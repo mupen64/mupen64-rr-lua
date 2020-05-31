@@ -931,11 +931,7 @@ VCR_getKeys( int Control, BUTTONS *Keys )
 		m_header.length_samples++;
 		m_currentSample++;
 		
-		// flush data every 5 seconds or so
-		if((m_header.length_samples % m_header.num_controllers) == 0)
-		{
-			flush_movie();
-		}
+		flush_movie();
 
 		return;
 	}
