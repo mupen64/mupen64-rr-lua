@@ -8,8 +8,8 @@
 
 #include "../r4300/r4300.h"
 
-//¯•ÊqÕ“Ë‘Îô
-//–{“–‚Íƒwƒbƒ_•ªŠ„‚·‚×‚«‚©
+//è­˜åˆ¥å­è¡çªå¯¾ç­–
+//æœ¬å½“ã¯ãƒ˜ãƒƒãƒ€åˆ†å‰²ã™ã¹ãã‹
 #ifndef LUACONSOLE_H_NOINCLUDE_WINDOWS_H
 #include <Windows.h>
 bool IsLuaConsoleMessage(MSG* msg);
@@ -32,8 +32,8 @@ void LuaTraceLoggingPure();
 void LuaTraceLoggingInterpOps();
 void LuaTraceLogState();
 
-//–³—‚â‚èinlineŠÖ”‚É
-namespace LuaEngine{
+//ç„¡ç†ã‚„ã‚Šinlineé–¢æ•°ã«
+namespace LuaEngine {
 void PCBreak(void*,unsigned long);
 extern void *pcBreakMap_[0x800000/4];
 }
