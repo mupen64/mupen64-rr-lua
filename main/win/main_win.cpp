@@ -1195,7 +1195,7 @@ BOOL StartRom(char *fullRomPath)
 //     while (emu_launched) {
 //		SleepEx(10, TRUE);
 //	 }
-     else if (!emu_launched) {
+     else{
                          //Makes window not resizable                         
                          //ShowWindow(mainHWND, FALSE);
                          winstyle = GetWindowLong( mainHWND, GWL_STYLE );
@@ -1230,7 +1230,7 @@ BOOL StartRom(char *fullRomPath)
                              InitTimer();
 
                              EnableEmulationMenuItems(TRUE);
-                             ShowRomBrowser(FALSE);
+                             ShowRomBrowser(FALSE,FALSE);
                              SaveGlobalPlugins(TRUE);
                           }
                          ShowInfo("");
@@ -1254,9 +1254,9 @@ void exit_emu2();
 static int shut_window = 0;
 
 //void closeRom()
-static DWORD WINAPI closeRom(LPVOID lpParam)
+static DWORD WINAPI closeRom(LPVOID lpParam) //lpParam - treated as bool, show romlist? 
 {
-    ShowInfo("Close Rom");
+    //ShowInfo("Close Rom"); this crashes everytime????
     
    LONG winstyle;                                //Used for setting new style to the window
 //   int browserwidths[] = {400, -1};              //Rombrowser statusbar
@@ -1314,18 +1314,22 @@ static DWORD WINAPI closeRom(LPVOID lpParam)
          
          ShowInfo("Init emulation menu items....");
          EnableEmulationMenuItems(FALSE);
-         ShowRomBrowser(TRUE);
          SaveGlobalPlugins(FALSE);
-         SetWindowText(mainHWND,MUPEN_VERSION);
-         SendMessage( hStatus, SB_SETTEXT, 1, (LPARAM)" " ); 
+         ShowRomBrowser(!really_restart_mode,!!lpParam);
+         if (!lpParam)
+         {
+             SetWindowText(mainHWND,MUPEN_VERSION);
+             SendMessage( hStatus, SB_SETTEXT, 1, (LPARAM)" " ); 
+         }
       }
       ShowInfo("Rom closed.");
       
       if(shut_window)
       {
         //exit_emu2();
-        SleepEx(100,TRUE);
+        //SleepEx(100,TRUE);
         SendMessage(mainHWND, WM_CLOSE, 0, 0);
+        return 0;
       }
    }   
    
@@ -2048,7 +2052,7 @@ void SetStatusMode( int mode )
              SendMessage( hStatus, SB_SETPARTS, sizeof(browserwidths)/sizeof(int), (LPARAM)browserwidths);    
              SendMessage( hStatus, SB_SETTEXT, 0, (LPARAM)statusmsg );
              SendMessage( hStatus, SB_SETTEXT, 1, (LPARAM)"" );
-             ShowTotalRoms();
+             //ShowTotalRoms();
         break;
         
         case 1:                 //Loading Statusbar
@@ -2352,7 +2356,7 @@ void exit_emu(int postquit)
 	}
 
    //closeRom();
-   CreateThread(NULL, 0, closeRom, NULL, 0, &Id);
+   CreateThread(NULL, 0, closeRom, NULL, 0, &Id); //
    
    if(postquit){
 	   freeRomDirList(); 
@@ -2827,8 +2831,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                  if (emu_launched) {
                        //closeRom();
                        stop_it();
-                       SleepEx(1000, TRUE);
-                       CreateThread(NULL, 0, closeRom, NULL, 0, &Id);
+                       SleepEx(1000, TRUE); //todo check if can remove
+                       CreateThread(NULL, 0, closeRom, (LPVOID)1, 0, &Id);
                        SendMessage(hTool, TB_CHECKBUTTON, EMU_PAUSE, 0);
                        SendMessage(hTool, TB_CHECKBUTTON, EMU_PLAY, 0);
                      }

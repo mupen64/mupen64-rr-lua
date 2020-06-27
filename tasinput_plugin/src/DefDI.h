@@ -79,11 +79,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define C_PAUSE 3
 #define C_RECORD 4
 
+//custom messages
+#define EDIT_END 10001
 
-typedef struct
+typedef struct COMBO
 {
 	int length = 0;
-	int* data; //pointer to combo key data somewhere in memory (because it's dynamic)
+	int* data = 0; //pointer to combo key data somewhere in memory (because it's dynamic)
+	void ClearData() //because default destructor gets called when building vector and input data shouldn't get freed yet.
+	{
+		free(data);
+	}
 } COMBO;
 
 typedef struct {

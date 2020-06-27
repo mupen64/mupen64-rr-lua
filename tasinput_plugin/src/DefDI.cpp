@@ -42,6 +42,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #define PI 3.14159265358979f
+#define BUFFER_CHUNK 128
+
+#define aCombo ComboList.at(activeCombo) //so it's a bit cleaner
 
 HINSTANCE g_hInstance;
 
@@ -57,6 +60,7 @@ DWORD WINAPI StatusDlgThreadProc (LPVOID lpParameter);
 bool romIsOpen = false;
 bool erase = true;
 
+bool lock; //don't focus mupen
 FILE* cFile; /*combo file conains list of combos in format:
 				n bytes - null terminated name string,
 				4 bytes - combo length,
@@ -129,6 +133,7 @@ struct Status
 		}
 		if(statusThread)
 		{
+			FreeCombos(); //apparently this is a good idea
 			TerminateThread(statusThread, 0);
 			statusThread = NULL;
 		}
@@ -173,13 +178,21 @@ struct Status
 	BUTTONS	LastControllerInput;
 	HWND statusDlg;
 	HWND prevHWnd;
+	HWND lBox;
 	int Control;
 	int Extend;
 	int comboTask;
 	int activeCombo;
 
+	void FreeCombos();
+
 	void InitialiseCombos(HWND);
+	void StopRecording();
+	int CreateNewCombo(int);
+	void StartEdit(int);
+	void EndEdit(int,char*);
 	void RefreshAnalogPicture ();
+
 	void ActivateEmulatorWindow ();
 	bool IsWindowFromEmulatorProcessActive ();
 	static bool IsAnyStatusDialogActive ();
@@ -263,13 +276,60 @@ EXPORT void CALL SetKeys(int Control, BUTTONS ControllerInput)
 		status[Control].SetKeys(ControllerInput);
 }
 
+LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
+{
+	//debug messages
+	//if (msg == ...)
+	//{
+		//char txt[100];
+		//sprintf(txt, "msg: %d", msg);
+		//ListBox_InsertString(GetParent(hwnd), -1, txt);
+	//}
+
+	switch (msg)
+	{
+	case WM_GETDLGCODE:
+	{
+		char txt[MAX_PATH] = "\0";
+		if (wParam == VK_RETURN)
+		{
+			SendMessage(hwnd, WM_GETTEXT, sizeof(txt), (LPARAM)txt);
+			SendMessage(GetParent(GetParent(hwnd)), EDIT_END, 0, (LPARAM)txt);
+			DestroyWindow(hwnd);
+		}
+		else if (wParam == VK_ESCAPE)
+		{
+			DestroyWindow(hwnd);
+		}
+		break;
+	}
+	case WM_KILLFOCUS:
+		DestroyWindow(hwnd);
+		lock = false;
+			break;
+	case WM_NCDESTROY:
+		RemoveWindowSubclass(hwnd, EditBoxProc, sId);
+	}
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+//reallocate buffer to closest multiple of chunk size <- assumes it didn't overflow already
+//returns pointer to new buffer (or old extended pointer)
+int *ExtendBuffer(int* buf, int curSize) //size in bytes
+{
+	//realloc(buf, curSize + BUFFER_CHUNK); //bad because crashes on unaligned buffers, which may come from combo file
+	int newsize = (div(curSize, BUFFER_CHUNK).quot+1) * BUFFER_CHUNK*4;
+	return (int*)realloc(buf, newsize);
+}
+
 void Status::GetKeys(BUTTONS * Keys)
 {
-	if (comboTask == C_RUNNING || comboTask == C_LOOP)
+	if (activeCombo!=-1 && (comboTask == C_RUNNING || comboTask == C_LOOP)) //override controller data with combo
 	{
 		int frame = frameCounter - comboStart+1; //+1 so it's human friendly
-		Keys->Value = ComboList.at(activeCombo).data[frame-1];
-		if (frame == ComboList.at(activeCombo).length) {
+		Keys->Value = aCombo.data[frame-1];
+		SetKeys(*Keys); //show changes
+		if (frame == aCombo.length) {
 			if (comboTask == C_LOOP)
 			{
 				comboStart = frameCounter+1; //+1 because frameCounter will get incremented by the time it get's here again
@@ -281,6 +341,7 @@ void Status::GetKeys(BUTTONS * Keys)
 		}
 		return;
 	}
+
 	gettingKeys = true;
 
 //	if(incrementingFrameNow)
@@ -698,7 +759,10 @@ void Status::GetKeys(BUTTONS * Keys)
 
 	bool prevOverrideAllowed = overrideAllowed;
 	overrideAllowed = true;
-	SetKeys(ControllerInput);
+	if (comboTask != C_PAUSE)
+	{
+		SetKeys(ControllerInput);
+	}
 	overrideAllowed = prevOverrideAllowed;
 
 	if(overrideOn)
@@ -709,6 +773,15 @@ void Status::GetKeys(BUTTONS * Keys)
 
 	//Pass Button Info to Emulator
 	Keys->Value = ControllerInput.Value;
+
+	//copy fetched data to combo too
+	if (comboTask == C_RECORD)
+	{
+		//extend if full and frame is not 0
+		if (frameCounter-comboStart && aCombo.length%BUFFER_CHUNK==0) aCombo.data = ExtendBuffer(aCombo.data, aCombo.length*4);
+		aCombo.data[frameCounter - comboStart] = Keys->Value;
+		aCombo.length++;
+	}
 
 	gettingKeys = false;
 }
@@ -1233,6 +1306,77 @@ EXPORT void CALL WM_KeyUp( WPARAM wParam, LPARAM lParam )
 {
 }
 
+//stop recording combo, uhh I think I dont need to do anything lol
+void Status::StopRecording() {
+	return;
+}
+
+void Status::FreeCombos()
+{
+	if (ComboList.size()) //reset
+	{
+		for (COMBO c : ComboList)
+		{
+			c.ClearData();
+			//delete c; //no you can't
+		}
+		ComboList.clear();
+	}
+}
+
+//Creates new combo, if id!=1 duplicates existing (todo)
+int Status::CreateNewCombo(int id) {
+	COMBO Combo;
+	Combo.length = 0;
+	Combo.data = (int*)malloc(BUFFER_CHUNK * 4); //must be aligned
+	char name[] = "New Combo"; //must be later renamed lol
+	ComboList.push_back(Combo);
+	return ListBox_InsertString(lBox,-1, name);
+}
+
+//shows edit box
+void Status::StartEdit(int id) {
+	RECT edit;//, box;
+	char txt[MAX_PATH];
+	ListBox_GetItemRect(lBox, id, &edit);
+	//If editBox isn't child of listbox (which would solve padding issues, but doesn't quite work)
+	//GetWindowRect(lBox, &box);
+	//POINT pt = { box.left, box.top };
+	//ScreenToClient(statusDlg, &pt);
+	//edit.top += pt.y;
+	//edit.left += pt.x;
+	//edit.bottom += pt.y;
+	//edit.right += pt.x;
+	lock = true;
+	HWND editBox = CreateWindowEx(WS_EX_CLIENTEDGE,"EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, edit.left, edit.top, edit.right - edit.left, edit.bottom - edit.top+4, lBox, 0, g_hInstance, 0);
+	ListBox_SetCurSel(lBox, -1); //just to be safe, it sometimes can be seen in background
+
+										 //FW_BOLD
+	//HFONT font = CreateFont(12, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, "MS Shell Dlg 2");
+	SendMessage(editBox,WM_SETFONT,(WPARAM)SendMessage(lBox, WM_GETFONT, 0, 0),0);
+	SetWindowSubclass(editBox,EditBoxProc,0,0); //to add more functionality
+	ListBox_GetText(lBox, activeCombo, txt);
+	SendMessage(editBox, WM_SETTEXT, 0, (LPARAM)txt);
+	PostMessage(statusDlg, WM_NEXTDLGCTL, (WPARAM)editBox, TRUE);
+}
+
+void Status::EndEdit(int id,char* name) {
+	if (name != NULL)
+	{
+		ListBox_DeleteString(lBox, id);
+		if (name[0] == NULL)
+		{
+			
+			ComboList.erase(ComboList.begin()+id);
+		}
+		else
+		{
+			ListBox_InsertString(lBox,id, name);
+		}
+	}
+}
+
+//load combos to listBox
 void Status::InitialiseCombos(HWND lBox) {
 	char c; //used to read name of combo
 	char name[MAX_PATH] = "Empty"; //cap of 260 characters!
@@ -1251,11 +1395,12 @@ void Status::InitialiseCombos(HWND lBox) {
 				i++;
 			}
 			name[i++] = '\0';
+			//todo: use CreateNewCombo() here?
 			ListBox_AddString(lBox, name);
 			fread(&combo.length, 4, 1, cFile); //reads 4 bytes - length
 			combo.data = (int*) malloc(combo.length*4);
 			fread(combo.data, 4, combo.length, cFile);
-			ComboList.push_back(combo);
+			ComboList.push_back(combo); //this calls destructor
 			c = fgetc(cFile);
 		}
 	}
@@ -1318,6 +1463,7 @@ static bool IsMouseOverControl (HWND hDlg, int dialogItemID)
 
 void Status::ActivateEmulatorWindow ()
 {
+	if (lock) return;
 	SetFocus(NULL);
 
 	SetActiveWindow(NULL); // activates whatever the previous window was
@@ -1538,9 +1684,13 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 			SetTimer(statusDlg, IDT_TIMER3, 50, (TIMERPROC) NULL);
 
 			//Load combos
-			HWND lBox = GetDlgItem(statusDlg, IDC_MACROLIST);
-			if (lBox) InitialiseCombos(lBox);
-
+			//I realised there's HasPanel() too, but doesn't make much difference
+			lBox = GetDlgItem(statusDlg, IDC_MACROLIST);
+			if (lBox)
+			{
+					FreeCombos();
+					InitialiseCombos(lBox);
+			}
 			// switch to emulator
 			if(IsWindowFromEmulatorProcessActive())
 				ActivateEmulatorWindow();
@@ -1890,6 +2040,9 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 		}	break;
 
+		case EDIT_END:
+			EndEdit(activeCombo,(char*)lParam);
+			break;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) 
             {
@@ -2088,6 +2241,7 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 						case IDC_MOREBUTTON6: AddPanel(2); break;
 					}
 
+					comboTask = C_IDLE;
 					RECT rect;
 					GetWindowRect(statusDlg, &rect);
 					xPosition = rect.left;
@@ -2110,13 +2264,15 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 					StartThread(Control);
 				}	break;
 				case IDC_PLAY:
-					comboTask = C_RUNNING;
 					activeCombo = ListBox_GetCurSel(GetDlgItem(statusDlg, IDC_MACROLIST));
+					if (activeCombo == -1) break;
+					comboTask = C_RUNNING;
 					comboStart = frameCounter;
 					break;
 				case IDC_STOP:
+					if (comboTask == C_RECORD) StopRecording();
 					comboTask = C_IDLE;
-					activeCombo = 0;
+					comboStart = 0; //should avoid unnecessary bugs
 					break;
 				case IDC_PAUSE:
 					comboTask = C_PAUSE;
@@ -2130,6 +2286,41 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 					comboStart = frameCounter;
 					comboTask = C_LOOP;
 					break;
+				case IDC_RECORD:
+					if (comboTask == C_RECORD)
+					{
+						comboTask = C_IDLE;
+						StopRecording();
+						//free(aCombo.data); //is it better to copy to new, aligned buffer or leave it?
+					}
+					else
+					{
+						if (comboTask == C_IDLE || activeCombo==-1)
+						{
+							activeCombo = CreateNewCombo(-1);
+							ListBox_SetCurSel(lBox, activeCombo);
+							comboStart = frameCounter;
+						}
+						else
+						{
+							aCombo.length = frameCounter - comboStart;
+							aCombo.data = ExtendBuffer(aCombo.data, aCombo.length*4);
+						}
+						comboTask = C_RECORD;
+					}
+					break;
+				case IDC_EDIT:
+					activeCombo = ListBox_GetCurSel(GetDlgItem(statusDlg, IDC_MACROLIST));
+					if (activeCombo == -1) break;
+					StartEdit(activeCombo);
+				case IDC_CLEAR:
+					//good joke, imagine msgbox working
+					//if (MessageBox(0, "Do you want to remove everything?", "Warning", MB_YESNO| MB_ICONQUESTION) == 6)
+					//{
+					FreeCombos();
+					ListBox_ResetContent(lBox);
+					//}
+					break;
 				default:
 //					SetFocus(statusDlg);
 					break;
@@ -2139,5 +2330,5 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 		default:
 			break;
 	}
-    return DefWindowProc (statusDlg, msg, wParam, lParam);
+	return FALSE; //Using DefWindowProc is prohibited but worked anyway
 }

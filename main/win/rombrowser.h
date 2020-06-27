@@ -77,7 +77,7 @@ BOOL LoadRomBrowserCache();
 void SaveRomBrowserCache();
 void saveMD5toCache(char md5str[33]);
 void CreateRomListControl (HWND hParent) ;
-void ShowRomBrowser(BOOL flag);
+void ShowRomBrowser(BOOL flag, BOOL showRom);
 void RefreshRomBrowser (void);
 void AddDirToList(char RomBrowserDir[MAX_PATH],BOOL sortflag);
 void RomList_ColoumnSortList(LPNMLISTVIEW pnmv);

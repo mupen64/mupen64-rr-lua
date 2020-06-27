@@ -938,7 +938,7 @@ void CreateRomListControl (HWND hParent) {
     LoadRomList();
 }
 
-void ShowRomBrowser(BOOL flag)
+void ShowRomBrowser(BOOL flag, BOOL showRom) //flag - hide/show browser; showRom - false means resize only
 {
     static RECT rcSaveMainWindow;
     if (!flag) 
@@ -953,11 +953,14 @@ void ShowRomBrowser(BOOL flag)
     else 
        { 
         MoveWindow(mainHWND, rcSaveMainWindow.left, rcSaveMainWindow.top, rcSaveMainWindow.right-rcSaveMainWindow.left, rcSaveMainWindow.bottom-rcSaveMainWindow.top, TRUE);
-        EnableWindow(hRomList,TRUE);
-        ShowWindow(hRomList,SW_SHOW); 
-        SendMessage(hTool, TB_AUTOSIZE, 0, 0);
-	    SendMessage(hStatus, WM_SIZE, 0, 0);
-	    ResizeRomListControl();
+        if (showRom)
+        {
+            EnableWindow(hRomList, TRUE);
+            ShowWindow(hRomList, SW_SHOW);
+            SendMessage(hTool, TB_AUTOSIZE, 0, 0);
+            SendMessage(hStatus, WM_SIZE, 0, 0);
+            ResizeRomListControl();
+        }
        } 
 }
 
