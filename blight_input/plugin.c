@@ -56,22 +56,22 @@ static SController controller[4];	// 4 controllers
 static int romopen = 0;			// is a rom opened
 
 static const char *button_names[] = {
-	"DPad R",		// R_DPAD
-	"DPad L",		// L_DPAD
-	"DPad D",		// D_DPAD
-	"DPad U",		// U_DPAD
-	"Start",		// START_BUTTON
-	"Z Trig",		// Z_TRIG
-	"B Button",		// B_BUTTON
-	"A Button",		// A_BUTTON
+	"DPad R",	// R_DPAD
+	"DPad L",	// L_DPAD
+	"DPad D",	// D_DPAD
+	"DPad U",	// U_DPAD
+	"Start",	// START_BUTTON
+	"Z Trig",	// Z_TRIG
+	"B Button",	// B_BUTTON
+	"A Button",	// A_BUTTON
 	"C Button R",	// R_CBUTTON
 	"C Button L",	// L_CBUTTON
 	"C Button D",	// D_CBUTTON
 	"C Button U",	// U_CBUTTON
-	"R Trig",		// R_TRIG
-	"L Trig",		// L_TRIG
-	"Y Axis",		// Y_AXIS
-	"X Axis"		// X_AXIS
+	"R Trig",	// R_TRIG
+	"L Trig",	// L_TRIG
+	"Y Axis",	// Y_AXIS
+	"X Axis"	// X_AXIS
 };
 
 static int
