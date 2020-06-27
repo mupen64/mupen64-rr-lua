@@ -1,17 +1,17 @@
-#include "disasm.h"	//main\disasm.h,main\disasm.cが必要
+#include "disasm.h"	//main\disasm.h,main\disasm.c窶堋ｪ窶｢K窶牌
 #include <stdio.h>
 #include <time.h>
-/* やっつけ */
+/* 窶堙｢窶堙≫堙や堋ｯ */
 
 FILE *inf, *outf;
 
 void TraceLogging(r4300word pc, r4300word w, r4300word r0, r4300word r1, int last) {
 	static char buf[0x1000000];
-	static char *p = buf;
+	static char * p = buf;
 	const char * const buflength = buf + sizeof(buf) - 512;
 	INSTDECODE decode;
 	const char * const x = "0123456789abcdef";
-#define HEX8(n) 	p[0] = x[(r4300word)(n)>>28&0xF];\
+#define HEX8(n) p[0] = x[(r4300word)(n)>>28&0xF];\
 	p[1] = x[(r4300word)(n)>>24&0xF];\
 	p[2] = x[(r4300word)(n)>>20&0xF];\
 	p[3] = x[(r4300word)(n)>>16&0xF];\
@@ -23,31 +23,31 @@ void TraceLogging(r4300word pc, r4300word w, r4300word r0, r4300word r1, int las
 
 	if(!last) {
 
-	DecodeInstruction(w, &decode);
-	HEX8(pc);
-	*(p++) = ':';
-	*(p++) = ' ';
-	HEX8(w);
-	*(p++) = ' ';
-	const char *ps = p;
-	if(w == 0x00000000) {
-		*(p++) = 'n';
-		*(p++) = 'o';
-		*(p++) = 'p';
-	}else {
-		for(const char *q = GetOpecodeString(&decode); *q; q ++) {
-			*(p++) = *q;
-		}
+		DecodeInstruction(w, &decode);
+		HEX8(pc);
+		*(p++) = ':';
 		*(p++) = ' ';
-		p = GetOperandString(p, &decode, pc);
-	}
-	for(int i = p-ps+3; i < 24; i += 4) {
-		*(p++) = '\t';
-	}
-	*(p++) = ';';
-	INSTOPERAND &o = decode.operand;
-#define REGCPU(n, b) if((n)!=0){\
-			for(const char *l = CPURegisterName[n]; *l; l++){\
+		HEX8(w);
+		*(p++) = ' ';
+		const char *ps = p;
+		if(w == 0x00000000) {
+			*(p++) = 'n';
+			*(p++) = 'o';
+			*(p++) = 'p';
+		} else {
+			for(const char *q = GetOpcodeString(&decode); *q; q ++) {
+				*(p++) = *q;
+			}
+			*(p++) = ' ';
+			p = GetOperandString(p, &decode, pc);
+		}
+		for(int i = p-ps+3; i < 24; i += 4) {
+			*(p++) = '\t';
+		}
+		*(p++) = ';';
+		INSTOPERAND &o = decode.operand;
+#define REGCPU(n, b) if((n)!=0) {\
+			for(const char *l = CPURegisterName[n]; *l; l++) {\
 				*(p++) = *l;\
 			}\
 			*(p++) = '=';\
@@ -55,15 +55,17 @@ void TraceLogging(r4300word pc, r4300word w, r4300word r0, r4300word r1, int las
 	}
 #define REGCPU2(n,m) \
 		REGCPU(n,0);\
-		if((n)!=(m)&&(m)!=0){C;REGCPU(m,1);}
-//10進数
+		if((n)!=(m)&&(m)!=0) {C;REGCPU(m,1);
+	}
+//10ﾂ進ﾂ絶�
 #define REGFPU(n, b) *(p++)='f';\
 			*(p++)=x[(n)/10];\
 			*(p++)=x[(n)%10];\
 			*(p++) = '=';\
 			p+=sprintf(p,"%f",*(float*)&r##b)
 #define REGFPU2(n,m) REGFPU(n,0);\
-		if((n)!=(m)){C;REGFPU(m,1);}
+		if((n)!=(m)) {C;REGFPU(m,1);
+	}
 #define C *(p++) = ','
 
 	/*
@@ -91,7 +93,8 @@ void TraceLogging(r4300word pc, r4300word w, r4300word r0, r4300word r1, int las
 		break;
 	case INSTF_ADDRW:
 		REGCPU(o.i.rt,1);
-		if(o.i.rt!=0){C;}
+		if(o.i.rt!=0) {C;
+	}
 	case INSTF_ADDRR:
 		*(p++) = '@';
 		*(p++) = '=';
@@ -155,8 +158,8 @@ int main(int argc, char *argv[]) {
 	clock_t clk;
 
 	clk = clock();
-	if(argc<=1){
-		puts("argment count <= 1!\nbintracefmt input_file [output_file('bintrace_fmt.log')]");
+	if(argc<=1) {
+		puts("argument count <= 1!\nbintracefmt input_file [output_file('bintrace_fmt.log')]");
 		while(getchar()!='\n');
 		return 1;
 	}
@@ -164,13 +167,13 @@ int main(int argc, char *argv[]) {
 	outf = fopen(argc>=3?argv[2]:"bintrace_fmt.log", "wb");
 	_fseeki64(inf, 0, SEEK_END);
 	in_allsize = _ftelli64(inf);
-	if(in_allsize%0x10){
+	if(in_allsize%0x10) {
 		printf("inputfile is bad? (size%0x10!=0)");
 	}
-	in_allsize=in_allsize/4*4;
+	in_allsize = in_allsize/4*4;
 	_fseeki64(inf, 0, SEEK_SET);
 	in_cntsize = 0;
-	do{
+	do {
 		size_t i;
 		readsize = fread(buf, 4, sizeof(buf)/4, inf);
 		for(i = 0; i < readsize/4; i ++) {
@@ -179,7 +182,7 @@ int main(int argc, char *argv[]) {
 		out_cntlines += readsize/4;
 		in_cntsize += readsize*4;
 		out_cntsize = _ftelli64(outf);
-		if(!readsize){
+		if(!readsize) {
 			TraceLogging(0, 0, 0, 0, 1);
 		}
 		printf("\rin: %.2fMiB / %.2fMiB (%.3f%%)\tout: %llulines %.2fMiB",
@@ -187,7 +190,7 @@ int main(int argc, char *argv[]) {
 			(double)in_cntsize/in_allsize*100,
 			out_cntlines,
 			out_cntsize/1024.0/1024);
-	}while(readsize);
+	} while(readsize);
 	//flush
 	fclose(inf);
 	fclose(outf);
