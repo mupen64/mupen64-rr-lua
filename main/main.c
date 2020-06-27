@@ -232,7 +232,7 @@ static void sigterm_handler()
 int main (int argc, char *argv[])
 {
    char c;
-   char plugins[100][100], s[20];
+   char plugins[101][101], s[20];
    char romfile[PATH_MAX];
    int old_i, i, i1, i2, i3, i4;
    int p, p_fullscreen = 0, p_emumode = 0, p_gfx = 0, p_audio = 0, p_input = 0, p_rsp = 0, p_help = 0, p_error = 0;
@@ -356,7 +356,7 @@ int main (int argc, char *argv[])
    //get config file settings
    
    buffer = (char*)config_get_string("Gfx Plugin", "");
-   buffer2= plugin_name_by_filename(buffer);
+   buffer2 = plugin_name_by_filename(buffer);
    if(buffer2)
      {
 	strcpy(plugins[100], buffer2);
