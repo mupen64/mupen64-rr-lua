@@ -1790,7 +1790,18 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 					     (!IsMouseOverControl(statusDlg,IDC_MACROBOX) &&
 				          !IsMouseOverControl(statusDlg,IDC_MACROLIST) &&
 				          !IsMouseOverControl(statusDlg,IDC_MOREBUTTON5) &&
+							 !IsMouseOverControl(statusDlg, IDC_SAVE) &&
+							 !IsMouseOverControl(statusDlg, IDC_IMPORT) &&
+							 !IsMouseOverControl(statusDlg, IDC_CLEAR) &&
+							 !IsMouseOverControl(statusDlg, IDC_EDIT) &&
+							 !IsMouseOverControl(statusDlg, IDC_LOOP) &&
+							 !IsMouseOverControl(statusDlg, IDC_STOP) &&
+							 !IsMouseOverControl(statusDlg, IDC_PAUSE) &&
+							 !IsMouseOverControl(statusDlg, IDC_PLAY) &&
+							 !IsMouseOverControl(statusDlg, IDC_RECORD) &&
+							 
 				          !IsMouseOverControl(statusDlg,IDC_MOREBUTTON6))))
+					
 				{
 					if(HasPanel(2) &&
 					   (IsMouseOverControl(statusDlg,IDC_CHECK_A) ||
@@ -2287,6 +2298,7 @@ LRESULT Status::StatusDlgMethod (UINT msg, WPARAM wParam, LPARAM lParam)
 				}	break;
 				case IDC_PLAY:
 					activeCombo = ListBox_GetCurSel(GetDlgItem(statusDlg, IDC_MACROLIST));
+					// Some small fix
 					if (activeCombo == -1) { SetStatus("Select a combo first");break; }
 					SetStatus("Playing combo");
 					CheckDlgButton(statusDlg, IDC_LOOP, 0);

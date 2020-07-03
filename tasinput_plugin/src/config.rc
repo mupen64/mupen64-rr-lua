@@ -1,11 +1,22 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-#include <windows.h>
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// Angielski (Stany Zjednoczone) resources
+#undef APSTUDIO_READONLY_SYMBOLS
 
+/////////////////////////////////////////////////////////////////////////////
+// Neutral (Default) (unknown sub-lang: 0x3) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ZZZ)
+LANGUAGE LANG_NEUTRAL, 0x3
 #pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
@@ -306,7 +317,7 @@ BEGIN
     LISTBOX         IDC_MACROLIST,8,123,143,148,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_CLIPSIBLINGS | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Record",IDC_RECORD,156,123,51,14
     PUSHBUTTON      "Play",IDC_PLAY,156,140,51,14
-    PUSHBUTTON      "Pause",IDC_PAUSE,156,157,51,14
+    PUSHBUTTON      "Pause",IDC_PAUSE,156,157,51,14,BS_BITMAP
     PUSHBUTTON      "Stop",IDC_STOP,156,174,51,14
     PUSHBUTTON      "Loop",IDC_LOOP,156,192,51,14
     PUSHBUTTON      "Edit",IDC_EDIT,156,209,51,14
@@ -554,6 +565,9 @@ IDD_STATUS_23 AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
+
+#endif    // Neutral (Default) (unknown sub-lang: 0x3) resources
+/////////////////////////////////////////////////////////////////////////////
 
 
 
