@@ -137,8 +137,28 @@ void LoadConfig()
    //Window position and size 
     Config.WindowWidth = ReadCfgInt("Window","Width",640); 
     Config.WindowHeight = ReadCfgInt("Window","Height",480); 
-    Config.WindowPosX = ReadCfgInt("Window","X",(GetSystemMetrics( SM_CXSCREEN ) - Config.WindowWidth) / 2);
-    Config.WindowPosY = ReadCfgInt("Window","Y",(GetSystemMetrics( SM_CYSCREEN ) - Config.WindowHeight) / 2);
+    
+
+    Config.WindowPosX = ReadCfgInt("Window", "X", (GetSystemMetrics(SM_CXSCREEN) - Config.WindowWidth) / 2);
+    // Fixes -32000 bug, code is nice and simple. Needs to be done two times for each axis.
+    if (Config.WindowPosX == -32000) {
+        Config.WindowPosX = 0;
+        Config.WindowHeight = 700;
+    }
+    if (Config.WindowPosY == -32000) {
+        Config.WindowPosY = 0;
+        Config.WindowWidth = 700;
+    }
+
+    Config.WindowPosY = ReadCfgInt("Window", "Y", (GetSystemMetrics(SM_CYSCREEN) - Config.WindowHeight) / 2);
+    if (Config.WindowPosX == -32000) {
+        Config.WindowPosX = 0;
+        Config.WindowHeight = 700;
+    }
+    if (Config.WindowPosY == -32000) {
+        Config.WindowPosY = 0;
+        Config.WindowWidth = 700;
+    }
     
     //General Vars
     Config.showFPS = ReadCfgInt("General","Show FPS",1);
@@ -253,10 +273,13 @@ void saveWindowSettings()
 	Config.WindowPosY=rcMain.top;
 	Config.WindowWidth = rcMain.right - rcMain.left;
 	Config.WindowHeight = rcMain.bottom - rcMain.top;
+    // If mupen is closed while minimized it gets set to a very low value
 	WriteCfgInt("Window","Width",Config.WindowWidth); 
     WriteCfgInt("Window","Height",Config.WindowHeight); 
     WriteCfgInt("Window","X",Config.WindowPosX);
     WriteCfgInt("Window","Y",Config.WindowPosY);
+    
+
 }
 
 void saveBrowserSettings()
