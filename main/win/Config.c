@@ -169,6 +169,7 @@ void LoadConfig()
     Config.OverwritePluginSettings = ReadCfgInt("Advanced","Overwrite Plugins Settings ",0);
     Config.GuiToolbar = ReadCfgInt( "Advanced", "Use Toolbar", 0);
     Config.GuiStatusbar = ReadCfgInt( "Advanced", "Use Statusbar", 1);
+    Config.UseSetkeys = ReadCfgInt("Advanced", "Use Setkeys", 1);
     Config.AutoIncSaveSlot = ReadCfgInt( "Advanced", "Auto Increment Save Slot", 0);
     
     //Compatibility Settings
@@ -326,6 +327,7 @@ void SaveConfig()
     WriteCfgInt( "Advanced", "Overwrite Plugins Settings", Config.OverwritePluginSettings);
     WriteCfgInt( "Advanced", "Use Toolbar", Config.GuiToolbar);
     WriteCfgInt( "Advanced", "Use Statusbar", Config.GuiStatusbar);
+    WriteCfgInt("Advanced", "Use Setkeys", Config.UseSetkeys);
     WriteCfgInt( "Advanced", "Auto Increment Save Slot", Config.AutoIncSaveSlot);
     
     WriteCfgInt( "CPU", "Core", Config.guiDynacore);

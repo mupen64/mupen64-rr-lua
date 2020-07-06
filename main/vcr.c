@@ -971,7 +971,8 @@ VCR_getKeys( int Control, BUTTONS *Keys )
 		{
 			*Keys = *((BUTTONS*)m_inputBufferPtr);
 			m_inputBufferPtr += sizeof(BUTTONS);
-			setKeys(Control, *Keys);
+				setKeys(Control, *Keys);
+			
 	
 #ifdef LUA_JOYPAD
 			 lastInputLua[Control] = *(DWORD*)Keys;

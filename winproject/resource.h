@@ -400,7 +400,7 @@
 
 
 #define ID_LANG_ENGLISH            10000
-
+#define IDC_USESETKEYS 10001
     
 
 #define MUPEN_VERSION     "Mupen 64 rr Lua" 

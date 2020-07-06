@@ -180,7 +180,7 @@ FONT 8, "Tahoma", 0, 0, 0
     DEFPUSHBUTTON   "&Ok", IDOK, 69, 197, 60, 14
     PUSHBUTTON      "&Web Site", IDC_WEBSITE, 134, 197, 60, 14
     GROUPBOX        "About this program", IDC_STATIC, 5, 65, 189, 127
-    LTEXT           "Author:\r\n     Hacktarux (hacktarux@yahoo.fr)\r\n\nWindows port:\r\n     ShadowPrince (shadow@emulation64.com)\r\n     linker (linker@mail.bg)\r\n\r\nContributors:\r\n     Codex, Falcon4ever, Pir4nhaX, Malcolm,\r\n     Olivieryuyu\r\n\r\nThanx to the many others who have helped (check the help file)", IDC_STATIC, 13, 82, 173, 104, SS_LEFT
+    LTEXT           "Author:\r\n     Hacktarux (hacktarux@yahoo.fr)\r\n\nWindows port:\r\n     ShadowPrince (shadow@emulation64.com)\r\n     linker (linker@mail.bg)\r\n\r\nContributors:\r\n     Codex, Falcon4ever, Pir4nhaX, Malcolm,\r\n     Olivieryuyu\r\n\r\nThanx to the many others who helped", IDC_STATIC, 13, 82, 173, 104, SS_LEFT
     CONTROL         "", 133, "STATIC", SS_BITMAP, 0, 0, 200, 100
 }
 
@@ -192,12 +192,13 @@ STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP
 FONT 8, "Tahoma", 0, 0, 0
 {
     GROUPBOX        "Common Options", IDC_COMMON, 7, 7, 215, 105
-    AUTOCHECKBOX    "Start game in full screen", IDC_STARTFULLSCREEN, 16, 20, 200, 10
+    AUTOCHECKBOX    "Start game in full screen", IDC_STARTFULLSCREEN, 16, 20, 60, 10
     AUTOCHECKBOX    "Pause emulation when window is not active", IDC_PAUSENOTACTIVE, 16, 35, 200, 10
     AUTOCHECKBOX    "Use global plugins settings", IDC_PLUGIN_OVERWRITE, 16, 50, 200, 10
     AUTOCHECKBOX    "Show toolbar", IDC_GUI_TOOLBAR, 16, 65, 200, 10
     AUTOCHECKBOX    "Show statusbar", IDC_GUI_STATUSBAR, 16, 80, 200, 10
-    AUTOCHECKBOX    "Auto Increment save slot", IDC_AUTOINCSAVESLOT, 16, 95, 200, 10
+    AUTOCHECKBOX    "Auto Increment save slot", IDC_AUTOINCSAVESLOT, 16, 95, 100, 10
+	AUTOCHECKBOX    "Use SetKeys", IDC_USESETKEYS, 120, 95, 60 10
     GROUPBOX        "Compatibility Options", IDC_COMPATIBILITY, 7, 116, 215, 56
     AUTOCHECKBOX    "No audio delay (it can fix some compatibility issues but audio won't be synchronised with video)", IDC_NO_AUDIO_DELAY, 16, 129, 200, 18, BS_VCENTER | BS_MULTILINE
     AUTOCHECKBOX    "No compiled jump (improves compatibility at the cost of some speed)", IDC_NO_COMPILED_JUMP, 16, 150, 200, 18, BS_VCENTER | BS_MULTILINE

@@ -864,7 +864,10 @@ int load_input(HMODULE handle_input)
    closeDLL_input = (void(__cdecl*)())GetProcAddress(handle_input, "CloseDLL");
    controllerCommand = (void(__cdecl*)(int Control, BYTE * Command))GetProcAddress(handle_input, "ControllerCommand");
    getKeys = (void(__cdecl*)(int Control, BUTTONS *Keys))GetProcAddress(handle_input, "GetKeys");
-   setKeys = (void(__cdecl*)(int Control, BUTTONS  Keys))GetProcAddress(handle_input, "SetKeys");
+   // Gets config
+   if (Config.UseSetkeys) {
+       setKeys = (void(__cdecl*)(int Control, BUTTONS  Keys))GetProcAddress(handle_input, "SetKeys");
+   }
    if (PluginInfo.Version == 0x0101)
        initiateControllers = (void(__cdecl*)(CONTROL_INFO ControlInfo))GetProcAddress(handle_input, "InitiateControllers");
    else
