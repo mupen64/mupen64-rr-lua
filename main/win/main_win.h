@@ -98,7 +98,7 @@ typedef struct _CONFIG {
     BOOL GuiToolbar;
     BOOL GuiStatusbar;
     BOOL AutoIncSaveSlot;
-    BOOL RoundToZero;
+    //BOOL RoundToZero;
     
     //Compatibility Options
     //BOOL NoAudioDelay;
@@ -142,6 +142,6 @@ typedef struct _CONFIG {
 		char LuaScriptPath[MAX_PATH];
 } CONFIG;
 
-extern CONFIG Config;
+extern "C" CONFIG Config;
 
 #endif

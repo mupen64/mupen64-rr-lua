@@ -49,6 +49,7 @@ extern void update_debugger();
 unsigned long i, dynacore = 0, interpcore = 0;
 int no_audio_delay = 0;
 int no_compiled_jump = 0;
+int round_to_zero = 0;
 int stop, llbit;
 long long int reg[32], hi, lo;
 long long int local_rs, local_rt;

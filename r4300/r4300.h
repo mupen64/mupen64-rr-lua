@@ -63,6 +63,7 @@ extern char invalid_code[0x100000];
 extern unsigned long jump_to_address;
 extern int no_audio_delay;
 extern int no_compiled_jump;
+extern int round_to_zero;
 
 void go();
 void pure_interpreter();

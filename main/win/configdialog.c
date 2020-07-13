@@ -52,6 +52,7 @@ HWND hwndTrack ;
 
 extern int no_audio_delay;
 extern int no_compiled_jump;
+extern int round_to_zero;
 
 void WriteCheckBoxValue( HWND hwnd, int resourceID , int value)
 {
@@ -843,7 +844,7 @@ BOOL CALLBACK AdvancedSettingsProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
          WriteCheckBoxValue( hwnd, IDC_GUI_TOOLBAR, Config.GuiToolbar);
          WriteCheckBoxValue( hwnd, IDC_GUI_STATUSBAR, Config.GuiStatusbar);
          WriteCheckBoxValue( hwnd, IDC_AUTOINCSAVESLOT, Config.AutoIncSaveSlot);
-         WriteCheckBoxValue( hwnd, IDC_ROUNDTOZERO, Config.RoundToZero);
+         WriteCheckBoxValue( hwnd, IDC_ROUNDTOZERO, round_to_zero);
                   
          WriteCheckBoxValue( hwnd, IDC_NO_AUDIO_DELAY, no_audio_delay);
          WriteCheckBoxValue( hwnd, IDC_NO_COMPILED_JUMP, no_compiled_jump);
@@ -873,7 +874,7 @@ BOOL CALLBACK AdvancedSettingsProc(HWND hwnd, UINT Message, WPARAM wParam, LPARA
                 Config.GuiToolbar =  ReadCheckBoxValue( hwnd, IDC_GUI_TOOLBAR);
                 Config.GuiStatusbar = ReadCheckBoxValue( hwnd, IDC_GUI_STATUSBAR);
 	            Config.AutoIncSaveSlot = ReadCheckBoxValue( hwnd, IDC_AUTOINCSAVESLOT);
-                Config.RoundToZero = ReadCheckBoxValue( hwnd, IDC_ROUNDTOZERO);
+                round_to_zero = ReadCheckBoxValue( hwnd, IDC_ROUNDTOZERO);
                                                                                                
                 no_audio_delay = ReadCheckBoxValue( hwnd, IDC_NO_AUDIO_DELAY);
                 no_compiled_jump = ReadCheckBoxValue( hwnd, IDC_NO_COMPILED_JUMP);

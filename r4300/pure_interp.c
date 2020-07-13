@@ -1402,7 +1402,11 @@ static void FLOOR_W_S()
 
 static void CVT_D_S()
 {
-   set_rounding();
+   if (round_to_zero) {
+       set_trunc();
+   } else {
+       set_rounding();
+   }
    *reg_cop1_double[cffd] = *reg_cop1_simple[cffs];
    interp_addr+=4;
 }
@@ -1728,7 +1732,11 @@ static void FLOOR_W_D()
 
 static void CVT_S_D()
 {
-   set_rounding();
+   if (round_to_zero) {
+       set_trunc();
+   } else {
+       set_rounding();
+   }
    *reg_cop1_simple[cffd] = *reg_cop1_double[cffs];
    interp_addr+=4;
 }
