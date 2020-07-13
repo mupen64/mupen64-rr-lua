@@ -144,7 +144,7 @@ void MTC0()
       case 15:  // PRevID
 	break;
       case 16:  // Config
-	Config = rrt;
+	Config_cop0 = rrt;
 	break;
       case 18:  // WatchLo
 	WatchLo = rrt & 0xFFFFFFFF;

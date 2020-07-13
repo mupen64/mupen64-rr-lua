@@ -95,7 +95,7 @@ stop=1; \
 #define Cause reg_cop0[13]
 #define EPC reg_cop0[14]
 #define PRevID reg_cop0[15]
-#define Config reg_cop0[16]
+#define Config_cop0 reg_cop0[16]
 #define LLAddr reg_cop0[17]
 #define WatchLo reg_cop0[18]
 #define WatchHi reg_cop0[19]

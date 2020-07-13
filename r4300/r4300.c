@@ -1568,7 +1568,7 @@ void go()
    
    Random = 31;
    Status= 0x34000000;
-   Config= 0x6e463;
+   Config_cop0= 0x6e463;
    PRevID = 0xb00;
    Count = 0x5000;
    Cause = 0x5C;
