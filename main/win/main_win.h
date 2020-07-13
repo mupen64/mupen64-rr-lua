@@ -98,6 +98,7 @@ typedef struct _CONFIG {
     BOOL GuiToolbar;
     BOOL GuiStatusbar;
     BOOL AutoIncSaveSlot;
+    BOOL RoundToZero;
     
     //Compatibility Options
     //BOOL NoAudioDelay;

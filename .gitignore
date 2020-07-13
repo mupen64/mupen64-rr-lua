@@ -8,7 +8,7 @@ commit.txt
 /tasinput_plugin/src/UpgradeLog.htm
 /tasinput_plugin/src/stdout.txt
 /tasinput_plugin/src/config.aps
-/.vs/TASInputDragfix/v16
-/.vs/VSWorkspaceState.json
-/.vs/slnx.sqlite
-/.vs/ProjectSettings.json
+.vs/
+plugins/
+winproject/save
+winproject/plugin

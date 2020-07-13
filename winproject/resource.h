@@ -227,6 +227,7 @@
 #define IDC_NO_COMPILED_JUMP            5516
 #define IDC_AUTOINCSAVESLOT             5517
 #define IDD_HOTKEY_CONFIG               5518
+#define IDC_WIIVC_OPTIONS               5519
 
 #define ID_RECENTROMS_RESET             6000
 #define ID_RECENTROMS_FREEZE            6001
@@ -399,7 +400,9 @@
 
 
 
-#define ID_LANG_ENGLISH            10000
+#define ID_LANG_ENGLISH                 10000
+
+#define IDC_ROUNDTOZERO                 10002
 
     
 

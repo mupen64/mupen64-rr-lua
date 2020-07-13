@@ -526,6 +526,9 @@ void TranslateAdvancedDialog(HWND hwnd)
     SetItemTranslatedString(hwnd,IDC_COLUMN_COMMENTS,"Comments");
     SetItemTranslatedString(hwnd,IDC_COLUMN_FILENAME,"File Name");
     SetItemTranslatedString(hwnd,IDC_COLUMN_MD5,"MD5");
+    
+    SetItemTranslatedString(hwnd, IDC_WIIVC_OPTIONS, "Wii VC Options");
+    SetItemTranslatedString(hwnd, IDC_ROUNDTOZERO, "Round To Zero");
          
 }
 
