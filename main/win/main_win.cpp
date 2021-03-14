@@ -2950,7 +2950,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 			case EMU_RESET:
                 if (warn_recording())break;
                 extern int m_task;
-                if (m_task == 3 && !Config.NoReset) //recording
+                if (m_task == 3 && resetRec) //recording
                 {
                     scheduled_restart = true;
                     continue_vcr_on_restart_mode = true;

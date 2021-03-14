@@ -36,6 +36,7 @@ extern int no_compiled_jump;
 
 int input_delay;
 int LUA_double_buffered;
+int resetRec;
 
 ////////////////////// Service functions and structures ////////////////////////
 
@@ -214,7 +215,7 @@ void LoadConfig()
     ReadCfgString("Rom Browser", "Sort Method", "ASC", Config.RomBrowserSortMethod);
 
     // Recording Options
-    Config.NoReset = ReadCfgInt("Recording Options", "No reset recording", 1);
+    resetRec = ReadCfgInt("Recording Options", "No reset recording", 1);
 
     //avi options
     Config.forceInternalCapture = ReadCfgInt("Avi Options", "Force internal capture", 0);
@@ -369,7 +370,7 @@ void SaveConfig()
     WriteCfgInt("Directories", "Default Screenshots Directory", Config.DefaultScreenshotsDir);
     WriteCfgString("Directories", "Screenshots Directory", Config.ScreenshotsDir);
 
-    WriteCfgInt("Recording Options", "No reset recording", Config.NoReset);
+    WriteCfgInt("Recording Options", "No reset recording", resetRec);
 
     WriteCfgInt("Avi Options", "Force internal capture", Config.forceInternalCapture);
 

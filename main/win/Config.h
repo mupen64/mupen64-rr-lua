@@ -22,6 +22,8 @@ int ReadCfgInt        (char *Section,char *Key,int DefaultValue) ;
 extern int round_to_zero;
 extern int input_delay;
 extern int LUA_double_buffered; 
+extern int resetRec;
+
 
 void LoadConfig()  ;
 void SaveConfig()  ; 
