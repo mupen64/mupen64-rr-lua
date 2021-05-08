@@ -1544,8 +1544,9 @@ int VCR_restartPlayback() {
 
 int restartPlayback()
 {
-	VCR_setReadOnly(true); // force read only
-	int ret = startPlayback(m_filename, "", "", true);
+    	VCR_setReadOnly(true); // force read only
+    	int ret = startPlayback(m_filename, "", "", true);
+    	SetActiveMovie(m_filename);
 
 	// Enable Stop Movie Playback button
 	m_task = Playback;
