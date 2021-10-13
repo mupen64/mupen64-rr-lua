@@ -58,6 +58,11 @@ bool lockNoStWarn;
 static unsigned int slot = 0;
 static char fname[MAX_PATH] = {0,};
 
+unsigned int savestates_get_slot()
+{
+   return slot;
+}
+
 void savestates_select_slot(unsigned int s)
 {
    if (s > 9) 
