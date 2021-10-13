@@ -355,7 +355,7 @@ static void truncateMovie()
 	// truncate movie controller data to header.length_samples length
 
 	long truncLen = MUP_HEADER_SIZE + sizeof(BUTTONS)*(m_header.length_samples);
-
+master
 #ifdef __WIN32__
 	HANDLE fileHandle = CreateFile(m_filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
 	if(fileHandle != NULL)
@@ -1123,6 +1123,8 @@ VCR_startRecord( const char *filename, unsigned short flags, const char *authorU
 
 	reserve_buffer_space(4096);
 
+    unsigned int previous_slot = savestates_get_slot();
+
     if(flags & MOVIE_START_FROM_SNAPSHOT)
     {
     	// save state
@@ -1172,6 +1174,8 @@ VCR_startRecord( const char *filename, unsigned short flags, const char *authorU
 	m_currentSample = 0;
 	m_currentVI = 0;
 
+	savestates_select_slot(previous_slot);
+	
 	return 0;
 
 }
