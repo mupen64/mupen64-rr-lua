@@ -355,7 +355,7 @@ static void truncateMovie()
 	// truncate movie controller data to header.length_samples length
 
 	long truncLen = MUP_HEADER_SIZE + sizeof(BUTTONS)*(m_header.length_samples);
-master
+
 #ifdef __WIN32__
 	HANDLE fileHandle = CreateFile(m_filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
 	if(fileHandle != NULL)
