@@ -34,6 +34,8 @@ extern int savestates_job;
 extern bool savestates_ignore_nonmovie_warnings;
 extern bool st_skip_dma;
 
+unsigned int savestates_get_slot();
+
 void savestates_save();
 void savestates_load(bool silenceNotFoundError);
 
