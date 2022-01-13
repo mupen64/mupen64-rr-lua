@@ -125,8 +125,9 @@ static int    m_audioFreq = 33000;		//0x30018;
 static int    m_audioBitrate = 16;		// 16 bits
 static float  m_videoFrame = 0;
 static float  m_audioFrame = 0;
-static char soundBuf [44100*2*2];
-static char soundBufEmpty [44100*2];
+#define SOUND_BUF_SIZE 44100*2*10
+static char soundBuf [SOUND_BUF_SIZE];
+static char soundBufEmpty [SOUND_BUF_SIZE];
 static int soundBufPos = 0;
 long lastSound = 0;
 volatile BOOL captureFrameValid = FALSE;
@@ -1878,12 +1879,12 @@ VCR_updateScreen()
 //	{
 //		if(image)
 //		{
-			if(!VCRComp_addVideoFrame((unsigned char*)image))
-			{
-//				ShowInfo("Video codec failure!\nA call to addVideoFrame() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?");
-				printError("Video codec failure!\nA call to addVideoFrame() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?");
-				VCR_stopCapture();
-			}
+	//if(!VCRComp_addVideoFrame((unsigned char*)image))
+	//{
+	//	printError("Video codec failure!\nA call to addVideoFrame() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?");
+	//	VCR_stopCapture();
+	//}
+	//m_videoFrame += 1.0;
 //		}
 //	}
 //	else
@@ -1898,8 +1899,43 @@ VCR_updateScreen()
 //			}
 //		}
 //	}
+
+	// AUDIO SYNC
+	// This type of syncing assumes the audio is authoratative, and drops or duplicates frames to keep the video as close to
+	// it as possible. Some games stop updating the screen entirely at certain points, such as loading zones, which will cause
+	// audio to drift away by default. This method of syncing prevents this, at the cost of the video feed possibly freezing or jumping
+	// (though in practice this rarely happens - usually a loading scene just appears shorter or something).
+
+	if (m_videoFrame > (m_audioFrame + 1.0))
+	{
+		printf("\nDropped Frame! a/v: %f/%f", m_videoFrame, m_audioFrame);
+	}
+	else
+	{
+		if (!VCRComp_addVideoFrame((unsigned char*)image))
+		{
+			//				ShowInfo("Video codec failure!\nA call to addVideoFrame() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?");
+			printError("Video codec failure!\nA call to addVideoFrame() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?");
+			VCR_stopCapture();
+		}
+
+		m_videoFrame += 1.0;
+	}
+
+	while (m_audioFrame > (m_videoFrame + 1.0))
+	{
+		if (!VCRComp_addVideoFrame((unsigned char*)image))
+		{
+			printError("Video codec failure!\nA call to addVideoFrame() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?");
+			VCR_stopCapture();
+		}
+		else
+		{
+			printf("\nDupped Frame! a/v: %f/%f", m_videoFrame, m_audioFrame);
+			m_videoFrame += 1.0;
+		}
+	}
 	
-	m_videoFrame += 1.0;
 
 	if(externalReadScreen /*|| (!captureFrameValid && lastImage != image)*/)
 	{
@@ -1975,7 +2011,7 @@ static void writeSound(char* buf, int len, int minWriteSize, int maxWriteSize, B
 	
 	if(len > 0)
 	{
-		if (soundBufPos + len > 44100 * 2 * 2 * sizeof(char))
+		if (soundBufPos + len > SOUND_BUF_SIZE * sizeof(char))
 		{
 #ifdef WIN32
 			MessageBox(0, "Fatal error", "Sound buffer overflow", MB_ICONERROR);
@@ -1986,7 +2022,7 @@ static void writeSound(char* buf, int len, int minWriteSize, int maxWriteSize, B
 #ifdef _DEBUG
 		else
 		{
-			float pro = (float)(soundBufPos + len) * 100 / (44100 * 2 * 2 * sizeof(char));
+			float pro = (float)(soundBufPos + len) * 100 / (SOUND_BUF_SIZE * sizeof(char));
 			if (pro > 75) printf("---!!!---");
 			printf("sound buffer: %.2f%%\n", pro);
 		}
@@ -1997,6 +2033,7 @@ static void writeSound(char* buf, int len, int minWriteSize, int maxWriteSize, B
 	}
 //	ShowInfo("writeSound() done");
 }
+
 
 void VCR_aiLenChanged()
 {
@@ -2029,34 +2066,43 @@ void VCR_aiLenChanged()
 			exit(0);
 		}
 */
-		
-		
-		{
-			float desync = m_videoFrame - m_audioFrame;
-			if (desync >= 0.0)
-			{
-				int len3;
-				printf( "[VCR]: Correcting for A/V desynchronization of %+f frames\n", desync );
-				len3 = (m_audioFreq/(float)visByCountrycode()) * desync;
-				len3 <<= 2;
 
-				int emptySize = len3 > writeSize ? writeSize : len3;
-				int i;
-				for(i = 0 ; i < emptySize ; i += 4)
-					*((long*)(soundBufEmpty + i)) = lastSound;
-				while(len3 > writeSize)
-				{
-					writeSound(soundBufEmpty, writeSize, m_audioFreq, writeSize, FALSE);
-					len3 -= writeSize;
-				}
-				writeSound(soundBufEmpty, len3, m_audioFreq, writeSize, FALSE);
-			}
-			else if (desync <= -10.0)
-			{
-				printf( "[VCR]: Waiting from A/V desynchronization of %+f frames\n", desync );
-			}
-		}	
+		// VIDEO SYNC
+		// This is the original syncing code, which adds silence to the audio track to get it to line up with video.
+		// The N64 appears to have the ability to arbitrarily disable its sound processing facilities and no audio samples
+		// are generated. When this happens, the video track will drift away from the audio. This can happen at load boundaries
+		// in some games, for example.
+		//
+		// The only new difference here is that the desync flag is checked for being greater than 1.0 instead of 0.
+		// This is because the audio and video in mupen tend to always be diverged just a little bit, but stay in sync
+		// over time. Checking if desync is not 0 causes the audio stream to to get thrashed which results in clicks
+		// and pops.
+		
+		//float desync = m_videoFrame - m_audioFrame;
+		//if (desync > 1.0)
+		//{
+		//	int len3;
+		//	printf( "[VCR]: Correcting for A/V desynchronization of %+f frames\n", desync );
+		//	len3 = (m_audioFreq/(float)visByCountrycode()) * desync;
+		//	len3 <<= 2;
 
+		//	int emptySize = len3 > writeSize ? writeSize : len3;
+		//	int i;
+
+		//	for(i = 0 ; i < emptySize ; i += 4)
+		//		*((long*)(soundBufEmpty + i)) = lastSound;
+
+		//	while(len3 > writeSize)
+		//	{
+		//		writeSound(soundBufEmpty, writeSize, m_audioFreq, writeSize, FALSE);
+		//		len3 -= writeSize;
+		//	}
+		//	writeSound(soundBufEmpty, len3, m_audioFreq, writeSize, FALSE);
+		//}
+		//else if (desync <= -10.0)
+		//{
+		//	printf( "[VCR]: Waiting from A/V desynchronization of %+f frames\n", desync );
+		//}
 
 		writeSound(buf, len, m_audioFreq, writeSize, FALSE);
 		
@@ -2100,8 +2146,8 @@ int VCR_startCapture( const char *recFilename, const char *aviFilename, bool cod
 	
 	fclose(tmpf);
 
-	memset(soundBufEmpty, 0, 44100*2);
-	memset(soundBuf, 0, 44100*2);
+	memset(soundBufEmpty, 0, SOUND_BUF_SIZE);
+	memset(soundBuf, 0, SOUND_BUF_SIZE);
 	lastSound = 0;
 
 	m_videoFrame = 0.0;
