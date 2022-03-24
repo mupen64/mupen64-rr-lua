@@ -1213,6 +1213,8 @@ VCR_startRecord( const char *filename, unsigned short flags, const char *authorU
 
 	reserve_buffer_space(4096);
 
+    unsigned int previous_slot = savestates_get_slot();
+
     if(flags & MOVIE_START_FROM_SNAPSHOT)
     {
     	// save state
@@ -1261,6 +1263,8 @@ VCR_startRecord( const char *filename, unsigned short flags, const char *authorU
 
 	m_currentSample = 0;
 	m_currentVI = 0;
+
+    savestates_select_slot(previous_slot);
 
 	return 0;
 
