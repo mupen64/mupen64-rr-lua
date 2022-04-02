@@ -836,7 +836,7 @@ BOOL CALLBACK GeneralCfg(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                   EnableWindow( GetDlgItem(hwnd,IDC_PURE_INTERP), FALSE );
          }
          
-         CreateTrackbar(hwnd,1,200,Config.FPSmodifier,200, 30, 184, 300) ; 
+         CreateTrackbar(hwnd,5,200,Config.FPSmodifier,200, 30, 184, 300) ; 
          
          SwitchLimitFPS(hwnd);
          FillModifierValue( hwnd, Config.FPSmodifier);        
