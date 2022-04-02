@@ -66,7 +66,7 @@ bool fix_new_st = true; //this is a switch to enable/disable fixing .st to work 
 bool st_skip_dma = false;
 #define MUPEN64NEW_ST_FIXED (1<<31) //last bit seems to be free
 
-static unsigned int slot = 0;
+static unsigned int slot = 1;
 static char fname[MAX_PATH] = {0,};
 
 void savestates_select_slot(unsigned int s)
