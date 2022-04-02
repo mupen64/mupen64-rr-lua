@@ -7,7 +7,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUD)
 LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
-#pragma code_page(1252)
+#pragma code_page(1250)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -124,7 +124,7 @@ BEGIN
             MENUITEM "Toggle Read-Only",            EMU_VCRTOGGLEREADONLY
             MENUITEM SEPARATOR
             MENUITEM "Start AVI Capture...",        ID_START_CAPTURE, GRAYED
-            MENUITEM "Start AVI From Preset...",       ID_START_CAPTURE_PRESET, GRAYED
+            MENUITEM "Start AVI From Preset...",    ID_START_CAPTURE_PRESET, GRAYED
             MENUITEM "Stop AVI Capture",            ID_END_CAPTURE, GRAYED
             MENUITEM SEPARATOR
             MENUITEM "Loop Movie Playback",         ID_LOOP_MOVIE
@@ -132,10 +132,8 @@ BEGIN
             MENUITEM "Replay Latest",               ID_REPLAY_LATEST
         END
         MENUITEM SEPARATOR
-#ifdef LUA_MODULEIMPL
         MENUITEM "Start &Trace Logger...",      ID_TRACELOG
-#endif
-    MENUITEM "Save Config",                 ID_FORCESAVE
+        MENUITEM "Save Config",                 ID_FORCESAVE
         MENUITEM "Game Debugger",               ID_GAMEDEBUGGER
     END
     POPUP "Help"
@@ -145,7 +143,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&About Mupen64...",           ID_HELP_ABOUT
     END
-#ifdef LUA_MODULEIMPL
     POPUP "Lua Script"
     BEGIN
         MENUITEM "New Instance",                ID_MENU_LUASCRIPT_NEW
@@ -159,7 +156,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Close All",                   ID_MENU_LUASCRIPT_CLOSEALL
     END
-#endif
 END
 
 ROM_POPUP_MENU MENU
@@ -200,9 +196,9 @@ BEGIN
     CONTROL         "Start game in full screen",IDC_STARTFULLSCREEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,20,100,10
     CONTROL         "1f Input Delay",IDC_INPUTDELAY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,83,90,18
 #ifdef LUA_MODULEIMPL
-    CONTROL         "LUA Double Buffer",IDC_CLUADOUBLEBUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,104,89,18
-#endif
-    CONTROL         "Pause emulation when window is not active",IDC_PAUSENOTACTIVE,
+                CONTROL         "LUA Double Buffer",IDC_CLUADOUBLEBUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,104,89,18
+#endif 
+                CONTROL         "Pause emulation when window is not active",IDC_PAUSENOTACTIVE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,35,100,10
     CONTROL         "Use global plugins settings",IDC_PLUGIN_OVERWRITE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,50,100,10
@@ -243,10 +239,12 @@ BEGIN
     CONTROL         "Automatic movie backups",IDC_MOVIEBACKUPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,40,100,10
     CONTROL         "Frequent statusbar updates",IDC_FREQUENTVCRREFRESH,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,50,120,10
-    CONTROL         "No Synchronisation",IDC_AV_NOSYNC,"Button",BS_AUTORADIOBUTTON,16,60,150,12
+    CONTROL         "No Synchronisation",IDC_AV_NOSYNC,"Button",BS_AUTORADIOBUTTON,16,77,150,12
     CONTROL         "Audio-Authoritative Synchronisation",IDC_AV_AUDIOSYNC,
-                    "Button",BS_AUTORADIOBUTTON,16,72,150,12
-    CONTROL         "Old Video Synchronisation",IDC_AV_VIDEOSYNC,"Button",BS_AUTORADIOBUTTON,16,84,150,12
+                    "Button",BS_AUTORADIOBUTTON,16,89,150,12
+    CONTROL         "Old Video Synchronisation",IDC_AV_VIDEOSYNC,"Button",BS_AUTORADIOBUTTON,16,101,150,12
+    CONTROL         "Allow loading movies on wrong roms",IDC_ALERTMOVIESERRORS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,61,120,10
 END
 
 IDD_AUDIT_ROMS_DIALOG DIALOGEX 0, 0, 183, 138
@@ -628,7 +626,6 @@ BEGIN
     PUSHBUTTON      "Cancel",IDC_CANCEL,281,282,50,14
 END
 
-#ifdef LUA_MODULEIMPL
 IDD_LUAINPUTPROMPT DIALOG 0, 0, 250, 200
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Dialog"
@@ -638,7 +635,6 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,161,173,40,20
     EDITTEXT        IDC_TEXTBOX_LUAPROMPT,7,7,236,161,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
 END
-#endif
 
 IDD_MUPENERROR DIALOGEX 0, 0, 341, 90
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_CAPTION | WS_SYSMENU
@@ -798,7 +794,7 @@ BEGIN
     BEGIN
     END
 #endif
-END
+    END
 #endif    // APSTUDIO_INVOKED
 
 
@@ -818,6 +814,11 @@ BEGIN
 END
 
 IDD_MOVIE_RECORD_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_OTHER_OPTIONS_DIALOG AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

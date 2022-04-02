@@ -242,12 +242,14 @@ void LoadConfig()
     Config.forceInternalCapture = ReadCfgInt("Avi Options", "Force internal capture", 0);
     Config.captureOtherWindows = ReadCfgInt("Avi Options", "Capture other windows", 0);
 
+    // other
     Config.LuaWarnOnClose = ReadCfgInt("Other", "Ask on lua close", 0);
     Config.LuaSimpleDialog = ReadCfgInt("Other", "Simplified lua", 0);
     Config.movieBackups = ReadCfgInt("Other", "Autobackup", 0);
     Config.movieBackupsLevel = ReadCfgInt("Other", "Autobackup level", 0);
     Config.FrequentVCRUIRefresh = ReadCfgInt("Other", "Fast statusbar updates", 0);
     Config.SyncMode = ReadCfgInt("Other", "Synchronisation Mode", VCR_SYNC_AUDIO_DUPL);
+    Config.moviesERRORS = ReadCfgInt("General", "Alert Movies errors", 1); //moviesERRORS == 1 -> the errors are shown
 
     // Load A Whole Whackton Of Hotkeys:
 
@@ -376,6 +378,7 @@ void SaveConfig()
     WriteCfgInt("General", "Alert Bad roms", Config.alertBAD);
     WriteCfgInt("General", "Alert Hacked roms", Config.alertHACK);
     WriteCfgInt("General", "Alert Saves errors", Config.savesERRORS);
+    WriteCfgInt("General", "Alert Movies errors", Config.moviesERRORS);
     WriteCfgInt("General", "Limit Fps", Config.limitFps);
     WriteCfgInt("General", "Compressed Ini", Config.compressedIni);
     WriteCfgInt("General", "Fps Modifier", Config.FPSmodifier);

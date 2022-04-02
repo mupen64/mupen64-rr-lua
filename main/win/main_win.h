@@ -87,7 +87,8 @@ typedef struct _CONFIG {
     BOOL showVIS;
     BOOL alertBAD;
     BOOL alertHACK;
-    BOOL savesERRORS;
+    BOOL savesERRORS; // warnings about savestates
+    BOOL moviesERRORS; // warnings about m64<->current rom issues
     
     // General vars
     BOOL limitFps;

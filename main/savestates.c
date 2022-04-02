@@ -43,6 +43,10 @@
 #include "../r4300/r4300.h"
 #include "../r4300/interupt.h"
 
+#ifdef WIN32
+#include "win/main_win.h"
+#endif
+
 
 extern unsigned long interp_addr;
 extern int *autoinc_save_slot;
@@ -304,16 +308,23 @@ void savestates_load(bool silenceNotFoundError)
 	gzread(f, buf, 32);
 	if (memcmp(buf, ROM_SETTINGS.MD5, 32))
 	{
-		if(!VCR_isRecording())
-		warn_savestate("Savestates Wrong Region", "Savestate Wrong Region");
+#ifdef WIN32
+		extern CONFIG Config;
+		if (Config.moviesERRORS)
+			warn_savestate("Savestate Warning", "You have option 'Allow loading movies on wrong roms' selected.\nMismatched .st is going to be loaded", TRUE);
+#endif
 		else
-		warn_savestate("Savestates Wrong Region", "This savestate is from another ROM or version\nRecording will be stopped!",TRUE);
-
-		gzclose(f);
-		savestates_job_success = FALSE;
-		if (VCR_isRecording()) VCR_stopRecord(1);
-		else VCR_stopPlayback();
-		return;
+		{
+			if (!VCR_isRecording())
+				warn_savestate("Savestates Wrong Region", "Savestate Wrong Region");
+			else
+				warn_savestate("Savestates Wrong Region", "This savestate is from another ROM or version\nRecording will be stopped!", TRUE);
+			gzclose(f);
+			savestates_job_success = FALSE;
+			if (VCR_isRecording()) VCR_stopRecord(1);
+			else VCR_stopPlayback();
+			return;
+		}
 	}
    
 	gzread(f, &rdram_register, sizeof(RDRAM_register));

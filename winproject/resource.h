@@ -154,6 +154,7 @@
 #define IDC_RESET_MODIFIER          2264
 #define IDC_SKIPFREQ                2265
 #define IDC_0INDEX                  2266
+#define IDC_ALERTMOVIESERRORS       2267
 
 
 #define STATE_SAVE                  3000

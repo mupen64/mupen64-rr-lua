@@ -1542,7 +1542,7 @@ startPlayback( const char *filename, const char *authorUTF8, const char *descrip
                 {
 				    sprintf(str, "The movie was recorded with the ROM \"%s\",\nbut you are using the ROM \"%s\",\nso the movie probably won't play properly.\n", m_header.romNom, ROM_HEADER->nom);
 					strcat(warningStr, str);
-					dontPlay = TRUE;
+					dontPlay = Config.moviesERRORS ? dontPlay : TRUE;
 				}
 				else 
 				{
@@ -1550,13 +1550,13 @@ startPlayback( const char *filename, const char *authorUTF8, const char *descrip
 	                {
 					    sprintf(str, "The movie was recorded with a ROM with country code \"%d\",\nbut you are using a ROM with country code \"%d\",\nso the movie may not play properly.\n", m_header.romCountry, ROM_HEADER->Country_code);
 						strcat(warningStr, str);
-						dontPlay = TRUE;
+						dontPlay = Config.moviesERRORS ? dontPlay : TRUE;
 					}
 					else if(ROM_HEADER && m_header.romCRC != ROM_HEADER->CRC1)
 	                {
 					    sprintf(str, "The movie was recorded with a ROM that has CRC \"0x%X\",\nbut you are using a ROM with CRC \"0x%X\",\nso the movie may not play properly.\n", (unsigned int)m_header.romCRC, (unsigned int)ROM_HEADER->CRC1);
 						strcat(warningStr, str);
-						dontPlay = TRUE;
+						dontPlay = Config.moviesERRORS ? dontPlay : TRUE;
 					}
 				}
 				
@@ -1609,7 +1609,7 @@ startPlayback( const char *filename, const char *authorUTF8, const char *descrip
 
 
 
-				if (dontPlay && !Config.savesERRORS) {
+				if (dontPlay) {
 					RESET_TITLEBAR
 					if(m_file != NULL)
 					fclose(m_file);
