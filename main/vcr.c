@@ -1298,6 +1298,9 @@ VCR_startRecord( const char *filename, unsigned short flags, const char *authorU
 		savestates_select_filename(buf);
 		savestates_job |= LOADSTATE;
 
+		// setting this so these states are compatible with stroop and older mupens
+		m_header.startFlags = MOVIE_START_FROM_SNAPSHOT;
+
 		m_task = StartRecordingFromExistingSnapshot;
 	}
 	else {
@@ -1692,7 +1695,7 @@ startPlayback( const char *filename, const char *authorUTF8, const char *descrip
 
 		if (Config.movieBackupsLevel > 1) movieBackup();
 
-		if (m_header.startFlags & (MOVIE_START_FROM_SNAPSHOT ^ MOVIE_START_FROM_EXISTING_SNAPSHOT))
+		if (m_header.startFlags & MOVIE_START_FROM_SNAPSHOT)
 		{
 			// we cant wait for this function to return and then get check in emu(?) thread (savestates_load)
 
