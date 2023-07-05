@@ -1916,12 +1916,12 @@ namespace LuaEngine {
 	}
 
 	int LuaD2DSetTextAntialiasMode(lua_State* L) {
-		float mode = luaL_checkinteger(L, 1);
+		int mode = luaL_checkinteger(L, 1);
 		d2d_render_target->SetTextAntialiasMode((D2D1_TEXT_ANTIALIAS_MODE)mode);
 		return 0;
 	}
 	int LuaD2DSetAntialiasMode(lua_State* L) {
-		float mode = luaL_checkinteger(L, 1);
+		int mode = luaL_checkinteger(L, 1);
 		d2d_render_target->SetAntialiasMode((D2D1_ANTIALIAS_MODE)mode);
 		return 0;
 	}
@@ -2759,14 +2759,14 @@ namespace LuaEngine {
 	}
 	int LuaGetKeyNameText(lua_State* L) {
 		char name[100] = {0};
-		auto vk = luaL_checkinteger(L, 1);
+		int vk = luaL_checkinteger(L, 1);
 		GetKeyNameText(vk, name, sizeof(name) / sizeof(name[0]));
 		lua_pushstring(L, name);
 		return 1;
 	}
 	int LuaMapVirtualKeyEx(lua_State* L) {
-		auto u_code = luaL_checkinteger(L, 1);
-		auto u_map_type = luaL_checkinteger(L, 2);
+		int u_code = luaL_checkinteger(L, 1);
+		int u_map_type = luaL_checkinteger(L, 2);
 		lua_pushinteger(L, MapVirtualKeyEx(u_code, u_map_type, GetKeyboardLayout(0)));
 		return 1;
 	}
