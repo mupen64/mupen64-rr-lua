@@ -1883,7 +1883,7 @@ namespace LuaEngine {
 		int horizontal_alignment = luaL_checkinteger(L, 14);
 		int vertical_alignment = luaL_checkinteger(L, 15);
 		int options = luaL_checkinteger(L, 16);
-		
+
 		IDWriteTextFormat* text_format;
 
 		dw_factory->CreateTextFormat(
