@@ -36,7 +36,7 @@
 #include <functional>
 #include <queue>
 #include <md5.h>
-
+#include <assert.h>
 
 #pragma comment(lib, "lua54.lib")
 #pragma comment (lib,"Gdiplus.lib")
@@ -65,6 +65,36 @@ bool enablePCBreak;
 bool maximumSpeedMode;
 bool gdiPlusInitialized = false;
 ULONG_PTR gdiPlusToken;
+// LoadScreen variables
+HDC hwindowDC, hsrcDC;
+SWindowInfo windowSize{};
+HBITMAP hbitmap;
+bool LoadScreenInitialized = false;
+
+// Deletes all the variables used in LoadScreen (avoid memory leaks)
+void LoadScreenDelete() {
+	ReleaseDC(mainHWND, hwindowDC);
+	DeleteDC(hsrcDC);
+
+	LoadScreenInitialized = false;
+}
+
+// Initializes everything needed for LoadScreen
+void LoadScreenInit() {
+	if (LoadScreenInitialized) LoadScreenDelete();
+
+	hwindowDC = GetDC(mainHWND);// Create a handle to the main window Device Context
+	hsrcDC = CreateCompatibleDC(hwindowDC);// Create a DC to copy the screen to
+
+	CalculateWindowDimensions(mainHWND, windowSize);
+	windowSize.height -= 1; // ¯\_(ツ)_/¯
+	printf("LoadScreen Size: %d x %d\n", windowSize.width, windowSize.height);
+
+	// create an hbitmap
+	hbitmap = CreateCompatibleBitmap(hwindowDC, windowSize.width, windowSize.height);
+
+	LoadScreenInitialized = true;
+}
 
 #define DEBUG_GETLASTERROR 0//if(GetLastError()){ShowInfo("Line:%d GetLastError:%d",__LINE__,GetLastError());SetLastError(0);}
 
@@ -83,6 +113,7 @@ namespace LuaEngine {
 
 
 	std::map<HWND, LuaEnvironment*> hwnd_lua_map;
+	std::vector<Gdiplus::Bitmap*> image_pool;
 
 	struct AddrBreakFunc {
 		lua_State* lua;
@@ -124,16 +155,9 @@ namespace LuaEngine {
 
 	int getn(lua_State*);
 
-	
 
-	HDC lua_dc;
-	int lua_dc_width, lua_dc_height;
-	ID2D1Factory* d2d_factory;
-	ID2D1DCRenderTarget* d2d_render_target;
-	IDWriteFactory* dw_factory;
-	std::unordered_map<uint32_t, ID2D1SolidColorBrush*> d2d_brush_cache;
-	std::unordered_map<std::string, ID2D1Bitmap*> d2d_bitmap_cache;
-	std::unordered_map<uint32_t, IDWriteTextLayout*> dw_text_layout_cache;
+
+	
 	
 	//improved debug print from stackoverflow, now shows function info
 #ifdef _DEBUG
@@ -170,6 +194,7 @@ namespace LuaEngine {
 	void ASSERT(bool e, const char* s = "assert") {
 		if (!e) {
 			DebugBreak();
+			printf("Lua assert failed: %s\n", s);
 		}
 	}
 	struct EmulationLock {
@@ -195,6 +220,7 @@ namespace LuaEngine {
 	extern const luaL_Reg globalFuncs[];
 	extern const luaL_Reg emuFuncs[];
 	extern const luaL_Reg wguiFuncs[];
+	extern const luaL_Reg d2dFuncs[];
 	extern const luaL_Reg memoryFuncs[];
 	extern const luaL_Reg inputFuncs[];
 	extern const luaL_Reg joypadFuncs[];
@@ -206,13 +232,185 @@ namespace LuaEngine {
 	int AtStop(lua_State* L);
 
 
+	enum Renderer {
+		None,
+		GDIMixed,
+		Direct2D
+	};
 
+	
+
+	//������ւ񂩂�EmuLua���Ċ�����
+
+	const char* const REG_LUACLASS = "C";
+	const char* const REG_ATUPDATESCREEN = "S";
+	const char* const REG_ATVI = "V";
+	const char* const REG_ATINPUT = "I";
+	const char* const REG_ATSTOP = "T";
+	const char* const REG_SYNCBREAK = "B";
+	const char* const REG_PCBREAK = "P";
+	const char* const REG_READBREAK = "R";
+	const char* const REG_WRITEBREAK = "W";
+	const char* const REG_WINDOWMESSAGE = "M";
+	const char* const REG_ATINTERVAL = "N";
+	const char* const REG_ATPLAYMOVIE = "PM";
+	const char* const REG_ATSTOPMOVIE = "SM";
+	const char* const REG_ATLOADSTATE = "LS";
+	const char* const REG_ATSAVESTATE = "SS";
+	const char* const REG_ATRESET = "RE";
+
+	
+	int AtUpdateScreen(lua_State* L);
 
 	class LuaEnvironment {
 	private:
 		bool stopping = false;
-
+		Renderer renderer = Renderer::None;
 	public:
+		uint64_t draw_call_count = 0;
+		HDC dc = NULL;
+		int dc_width, dc_height = NULL;
+		ID2D1Factory* d2d_factory = NULL;
+		ID2D1DCRenderTarget* d2d_render_target = NULL;
+		IDWriteFactory* dw_factory = NULL;
+		std::unordered_map<uint32_t, ID2D1SolidColorBrush*> d2d_brush_cache;
+		std::unordered_map<std::string, ID2D1Bitmap*> d2d_bitmap_cache;
+		std::unordered_map<uint32_t, IDWriteTextLayout*> dw_text_layout_cache;
+
+		Renderer get_renderer() { return renderer; };
+
+		void create_renderer(Renderer renderer) {
+			if (dc) {
+				return;
+			}
+			this->renderer = renderer;
+
+			printf("Initializing Lua environment with renderer %d...\n", renderer);
+
+			RECT window_rect;
+			GetClientRect(mainHWND, &window_rect);
+			dc_width = window_rect.right;
+			dc_height = window_rect.bottom;
+
+			if (renderer == Renderer::GDIMixed) {
+				if (Config.is_lua_double_buffered) {
+					HDC main_dc = GetDC(mainHWND);
+					dc = CreateCompatibleDC(main_dc);
+					HBITMAP bmp = CreateCompatibleBitmap(main_dc, window_rect.right, window_rect.bottom);
+					SelectObject(dc, bmp);
+					ReleaseDC(mainHWND, main_dc);
+				} else {
+					dc = GetDC(mainHWND);
+				}
+			} else {
+				D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
+				D2D1_RENDER_TARGET_TYPE_DEFAULT,
+				D2D1::PixelFormat(
+					DXGI_FORMAT_B8G8R8A8_UNORM,
+					D2D1_ALPHA_MODE_PREMULTIPLIED));
+
+				D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2d_factory);
+				d2d_factory->CreateDCRenderTarget(&props, &d2d_render_target);
+				DWriteCreateFactory(
+					DWRITE_FACTORY_TYPE_SHARED,
+					__uuidof(dw_factory),
+					reinterpret_cast<IUnknown**>(&dw_factory)
+				);
+				if (Config.is_lua_double_buffered) {
+					HDC main_dc = GetDC(mainHWND);
+					dc = CreateCompatibleDC(main_dc);
+					HBITMAP bmp = CreateCompatibleBitmap(main_dc, window_rect.right, window_rect.bottom);
+					SelectObject(dc, bmp);
+					ReleaseDC(mainHWND, main_dc);
+				} else {
+					dc = GetDC(mainHWND);
+				}
+
+				RECT dc_rect = {0, 0, dc_width, dc_height};
+				d2d_render_target->BindDC(dc, &dc_rect);
+			}
+			
+
+			
+		}
+
+		void destroy_renderer() {
+			printf("Destroying Lua renderer...\n");
+
+			if (!dc) {
+				printf("No renderer to destroy\n");
+				return;
+			}
+
+			if (renderer == Renderer::Direct2D) {
+				d2d_factory->Release();
+				d2d_render_target->Release();
+
+				for (auto const& [_, val] : d2d_brush_cache) {
+					val->Release();
+				}
+				d2d_brush_cache.clear();
+
+				for (auto const& [_, val] : d2d_bitmap_cache) {
+					val->Release();
+				}
+				d2d_bitmap_cache.clear();
+
+				for (auto const& [_, val] : dw_text_layout_cache) {
+					val->Release();
+				}
+				dw_text_layout_cache.clear();
+			}
+			ReleaseDC(mainHWND, dc);
+			dc = NULL;
+			d2d_factory = NULL;
+			d2d_render_target = NULL;
+		}
+
+		// HACK: fake transparency by using color mask with obscure color
+		const uint32_t d2d_color_mask = RGB(1, 0, 1);
+
+		
+		void early_draw() {
+			// NOTE: it's important to check for `stopping`, since it's set after the lua message processor is invoked on the emu thread, and draw functions are also called on emu thread
+			if (!dc || stopping) {
+				return;
+			}
+
+			if (renderer == Renderer::GDIMixed) {
+				HDC main_dc = GetDC(mainHWND);
+				BitBlt(dc, 0, 0, dc_width, dc_height, main_dc, 0, 0, SRCCOPY);
+				ReleaseDC(mainHWND, main_dc);
+			}
+		}
+
+		void draw() {
+			if (!dc || stopping) {
+				return;
+			}
+
+			HDC main_dc = GetDC(mainHWND);
+
+			if (renderer == Renderer::Direct2D) {
+				TransparentBlt(dc, 0, 0, dc_width, dc_height, main_dc, 0, 0, dc_width, dc_height, d2d_color_mask);
+				d2d_render_target->BeginDraw();
+				d2d_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
+				d2d_render_target->Clear(D2D1::ColorF(d2d_color_mask));
+			}
+
+			this->invoke_callbacks_with_key(LuaEngine::AtUpdateScreen, LuaEngine::REG_ATUPDATESCREEN);
+
+			if (renderer == Renderer::GDIMixed) {
+				BitBlt(main_dc, 0, 0, dc_width, dc_height, dc, 0, 0, SRCCOPY);
+			} else {
+				d2d_render_target->EndDraw();
+				TransparentBlt(main_dc, 0, 0, dc_width, dc_height, dc, 0, 0, dc_width, dc_height, d2d_color_mask);
+			}
+
+			ReleaseDC(mainHWND, main_dc);
+			draw_call_count++;
+		}
+
 		LuaEnvironment(HWND wnd) :
 			L(NULL),
 			ownWnd(wnd) {
@@ -233,7 +431,14 @@ namespace LuaEngine {
 			stopping = false;
 
 			ASSERT(!isrunning());
+			brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+			pen = (HPEN)GetStockObject(BLACK_PEN);
+			font = (HFONT)GetStockObject(SYSTEM_FONT);
+			col = bkcol = 0;
+			bkmode = TRANSPARENT;
 			hMutex = CreateMutex(0, 0, 0);
+			this->create_renderer(Renderer::GDIMixed);
+
 			newLuaState();
 			auto status = runFile(path);
 			if (isrunning()) {
@@ -250,9 +455,48 @@ namespace LuaEngine {
 
 			stopping = true;
 			invoke_callbacks_with_key(AtStop, REG_ATSTOP);
+			deleteGDIObject(brush, WHITE_BRUSH);
+			deleteGDIObject(pen, BLACK_PEN);
+			deleteGDIObject(font, SYSTEM_FONT);
 			deleteLuaState();
+			for (auto x : image_pool) {
+				delete x;
+			}
+			image_pool.clear();
 			SetButtonState(ownWnd, false);
 			ShowInfo("Lua stop");
+		}
+		void setBrush(HBRUSH h) {
+			setGDIObject((HGDIOBJ*)&brush, h);
+		}
+		void selectBrush() {
+			selectGDIObject(brush);
+		}
+		void setPen(HPEN h) {
+			setGDIObject((HGDIOBJ*)&pen, h);
+		}
+		void selectPen() {
+			selectGDIObject(pen);
+		}
+		void setFont(HFONT h) {
+			setGDIObject((HGDIOBJ*)&font, h);
+		}
+		void selectFont() {
+			selectGDIObject(font);
+		}
+		void setTextColor(COLORREF c) {
+			col = c;
+		}
+		void selectTextColor() {
+			::SetTextColor(this->dc, col);
+		}
+		void setBackgroundColor(COLORREF c, int mode = OPAQUE) {
+			bkcol = c;
+			bkmode = mode;
+		}
+		void selectBackgroundColor() {
+			::SetBkMode(this->dc, bkmode);
+			::SetBkColor(this->dc, bkcol);
 		}
 		bool isrunning() {
 			return L != NULL && !stopping;
@@ -317,6 +561,7 @@ namespace LuaEngine {
 			registerAsPackage(L, "emu", emuFuncs);
 			registerAsPackage(L, "memory", memoryFuncs);
 			registerAsPackage(L, "wgui", wguiFuncs);
+			registerAsPackage(L, "d2d", d2dFuncs);
 			registerAsPackage(L, "input", inputFuncs);
 			registerAsPackage(L, "joypad", joypadFuncs);
 			registerAsPackage(L, "movie", movieFuncs);
@@ -354,11 +599,11 @@ namespace LuaEngine {
 			*save = newobj;
 		}
 		void selectGDIObject(HGDIOBJ p) {
-			SelectObject(lua_dc, p);
+			SelectObject(this->dc, p);
 			DEBUG_GETLASTERROR;
 		}
 		void deleteGDIObject(HGDIOBJ p, int stockobj) {
-			SelectObject(lua_dc, GetStockObject(stockobj));
+			SelectObject(this->dc, GetStockObject(stockobj));
 			DeleteObject(p);
 		}
 		template<typename T>
@@ -410,6 +655,12 @@ namespace LuaEngine {
 			correctPCBreak();
 		}
 		lua_State* L;
+		// gdi objects are filled in on run(), then deleted on stop()
+		HBRUSH brush;
+		HPEN pen;
+		HFONT font;
+		COLORREF col, bkcol;
+		int bkmode;
 	};
 
 
@@ -424,28 +675,33 @@ namespace LuaEngine {
 	int AtWindowMessage(lua_State* L);
 	void CreateLuaWindow(void(*callback)());
 
-	void invoke_callbacks_with_key_on_all_instances(std::function<int(lua_State*)> function, const char* key) {
+	void invoke_callback_with_key_on_instance(LuaEnvironment* lua, std::function<int(lua_State*)> function, const char* key) {
+		if (lua->isrunning()) {
+			// ensure thread safety (load and savestate callbacks for example)
+			DWORD waitResult = WaitForSingleObject(lua->hMutex, INFINITE);
+			switch (waitResult) {
+				case WAIT_OBJECT_0:
+					if (lua->invoke_callbacks_with_key(function, key)) {
+						printf("!ERRROR, RETRY\n");
+						//if error happened, try again (but what if it fails again and again?)
+						invoke_callback_with_key_on_instance(lua, function, key);
+						return;
+					}
+					ReleaseMutex(lua->hMutex);
+			}
+		}
+	}
 
+	void invoke_callbacks_with_key_on_all_instances(std::function<int(lua_State*)> function, const char* key) {
 		for (auto pair : hwnd_lua_map) {
 			if (!pair.second || !pair.first) {
 				continue;
 			}
-			if (pair.second->isrunning()) {
-				//ensure thread safety (load and savestate callbacks for example)
-				DWORD waitResult = WaitForSingleObject(pair.second->hMutex, INFINITE);
-				switch (waitResult) {
-					case WAIT_OBJECT_0:
-						if (pair.second->invoke_callbacks_with_key(function, key)) {
-							printf("!ERRROR, RETRY\n");
-							//if error happened, try again (but what if it fails again and again?)
-							invoke_callbacks_with_key_on_all_instances(function, key);
-							return;
-						}
-						ReleaseMutex(pair.second->hMutex);
-				}
-			}
+			invoke_callback_with_key_on_instance(pair.second, function, key);
 		}
 	}
+
+	
 
 	void checkGDIPlusInitialized() {
 		if (gdiPlusInitialized)
@@ -588,105 +844,9 @@ namespace LuaEngine {
 			current_message = NULL;
 		}
 	};
+	
 	LuaMessenger lua_messenger;
 
-
-	void destroy_lua_dc() {
-		printf("Destroying Lua DC...\n");
-
-		d2d_factory->Release();
-		d2d_render_target->Release();
-
-		for (auto const& [_, val] : d2d_brush_cache) {
-			val->Release();
-		}
-		d2d_brush_cache.clear();
-
-		for (auto const& [_, val] : d2d_bitmap_cache) {
-			val->Release();
-		}
-		d2d_bitmap_cache.clear();
-
-		for (auto const& [_, val] : dw_text_layout_cache) {
-			val->Release();
-		}
-		dw_text_layout_cache.clear();
-
-		ReleaseDC(mainHWND, lua_dc);
-		lua_dc = NULL;
-		d2d_factory = NULL;
-		d2d_render_target = NULL;
-	}
-
-	void initialize_lua_dc() {
-
-		if (lua_dc) {
-			return;
-		}
-		printf("Initializing Lua DC...\n");
-
-		RECT window_rect;
-		GetClientRect(mainHWND, &window_rect);
-		lua_dc_width = window_rect.right;
-		lua_dc_height = window_rect.bottom;
-
-
-		D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-			D2D1_RENDER_TARGET_TYPE_DEFAULT,
-			D2D1::PixelFormat(
-				DXGI_FORMAT_B8G8R8A8_UNORM,
-				D2D1_ALPHA_MODE_PREMULTIPLIED));
-
-		D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2d_factory);
-		d2d_factory->CreateDCRenderTarget(&props, &d2d_render_target);
-		DWriteCreateFactory(
-			DWRITE_FACTORY_TYPE_SHARED,
-			__uuidof(dw_factory),
-			reinterpret_cast<IUnknown**>(&dw_factory)
-		);
-
-		if (Config.is_lua_double_buffered) {
-			HDC main_dc = GetDC(mainHWND);
-			lua_dc = CreateCompatibleDC(main_dc);
-			HBITMAP bmp = CreateCompatibleBitmap(main_dc, window_rect.right, window_rect.bottom);
-			SelectObject(lua_dc, bmp);
-			ReleaseDC(mainHWND, main_dc);
-		} else {
-			lua_dc = GetDC(mainHWND);
-		}
-
-		RECT dc_rect = {0, 0, lua_dc_width, lua_dc_height};
-		d2d_render_target->BindDC(lua_dc, &dc_rect);
-
-	}
-
-	void draw_lua(std::function<void()> draw_callback) {
-
-		if (!lua_dc || !d2d_render_target || hwnd_lua_map.empty()) {
-			// improper state
-			return;
-		}
-
-		if (Config.is_lua_double_buffered) {
-
-			// HACK: fake transparency by using color mask with obscure color
-			const uint32_t color_mask = RGB(1, 0, 1);
-
-			HDC main_dc = GetDC(mainHWND);
-			TransparentBlt(lua_dc, 0, 0, lua_dc_width, lua_dc_height, main_dc, 0, 0, lua_dc_width, lua_dc_height, color_mask);
-
-			d2d_render_target->BeginDraw();
-			d2d_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
-			d2d_render_target->Clear(D2D1::ColorF(color_mask));
-
-			draw_callback();
-
-			d2d_render_target->EndDraw();
-
-			TransparentBlt(main_dc, 0, 0, lua_dc_width, lua_dc_height, lua_dc, 0, 0, lua_dc_width, lua_dc_height, color_mask);
-			ReleaseDC(mainHWND, main_dc);
-		}
-	}
 
 	void SetWindowLua(HWND wnd, LuaEnvironment* lua) {
 		if (lua)
@@ -852,8 +1012,6 @@ namespace LuaEngine {
 
 	void CreateLuaWindow(void(*callback)(), std::function<void(HWND)> post_creation_callback) {
 
-		LuaEngine::initialize_lua_dc();
-
 		HWND wnd = CreateDialogParam(app_hInstance,
 			MAKEINTRESOURCE(IDD_LUAWINDOW), mainHWND, DialogProc,
 			(LPARAM)callback);
@@ -925,24 +1083,7 @@ namespace LuaEngine {
 		TraceLoggingBufFlush();
 	}
 
-	//������ւ񂩂�EmuLua���Ċ�����
-
-	const char* const REG_LUACLASS = "C";
-	const char* const REG_ATUPDATESCREEN = "S";
-	const char* const REG_ATVI = "V";
-	const char* const REG_ATINPUT = "I";
-	const char* const REG_ATSTOP = "T";
-	const char* const REG_SYNCBREAK = "B";
-	const char* const REG_PCBREAK = "P";
-	const char* const REG_READBREAK = "R";
-	const char* const REG_WRITEBREAK = "W";
-	const char* const REG_WINDOWMESSAGE = "M";
-	const char* const REG_ATINTERVAL = "N";
-	const char* const REG_ATPLAYMOVIE = "PM";
-	const char* const REG_ATSTOPMOVIE = "SM";
-	const char* const REG_ATLOADSTATE = "LS";
-	const char* const REG_ATSAVESTATE = "SS";
-	const char* const REG_ATRESET = "RE";
+	
 
 	LuaEnvironment* GetLuaClass(lua_State* L) {
 		lua_getfield(L, LUA_REGISTRYINDEX, REG_LUACLASS);
@@ -1693,9 +1834,434 @@ namespace LuaEngine {
 		return 1;
 	}
 
+#pragma region Legacy GDI & GDI+
+	//Gui
+//�v���O�C���ɕ�����Ă邩�玩�R�ɏo���Ȃ��H
+//�Ƃ������E�B���h�E�ɒ��ڏ����Ă���
+//�Ƃ肠������������E�B���h�E�ɒ�������
+	typedef struct COLORNAME {
+		const char* name;
+		COLORREF value;
+	} COLORNAME;
+
+	const int hexTable[256] = {
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
+		0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0,
+	};
+	const COLORNAME colors[] = {
+		{"white", 0xFFFFFFFF},
+		{"black", 0xFF000000},
+		{"clear", 0x00000000},
+		{"gray", 0xFF808080},
+		{"red", 0xFF0000FF},
+		{"orange", 0xFF0080FF},
+		{"yellow", 0xFF00FFFF},
+		{"chartreuse", 0xFF00FF80},
+		{"green", 0xFF00FF00},
+		{"teal", 0xFF80FF00},
+		{"cyan", 0xFFFFFF00},
+		{"blue", 0xFFFF0000},
+		{"purple", 0xFFFF0080},
+		{NULL}
+	};
+
+	COLORREF StrToColorA(const char* s, bool alpha = false, COLORREF def = 0) {
+		if (s[0] == '#') {
+			int l = lstrlen(s);
+			if (l == 4) {
+				return (hexTable[s[1]] * 0x10 + hexTable[s[1]]) |
+					((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
+					((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
+					(alpha ? 0xFF000000 : 0);
+			} else if (alpha && l == 5) {
+				return (hexTable[s[1]] * 0x10 + hexTable[s[1]]) |
+					((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
+					((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
+					((hexTable[s[4]] * 0x10 + hexTable[s[4]]) << 24);
+			} else if (l == 7) {
+				return (hexTable[s[1]] * 0x10 + hexTable[s[2]]) |
+					((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
+					((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
+					(alpha ? 0xFF000000 : 0);
+			} else if (alpha && l == 9) {
+				return (hexTable[s[1]] * 0x10 + hexTable[s[2]]) |
+					((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
+					((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
+					((hexTable[s[7]] * 0x10 + hexTable[s[8]]) << 24);
+			}
+		} else {
+			const COLORNAME* p = colors;
+			do {
+				if (lstrcmpi(s, p->name) == 0) {
+					return (alpha ? 0xFFFFFFFF : 0xFFFFFF) & p->value;
+				}
+			} while ((++p)->name);
+		}
+		return (alpha ? 0xFF000000 : 0x00000000) | def;
+	}
+	COLORREF StrToColor(const char* s, bool alpha = false, COLORREF def = 0) {
+		COLORREF c = StrToColorA(s, alpha, def);
+	/*
+		if((c&0xFFFFFF) == LUADC_BG_COLOR) {
+			return LUADC_BG_COLOR_A|(alpha?0xFF000000:0);
+		}else {
+			return c;
+		}
+	*/
+		return c;
+	}
+//wgui
+	int SetBrush(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		const char* s = lua_tostring(L, 1);
+		if (lstrcmpi(s, "null") == 0)
+			lua->setBrush((HBRUSH)GetStockObject(NULL_BRUSH));
+		else
+			lua->setBrush(::CreateSolidBrush(StrToColor(s)));
+		return 0;
+	}
+	int SetPen(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		const char* s = lua_tostring(L, 1);
+		if (lstrcmpi(s, "null") == 0)
+			lua->setPen((HPEN)GetStockObject(NULL_PEN));
+		else
+			// optional pen width defaults to 1
+			lua->setPen(::CreatePen(PS_SOLID, luaL_optnumber(L, 2, 1), StrToColor(s)));
+		return 0;
+	}
+	int SetTextColor(lua_State* L) {
+		GetLuaClass(L)->setTextColor(StrToColor(lua_tostring(L, 1)));
+		return 0;
+	}
+	int SetBackgroundColor(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		const char* s = lua_tostring(L, 1);
+		if (lstrcmpi(s, "null") == 0)
+			lua->setBackgroundColor(0, TRANSPARENT);
+		else
+			lua->setBackgroundColor(StrToColor(s));
+		return 0;
+	}
+	int SetFont(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		LOGFONT font = {0};
+
+		// set the size of the font
+		font.lfHeight = -MulDiv(luaL_checknumber(L, 1), GetDeviceCaps(lua->dc, LOGPIXELSY), 72);
+		lstrcpyn(font.lfFaceName, luaL_optstring(L, 2, "MS Gothic"), LF_FACESIZE);
+		font.lfCharSet = DEFAULT_CHARSET;
+		const char* style = luaL_optstring(L, 3, "");
+		for (const char* p = style; *p; p++) {
+			switch (*p) {
+				case 'b': font.lfWeight = FW_BOLD; break;
+				case 'i': font.lfItalic = TRUE; break;
+				case 'u': font.lfUnderline = TRUE; break;
+				case 's': font.lfStrikeOut = TRUE; break;
+				case 'a': font.lfQuality = ANTIALIASED_QUALITY; break;
+			}
+		}
+		GetLuaClass(L)->setFont(CreateFontIndirect(&font));
+		return 0;
+	}
+	int LuaTextOut(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		lua->selectTextColor();
+		lua->selectBackgroundColor();
+		lua->selectFont();
+
+		int x = luaL_checknumber(L, 1);
+		int y = luaL_checknumber(L, 2);
+		const char* text = lua_tostring(L, 3);
+
+		::TextOut(lua->dc, x, y, text, lstrlen(text));
+		return 0;
+	}
+	bool GetRectLua(lua_State* L, int idx, RECT* rect) {
+		switch (lua_type(L, idx)) {
+			case LUA_TTABLE:
+				lua_getfield(L, idx, "l");
+				rect->left = lua_tointeger(L, -1);
+				lua_pop(L, 1);
+				lua_getfield(L, idx, "t");
+				rect->top = lua_tointeger(L, -1);
+				lua_pop(L, 1);
+				lua_getfield(L, idx, "r");
+				if (lua_isnil(L, -1)) {
+					lua_pop(L, 1);
+					lua_getfield(L, idx, "w");
+					if (lua_isnil(L, -1)) {
+						return false;
+					}
+					rect->right = rect->left + lua_tointeger(L, -1);
+					lua_pop(L, 1);
+					lua_getfield(L, idx, "h");
+					rect->bottom = rect->top + lua_tointeger(L, -1);
+					lua_pop(L, 1);
+				} else {
+					rect->right = lua_tointeger(L, -1);
+					lua_pop(L, 1);
+					lua_getfield(L, idx, "b");
+					rect->bottom = lua_tointeger(L, -1);
+					lua_pop(L, 1);
+				}
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	int GetTextExtent(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		const char* string = luaL_checkstring(L, 1);
+		SIZE size = {0};
+		GetTextExtentPoint32(lua->dc, string, strlen(string), &size);
+		lua_newtable(L);
+		lua_pushinteger(L, size.cx);
+		lua_setfield(L, -2, "width");
+		lua_pushinteger(L, size.cy);
+		lua_setfield(L, -2, "height");
+		return 1;
+	}
+
+	int LuaDrawText(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		lua->selectTextColor();
+		lua->selectBackgroundColor();
+		lua->selectFont();
+		RECT rect = {0};
+		UINT format = DT_NOPREFIX | DT_WORDBREAK;
+		if (!GetRectLua(L, 2, &rect)) {
+			format |= DT_NOCLIP;
+		}
+		if (!lua_isnil(L, 3)) {
+			const char* p = lua_tostring(L, 3);
+			for (; p && *p; p++) {
+				switch (*p) {
+					case 'l':format |= DT_LEFT; break;
+					case 'r':format |= DT_RIGHT; break;
+					case 't':format |= DT_TOP; break;
+					case 'b':format |= DT_BOTTOM; break;
+					case 'c':format |= DT_CENTER; break;
+					case 'v':format |= DT_VCENTER; break;
+					case 'e':format |= DT_WORD_ELLIPSIS; break;
+					case 's':format |= DT_SINGLELINE; break;
+					case 'n':format &= ~DT_WORDBREAK; break;
+				}
+			}
+		}
+		::DrawText(lua->dc, lua_tostring(L, 1), -1, &rect, format);
+		return 0;
+	}
+
+	int LuaDrawTextAlt(lua_State* L) {
+
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		lua->selectTextColor();
+		lua->selectBackgroundColor();
+		lua->selectFont();
+
+		RECT rect = {0};
+		LPSTR string = (LPSTR)lua_tostring(L, 1);
+		UINT format = luaL_checkinteger(L, 2);
+		rect.left = luaL_checkinteger(L, 3);
+		rect.top = luaL_checkinteger(L, 4);
+		rect.right = luaL_checkinteger(L, 5);
+		rect.bottom = luaL_checkinteger(L, 6);
+
+		DrawTextEx(lua->dc, string, -1, &rect, format, NULL);
+		return 0;
+	}
+
+	int DrawRect(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		int left = luaL_checknumber(L, 1);
+		int top = luaL_checknumber(L, 2);
+		int right = luaL_checknumber(L, 3);
+		int bottom = luaL_checknumber(L, 4);
+		int cornerW = luaL_optnumber(L, 5, 0);
+		int cornerH = luaL_optnumber(L, 6, 0);
+
+		lua->selectBrush();
+		lua->selectPen();
+		::RoundRect(lua->dc, left, top, right, bottom, cornerW, cornerH);
+		return 0;
+	}
+
+	int LuaLoadImage(lua_State* L) {
+		const char* path = luaL_checkstring(L, 1);
+		int output_size = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
+		wchar_t* pathw = (wchar_t*)malloc(output_size * sizeof(wchar_t));
+		int size = MultiByteToWideChar(CP_ACP, 0, path, -1, pathw, output_size);
+
+		printf("LoadImage: %ws\n", pathw);
+		Gdiplus::Bitmap* img = new Gdiplus::Bitmap(pathw);
+		free(pathw);
+
+		if (img->GetLastStatus()) {
+			luaL_error(L, "Couldn't find image '%s'", path);
+			return 0;
+		}
+		image_pool.push_back(img);
+		lua_pushinteger(L, image_pool.size()); //return the identifier (index+1)
+		return 1;
+	}
+
+	int DeleteImage(lua_State* L) { // Clears one or all images from imagePool
+		unsigned int clearIndex = luaL_checkinteger(L, 1);
+		if (clearIndex == 0) { // If clearIndex is 0, clear all images
+			printf("Deleting all images\n");
+			for (auto x : image_pool) {
+				delete x;
+			}
+			image_pool.clear();
+		} else { // If clear index is not 0, clear 1 image
+			if (clearIndex <= image_pool.size()) {
+				printf("Deleting image index %d (%d in lua)\n", clearIndex - 1, clearIndex);
+				delete image_pool[clearIndex - 1];
+				image_pool.erase(image_pool.begin() + clearIndex - 1);
+			} else { // Error if the image doesn't exist
+				luaL_error(L, "Argument #1: Invalid image index");
+				return 0;
+			}
+		}
+		return 0;
+	}
+
+	int DrawImage(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		unsigned int imgIndex = luaL_checkinteger(L, 1) - 1; // because lua
+
+		// Error if the image doesn't exist
+		if (imgIndex > image_pool.size() - 1) {
+			luaL_error(L, "Argument #1: Invalid image index");
+			return 0;
+		}
+
+		// Gets the number of arguments
+		unsigned int args = lua_gettop(L);
+
+		Gdiplus::Graphics gfx(lua->dc);
+		Gdiplus::Bitmap* img = image_pool[imgIndex];
+
+		// Original DrawImage
+		if (args == 3) {
+			int x = luaL_checknumber(L, 2);
+			int y = luaL_checknumber(L, 3);
+
+			gfx.DrawImage(img, x, y);// Gdiplus::Image *image, int x, int y
+			return 0;
+		} else if (args == 4) {
+			int x = luaL_checknumber(L, 2);
+			int y = luaL_checknumber(L, 3);
+			float scale = luaL_checknumber(L, 4);
+			if (scale == 0) return 0;
+
+			// Create a Rect at x and y and scale the image's width and height
+			Gdiplus::Rect dest(x, y, img->GetWidth() * scale, img->GetHeight() * scale);
+
+			gfx.DrawImage(img, dest);// Gdiplus::Image *image, const Gdiplus::Rect &rect
+			return 0;
+		}
+		// In original DrawImage
+		else if (args == 5) {
+			int x = luaL_checknumber(L, 2);
+			int y = luaL_checknumber(L, 3);
+			int w = luaL_checknumber(L, 4);
+			int h = luaL_checknumber(L, 5);
+			if (w == 0 or h == 0) return 0;
+
+			Gdiplus::Rect dest(x, y, w, h);
+
+			gfx.DrawImage(img, dest);// Gdiplus::Image *image, const Gdiplus::Rect &rect
+			return 0;
+		} else if (args == 10) {
+			int x = luaL_checknumber(L, 2);
+			int y = luaL_checknumber(L, 3);
+			int w = luaL_checknumber(L, 4);
+			int h = luaL_checknumber(L, 5);
+			int srcx = luaL_checknumber(L, 6);
+			int srcy = luaL_checknumber(L, 7);
+			int srcw = luaL_checknumber(L, 8);
+			int srch = luaL_checknumber(L, 9);
+			float rotate = luaL_checknumber(L, 10);
+			if (w == 0 or h == 0 or srcw == 0 or srch == 0) return 0;
+			bool shouldrotate = ((int)rotate % 360) != 0; // Only rotate if the angle isn't a multiple of 360 Modulo only works with int
+
+			Gdiplus::Rect dest(x, y, w, h);
+
+			// Rotate
+			if (shouldrotate) {
+				Gdiplus::PointF center(x + (w / 2), y + (h / 2));// The center of dest
+				Gdiplus::Matrix matrix;
+				matrix.RotateAt(rotate, center);// rotate "rotate" number of degrees around "center"
+				gfx.SetTransform(&matrix);
+			}
+
+			gfx.DrawImage(img, dest, srcx, srcy, srcw, srch, Gdiplus::UnitPixel);// Gdiplus::Image *image, const Gdiplus::Rect &destRect, int srcx, int srcy, int srcheight, Gdiplus::srcUnit
+
+			if (shouldrotate) gfx.ResetTransform();
+			return 0;
+		}
+		luaL_error(L, "Incorrect number of arguments");
+		return 0;
+	}
 	int Screenshot(lua_State* L) {
 		CaptureScreen((char*)luaL_checkstring(L, 1));
 		return 0;
+	}
+
+	int LoadScreen(lua_State* L) {
+		if (!LoadScreenInitialized) {
+			luaL_error(L, "LoadScreen not initialized! Something has gone wrong.");
+			return 0;
+		}
+		// set the selected object of hsrcDC to hbwindow
+		SelectObject(hsrcDC, hbitmap);
+		// copy from the window device context to the bitmap device context
+		BitBlt(hsrcDC, 0, 0, windowSize.width, windowSize.height, hwindowDC, 0, 0, SRCCOPY);
+
+		Gdiplus::Bitmap* out = new Gdiplus::Bitmap(hbitmap, nullptr);
+
+		image_pool.push_back(out);
+
+		lua_pushinteger(L, image_pool.size());
+
+		return 1;
+	}
+
+	int LoadScreenReset(lua_State* L) {
+		LoadScreenInit();
+		return 0;
+	}
+
+	int GetImageInfo(lua_State* L) {
+		unsigned int imgIndex = luaL_checkinteger(L, 1) - 1;
+
+		if (imgIndex > image_pool.size() - 1) {
+			luaL_error(L, "Argument #1: Invalid image index");
+			return 0;
+		}
+
+		Gdiplus::Bitmap* img = image_pool[imgIndex];
+
+		lua_newtable(L);
+		lua_pushinteger(L, img->GetWidth());
+		lua_setfield(L, -2, "width");
+		lua_pushinteger(L, img->GetHeight());
+		lua_setfield(L, -2, "height");
+
+		return 1;
 	}
 
 	//1st arg is table of points
@@ -1749,12 +2315,127 @@ namespace LuaEngine {
 			//now stack again has only table at the bottom and color string on top, repeat
 		}
 
-		Gdiplus::Graphics gfx(lua_dc);
+		Gdiplus::Graphics gfx(lua->dc);
 		Gdiplus::SolidBrush brush(Gdiplus::Color(luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_checkinteger(L, 4), luaL_checkinteger(L, 5)));
 		gfx.FillPolygon(&brush, pts.data(), n);
 
 		return 0;
 	}
+
+
+	int FillEllipseAlpha(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		int x = luaL_checknumber(L, 1);
+		int y = luaL_checknumber(L, 2);
+		int w = luaL_checknumber(L, 3);
+		int h = luaL_checknumber(L, 4);
+		const char* col = luaL_checkstring(L, 5); //color string
+
+		Gdiplus::Graphics gfx(lua->dc);
+		Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
+
+		gfx.FillEllipse(&brush, x, y, w, h);
+
+		return 0;
+	}
+	int FillRectAlpha(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		int x = luaL_checknumber(L, 1);
+		int y = luaL_checknumber(L, 2);
+		int w = luaL_checknumber(L, 3);
+		int h = luaL_checknumber(L, 4);
+		const char* col = luaL_checkstring(L, 5); //color string
+
+		Gdiplus::Graphics gfx(lua->dc);
+		Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
+
+		gfx.FillRectangle(&brush, x, y, w, h);
+
+		return 0;
+	}
+	int FillRect(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		RECT rect{};
+		COLORREF color = RGB(
+			luaL_checknumber(L, 5),
+			luaL_checknumber(L, 6),
+			luaL_checknumber(L, 7)
+		);
+		COLORREF colorold = SetBkColor(lua->dc, color);
+		rect.left = luaL_checknumber(L, 1);
+		rect.top = luaL_checknumber(L, 2);
+		rect.right = luaL_checknumber(L, 3);
+		rect.bottom = luaL_checknumber(L, 4);
+		ExtTextOut(lua->dc, 0, 0, ETO_OPAQUE, &rect, "", 0, 0);
+		SetBkColor(lua->dc, colorold);
+		return 0;
+	}
+	int DrawEllipse(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		lua->selectBrush();
+		lua->selectPen();
+
+		int left = luaL_checknumber(L, 1);
+		int top = luaL_checknumber(L, 2);
+		int right = luaL_checknumber(L, 3);
+		int bottom = luaL_checknumber(L, 4);
+
+		::Ellipse(lua->dc, left, top, right, bottom);
+		return 0;
+	}
+	int DrawPolygon(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		POINT p[0x100];
+		luaL_checktype(L, 1, LUA_TTABLE);
+		int n = luaL_len(L, 1);
+		if (n >= sizeof(p) / sizeof(p[0])) {
+			lua_pushfstring(L, "wgui.polygon: too many points (%d < %d)",
+				sizeof(p) / sizeof(p[0]), n);
+			return lua_error(L);
+		}
+		for (int i = 0; i < n; i++) {
+			lua_pushinteger(L, i + 1);
+			lua_gettable(L, 1);
+			luaL_checktype(L, -1, LUA_TTABLE);
+			lua_pushinteger(L, 1);
+			lua_gettable(L, -2);
+			p[i].x = lua_tointeger(L, -1);
+			lua_pop(L, 1);
+			lua_pushinteger(L, 2);
+			lua_gettable(L, -2);
+			p[i].y = lua_tointeger(L, -1);
+			lua_pop(L, 2);
+		}
+		lua->selectBrush();
+		lua->selectPen();
+		::Polygon(lua->dc, p, n);
+		return 0;
+	}
+	int DrawLine(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		lua->selectPen();
+		::MoveToEx(lua->dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2),
+			NULL);
+		::LineTo(lua->dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
+		return 0;
+	}
+	int SetClip(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		auto rgn = CreateRectRgn(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2), luaL_checkinteger(L, 1) + luaL_checkinteger(L, 3), luaL_checkinteger(L, 2) + luaL_checkinteger(L, 4));
+		SelectClipRgn(lua->dc, rgn);
+		DeleteObject(rgn);
+		return 0;
+	}
+	int ResetClip(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+		SelectClipRgn(lua->dc, NULL);
+		return 0;
+	}
+#pragma endregion
+
 
 
 
@@ -1772,21 +2453,21 @@ namespace LuaEngine {
 		return (r << 24) | (g << 16) | (b << 8) | a;
 	}
 
-	ID2D1SolidColorBrush* d2d_get_cached_brush(D2D1::ColorF color) {
+	ID2D1SolidColorBrush* d2d_get_cached_brush(LuaEnvironment* lua, D2D1::ColorF color) {
 		uint32_t key = get_hash(color);
 
-		if (!d2d_brush_cache.contains(key)) {
+		if (!lua->d2d_brush_cache.contains(key)) {
 			printf("Creating ID2D1SolidColorBrush (%f, %f, %f, %f) = %d\n", color.r, color.g, color.b, color.a, key);
 
 			ID2D1SolidColorBrush* brush;
-			d2d_render_target->CreateSolidColorBrush(
+			lua->d2d_render_target->CreateSolidColorBrush(
 				color,
 				&brush
 			);
-			d2d_brush_cache[key] = brush;
+			lua->d2d_brush_cache[key] = brush;
 		}
 
-		return d2d_brush_cache[key];
+		return lua->d2d_brush_cache[key];
 	}
 
 #define D2D_GET_RECT(L, idx) D2D1::RectF( \
@@ -1821,70 +2502,82 @@ namespace LuaEngine {
 )
 
 	int LuaD2DFillRectangle(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 5);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
-		d2d_render_target->FillRectangle(&rectangle, brush);
+		lua->d2d_render_target->FillRectangle(&rectangle, brush);
 
 		return 0;
 	}
 
 	int LuaD2DDrawRectangle(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 5);
 		float thickness = luaL_checknumber(L, 9);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
-		d2d_render_target->DrawRectangle(&rectangle, brush, thickness);
+		lua->d2d_render_target->DrawRectangle(&rectangle, brush, thickness);
 
 		return 0;
 	}
 
 	int LuaD2DFillEllipse(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_ELLIPSE ellipse = D2D_GET_ELLIPSE(L, 1);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 5);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
-		d2d_render_target->FillEllipse(&ellipse, brush);
+		lua->d2d_render_target->FillEllipse(&ellipse, brush);
 
 		return 0;
 	}
 
 	int LuaD2DDrawEllipse(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_ELLIPSE ellipse = D2D_GET_ELLIPSE(L, 1);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 5);
 		float thickness = luaL_checknumber(L, 9);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
-		d2d_render_target->DrawEllipse(&ellipse, brush, thickness);
+		lua->d2d_render_target->DrawEllipse(&ellipse, brush, thickness);
 
 		return 0;
 	}
 
 	int LuaD2DDrawLine(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_POINT_2F point_a = D2D_GET_POINT(L, 1);
 		D2D1_POINT_2F point_b = D2D_GET_POINT(L, 3);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 5);
 		float thickness = luaL_checknumber(L, 9);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
-		d2d_render_target->DrawLine(point_a, point_b, brush, thickness);
+		lua->d2d_render_target->DrawLine(point_a, point_b, brush, thickness);
 
 		return 0;
 	}
 
 
 	int LuaD2DDrawText(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 5);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
 		int options = luaL_checkinteger(L, 16);
 
@@ -1904,12 +2597,14 @@ namespace LuaEngine {
 			std::hash <int>{}(horizontal_alignment) ^
 			std::hash <int>{}(vertical_alignment);
 		
-		if (!dw_text_layout_cache.contains(hash)) {
+		//if (!dw_text_layout_cache.contains(hash)) {
+		// FIXME: hash collisions!!!
+		if(true) {
 			printf("Creating text layout cache %ul\n", hash);
 
 			IDWriteTextFormat* text_format;
 
-			dw_factory->CreateTextFormat(
+			lua->dw_factory->CreateTextFormat(
 				widen(font_name).c_str(),
 				NULL,
 				(DWRITE_FONT_WEIGHT)font_weight,
@@ -1926,32 +2621,36 @@ namespace LuaEngine {
 			IDWriteTextLayout* text_layout;
 
 			auto wtext = widen(text);
-			dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, rectangle.right - rectangle.left, rectangle.bottom - rectangle.top, &text_layout);
+			lua->dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, rectangle.right - rectangle.left, rectangle.bottom - rectangle.top, &text_layout);
 
 			text_format->Release();
 
-			dw_text_layout_cache[hash] = text_layout;
+			lua->dw_text_layout_cache[hash] = text_layout;
 		}
 
-		d2d_render_target->DrawTextLayout({
+		lua->d2d_render_target->DrawTextLayout({
 			.x = rectangle.left,
 			.y = rectangle.top,
-			}, dw_text_layout_cache[hash], brush, (D2D1_DRAW_TEXT_OPTIONS)options);
+			}, lua->dw_text_layout_cache[hash], brush, (D2D1_DRAW_TEXT_OPTIONS)options);
 
 		return 0;
 	}
 
 	int LuaD2DSetTextAntialiasMode(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
 		float mode = luaL_checkinteger(L, 1);
-		d2d_render_target->SetTextAntialiasMode((D2D1_TEXT_ANTIALIAS_MODE)mode);
+		lua->d2d_render_target->SetTextAntialiasMode((D2D1_TEXT_ANTIALIAS_MODE)mode);
 		return 0;
 	}
 	int LuaD2DSetAntialiasMode(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
 		float mode = luaL_checkinteger(L, 1);
-		d2d_render_target->SetAntialiasMode((D2D1_ANTIALIAS_MODE)mode);
+		lua->d2d_render_target->SetAntialiasMode((D2D1_ANTIALIAS_MODE)mode);
 		return 0;
 	}
 	int LuaD2DGetTextSize(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		std::wstring text = widen(std::string(luaL_checkstring(L, 1)));
 		std::string font_name = std::string(luaL_checkstring(L, 2));
 		float font_size = luaL_checknumber(L, 3);
@@ -1960,7 +2659,7 @@ namespace LuaEngine {
 
 		IDWriteTextFormat* text_format;
 
-		dw_factory->CreateTextFormat(
+		lua->dw_factory->CreateTextFormat(
 			widen(font_name).c_str(),
 			NULL,
 			DWRITE_FONT_WEIGHT_NORMAL,
@@ -1973,7 +2672,7 @@ namespace LuaEngine {
 
 		IDWriteTextLayout* text_layout;
 
-		dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height, &text_layout);
+		lua->dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height, &text_layout);
 
 		DWRITE_TEXT_METRICS text_metrics;
 		text_layout->GetMetrics(&text_metrics);
@@ -1991,9 +2690,11 @@ namespace LuaEngine {
 	}
 
 	int LuaD2DPushClip(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
 
-		d2d_render_target->PushAxisAlignedClip(
+		lua->d2d_render_target->PushAxisAlignedClip(
 			rectangle,
 			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE
 		);
@@ -2002,40 +2703,48 @@ namespace LuaEngine {
 	}
 
 	int LuaD2DPopClip(lua_State* L) {
-		d2d_render_target->PopAxisAlignedClip();
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		lua->d2d_render_target->PopAxisAlignedClip();
 
 		return 0;
 	}
 
 	int LuaD2DFillRoundedRectangle(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_ROUNDED_RECT rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 7);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
-		d2d_render_target->FillRoundedRectangle(&rounded_rectangle, brush);
+		lua->d2d_render_target->FillRoundedRectangle(&rounded_rectangle, brush);
 
 		return 0;
 	}
 
 	int LuaD2DDrawRoundedRectangle(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_ROUNDED_RECT rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
 		D2D1::ColorF color = D2D_GET_COLOR(L, 7);
 		float thickness = luaL_checknumber(L, 11);
 
-		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(color);
+		ID2D1SolidColorBrush* brush = d2d_get_cached_brush(lua, color);
 
-		d2d_render_target->DrawRoundedRectangle(&rounded_rectangle, brush, thickness);
+		lua->d2d_render_target->DrawRoundedRectangle(&rounded_rectangle, brush, thickness);
 
 		return 0;
 	}
 
 	int LuaD2DLoadImage(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		std::string path(luaL_checkstring(L, 1));
 		std::string identifier(luaL_checkstring(L, 2));
 
-		if (d2d_bitmap_cache.contains(identifier)) {
-			d2d_bitmap_cache[identifier]->Release();
+		if (lua->d2d_bitmap_cache.contains(identifier)) {
+			lua->d2d_bitmap_cache[identifier]->Release();
 		}
 
 		IWICImagingFactory* pIWICFactory = NULL;
@@ -2076,7 +2785,7 @@ namespace LuaEngine {
 			WICBitmapPaletteTypeMedianCut
 		);
 
-		d2d_render_target->CreateBitmapFromWicBitmap(
+		lua->d2d_render_target->CreateBitmapFromWicBitmap(
 			pConverter,
 			NULL,
 			&bmp
@@ -2087,27 +2796,31 @@ namespace LuaEngine {
 		pSource->Release();
 		pConverter->Release();
 
-		d2d_bitmap_cache[identifier] = bmp;
+		lua->d2d_bitmap_cache[identifier] = bmp;
 
 		return 0;
 	}
 
 	int LuaD2DFreeImage(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		std::string identifier(luaL_checkstring(L, 1));
-		d2d_bitmap_cache[identifier]->Release();
-		d2d_bitmap_cache.erase(identifier);
+		lua->d2d_bitmap_cache[identifier]->Release();
+		lua->d2d_bitmap_cache.erase(identifier);
 		return 0;
 	}
 
 	int LuaD2DDrawImage(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		D2D1_RECT_F destination_rectangle = D2D_GET_RECT(L, 1);
 		D2D1_RECT_F source_rectangle = D2D_GET_RECT(L, 5);
 		std::string identifier(luaL_checkstring(L, 9));
 		float opacity = luaL_checknumber(L, 10);
 		int interpolation = luaL_checkinteger(L, 11);
 
-		d2d_render_target->DrawBitmap(
-			d2d_bitmap_cache[identifier],
+		lua->d2d_render_target->DrawBitmap(
+			lua->d2d_bitmap_cache[identifier],
 			destination_rectangle,
 			opacity,
 			(D2D1_BITMAP_INTERPOLATION_MODE)interpolation,
@@ -2118,8 +2831,10 @@ namespace LuaEngine {
 	}
 
 	int LuaD2DGetImageInfo(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		std::string identifier(luaL_checkstring(L, 1));
-		D2D1_SIZE_U size = d2d_bitmap_cache[identifier]->GetPixelSize();
+		D2D1_SIZE_U size = lua->d2d_bitmap_cache[identifier]->GetPixelSize();
 		lua_newtable(L);
 		lua_pushinteger(L, size.width);
 		lua_setfield(L, -2, "width");
@@ -2135,14 +2850,18 @@ namespace LuaEngine {
 #undef D2D_GET_ROUNDED_RECT
 
 	int GetGUIInfo(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		lua_newtable(L);
-		lua_pushinteger(L, lua_dc_width);
+		lua_pushinteger(L, lua->dc_width);
 		lua_setfield(L, -2, "width");
-		lua_pushinteger(L, lua_dc_height);
+		lua_pushinteger(L, lua->dc_height);
 		lua_setfield(L, -2, "height");
 		return 1;
 	}
 	int ResizeWindow(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
 		RECT clientRect, wndRect;
 		GetWindowRect(mainHWND, &wndRect);
 		GetClientRect(mainHWND, &clientRect);
@@ -2154,8 +2873,11 @@ namespace LuaEngine {
 			w + (wndRect.right - clientRect.right),
 			h + (wndRect.bottom - clientRect.bottom),
 			SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
-		LuaEngine::destroy_lua_dc();
-		LuaEngine::initialize_lua_dc();
+
+		auto prev_renderer = lua->get_renderer();
+		lua->destroy_renderer();
+		lua->create_renderer(prev_renderer);
+
 		return 0;
 	}
 	//emu
@@ -2171,74 +2893,19 @@ namespace LuaEngine {
 		SendMessage(hStatus, (WM_USER + 1), 0, (LPARAM)lua_tostring(L, 1));
 		return 0;
 	}
-	int RegisterUpdateScreen(lua_State* L) {
-		if (lua_toboolean(L, 2)) {
-			lua_pop(L, 1);
-			UnregisterFunction(L, REG_ATUPDATESCREEN);
-		} else {
-			if (lua_gettop(L) == 2)
-				lua_pop(L, 1);
-			RegisterFunction(L, REG_ATUPDATESCREEN);
-		}
-		return 0;
-	}
 	int AtUpdateScreen(lua_State* L) {
 		return lua_pcall(L, 0, 0, 0);
 	}
-	int RegisterVI(lua_State* L) {
-		if (lua_toboolean(L, 2)) {
-			lua_pop(L, 1);
-			UnregisterFunction(L, REG_ATVI);
-		} else {
-			if (lua_gettop(L) == 2)
-				lua_pop(L, 1);
-			RegisterFunction(L, REG_ATVI);
-		}
-		return 0;
-	}
 	int AtVI(lua_State* L) {
 		return lua_pcall(L, 0, 0, 0);
-	}
-	int RegisterInput(lua_State* L) {
-		if (lua_toboolean(L, 2)) {
-			lua_pop(L, 1);
-			UnregisterFunction(L, REG_ATINPUT);
-		} else {
-			if (lua_gettop(L) == 2)
-				lua_pop(L, 1);
-			RegisterFunction(L, REG_ATINPUT);
-		}
-		return 0;
 	}
 	static int current_input_n;
 	int AtInput(lua_State* L) {
 		lua_pushinteger(L, current_input_n);
 		return lua_pcall(L, 1, 0, 0);
 	}
-	int RegisterStop(lua_State* L) {
-		if (lua_toboolean(L, 2)) {
-			lua_pop(L, 1);
-			UnregisterFunction(L, REG_ATSTOP);
-		} else {
-			if (lua_gettop(L) == 2)
-				lua_pop(L, 1);
-			RegisterFunction(L, REG_ATSTOP);
-		}
-		return 0;
-	}
 	int AtStop(lua_State* L) {
 		return lua_pcall(L, 0, 0, 0);
-	}
-	int RegisterWindowMessage(lua_State* L) {
-		if (lua_toboolean(L, 2)) {
-			lua_pop(L, 1);
-			UnregisterFunction(L, REG_WINDOWMESSAGE);
-		} else {
-			if (lua_gettop(L) == 2)
-				lua_pop(L, 1);
-			RegisterFunction(L, REG_WINDOWMESSAGE);
-		}
-		return 0;
 	}
 	int AtWindowMessage(lua_State* L) {
 		auto message = lua_messenger.get_current_message();
@@ -2251,6 +2918,66 @@ namespace LuaEngine {
 
 		return lua_pcall(L, 4, 0, 0);
 	}
+	int RegisterUpdateScreen(lua_State* L) {
+		if (lua_toboolean(L, 2)) {
+			lua_pop(L, 1);
+			UnregisterFunction(L, REG_ATUPDATESCREEN);
+		} else {
+			if (lua_gettop(L) == 2)
+				lua_pop(L, 1);
+			RegisterFunction(L, REG_ATUPDATESCREEN);
+		}
+		return 0;
+	}
+	
+	int RegisterVI(lua_State* L) {
+		if (lua_toboolean(L, 2)) {
+			lua_pop(L, 1);
+			UnregisterFunction(L, REG_ATVI);
+		} else {
+			if (lua_gettop(L) == 2)
+				lua_pop(L, 1);
+			RegisterFunction(L, REG_ATVI);
+		}
+		return 0;
+	}
+	
+	int RegisterInput(lua_State* L) {
+		if (lua_toboolean(L, 2)) {
+			lua_pop(L, 1);
+			UnregisterFunction(L, REG_ATINPUT);
+		} else {
+			if (lua_gettop(L) == 2)
+				lua_pop(L, 1);
+			RegisterFunction(L, REG_ATINPUT);
+		}
+		return 0;
+	}
+	
+	int RegisterStop(lua_State* L) {
+		if (lua_toboolean(L, 2)) {
+			lua_pop(L, 1);
+			UnregisterFunction(L, REG_ATSTOP);
+		} else {
+			if (lua_gettop(L) == 2)
+				lua_pop(L, 1);
+			RegisterFunction(L, REG_ATSTOP);
+		}
+		return 0;
+	}
+	
+	int RegisterWindowMessage(lua_State* L) {
+		if (lua_toboolean(L, 2)) {
+			lua_pop(L, 1);
+			UnregisterFunction(L, REG_WINDOWMESSAGE);
+		} else {
+			if (lua_gettop(L) == 2)
+				lua_pop(L, 1);
+			RegisterFunction(L, REG_WINDOWMESSAGE);
+		}
+		return 0;
+	}
+	
 	int RegisterInterval(lua_State* L) {
 		if (lua_toboolean(L, 2)) {
 			lua_pop(L, 1);
@@ -2362,22 +3089,20 @@ namespace LuaEngine {
 	int SetGFX(lua_State* L) {
 		// Ignore or update gfx
 		int state = luaL_checknumber(L, 1);
-		//forceIgnoreRSP = !state; // ???? buggy
-
-		// DO NOT CALL THIS LUA FUNCTION INSIDE A LOOP!!! 
-		// (unpausing will not work and it gets stuck with paused gfx lol)
-
 		forceIgnoreRSP = state == 0;
-		/*if (state == 0) {
-			forceIgnoreRSP = true;
-		}
-		else {
-			forceIgnoreRSP = false;
-			//UpdateWindow(mainHWND); // vcr updatescreen causes access violation when called in loop.
-									// this doesnt but still doesnt work consistently
-		}*/
 		return 0;
 	}
+
+	// calling this during a drawing section will crash the application
+	int SetRenderer(lua_State* L) {
+		LuaEnvironment* lua = GetLuaClass(L);
+
+		lua->destroy_renderer();
+		lua->create_renderer(static_cast<Renderer>(luaL_checknumber(L, 1)));
+		
+		return 1;
+	}
+
 	int GetAddress(lua_State* L) {
 		struct NameAndVariable {
 			const char* name;
@@ -2969,7 +3694,7 @@ namespace LuaEngine {
 		{"ismainwindowinforeground", IsMainWindowInForeground},
 
 		{"screenshot", Screenshot},
-
+		{"set_renderer", SetRenderer},
 		{NULL, NULL}
 	};
 	const luaL_Reg memoryFuncs[] = {
@@ -3010,11 +3735,40 @@ namespace LuaEngine {
 
 	//winAPI GDI�֐���
 	const luaL_Reg wguiFuncs[] = {
+		{"setbrush", SetBrush},
+		{"setpen", SetPen},
+		{"setcolor", SetTextColor},
+		{"setbk", SetBackgroundColor},
+		{"setfont", SetFont},
+		{"text", LuaTextOut},
+		{"drawtext", LuaDrawText},
+		{"drawtextalt", LuaDrawTextAlt},
+		{"gettextextent", GetTextExtent},
+		{"rect", DrawRect},
+		{"fillrect", FillRect},
+		/*<GDIPlus>*/
+		// GDIPlus functions marked with "a" suffix
+		{"fillrecta", FillRectAlpha},
+		{"fillellipsea", FillEllipseAlpha},
+		{"fillpolygona", FillPolygonAlpha},
+		{"loadimage", LuaLoadImage},
+		{"deleteimage", DeleteImage},
+		{"drawimage", DrawImage},
+		{"loadscreen", LoadScreen},
+		{"loadscreenreset", LoadScreenReset},
+		{"getimageinfo", GetImageInfo},
+		/*</GDIPlus*/
+		{"ellipse", DrawEllipse},
+		{"polygon", DrawPolygon},
+		{"line", DrawLine},
+		{"info", GetGUIInfo},
+		{"resize", ResizeWindow},
+		{"setclip", SetClip},
+		{"resetclip", ResetClip},
+		{NULL, NULL}
+	};
 
-		// primitives:
-		//	rectangle, ellipse, rounded rectangle, polygon, line
-		// 
-		// text, images, clipping
+	const luaL_Reg d2dFuncs[] = {
 		{"fill_rectangle", LuaD2DFillRectangle},
 		{"draw_rectangle", LuaD2DDrawRectangle},
 		{"fill_ellipse", LuaD2DFillEllipse},
@@ -3032,12 +3786,6 @@ namespace LuaEngine {
 		{"get_image_info", LuaD2DGetImageInfo},
 		{"set_text_antialias_mode", LuaD2DSetTextAntialiasMode},
 		{"set_antialias_mode", LuaD2DSetAntialiasMode},
-
-		// GDIPlus-backed functions
-		{"gdip_fillpolygona", FillPolygonAlpha},
-
-		{"info", GetGUIInfo},
-		{"resize", ResizeWindow},
 		{NULL, NULL}
 	};
 
@@ -3166,17 +3914,22 @@ void lua_new_vi(int redraw) {
 	// hardware-accelerated drawing on a bitmap with some additional info (w, h, pixel format) provided by the emulator
 	// this way, the video plugin can't overwrite our window contents whenever it wants, thereby causing flicker
 
-	int can_repaint = (LuaEngine::lua_dc && redraw) ? 1 : 0;
+	if (redraw) {
+		for (auto& pair : LuaEngine::hwnd_lua_map) {
+			if (!pair.first || !pair.second)
+				continue;
+			pair.second->early_draw();
+		}
+	}
 
-	// then let user draw crap over it,
 	AtVILuaCallback();
 
-	// and finally we push it back directly to the window
+	if (!redraw) return;
 
-	if (can_repaint) {
-		LuaEngine::draw_lua([] {
-			AtUpdateScreenLuaCallback();
-			});
+	for (auto& pair : LuaEngine::hwnd_lua_map) {
+		if (!pair.first || !pair.second)
+			continue;
+		pair.second->draw();
 	}
 }
 
