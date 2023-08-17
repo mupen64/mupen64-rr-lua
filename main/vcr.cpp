@@ -1362,27 +1362,33 @@ void SetActiveMovie(char* buf) {
 }
 
 bool getSavestatePath(const char* filename, char* outBuffer) {
-	char* bufnExt = (char*)malloc(strlen(filename) + 11);
-	strcpy(bufnExt, filename);
+	std::filesystem::path stPath;
+	bool found = true;
 
-	strncat(bufnExt, ".st", 4);
+	char* filenameWithExtension = (char*)malloc(strlen(filename) + 11);
+	if (!filenameWithExtension)
+		return false;
 
-	std::filesystem::path stPath = bufnExt;
+	strcpy(filenameWithExtension, filename);
+	strncat(filenameWithExtension, ".st", 4);
+	stPath = filenameWithExtension;
 
 	if (std::filesystem::exists(stPath))
-		strcpy(outBuffer, bufnExt);
+		strcpy(outBuffer, filenameWithExtension);
 	else {
 		// try .savestate (old extension created bc of discord trying to display a preview of .st data when uploaded)
-		strcpy(bufnExt, filename);
-		strncat(bufnExt, ".savestate", 11);
-		stPath = bufnExt;
+		strcpy(filenameWithExtension, filename);
+		strncat(filenameWithExtension, ".savestate", 11);
+		stPath = filenameWithExtension;
+
 		if (std::filesystem::exists(stPath))
-			strcpy(outBuffer, bufnExt);
+			strcpy(outBuffer, filenameWithExtension);
 		else
-			return false;
+			found = false;
 	}
-	free(bufnExt);
-	return true;
+
+	free(filenameWithExtension);
+	return found;
 }
 
 int
