@@ -1,8 +1,9 @@
-﻿#pragma once
+#pragma once
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <string>
 #include <vector>
 
 namespace Gameshark
