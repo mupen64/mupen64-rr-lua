@@ -424,7 +424,6 @@ VCR::Result VCR::unfreeze(t_movie_freeze freeze)
 
 		g_movie_inputs.resize(freeze.current_sample);
 		memcpy(g_movie_inputs.data(), freeze.input_buffer.data(), sizeof(BUTTONS) * freeze.current_sample);
-		write_movie();
 	} else
 	{
 		// here, we are going to keep the input data from the movie file
@@ -438,6 +437,7 @@ VCR::Result VCR::unfreeze(t_movie_freeze freeze)
 		Messenger::broadcast(Messenger::Message::RerecordsChanged, (uint64_t)g_header.rerecord_count);
 	}
 
+	write_movie();
 
 	return Result::Ok;
 }
