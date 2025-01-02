@@ -58,24 +58,25 @@
 
 // 32 bits macros
 #ifndef _BIG_ENDIAN
-#define rrt32 *((int32_t *)PC->f.r.rt)
-#define rrd32 *((int32_t *)PC->f.r.rd)
-#define rrs32 *((int32_t *)PC->f.r.rs)
-#define irs32 *((int32_t *)PC->f.i.rs)
-#define irt32 *((int32_t *)PC->f.i.rt)
+#define rrt32 *((int32_t*)PC->f.r.rt)
+#define rrd32 *((int32_t*)PC->f.r.rd)
+#define rrs32 *((int32_t*)PC->f.r.rs)
+#define irs32 *((int32_t*)PC->f.i.rs)
+#define irt32 *((int32_t*)PC->f.i.rt)
 #else
-#define rrt32 *((int32_t *)PC->f.r.rt + 1)
-#define rrd32 *((int32_t *)PC->f.r.rd + 1)
-#define rrs32 *((int32_t *)PC->f.r.rs + 1)
-#define irs32 *((int32_t *)PC->f.i.rs + 1)
-#define irt32 *((int32_t *)PC->f.i.rt + 1)
+#define rrt32 *((int32_t*)PC->f.r.rt + 1)
+#define rrd32 *((int32_t*)PC->f.r.rd + 1)
+#define rrs32 *((int32_t*)PC->f.r.rs + 1)
+#define irs32 *((int32_t*)PC->f.i.rs + 1)
+#define irt32 *((int32_t*)PC->f.i.rt + 1)
 #endif
 
-#define check_PC                                                               \
-  if (PC->addr == actual->fin) {                                               \
-    g_core_logger->error("changement de block");                               \
-    stop = 1;                                                                  \
-  }
+#define check_PC                                                                                                                                                                                                                                                                                                                                                                                                                                                                               \
+    if (PC->addr == actual->fin)                                                                                                                                                                                                                                                                                                                                                                                                                                                               \
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          \
+        g_core_logger->error("changement de block");                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+        stop = 1;                                                                                                                                                                                                                                                                                                                                                                                                                                                                              \
+    }
 
 // cop0 macros
 #define core_Index reg_cop0[0]
@@ -119,8 +120,7 @@
 #else
 
 // asm converter that respects rounding modes
-#define FLOAT_CONVERT(input_width, output_width)                               \
-  __asm { \
+#define FLOAT_CONVERT(input_width, output_width) __asm { \
 __asm mov eax, src \
 __asm fld input_width ptr [eax] \
 __asm mov eax, dest \
@@ -128,28 +128,28 @@ __asm fistp output_width ptr [eax] }
 
 #endif
 
-#define FLOAT_CONVERT_L_S(s, d)                                                \
-  {                                                                            \
-    float *src = s;                                                            \
-    int64_t *dest = (int64_t *)d;                                              \
-    FLOAT_CONVERT(dword, qword);                                               \
-  }
-#define FLOAT_CONVERT_W_S(s, d)                                                \
-  {                                                                            \
-    float *src = s;                                                            \
-    int32_t *dest = (int32_t *)d;                                              \
-    FLOAT_CONVERT(dword, dword);                                               \
-  }
-#define FLOAT_CONVERT_L_D(s, d)                                                \
-  {                                                                            \
-    double *src = s;                                                           \
-    int64_t *dest = (int64_t *)d;                                              \
-    FLOAT_CONVERT(qword, dword);                                               \
-  }
-#define FLOAT_CONVERT_W_D(s, d)                                                \
-  {                                                                            \
-    double *src = s;                                                           \
-    int32_t *dest = (int32_t *)d;                                              \
-    FLOAT_CONVERT(qword, qword);                                               \
-  }
+#define FLOAT_CONVERT_L_S(s, d)                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          \
+        float* src = s;                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \
+        int64_t* dest = (int64_t*)d;                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+        FLOAT_CONVERT(dword, qword);                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+    }
+#define FLOAT_CONVERT_W_S(s, d)                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          \
+        float* src = s;                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \
+        int32_t* dest = (int32_t*)d;                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+        FLOAT_CONVERT(dword, dword);                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+    }
+#define FLOAT_CONVERT_L_D(s, d)                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          \
+        double* src = s;                                                                                                                                                                                                                                                                                                                                                                                                                                                                       \
+        int64_t* dest = (int64_t*)d;                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+        FLOAT_CONVERT(qword, dword);                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+    }
+#define FLOAT_CONVERT_W_D(s, d)                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          \
+        double* src = s;                                                                                                                                                                                                                                                                                                                                                                                                                                                                       \
+        int32_t* dest = (int32_t*)d;                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+        FLOAT_CONVERT(qword, qword);                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+    }
 #endif

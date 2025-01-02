@@ -42,14 +42,12 @@
 #define ARCH_INFO L""
 #endif
 
-#define MUPEN_VERSION                                                          \
-  L"Mupen 64 1.1.9-6" ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO
+#define MUPEN_VERSION L"Mupen 64 1.1.9-6" ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO
 
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)
 
-extern BOOL CALLBACK CfgDlgProc(HWND hwnd, UINT Message, WPARAM wParam,
-                                LPARAM lParam);
+extern BOOL CALLBACK CfgDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 extern DWORD g_ui_thread_id;
 
@@ -81,17 +79,17 @@ extern bool g_fast_forward;
  */
 struct BetterEmulationLock {
 private:
-  bool was_paused;
+    bool was_paused;
 
 public:
-  BetterEmulationLock();
-  ~BetterEmulationLock();
+    BetterEmulationLock();
+    ~BetterEmulationLock();
 };
 
 typedef struct {
-  long width;
-  long height;
-  long statusbar_height;
+    long width;
+    long height;
+    long statusbar_height;
 } t_window_info;
 
 extern t_window_info window_info;
@@ -103,7 +101,7 @@ t_window_info get_window_info();
  * \param hotkey The hotkey to convert
  * \return The hotkey as a string
  */
-std::wstring hotkey_to_string(const t_hotkey *hotkey);
+std::wstring hotkey_to_string(const t_hotkey* hotkey);
 
 /**
  * \brief Demands user confirmation for an exit action
@@ -125,21 +123,21 @@ bool is_on_gui_thread();
  * window is used. \returns Whether the function was able to show an error
  * dialog.
  */
-bool show_error_dialog_for_result(CoreResult result, void *hwnd = nullptr);
+bool show_error_dialog_for_result(CoreResult result, void* hwnd = nullptr);
 
 /**
  * Represents the result of a plugin discovery operation.
  */
 typedef struct {
-  /**
-   * The discovered plugins matching the plugin API surface.
-   */
-  std::vector<std::unique_ptr<Plugin>> plugins;
+    /**
+     * The discovered plugins matching the plugin API surface.
+     */
+    std::vector<std::unique_ptr<Plugin>> plugins;
 
-  /**
-   * Vector of discovered plugins and their results.
-   */
-  std::vector<std::pair<std::filesystem::path, std::wstring>> results;
+    /**
+     * Vector of discovered plugins and their results.
+     */
+    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
 
 } t_plugin_discovery_result;
 
