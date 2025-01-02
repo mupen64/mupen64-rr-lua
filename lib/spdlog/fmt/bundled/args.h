@@ -8,8 +8,8 @@
 #ifndef FMT_ARGS_H_
 #define FMT_ARGS_H_
 
-#include <functional>  // std::reference_wrapper
-#include <memory>      // std::unique_ptr
+#include <functional> // std::reference_wrapper
+#include <memory>     // std::unique_ptr
 #include <vector>
 
 #include "core.h"
@@ -22,10 +22,10 @@ template <typename T> struct is_reference_wrapper : std::false_type {};
 template <typename T>
 struct is_reference_wrapper<std::reference_wrapper<T>> : std::true_type {};
 
-template <typename T> auto unwrap(const T& v) -> const T& { return v; }
+template <typename T> auto unwrap(const T &v) -> const T & { return v; }
 template <typename T>
-auto unwrap(const std::reference_wrapper<T>& v) -> const T& {
-  return static_cast<const T&>(v);
+auto unwrap(const std::reference_wrapper<T> &v) -> const T & {
+  return static_cast<const T &>(v);
 }
 
 class dynamic_arg_list {
@@ -41,25 +41,25 @@ class dynamic_arg_list {
     T value;
 
     template <typename Arg>
-    FMT_CONSTEXPR typed_node(const Arg& arg) : value(arg) {}
+    FMT_CONSTEXPR typed_node(const Arg &arg) : value(arg) {}
 
     template <typename Char>
-    FMT_CONSTEXPR typed_node(const basic_string_view<Char>& arg)
+    FMT_CONSTEXPR typed_node(const basic_string_view<Char> &arg)
         : value(arg.data(), arg.size()) {}
   };
 
   std::unique_ptr<node<>> head_;
 
- public:
-  template <typename T, typename Arg> auto push(const Arg& arg) -> const T& {
+public:
+  template <typename T, typename Arg> auto push(const Arg &arg) -> const T & {
     auto new_node = std::unique_ptr<typed_node<T>>(new typed_node<T>(arg));
-    auto& value = new_node->value;
+    auto &value = new_node->value;
     new_node->next = std::move(head_);
     head_ = std::move(new_node);
     return value;
   }
 };
-}  // namespace detail
+} // namespace detail
 
 /**
   \rst
@@ -78,7 +78,7 @@ class dynamic_format_arg_store
     : public basic_format_args<Context>
 #endif
 {
- private:
+private:
   using char_type = typename Context::char_type;
 
   template <typename T> struct need_copy {
@@ -118,22 +118,22 @@ class dynamic_format_arg_store
                 : static_cast<unsigned long long>(detail::has_named_args_bit));
   }
 
-  auto data() const -> const basic_format_arg<Context>* {
+  auto data() const -> const basic_format_arg<Context> * {
     return named_info_.empty() ? data_.data() : data_.data() + 1;
   }
 
-  template <typename T> void emplace_arg(const T& arg) {
+  template <typename T> void emplace_arg(const T &arg) {
     data_.emplace_back(detail::make_arg<Context>(arg));
   }
 
   template <typename T>
-  void emplace_arg(const detail::named_arg<char_type, T>& arg) {
+  void emplace_arg(const detail::named_arg<char_type, T> &arg) {
     if (named_info_.empty()) {
-      constexpr const detail::named_arg_info<char_type>* zero_ptr{nullptr};
+      constexpr const detail::named_arg_info<char_type> *zero_ptr{nullptr};
       data_.insert(data_.begin(), {zero_ptr, 0});
     }
     data_.emplace_back(detail::make_arg<Context>(detail::unwrap(arg.value)));
-    auto pop_one = [](std::vector<basic_format_arg<Context>>* data) {
+    auto pop_one = [](std::vector<basic_format_arg<Context>> *data) {
       data->pop_back();
     };
     std::unique_ptr<std::vector<basic_format_arg<Context>>, decltype(pop_one)>
@@ -143,7 +143,7 @@ class dynamic_format_arg_store
     guard.release();
   }
 
- public:
+public:
   constexpr dynamic_format_arg_store() = default;
 
   /**
@@ -163,7 +163,7 @@ class dynamic_format_arg_store
       std::string result = fmt::vformat("{} and {} and {}", store);
     \endrst
   */
-  template <typename T> void push_back(const T& arg) {
+  template <typename T> void push_back(const T &arg) {
     if (detail::const_check(need_copy<T>::value))
       emplace_arg(dynamic_args_.push<stored_type<T>>(arg));
     else
@@ -198,8 +198,8 @@ class dynamic_format_arg_store
     argument. The name is always copied into the store.
   */
   template <typename T>
-  void push_back(const detail::named_arg<char_type, T>& arg) {
-    const char_type* arg_name =
+  void push_back(const detail::named_arg<char_type, T> &arg) {
+    const char_type *arg_name =
         dynamic_args_.push<std::basic_string<char_type>>(arg.name).c_str();
     if (detail::const_check(need_copy<T>::value)) {
       emplace_arg(
@@ -232,4 +232,4 @@ class dynamic_format_arg_store
 
 FMT_END_NAMESPACE
 
-#endif  // FMT_ARGS_H_
+#endif // FMT_ARGS_H_

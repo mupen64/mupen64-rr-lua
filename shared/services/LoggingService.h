@@ -2,7 +2,7 @@
 #include <spdlog/logger.h>
 
 /*
- *	Exposes an spdlog logger registry. 
+ *	Exposes an spdlog logger registry.
  *
  *	Must be implemented in the view layer.
  */

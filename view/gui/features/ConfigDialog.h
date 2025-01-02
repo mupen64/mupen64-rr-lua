@@ -1,8 +1,8 @@
 /***************************************************************************
-						  configdialog.h  -  description
-							 -------------------
-	copyright            : (C) 2003 by ShadowPrince
-	email                : shadow@emulation64.com
+                                                  configdialog.h  -  description
+                                                         -------------------
+        copyright            : (C) 2003 by ShadowPrince
+        email                : shadow@emulation64.com
  ***************************************************************************/
 
 /***************************************************************************

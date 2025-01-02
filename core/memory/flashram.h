@@ -25,10 +25,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
  * USA.
  *
-**/
+ **/
 
 extern int32_t use_flashram;
-
 
 void init_flashram();
 void flashram_command(uint32_t command);
@@ -36,5 +35,5 @@ uint32_t flashram_status();
 void dma_read_flashram();
 void dma_write_flashram();
 
-void save_flashram_infos(char* buf);
-void load_flashram_infos(char* buf);
+void save_flashram_infos(char *buf);
+void load_flashram_infos(char *buf);

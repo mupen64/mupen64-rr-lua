@@ -25,7 +25,7 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
  * USA.
  *
-**/
+ **/
 
 #ifndef DMA_H
 #define DMA_H

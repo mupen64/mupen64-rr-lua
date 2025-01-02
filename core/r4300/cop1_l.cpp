@@ -25,23 +25,23 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
  * USA.
  *
-**/
+ **/
 
-#include "r4300.h"
 #include "macros.h"
+#include "r4300.h"
 
-void CVT_S_L()
-{
-    if (check_cop1_unusable()) return;
-    set_rounding();
-    *reg_cop1_simple[core_cffd] = *((int64_t*)reg_cop1_double[core_cffs]);
-    PC++;
+void CVT_S_L() {
+  if (check_cop1_unusable())
+    return;
+  set_rounding();
+  *reg_cop1_simple[core_cffd] = *((int64_t *)reg_cop1_double[core_cffs]);
+  PC++;
 }
 
-void CVT_D_L()
-{
-    if (check_cop1_unusable()) return;
-    set_rounding();
-    *reg_cop1_double[core_cffd] = *((int64_t*)reg_cop1_double[core_cffs]);
-    PC++;
+void CVT_D_L() {
+  if (check_cop1_unusable())
+    return;
+  set_rounding();
+  *reg_cop1_double[core_cffd] = *((int64_t *)reg_cop1_double[core_cffs]);
+  PC++;
 }

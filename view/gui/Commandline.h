@@ -1,8 +1,8 @@
 /***************************************************************************
-						  commandline.h  -  description
-							 -------------------
-	copyright            : (C) 2003 by ShadowPrince
-	email                : shadow@emulation64.com
+                                                  commandline.h  -  description
+                                                         -------------------
+        copyright            : (C) 2003 by ShadowPrince
+        email                : shadow@emulation64.com
  ***************************************************************************/
 
 /***************************************************************************
@@ -16,16 +16,15 @@
 #ifndef COMMANDLINE_H
 #define COMMANDLINE_H
 
-namespace Cli
-{
-    /**
-     * \brief Initializes the CLI
-     */
-    void init();
+namespace Cli {
+/**
+ * \brief Initializes the CLI
+ */
+void init();
 
-    /**
-	 * Gets whether the CLI wants fast-forward to always be enabled.
-	 */
-	bool wants_fast_forward();
-}
+/**
+ * Gets whether the CLI wants fast-forward to always be enabled.
+ */
+bool wants_fast_forward();
+} // namespace Cli
 #endif

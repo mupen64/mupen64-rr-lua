@@ -25,7 +25,7 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
  * USA.
  *
-**/
+ **/
 
 #ifndef RECOMPH_H
 #define RECOMPH_H
@@ -34,15 +34,16 @@
 
 extern int32_t code_length;
 extern int32_t max_code_length;
-extern unsigned char** inst_pointer;
-extern precomp_block* dst_block;
+extern unsigned char **inst_pointer;
+extern precomp_block *dst_block;
 extern int32_t jump_marker;
-extern uint32_t* return_address;
+extern uint32_t *return_address;
 extern int32_t fast_memory;
 
-void passe2(precomp_instr* dest, int32_t start, int32_t end, precomp_block* block);
-void init_assembler(void* block_jumps_table, int32_t block_jumps_number);
-void free_assembler(void** block_jumps_table, int32_t* block_jumps_number);
+void passe2(precomp_instr *dest, int32_t start, int32_t end,
+            precomp_block *block);
+void init_assembler(void *block_jumps_table, int32_t block_jumps_number);
+void free_assembler(void **block_jumps_table, int32_t *block_jumps_number);
 
 void gencallinterp(uint32_t addr, int32_t jump);
 

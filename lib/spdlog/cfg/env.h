@@ -8,8 +8,9 @@
 
 //
 // Init levels and patterns from env variables SPDLOG_LEVEL
-// Inspired from Rust's "env_logger" crate (https://crates.io/crates/env_logger).
-// Note - fallback to "info" level on unrecognized levels
+// Inspired from Rust's "env_logger" crate
+// (https://crates.io/crates/env_logger). Note - fallback to "info" level on
+// unrecognized levels
 //
 // Examples:
 //
@@ -26,11 +27,11 @@
 namespace spdlog {
 namespace cfg {
 inline void load_env_levels() {
-    auto env_val = details::os::getenv("SPDLOG_LEVEL");
-    if (!env_val.empty()) {
-        helpers::load_levels(env_val);
-    }
+  auto env_val = details::os::getenv("SPDLOG_LEVEL");
+  if (!env_val.empty()) {
+    helpers::load_levels(env_val);
+  }
 }
 
-}  // namespace cfg
-}  // namespace spdlog
+} // namespace cfg
+} // namespace spdlog
