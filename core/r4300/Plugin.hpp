@@ -44,10 +44,10 @@ extern CONTROL Controls[4];
 
 #pragma region Base Functions
 
-typedef void(__cdecl *GETDLLINFO)(PLUGIN_INFO *);
-typedef void(__cdecl *DLLCONFIG)(void *);
-typedef void(__cdecl *DLLTEST)(void *);
-typedef void(__cdecl *DLLABOUT)(void *);
+typedef void(__cdecl* GETDLLINFO)(PLUGIN_INFO*);
+typedef void(__cdecl* DLLCONFIG)(void*);
+typedef void(__cdecl* DLLTEST)(void*);
+typedef void(__cdecl* DLLABOUT)(void*);
 extern GETDLLINFO getDllInfo;
 extern DLLCONFIG dllConfig;
 extern DLLTEST dllTest;
@@ -57,26 +57,26 @@ extern DLLABOUT dllAbout;
 
 #pragma region Video Functions
 
-typedef void(__cdecl *CHANGEWINDOW)();
-typedef void(__cdecl *CLOSEDLL_GFX)();
-typedef int32_t(__cdecl *INITIATEGFX)(GFX_INFO);
-typedef void(__cdecl *PROCESSDLIST)();
-typedef void(__cdecl *PROCESSRDPLIST)();
-typedef void(__cdecl *ROMCLOSED_GFX)();
-typedef void(__cdecl *ROMOPEN_GFX)();
-typedef void(__cdecl *SHOWCFB)();
-typedef void(__cdecl *UPDATESCREEN)();
-typedef void(__cdecl *VISTATUSCHANGED)();
-typedef void(__cdecl *VIWIDTHCHANGED)();
-typedef void(__cdecl *READSCREEN)(void **, int32_t *, int32_t *);
-typedef void(__cdecl *DLLCRTFREE)(void *);
-typedef void(__cdecl *MOVESCREEN)(int32_t, int32_t);
-typedef void(__cdecl *CAPTURESCREEN)(char *);
-typedef void(__cdecl *GETVIDEOSIZE)(int32_t *, int32_t *);
-typedef void(__cdecl *READVIDEO)(void **);
-typedef void(__cdecl *FBREAD)(uint32_t);
-typedef void(__cdecl *FBWRITE)(uint32_t addr, uint32_t size);
-typedef void(__cdecl *FBGETFRAMEBUFFERINFO)(void *);
+typedef void(__cdecl* CHANGEWINDOW)();
+typedef void(__cdecl* CLOSEDLL_GFX)();
+typedef int32_t(__cdecl* INITIATEGFX)(GFX_INFO);
+typedef void(__cdecl* PROCESSDLIST)();
+typedef void(__cdecl* PROCESSRDPLIST)();
+typedef void(__cdecl* ROMCLOSED_GFX)();
+typedef void(__cdecl* ROMOPEN_GFX)();
+typedef void(__cdecl* SHOWCFB)();
+typedef void(__cdecl* UPDATESCREEN)();
+typedef void(__cdecl* VISTATUSCHANGED)();
+typedef void(__cdecl* VIWIDTHCHANGED)();
+typedef void(__cdecl* READSCREEN)(void**, int32_t*, int32_t*);
+typedef void(__cdecl* DLLCRTFREE)(void*);
+typedef void(__cdecl* MOVESCREEN)(int32_t, int32_t);
+typedef void(__cdecl* CAPTURESCREEN)(char*);
+typedef void(__cdecl* GETVIDEOSIZE)(int32_t*, int32_t*);
+typedef void(__cdecl* READVIDEO)(void**);
+typedef void(__cdecl* FBREAD)(uint32_t);
+typedef void(__cdecl* FBWRITE)(uint32_t addr, uint32_t size);
+typedef void(__cdecl* FBGETFRAMEBUFFERINFO)(void*);
 extern CHANGEWINDOW changeWindow;
 extern CLOSEDLL_GFX closeDLL_gfx;
 extern INITIATEGFX initiateGFX;
@@ -104,15 +104,15 @@ extern FBGETFRAMEBUFFERINFO fBGetFrameBufferInfo;
 
 #pragma region Audio Functions
 
-typedef void(__cdecl *AIDACRATECHANGED)(int32_t system_type);
-typedef void(__cdecl *AILENCHANGED)();
-typedef uint32_t(__cdecl *AIREADLENGTH)();
-typedef void(__cdecl *CLOSEDLL_AUDIO)();
-typedef int32_t(__cdecl *INITIATEAUDIO)(AUDIO_INFO);
-typedef void(__cdecl *PROCESSALIST)();
-typedef void(__cdecl *ROMCLOSED_AUDIO)();
-typedef void(__cdecl *ROMOPEN_AUDIO)();
-typedef void(__cdecl *AIUPDATE)(int32_t wait);
+typedef void(__cdecl* AIDACRATECHANGED)(int32_t system_type);
+typedef void(__cdecl* AILENCHANGED)();
+typedef uint32_t(__cdecl* AIREADLENGTH)();
+typedef void(__cdecl* CLOSEDLL_AUDIO)();
+typedef int32_t(__cdecl* INITIATEAUDIO)(AUDIO_INFO);
+typedef void(__cdecl* PROCESSALIST)();
+typedef void(__cdecl* ROMCLOSED_AUDIO)();
+typedef void(__cdecl* ROMOPEN_AUDIO)();
+typedef void(__cdecl* AIUPDATE)(int32_t wait);
 extern AIDACRATECHANGED aiDacrateChanged;
 extern AILENCHANGED aiLenChanged;
 extern AIREADLENGTH aiReadLength;
@@ -127,19 +127,17 @@ extern AIUPDATE aiUpdate;
 
 #pragma region Input Functions
 
-typedef void(__cdecl *CLOSEDLL_INPUT)();
-typedef void(__cdecl *CONTROLLERCOMMAND)(int32_t controller,
-                                         unsigned char *command);
-typedef void(__cdecl *GETKEYS)(int32_t controller, BUTTONS *keys);
-typedef void(__cdecl *SETKEYS)(int32_t controller, BUTTONS keys);
-typedef void(__cdecl *OLD_INITIATECONTROLLERS)(void *hwnd, CONTROL controls[4]);
-typedef void(__cdecl *INITIATECONTROLLERS)(CONTROL_INFO control_info);
-typedef void(__cdecl *READCONTROLLER)(int32_t controller,
-                                      unsigned char *command);
-typedef void(__cdecl *ROMCLOSED_INPUT)();
-typedef void(__cdecl *ROMOPEN_INPUT)();
-typedef void(__cdecl *KEYDOWN)(uint32_t wParam, int32_t lParam);
-typedef void(__cdecl *KEYUP)(uint32_t wParam, int32_t lParam);
+typedef void(__cdecl* CLOSEDLL_INPUT)();
+typedef void(__cdecl* CONTROLLERCOMMAND)(int32_t controller, unsigned char* command);
+typedef void(__cdecl* GETKEYS)(int32_t controller, BUTTONS* keys);
+typedef void(__cdecl* SETKEYS)(int32_t controller, BUTTONS keys);
+typedef void(__cdecl* OLD_INITIATECONTROLLERS)(void* hwnd, CONTROL controls[4]);
+typedef void(__cdecl* INITIATECONTROLLERS)(CONTROL_INFO control_info);
+typedef void(__cdecl* READCONTROLLER)(int32_t controller, unsigned char* command);
+typedef void(__cdecl* ROMCLOSED_INPUT)();
+typedef void(__cdecl* ROMOPEN_INPUT)();
+typedef void(__cdecl* KEYDOWN)(uint32_t wParam, int32_t lParam);
+typedef void(__cdecl* KEYUP)(uint32_t wParam, int32_t lParam);
 extern CLOSEDLL_INPUT closeDLL_input;
 extern CONTROLLERCOMMAND controllerCommand;
 extern GETKEYS getKeys;
@@ -156,10 +154,10 @@ extern KEYUP keyUp;
 
 #pragma region RSP Functions
 
-typedef void(__cdecl *CLOSEDLL_RSP)();
-typedef uint32_t(__cdecl *DORSPCYCLES)(uint32_t);
-typedef void(__cdecl *INITIATERSP)(RSP_INFO rsp_info, uint32_t *cycles);
-typedef void(__cdecl *ROMCLOSED_RSP)();
+typedef void(__cdecl* CLOSEDLL_RSP)();
+typedef uint32_t(__cdecl* DORSPCYCLES)(uint32_t);
+typedef void(__cdecl* INITIATERSP)(RSP_INFO rsp_info, uint32_t* cycles);
+typedef void(__cdecl* ROMCLOSED_RSP)();
 extern CLOSEDLL_RSP closeDLL_RSP;
 extern DORSPCYCLES doRspCycles;
 extern INITIATERSP initiateRSP;
@@ -171,72 +169,71 @@ extern ROMCLOSED_RSP romClosed_RSP;
 
 // frame buffer plugin spec extension
 typedef struct {
-  uint32_t addr;
-  uint32_t size;
-  uint32_t width;
-  uint32_t height;
+    uint32_t addr;
+    uint32_t size;
+    uint32_t width;
+    uint32_t height;
 } FrameBufferInfo;
 
 class Plugin {
 public:
-  /**
-   * \brief Tries to create a plugin from the given path
-   * \param path The path to a plugin
-   * \return The operation status along with a pointer to the plugin. The
-   * pointer will be invalid if the first pair element isn't an empty string.
-   */
-  static std::pair<std::wstring, std::unique_ptr<Plugin>>
-  create(std::filesystem::path path);
+    /**
+     * \brief Tries to create a plugin from the given path
+     * \param path The path to a plugin
+     * \return The operation status along with a pointer to the plugin. The
+     * pointer will be invalid if the first pair element isn't an empty string.
+     */
+    static std::pair<std::wstring, std::unique_ptr<Plugin>> create(std::filesystem::path path);
 
-  Plugin() = default;
-  ~Plugin();
+    Plugin() = default;
+    ~Plugin();
 
-  /**
-   * \brief Opens the plugin configuration dialog
-   */
-  void config();
+    /**
+     * \brief Opens the plugin configuration dialog
+     */
+    void config();
 
-  /**
-   * \brief Opens the plugin test dialog
-   */
-  void test();
+    /**
+     * \brief Opens the plugin test dialog
+     */
+    void test();
 
-  /**
-   * \brief Opens the plugin about dialog
-   */
-  void about();
+    /**
+     * \brief Opens the plugin about dialog
+     */
+    void about();
 
-  /**
-   * \brief Loads the plugin's exported functions into the globals
-   */
-  void load_into_globals();
+    /**
+     * \brief Loads the plugin's exported functions into the globals
+     */
+    void load_into_globals();
 
-  /**
-   * \brief Gets the plugin's path
-   */
-  auto path() const { return m_path; }
+    /**
+     * \brief Gets the plugin's path
+     */
+    auto path() const { return m_path; }
 
-  /**
-   * \brief Gets the plugin's name
-   */
-  auto name() const { return m_name; }
+    /**
+     * \brief Gets the plugin's name
+     */
+    auto name() const { return m_name; }
 
-  /**
-   * \brief Gets the plugin's type
-   */
-  auto type() const { return m_type; }
+    /**
+     * \brief Gets the plugin's type
+     */
+    auto type() const { return m_type; }
 
-  /**
-   * \brief Gets the plugin's version
-   */
-  auto version() const { return m_version; }
+    /**
+     * \brief Gets the plugin's version
+     */
+    auto version() const { return m_version; }
 
 private:
-  std::filesystem::path m_path;
-  std::string m_name;
-  PluginType m_type;
-  uint16_t m_version;
-  void *m_module;
+    std::filesystem::path m_path;
+    std::string m_name;
+    PluginType m_type;
+    uint16_t m_version;
+    void* m_module;
 };
 
 /// <summary>

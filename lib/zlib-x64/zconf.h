@@ -342,10 +342,10 @@ typedef unsigned long z_size_t;
 #endif
 #endif
 #endif /* ZLIB_DLL */
-       /* If building or using zlib with the WINAPI/WINAPIV calling convention,
-        * define ZLIB_WINAPI.
-        * Caution: the standard ZLIB1.DLL is NOT compiled using ZLIB_WINAPI.
-        */
+/* If building or using zlib with the WINAPI/WINAPIV calling convention,
+ * define ZLIB_WINAPI.
+ * Caution: the standard ZLIB1.DLL is NOT compiled using ZLIB_WINAPI.
+ */
 #ifdef ZLIB_WINAPI
 #ifdef FAR
 #undef FAR
@@ -394,7 +394,7 @@ typedef unsigned long z_size_t;
 #if !defined(__MACTYPES__)
 typedef unsigned char Byte; /* 8 bits */
 #endif
-typedef unsigned int uInt;   /* 16 bits or more */
+typedef unsigned int uInt; /* 16 bits or more */
 typedef unsigned long uLong; /* 32 bits or more */
 
 #ifdef SMALL_MEDIUM
@@ -409,13 +409,13 @@ typedef uInt FAR uIntf;
 typedef uLong FAR uLongf;
 
 #ifdef STDC
-typedef void const *voidpc;
-typedef void FAR *voidpf;
-typedef void *voidp;
+typedef void const* voidpc;
+typedef void FAR* voidpf;
+typedef void* voidp;
 #else
-typedef Byte const *voidpc;
-typedef Byte FAR *voidpf;
-typedef Byte *voidp;
+typedef Byte const* voidpc;
+typedef Byte FAR* voidpf;
+typedef Byte* voidp;
 #endif
 
 #if !defined(Z_U4) && !defined(Z_SOLO) && defined(STDC)
@@ -509,8 +509,7 @@ typedef unsigned long z_crc_t;
 #define Z_LARGE64
 #endif
 
-#if defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS - 0 == 64 &&               \
-    defined(Z_LFS64)
+#if defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS - 0 == 64 && defined(Z_LFS64)
 #define Z_WANT64
 #endif
 
