@@ -32,7 +32,7 @@
 #include <shared/types/CoreTypes.h>
 #include <string>
 
-extern uint8_t* rom;
+extern uint8_t *rom;
 extern size_t rom_size;
 extern char rom_md5[33];
 extern t_rom_header ROM_HEADER;
@@ -60,4 +60,4 @@ uint32_t get_vis_per_second(uint16_t country_code);
  * \brief Performs an in-place byte order correction on a rom buffer depending
  * on its header \param rom The rom buffer
  */
-void rom_byteswap(uint8_t* rom);
+void rom_byteswap(uint8_t *rom);

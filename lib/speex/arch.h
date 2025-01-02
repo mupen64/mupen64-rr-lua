@@ -35,7 +35,7 @@
 #ifndef ARCH_H
 #define ARCH_H
 
-#define OUTSIDE_SPEEX // lazy
+#define OUTSIDE_SPEEX  // lazy
 #define FLOATING_POINT // lazy
 
 /* A couple test to catch stupid option combinations */
@@ -63,9 +63,9 @@
 #error I suppose you can have a [ARM4/ARM5E/Blackfin] that has float instructions?
 #endif
 #ifdef FIXED_DEBUG
-#error "Don't you think enabling fixed-point is a good thing to do if you want to debug that?"
+#error                                                                         \
+    "Don't you think enabling fixed-point is a good thing to do if you want to debug that?"
 #endif
-
 
 #endif
 
@@ -73,11 +73,11 @@
 #include "speex/speexdsp_types.h"
 #endif
 
-#define ABS(x) ((x) < 0 ? (-(x)) : (x)) /**< Absolute integer value. */
-#define ABS16(x) ((x) < 0 ? (-(x)) : (x)) /**< Absolute 16-bit value.  */
+#define ABS(x) ((x) < 0 ? (-(x)) : (x))     /**< Absolute integer value. */
+#define ABS16(x) ((x) < 0 ? (-(x)) : (x))   /**< Absolute 16-bit value.  */
 #define MIN16(a, b) ((a) < (b) ? (a) : (b)) /**< Maximum 16-bit value.   */
 #define MAX16(a, b) ((a) > (b) ? (a) : (b)) /**< Maximum 16-bit value.   */
-#define ABS32(x) ((x) < 0 ? (-(x)) : (x)) /**< Absolute 32-bit value.  */
+#define ABS32(x) ((x) < 0 ? (-(x)) : (x))   /**< Absolute 32-bit value.  */
 #define MIN32(a, b) ((a) < (b) ? (a) : (b)) /**< Maximum 32-bit value.   */
 #define MAX32(a, b) ((a) > (b) ? (a) : (b)) /**< Maximum 32-bit value.   */
 
@@ -111,7 +111,6 @@ typedef spx_word32_t spx_sig_t;
 #define VERY_LARGE16 ((spx_word16_t)32767)
 #define Q15_ONE ((spx_word16_t)32767)
 
-
 #ifdef FIXED_DEBUG
 #include "fixed_debug.h"
 #else
@@ -127,7 +126,6 @@ typedef spx_word32_t spx_sig_t;
 #endif
 
 #endif
-
 
 #else
 
@@ -145,7 +143,6 @@ typedef float spx_word32_t;
 #define GAMMA_SCALING 1.f
 #define GAIN_SCALING 1.f
 #define GAIN_SCALING_1 1.f
-
 
 #define VERY_SMALL 1e-15f
 #define VERY_LARGE32 1e15f
@@ -205,9 +202,10 @@ typedef float spx_word32_t;
 #define DIV32(a, b) (((spx_word32_t)(a)) / (spx_word32_t)(b))
 #define PDIV32(a, b) (((spx_word32_t)(a)) / (spx_word32_t)(b))
 
-#define WORD2INT(x) ((x) < -32767.5f ? -32768 : ((x) > 32766.5f ? 32767 : (spx_int16_t)floor(.5 + (x))))
+#define WORD2INT(x)                                                            \
+  ((x) < -32767.5f ? -32768                                                    \
+                   : ((x) > 32766.5f ? 32767 : (spx_int16_t)floor(.5 + (x))))
 #endif
-
 
 #if defined(CONFIG_TI_C54X) || defined(CONFIG_TI_C55X)
 
@@ -224,10 +222,8 @@ typedef float spx_word32_t;
 
 #endif
 
-
 #ifdef FIXED_DEBUG
 extern long long spx_mips;
 #endif
-
 
 #endif

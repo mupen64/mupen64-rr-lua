@@ -10,7 +10,8 @@
  * collection of valid extensions in the format *.ext separated by semicolons
  * \return The chosen file's path
  */
-std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter);
+std::wstring show_persistent_open_dialog(const std::wstring &id, HWND hwnd,
+                                         const std::wstring &filter);
 
 /**
  * \brief Shows a file save dialog
@@ -19,7 +20,8 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd, cons
  * collection of valid extensions in the format *.ext separated by semicolons
  * \return The chosen file's path
  */
-std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter);
+std::wstring show_persistent_save_dialog(const std::wstring &id, HWND hwnd,
+                                         const std::wstring &filter);
 
 /**
  * \brief Shows a folder selection dialog
@@ -27,4 +29,4 @@ std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd, cons
  * path \param hwnd The dialog owner's window handle, or NULL \return The chosen
  * folder's path
  */
-std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd);
+std::wstring show_persistent_folder_dialog(const std::wstring &id, HWND hwnd);

@@ -44,8 +44,8 @@ void add_interrupt_event_count(int32_t type, uint32_t count);
 void add_interrupt_event(int32_t type, uint32_t delay);
 uint32_t get_event(int32_t type);
 
-int32_t save_eventqueue_infos(char* buf);
-void load_eventqueue_infos(char* buf);
+int32_t save_eventqueue_infos(char *buf);
+void load_eventqueue_infos(char *buf);
 
 #define VI_INT 0x001
 #define COMPARE_INT 0x002

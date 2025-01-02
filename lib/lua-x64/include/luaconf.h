@@ -4,13 +4,11 @@
 ** See Copyright Notice in lua.h
 */
 
-
 #ifndef luaconf_h
 #define luaconf_h
 
 #include <limits.h>
 #include <stddef.h>
-
 
 /*
 ** ===================================================================
@@ -28,7 +26,6 @@
 ** ===================================================================
 */
 
-
 /*
 ** {====================================================================
 ** System Configuration: macros to adapt (if needed) Lua to some
@@ -43,7 +40,6 @@
 */
 /* #define LUA_USE_C89 */
 
-
 /*
 ** By default, Lua on Windows use (some) specific Windows features
 */
@@ -51,24 +47,20 @@
 #define LUA_USE_WINDOWS /* enable goodies for regular Windows */
 #endif
 
-
 #if defined(LUA_USE_WINDOWS)
-#define LUA_DL_DLL /* enable support for DLL */
+#define LUA_DL_DLL  /* enable support for DLL */
 #define LUA_USE_C89 /* broadly, Windows is C89 */
 #endif
-
 
 #if defined(LUA_USE_LINUX)
 #define LUA_USE_POSIX
 #define LUA_USE_DLOPEN /* needs an extra library: -ldl */
 #endif
 
-
 #if defined(LUA_USE_MACOSX)
 #define LUA_USE_POSIX
 #define LUA_USE_DLOPEN /* MacOS does not need -ldl */
 #endif
-
 
 /*
 @@ LUAI_IS32INT is true iff 'int' has (at least) 32 bits.
@@ -76,7 +68,6 @@
 #define LUAI_IS32INT ((UINT_MAX >> 30) >= 3)
 
 /* }================================================================== */
-
 
 /*
 ** {==================================================================
@@ -89,7 +80,6 @@
 */
 /* #define LUA_32BITS */
 
-
 /*
 @@ LUA_C89_NUMBERS ensures that Lua uses the largest types available for
 ** C89 ('long' and 'double'); Windows always has '__int64', so it does
@@ -98,7 +88,6 @@
 #if defined(LUA_USE_C89) && !defined(LUA_USE_WINDOWS)
 #define LUA_C89_NUMBERS
 #endif
-
 
 /*
 @@ LUA_INT_TYPE defines the type for Lua integers.
@@ -140,7 +129,6 @@
 
 #endif /* } */
 
-
 /*
 ** default configuration for 64-bit Lua ('long long' and 'double')
 */
@@ -153,7 +141,6 @@
 #endif
 
 /* }================================================================== */
-
 
 /*
 ** {==================================================================
@@ -171,7 +158,6 @@
 #define LUA_PATH_SEP ";"
 #define LUA_PATH_MARK "?"
 #define LUA_EXEC_DIR "!"
-
 
 /*
 @@ LUA_PATH_DEFAULT is the default path that Lua uses to look for
@@ -194,17 +180,19 @@
 #define LUA_SHRDIR "!\\..\\share\\lua\\" LUA_VDIR "\\"
 
 #if !defined(LUA_PATH_DEFAULT)
-#define LUA_PATH_DEFAULT                                                                                                                                                                                                                                                                                                                                                                                                                                                                       \
-    LUA_LDIR "?.lua;" LUA_LDIR "?\\init.lua;" LUA_CDIR "?.lua;" LUA_CDIR "?\\init.lua;" LUA_SHRDIR "?.lua;" LUA_SHRDIR "?\\init.lua;"                                                                                                                                                                                                                                                                                                                                                          \
-             ".\\?.lua;"                                                                                                                                                                                                                                                                                                                                                                                                                                                                       \
-             ".\\?\\init.lua"
+#define LUA_PATH_DEFAULT                                                       \
+  LUA_LDIR "?.lua;" LUA_LDIR "?\\init.lua;" LUA_CDIR "?.lua;" LUA_CDIR         \
+           "?\\init.lua;" LUA_SHRDIR "?.lua;" LUA_SHRDIR "?\\init.lua;"        \
+           ".\\?.lua;"                                                         \
+           ".\\?\\init.lua"
 #endif
 
 #if !defined(LUA_CPATH_DEFAULT)
-#define LUA_CPATH_DEFAULT                                                                                                                                                                                                                                                                                                                                                                                                                                                                      \
-    LUA_CDIR "?.dll;" LUA_CDIR "..\\lib\\lua\\" LUA_VDIR "\\?.dll;" LUA_CDIR "loadall.dll;"                                                                                                                                                                                                                                                                                                                                                                                                    \
-             ".\\?.dll;" LUA_CDIR "?54.dll;"                                                                                                                                                                                                                                                                                                                                                                                                                                                   \
-             ".\\?54.dll"
+#define LUA_CPATH_DEFAULT                                                      \
+  LUA_CDIR "?.dll;" LUA_CDIR "..\\lib\\lua\\" LUA_VDIR "\\?.dll;" LUA_CDIR     \
+           "loadall.dll;"                                                      \
+           ".\\?.dll;" LUA_CDIR "?54.dll;"                                     \
+           ".\\?54.dll"
 #endif
 
 #else /* }{ */
@@ -214,21 +202,21 @@
 #define LUA_CDIR LUA_ROOT "lib/lua/" LUA_VDIR "/"
 
 #if !defined(LUA_PATH_DEFAULT)
-#define LUA_PATH_DEFAULT                                                                                                                                                                                                                                                                                                                                                                                                                                                                       \
-    LUA_LDIR "?.lua;" LUA_LDIR "?/init.lua;" LUA_CDIR "?.lua;" LUA_CDIR "?/init.lua;"                                                                                                                                                                                                                                                                                                                                                                                                          \
-             "./?.lua;"                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \
-             "./?/init.lua"
+#define LUA_PATH_DEFAULT                                                       \
+  LUA_LDIR "?.lua;" LUA_LDIR "?/init.lua;" LUA_CDIR "?.lua;" LUA_CDIR          \
+           "?/init.lua;"                                                       \
+           "./?.lua;"                                                          \
+           "./?/init.lua"
 #endif
 
 #if !defined(LUA_CPATH_DEFAULT)
-#define LUA_CPATH_DEFAULT                                                                                                                                                                                                                                                                                                                                                                                                                                                                      \
-    LUA_CDIR "?.so;" LUA_CDIR "loadall.so;"                                                                                                                                                                                                                                                                                                                                                                                                                                                    \
-             "./?.so;" LUA_CDIR "lib?54.so;"                                                                                                                                                                                                                                                                                                                                                                                                                                                   \
-             "./lib?54.so"
+#define LUA_CPATH_DEFAULT                                                      \
+  LUA_CDIR "?.so;" LUA_CDIR "loadall.so;"                                      \
+           "./?.so;" LUA_CDIR "lib?54.so;"                                     \
+           "./lib?54.so"
 #endif
 
 #endif /* } */
-
 
 /*
 @@ LUA_DIRSEP is the directory separator (for submodules).
@@ -246,7 +234,6 @@
 #endif
 
 /* }================================================================== */
-
 
 /*
 ** {==================================================================
@@ -277,13 +264,11 @@
 
 #endif /* } */
 
-
 /*
 ** More often than not the libs go together with the core.
 */
 #define LUALIB_API LUA_API
 #define LUAMOD_API LUA_API
-
 
 /*
 @@ LUAI_FUNC is a mark for all extern functions that are not to be
@@ -299,7 +284,8 @@
 ** give a warning about it. To avoid these warnings, change to the
 ** default definition.
 */
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) && defined(__ELF__) /* { */
+#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) &&         \
+    defined(__ELF__) /* { */
 #define LUAI_FUNC __attribute__((visibility("internal"))) extern
 #else /* }{ */
 #define LUAI_FUNC extern
@@ -309,7 +295,6 @@
 #define LUAI_DDEF /* empty */
 
 /* }================================================================== */
-
 
 /*
 ** {==================================================================
@@ -341,13 +326,11 @@
 */
 #define LUA_COMPAT_APIINTCASTS
 
-
 /*
 @@ LUA_COMPAT_LT_LE controls the emulation of the '__le' metamethod
 ** using '__lt'.
 */
 #define LUA_COMPAT_LT_LE
-
 
 /*
 @@ The following macros supply trivial compatibility for some
@@ -366,7 +349,6 @@
 #endif /* } */
 
 /* }================================================================== */
-
 
 /*
 ** {==================================================================
@@ -390,12 +372,12 @@
 @@ lua_str2number converts a decimal numeral to a number.
 */
 
-
 /* The following definitions are good for most cases here */
 
 #define l_floor(x) (l_mathop(floor)(x))
 
-#define lua_number2str(s, sz, n) l_sprintf((s), sz, LUA_NUMBER_FMT, (LUAI_UACNUMBER)(n))
+#define lua_number2str(s, sz, n)                                               \
+  l_sprintf((s), sz, LUA_NUMBER_FMT, (LUAI_UACNUMBER)(n))
 
 /*
 @@ lua_numbertointeger converts a float number with an integral value
@@ -406,8 +388,9 @@
 ** MAXINTEGER may not have one, and therefore its conversion to float
 ** may have an ill-defined value.)
 */
-#define lua_numbertointeger(n, p) ((n) >= (LUA_NUMBER)(LUA_MININTEGER) && (n) < -(LUA_NUMBER)(LUA_MININTEGER) && (*(p) = (LUA_INTEGER)(n), 1))
-
+#define lua_numbertointeger(n, p)                                              \
+  ((n) >= (LUA_NUMBER)(LUA_MININTEGER) &&                                      \
+   (n) < -(LUA_NUMBER)(LUA_MININTEGER) && (*(p) = (LUA_INTEGER)(n), 1))
 
 /* now the variable definitions */
 
@@ -425,7 +408,6 @@
 #define l_mathop(op) op##f
 
 #define lua_str2number(s, p) strtof((s), (p))
-
 
 #elif LUA_FLOAT_TYPE == LUA_FLOAT_LONGDOUBLE /* }{ long double */
 
@@ -463,7 +445,6 @@
 
 #endif /* } */
 
-
 /*
 @@ LUA_INTEGER is the integer type used by Lua.
 **
@@ -480,14 +461,14 @@
 @@ lua_integer2str converts an integer to a string.
 */
 
-
 /* The following definitions are good for most cases here */
 
 #define LUA_INTEGER_FMT "%" LUA_INTEGER_FRMLEN "d"
 
 #define LUAI_UACINT LUA_INTEGER
 
-#define lua_integer2str(s, sz, n) l_sprintf((s), sz, LUA_INTEGER_FMT, (LUAI_UACINT)(n))
+#define lua_integer2str(s, sz, n)                                              \
+  l_sprintf((s), sz, LUA_INTEGER_FMT, (LUAI_UACINT)(n))
 
 /*
 ** use LUAI_UACINT here to avoid problems with promotions (which
@@ -495,9 +476,7 @@
 */
 #define LUA_UNSIGNED unsigned LUAI_UACINT
 
-
 #define LUA_UNSIGNEDBITS (sizeof(LUA_UNSIGNED) * CHAR_BIT)
-
 
 /* now the variable definitions */
 
@@ -524,7 +503,7 @@
 #elif LUA_INT_TYPE == LUA_INT_LONGLONG /* }{ long long */
 
 /* use presence of macro LLONG_MAX as proxy for C99 compliance */
-#if defined(LLONG_MAX) /* { */
+#if defined(LLONG_MAX)                 /* { */
 /* use ISO C99 stuff */
 
 #define LUA_INTEGER long long
@@ -561,7 +540,6 @@
 
 /* }================================================================== */
 
-
 /*
 ** {==================================================================
 ** Dependencies with C99 and other C details
@@ -578,7 +556,6 @@
 #define l_sprintf(s, sz, f, i) ((void)(sz), sprintf(s, f, i))
 #endif
 
-
 /*
 @@ lua_strx2number converts a hexadecimal numeral to a number.
 ** In C99, 'strtod' does that conversion. Otherwise, you can
@@ -589,13 +566,11 @@
 #define lua_strx2number(s, p) lua_str2number(s, p)
 #endif
 
-
 /*
 @@ lua_pointer2str converts a pointer to a readable string in a
 ** non-specified way.
 */
 #define lua_pointer2str(buff, sz, p) l_sprintf(buff, sz, "%p", p)
-
 
 /*
 @@ lua_number2strx converts a float to a hexadecimal numeral.
@@ -604,9 +579,9 @@
 ** provide its own implementation.
 */
 #if !defined(LUA_USE_C89)
-#define lua_number2strx(L, b, sz, f, n) ((void)L, l_sprintf(b, sz, f, (LUAI_UACNUMBER)(n)))
+#define lua_number2strx(L, b, sz, f, n)                                        \
+  ((void)L, l_sprintf(b, sz, f, (LUAI_UACNUMBER)(n)))
 #endif
-
 
 /*
 ** 'strtof' and 'opf' variants for math functions are not valid in
@@ -621,7 +596,6 @@
 #define lua_str2number(s, p) ((lua_Number)strtod((s), (p)))
 #endif
 
-
 /*
 @@ LUA_KCONTEXT is the type of the context ('ctx') for continuation
 ** functions.  It must be a numerical type; Lua will use 'intptr_t' if
@@ -630,14 +604,14 @@
 */
 #define LUA_KCONTEXT ptrdiff_t
 
-#if !defined(LUA_USE_C89) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#if !defined(LUA_USE_C89) && defined(__STDC_VERSION__) &&                      \
+    __STDC_VERSION__ >= 199901L
 #include <stdint.h>
 #if defined(INTPTR_MAX) /* even in C99 this type is optional */
 #undef LUA_KCONTEXT
 #define LUA_KCONTEXT intptr_t
 #endif
 #endif
-
 
 /*
 @@ lua_getlocaledecpoint gets the locale "radix character" (decimal point).
@@ -649,7 +623,6 @@
 #endif
 
 /* }================================================================== */
-
 
 /*
 ** {==================================================================
@@ -666,7 +639,6 @@
 /* #define LUA_NOCVTN2S */
 /* #define LUA_NOCVTS2N */
 
-
 /*
 @@ LUA_USE_APICHECK turns on several consistency checks on the C API.
 ** Define it as a help when debugging C code.
@@ -677,7 +649,6 @@
 #endif
 
 /* }================================================================== */
-
 
 /*
 ** {==================================================================
@@ -700,14 +671,12 @@
 #define LUAI_MAXSTACK 15000
 #endif
 
-
 /*
 @@ LUA_EXTRASPACE defines the size of a raw memory area associated with
 ** a Lua state with very fast access.
 ** CHANGE it if you need a different size.
 */
-#define LUA_EXTRASPACE (sizeof(void*))
-
+#define LUA_EXTRASPACE (sizeof(void *))
 
 /*
 @@ LUA_IDSIZE gives the maximum size for the description of the source
@@ -716,26 +685,23 @@
 */
 #define LUA_IDSIZE 60
 
-
 /*
 @@ LUAL_BUFFERSIZE is the buffer size used by the lauxlib buffer system.
 */
-#define LUAL_BUFFERSIZE ((int)(16 * sizeof(void*) * sizeof(lua_Number)))
-
+#define LUAL_BUFFERSIZE ((int)(16 * sizeof(void *) * sizeof(lua_Number)))
 
 /*
 @@ LUAI_MAXALIGN defines fields that, when used in a union, ensure
 ** maximum alignment for the other items in that union.
 */
-#define LUAI_MAXALIGN                                                                                                                                                                                                                                                                                                                                                                                                                                                                          \
-    lua_Number n;                                                                                                                                                                                                                                                                                                                                                                                                                                                                              \
-    double u;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  \
-    void* s;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   \
-    lua_Integer i;                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \
-    long l
+#define LUAI_MAXALIGN                                                          \
+  lua_Number n;                                                                \
+  double u;                                                                    \
+  void *s;                                                                     \
+  lua_Integer i;                                                               \
+  long l
 
 /* }================================================================== */
-
 
 /* =================================================================== */
 
@@ -743,6 +709,5 @@
 ** Local configuration. You can use this space to add your redefinitions
 ** without modifying the main part of the file.
 */
-
 
 #endif

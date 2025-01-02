@@ -39,7 +39,7 @@
 #include <core/r4300/rom.h>
 #include <stdio.h>
 
-extern precomp_instr* PC;
+extern precomp_instr *PC;
 extern uint32_t vr_op;
 
 extern precomp_block *blocks[0x100000], *actual;
@@ -60,8 +60,8 @@ extern int64_t local_rs, local_rt;
 extern uint32_t reg_cop0[32];
 extern int32_t local_rs32, local_rt32;
 extern uint32_t jump_target;
-extern double* reg_cop1_double[32];
-extern float* reg_cop1_simple[32];
+extern double *reg_cop1_double[32];
+extern float *reg_cop1_simple[32];
 extern int32_t reg_cop1_fgr_32[32];
 extern int64_t reg_cop1_fgr_64[32];
 extern int32_t FCR0, FCR31;
@@ -83,10 +83,10 @@ extern int32_t compare_core_mode;
 extern bool g_vr_fast_forward;
 extern bool g_vr_frame_skipped;
 
-extern FILE* g_eeprom_file;
-extern FILE* g_sram_file;
-extern FILE* g_fram_file;
-extern FILE* g_mpak_file;
+extern FILE *g_eeprom_file;
+extern FILE *g_sram_file;
+extern FILE *g_fram_file;
+extern FILE *g_mpak_file;
 
 extern bool g_vr_benchmark_enabled;
 extern bool g_vr_no_frameskip;
@@ -94,20 +94,19 @@ extern std::atomic<int32_t> g_vr_wait_before_input_poll;
 
 std::filesystem::path get_rom_path();
 
-namespace Core
-{
-    /**
-     * Starts a benchmark section. Must be stopped with <see
-     * cref="stop_benchmark"/>.
-     */
-    void start_benchmark();
+namespace Core {
+/**
+ * Starts a benchmark section. Must be stopped with <see
+ * cref="stop_benchmark"/>.
+ */
+void start_benchmark();
 
-    /**
-     * Stops the currently running benchmark section.
-     * \return The amount of frames per real-time second during the benchmark. If no
-     * benchmark is running, 0 is returned.
-     */
-    double stop_benchmark();
+/**
+ * Stops the currently running benchmark section.
+ * \return The amount of frames per real-time second during the benchmark. If no
+ * benchmark is running, 0 is returned.
+ */
+double stop_benchmark();
 } // namespace Core
 
 /**
@@ -147,7 +146,8 @@ CoreResult vr_close_rom(bool stop_vcr = true, bool wait = false);
  * complete. When true, the Busy result is never returned. \return The operation
  * result
  */
-CoreResult vr_reset_rom(bool reset_save_data = false, bool stop_vcr = true, bool wait = false);
+CoreResult vr_reset_rom(bool reset_save_data = false, bool stop_vcr = true,
+                        bool wait = false);
 
 /**
  * \brief Toggles between fullscreen and windowed mode
@@ -181,11 +181,11 @@ void update_count();
 int32_t check_cop1_unusable();
 void terminate_emu();
 
-#define jump_to(a)                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \
-    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          \
-        jump_to_address = a;                                                                                                                                                                                                                                                                                                                                                                                                                                                                   \
-        jump_to_func();                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \
-    }
+#define jump_to(a)                                                             \
+  {                                                                            \
+    jump_to_address = a;                                                       \
+    jump_to_func();                                                            \
+  }
 
 // Mask all exceptions, and set precision to 53 bits
 #define TRUNC_MODE 0xE3F

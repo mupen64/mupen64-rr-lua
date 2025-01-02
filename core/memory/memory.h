@@ -43,12 +43,12 @@ constexpr uint32_t AddrMask = 0x7FFFFF;
 #define write_hword_in_memory() writememh[address >> 16]()
 #define write_dword_in_memory() writememd[address >> 16]()
 extern uint32_t SP_DMEM[0x1000 / 4 * 2];
-extern unsigned char* SP_DMEMb;
-extern uint32_t* SP_IMEM;
+extern unsigned char *SP_DMEMb;
+extern uint32_t *SP_IMEM;
 extern uint32_t PIF_RAM[0x40 / 4];
-extern unsigned char* PIF_RAMb;
+extern unsigned char *PIF_RAMb;
 extern uint32_t rdram[0x800000 / 4];
-extern uint8_t* rdramb;
+extern uint8_t *rdramb;
 extern uint8_t sram[0x8000];
 extern uint8_t flashram[0x20000];
 extern uint8_t eeprom[0x800];
@@ -68,167 +68,167 @@ extern void (*writememh[0xFFFF])();
 extern void (*writememd[0xFFFF])();
 
 typedef struct _RDRAM_register {
-    uint32_t rdram_config;
-    uint32_t rdram_device_id;
-    uint32_t rdram_delay;
-    uint32_t rdram_mode;
-    uint32_t rdram_ref_interval;
-    uint32_t rdram_ref_row;
-    uint32_t rdram_ras_interval;
-    uint32_t rdram_min_interval;
-    uint32_t rdram_addr_select;
-    uint32_t rdram_device_manuf;
+  uint32_t rdram_config;
+  uint32_t rdram_device_id;
+  uint32_t rdram_delay;
+  uint32_t rdram_mode;
+  uint32_t rdram_ref_interval;
+  uint32_t rdram_ref_row;
+  uint32_t rdram_ras_interval;
+  uint32_t rdram_min_interval;
+  uint32_t rdram_addr_select;
+  uint32_t rdram_device_manuf;
 } RDRAM_register;
 
 typedef struct _SP_register {
-    uint32_t sp_mem_addr_reg;
-    uint32_t sp_dram_addr_reg;
-    uint32_t sp_rd_len_reg;
-    uint32_t sp_wr_len_reg;
-    uint32_t w_sp_status_reg;
-    uint32_t sp_status_reg;
-    char halt;
-    char broke;
-    char dma_busy;
-    char dma_full;
-    char io_full;
-    char single_step;
-    char intr_break;
-    char signal0;
-    char signal1;
-    char signal2;
-    char signal3;
-    char signal4;
-    char signal5;
-    char signal6;
-    char signal7;
-    uint32_t sp_dma_full_reg;
-    uint32_t sp_dma_busy_reg;
-    uint32_t sp_semaphore_reg;
+  uint32_t sp_mem_addr_reg;
+  uint32_t sp_dram_addr_reg;
+  uint32_t sp_rd_len_reg;
+  uint32_t sp_wr_len_reg;
+  uint32_t w_sp_status_reg;
+  uint32_t sp_status_reg;
+  char halt;
+  char broke;
+  char dma_busy;
+  char dma_full;
+  char io_full;
+  char single_step;
+  char intr_break;
+  char signal0;
+  char signal1;
+  char signal2;
+  char signal3;
+  char signal4;
+  char signal5;
+  char signal6;
+  char signal7;
+  uint32_t sp_dma_full_reg;
+  uint32_t sp_dma_busy_reg;
+  uint32_t sp_semaphore_reg;
 } SP_register;
 
 typedef struct _RSP_register {
-    uint32_t rsp_pc;
-    uint32_t rsp_ibist;
+  uint32_t rsp_pc;
+  uint32_t rsp_ibist;
 } RSP_register;
 
 typedef struct _DPC_register {
-    uint32_t dpc_start;
-    uint32_t dpc_end;
-    uint32_t dpc_current;
-    uint32_t w_dpc_status;
-    uint32_t dpc_status;
-    char xbus_dmem_dma;
-    char freeze;
-    char flush;
-    char start_glck;
-    char tmem_busy;
-    char pipe_busy;
-    char cmd_busy;
-    char cbuf_busy;
-    char dma_busy;
-    char end_valid;
-    char start_valid;
-    uint32_t dpc_clock;
-    uint32_t dpc_bufbusy;
-    uint32_t dpc_pipebusy;
-    uint32_t dpc_tmem;
+  uint32_t dpc_start;
+  uint32_t dpc_end;
+  uint32_t dpc_current;
+  uint32_t w_dpc_status;
+  uint32_t dpc_status;
+  char xbus_dmem_dma;
+  char freeze;
+  char flush;
+  char start_glck;
+  char tmem_busy;
+  char pipe_busy;
+  char cmd_busy;
+  char cbuf_busy;
+  char dma_busy;
+  char end_valid;
+  char start_valid;
+  uint32_t dpc_clock;
+  uint32_t dpc_bufbusy;
+  uint32_t dpc_pipebusy;
+  uint32_t dpc_tmem;
 } DPC_register;
 
 typedef struct _DPS_register {
-    uint32_t dps_tbist;
-    uint32_t dps_test_mode;
-    uint32_t dps_buftest_addr;
-    uint32_t dps_buftest_data;
+  uint32_t dps_tbist;
+  uint32_t dps_test_mode;
+  uint32_t dps_buftest_addr;
+  uint32_t dps_buftest_data;
 } DPS_register;
 
 typedef struct _mips_register {
-    uint32_t w_mi_init_mode_reg;
-    uint32_t mi_init_mode_reg;
-    char init_length;
-    char init_mode;
-    char ebus_test_mode;
-    char RDRAM_reg_mode;
-    uint32_t mi_version_reg;
-    uint32_t mi_intr_reg;
-    uint32_t mi_intr_mask_reg;
-    uint32_t w_mi_intr_mask_reg;
-    char SP_intr_mask;
-    char SI_intr_mask;
-    char AI_intr_mask;
-    char VI_intr_mask;
-    char PI_intr_mask;
-    char DP_intr_mask;
+  uint32_t w_mi_init_mode_reg;
+  uint32_t mi_init_mode_reg;
+  char init_length;
+  char init_mode;
+  char ebus_test_mode;
+  char RDRAM_reg_mode;
+  uint32_t mi_version_reg;
+  uint32_t mi_intr_reg;
+  uint32_t mi_intr_mask_reg;
+  uint32_t w_mi_intr_mask_reg;
+  char SP_intr_mask;
+  char SI_intr_mask;
+  char AI_intr_mask;
+  char VI_intr_mask;
+  char PI_intr_mask;
+  char DP_intr_mask;
 } mips_register;
 
 typedef struct _VI_register {
-    uint32_t vi_status;
-    uint32_t vi_origin;
-    uint32_t vi_width;
-    uint32_t vi_v_intr;
-    uint32_t vi_current;
-    uint32_t vi_burst;
-    uint32_t vi_v_sync;
-    uint32_t vi_h_sync;
-    uint32_t vi_leap;
-    uint32_t vi_h_start;
-    uint32_t vi_v_start;
-    uint32_t vi_v_burst;
-    uint32_t vi_x_scale;
-    uint32_t vi_y_scale;
-    uint32_t vi_delay;
+  uint32_t vi_status;
+  uint32_t vi_origin;
+  uint32_t vi_width;
+  uint32_t vi_v_intr;
+  uint32_t vi_current;
+  uint32_t vi_burst;
+  uint32_t vi_v_sync;
+  uint32_t vi_h_sync;
+  uint32_t vi_leap;
+  uint32_t vi_h_start;
+  uint32_t vi_v_start;
+  uint32_t vi_v_burst;
+  uint32_t vi_x_scale;
+  uint32_t vi_y_scale;
+  uint32_t vi_delay;
 } VI_register;
 
 typedef struct _AI_register {
-    uint32_t ai_dram_addr;
-    // source address (in rdram) of sound sample to be played
-    uint32_t ai_len; // amount of bytes(?) to be played
-    uint32_t ai_control;
-    uint32_t ai_status; // info about whether dma active and is fifo full
-    uint32_t ai_dacrate;
-    // clock rate / audio rate, tells sound controller how to interpret the audio
-    // samples
-    uint32_t ai_bitrate;
-    // possible values 2 to 16, bits per sample?, this is always (dacRate / 66)-1
-    // (by libultra)
-    uint32_t next_delay;
-    uint32_t next_len;
-    uint32_t current_delay;
-    uint32_t current_len;
+  uint32_t ai_dram_addr;
+  // source address (in rdram) of sound sample to be played
+  uint32_t ai_len; // amount of bytes(?) to be played
+  uint32_t ai_control;
+  uint32_t ai_status; // info about whether dma active and is fifo full
+  uint32_t ai_dacrate;
+  // clock rate / audio rate, tells sound controller how to interpret the audio
+  // samples
+  uint32_t ai_bitrate;
+  // possible values 2 to 16, bits per sample?, this is always (dacRate / 66)-1
+  // (by libultra)
+  uint32_t next_delay;
+  uint32_t next_len;
+  uint32_t current_delay;
+  uint32_t current_len;
 } AI_register;
 
 typedef struct _PI_register {
-    uint32_t pi_dram_addr_reg;
-    uint32_t pi_cart_addr_reg;
-    uint32_t pi_rd_len_reg;
-    uint32_t pi_wr_len_reg;
-    uint32_t read_pi_status_reg;
-    uint32_t pi_bsd_dom1_lat_reg;
-    uint32_t pi_bsd_dom1_pwd_reg;
-    uint32_t pi_bsd_dom1_pgs_reg;
-    uint32_t pi_bsd_dom1_rls_reg;
-    uint32_t pi_bsd_dom2_lat_reg;
-    uint32_t pi_bsd_dom2_pwd_reg;
-    uint32_t pi_bsd_dom2_pgs_reg;
-    uint32_t pi_bsd_dom2_rls_reg;
+  uint32_t pi_dram_addr_reg;
+  uint32_t pi_cart_addr_reg;
+  uint32_t pi_rd_len_reg;
+  uint32_t pi_wr_len_reg;
+  uint32_t read_pi_status_reg;
+  uint32_t pi_bsd_dom1_lat_reg;
+  uint32_t pi_bsd_dom1_pwd_reg;
+  uint32_t pi_bsd_dom1_pgs_reg;
+  uint32_t pi_bsd_dom1_rls_reg;
+  uint32_t pi_bsd_dom2_lat_reg;
+  uint32_t pi_bsd_dom2_pwd_reg;
+  uint32_t pi_bsd_dom2_pgs_reg;
+  uint32_t pi_bsd_dom2_rls_reg;
 } PI_register;
 
 typedef struct _RI_register {
-    uint32_t ri_mode;
-    uint32_t ri_config;
-    uint32_t ri_current_load;
-    uint32_t ri_select;
-    uint32_t ri_refresh;
-    uint32_t ri_latency;
-    uint32_t ri_error;
-    uint32_t ri_werror;
+  uint32_t ri_mode;
+  uint32_t ri_config;
+  uint32_t ri_current_load;
+  uint32_t ri_select;
+  uint32_t ri_refresh;
+  uint32_t ri_latency;
+  uint32_t ri_error;
+  uint32_t ri_werror;
 } RI_register;
 
 typedef struct _SI_register {
-    uint32_t si_dram_addr;
-    uint32_t si_pif_addr_rd64b;
-    uint32_t si_pif_addr_wr64b;
-    uint32_t si_status;
+  uint32_t si_dram_addr;
+  uint32_t si_pif_addr_rd64b;
+  uint32_t si_pif_addr_wr64b;
+  uint32_t si_status;
 } SI_register;
 
 extern RDRAM_register rdram_register;
@@ -244,7 +244,9 @@ extern DPC_register dpc_register;
 extern DPS_register dps_register;
 
 #ifndef _BIG_ENDIAN
-#define sl(mot) (((mot & 0x000000FF) << 24) | ((mot & 0x0000FF00) << 8) | ((mot & 0x00FF0000) >> 8) | ((mot & 0xFF000000) >> 24))
+#define sl(mot)                                                                \
+  (((mot & 0x000000FF) << 24) | ((mot & 0x0000FF00) << 8) |                    \
+   ((mot & 0x00FF0000) >> 8) | ((mot & 0xFF000000) >> 24))
 
 #define S8 3
 #define S16 2
@@ -425,10 +427,11 @@ void write_sc_regd();
 void update_SP();
 void update_DPC();
 
-template <typename T>
-uint32_t ToAddr(uint32_t addr)
-{
-    return sizeof(T) == 4 ? addr : sizeof(T) == 2 ? addr ^ S16 : sizeof(T) == 1 ? addr ^ S8 : throw "ToAddr: sizeof(T)";
+template <typename T> uint32_t ToAddr(uint32_t addr) {
+  return sizeof(T) == 4   ? addr
+         : sizeof(T) == 2 ? addr ^ S16
+         : sizeof(T) == 1 ? addr ^ S8
+                          : throw "ToAddr: sizeof(T)";
 }
 
 /**
@@ -437,10 +440,8 @@ uint32_t ToAddr(uint32_t addr)
  * \param addr The start address of the value
  * \return The value at the address
  */
-template <typename T>
-extern T LoadRDRAMSafe(uint32_t addr)
-{
-    return *((T*)(rdramb + ((ToAddr<T>(addr) & AddrMask))));
+template <typename T> extern T LoadRDRAMSafe(uint32_t addr) {
+  return *((T *)(rdramb + ((ToAddr<T>(addr) & AddrMask))));
 }
 
 /**
@@ -449,10 +450,8 @@ extern T LoadRDRAMSafe(uint32_t addr)
  * \param addr The start address of the value
  * \param value The value to set
  */
-template <typename T>
-extern void StoreRDRAMSafe(uint32_t addr, T value)
-{
-    *((T*)(rdramb + ((ToAddr<T>(addr) & AddrMask)))) = value;
+template <typename T> extern void StoreRDRAMSafe(uint32_t addr, T value) {
+  *((T *)(rdramb + ((ToAddr<T>(addr) & AddrMask)))) = value;
 }
 
 #endif

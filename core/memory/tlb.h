@@ -33,27 +33,27 @@
 #include <cstdint>
 
 typedef struct _tlb {
-    int16_t mask;
-    int32_t vpn2;
-    char g;
-    unsigned char asid;
-    int32_t pfn_even;
-    char c_even;
-    char d_even;
-    char v_even;
-    int32_t pfn_odd;
-    char c_odd;
-    char d_odd;
-    char v_odd;
-    char r;
-    // int32_t check_parity_mask;
+  int16_t mask;
+  int32_t vpn2;
+  char g;
+  unsigned char asid;
+  int32_t pfn_even;
+  char c_even;
+  char d_even;
+  char v_even;
+  int32_t pfn_odd;
+  char c_odd;
+  char d_odd;
+  char v_odd;
+  char r;
+  // int32_t check_parity_mask;
 
-    uint32_t start_even;
-    uint32_t end_even;
-    uint32_t phys_even;
-    uint32_t start_odd;
-    uint32_t end_odd;
-    uint32_t phys_odd;
+  uint32_t start_even;
+  uint32_t end_even;
+  uint32_t phys_even;
+  uint32_t start_odd;
+  uint32_t end_odd;
+  uint32_t phys_odd;
 } tlb;
 
 extern uint32_t tlb_LUT_r[0x100000];

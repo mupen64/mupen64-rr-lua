@@ -33,79 +33,70 @@
 #include "ops.h"
 #include "r4300.h"
 
-void MFC1()
-{
-    if (check_cop1_unusable())
-        return;
-    rrt32 = *((int32_t*)reg_cop1_simple[core_rfs]);
+void MFC1() {
+  if (check_cop1_unusable())
+    return;
+  rrt32 = *((int32_t *)reg_cop1_simple[core_rfs]);
+  sign_extended(core_rrt);
+  PC++;
+}
+
+void DMFC1() {
+  if (check_cop1_unusable())
+    return;
+  core_rrt = *((int64_t *)reg_cop1_double[core_rfs]);
+  PC++;
+}
+
+void CFC1() {
+  if (check_cop1_unusable())
+    return;
+  if (core_rfs == 31) {
+    rrt32 = FCR31;
     sign_extended(core_rrt);
-    PC++;
+  }
+  if (core_rfs == 0) {
+    rrt32 = FCR0;
+    sign_extended(core_rrt);
+  }
+  PC++;
 }
 
-void DMFC1()
-{
-    if (check_cop1_unusable())
-        return;
-    core_rrt = *((int64_t*)reg_cop1_double[core_rfs]);
-    PC++;
+void MTC1() {
+  if (check_cop1_unusable())
+    return;
+  *((int32_t *)reg_cop1_simple[core_rfs]) = rrt32;
+  PC++;
 }
 
-void CFC1()
-{
-    if (check_cop1_unusable())
-        return;
-    if (core_rfs == 31)
-    {
-        rrt32 = FCR31;
-        sign_extended(core_rrt);
-    }
-    if (core_rfs == 0)
-    {
-        rrt32 = FCR0;
-        sign_extended(core_rrt);
-    }
-    PC++;
+void DMTC1() {
+  if (check_cop1_unusable())
+    return;
+  *((int64_t *)reg_cop1_double[core_rfs]) = core_rrt;
+  PC++;
 }
 
-void MTC1()
-{
-    if (check_cop1_unusable())
-        return;
-    *((int32_t*)reg_cop1_simple[core_rfs]) = rrt32;
-    PC++;
-}
-
-void DMTC1()
-{
-    if (check_cop1_unusable())
-        return;
-    *((int64_t*)reg_cop1_double[core_rfs]) = core_rrt;
-    PC++;
-}
-
-void CTC1()
-{
-    if (check_cop1_unusable())
-        return;
-    if (core_rfs == 31)
-        FCR31 = rrt32;
-    switch ((FCR31 & 3))
-    {
-    case 0:
-        rounding_mode = ROUND_MODE;
-        break;
-    case 1:
-        rounding_mode = TRUNC_MODE;
-        break;
-    case 2:
-        rounding_mode = CEIL_MODE;
-        break;
-    case 3:
-        rounding_mode = FLOOR_MODE;
-        break;
-    }
-    set_rounding();
-    // if ((FCR31 >> 7) & 0x1F) g_core_logger->info("FPU Exception enabled :
-    // {:#06x}", 				   (int32_t)((FCR31 >> 7) & 0x1F));
-    PC++;
+void CTC1() {
+  if (check_cop1_unusable())
+    return;
+  if (core_rfs == 31)
+    FCR31 = rrt32;
+  switch ((FCR31 & 3)) {
+  case 0:
+    rounding_mode = ROUND_MODE;
+    break;
+  case 1:
+    rounding_mode = TRUNC_MODE;
+    break;
+  case 2:
+    rounding_mode = CEIL_MODE;
+    break;
+  case 3:
+    rounding_mode = FLOOR_MODE;
+    break;
+  }
+  set_rounding();
+  // if ((FCR31 >> 7) & 0x1F) g_core_logger->info("FPU Exception enabled :
+  // {:#06x}", 				   (int32_t)((FCR31 >> 7) & 0x1F));
+  PC++;
 }
