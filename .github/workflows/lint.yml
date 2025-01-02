@@ -34,7 +34,6 @@ jobs:
           VALIDATE_YAML_PRETTIER: false
           VALIDATE_CPP: false
           FIX_CLANG_FORMAT: true
-          LINTER_RULES_PATH: ""
           FILTER_REGEX_EXCLUDE: ^lib/
       - name: Commit and push linting fixes
         if: >
