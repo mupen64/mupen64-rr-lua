@@ -54,7 +54,7 @@
 #include "md5.h"
 #include <string.h>
 
-#undef BYTE_ORDER /* 1 = big-endian, -1 = little-endian, 0 = unknown */
+#undef      BYTE_ORDER /* 1 = big-endian, -1 = little-endian, 0 = unknown */
 #ifdef ARCH_IS_BIG_ENDIAN
 #define BYTE_ORDER (ARCH_IS_BIG_ENDIAN ? 1 : -1)
 #else
