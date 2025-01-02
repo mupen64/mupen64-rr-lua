@@ -72,7 +72,7 @@
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
 
-   DWORD g_ui_thread_id;
+DWORD g_ui_thread_id;
 HWND g_hwnd_plug;
 UINT g_update_screen_timer;
 HWND g_main_hwnd;
