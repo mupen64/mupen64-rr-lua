@@ -2,23 +2,22 @@
  * The MIT License (MIT)
  * Copyright (c) 2018 Danijel Durakovic
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
@@ -108,7 +107,8 @@ namespace mINI
 #ifndef MINI_CASE_SENSITIVE
         inline void toLower(std::string& str)
         {
-            std::transform(str.begin(), str.end(), str.begin(), [](const char c) { return static_cast<char>(std::tolower(c)); });
+            std::transform(str.begin(), str.end(), str.begin(),
+                           [](const char c) { return static_cast<char>(std::tolower(c)); });
         }
 #endif
         inline void replace(std::string& str, std::string const& a, std::string const& b)
@@ -127,7 +127,8 @@ namespace mINI
     } // namespace INIStringUtil
 
     template <typename T>
-    class INIMap {
+    class INIMap
+    {
     private:
         using T_DataIndexMap = std::unordered_map<std::string, std::size_t>;
         using T_DataItem = std::pair<std::string, T>;
@@ -260,7 +261,14 @@ namespace mINI
     {
         using T_ParseValues = std::pair<std::string, std::string>;
 
-        enum class PDataType : char { PDATA_NONE, PDATA_COMMENT, PDATA_SECTION, PDATA_KEYVALUE, PDATA_UNKNOWN };
+        enum class PDataType : char
+        {
+            PDATA_NONE,
+            PDATA_COMMENT,
+            PDATA_SECTION,
+            PDATA_KEYVALUE,
+            PDATA_UNKNOWN
+        };
 
         inline PDataType parseLine(std::string line, T_ParseValues& parseData)
         {
@@ -310,7 +318,8 @@ namespace mINI
         }
     } // namespace INIParser
 
-    class INIReader {
+    class INIReader
+    {
     public:
         using T_LineData = std::vector<std::string>;
         using T_LineDataPtr = std::shared_ptr<T_LineData>;
@@ -328,8 +337,11 @@ namespace mINI
             fileReadStream.seekg(0, std::ios::beg);
             if (fileSize >= 3)
             {
-                const char header[3] = {static_cast<char>(fileReadStream.get()), static_cast<char>(fileReadStream.get()), static_cast<char>(fileReadStream.get())};
-                isBOM = (header[0] == static_cast<char>(0xEF) && header[1] == static_cast<char>(0xBB) && header[2] == static_cast<char>(0xBF));
+                const char header[3] = {static_cast<char>(fileReadStream.get()),
+                                        static_cast<char>(fileReadStream.get()),
+                                        static_cast<char>(fileReadStream.get())};
+                isBOM = (header[0] == static_cast<char>(0xEF) && header[1] == static_cast<char>(0xBB) &&
+                         header[2] == static_cast<char>(0xBF));
             }
             else
             {
@@ -414,7 +426,8 @@ namespace mINI
         T_LineDataPtr getLines() { return lineData; }
     };
 
-    class INIGenerator {
+    class INIGenerator
+    {
     private:
         std::ofstream fileWriteStream;
 
@@ -472,7 +485,8 @@ namespace mINI
         }
     };
 
-    class INIWriter {
+    class INIWriter
+    {
     private:
         using T_LineData = std::vector<std::string>;
         using T_LineDataPtr = std::shared_ptr<T_LineData>;
@@ -543,7 +557,8 @@ namespace mINI
                                     auto lineNorm = *line;
                                     INIStringUtil::replace(lineNorm, "\\=", "  ");
                                     auto equalsAt = lineNorm.find_first_of('=');
-                                    auto valueAt = lineNorm.find_first_not_of(INIStringUtil::whitespaceDelimiters, equalsAt + 1);
+                                    auto valueAt =
+                                        lineNorm.find_first_not_of(INIStringUtil::whitespaceDelimiters, equalsAt + 1);
                                     std::string outputLine = line->substr(0, valueAt);
                                     if (prettyPrint && equalsAt + 1 == valueAt)
                                     {
@@ -662,7 +677,8 @@ namespace mINI
             {
                 if (fileIsBOM)
                 {
-                    const char utf8_BOM[3] = {static_cast<char>(0xEF), static_cast<char>(0xBB), static_cast<char>(0xBF)};
+                    const char utf8_BOM[3] = {static_cast<char>(0xEF), static_cast<char>(0xBB),
+                                              static_cast<char>(0xBF)};
                     fileWriteStream.write(utf8_BOM, 3);
                 }
                 if (output.size())
@@ -684,7 +700,8 @@ namespace mINI
         }
     };
 
-    class INIFile {
+    class INIFile
+    {
     private:
         std::string filename;
 

@@ -102,8 +102,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Uncomment to customize level names (e.g. "MY TRACE")
 //
-// #define SPDLOG_LEVEL_NAMES { "MY TRACE", "MY DEBUG", "MY INFO", "MY WARNING",
-// "MY ERROR", "MY CRITICAL", "OFF" }
+// #define SPDLOG_LEVEL_NAMES { "MY TRACE", "MY DEBUG", "MY INFO", "MY WARNING", "MY ERROR", "MY
+// CRITICAL", "OFF" }
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,16 +115,14 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Uncomment to disable default logger creation.
-// This might save some (very) small initialization time if no default logger is
-// needed.
+// This might save some (very) small initialization time if no default logger is needed.
 //
 // #define SPDLOG_DISABLE_DEFAULT_LOGGER
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 // Uncomment and set to compile time level with zero cost (default is INFO).
-// Macros like SPDLOG_DEBUG(..), SPDLOG_INFO(..)  will expand to empty
-// statements if not enabled
+// Macros like SPDLOG_DEBUG(..), SPDLOG_INFO(..)  will expand to empty statements if not enabled
 //
 // #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
 ///////////////////////////////////////////////////////////////////////////////
