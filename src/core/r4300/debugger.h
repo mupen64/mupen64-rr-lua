@@ -14,4 +14,6 @@ namespace Debugger
      * \param address The processor's address
      */
     void on_late_cycle(uint32_t opcode, uint32_t address);
+
+    void core_compare(void);
 }

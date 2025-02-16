@@ -42,13 +42,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -134,7 +134,7 @@
       <AdditionalIncludeDirectories>src/core;lib/;lib/zlib;lib/libdeflate-x64;lib/xxhash;lib/json;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;__x86_64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <CompileAs>CompileAsCpp</CompileAs>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -154,7 +154,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;__x86_64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CompileAs>CompileAsCpp</CompileAs>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -198,9 +198,11 @@
     <ClInclude Include="src\core\r4300\timers.h" />
     <ClInclude Include="src\core\r4300\tracelog.h" />
     <ClInclude Include="src\core\r4300\vcr.h" />
-    <ClInclude Include="src\core\r4300\x86\assemble.h" />
-    <ClInclude Include="src\core\r4300\x86\gcop1_helpers.h" />
-    <ClInclude Include="src\core\r4300\x86\regcache.h" />
+    <ClInclude Include="src\core\r4300\fpu.h" />
+    <ClInclude Include="src\core\r4300\x86_64\assemble.h" />
+    <ClInclude Include="src\core\r4300\x86_64\assemble_struct.h" />
+    <ClInclude Include="src\core\r4300\x86_64\interpret.h" />
+    <ClInclude Include="src\core\r4300\x86_64\regcache.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\IOHelpers.cpp">
@@ -251,23 +253,21 @@
     <ClCompile Include="src\core\r4300\timers.cpp" />
     <ClCompile Include="src\core\r4300\tracelog.cpp" />
     <ClCompile Include="src\core\r4300\vcr.cpp" />
-    <ClCompile Include="src\core\r4300\x86\assemble.cpp" />
-    <ClCompile Include="src\core\r4300\x86\debug.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gbc.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gcop0.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gcop1.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gcop1_d.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gcop1_helpers.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gcop1_l.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gcop1_s.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gcop1_w.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gr4300.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gregimm.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gspecial.cpp" />
-    <ClCompile Include="src\core\r4300\x86\gtlb.cpp" />
-    <ClCompile Include="src\core\r4300\x86\regcache.cpp" />
-    <ClCompile Include="src\core\r4300\x86\rjump.cpp" />
     <ClCompile Include="src\core\r4300\bc.cpp" />
+    <ClCompile Include="src\core\r4300\x86_64\assemble.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gbc.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gcop0.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gcop1.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gcop1_d.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gcop1_l.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gcop1_s.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gcop1_w.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gr4300.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gregimm.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gspecial.c" />
+    <ClCompile Include="src\core\r4300\x86_64\gtlb.c" />
+    <ClCompile Include="src\core\r4300\x86_64\regcache.c" />
+    <ClCompile Include="src\core\r4300\x86_64\rjump.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -340,8 +340,9 @@ void core_tl_start(std::filesystem::path path, bool binary, bool append)
     enabled = true;
     if (interpcore == 0)
     {
-        recompile_all();
-        recompile_now(PC->addr);
+        // FIXME
+        // recompile_all();
+        // recompile_now(PC->addr);
     }
 }
 

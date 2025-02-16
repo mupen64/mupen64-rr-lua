@@ -17,8 +17,8 @@ std::unordered_map<std::filesystem::path, std::pair<uint8_t*, size_t>> rom_cache
 uint8_t* rom;
 size_t rom_size;
 char rom_md5[33];
-
 core_rom_header ROM_HEADER;
+unsigned char isGoldeneyeRom;
 
 void print_rom_info()
 {
@@ -254,5 +254,9 @@ bool rom_load(std::filesystem::path path)
         rom_cache[path] = std::make_pair(data, taille);
     }
 
+    isGoldeneyeRom = 0;
+    if(strncmp((char*)ROM_HEADER.nom, "GOLDENEYE", 19) == 0)
+        isGoldeneyeRom = 1;
+    
     return true;
 }

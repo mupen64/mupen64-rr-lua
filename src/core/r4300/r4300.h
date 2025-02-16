@@ -64,16 +64,17 @@ extern FILE* g_mpak_file;
 
 extern bool g_vr_benchmark_enabled;
 
+void init_blocks(void);
+void free_blocks(void);
 void pure_interpreter();
 extern void jump_to_func();
 void update_count();
 int32_t check_cop1_unusable();
+void shuffle_fpr_data(int oldStatus, int newStatus);
+void set_fpr_pointers(int newStatus);
 void terminate_emu();
+void r4300_reset_soft(void);
 
 core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
-
-void *malloc_exec(size_t size);
-void *realloc_exec(void *ptr, size_t oldsize, size_t newsize);
-void free_exec(void* ptr);
 
 #define jump_to(a) { jump_to_address = a; jump_to_func(); }

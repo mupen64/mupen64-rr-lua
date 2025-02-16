@@ -15,12 +15,13 @@ extern precomp_block* dst_block;
 extern int32_t jump_marker;
 extern uint32_t* return_address;
 extern int32_t fast_memory;
+extern uint32_t src;
 
-void passe2(precomp_instr* dest, int32_t start, int32_t end, precomp_block* block);
-void init_assembler(void* block_jumps_table, int32_t block_jumps_number);
-void free_assembler(void** block_jumps_table, int32_t* block_jumps_number);
+void passe2(precomp_instr *dest, int start, int end, precomp_block* block);
+void init_assembler(void *block_jumps_table, int block_jumps_number, void *block_riprel_table, int block_riprel_number);
+void free_assembler(void **block_jumps_table, int *block_jumps_number, void **block_riprel_table, int *block_riprel_number);
 
-void gencallinterp(uint32_t addr, int32_t jump);
+void gencallinterp(unsigned long addr, int jump);
 
 void genupdate_system(int32_t type);
 void genbnel();

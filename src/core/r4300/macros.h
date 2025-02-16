@@ -79,7 +79,7 @@ stop=1; \
 #define core_Cause reg_cop0[13]
 #define core_EPC reg_cop0[14]
 #define core_PRevID reg_cop0[15]
-#define core_Config_cop0 reg_cop0[16]
+#define core_Config reg_cop0[16]
 #define core_LLAddr reg_cop0[17]
 #define core_WatchLo reg_cop0[18]
 #define core_WatchHi reg_cop0[19]
@@ -89,74 +89,3 @@ stop=1; \
 #define core_TagLo reg_cop0[28]
 #define core_TagHi reg_cop0[29]
 #define core_ErrorEPC reg_cop0[30]
-
-#define CODE_BLOCK_SIZE 5000
-#define JUMP_TABLE_SIZE 1000
-
-#ifdef _M_X64
-
-#define MUP_ROUND_TRUNC FE_TOWARDZERO
-#define MUP_ROUND_NEAREST FE_TONEAREST
-#define MUP_ROUND_CEIL FE_UPWARD
-#define MUP_ROUND_FLOOR FE_DOWNWARD
-
-#define set_rounding() fesetround(rounding_mode)
-#define set_trunc() fesetround(FE_TOWARDZERO)
-#define set_round_to_nearest() fesetround(FE_TONEAREST)
-#define set_ceil() fesetround(FE_UPWARD)
-#define set_floor() fesetround(FE_DOWNWARD)
-
-#define clear_x87_exceptions() feclearexcept(FE_ALL_EXCEPT)
-
-#define read_x87_status_word() fegetexceptflag()
-
-static int64_t convert_float_to_int64(float f) {
-    return _mm_cvtss_si64(_mm_set_ss(f));
-}
-
-static int32_t convert_float_to_int32(float f) {
-    return _mm_cvtss_si32(_mm_set_ss(f));
-}
-
-static int64_t convert_double_to_int64(double d) {
-    return _mm_cvtsd_si64(_mm_set_sd(d));
-}
-
-static int32_t convert_double_to_int32(double d) {
-    return _mm_cvtsd_si32(_mm_set_sd(d));
-}
-
-#define FLOAT_CONVERT_L_S(s, d) (*(int64_t*)(d) = convert_float_to_int64(*(float*)(s)))
-#define FLOAT_CONVERT_W_S(s, d) (*(int32_t*)(d) = convert_float_to_int32(*(float*)(s)))
-#define FLOAT_CONVERT_L_D(s, d) (*(int64_t*)(d) = convert_double_to_int64(*(double*)(s)))
-#define FLOAT_CONVERT_W_D(s, d) (*(int32_t*)(d) = convert_double_to_int32(*(double*)(s)))
-
-#else
-
-#define MUP_ROUND_TRUNC 0xE3F
-#define MUP_ROUND_NEAREST 0x23F
-#define MUP_ROUND_CEIL 0xA3F
-#define MUP_ROUND_FLOOR 0x63F
-
-#define set_rounding() __asm { fldcw rounding_mode }
-#define set_trunc() __asm { fldcw trunc_mode }
-#define set_round_to_nearest() __asm { fldcw round_mode }
-#define set_ceil() __asm { fldcw ceil_mode }
-#define set_floor() __asm { fldcw floor_mode }
-#define clear_x87_exceptions() __asm { fclex }
-#define read_x87_status_word() __asm { fstsw x87_status_word }
-
-//asm converter that respects rounding modes
-#define FLOAT_CONVERT(input_width, output_width) __asm { \
-__asm mov eax, src \
-__asm fld input_width ptr [eax] \
-__asm mov eax, dest \
-__asm fistp output_width ptr [eax] \
-}
-
-#define FLOAT_CONVERT_L_S(s,d) { float* src = s; int64_t* dest = (int64_t*)d;  FLOAT_CONVERT(dword, qword); }
-#define FLOAT_CONVERT_W_S(s,d) { float* src = s; int32_t* dest = (int32_t*)d;  FLOAT_CONVERT(dword, dword); }
-#define FLOAT_CONVERT_L_D(s,d) { double* src = s; int64_t* dest = (int64_t*)d; FLOAT_CONVERT(qword, dword); }
-#define FLOAT_CONVERT_W_D(s,d) { double* src = s; int32_t* dest = (int32_t*)d; FLOAT_CONVERT(qword, qword); }
-
-#endif

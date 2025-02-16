@@ -12,6 +12,7 @@ extern uint8_t* rom;
 extern size_t rom_size;
 extern char rom_md5[33];
 extern core_rom_header ROM_HEADER;
+extern unsigned char isGoldeneyeRom;
 
 /**
  * \brief Reads the specified rom and initializes the rom module's globals

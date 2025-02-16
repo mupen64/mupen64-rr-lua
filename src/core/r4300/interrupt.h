@@ -22,6 +22,9 @@ uint32_t get_event(int32_t type);
 int32_t save_eventqueue_infos(char* buf);
 void load_eventqueue_infos(char* buf);
 
+// unused
+extern int interupt_unsafe_state;
+
 #define VI_INT      0x001
 #define COMPARE_INT 0x002
 #define CHECK_INT   0x004
@@ -31,3 +34,6 @@ void load_eventqueue_infos(char* buf);
 #define AI_INT      0x040
 #define SP_INT      0x080
 #define DP_INT      0x100
+#define HW2_INT     0x200
+#define NMI_INT     0x400
+

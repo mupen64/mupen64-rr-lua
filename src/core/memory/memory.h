@@ -243,6 +243,12 @@ void write_sc_regd();
 void update_SP();
 void update_DPC();
 
+
+/* Returns a pointer to a block of contiguous memory
+ * Can access RDRAM, SP_DMEM, SP_IMEM and ROM, using TLB if necessary
+ * Useful for getting fast access to a zone with executable code. */
+unsigned int *fast_mem_access(unsigned int address);
+
 template <typename T>
 uint32_t ToAddr(uint32_t addr)
 {

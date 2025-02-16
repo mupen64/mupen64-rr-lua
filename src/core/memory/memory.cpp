@@ -109,10 +109,10 @@ int32_t init_memory()
     g_total_frames = 0;
     lag_count = 0;
 
-    int32_t i;
-
+    int i;
+    
     //init hash tables
-    for (i = 0; i < MemoryMaxCount; i++)
+    for (i=0; i<(0x10000); i++)
     {
         readmem[i] = read_nomem;
         readmemb[i] = read_nomemb;
@@ -125,46 +125,45 @@ int32_t init_memory()
     }
 
     //init RDRAM
-    for (i = 0; i < (0x800000 / 4); i++)
-        rdram[i] = 0;
-    for (i = 0; i < /*0x40*/0x80; i++)
+    for (i=0; i<(0x800000/4); i++) rdram[i]=0;
+    for (i=0; i</*0x40*/0x80; i++)
     {
-        readmem[(0x8000 + i)] = read_rdram;
-        readmem[(0xa000 + i)] = read_rdram;
-        readmemb[(0x8000 + i)] = read_rdramb;
-        readmemb[(0xa000 + i)] = read_rdramb;
-        readmemh[(0x8000 + i)] = read_rdramh;
-        readmemh[(0xa000 + i)] = read_rdramh;
-        readmemd[(0x8000 + i)] = read_rdramd;
-        readmemd[(0xa000 + i)] = read_rdramd;
-        writemem[(0x8000 + i)] = write_rdram;
-        writemem[(0xa000 + i)] = write_rdram;
-        writememb[(0x8000 + i)] = write_rdramb;
-        writememb[(0xa000 + i)] = write_rdramb;
-        writememh[(0x8000 + i)] = write_rdramh;
-        writememh[(0xa000 + i)] = write_rdramh;
-        writememd[(0x8000 + i)] = write_rdramd;
-        writememd[(0xa000 + i)] = write_rdramd;
+        readmem[(0x8000+i)] = read_rdram;
+        readmem[(0xa000+i)] = read_rdram;
+        readmemb[(0x8000+i)] = read_rdramb;
+        readmemb[(0xa000+i)] = read_rdramb;
+        readmemh[(0x8000+i)] = read_rdramh;
+        readmemh[(0xa000+i)] = read_rdramh;
+        readmemd[(0x8000+i)] = read_rdramd;
+        readmemd[(0xa000+i)] = read_rdramd;
+        writemem[(0x8000+i)] = write_rdram;
+        writemem[(0xa000+i)] = write_rdram;
+        writememb[(0x8000+i)] = write_rdramb;
+        writememb[(0xa000+i)] = write_rdramb;
+        writememh[(0x8000+i)] = write_rdramh;
+        writememh[(0xa000+i)] = write_rdramh;
+        writememd[(0x8000+i)] = write_rdramd;
+        writememd[(0xa000+i)] = write_rdramd;
     }
 
-    for (i =/*0x40*/0x80; i < 0x3F0; i++)
+    for (i=/*0x40*/0x80; i<0x3F0; i++)
     {
-        readmem[0x8000 + i] = read_nothing;
-        readmem[0xa000 + i] = read_nothing;
-        readmemb[0x8000 + i] = read_nothingb;
-        readmemb[0xa000 + i] = read_nothingb;
-        readmemh[0x8000 + i] = read_nothingh;
-        readmemh[0xa000 + i] = read_nothingh;
-        readmemd[0x8000 + i] = read_nothingd;
-        readmemd[0xa000 + i] = read_nothingd;
-        writemem[0x8000 + i] = write_nothing;
-        writemem[0xa000 + i] = write_nothing;
-        writememb[0x8000 + i] = write_nothingb;
-        writememb[0xa000 + i] = write_nothingb;
-        writememh[0x8000 + i] = write_nothingh;
-        writememh[0xa000 + i] = write_nothingh;
-        writememd[0x8000 + i] = write_nothingd;
-        writememd[0xa000 + i] = write_nothingd;
+        readmem[0x8000+i] = read_nothing;
+        readmem[0xa000+i] = read_nothing;
+        readmemb[0x8000+i] = read_nothingb;
+        readmemb[0xa000+i] = read_nothingb;
+        readmemh[0x8000+i] = read_nothingh;
+        readmemh[0xa000+i] = read_nothingh;
+        readmemd[0x8000+i] = read_nothingd;
+        readmemd[0xa000+i] = read_nothingd;
+        writemem[0x8000+i] = write_nothing;
+        writemem[0xa000+i] = write_nothing;
+        writememb[0x8000+i] = write_nothingb;
+        writememb[0xa000+i] = write_nothingb;
+        writememh[0x8000+i] = write_nothingh;
+        writememh[0xa000+i] = write_nothingh;
+        writememd[0x8000+i] = write_nothingd;
+        writememd[0xa000+i] = write_nothingd;
     }
 
     //init RDRAM registers
@@ -184,16 +183,16 @@ int32_t init_memory()
     writememh[0xa3f0] = write_rdramregh;
     writememd[0x83f0] = write_rdramregd;
     writememd[0xa3f0] = write_rdramregd;
-    rdram_register.rdram_config = 0;
-    rdram_register.rdram_device_id = 0;
-    rdram_register.rdram_delay = 0;
-    rdram_register.rdram_mode = 0;
-    rdram_register.rdram_ref_interval = 0;
-    rdram_register.rdram_ref_row = 0;
-    rdram_register.rdram_ras_interval = 0;
-    rdram_register.rdram_min_interval = 0;
-    rdram_register.rdram_addr_select = 0;
-    rdram_register.rdram_device_manuf = 0;
+    rdram_register.rdram_config=0;
+    rdram_register.rdram_device_id=0;
+    rdram_register.rdram_delay=0;
+    rdram_register.rdram_mode=0;
+    rdram_register.rdram_ref_interval=0;
+    rdram_register.rdram_ref_row=0;
+    rdram_register.rdram_ras_interval=0;
+    rdram_register.rdram_min_interval=0;
+    rdram_register.rdram_addr_select=0;
+    rdram_register.rdram_device_manuf=0;
     readrdramreg[0x0] = &rdram_register.rdram_config;
     readrdramreg[0x4] = &rdram_register.rdram_device_id;
     readrdramreg[0x8] = &rdram_register.rdram_delay;
@@ -205,26 +204,25 @@ int32_t init_memory()
     readrdramreg[0x20] = &rdram_register.rdram_addr_select;
     readrdramreg[0x24] = &rdram_register.rdram_device_manuf;
 
-    for (i = 0x28; i < MemoryMaxCount; i++)
-        readrdramreg[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x28; i<0x10000; i++) readrdramreg[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x83f0 + i] = read_nothing;
-        readmem[0xa3f0 + i] = read_nothing;
-        readmemb[0x83f0 + i] = read_nothingb;
-        readmemb[0xa3f0 + i] = read_nothingb;
-        readmemh[0x83f0 + i] = read_nothingh;
-        readmemh[0xa3f0 + i] = read_nothingh;
-        readmemd[0x83f0 + i] = read_nothingd;
-        readmemd[0xa3f0 + i] = read_nothingd;
-        writemem[0x83f0 + i] = write_nothing;
-        writemem[0xa3f0 + i] = write_nothing;
-        writememb[0x83f0 + i] = write_nothingb;
-        writememb[0xa3f0 + i] = write_nothingb;
-        writememh[0x83f0 + i] = write_nothingh;
-        writememh[0xa3f0 + i] = write_nothingh;
-        writememd[0x83f0 + i] = write_nothingd;
-        writememd[0xa3f0 + i] = write_nothingd;
+        readmem[0x83f0+i] = read_nothing;
+        readmem[0xa3f0+i] = read_nothing;
+        readmemb[0x83f0+i] = read_nothingb;
+        readmemb[0xa3f0+i] = read_nothingb;
+        readmemh[0x83f0+i] = read_nothingh;
+        readmemh[0xa3f0+i] = read_nothingh;
+        readmemd[0x83f0+i] = read_nothingd;
+        readmemd[0xa3f0+i] = read_nothingd;
+        writemem[0x83f0+i] = write_nothing;
+        writemem[0xa3f0+i] = write_nothing;
+        writememb[0x83f0+i] = write_nothingb;
+        writememb[0xa3f0+i] = write_nothingb;
+        writememh[0x83f0+i] = write_nothingh;
+        writememh[0xa3f0+i] = write_nothingh;
+        writememd[0x83f0+i] = write_nothingd;
+        writememd[0xa3f0+i] = write_nothingd;
     }
 
     //init RSP memory
@@ -244,29 +242,27 @@ int32_t init_memory()
     writememh[0xa400] = write_rsp_memh;
     writememd[0x8400] = write_rsp_memd;
     writememd[0xa400] = write_rsp_memd;
-    for (i = 0; i < (0x1000 / 4); i++)
-        SP_DMEM[i] = 0;
-    for (i = 0; i < (0x1000 / 4); i++)
-        SP_IMEM[i] = 0;
+    for (i=0; i<(0x1000/4); i++) SP_DMEM[i]=0;
+    for (i=0; i<(0x1000/4); i++) SP_IMEM[i]=0;
 
-    for (i = 1; i < 0x4; i++)
+    for (i=1; i<0x4; i++)
     {
-        readmem[0x8400 + i] = read_nothing;
-        readmem[0xa400 + i] = read_nothing;
-        readmemb[0x8400 + i] = read_nothingb;
-        readmemb[0xa400 + i] = read_nothingb;
-        readmemh[0x8400 + i] = read_nothingh;
-        readmemh[0xa400 + i] = read_nothingh;
-        readmemd[0x8400 + i] = read_nothingd;
-        readmemd[0xa400 + i] = read_nothingd;
-        writemem[0x8400 + i] = write_nothing;
-        writemem[0xa400 + i] = write_nothing;
-        writememb[0x8400 + i] = write_nothingb;
-        writememb[0xa400 + i] = write_nothingb;
-        writememh[0x8400 + i] = write_nothingh;
-        writememh[0xa400 + i] = write_nothingh;
-        writememd[0x8400 + i] = write_nothingd;
-        writememd[0xa400 + i] = write_nothingd;
+        readmem[0x8400+i] = read_nothing;
+        readmem[0xa400+i] = read_nothing;
+        readmemb[0x8400+i] = read_nothingb;
+        readmemb[0xa400+i] = read_nothingb;
+        readmemh[0x8400+i] = read_nothingh;
+        readmemh[0xa400+i] = read_nothingh;
+        readmemd[0x8400+i] = read_nothingd;
+        readmemd[0xa400+i] = read_nothingd;
+        writemem[0x8400+i] = write_nothing;
+        writemem[0xa400+i] = write_nothing;
+        writememb[0x8400+i] = write_nothingb;
+        writememb[0xa400+i] = write_nothingb;
+        writememh[0x8400+i] = write_nothingh;
+        writememh[0xa400+i] = write_nothingh;
+        writememd[0x8400+i] = write_nothingd;
+        writememd[0xa400+i] = write_nothingd;
     }
 
     //init RSP registers
@@ -286,30 +282,15 @@ int32_t init_memory()
     writememh[0xa404] = write_rsp_regh;
     writememd[0x8404] = write_rsp_regd;
     writememd[0xa404] = write_rsp_regd;
-    sp_register.sp_mem_addr_reg = 0;
-    sp_register.sp_dram_addr_reg = 0;
-    sp_register.sp_rd_len_reg = 0;
-    sp_register.sp_wr_len_reg = 0;
-    sp_register.sp_status_reg = 1;
-    sp_register.w_sp_status_reg = 0;
-    sp_register.halt = 1;
-    sp_register.broke = 0;
-    sp_register.dma_busy = 0;
-    sp_register.dma_full = 0;
-    sp_register.io_full = 0;
-    sp_register.single_step = 0;
-    sp_register.intr_break = 0;
-    sp_register.signal0 = 0;
-    sp_register.signal1 = 0;
-    sp_register.signal2 = 0;
-    sp_register.signal3 = 0;
-    sp_register.signal4 = 0;
-    sp_register.signal5 = 0;
-    sp_register.signal6 = 0;
-    sp_register.signal7 = 0;
-    sp_register.sp_dma_full_reg = 0;
-    sp_register.sp_dma_busy_reg = 0;
-    sp_register.sp_semaphore_reg = 0;
+    sp_register.sp_mem_addr_reg=0;
+    sp_register.sp_dram_addr_reg=0;
+    sp_register.sp_rd_len_reg=0;
+    sp_register.sp_wr_len_reg=0;
+    sp_register.sp_status_reg=1;
+    sp_register.w_sp_status_reg=0;
+    sp_register.sp_dma_full_reg=0;
+    sp_register.sp_dma_busy_reg=0;
+    sp_register.sp_semaphore_reg=0;
     readrspreg[0x0] = &sp_register.sp_mem_addr_reg;
     readrspreg[0x4] = &sp_register.sp_dram_addr_reg;
     readrspreg[0x8] = &sp_register.sp_rd_len_reg;
@@ -319,26 +300,25 @@ int32_t init_memory()
     readrspreg[0x18] = &sp_register.sp_dma_busy_reg;
     readrspreg[0x1c] = &sp_register.sp_semaphore_reg;
 
-    for (i = 0x20; i < MemoryMaxCount; i++)
-        readrspreg[i] = &trash;
-    for (i = 5; i < 8; i++)
+    for (i=0x20; i<0x10000; i++) readrspreg[i] = &trash;
+    for (i=5; i<8; i++)
     {
-        readmem[0x8400 + i] = read_nothing;
-        readmem[0xa400 + i] = read_nothing;
-        readmemb[0x8400 + i] = read_nothingb;
-        readmemb[0xa400 + i] = read_nothingb;
-        readmemh[0x8400 + i] = read_nothingh;
-        readmemh[0xa400 + i] = read_nothingh;
-        readmemd[0x8400 + i] = read_nothingd;
-        readmemd[0xa400 + i] = read_nothingd;
-        writemem[0x8400 + i] = write_nothing;
-        writemem[0xa400 + i] = write_nothing;
-        writememb[0x8400 + i] = write_nothingb;
-        writememb[0xa400 + i] = write_nothingb;
-        writememh[0x8400 + i] = write_nothingh;
-        writememh[0xa400 + i] = write_nothingh;
-        writememd[0x8400 + i] = write_nothingd;
-        writememd[0xa400 + i] = write_nothingd;
+        readmem[0x8400+i] = read_nothing;
+        readmem[0xa400+i] = read_nothing;
+        readmemb[0x8400+i] = read_nothingb;
+        readmemb[0xa400+i] = read_nothingb;
+        readmemh[0x8400+i] = read_nothingh;
+        readmemh[0xa400+i] = read_nothingh;
+        readmemd[0x8400+i] = read_nothingd;
+        readmemd[0xa400+i] = read_nothingd;
+        writemem[0x8400+i] = write_nothing;
+        writemem[0xa400+i] = write_nothing;
+        writememb[0x8400+i] = write_nothingb;
+        writememb[0xa400+i] = write_nothingb;
+        writememh[0x8400+i] = write_nothingh;
+        writememh[0xa400+i] = write_nothingh;
+        writememd[0x8400+i] = write_nothingd;
+        writememd[0xa400+i] = write_nothingd;
     }
 
     readmem[0x8408] = read_rsp;
@@ -357,31 +337,30 @@ int32_t init_memory()
     writememh[0xa408] = write_rsph;
     writememd[0x8408] = write_rspd;
     writememd[0xa408] = write_rspd;
-    rsp_register.rsp_pc = 0;
-    rsp_register.rsp_ibist = 0;
+    rsp_register.rsp_pc=0;
+    rsp_register.rsp_ibist=0;
     readrsp[0x0] = &rsp_register.rsp_pc;
     readrsp[0x4] = &rsp_register.rsp_ibist;
 
-    for (i = 0x8; i < MemoryMaxCount; i++)
-        readrsp[i] = &trash;
-    for (i = 9; i < 0x10; i++)
+    for (i=0x8; i<0x10000; i++) readrsp[i] = &trash;
+    for (i=9; i<0x10; i++)
     {
-        readmem[0x8400 + i] = read_nothing;
-        readmem[0xa400 + i] = read_nothing;
-        readmemb[0x8400 + i] = read_nothingb;
-        readmemb[0xa400 + i] = read_nothingb;
-        readmemh[0x8400 + i] = read_nothingh;
-        readmemh[0xa400 + i] = read_nothingh;
-        readmemd[0x8400 + i] = read_nothingd;
-        readmemd[0xa400 + i] = read_nothingd;
-        writemem[0x8400 + i] = write_nothing;
-        writemem[0xa400 + i] = write_nothing;
-        writememb[0x8400 + i] = write_nothingb;
-        writememb[0xa400 + i] = write_nothingb;
-        writememh[0x8400 + i] = write_nothingh;
-        writememh[0xa400 + i] = write_nothingh;
-        writememd[0x8400 + i] = write_nothingd;
-        writememd[0xa400 + i] = write_nothingd;
+        readmem[0x8400+i] = read_nothing;
+        readmem[0xa400+i] = read_nothing;
+        readmemb[0x8400+i] = read_nothingb;
+        readmemb[0xa400+i] = read_nothingb;
+        readmemh[0x8400+i] = read_nothingh;
+        readmemh[0xa400+i] = read_nothingh;
+        readmemd[0x8400+i] = read_nothingd;
+        readmemd[0xa400+i] = read_nothingd;
+        writemem[0x8400+i] = write_nothing;
+        writemem[0xa400+i] = write_nothing;
+        writememb[0x8400+i] = write_nothingb;
+        writememb[0xa400+i] = write_nothingb;
+        writememh[0x8400+i] = write_nothingh;
+        writememh[0xa400+i] = write_nothingh;
+        writememd[0x8400+i] = write_nothingd;
+        writememd[0xa400+i] = write_nothingd;
     }
 
     //init rdp command registers
@@ -401,26 +380,15 @@ int32_t init_memory()
     writememh[0xa410] = write_dph;
     writememd[0x8410] = write_dpd;
     writememd[0xa410] = write_dpd;
-    dpc_register.dpc_start = 0;
-    dpc_register.dpc_end = 0;
-    dpc_register.dpc_current = 0;
-    dpc_register.w_dpc_status = 0;
-    dpc_register.dpc_status = 0;
-    dpc_register.xbus_dmem_dma = 0;
-    dpc_register.freeze = 0;
-    dpc_register.flush = 0;
-    dpc_register.start_glck = 0;
-    dpc_register.tmem_busy = 0;
-    dpc_register.pipe_busy = 0;
-    dpc_register.cmd_busy = 0;
-    dpc_register.cbuf_busy = 0;
-    dpc_register.dma_busy = 0;
-    dpc_register.end_valid = 0;
-    dpc_register.start_valid = 0;
-    dpc_register.dpc_clock = 0;
-    dpc_register.dpc_bufbusy = 0;
-    dpc_register.dpc_pipebusy = 0;
-    dpc_register.dpc_tmem = 0;
+    dpc_register.dpc_start=0;
+    dpc_register.dpc_end=0;
+    dpc_register.dpc_current=0;
+    dpc_register.w_dpc_status=0;
+    dpc_register.dpc_status=0;
+    dpc_register.dpc_clock=0;
+    dpc_register.dpc_bufbusy=0;
+    dpc_register.dpc_pipebusy=0;
+    dpc_register.dpc_tmem=0;
     readdp[0x0] = &dpc_register.dpc_start;
     readdp[0x4] = &dpc_register.dpc_end;
     readdp[0x8] = &dpc_register.dpc_current;
@@ -430,26 +398,25 @@ int32_t init_memory()
     readdp[0x18] = &dpc_register.dpc_pipebusy;
     readdp[0x1c] = &dpc_register.dpc_tmem;
 
-    for (i = 0x20; i < MemoryMaxCount; i++)
-        readdp[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x20; i<0x10000; i++) readdp[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x8410 + i] = read_nothing;
-        readmem[0xa410 + i] = read_nothing;
-        readmemb[0x8410 + i] = read_nothingb;
-        readmemb[0xa410 + i] = read_nothingb;
-        readmemh[0x8410 + i] = read_nothingh;
-        readmemh[0xa410 + i] = read_nothingh;
-        readmemd[0x8410 + i] = read_nothingd;
-        readmemd[0xa410 + i] = read_nothingd;
-        writemem[0x8410 + i] = write_nothing;
-        writemem[0xa410 + i] = write_nothing;
-        writememb[0x8410 + i] = write_nothingb;
-        writememb[0xa410 + i] = write_nothingb;
-        writememh[0x8410 + i] = write_nothingh;
-        writememh[0xa410 + i] = write_nothingh;
-        writememd[0x8410 + i] = write_nothingd;
-        writememd[0xa410 + i] = write_nothingd;
+        readmem[0x8410+i] = read_nothing;
+        readmem[0xa410+i] = read_nothing;
+        readmemb[0x8410+i] = read_nothingb;
+        readmemb[0xa410+i] = read_nothingb;
+        readmemh[0x8410+i] = read_nothingh;
+        readmemh[0xa410+i] = read_nothingh;
+        readmemd[0x8410+i] = read_nothingd;
+        readmemd[0xa410+i] = read_nothingd;
+        writemem[0x8410+i] = write_nothing;
+        writemem[0xa410+i] = write_nothing;
+        writememb[0x8410+i] = write_nothingb;
+        writememb[0xa410+i] = write_nothingb;
+        writememh[0x8410+i] = write_nothingh;
+        writememh[0xa410+i] = write_nothingh;
+        writememd[0x8410+i] = write_nothingd;
+        writememd[0xa410+i] = write_nothingd;
     }
 
     //init rsp span registers
@@ -469,35 +436,34 @@ int32_t init_memory()
     writememh[0xa420] = write_dpsh;
     writememd[0x8420] = write_dpsd;
     writememd[0xa420] = write_dpsd;
-    dps_register.dps_tbist = 0;
-    dps_register.dps_test_mode = 0;
-    dps_register.dps_buftest_addr = 0;
-    dps_register.dps_buftest_data = 0;
+    dps_register.dps_tbist=0;
+    dps_register.dps_test_mode=0;
+    dps_register.dps_buftest_addr=0;
+    dps_register.dps_buftest_data=0;
     readdps[0x0] = &dps_register.dps_tbist;
     readdps[0x4] = &dps_register.dps_test_mode;
     readdps[0x8] = &dps_register.dps_buftest_addr;
     readdps[0xc] = &dps_register.dps_buftest_data;
 
-    for (i = 0x10; i < MemoryMaxCount; i++)
-        readdps[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x10; i<0x10000; i++) readdps[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x8420 + i] = read_nothing;
-        readmem[0xa420 + i] = read_nothing;
-        readmemb[0x8420 + i] = read_nothingb;
-        readmemb[0xa420 + i] = read_nothingb;
-        readmemh[0x8420 + i] = read_nothingh;
-        readmemh[0xa420 + i] = read_nothingh;
-        readmemd[0x8420 + i] = read_nothingd;
-        readmemd[0xa420 + i] = read_nothingd;
-        writemem[0x8420 + i] = write_nothing;
-        writemem[0xa420 + i] = write_nothing;
-        writememb[0x8420 + i] = write_nothingb;
-        writememb[0xa420 + i] = write_nothingb;
-        writememh[0x8420 + i] = write_nothingh;
-        writememh[0xa420 + i] = write_nothingh;
-        writememd[0x8420 + i] = write_nothingd;
-        writememd[0xa420 + i] = write_nothingd;
+        readmem[0x8420+i] = read_nothing;
+        readmem[0xa420+i] = read_nothing;
+        readmemb[0x8420+i] = read_nothingb;
+        readmemb[0xa420+i] = read_nothingb;
+        readmemh[0x8420+i] = read_nothingh;
+        readmemh[0xa420+i] = read_nothingh;
+        readmemd[0x8420+i] = read_nothingd;
+        readmemd[0xa420+i] = read_nothingd;
+        writemem[0x8420+i] = write_nothing;
+        writemem[0xa420+i] = write_nothing;
+        writememb[0x8420+i] = write_nothingb;
+        writememb[0xa420+i] = write_nothingb;
+        writememh[0x8420+i] = write_nothingh;
+        writememh[0xa420+i] = write_nothingh;
+        writememd[0x8420+i] = write_nothingd;
+        writememd[0xa420+i] = write_nothingd;
     }
 
     //init mips registers
@@ -519,45 +485,34 @@ int32_t init_memory()
     writememd[0xa430] = write_mid;
     MI_register.w_mi_init_mode_reg = 0;
     MI_register.mi_init_mode_reg = 0;
-    MI_register.init_length = 0;
-    MI_register.init_mode = 0;
-    MI_register.ebus_test_mode = 0;
-    MI_register.RDRAM_reg_mode = 0;
     MI_register.mi_version_reg = 0x02020102;
     MI_register.mi_intr_reg = 0;
     MI_register.w_mi_intr_mask_reg = 0;
     MI_register.mi_intr_mask_reg = 0;
-    MI_register.SP_intr_mask = 0;
-    MI_register.SI_intr_mask = 0;
-    MI_register.AI_intr_mask = 0;
-    MI_register.VI_intr_mask = 0;
-    MI_register.PI_intr_mask = 0;
-    MI_register.DP_intr_mask = 0;
     readmi[0x0] = &MI_register.mi_init_mode_reg;
     readmi[0x4] = &MI_register.mi_version_reg;
     readmi[0x8] = &MI_register.mi_intr_reg;
     readmi[0xc] = &MI_register.mi_intr_mask_reg;
 
-    for (i = 0x10; i < MemoryMaxCount; i++)
-        readmi[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x10; i<0x10000; i++) readmi[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x8430 + i] = read_nothing;
-        readmem[0xa430 + i] = read_nothing;
-        readmemb[0x8430 + i] = read_nothingb;
-        readmemb[0xa430 + i] = read_nothingb;
-        readmemh[0x8430 + i] = read_nothingh;
-        readmemh[0xa430 + i] = read_nothingh;
-        readmemd[0x8430 + i] = read_nothingd;
-        readmemd[0xa430 + i] = read_nothingd;
-        writemem[0x8430 + i] = write_nothing;
-        writemem[0xa430 + i] = write_nothing;
-        writememb[0x8430 + i] = write_nothingb;
-        writememb[0xa430 + i] = write_nothingb;
-        writememh[0x8430 + i] = write_nothingh;
-        writememh[0xa430 + i] = write_nothingh;
-        writememd[0x8430 + i] = write_nothingd;
-        writememd[0xa430 + i] = write_nothingd;
+        readmem[0x8430+i] = read_nothing;
+        readmem[0xa430+i] = read_nothing;
+        readmemb[0x8430+i] = read_nothingb;
+        readmemb[0xa430+i] = read_nothingb;
+        readmemh[0x8430+i] = read_nothingh;
+        readmemh[0xa430+i] = read_nothingh;
+        readmemd[0x8430+i] = read_nothingd;
+        readmemd[0xa430+i] = read_nothingd;
+        writemem[0x8430+i] = write_nothing;
+        writemem[0xa430+i] = write_nothing;
+        writememb[0x8430+i] = write_nothingb;
+        writememb[0xa430+i] = write_nothingb;
+        writememh[0x8430+i] = write_nothingh;
+        writememh[0xa430+i] = write_nothingh;
+        writememd[0x8430+i] = write_nothingd;
+        writememd[0xa430+i] = write_nothingd;
     }
 
     //init VI registers
@@ -606,26 +561,25 @@ int32_t init_memory()
     readvi[0x30] = &vi_register.vi_x_scale;
     readvi[0x34] = &vi_register.vi_y_scale;
 
-    for (i = 0x38; i < MemoryMaxCount; i++)
-        readvi[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x38; i<0x10000; i++) readvi[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x8440 + i] = read_nothing;
-        readmem[0xa440 + i] = read_nothing;
-        readmemb[0x8440 + i] = read_nothingb;
-        readmemb[0xa440 + i] = read_nothingb;
-        readmemh[0x8440 + i] = read_nothingh;
-        readmemh[0xa440 + i] = read_nothingh;
-        readmemd[0x8440 + i] = read_nothingd;
-        readmemd[0xa440 + i] = read_nothingd;
-        writemem[0x8440 + i] = write_nothing;
-        writemem[0xa440 + i] = write_nothing;
-        writememb[0x8440 + i] = write_nothingb;
-        writememb[0xa440 + i] = write_nothingb;
-        writememh[0x8440 + i] = write_nothingh;
-        writememh[0xa440 + i] = write_nothingh;
-        writememd[0x8440 + i] = write_nothingd;
-        writememd[0xa440 + i] = write_nothingd;
+        readmem[0x8440+i] = read_nothing;
+        readmem[0xa440+i] = read_nothing;
+        readmemb[0x8440+i] = read_nothingb;
+        readmemb[0xa440+i] = read_nothingb;
+        readmemh[0x8440+i] = read_nothingh;
+        readmemh[0xa440+i] = read_nothingh;
+        readmemd[0x8440+i] = read_nothingd;
+        readmemd[0xa440+i] = read_nothingd;
+        writemem[0x8440+i] = write_nothing;
+        writemem[0xa440+i] = write_nothing;
+        writememb[0x8440+i] = write_nothingb;
+        writememb[0xa440+i] = write_nothingb;
+        writememh[0x8440+i] = write_nothingh;
+        writememh[0xa440+i] = write_nothingh;
+        writememd[0x8440+i] = write_nothingd;
+        writememd[0xa440+i] = write_nothingd;
     }
 
     //init AI registers
@@ -662,26 +616,25 @@ int32_t init_memory()
     readai[0x10] = &ai_register.ai_dacrate;
     readai[0x14] = &ai_register.ai_bitrate;
 
-    for (i = 0x18; i < MemoryMaxCount; i++)
-        readai[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x18; i<0x10000; i++) readai[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x8450 + i] = read_nothing;
-        readmem[0xa450 + i] = read_nothing;
-        readmemb[0x8450 + i] = read_nothingb;
-        readmemb[0xa450 + i] = read_nothingb;
-        readmemh[0x8450 + i] = read_nothingh;
-        readmemh[0xa450 + i] = read_nothingh;
-        readmemd[0x8450 + i] = read_nothingd;
-        readmemd[0xa450 + i] = read_nothingd;
-        writemem[0x8450 + i] = write_nothing;
-        writemem[0xa450 + i] = write_nothing;
-        writememb[0x8450 + i] = write_nothingb;
-        writememb[0xa450 + i] = write_nothingb;
-        writememh[0x8450 + i] = write_nothingh;
-        writememh[0xa450 + i] = write_nothingh;
-        writememd[0x8450 + i] = write_nothingd;
-        writememd[0xa450 + i] = write_nothingd;
+        readmem[0x8450+i] = read_nothing;
+        readmem[0xa450+i] = read_nothing;
+        readmemb[0x8450+i] = read_nothingb;
+        readmemb[0xa450+i] = read_nothingb;
+        readmemh[0x8450+i] = read_nothingh;
+        readmemh[0xa450+i] = read_nothingh;
+        readmemd[0x8450+i] = read_nothingd;
+        readmemd[0xa450+i] = read_nothingd;
+        writemem[0x8450+i] = write_nothing;
+        writemem[0xa450+i] = write_nothing;
+        writememb[0x8450+i] = write_nothingb;
+        writememb[0xa450+i] = write_nothingb;
+        writememh[0x8450+i] = write_nothingh;
+        writememh[0xa450+i] = write_nothingh;
+        writememd[0x8450+i] = write_nothingd;
+        writememd[0xa450+i] = write_nothingd;
     }
 
     //init PI registers
@@ -728,26 +681,25 @@ int32_t init_memory()
     readpi[0x2c] = &pi_register.pi_bsd_dom2_pgs_reg;
     readpi[0x30] = &pi_register.pi_bsd_dom2_rls_reg;
 
-    for (i = 0x34; i < MemoryMaxCount; i++)
-        readpi[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x34; i<0x10000; i++) readpi[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x8460 + i] = read_nothing;
-        readmem[0xa460 + i] = read_nothing;
-        readmemb[0x8460 + i] = read_nothingb;
-        readmemb[0xa460 + i] = read_nothingb;
-        readmemh[0x8460 + i] = read_nothingh;
-        readmemh[0xa460 + i] = read_nothingh;
-        readmemd[0x8460 + i] = read_nothingd;
-        readmemd[0xa460 + i] = read_nothingd;
-        writemem[0x8460 + i] = write_nothing;
-        writemem[0xa460 + i] = write_nothing;
-        writememb[0x8460 + i] = write_nothingb;
-        writememb[0xa460 + i] = write_nothingb;
-        writememh[0x8460 + i] = write_nothingh;
-        writememh[0xa460 + i] = write_nothingh;
-        writememd[0x8460 + i] = write_nothingd;
-        writememd[0xa460 + i] = write_nothingd;
+        readmem[0x8460+i] = read_nothing;
+        readmem[0xa460+i] = read_nothing;
+        readmemb[0x8460+i] = read_nothingb;
+        readmemb[0xa460+i] = read_nothingb;
+        readmemh[0x8460+i] = read_nothingh;
+        readmemh[0xa460+i] = read_nothingh;
+        readmemd[0x8460+i] = read_nothingd;
+        readmemd[0xa460+i] = read_nothingd;
+        writemem[0x8460+i] = write_nothing;
+        writemem[0xa460+i] = write_nothing;
+        writememb[0x8460+i] = write_nothingb;
+        writememb[0xa460+i] = write_nothingb;
+        writememh[0x8460+i] = write_nothingh;
+        writememh[0xa460+i] = write_nothingh;
+        writememd[0x8460+i] = write_nothingd;
+        writememd[0xa460+i] = write_nothingd;
     }
 
     //init RI registers
@@ -784,26 +736,25 @@ int32_t init_memory()
     readri[0x18] = &ri_register.ri_error;
     readri[0x1c] = &ri_register.ri_werror;
 
-    for (i = 0x20; i < MemoryMaxCount; i++)
-        readri[i] = &trash;
-    for (i = 1; i < 0x10; i++)
+    for (i=0x20; i<0x10000; i++) readri[i] = &trash;
+    for (i=1; i<0x10; i++)
     {
-        readmem[0x8470 + i] = read_nothing;
-        readmem[0xa470 + i] = read_nothing;
-        readmemb[0x8470 + i] = read_nothingb;
-        readmemb[0xa470 + i] = read_nothingb;
-        readmemh[0x8470 + i] = read_nothingh;
-        readmemh[0xa470 + i] = read_nothingh;
-        readmemd[0x8470 + i] = read_nothingd;
-        readmemd[0xa470 + i] = read_nothingd;
-        writemem[0x8470 + i] = write_nothing;
-        writemem[0xa470 + i] = write_nothing;
-        writememb[0x8470 + i] = write_nothingb;
-        writememb[0xa470 + i] = write_nothingb;
-        writememh[0x8470 + i] = write_nothingh;
-        writememh[0xa470 + i] = write_nothingh;
-        writememd[0x8470 + i] = write_nothingd;
-        writememd[0xa470 + i] = write_nothingd;
+        readmem[0x8470+i] = read_nothing;
+        readmem[0xa470+i] = read_nothing;
+        readmemb[0x8470+i] = read_nothingb;
+        readmemb[0xa470+i] = read_nothingb;
+        readmemh[0x8470+i] = read_nothingh;
+        readmemh[0xa470+i] = read_nothingh;
+        readmemd[0x8470+i] = read_nothingd;
+        readmemd[0xa470+i] = read_nothingd;
+        writemem[0x8470+i] = write_nothing;
+        writemem[0xa470+i] = write_nothing;
+        writememb[0x8470+i] = write_nothingb;
+        writememb[0xa470+i] = write_nothingb;
+        writememh[0x8470+i] = write_nothingh;
+        writememh[0xa470+i] = write_nothingh;
+        writememd[0x8470+i] = write_nothingd;
+        writememd[0xa470+i] = write_nothingd;
     }
 
     //init SI registers
@@ -834,26 +785,25 @@ int32_t init_memory()
     readsi[0x14] = &trash;
     readsi[0x18] = &si_register.si_status;
 
-    for (i = 0x1c; i < MemoryMaxCount; i++)
-        readsi[i] = &trash;
-    for (i = 0x481; i < 0x800; i++)
+    for (i=0x1c; i<0x10000; i++) readsi[i] = &trash;
+    for (i=0x481; i<0x800; i++)
     {
-        readmem[0x8000 + i] = read_nothing;
-        readmem[0xa000 + i] = read_nothing;
-        readmemb[0x8000 + i] = read_nothingb;
-        readmemb[0xa000 + i] = read_nothingb;
-        readmemh[0x8000 + i] = read_nothingh;
-        readmemh[0xa000 + i] = read_nothingh;
-        readmemd[0x8000 + i] = read_nothingd;
-        readmemd[0xa000 + i] = read_nothingd;
-        writemem[0x8000 + i] = write_nothing;
-        writemem[0xa000 + i] = write_nothing;
-        writememb[0x8000 + i] = write_nothingb;
-        writememb[0xa000 + i] = write_nothingb;
-        writememh[0x8000 + i] = write_nothingh;
-        writememh[0xa000 + i] = write_nothingh;
-        writememd[0x8000 + i] = write_nothingd;
-        writememd[0xa000 + i] = write_nothingd;
+        readmem[0x8000+i] = read_nothing;
+        readmem[0xa000+i] = read_nothing;
+        readmemb[0x8000+i] = read_nothingb;
+        readmemb[0xa000+i] = read_nothingb;
+        readmemh[0x8000+i] = read_nothingh;
+        readmemh[0xa000+i] = read_nothingh;
+        readmemd[0x8000+i] = read_nothingd;
+        readmemd[0xa000+i] = read_nothingd;
+        writemem[0x8000+i] = write_nothing;
+        writemem[0xa000+i] = write_nothing;
+        writememb[0x8000+i] = write_nothingb;
+        writememb[0xa000+i] = write_nothingb;
+        writememh[0x8000+i] = write_nothingh;
+        writememh[0xa000+i] = write_nothingh;
+        writememd[0x8000+i] = write_nothingd;
+        writememd[0xa000+i] = write_nothingd;
     }
 
     //init flashram / sram
@@ -890,64 +840,64 @@ int32_t init_memory()
     writememd[0x8801] = write_flashram_commandd;
     writememd[0xa801] = write_flashram_commandd;
 
-    for (i = 0x802; i < 0x1000; i++)
+    for (i=0x802; i<0x1000; i++)
     {
-        readmem[0x8000 + i] = read_nothing;
-        readmem[0xa000 + i] = read_nothing;
-        readmemb[0x8000 + i] = read_nothingb;
-        readmemb[0xa000 + i] = read_nothingb;
-        readmemh[0x8000 + i] = read_nothingh;
-        readmemh[0xa000 + i] = read_nothingh;
-        readmemd[0x8000 + i] = read_nothingd;
-        readmemd[0xa000 + i] = read_nothingd;
-        writemem[0x8000 + i] = write_nothing;
-        writemem[0xa000 + i] = write_nothing;
-        writememb[0x8000 + i] = write_nothingb;
-        writememb[0xa000 + i] = write_nothingb;
-        writememh[0x8000 + i] = write_nothingh;
-        writememh[0xa000 + i] = write_nothingh;
-        writememd[0x8000 + i] = write_nothingd;
-        writememd[0xa000 + i] = write_nothingd;
+        readmem[0x8000+i] = read_nothing;
+        readmem[0xa000+i] = read_nothing;
+        readmemb[0x8000+i] = read_nothingb;
+        readmemb[0xa000+i] = read_nothingb;
+        readmemh[0x8000+i] = read_nothingh;
+        readmemh[0xa000+i] = read_nothingh;
+        readmemd[0x8000+i] = read_nothingd;
+        readmemd[0xa000+i] = read_nothingd;
+        writemem[0x8000+i] = write_nothing;
+        writemem[0xa000+i] = write_nothing;
+        writememb[0x8000+i] = write_nothingb;
+        writememb[0xa000+i] = write_nothingb;
+        writememh[0x8000+i] = write_nothingh;
+        writememh[0xa000+i] = write_nothingh;
+        writememd[0x8000+i] = write_nothingd;
+        writememd[0xa000+i] = write_nothingd;
     }
 
     //init rom area
-    for (i = 0; i < (rom_size >> 16); i++)
+    for (i=0; i<(rom_size >> 16); i++)
     {
-        readmem[0x9000 + i] = read_rom;
-        readmem[0xb000 + i] = read_rom;
-        readmemb[0x9000 + i] = read_romb;
-        readmemb[0xb000 + i] = read_romb;
-        readmemh[0x9000 + i] = read_romh;
-        readmemh[0xb000 + i] = read_romh;
-        readmemd[0x9000 + i] = read_romd;
-        readmemd[0xb000 + i] = read_romd;
-        writemem[0x9000 + i] = write_nothing;
-        writemem[0xb000 + i] = write_rom;
-        writememb[0x9000 + i] = write_nothingb;
-        writememb[0xb000 + i] = write_nothingb;
-        writememh[0x9000 + i] = write_nothingh;
-        writememh[0xb000 + i] = write_nothingh;
-        writememd[0x9000 + i] = write_nothingd;
-        writememd[0xb000 + i] = write_nothingd;
+        readmem[0x9000+i] = read_rom;
+        readmem[0xb000+i] = read_rom;
+        readmemb[0x9000+i] = read_romb;
+        readmemb[0xb000+i] = read_romb;
+        readmemh[0x9000+i] = read_romh;
+        readmemh[0xb000+i] = read_romh;
+        readmemd[0x9000+i] = read_romd;
+        readmemd[0xb000+i] = read_romd;
+        writemem[0x9000+i] = write_nothing;
+        writemem[0xb000+i] = write_rom;
+        writememb[0x9000+i] = write_nothingb;
+        writememb[0xb000+i] = write_nothingb;
+        writememh[0x9000+i] = write_nothingh;
+        writememh[0xb000+i] = write_nothingh;
+        writememd[0x9000+i] = write_nothingd;
+        writememd[0xb000+i] = write_nothingd;
     }
-    for (i = (rom_size >> 16); i < 0xfc0; i++)
+    for (i=(rom_size >> 16); i<0xfc0; i++)
     {
-        readmem[0x9000 + i] = read_nothing;
-        readmem[0xb000 + i] = read_nothing;
-        readmemb[0x9000 + i] = read_nothingb;
-        readmemb[0xb000 + i] = read_nothingb;
-        readmemh[0x9000 + i] = read_nothingh;
-        readmemh[0xb000 + i] = read_nothingh;
-        readmemd[0x9000 + i] = read_nothingd;
-        readmemd[0xb000 + i] = read_nothingd;
-        writemem[0x9000 + i] = write_nothing;
-        writemem[0xb000 + i] = write_nothing;
-        writememb[0x9000 + i] = write_nothingb;
-        writememb[0xb000 + i] = write_nothingb;
-        writememh[0x9000 + i] = write_nothingh;
-        writememh[0xb000 + i] = write_nothingh;
-        writememd[0x9000 + i] = write_nothingd;
-        writememd[0xb000 + i] = write_nothingd;
+        readmem[0x9000+i] = read_nothing;
+        readmem[0xb000+i] = read_nothing;
+        readmemb[0x9000+i] = read_nothingb;
+        readmemb[0xb000+i] = read_nothingb;
+        readmemh[0x9000+i] = read_nothingh;
+        readmemh[0xb000+i] = read_nothingh;
+        readmemd[0x9000+i] = read_nothingd;
+        readmemd[0xb000+i] = read_nothingd;
+        writemem[0x9000+i] = write_nothing;
+        writemem[0xb000+i] = write_nothing;
+        writememb[0x9000+i] = write_nothingb;
+        writememb[0xb000+i] = write_nothingb;
+        writememh[0x9000+i] = write_nothingh;
+        writememh[0xb000+i] = write_nothingh;
+        writememd[0x9000+i] = write_nothingd;
+        writememd[0xb000+i] = write_nothingd;
     }
 
     //init PIF_RAM
@@ -967,29 +917,28 @@ int32_t init_memory()
     writememh[0xbfc0] = write_pifh;
     writememd[0x9fc0] = write_pifd;
     writememd[0xbfc0] = write_pifd;
-    for (i = 0; i < (0x40 / 4); i++)
-        PIF_RAM[i] = 0;
+    for (i=0; i<(0x40/4); i++) PIF_RAM[i]=0;
 
-    for (i = 0xfc1; i < 0x1000; i++)
+    for (i=0xfc1; i<0x1000; i++)
     {
-        readmem[0x9000 + i] = read_nothing;
-        readmem[0xb000 + i] = read_nothing;
-        readmemb[0x9000 + i] = read_nothingb;
-        readmemb[0xb000 + i] = read_nothingb;
-        readmemh[0x9000 + i] = read_nothingh;
-        readmemh[0xb000 + i] = read_nothingh;
-        readmemd[0x9000 + i] = read_nothingd;
-        readmemd[0xb000 + i] = read_nothingd;
-        writemem[0x9000 + i] = write_nothing;
-        writemem[0xb000 + i] = write_nothing;
-        writememb[0x9000 + i] = write_nothingb;
-        writememb[0xb000 + i] = write_nothingb;
-        writememh[0x9000 + i] = write_nothingh;
-        writememh[0xb000 + i] = write_nothingh;
-        writememd[0x9000 + i] = write_nothingd;
-        writememd[0xb000 + i] = write_nothingd;
+        readmem[0x9000+i] = read_nothing;
+        readmem[0xb000+i] = read_nothing;
+        readmemb[0x9000+i] = read_nothingb;
+        readmemb[0xb000+i] = read_nothingb;
+        readmemh[0x9000+i] = read_nothingh;
+        readmemh[0xb000+i] = read_nothingh;
+        readmemd[0x9000+i] = read_nothingd;
+        readmemd[0xb000+i] = read_nothingd;
+        writemem[0x9000+i] = write_nothing;
+        writemem[0xb000+i] = write_nothing;
+        writememb[0x9000+i] = write_nothingb;
+        writememb[0xb000+i] = write_nothingb;
+        writememh[0x9000+i] = write_nothingh;
+        writememh[0xb000+i] = write_nothingh;
+        writememd[0x9000+i] = write_nothingd;
+        writememd[0xb000+i] = write_nothingd;
     }
-
+    
     //init SUMMERCART
     if (g_core->cfg->use_summercart)
     {
@@ -1333,17 +1282,35 @@ void update_DPC()
     if (dpc_register.w_dpc_status & 0x20)
         dpc_register.flush = 1;
     dpc_register.dpc_status = ((dpc_register.xbus_dmem_dma) |
-        (dpc_register.freeze << 1) |
-        (dpc_register.flush << 2) |
-        (dpc_register.start_glck << 3) |
-        (dpc_register.tmem_busy << 4) |
-        (dpc_register.pipe_busy << 5) |
-        (dpc_register.cmd_busy << 6) |
-        (dpc_register.cbuf_busy << 7) |
-        (dpc_register.dma_busy << 8) |
-        (dpc_register.end_valid << 9) |
-        (dpc_register.start_valid << 10)
-    );
+                               (dpc_register.freeze << 1) |
+                               (dpc_register.flush << 2) |
+                               (dpc_register.start_glck << 3) |
+                               (dpc_register.tmem_busy << 4) |
+                               (dpc_register.pipe_busy << 5) |
+                               (dpc_register.cmd_busy << 6) |
+                               (dpc_register.cbuf_busy << 7) |
+                               (dpc_register.dma_busy << 8) |
+                               (dpc_register.end_valid << 9) |
+                               (dpc_register.start_valid << 10));
+}
+
+unsigned int *fast_mem_access(unsigned int address)
+{
+    /* This code is performance critical, specially on pure interpreter mode.
+     * Removing error checking saves some time, but the emulator may crash. */
+    if (address < 0x80000000 || address >= 0xc0000000)
+        address = virtual_to_physical_address(address, 2);
+
+    if ((address & 0x1FFFFFFF) >= 0x10000000)
+        return (unsigned int *)rom + ((address & 0x1FFFFFFF) - 0x10000000)/4;
+    else if ((address & 0x1FFFFFFF) < 0x800000)
+        return (unsigned int *)rdram + (address & 0x1FFFFFFF)/4;
+    else if (address >= 0xa4000000 && address <= 0xa4001000)
+        return (unsigned int *)SP_DMEM + (address & 0xFFF)/4;
+    else if ((address >= 0xa4001000 && address <= 0xa4002000))
+        return (unsigned int *)SP_IMEM + (address & 0xFFF)/4;
+    else
+        return NULL;
 }
 
 void read_nothing()

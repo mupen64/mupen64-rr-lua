@@ -91,3 +91,6 @@ void Debugger::on_late_cycle(uint32_t opcode, uint32_t address)
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
+void Debugger::core_compare()
+{
+}

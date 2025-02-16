@@ -18,24 +18,11 @@
 #include <r4300/timers.h>
 #include <r4300/vcr.h>
 
-std::thread emu_thread_handle;
-std::thread audio_thread_handle;
-
-std::atomic<bool> audio_thread_stop_requested;
-
-// Lock to prevent emu state change race conditions
-std::recursive_mutex g_emu_cs;
-
-std::filesystem::path rom_path;
-
-bool g_vr_beq_ignore_jmp;
-volatile bool emu_launched = false;
-volatile bool emu_paused = false;
-volatile bool core_executing = false;
-volatile bool emu_resetting = false;
-size_t g_total_frames = 0;
-bool fullscreen = false;
-bool gs_button = false;
+// FIXME: Move these to view!
+std::filesystem::path get_sram_path();
+std::filesystem::path get_eeprom_path();
+std::filesystem::path get_flashram_path();
+std::filesystem::path get_mempak_path();
 
 uint32_t i, dynacore = 0, interpcore = 0;
 int32_t stop, llbit;
@@ -55,22 +42,36 @@ uint64_t debug_count = 0;
 uint32_t next_interrupt, CIC_Chip;
 precomp_instr* PC;
 char invalid_code[0x100000];
-std::atomic<bool> screen_invalidated = true;
 precomp_block *blocks[0x100000], *actual;
-int32_t rounding_mode = MUP_ROUND_NEAREST;
-int32_t trunc_mode = MUP_ROUND_TRUNC, round_mode = MUP_ROUND_NEAREST, ceil_mode = MUP_ROUND_CEIL, floor_mode = MUP_ROUND_FLOOR;
+int32_t rounding_mode = FE_TONEAREST;
+int32_t trunc_mode = FE_TOWARDZERO, round_mode = FE_TONEAREST, ceil_mode = FE_UPWARD, floor_mode = FE_DOWNWARD;
 int16_t x87_status_word;
 void (*code)();
 uint32_t next_vi;
 int32_t vi_field = 0;
+
 bool g_vr_fast_forward;
 bool g_vr_frame_skipped;
+std::atomic<bool> screen_invalidated = true;
 core_system_type g_sys_type;
-
 FILE* g_eeprom_file;
 FILE* g_sram_file;
 FILE* g_fram_file;
 FILE* g_mpak_file;
+std::thread emu_thread_handle;
+std::thread audio_thread_handle;
+std::atomic<bool> audio_thread_stop_requested;
+// Lock to prevent emu state change race conditions
+std::recursive_mutex g_emu_cs;
+std::filesystem::path rom_path;
+bool g_vr_beq_ignore_jmp;
+volatile bool emu_launched = false;
+volatile bool emu_paused = false;
+volatile bool core_executing = false;
+volatile bool emu_resetting = false;
+size_t g_total_frames = 0;
+bool fullscreen = false;
+bool gs_button = false;
 
 /*#define check_memory() \
    if (!invalid_code[address>>12]) \
@@ -80,88 +81,6 @@ FILE* g_mpak_file;
     if (!invalid_code[address >> 12])                                               \
         if (blocks[address >> 12]->block[(address & 0xFFF) / 4].ops != NOTCOMPILED) \
             invalid_code[address >> 12] = 1;
-
-void core_vr_invalidate_visuals()
-{
-    screen_invalidated = true;
-}
-
-std::filesystem::path get_sram_path()
-{
-    return std::format(L"{}{} {}.sra", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
-}
-
-std::filesystem::path get_eeprom_path()
-{
-    return std::format(L"{}{} {}.eep", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
-}
-
-std::filesystem::path get_flashram_path()
-{
-    return std::format(L"{}{} {}.fla", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
-}
-
-std::filesystem::path get_mempak_path()
-{
-    return std::format(L"{}{} {}.mpk", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
-}
-
-void core_vr_resume_emu()
-{
-    if (emu_launched)
-    {
-        emu_paused = 0;
-    }
-
-    g_core->callbacks.emu_paused_changed(emu_paused);
-}
-
-
-void core_vr_pause_emu()
-{
-    if (!vcr_allows_core_pause())
-    {
-        return;
-    }
-
-    if (emu_launched)
-    {
-        emu_paused = 1;
-    }
-
-    g_core->callbacks.emu_paused_changed(emu_paused);
-}
-
-void core_vr_frame_advance()
-{
-    frame_advancing = 1;
-    core_vr_resume_emu();
-}
-
-bool core_vr_get_paused()
-{
-    return emu_paused;
-}
-
-bool core_vr_get_frame_advance()
-{
-    return frame_advancing;
-}
-
-void terminate_emu()
-{
-    stop = 1;
-}
-
-bool core_vr_get_core_executing()
-{
-    return core_executing;
-}
-
-bool core_vr_get_launched()
-{
-    return emu_launched;
-}
 
 void NI()
 {
@@ -1474,39 +1393,14 @@ void SD()
 
 void NOTCOMPILED()
 {
-    if ((PC->addr >> 16) == 0xa400)
-        recompile_block((int32_t*)SP_DMEM, blocks[0xa4000000 >> 12], PC->addr);
+    unsigned int *mem = fast_mem_access(blocks[PC->addr>>12]->start);
+    if (mem != NULL)
+        recompile_block((int *)mem, blocks[PC->addr >> 12], PC->addr);
     else
-    {
-        uint32_t paddr = 0;
-        if (PC->addr >= 0x80000000 && PC->addr < 0xc0000000)
-            paddr = PC->addr;
-        // else paddr = (tlb_LUT_r[PC->addr>>12]&0xFFFFF000)|(PC->addr&0xFFF);
-        else
-            paddr = virtual_to_physical_address(PC->addr, 2);
-        if (paddr)
-        {
-            if ((paddr & 0x1FFFFFFF) >= 0x10000000)
-            {
-                // g_core->logger->info("not compiled rom:{:#06x}", paddr);
-                recompile_block(
-                (int32_t*)rom + ((((paddr - (PC->addr - blocks[PC->addr >> 12]->start)) & 0x1FFFFFFF) - 0x10000000) >> 2),
-                blocks[PC->addr >> 12], PC->addr);
-            }
-            else
-                recompile_block(
-                (int32_t*)(rdram + (((paddr - (PC->addr - blocks[PC->addr >> 12]->start)) & 0x1FFFFFFF) >> 2)),
-                blocks[PC->addr >> 12], PC->addr);
-        }
-        else
-            g_core->logger->info("not compiled exception");
-    }
+        g_core->logger->error("not compiled exception");
     PC->ops();
     if (dynacore)
         dyna_jump();
-    //*return_address = (uint32_t)(blocks[PC->addr>>12]->code + PC->local_addr);
-    // else
-    // PC->ops();
 }
 
 void NOTCOMPILED2()
@@ -1534,10 +1428,10 @@ static inline uint32_t update_invalid_addr(uint32_t addr)
     }
     else
     {
-        uint32_t paddr = virtual_to_physical_address(addr, 2);
+        unsigned int paddr = virtual_to_physical_address(addr, 2);
         if (paddr)
         {
-            uint32_t beg_paddr = paddr - (addr - (addr & ~0xFFF));
+            unsigned int beg_paddr = paddr - (addr - (addr & ~0xFFF));
             update_invalid_addr(paddr);
             if (invalid_code[(beg_paddr + 0x000) >> 12])
                 invalid_code[addr >> 12] = 1;
@@ -1557,37 +1451,116 @@ uint32_t jump_to_address;
 
 inline void jump_to_func()
 {
-    // #ifdef _DEBUG
-    //	g_core->logger->info("dyna jump: {:#08x}", addr);
-    // #endif
-    uint32_t paddr;
-    if (skip_jump)
-        return;
+    unsigned int paddr;
+    if (skip_jump) return;
     paddr = update_invalid_addr(addr);
-    if (!paddr)
-        return;
-    actual = blocks[addr >> 12];
-    if (invalid_code[addr >> 12])
+    if (!paddr) return;
+    actual = blocks[addr>>12];
+    if (invalid_code[addr>>12])
     {
-        if (!blocks[addr >> 12])
+        if (!blocks[addr>>12])
         {
-            blocks[addr >> 12] = (precomp_block*)malloc(sizeof(precomp_block));
-            actual = blocks[addr >> 12];
-            blocks[addr >> 12]->code = NULL;
-            blocks[addr >> 12]->block = NULL;
-            blocks[addr >> 12]->jumps_table = NULL;
+            blocks[addr>>12] = (precomp_block *) malloc(sizeof(precomp_block));
+            actual = blocks[addr>>12];
+            blocks[addr>>12]->code = NULL;
+            blocks[addr>>12]->block = NULL;
+            blocks[addr>>12]->jumps_table = NULL;
+            blocks[addr>>12]->riprel_table = NULL;
         }
-        blocks[addr >> 12]->start = addr & ~0xFFF;
-        blocks[addr >> 12]->end = (addr & ~0xFFF) + 0x1000;
-        init_block((int32_t*)(rdram + (((paddr - (addr - blocks[addr >> 12]->start)) & 0x1FFFFFFF) >> 2)),
-                   blocks[addr >> 12]);
+        blocks[addr>>12]->start = addr & ~0xFFF;
+        blocks[addr>>12]->end = (addr & ~0xFFF) + 0x1000;
+        init_block(blocks[addr>>12]);
     }
-    PC = actual->block + ((addr - actual->start) >> 2);
-
-    if (dynacore)
-        dyna_jump();
+    PC=actual->block+((addr-actual->start)>>2);
+   
+    if (dynacore) dyna_jump();
 }
 #undef addr
+
+
+/* Refer to Figure 6-2 on page 155 and explanation on page B-11
+   of MIPS R4000 Microprocessor User's Manual (Second Edition)
+   by Joe Heinrich.
+*/
+void shuffle_fpr_data(int oldStatus, int newStatus)
+{
+#if defined(M64P_BIG_ENDIAN)
+    const int isBigEndian = 1;
+#else
+    const int isBigEndian = 0;
+#endif
+
+    if ((newStatus & 0x04000000) != (oldStatus & 0x04000000))
+    {
+        int i;
+        int temp_fgr_32[32];
+
+        // pack or unpack the FGR register data
+        if (newStatus & 0x04000000)
+        {   // switching into 64-bit mode
+            // retrieve 32 FPR values from packed 32-bit FGR registers
+            for (i = 0; i < 32; i++)
+            {
+                temp_fgr_32[i] = *((int *) &reg_cop1_fgr_64[i>>1] + ((i & 1) ^ isBigEndian));
+            }
+            // unpack them into 32 64-bit registers, taking the high 32-bits from their temporary place in the upper 16 FGRs
+            for (i = 0; i < 32; i++)
+            {
+                int high32 = *((int *) &reg_cop1_fgr_64[(i>>1)+16] + (i & 1));
+                *((int *) &reg_cop1_fgr_64[i] + isBigEndian)     = temp_fgr_32[i];
+                *((int *) &reg_cop1_fgr_64[i] + (isBigEndian^1)) = high32;
+            }
+        }
+        else
+        {   // switching into 32-bit mode
+            // retrieve the high 32 bits from each 64-bit FGR register and store in temp array
+            for (i = 0; i < 32; i++)
+            {
+                temp_fgr_32[i] = *((int *) &reg_cop1_fgr_64[i] + (isBigEndian^1));
+            }
+            // take the low 32 bits from each register and pack them together into 64-bit pairs
+            for (i = 0; i < 16; i++)
+            {
+                unsigned int least32 = *((unsigned int *) &reg_cop1_fgr_64[i*2] + isBigEndian);
+                unsigned int most32 = *((unsigned int *) &reg_cop1_fgr_64[i*2+1] + isBigEndian);
+                reg_cop1_fgr_64[i] = ((unsigned long long) most32 << 32) | (unsigned long long) least32;
+            }
+            // store the high bits in the upper 16 FGRs, which wont be accessible in 32-bit mode
+            for (i = 0; i < 32; i++)
+            {
+                *((int *) &reg_cop1_fgr_64[(i>>1)+16] + (i & 1)) = temp_fgr_32[i];
+            }
+        }
+    }
+}
+
+void set_fpr_pointers(int newStatus)
+{
+    int i;
+#if defined(M64P_BIG_ENDIAN)
+    const int isBigEndian = 1;
+#else
+    const int isBigEndian = 0;
+#endif
+
+    // update the FPR register pointers
+    if (newStatus & 0x04000000)
+    {
+        for (i = 0; i < 32; i++)
+        {
+            reg_cop1_double[i] = (double*) &reg_cop1_fgr_64[i];
+            reg_cop1_simple[i] = ((float*) &reg_cop1_fgr_64[i]) + isBigEndian;
+        }
+    }
+    else
+    {
+        for (i = 0; i < 32; i++)
+        {
+            reg_cop1_double[i] = (double*) &reg_cop1_fgr_64[i>>1];
+            reg_cop1_simple[i] = ((float*) &reg_cop1_fgr_64[i>>1]) + ((i & 1) ^ isBigEndian);
+        }
+    }
+}
 
 int32_t check_cop1_unusable()
 {
@@ -1604,23 +1577,23 @@ void update_count()
 {
     if (interpcore)
     {
-        core_Count = core_Count + (interp_addr - last_addr) / 2;
+        core_Count = core_Count + (interp_addr - last_addr)/2;
         last_addr = interp_addr;
     }
     else
     {
         if (PC->addr < last_addr)
         {
-            g_core->logger->info("PC->addr < last_addr");
+            g_core->logger->error("PC->addr < last_addr");
         }
-        core_Count = core_Count + (PC->addr - last_addr) / 2;
+        core_Count = core_Count + (PC->addr - last_addr)/2;
         last_addr = PC->addr;
     }
 }
 
 void init_blocks()
 {
-    int32_t i;
+    int i;
     for (i = 0; i < 0x100000; i++)
     {
         invalid_code[i] = 1;
@@ -1631,13 +1604,13 @@ void init_blocks()
     blocks[0xa4000000 >> 12]->code = NULL;
     blocks[0xa4000000 >> 12]->block = NULL;
     blocks[0xa4000000 >> 12]->jumps_table = NULL;
+    blocks[0xa4000000 >> 12]->riprel_table = NULL;
     blocks[0xa4000000 >> 12]->start = 0xa4000000;
     blocks[0xa4000000 >> 12]->end = 0xa4001000;
     actual = blocks[0xa4000000 >> 12];
-    init_block((int32_t*)SP_DMEM, blocks[0xa4000000 >> 12]);
+    init_block(blocks[0xa4000000 >> 12]);
     PC = actual->block + (0x40 / 4);
 }
-
 
 void print_stop_debug()
 {
@@ -1659,81 +1632,70 @@ void print_stop_debug()
     g_core->logger->info("Executed {} ({:#08x}) instructions", debug_count, debug_count);
 }
 
-void core_start()
+void free_blocks(void)
 {
-    int64_t CRC = 0;
-    uint32_t j;
+    int i;
+    for (i=0; i<0x100000; i++)
+    {
+        if (blocks[i])
+        {
+            free_block(blocks[i]);
+            free(blocks[i]);
+            blocks[i] = NULL;
+        }
+    }
+}
 
-    j = 0;
-    debug_count = 0;
-    g_core->logger->info("demarrage r4300");
-    memcpy((char*)SP_DMEM + 0x40, rom + 0x40, 0xFBC);
-    delay_slot = 0;
-    stop = 0;
+void r4300_reset_hard(void)
+{
+    unsigned int i;
+
+    // clear r4300 registers and TLB entries
     for (i = 0; i < 32; i++)
     {
-        reg[i] = 0;
-        reg_cop0[i] = 0;
-        reg_cop1_fgr_32[i] = 0;
-        reg_cop1_fgr_64[i] = 0;
-
-        reg_cop1_double[i] = (double*)&reg_cop1_fgr_64[i];
-        reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i];
+        reg[i]=0;
+        reg_cop0[i]=0;
+        reg_cop1_fgr_64[i]=0;
 
         // --------------tlb------------------------
-        tlb_e[i].mask = 0;
-        tlb_e[i].vpn2 = 0;
-        tlb_e[i].g = 0;
-        tlb_e[i].asid = 0;
-        tlb_e[i].pfn_even = 0;
-        tlb_e[i].c_even = 0;
-        tlb_e[i].d_even = 0;
-        tlb_e[i].v_even = 0;
-        tlb_e[i].pfn_odd = 0;
-        tlb_e[i].c_odd = 0;
-        tlb_e[i].d_odd = 0;
-        tlb_e[i].v_odd = 0;
-        tlb_e[i].r = 0;
-        // tlb_e[i].check_parity_mask=0x1000;
+        tlb_e[i].mask=0;
+        tlb_e[i].vpn2=0;
+        tlb_e[i].g=0;
+        tlb_e[i].asid=0;
+        tlb_e[i].pfn_even=0;
+        tlb_e[i].c_even=0;
+        tlb_e[i].d_even=0;
+        tlb_e[i].v_even=0;
+        tlb_e[i].pfn_odd=0;
+        tlb_e[i].c_odd=0;
+        tlb_e[i].d_odd=0;
+        tlb_e[i].v_odd=0;
+        tlb_e[i].r=0;
+        //tlb_e[i].check_parity_mask=0x1000;
 
-        tlb_e[i].start_even = 0;
-        tlb_e[i].end_even = 0;
-        tlb_e[i].phys_even = 0;
-        tlb_e[i].start_odd = 0;
-        tlb_e[i].end_odd = 0;
-        tlb_e[i].phys_odd = 0;
+        tlb_e[i].start_even=0;
+        tlb_e[i].end_even=0;
+        tlb_e[i].phys_even=0;
+        tlb_e[i].start_odd=0;
+        tlb_e[i].end_odd=0;
+        tlb_e[i].phys_odd=0;
     }
-    memset(tlb_LUT_r, 0, sizeof(tlb_LUT_r));
-    memset(tlb_LUT_r, 0, sizeof(tlb_LUT_w));
-    llbit = 0;
-    hi = 0;
-    lo = 0;
-    FCR0 = 0x511;
-    FCR31 = 0;
+    for (i=0; i<0x100000; i++)
+    {
+        tlb_LUT_r[i] = 0;
+        tlb_LUT_w[i] = 0;
+    }
+    llbit=0;
+    hi=0;
+    lo=0;
+    FCR0=0x511;
+    FCR31=0;
 
-    //--------
-    /*reg[20]=1;
-    reg[22]=0x3F;
-    reg[29]=0xFFFFFFFFA0400000LL;
-    Random=31;
-    Status=0x70400004;
-    Config=0x66463;
-    PRevID=0xb00;*/
-    //--------
-
-    // the following values are extracted from the pj64 source code
-    // thanks to Zilmar and Jabo
-
-    reg[6] = 0xFFFFFFFFA4001F0CLL;
-    reg[7] = 0xFFFFFFFFA4001F08LL;
-    reg[8] = 0x00000000000000C0LL;
-    reg[10] = 0x0000000000000040LL;
-    reg[11] = 0xFFFFFFFFA4000040LL;
-    reg[29] = 0xFFFFFFFFA4001FF0LL;
-
+    // set COP0 registers
     core_Random = 31;
-    core_Status = 0x34000000;
-    core_Config_cop0 = 0x6e463;
+    core_Status= 0x34000000;
+    set_fpr_pointers(core_Status);
+    core_Config = 0x6e463;
     core_PRevID = 0xb00;
     core_Count = 0x5000;
     core_Cause = 0x5C;
@@ -1741,220 +1703,225 @@ void core_start()
     core_EPC = 0xFFFFFFFF;
     core_BadVAddr = 0xFFFFFFFF;
     core_ErrorEPC = 0xFFFFFFFF;
+   
+    rounding_mode = 0x33F;
+}
 
-    for (i = 0x40 / 4; i < (0x1000 / 4); i++)
-        CRC += SP_DMEM[i];
-    switch (CRC)
-    {
+
+/* this soft reset function simulates the actions of the PIF ROM, which may vary by region */
+void r4300_reset_soft(void)
+{
+    long long CRC = 0;
+    unsigned int i;
+
+    // copy boot code from ROM to SP_DMEM
+    memcpy((char *)SP_DMEM+0x40, rom+0x40, 0xFC0);
+
+   // the following values are extracted from the pj64 source code
+   // thanks to Zilmar and Jabo
+   
+   reg[6] = 0xFFFFFFFFA4001F0CLL;
+   reg[7] = 0xFFFFFFFFA4001F08LL;
+   reg[8] = 0x00000000000000C0LL;
+   reg[10]= 0x0000000000000040LL;
+   reg[11]= 0xFFFFFFFFA4000040LL;
+   reg[29]= 0xFFFFFFFFA4001FF0LL;
+   
+    // figure out which ROM type is loaded
+   for (i = 0x40/4; i < (0x1000/4); i++)
+     CRC += SP_DMEM[i];
+   switch(CRC) {
     case 0x000000D0027FDF31LL:
     case 0x000000CFFB631223LL:
-        CIC_Chip = 1;
-        break;
+      CIC_Chip = 1;
+      break;
     case 0x000000D057C85244LL:
-        CIC_Chip = 2;
-        break;
+      CIC_Chip = 2;
+      break;
     case 0x000000D6497E414BLL:
-        CIC_Chip = 3;
-        break;
+      CIC_Chip = 3;
+      break;
     case 0x0000011A49F60E96LL:
-        CIC_Chip = 5;
-        break;
+      CIC_Chip = 5;
+      break;
     case 0x000000D6D5BE5580LL:
-        CIC_Chip = 6;
-        break;
+      CIC_Chip = 6;
+      break;
     default:
-        CIC_Chip = 2;
-    }
+      CIC_Chip = 2;
+   }
 
-    switch (ROM_HEADER.Country_code & 0xFF)
-    {
-    case 0x44:
-    case 0x46:
-    case 0x49:
-    case 0x50:
-    case 0x53:
-    case 0x55:
-    case 0x58:
-    case 0x59:
-        switch (CIC_Chip)
-        {
-        case 2:
-            reg[5] = 0xFFFFFFFFC0F1D859LL;
-            reg[14] = 0x000000002DE108EALL;
-            break;
-        case 3:
-            reg[5] = 0xFFFFFFFFD4646273LL;
-            reg[14] = 0x000000001AF99984LL;
-            break;
-        case 5:
-            SP_IMEM[1] = 0xBDA807FC;
-            reg[5] = 0xFFFFFFFFDECAAAD1LL;
-            reg[14] = 0x000000000CF85C13LL;
-            reg[24] = 0x0000000000000002LL;
-            break;
-        case 6:
-            reg[5] = 0xFFFFFFFFB04DC903LL;
-            reg[14] = 0x000000001AF99984LL;
-            reg[24] = 0x0000000000000002LL;
-            break;
-        }
-        reg[23] = 0x0000000000000006LL;
-        reg[31] = 0xFFFFFFFFA4001554LL;
-        break;
-    case 0x37:
-    case 0x41:
-    case 0x45:
-    case 0x4A:
-    default:
-        switch (CIC_Chip)
-        {
-        case 2:
-            reg[5] = 0xFFFFFFFFC95973D5LL;
-            reg[14] = 0x000000002449A366LL;
-            break;
-        case 3:
-            reg[5] = 0xFFFFFFFF95315A28LL;
-            reg[14] = 0x000000005BACA1DFLL;
-            break;
-        case 5:
-            SP_IMEM[1] = 0x8DA807FC;
-            reg[5] = 0x000000005493FB9ALL;
-            reg[14] = 0xFFFFFFFFC2C20384LL;
-            break;
-        case 6:
-            reg[5] = 0xFFFFFFFFE067221FLL;
-            reg[14] = 0x000000005CD2B70FLL;
-            break;
-        }
-        reg[20] = 0x0000000000000001LL;
-        reg[24] = 0x0000000000000003LL;
-        reg[31] = 0xFFFFFFFFA4001550LL;
+   switch(g_sys_type)
+     {
+      case sys_pal:
+    switch (CIC_Chip) {
+     case 2:
+       reg[5] = 0xFFFFFFFFC0F1D859LL;
+       reg[14]= 0x000000002DE108EALL;
+       break;
+     case 3:
+       reg[5] = 0xFFFFFFFFD4646273LL;
+       reg[14]= 0x000000001AF99984LL;
+       break;
+     case 5:
+       SP_IMEM[1] = 0xBDA807FC;
+       reg[5] = 0xFFFFFFFFDECAAAD1LL;
+       reg[14]= 0x000000000CF85C13LL;
+       reg[24]= 0x0000000000000002LL;
+       break;
+     case 6:
+       reg[5] = 0xFFFFFFFFB04DC903LL;
+       reg[14]= 0x000000001AF99984LL;
+       reg[24]= 0x0000000000000002LL;
+       break;
     }
-    switch (CIC_Chip)
-    {
+    reg[23]= 0x0000000000000006LL;
+    reg[31]= 0xFFFFFFFFA4001554LL;
+    break;
+      case sys_ntsc:
+      default:
+    switch (CIC_Chip) {
+     case 2:
+       reg[5] = 0xFFFFFFFFC95973D5LL;
+       reg[14]= 0x000000002449A366LL;
+       break;
+     case 3:
+       reg[5] = 0xFFFFFFFF95315A28LL;
+       reg[14]= 0x000000005BACA1DFLL;
+       break;
+     case 5:
+       SP_IMEM[1] = 0x8DA807FC;
+       reg[5] = 0x000000005493FB9ALL;
+       reg[14]= 0xFFFFFFFFC2C20384LL;
+       break;
+     case 6:
+       reg[5] = 0xFFFFFFFFE067221FLL;
+       reg[14]= 0x000000005CD2B70FLL;
+       break;
+    }
+    reg[20]= 0x0000000000000001LL;
+    reg[24]= 0x0000000000000003LL;
+    reg[31]= 0xFFFFFFFFA4001550LL;
+     }
+   switch (CIC_Chip) {
     case 1:
-        reg[22] = 0x000000000000003FLL;
-        break;
+      reg[22]= 0x000000000000003FLL;
+      break;
     case 2:
-        reg[1] = 0x0000000000000001LL;
-        reg[2] = 0x000000000EBDA536LL;
-        reg[3] = 0x000000000EBDA536LL;
-        reg[4] = 0x000000000000A536LL;
-        reg[12] = 0xFFFFFFFFED10D0B3LL;
-        reg[13] = 0x000000001402A4CCLL;
-        reg[15] = 0x000000003103E121LL;
-        reg[22] = 0x000000000000003FLL;
-        reg[25] = 0xFFFFFFFF9DEBB54FLL;
-        break;
+      reg[1] = 0x0000000000000001LL;
+      reg[2] = 0x000000000EBDA536LL;
+      reg[3] = 0x000000000EBDA536LL;
+      reg[4] = 0x000000000000A536LL;
+      reg[12]= 0xFFFFFFFFED10D0B3LL;
+      reg[13]= 0x000000001402A4CCLL;
+      reg[15]= 0x000000003103E121LL;
+      reg[22]= 0x000000000000003FLL;
+      reg[25]= 0xFFFFFFFF9DEBB54FLL;
+      break;
     case 3:
-        reg[1] = 0x0000000000000001LL;
-        reg[2] = 0x0000000049A5EE96LL;
-        reg[3] = 0x0000000049A5EE96LL;
-        reg[4] = 0x000000000000EE96LL;
-        reg[12] = 0xFFFFFFFFCE9DFBF7LL;
-        reg[13] = 0xFFFFFFFFCE9DFBF7LL;
-        reg[15] = 0x0000000018B63D28LL;
-        reg[22] = 0x0000000000000078LL;
-        reg[25] = 0xFFFFFFFF825B21C9LL;
-        break;
+      reg[1] = 0x0000000000000001LL;
+      reg[2] = 0x0000000049A5EE96LL;
+      reg[3] = 0x0000000049A5EE96LL;
+      reg[4] = 0x000000000000EE96LL;
+      reg[12]= 0xFFFFFFFFCE9DFBF7LL;
+      reg[13]= 0xFFFFFFFFCE9DFBF7LL;
+      reg[15]= 0x0000000018B63D28LL;
+      reg[22]= 0x0000000000000078LL;
+      reg[25]= 0xFFFFFFFF825B21C9LL;
+      break;
     case 5:
-        SP_IMEM[0] = 0x3C0DBFC0;
-        SP_IMEM[2] = 0x25AD07C0;
-        SP_IMEM[3] = 0x31080080;
-        SP_IMEM[4] = 0x5500FFFC;
-        SP_IMEM[5] = 0x3C0DBFC0;
-        SP_IMEM[6] = 0x8DA80024;
-        SP_IMEM[7] = 0x3C0BB000;
-        reg[2] = 0xFFFFFFFFF58B0FBFLL;
-        reg[3] = 0xFFFFFFFFF58B0FBFLL;
-        reg[4] = 0x0000000000000FBFLL;
-        reg[12] = 0xFFFFFFFF9651F81ELL;
-        reg[13] = 0x000000002D42AAC5LL;
-        reg[15] = 0x0000000056584D60LL;
-        reg[22] = 0x0000000000000091LL;
-        reg[25] = 0xFFFFFFFFCDCE565FLL;
-        break;
+      SP_IMEM[0] = 0x3C0DBFC0;
+      SP_IMEM[2] = 0x25AD07C0;
+      SP_IMEM[3] = 0x31080080;
+      SP_IMEM[4] = 0x5500FFFC;
+      SP_IMEM[5] = 0x3C0DBFC0;
+      SP_IMEM[6] = 0x8DA80024;
+      SP_IMEM[7] = 0x3C0BB000;
+      reg[2] = 0xFFFFFFFFF58B0FBFLL;
+      reg[3] = 0xFFFFFFFFF58B0FBFLL;
+      reg[4] = 0x0000000000000FBFLL;
+      reg[12]= 0xFFFFFFFF9651F81ELL;
+      reg[13]= 0x000000002D42AAC5LL;
+      reg[15]= 0x0000000056584D60LL;
+      reg[22]= 0x0000000000000091LL;
+      reg[25]= 0xFFFFFFFFCDCE565FLL;
+      break;
     case 6:
-        reg[2] = 0xFFFFFFFFA95930A4LL;
-        reg[3] = 0xFFFFFFFFA95930A4LL;
-        reg[4] = 0x00000000000030A4LL;
-        reg[12] = 0xFFFFFFFFBCB59510LL;
-        reg[13] = 0xFFFFFFFFBCB59510LL;
-        reg[15] = 0x000000007A3C07F4LL;
-        reg[22] = 0x0000000000000085LL;
-        reg[25] = 0x00000000465E3F72LL;
-        break;
-    }
+      reg[2] = 0xFFFFFFFFA95930A4LL;
+      reg[3] = 0xFFFFFFFFA95930A4LL;
+      reg[4] = 0x00000000000030A4LL;
+      reg[12]= 0xFFFFFFFFBCB59510LL;
+      reg[13]= 0xFFFFFFFFBCB59510LL;
+      reg[15]= 0x000000007A3C07F4LL;
+      reg[22]= 0x0000000000000085LL;
+      reg[25]= 0x00000000465E3F72LL;
+      break;
+   }
 
-    rounding_mode = MUP_ROUND_NEAREST;
-    set_rounding();
+}
+
+void r4300_execute(void)
+{
+    unsigned int i;
+
+    debug_count = 0;
+    delay_slot=0;
+    stop = 0;
 
     last_addr = 0xa4000040;
-    // next_interrupt = 624999; //this is later overwritten with different value so what's the point...
+    next_interrupt = 624999;
     init_interrupt();
-    interpcore = 0;
 
-    if (!dynacore)
+    if (g_core->cfg->core_type == 2)
     {
-        g_core->logger->info("interpreter");
-        init_blocks();
-        last_addr = PC->addr;
-        core_executing = true;
-        g_core->callbacks.core_executing_changed(core_executing);
-        g_core->logger->info(L"core_executing: {}", (bool)core_executing);
-        while (!stop)
-        {
-            PC->ops();
-            g_vr_beq_ignore_jmp = false;
-        }
-    }
-    else if (dynacore == 2)
-    {
-        dynacore = 0;
+        g_core->logger->info("Starting R4300 emulator: Pure Interpreter");
         interpcore = 1;
         pure_interpreter();
     }
-    else
+    else if (g_core->cfg->core_type == 1)
     {
+        void (*code)(void);
+        g_core->logger->info("Starting R4300 emulator: Dynamic Recompiler");
         dynacore = 1;
-        g_core->logger->info("dynamic recompiler");
         init_blocks();
 
-        auto code_addr = actual->code + (actual->block[0x40 / 4].local_addr);
+        /* Prevent segfault on failed init_blocks */
+        if (!actual->block || !actual->code)
+            return;
 
-        code = (void (*)(void))(code_addr);
+        code =  (void(*)(void)) (actual->code+(actual->block[0x40/4].local_addr));
         dyna_start(code);
         PC++;
     }
-    debug_count += core_Count;
-    print_stop_debug();
-    for (i = 0; i < 0x100000; i++)
+    else
     {
-        if (blocks[i] != NULL)
+        g_core->logger->info("Starting R4300 emulator: Cached Interpreter");
+        interpcore = 1;
+        init_blocks();
+
+        /* Prevent segfault on failed init_blocks */
+        if (!actual->block)
+            return;
+
+        last_addr = PC->addr;
+        while (!stop)
         {
-            if (blocks[i]->block)
-            {
-                free(blocks[i]->block);
-                blocks[i]->block = NULL;
-            }
-            if (blocks[i]->code)
-            {
-                free_exec(blocks[i]->code);
-                blocks[i]->code = NULL;
-            }
-            if (blocks[i]->jumps_table)
-            {
-                free(blocks[i]->jumps_table);
-                blocks[i]->jumps_table = NULL;
-            }
-            free(blocks[i]);
-            blocks[i] = NULL;
+#ifdef COMPARE_CORE
+            if (PC->ops == FIN_BLOCK && (PC->addr < 0x80000000 || PC->addr >= 0xc0000000))
+                virtual_to_physical_address(PC->addr, 2);
+            CoreCompareCallback();
+#endif
+#ifdef DBG
+            if (g_DebuggerActive) update_debugger(PC->addr);
+#endif
+            PC->ops();
         }
     }
-    if (!dynacore && interpcore)
-        free(PC);
-    core_executing = false;
-    g_core->callbacks.core_executing_changed(core_executing);
+
+    debug_count+= core_Count;
+    g_core->logger->info("R4300 emulator finished.");
+    free_blocks();
+    if (interpcore) free(PC);
 }
 
 bool open_core_file_stream(const std::filesystem::path& path, FILE** file)
@@ -2046,9 +2013,7 @@ void emu_thread()
     g_core->plugin_funcs.rom_open_gfx();
     g_core->plugin_funcs.rom_open_input();
     g_core->plugin_funcs.rom_open_audio();
-
-    dynacore = g_core->cfg->core_type;
-
+    
     audio_thread_handle = std::thread(audio_thread);
 
     g_core->callbacks.emu_launched_changed(true);
@@ -2056,7 +2021,9 @@ void emu_thread()
     g_core->callbacks.reset();
 
     g_core->logger->info("[Core] Emu thread entry took {}ms", static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000));
-    core_start();
+    r4300_reset_hard();
+    r4300_reset_soft();
+    r4300_execute();
 
     st_on_core_stop();
 
@@ -2281,41 +2248,6 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     return Res_Ok;
 }
 
-// https://github.com/mupen64plus/mupen64plus-core/blob/e170c409fb006aa38fd02031b5eefab6886ec125/src/device/r4300/recomp.c#L995
-
-void* malloc_exec(size_t size)
-{
-#ifdef WIN32
-    return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-#else
-    assert(false);
-#endif
-}
-
-void *realloc_exec(void *ptr, size_t oldsize, size_t newsize)
-{
-    void* block = malloc_exec(newsize);
-    if (block != NULL)
-    {
-        size_t copysize;
-        copysize = (oldsize < newsize)
-            ? oldsize
-            : newsize;
-        memcpy(block, ptr, copysize);
-    }
-    free_exec(ptr);
-    return block;
-}
-
-void free_exec(void* ptr)
-{
-#ifdef WIN32
-    VirtualFree(ptr, 0, MEM_RELEASE);
-#else
-    assert(false);
-#endif
-}
-
 core_result core_vr_reset_rom(bool reset_save_data, bool stop_vcr, bool wait)
 {
     if (wait)
@@ -2358,4 +2290,87 @@ bool core_vr_get_gs_button()
 void core_vr_set_gs_button(bool value)
 {
     gs_button = value;
+}
+
+
+void core_vr_invalidate_visuals()
+{
+    screen_invalidated = true;
+}
+
+std::filesystem::path get_sram_path()
+{
+    return std::format(L"{}{} {}.sra", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+}
+
+std::filesystem::path get_eeprom_path()
+{
+    return std::format(L"{}{} {}.eep", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+}
+
+std::filesystem::path get_flashram_path()
+{
+    return std::format(L"{}{} {}.fla", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+}
+
+std::filesystem::path get_mempak_path()
+{
+    return std::format(L"{}{} {}.mpk", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+}
+
+void core_vr_resume_emu()
+{
+    if (emu_launched)
+    {
+        emu_paused = 0;
+    }
+
+    g_core->callbacks.emu_paused_changed(emu_paused);
+}
+
+
+void core_vr_pause_emu()
+{
+    if (!vcr_allows_core_pause())
+    {
+        return;
+    }
+
+    if (emu_launched)
+    {
+        emu_paused = 1;
+    }
+
+    g_core->callbacks.emu_paused_changed(emu_paused);
+}
+
+void core_vr_frame_advance()
+{
+    frame_advancing = 1;
+    core_vr_resume_emu();
+}
+
+bool core_vr_get_paused()
+{
+    return emu_paused;
+}
+
+bool core_vr_get_frame_advance()
+{
+    return frame_advancing;
+}
+
+void terminate_emu()
+{
+    stop = 1;
+}
+
+bool core_vr_get_core_executing()
+{
+    return core_executing;
+}
+
+bool core_vr_get_launched()
+{
+    return emu_launched;
 }
