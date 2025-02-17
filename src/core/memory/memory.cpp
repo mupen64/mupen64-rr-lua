@@ -33,11 +33,13 @@ core_ri_reg ri_register;
 core_ai_reg ai_register;
 core_dpc_reg dpc_register;
 core_dps_reg dps_register;
-uint32_t rdram[0x800000 / 4];
 uint8_t sram[0x8000];
 uint8_t flashram[0x20000];
 uint8_t eeprom[0x800];
 uint8_t mempack[4][0x8000];
+
+
+ALIGN(16, uint32_t rdram[0x800000 / 4]);
 uint8_t* rdramb = (uint8_t*)rdram;
 uint32_t SP_DMEM[0x1000 / 4 * 2];
 uint32_t* SP_IMEM = SP_DMEM + 0x1000 / 4;

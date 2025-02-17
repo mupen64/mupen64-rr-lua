@@ -10,6 +10,8 @@
 #define VR_PROFILE (1)
 #endif
 
+#define ALIGN(BYTES,DATA) __declspec(align(BYTES)) DATA;
+
 #include <r4300/recomp.h>
 #include <memory/tlb.h>
 #include <r4300/rom.h>
