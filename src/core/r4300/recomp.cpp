@@ -2166,12 +2166,7 @@ void init_block(precomp_block* block)
     {
         if (!block->code)
         {
-#if defined(PROFILE_R4300)
-            max_code_length = 524288; /* allocate so much code space that we'll never have to realloc(), because this may */
-            /* cause instruction locations to move, and break our profiling data                */
-#else
             max_code_length = 32768;
-#endif
             block->code = (unsigned char*)malloc_exec(max_code_length);
         }
         else
@@ -2197,42 +2192,21 @@ void init_block(precomp_block* block)
 
     if (!already_exist)
     {
-#if defined(PROFILE_R4300)
-        pfProfile = fopen("instructionaddrs.dat", "ab");
-        long x86addr = (long)block->code;
-        int mipsop = -2; /* -2 == NOTCOMPILED block at beginning of x86 code */
-        if (fwrite(&mipsop, 1, 4, pfProfile) != 4 || // write 4-byte MIPS opcode
-            fwrite(&x86addr, 1, sizeof(char*), pfProfile) != sizeof(char*)) // write pointer to dynamically generated x86 code for this MIPS instruction
-            g_core->logger->error("Error writing R4300 instruction address profiling data");
-#endif
-
         for (i = 0; i < length; i++)
         {
             dst = block->block + i;
             dst->addr = block->start + i * 4;
             dst->reg_cache_infos.need_map = 0;
             dst->local_addr = code_length;
-#ifdef COMPARE_CORE
-            if (dynacore)
-                gendebug();
-#endif
             RNOTCOMPILED();
             if (dynacore)
                 recomp_func();
         }
-#if defined(PROFILE_R4300)
-        fclose(pfProfile);
-        pfProfile = NULL;
-#endif
         init_length = code_length;
     }
     else
     {
-#if defined(PROFILE_R4300)
-        code_length = block->code_length; /* leave old instructions in their place */
-#else
         code_length = init_length; /* recompile everything, overwrite old recompiled instructions */
-#endif
         for (i = 0; i < length; i++)
         {
             dst = block->block + i;
