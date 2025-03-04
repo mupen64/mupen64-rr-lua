@@ -124,9 +124,9 @@ typedef struct {
     const core_plugin_cfg_item_enum_value** enum_values;
 
     /**
-     * \brief Pointer to a bool which specifies whether the item is read-only.
+     * \brief Pointer to a value which specifies whether the item is read-only.
      */
-    const bool* readonly;
+    const int32_t* readonly;
     
     /**
      * \brief Pointer to the item's value. The type of the value pointed to is determined by <c>type</c>.
