@@ -59,6 +59,9 @@ typedef struct {
  * \brief The plugin function collection.
  */
 typedef struct {
+
+    // TODO: Sort or re-order these... it's a catastrophe.
+    
     CLOSEDLL close_dll_gfx;
     INITIATEGFX initiate_gfx;
     PROCESSDLIST process_dlist;

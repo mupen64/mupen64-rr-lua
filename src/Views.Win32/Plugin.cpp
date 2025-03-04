@@ -7,14 +7,14 @@
 // ReSharper disable CppCStyleCast
 
 #include "stdafx.h"
-#include <gui/features/Statusbar.h>
 #include <Config.h>
 #include <FrontendService.h>
 #include <PlatformService.h>
 #include <Plugin.h>
-
 #include <gui/Loggers.h>
 #include <gui/Main.h>
+#include <gui/features/ConfigDialog.h>
+#include <gui/features/Statusbar.h>
 
 core_gfx_info dummy_gfx_info;
 core_audio_info dummy_audio_info;
@@ -417,6 +417,24 @@ void Plugin::config()
         }
     case plugin_rsp:
         {
+            const auto get_config_1 = (GETCONFIG1)PlatformService::get_function_in_module(m_module, "GetConfig1");
+            const auto save_config_1 = (SAVECONFIG1)PlatformService::get_function_in_module(m_module, "SaveConfig1");
+
+            if (get_config_1 && save_config_1)
+            {
+                core_plugin_cfg* cfg;
+                get_config_1(&cfg);
+                if (cfg)
+                {
+                    configdialog_show_plugin(this, cfg);
+                    if (!save_config_1())
+                    {
+                        FrontendService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
+                    }
+                    break;   
+                }
+            }
+        
             if (!core_vr_get_launched())
             {
                 auto initiateRSP = (INITIATERSP)PlatformService::get_function_in_module((void*)m_module, "InitiateRSP");

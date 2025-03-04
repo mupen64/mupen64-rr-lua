@@ -8,9 +8,7 @@
 #include <PlatformService.h>
 #include <FrontendService.h>
 
-
-
-
+// TODO: Remove this abstraction
 void* PlatformService::load_library(const wchar_t* path, uint64_t* error)
 {
     auto module = LoadLibrary(path);
@@ -29,6 +27,7 @@ void PlatformService::free_library(void* module)
     }
 }
 
+// TODO: Remove this abstraction
 void* PlatformService::get_function_in_module(void* module, const char* name)
 {
     return GetProcAddress((HMODULE)module, name);

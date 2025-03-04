@@ -8,7 +8,7 @@
  * Describes the Mupen64 Plugin API.
  *
  * This header can be used standalone by Mupen64 plugins, just make sure to define CORE_PLUGIN_WITH_CALLBACKS first.
- * 
+ *
  */
 
 #pragma once
@@ -47,6 +47,124 @@ typedef enum {
     plugin_input = 4,
     plugin_rsp = 1,
 } core_plugin_type;
+
+
+/**
+ * \brief Represents the type of a plugin config entry.
+ */
+typedef enum {
+    /*
+     * \brief The value is invalid. This should not be specified.
+     */
+    pcit_invalid,
+
+    /*
+     * \brief The value contained is of type <c>int32_t</c> and either 0 or 1.
+     */
+    pcit_bool,
+
+    /*
+     * \brief The value contained is of type <c>int32_t</c>.
+     */
+    pcit_int32,
+
+    /*
+     * \brief The value contained is of type <c>int32_t</c>, with a fixed set of allowed values, as specified by <c>enum_values</c>.
+     */
+    pcit_enum,
+
+    /*
+     * \brief The value contained is of type <c>wchar_t[260]</c>.
+     */
+    pcit_string,
+
+    /*
+     * \brief The value contained is of type <c>wchar_t[260]</c>, representing a path.
+     */
+    pcit_path,
+} core_plugin_cfg_item_type;
+
+/**
+ * \brief Represents a name-value pair for an enum entry.
+ */
+typedef struct {
+    wchar_t* name;
+    int32_t value;
+} core_plugin_cfg_item_enum_value;
+
+typedef struct {
+    /**
+     * \brief The group this item belongs to, as an index into the config's group list.
+     */
+    size_t group;
+
+    /**
+     * \brief The item's type.
+     */
+    core_plugin_cfg_item_type type;
+
+    /**
+     * \brief The item's name.
+     */
+    const wchar_t* name;
+
+    /**
+     * \brief The item's tooltip, or <c>0</c> if the item has no tooltip.
+     */
+    const wchar_t* tooltip;
+
+    /**
+     * \brief The amount of elements in <c>enum_values</c>.
+     */
+    size_t enum_values_len;
+
+    /**
+     * \brief The possible values for the item, if the item is an enum. Only valid if <c>type</c> is <c>pcit_enum</c>.
+     */
+    const core_plugin_cfg_item_enum_value** enum_values;
+
+    /**
+     * \brief Pointer to a bool which specifies whether the item is read-only.
+     */
+    const bool* readonly;
+    
+    /**
+     * \brief Pointer to the item's value. The type of the value pointed to is determined by <c>type</c>.
+     * \remark The implementer must guarantee access to this being safe while the emulator is paused.
+     */
+    void* value;
+
+    /**
+     * \brief Pointer to the item's default value. The type of the value pointed to is determined by <c>type</c>.
+     * \remark The implementer must guarantee access to this being safe while the emulator is paused.
+     */
+    const void* default_value;
+} core_plugin_cfg_item;
+
+/**
+ * \brief Represents the configuration of a plugin.
+ */
+typedef struct {
+    /**
+     * \brief The amount of elements in <c>groups</c>.
+     */
+    size_t groups_len;
+
+    /**
+     * \brief The configuration's groups.
+     */
+    const wchar_t** groups;
+
+    /**
+     * \brief The amount of elements in <c>items</c>.
+     */
+    size_t items_len;
+
+    /**
+     * \brief The configuration's items.
+     */
+    const core_plugin_cfg_item* items;
+} core_plugin_cfg;
 
 /**
  * \brief Describes generic information about a plugin.
@@ -228,6 +346,8 @@ typedef void(__cdecl* DLLTEST)(void*);
 typedef void(__cdecl* GETDLLINFO)(core_plugin_info*);
 typedef void(__cdecl* ROMCLOSED)();
 typedef void(__cdecl* ROMOPEN)();
+typedef void(__cdecl* GETCONFIG1)(core_plugin_cfg**);
+typedef bool(__cdecl* SAVECONFIG1)();
 
 typedef void(__cdecl* CHANGEWINDOW)();
 typedef int32_t(__cdecl* INITIATEGFX)(core_gfx_info);
@@ -281,6 +401,8 @@ EXPORT void CALL DllConfig(void* hParent);
 EXPORT void CALL GetDllInfo(core_plugin_info* PluginInfo);
 EXPORT void CALL RomClosed(void);
 EXPORT void CALL RomOpen(void);
+EXPORT void CALL GetConfig1(core_plugin_cfg**);
+EXPORT bool CALL SaveConfig1(void);
 
 #pragma endregion
 

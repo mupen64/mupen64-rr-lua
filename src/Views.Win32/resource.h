@@ -512,6 +512,7 @@
 #define IDM_MULTI_FRAME_ADVANCE_INC     40104
 #define IDM_MULTI_FRAME_ADVANCE_DEC     40105
 #define IDM_MULTI_FRAME_ADVANCE_RESET   40106
+#define IDD_PLUGIN_CONFIG   40107
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
