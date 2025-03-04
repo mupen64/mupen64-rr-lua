@@ -2110,7 +2110,7 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
                 switch (item.type)
                 {
                 case pcit_bool:
-                    return std::wstring((bool*)item.value ? L"On" : L"Off");
+                    return std::wstring(*(bool*)item.value ? L"On" : L"Off");
                 case pcit_int32:
                     return std::to_wstring(*(int32_t*)item.value);
                 case pcit_enum:
