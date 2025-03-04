@@ -5,10 +5,11 @@
  */
 
 #include "stdafx.h"
-#include <Plugin.h>
 #include <Config.h>
 #include <FrontendService.h>
 #include <Messenger.h>
+#include <Plugin.h>
+#include <SettingsListView.h>
 #include <capture/EncodingManager.h>
 #include <gui/Main.h>
 #include <gui/features/configdialog.h>
@@ -1005,46 +1006,46 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
 
 void get_config_listview_items(std::vector<t_options_group>& groups, std::vector<t_options_item>& options)
 {
-    size_t id = 1;
+    size_t id = 0;
 
     t_options_group interface_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Interface"};
 
     t_options_group statusbar_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Statusbar"};
 
     t_options_group seek_piano_roll_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Seek / Piano Roll"};
 
     t_options_group flow_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Flow"};
 
     t_options_group capture_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Capture"};
 
     t_options_group core_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Core"};
 
     t_options_group vcr_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"VCR"};
     
     t_options_group lua_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Lua"};
 
     t_options_group debug_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Debug"};
 
     t_options_group hotkey_group = {
-    .id = ++id,
+    .id = id++,
     .name = L"Hotkeys"};
 
     groups = {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group, lua_group, debug_group, hotkey_group};
@@ -1527,16 +1528,16 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
 }
 
 /**
- * Advances the settings listview's selection by one.
+ * Advances a listview's selection by one.
  */
-void advance_listview_selection()
+void advance_listview_selection(HWND lvhwnd)
 {
-    int32_t i = ListView_GetNextItem(g_lv_hwnd, -1, LVNI_SELECTED);
+    int32_t i = ListView_GetNextItem(lvhwnd, -1, LVNI_SELECTED);
     if (i == -1)
         return;
-    ListView_SetItemState(g_lv_hwnd, i, 0, LVIS_SELECTED | LVIS_FOCUSED);
-    ListView_SetItemState(g_lv_hwnd, i + 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-    ListView_EnsureVisible(g_lv_hwnd, i + 1, false);
+    ListView_SetItemState(lvhwnd, i, 0, LVIS_SELECTED | LVIS_FOCUSED);
+    ListView_SetItemState(lvhwnd, i + 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    ListView_EnsureVisible(lvhwnd, i + 1, false);
 }
 
 /**
@@ -1604,19 +1605,9 @@ static void handle_hotkey_conflict(const HWND hwnd, cfg_hotkey* current_hotkey)
     }
 }
 
-bool begin_listview_edit(HWND hwnd)
+bool begin_settings_lv_edit(HWND hwnd, int i)
 {
-    int32_t i = ListView_GetNextItem(g_lv_hwnd, -1, LVNI_SELECTED);
-
-    if (i == -1)
-        return false;
-
-    LVITEM item = {0};
-    item.mask = LVIF_PARAM;
-    item.iItem = i;
-    ListView_GetItem(g_lv_hwnd, &item);
-
-    auto option_item = g_option_items[item.lParam];
+    auto option_item = g_option_items[i];
 
     // TODO: Perhaps gray out readonly values too?
     if (option_item.is_readonly())
@@ -1673,7 +1664,7 @@ bool begin_listview_edit(HWND hwnd)
     // For strings, allow editing in a dialog (since it might be a multiline string and we can't really handle that below)
     if (option_item.type == OptionsItem::Type::String)
     {
-        g_edit_option_item_index = item.lParam;
+        g_edit_option_item_index = i;
         DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), hwnd, EditStringDialogProc, 0);
     }
 
@@ -1685,7 +1676,7 @@ bool begin_listview_edit(HWND hwnd)
             DestroyWindow(g_edit_hwnd);
         }
 
-        g_edit_option_item_index = item.lParam;
+        g_edit_option_item_index = i;
 
         RECT item_rect{};
         ListView_GetSubItemRect(g_lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
@@ -1724,33 +1715,11 @@ bool begin_listview_edit(HWND hwnd)
 
         handle_hotkey_conflict(hwnd, hotkey);
 
-        advance_listview_selection();
+        advance_listview_selection(g_lv_hwnd);
     }
 
     ListView_Update(g_lv_hwnd, i);
     return true;
-}
-
-LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param, UINT_PTR, DWORD_PTR)
-{
-    switch (msg)
-    {
-    case WM_KEYDOWN:
-        if (w_param == VK_SPACE)
-        {
-            return TRUE;
-        }
-        break;
-    case WM_KEYUP:
-        if (w_param == VK_SPACE && begin_listview_edit(hwnd))
-        {
-            return TRUE;
-        }
-        break;
-    default:
-        break;
-    }
-    return DefSubclassProc(hwnd, msg, w_param, l_param);
 }
 
 INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
@@ -1769,61 +1738,83 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             RECT grid_rect{};
             GetClientRect(hwnd, &grid_rect);
 
-            g_lv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                                       WS_TABSTOP | WS_VISIBLE | WS_CHILD |
-                                       LVS_SINGLESEL | LVS_REPORT |
-                                       LVS_SHOWSELALWAYS | LVS_ALIGNTOP,
-                                       grid_rect.left, grid_rect.top,
-                                       grid_rect.right - grid_rect.left,
-                                       grid_rect.bottom - grid_rect.top,
-                                       hwnd, (HMENU)IDC_SETTINGS_LV,
-                                       g_app_instance,
-                                       NULL);
-            SetWindowSubclass(g_lv_hwnd, list_view_proc, 0, 0);
-
-            HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK, 2, 0);
-            ImageList_AddIcon(image_list, LoadIcon(g_app_instance, MAKEINTRESOURCE(IDI_DENY)));
-            ImageList_AddIcon(image_list, LoadIcon(g_app_instance, MAKEINTRESOURCE(IDI_CHANGED)));
-            ListView_SetImageList(g_lv_hwnd, image_list, LVSIL_SMALL);
-
-            ListView_EnableGroupView(g_lv_hwnd, true);
-            ListView_SetExtendedListViewStyle(g_lv_hwnd,
-                                              LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_INFOTIP | LVS_EX_LABELTIP);
-
-            for (auto group : g_option_groups)
+            std::vector<std::wstring> groups;
+            for (const auto& group : g_option_groups)
             {
-                LVGROUP lvgroup;
-                lvgroup.cbSize = sizeof(LVGROUP);
-                lvgroup.mask = LVGF_HEADER | LVGF_GROUPID;
-                // FIXME: This is concerning, but seems to work
-                lvgroup.pszHeader = const_cast<wchar_t*>(group.name.c_str());
-                lvgroup.iGroupId = group.id;
-                ListView_InsertGroup(g_lv_hwnd, -1, &lvgroup);
+                groups.push_back(group.name);
             }
 
-            LVCOLUMN lv_column = {0};
-            lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
-
-            lv_column.pszText = const_cast<LPWSTR>(L"Name");
-            ListView_InsertColumn(g_lv_hwnd, 0, &lv_column);
-            lv_column.pszText = const_cast<LPWSTR>(L"Value");
-            ListView_InsertColumn(g_lv_hwnd, 1, &lv_column);
-
-            LVITEM lv_item = {0};
-            lv_item.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM | LVIF_IMAGE;
-            lv_item.pszText = LPSTR_TEXTCALLBACK;
-            lv_item.iImage = I_IMAGECALLBACK;
-            for (int i = 0; i < g_option_items.size(); ++i)
+            std::vector<std::pair<size_t, std::wstring>> items;
+            for (const auto& item : g_option_items)
             {
-                lv_item.iGroupId = g_option_items[i].group_id;
-                lv_item.lParam = i;
-                lv_item.iItem = i;
-                ListView_InsertItem(g_lv_hwnd, &lv_item);
+                items.emplace_back(item.group_id, item.name);
             }
 
-            ListView_SetColumnWidth(g_lv_hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-            ListView_SetColumnWidth(g_lv_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
-            ListView_SetColumnWidth(g_lv_hwnd, 2, LVSCW_AUTOSIZE_USEHEADER);
+            auto get_item_tooltip = [](size_t i) {
+                return g_option_items[i].tooltip;
+            };
+
+            auto edit_start = [=](size_t i)  {
+                begin_settings_lv_edit(hwnd, i);
+            };
+
+            auto get_item_image = [](size_t i) {
+                const auto options_item = g_option_items[i];
+                
+                void* default_value_ptr = options_item.get_default_value_ptr(&g_prev_config);
+
+                int32_t image = 50;
+                
+                if (options_item.type == OptionsItem::Type::String)
+                {
+                    image = *(std::wstring*)default_value_ptr == *options_item.data_str ? 50 : 1;
+                }
+                else if (options_item.type == OptionsItem::Type::Hotkey)
+                {
+                    auto default_hotkey = (cfg_hotkey*)default_value_ptr;
+                    auto current_hotkey = (cfg_hotkey*)options_item.data;
+
+                    bool same = default_hotkey->key == current_hotkey->key && default_hotkey->ctrl == current_hotkey->ctrl && default_hotkey->alt == current_hotkey->alt && default_hotkey->shift == current_hotkey->shift;
+
+                    image = same ? 50 : 1;
+                }
+                else
+                {
+                    image = *(int32_t*)default_value_ptr == *options_item.data ? 50 : 1;
+                }
+
+                if (options_item.is_readonly())
+                {
+                    image = 0;
+                }
+                
+                return image;
+            };
+
+            auto get_item_text = [](size_t i, size_t subitem) {
+                if (subitem == 0)
+                {
+                    return g_option_items[i].name;
+                }
+
+                if (g_hotkey_active_index.has_value() && g_hotkey_active_index.value() == i)
+                {
+                    return std::wstring(L"... (RMB to cancel)");
+                }
+                
+                return g_option_items[i].get_value_name();
+            };
+        
+            g_lv_hwnd = SettingsListView::create({
+                .dlg_hwnd = hwnd,
+                .rect = grid_rect,
+                .on_edit_start = edit_start,
+                .groups = groups,
+                .items = items,
+                .get_item_tooltip = get_item_tooltip,
+                .get_item_text = get_item_text,
+                .get_item_image = get_item_image,
+            });
 
             return TRUE;
         }
@@ -1976,91 +1967,8 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             {
                 g_config.settings_tab = 2;
             }
-
-            if (w_param == IDC_SETTINGS_LV)
-            {
-                switch (lpnmhdr->code)
-                {
-                case LVN_GETDISPINFO:
-                    {
-                        const auto plvdi = reinterpret_cast<NMLVDISPINFOW*>(l_param);
-                        t_options_item options_item = g_option_items[plvdi->item.lParam];
-
-                        if (plvdi->item.mask & LVIF_IMAGE)
-                        {
-                            void* default_value_ptr = options_item.get_default_value_ptr(&g_prev_config);
-
-                            if (options_item.type == OptionsItem::Type::String)
-                            {
-                                plvdi->item.iImage = *(std::wstring*)default_value_ptr == *options_item.data_str ? 50 : 1;
-                            }
-                            else if (options_item.type == OptionsItem::Type::Hotkey)
-                            {
-                                auto default_hotkey = (cfg_hotkey*)default_value_ptr;
-                                auto current_hotkey = (cfg_hotkey*)options_item.data;
-
-                                bool same = default_hotkey->key == current_hotkey->key && default_hotkey->ctrl == current_hotkey->ctrl && default_hotkey->alt == current_hotkey->alt && default_hotkey->shift == current_hotkey->shift;
-
-                                plvdi->item.iImage = same ? 50 : 1;
-                            }
-                            else
-                            {
-                                plvdi->item.iImage = *(int32_t*)default_value_ptr == *options_item.data ? 50 : 1;
-                            }
-
-                            if (options_item.is_readonly())
-                            {
-                                plvdi->item.iImage = 0;
-                            }
-                        }
-
-                        switch (plvdi->item.iSubItem)
-                        {
-                        case 0:
-                            StrNCpy(plvdi->item.pszText, options_item.name.c_str(), plvdi->item.cchTextMax);
-                            break;
-                        case 1:
-                            if (g_hotkey_active_index.has_value() && g_hotkey_active_index.value() == plvdi->item.iItem)
-                            {
-                                StrNCpy(plvdi->item.pszText, L"... (RMB to cancel)", plvdi->item.cchTextMax);
-                                break;
-                            }
-                            StrNCpy(plvdi->item.pszText, options_item.get_value_name().c_str(), plvdi->item.cchTextMax);
-                            break;
-                        }
-                        break;
-                    }
-                case LVN_GETINFOTIP:
-                    {
-                        auto getinfotip = (LPNMLVGETINFOTIP)l_param;
-
-                        LVITEM item = {0};
-                        item.mask = LVIF_PARAM;
-                        item.iItem = getinfotip->iItem;
-                        ListView_GetItem(g_lv_hwnd, &item);
-
-                        auto option_item = g_option_items[item.lParam];
-
-                        if (option_item.tooltip.empty())
-                        {
-                            break;
-                        }
-
-                        StrCpyNW(getinfotip->pszText, option_item.tooltip.c_str(), getinfotip->cchTextMax);
-
-                        break;
-                    }
-                case NM_DBLCLK:
-                    if (begin_listview_edit(hwnd))
-                    {
-                        return TRUE;
-                    }
-                    break;
-                default:
-                    break;
-                }
-            }
-            break;
+        
+            return SettingsListView::notify(hwnd, g_lv_hwnd, l_param, w_param);
         }
     case WM_DESTROY:
         {
@@ -2123,4 +2031,9 @@ void configdialog_show()
 
     save_config();
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+}
+
+void configdialog_show_plugin(Plugin* plugin, core_plugin_cfg* cfg)
+{
+    
 }

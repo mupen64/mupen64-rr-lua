@@ -9,3 +9,4 @@
 void configdialog_init();
 void configdialog_show();
 void configdialog_about();
+void configdialog_show_plugin(Plugin* plugin, core_plugin_cfg* cfg);
