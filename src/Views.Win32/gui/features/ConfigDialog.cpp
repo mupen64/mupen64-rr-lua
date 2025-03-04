@@ -180,7 +180,6 @@ typedef struct OptionsItem {
 } t_options_item;
 
 t_plugin_discovery_result plugin_discovery_result;
-std::vector<HWND> tooltips;
 std::vector<t_options_group> g_option_groups;
 std::vector<t_options_item> g_option_items;
 HWND g_lv_hwnd;
@@ -1969,15 +1968,6 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             }
         
             return SettingsListView::notify(hwnd, g_lv_hwnd, l_param, w_param);
-        }
-    case WM_DESTROY:
-        {
-            for (auto tooltip : tooltips)
-            {
-                DestroyWindow(tooltip);
-            }
-            tooltips.clear();
-            break;
         }
     default:
         return FALSE;
