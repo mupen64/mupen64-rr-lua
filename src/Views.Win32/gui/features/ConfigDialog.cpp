@@ -211,8 +211,9 @@ int32_t get_user_hotkey(cfg_hotkey* hotkey)
         SleepEx(10, TRUE);
         for (j = 8; j < 254; j++)
         {
-            while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE));
-            
+            while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE))
+                ;
+
             if (j == VK_LCONTROL || j == VK_RCONTROL || j == VK_LMENU || j == VK_RMENU || j == VK_LSHIFT || j == VK_RSHIFT)
                 continue;
 
@@ -227,7 +228,8 @@ int32_t get_user_hotkey(cfg_hotkey* hotkey)
                 hotkey->shift = 0;
                 hotkey->ctrl = 0;
                 hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+                    ;
                 return 1;
             }
 
@@ -237,17 +239,19 @@ int32_t get_user_hotkey(cfg_hotkey* hotkey)
                 hotkey->shift = 0;
                 hotkey->ctrl = 0;
                 hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+                    ;
                 return 1;
             }
-            
+
             if (GetAsyncKeyState(VK_XBUTTON2))
             {
                 hotkey->key = VK_XBUTTON2;
                 hotkey->shift = 0;
                 hotkey->ctrl = 0;
                 hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
+                    ;
                 return 1;
             }
 
@@ -1034,7 +1038,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     t_options_group vcr_group = {
     .id = id++,
     .name = L"VCR"};
-    
+
     t_options_group lua_group = {
     .id = id++,
     .name = L"Lua"};
@@ -1360,7 +1364,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.core.is_reset_recording_enabled,
     .type = t_options_item::Type::Bool,
     },
-        
+
     t_options_item{
     .group_id = lua_group.id,
     .name = L"Presenter",
@@ -1753,17 +1757,17 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 return g_option_items[i].tooltip;
             };
 
-            auto edit_start = [=](size_t i)  {
+            auto edit_start = [=](size_t i) {
                 begin_settings_lv_edit(hwnd, i);
             };
 
             auto get_item_image = [](size_t i) {
                 const auto options_item = g_option_items[i];
-                
+
                 void* default_value_ptr = options_item.get_default_value_ptr(&g_prev_config);
 
                 int32_t image = 50;
-                
+
                 if (options_item.type == OptionsItem::Type::String)
                 {
                     image = *(std::wstring*)default_value_ptr == *options_item.data_str ? 50 : 1;
@@ -1786,7 +1790,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 {
                     image = 0;
                 }
-                
+
                 return image;
             };
 
@@ -1800,19 +1804,19 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 {
                     return std::wstring(L"... (RMB to cancel)");
                 }
-                
+
                 return g_option_items[i].get_value_name();
             };
-        
+
             g_lv_hwnd = SettingsListView::create({
-                .dlg_hwnd = hwnd,
-                .rect = grid_rect,
-                .on_edit_start = edit_start,
-                .groups = groups,
-                .items = items,
-                .get_item_tooltip = get_item_tooltip,
-                .get_item_text = get_item_text,
-                .get_item_image = get_item_image,
+            .dlg_hwnd = hwnd,
+            .rect = grid_rect,
+            .on_edit_start = edit_start,
+            .groups = groups,
+            .items = items,
+            .get_item_tooltip = get_item_tooltip,
+            .get_item_text = get_item_text,
+            .get_item_image = get_item_image,
             });
 
             return TRUE;
@@ -1966,7 +1970,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             {
                 g_config.settings_tab = 2;
             }
-        
+
             return SettingsListView::notify(hwnd, g_lv_hwnd, l_param, w_param);
         }
     default:
@@ -2023,7 +2027,285 @@ void configdialog_show()
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
 }
 
+typedef struct {
+    Plugin* plugin;
+    core_plugin_cfg* cfg;
+} t_plugin_cfg_params;
+
+INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
+{
+    const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
+    static HWND lvhwnd = nullptr;
+    static t_plugin_cfg_params* params{};
+
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        {
+            params = reinterpret_cast<t_plugin_cfg_params*>(l_param);
+
+            if (lvhwnd)
+            {
+                DestroyWindow(lvhwnd);
+            }
+
+            std::wstring plugin_type = L"Unknown";
+            switch (params->plugin->type())
+            {
+            case plugin_video:
+                plugin_type = L"Video";
+                break;
+            case plugin_audio:
+                plugin_type = L"Audio";
+                break;
+            case plugin_input:
+                plugin_type = L"Input";
+                break;
+            case plugin_rsp:
+                plugin_type = L"RSP";
+                break;
+            }
+            SetWindowText(hwnd, std::format(L"{} Settings", plugin_type).c_str());
+
+            RECT grid_rect{};
+            GetClientRect(hwnd, &grid_rect);
+            grid_rect.bottom -= 29;
+
+            std::vector<std::wstring> groups;
+            for (int i = 0; i < params->cfg->groups_len; ++i)
+            {
+                groups.push_back(params->cfg->groups[i]);
+            }
+
+            std::vector<std::pair<size_t, std::wstring>> items;
+            for (int i = 0; i < params->cfg->items_len; ++i)
+            {
+                items.emplace_back(params->cfg->items[i].group, params->cfg->items[i].name);
+            }
+
+            auto get_item_tooltip = [](size_t i) {
+                if (params->cfg->items[i].tooltip == nullptr)
+                {
+                    return L"";
+                }
+                return params->cfg->items[i].tooltip;
+            };
+
+            auto edit_start = [=](size_t i) {
+                // begin_settings_lv_edit(hwnd, i);
+            };
+
+            auto get_item_image = [](size_t i) {
+                return 50;
+            };
+
+            auto get_item_text = [](size_t i, size_t subitem) {
+                const auto item = params->cfg->items[i];
+
+                if (subitem == 0)
+                {
+                    return std::wstring(item.name);
+                }
+
+                switch (item.type)
+                {
+                case pcit_bool:
+                    return std::wstring((bool*)item.value ? L"On" : L"Off");
+                case pcit_int32:
+                    return std::to_wstring(*(int32_t*)item.value);
+                case pcit_enum:
+                    return std::wstring(L"Idk yet");
+                case pcit_string:
+                case pcit_path:
+                    return std::wstring((wchar_t*)item.value);
+                default:
+                    return std::wstring(L"?");
+                }
+            };
+
+            lvhwnd = SettingsListView::create({
+            .dlg_hwnd = hwnd,
+            .rect = grid_rect,
+            .on_edit_start = edit_start,
+            .groups = groups,
+            .items = items,
+            .get_item_tooltip = get_item_tooltip,
+            .get_item_text = get_item_text,
+            .get_item_image = get_item_image,
+            });
+
+            return TRUE;
+        }
+    case WM_CLOSE:
+        EndDialog(hwnd, IDCANCEL);
+        break;
+    case IDOK:
+        EndDialog(hwnd, IDOK);
+        break;
+    case IDCANCEL:
+        EndDialog(hwnd, IDCANCEL);
+        break;
+    case WM_EDIT_END:
+        {
+            auto str = reinterpret_cast<wchar_t*>(l_param);
+            auto item = params->cfg->items[g_edit_option_item_index];
+
+            if (item.type == pcit_int32)
+            {
+                try
+                {
+                    auto result = std::stoi(str);
+                    *(int32_t*)item.value = result;
+                }
+                catch (...)
+                {
+                    // ignored
+                }
+            }
+            else
+            {
+                // TODO: Implement properly
+                // wcscpy((wchar_t*)item.value, str);
+            }
+
+            ListView_Update(lvhwnd, g_edit_option_item_index);
+
+            break;
+        }
+    case WM_CONTEXTMENU:
+        {
+            int32_t i = ListView_GetNextItem(lvhwnd, -1, LVNI_SELECTED);
+
+            if (i == -1)
+                break;
+
+            LVITEM item = {0};
+            item.mask = LVIF_PARAM;
+            item.iItem = i;
+            ListView_GetItem(lvhwnd, &item);
+
+            auto option_item = params->cfg->items[item.lParam];
+            auto readonly = *(bool*)option_item.readonly;
+
+            HMENU h_menu = CreatePopupMenu();
+            AppendMenu(h_menu, MF_STRING | (readonly ? MF_DISABLED : MF_ENABLED), 1, L"Reset to default");
+            AppendMenu(h_menu, MF_STRING, 2, L"More info...");
+            AppendMenu(h_menu, MF_SEPARATOR, 100, L"");
+            AppendMenu(h_menu, MF_STRING, 5, L"Reset all to default");
+
+            const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(l_param), GET_Y_LPARAM(l_param), hwnd, 0);
+
+            if (offset < 0)
+            {
+                break;
+            }
+
+            if (offset == 1)
+            {
+                switch (option_item.type)
+                {
+                case pcit_bool:
+                case pcit_int32:
+                case pcit_enum:
+                    *(int32_t*)option_item.value = *(int32_t*)option_item.default_value;
+                    break;
+                case pcit_string:
+                case pcit_path:
+                    // TODO: Implement this
+                    break;
+                default:
+                    assert(false);
+                }
+
+                ListView_Update(lvhwnd, i);
+            }
+
+            if (offset == 2)
+            {
+                // Show a MessageBox with the tooltip and all possible values along with the default value.
+
+                std::wstring str;
+
+                str += option_item.tooltip;
+
+                for (int i = 0; i < option_item.enum_values_len; ++i)
+                {
+                    const auto enum_value = option_item.enum_values[i];
+                    str += std::format(L"{} - {}", i, enum_value->name);
+
+                    switch (option_item.type)
+                    {
+                    case pcit_bool:
+                    case pcit_int32:
+                    case pcit_enum:
+                        if (enum_value->value == *(int32_t*)option_item.default_value)
+                        {
+                            str += L" (default)";
+                        }
+                        break;
+                    case pcit_string:
+                    case pcit_path:
+                        // TODO: Implement this
+                        break;
+                    default:
+                        assert(false);
+                    }
+
+
+                    str += L"\r\n";
+                }
+
+                FrontendService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
+            }
+        
+            if (offset == 5)
+            {
+                // If some settings can't be changed, we'll bail
+                bool can_all_be_changed = true;
+
+                for (int i = 0; i < params->cfg->items_len; ++i)
+                {
+                    if (!*params->cfg->items[i].readonly)
+                        continue;
+
+                    can_all_be_changed = false;
+                    break;
+                }
+
+                if (!can_all_be_changed)
+                {
+                    FrontendService::show_dialog(L"Some settings can't be reset, as they are currently read-only.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
+                    goto destroy_menu;
+                }
+
+                const auto result = FrontendService::show_ask_dialog(L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
+
+                if (!result)
+                {
+                    goto destroy_menu;
+                }
+
+                // TODO: Implement this
+                
+                ListView_RedrawItems(lvhwnd, 0, ListView_GetItemCount(lvhwnd));
+            }
+
+        destroy_menu:
+            DestroyMenu(h_menu);
+        }
+        break;
+    case WM_NOTIFY:
+        {
+            return SettingsListView::notify(hwnd, lvhwnd, l_param, w_param);
+        }
+    default:
+        return FALSE;
+    }
+    return TRUE;
+}
+
 void configdialog_show_plugin(Plugin* plugin, core_plugin_cfg* cfg)
 {
-    
+    t_plugin_cfg_params params = {plugin, cfg};
+    DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_PLUGIN_CONFIG), g_main_hwnd, plugin_cfg, (LPARAM)&params);
 }
