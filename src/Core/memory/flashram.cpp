@@ -42,6 +42,25 @@ void load_flashram_infos(char* buf)
     memcpy(&write_pointer, buf + 20, 4);
 }
 
+bool check_flashram_infos(uint8_t* buf)
+{
+    uint32_t erase_offset, write_pointer;
+    memcpy(&erase_offset, buf + 16, 4);
+    memcpy(&write_pointer, buf + 20, 4);
+    
+    for (int32_t i = erase_offset; i < erase_offset + 128; i++)
+    {
+        const auto mapped_index = i ^ S8;
+        if (mapped_index < 0 ||  mapped_index >= sizeof(flashram)) return false;
+    }
+
+    for (int32_t i = write_pointer; i < write_pointer + 128; i++)
+    {
+        const auto mapped_index = i ^ S8;
+        if (mapped_index < 0 ||  mapped_index >= sizeof(rdram)) return false;
+    }
+}
+
 void init_flashram()
 {
     mode = NOPES_MODE;

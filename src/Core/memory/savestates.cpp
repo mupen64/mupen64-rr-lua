@@ -380,7 +380,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     memread(&ptr, g_first_block, sizeof(g_first_block));
 
     const auto si_reg = (core_si_reg*)&g_first_block[0xDC - 0x20];
-    if (!check_register_validity(si_reg))
+    if (!check_register_validity(si_reg) || !check_flashram_infos(&g_first_block[0x8021F0 - 0x20]))
     {
         task.callback(ST_InvalidRegisters, {});
         return;
