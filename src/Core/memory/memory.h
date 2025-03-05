@@ -243,6 +243,11 @@ void write_sc_regd();
 void update_SP();
 void update_DPC();
 
+/**
+ * \brief Checks whether the provided register contents are valid.
+ */
+bool check_register_validity(core_si_reg* si_reg);
+
 template <typename T>
 uint32_t ToAddr(uint32_t addr)
 {

@@ -252,13 +252,17 @@ void dma_sp_read()
 
 void dma_si_write()
 {
-    int32_t i;
     if (si_register.si_pif_addr_wr64b != 0x1FC007C0)
     {
         g_core->log_warn(L"unknown SI use");
         stop = 1;
     }
-    for (i = 0; i < (64 / 4); i++)
+    if (!check_register_validity(&si_register))
+    {
+        stop = 1;
+        return;
+    }
+    for (int32_t i = 0; i < (64 / 4); i++)
         PIF_RAM[i] = sl(rdram[si_register.si_dram_addr / 4 + i]);
     update_pif_write();
     update_count();
@@ -267,14 +271,18 @@ void dma_si_write()
 
 void dma_si_read()
 {
-    int32_t i;
     if (si_register.si_pif_addr_rd64b != 0x1FC007C0)
     {
         g_core->log_warn(L"unknown SI use");
         stop = 1;
     }
     update_pif_read();
-    for (i = 0; i < (64 / 4); i++)
+    if (!check_register_validity(&si_register))
+    {
+        stop = 1;
+        return;
+    }
+    for (int32_t i = 0; i < (64 / 4); i++)
         rdram[si_register.si_dram_addr / 4 + i] = sl(PIF_RAM[i]);
     if (!g_st_skip_dma) //st already did this, see savestates.cpp, we still copy pif ram tho because it has new inputs
     {

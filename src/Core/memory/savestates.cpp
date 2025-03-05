@@ -379,6 +379,13 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     // new version does one bigass gzread for first part of .st (static size)
     memread(&ptr, g_first_block, sizeof(g_first_block));
 
+    const auto si_reg = (core_si_reg*)&g_first_block[0xDC - 0x20];
+    if (!check_register_validity(si_reg))
+    {
+        task.callback(ST_InvalidRegisters, {});
+        return;
+    }
+    
     // now read interrupt queue into buf
     int32_t len;
     for (len = 0; len < sizeof(g_event_queue_buf); len += 8)
@@ -458,6 +465,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
         // at this point we know the savestate is safe to be loaded (done after else block)
     }
+    
     {
         g_core->log_trace(std::format(L"[Savestates] {} bytes remaining", decompressed_buf.size() - (ptr - decompressed_buf.data())));
         int32_t video_width = 0;

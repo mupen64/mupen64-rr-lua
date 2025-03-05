@@ -1346,6 +1346,15 @@ void update_DPC()
     );
 }
 
+bool check_register_validity(core_si_reg* si_reg)
+{
+    if (si_reg->si_dram_addr / 4 + 16 > sizeof(rdram))
+    {
+        return false;
+    }
+    return true;
+}
+
 void read_nothing()
 {
     if (address == 0xa5000508) *rdword = 0xFFFFFFFF;

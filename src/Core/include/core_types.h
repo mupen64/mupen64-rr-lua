@@ -87,6 +87,8 @@ typedef enum {
     ST_DecompressionError,
     // The event queue was too long
     ST_EventQueueTooLong,
+    // The CPU registers contained invalid values
+    ST_InvalidRegisters,
     // The user cancelled the operation
     ST_Cancelled,
 #pragma endregion
