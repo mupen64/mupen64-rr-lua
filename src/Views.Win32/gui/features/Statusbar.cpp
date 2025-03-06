@@ -198,7 +198,7 @@ namespace Statusbar
 		}
 
 		// Compute the desired size of the statusbar and use that for the scaling factor
-		auto desired_size = std::accumulate(sizes.begin(), sizes.end() - 1, 0);
+		auto desired_size = std::accumulate(sizes.begin(), sizes.end(), 0);
 
 		auto scale = static_cast<float>(rect.right - rect.left) / static_cast<float>(desired_size);
 
