@@ -66,7 +66,7 @@ void timer_new_vi()
 
     auto current_vi_time = std::chrono::high_resolution_clock::now();
 
-    if (!g_vr_fast_forward)
+    if (!g_vr_fast_forward && frame_advance_outstanding == 0)
     {
         static std::chrono::duration<double, std::nano> last_sleep_error;
         // if we're playing game normally with no frame advance or ff and overstepping max time between frames,
