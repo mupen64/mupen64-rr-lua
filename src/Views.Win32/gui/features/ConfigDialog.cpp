@@ -1318,7 +1318,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .group_id = core_group.id,
     .name = L"Emulate SD Card",
     .tooltip = L"Enable SD card emulation.\nRequires a VHD-formatted SD card file named card.vhd in the same folder as Mupen.",
-    .data = &g_config.core.is_reset_recording_enabled,
+    .data = &g_config.core.use_summercart,
     .type = t_options_item::Type::Bool,
     },
     t_options_item{
