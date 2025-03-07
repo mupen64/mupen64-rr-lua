@@ -22,8 +22,8 @@ struct summercart
 
 extern struct summercart summercart;
 
-void save_summercart(const char* filename);
-void load_summercart(const char* filename);
+void save_summercart(const std::filesystem::path& path);
+void load_summercart(const std::filesystem::path& path);
 void init_summercart();
 uint32_t read_summercart(uint32_t address);
 void write_summercart(uint32_t address, uint32_t value);

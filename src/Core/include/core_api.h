@@ -181,7 +181,12 @@ typedef struct {
      * \brief Gets the directory in which VCR backups should be stored.
      */
     std::filesystem::path (*get_backups_directory)(void);
-    
+
+    /**
+     * \brief Gets the path to the summercart directory.
+     */
+    std::filesystem::path (*get_summercart_directory)(void);
+
     /**
      * \brief Gets the path to the summercart vhd.
      */

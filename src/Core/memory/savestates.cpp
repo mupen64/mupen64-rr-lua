@@ -88,7 +88,8 @@ std::vector<uint8_t> g_undo_savestate;
 
 void get_paths_for_task(const t_savestate_task& task, std::filesystem::path& st_path, std::filesystem::path& sd_path)
 {
-    sd_path = std::format("{}{}.sd", g_core->get_saves_directory().string(), (const char*)ROM_HEADER.nom);
+    sd_path = g_core->get_saves_directory() / (const char*)ROM_HEADER.nom;
+    sd_path.replace_extension(".vhd");
 
     if (task.medium == core_st_medium_slot)
     {
@@ -284,7 +285,7 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
         std::filesystem::path new_sd_path = "";
         get_paths_for_task(task, new_st_path, new_sd_path);
         if (g_core->cfg->use_summercart)
-            save_summercart(new_sd_path.string().c_str());
+            save_summercart(new_sd_path);
 
         // Generate compressed buffer
         std::vector<uint8_t> compressed_buffer;
@@ -323,7 +324,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     get_paths_for_task(task, new_st_path, new_sd_path);
 
     if (g_core->cfg->use_summercart)
-        load_summercart(new_sd_path.string().c_str());
+        load_summercart(new_sd_path);
 
     std::vector<uint8_t> st_buf;
 

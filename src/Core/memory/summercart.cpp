@@ -58,17 +58,6 @@ static void vhd_copy(struct vhd* vhd, FILE* dst, FILE* src, void* buf, uint32_t 
 
 struct summercart summercart;
 
-static char* get_st_path(const char* filename)
-{
-    char* path;
-    if ((path = (char*)malloc(strlen(filename) + 4 + 1)))
-    {
-        strcpy(path, filename);
-        strcat(path, ".vhd");
-    }
-    return path;
-}
-
 static int32_t sd_error(const wchar_t* text, const wchar_t* caption)
 {
     g_core->show_dialog(text, caption, fsvc_error);
@@ -177,76 +166,62 @@ static void sd_write()
         sd_error(L"Could not open SD image file.", L"SD write error");
 }
 
-void save_summercart(const char* filename)
+void save_summercart(const std::filesystem::path& path)
 {
     uint32_t n;
     void* buf;
-    char* stp;
     FILE* sdf;
     FILE* stf;
     struct vhd vhd;
-    const auto path = g_core->get_summercart_path();
+    const auto smc_path = g_core->get_summercart_path();
 
     if ((buf = malloc(512 * (n = 128))))
     {
-
-        if ((stp = get_st_path(filename)))
+        if ((sdf = fopen(smc_path.string().c_str(), "rb")))
         {
-            if ((sdf = fopen(path.string().c_str(), "rb")))
+            if ((stf = fopen(path.string().c_str(), "wb")))
             {
-                if ((stf = fopen(stp, "wb")))
-                {
-                    vhd_copy(&vhd, stf, sdf, buf, n);
-                    fwrite(&summercart, 1, sizeof(struct summercart), stf);
-                    fwrite(&vhd, 1, sizeof(struct vhd), stf);
-                    fclose(stf);
-                }
-                else
-                    sd_error(L"Could not open SD state file.", L"Save error");
-                fclose(sdf);
+                vhd_copy(&vhd, stf, sdf, buf, n);
+                fwrite(&summercart, 1, sizeof(struct summercart), stf);
+                fwrite(&vhd, 1, sizeof(struct vhd), stf);
+                fclose(stf);
             }
             else
-                sd_error(L"Could not open SD image file.", L"Save error");
-            free(stp);
+                sd_error(L"Could not open SD state file.", L"Save error");
+            fclose(sdf);
         }
         else
-            sd_error(L"Could not generate SD state path.", L"Save error");
+            sd_error(L"Could not open SD image file.", L"Save error");
     }
     else
         sd_error(L"Could not allocate buffer.", L"Save error");
 }
 
-void load_summercart(const char* filename)
+void load_summercart(const std::filesystem::path& path)
 {
     uint32_t n;
     void* buf;
-    char* stp;
     FILE* stf;
     FILE* sdf;
     struct vhd vhd;
-    const auto path = g_core->get_summercart_path();
+    const auto smc_path = g_core->get_summercart_path();
     if ((buf = malloc(512 * (n = 128))))
     {
-        if ((stp = get_st_path(filename)))
+        if ((stf = fopen(smc_path.string().c_str(), "rb")))
         {
-            if ((stf = fopen(stp, "rb")))
+            if ((sdf = fopen(path.string().c_str(), "wb")))
             {
-                if ((sdf = fopen(path.string().c_str(), "wb")))
-                {
-                    vhd_copy(&vhd, sdf, stf, buf, n);
-                    fread(&summercart, 1, sizeof(struct summercart), stf);
-                    fwrite(&vhd, 1, sizeof(struct vhd), sdf);
-                    fclose(sdf);
-                }
-                else
-                    sd_error(L"Could not open SD image file.", L"Load error");
-                fclose(stf);
+                vhd_copy(&vhd, sdf, stf, buf, n);
+                fread(&summercart, 1, sizeof(struct summercart), stf);
+                fwrite(&vhd, 1, sizeof(struct vhd), sdf);
+                fclose(sdf);
             }
             else
-                sd_error(L"Could not open SD state file.", L"Load error");
+                sd_error(L"Could not open SD image file.", L"Load error");
+            fclose(stf);
         }
         else
-            sd_error(L"Could not generate SD state path.", L"Load error");
+            sd_error(L"Could not open SD state file.", L"Load error");
         free(buf);
     }
     else
