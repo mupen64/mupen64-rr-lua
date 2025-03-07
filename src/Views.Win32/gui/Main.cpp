@@ -540,6 +540,11 @@ std::filesystem::path get_backups_directory()
     return g_config.backups_directory;
 }
 
+std::filesystem::path get_summercart_path()
+{
+    return get_saves_directory() / "card.vhd";
+}
+
 void update_titlebar()
 {
     std::wstring text = get_mupen_name();
@@ -2251,6 +2256,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.invoke_async = AsyncExecutor::invoke_async;
     g_core.get_saves_directory = get_saves_directory;
     g_core.get_backups_directory = get_backups_directory;
+    g_core.get_summercart_path = get_summercart_path;
     g_core.show_multiple_choice_dialog = [] (const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type) {
         return FrontendService::show_multiple_choice_dialog(choices, str, title, type);
     };
