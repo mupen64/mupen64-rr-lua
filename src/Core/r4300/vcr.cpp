@@ -313,11 +313,13 @@ static core_result read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_he
         memcpy(new_header.author, buf.data() + 0x222, 222);
         memcpy(new_header.description, buf.data() + 0x300, 256);
 
-        const auto expected_minimum_size = sizeof(core_vcr_movie_header) + sizeof(core_buttons) * new_header.length_samples;
-        
-        if (buf.size() < expected_minimum_size)
+        // Some movies have a higher length_samples than the actual input buffer size, so we patch the length_samples up and emit a warning
+        const auto actual_sample_count = (buf.size() - sizeof(core_vcr_movie_header)) / sizeof(core_buttons);
+
+        if (new_header.length_samples > actual_sample_count)
         {
-            return VCR_InvalidFormat;
+            g_core->log_warn(std::format(L"[VCR] Header has length_samples of {}, but the actual input buffer size is {}. Clamping length_samples...", new_header.length_samples, actual_sample_count));
+            new_header.length_samples = actual_sample_count;
         }
     }
     
