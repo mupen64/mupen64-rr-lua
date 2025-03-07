@@ -7,7 +7,7 @@
 #include "stdafx.h"
 #include "tlb.h"
 #include "memory.h"
-#include <zlib.h>
+#include <xxhash/xxh64.h>
 #include <Core.h>
 #include <r4300/exception.h>
 #include <r4300/interrupt.h>
@@ -21,8 +21,6 @@ uint32_t tlb_LUT_r[0x100000];
 uint32_t tlb_LUT_w[0x100000];
 extern uint32_t interp_addr;
 int32_t jump_marker = 0;
-
-uLong ZEXPORT adler32(uLong adler, const Bytef* buf, uInt len);
 
 uint32_t virtual_to_physical_address(uint32_t addresse, int32_t w)
 {
@@ -99,25 +97,13 @@ void TLBWI()
                 invalid_code[i] = 1;
             if (!invalid_code[i])
             {
-                /*int32_t j;
-                md5_state_t state;
-                md5_byte_t digest[16];
-                md5_init(&state);
-                md5_append(&state,
-                       (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                       0x1000);
-                md5_finish(&state, digest);
-                for (j=0; j<16; j++) blocks[i]->md5[j] = digest[j];*/
-
-                blocks[i]->adler32 = adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000);
-
+                
+                blocks[i]->hash = xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0);
                 invalid_code[i] = 1;
             }
             else if (blocks[i])
             {
-                /*int32_t j;
-                for (j=0; j<16; j++) blocks[i]->md5[j] = 0;*/
-                blocks[i]->adler32 = 0;
+                blocks[i]->hash = 0;
             }
             tlb_LUT_r[i] = 0;
         }
@@ -134,25 +120,12 @@ void TLBWI()
                 invalid_code[i] = 1;
             if (!invalid_code[i])
             {
-                /*int32_t j;
-                md5_state_t state;
-                md5_byte_t digest[16];
-                md5_init(&state);
-                md5_append(&state,
-                       (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                       0x1000);
-                md5_finish(&state, digest);
-                for (j=0; j<16; j++) blocks[i]->md5[j] = digest[j];*/
-
-                blocks[i]->adler32 = adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000);
-
+                blocks[i]->hash = xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0);
                 invalid_code[i] = 1;
             }
             else if (blocks[i])
             {
-                /*int32_t j;
-                for (j=0; j<16; j++) blocks[i]->md5[j] = 0;*/
-                blocks[i]->adler32 = 0;
+                blocks[i]->hash = 0;
             }
             tlb_LUT_r[i] = 0;
         }
@@ -197,26 +170,9 @@ void TLBWI()
 
         for (i = tlb_e[core_Index & 0x3F].start_even >> 12; i <= tlb_e[core_Index & 0x3F].end_even >> 12; i++)
         {
-            /*if (blocks[i] && (blocks[i]->md5[0] || blocks[i]->md5[1] ||
-                      blocks[i]->md5[2] || blocks[i]->md5[3]))
-              {
-             int32_t j;
-             int32_t equal = 1;
-             md5_state_t state;
-             md5_byte_t digest[16];
-             md5_init(&state);
-             md5_append(&state,
-                    (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                    0x1000);
-             md5_finish(&state, digest);
-             for (j=0; j<16; j++)
-               if (digest[j] != blocks[i]->md5[j])
-                 equal = 0;
-             if (equal) invalid_code[i] = 0;
-             }*/
-            if (blocks[i] && blocks[i]->adler32)
+            if (blocks[i] && blocks[i]->hash)
             {
-                if (blocks[i]->adler32 == adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000))
+                if (blocks[i]->hash == xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0))
                     invalid_code[i] = 0;
             }
         }
@@ -244,26 +200,9 @@ void TLBWI()
 
         for (i = tlb_e[core_Index & 0x3F].start_odd >> 12; i <= tlb_e[core_Index & 0x3F].end_odd >> 12; i++)
         {
-            /*if (blocks[i] && (blocks[i]->md5[0] || blocks[i]->md5[1] ||
-                      blocks[i]->md5[2] || blocks[i]->md5[3]))
-              {
-             int32_t j;
-             int32_t equal = 1;
-             md5_state_t state;
-             md5_byte_t digest[16];
-             md5_init(&state);
-             md5_append(&state,
-                    (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                    0x1000);
-             md5_finish(&state, digest);
-             for (j=0; j<16; j++)
-               if (digest[j] != blocks[i]->md5[j])
-                 equal = 0;
-             if (equal) invalid_code[i] = 0;
-              }*/
-            if (blocks[i] && blocks[i]->adler32)
+            if (blocks[i] && blocks[i]->hash)
             {
-                if (blocks[i]->adler32 == adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000))
+                if (blocks[i]->hash == xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0))
                     invalid_code[i] = 0;
             }
         }
@@ -286,25 +225,12 @@ void TLBWR()
                 invalid_code[i] = 1;
             if (!invalid_code[i])
             {
-                /*int32_t j;
-                md5_state_t state;
-                md5_byte_t digest[16];
-                md5_init(&state);
-                md5_append(&state,
-                       (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                       0x1000);
-                md5_finish(&state, digest);
-                for (j=0; j<16; j++) blocks[i]->md5[j] = digest[j];*/
-
-                blocks[i]->adler32 = adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000);
-
+                blocks[i]->hash = xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0);
                 invalid_code[i] = 1;
             }
             else if (blocks[i])
             {
-                /*int32_t j;
-                for (j=0; j<16; j++) blocks[i]->md5[j] = 0;*/
-                blocks[i]->adler32 = 0;
+                blocks[i]->hash = 0;
             }
             tlb_LUT_r[i] = 0;
         }
@@ -321,25 +247,12 @@ void TLBWR()
                 invalid_code[i] = 1;
             if (!invalid_code[i])
             {
-                /*int32_t j;
-                md5_state_t state;
-                md5_byte_t digest[16];
-                md5_init(&state);
-                md5_append(&state,
-                       (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                       0x1000);
-                md5_finish(&state, digest);
-                for (j=0; j<16; j++) blocks[i]->md5[j] = digest[j];*/
-
-                blocks[i]->adler32 = adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000);
-
+                blocks[i]->hash = xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0);
                 invalid_code[i] = 1;
             }
             else if (blocks[i])
             {
-                /*int32_t j;
-                for (j=0; j<16; j++) blocks[i]->md5[j] = 0;*/
-                blocks[i]->adler32 = 0;
+                blocks[i]->hash = 0;
             }
             tlb_LUT_r[i] = 0;
         }
@@ -384,26 +297,9 @@ void TLBWR()
 
         for (i = tlb_e[core_Random].start_even >> 12; i <= tlb_e[core_Random].end_even >> 12; i++)
         {
-            /*if (blocks[i] && (blocks[i]->md5[0] || blocks[i]->md5[1] ||
-                      blocks[i]->md5[2] || blocks[i]->md5[3]))
-              {
-             int32_t j;
-             int32_t equal = 1;
-             md5_state_t state;
-             md5_byte_t digest[16];
-             md5_init(&state);
-             md5_append(&state,
-                    (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                    0x1000);
-             md5_finish(&state, digest);
-             for (j=0; j<16; j++)
-               if (digest[j] != blocks[i]->md5[j])
-                 equal = 0;
-             if (equal) invalid_code[i] = 0;
-              }*/
-            if (blocks[i] && blocks[i]->adler32)
+            if (blocks[i] && blocks[i]->hash)
             {
-                if (blocks[i]->adler32 == adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000))
+                if (blocks[i]->hash == xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0))
                     invalid_code[i] = 0;
             }
         }
@@ -431,26 +327,9 @@ void TLBWR()
 
         for (i = tlb_e[core_Random].start_odd >> 12; i <= tlb_e[core_Random].end_odd >> 12; i++)
         {
-            /*if (blocks[i] && (blocks[i]->md5[0] || blocks[i]->md5[1] ||
-             blocks[i]->md5[2] || blocks[i]->md5[3]))
-              {
-             int32_t j;
-             int32_t equal = 1;
-             md5_state_t state;
-             md5_byte_t digest[16];
-             md5_init(&state);
-             md5_append(&state,
-                    (const md5_byte_t*)&rdram[(tlb_LUT_r[i]&0x7FF000)/4],
-                    0x1000);
-             md5_finish(&state, digest);
-             for (j=0; j<16; j++)
-               if (digest[j] != blocks[i]->md5[j])
-                 equal = 0;
-             if (equal) invalid_code[i] = 0;
-             }*/
-            if (blocks[i] && blocks[i]->adler32)
+            if (blocks[i] && blocks[i]->hash)
             {
-                if (blocks[i]->adler32 == adler32(0, (const Bytef*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000))
+                if (blocks[i]->hash == xxh64::hash((const char*)&rdram[(tlb_LUT_r[i] & 0x7FF000) / 4], 0x1000, 0))
                     invalid_code[i] = 0;
             }
         }

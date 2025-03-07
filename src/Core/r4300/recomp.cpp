@@ -2307,8 +2307,7 @@ void recompile_block(int32_t* source, precomp_block* block, uint32_t func)
     length = (block->end - block->start) / 4;
     dst_block = block;
 
-    //for (i=0; i<16; i++) block->md5[i] = 0;
-    block->adler32 = 0;
+    block->hash = 0;
 
     if (dynacore)
     {

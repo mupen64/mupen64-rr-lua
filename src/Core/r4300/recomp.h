@@ -70,8 +70,7 @@ typedef struct _precomp_block
     uint32_t max_code_length;
     void* jumps_table;
     int32_t jumps_number;
-    //unsigned char md5[16];
-    uint32_t adler32;
+    uint64_t hash;
 } precomp_block;
 
 void recompile_block(int32_t* source, precomp_block* block, uint32_t func);
