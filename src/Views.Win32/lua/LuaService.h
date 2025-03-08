@@ -6,10 +6,6 @@
 
 #pragma once
 
-extern "C" {
-#include <lua.h>
-}
-
 #include <core_types.h>
 
 namespace LuaService

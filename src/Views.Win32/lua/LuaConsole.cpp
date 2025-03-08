@@ -6,15 +6,9 @@
 
 #include "stdafx.h"
 #include "LuaConsole.h"
-
 #include "Config.h"
 #include "DialogService.h"
 #include "Messenger.h"
-
-
-
-
-
 #include <gdiplus.h>
 #include <gui/Main.h>
 #include <gui/features/Statusbar.h>
@@ -251,7 +245,7 @@ int RegisterFunction(lua_State* L, callback_key key)
         lua_rawseti(L, LUA_REGISTRYINDEX, key);
         lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     }
-    int i = luaL_len(L, -1) + 1;
+    int i = lua_objlen(L, -1) + 1;
     lua_pushinteger(L, i);
     lua_pushvalue(L, -3); //
     lua_settable(L, -3);
@@ -267,8 +261,8 @@ void UnregisterFunction(lua_State* L, callback_key key)
         lua_pop(L, 1);
         lua_newtable(L); // �Ƃ肠����
     }
-    int n = luaL_len(L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
+    int n = lua_objlen(L, -1);
+    for (int i = 0; i < n; i++)
     {
         lua_pushinteger(L, 1 + i);
         lua_gettable(L, -2);
@@ -294,7 +288,18 @@ void UnregisterFunction(lua_State* L, callback_key key)
 // please don't remove them
 
 // begin lua funcs
-const luaL_Reg globalFuncs[] = {{"print", LuaCore::Global::Print}, {"printx", LuaCore::Global::PrintX}, {"tostringex", LuaCore::Global::ToStringExs}, {"stop", LuaCore::Global::StopScript}, {NULL, NULL}};
+const luaL_Reg globalFuncs[] = {
+    {"print", LuaCore::Global::Print},
+    {"printx", LuaCore::Global::PrintX},
+    {"tostringex", LuaCore::Global::ToStringExs},
+    {"stop", LuaCore::Global::StopScript},
+    {"dofile", LuaCore::Global::DoFile},
+    {"bshl", LuaCore::Global::BSHL},
+    {"bshr", LuaCore::Global::BSHR},
+    {"bor", LuaCore::Global::BOR},
+    {"band", LuaCore::Global::BAND},
+    {"bxor", LuaCore::Global::BXOR},
+    {NULL, NULL}};
 
 const luaL_Reg emuFuncs[] = {{"console", LuaCore::Emu::ConsoleWriteLua},
                              {"statusbar", LuaCore::Emu::StatusbarWrite},
@@ -786,7 +791,8 @@ std::string LuaEnvironment::create(const std::filesystem::path& path, HWND wnd)
     lua_environment->col = lua_environment->bkcol = 0;
     lua_environment->bkmode = TRANSPARENT;
     lua_environment->L = luaL_newstate();
-    lua_atpanic(lua_environment->L, at_panic);
+    // TODO: Reimplement panic handler
+    //lua_atpanic(lua_environment->L, at_panic);
     lua_environment->register_functions();
     lua_environment->create_renderer();
 
@@ -794,14 +800,35 @@ std::string LuaEnvironment::create(const std::filesystem::path& path, HWND wnd)
     g_hwnd_lua_map[lua_environment->hwnd] = lua_environment;
     rebuild_lua_env_map();
 
-    bool has_error = luaL_dofile(lua_environment->L, lua_environment->path.string().c_str());
+    const auto code = read_file_string(lua_environment->path);
 
-    std::string error_msg;
-    if (has_error)
+    if (code.empty())
     {
         g_hwnd_lua_map.erase(lua_environment->hwnd);
         rebuild_lua_env_map();
-        error_msg = lua_tostring(lua_environment->L, -1);
+        delete lua_environment;
+        lua_environment = nullptr;
+        return "Couldn't open file";
+    }
+    
+    size_t bytecode_size = 0;
+    char* bytecode = luau_compile(code.data(), code.size(), nullptr, &bytecode_size);
+    int result = luau_load(lua_environment->L, path.string().c_str(), bytecode, bytecode_size, 0);
+    free(bytecode);
+
+    int status = lua_resume(lua_environment->L, NULL, 0);
+    
+    std::string error_msg;
+    if (result || status)
+    {
+        size_t len;
+        const char* msg = lua_tolstring(lua_environment->L, -1, &len);
+
+        error_msg = std::string(msg, len) + "\r\n" + lua_debugtrace(lua_environment->L);
+        lua_pop(lua_environment->L, 1);
+        
+        g_hwnd_lua_map.erase(lua_environment->hwnd);
+        rebuild_lua_env_map();
         delete lua_environment;
         lua_environment = nullptr;
     }
@@ -839,8 +866,8 @@ bool LuaEnvironment::invoke_callbacks_with_key(const std::function<int(lua_State
         lua_pop(L, 1);
         return false;
     }
-    int n = luaL_len(L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
+    int n = lua_objlen(L, -1);
+    for (int i = 0; i < n; i++)
     {
         lua_pushinteger(L, 1 + i);
         lua_gettable(L, -2);
@@ -871,26 +898,40 @@ void LuaEnvironment::repaint_visuals()
     RedrawWindow(this->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
-void register_as_package(lua_State* lua_state, const char* name, const luaL_Reg regs[])
-{
-    if (name == nullptr)
-    {
-        const luaL_Reg* p = regs;
-        do
-        {
-            lua_register(lua_state, p->name, p->func);
+void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup) {
+    luaL_checkstack(L, nup, "too many upvalues");
+    for (; l->name != NULL; l++) {  /* fill the table with given functions */
+        if (l->func == NULL)  /* placeholder? */
+            lua_pushboolean(L, 0);
+        else {
+            int i;
+            for (i = 0; i < nup; i++)  /* copy upvalues to the top */
+                lua_pushvalue(L, -nup);
+            lua_pushcclosure(L, l->func, l->name, nup);  /* closure with those upvalues */
         }
-        while ((++p)->func);
-        return;
+        lua_setfield(L, -(nup + 2), l->name);
     }
-    luaL_newlib(lua_state, regs);
-    lua_setglobal(lua_state, name);
+    lua_pop(L, nup);  /* remove upvalues */
+}
+
+   
+#define luaL_newlibtable(L,l)	\
+lua_createtable(L, 0, sizeof(l)/sizeof((l)[0]) - 1)
+
+#define luaL_newlib(L,l)  \
+(luaL_newlibtable(L,l), luaL_setfuncs(L,l,0))
+
+void register_as_package(lua_State* L, const char* name, const luaL_Reg regs[])
+{
+    lua_pushvalue(L, LUA_GLOBALSINDEX);
+    luaL_register(L, name, regs);
+    lua_pop(L, 1);
 }
 
 void LuaEnvironment::register_functions()
 {
     luaL_openlibs(L);
-
+    
     register_as_package(L, nullptr, globalFuncs);
     register_as_package(L, "emu", emuFuncs);
     register_as_package(L, "memory", memoryFuncs);
@@ -906,43 +947,49 @@ void LuaEnvironment::register_functions()
     // NOTE: The default os.exit implementation calls C++ destructors before closing the main window (WM_CLOSE + WM_DESTROY),
     // thereby ripping the program apart for the remaining section of time until the exit, which causes extremely unpredictable crashes and an impossible program state.
     lua_getglobal(L, "os");
-    lua_pushcfunction(L, LuaCore::Global::Exit);
+    lua_pushcfunction(L, LuaCore::Global::Exit, "Exit");
     lua_setfield(L, -2, "exit");
     lua_pop(L, 1);
+
+    lua_getglobal(L, "debug");
+    lua_pushcfunction(L, LuaCore::Global::GetInfo, "GetInfo");
+    lua_setfield(L, -2, "getinfo");
+    lua_pop(L, 1);
     
-    // COMPAT: table.getn deprecated, replaced by # prefix
-    luaL_dostring(L, "table.getn = function(t) return #t end");
-
-    // COMPAT: emu.debugview deprecated, forwarded to print
-    luaL_dostring(L, "emu.debugview = print");
-
-    // COMPAT: movie.playmovie deprecated, forwarded to movie.play
-    luaL_dostring(L, "movie.playmovie = movie.play");
-
-    // COMPAT: movie.stopmovie deprecated, forwarded to movie.stop
-    luaL_dostring(L, "movie.stopmovie = movie.stop");
-
-    // COMPAT: movie.getmoviefilename deprecated, forwarded to movie.get_filename
-    luaL_dostring(L, "movie.getmoviefilename = movie.get_filename");
-
-    // COMPAT: movie.isreadonly deprecated, forwarded to movie.get_readonly
-    luaL_dostring(L, "movie.isreadonly = movie.get_readonly");
-
-    // COMPAT: emu.isreadonly deprecated, forwarded to movie.get_readonly
-    luaL_dostring(L, "emu.isreadonly = movie.get_readonly");
-
-    // DEPRECATED: input.map_virtual_key_ex couples to WinAPI
-    luaL_dostring(L, "input.map_virtual_key_ex = function() print('input.map_virtual_key_ex has been deprecated') end");
-
-    // DEPRECATED: emu.getsystemmetrics couples to WinAPI
-    luaL_dostring(L, "emu.getsystemmetrics = function() print('emu.getsystemmetrics has been deprecated') end");
-
-    // DEPRECATED: movie.begin_seek_to doesn't exist anymore
-    luaL_dostring(L, "movie.begin_seek_to = function() print('movie.begin_seek_to has been deprecated, use movie.begin_seek instead') end");
-
-    // DEPRECATED: movie.get_seek_info doesn't exist anymore
-    luaL_dostring(L, "movie.get_seek_info = function() print('movie.get_seek_info has been deprecated, use movie.begin_seek instead') end");
-
-    // os.execute poses security risks
-    luaL_dostring(L, "os.execute = function() print('os.execute is disabled') end");
+    // TODO: REIMPLEMENT
+    // // COMPAT: table.getn deprecated, replaced by # prefix
+    // luaL_dostring(L, "table.getn = function(t) return #t end");
+    //
+    // // COMPAT: emu.debugview deprecated, forwarded to print
+    // luaL_dostring(L, "emu.debugview = print");
+    //
+    // // COMPAT: movie.playmovie deprecated, forwarded to movie.play
+    // luaL_dostring(L, "movie.playmovie = movie.play");
+    //
+    // // COMPAT: movie.stopmovie deprecated, forwarded to movie.stop
+    // luaL_dostring(L, "movie.stopmovie = movie.stop");
+    //
+    // // COMPAT: movie.getmoviefilename deprecated, forwarded to movie.get_filename
+    // luaL_dostring(L, "movie.getmoviefilename = movie.get_filename");
+    //
+    // // COMPAT: movie.isreadonly deprecated, forwarded to movie.get_readonly
+    // luaL_dostring(L, "movie.isreadonly = movie.get_readonly");
+    //
+    // // COMPAT: emu.isreadonly deprecated, forwarded to movie.get_readonly
+    // luaL_dostring(L, "emu.isreadonly = movie.get_readonly");
+    //
+    // // DEPRECATED: input.map_virtual_key_ex couples to WinAPI
+    // luaL_dostring(L, "input.map_virtual_key_ex = function() print('input.map_virtual_key_ex has been deprecated') end");
+    //
+    // // DEPRECATED: emu.getsystemmetrics couples to WinAPI
+    // luaL_dostring(L, "emu.getsystemmetrics = function() print('emu.getsystemmetrics has been deprecated') end");
+    //
+    // // DEPRECATED: movie.begin_seek_to doesn't exist anymore
+    // luaL_dostring(L, "movie.begin_seek_to = function() print('movie.begin_seek_to has been deprecated, use movie.begin_seek instead') end");
+    //
+    // // DEPRECATED: movie.get_seek_info doesn't exist anymore
+    // luaL_dostring(L, "movie.get_seek_info = function() print('movie.get_seek_info has been deprecated, use movie.begin_seek instead') end");
+    //
+    // // os.execute poses security risks
+    // luaL_dostring(L, "os.execute = function() print('os.execute is disabled') end");
 }

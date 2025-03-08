@@ -41,6 +41,28 @@ std::vector<uint8_t> read_file_buffer(const std::filesystem::path& path)
     return b;
 }
 
+std::string read_file_string(const std::filesystem::path& path)
+{
+    FILE* f = nullptr;
+
+    if (_wfopen_s(&f, path.wstring().c_str(), L"r"))
+    {
+        return "";
+    }
+
+    fseek(f, 0, SEEK_END);
+    const auto len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    std::string str;
+    str.resize(len + sizeof(char));
+    fread(str.data(), sizeof(char), len, f);
+
+    fclose(f);
+
+    return str;
+}
+
 bool write_file_buffer(const std::filesystem::path& path, std::span<uint8_t> data)
 {
     FILE* f = fopen(path.string().c_str(), "wb");

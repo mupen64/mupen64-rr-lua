@@ -58,3 +58,12 @@
 #include <windowsx.h>
 // HACK: Microsoft deprecated multimedia timers with no real alternative and moved them to another header without updating the docs...
 #include <mmsystem.h>
+
+extern "C" {
+#include <lua.h>
+#include <lualib.h>
+#include <luacode.h>
+#include <luaconf.h>
+}
+#include <Luau/BytecodeBuilder.h>
+#include <Luau/Compiler.h>

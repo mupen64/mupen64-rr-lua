@@ -4,13 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-}
+#pragma once
 
-
-#include <mmsystem.h>
 #include <gui/Main.h>
 #include <gui/features/Statusbar.h>
 #include <lua/LuaConsole.h>

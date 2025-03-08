@@ -8,13 +8,6 @@
 
 #include <microlru.h>
 #include "presenters/Presenter.h"
-
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
-
 #include <gdiplus.h>
 
 using callback_key = uint8_t;

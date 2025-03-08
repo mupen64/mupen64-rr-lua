@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
+#pragma once
 
 #include <lua/LuaConsole.h>
 #include <gui/Main.h>
@@ -609,14 +605,14 @@ namespace LuaCore::Wgui
         //--------
         //assert that first argument is table
         luaL_checktype(L, 1, LUA_TTABLE);
-
-        int n = luaL_len(L, 1); //length of the table, doesnt modify stack
+        
+        int n = lua_objlen(L, 1); //length of the table, doesnt modify stack
         if (n > 255)
         {
             //hard cap, the vector can handle more but dont try
-            lua_pushfstring(L, "wgui.polygon: too many points (%d > %d)",
-                            n, 255);
-            return lua_error(L);
+            lua_pushfstring(L, "wgui.polygon: too many points (%d > %d)", n, 255);
+            lua_error(L);
+            return 1;
         }
 
         std::vector<Gdiplus::PointF> pts(n); //list of points that make the poly
@@ -740,12 +736,13 @@ namespace LuaCore::Wgui
 
         POINT p[0x100];
         luaL_checktype(L, 1, LUA_TTABLE);
-        int n = luaL_len(L, 1);
+        int n = lua_objlen(L, 1);
         if (n >= sizeof(p) / sizeof(p[0]))
         {
             lua_pushfstring(L, "wgui.polygon: too many points (%d < %d)",
                             sizeof(p) / sizeof(p[0]), n);
-            return lua_error(L);
+            lua_error(L);
+            return 0;
         }
         for (int i = 0; i < n; i++)
         {

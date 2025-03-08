@@ -22,6 +22,13 @@ void vecwrite(std::vector<uint8_t>& vec, void* data, size_t len);
 std::vector<uint8_t> read_file_buffer(const std::filesystem::path& path);
 
 /**
+ * \brief Reads a file into a string
+ * \param path The file's path
+ * \return The file's contents, or an empty vector if the operation failed
+ */
+std::string read_file_string(const std::filesystem::path& path);
+
+/**
  * \brief Writes a buffer to a file
  * \param path The file's path
  * \param data The buffer

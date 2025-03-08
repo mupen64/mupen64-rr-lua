@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
-
-
+#pragma once
 
 namespace LuaCore::Global
 {
@@ -18,7 +12,7 @@ namespace LuaCore::Global
 
     static int Print(lua_State* L)
     {
-        lua_pushcfunction(L, ToStringExs);
+        lua_pushcfunction(L, ToStringExs, "ToStringExs");
         lua_insert(L, 1);
         lua_call(L, lua_gettop(L) - 1, 1);
         get_lua_class(L)->print(string_to_wstring(lua_tostring(L, 1)) + L"\r\n");
@@ -37,6 +31,93 @@ namespace LuaCore::Global
         // FIXME: Exit-code and close params are ignored
         PostMessage(g_main_hwnd, WM_CLOSE, 0, 0);
         return 0;
+    }
+
+    static int GetInfo(lua_State* L)
+    {
+        auto lua = get_lua_class(L);
+        
+        auto level = luaL_checkinteger(L, 1);
+        auto str = luaL_optstring(L, 2, "");
+        
+        lua_newtable(L);
+        lua_pushstring(L, "source");
+        lua_pushstring(L, ("@" + lua->path.string()).c_str());
+        lua_settable(L, -3);
+        
+        return 1;
+    }
+
+    static int DoFile(lua_State* L)
+    {
+        auto lua = get_lua_class(L);
+        auto path = luaL_checkstring(L, 1);
+        const auto code = read_file_string(path);
+        
+        if (code.empty())
+        {
+            lua_pushstring(L, "failed to load file");
+            lua_error(L);
+            return 1;
+        }
+
+        size_t bytecode_size = 0;
+        char* bytecode = luau_compile(code.data(), code.size(), nullptr, &bytecode_size);
+        int result = luau_load(L, path, bytecode, bytecode_size, 0);
+        free(bytecode);
+
+        // Whatever... to complicated since they removed loadfile/dofile        
+        
+        if (result)
+        {
+            size_t len;
+            const char* msg = lua_tolstring(L, -1, &len);
+            lua_pushstring(L, msg);
+            lua_pop(L, 1);
+            lua_error(L);
+        }
+        
+        return 0;
+    }
+
+    static int BSHL(lua_State* L)
+    {
+        auto x = luaL_checkinteger(L, 1);
+        auto y = luaL_checkinteger(L, 2);
+        lua_pushinteger(L, x << y);
+        return 1;
+    }
+
+    static int BSHR(lua_State* L)
+    {
+        auto x = luaL_checkinteger(L, 1);
+        auto y = luaL_checkinteger(L, 2);
+        lua_pushinteger(L, x >> y);
+        return 1;
+    }
+
+    static int BOR(lua_State* L)
+    {
+        auto x = luaL_checkinteger(L, 1);
+        auto y = luaL_checkinteger(L, 2);
+        lua_pushinteger(L, x | y);
+        return 1;
+    }
+
+    static int BAND(lua_State* L)
+    {
+        auto x = luaL_checkinteger(L, 1);
+        auto y = luaL_checkinteger(L, 2);
+        lua_pushinteger(L, x && y);
+        return 1;
+    }
+
+    static int BXOR(lua_State* L)
+    {
+        auto x = luaL_checkinteger(L, 1);
+        auto y = luaL_checkinteger(L, 2);
+        lua_pushinteger(L, x ^ y);
+        return 1;
     }
     
     static int ToStringEx(lua_State* L)
