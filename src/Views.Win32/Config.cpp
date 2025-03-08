@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 #include <Messenger.h>
 
 #include <ini.h>
@@ -15,10 +15,202 @@
 cfg_view g_config;
 std::vector<cfg_hotkey*> g_config_hotkeys;
 
+void set_default_hotkey_keys(cfg_view* config)
+{
+    config->fast_forward_hotkey.key = VK_TAB;
+
+    config->gs_hotkey.key = 'G';
+
+    config->speed_down_hotkey.key = VK_OEM_MINUS;
+
+    config->speed_up_hotkey.key = VK_OEM_PLUS;
+    
+    config->speed_reset_hotkey.key = VK_OEM_PLUS;
+    config->speed_reset_hotkey.ctrl = 1;
+
+    config->frame_advance_hotkey.key = VK_OEM_5;
+    
+    config->multi_frame_advance_hotkey.key = VK_OEM_5;
+    config->multi_frame_advance_hotkey.ctrl = 1;
+
+    config->multi_frame_advance_inc_hotkey.key = 'E';
+    config->multi_frame_advance_inc_hotkey.ctrl = 1;
+    
+    config->multi_frame_advance_dec_hotkey.key = 'Q';
+    config->multi_frame_advance_dec_hotkey.ctrl = 1;
+
+    config->multi_frame_advance_reset_hotkey.key = 'E';
+    config->multi_frame_advance_reset_hotkey.ctrl = 1;
+    config->multi_frame_advance_reset_hotkey.shift = 1;
+    
+    config->pause_hotkey.key = VK_PAUSE;
+
+    config->toggle_read_only_hotkey.key = 'R';
+    config->toggle_read_only_hotkey.shift = true;
+
+    config->toggle_movie_loop_hotkey.key = 'L';
+    config->toggle_movie_loop_hotkey.shift = true;
+
+    config->start_movie_playback_hotkey.key = 'P';
+    config->start_movie_playback_hotkey.ctrl = true;
+    config->start_movie_playback_hotkey.shift = true;
+
+    config->start_movie_recording_hotkey.key = 'R';
+    config->start_movie_recording_hotkey.ctrl = true;
+    config->start_movie_recording_hotkey.shift = true;
+
+    config->stop_movie_hotkey.key = 'C';
+    config->stop_movie_hotkey.ctrl = true;
+    config->stop_movie_hotkey.shift = true;
+
+    config->create_movie_backup_hotkey.key = 'B';
+    config->create_movie_backup_hotkey.ctrl = true;
+    config->create_movie_backup_hotkey.shift = true;
+
+    config->take_screenshot_hotkey.key = VK_F12;
+
+    config->play_latest_movie_hotkey.key = 'T';
+    config->play_latest_movie_hotkey.ctrl = true;
+    config->play_latest_movie_hotkey.shift = true;
+
+    config->load_latest_script_hotkey.key = 'K';
+    config->load_latest_script_hotkey.ctrl = true;
+    config->load_latest_script_hotkey.shift = true;
+
+    config->new_lua_hotkey.key = 'N';
+    config->new_lua_hotkey.ctrl = true;
+
+    config->close_all_lua_hotkey.key = 'W';
+    config->close_all_lua_hotkey.ctrl = true;
+    config->close_all_lua_hotkey.shift = true;
+
+    config->load_rom_hotkey.key = 'O';
+    config->load_rom_hotkey.ctrl = true;
+
+    config->close_rom_hotkey.key = 'W';
+    config->close_rom_hotkey.ctrl = true;
+
+    config->reset_rom_hotkey.key = 'R';
+    config->reset_rom_hotkey.ctrl = true;
+
+    config->load_latest_rom_hotkey.key = 'O';
+    config->load_latest_rom_hotkey.ctrl = true;
+    config->load_latest_rom_hotkey.shift = true;
+
+    config->fullscreen_hotkey.key = VK_RETURN;
+    config->fullscreen_hotkey.alt = true;
+
+    config->settings_hotkey.key = 'S';
+    config->settings_hotkey.ctrl = true;
+
+    config->toggle_statusbar_hotkey.key = 'S';
+    config->toggle_statusbar_hotkey.alt = true;
+
+    config->refresh_rombrowser_hotkey.key = VK_F5;
+    config->refresh_rombrowser_hotkey.ctrl = true;
+
+    config->seek_to_frame_hotkey.key = 'G';
+    config->seek_to_frame_hotkey.ctrl = true;
+
+    config->run_hotkey.key = 'P';
+    config->run_hotkey.ctrl = true;
+
+    config->cheats_hotkey.key = 'U';
+    config->cheats_hotkey.ctrl = true;
+
+    config->piano_roll_hotkey.key = 'K';
+    config->piano_roll_hotkey.ctrl = true;
+
+    config->save_current_hotkey.key = 'I';
+
+    config->load_current_hotkey.key = 'P';
+
+    config->save_as_hotkey.key = 'N';
+    config->save_as_hotkey.ctrl = true;
+
+    config->load_as_hotkey.key = 'M';
+    config->load_as_hotkey.ctrl = true;
+
+    config->undo_load_state_hotkey.key = 'Z';
+    config->undo_load_state_hotkey.ctrl = true;
+
+    config->save_to_slot_1_hotkey.key = '1';
+    config->save_to_slot_1_hotkey.shift = true;
+
+    config->save_to_slot_2_hotkey.key = '2';
+    config->save_to_slot_2_hotkey.shift = true;
+
+    config->save_to_slot_3_hotkey.key = '3';
+    config->save_to_slot_3_hotkey.shift = true;
+
+    config->save_to_slot_4_hotkey.key = '4';
+    config->save_to_slot_4_hotkey.shift = true;
+
+    config->save_to_slot_5_hotkey.key = '5';
+    config->save_to_slot_5_hotkey.shift = true;
+
+    config->save_to_slot_6_hotkey.key = '6';
+    config->save_to_slot_6_hotkey.shift = true;
+
+    config->save_to_slot_7_hotkey.key = '7';
+    config->save_to_slot_7_hotkey.shift = true;
+
+    config->save_to_slot_8_hotkey.key = '8';
+    config->save_to_slot_8_hotkey.shift = true;
+
+    config->save_to_slot_9_hotkey.key = '9';
+    config->save_to_slot_9_hotkey.shift = true;
+
+    config->save_to_slot_10_hotkey.key = '0';
+    config->save_to_slot_10_hotkey.shift = true;
+
+    config->load_from_slot_1_hotkey.key = VK_F1;
+
+    config->load_from_slot_2_hotkey.key = VK_F2;
+
+    config->load_from_slot_3_hotkey.key = VK_F3;
+
+    config->load_from_slot_4_hotkey.key = VK_F4;
+
+    config->load_from_slot_5_hotkey.key = VK_F5;
+
+    config->load_from_slot_6_hotkey.key = VK_F6;
+
+    config->load_from_slot_7_hotkey.key = VK_F7;
+
+    config->load_from_slot_8_hotkey.key = VK_F8;
+
+    config->load_from_slot_9_hotkey.key = VK_F9;
+
+    config->load_from_slot_10_hotkey.key = VK_F10;
+
+    config->select_slot_1_hotkey.key = '1';
+
+    config->select_slot_2_hotkey.key = '2';
+
+    config->select_slot_3_hotkey.key = '3';
+
+    config->select_slot_4_hotkey.key = '4';
+
+    config->select_slot_5_hotkey.key = '5';
+
+    config->select_slot_6_hotkey.key = '6';
+
+    config->select_slot_7_hotkey.key = '7';
+
+    config->select_slot_8_hotkey.key = '8';
+
+    config->select_slot_9_hotkey.key = '9';
+
+    config->select_slot_10_hotkey.key = '0';
+}
+
 cfg_view get_default_config()
 {
     cfg_view config = {};
 
+    // TODO: Merge get_default_hotkey_keys() into this function
+    
     config.fast_forward_hotkey = {
     .identifier = L"Fast-forward",
     .down_cmd = ACTION_FASTFORWARD_ON,
@@ -364,7 +556,7 @@ cfg_view get_default_config()
     .down_cmd = ACTION_SELECT_SLOT10,
     };
 
-    FrontendService::set_default_hotkey_keys(&config);
+    set_default_hotkey_keys(&config);
 
     return config;
 }
@@ -665,10 +857,9 @@ mINI::INIStructure handle_config_ini(bool is_reading, mINI::INIStructure ini)
     return ini;
 }
 
-// TODO: Should return std::filesystem::path
-std::string get_config_path()
+std::filesystem::path get_config_path()
 {
-    return FrontendService::get_app_path().string() + "config.ini";
+    return g_app_path / L"config.ini";
 }
 
 /// Modifies the config to apply value limits and other constraints
@@ -703,9 +894,9 @@ void save_config()
     Messenger::broadcast(Messenger::Message::ConfigSaving, nullptr);
     config_apply_limits();
 
-    std::remove(get_config_path().c_str());
+    std::remove(get_config_path().string().c_str());
 
-    mINI::INIFile file(get_config_path());
+    mINI::INIFile file(get_config_path().string());
     mINI::INIStructure ini;
 
     ini = handle_config_ini(false, ini);
@@ -722,7 +913,7 @@ void load_config()
         save_config();
     }
 
-    mINI::INIFile file(get_config_path());
+    mINI::INIFile file(get_config_path().string());
     mINI::INIStructure ini;
     file.read(ini);
 

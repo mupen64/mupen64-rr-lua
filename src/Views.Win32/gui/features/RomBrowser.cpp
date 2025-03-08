@@ -412,7 +412,7 @@ namespace RomBrowser
         }
     }
 
-    std::wstring find_available_rom(std::function<bool(const core_rom_header&)> predicate)
+    std::wstring find_available_rom(const std::function<bool(const core_rom_header&)>& predicate)
     {
         auto rom_paths = find_available_roms();
         for (auto rom_path : rom_paths)

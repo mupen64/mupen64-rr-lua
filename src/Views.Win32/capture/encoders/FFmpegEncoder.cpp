@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include "FFmpegEncoder.h"
-#include <FrontendService.h>
+#include <DialogService.h>
 #include <Config.h>
 #include <gui/Main.h>
 #include <gui/Loggers.h>
@@ -124,12 +124,12 @@ bool FFmpegEncoder::stop()
 
     if (!this->m_video_queue.empty() || !this->m_audio_queue.empty())
     {
-        FrontendService::show_dialog(std::format(L"Capture stopped with {} video, {} audio elements remaining in queue!\nThe capture might be corrupted.", this->m_video_queue.size(), this->m_audio_queue.size()).c_str(), L"FFmpeg");
+        DialogService::show_dialog(std::format(L"Capture stopped with {} video, {} audio elements remaining in queue!\nThe capture might be corrupted.", this->m_video_queue.size(), this->m_audio_queue.size()).c_str(), L"FFmpeg");
     }
 
     if (m_dropped_frames > 0)
     {
-        FrontendService::show_dialog(std::format(L"{} frames were dropped during capture to avoid out-of-memory errors.\nThe capture might contain empty frames.", m_dropped_frames).c_str(), L"FFmpeg");
+        DialogService::show_dialog(std::format(L"{} frames were dropped during capture to avoid out-of-memory errors.\nThe capture might contain empty frames.", m_dropped_frames).c_str(), L"FFmpeg");
     }
 
     free(m_silence_buffer);

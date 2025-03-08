@@ -8,7 +8,7 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 #include <PlatformService.h>
 #include <Plugin.h>
 #include <gui/Loggers.h>
@@ -346,7 +346,7 @@ void Plugin::config()
                 auto initiateGFX = (INITIATEGFX)PlatformService::get_function_in_module((void*)m_module, "InitiateGFX");
                 if (initiateGFX && !initiateGFX(dummy_gfx_info))
                 {
-                    FrontendService::show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
+                    DialogService::show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
                 }
             }
 
@@ -369,7 +369,7 @@ void Plugin::config()
                 auto initiateAudio = (INITIATEAUDIO)PlatformService::get_function_in_module((void*)m_module, "InitiateAudio");
                 if (initiateAudio && !initiateAudio(dummy_audio_info))
                 {
-                    FrontendService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
+                    DialogService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
                 }
             }
 
@@ -429,7 +429,7 @@ void Plugin::config()
                     configdialog_show_plugin(this, cfg);
                     if (!save_config_1())
                     {
-                        FrontendService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
+                        DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
                     }
                     break;   
                 }

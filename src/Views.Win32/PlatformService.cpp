@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <PlatformService.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 
 // TODO: Remove this abstraction
 void* PlatformService::load_library(const wchar_t* path, uint64_t* error)
@@ -23,7 +23,7 @@ void PlatformService::free_library(void* module)
 {
     if (!FreeLibrary((HMODULE)module))
     {
-        FrontendService::show_dialog(std::format(L"Failed to free library {:#06x}.", (unsigned long)module).c_str(), L"Core", fsvc_error);
+        DialogService::show_dialog(std::format(L"Failed to free library {:#06x}.", (unsigned long)module).c_str(), L"Core", fsvc_error);
     }
 }
 

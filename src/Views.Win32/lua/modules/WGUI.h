@@ -12,7 +12,7 @@ extern "C" {
 
 #include <lua/LuaConsole.h>
 #include <gui/Main.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 
 namespace LuaCore::Wgui
 {

@@ -7,8 +7,7 @@
 #include "stdafx.h"
 #include "Cheats.h"
 
-#include "FrontendService.h"
-
+#include "DialogService.h"
 
 
 #include <gui/Main.h>
@@ -115,7 +114,7 @@ namespace Cheats
 
                     if (!core_cht_compile(code, script))
                     {
-                        FrontendService::show_dialog(L"Cheat code could not be compiled.\r\nVerify that the syntax is correct", L"Cheats", fsvc_error);
+                        DialogService::show_dialog(L"Cheat code could not be compiled.\r\nVerify that the syntax is correct", L"Cheats", fsvc_error);
                         break;
                     }
 

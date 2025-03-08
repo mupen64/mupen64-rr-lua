@@ -7,7 +7,7 @@
 #include "stdafx.h"
 #include <AsyncExecutor.h>
 #include <Config.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 #include <Messenger.h>
 #include <argh.h>
 #include <capture/EncodingManager.h>
@@ -216,14 +216,14 @@ namespace Cli
         // If an st is specified, a movie mustn't be specified
         if (!commandline_st.empty() && !commandline_movie.empty())
         {
-            FrontendService::show_dialog(L"Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", L"CLI",
+            DialogService::show_dialog(L"Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", L"CLI",
                                          fsvc_error);
             commandline_st.clear();
         }
 
         if (commandline_close_on_movie_end && g_config.core.is_movie_loop_enabled)
         {
-            FrontendService::show_dialog(L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.", L"CLI",
+            DialogService::show_dialog(L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.", L"CLI",
                                          fsvc_warning);
             g_config.core.is_movie_loop_enabled = false;
         }
@@ -243,7 +243,7 @@ namespace Cli
 
         if (compare_control && compare_actual)
         {
-            FrontendService::show_dialog(L"Can't activate more than one compare mode at once.\nThe comparison system will be disabled.", L"CLI", fsvc_warning);
+            DialogService::show_dialog(L"Can't activate more than one compare mode at once.\nThe comparison system will be disabled.", L"CLI", fsvc_warning);
             compare_control = false;
             compare_actual = false;
         }

@@ -6,8 +6,7 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <FrontendService.h>
-
+#include <DialogService.h>
 
 
 #include <winhttp.h>
@@ -237,13 +236,13 @@ namespace UpdateChecker
         {
             if (manual)
             {
-                FrontendService::show_dialog(L"You are already up-to-date.", L"Already up-to-date", fsvc_information);
+                DialogService::show_dialog(L"You are already up-to-date.", L"Already up-to-date", fsvc_information);
             }
 
             return;
         }
 
-        const auto result = FrontendService::show_multiple_choice_dialog({L"Update now", L"Skip this version", L"Ignore"}, std::format(L"Mupen64 {} is available for download.", version).c_str(), L"Update Available", fsvc_information);
+        const auto result = DialogService::show_multiple_choice_dialog({L"Update now", L"Skip this version", L"Ignore"}, std::format(L"Mupen64 {} is available for download.", version).c_str(), L"Update Available", fsvc_information);
 
         if (result == 1)
         {

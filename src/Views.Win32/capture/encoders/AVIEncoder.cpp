@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 
 #include <capture/EncodingManager.h>
 #include <capture/Resampler.h>
@@ -299,7 +299,7 @@ bool AVIEncoder::write_sound(uint8_t* buf, int len, const int min_write_size, co
 
 				if (!ok)
 				{
-					FrontendService::show_dialog(L"Audio output failure!\nA call to addAudioData() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?", L"AVI Encoder", fsvc_error);
+					DialogService::show_dialog(L"Audio output failure!\nA call to addAudioData() (AVIStreamWrite) failed.\nPerhaps you ran out of memory?", L"AVI Encoder", fsvc_error);
 					return false;
 				}
 			}
@@ -314,7 +314,7 @@ bool AVIEncoder::write_sound(uint8_t* buf, int len, const int min_write_size, co
 
 	if (static_cast<unsigned int>(sound_buf_pos + len) > SOUND_BUF_SIZE * sizeof(char))
 	{
-		FrontendService::show_dialog(L"Sound buffer overflow!\nCapture will be stopped.", L"AVI Encoder", fsvc_error);
+		DialogService::show_dialog(L"Sound buffer overflow!\nCapture will be stopped.", L"AVI Encoder", fsvc_error);
 		return false;
 	}
 

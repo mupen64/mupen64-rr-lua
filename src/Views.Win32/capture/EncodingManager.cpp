@@ -7,7 +7,7 @@
 #include "stdafx.h"
 #include <AsyncExecutor.h>
 #include <Config.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 #include <Messenger.h>
 
 #include <capture/EncodingManager.h>
@@ -218,7 +218,7 @@ namespace EncodingManager
 		{
 			if (!core_vr_get_mge_available() && !g_core.plugin_funcs.read_screen)
 			{
-				FrontendService::show_dialog(L"The current video plugin has no readScreen implementation.\nPlugin capture is not possible.", L"Capture", fsvc_error);
+				DialogService::show_dialog(L"The current video plugin has no readScreen implementation.\nPlugin capture is not possible.", L"Capture", fsvc_error);
 				stop_capture();
 				return;
 			}
@@ -234,7 +234,7 @@ namespace EncodingManager
 		{
 			if (!core_vr_get_mge_available() && !g_core.plugin_funcs.read_screen)
 			{
-				FrontendService::show_dialog(L"The current video plugin has no readScreen implementation.\nHybrid capture is not possible.", L"Capture", fsvc_error);
+				DialogService::show_dialog(L"The current video plugin has no readScreen implementation.\nHybrid capture is not possible.", L"Capture", fsvc_error);
 				stop_capture();
 				return;
 			}
@@ -283,7 +283,7 @@ namespace EncodingManager
 	    
 	    if (!m_encoder->stop())
 	    {
-	        FrontendService::show_dialog(L"Failed to stop encoding.", L"Capture", fsvc_error);
+	        DialogService::show_dialog(L"Failed to stop encoding.", L"Capture", fsvc_error);
 	        return false;
 	    }
 
@@ -366,7 +366,7 @@ namespace EncodingManager
 
 		if (!result.empty())
 		{
-			FrontendService::show_dialog(result.c_str(), L"Capture", fsvc_error);
+			DialogService::show_dialog(result.c_str(), L"Capture", fsvc_error);
 			return false;
 		}
 
@@ -426,7 +426,7 @@ namespace EncodingManager
 			return;
 		}
 
-		FrontendService::show_dialog(
+		DialogService::show_dialog(
 			L"Failed to append frame to video.\nPerhaps you ran out of memory?",
 			L"Capture", fsvc_error);
 		stop_capture();
@@ -452,7 +452,7 @@ namespace EncodingManager
 
 		if (!m_encoder->append_audio(reinterpret_cast<uint8_t*>(buf), ai_len, m_audio_bitrate))
 		{
-			FrontendService::show_dialog(
+			DialogService::show_dialog(
 				L"Failed to append audio data.\nCapture will be stopped.",
 				L"Capture", fsvc_error);
 			stop_capture();
@@ -465,7 +465,7 @@ namespace EncodingManager
 
 		if (m_capturing)
 		{
-			FrontendService::show_dialog(L"Audio frequency changed during capture.\r\nThe capture will be stopped.", L"Capture", fsvc_error);
+			DialogService::show_dialog(L"Audio frequency changed during capture.\r\nThe capture will be stopped.", L"Capture", fsvc_error);
 		    stop_capture();
 			return;
 		}

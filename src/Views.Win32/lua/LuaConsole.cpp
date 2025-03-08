@@ -8,7 +8,7 @@
 #include "LuaConsole.h"
 
 #include "Config.h"
-#include "FrontendService.h"
+#include "DialogService.h"
 #include "Messenger.h"
 
 
@@ -54,7 +54,7 @@ int at_panic(lua_State* L)
     const auto message = string_to_wstring(lua_tostring(L, -1));
 
     g_view_logger->info(L"Lua panic: {}", message);
-    FrontendService::show_dialog(message.c_str(), L"Lua", fsvc_error);
+    DialogService::show_dialog(message.c_str(), L"Lua", fsvc_error);
 
     return 0;
 }
@@ -624,7 +624,7 @@ void LuaEnvironment::ensure_d2d_renderer_created()
     auto hr = CoInitialize(nullptr);
     if (hr != S_OK && hr != S_FALSE && hr != RPC_E_CHANGED_MODE)
     {
-        FrontendService::show_dialog(L"Failed to initialize COM.\r\nVerify that your system is up-to-date.", L"Lua", fsvc_error);
+        DialogService::show_dialog(L"Failed to initialize COM.\r\nVerify that your system is up-to-date.", L"Lua", fsvc_error);
         return;
     }
 
@@ -642,7 +642,7 @@ void LuaEnvironment::ensure_d2d_renderer_created()
 
     if (!presenter->init(d2d_overlay_hwnd))
     {
-        FrontendService::show_dialog(L"Failed to initialize presenter.\r\nVerify that your system supports the selected presenter.", L"Lua", fsvc_error);
+        DialogService::show_dialog(L"Failed to initialize presenter.\r\nVerify that your system supports the selected presenter.", L"Lua", fsvc_error);
         return;
     }
 

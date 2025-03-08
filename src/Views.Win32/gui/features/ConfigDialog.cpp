@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 #include <Messenger.h>
 #include <Plugin.h>
 #include <SettingsListView.h>
@@ -1582,7 +1582,7 @@ static void handle_hotkey_conflict(const HWND hwnd, cfg_hotkey* current_hotkey)
     const auto str = std::format(L"The key combination {} is already used by the following hotkey(s):\n\n{}\nHow would you like to proceed?",
                                  hotkey_to_string(current_hotkey), conflicting_hotkey_identifiers);
 
-    const auto result = FrontendService::show_multiple_choice_dialog({L"Discard Others", L"Discard Current", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
+    const auto result = DialogService::show_multiple_choice_dialog({L"Discard Others", L"Discard Current", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
 
     if (result == 0)
     {
@@ -1913,7 +1913,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                     }
                 }
 
-                FrontendService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
+                DialogService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
             }
 
             if (offset == 4 && option_item.type == OptionsItem::Type::Hotkey)
@@ -1942,11 +1942,11 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
 
                 if (!can_all_be_changed)
                 {
-                    FrontendService::show_dialog(L"Some settings can't be reset, as they are currently read-only. Try again with emulation stopped.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
+                    DialogService::show_dialog(L"Some settings can't be reset, as they are currently read-only. Try again with emulation stopped.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
                     goto destroy_menu;
                 }
 
-                const auto result = FrontendService::show_ask_dialog(L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
+                const auto result = DialogService::show_ask_dialog(L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
 
                 if (!result)
                 {
@@ -2255,7 +2255,7 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
                     str += L"\r\n";
                 }
 
-                FrontendService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
+                DialogService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
             }
         
             if (offset == 5)
@@ -2274,11 +2274,11 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
 
                 if (!can_all_be_changed)
                 {
-                    FrontendService::show_dialog(L"Some settings can't be reset, as they are currently read-only.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
+                    DialogService::show_dialog(L"Some settings can't be reset, as they are currently read-only.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
                     goto destroy_menu;
                 }
 
-                const auto result = FrontendService::show_ask_dialog(L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
+                const auto result = DialogService::show_ask_dialog(L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
 
                 if (!result)
                 {

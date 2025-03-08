@@ -7,7 +7,7 @@
 #include "stdafx.h"
 #include <AsyncExecutor.h>
 #include <Config.h>
-#include <FrontendService.h>
+#include <DialogService.h>
 #include <IOService.h>
 #include <Messenger.h>
 #include <Plugin.h>
@@ -189,7 +189,7 @@ std::wstring get_mupen_name()
 /// Prompts the user to change their plugin selection.
 static void prompt_plugin_change()
 {
-    auto result = FrontendService::show_multiple_choice_dialog(
+    auto result = DialogService::show_multiple_choice_dialog(
     {L"Choose Default Plugins", L"Change Plugins", L"Cancel"},
     L"One or more plugins couldn't be loaded.\r\nHow would you like to proceed?",
     L"Core",
@@ -364,7 +364,7 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
     if (!error.empty())
     {
         const auto title = std::format(L"{} Error {}", module, static_cast<int32_t>(result));
-        FrontendService::show_dialog(error.c_str(), title.c_str(), fsvc_error);
+        DialogService::show_dialog(error.c_str(), title.c_str(), fsvc_error);
     }
 
     return true;
@@ -543,6 +543,38 @@ std::filesystem::path get_backups_directory()
 std::filesystem::path get_summercart_path()
 {
     return get_saves_directory() / "card.vhd";
+}
+
+void update_screen()
+{
+    if (core_vr_get_mge_available())
+    {
+        MGECompositor::update_screen();
+    }
+    else
+    {
+        g_core.plugin_funcs.update_screen();
+    }
+}
+
+void at_vi()
+{
+    if (!EncodingManager::is_capturing())
+    {
+        return;
+    }
+
+    EncodingManager::at_vi();
+}
+
+void ai_len_changed()
+{
+    if (!EncodingManager::is_capturing())
+    {
+        return;
+    }
+
+    EncodingManager::ai_len_changed();
 }
 
 void update_titlebar()
@@ -730,7 +762,7 @@ void on_vis_since_input_poll_exceeded(std::any)
         return;
     }
 
-    if (g_config.silent_mode || FrontendService::show_ask_dialog(L"An unusual execution pattern was detected. Continuing might leave the emulator in an unusable state.\r\nWould you like to terminate emulation?", L"Warning", true))
+    if (g_config.silent_mode || DialogService::show_ask_dialog(L"An unusual execution pattern was detected. Continuing might leave the emulator in an unusable state.\r\nWould you like to terminate emulation?", L"Warning", true))
     {
         // TODO: Send IDM_CLOSE_ROM instead... probably better :P
         AsyncExecutor::invoke_async([] {
@@ -1413,13 +1445,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_BENCHMARK_LUA_CALLBACK:
                 {
-                    FrontendService::show_dialog(L"Make sure the Lua script is running and the registered atreset body is empty.", L"Benchmark Lua Callback", fsvc_information);
+                    DialogService::show_dialog(L"Make sure the Lua script is running and the registered atreset body is empty.", L"Benchmark Lua Callback", fsvc_information);
                     ScopeTimer timer("100,000,000x call_reset", g_view_logger.get());
                     for (int i = 0; i < 100'000'000; ++i)
                     {
                         LuaService::call_reset();
                     }
-                    FrontendService::show_dialog(std::format(L"100,000,000 atreset callback invocations took {}ms", timer.momentary_ms()).c_str(), L"Benchmark Lua Callback", fsvc_information);
+                    DialogService::show_dialog(std::format(L"100,000,000 atreset callback invocations took {}ms", timer.momentary_ms()).c_str(), L"Benchmark Lua Callback", fsvc_information);
                 }
                 break;
             case IDM_TRACELOG:
@@ -1604,7 +1636,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
 
-                    const auto result = FrontendService::show_multiple_choice_dialog({L"Copy STROOP config line",
+                    const auto result = DialogService::show_multiple_choice_dialog({L"Copy STROOP config line",
                                                                                       L"Close"},
                                                                                      str.c_str(), L"Show RAM Start", fsvc_information);
 
@@ -2015,7 +2047,7 @@ std::filesystem::path get_saves_directory()
 {
     if (g_config.is_default_saves_directory_used)
     {
-        return FrontendService::get_app_path().string() + "save\\";
+        return g_app_path / L"save\\";
     }
     return g_config.saves_directory;
 }
@@ -2161,12 +2193,12 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.callbacks.vi = [] {
         LuaService::call_interval();
         LuaService::call_vi();
-        FrontendService::at_vi();
+        at_vi();
     };
     g_core.callbacks.input = LuaService::call_input;
     g_core.callbacks.frame = on_new_frame;
     g_core.callbacks.interval = LuaService::call_interval;
-    g_core.callbacks.ai_len_changed = FrontendService::ai_len_changed;
+    g_core.callbacks.ai_len_changed = ai_len_changed;
     g_core.callbacks.play_movie = LuaService::call_play_movie;
     g_core.callbacks.stop_movie = [] {
         LuaService::call_stop_movie();
@@ -2258,18 +2290,18 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.get_backups_directory = get_backups_directory;
     g_core.get_summercart_path = get_summercart_path;
     g_core.show_multiple_choice_dialog = [] (const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type) {
-        return FrontendService::show_multiple_choice_dialog(choices, str, title, type);
+        return DialogService::show_multiple_choice_dialog(choices, str, title, type);
     };
     g_core.show_ask_dialog = [] (const wchar_t* str, const wchar_t* title, bool warning) {
-        return FrontendService::show_ask_dialog(str, title, warning);
+        return DialogService::show_ask_dialog(str, title, warning);
     };
     g_core.show_dialog = [] (const wchar_t* str, const wchar_t* title, core_dialog_type type) {
-        FrontendService::show_dialog(str, title, type);
+        DialogService::show_dialog(str, title, type);
     };
-    g_core.show_statusbar = FrontendService::show_statusbar;
-    g_core.update_screen = FrontendService::update_screen;
+    g_core.show_statusbar = DialogService::show_statusbar;
+    g_core.update_screen = update_screen;
     g_core.copy_video = MGECompositor::copy_video;
-    g_core.find_available_rom = FrontendService::find_available_rom;
+    g_core.find_available_rom = RomBrowser::find_available_rom;
     g_core.load_screen = MGECompositor::load_screen;
     g_core.get_plugin_names = [](char* video, char* audio, char* input, char* rsp) {
 #define DO_COPY(type)                                                                          \
@@ -2426,7 +2458,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)
     {
-        FrontendService::show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.", L"Error", fsvc_error);
+        DialogService::show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.", L"Error", fsvc_error);
         return -1;
     }
     
