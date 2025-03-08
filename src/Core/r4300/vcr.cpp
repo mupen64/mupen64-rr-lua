@@ -25,7 +25,7 @@ enum
 
 constexpr auto RAWDATA_WARNING_MESSAGE = L"Warning: One of the active controllers of your input plugin is set to accept \"Raw Data\".\nThis can cause issues when recording and playing movies. Proceed?";
 constexpr auto ROM_NAME_WARNING_MESSAGE = L"The movie was recorded on the rom '{}', but is being played back on '{}'.\r\nPlayback might desynchronize. Are you sure you want to continue?";
-constexpr auto ROM_COUNTRY_WARNING_MESSAGE = L"The movie was recorded on a rom with country {}, but is being played back on {}.\r\nPlayback might desynchronize. Are you sure you want to continue?";
+constexpr auto ROM_COUNTRY_WARNING_MESSAGE = L"The movie was recorded on a {} ROM, but is being played back on {}.\r\nPlayback might desynchronize. Are you sure you want to continue?";
 constexpr auto ROM_CRC_WARNING_MESSAGE = L"The movie was recorded with a ROM that has CRC \"0x%X\",\nbut you are using a ROM with CRC \"0x%X\".\r\nPlayback might desynchronize. Are you sure you want to continue?";
 constexpr auto TRUNCATE_MESSAGE = L"Failed to truncate the movie file. The movie may be corrupted.";
 constexpr auto WII_VC_MISMATCH_A_WARNING_MESSAGE = L"The movie was recorded with WiiVC mode enabled, but is being played back with it disabled.\r\nPlayback might desynchronize. Are you sure you want to continue?";
@@ -1255,17 +1255,15 @@ core_result core_vcr_start_playback(std::filesystem::path path)
     }
     else
     {
-        if (g_header.rom_country != ROM_HEADER.
-            Country_code)
+        if (g_header.rom_country != ROM_HEADER.Country_code)
         {
-            bool proceed = g_core->show_ask_dialog(std::format(ROM_COUNTRY_WARNING_MESSAGE, g_header.rom_country, ROM_HEADER.Country_code).c_str(), L"VCR", true);
+            bool proceed = g_core->show_ask_dialog(std::format(ROM_COUNTRY_WARNING_MESSAGE, core_vr_country_code_to_country_name(g_header.rom_country), core_vr_country_code_to_country_name(ROM_HEADER.Country_code)).c_str(), L"VCR", true);
             if (!proceed)
             {
                 return VCR_Cancelled;
             }
         }
-        else if (g_header.rom_crc1 != ROM_HEADER.
-            CRC1)
+        else if (g_header.rom_crc1 != ROM_HEADER.CRC1)
         {
             wchar_t str[512] = {0};
             swprintf_s(str, ROM_CRC_WARNING_MESSAGE, g_header.rom_crc1, ROM_HEADER.CRC1);
