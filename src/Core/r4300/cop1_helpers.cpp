@@ -27,7 +27,7 @@ void fail_float(const std::wstring& msg)
     {
         g_core->invoke_async([] {
             core_vr_close_rom(true, true);
-        }, 0);
+        });
     }
 }
 

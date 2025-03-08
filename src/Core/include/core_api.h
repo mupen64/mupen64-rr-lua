@@ -174,10 +174,8 @@ typedef struct {
     /**
      * \brief Executes a function on a background thread.
      * \param func The function to be executed.
-     * \param key The function's key used for deduplication. If not 0, the function will not be queued if another function with the same key is already in the queue.
      */
-    // TODO: Remove key from core API def
-    void (*invoke_async)(const std::function<void()>& func, size_t key);
+    void (*invoke_async)(const std::function<void()>& func);
 
     /**
      * \brief Gets the directory in which savestates and persistent game saves should be stored.

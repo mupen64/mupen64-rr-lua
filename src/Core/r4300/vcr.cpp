@@ -573,8 +573,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
     {
         bool clear_eeprom = !(g_header.startFlags & MOVIE_START_FROM_EEPROM);
         g_reset_pending = true;
-        g_core->invoke_async([clear_eeprom]
-        {
+        g_core->invoke_async([clear_eeprom] {
             const auto result = core_vr_reset_rom(clear_eeprom, false, true);
 
             std::scoped_lock lock(vcr_mutex);
@@ -582,7 +581,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
 
             if (result != Res_Ok)
             {
-            	g_core->show_dialog(L"Failed to reset the rom when initiating a from-start recording.\nRecording will be stopped.", L"VCR", fsvc_error);
+                g_core->show_dialog(L"Failed to reset the rom when initiating a from-start recording.\nRecording will be stopped.", L"VCR", fsvc_error);
                 core_vcr_stop_all();
                 return;
             }
@@ -593,7 +592,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
             g_core->callbacks.task_changed(g_task);
             g_core->callbacks.current_sample_changed(m_current_sample);
             g_core->callbacks.rerecords_changed(get_rerecord_count());
-        }, 0);
+        });
     }
 
     if (g_task == task_start_playback_from_reset)
@@ -620,7 +619,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
             g_core->callbacks.task_changed(g_task);
             g_core->callbacks.current_sample_changed(m_current_sample);
             g_core->callbacks.rerecords_changed(get_rerecord_count());
-        }, 0);
+        });
     }
 }
 
@@ -690,7 +689,7 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
             {
                 g_core->show_dialog(L"Failed to reset the rom following a user-invoked reset.", L"VCR", fsvc_error);
             }
-        }, 0);
+        });
     }
 }
 
@@ -750,7 +749,7 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
             }
 
             g_reset_pending = false;
-        }, 0);
+        });
     }
 
     g_core->callbacks.input(input, index);
@@ -992,7 +991,7 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
                 // FIXME: Doesn't this need a message broadcast?
                 // TODO: Also, what about clearing the input on first frame
             }, true);
-        }, 0);
+        });
     }
     else
     {
@@ -1339,7 +1338,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
                 g_core->callbacks.current_sample_changed(m_current_sample);
                 g_core->callbacks.rerecords_changed(get_rerecord_count());
             }, true);
-        }, 0);
+        });
     }
     else
     {
@@ -1494,7 +1493,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
                     g_core->log_info(std::format(L"[VCR] Seek savestate at frame {} loaded!", closest_key));
                     g_seek_savestate_loading = false;
                 }, false);
-            }, 0);
+            });
 
             return Res_Ok;
         }
@@ -1562,7 +1561,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
                 g_core->log_info(std::format(L"[VCR] Seek savestate at frame {} loaded!", closest_key));
                 g_seek_savestate_loading = false;
             }, false);
-        }, 0);
+        });
 
         return Res_Ok;
     }

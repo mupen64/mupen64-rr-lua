@@ -2285,7 +2285,9 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     };
     g_core.load_plugins = load_plugins;
     g_core.initiate_plugins = initiate_plugins;
-    g_core.invoke_async = AsyncExecutor::invoke_async;
+    g_core.invoke_async = [](const auto cb) {
+        AsyncExecutor::invoke_async(cb);
+    };
     g_core.get_saves_directory = get_saves_directory;
     g_core.get_backups_directory = get_backups_directory;
     g_core.get_summercart_path = get_summercart_path;
