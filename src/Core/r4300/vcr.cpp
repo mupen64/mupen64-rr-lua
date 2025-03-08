@@ -1188,18 +1188,16 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         lock.lock();
     }
 
-    // We can't call this after opening m_file, since it will potentially nuke it
-    core_vcr_stop_all();
-
-    const auto result = read_movie_header(movie_buf, &g_header);
+    core_vcr_movie_header header{};
+    const auto result = read_movie_header(movie_buf, &header);
     if (result != Res_Ok)
     {
         return result;
     }
 
-    g_movie_inputs = {};
-    g_movie_inputs.resize(g_header.length_samples);
-    memcpy(g_movie_inputs.data(), movie_buf.data() + sizeof(core_vcr_movie_header), sizeof(core_buttons) * g_header.length_samples);
+    std::vector<core_buttons> movie_inputs{};
+    movie_inputs.resize(header.length_samples);
+    memcpy(movie_inputs.data(), movie_buf.data() + sizeof(core_vcr_movie_header), sizeof(core_buttons) * header.length_samples);
 
     for (auto& [Present, RawData, Plugin] : g_core->controls)
     {
@@ -1220,13 +1218,13 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         return VCR_InvalidControllers;
     }
 
-    if (g_header.extended_version != 0)
+    if (header.extended_version != 0)
     {
-        g_core->log_info(std::format(L"[VCR] Movie has extended version {}", g_header.extended_version));
+        g_core->log_info(std::format(L"[VCR] Movie has extended version {}", header.extended_version));
 
-        if (g_core->cfg->wii_vc_emulation != g_header.extended_flags.wii_vc)
+        if (g_core->cfg->wii_vc_emulation != header.extended_flags.wii_vc)
         {
-            bool proceed = g_core->show_ask_dialog(g_header.extended_flags.wii_vc ? WII_VC_MISMATCH_A_WARNING_MESSAGE : WII_VC_MISMATCH_B_WARNING_MESSAGE, L"VCR", true);
+            bool proceed = g_core->show_ask_dialog(header.extended_flags.wii_vc ? WII_VC_MISMATCH_A_WARNING_MESSAGE : WII_VC_MISMATCH_B_WARNING_MESSAGE, L"VCR", true);
 
             if (!proceed)
             {
@@ -1237,16 +1235,15 @@ core_result core_vcr_start_playback(std::filesystem::path path)
     else
     {
         // Old movies filled with non-zero data in this section are suspicious, we'll warn the user.
-        if (g_header.extended_flags.data != 0)
+        if (header.extended_flags.data != 0)
         {
         	g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, L"VCR", fsvc_warning);
         }
     }
 
-    if (_stricmp(g_header.rom_name,
-                 (const char*)ROM_HEADER.nom) != 0)
+    if (_stricmp(header.rom_name, (const char*)ROM_HEADER.nom) != 0)
     {
-        bool proceed = g_core->show_ask_dialog(std::format(ROM_NAME_WARNING_MESSAGE, string_to_wstring(g_header.rom_name), string_to_wstring((char*)ROM_HEADER.nom)).c_str(), L"VCR", true);
+        bool proceed = g_core->show_ask_dialog(std::format(ROM_NAME_WARNING_MESSAGE, string_to_wstring(header.rom_name), string_to_wstring((char*)ROM_HEADER.nom)).c_str(), L"VCR", true);
 
         if (!proceed)
         {
@@ -1255,18 +1252,18 @@ core_result core_vcr_start_playback(std::filesystem::path path)
     }
     else
     {
-        if (g_header.rom_country != ROM_HEADER.Country_code)
+        if (header.rom_country != ROM_HEADER.Country_code)
         {
-            bool proceed = g_core->show_ask_dialog(std::format(ROM_COUNTRY_WARNING_MESSAGE, core_vr_country_code_to_country_name(g_header.rom_country), core_vr_country_code_to_country_name(ROM_HEADER.Country_code)).c_str(), L"VCR", true);
+            bool proceed = g_core->show_ask_dialog(std::format(ROM_COUNTRY_WARNING_MESSAGE, core_vr_country_code_to_country_name(header.rom_country), core_vr_country_code_to_country_name(ROM_HEADER.Country_code)).c_str(), L"VCR", true);
             if (!proceed)
             {
                 return VCR_Cancelled;
             }
         }
-        else if (g_header.rom_crc1 != ROM_HEADER.CRC1)
+        else if (header.rom_crc1 != ROM_HEADER.CRC1)
         {
             wchar_t str[512] = {0};
-            swprintf_s(str, ROM_CRC_WARNING_MESSAGE, g_header.rom_crc1, ROM_HEADER.CRC1);
+            swprintf_s(str, ROM_CRC_WARNING_MESSAGE, header.rom_crc1, ROM_HEADER.CRC1);
 
             bool proceed = g_core->show_ask_dialog(str, L"VCR", true);
             if (!proceed)
@@ -1298,12 +1295,14 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         }
     }
     
-    // Reset VCR-related state
+    core_vcr_stop_all();
     m_current_sample = 0;
     m_current_vi = 0;
     g_movie_path = path;
-
-    if (g_header.startFlags & MOVIE_START_FROM_SNAPSHOT)
+    g_movie_inputs = movie_inputs;
+    g_header = header;
+    
+    if (header.startFlags & MOVIE_START_FROM_SNAPSHOT)
     {
         g_core->log_info(L"[VCR] Loading state...");
 
