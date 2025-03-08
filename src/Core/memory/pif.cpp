@@ -148,8 +148,8 @@ void internal_ReadController(int32_t Control, uint8_t* Command)
     case 3: // write controller pack
         if (g_core->controls[Control].Present)
         {
-            if (g_core->controls[Control].Plugin == (int32_t)ce_raw && g_core->plugin_funcs.controller_command)
-                g_core->plugin_funcs.read_controller(Control, Command);
+            if (g_core->controls[Control].Plugin == (int32_t)ce_raw && g_core->plugin_funcs.input_controller_command)
+                g_core->plugin_funcs.input_read_controller(Control, Command);
         }
         break;
     }
@@ -222,8 +222,8 @@ void internal_ControllerCommand(int32_t Control, uint8_t* Command)
                 }
                 break;
             case (int32_t)ce_raw:
-                if (g_core->plugin_funcs.controller_command)
-                    g_core->plugin_funcs.controller_command(Control, Command);
+                if (g_core->plugin_funcs.input_controller_command)
+                    g_core->plugin_funcs.input_controller_command(Control, Command);
                 break;
             default:
                 memset(&Command[5], 0, 0x20);
@@ -267,8 +267,8 @@ void internal_ControllerCommand(int32_t Control, uint8_t* Command)
                 }
                 break;
             case (int32_t)ce_raw:
-                if (g_core->plugin_funcs.controller_command)
-                    g_core->plugin_funcs.controller_command(Control, Command);
+                if (g_core->plugin_funcs.input_controller_command)
+                    g_core->plugin_funcs.input_controller_command(Control, Command);
                 break;
             default:
                 Command[0x25] = mempack_crc(&Command[5]);
@@ -338,7 +338,7 @@ void update_pif_write()
                 {
                     if (g_core->controls[channel].Present &&
                         g_core->controls[channel].RawData)
-                        g_core->plugin_funcs.controller_command(channel, &PIF_RAMb[i]);
+                        g_core->plugin_funcs.input_controller_command(channel, &PIF_RAMb[i]);
                     else
                         internal_ControllerCommand(channel, &PIF_RAMb[i]);
                 }
@@ -355,7 +355,7 @@ void update_pif_write()
         i++;
     }
     // PIF_RAMb[0x3F] = 0;
-    g_core->plugin_funcs.controller_command(-1, NULL);
+    g_core->plugin_funcs.input_controller_command(-1, NULL);
     /*#ifdef DEBUG_PIF
         if (!one_frame_delay) {
             g_core->log_info(L"---------- after write ----------");
@@ -464,7 +464,7 @@ void update_pif_read()
                     if (g_core->controls[channel].Present &&
                         g_core->controls[channel].RawData && core_vcr_get_task() == task_idle)
                     {
-                        g_core->plugin_funcs.read_controller(channel, &PIF_RAMb[i]);
+                        g_core->plugin_funcs.input_read_controller(channel, &PIF_RAMb[i]);
                         auto ptr = (core_buttons*)&PIF_RAMb[i + 3];
                         g_core->callbacks.input(ptr, channel);
                     }
@@ -479,7 +479,7 @@ void update_pif_read()
         }
         i++;
     }
-    g_core->plugin_funcs.read_controller(-1, NULL);
+    g_core->plugin_funcs.input_read_controller(-1, NULL);
 
 #ifdef DEBUG_PIF
     g_core->log_info(L"---------- after read -----------");

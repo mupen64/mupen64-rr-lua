@@ -56,9 +56,9 @@ namespace EncodingManager
 			void* buf = nullptr;
 			int32_t w;
 			int32_t h;
-			g_core.plugin_funcs.read_screen(&buf, &w, &h);
+			g_core.plugin_funcs.video_read_screen(&buf, &w, &h);
 			memcpy(m_video_buf, buf, w * h * 3);
-			g_core.plugin_funcs.dll_crt_free(buf);
+			g_core.plugin_funcs.video_dll_crt_free(buf);
 
 			if (width)
 			{
@@ -216,7 +216,7 @@ namespace EncodingManager
 	{
 		if (g_config.capture_mode == 0)
 		{
-			if (!core_vr_get_mge_available() && !g_core.plugin_funcs.read_screen)
+			if (!core_vr_get_mge_available() && !g_core.plugin_funcs.video_read_screen)
 			{
 				DialogService::show_dialog(L"The current video plugin has no readScreen implementation.\nPlugin capture is not possible.", L"Capture", fsvc_error);
 				stop_capture();
@@ -232,7 +232,7 @@ namespace EncodingManager
 			readscreen_desktop();
 		} else if (g_config.capture_mode == 3)
 		{
-			if (!core_vr_get_mge_available() && !g_core.plugin_funcs.read_screen)
+			if (!core_vr_get_mge_available() && !g_core.plugin_funcs.video_read_screen)
 			{
 				DialogService::show_dialog(L"The current video plugin has no readScreen implementation.\nHybrid capture is not possible.", L"Capture", fsvc_error);
 				stop_capture();
@@ -252,14 +252,14 @@ namespace EncodingManager
 			if (core_vr_get_mge_available())
 			{
 				MGECompositor::get_video_size(width, height);
-			} else if(g_core.plugin_funcs.get_video_size)
+			} else if(g_core.plugin_funcs.video_get_video_size)
 			{
-				g_core.plugin_funcs.get_video_size(width, height);
+				g_core.plugin_funcs.video_get_video_size(width, height);
 			} else
 			{
 				void* buf = nullptr;
-				g_core.plugin_funcs.read_screen(&buf, width, height);
-				g_core.plugin_funcs.dll_crt_free(buf);
+				g_core.plugin_funcs.video_read_screen(&buf, width, height);
+				g_core.plugin_funcs.video_dll_crt_free(buf);
 			}
 		} else if (g_config.capture_mode == 1 || g_config.capture_mode == 2 || g_config.capture_mode == 3)
 		{

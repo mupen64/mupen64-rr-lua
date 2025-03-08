@@ -1158,7 +1158,7 @@ void update_SP()
         if (SP_DMEM[0xFC0 / 4] == 1)
         {
             // unprotecting old frame buffers
-            if (g_core->plugin_funcs.fb_get_frame_buffer_info && g_core->plugin_funcs.fb_read && g_core->plugin_funcs.fb_write && frameBufferInfos[0].addr)
+            if (g_core->plugin_funcs.video_fb_get_frame_buffer_info && g_core->plugin_funcs.video_fb_read && g_core->plugin_funcs.video_fb_write && frameBufferInfos[0].addr)
             {
                 int32_t i;
                 for (i = 0; i < 6; i++)
@@ -1205,7 +1205,7 @@ void update_SP()
             g_vr_frame_skipped = is_frame_skipped();
             if (!g_vr_frame_skipped)
             {
-                g_core->plugin_funcs.do_rsp_cycles(100);
+                g_core->plugin_funcs.rsp_do_rsp_cycles(100);
             }
 
             rsp_register.rsp_pc |= save_pc;
@@ -1218,14 +1218,14 @@ void update_SP()
             add_interrupt_event(DP_INT, 1000);
 
             // protecting new frame buffers
-            if (g_core->plugin_funcs.fb_get_frame_buffer_info && g_core->plugin_funcs.fb_read && g_core->plugin_funcs.fb_write)
+            if (g_core->plugin_funcs.video_fb_get_frame_buffer_info && g_core->plugin_funcs.video_fb_read && g_core->plugin_funcs.video_fb_write)
             {
-                g_core->plugin_funcs.fb_get_frame_buffer_info(frameBufferInfos);
+                g_core->plugin_funcs.video_fb_get_frame_buffer_info(frameBufferInfos);
             }
             
-            if (g_core->plugin_funcs.fb_get_frame_buffer_info
-                && g_core->plugin_funcs.fb_read
-                && g_core->plugin_funcs.fb_write
+            if (g_core->plugin_funcs.video_fb_get_frame_buffer_info
+                && g_core->plugin_funcs.video_fb_read
+                && g_core->plugin_funcs.video_fb_write
                 && frameBufferInfos[0].addr)
             {
                 int32_t i;
@@ -1286,7 +1286,7 @@ void update_SP()
 
             if (!g_vr_fast_forward || !g_core->cfg->fastforward_silent)
             {
-                g_core->plugin_funcs.do_rsp_cycles(100);
+                g_core->plugin_funcs.rsp_do_rsp_cycles(100);
             }
             rsp_register.rsp_pc |= save_pc;
 
@@ -1302,7 +1302,7 @@ void update_SP()
             rsp_register.rsp_pc &= 0xFFF;
             if (!g_vr_fast_forward || !g_core->cfg->fastforward_silent)
             {
-                g_core->plugin_funcs.do_rsp_cycles(100);
+                g_core->plugin_funcs.rsp_do_rsp_cycles(100);
             }
             rsp_register.rsp_pc |= save_pc;
 
@@ -1496,7 +1496,7 @@ void read_rdramFB()
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end &&
                 framebufferRead[(address & 0x7FFFFF) >> 12])
             {
-                g_core->plugin_funcs.fb_read(address);
+                g_core->plugin_funcs.video_fb_read(address);
                 framebufferRead[(address & 0x7FFFFF) >> 12] = 0;
             }
         }
@@ -1518,7 +1518,7 @@ void read_rdramFBb()
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end &&
                 framebufferRead[(address & 0x7FFFFF) >> 12])
             {
-                g_core->plugin_funcs.fb_read(address);
+                g_core->plugin_funcs.video_fb_read(address);
                 framebufferRead[(address & 0x7FFFFF) >> 12] = 0;
             }
         }
@@ -1540,7 +1540,7 @@ void read_rdramFBh()
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end &&
                 framebufferRead[(address & 0x7FFFFF) >> 12])
             {
-                g_core->plugin_funcs.fb_read(address);
+                g_core->plugin_funcs.video_fb_read(address);
                 framebufferRead[(address & 0x7FFFFF) >> 12] = 0;
             }
         }
@@ -1562,7 +1562,7 @@ void read_rdramFBd()
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end &&
                 framebufferRead[(address & 0x7FFFFF) >> 12])
             {
-                g_core->plugin_funcs.fb_read(address);
+                g_core->plugin_funcs.video_fb_read(address);
                 framebufferRead[(address & 0x7FFFFF) >> 12] = 0;
             }
         }
@@ -1603,7 +1603,7 @@ void write_rdramFB()
                 frameBufferInfos[i].height *
                 frameBufferInfos[i].size - 1;
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end)
-                g_core->plugin_funcs.fb_write(address, 4);
+                g_core->plugin_funcs.video_fb_write(address, 4);
         }
     }
     write_rdram();
@@ -1621,7 +1621,7 @@ void write_rdramFBb()
                 frameBufferInfos[i].height *
                 frameBufferInfos[i].size - 1;
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end)
-                g_core->plugin_funcs.fb_write(address ^ S8, 1);
+                g_core->plugin_funcs.video_fb_write(address ^ S8, 1);
         }
     }
     write_rdramb();
@@ -1639,7 +1639,7 @@ void write_rdramFBh()
                 frameBufferInfos[i].height *
                 frameBufferInfos[i].size - 1;
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end)
-                g_core->plugin_funcs.fb_write(address ^ S16, 2);
+                g_core->plugin_funcs.video_fb_write(address ^ S16, 2);
         }
     }
     write_rdramh();
@@ -1657,7 +1657,7 @@ void write_rdramFBd()
                 frameBufferInfos[i].height *
                 frameBufferInfos[i].size - 1;
             if ((address & 0x7FFFFF) >= start && (address & 0x7FFFFF) <= end)
-                g_core->plugin_funcs.fb_write(address, 8);
+                g_core->plugin_funcs.video_fb_write(address, 8);
         }
     }
     write_rdramd();
@@ -2075,7 +2075,7 @@ void write_dp()
         dpc_register.dpc_current = dpc_register.dpc_start;
         break;
     case 0x4:
-        g_core->plugin_funcs.process_rdp_list();
+        g_core->plugin_funcs.video_process_rdp_list();
         MI_register.mi_intr_reg |= 0x20;
         check_interrupt();
         break;
@@ -2130,7 +2130,7 @@ void write_dpb()
     case 0x5:
     case 0x6:
     case 0x7:
-        g_core->plugin_funcs.process_rdp_list();
+        g_core->plugin_funcs.video_process_rdp_list();
         MI_register.mi_intr_reg |= 0x20;
         check_interrupt();
         break;
@@ -2169,7 +2169,7 @@ void write_dph()
         break;
     case 0x4:
     case 0x6:
-        g_core->plugin_funcs.process_rdp_list();
+        g_core->plugin_funcs.video_process_rdp_list();
         MI_register.mi_intr_reg |= 0x20;
         check_interrupt();
         break;
@@ -2196,7 +2196,7 @@ void write_dpd()
     {
     case 0x0:
         dpc_register.dpc_current = dpc_register.dpc_start;
-        g_core->plugin_funcs.process_rdp_list();
+        g_core->plugin_funcs.video_process_rdp_list();
         MI_register.mi_intr_reg |= 0x20;
         check_interrupt();
         break;
@@ -2427,7 +2427,7 @@ void write_vi()
         if (vi_register.vi_status != word)
         {
             vi_register.vi_status = word;
-            g_core->plugin_funcs.vi_status_changed();
+            g_core->plugin_funcs.video_vi_status_changed();
         }
         return;
         break;
@@ -2435,7 +2435,7 @@ void write_vi()
         if (vi_register.vi_width != word)
         {
             vi_register.vi_width = word;
-            g_core->plugin_funcs.vi_width_changed();
+            g_core->plugin_funcs.video_vi_width_changed();
         }
         return;
         break;
@@ -2463,7 +2463,7 @@ void write_vib()
         if (vi_register.vi_status != temp)
         {
             vi_register.vi_status = temp;
-            g_core->plugin_funcs.vi_status_changed();
+            g_core->plugin_funcs.video_vi_status_changed();
         }
         return;
         break;
@@ -2477,7 +2477,7 @@ void write_vib()
         if (vi_register.vi_width != temp)
         {
             vi_register.vi_width = temp;
-            g_core->plugin_funcs.vi_width_changed();
+            g_core->plugin_funcs.video_vi_width_changed();
         }
         return;
         break;
@@ -2507,7 +2507,7 @@ void write_vih()
         if (vi_register.vi_status != temp)
         {
             vi_register.vi_status = temp;
-            g_core->plugin_funcs.vi_status_changed();
+            g_core->plugin_funcs.video_vi_status_changed();
         }
         return;
         break;
@@ -2519,7 +2519,7 @@ void write_vih()
         if (vi_register.vi_width != temp)
         {
             vi_register.vi_width = temp;
-            g_core->plugin_funcs.vi_width_changed();
+            g_core->plugin_funcs.video_vi_width_changed();
         }
         return;
         break;
@@ -2542,7 +2542,7 @@ void write_vid()
         if (vi_register.vi_status != dword >> 32)
         {
             vi_register.vi_status = dword >> 32;
-            g_core->plugin_funcs.vi_status_changed();
+            g_core->plugin_funcs.video_vi_status_changed();
         }
         vi_register.vi_origin = dword & 0xFFFFFFFF;
         return;
@@ -2551,7 +2551,7 @@ void write_vid()
         if (vi_register.vi_width != dword >> 32)
         {
             vi_register.vi_width = dword >> 32;
-            g_core->plugin_funcs.vi_width_changed();
+            g_core->plugin_funcs.video_vi_width_changed();
         }
         vi_register.vi_v_intr = dword & 0xFFFFFFFF;
         return;
@@ -2655,7 +2655,7 @@ void write_ai()
     {
     case 0x4:
         ai_register.ai_len = word;
-        g_core->plugin_funcs.ai_len_changed();
+        g_core->plugin_funcs.audio_ai_len_changed();
         g_core->callbacks.ai_len_changed();
         switch (ROM_HEADER.Country_code & 0xFF)
         {
@@ -2712,7 +2712,7 @@ void write_ai()
         if (ai_register.ai_dacrate != word)
         {
             ai_register.ai_dacrate = word;
-            g_core->plugin_funcs.ai_dacrate_changed(g_sys_type);
+            g_core->plugin_funcs.audio_ai_dacrate_changed(g_sys_type);
             g_core->callbacks.dacrate_changed(g_sys_type);
         }
         return;
@@ -2735,7 +2735,7 @@ void write_aib()
         *((unsigned char*)&temp
             + ((*address_low & 3) ^ S8)) = g_byte;
         ai_register.ai_len = temp;
-        g_core->plugin_funcs.ai_len_changed();
+        g_core->plugin_funcs.audio_ai_len_changed();
         g_core->callbacks.ai_len_changed();
         switch (ROM_HEADER.Country_code & 0xFF)
         {
@@ -2793,7 +2793,7 @@ void write_aib()
         if (ai_register.ai_dacrate != temp)
         {
             ai_register.ai_dacrate = temp;
-            g_core->plugin_funcs.ai_dacrate_changed(g_sys_type);
+            g_core->plugin_funcs.audio_ai_dacrate_changed(g_sys_type);
             g_core->callbacks.dacrate_changed(g_sys_type);
         }
         return;
@@ -2815,7 +2815,7 @@ void write_aih()
         *((uint16_t*)((unsigned char*)&temp
             + ((*address_low & 3) ^ S16))) = hword;
         ai_register.ai_len = temp;
-        g_core->plugin_funcs.ai_len_changed();
+        g_core->plugin_funcs.audio_ai_len_changed();
         g_core->callbacks.ai_len_changed();
         switch (ROM_HEADER.Country_code & 0xFF)
         {
@@ -2869,7 +2869,7 @@ void write_aih()
         if (ai_register.ai_dacrate != temp)
         {
             ai_register.ai_dacrate = temp;
-            g_core->plugin_funcs.ai_dacrate_changed(g_sys_type);
+            g_core->plugin_funcs.audio_ai_dacrate_changed(g_sys_type);
             g_core->callbacks.dacrate_changed(g_sys_type);
         }
         return;
@@ -2887,7 +2887,7 @@ void write_aid()
     case 0x0:
         ai_register.ai_dram_addr = dword >> 32;
         ai_register.ai_len = dword & 0xFFFFFFFF;
-        g_core->plugin_funcs.ai_len_changed();
+        g_core->plugin_funcs.audio_ai_len_changed();
         g_core->callbacks.ai_len_changed();
         switch (ROM_HEADER.Country_code & 0xFF)
         {
@@ -2937,7 +2937,7 @@ void write_aid()
         if (ai_register.ai_dacrate != dword >> 32)
         {
             ai_register.ai_dacrate = dword >> 32;
-            g_core->plugin_funcs.ai_dacrate_changed(g_sys_type);
+            g_core->plugin_funcs.audio_ai_dacrate_changed(g_sys_type);
             g_core->callbacks.dacrate_changed(g_sys_type);
         }
         ai_register.ai_bitrate = dword & 0xFFFFFFFF;

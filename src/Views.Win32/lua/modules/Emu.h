@@ -263,7 +263,7 @@ namespace LuaCore::Emu
 
     static int Screenshot(lua_State* L)
     {
-        g_core.plugin_funcs.capture_screen((char*)luaL_checkstring(L, 1));
+        g_core.plugin_funcs.video_capture_screen((char*)luaL_checkstring(L, 1));
         return 0;
     }
 

@@ -255,7 +255,7 @@ std::vector<uint8_t> generate_savestate()
     {
         int32_t width;
         int32_t height;
-        g_core->plugin_funcs.get_video_size(&width, &height);
+        g_core->plugin_funcs.video_get_video_size(&width, &height);
         g_core->log_trace(std::format(L"Writing screen buffer to savestate, width: {}, height: {}", width, height));
         
         void* video = malloc(width * height * 3);
@@ -496,7 +496,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         if (core_vr_get_mge_available() && video_buffer && !core_vcr_is_seeking())
         {
             int32_t current_width, current_height;
-            g_core->plugin_funcs.get_video_size(&current_width, &current_height);
+            g_core->plugin_funcs.video_get_video_size(&current_width, &current_height);
             if (current_width == video_width && current_height == video_height)
             {
                 g_core->load_screen(video_buffer);

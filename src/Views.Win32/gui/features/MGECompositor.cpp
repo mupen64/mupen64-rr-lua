@@ -110,7 +110,7 @@ namespace MGECompositor
 
     void update_screen()
     {
-        g_core.plugin_funcs.get_video_size(&internal_buffer.width, &internal_buffer.height);
+        g_core.plugin_funcs.video_get_video_size(&internal_buffer.width, &internal_buffer.height);
 
         if (internal_buffer.width != internal_buffer.last_width || internal_buffer.height != internal_buffer.last_height)
         {
@@ -137,7 +137,7 @@ namespace MGECompositor
             MoveWindow(control_hwnd, 0, 0, internal_buffer.width, internal_buffer.height, true);
         }
 
-        g_core.plugin_funcs.read_video(&internal_buffer.buffer);
+        g_core.plugin_funcs.video_read_video(&internal_buffer.buffer);
 
         internal_buffer.last_width = internal_buffer.width;
         internal_buffer.last_height = internal_buffer.height;

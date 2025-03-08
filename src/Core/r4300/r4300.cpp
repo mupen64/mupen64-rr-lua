@@ -2029,7 +2029,7 @@ void audio_thread()
             continue;
         }
 
-        g_core->plugin_funcs.ai_update(0);
+        g_core->plugin_funcs.audio_ai_update(0);
     }
     g_core->log_info(L"Sound thread exiting...");
 }
@@ -2042,9 +2042,9 @@ void emu_thread()
     
     init_memory();
 
-    g_core->plugin_funcs.rom_open_gfx();
-    g_core->plugin_funcs.rom_open_input();
-    g_core->plugin_funcs.rom_open_audio();
+    g_core->plugin_funcs.video_rom_open();
+    g_core->plugin_funcs.input_rom_open();
+    g_core->plugin_funcs.audio_rom_open();
 
     dynacore = g_core->cfg->core_type;
 
@@ -2059,14 +2059,14 @@ void emu_thread()
 
     st_on_core_stop();
 
-    g_core->plugin_funcs.rom_closed_gfx();
-    g_core->plugin_funcs.rom_closed_audio();
-    g_core->plugin_funcs.rom_closed_input();
-    g_core->plugin_funcs.rom_closed_rsp();
-    g_core->plugin_funcs.close_dll_gfx();
-    g_core->plugin_funcs.close_dll_audio();
-    g_core->plugin_funcs.close_dll_input();
-    g_core->plugin_funcs.close_dll_rsp();
+    g_core->plugin_funcs.video_rom_closed();
+    g_core->plugin_funcs.audio_rom_closed();
+    g_core->plugin_funcs.input_rom_closed();
+    g_core->plugin_funcs.rsp_rom_closed();
+    g_core->plugin_funcs.video_close_dll();
+    g_core->plugin_funcs.audio_close_dll_audio();
+    g_core->plugin_funcs.input_close_dll();
+    g_core->plugin_funcs.rsp_close_dll();
 
     emu_paused = true;
     emu_launched = false;
@@ -2335,7 +2335,7 @@ core_result core_vr_reset_rom(bool reset_save_data, bool stop_vcr, bool wait)
 
 void core_vr_toggle_fullscreen_mode()
 {
-    g_core->plugin_funcs.change_window();
+    g_core->plugin_funcs.video_change_window();
     fullscreen ^= true;
 }
 

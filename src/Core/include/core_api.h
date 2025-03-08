@@ -61,55 +61,61 @@ typedef struct {
  */
 typedef struct {
 
-    // TODO: Sort or re-order these... it's a catastrophe.
+#pragma region Video
+    CLOSEDLL video_close_dll;
+    ROMCLOSED video_rom_closed;
+    ROMOPEN video_rom_open;
+
+    PROCESSDLIST video_process_dlist;
+    PROCESSRDPLIST video_process_rdp_list;
+    SHOWCFB video_show_cfb;
+    UPDATESCREEN video_update_screen;
+    VISTATUSCHANGED video_vi_status_changed;
+    VIWIDTHCHANGED video_vi_width_changed;
+    READSCREEN video_read_screen;
+    DLLCRTFREE video_dll_crt_free;
+    MOVESCREEN video_move_screen;
+    CAPTURESCREEN video_capture_screen;
+    GETVIDEOSIZE video_get_video_size;
+    READVIDEO video_read_video;
+    FBREAD video_fb_read;
+    FBWRITE video_fb_write;
+    FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
+    CHANGEWINDOW video_change_window;
+#pragma endregion
+
+#pragma region Video
+    CLOSEDLL audio_close_dll_audio;
+    ROMCLOSED audio_rom_closed;
+    ROMOPEN audio_rom_open;
     
-    CLOSEDLL close_dll_gfx;
-    INITIATEGFX initiate_gfx;
-    PROCESSDLIST process_dlist;
-    PROCESSRDPLIST process_rdp_list;
-    ROMCLOSED rom_closed_gfx;
-    ROMOPEN rom_open_gfx;
-    SHOWCFB show_cfb;
-    UPDATESCREEN update_screen;
-    VISTATUSCHANGED vi_status_changed;
-    VIWIDTHCHANGED vi_width_changed;
-    READSCREEN read_screen;
-    DLLCRTFREE dll_crt_free;
-    MOVESCREEN move_screen;
-    CAPTURESCREEN capture_screen;
-    GETVIDEOSIZE get_video_size;
-    READVIDEO read_video;
-    FBREAD fb_read;
-    FBWRITE fb_write;
-    FBGETFRAMEBUFFERINFO fb_get_frame_buffer_info;
-    CHANGEWINDOW change_window;
+    AIDACRATECHANGED audio_ai_dacrate_changed;
+    AILENCHANGED audio_ai_len_changed;
+    AIREADLENGTH audio_ai_read_length;
+    PROCESSALIST audio_process_alist;
+    AIUPDATE audio_ai_update;
+#pragma endregion
 
-    AIDACRATECHANGED ai_dacrate_changed;
-    AILENCHANGED ai_len_changed;
-    AIREADLENGTH ai_read_length;
-    CLOSEDLL close_dll_audio;
-    INITIATEAUDIO initiate_audio;
-    PROCESSALIST process_a_list;
-    ROMCLOSED rom_closed_audio;
-    ROMOPEN rom_open_audio;
-    AIUPDATE ai_update;
+#pragma region Video
+    CLOSEDLL input_close_dll;
+    ROMCLOSED input_rom_closed;
+    ROMOPEN input_rom_open;
+    
+    CONTROLLERCOMMAND input_controller_command;
+    GETKEYS input_get_keys;
+    SETKEYS input_set_keys;
+    READCONTROLLER input_read_controller;
+    KEYDOWN input_key_down;
+    KEYUP input_key_up;
+#pragma endregion
 
-    CLOSEDLL close_dll_input;
-    CONTROLLERCOMMAND controller_command;
-    GETKEYS get_keys;
-    SETKEYS set_keys;
-    OLD_INITIATECONTROLLERS old_initiate_controllers;
-    INITIATECONTROLLERS initiate_controllers;
-    READCONTROLLER read_controller;
-    ROMCLOSED rom_closed_input;
-    ROMOPEN rom_open_input;
-    KEYDOWN key_down;
-    KEYUP key_up;
+#pragma region RSP
+    CLOSEDLL rsp_close_dll;
+    ROMCLOSED rsp_rom_closed;
+    
+    DORSPCYCLES rsp_do_rsp_cycles;
+#pragma endregion
 
-    CLOSEDLL close_dll_rsp;
-    DORSPCYCLES do_rsp_cycles;
-    INITIATERSP initiate_rsp;
-    ROMCLOSED rom_closed_rsp;
 } core_plugin_funcs;
 
 /**
@@ -170,6 +176,7 @@ typedef struct {
      * \param func The function to be executed.
      * \param key The function's key used for deduplication. If not 0, the function will not be queued if another function with the same key is already in the queue.
      */
+    // TODO: Remove key from core API def
     void (*invoke_async)(const std::function<void()>& func, size_t key);
 
     /**
@@ -251,10 +258,10 @@ typedef struct {
 
     /**
      * \brief Gets the plugin names.
-     * \param video Pointer to the video plugin name buffer. Must be at least 64 bytes large. If null, no data will be written.
-     * \param audio Pointer to the audio plugin name buffer. Must be at least 64 bytes large. If null, no data will be written.
-     * \param input Pointer to the input plugin name buffer. Must be at least 64 bytes large. If null, no data will be written.
-     * \param rsp Pointer to the RSP plugin name buffer. Must be at least 64 bytes large. If null, no data will be written.
+     * \param video Pointer to the video plugin name buffer. Destination must be at least 64 bytes large. If null, no data will be written.
+     * \param audio Pointer to the audio plugin name buffer. Destination must be at least 64 bytes large. If null, no data will be written.
+     * \param input Pointer to the input plugin name buffer. Destination must be at least 64 bytes large. If null, no data will be written.
+     * \param rsp Pointer to the RSP plugin name buffer. Destination must be at least 64 bytes large. If null, no data will be written.
      * \note Must be called after loading plugins and their globals.
      */
     void (*get_plugin_names)(char* video, char* audio, char* input, char* rsp);

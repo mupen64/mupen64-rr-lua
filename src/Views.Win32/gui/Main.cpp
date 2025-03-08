@@ -553,7 +553,7 @@ void update_screen()
     }
     else
     {
-        g_core.plugin_funcs.update_screen();
+        g_core.plugin_funcs.video_update_screen();
     }
 }
 
@@ -1119,8 +1119,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
             }
 
-            if (g_core.plugin_funcs.key_down && core_vr_get_launched())
-                g_core.plugin_funcs.key_down(wParam, lParam);
+            if (g_core.plugin_funcs.input_key_down && core_vr_get_launched())
+                g_core.plugin_funcs.input_key_down(wParam, lParam);
             if (!hit)
                 return DefWindowProc(hwnd, Message, wParam, lParam);
             break;
@@ -1155,8 +1155,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
             }
 
-            if (g_core.plugin_funcs.key_up && core_vr_get_launched())
-                g_core.plugin_funcs.key_up(wParam, lParam);
+            if (g_core.plugin_funcs.input_key_up && core_vr_get_launched())
+                g_core.plugin_funcs.input_key_up(wParam, lParam);
             if (!hit)
                 return DefWindowProc(hwnd, Message, wParam, lParam);
             break;
@@ -1181,7 +1181,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         {
             if (core_vr_get_launched())
             {
-                g_core.plugin_funcs.move_screen((int)wParam, lParam);
+                g_core.plugin_funcs.video_move_screen((int)wParam, lParam);
             }
 
             if (IsIconic(g_main_hwnd))
@@ -1871,7 +1871,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 });
                 break;
             case IDM_SCREENSHOT:
-                g_core.plugin_funcs.capture_screen(get_screenshots_directory().string().data());
+                g_core.plugin_funcs.video_capture_screen(get_screenshots_directory().string().data());
                 break;
             case IDM_RESET_RECENT_ROMS:
                 g_config.recent_rom_paths.clear();

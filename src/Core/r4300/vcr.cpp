@@ -656,7 +656,7 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
         }
         else
         {
-            g_core->plugin_funcs.get_keys(index, input);
+            g_core->plugin_funcs.input_get_keys(index, input);
             g_core->callbacks.input(input, index);
         }
     }
@@ -714,8 +714,8 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
             return;
         }
 
-        g_core->plugin_funcs.set_keys(index, {0});
-        g_core->plugin_funcs.get_keys(index, input);
+        g_core->plugin_funcs.input_set_keys(index, {0});
+        g_core->plugin_funcs.input_get_keys(index, input);
         return;
     }
 
@@ -728,7 +728,7 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
 
     // Use inputs from movie, also notify input plugin of override via setKeys
     *input = g_movie_inputs[m_current_sample + index];
-    g_core->plugin_funcs.set_keys(index, *input);
+    g_core->plugin_funcs.input_set_keys(index, *input);
 
     //no readable code because 120 star tas can't get this right >:(
     if (input->value == 0xC000)
@@ -831,7 +831,7 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
 
     if (g_task == task_idle)
     {
-        g_core->plugin_funcs.get_keys(index, input);
+        g_core->plugin_funcs.input_get_keys(index, input);
         g_core->callbacks.input(input, index);
         return;
     }
@@ -1672,7 +1672,7 @@ static void setkeys_with_zero()
     core_buttons zero = {0};
     for (int i = 0; i < 4; i++)
     {
-        g_core->plugin_funcs.set_keys(i, zero);
+        g_core->plugin_funcs.input_set_keys(i, zero);
     }
 }
 

@@ -69,7 +69,7 @@ core_result core_init(core_params* params)
 
 bool core_vr_get_mge_available()
 {
-    return g_core->plugin_funcs.read_video && g_core->plugin_funcs.get_video_size;
+    return g_core->plugin_funcs.video_read_video && g_core->plugin_funcs.video_get_video_size;
 }
 
 void core_vr_wait_increment()

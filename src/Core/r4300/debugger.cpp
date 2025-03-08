@@ -53,7 +53,7 @@ void core_dbg_set_dma_read_enabled(bool value)
 
 bool core_dbg_get_rsp_enabled()
 {
-    return g_core->plugin_funcs.do_rsp_cycles == g_original_do_rsp_cycles;
+    return g_core->plugin_funcs.rsp_do_rsp_cycles == g_original_do_rsp_cycles;
 }
 
 void core_dbg_set_rsp_enabled(bool value)
@@ -61,14 +61,14 @@ void core_dbg_set_rsp_enabled(bool value)
     // Stash the original plugin-provided do_rsp_cycles once
     if (!g_original_do_rsp_cycles)
     {
-        g_original_do_rsp_cycles = g_core->plugin_funcs.do_rsp_cycles;
+        g_original_do_rsp_cycles = g_core->plugin_funcs.rsp_do_rsp_cycles;
     }
 
     // If RSP is disabled, we swap out the real do_rsp_cycles function for the dummy one thereby effectively disabling the rsp unit
     if (value)
-        g_core->plugin_funcs.do_rsp_cycles = g_original_do_rsp_cycles;
+        g_core->plugin_funcs.rsp_do_rsp_cycles = g_original_do_rsp_cycles;
     else
-        g_core->plugin_funcs.do_rsp_cycles = dummy_doRspCycles;
+        g_core->plugin_funcs.rsp_do_rsp_cycles = dummy_doRspCycles;
 }
 
 void Debugger::on_late_cycle(uint32_t opcode, uint32_t address)

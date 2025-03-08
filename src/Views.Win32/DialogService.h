@@ -11,6 +11,8 @@
  */
 namespace DialogService
 {
+    typedef std::string t_dialog_id;
+
     /**
      * Prompts the user to select from a provided collection of choices.
      * \param choices The collection of choices.
