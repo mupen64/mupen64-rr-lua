@@ -2138,10 +2138,11 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     if (path.extension() == ".m64")
     {
         core_vcr_movie_header movie_header{};
-        if (core_vcr_parse_header(path, &movie_header) != Res_Ok)
+        const auto result = core_vcr_parse_header(path, &movie_header);
+        if (result != Res_Ok)
         {
             g_core->callbacks.emu_starting_changed(false);
-            return VR_RomInvalid;
+            return result;
         }
 
         const auto matching_rom = g_core->find_available_rom([&](auto header) {
