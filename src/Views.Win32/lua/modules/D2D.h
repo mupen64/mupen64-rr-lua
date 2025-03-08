@@ -30,6 +30,13 @@ namespace LuaCore::D2D
         float height;
     } t_text_layout_params;
 
+    typedef struct {
+        uint64_t text_hash;
+        uint64_t font_name_hash;
+        float font_size;
+        float max_width;
+        float max_height;
+    } t_text_measure_params;
 
 #define D2D_GET_RECT(L, idx) D2D1::RectF( \
 	luaL_checknumber(L, idx), \
@@ -282,44 +289,63 @@ namespace LuaCore::D2D
         LuaEnvironment* lua = get_lua_class(L);
         lua->ensure_d2d_renderer_created();
 
-        std::wstring text = string_to_wstring(
-            std::string(luaL_checkstring(L, 1)));
+        std::wstring text = string_to_wstring(std::string(luaL_checkstring(L, 1)));
         std::string font_name = std::string(luaL_checkstring(L, 2));
         float font_size = luaL_checknumber(L, 3);
         float max_width = luaL_checknumber(L, 4);
         float max_height = luaL_checknumber(L, 5);
 
-        IDWriteTextFormat* text_format;
+        uint64_t font_name_hash = xxh64::hash(font_name.data(), font_name.size(), 0);
+        uint64_t text_hash = xxh64::hash((char*)text.data(), text.size() * sizeof(wchar_t), 0);
 
-        lua->dw_factory->CreateTextFormat(
-            string_to_wstring(font_name).c_str(),
-            NULL,
-            DWRITE_FONT_WEIGHT_NORMAL,
-            DWRITE_FONT_STYLE_NORMAL,
-            DWRITE_FONT_STRETCH_NORMAL,
-            font_size,
-            L"",
-            &text_format
-        );
+        t_text_measure_params params = {
+            .text_hash = text_hash,
+            .font_name_hash = font_name_hash,
+            .font_size = font_size,
+            .max_width = max_width,
+            .max_height = max_height,
+        };
 
-        IDWriteTextLayout* text_layout;
+        uint64_t params_hash = xxh64::hash((const char*)&params, sizeof(params), 0);
 
-        lua->dw_factory->CreateTextLayout(text.c_str(), text.length(),
-                                          text_format, max_width, max_height,
-                                          &text_layout);
+        if (!lua->dw_text_sizes.contains(params_hash))
+        {
+            IDWriteTextFormat* text_format;
 
-        DWRITE_TEXT_METRICS text_metrics;
-        text_layout->GetMetrics(&text_metrics);
+            lua->dw_factory->CreateTextFormat(
+                string_to_wstring(font_name).c_str(),
+                NULL,
+                DWRITE_FONT_WEIGHT_NORMAL,
+                DWRITE_FONT_STYLE_NORMAL,
+                DWRITE_FONT_STRETCH_NORMAL,
+                font_size,
+                L"",
+                &text_format
+            );
 
+            IDWriteTextLayout* text_layout;
+
+            lua->dw_factory->CreateTextLayout(text.c_str(), text.length(),
+                                              text_format, max_width, max_height,
+                                              &text_layout);
+
+            DWRITE_TEXT_METRICS text_metrics;
+            text_layout->GetMetrics(&text_metrics);
+
+            lua->dw_text_sizes.add(params_hash, text_metrics);
+
+            text_format->Release();
+            text_layout->Release();
+        }
+
+        const auto text_metrics = lua->dw_text_sizes.get(params_hash).value();
+        
         lua_newtable(L);
         lua_pushinteger(L, text_metrics.widthIncludingTrailingWhitespace);
         lua_setfield(L, -2, "width");
         lua_pushinteger(L, text_metrics.height);
         lua_setfield(L, -2, "height");
-
-        text_format->Release();
-        text_layout->Release();
-
+        
         return 1;
     }
 

@@ -140,6 +140,9 @@ public:
     // The cache for DirectWrite text layouts
     MicroLRU::Cache<uint64_t, IDWriteTextLayout*> dw_text_layouts;
 
+    // The cache for DirectWrite text size measurements
+    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes;
+
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget*> d2d_render_target_stack;
 

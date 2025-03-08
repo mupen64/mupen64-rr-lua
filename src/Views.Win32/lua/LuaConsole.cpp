@@ -650,6 +650,7 @@ void LuaEnvironment::ensure_d2d_renderer_created()
     dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout*>(512, [&](auto value) { 
         value->Release(); 
     });
+    dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) { });
 }
 
 void LuaEnvironment::create_renderer()
@@ -709,6 +710,7 @@ void LuaEnvironment::destroy_renderer()
     if (presenter)
     {
         dw_text_layouts.clear();
+        dw_text_sizes.clear();
 
         while (!d2d_render_target_stack.empty())
         {
