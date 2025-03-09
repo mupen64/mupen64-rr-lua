@@ -251,7 +251,7 @@ int RegisterFunction(lua_State* L, callback_key key)
         lua_rawseti(L, LUA_REGISTRYINDEX, key);
         lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     }
-    int i = luaL_len(L, -1) + 1;
+    int i = lua_objlen(L, -1) + 1;
     lua_pushinteger(L, i);
     lua_pushvalue(L, -3); //
     lua_settable(L, -3);
@@ -267,7 +267,7 @@ void UnregisterFunction(lua_State* L, callback_key key)
         lua_pop(L, 1);
         lua_newtable(L); // �Ƃ肠����
     }
-    int n = luaL_len(L, -1);
+    int n = lua_objlen(L, -1);
     for (LUA_INTEGER i = 0; i < n; i++)
     {
         lua_pushinteger(L, 1 + i);
@@ -839,7 +839,7 @@ bool LuaEnvironment::invoke_callbacks_with_key(const std::function<int(lua_State
         lua_pop(L, 1);
         return false;
     }
-    int n = luaL_len(L, -1);
+    int n = lua_objlen(L, -1);
     for (LUA_INTEGER i = 0; i < n; i++)
     {
         lua_pushinteger(L, 1 + i);
@@ -883,7 +883,13 @@ void register_as_package(lua_State* lua_state, const char* name, const luaL_Reg 
         while ((++p)->func);
         return;
     }
-    luaL_newlib(lua_state, regs);
+
+    int count = 0;
+    while (regs[count].func != nullptr)
+        count++;
+
+    lua_createtable(lua_state, 0, count);
+    luaL_setfuncs(lua_state, regs, 0);
     lua_setglobal(lua_state, name);
 }
 
