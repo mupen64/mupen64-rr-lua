@@ -2466,8 +2466,9 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     }
     
     SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
-
-    while (true)
+    bool exit = false;
+    
+    while (!exit)
     {
         DWORD result = MsgWaitForMultipleObjects(1, &dispatcher_event, FALSE, INFINITE, QS_ALLINPUT);
 
@@ -2482,6 +2483,11 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
+
+                if (msg.message == WM_QUIT)
+                {
+                    exit = true;
+                }
             }
         }
         else
