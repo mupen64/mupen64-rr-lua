@@ -85,47 +85,6 @@ static bool vcr_is_task_recording(core_vcr_task task)
         task_start_recording_from_snapshot;
 }
 
-constexpr uint32_t AddrMask = 0x7FFFFF;
-#define S8 3
-#define S16 2
-#define Sh16 1
-
-template <typename T>
-static uint32_t ToAddr(uint32_t addr)
-{
-    return sizeof(T) == 4
-               ? addr
-               : sizeof(T) == 2
-               ? addr ^ S16
-               : sizeof(T) == 1
-               ? addr ^ S8
-               : throw"ToAddr: sizeof(T)";
-}
-
-/**
- * \brief Gets the value at the specified address from RDRAM
- * \tparam T The value's type
- * \param addr The start address of the value
- * \return The value at the address
- */
-template <typename T>
-static T LoadRDRAMSafe(uint32_t addr)
-{
-    return *((T*)((uint8_t*)g_core.rdram + ((ToAddr<T>(addr) & AddrMask))));
-}
-
-/**
- * \brief Sets the value at the specified address in RDRAM
- * \tparam T The value's type
- * \param addr The start address of the value
- * \param value The value to set
- */
-template <typename T>
-static void StoreRDRAMSafe(uint32_t addr, T value)
-{
-    *((T*)((uint8_t*)g_core.rdram + ((ToAddr<T>(addr) & AddrMask)))) = value;
-}
-
 
 t_window_info get_window_info();
 

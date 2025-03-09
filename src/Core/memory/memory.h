@@ -9,7 +9,7 @@
 #include <include/core_types.h>
 
 int32_t init_memory();
-constexpr uint32_t AddrMask = 0x7FFFFF;
+constexpr uint32_t ADDR_MASK = 0x7FFFFF;
 #define read_word_in_memory() readmem[address>>16]()
 #define read_byte_in_memory() readmemb[address>>16]()
 #define read_hword_in_memory() readmemh[address>>16]()
@@ -247,39 +247,3 @@ void update_DPC();
  * \brief Checks whether the provided register contents are valid.
  */
 bool check_register_validity(core_si_reg* si_reg);
-
-template <typename T>
-uint32_t ToAddr(uint32_t addr)
-{
-    return sizeof(T) == 4
-               ? addr
-               : sizeof(T) == 2
-               ? addr ^ S16
-               : sizeof(T) == 1
-               ? addr ^ S8
-               : throw"ToAddr: sizeof(T)";
-}
-
-/**
- * \brief Gets the value at the specified address from RDRAM
- * \tparam T The value's type
- * \param addr The start address of the value
- * \return The value at the address
- */
-template <typename T>
-extern T LoadRDRAMSafe(uint32_t addr)
-{
-    return *((T*)(rdramb + ((ToAddr<T>(addr) & AddrMask))));
-}
-
-/**
- * \brief Sets the value at the specified address in RDRAM
- * \tparam T The value's type
- * \param addr The start address of the value
- * \param value The value to set
- */
-template <typename T>
-extern void StoreRDRAMSafe(uint32_t addr, T value)
-{
-    *((T*)(rdramb + ((ToAddr<T>(addr) & AddrMask)))) = value;
-}

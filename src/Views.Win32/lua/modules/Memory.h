@@ -47,70 +47,70 @@ namespace LuaCore::Memory
 
     static int LuaReadByteUnsigned(lua_State* L)
     {
-        UCHAR value = LoadRDRAMSafe<UCHAR>(luaL_checkinteger(L, 1));
+        UCHAR value = core_rdram_load<UCHAR>((uint8_t*)g_core.rdram, luaL_checkinteger(L, 1));
         lua_pushinteger(L, value);
         return 1;
     }
 
     static int LuaReadByteSigned(lua_State* L)
     {
-        CHAR value = LoadRDRAMSafe<CHAR>(luaL_checkinteger(L, 1));
+        CHAR value = core_rdram_load<CHAR>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         lua_pushinteger(L, value);
         return 1;
     }
 
     static int LuaReadWordUnsigned(lua_State* L)
     {
-        USHORT value = LoadRDRAMSafe<USHORT>(luaL_checkinteger(L, 1));
+        USHORT value = core_rdram_load<USHORT>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         lua_pushinteger(L, value);
         return 1;
     }
 
     static int LuaReadWordSigned(lua_State* L)
     {
-        SHORT value = LoadRDRAMSafe<SHORT>(luaL_checkinteger(L, 1));
+        SHORT value = core_rdram_load<SHORT>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         lua_pushinteger(L, value);
         return 1;
     }
 
     static int LuaReadDWorldUnsigned(lua_State* L)
     {
-        ULONG value = LoadRDRAMSafe<ULONG>(luaL_checkinteger(L, 1));
+        ULONG value = core_rdram_load<ULONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         lua_pushinteger(L, value);
         return 1;
     }
 
     static int LuaReadDWordSigned(lua_State* L)
     {
-        LONG value = LoadRDRAMSafe<LONG>(luaL_checkinteger(L, 1));
+        LONG value = core_rdram_load<LONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         lua_pushinteger(L, value);
         return 1;
     }
 
     static int LuaReadQWordUnsigned(lua_State* L)
     {
-        ULONGLONG value = LoadRDRAMSafe<ULONGLONG>(luaL_checkinteger(L, 1));
+        ULONGLONG value = core_rdram_load<ULONGLONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         LuaPushQword(L, value);
         return 1;
     }
 
     static int LuaReadQWordSigned(lua_State* L)
     {
-        LONGLONG value = LoadRDRAMSafe<LONGLONG>(luaL_checkinteger(L, 1));
+        LONGLONG value = core_rdram_load<LONGLONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         LuaPushQword(L, value);
         return 1;
     }
 
     static int LuaReadFloat(lua_State* L)
     {
-        ULONG value = LoadRDRAMSafe<ULONG>(luaL_checkinteger(L, 1));
+        ULONG value = core_rdram_load<ULONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         lua_pushnumber(L, *(FLOAT*)&value);
         return 1;
     }
 
     static int LuaReadDouble(lua_State* L)
     {
-        ULONGLONG value = LoadRDRAMSafe<ULONGLONG>(luaL_checkinteger(L, 1));
+        ULONGLONG value = core_rdram_load<ULONGLONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1));
         lua_pushnumber(L, *(DOUBLE*)value);
         return 1;
     }
@@ -119,40 +119,39 @@ namespace LuaCore::Memory
 
     static int LuaWriteByteUnsigned(lua_State* L)
     {
-        StoreRDRAMSafe<UCHAR>(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+        core_rdram_store<UCHAR>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
         return 0;
     }
 
     static int LuaWriteWordUnsigned(lua_State* L)
     {
-        StoreRDRAMSafe<USHORT>(luaL_checkinteger(L, 1),
-                               luaL_checkinteger(L, 2));
+        core_rdram_store<USHORT>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
         return 0;
     }
 
     static int LuaWriteDWordUnsigned(lua_State* L)
     {
-        StoreRDRAMSafe<ULONG>(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+        core_rdram_store<ULONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
         return 0;
     }
 
     static int LuaWriteQWordUnsigned(lua_State* L)
     {
-        StoreRDRAMSafe<ULONGLONG>(luaL_checkinteger(L, 1), LuaCheckQWord(L, 2));
+        core_rdram_store<ULONGLONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1), LuaCheckQWord(L, 2));
         return 0;
     }
 
     static int LuaWriteFloatUnsigned(lua_State* L)
     {
         FLOAT f = luaL_checknumber(L, -1);
-        StoreRDRAMSafe<ULONG>(luaL_checkinteger(L, 1), *(ULONG*)&f);
+        core_rdram_store<ULONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1), *(ULONG*)&f);
         return 0;
     }
 
     static int LuaWriteDoubleUnsigned(lua_State* L)
     {
         DOUBLE f = luaL_checknumber(L, -1);
-        StoreRDRAMSafe<ULONGLONG>(luaL_checkinteger(L, 1), *(ULONGLONG*)&f);
+        core_rdram_store<ULONGLONG>((uint8_t*)g_core.rdram,luaL_checkinteger(L, 1), *(ULONGLONG*)&f);
         return 0;
     }
 
@@ -163,22 +162,22 @@ namespace LuaCore::Memory
         switch (size)
         {
         // unsigned
-        case 1: lua_pushinteger(L, LoadRDRAMSafe<UCHAR>(addr));
+        case 1: lua_pushinteger(L, core_rdram_load<UCHAR>((uint8_t*)g_core.rdram,addr));
             break;
-        case 2: lua_pushinteger(L, LoadRDRAMSafe<USHORT>(addr));
+        case 2: lua_pushinteger(L, core_rdram_load<USHORT>((uint8_t*)g_core.rdram,addr));
             break;
-        case 4: lua_pushinteger(L, LoadRDRAMSafe<ULONG>(addr));
+        case 4: lua_pushinteger(L, core_rdram_load<ULONG>((uint8_t*)g_core.rdram,addr));
             break;
-        case 8: LuaPushQword(L, LoadRDRAMSafe<ULONGLONG>(addr));
+        case 8: LuaPushQword(L, core_rdram_load<ULONGLONG>((uint8_t*)g_core.rdram,addr));
             break;
         // signed
-        case -1: lua_pushinteger(L, LoadRDRAMSafe<CHAR>(addr));
+        case -1: lua_pushinteger(L, core_rdram_load<CHAR>((uint8_t*)g_core.rdram,addr));
             break;
-        case -2: lua_pushinteger(L, LoadRDRAMSafe<SHORT>(addr));
+        case -2: lua_pushinteger(L, core_rdram_load<SHORT>((uint8_t*)g_core.rdram,addr));
             break;
-        case -4: lua_pushinteger(L, LoadRDRAMSafe<LONG>(addr));
+        case -4: lua_pushinteger(L, core_rdram_load<LONG>((uint8_t*)g_core.rdram,addr));
             break;
-        case -8: LuaPushQword(L, LoadRDRAMSafe<LONGLONG>(addr));
+        case -8: LuaPushQword(L, core_rdram_load<LONGLONG>((uint8_t*)g_core.rdram,addr));
             break;
         default: luaL_error(L, "size must be 1, 2, 4, 8, -1, -2, -4, -8");
         }
@@ -191,21 +190,21 @@ namespace LuaCore::Memory
         int size = luaL_checkinteger(L, 2);
         switch (size)
         {
-        case 1: StoreRDRAMSafe<UCHAR>(addr, luaL_checkinteger(L, 3));
+        case 1: core_rdram_store<UCHAR>((uint8_t*)g_core.rdram,addr, luaL_checkinteger(L, 3));
             break;
-        case 2: StoreRDRAMSafe<USHORT>(addr, luaL_checkinteger(L, 3));
+        case 2: core_rdram_store<USHORT>((uint8_t*)g_core.rdram,addr, luaL_checkinteger(L, 3));
             break;
-        case 4: StoreRDRAMSafe<ULONG>(addr, luaL_checkinteger(L, 3));
+        case 4: core_rdram_store<ULONG>((uint8_t*)g_core.rdram,addr, luaL_checkinteger(L, 3));
             break;
-        case 8: StoreRDRAMSafe<ULONGLONG>(addr, LuaCheckQWord(L, 3));
+        case 8: core_rdram_store<ULONGLONG>((uint8_t*)g_core.rdram,addr, LuaCheckQWord(L, 3));
             break;
-        case -1: StoreRDRAMSafe<CHAR>(addr, luaL_checkinteger(L, 3));
+        case -1: core_rdram_store<CHAR>((uint8_t*)g_core.rdram,addr, luaL_checkinteger(L, 3));
             break;
-        case -2: StoreRDRAMSafe<SHORT>(addr, luaL_checkinteger(L, 3));
+        case -2: core_rdram_store<SHORT>((uint8_t*)g_core.rdram,addr, luaL_checkinteger(L, 3));
             break;
-        case -4: StoreRDRAMSafe<LONG>(addr, luaL_checkinteger(L, 3));
+        case -4: core_rdram_store<LONG>((uint8_t*)g_core.rdram,addr, luaL_checkinteger(L, 3));
             break;
-        case -8: StoreRDRAMSafe<LONGLONG>(addr, LuaCheckQWord(L, 3));
+        case -8: core_rdram_store<LONGLONG>((uint8_t*)g_core.rdram,addr, LuaCheckQWord(L, 3));
             break;
         default: luaL_error(L, "size must be 1, 2, 4, 8, -1, -2, -4, -8");
         }

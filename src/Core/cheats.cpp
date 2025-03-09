@@ -55,7 +55,7 @@ bool core_cht_compile(const std::wstring& code, core_cheat& cheat)
                 // Madghostek: warning, assumes that serial codes are writing bytes, which seems to match pj64
                 // Madghostek: if not, change WB to WW
                 compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
-                    StoreRDRAMSafe<uint8_t>(address + serial_offset * i, val + serial_diff * i);
+                    core_rdram_store<uint8_t>(rdramb, address + serial_offset * i, val + serial_diff * i);
                     return true;
                 }));
             }
@@ -67,7 +67,7 @@ bool core_cht_compile(const std::wstring& code, core_cheat& cheat)
         {
             // Write byte
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
-                StoreRDRAMSafe<uint8_t>(address, val & 0xFF);
+                core_rdram_store<uint8_t>(rdramb, address, val & 0xFF);
                 return true;
             }));
         }
@@ -75,7 +75,7 @@ bool core_cht_compile(const std::wstring& code, core_cheat& cheat)
         {
             // Write word
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
-                StoreRDRAMSafe<uint16_t>(address, val);
+                core_rdram_store<uint16_t>(rdramb, address, val);
                 return true;
             }));
         }
@@ -85,7 +85,7 @@ bool core_cht_compile(const std::wstring& code, core_cheat& cheat)
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
                 if (core_vr_get_gs_button())
                 {
-                    StoreRDRAMSafe<uint8_t>(address, val & 0xFF);
+                    core_rdram_store<uint8_t>(rdramb, address, val & 0xFF);
                 }
                 return true;
             }));
@@ -96,7 +96,7 @@ bool core_cht_compile(const std::wstring& code, core_cheat& cheat)
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
                 if (core_vr_get_gs_button())
                 {
-                    StoreRDRAMSafe<uint16_t>(address, val);
+                    core_rdram_store<uint16_t>(rdramb, address, val);
                 }
                 return true;
             }));
@@ -105,28 +105,28 @@ bool core_cht_compile(const std::wstring& code, core_cheat& cheat)
         {
             // Byte equality comparison
             compiled_cheat.instructions.emplace_back(std::make_tuple(true, [=] {
-                return LoadRDRAMSafe<uint8_t>(address) == (val & 0xFF);
+                return core_rdram_load<uint8_t>(rdramb, address) == (val & 0xFF);
             }));
         }
         else if (opcode == L"D1")
         {
             // Word equality comparison
             compiled_cheat.instructions.emplace_back(std::make_tuple(true, [=] {
-                return LoadRDRAMSafe<uint16_t>(address) == val;
+                return core_rdram_load<uint16_t>(rdramb, address) == val;
             }));
         }
         else if (opcode == L"D2")
         {
             // Byte inequality comparison
             compiled_cheat.instructions.emplace_back(std::make_tuple(true, [=] {
-                return LoadRDRAMSafe<uint8_t>(address) != (val & 0xFF);
+                return core_rdram_load<uint8_t>(rdramb, address) != (val & 0xFF);
             }));
         }
         else if (opcode == L"D3")
         {
             // Word inequality comparison
             compiled_cheat.instructions.emplace_back(std::make_tuple(true, [=] {
-                return LoadRDRAMSafe<uint16_t>(address) != val;
+                return core_rdram_load<uint16_t>(rdramb, address) != val;
             }));
         }
         else if (opcode == L"50")

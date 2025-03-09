@@ -88,7 +88,7 @@ typedef struct {
     CLOSEDLL audio_close_dll_audio;
     ROMCLOSED audio_rom_closed;
     ROMOPEN audio_rom_open;
-    
+
     AIDACRATECHANGED audio_ai_dacrate_changed;
     AILENCHANGED audio_ai_len_changed;
     AIREADLENGTH audio_ai_read_length;
@@ -100,7 +100,7 @@ typedef struct {
     CLOSEDLL input_close_dll;
     ROMCLOSED input_rom_closed;
     ROMOPEN input_rom_open;
-    
+
     CONTROLLERCOMMAND input_controller_command;
     GETKEYS input_get_keys;
     SETKEYS input_set_keys;
@@ -112,7 +112,7 @@ typedef struct {
 #pragma region RSP
     CLOSEDLL rsp_close_dll;
     ROMCLOSED rsp_rom_closed;
-    
+
     DORSPCYCLES rsp_do_rsp_cycles;
 #pragma endregion
 
@@ -774,4 +774,61 @@ EXPORT void CALL core_cht_set_list(const std::vector<core_cheat>&);
 
 #ifdef __cplusplus
 }
+
+#pragma region Helper Functions
+
+constexpr uint32_t CORE_ADDR_MASK = 0x7FFFFF;
+
+/**
+ * \brief Converts an address for RDRAM operations with the specified size.
+ * \param addr An address.
+ * \param size The window size.
+ * \return The converted address.
+ */
+constexpr uint32_t to_addr(const uint32_t addr, const uint8_t size)
+{
+    constexpr auto s8 = 3;
+    constexpr auto s16 = 2;
+
+    if (size == 4)
+    {
+        return addr;
+    }
+    if (size == 2)
+    {
+        return addr ^ s16;
+    }
+    if (size == 1)
+    {
+        return addr ^ s8;
+    }
+    return UINT32_MAX;
+}
+
+/**
+ * \brief Gets the value at the specified address from RDRAM.
+ * \tparam T The value's type.
+ * \param addr The start address of the value.
+ * \return The value at the address.
+ */
+template <typename T>
+constexpr T core_rdram_load(uint8_t* rdram, const uint32_t addr)
+{
+    return *(T*)(rdram + (to_addr(addr, sizeof(T)) & CORE_ADDR_MASK));
+}
+
+/**
+ * \brief Sets the value at the specified address in RDRAM.
+ * \tparam T The value's type.
+ * \param addr The start address of the value.
+ * \param value The value to set.
+ */
+template <typename T>
+void core_rdram_store(uint8_t* rdram, const uint32_t addr, T value)
+{
+    *(T*)(rdram + (to_addr(addr, sizeof(T)) & CORE_ADDR_MASK)) = value;
+}
+
+#pragma endregion
+
 #endif
