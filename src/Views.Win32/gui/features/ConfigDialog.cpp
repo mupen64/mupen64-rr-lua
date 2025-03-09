@@ -2030,25 +2030,182 @@ void configdialog_show()
 typedef struct {
     Plugin* plugin;
     core_plugin_cfg* cfg;
+    bool save;
 } t_plugin_cfg_params;
+
+
+template <typename T>
+T cfg_item_get_value(const core_plugin_cfg_item* item)
+{
+    return *(T*)item->value;
+}
+
+template <typename T>
+void cfg_item_set_value(core_plugin_cfg_item* item, T value)
+{
+    *(T*)item->value = value;
+}
+
+INT_PTR CALLBACK plugin_cfg_edit_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    static t_plugin_cfg_params* params = nullptr;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        params = (t_plugin_cfg_params*)lParam;
+
+        auto option_item = params->cfg->items[g_edit_option_item_index];
+        auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+
+        SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
+        Edit_SetText(edit_hwnd, cfg_item_get_value<wchar_t*>(&option_item));
+
+        SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
+        break;
+    }
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
+        {
+    case IDOK:
+    {
+        auto option_item = params->cfg->items[g_edit_option_item_index];
+
+        auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+
+        auto len = Edit_GetTextLength(edit_hwnd) + 1;
+        auto str = static_cast<wchar_t*>(calloc(len, sizeof(wchar_t)));
+        Edit_GetText(edit_hwnd, str, len);
+
+        lstrcpyn((wchar_t*)option_item.value, str, std::min(len, 260));
+
+        free(str);
+
+        EndDialog(wnd, 0);
+        break;
+    }
+    case IDCANCEL:
+        EndDialog(wnd, 1);
+            break;
+        }
+        break;
+    }
+    return FALSE;
+}
+    
+bool begin_plugin_lv_edit(t_plugin_cfg_params* params, HWND dlghwnd, HWND lvhwnd, int i)
+{
+    auto option_item = params->cfg->items[i];
+
+    if (*option_item.readonly)
+    {
+        return false;
+    }
+
+    // For bools, just flip the value...
+    if (option_item.type == pcit_bool)
+    {
+        cfg_item_set_value<int32_t>(&option_item, !cfg_item_get_value<int32_t>(&option_item));
+    }
+
+    // For enums, cycle through the possible values
+    if (option_item.type == pcit_enum)
+    {
+        // 1. Find the index of the currently selected item, while falling back to the first possible value if there's no match
+        size_t current_value = option_item.enum_values[0]->value;
+        for (size_t i = 0; i < option_item.enum_values_len; ++i)
+        {
+            const auto enum_value = option_item.enum_values[i];
+            if (cfg_item_get_value<int32_t>(&option_item) == enum_value->value)
+            {
+                current_value = enum_value->value;
+                break;
+            }
+        }
+
+        // 2. Find the lowest and highest values in the vector
+        int32_t min_possible_value = INT32_MAX;
+        int32_t max_possible_value = INT32_MIN;
+        for (size_t i = 0; i < option_item.enum_values_len; ++i)
+        {
+            const auto enum_value = option_item.enum_values[i];
+            max_possible_value = std::max(enum_value->value, max_possible_value);
+            min_possible_value = std::min(enum_value->value, min_possible_value);
+        }
+
+        // 2. Bump it, wrapping around if needed
+        current_value++;
+        if (current_value > max_possible_value)
+        {
+            current_value = min_possible_value;
+        }
+
+        // 3. Apply the change
+        cfg_item_set_value<int32_t>(&option_item, current_value);
+    }
+
+    // For strings, allow editing in a dialog (since it might be a multiline string and we can't really handle that below)
+    if (option_item.type == pcit_string || option_item.type == pcit_path)
+    {
+        g_edit_option_item_index = i;
+        DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), dlghwnd, plugin_cfg_edit_dialog_proc, (LPARAM)params);
+    }
+
+    // For numbers, create a textbox over the value cell for inline editing
+    if (option_item.type == pcit_int32)
+    {
+        if (g_edit_hwnd)
+        {
+            DestroyWindow(g_edit_hwnd);
+        }
+
+        g_edit_option_item_index = i;
+
+        RECT item_rect{};
+        ListView_GetSubItemRect(lvhwnd, i, 1, LVIR_LABEL, &item_rect);
+
+        RECT lv_rect{};
+        GetClientRect(lvhwnd, &lv_rect);
+
+        item_rect.right = lv_rect.right;
+
+        g_edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
+                                     item_rect.top,
+                                     item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
+                                     dlghwnd, 0, g_app_instance, 0);
+
+        SendMessage(g_edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(lvhwnd, WM_GETFONT, 0, 0), 0);
+
+        SetWindowSubclass(g_edit_hwnd, InlineEditBoxProc, 0, 0);
+
+        Edit_SetText(g_edit_hwnd, std::to_wstring(cfg_item_get_value<int32_t>(&option_item)).c_str());
+
+        PostMessage(dlghwnd, WM_NEXTDLGCTL, (WPARAM)g_edit_hwnd, TRUE);
+    }
+
+    ListView_Update(lvhwnd, i);
+    return true;
+}
+
 
 INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
 {
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
     static HWND lvhwnd = nullptr;
-    static t_plugin_cfg_params* params{};
+    static t_plugin_cfg_params* params = nullptr;
 
     switch (message)
     {
     case WM_INITDIALOG:
         {
-            params = reinterpret_cast<t_plugin_cfg_params*>(l_param);
-
             if (lvhwnd)
             {
                 DestroyWindow(lvhwnd);
             }
 
+            params = (t_plugin_cfg_params*)l_param;
+        
             std::wstring plugin_type = L"Unknown";
             switch (params->plugin->type())
             {
@@ -2083,7 +2240,7 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
                 items.emplace_back(params->cfg->items[i].group, params->cfg->items[i].name);
             }
 
-            auto get_item_tooltip = [](size_t i) {
+            auto get_item_tooltip = [=](size_t i) {
                 if (params->cfg->items[i].tooltip == nullptr)
                 {
                     return L"";
@@ -2092,14 +2249,21 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
             };
 
             auto edit_start = [=](size_t i) {
-                // begin_settings_lv_edit(hwnd, i);
+                begin_plugin_lv_edit(params, hwnd, lvhwnd, i);
             };
 
-            auto get_item_image = [](size_t i) {
+            auto get_item_image = [=](size_t i) {
+                const auto item = params->cfg->items[i];
+
+                if (*item.readonly)
+                {
+                    return 0;
+                }
+
                 return 50;
             };
 
-            auto get_item_text = [](size_t i, size_t subitem) {
+            auto get_item_text = [=](size_t i, size_t subitem) {
                 const auto item = params->cfg->items[i];
 
                 if (subitem == 0)
@@ -2138,9 +2302,6 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
         }
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
-        break;
-    case IDOK:
-        EndDialog(hwnd, IDOK);
         break;
     case IDCANCEL:
         EndDialog(hwnd, IDCANCEL);
@@ -2257,7 +2418,7 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
 
                 DialogService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
             }
-        
+
             if (offset == 5)
             {
                 // If some settings can't be changed, we'll bail
@@ -2286,7 +2447,7 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
                 }
 
                 // TODO: Implement this
-                
+
                 ListView_RedrawItems(lvhwnd, 0, ListView_GetItemCount(lvhwnd));
             }
 
@@ -2294,18 +2455,28 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
             DestroyMenu(h_menu);
         }
         break;
-    case WM_NOTIFY:
+    case WM_COMMAND:
+        switch (LOWORD(w_param))
         {
-            return SettingsListView::notify(hwnd, lvhwnd, l_param, w_param);
+        case IDOK:
+            params->save = true;
+            EndDialog(hwnd, IDOK);
+            break;
+        default:
+            break;
         }
+        break;
+    case WM_NOTIFY:
+        return SettingsListView::notify(hwnd, lvhwnd, l_param, w_param);
     default:
         return FALSE;
     }
     return TRUE;
 }
 
-void configdialog_show_plugin(Plugin* plugin, core_plugin_cfg* cfg)
+bool configdialog_show_plugin(Plugin* plugin, core_plugin_cfg* cfg)
 {
     t_plugin_cfg_params params = {plugin, cfg};
     DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_PLUGIN_CONFIG), g_main_hwnd, plugin_cfg, (LPARAM)&params);
+    return params.save;
 }

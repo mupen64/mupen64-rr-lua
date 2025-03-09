@@ -435,8 +435,8 @@ void Plugin::config()
                 get_config_1(&cfg);
                 if (cfg)
                 {
-                    configdialog_show_plugin(this, cfg);
-                    if (!save_config_1())
+                    const bool save = configdialog_show_plugin(this, cfg);
+                    if (save && !save_config_1())
                     {
                         DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
                     }
