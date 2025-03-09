@@ -42,6 +42,9 @@
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
 
+HANDLE dispatcher_event;
+HANDLE dispatcher_done_event;
+
 core_params g_core{};
 bool g_frame_changed = true;
 
@@ -978,12 +981,6 @@ void open_console()
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    if (Message == WM_EXECUTE_DISPATCHER)
-    {
-        g_main_window_dispatcher->execute();
-        return TRUE;
-    }
-
     wchar_t path_buffer[_MAX_PATH]{};
 
     switch (Message)
@@ -1227,7 +1224,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_CREATE:
         g_main_window_dispatcher = std::make_unique<Dispatcher>(g_ui_thread_id, [] {
-            SendMessage(g_main_hwnd, WM_EXECUTE_DISPATCHER, 0, 0);
+            SetEvent(dispatcher_event);
+            WaitForSingleObject(dispatcher_done_event, INFINITE);
         });
         g_main_menu = GetMenu(hwnd);
         GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
@@ -2188,6 +2186,9 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_view_logger->info("WinMain");
     g_view_logger->info(get_mupen_name());
 
+    dispatcher_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    dispatcher_done_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    
     g_core.cfg = &g_config.core;
     g_core.callbacks = {};
     g_core.callbacks.vi = [] {
@@ -2367,7 +2368,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_view_logger->info(L"cwd: {}", cwd);
 
     WNDCLASSEX wc = {0};
-    MSG msg;
+    MSG msg{};
 
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.hInstance = hInstance;
@@ -2466,12 +2467,31 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     
     SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
 
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (true)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DWORD result = MsgWaitForMultipleObjects(1, &dispatcher_event, FALSE, INFINITE, QS_ALLINPUT);
+
+        if (result == WAIT_OBJECT_0)
+        {
+            g_main_window_dispatcher->execute();
+            SetEvent(dispatcher_done_event);
+        }
+        else if (result == WAIT_OBJECT_0 + 1)
+        {
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+        else
+        {
+            break;
+        }
     }
 
+    CloseHandle(dispatcher_event);
+    CloseHandle(dispatcher_done_event);
 
     return (int)msg.wParam;
 }
