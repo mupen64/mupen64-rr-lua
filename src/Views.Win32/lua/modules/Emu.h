@@ -353,23 +353,23 @@ namespace LuaCore::Emu
             const char* name;
             void* pointer;
         };
-#define A(n) {#n, &n}
-#define B(n) {#n, n}
+#define A(x, n) {x, &n}
+#define B(x, n) {x, n}
         const NameAndVariable list[] = {
-            A(g_core.rdram),
-            A(g_core.rdram_register),
-            A(g_core.MI_register),
-            A(g_core.pi_register),
-            A(g_core.sp_register),
-            A(g_core.rsp_register),
-            A(g_core.si_register),
-            A(g_core.vi_register),
-            A(g_core.ri_register),
-            A(g_core.ai_register),
-            A(g_core.dpc_register),
-            A(g_core.dps_register),
-            B(g_core.SP_DMEM),
-            B(g_core.PIF_RAM),
+            A("rdram", g_core.rdram),
+            A("rdram_register", g_core.rdram_register),
+            A("MI_register", g_core.MI_register),
+            A("pi_register", g_core.pi_register),
+            A("sp_register", g_core.sp_register),
+            A("rsp_register", g_core.rsp_register),
+            A("si_register", g_core.si_register),
+            A("vi_register", g_core.vi_register),
+            A("ri_register", g_core.ri_register),
+            A("ai_register", g_core.ai_register),
+            A("dpc_register", g_core.dpc_register),
+            A("dps_register", g_core.dps_register),
+            B("SP_DMEM", g_core.SP_DMEM),
+            B("PIF_RAM", g_core.PIF_RAM),
             {NULL, NULL}
         };
 #undef A
