@@ -184,10 +184,6 @@ namespace LuaCore::D2D
     {
         LuaEnvironment* lua = get_lua_class(L);
         lua->ensure_d2d_renderer_created();
-
-        auto maderchod = luaL_checkstring(L, 5);
-        wchar_t ok[256];
-        MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, maderchod, -1, ok, std::size(ok));
         
         D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
         auto text = std::string(luaL_checkstring(L, 5));
