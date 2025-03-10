@@ -876,7 +876,7 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
     if (!lock.owns_lock())
     {
         g_core->log_info(L"[VCR] vcr_start_record busy!");
-        return VCR_Busy;
+        return Res_Busy;
     }
     
     if (flags != MOVIE_START_FROM_SNAPSHOT
@@ -907,7 +907,7 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
             bool proceed = g_core->show_ask_dialog(RAWDATA_WARNING_MESSAGE, L"VCR", true);
             if (!proceed)
             {
-                return VCR_Cancelled;
+                return Res_Cancelled;
             }
             break;
         }
@@ -1100,7 +1100,7 @@ core_result vcr_stop_record()
     if (!lock.owns_lock())
     {
         g_core->log_info(L"[VCR] vcr_stop_record busy!");
-        return VCR_Busy;
+        return Res_Busy;
     }
 
     if (!vcr_is_task_recording(g_task))
@@ -1207,7 +1207,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         bool proceed = g_core->show_ask_dialog(RAWDATA_WARNING_MESSAGE, L"VCR", true);
         if (!proceed)
         {
-            return VCR_Cancelled;
+            return Res_Cancelled;
         }
 
         break;
@@ -1228,7 +1228,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
 
             if (!proceed)
             {
-                return VCR_Cancelled;
+                return Res_Cancelled;
             }
         }
     }
@@ -1247,7 +1247,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
 
         if (!proceed)
         {
-            return VCR_Cancelled;
+            return Res_Cancelled;
         }
     }
     else
@@ -1257,7 +1257,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
             bool proceed = g_core->show_ask_dialog(std::format(ROM_COUNTRY_WARNING_MESSAGE, core_vr_country_code_to_country_name(header.rom_country), core_vr_country_code_to_country_name(ROM_HEADER.Country_code)).c_str(), L"VCR", true);
             if (!proceed)
             {
-                return VCR_Cancelled;
+                return Res_Cancelled;
             }
         }
         else if (header.rom_crc1 != ROM_HEADER.CRC1)
@@ -1268,7 +1268,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
             bool proceed = g_core->show_ask_dialog(str, L"VCR", true);
             if (!proceed)
             {
-                return VCR_Cancelled;
+                return Res_Cancelled;
             }
         }
     }
@@ -1290,7 +1290,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
 
             if (!proceed)
             {
-                return VCR_Cancelled;
+                return Res_Cancelled;
             }
         }
     }
@@ -1618,7 +1618,7 @@ core_result vcr_stop_playback()
     if (!lock.owns_lock())
     {
         g_core->log_info(L"[VCR] vcr_stop_playback busy!");
-        return VCR_Busy;
+        return Res_Busy;
     }
 
     if (!is_task_playback(g_task))

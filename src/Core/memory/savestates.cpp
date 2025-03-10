@@ -372,7 +372,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
         if (!result)
         {
-            task.callback(ST_Cancelled, {});
+            task.callback(Res_Cancelled, {});
             return;
         }
     }
@@ -446,7 +446,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
             const auto result = g_core->show_ask_dialog(err_str.c_str(), L"Savestate", true);
             if (!result)
             {
-                task.callback(ST_Cancelled, {});
+                task.callback(Res_Cancelled, {});
                 goto failedLoad;
             }
         }
@@ -459,7 +459,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
             L"The savestate is not from a movie. Loading it might desynchronize the movie.\r\nAre you sure you want to continue?", L"Savestate", true);
             if (!result)
             {
-                task.callback(ST_Cancelled, {});
+                task.callback(Res_Cancelled, {});
                 return;
             }
         }
@@ -729,7 +729,7 @@ bool core_st_do_file(const std::filesystem::path& path, const core_st_job job, c
         {
             g_core->show_statusbar(std::format(L"{} {}", job == core_st_job_save ? L"Saved" : L"Loaded", path.filename().wstring()).c_str());
         }
-        else if (result == ST_Cancelled)
+        else if (result == Res_Cancelled)
         {
             g_core->show_statusbar(std::format(L"Cancelled {}", job == core_st_job_save ? L"save" : L"load").c_str());
         }
@@ -778,7 +778,7 @@ bool core_st_do_slot(const int32_t slot, const core_st_job job, const core_st_ca
         {
             g_core->show_statusbar(std::format(L"{} slot {}", job == core_st_job_save ? L"Saved" : L"Loaded", slot + 1).c_str());
         }
-        else if (result == ST_Cancelled)
+        else if (result == Res_Cancelled)
         {
             g_core->show_statusbar(std::format(L"Cancelled {}", job == core_st_job_save ? L"save" : L"load").c_str());
         }

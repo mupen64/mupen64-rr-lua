@@ -13,18 +13,23 @@
  * An enum containing results that can be returned by the core.
  */
 typedef enum {
-    // TODO: Maybe unify all Busy and Cancelled results?
 
+#pragma region Generic
     // The operation completed successfully
     Res_Ok,
+
+    // Another operation is already pending
+    Res_Busy,
+
+    // The operation was cancelled by the user
+    Res_Cancelled,
+#pragma endregion
 
 #pragma region VCR
     // The provided data has an invalid format
     VCR_InvalidFormat,
     // The provided file is inaccessible or does not exist
     VCR_BadFile,
-    // The user cancelled the operation
-    VCR_Cancelled,
     // The controller configuration is invalid
     VCR_InvalidControllers,
     // The movie's savestate is missing or invalid
@@ -33,8 +38,6 @@ typedef enum {
     VCR_InvalidFrame,
     // There is no rom which matches this movie
     VCR_NoMatchingRom,
-    // The callee is already performing another task
-    VCR_Busy,
     // The VCR engine is idle, but must be active to complete this operation
     VCR_Idle,
     // The provided freeze buffer is not from the currently active movie
@@ -62,8 +65,6 @@ typedef enum {
 #pragma endregion
 
 #pragma region VR
-    // The callee is already performing another task
-    VR_Busy,
     // Couldn't find a rom matching the provided movie
     VR_NoMatchingRom,
     // An error occured during plugin loading
@@ -89,8 +90,6 @@ typedef enum {
     ST_EventQueueTooLong,
     // The CPU registers contained invalid values
     ST_InvalidRegisters,
-    // The user cancelled the operation
-    ST_Cancelled,
 #pragma endregion
 
 #pragma region Plugins

@@ -254,7 +254,7 @@ static void prompt_plugin_change()
 
 bool show_error_dialog_for_result(const core_result result, void* hwnd)
 {
-    if (result == Res_Ok || result == ST_Cancelled || result == VCR_Cancelled || result == VCR_InvalidControllers)
+    if (result == Res_Ok || result == Res_Cancelled || result == VCR_InvalidControllers)
     {
         return false;
     }
@@ -266,6 +266,12 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
 
     switch (result)
     {
+#pragma region Generic
+    case Res_Busy:
+        module = L"Core";
+        error = L"Another operation is already pending.";
+        break;
+#pragma endregion
 #pragma region VCR
     case VCR_InvalidFormat:
         module = L"VCR";
@@ -286,10 +292,6 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
     case VCR_NoMatchingRom:
         module = L"VCR";
         error = L"There is no rom which matches this movie.";
-        break;
-    case VCR_Busy:
-        module = L"VCR";
-        error = L"The VCR engine is busy.";
         break;
     case VCR_Idle:
         module = L"VCR";
@@ -1768,7 +1770,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 								return;
 							}
 
-							if (result == ST_Cancelled)
+							if (result == Res_Cancelled)
 							{
 								return;
 							}

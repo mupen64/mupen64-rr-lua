@@ -2208,7 +2208,7 @@ core_result core_vr_start_rom(std::filesystem::path path, bool wait)
     if (!lock.owns_lock())
     {
         g_core->log_warn(L"[Core] vr_start_rom busy!");
-        return VR_Busy;
+        return Res_Busy;
     }
 
     return vr_start_rom_impl(path);
@@ -2226,7 +2226,7 @@ core_result core_vr_close_rom(bool stop_vcr, bool wait)
     if (!lock.owns_lock())
     {
         g_core->log_warn(L"[Core] vr_close_rom busy!");
-        return VR_Busy;
+        return Res_Busy;
     }
 
     return vr_close_rom_impl(stop_vcr);
@@ -2328,7 +2328,7 @@ core_result core_vr_reset_rom(bool reset_save_data, bool stop_vcr, bool wait)
     if (!lock.owns_lock())
     {
         g_core->log_info(L"[Core] vr_reset_rom busy!");
-        return VR_Busy;
+        return Res_Busy;
     }
 
     return vr_reset_rom_impl(reset_save_data, stop_vcr);
