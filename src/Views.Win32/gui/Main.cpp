@@ -1783,18 +1783,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    auto vcr_result = core_vcr_start_record(movie_dialog_result.path,
-                                                            movie_dialog_result.start_flag,
-                                                            wstring_to_string(movie_dialog_result.author),
-                                                            wstring_to_string(movie_dialog_result.description));
-                    if (show_error_dialog_for_result(vcr_result))
-                    {
-                        break;
-                    }
-
-                    g_config.last_movie_author = movie_dialog_result.author;
-
-                    Statusbar::post(L"Recording replay");
+                    core_vr_wait_increment();
+                    g_core.invoke_async([=] {
+                        auto vcr_result = core_vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag, wstring_to_string(movie_dialog_result.author), wstring_to_string(movie_dialog_result.description));
+                        core_vr_wait_decrement();
+                        if (!show_error_dialog_for_result(vcr_result))
+                        {
+                            g_config.last_movie_author = movie_dialog_result.author;
+                            Statusbar::post(L"Recording replay");
+                        }
+                    });
                 }
                 break;
             case IDM_START_MOVIE_PLAYBACK:
@@ -1820,7 +1818,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             case IDM_STOP_MOVIE:
-                core_vcr_stop_all();
+                core_vr_wait_increment();
+                g_core.invoke_async([] {
+                    core_vcr_stop_all();
+                    core_vr_wait_decrement();
+                });
                 break;
             case IDM_CREATE_MOVIE_BACKUP:
                 {
