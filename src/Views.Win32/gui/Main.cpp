@@ -266,12 +266,6 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
 
     switch (result)
     {
-#pragma region Generic
-    case Res_Busy:
-        module = L"Core";
-        error = L"Another operation is already pending.";
-        break;
-#pragma endregion
 #pragma region VCR
     case VCR_InvalidFormat:
         module = L"VCR";
@@ -771,7 +765,7 @@ void on_vis_since_input_poll_exceeded(std::any)
     {
         // TODO: Send IDM_CLOSE_ROM instead... probably better :P
         AsyncExecutor::invoke_async([] {
-            const auto result = core_vr_close_rom(true, false);
+            const auto result = core_vr_close_rom(true);
             show_error_dialog_for_result(result);
         });
     }
@@ -999,7 +993,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             if (extension == ".n64" || extension == ".z64" || extension == ".v64" || extension == ".rom")
             {
                 AsyncExecutor::invoke_async([path] {
-                    const auto result = core_vr_start_rom(path, false);
+                    const auto result = core_vr_start_rom(path);
                     if (result == Res_Ok)
                     {
                         g_rom_path = path;
@@ -1247,7 +1241,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         {
             close_all_scripts();
             std::thread([] {
-                core_vr_close_rom(true, false);
+                core_vr_close_rom(true);
                 g_main_window_dispatcher->invoke([] {
                     DestroyWindow(g_main_hwnd);
                 });
@@ -1481,7 +1475,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 if (!confirm_user_exit())
                     break;
                 AsyncExecutor::invoke_async([] {
-                    const auto result = core_vr_close_rom(true, false);
+                    const auto result = core_vr_close_rom(true);
                     show_error_dialog_for_result(result);
                 },
                                             ASYNC_KEY_CLOSE_ROM);
@@ -1571,7 +1565,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     break;
 
                 AsyncExecutor::invoke_async([] {
-                    const auto result = core_vr_reset_rom(false, true, false);
+                    const auto result = core_vr_reset_rom(false, true);
                     show_error_dialog_for_result(result);
                 },
                                             ASYNC_KEY_RESET_ROM);
@@ -1672,7 +1666,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (!path.empty())
                     {
                         AsyncExecutor::invoke_async([path] {
-                            const auto result = core_vr_start_rom(path, false);
+                            const auto result = core_vr_start_rom(path);
                             if (result == Res_Ok)
                             {
                                 g_rom_path = path;
@@ -1960,7 +1954,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
 
                     AsyncExecutor::invoke_async([path] {
-                        const auto result = core_vr_start_rom(path, false);
+                        const auto result = core_vr_start_rom(path);
                         if (result == Res_Ok)
                         {
                             g_rom_path = path;

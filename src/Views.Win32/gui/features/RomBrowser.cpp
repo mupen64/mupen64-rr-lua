@@ -400,7 +400,7 @@ namespace RomBrowser
                 ListView_GetItem(rombrowser_hwnd, &item);
                 auto path = rombrowser_entries[item.lParam]->path;
                 AsyncExecutor::invoke_async([path] {
-                    const auto result = core_vr_start_rom(path, false);
+                    const auto result = core_vr_start_rom(path);
                     if (result == Res_Ok)
                     {
                         g_rom_path = path;

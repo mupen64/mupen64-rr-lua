@@ -360,30 +360,27 @@ EXPORT void CALL core_vr_wait_decrement();
 /**
  * \brief Starts the emulator.
  * \param path Path to a rom or corresponding movie file.
- * \param wait Whether the calling thread will wait for other core operations to complete. When true, the Busy result is never returned.
  * \return The operation result.
  * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
  */
-EXPORT core_result CALL core_vr_start_rom(std::filesystem::path path, bool wait);
+EXPORT core_result CALL core_vr_start_rom(std::filesystem::path path);
 
 /**
  * \brief Stops the emulator.
  * \param stop_vcr Whether all VCR operations will be stopped. When resetting the ROM due to an in-movie restart, this needs to be false.
- * \param wait Whether the calling thread will wait for other core operations to complete. When true, the Busy result is never returned.
  * \return The operation result.
  * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
  */
-EXPORT core_result CALL core_vr_close_rom(bool stop_vcr, bool wait);
+EXPORT core_result CALL core_vr_close_rom(bool stop_vcr);
 
 /**
  * \brief Resets the emulator.
  * \param reset_save_data Whether save data (e.g.: EEPROM, SRAM, Mempak) will be reset.
  * \param stop_vcr Whether all VCR operations will be stopped. When resetting the ROM due to an in-movie restart, this needs to be false.
- * \param wait Whether the calling thread will wait for other core operations to complete. When true, the Busy result is never returned.
  * \return The operation result.
  * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
  */
-EXPORT core_result CALL core_vr_reset_rom(bool reset_save_data, bool stop_vcr, bool wait);
+EXPORT core_result CALL core_vr_reset_rom(bool reset_save_data, bool stop_vcr);
 
 /**
  * \brief Starts frame advancing the specified amount of frames.

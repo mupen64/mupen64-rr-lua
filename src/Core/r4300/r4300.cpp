@@ -2196,39 +2196,15 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     return Res_Ok;
 }
 
-core_result core_vr_start_rom(std::filesystem::path path, bool wait)
+core_result core_vr_start_rom(std::filesystem::path path)
 {
-    if (wait)
-    {
-        std::lock_guard lock(g_emu_cs);
-        return vr_start_rom_impl(path);
-    }
-
-    std::unique_lock lock(g_emu_cs, std::try_to_lock);
-    if (!lock.owns_lock())
-    {
-        g_core->log_warn(L"[Core] vr_start_rom busy!");
-        return Res_Busy;
-    }
-
+    std::lock_guard lock(g_emu_cs);
     return vr_start_rom_impl(path);
 }
 
-core_result core_vr_close_rom(bool stop_vcr, bool wait)
+core_result core_vr_close_rom(bool stop_vcr)
 {
-    if (wait)
-    {
-        std::lock_guard lock(g_emu_cs);
-        return vr_close_rom_impl(stop_vcr);
-    }
-
-    std::unique_lock lock(g_emu_cs, std::try_to_lock);
-    if (!lock.owns_lock())
-    {
-        g_core->log_warn(L"[Core] vr_close_rom busy!");
-        return Res_Busy;
-    }
-
+    std::lock_guard lock(g_emu_cs);
     return vr_close_rom_impl(stop_vcr);
 }
 
@@ -2255,7 +2231,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     frame_advance_outstanding = 0;
     emu_resetting = true;
 
-    core_result result = core_vr_close_rom(stop_vcr, false);
+    core_result result = core_vr_close_rom(stop_vcr);
     if (result != Res_Ok)
     {
         emu_resetting = false;
@@ -2268,7 +2244,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
         clear_save_data();
     }
 
-    result = core_vr_start_rom(rom_path, false);
+    result = core_vr_start_rom(rom_path);
     if (result != Res_Ok)
     {
         emu_resetting = false;
@@ -2316,21 +2292,9 @@ void free_exec(void* ptr)
 #endif
 }
 
-core_result core_vr_reset_rom(bool reset_save_data, bool stop_vcr, bool wait)
+core_result core_vr_reset_rom(bool reset_save_data, bool stop_vcr)
 {
-    if (wait)
-    {
-        std::lock_guard lock(g_emu_cs);
-        return vr_reset_rom_impl(reset_save_data, stop_vcr);
-    }
-
-    std::unique_lock lock(g_emu_cs, std::try_to_lock);
-    if (!lock.owns_lock())
-    {
-        g_core->log_info(L"[Core] vr_reset_rom busy!");
-        return Res_Busy;
-    }
-
+    std::lock_guard lock(g_emu_cs);
     return vr_reset_rom_impl(reset_save_data, stop_vcr);
 }
 

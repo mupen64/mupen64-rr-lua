@@ -574,7 +574,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
         bool clear_eeprom = !(g_header.startFlags & MOVIE_START_FROM_EEPROM);
         g_reset_pending = true;
         g_core->invoke_async([clear_eeprom] {
-            const auto result = core_vr_reset_rom(clear_eeprom, false, true);
+            const auto result = core_vr_reset_rom(clear_eeprom, false);
 
             std::scoped_lock lock(vcr_mutex);
             g_reset_pending = false;
@@ -601,7 +601,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
         g_reset_pending = true;
         g_core->invoke_async([clear_eeprom]
         {
-            const auto result = core_vr_reset_rom(clear_eeprom, false, true);
+            const auto result = core_vr_reset_rom(clear_eeprom, false);
 
             std::scoped_lock lock(vcr_mutex);
             g_reset_pending = false;
@@ -736,7 +736,7 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
         g_core->log_info(L"[VCR] Resetting during playback...");
         g_core->invoke_async([]
         {
-            auto result = core_vr_reset_rom(false, false, true);
+            auto result = core_vr_reset_rom(false, false);
 
             std::scoped_lock lock(vcr_mutex);
 
@@ -869,15 +869,9 @@ std::filesystem::path get_savestate_path_for_new_movie(std::filesystem::path pat
     return std::string(drive) + std::string(dir) + stem + ".st";
 }
 
-core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author,
-                             std::string description)
+core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description)
 {
-    std::unique_lock lock(vcr_mutex, std::try_to_lock);
-    if (!lock.owns_lock())
-    {
-        g_core->log_info(L"[VCR] vcr_start_record busy!");
-        return Res_Busy;
-    }
+    std::scoped_lock lock(vcr_mutex);
     
     if (flags != MOVIE_START_FROM_SNAPSHOT
         && flags != MOVIE_START_FROM_NOTHING
@@ -1096,12 +1090,7 @@ void core_vcr_get_seek_completion(std::pair<size_t, size_t>& pair)
 
 core_result vcr_stop_record()
 {
-    std::unique_lock lock(vcr_mutex, std::try_to_lock);
-    if (!lock.owns_lock())
-    {
-        g_core->log_info(L"[VCR] vcr_stop_record busy!");
-        return Res_Busy;
-    }
+    std::scoped_lock lock(vcr_mutex);
 
     if (!vcr_is_task_recording(g_task))
     {
@@ -1178,7 +1167,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         // If we kept the lock, the core would become permanently stuck waiting for it to be released in on_controller_poll.
         lock.unlock();
 
-        const auto result = core_vr_start_rom(path, true);
+        const auto result = core_vr_start_rom(path);
 
         if (result != Res_Ok)
         {
@@ -1614,12 +1603,7 @@ bool core_vcr_is_seeking()
 
 core_result vcr_stop_playback()
 {
-    std::unique_lock lock(vcr_mutex, std::try_to_lock);
-    if (!lock.owns_lock())
-    {
-        g_core->log_info(L"[VCR] vcr_stop_playback busy!");
-        return Res_Busy;
-    }
+    std::scoped_lock lock(vcr_mutex);
 
     if (!is_task_playback(g_task))
         return Res_Ok;

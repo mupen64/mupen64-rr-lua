@@ -17,10 +17,7 @@ typedef enum {
 #pragma region Generic
     // The operation completed successfully
     Res_Ok,
-
-    // Another operation is already pending
-    Res_Busy,
-
+    
     // The operation was cancelled by the user
     Res_Cancelled,
 #pragma endregion
