@@ -81,15 +81,4 @@ void dyna_jump();
 void dyna_start(void (*code)());
 void dyna_stop();
 
-/**
- * \brief Recompiles the block at the specified address
- * \param addr The virtual address to invalidate
- */
-void recompile_now(uint32_t addr);
-
-/**
- * \brief Invalidates all blocks
- */
-void recompile_all();
-
 extern precomp_instr* dst;

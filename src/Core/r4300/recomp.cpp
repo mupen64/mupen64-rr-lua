@@ -5,16 +5,16 @@
  */
 
 #include "stdafx.h"
-#include "ops.h"
-#include "recomp.h"
-
-#include "macros.h"
-#include "r4300.h"
-#include "../memory/memory.h"
+#include <Core.h>
+#include <memory/memory.h>
+#include <r4300/macros.h>
+#include <r4300/ops.h>
+#include <r4300/r4300.h>
+#include <r4300/recomp.h>
+#include <r4300/recomph.h>
+#include <r4300/rom.h>
+#include <r4300/tracelog.h>
 #include <r4300/x86/regcache.h>
-#include "recomph.h"
-#include "rom.h"
-#include "tracelog.h"
 
 // global variables :
 precomp_instr* dst; // destination structure for the recompiled instruction
@@ -36,19 +36,22 @@ static int32_t delay_slot_compiled = 0;
 static void RSV()
 {
     dst->ops = RESERVED;
-    if (dynacore) genreserved();
+    if (dynacore)
+        genreserved();
 }
 
 static void RFIN_BLOCK()
 {
     dst->ops = FIN_BLOCK;
-    if (dynacore) genfin_block();
+    if (dynacore)
+        genfin_block();
 }
 
 static void RNOTCOMPILED()
 {
     dst->ops = NOTCOMPILED;
-    if (dynacore) gennotcompiled();
+    if (dynacore)
+        gennotcompiled();
 }
 
 static void recompile_standard_i_type()
@@ -92,81 +95,98 @@ static void recompile_standard_cf_type()
 static void RNOP()
 {
     dst->ops = NOP;
-    if (dynacore) gennop();
+    if (dynacore)
+        gennop();
 }
 
 static void RSLL()
 {
     dst->ops = SLL;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensll();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensll();
 }
 
 static void RSRL()
 {
     dst->ops = SRL;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensrl();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensrl();
 }
 
 static void RSRA()
 {
     dst->ops = SRA;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensra();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensra();
 }
 
 static void RSLLV()
 {
     dst->ops = SLLV;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensllv();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensllv();
 }
 
 static void RSRLV()
 {
     dst->ops = SRLV;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensrlv();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensrlv();
 }
 
 static void RSRAV()
 {
     dst->ops = SRAV;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensrav();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensrav();
 }
 
 static void RJR()
 {
     dst->ops = JR;
     recompile_standard_i_type();
-    if (dynacore) genjr();
+    if (dynacore)
+        genjr();
 }
 
 static void RJALR()
 {
     dst->ops = JALR;
     recompile_standard_r_type();
-    if (dynacore) genjalr();
+    if (dynacore)
+        genjalr();
 }
 
 static void RSYSCALL()
 {
     dst->ops = SYSCALL;
-    if (dynacore) gensyscall();
+    if (dynacore)
+        gensyscall();
 }
 
 static void RBREAK()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RSYNC()
@@ -175,327 +195,393 @@ static void RSYNC()
 #ifdef LUA_BREAKPOINTSYNC_INTERP
     dst->f.stype = (src >> 6) & 0x1F;
 #endif
-    if (dynacore) gensync();
+    if (dynacore)
+        gensync();
 }
 
 static void RMFHI()
 {
     dst->ops = MFHI;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genmfhi();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genmfhi();
 }
 
 static void RMTHI()
 {
     dst->ops = MTHI;
     recompile_standard_r_type();
-    if (dynacore) genmthi();
+    if (dynacore)
+        genmthi();
 }
 
 static void RMFLO()
 {
     dst->ops = MFLO;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genmflo();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genmflo();
 }
 
 static void RMTLO()
 {
     dst->ops = MTLO;
     recompile_standard_r_type();
-    if (dynacore) genmtlo();
+    if (dynacore)
+        genmtlo();
 }
 
 static void RDSLLV()
 {
     dst->ops = DSLLV;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsllv();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsllv();
 }
 
 static void RDSRLV()
 {
     dst->ops = DSRLV;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsrlv();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsrlv();
 }
 
 static void RDSRAV()
 {
     dst->ops = DSRAV;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsrav();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsrav();
 }
 
 static void RMULT()
 {
     dst->ops = MULT;
     recompile_standard_r_type();
-    if (dynacore) genmult();
+    if (dynacore)
+        genmult();
 }
 
 static void RMULTU()
 {
     dst->ops = MULTU;
     recompile_standard_r_type();
-    if (dynacore) genmultu();
+    if (dynacore)
+        genmultu();
 }
 
 static void RDIV()
 {
     dst->ops = DIV;
     recompile_standard_r_type();
-    if (dynacore) gendiv();
+    if (dynacore)
+        gendiv();
 }
 
 static void RDIVU()
 {
     dst->ops = DIVU;
     recompile_standard_r_type();
-    if (dynacore) gendivu();
+    if (dynacore)
+        gendivu();
 }
 
 static void RDMULT()
 {
     dst->ops = DMULT;
     recompile_standard_r_type();
-    if (dynacore) gendmult();
+    if (dynacore)
+        gendmult();
 }
 
 static void RDMULTU()
 {
     dst->ops = DMULTU;
     recompile_standard_r_type();
-    if (dynacore) gendmultu();
+    if (dynacore)
+        gendmultu();
 }
 
 static void RDDIV()
 {
     dst->ops = DDIV;
     recompile_standard_r_type();
-    if (dynacore) genddiv();
+    if (dynacore)
+        genddiv();
 }
 
 static void RDDIVU()
 {
     dst->ops = DDIVU;
     recompile_standard_r_type();
-    if (dynacore) genddivu();
+    if (dynacore)
+        genddivu();
 }
 
 static void RADD()
 {
     dst->ops = ADD;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genadd();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genadd();
 }
 
 static void RADDU()
 {
     dst->ops = ADDU;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genaddu();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genaddu();
 }
 
 static void RSUB()
 {
     dst->ops = SUB;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    if (dynacore) gensub();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    if (dynacore)
+        gensub();
 }
 
 static void RSUBU()
 {
     dst->ops = SUBU;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensubu();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensubu();
 }
 
 static void RAND()
 {
     dst->ops = AND;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genand();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genand();
 }
 
 static void ROR()
 {
     dst->ops = OR;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genor();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genor();
 }
 
 static void RXOR()
 {
     dst->ops = XOR;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genxor();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genxor();
 }
 
 static void RNOR()
 {
     dst->ops = NOR;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    if (dynacore) gennor();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    if (dynacore)
+        gennor();
 }
 
 static void RSLT()
 {
     dst->ops = SLT;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) genslt();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        genslt();
 }
 
 static void RSLTU()
 {
     dst->ops = SLTU;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gensltu();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gensltu();
 }
 
 static void RDADD()
 {
     dst->ops = DADD;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendadd();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendadd();
 }
 
 static void RDADDU()
 {
     dst->ops = DADDU;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendaddu();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendaddu();
 }
 
 static void RDSUB()
 {
     dst->ops = DSUB;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsub();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsub();
 }
 
 static void RDSUBU()
 {
     dst->ops = DSUBU;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsubu();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsubu();
 }
 
 static void RTGE()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTGEU()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTLT()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTLTU()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTEQ()
 {
     dst->ops = TEQ;
     recompile_standard_r_type();
-    if (dynacore) genteq();
+    if (dynacore)
+        genteq();
 }
 
 static void RTNE()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RDSLL()
 {
     dst->ops = DSLL;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsll();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsll();
 }
 
 static void RDSRL()
 {
     dst->ops = DSRL;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsrl();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsrl();
 }
 
 static void RDSRA()
 {
     dst->ops = DSRA;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsra();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsra();
 }
 
 static void RDSLL32()
 {
     dst->ops = DSLL32;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsll32();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsll32();
 }
 
 static void RDSRL32()
 {
     dst->ops = DSRL32;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsrl32();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsrl32();
 }
 
 static void RDSRA32()
 {
     dst->ops = DSRA32;
     recompile_standard_r_type();
-    if (dst->f.r.rd == reg) RNOP();
-    else if (dynacore) gendsra32();
+    if (dst->f.r.rd == reg)
+        RNOP();
+    else if (dynacore)
+        gendsra32();
 }
 
 static void (*recomp_special[64])(void) =
 {
-    RSLL, RSV, RSRL, RSRA, RSLLV, RSV, RSRLV, RSRAV,
-    RJR, RJALR, RSV, RSV, RSYSCALL, RBREAK, RSV, RSYNC,
-    RMFHI, RMTHI, RMFLO, RMTLO, RDSLLV, RSV, RDSRLV, RDSRAV,
-    RMULT, RMULTU, RDIV, RDIVU, RDMULT, RDMULTU, RDDIV, RDDIVU,
-    RADD, RADDU, RSUB, RSUBU, RAND, ROR, RXOR, RNOR,
-    RSV, RSV, RSLT, RSLTU, RDADD, RDADDU, RDSUB, RDSUBU,
-    RTGE, RTGEU, RTLT, RTLTU, RTEQ, RSV, RTNE, RSV,
-    RDSLL, RSV, RDSRL, RDSRA, RDSLL32, RSV, RDSRL32, RDSRA32
-};
+RSLL, RSV, RSRL, RSRA, RSLLV, RSV, RSRLV, RSRAV,
+RJR, RJALR, RSV, RSV, RSYSCALL, RBREAK, RSV, RSYNC,
+RMFHI, RMTHI, RMFLO, RMTLO, RDSLLV, RSV, RDSRLV, RDSRAV,
+RMULT, RMULTU, RDIV, RDIVU, RDMULT, RDMULTU, RDDIV, RDDIVU,
+RADD, RADDU, RSUB, RSUBU, RAND, ROR, RXOR, RNOR,
+RSV, RSV, RSLT, RSLTU, RDADD, RDADDU, RDSUB, RDSUBU,
+RTGE, RTGEU, RTLT, RTLTU, RTEQ, RSV, RTNE, RSV,
+RDSLL, RSV, RDSRL, RDSRA, RDSLL32, RSV, RDSRL32, RDSRA32};
 
 //-------------------------------------------------------------------------
 //                                   REGIMM
@@ -512,17 +598,20 @@ static void RBLTZ()
         if (check_nop)
         {
             dst->ops = BLTZ_IDLE;
-            if (dynacore) genbltz_idle();
+            if (dynacore)
+                genbltz_idle();
         }
-        else if (dynacore) genbltz();
+        else if (dynacore)
+            genbltz();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BLTZ_OUT;
-        if (dynacore) genbltz_out();
+        if (dynacore)
+            genbltz_out();
     }
-    else if (dynacore) genbltz();
+    else if (dynacore)
+        genbltz();
 }
 
 static void RBGEZ()
@@ -536,17 +625,20 @@ static void RBGEZ()
         if (check_nop)
         {
             dst->ops = BGEZ_IDLE;
-            if (dynacore) genbgez_idle();
+            if (dynacore)
+                genbgez_idle();
         }
-        else if (dynacore) genbgez();
+        else if (dynacore)
+            genbgez();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BGEZ_OUT;
-        if (dynacore) genbgez_out();
+        if (dynacore)
+            genbgez_out();
     }
-    else if (dynacore) genbgez();
+    else if (dynacore)
+        genbgez();
 }
 
 static void RBLTZL()
@@ -560,17 +652,20 @@ static void RBLTZL()
         if (check_nop)
         {
             dst->ops = BLTZL_IDLE;
-            if (dynacore) genbltzl_idle();
+            if (dynacore)
+                genbltzl_idle();
         }
-        else if (dynacore) genbltzl();
+        else if (dynacore)
+            genbltzl();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BLTZL_OUT;
-        if (dynacore) genbltzl_out();
+        if (dynacore)
+            genbltzl_out();
     }
-    else if (dynacore) genbltzl();
+    else if (dynacore)
+        genbltzl();
 }
 
 static void RBGEZL()
@@ -584,53 +679,62 @@ static void RBGEZL()
         if (check_nop)
         {
             dst->ops = BGEZL_IDLE;
-            if (dynacore) genbgezl_idle();
+            if (dynacore)
+                genbgezl_idle();
         }
-        else if (dynacore) genbgezl();
+        else if (dynacore)
+            genbgezl();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BGEZL_OUT;
-        if (dynacore) genbgezl_out();
+        if (dynacore)
+            genbgezl_out();
     }
-    else if (dynacore) genbgezl();
+    else if (dynacore)
+        genbgezl();
 }
 
 static void RTGEI()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTGEIU()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTLTI()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTLTIU()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTEQI()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RTNEI()
 {
     dst->ops = NI;
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RBLTZAL()
@@ -644,17 +748,20 @@ static void RBLTZAL()
         if (check_nop)
         {
             dst->ops = BLTZAL_IDLE;
-            if (dynacore) genbltzal_idle();
+            if (dynacore)
+                genbltzal_idle();
         }
-        else if (dynacore) genbltzal();
+        else if (dynacore)
+            genbltzal();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BLTZAL_OUT;
-        if (dynacore) genbltzal_out();
+        if (dynacore)
+            genbltzal_out();
     }
-    else if (dynacore) genbltzal();
+    else if (dynacore)
+        genbltzal();
 }
 
 static void RBGEZAL()
@@ -668,17 +775,20 @@ static void RBGEZAL()
         if (check_nop)
         {
             dst->ops = BGEZAL_IDLE;
-            if (dynacore) genbgezal_idle();
+            if (dynacore)
+                genbgezal_idle();
         }
-        else if (dynacore) genbgezal();
+        else if (dynacore)
+            genbgezal();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BGEZAL_OUT;
-        if (dynacore) genbgezal_out();
+        if (dynacore)
+            genbgezal_out();
     }
-    else if (dynacore) genbgezal();
+    else if (dynacore)
+        genbgezal();
 }
 
 static void RBLTZALL()
@@ -692,17 +802,20 @@ static void RBLTZALL()
         if (check_nop)
         {
             dst->ops = BLTZALL_IDLE;
-            if (dynacore) genbltzall_idle();
+            if (dynacore)
+                genbltzall_idle();
         }
-        else if (dynacore) genbltzall();
+        else if (dynacore)
+            genbltzall();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BLTZALL_OUT;
-        if (dynacore) genbltzall_out();
+        if (dynacore)
+            genbltzall_out();
     }
-    else if (dynacore) genbltzall();
+    else if (dynacore)
+        genbltzall();
 }
 
 static void RBGEZALL()
@@ -716,26 +829,28 @@ static void RBGEZALL()
         if (check_nop)
         {
             dst->ops = BGEZALL_IDLE;
-            if (dynacore) genbgezall_idle();
+            if (dynacore)
+                genbgezall_idle();
         }
-        else if (dynacore) genbgezall();
+        else if (dynacore)
+            genbgezall();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BGEZALL_OUT;
-        if (dynacore) genbgezall_out();
+        if (dynacore)
+            genbgezall_out();
     }
-    else if (dynacore) genbgezall();
+    else if (dynacore)
+        genbgezall();
 }
 
 static void (*recomp_regimm[32])(void) =
 {
-    RBLTZ, RBGEZ, RBLTZL, RBGEZL, RSV, RSV, RSV, RSV,
-    RTGEI, RTGEIU, RTLTI, RTLTIU, RTEQI, RSV, RTNEI, RSV,
-    RBLTZAL, RBGEZAL, RBLTZALL, RBGEZALL, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV
-};
+RBLTZ, RBGEZ, RBLTZL, RBGEZL, RSV, RSV, RSV, RSV,
+RTGEI, RTGEIU, RTLTI, RTLTIU, RTEQI, RSV, RTNEI, RSV,
+RBLTZAL, RBGEZAL, RBLTZALL, RBGEZALL, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                     TLB
@@ -744,44 +859,48 @@ static void (*recomp_regimm[32])(void) =
 static void RTLBR()
 {
     dst->ops = TLBR;
-    if (dynacore) gentlbr();
+    if (dynacore)
+        gentlbr();
 }
 
 static void RTLBWI()
 {
     dst->ops = TLBWI;
-    if (dynacore) gentlbwi();
+    if (dynacore)
+        gentlbwi();
 }
 
 static void RTLBWR()
 {
     dst->ops = TLBWR;
-    if (dynacore) gentlbwr();
+    if (dynacore)
+        gentlbwr();
 }
 
 static void RTLBP()
 {
     dst->ops = TLBP;
-    if (dynacore) gentlbp();
+    if (dynacore)
+        gentlbp();
 }
 
 static void RERET()
 {
     dst->ops = ERET;
-    if (dynacore) generet();
+    if (dynacore)
+        generet();
 }
 
 static void (*recomp_tlb[64])(void) =
 {
-    RSV, RTLBR, RTLBWI, RSV, RSV, RSV, RTLBWR, RSV,
-    RTLBP, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RERET, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV
-};
+RSV, RTLBR, RTLBWI, RSV, RSV, RSV, RTLBWR, RSV,
+RTLBP, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RERET, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                    COP0
@@ -793,8 +912,10 @@ static void RMFC0()
     recompile_standard_r_type();
     dst->f.r.rd = (int64_t*)(reg_cop0 + ((src >> 11) & 0x1F));
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dst->f.r.rt == reg) RNOP();
-    else if (dynacore) genmfc0();
+    if (dst->f.r.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genmfc0();
 }
 
 static void RMTC0()
@@ -802,7 +923,8 @@ static void RMTC0()
     dst->ops = MTC0;
     recompile_standard_r_type();
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dynacore) genmtc0();
+    if (dynacore)
+        genmtc0();
 }
 
 static void RTLB()
@@ -812,11 +934,10 @@ static void RTLB()
 
 static void (*recomp_cop0[32])(void) =
 {
-    RMFC0, RSV, RSV, RSV, RMTC0, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RTLB, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV
-};
+RMFC0, RSV, RSV, RSV, RMTC0, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RTLB, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                     BC
@@ -833,17 +954,20 @@ static void RBC1F()
         if (check_nop)
         {
             dst->ops = BC1F_IDLE;
-            if (dynacore) genbc1f_idle();
+            if (dynacore)
+                genbc1f_idle();
         }
-        else if (dynacore) genbc1f();
+        else if (dynacore)
+            genbc1f();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BC1F_OUT;
-        if (dynacore) genbc1f_out();
+        if (dynacore)
+            genbc1f_out();
     }
-    else if (dynacore) genbc1f();
+    else if (dynacore)
+        genbc1f();
 }
 
 static void RBC1T()
@@ -857,17 +981,20 @@ static void RBC1T()
         if (check_nop)
         {
             dst->ops = BC1T_IDLE;
-            if (dynacore) genbc1t_idle();
+            if (dynacore)
+                genbc1t_idle();
         }
-        else if (dynacore) genbc1t();
+        else if (dynacore)
+            genbc1t();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BC1T_OUT;
-        if (dynacore) genbc1t_out();
+        if (dynacore)
+            genbc1t_out();
     }
-    else if (dynacore) genbc1t();
+    else if (dynacore)
+        genbc1t();
 }
 
 static void RBC1FL()
@@ -881,17 +1008,20 @@ static void RBC1FL()
         if (check_nop)
         {
             dst->ops = BC1FL_IDLE;
-            if (dynacore) genbc1fl_idle();
+            if (dynacore)
+                genbc1fl_idle();
         }
-        else if (dynacore) genbc1fl();
+        else if (dynacore)
+            genbc1fl();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BC1FL_OUT;
-        if (dynacore) genbc1fl_out();
+        if (dynacore)
+            genbc1fl_out();
     }
-    else if (dynacore) genbc1fl();
+    else if (dynacore)
+        genbc1fl();
 }
 
 static void RBC1TL()
@@ -905,24 +1035,26 @@ static void RBC1TL()
         if (check_nop)
         {
             dst->ops = BC1TL_IDLE;
-            if (dynacore) genbc1tl_idle();
+            if (dynacore)
+                genbc1tl_idle();
         }
-        else if (dynacore) genbc1tl();
+        else if (dynacore)
+            genbc1tl();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BC1TL_OUT;
-        if (dynacore) genbc1tl_out();
+        if (dynacore)
+            genbc1tl_out();
     }
-    else if (dynacore) genbc1tl();
+    else if (dynacore)
+        genbc1tl();
 }
 
 static void (*recomp_bc[4])(void) =
 {
-    RBC1F, RBC1T,
-    RBC1FL, RBC1TL
-};
+RBC1F, RBC1T,
+RBC1FL, RBC1TL};
 
 //-------------------------------------------------------------------------
 //                                     S
@@ -932,258 +1064,292 @@ static void RADD_S()
 {
     dst->ops = ADD_S;
     recompile_standard_cf_type();
-    if (dynacore) genadd_s();
+    if (dynacore)
+        genadd_s();
 }
 
 static void RSUB_S()
 {
     dst->ops = SUB_S;
     recompile_standard_cf_type();
-    if (dynacore) gensub_s();
+    if (dynacore)
+        gensub_s();
 }
 
 static void RMUL_S()
 {
     dst->ops = MUL_S;
     recompile_standard_cf_type();
-    if (dynacore) genmul_s();
+    if (dynacore)
+        genmul_s();
 }
 
 static void RDIV_S()
 {
     dst->ops = DIV_S;
     recompile_standard_cf_type();
-    if (dynacore) gendiv_s();
+    if (dynacore)
+        gendiv_s();
 }
 
 static void RSQRT_S()
 {
     dst->ops = SQRT_S;
     recompile_standard_cf_type();
-    if (dynacore) gensqrt_s();
+    if (dynacore)
+        gensqrt_s();
 }
 
 static void RABS_S()
 {
     dst->ops = ABS_S;
     recompile_standard_cf_type();
-    if (dynacore) genabs_s();
+    if (dynacore)
+        genabs_s();
 }
 
 static void RMOV_S()
 {
     dst->ops = MOV_S;
     recompile_standard_cf_type();
-    if (dynacore) genmov_s();
+    if (dynacore)
+        genmov_s();
 }
 
 static void RNEG_S()
 {
     dst->ops = NEG_S;
     recompile_standard_cf_type();
-    if (dynacore) genneg_s();
+    if (dynacore)
+        genneg_s();
 }
 
 static void RROUND_L_S()
 {
     dst->ops = ROUND_L_S;
     recompile_standard_cf_type();
-    if (dynacore) genround_l_s();
+    if (dynacore)
+        genround_l_s();
 }
 
 static void RTRUNC_L_S()
 {
     dst->ops = TRUNC_L_S;
     recompile_standard_cf_type();
-    if (dynacore) gentrunc_l_s();
+    if (dynacore)
+        gentrunc_l_s();
 }
 
 static void RCEIL_L_S()
 {
     dst->ops = CEIL_L_S;
     recompile_standard_cf_type();
-    if (dynacore) genceil_l_s();
+    if (dynacore)
+        genceil_l_s();
 }
 
 static void RFLOOR_L_S()
 {
     dst->ops = FLOOR_L_S;
     recompile_standard_cf_type();
-    if (dynacore) genfloor_l_s();
+    if (dynacore)
+        genfloor_l_s();
 }
 
 static void RROUND_W_S()
 {
     dst->ops = ROUND_W_S;
     recompile_standard_cf_type();
-    if (dynacore) genround_w_s();
+    if (dynacore)
+        genround_w_s();
 }
 
 static void RTRUNC_W_S()
 {
     dst->ops = TRUNC_W_S;
     recompile_standard_cf_type();
-    if (dynacore) gentrunc_w_s();
+    if (dynacore)
+        gentrunc_w_s();
 }
 
 static void RCEIL_W_S()
 {
     dst->ops = CEIL_W_S;
     recompile_standard_cf_type();
-    if (dynacore) genceil_w_s();
+    if (dynacore)
+        genceil_w_s();
 }
 
 static void RFLOOR_W_S()
 {
     dst->ops = FLOOR_W_S;
     recompile_standard_cf_type();
-    if (dynacore) genfloor_w_s();
+    if (dynacore)
+        genfloor_w_s();
 }
 
 static void RCVT_D_S()
 {
     dst->ops = CVT_D_S;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_d_s();
+    if (dynacore)
+        gencvt_d_s();
 }
 
 static void RCVT_W_S()
 {
     dst->ops = CVT_W_S;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_w_s();
+    if (dynacore)
+        gencvt_w_s();
 }
 
 static void RCVT_L_S()
 {
     dst->ops = CVT_L_S;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_l_s();
+    if (dynacore)
+        gencvt_l_s();
 }
 
 static void RC_F_S()
 {
     dst->ops = C_F_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_f_s();
+    if (dynacore)
+        genc_f_s();
 }
 
 static void RC_UN_S()
 {
     dst->ops = C_UN_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_un_s();
+    if (dynacore)
+        genc_un_s();
 }
 
 static void RC_EQ_S()
 {
     dst->ops = C_EQ_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_eq_s();
+    if (dynacore)
+        genc_eq_s();
 }
 
 static void RC_UEQ_S()
 {
     dst->ops = C_UEQ_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_ueq_s();
+    if (dynacore)
+        genc_ueq_s();
 }
 
 static void RC_OLT_S()
 {
     dst->ops = C_OLT_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_olt_s();
+    if (dynacore)
+        genc_olt_s();
 }
 
 static void RC_ULT_S()
 {
     dst->ops = C_ULT_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_ult_s();
+    if (dynacore)
+        genc_ult_s();
 }
 
 static void RC_OLE_S()
 {
     dst->ops = C_OLE_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_ole_s();
+    if (dynacore)
+        genc_ole_s();
 }
 
 static void RC_ULE_S()
 {
     dst->ops = C_ULE_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_ule_s();
+    if (dynacore)
+        genc_ule_s();
 }
 
 static void RC_SF_S()
 {
     dst->ops = C_SF_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_sf_s();
+    if (dynacore)
+        genc_sf_s();
 }
 
 static void RC_NGLE_S()
 {
     dst->ops = C_NGLE_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_ngle_s();
+    if (dynacore)
+        genc_ngle_s();
 }
 
 static void RC_SEQ_S()
 {
     dst->ops = C_SEQ_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_seq_s();
+    if (dynacore)
+        genc_seq_s();
 }
 
 static void RC_NGL_S()
 {
     dst->ops = C_NGL_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_ngl_s();
+    if (dynacore)
+        genc_ngl_s();
 }
 
 static void RC_LT_S()
 {
     dst->ops = C_LT_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_lt_s();
+    if (dynacore)
+        genc_lt_s();
 }
 
 static void RC_NGE_S()
 {
     dst->ops = C_NGE_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_nge_s();
+    if (dynacore)
+        genc_nge_s();
 }
 
 static void RC_LE_S()
 {
     dst->ops = C_LE_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_le_s();
+    if (dynacore)
+        genc_le_s();
 }
 
 static void RC_NGT_S()
 {
     dst->ops = C_NGT_S;
     recompile_standard_cf_type();
-    if (dynacore) genc_ngt_s();
+    if (dynacore)
+        genc_ngt_s();
 }
 
 static void (*recomp_s[64])(void) =
 {
-    RADD_S, RSUB_S, RMUL_S, RDIV_S, RSQRT_S, RABS_S, RMOV_S, RNEG_S,
-    RROUND_L_S, RTRUNC_L_S, RCEIL_L_S, RFLOOR_L_S, RROUND_W_S, RTRUNC_W_S, RCEIL_W_S, RFLOOR_W_S,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RCVT_D_S, RSV, RSV, RCVT_W_S, RCVT_L_S, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RC_F_S, RC_UN_S, RC_EQ_S, RC_UEQ_S, RC_OLT_S, RC_ULT_S, RC_OLE_S, RC_ULE_S,
-    RC_SF_S, RC_NGLE_S, RC_SEQ_S, RC_NGL_S, RC_LT_S, RC_NGE_S, RC_LE_S, RC_NGT_S
-};
+RADD_S, RSUB_S, RMUL_S, RDIV_S, RSQRT_S, RABS_S, RMOV_S, RNEG_S,
+RROUND_L_S, RTRUNC_L_S, RCEIL_L_S, RFLOOR_L_S, RROUND_W_S, RTRUNC_W_S, RCEIL_W_S, RFLOOR_W_S,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RCVT_D_S, RSV, RSV, RCVT_W_S, RCVT_L_S, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RC_F_S, RC_UN_S, RC_EQ_S, RC_UEQ_S, RC_OLT_S, RC_ULT_S, RC_OLE_S, RC_ULE_S,
+RC_SF_S, RC_NGLE_S, RC_SEQ_S, RC_NGL_S, RC_LT_S, RC_NGE_S, RC_LE_S, RC_NGT_S};
 
 //-------------------------------------------------------------------------
 //                                     D
@@ -1193,258 +1359,292 @@ static void RADD_D()
 {
     dst->ops = ADD_D;
     recompile_standard_cf_type();
-    if (dynacore) genadd_d();
+    if (dynacore)
+        genadd_d();
 }
 
 static void RSUB_D()
 {
     dst->ops = SUB_D;
     recompile_standard_cf_type();
-    if (dynacore) gensub_d();
+    if (dynacore)
+        gensub_d();
 }
 
 static void RMUL_D()
 {
     dst->ops = MUL_D;
     recompile_standard_cf_type();
-    if (dynacore) genmul_d();
+    if (dynacore)
+        genmul_d();
 }
 
 static void RDIV_D()
 {
     dst->ops = DIV_D;
     recompile_standard_cf_type();
-    if (dynacore) gendiv_d();
+    if (dynacore)
+        gendiv_d();
 }
 
 static void RSQRT_D()
 {
     dst->ops = SQRT_D;
     recompile_standard_cf_type();
-    if (dynacore) gensqrt_d();
+    if (dynacore)
+        gensqrt_d();
 }
 
 static void RABS_D()
 {
     dst->ops = ABS_D;
     recompile_standard_cf_type();
-    if (dynacore) genabs_d();
+    if (dynacore)
+        genabs_d();
 }
 
 static void RMOV_D()
 {
     dst->ops = MOV_D;
     recompile_standard_cf_type();
-    if (dynacore) genmov_d();
+    if (dynacore)
+        genmov_d();
 }
 
 static void RNEG_D()
 {
     dst->ops = NEG_D;
     recompile_standard_cf_type();
-    if (dynacore) genneg_d();
+    if (dynacore)
+        genneg_d();
 }
 
 static void RROUND_L_D()
 {
     dst->ops = ROUND_L_D;
     recompile_standard_cf_type();
-    if (dynacore) genround_l_d();
+    if (dynacore)
+        genround_l_d();
 }
 
 static void RTRUNC_L_D()
 {
     dst->ops = TRUNC_L_D;
     recompile_standard_cf_type();
-    if (dynacore) gentrunc_l_d();
+    if (dynacore)
+        gentrunc_l_d();
 }
 
 static void RCEIL_L_D()
 {
     dst->ops = CEIL_L_D;
     recompile_standard_cf_type();
-    if (dynacore) genceil_l_d();
+    if (dynacore)
+        genceil_l_d();
 }
 
 static void RFLOOR_L_D()
 {
     dst->ops = FLOOR_L_D;
     recompile_standard_cf_type();
-    if (dynacore) genfloor_l_d();
+    if (dynacore)
+        genfloor_l_d();
 }
 
 static void RROUND_W_D()
 {
     dst->ops = ROUND_W_D;
     recompile_standard_cf_type();
-    if (dynacore) genround_w_d();
+    if (dynacore)
+        genround_w_d();
 }
 
 static void RTRUNC_W_D()
 {
     dst->ops = TRUNC_W_D;
     recompile_standard_cf_type();
-    if (dynacore) gentrunc_w_d();
+    if (dynacore)
+        gentrunc_w_d();
 }
 
 static void RCEIL_W_D()
 {
     dst->ops = CEIL_W_D;
     recompile_standard_cf_type();
-    if (dynacore) genceil_w_d();
+    if (dynacore)
+        genceil_w_d();
 }
 
 static void RFLOOR_W_D()
 {
     dst->ops = FLOOR_W_D;
     recompile_standard_cf_type();
-    if (dynacore) genfloor_w_d();
+    if (dynacore)
+        genfloor_w_d();
 }
 
 static void RCVT_S_D()
 {
     dst->ops = CVT_S_D;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_s_d();
+    if (dynacore)
+        gencvt_s_d();
 }
 
 static void RCVT_W_D()
 {
     dst->ops = CVT_W_D;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_w_d();
+    if (dynacore)
+        gencvt_w_d();
 }
 
 static void RCVT_L_D()
 {
     dst->ops = CVT_L_D;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_l_d();
+    if (dynacore)
+        gencvt_l_d();
 }
 
 static void RC_F_D()
 {
     dst->ops = C_F_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_f_d();
+    if (dynacore)
+        genc_f_d();
 }
 
 static void RC_UN_D()
 {
     dst->ops = C_UN_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_un_d();
+    if (dynacore)
+        genc_un_d();
 }
 
 static void RC_EQ_D()
 {
     dst->ops = C_EQ_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_eq_d();
+    if (dynacore)
+        genc_eq_d();
 }
 
 static void RC_UEQ_D()
 {
     dst->ops = C_UEQ_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_ueq_d();
+    if (dynacore)
+        genc_ueq_d();
 }
 
 static void RC_OLT_D()
 {
     dst->ops = C_OLT_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_olt_d();
+    if (dynacore)
+        genc_olt_d();
 }
 
 static void RC_ULT_D()
 {
     dst->ops = C_ULT_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_ult_d();
+    if (dynacore)
+        genc_ult_d();
 }
 
 static void RC_OLE_D()
 {
     dst->ops = C_OLE_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_ole_d();
+    if (dynacore)
+        genc_ole_d();
 }
 
 static void RC_ULE_D()
 {
     dst->ops = C_ULE_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_ule_d();
+    if (dynacore)
+        genc_ule_d();
 }
 
 static void RC_SF_D()
 {
     dst->ops = C_SF_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_sf_d();
+    if (dynacore)
+        genc_sf_d();
 }
 
 static void RC_NGLE_D()
 {
     dst->ops = C_NGLE_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_ngle_d();
+    if (dynacore)
+        genc_ngle_d();
 }
 
 static void RC_SEQ_D()
 {
     dst->ops = C_SEQ_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_seq_d();
+    if (dynacore)
+        genc_seq_d();
 }
 
 static void RC_NGL_D()
 {
     dst->ops = C_NGL_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_ngl_d();
+    if (dynacore)
+        genc_ngl_d();
 }
 
 static void RC_LT_D()
 {
     dst->ops = C_LT_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_lt_d();
+    if (dynacore)
+        genc_lt_d();
 }
 
 static void RC_NGE_D()
 {
     dst->ops = C_NGE_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_nge_d();
+    if (dynacore)
+        genc_nge_d();
 }
 
 static void RC_LE_D()
 {
     dst->ops = C_LE_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_le_d();
+    if (dynacore)
+        genc_le_d();
 }
 
 static void RC_NGT_D()
 {
     dst->ops = C_NGT_D;
     recompile_standard_cf_type();
-    if (dynacore) genc_ngt_d();
+    if (dynacore)
+        genc_ngt_d();
 }
 
 static void (*recomp_d[64])(void) =
 {
-    RADD_D, RSUB_D, RMUL_D, RDIV_D, RSQRT_D, RABS_D, RMOV_D, RNEG_D,
-    RROUND_L_D, RTRUNC_L_D, RCEIL_L_D, RFLOOR_L_D, RROUND_W_D, RTRUNC_W_D, RCEIL_W_D, RFLOOR_W_D,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RCVT_S_D, RSV, RSV, RSV, RCVT_W_D, RCVT_L_D, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RC_F_D, RC_UN_D, RC_EQ_D, RC_UEQ_D, RC_OLT_D, RC_ULT_D, RC_OLE_D, RC_ULE_D,
-    RC_SF_D, RC_NGLE_D, RC_SEQ_D, RC_NGL_D, RC_LT_D, RC_NGE_D, RC_LE_D, RC_NGT_D
-};
+RADD_D, RSUB_D, RMUL_D, RDIV_D, RSQRT_D, RABS_D, RMOV_D, RNEG_D,
+RROUND_L_D, RTRUNC_L_D, RCEIL_L_D, RFLOOR_L_D, RROUND_W_D, RTRUNC_W_D, RCEIL_W_D, RFLOOR_W_D,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RCVT_S_D, RSV, RSV, RSV, RCVT_W_D, RCVT_L_D, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RC_F_D, RC_UN_D, RC_EQ_D, RC_UEQ_D, RC_OLT_D, RC_ULT_D, RC_OLE_D, RC_ULE_D,
+RC_SF_D, RC_NGLE_D, RC_SEQ_D, RC_NGL_D, RC_LT_D, RC_NGE_D, RC_LE_D, RC_NGT_D};
 
 //-------------------------------------------------------------------------
 //                                     W
@@ -1454,27 +1654,28 @@ static void RCVT_S_W()
 {
     dst->ops = CVT_S_W;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_s_w();
+    if (dynacore)
+        gencvt_s_w();
 }
 
 static void RCVT_D_W()
 {
     dst->ops = CVT_D_W;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_d_w();
+    if (dynacore)
+        gencvt_d_w();
 }
 
 static void (*recomp_w[64])(void) =
 {
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RCVT_S_W, RCVT_D_W, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV
-};
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RCVT_S_W, RCVT_D_W, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                     L
@@ -1484,26 +1685,84 @@ static void RCVT_S_L()
 {
     dst->ops = CVT_S_L;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_s_l();
+    if (dynacore)
+        gencvt_s_l();
 }
 
 static void RCVT_D_L()
 {
     dst->ops = CVT_D_L;
     recompile_standard_cf_type();
-    if (dynacore) gencvt_d_l();
+    if (dynacore)
+        gencvt_d_l();
 }
 
 static void (*recomp_l[64])(void) =
 {
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RCVT_S_L, RCVT_D_L, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RCVT_S_L,
+RCVT_D_L,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
+RSV,
 };
 
 //-------------------------------------------------------------------------
@@ -1515,8 +1774,10 @@ static void RMFC1()
     dst->ops = MFC1;
     recompile_standard_r_type();
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dst->f.r.rt == reg) RNOP();
-    else if (dynacore) genmfc1();
+    if (dst->f.r.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genmfc1();
 }
 
 static void RDMFC1()
@@ -1524,8 +1785,10 @@ static void RDMFC1()
     dst->ops = DMFC1;
     recompile_standard_r_type();
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dst->f.r.rt == reg) RNOP();
-    else if (dynacore) gendmfc1();
+    if (dst->f.r.rt == reg)
+        RNOP();
+    else if (dynacore)
+        gendmfc1();
 }
 
 static void RCFC1()
@@ -1533,8 +1796,10 @@ static void RCFC1()
     dst->ops = CFC1;
     recompile_standard_r_type();
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dst->f.r.rt == reg) RNOP();
-    else if (dynacore) gencfc1();
+    if (dst->f.r.rt == reg)
+        RNOP();
+    else if (dynacore)
+        gencfc1();
 }
 
 static void RMTC1()
@@ -1542,7 +1807,8 @@ static void RMTC1()
     dst->ops = MTC1;
     recompile_standard_r_type();
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dynacore) genmtc1();
+    if (dynacore)
+        genmtc1();
 }
 
 static void RDMTC1()
@@ -1550,7 +1816,8 @@ static void RDMTC1()
     dst->ops = DMTC1;
     recompile_standard_r_type();
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dynacore) gendmtc1();
+    if (dynacore)
+        gendmtc1();
 }
 
 static void RCTC1()
@@ -1558,7 +1825,8 @@ static void RCTC1()
     dst->ops = CTC1;
     recompile_standard_r_type();
     dst->f.r.nrd = (src >> 11) & 0x1F;
-    if (dynacore) genctc1();
+    if (dynacore)
+        genctc1();
 }
 
 static void RBC()
@@ -1588,11 +1856,10 @@ static void RL()
 
 static void (*recomp_cop1[32])(void) =
 {
-    RMFC1, RDMFC1, RCFC1, RSV, RMTC1, RDMTC1, RCTC1, RSV,
-    RBC, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
-    RS, RD, RSV, RSV, RW, RL, RSV, RSV,
-    RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV
-};
+RMFC1, RDMFC1, RCFC1, RSV, RMTC1, RDMTC1, RCTC1, RSV,
+RBC, RSV, RSV, RSV, RSV, RSV, RSV, RSV,
+RS, RD, RSV, RSV, RW, RL, RSV, RSV,
+RSV, RSV, RSV, RSV, RSV, RSV, RSV, RSV};
 
 //-------------------------------------------------------------------------
 //                                   R4300
@@ -1619,17 +1886,20 @@ static void RJ()
         if (check_nop)
         {
             dst->ops = J_IDLE;
-            if (dynacore) genj_idle();
+            if (dynacore)
+                genj_idle();
         }
-        else if (dynacore) genj();
+        else if (dynacore)
+            genj();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = J_OUT;
-        if (dynacore) genj_out();
+        if (dynacore)
+            genj_out();
     }
-    else if (dynacore) genj();
+    else if (dynacore)
+        genj();
 }
 
 static void RJAL()
@@ -1643,17 +1913,20 @@ static void RJAL()
         if (check_nop)
         {
             dst->ops = JAL_IDLE;
-            if (dynacore) genjal_idle();
+            if (dynacore)
+                genjal_idle();
         }
-        else if (dynacore) genjal();
+        else if (dynacore)
+            genjal();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = JAL_OUT;
-        if (dynacore) genjal_out();
+        if (dynacore)
+            genjal_out();
     }
-    else if (dynacore) genjal();
+    else if (dynacore)
+        genjal();
 }
 
 static void RBEQ()
@@ -1667,17 +1940,20 @@ static void RBEQ()
         if (check_nop)
         {
             dst->ops = BEQ_IDLE;
-            if (dynacore) genbeq_idle();
+            if (dynacore)
+                genbeq_idle();
         }
-        else if (dynacore) genbeq();
+        else if (dynacore)
+            genbeq();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BEQ_OUT;
-        if (dynacore) genbeq_out();
+        if (dynacore)
+            genbeq_out();
     }
-    else if (dynacore) genbeq();
+    else if (dynacore)
+        genbeq();
 }
 
 static void RBNE()
@@ -1691,17 +1967,20 @@ static void RBNE()
         if (check_nop)
         {
             dst->ops = BNE_IDLE;
-            if (dynacore) genbne_idle();
+            if (dynacore)
+                genbne_idle();
         }
-        else if (dynacore) genbne();
+        else if (dynacore)
+            genbne();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BNE_OUT;
-        if (dynacore) genbne_out();
+        if (dynacore)
+            genbne_out();
     }
-    else if (dynacore) genbne();
+    else if (dynacore)
+        genbne();
 }
 
 static void RBLEZ()
@@ -1715,17 +1994,20 @@ static void RBLEZ()
         if (check_nop)
         {
             dst->ops = BLEZ_IDLE;
-            if (dynacore) genblez_idle();
+            if (dynacore)
+                genblez_idle();
         }
-        else if (dynacore) genblez();
+        else if (dynacore)
+            genblez();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BLEZ_OUT;
-        if (dynacore) genblez_out();
+        if (dynacore)
+            genblez_out();
     }
-    else if (dynacore) genblez();
+    else if (dynacore)
+        genblez();
 }
 
 static void RBGTZ()
@@ -1739,81 +2021,100 @@ static void RBGTZ()
         if (check_nop)
         {
             dst->ops = BGTZ_IDLE;
-            if (dynacore) genbgtz_idle();
+            if (dynacore)
+                genbgtz_idle();
         }
-        else if (dynacore) genbgtz();
+        else if (dynacore)
+            genbgtz();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BGTZ_OUT;
-        if (dynacore) genbgtz_out();
+        if (dynacore)
+            genbgtz_out();
     }
-    else if (dynacore) genbgtz();
+    else if (dynacore)
+        genbgtz();
 }
 
 static void RADDI()
 {
     dst->ops = ADDI;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genaddi();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genaddi();
 }
 
 static void RADDIU()
 {
     dst->ops = ADDIU;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genaddiu();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genaddiu();
 }
 
 static void RSLTI()
 {
     dst->ops = SLTI;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genslti();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genslti();
 }
 
 static void RSLTIU()
 {
     dst->ops = SLTIU;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) gensltiu();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        gensltiu();
 }
 
 static void RANDI()
 {
     dst->ops = ANDI;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genandi();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genandi();
 }
 
 static void RORI()
 {
     dst->ops = ORI;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genori();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genori();
 }
 
 static void RXORI()
 {
     dst->ops = XORI;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genxori();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genxori();
 }
 
 static void RLUI()
 {
     dst->ops = LUI;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlui();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlui();
 }
 
 static void RCOP0()
@@ -1837,17 +2138,20 @@ static void RBEQL()
         if (check_nop)
         {
             dst->ops = BEQL_IDLE;
-            if (dynacore) genbeql_idle();
+            if (dynacore)
+                genbeql_idle();
         }
-        else if (dynacore) genbeql();
+        else if (dynacore)
+            genbeql();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BEQL_OUT;
-        if (dynacore) genbeql_out();
+        if (dynacore)
+            genbeql_out();
     }
-    else if (dynacore) genbeql();
+    else if (dynacore)
+        genbeql();
 }
 
 static void RBNEL()
@@ -1861,17 +2165,20 @@ static void RBNEL()
         if (check_nop)
         {
             dst->ops = BNEL_IDLE;
-            if (dynacore) genbnel_idle();
+            if (dynacore)
+                genbnel_idle();
         }
-        else if (dynacore) genbnel();
+        else if (dynacore)
+            genbnel();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BNEL_OUT;
-        if (dynacore) genbnel_out();
+        if (dynacore)
+            genbnel_out();
     }
-    else if (dynacore) genbnel();
+    else if (dynacore)
+        genbnel();
 }
 
 static void RBLEZL()
@@ -1885,17 +2192,20 @@ static void RBLEZL()
         if (check_nop)
         {
             dst->ops = BLEZL_IDLE;
-            if (dynacore) genblezl_idle();
+            if (dynacore)
+                genblezl_idle();
         }
-        else if (dynacore) genblezl();
+        else if (dynacore)
+            genblezl();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BLEZL_OUT;
-        if (dynacore) genblezl_out();
+        if (dynacore)
+            genblezl_out();
     }
-    else if (dynacore) genblezl();
+    else if (dynacore)
+        genblezl();
 }
 
 static void RBGTZL()
@@ -1909,254 +2219,301 @@ static void RBGTZL()
         if (check_nop)
         {
             dst->ops = BGTZL_IDLE;
-            if (dynacore) genbgtzl_idle();
+            if (dynacore)
+                genbgtzl_idle();
         }
-        else if (dynacore) genbgtzl();
+        else if (dynacore)
+            genbgtzl();
     }
-    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end -
-        4)))
+    else if (!interpcore && (target < dst_block->start || target >= dst_block->end || dst->addr == (dst_block->end - 4)))
     {
         dst->ops = BGTZL_OUT;
-        if (dynacore) genbgtzl_out();
+        if (dynacore)
+            genbgtzl_out();
     }
-    else if (dynacore) genbgtzl();
+    else if (dynacore)
+        genbgtzl();
 }
 
 static void RDADDI()
 {
     dst->ops = DADDI;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) gendaddi();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        gendaddi();
 }
 
 static void RDADDIU()
 {
     dst->ops = DADDIU;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) gendaddiu();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        gendaddiu();
 }
 
 static void RLDL()
 {
     dst->ops = LDL;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genldl();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genldl();
 }
 
 static void RLDR()
 {
     dst->ops = LDR;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genldr();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genldr();
 }
 
 static void RLB()
 {
     dst->ops = LB;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlb();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlb();
 }
 
 static void RLH()
 {
     dst->ops = LH;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlh();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlh();
 }
 
 static void RLWL()
 {
     dst->ops = LWL;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlwl();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlwl();
 }
 
 static void RLW()
 {
     dst->ops = LW;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlw();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlw();
 }
 
 static void RLBU()
 {
     dst->ops = LBU;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlbu();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlbu();
 }
 
 static void RLHU()
 {
     dst->ops = LHU;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlhu();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlhu();
 }
 
 static void RLWR()
 {
     dst->ops = LWR;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlwr();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlwr();
 }
 
 static void RLWU()
 {
     dst->ops = LWU;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genlwu();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genlwu();
 }
 
 static void RSB()
 {
     dst->ops = SB;
     recompile_standard_i_type();
-    if (dynacore) gensb();
+    if (dynacore)
+        gensb();
 }
 
 static void RSH()
 {
     dst->ops = SH;
     recompile_standard_i_type();
-    if (dynacore) gensh();
+    if (dynacore)
+        gensh();
 }
 
 static void RSWL()
 {
     dst->ops = SWL;
     recompile_standard_i_type();
-    if (dynacore) genswl();
+    if (dynacore)
+        genswl();
 }
 
 static void RSW()
 {
     dst->ops = SW;
     recompile_standard_i_type();
-    if (dynacore) gensw();
+    if (dynacore)
+        gensw();
 }
 
 static void RSDL()
 {
     dst->ops = SDL;
     recompile_standard_i_type();
-    if (dynacore) gensdl();
+    if (dynacore)
+        gensdl();
 }
 
 static void RSDR()
 {
     dst->ops = SDR;
     recompile_standard_i_type();
-    if (dynacore) gensdr();
+    if (dynacore)
+        gensdr();
 }
 
 static void RSWR()
 {
     dst->ops = SWR;
     recompile_standard_i_type();
-    if (dynacore) genswr();
+    if (dynacore)
+        genswr();
 }
 
 static void RCACHE()
 {
     dst->ops = CACHE;
-    if (dynacore) gencache();
+    if (dynacore)
+        gencache();
 }
 
 static void RLL()
 {
     dst->ops = LL;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genll();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genll();
 }
 
 static void RLWC1()
 {
     dst->ops = LWC1;
     recompile_standard_lf_type();
-    if (dynacore) genlwc1();
+    if (dynacore)
+        genlwc1();
 }
 
 static void RLLD()
 {
     dst->ops = NI;
     recompile_standard_i_type();
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RLDC1()
 {
     dst->ops = LDC1;
     recompile_standard_lf_type();
-    if (dynacore) genldc1();
+    if (dynacore)
+        genldc1();
 }
 
 static void RLD()
 {
     dst->ops = LD;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) genld();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        genld();
 }
 
 static void RSC()
 {
     dst->ops = SC;
     recompile_standard_i_type();
-    if (dst->f.i.rt == reg) RNOP();
-    else if (dynacore) gensc();
+    if (dst->f.i.rt == reg)
+        RNOP();
+    else if (dynacore)
+        gensc();
 }
 
 static void RSWC1()
 {
     dst->ops = SWC1;
     recompile_standard_lf_type();
-    if (dynacore) genswc1();
+    if (dynacore)
+        genswc1();
 }
 
 static void RSCD()
 {
     dst->ops = NI;
     recompile_standard_i_type();
-    if (dynacore) genni();
+    if (dynacore)
+        genni();
 }
 
 static void RSDC1()
 {
     dst->ops = SDC1;
     recompile_standard_lf_type();
-    if (dynacore) gensdc1();
+    if (dynacore)
+        gensdc1();
 }
 
 static void RSD()
 {
     dst->ops = SD;
     recompile_standard_i_type();
-    if (dynacore) gensd();
+    if (dynacore)
+        gensd();
 }
 
 static void (*recomp_ops[64])(void) =
 {
-    RSPECIAL, RREGIMM, RJ, RJAL, RBEQ, RBNE, RBLEZ, RBGTZ,
-    RADDI, RADDIU, RSLTI, RSLTIU, RANDI, RORI, RXORI, RLUI,
-    RCOP0, RCOP1, RSV, RSV, RBEQL, RBNEL, RBLEZL, RBGTZL,
-    RDADDI, RDADDIU, RLDL, RLDR, RSV, RSV, RSV, RSV,
-    RLB, RLH, RLWL, RLW, RLBU, RLHU, RLWR, RLWU,
-    RSB, RSH, RSWL, RSW, RSDL, RSDR, RSWR, RCACHE,
-    RLL, RLWC1, RSV, RSV, RLLD, RLDC1, RSV, RLD,
-    RSC, RSWC1, RSV, RSV, RSCD, RSDC1, RSV, RSD
-};
+RSPECIAL, RREGIMM, RJ, RJAL, RBEQ, RBNE, RBLEZ, RBGTZ,
+RADDI, RADDIU, RSLTI, RSLTIU, RANDI, RORI, RXORI, RLUI,
+RCOP0, RCOP1, RSV, RSV, RBEQL, RBNEL, RBLEZL, RBGTZL,
+RDADDI, RDADDIU, RLDL, RLDR, RSV, RSV, RSV, RSV,
+RLB, RLH, RLWL, RLW, RLBU, RLHU, RLWR, RLWU,
+RSB, RSH, RSWL, RSW, RSDL, RSDR, RSWR, RCACHE,
+RLL, RLWC1, RSV, RSV, RLLD, RLDC1, RSV, RLD,
+RSC, RSWC1, RSV, RSV, RSCD, RSDC1, RSV, RSD};
 
 /**********************************************************************
  ******************** initialize an empty block ***********************
@@ -2165,7 +2522,7 @@ void init_block(int32_t* source, precomp_block* block)
 {
     int32_t i, length, already_exist = 1;
     static int32_t init_length;
-    //g_core->log_info(L"init block recompiled {:#06x}\n", (int32_t)block->start);
+    // g_core->log_info(L"init block recompiled {:#06x}\n", (int32_t)block->start);
 
     length = (block->end - block->start) / 4;
 
@@ -2204,7 +2561,8 @@ void init_block(int32_t* source, precomp_block* block)
             dst->reg_cache_infos.need_map = 0;
             dst->local_addr = code_length;
 #ifdef EMU64_DEBUG
-			if (dynacore) gendebug();
+            if (dynacore)
+                gendebug();
 #endif
             RNOTCOMPILED();
         }
@@ -2225,7 +2583,7 @@ void init_block(int32_t* source, precomp_block* block)
     if (dynacore)
     {
         free_all_registers();
-        //passe2(block->block, 0, i, block);
+        // passe2(block->block, 0, i, block);
         block->code_length = code_length;
         block->max_code_length = max_code_length;
         free_assembler(&block->jumps_table, &block->jumps_number);
@@ -2318,20 +2676,22 @@ void recompile_block(int32_t* source, precomp_block* block, uint32_t func)
         init_cache(block->block + (func & 0xFFF) / 4);
     }
 
-    for (i = (func & 0xFFF) / 4; /*i<length &&*/finished != 2; i++)
+    for (i = (func & 0xFFF) / 4; /*i<length &&*/ finished != 2; i++)
     {
         if (block->start < 0x80000000 || block->start >= 0xc0000000)
         {
             uint32_t address2 =
-                virtual_to_physical_address(block->start + i * 4, 0);
+            virtual_to_physical_address(block->start + i * 4, 0);
             if (blocks[address2 >> 12]->block[(address2 & 0xFFF) / 4].ops == NOTCOMPILED)
                 blocks[address2 >> 12]->block[(address2 & 0xFFF) / 4].ops = NOTCOMPILED2;
         }
 
         SRC = source + i;
         src = source[i];
-        if (!source[i + 1]) check_nop = 1;
-        else check_nop = 0;
+        if (!source[i + 1])
+            check_nop = 1;
+        else
+            check_nop = 0;
         dst = block->block + i;
         dst->addr = block->start + i * 4;
         dst->reg_cache_infos.need_map = 0;
@@ -2356,16 +2716,15 @@ void recompile_block(int32_t* source, precomp_block* block, uint32_t func)
             free_all_registers();
         }
 
-        if (i >= length - 2 + (length >> 2)) finished = 2;
-        if (i >= (length - 1) && (block->start == 0xa4000000 ||
-            block->start >= 0xc0000000 ||
-            block->end < 0x80000000))
+        if (i >= length - 2 + (length >> 2))
             finished = 2;
-        if (dst->ops == ERET || finished == 1) finished = 2;
-        if ( /*i >= length &&*/
+        if (i >= (length - 1) && (block->start == 0xa4000000 || block->start >= 0xc0000000 || block->end < 0x80000000))
+            finished = 2;
+        if (dst->ops == ERET || finished == 1)
+            finished = 2;
+        if (/*i >= length &&*/
             (dst->ops == J || dst->ops == J_OUT || dst->ops == JR) &&
-            !(i >= (length - 1) && (block->start >= 0xc0000000 ||
-                block->end < 0x80000000)))
+            !(i >= (length - 1) && (block->start >= 0xc0000000 || block->end < 0x80000000)))
             finished = 1;
     }
     if (i >= length)
@@ -2375,7 +2734,8 @@ void recompile_block(int32_t* source, precomp_block* block, uint32_t func)
         dst->reg_cache_infos.need_map = 0;
         dst->local_addr = code_length;
 #ifdef EMU64_DEBUG
-		if (dynacore) gendebug();
+        if (dynacore)
+            gendebug();
 #endif
         RFIN_BLOCK();
         i++;
@@ -2386,13 +2746,15 @@ void recompile_block(int32_t* source, precomp_block* block, uint32_t func)
             dst->reg_cache_infos.need_map = 0;
             dst->local_addr = code_length;
 #ifdef EMU64_DEBUG
-			if (dynacore) gendebug();
+            if (dynacore)
+                gendebug();
 #endif
             RFIN_BLOCK();
             i++;
         }
     }
-    else if (dynacore) genlink_subblock();
+    else if (dynacore)
+        genlink_subblock();
     if (dynacore)
     {
         free_all_registers();
@@ -2401,16 +2763,18 @@ void recompile_block(int32_t* source, precomp_block* block, uint32_t func)
         block->max_code_length = max_code_length;
         free_assembler(&block->jumps_table, &block->jumps_number);
     }
-    //g_core->log_info(L"block recompiled ({:#06x}-%x)\n", (int32_t)func, (int32_t)(block->start+i*4));
-    //getchar();
+    // g_core->log_info(L"block recompiled ({:#06x}-%x)\n", (int32_t)func, (int32_t)(block->start+i*4));
+    // getchar();
 }
 
 int32_t is_jump()
 {
     int32_t dyn = 0;
     int32_t jump = 0;
-    if (dynacore) dyn = 1;
-    if (dyn) dynacore = 0;
+    if (dynacore)
+        dyn = 1;
+    if (dyn)
+        dynacore = 0;
     recomp_ops[((src >> 26) & 0x3F)]();
     if (dst->ops == J ||
         dst->ops == J_OUT ||
@@ -2481,7 +2845,8 @@ int32_t is_jump()
         dst->ops == BC1TL_OUT ||
         dst->ops == BC1TL_IDLE)
         jump = 1;
-    if (dyn) dynacore = 1;
+    if (dyn)
+        dynacore = 1;
     return jump;
 }
 
@@ -2524,16 +2889,19 @@ uint32_t PAddr(uint32_t addr)
     }
 }
 
-void recompile_all()
+void core_vr_recompile(uint32_t addr)
 {
-    memset(invalid_code, 1, 0x100000);
-}
+    if (addr == UINT32_MAX)
+    {
+        g_core->log_info(L"core_vr_recompile all blocks");
+        memset(invalid_code, 1, 0x100000);
+        return;
+    }
 
-void recompile_now(uint32_t addr)
-{
-    //NOTCOMPILED���B�����ɃR���p�C�����ʂ�ops�Ȃǂ��~�������Ɏg��
-    if ((addr >> 16) == 0xa400)
+    if (addr >> 16 == 0xa400)
+    {
         recompile_block((int32_t*)SP_DMEM, blocks[0xa4000000 >> 12], addr);
+    }
     else
     {
         uint32_t paddr = PAddr(addr);
@@ -2542,16 +2910,14 @@ void recompile_now(uint32_t addr)
             if ((paddr & 0x1FFFFFFF) >= 0x10000000)
             {
                 recompile_block(
-                    (int32_t*)rom + ((((paddr - (addr - blocks[addr >> 12]->
-                        start)) & 0x1FFFFFFF) - 0x10000000) >> 2),
-                    blocks[addr >> 12], addr);
+                (int32_t*)rom + (((paddr - (addr - blocks[addr >> 12]->start)) & 0x1FFFFFFF) - 0x10000000 >> 2),
+                blocks[addr >> 12], addr);
             }
             else
             {
                 recompile_block(
-                    (int32_t*)(rdram + (((paddr - (addr - blocks[addr >> 12]->
-                        start)) & 0x1FFFFFFF) >> 2)),
-                    blocks[addr >> 12], addr);
+                (int32_t*)(rdram + ((paddr - (addr - blocks[addr >> 12]->start) & 0x1FFFFFFF) >> 2)),
+                blocks[addr >> 12], addr);
             }
         }
     }

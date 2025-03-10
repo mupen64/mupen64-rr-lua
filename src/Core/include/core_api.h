@@ -452,6 +452,12 @@ EXPORT void CALL core_vr_invalidate_visuals();
  */
 EXPORT bool CALL core_vr_get_mge_available();
 
+/**
+ * \brief Invalidates the dynarec code cache for the block containing the specified address.
+ * \param addr The address. If UINT32_MAX, the entire cache is invalidated.
+ */
+EXPORT void CALL core_vr_recompile(uint32_t addr);
+
 #pragma endregion
 
 #pragma region VCR
