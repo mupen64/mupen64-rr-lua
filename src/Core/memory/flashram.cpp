@@ -59,6 +59,8 @@ bool check_flashram_infos(uint8_t* buf)
         const auto mapped_index = i ^ S8;
         if (mapped_index < 0 ||  mapped_index >= sizeof(rdram)) return false;
     }
+
+    return true;
 }
 
 void init_flashram()
