@@ -284,7 +284,6 @@
     <ClInclude Include="src\Views.Win32\gui\Main.h" />
     <ClInclude Include="src\Views.Win32\Config.h" />
     <ClInclude Include="src\Views.Win32\gui\wrapper\PersistentPathDialog.h" />
-    <ClInclude Include="src\Views.Win32\IOService.h" />
     <ClInclude Include="src\Views.Win32\lua\LuaConsole.h" />
     <ClInclude Include="src\Views.Win32\lua\LuaService.h" />
     <ClInclude Include="src\Views.Win32\lua\modules\AVI.h" />
@@ -343,7 +342,6 @@
     <ClCompile Include="src\Views.Win32\gui\features\Seeker.cpp" />
     <ClCompile Include="src\Views.Win32\gui\features\Statusbar.cpp" />
     <ClCompile Include="src\Views.Win32\gui\features\UpdateChecker.cpp" />
-    <ClCompile Include="src\Views.Win32\IOService.cpp" />
     <ClCompile Include="src\Views.Win32\gui\Loggers.cpp" />
     <ClCompile Include="src\Views.Win32\gui\Main.cpp" />
     <ClCompile Include="src\Views.Win32\gui\wrapper\PersistentPathDialog.cpp" />

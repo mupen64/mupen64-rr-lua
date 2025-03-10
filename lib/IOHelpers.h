@@ -138,3 +138,10 @@ size_t str_nth_occurence(const std::string& str, const std::string& searched, si
  * \remarks The files are opened in binary mode, hence "byte-wise".
  */
 bool files_are_equal(const std::filesystem::path& first, const std::filesystem::path& second);
+
+/**
+  * \brief Gets all files with a specific file extension directly under a directory.
+  * \param directory The directory.
+  * \param extension The file extension with no period.
+  */
+std::vector<std::wstring> get_files_with_extension_in_directory(std::wstring directory, const std::wstring& extension);

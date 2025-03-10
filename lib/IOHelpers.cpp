@@ -268,3 +268,44 @@ bool files_are_equal(const std::filesystem::path& first, const std::filesystem::
     fclose(fp2);
     return !different;
 }
+
+
+std::vector<std::wstring> get_files_with_extension_in_directory(std::wstring directory, const std::wstring& extension)
+{
+#ifdef _WIN32
+    if (directory.empty())
+    {
+        directory = L".\\";
+    }
+    else
+    {
+        if (directory.back() != L'\\')
+        {
+            directory += L"\\";
+        }
+    }
+
+    WIN32_FIND_DATA find_file_data;
+    const HANDLE h_find = FindFirstFile((directory + L"*." + extension).c_str(), &find_file_data);
+    if (h_find == INVALID_HANDLE_VALUE)
+    {
+        return {};
+    }
+
+    std::vector<std::wstring> paths;
+
+    do
+    {
+        if (!(find_file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            paths.emplace_back(directory + find_file_data.cFileName);
+        }
+    }
+    while (FindNextFile(h_find, &find_file_data) != 0);
+
+    FindClose(h_find);
+
+    return paths;
+#endif
+}
+

@@ -8,7 +8,6 @@
 #include <AsyncExecutor.h>
 #include <Config.h>
 #include <DialogService.h>
-#include <IOService.h>
 #include <Messenger.h>
 #include <Plugin.h>
 #include <strsafe.h>
@@ -945,7 +944,7 @@ t_plugin_discovery_result do_plugin_discovery()
     }
 
     std::vector<std::unique_ptr<Plugin>> plugins;
-    const auto files = IOService::get_files_with_extension_in_directory(get_plugins_directory(), L"dll");
+    const auto files = get_files_with_extension_in_directory(get_plugins_directory(), L"dll");
 
     std::vector<std::pair<std::filesystem::path, std::wstring>> results;
     for (const auto& file : files)

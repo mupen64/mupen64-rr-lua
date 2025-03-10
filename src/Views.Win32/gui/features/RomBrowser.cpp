@@ -6,18 +6,11 @@
 
 #include "stdafx.h"
 #include <Config.h>
-
 #include <Uxtheme.h>
-
-
-
-
 #include <gui/Loggers.h>
 #include <gui/Main.h>
 #include <gui/features/RomBrowser.h>
 #include <gui/features/Statusbar.h>
-
-#include <IOService.h>
 #include <AsyncExecutor.h>
 #include <Messenger.h>
 
@@ -51,7 +44,7 @@ namespace RomBrowser
         {
             for (auto path : g_config.rombrowser_rom_paths)
             {
-                auto file_paths = IOService::get_files_with_extension_in_directory(path, L"*");
+                auto file_paths = get_files_with_extension_in_directory(path, L"*");
                 rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
             }
         }
