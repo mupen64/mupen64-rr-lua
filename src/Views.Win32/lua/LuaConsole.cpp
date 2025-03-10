@@ -373,6 +373,11 @@ const luaL_Reg memoryFuncs[] = {
 {"writedouble", LuaCore::Memory::LuaWriteDoubleUnsigned},
 
 {"writesize", LuaCore::Memory::LuaWriteSize},
+    
+{"recompilenow", LuaCore::Memory::Recompile},
+{"recompile", LuaCore::Memory::Recompile},
+{"recompilenext", LuaCore::Memory::Recompile},
+{"recompilenextall", LuaCore::Memory::RecompileNextAll},
 
 {NULL, NULL}};
 

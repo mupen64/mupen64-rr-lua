@@ -269,4 +269,16 @@ namespace LuaCore::Memory
     {
         return LuaCheckQWord(L, i);
     }
+
+    static int Recompile(lua_State* L)
+    {
+        core_vr_recompile(luaL_checkinteger(L, 1));
+        return 0;
+    }
+    
+    static int RecompileNextAll(lua_State* L)
+    {
+        core_vr_recompile(UINT32_MAX);
+        return 0;
+    }
 }
