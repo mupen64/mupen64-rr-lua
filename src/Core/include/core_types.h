@@ -27,6 +27,8 @@ typedef enum {
     VCR_InvalidFormat,
     // The provided file is inaccessible or does not exist
     VCR_BadFile,
+    // The cheat data couldn't be written to disk
+    VCR_CheatWriteFailed,
     // The controller configuration is invalid
     VCR_InvalidControllers,
     // The movie's savestate is missing or invalid

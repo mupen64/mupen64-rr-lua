@@ -210,6 +210,25 @@ bool cht_read_from_file(const std::filesystem::path& path, std::vector<core_chea
     return true;
 }
 
+std::wstring cht_serialize()
+{
+    std::scoped_lock lock(cheats_mutex);
+
+    if (host_cheats.empty())
+    {
+        return L"";
+    }
+    
+    std::wstring str;
+    for (const auto& cheat : host_cheats)
+    {
+        str += std::format(L"--{}\n", cheat.name);
+        str += cheat.code + L"\n";
+    }
+    
+    return str;
+}
+
 void core_cht_get_override_stack(std::stack<std::vector<core_cheat>>& stack)
 {
     std::scoped_lock lock(cheats_mutex);

@@ -26,3 +26,8 @@ void cht_layer_pop();
  * \return Whether the operation succeeded.
  */
 bool cht_read_from_file(const std::filesystem::path& path, std::vector<core_cheat>& cheats);
+
+/**
+ * \brief Serializes the host-provided cheat collection to a string which can be understood by cht_read_from_file. If the collection is empty, an empty string is returned.
+ */
+std::wstring cht_serialize();

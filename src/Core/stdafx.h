@@ -27,6 +27,7 @@
 #include <map>
 #include <cassert>
 #include <math.h>
+#include <fstream>
 #include <float.h>
 #include <stacktrace>
 #include <stdarg.h>

@@ -847,15 +847,15 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
 }
 
 // Generates a savestate path for a newly created movie.
-// Consists of the movie path, but with the stem trimmed at the first dot and with .st extension
-std::filesystem::path get_savestate_path_for_new_movie(std::filesystem::path path)
+// Consists of the movie path, but with the stem trimmed at the first dot and with the specified extension (must contain dot)
+std::filesystem::path get_path_for_new_movie(std::filesystem::path path, const std::string& extension = ".st")
 {
     auto result = str_nth_occurence(path.stem().string(), ".", 1);
 
     // Standard case, no st shortcutting
     if (result == std::string::npos)
     {
-        path.replace_extension(".st");
+        path.replace_extension(extension);
         return path;
     }
 
@@ -865,7 +865,7 @@ std::filesystem::path get_savestate_path_for_new_movie(std::filesystem::path pat
 
     auto stem = path.stem().string().substr(0, result);
 
-    return std::string(drive) + std::string(dir) + stem + ".st";
+    return std::string(drive) + std::string(dir) + stem + extension;
 }
 
 core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description)
@@ -888,6 +888,32 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
     if (description.empty())
     {
         description = "(no description)";
+    }
+
+    const auto cheat_data = cht_serialize();
+    if (!cheat_data.empty())
+    {
+        const auto cheat_path = get_path_for_new_movie(path, ".cht");
+        g_core->log_info(std::format(L"Writing movie cheat data to {}...", cheat_path.wstring()));
+        
+        std::wofstream file(cheat_path, std::ios::out);
+        if (!file)
+        {
+            g_core->log_error(L"core_vcr_start_record cheat std::wofstream failed");
+            return VCR_CheatWriteFailed;
+        }
+        file << cheat_data;
+        if (file.fail())
+        {
+            g_core->log_error(L"core_vcr_start_record cheat write failed");
+            return VCR_CheatWriteFailed;
+        }
+        file.close();
+        if (file.bad())
+        {
+            g_core->log_error(L"core_vcr_start_record file bad");
+            return VCR_CheatWriteFailed;
+        }
     }
 
     core_vcr_stop_all();
@@ -934,7 +960,7 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
         // save state
         g_core->log_info(L"[VCR] Saving state...");
         g_task = task_start_recording_from_snapshot;
-        core_st_do_file(get_savestate_path_for_new_movie(g_movie_path), core_st_job_save, [](core_result result, auto)
+        core_st_do_file(get_path_for_new_movie(g_movie_path), core_st_job_save, [](core_result result, auto)
         {
             std::scoped_lock lock(vcr_mutex);
 
@@ -1612,12 +1638,9 @@ core_result vcr_stop_playback()
     g_task = task_idle;
     g_core->callbacks.task_changed(g_task);
     g_core->callbacks.stop_movie();
-
-    if (g_movie_has_cheat)
-    {
-        cht_layer_pop();
-    }
     
+    cht_layer_pop();
+
     return Res_Ok;
 }
 
