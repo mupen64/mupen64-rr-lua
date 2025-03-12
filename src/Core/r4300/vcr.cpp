@@ -57,7 +57,6 @@ std::filesystem::path g_movie_path;
 
 int32_t m_current_sample = -1;
 int32_t m_current_vi = -1;
-bool g_movie_has_cheat;
 
 // Used for tracking user-invoked resets
 bool vcr_reset_requested;
@@ -1262,7 +1261,6 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         }
     }
 
-    g_movie_has_cheat = false;
     const auto cht_path = find_accompanying_file_for_movie(path, {L".cht"});
 
     if (!cht_path.empty())
@@ -1270,7 +1268,6 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         std::vector<core_cheat> cheats;
         if (cht_read_from_file(cht_path, cheats))
         {
-            g_movie_has_cheat = true;
             cht_layer_push(cheats);
         }
         else
@@ -1282,6 +1279,10 @@ core_result core_vcr_start_playback(std::filesystem::path path)
                 return Res_Cancelled;
             }
         }
+    } else
+    {
+        // Push a fake empty layer to ensure that the potentially active cheats are overriden by nothing
+        cht_layer_push({});
     }
     
     core_vcr_stop_all();
