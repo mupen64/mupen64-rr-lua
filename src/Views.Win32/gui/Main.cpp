@@ -1632,9 +1632,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
 
-                    const auto result = DialogService::show_multiple_choice_dialog("ramstart", {L"Copy STROOP config line",
-                                                                                      L"Close"},
-                                                                                     str.c_str(), L"Show RAM Start", 0, fsvc_information);
+                    const auto result = DialogService::show_multiple_choice_dialog(
+                    "ramstart",
+                    {L"Copy STROOP config line", L"Close"},
+                    str.c_str(),
+                    L"Show RAM Start",
+                    0,
+                    fsvc_information);
 
                     if (result == 0)
                     {
