@@ -196,6 +196,7 @@ static void prompt_plugin_change()
     {L"Choose Default Plugins", L"Change Plugins", L"Cancel"},
     L"One or more plugins couldn't be loaded.\r\nHow would you like to proceed?",
     L"Core",
+    0,
     fsvc_error);
 
     if (result == 0)
