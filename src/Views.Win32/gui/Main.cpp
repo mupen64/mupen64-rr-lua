@@ -192,11 +192,10 @@ std::wstring get_mupen_name()
 static void prompt_plugin_change()
 {
     auto result = DialogService::show_multiple_choice_dialog(
-    "plugin_change",
+    VIEW_DLG_PLUGIN_LOAD_ERROR,
     {L"Choose Default Plugins", L"Change Plugins", L"Cancel"},
     L"One or more plugins couldn't be loaded.\r\nHow would you like to proceed?",
     L"Core",
-    0,
     fsvc_error);
 
     if (result == 0)
@@ -762,7 +761,7 @@ void on_vis_since_input_poll_exceeded(std::any)
         return;
     }
 
-    if (g_config.silent_mode || DialogService::show_ask_dialog("lag_exceeded", L"An unusual execution pattern was detected. Continuing might leave the emulator in an unusable state.\r\nWould you like to terminate emulation?", L"Warning", true))
+    if (g_config.silent_mode || DialogService::show_ask_dialog(VIEW_DLG_LAG_EXCEEDED, L"An unusual execution pattern was detected. Continuing might leave the emulator in an unusable state.\r\nWould you like to terminate emulation?", L"Warning", true))
     {
         // TODO: Send IDM_CLOSE_ROM instead... probably better :P
         AsyncExecutor::invoke_async([] {
@@ -916,7 +915,7 @@ bool confirm_user_exit()
     bool close = false;
     if (warnings > 0)
     {
-        close = DialogService::show_ask_dialog("view_stop_emulation_warning", final_message.c_str(), L"Close ROM", true);
+        close = DialogService::show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message.c_str(), L"Close ROM", true);
     }
 
     return close || warnings == 0;
@@ -1634,11 +1633,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
 
                     const auto result = DialogService::show_multiple_choice_dialog(
-                    "ramstart",
+                    VIEW_DLG_RAMSTART,
                     {L"Copy STROOP config line", L"Close"},
                     str.c_str(),
                     L"Show RAM Start",
-                    0,
                     fsvc_information);
 
                     if (result == 0)
@@ -2295,8 +2293,8 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.get_saves_directory = get_saves_directory;
     g_core.get_backups_directory = get_backups_directory;
     g_core.get_summercart_path = get_summercart_path;
-    g_core.show_multiple_choice_dialog = [] (const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, size_t default_index, core_dialog_type type) {
-        return DialogService::show_multiple_choice_dialog(id, choices, str, title, default_index, type);
+    g_core.show_multiple_choice_dialog = [] (const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type) {
+        return DialogService::show_multiple_choice_dialog(id, choices, str, title, type);
     };
     g_core.show_ask_dialog = [] (const std::string& id, const wchar_t* str, const wchar_t* title, bool warning) {
         return DialogService::show_ask_dialog(id, str, title, warning);

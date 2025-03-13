@@ -17,11 +17,10 @@ namespace DialogService
      * \param choices The collection of choices.
      * \param str The dialog content.
      * \param title The dialog title.
-     * \param default_index The choice index to return when the user has chosen to not use modals.
      * \param hwnd The parent window. If nullptr, the main window will be used.
-     * \return The index of the chosen choice. If the user has chosen to not use modals, this function will return <c>default_index</c> by default. If the user has chosen to not show the dialog again, this function will return the last choice.
+     * \return The index of the chosen choice. If the user has chosen to not use modals, this function will return the index specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function will return the last choice.
      */
-    size_t show_multiple_choice_dialog(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title = nullptr, size_t default_index = 0, core_dialog_type type = fsvc_warning, void* hwnd = nullptr);
+    size_t show_multiple_choice_dialog(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title = nullptr, core_dialog_type type = fsvc_warning, void* hwnd = nullptr);
 
     /**
      * \brief Asks the user a Yes/No question.
@@ -30,7 +29,7 @@ namespace DialogService
      * \param title The dialog title.
      * \param warning Whether the tone of the message is perceived as a warning.
      * \param hwnd The parent window. If nullptr, the main window will be used.
-     * \return Whether the user answered Yes. If the user has chosen to not use modals, this function will return true by default. If the user has chosen to not show the dialog again, this function will return the last choice.
+     * \return Whether the user answered Yes. If the user has chosen to not use modals, this function will return the value specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function will return the last choice.
      */
     bool show_ask_dialog(const std::string& id, const wchar_t* str, const wchar_t* title = nullptr, bool warning = false, void* hwnd = nullptr);
 

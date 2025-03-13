@@ -556,6 +556,11 @@ cfg_view get_default_config()
     .down_cmd = ACTION_SELECT_SLOT10,
     };
 
+    for (const auto& pair : DIALOG_IDS)
+    {
+        config.silent_mode_dialog_choices[string_to_wstring(pair.first)] = std::to_wstring(pair.second);
+    }
+    
     set_default_hotkey_keys(&config);
 
     return config;
@@ -853,6 +858,7 @@ mINI::INIStructure handle_config_ini(bool is_reading, mINI::INIStructure ini)
     HANDLE_P_VALUE(core.max_lag)
     HANDLE_VALUE(seeker_value)
     HANDLE_P_VALUE(multi_frame_advance_count)
+    HANDLE_VALUE(silent_mode_dialog_choices)
 
     return ini;
 }
@@ -887,6 +893,15 @@ void config_apply_limits()
     }
 
     g_config.settings_tab = std::min(std::max(g_config.settings_tab, 0), 2);
+
+    for (const auto& pair : DIALOG_IDS)
+    {
+        const auto key = string_to_wstring(pair.first);
+        if (!g_config.silent_mode_dialog_choices.contains(key))
+        {
+            g_config.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
+        }
+    }
 }
 
 void save_config()

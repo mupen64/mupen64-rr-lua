@@ -83,8 +83,7 @@ HWND SettingsListView::create(const t_settings_listview_context& ctx)
     ListView_SetImageList(lvhwnd, image_list, LVSIL_SMALL);
 
     ListView_EnableGroupView(lvhwnd, true);
-    ListView_SetExtendedListViewStyle(lvhwnd,
-                                      LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_INFOTIP | LVS_EX_LABELTIP);
+    ListView_SetExtendedListViewStyle(lvhwnd, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_INFOTIP | LVS_EX_LABELTIP);
 
     LVGROUP lvgroup;
     lvgroup.cbSize = sizeof(LVGROUP);
@@ -120,8 +119,8 @@ HWND SettingsListView::create(const t_settings_listview_context& ctx)
         ListView_InsertItem(lvhwnd, &lv_item);
     }
 
-    ListView_SetColumnWidth(lvhwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-    ListView_SetColumnWidth(lvhwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
+    ListView_SetColumnWidth(lvhwnd, 0, 180);
+    ListView_SetColumnWidth(lvhwnd, 1, 170);
 
     return lvhwnd;
 }

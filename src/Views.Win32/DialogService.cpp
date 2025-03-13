@@ -14,12 +14,13 @@
 
 std::unordered_map<std::string, size_t> dialog_choice_map;
 
-size_t DialogService::show_multiple_choice_dialog(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, size_t default_index, core_dialog_type type, void* hwnd)
+size_t DialogService::show_multiple_choice_dialog(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type, void* hwnd)
 {
     if (g_config.silent_mode)
     {
+        const auto default_index = g_config.silent_mode_dialog_choices[string_to_wstring(id)];
         g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str, default_index);
-        return default_index;
+        return std::stoi(default_index);
     }
 
     if (dialog_choice_map.contains(id))
@@ -78,7 +79,7 @@ size_t DialogService::show_multiple_choice_dialog(const std::string& id, const s
 
 bool DialogService::show_ask_dialog(const std::string& id, const wchar_t* str, const wchar_t* title, bool warning, void* hwnd)
 {
-    return show_multiple_choice_dialog(id, {L"Yes", L"No"}, str, title, 0, warning ? fsvc_warning : fsvc_information, hwnd) == 0;
+    return show_multiple_choice_dialog(id, {L"Yes", L"No"}, str, title, warning ? fsvc_warning : fsvc_information, hwnd) == 0;
 }
 
 void DialogService::show_dialog(const wchar_t* str, const wchar_t* title, core_dialog_type type, void* hwnd)

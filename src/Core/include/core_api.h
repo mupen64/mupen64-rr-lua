@@ -118,6 +118,21 @@ typedef struct {
 
 } core_plugin_funcs;
 
+#pragma region Dialog IDs
+    
+#define CORE_DLG_FLOAT_EXCEPTION "CORE_DLG_FLOAT_EXCEPTION"
+#define CORE_DLG_ST_HASH_MISMATCH "CORE_DLG_ST_HASH_MISMATCH"
+#define CORE_DLG_ST_UNFREEZE_WARNING "CORE_DLG_ST_UNFREEZE_WARNING"
+#define CORE_DLG_ST_NOT_FROM_MOVIE "CORE_DLG_ST_NOT_FROM_MOVIE"
+#define CORE_DLG_VCR_RAWDATA_WARNING "CORE_DLG_VCR_RAWDATA_WARNING"
+#define CORE_DLG_VCR_WIIVC_WARNING "CORE_DLG_VCR_WIIVC_WARNING"
+#define CORE_DLG_VCR_ROM_NAME_WARNING "CORE_DLG_VCR_ROM_NAME_WARNING"
+#define CORE_DLG_VCR_ROM_CCODE_WARNING "CORE_DLG_VCR_ROM_CCODE_WARNING"
+#define CORE_DLG_VCR_ROM_CRC_WARNING "CORE_DLG_VCR_ROM_CRC_WARNING"
+#define CORE_DLG_VCR_CHEAT_LOAD_ERROR "CORE_DLG_VCR_CHEAT_LOAD_ERROR"
+
+#pragma endregion
+    
 /**
  * \brief The core's parameters.
  */
@@ -203,10 +218,9 @@ typedef struct {
      * \param choices The collection of choices.
      * \param str The dialog content.
      * \param title The dialog title.
-     * \param default_index The choice index to return when the user has chosen to not use modals.
-     * \return The index of the chosen choice. If the user has chosen to not use modals, this function will <c>default_index</c> by default. If the user has chosen to not show the dialog again, this function will return the last choice.
+     * \return The index of the chosen choice. If the user has chosen to not use modals, this function will return the index specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function will return the last choice.
      */
-    size_t (*show_multiple_choice_dialog)(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, size_t default_index, core_dialog_type type);
+    size_t (*show_multiple_choice_dialog)(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type);
 
     /**
      * \brief Asks the user a Yes/No question.
@@ -214,7 +228,7 @@ typedef struct {
      * \param str The dialog content.
      * \param title The dialog title.
      * \param warning Whether the tone of the message is perceived as a warning.
-     * \return Whether the user answered Yes. If the user has chosen to not use modals, this function will return true by default. If the user has chosen to not show the dialog again, this function will return the last choice.
+     * \return Whether the user answered Yes. If the user has chosen to not use modals, this function will return the value specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function will return the last choice.
      */
     bool (*show_ask_dialog)(const std::string& id, const wchar_t* str, const wchar_t* title, bool warning);
 
