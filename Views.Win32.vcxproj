@@ -300,6 +300,7 @@
     <ClInclude Include="src\Views.Win32\lua\presenters\DCompPresenter.h" />
     <ClInclude Include="src\Views.Win32\lua\presenters\GDIPresenter.h" />
     <ClInclude Include="src\Views.Win32\lua\presenters\Presenter.h" />
+    <ClInclude Include="src\Views.Win32\lua\LuaRegistry.h" />
     <ClInclude Include="src\Views.Win32\Messenger.h" />
     <ClInclude Include="src\Views.Win32\PlatformService.h" />
     <ClInclude Include="src\Views.Win32\Plugin.h" />
@@ -349,6 +350,7 @@
     <ClCompile Include="src\Views.Win32\lua\LuaService.cpp" />
     <ClCompile Include="src\Views.Win32\lua\presenters\DCompPresenter.cpp" />
     <ClCompile Include="src\Views.Win32\lua\presenters\GDIPresenter.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\LuaRegistry.cpp" />
     <ClCompile Include="src\Views.Win32\Messenger.cpp" />
     <ClCompile Include="src\Views.Win32\PlatformService.cpp" />
     <ClCompile Include="src\Views.Win32\Plugin.cpp" />

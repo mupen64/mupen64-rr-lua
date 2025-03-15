@@ -4,16 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-}
+#pragma once
 
-
-#include <mmsystem.h>
 #include <gui/Main.h>
 #include <gui/features/Statusbar.h>
-#include <lua/LuaConsole.h>
+#include <Messenger.h>
 
 namespace LuaCore::Emu
 {
@@ -271,8 +266,7 @@ namespace LuaCore::Emu
     {
         LuaEnvironment* lua = get_lua_class(L);
         lua_pushboolean(
-            L, GetForegroundWindow() == g_main_hwnd || GetActiveWindow() ==
-            g_main_hwnd);
+        L, GetForegroundWindow() == g_main_hwnd || GetActiveWindow() == g_main_hwnd);
         return 1;
     }
 
@@ -348,30 +342,28 @@ namespace LuaCore::Emu
 
     static int GetAddress(lua_State* L)
     {
-        struct NameAndVariable
-        {
+        struct NameAndVariable {
             const char* name;
             void* pointer;
         };
 #define A(x, n) {x, &n}
 #define B(x, n) {x, n}
         const NameAndVariable list[] = {
-            A("rdram", g_core.rdram),
-            A("rdram_register", g_core.rdram_register),
-            A("MI_register", g_core.MI_register),
-            A("pi_register", g_core.pi_register),
-            A("sp_register", g_core.sp_register),
-            A("rsp_register", g_core.rsp_register),
-            A("si_register", g_core.si_register),
-            A("vi_register", g_core.vi_register),
-            A("ri_register", g_core.ri_register),
-            A("ai_register", g_core.ai_register),
-            A("dpc_register", g_core.dpc_register),
-            A("dps_register", g_core.dps_register),
-            B("SP_DMEM", g_core.SP_DMEM),
-            B("PIF_RAM", g_core.PIF_RAM),
-            {NULL, NULL}
-        };
+        A("rdram", g_core.rdram),
+        A("rdram_register", g_core.rdram_register),
+        A("MI_register", g_core.MI_register),
+        A("pi_register", g_core.pi_register),
+        A("sp_register", g_core.sp_register),
+        A("rsp_register", g_core.rsp_register),
+        A("si_register", g_core.si_register),
+        A("vi_register", g_core.vi_register),
+        A("ri_register", g_core.ri_register),
+        A("ai_register", g_core.ai_register),
+        A("dpc_register", g_core.dpc_register),
+        A("dps_register", g_core.dps_register),
+        B("SP_DMEM", g_core.SP_DMEM),
+        B("PIF_RAM", g_core.PIF_RAM),
+        {NULL, NULL}};
 #undef A
 #undef B
         const char* s = lua_tostring(L, 1);
@@ -391,21 +383,21 @@ namespace LuaCore::Emu
     {
         int type = luaL_optnumber(L, 1, 0);
 
-    	// 0 = name + version number
-    	// 1 = version number
+        // 0 = name + version number
+        // 1 = version number
 
-    	std::wstring version = get_mupen_name();
+        std::wstring version = get_mupen_name();
 
         if (type > 0)
         {
-	        version = version.substr(std::string("Mupen 64 ").size());
+            version = version.substr(std::string("Mupen 64 ").size());
         }
 
         lua_pushstring(L, wstring_to_string(version).c_str());
         return 1;
     }
 
-    //emu
+    // emu
     static int ConsoleWriteLua(lua_State* L)
     {
         get_lua_class(L)->print(string_to_wstring(lua_tostring(L, 1)));
@@ -417,4 +409,4 @@ namespace LuaCore::Emu
         Statusbar::post(string_to_wstring(lua_tostring(L, 1)));
         return 0;
     }
-}
+} // namespace LuaCore::Emu

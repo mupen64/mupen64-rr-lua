@@ -6,16 +6,7 @@
  
 #pragma once
 
-#include <microlru.h>
 #include "presenters/Presenter.h"
-
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
-
-#include <gdiplus.h>
 
 using callback_key = uint8_t;
 
@@ -200,9 +191,6 @@ public:
     {
         print_con(hwnd, text);
     }
-
-private:
-    void register_functions();
 };
 
 

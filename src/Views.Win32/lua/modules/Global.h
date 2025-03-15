@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
-
-
+#pragma once
 
 namespace LuaCore::Global
 {

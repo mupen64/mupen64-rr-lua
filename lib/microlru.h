@@ -1,5 +1,7 @@
 // MicroLRU Aurumaker72 2024
 
+#pragma once
+
 #include <functional>
 #include <optional>
 #include <vector>

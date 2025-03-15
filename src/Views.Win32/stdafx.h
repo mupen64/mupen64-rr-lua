@@ -41,7 +41,14 @@
 #include <deque>
 #include <numeric>
 
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 #include <spdlog/logger.h>
+#include <microlru.h>
 #include <Config.h>
 #include <core_api.h>
 #include <IOHelpers.h>
@@ -66,3 +73,5 @@
 #include <d3d11.h>
 #include <dcomp.h>
 #include <shlobj_core.h>
+#include <xxh64.h>
+#include <lua/LuaConsole.h>

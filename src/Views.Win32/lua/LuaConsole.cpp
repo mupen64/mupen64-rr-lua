@@ -8,21 +8,11 @@
 #include "LuaConsole.h"
 #include "Config.h"
 #include "DialogService.h"
+#include "LuaRegistry.h"
 #include "Messenger.h"
 #include <gui/Main.h>
 #include <gui/features/Statusbar.h>
 #include <gui/wrapper/PersistentPathDialog.h>
-#include "modules/AVI.h"
-#include "modules/D2D.h"
-#include "modules/Emu.h"
-#include "modules/Global.h"
-#include "modules/IOHelper.h"
-#include "modules/Input.h"
-#include "modules/Joypad.h"
-#include "modules/Memory.h"
-#include "modules/Movie.h"
-#include "modules/Savestate.h"
-#include "modules/WGUI.h"
 #include "presenters/DCompPresenter.h"
 #include "presenters/GDIPresenter.h"
 
@@ -281,177 +271,6 @@ void UnregisterFunction(lua_State* L, callback_key key)
     lua_error(L);
 }
 
-// these begin and end comments help to generate documentation
-// please don't remove them
-
-// begin lua funcs
-const luaL_Reg globalFuncs[] = {{"print", LuaCore::Global::Print}, {"printx", LuaCore::Global::PrintX}, {"tostringex", LuaCore::Global::ToStringExs}, {"stop", LuaCore::Global::StopScript}, {NULL, NULL}};
-
-const luaL_Reg emuFuncs[] = {{"console", LuaCore::Emu::ConsoleWriteLua},
-                             {"statusbar", LuaCore::Emu::StatusbarWrite},
-
-                             {"atvi", LuaCore::Emu::RegisterVI},
-                             {"atupdatescreen", LuaCore::Emu::RegisterUpdateScreen},
-                             {"atdrawd2d", LuaCore::Emu::RegisterAtDrawD2D},
-                             {"atinput", LuaCore::Emu::RegisterInput},
-                             {"atstop", LuaCore::Emu::RegisterStop},
-                             {"atwindowmessage", LuaCore::Emu::RegisterWindowMessage},
-                             {"atinterval", LuaCore::Emu::RegisterInterval},
-                             {"atplaymovie", LuaCore::Emu::RegisterPlayMovie},
-                             {"atstopmovie", LuaCore::Emu::RegisterStopMovie},
-                             {"atloadstate", LuaCore::Emu::RegisterLoadState},
-                             {"atsavestate", LuaCore::Emu::RegisterSaveState},
-                             {"atreset", LuaCore::Emu::RegisterReset},
-                             {"atseekcompleted", LuaCore::Emu::RegisterSeekCompleted},
-                             {"atwarpmodifystatuschanged", LuaCore::Emu::RegisterWarpModifyStatusChanged},
-
-                             {"framecount", LuaCore::Emu::GetVICount},
-                             {"samplecount", LuaCore::Emu::GetSampleCount},
-                             {"inputcount", LuaCore::Emu::GetInputCount},
-
-                             // DEPRECATE: This is completely useless
-                             {"getversion", LuaCore::Emu::GetMupenVersion},
-
-                             {"pause", LuaCore::Emu::EmuPause},
-                             {"getpause", LuaCore::Emu::GetEmuPause},
-                             {"getspeed", LuaCore::Emu::GetSpeed},
-                             {"get_ff", LuaCore::Emu::GetFastForward},
-                             {"set_ff", LuaCore::Emu::SetFastForward},
-                             {"speed", LuaCore::Emu::SetSpeed},
-                             {"speedmode", LuaCore::Emu::SetSpeedMode},
-                             // DEPRECATE: This is completely useless
-                             {"setgfx", LuaCore::Emu::SetGFX},
-
-                             {"getaddress", LuaCore::Emu::GetAddress},
-
-                             {"screenshot", LuaCore::Emu::Screenshot},
-
-#pragma region WinAPI
-                             {"play_sound", LuaCore::Emu::LuaPlaySound},
-#pragma endregion
-                             {"ismainwindowinforeground", LuaCore::Emu::IsMainWindowInForeground},
-
-                             {NULL, NULL}};
-const luaL_Reg memoryFuncs[] = {
-// memory conversion functions
-{"inttofloat", LuaCore::Memory::LuaIntToFloat},
-{"inttodouble", LuaCore::Memory::LuaIntToDouble},
-{"floattoint", LuaCore::Memory::LuaFloatToInt},
-{"doubletoint", LuaCore::Memory::LuaDoubleToInt},
-{"qwordtonumber", LuaCore::Memory::LuaQWordToNumber},
-
-// word = 2 bytes
-// reading functions
-{"readbytesigned", LuaCore::Memory::LuaReadByteSigned},
-{"readbyte", LuaCore::Memory::LuaReadByteUnsigned},
-{"readwordsigned", LuaCore::Memory::LuaReadWordSigned},
-{"readword", LuaCore::Memory::LuaReadWordUnsigned},
-{"readdwordsigned", LuaCore::Memory::LuaReadDWordSigned},
-{"readdword", LuaCore::Memory::LuaReadDWorldUnsigned},
-{"readqwordsigned", LuaCore::Memory::LuaReadQWordSigned},
-{"readqword", LuaCore::Memory::LuaReadQWordUnsigned},
-{"readfloat", LuaCore::Memory::LuaReadFloat},
-{"readdouble", LuaCore::Memory::LuaReadDouble},
-{"readsize", LuaCore::Memory::LuaReadSize},
-
-// writing functions
-// all of these are assumed to be unsigned
-{"writebyte", LuaCore::Memory::LuaWriteByteUnsigned},
-{"writeword", LuaCore::Memory::LuaWriteWordUnsigned},
-{"writedword", LuaCore::Memory::LuaWriteDWordUnsigned},
-{"writeqword", LuaCore::Memory::LuaWriteQWordUnsigned},
-{"writefloat", LuaCore::Memory::LuaWriteFloatUnsigned},
-{"writedouble", LuaCore::Memory::LuaWriteDoubleUnsigned},
-
-{"writesize", LuaCore::Memory::LuaWriteSize},
-    
-{"recompilenow", LuaCore::Memory::Recompile},
-{"recompile", LuaCore::Memory::Recompile},
-{"recompilenext", LuaCore::Memory::Recompile},
-{"recompilenextall", LuaCore::Memory::RecompileNextAll},
-
-{NULL, NULL}};
-
-const luaL_Reg wguiFuncs[] = {{"setbrush", LuaCore::Wgui::set_brush},
-                              {"setpen", LuaCore::Wgui::set_pen},
-                              {"setcolor", LuaCore::Wgui::set_text_color},
-                              {"setbk", LuaCore::Wgui::SetBackgroundColor},
-                              {"setfont", LuaCore::Wgui::SetFont},
-                              {"text", LuaCore::Wgui::LuaTextOut},
-                              {"drawtext", LuaCore::Wgui::LuaDrawText},
-                              {"drawtextalt", LuaCore::Wgui::LuaDrawTextAlt},
-                              {"gettextextent", LuaCore::Wgui::GetTextExtent},
-                              {"rect", LuaCore::Wgui::DrawRect},
-                              {"fillrect", LuaCore::Wgui::FillRect},
-                              /*<GDIPlus>*/
-                              // GDIPlus functions marked with "a" suffix
-                              {"fillrecta", LuaCore::Wgui::FillRectAlpha},
-                              {"fillellipsea", LuaCore::Wgui::FillEllipseAlpha},
-                              {"fillpolygona", LuaCore::Wgui::FillPolygonAlpha},
-                              {"loadimage", LuaCore::Wgui::LuaLoadImage},
-                              {"deleteimage", LuaCore::Wgui::DeleteImage},
-                              {"drawimage", LuaCore::Wgui::DrawImage},
-                              {"loadscreen", LuaCore::Wgui::LoadScreen},
-                              {"loadscreenreset", LuaCore::Wgui::LoadScreenReset},
-                              {"getimageinfo", LuaCore::Wgui::GetImageInfo},
-                              /*</GDIPlus*/
-                              {"ellipse", LuaCore::Wgui::DrawEllipse},
-                              {"polygon", LuaCore::Wgui::DrawPolygon},
-                              {"line", LuaCore::Wgui::DrawLine},
-                              {"info", LuaCore::Wgui::GetGUIInfo},
-                              {"resize", LuaCore::Wgui::ResizeWindow},
-                              {"setclip", LuaCore::Wgui::SetClip},
-                              {"resetclip", LuaCore::Wgui::ResetClip},
-                              {NULL, NULL}};
-
-const luaL_Reg d2dFuncs[] = {{"create_brush", LuaCore::D2D::create_brush},
-                             {"free_brush", LuaCore::D2D::free_brush},
-
-                             {"clear", LuaCore::D2D::clear},
-                             {"fill_rectangle", LuaCore::D2D::fill_rectangle},
-                             {"draw_rectangle", LuaCore::D2D::draw_rectangle},
-                             {"fill_ellipse", LuaCore::D2D::fill_ellipse},
-                             {"draw_ellipse", LuaCore::D2D::draw_ellipse},
-                             {"draw_line", LuaCore::D2D::draw_line},
-                             {"draw_text", LuaCore::D2D::draw_text},
-                             {"get_text_size", LuaCore::D2D::measure_text},
-                             {"push_clip", LuaCore::D2D::push_clip},
-                             {"pop_clip", LuaCore::D2D::pop_clip},
-                             {"fill_rounded_rectangle", LuaCore::D2D::fill_rounded_rectangle},
-                             {"draw_rounded_rectangle", LuaCore::D2D::draw_rounded_rectangle},
-                             {"load_image", LuaCore::D2D::load_image},
-                             {"free_image", LuaCore::D2D::free_image},
-                             {"draw_image", LuaCore::D2D::draw_image},
-                             {"get_image_info", LuaCore::D2D::get_image_info},
-                             {"set_text_antialias_mode", LuaCore::D2D::set_text_antialias_mode},
-                             {"set_antialias_mode", LuaCore::D2D::set_antialias_mode},
-
-                             {"draw_to_image", LuaCore::D2D::draw_to_image},
-                             {NULL, NULL}};
-
-const luaL_Reg inputFuncs[] = {{"get", LuaCore::Input::get_keys}, {"diff", LuaCore::Input::GetKeyDifference}, {"prompt", LuaCore::Input::InputPrompt}, {"get_key_name_text", LuaCore::Input::LuaGetKeyNameText}, {NULL, NULL}};
-const luaL_Reg joypadFuncs[] = {{"get", LuaCore::Joypad::lua_get_joypad},
-                                {"set", LuaCore::Joypad::lua_set_joypad},
-                                // OBSOLETE: Cross-module reach
-                                {"count", LuaCore::Emu::GetInputCount},
-                                {NULL, NULL}};
-
-const luaL_Reg movieFuncs[] = {{"play", LuaCore::Movie::PlayMovie},
-                               {"stop", LuaCore::Movie::StopMovie},
-                               {"get_filename", LuaCore::Movie::GetMovieFilename},
-                               {"get_readonly", LuaCore::Movie::GetVCRReadOnly},
-                               {"set_readonly", LuaCore::Movie::SetVCRReadOnly},
-                               {"begin_seek", LuaCore::Movie::begin_seek},
-                               {"stop_seek", LuaCore::Movie::stop_seek},
-                               {"is_seeking", LuaCore::Movie::is_seeking},
-                               {"get_seek_completion", LuaCore::Movie::get_seek_completion},
-                               {"begin_warp_modify", LuaCore::Movie::begin_warp_modify},
-                               {NULL, NULL}};
-
-const luaL_Reg savestateFuncs[] = {{"savefile", LuaCore::Savestate::SaveFileSavestate}, {"loadfile", LuaCore::Savestate::LoadFileSavestate}, {NULL, NULL}};
-const luaL_Reg iohelperFuncs[] = {{"filediag", LuaCore::IOHelper::LuaFileDialog}, {NULL, NULL}};
-const luaL_Reg aviFuncs[] = {{"startcapture", LuaCore::Avi::StartCapture}, {"stopcapture", LuaCore::Avi::StopCapture}, {NULL, NULL}};
-// end lua funcs
 
 void close_all_scripts()
 {
@@ -783,7 +602,7 @@ std::string LuaEnvironment::create(const std::filesystem::path& path, HWND wnd)
     lua_environment->bkmode = TRANSPARENT;
     lua_environment->L = luaL_newstate();
     lua_atpanic(lua_environment->L, at_panic);
-    lua_environment->register_functions();
+    LuaRegistry::register_functions(lua_environment->L);
     lua_environment->create_renderer();
 
     // NOTE: We need to add the lua to the global map already since it may receive callbacks while its executing the global code
@@ -865,80 +684,4 @@ void LuaEnvironment::repaint_visuals()
 {
     RedrawWindow(this->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     RedrawWindow(this->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-}
-
-void register_as_package(lua_State* lua_state, const char* name, const luaL_Reg regs[])
-{
-    if (name == nullptr)
-    {
-        const luaL_Reg* p = regs;
-        do
-        {
-            lua_register(lua_state, p->name, p->func);
-        }
-        while ((++p)->func);
-        return;
-    }
-    luaL_newlib(lua_state, regs);
-    lua_setglobal(lua_state, name);
-}
-
-void LuaEnvironment::register_functions()
-{
-    luaL_openlibs(L);
-
-    register_as_package(L, nullptr, globalFuncs);
-    register_as_package(L, "emu", emuFuncs);
-    register_as_package(L, "memory", memoryFuncs);
-    register_as_package(L, "wgui", wguiFuncs);
-    register_as_package(L, "d2d", d2dFuncs);
-    register_as_package(L, "input", inputFuncs);
-    register_as_package(L, "joypad", joypadFuncs);
-    register_as_package(L, "movie", movieFuncs);
-    register_as_package(L, "savestate", savestateFuncs);
-    register_as_package(L, "iohelper", iohelperFuncs);
-    register_as_package(L, "avi", aviFuncs);
-
-    // NOTE: The default os.exit implementation calls C++ destructors before closing the main window (WM_CLOSE + WM_DESTROY),
-    // thereby ripping the program apart for the remaining section of time until the exit, which causes extremely unpredictable crashes and an impossible program state.
-    lua_getglobal(L, "os");
-    lua_pushcfunction(L, LuaCore::Global::Exit);
-    lua_setfield(L, -2, "exit");
-    lua_pop(L, 1);
-    
-    // COMPAT: table.getn deprecated, replaced by # prefix
-    luaL_dostring(L, "table.getn = function(t) return #t end");
-
-    // COMPAT: emu.debugview deprecated, forwarded to print
-    luaL_dostring(L, "emu.debugview = print");
-
-    // COMPAT: movie.playmovie deprecated, forwarded to movie.play
-    luaL_dostring(L, "movie.playmovie = movie.play");
-
-    // COMPAT: movie.stopmovie deprecated, forwarded to movie.stop
-    luaL_dostring(L, "movie.stopmovie = movie.stop");
-
-    // COMPAT: movie.getmoviefilename deprecated, forwarded to movie.get_filename
-    luaL_dostring(L, "movie.getmoviefilename = movie.get_filename");
-
-    // COMPAT: movie.isreadonly deprecated, forwarded to movie.get_readonly
-    luaL_dostring(L, "movie.isreadonly = movie.get_readonly");
-
-    // COMPAT: emu.isreadonly deprecated, forwarded to movie.get_readonly
-    luaL_dostring(L, "emu.isreadonly = movie.get_readonly");
-
-    // DEPRECATED: input.map_virtual_key_ex couples to WinAPI
-    luaL_dostring(L, "input.map_virtual_key_ex = function() print('input.map_virtual_key_ex has been deprecated') end");
-
-    // DEPRECATED: emu.getsystemmetrics couples to WinAPI
-    luaL_dostring(L, "emu.getsystemmetrics = function() print('emu.getsystemmetrics has been deprecated') end");
-
-    // DEPRECATED: movie.begin_seek_to doesn't exist anymore
-    luaL_dostring(L, "movie.begin_seek_to = function() print('movie.begin_seek_to has been deprecated, use movie.begin_seek instead') end");
-
-    // DEPRECATED: movie.get_seek_info doesn't exist anymore
-    luaL_dostring(L, "movie.get_seek_info = function() print('movie.get_seek_info has been deprecated, use movie.begin_seek instead') end");
-
-    // os.execute poses security risks
-    luaL_dostring(L, "os.execute = function() print('os.execute is disabled') end");
 }
