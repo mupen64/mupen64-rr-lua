@@ -15,7 +15,7 @@
 cfg_view g_config;
 std::vector<cfg_hotkey*> g_config_hotkeys;
 
-const std::unordered_map<std::string, size_t> DIALOG_IDS = {
+const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
 {CORE_DLG_FLOAT_EXCEPTION, 0},
 {CORE_DLG_ST_HASH_MISMATCH, 0},
 {CORE_DLG_ST_UNFREEZE_WARNING, 0},
@@ -579,7 +579,7 @@ cfg_view get_default_config()
     .down_cmd = ACTION_SELECT_SLOT10,
     };
 
-    for (const auto& pair : DIALOG_IDS)
+    for (const auto& pair : DIALOG_SILENT_MODE_CHOICES)
     {
         config.silent_mode_dialog_choices[string_to_wstring(pair.first)] = std::to_wstring(pair.second);
     }
@@ -917,7 +917,7 @@ void config_apply_limits()
 
     g_config.settings_tab = std::min(std::max(g_config.settings_tab, 0), 2);
 
-    for (const auto& pair : DIALOG_IDS)
+    for (const auto& pair : DIALOG_SILENT_MODE_CHOICES)
     {
         const auto key = string_to_wstring(pair.first);
         if (!g_config.silent_mode_dialog_choices.contains(key))
