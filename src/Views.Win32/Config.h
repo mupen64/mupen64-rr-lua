@@ -387,7 +387,7 @@ typedef struct ViewCfg {
     /// <summary>
     /// Whether the async executor is used for async calls. If disabled, a new thread is spawned for each call (legacy behaviour).
     /// </summary>
-    int32_t use_async_executor;
+    int32_t use_async_executor = 1;
 
     /// <summary>
     /// Whether the view will apply concurrency fuzzing. When enabled, some functions will be delayed to expose delayed task execution handling deficiencies at the callsite.
