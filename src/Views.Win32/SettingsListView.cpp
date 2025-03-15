@@ -119,8 +119,8 @@ HWND SettingsListView::create(const t_settings_listview_context& ctx)
         ListView_InsertItem(lvhwnd, &lv_item);
     }
 
-    ListView_SetColumnWidth(lvhwnd, 0, 180);
-    ListView_SetColumnWidth(lvhwnd, 1, 170);
+    ListView_SetColumnWidth(lvhwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
+    ListView_SetColumnWidth(lvhwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
 
     return lvhwnd;
 }
