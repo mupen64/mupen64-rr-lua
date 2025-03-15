@@ -1143,30 +1143,30 @@ core_result vcr_stop_record()
     return Res_Ok;
 }
 
-bool show_controller_warning()
+bool show_controller_warning(const core_vcr_movie_header& header)
 {
     for (int32_t i = 0; i < 4; ++i)
     {
-        if (!g_core->controls[i].Present && g_header.controller_flags & CONTROLLER_X_PRESENT(i))
+        if (!g_core->controls[i].Present && header.controller_flags & CONTROLLER_X_PRESENT(i))
         {
             g_core->show_dialog(std::format(CONTROLLER_OFF_ON_MISMATCH, i + 1).c_str(), L"VCR", fsvc_error);
             return false;
-        }
-        if (g_core->controls[i].Present && !(g_header.controller_flags & CONTROLLER_X_PRESENT(i)))
+        }   
+        if (g_core->controls[i].Present && !(header.controller_flags & CONTROLLER_X_PRESENT(i)))
         {
             g_core->show_dialog(std::format(CONTROLLER_ON_OFF_MISMATCH, i + 1).c_str(), L"VCR", fsvc_warning);
         }
         else
         {
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_mempak) && g_header.controller_flags & CONTROLLER_X_MEMPAK(i))
+            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_mempak) && header.controller_flags & CONTROLLER_X_MEMPAK(i))
             {
                 g_core->show_dialog(std::format(CONTROLLER_MEMPAK_MISMATCH, i + 1).c_str(), L"VCR", fsvc_warning);
             }
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_rumblepak) && g_header.controller_flags & CONTROLLER_X_RUMBLE(i))
+            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_rumblepak) && header.controller_flags & CONTROLLER_X_RUMBLE(i))
             {
                 g_core->show_dialog(std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), L"VCR", fsvc_warning);
             }
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_none) && !(g_header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
+            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_none) && !(header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
             {
                 g_core->show_dialog(std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), L"VCR", fsvc_warning);
             }
@@ -1227,7 +1227,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         break;
     }
     
-    if (!show_controller_warning())
+    if (!show_controller_warning(header))
     {
         return VCR_InvalidControllers;
     }
