@@ -205,7 +205,6 @@ private:
     void register_functions();
 };
 
-extern uint64_t inputCount;
 
 /**
  * \brief The controller data at time of the last input poll
@@ -221,6 +220,11 @@ extern core_buttons new_controller_data[4];
  * \brief Whether the <c>new_controller_data</c> of a controller should be pushed the next frame
  */
 extern bool overwrite_controller_data[4];
+
+/**
+ * \brief Amount of call_input calls.
+ */
+extern size_t g_input_count;
 
 extern std::map<HWND, LuaEnvironment*> g_hwnd_lua_map;
 

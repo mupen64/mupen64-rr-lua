@@ -56,5 +56,13 @@
 #include <Shlwapi.h>
 #include <shellapi.h>
 #include <windowsx.h>
-// HACK: Microsoft deprecated multimedia timers with no real alternative and moved them to another header without updating the docs...
 #include <mmsystem.h>
+#include <wincodec.h>
+#include <gdiplus.h>
+#include <d2d1.h>
+#include <d2d1_3.h>
+#include <d2d1helper.h>
+#include <d2d1helper.h>
+#include <d3d11.h>
+#include <dcomp.h>
+#include <shlobj_core.h>

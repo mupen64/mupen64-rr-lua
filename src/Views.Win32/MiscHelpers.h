@@ -6,17 +6,7 @@
 
 #pragma once
 
-#include <d2d1_3.h>
-#include <d2d1helper.h>
-#include <d2d1helper.h>
-#include <d3d11.h>
-#include <dcomp.h>
-#include <gdiplus.h>
-#include <gdiplus.h>
-#include <shlobj_core.h>
-#include <wincodec.h>
-#include <wincodec.h>
-#include <windowsx.h>
+#include <stdafx.h>
 #include <gui/Loggers.h>
 #include <gui/Main.h>
 

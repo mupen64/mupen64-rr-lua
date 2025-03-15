@@ -33,7 +33,7 @@ namespace LuaCore::Emu
 
     static int GetInputCount(lua_State* L)
     {
-        lua_pushinteger(L, inputCount);
+        lua_pushinteger(L, g_input_count);
         return 1;
     }
 

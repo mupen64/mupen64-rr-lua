@@ -6,20 +6,12 @@
 
 #include "stdafx.h"
 #include "LuaConsole.h"
-
 #include "Config.h"
 #include "DialogService.h"
 #include "Messenger.h"
-
-
-
-
-
-#include <gdiplus.h>
 #include <gui/Main.h>
 #include <gui/features/Statusbar.h>
 #include <gui/wrapper/PersistentPathDialog.h>
-#include <wincodec.h>
 #include "modules/AVI.h"
 #include "modules/D2D.h"
 #include "modules/Emu.h"
@@ -40,13 +32,12 @@ const auto GDI_OVERLAY_CLASS = L"lua_gdi_overlay";
 core_buttons last_controller_data[4];
 core_buttons new_controller_data[4];
 bool overwrite_controller_data[4];
+size_t g_input_count = 0;
 
 std::atomic g_d2d_drawing_section = false;
 
 std::map<HWND, LuaEnvironment*> g_hwnd_lua_map;
 std::unordered_map<lua_State*, LuaEnvironment*> g_lua_env_map;
-
-uint64_t inputCount = 0;
 
 
 int at_panic(lua_State* L)

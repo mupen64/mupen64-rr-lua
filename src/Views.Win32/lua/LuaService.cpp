@@ -73,7 +73,7 @@ namespace LuaService
         {
             current_input_n = index;
             invoke_callbacks_with_key_on_all_instances(AtInput, REG_ATINPUT);
-            inputCount++;
+            g_input_count++;
         });
 
         if (overwrite_controller_data[index])
