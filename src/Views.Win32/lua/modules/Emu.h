@@ -6,9 +6,10 @@
 
 #pragma once
 
+#include <Messenger.h>
 #include <gui/Main.h>
 #include <gui/features/Statusbar.h>
-#include <Messenger.h>
+#include <lua/LuaCallbacks.h>
 
 namespace LuaCore::Emu
 {
@@ -32,18 +33,20 @@ namespace LuaCore::Emu
         return 1;
     }
 
+    // TODO: Extract this repeated logic to LuaCallbacks too!
+
     static int RegisterUpdateScreen(lua_State* L)
     {
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATUPDATESCREEN);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATUPDATESCREEN);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATUPDATESCREEN);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATUPDATESCREEN);
         }
         return 0;
     }
@@ -53,13 +56,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATDRAWD2D);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATDRAWD2D);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATDRAWD2D);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATDRAWD2D);
         }
         return 0;
     }
@@ -69,13 +72,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATVI);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATVI);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATVI);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATVI);
         }
         return 0;
     }
@@ -85,13 +88,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATINPUT);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATINPUT);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATINPUT);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATINPUT);
         }
         return 0;
     }
@@ -101,13 +104,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATSTOP);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSTOP);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATSTOP);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSTOP);
         }
         return 0;
     }
@@ -117,13 +120,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_WINDOWMESSAGE);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_WINDOWMESSAGE);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_WINDOWMESSAGE);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_WINDOWMESSAGE);
         }
         return 0;
     }
@@ -133,13 +136,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATINTERVAL);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATINTERVAL);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATINTERVAL);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATINTERVAL);
         }
         return 0;
     }
@@ -149,13 +152,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATPLAYMOVIE);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATPLAYMOVIE);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATPLAYMOVIE);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATPLAYMOVIE);
         }
         return 0;
     }
@@ -165,13 +168,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATSTOPMOVIE);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSTOPMOVIE);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATSTOPMOVIE);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSTOPMOVIE);
         }
         return 0;
     }
@@ -181,13 +184,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATLOADSTATE);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATLOADSTATE);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATLOADSTATE);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATLOADSTATE);
         }
         return 0;
     }
@@ -197,13 +200,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATSAVESTATE);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSAVESTATE);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATSAVESTATE);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSAVESTATE);
         }
         return 0;
     }
@@ -213,13 +216,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATRESET);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATRESET);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATRESET);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATRESET);
         }
         return 0;
     }
@@ -229,13 +232,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATSEEKCOMPLETED);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSEEKCOMPLETED);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATSEEKCOMPLETED);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSEEKCOMPLETED);
         }
         return 0;
     }
@@ -245,13 +248,13 @@ namespace LuaCore::Emu
         if (lua_toboolean(L, 2))
         {
             lua_pop(L, 1);
-            UnregisterFunction(L, REG_ATWARPMODIFYSTATUSCHANGED);
+            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED);
         }
         else
         {
             if (lua_gettop(L) == 2)
                 lua_pop(L, 1);
-            RegisterFunction(L, REG_ATWARPMODIFYSTATUSCHANGED);
+            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED);
         }
         return 0;
     }

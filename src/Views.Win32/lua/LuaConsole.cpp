@@ -8,6 +8,7 @@
 #include "LuaConsole.h"
 #include "Config.h"
 #include "DialogService.h"
+#include "LuaCallbacks.h"
 #include "LuaRegistry.h"
 #include "Messenger.h"
 #include <gui/Main.h>
@@ -38,29 +39,6 @@ int at_panic(lua_State* L)
     DialogService::show_dialog(message.c_str(), L"Lua", fsvc_error);
 
     return 0;
-}
-
-void invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key)
-{
-    // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone the queue
-    // OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry 
-    static std::queue<LuaEnvironment*> destruction_queue;
-
-    assert(destruction_queue.empty());
-    
-    for (const auto& [_, env] : g_hwnd_lua_map)
-    {
-        if (env->invoke_callbacks_with_key(function, key))
-        {
-            destruction_queue.push(env);
-        }
-    }
-
-    while (!destruction_queue.empty())
-    {
-        LuaEnvironment::destroy(destruction_queue.front());
-        destruction_queue.pop();
-    }
 }
 
 void set_button_state(HWND wnd, bool state)
@@ -222,56 +200,6 @@ void lua_create_and_run(const std::wstring& path)
 
 LuaEnvironment* get_lua_class(lua_State* lua_state) { return g_lua_env_map[lua_state]; }
 
-int RegisterFunction(lua_State* L, callback_key key)
-{
-    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 1);
-        lua_newtable(L);
-        lua_rawseti(L, LUA_REGISTRYINDEX, key);
-        lua_rawgeti(L, LUA_REGISTRYINDEX, key);
-    }
-    int i = luaL_len(L, -1) + 1;
-    lua_pushinteger(L, i);
-    lua_pushvalue(L, -3); //
-    lua_settable(L, -3);
-    lua_pop(L, 1);
-    return i;
-}
-
-void UnregisterFunction(lua_State* L, callback_key key)
-{
-    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
-    if (lua_isnil(L, -1))
-    {
-        lua_pop(L, 1);
-        lua_newtable(L); // �Ƃ肠����
-    }
-    int n = luaL_len(L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
-    {
-        lua_pushinteger(L, 1 + i);
-        lua_gettable(L, -2);
-        if (lua_rawequal(L, -1, -3))
-        {
-            lua_pop(L, 1);
-            lua_getglobal(L, "table");
-            lua_getfield(L, -1, "remove");
-            lua_pushvalue(L, -3);
-            lua_pushinteger(L, 1 + i);
-            lua_call(L, 2, 0);
-            lua_pop(L, 2);
-            return;
-        }
-        lua_pop(L, 1);
-    }
-    lua_pop(L, 1);
-    lua_pushfstring(L, "unregisterFunction(%s): not found function", key);
-    lua_error(L);
-}
-
-
 void close_all_scripts()
 {
     assert(is_on_gui_thread());
@@ -327,19 +255,20 @@ LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             BeginPaint(hwnd, &ps);
             GetClientRect(hwnd, &rect);
 
-            bool failed;
+            bool success;
             if (!lua->presenter)
             {
-                failed = lua->invoke_callbacks_with_key(pcall_no_params, REG_ATDRAWD2D);
+                // FIXME: Why are we blue-balling it like this by running the callback without a presenter section?
+                success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATDRAWD2D);
             }
             else
             {
                 lua->presenter->begin_present();
-                failed = lua->invoke_callbacks_with_key(pcall_no_params, REG_ATDRAWD2D);
+                success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATDRAWD2D);
                 lua->presenter->end_present();
             }
 
-            if (failed)
+            if (!success)
             {
                 LuaEnvironment::destroy(lua);
             }
@@ -370,11 +299,11 @@ LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             HDC dc = BeginPaint(hwnd, &ps);
             GetClientRect(hwnd, &rect);
 
-            bool failed = lua->invoke_callbacks_with_key(pcall_no_params, REG_ATUPDATESCREEN);
+            const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATUPDATESCREEN);
 
             BitBlt(dc, 0, 0, lua->dc_size.width, lua->dc_size.height, lua->gdi_back_dc, 0, 0, SRCCOPY);
 
-            if (failed)
+            if (!success)
             {
                 LuaEnvironment::destroy(lua);
             }
@@ -629,7 +558,7 @@ LuaEnvironment::~LuaEnvironment()
     m_ignore_renderer_creation = true;
     SetWindowLongPtr(gdi_overlay_hwnd, GWLP_USERDATA, 0);
     SetWindowLongPtr(d2d_overlay_hwnd, GWLP_USERDATA, 0);
-    invoke_callbacks_with_key(pcall_no_params, REG_ATSTOP);
+    LuaCallbacks::invoke_callbacks_with_key(*this, pcall_no_params, LuaCallbacks::REG_ATSTOP);
     SelectObject(gdi_back_dc, nullptr);
     DeleteObject(brush);
     DeleteObject(pen);
@@ -639,36 +568,6 @@ LuaEnvironment::~LuaEnvironment()
     set_button_state(hwnd, false);
     this->destroy_renderer();
     g_view_logger->info("Lua destroyed");
-}
-
-// calls all functions that lua script has defined as callbacks, reads them from registry
-// returns true at fail
-bool LuaEnvironment::invoke_callbacks_with_key(const std::function<int(lua_State*)>& function, callback_key key)
-{
-    assert(is_on_gui_thread());
-
-    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
-    // shouldn't ever happen but could cause kernel panic
-    if lua_isnil (L, -1)
-    {
-        lua_pop(L, 1);
-        return false;
-    }
-    int n = luaL_len(L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
-    {
-        lua_pushinteger(L, 1 + i);
-        lua_gettable(L, -2);
-        if (function(L))
-        {
-            const char* str = lua_tostring(L, -1);
-            this->print(string_to_wstring(str) + L"\r\n");
-            g_view_logger->info("Lua error: {}", str);
-            return true;
-        }
-    }
-    lua_pop(L, 1);
-    return false;
 }
 
 void LuaEnvironment::invalidate_visuals()

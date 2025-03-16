@@ -8,8 +8,6 @@
 
 #include "presenters/Presenter.h"
 
-using callback_key = uint8_t;
-
 typedef struct s_window_procedure_params
 {
     HWND wnd;
@@ -45,40 +43,15 @@ void close_all_scripts();
  */
 void stop_all_scripts();
 
-/**
- * \brief Invokes a lua callback on all instances
- * \param function The native function
- * \param key The function's registration key
- */
-void invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key);
-
-static const callback_key REG_LUACLASS = 1;
-static const callback_key REG_ATUPDATESCREEN = 2;
-static const callback_key REG_ATDRAWD2D = 3;
-static const callback_key REG_ATVI = 4;
-static const callback_key REG_ATINPUT = 5;
-static const callback_key REG_ATSTOP = 6;
-static const callback_key REG_SYNCBREAK = 7;
-static const callback_key REG_READBREAK = 8;
-static const callback_key REG_WRITEBREAK = 9;
-static const callback_key REG_WINDOWMESSAGE = 10;
-static const callback_key REG_ATINTERVAL = 11;
-static const callback_key REG_ATPLAYMOVIE = 12;
-static const callback_key REG_ATSTOPMOVIE = 13;
-static const callback_key REG_ATLOADSTATE = 14;
-static const callback_key REG_ATSAVESTATE = 15;
-static const callback_key REG_ATRESET = 16;
-static const callback_key REG_ATSEEKCOMPLETED = 17;
-static const callback_key REG_ATWARPMODIFYSTATUSCHANGED = 18;
-
 static uint32_t lua_gdi_color_mask = RGB(255, 0, 255);
 static HBRUSH alpha_mask_brush = CreateSolidBrush(lua_gdi_color_mask);
 
-inline int pcall_no_params(lua_State* L)
+static int pcall_no_params(lua_State* L)
 {
     return lua_pcall(L, 0, 0, 0);
 }
 
+// FIXME: This being a class just makes us shuck and jive around OOP while not doing it properly. It should be a struct.
 class LuaEnvironment
 {
 public:
@@ -169,10 +142,6 @@ public:
     void destroy_loadscreen();
 
     void ensure_d2d_renderer_created();
-    
-    //calls all functions that lua script has defined as callbacks, reads them from registry
-    //returns true at fail
-    bool invoke_callbacks_with_key(const std::function<int(lua_State*)>& function, callback_key key);
 
     // Invalidates the composition layer
     void invalidate_visuals();
@@ -221,16 +190,3 @@ extern std::map<HWND, LuaEnvironment*> g_hwnd_lua_map;
  */
 LuaEnvironment* get_lua_class(lua_State* lua_state);
 
-/**
- * \brief Registers a function with a key to a lua state
- * \param L The lua state
- * \param key The function's key
- */
-int RegisterFunction(lua_State* L, callback_key key);
-
-/**
- * \brief Unregisters a function with a key to a lua state
-* \param L The lua state
- * \param key The function's key
- */
-void UnregisterFunction(lua_State* L, callback_key key);

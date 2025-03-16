@@ -285,7 +285,7 @@
     <ClInclude Include="src\Views.Win32\Config.h" />
     <ClInclude Include="src\Views.Win32\gui\wrapper\PersistentPathDialog.h" />
     <ClInclude Include="src\Views.Win32\lua\LuaConsole.h" />
-    <ClInclude Include="src\Views.Win32\lua\LuaService.h" />
+    <ClInclude Include="src\Views.Win32\lua\LuaCallbacks.h" />
     <ClInclude Include="src\Views.Win32\lua\modules\AVI.h" />
     <ClInclude Include="src\Views.Win32\lua\modules\D2D.h" />
     <ClInclude Include="src\Views.Win32\lua\modules\Emu.h" />
@@ -347,7 +347,7 @@
     <ClCompile Include="src\Views.Win32\gui\Main.cpp" />
     <ClCompile Include="src\Views.Win32\gui\wrapper\PersistentPathDialog.cpp" />
     <ClCompile Include="src\Views.Win32\lua\LuaConsole.cpp" />
-    <ClCompile Include="src\Views.Win32\lua\LuaService.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\LuaCallbacks.cpp" />
     <ClCompile Include="src\Views.Win32\lua\presenters\DCompPresenter.cpp" />
     <ClCompile Include="src\Views.Win32\lua\presenters\GDIPresenter.cpp" />
     <ClCompile Include="src\Views.Win32\lua\LuaRegistry.cpp" />

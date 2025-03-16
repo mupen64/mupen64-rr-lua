@@ -32,7 +32,7 @@
 #include <gui/features/UpdateChecker.h>
 #include <gui/wrapper/PersistentPathDialog.h>
 #include <lua/LuaConsole.h>
-#include <lua/LuaService.h>
+#include <lua/LuaCallbacks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 // Throwaway actions which can be spammed get keys as to not clog up the async executor queue
@@ -404,7 +404,7 @@ const wchar_t* get_input_text()
     static wchar_t text[1024]{};
     memset(text, 0, sizeof(text));
 
-    core_buttons b = LuaService::get_last_controller_data(0);
+    core_buttons b = LuaCallbacks::get_last_controller_data(0);
     wsprintf(text, L"(%d, %d) ", b.y, b.x);
     if (b.start)
         lstrcatW(text, L"S");
@@ -810,14 +810,14 @@ void on_config_loaded(std::any)
 
 void on_seek_completed(std::any)
 {
-    LuaService::call_seek_completed();
+    LuaCallbacks::call_seek_completed();
 }
 
 
 void on_warp_modify_status_changed(std::any data)
 {
     auto value = std::any_cast<bool>(data);
-    LuaService::call_warp_modify_status_changed(value);
+    LuaCallbacks::call_warp_modify_status_changed(value);
 }
 
 void update_core_fast_forward(std::any)
@@ -1160,7 +1160,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
         // https://github.com/mkdasher/mupen64-rr-lua-/issues/190
-        LuaService::call_window_message(hwnd, Message, wParam, lParam);
+        LuaCallbacks::call_window_message(hwnd, Message, wParam, lParam);
         break;
     case WM_NOTIFY:
         {
@@ -1445,7 +1445,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     ScopeTimer timer("100,000,000x call_reset", g_view_logger.get());
                     for (int i = 0; i < 100'000'000; ++i)
                     {
-                        LuaService::call_reset();
+                        LuaCallbacks::call_reset();
                     }
                     DialogService::show_dialog(std::format(L"100,000,000 atreset callback invocations took {}ms", timer.momentary_ms()).c_str(), L"Benchmark Lua Callback", fsvc_information);
                 }
@@ -2195,17 +2195,17 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.cfg = &g_config.core;
     g_core.callbacks = {};
     g_core.callbacks.vi = [] {
-        LuaService::call_interval();
-        LuaService::call_vi();
+        LuaCallbacks::call_interval();
+        LuaCallbacks::call_vi();
         at_vi();
     };
-    g_core.callbacks.input = LuaService::call_input;
+    g_core.callbacks.input = LuaCallbacks::call_input;
     g_core.callbacks.frame = on_new_frame;
-    g_core.callbacks.interval = LuaService::call_interval;
+    g_core.callbacks.interval = LuaCallbacks::call_interval;
     g_core.callbacks.ai_len_changed = ai_len_changed;
-    g_core.callbacks.play_movie = LuaService::call_play_movie;
+    g_core.callbacks.play_movie = LuaCallbacks::call_play_movie;
     g_core.callbacks.stop_movie = [] {
-        LuaService::call_stop_movie();
+        LuaCallbacks::call_stop_movie();
         if (EncodingManager::is_capturing())
             EncodingManager::stop_capture();
     };
@@ -2213,10 +2213,10 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         if (EncodingManager::is_capturing())
             EncodingManager::stop_capture();
     };
-    g_core.callbacks.save_state = LuaService::call_save_state;
-    g_core.callbacks.load_state = LuaService::call_load_state;
-    g_core.callbacks.reset = LuaService::call_reset;
-    g_core.callbacks.seek_completed = LuaService::call_seek_completed;
+    g_core.callbacks.save_state = LuaCallbacks::call_save_state;
+    g_core.callbacks.load_state = LuaCallbacks::call_load_state;
+    g_core.callbacks.reset = LuaCallbacks::call_reset;
+    g_core.callbacks.seek_completed = LuaCallbacks::call_seek_completed;
     g_core.callbacks.core_executing_changed = [](bool value) {
         Messenger::broadcast(Messenger::Message::CoreExecutingChanged, value);
     };
