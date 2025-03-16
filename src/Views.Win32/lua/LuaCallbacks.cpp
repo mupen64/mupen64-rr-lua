@@ -182,11 +182,11 @@ bool LuaCallbacks::invoke_callbacks_with_key(const LuaEnvironment& lua, const st
 void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key)
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone the queue
-    // OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry 
+    // OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
     static std::queue<LuaEnvironment*> destruction_queue;
 
     assert(destruction_queue.empty());
-    
+
     for (const auto& [_, env] : g_hwnd_lua_map)
     {
         if (!LuaCallbacks::invoke_callbacks_with_key(*env, function, key))
@@ -202,8 +202,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::functio
     }
 }
 
-
-int LuaCallbacks::register_function(lua_State* L, callback_key key)
+static int register_function(lua_State* L, LuaCallbacks::callback_key key)
 {
     lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))
@@ -221,7 +220,7 @@ int LuaCallbacks::register_function(lua_State* L, callback_key key)
     return i;
 }
 
-void LuaCallbacks::unregister_function(lua_State* L, callback_key key)
+static void unregister_function(lua_State* L, LuaCallbacks::callback_key key)
 {
     lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))
@@ -248,6 +247,21 @@ void LuaCallbacks::unregister_function(lua_State* L, callback_key key)
         lua_pop(L, 1);
     }
     lua_pop(L, 1);
-    lua_pushfstring(L, "unregisterFunction(%s): not found function", key);
+    lua_pushfstring(L, "unregister_function(%s): not found function", key);
     lua_error(L);
+}
+
+void LuaCallbacks::register_or_unregister_function(lua_State* l, const callback_key key)
+{
+    if (lua_toboolean(l, 2))
+    {
+        lua_pop(l, 1);
+        unregister_function(l, key);
+    }
+    else
+    {
+        if (lua_gettop(l) == 2)
+            lua_pop(l, 1);
+        register_function(l, key);
+    }
 }

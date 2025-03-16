@@ -162,7 +162,6 @@ public:
     }
 };
 
-
 /**
  * \brief The controller data at time of the last input poll
  */

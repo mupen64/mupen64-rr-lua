@@ -258,7 +258,7 @@ LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             bool success;
             if (!lua->presenter)
             {
-                // FIXME: Why are we blue-balling it like this by running the callback without a presenter section?
+                // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
                 success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATDRAWD2D);
             }
             else

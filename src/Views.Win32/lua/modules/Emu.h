@@ -33,229 +33,87 @@ namespace LuaCore::Emu
         return 1;
     }
 
-    // TODO: Extract this repeated logic to LuaCallbacks too!
-
-    static int RegisterUpdateScreen(lua_State* L)
+    static int subscribe_atupdatescreen(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATUPDATESCREEN);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATUPDATESCREEN);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATUPDATESCREEN);
         return 0;
     }
 
-    static int RegisterAtDrawD2D(lua_State* L)
+    static int subscribe_atdrawd2d(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATDRAWD2D);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATDRAWD2D);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATDRAWD2D);
         return 0;
     }
 
-    static int RegisterVI(lua_State* L)
+    static int subscribe_atvi(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATVI);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATVI);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATVI);
         return 0;
     }
 
-    static int RegisterInput(lua_State* L)
+    static int subscribe_atinput(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATINPUT);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATINPUT);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATINPUT);
         return 0;
     }
 
-    static int RegisterStop(lua_State* L)
+    static int subscribe_atstop(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSTOP);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSTOP);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSTOP);
         return 0;
     }
 
-    static int RegisterWindowMessage(lua_State* L)
+    static int subscribe_atwindowmessage(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_WINDOWMESSAGE);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_WINDOWMESSAGE);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_WINDOWMESSAGE);
         return 0;
     }
 
-    static int RegisterInterval(lua_State* L)
+    static int subscribe_atinterval(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATINTERVAL);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATINTERVAL);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATINTERVAL);
         return 0;
     }
 
-    static int RegisterPlayMovie(lua_State* L)
+    static int subscribe_atplaymovie(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATPLAYMOVIE);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATPLAYMOVIE);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATPLAYMOVIE);
         return 0;
     }
 
-    static int RegisterStopMovie(lua_State* L)
+    static int subscribe_atstopmovie(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSTOPMOVIE);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSTOPMOVIE);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSTOPMOVIE);
         return 0;
     }
 
-    static int RegisterLoadState(lua_State* L)
+    static int subscribe_atloadstate(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATLOADSTATE);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATLOADSTATE);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATLOADSTATE);
         return 0;
     }
 
-    static int RegisterSaveState(lua_State* L)
+    static int subscribe_atsavestate(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSAVESTATE);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSAVESTATE);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSAVESTATE);
         return 0;
     }
 
-    static int RegisterReset(lua_State* L)
+    static int subscribe_atreset(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATRESET);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATRESET);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATRESET);
         return 0;
     }
 
-    static int RegisterSeekCompleted(lua_State* L)
+    static int subscribe_atseekcompleted(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATSEEKCOMPLETED);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATSEEKCOMPLETED);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATSEEKCOMPLETED);
         return 0;
     }
 
-    static int RegisterWarpModifyStatusChanged(lua_State* L)
+    static int subscribe_atwarpmodifystatuschanged(lua_State* L)
     {
-        if (lua_toboolean(L, 2))
-        {
-            lua_pop(L, 1);
-            LuaCallbacks::unregister_function(L, LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED);
-        }
-        else
-        {
-            if (lua_gettop(L) == 2)
-                lua_pop(L, 1);
-            LuaCallbacks::register_function(L, LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED);
-        }
+        LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED);
         return 0;
     }
 

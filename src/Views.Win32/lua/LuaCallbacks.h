@@ -111,16 +111,10 @@ namespace LuaCallbacks
     void invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key);
 
     /**
-     * \brief Registers a function with a key to a lua state
-     * \param L The lua state
-     * \param key The function's key
+     * \brief Subscribes to or unsubscribes from the specified callback based on the input parameters.
+     * If the second value on the Lua stack is true, the function is unregistered. Otherwise, it is registered.
+     * \param l The Lua state.
+     * \param key The callback key.
      */
-    int register_function(lua_State* L, callback_key key);
-
-    /**
-     * \brief Unregisters a function with a key to a lua state
-     * \param L The lua state
-     * \param key The function's key
-     */
-    void unregister_function(lua_State* L, callback_key key);
+    void register_or_unregister_function(lua_State* l, callback_key key);
 } // namespace LuaCallbacks
