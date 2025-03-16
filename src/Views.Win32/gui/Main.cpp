@@ -667,7 +667,7 @@ void on_emu_stopping(std::any)
     {
         g_previously_running_luas.push_back(key);
     }
-    g_main_window_dispatcher->invoke(stop_all_scripts);
+    g_main_window_dispatcher->invoke(lua_stop_all_scripts);
 }
 
 void on_emu_launched_changed(std::any data)
@@ -979,10 +979,14 @@ void open_console()
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+    // TODO: Remove...
     wchar_t path_buffer[_MAX_PATH]{};
 
     switch (Message)
     {
+    case WM_INVALIDATE_LUA:
+        invalidate_visuals();
+        break;
     case WM_DROPFILES:
         {
             auto drop = (HDROP)wParam;
@@ -1241,7 +1245,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (confirm_user_exit())
         {
-            close_all_scripts();
+            lua_close_all_scripts();
             std::thread([] {
                 core_vr_close_rom(true);
                 g_main_window_dispatcher->invoke([] {
@@ -1252,12 +1256,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             break;
         }
         return 0;
-    case WM_INVALIDATE_LUA:
-        for (const auto& map : g_hwnd_lua_map)
-        {
-            map.second->invalidate_visuals();
-        }
-        break;
     case WM_WINDOWPOSCHANGING: // allow gfx plugin to set arbitrary size
         return 0;
     case WM_GETMINMAXINFO:
@@ -1418,7 +1416,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
 
             case IDM_CLOSE_ALL_LUA:
-                close_all_scripts();
+                lua_close_all_scripts();
                 break;
             case IDM_DEBUG_WARP_MODIFY:
                 {

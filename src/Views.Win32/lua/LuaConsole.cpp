@@ -27,9 +27,13 @@ size_t g_input_count = 0;
 
 std::atomic g_d2d_drawing_section = false;
 
-std::map<HWND, LuaEnvironment*> g_hwnd_lua_map;
-std::unordered_map<lua_State*, LuaEnvironment*> g_lua_env_map;
+std::map<HWND, t_lua_environment*> g_hwnd_lua_map;
+std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
 
+t_lua_environment* get_lua_class(lua_State* lua_state)
+{
+    return g_lua_env_map[lua_state];
+}
 
 int at_panic(lua_State* L)
 {
@@ -75,7 +79,7 @@ INT_PTR CALLBACK DialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             if (g_hwnd_lua_map.contains(wnd))
             {
-                LuaEnvironment::destroy(g_hwnd_lua_map[wnd]);
+                destroy_lua_environment(g_hwnd_lua_map[wnd]);
             }
             return TRUE;
         }
@@ -91,16 +95,16 @@ INT_PTR CALLBACK DialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     // if already running, delete and erase it (we dont want to overwrite the environment without properly disposing it)
                     if (g_hwnd_lua_map.contains(wnd))
                     {
-                        LuaEnvironment::destroy(g_hwnd_lua_map[wnd]);
+                        destroy_lua_environment(g_hwnd_lua_map[wnd]);
                     }
 
                     // now spool up a new one
-                    const auto error_msg = LuaEnvironment::create(path, wnd);
+                    const auto error_msg = create_lua_environment(path, wnd);
                     Messenger::broadcast(Messenger::Message::ScriptStarted, std::filesystem::path(path));
 
                     if (!error_msg.empty())
                     {
-                        LuaEnvironment::print_con(wnd, string_to_wstring(error_msg) + L"\r\n");
+                        print_con(wnd, string_to_wstring(error_msg) + L"\r\n");
                     }
                     else
                     {
@@ -113,7 +117,7 @@ INT_PTR CALLBACK DialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 {
                     if (g_hwnd_lua_map.contains(wnd))
                     {
-                        LuaEnvironment::destroy(g_hwnd_lua_map[wnd]);
+                        destroy_lua_environment(g_hwnd_lua_map[wnd]);
                         set_button_state(wnd, false);
                     }
                     return TRUE;
@@ -198,31 +202,32 @@ void lua_create_and_run(const std::wstring& path)
     SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTATE, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTATE));
 }
 
-LuaEnvironment* get_lua_class(lua_State* lua_state) { return g_lua_env_map[lua_state]; }
 
-void close_all_scripts()
+void lua_close_all_scripts()
 {
     assert(is_on_gui_thread());
 
     // we mutate the map's nodes while iterating, so we have to make a copy
-    auto copy = std::map(g_hwnd_lua_map);
-    for (const auto [fst, _] : copy)
+    const auto map = g_hwnd_lua_map;
+    for (const auto [hwnd, _] : map)
     {
-        SendMessage(fst, WM_CLOSE, 0, 0);
+        SendMessage(hwnd, WM_CLOSE, 0, 0);
     }
+    
     assert(g_hwnd_lua_map.empty());
 }
 
-void stop_all_scripts()
+void lua_stop_all_scripts()
 {
     assert(is_on_gui_thread());
 
     // we mutate the map's nodes while iterating, so we have to make a copy
-    auto copy = std::map(g_hwnd_lua_map);
-    for (const auto [key, _] : copy)
+    const auto map = g_hwnd_lua_map;
+    for (const auto [hwnd, _] : map)
     {
-        SendMessage(key, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTOP, BN_CLICKED), (LPARAM)GetDlgItem(key, IDC_BUTTON_LUASTOP));
+        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTOP, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTOP));
     }
+    
     assert(g_hwnd_lua_map.empty());
 }
 
@@ -242,14 +247,14 @@ LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
             g_d2d_drawing_section = true;
 
-            auto lua = (LuaEnvironment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            auto lua = (t_lua_environment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
             if (!lua)
             {
                 g_d2d_drawing_section = false;
                 return 0;
             }
-        
+
             PAINTSTRUCT ps;
             RECT rect;
             BeginPaint(hwnd, &ps);
@@ -270,7 +275,7 @@ LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
             if (!success)
             {
-                LuaEnvironment::destroy(lua);
+                destroy_lua_environment(lua);
             }
 
             EndPaint(hwnd, &ps);
@@ -287,13 +292,13 @@ LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     {
     case WM_PAINT:
         {
-            auto lua = (LuaEnvironment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            auto lua = (t_lua_environment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
             if (!lua)
             {
                 return 0;
             }
-        
+
             PAINTSTRUCT ps;
             RECT rect;
             HDC dc = BeginPaint(hwnd, &ps);
@@ -305,7 +310,7 @@ LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
             if (!success)
             {
-                LuaEnvironment::destroy(lua);
+                destroy_lua_environment(lua);
             }
 
             EndPaint(hwnd, &ps);
@@ -331,34 +336,34 @@ void lua_init()
     RegisterClass(&wndclass);
 }
 
-void LuaEnvironment::create_loadscreen()
+void create_loadscreen(t_lua_environment* lua)
 {
-    if (loadscreen_dc)
+    if (lua->loadscreen_dc)
     {
         return;
     }
     auto gdi_dc = GetDC(g_main_hwnd);
-    loadscreen_dc = CreateCompatibleDC(gdi_dc);
-    loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
-    SelectObject(loadscreen_dc, loadscreen_bmp);
+    lua->loadscreen_dc = CreateCompatibleDC(gdi_dc);
+    lua->loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, lua->dc_size.width, lua->dc_size.height);
+    SelectObject(lua->loadscreen_dc, lua->loadscreen_bmp);
     ReleaseDC(g_main_hwnd, gdi_dc);
 }
 
-void LuaEnvironment::destroy_loadscreen()
+void destroy_loadscreen(t_lua_environment* lua)
 {
-    if (!loadscreen_dc)
+    if (!lua->loadscreen_dc)
     {
         return;
     }
-    SelectObject(loadscreen_dc, nullptr);
-    DeleteDC(loadscreen_dc);
-    DeleteObject(loadscreen_bmp);
-    loadscreen_dc = nullptr;
+    SelectObject(lua->loadscreen_dc, nullptr);
+    DeleteDC(lua->loadscreen_dc);
+    DeleteObject(lua->loadscreen_bmp);
+    lua->loadscreen_dc = nullptr;
 }
 
-void LuaEnvironment::ensure_d2d_renderer_created()
+void ensure_d2d_renderer_created(t_lua_environment* lua)
 {
-    if (presenter || m_ignore_renderer_creation)
+    if (lua->presenter || lua->m_ignore_renderer_creation)
     {
         return;
     }
@@ -372,34 +377,33 @@ void LuaEnvironment::ensure_d2d_renderer_created()
         return;
     }
 
-    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dw_factory), reinterpret_cast<IUnknown**>(&dw_factory));
-
+    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(lua->dw_factory), reinterpret_cast<IUnknown**>(&lua->dw_factory));
 
     if (g_config.presenter_type != static_cast<int32_t>(PRESENTER_GDI))
     {
-        presenter = new DCompPresenter();
+        lua->presenter = new DCompPresenter();
     }
     else
     {
-        presenter = new GDIPresenter();
+        lua->presenter = new GDIPresenter();
     }
 
-    if (!presenter->init(d2d_overlay_hwnd))
+    if (!lua->presenter->init(lua->d2d_overlay_hwnd))
     {
         DialogService::show_dialog(L"Failed to initialize presenter.\r\nVerify that your system supports the selected presenter.", L"Lua", fsvc_error);
         return;
     }
 
-    d2d_render_target_stack.push(presenter->dc());
-    dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout*>(512, [&](auto value) { 
-        value->Release(); 
+    lua->d2d_render_target_stack.push(lua->presenter->dc());
+    lua->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout*>(512, [&](auto value) {
+        value->Release();
     });
-    dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) { });
+    lua->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
 }
 
-void LuaEnvironment::create_renderer()
+void create_renderer(t_lua_environment* lua)
 {
-    if (gdi_back_dc != nullptr || m_ignore_renderer_creation)
+    if (lua->gdi_back_dc != nullptr || lua->m_ignore_renderer_creation)
     {
         return;
     }
@@ -417,81 +421,95 @@ void LuaEnvironment::create_renderer()
     }
 
     // NOTE: We don't want negative or zero size on any axis, as that messes up comp surface creation
-    dc_size = {(UINT32)std::max(1, (int32_t)window_rect.right), (UINT32)std::max(1, (int32_t)window_rect.bottom)};
-    g_view_logger->info("Lua dc size: {} {}", dc_size.width, dc_size.height);
+    lua->dc_size = {(UINT32)std::max(1, (int32_t)window_rect.right), (UINT32)std::max(1, (int32_t)window_rect.bottom)};
+    g_view_logger->info("Lua dc size: {} {}", lua->dc_size.width, lua->dc_size.height);
 
     // Key 0 is reserved for clearing the image pool, too late to change it now...
-    image_pool_index = 1;
+    lua->image_pool_index = 1;
 
     auto gdi_dc = GetDC(g_main_hwnd);
-    gdi_back_dc = CreateCompatibleDC(gdi_dc);
-    gdi_bmp = CreateCompatibleBitmap(gdi_dc, dc_size.width, dc_size.height);
-    SelectObject(gdi_back_dc, gdi_bmp);
+    lua->gdi_back_dc = CreateCompatibleDC(gdi_dc);
+    lua->gdi_bmp = CreateCompatibleBitmap(gdi_dc, lua->dc_size.width, lua->dc_size.height);
+    SelectObject(lua->gdi_back_dc, lua->gdi_bmp);
     ReleaseDC(g_main_hwnd, gdi_dc);
 
-    gdi_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, dc_size.width, dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
-    SetWindowLongPtr(gdi_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)this);
-    SetLayeredWindowAttributes(gdi_overlay_hwnd, lua_gdi_color_mask, 0, LWA_COLORKEY);
+    lua->gdi_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, lua->dc_size.width, lua->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
+    SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)lua);
+    SetLayeredWindowAttributes(lua->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
 
     // If we don't fill up the DC with the key first, it never becomes "transparent"
-    FillRect(gdi_back_dc, &window_rect, alpha_mask_brush);
+    FillRect(lua->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
-    d2d_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, dc_size.width, dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
-    SetWindowLongPtr(d2d_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)this);
+    lua->d2d_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, lua->dc_size.width, lua->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
+    SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)lua);
 
     if (!g_config.lazy_renderer_init)
     {
-        ensure_d2d_renderer_created();
+        ensure_d2d_renderer_created(lua);
     }
 
-    create_loadscreen();
+    create_loadscreen(lua);
 }
 
-void LuaEnvironment::destroy_renderer()
+void destroy_renderer(t_lua_environment* lua)
 {
     g_view_logger->info("Destroying Lua renderer...");
 
-    if (presenter)
+    if (lua->presenter)
     {
-        dw_text_layouts.clear();
-        dw_text_sizes.clear();
+        lua->dw_text_layouts.clear();
+        lua->dw_text_sizes.clear();
 
-        while (!d2d_render_target_stack.empty())
+        while (!lua->d2d_render_target_stack.empty())
         {
-            d2d_render_target_stack.pop();
+            lua->d2d_render_target_stack.pop();
         }
 
-        for (auto& [_, val] : image_pool)
+        for (auto& [_, val] : lua->image_pool)
         {
             delete val;
         }
-        image_pool.clear();
+        lua->image_pool.clear();
 
-        DestroyWindow(d2d_overlay_hwnd);
+        DestroyWindow(lua->d2d_overlay_hwnd);
 
-        delete presenter;
-        presenter = nullptr;
+        delete lua->presenter;
+        lua->presenter = nullptr;
         CoUninitialize();
     }
 
-    if (gdi_back_dc)
+    if (lua->gdi_back_dc)
     {
-        DestroyWindow(gdi_overlay_hwnd);
-        SelectObject(gdi_back_dc, nullptr);
-        DeleteDC(gdi_back_dc);
-        DeleteObject(gdi_bmp);
-        gdi_back_dc = nullptr;
-        destroy_loadscreen();
+        DestroyWindow(lua->gdi_overlay_hwnd);
+        SelectObject(lua->gdi_back_dc, nullptr);
+        DeleteDC(lua->gdi_back_dc);
+        DeleteObject(lua->gdi_bmp);
+        lua->gdi_back_dc = nullptr;
+        destroy_loadscreen(lua);
     }
 }
 
-void LuaEnvironment::destroy(LuaEnvironment* lua_environment)
+void destroy_lua_environment(t_lua_environment* lua)
 {
-    g_hwnd_lua_map.erase(lua_environment->hwnd);
-    delete lua_environment;
+    g_hwnd_lua_map.erase(lua->hwnd);
+
+    lua->m_ignore_renderer_creation = true;
+    SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, 0);
+    SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, 0);
+    LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATSTOP);
+    SelectObject(lua->gdi_back_dc, nullptr);
+    DeleteObject(lua->brush);
+    DeleteObject(lua->pen);
+    DeleteObject(lua->font);
+    lua_close(lua->L);
+    lua->L = nullptr;
+    set_button_state(lua->hwnd, false);
+    destroy_renderer(lua);
+
+    g_view_logger->info("Lua destroyed");
 }
 
-void LuaEnvironment::print_con(HWND hwnd, const std::wstring& text)
+void print_con(HWND hwnd, const std::wstring& text)
 {
     HWND con_wnd = GetDlgItem(hwnd, IDC_TEXTBOX_LUACONSOLE);
 
@@ -515,72 +533,62 @@ void rebuild_lua_env_map()
     }
 }
 
-std::string LuaEnvironment::create(const std::filesystem::path& path, HWND wnd)
+std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
 {
     assert(is_on_gui_thread());
 
-    auto lua_environment = new LuaEnvironment();
+    auto lua = new t_lua_environment();
 
-    lua_environment->hwnd = wnd;
-    lua_environment->path = path;
+    lua->hwnd = wnd;
+    lua->path = path;
 
-    lua_environment->brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
-    lua_environment->pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
-    lua_environment->font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
-    lua_environment->col = lua_environment->bkcol = 0;
-    lua_environment->bkmode = TRANSPARENT;
-    lua_environment->L = luaL_newstate();
-    lua_atpanic(lua_environment->L, at_panic);
-    LuaRegistry::register_functions(lua_environment->L);
-    lua_environment->create_renderer();
+    lua->brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
+    lua->pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
+    lua->font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
+    lua->col = lua->bkcol = 0;
+    lua->bkmode = TRANSPARENT;
+    lua->L = luaL_newstate();
+    lua_atpanic(lua->L, at_panic);
+    LuaRegistry::register_functions(lua->L);
+    create_renderer(lua);
 
     // NOTE: We need to add the lua to the global map already since it may receive callbacks while its executing the global code
-    g_hwnd_lua_map[lua_environment->hwnd] = lua_environment;
+    g_hwnd_lua_map[lua->hwnd] = lua;
     rebuild_lua_env_map();
 
-    bool has_error = luaL_dofile(lua_environment->L, lua_environment->path.string().c_str());
+    bool has_error = luaL_dofile(lua->L, lua->path.string().c_str());
 
     std::string error_msg;
     if (has_error)
     {
-        g_hwnd_lua_map.erase(lua_environment->hwnd);
+        g_hwnd_lua_map.erase(lua->hwnd);
         rebuild_lua_env_map();
-        error_msg = lua_tostring(lua_environment->L, -1);
-        delete lua_environment;
-        lua_environment = nullptr;
+        error_msg = lua_tostring(lua->L, -1);
+        delete lua;
+        lua = nullptr;
     }
 
     return error_msg;
 }
 
-LuaEnvironment::~LuaEnvironment()
+void invalidate_visuals()
 {
-    m_ignore_renderer_creation = true;
-    SetWindowLongPtr(gdi_overlay_hwnd, GWLP_USERDATA, 0);
-    SetWindowLongPtr(d2d_overlay_hwnd, GWLP_USERDATA, 0);
-    LuaCallbacks::invoke_callbacks_with_key(*this, pcall_no_params, LuaCallbacks::REG_ATSTOP);
-    SelectObject(gdi_back_dc, nullptr);
-    DeleteObject(brush);
-    DeleteObject(pen);
-    DeleteObject(font);
-    lua_close(L);
-    L = NULL;
-    set_button_state(hwnd, false);
-    this->destroy_renderer();
-    g_view_logger->info("Lua destroyed");
+    assert(is_on_gui_thread());
+    
+    for (const auto& pair : g_hwnd_lua_map)
+    {
+        RedrawWindow(pair.second->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        RedrawWindow(pair.second->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+    }
 }
 
-void LuaEnvironment::invalidate_visuals()
+void repaint_visuals()
 {
-    RECT rect;
-    GetClientRect(this->d2d_overlay_hwnd, &rect);
-
-    InvalidateRect(this->d2d_overlay_hwnd, &rect, false);
-    InvalidateRect(this->gdi_overlay_hwnd, &rect, false);
-}
-
-void LuaEnvironment::repaint_visuals()
-{
-    RedrawWindow(this->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-    RedrawWindow(this->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+    assert(is_on_gui_thread());
+    
+    for (const auto& pair : g_hwnd_lua_map)
+    {
+        RedrawWindow(pair.second->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(pair.second->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+    }
 }

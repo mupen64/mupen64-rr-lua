@@ -3,78 +3,22 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
- 
+
 #pragma once
 
 #include "presenters/Presenter.h"
 
-typedef struct s_window_procedure_params
-{
-    HWND wnd;
-    UINT msg;
-    WPARAM w_param;
-    LPARAM l_param;
-} t_window_procedure_params;
+constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
+static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
+
 
 /**
- * \brief Initializes the lua subsystem
+ * \brief Describes a Lua instance.
  */
-void lua_init();
+typedef struct LuaEnvironment {
 
-/**
- * \brief Creates a lua window and runs the specified script
- * \param path The script's path
- */
-void lua_create_and_run(const std::wstring& path);
-
-/**
- * \brief Creates a lua window
- * \return The window's handle
- */
-HWND lua_create();
-
-/**
- * \brief Stops all lua scripts and closes their windows
- */
-void close_all_scripts();
-
-/**
- * \brief Stops all lua scripts
- */
-void stop_all_scripts();
-
-static uint32_t lua_gdi_color_mask = RGB(255, 0, 255);
-static HBRUSH alpha_mask_brush = CreateSolidBrush(lua_gdi_color_mask);
-
-static int pcall_no_params(lua_State* L)
-{
-    return lua_pcall(L, 0, 0, 0);
-}
-
-// FIXME: This being a class just makes us shuck and jive around OOP while not doing it properly. It should be a struct.
-class LuaEnvironment
-{
-public:
-    /**
-     * \brief Creates a lua environment, adding it to the global map and running it if the operation succeeds
-     * \param path The script path
-     * \param wnd The associated window
-     * \return An error string, or an empty string if the operation succeeded
-     */
-    static std::string create(const std::filesystem::path& path, HWND wnd);
-
-    /**
-     * \brief Stops, destroys and removes a lua environment from the environment map
-     * \param lua_environment The lua environment to destroy
-     */
-    static void destroy(LuaEnvironment* lua_environment);
-
-    /**
-     * \brief Prints text to a lua environment dialog's console
-     * \param hwnd Handle to a lua environment dialog of IDD_LUAWINDOW
-     * \param text The text to display
-     */
-    static void print_con(HWND hwnd, const std::wstring& text);
+    HWND hwnd;
+    lua_State* L;
 
     // The path to the current lua script
     std::filesystem::path path;
@@ -127,40 +71,96 @@ public:
     HFONT font;
     COLORREF col, bkcol;
     int bkmode;
+} t_lua_environment;
 
-    LuaEnvironment() = default;
+static int pcall_no_params(lua_State* L)
+{
+    return lua_pcall(L, 0, 0, 0);
+}
 
-    /**
-     * \brief Destroys and stops the environment
-     */
-    ~LuaEnvironment();
+/**
+ * \brief Initializes the lua subsystem
+ */
+void lua_init();
 
-    void create_renderer();
-    void destroy_renderer();
+/**
+ * \brief Creates a lua window and runs the specified script
+ * \param path The script's path
+ */
+void lua_create_and_run(const std::wstring& path);
 
-    void create_loadscreen();
-    void destroy_loadscreen();
+/**
+ * \brief Creates a lua window
+ * \return The window's handle
+ */
+HWND lua_create();
 
-    void ensure_d2d_renderer_created();
+/**
+ * \brief Stops all lua scripts
+ */
+void lua_stop_all_scripts();
 
-    // Invalidates the composition layer
-    void invalidate_visuals();
+/**
+ * \brief Stops all lua scripts and closes their windows
+ */
+void lua_close_all_scripts();
 
-    // Repaints the composition layer
-    void repaint_visuals();
+/**
+ * \brief Creates a lua environment, adding it to the global map and running it if the operation succeeds
+ * \param path The script path
+ * \param wnd The associated window
+ * \return An error string, or an empty string if the operation succeeded
+ */
+std::string create_lua_environment(const std::filesystem::path& path, HWND wnd);
 
-    HWND hwnd;
-    lua_State* L;
+/**
+ * \brief Stops, destroys and removes a lua environment from the environment map
+ */
+void destroy_lua_environment(t_lua_environment*);
 
-    /**
-     * \brief Prints text to the environment's console
-     * \param text The text to print
-     */
-    void print(const std::wstring& text) const
-    {
-        print_con(hwnd, text);
-    }
-};
+/**
+ * \brief Prints text to a lua environment dialog's console
+ * \param hwnd Handle to a lua environment dialog of IDD_LUAWINDOW
+ * \param text The text to display
+ */
+void print_con(HWND hwnd, const std::wstring& text);
+
+/**
+ * \brief Creates the renderer for a Lua environment. Does nothing if the renderer already exists.
+ */
+void create_renderer(t_lua_environment*);
+
+/**
+ * \brief Destroys the renderer for a Lua environment. Does nothing if the renderer doesn't exist.
+ */
+void destroy_renderer(t_lua_environment*);
+
+/**
+ * \brief Creates the loadscreen DC and bitmap for a Lua environment. Does nothing if the loadscreen already exists.
+ */
+void create_loadscreen(t_lua_environment*);
+
+/**
+ * \brief Destroys the loadscreen DC and bitmap for a Lua environment. Does nothing if the loadscreen doesn't exist.
+ */
+void destroy_loadscreen(t_lua_environment*);
+
+/**
+ * \brief Ensures that the D2D renderer is created for a Lua environment. Does nothing if the renderer already exists.
+ */
+void ensure_d2d_renderer_created(t_lua_environment*);
+
+/**
+ * \brief Invalidates all visual layers of all running Lua scripts.
+ * \remarks Must be called from the UI thread.
+ */
+void invalidate_visuals();
+
+/**
+ * \brief Forces an immediate repaint of all visual layers of all running Lua scripts.
+ * \remarks Must be called from the UI thread.
+ */
+void repaint_visuals();
 
 /**
  * \brief The controller data at time of the last input poll
@@ -182,10 +182,9 @@ extern bool overwrite_controller_data[4];
  */
 extern size_t g_input_count;
 
-extern std::map<HWND, LuaEnvironment*> g_hwnd_lua_map;
+extern std::map<HWND, t_lua_environment*> g_hwnd_lua_map;
 
 /**
  * \brief Gets the Lua environment associated with a lua state.
  */
-LuaEnvironment* get_lua_class(lua_State* lua_state);
-
+t_lua_environment* get_lua_class(lua_State* lua_state);

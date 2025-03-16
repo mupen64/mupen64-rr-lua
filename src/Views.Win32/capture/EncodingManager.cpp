@@ -137,17 +137,14 @@ namespace EncodingManager
 	{
 		int32_t raw_video_width, raw_video_height;
 		readscreen_plugin(&raw_video_width, &raw_video_height);
-
+	    
 		// UI resources, must be accessed from UI thread
 		// To avoid GDI weirdness with cross-thread resources, we do all GDI work on UI thread.
 		g_main_window_dispatcher->invoke([&]
 		{
 			// Since atupdatescreen might not have occured for a long time, we force it now.
 			// This avoids "outdated" visuals, which are otherwise acceptable during normal gameplay, being blitted to the video stream.
-			for (auto& pair : g_hwnd_lua_map)
-			{
-				pair.second->repaint_visuals();
-			}
+			repaint_visuals();
 
 			GdiFlush();
 		    
@@ -197,7 +194,7 @@ namespace EncodingManager
 			for (auto& pair : g_hwnd_lua_map)
 			{
 				TransparentBlt(hy_dc, 0, 0, pair.second->dc_size.width, pair.second->dc_size.height, pair.second->gdi_back_dc, 0, 0,
-				               pair.second->dc_size.width, pair.second->dc_size.height, lua_gdi_color_mask);
+				               pair.second->dc_size.width, pair.second->dc_size.height, LUA_GDI_COLOR_MASK);
 			}
 
 			BITMAPINFO bmp_info{};

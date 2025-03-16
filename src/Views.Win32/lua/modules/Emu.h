@@ -261,7 +261,8 @@ namespace LuaCore::Emu
     // emu
     static int ConsoleWriteLua(lua_State* L)
     {
-        get_lua_class(L)->print(string_to_wstring(lua_tostring(L, 1)));
+        LuaEnvironment* lua = get_lua_class(L);
+        print_con(lua->hwnd, string_to_wstring(luaL_checkstring(L, 1)) + L"\r\n");
         return 0;
     }
 

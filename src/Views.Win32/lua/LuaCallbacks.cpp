@@ -17,7 +17,15 @@
             return;                 \
     }
 
-t_window_procedure_params window_proc_params = {0};
+typedef struct {
+    HWND wnd;
+    UINT msg;
+    WPARAM w_param;
+    LPARAM l_param;
+} t_window_procedure_params;
+
+t_window_procedure_params window_proc_params{};
+
 int current_input_n = 0;
 
 int AtInput(lua_State* L)
@@ -170,7 +178,7 @@ bool LuaCallbacks::invoke_callbacks_with_key(const LuaEnvironment& lua, const st
         if (function(lua.L))
         {
             const char* str = lua_tostring(lua.L, -1);
-            lua.print(string_to_wstring(str) + L"\r\n");
+            print_con(lua.hwnd, string_to_wstring(str) + L"\r\n");
             g_view_logger->info("Lua error: {}", str);
             return false;
         }
@@ -197,7 +205,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::functio
 
     while (!destruction_queue.empty())
     {
-        LuaEnvironment::destroy(destruction_queue.front());
+        destroy_lua_environment(destruction_queue.front());
         destruction_queue.pop();
     }
 }

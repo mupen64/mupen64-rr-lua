@@ -12,10 +12,11 @@ namespace LuaCore::Global
 
     static int Print(lua_State* L)
     {
+        LuaEnvironment* lua = get_lua_class(L);
         lua_pushcfunction(L, ToStringExs);
         lua_insert(L, 1);
         lua_call(L, lua_gettop(L) - 1, 1);
-        get_lua_class(L)->print(string_to_wstring(lua_tostring(L, 1)) + L"\r\n");
+        print_con(lua->hwnd, string_to_wstring(lua_tostring(L, -1)) + L"\r\n");
         return 0;
     }
 
@@ -152,6 +153,7 @@ namespace LuaCore::Global
 
     static int PrintX(lua_State* L)
     {
+        LuaEnvironment* lua = get_lua_class(L);
         int len = lua_gettop(L);
         std::string str("");
         for (int i = 0; i < len; i++)
@@ -181,7 +183,7 @@ namespace LuaCore::Global
             lua_pop(L, 1);
             if (i != len - 1) { str.append("\t"); }
         }
-        get_lua_class(L)->print(string_to_wstring(str) + L"\r\n");
+        print_con(lua->hwnd, string_to_wstring(str) + L"\r\n");
         return 1;
     }
 }

@@ -73,8 +73,8 @@ namespace LuaCore::Wgui
 
 
         // we need to recreate the renderer to accomodate for size changes (this cant be done in-place)
-        lua->destroy_renderer();
-        lua->create_renderer();
+        destroy_renderer(lua);
+        create_renderer(lua);
 
         return 0;
     }
@@ -562,8 +562,8 @@ namespace LuaCore::Wgui
     static int LoadScreenReset(lua_State* L)
     {
         LuaEnvironment* lua = get_lua_class(L);
-        lua->destroy_loadscreen();
-        lua->create_loadscreen();
+        destroy_loadscreen(lua);
+        create_loadscreen(lua);
         return 0;
     }
 
