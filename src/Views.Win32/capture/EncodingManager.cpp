@@ -182,19 +182,19 @@ namespace EncodingManager
 			}
 
 			// First, composite the lua's dxgi surfaces
-			for (auto& pair : g_hwnd_lua_map)
+			for (auto& lua : g_lua_environments)
 			{
-                if (pair.second->presenter)
+                if (lua->presenter)
                 {
-					pair.second->presenter->blit(hy_dc, {0, 0, (LONG)pair.second->presenter->size().width, (LONG)pair.second->presenter->size().height});
+					lua->presenter->blit(hy_dc, {0, 0, (LONG)lua->presenter->size().width, (LONG)lua->presenter->size().height});
                 }
 			}
 
 			// Then, blit the GDI back DCs
-			for (auto& pair : g_hwnd_lua_map)
+			for (auto& lua : g_lua_environments)
 			{
-				TransparentBlt(hy_dc, 0, 0, pair.second->dc_size.width, pair.second->dc_size.height, pair.second->gdi_back_dc, 0, 0,
-				               pair.second->dc_size.width, pair.second->dc_size.height, LUA_GDI_COLOR_MASK);
+				TransparentBlt(hy_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, lua->gdi_back_dc, 0, 0,
+				               lua->dc_size.width, lua->dc_size.height, LUA_GDI_COLOR_MASK);
 			}
 
 			BITMAPINFO bmp_info{};

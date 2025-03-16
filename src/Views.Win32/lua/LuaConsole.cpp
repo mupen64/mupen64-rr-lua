@@ -17,6 +17,8 @@
 #include "presenters/DCompPresenter.h"
 #include "presenters/GDIPresenter.h"
 
+constexpr auto LUA_PROP_NAME = L"lua_env";
+
 const auto D2D_OVERLAY_CLASS = L"lua_d2d_overlay";
 const auto GDI_OVERLAY_CLASS = L"lua_gdi_overlay";
 
@@ -27,7 +29,7 @@ size_t g_input_count = 0;
 
 std::atomic g_d2d_drawing_section = false;
 
-std::map<HWND, t_lua_environment*> g_hwnd_lua_map;
+std::vector<t_lua_environment*> g_lua_environments;
 std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
 
 t_lua_environment* get_lua_class(lua_State* lua_state)
@@ -63,81 +65,99 @@ void set_button_state(HWND wnd, bool state)
     }
 }
 
-INT_PTR CALLBACK DialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK lua_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    auto lua = (t_lua_environment*)GetProp(hwnd, LUA_PROP_NAME);
+
     switch (msg)
     {
     case WM_INITDIALOG:
-        {
-            SetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUASCRIPTPATH), g_config.lua_script_path.c_str());
-            return TRUE;
-        }
+        SetProp(hwnd, LUA_PROP_NAME, (HANDLE)lparam);
+        SetWindowText(GetDlgItem(hwnd, IDC_TEXTBOX_LUASCRIPTPATH), g_config.lua_script_path.c_str());
+        return TRUE;
     case WM_CLOSE:
-        DestroyWindow(wnd);
+        DestroyWindow(hwnd);
         return TRUE;
     case WM_DESTROY:
+        if (lua)
         {
-            if (g_hwnd_lua_map.contains(wnd))
-            {
-                destroy_lua_environment(g_hwnd_lua_map[wnd]);
-            }
-            return TRUE;
+            destroy_lua_environment(lua);
+        }
+        RemoveProp(hwnd, LUA_PROP_NAME);
+        return TRUE;
+    case WM_SIZE:
+        {
+            RECT window_rect = {0};
+            GetClientRect(hwnd, &window_rect);
+
+            HWND console_hwnd = GetDlgItem(hwnd, IDC_TEXTBOX_LUACONSOLE);
+            RECT console_rect = get_window_rect_client_space(hwnd, console_hwnd);
+            SetWindowPos(console_hwnd, nullptr, 0, 0, window_rect.right - console_rect.left * 2, window_rect.bottom - console_rect.top, SWP_NOMOVE);
+
+            HWND path_hwnd = GetDlgItem(hwnd, IDC_TEXTBOX_LUASCRIPTPATH);
+            RECT path_rect = get_window_rect_client_space(hwnd, path_hwnd);
+            SetWindowPos(path_hwnd, nullptr, 0, 0, window_rect.right - console_rect.left * 2, path_rect.bottom - path_rect.top, SWP_NOMOVE);
+
+            if (wparam == SIZE_MINIMIZED)
+                SetFocus(g_main_hwnd);
+
+            break;
         }
     case WM_COMMAND:
         {
-            switch (LOWORD(wParam))
+            switch (LOWORD(wparam))
             {
             case IDC_BUTTON_LUASTATE:
                 {
                     wchar_t path[MAX_PATH] = {0};
-                    GetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUASCRIPTPATH), path, std::size(path));
+                    GetWindowText(GetDlgItem(hwnd, IDC_TEXTBOX_LUASCRIPTPATH), path, std::size(path));
 
                     // if already running, delete and erase it (we dont want to overwrite the environment without properly disposing it)
-                    if (g_hwnd_lua_map.contains(wnd))
+                    if (lua)
                     {
-                        destroy_lua_environment(g_hwnd_lua_map[wnd]);
+                        destroy_lua_environment(lua);
                     }
 
                     // now spool up a new one
-                    const auto error_msg = create_lua_environment(path, wnd);
+                    const auto error_msg = create_lua_environment(path, hwnd);
                     Messenger::broadcast(Messenger::Message::ScriptStarted, std::filesystem::path(path));
 
                     if (!error_msg.empty())
                     {
-                        print_con(wnd, string_to_wstring(error_msg) + L"\r\n");
+                        print_con(hwnd, string_to_wstring(error_msg) + L"\r\n");
                     }
                     else
                     {
-                        set_button_state(wnd, true);
+                        set_button_state(hwnd, true);
                     }
 
                     return TRUE;
                 }
             case IDC_BUTTON_LUASTOP:
                 {
-                    if (g_hwnd_lua_map.contains(wnd))
+                    if (lua)
                     {
-                        destroy_lua_environment(g_hwnd_lua_map[wnd]);
-                        set_button_state(wnd, false);
+                        destroy_lua_environment(lua);
+                        set_button_state(hwnd, false);
                     }
                     return TRUE;
                 }
             case IDC_BUTTON_LUABROWSE:
                 {
-                    const auto path = show_persistent_open_dialog(L"o_lua", wnd, L"*.lua");
+                    const auto path = show_persistent_open_dialog(L"o_lua", hwnd, L"*.lua");
 
                     if (path.empty())
                     {
                         break;
                     }
 
-                    SetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUASCRIPTPATH), path.c_str());
+                    SetWindowText(GetDlgItem(hwnd, IDC_TEXTBOX_LUASCRIPTPATH), path.c_str());
                     return TRUE;
                 }
             case IDC_BUTTON_LUAEDIT:
                 {
                     wchar_t buf[MAX_PATH]{};
-                    GetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUASCRIPTPATH), buf, std::size(buf));
+                    GetWindowText(GetDlgItem(hwnd, IDC_TEXTBOX_LUASCRIPTPATH), buf, std::size(buf));
 
                     if (buf == NULL || buf[0] == '\0')
                         return FALSE;
@@ -149,39 +169,26 @@ INT_PTR CALLBACK DialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (GetAsyncKeyState(VK_MENU))
                 {
                     // clear path
-                    SetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUASCRIPTPATH), L"");
+                    SetWindowText(GetDlgItem(hwnd, IDC_TEXTBOX_LUASCRIPTPATH), L"");
                     return TRUE;
                 }
 
-                SetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUACONSOLE), L"");
+                SetWindowText(GetDlgItem(hwnd, IDC_TEXTBOX_LUACONSOLE), L"");
                 return TRUE;
             default:
                 break;
             }
-        }
-    case WM_SIZE:
-        {
-            RECT window_rect = {0};
-            GetClientRect(wnd, &window_rect);
-
-            HWND console_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUACONSOLE);
-            RECT console_rect = get_window_rect_client_space(wnd, console_hwnd);
-            SetWindowPos(console_hwnd, nullptr, 0, 0, window_rect.right - console_rect.left * 2, window_rect.bottom - console_rect.top, SWP_NOMOVE);
-
-            HWND path_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUASCRIPTPATH);
-            RECT path_rect = get_window_rect_client_space(wnd, path_hwnd);
-            SetWindowPos(path_hwnd, nullptr, 0, 0, window_rect.right - console_rect.left * 2, path_rect.bottom - path_rect.top, SWP_NOMOVE);
-            if (wParam == SIZE_MINIMIZED)
-                SetFocus(g_main_hwnd);
             break;
         }
+    default:
+        break;
     }
     return FALSE;
 }
 
 HWND lua_create()
 {
-    HWND hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAWINDOW), g_main_hwnd, DialogProc, NULL);
+    HWND hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUAWINDOW), g_main_hwnd, lua_dialog_proc);
     ShowWindow(hwnd, SW_SHOW);
     return hwnd;
 }
@@ -208,13 +215,13 @@ void lua_close_all_scripts()
     assert(is_on_gui_thread());
 
     // we mutate the map's nodes while iterating, so we have to make a copy
-    const auto map = g_hwnd_lua_map;
-    for (const auto [hwnd, _] : map)
+    const auto lua_environments = g_lua_environments;
+    for (const auto& lua : lua_environments)
     {
-        SendMessage(hwnd, WM_CLOSE, 0, 0);
+        SendMessage(lua->hwnd, WM_CLOSE, 0, 0);
     }
-    
-    assert(g_hwnd_lua_map.empty());
+
+    assert(g_lua_environments.empty());
 }
 
 void lua_stop_all_scripts()
@@ -222,13 +229,13 @@ void lua_stop_all_scripts()
     assert(is_on_gui_thread());
 
     // we mutate the map's nodes while iterating, so we have to make a copy
-    const auto map = g_hwnd_lua_map;
-    for (const auto [hwnd, _] : map)
+    const auto lua_environments = g_lua_environments;
+    for (const auto& lua : lua_environments)
     {
-        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTOP, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTOP));
+        SendMessage(lua->hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTOP, BN_CLICKED), (LPARAM)GetDlgItem(lua->hwnd, IDC_BUTTON_LUASTOP));
     }
-    
-    assert(g_hwnd_lua_map.empty());
+
+    assert(g_lua_environments.empty());
 }
 
 LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -491,8 +498,11 @@ void destroy_renderer(t_lua_environment* lua)
 
 void destroy_lua_environment(t_lua_environment* lua)
 {
-    g_hwnd_lua_map.erase(lua->hwnd);
-
+    std::erase_if(g_lua_environments, [=](const t_lua_environment* v) {
+        return v == lua;
+    });
+    SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
+    
     lua->m_ignore_renderer_creation = true;
     SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, 0);
     SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, 0);
@@ -505,7 +515,7 @@ void destroy_lua_environment(t_lua_environment* lua)
     lua->L = nullptr;
     set_button_state(lua->hwnd, false);
     destroy_renderer(lua);
-
+    
     g_view_logger->info("Lua destroyed");
 }
 
@@ -527,9 +537,9 @@ void print_con(HWND hwnd, const std::wstring& text)
 void rebuild_lua_env_map()
 {
     g_lua_env_map.clear();
-    for (const auto& [_, val] : g_hwnd_lua_map)
+    for (const auto& lua : g_lua_environments)
     {
-        g_lua_env_map[val->L] = val;
+        g_lua_env_map[lua->L] = lua;
     }
 }
 
@@ -553,7 +563,8 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     create_renderer(lua);
 
     // NOTE: We need to add the lua to the global map already since it may receive callbacks while its executing the global code
-    g_hwnd_lua_map[lua->hwnd] = lua;
+    g_lua_environments.push_back(lua);
+    SetProp(lua->hwnd, LUA_PROP_NAME, lua);
     rebuild_lua_env_map();
 
     bool has_error = luaL_dofile(lua->L, lua->path.string().c_str());
@@ -561,8 +572,10 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     std::string error_msg;
     if (has_error)
     {
-        g_hwnd_lua_map.erase(lua->hwnd);
+        g_lua_environments.pop_back();
+        SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
         rebuild_lua_env_map();
+
         error_msg = lua_tostring(lua->L, -1);
         delete lua;
         lua = nullptr;
@@ -574,21 +587,21 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
 void invalidate_visuals()
 {
     assert(is_on_gui_thread());
-    
-    for (const auto& pair : g_hwnd_lua_map)
+
+    for (const auto& lua : g_lua_environments)
     {
-        RedrawWindow(pair.second->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
-        RedrawWindow(pair.second->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        RedrawWindow(lua->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        RedrawWindow(lua->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
     }
 }
 
 void repaint_visuals()
 {
     assert(is_on_gui_thread());
-    
-    for (const auto& pair : g_hwnd_lua_map)
+
+    for (const auto& lua : g_lua_environments)
     {
-        RedrawWindow(pair.second->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(pair.second->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(lua->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(lua->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     }
 }

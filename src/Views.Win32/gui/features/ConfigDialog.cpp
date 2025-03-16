@@ -1376,7 +1376,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     std::make_pair(L"GDI", (int32_t)PRESENTER_GDI),
     },
     .is_readonly = [] {
-        return !g_hwnd_lua_map.empty();
+        return !g_lua_environments.empty();
     },
     },
     t_options_item{
@@ -1386,7 +1386,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.lazy_renderer_init,
     .type = t_options_item::Type::Bool,
     .is_readonly = [] {
-        return !g_hwnd_lua_map.empty();
+        return !g_lua_environments.empty();
     },
     },
 

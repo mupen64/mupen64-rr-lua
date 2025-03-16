@@ -11,10 +11,10 @@
 
 // OPTIMIZATION: If no lua scripts are running, skip the deeper lua path
 // This is an unsynchronized access to the map from the emu thread!
-#define RET_IF_EMPTY                \
-    {                               \
-        if (g_hwnd_lua_map.empty()) \
-            return;                 \
+#define RET_IF_EMPTY                    \
+    {                                   \
+        if (g_lua_environments.empty()) \
+            return;                     \
     }
 
 typedef struct {
@@ -195,11 +195,11 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::functio
 
     assert(destruction_queue.empty());
 
-    for (const auto& [_, env] : g_hwnd_lua_map)
+    for (const auto& lua : g_lua_environments)
     {
-        if (!LuaCallbacks::invoke_callbacks_with_key(*env, function, key))
+        if (!LuaCallbacks::invoke_callbacks_with_key(*lua, function, key))
         {
-            destruction_queue.push(env);
+            destruction_queue.push(lua);
         }
     }
 

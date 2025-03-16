@@ -663,9 +663,9 @@ void on_task_changed(std::any data)
 void on_emu_stopping(std::any)
 {
     // Remember all running lua scripts' HWNDs
-    for (const auto [key, _] : g_hwnd_lua_map)
+    for (const auto& lua : g_lua_environments)
     {
-        g_previously_running_luas.push_back(key);
+        g_previously_running_luas.push_back(lua->hwnd);
     }
     g_main_window_dispatcher->invoke(lua_stop_all_scripts);
 }

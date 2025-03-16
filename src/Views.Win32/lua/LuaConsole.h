@@ -162,6 +162,8 @@ void invalidate_visuals();
  */
 void repaint_visuals();
 
+extern std::vector<t_lua_environment*> g_lua_environments;
+
 /**
  * \brief The controller data at time of the last input poll
  */
@@ -181,8 +183,6 @@ extern bool overwrite_controller_data[4];
  * \brief Amount of call_input calls.
  */
 extern size_t g_input_count;
-
-extern std::map<HWND, t_lua_environment*> g_hwnd_lua_map;
 
 /**
  * \brief Gets the Lua environment associated with a lua state.
