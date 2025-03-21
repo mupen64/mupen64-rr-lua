@@ -1434,6 +1434,11 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
         return VCR_SeekAlreadyRunning;
     }
 
+    if (g_task == task_idle)
+    {
+        return VCR_Idle;
+    }
+
     auto frame = compute_sample_from_seek_string(str);
 
     if (frame == SIZE_MAX || !can_seek_to(frame))
