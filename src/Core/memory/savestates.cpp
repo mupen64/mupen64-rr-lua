@@ -22,10 +22,7 @@
 // - one frame of input is "embedded", that is the pif ram holds already fetched controller info.
 // - execution continues at exception handler (after input poll) at 0x80000180.
 bool g_st_old;
-
-// read savestate save function for more info
-// right now its hardcoded to enabled
-bool g_st_skip_dma = false;
+bool g_st_skip_dma{};
 
 /// Represents a task to be performed by the savestate system.
 struct t_savestate_task {
@@ -58,12 +55,6 @@ struct t_savestate_task {
     /// Whether warnings, such as those about ROM compatibility, shouldn't be shown.
     bool ignore_warnings;
 };
-
-// Enable fixing .st to work for old mupen and m64p
-constexpr bool FIX_NEW_ST = true;
-
-// Bit to set in RDRAM register to indicate that the savestate has been fixed
-constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1 << 31);
 
 // The task vector mutex. Locked when accessing the task vector.
 std::recursive_mutex g_task_mutex;
@@ -105,11 +96,6 @@ void get_paths_for_task(const t_savestate_task& task, std::filesystem::path& st_
 void load_memory_from_buffer(uint8_t* p)
 {
     memread(&p, &rdram_register, sizeof(core_rdram_reg));
-    if (rdram_register.rdram_device_manuf & RDRAM_DEVICE_MANUF_NEW_FIX_BIT)
-    {
-        rdram_register.rdram_device_manuf &= ~RDRAM_DEVICE_MANUF_NEW_FIX_BIT; // remove the trick
-        g_st_skip_dma = true; // tell dma.c to skip it
-    }
     memread(&p, &MI_register, sizeof(core_mips_reg));
     memread(&p, &pi_register, sizeof(core_pi_reg));
     memread(&p, &sp_register, sizeof(core_sp_reg));
@@ -172,33 +158,7 @@ std::vector<uint8_t> generate_savestate()
 
     core_vcr_freeze_info freeze{};
     uint32_t movie_active = core_vcr_freeze(&freeze);
-
-    if (FIX_NEW_ST)
-    {
-        // this is code taken from dma.c:dma_si_read(), it finishes up the dma.
-        // it copies data from pif (should contain commands and controller states), updates count reg and adds SI interrupt to queue
-        // so why does old mupen and mupen64plus dislike savestates without doing this? well in case of mario 64 it leaves pif command buffer uninitialised
-        // and it never can poll input properly (hence the inability to frame advance which is handled inside controller read).
-
-        // But we dont want to do this then load such .st and dma again... so I notify mupen about this in .st,
-        // since .st is filled up to the brim with data (not even a single unused offset) I have to store one bit in... rdram manufacturer register
-        // this 99.999% wont break on any game, and that bit will be cleared by mupen64plus converter as well, so only old old mupen ever sees this trick.
-
-        // update: I stumbled upon a .st that had the bit set, but didn't have SI_INT in queue,
-        // so it froze game, so there exists a way to cause that somehow
-        if (get_event(SI_INT) == 0) // if there is no interrupt, add it, otherwise dont care
-        {
-            g_core->log_warn(L"[ST] No SI interrupt in queue, adding one...");
-            for (size_t i = 0; i < (64 / 4); i++)
-                rdram[si_register.si_dram_addr / 4 + i] = sl(PIF_RAM[i]);
-            update_count();
-            add_interrupt_event(SI_INT, /*0x100*/ 0x900);
-            rdram_register.rdram_device_manuf |= RDRAM_DEVICE_MANUF_NEW_FIX_BIT;
-            g_st_skip_dma = true;
-        }
-        // hack end
-    }
-
+    
     // NOTE: This saving needs to be done **after** the fixing block, as it is now. See previous regression in f9d58f639c798cbc26bbb808b1c3dbd834ffe2d9.
     save_flashram_infos(g_flashram_buf);
     const int32_t event_queue_len = save_eventqueue_infos(g_event_queue_buf);
@@ -505,6 +465,18 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         }
     }
 
+    // NOTE: Some savestates don't have an SI interrupt in the queue, which means that a dma_si_read call which should have happened prior to the save didn't happen.
+    // In that case, we "finish up" the dma by performing its final part manually.
+    if (get_event(SI_INT) == 0)
+    {
+        g_core->log_warn(L"[ST] Finishing up DMA...");
+        for (size_t i = 0; i < 64 / 4; i++)
+            rdram[si_register.si_dram_addr / 4 + i] = sl(PIF_RAM[i]);
+        update_count();
+        add_interrupt_event(SI_INT, 0x900);
+        g_st_skip_dma = true;
+    }
+    
     g_core->callbacks.load_state();
     task.callback(Res_Ok, decompressed_buf);
 
@@ -691,6 +663,9 @@ void st_do_work()
         {
             savestates_load_immediate_impl(task);
         }
+
+        extern void print_queue();
+        print_queue();
     }
     g_tasks.clear();
 }
