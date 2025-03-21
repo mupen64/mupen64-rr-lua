@@ -109,16 +109,48 @@ void clear_queue()
 void print_queue()
 {
     interrupt_queue* aux;
-    //if (Count < 0x7000000) return;
-    g_core->log_info(std::format(L"------------------ {:#06x}", (uint32_t)core_Count));
+    g_core->log_info(std::format(L"------------------ {:#06x}", core_Count));
     aux = q;
     while (aux != NULL)
     {
-        g_core->log_info(std::format(L"Count:{:#06x}, {:#06x}", (uint32_t)aux->count, aux->type));
+        std::wstring type = L"";
+        switch (aux->type)
+        {
+        case VI_INT:
+            type = L"VI";
+            break;
+        case COMPARE_INT:
+            type = L"COMPARE";
+            break;
+        case CHECK_INT:
+            type = L"CHECK";
+            break;
+        case SI_INT:
+            type = L"SI";
+            break;
+        case PI_INT:
+            type = L"PI";
+            break;
+        case SPECIAL_INT:
+            type = L"SPECIAL";
+            break;
+        case AI_INT:
+            type = L"AI";
+            break;
+        case SP_INT:
+            type = L"SP";
+            break;
+        case DP_INT:
+            type = L"DP";
+            break;
+        default:
+            type = L"UNKNOWN";
+            break;
+        }
+        g_core->log_info(std::format(L"@{:#06x} {}", aux->count, type));
         aux = aux->next;
     }
     g_core->log_info(L"------------------");
-    //getchar();
 }
 
 static int32_t SPECIAL_done = 0;
