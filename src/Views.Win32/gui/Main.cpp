@@ -1527,15 +1527,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 core_vr_resume_emu();
                 break;
             case IDM_MULTI_FRAME_ADVANCE:
-                core_vr_frame_advance(g_config.multi_frame_advance_count);
+                if (g_config.multi_frame_advance_count > 0)
+                {
+                    core_vr_frame_advance(g_config.multi_frame_advance_count);
+                } else
+                {
+                    AsyncExecutor::invoke_async([] {
+                        const auto result = core_vcr_begin_seek(std::to_wstring(g_config.multi_frame_advance_count), true);
+                        show_error_dialog_for_result(result);
+                    });
+                }
                 core_vr_resume_emu();
                 break;
             case IDM_MULTI_FRAME_ADVANCE_INC:
-                g_config.multi_frame_advance_count += 1;
+                g_config.multi_frame_advance_count++;
                 Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
                 break;
             case IDM_MULTI_FRAME_ADVANCE_DEC:
-                g_config.multi_frame_advance_count = std::max(1, g_config.multi_frame_advance_count - 1);
+                g_config.multi_frame_advance_count--;
+                if (g_config.multi_frame_advance_count == 0)
+                {
+                    g_config.multi_frame_advance_count--;
+                }
                 Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
                 break;
             case IDM_MULTI_FRAME_ADVANCE_RESET:
