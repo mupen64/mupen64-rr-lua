@@ -29,20 +29,20 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run:  msbuild mupen64.sln /p:Configuration=Release /p:Platform=Win32 /m
           
-      - name: 'Upload x86 Artifact'
+      - name: 'Upload x86 SSE2 Release Artifact'
         uses: actions/upload-artifact@v4
         with:
-          name: mupen-x86
-          path: build/Views.Win32/mupen64-x86-release.exe
+          name: mupen-x86-sse2
+          path: build/Views.Win32/mupen64-x86-sse2-release.exe
           retention-days: 14
         
       - name: Build x64
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: msbuild mupen64.sln /p:Configuration=Release /p:Platform=x64 /m
 
-      - name: 'Upload x64 Artifact'
+      - name: 'Upload x64 SSE2 Release Artifact'
         uses: actions/upload-artifact@v4
         with:
-          name: mupen-x64
-          path: build/Views.Win32/mupen64-x64-release.exe
+          name: mupen-x64-sse2
+          path: build/Views.Win32/mupen64-x64-sse2-release.exe
           retention-days: 14
