@@ -7,19 +7,18 @@
 #pragma once
 
 
-
 /**
  * Represents a dispatcher that can execute functions on a specific thread.
  */
-class Dispatcher
-{
+class Dispatcher {
 public:
     /**
      * Creates a new dispatcher.
      * \param thread_id The dispatcher's target thread id.
      * \param execute_callback The callback that will be called when the queue has to be executed on the target thread.
      */
-    explicit Dispatcher(const DWORD thread_id, const std::function<void()>& execute_callback) : m_execute_callback(execute_callback), m_thread_id(thread_id)
+    explicit Dispatcher(const DWORD thread_id, const std::function<void()>& execute_callback) :
+        m_execute_callback(execute_callback), m_thread_id(thread_id)
     {
     }
 

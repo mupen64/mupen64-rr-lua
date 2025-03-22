@@ -131,7 +131,7 @@ bool SettingsListView::notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM 
     {
         return false;
     }
-    
+
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(lparam);
     auto ctx = (t_settings_listview_context*)GetProp(dlg_hwnd, PROP_NAME);
 

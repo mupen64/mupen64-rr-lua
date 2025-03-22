@@ -6,8 +6,7 @@
 
 #pragma once
 
-typedef enum
-{
+typedef enum {
     INST_UNDEF,
 
     INST_LB,
@@ -230,9 +229,8 @@ typedef enum
     INST_COUNT
 } INST;
 
-//•\Ž¦—p
-typedef enum
-{
+// •\Ž¦—p
+typedef enum {
     INSTF_NONE,
     //---- i type
     INSTF_LUI,
@@ -266,8 +264,7 @@ typedef enum
     INSTF_COUNT
 } INSTFMT;
 
-typedef enum
-{
+typedef enum {
     INSTFTYPE_NONE,
     INSTFTYPE_I,
     INSTFTYPE_J,
@@ -277,8 +274,7 @@ typedef enum
     INSTFTYPE_COUNT
 } INSTFTYPE;
 
-typedef union
-{
+typedef union {
     struct
     {
         uint8_t rs;
@@ -326,7 +322,7 @@ INST GetInstruction(uint32_t w);
 void DecodeInstruction(uint32_t w, INSTDECODE* d);
 const char* GetOpecodeString(INSTDECODE* d);
 char* GetOperandString(char* buf, INSTDECODE* d, uint32_t pc);
-//buf size:27
+// buf size:27
 
 extern const INSTFMT InstFormat[INST_COUNT];
 extern const INSTFTYPE InstFormatType[INSTF_COUNT];

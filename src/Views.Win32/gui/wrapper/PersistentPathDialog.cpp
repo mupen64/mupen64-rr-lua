@@ -8,7 +8,9 @@
 #include <Config.h>
 #include <gui/wrapper/PersistentPathDialog.h>
 
-#define FAILSAFE(operation) if(FAILED(operation)) goto cleanUp
+#define FAILSAFE(operation) \
+    if (FAILED(operation))  \
+    goto cleanUp
 
 std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
                                          const std::wstring& filter)
@@ -21,8 +23,8 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
     bool succeeded = false;
 
     FAILSAFE(
-        CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&pFileDialog)));
+    CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER,
+                     IID_PPV_ARGS(&pFileDialog)));
 
     FAILSAFE(pFileDialog->GetOptions(&dwFlags));
 
@@ -30,7 +32,7 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
     {
         COMDLG_FILTERSPEC fileTypes[] =
         {
-            {L"Supported files", filter.c_str()},
+        {L"Supported files", filter.c_str()},
         };
         FAILSAFE(pFileDialog->SetFileTypes(ARRAYSIZE(fileTypes), fileTypes));
     }
@@ -38,13 +40,13 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
 
     {
         std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
-                                         ? g_config.persistent_folder_paths[id]
-                                         : get_desktop_path();
+        ? g_config.persistent_folder_paths[id]
+        : get_desktop_path();
         g_view_logger->info(L"Open dialog {} restored {}\n", id.c_str(), restored_path);
         if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr,
                                         IID_PPV_ARGS(&shlPtr)) != S_OK)
             g_view_logger->info(
-                "Unable to create IShellItem from parsing lastPath name");
+            "Unable to create IShellItem from parsing lastPath name");
     }
     FAILSAFE(pFileDialog->SetFolder(shlPtr));
     // we need to pass null due to a shell api bug. ms has been informed
@@ -58,8 +60,10 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
 
 cleanUp:
     CoTaskMemFree(pFilePath);
-    if (pShellItem) pShellItem->Release();
-    if (pFileDialog) pFileDialog->Release();
+    if (pShellItem)
+        pShellItem->Release();
+    if (pFileDialog)
+        pFileDialog->Release();
 
     return succeeded ? g_config.persistent_folder_paths[id] : std::wstring();
 }
@@ -75,15 +79,15 @@ std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd,
     bool succeeded = false;
 
     FAILSAFE(
-        CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&pFileDialog)));
+    CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER,
+                     IID_PPV_ARGS(&pFileDialog)));
 
     FAILSAFE(pFileDialog->GetOptions(&dwFlags));
 
     {
         COMDLG_FILTERSPEC fileTypes[] =
         {
-            {L"Supported files", filter.c_str()},
+        {L"Supported files", filter.c_str()},
         };
         FAILSAFE(pFileDialog->SetFileTypes(ARRAYSIZE(fileTypes), fileTypes));
     }
@@ -91,13 +95,13 @@ std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd,
 
     {
         std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
-                                         ? g_config.persistent_folder_paths[id]
-                                         : get_desktop_path();
+        ? g_config.persistent_folder_paths[id]
+        : get_desktop_path();
         g_view_logger->info(L"Save dialog {} restored %ls\n", id.c_str(), restored_path);
         if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr,
                                         IID_PPV_ARGS(&shlPtr)) != S_OK)
             g_view_logger->info(
-                "Unable to create IShellItem from parsing lastPath name");
+            "Unable to create IShellItem from parsing lastPath name");
     }
 
     // we are saving a file, use the filter list's first extension as the default suffix
@@ -119,8 +123,10 @@ std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd,
 
 cleanUp:
     CoTaskMemFree(pFilePath);
-    if (pShellItem) pShellItem->Release();
-    if (pFileDialog) pFileDialog->Release();
+    if (pShellItem)
+        pShellItem->Release();
+    if (pFileDialog)
+        pFileDialog->Release();
 
     return succeeded ? g_config.persistent_folder_paths[id] : std::wstring();
 }
@@ -132,11 +138,11 @@ std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd)
     IFileDialog* pfd;
     if (SUCCEEDED(
         CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&pfd))))
+                         IID_PPV_ARGS(&pfd))))
     {
         std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
-                                         ? g_config.persistent_folder_paths[id]
-                                         : get_desktop_path();
+        ? g_config.persistent_folder_paths[id]
+        : get_desktop_path();
 
         PIDLIST_ABSOLUTE pidl;
 

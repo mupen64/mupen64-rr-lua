@@ -7,7 +7,6 @@
 #pragma once
 
 
-
 namespace RomBrowser
 {
     /**
@@ -32,4 +31,4 @@ namespace RomBrowser
      * \return The rom's path, or an empty string if no rom was found
      */
     std::wstring find_available_rom(const std::function<bool(const core_rom_header&)>& predicate);
-}
+} // namespace RomBrowser

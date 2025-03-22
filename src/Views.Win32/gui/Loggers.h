@@ -15,4 +15,4 @@ namespace Loggers
      * Initializes the loggers
      */
     void init();
-}
+} // namespace Loggers

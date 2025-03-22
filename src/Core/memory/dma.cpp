@@ -33,8 +33,7 @@ void dma_pi_read()
             fread(sram, 1, 0x8000, g_sram_file);
 
             for (i = 0; i < (pi_register.pi_rd_len_reg & 0xFFFFFF) + 1; i++)
-                sram[((pi_register.pi_cart_addr_reg - 0x08000000) + i) ^ S8] = ((unsigned char*)rdram)[(pi_register.
-                    pi_dram_addr_reg + i) ^ S8];
+                sram[((pi_register.pi_cart_addr_reg - 0x08000000) + i) ^ S8] = ((unsigned char*)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8];
 
             fseek(g_sram_file, 0, SEEK_SET);
             fwrite(sram, 1, 0x8000, g_sram_file);
@@ -53,19 +52,21 @@ void dma_pi_read()
             {
                 uint32_t dram = (pi_register.pi_dram_addr_reg + i);
                 uint32_t cart = (pi_register.pi_cart_addr_reg + i) - 0x1ffe0000;
-                if (dram > 0x7FFFFF || cart > 0x1FFF) break;
+                if (dram > 0x7FFFFF || cart > 0x1FFF)
+                    break;
                 summercart.buffer[cart ^ S8] = ((char*)rdram)[dram ^ S8];
             }
         }
         else if (pi_register.pi_cart_addr_reg >= 0x10000000 &&
-            pi_register.pi_cart_addr_reg < 0x14000000 &&
-            summercart.cfg_rom_write)
+                 pi_register.pi_cart_addr_reg < 0x14000000 &&
+                 summercart.cfg_rom_write)
         {
             for (i = 0; i < longueur; i++)
             {
                 uint32_t dram = (pi_register.pi_dram_addr_reg + i);
                 uint32_t cart = (pi_register.pi_cart_addr_reg + i) - 0x10000000;
-                if (dram > 0x7FFFFF || cart > 0x3FFFFFF) break;
+                if (dram > 0x7FFFFF || cart > 0x3FFFFFF)
+                    break;
                 rom[cart ^ S8] = ((char*)rdram)[dram ^ S8];
             }
         }
@@ -79,7 +80,7 @@ void dma_pi_read()
 
     pi_register.read_pi_status_reg |= 1;
     update_count();
-    add_interrupt_event(PI_INT, 0x1000/*pi_register.pi_rd_len_reg*/);
+    add_interrupt_event(PI_INT, 0x1000 /*pi_register.pi_rd_len_reg*/);
 }
 
 void dma_pi_write()
@@ -99,14 +100,14 @@ void dma_pi_write()
 
                 for (i = 0; i < (pi_register.pi_wr_len_reg & 0xFFFFFF) + 1; i++)
                     ((unsigned char*)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-                        sram[(((pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF) + i) ^ S8];
+                    sram[(((pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF) + i) ^ S8];
                 use_flashram = -1;
             }
             else
                 dma_read_flashram();
         }
         else if (pi_register.pi_cart_addr_reg >= 0x06000000 &&
-            pi_register.pi_cart_addr_reg < 0x08000000)
+                 pi_register.pi_cart_addr_reg < 0x08000000)
         {
         }
         else
@@ -114,7 +115,7 @@ void dma_pi_write()
 
         pi_register.read_pi_status_reg |= 1;
         update_count();
-        add_interrupt_event(PI_INT, /*pi_register.pi_wr_len_reg*/0x1000);
+        add_interrupt_event(PI_INT, /*pi_register.pi_wr_len_reg*/ 0x1000);
 
         return;
     }
@@ -128,7 +129,8 @@ void dma_pi_write()
         {
             uint32_t dram = (pi_register.pi_dram_addr_reg + i);
             uint32_t cart = (pi_register.pi_cart_addr_reg + i) - 0x1ffe0000;
-            if (dram > 0x7FFFFF || cart > 0x1FFF) break;
+            if (dram > 0x7FFFFF || cart > 0x1FFF)
+                break;
             ((char*)rdram)[dram ^ S8] = summercart.buffer[cart ^ S8];
         }
         pi_register.read_pi_status_reg |= 1;
@@ -148,8 +150,8 @@ void dma_pi_write()
     i = (pi_register.pi_cart_addr_reg - 0x10000000) & 0x3FFFFFF;
     longueur = (i + longueur) > rom_size ? (rom_size - i) : longueur;
     longueur = (pi_register.pi_dram_addr_reg + longueur) > 0x7FFFFF
-                   ? (0x7FFFFF - pi_register.pi_dram_addr_reg)
-                   : longueur;
+    ? (0x7FFFFF - pi_register.pi_dram_addr_reg)
+    : longueur;
 
     if (i > rom_size || pi_register.pi_dram_addr_reg > 0x7FFFFF)
     {
@@ -167,9 +169,9 @@ void dma_pi_write()
             uint32_t rdram_address2 = pi_register.pi_dram_addr_reg + i + 0xa0000000;
 
             ((unsigned char*)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-                !core_dbg_get_dma_read_enabled()
-                    ? 0xFF
-                    : rom[(((pi_register.pi_cart_addr_reg - 0x10000000) & 0x3FFFFFF) + i) ^ S8];
+            !core_dbg_get_dma_read_enabled()
+            ? 0xFF
+            : rom[(((pi_register.pi_cart_addr_reg - 0x10000000) & 0x3FFFFFF) + i) ^ S8];
 
             if (!invalid_code[rdram_address1 >> 12])
                 if (blocks[rdram_address1 >> 12]->block[(rdram_address1 & 0xFFF) / 4].ops != NOTCOMPILED)
@@ -185,9 +187,9 @@ void dma_pi_write()
         for (i = 0; i < longueur; i++)
         {
             ((unsigned char*)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-                !core_dbg_get_dma_read_enabled()
-                    ? 0xFF
-                    : rom[(((pi_register.pi_cart_addr_reg - 0x10000000) & 0x3FFFFFF) + i) ^ S8];
+            !core_dbg_get_dma_read_enabled()
+            ? 0xFF
+            : rom[(((pi_register.pi_cart_addr_reg - 0x10000000) & 0x3FFFFFF) + i) ^ S8];
         }
     }
 
@@ -223,13 +225,13 @@ void dma_sp_write()
     {
         for (i = 0; i < ((sp_register.sp_rd_len_reg & 0xFFF) + 1); i++)
             ((unsigned char*)(SP_IMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8] =
-                ((unsigned char*)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8];
+            ((unsigned char*)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8];
     }
     else
     {
         for (i = 0; i < ((sp_register.sp_rd_len_reg & 0xFFF) + 1); i++)
             ((unsigned char*)(SP_DMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8] =
-                ((unsigned char*)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8];
+            ((unsigned char*)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8];
     }
 }
 
@@ -240,13 +242,13 @@ void dma_sp_read()
     {
         for (i = 0; i < ((sp_register.sp_wr_len_reg & 0xFFF) + 1); i++)
             ((unsigned char*)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8] =
-                ((unsigned char*)(SP_IMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8];
+            ((unsigned char*)(SP_IMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8];
     }
     else
     {
         for (i = 0; i < ((sp_register.sp_wr_len_reg & 0xFFF) + 1); i++)
             ((unsigned char*)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8] =
-                ((unsigned char*)(SP_DMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8];
+            ((unsigned char*)(SP_DMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8];
     }
 }
 
@@ -266,7 +268,7 @@ void dma_si_write()
         PIF_RAM[i] = sl(rdram[si_register.si_dram_addr / 4 + i]);
     update_pif_write();
     update_count();
-    add_interrupt_event(SI_INT, /*0x100*/0x900);
+    add_interrupt_event(SI_INT, /*0x100*/ 0x900);
 }
 
 void dma_si_read()
@@ -284,10 +286,10 @@ void dma_si_read()
     }
     for (int32_t i = 0; i < (64 / 4); i++)
         rdram[si_register.si_dram_addr / 4 + i] = sl(PIF_RAM[i]);
-    if (!g_st_skip_dma) //st already did this, see savestates.cpp, we still copy pif ram tho because it has new inputs
+    if (!g_st_skip_dma) // st already did this, see savestates.cpp, we still copy pif ram tho because it has new inputs
     {
         update_count();
-        add_interrupt_event(SI_INT, /*0x100*/0x900);
+        add_interrupt_event(SI_INT, /*0x100*/ 0x900);
     }
     g_st_skip_dma = false;
 }

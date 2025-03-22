@@ -71,7 +71,7 @@ std::wstring FFmpegEncoder::start(Params params)
     g_view_logger->info(L"[FFmpegEncoder] {}", options);
 
     DeleteFile(params.path.wstring().c_str());
-    
+
     if (!CreateProcess(g_config.ffmpeg_path.c_str(),
                        options,
                        nullptr,
@@ -110,12 +110,12 @@ bool FFmpegEncoder::stop()
 
     // HACK: Give it some time to maybe accept the last writes...
     Sleep(500);
-    
+
     CancelIo(m_video_pipe);
     CancelIo(m_audio_pipe);
     DisconnectNamedPipe(m_video_pipe);
     DisconnectNamedPipe(m_audio_pipe);
-    
+
     WaitForSingleObject(m_pi.hProcess, INFINITE);
     CloseHandle(m_pi.hProcess);
     CloseHandle(m_pi.hThread);

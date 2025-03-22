@@ -18,7 +18,7 @@ void genmfc0()
     genupdate_system(0);*/
 }
 
-//static uint32_t pMTC0 = (uint32_t)(MTC0);
+// static uint32_t pMTC0 = (uint32_t)(MTC0);
 void genmtc0()
 {
     gencallinterp((uint32_t)MTC0, 0);

@@ -8,8 +8,7 @@
 
 #include "Presenter.h"
 
-class GDIPresenter : public Presenter
-{
+class GDIPresenter : public Presenter {
 public:
     ~GDIPresenter() override;
     bool init(HWND hwnd) override;

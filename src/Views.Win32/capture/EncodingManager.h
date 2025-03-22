@@ -7,7 +7,6 @@
 #pragma once
 
 
-
 /**
  * Provides encoding functionality to the view.
  * \warning This namespace is not thread-safe unless otherwise specified.
@@ -17,8 +16,7 @@ namespace EncodingManager
     /**
      * \brief Synchronization modes the encoding manager can abide by
      */
-    enum class Sync : int
-    {
+    enum class Sync : int {
         /**
          * \brief Video and Audio streams are not kept in sync
          */
@@ -39,7 +37,7 @@ namespace EncodingManager
      * \brief Initializes the encoding manager
      */
     void init();
-    
+
     /**
      * \brief Whether a capture is currently running
      * \remarks This method is thread-safe.
@@ -82,4 +80,4 @@ namespace EncodingManager
      * Gets the current output path.
      */
     std::filesystem::path get_current_path();
-}
+} // namespace EncodingManager

@@ -22,12 +22,12 @@ uint32_t get_event(int32_t type);
 int32_t save_eventqueue_infos(char* buf);
 void load_eventqueue_infos(char* buf);
 
-#define VI_INT      0x001
+#define VI_INT 0x001
 #define COMPARE_INT 0x002
-#define CHECK_INT   0x004
-#define SI_INT      0x008
-#define PI_INT      0x010
+#define CHECK_INT 0x004
+#define SI_INT 0x008
+#define PI_INT 0x010
 #define SPECIAL_INT 0x020
-#define AI_INT      0x040
-#define SP_INT      0x080
-#define DP_INT      0x100
+#define AI_INT 0x040
+#define SP_INT 0x080
+#define DP_INT 0x100

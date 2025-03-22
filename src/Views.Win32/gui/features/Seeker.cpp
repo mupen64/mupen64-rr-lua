@@ -9,7 +9,6 @@
 #include <Config.h>
 
 
-
 #include <gui/Main.h>
 #include <gui/features/Seeker.h>
 

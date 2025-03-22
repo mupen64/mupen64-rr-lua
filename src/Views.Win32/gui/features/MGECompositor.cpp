@@ -14,8 +14,7 @@
 
 namespace MGECompositor
 {
-    struct VideoBuffer
-    {
+    struct VideoBuffer {
         int32_t last_width = 0;
         int32_t last_height = 0;
         int32_t width = 0;
@@ -101,8 +100,7 @@ namespace MGECompositor
         internal_buffer.bmp_info.bmiHeader.biCompression = BI_RGB;
         external_buffer.bmp_info = internal_buffer.bmp_info;
 
-        Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](std::any data)
-        {
+        Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](std::any data) {
             auto value = std::any_cast<bool>(data);
             ShowWindow(control_hwnd, (value && core_vr_get_mge_available()) ? SW_SHOW : SW_HIDE);
         });
@@ -164,23 +162,22 @@ namespace MGECompositor
 
     void load_screen(void* data)
     {
-	    g_main_window_dispatcher->invoke([=]
-	    {
-		    SetWindowLongPtr(control_hwnd, GWLP_USERDATA, (LONG_PTR)&external_buffer);
+        g_main_window_dispatcher->invoke([=] {
+            SetWindowLongPtr(control_hwnd, GWLP_USERDATA, (LONG_PTR)&external_buffer);
 
-		    external_buffer.width = internal_buffer.width;
-		    external_buffer.height = internal_buffer.height;
+            external_buffer.width = internal_buffer.width;
+            external_buffer.height = internal_buffer.height;
 
-		    external_buffer.bmp_info.bmiHeader.biWidth = external_buffer.width;
-		    external_buffer.bmp_info.bmiHeader.biHeight = external_buffer.height;
+            external_buffer.bmp_info.bmiHeader.biWidth = external_buffer.width;
+            external_buffer.bmp_info.bmiHeader.biHeight = external_buffer.height;
 
-		    free(external_buffer.buffer);
-		    external_buffer.buffer = malloc(external_buffer.width * external_buffer.height * 3);
-		    memcpy(external_buffer.buffer, data, external_buffer.width * external_buffer.height * 3);
+            free(external_buffer.buffer);
+            external_buffer.buffer = malloc(external_buffer.width * external_buffer.height * 3);
+            memcpy(external_buffer.buffer, data, external_buffer.width * external_buffer.height * 3);
 
-		    MoveWindow(control_hwnd, 0, 0, external_buffer.width, external_buffer.height, true);
-		    RedrawWindow(control_hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-		    SetWindowLongPtr(control_hwnd, GWLP_USERDATA, (LONG_PTR)&internal_buffer);
-	    });
+            MoveWindow(control_hwnd, 0, 0, external_buffer.width, external_buffer.height, true);
+            RedrawWindow(control_hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+            SetWindowLongPtr(control_hwnd, GWLP_USERDATA, (LONG_PTR)&internal_buffer);
+        });
     }
-}
+} // namespace MGECompositor

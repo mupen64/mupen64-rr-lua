@@ -15,7 +15,7 @@
 #include <r4300/x86/assemble.h>
 #include <r4300/x86/regcache.h>
 
-extern uint32_t src; //recomp.c
+extern uint32_t src; // recomp.c
 
 precomp_instr fake_instr;
 static int32_t eax, ebx, ecx, edx, esp, ebp, esi, edi;
@@ -45,7 +45,7 @@ void genlink_subblock()
 
 void gendebug()
 {
-    //free_all_registers();
+    // free_all_registers();
     mov_m32_reg32((uint32_t*)&eax, EAX);
     mov_m32_reg32((uint32_t*)&ebx, EBX);
     mov_m32_reg32((uint32_t*)&ecx, ECX);
@@ -109,14 +109,14 @@ void gendelayslot()
 void genni()
 {
 #ifdef EMU64_DEBUG
-	gencallinterp((uint32_t)NI, 0);
+    gencallinterp((uint32_t)NI, 0);
 #endif
 }
 
 void genreserved()
 {
 #ifdef EMU64_DEBUG
-	gencallinterp((uint32_t)RESERVED, 0);
+    gencallinterp((uint32_t)RESERVED, 0);
 #endif
 }
 
@@ -164,12 +164,13 @@ void gennop()
 void genj()
 {
 #ifdef INTERPRET_J
-	gencallinterp((uint32_t)J, 1);
+    gencallinterp((uint32_t)J, 1);
 #else
     uint32_t naddr;
 
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)J, 1);
         return;
@@ -187,12 +188,13 @@ void genj()
 void genj_out()
 {
 #ifdef INTERPRET_J_OUT
-	gencallinterp((uint32_t)J_OUT, 1);
+    gencallinterp((uint32_t)J_OUT, 1);
 #else
     uint32_t naddr;
 
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)J_OUT, 1);
         return;
@@ -213,10 +215,11 @@ void genj_out()
 void genj_idle()
 {
 #ifdef INTERPRET_J_IDLE
-	gencallinterp((uint32_t)J_IDLE, 1);
+    gencallinterp((uint32_t)J_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)J_IDLE, 1);
         return;
@@ -237,12 +240,13 @@ void genj_idle()
 void genjal()
 {
 #ifdef INTERPRET_JAL
-	gencallinterp((uint32_t)JAL, 1);
+    gencallinterp((uint32_t)JAL, 1);
 #else
     uint32_t naddr;
 
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)JAL, 1);
         return;
@@ -267,12 +271,13 @@ void genjal()
 void genjal_out()
 {
 #ifdef INTERPRET_JAL_OUT
-	gencallinterp((uint32_t)JAL_OUT, 1);
+    gencallinterp((uint32_t)JAL_OUT, 1);
 #else
     uint32_t naddr;
 
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)JAL_OUT, 1);
         return;
@@ -300,10 +305,11 @@ void genjal_out()
 void genjal_idle()
 {
 #ifdef INTERPRET_JAL_IDLE
-	gencallinterp((uint32_t)JAL_IDLE, 1);
+    gencallinterp((uint32_t)JAL_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)JAL_IDLE, 1);
         return;
@@ -413,10 +419,11 @@ void gentest()
 void genbeq()
 {
 #ifdef INTERPRET_BEQ
-	gencallinterp((uint32_t)BEQ, 1);
+    gencallinterp((uint32_t)BEQ, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BEQ, 1);
         return;
@@ -454,10 +461,11 @@ void gentest_out()
 void genbeq_out()
 {
 #ifdef INTERPRET_BEQ_OUT
-	gencallinterp((uint32_t)BEQ_OUT, 1);
+    gencallinterp((uint32_t)BEQ_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BEQ_OUT, 1);
         return;
@@ -498,10 +506,11 @@ void gentest_idle()
 void genbeq_idle()
 {
 #ifdef INTERPRET_BEQ_IDLE
-	gencallinterp((uint32_t)BEQ_IDLE, 1);
+    gencallinterp((uint32_t)BEQ_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BEQ_IDLE, 1);
         return;
@@ -585,10 +594,11 @@ void genbne_test()
 void genbne()
 {
 #ifdef INTERPRET_BNE
-	gencallinterp((uint32_t)BNE, 1);
+    gencallinterp((uint32_t)BNE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BNE, 1);
         return;
@@ -603,10 +613,11 @@ void genbne()
 void genbne_out()
 {
 #ifdef INTERPRET_BNE_OUT
-	gencallinterp((uint32_t)BNE_OUT, 1);
+    gencallinterp((uint32_t)BNE_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BNE_OUT, 1);
         return;
@@ -621,10 +632,11 @@ void genbne_out()
 void genbne_idle()
 {
 #ifdef INTERPRET_BNE_IDLE
-	gencallinterp((uint32_t)BNE_IDLE, 1);
+    gencallinterp((uint32_t)BNE_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BNE_IDLE, 1);
         return;
@@ -680,10 +692,11 @@ void genblez_test()
 void genblez()
 {
 #ifdef INTERPRET_BLEZ
-	gencallinterp((uint32_t)BLEZ, 1);
+    gencallinterp((uint32_t)BLEZ, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BLEZ, 1);
         return;
@@ -698,10 +711,11 @@ void genblez()
 void genblez_out()
 {
 #ifdef INTERPRET_BLEZ_OUT
-	gencallinterp((uint32_t)BLEZ_OUT, 1);
+    gencallinterp((uint32_t)BLEZ_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BLEZ_OUT, 1);
         return;
@@ -716,10 +730,11 @@ void genblez_out()
 void genblez_idle()
 {
 #ifdef INTERPRET_BLEZ_IDLE
-	gencallinterp((uint32_t)BLEZ_IDLE, 1);
+    gencallinterp((uint32_t)BLEZ_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BLEZ_IDLE, 1);
         return;
@@ -775,10 +790,11 @@ void genbgtz_test()
 void genbgtz()
 {
 #ifdef INTERPRET_BGTZ
-	gencallinterp((uint32_t)BGTZ, 1);
+    gencallinterp((uint32_t)BGTZ, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BGTZ, 1);
         return;
@@ -793,10 +809,11 @@ void genbgtz()
 void genbgtz_out()
 {
 #ifdef INTERPRET_BGTZ_OUT
-	gencallinterp((uint32_t)BGTZ_OUT, 1);
+    gencallinterp((uint32_t)BGTZ_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BGTZ_OUT, 1);
         return;
@@ -811,10 +828,11 @@ void genbgtz_out()
 void genbgtz_idle()
 {
 #ifdef INTERPRET_BGTZ_IDLE
-	gencallinterp((uint32_t)BGTZ_IDLE, 1);
+    gencallinterp((uint32_t)BGTZ_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BGTZ_IDLE, 1);
         return;
@@ -829,7 +847,7 @@ void genbgtz_idle()
 void genaddi()
 {
 #ifdef INTERPRET_ADDI
-	gencallinterp((uint32_t)ADDI, 0);
+    gencallinterp((uint32_t)ADDI, 0);
 #else
     int32_t rs = allocate_register((uint32_t*)dst->f.i.rs);
     int32_t rt = allocate_register_w((uint32_t*)dst->f.i.rt);
@@ -842,7 +860,7 @@ void genaddi()
 void genaddiu()
 {
 #ifdef INTERPRET_ADDIU
-	gencallinterp((uint32_t)ADDIU, 0);
+    gencallinterp((uint32_t)ADDIU, 0);
 #else
     int32_t rs = allocate_register((uint32_t*)dst->f.i.rs);
     int32_t rt = allocate_register_w((uint32_t*)dst->f.i.rt);
@@ -855,7 +873,7 @@ void genaddiu()
 void genslti()
 {
 #ifdef INTERPRET_SLTI
-	gencallinterp((uint32_t)SLTI, 0);
+    gencallinterp((uint32_t)SLTI, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.i.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.i.rs);
@@ -876,7 +894,7 @@ void genslti()
 void gensltiu()
 {
 #ifdef INTERPRET_SLTIU
-	gencallinterp((uint32_t)SLTIU, 0);
+    gencallinterp((uint32_t)SLTIU, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.i.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.i.rs);
@@ -897,7 +915,7 @@ void gensltiu()
 void genandi()
 {
 #ifdef INTERPRET_ANDI
-	gencallinterp((uint32_t)ANDI, 0);
+    gencallinterp((uint32_t)ANDI, 0);
 #else
     int32_t rs = allocate_register((uint32_t*)dst->f.i.rs);
     int32_t rt = allocate_register_w((uint32_t*)dst->f.i.rt);
@@ -910,7 +928,7 @@ void genandi()
 void genori()
 {
 #ifdef INTERPRET_ORI
-	gencallinterp((uint32_t)ORI, 0);
+    gencallinterp((uint32_t)ORI, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.i.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.i.rs);
@@ -926,7 +944,7 @@ void genori()
 void genxori()
 {
 #ifdef INTERPRET_XORI
-	gencallinterp((uint32_t)XORI, 0);
+    gencallinterp((uint32_t)XORI, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.i.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.i.rs);
@@ -942,7 +960,7 @@ void genxori()
 void genlui()
 {
 #ifdef INTERPRET_LUI
-	gencallinterp((uint32_t)LUI, 0);
+    gencallinterp((uint32_t)LUI, 0);
 #else
     int32_t rt = allocate_register_w((uint32_t*)dst->f.i.rt);
 
@@ -975,10 +993,11 @@ void gentestl()
 void genbeql()
 {
 #ifdef INTERPRET_BEQL
-	gencallinterp((uint32_t)BEQL, 1);
+    gencallinterp((uint32_t)BEQL, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BEQL, 1);
         return;
@@ -1018,10 +1037,11 @@ void gentestl_out()
 void genbeql_out()
 {
 #ifdef INTERPRET_BEQL_OUT
-	gencallinterp((uint32_t)BEQL_OUT, 1);
+    gencallinterp((uint32_t)BEQL_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BEQL_OUT, 1);
         return;
@@ -1036,10 +1056,11 @@ void genbeql_out()
 void genbeql_idle()
 {
 #ifdef INTERPRET_BEQL_IDLE
-	gencallinterp((uint32_t)BEQL_IDLE, 1);
+    gencallinterp((uint32_t)BEQL_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BEQL_IDLE, 1);
         return;
@@ -1054,10 +1075,11 @@ void genbeql_idle()
 void genbnel()
 {
 #ifdef INTERPRET_BNEL
-	gencallinterp((uint32_t)BNEL, 1);
+    gencallinterp((uint32_t)BNEL, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BNEL, 1);
         return;
@@ -1072,10 +1094,11 @@ void genbnel()
 void genbnel_out()
 {
 #ifdef INTERPRET_BNEL_OUT
-	gencallinterp((uint32_t)BNEL_OUT, 1);
+    gencallinterp((uint32_t)BNEL_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BNEL_OUT, 1);
         return;
@@ -1090,10 +1113,11 @@ void genbnel_out()
 void genbnel_idle()
 {
 #ifdef INTERPRET_BNEL_IDLE
-	gencallinterp((uint32_t)BNEL_IDLE, 1);
+    gencallinterp((uint32_t)BNEL_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BNEL_IDLE, 1);
         return;
@@ -1108,10 +1132,11 @@ void genbnel_idle()
 void genblezl()
 {
 #ifdef INTERPRET_BLEZL
-	gencallinterp((uint32_t)BLEZL, 1);
+    gencallinterp((uint32_t)BLEZL, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BLEZL, 1);
         return;
@@ -1126,10 +1151,11 @@ void genblezl()
 void genblezl_out()
 {
 #ifdef INTERPRET_BLEZL_OUT
-	gencallinterp((uint32_t)BLEZL_OUT, 1);
+    gencallinterp((uint32_t)BLEZL_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BLEZL_OUT, 1);
         return;
@@ -1144,10 +1170,11 @@ void genblezl_out()
 void genblezl_idle()
 {
 #ifdef INTERPRET_BLEZL_IDLE
-	gencallinterp((uint32_t)BLEZL_IDLE, 1);
+    gencallinterp((uint32_t)BLEZL_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BLEZL_IDLE, 1);
         return;
@@ -1162,10 +1189,11 @@ void genblezl_idle()
 void genbgtzl()
 {
 #ifdef INTERPRET_BGTZL
-	gencallinterp((uint32_t)BGTZL, 1);
+    gencallinterp((uint32_t)BGTZL, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BGTZL, 1);
         return;
@@ -1180,10 +1208,11 @@ void genbgtzl()
 void genbgtzl_out()
 {
 #ifdef INTERPRET_BGTZL_OUT
-	gencallinterp((uint32_t)BGTZL_OUT, 1);
+    gencallinterp((uint32_t)BGTZL_OUT, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BGTZL_OUT, 1);
         return;
@@ -1198,10 +1227,11 @@ void genbgtzl_out()
 void genbgtzl_idle()
 {
 #ifdef INTERPRET_BGTZL_IDLE
-	gencallinterp((uint32_t)BGTZL_IDLE, 1);
+    gencallinterp((uint32_t)BGTZL_IDLE, 1);
 #else
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)BGTZL_IDLE, 1);
         return;
@@ -1216,7 +1246,7 @@ void genbgtzl_idle()
 void gendaddi()
 {
 #ifdef INTERPRET_DADDI
-	gencallinterp((uint32_t)DADDI, 0);
+    gencallinterp((uint32_t)DADDI, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.i.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.i.rs);
@@ -1233,7 +1263,7 @@ void gendaddi()
 void gendaddiu()
 {
 #ifdef INTERPRET_DADDIU
-	gencallinterp((uint32_t)DADDIU, 0);
+    gencallinterp((uint32_t)DADDIU, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.i.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.i.rs);
@@ -1260,7 +1290,7 @@ void genldr()
 void genlb()
 {
 #ifdef INTERPRET_LB
-	gencallinterp((uint32_t)LB, 0);
+    gencallinterp((uint32_t)LB, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1300,7 +1330,7 @@ void genlb()
 void genlh()
 {
 #ifdef INTERPRET_LH
-	gencallinterp((uint32_t)LH, 0);
+    gencallinterp((uint32_t)LH, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1345,7 +1375,7 @@ void genlwl()
 void genlw()
 {
 #ifdef INTERPRET_LW
-	gencallinterp((uint32_t)LW, 0);
+    gencallinterp((uint32_t)LW, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1384,7 +1414,7 @@ void genlw()
 void genlbu()
 {
 #ifdef INTERPRET_LBU
-	gencallinterp((uint32_t)LBU, 0);
+    gencallinterp((uint32_t)LBU, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1426,7 +1456,7 @@ void genlbu()
 void genlhu()
 {
 #ifdef INTERPRET_LHU
-	gencallinterp((uint32_t)LHU, 0);
+    gencallinterp((uint32_t)LHU, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1473,7 +1503,7 @@ void genlwr()
 void genlwu()
 {
 #ifdef INTERPRET_LWU
-	gencallinterp((uint32_t)LWU, 0);
+    gencallinterp((uint32_t)LWU, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1514,7 +1544,7 @@ void genlwu()
 void gensb()
 {
 #ifdef INTERPRET_SB
-	gencallinterp((uint32_t)SB, 0);
+    gencallinterp((uint32_t)SB, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1571,7 +1601,7 @@ void gensb()
 void gensh()
 {
 #ifdef INTERPRET_SH
-	gencallinterp((uint32_t)SH, 0);
+    gencallinterp((uint32_t)SH, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1633,7 +1663,7 @@ void genswl()
 void gensw()
 {
 #ifdef INTERPRET_SW
-	gencallinterp((uint32_t)SW, 0);
+    gencallinterp((uint32_t)SW, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1735,7 +1765,7 @@ void gencheck_cop1_unusable()
 void genlwc1()
 {
 #ifdef INTERPRET_LWC1
-	gencallinterp((uint32_t)LWC1, 0);
+    gencallinterp((uint32_t)LWC1, 0);
 #else
     gencheck_cop1_unusable();
 
@@ -1774,7 +1804,7 @@ void genlwc1()
 void genldc1()
 {
 #ifdef INTERPRET_LDC1
-	gencallinterp((uint32_t)LDC1, 0);
+    gencallinterp((uint32_t)LDC1, 0);
 #else
     gencheck_cop1_unusable();
 
@@ -1819,7 +1849,7 @@ void gencache()
 void genld()
 {
 #ifdef INTERPRET_LD
-	gencallinterp((uint32_t)LD, 0);
+    gencallinterp((uint32_t)LD, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -1860,7 +1890,7 @@ void genld()
 void genswc1()
 {
 #ifdef INTERPRET_SWC1
-	gencallinterp((uint32_t)SWC1, 0);
+    gencallinterp((uint32_t)SWC1, 0);
 #else
     gencheck_cop1_unusable();
 
@@ -1917,7 +1947,7 @@ void genswc1()
 void gensdc1()
 {
 #ifdef INTERPRET_SDC1
-	gencallinterp((uint32_t)SDC1, 0);
+    gencallinterp((uint32_t)SDC1, 0);
 #else
     gencheck_cop1_unusable();
 
@@ -1977,7 +2007,7 @@ void gensdc1()
 void gensd()
 {
 #ifdef INTERPRET_SD
-	gencallinterp((uint32_t)SD, 0);
+    gencallinterp((uint32_t)SD, 0);
 #else
     free_all_registers();
     simplify_access();

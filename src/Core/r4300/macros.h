@@ -26,16 +26,16 @@
 #define core_irt *PC->f.i.rt
 #define core_ioffset PC->f.i.immediate
 #define core_iimmediate PC->f.i.immediate
-#define core_lsaddr (PC-1)->f.i.immediate+(*(PC-1)->f.i.rs)
-#define core_lsrt *(PC-1)->f.i.rt
+#define core_lsaddr (PC - 1)->f.i.immediate + (*(PC - 1)->f.i.rs)
+#define core_lsrt *(PC - 1)->f.i.rt
 #define core_irs *PC->f.i.rs
 #define core_ibase *PC->f.i.rs
 #define core_jinst_index PC->f.j.inst_index
 #define core_lfbase PC->f.lf.base
 #define core_lfft PC->f.lf.ft
 #define core_lfoffset PC->f.lf.offset
-#define core_lslfaddr (PC-1)->f.lf.offset+reg[(PC-1)->f.lf.base]
-#define core_lslfft (PC-1)->f.lf.ft
+#define core_lslfaddr (PC - 1)->f.lf.offset + reg[(PC - 1)->f.lf.base]
+#define core_lslfft (PC - 1)->f.lf.ft
 #define core_cfft PC->f.cf.ft
 #define core_cffs PC->f.cf.fs
 #define core_cffd PC->f.cf.fd
@@ -48,22 +48,22 @@
 #define irs32 *((int32_t*)PC->f.i.rs)
 #define irt32 *((int32_t*)PC->f.i.rt)
 #else
-#define rrt32 *((int32_t*)PC->f.r.rt+1)
-#define rrd32 *((int32_t*)PC->f.r.rd+1)
-#define rrs32 *((int32_t*)PC->f.r.rs+1)
-#define irs32 *((int32_t*)PC->f.i.rs+1)
-#define irt32 *((int32_t*)PC->f.i.rt+1)
+#define rrt32 *((int32_t*)PC->f.r.rt + 1)
+#define rrd32 *((int32_t*)PC->f.r.rd + 1)
+#define rrs32 *((int32_t*)PC->f.r.rs + 1)
+#define irs32 *((int32_t*)PC->f.i.rs + 1)
+#define irt32 *((int32_t*)PC->f.i.rt + 1)
 #endif
 
-#define check_PC \
-if (PC->addr == actual->fin) \
-{ \
-g_core->log_error(L"changement de block"); \
-stop=1; \
-}
+#define check_PC                                   \
+    if (PC->addr == actual->fin)                   \
+    {                                              \
+        g_core->log_error(L"changement de block"); \
+        stop = 1;                                  \
+    }
 
 
-//cop0 macros
+// cop0 macros
 #define core_Index reg_cop0[0]
 #define core_Random reg_cop0[1]
 #define core_EntryLo0 reg_cop0[2]
@@ -110,19 +110,23 @@ stop=1; \
 
 #define read_x87_status_word() fegetexceptflag()
 
-static int64_t convert_float_to_int64(float f) {
+static int64_t convert_float_to_int64(float f)
+{
     return _mm_cvtss_si64(_mm_set_ss(f));
 }
 
-static int32_t convert_float_to_int32(float f) {
+static int32_t convert_float_to_int32(float f)
+{
     return _mm_cvtss_si32(_mm_set_ss(f));
 }
 
-static int64_t convert_double_to_int64(double d) {
+static int64_t convert_double_to_int64(double d)
+{
     return _mm_cvtsd_si64(_mm_set_sd(d));
 }
 
-static int32_t convert_double_to_int32(double d) {
+static int32_t convert_double_to_int32(double d)
+{
     return _mm_cvtsd_si32(_mm_set_sd(d));
 }
 
@@ -146,17 +150,36 @@ static int32_t convert_double_to_int32(double d) {
 #define clear_x87_exceptions() __asm { fclex }
 #define read_x87_status_word() __asm { fstsw x87_status_word }
 
-//asm converter that respects rounding modes
+// asm converter that respects rounding modes
 #define FLOAT_CONVERT(input_width, output_width) __asm { \
 __asm mov eax, src \
 __asm fld input_width ptr [eax] \
 __asm mov eax, dest \
-__asm fistp output_width ptr [eax] \
-}
+__asm fistp output_width ptr [eax] }
 
-#define FLOAT_CONVERT_L_S(s,d) { float* src = s; int64_t* dest = (int64_t*)d;  FLOAT_CONVERT(dword, qword); }
-#define FLOAT_CONVERT_W_S(s,d) { float* src = s; int32_t* dest = (int32_t*)d;  FLOAT_CONVERT(dword, dword); }
-#define FLOAT_CONVERT_L_D(s,d) { double* src = s; int64_t* dest = (int64_t*)d; FLOAT_CONVERT(qword, dword); }
-#define FLOAT_CONVERT_W_D(s,d) { double* src = s; int32_t* dest = (int32_t*)d; FLOAT_CONVERT(qword, qword); }
+#define FLOAT_CONVERT_L_S(s, d)      \
+    {                                \
+        float* src = s;              \
+        int64_t* dest = (int64_t*)d; \
+        FLOAT_CONVERT(dword, qword); \
+    }
+#define FLOAT_CONVERT_W_S(s, d)      \
+    {                                \
+        float* src = s;              \
+        int32_t* dest = (int32_t*)d; \
+        FLOAT_CONVERT(dword, dword); \
+    }
+#define FLOAT_CONVERT_L_D(s, d)      \
+    {                                \
+        double* src = s;             \
+        int64_t* dest = (int64_t*)d; \
+        FLOAT_CONVERT(qword, dword); \
+    }
+#define FLOAT_CONVERT_W_D(s, d)      \
+    {                                \
+        double* src = s;             \
+        int32_t* dest = (int32_t*)d; \
+        FLOAT_CONVERT(qword, qword); \
+    }
 
 #endif

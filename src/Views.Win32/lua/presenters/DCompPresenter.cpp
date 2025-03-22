@@ -61,19 +61,19 @@ void DCompPresenter::begin_present()
 void DCompPresenter::end_present()
 {
     m_d2d_dc->EndDraw();
-    
+
     // 1. Copy Direct2D graphics to the GDI-compatible texture
     ID3D11Resource* d2d_render_target = nullptr;
     m_dxgi_surface->QueryInterface(&d2d_render_target);
     m_d3d_dc->CopyResource(m_d3d_gdi_tex, d2d_render_target);
     d2d_render_target->Release();
-    
+
     // 2. Copy the GDI-compatible texture to the swapchain's back buffer
     ID3D11Resource* back_buffer = nullptr;
     m_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
     m_d3d_dc->CopyResource(back_buffer, m_d3d_gdi_tex);
     back_buffer->Release();
-    
+
     m_dxgi_swapchain->Present(0, 0);
     m_comp_device->Commit();
 }
@@ -85,15 +85,10 @@ void DCompPresenter::blit(HDC hdc, RECT rect)
     IDXGISurface1* dxgi_surface;
     m_d3d_gdi_tex->QueryInterface(&dxgi_surface);
     dxgi_surface->GetDC(false, &dc);
-    
+
     // 2. Blit our texture DC to the target DC, while preserving the alpha channel with AlphaBlend
-    AlphaBlend(hdc, 0, 0, m_size.width, m_size.height, dc, 0, 0, m_size.width, m_size.height, {
-                   .BlendOp = AC_SRC_OVER,
-                   .BlendFlags = 0,
-                   .SourceConstantAlpha = 255,
-                   .AlphaFormat = AC_SRC_ALPHA
-               });
-    
+    AlphaBlend(hdc, 0, 0, m_size.width, m_size.height, dc, 0, 0, m_size.width, m_size.height, {.BlendOp = AC_SRC_OVER, .BlendFlags = 0, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA});
+
     // 3. Cleanup
     dxgi_surface->ReleaseDC(nullptr);
     dxgi_surface->Release();

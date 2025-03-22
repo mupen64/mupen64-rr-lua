@@ -39,11 +39,11 @@ bool GDIPresenter::init(HWND hwnd)
 
     // 3. Create a D2D1 RT and point it to our back DC
     D2D1_RENDER_TARGET_PROPERTIES props =
-        D2D1::RenderTargetProperties(
-            D2D1_RENDER_TARGET_TYPE_DEFAULT,
-            D2D1::PixelFormat(
-                DXGI_FORMAT_B8G8R8A8_UNORM,
-                D2D1_ALPHA_MODE_PREMULTIPLIED));
+    D2D1::RenderTargetProperties(
+    D2D1_RENDER_TARGET_TYPE_DEFAULT,
+    D2D1::PixelFormat(
+    DXGI_FORMAT_B8G8R8A8_UNORM,
+    D2D1_ALPHA_MODE_PREMULTIPLIED));
 
     D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
                       &m_d2d_factory);

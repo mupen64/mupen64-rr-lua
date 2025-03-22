@@ -69,7 +69,8 @@ void JR()
     delay_slot = 0;
     jump_to(local_rs32);
     last_addr = PC->addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 void JALR()
@@ -89,7 +90,8 @@ void JALR()
         jump_to(local_rs32);
     }
     last_addr = PC->addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 void SYSCALL()
@@ -178,7 +180,8 @@ void DIV()
         sign_extended(lo);
         sign_extended(hi);
     }
-    else g_core->log_info(L"div");
+    else
+        g_core->log_info(L"div");
     PC++;
 }
 
@@ -191,7 +194,8 @@ void DIVU()
         sign_extended(lo);
         sign_extended(hi);
     }
-    else g_core->log_info(L"divu");
+    else
+        g_core->log_info(L"divu");
     PC++;
 }
 
@@ -207,13 +211,15 @@ void DMULT()
         op2 = -core_rrs;
         sign = 1 - sign;
     }
-    else op2 = core_rrs;
+    else
+        op2 = core_rrs;
     if (core_rrt < 0)
     {
         op4 = -core_rrt;
         sign = 1 - sign;
     }
-    else op4 = core_rrt;
+    else
+        op4 = core_rrt;
 
     op1 = op2 & 0xFFFFFFFF;
     op2 = (op2 >> 32) & 0xFFFFFFFF;
@@ -235,8 +241,10 @@ void DMULT()
     if (sign)
     {
         hi = ~hi;
-        if (!lo) hi++;
-        else lo = ~lo + 1;
+        if (!lo)
+            hi++;
+        else
+            lo = ~lo + 1;
     }
     PC++;
 }

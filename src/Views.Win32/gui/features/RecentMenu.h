@@ -37,5 +37,5 @@ namespace RecentMenu
      * \return The element at the specified index. Can be empty.
      */
     std::wstring element_at(std::vector<std::wstring> vec, int first_menu_id, int menu_id);
-    
+
 } // namespace RecentMenu

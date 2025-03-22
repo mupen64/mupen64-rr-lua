@@ -47,25 +47,25 @@ void set_default_hotkey_keys(cfg_view* config)
     config->speed_down_hotkey.key = VK_OEM_MINUS;
 
     config->speed_up_hotkey.key = VK_OEM_PLUS;
-    
+
     config->speed_reset_hotkey.key = VK_OEM_PLUS;
     config->speed_reset_hotkey.ctrl = 1;
 
     config->frame_advance_hotkey.key = VK_OEM_5;
-    
+
     config->multi_frame_advance_hotkey.key = VK_OEM_5;
     config->multi_frame_advance_hotkey.ctrl = 1;
 
     config->multi_frame_advance_inc_hotkey.key = 'E';
     config->multi_frame_advance_inc_hotkey.ctrl = 1;
-    
+
     config->multi_frame_advance_dec_hotkey.key = 'Q';
     config->multi_frame_advance_dec_hotkey.ctrl = 1;
 
     config->multi_frame_advance_reset_hotkey.key = 'E';
     config->multi_frame_advance_reset_hotkey.ctrl = 1;
     config->multi_frame_advance_reset_hotkey.shift = 1;
-    
+
     config->pause_hotkey.key = VK_PAUSE;
 
     config->toggle_read_only_hotkey.key = 'R';
@@ -233,7 +233,7 @@ cfg_view get_default_config()
     cfg_view config = {};
 
     // TODO: Merge get_default_hotkey_keys() into this function
-    
+
     config.fast_forward_hotkey = {
     .identifier = L"Fast-forward",
     .down_cmd = ACTION_FASTFORWARD_ON,
@@ -583,7 +583,7 @@ cfg_view get_default_config()
     {
         config.silent_mode_dialog_choices[string_to_wstring(pair.first)] = std::to_wstring(pair.second);
     }
-    
+
     set_default_hotkey_keys(&config);
 
     return config;

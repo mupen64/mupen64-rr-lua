@@ -13,7 +13,6 @@
 #include <gui/Main.h>
 
 
-
 namespace Cheats
 {
     LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam,

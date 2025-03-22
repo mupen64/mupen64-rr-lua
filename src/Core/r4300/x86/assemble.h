@@ -33,8 +33,7 @@
 #define DH 6
 #define BH 7
 
-typedef struct _reg_cache_struct
-{
+typedef struct _reg_cache_struct {
     int32_t need_map;
     void* needed_registers[8];
     unsigned char jump_wrapper[62];

@@ -8,12 +8,10 @@
 
 #include <r4300/x86/assemble.h>
 
-typedef struct _precomp_instr
-{
+typedef struct _precomp_instr {
     void (*ops)();
 
-    union
-    {
+    union {
         struct
         {
             int64_t* rs;
@@ -49,7 +47,7 @@ typedef struct _precomp_instr
             unsigned char fd;
         } cf;
 #ifdef LUA_BREAKPOINTSYNC_INTERP
-		unsigned char stype;
+        unsigned char stype;
 #endif
     } f;
 
@@ -60,8 +58,7 @@ typedef struct _precomp_instr
     uint32_t src;
 } precomp_instr;
 
-typedef struct _precomp_block
-{
+typedef struct _precomp_block {
     precomp_instr* block;
     uint32_t start;
     uint32_t end;

@@ -17,7 +17,7 @@ typedef enum {
 #pragma region Generic
     // The operation completed successfully
     Res_Ok,
-    
+
     // The operation was cancelled by the user
     Res_Cancelled,
 #pragma endregion
@@ -163,7 +163,7 @@ typedef struct CoreCfg {
     /// The CPU's counter factor. Higher values will generate less lag frames in-game at the cost of higher native CPU usage.
     /// </summary>
     int32_t counter_factor = 1;
-    
+
     /// <summary>
     /// Whether rom resets are not recorded in movies
     /// </summary>
@@ -692,13 +692,13 @@ typedef struct
 typedef struct CoreCheat {
     // The script's name. FIXME: This should be read from the script
     std::wstring name = L"Unnamed Cheat";
-    
+
     // The script's code. Mutating after creation does nothing unless instructions are recompiled.
     std::wstring code;
-    
+
     // Whether the cheat is active.
     bool active = true;
-    
+
     // The cheat's instructions. The pair's 1st element tells us whether instruction is a conditional, which is required for special handling of buggy kaze blj anywhere code
     std::vector<std::tuple<bool, std::function<bool()>>> instructions;
 } core_cheat;

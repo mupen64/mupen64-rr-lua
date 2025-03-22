@@ -8,8 +8,6 @@
 #include <Messenger.h>
 
 
-
-
 #include <gui/Main.h>
 #include <gui/features/CoreDbg.h>
 #include <lua/LuaConsole.h>
@@ -22,8 +20,8 @@ namespace CoreDbg
     std::atomic<HWND> g_hwnd = nullptr;
     core_dbg_cpu_state g_cpu_state{};
 
-	INT_PTR CALLBACK coredbg_dlgproc(HWND hwnd, UINT msg, WPARAM w_param,
-                                  LPARAM l_param)
+    INT_PTR CALLBACK coredbg_dlgproc(HWND hwnd, UINT msg, WPARAM w_param,
+                                     LPARAM l_param)
     {
         switch (msg)
         {
@@ -63,8 +61,8 @@ namespace CoreDbg
 
                 char disasm[255] = {0};
                 core_dbg_disassemble(disasm,
-                                       g_cpu_state.opcode,
-                                       g_cpu_state.address);
+                                     g_cpu_state.opcode,
+                                     g_cpu_state.address);
 
                 auto str = std::format("{} ({:#08x}, {:#08x})", disasm, g_cpu_state.opcode, g_cpu_state.address);
                 ListBox_InsertString(list_hwnd, 0, str.c_str());
@@ -86,19 +84,18 @@ namespace CoreDbg
 
     void show()
     {
-        std::thread([]
-        {
+        std::thread([] {
             DialogBox(g_app_instance,
                       MAKEINTRESOURCE(IDD_COREDBG),
                       0,
                       coredbg_dlgproc);
-        }).detach();
+        })
+        .detach();
     }
 
     void init()
     {
-        Messenger::subscribe(Messenger::Message::DebuggerCpuStateChanged, [](std::any data)
-        {
+        Messenger::subscribe(Messenger::Message::DebuggerCpuStateChanged, [](std::any data) {
             g_cpu_state = std::any_cast<core_dbg_cpu_state>(data);
 
             if (g_hwnd)
@@ -107,12 +104,11 @@ namespace CoreDbg
             }
         });
 
-        Messenger::subscribe(Messenger::Message::DebuggerResumedChanged, [](std::any data)
-        {
+        Messenger::subscribe(Messenger::Message::DebuggerResumedChanged, [](std::any data) {
             if (g_hwnd)
             {
                 SendMessage(g_hwnd, WM_DEBUGGER_RESUMED_UPDATED, 0, 0);
             }
         });
     }
-}
+} // namespace CoreDbg

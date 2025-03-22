@@ -10,14 +10,14 @@
 
 int32_t init_memory();
 constexpr uint32_t ADDR_MASK = 0x7FFFFF;
-#define read_word_in_memory() readmem[address>>16]()
-#define read_byte_in_memory() readmemb[address>>16]()
-#define read_hword_in_memory() readmemh[address>>16]()
-#define read_dword_in_memory() readmemd[address>>16]()
-#define write_word_in_memory() writemem[address>>16]()
-#define write_byte_in_memory() writememb[address >>16]()
-#define write_hword_in_memory() writememh[address >>16]()
-#define write_dword_in_memory() writememd[address >>16]()
+#define read_word_in_memory() readmem[address >> 16]()
+#define read_byte_in_memory() readmemb[address >> 16]()
+#define read_hword_in_memory() readmemh[address >> 16]()
+#define read_dword_in_memory() readmemd[address >> 16]()
+#define write_word_in_memory() writemem[address >> 16]()
+#define write_byte_in_memory() writememb[address >> 16]()
+#define write_hword_in_memory() writememh[address >> 16]()
+#define write_dword_in_memory() writememd[address >> 16]()
 extern uint32_t SP_DMEM[0x1000 / 4 * 2];
 extern unsigned char* SP_DMEMb;
 extern uint32_t* SP_IMEM;
@@ -56,13 +56,12 @@ extern core_dpc_reg dpc_register;
 extern core_dps_reg dps_register;
 
 #ifndef _BIG_ENDIAN
-#define sl(mot) \
-( \
-((mot & 0x000000FF) << 24) | \
-((mot & 0x0000FF00) <<  8) | \
-((mot & 0x00FF0000) >>  8) | \
-((mot & 0xFF000000) >> 24) \
-)
+#define sl(mot)                  \
+    (                            \
+    ((mot & 0x000000FF) << 24) | \
+    ((mot & 0x0000FF00) << 8) |  \
+    ((mot & 0x00FF0000) >> 8) |  \
+    ((mot & 0xFF000000) >> 24))
 
 #define S8 3
 #define S16 2

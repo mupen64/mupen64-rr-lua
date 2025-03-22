@@ -158,7 +158,7 @@ std::vector<uint8_t> generate_savestate()
 
     core_vcr_freeze_info freeze{};
     uint32_t movie_active = core_vcr_freeze(&freeze);
-    
+
     // NOTE: This saving needs to be done **after** the fixing block, as it is now. See previous regression in f9d58f639c798cbc26bbb808b1c3dbd834ffe2d9.
     save_flashram_infos(g_flashram_buf);
     const int32_t event_queue_len = save_eventqueue_infos(g_event_queue_buf);
@@ -217,15 +217,15 @@ std::vector<uint8_t> generate_savestate()
         int32_t height;
         g_core->plugin_funcs.video_get_video_size(&width, &height);
         g_core->log_trace(std::format(L"Writing screen buffer to savestate, width: {}, height: {}", width, height));
-        
+
         void* video = malloc(width * height * 3);
         g_core->copy_video(video);
-        
+
         vecwrite(b, screen_section, sizeof(screen_section));
         vecwrite(b, &width, sizeof(width));
         vecwrite(b, &height, sizeof(height));
         vecwrite(b, video, width * height * 3);
-        
+
         free(video);
     }
 
@@ -235,7 +235,7 @@ std::vector<uint8_t> generate_savestate()
 void savestates_save_immediate_impl(const t_savestate_task& task)
 {
     // TODO: Reimplement timing
-    
+
     const auto st = generate_savestate();
 
     if (task.medium == core_st_medium_slot || task.medium == core_st_medium_path)
@@ -324,10 +324,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
     if (!task.ignore_warnings && memcmp(md5, rom_md5, 32))
     {
-        auto result = g_core->show_ask_dialog(CORE_DLG_ST_HASH_MISMATCH, std::format(
-                                              L"The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe emulator may crash. Are you sure you want to continue?",
-                                              string_to_wstring(md5))
-                                              .c_str(),
+        auto result = g_core->show_ask_dialog(CORE_DLG_ST_HASH_MISMATCH, std::format(L"The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe emulator may crash. Are you sure you want to continue?", string_to_wstring(md5)).c_str(),
                                               L"Savestate", true);
 
         if (!result)
@@ -346,7 +343,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         task.callback(ST_InvalidRegisters, {});
         return;
     }
-    
+
     // now read interrupt queue into buf
     int32_t len;
     for (len = 0; len < sizeof(g_event_queue_buf); len += 8)
@@ -416,7 +413,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         if (!task.ignore_warnings && (core_vcr_get_task() == task_recording || core_vcr_get_task() == task_playback))
         {
             const auto result = g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
-            L"The savestate is not from a movie. Loading it might desynchronize the movie.\r\nAre you sure you want to continue?", L"Savestate", true);
+                                                        L"The savestate is not from a movie. Loading it might desynchronize the movie.\r\nAre you sure you want to continue?", L"Savestate", true);
             if (!result)
             {
                 task.callback(Res_Cancelled, {});
@@ -426,7 +423,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
         // at this point we know the savestate is safe to be loaded (done after else block)
     }
-    
+
     {
         g_core->log_trace(std::format(L"[Savestates] {} bytes remaining", decompressed_buf.size() - (ptr - decompressed_buf.data())));
         int32_t video_width = 0;
@@ -476,7 +473,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         add_interrupt_event(SI_INT, 0x900);
         g_st_skip_dma = true;
     }
-    
+
     g_core->callbacks.load_state();
     task.callback(Res_Ok, decompressed_buf);
 

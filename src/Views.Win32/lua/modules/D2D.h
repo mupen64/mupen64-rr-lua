@@ -30,48 +30,48 @@ namespace LuaCore::D2D
     } t_text_measure_params;
 
 #define D2D_GET_RECT(L, idx) D2D1::RectF( \
-	luaL_checknumber(L, idx), \
-	luaL_checknumber(L, idx + 1), \
-	luaL_checknumber(L, idx + 2), \
-	luaL_checknumber(L, idx + 3) \
-)
+luaL_checknumber(L, idx),                 \
+luaL_checknumber(L, idx + 1),             \
+luaL_checknumber(L, idx + 2),             \
+luaL_checknumber(L, idx + 3))
 
 #define D2D_GET_COLOR(L, idx) D2D1::ColorF( \
-	luaL_checknumber(L, idx), \
-	luaL_checknumber(L, idx + 1), \
-	luaL_checknumber(L, idx + 2), \
-	luaL_checknumber(L, idx + 3) \
-)
+luaL_checknumber(L, idx),                   \
+luaL_checknumber(L, idx + 1),               \
+luaL_checknumber(L, idx + 2),               \
+luaL_checknumber(L, idx + 3))
 
-#define D2D_GET_POINT(L, idx) D2D1_POINT_2F{ \
-	.x = (float)luaL_checknumber(L, idx), \
-	.y = (float)luaL_checknumber(L, idx + 1) \
-}
+#define D2D_GET_POINT(L, idx)                    \
+    D2D1_POINT_2F                                \
+    {                                            \
+        .x = (float)luaL_checknumber(L, idx),    \
+        .y = (float)luaL_checknumber(L, idx + 1) \
+    }
 
-#define D2D_GET_ELLIPSE(L, idx) D2D1_ELLIPSE{ \
-	.point = D2D_GET_POINT(L, idx), \
-	.radiusX = (float)luaL_checknumber(L, idx + 2), \
-	.radiusY = (float)luaL_checknumber(L, idx + 3) \
-}
+#define D2D_GET_ELLIPSE(L, idx)                         \
+    D2D1_ELLIPSE                                        \
+    {                                                   \
+        .point = D2D_GET_POINT(L, idx),                 \
+        .radiusX = (float)luaL_checknumber(L, idx + 2), \
+        .radiusY = (float)luaL_checknumber(L, idx + 3)  \
+    }
 
 #define D2D_GET_ROUNDED_RECT(L, idx) D2D1_ROUNDED_RECT( \
-	D2D_GET_RECT(L, idx), \
-	luaL_checknumber(L, idx + 5), \
-	luaL_checknumber(L, idx + 6) \
-)
+D2D_GET_RECT(L, idx),                                   \
+luaL_checknumber(L, idx + 5),                           \
+luaL_checknumber(L, idx + 6))
 
     static int create_brush(lua_State* L)
     {
         LuaEnvironment* lua = get_lua_class(L);
         ensure_d2d_renderer_created(lua);
-        
+
         D2D1::ColorF color = D2D_GET_COLOR(L, 1);
 
         ID2D1SolidColorBrush* brush;
         lua->d2d_render_target_stack.top()->CreateSolidColorBrush(
-            color,
-            &brush
-        );
+        color,
+        &brush);
 
         lua_pushinteger(L, (uint64_t)brush);
         return 1;
@@ -122,7 +122,7 @@ namespace LuaCore::D2D
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
         lua->d2d_render_target_stack.top()->DrawRectangle(
-            &rectangle, brush, thickness);
+        &rectangle, brush, thickness);
 
         return 0;
     }
@@ -149,7 +149,7 @@ namespace LuaCore::D2D
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
         lua->d2d_render_target_stack.top()->DrawEllipse(
-            &ellipse, brush, thickness);
+        &ellipse, brush, thickness);
 
         return 0;
     }
@@ -165,7 +165,7 @@ namespace LuaCore::D2D
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
         lua->d2d_render_target_stack.top()->DrawLine(
-            point_a, point_b, brush, thickness);
+        point_a, point_b, brush, thickness);
 
         return 0;
     }
@@ -175,7 +175,7 @@ namespace LuaCore::D2D
     {
         LuaEnvironment* lua = get_lua_class(L);
         ensure_d2d_renderer_created(lua);
-        
+
         D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
         auto text = std::string(luaL_checkstring(L, 5));
         auto font_name = std::string(luaL_checkstring(L, 6));
@@ -191,15 +191,15 @@ namespace LuaCore::D2D
         uint64_t text_hash = xxh64::hash(text.data(), text.size(), 0);
 
         t_text_layout_params params = {
-            .text_hash = text_hash,
-            .font_name_hash = font_name_hash,
-            .font_weight = font_weight,
-            .font_style = font_style,
-            .font_size = font_size,
-            .horizontal_alignment = horizontal_alignment,
-            .vertical_alignment = vertical_alignment,
-            .width = rectangle.right - rectangle.left,
-            .height = rectangle.bottom - rectangle.top,
+        .text_hash = text_hash,
+        .font_name_hash = font_name_hash,
+        .font_weight = font_weight,
+        .font_style = font_style,
+        .font_size = font_size,
+        .horizontal_alignment = horizontal_alignment,
+        .vertical_alignment = vertical_alignment,
+        .width = rectangle.right - rectangle.left,
+        .height = rectangle.bottom - rectangle.top,
         };
 
         uint64_t params_hash = xxh64::hash((const char*)&params, sizeof(params), 0);
@@ -211,20 +211,19 @@ namespace LuaCore::D2D
             IDWriteTextFormat* text_format;
 
             lua->dw_factory->CreateTextFormat(
-                string_to_wstring(font_name).c_str(),
-                nullptr,
-                static_cast<DWRITE_FONT_WEIGHT>(font_weight),
-                static_cast<DWRITE_FONT_STYLE>(font_style),
-                DWRITE_FONT_STRETCH_NORMAL,
-                font_size,
-                L"",
-                &text_format
-            );
+            string_to_wstring(font_name).c_str(),
+            nullptr,
+            static_cast<DWRITE_FONT_WEIGHT>(font_weight),
+            static_cast<DWRITE_FONT_STYLE>(font_style),
+            DWRITE_FONT_STRETCH_NORMAL,
+            font_size,
+            L"",
+            &text_format);
 
             text_format->SetTextAlignment(
-                static_cast<DWRITE_TEXT_ALIGNMENT>(horizontal_alignment));
+            static_cast<DWRITE_TEXT_ALIGNMENT>(horizontal_alignment));
             text_format->SetParagraphAlignment(
-                static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(vertical_alignment));
+            static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(vertical_alignment));
 
             IDWriteTextLayout* text_layout;
 
@@ -241,12 +240,10 @@ namespace LuaCore::D2D
 
         auto layout = lua->dw_text_layouts.get(params_hash);
         lua->d2d_render_target_stack.top()->DrawTextLayout({
-                                                               .x = rectangle.left,
-                                                               .y = rectangle.top,
-                                                           }, layout.value(), brush,
-                                                           static_cast<
-                                                               D2D1_DRAW_TEXT_OPTIONS>(
-                                                               options));
+                                                           .x = rectangle.left,
+                                                           .y = rectangle.top,
+                                                           },
+                                                           layout.value(), brush, static_cast<D2D1_DRAW_TEXT_OPTIONS>(options));
 
         return 0;
     }
@@ -257,7 +254,7 @@ namespace LuaCore::D2D
         ensure_d2d_renderer_created(lua);
         float mode = luaL_checkinteger(L, 1);
         lua->d2d_render_target_stack.top()->SetTextAntialiasMode(
-            (D2D1_TEXT_ANTIALIAS_MODE)mode);
+        (D2D1_TEXT_ANTIALIAS_MODE)mode);
         return 0;
     }
 
@@ -267,7 +264,7 @@ namespace LuaCore::D2D
         ensure_d2d_renderer_created(lua);
         float mode = luaL_checkinteger(L, 1);
         lua->d2d_render_target_stack.top()->SetAntialiasMode(
-            (D2D1_ANTIALIAS_MODE)mode);
+        (D2D1_ANTIALIAS_MODE)mode);
         return 0;
     }
 
@@ -286,11 +283,11 @@ namespace LuaCore::D2D
         uint64_t text_hash = xxh64::hash((char*)text.data(), text.size() * sizeof(wchar_t), 0);
 
         t_text_measure_params params = {
-            .text_hash = text_hash,
-            .font_name_hash = font_name_hash,
-            .font_size = font_size,
-            .max_width = max_width,
-            .max_height = max_height,
+        .text_hash = text_hash,
+        .font_name_hash = font_name_hash,
+        .font_size = font_size,
+        .max_width = max_width,
+        .max_height = max_height,
         };
 
         uint64_t params_hash = xxh64::hash((const char*)&params, sizeof(params), 0);
@@ -300,15 +297,14 @@ namespace LuaCore::D2D
             IDWriteTextFormat* text_format;
 
             lua->dw_factory->CreateTextFormat(
-                string_to_wstring(font_name).c_str(),
-                NULL,
-                DWRITE_FONT_WEIGHT_NORMAL,
-                DWRITE_FONT_STYLE_NORMAL,
-                DWRITE_FONT_STRETCH_NORMAL,
-                font_size,
-                L"",
-                &text_format
-            );
+            string_to_wstring(font_name).c_str(),
+            NULL,
+            DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL,
+            font_size,
+            L"",
+            &text_format);
 
             IDWriteTextLayout* text_layout;
 
@@ -326,13 +322,13 @@ namespace LuaCore::D2D
         }
 
         const auto text_metrics = lua->dw_text_sizes.get(params_hash).value();
-        
+
         lua_newtable(L);
         lua_pushinteger(L, text_metrics.widthIncludingTrailingWhitespace);
         lua_setfield(L, -2, "width");
         lua_pushinteger(L, text_metrics.height);
         lua_setfield(L, -2, "height");
-        
+
         return 1;
     }
 
@@ -344,9 +340,8 @@ namespace LuaCore::D2D
         D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
 
         lua->d2d_render_target_stack.top()->PushAxisAlignedClip(
-            rectangle,
-            D2D1_ANTIALIAS_MODE_PER_PRIMITIVE
-        );
+        rectangle,
+        D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 
         return 0;
     }
@@ -370,7 +365,7 @@ namespace LuaCore::D2D
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 7);
 
         lua->d2d_render_target_stack.top()->FillRoundedRectangle(
-            &rounded_rectangle, brush);
+        &rounded_rectangle, brush);
 
         return 0;
     }
@@ -385,7 +380,7 @@ namespace LuaCore::D2D
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 8);
 
         lua->d2d_render_target_stack.top()->DrawRoundedRectangle(
-            &rounded_rectangle, brush, thickness);
+        &rounded_rectangle, brush, thickness);
 
         return 0;
     }
@@ -404,19 +399,17 @@ namespace LuaCore::D2D
         ID2D1Bitmap* bmp = NULL;
 
         CoCreateInstance(
-            CLSID_WICImagingFactory,
-            NULL,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&pIWICFactory)
-        );
+        CLSID_WICImagingFactory,
+        NULL,
+        CLSCTX_INPROC_SERVER,
+        IID_PPV_ARGS(&pIWICFactory));
 
         HRESULT hr = pIWICFactory->CreateDecoderFromFilename(
-            string_to_wstring(path).c_str(),
-            NULL,
-            GENERIC_READ,
-            WICDecodeMetadataCacheOnLoad,
-            &pDecoder
-        );
+        string_to_wstring(path).c_str(),
+        NULL,
+        GENERIC_READ,
+        WICDecodeMetadataCacheOnLoad,
+        &pDecoder);
 
         if (!SUCCEEDED(hr))
         {
@@ -428,19 +421,17 @@ namespace LuaCore::D2D
         pIWICFactory->CreateFormatConverter(&pConverter);
         pDecoder->GetFrame(0, &pSource);
         pConverter->Initialize(
-            pSource,
-            GUID_WICPixelFormat32bppPBGRA,
-            WICBitmapDitherTypeNone,
-            NULL,
-            0.0f,
-            WICBitmapPaletteTypeMedianCut
-        );
+        pSource,
+        GUID_WICPixelFormat32bppPBGRA,
+        WICBitmapDitherTypeNone,
+        NULL,
+        0.0f,
+        WICBitmapPaletteTypeMedianCut);
 
         lua->d2d_render_target_stack.top()->CreateBitmapFromWicBitmap(
-            pConverter,
-            NULL,
-            &bmp
-        );
+        pConverter,
+        NULL,
+        &bmp);
 
         pIWICFactory->Release();
         pDecoder->Release();
@@ -473,12 +464,11 @@ namespace LuaCore::D2D
         auto bmp = (ID2D1Bitmap*)luaL_checkinteger(L, 11);
 
         lua->d2d_render_target_stack.top()->DrawBitmap(
-            bmp,
-            destination_rectangle,
-            opacity,
-            (D2D1_BITMAP_INTERPOLATION_MODE)interpolation,
-            source_rectangle
-        );
+        bmp,
+        destination_rectangle,
+        opacity,
+        (D2D1_BITMAP_INTERPOLATION_MODE)interpolation,
+        source_rectangle);
 
         return 0;
     }
@@ -510,7 +500,7 @@ namespace LuaCore::D2D
 
         ID2D1BitmapRenderTarget* render_target;
         lua->d2d_render_target_stack.top()->CreateCompatibleRenderTarget(
-            D2D1::SizeF(width, height), &render_target);
+        D2D1::SizeF(width, height), &render_target);
 
         // With render target at top of stack, we hand control back to script and let it run its callback with rt-scoped drawing
         lua->d2d_render_target_stack.push(render_target);
@@ -533,4 +523,4 @@ namespace LuaCore::D2D
 #undef D2D_GET_POINT
 #undef D2D_GET_ELLIPS
 #undef D2D_GET_ROUNDED_RECT
-}
+} // namespace LuaCore::D2D

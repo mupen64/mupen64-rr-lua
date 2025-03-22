@@ -73,8 +73,12 @@ void terminate_emu();
 
 core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
 
-void *malloc_exec(size_t size);
-void *realloc_exec(void *ptr, size_t oldsize, size_t newsize);
+void* malloc_exec(size_t size);
+void* realloc_exec(void* ptr, size_t oldsize, size_t newsize);
 void free_exec(void* ptr);
 
-#define jump_to(a) { jump_to_address = a; jump_to_func(); }
+#define jump_to(a)           \
+    {                        \
+        jump_to_address = a; \
+        jump_to_func();      \
+    }

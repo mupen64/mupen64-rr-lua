@@ -11,8 +11,7 @@
 #include <r4300/x86/assemble.h>
 #include <r4300/x86/regcache.h>
 
-typedef struct _jump_table
-{
+typedef struct _jump_table {
     uint32_t mi_addr;
     uint32_t pc_addr;
 } jump_table;
@@ -1057,7 +1056,8 @@ void nop()
 
 void mov_reg32_reg32(uint32_t reg1, uint32_t reg2)
 {
-    if (reg1 == reg2) return;
+    if (reg1 == reg2)
+        return;
     put8(0x89);
     put8(0xC0 | (reg2 << 3) | reg1);
 }

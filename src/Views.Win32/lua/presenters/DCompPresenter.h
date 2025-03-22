@@ -12,8 +12,7 @@
 #include <dcomp.h>
 #include <d3d11.h>
 
-class DCompPresenter : public Presenter
-{
+class DCompPresenter : public Presenter {
 public:
     ~DCompPresenter() override;
     bool init(HWND hwnd) override;

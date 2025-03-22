@@ -17,4 +17,4 @@ namespace PianoRoll
      * Shows the piano roll dialog
      */
     void show();
-}
+} // namespace PianoRoll

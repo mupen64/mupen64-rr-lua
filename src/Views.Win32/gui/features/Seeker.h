@@ -17,4 +17,4 @@ namespace Seeker
      * \brief Shows the seeker dialog
      */
     void show();
-}
+} // namespace Seeker

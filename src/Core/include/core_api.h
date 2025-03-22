@@ -119,7 +119,7 @@ typedef struct {
 } core_plugin_funcs;
 
 #pragma region Dialog IDs
-    
+
 #define CORE_DLG_FLOAT_EXCEPTION "CORE_DLG_FLOAT_EXCEPTION"
 #define CORE_DLG_ST_HASH_MISMATCH "CORE_DLG_ST_HASH_MISMATCH"
 #define CORE_DLG_ST_UNFREEZE_WARNING "CORE_DLG_ST_UNFREEZE_WARNING"
@@ -132,7 +132,7 @@ typedef struct {
 #define CORE_DLG_VCR_CHEAT_LOAD_ERROR "CORE_DLG_VCR_CHEAT_LOAD_ERROR"
 
 #pragma endregion
-    
+
 /**
  * \brief The core's parameters.
  */

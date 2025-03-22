@@ -21,8 +21,7 @@ int rates_changed(const int cur_in, const int cur_out)
     return in != (unsigned int)cur_in || out != (unsigned int)cur_out;
 }
 
-int
-rsmp_get_resample_len(const int dst_freq, const int src_freq, const int src_bitrate, int src_len)
+int rsmp_get_resample_len(const int dst_freq, const int src_freq, const int src_bitrate, int src_len)
 {
     // convert bitrate to 16 bits
     if (src_bitrate != 16)
@@ -39,9 +38,8 @@ rsmp_get_resample_len(const int dst_freq, const int src_freq, const int src_bitr
     return dst_len;
 }
 
-int
-rsmp_resample(short** dst, const int dst_freq,
-              const short* src, const int src_freq, const int src_bitrate, const int src_len)
+int rsmp_resample(short** dst, const int dst_freq,
+                  const short* src, const int src_freq, const int src_bitrate, const int src_len)
 {
     if (src_bitrate != 16)
     {
