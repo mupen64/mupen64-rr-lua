@@ -61,10 +61,16 @@ void DCompPresenter::begin_present()
 void DCompPresenter::end_present()
 {
     m_d2d_dc->EndDraw();
-
+    
+    // 1. Copy Direct2D graphics to the GDI-compatible texture
+    ID3D11Resource* d2d_render_target = nullptr;
+    m_dxgi_surface->QueryInterface(&d2d_render_target);
+    m_d3d_dc->CopyResource(m_d3d_gdi_tex, d2d_render_target);
+    d2d_render_target->Release();
+    
+    // 2. Copy the GDI-compatible texture to the swapchain's back buffer
     ID3D11Resource* back_buffer = nullptr;
     m_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
-    
     m_d3d_dc->CopyResource(back_buffer, m_d3d_gdi_tex);
     back_buffer->Release();
     
