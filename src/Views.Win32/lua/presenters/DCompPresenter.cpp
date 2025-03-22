@@ -61,40 +61,36 @@ void DCompPresenter::begin_present()
 void DCompPresenter::end_present()
 {
     m_d2d_dc->EndDraw();
+
+    ID3D11Resource* back_buffer = nullptr;
+    m_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
+    
+    m_d3d_dc->CopyResource(back_buffer, m_d3d_gdi_tex);
+    back_buffer->Release();
+    
     m_dxgi_swapchain->Present(0, 0);
     m_comp_device->Commit();
 }
 
 void DCompPresenter::blit(HDC hdc, RECT rect)
 {
-    // 1. Get an ID3D11Resource from our IDXGISurface1 to use as the source for CopySubresourceRegion
+    // 1. Get our GDI-compatible D3D texture's DC
     HDC dc;
-    ID3D11Resource* rc;
-    m_dxgi_surface->QueryInterface(&rc);
-
-    // 2. Get an ID3D11DeviceContext from our ID3D11Device and use it to blit the source (our dxgi surface, so the front buffer) to the GDI-compatible D3D texture
-    ID3D11DeviceContext* ctx;
-    m_d3device->GetImmediateContext(&ctx);
-    ctx->CopySubresourceRegion(m_d3d_gdi_tex, 0, 0, 0, 0, rc, 0, nullptr);
-
-    // 3. Get our GDI-compatible D3D texture's DC
     IDXGISurface1* dxgi_surface;
     m_d3d_gdi_tex->QueryInterface(&dxgi_surface);
     dxgi_surface->GetDC(false, &dc);
-
-    // 4. Blit our texture DC to the target DC, while preserving the alpha channel(!!!) with the alpha-aware AlphaBlend
+    
+    // 2. Blit our texture DC to the target DC, while preserving the alpha channel with AlphaBlend
     AlphaBlend(hdc, 0, 0, m_size.width, m_size.height, dc, 0, 0, m_size.width, m_size.height, {
                    .BlendOp = AC_SRC_OVER,
                    .BlendFlags = 0,
                    .SourceConstantAlpha = 255,
                    .AlphaFormat = AC_SRC_ALPHA
                });
-
-    // 5. Cleanup
+    
+    // 3. Cleanup
     dxgi_surface->ReleaseDC(nullptr);
-    ctx->Release();
     dxgi_surface->Release();
-    rc->Release();
 }
 
 D2D1_SIZE_U DCompPresenter::size()

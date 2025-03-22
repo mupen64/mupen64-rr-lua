@@ -57,7 +57,6 @@ static RECT get_window_rect_client_space(HWND parent, HWND child)
     offset_client.left + (client.right - client.left),
     offset_client.top + (client.bottom - client.top)};
 }
-
 static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory2** factory, IDXGIAdapter1** dxgiadapter, ID3D11Device** d3device,
                                        IDXGIDevice1** dxdevice, ID2D1Bitmap1** bitmap, IDCompositionVisual** comp_visual, IDCompositionDevice** comp_device,
                                        IDCompositionTarget** comp_target, IDXGISwapChain1** swapchain, ID2D1Factory3** d2d_factory, ID2D1Device2** d2d_device,
@@ -65,60 +64,36 @@ static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory
                                        ID3D11Resource** dxgi_surface_resource, ID3D11Resource** front_buffer, ID3D11Texture2D** d3d_gdi_tex)
 {
     CreateDXGIFactory2(0, IID_PPV_ARGS(factory));
-
     (*factory)->EnumAdapters1(0, dxgiadapter);
 
     D3D11CreateDevice(*dxgiadapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0,
-                      D3D11_SDK_VERSION, d3device, nullptr,
-                      d3d_dc);
-
+                      D3D11_SDK_VERSION, d3device, nullptr, d3d_dc);
+    
     (*d3device)->QueryInterface(dxdevice);
-
     (*dxdevice)->SetMaximumFrameLatency(1);
+    
+    DCompositionCreateDevice(*dxdevice, IID_PPV_ARGS(comp_device));
+    (*comp_device)->CreateTargetForHwnd(hwnd, true, comp_target);
+    (*comp_device)->CreateVisual(comp_visual);
 
-    {
-        DCompositionCreateDevice(*dxdevice, IID_PPV_ARGS(comp_device));
+    DXGI_SWAP_CHAIN_DESC1 swapdesc{};
+    swapdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapdesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+    swapdesc.SampleDesc.Count = 1;
+    swapdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapdesc.BufferCount = 2;
+    swapdesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    swapdesc.Width = size.width;
+    swapdesc.Height = size.height;
 
-        (*comp_device)->CreateTargetForHwnd(hwnd, true, comp_target);
-
-        (*comp_device)->CreateVisual(comp_visual);
-
-        DXGI_SWAP_CHAIN_DESC1 swapdesc{};
-        swapdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        swapdesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
-        swapdesc.SampleDesc.Count = 1;
-        swapdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swapdesc.BufferCount = 2;
-        swapdesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-        swapdesc.Width = size.width;
-        swapdesc.Height = size.height;
-
-        (*factory)->CreateSwapChainForComposition(*d3device, &swapdesc, nullptr, swapchain);
-
-        (*comp_visual)->SetContent(*swapchain);
-        (*comp_target)->SetRoot(*comp_visual);
-    }
-
+    (*factory)->CreateSwapChainForComposition(*d3device, &swapdesc, nullptr, swapchain);
+    (*comp_visual)->SetContent(*swapchain);
+    (*comp_target)->SetRoot(*comp_visual);
+    
     D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, {}, d2d_factory);
     (*d2d_factory)->CreateDevice(*dxdevice, d2d_device);
-    {
-        (*d2d_device)->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2d_dc);
-
-        (*swapchain)->GetBuffer(0, IID_PPV_ARGS(dxgi_surface));
-
-        const UINT dpi = GetDpiForWindow(hwnd);
-        const D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(
-        D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-        D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
-        dpi,
-        dpi);
-
-        (*d2d_dc)->CreateBitmapFromDxgiSurface(*dxgi_surface, props, bitmap);
-
-        (*d2d_dc)->SetTarget(*bitmap);
-    }
-
-    // Since the swapchain can't be gdi-compatible, we need a gdi-compatible texture which we blit the swapbuffer onto
+    (*d2d_device)->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2d_dc);
+    
     D3D11_TEXTURE2D_DESC desc{};
     desc.Width = size.width;
     desc.Height = size.height;
@@ -131,10 +106,20 @@ static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory
     desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
 
     (*d3device)->CreateTexture2D(&desc, nullptr, d3d_gdi_tex);
+    (*d3d_gdi_tex)->QueryInterface(dxgi_surface);
+    
+    const UINT dpi = GetDpiForWindow(hwnd);
+    const D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(
+        D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+        D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
+        dpi, dpi);
 
+    (*d2d_dc)->CreateBitmapFromDxgiSurface(*dxgi_surface, props, bitmap);
+    (*d2d_dc)->SetTarget(*bitmap);
+    
     (*swapchain)->GetBuffer(1, IID_PPV_ARGS(front_buffer));
     (*dxgi_surface)->QueryInterface(dxgi_surface_resource);
-
+    
     return true;
 }
 
