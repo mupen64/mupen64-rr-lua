@@ -6,8 +6,7 @@
 
 #pragma once
 
-typedef struct _tlb
-{
+typedef struct _tlb {
     int16_t mask;
     int32_t vpn2;
     char g;
@@ -21,7 +20,7 @@ typedef struct _tlb
     char d_odd;
     char v_odd;
     char r;
-    //int32_t check_parity_mask;
+    // int32_t check_parity_mask;
 
     uint32_t start_even;
     uint32_t end_even;

@@ -17,4 +17,4 @@ namespace CoreDbg
      * Initializes CoreDbg
      */
     void init();
-}
+} // namespace CoreDbg

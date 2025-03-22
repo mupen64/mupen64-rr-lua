@@ -12,7 +12,7 @@
 void gencvt_s_w()
 {
 #ifdef INTERPRET_CVT_S_W
-	gencallinterp((uint32_t)CVT_S_W, 0);
+    gencallinterp((uint32_t)CVT_S_W, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_simple[dst->f.cf.fs]));
@@ -25,7 +25,7 @@ void gencvt_s_w()
 void gencvt_d_w()
 {
 #ifdef INTERPRET_CVT_D_W
-	gencallinterp((uint32_t)CVT_D_W, 0);
+    gencallinterp((uint32_t)CVT_D_W, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_simple[dst->f.cf.fs]));

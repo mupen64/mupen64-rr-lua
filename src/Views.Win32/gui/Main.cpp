@@ -201,45 +201,41 @@ static void prompt_plugin_change()
     if (result == 0)
     {
         auto plugin_discovery_result = do_plugin_discovery();
-        
-        auto first_video_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin)
-        {
-        	return plugin->type() == plugin_video;
+
+        auto first_video_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin) {
+            return plugin->type() == plugin_video;
         });
-        
-        auto first_audio_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin)
-        {
-        	return plugin->type() == plugin_audio;
+
+        auto first_audio_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin) {
+            return plugin->type() == plugin_audio;
         });
-        
-        auto first_input_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin)
-        {
-        	return plugin->type() == plugin_input;
+
+        auto first_input_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin) {
+            return plugin->type() == plugin_input;
         });
-        
-        auto first_rsp_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin)
-        {
-        	return plugin->type() == plugin_rsp;
+
+        auto first_rsp_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto& plugin) {
+            return plugin->type() == plugin_rsp;
         });
 
         if (first_video_plugin != plugin_discovery_result.plugins.end())
         {
-        	g_config.selected_video_plugin = first_video_plugin->get()->path();
+            g_config.selected_video_plugin = first_video_plugin->get()->path();
         }
-        
+
         if (first_audio_plugin != plugin_discovery_result.plugins.end())
         {
-        	g_config.selected_audio_plugin = first_audio_plugin->get()->path();
+            g_config.selected_audio_plugin = first_audio_plugin->get()->path();
         }
-        
+
         if (first_input_plugin != plugin_discovery_result.plugins.end())
         {
-        	g_config.selected_input_plugin = first_input_plugin->get()->path();
+            g_config.selected_input_plugin = first_input_plugin->get()->path();
         }
-        
+
         if (first_rsp_plugin != plugin_discovery_result.plugins.end())
         {
-        	g_config.selected_rsp_plugin = first_rsp_plugin->get()->path();
+            g_config.selected_rsp_plugin = first_rsp_plugin->get()->path();
         }
 
         return;
@@ -1044,7 +1040,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
             bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
             bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
-        
+
             BOOL hit = FALSE;
             for (cfg_hotkey* hotkey : g_config_hotkeys)
             {
@@ -1088,7 +1084,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             last_mmb = mmb;
             last_xmb1 = xmb1;
             last_xmb2 = xmb2;
-        
+
             if (!hit)
                 return DefWindowProc(hwnd, Message, wParam, lParam);
             break;
@@ -1273,7 +1269,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
             ModifyMenu(g_main_menu, IDM_MULTI_FRAME_ADVANCE, MF_BYCOMMAND | MF_STRING, IDM_MULTI_FRAME_ADVANCE, std::format(L"Multi-Frame Advance {}x", g_config.multi_frame_advance_count).c_str());
             apply_menu_item_accelerator_text();
-         
+
             EnableMenuItem(g_main_menu, IDM_CLOSE_ROM, core_executing ? MF_ENABLED : MF_GRAYED);
             EnableMenuItem(g_main_menu, IDM_RESET_ROM, core_executing ? MF_ENABLED : MF_GRAYED);
             EnableMenuItem(g_main_menu, IDM_PAUSE, core_executing ? MF_ENABLED : MF_GRAYED);
@@ -1530,7 +1526,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 if (g_config.multi_frame_advance_count > 0)
                 {
                     core_vr_frame_advance(g_config.multi_frame_advance_count);
-                } else
+                }
+                else
                 {
                     AsyncExecutor::invoke_async([] {
                         const auto result = core_vcr_begin_seek(std::to_wstring(g_config.multi_frame_advance_count), true);
@@ -1571,19 +1568,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
 
             case IDM_RESET_ROM:
-            {
-                const bool reset_will_continue_recording = g_config.core.is_reset_recording_enabled && core_vcr_get_task() == task_recording;
+                {
+                    const bool reset_will_continue_recording = g_config.core.is_reset_recording_enabled && core_vcr_get_task() == task_recording;
 
-                if (!reset_will_continue_recording && !confirm_user_exit())
+                    if (!reset_will_continue_recording && !confirm_user_exit())
+                        break;
+
+                    AsyncExecutor::invoke_async([] {
+                        const auto result = core_vr_reset_rom(false, true);
+                        show_error_dialog_for_result(result);
+                    },
+                                                ASYNC_KEY_RESET_ROM);
                     break;
-
-                AsyncExecutor::invoke_async([] {
-                    const auto result = core_vr_reset_rom(false, true);
-                    show_error_dialog_for_result(result);
-                },
-                                            ASYNC_KEY_RESET_ROM);
-                break;
-            }
+                }
             case IDM_SETTINGS:
                 {
                     BetterEmulationLock lock;
@@ -1871,7 +1868,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                             Statusbar::post(L"Capture started...");
                         }
                     });
-                
+
                     break;
                 }
             case IDM_STOP_CAPTURE:
@@ -2081,7 +2078,7 @@ bool load_plugins()
         g_view_logger->trace(L"Loading audio plugin: {}", g_config.selected_audio_plugin);
         g_view_logger->trace(L"Loading input plugin: {}", g_config.selected_input_plugin);
         g_view_logger->trace(L"Loading RSP plugin: {}", g_config.selected_rsp_plugin);
-        
+
         auto video_pl = Plugin::create(g_config.selected_video_plugin);
         auto audio_pl = Plugin::create(g_config.selected_audio_plugin);
         auto input_pl = Plugin::create(g_config.selected_input_plugin);
@@ -2103,7 +2100,7 @@ bool load_plugins()
         {
             g_view_logger->error(L"Failed to load rsp plugin: {}", rsp_pl.first);
         }
-        
+
         if (video_pl.second == nullptr || audio_pl.second == nullptr || input_pl.second == nullptr || rsp_pl.second == nullptr)
         {
             video_pl.second.reset();
@@ -2144,7 +2141,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 
     // This has to be posted to ui thread since it requires synchronized access to the lua map
     PostMessage(g_main_hwnd, WM_INVALIDATE_LUA, 0, 0);
-    
+
     static std::chrono::high_resolution_clock::time_point last_statusbar_update = std::chrono::high_resolution_clock::now();
     std::chrono::high_resolution_clock::time_point time = std::chrono::high_resolution_clock::now();
 
@@ -2170,7 +2167,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 
         g_frame_changed = false;
     }
-    
+
     // We throttle FPS and VI/s visual updates to 1 per second, so no unstable values are displayed
     if (time - last_statusbar_update > std::chrono::seconds(1))
     {
@@ -2202,7 +2199,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     dispatcher_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     dispatcher_done_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    
+
     g_core.cfg = &g_config.core;
     g_core.callbacks = {};
     g_core.callbacks.vi = [] {
@@ -2306,13 +2303,13 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.get_saves_directory = get_saves_directory;
     g_core.get_backups_directory = get_backups_directory;
     g_core.get_summercart_path = get_summercart_path;
-    g_core.show_multiple_choice_dialog = [] (const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type) {
+    g_core.show_multiple_choice_dialog = [](const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type) {
         return DialogService::show_multiple_choice_dialog(id, choices, str, title, type);
     };
-    g_core.show_ask_dialog = [] (const std::string& id, const wchar_t* str, const wchar_t* title, bool warning) {
+    g_core.show_ask_dialog = [](const std::string& id, const wchar_t* str, const wchar_t* title, bool warning) {
         return DialogService::show_ask_dialog(id, str, title, warning);
     };
-    g_core.show_dialog = [] (const wchar_t* str, const wchar_t* title, core_dialog_type type) {
+    g_core.show_dialog = [](const wchar_t* str, const wchar_t* title, core_dialog_type type) {
         DialogService::show_dialog(str, title, type);
     };
     g_core.show_statusbar = DialogService::show_statusbar;
@@ -2324,16 +2321,15 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 #define DO_COPY(type)                                                                          \
     if (type)                                                                                  \
     {                                                                                          \
-        if (g_## type## _plugin)                                                                 \
+        if (g_##type##_plugin)                                                                 \
         {                                                                                      \
-            strncpy(type, g_## type## _plugin->name().data(), 64);                               \
+            strncpy(type, g_##type##_plugin->name().data(), 64);                               \
         }                                                                                      \
         else                                                                                   \
         {                                                                                      \
             g_view_logger->error("Tried to get {} plugin name while it wasn't loaded", #type); \
         }                                                                                      \
-    }\
-    
+    }
         DO_COPY(video)
         DO_COPY(audio)
         DO_COPY(input)
@@ -2341,7 +2337,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     };
 
     core_init(&g_core);
-    
+
     g_ui_thread_id = GetCurrentThreadId();
 
     Gdiplus::GdiplusStartupInput startup_input;
@@ -2478,10 +2474,10 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         DialogService::show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.", L"Error", fsvc_error);
         return -1;
     }
-    
+
     SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
     bool exit = false;
-    
+
     while (!exit)
     {
         DWORD result = MsgWaitForMultipleObjects(1, &dispatcher_event, FALSE, INFINITE, QS_ALLINPUT);

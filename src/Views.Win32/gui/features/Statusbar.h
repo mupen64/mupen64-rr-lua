@@ -7,11 +7,9 @@
 #pragma once
 
 
-
 namespace Statusbar
 {
-    enum class Section
-    {
+    enum class Section {
         Notification,
         VCR,
         Readonly,
@@ -39,4 +37,4 @@ namespace Statusbar
      * \param section The statusbar section to display the text in
      */
     void post(const std::wstring& text, Section section = Section::Notification);
-}
+} // namespace Statusbar

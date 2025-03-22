@@ -118,7 +118,7 @@ static void __cdecl dummy_moveScreen(int32_t, int32_t)
 void load_gfx(void* handle)
 {
     INITIATEGFX initiate_gfx{};
-    
+
     FUNC(g_core.plugin_funcs.video_change_window, CHANGEWINDOW, dummy_void, "ChangeWindow");
     FUNC(g_core.plugin_funcs.video_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(initiate_gfx, INITIATEGFX, dummy_initiateGFX, "InitiateGFX");
@@ -180,7 +180,7 @@ void load_input(uint16_t version, void* handle)
 {
     OLD_INITIATECONTROLLERS old_initiate_controllers{};
     INITIATECONTROLLERS initiate_controllers{};
-    
+
     FUNC(g_core.plugin_funcs.input_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_core.plugin_funcs.input_controller_command, CONTROLLERCOMMAND, dummy_controllerCommand, "ControllerCommand");
     FUNC(g_core.plugin_funcs.input_get_keys, GETKEYS, dummy_getKeys, "GetKeys");
@@ -224,7 +224,7 @@ void load_input(uint16_t version, void* handle)
 void load_audio(void* handle)
 {
     INITIATEAUDIO initiate_audio{};
-    
+
     FUNC(g_core.plugin_funcs.audio_close_dll_audio, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_core.plugin_funcs.audio_ai_dacrate_changed, AIDACRATECHANGED, dummy_aiDacrateChanged, "AiDacrateChanged");
     FUNC(g_core.plugin_funcs.audio_ai_len_changed, AILENCHANGED, dummy_void, "AiLenChanged");
@@ -257,7 +257,7 @@ void load_audio(void* handle)
 void load_rsp(void* handle)
 {
     INITIATERSP initiate_rsp{};
-    
+
     FUNC(g_core.plugin_funcs.rsp_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_core.plugin_funcs.rsp_do_rsp_cycles, DORSPCYCLES, dummy_doRspCycles, "DoRspCycles");
     FUNC(initiate_rsp, INITIATERSP, dummy_initiateRSP, "InitiateRSP");
@@ -440,10 +440,10 @@ void Plugin::config()
                     {
                         DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
                     }
-                    break;   
+                    break;
                 }
             }
-        
+
             if (!core_vr_get_launched())
             {
                 auto initiateRSP = (INITIATERSP)PlatformService::get_function_in_module((void*)m_module, "InitiateRSP");

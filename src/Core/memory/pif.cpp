@@ -23,8 +23,8 @@ void print_pif()
     int32_t i;
     for (i = 0; i < (64 / 8); i++)
         g_core->log_info(L"{:#06x} {:#06x} {:#06x} {:#06x} | {:#06x} {:#06x} {:#06x} {:#06x}",
-                            PIF_RAMb[i * 8 + 0], PIF_RAMb[i * 8 + 1], PIF_RAMb[i * 8 + 2], PIF_RAMb[i * 8 + 3],
-                            PIF_RAMb[i * 8 + 4], PIF_RAMb[i * 8 + 5], PIF_RAMb[i * 8 + 6], PIF_RAMb[i * 8 + 7]);
+                         PIF_RAMb[i * 8 + 0], PIF_RAMb[i * 8 + 1], PIF_RAMb[i * 8 + 2], PIF_RAMb[i * 8 + 3],
+                         PIF_RAMb[i * 8 + 4], PIF_RAMb[i * 8 + 5], PIF_RAMb[i * 8 + 6], PIF_RAMb[i * 8 + 7]);
     // getchar();
 }
 #endif
@@ -418,7 +418,8 @@ void update_pif_read()
                             {
                                 --frame_advance_outstanding;
                                 core_vr_pause_emu();
-                            } else if (frame_advance_outstanding > 1)
+                            }
+                            else if (frame_advance_outstanding > 1)
                             {
                                 --frame_advance_outstanding;
                             }
@@ -436,7 +437,7 @@ void update_pif_read()
                         while (emu_paused)
                         {
                             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                            
+
                             g_core->callbacks.interval();
 
                             if (stAllowed)

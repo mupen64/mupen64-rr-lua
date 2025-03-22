@@ -18,7 +18,7 @@
 void gensll()
 {
 #ifdef INTERPRET_SLL
-	gencallinterp((uint32_t)SLL, 0);
+    gencallinterp((uint32_t)SLL, 0);
 #else
     int32_t rt = allocate_register((uint32_t*)dst->f.r.rt);
     int32_t rd = allocate_register_w((uint32_t*)dst->f.r.rd);
@@ -31,7 +31,7 @@ void gensll()
 void gensrl()
 {
 #ifdef INTERPRET_SRL
-	gencallinterp((uint32_t)SRL, 0);
+    gencallinterp((uint32_t)SRL, 0);
 #else
     int32_t rt = allocate_register((uint32_t*)dst->f.r.rt);
     int32_t rd = allocate_register_w((uint32_t*)dst->f.r.rd);
@@ -44,7 +44,7 @@ void gensrl()
 void gensra()
 {
 #ifdef INTERPRET_SRA
-	gencallinterp((uint32_t)SRA, 0);
+    gencallinterp((uint32_t)SRA, 0);
 #else
     int32_t rt = allocate_register((uint32_t*)dst->f.r.rt);
     int32_t rd = allocate_register_w((uint32_t*)dst->f.r.rd);
@@ -57,7 +57,7 @@ void gensra()
 void gensllv()
 {
 #ifdef INTERPRET_SLLV
-	gencallinterp((uint32_t)SLLV, 0);
+    gencallinterp((uint32_t)SLLV, 0);
 #else
     int32_t rt, rd;
     allocate_register_manually(ECX, (uint32_t*)dst->f.r.rs);
@@ -84,7 +84,7 @@ void gensllv()
 void gensrlv()
 {
 #ifdef INTERPRET_SRLV
-	gencallinterp((uint32_t)SRLV, 0);
+    gencallinterp((uint32_t)SRLV, 0);
 #else
     int32_t rt, rd;
     allocate_register_manually(ECX, (uint32_t*)dst->f.r.rs);
@@ -111,7 +111,7 @@ void gensrlv()
 void gensrav()
 {
 #ifdef INTERPRET_SRAV
-	gencallinterp((uint32_t)SRAV, 0);
+    gencallinterp((uint32_t)SRAV, 0);
 #else
     int32_t rt, rd;
     allocate_register_manually(ECX, (uint32_t*)dst->f.r.rs);
@@ -138,19 +138,20 @@ void gensrav()
 void genjr()
 {
 #ifdef INTERPRET_JR
-	gencallinterp((uint32_t)JR, 1);
+    gencallinterp((uint32_t)JR, 1);
 #else
     static uint32_t precomp_instr_size = sizeof(precomp_instr);
     uint32_t diff =
-        (uint32_t)(&dst->local_addr) - (uint32_t)(dst);
+    (uint32_t)(&dst->local_addr) - (uint32_t)(dst);
     uint32_t diff_need =
-        (uint32_t)(&dst->reg_cache_infos.need_map) - (uint32_t)(dst);
+    (uint32_t)(&dst->reg_cache_infos.need_map) - (uint32_t)(dst);
     uint32_t diff_wrap =
-        (uint32_t)(&dst->reg_cache_infos.jump_wrapper) - (uint32_t)(dst);
+    (uint32_t)(&dst->reg_cache_infos.jump_wrapper) - (uint32_t)(dst);
     uint32_t temp, temp2;
 
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)JR, 1);
         return;
@@ -207,19 +208,20 @@ void genjr()
 void genjalr()
 {
 #ifdef INTERPRET_JALR
-	gencallinterp((uint32_t)JALR, 0);
+    gencallinterp((uint32_t)JALR, 0);
 #else
     static uint32_t precomp_instr_size = sizeof(precomp_instr);
     uint32_t diff =
-        (uint32_t)(&dst->local_addr) - (uint32_t)(dst);
+    (uint32_t)(&dst->local_addr) - (uint32_t)(dst);
     uint32_t diff_need =
-        (uint32_t)(&dst->reg_cache_infos.need_map) - (uint32_t)(dst);
+    (uint32_t)(&dst->reg_cache_infos.need_map) - (uint32_t)(dst);
     uint32_t diff_wrap =
-        (uint32_t)(&dst->reg_cache_infos.jump_wrapper) - (uint32_t)(dst);
+    (uint32_t)(&dst->reg_cache_infos.jump_wrapper) - (uint32_t)(dst);
     uint32_t temp, temp2;
 
     if (((dst->addr & 0xFFF) == 0xFFC &&
-        (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) || !g_core->cfg->is_compiled_jump_enabled)
+         (dst->addr < 0x80000000 || dst->addr >= 0xC0000000)) ||
+        !g_core->cfg->is_compiled_jump_enabled)
     {
         gencallinterp((uint32_t)JALR, 1);
         return;
@@ -282,7 +284,7 @@ void genjalr()
 void gensyscall()
 {
 #ifdef INTERPRET_SYSCALL
-	gencallinterp((uint32_t)SYSCALL, 0);
+    gencallinterp((uint32_t)SYSCALL, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -301,7 +303,7 @@ void gensync()
 void genmfhi()
 {
 #ifdef INTERPRET_MFHI
-	gencallinterp((uint32_t)MFHI, 0);
+    gencallinterp((uint32_t)MFHI, 0);
 #else
     int32_t rd1 = allocate_64_register1_w((uint32_t*)dst->f.r.rd);
     int32_t rd2 = allocate_64_register2_w((uint32_t*)dst->f.r.rd);
@@ -316,7 +318,7 @@ void genmfhi()
 void genmthi()
 {
 #ifdef INTERPRET_MTHI
-	gencallinterp((uint32_t)MTHI, 0);
+    gencallinterp((uint32_t)MTHI, 0);
 #else
     int32_t hi1 = allocate_64_register1_w((uint32_t*)&hi);
     int32_t hi2 = allocate_64_register2_w((uint32_t*)&hi);
@@ -331,7 +333,7 @@ void genmthi()
 void genmflo()
 {
 #ifdef INTERPRET_MFLO
-	gencallinterp((uint32_t)MFLO, 0);
+    gencallinterp((uint32_t)MFLO, 0);
 #else
     int32_t rd1 = allocate_64_register1_w((uint32_t*)dst->f.r.rd);
     int32_t rd2 = allocate_64_register2_w((uint32_t*)dst->f.r.rd);
@@ -346,7 +348,7 @@ void genmflo()
 void genmtlo()
 {
 #ifdef INTERPRET_MTLO
-	gencallinterp((uint32_t)MTLO, 0);
+    gencallinterp((uint32_t)MTLO, 0);
 #else
     int32_t lo1 = allocate_64_register1_w((uint32_t*)&lo);
     int32_t lo2 = allocate_64_register2_w((uint32_t*)&lo);
@@ -361,7 +363,7 @@ void genmtlo()
 void gendsllv()
 {
 #ifdef INTERPRET_DSLLV
-	gencallinterp((uint32_t)DSLLV, 0);
+    gencallinterp((uint32_t)DSLLV, 0);
 #else
     int32_t rt1, rt2, rd1, rd2;
     allocate_register_manually(ECX, (uint32_t*)dst->f.r.rs);
@@ -409,7 +411,7 @@ void gendsllv()
 void gendsrlv()
 {
 #ifdef INTERPRET_DSRLV
-	gencallinterp((uint32_t)DSRLV, 0);
+    gencallinterp((uint32_t)DSRLV, 0);
 #else
     int32_t rt1, rt2, rd1, rd2;
     allocate_register_manually(ECX, (uint32_t*)dst->f.r.rs);
@@ -457,7 +459,7 @@ void gendsrlv()
 void gendsrav()
 {
 #ifdef INTERPRET_DSRAV
-	gencallinterp((uint32_t)DSRAV, 0);
+    gencallinterp((uint32_t)DSRAV, 0);
 #else
     int32_t rt1, rt2, rd1, rd2;
     allocate_register_manually(ECX, (uint32_t*)dst->f.r.rs);
@@ -505,7 +507,7 @@ void gendsrav()
 void genmult()
 {
 #ifdef INTERPRET_MULT
-	gencallinterp((uint32_t)MULT, 0);
+    gencallinterp((uint32_t)MULT, 0);
 #else
     int32_t rs, rt;
     allocate_register_manually_w(EAX, (uint32_t*)&lo, 0);
@@ -520,7 +522,7 @@ void genmult()
 void genmultu()
 {
 #ifdef INTERPRET_MULTU
-	gencallinterp((uint32_t)MULTU, 0);
+    gencallinterp((uint32_t)MULTU, 0);
 #else
     int32_t rs, rt;
     allocate_register_manually_w(EAX, (uint32_t*)&lo, 0);
@@ -535,7 +537,7 @@ void genmultu()
 void gendiv()
 {
 #ifdef INTERPRET_DIV
-	gencallinterp((uint32_t)DIV, 0);
+    gencallinterp((uint32_t)DIV, 0);
 #else
     int32_t rs, rt;
     allocate_register_manually_w(EAX, (uint32_t*)&lo, 0);
@@ -553,7 +555,7 @@ void gendiv()
 void gendivu()
 {
 #ifdef INTERPRET_DIVU
-	gencallinterp((uint32_t)DIVU, 0);
+    gencallinterp((uint32_t)DIVU, 0);
 #else
     int32_t rs, rt;
     allocate_register_manually_w(EAX, (uint32_t*)&lo, 0);
@@ -576,7 +578,7 @@ void gendmult()
 void gendmultu()
 {
 #ifdef INTERPRET_DMULTU
-	gencallinterp((uint32_t)DMULTU, 0);
+    gencallinterp((uint32_t)DMULTU, 0);
 #else
     free_all_registers();
     simplify_access();
@@ -625,7 +627,7 @@ void genddivu()
 void genadd()
 {
 #ifdef INTERPRET_ADD
-	gencallinterp((uint32_t)ADD, 0);
+    gencallinterp((uint32_t)ADD, 0);
 #else
     int32_t rs = allocate_register((uint32_t*)dst->f.r.rs);
     int32_t rt = allocate_register((uint32_t*)dst->f.r.rt);
@@ -650,7 +652,7 @@ void genadd()
 void genaddu()
 {
 #ifdef INTERPRET_ADDU
-	gencallinterp((uint32_t)ADDU, 0);
+    gencallinterp((uint32_t)ADDU, 0);
 #else
     int32_t rs = allocate_register((uint32_t*)dst->f.r.rs);
     int32_t rt = allocate_register((uint32_t*)dst->f.r.rt);
@@ -675,7 +677,7 @@ void genaddu()
 void gensub()
 {
 #ifdef INTERPRET_SUB
-	gencallinterp((uint32_t)SUB, 0);
+    gencallinterp((uint32_t)SUB, 0);
 #else
     int32_t rs = allocate_register((uint32_t*)dst->f.r.rs);
     int32_t rt = allocate_register((uint32_t*)dst->f.r.rt);
@@ -700,7 +702,7 @@ void gensub()
 void gensubu()
 {
 #ifdef INTERPRET_SUBU
-	gencallinterp((uint32_t)SUBU, 0);
+    gencallinterp((uint32_t)SUBU, 0);
 #else
     int32_t rs = allocate_register((uint32_t*)dst->f.r.rs);
     int32_t rt = allocate_register((uint32_t*)dst->f.r.rt);
@@ -725,7 +727,7 @@ void gensubu()
 void genand()
 {
 #ifdef INTERPRET_AND
-	gencallinterp((uint32_t)AND, 0);
+    gencallinterp((uint32_t)AND, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -758,7 +760,7 @@ void genand()
 void genor()
 {
 #ifdef INTERPRET_OR
-	gencallinterp((uint32_t)OR, 0);
+    gencallinterp((uint32_t)OR, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -791,7 +793,7 @@ void genor()
 void genxor()
 {
 #ifdef INTERPRET_XOR
-	gencallinterp((uint32_t)XOR, 0);
+    gencallinterp((uint32_t)XOR, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -824,7 +826,7 @@ void genxor()
 void gennor()
 {
 #ifdef INTERPRET_NOR
-	gencallinterp((uint32_t)NOR, 0);
+    gencallinterp((uint32_t)NOR, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -861,7 +863,7 @@ void gennor()
 void genslt()
 {
 #ifdef INTERPRET_SLT
-	gencallinterp((uint32_t)SLT, 0);
+    gencallinterp((uint32_t)SLT, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -883,7 +885,7 @@ void genslt()
 void gensltu()
 {
 #ifdef INTERPRET_SLTU
-	gencallinterp((uint32_t)SLTU, 0);
+    gencallinterp((uint32_t)SLTU, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -905,7 +907,7 @@ void gensltu()
 void gendadd()
 {
 #ifdef INTERPRET_DADD
-	gencallinterp((uint32_t)DADD, 0);
+    gencallinterp((uint32_t)DADD, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -938,7 +940,7 @@ void gendadd()
 void gendaddu()
 {
 #ifdef INTERPRET_DADDU
-	gencallinterp((uint32_t)DADDU, 0);
+    gencallinterp((uint32_t)DADDU, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -971,7 +973,7 @@ void gendaddu()
 void gendsub()
 {
 #ifdef INTERPRET_DSUB
-	gencallinterp((uint32_t)DSUB, 0);
+    gencallinterp((uint32_t)DSUB, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -1004,7 +1006,7 @@ void gendsub()
 void gendsubu()
 {
 #ifdef INTERPRET_DSUBU
-	gencallinterp((uint32_t)DSUBU, 0);
+    gencallinterp((uint32_t)DSUBU, 0);
 #else
     int32_t rs1 = allocate_64_register1((uint32_t*)dst->f.r.rs);
     int32_t rs2 = allocate_64_register2((uint32_t*)dst->f.r.rs);
@@ -1042,7 +1044,7 @@ void genteq()
 void gendsll()
 {
 #ifdef INTERPRET_DSLL
-	gencallinterp((uint32_t)DSLL, 0);
+    gencallinterp((uint32_t)DSLL, 0);
 #else
     int32_t rt1 = allocate_64_register1((uint32_t*)dst->f.r.rt);
     int32_t rt2 = allocate_64_register2((uint32_t*)dst->f.r.rt);
@@ -1064,7 +1066,7 @@ void gendsll()
 void gendsrl()
 {
 #ifdef INTERPRET_DSRL
-	gencallinterp((uint32_t)DSRL, 0);
+    gencallinterp((uint32_t)DSRL, 0);
 #else
     int32_t rt1 = allocate_64_register1((uint32_t*)dst->f.r.rt);
     int32_t rt2 = allocate_64_register2((uint32_t*)dst->f.r.rt);
@@ -1086,7 +1088,7 @@ void gendsrl()
 void gendsra()
 {
 #ifdef INTERPRET_DSRA
-	gencallinterp((uint32_t)DSRA, 0);
+    gencallinterp((uint32_t)DSRA, 0);
 #else
     int32_t rt1 = allocate_64_register1((uint32_t*)dst->f.r.rt);
     int32_t rt2 = allocate_64_register2((uint32_t*)dst->f.r.rt);
@@ -1108,7 +1110,7 @@ void gendsra()
 void gendsll32()
 {
 #ifdef INTERPRET_DSLL32
-	gencallinterp((uint32_t)DSLL32, 0);
+    gencallinterp((uint32_t)DSLL32, 0);
 #else
     int32_t rt1 = allocate_64_register1((uint32_t*)dst->f.r.rt);
     int32_t rd1 = allocate_64_register1_w((uint32_t*)dst->f.r.rd);
@@ -1123,7 +1125,7 @@ void gendsll32()
 void gendsrl32()
 {
 #ifdef INTERPRET_DSRL32
-	gencallinterp((uint32_t)DSRL32, 0);
+    gencallinterp((uint32_t)DSRL32, 0);
 #else
     int32_t rt2 = allocate_64_register2((uint32_t*)dst->f.r.rt);
     int32_t rd1 = allocate_64_register1_w((uint32_t*)dst->f.r.rd);
@@ -1138,7 +1140,7 @@ void gendsrl32()
 void gendsra32()
 {
 #ifdef INTERPRET_DSRA32
-	gencallinterp((uint32_t)DSRA32, 0);
+    gencallinterp((uint32_t)DSRA32, 0);
 #else
     int32_t rt2 = allocate_64_register2((uint32_t*)dst->f.r.rt);
     int32_t rd = allocate_register_w((uint32_t*)dst->f.r.rd);

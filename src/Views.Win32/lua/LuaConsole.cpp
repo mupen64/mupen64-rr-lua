@@ -502,7 +502,7 @@ void destroy_lua_environment(t_lua_environment* lua)
         return v == lua;
     });
     SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
-    
+
     lua->m_ignore_renderer_creation = true;
     SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, 0);
     SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, 0);
@@ -515,7 +515,7 @@ void destroy_lua_environment(t_lua_environment* lua)
     lua->L = nullptr;
     set_button_state(lua->hwnd, false);
     destroy_renderer(lua);
-    
+
     g_view_logger->info("Lua destroyed");
 }
 

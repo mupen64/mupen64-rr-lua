@@ -317,7 +317,7 @@ namespace MovieDialog
         std::vector<std::pair<std::wstring, std::wstring>> metadata;
 
         ListView_DeleteAllItems(grid_hwnd);
-        
+
         metadata.emplace_back(std::make_pair(L"ROM", std::format(L"{} ({}, {})", string_to_wstring((char*)header.rom_name), core_vr_country_code_to_country_name(header.rom_country), std::format(L"{:#08x}", header.rom_crc1))));
 
         metadata.emplace_back(std::make_pair(L"Length",

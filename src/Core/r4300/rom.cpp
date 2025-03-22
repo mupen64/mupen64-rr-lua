@@ -24,15 +24,17 @@ void print_rom_info()
 {
     g_core->log_info(L"--- Rom Info ---");
     g_core->log_info(std::format(L"{:#06x} {:#06x} {:#06x} {:#06x}", ROM_HEADER.init_PI_BSB_DOM1_LAT_REG,
-           ROM_HEADER.init_PI_BSB_DOM1_PGS_REG,
-           ROM_HEADER.init_PI_BSB_DOM1_PWD_REG,
-           ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
+                                 ROM_HEADER.init_PI_BSB_DOM1_PGS_REG,
+                                 ROM_HEADER.init_PI_BSB_DOM1_PWD_REG,
+                                 ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
     g_core->log_info(std::format(L"Clock rate: {:#06x}", sl((uint32_t)ROM_HEADER.ClockRate)));
     g_core->log_info(std::format(L"Version: {:#06x}", sl((uint32_t)ROM_HEADER.Release)));
     g_core->log_info(std::format(L"CRC: {:#06x} {:#06x}", sl((uint32_t)ROM_HEADER.CRC1), sl((uint32_t)ROM_HEADER.CRC2)));
     g_core->log_info(std::format(L"Name: {}", string_to_wstring((char*)ROM_HEADER.nom)));
-    if (sl(ROM_HEADER.Manufacturer_ID) == 'N') g_core->log_info(L"Manufacturer: Nintendo");
-    else g_core->log_info(std::format(L"Manufacturer: {:#06x}", ROM_HEADER.Manufacturer_ID));
+    if (sl(ROM_HEADER.Manufacturer_ID) == 'N')
+        g_core->log_info(L"Manufacturer: Nintendo");
+    else
+        g_core->log_info(std::format(L"Manufacturer: {:#06x}", ROM_HEADER.Manufacturer_ID));
     g_core->log_info(std::format(L"Cartridge ID: {:#06x}", ROM_HEADER.Cartridge_ID));
     g_core->log_info(std::format(L"Size: {}", rom_size));
     g_core->log_info(std::format(L"PC: {:#06x}\n", sl((uint32_t)ROM_HEADER.PC)));
@@ -158,7 +160,8 @@ bool rom_load(std::filesystem::path path)
 
     rom_size = decompressed_rom.size();
     uint32_t taille = rom_size;
-    if (g_core->cfg->use_summercart && taille < 0x4000000) taille = 0x4000000;
+    if (g_core->cfg->use_summercart && taille < 0x4000000)
+        taille = 0x4000000;
 
     g_core->rom = rom = (unsigned char*)malloc(taille);
     memcpy(rom, decompressed_rom.data(), rom_size);
@@ -185,10 +188,7 @@ bool rom_load(std::filesystem::path path)
             rom[i * 4 + 2] = (unsigned char)tmp;
         }
     }
-    else if ((rom[0] != 0x80)
-        || (rom[1] != 0x37)
-        || (rom[2] != 0x12)
-        || (rom[3] != 0x40)
+    else if ((rom[0] != 0x80) || (rom[1] != 0x37) || (rom[2] != 0x12) || (rom[3] != 0x40)
 
     )
     {
@@ -204,7 +204,7 @@ bool rom_load(std::filesystem::path path)
     ROM_HEADER.Unknown[0] = 0;
     ROM_HEADER.Unknown[1] = 0;
 
-    //trim header
+    // trim header
     strtrim((char*)ROM_HEADER.nom, sizeof(ROM_HEADER.nom));
 
     {
@@ -215,7 +215,8 @@ bool rom_load(std::filesystem::path path)
         md5_finish(&state, digest);
 
         char arg[256] = {0};
-        for (size_t i = 0; i < 16; i++) sprintf(arg + i * 2, "%02X", digest[i]);
+        for (size_t i = 0; i < 16; i++)
+            sprintf(arg + i * 2, "%02X", digest[i]);
         strcpy(rom_md5, arg);
     }
 
@@ -245,7 +246,7 @@ bool rom_load(std::filesystem::path path)
         g_core->log_error(std::format(L"Unknown ccode: {:#06x}", ROM_HEADER.Country_code));
         return false;
     }
-    
+
     if (rom_cache.size() < g_core->cfg->rom_cache_size)
     {
         g_core->log_info(std::format(L"[Core] Putting ROM in cache... ({}/{} full)\n", rom_cache.size(), g_core->cfg->rom_cache_size));

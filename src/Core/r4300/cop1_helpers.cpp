@@ -22,7 +22,7 @@ void fail_float(const std::wstring& msg)
 
     core_Cause = 15 << 2;
     exception_general();
-   
+
     if (choice == 0)
     {
         g_core->invoke_async([] {
@@ -38,7 +38,7 @@ void fail_float_input()
 
 void fail_float_input_arg(double x)
 {
-	fail_float(std::format(L"Operation on denormal/nan: {}", x));
+    fail_float(std::format(L"Operation on denormal/nan: {}", x));
 }
 
 void fail_float_output()

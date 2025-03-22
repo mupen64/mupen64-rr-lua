@@ -3,13 +3,12 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
- 
+
 #pragma once
 
 namespace MovieDialog
 {
-    struct t_record_params
-    {
+    struct t_record_params {
         std::filesystem::path path;
         unsigned short start_flag;
         std::wstring author;
@@ -24,4 +23,4 @@ namespace MovieDialog
      * \return The user-chosen parameters
      */
     t_record_params show(bool readonly);
-}
+} // namespace MovieDialog

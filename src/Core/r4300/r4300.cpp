@@ -1651,10 +1651,10 @@ void print_stop_debug()
     for (int32_t j = 0; j < 16; j++)
         g_core->log_info(std::format(L"reg[{}]:{:#08x}{:#08x}        reg[{}]:{:#08x}{:#08x}", j, (uint32_t)(reg[j] >> 32), (uint32_t)reg[j], j + 16, (uint32_t)(reg[j + 16] >> 32), (uint32_t)reg[j + 16]));
     g_core->log_info(std::format(L"hi:{:#08x}{:#08x}        lo:{:#08x}{:#08x}",
-                         (uint32_t)(hi >> 32),
-                         (uint32_t)hi,
-                         (uint32_t)(lo >> 32),
-                         (uint32_t)lo));
+                                 (uint32_t)(hi >> 32),
+                                 (uint32_t)hi,
+                                 (uint32_t)(lo >> 32),
+                                 (uint32_t)lo));
     g_core->log_info(std::format(L"Executed {} ({:#08x}) instructions", debug_count, debug_count));
 }
 
@@ -2039,7 +2039,7 @@ void emu_thread()
     auto start_time = std::chrono::high_resolution_clock::now();
 
     g_core->initiate_plugins();
-    
+
     init_memory();
 
     g_core->plugin_funcs.video_rom_open();
@@ -2268,15 +2268,15 @@ void* malloc_exec(size_t size)
 #endif
 }
 
-void *realloc_exec(void *ptr, size_t oldsize, size_t newsize)
+void* realloc_exec(void* ptr, size_t oldsize, size_t newsize)
 {
     void* block = malloc_exec(newsize);
     if (block != NULL)
     {
         size_t copysize;
         copysize = (oldsize < newsize)
-            ? oldsize
-            : newsize;
+        ? oldsize
+        : newsize;
         memcpy(block, ptr, copysize);
     }
     free_exec(ptr);

@@ -7,8 +7,6 @@
 #pragma once
 
 
-
-
 /**
  * A presenter is responsible for the following:
  *
@@ -20,8 +18,7 @@
  *
  *	This class is not thread-safe.
  */
-class Presenter
-{
+class Presenter {
 public:
     /**
      * Destroys the presenter and cleans up its resources

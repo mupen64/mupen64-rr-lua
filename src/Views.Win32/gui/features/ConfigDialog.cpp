@@ -2053,47 +2053,47 @@ INT_PTR CALLBACK plugin_cfg_edit_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, 
     switch (msg)
     {
     case WM_INITDIALOG:
-    {
-        params = (t_plugin_cfg_params*)lParam;
+        {
+            params = (t_plugin_cfg_params*)lParam;
 
-        auto option_item = params->cfg->items[g_edit_option_item_index];
-        auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+            auto option_item = params->cfg->items[g_edit_option_item_index];
+            auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
 
-        SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
-        Edit_SetText(edit_hwnd, cfg_item_get_value<wchar_t*>(&option_item));
+            SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
+            Edit_SetText(edit_hwnd, cfg_item_get_value<wchar_t*>(&option_item));
 
-        SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
-        break;
-    }
+            SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
+            break;
+        }
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
-    case IDOK:
-    {
-        auto option_item = params->cfg->items[g_edit_option_item_index];
+        case IDOK:
+            {
+                auto option_item = params->cfg->items[g_edit_option_item_index];
 
-        auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+                auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
 
-        auto len = Edit_GetTextLength(edit_hwnd) + 1;
-        auto str = static_cast<wchar_t*>(calloc(len, sizeof(wchar_t)));
-        Edit_GetText(edit_hwnd, str, len);
+                auto len = Edit_GetTextLength(edit_hwnd) + 1;
+                auto str = static_cast<wchar_t*>(calloc(len, sizeof(wchar_t)));
+                Edit_GetText(edit_hwnd, str, len);
 
-        lstrcpyn((wchar_t*)option_item.value, str, std::min(len, 260));
+                lstrcpyn((wchar_t*)option_item.value, str, std::min(len, 260));
 
-        free(str);
+                free(str);
 
-        EndDialog(wnd, 0);
-        break;
-    }
-    case IDCANCEL:
-        EndDialog(wnd, 1);
+                EndDialog(wnd, 0);
+                break;
+            }
+        case IDCANCEL:
+            EndDialog(wnd, 1);
             break;
         }
         break;
     }
     return FALSE;
 }
-    
+
 bool begin_plugin_lv_edit(t_plugin_cfg_params* params, HWND dlghwnd, HWND lvhwnd, int i)
 {
     auto option_item = params->cfg->items[i];
@@ -2205,7 +2205,7 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
             }
 
             params = (t_plugin_cfg_params*)l_param;
-        
+
             std::wstring plugin_type = L"Unknown";
             switch (params->plugin->type())
             {

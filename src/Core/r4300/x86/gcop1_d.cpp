@@ -45,7 +45,7 @@ static void gencheck_result_valid_s()
 void genadd_d()
 {
 #ifdef INTERPRET_ADD_D
-	gencallinterp((uint32_t)ADD_D, 0);
+    gencallinterp((uint32_t)ADD_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -63,7 +63,7 @@ void genadd_d()
 void gensub_d()
 {
 #ifdef INTERPRET_SUB_D
-	gencallinterp((uint32_t)SUB_D, 0);
+    gencallinterp((uint32_t)SUB_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -81,7 +81,7 @@ void gensub_d()
 void genmul_d()
 {
 #ifdef INTERPRET_MUL_D
-	gencallinterp((uint32_t)MUL_D, 0);
+    gencallinterp((uint32_t)MUL_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -99,7 +99,7 @@ void genmul_d()
 void gendiv_d()
 {
 #ifdef INTERPRET_DIV_D
-	gencallinterp((uint32_t)DIV_D, 0);
+    gencallinterp((uint32_t)DIV_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -117,7 +117,7 @@ void gendiv_d()
 void gensqrt_d()
 {
 #ifdef INTERPRET_SQRT_D
-	gencallinterp((uint32_t)SQRT_D, 0);
+    gencallinterp((uint32_t)SQRT_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -133,7 +133,7 @@ void gensqrt_d()
 void genabs_d()
 {
 #ifdef INTERPRET_ABS_D
-	gencallinterp((uint32_t)ABS_D, 0);
+    gencallinterp((uint32_t)ABS_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -148,7 +148,7 @@ void genabs_d()
 void genmov_d()
 {
 #ifdef INTERPRET_MOV_D
-	gencallinterp((uint32_t)MOV_D, 0);
+    gencallinterp((uint32_t)MOV_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -163,7 +163,7 @@ void genmov_d()
 void genneg_d()
 {
 #ifdef INTERPRET_NEG_D
-	gencallinterp((uint32_t)NEG_D, 0);
+    gencallinterp((uint32_t)NEG_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -178,7 +178,7 @@ void genneg_d()
 void genround_l_d()
 {
 #ifdef INTERPRET_ROUND_L_D
-	gencallinterp((uint32_t)ROUND_L_D, 0);
+    gencallinterp((uint32_t)ROUND_L_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&round_mode);
@@ -196,7 +196,7 @@ void genround_l_d()
 void gentrunc_l_d()
 {
 #ifdef INTERPRET_TRUNC_L_D
-	gencallinterp((uint32_t)TRUNC_L_D, 0);
+    gencallinterp((uint32_t)TRUNC_L_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&trunc_mode);
@@ -214,7 +214,7 @@ void gentrunc_l_d()
 void genceil_l_d()
 {
 #ifdef INTERPRET_CEIL_L_D
-	gencallinterp((uint32_t)CEIL_L_D, 0);
+    gencallinterp((uint32_t)CEIL_L_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&ceil_mode);
@@ -232,7 +232,7 @@ void genceil_l_d()
 void genfloor_l_d()
 {
 #ifdef INTERPRET_FLOOR_L_D
-	gencallinterp((uint32_t)FLOOR_L_D, 0);
+    gencallinterp((uint32_t)FLOOR_L_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&floor_mode);
@@ -250,7 +250,7 @@ void genfloor_l_d()
 void genround_w_d()
 {
 #ifdef INTERPRET_ROUND_W_D
-	gencallinterp((uint32_t)ROUND_W_D, 0);
+    gencallinterp((uint32_t)ROUND_W_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&round_mode);
@@ -268,7 +268,7 @@ void genround_w_d()
 void gentrunc_w_d()
 {
 #ifdef INTERPRET_TRUNC_W_D
-	gencallinterp((uint32_t)TRUNC_W_D, 0);
+    gencallinterp((uint32_t)TRUNC_W_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&trunc_mode);
@@ -286,7 +286,7 @@ void gentrunc_w_d()
 void genceil_w_d()
 {
 #ifdef INTERPRET_CEIL_W_D
-	gencallinterp((uint32_t)CEIL_W_D, 0);
+    gencallinterp((uint32_t)CEIL_W_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&ceil_mode);
@@ -304,7 +304,7 @@ void genceil_w_d()
 void genfloor_w_d()
 {
 #ifdef INTERPRET_FLOOR_W_D
-	gencallinterp((uint32_t)FLOOR_W_D, 0);
+    gencallinterp((uint32_t)FLOOR_W_D, 0);
 #else
     gencheck_cop1_unusable();
     fldcw_m16((uint16_t*)&floor_mode);
@@ -322,7 +322,7 @@ void genfloor_w_d()
 void gencvt_s_d()
 {
 #ifdef INTERPRET_CVT_S_D
-	gencallinterp((uint32_t)CVT_S_D, 0);
+    gencallinterp((uint32_t)CVT_S_D, 0);
 #else
     gencheck_cop1_unusable();
     if (g_core->cfg->wii_vc_emulation)
@@ -345,7 +345,7 @@ void gencvt_s_d()
 void gencvt_w_d()
 {
 #ifdef INTERPRET_CVT_W_D
-	gencallinterp((uint32_t)CVT_W_D, 0);
+    gencallinterp((uint32_t)CVT_W_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -361,7 +361,7 @@ void gencvt_w_d()
 void gencvt_l_d()
 {
 #ifdef INTERPRET_CVT_L_D
-	gencallinterp((uint32_t)CVT_L_D, 0);
+    gencallinterp((uint32_t)CVT_L_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.fs]));
@@ -377,7 +377,7 @@ void gencvt_l_d()
 void genc_f_d()
 {
 #ifdef INTERPRET_C_F_D
-	gencallinterp((uint32_t)C_F_D, 0);
+    gencallinterp((uint32_t)C_F_D, 0);
 #else
     gencheck_cop1_unusable();
     and_m32_imm32((uint32_t*)&FCR31, ~0x800000);
@@ -387,7 +387,7 @@ void genc_f_d()
 void genc_un_d()
 {
 #ifdef INTERPRET_C_UN_D
-	gencallinterp((uint32_t)C_UN_D, 0);
+    gencallinterp((uint32_t)C_UN_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -406,7 +406,7 @@ void genc_un_d()
 void genc_eq_d()
 {
 #ifdef INTERPRET_C_EQ_D
-	gencallinterp((uint32_t)C_EQ_D, 0);
+    gencallinterp((uint32_t)C_EQ_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -425,7 +425,7 @@ void genc_eq_d()
 void genc_ueq_d()
 {
 #ifdef INTERPRET_C_UEQ_D
-	gencallinterp((uint32_t)C_UEQ_D, 0);
+    gencallinterp((uint32_t)C_UEQ_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -445,7 +445,7 @@ void genc_ueq_d()
 void genc_olt_d()
 {
 #ifdef INTERPRET_C_OLT_D
-	gencallinterp((uint32_t)C_OLT_D, 0);
+    gencallinterp((uint32_t)C_OLT_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -464,7 +464,7 @@ void genc_olt_d()
 void genc_ult_d()
 {
 #ifdef INTERPRET_C_ULT_D
-	gencallinterp((uint32_t)C_ULT_D, 0);
+    gencallinterp((uint32_t)C_ULT_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -484,7 +484,7 @@ void genc_ult_d()
 void genc_ole_d()
 {
 #ifdef INTERPRET_C_OLE_D
-	gencallinterp((uint32_t)C_OLE_D, 0);
+    gencallinterp((uint32_t)C_OLE_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -503,7 +503,7 @@ void genc_ole_d()
 void genc_ule_d()
 {
 #ifdef INTERPRET_C_ULE_D
-	gencallinterp((uint32_t)C_ULE_D, 0);
+    gencallinterp((uint32_t)C_ULE_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -523,7 +523,7 @@ void genc_ule_d()
 void genc_sf_d()
 {
 #ifdef INTERPRET_C_SF_D
-	gencallinterp((uint32_t)C_SF_D, 0);
+    gencallinterp((uint32_t)C_SF_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -539,7 +539,7 @@ void genc_sf_d()
 void genc_ngle_d()
 {
 #ifdef INTERPRET_C_NGLE_D
-	gencallinterp((uint32_t)C_NGLE_D, 0);
+    gencallinterp((uint32_t)C_NGLE_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -558,7 +558,7 @@ void genc_ngle_d()
 void genc_seq_d()
 {
 #ifdef INTERPRET_C_SEQ_D
-	gencallinterp((uint32_t)C_SEQ_D, 0);
+    gencallinterp((uint32_t)C_SEQ_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -577,7 +577,7 @@ void genc_seq_d()
 void genc_ngl_d()
 {
 #ifdef INTERPRET_C_NGL_D
-	gencallinterp((uint32_t)C_NGL_D, 0);
+    gencallinterp((uint32_t)C_NGL_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -597,7 +597,7 @@ void genc_ngl_d()
 void genc_lt_d()
 {
 #ifdef INTERPRET_C_LT_D
-	gencallinterp((uint32_t)C_LT_D, 0);
+    gencallinterp((uint32_t)C_LT_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -616,7 +616,7 @@ void genc_lt_d()
 void genc_nge_d()
 {
 #ifdef INTERPRET_C_NGE_D
-	gencallinterp((uint32_t)C_NGE_D, 0);
+    gencallinterp((uint32_t)C_NGE_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -636,7 +636,7 @@ void genc_nge_d()
 void genc_le_d()
 {
 #ifdef INTERPRET_C_LE_D
-	gencallinterp((uint32_t)C_LE_D, 0);
+    gencallinterp((uint32_t)C_LE_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));
@@ -655,7 +655,7 @@ void genc_le_d()
 void genc_ngt_d()
 {
 #ifdef INTERPRET_C_NGT_D
-	gencallinterp((uint32_t)C_NGT_D, 0);
+    gencallinterp((uint32_t)C_NGT_D, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.cf.ft]));

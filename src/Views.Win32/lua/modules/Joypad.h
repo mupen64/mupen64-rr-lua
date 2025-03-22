@@ -16,7 +16,9 @@ namespace LuaCore::Joypad
             luaL_error(L, "port: 1-4");
         }
         lua_newtable(L);
-#define A(a,s) lua_pushboolean(L,last_controller_data[i].a);lua_setfield(L, -2, s)
+#define A(a, s)                                    \
+    lua_pushboolean(L, last_controller_data[i].a); \
+    lua_setfield(L, -2, s)
         A(dr, "right");
         A(dl, "left");
         A(dd, "down");
@@ -57,7 +59,10 @@ namespace LuaCore::Joypad
             luaL_error(L, "control: 1-4");
         }
         lua_pushvalue(L, a_2);
-#define A(a,s) lua_getfield(L, -1, s);new_controller_data[i].a=lua_toboolean(L,-1);lua_pop(L,1)
+#define A(a, s)                                      \
+    lua_getfield(L, -1, s);                          \
+    new_controller_data[i].a = lua_toboolean(L, -1); \
+    lua_pop(L, 1)
         A(dr, "right");
         A(dl, "left");
         A(dd, "down");
@@ -82,4 +87,4 @@ namespace LuaCore::Joypad
 #undef A
         return 1;
     }
-}
+} // namespace LuaCore::Joypad

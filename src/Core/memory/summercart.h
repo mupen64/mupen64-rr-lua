@@ -6,8 +6,7 @@
 
 #pragma once
 
-struct summercart
-{
+struct summercart {
     char buffer[8192];
     uint32_t status;
     uint32_t data0;

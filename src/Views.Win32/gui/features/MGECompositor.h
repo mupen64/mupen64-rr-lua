@@ -7,14 +7,13 @@
 #pragma once
 
 
-
 namespace MGECompositor
 {
     /**
      * \brief Initializes the MGE compositor
      */
     void init();
-    
+
     /**
      * \brief Creates the MGE control
      * \param hwnd The control's parent
@@ -45,4 +44,4 @@ namespace MGECompositor
      * \remarks The video buffer's size must match the current video size provided by <c>get_video_size</c>.
      */
     void load_screen(void* data);
-}
+} // namespace MGECompositor

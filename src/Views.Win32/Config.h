@@ -219,7 +219,7 @@ typedef struct ViewCfg {
     /// The current savestate slot index (0-9).
     /// </summary>
     int32_t st_slot;
-    
+
     /// <summary>
     /// Whether emulation will pause when the main window loses focus
     /// </summary>
@@ -324,7 +324,7 @@ typedef struct ViewCfg {
     /// The paths to directories which are searched for roms
     /// </summary>
     std::vector<std::wstring> rombrowser_rom_paths;
-    
+
     /// <summary>
     /// The strategy to use when capturing video
     /// <para/>
@@ -413,7 +413,7 @@ typedef struct ViewCfg {
     /// Whether recently opened lua script path collection is paused
     /// </summary>
     int32_t is_recent_scripts_frozen;
-    
+
     /// <summary>
     /// Whether piano roll edits are constrained to the column they started on
     /// </summary>
@@ -433,7 +433,7 @@ typedef struct ViewCfg {
     /// Whether the piano roll will try to keep the playhead visible when the frame changes
     /// </summary>
     int32_t piano_roll_keep_playhead_visible;
-    
+
     /// <summary>
     /// The path of the currently selected video plugin
     /// </summary>
@@ -508,7 +508,7 @@ typedef struct ViewCfg {
     /// The last selected settings tab's index.
     /// </summary>
     int32_t settings_tab;
-    
+
     /// <summary>
     /// Whether VCR displays frame information relative to frame 0, not 1
     /// </summary>
@@ -518,7 +518,7 @@ typedef struct ViewCfg {
     /// Increments the current slot when saving savestate to slot
     /// </summary>
     int32_t increment_slot;
-    
+
     /// <summary>
     /// Whether automatic update checking is enabled.
     /// </summary>
@@ -528,7 +528,7 @@ typedef struct ViewCfg {
     /// Whether mupen will avoid showing modals and other elements which require user interaction
     /// </summary>
     int32_t silent_mode = 0;
-    
+
     /// <summary>
     /// The current seeker input value
     /// </summary>

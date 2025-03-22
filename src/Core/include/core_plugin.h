@@ -127,7 +127,7 @@ typedef struct {
      * \brief Pointer to a value which specifies whether the item is read-only.
      */
     const int32_t* readonly;
-    
+
     /**
      * \brief Pointer to the item's value. The type of the value pointed to is determined by <c>type</c>.
      * \remark The implementer must guarantee access to this being safe while the emulator is paused.

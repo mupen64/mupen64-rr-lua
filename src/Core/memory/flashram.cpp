@@ -11,8 +11,7 @@
 
 int32_t use_flashram;
 
-typedef enum flashram_mode
-{
+typedef enum flashram_mode {
     NOPES_MODE = 0,
     ERASE_MODE,
     WRITE_MODE,
@@ -47,17 +46,19 @@ bool check_flashram_infos(uint8_t* buf)
     uint32_t erase_offset, write_pointer;
     memcpy(&erase_offset, buf + 16, 4);
     memcpy(&write_pointer, buf + 20, 4);
-    
+
     for (int32_t i = erase_offset; i < erase_offset + 128; i++)
     {
         const auto mapped_index = i ^ S8;
-        if (mapped_index < 0 ||  mapped_index >= sizeof(flashram)) return false;
+        if (mapped_index < 0 || mapped_index >= sizeof(flashram))
+            return false;
     }
 
     for (int32_t i = write_pointer; i < write_pointer + 128; i++)
     {
         const auto mapped_index = i ^ S8;
-        if (mapped_index < 0 ||  mapped_index >= sizeof(rdram)) return false;
+        if (mapped_index < 0 || mapped_index >= sizeof(rdram))
+            return false;
     }
 
     return true;
@@ -116,7 +117,7 @@ void flashram_command(uint32_t command)
 
                 for (int32_t i = 0; i < 128; i++)
                     flashram[(erase_offset + i) ^ S8] =
-                        ((unsigned char*)rdram)[(write_pointer + i) ^ S8];
+                    ((unsigned char*)rdram)[(write_pointer + i) ^ S8];
 
                 fseek(g_sram_file, 0, SEEK_SET);
                 fwrite(flashram, 1, 0x20000, g_sram_file);
@@ -140,7 +141,7 @@ void flashram_command(uint32_t command)
         break;
     default:
         g_core->log_warn(std::format(L"unknown flashram command:{:#06x}", (int32_t)command));
-    //stop=1;
+        // stop=1;
     }
 }
 
@@ -161,7 +162,7 @@ void dma_read_flashram()
 
             for (i = 0; i < (pi_register.pi_wr_len_reg & 0x0FFFFFF) + 1; i++)
                 ((unsigned char*)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-                    flashram[(((pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF) * 2 + i) ^ S8];
+                flashram[(((pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF) * 2 + i) ^ S8];
             break;
         }
     default:

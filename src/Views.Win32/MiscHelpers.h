@@ -68,10 +68,10 @@ static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory
 
     D3D11CreateDevice(*dxgiadapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0,
                       D3D11_SDK_VERSION, d3device, nullptr, d3d_dc);
-    
+
     (*d3device)->QueryInterface(dxdevice);
     (*dxdevice)->SetMaximumFrameLatency(1);
-    
+
     DCompositionCreateDevice(*dxdevice, IID_PPV_ARGS(comp_device));
     (*comp_device)->CreateTargetForHwnd(hwnd, true, comp_target);
     (*comp_device)->CreateVisual(comp_visual);
@@ -89,11 +89,11 @@ static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory
     (*factory)->CreateSwapChainForComposition(*d3device, &swapdesc, nullptr, swapchain);
     (*comp_visual)->SetContent(*swapchain);
     (*comp_target)->SetRoot(*comp_visual);
-    
+
     D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, {}, d2d_factory);
     (*d2d_factory)->CreateDevice(*dxdevice, d2d_device);
     (*d2d_device)->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2d_dc);
-    
+
     D3D11_TEXTURE2D_DESC desc{};
     desc.Width = size.width;
     desc.Height = size.height;
@@ -107,19 +107,19 @@ static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory
 
     (*d3device)->CreateTexture2D(&desc, nullptr, d3d_gdi_tex);
     (*d3d_gdi_tex)->QueryInterface(dxgi_surface);
-    
+
     const UINT dpi = GetDpiForWindow(hwnd);
     const D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(
-        D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-        D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
-        dpi, dpi);
+    D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+    D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
+    dpi, dpi);
 
     (*d2d_dc)->CreateBitmapFromDxgiSurface(*dxgi_surface, props, bitmap);
     (*d2d_dc)->SetTarget(*bitmap);
-    
+
     (*swapchain)->GetBuffer(1, IID_PPV_ARGS(front_buffer));
     (*dxgi_surface)->QueryInterface(dxgi_surface_resource);
-    
+
     return true;
 }
 

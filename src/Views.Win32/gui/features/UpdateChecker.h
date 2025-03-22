@@ -16,4 +16,4 @@ namespace UpdateChecker
      * @param manual Whether the update check was initiated via a deliberate user interaction.
      */
     void check(bool manual);
-};
+}; // namespace UpdateChecker

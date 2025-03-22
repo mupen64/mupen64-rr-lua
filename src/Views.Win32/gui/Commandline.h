@@ -14,7 +14,7 @@ namespace Cli
     void init();
 
     /**
-	 * Gets whether the CLI wants fast-forward to always be enabled.
-	 */
-	bool wants_fast_forward();
-}
+     * Gets whether the CLI wants fast-forward to always be enabled.
+     */
+    bool wants_fast_forward();
+} // namespace Cli

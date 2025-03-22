@@ -33,7 +33,7 @@ namespace LuaCore::Global
         PostMessage(g_main_hwnd, WM_CLOSE, 0, 0);
         return 0;
     }
-    
+
     static int ToStringEx(lua_State* L)
     {
         switch (lua_type(L, -1))
@@ -99,8 +99,7 @@ namespace LuaCore::Global
                             else
                             {
                                 ToStringEx(L);
-                                s.append("[").append(lua_tostring(L, -1)).
-                                  append("]");
+                                s.append("[").append(lua_tostring(L, -1)).append("]");
                                 lua_pop(L, 1);
                             }
                         }
@@ -111,7 +110,8 @@ namespace LuaCore::Global
                         }
                         s.append(lua_tostring(L, -1));
                         lua_pop(L, 1);
-                        if (!lua_next(L, -2))break;
+                        if (!lua_next(L, -2))
+                            break;
                         s.append(", ");
                     }
                 }
@@ -145,7 +145,10 @@ namespace LuaCore::Global
             }
             str.append(lua_tostring(L, -1));
             lua_pop(L, 1);
-            if (i != len - 1) { str.append("\t"); }
+            if (i != len - 1)
+            {
+                str.append("\t");
+            }
         }
         lua_pushstring(L, str.c_str());
         return 1;
@@ -164,16 +167,16 @@ namespace LuaCore::Global
                 int n = (DWORD)luaL_checknumber(L, -1);
                 lua_pop(L, 1);
                 lua_getglobal(L, "string");
-                lua_getfield(L, -1, "format"); //string,string.format
-                lua_pushstring(L, "%X"); //s,f,X
-                lua_pushinteger(L, n); //s,f,X,n
-                lua_call(L, 2, 1); //s,r
+                lua_getfield(L, -1, "format"); // string,string.format
+                lua_pushstring(L, "%X"); // s,f,X
+                lua_pushinteger(L, n); // s,f,X,n
+                lua_call(L, 2, 1); // s,r
                 lua_insert(L, lua_gettop(L) - 1); //
                 lua_pop(L, 1);
             }
             else if (lua_type(L, -1) == LUA_TSTRING)
             {
-                //do nothing
+                // do nothing
             }
             else
             {
@@ -181,9 +184,12 @@ namespace LuaCore::Global
             }
             str.append(lua_tostring(L, -1));
             lua_pop(L, 1);
-            if (i != len - 1) { str.append("\t"); }
+            if (i != len - 1)
+            {
+                str.append("\t");
+            }
         }
         print_con(lua->hwnd, string_to_wstring(str) + L"\r\n");
         return 1;
     }
-}
+} // namespace LuaCore::Global

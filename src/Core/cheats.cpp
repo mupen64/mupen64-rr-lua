@@ -218,14 +218,14 @@ std::wstring cht_serialize()
     {
         return L"";
     }
-    
+
     std::wstring str;
     for (const auto& cheat : host_cheats)
     {
         str += std::format(L"--{}\n", cheat.name);
         str += cheat.code + L"\n";
     }
-    
+
     return str;
 }
 
@@ -239,7 +239,7 @@ void core_cht_get_override_stack(std::stack<std::vector<core_cheat>>& stack)
 void core_cht_get_list(std::vector<core_cheat>& list)
 {
     std::scoped_lock lock(cheats_mutex);
-    
+
     list = cheat_stack.empty() ? host_cheats : cheat_stack.top();
 }
 
@@ -261,7 +261,7 @@ void cht_layer_push(const std::vector<core_cheat>& cheats)
     std::scoped_lock lock(cheats_mutex);
 
     g_core->log_info(std::format(L"cht_layer_push pushing {} cheats", cheats.size()));
-    
+
     cheat_stack.push(cheats);
 }
 

@@ -9,8 +9,7 @@
 #include "Encoder.h"
 
 
-class FFmpegEncoder : public Encoder
-{
+class FFmpegEncoder : public Encoder {
 public:
     std::wstring start(Params params) override;
     bool stop() override;
@@ -38,11 +37,11 @@ private:
 
     std::thread m_audio_thread;
     std::mutex m_audio_queue_mutex{};
-	std::condition_variable m_audio_cv{};
+    std::condition_variable m_audio_cv{};
     std::queue<std::tuple<uint8_t*, size_t>> m_audio_queue;
 
     std::thread m_video_thread;
     std::mutex m_video_queue_mutex{};
-	std::condition_variable m_video_cv{};
+    std::condition_variable m_video_cv{};
     std::queue<std::pair<uint8_t*, bool>> m_video_queue;
 };

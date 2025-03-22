@@ -59,7 +59,8 @@ void MTC0()
         break;
     case 9: // Count
         update_count();
-        if (next_interrupt <= core_Count) gen_interrupt();
+        if (next_interrupt <= core_Count)
+            gen_interrupt();
         debug_count += core_Count;
         translate_event_queue(core_rrt & 0xFFFFFFFF);
         core_Count = core_rrt & 0xFFFFFFFF;
@@ -73,7 +74,7 @@ void MTC0()
         remove_event(COMPARE_INT);
         add_interrupt_event_count(COMPARE_INT, (uint32_t)core_rrt);
         core_Compare = core_rrt;
-        core_Cause = core_Cause & 0xFFFF7FFF; //Timer interrupt is clear
+        core_Cause = core_Cause & 0xFFFF7FFF; // Timer interrupt is clear
         break;
     case 12: // Status
         if ((core_rrt & 0x04000000) != (core_Status & 0x04000000))
@@ -97,7 +98,7 @@ void MTC0()
 #ifndef _BIG_ENDIAN
                     reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i >> 1] + (i & 1);
 #else
-						reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i >> 1] + (1 - (i & 1));
+                    reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i >> 1] + (1 - (i & 1));
 #endif
                 }
             }
@@ -106,7 +107,8 @@ void MTC0()
         PC++;
         check_interrupt();
         update_count();
-        if (next_interrupt <= core_Count) gen_interrupt();
+        if (next_interrupt <= core_Count)
+            gen_interrupt();
         PC--;
         break;
     case 13: // Cause

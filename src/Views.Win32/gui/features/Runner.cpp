@@ -10,8 +10,6 @@
 #include <Messenger.h>
 
 
-
-
 #include <gui/Main.h>
 #include <gui/features/Runner.h>
 #include <lua/LuaConsole.h>

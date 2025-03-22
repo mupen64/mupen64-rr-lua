@@ -13,29 +13,132 @@
 namespace LuaCore::Wgui
 {
     const int hexTable[256] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
-        0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     };
 
     const std::unordered_map<std::wstring, COLORREF> color_map = {
-        {L"white", 0xFFFFFFFF},
-        {L"black", 0xFF000000},
-        {L"clear", 0x00000000},
-        {L"gray", 0xFF808080},
-        {L"red", 0xFF0000FF},
-        {L"orange", 0xFF0080FF},
-        {L"yellow", 0xFF00FFFF},
-        {L"chartreuse", 0xFF00FF80},
-        {L"green", 0xFF00FF00},
-        {L"teal", 0xFF80FF00},
-        {L"cyan", 0xFFFFFF00},
-        {L"blue", 0xFFFF0000},
-        {L"purple", 0xFFFF0080},
+    {L"white", 0xFFFFFFFF},
+    {L"black", 0xFF000000},
+    {L"clear", 0x00000000},
+    {L"gray", 0xFF808080},
+    {L"red", 0xFF0000FF},
+    {L"orange", 0xFF0080FF},
+    {L"yellow", 0xFF00FFFF},
+    {L"chartreuse", 0xFF00FF80},
+    {L"green", 0xFF00FF00},
+    {L"teal", 0xFF80FF00},
+    {L"cyan", 0xFFFFFF00},
+    {L"blue", 0xFFFF0000},
+    {L"purple", 0xFFFF0080},
     };
 
     static int GetGUIInfo(lua_State* L)
@@ -87,30 +190,30 @@ namespace LuaCore::Wgui
             if (l == 4)
             {
                 return (hexTable[s[1]] * 0x10 + hexTable[s[1]]) |
-                    ((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
-                    ((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
-                    (alpha ? 0xFF000000 : 0);
+                ((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
+                ((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
+                (alpha ? 0xFF000000 : 0);
             }
             else if (alpha && l == 5)
             {
                 return (hexTable[s[1]] * 0x10 + hexTable[s[1]]) |
-                    ((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
-                    ((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
-                    ((hexTable[s[4]] * 0x10 + hexTable[s[4]]) << 24);
+                ((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
+                ((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
+                ((hexTable[s[4]] * 0x10 + hexTable[s[4]]) << 24);
             }
             else if (l == 7)
             {
                 return (hexTable[s[1]] * 0x10 + hexTable[s[2]]) |
-                    ((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
-                    ((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
-                    (alpha ? 0xFF000000 : 0);
+                ((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
+                ((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
+                (alpha ? 0xFF000000 : 0);
             }
             else if (alpha && l == 9)
             {
                 return (hexTable[s[1]] * 0x10 + hexTable[s[2]]) |
-                    ((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
-                    ((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
-                    ((hexTable[s[7]] * 0x10 + hexTable[s[8]]) << 24);
+                ((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
+                ((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
+                ((hexTable[s[7]] * 0x10 + hexTable[s[8]]) << 24);
             }
         }
         else
@@ -181,7 +284,7 @@ namespace LuaCore::Wgui
 
         if (iequals(s, L"null"))
         {
-	        lua->bkmode = TRANSPARENT;
+            lua->bkmode = TRANSPARENT;
         }
         else
         {
@@ -214,21 +317,26 @@ namespace LuaCore::Wgui
 
         for (const auto p : style)
         {
-        	switch (p)
-        	{
-        	case 'b': font.lfWeight = FW_BOLD;
-        		break;
-        	case 'i': font.lfItalic = TRUE;
-        		break;
-        	case 'u': font.lfUnderline = TRUE;
-        		break;
-        	case 's': font.lfStrikeOut = TRUE;
-        		break;
-        	case 'a': font.lfQuality = ANTIALIASED_QUALITY;
-        		break;
-	        default:
-	        	break;
-	        }
+            switch (p)
+            {
+            case 'b':
+                font.lfWeight = FW_BOLD;
+                break;
+            case 'i':
+                font.lfItalic = TRUE;
+                break;
+            case 'u':
+                font.lfUnderline = TRUE;
+                break;
+            case 's':
+                font.lfStrikeOut = TRUE;
+                break;
+            case 'a':
+                font.lfQuality = ANTIALIASED_QUALITY;
+                break;
+            default:
+                break;
+            }
         }
 
         lua->font = CreateFontIndirect(&font);
@@ -295,7 +403,7 @@ namespace LuaCore::Wgui
     static int GetTextExtent(lua_State* L)
     {
         LuaEnvironment* lua = get_lua_class(L);
-    	auto string = string_to_wstring(luaL_checkstring(L, 1));
+        auto string = string_to_wstring(luaL_checkstring(L, 1));
 
         SelectObject(lua->gdi_back_dc, lua->font);
 
@@ -332,28 +440,37 @@ namespace LuaCore::Wgui
             {
                 switch (*p)
                 {
-                case 'l': format |= DT_LEFT;
+                case 'l':
+                    format |= DT_LEFT;
                     break;
-                case 'r': format |= DT_RIGHT;
+                case 'r':
+                    format |= DT_RIGHT;
                     break;
-                case 't': format |= DT_TOP;
+                case 't':
+                    format |= DT_TOP;
                     break;
-                case 'b': format |= DT_BOTTOM;
+                case 'b':
+                    format |= DT_BOTTOM;
                     break;
-                case 'c': format |= DT_CENTER;
+                case 'c':
+                    format |= DT_CENTER;
                     break;
-                case 'v': format |= DT_VCENTER;
+                case 'v':
+                    format |= DT_VCENTER;
                     break;
-                case 'e': format |= DT_WORD_ELLIPSIS;
+                case 'e':
+                    format |= DT_WORD_ELLIPSIS;
                     break;
-                case 's': format |= DT_SINGLELINE;
+                case 's':
+                    format |= DT_SINGLELINE;
                     break;
-                case 'n': format &= ~DT_WORDBREAK;
+                case 'n':
+                    format &= ~DT_WORDBREAK;
                     break;
                 }
             }
         }
-    	auto str = string_to_wstring(lua_tostring(L, 1));
+        auto str = string_to_wstring(lua_tostring(L, 1));
 
         ::DrawText(lua->gdi_back_dc, str.c_str(), -1, &rect, format);
         return 0;
@@ -475,7 +592,8 @@ namespace LuaCore::Wgui
             int x = luaL_checknumber(L, 2);
             int y = luaL_checknumber(L, 3);
             float scale = luaL_checknumber(L, 4);
-            if (scale == 0) return 0;
+            if (scale == 0)
+                return 0;
 
             // Create a Rect at x and y and scale the image's width and height
             Gdiplus::Rect dest(x, y, img->GetWidth() * scale,
@@ -492,7 +610,8 @@ namespace LuaCore::Wgui
             int y = luaL_checknumber(L, 3);
             int w = luaL_checknumber(L, 4);
             int h = luaL_checknumber(L, 5);
-            if (w == 0 or h == 0) return 0;
+            if (w == 0 or h == 0)
+                return 0;
 
             Gdiplus::Rect dest(x, y, w, h);
 
@@ -511,7 +630,8 @@ namespace LuaCore::Wgui
             int srcw = luaL_checknumber(L, 8);
             int srch = luaL_checknumber(L, 9);
             float rotate = luaL_checknumber(L, 10);
-            if (w == 0 or h == 0 or srcw == 0 or srch == 0) return 0;
+            if (w == 0 or h == 0 or srcw == 0 or srch == 0)
+                return 0;
             bool shouldrotate = ((int)rotate % 360) != 0;
             // Only rotate if the angle isn't a multiple of 360 Modulo only works with int
 
@@ -532,7 +652,8 @@ namespace LuaCore::Wgui
                           Gdiplus::UnitPixel);
             // Gdiplus::Image *image, const Gdiplus::Rect &destRect, int srcx, int srcy, int srcheight, Gdiplus::srcUnit
 
-            if (shouldrotate) gfx.ResetTransform();
+            if (shouldrotate)
+                gfx.ResetTransform();
             return 0;
         }
         luaL_error(L, "Incorrect number of arguments");
@@ -589,66 +710,66 @@ namespace LuaCore::Wgui
         return 1;
     }
 
-    //1st arg is table of points
-    //2nd arg is color #xxxxxxxx
+    // 1st arg is table of points
+    // 2nd arg is color #xxxxxxxx
     static int FillPolygonAlpha(lua_State* L)
     {
-        //Get lua instance stored in script class
+        // Get lua instance stored in script class
         LuaEnvironment* lua = get_lua_class(L);
 
 
-        //stack should look like
+        // stack should look like
         //--------
-        //2: color string
+        // 2: color string
         //--------
-        //1: table of points
+        // 1: table of points
         //--------
-        //assert that first argument is table
+        // assert that first argument is table
         luaL_checktype(L, 1, LUA_TTABLE);
 
-        int n = luaL_len(L, 1); //length of the table, doesnt modify stack
+        int n = luaL_len(L, 1); // length of the table, doesnt modify stack
         if (n > 255)
         {
-            //hard cap, the vector can handle more but dont try
+            // hard cap, the vector can handle more but dont try
             lua_pushfstring(L, "wgui.polygon: too many points (%d > %d)",
                             n, 255);
             return lua_error(L);
         }
 
-        std::vector<Gdiplus::PointF> pts(n); //list of points that make the poly
+        std::vector<Gdiplus::PointF> pts(n); // list of points that make the poly
 
-        //do n times
+        // do n times
         for (int i = 0; i < n; i++)
         {
-            //push current index +1 because lua
+            // push current index +1 because lua
             lua_pushinteger(L, i + 1);
-            //get index i+1 from table at the bottom of the stack (index 1 is bottom, 2 is next etc, -1 is top)
-            //pops the index and places the element inside table on top, which again is a table [x,y]
+            // get index i+1 from table at the bottom of the stack (index 1 is bottom, 2 is next etc, -1 is top)
+            // pops the index and places the element inside table on top, which again is a table [x,y]
             lua_gettable(L, 1);
-            //make sure its a table
+            // make sure its a table
             luaL_checktype(L, -1, LUA_TTABLE);
-            //push '1'
+            // push '1'
             lua_pushinteger(L, 1);
-            //get index 1 from table that is second from top, because '1' is on top right now
-            //then remove '1' and put table contents, its the X coord
+            // get index 1 from table that is second from top, because '1' is on top right now
+            // then remove '1' and put table contents, its the X coord
             lua_gettable(L, -2);
-            //read it
+            // read it
             pts[i].X = lua_tointeger(L, -1);
-            //remove X coord
+            // remove X coord
             lua_pop(L, 1);
-            //push '2'
+            // push '2'
             lua_pushinteger(L, 2);
-            //same thing
+            // same thing
             lua_gettable(L, -2);
             pts[i].Y = lua_tointeger(L, -1);
             lua_pop(L, 2);
-            //now stack again has only table at the bottom and color string on top, repeat
+            // now stack again has only table at the bottom and color string on top, repeat
         }
 
         Gdiplus::Graphics gfx(lua->gdi_back_dc);
         Gdiplus::SolidBrush brush(Gdiplus::Color(
-            luaL_checkinteger(L, 2), luaL_checkinteger(L, 3),
-            luaL_checkinteger(L, 4), luaL_checkinteger(L, 5)));
+        luaL_checkinteger(L, 2), luaL_checkinteger(L, 3),
+        luaL_checkinteger(L, 4), luaL_checkinteger(L, 5)));
         gfx.FillPolygon(&brush, pts.data(), n);
 
         return 0;
@@ -698,10 +819,9 @@ namespace LuaCore::Wgui
 
 
         COLORREF color = RGB(
-            luaL_checknumber(L, 5),
-            luaL_checknumber(L, 6),
-            luaL_checknumber(L, 7)
-        );
+        luaL_checknumber(L, 5),
+        luaL_checknumber(L, 6),
+        luaL_checknumber(L, 7));
         COLORREF colorold = SetBkColor(lua->gdi_back_dc, color);
         RECT rect;
         rect.left = luaL_checknumber(L, 1);
@@ -783,8 +903,7 @@ namespace LuaCore::Wgui
                                  luaL_checkinteger(L, 2),
                                  luaL_checkinteger(L, 1) +
                                  luaL_checkinteger(L, 3),
-                                 luaL_checkinteger(L, 2) + luaL_checkinteger(
-                                     L, 4));
+                                 luaL_checkinteger(L, 2) + luaL_checkinteger(L, 4));
         SelectClipRgn(lua->gdi_back_dc, rgn);
         DeleteObject(rgn);
         return 0;
@@ -797,4 +916,4 @@ namespace LuaCore::Wgui
         SelectClipRgn(lua->gdi_back_dc, NULL);
         return 0;
     }
-}
+} // namespace LuaCore::Wgui

@@ -75,14 +75,12 @@ extern t_window_info window_info;
 
 static bool task_is_playback(core_vcr_task task)
 {
-    return task == task_playback || task == task_start_playback_from_reset || task ==
-        task_start_playback_from_snapshot;
+    return task == task_playback || task == task_start_playback_from_reset || task == task_start_playback_from_snapshot;
 }
 
 static bool vcr_is_task_recording(core_vcr_task task)
 {
-    return task == task_recording || task == task_start_recording_from_reset || task == task_start_recording_from_existing_snapshot || task ==
-        task_start_recording_from_snapshot;
+    return task == task_recording || task == task_start_recording_from_reset || task == task_start_recording_from_existing_snapshot || task == task_start_recording_from_snapshot;
 }
 
 

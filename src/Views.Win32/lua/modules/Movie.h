@@ -199,4 +199,4 @@ namespace LuaCore::Movie
         lua_pushinteger(L, static_cast<int32_t>(result));
         return 1;
     }
-}
+} // namespace LuaCore::Movie

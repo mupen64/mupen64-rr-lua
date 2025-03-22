@@ -14,7 +14,7 @@
 void genmfc1()
 {
 #ifdef INTERPRET_MFC1
-	gencallinterp((uint32_t)MFC1, 0);
+    gencallinterp((uint32_t)MFC1, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_simple[dst->f.r.nrd]));
@@ -28,7 +28,7 @@ void genmfc1()
 void gendmfc1()
 {
 #ifdef INTERPRET_DMFC1
-	gencallinterp((uint32_t)DMFC1, 0);
+    gencallinterp((uint32_t)DMFC1, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)(&reg_cop1_double[dst->f.r.nrd]));
@@ -42,11 +42,13 @@ void gendmfc1()
 void gencfc1()
 {
 #ifdef INTERPRET_CFC1
-	gencallinterp((uint32_t)CFC1, 0);
+    gencallinterp((uint32_t)CFC1, 0);
 #else
     gencheck_cop1_unusable();
-    if (dst->f.r.nrd == 31) mov_eax_memoffs32((uint32_t*)&FCR31);
-    else mov_eax_memoffs32((uint32_t*)&FCR0);
+    if (dst->f.r.nrd == 31)
+        mov_eax_memoffs32((uint32_t*)&FCR31);
+    else
+        mov_eax_memoffs32((uint32_t*)&FCR0);
     mov_memoffs32_eax((uint32_t*)dst->f.r.rt);
     sar_reg32_imm8(EAX, 31);
     mov_memoffs32_eax(((uint32_t*)dst->f.r.rt) + 1);
@@ -56,7 +58,7 @@ void gencfc1()
 void genmtc1()
 {
 #ifdef INTERPRET_MTC1
-	gencallinterp((uint32_t)MTC1, 0);
+    gencallinterp((uint32_t)MTC1, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)dst->f.r.rt);
@@ -68,7 +70,7 @@ void genmtc1()
 void gendmtc1()
 {
 #ifdef INTERPRET_DMTC1
-	gencallinterp((uint32_t)DMTC1, 0);
+    gencallinterp((uint32_t)DMTC1, 0);
 #else
     gencheck_cop1_unusable();
     mov_eax_memoffs32((uint32_t*)dst->f.r.rt);
@@ -82,11 +84,12 @@ void gendmtc1()
 void genctc1()
 {
 #ifdef INTERPRET_CTC1
-	gencallinterp((uint32_t)CTC1, 0);
+    gencallinterp((uint32_t)CTC1, 0);
 #else
     gencheck_cop1_unusable();
 
-    if (dst->f.r.nrd != 31) return;
+    if (dst->f.r.nrd != 31)
+        return;
     mov_eax_memoffs32((uint32_t*)dst->f.r.rt);
     mov_memoffs32_eax((uint32_t*)&FCR31);
     and_eax_imm32(3);

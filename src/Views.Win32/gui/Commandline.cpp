@@ -75,7 +75,7 @@ namespace Cli
         {
             return;
         }
-        
+
         core_st_do_file(commandline_st.c_str(), core_st_job_load, nullptr, false);
     }
 
@@ -200,7 +200,7 @@ namespace Cli
         bool compare_actual = cmdl["--cmp-act"] || cmdl["--compare-actual"];
         std::string compare_interval_str = cmdl({"--cmp-int", "--compare-interval"}, "100").str();
         size_t compare_interval = std::stoi(compare_interval_str);
-        
+
         // handle "Open With...":
         if (cmdl.size() == 2 && cmdl.params().empty())
         {
@@ -217,19 +217,19 @@ namespace Cli
         if (!commandline_st.empty() && !commandline_movie.empty())
         {
             DialogService::show_dialog(L"Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", L"CLI",
-                                         fsvc_error);
+                                       fsvc_error);
             commandline_st.clear();
         }
 
         if (commandline_close_on_movie_end && g_config.core.is_movie_loop_enabled)
         {
             DialogService::show_dialog(L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.", L"CLI",
-                                         fsvc_warning);
+                                       fsvc_warning);
             g_config.core.is_movie_loop_enabled = false;
         }
 
         // TODO: Show warning when encoding with lazy lua renderer initialization enabled
-        
+
         // HACK: When playing a movie from start, the rom will start normally and signal us to do our work via EmuLaunchedChanged.
         // The work is started, but then the rom is reset. At that point, the dacrate changes and breaks the capture in some cases.
         // To avoid this, we store the movie's start flag prior to doing anything, and ignore the first EmuLaunchedChanged if it's set.
@@ -252,7 +252,7 @@ namespace Cli
         {
             Compare::start(true, compare_interval);
         }
-        
+
         if (compare_actual)
         {
             Compare::start(false, compare_interval);

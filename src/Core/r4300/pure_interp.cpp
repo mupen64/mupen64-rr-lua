@@ -87,7 +87,8 @@ static void JR()
     delay_slot = 0;
     interp_addr = local_rs32;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void JALR()
@@ -108,7 +109,8 @@ static void JALR()
         interp_addr = local_rs32;
     }
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void SYSCALL()
@@ -197,7 +199,8 @@ static void DIV()
         sign_extended(lo);
         sign_extended(hi);
     }
-    else g_core->log_info(L"div");
+    else
+        g_core->log_info(L"div");
     interp_addr += 4;
 }
 
@@ -210,7 +213,8 @@ static void DIVU()
         sign_extended(lo);
         sign_extended(hi);
     }
-    else g_core->log_info(L"divu");
+    else
+        g_core->log_info(L"divu");
     interp_addr += 4;
 }
 
@@ -226,13 +230,15 @@ static void DMULT()
         op2 = -core_rrs;
         sign = 1 - sign;
     }
-    else op2 = core_rrs;
+    else
+        op2 = core_rrs;
     if (core_rrt < 0)
     {
         op4 = -core_rrt;
         sign = 1 - sign;
     }
-    else op4 = core_rrt;
+    else
+        op4 = core_rrt;
 
     op1 = op2 & 0xFFFFFFFF;
     op2 = (op2 >> 32) & 0xFFFFFFFF;
@@ -254,8 +260,10 @@ static void DMULT()
     if (sign)
     {
         hi = ~hi;
-        if (!lo) hi++;
-        else lo = ~lo + 1;
+        if (!lo)
+            hi++;
+        else
+            lo = ~lo + 1;
     }
     interp_addr += 4;
 }
@@ -294,7 +302,8 @@ static void DDIV()
         lo = (int64_t)core_rrs / (int64_t)core_rrt;
         hi = (int64_t)core_rrs % (int64_t)core_rrt;
     }
-    else g_core->log_info(L"ddiv");
+    else
+        g_core->log_info(L"ddiv");
     interp_addr += 4;
 }
 
@@ -305,7 +314,8 @@ static void DDIVU()
         lo = (uint64_t)core_rrs / (uint64_t)core_rrt;
         hi = (uint64_t)core_rrs % (uint64_t)core_rrt;
     }
-    else g_core->log_info(L"ddivu");
+    else
+        g_core->log_info(L"ddivu");
     interp_addr += 4;
 }
 
@@ -451,15 +461,14 @@ static void DSRA32()
 
 static void (*interp_special[64])(void) =
 {
-    SLL, NI, SRL, SRA, SLLV, NI, SRLV, SRAV,
-    JR, JALR, NI, NI, SYSCALL, NI, NI, SYNC,
-    MFHI, MTHI, MFLO, MTLO, DSLLV, NI, DSRLV, DSRAV,
-    MULT, MULTU, DIV, DIVU, DMULT, DMULTU, DDIV, DDIVU,
-    ADD, ADDU, SUB, SUBU, AND, OR, XOR, NOR,
-    NI, NI, SLT, SLTU, DADD, DADDU, DSUB, DSUBU,
-    NI, NI, NI, NI, TEQ, NI, NI, NI,
-    DSLL, NI, DSRL, DSRA, DSLL32, NI, DSRL32, DSRA32
-};
+SLL, NI, SRL, SRA, SLLV, NI, SRLV, SRAV,
+JR, JALR, NI, NI, SYSCALL, NI, NI, SYNC,
+MFHI, MTHI, MFLO, MTLO, DSLLV, NI, DSRLV, DSRAV,
+MULT, MULTU, DIV, DIVU, DMULT, DMULTU, DDIV, DDIVU,
+ADD, ADDU, SUB, SUBU, AND, OR, XOR, NOR,
+NI, NI, SLT, SLTU, DADD, DADDU, DSUB, DSUBU,
+NI, NI, NI, NI, TEQ, NI, NI, NI,
+DSLL, NI, DSRL, DSRA, DSLL32, NI, DSRL32, DSRA32};
 
 static void BLTZ()
 {
@@ -488,7 +497,8 @@ static void BLTZ()
     if (local_rs < 0)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BGEZ()
@@ -518,7 +528,8 @@ static void BGEZ()
     if (local_rs >= 0)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BLTZL()
@@ -549,9 +560,11 @@ static void BLTZL()
         delay_slot = 0;
         interp_addr += (local_immediate - 1) * 4;
     }
-    else interp_addr += 8;
+    else
+        interp_addr += 8;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BGEZL()
@@ -582,9 +595,11 @@ static void BGEZL()
         delay_slot = 0;
         interp_addr += (local_immediate - 1) * 4;
     }
-    else interp_addr += 8;
+    else
+        interp_addr += 8;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BLTZAL()
@@ -617,9 +632,11 @@ static void BLTZAL()
         if (local_rs < 0)
             interp_addr += (local_immediate - 1) * 4;
     }
-    else g_core->log_error(L"erreur dans bltzal");
+    else
+        g_core->log_error(L"erreur dans bltzal");
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BGEZAL()
@@ -652,9 +669,11 @@ static void BGEZAL()
         if (local_rs >= 0)
             interp_addr += (local_immediate - 1) * 4;
     }
-    else g_core->log_error(L"erreur dans bgezal");
+    else
+        g_core->log_error(L"erreur dans bgezal");
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BLTZALL()
@@ -688,11 +707,14 @@ static void BLTZALL()
             delay_slot = 0;
             interp_addr += (local_immediate - 1) * 4;
         }
-        else interp_addr += 8;
+        else
+            interp_addr += 8;
     }
-    else g_core->log_error(L"erreur dans bltzall");
+    else
+        g_core->log_error(L"erreur dans bltzall");
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BGEZALL()
@@ -726,20 +748,22 @@ static void BGEZALL()
             delay_slot = 0;
             interp_addr += (local_immediate - 1) * 4;
         }
-        else interp_addr += 8;
+        else
+            interp_addr += 8;
     }
-    else g_core->log_info(L"erreur dans bgezall");
+    else
+        g_core->log_info(L"erreur dans bgezall");
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void (*interp_regimm[32])(void) =
 {
-    BLTZ, BGEZ, BLTZL, BGEZL, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    BLTZAL, BGEZAL, BLTZALL, BGEZALL, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI
-};
+BLTZ, BGEZ, BLTZL, BGEZL, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+BLTZAL, BGEZAL, BLTZALL, BGEZALL, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI};
 
 static void TLBR()
 {
@@ -747,12 +771,8 @@ static void TLBR()
     index = core_Index & 0x1F;
     core_PageMask = tlb_e[index].mask << 13;
     core_EntryHi = ((tlb_e[index].vpn2 << 13) | tlb_e[index].asid);
-    core_EntryLo0 = (tlb_e[index].pfn_even << 6) | (tlb_e[index].c_even << 3)
-        | (tlb_e[index].d_even << 2) | (tlb_e[index].v_even << 1)
-        | tlb_e[index].g;
-    core_EntryLo1 = (tlb_e[index].pfn_odd << 6) | (tlb_e[index].c_odd << 3)
-        | (tlb_e[index].d_odd << 2) | (tlb_e[index].v_odd << 1)
-        | tlb_e[index].g;
+    core_EntryLo0 = (tlb_e[index].pfn_even << 6) | (tlb_e[index].c_even << 3) | (tlb_e[index].d_even << 2) | (tlb_e[index].v_even << 1) | tlb_e[index].g;
+    core_EntryLo1 = (tlb_e[index].pfn_odd << 6) | (tlb_e[index].c_odd << 3) | (tlb_e[index].d_odd << 2) | (tlb_e[index].v_odd << 1) | tlb_e[index].g;
     interp_addr += 4;
 }
 
@@ -787,50 +807,50 @@ static void TLBWI()
     tlb_e[core_Index & 0x3F].v_odd = (core_EntryLo1 & 0x2) >> 1;
     tlb_e[core_Index & 0x3F].asid = (core_EntryHi & 0xFF);
     tlb_e[core_Index & 0x3F].vpn2 = (core_EntryHi & 0xFFFFE000) >> 13;
-    //tlb_e[Index&0x3F].r = (EntryHi & 0xC000000000000000LL) >> 62;
+    // tlb_e[Index&0x3F].r = (EntryHi & 0xC000000000000000LL) >> 62;
     tlb_e[core_Index & 0x3F].mask = (core_PageMask & 0x1FFE000) >> 13;
 
     tlb_e[core_Index & 0x3F].start_even = tlb_e[core_Index & 0x3F].vpn2 << 13;
     tlb_e[core_Index & 0x3F].end_even = tlb_e[core_Index & 0x3F].start_even +
-        (tlb_e[core_Index & 0x3F].mask << 12) + 0xFFF;
+    (tlb_e[core_Index & 0x3F].mask << 12) + 0xFFF;
     tlb_e[core_Index & 0x3F].phys_even = tlb_e[core_Index & 0x3F].pfn_even << 12;
 
     if (tlb_e[core_Index & 0x3F].v_even)
     {
         if (tlb_e[core_Index & 0x3F].start_even < tlb_e[core_Index & 0x3F].end_even &&
             !(tlb_e[core_Index & 0x3F].start_even >= 0x80000000 &&
-                tlb_e[core_Index & 0x3F].end_even < 0xC0000000) &&
+              tlb_e[core_Index & 0x3F].end_even < 0xC0000000) &&
             tlb_e[core_Index & 0x3F].phys_even < 0x20000000)
         {
             for (i = tlb_e[core_Index & 0x3F].start_even; i < tlb_e[core_Index & 0x3F].end_even; i++)
                 tlb_LUT_r[i >> 12] = 0x80000000 |
-                    (tlb_e[core_Index & 0x3F].phys_even + (i - tlb_e[core_Index & 0x3F].start_even));
+                (tlb_e[core_Index & 0x3F].phys_even + (i - tlb_e[core_Index & 0x3F].start_even));
             if (tlb_e[core_Index & 0x3F].d_even)
                 for (i = tlb_e[core_Index & 0x3F].start_even; i < tlb_e[core_Index & 0x3F].end_even; i++)
                     tlb_LUT_w[i >> 12] = 0x80000000 |
-                        (tlb_e[core_Index & 0x3F].phys_even + (i - tlb_e[core_Index & 0x3F].start_even));
+                    (tlb_e[core_Index & 0x3F].phys_even + (i - tlb_e[core_Index & 0x3F].start_even));
         }
     }
 
     tlb_e[core_Index & 0x3F].start_odd = tlb_e[core_Index & 0x3F].end_even + 1;
     tlb_e[core_Index & 0x3F].end_odd = tlb_e[core_Index & 0x3F].start_odd +
-        (tlb_e[core_Index & 0x3F].mask << 12) + 0xFFF;
+    (tlb_e[core_Index & 0x3F].mask << 12) + 0xFFF;
     tlb_e[core_Index & 0x3F].phys_odd = tlb_e[core_Index & 0x3F].pfn_odd << 12;
 
     if (tlb_e[core_Index & 0x3F].v_odd)
     {
         if (tlb_e[core_Index & 0x3F].start_odd < tlb_e[core_Index & 0x3F].end_odd &&
             !(tlb_e[core_Index & 0x3F].start_odd >= 0x80000000 &&
-                tlb_e[core_Index & 0x3F].end_odd < 0xC0000000) &&
+              tlb_e[core_Index & 0x3F].end_odd < 0xC0000000) &&
             tlb_e[core_Index & 0x3F].phys_odd < 0x20000000)
         {
             for (i = tlb_e[core_Index & 0x3F].start_odd; i < tlb_e[core_Index & 0x3F].end_odd; i++)
                 tlb_LUT_r[i >> 12] = 0x80000000 |
-                    (tlb_e[core_Index & 0x3F].phys_odd + (i - tlb_e[core_Index & 0x3F].start_odd));
+                (tlb_e[core_Index & 0x3F].phys_odd + (i - tlb_e[core_Index & 0x3F].start_odd));
             if (tlb_e[core_Index & 0x3F].d_odd)
                 for (i = tlb_e[core_Index & 0x3F].start_odd; i < tlb_e[core_Index & 0x3F].end_odd; i++)
                     tlb_LUT_w[i >> 12] = 0x80000000 |
-                        (tlb_e[core_Index & 0x3F].phys_odd + (i - tlb_e[core_Index & 0x3F].start_odd));
+                    (tlb_e[core_Index & 0x3F].phys_odd + (i - tlb_e[core_Index & 0x3F].start_odd));
         }
     }
     interp_addr += 4;
@@ -868,49 +888,49 @@ static void TLBWR()
     tlb_e[core_Random].v_odd = (core_EntryLo1 & 0x2) >> 1;
     tlb_e[core_Random].asid = (core_EntryHi & 0xFF);
     tlb_e[core_Random].vpn2 = (core_EntryHi & 0xFFFFE000) >> 13;
-    //tlb_e[Random].r = (EntryHi & 0xC000000000000000LL) >> 62;
+    // tlb_e[Random].r = (EntryHi & 0xC000000000000000LL) >> 62;
     tlb_e[core_Random].mask = (core_PageMask & 0x1FFE000) >> 13;
 
     tlb_e[core_Random].start_even = tlb_e[core_Random].vpn2 << 13;
     tlb_e[core_Random].end_even = tlb_e[core_Random].start_even +
-        (tlb_e[core_Random].mask << 12) + 0xFFF;
+    (tlb_e[core_Random].mask << 12) + 0xFFF;
     tlb_e[core_Random].phys_even = tlb_e[core_Random].pfn_even << 12;
 
     if (tlb_e[core_Random].v_even)
     {
         if (tlb_e[core_Random].start_even < tlb_e[core_Random].end_even &&
             !(tlb_e[core_Random].start_even >= 0x80000000 &&
-                tlb_e[core_Random].end_even < 0xC0000000) &&
+              tlb_e[core_Random].end_even < 0xC0000000) &&
             tlb_e[core_Random].phys_even < 0x20000000)
         {
             for (i = tlb_e[core_Random].start_even; i < tlb_e[core_Random].end_even; i++)
                 tlb_LUT_r[i >> 12] = 0x80000000 |
-                    (tlb_e[core_Random].phys_even + (i - tlb_e[core_Random].start_even));
+                (tlb_e[core_Random].phys_even + (i - tlb_e[core_Random].start_even));
             if (tlb_e[core_Random].d_even)
                 for (i = tlb_e[core_Random].start_even; i < tlb_e[core_Random].end_even; i++)
                     tlb_LUT_w[i >> 12] = 0x80000000 |
-                        (tlb_e[core_Random].phys_even + (i - tlb_e[core_Random].start_even));
+                    (tlb_e[core_Random].phys_even + (i - tlb_e[core_Random].start_even));
         }
     }
     tlb_e[core_Random].start_odd = tlb_e[core_Random].end_even + 1;
     tlb_e[core_Random].end_odd = tlb_e[core_Random].start_odd +
-        (tlb_e[core_Random].mask << 12) + 0xFFF;
+    (tlb_e[core_Random].mask << 12) + 0xFFF;
     tlb_e[core_Random].phys_odd = tlb_e[core_Random].pfn_odd << 12;
 
     if (tlb_e[core_Random].v_odd)
     {
         if (tlb_e[core_Random].start_odd < tlb_e[core_Random].end_odd &&
             !(tlb_e[core_Random].start_odd >= 0x80000000 &&
-                tlb_e[core_Random].end_odd < 0xC0000000) &&
+              tlb_e[core_Random].end_odd < 0xC0000000) &&
             tlb_e[core_Random].phys_odd < 0x20000000)
         {
             for (i = tlb_e[core_Random].start_odd; i < tlb_e[core_Random].end_odd; i++)
                 tlb_LUT_r[i >> 12] = 0x80000000 |
-                    (tlb_e[core_Random].phys_odd + (i - tlb_e[core_Random].start_odd));
+                (tlb_e[core_Random].phys_odd + (i - tlb_e[core_Random].start_odd));
             if (tlb_e[core_Random].d_odd)
                 for (i = tlb_e[core_Random].start_odd; i < tlb_e[core_Random].end_odd; i++)
                     tlb_LUT_w[i >> 12] = 0x80000000 |
-                        (tlb_e[core_Random].phys_odd + (i - tlb_e[core_Random].start_odd));
+                    (tlb_e[core_Random].phys_odd + (i - tlb_e[core_Random].start_odd));
         }
     }
     interp_addr += 4;
@@ -923,9 +943,9 @@ static void TLBP()
     for (i = 0; i < 32; i++)
     {
         if (((tlb_e[i].vpn2 & (~tlb_e[i].mask)) ==
-                (((core_EntryHi & 0xFFFFE000) >> 13) & (~tlb_e[i].mask))) &&
+             (((core_EntryHi & 0xFFFFE000) >> 13) & (~tlb_e[i].mask))) &&
             ((tlb_e[i].g) ||
-                (tlb_e[i].asid == (core_EntryHi & 0xFF))))
+             (tlb_e[i].asid == (core_EntryHi & 0xFF))))
         {
             core_Index = i;
             break;
@@ -950,20 +970,20 @@ static void ERET()
     llbit = 0;
     check_interrupt();
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void (*interp_tlb[64])(void) =
 {
-    NI, TLBR, TLBWI, NI, NI, NI, TLBWR, NI,
-    TLBP, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    ERET, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI
-};
+NI, TLBR, TLBWI, NI, NI, NI, TLBWR, NI,
+TLBP, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+ERET, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI};
 
 static void MFC0()
 {
@@ -1013,7 +1033,8 @@ static void MTC0()
         break;
     case 9: // Count
         update_count();
-        if (next_interrupt <= core_Count) gen_interrupt();
+        if (next_interrupt <= core_Count)
+            gen_interrupt();
         debug_count += core_Count;
         translate_event_queue(core_rrt & 0xFFFFFFFF);
         core_Count = core_rrt & 0xFFFFFFFF;
@@ -1027,7 +1048,7 @@ static void MTC0()
         remove_event(COMPARE_INT);
         add_interrupt_event_count(COMPARE_INT, (uint32_t)core_rrt);
         core_Compare = core_rrt;
-        core_Cause = core_Cause & 0xFFFF7FFF; //Timer interrupt is clear
+        core_Cause = core_Cause & 0xFFFF7FFF; // Timer interrupt is clear
         break;
     case 12: // Status
         if ((core_rrt & 0x04000000) != (core_Status & 0x04000000))
@@ -1037,7 +1058,7 @@ static void MTC0()
                 int32_t i;
                 for (i = 0; i < 32; i++)
                 {
-                    //reg_cop1_fgr_64[i]=reg_cop1_fgr_32[i];
+                    // reg_cop1_fgr_64[i]=reg_cop1_fgr_32[i];
                     reg_cop1_double[i] = (double*)&reg_cop1_fgr_64[i];
                     reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i];
                 }
@@ -1047,18 +1068,18 @@ static void MTC0()
                 int32_t i;
                 for (i = 0; i < 32; i++)
                 {
-                    //reg_cop1_fgr_32[i]=reg_cop1_fgr_64[i]&0xFFFFFFFF;
-                    //if (i<16) reg_cop1_double[i*2]=(double*)&reg_cop1_fgr_32[i*2];
-                    //reg_cop1_double[i]=(double*)&reg_cop1_fgr_64[i & 0xFFFE];
+                    // reg_cop1_fgr_32[i]=reg_cop1_fgr_64[i]&0xFFFFFFFF;
+                    // if (i<16) reg_cop1_double[i*2]=(double*)&reg_cop1_fgr_32[i*2];
+                    // reg_cop1_double[i]=(double*)&reg_cop1_fgr_64[i & 0xFFFE];
                     if (!(i & 1))
                         reg_cop1_double[i] = (double*)&reg_cop1_fgr_64[i >> 1];
-                    //reg_cop1_double[i]=(double*)&reg_cop1_fgr_64[i];
-                    //reg_cop1_simple[i]=(float*)&reg_cop1_fgr_32[i];
-                    //reg_cop1_simple[i]=(float*)&reg_cop1_fgr_64[i & 0xFFFE]+(i&1);
+                        // reg_cop1_double[i]=(double*)&reg_cop1_fgr_64[i];
+                        // reg_cop1_simple[i]=(float*)&reg_cop1_fgr_32[i];
+                        // reg_cop1_simple[i]=(float*)&reg_cop1_fgr_64[i & 0xFFFE]+(i&1);
 #ifndef _BIG_ENDIAN
                     reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i >> 1] + (i & 1);
 #else
-						reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i >> 1] + (1 - (i & 1));
+                    reg_cop1_simple[i] = (float*)&reg_cop1_fgr_64[i >> 1] + (1 - (i & 1));
 #endif
                 }
             }
@@ -1067,7 +1088,8 @@ static void MTC0()
         interp_addr += 4;
         check_interrupt();
         update_count();
-        if (next_interrupt <= core_Count) gen_interrupt();
+        if (next_interrupt <= core_Count)
+            gen_interrupt();
         interp_addr -= 4;
         break;
     case 13: // Cause
@@ -1115,11 +1137,10 @@ static void TLB()
 
 static void (*interp_cop0[32])(void) =
 {
-    MFC0, NI, NI, NI, MTC0, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    TLB, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI
-};
+MFC0, NI, NI, NI, MTC0, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+TLB, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI};
 
 static void BC1F()
 {
@@ -1147,7 +1168,8 @@ static void BC1F()
     if ((FCR31 & 0x800000) == 0)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BC1T()
@@ -1176,7 +1198,8 @@ static void BC1T()
     if ((FCR31 & 0x800000) != 0)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BC1FL()
@@ -1209,7 +1232,8 @@ static void BC1FL()
     else
         interp_addr += 8;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BC1TL()
@@ -1242,14 +1266,14 @@ static void BC1TL()
     else
         interp_addr += 8;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void (*interp_cop1_bc[4])(void) =
 {
-    BC1F, BC1T,
-    BC1FL, BC1TL
-};
+BC1F, BC1T,
+BC1FL, BC1TL};
 
 static void ADD_S()
 {
@@ -1257,7 +1281,7 @@ static void ADD_S()
     CHECK_INPUT(*reg_cop1_simple[core_cffs]);
     CHECK_INPUT(*reg_cop1_simple[core_cfft]);
     *reg_cop1_simple[core_cffd] = *reg_cop1_simple[core_cffs] +
-        *reg_cop1_simple[core_cfft];
+    *reg_cop1_simple[core_cfft];
     CHECK_OUTPUT(*reg_cop1_simple[core_cffd]);
     interp_addr += 4;
 }
@@ -1268,7 +1292,7 @@ static void SUB_S()
     CHECK_INPUT(*reg_cop1_simple[core_cffs]);
     CHECK_INPUT(*reg_cop1_simple[core_cfft]);
     *reg_cop1_simple[core_cffd] = *reg_cop1_simple[core_cffs] -
-        *reg_cop1_simple[core_cfft];
+    *reg_cop1_simple[core_cfft];
     CHECK_OUTPUT(*reg_cop1_simple[core_cffd]);
     interp_addr += 4;
 }
@@ -1279,7 +1303,7 @@ static void MUL_S()
     CHECK_INPUT(*reg_cop1_simple[core_cffs]);
     CHECK_INPUT(*reg_cop1_simple[core_cfft]);
     *reg_cop1_simple[core_cffd] = *reg_cop1_simple[core_cffs] *
-        *reg_cop1_simple[core_cfft];
+    *reg_cop1_simple[core_cfft];
     CHECK_OUTPUT(*reg_cop1_simple[core_cffd]);
     interp_addr += 4;
 }
@@ -1294,7 +1318,7 @@ static void DIV_S()
     CHECK_INPUT(*reg_cop1_simple[core_cffs]);
     CHECK_INPUT(*reg_cop1_simple[core_cfft]);
     *reg_cop1_simple[core_cffd] = *reg_cop1_simple[core_cffs] /
-        *reg_cop1_simple[core_cfft];
+    *reg_cop1_simple[core_cfft];
     CHECK_OUTPUT(*reg_cop1_simple[core_cffd]);
     interp_addr += 4;
 }
@@ -1453,7 +1477,8 @@ static void C_UN_S()
 {
     if (isnan(*reg_cop1_simple[core_cffs]) || isnan(*reg_cop1_simple[core_cfft]))
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1462,7 +1487,8 @@ static void C_EQ_S()
     if (!isnan(*reg_cop1_simple[core_cffs]) && !isnan(*reg_cop1_simple[core_cfft]) &&
         *reg_cop1_simple[core_cffs] == *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1471,7 +1497,8 @@ static void C_UEQ_S()
     if (isnan(*reg_cop1_simple[core_cffs]) || isnan(*reg_cop1_simple[core_cfft]) ||
         *reg_cop1_simple[core_cffs] == *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1480,7 +1507,8 @@ static void C_OLT_S()
     if (!isnan(*reg_cop1_simple[core_cffs]) && !isnan(*reg_cop1_simple[core_cfft]) &&
         *reg_cop1_simple[core_cffs] < *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1489,7 +1517,8 @@ static void C_ULT_S()
     if (isnan(*reg_cop1_simple[core_cffs]) || isnan(*reg_cop1_simple[core_cfft]) ||
         *reg_cop1_simple[core_cffs] < *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1498,7 +1527,8 @@ static void C_OLE_S()
     if (!isnan(*reg_cop1_simple[core_cffs]) && !isnan(*reg_cop1_simple[core_cfft]) &&
         *reg_cop1_simple[core_cffs] <= *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1507,7 +1537,8 @@ static void C_ULE_S()
     if (isnan(*reg_cop1_simple[core_cffs]) || isnan(*reg_cop1_simple[core_cfft]) ||
         *reg_cop1_simple[core_cffs] <= *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1542,7 +1573,8 @@ static void C_SEQ_S()
     }
     if (*reg_cop1_simple[core_cffs] == *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1555,7 +1587,8 @@ static void C_NGL_S()
     }
     if (*reg_cop1_simple[core_cffs] == *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1568,7 +1601,8 @@ static void C_LT_S()
     }
     if (*reg_cop1_simple[core_cffs] < *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1581,7 +1615,8 @@ static void C_NGE_S()
     }
     if (*reg_cop1_simple[core_cffs] < *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1594,7 +1629,8 @@ static void C_LE_S()
     }
     if (*reg_cop1_simple[core_cffs] <= *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1607,21 +1643,21 @@ static void C_NGT_S()
     }
     if (*reg_cop1_simple[core_cffs] <= *reg_cop1_simple[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
 static void (*interp_cop1_s[64])(void) =
 {
-    ADD_S, SUB_S, MUL_S, DIV_S, SQRT_S, ABS_S, MOV_S, NEG_S,
-    ROUND_L_S, TRUNC_L_S, CEIL_L_S, FLOOR_L_S, ROUND_W_S, TRUNC_W_S, CEIL_W_S, FLOOR_W_S,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, CVT_D_S, NI, NI, CVT_W_S, CVT_L_S, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    C_F_S, C_UN_S, C_EQ_S, C_UEQ_S, C_OLT_S, C_ULT_S, C_OLE_S, C_ULE_S,
-    C_SF_S, C_NGLE_S, C_SEQ_S, C_NGL_S, C_LT_S, C_NGE_S, C_LE_S, C_NGT_S
-};
+ADD_S, SUB_S, MUL_S, DIV_S, SQRT_S, ABS_S, MOV_S, NEG_S,
+ROUND_L_S, TRUNC_L_S, CEIL_L_S, FLOOR_L_S, ROUND_W_S, TRUNC_W_S, CEIL_W_S, FLOOR_W_S,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, CVT_D_S, NI, NI, CVT_W_S, CVT_L_S, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+C_F_S, C_UN_S, C_EQ_S, C_UEQ_S, C_OLT_S, C_ULT_S, C_OLE_S, C_ULE_S,
+C_SF_S, C_NGLE_S, C_SEQ_S, C_NGL_S, C_LT_S, C_NGE_S, C_LE_S, C_NGT_S};
 
 static void ADD_D()
 {
@@ -1629,7 +1665,7 @@ static void ADD_D()
     CHECK_INPUT(*reg_cop1_double[core_cffs]);
     CHECK_INPUT(*reg_cop1_double[core_cfft]);
     *reg_cop1_double[core_cffd] = *reg_cop1_double[core_cffs] +
-        *reg_cop1_double[core_cfft];
+    *reg_cop1_double[core_cfft];
     CHECK_OUTPUT(*reg_cop1_double[core_cffd]);
     interp_addr += 4;
 }
@@ -1640,7 +1676,7 @@ static void SUB_D()
     CHECK_INPUT(*reg_cop1_double[core_cffs]);
     CHECK_INPUT(*reg_cop1_double[core_cfft]);
     *reg_cop1_double[core_cffd] = *reg_cop1_double[core_cffs] -
-        *reg_cop1_double[core_cfft];
+    *reg_cop1_double[core_cfft];
     CHECK_OUTPUT(*reg_cop1_double[core_cffd]);
     interp_addr += 4;
 }
@@ -1651,7 +1687,7 @@ static void MUL_D()
     CHECK_INPUT(*reg_cop1_double[core_cffs]);
     CHECK_INPUT(*reg_cop1_double[core_cfft]);
     *reg_cop1_double[core_cffd] = *reg_cop1_double[core_cffs] *
-        *reg_cop1_double[core_cfft];
+    *reg_cop1_double[core_cfft];
     CHECK_OUTPUT(*reg_cop1_double[core_cffd]);
     interp_addr += 4;
 }
@@ -1660,18 +1696,18 @@ static void DIV_D()
 {
     if ((FCR31 & 0x400) && *reg_cop1_double[core_cfft] == 0)
     {
-        //FCR31 |= 0x8020;
+        // FCR31 |= 0x8020;
         /*FCR31 |= 0x8000;
         Cause = 15 << 2;
         exception_general();*/
         g_core->log_info(L"div_d by 0");
-        //return;
+        // return;
     }
     set_rounding();
     CHECK_INPUT(*reg_cop1_double[core_cffs]);
     CHECK_INPUT(*reg_cop1_double[core_cfft]);
     *reg_cop1_double[core_cffd] = *reg_cop1_double[core_cffs] /
-        *reg_cop1_double[core_cfft];
+    *reg_cop1_double[core_cfft];
     CHECK_OUTPUT(*reg_cop1_double[core_cffd]);
     interp_addr += 4;
 }
@@ -1840,7 +1876,8 @@ static void C_UN_D()
 {
     if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1849,7 +1886,8 @@ static void C_EQ_D()
     if (!isnan(*reg_cop1_double[core_cffs]) && !isnan(*reg_cop1_double[core_cfft]) &&
         *reg_cop1_double[core_cffs] == *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1858,7 +1896,8 @@ static void C_UEQ_D()
     if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]) ||
         *reg_cop1_double[core_cffs] == *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1867,7 +1906,8 @@ static void C_OLT_D()
     if (!isnan(*reg_cop1_double[core_cffs]) && !isnan(*reg_cop1_double[core_cfft]) &&
         *reg_cop1_double[core_cffs] < *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1876,7 +1916,8 @@ static void C_ULT_D()
     if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]) ||
         *reg_cop1_double[core_cffs] < *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1885,7 +1926,8 @@ static void C_OLE_D()
     if (!isnan(*reg_cop1_double[core_cffs]) && !isnan(*reg_cop1_double[core_cfft]) &&
         *reg_cop1_double[core_cffs] <= *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1894,7 +1936,8 @@ static void C_ULE_D()
     if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]) ||
         *reg_cop1_double[core_cffs] <= *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1929,7 +1972,8 @@ static void C_SEQ_D()
     }
     if (*reg_cop1_double[core_cffs] == *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1942,7 +1986,8 @@ static void C_NGL_D()
     }
     if (*reg_cop1_double[core_cffs] == *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1955,7 +2000,8 @@ static void C_LT_D()
     }
     if (*reg_cop1_double[core_cffs] < *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1968,7 +2014,8 @@ static void C_NGE_D()
     }
     if (*reg_cop1_double[core_cffs] < *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1981,7 +2028,8 @@ static void C_LE_D()
     }
     if (*reg_cop1_double[core_cffs] <= *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
@@ -1994,21 +2042,21 @@ static void C_NGT_D()
     }
     if (*reg_cop1_double[core_cffs] <= *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
-    else FCR31 &= ~0x800000;
+    else
+        FCR31 &= ~0x800000;
     interp_addr += 4;
 }
 
 static void (*interp_cop1_d[64])(void) =
 {
-    ADD_D, SUB_D, MUL_D, DIV_D, SQRT_D, ABS_D, MOV_D, NEG_D,
-    ROUND_L_D, TRUNC_L_D, CEIL_L_D, FLOOR_L_D, ROUND_W_D, TRUNC_W_D, CEIL_W_D, FLOOR_W_D,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    CVT_S_D, NI, NI, NI, CVT_W_D, CVT_L_D, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    C_F_D, C_UN_D, C_EQ_D, C_UEQ_D, C_OLT_D, C_ULT_D, C_OLE_D, C_ULE_D,
-    C_SF_D, C_NGLE_D, C_SEQ_D, C_NGL_D, C_LT_D, C_NGE_D, C_LE_D, C_NGT_D
-};
+ADD_D, SUB_D, MUL_D, DIV_D, SQRT_D, ABS_D, MOV_D, NEG_D,
+ROUND_L_D, TRUNC_L_D, CEIL_L_D, FLOOR_L_D, ROUND_W_D, TRUNC_W_D, CEIL_W_D, FLOOR_W_D,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+CVT_S_D, NI, NI, NI, CVT_W_D, CVT_L_D, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+C_F_D, C_UN_D, C_EQ_D, C_UEQ_D, C_OLT_D, C_ULT_D, C_OLE_D, C_ULE_D,
+C_SF_D, C_NGLE_D, C_SEQ_D, C_NGL_D, C_LT_D, C_NGE_D, C_LE_D, C_NGT_D};
 
 static void CVT_S_W()
 {
@@ -2026,15 +2074,14 @@ static void CVT_D_W()
 
 static void (*interp_cop1_w[64])(void) =
 {
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    CVT_S_W, CVT_D_W, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI
-};
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+CVT_S_W, CVT_D_W, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI};
 
 static void CVT_S_L()
 {
@@ -2052,15 +2099,14 @@ static void CVT_D_L()
 
 static void (*interp_cop1_l[64])(void) =
 {
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    CVT_S_L, CVT_D_L, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI
-};
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+CVT_S_L, CVT_D_L, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI};
 
 static void MFC1()
 {
@@ -2121,7 +2167,7 @@ static void CTC1()
         rounding_mode = MUP_ROUND_FLOOR;
         break;
     }
-    //if ((FCR31 >> 7) & 0x1F) g_core->log_info(L"FPU Exception enabled : {:#06x}\n",
+    // if ((FCR31 >> 7) & 0x1F) g_core->log_info(L"FPU Exception enabled : {:#06x}\n",
     //				   (int32_t)((FCR31 >> 7) & 0x1F));
     set_rounding();
     interp_addr += 4;
@@ -2154,11 +2200,10 @@ static void L()
 
 static void (*interp_cop1[32])(void) =
 {
-    MFC1, DMFC1, CFC1, NI, MTC1, DMTC1, CTC1, NI,
-    BC, NI, NI, NI, NI, NI, NI, NI,
-    S, D, NI, NI, W, L, NI, NI,
-    NI, NI, NI, NI, NI, NI, NI, NI
-};
+MFC1, DMFC1, CFC1, NI, MTC1, DMTC1, CTC1, NI,
+BC, NI, NI, NI, NI, NI, NI, NI,
+S, D, NI, NI, W, L, NI, NI,
+NI, NI, NI, NI, NI, NI, NI, NI};
 
 static void SPECIAL()
 {
@@ -2170,17 +2215,18 @@ static void REGIMM()
     interp_regimm[((vr_op >> 16) & 0x1F)]();
 }
 
-//skips idle loop and advances to next interrupt
-#define SKIP_IDLE() \
-if (probe_nop(interp_addr+4)) {\
-	update_count();\
-	skip = next_interrupt - core_Count; \
-	if (skip > 3)\
-	{\
-		core_Count += (skip & 0xFFFFFFFC);\
-		return;\
-	}\
-}
+// skips idle loop and advances to next interrupt
+#define SKIP_IDLE()                            \
+    if (probe_nop(interp_addr + 4))            \
+    {                                          \
+        update_count();                        \
+        skip = next_interrupt - core_Count;    \
+        if (skip > 3)                          \
+        {                                      \
+            core_Count += (skip & 0xFFFFFFFC); \
+            return;                            \
+        }                                      \
+    }
 
 static void J()
 {
@@ -2197,7 +2243,8 @@ static void J()
     delay_slot = 0;
     interp_addr = naddr;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void JAL()
@@ -2221,7 +2268,8 @@ static void JAL()
         interp_addr = naddr;
     }
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BEQ()
@@ -2242,7 +2290,8 @@ static void BEQ()
     if (local_rs == local_rt && !g_vr_beq_ignore_jmp)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BNE()
@@ -2263,7 +2312,8 @@ static void BNE()
     if (local_rs != local_rt)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BLEZ()
@@ -2283,7 +2333,8 @@ static void BLEZ()
     if (local_rs <= 0)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BGTZ()
@@ -2303,7 +2354,8 @@ static void BGTZ()
     if (local_rs > 0)
         interp_addr += (local_immediate - 1) * 4;
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 #undef SKIP_IDLE
@@ -2372,7 +2424,8 @@ static void COP0()
 
 static void COP1()
 {
-    if (check_cop1_unusable()) return;
+    if (check_cop1_unusable())
+        return;
     interp_cop1[((vr_op >> 21) & 0x1F)]();
 }
 
@@ -2411,7 +2464,8 @@ static void BEQL()
         update_count();
     }
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BNEL()
@@ -2449,7 +2503,8 @@ static void BNEL()
         update_count();
     }
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BLEZL()
@@ -2486,7 +2541,8 @@ static void BLEZL()
         update_count();
     }
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void BGTZL()
@@ -2523,7 +2579,8 @@ static void BGTZL()
         update_count();
     }
     last_addr = interp_addr;
-    if (next_interrupt <= core_Count) gen_interrupt();
+    if (next_interrupt <= core_Count)
+        gen_interrupt();
 }
 
 static void DADDI()
@@ -3002,7 +3059,8 @@ static void LL()
 static void LWC1()
 {
     uint64_t temp;
-    if (check_cop1_unusable()) return;
+    if (check_cop1_unusable())
+        return;
     interp_addr += 4;
     address = core_lfoffset + reg[core_lfbase];
     rdword = &temp;
@@ -3012,7 +3070,8 @@ static void LWC1()
 
 static void LDC1()
 {
-    if (check_cop1_unusable()) return;
+    if (check_cop1_unusable())
+        return;
     interp_addr += 4;
     address = core_lfoffset + reg[core_lfbase];
     rdword = (uint64_t*)reg_cop1_double[core_lfft];
@@ -3046,7 +3105,8 @@ static void SC()
 
 static void SWC1()
 {
-    if (check_cop1_unusable()) return;
+    if (check_cop1_unusable())
+        return;
     interp_addr += 4;
     address = core_lfoffset + reg[core_lfbase];
     word = *((int32_t*)reg_cop1_simple[core_lfft]);
@@ -3055,7 +3115,8 @@ static void SWC1()
 
 static void SDC1()
 {
-    if (check_cop1_unusable()) return;
+    if (check_cop1_unusable())
+        return;
     interp_addr += 4;
     address = core_lfoffset + reg[core_lfbase];
     dword = *((uint64_t*)reg_cop1_double[core_lfft]);
@@ -3072,24 +3133,23 @@ static void SD()
 
 void (*interp_ops[64])(void) =
 {
-    SPECIAL, REGIMM, J, JAL, BEQ, BNE, BLEZ, BGTZ,
-    ADDI, ADDIU, SLTI, SLTIU, ANDI, ORI, XORI, LUI,
-    COP0, COP1, NI, NI, BEQL, BNEL, BLEZL, BGTZL,
-    DADDI, DADDIU, LDL, LDR, NI, NI, NI, NI,
-    LB, LH, LWL, LW, LBU, LHU, LWR, LWU,
-    SB, SH, SWL, SW, SDL, SDR, SWR, CACHE,
-    LL, LWC1, NI, NI, NI, LDC1, NI, LD,
-    SC, SWC1, NI, NI, NI, SDC1, NI, SD
-};
+SPECIAL, REGIMM, J, JAL, BEQ, BNE, BLEZ, BGTZ,
+ADDI, ADDIU, SLTI, SLTIU, ANDI, ORI, XORI, LUI,
+COP0, COP1, NI, NI, BEQL, BNEL, BLEZL, BGTZL,
+DADDI, DADDIU, LDL, LDR, NI, NI, NI, NI,
+LB, LH, LWL, LW, LBU, LHU, LWR, LWU,
+SB, SH, SWL, SW, SDL, SDR, SWR, CACHE,
+LL, LWC1, NI, NI, NI, LDC1, NI, LD,
+SC, SWC1, NI, NI, NI, SDC1, NI, SD};
 
-//Get opcode from address (interp_address)
+// Get opcode from address (interp_address)
 void prefetch()
 {
-    //static FILE *f = NULL;
-    //static int32_t line=1;
-    //static int32_t tlb_used = 0;
-    //uint32_t comp;
-    //if (!tlb_used)
+    // static FILE *f = NULL;
+    // static int32_t line=1;
+    // static int32_t tlb_used = 0;
+    // uint32_t comp;
+    // if (!tlb_used)
     //{
     /*if (f==NULL) f = fopen("/mnt/windows/pcdeb.txt", "rb");
     fscanf(f, "%x", &comp);
@@ -3098,16 +3158,16 @@ void prefetch()
          g_core->log_info(L"diff@%x, line:{}", interp_addr, line);
          stop=1;
       }*/
-    //line++;
-    //if ((debug_count+Count) > 0x50fe000) g_core->log_info(L"line:{}", line);
+    // line++;
+    // if ((debug_count+Count) > 0x50fe000) g_core->log_info(L"line:{}", line);
     /*if ((debug_count+Count) > 0xb70000)
       g_core->log_info(L"count:%x, add:%x, op:%x, l{}\n", (int32_t)(Count+debug_count),
          interp_addr, op, line);*/
     //}
-    //g_core->log_info(L"addr:%x", interp_addr);
+    // g_core->log_info(L"addr:%x", interp_addr);
     if ((interp_addr >= 0x80000000) && (interp_addr < 0xc0000000))
     {
-        if (/*(interp_addr >= 0x80000000) && */(interp_addr < 0x80800000))
+        if (/*(interp_addr >= 0x80000000) && */ (interp_addr < 0x80800000))
         {
             vr_op = *(uint32_t*)&((unsigned char*)rdram)[(interp_addr & 0xFFFFFF)];
             /*if ((debug_count+Count) > 0xabaa20)
@@ -3127,7 +3187,7 @@ void prefetch()
         }
         else
         {
-            //unmapped memory exception
+            // unmapped memory exception
             g_core->log_info(std::format(L"Exception, attempt to prefetch unmapped memory at: {:#08x}\n", (int32_t)interp_addr));
             stop = 1;
         }
@@ -3136,16 +3196,17 @@ void prefetch()
     {
         uint32_t addr = interp_addr, phys;
         phys = virtual_to_physical_address(interp_addr, 2);
-        if (phys != 0x00000000) interp_addr = phys;
+        if (phys != 0x00000000)
+            interp_addr = phys;
         else
         {
             prefetch();
-            //tlb_used = 0;
+            // tlb_used = 0;
             return;
         }
-        //tlb_used = 1;
+        // tlb_used = 1;
         prefetch();
-        //tlb_used = 0;
+        // tlb_used = 0;
         interp_addr = addr;
         return;
     }
@@ -3164,17 +3225,17 @@ void pure_interpreter()
     g_core->log_info(std::format(L"core_executing: {}", (bool)core_executing));
     while (!stop)
     {
-        //if (interp_addr == 0x10022d08) stop = 1;
-        //g_core->log_info(L"addr: %x", interp_addr);
+        // if (interp_addr == 0x10022d08) stop = 1;
+        // g_core->log_info(L"addr: %x", interp_addr);
         prefetch();
 
-        //if (Count > 0x2000000) g_core->log_info(L"inter:%x,%x", interp_addr,op);
-        //if ((Count+debug_count) > 0xabaa2c) stop=1;
+        // if (Count > 0x2000000) g_core->log_info(L"inter:%x,%x", interp_addr,op);
+        // if ((Count+debug_count) > 0xabaa2c) stop=1;
         interp_ops[((vr_op >> 26) & 0x3F)]();
         g_vr_beq_ignore_jmp = false;
 
-        //Count = (uint32_t)Count + 2;
-        //if (interp_addr == 0x80000180) last_addr = interp_addr;
+        // Count = (uint32_t)Count + 2;
+        // if (interp_addr == 0x80000180) last_addr = interp_addr;
         while (!core_dbg_get_resumed())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));

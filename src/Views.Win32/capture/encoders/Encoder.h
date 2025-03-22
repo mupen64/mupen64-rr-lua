@@ -6,11 +6,9 @@
 
 #pragma once
 
-class Encoder
-{
+class Encoder {
 public:
-    struct Params
-    {
+    struct Params {
         /**
          * \brief The video file's path
          */

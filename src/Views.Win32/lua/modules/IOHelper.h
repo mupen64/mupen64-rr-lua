@@ -32,4 +32,4 @@ namespace LuaCore::IOHelper
         lua_pushstring(L, wstring_to_string(path).c_str());
         return 1;
     }
-}
+} // namespace LuaCore::IOHelper
