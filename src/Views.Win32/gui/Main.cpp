@@ -2224,7 +2224,10 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.callbacks.save_state = LuaCallbacks::call_save_state;
     g_core.callbacks.load_state = LuaCallbacks::call_load_state;
     g_core.callbacks.reset = LuaCallbacks::call_reset;
-    g_core.callbacks.seek_completed = LuaCallbacks::call_seek_completed;
+    g_core.callbacks.seek_completed = [] {
+        Messenger::broadcast(Messenger::Message::SeekCompleted, nullptr);
+        LuaCallbacks::call_seek_completed();
+    };
     g_core.callbacks.core_executing_changed = [](bool value) {
         Messenger::broadcast(Messenger::Message::CoreExecutingChanged, value);
     };
