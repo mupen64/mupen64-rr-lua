@@ -171,7 +171,7 @@ bool core_vr_get_launched()
 
 std::filesystem::path CALL core_vr_get_rom_path()
 {
-    return rom_path;    
+    return rom_path;
 }
 
 void NI()
