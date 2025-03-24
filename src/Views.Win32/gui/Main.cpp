@@ -2403,7 +2403,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     SetWindowLong(g_main_hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
 
     g_recent_roms_menu = GetSubMenu(GetSubMenu(g_main_menu, 0), 5);
-    g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 5);
+    g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 6);
     g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
 #ifndef _DEBUG
 #endif
