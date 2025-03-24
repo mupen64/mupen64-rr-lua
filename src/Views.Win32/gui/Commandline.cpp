@@ -50,10 +50,6 @@ namespace Cli
             {
                 g_view_logger->trace("[CLI] commandline_start_rom vr_start_rom");
                 const auto result = core_vr_start_rom(commandline_rom);
-                if (result == Res_Ok)
-                {
-                    g_rom_path = commandline_rom;
-                }
                 show_error_dialog_for_result(result);
             }
         });

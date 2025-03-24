@@ -327,6 +327,11 @@ EXPORT core_result CALL core_init(core_params* params);
 EXPORT void CALL core_vr_byteswap(uint8_t* rom);
 
 /**
+ * \brief Gets the currently loaded rom's path. If no rom is loaded, the function returns an empty string.
+ */
+EXPORT std::filesystem::path CALL core_vr_get_rom_path();
+
+/**
  * \brief Gets the number of lag frames.
  */
 EXPORT size_t CALL core_vr_get_lag_count();

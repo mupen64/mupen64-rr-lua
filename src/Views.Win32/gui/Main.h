@@ -36,11 +36,6 @@ extern std::filesystem::path g_app_path;
 extern std::shared_ptr<Dispatcher> g_main_window_dispatcher;
 
 /**
- * \brief Currently loaded ROM's path, or empty.
- */
-extern std::filesystem::path g_rom_path;
-
-/**
  * \brief Whether the statusbar needs to be updated with new input information
  */
 extern bool is_primary_statusbar_invalidated;

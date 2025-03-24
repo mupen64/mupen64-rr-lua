@@ -169,6 +169,11 @@ bool core_vr_get_launched()
     return emu_launched;
 }
 
+std::filesystem::path CALL core_vr_get_rom_path()
+{
+    return rom_path;    
+}
+
 void NI()
 {
     g_core->log_error(std::format(L"NI() @ {:#06x}\n", (int32_t)PC->addr));

@@ -51,7 +51,7 @@ void RecentMenu::add(std::vector<std::wstring>& vec, std::wstring val, const boo
         return;
     }
     if (vec.size() > 5)
-    {
+    { 
         vec.pop_back();
     }
     std::erase_if(vec, [&](const auto str) {

@@ -79,8 +79,6 @@ std::shared_ptr<Plugin> g_audio_plugin;
 std::shared_ptr<Plugin> g_input_plugin;
 std::shared_ptr<Plugin> g_rsp_plugin;
 
-std::filesystem::path g_rom_path;
-
 constexpr auto WND_CLASS = L"myWindowClass";
 
 const std::map<cfg_action, int> ACTION_ID_MAP = {
@@ -691,7 +689,11 @@ void on_emu_launched_changed(std::any data)
         {
             g_vis_since_input_poll_warning_dismissed = false;
 
-            RecentMenu::add(g_config.recent_rom_paths, g_rom_path.wstring(), g_config.is_recent_rom_paths_frozen, ID_RECENTROMS_FIRST, g_recent_roms_menu);
+            const auto rom_path = core_vr_get_rom_path();
+            if (!rom_path.empty())
+            {
+                RecentMenu::add(g_config.recent_rom_paths, rom_path.wstring(), g_config.is_recent_rom_paths_frozen, ID_RECENTROMS_FIRST, g_recent_roms_menu);
+            }
 
             for (const HWND hwnd : g_previously_running_luas)
             {
@@ -996,10 +998,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             {
                 AsyncExecutor::invoke_async([path] {
                     const auto result = core_vr_start_rom(path);
-                    if (result == Res_Ok)
-                    {
-                        g_rom_path = path;
-                    }
                     show_error_dialog_for_result(result);
                 });
             }
@@ -1680,10 +1678,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     {
                         AsyncExecutor::invoke_async([path] {
                             const auto result = core_vr_start_rom(path);
-                            if (result == Res_Ok)
-                            {
-                                g_rom_path = path;
-                            }
                             show_error_dialog_for_result(result);
                         });
                     }
@@ -1970,10 +1964,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     AsyncExecutor::invoke_async([path] {
                         const auto result = core_vr_start_rom(path);
-                        if (result == Res_Ok)
-                        {
-                            g_rom_path = path;
-                        }
                         show_error_dialog_for_result(result);
                     },
                                                 ASYNC_KEY_START_ROM);
