@@ -2374,6 +2374,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     MSG msg{};
 
     wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     wc.hInstance = hInstance;
     wc.hIcon = LoadIcon(g_app_instance, MAKEINTRESOURCE(IDI_M64ICONBIG));
     wc.hIconSm = LoadIcon(g_app_instance, MAKEINTRESOURCE(IDI_M64ICONSMALL));
