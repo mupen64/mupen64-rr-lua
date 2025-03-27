@@ -339,6 +339,36 @@ typedef union {
     };
 } core_buttons;
 
+/**
+ * \brief Exposes an extended set of functions to plugins.
+ */
+typedef struct {
+    /**
+     * \brief Size of the structure in bytes.
+     */
+    uint32_t size;
+
+    /**
+     * \brief Logs the specified message at the trace level.
+     */
+    void (*log_trace)(const wchar_t*);
+
+    /**
+     * \brief Logs the specified message at the info level.
+     */
+    void (*log_info)(const wchar_t*);
+
+    /**
+     * \brief Logs the specified message at the warning level.
+     */
+    void (*log_warn)(const wchar_t*);
+
+    /**
+     * \brief Logs the specified message at the error level.
+     */
+    void (*log_error)(const wchar_t*);
+} core_plugin_extended_funcs;
+
 typedef void(__cdecl* CLOSEDLL)();
 typedef void(__cdecl* DLLABOUT)(void*);
 typedef void(__cdecl* DLLCONFIG)(void*);
@@ -348,6 +378,7 @@ typedef void(__cdecl* ROMCLOSED)();
 typedef void(__cdecl* ROMOPEN)();
 typedef void(__cdecl* GETCONFIG1)(core_plugin_cfg**);
 typedef bool(__cdecl* SAVECONFIG1)();
+typedef void(__cdecl* RECEIVEEXTENDEDFUNCS)(core_plugin_extended_funcs*);
 
 typedef void(__cdecl* CHANGEWINDOW)();
 typedef int32_t(__cdecl* INITIATEGFX)(core_gfx_info);
@@ -403,6 +434,12 @@ EXPORT void CALL RomClosed(void);
 EXPORT void CALL RomOpen(void);
 EXPORT void CALL GetConfig1(core_plugin_cfg**);
 EXPORT bool CALL SaveConfig1(void);
+/**
+ * Called by the core to provide the plugin with a set of extended functions.
+ * The plugin can store this pointer for use throughout its lifetime.
+ * This function is called before the plugin-specific InitiateXXX function.
+ */
+EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs*);
 
 #pragma endregion
 

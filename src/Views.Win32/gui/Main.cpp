@@ -2176,6 +2176,38 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
     }
 }
 
+static core_plugin_extended_funcs video_extended_funcs = {
+.size = sizeof(core_plugin_extended_funcs),
+.log_trace = [](const wchar_t* str) {g_video_logger->trace(str);},
+.log_info = [](const wchar_t* str) { g_video_logger->info(str); },
+.log_warn = [](const wchar_t* str) { g_video_logger->warn(str); },
+.log_error = [](const wchar_t* str) { g_video_logger->error(str); },
+};
+
+static core_plugin_extended_funcs audio_extended_funcs = {
+.size = sizeof(core_plugin_extended_funcs),
+.log_trace = [](const wchar_t* str) { g_audio_logger->trace(str); },
+.log_info = [](const wchar_t* str) { g_audio_logger->info(str); },
+.log_warn = [](const wchar_t* str) { g_audio_logger->warn(str); },
+.log_error = [](const wchar_t* str) { g_audio_logger->error(str); },
+};
+
+static core_plugin_extended_funcs input_extended_funcs = {
+.size = sizeof(core_plugin_extended_funcs),
+.log_trace = [](const wchar_t* str) { g_input_logger->trace(str); },
+.log_info = [](const wchar_t* str) { g_input_logger->info(str); },
+.log_warn = [](const wchar_t* str) { g_input_logger->warn(str); },
+.log_error = [](const wchar_t* str) { g_input_logger->error(str); },
+};
+
+static core_plugin_extended_funcs rsp_extended_funcs = {
+.size = sizeof(core_plugin_extended_funcs),
+.log_trace = [](const wchar_t* str) { g_rsp_logger->trace(str); },
+.log_info = [](const wchar_t* str) { g_rsp_logger->info(str); },
+.log_warn = [](const wchar_t* str) { g_rsp_logger->warn(str); },
+.log_error = [](const wchar_t* str) { g_rsp_logger->error(str); },
+};
+
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 #ifdef _DEBUG
@@ -2329,6 +2361,11 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         DO_COPY(rsp)
     };
 
+    g_core.plugin_funcs.video_extended_funcs = video_extended_funcs;
+    g_core.plugin_funcs.audio_extended_funcs = audio_extended_funcs;
+    g_core.plugin_funcs.input_extended_funcs = input_extended_funcs;
+    g_core.plugin_funcs.rsp_extended_funcs = rsp_extended_funcs;
+    
     core_init(&g_core);
 
     g_ui_thread_id = GetCurrentThreadId();

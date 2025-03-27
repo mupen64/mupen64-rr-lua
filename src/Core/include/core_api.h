@@ -62,6 +62,7 @@ typedef struct {
 typedef struct {
 
 #pragma region Video
+    core_plugin_extended_funcs video_extended_funcs;
     CLOSEDLL video_close_dll;
     ROMCLOSED video_rom_closed;
     ROMOPEN video_rom_open;
@@ -84,7 +85,8 @@ typedef struct {
     CHANGEWINDOW video_change_window;
 #pragma endregion
 
-#pragma region Video
+#pragma region Audio
+    core_plugin_extended_funcs audio_extended_funcs;
     CLOSEDLL audio_close_dll_audio;
     ROMCLOSED audio_rom_closed;
     ROMOPEN audio_rom_open;
@@ -96,7 +98,8 @@ typedef struct {
     AIUPDATE audio_ai_update;
 #pragma endregion
 
-#pragma region Video
+#pragma region Input
+    core_plugin_extended_funcs input_extended_funcs;
     CLOSEDLL input_close_dll;
     ROMCLOSED input_rom_closed;
     ROMOPEN input_rom_open;
@@ -110,6 +113,7 @@ typedef struct {
 #pragma endregion
 
 #pragma region RSP
+    core_plugin_extended_funcs rsp_extended_funcs;
     CLOSEDLL rsp_close_dll;
     ROMCLOSED rsp_rom_closed;
 

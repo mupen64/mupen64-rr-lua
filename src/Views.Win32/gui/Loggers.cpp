@@ -11,6 +11,10 @@
 
 std::shared_ptr<spdlog::logger> g_core_logger;
 std::shared_ptr<spdlog::logger> g_view_logger;
+std::shared_ptr<spdlog::logger> g_video_logger;
+std::shared_ptr<spdlog::logger> g_audio_logger;
+std::shared_ptr<spdlog::logger> g_input_logger;
+std::shared_ptr<spdlog::logger> g_rsp_logger;
 
 void Loggers::init()
 {
@@ -43,9 +47,23 @@ void Loggers::init()
 
     g_core_logger = std::make_shared<spdlog::logger>("Core", sink_list);
     g_view_logger = std::make_shared<spdlog::logger>("View", sink_list);
+    g_video_logger = std::make_shared<spdlog::logger>("Video", sink_list);
+    g_audio_logger = std::make_shared<spdlog::logger>("Audio", sink_list);
+    g_input_logger = std::make_shared<spdlog::logger>("Input", sink_list);
+    g_rsp_logger = std::make_shared<spdlog::logger>("RSP", sink_list);
 
-    g_core_logger->set_level(spdlog::level::trace);
-    g_view_logger->set_level(spdlog::level::trace);
-    g_core_logger->flush_on(spdlog::level::err);
-    g_view_logger->flush_on(spdlog::level::err);
+    const auto LOGGERS = {
+    g_core_logger,
+    g_view_logger,
+    g_video_logger,
+    g_audio_logger,
+    g_input_logger,
+    g_rsp_logger,
+    };
+
+    for (auto& logger : LOGGERS)
+    {
+        logger->set_level(spdlog::level::trace);
+        logger->flush_on(spdlog::level::err);
+    }
 }

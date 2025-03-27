@@ -40,6 +40,10 @@ static void __cdecl dummy_void()
 {
 }
 
+static void __cdecl dummy_receive_extended_funcs(core_plugin_extended_funcs*)
+{
+}
+
 static int32_t __cdecl dummy_initiateGFX(core_gfx_info Gfx_Info)
 {
     return 1;
@@ -119,6 +123,9 @@ void load_gfx(void* handle)
 {
     INITIATEGFX initiate_gfx{};
 
+    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
+    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
+    
     FUNC(g_core.plugin_funcs.video_change_window, CHANGEWINDOW, dummy_void, "ChangeWindow");
     FUNC(g_core.plugin_funcs.video_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(initiate_gfx, INITIATEGFX, dummy_initiateGFX, "InitiateGFX");
@@ -173,6 +180,8 @@ void load_gfx(void* handle)
     gfx_info.vi_x_scale_reg = &(g_core.vi_register->vi_x_scale);
     gfx_info.vi_y_scale_reg = &(g_core.vi_register->vi_y_scale);
     gfx_info.check_interrupts = dummy_void;
+
+    receive_extended_funcs(&g_core.plugin_funcs.video_extended_funcs);
     initiate_gfx(gfx_info);
 }
 
@@ -180,6 +189,9 @@ void load_input(uint16_t version, void* handle)
 {
     OLD_INITIATECONTROLLERS old_initiate_controllers{};
     INITIATECONTROLLERS initiate_controllers{};
+
+    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
+    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_core.plugin_funcs.input_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_core.plugin_funcs.input_controller_command, CONTROLLERCOMMAND, dummy_controllerCommand, "ControllerCommand");
@@ -210,6 +222,7 @@ void load_input(uint16_t version, void* handle)
         controller.RawData = 0;
         controller.Plugin = (int32_t)ce_none;
     }
+    receive_extended_funcs(&g_core.plugin_funcs.input_extended_funcs);
     if (version == 0x0101)
     {
         initiate_controllers(control_info);
@@ -224,6 +237,9 @@ void load_input(uint16_t version, void* handle)
 void load_audio(void* handle)
 {
     INITIATEAUDIO initiate_audio{};
+
+    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
+    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_core.plugin_funcs.audio_close_dll_audio, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_core.plugin_funcs.audio_ai_dacrate_changed, AIDACRATECHANGED, dummy_aiDacrateChanged, "AiDacrateChanged");
@@ -251,12 +267,17 @@ void load_audio(void* handle)
     audio_info.ai_bitrate_reg = &(g_core.ai_register->ai_bitrate);
 
     audio_info.check_interrupts = dummy_void;
+
+    receive_extended_funcs(&g_core.plugin_funcs.audio_extended_funcs);
     initiate_audio(audio_info);
 }
 
 void load_rsp(void* handle)
 {
     INITIATERSP initiate_rsp{};
+
+    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
+    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_core.plugin_funcs.rsp_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_core.plugin_funcs.rsp_do_rsp_cycles, DORSPCYCLES, dummy_doRspCycles, "DoRspCycles");
@@ -290,6 +311,8 @@ void load_rsp(void* handle)
     rsp_info.process_alist_list = g_core.plugin_funcs.audio_process_alist;
     rsp_info.process_rdp_list = g_core.plugin_funcs.video_process_rdp_list;
     rsp_info.show_cfb = g_core.plugin_funcs.video_show_cfb;
+
+    receive_extended_funcs(&g_core.plugin_funcs.rsp_extended_funcs);
 
     int32_t i = 4;
     initiate_rsp(rsp_info, (uint32_t*)&i);
