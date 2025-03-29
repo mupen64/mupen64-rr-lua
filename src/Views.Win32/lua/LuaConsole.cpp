@@ -585,7 +585,7 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
             has_error = true;
         }
     }
-    
+
     if (luaL_dofile(lua->L, lua->path.string().c_str()))
     {
         has_error = true;

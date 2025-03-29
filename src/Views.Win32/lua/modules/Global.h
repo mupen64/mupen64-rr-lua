@@ -11,7 +11,7 @@ namespace LuaCore::Global
     static int print(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        
+
         const int nargs = lua_gettop(L);
 
         for (int i = 1; i <= nargs; i++)
@@ -33,15 +33,16 @@ namespace LuaCore::Global
             if (inspected_value)
             {
                 auto str = string_to_wstring(inspected_value);
-                
+
                 // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
                 if (str.size() > 1 && ((str[0] == '"' && str[str.size() - 1] == '"') || (str[0] == '\'' && str[str.size() - 1] == '\'')))
                 {
                     str = str.substr(1, str.size() - 2);
                 }
-                
+
                 print_con(lua->hwnd, str);
-            } else
+            }
+            else
             {
                 print_con(lua->hwnd, L"???");
             }
@@ -58,11 +59,11 @@ namespace LuaCore::Global
     static int tostringexs(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        
+
         const int nargs = lua_gettop(L);
 
         std::wstring final_str;
-        
+
         for (int i = 1; i <= nargs; i++)
         {
             lua_getglobal(L, "__mupeninspect");
@@ -76,26 +77,27 @@ namespace LuaCore::Global
             lua_getfield(L, -1, "inspect");
 
             lua_pushvalue(L, i);
-            
+
             lua_newtable(L);
             lua_pushstring(L, "");
             lua_setfield(L, -2, "newline");
-            
+
             lua_pcall(L, 2, 1, 0);
 
             const char* inspected_value = lua_tostring(L, -1);
             if (inspected_value)
             {
                 auto str = string_to_wstring(inspected_value);
-                
+
                 // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
                 if (str.size() > 1 && str[0] == '"' && str[str.size() - 1] == '"')
                 {
                     str = str.substr(1, str.size() - 2);
                 }
-                
+
                 final_str += str;
-            } else
+            }
+            else
             {
                 final_str += L"???";
             }
