@@ -577,6 +577,7 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
         rebuild_lua_env_map();
 
         error_msg = lua_tostring(lua->L, -1);
+        destroy_lua_environment(lua);
         delete lua;
         lua = nullptr;
     }
