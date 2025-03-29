@@ -32,6 +32,8 @@ std::atomic g_d2d_drawing_section = false;
 std::vector<t_lua_environment*> g_lua_environments;
 std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
 
+std::string inspect_lua_code;
+
 t_lua_environment* get_lua_class(lua_State* lua_state)
 {
     return g_lua_env_map[lua_state];
@@ -341,6 +343,12 @@ void lua_init()
     wndclass.lpfnWndProc = (WNDPROC)gdi_overlay_wndproc;
     wndclass.lpszClassName = GDI_OVERLAY_CLASS;
     RegisterClass(&wndclass);
+
+    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(IDR_INSPECT_LUA_FILE), MAKEINTRESOURCE(TEXTFILE));
+    HGLOBAL rc_data = LoadResource(g_app_instance, rc);
+    const auto size = SizeofResource(g_app_instance, rc);
+    const auto data = static_cast<const char*>(LockResource(rc_data));
+    inspect_lua_code = std::string(data, size);
 }
 
 void create_loadscreen(t_lua_environment* lua)
@@ -567,7 +575,21 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     SetProp(lua->hwnd, LUA_PROP_NAME, lua);
     rebuild_lua_env_map();
 
-    bool has_error = luaL_dofile(lua->L, lua->path.string().c_str());
+    bool has_error = false;
+
+    {
+        ScopeTimer timer("inspect.lua injection", g_view_logger.get());
+        if (luaL_dostring(lua->L, inspect_lua_code.c_str()))
+        {
+            // Shouldn't happen...
+            has_error = true;
+        }
+    }
+    
+    if (luaL_dofile(lua->L, lua->path.string().c_str()))
+    {
+        has_error = true;
+    }
 
     std::string error_msg;
     if (has_error)

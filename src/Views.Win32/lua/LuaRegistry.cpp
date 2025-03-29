@@ -23,9 +23,8 @@
 
 // begin lua funcs
 const luaL_Reg GLOBAL_FUNCS[] = {
-{"print", LuaCore::Global::Print},
-{"printx", LuaCore::Global::PrintX},
-{"tostringex", LuaCore::Global::ToStringExs},
+{"print", LuaCore::Global::print},
+{"tostringex", LuaCore::Global::tostringexs},
 {"stop", LuaCore::Global::StopScript},
 {NULL, NULL}};
 
@@ -275,6 +274,9 @@ void LuaRegistry::register_functions(lua_State* L)
 
     // COMPAT: emu.isreadonly deprecated, forwarded to movie.get_readonly
     luaL_dostring(L, "emu.isreadonly = movie.get_readonly");
+
+    // COMPAT: printx deprecated, forwarded to print
+    luaL_dostring(L, "printx = print");
 
     // DEPRECATED: input.map_virtual_key_ex couples to WinAPI
     luaL_dostring(L, "input.map_virtual_key_ex = function() print('input.map_virtual_key_ex has been deprecated') end");

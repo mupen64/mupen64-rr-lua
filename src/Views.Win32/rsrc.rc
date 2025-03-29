@@ -32,6 +32,7 @@ IDB_RSP                 BITMAP                  "icons\\plugin_rsp.bmp"
 
 IDB_SOUND               BITMAP                  "icons\\plugin_audio.bmp"
 
+IDR_INSPECT_LUA_FILE    TEXTFILE                "..\\..\\lib\\inspect.lua"
 
 /////////////////////////////////////////////////////////////////////////////
 //
