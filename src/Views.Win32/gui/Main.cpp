@@ -1536,6 +1536,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_MULTI_FRAME_ADVANCE_INC:
                 g_config.multi_frame_advance_count++;
+                if (g_config.multi_frame_advance_count == 0)
+                {
+                    g_config.multi_frame_advance_count++;
+                }
                 Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
                 break;
             case IDM_MULTI_FRAME_ADVANCE_DEC:
