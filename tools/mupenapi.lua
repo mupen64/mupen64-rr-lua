@@ -1,6 +1,6 @@
 ---@meta
 
--- version 1.1.9.1
+-- version 1.2.0
 
 -- This file has meta definitions for the functions implemented in mupen64.
 -- https://github.com/mkdasher/mupen64-rr-lua-/blob/master/lua/LuaConsole.cpp
@@ -32,13 +32,35 @@ avi = {}
 --#region
 
 ---Prints a value to the lua console.
+---
+---The data is formatted using the [inspect.lua library](https://github.com/kikito/inspect.lua).
+---
 ---@param data any The data to print to the console.
 ---@return nil
 function print(data) end
 
+
+---Prints a value to the lua console.
+---@deprecated Use [print](lua://print).
+---@param data any The data to print to the console.
+---@return nil
+function printx(data) end
+
+---Converts a value to a string using the [inspect.lua library](https://github.com/kikito/inspect.lua).
+---@param value any
+---@return string
+function tostringex(value) end
+
 ---Stops script execution.
 ---@return nil
 function stop() end
+
+---Queues up the Mupen64 process to be stopped.
+---
+---**Script execution may continue after this function is called; make sure this behaviour is handled correctly.**
+---@param code?  boolean|integer
+---@param close? boolean
+function os.exit(code, close) end
 
 --#endregion
 
@@ -242,6 +264,7 @@ function emu.set_ff(fast_forward) end
 function emu.speed(speed_limit) end
 
 ---Sets the speed mode of the emulator.
+---@deprecated Use [emu.setff](lua://emu.emu.set_ff) instead.
 ---@param mode "normal"|"maximum"
 ---@return nil
 function emu.speedmode(mode) end
@@ -438,6 +461,21 @@ function memory.writedouble(address, data) end
 ---@param data integer|qword
 ---@return nil
 function memory.writesize(address, size, data) end
+
+---See [memory.recompile](lua://memory.recompile).
+---@param addr integer
+function memory.recompilenow(addr) end
+
+---Queues up a recompilation of the block at the specified address.
+---@param addr integer
+function memory.recompile(addr) end
+
+---See [memory.recompile](lua://memory.recompile).
+---@param addr integer
+function memory.recompilenext(addr) end
+
+---Queues up a recompilation of all blocks.
+function memory.recompilenextall() end
 
 --#endregion
 
