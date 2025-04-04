@@ -261,7 +261,7 @@ LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             if (!lua)
             {
                 g_d2d_drawing_section = false;
-                return 0;
+                break;
             }
 
             PAINTSTRUCT ps;
