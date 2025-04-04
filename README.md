@@ -2,15 +2,12 @@
   <img width="128" align="center" src="https://github.com/mkdasher/mupen64-rr-lua-/assets/48759429/45351707-be77-4daf-987c-0bdb712891ab">
 </p>
 
-
-
 <h1 align="center">
-  Mupen64-rr-lua
+  mupen64-rr-lua
 </h1>
 
-
 <p align="center">
-  N64 TASing emulator with Lua scripting support
+  Powerful N64 TASing emulator with Lua scripting support
 </p>
 
 <p align="center">
@@ -20,6 +17,7 @@
 </p>
 
 # Quickstart
+
 The latest release is available on the [releases page](https://github.com/mkdasher/mupen64-rr-lua-/releases/latest/)
 
 If any issues arise or you need help, join the [discord server](https://discord.gg/eZXbmguKEq)
