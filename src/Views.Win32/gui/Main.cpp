@@ -46,6 +46,7 @@ HANDLE dispatcher_done_event;
 
 core_params g_core{};
 bool g_frame_changed = true;
+bool g_exit = false;
 
 DWORD g_ui_thread_id;
 HWND g_hwnd_plug;
@@ -1234,6 +1235,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         timeKillEvent(g_ui_timer);
         AsyncExecutor::stop();
         Gdiplus::GdiplusShutdown(gdi_plus_token);
+        g_exit = true;
         PostQuitMessage(0);
         break;
     case WM_CLOSE:
@@ -2511,9 +2513,8 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     }
 
     SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
-    bool exit = false;
 
-    while (!exit)
+    while (!g_exit)
     {
         DWORD result = MsgWaitForMultipleObjects(1, &dispatcher_event, FALSE, INFINITE, QS_ALLINPUT);
 
@@ -2528,11 +2529,6 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
-
-                if (msg.message == WM_QUIT)
-                {
-                    exit = true;
-                }
             }
         }
         else
