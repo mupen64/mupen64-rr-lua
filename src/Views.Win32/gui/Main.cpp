@@ -974,6 +974,7 @@ void open_console()
     freopen_s(&f, "CONIN$", "r", stdin);
     freopen_s(&f, "CONOUT$", "w", stdout);
     freopen_s(&f, "CONOUT$", "w", stderr);
+    SetConsoleOutputCP(CP_UTF8);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -1088,6 +1089,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 return DefWindowProc(hwnd, Message, wParam, lParam);
             break;
         }
+    case WM_CHAR:
+        g_view_logger->info(L"{}", (wchar_t)wParam);
+        break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
         {

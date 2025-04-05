@@ -156,7 +156,7 @@
   
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -173,7 +173,7 @@
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -195,7 +195,7 @@
   
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -216,7 +216,7 @@
  
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <IntrinsicFunctions>true</IntrinsicFunctions>
