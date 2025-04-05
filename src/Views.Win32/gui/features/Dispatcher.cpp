@@ -7,7 +7,7 @@
 #include "stdafx.h"
 #include "Dispatcher.h"
 
-//#define DISPATCHER_OVERHEAD_LOGGING
+// #define DISPATCHER_OVERHEAD_LOGGING
 
 void Dispatcher::invoke(const std::function<void()>& func)
 {
