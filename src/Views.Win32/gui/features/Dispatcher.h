@@ -38,4 +38,6 @@ private:
     DWORD m_thread_id;
     std::queue<std::function<void()>> m_queue;
     std::mutex m_mutex;
+
+    std::chrono::time_point<std::chrono::steady_clock> m_call_start;
 };
