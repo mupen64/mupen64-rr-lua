@@ -7,7 +7,7 @@
 #include "stdafx.h"
 #include "Dispatcher.h"
 
-#define DISPATCHER_OVERHEAD_LOGGING
+//#define DISPATCHER_OVERHEAD_LOGGING
 
 void Dispatcher::invoke(const std::function<void()>& func)
 {
@@ -51,6 +51,24 @@ void Dispatcher::execute()
     const auto execute_ns = (end - execute_start).count();
     const auto overhead_ns = call_ns - execute_ns;
     const auto overhead_percent = (double)overhead_ns / (double)call_ns * 100.0;
-    g_view_logger->trace("[Dispatcher] {} - {}ns {}ns (overhead {:.2f}%)", m_thread_id, call_ns, execute_ns, overhead_percent);
+    m_overhead_index = (m_overhead_index + 1) % std::size(m_overhead_percentages);
+    m_overhead_times[m_overhead_index] = overhead_ns;
+    m_overhead_percentages[m_overhead_index] = overhead_percent;
+
+    double percentage_sum = 0.0;
+    for (const auto p : m_overhead_percentages)
+    {
+        percentage_sum += p;
+    }
+    double avg_overhead_percentage = percentage_sum / (double)std::size(m_overhead_percentages);
+
+    double overhead_sum = 0.0;
+    for (const auto t : m_overhead_times)
+    {
+        overhead_sum += t;
+    }
+    double avg_overhead_time = overhead_sum / (double)std::size(m_overhead_times);
+
+    g_view_logger->trace("[Dispatcher] id {} overhead avg {:.0f}ns ({:.2f}%)", m_thread_id, avg_overhead_time, avg_overhead_percentage);
 #endif
 }
