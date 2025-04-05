@@ -9,10 +9,12 @@
 #include <gui/Loggers.h>
 #include <gui/Main.h>
 #include <gui/features/CrashManager.h>
+#include <backward.hpp>
 
 typedef struct StacktraceInfo {
     std::stacktrace stl_stacktrace{};
     void* rtl_stacktrace[32]{};
+    std::vector<backward::ResolvedTrace> backward_stacktrace{};
 } t_stacktrace_info;
 
 static t_stacktrace_info stacktrace_info;
@@ -93,6 +95,17 @@ static __forceinline void fill_stacktrace_info()
     stacktrace_info.stl_stacktrace = std::stacktrace::current();
     stacktrace_info.rtl_stacktrace[0] = nullptr;
     CaptureStackBackTrace(0, std::size(stacktrace_info.rtl_stacktrace), stacktrace_info.rtl_stacktrace, NULL);
+
+    backward::StackTrace st;
+    st.load_here();
+
+    backward::TraceResolver tr;
+    tr.load_stacktrace(st);
+
+    for (size_t i = 0; i < st.size(); ++i)
+    {
+        stacktrace_info.backward_stacktrace.push_back(tr.resolve(st[i]));
+    }
 }
 
 static void log_crash(const std::wstring& additional_exception_info)
@@ -126,6 +139,12 @@ static void log_crash(const std::wstring& additional_exception_info)
             break;
         }
         g_video_logger->critical(frame);
+    }
+
+    g_view_logger->critical("backward-cpp Stacktrace:");
+    for (const auto& stacktrace_entry : stacktrace_info.backward_stacktrace)
+    {
+        g_view_logger->critical(std::format("{} {} {}", stacktrace_entry.object_filename, stacktrace_entry.object_function, stacktrace_entry.addr));
     }
 
     g_view_logger->flush();
