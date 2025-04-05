@@ -63,6 +63,7 @@ extern "C" {
 #include <Shlwapi.h>
 #include <shellapi.h>
 #include <windowsx.h>
+#include <Psapi.h>
 #include <mmsystem.h>
 #include <wincodec.h>
 #include <gdiplus.h>

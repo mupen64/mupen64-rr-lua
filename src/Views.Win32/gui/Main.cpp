@@ -19,7 +19,7 @@
 #include <gui/features/Compare.h>
 #include <gui/features/ConfigDialog.h>
 #include <gui/features/CoreDbg.h>
-#include <gui/features/CrashHelper.h>
+#include <gui/features/CrashManager.h>
 #include <gui/features/Dispatcher.h>
 #include <gui/features/MGECompositor.h>
 #include <gui/features/MovieDialog.h>
@@ -2008,41 +2008,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
-// kaboom
-LONG WINAPI ExceptionReleaseTarget(_EXCEPTION_POINTERS* ExceptionInfo)
-{
-    CrashHelper::log_crash(ExceptionInfo);
-
-    if (g_config.silent_mode)
-    {
-        return EXCEPTION_EXECUTE_HANDLER;
-    }
-
-    bool is_continuable = !(ExceptionInfo->ExceptionRecord->ExceptionFlags &
-                            EXCEPTION_NONCONTINUABLE);
-
-    int result = 0;
-
-    if (is_continuable)
-    {
-        TaskDialog(g_main_hwnd, g_app_instance, L"Error",
-                   L"An error has occured", L"A crash log has been automatically generated. You can choose to continue program execution.",
-                   TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON, TD_ERROR_ICON, &result);
-    }
-    else
-    {
-        TaskDialog(g_main_hwnd, g_app_instance, L"Error",
-                   L"An error has occured", L"A crash log has been automatically generated. The program will now exit.", TDCBF_CLOSE_BUTTON, TD_ERROR_ICON,
-                   &result);
-    }
-
-    if (result == IDCLOSE)
-    {
-        return EXCEPTION_EXECUTE_HANDLER;
-    }
-    return EXCEPTION_CONTINUE_EXECUTION;
-}
-
 void on_new_frame()
 {
     g_frame_changed = true;
@@ -2428,6 +2393,8 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     wc.lpszMenuName = MAKEINTRESOURCE(IDR_MYMENU);
 
     RegisterClassEx(&wc);
+
+    CrashManager::init();
     MGECompositor::init();
 
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height);
@@ -2495,15 +2462,6 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     Messenger::broadcast(Messenger::Message::SizeChanged, rect);
     Messenger::broadcast(Messenger::Message::AppReady, nullptr);
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
-
-    // warning, this is ignored when debugger is attached (like visual studio)
-    SetUnhandledExceptionFilter(ExceptionReleaseTarget);
-
-    // raise noncontinuable exception (impossible to recover from it)
-    // RaiseException(EXCEPTION_ACCESS_VIOLATION, EXCEPTION_NONCONTINUABLE, NULL, NULL);
-    //
-    // raise continuable exception
-    // RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, NULL, NULL);
 
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)

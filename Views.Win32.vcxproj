@@ -257,7 +257,7 @@
     <ClInclude Include="src\Views.Win32\gui\features\Cheats.h" />
     <ClInclude Include="src\Views.Win32\gui\features\ConfigDialog.h" />
     <ClInclude Include="src\Views.Win32\gui\features\CoreDbg.h" />
-    <ClInclude Include="src\Views.Win32\gui\features\CrashHelper.h" />
+    <ClInclude Include="src\Views.Win32\gui\features\CrashManager.h"/>
     <ClInclude Include="src\Views.Win32\gui\features\Dispatcher.h" />
     <ClInclude Include="src\Views.Win32\gui\features\MGECompositor.h" />
     <ClInclude Include="src\Views.Win32\gui\features\MovieDialog.h" />
@@ -316,7 +316,7 @@
     <ClCompile Include="src\Views.Win32\gui\features\Cheats.cpp" />
     <ClCompile Include="src\Views.Win32\gui\features\ConfigDialog.cpp" />
     <ClCompile Include="src\Views.Win32\gui\features\CoreDbg.cpp" />
-    <ClCompile Include="src\Views.Win32\gui\features\CrashHelper.cpp" />
+    <ClCompile Include="src\Views.Win32\gui\features\CrashManager.cpp"/>
     <ClCompile Include="src\Views.Win32\gui\features\Dispatcher.cpp" />
     <ClCompile Include="src\Views.Win32\gui\features\MGECompositor.cpp" />
     <ClCompile Include="src\Views.Win32\gui\features\MovieDialog.cpp" />
