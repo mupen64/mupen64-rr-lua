@@ -10,6 +10,41 @@
 #include <gui/Main.h>
 #include <gui/features/CrashManager.h>
 
+typedef struct StacktraceInfo {
+    std::stacktrace stl_stacktrace{};
+    void* rtl_stacktrace[32]{};
+} t_stacktrace_info;
+
+static t_stacktrace_info stacktrace_info;
+
+#define E(x) {x, L#x}
+const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
+E(EXCEPTION_ACCESS_VIOLATION),
+E(EXCEPTION_ACCESS_VIOLATION),
+E(EXCEPTION_DATATYPE_MISALIGNMENT),
+E(EXCEPTION_BREAKPOINT),
+E(EXCEPTION_SINGLE_STEP),
+E(EXCEPTION_ARRAY_BOUNDS_EXCEEDED),
+E(EXCEPTION_FLT_DENORMAL_OPERAND),
+E(EXCEPTION_FLT_DIVIDE_BY_ZERO),
+E(EXCEPTION_FLT_INEXACT_RESULT),
+E(EXCEPTION_FLT_INVALID_OPERATION),
+E(EXCEPTION_FLT_OVERFLOW),
+E(EXCEPTION_FLT_STACK_CHECK),
+E(EXCEPTION_FLT_UNDERFLOW),
+E(EXCEPTION_INT_DIVIDE_BY_ZERO),
+E(EXCEPTION_INT_OVERFLOW),
+E(EXCEPTION_PRIV_INSTRUCTION),
+E(EXCEPTION_IN_PAGE_ERROR),
+E(EXCEPTION_ILLEGAL_INSTRUCTION),
+E(EXCEPTION_NONCONTINUABLE_EXCEPTION),
+E(EXCEPTION_STACK_OVERFLOW),
+E(EXCEPTION_INVALID_DISPOSITION),
+E(EXCEPTION_GUARD_PAGE),
+E(EXCEPTION_INVALID_HANDLE),
+};
+#undef E
+
 /**
  * \brief Gets additional information about the exception address
  * \param addr The address where the exception occurred
@@ -45,43 +80,22 @@ static std::wstring get_metadata_for_exception_address(void* addr)
     return std::format(L"Address: {:#08x}", (uintptr_t)addr);
 }
 
-#define E(x) {x, L#x}
-const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
-E(EXCEPTION_ACCESS_VIOLATION),
-E(EXCEPTION_ACCESS_VIOLATION),
-E(EXCEPTION_DATATYPE_MISALIGNMENT),
-E(EXCEPTION_BREAKPOINT),
-E(EXCEPTION_SINGLE_STEP),
-E(EXCEPTION_ARRAY_BOUNDS_EXCEEDED),
-E(EXCEPTION_FLT_DENORMAL_OPERAND),
-E(EXCEPTION_FLT_DIVIDE_BY_ZERO),
-E(EXCEPTION_FLT_INEXACT_RESULT),
-E(EXCEPTION_FLT_INVALID_OPERATION),
-E(EXCEPTION_FLT_OVERFLOW),
-E(EXCEPTION_FLT_STACK_CHECK),
-E(EXCEPTION_FLT_UNDERFLOW),
-E(EXCEPTION_INT_DIVIDE_BY_ZERO),
-E(EXCEPTION_INT_OVERFLOW),
-E(EXCEPTION_PRIV_INSTRUCTION),
-E(EXCEPTION_IN_PAGE_ERROR),
-E(EXCEPTION_ILLEGAL_INSTRUCTION),
-E(EXCEPTION_NONCONTINUABLE_EXCEPTION),
-E(EXCEPTION_STACK_OVERFLOW),
-E(EXCEPTION_INVALID_DISPOSITION),
-E(EXCEPTION_GUARD_PAGE),
-E(EXCEPTION_INVALID_HANDLE),
-};
-
-#undef E
-static std::wstring get_exception_code_friendly_name(const _EXCEPTION_POINTERS* exception_pointers_ptr)
+static std::wstring get_exception_code_friendly_name(const _EXCEPTION_POINTERS* e)
 {
-    std::wstring exception_name = EXCEPTION_NAMES.contains(exception_pointers_ptr->ExceptionRecord->ExceptionCode) ? EXCEPTION_NAMES.at(exception_pointers_ptr->ExceptionRecord->ExceptionCode) : L"Unknown exception";
+    std::wstring exception_name = EXCEPTION_NAMES.contains(e->ExceptionRecord->ExceptionCode) ? EXCEPTION_NAMES.at(e->ExceptionRecord->ExceptionCode) : L"Unknown exception";
 
-    return std::format(L"{} ({:#08x})", exception_name, exception_pointers_ptr->ExceptionRecord->ExceptionCode);
+    return std::format(L"{} ({:#08x})", exception_name, e->ExceptionRecord->ExceptionCode);
 }
 
+static __forceinline void fill_stacktrace_info()
+{
+    stacktrace_info = {};
+    stacktrace_info.stl_stacktrace = std::stacktrace::current();
+    stacktrace_info.rtl_stacktrace[0] = nullptr;
+    CaptureStackBackTrace(0, std::size(stacktrace_info.rtl_stacktrace), stacktrace_info.rtl_stacktrace, NULL);
+}
 
-static void log_crash(const _EXCEPTION_POINTERS* exception_pointers_ptr)
+static void log_crash(const std::wstring& additional_exception_info)
 {
     SYSTEMTIME time;
     GetSystemTime(&time);
@@ -89,38 +103,43 @@ static void log_crash(const _EXCEPTION_POINTERS* exception_pointers_ptr)
     g_view_logger->critical(L"Crash!");
     g_view_logger->critical(get_mupen_name());
     g_view_logger->critical(std::format(L"{:02}/{:02}/{} {:02}:{:02}:{:02}", time.wDay, time.wMonth, time.wYear, time.wHour, time.wMinute, time.wSecond));
-    g_view_logger->critical(get_metadata_for_exception_address(exception_pointers_ptr->ExceptionRecord->ExceptionAddress) + L" " + get_exception_code_friendly_name(exception_pointers_ptr));
     g_view_logger->critical(L"Video: {}", g_config.selected_video_plugin);
     g_view_logger->critical(L"Audio: {}", g_config.selected_audio_plugin);
     g_view_logger->critical(L"Input: {}", g_config.selected_input_plugin);
     g_view_logger->critical(L"RSP: {}", g_config.selected_rsp_plugin);
     g_view_logger->critical(L"VCR Task: {}", static_cast<int>(core_vcr_get_task()));
     g_view_logger->critical(L"Core Executing: {}", core_vr_get_launched());
+    g_view_logger->critical(additional_exception_info);
 
-    const std::stacktrace st = std::stacktrace::current();
-    g_view_logger->critical("Stacktrace:");
-    for (const auto& stacktrace_entry : st)
+    g_view_logger->critical("STL Stacktrace:");
+    for (const auto& stacktrace_entry : stacktrace_info.stl_stacktrace)
     {
         g_view_logger->critical(std::format("{}", std::to_string(stacktrace_entry)));
+    }
+
+    g_view_logger->critical("RTL Stacktrace:");
+    for (auto i = 0; i < std::size(stacktrace_info.rtl_stacktrace); ++i)
+    {
+        const auto frame = stacktrace_info.rtl_stacktrace[i];
+        if (!frame)
+        {
+            break;
+        }
+        g_video_logger->critical(frame);
     }
 
     g_view_logger->flush();
 }
 
-LONG WINAPI exception_handler(_EXCEPTION_POINTERS* e)
+bool show_crash_dialog(bool continuable)
 {
-    log_crash(e);
-
     if (g_config.silent_mode)
     {
-        return EXCEPTION_EXECUTE_HANDLER;
+        return true;
     }
 
-    const bool is_continuable = !(e->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE);
-
     int result = 0;
-
-    if (is_continuable)
+    if (continuable)
     {
         TaskDialog(g_main_hwnd, g_app_instance, L"Error",
                    L"An error has occured", L"A crash log has been automatically generated. You can choose to continue program execution.",
@@ -133,23 +152,80 @@ LONG WINAPI exception_handler(_EXCEPTION_POINTERS* e)
                    &result);
     }
 
-    if (result == IDCLOSE)
+    return result == IDCLOSE;
+}
+
+LONG WINAPI exception_handler(_EXCEPTION_POINTERS* e)
+{
+    fill_stacktrace_info();
+
+    std::wstring exception_info;
+    exception_info += get_metadata_for_exception_address(e->ExceptionRecord->ExceptionAddress) + L" " + get_exception_code_friendly_name(e) + L" ";
+    exception_info += L"(from SetUnhandledExceptionFilter) ";
+    log_crash(exception_info);
+
+    const bool is_continuable = !(e->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE);
+
+    const bool close = show_crash_dialog(is_continuable);
+
+    return close ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_EXECUTION;
+}
+
+void invalid_parameter_handler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t)
+{
+    fill_stacktrace_info();
+
+    std::wstring exception_info;
+    exception_info += std::format(L"File: {} ", file ? file : L"(unknown)");
+    exception_info += std::format(L"Function: {} ", function ? function : L"(unknown)");
+    exception_info += std::format(L"Expression: {} ", expression ? expression : L"(unknown)");
+    exception_info += std::format(L"Line: {} ", line);
+    exception_info += L"(from _set_invalid_parameter_handler) ";
+
+    log_crash(exception_info);
+    show_crash_dialog(false);
+}
+
+// See https://randomascii.wordpress.com/2012/07/05/when-even-crashing-doesnt-work/
+static void enable_crashing_on_crashes()
+{
+    const DWORD EXCEPTION_SWALLOWING = 0x1;
+    typedef BOOL(WINAPI * tGetPolicy)(LPDWORD lpFlags);
+    typedef BOOL(WINAPI * tSetPolicy)(DWORD dwFlags);
+
+    const HMODULE k32 = GetModuleHandle(L"kernel32.dll");
+    const auto p_get_policy = (tGetPolicy)GetProcAddress(k32, "GetProcessUserModeExceptionPolicy");
+    const auto p_set_policy = (tSetPolicy)GetProcAddress(k32, "SetProcessUserModeExceptionPolicy");
+    if (p_get_policy && p_set_policy)
     {
-        return EXCEPTION_EXECUTE_HANDLER;
+        DWORD dwFlags;
+        if (p_get_policy(&dwFlags))
+        {
+            p_set_policy(dwFlags & ~EXCEPTION_SWALLOWING);
+        }
     }
-    return EXCEPTION_CONTINUE_EXECUTION;
+    BOOL insanity = FALSE;
+    SetUserObjectInformationA(GetCurrentProcess(),
+                              UOI_TIMERPROC_EXCEPTION_SUPPRESSION,
+                              &insanity, sizeof(insanity));
 }
 
 void CrashManager::init()
 {
+    enable_crashing_on_crashes();
+
     SetUnhandledExceptionFilter(exception_handler);
+    _set_invalid_parameter_handler(invalid_parameter_handler);
 
-    // raise noncontinuable exception (impossible to recover from it)
-    RaiseException(EXCEPTION_ACCESS_VIOLATION, EXCEPTION_NONCONTINUABLE, NULL, NULL);
+    // Some test cases:
     //
-    // raise continuable exception
+    // RaiseException(EXCEPTION_ACCESS_VIOLATION, EXCEPTION_NONCONTINUABLE, NULL, NULL);
+    //
     // RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, NULL, NULL);
-
-    // TODO: Register _set_invalid_parameter_handler, maybe some other handlers too. Fixes cases like printf(0); not triggering the crash dialog.
-    // See https://randomascii.wordpress.com/2012/07/05/when-even-crashing-doesnt-work/
+    //
+    // printf(0);
+    //
+    // In WndProc:
+    // int* a = 0; *a = 1;
+    //
 }
