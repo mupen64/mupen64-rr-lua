@@ -33,4 +33,5 @@
 #include <thread>
 #include <variant>
 #include <vector>
+#include <xxh64.h>
 #include <IOHelpers.h>

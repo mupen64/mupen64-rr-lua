@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include "tlb.h"
 #include "memory.h"
-#include <xxhash/xxh64.h>
 #include <Core.h>
 #include <r4300/exception.h>
 #include <r4300/interrupt.h>
