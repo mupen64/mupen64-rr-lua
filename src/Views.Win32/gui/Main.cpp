@@ -2380,24 +2380,27 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     while (!g_exit)
     {
-        DWORD result = MsgWaitForMultipleObjects(1, &dispatcher_event, FALSE, INFINITE, QS_ALLINPUT);
+        DWORD result = MsgWaitForMultipleObjectsEx(1, &dispatcher_event, INFINITE, QS_ALLEVENTS | QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
 
-        if (result == WAIT_OBJECT_0)
+        if (result == WAIT_FAILED)
+        {
+            g_view_logger->critical("MsgWaitForMultipleObjects WAIT_FAILED");
+            break;
+        }
+
+        if (result == WAIT_OBJECT_0 || WaitForSingleObjectEx(dispatcher_event, 0, FALSE) == WAIT_OBJECT_0)
         {
             g_main_window_dispatcher->execute();
             SetEvent(dispatcher_done_event);
         }
-        else if (result == WAIT_OBJECT_0 + 1)
+
+        if (result == WAIT_OBJECT_0 + 1)
         {
             while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
-        }
-        else
-        {
-            break;
         }
     }
 
