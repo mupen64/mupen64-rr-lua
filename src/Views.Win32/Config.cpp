@@ -38,196 +38,6 @@ const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
 {VIEW_DLG_RAMSTART, 0},
 };
 
-void set_default_hotkey_keys(cfg_view* config)
-{
-    config->fast_forward_hotkey.key = VK_TAB;
-
-    config->gs_hotkey.key = 'G';
-
-    config->speed_down_hotkey.key = VK_OEM_MINUS;
-
-    config->speed_up_hotkey.key = VK_OEM_PLUS;
-
-    config->speed_reset_hotkey.key = VK_OEM_PLUS;
-    config->speed_reset_hotkey.ctrl = 1;
-
-    config->frame_advance_hotkey.key = VK_OEM_5;
-
-    config->multi_frame_advance_hotkey.key = VK_OEM_5;
-    config->multi_frame_advance_hotkey.ctrl = 1;
-
-    config->multi_frame_advance_inc_hotkey.key = 'E';
-    config->multi_frame_advance_inc_hotkey.ctrl = 1;
-
-    config->multi_frame_advance_dec_hotkey.key = 'Q';
-    config->multi_frame_advance_dec_hotkey.ctrl = 1;
-
-    config->multi_frame_advance_reset_hotkey.key = 'E';
-    config->multi_frame_advance_reset_hotkey.ctrl = 1;
-    config->multi_frame_advance_reset_hotkey.shift = 1;
-
-    config->pause_hotkey.key = VK_PAUSE;
-
-    config->toggle_read_only_hotkey.key = 'R';
-    config->toggle_read_only_hotkey.shift = true;
-
-    config->toggle_movie_loop_hotkey.key = 'L';
-    config->toggle_movie_loop_hotkey.shift = true;
-
-    config->start_movie_playback_hotkey.key = 'P';
-    config->start_movie_playback_hotkey.ctrl = true;
-    config->start_movie_playback_hotkey.shift = true;
-
-    config->start_movie_recording_hotkey.key = 'R';
-    config->start_movie_recording_hotkey.ctrl = true;
-    config->start_movie_recording_hotkey.shift = true;
-
-    config->stop_movie_hotkey.key = 'C';
-    config->stop_movie_hotkey.ctrl = true;
-    config->stop_movie_hotkey.shift = true;
-
-    config->create_movie_backup_hotkey.key = 'B';
-    config->create_movie_backup_hotkey.ctrl = true;
-    config->create_movie_backup_hotkey.shift = true;
-
-    config->take_screenshot_hotkey.key = VK_F12;
-
-    config->play_latest_movie_hotkey.key = 'T';
-    config->play_latest_movie_hotkey.ctrl = true;
-    config->play_latest_movie_hotkey.shift = true;
-
-    config->load_latest_script_hotkey.key = 'K';
-    config->load_latest_script_hotkey.ctrl = true;
-    config->load_latest_script_hotkey.shift = true;
-
-    config->new_lua_hotkey.key = 'N';
-    config->new_lua_hotkey.ctrl = true;
-
-    config->close_all_lua_hotkey.key = 'W';
-    config->close_all_lua_hotkey.ctrl = true;
-    config->close_all_lua_hotkey.shift = true;
-
-    config->load_rom_hotkey.key = 'O';
-    config->load_rom_hotkey.ctrl = true;
-
-    config->close_rom_hotkey.key = 'W';
-    config->close_rom_hotkey.ctrl = true;
-
-    config->reset_rom_hotkey.key = 'R';
-    config->reset_rom_hotkey.ctrl = true;
-
-    config->load_latest_rom_hotkey.key = 'O';
-    config->load_latest_rom_hotkey.ctrl = true;
-    config->load_latest_rom_hotkey.shift = true;
-
-    config->fullscreen_hotkey.key = VK_RETURN;
-    config->fullscreen_hotkey.alt = true;
-
-    config->settings_hotkey.key = 'S';
-    config->settings_hotkey.ctrl = true;
-
-    config->toggle_statusbar_hotkey.key = 'S';
-    config->toggle_statusbar_hotkey.alt = true;
-
-    config->refresh_rombrowser_hotkey.key = VK_F5;
-    config->refresh_rombrowser_hotkey.ctrl = true;
-
-    config->seek_to_frame_hotkey.key = 'G';
-    config->seek_to_frame_hotkey.ctrl = true;
-
-    config->run_hotkey.key = 'P';
-    config->run_hotkey.ctrl = true;
-
-    config->cheats_hotkey.key = 'U';
-    config->cheats_hotkey.ctrl = true;
-
-    config->piano_roll_hotkey.key = 'K';
-    config->piano_roll_hotkey.ctrl = true;
-
-    config->save_current_hotkey.key = 'I';
-
-    config->load_current_hotkey.key = 'P';
-
-    config->save_as_hotkey.key = 'N';
-    config->save_as_hotkey.ctrl = true;
-
-    config->load_as_hotkey.key = 'M';
-    config->load_as_hotkey.ctrl = true;
-
-    config->undo_load_state_hotkey.key = 'Z';
-    config->undo_load_state_hotkey.ctrl = true;
-
-    config->save_to_slot_1_hotkey.key = '1';
-    config->save_to_slot_1_hotkey.shift = true;
-
-    config->save_to_slot_2_hotkey.key = '2';
-    config->save_to_slot_2_hotkey.shift = true;
-
-    config->save_to_slot_3_hotkey.key = '3';
-    config->save_to_slot_3_hotkey.shift = true;
-
-    config->save_to_slot_4_hotkey.key = '4';
-    config->save_to_slot_4_hotkey.shift = true;
-
-    config->save_to_slot_5_hotkey.key = '5';
-    config->save_to_slot_5_hotkey.shift = true;
-
-    config->save_to_slot_6_hotkey.key = '6';
-    config->save_to_slot_6_hotkey.shift = true;
-
-    config->save_to_slot_7_hotkey.key = '7';
-    config->save_to_slot_7_hotkey.shift = true;
-
-    config->save_to_slot_8_hotkey.key = '8';
-    config->save_to_slot_8_hotkey.shift = true;
-
-    config->save_to_slot_9_hotkey.key = '9';
-    config->save_to_slot_9_hotkey.shift = true;
-
-    config->save_to_slot_10_hotkey.key = '0';
-    config->save_to_slot_10_hotkey.shift = true;
-
-    config->load_from_slot_1_hotkey.key = VK_F1;
-
-    config->load_from_slot_2_hotkey.key = VK_F2;
-
-    config->load_from_slot_3_hotkey.key = VK_F3;
-
-    config->load_from_slot_4_hotkey.key = VK_F4;
-
-    config->load_from_slot_5_hotkey.key = VK_F5;
-
-    config->load_from_slot_6_hotkey.key = VK_F6;
-
-    config->load_from_slot_7_hotkey.key = VK_F7;
-
-    config->load_from_slot_8_hotkey.key = VK_F8;
-
-    config->load_from_slot_9_hotkey.key = VK_F9;
-
-    config->load_from_slot_10_hotkey.key = VK_F10;
-
-    config->select_slot_1_hotkey.key = '1';
-
-    config->select_slot_2_hotkey.key = '2';
-
-    config->select_slot_3_hotkey.key = '3';
-
-    config->select_slot_4_hotkey.key = '4';
-
-    config->select_slot_5_hotkey.key = '5';
-
-    config->select_slot_6_hotkey.key = '6';
-
-    config->select_slot_7_hotkey.key = '7';
-
-    config->select_slot_8_hotkey.key = '8';
-
-    config->select_slot_9_hotkey.key = '9';
-
-    config->select_slot_10_hotkey.key = '0';
-}
-
 cfg_view get_default_config()
 {
     cfg_view config = {};
@@ -236,355 +46,471 @@ cfg_view get_default_config()
 
     config.fast_forward_hotkey = {
     .identifier = L"Fast-forward",
-    .down_cmd = ACTION_FASTFORWARD_ON,
-    .up_cmd = ACTION_FASTFORWARD_OFF};
+    .key = VK_TAB,
+    .down_cmd = IDM_FASTFORWARD_ON,
+    .up_cmd = IDM_FASTFORWARD_OFF};
 
     config.gs_hotkey = {
     .identifier = L"GS Button",
-    .down_cmd = ACTION_GAMESHARK_ON,
-    .up_cmd = ACTION_GAMESHARK_OFF};
+    .key = 'G',
+    .down_cmd = IDM_GS_ON,
+    .up_cmd = IDM_GS_OFF};
 
     config.speed_down_hotkey = {
     .identifier = L"Speed down",
-    .down_cmd = ACTION_SPEED_DOWN,
+    .key = VK_OEM_MINUS,
+    .down_cmd = IDM_SPEED_DOWN,
     };
 
     config.speed_up_hotkey = {
     .identifier = L"Speed up",
-    .down_cmd = ACTION_SPEED_UP,
+    .key = VK_OEM_PLUS,
+    .down_cmd = IDM_SPEED_UP,
     };
 
     config.speed_reset_hotkey = {
     .identifier = L"Speed reset",
-    .down_cmd = ACTION_SPEED_RESET,
+    .key = VK_OEM_PLUS,
+    .ctrl = 1,
+    .down_cmd = IDM_SPEED_RESET,
     };
 
     config.frame_advance_hotkey = {
     .identifier = L"Frame advance",
-    .down_cmd = ACTION_FRAME_ADVANCE,
+    .key = VK_OEM_5,
+    .down_cmd = IDM_FRAMEADVANCE,
     };
 
     config.multi_frame_advance_hotkey = {
     .identifier = L"Multi-Frame advance",
-    .down_cmd = ACTION_MULTI_FRAME_ADVANCE,
+    .key = VK_OEM_5,
+    .ctrl = 1,
+    .down_cmd = IDM_MULTI_FRAME_ADVANCE,
     };
 
     config.multi_frame_advance_inc_hotkey = {
     .identifier = L"Multi-Frame advance increment",
-    .down_cmd = ACTION_MULTI_FRAME_ADVANCE_INC,
+    .key = 'E',
+    .ctrl = 1,
+    .down_cmd = IDM_MULTI_FRAME_ADVANCE_INC,
     };
 
     config.multi_frame_advance_dec_hotkey = {
     .identifier = L"Multi-Frame advance decrement",
-    .down_cmd = ACTION_MULTI_FRAME_ADVANCE_DEC,
+    .key = 'Q',
+    .ctrl = 1,
+    .down_cmd = IDM_MULTI_FRAME_ADVANCE_DEC,
     };
 
     config.multi_frame_advance_reset_hotkey = {
     .identifier = L"Multi-Frame advance reset",
-    .down_cmd = ACTION_MULTI_FRAME_ADVANCE_RESET,
+    .key = 'E',
+    .ctrl = 1,
+    .shift = 1,
+    .down_cmd = IDM_MULTI_FRAME_ADVANCE_RESET,
     };
 
     config.pause_hotkey = {
     .identifier = L"Pause",
-    .down_cmd = ACTION_PAUSE,
+    .key = VK_PAUSE,
+    .down_cmd = IDM_PAUSE,
     };
 
     config.toggle_read_only_hotkey = {
     .identifier = L"Toggle read-only",
-    .down_cmd = ACTION_TOGGLE_READONLY,
+    .key = 'R',
+    .shift = true,
+    .down_cmd = IDM_VCR_READONLY,
     };
 
     config.toggle_movie_loop_hotkey = {
     .identifier = L"Toggle movie loop",
-    .down_cmd = ACTION_TOGGLE_MOVIE_LOOP,
+    .key = 'L',
+    .shift = true,
+    .down_cmd = IDM_LOOP_MOVIE,
     };
 
     config.start_movie_playback_hotkey = {
     .identifier = L"Start movie playback",
-    .down_cmd = ACTION_START_MOVIE_PLAYBACK,
+    .key = 'P',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_START_MOVIE_PLAYBACK,
     };
 
     config.start_movie_recording_hotkey = {
     .identifier = L"Start movie recording",
-    .down_cmd = ACTION_START_MOVIE_RECORDING,
+    .key = 'R',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_START_MOVIE_RECORDING,
     };
 
     config.stop_movie_hotkey = {
     .identifier = L"Stop movie",
-    .down_cmd = ACTION_STOP_MOVIE,
+    .key = 'C',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_STOP_MOVIE,
     };
 
     config.create_movie_backup_hotkey = {
     .identifier = L"Create Movie Backup",
-    .down_cmd = ACTION_CREATE_MOVIE_BACKUP,
+    .key = 'B',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_CREATE_MOVIE_BACKUP,
     };
 
     config.take_screenshot_hotkey = {
     .identifier = L"Take screenshot",
-    .down_cmd = ACTION_TAKE_SCREENSHOT,
+    .key = VK_F12,
+    .down_cmd = IDM_SCREENSHOT,
     };
 
     config.play_latest_movie_hotkey = {
     .identifier = L"Play latest movie",
-    .down_cmd = ACTION_PLAY_LATEST_MOVIE,
+    .key = 'T',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_PLAY_LATEST_MOVIE,
     };
 
     config.load_latest_script_hotkey = {
     .identifier = L"Load latest script",
-    .down_cmd = ACTION_LOAD_LATEST_SCRIPT,
+    .key = 'K',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_LOAD_LATEST_LUA,
     };
 
     config.new_lua_hotkey = {
     .identifier = L"New Lua Instance",
-    .down_cmd = ACTION_NEW_LUA,
+    .key = 'N',
+    .ctrl = true,
+    .down_cmd = IDM_LOAD_LUA,
     };
 
     config.close_all_lua_hotkey = {
     .identifier = L"Close all Lua Instances",
-    .down_cmd = ACTION_CLOSE_ALL_LUA,
+    .key = 'W',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_CLOSE_ALL_LUA,
     };
 
     config.load_rom_hotkey = {
     .identifier = L"Load ROM",
-    .down_cmd = ACTION_LOAD_ROM,
+    .key = 'O',
+    .ctrl = true,
+    .down_cmd = IDM_LOAD_ROM,
     };
 
     config.close_rom_hotkey = {
     .identifier = L"Close ROM",
-    .down_cmd = ACTION_CLOSE_ROM,
+    .key = 'W',
+    .ctrl = true,
+    .down_cmd = IDM_CLOSE_ROM,
     };
 
     config.reset_rom_hotkey = {
     .identifier = L"Reset ROM",
-    .down_cmd = ACTION_RESET_ROM,
+    .key = 'R',
+    .ctrl = true,
+    .down_cmd = IDM_RESET_ROM,
     };
 
     config.load_latest_rom_hotkey = {
     .identifier = L"Load Latest ROM",
-    .down_cmd = ACTION_LOAD_LATEST_ROM,
+    .key = 'O',
+    .ctrl = true,
+    .shift = true,
+    .down_cmd = IDM_LOAD_LATEST_ROM,
     };
 
     config.fullscreen_hotkey = {
     .identifier = L"Toggle Fullscreen",
-    .down_cmd = ACTION_FULLSCREEN,
+    .key = VK_RETURN,
+    .alt = true,
+    .down_cmd = IDM_FULLSCREEN,
     };
 
     config.settings_hotkey = {
     .identifier = L"Show Settings",
-    .down_cmd = ACTION_SETTINGS,
+    .key = 'S',
+    .ctrl = true,
+    .down_cmd = IDM_SETTINGS,
     };
 
     config.toggle_statusbar_hotkey = {
     .identifier = L"Toggle Statusbar",
-    .down_cmd = ACTION_TOGGLE_STATUSBAR,
+    .key = 'S',
+    .alt = true,
+    .down_cmd = IDM_STATUSBAR,
     };
 
     config.refresh_rombrowser_hotkey = {
     .identifier = L"Refresh Rombrowser",
-    .down_cmd = ACTION_REFRESH_ROM_BROWSER,
+    .key = VK_F5,
+    .ctrl = true,
+    .down_cmd = IDM_REFRESH_ROMBROWSER,
     };
 
     config.seek_to_frame_hotkey = {
     .identifier = L"Seek to frame",
-    .down_cmd = ACTION_OPEN_SEEKER,
+    .key = 'G',
+    .ctrl = true,
+    .down_cmd = IDM_SEEKER,
     };
 
     config.run_hotkey = {
     .identifier = L"Run",
-    .down_cmd = ACTION_OPEN_RUNNER,
+    .key = 'P',
+    .ctrl = true,
+    .down_cmd = IDM_RUNNER,
     };
 
     config.piano_roll_hotkey = {
     .identifier = L"Open Piano Roll",
-    .down_cmd = ACTION_OPEN_PIANO_ROLL,
+    .key = 'U',
+    .ctrl = true,
+    .down_cmd = IDM_PIANO_ROLL,
     };
 
     config.cheats_hotkey = {
     .identifier = L"Open Cheats dialog",
-    .down_cmd = ACTION_OPEN_CHEATS,
+    .key = 'K',
+    .ctrl = true,
+    .down_cmd = IDM_CHEATS,
     };
 
     config.save_current_hotkey = {
     .identifier = L"Save to current slot",
-    .down_cmd = ACTION_SAVE_SLOT,
+    .key = 'I',
+    .down_cmd = IDM_SAVE_SLOT,
     };
 
     config.load_current_hotkey = {
     .identifier = L"Load from current slot",
-    .down_cmd = ACTION_LOAD_SLOT,
+    .key = 'P',
+    .down_cmd = IDM_LOAD_SLOT,
     };
 
     config.save_as_hotkey = {
     .identifier = L"Save state as",
-    .down_cmd = ACTION_SAVE_AS,
+    .key = 'N',
+    .ctrl = true,
+    .down_cmd = IDM_SAVE_STATE_AS,
     };
 
     config.load_as_hotkey = {
     .identifier = L"Load state as",
-    .down_cmd = ACTION_LOAD_AS,
+    .key = 'M',
+    .ctrl = true,
+    .down_cmd = IDM_LOAD_STATE_AS,
     };
 
     config.undo_load_state_hotkey = {
     .identifier = L"Undo load state",
-    .down_cmd = ACTION_UNDO_LOAD_STATE,
+    .key = 'Z',
+    .ctrl = true,
+    .down_cmd = IDM_UNDO_LOAD_STATE,
     };
 
     config.save_to_slot_1_hotkey = {
     .identifier = L"Save to slot 1",
-    .down_cmd = ACTION_SAVE_SLOT1,
+    .key = '1',
+    .shift = true,
+    .down_cmd = ID_SAVE_1,
     };
 
     config.save_to_slot_2_hotkey = {
     .identifier = L"Save to slot 2",
-    .down_cmd = ACTION_SAVE_SLOT2,
+    .key = '2',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 1,
     };
 
     config.save_to_slot_3_hotkey = {
     .identifier = L"Save to slot 3",
-    .down_cmd = ACTION_SAVE_SLOT3,
+    .key = '3',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 2,
     };
 
     config.save_to_slot_4_hotkey = {
     .identifier = L"Save to slot 4",
-    .down_cmd = ACTION_SAVE_SLOT4,
+    .key = '4',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 3,
     };
 
     config.save_to_slot_5_hotkey = {
     .identifier = L"Save to slot 5",
-    .down_cmd = ACTION_SAVE_SLOT5,
+    .key = '5',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 4,
     };
 
     config.save_to_slot_6_hotkey = {
     .identifier = L"Save to slot 6",
-    .down_cmd = ACTION_SAVE_SLOT6,
+    .key = '6',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 5,
     };
 
     config.save_to_slot_7_hotkey = {
     .identifier = L"Save to slot 7",
-    .down_cmd = ACTION_SAVE_SLOT7,
+    .key = '7',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 6,
     };
 
     config.save_to_slot_8_hotkey = {
     .identifier = L"Save to slot 8",
-    .down_cmd = ACTION_SAVE_SLOT8,
+    .key = '8',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 7,
     };
 
     config.save_to_slot_9_hotkey = {
     .identifier = L"Save to slot 9",
-    .down_cmd = ACTION_SAVE_SLOT9,
+    .key = '9',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 8,
     };
 
     config.save_to_slot_10_hotkey = {
     .identifier = L"Save to slot 10",
-    .down_cmd = ACTION_SAVE_SLOT10,
+    .key = '0',
+    .shift = true,
+    .down_cmd = ID_SAVE_1 + 9,
     };
 
     config.load_from_slot_1_hotkey = {
     .identifier = L"Load from slot 1",
-    .down_cmd = ACTION_LOAD_SLOT1,
+    .key = VK_F1,
+    .down_cmd = ID_LOAD_1,
     };
 
     config.load_from_slot_2_hotkey = {
     .identifier = L"Load from slot 2",
-    .down_cmd = ACTION_LOAD_SLOT2,
+    .key = VK_F2,
+    .down_cmd = ID_LOAD_1 + 1,
     };
 
     config.load_from_slot_3_hotkey = {
     .identifier = L"Load from slot 3",
-    .down_cmd = ACTION_LOAD_SLOT3,
+    .key = VK_F3,
+    .down_cmd = ID_LOAD_1 + 2,
     };
 
     config.load_from_slot_4_hotkey = {
     .identifier = L"Load from slot 4",
-    .down_cmd = ACTION_LOAD_SLOT4,
+    .key = VK_F4,
+    .down_cmd = ID_LOAD_1 + 3,
     };
 
     config.load_from_slot_5_hotkey = {
     .identifier = L"Load from slot 5",
-    .down_cmd = ACTION_LOAD_SLOT5,
+    .key = VK_F5,
+    .down_cmd = ID_LOAD_1 + 4,
     };
 
     config.load_from_slot_6_hotkey = {
     .identifier = L"Load from slot 6",
-    .down_cmd = ACTION_LOAD_SLOT6,
+    .key = VK_F6,
+    .down_cmd = ID_LOAD_1 + 5,
     };
 
     config.load_from_slot_7_hotkey = {
     .identifier = L"Load from slot 7",
-    .down_cmd = ACTION_LOAD_SLOT7,
+    .key = VK_F7,
+    .down_cmd = ID_LOAD_1 + 6,
     };
 
     config.load_from_slot_8_hotkey = {
     .identifier = L"Load from slot 8",
-    .down_cmd = ACTION_LOAD_SLOT8,
+    .key = VK_F8,
+    .down_cmd = ID_LOAD_1 + 7,
     };
 
     config.load_from_slot_9_hotkey = {
     .identifier = L"Load from slot 9",
-    .down_cmd = ACTION_LOAD_SLOT9,
+    .key = VK_F9,
+    .down_cmd = ID_LOAD_1 + 8,
     };
 
     config.load_from_slot_10_hotkey = {
     .identifier = L"Load from slot 10",
-    .down_cmd = ACTION_LOAD_SLOT10,
+    .key = VK_F10,
+    .down_cmd = ID_LOAD_1 + 9,
     };
 
     config.select_slot_1_hotkey = {
     .identifier = L"Select slot 1",
-    .down_cmd = ACTION_SELECT_SLOT1,
+    .key = '1',
+    .down_cmd = IDM_SELECT_1,
     };
 
     config.select_slot_2_hotkey = {
     .identifier = L"Select slot 2",
-    .down_cmd = ACTION_SELECT_SLOT2,
+    .key = '2',
+    .down_cmd = IDM_SELECT_1 + 1,
     };
 
     config.select_slot_3_hotkey = {
     .identifier = L"Select slot 3",
-    .down_cmd = ACTION_SELECT_SLOT3,
+    .key = '3',
+    .down_cmd = IDM_SELECT_1 + 2,
     };
 
     config.select_slot_4_hotkey = {
     .identifier = L"Select slot 4",
-    .down_cmd = ACTION_SELECT_SLOT4,
+    .key = '4',
+    .down_cmd = IDM_SELECT_1 + 3,
     };
 
     config.select_slot_5_hotkey = {
     .identifier = L"Select slot 5",
-    .down_cmd = ACTION_SELECT_SLOT5,
+    .key = '5',
+    .down_cmd = IDM_SELECT_1 + 4,
     };
 
     config.select_slot_6_hotkey = {
     .identifier = L"Select slot 6",
-    .down_cmd = ACTION_SELECT_SLOT6,
+    .key = '6',
+    .down_cmd = IDM_SELECT_1 + 5,
     };
 
     config.select_slot_7_hotkey = {
     .identifier = L"Select slot 7",
-    .down_cmd = ACTION_SELECT_SLOT7,
+    .key = '7',
+    .down_cmd = IDM_SELECT_1 + 6,
     };
 
     config.select_slot_8_hotkey = {
     .identifier = L"Select slot 8",
-    .down_cmd = ACTION_SELECT_SLOT8,
+    .key = '8',
+    .down_cmd = IDM_SELECT_1 + 7,
     };
 
     config.select_slot_9_hotkey = {
     .identifier = L"Select slot 9",
-    .down_cmd = ACTION_SELECT_SLOT9,
+    .key = '9',
+    .down_cmd = IDM_SELECT_1 + 8,
     };
 
     config.select_slot_10_hotkey = {
     .identifier = L"Select slot 10",
-    .down_cmd = ACTION_SELECT_SLOT10,
+    .key = '0',
+    .down_cmd = IDM_SELECT_1 + 9,
     };
 
     for (const auto& pair : DIALOG_SILENT_MODE_CHOICES)
     {
         config.silent_mode_dialog_choices[string_to_wstring(pair.first)] = std::to_wstring(pair.second);
     }
-
-    set_default_hotkey_keys(&config);
 
     return config;
 }

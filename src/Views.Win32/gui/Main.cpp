@@ -82,80 +82,6 @@ std::shared_ptr<Plugin> g_rsp_plugin;
 
 constexpr auto WND_CLASS = L"myWindowClass";
 
-const std::map<cfg_action, int> ACTION_ID_MAP = {
-{ACTION_FASTFORWARD_ON, IDM_FASTFORWARD_ON},
-{ACTION_FASTFORWARD_OFF, IDM_FASTFORWARD_OFF},
-{ACTION_GAMESHARK_ON, IDM_GS_ON},
-{ACTION_GAMESHARK_OFF, IDM_GS_OFF},
-{ACTION_FRAME_ADVANCE, IDM_FRAMEADVANCE},
-{ACTION_MULTI_FRAME_ADVANCE, IDM_MULTI_FRAME_ADVANCE},
-{ACTION_MULTI_FRAME_ADVANCE_INC, IDM_MULTI_FRAME_ADVANCE_INC},
-{ACTION_MULTI_FRAME_ADVANCE_DEC, IDM_MULTI_FRAME_ADVANCE_DEC},
-{ACTION_MULTI_FRAME_ADVANCE_RESET, IDM_MULTI_FRAME_ADVANCE_RESET},
-{ACTION_SPEED_DOWN, IDM_SPEED_DOWN},
-{ACTION_SPEED_UP, IDM_SPEED_UP},
-{ACTION_SPEED_RESET, IDM_SPEED_RESET},
-{ACTION_PAUSE, IDM_PAUSE},
-{ACTION_TOGGLE_READONLY, IDM_VCR_READONLY},
-{ACTION_TOGGLE_MOVIE_LOOP, IDM_LOOP_MOVIE},
-{ACTION_START_MOVIE_PLAYBACK, IDM_START_MOVIE_PLAYBACK},
-{ACTION_START_MOVIE_RECORDING, IDM_START_MOVIE_RECORDING},
-{ACTION_STOP_MOVIE, IDM_STOP_MOVIE},
-{ACTION_CREATE_MOVIE_BACKUP, IDM_CREATE_MOVIE_BACKUP},
-{ACTION_TAKE_SCREENSHOT, IDM_SCREENSHOT},
-{ACTION_PLAY_LATEST_MOVIE, IDM_PLAY_LATEST_MOVIE},
-{ACTION_LOAD_LATEST_SCRIPT, IDM_LOAD_LATEST_LUA},
-{ACTION_NEW_LUA, IDM_LOAD_LUA},
-{ACTION_CLOSE_ALL_LUA, IDM_CLOSE_ALL_LUA},
-{ACTION_LOAD_ROM, IDM_LOAD_ROM},
-{ACTION_CLOSE_ROM, IDM_CLOSE_ROM},
-{ACTION_RESET_ROM, IDM_RESET_ROM},
-{ACTION_LOAD_LATEST_ROM, IDM_LOAD_LATEST_ROM},
-{ACTION_FULLSCREEN, IDM_FULLSCREEN},
-{ACTION_SETTINGS, IDM_SETTINGS},
-{ACTION_TOGGLE_STATUSBAR, IDM_STATUSBAR},
-{ACTION_REFRESH_ROM_BROWSER, IDM_REFRESH_ROMBROWSER},
-{ACTION_OPEN_SEEKER, IDM_SEEKER},
-{ACTION_OPEN_RUNNER, IDM_RUNNER},
-{ACTION_OPEN_PIANO_ROLL, IDM_PIANO_ROLL},
-{ACTION_OPEN_CHEATS, IDM_CHEATS},
-{ACTION_SAVE_SLOT, IDM_SAVE_SLOT},
-{ACTION_LOAD_SLOT, IDM_LOAD_SLOT},
-{ACTION_SAVE_AS, IDM_SAVE_STATE_AS},
-{ACTION_LOAD_AS, IDM_LOAD_STATE_AS},
-{ACTION_UNDO_LOAD_STATE, IDM_UNDO_LOAD_STATE},
-{ACTION_SAVE_SLOT1, (ID_SAVE_1 - 1) + 1},
-{ACTION_SAVE_SLOT2, (ID_SAVE_1 - 1) + 2},
-{ACTION_SAVE_SLOT3, (ID_SAVE_1 - 1) + 3},
-{ACTION_SAVE_SLOT4, (ID_SAVE_1 - 1) + 4},
-{ACTION_SAVE_SLOT5, (ID_SAVE_1 - 1) + 5},
-{ACTION_SAVE_SLOT6, (ID_SAVE_1 - 1) + 6},
-{ACTION_SAVE_SLOT7, (ID_SAVE_1 - 1) + 7},
-{ACTION_SAVE_SLOT8, (ID_SAVE_1 - 1) + 8},
-{ACTION_SAVE_SLOT9, (ID_SAVE_1 - 1) + 9},
-{ACTION_SAVE_SLOT10, (ID_SAVE_1 - 1) + 10},
-{ACTION_LOAD_SLOT1, (ID_LOAD_1 - 1) + 1},
-{ACTION_LOAD_SLOT2, (ID_LOAD_1 - 1) + 2},
-{ACTION_LOAD_SLOT3, (ID_LOAD_1 - 1) + 3},
-{ACTION_LOAD_SLOT4, (ID_LOAD_1 - 1) + 4},
-{ACTION_LOAD_SLOT5, (ID_LOAD_1 - 1) + 5},
-{ACTION_LOAD_SLOT6, (ID_LOAD_1 - 1) + 6},
-{ACTION_LOAD_SLOT7, (ID_LOAD_1 - 1) + 7},
-{ACTION_LOAD_SLOT8, (ID_LOAD_1 - 1) + 8},
-{ACTION_LOAD_SLOT9, (ID_LOAD_1 - 1) + 9},
-{ACTION_LOAD_SLOT10, (ID_LOAD_1 - 1) + 10},
-{ACTION_SELECT_SLOT1, (IDM_SELECT_1 - 1) + 1},
-{ACTION_SELECT_SLOT2, (IDM_SELECT_1 - 1) + 2},
-{ACTION_SELECT_SLOT3, (IDM_SELECT_1 - 1) + 3},
-{ACTION_SELECT_SLOT4, (IDM_SELECT_1 - 1) + 4},
-{ACTION_SELECT_SLOT5, (IDM_SELECT_1 - 1) + 5},
-{ACTION_SELECT_SLOT6, (IDM_SELECT_1 - 1) + 6},
-{ACTION_SELECT_SLOT7, (IDM_SELECT_1 - 1) + 7},
-{ACTION_SELECT_SLOT8, (IDM_SELECT_1 - 1) + 8},
-{ACTION_SELECT_SLOT9, (IDM_SELECT_1 - 1) + 9},
-{ACTION_SELECT_SLOT10, (IDM_SELECT_1 - 1) + 10},
-};
-
 std::wstring get_mupen_name()
 {
 #ifdef _DEBUG
@@ -491,22 +417,6 @@ const wchar_t* get_status_text()
     return text;
 }
 
-/**
- * \brief Converts a config action to its respective menu ID
- * \param action The action to convert
- * \returns The converted ID, or 0 if no match is found.
- * \remark In case of some toggle actions, the IDs dont map to a menu item, but only to an identifier which is handled in WM_COMMAND
- */
-int config_action_to_menu_id(cfg_action action)
-{
-    if (!ACTION_ID_MAP.contains(action))
-    {
-        g_view_logger->info("[View] No menu ID found for action {}", static_cast<int>(action));
-        return 0;
-    }
-    return ACTION_ID_MAP.at(action);
-}
-
 std::filesystem::path get_screenshots_directory()
 {
     if (g_config.is_default_screenshots_directory_used)
@@ -792,11 +702,10 @@ void apply_menu_item_accelerator_text()
     for (auto hotkey : g_config_hotkeys)
     {
         // Only set accelerator if hotkey has a down command and the command is valid menu item identifier
-        auto down_cmd = config_action_to_menu_id(hotkey->down_cmd);
-        auto state = GetMenuState(GetMenu(g_main_hwnd), down_cmd, MF_BYCOMMAND);
-        if (down_cmd && state != -1)
+        const auto state = GetMenuState(GetMenu(g_main_hwnd), hotkey->down_cmd, MF_BYCOMMAND);
+        if (hotkey->down_cmd && state != -1)
         {
-            set_hotkey_menu_accelerators(hotkey, down_cmd);
+            set_hotkey_menu_accelerators(hotkey, hotkey->down_cmd);
         }
     }
 }
@@ -1051,30 +960,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                 if (down)
                 {
-                    auto down_cmd = config_action_to_menu_id(hotkey->down_cmd);
                     // We only want to send it if the corresponding menu item exists and is enabled
-                    auto state = GetMenuState(g_main_menu, down_cmd, MF_BYCOMMAND);
+                    const auto state = GetMenuState(g_main_menu, hotkey->down_cmd, MF_BYCOMMAND);
                     if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
                     {
-                        g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), down_cmd);
+                        g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
                         continue;
                     }
-                    g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), down_cmd);
-                    SendMessage(g_main_hwnd, WM_COMMAND, down_cmd, 0);
+                    g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
+                    SendMessage(g_main_hwnd, WM_COMMAND, hotkey->down_cmd, 0);
                     hit = TRUE;
                 }
                 if (up)
                 {
-                    auto up_cmd = config_action_to_menu_id(hotkey->up_cmd);
                     // We only want to send it if the corresponding menu item exists and is enabled
-                    auto state = GetMenuState(g_main_menu, up_cmd, MF_BYCOMMAND);
+                    const auto state = GetMenuState(g_main_menu, hotkey->up_cmd, MF_BYCOMMAND);
                     if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
                     {
-                        g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), up_cmd);
+                        g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
                         continue;
                     }
-                    g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), up_cmd);
-                    SendMessage(g_main_hwnd, WM_COMMAND, up_cmd, 0);
+                    g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
+                    SendMessage(g_main_hwnd, WM_COMMAND, hotkey->up_cmd, 0);
                     hit = TRUE;
                 }
             }
@@ -1089,9 +996,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 return DefWindowProc(hwnd, Message, wParam, lParam);
             break;
         }
-    case WM_CHAR:
-        g_view_logger->info(L"{}", (wchar_t)wParam);
-        break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
         {
@@ -1102,16 +1006,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 {
                     if (((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) == hotkey->shift && ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) == hotkey->ctrl && ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) == hotkey->alt)
                     {
-                        auto down_cmd = config_action_to_menu_id(hotkey->down_cmd);
                         // We only want to send it if the corresponding menu item exists and is enabled
-                        auto state = GetMenuState(g_main_menu, down_cmd, MF_BYCOMMAND);
+                        const auto state = GetMenuState(g_main_menu, hotkey->down_cmd, MF_BYCOMMAND);
                         if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
                         {
-                            g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), down_cmd);
+                            g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
                             continue;
                         }
-                        g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), down_cmd);
-                        SendMessage(g_main_hwnd, WM_COMMAND, down_cmd, 0);
+                        g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
+                        SendMessage(g_main_hwnd, WM_COMMAND, hotkey->down_cmd, 0);
                         hit = TRUE;
                     }
                 }
@@ -1129,7 +1032,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             BOOL hit = FALSE;
             for (cfg_hotkey* hotkey : g_config_hotkeys)
             {
-                if (hotkey->up_cmd == ACTION_NONE)
+                if (hotkey->up_cmd == 0)
                 {
                     continue;
                 }
@@ -1138,16 +1041,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 {
                     if (((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) == hotkey->shift && ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) == hotkey->ctrl && ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) == hotkey->alt)
                     {
-                        auto up_cmd = config_action_to_menu_id(hotkey->up_cmd);
                         // We only want to send it if the corresponding menu item exists and is enabled
-                        auto state = GetMenuState(g_main_menu, up_cmd, MF_BYCOMMAND);
+                        auto state = GetMenuState(g_main_menu, hotkey->up_cmd, MF_BYCOMMAND);
                         if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
                         {
-                            g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), up_cmd);
+                            g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
                             continue;
                         }
-                        g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), up_cmd);
-                        SendMessage(g_main_hwnd, WM_COMMAND, up_cmd, 0);
+                        g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
+                        SendMessage(g_main_hwnd, WM_COMMAND, hotkey->up_cmd, 0);
                         hit = TRUE;
                     }
                 }
