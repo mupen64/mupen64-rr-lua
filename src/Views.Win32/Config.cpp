@@ -21,6 +21,8 @@ std::vector<cfg_hotkey*> g_config_hotkeys;
 #define CONFIG_FILE_NAME L"config.ini"
 #endif
 
+constexpr auto FLAT_FIELD_KEY = "config";
+
 const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
 {CORE_DLG_FLOAT_EXCEPTION, 0},
 {CORE_DLG_ST_HASH_MISMATCH, 0},
@@ -523,74 +525,88 @@ cfg_view get_default_config()
 
 const cfg_view g_default_config = get_default_config();
 
+static std::string process_field_name(const std::wstring& field_name)
+{
+    std::string str = wstring_to_string(field_name);
+
+    // We don't want the "core." prefix in the ini file...
+    // This isn't too great of an approach though because it can cause silent key collisions but whatever
+    if (str.starts_with("core."))
+    {
+        str.erase(0, 5);
+    }
+
+    return str;
+}
+
 void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, int32_t is_reading, cfg_hotkey* hotkey)
 {
-    auto converted_key = wstring_to_string(field_name);
+    const auto key = process_field_name(field_name);
 
     if (is_reading)
     {
-        if (!ini.has(converted_key))
+        if (!ini.has(key))
         {
             return;
         }
 
-        hotkey->key = std::stoi(ini[converted_key]["key"]);
-        hotkey->ctrl = std::stoi(ini[converted_key]["ctrl"]);
-        hotkey->shift = std::stoi(ini[converted_key]["shift"]);
-        hotkey->alt = std::stoi(ini[converted_key]["alt"]);
+        hotkey->key = std::stoi(ini[key]["key"]);
+        hotkey->ctrl = std::stoi(ini[key]["ctrl"]);
+        hotkey->shift = std::stoi(ini[key]["shift"]);
+        hotkey->alt = std::stoi(ini[key]["alt"]);
     }
     else
     {
-        ini[converted_key]["key"] = std::to_string(hotkey->key);
-        ini[converted_key]["ctrl"] = std::to_string(hotkey->ctrl);
-        ini[converted_key]["shift"] = std::to_string(hotkey->shift);
-        ini[converted_key]["alt"] = std::to_string(hotkey->alt);
+        ini[key]["key"] = std::to_string(hotkey->key);
+        ini[key]["ctrl"] = std::to_string(hotkey->ctrl);
+        ini[key]["shift"] = std::to_string(hotkey->shift);
+        ini[key]["alt"] = std::to_string(hotkey->alt);
     }
 }
 
 void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, int32_t* value)
 {
-    auto converted_key = wstring_to_string(field_name);
+    const auto key = process_field_name(field_name);
 
     if (is_reading)
     {
         // keep the default value if the key doesnt exist
         // it will be created upon saving anyway
-        if (!ini["Config"].has(converted_key))
+        if (!ini[FLAT_FIELD_KEY].has(key))
         {
             return;
         }
-        *value = std::stoi(ini["Config"][converted_key]);
+        *value = std::stoi(ini[FLAT_FIELD_KEY][key]);
     }
     else
     {
-        ini["Config"][converted_key] = std::to_string(*value);
+        ini[FLAT_FIELD_KEY][key] = std::to_string(*value);
     }
 }
 
 void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, uint64_t* value)
 {
-    auto converted_key = wstring_to_string(field_name);
+    const auto key = process_field_name(field_name);
 
     if (is_reading)
     {
         // keep the default value if the key doesnt exist
         // it will be created upon saving anyway
-        if (!ini["Config"].has(converted_key))
+        if (!ini[FLAT_FIELD_KEY].has(key))
         {
             return;
         }
-        *value = std::stoull(ini["Config"][converted_key]);
+        *value = std::stoull(ini[FLAT_FIELD_KEY][key]);
     }
     else
     {
-        ini["Config"][converted_key] = std::to_string(*value);
+        ini[FLAT_FIELD_KEY][key] = std::to_string(*value);
     }
 }
 
 void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::wstring& value)
 {
-    auto converted_key = wstring_to_string(field_name);
+    const auto key = process_field_name(field_name);
 
     // BUG: Leading whitespace seems to be dropped by mINI after a roundtrip!!!
 
@@ -598,33 +614,33 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     {
         // keep the default value if the key doesnt exist
         // it will be created upon saving anyway
-        if (!ini["Config"].has(converted_key))
+        if (!ini[FLAT_FIELD_KEY].has(key))
         {
             return;
         }
-        value = string_to_wstring(ini["Config"][converted_key]);
+        value = string_to_wstring(ini[FLAT_FIELD_KEY][key]);
     }
     else
     {
-        ini["Config"][converted_key] = wstring_to_string(value);
+        ini[FLAT_FIELD_KEY][key] = wstring_to_string(value);
     }
 }
 
 void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::vector<std::wstring>& value)
 {
-    auto converted_key = wstring_to_string(field_name);
+    const auto key = process_field_name(field_name);
 
     if (is_reading)
     {
         // if the virtual collection doesn't exist just leave the vector empty, as attempting to read will crash
-        if (!ini.has(converted_key))
+        if (!ini.has(key))
         {
             return;
         }
 
-        for (size_t i = 0; i < ini[converted_key].size(); i++)
+        for (size_t i = 0; i < ini[key].size(); i++)
         {
-            value.push_back(string_to_wstring(ini[converted_key][std::to_string(i)]));
+            value.push_back(string_to_wstring(ini[key][std::to_string(i)]));
         }
     }
     else
@@ -636,23 +652,23 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
         // 1 = b.m64
         for (size_t i = 0; i < value.size(); i++)
         {
-            ini[converted_key][std::to_string(i)] = wstring_to_string(value[i]);
+            ini[key][std::to_string(i)] = wstring_to_string(value[i]);
         }
     }
 }
 
 void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::map<std::wstring, std::wstring>& value)
 {
-    auto converted_key = wstring_to_string(field_name);
+    const auto key = process_field_name(field_name);
 
     if (is_reading)
     {
         // if the virtual map doesn't exist just leave the vector empty, as attempting to read will crash
-        if (!ini.has(converted_key))
+        if (!ini.has(key))
         {
             return;
         }
-        auto& map = ini[converted_key];
+        auto& map = ini[key];
         for (auto& pair : map)
         {
             value[string_to_wstring(pair.first)] = string_to_wstring(pair.second);
@@ -665,7 +681,7 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
         // value = value
         for (auto& pair : value)
         {
-            ini[converted_key][wstring_to_string(pair.first)] = wstring_to_string(pair.second);
+            ini[key][wstring_to_string(pair.first)] = wstring_to_string(pair.second);
         }
     }
 }
