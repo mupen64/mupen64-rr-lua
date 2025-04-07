@@ -15,6 +15,12 @@
 cfg_view g_config;
 std::vector<cfg_hotkey*> g_config_hotkeys;
 
+#ifdef _M_X64
+#define CONFIG_FILE_NAME L"config-x64.ini"
+#else
+#define CONFIG_FILE_NAME L"config.ini"
+#endif
+
 const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
 {CORE_DLG_FLOAT_EXCEPTION, 0},
 {CORE_DLG_ST_HASH_MISMATCH, 0},
@@ -814,7 +820,7 @@ mINI::INIStructure handle_config_ini(bool is_reading, mINI::INIStructure ini)
 
 std::filesystem::path get_config_path()
 {
-    return g_app_path / L"config.ini";
+    return g_app_path / CONFIG_FILE_NAME;
 }
 
 /// Modifies the config to apply value limits and other constraints
