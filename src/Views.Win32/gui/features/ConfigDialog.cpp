@@ -2067,7 +2067,7 @@ INT_PTR CALLBACK plugin_cfg_edit_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, 
             auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
 
             SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
-            Edit_SetText(edit_hwnd, cfg_item_get_value<wchar_t*>(&option_item));
+            Edit_SetText(edit_hwnd, (wchar_t*)option_item.value);
 
             SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
             break;
@@ -2484,6 +2484,6 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
 bool configdialog_show_plugin(Plugin* plugin, core_plugin_cfg* cfg)
 {
     t_plugin_cfg_params params = {plugin, cfg};
-    DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_PLUGIN_CONFIG), g_main_hwnd, plugin_cfg, (LPARAM)&params);
+    DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_PLUGIN_CONFIG), g_hwnd_plug, plugin_cfg, (LPARAM)&params);
     return params.save;
 }
