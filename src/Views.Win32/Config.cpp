@@ -50,8 +50,6 @@ cfg_view get_default_config()
 {
     cfg_view config = {};
 
-    // TODO: Merge get_default_hotkey_keys() into this function
-
     config.fast_forward_hotkey = {
     .identifier = L"Fast-forward",
     .key = VK_TAB,
@@ -784,6 +782,7 @@ mINI::INIStructure handle_config_ini(bool is_reading, mINI::INIStructure ini)
     HANDLE_P_VALUE(synchronization_mode)
     HANDLE_P_VALUE(keep_default_working_directory)
     HANDLE_P_VALUE(use_async_executor)
+    HANDLE_P_VALUE(fast_dispatcher)
     HANDLE_P_VALUE(concurrency_fuzzing)
     HANDLE_P_VALUE(plugin_discovery_delayed)
     HANDLE_VALUE(lua_script_path)

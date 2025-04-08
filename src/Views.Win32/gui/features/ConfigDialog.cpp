@@ -1389,6 +1389,13 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
         return !g_lua_environments.empty();
     },
     },
+    t_options_item{
+    .group_id = lua_group.id,
+    .name = L"Fast Dispatcher",
+    .tooltip = L"Whether a low-latency dispatcher implementation is used. Greatly improves performance when Lua scripts are running. Disable if you DirectInput-based plugins aren't working as expected.",
+    .data = &g_config.fast_dispatcher,
+    .type = t_options_item::Type::Bool,
+    },
 
     t_options_item{
     .group_id = debug_group.id,

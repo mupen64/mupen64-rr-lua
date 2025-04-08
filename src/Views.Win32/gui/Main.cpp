@@ -1125,10 +1125,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_FOCUS_MAIN_WINDOW:
         SetFocus(g_main_hwnd);
         break;
+    case WM_EXECUTE_DISPATCHER:
+        g_main_window_dispatcher->execute();
+        break;
     case WM_CREATE:
         g_main_window_dispatcher = std::make_unique<Dispatcher>(g_ui_thread_id, [] {
-            SetEvent(dispatcher_event);
-            WaitForSingleObject(dispatcher_done_event, INFINITE);
+            if (g_config.fast_dispatcher)
+            {
+                SetEvent(dispatcher_event);
+                WaitForSingleObject(dispatcher_done_event, INFINITE);
+                return;
+            }
+            SendMessage(g_main_hwnd, WM_EXECUTE_DISPATCHER, 0, 0);
         });
         g_main_menu = GetMenu(hwnd);
         GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
@@ -2285,8 +2293,6 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_view_logger->info(L"cwd: {}", cwd);
 
     WNDCLASSEX wc = {0};
-    MSG msg{};
-
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     wc.hInstance = hInstance;
@@ -2378,29 +2384,43 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
 
+    MSG msg{};
+    DWORD result{};
+
     while (!g_exit)
     {
-        DWORD result = MsgWaitForMultipleObjectsEx(1, &dispatcher_event, INFINITE, QS_ALLEVENTS | QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
-
-        if (result == WAIT_FAILED)
+        if (g_config.fast_dispatcher)
         {
-            g_view_logger->critical("MsgWaitForMultipleObjects WAIT_FAILED");
-            break;
-        }
+            result = MsgWaitForMultipleObjectsEx(1, &dispatcher_event, INFINITE, QS_ALLEVENTS | QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
 
-        if (result == WAIT_OBJECT_0 || WaitForSingleObjectEx(dispatcher_event, 0, FALSE) == WAIT_OBJECT_0)
-        {
-            g_main_window_dispatcher->execute();
-            SetEvent(dispatcher_done_event);
-        }
-
-        if (result == WAIT_OBJECT_0 + 1)
-        {
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            if (result == WAIT_FAILED)
             {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                g_view_logger->critical("MsgWaitForMultipleObjects WAIT_FAILED");
+                break;
             }
+
+            if (result == WAIT_OBJECT_0 || WaitForSingleObjectEx(dispatcher_event, 0, FALSE) == WAIT_OBJECT_0)
+            {
+                g_main_window_dispatcher->execute();
+                SetEvent(dispatcher_done_event);
+            }
+
+            if (result == WAIT_OBJECT_0 + 1)
+            {
+                while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+                {
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
+            }
+            continue;
+        }
+
+        MsgWaitForMultipleObjects(0, nullptr, FALSE, INFINITE, QS_ALLEVENTS | QS_ALLINPUT);
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
     }
 
