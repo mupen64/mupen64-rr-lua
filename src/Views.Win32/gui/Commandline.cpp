@@ -10,10 +10,12 @@
 #include <DialogService.h>
 #include <Messenger.h>
 #include <argh.h>
+#include <json.hpp>
 #include <capture/EncodingManager.h>
 #include <gui/Commandline.h>
 #include <gui/Loggers.h>
 #include <gui/Main.h>
+#include <gui/features/Benchmark.h>
 #include <gui/features/Compare.h>
 #include <gui/features/Dispatcher.h>
 #include <lua/LuaConsole.h>
@@ -25,6 +27,7 @@ namespace Cli
     static std::filesystem::path commandline_st;
     static std::filesystem::path commandline_movie;
     static std::filesystem::path commandline_avi;
+    static std::filesystem::path commandline_benchmark;
     static bool commandline_close_on_movie_end;
     static bool dacrate_changed;
     static bool rom_is_movie;
@@ -106,13 +109,26 @@ namespace Cli
 
     static void on_movie_playback_stop()
     {
-        if (commandline_close_on_movie_end)
+        if (!commandline_close_on_movie_end)
+        {
+            return;
+        }
+
+        if (!commandline_avi.empty())
         {
             EncodingManager::stop_capture([](auto result) {
                 if (!result)
                     return;
                 PostMessage(g_main_hwnd, WM_CLOSE, 0, 0);
             });
+        }
+
+        if (!commandline_benchmark.empty())
+        {
+            Benchmark::t_result result{};
+            Benchmark::stop(&result);
+            Benchmark::save_result_to_file(commandline_benchmark, result);
+            PostMessage(g_main_hwnd, WM_CLOSE, 0, 0);
         }
     }
 
@@ -142,6 +158,11 @@ namespace Cli
         }
 
         first_emu_launched = false;
+
+        if (!commandline_benchmark.empty())
+        {
+            Benchmark::start();
+        }
 
         AsyncExecutor::invoke_async([=] {
             g_view_logger->trace("[CLI] on_core_executing_changed -> load_st");
@@ -191,6 +212,7 @@ namespace Cli
         commandline_st = cmdl({"--st", "-st"}, "").str();
         commandline_movie = cmdl({"--movie", "-m64"}, "").str();
         commandline_avi = cmdl({"--avi", "-avi"}, "").str();
+        commandline_benchmark = cmdl({"--benchmark", "-b"}, "").str();
         commandline_close_on_movie_end = cmdl["--close-on-movie-end"];
         bool compare_control = cmdl["--cmp-ctl"] || cmdl["--compare-control"];
         bool compare_actual = cmdl["--cmp-act"] || cmdl["--compare-actual"];
@@ -209,18 +231,33 @@ namespace Cli
             commandline_close_on_movie_end = true;
         }
 
+        if (!commandline_benchmark.empty() && commandline_movie.empty() && commandline_rom.empty())
+        {
+            DialogService::show_dialog(L"Benchmark flag specified without a movie.\nThe benchmark won't be performed.", L"CLI", fsvc_error);
+            commandline_benchmark.clear();
+        }
+
+        if (!commandline_benchmark.empty() && !commandline_avi.empty())
+        {
+            DialogService::show_dialog(L"Benchmark flag specified in combination with AVI.\nThe benchmark won't be performed.", L"CLI", fsvc_error);
+            commandline_benchmark.clear();
+        }
+
+        if (!commandline_benchmark.empty())
+        {
+            commandline_close_on_movie_end = true;
+        }
+
         // If an st is specified, a movie mustn't be specified
         if (!commandline_st.empty() && !commandline_movie.empty())
         {
-            DialogService::show_dialog(L"Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", L"CLI",
-                                       fsvc_error);
+            DialogService::show_dialog(L"Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", L"CLI", fsvc_error);
             commandline_st.clear();
         }
 
         if (commandline_close_on_movie_end && g_config.core.is_movie_loop_enabled)
         {
-            DialogService::show_dialog(L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.", L"CLI",
-                                       fsvc_warning);
+            DialogService::show_dialog(L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.", L"CLI", fsvc_warning);
             g_config.core.is_movie_loop_enabled = false;
         }
 
@@ -261,11 +298,12 @@ namespace Cli
         g_view_logger->trace("[CLI] commandline_st: {}", commandline_st.string());
         g_view_logger->trace("[CLI] commandline_movie: {}", commandline_movie.string());
         g_view_logger->trace("[CLI] commandline_avi: {}", commandline_avi.string());
+        g_view_logger->trace("[CLI] commandline_benchmark: {}", commandline_benchmark.string());
         g_view_logger->trace("[CLI] commandline_close_on_movie_end: {}", commandline_close_on_movie_end);
     }
 
     bool wants_fast_forward()
     {
-        return !commandline_avi.empty();
+        return !commandline_avi.empty() || !commandline_benchmark.empty();
     }
 } // namespace Cli

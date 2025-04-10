@@ -15,6 +15,7 @@
 #include <gui/Commandline.h>
 #include <gui/Loggers.h>
 #include <gui/Main.h>
+#include <gui/features/Benchmark.h>
 #include <gui/features/Cheats.h>
 #include <gui/features/Compare.h>
 #include <gui/features/ConfigDialog.h>
@@ -31,9 +32,11 @@
 #include <gui/features/Statusbar.h>
 #include <gui/features/UpdateChecker.h>
 #include <gui/wrapper/PersistentPathDialog.h>
-#include <lua/LuaConsole.h>
 #include <lua/LuaCallbacks.h>
+#include <lua/LuaConsole.h>
 #include <spdlog/sinks/basic_file_sink.h>
+
+#define VIEW_BENCHMARK_SUPPORT
 
 // Throwaway actions which can be spammed get keys as to not clog up the async executor queue
 #define ASYNC_KEY_CLOSE_ROM (1)
@@ -1925,6 +1928,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 void on_new_frame()
 {
     g_frame_changed = true;
+#ifdef VIEW_BENCHMARK_SUPPORT
+    Benchmark::frame();
+#endif
 }
 
 std::filesystem::path get_saves_directory()

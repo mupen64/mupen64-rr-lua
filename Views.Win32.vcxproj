@@ -234,6 +234,7 @@
         <ClInclude Include="src\Views.Win32\capture\Resampler.h"/>
         <ClInclude Include="src\Views.Win32\DialogService.h"/>
         <ClInclude Include="src\Views.Win32\SettingsListView.h"/>
+        <ClInclude Include="src\Views.Win32\gui\features\Benchmark.h"/>
         <ClInclude Include="src\Views.Win32\gui\features\PianoRoll.h"/>
         <ClInclude Include="src\Views.Win32\gui\features\RecentMenu.h"/>
         <ClInclude Include="src\Views.Win32\gui\features\UpdateChecker.h"/>
@@ -299,6 +300,7 @@
         <ClCompile Include="src\Views.Win32\DialogService.cpp"/>
         <ClCompile Include="src\Views.Win32\gui\Commandline.cpp"/>
         <ClCompile Include="src\Views.Win32\SettingsListView.cpp"/>
+        <ClCompile Include="src\Views.Win32\gui\features\Benchmark.cpp"/>
         <ClCompile Include="src\Views.Win32\gui\features\Cheats.cpp"/>
         <ClCompile Include="src\Views.Win32\gui\features\ConfigDialog.cpp"/>
         <ClCompile Include="src\Views.Win32\gui\features\CoreDbg.cpp"/>
