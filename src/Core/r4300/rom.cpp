@@ -243,8 +243,9 @@ bool rom_load(std::filesystem::path path)
         g_sys_type = sys_ntsc;
         break;
     default:
-        g_core->log_error(std::format(L"Unknown ccode: {:#06x}", ROM_HEADER.Country_code));
-        return false;
+        g_core->log_warn(std::format(L"Unknown ccode: {:#06x}. Assuming PAL.", ROM_HEADER.Country_code));
+        g_sys_type = sys_pal;
+        break;
     }
 
     if (rom_cache.size() < g_core->cfg->rom_cache_size)
