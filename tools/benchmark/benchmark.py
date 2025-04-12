@@ -46,7 +46,7 @@ def run_benchmark_full(name, additional_args=[]):
 
     print(f"HEAD ({head_hash}):", benchmark_new)
     print(f"HEAD~1 ({old_hash}):", benchmark_old)
-    print("------")
+    print("------") 
 
     new_fps = benchmark_new['fps']
     old_fps = benchmark_old['fps']
