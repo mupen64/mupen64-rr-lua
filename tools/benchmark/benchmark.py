@@ -34,27 +34,25 @@ def run_mupen(name, additional_args):
     return data
 
 def run_benchmark_full(name, additional_args=[]):
-    head_hash = get_commit_hash()
+    new_hash = get_commit_hash()
     benchmark_new = run_mupen(get_commit_hash(), additional_args)
     
-    subprocess.run(['git', 'checkout', 'HEAD~1'])
+    subprocess.run(['git', 'stash'])
+    subprocess.run(['git', 'reset', '--hard', 'HEAD~1'])
     old_hash = get_commit_hash()
     benchmark_old = run_mupen(get_commit_hash(), additional_args)
 
-    subprocess.run(['git', 'checkout', 'HEAD@{1}'])
-
-    print(f"HEAD ({head_hash}):", benchmark_new)
-    print(f"HEAD~1 ({old_hash}):", benchmark_old)
-    print("------")
+    subprocess.run(['git', 'reset', '--hard', 'HEAD@{1}'])
+    subprocess.run(['git', 'stash', 'pop'])
 
     new_fps = benchmark_new['fps']
     old_fps = benchmark_old['fps']
 
-    print(f"FPS diff for {name}")
+    print(f"Benchmark - {name} ({old_hash}) vs {new_hash}")
     delta = new_fps - old_fps
     percentage_change = (delta / old_fps) * 100
 
-    print(f"FPS: {new_fps:.2f} (HEAD) | {old_fps:.2f} (HEAD~1)")
+    print(f"FPS: {old_fps:.2f} (old) | {old_fps:.2f} (new)")
     print(f"Change: {percentage_change:.2f}%")
     print("------")
 
