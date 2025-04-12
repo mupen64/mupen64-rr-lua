@@ -34,7 +34,6 @@ def run_mupen(name, additional_args):
     return data
 
 def run_benchmark_full(name, additional_args=[]):
-    subprocess.run(['git', 'reset', '--hard', 'HEAD'])
     head_hash = get_commit_hash()
     benchmark_new = run_mupen(get_commit_hash(), additional_args)
     
@@ -42,11 +41,11 @@ def run_benchmark_full(name, additional_args=[]):
     old_hash = get_commit_hash()
     benchmark_old = run_mupen(get_commit_hash(), additional_args)
 
-    subprocess.run(['git', 'reset', '--hard', 'HEAD'])
+    subprocess.run(['git', 'checkout', 'HEAD@{1}'])
 
     print(f"HEAD ({head_hash}):", benchmark_new)
     print(f"HEAD~1 ({old_hash}):", benchmark_old)
-    print("------") 
+    print("------")
 
     new_fps = benchmark_new['fps']
     old_fps = benchmark_old['fps']
