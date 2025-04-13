@@ -26,6 +26,10 @@ BraceWrapping:
   SplitEmptyRecord: true
   SplitEmptyNamespace: true
 BreakBeforeBraces: Custom
+AllowShortLambdasOnASingleLine: false
+AllowAllArgumentsOnNextLine: false
+BinPackArguments: false
+BinPackParameters: false
 BreakConstructorInitializers: AfterColon
 BreakConstructorInitializersBeforeComma: false
 ColumnLimit: 0
