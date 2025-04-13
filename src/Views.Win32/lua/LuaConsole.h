@@ -162,6 +162,9 @@ void invalidate_visuals();
  */
 void repaint_visuals();
 
+void* lua_tocallback(lua_State* L, int i);
+void lua_pushcallback(lua_State* L, void* key);
+
 extern std::vector<t_lua_environment*> g_lua_environments;
 
 /**

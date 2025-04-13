@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <lua/LuaConsole.h>
+
 namespace LuaCore::Savestate
 {
     static int SaveFileSavestate(lua_State* L)
@@ -38,22 +40,22 @@ namespace LuaCore::Savestate
     {
         const std::filesystem::path path = lua_tostring(L, 1);
         const auto job = static_cast<core_st_job>(lua_tointeger(L, 2));
+        const auto callback = lua_tocallback(L, 3);
         const bool ignore_warnings = lua_toboolean(L, 4);
 
-        lua_pushvalue(L, 3);
-        // FIXME: BUG: This corrupts the registry!!! 
-        int callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-        
         core_vr_wait_increment();
         AsyncExecutor::invoke_async([=] {
             core_vr_wait_decrement();
             core_st_do_file(path, job, [=](const auto result, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
-                    lua_rawgeti(L, LUA_REGISTRYINDEX, callback_ref);
+                    if (!get_lua_class(L))
+                    {
+                        return;
+                    }
+                    lua_pushcallback(L, callback);
                     lua_pushinteger(L, result);
                     lua_pushlstring(L, (const char*)buf.data(), buf.size());
                     lua_pcall(L, 2, 0, 0);
-                    luaL_unref(L, LUA_REGISTRYINDEX, callback_ref);
                 });
             },
                             ignore_warnings);

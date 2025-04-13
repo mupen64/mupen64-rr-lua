@@ -36,6 +36,10 @@ std::string inspect_lua_code;
 
 t_lua_environment* get_lua_class(lua_State* lua_state)
 {
+    if (!g_lua_env_map.contains(lua_state))
+    {
+        return nullptr;
+    }
     return g_lua_env_map[lua_state];
 }
 
@@ -413,7 +417,8 @@ void ensure_d2d_renderer_created(t_lua_environment* lua)
     lua->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout*>(512, [&](auto value) {
         value->Release();
     });
-    lua->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
+    lua->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {
+    });
 }
 
 void create_renderer(t_lua_environment* lua)
@@ -627,4 +632,21 @@ void repaint_visuals()
         RedrawWindow(lua->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
         RedrawWindow(lua->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     }
+}
+
+void* lua_tocallback(lua_State* L, const int i)
+{
+    void* key = calloc(1, sizeof(void*));
+    lua_pushvalue(L, i);
+    lua_pushlightuserdata(L, key);
+    lua_pushvalue(L, -2);
+    lua_settable(L, LUA_REGISTRYINDEX);
+    lua_pop(L, 1);
+    return key;
+}
+
+void lua_pushcallback(lua_State* L, void* key)
+{
+    lua_pushlightuserdata(L, key);
+    lua_gettable(L, LUA_REGISTRYINDEX);
 }
