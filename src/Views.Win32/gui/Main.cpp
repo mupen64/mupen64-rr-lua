@@ -1433,6 +1433,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
 
             case IDM_FRAMEADVANCE:
+                g_fast_forward = false;
+                update_core_fast_forward(nullptr);
                 core_vr_frame_advance(1);
                 core_vr_resume_emu();
                 break;
