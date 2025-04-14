@@ -716,7 +716,6 @@ std::vector<cfg_hotkey*> collect_hotkeys(const cfg_view* config)
     for (size_t i = 0; i < ((last_offset - first_offset) / sizeof(cfg_hotkey)) + 1; i++)
     {
         auto hotkey = &(((cfg_hotkey*)config)[i]);
-        g_view_logger->info(L"Hotkey[{}]: {}", i, hotkey->identifier.c_str());
         vec.push_back(hotkey);
     }
 
