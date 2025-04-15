@@ -12,8 +12,8 @@
 import json
 import subprocess
 
-MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-release.exe"
-STANDARD_ARGS = [  '-g', "..\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
+MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-debug.exe"
+STANDARD_ARGS = [  '-g', "..\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64', '-d' ]
 
 # If left empty, HEAD~1 will be used.
 old_commit_hash = ""

@@ -30,7 +30,7 @@ namespace Cli
     static std::filesystem::path commandline_benchmark;
     static bool commandline_close_on_movie_end;
     static bool commandline_wait_for_debugger;
-    
+
     static bool dacrate_changed;
     static bool rom_is_movie;
     static bool is_movie_from_start;
@@ -229,9 +229,10 @@ namespace Cli
             {
                 CheckRemoteDebuggerPresent(GetCurrentProcess(), &debugger_attached);
                 Sleep(100);
-            } while (!debugger_attached);
+            }
+            while (!debugger_attached);
         }
-        
+
         // handle "Open With...":
         if (cmdl.size() == 2 && cmdl.params().empty())
         {
