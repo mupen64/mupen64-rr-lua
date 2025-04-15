@@ -19,82 +19,84 @@ savestate = {}
 iohelper = {}
 avi = {}
 
----@enum Result
----An enum containing results that can be returned by the core.
-Result = {
-    -- The operation completed successfully
-    res_ok = 0,
+Mupen = {
+    ---@enum Result
+    ---An enum containing results that can be returned by the core.
+    result = {
+        -- The operation completed successfully
+        res_ok = 0,
 
-    -- The operation was cancelled by the user
-    res_cancelled = 1,
+        -- The operation was cancelled by the user
+        res_cancelled = 1,
 
-    -- The provided data has an invalid format
-    vcr_invalid_format = 2,
-    -- The provided file is inaccessible or does not exist
-    vcr_bad_file = 3,
-    -- The cheat data couldn't be written to disk
-    vcr_cheat_write_failed = 4,
-    -- The controller configuration is invalid
-    vcr_invalid_controllers = 5,
-    -- The movie's savestate is missing or invalid
-    vcr_invalid_savestate = 6,
-    -- The resulting frame is outside the bounds of the movie
-    vcr_invalid_frame = 7,
-    -- There is no rom which matches this movie
-    vcr_no_matching_rom = 8,
-    -- The VCR engine is idle, but must be active to complete this operation
-    vcr_idle = 9,
-    -- The provided freeze buffer is not from the currently active movie
-    vcr_not_from_this_movie = 10,
-    -- The movie's version is invalid
-    vcr_invalid_version = 11,
-    -- The movie's extended version is invalid
-    vcr_invalid_extended_version = 12,
-    -- The operation requires a playback or recording task
-    vcr_needs_playback_or_recording = 13,
-    -- The provided start type is invalid.
-    vcr_invalid_start_type = 14,
-    -- Another warp modify operation is already running
-    vcr_warp_modify_already_running = 15,
-    -- Warp modifications can only be performed during recording
-    vcr_warp_modify_needs_recording_task = 16,
-    -- The provided input buffer is empty
-    vcr_warp_modify_empty_input_buffer = 17,
-    -- Another seek operation is already running
-    vcr_seek_already_running = 18,
-    -- The seek operation could not be initiated due to a savestate not being loaded successfully
-    vcr_seek_savestate_load_failed = 19,
-    -- The seek operation can't be initiated because the seek savestate interval is 0
-    vcr_seek_savestate_interval_zero = 20,
+        -- The provided data has an invalid format
+        vcr_invalid_format = 2,
+        -- The provided file is inaccessible or does not exist
+        vcr_bad_file = 3,
+        -- The cheat data couldn't be written to disk
+        vcr_cheat_write_failed = 4,
+        -- The controller configuration is invalid
+        vcr_invalid_controllers = 5,
+        -- The movie's savestate is missing or invalid
+        vcr_invalid_savestate = 6,
+        -- The resulting frame is outside the bounds of the movie
+        vcr_invalid_frame = 7,
+        -- There is no rom which matches this movie
+        vcr_no_matching_rom = 8,
+        -- The VCR engine is idle, but must be active to complete this operation
+        vcr_idle = 9,
+        -- The provided freeze buffer is not from the currently active movie
+        vcr_not_from_this_movie = 10,
+        -- The movie's version is invalid
+        vcr_invalid_version = 11,
+        -- The movie's extended version is invalid
+        vcr_invalid_extended_version = 12,
+        -- The operation requires a playback or recording task
+        vcr_needs_playback_or_recording = 13,
+        -- The provided start type is invalid.
+        vcr_invalid_start_type = 14,
+        -- Another warp modify operation is already running
+        vcr_warp_modify_already_running = 15,
+        -- Warp modifications can only be performed during recording
+        vcr_warp_modify_needs_recording_task = 16,
+        -- The provided input buffer is empty
+        vcr_warp_modify_empty_input_buffer = 17,
+        -- Another seek operation is already running
+        vcr_seek_already_running = 18,
+        -- The seek operation could not be initiated due to a savestate not being loaded successfully
+        vcr_seek_savestate_load_failed = 19,
+        -- The seek operation can't be initiated because the seek savestate interval is 0
+        vcr_seek_savestate_interval_zero = 20,
 
-    -- Couldn't find a rom matching the provided movie
-    vr_no_matching_rom = 21,
-    -- An error occured during plugin loading
-    vr_plugin_error = 22,
-    -- The ROM or alternative rom source is invalid
-    vr_rom_invalid = 23,
-    -- The emulator isn't running yet
-    vr_not_running = 24,
-    -- Failed to open core streams
-    vr_file_open_failed = 25,
+        -- Couldn't find a rom matching the provided movie
+        vr_no_matching_rom = 21,
+        -- An error occured during plugin loading
+        vr_plugin_error = 22,
+        -- The ROM or alternative rom source is invalid
+        vr_rom_invalid = 23,
+        -- The emulator isn't running yet
+        vr_not_running = 24,
+        -- Failed to open core streams
+        vr_file_open_failed = 25,
 
-    -- The core isn't launched
-    st_core_not_launched = 26,
-    -- The savestate file wasn't found
-    st_not_found = 27,
-    -- The savestate couldn't be written to disk
-    st_file_write_error = 28,
-    -- Couldn't decompress the savestate
-    st_decompression_error = 29,
-    -- The event queue was too long
-    st_event_queue_too_long = 30,
-    -- The CPU registers contained invalid values
-    st_invalid_registers = 31,
+        -- The core isn't launched
+        st_core_not_launched = 26,
+        -- The savestate file wasn't found
+        st_not_found = 27,
+        -- The savestate couldn't be written to disk
+        st_file_write_error = 28,
+        -- Couldn't decompress the savestate
+        st_decompression_error = 29,
+        -- The event queue was too long
+        st_event_queue_too_long = 30,
+        -- The CPU registers contained invalid values
+        st_invalid_registers = 31,
 
-    -- The plugin library couldn't be loaded
-    pl_load_library_failed = 32,
-    -- The plugin doesn't export a GetDllInfo function
-    pl_no_get_dll_info = 33,
+        -- The plugin library couldn't be loaded
+        pl_load_library_failed = 32,
+        -- The plugin doesn't export a GetDllInfo function
+        pl_no_get_dll_info = 33,
+    }
 }
 
 ---@alias ByteBuffer string

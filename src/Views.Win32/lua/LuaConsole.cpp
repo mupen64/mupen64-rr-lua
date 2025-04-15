@@ -32,6 +32,7 @@ std::atomic g_d2d_drawing_section = false;
 std::vector<t_lua_environment*> g_lua_environments;
 std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
 
+std::string mupen_api_lua_code;
 std::string inspect_lua_code;
 
 t_lua_environment* get_lua_class(lua_State* lua_state)
@@ -333,6 +334,14 @@ LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+static std::string get_string_by_resource_id(const int id)
+{
+    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(id), MAKEINTRESOURCE(TEXTFILE));
+    const HGLOBAL rc_data = LoadResource(g_app_instance, rc);
+    const auto size = SizeofResource(g_app_instance, rc);
+    const auto data = static_cast<const char*>(LockResource(rc_data));
+    return std::string(data, size);
+}
 
 void lua_init()
 {
@@ -347,12 +356,9 @@ void lua_init()
     wndclass.lpfnWndProc = (WNDPROC)gdi_overlay_wndproc;
     wndclass.lpszClassName = GDI_OVERLAY_CLASS;
     RegisterClass(&wndclass);
-
-    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(IDR_INSPECT_LUA_FILE), MAKEINTRESOURCE(TEXTFILE));
-    HGLOBAL rc_data = LoadResource(g_app_instance, rc);
-    const auto size = SizeofResource(g_app_instance, rc);
-    const auto data = static_cast<const char*>(LockResource(rc_data));
-    inspect_lua_code = std::string(data, size);
+    
+    mupen_api_lua_code = get_string_by_resource_id(IDR_API_LUA_FILE);
+    inspect_lua_code = get_string_by_resource_id(IDR_INSPECT_LUA_FILE);
 }
 
 void create_loadscreen(t_lua_environment* lua)
@@ -585,6 +591,17 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     rebuild_lua_env_map();
 
     bool has_error = false;
+
+    {
+        ScopeTimer timer("mupenapi.lua injection", g_view_logger.get());
+        if (luaL_dostring(lua->L, mupen_api_lua_code.c_str()))
+        {
+            // Shouldn't happen...
+            has_error = true;
+        }
+    }
+
+    LuaRegistry::register_functions(lua->L);
 
     {
         ScopeTimer timer("inspect.lua injection", g_view_logger.get());
