@@ -4,23 +4,29 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # 
 
-# Benchmarks the emulator's performance on the latest and second-latest commit of the currently checked out branch.
-# Performs a hard git reset when rolling back to the latest commit.
-# Outputs performance results to the output stream and to a JSON file.
+# Benchmarks the emulator's performance on the specified commits and compares them.
+# 
 # Utilizes the [mupen64plus test ROM](https://github.com/mupen64plus/mupen64plus-rom) for benchmarking.
-
 # Requires Mupen64 to be built in the Views.Win32 directory.
 
 import json
 import subprocess
 
 MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-release.exe"
-
 STANDARD_ARGS = [  '-g', "..\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
 
-def get_commit_hash():
-    result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True, check=True)
-    return result.stdout.strip()
+# If left empty, HEAD~1 will be used.
+old_commit_hash = ""
+
+# If left empty, HEAD will be used.
+new_commit_hash = ""
+
+def fill_commit_hashes():
+    global old_commit_hash, new_commit_hash
+    if not old_commit_hash:
+        old_commit_hash = subprocess.run(['git', 'rev-parse', '--short', 'HEAD^'], capture_output=True, text=True, check=True).stdout.strip()
+    if not new_commit_hash:
+        new_commit_hash = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
 
 def run_mupen(name, additional_args):
     benchmark_path = f"benchmark_{name}.json"
@@ -34,21 +40,21 @@ def run_mupen(name, additional_args):
     return data
 
 def run_benchmark_full(name, additional_args=[]):
-    new_hash = get_commit_hash()
-    benchmark_new = run_mupen(get_commit_hash(), additional_args)
-    
-    subprocess.run(['git', 'stash'])
-    subprocess.run(['git', 'reset', '--hard', 'HEAD~1'])
-    old_hash = get_commit_hash()
-    benchmark_old = run_mupen(get_commit_hash(), additional_args)
+    subprocess.run(['git', 'stash', '-u'])
 
-    subprocess.run(['git', 'reset', '--hard', 'HEAD@{1}'])
+    subprocess.run(['git', 'reset', '--hard', new_commit_hash])
+    benchmark_new = run_mupen(new_commit_hash, additional_args)
+    
+    subprocess.run(['git', 'reset', '--hard', old_commit_hash])
+    benchmark_old = run_mupen(old_commit_hash, additional_args)
+
+    subprocess.run(['git', 'reset', '--hard', new_commit_hash])
     subprocess.run(['git', 'stash', 'pop'])
 
     new_fps = benchmark_new['fps']
     old_fps = benchmark_old['fps']
 
-    print(f"Benchmark - {name} ({old_hash}) vs {new_hash}")
+    print(f"Benchmark - {name} ({old_commit_hash}) vs {new_commit_hash}")
     delta = new_fps - old_fps
     percentage_change = (delta / old_fps) * 100
 
@@ -57,8 +63,12 @@ def run_benchmark_full(name, additional_args=[]):
     print("------")
 
 def main():
+    fill_commit_hashes()
+    print(f"Running benchmarks for {old_commit_hash} vs {new_commit_hash}")
+
     run_benchmark_full("normal")
     run_benchmark_full("with-dummy-lua", ["-lua", "dummy.lua"])
+    # TODO: Add more benchmarks here.
     
 
 if __name__ == "__main__":
