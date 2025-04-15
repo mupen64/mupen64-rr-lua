@@ -509,17 +509,30 @@ void destroy_renderer(t_lua_environment* lua)
     }
 }
 
+static void rebuild_lua_env_map()
+{
+    g_lua_env_map.clear();
+    for (const auto& lua : g_lua_environments)
+    {
+        g_lua_env_map[lua->L] = lua;
+    }
+}
+
 void destroy_lua_environment(t_lua_environment* lua)
 {
-    std::erase_if(g_lua_environments, [=](const t_lua_environment* v) {
-        return v == lua;
-    });
-    SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
-
     lua->m_ignore_renderer_creation = true;
     SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, 0);
     SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, 0);
     LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATSTOP);
+
+    // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
+    // After this point, it's game over and no callbacks will be called anymore.
+    std::erase_if(g_lua_environments, [=](const t_lua_environment* v) {
+        return v == lua;
+    });
+    SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
+    rebuild_lua_env_map();
+
     SelectObject(lua->gdi_back_dc, nullptr);
     DeleteObject(lua->brush);
     DeleteObject(lua->pen);
@@ -545,15 +558,6 @@ void print_con(HWND hwnd, const std::wstring& text)
     }
     SendMessage(con_wnd, EM_SETSEL, length, length);
     SendMessage(con_wnd, EM_REPLACESEL, false, (LPARAM)text.c_str());
-}
-
-void rebuild_lua_env_map()
-{
-    g_lua_env_map.clear();
-    for (const auto& lua : g_lua_environments)
-    {
-        g_lua_env_map[lua->L] = lua;
-    }
 }
 
 std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
