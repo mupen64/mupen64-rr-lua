@@ -29,6 +29,8 @@ namespace Cli
     static std::filesystem::path commandline_avi;
     static std::filesystem::path commandline_benchmark;
     static bool commandline_close_on_movie_end;
+    static bool commandline_wait_for_debugger;
+    
     static bool dacrate_changed;
     static bool rom_is_movie;
     static bool is_movie_from_start;
@@ -214,11 +216,22 @@ namespace Cli
         commandline_avi = cmdl({"--avi", "-avi"}, "").str();
         commandline_benchmark = cmdl({"--benchmark", "-b"}, "").str();
         commandline_close_on_movie_end = cmdl["--close-on-movie-end"];
+        commandline_wait_for_debugger = cmdl["--wait-for-debugger"] || cmdl["--d"];
         bool compare_control = cmdl["--cmp-ctl"] || cmdl["--compare-control"];
         bool compare_actual = cmdl["--cmp-act"] || cmdl["--compare-actual"];
         std::string compare_interval_str = cmdl({"--cmp-int", "--compare-interval"}, "100").str();
         size_t compare_interval = std::stoi(compare_interval_str);
 
+        if (commandline_wait_for_debugger)
+        {
+            BOOL debugger_attached = true;
+            do
+            {
+                CheckRemoteDebuggerPresent(GetCurrentProcess(), &debugger_attached);
+                Sleep(100);
+            } while (!debugger_attached);
+        }
+        
         // handle "Open With...":
         if (cmdl.size() == 2 && cmdl.params().empty())
         {
