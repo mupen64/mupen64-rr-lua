@@ -1,0 +1,34 @@
+name: benchmark
+
+on: [ push ]
+
+env:
+  DUMMY: a
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set VERSION_SUFFIX
+        shell: powershell
+        run: |
+          $VERSION_SUFFIX = "-$(git rev-parse --short HEAD)"
+          echo "VERSION_SUFFIX=$VERSION_SUFFIX" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+      - name: Display VERSION_SUFFIX
+        shell: powershell
+        run: echo "VERSION_SUFFIX is $env:VERSION_SUFFIX"
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build x86
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run:  msbuild mupen64.sln /p:Configuration=Release /p:Platform=x86 /m
+
+      - name: Run x86 benchmark
+        shell: powershell
+        run: python tools/benchmark/benchmark.py
