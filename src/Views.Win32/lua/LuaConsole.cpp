@@ -649,4 +649,11 @@ void lua_pushcallback(lua_State* L, void* key)
 {
     lua_pushlightuserdata(L, key);
     lua_gettable(L, LUA_REGISTRYINDEX);
+    free(key);
+    key = nullptr;
+}
+
+void lua_freecallback(void* key)
+{
+    free(key);
 }

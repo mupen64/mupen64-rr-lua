@@ -21,7 +21,7 @@ avi = {}
 
 ---@enum Result
 ---An enum containing results that can be returned by the core.
-local result = {
+Result = {
     -- The operation completed successfully
     res_ok = 0,
 
