@@ -5,15 +5,15 @@
 # 
 
 # Benchmarks the emulator's performance on the specified commits and compares them.
-# 
+# Requires "Keep working directory" to be enabled in Mupen settings.
 # Utilizes the [mupen64plus test ROM](https://github.com/mupen64plus/mupen64plus-rom) for benchmarking.
 # Requires Mupen64 to be built in the Views.Win32 directory.
 
 import json
 import subprocess
 
-MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-debug.exe"
-STANDARD_ARGS = [  '-g', "..\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64', '-d' ]
+MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-release.exe"
+STANDARD_ARGS = [  '-g', "..\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
 
 # If left empty, HEAD~1 will be used.
 old_commit_hash = ""
