@@ -224,13 +224,12 @@ namespace Cli
 
         if (commandline_wait_for_debugger)
         {
-            BOOL debugger_attached = true;
             do
             {
-                CheckRemoteDebuggerPresent(GetCurrentProcess(), &debugger_attached);
+                g_view_logger->trace("[CLI] Waiting for debugger to attach...");
                 Sleep(100);
             }
-            while (!debugger_attached);
+            while (!IsDebuggerPresent());
         }
 
         // handle "Open With...":
