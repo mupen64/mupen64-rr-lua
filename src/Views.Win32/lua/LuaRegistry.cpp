@@ -202,6 +202,9 @@ const luaL_Reg MOVIE_FUNCS[] = {
 const luaL_Reg SAVESTATE_FUNCS[] = {
 {"savefile", LuaCore::Savestate::SaveFileSavestate},
 {"loadfile", LuaCore::Savestate::LoadFileSavestate},
+{"do_file", LuaCore::Savestate::do_file},
+{"do_slot", LuaCore::Savestate::do_slot},
+{"do_memory", LuaCore::Savestate::do_memory},
 {NULL, NULL}};
 
 const luaL_Reg IOHELPER_FUNCS[] = {

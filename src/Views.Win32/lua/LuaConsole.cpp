@@ -32,10 +32,15 @@ std::atomic g_d2d_drawing_section = false;
 std::vector<t_lua_environment*> g_lua_environments;
 std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
 
+std::string mupen_api_lua_code;
 std::string inspect_lua_code;
 
 t_lua_environment* get_lua_class(lua_State* lua_state)
 {
+    if (!g_lua_env_map.contains(lua_state))
+    {
+        return nullptr;
+    }
     return g_lua_env_map[lua_state];
 }
 
@@ -329,6 +334,14 @@ LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+static std::string get_string_by_resource_id(const int id)
+{
+    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(id), MAKEINTRESOURCE(TEXTFILE));
+    const HGLOBAL rc_data = LoadResource(g_app_instance, rc);
+    const auto size = SizeofResource(g_app_instance, rc);
+    const auto data = static_cast<const char*>(LockResource(rc_data));
+    return std::string(data, size);
+}
 
 void lua_init()
 {
@@ -343,12 +356,9 @@ void lua_init()
     wndclass.lpfnWndProc = (WNDPROC)gdi_overlay_wndproc;
     wndclass.lpszClassName = GDI_OVERLAY_CLASS;
     RegisterClass(&wndclass);
-
-    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(IDR_INSPECT_LUA_FILE), MAKEINTRESOURCE(TEXTFILE));
-    HGLOBAL rc_data = LoadResource(g_app_instance, rc);
-    const auto size = SizeofResource(g_app_instance, rc);
-    const auto data = static_cast<const char*>(LockResource(rc_data));
-    inspect_lua_code = std::string(data, size);
+    
+    mupen_api_lua_code = get_string_by_resource_id(IDR_API_LUA_FILE);
+    inspect_lua_code = get_string_by_resource_id(IDR_INSPECT_LUA_FILE);
 }
 
 void create_loadscreen(t_lua_environment* lua)
@@ -413,7 +423,8 @@ void ensure_d2d_renderer_created(t_lua_environment* lua)
     lua->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout*>(512, [&](auto value) {
         value->Release();
     });
-    lua->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
+    lua->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {
+    });
 }
 
 void create_renderer(t_lua_environment* lua)
@@ -504,17 +515,30 @@ void destroy_renderer(t_lua_environment* lua)
     }
 }
 
+static void rebuild_lua_env_map()
+{
+    g_lua_env_map.clear();
+    for (const auto& lua : g_lua_environments)
+    {
+        g_lua_env_map[lua->L] = lua;
+    }
+}
+
 void destroy_lua_environment(t_lua_environment* lua)
 {
-    std::erase_if(g_lua_environments, [=](const t_lua_environment* v) {
-        return v == lua;
-    });
-    SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
-
     lua->m_ignore_renderer_creation = true;
     SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, 0);
     SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, 0);
     LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATSTOP);
+
+    // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
+    // After this point, it's game over and no callbacks will be called anymore.
+    std::erase_if(g_lua_environments, [=](const t_lua_environment* v) {
+        return v == lua;
+    });
+    SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
+    rebuild_lua_env_map();
+
     SelectObject(lua->gdi_back_dc, nullptr);
     DeleteObject(lua->brush);
     DeleteObject(lua->pen);
@@ -542,15 +566,6 @@ void print_con(HWND hwnd, const std::wstring& text)
     SendMessage(con_wnd, EM_REPLACESEL, false, (LPARAM)text.c_str());
 }
 
-void rebuild_lua_env_map()
-{
-    g_lua_env_map.clear();
-    for (const auto& lua : g_lua_environments)
-    {
-        g_lua_env_map[lua->L] = lua;
-    }
-}
-
 std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
 {
     assert(is_on_gui_thread());
@@ -576,6 +591,17 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     rebuild_lua_env_map();
 
     bool has_error = false;
+
+    {
+        ScopeTimer timer("mupenapi.lua injection", g_view_logger.get());
+        if (luaL_dostring(lua->L, mupen_api_lua_code.c_str()))
+        {
+            // Shouldn't happen...
+            has_error = true;
+        }
+    }
+
+    LuaRegistry::register_functions(lua->L);
 
     {
         ScopeTimer timer("inspect.lua injection", g_view_logger.get());
@@ -627,4 +653,28 @@ void repaint_visuals()
         RedrawWindow(lua->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
         RedrawWindow(lua->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     }
+}
+
+void* lua_tocallback(lua_State* L, const int i)
+{
+    void* key = calloc(1, sizeof(void*));
+    lua_pushvalue(L, i);
+    lua_pushlightuserdata(L, key);
+    lua_pushvalue(L, -2);
+    lua_settable(L, LUA_REGISTRYINDEX);
+    lua_pop(L, 1);
+    return key;
+}
+
+void lua_pushcallback(lua_State* L, void* key)
+{
+    lua_pushlightuserdata(L, key);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    free(key);
+    key = nullptr;
+}
+
+void lua_freecallback(void* key)
+{
+    free(key);
 }
