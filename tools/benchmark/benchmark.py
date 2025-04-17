@@ -18,7 +18,7 @@ import configparser
 
 MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-release.exe"
 CONFIG_INI_PATH = "../../build/Views.Win32/config.ini"
-STANDARD_ARGS = [  '-g', "..\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
+STANDARD_ARGS = [  '-g', "..\\roms\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
 FPS_PERCENTAGE_EPSILON = 1
 
 # If left empty, HEAD~1 will be used.
