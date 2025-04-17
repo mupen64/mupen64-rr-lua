@@ -45,23 +45,23 @@ def run_mupen(name, additional_args):
     return data
 
 def run_benchmark_full(name, additional_args=[]):
-    subprocess.run(['git', 'stash', 'push', '-u', '-m', 'benchmark'])
+    subprocess.run(['git', 'stash', 'push', '-u', '-m', 'benchmark'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
     try:
-        subprocess.run(['git', 'reset', '--hard', new_commit_hash])
+        subprocess.run(['git', 'reset', '--hard', new_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         benchmark_new = run_mupen(new_commit_hash, additional_args)
 
-        subprocess.run(['git', 'reset', '--hard', old_commit_hash])
+        subprocess.run(['git', 'reset', '--hard', old_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         benchmark_old = run_mupen(old_commit_hash, additional_args)
 
-        subprocess.run(['git', 'reset', '--hard', new_commit_hash])
+        subprocess.run(['git', 'reset', '--hard', new_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
     except Exception as e:
         print("Error during benchmark. Stash will be popped.")
         print(e)
         subprocess.run(['git', 'stash', 'pop'])
         return
     
-    subprocess.run(['git', 'stash', 'pop'])
+    subprocess.run(['git', 'stash', 'pop'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
     new_fps = benchmark_new['fps']
     old_fps = benchmark_old['fps']
