@@ -57,4 +57,11 @@ jobs:
 
       - name: Run x86 benchmark
         shell: powershell
-        run: cd tools/benchmark; python benchmark.py
+        run: cd tools/benchmark; python benchmark.py; cd ../../;
+
+      - name: 'Upload mupen.log'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mupen-log
+          path: tools/benchmark/mupen.log
+          retention-days: 14
