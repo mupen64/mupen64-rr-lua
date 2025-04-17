@@ -84,7 +84,7 @@ def create_config():
     Creates a config file with some default values filled in, while deleting any existing config.
     '''
 
-    pathlib.Path.unlink(CONFIG_INI_PATH, missing_ok=True)
+    pathlib.Path.unlink(pathlib.Path(CONFIG_INI_PATH), missing_ok=True)
 
     config = configparser.ConfigParser()
     config.read(CONFIG_INI_PATH)
