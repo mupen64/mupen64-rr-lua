@@ -57,4 +57,4 @@ jobs:
 
       - name: Run x86 benchmark
         shell: powershell
-        run: python tools/benchmark/benchmark.py
+        run: cd tools/benchmark; python benchmark.py
