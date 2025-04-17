@@ -96,7 +96,7 @@ def create_config():
     config.set("config", "selected_input_plugin", "../plugins/NoInput-x86.dll")
     config.set("config", "selected_rsp_plugin", "../plugins/NoRSP-x86.dll")
 
-    with open(CONFIG_INI_PATH, 'w') as configfile:
+    with open(CONFIG_INI_PATH, 'w+') as configfile:
         config.write(configfile)
 
 def main():
