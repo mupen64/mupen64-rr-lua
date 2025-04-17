@@ -102,7 +102,7 @@ def main():
     run_benchmark_full("normal")
     run_benchmark_full("with-dummy-lua", ["-lua", "dummy.lua"])
     
-    # TODO: Add more benchmarks here. 
+    # TODO: Add more benchmarks here.  
     
 
 if __name__ == "__main__":
