@@ -37,9 +37,13 @@ def fill_commit_hashes():
 def run_mupen(name, additional_args):
     benchmark_path = f"benchmark_{name}.json"
 
+    args = [MUPEN_PATH, *STANDARD_ARGS, *additional_args, '-b', benchmark_path]
+
+    print(f"Running {' '.join(args)}")
+    
     # First run is warmup.
     for _ in range(2):
-        subprocess.run([MUPEN_PATH, *STANDARD_ARGS, *additional_args, '-b', benchmark_path], timeout=120)
+        subprocess.run(args, timeout=120)
 
     with open(benchmark_path) as f:
         data = json.load(f)
