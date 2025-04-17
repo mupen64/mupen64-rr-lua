@@ -90,6 +90,7 @@ def create_config():
     config.read(CONFIG_INI_PATH)
     
     config.add_section("config")
+    config.set("config", "silent_mode", "1")
     config.set("config", "keep_default_working_directory", "1")
     config.set("config", "selected_video_plugin", "../plugins/NoVideo-x86.dll")
     config.set("config", "selected_audio_plugin", "../plugins/NoAudio-x86.dll")
