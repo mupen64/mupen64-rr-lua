@@ -70,7 +70,7 @@ def run_benchmark_full(name, additional_args=[]):
     delta = new_fps - old_fps
     percentage_change = (delta / old_fps) * 100
 
-    print(f"FPS: {old_fps:.2f} (old) | {old_fps:.2f} (new)")
+    print(f"FPS: {old_fps:.2f} (old) | {new_fps:.2f} (new)")
     print(f"Change: {percentage_change:.2f}%")
     print("------")
 
