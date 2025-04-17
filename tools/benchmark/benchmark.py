@@ -19,6 +19,7 @@ import configparser
 MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-release.exe"
 CONFIG_INI_PATH = "../../build/Views.Win32/config.ini"
 STANDARD_ARGS = [  '-g', "..\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
+FPS_PERCENTAGE_EPSILON = 1
 
 # If left empty, HEAD~1 will be used.
 old_commit_hash = ""
@@ -65,13 +66,17 @@ def run_benchmark_full(name, additional_args=[]):
 
     new_fps = benchmark_new['fps']
     old_fps = benchmark_old['fps']
-
-    print(f"Benchmark - {name} ({old_commit_hash}) vs {new_commit_hash}")
     delta = new_fps - old_fps
     percentage_change = (delta / old_fps) * 100
+    within_margin_of_error = abs(percentage_change) < FPS_PERCENTAGE_EPSILON
 
+    print(f"Benchmark - {name} ({old_commit_hash}) vs {new_commit_hash}")
     print(f"FPS: {old_fps:.2f} (old) | {new_fps:.2f} (new)")
     print(f"Change: {percentage_change:.2f}%")
+    if within_margin_of_error:
+        print("Within margin of error.")
+    else:
+        print(percentage_change > 0 and "IMPROVEMENT" or "REGRESSION")
     print("------")
 
 def create_config():
