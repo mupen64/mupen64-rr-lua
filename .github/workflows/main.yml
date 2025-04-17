@@ -49,6 +49,12 @@ jobs:
           path: build/Views.Win32/mupen64-x64-sse2-release.exe
           retention-days: 14
 
+      - name: Download x86 SSE2 Release Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mupen-x86-sse2
+          path: build/Views.Win32/
+
       - name: Run x86 benchmark
         shell: powershell
         run: python tools/benchmark/benchmark.py
