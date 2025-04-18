@@ -15,11 +15,13 @@ import json
 import pathlib
 import subprocess
 import configparser
+import traceback
 
 MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-release.exe"
 CONFIG_INI_PATH = "../../build/Views.Win32/config.ini"
 STANDARD_ARGS = [  '-g', "..\\roms\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
 FPS_PERCENTAGE_EPSILON = 1
+RUN_COUNT = 3
 
 # If left empty, HEAD~1 will be used.
 old_commit_hash = ""
@@ -41,16 +43,27 @@ def run_mupen(name, additional_args):
 
     print(f"Running {' '.join(args)}")
     
-    # First run is warmup.
-    for _ in range(2):
-        subprocess.run(args, timeout=120)
+    # Warmup
+    subprocess.run(args, timeout=120)
 
-    with open(benchmark_path) as f:
-        data = json.load(f)
-    return data
+    fps_sum = 0
+
+    for _ in range(RUN_COUNT):
+        subprocess.run(args, timeout=120)
+        with open(benchmark_path) as f:
+            data = json.load(f)
+            fps_sum += data['fps']
+    
+    print(fps_sum)
+    fps_avg = fps_sum / RUN_COUNT
+    
+    return { 'fps': fps_avg } 
 
 def run_benchmark_full(name, additional_args=[]):
     subprocess.run(['git', 'stash', 'push', '-u', '-m', 'benchmark'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+
+    benchmark_new = {}
+    benchmark_old = {}
 
     try:
         subprocess.run(['git', 'reset', '--hard', new_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
@@ -60,9 +73,9 @@ def run_benchmark_full(name, additional_args=[]):
         benchmark_old = run_mupen(old_commit_hash, additional_args)
 
         subprocess.run(['git', 'reset', '--hard', new_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-    except Exception as e:
+    except Exception:
+        traceback.print_exc()
         print("Error during benchmark. Stash will be popped.")
-        print(e)
         subprocess.run(['git', 'stash', 'pop'])
         return
     
