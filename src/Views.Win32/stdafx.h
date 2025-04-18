@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
+
 #include <filesystem>
 #include <string>
 #include <format>
@@ -38,6 +40,7 @@
 #include <cctype>
 #include <any>
 #include <stack>
+#include <fstream>
 #include <deque>
 #include <numeric>
 

@@ -1295,6 +1295,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         cht_layer_push({});
     }
 
+    g_core->log_trace(L"VCR 1");
     core_vcr_stop_all();
     m_current_sample = 0;
     m_current_vi = 0;
@@ -1339,12 +1340,16 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         g_task = task_start_playback_from_reset;
     }
 
+    g_core->log_trace(L"VCR 2");
+
     g_core->callbacks.task_changed(g_task);
     g_core->callbacks.current_sample_changed(m_current_sample);
     g_core->callbacks.rerecords_changed(get_rerecord_count());
 
     // FIXME: Move this into the actual starting sections, and document it :p
     g_core->callbacks.play_movie();
+
+    g_core->log_trace(L"VCR 3");
 
     return Res_Ok;
 }
@@ -1631,7 +1636,6 @@ bool vcr_is_task_recording(core_vcr_task task)
 static void vcr_clear_seek_savestates()
 {
     std::scoped_lock lock(vcr_mutex);
-
     g_core->log_info(L"[VCR] Clearing seek savestates...");
 
     std::vector<size_t> prev_seek_savestate_keys;
