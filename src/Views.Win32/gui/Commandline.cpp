@@ -171,7 +171,7 @@ namespace Cli
             load_st();
 
             g_view_logger->trace("[CLI] on_core_executing_changed -> play_movie");
-            //play_movie();
+            play_movie();
 
             g_view_logger->trace("[CLI] on_core_executing_changed -> start_lua");
             start_lua();
