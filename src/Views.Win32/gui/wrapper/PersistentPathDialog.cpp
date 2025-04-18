@@ -7,187 +7,102 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <gui/wrapper/PersistentPathDialog.h>
-
 #define FAILSAFE(operation) \
     if (FAILED(operation))  \
     goto cleanUp
 
 std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
-    COMInitializer com_initializer;
-    IFileDialog* pFileDialog = nullptr;
-    IShellItem* pShellItem = nullptr;
-    PWSTR pFilePath = nullptr;
-    DWORD dwFlags;
-    bool succeeded = false;
+    std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
+    ? g_config.persistent_folder_paths[id]
+    : get_desktop_path();
+    g_view_logger->info(L"file dialog {}: {}\n", id.c_str(), restored_path);
 
-    FAILSAFE(
-    CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFileDialog)));
+    wchar_t out_path[MAX_PATH]{};
+    OPENFILENAMEW ofn{};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = out_path;
+    ofn.nMaxFile = std::size(out_path);
+    ofn.lpstrFilter = filter.c_str();
+    ofn.nFilterIndex = 1;
+    ofn.lpstrInitialDir = restored_path.c_str();
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_ENABLESIZING;
 
-    FAILSAFE(pFileDialog->GetOptions(&dwFlags));
-
-
+    if (GetOpenFileName(&ofn))
     {
-        COMDLG_FILTERSPEC fileTypes[] =
-        {
-        {L"Supported files", filter.c_str()},
-        };
-        FAILSAFE(pFileDialog->SetFileTypes(ARRAYSIZE(fileTypes), fileTypes));
+        g_config.persistent_folder_paths[id] = ofn.lpstrFile;
+        return g_config.persistent_folder_paths[id];
     }
-    IShellItem* shlPtr;
 
-    {
-        std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
-        ? g_config.persistent_folder_paths[id]
-        : get_desktop_path();
-        g_view_logger->info(L"Open dialog {} restored {}\n", id.c_str(), restored_path);
-        if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr, IID_PPV_ARGS(&shlPtr)) != S_OK)
-            g_view_logger->info(
-            "Unable to create IShellItem from parsing lastPath name");
-    }
-    FAILSAFE(pFileDialog->SetFolder(shlPtr));
-    // we need to pass null due to a shell api bug. ms has been informed
-    FAILSAFE(pFileDialog->Show(nullptr));
-    FAILSAFE(pFileDialog->GetResult(&pShellItem));
-    FAILSAFE(pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &pFilePath));
-
-    g_config.persistent_folder_paths[id] = pFilePath;
-
-    succeeded = true;
-
-cleanUp:
-    CoTaskMemFree(pFilePath);
-    if (pShellItem)
-        pShellItem->Release();
-    if (pFileDialog)
-        pFileDialog->Release();
-
-    return succeeded ? g_config.persistent_folder_paths[id] : std::wstring();
+    return L"";
 }
 
 std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
-    COMInitializer com_initializer;
-    IFileDialog* pFileDialog = nullptr;
-    IShellItem* pShellItem = nullptr;
-    PWSTR pFilePath = nullptr;
-    DWORD dwFlags;
-    bool succeeded = false;
+    std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
+    ? g_config.persistent_folder_paths[id]
+    : get_desktop_path();
+    g_view_logger->info(L"file dialog {}: {}\n", id.c_str(), restored_path);
 
-    FAILSAFE(
-    CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFileDialog)));
+    wchar_t out_path[MAX_PATH]{};
+    OPENFILENAMEW ofn{};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = out_path;
+    ofn.nMaxFile = std::size(out_path);
+    ofn.lpstrFilter = filter.c_str();
+    ofn.nFilterIndex = 1;
+    ofn.lpstrInitialDir = restored_path.c_str();
+    ofn.Flags = OFN_CREATEPROMPT | OFN_EXPLORER | OFN_ENABLESIZING;
 
-    FAILSAFE(pFileDialog->GetOptions(&dwFlags));
-
+    if (GetOpenFileName(&ofn))
     {
-        COMDLG_FILTERSPEC fileTypes[] =
-        {
-        {L"Supported files", filter.c_str()},
-        };
-        FAILSAFE(pFileDialog->SetFileTypes(ARRAYSIZE(fileTypes), fileTypes));
-    }
-    IShellItem* shlPtr;
-
-    {
-        std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
-        ? g_config.persistent_folder_paths[id]
-        : get_desktop_path();
-        g_view_logger->info(L"Save dialog {} restored %ls\n", id.c_str(), restored_path);
-        if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr, IID_PPV_ARGS(&shlPtr)) != S_OK)
-            g_view_logger->info(
-            "Unable to create IShellItem from parsing lastPath name");
+        g_config.persistent_folder_paths[id] = ofn.lpstrFile;
+        return g_config.persistent_folder_paths[id];
     }
 
-    // we are saving a file, use the filter list's first extension as the default suffix
-    // because otherwise we get an extension-less file...
-    {
-        auto first_filter = split_wstring(filter, L";")[0];
-        first_filter.erase(0, 2);
-        pFileDialog->SetDefaultExtension(first_filter.c_str());
-    }
-    FAILSAFE(pFileDialog->SetFolder(shlPtr));
-    // we need to pass null due to a shell api bug. ms has been informed
-    FAILSAFE(pFileDialog->Show(nullptr));
-    FAILSAFE(pFileDialog->GetResult(&pShellItem));
-    FAILSAFE(pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &pFilePath));
-
-    g_config.persistent_folder_paths[id] = pFilePath;
-
-    succeeded = true;
-
-cleanUp:
-    CoTaskMemFree(pFilePath);
-    if (pShellItem)
-        pShellItem->Release();
-    if (pFileDialog)
-        pFileDialog->Release();
-
-    return succeeded ? g_config.persistent_folder_paths[id] : std::wstring();
+    return L"";
 }
 
 std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd)
 {
+    std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id)
+    ? g_config.persistent_folder_paths[id]
+    : get_desktop_path();
+
     COMInitializer com_initializer;
-    std::wstring final_path;
-    IFileDialog* pfd;
-    if (SUCCEEDED(
-        CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd))))
-    {
-        std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
-        ? g_config.persistent_folder_paths[id]
-        : get_desktop_path();
 
-        PIDLIST_ABSOLUTE pidl;
-
-        g_view_logger->info(L"Folder dialog {} restored %ls\n", id.c_str(), restored_path);
-        HRESULT hresult = SHParseDisplayName(restored_path.c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr);
-        if (SUCCEEDED(hresult))
+    BROWSEINFO bi{};
+    bi.hwndOwner = hwnd;
+    bi.lpszTitle = _T("Select a folder");
+    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+    bi.lpfn = [](const HWND hwnd, const UINT msg, LPARAM, const LPARAM lpdata) -> int {
+        if (msg == BFFM_INITIALIZED)
         {
-            IShellItem* psi;
-            hresult = SHCreateShellItem(nullptr, nullptr, pidl, &psi);
-            if (SUCCEEDED(hresult))
-            {
-                pfd->SetFolder(psi);
-            }
-            ILFree(pidl);
+            SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpdata);
         }
+        return 0;
+    };
+    bi.lParam = (LPARAM)restored_path.wstring().c_str();
 
+    bool success = false;
 
-        DWORD dwOptions;
-        if (SUCCEEDED(pfd->GetOptions(&dwOptions)))
-        {
-            pfd->SetOptions(dwOptions | FOS_PICKFOLDERS | FOS_PATHMUSTEXIST);
-        }
-        // we need to pass null due to a shell api bug. ms has been informed
-        if (SUCCEEDED(pfd->Show(nullptr)))
-        {
-            IShellItem* psi;
-            if (SUCCEEDED(pfd->GetResult(&psi)))
-            {
-                WCHAR* tmp;
-                if (SUCCEEDED(
-                    psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &tmp)))
-                {
-                    final_path = tmp;
-                }
-                psi->Release();
-            }
-        }
-        pfd->Release();
-    }
+    PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
 
-
-    // HACK: fail if non-filesystem folders were picked
-    if (final_path.find('{') != std::string::npos || final_path.find('}') != std::string::npos)
+    if (!pidl)
     {
         return L"";
     }
 
-    if (final_path.size() > 1)
+    wchar_t path[MAX_PATH];
+    if (SHGetPathFromIDList(pidl, path))
     {
-        // probably valid path, store it
-        g_config.persistent_folder_paths[id] = final_path;
+        g_config.persistent_folder_paths[id] = path;
+        CoTaskMemFree(pidl);
+        success = true;
     }
+    CoTaskMemFree(pidl);
 
-    return final_path;
+    return success ? path : L"";
 }

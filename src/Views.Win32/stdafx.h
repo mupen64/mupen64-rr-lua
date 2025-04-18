@@ -80,3 +80,4 @@ extern "C" {
 #include <xxh64.h>
 #include <lua/LuaConsole.h>
 #include <strsafe.h>
+#include <commdlg.h>
