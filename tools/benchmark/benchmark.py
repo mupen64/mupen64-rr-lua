@@ -16,18 +16,26 @@ import pathlib
 import subprocess
 import configparser
 import traceback
+import os
 
 MUPEN_PATH = "../../build/Views.Win32/mupen64-x86-sse2-release.exe"
 CONFIG_INI_PATH = "../../build/Views.Win32/config.ini"
 STANDARD_ARGS = [  '-g', "..\\roms\\m64p_test_rom.v64", '-m64', 'test_rom_benchmark.m64' ]
+BUILD_COMMAND = 'msbuild mupen64.sln /p:Configuration=Release /p:Platform=x86 /m /verbosity:quiet -nologo'
 FPS_PERCENTAGE_EPSILON = 1
-RUN_COUNT = 3
+WARMUP_RUN_COUNT = 3
+NORMAL_RUN_COUNT = 6
 
 # If left empty, HEAD~1 will be used.
 old_commit_hash = ""
 
 # If left empty, HEAD will be used.
 new_commit_hash = ""
+
+def build():
+    os.chdir("../../")
+    subprocess.run(BUILD_COMMAND, shell=True, check=True)
+    os.chdir("tools/benchmark")
 
 def fill_commit_hashes():
     global old_commit_hash, new_commit_hash
@@ -43,19 +51,16 @@ def run_mupen(name, additional_args):
 
     print(f"Running {' '.join(args)}")
     
-    # Warmup
-    subprocess.run(args, timeout=120)
-
     fps_sum = 0
 
-    for _ in range(RUN_COUNT):
+    for i in range(WARMUP_RUN_COUNT + NORMAL_RUN_COUNT):
         subprocess.run(args, timeout=120)
-        with open(benchmark_path) as f:
-            data = json.load(f)
-            fps_sum += data['fps']
+        if i > WARMUP_RUN_COUNT:
+            with open(benchmark_path) as f:
+                data = json.load(f)
+                fps_sum += data['fps']
     
-    print(fps_sum)
-    fps_avg = fps_sum / RUN_COUNT
+    fps_avg = fps_sum / NORMAL_RUN_COUNT
     
     return { 'fps': fps_avg } 
 
@@ -67,12 +72,15 @@ def run_benchmark_full(name, additional_args=[]):
 
     try:
         subprocess.run(['git', 'reset', '--hard', new_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        build()
         benchmark_new = run_mupen(new_commit_hash, additional_args)
 
         subprocess.run(['git', 'reset', '--hard', old_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        build()
         benchmark_old = run_mupen(old_commit_hash, additional_args)
 
         subprocess.run(['git', 'reset', '--hard', new_commit_hash], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        build()
     except Exception:
         traceback.print_exc()
         print("Error during benchmark. Stash will be popped.")
