@@ -39,13 +39,13 @@ jobs:
 
       - name: Build x86
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run:  msbuild mupen64.sln /p:Configuration=Debug /p:Platform=x86 /m
+        run:  msbuild mupen64.sln /p:Configuration=Release /p:Platform=x86 /m
 
-      - name: 'Upload x86 SSE2 Debug Artifact'
+      - name: 'Upload x86 SSE2 Release Artifact'
         uses: actions/upload-artifact@v4
         with:
           name: mupen-x86-sse2
-          path: build/Views.Win32/mupen64-x86-sse2-debug.exe
+          path: build/Views.Win32/mupen64-x86-sse2-release.exe
           retention-days: 14
   benchmark:
     needs: build
@@ -56,7 +56,7 @@ jobs:
         with: 
           fetch-depth: '2'
 
-      - name: Download x86 SSE2 Debug Artifact
+      - name: Download x86 SSE2 Release Artifact
         uses: actions/download-artifact@v4
         with:
           name: mupen-x86-sse2
