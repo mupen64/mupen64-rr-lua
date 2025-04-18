@@ -48,6 +48,7 @@ jobs:
           path: build/Views.Win32/mupen64-x86-sse2-release.exe
           retention-days: 14
   benchmark:
+    needs: build
     runs-on: windows-latest
 
     steps:
