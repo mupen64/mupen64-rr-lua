@@ -45,11 +45,11 @@ void Loggers::init()
     };
 #endif
 
-    g_core_logger = std::make_shared<spdlog::logger>("Core", sink_list);
-    g_view_logger = std::make_shared<spdlog::logger>("View", sink_list);
-    g_video_logger = std::make_shared<spdlog::logger>("Video", sink_list);
-    g_audio_logger = std::make_shared<spdlog::logger>("Audio", sink_list);
-    g_input_logger = std::make_shared<spdlog::logger>("Input", sink_list);
+    g_core_logger = std::make_shared<spdlog::logger>("COR", sink_list);
+    g_view_logger = std::make_shared<spdlog::logger>("VIW", sink_list);
+    g_video_logger = std::make_shared<spdlog::logger>("VID", sink_list);
+    g_audio_logger = std::make_shared<spdlog::logger>("AUD", sink_list);
+    g_input_logger = std::make_shared<spdlog::logger>("INP", sink_list);
     g_rsp_logger = std::make_shared<spdlog::logger>("RSP", sink_list);
 
     const auto LOGGERS = {
