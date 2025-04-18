@@ -60,11 +60,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: mupen-x86-sse2
-          path: ../build/Views.Win32/
+          path: build/Views.Win32/
 
       - name: Run x86 benchmark
         shell: powershell
-        run: cd ../tools/benchmark; python benchmark.py; cd ../../../;
+        run: cd tools/benchmark; python benchmark.py; cd ../../;
 
       - name: 'Upload mupen.log'
         uses: actions/upload-artifact@v4
