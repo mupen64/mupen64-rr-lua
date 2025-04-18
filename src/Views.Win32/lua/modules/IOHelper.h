@@ -13,13 +13,16 @@ namespace LuaCore::IOHelper
     // IO
     static int LuaFileDialog(lua_State* L)
     {
-        BetterEmulationLock lock;
+        auto lua = get_lua_class(L);
 
+        BetterEmulationLock lock;
+    
         auto filter = string_to_wstring(std::string(luaL_checkstring(L, 1)));
         const int32_t type = luaL_checkinteger(L, 2);
 
         std::wstring path;
 
+        EnableWindow(lua->hwnd, FALSE);
         if (type == 0)
         {
             path = show_persistent_open_dialog(L"o_lua_api", g_main_hwnd, filter);
@@ -28,7 +31,7 @@ namespace LuaCore::IOHelper
         {
             path = show_persistent_save_dialog(L"s_lua_api", g_main_hwnd, filter);
         }
-
+        EnableWindow(lua->hwnd, TRUE);
         lua_pushstring(L, wstring_to_string(path).c_str());
         return 1;
     }
