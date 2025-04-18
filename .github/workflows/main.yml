@@ -72,3 +72,11 @@ jobs:
           name: mupen-log
           path: tools/benchmark/mupen.log
           retention-days: 14
+
+      - name: 'Upload mupen.dmp'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mupen-dmp
+          path: tools/benchmark/mupen.dmp
+          retention-days: 14
+          
