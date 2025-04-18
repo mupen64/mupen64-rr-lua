@@ -126,6 +126,7 @@ def create_config():
         config.write(configfile)
 
 def main():
+    build()
     create_config()
     fill_commit_hashes()
 
