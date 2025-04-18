@@ -18,13 +18,11 @@ jobs:
           extensions: 'h,cpp'
           clangFormatVersion: 18.1.8
           style: file
-  main:
+  build:
     runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
-        with: 
-          fetch-depth: '2'
 
       - name: Set VERSION_SUFFIX
         shell: powershell
@@ -49,12 +47,19 @@ jobs:
           name: mupen-x86-sse2
           path: build/Views.Win32/mupen64-x86-sse2-release.exe
           retention-days: 14
+  benchmark:
+    runs-on: windows-latest
 
-#      - name: Download x86 SSE2 Release Artifact
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: mupen-x86-sse2
-#          path: ../build/Views.Win32/
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          fetch-depth: '2'
+
+      - name: Download x86 SSE2 Release Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mupen-x86-sse2
+          path: ../build/Views.Win32/
 
       - name: Run x86 benchmark
         shell: powershell
