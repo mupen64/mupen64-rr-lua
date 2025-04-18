@@ -2043,20 +2043,12 @@ void emu_thread()
 {
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    g_core->log_info(L"[CORE] 6");
-
     g_core->initiate_plugins();
 
-    g_core->log_info(L"[CORE] 7");
-    
     init_memory();
 
-    g_core->log_info(L"[CORE] 8");
-
     g_core->plugin_funcs.video_rom_open();
-    g_core->log_info(L"[CORE] 9");
     g_core->plugin_funcs.input_rom_open();
-    g_core->log_info(L"[CORE] 10");
     g_core->plugin_funcs.audio_rom_open();
 
     dynacore = g_core->cfg->core_type;
@@ -2068,7 +2060,6 @@ void emu_thread()
     g_core->callbacks.reset();
 
     g_core->log_info(std::format(L"[Core] Emu thread entry took {}ms", static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000)));
-    g_core->log_info(L"[CORE] 11");
     core_start();
 
     st_on_core_stop();
@@ -2146,8 +2137,6 @@ core_result vr_start_rom_impl(std::filesystem::path path)
         }
     }
 
-    g_core->log_info(L"[CORE] 1");
-    
     g_core->callbacks.emu_starting_changed(true);
 
     // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
@@ -2177,15 +2166,11 @@ core_result vr_start_rom_impl(std::filesystem::path path)
 
     rom_path = path;
 
-    g_core->log_info(L"[CORE] 2");
-
     if (!g_core->load_plugins())
     {
         g_core->callbacks.emu_starting_changed(false);
         return VR_PluginError;
     }
-
-    g_core->log_info(L"[CORE] 3");
 
     if (!rom_load(path.string().c_str()))
     {
@@ -2193,16 +2178,12 @@ core_result vr_start_rom_impl(std::filesystem::path path)
         return VR_RomInvalid;
     }
 
-    g_core->log_info(L"[CORE] 4");
-
     // Open all the save file streams
     if (!open_core_file_stream(get_eeprom_path(), &g_eeprom_file) || !open_core_file_stream(get_sram_path(), &g_sram_file) || !open_core_file_stream(get_flashram_path(), &g_fram_file) || !open_core_file_stream(get_mempak_path(), &g_mpak_file))
     {
         g_core->callbacks.emu_starting_changed(false);
         return VR_FileOpenFailed;
     }
-
-    g_core->log_info(L"[CORE] 5");
 
     core_vr_on_speed_modifier_changed();
 
