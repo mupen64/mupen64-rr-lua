@@ -86,18 +86,14 @@ namespace Cli
         {
             return;
         }
-
-        g_view_logger->trace("[CLI] start_lua entering dispatcher");
         
         g_main_window_dispatcher->invoke([] {
             // To run multiple lua scripts, a semicolon-separated list is provided
             std::wstringstream stream;
             std::wstring script;
             stream << commandline_lua.wstring();
-            g_view_logger->trace("[CLI] std::getline");
             while (std::getline(stream, script, L';'))
             {
-                g_view_logger->trace("[CLI] lua_create_and_run");
                 lua_create_and_run(script);
             }
         });

@@ -197,8 +197,6 @@ HWND lua_create()
 
 void lua_create_and_run(const std::wstring& path)
 {
-    g_view_logger->trace("lua_create_and_run enter");
-
     assert(is_on_gui_thread());
 
     g_view_logger->info("Creating lua window...");
