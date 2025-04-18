@@ -38,8 +38,7 @@ int rsmp_get_resample_len(const int dst_freq, const int src_freq, const int src_
     return dst_len;
 }
 
-int rsmp_resample(short** dst, const int dst_freq,
-                  const short* src, const int src_freq, const int src_bitrate, const int src_len)
+int rsmp_resample(short** dst, const int dst_freq, const short* src, const int src_freq, const int src_bitrate, const int src_len)
 {
     if (src_bitrate != 16)
     {

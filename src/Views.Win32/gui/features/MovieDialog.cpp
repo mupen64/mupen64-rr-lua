@@ -80,34 +80,28 @@ namespace MovieDialog
         return accumulator;
     }
 
-    LRESULT CALLBACK MovieInspectorProc(HWND hwnd, UINT Message, WPARAM wParam,
-                                        LPARAM lParam)
+    LRESULT CALLBACK MovieInspectorProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     {
         // List of dialog item IDs that shouldn't be interactable when in a specific mode
         const std::vector disabled_on_play = {
         IDC_RADIO_FROM_START,
-        IDC_RADIO_FROM_ST, IDC_RADIO_FROM_EEPROM, IDC_RADIO_FROM_EXISTING_ST};
+        IDC_RADIO_FROM_ST,
+        IDC_RADIO_FROM_EEPROM,
+        IDC_RADIO_FROM_EXISTING_ST};
         const std::vector disabled_on_record = {
-        IDC_PAUSE_AT_END, IDC_PAUSEAT_FIELD};
+        IDC_PAUSE_AT_END,
+        IDC_PAUSEAT_FIELD};
 
         switch (Message)
         {
         case WM_INITDIALOG:
             {
                 RECT grid_rect = get_window_rect_client_space(
-                hwnd, GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
+                hwnd,
+                GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
                 DestroyWindow(GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
 
-                grid_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                                           WS_TABSTOP | WS_VISIBLE | WS_CHILD |
-                                           LVS_SINGLESEL | LVS_REPORT |
-                                           LVS_SHOWSELALWAYS,
-                                           grid_rect.left, grid_rect.top,
-                                           grid_rect.right - grid_rect.left,
-                                           grid_rect.bottom - grid_rect.top,
-                                           hwnd, nullptr,
-                                           g_app_instance,
-                                           NULL);
+                grid_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL, WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, grid_rect.left, grid_rect.top, grid_rect.right - grid_rect.left, grid_rect.bottom - grid_rect.top, hwnd, nullptr, g_app_instance, NULL);
 
                 ListView_SetExtendedListViewStyle(grid_hwnd,
                                                   LVS_EX_GRIDLINES |
@@ -127,7 +121,8 @@ namespace MovieDialog
                 ListView_SetColumnWidth(grid_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
 
                 SetWindowText(
-                hwnd, is_readonly ? L"Play Movie" : L"Record Movie");
+                hwnd,
+                is_readonly ? L"Play Movie" : L"Record Movie");
                 for (auto id : is_readonly
                      ? disabled_on_play
                      : disabled_on_record)
@@ -136,13 +131,11 @@ namespace MovieDialog
                 }
                 SendMessage(GetDlgItem(hwnd, IDC_INI_DESCRIPTION),
                             EM_SETLIMITTEXT,
-                            sizeof(core_vcr_movie_header::description), 0);
-                SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT,
-                            sizeof(core_vcr_movie_header::author),
+                            sizeof(core_vcr_movie_header::description),
                             0);
+                SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::author), 0);
 
-                SetDlgItemText(hwnd, IDC_INI_AUTHOR,
-                               g_config.last_movie_author.c_str());
+                SetDlgItemText(hwnd, IDC_INI_AUTHOR, g_config.last_movie_author.c_str());
                 SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, L"");
 
                 SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, record_params.path.wstring().c_str());
@@ -178,8 +171,7 @@ namespace MovieDialog
             case IDOK:
                 {
                     wchar_t text[MAX_PATH] = {0};
-                    GetDlgItemText(hwnd, IDC_PAUSEAT_FIELD, text,
-                                   std::size(text));
+                    GetDlgItemText(hwnd, IDC_PAUSEAT_FIELD, text, std::size(text));
                     if (lstrlenW(text) == 0)
                     {
                         record_params.pause_at = -1;
@@ -189,7 +181,8 @@ namespace MovieDialog
                         record_params.pause_at = std::wcstoul(text, nullptr, 10);
                     }
                     record_params.pause_at_last = IsDlgButtonChecked(
-                    hwnd, IDC_PAUSE_AT_END);
+                    hwnd,
+                    IDC_PAUSE_AT_END);
 
                     g_config.last_movie_type = record_params.start_flag;
 
@@ -249,12 +242,16 @@ namespace MovieDialog
                     if (is_readonly)
                     {
                         path = show_persistent_open_dialog(
-                        L"o_movie", hwnd, L"*.m64;*.rec");
+                        L"o_movie",
+                        hwnd,
+                        L"*.m64;*.rec");
                     }
                     else
                     {
                         path = show_persistent_save_dialog(
-                        L"s_movie", hwnd, L"*.m64;*.rec");
+                        L"s_movie",
+                        hwnd,
+                        L"*.m64;*.rec");
                     }
 
                     if (path.empty())
@@ -392,18 +389,10 @@ namespace MovieDialog
         SetDlgItemText(hwnd, IDC_INI_AUTHOR, string_to_wstring(header.author).c_str());
         SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, string_to_wstring(header.description).c_str());
 
-        CheckDlgButton(hwnd, IDC_RADIO_FROM_ST,
-                       header.startFlags ==
-                       MOVIE_START_FROM_SNAPSHOT);
-        CheckDlgButton(hwnd, IDC_RADIO_FROM_EXISTING_ST,
-                       header.startFlags ==
-                       MOVIE_START_FROM_EXISTING_SNAPSHOT);
-        CheckDlgButton(hwnd, IDC_RADIO_FROM_START,
-                       header.startFlags ==
-                       MOVIE_START_FROM_NOTHING);
-        CheckDlgButton(hwnd, IDC_RADIO_FROM_EEPROM,
-                       header.startFlags ==
-                       MOVIE_START_FROM_EEPROM);
+        CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.startFlags == MOVIE_START_FROM_SNAPSHOT);
+        CheckDlgButton(hwnd, IDC_RADIO_FROM_EXISTING_ST, header.startFlags == MOVIE_START_FROM_EXISTING_SNAPSHOT);
+        CheckDlgButton(hwnd, IDC_RADIO_FROM_START, header.startFlags == MOVIE_START_FROM_NOTHING);
+        CheckDlgButton(hwnd, IDC_RADIO_FROM_EEPROM, header.startFlags == MOVIE_START_FROM_EEPROM);
 
         LVITEM lv_item = {0};
         lv_item.mask = LVIF_TEXT | LVIF_DI_SETITEM;
@@ -436,7 +425,8 @@ namespace MovieDialog
         g_is_closing = false;
 
         DialogBox(g_app_instance,
-                  MAKEINTRESOURCE(IDD_MOVIE_PLAYBACK_DIALOG), g_main_hwnd,
+                  MAKEINTRESOURCE(IDD_MOVIE_PLAYBACK_DIALOG),
+                  g_main_hwnd,
                   (DLGPROC)MovieInspectorProc);
 
         return record_params;

@@ -52,8 +52,7 @@ namespace MGECompositor
                 GetClientRect(hwnd, &rect);
                 if (vbuf->dib)
                 {
-                    BitBlt(hdc, 0, 0, vbuf->bmp_info.bmiHeader.biWidth,
-                           vbuf->bmp_info.bmiHeader.biHeight, vbuf->dc, 0, 0, SRCCOPY);
+                    BitBlt(hdc, 0, 0, vbuf->bmp_info.bmiHeader.biWidth, vbuf->bmp_info.bmiHeader.biHeight, vbuf->dc, 0, 0, SRCCOPY);
                 }
                 else
                 {
@@ -62,7 +61,8 @@ namespace MGECompositor
                                   rect.left,
                                   rect.right,
                                   rect.bottom,
-                                  0, 0,
+                                  0,
+                                  0,
                                   vbuf->bmp_info.bmiHeader.biWidth,
                                   vbuf->bmp_info.bmiHeader.biHeight,
                                   vbuf->buffer,

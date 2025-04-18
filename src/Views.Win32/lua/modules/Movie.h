@@ -16,7 +16,9 @@ namespace LuaCore::Movie
         const char* fname = lua_tostring(L, 1);
         g_config.core.vcr_readonly = true;
         Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-        AsyncExecutor::invoke_async([=] { core_vcr_start_playback(fname); });
+        AsyncExecutor::invoke_async([=] {
+            core_vcr_start_playback(fname);
+        });
         return 0;
     }
 

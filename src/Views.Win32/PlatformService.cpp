@@ -41,8 +41,7 @@ void (*PlatformService::get_free_function_in_module(void* module))(void*)
 
     ULONG size;
     auto import_descriptor = (PIMAGE_IMPORT_DESCRIPTOR)
-    ImageDirectoryEntryToDataEx(module, true, IMAGE_DIRECTORY_ENTRY_IMPORT,
-                                &size, nullptr);
+    ImageDirectoryEntryToDataEx(module, true, IMAGE_DIRECTORY_ENTRY_IMPORT, &size, nullptr);
     if (import_descriptor != nullptr)
     {
         while (import_descriptor->Characteristics && import_descriptor->Name)
@@ -52,7 +51,8 @@ void (*PlatformService::get_free_function_in_module(void* module))(void*)
             if (importDllHandle != nullptr)
             {
                 dll_crt_free = (DLLCRTFREE)GetProcAddress(
-                importDllHandle, "free");
+                importDllHandle,
+                "free");
                 if (dll_crt_free != nullptr)
                     return dll_crt_free;
             }

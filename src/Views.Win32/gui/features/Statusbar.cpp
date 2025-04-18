@@ -244,12 +244,7 @@ namespace Statusbar
     void create()
     {
         // undocumented behaviour of CCS_BOTTOM: it skips applying SBARS_SIZEGRIP in style pre-computation phase
-        statusbar_hwnd = CreateWindowEx(0, STATUSCLASSNAME, nullptr,
-                                        WS_CHILD | WS_VISIBLE | CCS_BOTTOM,
-                                        0, 0,
-                                        0, 0,
-                                        g_main_hwnd, (HMENU)IDC_MAIN_STATUS,
-                                        g_app_instance, nullptr);
+        statusbar_hwnd = CreateWindowEx(0, STATUSCLASSNAME, nullptr, WS_CHILD | WS_VISIBLE | CCS_BOTTOM, 0, 0, 0, 0, g_main_hwnd, (HMENU)IDC_MAIN_STATUS, g_app_instance, nullptr);
     }
 
 

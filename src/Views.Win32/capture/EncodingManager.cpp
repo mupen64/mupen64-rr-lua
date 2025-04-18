@@ -112,8 +112,7 @@ namespace EncodingManager
 
             SelectObject(compat_dc, bitmap);
 
-            BitBlt(compat_dc, 0, 0, m_video_width, m_video_height, dc, pt.x,
-                   pt.y, SRCCOPY);
+            BitBlt(compat_dc, 0, 0, m_video_width, m_video_height, dc, pt.x, pt.y, SRCCOPY);
 
             BITMAPINFO bmp_info{};
             bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -170,7 +169,8 @@ namespace EncodingManager
                               0,
                               raw_video_width,
                               raw_video_height,
-                              0, 0,
+                              0,
+                              0,
                               raw_video_width,
                               raw_video_height,
                               m_video_buf,
@@ -191,8 +191,7 @@ namespace EncodingManager
             // Then, blit the GDI back DCs
             for (auto& lua : g_lua_environments)
             {
-                TransparentBlt(hy_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, lua->gdi_back_dc, 0, 0,
-                               lua->dc_size.width, lua->dc_size.height, LUA_GDI_COLOR_MASK);
+                TransparentBlt(hy_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, lua->gdi_back_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, LUA_GDI_COLOR_MASK);
             }
 
             BITMAPINFO bmp_info{};
@@ -430,7 +429,8 @@ namespace EncodingManager
 
         DialogService::show_dialog(
         L"Failed to append frame to video.\nPerhaps you ran out of memory?",
-        L"Capture", fsvc_error);
+        L"Capture",
+        fsvc_error);
         stop_capture();
     }
 
@@ -456,7 +456,8 @@ namespace EncodingManager
         {
             DialogService::show_dialog(
             L"Failed to append audio data.\nCapture will be stopped.",
-            L"Capture", fsvc_error);
+            L"Capture",
+            fsvc_error);
             stop_capture();
         }
     }

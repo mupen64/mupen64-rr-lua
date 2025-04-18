@@ -181,15 +181,11 @@ bool show_crash_dialog(bool continuable)
     int result = 0;
     if (continuable)
     {
-        TaskDialog(g_main_hwnd, g_app_instance, L"Error",
-                   L"An error has occured", L"Crash dumps have been automatically generated. You can choose to continue program execution.",
-                   TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON, TD_ERROR_ICON, &result);
+        TaskDialog(g_main_hwnd, g_app_instance, L"Error", L"An error has occured", L"Crash dumps have been automatically generated. You can choose to continue program execution.", TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON, TD_ERROR_ICON, &result);
     }
     else
     {
-        TaskDialog(g_main_hwnd, g_app_instance, L"Error",
-                   L"An error has occured", L"Crash dumps have been automatically generated. The program will now exit.", TDCBF_CLOSE_BUTTON, TD_ERROR_ICON,
-                   &result);
+        TaskDialog(g_main_hwnd, g_app_instance, L"Error", L"An error has occured", L"Crash dumps have been automatically generated. The program will now exit.", TDCBF_CLOSE_BUTTON, TD_ERROR_ICON, &result);
     }
 
     return result == IDCLOSE;
@@ -249,7 +245,8 @@ static void enable_crashing_on_crashes()
     BOOL insanity = FALSE;
     SetUserObjectInformationA(GetCurrentProcess(),
                               UOI_TIMERPROC_EXCEPTION_SUPPRESSION,
-                              &insanity, sizeof(insanity));
+                              &insanity,
+                              sizeof(insanity));
 }
 
 void CrashManager::init()

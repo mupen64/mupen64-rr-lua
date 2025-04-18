@@ -24,7 +24,9 @@ void async_executor_thread()
         std::function<void()> task;
         {
             std::unique_lock lock(g_queue_mutex);
-            g_task_cv.wait(lock, [] { return g_async_stop || !g_task_queue.empty(); });
+            g_task_cv.wait(lock, [] {
+                return g_async_stop || !g_task_queue.empty();
+            });
 
             if (g_async_stop && g_task_queue.empty())
                 return;

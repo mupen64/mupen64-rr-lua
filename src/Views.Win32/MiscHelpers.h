@@ -57,17 +57,12 @@ static RECT get_window_rect_client_space(HWND parent, HWND child)
     offset_client.left + (client.right - client.left),
     offset_client.top + (client.bottom - client.top)};
 }
-static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory2** factory, IDXGIAdapter1** dxgiadapter, ID3D11Device** d3device,
-                                       IDXGIDevice1** dxdevice, ID2D1Bitmap1** bitmap, IDCompositionVisual** comp_visual, IDCompositionDevice** comp_device,
-                                       IDCompositionTarget** comp_target, IDXGISwapChain1** swapchain, ID2D1Factory3** d2d_factory, ID2D1Device2** d2d_device,
-                                       ID3D11DeviceContext** d3d_dc, ID2D1DeviceContext2** d2d_dc, IDXGISurface1** dxgi_surface,
-                                       ID3D11Resource** dxgi_surface_resource, ID3D11Resource** front_buffer, ID3D11Texture2D** d3d_gdi_tex)
+static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory2** factory, IDXGIAdapter1** dxgiadapter, ID3D11Device** d3device, IDXGIDevice1** dxdevice, ID2D1Bitmap1** bitmap, IDCompositionVisual** comp_visual, IDCompositionDevice** comp_device, IDCompositionTarget** comp_target, IDXGISwapChain1** swapchain, ID2D1Factory3** d2d_factory, ID2D1Device2** d2d_device, ID3D11DeviceContext** d3d_dc, ID2D1DeviceContext2** d2d_dc, IDXGISurface1** dxgi_surface, ID3D11Resource** dxgi_surface_resource, ID3D11Resource** front_buffer, ID3D11Texture2D** d3d_gdi_tex)
 {
     CreateDXGIFactory2(0, IID_PPV_ARGS(factory));
     (*factory)->EnumAdapters1(0, dxgiadapter);
 
-    D3D11CreateDevice(*dxgiadapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0,
-                      D3D11_SDK_VERSION, d3device, nullptr, d3d_dc);
+    D3D11CreateDevice(*dxgiadapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0, D3D11_SDK_VERSION, d3device, nullptr, d3d_dc);
 
     (*d3device)->QueryInterface(dxdevice);
     (*dxdevice)->SetMaximumFrameLatency(1);
@@ -112,7 +107,8 @@ static bool create_composition_surface(HWND hwnd, D2D1_SIZE_U size, IDXGIFactory
     const D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(
     D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
     D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
-    dpi, dpi);
+    dpi,
+    dpi);
 
     (*d2d_dc)->CreateBitmapFromDxgiSurface(*dxgi_surface, props, bitmap);
     (*d2d_dc)->SetTarget(*bitmap);
@@ -132,19 +128,12 @@ static void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
         accumulator += parts[i];
         new_parts[i] = accumulator;
     }
-    SendMessage(hwnd, SB_SETPARTS,
-                new_parts.size(),
-                (LPARAM)new_parts.data());
+    SendMessage(hwnd, SB_SETPARTS, new_parts.size(), (LPARAM)new_parts.data());
 }
 
 static HWND create_tooltip(HWND hwnd, int id, std::wstring text)
 {
-    HWND hwnd_tip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
-                                   WS_POPUP | TTS_NOPREFIX,
-                                   CW_USEDEFAULT, CW_USEDEFAULT,
-                                   CW_USEDEFAULT, CW_USEDEFAULT,
-                                   hwnd, NULL,
-                                   GetModuleHandle(0), NULL);
+    HWND hwnd_tip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_NOPREFIX, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hwnd, NULL, GetModuleHandle(0), NULL);
 
     TOOLINFO info = {0};
     info.cbSize = sizeof(info);

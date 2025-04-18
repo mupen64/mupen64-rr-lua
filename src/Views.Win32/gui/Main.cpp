@@ -313,8 +313,7 @@ void set_hotkey_menu_accelerators(cfg_hotkey* hotkey, int menu_item_id)
     set_menu_accelerator(menu_item_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
 }
 
-void SetDlgItemHotkeyAndMenu(HWND hwnd, int idc, cfg_hotkey* hotkey,
-                             int menuItemID)
+void SetDlgItemHotkeyAndMenu(HWND hwnd, int idc, cfg_hotkey* hotkey, int menuItemID)
 {
     const auto hotkey_str = hotkey_to_string(hotkey);
     SetDlgItemText(hwnd, idc, hotkey_str.c_str());
@@ -409,11 +408,7 @@ const wchar_t* get_status_text()
         }
         else
         {
-            wsprintfW(text, L"%d / %d (%d / %d) ",
-                      current_vi,
-                      core_vcr_get_length_vis(),
-                      current_sample - index_adjustment,
-                      core_vcr_get_length_samples());
+            wsprintfW(text, L"%d / %d (%d / %d) ", current_vi, core_vcr_get_length_vis(), current_sample - index_adjustment, core_vcr_get_length_samples());
         }
     }
 
@@ -612,9 +607,7 @@ void on_emu_launched_changed(std::any data)
             for (const HWND hwnd : g_previously_running_luas)
             {
                 // click start button
-                SendMessage(hwnd, WM_COMMAND,
-                            MAKEWPARAM(IDC_BUTTON_LUASTATE, BN_CLICKED),
-                            (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTATE));
+                SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTATE, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTATE));
             }
 
             g_previously_running_luas.clear();
@@ -1377,8 +1370,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    auto result = MessageBox(g_main_hwnd, L"Should the trace log be generated in a binary format?", L"Trace Logger",
-                                             MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+                    auto result = MessageBox(g_main_hwnd, L"Should the trace log be generated in a binary format?", L"Trace Logger", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
 
                     core_tl_start(path, result == IDYES, false);
                     ModifyMenu(g_main_menu, IDM_TRACELOG, MF_BYCOMMAND | MF_STRING, IDM_TRACELOG, L"Stop &Trace Logger");
@@ -1559,7 +1551,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     wchar_t stroop_c[1024] = {0};
                     wsprintfW(stroop_c,
                               L"<Emulator name=\"Mupen 5.0 RR\" processName=\"%s\" ramStart=\"%s\" endianness=\"little\" autoDetect=\"true\"/>",
-                              proc_name, ram_start);
+                              proc_name,
+                              ram_start);
 
                     const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
 
@@ -1581,8 +1574,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 {
                     BetterEmulationLock lock;
 
-                    auto str = std::format(L"Total playtime: {}\r\nTotal rerecords: {}", format_duration(g_config.core.total_frames / 30),
-                                           g_config.core.total_rerecords);
+                    auto str = std::format(L"Total playtime: {}\r\nTotal rerecords: {}", format_duration(g_config.core.total_frames / 30), g_config.core.total_rerecords);
 
                     MessageBoxW(g_main_hwnd,
                                 str.c_str(),
@@ -1660,8 +1652,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 {
                     BetterEmulationLock lock;
 
-                    auto path = show_persistent_open_dialog(L"o_state", hwnd,
-                                                            L"*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
+                    auto path = show_persistent_open_dialog(L"o_state", hwnd, L"*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
                     if (path.empty())
                     {
                         break;
@@ -1690,18 +1681,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         }
 
                         core_st_do_memory(buf, core_st_job_load, [](const core_result result, auto) {
-							if (result == Res_Ok)
-							{
-								Statusbar::post(L"Undid load");
-								return;
-							}
+                            if (result == Res_Ok)
+                            {
+                                Statusbar::post(L"Undid load");
+                                return;
+                            }
 
-							if (result == Res_Cancelled)
-							{
-								return;
-							}
+                            if (result == Res_Cancelled)
+                            {
+                                return;
+                            }
 
-							Statusbar::post(L"Failed to undo load"); }, false);
+                            Statusbar::post(L"Failed to undo load");
+                        },
+                                          false);
                     });
                 }
                 break;
@@ -2004,13 +1997,21 @@ bool load_plugins()
 void initiate_plugins()
 {
     // HACK: We sleep between each plugin load, as that seems to remedy various plugins failing to initialize correctly.
-    auto gfx_plugin_thread = std::thread([] { g_video_plugin->initiate(); });
+    auto gfx_plugin_thread = std::thread([] {
+        g_video_plugin->initiate();
+    });
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    auto audio_plugin_thread = std::thread([] { g_audio_plugin->initiate(); });
+    auto audio_plugin_thread = std::thread([] {
+        g_audio_plugin->initiate();
+    });
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    auto input_plugin_thread = std::thread([] { g_input_plugin->initiate(); });
+    auto input_plugin_thread = std::thread([] {
+        g_input_plugin->initiate();
+    });
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    auto rsp_plugin_thread = std::thread([] { g_rsp_plugin->initiate(); });
+    auto rsp_plugin_thread = std::thread([] {
+        g_rsp_plugin->initiate();
+    });
 
     gfx_plugin_thread.join();
     audio_plugin_thread.join();
@@ -2071,34 +2072,66 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 
 static core_plugin_extended_funcs video_extended_funcs = {
 .size = sizeof(core_plugin_extended_funcs),
-.log_trace = [](const wchar_t* str) { g_video_logger->trace(str); },
-.log_info = [](const wchar_t* str) { g_video_logger->info(str); },
-.log_warn = [](const wchar_t* str) { g_video_logger->warn(str); },
-.log_error = [](const wchar_t* str) { g_video_logger->error(str); },
+.log_trace = [](const wchar_t* str) {
+    g_video_logger->trace(str);
+},
+.log_info = [](const wchar_t* str) {
+    g_video_logger->info(str);
+},
+.log_warn = [](const wchar_t* str) {
+    g_video_logger->warn(str);
+},
+.log_error = [](const wchar_t* str) {
+    g_video_logger->error(str);
+},
 };
 
 static core_plugin_extended_funcs audio_extended_funcs = {
 .size = sizeof(core_plugin_extended_funcs),
-.log_trace = [](const wchar_t* str) { g_audio_logger->trace(str); },
-.log_info = [](const wchar_t* str) { g_audio_logger->info(str); },
-.log_warn = [](const wchar_t* str) { g_audio_logger->warn(str); },
-.log_error = [](const wchar_t* str) { g_audio_logger->error(str); },
+.log_trace = [](const wchar_t* str) {
+    g_audio_logger->trace(str);
+},
+.log_info = [](const wchar_t* str) {
+    g_audio_logger->info(str);
+},
+.log_warn = [](const wchar_t* str) {
+    g_audio_logger->warn(str);
+},
+.log_error = [](const wchar_t* str) {
+    g_audio_logger->error(str);
+},
 };
 
 static core_plugin_extended_funcs input_extended_funcs = {
 .size = sizeof(core_plugin_extended_funcs),
-.log_trace = [](const wchar_t* str) { g_input_logger->trace(str); },
-.log_info = [](const wchar_t* str) { g_input_logger->info(str); },
-.log_warn = [](const wchar_t* str) { g_input_logger->warn(str); },
-.log_error = [](const wchar_t* str) { g_input_logger->error(str); },
+.log_trace = [](const wchar_t* str) {
+    g_input_logger->trace(str);
+},
+.log_info = [](const wchar_t* str) {
+    g_input_logger->info(str);
+},
+.log_warn = [](const wchar_t* str) {
+    g_input_logger->warn(str);
+},
+.log_error = [](const wchar_t* str) {
+    g_input_logger->error(str);
+},
 };
 
 static core_plugin_extended_funcs rsp_extended_funcs = {
 .size = sizeof(core_plugin_extended_funcs),
-.log_trace = [](const wchar_t* str) { g_rsp_logger->trace(str); },
-.log_info = [](const wchar_t* str) { g_rsp_logger->info(str); },
-.log_warn = [](const wchar_t* str) { g_rsp_logger->warn(str); },
-.log_error = [](const wchar_t* str) { g_rsp_logger->error(str); },
+.log_trace = [](const wchar_t* str) {
+    g_rsp_logger->trace(str);
+},
+.log_info = [](const wchar_t* str) {
+    g_rsp_logger->info(str);
+},
+.log_warn = [](const wchar_t* str) {
+    g_rsp_logger->warn(str);
+},
+.log_error = [](const wchar_t* str) {
+    g_rsp_logger->error(str);
+},
 };
 
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
@@ -2324,9 +2357,14 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     WND_CLASS,
     get_mupen_name().c_str(),
     WS_OVERLAPPEDWINDOW | WS_EX_COMPOSITED,
-    g_config.window_x, g_config.window_y, g_config.window_width,
+    g_config.window_x,
+    g_config.window_y,
+    g_config.window_width,
     g_config.window_height,
-    NULL, NULL, hInstance, NULL);
+    NULL,
+    NULL,
+    hInstance,
+    NULL);
 
     setup_dummy_info();
 

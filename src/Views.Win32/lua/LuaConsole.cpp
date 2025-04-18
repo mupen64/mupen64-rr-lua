@@ -356,7 +356,7 @@ void lua_init()
     wndclass.lpfnWndProc = (WNDPROC)gdi_overlay_wndproc;
     wndclass.lpszClassName = GDI_OVERLAY_CLASS;
     RegisterClass(&wndclass);
-    
+
     mupen_api_lua_code = get_string_by_resource_id(IDR_API_LUA_FILE);
     inspect_lua_code = get_string_by_resource_id(IDR_INSPECT_LUA_FILE);
 }

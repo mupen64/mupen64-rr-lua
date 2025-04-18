@@ -316,8 +316,7 @@ namespace LuaCore::Input
         return 1;
     }
 
-    static INT_PTR CALLBACK InputPromptProc(HWND wnd, UINT msg, WPARAM wParam,
-                                            LPARAM lParam)
+    static INT_PTR CALLBACK InputPromptProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         static lua_State* L;
         switch (msg)
@@ -371,8 +370,10 @@ namespace LuaCore::Input
     static int InputPrompt(lua_State* L)
     {
         DialogBoxParam(g_app_instance,
-                       MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), g_main_hwnd,
-                       InputPromptProc, (LPARAM)L);
+                       MAKEINTRESOURCE(IDD_LUAINPUTPROMPT),
+                       g_main_hwnd,
+                       InputPromptProc,
+                       (LPARAM)L);
         return 1;
     }
 } // namespace LuaCore::Input

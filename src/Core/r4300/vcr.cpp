@@ -255,8 +255,7 @@ static core_result read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_he
                 break;
         if (i != 56 + 64)
         {
-            memmove(new_header.video_plugin_name, new_header.reserved_bytes + i,
-                    256);
+            memmove(new_header.video_plugin_name, new_header.reserved_bytes + i, 256);
         }
         else
         {
@@ -264,8 +263,7 @@ static core_result read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_he
                 if (IS_ALPHA(new_header.reserved_bytes[i]) && IS_ALPHA(new_header.reserved_bytes[i + 64]) && IS_ALPHA(new_header.reserved_bytes[i + 64 + 64]))
                     break;
             if (i != 56 + 64)
-                memmove(new_header.audio_plugin_name, new_header.reserved_bytes + i,
-                        256 - 64);
+                memmove(new_header.audio_plugin_name, new_header.reserved_bytes + i, 256 - 64);
             else
             {
                 for (i = 0; i < 56 + 64; i++)
@@ -273,7 +271,8 @@ static core_result read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_he
                         break;
                 if (i != 56 + 64)
                     memmove(new_header.input_plugin_name,
-                            new_header.reserved_bytes + i, 256 - 64 - 64);
+                            new_header.reserved_bytes + i,
+                            256 - 64 - 64);
                 else
                 {
                     for (i = 0; i < 56 + 64; i++)
@@ -553,7 +552,9 @@ void vcr_create_n_frame_savestate(size_t frame)
 
         g_core->log_info(std::format(L"[VCR] Seek savestate at frame {} of size {} completed", frame, buf.size()));
         g_seek_savestates[frame] = buf;
-        g_core->callbacks.seek_savestate_changed((size_t)frame); }, false);
+        g_core->callbacks.seek_savestate_changed((size_t)frame);
+    },
+                      false);
 }
 
 void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
@@ -1323,7 +1324,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
 
                 if (result != Res_Ok)
                 {
-                	g_core->show_dialog(L"Failed to load savestate while starting playback.\nRecording will be stopped.", L"VCR", fsvc_error);
+                    g_core->show_dialog(L"Failed to load savestate while starting playback.\nRecording will be stopped.", L"VCR", fsvc_error);
                     core_vcr_stop_all();
                     return;
                 }
@@ -1332,7 +1333,9 @@ core_result core_vcr_start_playback(std::filesystem::path path)
                 g_task = task_playback;
                 g_core->callbacks.task_changed(g_task);
                 g_core->callbacks.current_sample_changed(m_current_sample);
-                g_core->callbacks.rerecords_changed(get_rerecord_count()); }, true);
+                g_core->callbacks.rerecords_changed(get_rerecord_count());
+            },
+                            true);
         });
     }
     else
@@ -1486,13 +1489,15 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
                 core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](core_result result, auto buf) {
                     if (result != Res_Ok)
                     {
-                    	g_core->show_dialog(L"Failed to load seek savestate for seek operation.", L"VCR", fsvc_error);
+                        g_core->show_dialog(L"Failed to load seek savestate for seek operation.", L"VCR", fsvc_error);
                         g_seek_savestate_loading = false;
                         core_vcr_stop_seek();
                     }
 
                     g_core->log_info(std::format(L"[VCR] Seek savestate at frame {} loaded!", closest_key));
-                    g_seek_savestate_loading = false; }, false);
+                    g_seek_savestate_loading = false;
+                },
+                                  false);
             });
 
             return Res_Ok;
@@ -1551,13 +1556,15 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
             core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](core_result result, auto buf) {
                 if (result != Res_Ok)
                 {
-                	g_core->show_dialog(L"Failed to load seek savestate for seek operation.", L"VCR", fsvc_error);
+                    g_core->show_dialog(L"Failed to load seek savestate for seek operation.", L"VCR", fsvc_error);
                     g_seek_savestate_loading = false;
                     core_vcr_stop_seek();
                 }
 
                 g_core->log_info(std::format(L"[VCR] Seek savestate at frame {} loaded!", closest_key));
-                g_seek_savestate_loading = false; }, false);
+                g_seek_savestate_loading = false;
+            },
+                              false);
         });
 
         return Res_Ok;

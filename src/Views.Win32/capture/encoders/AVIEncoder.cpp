@@ -246,13 +246,10 @@ bool AVIEncoder::append_audio(uint8_t* audio, size_t length, uint8_t bitrate)
 
             while (len3 > write_size)
             {
-                write_sound(m_sound_buf_empty, write_size, m_params.arate,
-                            write_size,
-                            FALSE, bitrate);
+                write_sound(m_sound_buf_empty, write_size, m_params.arate, write_size, FALSE, bitrate);
                 len3 -= write_size;
             }
-            write_sound(m_sound_buf_empty, len3, m_params.arate, write_size,
-                        FALSE, bitrate);
+            write_sound(m_sound_buf_empty, len3, m_params.arate, write_size, FALSE, bitrate);
         }
         else if (desync <= -10.0)
         {
@@ -335,9 +332,7 @@ bool AVIEncoder::write_sound(uint8_t* buf, int len, const int min_write_size, co
 bool AVIEncoder::append_video_impl(uint8_t* image)
 {
     LONG written_len;
-    BOOL ret = AVIStreamWrite(m_compressed_video_stream, m_frame++, 1, image,
-                              m_info_hdr.biSizeImage, AVIIF_KEYFRAME, NULL,
-                              &written_len);
+    BOOL ret = AVIStreamWrite(m_compressed_video_stream, m_frame++, 1, image, m_info_hdr.biSizeImage, AVIIF_KEYFRAME, NULL, &written_len);
     m_avi_file_size += written_len;
     return !ret;
 }

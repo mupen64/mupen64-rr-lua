@@ -330,7 +330,10 @@ INST_UNDEF,
 };
 static INST Bc0Instruction[1 << 2] = {
 // ‘S•”•s–¾‚¾‚©‚çUNDEF‚É‚µ‚Æ‚­
-INST_UNDEF, INST_UNDEF, INST_UNDEF, INST_UNDEF};
+INST_UNDEF,
+INST_UNDEF,
+INST_UNDEF,
+INST_UNDEF};
 static INST TlbInstruction[1 << 6] = {
 INST_UNDEF,
 INST_TLBR,
@@ -1280,11 +1283,29 @@ static void cfType(uint32_t w, INSTOPERAND* f)
 
 const INSTFTYPE InstFormatType[INSTF_COUNT] = {
 INSTFTYPE_NONE,
-INSTFTYPE_I, INSTFTYPE_I, INSTFTYPE_I, INSTFTYPE_I, INSTFTYPE_I, INSTFTYPE_I, INSTFTYPE_I, INSTFTYPE_I, INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
+INSTFTYPE_I,
 INSTFTYPE_J,
-INSTFTYPE_R, INSTFTYPE_R, INSTFTYPE_R, INSTFTYPE_R, INSTFTYPE_R, INSTFTYPE_R, INSTFTYPE_R, INSTFTYPE_R,
-INSTFTYPE_LF, INSTFTYPE_LF,
-INSTFTYPE_CF, INSTFTYPE_CF, INSTFTYPE_CF};
+INSTFTYPE_R,
+INSTFTYPE_R,
+INSTFTYPE_R,
+INSTFTYPE_R,
+INSTFTYPE_R,
+INSTFTYPE_R,
+INSTFTYPE_R,
+INSTFTYPE_R,
+INSTFTYPE_LF,
+INSTFTYPE_LF,
+INSTFTYPE_CF,
+INSTFTYPE_CF,
+INSTFTYPE_CF};
 void (*InstFormatTypeFunc[INSTFTYPE_COUNT])(uint32_t, INSTOPERAND*) = {
 noneType, iType, jType, rType, lfType, cfType};
 
@@ -1346,14 +1367,7 @@ const char* const CPURegisterName[32] = {
 "ra",
 };
 const char* const COP0RegisterName[32] = {
-"index", "random", "entrylo0", "entrylo1",
-"context", "pagemask", "wired", "reserved07",
-"badvaddr", "count", "entryhi", "compare",
-"status", "cause", "epc", "previd",
-"config", "lladdr", "watchlo", "watchhi",
-"xcontext", "reserved21", "reserved22", "reserved23",
-"reserved24", "reserved25", "perr", "cacheerr",
-"taglo", "taghi", "errorepc", "reserved1f"};
+"index", "random", "entrylo0", "entrylo1", "context", "pagemask", "wired", "reserved07", "badvaddr", "count", "entryhi", "compare", "status", "cause", "epc", "previd", "config", "lladdr", "watchlo", "watchhi", "xcontext", "reserved21", "reserved22", "reserved23", "reserved24", "reserved25", "perr", "cacheerr", "taglo", "taghi", "errorepc", "reserved1f"};
 
 static char* sfmt(char* b, const char* f, ...)
 {

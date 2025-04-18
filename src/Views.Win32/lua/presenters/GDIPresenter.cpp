@@ -84,8 +84,7 @@ void GDIPresenter::end_present()
 
 void GDIPresenter::blit(HDC hdc, RECT rect)
 {
-    TransparentBlt(hdc, 0, 0, m_size.width, m_size.height, m_gdi_back_dc, 0, 0,
-                   m_size.width, m_size.height, LUA_GDI_COLOR_MASK);
+    TransparentBlt(hdc, 0, 0, m_size.width, m_size.height, m_gdi_back_dc, 0, 0, m_size.width, m_size.height, LUA_GDI_COLOR_MASK);
 }
 
 D2D1::ColorF GDIPresenter::adjust_clear_color(const D2D1::ColorF color) const

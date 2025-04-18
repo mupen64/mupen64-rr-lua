@@ -1502,12 +1502,14 @@ void NOTCOMPILED()
                 // g_core->log_info(L"not compiled rom:{:#06x}", paddr);
                 recompile_block(
                 (int32_t*)rom + ((((paddr - (PC->addr - blocks[PC->addr >> 12]->start)) & 0x1FFFFFFF) - 0x10000000) >> 2),
-                blocks[PC->addr >> 12], PC->addr);
+                blocks[PC->addr >> 12],
+                PC->addr);
             }
             else
                 recompile_block(
                 (int32_t*)(rdram + (((paddr - (PC->addr - blocks[PC->addr >> 12]->start)) & 0x1FFFFFFF) >> 2)),
-                blocks[PC->addr >> 12], PC->addr);
+                blocks[PC->addr >> 12],
+                PC->addr);
         }
         else
             g_core->log_info(L"not compiled exception");

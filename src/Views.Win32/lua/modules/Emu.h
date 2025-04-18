@@ -127,7 +127,8 @@ namespace LuaCore::Emu
     {
         LuaEnvironment* lua = get_lua_class(L);
         lua_pushboolean(
-        L, GetForegroundWindow() == g_main_hwnd || GetActiveWindow() == g_main_hwnd);
+        L,
+        GetForegroundWindow() == g_main_hwnd || GetActiveWindow() == g_main_hwnd);
         return 1;
     }
 

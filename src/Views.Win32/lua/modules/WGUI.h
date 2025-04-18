@@ -169,10 +169,7 @@ namespace LuaCore::Wgui
         wndRect.right -= wndRect.left;
         int w = luaL_checkinteger(L, 1),
             h = luaL_checkinteger(L, 2);
-        SetWindowPos(g_main_hwnd, 0, 0, 0,
-                     w + (wndRect.right - clientRect.right),
-                     h + (wndRect.bottom - clientRect.bottom),
-                     SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+        SetWindowPos(g_main_hwnd, 0, 0, 0, w + (wndRect.right - clientRect.right), h + (wndRect.bottom - clientRect.bottom), SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
 
 
         // we need to recreate the renderer to accomodate for size changes (this cant be done in-place)
@@ -311,7 +308,8 @@ namespace LuaCore::Wgui
 
         // set the size of the font
         font.lfHeight = -MulDiv(font_size,
-                                GetDeviceCaps(lua->gdi_back_dc, LOGPIXELSY), 72);
+                                GetDeviceCaps(lua->gdi_back_dc, LOGPIXELSY),
+                                72);
         lstrcpyn(font.lfFaceName, font_name.c_str(), LF_FACESIZE);
         font.lfCharSet = DEFAULT_CHARSET;
 
@@ -596,8 +594,7 @@ namespace LuaCore::Wgui
                 return 0;
 
             // Create a Rect at x and y and scale the image's width and height
-            Gdiplus::Rect dest(x, y, img->GetWidth() * scale,
-                               img->GetHeight() * scale);
+            Gdiplus::Rect dest(x, y, img->GetWidth() * scale, img->GetHeight() * scale);
 
             gfx.DrawImage(img, dest);
             // Gdiplus::Image *image, const Gdiplus::Rect &rect
@@ -648,8 +645,7 @@ namespace LuaCore::Wgui
                 gfx.SetTransform(&matrix);
             }
 
-            gfx.DrawImage(img, dest, srcx, srcy, srcw, srch,
-                          Gdiplus::UnitPixel);
+            gfx.DrawImage(img, dest, srcx, srcy, srcw, srch, Gdiplus::UnitPixel);
             // Gdiplus::Image *image, const Gdiplus::Rect &destRect, int srcx, int srcy, int srcheight, Gdiplus::srcUnit
 
             if (shouldrotate)
@@ -667,8 +663,7 @@ namespace LuaCore::Wgui
 
         // Copy screen into the loadscreen dc
         auto dc = GetDC(g_main_hwnd);
-        BitBlt(lua->loadscreen_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, dc, 0,
-               0, SRCCOPY);
+        BitBlt(lua->loadscreen_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, dc, 0, 0, SRCCOPY);
         ReleaseDC(g_main_hwnd, dc);
 
         Gdiplus::Bitmap* out = new Gdiplus::Bitmap(lua->loadscreen_bmp, nullptr);
@@ -731,8 +726,7 @@ namespace LuaCore::Wgui
         if (n > 255)
         {
             // hard cap, the vector can handle more but dont try
-            lua_pushfstring(L, "wgui.polygon: too many points (%d > %d)",
-                            n, 255);
+            lua_pushfstring(L, "wgui.polygon: too many points (%d > %d)", n, 255);
             return lua_error(L);
         }
 
@@ -768,8 +762,10 @@ namespace LuaCore::Wgui
 
         Gdiplus::Graphics gfx(lua->gdi_back_dc);
         Gdiplus::SolidBrush brush(Gdiplus::Color(
-        luaL_checkinteger(L, 2), luaL_checkinteger(L, 3),
-        luaL_checkinteger(L, 4), luaL_checkinteger(L, 5)));
+        luaL_checkinteger(L, 2),
+        luaL_checkinteger(L, 3),
+        luaL_checkinteger(L, 4),
+        luaL_checkinteger(L, 5)));
         gfx.FillPolygon(&brush, pts.data(), n);
 
         return 0;
@@ -859,8 +855,7 @@ namespace LuaCore::Wgui
         int n = luaL_len(L, 1);
         if (n >= sizeof(p) / sizeof(p[0]))
         {
-            lua_pushfstring(L, "wgui.polygon: too many points (%d < %d)",
-                            sizeof(p) / sizeof(p[0]), n);
+            lua_pushfstring(L, "wgui.polygon: too many points (%d < %d)", sizeof(p) / sizeof(p[0]), n);
             return lua_error(L);
         }
         for (int i = 0; i < n; i++)
@@ -888,8 +883,7 @@ namespace LuaCore::Wgui
         LuaEnvironment* lua = get_lua_class(L);
 
         SelectObject(lua->gdi_back_dc, lua->pen);
-        ::MoveToEx(lua->gdi_back_dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2),
-                   NULL);
+        ::MoveToEx(lua->gdi_back_dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2), NULL);
         ::LineTo(lua->gdi_back_dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
         return 0;
     }

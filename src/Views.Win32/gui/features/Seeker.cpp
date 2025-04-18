@@ -19,8 +19,7 @@ namespace Seeker
     HWND current_hwnd;
     UINT_PTR refresh_timer;
 
-    LRESULT CALLBACK SeekerProc(HWND hwnd, UINT Message, WPARAM wParam,
-                                LPARAM lParam)
+    LRESULT CALLBACK SeekerProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     {
         switch (Message)
         {
@@ -117,7 +116,8 @@ namespace Seeker
         // We need to run the dialog on another thread, since we don't want to block the main one
         std::thread([] {
             DialogBox(g_app_instance,
-                      MAKEINTRESOURCE(IDD_SEEKER), g_main_hwnd,
+                      MAKEINTRESOURCE(IDD_SEEKER),
+                      g_main_hwnd,
                       (DLGPROC)SeekerProc);
             current_hwnd = nullptr;
         })

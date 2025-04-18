@@ -86,7 +86,7 @@ namespace Cli
         {
             return;
         }
-        
+
         g_main_window_dispatcher->invoke([] {
             // To run multiple lua scripts, a semicolon-separated list is provided
             std::wstringstream stream;

@@ -122,7 +122,9 @@ luaL_checknumber(L, idx + 6))
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
         lua->d2d_render_target_stack.top()->DrawRectangle(
-        &rectangle, brush, thickness);
+        &rectangle,
+        brush,
+        thickness);
 
         return 0;
     }
@@ -149,7 +151,9 @@ luaL_checknumber(L, idx + 6))
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
         lua->d2d_render_target_stack.top()->DrawEllipse(
-        &ellipse, brush, thickness);
+        &ellipse,
+        brush,
+        thickness);
 
         return 0;
     }
@@ -165,7 +169,10 @@ luaL_checknumber(L, idx + 6))
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
         lua->d2d_render_target_stack.top()->DrawLine(
-        point_a, point_b, brush, thickness);
+        point_a,
+        point_b,
+        brush,
+        thickness);
 
         return 0;
     }
@@ -228,11 +235,7 @@ luaL_checknumber(L, idx + 6))
             IDWriteTextLayout* text_layout;
 
             auto wtext = string_to_wstring(text);
-            lua->dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(),
-                                              text_format,
-                                              rectangle.right - rectangle.left,
-                                              rectangle.bottom - rectangle.top,
-                                              &text_layout);
+            lua->dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, rectangle.right - rectangle.left, rectangle.bottom - rectangle.top, &text_layout);
 
             lua->dw_text_layouts.add(params_hash, text_layout);
             text_format->Release();
@@ -243,7 +246,9 @@ luaL_checknumber(L, idx + 6))
                                                            .x = rectangle.left,
                                                            .y = rectangle.top,
                                                            },
-                                                           layout.value(), brush, static_cast<D2D1_DRAW_TEXT_OPTIONS>(options));
+                                                           layout.value(),
+                                                           brush,
+                                                           static_cast<D2D1_DRAW_TEXT_OPTIONS>(options));
 
         return 0;
     }
@@ -308,9 +313,7 @@ luaL_checknumber(L, idx + 6))
 
             IDWriteTextLayout* text_layout;
 
-            lua->dw_factory->CreateTextLayout(text.c_str(), text.length(),
-                                              text_format, max_width, max_height,
-                                              &text_layout);
+            lua->dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height, &text_layout);
 
             DWRITE_TEXT_METRICS text_metrics;
             text_layout->GetMetrics(&text_metrics);
@@ -365,7 +368,8 @@ luaL_checknumber(L, idx + 6))
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 7);
 
         lua->d2d_render_target_stack.top()->FillRoundedRectangle(
-        &rounded_rectangle, brush);
+        &rounded_rectangle,
+        brush);
 
         return 0;
     }
@@ -380,7 +384,9 @@ luaL_checknumber(L, idx + 6))
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 8);
 
         lua->d2d_render_target_stack.top()->DrawRoundedRectangle(
-        &rounded_rectangle, brush, thickness);
+        &rounded_rectangle,
+        brush,
+        thickness);
 
         return 0;
     }
@@ -500,7 +506,8 @@ luaL_checknumber(L, idx + 6))
 
         ID2D1BitmapRenderTarget* render_target;
         lua->d2d_render_target_stack.top()->CreateCompatibleRenderTarget(
-        D2D1::SizeF(width, height), &render_target);
+        D2D1::SizeF(width, height),
+        &render_target);
 
         // With render target at top of stack, we hand control back to script and let it run its callback with rt-scoped drawing
         lua->d2d_render_target_stack.push(render_target);

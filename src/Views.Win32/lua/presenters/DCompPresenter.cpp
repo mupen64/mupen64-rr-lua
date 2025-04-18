@@ -35,10 +35,7 @@ bool DCompPresenter::init(HWND hwnd)
     m_size = {(UINT32)rect.right - rect.left, (UINT32)rect.bottom - rect.top};
 
     // Create the whole DComp <-> DXGI <-> D3D11 <-> D2D shabang
-    if (!create_composition_surface(hwnd, m_size, &m_factory, &m_dxgiadapter, &m_d3device, &m_dxdevice, &m_bitmap, &m_comp_visual,
-                                    &m_comp_device, &m_comp_target,
-                                    &m_dxgi_swapchain, &m_d2d_factory, &m_d2d_device, &m_d3d_dc, &m_d2d_dc, &m_dxgi_surface, &m_dxgi_surface_resource, &m_front_buffer,
-                                    &m_d3d_gdi_tex))
+    if (!create_composition_surface(hwnd, m_size, &m_factory, &m_dxgiadapter, &m_d3device, &m_dxdevice, &m_bitmap, &m_comp_visual, &m_comp_device, &m_comp_target, &m_dxgi_swapchain, &m_d2d_factory, &m_d2d_device, &m_d3d_dc, &m_d2d_dc, &m_dxgi_surface, &m_dxgi_surface_resource, &m_front_buffer, &m_d3d_gdi_tex))
     {
         return false;
     }

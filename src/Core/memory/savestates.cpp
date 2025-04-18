@@ -88,7 +88,8 @@ void get_paths_for_task(const t_savestate_task& task, std::filesystem::path& st_
         L"{}{} {}.st{}",
         g_core->get_saves_directory().wstring(),
         string_to_wstring((const char*)ROM_HEADER.nom),
-        core_vr_country_code_to_country_name(ROM_HEADER.Country_code), std::to_wstring(task.params.slot));
+        core_vr_country_code_to_country_name(ROM_HEADER.Country_code),
+        std::to_wstring(task.params.slot));
     }
 }
 
@@ -324,8 +325,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
     if (!task.ignore_warnings && memcmp(md5, rom_md5, 32))
     {
-        auto result = g_core->show_ask_dialog(CORE_DLG_ST_HASH_MISMATCH, std::format(L"The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe emulator may crash. Are you sure you want to continue?", string_to_wstring(md5)).c_str(),
-                                              L"Savestate", true);
+        auto result = g_core->show_ask_dialog(CORE_DLG_ST_HASH_MISMATCH, std::format(L"The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe emulator may crash. Are you sure you want to continue?", string_to_wstring(md5)).c_str(), L"Savestate", true);
 
         if (!result)
         {
@@ -413,7 +413,9 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         if (!task.ignore_warnings && (core_vcr_get_task() == task_recording || core_vcr_get_task() == task_playback))
         {
             const auto result = g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
-                                                        L"The savestate is not from a movie. Loading it might desynchronize the movie.\r\nAre you sure you want to continue?", L"Savestate", true);
+                                                        L"The savestate is not from a movie. Loading it might desynchronize the movie.\r\nAre you sure you want to continue?",
+                                                        L"Savestate",
+                                                        true);
             if (!result)
             {
                 task.callback(Res_Cancelled, {});
@@ -708,7 +710,9 @@ bool core_st_do_file(const std::filesystem::path& path, const core_st_job job, c
         else
         {
             const auto message = std::format(L"Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
-                                             job == core_st_job_save ? L"save" : L"load", path.filename().wstring(), (int32_t)result);
+                                             job == core_st_job_save ? L"save" : L"load",
+                                             path.filename().wstring(),
+                                             (int32_t)result);
             g_core->show_dialog(message.c_str(), L"Savestate", fsvc_error);
         }
 

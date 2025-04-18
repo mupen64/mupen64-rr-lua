@@ -233,7 +233,9 @@ void FFmpegEncoder::write_audio_thread()
     while (!this->m_stop_thread)
     {
         std::unique_lock lock(m_audio_queue_mutex);
-        m_audio_cv.wait(lock, [this] { return !m_audio_queue.empty() || m_stop_thread; });
+        m_audio_cv.wait(lock, [this] {
+            return !m_audio_queue.empty() || m_stop_thread;
+        });
 
         if (this->m_audio_queue.empty())
             continue;
@@ -260,7 +262,9 @@ void FFmpegEncoder::write_video_thread()
     while (!this->m_stop_thread)
     {
         std::unique_lock lock(m_video_queue_mutex);
-        m_video_cv.wait(lock, [this] { return !m_video_queue.empty() || m_stop_thread; });
+        m_video_cv.wait(lock, [this] {
+            return !m_video_queue.empty() || m_stop_thread;
+        });
 
         if (m_video_queue.empty())
             continue;

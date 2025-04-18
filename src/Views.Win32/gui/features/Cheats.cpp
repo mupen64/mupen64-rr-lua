@@ -15,8 +15,7 @@
 
 namespace Cheats
 {
-    LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam,
-                             LPARAM lParam)
+    LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     {
         switch (Message)
         {
@@ -175,7 +174,8 @@ namespace Cheats
     void show()
     {
         DialogBox(g_app_instance,
-                  MAKEINTRESOURCE(IDD_CHEATS), g_main_hwnd,
+                  MAKEINTRESOURCE(IDD_CHEATS),
+                  g_main_hwnd,
                   (DLGPROC)WndProc);
     }
 } // namespace Cheats

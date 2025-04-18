@@ -88,7 +88,9 @@ typedef struct OptionsItem {
     /**
      * Function which returns whether the option can be changed. Useful for values which shouldn't be changed during emulation.
      */
-    std::function<bool()> is_readonly = [] { return false; };
+    std::function<bool()> is_readonly = [] {
+        return false;
+    };
 
     /**
      * Gets the value name for the current backing data, or a fallback name if no match is found.
@@ -348,16 +350,7 @@ INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, L
             RECT rect{};
             GetClientRect(hwnd, &rect);
 
-            g_pldlv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                                          WS_TABSTOP | WS_VISIBLE | WS_CHILD |
-                                          LVS_SINGLESEL | LVS_REPORT |
-                                          LVS_SHOWSELALWAYS,
-                                          rect.left, rect.top,
-                                          rect.right - rect.left,
-                                          rect.bottom - rect.top,
-                                          hwnd, nullptr,
-                                          g_app_instance,
-                                          NULL);
+            g_pldlv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL, WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, hwnd, nullptr, g_app_instance, NULL);
 
             ListView_SetExtendedListViewStyle(g_pldlv_hwnd,
                                               LVS_EX_GRIDLINES |
@@ -480,7 +473,8 @@ INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, const WPARA
 void configdialog_about()
 {
     DialogBox(g_app_instance,
-              MAKEINTRESOURCE(IDD_ABOUT), g_main_hwnd,
+              MAKEINTRESOURCE(IDD_ABOUT),
+              g_main_hwnd,
               about_dlg_proc);
 }
 
@@ -492,8 +486,7 @@ void build_rom_browser_path_list(const HWND dialog_hwnd)
 
     for (const std::wstring& str : g_config.rombrowser_rom_paths)
     {
-        SendMessage(hwnd, LB_ADDSTRING, 0,
-                    (LPARAM)str.c_str());
+        SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)str.c_str());
     }
 }
 
@@ -507,8 +500,7 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
     case WM_INITDIALOG:
         build_rom_browser_path_list(hwnd);
 
-        SendMessage(GetDlgItem(hwnd, IDC_RECURSION), BM_SETCHECK,
-                    g_config.is_rombrowser_recursion_enabled ? BST_CHECKED : BST_UNCHECKED, 0);
+        SendMessage(GetDlgItem(hwnd, IDC_RECURSION), BM_SETCHECK, g_config.is_rombrowser_recursion_enabled ? BST_CHECKED : BST_UNCHECKED, 0);
 
         if (g_config.is_default_plugins_directory_used)
         {
@@ -625,8 +617,7 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
             break;
         case IDC_PLUGIN_DIRECTORY_HELP:
             {
-                MessageBox(hwnd, L"Changing the plugin directory may introduce bugs to some plugins.", L"Info",
-                           MB_ICONINFORMATION | MB_OK);
+                MessageBox(hwnd, L"Changing the plugin directory may introduce bugs to some plugins.", L"Info", MB_ICONINFORMATION | MB_OK);
             }
             break;
         case IDC_CHOOSE_PLUGINS_DIR:
@@ -803,18 +794,10 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         break;
     case WM_INITDIALOG:
         {
-            SendDlgItemMessage(hwnd, IDB_DISPLAY, STM_SETIMAGE, IMAGE_BITMAP,
-                               (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_DISPLAY),
-                                                 IMAGE_BITMAP, 0, 0, 0));
-            SendDlgItemMessage(hwnd, IDB_CONTROL, STM_SETIMAGE, IMAGE_BITMAP,
-                               (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_CONTROL),
-                                                 IMAGE_BITMAP, 0, 0, 0));
-            SendDlgItemMessage(hwnd, IDB_SOUND, STM_SETIMAGE, IMAGE_BITMAP,
-                               (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_SOUND),
-                                                 IMAGE_BITMAP, 0, 0, 0));
-            SendDlgItemMessage(hwnd, IDB_RSP, STM_SETIMAGE, IMAGE_BITMAP,
-                               (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_RSP),
-                                                 IMAGE_BITMAP, 0, 0, 0));
+            SendDlgItemMessage(hwnd, IDB_DISPLAY, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_DISPLAY), IMAGE_BITMAP, 0, 0, 0));
+            SendDlgItemMessage(hwnd, IDB_CONTROL, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_CONTROL), IMAGE_BITMAP, 0, 0, 0));
+            SendDlgItemMessage(hwnd, IDB_SOUND, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_SOUND), IMAGE_BITMAP, 0, 0, 0));
+            SendDlgItemMessage(hwnd, IDB_RSP, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)LoadImage(g_app_instance, MAKEINTRESOURCE(IDB_RSP), IMAGE_BITMAP, 0, 0, 0));
 
             refresh_plugins_page(hwnd);
 
@@ -1587,7 +1570,8 @@ static void handle_hotkey_conflict(const HWND hwnd, cfg_hotkey* current_hotkey)
     }
 
     const auto str = std::format(L"The key combination {} is already used by the following hotkey(s):\n\n{}\nHow would you like to proceed?",
-                                 hotkey_to_string(current_hotkey), conflicting_hotkey_identifiers);
+                                 hotkey_to_string(current_hotkey),
+                                 conflicting_hotkey_identifiers);
 
     const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Discard Others", L"Discard Current", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
 
@@ -1696,10 +1680,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
 
         item_rect.right = lv_rect.right;
 
-        g_edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
-                                     item_rect.top,
-                                     item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
-                                     hwnd, 0, g_app_instance, 0);
+        g_edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left, item_rect.top, item_rect.right - item_rect.left, item_rect.bottom - item_rect.top, hwnd, 0, g_app_instance, 0);
 
         SendMessage(g_edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(g_lv_hwnd, WM_GETFONT, 0, 0), 0);
 
@@ -2177,10 +2158,7 @@ bool begin_plugin_lv_edit(t_plugin_cfg_params* params, HWND dlghwnd, HWND lvhwnd
 
         item_rect.right = lv_rect.right;
 
-        g_edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
-                                     item_rect.top,
-                                     item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
-                                     dlghwnd, 0, g_app_instance, 0);
+        g_edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left, item_rect.top, item_rect.right - item_rect.left, item_rect.bottom - item_rect.top, dlghwnd, 0, g_app_instance, 0);
 
         SendMessage(g_edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(lvhwnd, WM_GETFONT, 0, 0), 0);
 

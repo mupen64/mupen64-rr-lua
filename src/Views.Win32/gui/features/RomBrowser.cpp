@@ -118,19 +118,7 @@ namespace RomBrowser
         GetClientRect(g_main_hwnd, &rcl);
         GetWindowRect(Statusbar::hwnd(), &rstatus);
 
-        rombrowser_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                                         WS_TABSTOP | WS_VISIBLE | WS_CHILD |
-                                         LVS_SINGLESEL | LVS_REPORT |
-                                         LVS_SHOWSELALWAYS,
-                                         0, rtool.bottom - rtool.top,
-                                         rcl.right - rcl.left,
-                                         rcl.bottom - rcl.top - rtool.bottom +
-                                         rtool
-                                         .top -
-                                         rstatus.bottom + rstatus.top,
-                                         g_main_hwnd, (HMENU)IDC_ROMLIST,
-                                         g_app_instance,
-                                         NULL);
+        rombrowser_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL, WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, 0, rtool.bottom - rtool.top, rcl.right - rcl.left, rcl.bottom - rcl.top - rtool.bottom + rtool.top - rstatus.bottom + rstatus.top, g_main_hwnd, (HMENU)IDC_ROMLIST, g_app_instance, NULL);
         ListView_SetExtendedListViewStyle(rombrowser_hwnd,
                                           LVS_EX_GRIDLINES |
                                           LVS_EX_FULLROWSELECT |
@@ -382,7 +370,9 @@ namespace RomBrowser
         case NM_DBLCLK:
             {
                 int32_t i = ListView_GetNextItem(
-                rombrowser_hwnd, -1, LVNI_SELECTED);
+                rombrowser_hwnd,
+                -1,
+                LVNI_SELECTED);
 
                 if (i == -1)
                     break;

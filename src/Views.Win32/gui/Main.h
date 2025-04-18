@@ -16,8 +16,7 @@
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)
 #define WM_INVALIDATE_LUA (WM_USER + 23)
 
-extern BOOL CALLBACK CfgDlgProc(HWND hwnd, UINT Message, WPARAM wParam,
-                                LPARAM lParam);
+extern BOOL CALLBACK CfgDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 extern core_params g_core;
 extern bool g_frame_changed;

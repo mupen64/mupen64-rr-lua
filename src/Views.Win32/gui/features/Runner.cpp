@@ -43,8 +43,7 @@ namespace Runner
         }
     }
 
-    LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam,
-                             LPARAM lParam)
+    LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     {
         switch (Message)
         {
@@ -135,7 +134,8 @@ namespace Runner
     void show()
     {
         DialogBox(g_app_instance,
-                  MAKEINTRESOURCE(IDD_RUNNER), g_main_hwnd,
+                  MAKEINTRESOURCE(IDD_RUNNER),
+                  g_main_hwnd,
                   (DLGPROC)WndProc);
     }
 } // namespace Runner

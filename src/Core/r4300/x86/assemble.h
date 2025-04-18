@@ -107,8 +107,7 @@ void jg_rj(unsigned char saut);
 void and_ax_imm16(uint16_t imm16);
 void or_ax_imm16(uint16_t imm16);
 void xor_ax_imm16(uint16_t imm16);
-void shrd_reg32_reg32_imm8(uint32_t reg1, uint32_t reg2,
-                           unsigned char imm8);
+void shrd_reg32_reg32_imm8(uint32_t reg1, uint32_t reg2, unsigned char imm8);
 void or_eax_imm32(uint32_t imm32);
 void or_m32_reg32(void* _m32, uint32_t reg32);
 void or_reg32_reg32(uint32_t reg1, uint32_t reg2);
@@ -135,13 +134,11 @@ void xor_reg32_m32(uint32_t reg32, void* _m32);
 void sar_reg32_cl(uint32_t reg32);
 void jmp_imm_short(char saut);
 void jmp_m32(void* _m32);
-void mov_reg32_preg32preg32pimm32(int32_t reg1, int32_t reg2, int32_t reg3,
-                                  uint32_t imm32);
+void mov_reg32_preg32preg32pimm32(int32_t reg1, int32_t reg2, int32_t reg3, uint32_t imm32);
 void mov_reg32_preg32pimm32(int32_t reg1, int32_t reg2, uint32_t imm32);
 void cmp_m32_imm8(void* _m32, unsigned char imm8);
 void mov_reg32_preg32x4preg32(int32_t reg1, int32_t reg2, int32_t reg3);
-void mov_reg32_preg32x4preg32pimm32(int32_t reg1, int32_t reg2, int32_t reg3,
-                                    uint32_t imm32);
+void mov_reg32_preg32x4preg32pimm32(int32_t reg1, int32_t reg2, int32_t reg3, uint32_t imm32);
 void mov_reg32_preg32x4pimm32(int32_t reg1, int32_t reg2, uint32_t imm32);
 void and_reg32_imm32(int32_t reg32, uint32_t imm32);
 void movsx_reg32_m8(int32_t reg32, unsigned char* m8);
@@ -154,8 +151,7 @@ void movsx_reg32_m16(int32_t reg32, uint16_t* m16);
 void cmp_reg32_imm8(int32_t reg32, unsigned char imm8);
 void add_m32_imm8(void* _m32, unsigned char imm8);
 void mov_reg8_m8(int32_t reg8, unsigned char* m8);
-void mov_preg32preg32pimm32_reg8(int32_t reg1, int32_t reg2, uint32_t imm32,
-                                 int32_t reg8);
+void mov_preg32preg32pimm32_reg8(int32_t reg1, int32_t reg2, uint32_t imm32, int32_t reg8);
 void mov_preg32pimm32_reg16(int32_t reg32, uint32_t imm32, int32_t reg16);
 void cmp_reg32_imm32(int32_t reg32, uint32_t imm32);
 void mov_preg32pimm32_reg32(int32_t reg1, uint32_t imm32, int32_t reg2);
@@ -211,8 +207,7 @@ void idiv_reg32(uint32_t reg32);
 void div_reg32(uint32_t reg32);
 void adc_reg32_reg32(uint32_t reg1, uint32_t reg2);
 void sbb_reg32_reg32(int32_t reg1, int32_t reg2);
-void shld_reg32_reg32_imm8(uint32_t reg1, uint32_t reg2,
-                           unsigned char imm8);
+void shld_reg32_reg32_imm8(uint32_t reg1, uint32_t reg2, unsigned char imm8);
 void cmp_preg32pimm32_imm8(int32_t reg32, uint32_t imm32, unsigned char imm8);
 void test_m32_imm32(void* _m32, uint32_t imm32);
 void fldcw_m16(uint16_t* m16);

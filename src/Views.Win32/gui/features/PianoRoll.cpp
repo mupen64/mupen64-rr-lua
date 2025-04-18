@@ -1270,20 +1270,15 @@ namespace PianoRoll
                 // Some controls don't get the font set by default, so we do it manually
                 EnumChildWindows(hwnd, [](HWND hwnd, LPARAM font) {
                     SendMessage(hwnd, WM_SETFONT, (WPARAM)font, 0);
-                    return TRUE; }, SendMessage(hwnd, WM_GETFONT, 0, 0));
+                    return TRUE;
+                },
+                                 SendMessage(hwnd, WM_GETFONT, 0, 0));
 
                 const auto lv_style = WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_ALIGNTOP | LVS_NOSORTHEADER | LVS_SHOWSELALWAYS | LVS_OWNERDATA;
 
                 RECT grid_rect = get_window_rect_client_space(hwnd, GetDlgItem(hwnd, IDC_LIST_PIANO_ROLL));
 
-                g_lv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, nullptr,
-                                           lv_style,
-                                           grid_rect.left, grid_rect.top,
-                                           grid_rect.right - grid_rect.left,
-                                           grid_rect.bottom - grid_rect.top,
-                                           hwnd, (HMENU)IDC_PIANO_ROLL_LV,
-                                           g_app_instance,
-                                           nullptr);
+                g_lv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, nullptr, lv_style, grid_rect.left, grid_rect.top, grid_rect.right - grid_rect.left, grid_rect.bottom - grid_rect.top, hwnd, (HMENU)IDC_PIANO_ROLL_LV, g_app_instance, nullptr);
                 SetWindowSubclass(g_lv_hwnd, list_view_proc, 0, 0);
 
                 ListView_SetExtendedListViewStyle(g_lv_hwnd,
@@ -1343,7 +1338,9 @@ namespace PianoRoll
         case WM_DESTROY:
             EnumChildWindows(hwnd, [](HWND hwnd, LPARAM) {
                 DestroyWindow(hwnd);
-                return TRUE; }, 0);
+                return TRUE;
+            },
+                             0);
             g_lv_hwnd = nullptr;
             g_hist_hwnd = nullptr;
             g_hwnd = nullptr;

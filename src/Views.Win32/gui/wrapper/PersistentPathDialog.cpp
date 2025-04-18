@@ -12,8 +12,7 @@
     if (FAILED(operation))  \
     goto cleanUp
 
-std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
-                                         const std::wstring& filter)
+std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
     COMInitializer com_initializer;
     IFileDialog* pFileDialog = nullptr;
@@ -23,8 +22,7 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
     bool succeeded = false;
 
     FAILSAFE(
-    CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER,
-                     IID_PPV_ARGS(&pFileDialog)));
+    CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFileDialog)));
 
     FAILSAFE(pFileDialog->GetOptions(&dwFlags));
 
@@ -43,8 +41,7 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd,
         ? g_config.persistent_folder_paths[id]
         : get_desktop_path();
         g_view_logger->info(L"Open dialog {} restored {}\n", id.c_str(), restored_path);
-        if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr,
-                                        IID_PPV_ARGS(&shlPtr)) != S_OK)
+        if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr, IID_PPV_ARGS(&shlPtr)) != S_OK)
             g_view_logger->info(
             "Unable to create IShellItem from parsing lastPath name");
     }
@@ -68,8 +65,7 @@ cleanUp:
     return succeeded ? g_config.persistent_folder_paths[id] : std::wstring();
 }
 
-std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd,
-                                         const std::wstring& filter)
+std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
     COMInitializer com_initializer;
     IFileDialog* pFileDialog = nullptr;
@@ -79,8 +75,7 @@ std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd,
     bool succeeded = false;
 
     FAILSAFE(
-    CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER,
-                     IID_PPV_ARGS(&pFileDialog)));
+    CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFileDialog)));
 
     FAILSAFE(pFileDialog->GetOptions(&dwFlags));
 
@@ -98,8 +93,7 @@ std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd,
         ? g_config.persistent_folder_paths[id]
         : get_desktop_path();
         g_view_logger->info(L"Save dialog {} restored %ls\n", id.c_str(), restored_path);
-        if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr,
-                                        IID_PPV_ARGS(&shlPtr)) != S_OK)
+        if (SHCreateItemFromParsingName(restored_path.c_str(), nullptr, IID_PPV_ARGS(&shlPtr)) != S_OK)
             g_view_logger->info(
             "Unable to create IShellItem from parsing lastPath name");
     }
@@ -137,8 +131,7 @@ std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd)
     std::wstring final_path;
     IFileDialog* pfd;
     if (SUCCEEDED(
-        CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
-                         IID_PPV_ARGS(&pfd))))
+        CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd))))
     {
         std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
         ? g_config.persistent_folder_paths[id]

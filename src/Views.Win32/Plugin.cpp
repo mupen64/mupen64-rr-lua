@@ -329,7 +329,8 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
     }
 
     const auto get_dll_info = (GETDLLINFO)PlatformService::get_function_in_module(
-    module, "GetDllInfo");
+    module,
+    "GetDllInfo");
 
     if (!get_dll_info)
     {

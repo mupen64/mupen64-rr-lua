@@ -23,10 +23,7 @@ core_rom_header ROM_HEADER;
 void print_rom_info()
 {
     g_core->log_info(L"--- Rom Info ---");
-    g_core->log_info(std::format(L"{:#06x} {:#06x} {:#06x} {:#06x}", ROM_HEADER.init_PI_BSB_DOM1_LAT_REG,
-                                 ROM_HEADER.init_PI_BSB_DOM1_PGS_REG,
-                                 ROM_HEADER.init_PI_BSB_DOM1_PWD_REG,
-                                 ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
+    g_core->log_info(std::format(L"{:#06x} {:#06x} {:#06x} {:#06x}", ROM_HEADER.init_PI_BSB_DOM1_LAT_REG, ROM_HEADER.init_PI_BSB_DOM1_PGS_REG, ROM_HEADER.init_PI_BSB_DOM1_PWD_REG, ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
     g_core->log_info(std::format(L"Clock rate: {:#06x}", sl((uint32_t)ROM_HEADER.ClockRate)));
     g_core->log_info(std::format(L"Version: {:#06x}", sl((uint32_t)ROM_HEADER.Release)));
     g_core->log_info(std::format(L"CRC: {:#06x} {:#06x}", sl((uint32_t)ROM_HEADER.CRC1), sl((uint32_t)ROM_HEADER.CRC2)));
