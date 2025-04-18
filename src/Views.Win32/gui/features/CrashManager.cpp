@@ -11,6 +11,8 @@
 #include <gui/features/CrashManager.h>
 #include <backward.hpp>
 
+const std::filesystem::path MINIDUMP_PATH = L"mupen.dmp";
+
 typedef struct StacktraceInfo {
     std::stacktrace stl_stacktrace{};
     void* rtl_stacktrace[32]{};
@@ -46,6 +48,25 @@ E(EXCEPTION_GUARD_PAGE),
 E(EXCEPTION_INVALID_HANDLE),
 };
 #undef E
+
+void create_minidump(EXCEPTION_POINTERS* e)
+{
+    MINIDUMP_EXCEPTION_INFORMATION info{};
+
+    const HANDLE h_dump_file = CreateFile(MINIDUMP_PATH.wstring().c_str(), GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+
+    info.ThreadId = GetCurrentThreadId();
+    info.ExceptionPointers = e;
+    info.ClientPointers = TRUE;
+
+    if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), h_dump_file, MiniDumpWithDataSegs, &info, NULL, NULL))
+    {
+        g_view_logger->error(L"Couldn't create minidump (error code: {})", GetLastError());
+    }
+
+    CloseHandle(h_dump_file);
+}
+
 
 /**
  * \brief Gets additional information about the exception address
@@ -161,13 +182,13 @@ bool show_crash_dialog(bool continuable)
     if (continuable)
     {
         TaskDialog(g_main_hwnd, g_app_instance, L"Error",
-                   L"An error has occured", L"A crash log has been automatically generated. You can choose to continue program execution.",
+                   L"An error has occured", L"Crash dumps have been automatically generated. You can choose to continue program execution.",
                    TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON, TD_ERROR_ICON, &result);
     }
     else
     {
         TaskDialog(g_main_hwnd, g_app_instance, L"Error",
-                   L"An error has occured", L"A crash log has been automatically generated. The program will now exit.", TDCBF_CLOSE_BUTTON, TD_ERROR_ICON,
+                   L"An error has occured", L"Crash dumps have been automatically generated. The program will now exit.", TDCBF_CLOSE_BUTTON, TD_ERROR_ICON,
                    &result);
     }
 
@@ -182,6 +203,8 @@ LONG WINAPI exception_handler(_EXCEPTION_POINTERS* e)
     exception_info += get_metadata_for_exception_address(e->ExceptionRecord->ExceptionAddress) + L" " + get_exception_code_friendly_name(e) + L" ";
     exception_info += L"(from SetUnhandledExceptionFilter) ";
     log_crash(exception_info);
+
+    create_minidump(e);
 
     const bool is_continuable = !(e->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE);
 
