@@ -108,7 +108,7 @@ namespace LuaCallbacks
      * \param function The parameter preparation function associated with the callback.
      * \param key The callback key.
      */
-    void invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key);
+    std::future<void> invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key);
 
     /**
      * \brief Subscribes to or unsubscribes from the specified callback based on the input parameters.

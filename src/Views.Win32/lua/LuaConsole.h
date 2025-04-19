@@ -168,6 +168,8 @@ void lua_freecallback(void* key);
 
 extern std::vector<t_lua_environment*> g_lua_environments;
 
+extern std::recursive_mutex lua_mutex;
+
 /**
  * \brief The controller data at time of the last input poll
  */

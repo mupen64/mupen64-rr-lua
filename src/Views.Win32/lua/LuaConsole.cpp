@@ -22,6 +22,8 @@ constexpr auto LUA_PROP_NAME = L"lua_env";
 const auto D2D_OVERLAY_CLASS = L"lua_d2d_overlay";
 const auto GDI_OVERLAY_CLASS = L"lua_gdi_overlay";
 
+std::recursive_mutex lua_mutex;
+
 core_buttons last_controller_data[4];
 core_buttons new_controller_data[4];
 bool overwrite_controller_data[4];
@@ -526,6 +528,8 @@ static void rebuild_lua_env_map()
 
 void destroy_lua_environment(t_lua_environment* lua)
 {
+    std::scoped_lock lock(lua_mutex);
+
     lua->m_ignore_renderer_creation = true;
     SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, 0);
     SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, 0);
@@ -568,6 +572,8 @@ void print_con(HWND hwnd, const std::wstring& text)
 
 std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
 {
+    std::scoped_lock lock(lua_mutex);
+    
     assert(is_on_gui_thread());
 
     auto lua = new t_lua_environment();
@@ -663,7 +669,7 @@ void* lua_tocallback(lua_State* L, const int i)
     lua_pushvalue(L, -2);
     lua_settable(L, LUA_REGISTRYINDEX);
     lua_pop(L, 1);
-    return key;
+    return key; 
 }
 
 void lua_pushcallback(lua_State* L, void* key)

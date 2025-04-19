@@ -5,6 +5,7 @@
  */
 
 #include "stdafx.h"
+#include <AsyncExecutor.h>
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaConsole.h>
 #include <Main.h>
@@ -64,9 +65,7 @@ void LuaCallbacks::call_window_message(void* wnd, unsigned int msg, unsigned int
 void LuaCallbacks::call_vi()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATVI);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATVI);
 }
 
 void LuaCallbacks::call_input(core_buttons* input, int index)
@@ -77,11 +76,9 @@ void LuaCallbacks::call_input(core_buttons* input, int index)
 
     RET_IF_EMPTY;
 
-    g_main_window_dispatcher->invoke([=] {
-        current_input_n = index;
-        invoke_callbacks_with_key_on_all_instances(AtInput, REG_ATINPUT);
-        g_input_count++;
-    });
+    current_input_n = index;
+    invoke_callbacks_with_key_on_all_instances(AtInput, REG_ATINPUT).wait();
+    g_input_count++;
 
     if (overwrite_controller_data[index])
     {
@@ -94,75 +91,59 @@ void LuaCallbacks::call_input(core_buttons* input, int index)
 void LuaCallbacks::call_interval()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATINTERVAL);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATINTERVAL);
 }
 
 void LuaCallbacks::call_play_movie()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATPLAYMOVIE);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATPLAYMOVIE);
 }
 
 void LuaCallbacks::call_stop_movie()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSTOPMOVIE);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSTOPMOVIE);
 }
 
 void LuaCallbacks::call_load_state()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATLOADSTATE);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATLOADSTATE);
 }
 
 void LuaCallbacks::call_save_state()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSAVESTATE);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSAVESTATE);
 }
 
 void LuaCallbacks::call_reset()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATRESET);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATRESET);
 }
 
 void LuaCallbacks::call_seek_completed()
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSEEKCOMPLETED);
-    });
+    invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSEEKCOMPLETED);
 }
 
 void LuaCallbacks::call_warp_modify_status_changed(const int32_t status)
 {
     RET_IF_EMPTY;
-    g_main_window_dispatcher->invoke([=] {
-        invoke_callbacks_with_key_on_all_instances(
-        [=](lua_State* L) {
-            lua_pushinteger(L, status);
-            return lua_pcall(L, 1, 0, 0);
-        },
-        REG_ATWARPMODIFYSTATUSCHANGED);
-    });
+    invoke_callbacks_with_key_on_all_instances(
+    [=](lua_State* L) {
+        lua_pushinteger(L, status);
+        return lua_pcall(L, 1, 0, 0);
+    },
+    REG_ATWARPMODIFYSTATUSCHANGED);
 }
 
 bool LuaCallbacks::invoke_callbacks_with_key(const LuaEnvironment& lua, const std::function<int(lua_State*)>& function, callback_key key)
 {
-    assert(is_on_gui_thread());
+    std::scoped_lock lock(lua_mutex);
 
     lua_rawgeti(lua.L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(lua.L, -1))
@@ -187,27 +168,38 @@ bool LuaCallbacks::invoke_callbacks_with_key(const LuaEnvironment& lua, const st
     return true;
 }
 
-void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key)
+std::future<void> LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key)
 {
-    // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone the queue
-    // OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
-    static std::queue<LuaEnvironment*> destruction_queue;
+    auto promise = std::make_shared<std::promise<void>>();
+    auto future = promise->get_future();
 
-    assert(destruction_queue.empty());
+    AsyncExecutor::invoke_async([=] {
+        std::scoped_lock lock(lua_mutex);
 
-    for (const auto& lua : g_lua_environments)
-    {
-        if (!LuaCallbacks::invoke_callbacks_with_key(*lua, function, key))
+        // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone the queue
+        // OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
+        static std::queue<LuaEnvironment*> destruction_queue;
+
+        assert(destruction_queue.empty());
+
+        for (const auto& lua : g_lua_environments)
         {
-            destruction_queue.push(lua);
+            if (!invoke_callbacks_with_key(*lua, function, key))
+            {
+                destruction_queue.push(lua);
+            }
         }
-    }
 
-    while (!destruction_queue.empty())
-    {
-        destroy_lua_environment(destruction_queue.front());
-        destruction_queue.pop();
-    }
+        while (!destruction_queue.empty())
+        {
+            destroy_lua_environment(destruction_queue.front());
+            destruction_queue.pop();
+        }
+
+        promise->set_value();
+    });
+
+    return future;
 }
 
 static int register_function(lua_State* L, LuaCallbacks::callback_key key)
