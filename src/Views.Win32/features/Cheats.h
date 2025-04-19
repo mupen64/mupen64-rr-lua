@@ -6,6 +6,9 @@
 
 #pragma once
 
+/**
+ * \brief A module responsible for implementing frontend components for the cheat feature.
+ */
 namespace Cheats
 {
     /**
