@@ -274,7 +274,6 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return FALSE;
 
 refresh:
-    wchar_t tempbuf[520] = {0};
     core_vcr_movie_header header = {};
 
     if (core_vcr_parse_header(user_result.path, &header) != Res_Ok)
@@ -315,13 +314,16 @@ refresh:
 
     for (int i = 0; i < 4; ++i)
     {
-        StrCpy(tempbuf, (header.controller_flags & CONTROLLER_X_PRESENT(i)) ? L"Present" : L"Disconnected");
-        if (header.controller_flags & CONTROLLER_X_MEMPAK(i))
-            StrCat(tempbuf, L" with mempak");
-        if (header.controller_flags & CONTROLLER_X_RUMBLE(i))
-            StrCat(tempbuf, L" with rumble");
+        std::wstring desc;
 
-        metadata.emplace_back(std::make_pair(std::format(L"Controller {}", i + 1), tempbuf));
+        desc += header.controller_flags & CONTROLLER_X_PRESENT(i) ? L"Present" : L"Disconnected";
+
+        if (header.controller_flags & CONTROLLER_X_MEMPAK(i))
+            desc += L" with mempak";
+        if (header.controller_flags & CONTROLLER_X_RUMBLE(i))
+            desc += L" with rumble";
+
+        metadata.emplace_back(std::make_pair(std::format(L"Controller {}", i + 1), desc));
     }
 
     metadata.emplace_back(
