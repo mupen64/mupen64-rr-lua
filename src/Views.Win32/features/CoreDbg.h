@@ -6,15 +6,18 @@
 
 #pragma once
 
+/**
+ * \brief A module responsible for implementing frontend components for the CoreDbg feature.
+ */
 namespace CoreDbg
 {
+    /**
+     * Initializes the subsystem.
+     */
+    void init();
+    
     /**
      * \brief Shows the CoreDbg dialog
      */
     void show();
-
-    /**
-     * Initializes CoreDbg
-     */
-    void init();
 } // namespace CoreDbg
