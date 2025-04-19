@@ -6,6 +6,9 @@
 
 #pragma once
 
+/**
+ * \brief A module responsible for implementing the runner dialog.
+ */
 namespace Runner
 {
     /**
