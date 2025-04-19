@@ -470,14 +470,6 @@ INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, const WPARA
     return TRUE;
 }
 
-void configdialog_about()
-{
-    DialogBox(g_app_instance,
-              MAKEINTRESOURCE(IDD_ABOUT),
-              g_main_hwnd,
-              about_dlg_proc);
-}
-
 void build_rom_browser_path_list(const HWND dialog_hwnd)
 {
     const HWND hwnd = GetDlgItem(dialog_hwnd, IDC_ROMBROWSER_DIR_LIST);
@@ -1967,12 +1959,12 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
     return TRUE;
 }
 
-void configdialog_init()
+void ConfigDialog::init()
 {
     get_config_listview_items(g_option_groups, g_option_items);
 }
 
-void configdialog_show()
+void ConfigDialog::show_app_settings()
 {
     PROPSHEETPAGE psp[3] = {{0}};
     for (auto& i : psp)
@@ -2459,9 +2451,14 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
     return TRUE;
 }
 
-bool configdialog_show_plugin(Plugin* plugin, core_plugin_cfg* cfg)
+bool ConfigDialog::show_plugin_settings(Plugin* plugin, core_plugin_cfg* cfg)
 {
     t_plugin_cfg_params params = {plugin, cfg};
     DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_PLUGIN_CONFIG), g_hwnd_plug, plugin_cfg, (LPARAM)&params);
     return params.save;
+}
+
+void ConfigDialog::show_about()
+{
+    DialogBox(g_app_instance, MAKEINTRESOURCE(IDD_ABOUT), g_main_hwnd, about_dlg_proc);
 }

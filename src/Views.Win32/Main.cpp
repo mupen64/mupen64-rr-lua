@@ -1138,7 +1138,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
         MGECompositor::create(hwnd);
         PianoRoll::init();
-        configdialog_init();
+        ConfigDialog::init();
         return TRUE;
     case WM_DESTROY:
         save_config();
@@ -1499,13 +1499,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             case IDM_SETTINGS:
                 {
                     BetterEmulationLock lock;
-                    configdialog_show();
+                    ConfigDialog::show_app_settings();
                 }
                 break;
             case IDM_ABOUT:
                 {
                     BetterEmulationLock lock;
-                    configdialog_about();
+                    ConfigDialog::show_about();
                 }
                 break;
             case IDM_CHECK_FOR_UPDATES:
