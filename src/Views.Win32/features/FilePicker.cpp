@@ -12,14 +12,22 @@
     if (FAILED(operation))  \
     goto cleanUp
 
-// BUG: Filter format needs converting!!!
+static std::wstring fix_filter(const std::wstring& filter)
+{
+    const std::wstring description = L"Allowed Files (" + filter + L")";
+    std::wstring result = description + L'\0' + filter + L'\0';
+    return result;
+}
 
 std::filesystem::path FilePicker::show_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
     std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
     : get_desktop_path();
+    
     g_view_logger->info(L"file dialog {}: {}\n", id.c_str(), restored_path);
+
+    const auto fixed_filter = fix_filter(filter);
 
     wchar_t out_path[MAX_PATH]{};
     OPENFILENAMEW ofn{};
@@ -27,7 +35,7 @@ std::filesystem::path FilePicker::show_open_dialog(const std::wstring& id, HWND 
     ofn.hwndOwner = hwnd;
     ofn.lpstrFile = out_path;
     ofn.nMaxFile = std::size(out_path);
-    ofn.lpstrFilter = filter.c_str();
+    ofn.lpstrFilter = fixed_filter.c_str();
     ofn.nFilterIndex = 1;
     ofn.lpstrInitialDir = restored_path.c_str();
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_ENABLESIZING;
@@ -46,7 +54,10 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND 
     std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
     : get_desktop_path();
+    
     g_view_logger->info(L"file dialog {}: {}\n", id.c_str(), restored_path);
+
+    const auto fixed_filter = fix_filter(filter);
 
     wchar_t out_path[MAX_PATH]{};
     OPENFILENAMEW ofn{};
@@ -54,7 +65,7 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND 
     ofn.hwndOwner = hwnd;
     ofn.lpstrFile = out_path;
     ofn.nMaxFile = std::size(out_path);
-    ofn.lpstrFilter = filter.c_str();
+    ofn.lpstrFilter = fixed_filter.c_str();
     ofn.nFilterIndex = 1;
     ofn.lpstrInitialDir = restored_path.c_str();
     ofn.Flags = OFN_CREATEPROMPT | OFN_EXPLORER | OFN_ENABLESIZING;
@@ -73,6 +84,8 @@ std::filesystem::path FilePicker::show_folder_dialog(const std::wstring& id, HWN
     std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
     : get_desktop_path();
+
+    g_view_logger->info(L"folder dialog {}: {}\n", id.c_str(), restored_path);
 
     COMInitializer com_initializer;
 
