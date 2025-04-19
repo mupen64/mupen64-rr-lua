@@ -100,7 +100,6 @@ std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd)
     if (SHGetPathFromIDList(pidl, path))
     {
         g_config.persistent_folder_paths[id] = path;
-        CoTaskMemFree(pidl);
         success = true;
     }
     CoTaskMemFree(pidl);
