@@ -1341,14 +1341,14 @@ core_result core_vcr_start_playback(std::filesystem::path path)
     {
         g_task = task_start_playback_from_reset;
     }
-    
+
     g_core->callbacks.task_changed(g_task);
     g_core->callbacks.current_sample_changed(m_current_sample);
     g_core->callbacks.rerecords_changed(get_rerecord_count());
 
     // FIXME: Move this into the actual starting sections, and document it :p
     g_core->callbacks.play_movie();
-    
+
     return Res_Ok;
 }
 
