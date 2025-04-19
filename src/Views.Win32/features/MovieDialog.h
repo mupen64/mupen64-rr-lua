@@ -6,9 +6,12 @@
 
 #pragma once
 
+/**
+ * \brief A module responsible for implementing the movie inspector dialog.
+ */
 namespace MovieDialog
 {
-    struct t_record_params {
+    struct t_result {
         std::filesystem::path path;
         unsigned short start_flag;
         std::wstring author;
@@ -18,9 +21,10 @@ namespace MovieDialog
     };
 
     /**
-     * \brief Shows a movie inspector dialog
-     * \param readonly Whether movie properties can't be edited
-     * \return The user-chosen parameters
+     * \brief Shows a movie inspector dialog.
+     * \param readonly Whether the movie is being viewed in read-only mode.
+     * \return The user's interaction result.
      */
-    t_record_params show(bool readonly);
+    t_result show(bool readonly);
+
 } // namespace MovieDialog
