@@ -6,27 +6,29 @@
 
 #pragma once
 
-
+/**
+ * \brief A module responsible for implementing game rendering using Mupen Graphics Extension.
+ */
 namespace MGECompositor
 {
     /**
-     * \brief Initializes the MGE compositor
+     * \brief Initializes the subsystem.
      */
     void init();
 
     /**
-     * \brief Creates the MGE control
-     * \param hwnd The control's parent
+     * \brief Creates the MGE control.
+     * \param hwnd The control's parent.
      */
     void create(HWND hwnd);
 
     /**
-     * \brief Updates the game screen
+     * \brief Updates the game screen.
      */
     void update_screen();
 
     /**
-     * Gets the current video size from the MGE compositor
+     * Gets the current video size from the MGE compositor.
      * \param width The video width. If null, the width is not written.
      * \param height The video height. If null, the height is not written.
      */
@@ -39,7 +41,7 @@ namespace MGECompositor
     void copy_video(void* buffer);
 
     /**
-     * \brief Draws the given data to the MGE surface
+     * \brief Draws the given data to the MGE surface.
      * \param data The buffer holding video data. Must be at least of size <c>width * height * 3</c>, as acquired by <c>mge_get_video_size</c>.
      * \remarks The video buffer's size must match the current video size provided by <c>get_video_size</c>.
      */

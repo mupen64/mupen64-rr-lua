@@ -11,173 +11,130 @@
 #include <Main.h>
 #include <Loggers.h>
 
+constexpr auto CONTROL_CLASS_NAME = L"game_control";
 
-namespace MGECompositor
+struct t_mge_context {
+    int32_t last_width{};
+    int32_t last_height{};
+    int32_t width{};
+    int32_t height{};
+    void* buffer{};
+    BITMAPINFO bmp_info{};
+    HBITMAP dib{};
+    HDC dc{};
+};
+
+static HWND mge_hwnd;
+static t_mge_context mge_context{};
+
+static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    struct VideoBuffer {
-        int32_t last_width = 0;
-        int32_t last_height = 0;
-        int32_t width = 0;
-        int32_t height = 0;
-        void* buffer = nullptr;
-        BITMAPINFO bmp_info{};
-        // Optional DIB for perf
-        HBITMAP dib = nullptr;
-        // Optional DC backing the dib
-        HDC dc = nullptr;
-    };
-
-    constexpr auto CONTROL_CLASS_NAME = L"game_control";
-
-    HWND control_hwnd;
-
-    VideoBuffer internal_buffer{};
-    VideoBuffer external_buffer{};
-
-    LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+    switch (msg)
     {
-        switch (msg)
+    case WM_PAINT:
         {
-        case WM_PAINT:
-            {
-                auto vbuf = (VideoBuffer*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-                if (!vbuf)
-                {
-                    break;
-                }
-                PAINTSTRUCT ps;
-                HDC hdc = BeginPaint(hwnd, &ps);
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
 
-                RECT rect{};
-                GetClientRect(hwnd, &rect);
-                if (vbuf->dib)
-                {
-                    BitBlt(hdc, 0, 0, vbuf->bmp_info.bmiHeader.biWidth, vbuf->bmp_info.bmiHeader.biHeight, vbuf->dc, 0, 0, SRCCOPY);
-                }
-                else
-                {
-                    StretchDIBits(hdc,
-                                  rect.top,
-                                  rect.left,
-                                  rect.right,
-                                  rect.bottom,
-                                  0,
-                                  0,
-                                  vbuf->bmp_info.bmiHeader.biWidth,
-                                  vbuf->bmp_info.bmiHeader.biHeight,
-                                  vbuf->buffer,
-                                  &(vbuf->bmp_info),
-                                  DIB_RGB_COLORS,
-                                  SRCCOPY);
-                }
+            RECT rect{};
+            GetClientRect(hwnd, &rect);
 
+            BitBlt(hdc, 0, 0, mge_context.bmp_info.bmiHeader.biWidth, mge_context.bmp_info.bmiHeader.biHeight, mge_context.dc, 0, 0, SRCCOPY);
 
-                EndPaint(hwnd, &ps);
-                return 0;
-            }
-        }
-        return DefWindowProc(hwnd, msg, wparam, lparam);
-    }
-
-    void create(HWND hwnd)
-    {
-        control_hwnd = CreateWindow(CONTROL_CLASS_NAME, L"", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr, g_app_instance, nullptr);
-    }
-
-    void init()
-    {
-        WNDCLASS wndclass = {0};
-        wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
-        wndclass.lpfnWndProc = (WNDPROC)wndproc;
-        wndclass.hInstance = g_app_instance;
-        wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-        wndclass.lpszClassName = CONTROL_CLASS_NAME;
-        RegisterClass(&wndclass);
-
-        internal_buffer.bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        internal_buffer.bmp_info.bmiHeader.biPlanes = 1;
-        internal_buffer.bmp_info.bmiHeader.biBitCount = 24;
-        internal_buffer.bmp_info.bmiHeader.biCompression = BI_RGB;
-        external_buffer.bmp_info = internal_buffer.bmp_info;
-
-        Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](std::any data) {
-            auto value = std::any_cast<bool>(data);
-            ShowWindow(control_hwnd, (value && core_vr_get_mge_available()) ? SW_SHOW : SW_HIDE);
-        });
-    }
-
-    void update_screen()
-    {
-        g_core.plugin_funcs.video_get_video_size(&internal_buffer.width, &internal_buffer.height);
-
-        if (internal_buffer.width != internal_buffer.last_width || internal_buffer.height != internal_buffer.last_height)
-        {
-            SetWindowLongPtr(control_hwnd, GWLP_USERDATA, (LONG_PTR)&internal_buffer);
-            g_view_logger->info("MGE Compositor: Video size {}x{}", internal_buffer.width, internal_buffer.height);
-
-            internal_buffer.bmp_info.bmiHeader.biWidth = internal_buffer.width;
-            internal_buffer.bmp_info.bmiHeader.biHeight = internal_buffer.height;
-
-            if (internal_buffer.dib)
-            {
-                SelectObject(internal_buffer.dc, nullptr);
-                DeleteObject(internal_buffer.dc);
-                DeleteObject(internal_buffer.dib);
-            }
-
-            auto dc = GetDC(control_hwnd);
-            internal_buffer.dc = CreateCompatibleDC(dc);
-            internal_buffer.dib = CreateDIBSection(internal_buffer.dc, &internal_buffer.bmp_info, DIB_RGB_COLORS, &internal_buffer.buffer, nullptr, 0);
-            SelectObject(internal_buffer.dc, internal_buffer.dib);
-
-            ReleaseDC(control_hwnd, dc);
-
-            MoveWindow(control_hwnd, 0, 0, internal_buffer.width, internal_buffer.height, true);
-        }
-
-        g_core.plugin_funcs.video_read_video(&internal_buffer.buffer);
-
-        internal_buffer.last_width = internal_buffer.width;
-        internal_buffer.last_height = internal_buffer.height;
-
-        RedrawWindow(control_hwnd, NULL, NULL, RDW_INVALIDATE);
-    }
-
-    void get_video_size(int32_t* width, int32_t* height)
-    {
-        if (width)
-        {
-            *width = internal_buffer.width;
-        }
-        if (height)
-        {
-            *height = internal_buffer.height;
+            EndPaint(hwnd, &ps);
+            return 0;
         }
     }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
 
-    void copy_video(void* buffer)
+static void recreate_mge_context()
+{
+    g_view_logger->info("Creating MGE context with size {}x{}...", mge_context.width, mge_context.height);
+
+    mge_context.bmp_info.bmiHeader.biWidth = mge_context.width;
+    mge_context.bmp_info.bmiHeader.biHeight = mge_context.height;
+
+    if (mge_context.dib)
     {
-        memcpy(buffer, internal_buffer.buffer, internal_buffer.width * internal_buffer.height * 3);
+        SelectObject(mge_context.dc, nullptr);
+        DeleteObject(mge_context.dc);
+        DeleteObject(mge_context.dib);
     }
 
-    void load_screen(void* data)
+    const auto mge_dc = GetDC(mge_hwnd);
+
+    mge_context.dc = CreateCompatibleDC(mge_dc);
+    mge_context.dib = CreateDIBSection(mge_context.dc, &mge_context.bmp_info, DIB_RGB_COLORS, &mge_context.buffer, nullptr, 0);
+    SelectObject(mge_context.dc, mge_context.dib);
+
+    ReleaseDC(mge_hwnd, mge_dc);
+}
+
+void MGECompositor::create(HWND hwnd)
+{
+    mge_hwnd = CreateWindow(CONTROL_CLASS_NAME, L"", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr, g_app_instance, nullptr);
+}
+
+void MGECompositor::init()
+{
+    WNDCLASS wndclass = {0};
+    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
+    wndclass.lpfnWndProc = (WNDPROC)wndproc;
+    wndclass.hInstance = g_app_instance;
+    wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wndclass.lpszClassName = CONTROL_CLASS_NAME;
+    RegisterClass(&wndclass);
+
+    mge_context.bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    mge_context.bmp_info.bmiHeader.biPlanes = 1;
+    mge_context.bmp_info.bmiHeader.biBitCount = 24;
+    mge_context.bmp_info.bmiHeader.biCompression = BI_RGB;
+
+    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const std::any& data) {
+        const auto value = std::any_cast<bool>(data);
+        ShowWindow(mge_hwnd, value && core_vr_get_mge_available() ? SW_SHOW : SW_HIDE);
+    });
+}
+
+void MGECompositor::update_screen()
+{
+    g_core.plugin_funcs.video_get_video_size(&mge_context.width, &mge_context.height);
+
+    if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
     {
-        g_main_window_dispatcher->invoke([=] {
-            SetWindowLongPtr(control_hwnd, GWLP_USERDATA, (LONG_PTR)&external_buffer);
+        recreate_mge_context();
 
-            external_buffer.width = internal_buffer.width;
-            external_buffer.height = internal_buffer.height;
-
-            external_buffer.bmp_info.bmiHeader.biWidth = external_buffer.width;
-            external_buffer.bmp_info.bmiHeader.biHeight = external_buffer.height;
-
-            free(external_buffer.buffer);
-            external_buffer.buffer = malloc(external_buffer.width * external_buffer.height * 3);
-            memcpy(external_buffer.buffer, data, external_buffer.width * external_buffer.height * 3);
-
-            MoveWindow(control_hwnd, 0, 0, external_buffer.width, external_buffer.height, true);
-            RedrawWindow(control_hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-            SetWindowLongPtr(control_hwnd, GWLP_USERDATA, (LONG_PTR)&internal_buffer);
-        });
+        MoveWindow(mge_hwnd, 0, 0, mge_context.width, mge_context.height, true);
     }
-} // namespace MGECompositor
+
+    g_core.plugin_funcs.video_read_video(&mge_context.buffer);
+
+    mge_context.last_width = mge_context.width;
+    mge_context.last_height = mge_context.height;
+
+    RedrawWindow(mge_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+}
+
+void MGECompositor::get_video_size(int32_t* width, int32_t* height)
+{
+    if (width)
+    {
+        *width = mge_context.width;
+    }
+    if (height)
+    {
+        *height = mge_context.height;
+    }
+}
+
+void MGECompositor::copy_video(void* buffer)
+{
+    memcpy(buffer, mge_context.buffer, mge_context.width * mge_context.height * 3);
+}
+
+void MGECompositor::load_screen(void* data)
+{
+    memcpy(mge_context.buffer, data, mge_context.width * mge_context.height * 3);
+    RedrawWindow(mge_hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+}
