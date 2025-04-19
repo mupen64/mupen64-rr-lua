@@ -6,7 +6,9 @@
 
 #pragma once
 
-
+/**
+ * \brief A module responsible for implementing statusbar functionality.
+ */
 namespace Statusbar
 {
     enum class Section {
@@ -22,14 +24,9 @@ namespace Statusbar
     };
 
     /**
-     * \brief Gets the statusbar handle
+     * \brief Creates the statusbar.
      */
-    HWND hwnd();
-
-    /**
-     * \brief Initializes the statusbar
-     */
-    void init();
+    void create();
 
     /**
      * \brief Shows text in the statusbar
@@ -37,4 +34,9 @@ namespace Statusbar
      * \param section The statusbar section to display the text in
      */
     void post(const std::wstring& text, Section section = Section::Notification);
+
+    /**
+     * \brief Gets the statusbar handle
+     */
+    HWND hwnd();
 } // namespace Statusbar

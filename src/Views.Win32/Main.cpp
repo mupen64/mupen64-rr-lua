@@ -2403,7 +2403,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     });
 
     // Rombrowser needs to be initialized *after* other components, since it depends on their state smh bru
-    Statusbar::init();
+    Statusbar::create();
     RomBrowser::create();
     EncodingManager::init();
     Cli::init();
