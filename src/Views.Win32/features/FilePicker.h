@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 /**
  * \brief Shows a file selection dialog
  * \param id The dialog's unique identifier, which is used for persisting the path

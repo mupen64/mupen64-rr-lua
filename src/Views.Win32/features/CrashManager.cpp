@@ -6,9 +6,9 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
-#include <gui/features/CrashManager.h>
+#include <Loggers.h>
+#include <Main.h>
+#include <features/CrashManager.h>
 #include <backward.hpp>
 
 const std::filesystem::path MINIDUMP_PATH = L"mupen.dmp";

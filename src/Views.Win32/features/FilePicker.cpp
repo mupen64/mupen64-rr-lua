@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include <stdafx.h>
 #include <Config.h>
-#include <gui/wrapper/PersistentPathDialog.h>
+#include <features/FilePicker.h>
+
 #define FAILSAFE(operation) \
     if (FAILED(operation))  \
     goto cleanUp

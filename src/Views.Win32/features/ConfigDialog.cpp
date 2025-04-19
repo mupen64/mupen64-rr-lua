@@ -11,9 +11,9 @@
 #include <Plugin.h>
 #include <SettingsListView.h>
 #include <capture/EncodingManager.h>
-#include <gui/Main.h>
-#include <gui/features/configdialog.h>
-#include <gui/wrapper/PersistentPathDialog.h>
+#include <Main.h>
+#include <features/configdialog.h>
+#include <features/FilePicker.h>
 #include <lua/LuaConsole.h>
 
 #define WM_EDIT_END (WM_USER + 19)

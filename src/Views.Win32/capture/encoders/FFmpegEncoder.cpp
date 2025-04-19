@@ -8,8 +8,8 @@
 #include "FFmpegEncoder.h"
 #include <DialogService.h>
 #include <Config.h>
-#include <gui/Main.h>
-#include <gui/Loggers.h>
+#include <Main.h>
+#include <Loggers.h>
 
 std::wstring FFmpegEncoder::start(Params params)
 {

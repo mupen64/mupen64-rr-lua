@@ -7,10 +7,10 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <Uxtheme.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
-#include <gui/features/RomBrowser.h>
-#include <gui/features/Statusbar.h>
+#include <Loggers.h>
+#include <Main.h>
+#include <features/RomBrowser.h>
+#include <features/Statusbar.h>
 #include <AsyncExecutor.h>
 #include <Messenger.h>
 

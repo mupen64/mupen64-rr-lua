@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <gui/wrapper/PersistentPathDialog.h>
+#include <features/FilePicker.h>
 
 namespace LuaCore::IOHelper
 {

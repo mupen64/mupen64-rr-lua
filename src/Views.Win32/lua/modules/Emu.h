@@ -7,8 +7,8 @@
 #pragma once
 
 #include <Messenger.h>
-#include <gui/Main.h>
-#include <gui/features/Statusbar.h>
+#include <Main.h>
+#include <features/Statusbar.h>
 #include <lua/LuaCallbacks.h>
 
 namespace LuaCore::Emu

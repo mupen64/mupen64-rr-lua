@@ -11,8 +11,8 @@
 #include <capture/EncodingManager.h>
 #include <capture/Resampler.h>
 #include <capture/encoders/AVIEncoder.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
+#include <Loggers.h>
+#include <Main.h>
 
 
 std::wstring AVIEncoder::start(Params params)

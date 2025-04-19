@@ -7,9 +7,9 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <DialogService.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
-#include <gui/features/Statusbar.h>
+#include <Loggers.h>
+#include <Main.h>
+#include <features/Statusbar.h>
 #include <lua/LuaConsole.h>
 
 std::unordered_map<std::string, size_t> dialog_choice_map;

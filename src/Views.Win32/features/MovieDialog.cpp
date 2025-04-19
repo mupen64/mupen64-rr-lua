@@ -8,8 +8,8 @@
 #include "MovieDialog.h"
 #include "Config.h"
 #include "DialogService.h"
-#include <gui/Main.h>
-#include <gui/wrapper/PersistentPathDialog.h>
+#include <Main.h>
+#include <features/FilePicker.h>
 
 namespace MovieDialog
 {

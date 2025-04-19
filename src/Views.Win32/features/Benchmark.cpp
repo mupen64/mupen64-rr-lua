@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <json.hpp>
-#include <gui/features/Benchmark.h>
+#include <features/Benchmark.h>
 
 static size_t frames{};
 static std::chrono::time_point<std::chrono::high_resolution_clock> start_time;

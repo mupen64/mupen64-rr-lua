@@ -11,10 +11,10 @@
 #include <DialogService.h>
 #include <PlatformService.h>
 #include <Plugin.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
-#include <gui/features/ConfigDialog.h>
-#include <gui/features/Statusbar.h>
+#include <Loggers.h>
+#include <Main.h>
+#include <features/ConfigDialog.h>
+#include <features/Statusbar.h>
 
 core_gfx_info dummy_gfx_info;
 core_audio_info dummy_audio_info;

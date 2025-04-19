@@ -8,8 +8,8 @@
 #include <Messenger.h>
 
 
-#include <gui/Main.h>
-#include <gui/features/CoreDbg.h>
+#include <Main.h>
+#include <features/CoreDbg.h>
 #include <lua/LuaConsole.h>
 
 #define WM_DEBUGGER_CPU_STATE_UPDATED (WM_USER + 20)

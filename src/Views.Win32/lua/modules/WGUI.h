@@ -7,7 +7,7 @@
 #pragma once
 
 #include <lua/LuaConsole.h>
-#include <gui/Main.h>
+#include <Main.h>
 #include <DialogService.h>
 
 namespace LuaCore::Wgui

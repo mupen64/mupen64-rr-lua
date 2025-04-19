@@ -10,7 +10,7 @@
 #include <Messenger.h>
 
 #include <ini.h>
-#include <gui/Loggers.h>
+#include <Loggers.h>
 
 cfg_view g_config;
 std::vector<cfg_hotkey*> g_config_hotkeys;

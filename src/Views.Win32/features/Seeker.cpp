@@ -9,8 +9,8 @@
 #include <Config.h>
 
 
-#include <gui/Main.h>
-#include <gui/features/Seeker.h>
+#include <Main.h>
+#include <features/Seeker.h>
 
 #define WM_SEEK_COMPLETED (WM_USER + 11)
 

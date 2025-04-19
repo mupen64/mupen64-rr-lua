@@ -11,9 +11,9 @@
 #include "LuaCallbacks.h"
 #include "LuaRegistry.h"
 #include "Messenger.h"
-#include <gui/Main.h>
-#include <gui/features/Statusbar.h>
-#include <gui/wrapper/PersistentPathDialog.h>
+#include <Main.h>
+#include <features/Statusbar.h>
+#include <features/FilePicker.h>
 #include "presenters/DCompPresenter.h"
 #include "presenters/GDIPresenter.h"
 

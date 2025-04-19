@@ -10,7 +10,7 @@
 #include "DialogService.h"
 
 
-#include <gui/Main.h>
+#include <Main.h>
 
 
 namespace Cheats

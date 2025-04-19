@@ -12,12 +12,12 @@
 #include <argh.h>
 #include <json.hpp>
 #include <capture/EncodingManager.h>
-#include <gui/Commandline.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
-#include <gui/features/Benchmark.h>
-#include <gui/features/Compare.h>
-#include <gui/features/Dispatcher.h>
+#include <Commandline.h>
+#include <Loggers.h>
+#include <Main.h>
+#include <features/Benchmark.h>
+#include <features/Compare.h>
+#include <features/Dispatcher.h>
 #include <lua/LuaConsole.h>
 
 namespace Cli

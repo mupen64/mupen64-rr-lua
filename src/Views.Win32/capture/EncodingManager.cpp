@@ -14,10 +14,10 @@
 #include <capture/encoders/AVIEncoder.h>
 #include <capture/encoders/Encoder.h>
 #include <capture/encoders/FFmpegEncoder.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
-#include <gui/features/Dispatcher.h>
-#include <gui/features/MGECompositor.h>
+#include <Loggers.h>
+#include <Main.h>
+#include <features/Dispatcher.h>
+#include <features/MGECompositor.h>
 #include <lua/LuaConsole.h>
 
 namespace EncodingManager

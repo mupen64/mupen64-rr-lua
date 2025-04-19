@@ -7,8 +7,8 @@
 #pragma once
 
 #include <stdafx.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
+#include <Loggers.h>
+#include <Main.h>
 
 /**
  * \brief Records the execution time of a scope
@@ -129,25 +129,6 @@ static void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
         new_parts[i] = accumulator;
     }
     SendMessage(hwnd, SB_SETPARTS, new_parts.size(), (LPARAM)new_parts.data());
-}
-
-static HWND create_tooltip(HWND hwnd, int id, std::wstring text)
-{
-    HWND hwnd_tip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_NOPREFIX, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hwnd, NULL, GetModuleHandle(0), NULL);
-
-    TOOLINFO info = {0};
-    info.cbSize = sizeof(info);
-    info.hwnd = hwnd;
-    info.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-    info.uId = (UINT_PTR)GetDlgItem(hwnd, id);
-    // FIXME: Why does ms want mutable string for this, isn't this getting copied when the tool is added???
-    info.lpszText = const_cast<LPWSTR>(text.c_str());
-
-    SendMessage(hwnd_tip, TTM_ADDTOOL, 0, (LPARAM)&info);
-    // Multiline tooltips only work if you specify a max width because of course they do
-    SendMessage(hwnd_tip, TTM_SETMAXTIPWIDTH, 0, 999999);
-
-    return hwnd_tip;
 }
 
 /**
@@ -346,38 +327,6 @@ static std::vector<std::wstring> get_files_in_subdirectories(std::wstring direct
 }
 
 /**
- * \brief Removes the extension from a path
- * \param path The path to remove the extension from
- * \return The path without an extension
- */
-static std::string strip_extension(const std::string& path)
-{
-    size_t i = path.find_last_of('.');
-
-    if (i != std::string::npos)
-    {
-        return path.substr(0, i);
-    }
-    return path;
-}
-
-/**
- * \brief Removes the extension from a path
- * \param path The path to remove the extension from
- * \return The path without an extension
- */
-static std::wstring strip_extension(const std::wstring& path)
-{
-    size_t i = path.find_last_of('.');
-
-    if (i != std::string::npos)
-    {
-        return path.substr(0, i);
-    }
-    return path;
-}
-
-/**
  * \brief Gets the path to the current user's desktop
  */
 static std::wstring get_desktop_path()
@@ -386,35 +335,6 @@ static std::wstring get_desktop_path()
     SHGetSpecialFolderPathW(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE);
     return path;
 }
-
-/**
- * \brief Creates a new path with a different name, keeping the extension and preceeding path intact
- * \param path A path
- * \param name The new name
- * \return The modified path
- */
-static std::filesystem::path with_name(std::filesystem::path path, std::string name)
-{
-    char drive[MAX_PATH] = {0};
-    char dir[MAX_PATH] = {0};
-    char filename[MAX_PATH] = {0};
-    _splitpath(path.string().c_str(), drive, dir, filename, nullptr);
-
-    return std::filesystem::path(std::string(drive) + std::string(dir) + name + path.extension().string());
-}
-
-/**
- * \brief Gets the name (filename without extension) of a path
- * \param path A path
- * \return The path's name
- */
-static std::string get_name(std::filesystem::path path)
-{
-    char filename[MAX_PATH] = {0};
-    _splitpath(path.string().c_str(), nullptr, nullptr, filename, nullptr);
-    return filename;
-}
-
 
 /**
  * \brief Limits a value to a specific range

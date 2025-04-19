@@ -10,9 +10,9 @@
 
 
 #include <winhttp.h>
-#include <gui/Loggers.h>
-#include <gui/Main.h>
-#include <gui/features/UpdateChecker.h>
+#include <Loggers.h>
+#include <Main.h>
+#include <features/UpdateChecker.h>
 #include <json/json.hpp>
 
 namespace UpdateChecker

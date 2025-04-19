@@ -8,8 +8,8 @@
 #include "MGECompositor.h"
 #include <Messenger.h>
 
-#include <gui/Main.h>
-#include <gui/Loggers.h>
+#include <Main.h>
+#include <Loggers.h>
 
 
 namespace MGECompositor

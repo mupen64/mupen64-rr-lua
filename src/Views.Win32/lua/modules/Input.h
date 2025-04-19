@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <gui/Main.h>
+#include <Main.h>
 
 namespace LuaCore::Input
 {
