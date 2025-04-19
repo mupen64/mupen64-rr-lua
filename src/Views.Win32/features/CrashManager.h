@@ -11,5 +11,8 @@
  */
 namespace CrashManager
 {
+    /**
+     * \brief Initializes the subsystem.
+     */
     void init();
 } // namespace CrashManager
