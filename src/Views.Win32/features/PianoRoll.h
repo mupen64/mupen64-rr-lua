@@ -6,15 +6,18 @@
 
 #pragma once
 
+/**
+ * \brief A module responsible for implementing the piano roll frontend.
+ */
 namespace PianoRoll
 {
     /**
-     * Initializes the piano roll subsystem
+     * \brief Initializes the subsystem.
      */
     void init();
 
     /**
-     * Shows the piano roll dialog
+     * Shows the piano roll window.
      */
     void show();
 } // namespace PianoRoll
