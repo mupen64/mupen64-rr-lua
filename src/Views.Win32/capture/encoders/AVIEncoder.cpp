@@ -272,11 +272,11 @@ bool AVIEncoder::write_sound(uint8_t* buf, int len, const int min_write_size, co
 
     if (sound_buf_pos + len > min_write_size || force)
     {
-        int len2 = rsmp_get_resample_len(RESAMPLED_FREQ, m_params.arate, bitrate, sound_buf_pos);
+        int len2 = Resampler::get_resample_len(RESAMPLED_FREQ, m_params.arate, bitrate, sound_buf_pos);
         if ((len2 % 8) == 0 || len > max_write_size)
         {
             static short* buf2 = nullptr;
-            len2 = rsmp_resample(&buf2, RESAMPLED_FREQ, reinterpret_cast<short*>(m_sound_buf), m_params.arate, bitrate, sound_buf_pos);
+            len2 = Resampler::resample(&buf2, RESAMPLED_FREQ, reinterpret_cast<short*>(m_sound_buf), m_params.arate, bitrate, sound_buf_pos);
 
             if (len2 > 0)
             {

@@ -8,12 +8,13 @@
 #include "Resampler.h"
 #include <speex/speex_resampler.h>
 
-SpeexResamplerState* speex_ctx = NULL;
-short in_samps[44100 * 2 * 2]; // big enough i guess?
-short out_samps[44100 * 2 * 2]; // big enough i guess?
-int err = 0;
+const auto RESAMP_BUFFER_SIZE = 44100 * 2 * 2;
 
-int rates_changed(const int cur_in, const int cur_out)
+static SpeexResamplerState* speex_ctx{};
+static short in_samps[RESAMP_BUFFER_SIZE]{};
+static short out_samps[RESAMP_BUFFER_SIZE]{};
+
+static int rates_changed(const int cur_in, const int cur_out)
 {
     static spx_uint32_t in;
     static spx_uint32_t out;
@@ -21,7 +22,7 @@ int rates_changed(const int cur_in, const int cur_out)
     return in != (unsigned int)cur_in || out != (unsigned int)cur_out;
 }
 
-int rsmp_get_resample_len(const int dst_freq, const int src_freq, const int src_bitrate, int src_len)
+int Resampler::get_resample_len(const int dst_freq, const int src_freq, const int src_bitrate, int src_len)
 {
     // convert bitrate to 16 bits
     if (src_bitrate != 16)
@@ -38,11 +39,11 @@ int rsmp_get_resample_len(const int dst_freq, const int src_freq, const int src_
     return dst_len;
 }
 
-int rsmp_resample(short** dst, const int dst_freq, const short* src, const int src_freq, const int src_bitrate, const int src_len)
+int Resampler::resample(short** dst, const int dst_freq, const short* src, const int src_freq, const int src_bitrate, const int src_len)
 {
     if (src_bitrate != 16)
     {
-        puts("[VCR]: resample: Bitrate is not 16 bits");
+        g_view_logger->error("rsmp_resample bitrate is {} bits when it should be {} bits", src_bitrate, 16);
         return -1;
     }
 
@@ -56,6 +57,7 @@ int rsmp_resample(short** dst, const int dst_freq, const short* src, const int s
 
     if (!speex_ctx)
     {
+        int err = 0;
         speex_ctx = speex_resampler_init(2, src_freq, dst_freq, 6, &err);
     }
 
