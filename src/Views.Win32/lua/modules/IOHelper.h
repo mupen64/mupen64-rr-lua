@@ -25,11 +25,11 @@ namespace LuaCore::IOHelper
         EnableWindow(lua->hwnd, FALSE);
         if (type == 0)
         {
-            path = show_persistent_open_dialog(L"o_lua_api", g_main_hwnd, filter);
+            path = FilePicker::show_open_dialog(L"o_lua_api", g_main_hwnd, filter);
         }
         else
         {
-            path = show_persistent_save_dialog(L"s_lua_api", g_main_hwnd, filter);
+            path = FilePicker::show_save_dialog(L"s_lua_api", g_main_hwnd, filter);
         }
         EnableWindow(lua->hwnd, TRUE);
         lua_pushstring(L, wstring_to_string(path).c_str());

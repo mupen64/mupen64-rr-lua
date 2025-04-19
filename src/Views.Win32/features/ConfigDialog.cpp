@@ -564,7 +564,7 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
             break;
         case IDC_ADD_BROWSER_DIR:
             {
-                const auto path = show_persistent_folder_dialog(L"f_roms", hwnd);
+                const auto path = FilePicker::show_folder_dialog(L"f_roms", hwnd);
                 if (path.empty())
                 {
                     break;
@@ -614,12 +614,12 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
             break;
         case IDC_CHOOSE_PLUGINS_DIR:
             {
-                const auto path = show_persistent_folder_dialog(L"f_plugins", hwnd);
+                const auto path = FilePicker::show_folder_dialog(L"f_plugins", hwnd);
                 if (path.empty())
                 {
                     break;
                 }
-                g_config.plugins_directory = path + L"\\";
+                g_config.plugins_directory = path;
                 SetDlgItemText(hwnd, IDC_PLUGINS_DIR, g_config.plugins_directory.c_str());
             }
             break;
@@ -632,12 +632,12 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
             break;
         case IDC_CHOOSE_SAVES_DIR:
             {
-                const auto path = show_persistent_folder_dialog(L"f_saves", hwnd);
+                const auto path = FilePicker::show_folder_dialog(L"f_saves", hwnd);
                 if (path.empty())
                 {
                     break;
                 }
-                g_config.saves_directory = path + L"\\";
+                g_config.saves_directory = path;
                 SetDlgItemText(hwnd, IDC_SAVES_DIR, g_config.saves_directory.c_str());
             }
             break;
@@ -650,23 +650,23 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
             break;
         case IDC_CHOOSE_SCREENSHOTS_DIR:
             {
-                const auto path = show_persistent_folder_dialog(L"f_screenshots", hwnd);
+                const auto path = FilePicker::show_folder_dialog(L"f_screenshots", hwnd);
                 if (path.empty())
                 {
                     break;
                 }
-                g_config.screenshots_directory = path + L"\\";
+                g_config.screenshots_directory = path;
                 SetDlgItemText(hwnd, IDC_SCREENSHOTS_DIR, g_config.screenshots_directory.c_str());
             }
             break;
         case IDC_CHOOSE_BACKUPS_DIR:
             {
-                const auto path = show_persistent_folder_dialog(L"f_backups", hwnd);
+                const auto path = FilePicker::show_folder_dialog(L"f_backups", hwnd);
                 if (path.empty())
                 {
                     break;
                 }
-                g_config.backups_directory = path + L"\\";
+                g_config.backups_directory = path;
                 SetDlgItemText(hwnd, IDC_BACKUPS_DIR, g_config.backups_directory.c_str());
             }
             break;

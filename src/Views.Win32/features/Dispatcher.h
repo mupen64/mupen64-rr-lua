@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 /**
  * Represents a dispatcher that can execute functions on a specific thread.
  */
@@ -34,13 +33,13 @@ public:
     void execute();
 
 private:
-    std::function<void()> m_execute_callback;
-    DWORD m_thread_id;
-    std::queue<std::function<void()>> m_queue;
-    std::mutex m_mutex;
+    std::function<void()> m_execute_callback{};
+    DWORD m_thread_id{};
+    std::queue<std::function<void()>> m_queue{};
+    std::mutex m_mutex{};
 
-    uint64_t m_overhead_times[60];
-    double m_overhead_percentages[60];
-    size_t m_overhead_index;
-    std::chrono::time_point<std::chrono::steady_clock> m_call_start;
+    uint64_t m_overhead_times[60]{};
+    double m_overhead_percentages[60]{};
+    size_t m_overhead_index{};
+    std::chrono::time_point<std::chrono::steady_clock> m_call_start{};
 };

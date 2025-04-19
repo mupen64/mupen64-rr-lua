@@ -191,7 +191,7 @@ namespace MovieDialog
                     {
                         // The default directory we open the file dialog window in is the
                         // parent directory of the last savestate that the user saved or loaded
-                        std::filesystem::path path = show_persistent_open_dialog(L"o_movie_existing_snapshot", hwnd, L"*.st;*.savestate");
+                        std::filesystem::path path = FilePicker::show_open_dialog(L"o_movie_existing_snapshot", hwnd, L"*.st;*.savestate");
 
                         if (path.empty())
                         {
@@ -241,14 +241,14 @@ namespace MovieDialog
                     std::wstring path;
                     if (is_readonly)
                     {
-                        path = show_persistent_open_dialog(
+                        path = FilePicker::show_open_dialog(
                         L"o_movie",
                         hwnd,
                         L"*.m64;*.rec");
                     }
                     else
                     {
-                        path = show_persistent_save_dialog(
+                        path = FilePicker::show_save_dialog(
                         L"s_movie",
                         hwnd,
                         L"*.m64;*.rec");

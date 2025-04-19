@@ -12,7 +12,9 @@
     if (FAILED(operation))  \
     goto cleanUp
 
-std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
+// BUG: Filter format needs converting!!!
+
+std::filesystem::path FilePicker::show_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
     std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
@@ -36,10 +38,10 @@ std::wstring show_persistent_open_dialog(const std::wstring& id, HWND hwnd, cons
         return g_config.persistent_folder_paths[id];
     }
 
-    return L"";
+    return {};
 }
 
-std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
+std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
     std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
@@ -63,10 +65,10 @@ std::wstring show_persistent_save_dialog(const std::wstring& id, HWND hwnd, cons
         return g_config.persistent_folder_paths[id];
     }
 
-    return L"";
+    return {};
 }
 
-std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd)
+std::filesystem::path FilePicker::show_folder_dialog(const std::wstring& id, HWND hwnd)
 {
     std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
@@ -93,7 +95,7 @@ std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd)
 
     if (!pidl)
     {
-        return L"";
+        return {};
     }
 
     wchar_t path[MAX_PATH];
@@ -104,5 +106,5 @@ std::wstring show_persistent_folder_dialog(const std::wstring& id, HWND hwnd)
     }
     CoTaskMemFree(pidl);
 
-    return success ? path : L"";
+    return success ? path : std::filesystem::path{};
 }

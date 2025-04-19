@@ -1363,7 +1363,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    auto path = show_persistent_save_dialog(L"s_tracelog", g_main_hwnd, L"*.log");
+                    auto path = FilePicker::show_save_dialog(L"s_tracelog", g_main_hwnd, L"*.log");
 
                     if (path.empty())
                     {
@@ -1589,7 +1589,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 {
                     BetterEmulationLock lock;
 
-                    const auto path = show_persistent_open_dialog(L"o_rom", g_main_hwnd, L"*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
+                    const auto path = FilePicker::show_open_dialog(L"o_rom", g_main_hwnd, L"*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
 
                     if (!path.empty())
                     {
@@ -1628,7 +1628,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 {
                     BetterEmulationLock lock;
 
-                    auto path = show_persistent_save_dialog(L"s_savestate", hwnd, L"*.st;*.savestate");
+                    auto path = FilePicker::show_save_dialog(L"s_savestate", hwnd, L"*.st;*.savestate");
                     if (path.empty())
                     {
                         break;
@@ -1652,7 +1652,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 {
                     BetterEmulationLock lock;
 
-                    auto path = show_persistent_open_dialog(L"o_state", hwnd, L"*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
+                    auto path = FilePicker::show_open_dialog(L"o_state", hwnd, L"*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
                     if (path.empty())
                     {
                         break;
@@ -1766,7 +1766,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     BetterEmulationLock lock;
 
-                    auto path = show_persistent_save_dialog(L"s_capture", hwnd, L"*.avi");
+                    auto path = FilePicker::show_save_dialog(L"s_capture", hwnd, L"*.avi");
                     if (path.empty())
                     {
                         break;
