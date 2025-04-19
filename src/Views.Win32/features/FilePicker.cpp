@@ -21,11 +21,11 @@ static std::wstring fix_filter(const std::wstring& filter)
 
 std::filesystem::path FilePicker::show_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
-    std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
+    std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
     : get_desktop_path();
-    
-    g_view_logger->info(L"file dialog {}: {}\n", id.c_str(), restored_path);
+
+    g_view_logger->info(L"file dialog {}: {}\n", id, restored_path.wstring());
 
     const auto fixed_filter = fix_filter(filter);
 
@@ -51,11 +51,11 @@ std::filesystem::path FilePicker::show_open_dialog(const std::wstring& id, HWND 
 
 std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
-    std::wstring restored_path = g_config.persistent_folder_paths.contains(id)
+    std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id)
     ? g_config.persistent_folder_paths[id]
     : get_desktop_path();
-    
-    g_view_logger->info(L"file dialog {}: {}\n", id.c_str(), restored_path);
+
+    g_view_logger->info(L"file dialog {}: {}\n", id, restored_path.wstring());
 
     const auto fixed_filter = fix_filter(filter);
 
@@ -81,43 +81,58 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND 
 
 std::filesystem::path FilePicker::show_folder_dialog(const std::wstring& id, HWND hwnd)
 {
-    std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id)
-    ? g_config.persistent_folder_paths[id]
-    : get_desktop_path();
-
-    g_view_logger->info(L"folder dialog {}: {}\n", id.c_str(), restored_path);
+    std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id) ? g_config.persistent_folder_paths[id] : get_desktop_path();
 
     COMInitializer com_initializer;
+    std::wstring final_path;
+    IFileDialog* pfd;
 
-    BROWSEINFO bi{};
-    bi.hwndOwner = hwnd;
-    bi.lpszTitle = _T("Select a folder");
-    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-    bi.lpfn = [](const HWND hwnd, const UINT msg, LPARAM, const LPARAM lpdata) -> int {
-        if (msg == BFFM_INITIALIZED)
+    g_view_logger->info(L"folder dialog {}: {}\n", id, restored_path.wstring());
+
+    if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd))))
+    {
+        PIDLIST_ABSOLUTE pidl;
+
+        HRESULT hresult = SHParseDisplayName(restored_path.c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr);
+        if (SUCCEEDED(hresult))
         {
-            SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpdata);
+            IShellItem* psi;
+            hresult = SHCreateShellItem(nullptr, nullptr, pidl, &psi);
+            if (SUCCEEDED(hresult))
+            {
+                pfd->SetFolder(psi);
+            }
+            ILFree(pidl);
         }
-        return 0;
-    };
-    bi.lParam = (LPARAM)restored_path.wstring().c_str();
 
-    bool success = false;
+        DWORD dwOptions;
+        if (SUCCEEDED(pfd->GetOptions(&dwOptions)))
+        {
+            pfd->SetOptions(dwOptions | FOS_PICKFOLDERS | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM);
+        }
 
-    PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
-
-    if (!pidl)
-    {
-        return {};
+        if (SUCCEEDED(pfd->Show(hwnd)))
+        {
+            IShellItem* psi;
+            if (SUCCEEDED(pfd->GetResult(&psi)))
+            {
+                WCHAR* tmp;
+                if (SUCCEEDED(
+                    psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &tmp)))
+                {
+                    final_path = tmp;
+                }
+                psi->Release();
+            }
+        }
+        pfd->Release();
     }
 
-    wchar_t path[MAX_PATH];
-    if (SHGetPathFromIDList(pidl, path))
+    if (final_path.size() > 1)
     {
-        g_config.persistent_folder_paths[id] = path;
-        success = true;
+        // probably valid path, store it
+        g_config.persistent_folder_paths[id] = final_path;
     }
-    CoTaskMemFree(pidl);
 
-    return success ? path : std::filesystem::path{};
+    return final_path;
 }
