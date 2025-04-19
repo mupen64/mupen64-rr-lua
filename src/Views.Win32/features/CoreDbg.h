@@ -15,7 +15,7 @@ namespace CoreDbg
      * Initializes the subsystem.
      */
     void init();
-    
+
     /**
      * \brief Shows the CoreDbg dialog
      */
