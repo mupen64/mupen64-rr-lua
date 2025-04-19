@@ -110,7 +110,7 @@ std::wstring get_mupen_name()
     std::wstring version_suffix = VERSION_SUFFIX;
     if (version_suffix.empty())
     {
-        version_suffix = L"-rc2";
+        version_suffix = L"-rc3";
     }
 
     return BASE_NAME CURRENT_VERSION + version_suffix + ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
