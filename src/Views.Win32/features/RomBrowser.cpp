@@ -432,7 +432,7 @@ namespace RomBrowser
         rombrowser_update_size();
     }
 
-    void init()
+    void create()
     {
         rombrowser_create();
         Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, emu_launched_changed);
