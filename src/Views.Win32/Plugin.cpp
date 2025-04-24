@@ -16,103 +16,111 @@
 #include <features/ConfigDialog.h>
 #include <features/Statusbar.h>
 
-core_gfx_info dummy_gfx_info;
-core_audio_info dummy_audio_info;
-core_input_info dummy_control_info;
-core_rsp_info dummy_rsp_info;
-unsigned char dummy_header[0x40];
+#define CALL _cdecl
 
-core_gfx_info gfx_info;
-core_audio_info audio_info;
-core_input_info control_info;
-core_rsp_info rsp_info;
+static core_gfx_info dummy_gfx_info{};
+static core_audio_info dummy_audio_info{};
+static core_input_info dummy_control_info{};
+static core_rsp_info dummy_rsp_info{};
+static uint8_t dummy_header[0x40]{};
+static uint32_t dummy_dw{};
 
-DLLABOUT dll_about;
-DLLCONFIG dll_config;
-DLLTEST dll_test;
+static core_gfx_info gfx_info{};
+static core_audio_info audio_info{};
+static core_input_info control_info{};
+static core_rsp_info rsp_info{};
 
-static uint32_t __cdecl dummy_doRspCycles(uint32_t Cycles)
+static DLLABOUT dll_about{};
+static DLLCONFIG dll_config{};
+static DLLTEST dll_test{};
+
+#pragma region Dummy Functions
+
+static uint32_t CALL dummy_do_rsp_cycles(uint32_t Cycles)
 {
     return Cycles;
 }
 
-static void __cdecl dummy_void()
+static void CALL dummy_void()
 {
 }
 
-static void __cdecl dummy_receive_extended_funcs(core_plugin_extended_funcs*)
+static void CALL dummy_receive_extended_funcs(core_plugin_extended_funcs*)
 {
 }
 
-static int32_t __cdecl dummy_initiateGFX(core_gfx_info Gfx_Info)
-{
-    return 1;
-}
-
-static int32_t __cdecl dummy_initiateAudio(core_audio_info Audio_Info)
+static int32_t CALL dummy_initiate_gfx(core_gfx_info)
 {
     return 1;
 }
 
-static void __cdecl dummy_initiateControllers(core_input_info Control_Info)
+static int32_t CALL dummy_initiate_audio(core_audio_info)
+{
+    return 1;
+}
+
+static void CALL dummy_initiate_controllers(core_input_info)
 {
 }
 
-static void __cdecl dummy_aiDacrateChanged(int32_t SystemType)
+static void CALL dummy_ai_dacrate_changed(int32_t)
 {
 }
 
-static uint32_t __cdecl dummy_aiReadLength()
+static uint32_t CALL dummy_ai_read_length()
 {
     return 0;
 }
 
-static void __cdecl dummy_aiUpdate(int32_t)
+static void CALL dummy_ai_update(int32_t)
 {
 }
 
-static void __cdecl dummy_controllerCommand(int32_t Control, uint8_t* Command)
+static void CALL dummy_controller_command(int32_t, uint8_t*)
 {
 }
 
-static void __cdecl dummy_getKeys(int32_t Control, core_buttons* Keys)
+static void CALL dummy_get_keys(int32_t, core_buttons*)
 {
 }
 
-static void __cdecl dummy_setKeys(int32_t Control, core_buttons Keys)
+static void CALL dummy_set_keys(int32_t, core_buttons)
 {
 }
 
-static void __cdecl dummy_readController(int32_t Control, uint8_t* Command)
+static void CALL dummy_read_controller(int32_t, uint8_t*)
 {
 }
 
-static void __cdecl dummy_keyDown(uint32_t wParam, int32_t lParam)
+static void CALL dummy_key_down(uint32_t, int32_t)
 {
 }
 
-static void __cdecl dummy_keyUp(uint32_t wParam, int32_t lParam)
+static void CALL dummy_key_up(uint32_t, int32_t)
 {
 }
 
-static uint32_t dummy;
-
-static void __cdecl dummy_initiateRSP(core_rsp_info Rsp_Info,
-                                      uint32_t* CycleCount){};
-
-static void __cdecl dummy_fBRead(uint32_t addr){};
-
-static void __cdecl dummy_fBWrite(uint32_t addr, uint32_t size){};
-
-static void __cdecl dummy_fBGetFrameBufferInfo(void* p){};
-
-static void __cdecl dummy_readScreen(void**, int32_t*, int32_t*)
+static void CALL dummy_initiate_rsp(core_rsp_info, uint32_t*)
 {
 }
 
-static void __cdecl dummy_moveScreen(int32_t, int32_t)
+static void CALL dummy_fb_read(uint32_t)
 {
 }
+
+static void CALL dummy_fb_write(uint32_t, uint32_t)
+{
+}
+
+static void CALL dummy_fb_get_framebuffer_info(void*)
+{
+}
+
+static void CALL dummy_move_screen(int32_t, int32_t)
+{
+}
+
+#pragma endregion
 
 #define FUNC(target, type, fallback, name)                \
     target = (type)GetProcAddress((HMODULE)handle, name); \
@@ -128,7 +136,7 @@ void load_gfx(void* handle)
 
     FUNC(g_core.plugin_funcs.video_change_window, CHANGEWINDOW, dummy_void, "ChangeWindow");
     FUNC(g_core.plugin_funcs.video_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
-    FUNC(initiate_gfx, INITIATEGFX, dummy_initiateGFX, "InitiateGFX");
+    FUNC(initiate_gfx, INITIATEGFX, dummy_initiate_gfx, "InitiateGFX");
     FUNC(g_core.plugin_funcs.video_process_dlist, PROCESSDLIST, dummy_void, "ProcessDList");
     FUNC(g_core.plugin_funcs.video_process_rdp_list, PROCESSRDPLIST, dummy_void, "ProcessRDPList");
     FUNC(g_core.plugin_funcs.video_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
@@ -137,14 +145,14 @@ void load_gfx(void* handle)
     FUNC(g_core.plugin_funcs.video_update_screen, UPDATESCREEN, dummy_void, "UpdateScreen");
     FUNC(g_core.plugin_funcs.video_vi_status_changed, VISTATUSCHANGED, dummy_void, "ViStatusChanged");
     FUNC(g_core.plugin_funcs.video_vi_width_changed, VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
-    FUNC(g_core.plugin_funcs.video_move_screen, MOVESCREEN, dummy_moveScreen, "MoveScreen");
+    FUNC(g_core.plugin_funcs.video_move_screen, MOVESCREEN, dummy_move_screen, "MoveScreen");
     FUNC(g_core.plugin_funcs.video_capture_screen, CAPTURESCREEN, nullptr, "CaptureScreen");
     FUNC(g_core.plugin_funcs.video_read_screen, READSCREEN, (READSCREEN)PlatformService::get_function_in_module(handle, "ReadScreen2"), "ReadScreen");
     FUNC(g_core.plugin_funcs.video_get_video_size, GETVIDEOSIZE, nullptr, "mge_get_video_size");
     FUNC(g_core.plugin_funcs.video_read_video, READVIDEO, nullptr, "mge_read_video");
-    FUNC(g_core.plugin_funcs.video_fb_read, FBREAD, dummy_fBRead, "FBRead");
-    FUNC(g_core.plugin_funcs.video_fb_write, FBWRITE, dummy_fBWrite, "FBWrite");
-    FUNC(g_core.plugin_funcs.video_fb_get_frame_buffer_info, FBGETFRAMEBUFFERINFO, dummy_fBGetFrameBufferInfo, "FBGetFrameBufferInfo");
+    FUNC(g_core.plugin_funcs.video_fb_read, FBREAD, dummy_fb_read, "FBRead");
+    FUNC(g_core.plugin_funcs.video_fb_write, FBWRITE, dummy_fb_write, "FBWrite");
+    FUNC(g_core.plugin_funcs.video_fb_get_frame_buffer_info, FBGETFRAMEBUFFERINFO, dummy_fb_get_framebuffer_info, "FBGetFrameBufferInfo");
 
     // ReadScreen returns a plugin-allocated buffer which must be freed by the same CRT
     g_core.plugin_funcs.video_dll_crt_free = PlatformService::get_free_function_in_module(handle);
@@ -156,29 +164,29 @@ void load_gfx(void* handle)
     gfx_info.rdram = (uint8_t*)g_core.rdram;
     gfx_info.dmem = (uint8_t*)g_core.SP_DMEM;
     gfx_info.imem = (uint8_t*)g_core.SP_IMEM;
-    gfx_info.mi_intr_reg = &(g_core.MI_register->mi_intr_reg);
-    gfx_info.dpc_start_reg = &(g_core.dpc_register->dpc_start);
-    gfx_info.dpc_end_reg = &(g_core.dpc_register->dpc_end);
-    gfx_info.dpc_current_reg = &(g_core.dpc_register->dpc_current);
-    gfx_info.dpc_status_reg = &(g_core.dpc_register->dpc_status);
-    gfx_info.dpc_clock_reg = &(g_core.dpc_register->dpc_clock);
-    gfx_info.dpc_bufbusy_reg = &(g_core.dpc_register->dpc_bufbusy);
-    gfx_info.dpc_pipebusy_reg = &(g_core.dpc_register->dpc_pipebusy);
-    gfx_info.dpc_tmem_reg = &(g_core.dpc_register->dpc_tmem);
-    gfx_info.vi_status_reg = &(g_core.vi_register->vi_status);
-    gfx_info.vi_origin_reg = &(g_core.vi_register->vi_origin);
-    gfx_info.vi_width_reg = &(g_core.vi_register->vi_width);
-    gfx_info.vi_intr_reg = &(g_core.vi_register->vi_v_intr);
-    gfx_info.vi_v_current_line_reg = &(g_core.vi_register->vi_current);
-    gfx_info.vi_timing_reg = &(g_core.vi_register->vi_burst);
-    gfx_info.vi_v_sync_reg = &(g_core.vi_register->vi_v_sync);
-    gfx_info.vi_h_sync_reg = &(g_core.vi_register->vi_h_sync);
-    gfx_info.vi_leap_reg = &(g_core.vi_register->vi_leap);
-    gfx_info.vi_h_start_reg = &(g_core.vi_register->vi_h_start);
-    gfx_info.vi_v_start_reg = &(g_core.vi_register->vi_v_start);
-    gfx_info.vi_v_burst_reg = &(g_core.vi_register->vi_v_burst);
-    gfx_info.vi_x_scale_reg = &(g_core.vi_register->vi_x_scale);
-    gfx_info.vi_y_scale_reg = &(g_core.vi_register->vi_y_scale);
+    gfx_info.mi_intr_reg = &g_core.MI_register->mi_intr_reg;
+    gfx_info.dpc_start_reg = &g_core.dpc_register->dpc_start;
+    gfx_info.dpc_end_reg = &g_core.dpc_register->dpc_end;
+    gfx_info.dpc_current_reg = &g_core.dpc_register->dpc_current;
+    gfx_info.dpc_status_reg = &g_core.dpc_register->dpc_status;
+    gfx_info.dpc_clock_reg = &g_core.dpc_register->dpc_clock;
+    gfx_info.dpc_bufbusy_reg = &g_core.dpc_register->dpc_bufbusy;
+    gfx_info.dpc_pipebusy_reg = &g_core.dpc_register->dpc_pipebusy;
+    gfx_info.dpc_tmem_reg = &g_core.dpc_register->dpc_tmem;
+    gfx_info.vi_status_reg = &g_core.vi_register->vi_status;
+    gfx_info.vi_origin_reg = &g_core.vi_register->vi_origin;
+    gfx_info.vi_width_reg = &g_core.vi_register->vi_width;
+    gfx_info.vi_intr_reg = &g_core.vi_register->vi_v_intr;
+    gfx_info.vi_v_current_line_reg = &g_core.vi_register->vi_current;
+    gfx_info.vi_timing_reg = &g_core.vi_register->vi_burst;
+    gfx_info.vi_v_sync_reg = &g_core.vi_register->vi_v_sync;
+    gfx_info.vi_h_sync_reg = &g_core.vi_register->vi_h_sync;
+    gfx_info.vi_leap_reg = &g_core.vi_register->vi_leap;
+    gfx_info.vi_h_start_reg = &g_core.vi_register->vi_h_start;
+    gfx_info.vi_v_start_reg = &g_core.vi_register->vi_v_start;
+    gfx_info.vi_v_burst_reg = &g_core.vi_register->vi_v_burst;
+    gfx_info.vi_x_scale_reg = &g_core.vi_register->vi_x_scale;
+    gfx_info.vi_y_scale_reg = &g_core.vi_register->vi_y_scale;
     gfx_info.check_interrupts = dummy_void;
 
     receive_extended_funcs(&g_core.plugin_funcs.video_extended_funcs);
@@ -194,22 +202,22 @@ void load_input(uint16_t version, void* handle)
     FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_core.plugin_funcs.input_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
-    FUNC(g_core.plugin_funcs.input_controller_command, CONTROLLERCOMMAND, dummy_controllerCommand, "ControllerCommand");
-    FUNC(g_core.plugin_funcs.input_get_keys, GETKEYS, dummy_getKeys, "GetKeys");
-    FUNC(g_core.plugin_funcs.input_set_keys, SETKEYS, dummy_setKeys, "SetKeys");
+    FUNC(g_core.plugin_funcs.input_controller_command, CONTROLLERCOMMAND, dummy_controller_command, "ControllerCommand");
+    FUNC(g_core.plugin_funcs.input_get_keys, GETKEYS, dummy_get_keys, "GetKeys");
+    FUNC(g_core.plugin_funcs.input_set_keys, SETKEYS, dummy_set_keys, "SetKeys");
     if (version == 0x0101)
     {
-        FUNC(initiate_controllers, INITIATECONTROLLERS, dummy_initiateControllers, "InitiateControllers");
+        FUNC(initiate_controllers, INITIATECONTROLLERS, dummy_initiate_controllers, "InitiateControllers");
     }
     else
     {
         FUNC(old_initiate_controllers, OLD_INITIATECONTROLLERS, nullptr, "InitiateControllers");
     }
-    FUNC(g_core.plugin_funcs.input_read_controller, READCONTROLLER, dummy_readController, "ReadController");
+    FUNC(g_core.plugin_funcs.input_read_controller, READCONTROLLER, dummy_read_controller, "ReadController");
     FUNC(g_core.plugin_funcs.input_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
     FUNC(g_core.plugin_funcs.input_rom_open, ROMOPEN, dummy_void, "RomOpen");
-    FUNC(g_core.plugin_funcs.input_key_down, KEYDOWN, dummy_keyDown, "WM_KeyDown");
-    FUNC(g_core.plugin_funcs.input_key_up, KEYUP, dummy_keyUp, "WM_KeyUp");
+    FUNC(g_core.plugin_funcs.input_key_down, KEYDOWN, dummy_key_down, "WM_KeyDown");
+    FUNC(g_core.plugin_funcs.input_key_up, KEYUP, dummy_key_up, "WM_KeyUp");
 
     control_info.main_hwnd = g_main_hwnd;
     control_info.hinst = g_app_instance;
@@ -242,14 +250,14 @@ void load_audio(void* handle)
     FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_core.plugin_funcs.audio_close_dll_audio, CLOSEDLL, dummy_void, "CloseDLL");
-    FUNC(g_core.plugin_funcs.audio_ai_dacrate_changed, AIDACRATECHANGED, dummy_aiDacrateChanged, "AiDacrateChanged");
+    FUNC(g_core.plugin_funcs.audio_ai_dacrate_changed, AIDACRATECHANGED, dummy_ai_dacrate_changed, "AiDacrateChanged");
     FUNC(g_core.plugin_funcs.audio_ai_len_changed, AILENCHANGED, dummy_void, "AiLenChanged");
-    FUNC(g_core.plugin_funcs.audio_ai_read_length, AIREADLENGTH, dummy_aiReadLength, "AiReadLength");
-    FUNC(initiate_audio, INITIATEAUDIO, dummy_initiateAudio, "InitiateAudio");
+    FUNC(g_core.plugin_funcs.audio_ai_read_length, AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
+    FUNC(initiate_audio, INITIATEAUDIO, dummy_initiate_audio, "InitiateAudio");
     FUNC(g_core.plugin_funcs.audio_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
     FUNC(g_core.plugin_funcs.audio_rom_open, ROMOPEN, dummy_void, "RomOpen");
     FUNC(g_core.plugin_funcs.audio_process_alist, PROCESSALIST, dummy_void, "ProcessAList");
-    FUNC(g_core.plugin_funcs.audio_ai_update, AIUPDATE, dummy_aiUpdate, "AiUpdate");
+    FUNC(g_core.plugin_funcs.audio_ai_update, AIUPDATE, dummy_ai_update, "AiUpdate");
 
     audio_info.main_hwnd = g_main_hwnd;
     audio_info.hinst = g_app_instance;
@@ -258,13 +266,13 @@ void load_audio(void* handle)
     audio_info.rdram = (uint8_t*)g_core.rdram;
     audio_info.dmem = (uint8_t*)g_core.SP_DMEM;
     audio_info.imem = (uint8_t*)g_core.SP_IMEM;
-    audio_info.mi_intr_reg = &dummy; //&(g_core.MI_register->mi_intr_reg);
-    audio_info.ai_dram_addr_reg = &(g_core.ai_register->ai_dram_addr);
-    audio_info.ai_len_reg = &(g_core.ai_register->ai_len);
-    audio_info.ai_control_reg = &(g_core.ai_register->ai_control);
-    audio_info.ai_status_reg = &dummy; //&(g_core.ai_register->ai_status);
-    audio_info.ai_dacrate_reg = &(g_core.ai_register->ai_dacrate);
-    audio_info.ai_bitrate_reg = &(g_core.ai_register->ai_bitrate);
+    audio_info.mi_intr_reg = &dummy_dw;
+    audio_info.ai_dram_addr_reg = &g_core.ai_register->ai_dram_addr;
+    audio_info.ai_len_reg = &g_core.ai_register->ai_len;
+    audio_info.ai_control_reg = &g_core.ai_register->ai_control;
+    audio_info.ai_status_reg = &dummy_dw;
+    audio_info.ai_dacrate_reg = &g_core.ai_register->ai_dacrate;
+    audio_info.ai_bitrate_reg = &g_core.ai_register->ai_bitrate;
 
     audio_info.check_interrupts = dummy_void;
 
@@ -280,8 +288,8 @@ void load_rsp(void* handle)
     FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_core.plugin_funcs.rsp_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
-    FUNC(g_core.plugin_funcs.rsp_do_rsp_cycles, DORSPCYCLES, dummy_doRspCycles, "DoRspCycles");
-    FUNC(initiate_rsp, INITIATERSP, dummy_initiateRSP, "InitiateRSP");
+    FUNC(g_core.plugin_funcs.rsp_do_rsp_cycles, DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
+    FUNC(initiate_rsp, INITIATERSP, dummy_initiate_rsp, "InitiateRSP");
     FUNC(g_core.plugin_funcs.rsp_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
 
     rsp_info.byteswapped = 1;
@@ -361,11 +369,33 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
 
 Plugin::~Plugin()
 {
-    PlatformService::free_library((void*)m_module);
+    PlatformService::free_library(m_module);
 }
 
 void Plugin::config()
 {
+    const auto run_config = [&] {
+        const auto dll_config = (DLLCONFIG)PlatformService::get_function_in_module(m_module, "DllConfig");
+
+        if (dll_config)
+        {
+            dll_config(g_hwnd_plug);
+        }
+        else
+        {
+            DialogService::show_dialog(std::format(L"'{}' has no configuration.", string_to_wstring(this->name())).c_str(), L"Plugin", fsvc_error);
+        }
+
+        if (core_vr_get_launched())
+        {
+            return;
+        }
+
+        const auto close_dll = (CLOSEDLL)PlatformService::get_function_in_module(m_module, "CloseDLL");
+        if (close_dll)
+            close_dll();
+    };
+
     switch (m_type)
     {
     case plugin_video:
@@ -376,46 +406,30 @@ void Plugin::config()
                 dummy_gfx_info.main_hwnd = Statusbar::hwnd();
                 dummy_gfx_info.statusbar_hwnd = Statusbar::hwnd();
 
-                auto initiateGFX = (INITIATEGFX)PlatformService::get_function_in_module((void*)m_module, "InitiateGFX");
-                if (initiateGFX && !initiateGFX(dummy_gfx_info))
+                const auto initiate_gfx = (INITIATEGFX)PlatformService::get_function_in_module(m_module, "InitiateGFX");
+                if (initiate_gfx && !initiate_gfx(dummy_gfx_info))
                 {
                     DialogService::show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
                 }
             }
 
-            auto dllConfig = (DLLCONFIG)PlatformService::get_function_in_module((void*)m_module, "DllConfig");
-            if (dllConfig)
-                dllConfig(g_hwnd_plug);
+            run_config();
 
-            if (!core_vr_get_launched())
-            {
-                auto closeDLL_gfx = (CLOSEDLL)PlatformService::get_function_in_module((void*)m_module, "CloseDLL");
-                if (closeDLL_gfx)
-                    closeDLL_gfx();
-            }
             break;
         }
     case plugin_audio:
         {
             if (!core_vr_get_launched())
             {
-                auto initiateAudio = (INITIATEAUDIO)PlatformService::get_function_in_module((void*)m_module, "InitiateAudio");
-                if (initiateAudio && !initiateAudio(dummy_audio_info))
+                const auto initiate_audio = (INITIATEAUDIO)PlatformService::get_function_in_module(m_module, "InitiateAudio");
+                if (initiate_audio && !initiate_audio(dummy_audio_info))
                 {
                     DialogService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
                 }
             }
 
-            auto dllConfig = (DLLCONFIG)PlatformService::get_function_in_module((void*)m_module, "DllConfig");
-            if (dllConfig)
-                dllConfig(g_hwnd_plug);
+            run_config();
 
-            if (!core_vr_get_launched())
-            {
-                auto closeDLL_audio = (CLOSEDLL)PlatformService::get_function_in_module((void*)m_module, "CloseDLL");
-                if (closeDLL_audio)
-                    closeDLL_audio();
-            }
             break;
         }
     case plugin_input:
@@ -424,68 +438,53 @@ void Plugin::config()
             {
                 if (m_version == 0x0101)
                 {
-                    auto initiateControllers = (INITIATECONTROLLERS)PlatformService::get_function_in_module((void*)m_module, "InitiateControllers");
-                    if (initiateControllers)
-                        initiateControllers(dummy_control_info);
+                    const auto initiate_controllers = (INITIATECONTROLLERS)PlatformService::get_function_in_module(m_module, "InitiateControllers");
+                    if (initiate_controllers)
+                        initiate_controllers(dummy_control_info);
                 }
                 else
                 {
-                    auto old_initiateControllers = (OLD_INITIATECONTROLLERS)PlatformService::get_function_in_module((void*)m_module, "InitiateControllers");
-                    if (old_initiateControllers)
-                        old_initiateControllers(g_main_hwnd, g_core.controls);
+                    const auto old_initiate_controllers = (OLD_INITIATECONTROLLERS)PlatformService::get_function_in_module(m_module, "InitiateControllers");
+                    if (old_initiate_controllers)
+                        old_initiate_controllers(g_main_hwnd, g_core.controls);
                 }
             }
 
-            auto dllConfig = (DLLCONFIG)PlatformService::get_function_in_module((void*)m_module, "DllConfig");
-            if (dllConfig)
-                dllConfig(g_hwnd_plug);
+            run_config();
 
-            if (!core_vr_get_launched())
-            {
-                auto closeDLL_input = (CLOSEDLL)PlatformService::get_function_in_module((void*)m_module, "CloseDLL");
-                if (closeDLL_input)
-                    closeDLL_input();
-            }
             break;
         }
     case plugin_rsp:
         {
-            const auto get_config_1 = (GETCONFIG1)PlatformService::get_function_in_module(m_module, "GetConfig1");
-            const auto save_config_1 = (SAVECONFIG1)PlatformService::get_function_in_module(m_module, "SaveConfig1");
-
-            if (get_config_1 && save_config_1)
-            {
-                core_plugin_cfg* cfg;
-                get_config_1(&cfg);
-                if (cfg)
-                {
-                    const bool save = ConfigDialog::show_plugin_settings(this, cfg);
-                    if (save && !save_config_1())
-                    {
-                        DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
-                    }
-                    break;
-                }
-            }
-
+            // TODO: Move into run_config
+            // const auto get_config_1 = (GETCONFIG1)PlatformService::get_function_in_module(m_module, "GetConfig1");
+            // const auto save_config_1 = (SAVECONFIG1)PlatformService::get_function_in_module(m_module, "SaveConfig1");
+            //
+            // if (get_config_1 && save_config_1)
+            // {
+            //     core_plugin_cfg* cfg;
+            //     get_config_1(&cfg);
+            //     if (cfg)
+            //     {
+            //         const bool save = ConfigDialog::show_plugin_settings(this, cfg);
+            //         if (save && !save_config_1())
+            //         {
+            //             DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
+            //         }
+            //         break;
+            //     }
+            // }
+            //
             if (!core_vr_get_launched())
             {
-                auto initiateRSP = (INITIATERSP)PlatformService::get_function_in_module((void*)m_module, "InitiateRSP");
+                auto initiateRSP = (INITIATERSP)PlatformService::get_function_in_module(m_module, "InitiateRSP");
                 uint32_t i = 0;
                 if (initiateRSP)
                     initiateRSP(dummy_rsp_info, &i);
             }
 
-            auto dllConfig = (DLLCONFIG)PlatformService::get_function_in_module((void*)m_module, "DllConfig");
-            if (dllConfig)
-                dllConfig(g_hwnd_plug);
+            run_config();
 
-            if (!core_vr_get_launched())
-            {
-                auto closeDLL_RSP = (CLOSEDLL)PlatformService::get_function_in_module((void*)m_module, "CloseDLL");
-                if (closeDLL_RSP)
-                    closeDLL_RSP();
-            }
             break;
         }
     default:
@@ -496,14 +495,14 @@ void Plugin::config()
 
 void Plugin::test()
 {
-    dll_test = (DLLTEST)PlatformService::get_function_in_module((void*)m_module, "DllTest");
+    dll_test = (DLLTEST)PlatformService::get_function_in_module(m_module, "DllTest");
     if (dll_test)
         dll_test(g_hwnd_plug);
 }
 
 void Plugin::about()
 {
-    dll_about = (DLLABOUT)PlatformService::get_function_in_module((void*)m_module, "DllAbout");
+    dll_about = (DLLABOUT)PlatformService::get_function_in_module(m_module, "DllAbout");
     if (dll_about)
         dll_about(g_hwnd_plug);
 }
@@ -538,29 +537,29 @@ void setup_dummy_info()
     dummy_gfx_info.rdram = (uint8_t*)g_core.rdram;
     dummy_gfx_info.dmem = (uint8_t*)g_core.SP_DMEM;
     dummy_gfx_info.imem = (uint8_t*)g_core.SP_IMEM;
-    dummy_gfx_info.mi_intr_reg = &(g_core.MI_register->mi_intr_reg);
-    dummy_gfx_info.dpc_start_reg = &(g_core.dpc_register->dpc_start);
-    dummy_gfx_info.dpc_end_reg = &(g_core.dpc_register->dpc_end);
-    dummy_gfx_info.dpc_current_reg = &(g_core.dpc_register->dpc_current);
-    dummy_gfx_info.dpc_status_reg = &(g_core.dpc_register->dpc_status);
-    dummy_gfx_info.dpc_clock_reg = &(g_core.dpc_register->dpc_clock);
-    dummy_gfx_info.dpc_bufbusy_reg = &(g_core.dpc_register->dpc_bufbusy);
-    dummy_gfx_info.dpc_pipebusy_reg = &(g_core.dpc_register->dpc_pipebusy);
-    dummy_gfx_info.dpc_tmem_reg = &(g_core.dpc_register->dpc_tmem);
-    dummy_gfx_info.vi_status_reg = &(g_core.vi_register->vi_status);
-    dummy_gfx_info.vi_origin_reg = &(g_core.vi_register->vi_origin);
-    dummy_gfx_info.vi_width_reg = &(g_core.vi_register->vi_width);
-    dummy_gfx_info.vi_intr_reg = &(g_core.vi_register->vi_v_intr);
-    dummy_gfx_info.vi_v_current_line_reg = &(g_core.vi_register->vi_current);
-    dummy_gfx_info.vi_timing_reg = &(g_core.vi_register->vi_burst);
-    dummy_gfx_info.vi_v_sync_reg = &(g_core.vi_register->vi_v_sync);
-    dummy_gfx_info.vi_h_sync_reg = &(g_core.vi_register->vi_h_sync);
-    dummy_gfx_info.vi_leap_reg = &(g_core.vi_register->vi_leap);
-    dummy_gfx_info.vi_h_start_reg = &(g_core.vi_register->vi_h_start);
-    dummy_gfx_info.vi_v_start_reg = &(g_core.vi_register->vi_v_start);
-    dummy_gfx_info.vi_v_burst_reg = &(g_core.vi_register->vi_v_burst);
-    dummy_gfx_info.vi_x_scale_reg = &(g_core.vi_register->vi_x_scale);
-    dummy_gfx_info.vi_y_scale_reg = &(g_core.vi_register->vi_y_scale);
+    dummy_gfx_info.mi_intr_reg = &g_core.MI_register->mi_intr_reg;
+    dummy_gfx_info.dpc_start_reg = &g_core.dpc_register->dpc_start;
+    dummy_gfx_info.dpc_end_reg = &g_core.dpc_register->dpc_end;
+    dummy_gfx_info.dpc_current_reg = &g_core.dpc_register->dpc_current;
+    dummy_gfx_info.dpc_status_reg = &g_core.dpc_register->dpc_status;
+    dummy_gfx_info.dpc_clock_reg = &g_core.dpc_register->dpc_clock;
+    dummy_gfx_info.dpc_bufbusy_reg = &g_core.dpc_register->dpc_bufbusy;
+    dummy_gfx_info.dpc_pipebusy_reg = &g_core.dpc_register->dpc_pipebusy;
+    dummy_gfx_info.dpc_tmem_reg = &g_core.dpc_register->dpc_tmem;
+    dummy_gfx_info.vi_status_reg = &g_core.vi_register->vi_status;
+    dummy_gfx_info.vi_origin_reg = &g_core.vi_register->vi_origin;
+    dummy_gfx_info.vi_width_reg = &g_core.vi_register->vi_width;
+    dummy_gfx_info.vi_intr_reg = &g_core.vi_register->vi_v_intr;
+    dummy_gfx_info.vi_v_current_line_reg = &g_core.vi_register->vi_current;
+    dummy_gfx_info.vi_timing_reg = &g_core.vi_register->vi_burst;
+    dummy_gfx_info.vi_v_sync_reg = &g_core.vi_register->vi_v_sync;
+    dummy_gfx_info.vi_h_sync_reg = &g_core.vi_register->vi_h_sync;
+    dummy_gfx_info.vi_leap_reg = &g_core.vi_register->vi_leap;
+    dummy_gfx_info.vi_h_start_reg = &g_core.vi_register->vi_h_start;
+    dummy_gfx_info.vi_v_start_reg = &g_core.vi_register->vi_v_start;
+    dummy_gfx_info.vi_v_burst_reg = &g_core.vi_register->vi_v_burst;
+    dummy_gfx_info.vi_x_scale_reg = &g_core.vi_register->vi_x_scale;
+    dummy_gfx_info.vi_y_scale_reg = &g_core.vi_register->vi_y_scale;
     dummy_gfx_info.check_interrupts = dummy_void;
 
     /////// AUDIO /////////////////////////
@@ -571,13 +570,13 @@ void setup_dummy_info()
     dummy_audio_info.rdram = (uint8_t*)g_core.rdram;
     dummy_audio_info.dmem = (uint8_t*)g_core.SP_DMEM;
     dummy_audio_info.imem = (uint8_t*)g_core.SP_IMEM;
-    dummy_audio_info.mi_intr_reg = &(g_core.MI_register->mi_intr_reg);
-    dummy_audio_info.ai_dram_addr_reg = &(g_core.ai_register->ai_dram_addr);
-    dummy_audio_info.ai_len_reg = &(g_core.ai_register->ai_len);
-    dummy_audio_info.ai_control_reg = &(g_core.ai_register->ai_control);
-    dummy_audio_info.ai_status_reg = &(g_core.ai_register->ai_status);
-    dummy_audio_info.ai_dacrate_reg = &(g_core.ai_register->ai_dacrate);
-    dummy_audio_info.ai_bitrate_reg = &(g_core.ai_register->ai_bitrate);
+    dummy_audio_info.mi_intr_reg = &g_core.MI_register->mi_intr_reg;
+    dummy_audio_info.ai_dram_addr_reg = &g_core.ai_register->ai_dram_addr;
+    dummy_audio_info.ai_len_reg = &g_core.ai_register->ai_len;
+    dummy_audio_info.ai_control_reg = &g_core.ai_register->ai_control;
+    dummy_audio_info.ai_status_reg = &g_core.ai_register->ai_status;
+    dummy_audio_info.ai_dacrate_reg = &g_core.ai_register->ai_dacrate;
+    dummy_audio_info.ai_bitrate_reg = &g_core.ai_register->ai_bitrate;
     dummy_audio_info.check_interrupts = dummy_void;
 
     ///// CONTROLS ///////////////////////////
@@ -644,9 +643,9 @@ std::wstring hotkey_to_string(const cfg_hotkey* hotkey)
         char buf2[64] = {0};
         if ((k >= 0x30 && k <= 0x39) || (k >= 0x41 && k <= 0x5A))
             sprintf(buf2, "%c", static_cast<char>(k));
-        else if ((k >= VK_F1 && k <= VK_F24))
+        else if (k >= VK_F1 && k <= VK_F24)
             sprintf(buf2, "F%d", k - (VK_F1 - 1));
-        else if ((k >= VK_NUMPAD0 && k <= VK_NUMPAD9))
+        else if (k >= VK_NUMPAD0 && k <= VK_NUMPAD9)
             sprintf(buf2, "Num%d", k - VK_NUMPAD0);
         else
             switch (k)
