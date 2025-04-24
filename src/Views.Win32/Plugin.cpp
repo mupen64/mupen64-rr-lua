@@ -376,15 +376,33 @@ void Plugin::config()
 {
     const auto run_config = [&] {
         const auto dll_config = (DLLCONFIG)PlatformService::get_function_in_module(m_module, "DllConfig");
+        const auto get_config_1 = (GETCONFIG1)PlatformService::get_function_in_module(m_module, "GetConfig1");
+        const auto save_config_1 = (SAVECONFIG1)PlatformService::get_function_in_module(m_module, "SaveConfig1");
 
-        if (dll_config)
+        if (!get_config_1 && !dll_config || (get_config_1 && !save_config_1))
         {
-            dll_config(g_hwnd_plug);
+            DialogService::show_dialog(std::format(L"'{}' has no configuration.", string_to_wstring(this->name())).c_str(), L"Plugin", fsvc_error, g_hwnd_plug);
+            goto cleanup;
         }
-        else
+
+        if (get_config_1)
         {
-            DialogService::show_dialog(std::format(L"'{}' has no configuration.", string_to_wstring(this->name())).c_str(), L"Plugin", fsvc_error);
+            core_plugin_cfg* cfg;
+            get_config_1(&cfg);
+            if (cfg)
+            {
+                const bool save = ConfigDialog::show_plugin_settings(this, cfg);
+                if (save && !save_config_1())
+                {
+                    DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error, g_hwnd_plug);
+                }
+                goto cleanup;
+            }
         }
+
+        dll_config(g_hwnd_plug);
+
+    cleanup:
 
         if (core_vr_get_launched())
         {
@@ -456,25 +474,6 @@ void Plugin::config()
         }
     case plugin_rsp:
         {
-            // TODO: Move into run_config
-            // const auto get_config_1 = (GETCONFIG1)PlatformService::get_function_in_module(m_module, "GetConfig1");
-            // const auto save_config_1 = (SAVECONFIG1)PlatformService::get_function_in_module(m_module, "SaveConfig1");
-            //
-            // if (get_config_1 && save_config_1)
-            // {
-            //     core_plugin_cfg* cfg;
-            //     get_config_1(&cfg);
-            //     if (cfg)
-            //     {
-            //         const bool save = ConfigDialog::show_plugin_settings(this, cfg);
-            //         if (save && !save_config_1())
-            //         {
-            //             DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error);
-            //         }
-            //         break;
-            //     }
-            // }
-            //
             if (!core_vr_get_launched())
             {
                 auto initiateRSP = (INITIATERSP)PlatformService::get_function_in_module(m_module, "InitiateRSP");
