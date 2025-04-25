@@ -36,12 +36,7 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
                 d2d_drawing = false;
                 break;
             }
-
-            PAINTSTRUCT ps;
-            RECT rect;
-            BeginPaint(hwnd, &ps);
-            GetClientRect(hwnd, &rect);
-
+        
             bool success;
             if (!lua->rctx.presenter)
             {
@@ -60,7 +55,7 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
                 destroy_lua_environment(lua);
             }
 
-            EndPaint(hwnd, &ps);
+            ValidateRect(hwnd, nullptr);
             d2d_drawing = false;
             return 0;
         }
@@ -80,24 +75,19 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             if (!lua)
             {
-                return 0;
+                break;
             }
-
-            PAINTSTRUCT ps;
-            RECT rect;
-            HDC dc = BeginPaint(hwnd, &ps);
-            GetClientRect(hwnd, &rect);
-
+        
             const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATUPDATESCREEN);
 
-            BitBlt(dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
+            BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
 
             if (!success)
             {
                 destroy_lua_environment(lua);
             }
 
-            EndPaint(hwnd, &ps);
+            ValidateRect(hwnd, nullptr);
             return 0;
         }
     default:
@@ -109,7 +99,7 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 void LuaRenderer::init()
 {
     WNDCLASS wndclass = {0};
-    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
+    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wndclass.lpfnWndProc = (WNDPROC)d2d_overlay_wndproc;
     wndclass.hInstance = g_app_instance;
     wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -214,6 +204,8 @@ void LuaRenderer::create_renderer(t_lua_rendering_context* ctx, t_lua_environmen
     ctx->gdi_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width, ctx->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
     SetLayeredWindowAttributes(ctx->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
 
+    ctx->gdi_front_dc = GetDC(ctx->gdi_overlay_hwnd);
+    
     // If we don't fill up the DC with the key first, it never becomes "transparent"
     FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
@@ -264,6 +256,7 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
 
     if (ctx->gdi_back_dc)
     {
+        ReleaseDC(ctx->gdi_overlay_hwnd, ctx->gdi_front_dc);
         DestroyWindow(ctx->gdi_overlay_hwnd);
         SelectObject(ctx->gdi_back_dc, nullptr);
         DeleteDC(ctx->gdi_back_dc);

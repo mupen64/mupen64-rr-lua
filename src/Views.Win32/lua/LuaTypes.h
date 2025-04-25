@@ -15,6 +15,8 @@ struct t_lua_rendering_context {
     // The GDI/GDI+ overlay control handle
     HWND gdi_overlay_hwnd{};
 
+    HDC gdi_front_dc{};
+
     // The DC for GDI/GDI+ drawings
     // This DC is special, since commands can be issued to it anytime and it's never cleared
     HDC gdi_back_dc{};
