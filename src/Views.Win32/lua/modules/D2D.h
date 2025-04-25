@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <lua/LuaRenderer.h>
+#include <lua/LuaConsole.h>
+
 namespace LuaCore::D2D
 {
     typedef struct
@@ -63,13 +66,13 @@ luaL_checknumber(L, idx + 6))
 
     static int create_brush(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1::ColorF color = D2D_GET_COLOR(L, 1);
 
         ID2D1SolidColorBrush* brush;
-        lua->d2d_render_target_stack.top()->CreateSolidColorBrush(
+        lua->rctx.d2d_render_target_stack.top()->CreateSolidColorBrush(
         color,
         &brush);
 
@@ -79,8 +82,8 @@ luaL_checknumber(L, idx + 6))
 
     static int free_brush(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 1);
         brush->Release();
@@ -89,39 +92,39 @@ luaL_checknumber(L, idx + 6))
 
     static int clear(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1::ColorF color = D2D_GET_COLOR(L, 1);
 
-        lua->d2d_render_target_stack.top()->Clear(lua->presenter->adjust_clear_color(color));
+        lua->rctx.d2d_render_target_stack.top()->Clear(lua->rctx.presenter->adjust_clear_color(color));
 
         return 0;
     }
 
     static int fill_rectangle(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 5);
 
-        lua->d2d_render_target_stack.top()->FillRectangle(&rectangle, brush);
+        lua->rctx.d2d_render_target_stack.top()->FillRectangle(&rectangle, brush);
 
         return 0;
     }
 
     static int draw_rectangle(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
         float thickness = luaL_checknumber(L, 5);
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
-        lua->d2d_render_target_stack.top()->DrawRectangle(
+        lua->rctx.d2d_render_target_stack.top()->DrawRectangle(
         &rectangle,
         brush,
         thickness);
@@ -131,26 +134,26 @@ luaL_checknumber(L, idx + 6))
 
     static int fill_ellipse(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
+        auto lua = get_lua_class(L);
 
         D2D1_ELLIPSE ellipse = D2D_GET_ELLIPSE(L, 1);
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 5);
 
-        lua->d2d_render_target_stack.top()->FillEllipse(&ellipse, brush);
+        lua->rctx.d2d_render_target_stack.top()->FillEllipse(&ellipse, brush);
 
         return 0;
     }
 
     static int draw_ellipse(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_ELLIPSE ellipse = D2D_GET_ELLIPSE(L, 1);
         float thickness = luaL_checknumber(L, 5);
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
-        lua->d2d_render_target_stack.top()->DrawEllipse(
+        lua->rctx.d2d_render_target_stack.top()->DrawEllipse(
         &ellipse,
         brush,
         thickness);
@@ -160,15 +163,15 @@ luaL_checknumber(L, idx + 6))
 
     static int draw_line(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_POINT_2F point_a = D2D_GET_POINT(L, 1);
         D2D1_POINT_2F point_b = D2D_GET_POINT(L, 3);
         float thickness = luaL_checknumber(L, 5);
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 6);
 
-        lua->d2d_render_target_stack.top()->DrawLine(
+        lua->rctx.d2d_render_target_stack.top()->DrawLine(
         point_a,
         point_b,
         brush,
@@ -180,8 +183,8 @@ luaL_checknumber(L, idx + 6))
 
     static int draw_text(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
         auto text = std::string(luaL_checkstring(L, 5));
@@ -211,13 +214,13 @@ luaL_checknumber(L, idx + 6))
 
         uint64_t params_hash = xxh64::hash((const char*)&params, sizeof(params), 0);
 
-        if (!lua->dw_text_layouts.contains(params_hash))
+        if (!lua->rctx.dw_text_layouts.contains(params_hash))
         {
-            // g_view_logger->info("[Lua] Adding layout to cache... ({} elements)\n", lua->dw_text_layouts.size());
+            // g_view_logger->info("[Lua] Adding layout to cache... ({} elements)\n", lua->rctx.dw_text_layouts.size());
 
             IDWriteTextFormat* text_format;
 
-            lua->dw_factory->CreateTextFormat(
+            lua->rctx.dw_factory->CreateTextFormat(
             string_to_wstring(font_name).c_str(),
             nullptr,
             static_cast<DWRITE_FONT_WEIGHT>(font_weight),
@@ -235,14 +238,14 @@ luaL_checknumber(L, idx + 6))
             IDWriteTextLayout* text_layout;
 
             auto wtext = string_to_wstring(text);
-            lua->dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, rectangle.right - rectangle.left, rectangle.bottom - rectangle.top, &text_layout);
+            lua->rctx.dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, rectangle.right - rectangle.left, rectangle.bottom - rectangle.top, &text_layout);
 
-            lua->dw_text_layouts.add(params_hash, text_layout);
+            lua->rctx.dw_text_layouts.add(params_hash, text_layout);
             text_format->Release();
         }
 
-        auto layout = lua->dw_text_layouts.get(params_hash);
-        lua->d2d_render_target_stack.top()->DrawTextLayout({
+        auto layout = lua->rctx.dw_text_layouts.get(params_hash);
+        lua->rctx.d2d_render_target_stack.top()->DrawTextLayout({
                                                            .x = rectangle.left,
                                                            .y = rectangle.top,
                                                            },
@@ -255,28 +258,28 @@ luaL_checknumber(L, idx + 6))
 
     static int set_text_antialias_mode(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
         float mode = luaL_checkinteger(L, 1);
-        lua->d2d_render_target_stack.top()->SetTextAntialiasMode(
+        lua->rctx.d2d_render_target_stack.top()->SetTextAntialiasMode(
         (D2D1_TEXT_ANTIALIAS_MODE)mode);
         return 0;
     }
 
     static int set_antialias_mode(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
         float mode = luaL_checkinteger(L, 1);
-        lua->d2d_render_target_stack.top()->SetAntialiasMode(
+        lua->rctx.d2d_render_target_stack.top()->SetAntialiasMode(
         (D2D1_ANTIALIAS_MODE)mode);
         return 0;
     }
 
     static int measure_text(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         std::wstring text = string_to_wstring(std::string(luaL_checkstring(L, 1)));
         std::string font_name = std::string(luaL_checkstring(L, 2));
@@ -297,11 +300,11 @@ luaL_checknumber(L, idx + 6))
 
         uint64_t params_hash = xxh64::hash((const char*)&params, sizeof(params), 0);
 
-        if (!lua->dw_text_sizes.contains(params_hash))
+        if (!lua->rctx.dw_text_sizes.contains(params_hash))
         {
             IDWriteTextFormat* text_format;
 
-            lua->dw_factory->CreateTextFormat(
+            lua->rctx.dw_factory->CreateTextFormat(
             string_to_wstring(font_name).c_str(),
             NULL,
             DWRITE_FONT_WEIGHT_NORMAL,
@@ -313,18 +316,18 @@ luaL_checknumber(L, idx + 6))
 
             IDWriteTextLayout* text_layout;
 
-            lua->dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height, &text_layout);
+            lua->rctx.dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height, &text_layout);
 
             DWRITE_TEXT_METRICS text_metrics;
             text_layout->GetMetrics(&text_metrics);
 
-            lua->dw_text_sizes.add(params_hash, text_metrics);
+            lua->rctx.dw_text_sizes.add(params_hash, text_metrics);
 
             text_format->Release();
             text_layout->Release();
         }
 
-        const auto text_metrics = lua->dw_text_sizes.get(params_hash).value();
+        const auto text_metrics = lua->rctx.dw_text_sizes.get(params_hash).value();
 
         lua_newtable(L);
         lua_pushinteger(L, text_metrics.widthIncludingTrailingWhitespace);
@@ -337,12 +340,12 @@ luaL_checknumber(L, idx + 6))
 
     static int push_clip(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
 
-        lua->d2d_render_target_stack.top()->PushAxisAlignedClip(
+        lua->rctx.d2d_render_target_stack.top()->PushAxisAlignedClip(
         rectangle,
         D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 
@@ -351,23 +354,23 @@ luaL_checknumber(L, idx + 6))
 
     static int pop_clip(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
-        lua->d2d_render_target_stack.top()->PopAxisAlignedClip();
+        lua->rctx.d2d_render_target_stack.top()->PopAxisAlignedClip();
 
         return 0;
     }
 
     static int fill_rounded_rectangle(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_ROUNDED_RECT rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 7);
 
-        lua->d2d_render_target_stack.top()->FillRoundedRectangle(
+        lua->rctx.d2d_render_target_stack.top()->FillRoundedRectangle(
         &rounded_rectangle,
         brush);
 
@@ -376,14 +379,14 @@ luaL_checknumber(L, idx + 6))
 
     static int draw_rounded_rectangle(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_ROUNDED_RECT rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
         float thickness = luaL_checknumber(L, 7);
         auto brush = (ID2D1SolidColorBrush*)luaL_checkinteger(L, 8);
 
-        lua->d2d_render_target_stack.top()->DrawRoundedRectangle(
+        lua->rctx.d2d_render_target_stack.top()->DrawRoundedRectangle(
         &rounded_rectangle,
         brush,
         thickness);
@@ -393,8 +396,8 @@ luaL_checknumber(L, idx + 6))
 
     static int load_image(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         std::string path(luaL_checkstring(L, 1));
 
@@ -434,7 +437,7 @@ luaL_checknumber(L, idx + 6))
         0.0f,
         WICBitmapPaletteTypeMedianCut);
 
-        lua->d2d_render_target_stack.top()->CreateBitmapFromWicBitmap(
+        lua->rctx.d2d_render_target_stack.top()->CreateBitmapFromWicBitmap(
         pConverter,
         NULL,
         &bmp);
@@ -450,8 +453,8 @@ luaL_checknumber(L, idx + 6))
 
     static int free_image(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         auto bmp = (ID2D1Bitmap*)luaL_checkinteger(L, 1);
         bmp->Release();
@@ -460,8 +463,8 @@ luaL_checknumber(L, idx + 6))
 
     static int draw_image(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         D2D1_RECT_F destination_rectangle = D2D_GET_RECT(L, 1);
         D2D1_RECT_F source_rectangle = D2D_GET_RECT(L, 5);
@@ -469,7 +472,7 @@ luaL_checknumber(L, idx + 6))
         int interpolation = luaL_checkinteger(L, 10);
         auto bmp = (ID2D1Bitmap*)luaL_checkinteger(L, 11);
 
-        lua->d2d_render_target_stack.top()->DrawBitmap(
+        lua->rctx.d2d_render_target_stack.top()->DrawBitmap(
         bmp,
         destination_rectangle,
         opacity,
@@ -481,8 +484,8 @@ luaL_checknumber(L, idx + 6))
 
     static int get_image_info(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         auto bmp = (ID2D1Bitmap*)luaL_checkinteger(L, 1);
 
@@ -498,24 +501,24 @@ luaL_checknumber(L, idx + 6))
 
     static int draw_to_image(lua_State* L)
     {
-        LuaEnvironment* lua = get_lua_class(L);
-        ensure_d2d_renderer_created(lua);
+        auto lua = get_lua_class(L);
+        LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
         float width = luaL_checknumber(L, 1);
         float height = luaL_checknumber(L, 2);
 
         ID2D1BitmapRenderTarget* render_target;
-        lua->d2d_render_target_stack.top()->CreateCompatibleRenderTarget(
+        lua->rctx.d2d_render_target_stack.top()->CreateCompatibleRenderTarget(
         D2D1::SizeF(width, height),
         &render_target);
 
         // With render target at top of stack, we hand control back to script and let it run its callback with rt-scoped drawing
-        lua->d2d_render_target_stack.push(render_target);
+        lua->rctx.d2d_render_target_stack.push(render_target);
         render_target->BeginDraw();
         render_target->Clear(D2D1::ColorF(0, 0, 0, 0));
         lua_call(L, 0, 0);
         render_target->EndDraw();
-        lua->d2d_render_target_stack.pop();
+        lua->rctx.d2d_render_target_stack.pop();
 
         ID2D1Bitmap* bmp;
         render_target->GetBitmap(&bmp);

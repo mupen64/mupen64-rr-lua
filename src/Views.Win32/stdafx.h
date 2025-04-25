@@ -78,6 +78,7 @@ extern "C" {
 #include <dcomp.h>
 #include <shlobj_core.h>
 #include <xxh64.h>
-#include <lua/LuaConsole.h>
 #include <strsafe.h>
 #include <commdlg.h>
+
+#include <lua/LuaTypes.h>

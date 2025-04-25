@@ -34,6 +34,7 @@
 #include <features/FilePicker.h>
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaConsole.h>
+#include <lua/LuaRenderer.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 #define VIEW_BENCHMARK_SUPPORT
@@ -890,7 +891,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     switch (Message)
     {
     case WM_INVALIDATE_LUA:
-        invalidate_visuals();
+        LuaRenderer::invalidate_visuals();
         break;
     case WM_DROPFILES:
         {
@@ -2323,6 +2324,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     init_config();
     load_config();
     lua_init();
+    LuaRenderer::init();
 
     if (g_config.keep_default_working_directory)
     {

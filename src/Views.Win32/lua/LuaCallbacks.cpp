@@ -160,7 +160,7 @@ void LuaCallbacks::call_warp_modify_status_changed(const int32_t status)
     });
 }
 
-bool LuaCallbacks::invoke_callbacks_with_key(const LuaEnvironment& lua, const std::function<int(lua_State*)>& function, callback_key key)
+bool LuaCallbacks::invoke_callbacks_with_key(const t_lua_environment& lua, const std::function<int(lua_State*)>& function, callback_key key)
 {
     assert(is_on_gui_thread());
 
@@ -191,7 +191,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::functio
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone the queue
     // OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
-    static std::queue<LuaEnvironment*> destruction_queue;
+    static std::queue<t_lua_environment*> destruction_queue;
 
     assert(destruction_queue.empty());
 

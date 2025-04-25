@@ -9,7 +9,6 @@
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
-
 #include <capture/EncodingManager.h>
 #include <capture/encoders/AVIEncoder.h>
 #include <capture/encoders/Encoder.h>
@@ -18,6 +17,7 @@
 #include <Main.h>
 #include <features/Dispatcher.h>
 #include <features/MGECompositor.h>
+#include <lua/LuaRenderer.h>
 #include <lua/LuaConsole.h>
 
 namespace EncodingManager
@@ -141,7 +141,7 @@ namespace EncodingManager
         g_main_window_dispatcher->invoke([&] {
             // Since atupdatescreen might not have occured for a long time, we force it now.
             // This avoids "outdated" visuals, which are otherwise acceptable during normal gameplay, being blitted to the video stream.
-            repaint_visuals();
+            LuaRenderer::repaint_visuals();
 
             GdiFlush();
 
@@ -182,16 +182,16 @@ namespace EncodingManager
             // First, composite the lua's dxgi surfaces
             for (auto& lua : g_lua_environments)
             {
-                if (lua->presenter)
+                if (lua->rctx.presenter)
                 {
-                    lua->presenter->blit(hy_dc, {0, 0, (LONG)lua->presenter->size().width, (LONG)lua->presenter->size().height});
+                    lua->rctx.presenter->blit(hy_dc, {0, 0, (LONG)lua->rctx.presenter->size().width, (LONG)lua->rctx.presenter->size().height});
                 }
             }
 
             // Then, blit the GDI back DCs
             for (auto& lua : g_lua_environments)
             {
-                TransparentBlt(hy_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, lua->gdi_back_dc, 0, 0, lua->dc_size.width, lua->dc_size.height, LUA_GDI_COLOR_MASK);
+                TransparentBlt(hy_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, LUA_GDI_COLOR_MASK);
             }
 
             BITMAPINFO bmp_info{};

@@ -12,22 +12,15 @@
 #include "LuaRegistry.h"
 #include "Messenger.h"
 #include <Main.h>
-#include <features/Statusbar.h>
 #include <features/FilePicker.h>
-#include "presenters/DCompPresenter.h"
-#include "presenters/GDIPresenter.h"
+#include <lua/LuaRenderer.h>
 
 constexpr auto LUA_PROP_NAME = L"lua_env";
-
-const auto D2D_OVERLAY_CLASS = L"lua_d2d_overlay";
-const auto GDI_OVERLAY_CLASS = L"lua_gdi_overlay";
 
 core_buttons last_controller_data[4];
 core_buttons new_controller_data[4];
 bool overwrite_controller_data[4];
 size_t g_input_count = 0;
-
-std::atomic g_d2d_drawing_section = false;
 
 std::vector<t_lua_environment*> g_lua_environments;
 std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
@@ -246,267 +239,13 @@ void lua_stop_all_scripts()
     assert(g_lua_environments.empty());
 }
 
-LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_PAINT:
-        {
-            // NOTE: Sometimes, this control receives a WM_PAINT message while execution is already in WM_PAINT, causing us to call begin_present twice in a row...
-            // Usually this shouldn't happen, but the shell file dialog API causes this by messing with the parent window's message loop.
-            if (g_d2d_drawing_section)
-            {
-                g_view_logger->warn("Tried to clobber a D2D drawing section!");
-                break;
-            }
-
-            g_d2d_drawing_section = true;
-
-            auto lua = (t_lua_environment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-
-            if (!lua)
-            {
-                g_d2d_drawing_section = false;
-                break;
-            }
-
-            PAINTSTRUCT ps;
-            RECT rect;
-            BeginPaint(hwnd, &ps);
-            GetClientRect(hwnd, &rect);
-
-            bool success;
-            if (!lua->presenter)
-            {
-                // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
-                success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATDRAWD2D);
-            }
-            else
-            {
-                lua->presenter->begin_present();
-                success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATDRAWD2D);
-                lua->presenter->end_present();
-            }
-
-            if (!success)
-            {
-                destroy_lua_environment(lua);
-            }
-
-            EndPaint(hwnd, &ps);
-            g_d2d_drawing_section = false;
-            return 0;
-        }
-    }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
-}
-
-LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_PAINT:
-        {
-            auto lua = (t_lua_environment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-
-            if (!lua)
-            {
-                return 0;
-            }
-
-            PAINTSTRUCT ps;
-            RECT rect;
-            HDC dc = BeginPaint(hwnd, &ps);
-            GetClientRect(hwnd, &rect);
-
-            const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATUPDATESCREEN);
-
-            BitBlt(dc, 0, 0, lua->dc_size.width, lua->dc_size.height, lua->gdi_back_dc, 0, 0, SRCCOPY);
-
-            if (!success)
-            {
-                destroy_lua_environment(lua);
-            }
-
-            EndPaint(hwnd, &ps);
-            return 0;
-        }
-    }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
-}
-
 void lua_init()
 {
-    WNDCLASS wndclass = {0};
-    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
-    wndclass.lpfnWndProc = (WNDPROC)d2d_overlay_wndproc;
-    wndclass.hInstance = g_app_instance;
-    wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wndclass.lpszClassName = D2D_OVERLAY_CLASS;
-    RegisterClass(&wndclass);
-
-    wndclass.lpfnWndProc = (WNDPROC)gdi_overlay_wndproc;
-    wndclass.lpszClassName = GDI_OVERLAY_CLASS;
-    RegisterClass(&wndclass);
-
     mupen_api_lua_code = get_string_by_textfile_resource_id(IDR_API_LUA_FILE);
     inspect_lua_code = get_string_by_textfile_resource_id(IDR_INSPECT_LUA_FILE);
     shims_lua_code = get_string_by_textfile_resource_id(IDR_SHIMS_LUA_FILE);
 }
 
-void create_loadscreen(t_lua_environment* lua)
-{
-    if (lua->loadscreen_dc)
-    {
-        return;
-    }
-    auto gdi_dc = GetDC(g_main_hwnd);
-    lua->loadscreen_dc = CreateCompatibleDC(gdi_dc);
-    lua->loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, lua->dc_size.width, lua->dc_size.height);
-    SelectObject(lua->loadscreen_dc, lua->loadscreen_bmp);
-    ReleaseDC(g_main_hwnd, gdi_dc);
-}
-
-void destroy_loadscreen(t_lua_environment* lua)
-{
-    if (!lua->loadscreen_dc)
-    {
-        return;
-    }
-    SelectObject(lua->loadscreen_dc, nullptr);
-    DeleteDC(lua->loadscreen_dc);
-    DeleteObject(lua->loadscreen_bmp);
-    lua->loadscreen_dc = nullptr;
-}
-
-void ensure_d2d_renderer_created(t_lua_environment* lua)
-{
-    if (lua->presenter || lua->m_ignore_renderer_creation)
-    {
-        return;
-    }
-
-    g_view_logger->trace("[Lua] Creating D2D renderer...");
-
-    auto hr = CoInitialize(nullptr);
-    if (hr != S_OK && hr != S_FALSE && hr != RPC_E_CHANGED_MODE)
-    {
-        DialogService::show_dialog(L"Failed to initialize COM.\r\nVerify that your system is up-to-date.", L"Lua", fsvc_error);
-        return;
-    }
-
-    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(lua->dw_factory), reinterpret_cast<IUnknown**>(&lua->dw_factory));
-
-    if (g_config.presenter_type != static_cast<int32_t>(PRESENTER_GDI))
-    {
-        lua->presenter = new DCompPresenter();
-    }
-    else
-    {
-        lua->presenter = new GDIPresenter();
-    }
-
-    if (!lua->presenter->init(lua->d2d_overlay_hwnd))
-    {
-        DialogService::show_dialog(L"Failed to initialize presenter.\r\nVerify that your system supports the selected presenter.", L"Lua", fsvc_error);
-        return;
-    }
-
-    lua->d2d_render_target_stack.push(lua->presenter->dc());
-    lua->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout*>(512, [&](auto value) {
-        value->Release();
-    });
-    lua->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {
-    });
-}
-
-void create_renderer(t_lua_environment* lua)
-{
-    if (lua->gdi_back_dc != nullptr || lua->m_ignore_renderer_creation)
-    {
-        return;
-    }
-
-    g_view_logger->info("Creating multi-target renderer for Lua...");
-
-    RECT window_rect;
-    GetClientRect(g_main_hwnd, &window_rect);
-    if (Statusbar::hwnd())
-    {
-        // We don't want to paint over statusbar
-        RECT rc{};
-        GetWindowRect(Statusbar::hwnd(), &rc);
-        window_rect.bottom -= (WORD)(rc.bottom - rc.top);
-    }
-
-    // NOTE: We don't want negative or zero size on any axis, as that messes up comp surface creation
-    lua->dc_size = {(UINT32)std::max(1, (int32_t)window_rect.right), (UINT32)std::max(1, (int32_t)window_rect.bottom)};
-    g_view_logger->info("Lua dc size: {} {}", lua->dc_size.width, lua->dc_size.height);
-
-    // Key 0 is reserved for clearing the image pool, too late to change it now...
-    lua->image_pool_index = 1;
-
-    auto gdi_dc = GetDC(g_main_hwnd);
-    lua->gdi_back_dc = CreateCompatibleDC(gdi_dc);
-    lua->gdi_bmp = CreateCompatibleBitmap(gdi_dc, lua->dc_size.width, lua->dc_size.height);
-    SelectObject(lua->gdi_back_dc, lua->gdi_bmp);
-    ReleaseDC(g_main_hwnd, gdi_dc);
-
-    lua->gdi_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, lua->dc_size.width, lua->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
-    SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)lua);
-    SetLayeredWindowAttributes(lua->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
-
-    // If we don't fill up the DC with the key first, it never becomes "transparent"
-    FillRect(lua->gdi_back_dc, &window_rect, g_alpha_mask_brush);
-
-    lua->d2d_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, lua->dc_size.width, lua->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
-    SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)lua);
-
-    if (!g_config.lazy_renderer_init)
-    {
-        ensure_d2d_renderer_created(lua);
-    }
-
-    create_loadscreen(lua);
-}
-
-void destroy_renderer(t_lua_environment* lua)
-{
-    g_view_logger->info("Destroying Lua renderer...");
-
-    if (lua->presenter)
-    {
-        lua->dw_text_layouts.clear();
-        lua->dw_text_sizes.clear();
-
-        while (!lua->d2d_render_target_stack.empty())
-        {
-            lua->d2d_render_target_stack.pop();
-        }
-
-        for (auto& [_, val] : lua->image_pool)
-        {
-            delete val;
-        }
-        lua->image_pool.clear();
-
-        DestroyWindow(lua->d2d_overlay_hwnd);
-
-        delete lua->presenter;
-        lua->presenter = nullptr;
-        CoUninitialize();
-    }
-
-    if (lua->gdi_back_dc)
-    {
-        DestroyWindow(lua->gdi_overlay_hwnd);
-        SelectObject(lua->gdi_back_dc, nullptr);
-        DeleteDC(lua->gdi_back_dc);
-        DeleteObject(lua->gdi_bmp);
-        lua->gdi_back_dc = nullptr;
-        destroy_loadscreen(lua);
-    }
-}
 
 static void rebuild_lua_env_map()
 {
@@ -519,9 +258,9 @@ static void rebuild_lua_env_map()
 
 void destroy_lua_environment(t_lua_environment* lua)
 {
-    lua->m_ignore_renderer_creation = true;
-    SetWindowLongPtr(lua->gdi_overlay_hwnd, GWLP_USERDATA, 0);
-    SetWindowLongPtr(lua->d2d_overlay_hwnd, GWLP_USERDATA, 0);
+    lua->rctx.ignore_create_renderer = true;
+    SetWindowLongPtr(lua->rctx.gdi_overlay_hwnd, GWLP_USERDATA, 0);
+    SetWindowLongPtr(lua->rctx.d2d_overlay_hwnd, GWLP_USERDATA, 0);
     LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATSTOP);
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
@@ -531,15 +270,11 @@ void destroy_lua_environment(t_lua_environment* lua)
     });
     SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
     rebuild_lua_env_map();
-
-    SelectObject(lua->gdi_back_dc, nullptr);
-    DeleteObject(lua->brush);
-    DeleteObject(lua->pen);
-    DeleteObject(lua->font);
+    
     lua_close(lua->L);
     lua->L = nullptr;
     set_button_state(lua->hwnd, false);
-    destroy_renderer(lua);
+    LuaRenderer::destroy_renderer(&lua->rctx);
 
     g_view_logger->info("Lua destroyed");
 }
@@ -565,18 +300,14 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
 
     auto lua = new t_lua_environment();
 
-    lua->hwnd = wnd;
     lua->path = path;
-
-    lua->brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
-    lua->pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
-    lua->font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
-    lua->col = lua->bkcol = 0;
-    lua->bkmode = TRANSPARENT;
+    lua->hwnd = wnd;
+    lua->rctx = LuaRenderer::default_rendering_context();
+    
     lua->L = luaL_newstate();
     lua_atpanic(lua->L, at_panic);
     LuaRegistry::register_functions(lua->L);
-    create_renderer(lua);
+    LuaRenderer::create_renderer(&lua->rctx, lua);
 
     // NOTE: We need to add the lua to the global map already since it may receive callbacks while its executing the global code
     g_lua_environments.push_back(lua);
@@ -635,27 +366,6 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     return error_msg;
 }
 
-void invalidate_visuals()
-{
-    assert(is_on_gui_thread());
-
-    for (const auto& lua : g_lua_environments)
-    {
-        RedrawWindow(lua->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
-        RedrawWindow(lua->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
-    }
-}
-
-void repaint_visuals()
-{
-    assert(is_on_gui_thread());
-
-    for (const auto& lua : g_lua_environments)
-    {
-        RedrawWindow(lua->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(lua->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-    }
-}
 
 void* lua_tocallback(lua_State* L, const int i)
 {
