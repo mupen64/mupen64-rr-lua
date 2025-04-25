@@ -33,6 +33,11 @@ namespace LuaRenderer
     void create_renderer(t_lua_rendering_context*, t_lua_environment*);
 
     /**
+     * \brief Prepares a Lua rendering context for deinitialization. Does nothing if the renderer isn't initialized.
+     */
+    void pre_destroy_renderer(t_lua_rendering_context*);
+
+    /**
      * \brief Deinitializes a Lua rendering context. Does nothing if the renderer isn't initialized.
      */
     void destroy_renderer(t_lua_rendering_context*);

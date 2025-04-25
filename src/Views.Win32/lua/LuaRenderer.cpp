@@ -205,7 +205,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context* ctx, t_lua_environmen
     SetLayeredWindowAttributes(ctx->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
 
     ctx->gdi_front_dc = GetDC(ctx->gdi_overlay_hwnd);
-    
+
     // If we don't fill up the DC with the key first, it never becomes "transparent"
     FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
@@ -220,6 +220,14 @@ void LuaRenderer::create_renderer(t_lua_rendering_context* ctx, t_lua_environmen
     }
 
     create_loadscreen(ctx);
+}
+
+void LuaRenderer::pre_destroy_renderer(t_lua_rendering_context* ctx)
+{
+    g_view_logger->info("Pre-destroying Lua renderer...");
+    ctx->ignore_create_renderer = true;
+    SetWindowLongPtr(ctx->gdi_overlay_hwnd, GWLP_USERDATA, 0);
+    SetWindowLongPtr(ctx->d2d_overlay_hwnd, GWLP_USERDATA, 0);
 }
 
 void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)

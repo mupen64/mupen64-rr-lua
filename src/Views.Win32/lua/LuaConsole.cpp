@@ -258,9 +258,8 @@ static void rebuild_lua_env_map()
 
 void destroy_lua_environment(t_lua_environment* lua)
 {
-    lua->rctx.ignore_create_renderer = true;
-    SetWindowLongPtr(lua->rctx.gdi_overlay_hwnd, GWLP_USERDATA, 0);
-    SetWindowLongPtr(lua->rctx.d2d_overlay_hwnd, GWLP_USERDATA, 0);
+    LuaRenderer::pre_destroy_renderer(&lua->rctx);
+    
     LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATSTOP);
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
