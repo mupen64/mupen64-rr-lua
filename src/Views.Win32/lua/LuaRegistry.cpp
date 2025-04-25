@@ -256,43 +256,4 @@ void LuaRegistry::register_functions(lua_State* L)
     lua_pushcfunction(L, LuaCore::Global::Exit);
     lua_setfield(L, -2, "exit");
     lua_pop(L, 1);
-
-    // COMPAT: table.getn deprecated, replaced by # prefix
-    luaL_dostring(L, "table.getn = function(t) return #t end");
-
-    // COMPAT: emu.debugview deprecated, forwarded to print
-    luaL_dostring(L, "emu.debugview = print");
-
-    // COMPAT: movie.playmovie deprecated, forwarded to movie.play
-    luaL_dostring(L, "movie.playmovie = movie.play");
-
-    // COMPAT: movie.stopmovie deprecated, forwarded to movie.stop
-    luaL_dostring(L, "movie.stopmovie = movie.stop");
-
-    // COMPAT: movie.getmoviefilename deprecated, forwarded to movie.get_filename
-    luaL_dostring(L, "movie.getmoviefilename = movie.get_filename");
-
-    // COMPAT: movie.isreadonly deprecated, forwarded to movie.get_readonly
-    luaL_dostring(L, "movie.isreadonly = movie.get_readonly");
-
-    // COMPAT: emu.isreadonly deprecated, forwarded to movie.get_readonly
-    luaL_dostring(L, "emu.isreadonly = movie.get_readonly");
-
-    // COMPAT: printx deprecated, forwarded to print
-    luaL_dostring(L, "printx = print");
-
-    // DEPRECATED: input.map_virtual_key_ex couples to WinAPI
-    luaL_dostring(L, "input.map_virtual_key_ex = function() print('input.map_virtual_key_ex has been deprecated') end");
-
-    // DEPRECATED: emu.getsystemmetrics couples to WinAPI
-    luaL_dostring(L, "emu.getsystemmetrics = function() print('emu.getsystemmetrics has been deprecated') end");
-
-    // DEPRECATED: movie.begin_seek_to doesn't exist anymore
-    luaL_dostring(L, "movie.begin_seek_to = function() print('movie.begin_seek_to has been deprecated, use movie.begin_seek instead') end");
-
-    // DEPRECATED: movie.get_seek_info doesn't exist anymore
-    luaL_dostring(L, "movie.get_seek_info = function() print('movie.get_seek_info has been deprecated, use movie.begin_seek instead') end");
-
-    // os.execute poses security risks
-    luaL_dostring(L, "os.execute = function() print('os.execute is disabled') end");
 }

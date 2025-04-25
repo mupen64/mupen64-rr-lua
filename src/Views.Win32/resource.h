@@ -516,6 +516,7 @@
 #define IDR_INSPECT_LUA_FILE 40108
 #define TEXTFILE 40109
 #define IDR_API_LUA_FILE 40110
+#define IDR_SHIMS_LUA_FILE 40111
 #define IDC_STATIC -1
 
 // Next default values for new objects

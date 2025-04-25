@@ -34,6 +34,7 @@ std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
 
 std::string mupen_api_lua_code;
 std::string inspect_lua_code;
+std::string shims_lua_code;
 
 t_lua_environment* get_lua_class(lua_State* lua_state)
 {
@@ -334,15 +335,6 @@ LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-static std::string get_string_by_resource_id(const int id)
-{
-    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(id), MAKEINTRESOURCE(TEXTFILE));
-    const HGLOBAL rc_data = LoadResource(g_app_instance, rc);
-    const auto size = SizeofResource(g_app_instance, rc);
-    const auto data = static_cast<const char*>(LockResource(rc_data));
-    return std::string(data, size);
-}
-
 void lua_init()
 {
     WNDCLASS wndclass = {0};
@@ -357,8 +349,9 @@ void lua_init()
     wndclass.lpszClassName = GDI_OVERLAY_CLASS;
     RegisterClass(&wndclass);
 
-    mupen_api_lua_code = get_string_by_resource_id(IDR_API_LUA_FILE);
-    inspect_lua_code = get_string_by_resource_id(IDR_INSPECT_LUA_FILE);
+    mupen_api_lua_code = get_string_by_textfile_resource_id(IDR_API_LUA_FILE);
+    inspect_lua_code = get_string_by_textfile_resource_id(IDR_INSPECT_LUA_FILE);
+    shims_lua_code = get_string_by_textfile_resource_id(IDR_SHIMS_LUA_FILE);
 }
 
 void create_loadscreen(t_lua_environment* lua)
@@ -606,6 +599,15 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     {
         ScopeTimer timer("inspect.lua injection", g_view_logger.get());
         if (luaL_dostring(lua->L, inspect_lua_code.c_str()))
+        {
+            // Shouldn't happen...
+            has_error = true;
+        }
+    }
+
+    {
+        ScopeTimer timer("shims.lua injection", g_view_logger.get());
+        if (luaL_dostring(lua->L, shims_lua_code.c_str()))
         {
             // Shouldn't happen...
             has_error = true;

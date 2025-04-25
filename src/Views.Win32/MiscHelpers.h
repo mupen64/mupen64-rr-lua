@@ -368,3 +368,21 @@ static std::wstring format_duration(size_t seconds)
     wsprintfW(str, L"%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
     return str;
 }
+
+/**
+ * \brief Gets the string associated with an embedded TEXTFILE resource id.
+ * \param id The resource id.
+ * \return The string associated with the resource id, or an empty string if the resource couldn't be found.
+ */
+static std::string get_string_by_textfile_resource_id(const int id)
+{
+    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(id), MAKEINTRESOURCE(TEXTFILE));
+    if (!rc)
+    {
+        return "";
+    }
+    const HGLOBAL rc_data = LoadResource(g_app_instance, rc);
+    const auto size = SizeofResource(g_app_instance, rc);
+    const auto data = static_cast<const char*>(LockResource(rc_data));
+    return std::string(data, size);
+}
