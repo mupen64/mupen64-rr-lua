@@ -68,7 +68,7 @@ void LuaCallbacks::call_window_message(void* wnd, unsigned int msg, unsigned int
     .msg = msg,
     .w_param = w,
     .l_param = l};
-    
+
     g_main_window_dispatcher->invoke([] {
         invoke_callbacks_with_key_on_all_instances(REG_WINDOWMESSAGE);
     });

@@ -477,9 +477,9 @@ EXPORT void CALL ProcessAList(void);
 EXPORT void CALL ControllerCommand(int32_t Control, uint8_t* Command);
 EXPORT void CALL GetKeys(int32_t Control, core_buttons* Keys);
 #if defined(CORE_PLUGIN_INPUT_OLD_INITIATE_CONTROLLERS)
-    EXPORT void CALL InitiateControllers(void* hwnd, core_controller controls[4]);
+EXPORT void CALL InitiateControllers(void* hwnd, core_controller controls[4]);
 #else
-    EXPORT void CALL InitiateControllers(core_input_info* ControlInfo);
+EXPORT void CALL InitiateControllers(core_input_info* ControlInfo);
 #endif
 EXPORT void CALL ReadController(int Control, uint8_t* Command);
 EXPORT void CALL WM_KeyDown(uint32_t wParam, uint32_t lParam);

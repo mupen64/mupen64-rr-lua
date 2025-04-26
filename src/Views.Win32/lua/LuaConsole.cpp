@@ -259,7 +259,7 @@ static void rebuild_lua_env_map()
 void destroy_lua_environment(t_lua_environment* lua)
 {
     LuaRenderer::pre_destroy_renderer(&lua->rctx);
-    
+
     LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATSTOP);
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
@@ -269,7 +269,7 @@ void destroy_lua_environment(t_lua_environment* lua)
     });
     SetProp(lua->hwnd, LUA_PROP_NAME, nullptr);
     rebuild_lua_env_map();
-    
+
     lua_close(lua->L);
     lua->L = nullptr;
     set_button_state(lua->hwnd, false);
@@ -302,7 +302,7 @@ std::string create_lua_environment(const std::filesystem::path& path, HWND wnd)
     lua->path = path;
     lua->hwnd = wnd;
     lua->rctx = LuaRenderer::default_rendering_context();
-    
+
     lua->L = luaL_newstate();
     lua_atpanic(lua->L, at_panic);
     LuaRegistry::register_functions(lua->L);

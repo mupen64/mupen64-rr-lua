@@ -36,7 +36,7 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
                 d2d_drawing = false;
                 break;
             }
-        
+
             bool success;
             if (!lua->rctx.presenter)
             {
@@ -77,7 +77,7 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
             {
                 break;
             }
-        
+
             const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATUPDATESCREEN);
 
             BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);

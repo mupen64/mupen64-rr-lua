@@ -246,12 +246,12 @@ luaL_checknumber(L, idx + 6))
 
         auto layout = lua->rctx.dw_text_layouts.get(params_hash);
         lua->rctx.d2d_render_target_stack.top()->DrawTextLayout({
-                                                           .x = rectangle.left,
-                                                           .y = rectangle.top,
-                                                           },
-                                                           layout.value(),
-                                                           brush,
-                                                           static_cast<D2D1_DRAW_TEXT_OPTIONS>(options));
+                                                                .x = rectangle.left,
+                                                                .y = rectangle.top,
+                                                                },
+                                                                layout.value(),
+                                                                brush,
+                                                                static_cast<D2D1_DRAW_TEXT_OPTIONS>(options));
 
         return 0;
     }
