@@ -97,18 +97,16 @@ namespace LuaCallbacks
     /**
      * \brief Invokes the registered callbacks with the specified key on the specified Lua environment.
      * \param lua The Lua environment.
-     * \param function The parameter preparation function associated with the callback.
      * \param key The callback key.
      * \return Whether the invocation failed.
      */
-    bool invoke_callbacks_with_key(const t_lua_environment& lua, const std::function<int(lua_State*)>& function, callback_key key);
+    bool invoke_callbacks_with_key(const t_lua_environment& lua, callback_key key);
 
     /**
      * \brief Invokes the registered callbacks with the specified key on all Lua instances in the global map.
-     * \param function The parameter preparation function associated with the callback.
      * \param key The callback key.
      */
-    void invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key);
+    void invoke_callbacks_with_key_on_all_instances(callback_key key);
 
     /**
      * \brief Subscribes to or unsubscribes from the specified callback based on the input parameters.

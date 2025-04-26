@@ -17,31 +17,41 @@
             return;                     \
     }
 
-typedef struct {
+struct t_atwindowmessage_context {
     HWND wnd;
     UINT msg;
     WPARAM w_param;
     LPARAM l_param;
-} t_window_procedure_params;
+};
 
-t_window_procedure_params window_proc_params{};
+static t_atwindowmessage_context atwindowmessage_ctx{};
+static int current_input_n = 0;
 
-int current_input_n = 0;
+const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State*)>> CALLBACK_FUNC_MAP = {
+{LuaCallbacks::REG_ATINPUT, [](auto l) -> int {
+     lua_pushinteger(l, current_input_n);
+     return lua_pcall(l, 1, 0, 0);
+ }},
+{LuaCallbacks::REG_WINDOWMESSAGE, [](auto l) -> int {
+     lua_pushinteger(l, (unsigned)atwindowmessage_ctx.wnd);
+     lua_pushinteger(l, atwindowmessage_ctx.msg);
+     lua_pushinteger(l, atwindowmessage_ctx.w_param);
+     lua_pushinteger(l, atwindowmessage_ctx.l_param);
+     return lua_pcall(l, 4, 0, 0);
+ }},
+{LuaCallbacks::REG_ATWARPMODIFYSTATUSCHANGED, [](auto l) -> int {
+     lua_pushinteger(l, core_vcr_get_warp_modify_status());
+     return lua_pcall(l, 1, 0, 0);
+ }},
+};
 
-int AtInput(lua_State* L)
+static std::function<int(lua_State*)> get_function_for_callback(const LuaCallbacks::callback_key key)
 {
-    lua_pushinteger(L, current_input_n);
-    return lua_pcall(L, 1, 0, 0);
-}
-
-int AtWindowMessage(lua_State* L)
-{
-    lua_pushinteger(L, (unsigned)window_proc_params.wnd);
-    lua_pushinteger(L, window_proc_params.msg);
-    lua_pushinteger(L, window_proc_params.w_param);
-    lua_pushinteger(L, window_proc_params.l_param);
-
-    return lua_pcall(L, 4, 0, 0);
+    if (CALLBACK_FUNC_MAP.contains(key))
+    {
+        return CALLBACK_FUNC_MAP.at(key);
+    }
+    return pcall_no_params;
 }
 
 core_buttons LuaCallbacks::get_last_controller_data(int index)
@@ -52,20 +62,23 @@ core_buttons LuaCallbacks::get_last_controller_data(int index)
 void LuaCallbacks::call_window_message(void* wnd, unsigned int msg, unsigned int w, long l)
 {
     RET_IF_EMPTY;
-    // Invoking dispatcher here isn't allowed, as it would lead to infinite recursion
-    window_proc_params = {
+
+    atwindowmessage_ctx = {
     .wnd = (HWND)wnd,
     .msg = msg,
     .w_param = w,
     .l_param = l};
-    invoke_callbacks_with_key_on_all_instances(AtWindowMessage, REG_WINDOWMESSAGE);
+    
+    g_main_window_dispatcher->invoke([] {
+        invoke_callbacks_with_key_on_all_instances(REG_WINDOWMESSAGE);
+    });
 }
 
 void LuaCallbacks::call_vi()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATVI);
+        invoke_callbacks_with_key_on_all_instances(REG_ATVI);
     });
 }
 
@@ -79,7 +92,7 @@ void LuaCallbacks::call_input(core_buttons* input, int index)
 
     g_main_window_dispatcher->invoke([=] {
         current_input_n = index;
-        invoke_callbacks_with_key_on_all_instances(AtInput, REG_ATINPUT);
+        invoke_callbacks_with_key_on_all_instances(REG_ATINPUT);
         g_input_count++;
     });
 
@@ -95,7 +108,7 @@ void LuaCallbacks::call_interval()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATINTERVAL);
+        invoke_callbacks_with_key_on_all_instances(REG_ATINTERVAL);
     });
 }
 
@@ -103,7 +116,7 @@ void LuaCallbacks::call_play_movie()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATPLAYMOVIE);
+        invoke_callbacks_with_key_on_all_instances(REG_ATPLAYMOVIE);
     });
 }
 
@@ -111,7 +124,7 @@ void LuaCallbacks::call_stop_movie()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSTOPMOVIE);
+        invoke_callbacks_with_key_on_all_instances(REG_ATSTOPMOVIE);
     });
 }
 
@@ -119,7 +132,7 @@ void LuaCallbacks::call_load_state()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATLOADSTATE);
+        invoke_callbacks_with_key_on_all_instances(REG_ATLOADSTATE);
     });
 }
 
@@ -127,7 +140,7 @@ void LuaCallbacks::call_save_state()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSAVESTATE);
+        invoke_callbacks_with_key_on_all_instances(REG_ATSAVESTATE);
     });
 }
 
@@ -135,7 +148,7 @@ void LuaCallbacks::call_reset()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATRESET);
+        invoke_callbacks_with_key_on_all_instances(REG_ATRESET);
     });
 }
 
@@ -143,7 +156,7 @@ void LuaCallbacks::call_seek_completed()
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([] {
-        invoke_callbacks_with_key_on_all_instances(pcall_no_params, REG_ATSEEKCOMPLETED);
+        invoke_callbacks_with_key_on_all_instances(REG_ATSEEKCOMPLETED);
     });
 }
 
@@ -151,16 +164,11 @@ void LuaCallbacks::call_warp_modify_status_changed(const int32_t status)
 {
     RET_IF_EMPTY;
     g_main_window_dispatcher->invoke([=] {
-        invoke_callbacks_with_key_on_all_instances(
-        [=](lua_State* L) {
-            lua_pushinteger(L, status);
-            return lua_pcall(L, 1, 0, 0);
-        },
-        REG_ATWARPMODIFYSTATUSCHANGED);
+        invoke_callbacks_with_key_on_all_instances(REG_ATWARPMODIFYSTATUSCHANGED);
     });
 }
 
-bool LuaCallbacks::invoke_callbacks_with_key(const t_lua_environment& lua, const std::function<int(lua_State*)>& function, callback_key key)
+bool invoke_callbacks_with_key_impl(const t_lua_environment& lua, const std::function<int(lua_State*)>& function, LuaCallbacks::callback_key key)
 {
     assert(is_on_gui_thread());
 
@@ -187,7 +195,12 @@ bool LuaCallbacks::invoke_callbacks_with_key(const t_lua_environment& lua, const
     return true;
 }
 
-void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::function<int(lua_State*)>& function, callback_key key)
+bool LuaCallbacks::invoke_callbacks_with_key(const t_lua_environment& lua, callback_key key)
+{
+    return invoke_callbacks_with_key_impl(lua, get_function_for_callback(key), key);
+}
+
+void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 {
     // OPTIMIZATION: Store destruction-queued scripts in queue and destroy them after iteration to avoid having to clone the queue
     // OPTIMIZATION: Make the destruction queue static to avoid allocating it every entry
@@ -195,9 +208,11 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(const std::functio
 
     assert(destruction_queue.empty());
 
+    const auto function = get_function_for_callback(key);
+
     for (const auto& lua : g_lua_environments)
     {
-        if (!LuaCallbacks::invoke_callbacks_with_key(*lua, function, key))
+        if (!invoke_callbacks_with_key_impl(*lua, function, key))
         {
             destruction_queue.push(lua);
         }
@@ -234,7 +249,7 @@ static void unregister_function(lua_State* L, LuaCallbacks::callback_key key)
     if (lua_isnil(L, -1))
     {
         lua_pop(L, 1);
-        lua_newtable(L); // �Ƃ肠����
+        lua_newtable(L);
     }
     int n = luaL_len(L, -1);
     for (LUA_INTEGER i = 0; i < n; i++)

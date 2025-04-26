@@ -260,7 +260,7 @@ void destroy_lua_environment(t_lua_environment* lua)
 {
     LuaRenderer::pre_destroy_renderer(&lua->rctx);
     
-    LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATSTOP);
+    LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATSTOP);
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
     // After this point, it's game over and no callbacks will be called anymore.

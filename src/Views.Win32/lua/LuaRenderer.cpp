@@ -41,12 +41,12 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
             if (!lua->rctx.presenter)
             {
                 // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
-                success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATDRAWD2D);
+                success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATDRAWD2D);
             }
             else
             {
                 lua->rctx.presenter->begin_present();
-                success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATDRAWD2D);
+                success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATDRAWD2D);
                 lua->rctx.presenter->end_present();
             }
 
@@ -78,7 +78,7 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
                 break;
             }
         
-            const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, pcall_no_params, LuaCallbacks::REG_ATUPDATESCREEN);
+            const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATUPDATESCREEN);
 
             BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
 
