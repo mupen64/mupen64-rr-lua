@@ -75,7 +75,7 @@ private:
     std::string m_name;
     core_plugin_type m_type;
     uint16_t m_version;
-    void* m_module;
+    HMODULE m_module;
 };
 
 /// <summary>

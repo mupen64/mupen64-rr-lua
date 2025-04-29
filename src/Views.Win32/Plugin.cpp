@@ -9,7 +9,6 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <DialogService.h>
-#include <PlatformService.h>
 #include <Plugin.h>
 #include <Loggers.h>
 #include <Main.h>
@@ -127,7 +126,39 @@ static void CALL dummy_move_screen(int32_t, int32_t)
     if (!target)                                          \
     target = fallback
 
-void load_gfx(void* handle)
+/**
+ * \brief Tries to find the free function exported by the CRT in the specified module.
+ */
+static void (*get_free_function_in_module(HMODULE module))(void*)
+{
+    auto dll_crt_free = (DLLCRTFREE)GetProcAddress(module, "DllCrtFree");
+    if (dll_crt_free)
+        return dll_crt_free;
+
+    ULONG size;
+    auto import_descriptor = (PIMAGE_IMPORT_DESCRIPTOR)
+    ImageDirectoryEntryToDataEx(module, true, IMAGE_DIRECTORY_ENTRY_IMPORT, &size, nullptr);
+    if (import_descriptor != nullptr)
+    {
+        while (import_descriptor->Characteristics && import_descriptor->Name)
+        {
+            auto importDllName = (LPCSTR)((PBYTE)module + import_descriptor->Name);
+            auto importDllHandle = GetModuleHandleA(importDllName);
+            if (importDllHandle != nullptr)
+            {
+                dll_crt_free = (DLLCRTFREE)GetProcAddress(importDllHandle, "free");
+                if (dll_crt_free != nullptr)
+                    return dll_crt_free;
+            }
+
+            import_descriptor++;
+        }
+    }
+
+    return free;
+}
+
+void load_gfx(HMODULE handle)
 {
     INITIATEGFX initiate_gfx{};
 
@@ -147,15 +178,13 @@ void load_gfx(void* handle)
     FUNC(g_core.plugin_funcs.video_vi_width_changed, VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
     FUNC(g_core.plugin_funcs.video_move_screen, MOVESCREEN, dummy_move_screen, "MoveScreen");
     FUNC(g_core.plugin_funcs.video_capture_screen, CAPTURESCREEN, nullptr, "CaptureScreen");
-    FUNC(g_core.plugin_funcs.video_read_screen, READSCREEN, (READSCREEN)PlatformService::get_function_in_module(handle, "ReadScreen2"), "ReadScreen");
+    FUNC(g_core.plugin_funcs.video_read_screen, READSCREEN, (READSCREEN)GetProcAddress(handle, "ReadScreen2"), "ReadScreen");
     FUNC(g_core.plugin_funcs.video_get_video_size, GETVIDEOSIZE, nullptr, "mge_get_video_size");
     FUNC(g_core.plugin_funcs.video_read_video, READVIDEO, nullptr, "mge_read_video");
     FUNC(g_core.plugin_funcs.video_fb_read, FBREAD, dummy_fb_read, "FBRead");
     FUNC(g_core.plugin_funcs.video_fb_write, FBWRITE, dummy_fb_write, "FBWrite");
     FUNC(g_core.plugin_funcs.video_fb_get_frame_buffer_info, FBGETFRAMEBUFFERINFO, dummy_fb_get_framebuffer_info, "FBGetFrameBufferInfo");
-
-    // ReadScreen returns a plugin-allocated buffer which must be freed by the same CRT
-    g_core.plugin_funcs.video_dll_crt_free = PlatformService::get_free_function_in_module(handle);
+    g_core.plugin_funcs.video_dll_crt_free = get_free_function_in_module(handle);
 
     gfx_info.main_hwnd = g_main_hwnd;
     gfx_info.statusbar_hwnd = g_config.is_statusbar_enabled ? Statusbar::hwnd() : nullptr;
@@ -193,7 +222,7 @@ void load_gfx(void* handle)
     initiate_gfx(gfx_info);
 }
 
-void load_input(uint16_t version, void* handle)
+void load_input(uint16_t version, HMODULE handle)
 {
     OLD_INITIATECONTROLLERS old_initiate_controllers{};
     INITIATECONTROLLERS initiate_controllers{};
@@ -242,7 +271,7 @@ void load_input(uint16_t version, void* handle)
 }
 
 
-void load_audio(void* handle)
+void load_audio(HMODULE handle)
 {
     INITIATEAUDIO initiate_audio{};
 
@@ -280,7 +309,7 @@ void load_audio(void* handle)
     initiate_audio(audio_info);
 }
 
-void load_rsp(void* handle)
+void load_rsp(HMODULE handle)
 {
     INITIATERSP initiate_rsp{};
 
@@ -328,21 +357,24 @@ void load_rsp(void* handle)
 
 std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
 {
-    uint64_t error = 0;
-    void* module = PlatformService::load_library(path.wstring().c_str(), &error);
+    const auto module = LoadLibrary(path.wstring().c_str());
+    uint64_t last_error = GetLastError();
 
     if (module == nullptr)
     {
-        return std::make_pair(std::format(L"LoadLibrary (code {})", error), nullptr);
+        return std::make_pair(std::format(L"LoadLibrary (code {})", last_error), nullptr);
     }
 
-    const auto get_dll_info = (GETDLLINFO)PlatformService::get_function_in_module(
+    const auto get_dll_info = (GETDLLINFO)GetProcAddress(
     module,
     "GetDllInfo");
 
     if (!get_dll_info)
     {
-        PlatformService::free_library(module);
+        if (!FreeLibrary(module))
+        {
+            DialogService::show_dialog(std::format(L"Failed to free library {:#06x}.", (unsigned long)module).c_str(), L"Core", fsvc_error);
+        }
         return std::make_pair(L"GetDllInfo missing", nullptr);
     }
 
@@ -369,15 +401,18 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
 
 Plugin::~Plugin()
 {
-    PlatformService::free_library(m_module);
+    if (!FreeLibrary(m_module))
+    {
+        DialogService::show_dialog(std::format(L"Failed to free library {:#06x}.", (unsigned long)m_module).c_str(), L"Core", fsvc_error);
+    }
 }
 
 void Plugin::config()
 {
     const auto run_config = [&] {
-        const auto dll_config = (DLLCONFIG)PlatformService::get_function_in_module(m_module, "DllConfig");
-        const auto get_config_1 = (GETCONFIG1)PlatformService::get_function_in_module(m_module, "GetConfig1");
-        const auto save_config_1 = (SAVECONFIG1)PlatformService::get_function_in_module(m_module, "SaveConfig1");
+        const auto dll_config = (DLLCONFIG)GetProcAddress(m_module, "DllConfig");
+        const auto get_config_1 = (GETCONFIG1)GetProcAddress(m_module, "GetConfig1");
+        const auto save_config_1 = (SAVECONFIG1)GetProcAddress(m_module, "SaveConfig1");
 
         if (!get_config_1 && !dll_config || (get_config_1 && !save_config_1))
         {
@@ -409,7 +444,7 @@ void Plugin::config()
             return;
         }
 
-        const auto close_dll = (CLOSEDLL)PlatformService::get_function_in_module(m_module, "CloseDLL");
+        const auto close_dll = (CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
         if (close_dll)
             close_dll();
     };
@@ -424,7 +459,7 @@ void Plugin::config()
                 dummy_gfx_info.main_hwnd = Statusbar::hwnd();
                 dummy_gfx_info.statusbar_hwnd = Statusbar::hwnd();
 
-                const auto initiate_gfx = (INITIATEGFX)PlatformService::get_function_in_module(m_module, "InitiateGFX");
+                const auto initiate_gfx = (INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
                 if (initiate_gfx && !initiate_gfx(dummy_gfx_info))
                 {
                     DialogService::show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
@@ -439,7 +474,7 @@ void Plugin::config()
         {
             if (!core_vr_get_launched())
             {
-                const auto initiate_audio = (INITIATEAUDIO)PlatformService::get_function_in_module(m_module, "InitiateAudio");
+                const auto initiate_audio = (INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
                 if (initiate_audio && !initiate_audio(dummy_audio_info))
                 {
                     DialogService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
@@ -456,13 +491,13 @@ void Plugin::config()
             {
                 if (m_version == 0x0101)
                 {
-                    const auto initiate_controllers = (INITIATECONTROLLERS)PlatformService::get_function_in_module(m_module, "InitiateControllers");
+                    const auto initiate_controllers = (INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
                     if (initiate_controllers)
                         initiate_controllers(dummy_control_info);
                 }
                 else
                 {
-                    const auto old_initiate_controllers = (OLD_INITIATECONTROLLERS)PlatformService::get_function_in_module(m_module, "InitiateControllers");
+                    const auto old_initiate_controllers = (OLD_INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
                     if (old_initiate_controllers)
                         old_initiate_controllers(g_main_hwnd, g_core.controls);
                 }
@@ -476,7 +511,7 @@ void Plugin::config()
         {
             if (!core_vr_get_launched())
             {
-                auto initiateRSP = (INITIATERSP)PlatformService::get_function_in_module(m_module, "InitiateRSP");
+                auto initiateRSP = (INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
                 uint32_t i = 0;
                 if (initiateRSP)
                     initiateRSP(dummy_rsp_info, &i);
@@ -494,14 +529,14 @@ void Plugin::config()
 
 void Plugin::test()
 {
-    dll_test = (DLLTEST)PlatformService::get_function_in_module(m_module, "DllTest");
+    dll_test = (DLLTEST)GetProcAddress(m_module, "DllTest");
     if (dll_test)
         dll_test(g_hwnd_plug);
 }
 
 void Plugin::about()
 {
-    dll_about = (DLLABOUT)PlatformService::get_function_in_module(m_module, "DllAbout");
+    dll_about = (DLLABOUT)GetProcAddress(m_module, "DllAbout");
     if (dll_about)
         dll_about(g_hwnd_plug);
 }
