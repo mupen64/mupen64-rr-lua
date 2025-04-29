@@ -19,6 +19,18 @@ static std::wstring fix_filter(const std::wstring& filter)
     return result;
 }
 
+static std::wstring get_default_extension(const std::wstring& filter)
+{
+    const auto wildcards = split_string(filter, L";");
+
+    if (wildcards.empty())
+        return L"";
+
+    const auto& first_wildcard = wildcards[0];
+
+    return first_wildcard.substr(2);
+}
+
 std::filesystem::path FilePicker::show_open_dialog(const std::wstring& id, HWND hwnd, const std::wstring& filter)
 {
     std::filesystem::path restored_path = g_config.persistent_folder_paths.contains(id)
@@ -58,6 +70,7 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND 
     g_view_logger->info(L"file dialog {}: {}\n", id, restored_path.wstring());
 
     const auto fixed_filter = fix_filter(filter);
+    const auto default_extension = get_default_extension(filter);
 
     wchar_t out_path[MAX_PATH]{};
     OPENFILENAMEW ofn{};
@@ -68,6 +81,7 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND 
     ofn.lpstrFilter = fixed_filter.c_str();
     ofn.nFilterIndex = 1;
     ofn.lpstrInitialDir = restored_path.c_str();
+    ofn.lpstrDefExt = default_extension.c_str();
     ofn.Flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_EXTENSIONDIFFERENT;
 
     if (GetSaveFileName(&ofn))
