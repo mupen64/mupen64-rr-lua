@@ -15,6 +15,7 @@
 #include <r4300/rom.h>
 #include <r4300/tracelog.h>
 #include <r4300/x86/regcache.h>
+#include <alloc.h>
 
 // global variables :
 precomp_instr* dst; // destination structure for the recompiled instruction

@@ -6,10 +6,10 @@
 
 #include "stdafx.h"
 #include <r4300/macros.h>
-#include <r4300/r4300.h>
 #include <r4300/recomph.h>
 #include <r4300/x86/assemble.h>
 #include <r4300/x86/regcache.h>
+#include <alloc.h>
 
 typedef struct _jump_table {
     uint32_t mi_addr;

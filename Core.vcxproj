@@ -171,6 +171,7 @@
   <ItemGroup>
     <ClInclude Include="lib\IOHelpers.h" />
     <ClInclude Include="src\Core\Core.h" />
+    <ClInclude Include="src\Core\alloc.h" />
     <ClInclude Include="src\Core\cheats.h" />
     <ClInclude Include="src\Core\include\core_plugin.h" />
     <ClInclude Include="src\Core\include\core_types.h" />
@@ -222,6 +223,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Core\Core.cpp" />
+    <ClCompile Include="src\Core\alloc.cpp" />
     <ClCompile Include="src\Core\cheats.cpp" />
     <ClCompile Include="src\Core\memory\pif_lut.cpp" />
     <ClCompile Include="src\Core\memory\dma.cpp" />
