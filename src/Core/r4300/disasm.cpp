@@ -294,7 +294,6 @@ INSTSETCOP0_UNDEF,
 INSTSETCOP0_UNDEF,
 };
 static INST Cop0Instruction[1 << 5] = {
-// CFC0,CTC0‚ª•s–¾‚¾‚©‚çUNDEF‚É‚µ‚Æ‚­(ã‚Ì‚ÍMAIN‚Ì‚Ü‚Ü)
 INST_MFC0,
 INST_UNDEF,
 INST_UNDEF,
@@ -905,7 +904,6 @@ INSTF_LFR,
 INSTF_LFW,
 INSTF_LFW,
 
-// ‚Æ‚è‚ ‚¦‚¸Aƒgƒ‰ƒbƒvŒn‚Í‚æ‚­‚í‚©‚ç‚ñ‚Ì‚Å
 INSTF_NONE,
 INSTF_NONE,
 INSTF_NONE,

@@ -450,17 +450,12 @@ void check_interrupt()
 
 void gen_interrupt()
 {
-    // auto starttime = std::chrono::high_resolution_clock::now();
-    // if (!skip_jump)
-    // g_core->log_info(L"interrupt:{:#06x} ({:#06x})", q->type, Count);
-
-    // dyna_stop()��longjmp()���邽�߁A�������O�ŃR���X�g���N�g����ƃf�X�g���N�^���Ă΂�Ȃ�
     if (stop)
     {
         dyna_stop();
     }
 
-    if (skip_jump /*&& !dynacore*/)
+    if (skip_jump)
     {
         if (q->count > core_Count || (core_Count - q->count) < 0x80000000)
             next_interrupt = q->count;
@@ -468,18 +463,12 @@ void gen_interrupt()
             next_interrupt = 0;
         if (interpcore)
         {
-            /*if ((Cause & (2 << 2)) && (Cause & 0x80000000))
-              interp_addr = skip_jump+4;
-            else*/
             interp_addr = skip_jump;
             last_addr = interp_addr;
         }
         else
         {
-            /*if ((Cause & (2 << 2)) && (Cause & 0x80000000))
-              jump_to(skip_jump+4);
-            else*/
-            uint32_t dest = skip_jump;
+            const uint32_t dest = skip_jump;
             skip_jump = 0;
             jump_to(dest);
             last_addr = PC->addr;
@@ -490,15 +479,12 @@ void gen_interrupt()
     auto type = q->type;
     switch (q->type)
     {
-    case SPECIAL_INT: // does nothing, spammed when Count is close to rolling over
-        // g_core->log_info(L"SPECIAL, count: {:#06x}", q->count);
+    case SPECIAL_INT:
         if (core_Count > 0x10000000)
             return;
         remove_interrupt_event();
         add_interrupt_event_count(SPECIAL_INT, 0);
         return;
-        break;
-
     case VI_INT:
         {
             lag_count++;
