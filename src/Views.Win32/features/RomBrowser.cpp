@@ -11,7 +11,7 @@
 #include <Main.h>
 #include <features/RomBrowser.h>
 #include <features/Statusbar.h>
-#include <AsyncExecutor.h>
+#include <ThreadPool.h>
 #include <Messenger.h>
 
 using t_rombrowser_entry = struct s_rombrowser_entry {
@@ -382,7 +382,7 @@ namespace RomBrowser
                 item.iItem = i;
                 ListView_GetItem(rombrowser_hwnd, &item);
                 auto path = rombrowser_entries[item.lParam]->path;
-                AsyncExecutor::invoke_async([path] {
+                ThreadPool::submit_task([path] {
                     const auto result = core_vr_start_rom(path);
                     show_error_dialog_for_result(result);
                 });

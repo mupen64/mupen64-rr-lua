@@ -5,7 +5,6 @@
  */
 
 #include "stdafx.h"
-#include <AsyncExecutor.h>
 #include <Commandline.h>
 #include <Config.h>
 #include <DialogService.h>
@@ -36,6 +35,7 @@
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaConsole.h>
 #include <lua/LuaRenderer.h>
+#include <ThreadPool.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 #define VIEW_BENCHMARK_SUPPORT
@@ -671,7 +671,7 @@ void on_vis_since_input_poll_exceeded(std::any)
     if (g_config.silent_mode || DialogService::show_ask_dialog(VIEW_DLG_LAG_EXCEEDED, L"An unusual execution pattern was detected. Continuing might leave the emulator in an unusable state.\r\nWould you like to terminate emulation?", L"Warning", true))
     {
         // TODO: Send IDM_CLOSE_ROM instead... probably better :P
-        AsyncExecutor::invoke_async([] {
+        ThreadPool::submit_task([] {
             const auto result = core_vr_close_rom(true);
             show_error_dialog_for_result(result);
         });
@@ -905,7 +905,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
             if (extension == ".n64" || extension == ".z64" || extension == ".v64" || extension == ".rom")
             {
-                AsyncExecutor::invoke_async([path] {
+                ThreadPool::submit_task([path] {
                     const auto result = core_vr_start_rom(path);
                     show_error_dialog_for_result(result);
                 });
@@ -914,7 +914,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             {
                 g_config.core.vcr_readonly = true;
                 Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-                AsyncExecutor::invoke_async([fname] {
+                ThreadPool::submit_task([fname] {
                     auto result = core_vcr_start_playback(fname);
                     show_error_dialog_for_result(result);
                 });
@@ -924,7 +924,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 if (!core_vr_get_launched())
                     break;
                 core_vr_wait_increment();
-                AsyncExecutor::invoke_async([=] {
+                ThreadPool::submit_task([=] {
                     core_vr_wait_decrement();
                     core_st_do_file(fname, core_st_job_load, nullptr, false);
                 });
@@ -1380,7 +1380,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             case IDM_CLOSE_ROM:
                 if (!confirm_user_exit())
                     break;
-                AsyncExecutor::invoke_async([] {
+                ThreadPool::submit_task([] {
                     const auto result = core_vr_close_rom(true);
                     show_error_dialog_for_result(result);
                 },
@@ -1441,7 +1441,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
                 else
                 {
-                    AsyncExecutor::invoke_async([] {
+                    ThreadPool::submit_task([] {
                         const auto result = core_vcr_begin_seek(std::to_wstring(g_config.multi_frame_advance_count), true);
                         show_error_dialog_for_result(result);
                     });
@@ -1490,7 +1490,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (!reset_will_continue_recording && !confirm_user_exit())
                         break;
 
-                    AsyncExecutor::invoke_async([] {
+                    ThreadPool::submit_task([] {
                         const auto result = core_vr_reset_rom(false, true);
                         show_error_dialog_for_result(result);
                     },
@@ -1510,7 +1510,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             case IDM_CHECK_FOR_UPDATES:
-                AsyncExecutor::invoke_async([=] {
+                ThreadPool::submit_task([=] {
                     UpdateChecker::check(lParam != 1);
                 });
                 break;
@@ -1594,7 +1594,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     if (!path.empty())
                     {
-                        AsyncExecutor::invoke_async([path] {
+                        ThreadPool::submit_task([path] {
                             const auto result = core_vr_start_rom(path);
                             show_error_dialog_for_result(result);
                         });
@@ -1620,7 +1620,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     g_config.st_slot >= 9 ? g_config.st_slot = 0 : g_config.st_slot++;
                     Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
                 }
-                AsyncExecutor::invoke_async([=] {
+                ThreadPool::submit_task([=] {
                     core_vr_wait_decrement();
                     core_st_do_slot(g_config.st_slot, core_st_job_save, nullptr, false);
                 });
@@ -1636,7 +1636,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     }
 
                     core_vr_wait_increment();
-                    AsyncExecutor::invoke_async([=] {
+                    ThreadPool::submit_task([=] {
                         core_vr_wait_decrement();
                         core_st_do_file(path, core_st_job_save, nullptr, false);
                     });
@@ -1644,7 +1644,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_LOAD_SLOT:
                 core_vr_wait_increment();
-                AsyncExecutor::invoke_async([=] {
+                ThreadPool::submit_task([=] {
                     core_vr_wait_decrement();
                     core_st_do_slot(g_config.st_slot, core_st_job_load, nullptr, false);
                 });
@@ -1660,7 +1660,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     }
 
                     core_vr_wait_increment();
-                    AsyncExecutor::invoke_async([=] {
+                    ThreadPool::submit_task([=] {
                         core_vr_wait_decrement();
                         core_st_do_file(path, core_st_job_load, nullptr, false);
                     });
@@ -1669,7 +1669,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             case IDM_UNDO_LOAD_STATE:
                 {
                     core_vr_wait_increment();
-                    AsyncExecutor::invoke_async([=] {
+                    ThreadPool::submit_task([=] {
                         core_vr_wait_decrement();
 
                         std::vector<uint8_t> buf{};
@@ -1711,7 +1711,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     }
 
                     core_vr_wait_increment();
-                    g_core.invoke_async([=] {
+                    g_core.submit_task([=] {
                         auto vcr_result = core_vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag, wstring_to_string(movie_dialog_result.author), wstring_to_string(movie_dialog_result.description));
                         core_vr_wait_decrement();
                         if (!show_error_dialog_for_result(vcr_result))
@@ -1738,7 +1738,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     g_config.core.pause_at_frame = result.pause_at;
                     g_config.core.pause_at_last_frame = result.pause_at_last;
 
-                    AsyncExecutor::invoke_async([result] {
+                    ThreadPool::submit_task([result] {
                         auto vcr_result = core_vcr_start_playback(result.path);
                         show_error_dialog_for_result(vcr_result);
                     });
@@ -1746,7 +1746,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_STOP_MOVIE:
                 core_vr_wait_increment();
-                g_core.invoke_async([] {
+                g_core.submit_task([] {
                     core_vcr_stop_all();
                     core_vr_wait_decrement();
                 });
@@ -1856,7 +1856,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     g_config.st_slot = slot;
                     Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
 
-                    AsyncExecutor::invoke_async([=] {
+                    ThreadPool::submit_task([=] {
                         core_vr_wait_decrement();
                         core_st_do_slot(slot, core_st_job_save, nullptr, false);
                     });
@@ -1869,7 +1869,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     g_config.st_slot = slot;
                     Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
 
-                    AsyncExecutor::invoke_async([=] {
+                    ThreadPool::submit_task([=] {
                         core_vr_wait_decrement();
                         core_st_do_slot(slot, core_st_job_load, nullptr, false);
                     });
@@ -1881,7 +1881,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (path.empty())
                         break;
 
-                    AsyncExecutor::invoke_async([path] {
+                    ThreadPool::submit_task([path] {
                         const auto result = core_vr_start_rom(path);
                         show_error_dialog_for_result(result);
                     },
@@ -1896,7 +1896,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     g_config.core.vcr_readonly = true;
                     Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-                    AsyncExecutor::invoke_async([path] {
+                    ThreadPool::submit_task([path] {
                         auto result = core_vcr_start_playback(path);
                         show_error_dialog_for_result(result);
                     },
@@ -2249,8 +2249,8 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     };
     g_core.load_plugins = load_plugins;
     g_core.initiate_plugins = initiate_plugins;
-    g_core.invoke_async = [](const auto cb) {
-        AsyncExecutor::invoke_async(cb);
+    g_core.submit_task = [](const auto cb) {
+        ThreadPool::submit_task(cb);
     };
     g_core.get_saves_directory = get_saves_directory;
     g_core.get_backups_directory = get_backups_directory;

@@ -15,7 +15,7 @@ namespace LuaCore::Savestate
         const std::string path = lua_tostring(L, 1);
 
         core_vr_wait_increment();
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
             core_st_do_file(path, core_st_job_save, nullptr, false);
         });
@@ -28,7 +28,7 @@ namespace LuaCore::Savestate
         const std::string path = lua_tostring(L, 1);
 
         core_vr_wait_increment();
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
             core_st_do_file(path, core_st_job_load, nullptr, false);
         });
@@ -50,7 +50,7 @@ namespace LuaCore::Savestate
         const bool ignore_warnings = lua_toboolean(L, 4);
 
         core_vr_wait_increment();
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
             core_st_do_file(path, job, [=](const auto result, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
@@ -77,7 +77,7 @@ namespace LuaCore::Savestate
         const bool ignore_warnings = lua_toboolean(L, 4);
 
         core_vr_wait_increment();
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
             core_st_do_slot(slot, job, [=](const auto result, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
@@ -105,7 +105,7 @@ namespace LuaCore::Savestate
         const bool ignore_warnings = lua_toboolean(L, 4);
 
         core_vr_wait_increment();
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
             const auto buffer = std::vector<uint8_t>(buffer_str, buffer_str + buffer_len);
             core_st_do_memory(buffer, job, [=](const auto result, const std::vector<uint8_t>& buf) {

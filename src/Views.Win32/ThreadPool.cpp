@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <AsyncExecutor.h>
+#include <ThreadPool.h>
 #include <BS_thread_pool.hpp>
 #include <Loggers.h>
 
@@ -13,7 +13,7 @@ static BS::thread_pool pool{};
 static std::unordered_set<size_t> pending_keys{};
 static std::mutex mtx{};
 
-void AsyncExecutor::invoke_async(const std::function<void()>& func, const size_t key)
+void ThreadPool::submit_task(const std::function<void()>& func, const size_t key)
 {
     if (!key)
     {

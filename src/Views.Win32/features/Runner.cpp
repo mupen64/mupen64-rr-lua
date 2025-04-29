@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <AsyncExecutor.h>
+#include <ThreadPool.h>
 #include <Config.h>
 #include <Main.h>
 #include <Messenger.h>
@@ -19,7 +19,7 @@ static void run_auto(const int id, const std::filesystem::path& path)
     switch (id)
     {
     case IDC_LIST_ROMS:
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             const auto result = core_vr_start_rom(path);
             show_error_dialog_for_result(result);
         });
@@ -29,7 +29,7 @@ static void run_auto(const int id, const std::filesystem::path& path)
         Messenger::broadcast(
         Messenger::Message::ReadonlyChanged,
         (bool)g_config.core.vcr_readonly);
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             core_vcr_start_playback(path);
         });
         break;

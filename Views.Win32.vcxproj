@@ -242,7 +242,7 @@
         <ClInclude Include="lib\microlru.h"/>
         <ClInclude Include="lib\IOHelpers.h"/>
         <ClInclude Include="src\Views.Win32\MiscHelpers.h"/>
-        <ClInclude Include="src\Views.Win32\AsyncExecutor.h"/>
+        <ClInclude Include="src\Views.Win32\ThreadPool.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\AVIEncoder.h"/>
         <ClInclude Include="src\Views.Win32\capture\encoders\Encoder.h"/>
         <ClInclude Include="src\Views.Win32\capture\encoders\FFmpegEncoder.h"/>
@@ -308,7 +308,7 @@
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
         </ClCompile>
-        <ClCompile Include="src\Views.Win32\AsyncExecutor.cpp"/>
+        <ClCompile Include="src\Views.Win32\ThreadPool.cpp" />
         <ClCompile Include="src\Views.Win32\capture\encoders\AVIEncoder.cpp"/>
         <ClCompile Include="src\Views.Win32\capture\encoders\FFmpegEncoder.cpp"/>
         <ClCompile Include="src\Views.Win32\capture\EncodingManager.cpp"/>

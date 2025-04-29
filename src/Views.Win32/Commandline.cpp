@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <AsyncExecutor.h>
+#include <ThreadPool.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
@@ -44,7 +44,7 @@ namespace Cli
             return;
         }
 
-        AsyncExecutor::invoke_async([] {
+        ThreadPool::submit_task([] {
             if (rom_is_movie)
             {
                 g_view_logger->trace("[CLI] commandline_start_rom core_vcr_start_playback");
@@ -166,7 +166,7 @@ namespace Cli
             Benchmark::start();
         }
 
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             g_view_logger->trace("[CLI] on_core_executing_changed -> load_st");
             load_st();
 

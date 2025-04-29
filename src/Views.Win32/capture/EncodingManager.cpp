@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <AsyncExecutor.h>
+#include <ThreadPool.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
@@ -382,7 +382,7 @@ namespace EncodingManager
     void start_capture(std::filesystem::path path, cfg_encoder_type encoder_type, const bool ask_for_encoding_settings, const std::function<void(bool)>& callback)
     {
         core_vr_wait_increment();
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             const auto result = start_capture_impl(path, encoder_type, ask_for_encoding_settings);
             if (callback)
             {
@@ -395,7 +395,7 @@ namespace EncodingManager
     void stop_capture(const std::function<void(bool)>& callback)
     {
         core_vr_wait_increment();
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             const auto result = stop_capture_impl();
             if (callback)
             {

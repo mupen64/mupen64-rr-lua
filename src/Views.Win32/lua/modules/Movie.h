@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AsyncExecutor.h>
+#include <ThreadPool.h>
 
 namespace LuaCore::Movie
 {
@@ -16,7 +16,7 @@ namespace LuaCore::Movie
         const char* fname = lua_tostring(L, 1);
         g_config.core.vcr_readonly = true;
         Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             core_vcr_start_playback(fname);
         });
         return 0;

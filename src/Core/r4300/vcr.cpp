@@ -563,7 +563,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
     {
         bool clear_eeprom = !(g_header.startFlags & MOVIE_START_FROM_EEPROM);
         g_reset_pending = true;
-        g_core->invoke_async([clear_eeprom] {
+        g_core->submit_task([clear_eeprom] {
             const auto result = core_vr_reset_rom(clear_eeprom, false);
 
             std::scoped_lock lock(vcr_mutex);
@@ -589,7 +589,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
     {
         bool clear_eeprom = !(g_header.startFlags & MOVIE_START_FROM_EEPROM);
         g_reset_pending = true;
-        g_core->invoke_async([clear_eeprom] {
+        g_core->submit_task([clear_eeprom] {
             const auto result = core_vr_reset_rom(clear_eeprom, false);
 
             std::scoped_lock lock(vcr_mutex);
@@ -662,7 +662,7 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
     {
         vcr_reset_requested = false;
         g_reset_pending = true;
-        g_core->invoke_async([] {
+        g_core->submit_task([] {
             core_result result;
             {
                 std::lock_guard lock(g_emu_cs);
@@ -722,7 +722,7 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
     {
         g_reset_pending = true;
         g_core->log_info(L"[VCR] Resetting during playback...");
-        g_core->invoke_async([] {
+        g_core->submit_task([] {
             auto result = core_vr_reset_rom(false, false);
 
             std::scoped_lock lock(vcr_mutex);
@@ -977,7 +977,7 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
         g_header.startFlags = MOVIE_START_FROM_SNAPSHOT;
         g_task = task_start_recording_from_existing_snapshot;
 
-        g_core->invoke_async([=] {
+        g_core->submit_task([=] {
             core_st_do_file(st_path, core_st_job_load, [](core_result result, auto) {
                 std::scoped_lock lock(vcr_mutex);
 
@@ -1317,7 +1317,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
 
         g_task = task_start_playback_from_snapshot;
 
-        g_core->invoke_async([=] {
+        g_core->submit_task([=] {
             core_st_do_file(st_path, core_st_job_load, [](const core_result result, auto) {
                 std::scoped_lock lock(vcr_mutex);
 
@@ -1480,7 +1480,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
             g_seek_savestate_loading = true;
 
             // NOTE: This needs to go through AsyncExecutor (despite us already being on a worker thread) or it will cause a deadlock.
-            g_core->invoke_async([=] {
+            g_core->submit_task([=] {
                 core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](core_result result, auto buf) {
                     if (result != Res_Ok)
                     {
@@ -1547,7 +1547,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
         g_seek_savestate_loading = true;
 
         // NOTE: This needs to go through AsyncExecutor (despite us already being on a worker thread) or it will cause a deadlock.
-        g_core->invoke_async([=] {
+        g_core->submit_task([=] {
             core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](core_result result, auto buf) {
                 if (result != Res_Ok)
                 {

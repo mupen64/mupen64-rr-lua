@@ -191,10 +191,10 @@ typedef struct {
     void (*initiate_plugins)(void);
 
     /**
-     * \brief Executes a function on a background thread.
+     * \brief Executes a function asynchronously.
      * \param func The function to be executed.
      */
-    void (*invoke_async)(const std::function<void()>& func);
+    void (*submit_task)(const std::function<void()>& func);
 
     /**
      * \brief Gets the directory in which savestates and persistent game saves should be stored.

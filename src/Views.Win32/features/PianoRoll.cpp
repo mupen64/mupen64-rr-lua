@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include "PianoRoll.h"
-#include "AsyncExecutor.h"
+#include "ThreadPool.h"
 #include "Config.h"
 #include "Messenger.h"
 #include <Main.h>
@@ -422,7 +422,7 @@ namespace PianoRoll
 
         // This might be called from UI thread, thus grabbing the VCR lock.
         // Problem is that the VCR lock is already grabbed by the core thread because current sample changed message is executed on core thread.
-        AsyncExecutor::invoke_async([=] {
+        ThreadPool::submit_task([=] {
             auto result = core_vcr_begin_warp_modify(g_piano_roll_state.inputs);
 
             g_piano_roll_dispatcher->invoke([=] {
@@ -1205,7 +1205,7 @@ namespace PianoRoll
                 goto def;
             }
 
-            AsyncExecutor::invoke_async([=] {
+            ThreadPool::submit_task([=] {
                 core_vcr_begin_seek(std::to_wstring(lplvhtti.iItem), true);
             });
             return 0;
