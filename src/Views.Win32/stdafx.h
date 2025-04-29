@@ -80,5 +80,6 @@ extern "C" {
 #include <xxh64.h>
 #include <strsafe.h>
 #include <commdlg.h>
+#include <unordered_set>
 
 #include <lua/LuaTypes.h>

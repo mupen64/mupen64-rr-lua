@@ -1145,7 +1145,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         save_config();
         timeKillEvent(g_ui_timer);
-        AsyncExecutor::stop();
         Gdiplus::GdiplusShutdown(gdi_plus_token);
         g_exit = true;
         PostQuitMessage(0);
@@ -2302,7 +2301,6 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
     Messenger::init();
-    AsyncExecutor::init();
     CoreDbg::init();
 
     g_app_path = get_app_full_path();
