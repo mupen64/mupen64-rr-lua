@@ -6,15 +6,16 @@
 
 #include "stdafx.h"
 #include <AsyncExecutor.h>
+#include <Commandline.h>
 #include <Config.h>
 #include <DialogService.h>
+#include <Loggers.h>
+#include <Main.h>
 #include <Messenger.h>
 #include <Plugin.h>
 #include <strsafe.h>
 #include <capture/EncodingManager.h>
-#include <Commandline.h>
-#include <Loggers.h>
-#include <Main.h>
+#include <features/AboutDialog.h>
 #include <features/Benchmark.h>
 #include <features/Cheats.h>
 #include <features/Compare.h>
@@ -22,6 +23,7 @@
 #include <features/CoreDbg.h>
 #include <features/CrashManager.h>
 #include <features/Dispatcher.h>
+#include <features/FilePicker.h>
 #include <features/MGECompositor.h>
 #include <features/MovieDialog.h>
 #include <features/PianoRoll.h>
@@ -31,7 +33,6 @@
 #include <features/Seeker.h>
 #include <features/Statusbar.h>
 #include <features/UpdateChecker.h>
-#include <features/FilePicker.h>
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaConsole.h>
 #include <lua/LuaRenderer.h>
@@ -1506,7 +1507,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             case IDM_ABOUT:
                 {
                     BetterEmulationLock lock;
-                    ConfigDialog::show_about();
+                    AboutDialog::show();
                 }
                 break;
             case IDM_CHECK_FOR_UPDATES:

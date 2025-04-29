@@ -28,9 +28,4 @@ namespace ConfigDialog
      * \return Whether the user chose to save the settings.
      */
     bool show_plugin_settings(Plugin* plugin, core_plugin_cfg* cfg);
-
-    /**
-     * \brief Shows the about dialog.
-     */
-    void show_about();
 } // namespace ConfigDialog

@@ -259,6 +259,7 @@
         <ClInclude Include="src\Views.Win32\Commandline.h"/>
         <ClInclude Include="src\Views.Win32\features\Cheats.h"/>
         <ClInclude Include="src\Views.Win32\features\ConfigDialog.h"/>
+        <ClInclude Include="src\Views.Win32\features\AboutDialog.h" />
         <ClInclude Include="src\Views.Win32\features\CoreDbg.h"/>
         <ClInclude Include="src\Views.Win32\features\CrashManager.h"/>
         <ClInclude Include="src\Views.Win32\features\Dispatcher.h"/>
@@ -321,6 +322,7 @@
         <ClCompile Include="src\Views.Win32\features\Benchmark.cpp"/>
         <ClCompile Include="src\Views.Win32\features\Cheats.cpp"/>
         <ClCompile Include="src\Views.Win32\features\ConfigDialog.cpp"/>
+        <ClCompile Include="src\Views.Win32\features\AboutDialog.cpp" />
         <ClCompile Include="src\Views.Win32\features\CoreDbg.cpp"/>
         <ClCompile Include="src\Views.Win32\features\CrashManager.cpp"/>
         <ClCompile Include="src\Views.Win32\features\Dispatcher.cpp"/>
