@@ -68,9 +68,9 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring& id, HWND 
     ofn.lpstrFilter = fixed_filter.c_str();
     ofn.nFilterIndex = 1;
     ofn.lpstrInitialDir = restored_path.c_str();
-    ofn.Flags = OFN_CREATEPROMPT | OFN_EXPLORER | OFN_ENABLESIZING;
+    ofn.Flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_EXTENSIONDIFFERENT;
 
-    if (GetOpenFileName(&ofn))
+    if (GetSaveFileName(&ofn))
     {
         g_config.persistent_folder_paths[id] = ofn.lpstrFile;
         return g_config.persistent_folder_paths[id];
