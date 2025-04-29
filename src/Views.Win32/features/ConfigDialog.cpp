@@ -1025,13 +1025,6 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     t_options_item{
     .group_id = interface_group.id,
-    .name = L"Use Async Executor",
-    .tooltip = L"Whether the new async executor is used for async calls.\nLowers interaction latency in general usecases.\nOn - Each call is put on the async execution queue\nOff - Each call runs on a newly created thread (legacy behaviour)",
-    .data = &g_config.use_async_executor,
-    .type = t_options_item::Type::Bool,
-    },
-    t_options_item{
-    .group_id = interface_group.id,
     .name = L"Async Plugin Discovery",
     .tooltip = L"Whether plugins discovery is performed asynchronously. Removes potential waiting times in the config dialog.",
     .data = &g_config.plugin_discovery_async,
@@ -1337,14 +1330,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.fast_dispatcher,
     .type = t_options_item::Type::Bool,
     },
-
-    t_options_item{
-    .group_id = debug_group.id,
-    .name = L"Concurrency Fuzzing",
-    .tooltip = L"Whether the view will apply concurrency fuzzing. When enabled, some functions will be delayed to expose delayed task execution handling deficiencies at the callsite.\nDo not enable unless you are debugging.",
-    .data = &g_config.concurrency_fuzzing,
-    .type = t_options_item::Type::Bool,
-    },
+        
     t_options_item{
     .group_id = debug_group.id,
     .name = L"Delay Plugin Discovery",

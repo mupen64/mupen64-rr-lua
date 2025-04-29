@@ -303,21 +303,11 @@ typedef struct ViewCfg {
     /// When enabled, mupen won't change the working directory to its current path at startup
     /// </summary>
     int32_t keep_default_working_directory;
-
-    /// <summary>
-    /// Whether the async executor is used for async calls. If disabled, a new thread is spawned for each call (legacy behaviour).
-    /// </summary>
-    int32_t use_async_executor = 1;
-
+    
     /// <summary>
     /// Whether a low-latency dispatcher implementation is used. Greatly improves performance when Lua scripts are running. Disable if you DirectInput-based plugins aren't working as expected.
     /// </summary>
     int32_t fast_dispatcher = 1;
-
-    /// <summary>
-    /// Whether the view will apply concurrency fuzzing. When enabled, some functions will be delayed to expose delayed task execution handling deficiencies at the callsite.
-    /// </summary>
-    int32_t concurrency_fuzzing;
 
     /// <summary>
     /// Whether the plugin discovery process is artificially lengthened.
