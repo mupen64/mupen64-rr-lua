@@ -886,7 +886,7 @@ void save_config()
     file.write(ini, true);
 }
 
-void load_config()
+void config_load()
 {
     if (!std::filesystem::exists(get_config_path()))
     {
@@ -906,7 +906,7 @@ void load_config()
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
 }
 
-void init_config()
+void config_init()
 {
     g_config_hotkeys = collect_hotkeys(&g_config);
 }

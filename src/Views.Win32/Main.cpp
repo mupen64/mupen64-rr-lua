@@ -46,8 +46,8 @@
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
 
-HANDLE dispatcher_event;
-HANDLE dispatcher_done_event;
+static HANDLE dispatcher_event{};
+static HANDLE dispatcher_done_event{};
 
 core_params g_core{};
 bool g_frame_changed = true;
@@ -731,6 +731,12 @@ void update_core_fast_forward(std::any)
     core_vr_set_fast_forward(g_fast_forward || core_vcr_is_seeking() || Cli::wants_fast_forward() || Compare::active());
 }
 
+void on_emu_starting_changed(std::any data)
+{
+    g_emu_starting = std::any_cast<bool>(data);
+    update_titlebar();
+}
+
 BetterEmulationLock::BetterEmulationLock()
 {
     if (g_in_menu_loop)
@@ -1126,17 +1132,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_EXECUTE_DISPATCHER:
         g_main_window_dispatcher->execute();
         break;
+    case WM_NCCREATE:
+        g_main_hwnd = hwnd;
+        break;
     case WM_CREATE:
-        g_main_window_dispatcher = std::make_unique<Dispatcher>(g_ui_thread_id, [] {
-            if (g_config.fast_dispatcher)
-            {
-                SetEvent(dispatcher_event);
-                WaitForSingleObject(dispatcher_done_event, INFINITE);
-                return;
-            }
-            SendMessage(g_main_hwnd, WM_EXECUTE_DISPATCHER, 0, 0);
-        });
+        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
+
         g_main_menu = GetMenu(hwnd);
+        g_recent_roms_menu = GetSubMenu(GetSubMenu(g_main_menu, 0), 5);
+        g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 6);
+        g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
+
         GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
         MGECompositor::create(hwnd);
         PianoRoll::init();
@@ -1384,7 +1390,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     const auto result = core_vr_close_rom(true);
                     show_error_dialog_for_result(result);
                 },
-                                            ASYNC_KEY_CLOSE_ROM);
+                                        ASYNC_KEY_CLOSE_ROM);
                 break;
             case IDM_FASTFORWARD_ON:
                 g_fast_forward = true;
@@ -1494,7 +1500,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         const auto result = core_vr_reset_rom(false, true);
                         show_error_dialog_for_result(result);
                     },
-                                                ASYNC_KEY_RESET_ROM);
+                                            ASYNC_KEY_RESET_ROM);
                     break;
                 }
             case IDM_SETTINGS:
@@ -1885,7 +1891,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         const auto result = core_vr_start_rom(path);
                         show_error_dialog_for_result(result);
                     },
-                                                ASYNC_KEY_START_ROM);
+                                            ASYNC_KEY_START_ROM);
                 }
                 else if (LOWORD(wParam) >= ID_RECENTMOVIES_FIRST &&
                          LOWORD(wParam) < (ID_RECENTMOVIES_FIRST + g_config.recent_movie_paths.size()))
@@ -1900,7 +1906,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         auto result = core_vcr_start_playback(path);
                         show_error_dialog_for_result(result);
                     },
-                                                ASYNC_KEY_PLAY_MOVIE);
+                                            ASYNC_KEY_PLAY_MOVIE);
                 }
                 else if (LOWORD(wParam) >= ID_LUA_RECENT && LOWORD(wParam) < (ID_LUA_RECENT + g_config.recent_lua_script_paths.size()))
                 {
@@ -2135,20 +2141,8 @@ static core_plugin_extended_funcs rsp_extended_funcs = {
 },
 };
 
-int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
+static core_result init_core()
 {
-#ifdef _DEBUG
-    open_console();
-#endif
-
-    Loggers::init();
-
-    g_view_logger->info("WinMain");
-    g_view_logger->info(get_mupen_name());
-
-    dispatcher_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    dispatcher_done_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-
     g_core.cfg = &g_config.core;
     g_core.callbacks = {};
     g_core.callbacks.vi = [] {
@@ -2293,46 +2287,82 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     g_core.plugin_funcs.input_extended_funcs = input_extended_funcs;
     g_core.plugin_funcs.rsp_extended_funcs = rsp_extended_funcs;
 
-    core_init(&g_core);
+    setup_dummy_info();
 
+    return core_init(&g_core);
+}
+
+static void main_dispatcher_init()
+{
     g_ui_thread_id = GetCurrentThreadId();
+    dispatcher_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    dispatcher_done_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    g_main_window_dispatcher = std::make_unique<Dispatcher>(g_ui_thread_id, [] {
+        if (g_config.fast_dispatcher)
+        {
+            SetEvent(dispatcher_event);
+            WaitForSingleObject(dispatcher_done_event, INFINITE);
+            return;
+        }
+        SendMessage(g_main_hwnd, WM_EXECUTE_DISPATCHER, 0, 0);
+    });
+}
 
-    Gdiplus::GdiplusStartupInput startup_input;
-    GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
-
-    Messenger::init();
-    CoreDbg::init();
-
-    g_app_path = get_app_full_path();
+static void set_cwd()
+{
+    if (!g_config.keep_default_working_directory)
+    {
+        SetCurrentDirectory(g_app_path.c_str());
+    }
 
     wchar_t cwd[MAX_PATH] = {0};
-    GetCurrentDirectory(std::size(cwd), cwd);
+    GetCurrentDirectory(sizeof(cwd), cwd);
+    g_view_logger->info(L"cwd: {}", cwd);
+}
 
-    // CWD is sometimes messed up when running from CLI, so we fix it here
-    // Needs to be fixed prior to loading config, since that uses a relative path
-    SetCurrentDirectory(g_app_path.c_str());
+int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
+{
+#ifdef _DEBUG
+    open_console();
+#endif
+
+    Loggers::init();
+
+    g_view_logger->info("WinMain");
+    g_view_logger->info(get_mupen_name());
 
     g_app_instance = hInstance;
+    g_app_path = get_app_full_path();
+    set_cwd();
 
-    // ensure folders exist!
+    config_init();
+    config_load();
+    main_dispatcher_init();
+
+    const auto core_result = init_core();
+    if (core_result != Res_Ok)
+    {
+        show_error_dialog_for_result(core_result);
+        return 1;
+    }
+
     CreateDirectory((g_app_path / L"save").c_str(), NULL);
     CreateDirectory((g_app_path / L"screenshots").c_str(), NULL);
     CreateDirectory((g_app_path / L"plugin").c_str(), NULL);
     CreateDirectory((g_app_path / L"backups").c_str(), NULL);
 
-    init_config();
-    load_config();
+    Gdiplus::GdiplusStartupInput startup_input;
+    GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
+
     lua_init();
+
+    CrashManager::init();
+    MGECompositor::init();
     LuaRenderer::init();
-
-    if (g_config.keep_default_working_directory)
-    {
-        SetCurrentDirectory(cwd);
-    }
-
-    // Log cwd again for fun
-    GetCurrentDirectory(sizeof(cwd), cwd);
-    g_view_logger->info(L"cwd: {}", cwd);
+    EncodingManager::init();
+    Cli::init();
+    Seeker::init();
+    CoreDbg::init();
 
     WNDCLASSEX wc = {0};
     wc.cbSize = sizeof(WNDCLASSEX);
@@ -2345,41 +2375,12 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     wc.lpszMenuName = MAKEINTRESOURCE(IDR_MYMENU);
-
     RegisterClassEx(&wc);
-
-    CrashManager::init();
-    MGECompositor::init();
 
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height);
 
-    g_main_hwnd = CreateWindowEx(
-    0,
-    WND_CLASS,
-    get_mupen_name().c_str(),
-    WS_OVERLAPPEDWINDOW | WS_EX_COMPOSITED,
-    g_config.window_x,
-    g_config.window_y,
-    g_config.window_width,
-    g_config.window_height,
-    NULL,
-    NULL,
-    hInstance,
-    NULL);
-
-    setup_dummy_info();
-
-    ShowWindow(g_main_hwnd, nCmdShow);
-    SetWindowLong(g_main_hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
-
-    g_recent_roms_menu = GetSubMenu(GetSubMenu(g_main_menu, 0), 5);
-    g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 6);
-    g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
-#ifndef _DEBUG
-#endif
-
-    RECT rect{};
-    GetClientRect(g_main_hwnd, &rect);
+    CreateWindow(WND_CLASS, get_mupen_name().c_str(), WS_OVERLAPPEDWINDOW | WS_EX_COMPOSITED, g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height, NULL, NULL, g_app_instance, NULL);
+    ShowWindow(g_main_hwnd, nShowCmd);
 
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, on_emu_launched_changed);
     Messenger::subscribe(Messenger::Message::EmuStopping, on_emu_stopping);
@@ -2395,30 +2396,19 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed);
     Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed);
     Messenger::subscribe(Messenger::Message::FastForwardNeedsUpdate, update_core_fast_forward);
-    Messenger::subscribe(Messenger::Message::SeekStatusChanged, [](std::any) {
-        update_core_fast_forward(nullptr);
-    });
-    Messenger::subscribe(Messenger::Message::EmuStartingChanged, [](std::any data) {
-        g_emu_starting = std::any_cast<bool>(data);
-        update_titlebar();
-    });
+    Messenger::subscribe(Messenger::Message::SeekStatusChanged, update_core_fast_forward);
+    Messenger::subscribe(Messenger::Message::EmuStartingChanged, on_emu_starting_changed);
 
-    // Rombrowser needs to be initialized *after* other components, since it depends on their state smh bru
     Statusbar::create();
     RomBrowser::create();
-    EncodingManager::init();
-    Cli::init();
-    Seeker::init();
-
     update_core_fast_forward(nullptr);
-
+    
     Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
     Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
     Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
     Messenger::broadcast(Messenger::Message::EmuLaunchedChanged, false);
     Messenger::broadcast(Messenger::Message::CoreExecutingChanged, false);
     Messenger::broadcast(Messenger::Message::CapturingChanged, false);
-    Messenger::broadcast(Messenger::Message::SizeChanged, rect);
     Messenger::broadcast(Messenger::Message::AppReady, nullptr);
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
 
@@ -2429,16 +2419,15 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         return -1;
     }
 
-    SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
-
+    PostMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
+    
     MSG msg{};
-    DWORD result{};
 
     while (!g_exit)
     {
         if (g_config.fast_dispatcher)
         {
-            result = MsgWaitForMultipleObjectsEx(1, &dispatcher_event, INFINITE, QS_ALLEVENTS | QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
+            const DWORD result = MsgWaitForMultipleObjectsEx(1, &dispatcher_event, INFINITE, QS_ALLEVENTS | QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
 
             if (result == WAIT_FAILED)
             {

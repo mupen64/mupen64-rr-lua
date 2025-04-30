@@ -181,11 +181,6 @@ namespace Messenger
     using t_user_callback = std::function<void(std::any)>;
 
     /**
-     * \brief Initializes the messenger
-     */
-    void init();
-
-    /**
      * \brief Broadcasts a message to all listeners
      * \param message The message type
      * \param data The message data

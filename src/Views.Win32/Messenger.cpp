@@ -56,10 +56,6 @@ namespace Messenger
         }
     }
 
-    void init()
-    {
-    }
-
     /**
      * Rebuilds the subscriber cache from the current subscriber vector.
      */

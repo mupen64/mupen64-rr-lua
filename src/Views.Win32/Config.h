@@ -468,7 +468,7 @@ extern std::vector<cfg_hotkey*> g_config_hotkeys;
 /**
  * \brief Initializes the config subsystem
  */
-void init_config();
+void config_init();
 
 /**
  * \brief Saves the current config state to the config file
@@ -478,7 +478,7 @@ void save_config();
 /**
  * \brief Restores the config state from the config file
  */
-void load_config();
+void config_load();
 
 
 /**
