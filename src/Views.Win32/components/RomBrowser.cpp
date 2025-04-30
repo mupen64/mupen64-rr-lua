@@ -315,7 +315,7 @@ namespace RomBrowser
     }
 
 
-    void notify(long lparam)
+    LRESULT notify(LPARAM lparam)
     {
         switch (((LPNMHDR)lparam)->code)
         {
@@ -366,7 +366,6 @@ namespace RomBrowser
 
                 break;
             }
-            break;
         case NM_DBLCLK:
             {
                 int32_t i = ListView_GetNextItem(
@@ -389,6 +388,7 @@ namespace RomBrowser
             }
             break;
         }
+        return 0;
     }
 
     std::wstring find_available_rom(const std::function<bool(const core_rom_header&)>& predicate)

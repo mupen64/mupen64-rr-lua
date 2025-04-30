@@ -25,7 +25,7 @@ namespace RomBrowser
      * \brief Notifies the rombrowser of a parent receiving the WM_NOTIFY message
      * \param lparam The lparam value associated with the current message processing pass
      */
-    void notify(long lparam);
+    LRESULT notify(LPARAM lparam);
 
     /**
      * \brief Finds the first rom from the available ROM list which matches the predicate
