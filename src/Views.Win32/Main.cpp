@@ -1073,17 +1073,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_NOTIFY:
         {
-            LPNMHDR l_header = (LPNMHDR)lParam;
-
             if (wParam == IDC_ROMLIST)
             {
-                const auto ret = RomBrowser::notify(lParam);
-                if (ret)
-                {
-                    return ret;
-                }
+                RomBrowser::notify(lParam);
             }
-            break;
+            return 0;
         }
     case WM_MOVE:
         {
