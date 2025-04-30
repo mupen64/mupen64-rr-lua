@@ -6,7 +6,7 @@
 
 #pragma once
 
-namespace Cli
+namespace CLI
 {
     /**
      * \brief Initializes the CLI

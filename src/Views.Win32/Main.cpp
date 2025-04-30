@@ -728,7 +728,7 @@ void on_warp_modify_status_changed(std::any data)
 
 void update_core_fast_forward(std::any)
 {
-    core_vr_set_fast_forward(g_fast_forward || core_vcr_is_seeking() || Cli::wants_fast_forward() || Compare::active());
+    core_vr_set_fast_forward(g_fast_forward || core_vcr_is_seeking() || CLI::wants_fast_forward() || Compare::active());
 }
 
 void on_emu_starting_changed(std::any data)
@@ -2360,7 +2360,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     MGECompositor::init();
     LuaRenderer::init();
     EncodingManager::init();
-    Cli::init();
+    CLI::init();
     Seeker::init();
     CoreDbg::init();
 
