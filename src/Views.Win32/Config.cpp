@@ -722,7 +722,7 @@ std::vector<cfg_hotkey*> collect_hotkeys(const cfg_view* config)
     return vec;
 }
 
-mINI::INIStructure handle_config_ini(bool is_reading, mINI::INIStructure ini)
+static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
 {
 #define HANDLE_P_VALUE(x) handle_config_value(ini, L#x, is_reading, &g_config.x);
 #define HANDLE_VALUE(x) handle_config_value(ini, L#x, is_reading, g_config.x);
@@ -733,7 +733,7 @@ mINI::INIStructure handle_config_ini(bool is_reading, mINI::INIStructure ini)
         g_config = get_default_config();
     }
 
-    for (auto hotkey : g_config_hotkeys)
+    for (auto& hotkey : g_config_hotkeys)
     {
         handle_config_value(ini, hotkey->identifier, is_reading, hotkey);
     }
@@ -826,8 +826,6 @@ mINI::INIStructure handle_config_ini(bool is_reading, mINI::INIStructure ini)
     HANDLE_VALUE(seeker_value)
     HANDLE_P_VALUE(multi_frame_advance_count)
     HANDLE_VALUE(silent_mode_dialog_choices)
-
-    return ini;
 }
 
 std::filesystem::path get_config_path()
@@ -881,7 +879,7 @@ void save_config()
     mINI::INIFile file(get_config_path().string());
     mINI::INIStructure ini;
 
-    ini = handle_config_ini(false, ini);
+    handle_config_ini(false, ini);
 
     file.write(ini, true);
 }
@@ -899,7 +897,7 @@ void config_load()
     mINI::INIStructure ini;
     file.read(ini);
 
-    ini = handle_config_ini(true, ini);
+    handle_config_ini(true, ini);
 
     config_apply_limits();
 
