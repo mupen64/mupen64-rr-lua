@@ -8,7 +8,7 @@
 #include <Config.h>
 #include <Messenger.h>
 #include <Main.h>
-#include <features/Statusbar.h>
+#include <components/Statusbar.h>
 
 struct t_segment {
     std::vector<Statusbar::Section> sections;

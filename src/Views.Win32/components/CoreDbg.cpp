@@ -7,7 +7,7 @@
 #include "stdafx.h"
 #include <Main.h>
 #include <Messenger.h>
-#include <features/CoreDbg.h>
+#include <components/CoreDbg.h>
 
 #define WM_DEBUGGER_CPU_STATE_UPDATED (WM_USER + 20)
 #define WM_DEBUGGER_RESUMED_UPDATED (WM_USER + 21)

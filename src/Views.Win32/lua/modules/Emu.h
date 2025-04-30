@@ -8,7 +8,7 @@
 
 #include <Messenger.h>
 #include <Main.h>
-#include <features/Statusbar.h>
+#include <components/Statusbar.h>
 #include <lua/LuaCallbacks.h>
 
 namespace LuaCore::Emu

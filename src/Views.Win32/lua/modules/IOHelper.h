@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <features/FilePicker.h>
+#include <components/FilePicker.h>
 
 namespace LuaCore::IOHelper
 {

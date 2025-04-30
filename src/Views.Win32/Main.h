@@ -7,7 +7,7 @@
 #pragma once
 
 #include <spdlog/logger.h>
-#include <features/Dispatcher.h>
+#include <components/Dispatcher.h>
 #include <Plugin.h>
 
 #define CURRENT_VERSION L"1.2.0"

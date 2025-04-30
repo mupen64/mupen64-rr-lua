@@ -9,7 +9,7 @@
 #include <Config.h>
 #include <Main.h>
 #include <Messenger.h>
-#include <features/Runner.h>
+#include <components/Runner.h>
 #include <lua/LuaConsole.h>
 
 static int32_t last_selected_id = -1;

@@ -5,19 +5,19 @@
  */
 
 #include "stdafx.h"
-#include <ThreadPool.h>
 #include <Config.h>
 #include <DialogService.h>
+#include <Loggers.h>
+#include <Main.h>
 #include <Messenger.h>
+#include <ThreadPool.h>
 #include <argh.h>
 #include <json.hpp>
 #include <capture/EncodingManager.h>
-#include <Commandline.h>
-#include <Loggers.h>
-#include <Main.h>
-#include <features/Benchmark.h>
-#include <features/Compare.h>
-#include <features/Dispatcher.h>
+#include <components/Benchmark.h>
+#include <components/CLI.h>
+#include <components/Compare.h>
+#include <components/Dispatcher.h>
 #include <lua/LuaConsole.h>
 
 namespace Cli

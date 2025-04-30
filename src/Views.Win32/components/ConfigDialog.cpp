@@ -9,11 +9,11 @@
 #include <DialogService.h>
 #include <Messenger.h>
 #include <Plugin.h>
-#include <SettingsListView.h>
+#include <components/SettingsListView.h>
 #include <capture/EncodingManager.h>
 #include <Main.h>
-#include <features/configdialog.h>
-#include <features/FilePicker.h>
+#include <components/configdialog.h>
+#include <components/FilePicker.h>
 #include <lua/LuaConsole.h>
 
 #define WM_EDIT_END (WM_USER + 19)

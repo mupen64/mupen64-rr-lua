@@ -10,7 +10,7 @@
 
 
 #include <Main.h>
-#include <features/Seeker.h>
+#include <components/Seeker.h>
 
 #define WM_SEEK_COMPLETED (WM_USER + 11)
 

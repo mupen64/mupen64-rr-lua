@@ -9,8 +9,8 @@
 #include <Uxtheme.h>
 #include <Loggers.h>
 #include <Main.h>
-#include <features/RomBrowser.h>
-#include <features/Statusbar.h>
+#include <components/RomBrowser.h>
+#include <components/Statusbar.h>
 #include <ThreadPool.h>
 #include <Messenger.h>
 

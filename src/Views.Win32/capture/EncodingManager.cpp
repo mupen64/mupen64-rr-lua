@@ -15,8 +15,8 @@
 #include <capture/encoders/FFmpegEncoder.h>
 #include <Loggers.h>
 #include <Main.h>
-#include <features/Dispatcher.h>
-#include <features/MGECompositor.h>
+#include <components/Dispatcher.h>
+#include <components/MGECompositor.h>
 #include <lua/LuaRenderer.h>
 #include <lua/LuaConsole.h>
 

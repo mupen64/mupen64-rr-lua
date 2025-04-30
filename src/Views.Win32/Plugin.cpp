@@ -12,8 +12,8 @@
 #include <Plugin.h>
 #include <Loggers.h>
 #include <Main.h>
-#include <features/ConfigDialog.h>
-#include <features/Statusbar.h>
+#include <components/ConfigDialog.h>
+#include <components/Statusbar.h>
 
 #define CALL _cdecl
 

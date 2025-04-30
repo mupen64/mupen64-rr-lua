@@ -6,7 +6,7 @@
 
 #include <stdafx.h>
 #include <Config.h>
-#include <features/FilePicker.h>
+#include <components/FilePicker.h>
 
 #define FAILSAFE(operation) \
     if (FAILED(operation))  \

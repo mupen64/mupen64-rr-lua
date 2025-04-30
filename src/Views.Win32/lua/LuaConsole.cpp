@@ -12,7 +12,7 @@
 #include "LuaRegistry.h"
 #include "Messenger.h"
 #include <Main.h>
-#include <features/FilePicker.h>
+#include <components/FilePicker.h>
 #include <lua/LuaRenderer.h>
 
 constexpr auto LUA_PROP_NAME = L"lua_env";

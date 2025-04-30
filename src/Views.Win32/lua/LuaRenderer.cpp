@@ -1,6 +1,6 @@
 ﻿#include "stdafx.h"
 #include <DialogService.h>
-#include <features/Statusbar.h>
+#include <components/Statusbar.h>
 #include <lua/LuaConsole.h>
 #include <lua/LuaRenderer.h>
 #include <lua/presenters/DCompPresenter.h>

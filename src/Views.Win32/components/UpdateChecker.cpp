@@ -12,7 +12,7 @@
 #include <winhttp.h>
 #include <Loggers.h>
 #include <Main.h>
-#include <features/UpdateChecker.h>
+#include <components/UpdateChecker.h>
 #include <json/json.hpp>
 
 namespace UpdateChecker

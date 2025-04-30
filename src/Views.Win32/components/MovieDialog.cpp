@@ -5,11 +5,11 @@
  */
 
 #include "stdafx.h"
-#include <features/MovieDialog.h>
+#include <components/MovieDialog.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Main.h>
-#include <features/FilePicker.h>
+#include <components/FilePicker.h>
 
 static MovieDialog::t_result user_result{};
 static bool is_readonly{};
