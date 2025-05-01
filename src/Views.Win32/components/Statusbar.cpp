@@ -20,8 +20,8 @@ struct t_segment_layout {
     std::vector<t_segment> idle_parts;
 };
 
-const std::unordered_map<cfg_statusbar_layout, t_segment_layout> LAYOUT_MAP = {
-{LAYOUT_CLASSIC, t_segment_layout{
+const std::unordered_map<t_config::StatusbarLayout, t_segment_layout> LAYOUT_MAP = {
+{t_config::StatusbarLayout::Classic, t_segment_layout{
                  .emu_parts = {
                  t_segment{
                  .sections = {Statusbar::Section::VCR, Statusbar::Section::Notification},
@@ -42,7 +42,7 @@ const std::unordered_map<cfg_statusbar_layout, t_segment_layout> LAYOUT_MAP = {
                  },
                  .idle_parts = {},
                  }},
-{LAYOUT_MODERN, t_segment_layout{
+{t_config::StatusbarLayout::Modern, t_segment_layout{
                 .emu_parts = {
                 t_segment{
                 .sections = {Statusbar::Section::Notification, Statusbar::Section::Readonly},
@@ -79,7 +79,7 @@ const std::unordered_map<cfg_statusbar_layout, t_segment_layout> LAYOUT_MAP = {
                 },
                 .idle_parts = {},
                 }},
-{LAYOUT_MODERN_WITH_READONLY, t_segment_layout{
+{t_config::StatusbarLayout::ModernWithReadOnly, t_segment_layout{
                               .emu_parts = {
                               t_segment{
                               .sections = {Statusbar::Section::Notification},
@@ -126,7 +126,7 @@ static HWND statusbar_hwnd;
 
 static std::vector<t_segment> get_current_parts()
 {
-    const t_segment_layout layout = LAYOUT_MAP.at(static_cast<cfg_statusbar_layout>(g_config.statusbar_layout));
+    const t_segment_layout layout = LAYOUT_MAP.at(static_cast<t_config::StatusbarLayout>(g_config.statusbar_layout));
     return (core_vr_get_launched()) ? layout.emu_parts : layout.idle_parts;
 }
 

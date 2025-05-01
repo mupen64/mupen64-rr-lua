@@ -52,7 +52,7 @@ namespace EncodingManager
      * \param callback The callback that will be invoked when the operation completes. Can be null.
      * \remarks This function must be called from a thread that isn't directly or indirectly interlocked with the emulator thread. Emulation will be paused until the operation completes.
      */
-    void start_capture(std::filesystem::path path, cfg_encoder_type encoder_type, bool ask_for_encoding_settings = true, const std::function<void(bool)>& callback = nullptr);
+    void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, bool ask_for_encoding_settings = true, const std::function<void(bool)>& callback = nullptr);
 
     /**
      * \brief Stops capturing a video.

@@ -17,7 +17,7 @@ namespace LuaCore::Avi
         if (!EncodingManager::is_capturing())
         {
             // FIXME: Lua side has no callback to check the operation status
-            EncodingManager::start_capture(fname, (cfg_encoder_type)g_config.encoder_type, false);
+            EncodingManager::start_capture(fname, (t_config::EncoderType)g_config.encoder_type, false);
         }
         else
             luaL_error(

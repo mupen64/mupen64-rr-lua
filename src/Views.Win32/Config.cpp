@@ -6,14 +6,13 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <DialogService.h>
 #include <Messenger.h>
-
 #include <ini.h>
-#include <Loggers.h>
 
-cfg_view g_config;
-std::vector<cfg_hotkey*> g_config_hotkeys;
+static t_config get_default_config();
+
+t_config g_config;
+std::vector<t_hotkey*> g_config_hotkeys;
 
 #ifdef _M_X64
 #define CONFIG_FILE_NAME L"config-x64.ini"
@@ -46,9 +45,11 @@ const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
 {VIEW_DLG_RAMSTART, 0},
 };
 
-cfg_view get_default_config()
+const t_config g_default_config = get_default_config();
+
+static t_config get_default_config()
 {
-    cfg_view config = {};
+    t_config config = {};
 
     config.fast_forward_hotkey = {
     .identifier = L"Fast-forward",
@@ -521,8 +522,6 @@ cfg_view get_default_config()
     return config;
 }
 
-const cfg_view g_default_config = get_default_config();
-
 static std::string process_field_name(const std::wstring& field_name)
 {
     std::string str = wstring_to_string(field_name);
@@ -537,7 +536,7 @@ static std::string process_field_name(const std::wstring& field_name)
     return str;
 }
 
-void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, int32_t is_reading, cfg_hotkey* hotkey)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, int32_t is_reading, t_hotkey* hotkey)
 {
     const auto key = process_field_name(field_name);
 
@@ -562,7 +561,7 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     }
 }
 
-void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, int32_t* value)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, int32_t* value)
 {
     const auto key = process_field_name(field_name);
 
@@ -582,7 +581,7 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     }
 }
 
-void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, uint64_t* value)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, uint64_t* value)
 {
     const auto key = process_field_name(field_name);
 
@@ -602,7 +601,7 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     }
 }
 
-void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::wstring& value)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::wstring& value)
 {
     const auto key = process_field_name(field_name);
 
@@ -624,7 +623,7 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     }
 }
 
-void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::vector<std::wstring>& value)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::vector<std::wstring>& value)
 {
     const auto key = process_field_name(field_name);
 
@@ -655,7 +654,7 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     }
 }
 
-void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::map<std::wstring, std::wstring>& value)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::map<std::wstring, std::wstring>& value)
 {
     const auto key = process_field_name(field_name);
 
@@ -684,7 +683,7 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     }
 }
 
-void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::vector<int32_t>& value)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::vector<int32_t>& value)
 {
     std::vector<std::wstring> string_values;
     for (const auto int_value : value)
@@ -703,19 +702,19 @@ void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name
     }
 }
 
-const auto first_offset = offsetof(cfg_view, fast_forward_hotkey);
-const auto last_offset = offsetof(cfg_view, select_slot_10_hotkey);
+const auto first_offset = offsetof(t_config, fast_forward_hotkey);
+const auto last_offset = offsetof(t_config, select_slot_10_hotkey);
 
-std::vector<cfg_hotkey*> collect_hotkeys(const cfg_view* config)
+static std::vector<t_hotkey*> collect_hotkeys(const t_config* config)
 {
     // NOTE:
     // last_offset should contain the offset of the last hotkey
     // this also requires that the hotkeys are laid out contiguously, or else the pointer arithmetic fails
     // i recommend inserting your new hotkeys before the savestate hotkeys... pretty please
-    std::vector<cfg_hotkey*> vec;
-    for (size_t i = 0; i < ((last_offset - first_offset) / sizeof(cfg_hotkey)) + 1; i++)
+    std::vector<t_hotkey*> vec;
+    for (size_t i = 0; i < ((last_offset - first_offset) / sizeof(t_hotkey)) + 1; i++)
     {
-        auto hotkey = &(((cfg_hotkey*)config)[i]);
+        auto hotkey = &(((t_hotkey*)config)[i]);
         vec.push_back(hotkey);
     }
 
@@ -828,51 +827,229 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
     HANDLE_VALUE(silent_mode_dialog_choices)
 }
 
-std::filesystem::path get_config_path()
+static std::filesystem::path get_config_path()
 {
     return g_app_path / CONFIG_FILE_NAME;
 }
 
-/// Modifies the config to apply value limits and other constraints
-void config_apply_limits()
+/**
+ * \brief Modifies the config to apply value limits and other constraints.
+ */
+static void config_patch(t_config& cfg)
 {
     // handle edge case: closing while minimized produces bogus values for position
-    if (g_config.window_x < -10'000 || g_config.window_y < -10'000)
+    if (cfg.window_x < -10'000 || cfg.window_y < -10'000)
     {
-        g_config.window_x = g_default_config.window_x;
-        g_config.window_y = g_default_config.window_y;
-        g_config.window_width = g_default_config.window_width;
-        g_config.window_height = g_default_config.window_height;
+        cfg.window_x = g_default_config.window_x;
+        cfg.window_y = g_default_config.window_y;
+        cfg.window_width = g_default_config.window_width;
+        cfg.window_height = g_default_config.window_height;
     }
 
-    if (g_config.rombrowser_column_widths.size() < 4)
+    if (cfg.rombrowser_column_widths.size() < 4)
     {
         // something's malformed, fuck off and use default values
-        g_config.rombrowser_column_widths = g_default_config.rombrowser_column_widths;
+        cfg.rombrowser_column_widths = g_default_config.rombrowser_column_widths;
     }
 
     // Causes too many issues
-    if (g_config.core.seek_savestate_interval == 1)
+    if (cfg.core.seek_savestate_interval == 1)
     {
-        g_config.core.seek_savestate_interval = 2;
+        cfg.core.seek_savestate_interval = 2;
     }
 
-    g_config.settings_tab = std::min(std::max(g_config.settings_tab, 0), 2);
+    cfg.settings_tab = std::min(std::max(cfg.settings_tab, 0), 2);
 
     for (const auto& pair : DIALOG_SILENT_MODE_CHOICES)
     {
         const auto key = string_to_wstring(pair.first);
-        if (!g_config.silent_mode_dialog_choices.contains(key))
+        if (!cfg.silent_mode_dialog_choices.contains(key))
         {
-            g_config.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
+            cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
         }
     }
 }
 
-void save_config()
+
+std::wstring t_hotkey::to_wstring()
+{
+    wchar_t buf[260]{};
+    const int k = this->key;
+
+    if (!this->ctrl && !this->shift && !this->alt && !this->key)
+    {
+        return L"(nothing)";
+    }
+
+    if (this->ctrl)
+        StrCat(buf, L"Ctrl ");
+    if (this->shift)
+        StrCat(buf, L"Shift ");
+    if (this->alt)
+        StrCat(buf, L"Alt ");
+    if (k)
+    {
+        wchar_t buf2[64]{};
+        if ((k >= 0x30 && k <= 0x39) || (k >= 0x41 && k <= 0x5A))
+            wsprintf(buf2, L"%c", static_cast<char>(k));
+        else if (k >= VK_F1 && k <= VK_F24)
+            wsprintf(buf2, L"F%d", k - (VK_F1 - 1));
+        else if (k >= VK_NUMPAD0 && k <= VK_NUMPAD9)
+            wsprintf(buf2, L"Num%d", k - VK_NUMPAD0);
+        else
+            switch (k)
+            {
+            case VK_LBUTTON:
+                StrCpy(buf2, L"LMB");
+                break;
+            case VK_RBUTTON:
+                StrCpy(buf2, L"RMB");
+                break;
+            case VK_MBUTTON:
+                StrCpy(buf2, L"MMB");
+                break;
+            case VK_XBUTTON1:
+                StrCpy(buf2, L"XMB1");
+                break;
+            case VK_XBUTTON2:
+                StrCpy(buf2, L"XMB2");
+                break;
+            case VK_SPACE:
+                StrCpy(buf2, L"Space");
+                break;
+            case VK_BACK:
+                StrCpy(buf2, L"Backspace");
+                break;
+            case VK_TAB:
+                StrCpy(buf2, L"Tab");
+                break;
+            case VK_CLEAR:
+                StrCpy(buf2, L"Clear");
+                break;
+            case VK_RETURN:
+                StrCpy(buf2, L"Enter");
+                break;
+            case VK_PAUSE:
+                StrCpy(buf2, L"Pause");
+                break;
+            case VK_CAPITAL:
+                StrCpy(buf2, L"Caps");
+                break;
+            case VK_PRIOR:
+                StrCpy(buf2, L"PageUp");
+                break;
+            case VK_NEXT:
+                StrCpy(buf2, L"PageDn");
+                break;
+            case VK_END:
+                StrCpy(buf2, L"End");
+                break;
+            case VK_HOME:
+                StrCpy(buf2, L"Home");
+                break;
+            case VK_LEFT:
+                StrCpy(buf2, L"Left");
+                break;
+            case VK_UP:
+                StrCpy(buf2, L"Up");
+                break;
+            case VK_RIGHT:
+                StrCpy(buf2, L"Right");
+                break;
+            case VK_DOWN:
+                StrCpy(buf2, L"Down");
+                break;
+            case VK_SELECT:
+                StrCpy(buf2, L"Select");
+                break;
+            case VK_PRINT:
+                StrCpy(buf2, L"Print");
+                break;
+            case VK_SNAPSHOT:
+                StrCpy(buf2, L"PrintScrn");
+                break;
+            case VK_INSERT:
+                StrCpy(buf2, L"Insert");
+                break;
+            case VK_DELETE:
+                StrCpy(buf2, L"Delete");
+                break;
+            case VK_HELP:
+                StrCpy(buf2, L"Help");
+                break;
+            case VK_MULTIPLY:
+                StrCpy(buf2, L"Num*");
+                break;
+            case VK_ADD:
+                StrCpy(buf2, L"Num+");
+                break;
+            case VK_SUBTRACT:
+                StrCpy(buf2, L"Num-");
+                break;
+            case VK_DECIMAL:
+                StrCpy(buf2, L"Num.");
+                break;
+            case VK_DIVIDE:
+                StrCpy(buf2, L"Num/");
+                break;
+            case VK_NUMLOCK:
+                StrCpy(buf2, L"NumLock");
+                break;
+            case VK_SCROLL:
+                StrCpy(buf2, L"ScrollLock");
+                break;
+            case /*VK_OEM_PLUS*/ 0xBB:
+                StrCpy(buf2, L"=+");
+                break;
+            case /*VK_OEM_MINUS*/ 0xBD:
+                StrCpy(buf2, L"-_");
+                break;
+            case /*VK_OEM_COMMA*/ 0xBC:
+                StrCpy(buf2, L",");
+                break;
+            case /*VK_OEM_PERIOD*/ 0xBE:
+                StrCpy(buf2, L".");
+                break;
+            case VK_OEM_7:
+                StrCpy(buf2, L"'\"");
+                break;
+            case VK_OEM_6:
+                StrCpy(buf2, L"]}");
+                break;
+            case VK_OEM_5:
+                StrCpy(buf2, L"\\|");
+                break;
+            case VK_OEM_4:
+                StrCpy(buf2, L"[{");
+                break;
+            case VK_OEM_3:
+                StrCpy(buf2, L"`~");
+                break;
+            case VK_OEM_2:
+                StrCpy(buf2, L"/?");
+                break;
+            case VK_OEM_1:
+                StrCpy(buf2, L";:");
+                break;
+            default:
+                wsprintf(buf2, L"(%d)", k);
+                break;
+            }
+        StrCat(buf, buf2);
+    }
+    return buf;
+}
+
+void Config::init()
+{
+    g_config_hotkeys = collect_hotkeys(&g_config);
+}
+
+void Config::save()
 {
     Messenger::broadcast(Messenger::Message::ConfigSaving, nullptr);
-    config_apply_limits();
+
+    config_patch(g_config);
 
     std::remove(get_config_path().string().c_str());
 
@@ -884,13 +1061,13 @@ void save_config()
     file.write(ini, true);
 }
 
-void config_load()
+void Config::load()
 {
     if (!std::filesystem::exists(get_config_path()))
     {
         g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
         g_config = get_default_config();
-        save_config();
+        save();
     }
 
     mINI::INIFile file(get_config_path().string());
@@ -899,12 +1076,7 @@ void config_load()
 
     handle_config_ini(true, ini);
 
-    config_apply_limits();
+    config_patch(g_config);
 
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
-}
-
-void config_init()
-{
-    g_config_hotkeys = collect_hotkeys(&g_config);
 }

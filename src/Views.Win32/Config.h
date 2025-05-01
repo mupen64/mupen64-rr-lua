@@ -8,37 +8,7 @@
 
 #include <core_types.h>
 
-typedef enum {
-    PRESENTER_DCOMP,
-    PRESENTER_GDI
-} cfg_presenter_type;
-
-typedef enum {
-    ENCODER_VFW,
-    ENCODER_FFMPEG
-} cfg_encoder_type;
-
-/**
- * \brief The statusbar layout preset.
- */
-typedef enum {
-    /**
-     * The legacy layout.
-     */
-    LAYOUT_CLASSIC,
-
-    /**
-     * The new layout containing additional information.
-     */
-    LAYOUT_MODERN,
-
-    /**
-     * The new layout, but with a section for read-only status.
-     */
-    LAYOUT_MODERN_WITH_READONLY,
-} cfg_statusbar_layout;
-
-typedef struct Hotkey {
+struct t_hotkey {
     std::wstring identifier;
     int32_t key;
     int32_t ctrl;
@@ -46,80 +16,100 @@ typedef struct Hotkey {
     int32_t alt;
     int32_t down_cmd;
     int32_t up_cmd;
-} cfg_hotkey;
+    /**
+     * \brief Gets the wstring representation of the hotkey.
+     */
+    std::wstring to_wstring();
+};
 
-#pragma pack(push, 1)
-typedef struct ViewCfg {
+struct t_config {
+
+    enum class PresenterType {
+        DirectComposition,
+        GDI
+    };
+
+    enum class EncoderType {
+        VFW,
+        FFmpeg
+    };
+
+    enum class StatusbarLayout {
+        Classic,
+        Modern,
+        ModernWithReadOnly
+    };
+
 #pragma region Hotkeys
-    cfg_hotkey fast_forward_hotkey;
-    cfg_hotkey gs_hotkey;
-    cfg_hotkey speed_down_hotkey;
-    cfg_hotkey speed_up_hotkey;
-    cfg_hotkey speed_reset_hotkey;
-    cfg_hotkey frame_advance_hotkey;
-    cfg_hotkey multi_frame_advance_hotkey;
-    cfg_hotkey multi_frame_advance_inc_hotkey;
-    cfg_hotkey multi_frame_advance_dec_hotkey;
-    cfg_hotkey multi_frame_advance_reset_hotkey;
-    cfg_hotkey pause_hotkey;
-    cfg_hotkey toggle_read_only_hotkey;
-    cfg_hotkey toggle_movie_loop_hotkey;
-    cfg_hotkey start_movie_playback_hotkey;
-    cfg_hotkey start_movie_recording_hotkey;
-    cfg_hotkey stop_movie_hotkey;
-    cfg_hotkey create_movie_backup_hotkey;
-    cfg_hotkey take_screenshot_hotkey;
-    cfg_hotkey play_latest_movie_hotkey;
-    cfg_hotkey load_latest_script_hotkey;
-    cfg_hotkey new_lua_hotkey;
-    cfg_hotkey close_all_lua_hotkey;
-    cfg_hotkey load_rom_hotkey;
-    cfg_hotkey close_rom_hotkey;
-    cfg_hotkey reset_rom_hotkey;
-    cfg_hotkey load_latest_rom_hotkey;
-    cfg_hotkey fullscreen_hotkey;
-    cfg_hotkey settings_hotkey;
-    cfg_hotkey toggle_statusbar_hotkey;
-    cfg_hotkey refresh_rombrowser_hotkey;
-    cfg_hotkey seek_to_frame_hotkey;
-    cfg_hotkey run_hotkey;
-    cfg_hotkey piano_roll_hotkey;
-    cfg_hotkey cheats_hotkey;
-    cfg_hotkey save_current_hotkey;
-    cfg_hotkey load_current_hotkey;
-    cfg_hotkey save_as_hotkey;
-    cfg_hotkey load_as_hotkey;
-    cfg_hotkey undo_load_state_hotkey;
-    cfg_hotkey save_to_slot_1_hotkey;
-    cfg_hotkey save_to_slot_2_hotkey;
-    cfg_hotkey save_to_slot_3_hotkey;
-    cfg_hotkey save_to_slot_4_hotkey;
-    cfg_hotkey save_to_slot_5_hotkey;
-    cfg_hotkey save_to_slot_6_hotkey;
-    cfg_hotkey save_to_slot_7_hotkey;
-    cfg_hotkey save_to_slot_8_hotkey;
-    cfg_hotkey save_to_slot_9_hotkey;
-    cfg_hotkey save_to_slot_10_hotkey;
-    cfg_hotkey load_from_slot_1_hotkey;
-    cfg_hotkey load_from_slot_2_hotkey;
-    cfg_hotkey load_from_slot_3_hotkey;
-    cfg_hotkey load_from_slot_4_hotkey;
-    cfg_hotkey load_from_slot_5_hotkey;
-    cfg_hotkey load_from_slot_6_hotkey;
-    cfg_hotkey load_from_slot_7_hotkey;
-    cfg_hotkey load_from_slot_8_hotkey;
-    cfg_hotkey load_from_slot_9_hotkey;
-    cfg_hotkey load_from_slot_10_hotkey;
-    cfg_hotkey select_slot_1_hotkey;
-    cfg_hotkey select_slot_2_hotkey;
-    cfg_hotkey select_slot_3_hotkey;
-    cfg_hotkey select_slot_4_hotkey;
-    cfg_hotkey select_slot_5_hotkey;
-    cfg_hotkey select_slot_6_hotkey;
-    cfg_hotkey select_slot_7_hotkey;
-    cfg_hotkey select_slot_8_hotkey;
-    cfg_hotkey select_slot_9_hotkey;
-    cfg_hotkey select_slot_10_hotkey;
+    t_hotkey fast_forward_hotkey;
+    t_hotkey gs_hotkey;
+    t_hotkey speed_down_hotkey;
+    t_hotkey speed_up_hotkey;
+    t_hotkey speed_reset_hotkey;
+    t_hotkey frame_advance_hotkey;
+    t_hotkey multi_frame_advance_hotkey;
+    t_hotkey multi_frame_advance_inc_hotkey;
+    t_hotkey multi_frame_advance_dec_hotkey;
+    t_hotkey multi_frame_advance_reset_hotkey;
+    t_hotkey pause_hotkey;
+    t_hotkey toggle_read_only_hotkey;
+    t_hotkey toggle_movie_loop_hotkey;
+    t_hotkey start_movie_playback_hotkey;
+    t_hotkey start_movie_recording_hotkey;
+    t_hotkey stop_movie_hotkey;
+    t_hotkey create_movie_backup_hotkey;
+    t_hotkey take_screenshot_hotkey;
+    t_hotkey play_latest_movie_hotkey;
+    t_hotkey load_latest_script_hotkey;
+    t_hotkey new_lua_hotkey;
+    t_hotkey close_all_lua_hotkey;
+    t_hotkey load_rom_hotkey;
+    t_hotkey close_rom_hotkey;
+    t_hotkey reset_rom_hotkey;
+    t_hotkey load_latest_rom_hotkey;
+    t_hotkey fullscreen_hotkey;
+    t_hotkey settings_hotkey;
+    t_hotkey toggle_statusbar_hotkey;
+    t_hotkey refresh_rombrowser_hotkey;
+    t_hotkey seek_to_frame_hotkey;
+    t_hotkey run_hotkey;
+    t_hotkey piano_roll_hotkey;
+    t_hotkey cheats_hotkey;
+    t_hotkey save_current_hotkey;
+    t_hotkey load_current_hotkey;
+    t_hotkey save_as_hotkey;
+    t_hotkey load_as_hotkey;
+    t_hotkey undo_load_state_hotkey;
+    t_hotkey save_to_slot_1_hotkey;
+    t_hotkey save_to_slot_2_hotkey;
+    t_hotkey save_to_slot_3_hotkey;
+    t_hotkey save_to_slot_4_hotkey;
+    t_hotkey save_to_slot_5_hotkey;
+    t_hotkey save_to_slot_6_hotkey;
+    t_hotkey save_to_slot_7_hotkey;
+    t_hotkey save_to_slot_8_hotkey;
+    t_hotkey save_to_slot_9_hotkey;
+    t_hotkey save_to_slot_10_hotkey;
+    t_hotkey load_from_slot_1_hotkey;
+    t_hotkey load_from_slot_2_hotkey;
+    t_hotkey load_from_slot_3_hotkey;
+    t_hotkey load_from_slot_4_hotkey;
+    t_hotkey load_from_slot_5_hotkey;
+    t_hotkey load_from_slot_6_hotkey;
+    t_hotkey load_from_slot_7_hotkey;
+    t_hotkey load_from_slot_8_hotkey;
+    t_hotkey load_from_slot_9_hotkey;
+    t_hotkey load_from_slot_10_hotkey;
+    t_hotkey select_slot_1_hotkey;
+    t_hotkey select_slot_2_hotkey;
+    t_hotkey select_slot_3_hotkey;
+    t_hotkey select_slot_4_hotkey;
+    t_hotkey select_slot_5_hotkey;
+    t_hotkey select_slot_6_hotkey;
+    t_hotkey select_slot_7_hotkey;
+    t_hotkey select_slot_8_hotkey;
+    t_hotkey select_slot_9_hotkey;
+    t_hotkey select_slot_10_hotkey;
 
 #pragma endregion
 
@@ -163,7 +153,7 @@ typedef struct ViewCfg {
     /// <summary>
     /// The statusbar layout.
     /// </summary>
-    int32_t statusbar_layout = LAYOUT_MODERN;
+    int32_t statusbar_layout = (int32_t)StatusbarLayout::Modern;
 
     /// <summary>
     /// Whether plugins discovery is performed asynchronously. Removes potential waiting times in the config dialog.
@@ -258,7 +248,7 @@ typedef struct ViewCfg {
     /// <summary>
     /// The presenter to use for Lua scripts
     /// </summary>
-    int32_t presenter_type = PRESENTER_DCOMP;
+    int32_t presenter_type = (int32_t)PresenterType::DirectComposition;
 
     /// <summary>
     /// Enables lazy Lua renderer initialization. Greatly speeds up start and stop times for certain scripts.
@@ -268,7 +258,7 @@ typedef struct ViewCfg {
     /// <summary>
     /// The encoder to use for capturing.
     /// </summary>
-    int32_t encoder_type = ENCODER_VFW;
+    int32_t encoder_type = (int32_t)EncoderType::VFW;
 
     /// <summary>
     /// The delay (in milliseconds) before capturing the window
@@ -303,7 +293,7 @@ typedef struct ViewCfg {
     /// When enabled, mupen won't change the working directory to its current path at startup
     /// </summary>
     int32_t keep_default_working_directory;
-    
+
     /// <summary>
     /// Whether a low-latency dispatcher implementation is used. Greatly improves performance when Lua scripts are running. Disable if you DirectInput-based plugins aren't working as expected.
     /// </summary>
@@ -458,32 +448,26 @@ typedef struct ViewCfg {
     /// A map of dialog IDs to their default choices for silent mode.
     /// </summary>
     std::map<std::wstring, std::wstring> silent_mode_dialog_choices;
-} cfg_view;
-#pragma pack(pop)
+};
 
-extern cfg_view g_config;
-extern const cfg_view g_default_config;
-extern std::vector<cfg_hotkey*> g_config_hotkeys;
+extern t_config g_config;
+extern const t_config g_default_config;
+extern std::vector<t_hotkey*> g_config_hotkeys;
 
-/**
- * \brief Initializes the config subsystem
- */
-void config_init();
+namespace Config
+{
+    /**
+     * \brief Initializes the subsystem.
+     */
+    void init();
 
-/**
- * \brief Saves the current config state to the config file
- */
-void save_config();
+    /**
+     * \brief Saves the current config state to the config file.
+     */
+    void save();
 
-/**
- * \brief Restores the config state from the config file
- */
-void config_load();
-
-
-/**
- * \brief Gets the string representation of a hotkey
- * \param hotkey The hotkey to convert
- * \return The hotkey as a string
- */
-std::wstring hotkey_to_string(const cfg_hotkey* hotkey);
+    /**
+     * \brief Restores the config state from the config file.
+     */
+    void load();
+} // namespace Config

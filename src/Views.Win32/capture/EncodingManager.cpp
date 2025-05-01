@@ -13,7 +13,6 @@
 #include <capture/encoders/AVIEncoder.h>
 #include <capture/encoders/Encoder.h>
 #include <capture/encoders/FFmpegEncoder.h>
-#include <Loggers.h>
 #include <Main.h>
 #include <components/Dispatcher.h>
 #include <components/MGECompositor.h>
@@ -37,7 +36,7 @@ namespace EncodingManager
     int32_t m_video_height;
 
     std::atomic m_capturing = false;
-    cfg_encoder_type m_encoder_type;
+    t_config::EncoderType m_encoder_type;
     std::unique_ptr<Encoder> m_encoder;
     std::recursive_mutex m_mutex;
 
@@ -313,7 +312,7 @@ namespace EncodingManager
         return true;
     }
 
-    bool start_capture_impl(std::filesystem::path path, cfg_encoder_type encoder_type, const bool ask_for_encoding_settings)
+    bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_encoding_settings)
     {
         std::lock_guard lock(m_mutex);
 
@@ -330,10 +329,10 @@ namespace EncodingManager
 
         switch (encoder_type)
         {
-        case ENCODER_VFW:
+        case t_config::EncoderType::VFW:
             m_encoder = std::make_unique<AVIEncoder>();
             break;
-        case ENCODER_FFMPEG:
+        case t_config::EncoderType::FFmpeg:
             m_encoder = std::make_unique<FFmpegEncoder>();
             break;
         default:
@@ -343,7 +342,7 @@ namespace EncodingManager
         m_encoder_type = encoder_type;
         m_current_path = path;
 
-        if (encoder_type == ENCODER_FFMPEG)
+        if (encoder_type == t_config::EncoderType::FFmpeg)
         {
             m_current_path.replace_extension(".mp4");
         }
@@ -379,7 +378,7 @@ namespace EncodingManager
         return true;
     }
 
-    void start_capture(std::filesystem::path path, cfg_encoder_type encoder_type, const bool ask_for_encoding_settings, const std::function<void(bool)>& callback)
+    void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_encoding_settings, const std::function<void(bool)>& callback)
     {
         core_vr_wait_increment();
         ThreadPool::submit_task([=] {

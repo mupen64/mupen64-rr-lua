@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <DialogService.h>
-#include <Loggers.h>
 #include <Main.h>
 #include <Messenger.h>
 #include <ThreadPool.h>
@@ -120,7 +119,7 @@ static void start_capture()
         return;
     }
 
-    EncodingManager::start_capture(cli_params.avi.string().c_str(), static_cast<cfg_encoder_type>(g_config.encoder_type), false);
+    EncodingManager::start_capture(cli_params.avi.string().c_str(), static_cast<t_config::EncoderType>(g_config.encoder_type), false);
 }
 
 static void on_movie_playback_stop()

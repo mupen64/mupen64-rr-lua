@@ -8,7 +8,6 @@
 #include <components/CLI.h>
 #include <Config.h>
 #include <DialogService.h>
-#include <Loggers.h>
 #include <Main.h>
 #include <Messenger.h>
 #include <Plugin.h>
@@ -309,15 +308,15 @@ void set_menu_accelerator(int element_id, const wchar_t* acc)
     ModifyMenu(GetMenu(g_main_hwnd), element_id, MF_BYCOMMAND | MF_STRING, element_id, string);
 }
 
-void set_hotkey_menu_accelerators(cfg_hotkey* hotkey, int menu_item_id)
+void set_hotkey_menu_accelerators(t_hotkey* hotkey, int menu_item_id)
 {
-    const auto hotkey_str = hotkey_to_string(hotkey);
+    const auto hotkey_str = hotkey->to_wstring();
     set_menu_accelerator(menu_item_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
 }
 
-void SetDlgItemHotkeyAndMenu(HWND hwnd, int idc, cfg_hotkey* hotkey, int menuItemID)
+void SetDlgItemHotkeyAndMenu(HWND hwnd, int idc, t_hotkey* hotkey, int menuItemID)
 {
-    const auto hotkey_str = hotkey_to_string(hotkey);
+    const auto hotkey_str = hotkey->to_wstring();
     SetDlgItemText(hwnd, idc, hotkey_str.c_str());
 
     set_menu_accelerator(menuItemID,
@@ -955,7 +954,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
 
             BOOL hit = FALSE;
-            for (cfg_hotkey* hotkey : g_config_hotkeys)
+            for (t_hotkey* hotkey : g_config_hotkeys)
             {
                 const auto down =
                 (lmb && !last_lmb && hotkey->key == VK_LBUTTON) || (rmb && !last_rmb && hotkey->key == VK_RBUTTON) || (mmb && !last_mmb && hotkey->key == VK_MBUTTON) || (xmb1 && !last_xmb1 && hotkey->key == VK_XBUTTON1) || (xmb2 && !last_xmb2 && hotkey->key == VK_XBUTTON2);
@@ -1004,7 +1003,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYDOWN:
         {
             BOOL hit = FALSE;
-            for (cfg_hotkey* hotkey : g_config_hotkeys)
+            for (t_hotkey* hotkey : g_config_hotkeys)
             {
                 if ((int)wParam == hotkey->key)
                 {
@@ -1034,7 +1033,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_KEYUP:
         {
             BOOL hit = FALSE;
-            for (cfg_hotkey* hotkey : g_config_hotkeys)
+            for (t_hotkey* hotkey : g_config_hotkeys)
             {
                 if (hotkey->up_cmd == 0)
                 {
@@ -1147,7 +1146,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         ConfigDialog::init();
         return TRUE;
     case WM_DESTROY:
-        save_config();
+        Config::save();
         timeKillEvent(g_ui_timer);
         Gdiplus::GdiplusShutdown(gdi_plus_token);
         g_exit = true;
@@ -1779,7 +1778,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     bool ask_preset = LOWORD(wParam) == IDM_START_CAPTURE;
 
-                    EncodingManager::start_capture(path, (cfg_encoder_type)g_config.encoder_type, ask_preset, [](const auto result) {
+                    EncodingManager::start_capture(path, (t_config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
                         if (result)
                         {
                             Statusbar::post(L"Capture started...");
@@ -2333,8 +2332,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_app_path = get_app_full_path();
     set_cwd();
 
-    config_init();
-    config_load();
+    Config::init();
+    Config::load();
     main_dispatcher_init();
 
     const auto core_result = init_core();

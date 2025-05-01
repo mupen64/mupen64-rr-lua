@@ -292,7 +292,7 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context* ctx)
 
     DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(ctx->dw_factory), reinterpret_cast<IUnknown**>(&ctx->dw_factory));
 
-    if (g_config.presenter_type != static_cast<int32_t>(PRESENTER_GDI))
+    if (g_config.presenter_type != (int32_t)t_config::PresenterType::GDI)
     {
         ctx->presenter = new DCompPresenter();
     }

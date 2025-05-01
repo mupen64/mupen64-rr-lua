@@ -114,8 +114,8 @@ typedef struct OptionsItem {
 
         if (type == Type::Hotkey)
         {
-            auto hotkey_ptr = reinterpret_cast<cfg_hotkey*>(data);
-            return hotkey_to_string(hotkey_ptr);
+            const auto hotkey_ptr = reinterpret_cast<t_hotkey*>(data);
+            return hotkey_ptr->to_wstring();
         }
 
         for (auto [name, val] : possible_values)
@@ -132,7 +132,7 @@ typedef struct OptionsItem {
     /**
      * Gets the option's default value from another config struct.
      */
-    void* get_default_value_ptr(const cfg_view* config) const
+    void* get_default_value_ptr(const t_config* config) const
     {
         // Find the field offset for the option relative to g_config and grab the equivalent from the default config
         size_t field_offset;
@@ -166,8 +166,8 @@ typedef struct OptionsItem {
         }
         else if (type == Type::Hotkey)
         {
-            auto default_hotkey = (cfg_hotkey*)default_equivalent;
-            auto current_hotkey = (cfg_hotkey*)data;
+            auto default_hotkey = (t_hotkey*)default_equivalent;
+            auto current_hotkey = (t_hotkey*)data;
             current_hotkey->key = default_hotkey->key;
             current_hotkey->ctrl = default_hotkey->ctrl;
             current_hotkey->alt = default_hotkey->alt;
@@ -187,7 +187,7 @@ std::vector<t_options_item> g_option_items;
 HWND g_lv_hwnd;
 HWND g_edit_hwnd;
 size_t g_edit_option_item_index;
-cfg_view g_prev_config;
+t_config g_prev_config;
 
 // Index of the hotkey currently being entered, if any
 std::optional<size_t> g_hotkey_active_index;
@@ -203,7 +203,7 @@ bool g_plugin_discovery_rescan = false;
 /// <returns>
 /// Whether a hotkey has successfully been picked
 /// </returns>
-int32_t get_user_hotkey(cfg_hotkey* hotkey)
+int32_t get_user_hotkey(t_hotkey* hotkey)
 {
     MSG msg;
     int i, j;
@@ -1045,9 +1045,9 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.statusbar_layout,
     .type = t_options_item::Type::Enum,
     .possible_values = {
-    std::make_pair(L"Classic", (int32_t)LAYOUT_CLASSIC),
-    std::make_pair(L"Modern", (int32_t)LAYOUT_MODERN),
-    std::make_pair(L"Modern+", (int32_t)LAYOUT_MODERN_WITH_READONLY),
+    std::make_pair(L"Classic", (int32_t)t_config::StatusbarLayout::Classic),
+    std::make_pair(L"Modern", (int32_t)t_config::StatusbarLayout::Modern),
+    std::make_pair(L"Modern+", (int32_t)t_config::StatusbarLayout::ModernWithReadOnly),
     },
     },
     t_options_item{
@@ -1132,8 +1132,8 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.encoder_type,
     .type = t_options_item::Type::Enum,
     .possible_values = {
-    std::make_pair(L"VFW", (int32_t)ENCODER_VFW),
-    std::make_pair(L"FFmpeg (experimental)", (int32_t)ENCODER_FFMPEG),
+    std::make_pair(L"VFW", (int32_t)t_config::EncoderType::VFW),
+    std::make_pair(L"FFmpeg (experimental)", (int32_t)t_config::EncoderType::FFmpeg),
     },
     .is_readonly = [] {
         return EncodingManager::is_capturing();
@@ -1306,8 +1306,8 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.presenter_type,
     .type = t_options_item::Type::Enum,
     .possible_values = {
-    std::make_pair(L"DirectComposition", (int32_t)PRESENTER_DCOMP),
-    std::make_pair(L"GDI", (int32_t)PRESENTER_GDI),
+    std::make_pair(L"DirectComposition", (int32_t)t_config::PresenterType::DirectComposition),
+    std::make_pair(L"GDI", (int32_t)t_config::PresenterType::GDI),
     },
     .is_readonly = [] {
         return !g_lua_environments.empty();
@@ -1480,7 +1480,7 @@ void advance_listview_selection(HWND lvhwnd)
 /**
  * Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
  */
-static void handle_hotkey_conflict(const HWND hwnd, cfg_hotkey* current_hotkey)
+static void handle_hotkey_conflict(const HWND hwnd, t_hotkey* current_hotkey)
 {
     const bool current_hotkey_unbound = current_hotkey->key == 0 && current_hotkey->ctrl == 0 && current_hotkey->shift == 0 && current_hotkey->alt == 0;
     if (current_hotkey_unbound)
@@ -1488,7 +1488,7 @@ static void handle_hotkey_conflict(const HWND hwnd, cfg_hotkey* current_hotkey)
         return;
     }
 
-    std::vector<cfg_hotkey*> conflicting_hotkeys;
+    std::vector<t_hotkey*> conflicting_hotkeys;
     for (const auto hotkey : g_config_hotkeys)
     {
         if (hotkey == current_hotkey)
@@ -1514,7 +1514,7 @@ static void handle_hotkey_conflict(const HWND hwnd, cfg_hotkey* current_hotkey)
     }
 
     const auto str = std::format(L"The key combination {} is already used by the following hotkey(s):\n\n{}\nHow would you like to proceed?",
-                                 hotkey_to_string(current_hotkey),
+                                 current_hotkey->to_wstring(),
                                  conflicting_hotkey_identifiers);
 
     const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Discard Others", L"Discard Current", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
@@ -1638,9 +1638,9 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     // For hotkeys, accept keyboard inputs
     if (option_item.type == OptionsItem::Type::Hotkey)
     {
-        cfg_hotkey* hotkey = (cfg_hotkey*)option_item.data;
+        t_hotkey* hotkey = (t_hotkey*)option_item.data;
 
-        cfg_hotkey prev_hotkey_data = *hotkey;
+        t_hotkey prev_hotkey_data = *hotkey;
 
         g_hotkey_active_index = std::make_optional(i);
         ListView_Update(g_lv_hwnd, i);
@@ -1706,8 +1706,8 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 }
                 else if (options_item.type == OptionsItem::Type::Hotkey)
                 {
-                    auto default_hotkey = (cfg_hotkey*)default_value_ptr;
-                    auto current_hotkey = (cfg_hotkey*)options_item.data;
+                    auto default_hotkey = (t_hotkey*)default_value_ptr;
+                    auto current_hotkey = (t_hotkey*)options_item.data;
 
                     bool same = default_hotkey->key == current_hotkey->key && default_hotkey->ctrl == current_hotkey->ctrl && default_hotkey->alt == current_hotkey->alt && default_hotkey->shift == current_hotkey->shift;
 
@@ -1850,7 +1850,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
 
             if (offset == 4 && option_item.type == OptionsItem::Type::Hotkey)
             {
-                auto current_hotkey = (cfg_hotkey*)option_item.data;
+                auto current_hotkey = (t_hotkey*)option_item.data;
                 current_hotkey->key = 0;
                 current_hotkey->ctrl = 0;
                 current_hotkey->alt = 0;
@@ -1955,7 +1955,7 @@ void ConfigDialog::show_app_settings()
         g_config = g_prev_config;
     }
 
-    save_config();
+    Config::save();
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
 }
 
