@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <ThreadPool.h>
 #include <BS_thread_pool.hpp>
-#include <Loggers.h>
 
 static BS::thread_pool pool{};
 static std::unordered_set<size_t> pending_keys{};

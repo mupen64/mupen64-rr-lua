@@ -9,7 +9,6 @@
 #include <Messenger.h>
 
 #include <Main.h>
-#include <Loggers.h>
 
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 

@@ -9,7 +9,6 @@
 #include <DialogService.h>
 #include <Config.h>
 #include <Main.h>
-#include <Loggers.h>
 
 std::wstring FFmpegEncoder::start(Params params)
 {

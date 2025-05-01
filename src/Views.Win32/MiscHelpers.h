@@ -7,7 +7,6 @@
 #pragma once
 
 #include <stdafx.h>
-#include <Loggers.h>
 #include <Main.h>
 
 /**

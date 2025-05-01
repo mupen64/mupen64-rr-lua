@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <Uxtheme.h>
-#include <Loggers.h>
 #include <Main.h>
 #include <components/RomBrowser.h>
 #include <components/Statusbar.h>
