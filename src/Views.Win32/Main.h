@@ -124,6 +124,8 @@ t_plugin_discovery_result do_plugin_discovery();
 
 std::filesystem::path get_saves_directory();
 
+void set_cwd();
+
 #pragma region Dialog IDs
 
 #define VIEW_DLG_MOVIE_OVERWRITE_WARNING "VIEW_DLG_MOVIE_OVERWRITE_WARNING"

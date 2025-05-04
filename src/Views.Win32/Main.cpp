@@ -2305,7 +2305,7 @@ static void main_dispatcher_init()
     });
 }
 
-static void set_cwd()
+void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
     {
