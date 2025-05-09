@@ -2266,7 +2266,7 @@ static core_result init_core()
     {                                                                                          \
         if (g_##type##_plugin)                                                                 \
         {                                                                                      \
-            if (strncpy_s(type, sizeof(type), g_##type##_plugin->name().data(), 64))      \
+            if (strncpy_s(type, sizeof(type), g_##type##_plugin->name().data(), 64))           \
             {                                                                                  \
                 g_view_logger->error("Failed to copy {} plugin name", #type);                  \
             }                                                                                  \
@@ -2402,7 +2402,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Statusbar::create();
     RomBrowser::create();
     update_core_fast_forward(nullptr);
-    
+
     Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
     Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
     Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
@@ -2420,7 +2420,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     }
 
     PostMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
-    
+
     MSG msg{};
 
     while (!g_exit)

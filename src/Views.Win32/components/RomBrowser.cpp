@@ -52,7 +52,8 @@ namespace RomBrowser
 
         std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](std::wstring val) {
             wchar_t c_extension[260] = {0};
-            if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension))) {
+            if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
+            {
                 return false;
             }
             return iequals(c_extension, L".z64") || iequals(c_extension, L".n64") || iequals(c_extension, L".v64") || iequals(c_extension, L".rom");
@@ -401,7 +402,7 @@ namespace RomBrowser
             FILE* f = nullptr;
             if (_wfopen_s(&f, rom_path.c_str(), L"rb"))
             {
-                //g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+                // g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
                 continue;
             }
 

@@ -56,7 +56,7 @@ std::wstring AVIEncoder::start(Params params)
 
     // NOTE: AVIFileCreateStream seems to change the cwd for some reason...
     set_cwd();
-    
+
     if (params.ask_for_encoding_settings && !m_splitting)
     {
         if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, &m_avi_options))
@@ -341,7 +341,7 @@ bool AVIEncoder::append_video_impl(uint8_t* image)
 
 bool AVIEncoder::save_options() const
 {
-    FILE *f = nullptr;
+    FILE* f = nullptr;
     if (fopen_s(&f, "avi.cfg", "wb"))
     {
         g_view_logger->error("[AVIEncoder] {} fopen() failed", __func__);
@@ -370,7 +370,8 @@ bool AVIEncoder::save_options() const
 bool AVIEncoder::load_options()
 {
     FILE* f = nullptr;
-    if (fopen_s(&f, "avi.cfg", "rb") != 0 || !f) {
+    if (fopen_s(&f, "avi.cfg", "rb") != 0 || !f)
+    {
         return false;
     }
     fseek(f, 0, SEEK_END);
