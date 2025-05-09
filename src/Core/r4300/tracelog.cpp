@@ -215,7 +215,7 @@ void log(uint32_t pc, uint32_t w)
     *(p++) = x[(n) / 10]; \
     *(p++) = x[(n) % 10]; \
     *(p++) = '=';         \
-    p += sprintf(p, "%f", *reg_cop1_simple[n])
+    p += sprintf_s(p, sizeof(p), "%f", *reg_cop1_simple[n])
 #define REGFPU2(n, m) \
     REGFPU(n);        \
     if ((n) != (m))   \
