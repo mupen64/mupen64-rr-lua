@@ -214,7 +214,7 @@ bool rom_load(std::filesystem::path path)
         char arg[256] = {0};
         for (size_t i = 0; i < 16; i++)
             sprintf_s(arg + i * 2, sizeof(arg + i * 2), "%02X", digest[i]);
-        strcpy(rom_md5, arg);
+        strcpy_s(rom_md5, sizeof(rom_md5), arg);
     }
 
     auto roml = (uint32_t*)rom;
