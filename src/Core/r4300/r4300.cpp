@@ -1965,15 +1965,18 @@ bool open_core_file_stream(const std::filesystem::path& path, FILE** file)
 
     if (!exists(path))
     {
-        FILE* f = fopen(path.string().c_str(), "w");
-        if (!f)
+        FILE* f = nullptr;
+        if (fopen_s(&f, path.string().c_str(), "w"))
         {
             return false;
         }
         fflush(f);
         fclose(f);
     }
-    *file = fopen(path.string().c_str(), "rb+");
+    if (fopen_s(file, path.string().c_str(), "rb+"))
+    {
+        return false;
+    }
     return *file != nullptr;
 }
 

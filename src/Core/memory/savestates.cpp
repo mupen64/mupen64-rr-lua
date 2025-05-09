@@ -258,9 +258,9 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
         compressed_buffer.resize(final_size);
 
         // write compressed st to disk
-        FILE* f = fopen(new_st_path.string().c_str(), "wb");
+        FILE* f = nullptr;
 
-        if (f == nullptr)
+        if (fopen_s(&f, new_st_path.string().c_str(), "wb"))
         {
             task.callback(ST_FileWriteError, st);
             return;

@@ -68,8 +68,8 @@ bool write_movie_impl(const core_vcr_movie_header* hdr, const std::vector<core_b
 {
     g_core->log_info(std::format(L"[VCR] write_movie_impl to {}...", g_movie_path.wstring()));
 
-    FILE* f = fopen(path.string().c_str(), "wb+");
-    if (!f)
+    FILE* f = nullptr;
+    if (fopen_s(&f, path.string().c_str(), "wb+") || !f)
     {
         return false;
     }
@@ -1054,8 +1054,9 @@ core_result core_vcr_replace_author_info(const std::filesystem::path& path, cons
         return Res_Ok;
     }
 
-    FILE* f = fopen(path.string().c_str(), "rb+");
-    if (!f)
+    FILE* f = nullptr;
+
+    if (fopen_s(&f, path.string().c_str(), "rb+") || !f)
     {
         return VCR_BadFile;
     }
