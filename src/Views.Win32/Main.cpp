@@ -497,7 +497,7 @@ void update_titlebar()
     if (core_vcr_get_task() != task_idle)
     {
         wchar_t movie_filename[MAX_PATH] = {0};
-        _wsplitpath(core_vcr_get_path().wstring().c_str(), nullptr, nullptr, movie_filename, nullptr);
+        _wsplitpath_s(core_vcr_get_path().wstring().c_str(), nullptr, 0, nullptr, 0, movie_filename, _countof(movie_filename), nullptr, 0);
         text += std::format(L" - {}", movie_filename);
     }
 
@@ -843,7 +843,7 @@ std::filesystem::path get_app_full_path()
     wchar_t drive[_MAX_DRIVE], dirn[_MAX_DIR];
     wchar_t path_buffer[_MAX_DIR];
     GetModuleFileName(nullptr, path_buffer, std::size(path_buffer));
-    _wsplitpath(path_buffer, drive, dirn, nullptr, nullptr);
+    _wsplitpath_s(path_buffer, drive, _countof(drive), dirn, _countof(dirn), nullptr, 0, nullptr, 0);
     StrCpy(ret, drive);
     StrCat(ret, dirn);
 
@@ -1550,7 +1550,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     wchar_t proc_name[MAX_PATH] = {0};
                     GetModuleFileName(NULL, proc_name, MAX_PATH);
-                    _wsplitpath(proc_name, 0, 0, proc_name, 0);
+                    _wsplitpath_s(proc_name, nullptr, 0, nullptr, 0, proc_name, _countof(proc_name), nullptr, 0);
 
                     wchar_t stroop_c[1024] = {0};
                     wsprintfW(stroop_c,

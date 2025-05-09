@@ -52,8 +52,9 @@ namespace RomBrowser
 
         std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](std::wstring val) {
             wchar_t c_extension[260] = {0};
-            _wsplitpath(val.c_str(), nullptr, nullptr, nullptr, c_extension);
-
+            if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension))) {
+                return false;
+            }
             return iequals(c_extension, L".z64") || iequals(c_extension, L".n64") || iequals(c_extension, L".v64") || iequals(c_extension, L".rom");
         });
         return filtered_rom_paths;
@@ -344,14 +345,14 @@ namespace RomBrowser
                         if (strncpy_s(str, sizeof(str), (const char*)rombrowser_entry->rom_header.nom, sizeof(core_rom_header::nom)) != 0)
                         {
                             g_view_logger->error("Failed to copy rom name");
-                        } ;
+                        }
                         StrNCpy(plvdi->item.pszText, string_to_wstring(str).c_str(), plvdi->item.cchTextMax);
                         break;
                     }
                 case 2:
                     {
                         wchar_t filename[MAX_PATH] = {0};
-                        _wsplitpath(rombrowser_entry->path.c_str(), nullptr, nullptr, filename, nullptr);
+                        _wsplitpath_s(rombrowser_entry->path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr, 0);
                         StrNCpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
                         break;
                     }
