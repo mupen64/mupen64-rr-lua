@@ -234,9 +234,8 @@ namespace RomBrowser
         int32_t i = 0;
         for (auto& path : rom_paths)
         {
-            FILE* f = _wfopen(path.c_str(), L"rb");
-
-            if (!f)
+            FILE* f = nullptr;
+            if (_wfopen_s(&f, path.c_str(), L"rb"))
             {
                 g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", path.c_str());
                 continue;
@@ -398,7 +397,12 @@ namespace RomBrowser
         auto rom_paths = find_available_roms();
         for (auto rom_path : rom_paths)
         {
-            FILE* f = _wfopen(rom_path.c_str(), L"rb");
+            FILE* f = nullptr;
+            if (_wfopen_s(&f, rom_path.c_str(), L"rb"))
+            {
+                //g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+                continue;
+            }
 
             fseek(f, 0, SEEK_END);
             uint64_t len = ftell(f);
