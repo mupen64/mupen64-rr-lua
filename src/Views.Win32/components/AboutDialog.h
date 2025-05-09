@@ -9,4 +9,4 @@ namespace AboutDialog
      * \brief Shows the about dialog.
      */
     void show();
-}
+} // namespace AboutDialog

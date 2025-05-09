@@ -56,7 +56,7 @@ std::wstring AVIEncoder::start(Params params)
 
     // NOTE: AVIFileCreateStream seems to change the cwd for some reason...
     set_cwd();
-    
+
     if (params.ask_for_encoding_settings && !m_splitting)
     {
         if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, &m_avi_options))

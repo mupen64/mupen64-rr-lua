@@ -1330,7 +1330,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.fast_dispatcher,
     .type = t_options_item::Type::Bool,
     },
-        
+
     t_options_item{
     .group_id = debug_group.id,
     .name = L"Delay Plugin Discovery",
