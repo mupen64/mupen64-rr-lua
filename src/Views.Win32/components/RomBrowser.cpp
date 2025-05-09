@@ -342,7 +342,10 @@ namespace RomBrowser
                     {
                         // NOTE: The name may not be null-terminated, so we NEED to limit the size
                         char str[sizeof(core_rom_header::nom) + 1] = {0};
-                        strncpy(str, (char*)rombrowser_entry->rom_header.nom, sizeof(core_rom_header::nom));
+                        if (strncpy_s(str, sizeof(str), (const char*)rombrowser_entry->rom_header.nom, sizeof(core_rom_header::nom)) != 0)
+                        {
+                            g_view_logger->error("Failed to copy rom name");
+                        } ;
                         StrNCpy(plvdi->item.pszText, string_to_wstring(str).c_str(), plvdi->item.cchTextMax);
                         break;
                     }

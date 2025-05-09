@@ -1,385 +1,377 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Import Project="Core.Dependencies.props"/>
-
-    <ItemGroup Label="ProjectConfigurations">
-        <ProjectConfiguration Include="Debug|Win32">
-            <Configuration>Debug</Configuration>
-            <Platform>Win32</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Release|Win32">
-            <Configuration>Release</Configuration>
-            <Platform>Win32</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Debug|x64">
-            <Configuration>Debug</Configuration>
-            <Platform>x64</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Release|x64">
-            <Configuration>Release</Configuration>
-            <Platform>x64</Platform>
-        </ProjectConfiguration>
-    </ItemGroup>
-    <PropertyGroup Label="Globals">
-        <ProjectName>Views.Win32</ProjectName>
-        <RootNamespace>Views.Win32</RootNamespace>
-        <ProjectGuid>{83B5BB38-A6A7-432B-AF4D-2AE840F5621C}</ProjectGuid>
-        <Keyword>Win32Proj</Keyword>
-        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    </PropertyGroup>
-    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-        <ConfigurationType>Application</ConfigurationType>
-        <CharacterSet>Unicode</CharacterSet>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>false</WholeProgramOptimization>
-        <UseDebugLibraries>true</UseDebugLibraries>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-        <ConfigurationType>Application</ConfigurationType>
-        <CharacterSet>Unicode</CharacterSet>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>true</WholeProgramOptimization>
-        <UseDebugLibraries>false</UseDebugLibraries>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-        <ConfigurationType>Application</ConfigurationType>
-        <CharacterSet>Unicode</CharacterSet>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>false</WholeProgramOptimization>
-        <UseDebugLibraries>true</UseDebugLibraries>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-        <ConfigurationType>Application</ConfigurationType>
-        <CharacterSet>Unicode</CharacterSet>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>true</WholeProgramOptimization>
-        <UseDebugLibraries>false</UseDebugLibraries>
-    </PropertyGroup>
-    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
-    <ImportGroup Label="ExtensionSettings">
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <PropertyGroup Label="UserMacros"/>
-    <PropertyGroup>
-        <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-        <OutDir>build\$(ProjectName)\</OutDir>
-        <LocalDebuggerWorkingDirectory>build\$(ProjectName)\</LocalDebuggerWorkingDirectory>
-        <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build\$(ProjectName)\obj-x86-debug\</IntDir>
-        <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build\$(ProjectName)\obj-x86-release\</IntDir>
-        <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">build\$(ProjectName)\obj-x64-debug\</IntDir>
-        <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">build\$(ProjectName)\obj-x64-release\</IntDir>
-        <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">mupen64-x86-sse2-debug</TargetName>
-        <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">mupen64-x86-sse2-release</TargetName>
-        <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mupen64-x64-avx2-debug</TargetName>
-        <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mupen64-x64-avx2-release</TargetName>
-    </PropertyGroup>
-    
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Link>
-            <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-sse2-debug.pdb</ProgramDatabaseFile>
-        </Link>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <Link>
-            <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-sse2-release.pdb</ProgramDatabaseFile>
-        </Link>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <Link>
-            <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-avx2-debug.pdb</ProgramDatabaseFile>
-        </Link>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <Link>
-            <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-avx2-release.pdb</ProgramDatabaseFile>
-        </Link>
-    </ItemDefinitionGroup>
-    <PropertyGroup>
-        <GenerateManifest>false</GenerateManifest>
-    </PropertyGroup>
-    <ItemDefinitionGroup>
-        <Link>
-            <LinkIncremental>true</LinkIncremental>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-        </Link>
-    </ItemDefinitionGroup>
-
-    <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
-        <ClCompile>
-            <AdditionalIncludeDirectories>src/Core/include;src/Views.Win32;src/;lib/;lib/lua/include;lib/xxhash;lib/json;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <BufferSecurityCheck>true</BufferSecurityCheck>
-            <WarningLevel>Level4</WarningLevel>
-            <DisableSpecificWarnings>4018;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-            <CompileAs>CompileAsCpp</CompileAs>
-            <LanguageStandard>stdcpplatest</LanguageStandard>
-            <UseFullPaths>false</UseFullPaths>
-            <SDLCheck>true</SDLCheck>
-            <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-            <PrecompiledHeader>Use</PrecompiledHeader>
-            <FloatingPointModel>Strict</FloatingPointModel>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-        </ClCompile>
-        <Link>
-            <AdditionalDependencies>Shlwapi.lib;vfw32.lib;winmm.lib;propsys.lib;Comctl32.lib;uxtheme.lib;Msimg32.lib;Gdiplus.lib;d2d1.lib;dwrite.lib;Dbghelp.lib;lua54.lib;Dcomp.lib;D3D11.lib;DXGI.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-            <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-            <AdditionalLibraryDirectories>lib/lua;lib/xxhash;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-            <SubSystem>Windows</SubSystem>
-            <RandomizedBaseAddress>false</RandomizedBaseAddress>
-            <DataExecutionPrevention>false</DataExecutionPrevention>
-            <LargeAddressAware>true</LargeAddressAware>
-        </Link>
-    </ItemDefinitionGroup>
-
-    <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
-        <ClCompile>
-            <AdditionalIncludeDirectories>src/Core/include;src/Views.Win32;src/;lib/;lib/lua-x64/include;lib/xxhash;lib/json;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <BufferSecurityCheck>true</BufferSecurityCheck>
-            <WarningLevel>Level4</WarningLevel>
-            <DisableSpecificWarnings>4018;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-            <CompileAs>CompileAsCpp</CompileAs>
-            <LanguageStandard>stdcpplatest</LanguageStandard>
-            <UseFullPaths>false</UseFullPaths>
-            <SDLCheck>true</SDLCheck>
-            <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-            <PrecompiledHeader>Use</PrecompiledHeader>
-            <FloatingPointModel>Strict</FloatingPointModel>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-        </ClCompile>
-        <Link>
-            <AdditionalDependencies>Shlwapi.lib;vfw32.lib;winmm.lib;propsys.lib;Comctl32.lib;uxtheme.lib;Msimg32.lib;Gdiplus.lib;d2d1.lib;dwrite.lib;Dbghelp.lib;lua54.lib;Dcomp.lib;D3D11.lib;DXGI.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-            <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-            <AdditionalLibraryDirectories>lib/lua-x64;lib/xxhash;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-            <SubSystem>Windows</SubSystem>
-            <RandomizedBaseAddress>false</RandomizedBaseAddress>
-            <DataExecutionPrevention>false</DataExecutionPrevention>
-        </Link>
-    </ItemDefinitionGroup>
-
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <ClCompile>
-            <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-            <Optimization>Disabled</Optimization>
-            <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-            <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-        </ClCompile>
-        <Link>
-            <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-        </Link>
-    </ItemDefinitionGroup>
-
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <ClCompile>
-            <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-            <IntrinsicFunctions>true</IntrinsicFunctions>
-            <WholeProgramOptimization>true</WholeProgramOptimization>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-            <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-            <Optimization>Full</Optimization>
-            <OmitFramePointers>true</OmitFramePointers>
-            <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-            <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-        </ClCompile>
-        <Link>
-            <OptimizeReferences>true</OptimizeReferences>
-            <EnableCOMDATFolding>true</EnableCOMDATFolding>
-            <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-        </Link>
-    </ItemDefinitionGroup>
-
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <ClCompile>
-            <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-            <Optimization>Disabled</Optimization>
-            <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-            <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-        </ClCompile>
-        <Link>
-            <ProgramDatabaseFile>$(OutDir)views_win32_debug.pdb</ProgramDatabaseFile>
-        </Link>
-    </ItemDefinitionGroup>
-
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <ClCompile>
-            <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-            <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-            <IntrinsicFunctions>true</IntrinsicFunctions>
-            <WholeProgramOptimization>true</WholeProgramOptimization>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-            <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-            <Optimization>Full</Optimization>
-            <OmitFramePointers>true</OmitFramePointers>
-            <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-            <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-        </ClCompile>
-        <Link>
-            <OptimizeReferences>true</OptimizeReferences>
-            <EnableCOMDATFolding>true</EnableCOMDATFolding>
-            <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-        </Link>
-    </ItemDefinitionGroup>
-    <ItemGroup>
-        <ClInclude Include="src\Views.Win32\stdafx.h"/>
-        <ClInclude Include="lib\microlru.h"/>
-        <ClInclude Include="lib\IOHelpers.h"/>
-        <ClInclude Include="src\Views.Win32\MiscHelpers.h"/>
-        <ClInclude Include="src\Views.Win32\ThreadPool.h" />
-        <ClInclude Include="src\Views.Win32\capture\encoders\AVIEncoder.h"/>
-        <ClInclude Include="src\Views.Win32\capture\encoders\Encoder.h"/>
-        <ClInclude Include="src\Views.Win32\capture\encoders\FFmpegEncoder.h"/>
-        <ClInclude Include="src\Views.Win32\capture\EncodingManager.h"/>
-        <ClInclude Include="src\Views.Win32\capture\Resampler.h"/>
-        <ClInclude Include="src\Views.Win32\DialogService.h"/>
-        <ClInclude Include="src\Views.Win32\components\Benchmark.h" />
-        <ClInclude Include="src\Views.Win32\components\PianoRoll.h" />
-        <ClInclude Include="src\Views.Win32\components\RecentMenu.h" />
-        <ClInclude Include="src\Views.Win32\components\UpdateChecker.h" />
-        <ClInclude Include="src\Views.Win32\components\Compare.h" />
-        <ClInclude Include="src\Views.Win32\Loggers.h" />
-        <ClInclude Include="src\Views.Win32\components\Cheats.h" />
-        <ClInclude Include="src\Views.Win32\components\ConfigDialog.h" />
-        <ClInclude Include="src\Views.Win32\components\AboutDialog.h" />
-        <ClInclude Include="src\Views.Win32\components\CoreDbg.h" />
-        <ClInclude Include="src\Views.Win32\components\CrashManager.h" />
-        <ClInclude Include="src\Views.Win32\components\Dispatcher.h" />
-        <ClInclude Include="src\Views.Win32\components\MGECompositor.h" />
-        <ClInclude Include="src\Views.Win32\components\MovieDialog.h" />
-        <ClInclude Include="src\Views.Win32\components\RomBrowser.h" />
-        <ClInclude Include="src\Views.Win32\components\Runner.h" />
-        <ClInclude Include="src\Views.Win32\components\Seeker.h" />
-        <ClInclude Include="src\Views.Win32\components\Statusbar.h" />
-        <ClInclude Include="src\Views.Win32\components\FilePicker.h" />
-        <ClInclude Include="src\Views.Win32\components\CLI.h" />
-        <ClInclude Include="src\Views.Win32\components\SettingsListView.h" />
-        <ClInclude Include="src\Views.Win32\Main.h" />
-        <ClInclude Include="src\Views.Win32\Config.h" />
-        <ClInclude Include="src\Views.Win32\lua\LuaTypes.h" />
-        <ClInclude Include="src\Views.Win32\lua\LuaConsole.h" />
-        <ClInclude Include="src\Views.Win32\lua\LuaCallbacks.h" />
-        <ClInclude Include="src\Views.Win32\lua\LuaRegistry.h" />
-        <ClInclude Include="src\Views.Win32\lua\LuaRenderer.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\AVI.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\D2D.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\Emu.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\Global.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\Input.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\IOHelper.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\Joypad.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\Memory.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\Movie.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\Savestate.h" />
-        <ClInclude Include="src\Views.Win32\lua\modules\WGUI.h" />
-        <ClInclude Include="src\Views.Win32\lua\presenters\DCompPresenter.h" />
-        <ClInclude Include="src\Views.Win32\lua\presenters\GDIPresenter.h" />
-        <ClInclude Include="src\Views.Win32\lua\presenters\Presenter.h" />
-        <ClInclude Include="src\Views.Win32\Messenger.h" />
-        <ClInclude Include="src\Views.Win32\Plugin.h" />
-        <ClInclude Include="src\Views.Win32\resource.h" />
-    </ItemGroup>
-    <ItemGroup>
-        <ClCompile Include="src\Views.Win32\stdafx.cpp">
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-        </ClCompile>
-        <ClCompile Include="lib\speex\speex_resampler.c">
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-            <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-        </ClCompile>
-        <ClCompile Include="src\Views.Win32\ThreadPool.cpp" />
-        <ClCompile Include="src\Views.Win32\capture\encoders\AVIEncoder.cpp" />
-        <ClCompile Include="src\Views.Win32\capture\encoders\FFmpegEncoder.cpp" />
-        <ClCompile Include="src\Views.Win32\capture\EncodingManager.cpp" />
-        <ClCompile Include="src\Views.Win32\capture\Resampler.cpp" />
-        <ClCompile Include="src\Views.Win32\Config.cpp" />
-        <ClCompile Include="src\Views.Win32\DialogService.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Compare.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Benchmark.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Cheats.cpp" />
-        <ClCompile Include="src\Views.Win32\components\ConfigDialog.cpp" />
-        <ClCompile Include="src\Views.Win32\components\AboutDialog.cpp" />
-        <ClCompile Include="src\Views.Win32\components\CoreDbg.cpp" />
-        <ClCompile Include="src\Views.Win32\components\CrashManager.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Dispatcher.cpp" />
-        <ClCompile Include="src\Views.Win32\components\MGECompositor.cpp" />
-        <ClCompile Include="src\Views.Win32\components\MovieDialog.cpp" />
-        <ClCompile Include="src\Views.Win32\components\PianoRoll.cpp" />
-        <ClCompile Include="src\Views.Win32\components\RecentMenu.cpp" />
-        <ClCompile Include="src\Views.Win32\components\RomBrowser.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Runner.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Seeker.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Statusbar.cpp" />
-        <ClCompile Include="src\Views.Win32\components\UpdateChecker.cpp" />
-        <ClCompile Include="src\Views.Win32\components\FilePicker.cpp" />
-        <ClCompile Include="src\Views.Win32\components\CLI.cpp"/>
-        <ClCompile Include="src\Views.Win32\components\SettingsListView.cpp"/>
-        <ClCompile Include="src\Views.Win32\Loggers.cpp"/>
-        <ClCompile Include="src\Views.Win32\Main.cpp"/>
-        <ClCompile Include="src\Views.Win32\lua\LuaConsole.cpp"/>
-        <ClCompile Include="src\Views.Win32\lua\LuaCallbacks.cpp"/>
-        <ClCompile Include="src\Views.Win32\lua\LuaRegistry.cpp"/>
-        <ClCompile Include="src\Views.Win32\lua\LuaRenderer.cpp" />
-        <ClCompile Include="src\Views.Win32\lua\presenters\DCompPresenter.cpp"/>
-        <ClCompile Include="src\Views.Win32\lua\presenters\GDIPresenter.cpp"/>
-        <ClCompile Include="src\Views.Win32\Messenger.cpp"/>
-        <ClCompile Include="src\Views.Win32\Plugin.cpp"/>
-    </ItemGroup>
-    <ItemGroup>
-        <Image Include="src\Views.Win32\icons\flag_unknown.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_beta.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_us.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_au.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_sp.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_demo.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_eu.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_fr.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_de.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_it.ico"/>
-        <Image Include="src\Views.Win32\icons\flag_jp.ico"/>
-        <Image Include="src\Views.Win32\icons\logo_48.ico"/>
-        <Image Include="src\Views.Win32\icons\logo_16.ico"/>
-        <Image Include="src\Views.Win32\icons\changed.ico"/>
-        <Image Include="src\Views.Win32\icons\deny.ico"/>
-        <Image Include="src\Views.Win32\icons\plugin_video.bmp"/>
-        <Image Include="src\Views.Win32\icons\plugin_audio.bmp"/>
-        <Image Include="src\Views.Win32\icons\plugin_input.bmp"/>
-        <Image Include="src\Views.Win32\icons\plugin_rsp.bmp"/>
-    </ItemGroup>
-    <ItemGroup>
-        <ResourceCompile Include="src\Views.Win32\rsrc.rc"/>
-    </ItemGroup>
-    <ItemGroup>
-        <Manifest Include="src\Views.Win32\app.manifest"/>
-    </ItemGroup>
-    <ItemGroup>
-        <ProjectReference Include="Core.vcxproj">
-            <Project>{30467598-d6de-4adf-8098-ce1da988b88a}</Project>
-            <Name>Core</Name>
-        </ProjectReference>
-    </ItemGroup>
-    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
-    <ImportGroup Label="ExtensionTargets">
-    </ImportGroup>
+  <Import Project="Core.Dependencies.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>Views.Win32</ProjectName>
+    <RootNamespace>Views.Win32</RootNamespace>
+    <ProjectGuid>{83B5BB38-A6A7-432B-AF4D-2AE840F5621C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir>build\$(ProjectName)\</OutDir>
+    <LocalDebuggerWorkingDirectory>build\$(ProjectName)\</LocalDebuggerWorkingDirectory>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build\$(ProjectName)\obj-x86-debug\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build\$(ProjectName)\obj-x86-release\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">build\$(ProjectName)\obj-x64-debug\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">build\$(ProjectName)\obj-x64-release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">mupen64-x86-sse2-debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">mupen64-x86-sse2-release</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mupen64-x64-avx2-debug</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mupen64-x64-avx2-release</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Link>
+      <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-sse2-debug.pdb</ProgramDatabaseFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Link>
+      <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-sse2-release.pdb</ProgramDatabaseFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-avx2-debug.pdb</ProgramDatabaseFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <ProgramDatabaseFile>build\$(ProjectName)\mupen64-x86-avx2-release.pdb</ProgramDatabaseFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <PropertyGroup>
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <LinkIncremental>true</LinkIncremental>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>src/Core/include;src/Views.Win32;src/;lib/;lib/lua/include;lib/xxhash;lib/json;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <WarningLevel>Level4</WarningLevel>
+      <DisableSpecificWarnings>4018;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <UseFullPaths>false</UseFullPaths>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <FloatingPointModel>Strict</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Shlwapi.lib;vfw32.lib;winmm.lib;propsys.lib;Comctl32.lib;uxtheme.lib;Msimg32.lib;Gdiplus.lib;d2d1.lib;dwrite.lib;Dbghelp.lib;lua54.lib;Dcomp.lib;D3D11.lib;DXGI.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalLibraryDirectories>lib/lua;lib/xxhash;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+      <LargeAddressAware>true</LargeAddressAware>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>src/Core/include;src/Views.Win32;src/;lib/;lib/lua-x64/include;lib/xxhash;lib/json;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <WarningLevel>Level4</WarningLevel>
+      <DisableSpecificWarnings>4018;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <UseFullPaths>false</UseFullPaths>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <FloatingPointModel>Strict</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Shlwapi.lib;vfw32.lib;winmm.lib;propsys.lib;Comctl32.lib;uxtheme.lib;Msimg32.lib;Gdiplus.lib;d2d1.lib;dwrite.lib;Dbghelp.lib;lua54.lib;Dcomp.lib;D3D11.lib;DXGI.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalLibraryDirectories>lib/lua-x64;lib/xxhash;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+    </ClCompile>
+    <Link>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+    </ClCompile>
+    <Link>
+      <ProgramDatabaseFile>$(OutDir)views_win32_debug.pdb</ProgramDatabaseFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_WINDOWS;__WIN32__;X86;_CRT_SECURE_NO_WARNINGS;VERSION_SUFFIX=L"$(VERSION_SUFFIX)";MINI_CASE_SENSITIVE;SPDLOG_WCHAR_TO_UTF8_SUPPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>Full</Optimization>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+    </ClCompile>
+    <Link>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Views.Win32\stdafx.h" />
+    <ClInclude Include="lib\microlru.h" />
+    <ClInclude Include="lib\IOHelpers.h" />
+    <ClInclude Include="src\Views.Win32\MiscHelpers.h" />
+    <ClInclude Include="src\Views.Win32\ThreadPool.h" />
+    <ClInclude Include="src\Views.Win32\capture\encoders\AVIEncoder.h" />
+    <ClInclude Include="src\Views.Win32\capture\encoders\Encoder.h" />
+    <ClInclude Include="src\Views.Win32\capture\encoders\FFmpegEncoder.h" />
+    <ClInclude Include="src\Views.Win32\capture\EncodingManager.h" />
+    <ClInclude Include="src\Views.Win32\capture\Resampler.h" />
+    <ClInclude Include="src\Views.Win32\DialogService.h" />
+    <ClInclude Include="src\Views.Win32\components\Benchmark.h" />
+    <ClInclude Include="src\Views.Win32\components\PianoRoll.h" />
+    <ClInclude Include="src\Views.Win32\components\RecentMenu.h" />
+    <ClInclude Include="src\Views.Win32\components\UpdateChecker.h" />
+    <ClInclude Include="src\Views.Win32\components\Compare.h" />
+    <ClInclude Include="src\Views.Win32\Loggers.h" />
+    <ClInclude Include="src\Views.Win32\components\Cheats.h" />
+    <ClInclude Include="src\Views.Win32\components\ConfigDialog.h" />
+    <ClInclude Include="src\Views.Win32\components\AboutDialog.h" />
+    <ClInclude Include="src\Views.Win32\components\CoreDbg.h" />
+    <ClInclude Include="src\Views.Win32\components\CrashManager.h" />
+    <ClInclude Include="src\Views.Win32\components\Dispatcher.h" />
+    <ClInclude Include="src\Views.Win32\components\MGECompositor.h" />
+    <ClInclude Include="src\Views.Win32\components\MovieDialog.h" />
+    <ClInclude Include="src\Views.Win32\components\RomBrowser.h" />
+    <ClInclude Include="src\Views.Win32\components\Runner.h" />
+    <ClInclude Include="src\Views.Win32\components\Seeker.h" />
+    <ClInclude Include="src\Views.Win32\components\Statusbar.h" />
+    <ClInclude Include="src\Views.Win32\components\FilePicker.h" />
+    <ClInclude Include="src\Views.Win32\components\CLI.h" />
+    <ClInclude Include="src\Views.Win32\components\SettingsListView.h" />
+    <ClInclude Include="src\Views.Win32\Main.h" />
+    <ClInclude Include="src\Views.Win32\Config.h" />
+    <ClInclude Include="src\Views.Win32\lua\LuaTypes.h" />
+    <ClInclude Include="src\Views.Win32\lua\LuaConsole.h" />
+    <ClInclude Include="src\Views.Win32\lua\LuaCallbacks.h" />
+    <ClInclude Include="src\Views.Win32\lua\LuaRegistry.h" />
+    <ClInclude Include="src\Views.Win32\lua\LuaRenderer.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\AVI.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\D2D.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\Emu.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\Global.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\Input.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\IOHelper.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\Joypad.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\Memory.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\Movie.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\Savestate.h" />
+    <ClInclude Include="src\Views.Win32\lua\modules\WGUI.h" />
+    <ClInclude Include="src\Views.Win32\lua\presenters\DCompPresenter.h" />
+    <ClInclude Include="src\Views.Win32\lua\presenters\GDIPresenter.h" />
+    <ClInclude Include="src\Views.Win32\lua\presenters\Presenter.h" />
+    <ClInclude Include="src\Views.Win32\Messenger.h" />
+    <ClInclude Include="src\Views.Win32\Plugin.h" />
+    <ClInclude Include="src\Views.Win32\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Views.Win32\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="lib\speex\speex_resampler.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\Views.Win32\ThreadPool.cpp" />
+    <ClCompile Include="src\Views.Win32\capture\encoders\AVIEncoder.cpp" />
+    <ClCompile Include="src\Views.Win32\capture\encoders\FFmpegEncoder.cpp" />
+    <ClCompile Include="src\Views.Win32\capture\EncodingManager.cpp" />
+    <ClCompile Include="src\Views.Win32\capture\Resampler.cpp" />
+    <ClCompile Include="src\Views.Win32\Config.cpp" />
+    <ClCompile Include="src\Views.Win32\DialogService.cpp" />
+    <ClCompile Include="src\Views.Win32\components\Compare.cpp" />
+    <ClCompile Include="src\Views.Win32\components\Benchmark.cpp" />
+    <ClCompile Include="src\Views.Win32\components\Cheats.cpp" />
+    <ClCompile Include="src\Views.Win32\components\ConfigDialog.cpp" />
+    <ClCompile Include="src\Views.Win32\components\AboutDialog.cpp" />
+    <ClCompile Include="src\Views.Win32\components\CoreDbg.cpp" />
+    <ClCompile Include="src\Views.Win32\components\CrashManager.cpp" />
+    <ClCompile Include="src\Views.Win32\components\Dispatcher.cpp" />
+    <ClCompile Include="src\Views.Win32\components\MGECompositor.cpp" />
+    <ClCompile Include="src\Views.Win32\components\MovieDialog.cpp" />
+    <ClCompile Include="src\Views.Win32\components\PianoRoll.cpp" />
+    <ClCompile Include="src\Views.Win32\components\RecentMenu.cpp" />
+    <ClCompile Include="src\Views.Win32\components\RomBrowser.cpp" />
+    <ClCompile Include="src\Views.Win32\components\Runner.cpp" />
+    <ClCompile Include="src\Views.Win32\components\Seeker.cpp" />
+    <ClCompile Include="src\Views.Win32\components\Statusbar.cpp" />
+    <ClCompile Include="src\Views.Win32\components\UpdateChecker.cpp" />
+    <ClCompile Include="src\Views.Win32\components\FilePicker.cpp" />
+    <ClCompile Include="src\Views.Win32\components\CLI.cpp" />
+    <ClCompile Include="src\Views.Win32\components\SettingsListView.cpp" />
+    <ClCompile Include="src\Views.Win32\Loggers.cpp" />
+    <ClCompile Include="src\Views.Win32\Main.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\LuaConsole.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\LuaCallbacks.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\LuaRegistry.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\LuaRenderer.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\presenters\DCompPresenter.cpp" />
+    <ClCompile Include="src\Views.Win32\lua\presenters\GDIPresenter.cpp" />
+    <ClCompile Include="src\Views.Win32\Messenger.cpp" />
+    <ClCompile Include="src\Views.Win32\Plugin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\Views.Win32\icons\flag_unknown.ico" />
+    <Image Include="src\Views.Win32\icons\flag_beta.ico" />
+    <Image Include="src\Views.Win32\icons\flag_us.ico" />
+    <Image Include="src\Views.Win32\icons\flag_au.ico" />
+    <Image Include="src\Views.Win32\icons\flag_sp.ico" />
+    <Image Include="src\Views.Win32\icons\flag_demo.ico" />
+    <Image Include="src\Views.Win32\icons\flag_eu.ico" />
+    <Image Include="src\Views.Win32\icons\flag_fr.ico" />
+    <Image Include="src\Views.Win32\icons\flag_de.ico" />
+    <Image Include="src\Views.Win32\icons\flag_it.ico" />
+    <Image Include="src\Views.Win32\icons\flag_jp.ico" />
+    <Image Include="src\Views.Win32\icons\logo_48.ico" />
+    <Image Include="src\Views.Win32\icons\logo_16.ico" />
+    <Image Include="src\Views.Win32\icons\changed.ico" />
+    <Image Include="src\Views.Win32\icons\deny.ico" />
+    <Image Include="src\Views.Win32\icons\plugin_video.bmp" />
+    <Image Include="src\Views.Win32\icons\plugin_audio.bmp" />
+    <Image Include="src\Views.Win32\icons\plugin_input.bmp" />
+    <Image Include="src\Views.Win32\icons\plugin_rsp.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\Views.Win32\rsrc.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="src\Views.Win32\app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Core.vcxproj">
+      <Project>{30467598-d6de-4adf-8098-ce1da988b88a}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>

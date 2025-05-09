@@ -2266,7 +2266,10 @@ static core_result init_core()
     {                                                                                          \
         if (g_##type##_plugin)                                                                 \
         {                                                                                      \
-            strncpy(type, g_##type##_plugin->name().data(), 64);                               \
+            if (strncpy_s(type, sizeof(type), g_##type##_plugin->name().data(), 64))      \
+            {                                                                                  \
+                g_view_logger->error("Failed to copy {} plugin name", #type);                  \
+            }                                                                                  \
         }                                                                                      \
         else                                                                                   \
         {                                                                                      \
