@@ -145,7 +145,7 @@ std::filesystem::path find_accompanying_file_for_movie(std::filesystem::path pat
     memset(dir, 0, std::size(dir));
     memset(filename, 0, std::size(filename));
 
-    _splitpath(path.string().c_str(), drive, dir, filename, nullptr);
+    _splitpath_s(path.string().c_str(), drive, _countof(drive), dir, _countof(dir), filename, _countof(filename), nullptr, 0);
 
     size_t i = 0;
     while (true)
@@ -849,7 +849,7 @@ std::filesystem::path get_path_for_new_movie(std::filesystem::path path, const s
 
     char drive[260]{};
     char dir[260]{};
-    _splitpath(path.string().c_str(), drive, dir, nullptr, nullptr);
+    _splitpath_s(path.string().c_str(), drive, _countof(drive), dir, _countof(dir), nullptr, 0, nullptr, 0);
 
     auto stem = path.stem().string().substr(0, result);
 
