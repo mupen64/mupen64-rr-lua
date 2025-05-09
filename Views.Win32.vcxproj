@@ -191,7 +191,7 @@
             <WholeProgramOptimization>true</WholeProgramOptimization>
             <FunctionLevelLinking>true</FunctionLevelLinking>
             <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-            <Optimization>Full</Optimization>
+            <Optimization>MaxSpeed</Optimization>
             <OmitFramePointers>true</OmitFramePointers>
             <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
             <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -226,7 +226,7 @@
             <WholeProgramOptimization>true</WholeProgramOptimization>
             <FunctionLevelLinking>true</FunctionLevelLinking>
             <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-            <Optimization>Full</Optimization>
+            <Optimization>MaxSpeed</Optimization>
             <OmitFramePointers>true</OmitFramePointers>
             <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
             <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
