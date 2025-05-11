@@ -2155,7 +2155,12 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
 
             RECT grid_rect{};
             GetClientRect(hwnd, &grid_rect);
-            grid_rect.bottom -= 29;
+
+            RECT ok_button_rect{};
+            GetWindowRect(GetDlgItem(hwnd, IDOK), &ok_button_rect);
+            MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&ok_button_rect, 2);
+
+            grid_rect.bottom = ok_button_rect.top - 4;
 
             std::vector<std::wstring> groups;
             for (int i = 0; i < params->cfg->groups_len; ++i)
