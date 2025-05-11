@@ -134,7 +134,7 @@ typedef struct CoreCfg {
     /// 1 = skip no frames
     /// >0 = every nth frame is skipped
     /// </summary>
-    int32_t frame_skip_frequency = 1;
+    int32_t frame_skip_frequency = 8;
 
     /// <summary>
     /// Whether fast-forward will mute audio
