@@ -410,29 +410,35 @@ void Plugin::config()
 {
     const auto run_config = [&] {
         const auto dll_config = (DLLCONFIG)GetProcAddress(m_module, "DllConfig");
-        const auto get_config_1 = (GETCONFIG1)GetProcAddress(m_module, "GetConfig1");
-        const auto save_config_1 = (SAVECONFIG1)GetProcAddress(m_module, "SaveConfig1");
+        // const auto get_config_1 = (GETCONFIG1)GetProcAddress(m_module, "GetConfig1");
+        // const auto save_config_1 = (SAVECONFIG1)GetProcAddress(m_module, "SaveConfig1");
 
-        if (!get_config_1 && !dll_config || (get_config_1 && !save_config_1))
+        if (!dll_config)
         {
             DialogService::show_dialog(std::format(L"'{}' has no configuration.", string_to_wstring(this->name())).c_str(), L"Plugin", fsvc_error, g_hwnd_plug);
             goto cleanup;
         }
-
-        if (get_config_1)
-        {
-            core_plugin_cfg* cfg;
-            get_config_1(&cfg);
-            if (cfg)
-            {
-                const bool save = ConfigDialog::show_plugin_settings(this, cfg);
-                if (save && !save_config_1())
-                {
-                    DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error, g_hwnd_plug);
-                }
-                goto cleanup;
-            }
-        }
+        
+        // if (!get_config_1 && !dll_config || (get_config_1 && !save_config_1))
+        // {
+        //     DialogService::show_dialog(std::format(L"'{}' has no configuration.", string_to_wstring(this->name())).c_str(), L"Plugin", fsvc_error, g_hwnd_plug);
+        //     goto cleanup;
+        // }
+        //
+        // if (get_config_1)
+        // {
+        //     core_plugin_cfg* cfg;
+        //     get_config_1(&cfg);
+        //     if (cfg)
+        //     {
+        //         const bool save = ConfigDialog::show_plugin_settings(this, cfg);
+        //         if (save && !save_config_1())
+        //         {
+        //             DialogService::show_dialog(L"Couldn't save plugin configuration.", L"Plugin", fsvc_error, g_hwnd_plug);
+        //         }
+        //         goto cleanup;
+        //     }
+        // }
 
         dll_config(g_hwnd_plug);
 
