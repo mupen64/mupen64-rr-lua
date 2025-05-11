@@ -2370,7 +2370,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.lpszClassName = WND_CLASS;
     wc.lpfnWndProc = WndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszMenuName = MAKEINTRESOURCE(IDR_MYMENU);
     RegisterClassEx(&wc);
 
