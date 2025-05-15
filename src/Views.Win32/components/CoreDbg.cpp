@@ -5,7 +5,6 @@
  */
 
 #include "stdafx.h"
-#include <Main.h>
 #include <Messenger.h>
 #include <components/CoreDbg.h>
 

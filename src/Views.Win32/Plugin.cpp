@@ -10,7 +10,6 @@
 #include <Config.h>
 #include <DialogService.h>
 #include <Plugin.h>
-#include <Main.h>
 #include <components/ConfigDialog.h>
 #include <components/Statusbar.h>
 

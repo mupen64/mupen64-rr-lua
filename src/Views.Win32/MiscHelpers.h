@@ -6,9 +6,6 @@
 
 #pragma once
 
-#include <stdafx.h>
-#include <Main.h>
-
 /**
  * \brief Records the execution time of a scope
  */
@@ -369,19 +366,21 @@ static std::wstring format_duration(size_t seconds)
 }
 
 /**
- * \brief Gets the string associated with an embedded TEXTFILE resource id.
+ * \brief Loads a resource as a string.
  * \param id The resource id.
- * \return The string associated with the resource id, or an empty string if the resource couldn't be found.
+ * \param type The resource type.
+ * \return The resource as a string, or an empty string if the resource could not be loaded.
  */
-static std::string get_string_by_textfile_resource_id(const int id)
+static std::string load_resource_as_string(const int id, const LPCWSTR type)
 {
-    const HRSRC rc = FindResource(g_app_instance, MAKEINTRESOURCE(id), MAKEINTRESOURCE(TEXTFILE));
+    const HINSTANCE hinst = GetModuleHandle(nullptr);
+    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), type);
     if (!rc)
     {
         return "";
     }
-    const HGLOBAL rc_data = LoadResource(g_app_instance, rc);
-    const auto size = SizeofResource(g_app_instance, rc);
+    const HGLOBAL rc_data = LoadResource(hinst, rc);
+    const auto size = SizeofResource(hinst, rc);
     const auto data = static_cast<const char*>(LockResource(rc_data));
     return std::string(data, size);
 }

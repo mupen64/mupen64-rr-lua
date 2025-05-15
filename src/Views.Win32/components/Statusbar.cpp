@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <Messenger.h>
-#include <Main.h>
 #include <components/Statusbar.h>
 
 struct t_segment {

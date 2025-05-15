@@ -13,7 +13,6 @@
 #include <capture/encoders/AVIEncoder.h>
 #include <capture/encoders/Encoder.h>
 #include <capture/encoders/FFmpegEncoder.h>
-#include <Main.h>
 #include <components/Dispatcher.h>
 #include <components/MGECompositor.h>
 #include <lua/LuaRenderer.h>

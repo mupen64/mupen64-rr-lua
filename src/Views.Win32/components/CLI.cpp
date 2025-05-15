@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <DialogService.h>
-#include <Main.h>
 #include <Messenger.h>
 #include <ThreadPool.h>
 #include <argh.h>

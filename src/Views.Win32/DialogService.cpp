@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <DialogService.h>
-#include <Main.h>
 #include <components/Statusbar.h>
 #include <lua/LuaConsole.h>
 

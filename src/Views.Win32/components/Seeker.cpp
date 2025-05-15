@@ -7,9 +7,6 @@
 #include "stdafx.h"
 #include <Messenger.h>
 #include <Config.h>
-
-
-#include <Main.h>
 #include <components/Seeker.h>
 
 #define WM_SEEK_COMPLETED (WM_USER + 11)

@@ -11,7 +11,6 @@
 #include <Plugin.h>
 #include <components/SettingsListView.h>
 #include <capture/EncodingManager.h>
-#include <Main.h>
 #include <components/configdialog.h>
 #include <components/FilePicker.h>
 #include <lua/LuaConsole.h>

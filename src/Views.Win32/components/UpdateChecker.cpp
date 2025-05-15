@@ -7,10 +7,7 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <DialogService.h>
-
-
 #include <winhttp.h>
-#include <Main.h>
 #include <components/UpdateChecker.h>
 #include <json/json.hpp>
 

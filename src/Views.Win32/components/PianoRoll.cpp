@@ -9,7 +9,6 @@
 #include "ThreadPool.h"
 #include "Config.h"
 #include "Messenger.h"
-#include <Main.h>
 
 namespace PianoRoll
 {

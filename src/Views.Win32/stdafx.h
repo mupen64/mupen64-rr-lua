@@ -6,43 +6,8 @@
 
 #define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
 
-#include <filesystem>
-#include <string>
-#include <format>
-#include <algorithm>
-#include <memory>
-#include <functional>
-#include <vector>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
-#include <span>
-#include <cstdint>
-#include <mutex>
-#include <queue>
-#include <thread>
-#include <condition_variable>
-#include <atomic>
-#include <intsafe.h>
-#include <cstdio>
-#include <stdint.h>
-#include <map>
-#include <cassert>
-#include <math.h>
-#include <float.h>
-#include <stacktrace>
-#include <stdarg.h>
-#include <optional>
-#include <string_view>
-#include <variant>
-#include <csetjmp>
-#include <locale>
-#include <cctype>
-#include <any>
-#include <stack>
-#include <fstream>
-#include <deque>
-#include <numeric>
+#include <Core/stdafx.h>
+#include <core_api.h>
 
 extern "C" {
 #include <lua.h>
@@ -52,10 +17,6 @@ extern "C" {
 
 #include <spdlog/logger.h>
 #include <microlru.h>
-#include <Config.h>
-#include <core_api.h>
-#include <IOHelpers.h>
-#include <MiscHelpers.h>
 #include <Windows.h>
 #include <commctrl.h>
 #include <resource.h>
@@ -81,6 +42,11 @@ extern "C" {
 #include <strsafe.h>
 #include <commdlg.h>
 #include <unordered_set>
+#include <stacktrace>
 
-#include <lua/LuaTypes.h>
 #include <Loggers.h>
+#include <MiscHelpers.h>
+#include <Main.h>
+#include <lua/LuaTypes.h>
+#include <Config.h>
+#include <IOHelpers.h>

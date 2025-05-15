@@ -8,7 +8,6 @@
 #include <components/CLI.h>
 #include <Config.h>
 #include <DialogService.h>
-#include <Main.h>
 #include <Messenger.h>
 #include <Plugin.h>
 #include <strsafe.h>
