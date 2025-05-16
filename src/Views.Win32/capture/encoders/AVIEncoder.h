@@ -30,7 +30,7 @@ private:
     bool stop_impl(bool fail_stop = true);
 
     Params m_params{};
-    AVICOMPRESSOPTIONS* m_avi_options = new AVICOMPRESSOPTIONS();
+    AVICOMPRESSOPTIONS m_avi_options{};
 
     bool m_splitting = false;
     size_t m_splits = 0;

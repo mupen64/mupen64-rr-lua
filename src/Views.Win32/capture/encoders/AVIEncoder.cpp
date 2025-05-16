@@ -58,7 +58,8 @@ std::optional<std::wstring> AVIEncoder::start(Params params)
 
     if (params.ask_for_encoding_settings && !m_splitting)
     {
-        if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, &m_avi_options))
+        LPAVICOMPRESSOPTIONS avi_options[1] = {&m_avi_options};
+        if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, avi_options))
         {
             stop_impl();
             return L"";
@@ -78,7 +79,7 @@ std::optional<std::wstring> AVIEncoder::start(Params params)
         }
     }
 
-    if (AVIMakeCompressedStream(&m_compressed_video_stream, m_video_stream, m_avi_options, NULL) != AVIERR_OK)
+    if (AVIMakeCompressedStream(&m_compressed_video_stream, m_video_stream, &m_avi_options, NULL) != AVIERR_OK)
     {
         stop_impl();
         return L"Failed to make video compressed stream.";
@@ -357,18 +358,21 @@ bool AVIEncoder::save_options() const
         return false;
     }
 
-    if (fwrite(m_avi_options, sizeof(AVICOMPRESSOPTIONS), 1, f) < 1)
+    if (fwrite(&m_avi_options, sizeof(AVICOMPRESSOPTIONS), 1, f) < 1)
     {
         g_view_logger->error("[AVIEncoder] {} fwrite(m_avi_options) failed", __func__);
         (void)fclose(f);
         return false;
     }
 
-    if (fwrite(m_avi_options->lpParms, m_avi_options->cbParms, 1, f) < 1)
+    if (m_avi_options.lpParms)
     {
-        g_view_logger->error("[AVIEncoder] {} fwrite(m_avi_options->lpParms) failed", __func__);
-        (void)fclose(f);
-        return false;
+        if (fwrite(m_avi_options.lpParms, m_avi_options.cbParms, 1, f) < 1)
+        {
+            g_view_logger->error("[AVIEncoder] {} fwrite(m_avi_options->lpParms) failed", __func__);
+            (void)fclose(f);
+            return false;
+        }
     }
 
     (void)fclose(f);
@@ -391,15 +395,19 @@ bool AVIEncoder::load_options()
 
     fseek(f, 0, SEEK_SET);
 
-    fread(m_avi_options, sizeof(AVICOMPRESSOPTIONS), 1, f);
+    fread(&m_avi_options, sizeof(AVICOMPRESSOPTIONS), 1, f);
 
     {
-        void* moreOptions = malloc(m_avi_options->cbParms);
-        fread(moreOptions, m_avi_options->cbParms, 1, f);
-        m_avi_options->lpParms = moreOptions;
+        void* params = malloc(m_avi_options.cbParms);
+        const bool has_params = fread(params, m_avi_options.cbParms, 1, f) == 1;
+        if (has_params)
+        {
+            m_avi_options.lpParms = params;
+        }
+        free(params);
     }
-
-    fclose(f);
+    
+    (void)fclose(f);
     return true;
 
 error:
