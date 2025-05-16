@@ -401,7 +401,7 @@ namespace RomBrowser
             FILE* f = nullptr;
             if (_wfopen_s(&f, rom_path.c_str(), L"rb"))
             {
-                // g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+                g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
                 continue;
             }
 

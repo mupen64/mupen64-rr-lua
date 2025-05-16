@@ -405,7 +405,7 @@ bool AVIEncoder::load_options()
         }
         free(params);
     }
-    
+
     (void)fclose(f);
     return true;
 
