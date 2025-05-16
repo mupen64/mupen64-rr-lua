@@ -382,7 +382,7 @@ bool AVIEncoder::save_options() const
 bool AVIEncoder::load_options()
 {
     FILE* f = nullptr;
-    if (fopen_s(&f, "avi.cfg", "rb") != 0 || !f)
+    if (fopen_s(&f, "avi.cfg", "rb"))
     {
         return false;
     }
