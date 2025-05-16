@@ -12,7 +12,7 @@
 
 class AVIEncoder final : public Encoder {
 public:
-    std::wstring start(Params params) override;
+    std::optional<std::wstring> start(Params params) override;
     bool stop() override;
     bool append_video(uint8_t* image) override;
     bool append_audio(uint8_t* audio, size_t length, uint8_t bitrate) override;
@@ -27,6 +27,7 @@ private:
     bool append_video_impl(uint8_t* image);
     bool save_options() const;
     bool load_options();
+    bool stop_impl(bool fail_stop = true);
 
     Params m_params{};
     AVICOMPRESSOPTIONS* m_avi_options = new AVICOMPRESSOPTIONS();

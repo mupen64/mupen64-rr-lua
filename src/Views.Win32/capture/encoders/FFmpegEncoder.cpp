@@ -9,7 +9,7 @@
 #include <DialogService.h>
 #include <Config.h>
 
-std::wstring FFmpegEncoder::start(Params params)
+std::optional<std::wstring> FFmpegEncoder::start(Params params)
 {
     m_params = params;
 
@@ -97,7 +97,7 @@ std::wstring FFmpegEncoder::start(Params params)
 
     Sleep(500);
 
-    return L"";
+    return std::nullopt;
 }
 
 bool FFmpegEncoder::stop()

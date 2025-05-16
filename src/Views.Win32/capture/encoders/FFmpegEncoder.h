@@ -8,10 +8,9 @@
 
 #include "Encoder.h"
 
-
 class FFmpegEncoder : public Encoder {
 public:
-    std::wstring start(Params params) override;
+    std::optional<std::wstring> start(Params params) override;
     bool stop() override;
     bool append_video(uint8_t* image) override;
     bool append_audio(uint8_t* audio, size_t length, uint8_t bitrate) override;

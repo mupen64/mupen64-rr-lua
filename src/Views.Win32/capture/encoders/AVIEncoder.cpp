@@ -13,7 +13,7 @@
 #include <capture/encoders/AVIEncoder.h>
 
 
-std::wstring AVIEncoder::start(Params params)
+std::optional<std::wstring> AVIEncoder::start(Params params)
 {
     if (!m_splitting)
     {
@@ -38,7 +38,7 @@ std::wstring AVIEncoder::start(Params params)
     AVIFileInit();
     if (AVIFileOpen(&m_avi_file, params.path.wstring().c_str(), OF_WRITE | OF_CREATE, NULL))
     {
-        stop();
+        stop_impl();
         return L"Failed to open output file.";
     }
 
@@ -49,7 +49,7 @@ std::wstring AVIEncoder::start(Params params)
     m_video_stream_hdr.dwSuggestedBufferSize = 0;
     if (AVIFileCreateStream(m_avi_file, &m_video_stream, &m_video_stream_hdr))
     {
-        stop();
+        stop_impl();
         return L"Failed to create video file stream.";
     }
 
@@ -60,12 +60,13 @@ std::wstring AVIEncoder::start(Params params)
     {
         if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, &m_avi_options))
         {
-            return L"Failed to save options.";
+            stop_impl();
+            return L"";
         }
 
         if (!save_options())
         {
-            stop();
+            stop_impl();
             return L"Failed to save options.";
         }
     }
@@ -79,13 +80,13 @@ std::wstring AVIEncoder::start(Params params)
 
     if (AVIMakeCompressedStream(&m_compressed_video_stream, m_video_stream, m_avi_options, NULL) != AVIERR_OK)
     {
-        stop();
+        stop_impl();
         return L"Failed to make video compressed stream.";
     }
 
     if (AVIStreamSetFormat(m_compressed_video_stream, 0, &m_info_hdr, m_info_hdr.biSize + m_info_hdr.biClrUsed * sizeof(RGBQUAD)) != AVIERR_OK)
     {
-        stop();
+        stop_impl();
         return L"Failed to set video stream format.";
     }
 
@@ -107,12 +108,12 @@ std::wstring AVIEncoder::start(Params params)
     m_sound_stream_hdr.dwSampleSize = m_sound_format.nBlockAlign;
     if (AVIFileCreateStream(m_avi_file, &m_sound_stream, &m_sound_stream_hdr))
     {
-        stop();
+        stop_impl();
         return L"Failed to create audio stream.";
     }
     if (AVIStreamSetFormat(m_sound_stream, 0, &m_sound_format, sizeof(WAVEFORMATEX)) != AVIERR_OK)
     {
-        stop();
+        stop_impl();
         return L"Failed to set audio stream format.";
     }
 
@@ -120,12 +121,11 @@ std::wstring AVIEncoder::start(Params params)
     memset(m_sound_buf, 0, sizeof(m_sound_buf));
     last_sound = 0;
 
-    return L"";
+    return std::nullopt;
 }
 
-bool AVIEncoder::stop()
+bool AVIEncoder::stop_impl(const bool fail_stop)
 {
-    // TODO: Move bitrate to params
     write_sound(nullptr, 0, RESAMPLED_FREQ, RESAMPLED_FREQ * 2, TRUE, 16);
 
     if (m_compressed_video_stream)
@@ -150,9 +150,18 @@ bool AVIEncoder::stop()
     }
     AVIFileExit();
 
+    if (fail_stop)
+    {
+        DeleteFile(m_params.path.wstring().c_str());
+    }
+
     return true;
 }
 
+bool AVIEncoder::stop()
+{
+    return this->stop_impl(false);
+}
 
 bool AVIEncoder::append_video(uint8_t* image)
 {
