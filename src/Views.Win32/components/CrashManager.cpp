@@ -7,7 +7,9 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <components/CrashManager.h>
+#define CRT_SECURE_NO_WARNINGS
 #include <backward.hpp>
+#undef CRT_SECURE_NO_WARNINGS
 
 const std::filesystem::path MINIDUMP_PATH = L"mupen.dmp";
 
