@@ -239,7 +239,7 @@ void CrashManager::init()
     //
     // RaiseException(EXCEPTION_ACCESS_VIOLATION, EXCEPTION_NONCONTINUABLE, NULL, NULL);
     //
-    RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, NULL, NULL);
+    // RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, NULL, NULL);
     //
     // printf(0);
     //
