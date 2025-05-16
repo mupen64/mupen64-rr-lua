@@ -321,9 +321,7 @@
         <ClCompile Include="src\Views.Win32\components\ConfigDialog.cpp" />
         <ClCompile Include="src\Views.Win32\components\AboutDialog.cpp" />
         <ClCompile Include="src\Views.Win32\components\CoreDbg.cpp" />
-        <ClCompile Include="src\Views.Win32\components\CrashManager.cpp" >
-            <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-        </ClCompile>
+        <ClCompile Include="src\Views.Win32\components\CrashManager.cpp" />
         <ClCompile Include="src\Views.Win32\components\Dispatcher.cpp" />
         <ClCompile Include="src\Views.Win32\components\MGECompositor.cpp" />
         <ClCompile Include="src\Views.Win32\components\MovieDialog.cpp" />
