@@ -11,7 +11,6 @@
 #include <Plugin.h>
 #include <components/SettingsListView.h>
 #include <capture/EncodingManager.h>
-#include <Main.h>
 #include <components/configdialog.h>
 #include <components/FilePicker.h>
 #include <lua/LuaConsole.h>
@@ -1326,11 +1325,11 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     t_options_item{
     .group_id = lua_group.id,
     .name = L"Fast Dispatcher",
-    .tooltip = L"Whether a low-latency dispatcher implementation is used. Greatly improves performance when Lua scripts are running. Disable if you DirectInput-based plugins aren't working as expected.",
+    .tooltip = L"Enables a low-latency dispatcher implementation. Can improve performance with Lua scripts.\nDisable if the UI is stuttering heavily or if you're using a low-end machine.",
     .data = &g_config.fast_dispatcher,
     .type = t_options_item::Type::Bool,
     },
-        
+
     t_options_item{
     .group_id = debug_group.id,
     .name = L"Delay Plugin Discovery",
@@ -2155,7 +2154,12 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
 
             RECT grid_rect{};
             GetClientRect(hwnd, &grid_rect);
-            grid_rect.bottom -= 29;
+
+            RECT ok_button_rect{};
+            GetWindowRect(GetDlgItem(hwnd, IDOK), &ok_button_rect);
+            MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&ok_button_rect, 2);
+
+            grid_rect.bottom = ok_button_rect.top - 4;
 
             std::vector<std::wstring> groups;
             for (int i = 0; i < params->cfg->groups_len; ++i)

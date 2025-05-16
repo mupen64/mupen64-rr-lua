@@ -74,7 +74,6 @@ void terminate_emu();
 core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
 
 
-
 #define jump_to(a)           \
     {                        \
         jump_to_address = a; \

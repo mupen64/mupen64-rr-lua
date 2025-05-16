@@ -6,7 +6,6 @@
 
 #include "stdafx.h"
 #include <Config.h>
-#include <Main.h>
 #include <components/CrashManager.h>
 #include <backward.hpp>
 

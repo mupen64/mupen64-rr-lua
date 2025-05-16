@@ -11,7 +11,6 @@
 #include "LuaCallbacks.h"
 #include "LuaRegistry.h"
 #include "Messenger.h"
-#include <Main.h>
 #include <components/FilePicker.h>
 #include <lua/LuaRenderer.h>
 
@@ -241,9 +240,9 @@ void lua_stop_all_scripts()
 
 void lua_init()
 {
-    mupen_api_lua_code = get_string_by_textfile_resource_id(IDR_API_LUA_FILE);
-    inspect_lua_code = get_string_by_textfile_resource_id(IDR_INSPECT_LUA_FILE);
-    shims_lua_code = get_string_by_textfile_resource_id(IDR_SHIMS_LUA_FILE);
+    mupen_api_lua_code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
+    inspect_lua_code = load_resource_as_string(IDR_INSPECT_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
+    shims_lua_code = load_resource_as_string(IDR_SHIMS_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
 }
 
 

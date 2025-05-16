@@ -8,7 +8,6 @@
 #include <components/MovieDialog.h>
 #include <Config.h>
 #include <DialogService.h>
-#include <Main.h>
 #include <components/FilePicker.h>
 
 static MovieDialog::t_result user_result{};

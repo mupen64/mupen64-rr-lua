@@ -8,7 +8,6 @@
 #include <components/CLI.h>
 #include <Config.h>
 #include <DialogService.h>
-#include <Main.h>
 #include <Messenger.h>
 #include <Plugin.h>
 #include <strsafe.h>
@@ -111,7 +110,7 @@ std::wstring get_mupen_name()
     std::wstring version_suffix = VERSION_SUFFIX;
     if (version_suffix.empty())
     {
-        version_suffix = L"-rc3";
+        // version_suffix = L"-rc5";
     }
 
     return BASE_NAME CURRENT_VERSION + version_suffix + ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
@@ -2373,7 +2372,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.lpszClassName = WND_CLASS;
     wc.lpfnWndProc = WndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszMenuName = MAKEINTRESOURCE(IDR_MYMENU);
     RegisterClassEx(&wc);
 

@@ -13,7 +13,6 @@
 #include <capture/encoders/AVIEncoder.h>
 #include <capture/encoders/Encoder.h>
 #include <capture/encoders/FFmpegEncoder.h>
-#include <Main.h>
 #include <components/Dispatcher.h>
 #include <components/MGECompositor.h>
 #include <lua/LuaRenderer.h>
@@ -355,7 +354,7 @@ namespace EncodingManager
         get_video_dimensions(&m_video_width, &m_video_height);
         m_video_buf = (uint8_t*)malloc(m_video_width * m_video_height * 3);
 
-        auto result = m_encoder->start(Encoder::Params{
+        const auto result = m_encoder->start(Encoder::Params{
         .path = m_current_path,
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
@@ -364,9 +363,13 @@ namespace EncodingManager
         .ask_for_encoding_settings = ask_for_encoding_settings,
         });
 
-        if (!result.empty())
+        if (result.has_value())
         {
-            DialogService::show_dialog(result.c_str(), L"Capture", fsvc_error);
+            const auto& str = result.value();
+            if (!str.empty())
+            {
+                DialogService::show_dialog(str.c_str(), L"Capture", fsvc_error);
+            }
             return false;
         }
 

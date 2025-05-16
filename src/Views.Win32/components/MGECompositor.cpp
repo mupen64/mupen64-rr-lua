@@ -8,7 +8,6 @@
 #include "MGECompositor.h"
 #include <Messenger.h>
 
-#include <Main.h>
 
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 

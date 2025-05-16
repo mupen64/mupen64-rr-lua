@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaConsole.h>
-#include <Main.h>
 
 // OPTIMIZATION: If no lua scripts are running, skip the deeper lua path
 // This is an unsynchronized access to the map from the emu thread!

@@ -17,4 +17,4 @@ namespace CLI
      * Gets whether the CLI wants fast-forward to always be enabled.
      */
     bool wants_fast_forward();
-} // namespace Cli
+} // namespace CLI

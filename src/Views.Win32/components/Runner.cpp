@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <ThreadPool.h>
 #include <Config.h>
-#include <Main.h>
 #include <Messenger.h>
 #include <components/Runner.h>
 #include <lua/LuaConsole.h>

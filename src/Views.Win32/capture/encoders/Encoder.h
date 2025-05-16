@@ -41,11 +41,11 @@ public:
     virtual ~Encoder() = default;
 
     /**
-     * \brief Starts encoding
-     * \param params The parameters to encode with
-     * \return The error message, or an empty string if the operation succeeded.
+     * \brief Starts encoding.
+     * \param params The parameters to encode with.
+     * \return The error message if the operation failed, or an empty optional if it succeeded. An empty error message means the user cancelled the starting.
      */
-    virtual std::wstring start(Params params) = 0;
+    virtual std::optional<std::wstring> start(Params params) = 0;
 
     /**
      * \brief Stops encoding

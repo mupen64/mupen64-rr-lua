@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <Main.h>
 #include <lua/LuaConsole.h>
 #include <lua/LuaRenderer.h>
 

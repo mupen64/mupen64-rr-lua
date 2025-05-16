@@ -7,7 +7,6 @@
 #include "stdafx.h"
 #include <Config.h>
 #include <DialogService.h>
-#include <Main.h>
 #include <Messenger.h>
 #include <ThreadPool.h>
 #include <argh.h>
@@ -286,7 +285,7 @@ void CLI::init()
         DialogService::show_dialog(L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.", L"CLI", fsvc_warning);
         g_config.core.is_movie_loop_enabled = false;
     }
-    
+
     // HACK: When playing a movie from start, the rom will start normally and signal us to do our work via EmuLaunchedChanged.
     // The work is started, but then the rom is reset. At that point, the dacrate changes and breaks the capture in some cases.
     // To avoid this, we store the movie's start flag prior to doing anything, and ignore the first EmuLaunchedChanged if it's set.

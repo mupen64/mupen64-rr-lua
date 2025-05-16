@@ -50,13 +50,14 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
                 lua->rctx.presenter->end_present();
             }
 
+            ValidateRect(hwnd, nullptr);
+            d2d_drawing = false;
+            
             if (!success)
             {
                 destroy_lua_environment(lua);
             }
 
-            ValidateRect(hwnd, nullptr);
-            d2d_drawing = false;
             return 0;
         }
     default:
@@ -82,12 +83,13 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
 
+            ValidateRect(hwnd, nullptr);
+
             if (!success)
             {
                 destroy_lua_environment(lua);
             }
 
-            ValidateRect(hwnd, nullptr);
             return 0;
         }
     default:

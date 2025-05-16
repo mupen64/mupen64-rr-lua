@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+--
+-- SPDX-License-Identifier: GPL-2.0-or-later
+--
+
 print("Press 1 to save to 'out.st'")
 print("Press 2 to load from 'out.st'")
 print("Press 3 to save to slot 1")
