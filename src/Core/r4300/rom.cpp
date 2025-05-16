@@ -213,7 +213,7 @@ bool rom_load(std::filesystem::path path)
 
         char arg[256] = {0};
         for (size_t i = 0; i < 16; i++)
-            sprintf_s(arg + i * 2, sizeof(arg + i * 2), "%02X", digest[i]);
+            sprintf_s(arg + i * 2, std::size(arg) - i * 2, "%02X", digest[i]);
         strcpy_s(rom_md5, sizeof(rom_md5), arg);
     }
 
