@@ -99,6 +99,12 @@ core_result core_init(core_params* params)
     g_core->SP_IMEM = SP_IMEM;
     g_core->PIF_RAM = PIF_RAM;
 
+    if (!g_core->st_pre_callback)
+    {
+        g_core->st_pre_callback = [](const core_st_callback_info&, const std::vector<uint8_t>&) {
+        };
+    }
+
     return Res_Ok;
 }
 

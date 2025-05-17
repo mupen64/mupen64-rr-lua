@@ -541,10 +541,10 @@ void vcr_create_n_frame_savestate(size_t frame)
     }
 
     g_core->log_info(std::format(L"[VCR] Creating seek savestate at frame {}...", frame));
-    core_st_do_memory({}, core_st_job_save, [frame](core_result result, const auto& buf) {
+    core_st_do_memory({}, core_st_job_save, [frame](const core_st_callback_info& info, const auto& buf) {
         std::scoped_lock lock(vcr_mutex);
 
-        if (result != Res_Ok)
+        if (info.result != Res_Ok)
         {
             g_core->show_dialog(std::format(L"Failed to save seek savestate at frame {}.", frame).c_str(), L"VCR", fsvc_error);
             return;
@@ -945,10 +945,10 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
         // save state
         g_core->log_info(L"[VCR] Saving state...");
         g_task = task_start_recording_from_snapshot;
-        core_st_do_file(get_path_for_new_movie(g_movie_path), core_st_job_save, [](core_result result, auto) {
+        core_st_do_file(get_path_for_new_movie(g_movie_path), core_st_job_save, [](const core_st_callback_info& info, auto) {
             std::scoped_lock lock(vcr_mutex);
 
-            if (result != Res_Ok)
+            if (info.result != Res_Ok)
             {
                 g_core->show_dialog(L"Failed to save savestate while starting recording.\nRecording will be stopped.", L"VCR", fsvc_error);
                 core_vcr_stop_all();
@@ -978,10 +978,10 @@ core_result core_vcr_start_record(std::filesystem::path path, uint16_t flags, st
         g_task = task_start_recording_from_existing_snapshot;
 
         g_core->submit_task([=] {
-            core_st_do_file(st_path, core_st_job_load, [](core_result result, auto) {
+            core_st_do_file(st_path, core_st_job_load, [](const core_st_callback_info& info, auto) {
                 std::scoped_lock lock(vcr_mutex);
 
-                if (result != Res_Ok)
+                if (info.result != Res_Ok)
                 {
                     g_core->show_dialog(L"Failed to load savestate while starting recording.\nRecording will be stopped.", L"VCR", fsvc_error);
                     core_vcr_stop_all();
@@ -1319,10 +1319,10 @@ core_result core_vcr_start_playback(std::filesystem::path path)
         g_task = task_start_playback_from_snapshot;
 
         g_core->submit_task([=] {
-            core_st_do_file(st_path, core_st_job_load, [](const core_result result, auto) {
+            core_st_do_file(st_path, core_st_job_load, [](const core_st_callback_info& info, auto) {
                 std::scoped_lock lock(vcr_mutex);
 
-                if (result != Res_Ok)
+                if (info.result != Res_Ok)
                 {
                     g_core->show_dialog(L"Failed to load savestate while starting playback.\nRecording will be stopped.", L"VCR", fsvc_error);
                     core_vcr_stop_all();
@@ -1482,8 +1482,8 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 
             // NOTE: This needs to go through AsyncExecutor (despite us already being on a worker thread) or it will cause a deadlock.
             g_core->submit_task([=] {
-                core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](core_result result, auto buf) {
-                    if (result != Res_Ok)
+                core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](const core_st_callback_info& info, auto buf) {
+                    if (info.result != Res_Ok)
                     {
                         g_core->show_dialog(L"Failed to load seek savestate for seek operation.", L"VCR", fsvc_error);
                         g_seek_savestate_loading = false;
@@ -1549,8 +1549,8 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 
         // NOTE: This needs to go through AsyncExecutor (despite us already being on a worker thread) or it will cause a deadlock.
         g_core->submit_task([=] {
-            core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](core_result result, auto buf) {
-                if (result != Res_Ok)
+            core_st_do_memory(g_seek_savestates[closest_key], core_st_job_load, [=](const core_st_callback_info& info, auto buf) {
+                if (info.result != Res_Ok)
                 {
                     g_core->show_dialog(L"Failed to load seek savestate for seek operation.", L"VCR", fsvc_error);
                     g_seek_savestate_loading = false;

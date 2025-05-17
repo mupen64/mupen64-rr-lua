@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <Main.h>
 #include <lua/LuaConsole.h>
 
 namespace LuaCore::Savestate
@@ -52,14 +53,14 @@ namespace LuaCore::Savestate
         core_vr_wait_increment();
         ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
-            core_st_do_file(path, job, [=](const auto result, const std::vector<uint8_t>& buf) {
+            core_st_do_file(path, job, [=](const core_st_callback_info& info, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
                     if (!get_lua_class(L))
                     {
                         return;
                     }
                     lua_pushcallback(L, callback);
-                    lua_pushinteger(L, result);
+                    lua_pushinteger(L, info.result);
                     lua_pushlstring(L, (const char*)buf.data(), buf.size());
                     lua_pcall(L, 2, 0, 0);
                 });
@@ -79,14 +80,14 @@ namespace LuaCore::Savestate
         core_vr_wait_increment();
         ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
-            core_st_do_slot(slot, job, [=](const auto result, const std::vector<uint8_t>& buf) {
+            core_st_do_file(get_st_with_slot_path(slot), job, [=](const core_st_callback_info& info, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
                     if (!get_lua_class(L))
                     {
                         return;
                     }
                     lua_pushcallback(L, callback);
-                    lua_pushinteger(L, result);
+                    lua_pushinteger(L, info.result);
                     lua_pushlstring(L, (const char*)buf.data(), buf.size());
                     lua_pcall(L, 2, 0, 0);
                 });
@@ -108,14 +109,14 @@ namespace LuaCore::Savestate
         ThreadPool::submit_task([=] {
             core_vr_wait_decrement();
             const auto buffer = std::vector<uint8_t>(buffer_str, buffer_str + buffer_len);
-            core_st_do_memory(buffer, job, [=](const auto result, const std::vector<uint8_t>& buf) {
+            core_st_do_memory(buffer, job, [=](const core_st_callback_info& info, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
                     if (!get_lua_class(L))
                     {
                         return;
                     }
                     lua_pushcallback(L, callback);
-                    lua_pushinteger(L, result);
+                    lua_pushinteger(L, info.result);
                     lua_pushlstring(L, (const char*)buf.data(), buf.size());
                     lua_pcall(L, 2, 0, 0);
                 });

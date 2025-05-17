@@ -284,6 +284,12 @@ typedef struct {
      */
     void (*get_plugin_names)(char* video, char* audio, char* input, char* rsp);
 
+    /**
+     * \brief The savestate callback wrapper, which is invoked prior to individual savestate callbacks.
+     * Can be used to display generic error information.
+     */
+    void (*st_pre_callback)(const core_st_callback_info& info, const std::vector<uint8_t>& buffer);
+
 #pragma endregion
 
 #pragma region Core-Provided
@@ -697,17 +703,6 @@ EXPORT void CALL core_tl_stop();
  * \return Whether the operation was enqueued.
  */
 EXPORT bool CALL core_st_do_file(const std::filesystem::path& path, core_st_job job, const core_st_callback& callback, bool ignore_warnings);
-
-/**
- * \brief Executes a savestate operation to a slot.
- * \param slot The slot to construct the savestate path with.
- * \param job The job to set.
- * \param callback The callback to call when the operation is complete.
- * \param ignore_warnings Whether warnings, such as those about ROM compatibility, shouldn't be shown.
- * \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are originating from the emu thread.
- * \return Whether the operation was enqueued.
- */
-EXPORT bool CALL core_st_do_slot(int32_t slot, core_st_job job, const core_st_callback& callback, bool ignore_warnings);
 
 /**
  * Executes a savestate operation in-memory.

@@ -126,6 +126,8 @@ std::filesystem::path get_saves_directory();
 
 void set_cwd();
 
+std::filesystem::path get_st_with_slot_path(size_t slot);
+
 #pragma region Dialog IDs
 
 #define VIEW_DLG_MOVIE_OVERWRITE_WARNING "VIEW_DLG_MOVIE_OVERWRITE_WARNING"

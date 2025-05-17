@@ -447,6 +447,65 @@ std::filesystem::path get_summercart_path()
     return get_saves_directory() / "card.vhd";
 }
 
+std::filesystem::path get_st_with_slot_path(const size_t slot)
+{
+    const auto hdr = core_vr_get_rom_header();
+    const auto fname = std::format(L"{} {}.st{}", string_to_wstring((const char*)hdr->nom), core_vr_country_code_to_country_name(hdr->Country_code), std::to_wstring(slot));
+    return get_saves_directory() / fname;
+}
+
+void st_callback_wrapper(const core_st_callback_info& info, const std::vector<uint8_t>&)
+{
+    if (info.medium == core_st_medium_memory)
+    {
+        return;
+    }
+
+    if (info.medium == core_st_medium_path)
+    {
+        const auto& fname = info.params.path.filename().wstring();
+        const bool is_slot = fname.find(L".st") != std::wstring::npos && std::isdigit(fname.back());
+
+        if (is_slot)
+        {
+            const size_t slot = std::stoul(fname.substr(fname.size() - 1));
+            
+            switch (info.result)
+            {
+            case Res_Ok:
+                Statusbar::post(std::format(L"{} slot {}", info.job == core_st_job_save ? L"Saved" : L"Loaded", slot + 1));
+                break;
+            case Res_Cancelled:
+                Statusbar::post(std::format(L"Cancelled {}", info.job == core_st_job_save ? L"save" : L"load"));
+                break;
+            default:
+                Statusbar::post(std::format(L"Failed to {} slot {}", info.job == core_st_job_save ? L"save" : L"load", slot + 1));
+                break;
+            }
+            return;
+        }
+
+        switch (info.result)
+        {
+        case Res_Ok:
+            Statusbar::post(std::format(L"{} {}", info.job == core_st_job_save ? L"Saved" : L"Loaded", info.params.path.filename().wstring()));
+            break;
+        case Res_Cancelled:
+            Statusbar::post(std::format(L"Cancelled {}", info.job == core_st_job_save ? L"save" : L"load"));
+            break;
+        default:
+            {
+                const auto message = std::format(L"Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
+                                                 info.job == core_st_job_save ? L"save" : L"load",
+                                                 info.params.path.filename().wstring(),
+                                                 (int32_t)info.result);
+                DialogService::show_dialog(message.c_str(), L"Savestate", fsvc_error);
+                break;
+            }
+        }
+    }
+}
+
 void update_screen()
 {
     if (core_vr_get_mge_available())
@@ -1624,7 +1683,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
                 ThreadPool::submit_task([=] {
                     core_vr_wait_decrement();
-                    core_st_do_slot(g_config.st_slot, core_st_job_save, nullptr, false);
+                    core_st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_save, nullptr, false);
                 });
                 break;
             case IDM_SAVE_STATE_AS:
@@ -1648,7 +1707,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 core_vr_wait_increment();
                 ThreadPool::submit_task([=] {
                     core_vr_wait_decrement();
-                    core_st_do_slot(g_config.st_slot, core_st_job_load, nullptr, false);
+                    core_st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_load, nullptr, false);
                 });
                 break;
             case IDM_LOAD_STATE_AS:
@@ -1683,14 +1742,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                             return;
                         }
 
-                        core_st_do_memory(buf, core_st_job_load, [](const core_result result, auto) {
-                            if (result == Res_Ok)
+                        core_st_do_memory(buf, core_st_job_load, [](const core_st_callback_info& info, auto) {
+                            if (info.result == Res_Ok)
                             {
                                 Statusbar::post(L"Undid load");
                                 return;
                             }
 
-                            if (result == Res_Cancelled)
+                            if (info.result == Res_Cancelled)
                             {
                                 return;
                             }
@@ -1860,7 +1919,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     ThreadPool::submit_task([=] {
                         core_vr_wait_decrement();
-                        core_st_do_slot(slot, core_st_job_save, nullptr, false);
+                        core_st_do_file(get_st_with_slot_path(slot), core_st_job_save, nullptr, false);
                     });
                 }
                 else if (LOWORD(wParam) >= ID_LOAD_1 && LOWORD(wParam) <= ID_LOAD_10)
@@ -1873,7 +1932,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     ThreadPool::submit_task([=] {
                         core_vr_wait_decrement();
-                        core_st_do_slot(slot, core_st_job_load, nullptr, false);
+                        core_st_do_file(get_st_with_slot_path(slot), core_st_job_load, nullptr, false);
                     });
                 }
                 else if (LOWORD(wParam) >= ID_RECENTROMS_FIRST &&
@@ -2259,6 +2318,7 @@ static core_result init_core()
     g_core.copy_video = MGECompositor::copy_video;
     g_core.find_available_rom = RomBrowser::find_available_rom;
     g_core.load_screen = MGECompositor::load_screen;
+    g_core.st_pre_callback = st_callback_wrapper;
     g_core.get_plugin_names = [](char* video, char* audio, char* input, char* rsp) {
 #define DO_COPY(type)                                                                          \
     if (type)                                                                                  \

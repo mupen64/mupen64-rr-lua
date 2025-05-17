@@ -712,15 +712,30 @@ typedef enum {
 } core_st_job;
 
 typedef enum {
-    // The target medium is a slot (0-9).
-    core_st_medium_slot,
     // The target medium is a file with a path.
     core_st_medium_path,
     // The target medium is in-memory.
     core_st_medium_memory,
 } core_st_medium;
 
-using core_st_callback = std::function<void(core_result result, const std::vector<uint8_t>&)>;
+struct core_st_job_params {
+    /// The path to the savestate file.
+    /// Valid if the task's medium is <see cref="e_st_medium::path"/>.
+    std::filesystem::path path{};
+
+    /// The buffer containing the savestate data.
+    /// Valid if the task's medium is <see cref="e_st_medium::memory"/> and the job is <see cref="e_st_job::load"/>.
+    std::vector<uint8_t> buffer{};
+};
+
+struct core_st_callback_info {
+    core_result result{};
+    core_st_job job{};
+    core_st_medium medium{};
+    core_st_job_params params{};
+};
+
+using core_st_callback = std::function<void(const core_st_callback_info&, const std::vector<uint8_t>&)>;
 
 #pragma endregion
 

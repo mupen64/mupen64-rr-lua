@@ -11,7 +11,6 @@
 #include <r4300/interrupt.h>
 #include <r4300/r4300.h>
 #include <r4300/rom.h>
-#include <r4300/vcr.h>
 #include <include/core_api.h>
 #include <IOHelpers.h>
 #include "flashram.h"
@@ -26,20 +25,6 @@ bool g_st_skip_dma{};
 
 /// Represents a task to be performed by the savestate system.
 struct t_savestate_task {
-    struct t_params {
-        /// The savestate slot.
-        /// Valid if the task's medium is <see cref="e_st_medium::slot"/>.
-        size_t slot;
-
-        /// The path to the savestate file.
-        /// Valid if the task's medium is <see cref="e_st_medium::path"/>.
-        std::filesystem::path path;
-
-        /// The buffer containing the savestate data.
-        /// Valid if the task's medium is <see cref="e_st_medium::memory"/> and the job is <see cref="e_st_job::load"/>.
-        std::vector<uint8_t> buffer;
-    };
-
     /// The job to perform.
     core_st_job job;
 
@@ -50,7 +35,7 @@ struct t_savestate_task {
     core_st_callback callback;
 
     /// The task's parameters. Only one field in the struct is valid at a time.
-    t_params params{};
+    core_st_job_params params{};
 
     /// Whether warnings, such as those about ROM compatibility, shouldn't be shown.
     bool ignore_warnings;
@@ -81,16 +66,6 @@ void get_paths_for_task(const t_savestate_task& task, std::filesystem::path& st_
 {
     sd_path = g_core->get_saves_directory() / (const char*)ROM_HEADER.nom;
     sd_path.replace_extension(".vhd");
-
-    if (task.medium == core_st_medium_slot)
-    {
-        st_path = std::format(
-        L"{}{} {}.st{}",
-        g_core->get_saves_directory().wstring(),
-        string_to_wstring((const char*)ROM_HEADER.nom),
-        core_vr_country_code_to_country_name(ROM_HEADER.Country_code),
-        std::to_wstring(task.params.slot));
-    }
 }
 
 
@@ -239,7 +214,7 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
 
     const auto st = generate_savestate();
 
-    if (task.medium == core_st_medium_slot || task.medium == core_st_medium_path)
+    if (task.medium == core_st_medium_path)
     {
         // Always save summercart for some reason
         std::filesystem::path new_st_path = task.params.path;
@@ -262,7 +237,12 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
 
         if (fopen_s(&f, new_st_path.string().c_str(), "wb"))
         {
-            task.callback(ST_FileWriteError, st);
+            task.callback(core_st_callback_info{
+                          .result = ST_FileWriteError,
+                          .job = task.job,
+                          .medium = task.medium,
+                          .params = task.params},
+                          st);
             return;
         }
 
@@ -270,7 +250,12 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
         fclose(f);
     }
 
-    task.callback(Res_Ok, st);
+    task.callback(core_st_callback_info{
+                  .result = Res_Ok,
+                  .job = task.job,
+                  .medium = task.medium,
+                  .params = task.params},
+                  st);
     g_core->callbacks.save_state();
 }
 
@@ -291,7 +276,6 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
     switch (task.medium)
     {
-    case core_st_medium_slot:
     case core_st_medium_path:
         st_buf = read_file_buffer(new_st_path);
         break;
@@ -304,14 +288,24 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
     if (st_buf.empty())
     {
-        task.callback(ST_NotFound, {});
+        task.callback(core_st_callback_info{
+                      .result = ST_NotFound,
+                      .job = task.job,
+                      .medium = task.medium,
+                      .params = task.params},
+                      {});
         return;
     }
 
     std::vector<uint8_t> decompressed_buf = auto_decompress(st_buf);
     if (decompressed_buf.empty())
     {
-        task.callback(ST_DecompressionError, {});
+        task.callback(core_st_callback_info{
+                      .result = ST_DecompressionError,
+                      .job = task.job,
+                      .medium = task.medium,
+                      .params = task.params},
+                      {});
         return;
     }
 
@@ -329,7 +323,12 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
         if (!result)
         {
-            task.callback(Res_Cancelled, {});
+            task.callback(core_st_callback_info{
+                          .result = Res_Cancelled,
+                          .job = task.job,
+                          .medium = task.medium,
+                          .params = task.params},
+                          {});
             return;
         }
     }
@@ -340,7 +339,12 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     const auto si_reg = (core_si_reg*)&g_first_block[0xDC - 0x20];
     if (!check_register_validity(si_reg) || !check_flashram_infos(&g_first_block[0x8021F0 - 0x20]))
     {
-        task.callback(ST_InvalidRegisters, {});
+        task.callback(core_st_callback_info{
+                      .result = ST_InvalidRegisters,
+                      .job = task.job,
+                      .medium = task.medium,
+                      .params = task.params},
+                      {});
         return;
     }
 
@@ -356,7 +360,12 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     if (len == sizeof(g_event_queue_buf))
     {
         // Exhausted the buffer and still no terminator. Prevents the buffer overflow "Queuecrush".
-        task.callback(ST_EventQueueTooLong, {});
+        task.callback(core_st_callback_info{
+                      .result = ST_EventQueueTooLong,
+                      .job = task.job,
+                      .medium = task.medium,
+                      .params = task.params},
+                      {});
         return;
     }
 
@@ -403,7 +412,12 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
             const auto result = g_core->show_ask_dialog(CORE_DLG_ST_UNFREEZE_WARNING, err_str.c_str(), L"Savestate", true);
             if (!result)
             {
-                task.callback(Res_Cancelled, {});
+                task.callback(core_st_callback_info{
+                              .result = Res_Cancelled,
+                              .job = task.job,
+                              .medium = task.medium,
+                              .params = task.params},
+                              {});
                 goto failedLoad;
             }
         }
@@ -418,7 +432,12 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
                                                         true);
             if (!result)
             {
-                task.callback(Res_Cancelled, {});
+                task.callback(core_st_callback_info{
+                              .result = Res_Cancelled,
+                              .job = task.job,
+                              .medium = task.medium,
+                              .params = task.params},
+                              {});
                 return;
             }
         }
@@ -477,7 +496,12 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     }
 
     g_core->callbacks.load_state();
-    task.callback(Res_Ok, decompressed_buf);
+    task.callback(core_st_callback_info{
+                  .result = Res_Ok,
+                  .job = task.job,
+                  .medium = task.medium,
+                  .params = task.params},
+                  decompressed_buf);
 
 failedLoad:
     // legacy .st fix, makes BEQ instruction ignore jump, because .st writes new address explictly.
@@ -516,10 +540,10 @@ void savestates_simplify_tasks()
     {
         const auto& task = g_tasks[i];
 
-        if (task.medium != core_st_medium_slot)
+        if (task.medium != core_st_medium_path)
             continue;
 
-        // 2. If a slot task is detected, loop through all other tasks up to the next load task to find duplicates
+        // 2. If a path task is detected, loop through all other tasks up to the next load task to find duplicates
         for (size_t j = i + 1; j < g_tasks.size(); j++)
         {
             const auto& other_task = g_tasks[j];
@@ -529,7 +553,7 @@ void savestates_simplify_tasks()
                 break;
             }
 
-            if (other_task.medium == core_st_medium_slot && task.params.slot == other_task.params.slot)
+            if (other_task.medium == core_st_medium_path && task.params.path == other_task.params.path)
             {
                 g_core->log_trace(std::format(L"[ST] Found duplicate slot task at index {}", j));
                 duplicate_indicies.push_back(j);
@@ -577,9 +601,6 @@ void savestates_log_tasks()
         std::wstring medium_str;
         switch (task.medium)
         {
-        case core_st_medium_slot:
-            medium_str = L"Slot";
-            break;
         case core_st_medium_path:
             medium_str = L"Path";
             break;
@@ -620,8 +641,8 @@ void savestates_create_undo_point()
     const t_savestate_task task = {
     .job = core_st_job_save,
     .medium = core_st_medium_memory,
-    .callback = [](const core_result result, const std::vector<uint8_t>& buffer) {
-        if (result != Res_Ok)
+    .callback = [](const core_st_callback_info& info, const std::vector<uint8_t>& buffer) {
+        if (info.result != Res_Ok)
         {
             return;
         }
@@ -693,88 +714,30 @@ bool core_st_do_file(const std::filesystem::path& path, const core_st_job job, c
         g_core->log_trace(L"[ST] do_file: Can't enqueue work.");
         if (callback)
         {
-            callback(ST_CoreNotLaunched, {});
+            callback(core_st_callback_info{
+                     .result = ST_CoreNotLaunched,
+                     .job = job,
+                     .medium = core_st_medium_path,
+                     .params = {.path = path}},
+                     {});
         }
         return false;
     }
 
-    auto pre_callback = [=](const core_result result, const std::vector<uint8_t>& buffer) {
-        if (result == Res_Ok)
-        {
-            g_core->show_statusbar(std::format(L"{} {}", job == core_st_job_save ? L"Saved" : L"Loaded", path.filename().wstring()).c_str());
-        }
-        else if (result == Res_Cancelled)
-        {
-            g_core->show_statusbar(std::format(L"Cancelled {}", job == core_st_job_save ? L"save" : L"load").c_str());
-        }
-        else
-        {
-            const auto message = std::format(L"Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
-                                             job == core_st_job_save ? L"save" : L"load",
-                                             path.filename().wstring(),
-                                             (int32_t)result);
-            g_core->show_dialog(message.c_str(), L"Savestate", fsvc_error);
-        }
-
+    auto internal_callback_wrapper = [=](const core_st_callback_info& info, const std::vector<uint8_t>& buffer) {
+        g_core->st_pre_callback(info, buffer);
         if (callback)
         {
-            callback(result, buffer);
+            callback(info, buffer);
         }
     };
 
     const t_savestate_task task = {
     .job = job,
     .medium = core_st_medium_path,
-    .callback = pre_callback,
+    .callback = internal_callback_wrapper,
     .params = {
     .path = path},
-    .ignore_warnings = ignore_warnings,
-    };
-
-    g_tasks.insert(g_tasks.begin(), task);
-    return true;
-}
-
-bool core_st_do_slot(const int32_t slot, const core_st_job job, const core_st_callback& callback, bool ignore_warnings)
-{
-    std::scoped_lock lock(g_task_mutex);
-
-    if (!can_push_work())
-    {
-        g_core->log_trace(L"[ST] do_slot: Can't enqueue work.");
-        if (callback)
-        {
-            callback(ST_CoreNotLaunched, {});
-        }
-        return false;
-    }
-
-    auto pre_callback = [=](const core_result result, const std::vector<uint8_t>& buffer) {
-        if (result == Res_Ok)
-        {
-            g_core->show_statusbar(std::format(L"{} slot {}", job == core_st_job_save ? L"Saved" : L"Loaded", slot + 1).c_str());
-        }
-        else if (result == Res_Cancelled)
-        {
-            g_core->show_statusbar(std::format(L"Cancelled {}", job == core_st_job_save ? L"save" : L"load").c_str());
-        }
-        else
-        {
-            g_core->show_statusbar(std::format(L"Failed to {} slot {}", job == core_st_job_save ? L"save" : L"load", slot + 1).c_str());
-        }
-
-        if (callback)
-        {
-            callback(result, buffer);
-        }
-    };
-
-    const t_savestate_task task = {
-    .job = job,
-    .medium = core_st_medium_slot,
-    .callback = pre_callback,
-    .params = {
-    .slot = static_cast<size_t>(slot)},
     .ignore_warnings = ignore_warnings,
     };
 
@@ -791,15 +754,27 @@ bool core_st_do_memory(const std::vector<uint8_t>& buffer, const core_st_job job
         g_core->log_trace(L"[ST] do_memory: Can't enqueue work.");
         if (callback)
         {
-            callback(ST_CoreNotLaunched, {});
+            callback(core_st_callback_info{.result = ST_CoreNotLaunched,
+                                           .job = job,
+                                           .medium = core_st_medium_memory,
+                                           .params = {.buffer = buffer}},
+                     {});
         }
         return false;
     }
 
+    auto internal_callback_wrapper = [=](const core_st_callback_info& info, const std::vector<uint8_t>& buffer) {
+        g_core->st_pre_callback(info, buffer);
+        if (callback)
+        {
+            callback(info, buffer);
+        }
+    };
+
     const t_savestate_task task = {
     .job = job,
     .medium = core_st_medium_memory,
-    .callback = callback,
+    .callback = internal_callback_wrapper,
     .params = {
     .buffer = buffer},
     .ignore_warnings = ignore_warnings,
