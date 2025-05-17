@@ -469,7 +469,7 @@ void st_callback_wrapper(const core_st_callback_info& info, const std::vector<ui
         if (is_slot)
         {
             const size_t slot = std::stoul(fname.substr(fname.size() - 1));
-            
+
             switch (info.result)
             {
             case Res_Ok:
@@ -2320,20 +2320,20 @@ static core_result init_core()
     g_core.load_screen = MGECompositor::load_screen;
     g_core.st_pre_callback = st_callback_wrapper;
     g_core.get_plugin_names = [](char* video, char* audio, char* input, char* rsp) {
-#define DO_COPY(type)                                                                          \
-    if (type)                                                                                  \
-    {                                                                                          \
-        if (g_##type##_plugin)                                                                 \
-        {                                                                                      \
-            if (strncpy_s(type, sizeof(type), g_##type##_plugin->name().data(), 64))           \
-            {                                                                                  \
-                g_view_logger->error("Failed to copy {} plugin name", #type);                  \
-            }                                                                                  \
-        }                                                                                      \
-        else                                                                                   \
-        {                                                                                      \
-            g_view_logger->error("Tried to get {} plugin name while it wasn't loaded", #type); \
-        }                                                                                      \
+#define DO_COPY(type)                                                                                        \
+    if (type)                                                                                                \
+    {                                                                                                        \
+        if (g_##type##_plugin)                                                                               \
+        {                                                                                                    \
+            if (strncpy_s(type, 64 - 1, g_##type##_plugin->name().data(), g_##type##_plugin->name().size())) \
+            {                                                                                                \
+                g_view_logger->error("Failed to copy {} plugin name", #type);                                \
+            }                                                                                                \
+        }                                                                                                    \
+        else                                                                                                 \
+        {                                                                                                    \
+            g_view_logger->error("Tried to get {} plugin name while it wasn't loaded", #type);               \
+        }                                                                                                    \
     }
         DO_COPY(video)
         DO_COPY(audio)
