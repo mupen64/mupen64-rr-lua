@@ -350,9 +350,8 @@ bool AVIEncoder::append_video_impl(uint8_t* image)
 
 bool AVIEncoder::save_options() const
 {
-    FILE* f = fopen("avi.cfg", "wb");
-
-    if (!f)
+    FILE* f = nullptr;
+    if (fopen_s(&f, "avi.cfg", "wb"))
     {
         g_view_logger->error("[AVIEncoder] {} fopen() failed", __func__);
         return false;
@@ -382,11 +381,11 @@ bool AVIEncoder::save_options() const
 
 bool AVIEncoder::load_options()
 {
-    FILE* f = fopen("avi.cfg", "rb");
-
-    if (!f)
+    FILE* f = nullptr;
+    if (fopen_s(&f, "avi.cfg", "rb"))
+    {
         return false;
-
+    }
     fseek(f, 0, SEEK_END);
 
     // Too small...
@@ -406,7 +405,7 @@ bool AVIEncoder::load_options()
         }
         free(params);
     }
-    
+
     (void)fclose(f);
     return true;
 

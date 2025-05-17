@@ -215,7 +215,7 @@ void log(uint32_t pc, uint32_t w)
     *(p++) = x[(n) / 10]; \
     *(p++) = x[(n) % 10]; \
     *(p++) = '=';         \
-    p += sprintf(p, "%f", *reg_cop1_simple[n])
+    p += sprintf_s(p, sizeof(traceLoggingBuf) - (p - traceLoggingBuf), "%f", *reg_cop1_simple[n])
 #define REGFPU2(n, m) \
     REGFPU(n);        \
     if ((n) != (m))   \
@@ -335,7 +335,7 @@ void tracelog_log_interp_ops()
 void core_tl_start(std::filesystem::path path, bool binary, bool append)
 {
     use_binary = binary;
-    log_file = _wfopen(path.wstring().c_str(), L"wb");
+    _wfopen_s(&log_file, path.wstring().c_str(), L"wb");
 
     enabled = true;
     if (interpcore == 0)

@@ -52,7 +52,7 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             ValidateRect(hwnd, nullptr);
             d2d_drawing = false;
-            
+
             if (!success)
             {
                 destroy_lua_environment(lua);

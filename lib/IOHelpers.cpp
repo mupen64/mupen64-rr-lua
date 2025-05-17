@@ -21,9 +21,9 @@ void vecwrite(std::vector<uint8_t>& vec, void* data, size_t len)
 
 std::vector<uint8_t> read_file_buffer(const std::filesystem::path& path)
 {
-    FILE* f = fopen(path.string().c_str(), "rb");
+    FILE* f = nullptr;
 
-    if (!f)
+    if (fopen_s(&f, path.string().c_str(), "rb"))
     {
         return {};
     }
@@ -43,9 +43,9 @@ std::vector<uint8_t> read_file_buffer(const std::filesystem::path& path)
 
 bool write_file_buffer(const std::filesystem::path& path, std::span<uint8_t> data)
 {
-    FILE* f = fopen(path.string().c_str(), "wb");
+    FILE* f = nullptr;
 
-    if (!f)
+    if (fopen_s(&f, path.string().c_str(), "wb"))
     {
         return false;
     }
@@ -76,7 +76,11 @@ std::vector<uint8_t> auto_decompress(std::vector<uint8_t>& vec, size_t initial_s
         out_buf = static_cast<uint8_t*>(realloc(out_buf, buf_size));
         size_t actual_size = 0;
         auto result = libdeflate_gzip_decompress(
-        decompressor, vec.data(), vec.size(), out_buf, buf_size,
+        decompressor,
+        vec.data(),
+        vec.size(),
+        out_buf,
+        buf_size,
         &actual_size);
         if (result == LIBDEFLATE_SHORT_OUTPUT || result == LIBDEFLATE_INSUFFICIENT_SPACE)
         {
@@ -114,8 +118,9 @@ bool iequals(std::wstring_view lhs, std::wstring_view rhs)
 
 std::string to_lower(std::string a)
 {
-    std::ranges::transform(a, a.begin(),
-                           [](unsigned char c) { return std::tolower(c); });
+    std::ranges::transform(a, a.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
     return a;
 }
 
@@ -235,15 +240,18 @@ bool files_are_equal(const std::filesystem::path& first, const std::filesystem::
 {
     bool different = false;
 
-    FILE* fp1 = fopen(first.string().c_str(), "rb");
-    FILE* fp2 = fopen(second.string().c_str(), "rb");
-    
+    FILE* fp1 = nullptr;
+    FILE* fp2 = nullptr;
+    if (fopen_s(&fp1, first.string().c_str(), "rb") || fopen_s(&fp2, second.string().c_str(), "rb"))
+    {
+        return false;
+    }
     fseek(fp1, 0, SEEK_END);
     fseek(fp2, 0, SEEK_END);
-    
+
     const auto len1 = ftell(fp1);
     const auto len2 = ftell(fp2);
-    
+
     if (len1 != len2)
     {
         different = true;
@@ -252,7 +260,7 @@ bool files_are_equal(const std::filesystem::path& first, const std::filesystem::
 
     fseek(fp1, 0, SEEK_SET);
     fseek(fp2, 0, SEEK_SET);
-    
+
     int ch1, ch2;
     while ((ch1 = fgetc(fp1)) != EOF && (ch2 = fgetc(fp2)) != EOF)
     {
@@ -263,7 +271,7 @@ bool files_are_equal(const std::filesystem::path& first, const std::filesystem::
         }
     }
 
-    cleanup:
+cleanup:
     fclose(fp1);
     fclose(fp2);
     return !different;
@@ -308,4 +316,3 @@ std::vector<std::wstring> get_files_with_extension_in_directory(std::wstring dir
     return paths;
 #endif
 }
-

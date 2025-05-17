@@ -417,7 +417,7 @@ void Plugin::config()
             DialogService::show_dialog(std::format(L"'{}' has no configuration.", string_to_wstring(this->name())).c_str(), L"Plugin", fsvc_error, g_hwnd_plug);
             goto cleanup;
         }
-        
+
         // if (!get_config_1 && !dll_config || (get_config_1 && !save_config_1))
         // {
         //     DialogService::show_dialog(std::format(L"'{}' has no configuration.", string_to_wstring(this->name())).c_str(), L"Plugin", fsvc_error, g_hwnd_plug);
