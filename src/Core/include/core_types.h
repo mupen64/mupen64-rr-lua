@@ -99,8 +99,7 @@ typedef enum {
 #pragma endregion
 } core_result;
 
-#pragma pack(push, 1)
-typedef struct CoreCfg {
+struct core_cfg {
     /// <summary>
     /// Statistic - Amount of state loads during recording
     /// </summary>
@@ -251,9 +250,7 @@ typedef struct CoreCfg {
     /// Throttles game rendering to 60 FPS.
     /// </summary>
     int32_t render_throttling = 1;
-
-} core_cfg;
-#pragma pack(pop)
+};
 
 #pragma region Emulator
 
