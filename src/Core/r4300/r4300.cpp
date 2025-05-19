@@ -110,6 +110,11 @@ std::filesystem::path get_mempak_path()
 
 void core_vr_resume_emu()
 {
+    if (!vcr_allows_core_unpause())
+    {
+        return;
+    }
+    
     if (emu_launched)
     {
         emu_paused = 0;

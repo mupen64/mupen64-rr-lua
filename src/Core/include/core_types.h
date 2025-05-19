@@ -236,6 +236,11 @@ struct core_cfg {
     int32_t vcr_write_extended_format = 1;
 
     /// <summary>
+    /// Makes the emulator wait at the last frame of a movie.
+    /// </summary>
+    int32_t vcr_wait_at_movie_end{};
+    
+    /// <summary>
     /// The maximum amount of VIs allowed to be generated since the last input poll before a warning dialog is shown
     /// 0 - no warning
     /// </summary>
