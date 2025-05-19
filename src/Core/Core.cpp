@@ -12,6 +12,14 @@
 core_params* g_core{};
 std::atomic<int32_t> g_wait_counter = 0;
 
+#define CORE_EXPORT __declspec(dllexport)
+
+extern "C" {
+// ReSharper disable CppInconsistentNaming
+CORE_EXPORT void* CORE_RDRAM = nullptr;
+// ReSharper restore CppInconsistentNaming
+}
+
 core_result core_init(core_params* params)
 {
     g_core = params;
@@ -98,6 +106,7 @@ core_result core_init(core_params* params)
     g_core->SP_DMEM = SP_DMEM;
     g_core->SP_IMEM = SP_IMEM;
     g_core->PIF_RAM = PIF_RAM;
+    CORE_RDRAM = rdram;
 
     if (!g_core->st_pre_callback)
     {
