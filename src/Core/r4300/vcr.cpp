@@ -688,7 +688,7 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
         return;
     }
 
-    if (g_core->cfg->vcr_wait_at_movie_end && m_current_sample == (int32_t)g_header.length_samples - 1)
+    if (g_core->cfg->wait_at_movie_end && m_current_sample == (int32_t)g_header.length_samples - 1)
     {
         core_vr_pause_emu();
     }
@@ -788,7 +788,7 @@ bool vcr_allows_core_pause()
 
 bool vcr_allows_core_unpause()
 {
-    if (g_core->cfg->vcr_wait_at_movie_end && g_task == task_playback && m_current_sample != g_header.length_samples - 1)
+    if (g_core->cfg->wait_at_movie_end && g_task == task_playback && m_current_sample >= g_header.length_samples - 1)
     {
         return false;
     }
