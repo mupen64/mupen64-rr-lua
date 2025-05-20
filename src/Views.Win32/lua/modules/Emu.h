@@ -137,12 +137,6 @@ namespace LuaCore::Emu
         return 1;
     }
 
-    static int SetGFX(lua_State* L)
-    {
-        // stub for now
-        return 0;
-    }
-
     static int EmuPause(lua_State* L)
     {
         if (!lua_toboolean(L, 1))
