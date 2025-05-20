@@ -130,6 +130,11 @@ static t_config get_default_config()
     .down_cmd = IDM_VCR_READONLY,
     };
 
+    config.toggle_wait_at_movie_end_hotkey = {
+    .identifier = L"Toggle Wait at Movie End",
+    .down_cmd = IDM_WAIT_AT_MOVIE_END,
+    };
+
     config.toggle_movie_loop_hotkey = {
     .identifier = L"Toggle movie loop",
     .key = 'L',
@@ -819,7 +824,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
     HANDLE_P_VALUE(core.vcr_readonly)
     HANDLE_P_VALUE(core.vcr_backups)
     HANDLE_P_VALUE(core.vcr_write_extended_format)
-    HANDLE_P_VALUE(core.vcr_wait_at_movie_end)
+    HANDLE_P_VALUE(core.wait_at_movie_end)
     HANDLE_P_VALUE(automatic_update_checking)
     HANDLE_P_VALUE(silent_mode)
     HANDLE_P_VALUE(core.max_lag)

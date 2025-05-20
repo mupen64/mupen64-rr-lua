@@ -130,6 +130,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Loop Movie Pl&ayback",        IDM_LOOP_MOVIE
         MENUITEM "Read-Onl&y",                  IDM_VCR_READONLY
+        MENUITEM "Wait at &Movie End",          IDM_WAIT_AT_MOVIE_END
     END
     POPUP "&Utilities"
     BEGIN
