@@ -205,7 +205,7 @@ namespace UpdateChecker
                 SetWindowText(hwnd, L"Changelog");
                 Edit_SetText(edit_hwnd, str);
                 Edit_SetReadOnly(edit_hwnd, true);
-            
+
                 SetFocus(GetDlgItem(hwnd, IDC_TEXTBOX_LUAPROMPT));
                 break;
             }
@@ -232,6 +232,11 @@ namespace UpdateChecker
         DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), g_main_hwnd, changelog_dlgproc, (LPARAM)changelog.data());
     }
 
+    void show_connectivity_error()
+    {
+        DialogService::show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error", fsvc_error);
+    }
+
     void check(bool manual)
     {
         if (!manual && !g_config.automatic_update_checking)
@@ -244,6 +249,7 @@ namespace UpdateChecker
 
         if (json.empty())
         {
+            show_connectivity_error();
             return;
         }
 
@@ -254,6 +260,7 @@ namespace UpdateChecker
         if (!tag_name.is_string())
         {
             g_view_logger->error("[UpdateChecker] no tag_name in json response");
+            show_connectivity_error();
             return;
         }
 
@@ -262,6 +269,7 @@ namespace UpdateChecker
         if (!body.is_string())
         {
             g_view_logger->error("[UpdateChecker] no body in json response");
+            show_connectivity_error();
             return;
         }
 
@@ -275,7 +283,6 @@ namespace UpdateChecker
 
         const auto version_difference = version_compare(CURRENT_VERSION, version);
 
-
         if (version_difference != -1)
         {
             if (manual)
@@ -286,8 +293,8 @@ namespace UpdateChecker
             return;
         }
 
-        show_prompt:
-        
+    show_prompt:
+
         const auto result = DialogService::show_multiple_choice_dialog(
         VIEW_DLG_UPDATE_DIALOG,
         {
