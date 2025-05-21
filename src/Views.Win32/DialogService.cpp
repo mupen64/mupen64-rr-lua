@@ -12,7 +12,7 @@
 
 std::unordered_map<std::string, size_t> dialog_choice_map;
 
-size_t DialogService::show_multiple_choice_dialog(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type, void* hwnd)
+size_t DialogService::show_multiple_choice_dialog(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type, void* hwnd, const wchar_t* details)
 {
     if (g_config.silent_mode)
     {
@@ -50,7 +50,7 @@ size_t DialogService::show_multiple_choice_dialog(const std::string& id, const s
         break;
     }
 
-    const TASKDIALOGCONFIG task_dialog_config = {
+    TASKDIALOGCONFIG task_dialog_config = {
     .cbSize = sizeof(TASKDIALOGCONFIG),
     .hwndParent = static_cast<HWND>(hwnd ? hwnd : g_main_hwnd),
     .pszWindowTitle = title,
@@ -60,6 +60,14 @@ size_t DialogService::show_multiple_choice_dialog(const std::string& id, const s
     .pButtons = buttons.data(),
     .pszVerificationText = L"Don't show again",
     };
+
+    if (details)
+    {
+        task_dialog_config.dwFlags |= TDF_EXPAND_FOOTER_AREA;
+        task_dialog_config.pszExpandedInformation = details;
+        task_dialog_config.pszExpandedControlText = L"Show details";
+        task_dialog_config.pszCollapsedControlText = L"Hide details";
+    }
 
     int pressed_button = -1;
     BOOL dont_show_again = false;
