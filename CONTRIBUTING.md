@@ -82,6 +82,11 @@ Code formatting must, to the furthest possible extent, abide by the [.clang-form
 
 # Plugin Guidelines
 
+- Give your plugin a descriptive name.
+    1. The filename should be formatted as follows: `[Plugin Name]-[x86|x64]-[sse2|avx2|avx512]-[debug|release].dll`
+        a. e.g.: `TASInput-x86-sse2-release.dll` 
+    2. The friendly name should be formatted as follows: `[Plugin Name] [x86|x64] [SSE2|AVX2|AVX512] [Debug|Release]`
+        a. e.g.: `TASInput x86 SSE2 Release`, `TASInput x86 SSE2 Debug`
 - Do as little initialization work in `DllMain` as possible. Do it all in `RomOpen` and cache the results.
     1. Watch out for implicit COM initialization through DirectInput!
 - Write persistent config to the registry, not the filesystem.
