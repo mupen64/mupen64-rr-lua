@@ -234,7 +234,7 @@ namespace UpdateChecker
 
     void show_connectivity_error(bool manual)
     {
-        if (!manual)
+        if (manual)
         {
             DialogService::show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error", fsvc_error);
         }
