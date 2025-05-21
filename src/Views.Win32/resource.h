@@ -517,6 +517,7 @@
 #define TEXTFILE 40109
 #define IDR_API_LUA_FILE 40110
 #define IDR_SHIMS_LUA_FILE 40111
+#define IDM_WAIT_AT_MOVIE_END 40112
 #define IDC_STATIC -1
 
 // Next default values for new objects

@@ -1280,6 +1280,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             CheckMenuItem(g_main_menu, IDM_FREEZE_RECENT_LUA, g_config.is_recent_scripts_frozen ? MF_CHECKED : MF_UNCHECKED);
             CheckMenuItem(g_main_menu, IDM_LOOP_MOVIE, g_config.core.is_movie_loop_enabled ? MF_CHECKED : MF_UNCHECKED);
             CheckMenuItem(g_main_menu, IDM_VCR_READONLY, g_config.core.vcr_readonly ? MF_CHECKED : MF_UNCHECKED);
+            CheckMenuItem(g_main_menu, IDM_WAIT_AT_MOVIE_END, g_config.core.wait_at_movie_end ? MF_CHECKED : MF_UNCHECKED);
             CheckMenuItem(g_main_menu, IDM_FULLSCREEN, core_vr_is_fullscreen() ? MF_CHECKED : MF_UNCHECKED);
 
             for (int i = IDM_SELECT_1; i < IDM_SELECT_10; ++i)
@@ -1533,7 +1534,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 g_config.core.vcr_readonly ^= true;
                 Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
                 break;
-
+            case IDM_WAIT_AT_MOVIE_END:
+                g_config.core.wait_at_movie_end ^= true;
+                break;
             case IDM_LOOP_MOVIE:
                 g_config.core.is_movie_loop_enabled ^= true;
                 Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);

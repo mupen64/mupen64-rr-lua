@@ -108,8 +108,13 @@ std::filesystem::path get_mempak_path()
     return std::format(L"{}{} {}.mpk", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
 }
 
-void core_vr_resume_emu()
+void core_vr_resume_emu_impl(bool force)
 {
+    if (!force && !vcr_allows_core_unpause())
+    {
+        return;
+    }
+    
     if (emu_launched)
     {
         emu_paused = 0;
@@ -118,6 +123,10 @@ void core_vr_resume_emu()
     g_core->callbacks.emu_paused_changed(emu_paused);
 }
 
+void core_vr_resume_emu()
+{
+    core_vr_resume_emu_impl(false);
+}
 
 void core_vr_pause_emu()
 {
@@ -136,6 +145,11 @@ void core_vr_pause_emu()
 
 void core_vr_frame_advance(size_t count)
 {
+    if (!vcr_allows_core_unpause())
+    {
+        return;
+    }
+    
     frame_advance_outstanding = count;
     core_vr_resume_emu();
 }
@@ -2091,7 +2105,7 @@ core_result vr_close_rom_impl(bool stop_vcr)
         return VR_NotRunning;
     }
 
-    core_vr_resume_emu();
+    core_vr_resume_emu_impl(true);
 
     audio_thread_stop_requested = true;
     audio_thread_handle.join();

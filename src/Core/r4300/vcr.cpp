@@ -688,6 +688,11 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
         return;
     }
 
+    if (g_core->cfg->wait_at_movie_end && m_current_sample == (int32_t)g_header.length_samples - 1)
+    {
+        core_vr_pause_emu();
+    }
+
     // This if previously also checked for if the VI is over the amount specified in the header,
     // but that can cause movies to end playback early on laggy plugins.
     if (m_current_sample >= (int32_t)g_header.length_samples)
@@ -779,6 +784,15 @@ bool vcr_allows_core_pause()
         return true;
     }
     return m_current_sample == seek_to_frame.value() - 1 && g_seek_pause_at_end;
+}
+
+bool vcr_allows_core_unpause()
+{
+    if (g_core->cfg->wait_at_movie_end && g_task == task_playback && m_current_sample >= g_header.length_samples - 1)
+    {
+        return false;
+    }
+    return true;
 }
 
 void vcr_create_seek_savestates()
