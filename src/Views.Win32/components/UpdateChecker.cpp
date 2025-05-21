@@ -232,9 +232,12 @@ namespace UpdateChecker
         DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), g_main_hwnd, changelog_dlgproc, (LPARAM)changelog.data());
     }
 
-    void show_connectivity_error()
+    void show_connectivity_error(bool manual)
     {
-        DialogService::show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error", fsvc_error);
+        if (!manual)
+        {
+            DialogService::show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error", fsvc_error);
+        }
     }
 
     void check(bool manual)
@@ -249,7 +252,7 @@ namespace UpdateChecker
 
         if (json.empty())
         {
-            show_connectivity_error();
+            show_connectivity_error(manual);
             return;
         }
 
@@ -260,7 +263,7 @@ namespace UpdateChecker
         if (!tag_name.is_string())
         {
             g_view_logger->error("[UpdateChecker] no tag_name in json response");
-            show_connectivity_error();
+            show_connectivity_error(manual);
             return;
         }
 
@@ -269,7 +272,7 @@ namespace UpdateChecker
         if (!body.is_string())
         {
             g_view_logger->error("[UpdateChecker] no body in json response");
-            show_connectivity_error();
+            show_connectivity_error(manual);
             return;
         }
 
