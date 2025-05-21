@@ -67,37 +67,22 @@ The Win32 implementation of a Mupen64 GUI.
 
 # Reading and using Crashlogs
 
-## 1.2.0 and newer
+If you have a `mupen.dmp`, open it in WinDbg and run `!analyze-v`.
 
-1. Open the `mupen.dmp` file in WinDbg
-2. Run `!analyze -v`
+If you only have the stacktrace from `mupen.log`:
 
-## Pre-1.2.0
-
-1. Find the stacktrace
-
-```
-[2025-02-06 18:58:07.911] [View] [critical] Stacktrace:
-[2025-02-06 18:58:07.946] [View] [critical] mupen64_119_9_avx2+0xA2AB6
-[2025-02-06 18:58:07.946] [View] [critical] mupen64_119_9_avx2+0xD304A
-[2025-02-06 18:58:07.950] [View] [critical] ntdll!RtlGetFullPathName_UEx+0x13F
-[2025-02-06 18:58:07.950] [View] [critical] ntdll!RtlGetFullPathName_UEx+0x7B
-```
-
-2. Identify the frame you want to look at
-
-```
-0xA2AB6
-```
-
-3. Open x32dbg
-
-4. Open the "Go to" dialog by pressing Ctrl + G
-
-5. Navigate to `0x00400000` + `[Your Address]`
+1. Identify the faulting address
+2. Open x32dbg
+3. Open the "Go to" dialog by pressing Ctrl + G
+4. Navigate to `0x00400000` + `[Your Address]`
 
 # Code Style
 
 Code formatting must, to the furthest possible extent, abide by the [.clang-format](https://github.com/mkdasher/mupen64-rr-lua-/blob/master/.clang-format) file provided in the repository root.
 
+# Plugin Guidelines
 
+- Do as little initialization work in `DllMain` as possible. Do it all in `RomOpen` and cache the results.
+    1. Watch out for implicit COM initialization through DirectInput!
+- Write persistent config to the registry, not the filesystem.
+    1. Play fair, don't pollute the user's Mupen directory if possible.
