@@ -14,6 +14,9 @@ end
 -- emu.debugview deprecated, forwarded to print
 emu.debugview = print
 
+-- emu.setgfx deprecated, no-op
+emu.setgfx = function (_) end
+
 -- movie.playmovie deprecated, forwarded to movie.play
 movie.playmovie = movie.play
 
