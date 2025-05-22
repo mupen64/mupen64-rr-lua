@@ -61,8 +61,6 @@ const luaL_Reg EMU_FUNCS[] = {
 {"set_ff", LuaCore::Emu::SetFastForward},
 {"speed", LuaCore::Emu::SetSpeed},
 {"speedmode", LuaCore::Emu::SetSpeedMode},
-// DEPRECATE: This is completely useless
-{"setgfx", LuaCore::Emu::SetGFX},
 
 {"getaddress", LuaCore::Emu::GetAddress},
 
