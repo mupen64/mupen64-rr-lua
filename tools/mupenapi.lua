@@ -101,7 +101,7 @@ Mupen = {
 
 ---The `lua_tostring` c function converts numbers to strings, so numbers are
 ---acceptable to pass into some functions that use that function.
----@alias tostringusable string|number
+---@alias tostringusable string|number 
 
 
 -- Global Functions
@@ -178,7 +178,6 @@ function emu.atdrawd2d(f, unregister) end
 
 ---Calls the function `f` every input frame.
 ---The function `f` receives an argument that seems to always be `0`.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(a: integer?): nil The function to be called every input frame. It receives an argument that seems to always be `0`.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -375,7 +374,7 @@ function emu.ismainwindowinforeground() end
 --#region
 
 ---A representation of an 8 byte integer (quad word) as two 4 byte integers.
----@alias qword [integer, integer]
+---@alias qword [integer, integer] 
 
 ---Reinterprets the bits of a 4 byte integer `n` as a float and returns it.
 ---This does not convert from an int to a float, but reinterprets the memory.
@@ -848,8 +847,7 @@ function d2d.draw_line(x1, y1, x2, y2, thickness, brush) end
 ---@param brush brush pass 0 if you don't know what you're doing
 ---@return nil
 function d2d.draw_text(x1, y1, x2, y2, text, fontname, fontsize, fontweight,
-                       fontstyle, horizalign, vertalign, options, brush)
-end
+                       fontstyle, horizalign, vertalign, options, brush) end
 
 ---Returns the width and height of the specified text.
 ---@param text string
