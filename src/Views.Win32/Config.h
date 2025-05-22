@@ -428,7 +428,7 @@ struct t_config {
     /// <summary>
     /// Whether automatic update checking is enabled.
     /// </summary>
-    int32_t automatic_update_checking;
+    int32_t automatic_update_checking = 1;
 
     /// <summary>
     /// Whether mupen will avoid showing modals and other elements which require user interaction
