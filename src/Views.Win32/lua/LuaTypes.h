@@ -22,7 +22,7 @@ struct t_lua_rendering_context {
     HDC gdi_back_dc{};
 
     // The bitmap for GDI/GDI+ drawings
-    HBITMAP gdi_bmp{};
+    HBITMAP gdi_dib{};
 
     // Dimensions of the drawing surfaces
     D2D1_SIZE_U dc_size{};
@@ -51,11 +51,15 @@ struct t_lua_rendering_context {
     HDC loadscreen_dc{};
     HBITMAP loadscreen_bmp{};
 
-    HBRUSH brush{};
-    HPEN pen{};
-    HFONT font{};
-    COLORREF col, bkcol{};
-    int bkmode{};
+    std::shared_ptr<Gdiplus::Graphics> gfx{};
+    
+    std::shared_ptr<Gdiplus::Brush> gdip_brush{};
+    std::shared_ptr<Gdiplus::Brush> gdip_text_brush{};
+    std::shared_ptr<Gdiplus::Brush> gdip_bg_brush{};
+    std::shared_ptr<Gdiplus::Pen> gdip_pen{};
+    std::shared_ptr<Gdiplus::Font> gdip_font{};
+    int bkmode = TRANSPARENT;
+    Gdiplus::TextRenderingHint text_rendering_hint = Gdiplus::TextRenderingHintSystemDefault;
 };
 
 /**

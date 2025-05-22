@@ -125,8 +125,6 @@ const luaL_Reg WGUI_FUNCS[] = {
 {"gettextextent", LuaCore::Wgui::GetTextExtent},
 {"rect", LuaCore::Wgui::DrawRect},
 {"fillrect", LuaCore::Wgui::FillRect},
-/*<GDIPlus>*/
-// GDIPlus functions marked with "a" suffix
 {"fillrecta", LuaCore::Wgui::FillRectAlpha},
 {"fillellipsea", LuaCore::Wgui::FillEllipseAlpha},
 {"fillpolygona", LuaCore::Wgui::FillPolygonAlpha},
@@ -136,7 +134,6 @@ const luaL_Reg WGUI_FUNCS[] = {
 {"loadscreen", LuaCore::Wgui::LoadScreen},
 {"loadscreenreset", LuaCore::Wgui::LoadScreenReset},
 {"getimageinfo", LuaCore::Wgui::GetImageInfo},
-/*</GDIPlus*/
 {"ellipse", LuaCore::Wgui::DrawEllipse},
 {"polygon", LuaCore::Wgui::DrawPolygon},
 {"line", LuaCore::Wgui::DrawLine},

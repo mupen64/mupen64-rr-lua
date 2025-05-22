@@ -157,8 +157,6 @@ namespace LuaCore::Wgui
 
     static int ResizeWindow(lua_State* L)
     {
-        assert(is_on_gui_thread());
-
         auto lua = get_lua_class(L);
 
         RECT clientRect, wndRect;
@@ -177,69 +175,50 @@ namespace LuaCore::Wgui
         return 0;
     }
 
-    static COLORREF StrToColorA(const std::wstring& s, bool alpha = false, COLORREF def = 0)
+    static Gdiplus::Color str_to_color(const std::wstring& str, const Gdiplus::Color fallback = Gdiplus::Color::Black)
     {
-        if (s[0] == '#')
+        if (str[0] == L'#')
         {
-            int l = s.size();
-            if (l == 4)
+            if (str.size() == 4)
             {
-                return (hexTable[s[1]] * 0x10 + hexTable[s[1]]) |
-                ((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
-                ((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
-                (alpha ? 0xFF000000 : 0);
+                return hexTable[str[1]] * 0x10 + hexTable[str[1]] | (hexTable[str[2]] * 0x10 + hexTable[str[2]]) << 8 | (hexTable[str[3]] * 0x10 + hexTable[str[3]]) << 16 | 0xFF000000;
             }
-            else if (alpha && l == 5)
+            if (str.size() == 7)
             {
-                return (hexTable[s[1]] * 0x10 + hexTable[s[1]]) |
-                ((hexTable[s[2]] * 0x10 + hexTable[s[2]]) << 8) |
-                ((hexTable[s[3]] * 0x10 + hexTable[s[3]]) << 16) |
-                ((hexTable[s[4]] * 0x10 + hexTable[s[4]]) << 24);
+                return hexTable[str[1]] * 0x10 + hexTable[str[2]] | (hexTable[str[3]] * 0x10 + hexTable[str[4]]) << 8 | (hexTable[str[5]] * 0x10 + hexTable[str[6]]) << 16 | 0xFF000000;
             }
-            else if (l == 7)
+            if (str.size() == 5)
             {
-                return (hexTable[s[1]] * 0x10 + hexTable[s[2]]) |
-                ((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
-                ((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
-                (alpha ? 0xFF000000 : 0);
+                return hexTable[str[1]] * 0x10 + hexTable[str[1]] | (hexTable[str[2]] * 0x10 + hexTable[str[2]]) << 8 | (hexTable[str[3]] * 0x10 + hexTable[str[3]]) << 16 | (hexTable[str[4]] * 0x10 + hexTable[str[4]]) << 24;
             }
-            else if (alpha && l == 9)
+            if (str.size() == 9)
             {
-                return (hexTable[s[1]] * 0x10 + hexTable[s[2]]) |
-                ((hexTable[s[3]] * 0x10 + hexTable[s[4]]) << 8) |
-                ((hexTable[s[5]] * 0x10 + hexTable[s[6]]) << 16) |
-                ((hexTable[s[7]] * 0x10 + hexTable[s[8]]) << 24);
+                return hexTable[str[1]] * 0x10 + hexTable[str[2]] | (hexTable[str[3]] * 0x10 + hexTable[str[4]]) << 8 | (hexTable[str[5]] * 0x10 + hexTable[str[6]]) << 16 | (hexTable[str[7]] * 0x10 + hexTable[str[8]]) << 24;
             }
+            return fallback;
         }
-        else
-        {
-            if (color_map.contains(s))
-            {
-                return (alpha ? 0xFFFFFFFF : 0xFFFFFF) & color_map.at(s);
-            }
-        }
-        return (alpha ? 0xFF000000 : 0x00000000) | def;
-    }
 
-    static COLORREF StrToColor(const std::wstring& s, bool alpha = false, COLORREF def = 0)
-    {
-        return StrToColorA(s, alpha, def);
+        if (color_map.contains(str))
+        {
+            return color_map.at(str);
+        }
+
+        return fallback;
     }
 
     static int set_brush(lua_State* L)
     {
         auto lua = get_lua_class(L);
+        const auto color_str = string_to_wstring(lua_tostring(L, 1));
 
-        if (lua->rctx.brush)
+        if (!iequals(color_str, L"null"))
         {
-            DeleteObject(lua->rctx.brush);
+            const auto color = str_to_color(color_str);
+            lua->rctx.gdip_brush = std::make_shared<Gdiplus::SolidBrush>(color);
+            return 0;
         }
 
-        auto s = string_to_wstring(lua_tostring(L, 1));
-        if (iequals(s, L"null"))
-            lua->rctx.brush = (HBRUSH)GetStockObject(NULL_BRUSH);
-        else
-            lua->rctx.brush = CreateSolidBrush(StrToColor(s));
+        lua->rctx.gdip_brush.reset();
 
         return 0;
     }
@@ -247,19 +226,17 @@ namespace LuaCore::Wgui
     static int set_pen(lua_State* L)
     {
         auto lua = get_lua_class(L);
+        const auto color_str = string_to_wstring(lua_tostring(L, 1));
+        const auto width = static_cast<float>(luaL_optnumber(L, 2, 1));
 
-        if (lua->rctx.pen)
+        if (!iequals(color_str, L"null"))
         {
-            DeleteObject(lua->rctx.pen);
+            const auto color = str_to_color(color_str);
+            lua->rctx.gdip_pen = std::make_shared<Gdiplus::Pen>(color, width);
+            return 0;
         }
 
-        auto s = string_to_wstring(lua_tostring(L, 1));
-        int width = luaL_optnumber(L, 2, 1);
-
-        if (iequals(s, L"null"))
-            lua->rctx.pen = (HPEN)GetStockObject(NULL_PEN);
-        else
-            lua->rctx.pen = CreatePen(PS_SOLID, width, StrToColor(s));
+        lua->rctx.gdip_pen.reset();
 
         return 0;
     }
@@ -267,25 +244,28 @@ namespace LuaCore::Wgui
     static int set_text_color(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        lua->rctx.col = StrToColor(string_to_wstring(lua_tostring(L, 1)));
+        const auto color_str = string_to_wstring(lua_tostring(L, 1));
+        const auto color = str_to_color(color_str);
+
+        lua->rctx.gdip_text_brush = std::make_shared<Gdiplus::SolidBrush>(color);
+
         return 0;
     }
 
     static int SetBackgroundColor(lua_State* L)
     {
         auto lua = get_lua_class(L);
+        const auto color_str = string_to_wstring(lua_tostring(L, 1));
 
-        auto s = string_to_wstring(lua_tostring(L, 1));
-
-        if (iequals(s, L"null"))
+        if (!iequals(color_str, L"null"))
         {
-            lua->rctx.bkmode = TRANSPARENT;
-        }
-        else
-        {
-            lua->rctx.bkcol = StrToColor(s);
+            const auto color = str_to_color(color_str);
+            lua->rctx.gdip_bg_brush = std::make_shared<Gdiplus::SolidBrush>(color);
             lua->rctx.bkmode = OPAQUE;
+            return 0;
         }
+
+        lua->rctx.bkmode = TRANSPARENT;
 
         return 0;
     }
@@ -293,64 +273,75 @@ namespace LuaCore::Wgui
     static int SetFont(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        LOGFONT font = {0};
+        const auto font_size = luaL_checknumber(L, 1);
+        const auto font_name = string_to_wstring(luaL_optstring(L, 2, "MS Gothic"));
+        const auto style = string_to_wstring(luaL_optstring(L, 3, ""));
 
-        if (lua->rctx.font)
-        {
-            DeleteObject(lua->rctx.font);
-        }
+        INT gdip_style = Gdiplus::FontStyle::FontStyleRegular;
 
-        auto font_size = luaL_checknumber(L, 1);
-        auto font_name = string_to_wstring(luaL_optstring(L, 2, "MS Gothic"));
-        auto style = string_to_wstring(luaL_optstring(L, 3, ""));
-
-        // set the size of the font
-        font.lfHeight = -MulDiv(font_size, GetDeviceCaps(lua->rctx.gdi_back_dc, LOGPIXELSY), 72);
-        lstrcpyn(font.lfFaceName, font_name.c_str(), LF_FACESIZE);
-        font.lfCharSet = DEFAULT_CHARSET;
+        lua->rctx.text_rendering_hint = Gdiplus::TextRenderingHintSystemDefault;
 
         for (const auto p : style)
         {
             switch (p)
             {
             case 'b':
-                font.lfWeight = FW_BOLD;
+                gdip_style |= Gdiplus::FontStyleBold;
                 break;
             case 'i':
-                font.lfItalic = TRUE;
+                gdip_style |= Gdiplus::FontStyleItalic;
                 break;
             case 'u':
-                font.lfUnderline = TRUE;
+                gdip_style |= Gdiplus::FontStyleUnderline;
                 break;
             case 's':
-                font.lfStrikeOut = TRUE;
+                gdip_style |= Gdiplus::FontStyleStrikeout;
                 break;
             case 'a':
-                font.lfQuality = ANTIALIASED_QUALITY;
+                lua->rctx.text_rendering_hint = Gdiplus::TextRenderingHintAntiAlias;
                 break;
             default:
                 break;
             }
         }
 
-        lua->rctx.font = CreateFontIndirect(&font);
+        const auto effective_size = (float)MulDiv(font_size, GetDeviceCaps(lua->rctx.gdi_back_dc, LOGPIXELSY), 72);
+
+        lua->rctx.gdip_font = std::make_shared<Gdiplus::Font>(
+        font_name.c_str(),
+        effective_size,
+        gdip_style);
+
         return 0;
     }
 
     static int LuaTextOut(lua_State* L)
     {
         auto lua = get_lua_class(L);
+        const auto x = luaL_checknumber(L, 1);
+        const auto y = luaL_checknumber(L, 2);
+        const auto text = string_to_wstring(lua_tostring(L, 3));
 
-        SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
-        SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
-        SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
 
-        int x = luaL_checknumber(L, 1);
-        int y = luaL_checknumber(L, 2);
-        auto text = string_to_wstring(lua_tostring(L, 3));
+        // SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
+        // SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
+        // SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+        // ::TextOut(lua->rctx.gdi_back_dc, x, y, text.c_str(), text.size());
 
-        ::TextOut(lua->rctx.gdi_back_dc, x, y, text.c_str(), text.size());
+        Gdiplus::PointF pt(x, y);
+        Gdiplus::RectF bounds(x, y, 10000, 10000);
+
+        Gdiplus::RectF measured_bounds{};
+        lua->rctx.gfx->MeasureString(text.c_str(), text.size(), lua->rctx.gdip_font.get(), bounds, nullptr, &measured_bounds);
+
+        if (lua->rctx.bkmode != TRANSPARENT)
+        {
+            lua->rctx.gfx->FillRectangle(lua->rctx.gdip_bg_brush.get(), measured_bounds);
+        }
+
+        lua->rctx.gfx->DrawString(text.c_str(), text.size(), lua->rctx.gdip_font.get(), pt, lua->rctx.gdip_text_brush.get());
+
         return 0;
     }
 
@@ -398,112 +389,113 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         auto string = string_to_wstring(luaL_checkstring(L, 1));
-
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
-
-        SIZE size = {0};
-        GetTextExtentPoint32(lua->rctx.gdi_back_dc, string.c_str(), string.size(), &size);
-
-        lua_newtable(L);
-        lua_pushinteger(L, size.cx);
-        lua_setfield(L, -2, "width");
-        lua_pushinteger(L, size.cy);
-        lua_setfield(L, -2, "height");
+        //
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+        //
+        // SIZE size = {0};
+        // GetTextExtentPoint32(lua->rctx.gdi_back_dc, string.c_str(), string.size(), &size);
+        //
+        // lua_newtable(L);
+        // lua_pushinteger(L, size.cx);
+        // lua_setfield(L, -2, "width");
+        // lua_pushinteger(L, size.cy);
+        // lua_setfield(L, -2, "height");
         return 1;
     }
 
     static int LuaDrawText(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
-        SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
-        SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
-        SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
-
-        RECT rect = {0};
-        UINT format = DT_NOPREFIX | DT_WORDBREAK;
-        if (!GetRectLua(L, 2, &rect))
-        {
-            format |= DT_NOCLIP;
-        }
-        if (!lua_isnil(L, 3))
-        {
-            const char* p = lua_tostring(L, 3);
-            for (; p && *p; p++)
-            {
-                switch (*p)
-                {
-                case 'l':
-                    format |= DT_LEFT;
-                    break;
-                case 'r':
-                    format |= DT_RIGHT;
-                    break;
-                case 't':
-                    format |= DT_TOP;
-                    break;
-                case 'b':
-                    format |= DT_BOTTOM;
-                    break;
-                case 'c':
-                    format |= DT_CENTER;
-                    break;
-                case 'v':
-                    format |= DT_VCENTER;
-                    break;
-                case 'e':
-                    format |= DT_WORD_ELLIPSIS;
-                    break;
-                case 's':
-                    format |= DT_SINGLELINE;
-                    break;
-                case 'n':
-                    format &= ~DT_WORDBREAK;
-                    break;
-                }
-            }
-        }
-        auto str = string_to_wstring(lua_tostring(L, 1));
-
-        ::DrawText(lua->rctx.gdi_back_dc, str.c_str(), -1, &rect, format);
+        //
+        // SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
+        // SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
+        // SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+        //
+        // RECT rect = {0};
+        // UINT format = DT_NOPREFIX | DT_WORDBREAK;
+        // if (!GetRectLua(L, 2, &rect))
+        // {
+        //     format |= DT_NOCLIP;
+        // }
+        // if (!lua_isnil(L, 3))
+        // {
+        //     const char* p = lua_tostring(L, 3);
+        //     for (; p && *p; p++)
+        //     {
+        //         switch (*p)
+        //         {
+        //         case 'l':
+        //             format |= DT_LEFT;
+        //             break;
+        //         case 'r':
+        //             format |= DT_RIGHT;
+        //             break;
+        //         case 't':
+        //             format |= DT_TOP;
+        //             break;
+        //         case 'b':
+        //             format |= DT_BOTTOM;
+        //             break;
+        //         case 'c':
+        //             format |= DT_CENTER;
+        //             break;
+        //         case 'v':
+        //             format |= DT_VCENTER;
+        //             break;
+        //         case 'e':
+        //             format |= DT_WORD_ELLIPSIS;
+        //             break;
+        //         case 's':
+        //             format |= DT_SINGLELINE;
+        //             break;
+        //         case 'n':
+        //             format &= ~DT_WORDBREAK;
+        //             break;
+        //         }
+        //     }
+        // }
+        // auto str = string_to_wstring(lua_tostring(L, 1));
+        //
+        // ::DrawText(lua->rctx.gdi_back_dc, str.c_str(), -1, &rect, format);
         return 0;
     }
 
     static int LuaDrawTextAlt(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
-        SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
-        SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
-        SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
-
-        RECT rect = {0};
-        auto string = string_to_wstring(lua_tostring(L, 1));
-        UINT format = luaL_checkinteger(L, 2);
-        rect.left = luaL_checkinteger(L, 3);
-        rect.top = luaL_checkinteger(L, 4);
-        rect.right = luaL_checkinteger(L, 5);
-        rect.bottom = luaL_checkinteger(L, 6);
-
-        DrawTextEx(lua->rctx.gdi_back_dc, string.data(), -1, &rect, format, NULL);
+        //
+        // SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
+        // SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
+        // SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+        //
+        // RECT rect = {0};
+        // auto string = string_to_wstring(lua_tostring(L, 1));
+        // UINT format = luaL_checkinteger(L, 2);
+        // rect.left = luaL_checkinteger(L, 3);
+        // rect.top = luaL_checkinteger(L, 4);
+        // rect.right = luaL_checkinteger(L, 5);
+        // rect.bottom = luaL_checkinteger(L, 6);
+        //
+        // DrawTextEx(lua->rctx.gdi_back_dc, string.data(), -1, &rect, format, NULL);
         return 0;
     }
 
     static int DrawRect(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        int left = luaL_checknumber(L, 1);
-        int top = luaL_checknumber(L, 2);
-        int right = luaL_checknumber(L, 3);
-        int bottom = luaL_checknumber(L, 4);
-        int cornerW = luaL_optnumber(L, 5, 0);
-        int cornerH = luaL_optnumber(L, 6, 0);
+        const auto left = luaL_checknumber(L, 1);
+        const auto top = luaL_checknumber(L, 2);
+        const auto right = luaL_checknumber(L, 3);
+        const auto bottom = luaL_checknumber(L, 4);
+        const auto cornerW = luaL_optnumber(L, 5, 0);
+        const auto cornerH = luaL_optnumber(L, 6, 0);
 
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
-        RoundRect(lua->rctx.gdi_back_dc, left, top, right, bottom, cornerW, cornerH);
+        // TODO: Round rect support?
+        const Gdiplus::RectF rect(left, top, right - left, bottom - top);
+        lua->rctx.gfx->FillRectangle(lua->rctx.gdip_brush.get(), rect);
+
         return 0;
     }
 
@@ -569,7 +561,6 @@ namespace LuaCore::Wgui
         // Gets the number of arguments
         unsigned int args = lua_gettop(L);
 
-        Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
         Gdiplus::Bitmap* img = lua->rctx.image_pool[key];
 
         // Original DrawImage
@@ -578,7 +569,7 @@ namespace LuaCore::Wgui
             int x = luaL_checknumber(L, 2);
             int y = luaL_checknumber(L, 3);
 
-            gfx.DrawImage(img, x, y); // Gdiplus::Image *image, int x, int y
+            lua->rctx.gfx->DrawImage(img, x, y); // Gdiplus::Image *image, int x, int y
             return 0;
         }
         else if (args == 4)
@@ -592,7 +583,7 @@ namespace LuaCore::Wgui
             // Create a Rect at x and y and scale the image's width and height
             Gdiplus::Rect dest(x, y, img->GetWidth() * scale, img->GetHeight() * scale);
 
-            gfx.DrawImage(img, dest);
+            lua->rctx.gfx->DrawImage(img, dest);
             // Gdiplus::Image *image, const Gdiplus::Rect &rect
             return 0;
         }
@@ -608,7 +599,7 @@ namespace LuaCore::Wgui
 
             Gdiplus::Rect dest(x, y, w, h);
 
-            gfx.DrawImage(img, dest);
+            lua->rctx.gfx->DrawImage(img, dest);
             // Gdiplus::Image *image, const Gdiplus::Rect &rect
             return 0;
         }
@@ -625,7 +616,7 @@ namespace LuaCore::Wgui
             float rotate = luaL_checknumber(L, 10);
             if (w == 0 or h == 0 or srcw == 0 or srch == 0)
                 return 0;
-            bool shouldrotate = ((int)rotate % 360) != 0;
+            bool shouldrotate = (int)rotate % 360 != 0;
             // Only rotate if the angle isn't a multiple of 360 Modulo only works with int
 
             Gdiplus::Rect dest(x, y, w, h);
@@ -633,19 +624,19 @@ namespace LuaCore::Wgui
             // Rotate
             if (shouldrotate)
             {
-                Gdiplus::PointF center(x + (w / 2), y + (h / 2));
+                Gdiplus::PointF center(x + w / 2, y + h / 2);
                 // The center of dest
                 Gdiplus::Matrix matrix;
                 matrix.RotateAt(rotate, center);
                 // rotate "rotate" number of degrees around "center"
-                gfx.SetTransform(&matrix);
+                lua->rctx.gfx->SetTransform(&matrix);
             }
 
-            gfx.DrawImage(img, dest, srcx, srcy, srcw, srch, Gdiplus::UnitPixel);
+            lua->rctx.gfx->DrawImage(img, dest, srcx, srcy, srcw, srch, Gdiplus::UnitPixel);
             // Gdiplus::Image *image, const Gdiplus::Rect &destRect, int srcx, int srcy, int srcheight, Gdiplus::srcUnit
 
             if (shouldrotate)
-                gfx.ResetTransform();
+                lua->rctx.gfx->ResetTransform();
             return 0;
         }
         luaL_error(L, "Incorrect number of arguments");
@@ -755,13 +746,12 @@ namespace LuaCore::Wgui
             // now stack again has only table at the bottom and color string on top, repeat
         }
 
-        Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
         Gdiplus::SolidBrush brush(Gdiplus::Color(
         luaL_checkinteger(L, 2),
         luaL_checkinteger(L, 3),
         luaL_checkinteger(L, 4),
         luaL_checkinteger(L, 5)));
-        gfx.FillPolygon(&brush, pts.data(), n);
+        lua->rctx.gfx->FillPolygon(&brush, pts.data(), n);
 
         return 0;
     }
@@ -770,17 +760,17 @@ namespace LuaCore::Wgui
     static int FillEllipseAlpha(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
-        int x = luaL_checknumber(L, 1);
-        int y = luaL_checknumber(L, 2);
-        int w = luaL_checknumber(L, 3);
-        int h = luaL_checknumber(L, 4);
-        auto col = string_to_wstring(luaL_checkstring(L, 5));
-
-        Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
-        Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
-
-        gfx.FillEllipse(&brush, x, y, w, h);
+        //
+        // int x = luaL_checknumber(L, 1);
+        // int y = luaL_checknumber(L, 2);
+        // int w = luaL_checknumber(L, 3);
+        // int h = luaL_checknumber(L, 4);
+        // auto col = string_to_wstring(luaL_checkstring(L, 5));
+        //
+        // Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
+        // Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
+        //
+        // gfx.FillEllipse(&brush, x, y, w, h);
 
         return 0;
     }
@@ -789,17 +779,17 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
 
-
-        int x = luaL_checknumber(L, 1);
-        int y = luaL_checknumber(L, 2);
-        int w = luaL_checknumber(L, 3);
-        int h = luaL_checknumber(L, 4);
-        auto col = string_to_wstring(luaL_checkstring(L, 5));
-
-        Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
-        Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
-
-        gfx.FillRectangle(&brush, x, y, w, h);
+        //
+        // int x = luaL_checknumber(L, 1);
+        // int y = luaL_checknumber(L, 2);
+        // int w = luaL_checknumber(L, 3);
+        // int h = luaL_checknumber(L, 4);
+        // auto col = string_to_wstring(luaL_checkstring(L, 5));
+        //
+        // Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
+        // Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
+        //
+        // gfx.FillRectangle(&brush, x, y, w, h);
 
         return 0;
     }
@@ -828,15 +818,15 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
 
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
-
-        int left = luaL_checknumber(L, 1);
-        int top = luaL_checknumber(L, 2);
-        int right = luaL_checknumber(L, 3);
-        int bottom = luaL_checknumber(L, 4);
-
-        ::Ellipse(lua->rctx.gdi_back_dc, left, top, right, bottom);
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
+        //
+        // int left = luaL_checknumber(L, 1);
+        // int top = luaL_checknumber(L, 2);
+        // int right = luaL_checknumber(L, 3);
+        // int bottom = luaL_checknumber(L, 4);
+        //
+        // ::Ellipse(lua->rctx.gdi_back_dc, left, top, right, bottom);
         return 0;
     }
 
@@ -867,9 +857,9 @@ namespace LuaCore::Wgui
             p[i].y = lua_tointeger(L, -1);
             lua_pop(L, 2);
         }
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
-        ::Polygon(lua->rctx.gdi_back_dc, p, n);
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
+        // ::Polygon(lua->rctx.gdi_back_dc, p, n);
         return 0;
     }
 
@@ -877,9 +867,9 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
 
-        SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
-        ::MoveToEx(lua->rctx.gdi_back_dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2), NULL);
-        ::LineTo(lua->rctx.gdi_back_dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
+        // SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
+        // ::MoveToEx(lua->rctx.gdi_back_dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2), NULL);
+        // ::LineTo(lua->rctx.gdi_back_dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
         return 0;
     }
 

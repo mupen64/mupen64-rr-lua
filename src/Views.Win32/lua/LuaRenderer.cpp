@@ -81,7 +81,13 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATUPDATESCREEN);
 
-            BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
+            lua->rctx.gfx->Flush();
+
+            POINT pt_src = {0, 0};
+            SIZE size_window = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
+            POINT pt_dest = {0, 0};
+            BLENDFUNCTION blend = {.BlendOp = AC_SRC_OVER, .BlendFlags = 0, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA};
+            UpdateLayeredWindow(hwnd, nullptr, &pt_dest, &size_window, lua->rctx.gdi_back_dc, &pt_src, 0, &blend, ULW_ALPHA);
 
             ValidateRect(hwnd, nullptr);
 
@@ -141,11 +147,12 @@ static void destroy_loadscreen(t_lua_rendering_context* ctx)
 t_lua_rendering_context LuaRenderer::default_rendering_context()
 {
     t_lua_rendering_context ctx{};
-    ctx.brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
-    ctx.pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
-    ctx.font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
-    ctx.col = ctx.bkcol = 0;
-    ctx.bkmode = TRANSPARENT;
+    ctx.gdip_brush = std::make_shared<Gdiplus::SolidBrush>(0xFFFFFFFF);
+    ctx.gdip_text_brush = std::make_shared<Gdiplus::SolidBrush>(0xFF000000);
+    ctx.gdip_bg_brush = std::make_shared<Gdiplus::SolidBrush>(0xFF000000);
+    ctx.gdip_pen = std::make_shared<Gdiplus::Pen>(0xFF000000);
+    ctx.gdip_font = std::make_shared<Gdiplus::Font>(L"MS Shell Dlg", 12);
+
     return ctx;
 }
 
@@ -197,21 +204,23 @@ void LuaRenderer::create_renderer(t_lua_rendering_context* ctx, t_lua_environmen
     // Key 0 is reserved for clearing the image pool, too late to change it now...
     ctx->image_pool_index = 1;
 
-    auto gdi_dc = GetDC(g_main_hwnd);
-    ctx->gdi_back_dc = CreateCompatibleDC(gdi_dc);
-    ctx->gdi_bmp = CreateCompatibleBitmap(gdi_dc, ctx->dc_size.width, ctx->dc_size.height);
-    SelectObject(ctx->gdi_back_dc, ctx->gdi_bmp);
-    ReleaseDC(g_main_hwnd, gdi_dc);
-
     ctx->gdi_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width, ctx->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
-    SetLayeredWindowAttributes(ctx->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
+    ctx->d2d_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width, ctx->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
 
     ctx->gdi_front_dc = GetDC(ctx->gdi_overlay_hwnd);
+    ctx->gdi_back_dc = CreateCompatibleDC(ctx->gdi_front_dc);
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = ctx->dc_size.width;
+    bmi.bmiHeader.biHeight = ctx->dc_size.height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    void* bits = nullptr;
+    ctx->gdi_dib = CreateDIBSection(ctx->gdi_back_dc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+    SelectObject(ctx->gdi_back_dc, ctx->gdi_dib);
 
-    // If we don't fill up the DC with the key first, it never becomes "transparent"
-    FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
-
-    ctx->d2d_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width, ctx->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
+    ctx->gfx = std::make_shared<Gdiplus::Graphics>(ctx->gdi_back_dc);
 
     SetWindowLongPtr(ctx->d2d_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)env);
     SetWindowLongPtr(ctx->gdi_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)env);
@@ -237,9 +246,9 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
     g_view_logger->info("Destroying Lua renderer...");
 
     SelectObject(ctx->gdi_back_dc, nullptr);
-    DeleteObject(ctx->brush);
-    DeleteObject(ctx->pen);
-    DeleteObject(ctx->font);
+    ctx->gdip_brush.reset();
+    ctx->gdip_pen.reset();
+    ctx->gdip_font.reset();
 
     if (ctx->presenter)
     {
@@ -266,11 +275,12 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
 
     if (ctx->gdi_back_dc)
     {
+        ctx->gfx.reset();
         ReleaseDC(ctx->gdi_overlay_hwnd, ctx->gdi_front_dc);
         DestroyWindow(ctx->gdi_overlay_hwnd);
         SelectObject(ctx->gdi_back_dc, nullptr);
         DeleteDC(ctx->gdi_back_dc);
-        DeleteObject(ctx->gdi_bmp);
+        DeleteObject(ctx->gdi_dib);
         ctx->gdi_back_dc = nullptr;
         destroy_loadscreen(ctx);
     }
