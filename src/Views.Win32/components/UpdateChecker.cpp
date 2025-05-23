@@ -193,6 +193,53 @@ namespace UpdateChecker
         PostMessage(g_main_hwnd, WM_CLOSE, 0, 0);
     }
 
+    INT_PTR CALLBACK changelog_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+    {
+        switch (msg)
+        {
+        case WM_INITDIALOG:
+            {
+                const auto str = (wchar_t*)lparam;
+                const auto edit_hwnd = GetDlgItem(hwnd, IDC_TEXTBOX_LUAPROMPT);
+
+                SetWindowText(hwnd, L"Changelog");
+                Edit_SetText(edit_hwnd, str);
+                Edit_SetReadOnly(edit_hwnd, true);
+
+                SetFocus(GetDlgItem(hwnd, IDC_TEXTBOX_LUAPROMPT));
+                break;
+            }
+        case WM_CLOSE:
+            EndDialog(hwnd, IDCANCEL);
+            break;
+        case WM_COMMAND:
+            switch (LOWORD(wparam))
+            {
+            case IDOK:
+                EndDialog(hwnd, 0);
+                break;
+            case IDCANCEL:
+                EndDialog(hwnd, 1);
+                break;
+            }
+            break;
+        }
+        return FALSE;
+    }
+
+    void show_changelog(const std::wstring& changelog)
+    {
+        DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), g_main_hwnd, changelog_dlgproc, (LPARAM)changelog.data());
+    }
+
+    void show_connectivity_error(bool manual)
+    {
+        if (manual)
+        {
+            DialogService::show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error", fsvc_error);
+        }
+    }
+
     void check(bool manual)
     {
         if (!manual && !g_config.automatic_update_checking)
@@ -205,6 +252,7 @@ namespace UpdateChecker
 
         if (json.empty())
         {
+            show_connectivity_error(manual);
             return;
         }
 
@@ -215,6 +263,16 @@ namespace UpdateChecker
         if (!tag_name.is_string())
         {
             g_view_logger->error("[UpdateChecker] no tag_name in json response");
+            show_connectivity_error(manual);
+            return;
+        }
+
+        const auto body = data["body"];
+
+        if (!body.is_string())
+        {
+            g_view_logger->error("[UpdateChecker] no body in json response");
+            show_connectivity_error(manual);
             return;
         }
 
@@ -238,19 +296,32 @@ namespace UpdateChecker
             return;
         }
 
-        const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_UPDATE_DIALOG, {L"Update now", L"Skip this version", L"Ignore"}, std::format(L"Mupen64 {} is available for download.", version).c_str(), L"Update Available", fsvc_information);
+    show_prompt:
 
-        if (result == 1)
+        const auto result = DialogService::show_multiple_choice_dialog(
+        VIEW_DLG_UPDATE_DIALOG,
         {
+        L"Update Now",
+        L"Show Changelog",
+        L"Skip Version",
+        },
+        std::format(L"Mupen64 {} is available for download.", version).c_str(),
+        L"Update Available",
+        fsvc_information);
+
+        switch (result)
+        {
+        case 0:
+            download_executable(data);
+            break;
+        case 1:
+            show_changelog(string_to_wstring(body.get<std::string>()));
+            goto show_prompt;
+        case 2:
             g_config.ignored_version = version;
-            return;
+            break;
+        default:
+            break;
         }
-
-        if (result == 2)
-        {
-            return;
-        }
-
-        download_executable(data);
     }
 } // namespace UpdateChecker
