@@ -10,16 +10,23 @@
 
 namespace LuaCore::Movie
 {
-    // Movie
-    static int PlayMovie(lua_State* L)
+    static int play(lua_State* L)
     {
-        const char* fname = lua_tostring(L, 1);
+        const auto path = lua_tostring(L, 1);
+        if (!path)
+        {
+            lua_pushinteger(L, VCR_BadFile);
+            return 1;
+        }
+
         g_config.core.vcr_readonly = true;
         Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
         ThreadPool::submit_task([=] {
-            core_vcr_start_playback(fname);
+            core_vcr_start_playback(path);
         });
-        return 0;
+
+        lua_pushinteger(L, Res_Ok);
+        return 1;
     }
 
     static int StopMovie(lua_State* L)

@@ -1157,11 +1157,11 @@ function joypad.count() end
 -- movie functions
 --#region
 
----Plays a movie file located at `filename`.
+---Plays a movie.
 ---This function sets `Read Only` to true.
----@param filename string
----@return nil
-function movie.play(filename) end
+---@param path string
+---@return Result # The operation result.
+function movie.play(path) end
 
 ---Stops the currently playing movie.
 ---@return nil
