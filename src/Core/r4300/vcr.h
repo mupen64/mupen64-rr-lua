@@ -6,8 +6,6 @@
 
 #pragma once
 
-extern bool vcr_reset_requested;
-
 /**
  * \brief Notifies VCR engine about controller being polled
  * \param index The polled controller's index
@@ -29,3 +27,5 @@ bool is_frame_skipped();
 
 bool vcr_allows_core_pause();
 bool vcr_allows_core_unpause();
+
+void vcr_request_reset();

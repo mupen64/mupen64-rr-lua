@@ -2239,8 +2239,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     const auto task = core_vcr_get_task();
     if (g_core->cfg->is_reset_recording_enabled && !skip_reset_recording_check && task == task_recording)
     {
-        g_core->log_trace(L"vr_reset_rom_impl Reset during recording, handing off to VCR");
-        vcr_reset_requested = true;
+        vcr_request_reset();
         return Res_Ok;
     }
 

@@ -11,9 +11,6 @@
 #include <memory/pif.h>
 #include <r4300/r4300.h>
 
-extern int32_t m_current_vi;
-extern int32_t m_current_sample;
-
 std::chrono::duration<double, std::milli> max_vi_s_ms;
 
 size_t frame_deltas_ptr = 0;
