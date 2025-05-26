@@ -27,7 +27,9 @@ jobs:
       - name: Set VERSION_SUFFIX
         shell: powershell
         run: |
-          $VERSION_SUFFIX = "-$(git rev-parse --short HEAD)"
+          $branch = git rev-parse --abbrev-ref HEAD
+          $commit = git rev-parse --short HEAD
+          $VERSION_SUFFIX = "-$branch-$commit"
           echo "VERSION_SUFFIX=$VERSION_SUFFIX" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
       - name: Display VERSION_SUFFIX
@@ -39,7 +41,7 @@ jobs:
 
       - name: Build x86
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run:  msbuild mupen64.sln /p:Configuration=Release /p:Platform=x86 /m
+        run:  msbuild mupen64.sln /p:Configuration=Release /p:Platform=x86 /m -restore -p:RestorePackagesConfig=true
 
       - name: 'Upload x86-sse2 build'
         uses: actions/upload-artifact@v4
