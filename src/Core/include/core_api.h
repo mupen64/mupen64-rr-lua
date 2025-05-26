@@ -224,7 +224,7 @@ typedef struct {
      * \param title The dialog title.
      * \return The index of the chosen choice. If the user has chosen to not use modals, this function will return the index specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function will return the last choice.
      */
-    size_t (*show_multiple_choice_dialog)(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type);
+    std::function<size_t(const std::string& id, const std::vector<std::wstring>& choices, const wchar_t* str, const wchar_t* title, core_dialog_type type)> show_multiple_choice_dialog;
 
     /**
      * \brief Asks the user a Yes/No question.
@@ -234,7 +234,7 @@ typedef struct {
      * \param warning Whether the tone of the message is perceived as a warning.
      * \return Whether the user answered Yes. If the user has chosen to not use modals, this function will return the value specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function will return the last choice.
      */
-    bool (*show_ask_dialog)(const std::string& id, const wchar_t* str, const wchar_t* title, bool warning);
+    std::function<bool(const std::string& id, const wchar_t* str, const wchar_t* title, bool warning)> show_ask_dialog;
 
     /**
      * \brief Shows the user a dialog.
@@ -242,12 +242,12 @@ typedef struct {
      * \param title The dialog title.
      * \param type The dialog's tone.
      */
-    void (*show_dialog)(const wchar_t* str, const wchar_t* title, core_dialog_type type);
+    std::function<void(const wchar_t* str, const wchar_t* title, core_dialog_type type)> show_dialog;
 
     /**
      * \brief Shows text in the notification section of the statusbar.
      */
-    void (*show_statusbar)(const wchar_t* str);
+    std::function<void(const wchar_t* str)> show_statusbar;
 
     /**
      * \brief Updates the screen.

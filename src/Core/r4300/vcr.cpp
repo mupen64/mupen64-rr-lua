@@ -31,30 +31,7 @@ constexpr auto CONTROLLER_MEMPAK_MISMATCH = L"Controller {} has a Memory Pak in 
 constexpr auto CONTROLLER_RUMBLEPAK_MISMATCH = L"Controller {} has a Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 constexpr auto CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH = L"Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 
-struct t_vcr_state {
-    std::filesystem::path movie_path{};
-    std::atomic<core_vcr_task> task = task_idle;
-
-    std::atomic<bool> reset_pending{};
-
-    std::optional<size_t> seek_to_frame{};
-    bool seek_pause_at_end{};
-    std::atomic<bool> seek_savestate_loading{};
-    std::unordered_map<size_t, std::vector<uint8_t>> seek_savestates{};
-
-    bool warp_modify_active{};
-    size_t warp_modify_first_difference_frame{};
-
-    core_vcr_movie_header hdr{};
-    std::vector<core_buttons> inputs{};
-
-    int32_t current_sample = -1;
-    int32_t current_vi = -1;
-
-    bool reset_requested;
-};
-
-static t_vcr_state vcr{};
+t_vcr_state vcr{};
 static std::recursive_mutex vcr_mtx{};
 
 bool vcr_is_task_recording(core_vcr_task task);

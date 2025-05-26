@@ -57,7 +57,7 @@
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
         </ClCompile>
-        <ClCompile Include="test\core\test.cpp"/>
+        <ClCompile Include="test\core\vcr_tests.cpp" />
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config"/>
