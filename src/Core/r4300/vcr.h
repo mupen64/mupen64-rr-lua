@@ -52,3 +52,4 @@ bool vcr_allows_core_pause();
 bool vcr_allows_core_unpause();
 
 void vcr_request_reset();
+core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header* header);

@@ -77,7 +77,7 @@ TEST(vcr_on_controller_poll, idle_task_returns_input_from_getkeys)
 TEST(vcr_on_controller_poll, playback_returns_correct_input)
 {
     prepare_test();
-    
+
     core_init(&params);
 
     const auto inputs = std::vector<core_buttons>{
@@ -128,10 +128,10 @@ TEST(vcr_on_controller_poll, seek_continues_when_end_not_reached)
     prepare_test();
 
     const auto inputs = std::vector<core_buttons>{
-        {1},
-        {2},
-        {3},
-        {4}};
+    {1},
+    {2},
+    {3},
+    {4}};
 
     core_init(&params);
 
@@ -171,6 +171,61 @@ TEST(vcr_on_controller_poll, seek_stops_when_end_reached)
     vcr_on_controller_poll(0, &input);
 
     EXPECT_FALSE(vcr.seek_to_frame.has_value());
+}
+
+#pragma endregion
+
+#pragma region Unit
+
+// ee2a0e4
+TEST(vcr_on_controller_poll, input_callback_called_when_using_input_buffer_during_recording)
+{
+    prepare_test();
+
+    static bool called = false;
+    params.callbacks.input = [](core_buttons* input, int index) {
+        called = true;
+    };
+
+    const auto inputs = std::vector<core_buttons>{
+    {1},
+    {2},
+    {3},
+    {4}};
+
+    core_init(&params);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_recording;
+    vcr.current_sample = 2;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    EXPECT_TRUE(called);
+}
+
+// 94e3d9d
+TEST(read_movie_header, sample_length_gets_clamped_to_buffer_max)
+{
+    prepare_test();
+
+    core_vcr_movie_header hdr{};
+    hdr.magic = 0x1a34364d;
+    hdr.version = 3;
+    hdr.length_samples = 3;
+
+    std::vector<uint8_t> bytes(sizeof(hdr));
+    std::memcpy(bytes.data(), &hdr, sizeof(hdr));
+    bytes.insert(bytes.end(), { 0, 0, 0, 0 });
+    bytes.insert(bytes.end(), { 0, 0, 0, 0 });
+
+    core_vcr_movie_header out_hdr{};
+    vcr_read_movie_header(bytes, &out_hdr);
+
+    ASSERT_EQ(out_hdr.length_samples, 2);
 }
 
 #pragma endregion

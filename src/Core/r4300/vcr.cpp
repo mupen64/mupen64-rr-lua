@@ -193,7 +193,7 @@ static void set_rom_info(core_vcr_movie_header* header)
     g_core->get_plugin_names(header->video_plugin_name, header->audio_plugin_name, header->input_plugin_name, header->rsp_plugin_name);
 }
 
-static core_result read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header* header)
+core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header* header)
 {
     const core_vcr_movie_header default_hdr{};
     constexpr auto old_header_size = 512;
@@ -307,7 +307,7 @@ core_result core_vcr_parse_header(std::filesystem::path path, core_vcr_movie_hea
         return VCR_BadFile;
     }
 
-    const auto result = read_movie_header(buf, &new_header);
+    const auto result = vcr_read_movie_header(buf, &new_header);
     *header = new_header;
 
     return result;
@@ -1029,7 +1029,7 @@ core_result core_vcr_replace_author_info(const std::filesystem::path& path, cons
     }
 
     core_vcr_movie_header hdr{};
-    auto result = read_movie_header(buf, &hdr);
+    auto result = vcr_read_movie_header(buf, &hdr);
 
     if (result != Res_Ok)
     {
@@ -1177,7 +1177,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
     }
 
     core_vcr_movie_header header{};
-    const auto result = read_movie_header(movie_buf, &header);
+    const auto result = vcr_read_movie_header(movie_buf, &header);
     if (result != Res_Ok)
     {
         return result;
