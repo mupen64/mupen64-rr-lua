@@ -269,7 +269,10 @@ void cht_layer_pop()
 {
     std::scoped_lock lock(cheats_mutex);
 
-    cheat_stack.pop();
+    if (!cheat_stack.empty())
+    {
+        cheat_stack.pop();
+    }
 }
 
 void cht_execute()

@@ -28,6 +28,13 @@ namespace UpdateChecker
             return "";
         }
 
+        DWORD secure_protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
+        if (!WinHttpSetOption(h_session, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols)))
+        {
+            g_view_logger->error("[UpdateChecker] Failed to set TLS 1.2 protocol");
+            return "";
+        }
+
         HINTERNET h_connect = WinHttpConnect(h_session, L"api.github.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
 
         if (!h_connect)
