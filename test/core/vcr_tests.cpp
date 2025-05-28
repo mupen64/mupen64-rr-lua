@@ -18,13 +18,16 @@ static void prepare_test()
 {
     vcr = {};
     cfg = {};
-    params = {};
     params.cfg = &cfg;
+    params.plugin_funcs.input_get_keys = [](int32_t controller, core_buttons* keys) {
+    };
+    params.plugin_funcs.input_set_keys = [](int32_t controller, core_buttons keys) {
+    };
 }
 
 TEST(vcr_on_controller_poll, reset_pending_returns_unmodified_input)
 {
-    core_params params = prepare_test();
+    prepare_test();
 
     const auto INPUT_VALUE = 0xDEAD;
 
@@ -40,7 +43,7 @@ TEST(vcr_on_controller_poll, reset_pending_returns_unmodified_input)
 
 TEST(vcr_on_controller_poll, seek_savestate_loading_returns_unmodified_input)
 {
-    core_params params = prepare_test();
+    prepare_test();
 
     const auto INPUT_VALUE = 0xDEAD;
 
@@ -56,15 +59,15 @@ TEST(vcr_on_controller_poll, seek_savestate_loading_returns_unmodified_input)
 
 TEST(vcr_on_controller_poll, idle_task_returns_input_from_getkeys)
 {
-    core_params params = prepare_test();
+    prepare_test();
 
     const auto INPUT_VALUE = 0xDEAD;
-    
+
     params.plugin_funcs.input_get_keys = [](int32_t index, core_buttons* input) {
         *input = {INPUT_VALUE};
     };
     core_init(&params);
-    
+
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
 
@@ -73,12 +76,10 @@ TEST(vcr_on_controller_poll, idle_task_returns_input_from_getkeys)
 
 TEST(vcr_on_controller_poll, playback_returns_correct_input)
 {
-    core_params params = prepare_test();
+    prepare_test();
     
-    params.plugin_funcs.input_set_keys = [](int32_t controller, core_buttons keys) {
-    };
     core_init(&params);
-    
+
     const auto inputs = std::vector<core_buttons>{
     {1},
     {2},
@@ -99,7 +100,7 @@ TEST(vcr_on_controller_poll, playback_returns_correct_input)
 
 TEST(vcr_on_controller_poll, record_appends_input)
 {
-    core_params params = prepare_test();
+    prepare_test();
 
     const auto inputs = std::vector<core_buttons>{
     {1},
@@ -119,6 +120,57 @@ TEST(vcr_on_controller_poll, record_appends_input)
     vcr_on_controller_poll(0, &input);
 
     EXPECT_EQ(vcr.inputs.back().value, 0xDEAD);
+}
+
+
+TEST(vcr_on_controller_poll, seek_continues_when_end_not_reached)
+{
+    prepare_test();
+
+    const auto inputs = std::vector<core_buttons>{
+        {1},
+        {2},
+        {3},
+        {4}};
+
+    core_init(&params);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_playback;
+    vcr.current_sample = 1;
+    vcr.seek_to_frame = std::make_optional(3);
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    EXPECT_TRUE(vcr.seek_to_frame.has_value());
+}
+
+TEST(vcr_on_controller_poll, seek_stops_when_end_reached)
+{
+    prepare_test();
+
+    const auto inputs = std::vector<core_buttons>{
+    {1},
+    {2},
+    {3},
+    {4}};
+
+    core_init(&params);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_playback;
+    vcr.current_sample = 3;
+    vcr.seek_to_frame = std::make_optional(3);
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    EXPECT_FALSE(vcr.seek_to_frame.has_value());
 }
 
 #pragma endregion

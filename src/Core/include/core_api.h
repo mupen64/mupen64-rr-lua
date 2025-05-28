@@ -61,6 +61,7 @@ typedef struct {
  */
 typedef struct {
 
+// TODO: Maybe implement dummy substitutions in the core?
 #pragma region Video
     core_plugin_extended_funcs video_extended_funcs;
     CLOSEDLL video_close_dll;
