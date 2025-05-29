@@ -10,6 +10,7 @@
 extern t_vcr_state vcr;
 static core_cfg cfg{};
 static core_params params{};
+static IIOHelperService io_service{};
 
 #pragma region Integration
 
@@ -18,6 +19,7 @@ static void prepare_test()
     vcr = {};
     cfg = {};
     params.cfg = &cfg;
+    params.io_service = &io_service;
     params.plugin_funcs.input_get_keys = [](int32_t controller, core_buttons* keys) {
     };
     params.plugin_funcs.input_set_keys = [](int32_t controller, core_buttons keys) {
