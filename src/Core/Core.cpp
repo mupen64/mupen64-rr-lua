@@ -32,7 +32,7 @@ core_result core_init(core_params* params)
     {
         return IN_MissingComponent;
     }
-    
+
     if (!g_core->log_trace)
     {
         g_core->log_trace = log_dummy;
