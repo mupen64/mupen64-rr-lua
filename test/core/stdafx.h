@@ -6,3 +6,4 @@
 
 #include <Core/stdafx.h>
 #include <Core/include/core_api.h>
+#include <catch2/catch_amalgamated.hpp>

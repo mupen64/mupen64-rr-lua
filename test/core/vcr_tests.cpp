@@ -6,7 +6,6 @@
 
 #include <stdafx.h>
 #include <Core/r4300/vcr.h>
-#include <gtest/gtest.h>
 
 extern t_vcr_state vcr;
 static core_cfg cfg{};
@@ -25,7 +24,8 @@ static void prepare_test()
     };
 }
 
-TEST(vcr_on_controller_poll, reset_pending_returns_unmodified_input)
+
+TEST_CASE("reset_pending_returns_unmodified_input", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -38,10 +38,10 @@ TEST(vcr_on_controller_poll, reset_pending_returns_unmodified_input)
     core_buttons input = {INPUT_VALUE};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_EQ(input.value, INPUT_VALUE);
+    REQUIRE(input.value == INPUT_VALUE);
 }
 
-TEST(vcr_on_controller_poll, seek_savestate_loading_returns_unmodified_input)
+TEST_CASE("seek_savestate_loading_returns_unmodified_input", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -54,10 +54,10 @@ TEST(vcr_on_controller_poll, seek_savestate_loading_returns_unmodified_input)
     core_buttons input = {INPUT_VALUE};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_EQ(input.value, INPUT_VALUE);
+    REQUIRE(input.value == INPUT_VALUE);
 }
 
-TEST(vcr_on_controller_poll, idle_task_returns_input_from_getkeys)
+TEST_CASE("idle_task_returns_input_from_getkeys", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -71,10 +71,10 @@ TEST(vcr_on_controller_poll, idle_task_returns_input_from_getkeys)
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_EQ(input.value, INPUT_VALUE);
+    REQUIRE(input.value == INPUT_VALUE);
 }
 
-TEST(vcr_on_controller_poll, playback_returns_correct_input)
+TEST_CASE("playback_returns_correct_input", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -95,10 +95,10 @@ TEST(vcr_on_controller_poll, playback_returns_correct_input)
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_EQ(input.value, inputs[2].value);
+    REQUIRE(input.value == inputs[2].value);
 }
 
-TEST(vcr_on_controller_poll, record_appends_input)
+TEST_CASE("record_appends_input", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -119,11 +119,10 @@ TEST(vcr_on_controller_poll, record_appends_input)
     core_buttons input{0xDEAD};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_EQ(vcr.inputs.back().value, 0xDEAD);
+    REQUIRE(vcr.inputs.back().value == 0xDEAD);
 }
 
-
-TEST(vcr_on_controller_poll, seek_continues_when_end_not_reached)
+TEST_CASE("seek_continues_when_end_not_reached", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -145,10 +144,10 @@ TEST(vcr_on_controller_poll, seek_continues_when_end_not_reached)
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_TRUE(vcr.seek_to_frame.has_value());
+    REQUIRE(vcr.seek_to_frame.has_value());
 }
 
-TEST(vcr_on_controller_poll, seek_stops_when_end_reached)
+TEST_CASE("seek_stops_when_end_reached", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -170,7 +169,7 @@ TEST(vcr_on_controller_poll, seek_stops_when_end_reached)
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_FALSE(vcr.seek_to_frame.has_value());
+    REQUIRE(!vcr.seek_to_frame.has_value());
 }
 
 #pragma endregion
@@ -178,7 +177,7 @@ TEST(vcr_on_controller_poll, seek_stops_when_end_reached)
 #pragma region Unit
 
 // ee2a0e4
-TEST(vcr_on_controller_poll, input_callback_called_when_using_input_buffer_during_recording)
+TEST_CASE("input_callback_called_when_using_input_buffer_during_recording", "vcr_on_controller_poll")
 {
     prepare_test();
 
@@ -204,11 +203,11 @@ TEST(vcr_on_controller_poll, input_callback_called_when_using_input_buffer_durin
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
 
-    EXPECT_TRUE(called);
+    REQUIRE(called);
 }
 
 // 94e3d9d
-TEST(read_movie_header, sample_length_gets_clamped_to_buffer_max)
+TEST_CASE("sample_length_gets_clamped_to_buffer_max", "read_movie_header")
 {
     prepare_test();
 
@@ -225,21 +224,59 @@ TEST(read_movie_header, sample_length_gets_clamped_to_buffer_max)
     core_vcr_movie_header out_hdr{};
     vcr_read_movie_header(bytes, &out_hdr);
 
-    ASSERT_EQ(out_hdr.length_samples, 2);
+    REQUIRE(out_hdr.length_samples == 2);
 }
 
-struct seek_test_params {
-    t_vcr_state vcr{};
-    std::wstring str{};
-    size_t expected_frame{};
-};
 
-class SeekTest : public testing::TestWithParam<seek_test_params> {};
-TEST_P(SeekTest, seek_stops_at_expected_frame)
+TEST_CASE("seek_stops_at_expected_frame", "seek")
 {
-    prepare_test();
+    struct seek_test_params {
+        t_vcr_state vcr{};
+        std::wstring str{};
+        size_t expected_frame{};
+    };
 
-    const auto param = GetParam();
+    const auto param = GENERATE(seek_test_params{
+                                .vcr = {
+                                .task = task_playback,
+                                .hdr = {
+                                .length_samples = 5,
+                                .controller_flags = CONTROLLER_X_PRESENT(0),
+                                },
+                                .inputs = {
+                                core_buttons{0x01},
+                                core_buttons{0x02},
+                                core_buttons{0x03},
+                                core_buttons{0x04},
+                                core_buttons{0x05},
+                                },
+                                .current_sample = 0,
+                                },
+                                .str = L"3",
+                                .expected_frame = 3,
+                                },
+
+                                seek_test_params{
+                                .vcr = {
+                                .task = task_playback,
+                                .hdr = {
+                                .length_samples = 5,
+                                .controller_flags = CONTROLLER_X_PRESENT(0),
+                                },
+                                .inputs = {
+                                core_buttons{0x01},
+                                core_buttons{0x02},
+                                core_buttons{0x03},
+                                core_buttons{0x04},
+                                core_buttons{0x05},
+                                },
+                                .current_sample = 3,
+                                },
+                                .str = L"-1",
+                                .expected_frame = 2,
+                                });
+
+    prepare_test();
     vcr = param.vcr;
 
     bool seek_completed = false;
@@ -250,7 +287,7 @@ TEST_P(SeekTest, seek_stops_at_expected_frame)
     core_init(&params);
 
     const auto result = core_vcr_begin_seek(param.str, false);
-    ASSERT_EQ(result, Res_Ok);
+    REQUIRE(result == Res_Ok);
 
     while (!seek_completed)
     {
@@ -258,50 +295,8 @@ TEST_P(SeekTest, seek_stops_at_expected_frame)
         vcr_on_controller_poll(0, &input);
     }
 
-    ASSERT_EQ(param.expected_frame + 1, vcr.current_sample);
+    REQUIRE(vcr.current_sample == param.expected_frame + 1);
 }
-INSTANTIATE_TEST_CASE_P(
-seek_tests,
-SeekTest,
-::testing::Values(seek_test_params{
-                  .vcr = {
-                  .task = task_playback,
-                  .hdr = {
-                  .length_samples = 5,
-                  .controller_flags = CONTROLLER_X_PRESENT(0),
-                  },
-                  .inputs = {
-                  core_buttons{0x01},
-                  core_buttons{0x02},
-                  core_buttons{0x03},
-                  core_buttons{0x04},
-                  core_buttons{0x05},
-                  },
-                  .current_sample = 0,
-                  },
-                  .str = L"3",
-                  .expected_frame = 3,
-                  },
-
-                  seek_test_params{
-                  .vcr = {
-                  .task = task_playback,
-                  .hdr = {
-                  .length_samples = 5,
-                  .controller_flags = CONTROLLER_X_PRESENT(0),
-                  },
-                  .inputs = {
-                  core_buttons{0x01},
-                  core_buttons{0x02},
-                  core_buttons{0x03},
-                  core_buttons{0x04},
-                  core_buttons{0x05},
-                  },
-                  .current_sample = 3,
-                  },
-                  .str = L"-1",
-                  .expected_frame = 2,
-                  }));
 
 
 #pragma endregion

@@ -48,6 +48,7 @@
     <ImportGroup Label="PropertySheets"/>
     <PropertyGroup Label="UserMacros"/>
     <ItemGroup>
+        <ClInclude Include="lib\catch2\catch_amalgamated.hpp"/>
         <ClInclude Include="test\core\stdafx.h"/>
     </ItemGroup>
     <ItemGroup>
@@ -57,19 +58,16 @@
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
         </ClCompile>
+        <ClCompile Include="lib\catch2\catch_amalgamated.cpp">
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+        </ClCompile>
         <ClCompile Include="test\core\vcr_tests.cpp" />
-    </ItemGroup>
-    <ItemGroup>
-        <None Include="packages.config"/>
     </ItemGroup>
     <ItemDefinitionGroup/>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
-    <ImportGroup Label="ExtensionTargets">
-        <Import Project="packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.6\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.targets" Condition="Exists('packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.6\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.targets')"/>
-    </ImportGroup>
     <ItemDefinitionGroup>
         <ClCompile>
-            <AdditionalIncludeDirectories>src/;test/core;lib/;lib/xxhash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>src/;test/core;lib/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
             <WarningLevel>Level3</WarningLevel>
             <SDLCheck>true</SDLCheck>
             <CompileAs>CompileAsCpp</CompileAs>
@@ -127,10 +125,4 @@
             <Name>Core</Name>
         </ProjectReference>
     </ItemGroup>
-    <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-        <PropertyGroup>
-            <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them. For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-        </PropertyGroup>
-        <Error Condition="!Exists('packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.6\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.6\build\native\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.targets'))"/>
-    </Target>
 </Project>
