@@ -23,37 +23,37 @@ extern "C" {
  * \brief Callbacks for the core to call into the host.
  */
 typedef struct {
-    void (*vi)(void);
-    void (*input)(core_buttons* input, int index);
-    void (*frame)(void);
-    void (*interval)(void);
-    void (*ai_len_changed)();
-    void (*play_movie)(void);
-    void (*stop_movie)(void);
-    void (*loop_movie)(void);
-    void (*save_state)(void);
-    void (*load_state)(void);
-    void (*reset)(void);
-    void (*seek_completed)(void);
-    void (*core_executing_changed)(bool);
-    void (*emu_paused_changed)(bool);
-    void (*emu_launched_changed)(bool);
-    void (*emu_starting_changed)(bool);
-    void (*emu_stopping)(void);
-    void (*reset_completed)(void);
-    void (*speed_modifier_changed)(int32_t);
-    void (*warp_modify_status_changed)(bool);
-    void (*current_sample_changed)(int32_t);
-    void (*task_changed)(core_vcr_task);
-    void (*rerecords_changed)(uint64_t);
-    void (*unfreeze_completed)(void);
-    void (*seek_savestate_changed)(size_t);
-    void (*readonly_changed)(bool);
-    void (*dacrate_changed)(core_system_type);
-    void (*debugger_resumed_changed)(bool);
-    void (*debugger_cpu_state_changed)(core_dbg_cpu_state*);
-    void (*lag_limit_exceeded)(void);
-    void (*seek_status_changed)(void);
+    std::function<void()> vi;
+    std::function<void(core_buttons* input, int index)> input;
+    std::function<void()> frame;
+    std::function<void()> interval;
+    std::function<void()> ai_len_changed;
+    std::function<void()> play_movie;
+    std::function<void()> stop_movie;
+    std::function<void()> loop_movie;
+    std::function<void()> save_state;
+    std::function<void()> load_state;
+    std::function<void()> reset;
+    std::function<void()> seek_completed;
+    std::function<void(bool)> core_executing_changed;
+    std::function<void(bool)> emu_paused_changed;
+    std::function<void(bool)> emu_launched_changed;
+    std::function<void(bool)> emu_starting_changed;
+    std::function<void()> emu_stopping;
+    std::function<void()> reset_completed;
+    std::function<void(int32_t)> speed_modifier_changed;
+    std::function<void(bool)> warp_modify_status_changed;
+    std::function<void(int32_t)> current_sample_changed;
+    std::function<void(core_vcr_task)> task_changed;
+    std::function<void(uint64_t)> rerecords_changed;
+    std::function<void()> unfreeze_completed;
+    std::function<void(size_t)> seek_savestate_changed;
+    std::function<void(bool)> readonly_changed;
+    std::function<void(core_system_type)> dacrate_changed;
+    std::function<void(bool)> debugger_resumed_changed;
+    std::function<void(core_dbg_cpu_state*)> debugger_cpu_state_changed;
+    std::function<void()> lag_limit_exceeded;
+    std::function<void()> seek_status_changed;
 } core_callbacks;
 
 /**

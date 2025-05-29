@@ -219,13 +219,112 @@ TEST(read_movie_header, sample_length_gets_clamped_to_buffer_max)
 
     std::vector<uint8_t> bytes(sizeof(hdr));
     std::memcpy(bytes.data(), &hdr, sizeof(hdr));
-    bytes.insert(bytes.end(), { 0, 0, 0, 0 });
-    bytes.insert(bytes.end(), { 0, 0, 0, 0 });
+    bytes.insert(bytes.end(), {0, 0, 0, 0});
+    bytes.insert(bytes.end(), {0, 0, 0, 0});
 
     core_vcr_movie_header out_hdr{};
     vcr_read_movie_header(bytes, &out_hdr);
 
     ASSERT_EQ(out_hdr.length_samples, 2);
 }
+
+
+// 94e3d9d
+TEST(compute_sample_from_seek_string, sample_length_gets_clamped_to_buffer_max)
+{
+    prepare_test();
+    core_init(&params);
+
+    core_vcr_movie_header hdr{};
+    hdr.magic = 0x1a34364d;
+    hdr.version = 3;
+    hdr.length_samples = 3;
+
+    std::vector<uint8_t> bytes(sizeof(hdr));
+    std::memcpy(bytes.data(), &hdr, sizeof(hdr));
+    bytes.insert(bytes.end(), {0, 0, 0, 0});
+    bytes.insert(bytes.end(), {0, 0, 0, 0});
+
+    core_vcr_movie_header out_hdr{};
+    vcr_read_movie_header(bytes, &out_hdr);
+
+    ASSERT_EQ(out_hdr.length_samples, 2);
+}
+
+struct seek_test_params {
+    t_vcr_state vcr{};
+    std::wstring str{};
+    size_t expected_frame{};
+};
+
+class SeekTest : public testing::TestWithParam<seek_test_params> {};
+TEST_P(SeekTest, seek_stops_at_expected_frame)
+{
+    prepare_test();
+
+    const auto param = GetParam();
+    vcr = param.vcr;
+
+    bool seek_completed = false;
+    params.callbacks.seek_completed = [&] {
+        seek_completed = true;
+    };
+
+    core_init(&params);
+
+    const auto result = core_vcr_begin_seek(param.str, false);
+    ASSERT_EQ(result, Res_Ok);
+
+    while (!seek_completed)
+    {
+        core_buttons input{};
+        vcr_on_controller_poll(0, &input);
+    }
+
+    ASSERT_EQ(param.expected_frame + 1, vcr.current_sample);
+}
+INSTANTIATE_TEST_CASE_P(
+seek_tests,
+SeekTest,
+::testing::Values(seek_test_params{
+                  .vcr = {
+                  .task = task_playback,
+                  .hdr = {
+                  .length_samples = 5,
+                  .controller_flags = CONTROLLER_X_PRESENT(0),
+                  },
+                  .inputs = {
+                  core_buttons{0x01},
+                  core_buttons{0x02},
+                  core_buttons{0x03},
+                  core_buttons{0x04},
+                  core_buttons{0x05},
+                  },
+                  .current_sample = 0,
+                  },
+                  .str = L"3",
+                  .expected_frame = 3,
+                  },
+
+                  seek_test_params{
+                  .vcr = {
+                  .task = task_playback,
+                  .hdr = {
+                  .length_samples = 5,
+                  .controller_flags = CONTROLLER_X_PRESENT(0),
+                  },
+                  .inputs = {
+                  core_buttons{0x01},
+                  core_buttons{0x02},
+                  core_buttons{0x03},
+                  core_buttons{0x04},
+                  core_buttons{0x05},
+                  },
+                  .current_sample = 3,
+                  },
+                  .str = L"-1",
+                  .expected_frame = 2,
+                  }));
+
 
 #pragma endregion
