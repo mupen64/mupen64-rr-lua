@@ -228,29 +228,6 @@ TEST(read_movie_header, sample_length_gets_clamped_to_buffer_max)
     ASSERT_EQ(out_hdr.length_samples, 2);
 }
 
-
-// 94e3d9d
-TEST(compute_sample_from_seek_string, sample_length_gets_clamped_to_buffer_max)
-{
-    prepare_test();
-    core_init(&params);
-
-    core_vcr_movie_header hdr{};
-    hdr.magic = 0x1a34364d;
-    hdr.version = 3;
-    hdr.length_samples = 3;
-
-    std::vector<uint8_t> bytes(sizeof(hdr));
-    std::memcpy(bytes.data(), &hdr, sizeof(hdr));
-    bytes.insert(bytes.end(), {0, 0, 0, 0});
-    bytes.insert(bytes.end(), {0, 0, 0, 0});
-
-    core_vcr_movie_header out_hdr{};
-    vcr_read_movie_header(bytes, &out_hdr);
-
-    ASSERT_EQ(out_hdr.length_samples, 2);
-}
-
 struct seek_test_params {
     t_vcr_state vcr{};
     std::wstring str{};
