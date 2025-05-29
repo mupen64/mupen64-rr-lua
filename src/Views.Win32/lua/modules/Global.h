@@ -32,7 +32,7 @@ namespace LuaCore::Global
             const char* inspected_value = lua_tostring(L, -1);
             if (inspected_value)
             {
-                auto str = string_to_wstring(inspected_value);
+                auto str = io_service.string_to_wstring(inspected_value);
 
                 // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
                 if (str.size() > 1 && ((str[0] == '"' && str[str.size() - 1] == '"') || (str[0] == '\'' && str[str.size() - 1] == '\'')))
@@ -87,7 +87,7 @@ namespace LuaCore::Global
             const char* inspected_value = lua_tostring(L, -1);
             if (inspected_value)
             {
-                auto str = string_to_wstring(inspected_value);
+                auto str = io_service.string_to_wstring(inspected_value);
 
                 // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
                 if (str.size() > 1 && str[0] == '"' && str[str.size() - 1] == '"')
@@ -107,7 +107,7 @@ namespace LuaCore::Global
                 final_str += L"\t";
         }
 
-        lua_pushstring(L, wstring_to_string(final_str).c_str());
+        lua_pushstring(L, io_service.wstring_to_string(final_str).c_str());
         return 1;
     }
 

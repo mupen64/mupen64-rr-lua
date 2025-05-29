@@ -54,7 +54,7 @@ void RecentMenu::add(std::vector<std::wstring>& vec, std::wstring val, const boo
         vec.pop_back();
     }
     std::erase_if(vec, [&](const auto str) {
-        return ::iequals(str, val) || std::filesystem::path(str).compare(val) == 0;
+        return io_service.iequals(str, val) || std::filesystem::path(str).compare(val) == 0;
     });
     vec.insert(vec.begin(), val);
     build(vec, first_menu_id, parent_menu);

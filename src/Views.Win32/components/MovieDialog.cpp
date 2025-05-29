@@ -291,7 +291,7 @@ refresh:
 
     ListView_DeleteAllItems(grid_hwnd);
 
-    metadata.emplace_back(std::make_pair(L"ROM", std::format(L"{} ({}, {})", string_to_wstring((char*)header.rom_name), core_vr_country_code_to_country_name(header.rom_country), std::format(L"{:#08x}", header.rom_crc1))));
+    metadata.emplace_back(std::make_pair(L"ROM", std::format(L"{} ({}, {})", io_service.string_to_wstring((char*)header.rom_name), core_vr_country_code_to_country_name(header.rom_country), std::format(L"{:#08x}", header.rom_crc1))));
 
     metadata.emplace_back(std::make_pair(L"Length",
                                          std::format(
@@ -303,13 +303,13 @@ refresh:
     std::make_pair(L"Rerecords", std::to_wstring(static_cast<uint64_t>(header.extended_data.rerecord_count) << 32 | header.rerecord_count)));
 
     metadata.emplace_back(
-    std::make_pair(L"Video Plugin", string_to_wstring(header.video_plugin_name)));
+    std::make_pair(L"Video Plugin", io_service.string_to_wstring(header.video_plugin_name)));
     metadata.emplace_back(
-    std::make_pair(L"Input Plugin", string_to_wstring(header.input_plugin_name)));
+    std::make_pair(L"Input Plugin", io_service.string_to_wstring(header.input_plugin_name)));
     metadata.emplace_back(
-    std::make_pair(L"Sound Plugin", string_to_wstring(header.audio_plugin_name)));
+    std::make_pair(L"Sound Plugin", io_service.string_to_wstring(header.audio_plugin_name)));
     metadata.emplace_back(
-    std::make_pair(L"RSP Plugin", string_to_wstring(header.rsp_plugin_name)));
+    std::make_pair(L"RSP Plugin", io_service.string_to_wstring(header.rsp_plugin_name)));
 
     for (int i = 0; i < 4; ++i)
     {
@@ -332,7 +332,7 @@ refresh:
     memcpy(authorship, header.extended_data.authorship_tag, sizeof(header.extended_data.authorship_tag));
 
     metadata.emplace_back(
-    std::make_pair(L"Authorship", header.extended_version == 0 ? L"Unknown" : string_to_wstring(authorship)));
+    std::make_pair(L"Authorship", header.extended_version == 0 ? L"Unknown" : io_service.string_to_wstring(authorship)));
 
     metadata.emplace_back(
     std::make_pair(L"A Presses", std::to_wstring(count_button_presses(inputs, 7))));
@@ -365,8 +365,8 @@ refresh:
     std::make_pair(L"Input Changes", std::to_wstring(count_input_changes(inputs))));
 
 
-    SetDlgItemText(hwnd, IDC_INI_AUTHOR, string_to_wstring(header.author).c_str());
-    SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, string_to_wstring(header.description).c_str());
+    SetDlgItemText(hwnd, IDC_INI_AUTHOR, io_service.string_to_wstring(header.author).c_str());
+    SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, io_service.string_to_wstring(header.description).c_str());
 
     CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.startFlags == MOVIE_START_FROM_SNAPSHOT);
     CheckDlgButton(hwnd, IDC_RADIO_FROM_EXISTING_ST, header.startFlags == MOVIE_START_FROM_EXISTING_SNAPSHOT);
@@ -397,7 +397,7 @@ refresh:
 MovieDialog::t_result MovieDialog::show(bool readonly)
 {
     is_readonly = readonly;
-    user_result.path = std::format(L"{} ({}).m64", string_to_wstring((char*)core_vr_get_rom_header()->nom), core_vr_country_code_to_country_name(core_vr_get_rom_header()->Country_code));
+    user_result.path = std::format(L"{} ({}).m64", io_service.string_to_wstring((char*)core_vr_get_rom_header()->nom), core_vr_country_code_to_country_name(core_vr_get_rom_header()->Country_code));
     user_result.start_flag = g_config.last_movie_type;
     user_result.author = g_config.last_movie_author;
     user_result.description = L"";

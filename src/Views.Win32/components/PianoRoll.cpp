@@ -617,8 +617,8 @@ namespace PianoRoll
             return;
         }
 
-        std::vector<size_t> selected_indicies(g_piano_roll_state.selected_indicies.begin(), g_piano_roll_state.selected_indicies.end());
-        g_piano_roll_state.inputs = erase_indices(g_piano_roll_state.inputs, selected_indicies);
+        std::vector selected_indicies(g_piano_roll_state.selected_indicies.begin(), g_piano_roll_state.selected_indicies.end());
+        g_piano_roll_state.inputs = io_service.erase_indices(g_piano_roll_state.inputs, selected_indicies);
         ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
         const int32_t offset = g_piano_roll_state.selected_indicies[g_piano_roll_state.selected_indicies.size() - 1] - g_piano_roll_state.selected_indicies[0] + 1;
         shift_listview_selection(g_lv_hwnd, -offset);

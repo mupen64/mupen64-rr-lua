@@ -235,8 +235,8 @@ namespace LuaCore::Wgui
             DeleteObject(lua->rctx.brush);
         }
 
-        auto s = string_to_wstring(lua_tostring(L, 1));
-        if (iequals(s, L"null"))
+        auto s = io_service.string_to_wstring(lua_tostring(L, 1));
+        if (io_service.iequals(s, L"null"))
             lua->rctx.brush = (HBRUSH)GetStockObject(NULL_BRUSH);
         else
             lua->rctx.brush = CreateSolidBrush(StrToColor(s));
@@ -253,10 +253,10 @@ namespace LuaCore::Wgui
             DeleteObject(lua->rctx.pen);
         }
 
-        auto s = string_to_wstring(lua_tostring(L, 1));
+        auto s = io_service.string_to_wstring(lua_tostring(L, 1));
         int width = luaL_optnumber(L, 2, 1);
 
-        if (iequals(s, L"null"))
+        if (io_service.iequals(s, L"null"))
             lua->rctx.pen = (HPEN)GetStockObject(NULL_PEN);
         else
             lua->rctx.pen = CreatePen(PS_SOLID, width, StrToColor(s));
@@ -267,7 +267,7 @@ namespace LuaCore::Wgui
     static int set_text_color(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        lua->rctx.col = StrToColor(string_to_wstring(lua_tostring(L, 1)));
+        lua->rctx.col = StrToColor(io_service.string_to_wstring(lua_tostring(L, 1)));
         return 0;
     }
 
@@ -275,9 +275,9 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
 
-        auto s = string_to_wstring(lua_tostring(L, 1));
+        auto s = io_service.string_to_wstring(lua_tostring(L, 1));
 
-        if (iequals(s, L"null"))
+        if (io_service.iequals(s, L"null"))
         {
             lua->rctx.bkmode = TRANSPARENT;
         }
@@ -301,8 +301,8 @@ namespace LuaCore::Wgui
         }
 
         auto font_size = luaL_checknumber(L, 1);
-        auto font_name = string_to_wstring(luaL_optstring(L, 2, "MS Gothic"));
-        auto style = string_to_wstring(luaL_optstring(L, 3, ""));
+        auto font_name = io_service.string_to_wstring(luaL_optstring(L, 2, "MS Gothic"));
+        auto style = io_service.string_to_wstring(luaL_optstring(L, 3, ""));
 
         // set the size of the font
         font.lfHeight = -MulDiv(font_size, GetDeviceCaps(lua->rctx.gdi_back_dc, LOGPIXELSY), 72);
@@ -348,7 +348,7 @@ namespace LuaCore::Wgui
 
         int x = luaL_checknumber(L, 1);
         int y = luaL_checknumber(L, 2);
-        auto text = string_to_wstring(lua_tostring(L, 3));
+        auto text = io_service.string_to_wstring(lua_tostring(L, 3));
 
         ::TextOut(lua->rctx.gdi_back_dc, x, y, text.c_str(), text.size());
         return 0;
@@ -397,7 +397,7 @@ namespace LuaCore::Wgui
     static int GetTextExtent(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        auto string = string_to_wstring(luaL_checkstring(L, 1));
+        auto string = io_service.string_to_wstring(luaL_checkstring(L, 1));
 
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
 
@@ -464,7 +464,7 @@ namespace LuaCore::Wgui
                 }
             }
         }
-        auto str = string_to_wstring(lua_tostring(L, 1));
+        auto str = io_service.string_to_wstring(lua_tostring(L, 1));
 
         ::DrawText(lua->rctx.gdi_back_dc, str.c_str(), -1, &rect, format);
         return 0;
@@ -480,7 +480,7 @@ namespace LuaCore::Wgui
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
 
         RECT rect = {0};
-        auto string = string_to_wstring(lua_tostring(L, 1));
+        auto string = io_service.string_to_wstring(lua_tostring(L, 1));
         UINT format = luaL_checkinteger(L, 2);
         rect.left = luaL_checkinteger(L, 3);
         rect.top = luaL_checkinteger(L, 4);
@@ -510,7 +510,7 @@ namespace LuaCore::Wgui
     static int LuaLoadImage(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        std::wstring path = string_to_wstring(luaL_checkstring(L, 1));
+        std::wstring path = io_service.string_to_wstring(luaL_checkstring(L, 1));
 
         auto img = new Gdiplus::Bitmap(path.c_str());
         if (!img || img->GetLastStatus())
@@ -775,7 +775,7 @@ namespace LuaCore::Wgui
         int y = luaL_checknumber(L, 2);
         int w = luaL_checknumber(L, 3);
         int h = luaL_checknumber(L, 4);
-        auto col = string_to_wstring(luaL_checkstring(L, 5));
+        auto col = io_service.string_to_wstring(luaL_checkstring(L, 5));
 
         Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
         Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
@@ -794,7 +794,7 @@ namespace LuaCore::Wgui
         int y = luaL_checknumber(L, 2);
         int w = luaL_checknumber(L, 3);
         int h = luaL_checknumber(L, 4);
-        auto col = string_to_wstring(luaL_checkstring(L, 5));
+        auto col = io_service.string_to_wstring(luaL_checkstring(L, 5));
 
         Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
         Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));

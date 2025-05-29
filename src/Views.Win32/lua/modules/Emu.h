@@ -133,7 +133,7 @@ namespace LuaCore::Emu
 
     static int LuaPlaySound(lua_State* L)
     {
-        PlaySound(string_to_wstring(luaL_checkstring(L, 1)).c_str(), NULL, SND_FILENAME | SND_ASYNC);
+        PlaySound(io_service.string_to_wstring(luaL_checkstring(L, 1)).c_str(), NULL, SND_FILENAME | SND_ASYNC);
         return 1;
     }
 
@@ -248,7 +248,7 @@ namespace LuaCore::Emu
             version = version.substr(std::string("Mupen 64 ").size());
         }
 
-        lua_pushstring(L, wstring_to_string(version).c_str());
+        lua_pushstring(L, io_service.wstring_to_string(version).c_str());
         return 1;
     }
 
@@ -256,13 +256,13 @@ namespace LuaCore::Emu
     static int ConsoleWriteLua(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        print_con(lua->hwnd, string_to_wstring(luaL_checkstring(L, 1)) + L"\r\n");
+        print_con(lua->hwnd, io_service.string_to_wstring(luaL_checkstring(L, 1)) + L"\r\n");
         return 0;
     }
 
     static int StatusbarWrite(lua_State* L)
     {
-        Statusbar::post(string_to_wstring(lua_tostring(L, 1)));
+        Statusbar::post(io_service.string_to_wstring(lua_tostring(L, 1)));
         return 0;
     }
 } // namespace LuaCore::Emu

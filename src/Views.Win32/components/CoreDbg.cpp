@@ -57,7 +57,7 @@ INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
                                  g_cpu_state.opcode,
                                  g_cpu_state.address);
 
-            auto str = std::format(L"{} ({:#08x}, {:#08x})", string_to_wstring(disasm), g_cpu_state.opcode, g_cpu_state.address);
+            auto str = std::format(L"{} ({:#08x}, {:#08x})", io_service.string_to_wstring(disasm), g_cpu_state.opcode, g_cpu_state.address);
             ListBox_InsertString(list_hwnd, 0, str.c_str());
 
             if (ListBox_GetCount(list_hwnd) > 1024)

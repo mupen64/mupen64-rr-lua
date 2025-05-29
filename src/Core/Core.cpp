@@ -28,6 +28,11 @@ core_result core_init(core_params* params)
 {
     g_core = params;
 
+    if (!g_core->io_service)
+    {
+        return IN_MissingComponent;
+    }
+    
     if (!g_core->log_trace)
     {
         g_core->log_trace = log_dummy;

@@ -21,7 +21,7 @@ static std::wstring fix_filter(const std::wstring& filter)
 
 static std::wstring get_default_extension(const std::wstring& filter)
 {
-    const auto wildcards = split_string(filter, L";");
+    const auto wildcards = io_service.split_string(filter, L";");
 
     if (wildcards.empty())
         return L"";

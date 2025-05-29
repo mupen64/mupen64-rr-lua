@@ -221,7 +221,7 @@ luaL_checknumber(L, idx + 6))
             IDWriteTextFormat* text_format;
 
             lua->rctx.dw_factory->CreateTextFormat(
-            string_to_wstring(font_name).c_str(),
+            io_service.string_to_wstring(font_name).c_str(),
             nullptr,
             static_cast<DWRITE_FONT_WEIGHT>(font_weight),
             static_cast<DWRITE_FONT_STYLE>(font_style),
@@ -237,7 +237,7 @@ luaL_checknumber(L, idx + 6))
 
             IDWriteTextLayout* text_layout;
 
-            auto wtext = string_to_wstring(text);
+            auto wtext = io_service.string_to_wstring(text);
             lua->rctx.dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, rectangle.right - rectangle.left, rectangle.bottom - rectangle.top, &text_layout);
 
             lua->rctx.dw_text_layouts.add(params_hash, text_layout);
@@ -281,7 +281,7 @@ luaL_checknumber(L, idx + 6))
         auto lua = get_lua_class(L);
         LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
-        std::wstring text = string_to_wstring(std::string(luaL_checkstring(L, 1)));
+        std::wstring text = io_service.string_to_wstring(std::string(luaL_checkstring(L, 1)));
         std::string font_name = std::string(luaL_checkstring(L, 2));
         float font_size = luaL_checknumber(L, 3);
         float max_width = luaL_checknumber(L, 4);
@@ -305,7 +305,7 @@ luaL_checknumber(L, idx + 6))
             IDWriteTextFormat* text_format;
 
             lua->rctx.dw_factory->CreateTextFormat(
-            string_to_wstring(font_name).c_str(),
+            io_service.string_to_wstring(font_name).c_str(),
             NULL,
             DWRITE_FONT_WEIGHT_NORMAL,
             DWRITE_FONT_STYLE_NORMAL,
@@ -414,7 +414,7 @@ luaL_checknumber(L, idx + 6))
         IID_PPV_ARGS(&pIWICFactory));
 
         HRESULT hr = pIWICFactory->CreateDecoderFromFilename(
-        string_to_wstring(path).c_str(),
+        io_service.string_to_wstring(path).c_str(),
         NULL,
         GENERIC_READ,
         WICDecodeMetadataCacheOnLoad,

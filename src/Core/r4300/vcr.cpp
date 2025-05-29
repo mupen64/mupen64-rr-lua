@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <IOHelpers.h>
+#include <IIOHelperService.h>
 #include <Core.h>
 #include <cheats.h>
 #include <include/core_api.h>
@@ -121,7 +121,7 @@ std::filesystem::path find_accompanying_file_for_movie(std::filesystem::path pat
     size_t i = 0;
     while (true)
     {
-        auto result = str_nth_occurence(filename, ".", i + 1);
+        auto result = g_core->io_service->str_nth_occurence(filename, ".", i + 1);
         std::string matched_filename = "";
 
         // Standard case, no st sharing
@@ -139,7 +139,7 @@ std::filesystem::path find_accompanying_file_for_movie(std::filesystem::path pat
         for (const auto& ext : extensions)
         {
             // FIXME: Port this function to Unicode so we don't have to wstring_to_string the extension!!!
-            st = std::string(drive) + std::string(dir) + matched_filename + wstring_to_string(ext);
+            st = std::string(drive) + std::string(dir) + matched_filename + g_core->io_service->wstring_to_string(ext);
             if (std::filesystem::exists(st))
             {
                 return st;
@@ -301,7 +301,7 @@ core_result core_vcr_parse_header(std::filesystem::path path, core_vcr_movie_hea
     new_header.rom_country = -1;
     strcpy_s(new_header.rom_name, sizeof(new_header.rom_name), "(no ROM)");
 
-    auto buf = read_file_buffer(path);
+    auto buf = g_core->io_service->read_file_buffer(path);
     if (buf.empty())
     {
         return VCR_BadFile;
@@ -322,7 +322,7 @@ core_result core_vcr_read_movie_inputs(std::filesystem::path path, std::vector<c
         return result;
     }
 
-    auto buf = read_file_buffer(path);
+    auto buf = g_core->io_service->read_file_buffer(path);
 
     if (buf.size() < sizeof(core_vcr_movie_header) + sizeof(core_buttons) * header.length_samples)
     {
@@ -827,7 +827,7 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
 // Consists of the movie path, but with the stem trimmed at the first dot and with the specified extension (must contain dot)
 std::filesystem::path get_path_for_new_movie(std::filesystem::path path, const std::string& extension = ".st")
 {
-    auto result = str_nth_occurence(path.stem().string(), ".", 1);
+    auto result = g_core->io_service->str_nth_occurence(path.stem().string(), ".", 1);
 
     // Standard case, no st shortcutting
     if (result == std::string::npos)
@@ -1021,7 +1021,7 @@ core_result core_vcr_replace_author_info(const std::filesystem::path& path, cons
     // we skip that step if the values remain identical
 
     // 1. Read movie header
-    const auto buf = read_file_buffer(path);
+    const auto buf = g_core->io_service->read_file_buffer(path);
 
     if (buf.empty())
     {
@@ -1153,7 +1153,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
 {
     std::unique_lock lock(vcr_mtx);
 
-    auto movie_buf = read_file_buffer(path);
+    auto movie_buf = g_core->io_service->read_file_buffer(path);
 
     if (movie_buf.empty())
     {
@@ -1231,7 +1231,7 @@ core_result core_vcr_start_playback(std::filesystem::path path)
 
     if (_stricmp(header.rom_name, (const char*)ROM_HEADER.nom) != 0)
     {
-        bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_ROM_NAME_WARNING, std::format(ROM_NAME_WARNING_MESSAGE, string_to_wstring(header.rom_name), string_to_wstring((char*)ROM_HEADER.nom)).c_str(), L"VCR", true);
+        bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_ROM_NAME_WARNING, std::format(ROM_NAME_WARNING_MESSAGE, g_core->io_service->string_to_wstring(header.rom_name), g_core->io_service->string_to_wstring((char*)ROM_HEADER.nom)).c_str(), L"VCR", true);
 
         if (!proceed)
         {

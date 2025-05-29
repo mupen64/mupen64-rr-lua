@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <Core.h>
-#include <IOHelpers.h>
+#include <IIOHelperService.h>
 #include <md5.h>
 #include <memory/memory.h>
 #include <r4300/r4300.h>
@@ -27,7 +27,7 @@ void print_rom_info()
     g_core->log_info(std::format(L"Clock rate: {:#06x}", sl((uint32_t)ROM_HEADER.ClockRate)));
     g_core->log_info(std::format(L"Version: {:#06x}", sl((uint32_t)ROM_HEADER.Release)));
     g_core->log_info(std::format(L"CRC: {:#06x} {:#06x}", sl((uint32_t)ROM_HEADER.CRC1), sl((uint32_t)ROM_HEADER.CRC2)));
-    g_core->log_info(std::format(L"Name: {}", string_to_wstring((char*)ROM_HEADER.nom)));
+    g_core->log_info(std::format(L"Name: {}", g_core->io_service->string_to_wstring((char*)ROM_HEADER.nom)));
     if (sl(ROM_HEADER.Manufacturer_ID) == 'N')
         g_core->log_info(L"Manufacturer: Nintendo");
     else
@@ -147,8 +147,8 @@ bool rom_load(std::filesystem::path path)
         return true;
     }
 
-    auto rom_buf = read_file_buffer(path);
-    auto decompressed_rom = auto_decompress(rom_buf);
+    auto rom_buf = g_core->io_service->read_file_buffer(path);
+    auto decompressed_rom = g_core->io_service->auto_decompress(rom_buf, 8000000);
 
     if (decompressed_rom.empty())
     {
@@ -202,7 +202,7 @@ bool rom_load(std::filesystem::path path)
     ROM_HEADER.Unknown[1] = 0;
 
     // trim header
-    strtrim((char*)ROM_HEADER.nom, sizeof(ROM_HEADER.nom));
+    g_core->io_service->strtrim((char*)ROM_HEADER.nom, sizeof(ROM_HEADER.nom));
 
     {
         md5_state_t state;

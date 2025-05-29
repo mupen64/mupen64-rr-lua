@@ -42,7 +42,7 @@ namespace RomBrowser
         {
             for (auto path : g_config.rombrowser_rom_paths)
             {
-                auto file_paths = get_files_with_extension_in_directory(path, L"*");
+                auto file_paths = io_service.get_files_with_extension_in_directory(path, L"*");
                 rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
             }
         }
@@ -55,7 +55,7 @@ namespace RomBrowser
             {
                 return false;
             }
-            return iequals(c_extension, L".z64") || iequals(c_extension, L".n64") || iequals(c_extension, L".v64") || iequals(c_extension, L".rom");
+            return io_service.iequals(c_extension, L".z64") || io_service.iequals(c_extension, L".n64") || io_service.iequals(c_extension, L".v64") || io_service.iequals(c_extension, L".rom");
         });
         return filtered_rom_paths;
     }
@@ -258,7 +258,7 @@ namespace RomBrowser
 
                 core_vr_byteswap((uint8_t*)&header);
 
-                strtrim((char*)header.nom, sizeof(header.nom));
+                io_service.strtrim((char*)header.nom, sizeof(header.nom));
 
                 // We need this for later, because listview assumes it has a nul terminator
                 header.nom[sizeof(header.nom) - 1] = '\0';
@@ -346,7 +346,7 @@ namespace RomBrowser
                         {
                             g_view_logger->error("Failed to copy rom name");
                         }
-                        StrNCpy(plvdi->item.pszText, string_to_wstring(str).c_str(), plvdi->item.cchTextMax);
+                        StrNCpy(plvdi->item.pszText, io_service.string_to_wstring(str).c_str(), plvdi->item.cchTextMax);
                         break;
                     }
                 case 2:

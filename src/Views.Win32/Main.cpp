@@ -48,6 +48,8 @@ static HANDLE dispatcher_event{};
 static HANDLE dispatcher_done_event{};
 
 core_params g_core{};
+IIOHelperService io_service{};
+
 bool g_frame_changed = true;
 bool g_exit = false;
 
@@ -278,6 +280,12 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
         error = L"Failed to open streams to core files.\r\nVerify that Mupen is allowed disk access.";
         break;
 #pragma endregion
+#pragma region Init
+    case IN_MissingComponent:
+        module = L"Core";
+        error = L"The core params are missing a critical component.";
+        break;
+#pragma endregion
     default:
         module = L"Unknown";
         error = L"Unknown error.";
@@ -450,7 +458,7 @@ std::filesystem::path get_summercart_path()
 std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
     const auto hdr = core_vr_get_rom_header();
-    const auto fname = std::format(L"{} {}.st{}", string_to_wstring((const char*)hdr->nom), core_vr_country_code_to_country_name(hdr->Country_code), std::to_wstring(slot));
+    const auto fname = std::format(L"{} {}.st{}", io_service.string_to_wstring((const char*)hdr->nom), core_vr_country_code_to_country_name(hdr->Country_code), std::to_wstring(slot));
     return get_saves_directory() / fname;
 }
 
@@ -549,7 +557,7 @@ void update_titlebar()
 
     if (core_vr_get_launched())
     {
-        text += std::format(L" - {}", string_to_wstring(reinterpret_cast<char*>(core_vr_get_rom_header()->nom)));
+        text += std::format(L" - {}", io_service.string_to_wstring(reinterpret_cast<char*>(core_vr_get_rom_header()->nom)));
     }
 
     if (core_vcr_get_task() != task_idle)
@@ -916,7 +924,7 @@ t_plugin_discovery_result do_plugin_discovery()
     }
 
     std::vector<std::unique_ptr<Plugin>> plugins;
-    const auto files = get_files_with_extension_in_directory(get_plugins_directory(), L"dll");
+    const auto files = io_service.get_files_with_extension_in_directory(get_plugins_directory(), L"dll");
 
     std::vector<std::pair<std::filesystem::path, std::wstring>> results;
     for (const auto& file : files)
@@ -964,7 +972,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             DragQueryFile(drop, 0, fname, std::size(fname));
 
             std::filesystem::path path = fname;
-            std::string extension = to_lower(path.extension().string());
+            std::string extension = io_service.to_lower(path.extension().string());
 
             if (extension == ".n64" || extension == ".z64" || extension == ".v64" || extension == ".rom")
             {
@@ -1776,7 +1784,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     core_vr_wait_increment();
                     g_core.submit_task([=] {
-                        auto vcr_result = core_vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag, wstring_to_string(movie_dialog_result.author), wstring_to_string(movie_dialog_result.description));
+                        auto vcr_result = core_vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag, io_service.wstring_to_string(movie_dialog_result.author), io_service.wstring_to_string(movie_dialog_result.description));
                         core_vr_wait_decrement();
                         if (!show_error_dialog_for_result(vcr_result))
                         {
@@ -1797,7 +1805,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    core_vcr_replace_author_info(result.path, wstring_to_string(result.author), wstring_to_string(result.description));
+                    core_vcr_replace_author_info(result.path, io_service.wstring_to_string(result.author), io_service.wstring_to_string(result.description));
 
                     g_config.core.pause_at_frame = result.pause_at;
                     g_config.core.pause_at_last_frame = result.pause_at_last;
@@ -2202,6 +2210,7 @@ static core_plugin_extended_funcs rsp_extended_funcs = {
 static core_result init_core()
 {
     g_core.cfg = &g_config.core;
+    g_core.io_service = &io_service;
     g_core.callbacks = {};
     g_core.callbacks.vi = [] {
         LuaCallbacks::call_interval();

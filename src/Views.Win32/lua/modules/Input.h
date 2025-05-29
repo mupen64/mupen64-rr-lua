@@ -311,7 +311,7 @@ namespace LuaCore::Input
         wchar_t name[100] = {0};
         GetKeyNameText(vk, name, std::size(name));
 
-        lua_pushstring(L, wstring_to_string(name).c_str());
+        lua_pushstring(L, io_service.wstring_to_string(name).c_str());
         return 1;
     }
 
@@ -324,14 +324,14 @@ namespace LuaCore::Input
             {
                 L = (lua_State*)lParam;
                 std::string str(luaL_optstring(L, 2, ""));
-                SetWindowText(wnd, string_to_wstring(luaL_optstring(L, 1, "input:")).c_str());
+                SetWindowText(wnd, io_service.string_to_wstring(luaL_optstring(L, 1, "input:")).c_str());
                 std::string::size_type p = 0;
                 while ((p = str.find('\n', p)) != std::string::npos)
                 {
                     str.replace(p, 1, "\r\n");
                     p += 2;
                 }
-                SetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT), string_to_wstring(str).c_str());
+                SetWindowText(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT), io_service.string_to_wstring(str).c_str());
                 SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
                 break;
             }
@@ -352,7 +352,7 @@ namespace LuaCore::Input
                         str.replace(p, 2, L"\n");
                         p += 1;
                     }
-                    lua_pushstring(L, wstring_to_string(str).c_str());
+                    lua_pushstring(L, io_service.wstring_to_string(str).c_str());
                     EndDialog(wnd, 0);
                     break;
                 }

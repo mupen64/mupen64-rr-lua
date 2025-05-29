@@ -12,7 +12,7 @@
 #include <r4300/r4300.h>
 #include <r4300/rom.h>
 #include <include/core_api.h>
-#include <IOHelpers.h>
+#include <IIOHelperService.h>
 #include "flashram.h"
 #include "memory.h"
 #include "summercart.h"
@@ -71,56 +71,56 @@ void get_paths_for_task(const t_savestate_task& task, std::filesystem::path& st_
 
 void load_memory_from_buffer(uint8_t* p)
 {
-    memread(&p, &rdram_register, sizeof(core_rdram_reg));
-    memread(&p, &MI_register, sizeof(core_mips_reg));
-    memread(&p, &pi_register, sizeof(core_pi_reg));
-    memread(&p, &sp_register, sizeof(core_sp_reg));
-    memread(&p, &rsp_register, sizeof(core_rsp_reg));
-    memread(&p, &si_register, sizeof(core_si_reg));
-    memread(&p, &vi_register, sizeof(core_vi_reg));
-    memread(&p, &ri_register, sizeof(core_ri_reg));
-    memread(&p, &ai_register, sizeof(core_ai_reg));
-    memread(&p, &dpc_register, sizeof(core_dpc_reg));
-    memread(&p, &dps_register, sizeof(core_dps_reg));
-    memread(&p, rdram, 0x800000);
-    memread(&p, SP_DMEM, 0x1000);
-    memread(&p, SP_IMEM, 0x1000);
-    memread(&p, PIF_RAM, 0x40);
+    g_core->io_service->memread(&p, &rdram_register, sizeof(core_rdram_reg));
+    g_core->io_service->memread(&p, &MI_register, sizeof(core_mips_reg));
+    g_core->io_service->memread(&p, &pi_register, sizeof(core_pi_reg));
+    g_core->io_service->memread(&p, &sp_register, sizeof(core_sp_reg));
+    g_core->io_service->memread(&p, &rsp_register, sizeof(core_rsp_reg));
+    g_core->io_service->memread(&p, &si_register, sizeof(core_si_reg));
+    g_core->io_service->memread(&p, &vi_register, sizeof(core_vi_reg));
+    g_core->io_service->memread(&p, &ri_register, sizeof(core_ri_reg));
+    g_core->io_service->memread(&p, &ai_register, sizeof(core_ai_reg));
+    g_core->io_service->memread(&p, &dpc_register, sizeof(core_dpc_reg));
+    g_core->io_service->memread(&p, &dps_register, sizeof(core_dps_reg));
+    g_core->io_service->memread(&p, rdram, 0x800000);
+    g_core->io_service->memread(&p, SP_DMEM, 0x1000);
+    g_core->io_service->memread(&p, SP_IMEM, 0x1000);
+    g_core->io_service->memread(&p, PIF_RAM, 0x40);
 
     char buf[4 * 32];
-    memread(&p, buf, 24);
+    g_core->io_service->memread(&p, buf, 24);
     load_flashram_infos(buf);
 
-    memread(&p, tlb_LUT_r, 0x100000);
-    memread(&p, tlb_LUT_w, 0x100000);
+    g_core->io_service->memread(&p, tlb_LUT_r, 0x100000);
+    g_core->io_service->memread(&p, tlb_LUT_w, 0x100000);
 
-    memread(&p, &llbit, 4);
-    memread(&p, reg, 32 * 8);
+    g_core->io_service->memread(&p, &llbit, 4);
+    g_core->io_service->memread(&p, reg, 32 * 8);
     for (int32_t i = 0; i < 32; i++)
     {
-        memread(&p, reg_cop0 + i, 4);
-        memread(&p, buf, 4); // for compatibility with old versions purpose
+        g_core->io_service->memread(&p, reg_cop0 + i, 4);
+        g_core->io_service->memread(&p, buf, 4); // for compatibility with old versions purpose
     }
-    memread(&p, &lo, 8);
-    memread(&p, &hi, 8);
-    memread(&p, reg_cop1_fgr_64, 32 * 8);
-    memread(&p, &FCR0, 4);
-    memread(&p, &FCR31, 4);
-    memread(&p, tlb_e, 32 * sizeof(tlb));
+    g_core->io_service->memread(&p, &lo, 8);
+    g_core->io_service->memread(&p, &hi, 8);
+    g_core->io_service->memread(&p, reg_cop1_fgr_64, 32 * 8);
+    g_core->io_service->memread(&p, &FCR0, 4);
+    g_core->io_service->memread(&p, &FCR31, 4);
+    g_core->io_service->memread(&p, tlb_e, 32 * sizeof(tlb));
     if (!dynacore && interpcore)
-        memread(&p, &interp_addr, 4);
+        g_core->io_service->memread(&p, &interp_addr, 4);
     else
     {
         uint32_t target_addr;
-        memread(&p, &target_addr, 4);
+        g_core->io_service->memread(&p, &target_addr, 4);
         for (char& i : invalid_code)
             i = 1;
         jump_to(target_addr)
     }
 
-    memread(&p, &next_interrupt, 4);
-    memread(&p, &next_vi, 4);
-    memread(&p, &vi_field, 4);
+    g_core->io_service->memread(&p, &next_interrupt, 4);
+    g_core->io_service->memread(&p, &next_vi, 4);
+    g_core->io_service->memread(&p, &vi_field, 4);
 }
 
 std::vector<uint8_t> generate_savestate()
@@ -139,52 +139,52 @@ std::vector<uint8_t> generate_savestate()
     save_flashram_infos(g_flashram_buf);
     const int32_t event_queue_len = save_eventqueue_infos(g_event_queue_buf);
 
-    vecwrite(b, rom_md5, 32);
-    vecwrite(b, &rdram_register, sizeof(core_rdram_reg));
-    vecwrite(b, &MI_register, sizeof(core_mips_reg));
-    vecwrite(b, &pi_register, sizeof(core_pi_reg));
-    vecwrite(b, &sp_register, sizeof(core_sp_reg));
-    vecwrite(b, &rsp_register, sizeof(core_rsp_reg));
-    vecwrite(b, &si_register, sizeof(core_si_reg));
-    vecwrite(b, &vi_register, sizeof(core_vi_reg));
-    vecwrite(b, &ri_register, sizeof(core_ri_reg));
-    vecwrite(b, &ai_register, sizeof(core_ai_reg));
-    vecwrite(b, &dpc_register, sizeof(core_dpc_reg));
-    vecwrite(b, &dps_register, sizeof(core_dps_reg));
-    vecwrite(b, rdram, 0x800000);
-    vecwrite(b, SP_DMEM, 0x1000);
-    vecwrite(b, SP_IMEM, 0x1000);
-    vecwrite(b, PIF_RAM, 0x40);
-    vecwrite(b, g_flashram_buf, 24);
-    vecwrite(b, tlb_LUT_r, 0x100000);
-    vecwrite(b, tlb_LUT_w, 0x100000);
-    vecwrite(b, &llbit, 4);
-    vecwrite(b, reg, 32 * 8);
+    g_core->io_service->vecwrite(b, rom_md5, 32);
+    g_core->io_service->vecwrite(b, &rdram_register, sizeof(core_rdram_reg));
+    g_core->io_service->vecwrite(b, &MI_register, sizeof(core_mips_reg));
+    g_core->io_service->vecwrite(b, &pi_register, sizeof(core_pi_reg));
+    g_core->io_service->vecwrite(b, &sp_register, sizeof(core_sp_reg));
+    g_core->io_service->vecwrite(b, &rsp_register, sizeof(core_rsp_reg));
+    g_core->io_service->vecwrite(b, &si_register, sizeof(core_si_reg));
+    g_core->io_service->vecwrite(b, &vi_register, sizeof(core_vi_reg));
+    g_core->io_service->vecwrite(b, &ri_register, sizeof(core_ri_reg));
+    g_core->io_service->vecwrite(b, &ai_register, sizeof(core_ai_reg));
+    g_core->io_service->vecwrite(b, &dpc_register, sizeof(core_dpc_reg));
+    g_core->io_service->vecwrite(b, &dps_register, sizeof(core_dps_reg));
+    g_core->io_service->vecwrite(b, rdram, 0x800000);
+    g_core->io_service->vecwrite(b, SP_DMEM, 0x1000);
+    g_core->io_service->vecwrite(b, SP_IMEM, 0x1000);
+    g_core->io_service->vecwrite(b, PIF_RAM, 0x40);
+    g_core->io_service->vecwrite(b, g_flashram_buf, 24);
+    g_core->io_service->vecwrite(b, tlb_LUT_r, 0x100000);
+    g_core->io_service->vecwrite(b, tlb_LUT_w, 0x100000);
+    g_core->io_service->vecwrite(b, &llbit, 4);
+    g_core->io_service->vecwrite(b, reg, 32 * 8);
     for (size_t i = 0; i < 32; i++)
-        vecwrite(b, reg_cop0 + i, 8); // *8 for compatibility with old versions purpose
-    vecwrite(b, &lo, 8);
-    vecwrite(b, &hi, 8);
-    vecwrite(b, reg_cop1_fgr_64, 32 * 8);
-    vecwrite(b, &FCR0, 4);
-    vecwrite(b, &FCR31, 4);
-    vecwrite(b, tlb_e, 32 * sizeof(tlb));
+        g_core->io_service->vecwrite(b, reg_cop0 + i, 8); // *8 for compatibility with old versions purpose
+    g_core->io_service->vecwrite(b, &lo, 8);
+    g_core->io_service->vecwrite(b, &hi, 8);
+    g_core->io_service->vecwrite(b, reg_cop1_fgr_64, 32 * 8);
+    g_core->io_service->vecwrite(b, &FCR0, 4);
+    g_core->io_service->vecwrite(b, &FCR31, 4);
+    g_core->io_service->vecwrite(b, tlb_e, 32 * sizeof(tlb));
     if (!dynacore && interpcore)
-        vecwrite(b, &interp_addr, 4);
+        g_core->io_service->vecwrite(b, &interp_addr, 4);
     else
-        vecwrite(b, &PC->addr, 4);
-    vecwrite(b, &next_interrupt, 4);
-    vecwrite(b, &next_vi, 4);
-    vecwrite(b, &vi_field, 4);
-    vecwrite(b, g_event_queue_buf, event_queue_len);
-    vecwrite(b, &movie_active, sizeof(movie_active));
+        g_core->io_service->vecwrite(b, &PC->addr, 4);
+    g_core->io_service->vecwrite(b, &next_interrupt, 4);
+    g_core->io_service->vecwrite(b, &next_vi, 4);
+    g_core->io_service->vecwrite(b, &vi_field, 4);
+    g_core->io_service->vecwrite(b, g_event_queue_buf, event_queue_len);
+    g_core->io_service->vecwrite(b, &movie_active, sizeof(movie_active));
     if (movie_active)
     {
-        vecwrite(b, &freeze.size, sizeof(freeze.size));
-        vecwrite(b, &freeze.uid, sizeof(freeze.uid));
-        vecwrite(b, &freeze.current_sample, sizeof(freeze.current_sample));
-        vecwrite(b, &freeze.current_vi, sizeof(freeze.current_vi));
-        vecwrite(b, &freeze.length_samples, sizeof(freeze.length_samples));
-        vecwrite(b, freeze.input_buffer.data(), freeze.input_buffer.size() * sizeof(core_buttons));
+        g_core->io_service->vecwrite(b, &freeze.size, sizeof(freeze.size));
+        g_core->io_service->vecwrite(b, &freeze.uid, sizeof(freeze.uid));
+        g_core->io_service->vecwrite(b, &freeze.current_sample, sizeof(freeze.current_sample));
+        g_core->io_service->vecwrite(b, &freeze.current_vi, sizeof(freeze.current_vi));
+        g_core->io_service->vecwrite(b, &freeze.length_samples, sizeof(freeze.length_samples));
+        g_core->io_service->vecwrite(b, freeze.input_buffer.data(), freeze.input_buffer.size() * sizeof(core_buttons));
     }
 
     if (core_vr_get_mge_available() && g_core->cfg->st_screenshot)
@@ -197,10 +197,10 @@ std::vector<uint8_t> generate_savestate()
         void* video = malloc(width * height * 3);
         g_core->copy_video(video);
 
-        vecwrite(b, screen_section, sizeof(screen_section));
-        vecwrite(b, &width, sizeof(width));
-        vecwrite(b, &height, sizeof(height));
-        vecwrite(b, video, width * height * 3);
+        g_core->io_service->vecwrite(b, screen_section, sizeof(screen_section));
+        g_core->io_service->vecwrite(b, &width, sizeof(width));
+        g_core->io_service->vecwrite(b, &height, sizeof(height));
+        g_core->io_service->vecwrite(b, video, width * height * 3);
 
         free(video);
     }
@@ -277,7 +277,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     switch (task.medium)
     {
     case core_st_medium_path:
-        st_buf = read_file_buffer(new_st_path);
+        st_buf = g_core->io_service->read_file_buffer(new_st_path);
         break;
     case core_st_medium_memory:
         st_buf = task.params.buffer;
@@ -297,7 +297,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         return;
     }
 
-    std::vector<uint8_t> decompressed_buf = auto_decompress(st_buf);
+    std::vector<uint8_t> decompressed_buf = g_core->io_service->auto_decompress(st_buf, 0xB624F0);
     if (decompressed_buf.empty())
     {
         task.callback(core_st_callback_info{
@@ -315,11 +315,11 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
 
     // compare current rom hash with one stored in state
     char md5[33] = {0};
-    memread(&ptr, &md5, 32);
+    g_core->io_service->memread(&ptr, &md5, 32);
 
     if (!task.ignore_warnings && memcmp(md5, rom_md5, 32))
     {
-        auto result = g_core->show_ask_dialog(CORE_DLG_ST_HASH_MISMATCH, std::format(L"The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe emulator may crash. Are you sure you want to continue?", string_to_wstring(md5)).c_str(), L"Savestate", true);
+        auto result = g_core->show_ask_dialog(CORE_DLG_ST_HASH_MISMATCH, std::format(L"The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe emulator may crash. Are you sure you want to continue?", g_core->io_service->string_to_wstring(md5)).c_str(), L"Savestate", true);
 
         if (!result)
         {
@@ -334,7 +334,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     }
 
     // new version does one bigass gzread for first part of .st (static size)
-    memread(&ptr, g_first_block, sizeof(g_first_block));
+    g_core->io_service->memread(&ptr, g_first_block, sizeof(g_first_block));
 
     const auto si_reg = (core_si_reg*)&g_first_block[0xDC - 0x20];
     if (!check_register_validity(si_reg) || !check_flashram_infos(&g_first_block[0x8021F0 - 0x20]))
@@ -352,10 +352,10 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     int32_t len;
     for (len = 0; len < sizeof(g_event_queue_buf); len += 8)
     {
-        memread(&ptr, g_event_queue_buf + len, 4);
+        g_core->io_service->memread(&ptr, g_event_queue_buf + len, 4);
         if (*reinterpret_cast<uint32_t*>(&g_event_queue_buf[len]) == 0xFFFFFFFF)
             break;
-        memread(&ptr, g_event_queue_buf + len + 4, 4);
+        g_core->io_service->memread(&ptr, g_event_queue_buf + len + 4, 4);
     }
     if (len == sizeof(g_event_queue_buf))
     {
@@ -370,7 +370,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     }
 
     uint32_t is_movie;
-    memread(&ptr, &is_movie, sizeof(is_movie));
+    g_core->io_service->memread(&ptr, &is_movie, sizeof(is_movie));
 
     if (is_movie)
     {
@@ -378,14 +378,14 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         // hash matches, load and verify rest of the data
         core_vcr_freeze_info freeze{};
 
-        memread(&ptr, &freeze.size, sizeof(freeze.size));
-        memread(&ptr, &freeze.uid, sizeof(freeze.uid));
-        memread(&ptr, &freeze.current_sample, sizeof(freeze.current_sample));
-        memread(&ptr, &freeze.current_vi, sizeof(freeze.current_vi));
-        memread(&ptr, &freeze.length_samples, sizeof(freeze.length_samples));
+        g_core->io_service->memread(&ptr, &freeze.size, sizeof(freeze.size));
+        g_core->io_service->memread(&ptr, &freeze.uid, sizeof(freeze.uid));
+        g_core->io_service->memread(&ptr, &freeze.current_sample, sizeof(freeze.current_sample));
+        g_core->io_service->memread(&ptr, &freeze.current_vi, sizeof(freeze.current_vi));
+        g_core->io_service->memread(&ptr, &freeze.length_samples, sizeof(freeze.length_samples));
 
         freeze.input_buffer.resize(sizeof(core_buttons) * (freeze.length_samples + 1));
-        memread(&ptr, freeze.input_buffer.data(), freeze.input_buffer.size());
+        g_core->io_service->memread(&ptr, freeze.input_buffer.data(), freeze.input_buffer.size());
 
         const auto code = core_vcr_unfreeze(freeze);
 
@@ -453,16 +453,16 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         if (decompressed_buf.size() - (ptr - decompressed_buf.data()) > 0)
         {
             char scr_section[sizeof(screen_section)] = {0};
-            memread(&ptr, scr_section, sizeof(screen_section));
+            g_core->io_service->memread(&ptr, scr_section, sizeof(screen_section));
 
             if (!memcmp(scr_section, screen_section, sizeof(screen_section)))
             {
                 g_core->log_trace(std::format(L"[Savestates] Restoring screen buffer..."));
-                memread(&ptr, &video_width, sizeof(video_width));
-                memread(&ptr, &video_height, sizeof(video_height));
+                g_core->io_service->memread(&ptr, &video_width, sizeof(video_width));
+                g_core->io_service->memread(&ptr, &video_height, sizeof(video_height));
 
                 video_buffer = malloc(video_width * video_height * 3);
-                memread(&ptr, video_buffer, video_width * video_height * 3);
+                g_core->io_service->memread(&ptr, video_buffer, video_width * video_height * 3);
             }
         }
 
@@ -561,7 +561,7 @@ void savestates_simplify_tasks()
         }
     }
 
-    g_tasks = erase_indices(g_tasks, duplicate_indicies);
+    g_tasks = g_core->io_service->erase_indices(g_tasks, duplicate_indicies);
 }
 
 /**

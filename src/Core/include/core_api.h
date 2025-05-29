@@ -150,6 +150,11 @@ typedef struct {
     core_cfg* cfg;
 
     /**
+     * \brief An IIOHelperService implementation.
+     */
+    IIOHelperService* io_service;
+
+    /**
      * \brief The core callbacks.
      */
     core_callbacks callbacks;

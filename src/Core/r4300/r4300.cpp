@@ -90,22 +90,22 @@ void core_vr_invalidate_visuals()
 
 std::filesystem::path get_sram_path()
 {
-    return std::format(L"{}{} {}.sra", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return std::format(L"{}{} {}.sra", g_core->get_saves_directory().wstring(), g_core->io_service->string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
 }
 
 std::filesystem::path get_eeprom_path()
 {
-    return std::format(L"{}{} {}.eep", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return std::format(L"{}{} {}.eep", g_core->get_saves_directory().wstring(), g_core->io_service->string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
 }
 
 std::filesystem::path get_flashram_path()
 {
-    return std::format(L"{}{} {}.fla", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return std::format(L"{}{} {}.fla", g_core->get_saves_directory().wstring(), g_core->io_service->string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
 }
 
 std::filesystem::path get_mempak_path()
 {
-    return std::format(L"{}{} {}.mpk", g_core->get_saves_directory().wstring(), string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return std::format(L"{}{} {}.mpk", g_core->get_saves_directory().wstring(), g_core->io_service->string_to_wstring((const char*)ROM_HEADER.nom), core_vr_country_code_to_country_name(ROM_HEADER.Country_code));
 }
 
 void core_vr_resume_emu_impl(bool force)
@@ -2166,7 +2166,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
         }
 
         const auto matching_rom = g_core->find_available_rom([&](auto header) {
-            strtrim((char*)header.nom, sizeof(header.nom));
+            g_core->io_service->strtrim((char*)header.nom, sizeof(header.nom));
             return movie_header.rom_crc1 == header.CRC1 && !_strnicmp((const char*)header.nom, movie_header.rom_name, 20);
         });
 

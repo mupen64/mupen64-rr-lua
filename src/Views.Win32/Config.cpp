@@ -521,7 +521,7 @@ static t_config get_default_config()
 
     for (const auto& pair : DIALOG_SILENT_MODE_CHOICES)
     {
-        config.silent_mode_dialog_choices[string_to_wstring(pair.first)] = std::to_wstring(pair.second);
+        config.silent_mode_dialog_choices[io_service.string_to_wstring(pair.first)] = std::to_wstring(pair.second);
     }
 
     return config;
@@ -529,7 +529,7 @@ static t_config get_default_config()
 
 static std::string process_field_name(const std::wstring& field_name)
 {
-    std::string str = wstring_to_string(field_name);
+    std::string str = io_service.wstring_to_string(field_name);
 
     // We don't want the "core." prefix in the ini file...
     // This isn't too great of an approach though because it can cause silent key collisions but whatever
@@ -620,11 +620,11 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
         {
             return;
         }
-        value = string_to_wstring(ini[FLAT_FIELD_KEY][key]);
+        value = io_service.string_to_wstring(ini[FLAT_FIELD_KEY][key]);
     }
     else
     {
-        ini[FLAT_FIELD_KEY][key] = wstring_to_string(value);
+        ini[FLAT_FIELD_KEY][key] = io_service.wstring_to_string(value);
     }
 }
 
@@ -642,7 +642,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
 
         for (size_t i = 0; i < ini[key].size(); i++)
         {
-            value.push_back(string_to_wstring(ini[key][std::to_string(i)]));
+            value.push_back(io_service.string_to_wstring(ini[key][std::to_string(i)]));
         }
     }
     else
@@ -654,7 +654,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
         // 1 = b.m64
         for (size_t i = 0; i < value.size(); i++)
         {
-            ini[key][std::to_string(i)] = wstring_to_string(value[i]);
+            ini[key][std::to_string(i)] = io_service.wstring_to_string(value[i]);
         }
     }
 }
@@ -673,7 +673,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
         auto& map = ini[key];
         for (auto& pair : map)
         {
-            value[string_to_wstring(pair.first)] = string_to_wstring(pair.second);
+            value[io_service.string_to_wstring(pair.first)] = io_service.string_to_wstring(pair.second);
         }
     }
     else
@@ -683,7 +683,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
         // value = value
         for (auto& pair : value)
         {
-            ini[key][wstring_to_string(pair.first)] = wstring_to_string(pair.second);
+            ini[key][io_service.wstring_to_string(pair.first)] = io_service.wstring_to_string(pair.second);
         }
     }
 }
@@ -868,7 +868,7 @@ static void config_patch(t_config& cfg)
 
     for (const auto& pair : DIALOG_SILENT_MODE_CHOICES)
     {
-        const auto key = string_to_wstring(pair.first);
+        const auto key = io_service.string_to_wstring(pair.first);
         if (!cfg.silent_mode_dialog_choices.contains(key))
         {
             cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);

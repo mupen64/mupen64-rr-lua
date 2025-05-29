@@ -196,7 +196,7 @@ namespace UpdateChecker
             return;
         }
 
-        ShellExecute(0, 0, string_to_wstring(download_url).c_str(), 0, 0, SW_SHOW);
+        ShellExecute(0, 0, io_service.string_to_wstring(download_url).c_str(), 0, 0, SW_SHOW);
         PostMessage(g_main_hwnd, WM_CLOSE, 0, 0);
     }
 
@@ -283,7 +283,7 @@ namespace UpdateChecker
             return;
         }
 
-        auto version = string_to_wstring(tag_name.get<std::string>());
+        auto version = io_service.string_to_wstring(tag_name.get<std::string>());
 
         if (!manual && g_config.ignored_version == version)
         {
@@ -322,7 +322,7 @@ namespace UpdateChecker
             download_executable(data);
             break;
         case 1:
-            show_changelog(string_to_wstring(body.get<std::string>()));
+            show_changelog(io_service.string_to_wstring(body.get<std::string>()));
             goto show_prompt;
         case 2:
             g_config.ignored_version = version;

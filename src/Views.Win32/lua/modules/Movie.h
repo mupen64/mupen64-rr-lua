@@ -65,7 +65,7 @@ namespace LuaCore::Movie
 
     static int begin_seek(lua_State* L)
     {
-        auto str = string_to_wstring(lua_tostring(L, 1));
+        auto str = io_service.string_to_wstring(lua_tostring(L, 1));
         bool pause_at_end = lua_toboolean(L, 2);
 
         lua_pushinteger(L, static_cast<int32_t>(core_vcr_begin_seek(str, pause_at_end)));

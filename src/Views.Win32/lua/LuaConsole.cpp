@@ -39,7 +39,7 @@ t_lua_environment* get_lua_class(lua_State* lua_state)
 
 int at_panic(lua_State* L)
 {
-    const auto message = string_to_wstring(lua_tostring(L, -1));
+    const auto message = io_service.string_to_wstring(lua_tostring(L, -1));
 
     g_view_logger->info(L"Lua panic: {}", message);
     DialogService::show_dialog(message.c_str(), L"Lua", fsvc_error);
@@ -124,7 +124,7 @@ INT_PTR CALLBACK lua_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
                     if (!error_msg.empty())
                     {
-                        print_con(hwnd, string_to_wstring(error_msg) + L"\r\n");
+                        print_con(hwnd, io_service.string_to_wstring(error_msg) + L"\r\n");
                     }
                     else
                     {

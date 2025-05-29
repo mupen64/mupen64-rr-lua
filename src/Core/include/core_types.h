@@ -97,6 +97,12 @@ typedef enum {
     // The plugin doesn't export a GetDllInfo function
     Pl_NoGetDllInfo,
 #pragma endregion
+
+#pragma region Init
+    // The core params are missing a critical component.
+    IN_MissingComponent,
+#pragma endregion
+
 } core_result;
 
 struct core_cfg {

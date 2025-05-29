@@ -240,7 +240,7 @@
     <ItemGroup>
         <ClInclude Include="src\Views.Win32\stdafx.h"/>
         <ClInclude Include="lib\microlru.h"/>
-        <ClInclude Include="lib\IOHelpers.h"/>
+        <ClInclude Include="lib\IIOHelperService.h" />
         <ClInclude Include="src\Views.Win32\MiscHelpers.h"/>
         <ClInclude Include="src\Views.Win32\ThreadPool.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\AVIEncoder.h"/>
