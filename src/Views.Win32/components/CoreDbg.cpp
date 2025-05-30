@@ -33,16 +33,16 @@ INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
         switch (LOWORD(w_param))
         {
         case IDC_COREDBG_CART_TILT:
-            core_dbg_set_dma_read_enabled(!IsDlgButtonChecked(hwnd, IDC_COREDBG_CART_TILT));
+            g_core_ctx->dbg_set_dma_read_enabled(!IsDlgButtonChecked(hwnd, IDC_COREDBG_CART_TILT));
             break;
         case IDC_COREDBG_RSP_TOGGLE:
-            core_dbg_set_rsp_enabled(IsDlgButtonChecked(hwnd, IDC_COREDBG_RSP_TOGGLE));
+            g_core_ctx->dbg_set_rsp_enabled(IsDlgButtonChecked(hwnd, IDC_COREDBG_RSP_TOGGLE));
             break;
         case IDC_COREDBG_STEP:
-            core_dbg_step();
+            g_core_ctx->dbg_step();
             break;
         case IDC_COREDBG_TOGGLEPAUSE:
-            core_dbg_set_is_resumed(!core_dbg_get_resumed());
+            g_core_ctx->dbg_set_is_resumed(!g_core_ctx->dbg_get_resumed());
             break;
         default:
             break;
@@ -53,7 +53,7 @@ INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
             HWND list_hwnd = GetDlgItem(g_hwnd, IDC_COREDBG_LIST);
 
             char disasm[32] = {0};
-            core_dbg_disassemble(disasm,
+            g_core_ctx->dbg_disassemble(disasm,
                                  g_cpu_state.opcode,
                                  g_cpu_state.address);
 
@@ -67,7 +67,7 @@ INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
             break;
         }
     case WM_DEBUGGER_RESUMED_UPDATED:
-        Button_SetText(GetDlgItem(g_hwnd, IDC_COREDBG_TOGGLEPAUSE), core_dbg_get_resumed() ? L"Pause" : L"Resume");
+        Button_SetText(GetDlgItem(g_hwnd, IDC_COREDBG_TOGGLEPAUSE), g_core_ctx->dbg_get_resumed() ? L"Pause" : L"Resume");
         break;
     default:
         return FALSE;

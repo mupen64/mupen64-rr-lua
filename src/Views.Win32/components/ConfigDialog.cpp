@@ -489,7 +489,7 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
         SetDlgItemText(hwnd, IDC_SCREENSHOTS_DIR, g_config.screenshots_directory.c_str());
         SetDlgItemText(hwnd, IDC_BACKUPS_DIR, g_config.backups_directory.c_str());
 
-        if (core_vr_get_launched())
+        if (g_core_ctx->vr_get_launched())
         {
             EnableWindow(GetDlgItem(hwnd, IDC_DEFAULT_SAVES_CHECK), FALSE);
             EnableWindow(GetDlgItem(hwnd, IDC_SAVES_DIR), FALSE);
@@ -831,10 +831,10 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             IDRSPABOUT,
             };
 
-            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_GFX), !core_vr_get_launched());
-            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_INPUT), !core_vr_get_launched());
-            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_SOUND), !core_vr_get_launched());
-            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_RSP), !core_vr_get_launched());
+            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_GFX), !g_core_ctx->vr_get_launched());
+            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_INPUT), !g_core_ctx->vr_get_launched());
+            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_SOUND), !g_core_ctx->vr_get_launched());
+            EnableWindow(GetDlgItem(hwnd, IDC_COMBO_RSP), !g_core_ctx->vr_get_launched());
 
             for (const auto& id : ids_to_enable)
             {
@@ -1078,7 +1078,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .data = &g_config.core.seek_savestate_interval,
     .type = t_options_item::Type::Number,
     .is_readonly = [] {
-        return core_vcr_get_task() != task_idle;
+        return g_core_ctx->vcr_get_task() != task_idle;
     },
     },
     t_options_item{
@@ -1202,7 +1202,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     std::make_pair(L"Pure Interpreter", 2),
     },
     .is_readonly = [] {
-        return core_vr_get_launched();
+        return g_core_ctx->vr_get_launched();
     },
     },
     t_options_item{

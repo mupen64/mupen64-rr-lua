@@ -3151,7 +3151,7 @@ void prefetch()
         interp_addr = addr;
         return;
     }
-    if (core_vr_is_tracelog_active())
+    if (g_ctx.vr_is_tracelog_active())
         tracelog_log_pure();
 }
 
@@ -3177,7 +3177,7 @@ void pure_interpreter()
 
         // Count = (uint32_t)Count + 2;
         // if (interp_addr == 0x80000180) last_addr = interp_addr;
-        while (!core_dbg_get_resumed())
+        while (!g_ctx.dbg_get_resumed())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
@@ -3194,7 +3194,7 @@ void interprete_section(uint32_t addr)
     while (!stop && (addr >> 12) == (interp_addr >> 12))
     {
         prefetch();
-        if (core_vr_is_tracelog_active())
+        if (g_ctx.vr_is_tracelog_active())
             tracelog_log_pure();
         PC->addr = interp_addr;
         interp_ops[((vr_op >> 26) & 0x3F)]();

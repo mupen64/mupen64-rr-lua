@@ -284,13 +284,13 @@ namespace LuaCore::Memory
 
     static int Recompile(lua_State* L)
     {
-        core_vr_recompile(luaL_checkinteger(L, 1));
+        g_core_ctx->vr_recompile(luaL_checkinteger(L, 1));
         return 0;
     }
 
     static int RecompileNextAll(lua_State* L)
     {
-        core_vr_recompile(UINT32_MAX);
+        g_core_ctx->vr_recompile(UINT32_MAX);
         return 0;
     }
 } // namespace LuaCore::Memory

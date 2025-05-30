@@ -2646,7 +2646,7 @@ void recompile_block(int32_t* source, precomp_block* block, uint32_t func)
         dst->reg_cache_infos.need_map = 0;
         dst->local_addr = code_length;
         recomp_ops[((src >> 26) & 0x3F)]();
-        if (core_vr_is_tracelog_active())
+        if (g_ctx.vr_is_tracelog_active())
         {
             dst->s_ops = dst->ops;
             dst->ops = tracelog_log_interp_ops;
@@ -2838,7 +2838,7 @@ uint32_t PAddr(uint32_t addr)
     }
 }
 
-void core_vr_recompile(uint32_t addr)
+void vr_recompile(uint32_t addr)
 {
     if (addr == UINT32_MAX)
     {

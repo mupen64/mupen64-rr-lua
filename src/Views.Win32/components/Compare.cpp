@@ -46,13 +46,13 @@ void Compare::compare(size_t current_sample)
         }
 
         const auto actual_path = get_saves_directory() / std::format(L"cmp_actual_{}.st", current_sample);
-        core_st_do_file(actual_path.c_str(), core_st_job_save, nullptr, true);
+        g_core_ctx->st_do_file(actual_path.c_str(), core_st_job_save, nullptr, true);
 
         return;
     }
 
     const auto path = get_saves_directory() / std::format(L"cmp_expected_{}.st", current_sample);
-    core_st_do_file(path.c_str(), core_st_job_save, nullptr, true);
+    g_core_ctx->st_do_file(path.c_str(), core_st_job_save, nullptr, true);
 }
 
 bool Compare::active()

@@ -275,14 +275,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 refresh:
     core_vcr_movie_header header = {};
 
-    if (core_vcr_parse_header(user_result.path, &header) != Res_Ok)
+    if (g_core_ctx->vcr_parse_header(user_result.path, &header) != Res_Ok)
     {
         return FALSE;
     }
 
     std::vector<core_buttons> inputs = {};
 
-    if (core_vcr_read_movie_inputs(user_result.path, inputs) != Res_Ok)
+    if (g_core_ctx->vcr_read_movie_inputs(user_result.path, inputs) != Res_Ok)
     {
         return FALSE;
     }
@@ -291,7 +291,7 @@ refresh:
 
     ListView_DeleteAllItems(grid_hwnd);
 
-    metadata.emplace_back(std::make_pair(L"ROM", std::format(L"{} ({}, {})", io_service.string_to_wstring((char*)header.rom_name), core_vr_country_code_to_country_name(header.rom_country), std::format(L"{:#08x}", header.rom_crc1))));
+    metadata.emplace_back(std::make_pair(L"ROM", std::format(L"{} ({}, {})", io_service.string_to_wstring((char*)header.rom_name), g_core_ctx->vr_country_code_to_country_name(header.rom_country), std::format(L"{:#08x}", header.rom_crc1))));
 
     metadata.emplace_back(std::make_pair(L"Length",
                                          std::format(
@@ -396,8 +396,10 @@ refresh:
 
 MovieDialog::t_result MovieDialog::show(bool readonly)
 {
+    const auto rom_hdr = g_core_ctx->vr_get_rom_header();
+    
     is_readonly = readonly;
-    user_result.path = std::format(L"{} ({}).m64", io_service.string_to_wstring((char*)core_vr_get_rom_header()->nom), core_vr_country_code_to_country_name(core_vr_get_rom_header()->Country_code));
+    user_result.path = std::format(L"{} ({}).m64", io_service.string_to_wstring((char*)rom_hdr->nom), g_core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code));
     user_result.start_flag = g_config.last_movie_type;
     user_result.author = g_config.last_movie_author;
     user_result.description = L"";

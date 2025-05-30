@@ -330,3 +330,5 @@ extern const char* const OpecodeName[INST_COUNT];
 extern void (*InstFormatTypeFunc[INSTFTYPE_COUNT])(uint32_t, INSTOPERAND*);
 extern const char* const CPURegisterName[32];
 extern const char* const COP0RegisterName[32];
+
+char* dbg_disassemble(char* buf, uint32_t w, uint32_t pc);

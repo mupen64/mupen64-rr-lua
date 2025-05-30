@@ -14,14 +14,14 @@ namespace LuaCore::Emu
 {
     static int GetVICount(lua_State* L)
     {
-        lua_pushinteger(L, core_vcr_get_current_vi());
+        lua_pushinteger(L, g_core_ctx->vcr_get_current_vi());
         return 1;
     }
 
     static int GetSampleCount(lua_State* L)
     {
         std::pair<size_t, size_t> pair{};
-        core_vcr_get_seek_completion(pair);
+        g_core_ctx->vcr_get_seek_completion(pair);
         lua_pushinteger(L, pair.first);
         return 1;
     }
@@ -141,18 +141,18 @@ namespace LuaCore::Emu
     {
         if (!lua_toboolean(L, 1))
         {
-            core_vr_pause_emu();
+            g_core_ctx->vr_pause_emu();
         }
         else
         {
-            core_vr_resume_emu();
+            g_core_ctx->vr_resume_emu();
         }
         return 0;
     }
 
     static int GetEmuPause(lua_State* L)
     {
-        lua_pushboolean(L, core_vr_get_paused());
+        lua_pushboolean(L, g_core_ctx->vr_get_paused());
         return 1;
     }
 
@@ -165,7 +165,7 @@ namespace LuaCore::Emu
     static int SetSpeed(lua_State* L)
     {
         g_config.core.fps_modifier = luaL_checkinteger(L, 1);
-        core_vr_on_speed_modifier_changed();
+        g_core_ctx->vr_on_speed_modifier_changed();
         return 0;
     }
 

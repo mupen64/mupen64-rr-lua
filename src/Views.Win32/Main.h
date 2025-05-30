@@ -19,6 +19,7 @@
 extern BOOL CALLBACK CfgDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 extern core_params g_core;
+extern core_ctx* g_core_ctx;
 extern IIOHelperService io_service;
 extern bool g_frame_changed;
 

@@ -15,3 +15,11 @@ namespace Debugger
      */
     void on_late_cycle(uint32_t opcode, uint32_t address);
 } // namespace Debugger
+
+bool dbg_get_resumed();
+void dbg_set_is_resumed(bool value);
+void dbg_step();
+bool dbg_get_dma_read_enabled();
+void dbg_set_dma_read_enabled(bool value);
+bool dbg_get_rsp_enabled();
+void dbg_set_rsp_enabled(bool value);

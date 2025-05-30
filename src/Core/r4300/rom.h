@@ -20,8 +20,8 @@ extern core_rom_header ROM_HEADER;
  */
 bool rom_load(std::filesystem::path path);
 
-/**
- * \brief Performs an in-place byte order correction on a rom buffer depending on its header
- * \param rom The rom buffer
- */
 void rom_byteswap(uint8_t* rom);
+
+core_rom_header* rom_get_rom_header();
+uint32_t rom_get_vis_per_second(uint16_t country_code);
+std::wstring rom_country_code_to_country_name(uint16_t country_code);

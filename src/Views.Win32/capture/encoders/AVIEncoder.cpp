@@ -246,7 +246,7 @@ bool AVIEncoder::append_audio(uint8_t* audio, size_t length, uint8_t bitrate)
             g_view_logger->info(
             "[EncodingManager]: Correcting for A/V desynchronization of %+Lf frames\n",
             desync);
-            int len3 = (int)(m_params.arate / (long double)core_vr_get_vis_per_second(core_vr_get_rom_header()->Country_code)) * (int)desync;
+            int len3 = (int)(m_params.arate / (long double)g_core_ctx->vr_get_vis_per_second(g_core_ctx->vr_get_rom_header()->Country_code)) * (int)desync;
             len3 <<= 2;
             const int empty_size =
             len3 > write_size ? write_size : len3;
@@ -334,8 +334,7 @@ bool AVIEncoder::write_sound(uint8_t* buf, int len, const int min_write_size, co
     memcpy(m_sound_buf + sound_buf_pos, (char*)buf, len);
     sound_buf_pos += len;
     m_audio_frame += ((len / 4) / (long double)m_params.arate) *
-    core_vr_get_vis_per_second(core_vr_get_rom_header()->Country_code);
-
+    g_core_ctx->vr_get_vis_per_second(g_core_ctx->vr_get_rom_header()->Country_code);
 
     return true;
 }

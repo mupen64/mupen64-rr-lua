@@ -99,11 +99,6 @@ static int32_t firstFrameBufferSetting;
 
 static const int32_t MemoryMaxCount = 0xFFFF;
 
-size_t core_vr_get_lag_count()
-{
-    return lag_count;
-}
-
 int32_t init_memory()
 {
     g_total_frames = 0;
@@ -1209,7 +1204,7 @@ void update_SP()
             // if that happens, then we never increment screen_updates and thus are stuck in incorrect state
             g_total_frames++;
             g_core->cfg->total_frames++;
-            g_vr_frame_skipped = is_frame_skipped();
+            g_vr_frame_skipped = vcr_is_frame_skipped();
             if (!g_vr_frame_skipped)
             {
                 g_core->plugin_funcs.rsp_do_rsp_cycles(100);

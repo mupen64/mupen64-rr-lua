@@ -20,26 +20,7 @@ char rom_md5[33];
 
 core_rom_header ROM_HEADER;
 
-void print_rom_info()
-{
-    g_core->log_info(L"--- Rom Info ---");
-    g_core->log_info(std::format(L"{:#06x} {:#06x} {:#06x} {:#06x}", ROM_HEADER.init_PI_BSB_DOM1_LAT_REG, ROM_HEADER.init_PI_BSB_DOM1_PGS_REG, ROM_HEADER.init_PI_BSB_DOM1_PWD_REG, ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
-    g_core->log_info(std::format(L"Clock rate: {:#06x}", sl((uint32_t)ROM_HEADER.ClockRate)));
-    g_core->log_info(std::format(L"Version: {:#06x}", sl((uint32_t)ROM_HEADER.Release)));
-    g_core->log_info(std::format(L"CRC: {:#06x} {:#06x}", sl((uint32_t)ROM_HEADER.CRC1), sl((uint32_t)ROM_HEADER.CRC2)));
-    g_core->log_info(std::format(L"Name: {}", g_core->io_service->string_to_wstring((char*)ROM_HEADER.nom)));
-    if (sl(ROM_HEADER.Manufacturer_ID) == 'N')
-        g_core->log_info(L"Manufacturer: Nintendo");
-    else
-        g_core->log_info(std::format(L"Manufacturer: {:#06x}", ROM_HEADER.Manufacturer_ID));
-    g_core->log_info(std::format(L"Cartridge ID: {:#06x}", ROM_HEADER.Cartridge_ID));
-    g_core->log_info(std::format(L"Size: {}", rom_size));
-    g_core->log_info(std::format(L"PC: {:#06x}\n", sl((uint32_t)ROM_HEADER.PC)));
-    g_core->log_info(std::format(L"Country: {}", core_vr_country_code_to_country_name(ROM_HEADER.Country_code)));
-    g_core->log_info(L"----------------");
-}
-
-std::wstring core_vr_country_code_to_country_name(uint16_t country_code)
+std::wstring rom_country_code_to_country_name(uint16_t country_code)
 {
     switch (country_code & 0xFF)
     {
@@ -76,12 +57,31 @@ std::wstring core_vr_country_code_to_country_name(uint16_t country_code)
     }
 }
 
-core_rom_header* core_vr_get_rom_header()
+void print_rom_info()
+{
+    g_core->log_info(L"--- Rom Info ---");
+    g_core->log_info(std::format(L"{:#06x} {:#06x} {:#06x} {:#06x}", ROM_HEADER.init_PI_BSB_DOM1_LAT_REG, ROM_HEADER.init_PI_BSB_DOM1_PGS_REG, ROM_HEADER.init_PI_BSB_DOM1_PWD_REG, ROM_HEADER.init_PI_BSB_DOM1_PGS_REG2));
+    g_core->log_info(std::format(L"Clock rate: {:#06x}", sl((uint32_t)ROM_HEADER.ClockRate)));
+    g_core->log_info(std::format(L"Version: {:#06x}", sl((uint32_t)ROM_HEADER.Release)));
+    g_core->log_info(std::format(L"CRC: {:#06x} {:#06x}", sl((uint32_t)ROM_HEADER.CRC1), sl((uint32_t)ROM_HEADER.CRC2)));
+    g_core->log_info(std::format(L"Name: {}", g_core->io_service->string_to_wstring((char*)ROM_HEADER.nom)));
+    if (sl(ROM_HEADER.Manufacturer_ID) == 'N')
+        g_core->log_info(L"Manufacturer: Nintendo");
+    else
+        g_core->log_info(std::format(L"Manufacturer: {:#06x}", ROM_HEADER.Manufacturer_ID));
+    g_core->log_info(std::format(L"Cartridge ID: {:#06x}", ROM_HEADER.Cartridge_ID));
+    g_core->log_info(std::format(L"Size: {}", rom_size));
+    g_core->log_info(std::format(L"PC: {:#06x}\n", sl((uint32_t)ROM_HEADER.PC)));
+    g_core->log_info(std::format(L"Country: {}", rom_country_code_to_country_name(ROM_HEADER.Country_code)));
+    g_core->log_info(L"----------------");
+}
+
+core_rom_header* rom_get_rom_header()
 {
     return &ROM_HEADER;
 }
 
-uint32_t core_vr_get_vis_per_second(uint16_t country_code)
+uint32_t rom_get_vis_per_second(uint16_t country_code)
 {
     switch (country_code & 0xFF)
     {
@@ -104,7 +104,7 @@ uint32_t core_vr_get_vis_per_second(uint16_t country_code)
     }
 }
 
-void core_vr_byteswap(uint8_t* rom)
+void rom_byteswap(uint8_t* rom)
 {
     uint8_t tmp = 0;
 

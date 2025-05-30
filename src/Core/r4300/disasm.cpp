@@ -1522,7 +1522,7 @@ char* GetOperandString(char* buf, INSTDECODE* d, uint32_t pc)
 }
 
 // max-size:27 = 9(opecode)+1(space)+16(operand)+1(NUL)
-char* core_dbg_disassemble(char* buf, uint32_t w, uint32_t pc)
+char* dbg_disassemble(char* buf, uint32_t w, uint32_t pc)
 {
     INSTDECODE decode;
     const char* p;

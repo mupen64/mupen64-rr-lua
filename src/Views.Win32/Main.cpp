@@ -48,6 +48,7 @@ static HANDLE dispatcher_event{};
 static HANDLE dispatcher_done_event{};
 
 core_params g_core{};
+core_ctx* g_core_ctx;
 IIOHelperService io_service{};
 
 bool g_frame_changed = true;
@@ -383,20 +384,20 @@ const wchar_t* get_status_text()
     memset(text, 0, sizeof(text));
 
     std::pair<size_t, size_t> pair = {0, 0};
-    core_vcr_get_seek_completion(pair);
+    g_core_ctx->vcr_get_seek_completion(pair);
 
     const auto index_adjustment = g_config.vcr_0_index ? 1 : 0;
     const auto current_sample = pair.first;
-    const auto current_vi = core_vcr_get_current_vi();
+    const auto current_vi = g_core_ctx->vcr_get_current_vi();
     const auto is_before_start = static_cast<int64_t>(current_sample) - static_cast<int64_t>(index_adjustment) < 0;
 
-    if (core_vcr_get_warp_modify_status())
+    if (g_core_ctx->vcr_get_warp_modify_status())
     {
-        StringCbPrintfW(text, sizeof(text), L"Warping (%.2f%%)", (double)current_sample / (double)core_vcr_get_length_samples() * 100.0);
+        StringCbPrintfW(text, sizeof(text), L"Warping (%.2f%%)", (double)current_sample / (double)g_core_ctx->vcr_get_length_samples() * 100.0);
         return text;
     }
 
-    if (core_vcr_get_task() == task_recording)
+    if (g_core_ctx->vcr_get_task() == task_recording)
     {
         if (is_before_start)
         {
@@ -408,7 +409,7 @@ const wchar_t* get_status_text()
         }
     }
 
-    if (core_vcr_get_task() == task_playback)
+    if (g_core_ctx->vcr_get_task() == task_playback)
     {
         if (is_before_start)
         {
@@ -416,7 +417,7 @@ const wchar_t* get_status_text()
         }
         else
         {
-            wsprintfW(text, L"%d / %d (%d / %d) ", current_vi, core_vcr_get_length_vis(), current_sample - index_adjustment, core_vcr_get_length_samples());
+            wsprintfW(text, L"%d / %d (%d / %d) ", current_vi, g_core_ctx->vcr_get_length_vis(), current_sample - index_adjustment, g_core_ctx->vcr_get_length_samples());
         }
     }
 
@@ -457,8 +458,8 @@ std::filesystem::path get_summercart_path()
 
 std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
-    const auto hdr = core_vr_get_rom_header();
-    const auto fname = std::format(L"{} {}.st{}", io_service.string_to_wstring((const char*)hdr->nom), core_vr_country_code_to_country_name(hdr->Country_code), std::to_wstring(slot));
+    const auto hdr = g_core_ctx->vr_get_rom_header();
+    const auto fname = std::format(L"{} {}.st{}", io_service.string_to_wstring((const char*)hdr->nom), g_core_ctx->vr_country_code_to_country_name(hdr->Country_code), std::to_wstring(slot));
     return get_saves_directory() / fname;
 }
 
@@ -516,7 +517,7 @@ void st_callback_wrapper(const core_st_callback_info& info, const std::vector<ui
 
 void update_screen()
 {
-    if (core_vr_get_mge_available())
+    if (g_core_ctx->vr_get_mge_available())
     {
         MGECompositor::update_screen();
     }
@@ -555,15 +556,15 @@ void update_titlebar()
         text += L" - Starting...";
     }
 
-    if (core_vr_get_launched())
+    if (g_core_ctx->vr_get_launched())
     {
-        text += std::format(L" - {}", io_service.string_to_wstring(reinterpret_cast<char*>(core_vr_get_rom_header()->nom)));
+        text += std::format(L" - {}", io_service.string_to_wstring(reinterpret_cast<char*>(g_core_ctx->vr_get_rom_header()->nom)));
     }
 
-    if (core_vcr_get_task() != task_idle)
+    if (g_core_ctx->vcr_get_task() != task_idle)
     {
         wchar_t movie_filename[MAX_PATH] = {0};
-        _wsplitpath_s(core_vcr_get_path().wstring().c_str(), nullptr, 0, nullptr, 0, movie_filename, _countof(movie_filename), nullptr, 0);
+        _wsplitpath_s(g_core_ctx->vcr_get_path().wstring().c_str(), nullptr, 0, nullptr, 0, movie_filename, _countof(movie_filename), nullptr, 0);
         text += std::format(L" - {}", movie_filename);
     }
 
@@ -619,9 +620,9 @@ void on_task_changed(std::any data)
             Statusbar::post(L"Playback stopped");
         }
 
-        if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) || task_is_playback(value) && !task_is_playback(previous_value) && !core_vcr_get_path().empty())
+        if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) || task_is_playback(value) && !task_is_playback(previous_value) && !g_core_ctx->vcr_get_path().empty())
         {
-            RecentMenu::add(g_config.recent_movie_paths, core_vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen, ID_RECENTMOVIES_FIRST, g_recent_movies_menu);
+            RecentMenu::add(g_config.recent_movie_paths, g_core_ctx->vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen, ID_RECENTMOVIES_FIRST, g_recent_movies_menu);
         }
 
         update_titlebar();
@@ -658,14 +659,14 @@ void on_emu_launched_changed(std::any data)
 
         update_titlebar();
         // Some menu items, like movie ones, depend on both this and vcr task
-        on_task_changed(core_vcr_get_task());
+        on_task_changed(g_core_ctx->vcr_get_task());
 
         // Reset and restore view stuff when emulation starts
         if (value)
         {
             g_vis_since_input_poll_warning_dismissed = false;
 
-            const auto rom_path = core_vr_get_rom_path();
+            const auto rom_path = g_core_ctx->vr_get_rom_path();
             if (!rom_path.empty())
             {
                 RecentMenu::add(g_config.recent_rom_paths, rom_path.wstring(), g_config.is_recent_rom_paths_frozen, ID_RECENTROMS_FIRST, g_recent_roms_menu);
@@ -737,7 +738,7 @@ void on_vis_since_input_poll_exceeded(std::any)
     {
         // TODO: Send IDM_CLOSE_ROM instead... probably better :P
         ThreadPool::submit_task([] {
-            const auto result = core_vr_close_rom(true);
+            const auto result = g_core_ctx->vr_close_rom(true);
             show_error_dialog_for_result(result);
         });
     }
@@ -793,7 +794,7 @@ void on_warp_modify_status_changed(std::any data)
 
 void update_core_fast_forward(std::any)
 {
-    core_vr_set_fast_forward(g_fast_forward || core_vcr_is_seeking() || CLI::wants_fast_forward() || Compare::active());
+    g_core_ctx->vr_set_fast_forward(g_fast_forward || g_core_ctx->vcr_is_seeking() || CLI::wants_fast_forward() || Compare::active());
 }
 
 void on_emu_starting_changed(std::any data)
@@ -813,8 +814,8 @@ BetterEmulationLock::BetterEmulationLock()
     }
     else
     {
-        was_paused = core_vr_get_paused();
-        core_vr_pause_emu();
+        was_paused = g_core_ctx->vr_get_paused();
+        g_core_ctx->vr_pause_emu();
     }
 }
 
@@ -822,11 +823,11 @@ BetterEmulationLock::~BetterEmulationLock()
 {
     if (was_paused)
     {
-        core_vr_pause_emu();
+        g_core_ctx->vr_pause_emu();
     }
     else
     {
-        core_vr_resume_emu();
+        g_core_ctx->vr_resume_emu();
     }
 }
 
@@ -864,7 +865,7 @@ bool confirm_user_exit()
     int warnings = 0;
 
     std::wstring final_message;
-    if (core_vcr_get_task() == task_recording)
+    if (g_core_ctx->vcr_get_task() == task_recording)
     {
         final_message.append(L"Movie recording ");
         warnings++;
@@ -878,7 +879,7 @@ bool confirm_user_exit()
         final_message.append(L" AVI capture ");
         warnings++;
     }
-    if (core_vr_is_tracelog_active())
+    if (g_core_ctx->vr_is_tracelog_active())
     {
         if (warnings > 0)
         {
@@ -977,7 +978,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             if (extension == ".n64" || extension == ".z64" || extension == ".v64" || extension == ".rom")
             {
                 ThreadPool::submit_task([path] {
-                    const auto result = core_vr_start_rom(path);
+                    const auto result = g_core_ctx->vr_start_rom(path);
                     show_error_dialog_for_result(result);
                 });
             }
@@ -986,18 +987,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 g_config.core.vcr_readonly = true;
                 Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
                 ThreadPool::submit_task([fname] {
-                    auto result = core_vcr_start_playback(fname);
+                    auto result = g_core_ctx->vcr_start_playback(fname);
                     show_error_dialog_for_result(result);
                 });
             }
             else if (extension == ".st" || extension == ".savestate" || extension == ".st0" || extension == ".st1" || extension == ".st2" || extension == ".st3" || extension == ".st4" || extension == ".st5" || extension == ".st6" || extension == ".st7" || extension == ".st8" || extension == ".st9")
             {
-                if (!core_vr_get_launched())
+                if (!g_core_ctx->vr_get_launched())
                     break;
-                core_vr_wait_increment();
+                g_core_ctx->vr_wait_increment();
                 ThreadPool::submit_task([=] {
-                    core_vr_wait_decrement();
-                    core_st_do_file(fname, core_st_job_load, nullptr, false);
+                    g_core_ctx->vr_wait_decrement();
+                    g_core_ctx->st_do_file(fname, core_st_job_load, nullptr, false);
                 });
             }
             else if (extension == ".lua")
@@ -1089,7 +1090,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
             }
 
-            if (g_core.plugin_funcs.input_key_down && core_vr_get_launched())
+            if (g_core.plugin_funcs.input_key_down && g_core_ctx->vr_get_launched())
                 g_core.plugin_funcs.input_key_down(wParam, lParam);
             if (!hit)
                 return DefWindowProc(hwnd, Message, wParam, lParam);
@@ -1124,7 +1125,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
             }
 
-            if (g_core.plugin_funcs.input_key_up && core_vr_get_launched())
+            if (g_core.plugin_funcs.input_key_up && g_core_ctx->vr_get_launched())
                 g_core.plugin_funcs.input_key_up(wParam, lParam);
             if (!hit)
                 return DefWindowProc(hwnd, Message, wParam, lParam);
@@ -1146,7 +1147,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         }
     case WM_MOVE:
         {
-            if (core_vr_get_launched())
+            if (g_core_ctx->vr_get_launched())
             {
                 g_core.plugin_funcs.video_move_screen((int)wParam, lParam);
             }
@@ -1170,7 +1171,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             GetClientRect(g_main_hwnd, &rect);
             Messenger::broadcast(Messenger::Message::SizeChanged, rect);
 
-            if (core_vr_get_launched())
+            if (g_core_ctx->vr_get_launched())
             {
                 // We don't need to remember the dimensions set by gfx plugin
                 break;
@@ -1223,7 +1224,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         {
             lua_close_all_scripts();
             std::thread([] {
-                core_vr_close_rom(true);
+                g_core_ctx->vr_close_rom(true);
                 g_main_window_dispatcher->invoke([] {
                     DestroyWindow(g_main_hwnd);
                 });
@@ -1244,8 +1245,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_INITMENU:
         {
-            const auto core_executing = core_vr_get_launched();
-            const auto vcr_active = core_vcr_get_task() != task_idle;
+            const auto core_executing = g_core_ctx->vr_get_launched();
+            const auto vcr_active = g_core_ctx->vcr_get_task() != task_idle;
 
             ModifyMenu(g_main_menu, IDM_MULTI_FRAME_ADVANCE, MF_BYCOMMAND | MF_STRING, IDM_MULTI_FRAME_ADVANCE, std::format(L"Multi-Frame Advance {}x", g_config.multi_frame_advance_count).c_str());
             apply_menu_item_accelerator_text();
@@ -1289,7 +1290,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             CheckMenuItem(g_main_menu, IDM_LOOP_MOVIE, g_config.core.is_movie_loop_enabled ? MF_CHECKED : MF_UNCHECKED);
             CheckMenuItem(g_main_menu, IDM_VCR_READONLY, g_config.core.vcr_readonly ? MF_CHECKED : MF_UNCHECKED);
             CheckMenuItem(g_main_menu, IDM_WAIT_AT_MOVIE_END, g_config.core.wait_at_movie_end ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_FULLSCREEN, core_vr_is_fullscreen() ? MF_CHECKED : MF_UNCHECKED);
+            CheckMenuItem(g_main_menu, IDM_FULLSCREEN, g_core_ctx->vr_is_fullscreen() ? MF_CHECKED : MF_UNCHECKED);
 
             for (int i = IDM_SELECT_1; i < IDM_SELECT_10; ++i)
             {
@@ -1304,8 +1305,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_ENTERMENULOOP:
         g_in_menu_loop = true;
-        g_paused_before_menu = core_vr_get_paused();
-        core_vr_pause_emu();
+        g_paused_before_menu = g_core_ctx->vr_get_paused();
+        g_core_ctx->vr_pause_emu();
         break;
 
     case WM_EXITMENULOOP:
@@ -1317,11 +1318,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             g_in_menu_loop = false;
             if (g_paused_before_menu)
             {
-                core_vr_pause_emu();
+                g_core_ctx->vr_pause_emu();
             }
             else
             {
-                core_vr_resume_emu();
+                g_core_ctx->vr_resume_emu();
             }
         })
         .detach();
@@ -1340,13 +1341,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         case WA_CLICKACTIVE:
             if (!g_paused_before_focus)
             {
-                core_vr_resume_emu();
+                g_core_ctx->vr_resume_emu();
             }
             break;
 
         case WA_INACTIVE:
-            g_paused_before_focus = core_vr_get_paused();
-            core_vr_pause_emu();
+            g_paused_before_focus = g_core_ctx->vr_get_paused();
+            g_core_ctx->vr_pause_emu();
             break;
         default:
             break;
@@ -1397,10 +1398,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_DEBUG_WARP_MODIFY:
                 {
-                    auto inputs = core_vcr_get_inputs();
+                    auto inputs = g_core_ctx->vcr_get_inputs();
                     inputs[inputs.size() - 10].a = 1;
 
-                    auto result = core_vcr_begin_warp_modify(inputs);
+                    auto result = g_core_ctx->vcr_begin_warp_modify(inputs);
                     show_error_dialog_for_result(result);
 
                     break;
@@ -1427,9 +1428,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_TRACELOG:
                 {
-                    if (core_vr_is_tracelog_active())
+                    if (g_core_ctx->vr_is_tracelog_active())
                     {
-                        core_tl_stop();
+                        g_core_ctx->tl_stop();
                         ModifyMenu(g_main_menu, IDM_TRACELOG, MF_BYCOMMAND | MF_STRING, IDM_TRACELOG, L"Start &Trace Logger...");
                         break;
                     }
@@ -1443,7 +1444,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     auto result = MessageBox(g_main_hwnd, L"Should the trace log be generated in a binary format?", L"Trace Logger", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
 
-                    core_tl_start(path, result == IDYES, false);
+                    g_core_ctx->tl_start(path, result == IDYES, false);
                     ModifyMenu(g_main_menu, IDM_TRACELOG, MF_BYCOMMAND | MF_STRING, IDM_TRACELOG, L"Stop &Trace Logger");
                 }
                 break;
@@ -1451,7 +1452,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 if (!confirm_user_exit())
                     break;
                 ThreadPool::submit_task([] {
-                    const auto result = core_vr_close_rom(true);
+                    const auto result = g_core_ctx->vr_close_rom(true);
                     show_error_dialog_for_result(result);
                 },
                                         ASYNC_KEY_CLOSE_ROM);
@@ -1465,10 +1466,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
                 break;
             case IDM_GS_ON:
-                core_vr_set_gs_button(true);
+                g_core_ctx->vr_set_gs_button(true);
                 break;
             case IDM_GS_OFF:
-                core_vr_set_gs_button(false);
+                g_core_ctx->vr_set_gs_button(false);
                 break;
             case IDM_PAUSE:
                 {
@@ -1478,21 +1479,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     {
                         if (g_paused_before_menu)
                         {
-                            core_vr_resume_emu();
+                            g_core_ctx->vr_resume_emu();
                             g_paused_before_menu = false;
                             break;
                         }
                         g_paused_before_menu = true;
-                        core_vr_pause_emu();
+                        g_core_ctx->vr_pause_emu();
                     }
                     else
                     {
-                        if (core_vr_get_paused())
+                        if (g_core_ctx->vr_get_paused())
                         {
-                            core_vr_resume_emu();
+                            g_core_ctx->vr_resume_emu();
                             break;
                         }
-                        core_vr_pause_emu();
+                        g_core_ctx->vr_pause_emu();
                     }
 
                     break;
@@ -1501,22 +1502,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             case IDM_FRAMEADVANCE:
                 g_fast_forward = false;
                 update_core_fast_forward(nullptr);
-                core_vr_frame_advance(1);
-                core_vr_resume_emu();
+                g_core_ctx->vr_frame_advance(1);
+                g_core_ctx->vr_resume_emu();
                 break;
             case IDM_MULTI_FRAME_ADVANCE:
                 if (g_config.multi_frame_advance_count > 0)
                 {
-                    core_vr_frame_advance(g_config.multi_frame_advance_count);
+                    g_core_ctx->vr_frame_advance(g_config.multi_frame_advance_count);
                 }
                 else
                 {
                     ThreadPool::submit_task([] {
-                        const auto result = core_vcr_begin_seek(std::to_wstring(g_config.multi_frame_advance_count), true);
+                        const auto result = g_core_ctx->vcr_begin_seek(std::to_wstring(g_config.multi_frame_advance_count), true);
                         show_error_dialog_for_result(result);
                     });
                 }
-                core_vr_resume_emu();
+                g_core_ctx->vr_resume_emu();
                 break;
             case IDM_MULTI_FRAME_ADVANCE_INC:
                 g_config.multi_frame_advance_count++;
@@ -1552,18 +1553,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 
             case EMU_PLAY:
-                core_vr_resume_emu();
+                g_core_ctx->vr_resume_emu();
                 break;
 
             case IDM_RESET_ROM:
                 {
-                    const bool reset_will_continue_recording = g_config.core.is_reset_recording_enabled && core_vcr_get_task() == task_recording;
+                    const bool reset_will_continue_recording = g_config.core.is_reset_recording_enabled && g_core_ctx->vcr_get_task() == task_recording;
 
                     if (!reset_will_continue_recording && !confirm_user_exit())
                         break;
 
                     ThreadPool::submit_task([] {
-                        const auto result = core_vr_reset_rom(false, true);
+                        const auto result = g_core_ctx->vr_reset_rom(false, true);
                         show_error_dialog_for_result(result);
                     },
                                             ASYNC_KEY_RESET_ROM);
@@ -1667,7 +1668,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (!path.empty())
                     {
                         ThreadPool::submit_task([path] {
-                            const auto result = core_vr_start_rom(path);
+                            const auto result = g_core_ctx->vr_start_rom(path);
                             show_error_dialog_for_result(result);
                         });
                     }
@@ -1677,24 +1678,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 DestroyWindow(g_main_hwnd);
                 break;
             case IDM_FULLSCREEN:
-                core_vr_toggle_fullscreen_mode();
+                g_core_ctx->vr_toggle_fullscreen_mode();
                 break;
             case IDM_REFRESH_ROMBROWSER:
-                if (!core_vr_get_launched())
+                if (!g_core_ctx->vr_get_launched())
                 {
                     RomBrowser::build();
                 }
                 break;
             case IDM_SAVE_SLOT:
-                core_vr_wait_increment();
+                g_core_ctx->vr_wait_increment();
                 if (g_config.increment_slot)
                 {
                     g_config.st_slot >= 9 ? g_config.st_slot = 0 : g_config.st_slot++;
                     Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
                 }
                 ThreadPool::submit_task([=] {
-                    core_vr_wait_decrement();
-                    core_st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_save, nullptr, false);
+                    g_core_ctx->vr_wait_decrement();
+                    g_core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_save, nullptr, false);
                 });
                 break;
             case IDM_SAVE_STATE_AS:
@@ -1707,18 +1708,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    core_vr_wait_increment();
+                    g_core_ctx->vr_wait_increment();
                     ThreadPool::submit_task([=] {
-                        core_vr_wait_decrement();
-                        core_st_do_file(path, core_st_job_save, nullptr, false);
+                        g_core_ctx->vr_wait_decrement();
+                        g_core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
                     });
                 }
                 break;
             case IDM_LOAD_SLOT:
-                core_vr_wait_increment();
+                g_core_ctx->vr_wait_increment();
                 ThreadPool::submit_task([=] {
-                    core_vr_wait_decrement();
-                    core_st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_load, nullptr, false);
+                    g_core_ctx->vr_wait_decrement();
+                    g_core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_load, nullptr, false);
                 });
                 break;
             case IDM_LOAD_STATE_AS:
@@ -1731,21 +1732,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    core_vr_wait_increment();
+                    g_core_ctx->vr_wait_increment();
                     ThreadPool::submit_task([=] {
-                        core_vr_wait_decrement();
-                        core_st_do_file(path, core_st_job_load, nullptr, false);
+                        g_core_ctx->vr_wait_decrement();
+                        g_core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
                     });
                 }
                 break;
             case IDM_UNDO_LOAD_STATE:
                 {
-                    core_vr_wait_increment();
+                    g_core_ctx->vr_wait_increment();
                     ThreadPool::submit_task([=] {
-                        core_vr_wait_decrement();
+                        g_core_ctx->vr_wait_decrement();
 
                         std::vector<uint8_t> buf{};
-                        core_st_get_undo_savestate(buf);
+                        g_core_ctx->st_get_undo_savestate(buf);
 
                         if (buf.empty())
                         {
@@ -1753,7 +1754,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                             return;
                         }
 
-                        core_st_do_memory(buf, core_st_job_load, [](const core_st_callback_info& info, auto) {
+                        g_core_ctx->st_do_memory(buf, core_st_job_load, [](const core_st_callback_info& info, auto) {
                             if (info.result == Res_Ok)
                             {
                                 Statusbar::post(L"Undid load");
@@ -1782,10 +1783,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    core_vr_wait_increment();
+                    g_core_ctx->vr_wait_increment();
                     g_core.submit_task([=] {
-                        auto vcr_result = core_vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag, io_service.wstring_to_string(movie_dialog_result.author), io_service.wstring_to_string(movie_dialog_result.description));
-                        core_vr_wait_decrement();
+                        auto vcr_result = g_core_ctx->vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag, io_service.wstring_to_string(movie_dialog_result.author), io_service.wstring_to_string(movie_dialog_result.description));
+                        g_core_ctx->vr_wait_decrement();
                         if (!show_error_dialog_for_result(vcr_result))
                         {
                             g_config.last_movie_author = movie_dialog_result.author;
@@ -1805,34 +1806,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
                     }
 
-                    core_vcr_replace_author_info(result.path, io_service.wstring_to_string(result.author), io_service.wstring_to_string(result.description));
+                    g_core_ctx->vcr_replace_author_info(result.path, io_service.wstring_to_string(result.author), io_service.wstring_to_string(result.description));
 
                     g_config.core.pause_at_frame = result.pause_at;
                     g_config.core.pause_at_last_frame = result.pause_at_last;
 
                     ThreadPool::submit_task([result] {
-                        auto vcr_result = core_vcr_start_playback(result.path);
+                        auto vcr_result = g_core_ctx->vcr_start_playback(result.path);
                         show_error_dialog_for_result(vcr_result);
                     });
                 }
                 break;
             case IDM_STOP_MOVIE:
-                core_vr_wait_increment();
+                g_core_ctx->vr_wait_increment();
                 g_core.submit_task([] {
-                    core_vcr_stop_all();
-                    core_vr_wait_decrement();
+                    g_core_ctx->vcr_stop_all();
+                    g_core_ctx->vr_wait_decrement();
                 });
                 break;
             case IDM_CREATE_MOVIE_BACKUP:
                 {
-                    const auto result = core_vcr_write_backup();
+                    const auto result = g_core_ctx->vcr_write_backup();
                     show_error_dialog_for_result(result);
                     break;
                 }
             case IDM_START_CAPTURE_PRESET:
             case IDM_START_CAPTURE:
                 {
-                    if (!core_vr_get_launched())
+                    if (!g_core_ctx->vr_get_launched())
                     {
                         break;
                     }
@@ -1900,17 +1901,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_SPEED_DOWN:
                 g_config.core.fps_modifier = clamp(g_config.core.fps_modifier - 25, 25, 1000);
-                core_vr_on_speed_modifier_changed();
+                g_core_ctx->vr_on_speed_modifier_changed();
                 Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
                 break;
             case IDM_SPEED_UP:
                 g_config.core.fps_modifier = clamp(g_config.core.fps_modifier + 25, 25, 1000);
-                core_vr_on_speed_modifier_changed();
+                g_core_ctx->vr_on_speed_modifier_changed();
                 Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
                 break;
             case IDM_SPEED_RESET:
                 g_config.core.fps_modifier = 100;
-                core_vr_on_speed_modifier_changed();
+                g_core_ctx->vr_on_speed_modifier_changed();
                 Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
                 break;
             default:
@@ -1923,27 +1924,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 else if (LOWORD(wParam) >= ID_SAVE_1 && LOWORD(wParam) <= ID_SAVE_10)
                 {
                     auto slot = LOWORD(wParam) - ID_SAVE_1;
-                    core_vr_wait_increment();
+                    g_core_ctx->vr_wait_increment();
 
                     g_config.st_slot = slot;
                     Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
 
                     ThreadPool::submit_task([=] {
-                        core_vr_wait_decrement();
-                        core_st_do_file(get_st_with_slot_path(slot), core_st_job_save, nullptr, false);
+                        g_core_ctx->vr_wait_decrement();
+                        g_core_ctx->st_do_file(get_st_with_slot_path(slot), core_st_job_save, nullptr, false);
                     });
                 }
                 else if (LOWORD(wParam) >= ID_LOAD_1 && LOWORD(wParam) <= ID_LOAD_10)
                 {
                     auto slot = LOWORD(wParam) - ID_LOAD_1;
-                    core_vr_wait_increment();
+                    g_core_ctx->vr_wait_increment();
 
                     g_config.st_slot = slot;
                     Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
 
                     ThreadPool::submit_task([=] {
-                        core_vr_wait_decrement();
-                        core_st_do_file(get_st_with_slot_path(slot), core_st_job_load, nullptr, false);
+                        g_core_ctx->vr_wait_decrement();
+                        g_core_ctx->st_do_file(get_st_with_slot_path(slot), core_st_job_load, nullptr, false);
                     });
                 }
                 else if (LOWORD(wParam) >= ID_RECENTROMS_FIRST &&
@@ -1954,7 +1955,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         break;
 
                     ThreadPool::submit_task([path] {
-                        const auto result = core_vr_start_rom(path);
+                        const auto result = g_core_ctx->vr_start_rom(path);
                         show_error_dialog_for_result(result);
                     },
                                             ASYNC_KEY_START_ROM);
@@ -1969,7 +1970,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     g_config.core.vcr_readonly = true;
                     Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
                     ThreadPool::submit_task([path] {
-                        auto result = core_vcr_start_playback(path);
+                        auto result = g_core_ctx->vcr_start_playback(path);
                         show_error_dialog_for_result(result);
                     },
                                             ASYNC_KEY_PLAY_MOVIE);
@@ -2094,7 +2095,7 @@ void initiate_plugins()
 
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
-    core_vr_invalidate_visuals();
+    g_core_ctx->vr_invalidate_visuals();
 
     // This has to be posted to ui thread since it requires synchronized access to the lua map
     PostMessage(g_main_hwnd, WM_INVALIDATE_LUA, 0, 0);
@@ -2108,7 +2109,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 
         if (EncodingManager::is_capturing())
         {
-            if (core_vcr_get_task() == task_idle)
+            if (g_core_ctx->vcr_get_task() == task_idle)
             {
                 Statusbar::post(std::format(L"{}", EncodingManager::get_video_frame()), Statusbar::Section::VCR);
             }
@@ -2360,7 +2361,7 @@ static core_result init_core()
 
     setup_dummy_info();
 
-    return core_init(&g_core);
+    return core_init(&g_core, &g_core_ctx);
 }
 
 static void main_dispatcher_init()

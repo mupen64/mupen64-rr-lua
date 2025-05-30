@@ -77,5 +77,6 @@ void prefetch_opcode(uint32_t op);
 void dyna_jump();
 void dyna_start(void (*code)());
 void dyna_stop();
+void vr_recompile(uint32_t addr);
 
 extern precomp_instr* dst;

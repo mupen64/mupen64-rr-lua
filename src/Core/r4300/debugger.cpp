@@ -20,12 +20,12 @@ static uint32_t dummy_doRspCycles(uint32_t cycles)
     return cycles;
 }
 
-bool core_dbg_get_resumed()
+bool dbg_get_resumed()
 {
     return g_resumed;
 }
 
-void core_dbg_set_is_resumed(bool value)
+void dbg_set_is_resumed(bool value)
 {
     if (value)
     {
@@ -35,28 +35,28 @@ void core_dbg_set_is_resumed(bool value)
     g_core->callbacks.debugger_resumed_changed(g_resumed);
 }
 
-void core_dbg_step()
+void dbg_step()
 {
     g_instruction_advancing = true;
     g_resumed = true;
 }
 
-bool core_dbg_get_dma_read_enabled()
+bool dbg_get_dma_read_enabled()
 {
     return g_dma_read_enabled;
 }
 
-void core_dbg_set_dma_read_enabled(bool value)
+void dbg_set_dma_read_enabled(bool value)
 {
     g_dma_read_enabled = value;
 }
 
-bool core_dbg_get_rsp_enabled()
+bool dbg_get_rsp_enabled()
 {
     return g_core->plugin_funcs.rsp_do_rsp_cycles == g_original_do_rsp_cycles;
 }
 
-void core_dbg_set_rsp_enabled(bool value)
+void dbg_set_rsp_enabled(bool value)
 {
     // Stash the original plugin-provided do_rsp_cycles once
     if (!g_original_do_rsp_cycles)

@@ -10,16 +10,18 @@
 extern t_vcr_state vcr;
 static core_cfg cfg{};
 static core_params params{};
-static IIOHelperService io_service{};
+static fakeit::Mock<IIOHelperService> io_service{};
 
 #pragma region Integration
 
 static void prepare_test()
 {
+    io_service.Reset();
+
     vcr = {};
     cfg = {};
     params.cfg = &cfg;
-    params.io_service = &io_service;
+    params.io_service = &io_service.get();
     params.plugin_funcs.input_get_keys = [](int32_t controller, core_buttons* keys) {
     };
     params.plugin_funcs.input_set_keys = [](int32_t controller, core_buttons keys) {
@@ -230,6 +232,11 @@ TEST_CASE("sample_length_gets_clamped_to_buffer_max", "read_movie_header")
 }
 
 
+core_result core_vr_start_rom2(std::filesystem::path path)
+{
+    return Res_Ok;
+}
+
 TEST_CASE("seek_stops_at_expected_frame", "seek")
 {
     struct seek_test_params {
@@ -286,6 +293,15 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
         seek_completed = true;
     };
 
+    // Return the header + inputs as bytes when calling read_file_buffer
+    std::vector<uint8_t> fake_bytes(sizeof(vcr.hdr) + vcr.inputs.size() * sizeof(core_buttons));
+    std::memcpy(fake_bytes.data(), &vcr.hdr, sizeof(vcr.hdr));
+    std::memcpy(fake_bytes.data() + sizeof(vcr.hdr), vcr.inputs.data(), vcr.inputs.size() * sizeof(core_buttons));
+    fakeit::When(Method(io_service, read_file_buffer)).Return(fake_bytes);
+
+    extern core_result core_vr_start_rom(std::filesystem::path path);
+    memcpy(core_vr_start_rom, core_vr_start_rom2, sizeof(void*));
+    
     core_init(&params);
 
     const auto result = core_vcr_begin_seek(param.str, false);

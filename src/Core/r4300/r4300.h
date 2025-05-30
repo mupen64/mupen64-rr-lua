@@ -73,6 +73,26 @@ void terminate_emu();
 
 core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
 
+std::filesystem::path vr_get_rom_path();
+bool vr_get_core_executing();
+bool vr_get_launched();
+void vr_frame_advance(size_t count);
+void vr_pause_emu();
+void vr_resume_emu();
+bool vr_get_paused();
+bool vr_get_frame_advance();
+void vr_wait_increment();
+void vr_wait_decrement();
+core_result vr_start_rom(std::filesystem::path path);
+core_result vr_close_rom(bool stop_vcr);
+core_result vr_reset_rom(bool reset_save_data, bool stop_vcr);
+void vr_toggle_fullscreen_mode();
+void vr_set_fast_forward(bool value);
+bool vr_is_fullscreen();
+bool vr_get_gs_button();
+void vr_set_gs_button(bool value);
+void vr_invalidate_visuals();
+bool vr_get_mge_available();
 
 #define jump_to(a)           \
     {                        \

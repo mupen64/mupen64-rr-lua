@@ -256,7 +256,7 @@ namespace RomBrowser
                 core_rom_header header{};
                 fread(&header, sizeof(core_rom_header), 1, f);
 
-                core_vr_byteswap((uint8_t*)&header);
+                g_core_ctx->vr_byteswap((uint8_t*)&header);
 
                 io_service.strtrim((char*)header.nom, sizeof(header.nom));
 
@@ -293,7 +293,7 @@ namespace RomBrowser
 
     void rombrowser_update_size()
     {
-        if (core_vr_get_launched())
+        if (g_core_ctx->vr_get_launched())
             return;
         if (!IsWindow(rombrowser_hwnd))
             return;
@@ -384,7 +384,7 @@ namespace RomBrowser
                 ListView_GetItem(rombrowser_hwnd, &item);
                 auto path = rombrowser_entries[item.lParam]->path;
                 ThreadPool::submit_task([path] {
-                    const auto result = core_vr_start_rom(path);
+                    const auto result = g_core_ctx->vr_start_rom(path);
                     show_error_dialog_for_result(result);
                 });
             }
@@ -414,7 +414,7 @@ namespace RomBrowser
                 auto header = (core_rom_header*)malloc(sizeof(core_rom_header));
                 fread(header, sizeof(core_rom_header), 1, f);
 
-                core_vr_byteswap((uint8_t*)header);
+                g_core_ctx->vr_byteswap((uint8_t*)header);
 
                 if (predicate(*header))
                 {

@@ -443,7 +443,7 @@ void Plugin::config()
 
     cleanup:
 
-        if (core_vr_get_launched())
+        if (g_core_ctx->vr_get_launched())
         {
             return;
         }
@@ -457,7 +457,7 @@ void Plugin::config()
     {
     case plugin_video:
         {
-            if (!core_vr_get_launched())
+            if (!g_core_ctx->vr_get_launched())
             {
                 // NOTE: Since olden days, dummy render target hwnd was the statusbar.
                 dummy_gfx_info.main_hwnd = Statusbar::hwnd();
@@ -476,7 +476,7 @@ void Plugin::config()
         }
     case plugin_audio:
         {
-            if (!core_vr_get_launched())
+            if (!g_core_ctx->vr_get_launched())
             {
                 const auto initiate_audio = (INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
                 if (initiate_audio && !initiate_audio(dummy_audio_info))
@@ -491,7 +491,7 @@ void Plugin::config()
         }
     case plugin_input:
         {
-            if (!core_vr_get_launched())
+            if (!g_core_ctx->vr_get_launched())
             {
                 if (m_version == 0x0101)
                 {
@@ -513,7 +513,7 @@ void Plugin::config()
         }
     case plugin_rsp:
         {
-            if (!core_vr_get_launched())
+            if (!g_core_ctx->vr_get_launched())
             {
                 auto initiateRSP = (INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
                 uint32_t i = 0;

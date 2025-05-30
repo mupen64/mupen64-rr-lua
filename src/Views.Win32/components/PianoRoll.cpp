@@ -109,9 +109,15 @@ namespace PianoRoll
     bool can_modify_inputs()
     {
         std::pair<size_t, size_t> pair{};
-        core_vcr_get_seek_completion(pair);
+        g_core_ctx->vcr_get_seek_completion(pair);
 
-        return !core_vcr_get_warp_modify_status() && pair.second == SIZE_MAX && core_vcr_get_task() == task_recording && !core_vcr_is_seeking() && !g_config.core.vcr_readonly && g_config.core.seek_savestate_interval > 0 && core_vr_get_paused();
+        return !g_core_ctx->vcr_get_warp_modify_status()
+        && pair.second == SIZE_MAX
+        && g_core_ctx->vcr_get_task() == task_recording
+        && !g_core_ctx->vcr_is_seeking()
+        && !g_config.core.vcr_readonly
+        && g_config.core.seek_savestate_interval > 0
+        && g_core_ctx->vr_get_paused();
     }
 
     /**
@@ -133,19 +139,19 @@ namespace PianoRoll
         }
 
         // If VCR is idle, we can't really show anything.
-        if (core_vcr_get_task() == task_idle)
+        if (g_core_ctx->vcr_get_task() == task_idle)
         {
             ListView_DeleteAllItems(g_lv_hwnd);
         }
 
         // In playback mode, the input buffer can't change so we're safe to only pull it once.
-        if (core_vcr_get_task() == task_playback)
+        if (g_core_ctx->vcr_get_task() == task_playback)
         {
             SetWindowRedraw(g_lv_hwnd, false);
 
             ListView_DeleteAllItems(g_lv_hwnd);
 
-            g_piano_roll_state.inputs = core_vcr_get_inputs();
+            g_piano_roll_state.inputs = g_core_ctx->vcr_get_inputs();
             ListView_SetItemCount(g_lv_hwnd, g_piano_roll_state.inputs.size());
             g_view_logger->info("[PianoRoll] Pulled inputs from core for playback mode, count: {}", g_piano_roll_state.inputs.size());
 
@@ -315,10 +321,10 @@ namespace PianoRoll
         const int32_t i = ListView_GetNextItem(g_lv_hwnd, -1, LVNI_SELECTED);
 
         std::pair<size_t, size_t> pair{};
-        core_vcr_get_seek_completion(pair);
+        g_core_ctx->vcr_get_seek_completion(pair);
 
         const auto current_sample = std::min(ListView_GetItemCount(g_lv_hwnd), static_cast<int32_t>(pair.first) + 10);
-        const auto playhead_sample = core_vcr_get_task() == task_recording ? current_sample - 1 : current_sample;
+        const auto playhead_sample = g_core_ctx->vcr_get_task() == task_recording ? current_sample - 1 : current_sample;
 
         if (g_config.piano_roll_keep_playhead_visible)
         {
@@ -422,7 +428,7 @@ namespace PianoRoll
         // This might be called from UI thread, thus grabbing the VCR lock.
         // Problem is that the VCR lock is already grabbed by the core thread because current sample changed message is executed on core thread.
         ThreadPool::submit_task([=] {
-            auto result = core_vcr_begin_warp_modify(g_piano_roll_state.inputs);
+            auto result = g_core_ctx->vcr_begin_warp_modify(g_piano_roll_state.inputs);
 
             g_piano_roll_dispatcher->invoke([=] {
                 if (result == Res_Ok)
@@ -439,7 +445,7 @@ namespace PianoRoll
 
                     ListView_DeleteAllItems(g_lv_hwnd);
 
-                    g_piano_roll_state.inputs = core_vcr_get_inputs();
+                    g_piano_roll_state.inputs = g_core_ctx->vcr_get_inputs();
                     ListView_SetItemCount(g_lv_hwnd, g_piano_roll_state.inputs.size());
                     g_view_logger->info("[PianoRoll] Pulled inputs from core for recording mode due to warp modify failing, count: {}", g_piano_roll_state.inputs.size());
 
@@ -652,13 +658,13 @@ namespace PianoRoll
 
     void update_groupbox_status_text()
     {
-        if (core_vcr_get_warp_modify_status())
+        if (g_core_ctx->vcr_get_warp_modify_status())
         {
             SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Warping...");
             return;
         }
 
-        if (!core_vr_get_paused())
+        if (!g_core_ctx->vr_get_paused())
         {
             SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Resumed (readonly)");
             return;
@@ -721,19 +727,19 @@ namespace PianoRoll
             auto value = std::any_cast<int32_t>(data);
             static auto previous_value = value;
 
-            if (core_vcr_get_warp_modify_status() || core_vcr_is_seeking())
+            if (g_core_ctx->vcr_get_warp_modify_status() || g_core_ctx->vcr_is_seeking())
             {
                 goto exit;
             }
 
-            if (core_vcr_get_task() == task_idle)
+            if (g_core_ctx->vcr_get_task() == task_idle)
             {
                 goto exit;
             }
 
-            if (core_vcr_get_task() == task_recording)
+            if (g_core_ctx->vcr_get_task() == task_recording)
             {
-                g_piano_roll_state.inputs = core_vcr_get_inputs();
+                g_piano_roll_state.inputs = g_core_ctx->vcr_get_inputs();
                 ListView_SetItemCountEx(g_lv_hwnd, g_piano_roll_state.inputs.size(), LVSICF_NOSCROLL);
             }
 
@@ -750,7 +756,7 @@ namespace PianoRoll
     void on_unfreeze_completed(std::any)
     {
         g_piano_roll_dispatcher->invoke([=] {
-            if (core_vcr_get_warp_modify_status() || core_vcr_is_seeking())
+            if (g_core_ctx->vcr_get_warp_modify_status() || g_core_ctx->vcr_is_seeking())
             {
                 return;
             }
@@ -759,12 +765,12 @@ namespace PianoRoll
 
             ListView_DeleteAllItems(g_lv_hwnd);
 
-            g_piano_roll_state.inputs = core_vcr_get_inputs();
+            g_piano_roll_state.inputs = g_core_ctx->vcr_get_inputs();
 
             std::pair<size_t, size_t> pair{};
-            core_vcr_get_seek_completion(pair);
+            g_core_ctx->vcr_get_seek_completion(pair);
 
-            const auto item_count = core_vcr_get_task() == task_recording
+            const auto item_count = g_core_ctx->vcr_get_task() == task_recording
             ? std::min(pair.first, g_piano_roll_state.inputs.size())
             : g_piano_roll_state.inputs.size();
 
@@ -797,7 +803,7 @@ namespace PianoRoll
     {
         g_piano_roll_dispatcher->invoke([=] {
             auto value = std::any_cast<size_t>(data);
-            core_vcr_get_seek_savestate_frames(g_seek_savestate_frames);
+            g_core_ctx->vcr_get_seek_savestate_frames(g_seek_savestate_frames);
             ListView_Update(g_lv_hwnd, value);
         });
     }
@@ -805,7 +811,7 @@ namespace PianoRoll
     void on_emu_paused_changed(std::any)
     {
         // Redrawing during frame advance (paused on, then off next frame) causes ugly flicker, so we'll just not do that
-        if (core_vr_get_frame_advance() && !core_vr_get_paused())
+        if (g_core_ctx->vr_get_frame_advance() && !g_core_ctx->vr_get_paused())
         {
             return;
         }
@@ -1205,7 +1211,7 @@ namespace PianoRoll
             }
 
             ThreadPool::submit_task([=] {
-                core_vcr_begin_seek(std::to_wstring(lplvhtti.iItem), true);
+                g_core_ctx->vcr_begin_seek(std::to_wstring(lplvhtti.iItem), true);
             });
             return 0;
         }
@@ -1323,10 +1329,10 @@ namespace PianoRoll
 
                 // Manually call all the setup-related callbacks
                 update_inputs();
-                on_task_changed(core_vcr_get_task());
+                on_task_changed(g_core_ctx->vcr_get_task());
                 // ReSharper disable once CppRedundantCastExpression
                 std::pair<size_t, size_t> pair{};
-                core_vcr_get_seek_completion(pair);
+                g_core_ctx->vcr_get_seek_completion(pair);
                 on_current_sample_changed(static_cast<int32_t>(pair.first));
                 update_groupbox_status_text();
                 update_history_listbox();
@@ -1429,7 +1435,7 @@ namespace PianoRoll
                         case 0:
                             {
                                 std::pair<size_t, size_t> pair;
-                                core_vcr_get_seek_completion(pair);
+                                g_core_ctx->vcr_get_seek_completion(pair);
                                 const auto current_sample = pair.first;
                                 if (current_sample == plvdi->item.iItem)
                                 {

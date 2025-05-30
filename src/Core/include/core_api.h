@@ -326,480 +326,477 @@ typedef struct {
 #pragma endregion
 } core_params;
 
-/**
- * \brief Initializes the core with the specified parameters.
- * \remarks
- * The core must be initialized before any other functions are called.
- * The core parameters must be valid for the lifetime of the core.
- */
-EXPORT core_result CALL core_init(core_params* params);
-
+struct core_ctx {
 #pragma region Emulator
 
-/**
- * \brief Performs an in-place endianness correction on a rom's header.
- * \param rom The rom buffer, which must be at least 131 bytes large.
- */
-EXPORT void CALL core_vr_byteswap(uint8_t* rom);
+    /**
+     * \brief Performs an in-place endianness correction on a rom's header.
+     * \param rom The rom buffer, which must be at least 131 bytes large.
+     */
+    std::function<void(uint8_t* rom)> vr_byteswap;
 
-/**
- * \brief Gets the currently loaded rom's path. If no rom is loaded, the function returns an empty string.
- */
-EXPORT std::filesystem::path CALL core_vr_get_rom_path();
+    /**
+     * \brief Gets the currently loaded rom's path. If no rom is loaded, the function returns an empty string.
+     */
+    std::function<std::filesystem::path()> vr_get_rom_path;
 
-/**
- * \brief Gets the number of lag frames.
- */
-EXPORT size_t CALL core_vr_get_lag_count();
+    /**
+     * \brief Gets the number of lag frames.
+     */
+    std::function<size_t()> vr_get_lag_count;
 
-/**
- * \brief Gets whether the core is currently executing.
- */
-EXPORT bool CALL core_vr_get_core_executing();
+    /**
+     * \brief Gets whether the core is currently executing.
+     */
+    std::function<bool()> vr_get_core_executing;
 
-/**
- * \brief Gets whether the emu is launched.
- */
-EXPORT bool CALL core_vr_get_launched();
+    /**
+     * \brief Gets whether the emu is launched.
+     */
+    std::function<bool()> vr_get_launched;
 
-/**
- * \brief Gets whether the core is currently frame-advancing.
- */
-EXPORT bool CALL core_vr_get_frame_advance();
+    /**
+     * \brief Gets whether the core is currently frame-advancing.
+     */
+    std::function<bool()> vr_get_frame_advance;
 
-/**
- * \brief Gets whether the core is currently paused.
- */
-EXPORT bool CALL core_vr_get_paused();
+    /**
+     * \brief Gets whether the core is currently paused.
+     */
+    std::function<bool()> vr_get_paused;
 
-/**
- * \brief Pauses the emulator.
- */
-EXPORT void CALL core_vr_pause_emu();
+    /**
+     * \brief Pauses the emulator.
+     */
+    std::function<void()> vr_pause_emu;
 
-/**
- * \brief Resumes the emulator.
- */
-EXPORT void CALL core_vr_resume_emu();
+    /**
+     * \brief Resumes the emulator.
+     */
+    std::function<void()> vr_resume_emu;
 
-/**
- * \brief Increments the wait counter.
- * \remarks If the counter is greater than 0, the core will wait for the counter to be 0 before continuing to the next frame. This function is thread-safe.
- */
-EXPORT void CALL core_vr_wait_increment();
+    /**
+     * \brief Increments the wait counter.
+     * \remarks If the counter is greater than 0, the core will wait for the counter to be 0 before continuing to the next frame. This function is thread-safe.
+     */
+    std::function<void()> vr_wait_increment;
 
-/**
- * \brief Decrements the wait counter.
- * \remarks If the counter is greater than 0, the core will wait for the counter to be 0 before continuing to the next frame. This function is thread-safe.
- */
-EXPORT void CALL core_vr_wait_decrement();
+    /**
+     * \brief Decrements the wait counter.
+     * \remarks If the counter is greater than 0, the core will wait for the counter to be 0 before continuing to the next frame. This function is thread-safe.
+     */
+    std::function<void()> vr_wait_decrement;
 
-/**
- * \brief Starts the emulator.
- * \param path Path to a rom or corresponding movie file.
- * \return The operation result.
- * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
- */
-EXPORT core_result CALL core_vr_start_rom(std::filesystem::path path);
+    /**
+     * \brief Starts the emulator.
+     * \param path Path to a rom or corresponding movie file.
+     * \return The operation result.
+     * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
+     */
+    std::function<core_result(std::filesystem::path path)> vr_start_rom;
 
-/**
- * \brief Stops the emulator.
- * \param stop_vcr Whether all VCR operations will be stopped. When resetting the ROM due to an in-movie restart, this needs to be false.
- * \return The operation result.
- * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
- */
-EXPORT core_result CALL core_vr_close_rom(bool stop_vcr);
+    /**
+     * \brief Stops the emulator.
+     * \param stop_vcr Whether all VCR operations will be stopped. When resetting the ROM due to an in-movie restart, this needs to be false.
+     * \return The operation result.
+     * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
+     */
+    std::function<core_result(bool stop_vcr)> vr_close_rom;
 
-/**
- * \brief Resets the emulator.
- * \param reset_save_data Whether save data (e.g.: EEPROM, SRAM, Mempak) will be reset.
- * \param stop_vcr Whether all VCR operations will be stopped. When resetting the ROM due to an in-movie restart, this needs to be false.
- * \return The operation result.
- * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
- */
-EXPORT core_result CALL core_vr_reset_rom(bool reset_save_data, bool stop_vcr);
+    /**
+     * \brief Resets the emulator.
+     * \param reset_save_data Whether save data (e.g.: EEPROM, SRAM, Mempak) will be reset.
+     * \param stop_vcr Whether all VCR operations will be stopped. When resetting the ROM due to an in-movie restart, this needs to be false.
+     * \return The operation result.
+     * \remarks This function must be called from a thread that isn't interlocked with the emulator thread.
+     */
+    std::function<core_result(bool reset_save_data, bool stop_vcr)> vr_reset_rom;
 
-/**
- * \brief Starts frame advancing the specified amount of frames.
- */
-EXPORT void CALL core_vr_frame_advance(size_t);
+    /**
+     * \brief Starts frame advancing the specified amount of frames.
+     */
+    std::function<void(size_t)> vr_frame_advance;
 
-/**
- * \brief Toggles between fullscreen and windowed mode.
- */
-EXPORT void CALL core_vr_toggle_fullscreen_mode();
+    /**
+     * \brief Toggles between fullscreen and windowed mode.
+     * TODO: Move this to the view; the core should not be responsible for the video plugin's fullscreen state.
+     */
+    std::function<void()> vr_toggle_fullscreen_mode;
 
-/**
- * \brief Sets the fast-forward state.
- */
-EXPORT void CALL core_vr_set_fast_forward(bool);
+    /**
+     * \brief Sets the fast-forward state.
+     */
+    std::function<void(bool)> vr_set_fast_forward;
 
-/**
- * \brief Gets whether tracelogging is active.
- */
-EXPORT bool CALL core_vr_is_tracelog_active();
+    /**
+     * \brief Gets whether tracelogging is active.
+     */
+    std::function<bool()> vr_is_tracelog_active;
 
-/**
- * \brief Gets the fullscreen state.
- */
-EXPORT bool CALL core_vr_is_fullscreen();
+    /**
+     * \brief Gets the fullscreen state.
+     */
+    std::function<bool()> vr_is_fullscreen;
 
-/**
- * \brief Gets the GS button state.
- */
-EXPORT bool CALL core_vr_get_gs_button();
+    /**
+     * \brief Gets the GS button state.
+     */
+    std::function<bool()> vr_get_gs_button;
 
-/**
- * \brief Sets the GS button state.
- */
-EXPORT void CALL core_vr_set_gs_button(bool);
+    /**
+     * \brief Sets the GS button state.
+     */
+    std::function<void(bool)> vr_set_gs_button;
 
-/**
- * \param country_code A rom's country code.
- * \return The maximum amount of VIs per second intended.
- */
-EXPORT uint32_t CALL core_vr_get_vis_per_second(uint16_t country_code);
+    /**
+     * \param country_code A rom's country code.
+     * \return The maximum amount of VIs per second intended.
+     */
+    std::function<uint32_t(uint16_t country_code)> vr_get_vis_per_second;
 
-/**
- * \breif Gets the rom header.
- */
-EXPORT core_rom_header* CALL core_vr_get_rom_header();
+    /**
+     * \breif Gets the rom header.
+     */
+    std::function<core_rom_header*()> vr_get_rom_header;
 
-/**
- * \param country_code A rom's country code.
- * \return The rom's country name.
- */
-EXPORT std::wstring CALL core_vr_country_code_to_country_name(uint16_t country_code);
+    /**
+     * \param country_code A rom's country code.
+     * \return The rom's country name.
+     */
+    std::function<std::wstring(uint16_t country_code)> vr_country_code_to_country_name;
 
-/**
- * \brief Updates internal timings after the speed modifier changes.
- */
-EXPORT void CALL core_vr_on_speed_modifier_changed();
+    /**
+     * \brief Updates internal timings after the speed modifier changes.
+     */
+    std::function<void()> vr_on_speed_modifier_changed;
 
-/**
- * \brief Invalidates the visuals, allowing an updateScreen call to happen.
- */
-EXPORT void CALL core_vr_invalidate_visuals();
+    /**
+     * \brief Invalidates the visuals, allowing an updateScreen call to happen.
+     */
+    std::function<void()> vr_invalidate_visuals;
 
-/**
- * \brief Gets whether the current set of plugin functions loaded in the core is capable of providing MGE functionality.
- */
-EXPORT bool CALL core_vr_get_mge_available();
+    /**
+     * \brief Gets whether the current set of plugin functions loaded in the core is capable of providing MGE functionality.
+     */
+    std::function<bool()> vr_get_mge_available;
 
-/**
- * \brief Invalidates the dynarec code cache for the block containing the specified address.
- * \param addr The address. If UINT32_MAX, the entire cache is invalidated.
- */
-EXPORT void CALL core_vr_recompile(uint32_t addr);
+    /**
+     * \brief Invalidates the dynarec code cache for the block containing the specified address.
+     * \param addr The address. If UINT32_MAX, the entire cache is invalidated.
+     */
+    std::function<void(uint32_t addr)> vr_recompile;
 
 #pragma endregion
 
 #pragma region VCR
 
-/**
- * \brief Parses a movie's header
- * \param path The movie's path
- * \param header The header to fill
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_parse_header(std::filesystem::path path, core_vcr_movie_header* header);
+    /**
+     * \brief Parses a movie's header
+     * \param path The movie's path
+     * \param header The header to fill
+     * \return The operation result
+     */
+    std::function<core_result(std::filesystem::path path, core_vcr_movie_header* header)> vcr_parse_header;
 
-/**
- * \brief Reads the inputs from a movie
- * \param path The movie's path
- * \param inputs The button collection to fill
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_read_movie_inputs(std::filesystem::path path, std::vector<core_buttons>& inputs);
+    /**
+     * \brief Reads the inputs from a movie
+     * \param path The movie's path
+     * \param inputs The button collection to fill
+     * \return The operation result
+     */
+    std::function<core_result(std::filesystem::path path, std::vector<core_buttons>& inputs)> vcr_read_movie_inputs;
 
-/**
- * \brief Starts playing back a movie
- * \param path The movie's path
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_start_playback(std::filesystem::path path);
+    /**
+     * \brief Starts playing back a movie
+     * \param path The movie's path
+     * \return The operation result
+     */
+    std::function<core_result(std::filesystem::path path)> vcr_start_playback;
 
-/**
- * \brief Starts recording a movie
- * \param path The movie's path
- * \param flags Start flags, see MOVIE_START_FROM_X
- * \param author The movie author's name
- * \param description The movie's description
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description);
+    /**
+     * \brief Starts recording a movie
+     * \param path The movie's path
+     * \param flags Start flags, see MOVIE_START_FROM_X
+     * \param author The movie author's name
+     * \param description The movie's description
+     * \return The operation result
+     */
+    std::function<core_result(std::filesystem::path path, uint16_t flags, std::string author, std::string description)> vcr_start_record;
 
-/**
- * \brief Replaces the author and description information of a movie
- * \param path The movie's path
- * \param author The movie author's name
- * \param description The movie's description
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_replace_author_info(const std::filesystem::path& path, const std::string& author, const std::string& description);
+    /**
+     * \brief Replaces the author and description information of a movie
+     * \param path The movie's path
+     * \param author The movie author's name
+     * \param description The movie's description
+     * \return The operation result
+     */
+    std::function<core_result(const std::filesystem::path& path, const std::string& author, const std::string& description)> vcr_replace_author_info;
 
-/**
- * \brief Gets the completion status of the current seek operation.
- * If no seek operation is active, the first value is the current sample and the second one is SIZE_MAX.
- */
-EXPORT void CALL core_vcr_get_seek_completion(std::pair<size_t, size_t>& pair);
+    /**
+     * \brief Gets the completion status of the current seek operation.
+     * If no seek operation is active, the first value is the current sample and the second one is SIZE_MAX.
+     */
+    std::function<void(std::pair<size_t, size_t>& pair)> vcr_get_seek_completion;
 
-/**
- * \brief Begins seeking to a frame in the current movie.
- * \param str A seek format string
- * \param pause_at_end Whether the emu should be paused when the seek operation ends
- * \return The operation result
- * \remarks When the seek operation completes, the SeekCompleted message will be sent
- *
- * Seek string format possibilities:
- *	"n" - Frame
- *	"+n", "-n" - Relative to current sample
- *	"^n" - Sample n from the end
- *
- */
-EXPORT core_result CALL core_vcr_begin_seek(std::wstring str, bool pause_at_end);
+    /**
+     * \brief Begins seeking to a frame in the current movie.
+     * \param str A seek format string
+     * \param pause_at_end Whether the emu should be paused when the seek operation ends
+     * \return The operation result
+     * \remarks When the seek operation completes, the SeekCompleted message will be sent
+     *
+     * Seek string format possibilities:
+     *	"n" - Frame
+     *	"+n", "-n" - Relative to current sample
+     *	"^n" - Sample n from the end
+     *
+     */
+    std::function<core_result(std::wstring str, bool pause_at_end)> vcr_begin_seek;
 
-/**
- * \brief Converts a freeze buffer into a movie, trying to reconstruct as much as possible
- * \param freeze The freeze buffer to convert
- * \param header The generated header
- * \param inputs The generated inputs
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_convert_freeze_buffer_to_movie(const core_vcr_freeze_info& freeze, core_vcr_movie_header& header, std::vector<core_buttons>& inputs);
+    /**
+     * \brief Converts a freeze buffer into a movie, trying to reconstruct as much as possible
+     * \param freeze The freeze buffer to convert
+     * \param header The generated header
+     * \param inputs The generated inputs
+     * \return The operation result
+     */
+    std::function<core_result(const core_vcr_freeze_info& freeze, core_vcr_movie_header& header, std::vector<core_buttons>& inputs)> vcr_convert_freeze_buffer_to_movie;
 
-/**
- * \brief Stops the current seek operation
- */
-EXPORT void CALL core_vcr_stop_seek();
+    /**
+     * \brief Stops the current seek operation
+     */
+    std::function<void()> vcr_stop_seek;
 
-/**
- * \brief Gets whether the VCR engine is currently performing a seek operation
- */
-EXPORT bool CALL core_vcr_is_seeking();
+    /**
+     * \brief Gets whether the VCR engine is currently performing a seek operation
+     */
+    std::function<bool()> vcr_is_seeking;
 
-/**
- * \brief Generates the current movie freeze buffer.
- * \return Whether a freeze buffer was generated.
- */
-EXPORT bool CALL core_vcr_freeze(core_vcr_freeze_info* freeze);
+    /**
+     * \brief Generates the current movie freeze buffer.
+     * \return Whether a freeze buffer was generated.
+     */
+    std::function<bool(core_vcr_freeze_info* freeze)> vcr_freeze;
 
-/**
- * \brief Restores the movie from a freeze buffer
- * \param freeze The freeze buffer
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_unfreeze(core_vcr_freeze_info freeze);
+    /**
+     * \brief Restores the movie from a freeze buffer
+     * \param freeze The freeze buffer
+     * \return The operation result
+     * TODO: Pass a const ref!
+     */
+    std::function<core_result(core_vcr_freeze_info freeze)> vcr_unfreeze;
 
-/**
- * \brief Writes a backup of the current movie to the backup folder.
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_write_backup();
+    /**
+     * \brief Writes a backup of the current movie to the backup folder.
+     * \return The operation result
+     */
+    std::function<core_result()> vcr_write_backup;
 
-/**
- * \brief Stops all running tasks
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_stop_all();
+    /**
+     * \brief Stops all running tasks
+     * \return The operation result
+     */
+    std::function<core_result()> vcr_stop_all;
 
-/**
- * \brief Gets the current movie path. Only valid when task is not idle.
- */
-EXPORT std::filesystem::path CALL core_vcr_get_path();
+    /**
+     * \brief Gets the current movie path. Only valid when task is not idle.
+     */
+    std::function<std::filesystem::path()> vcr_get_path;
 
-/**
- * \brief Gets the current task
- */
-EXPORT core_vcr_task CALL core_vcr_get_task();
+    /**
+     * \brief Gets the current task
+     */
+    std::function<core_vcr_task()> vcr_get_task;
 
-/**
- * Gets the sample length of the current movie. If no movie is active, the function returns UINT32_MAX.
- */
-EXPORT uint32_t CALL core_vcr_get_length_samples();
+    /**
+     * Gets the sample length of the current movie. If no movie is active, the function returns UINT32_MAX.
+     */
+    std::function<uint32_t()> vcr_get_length_samples;
 
-/**
- * Gets the VI length of the current movie. If no movie is active, the function returns UINT32_MAX.
- */
-EXPORT uint32_t CALL core_vcr_get_length_vis();
+    /**
+     * Gets the VI length of the current movie. If no movie is active, the function returns UINT32_MAX.
+     */
+    std::function<uint32_t()> vcr_get_length_vis;
 
-/**
- * Gets the current VI in the current movie. If no movie is active, the function returns -1.
- */
-EXPORT int32_t CALL core_vcr_get_current_vi();
+    /**
+     * Gets the current VI in the current movie. If no movie is active, the function returns -1.
+     */
+    std::function<int32_t()> vcr_get_current_vi;
 
-/**
- * Gets a copy of the current input buffer
- */
-EXPORT std::vector<core_buttons> CALL core_vcr_get_inputs();
+    /**
+     * Gets a copy of the current input buffer.
+     */
+    std::function<std::vector<core_buttons>()> vcr_get_inputs;
 
-/**
- * Begins a warp modification operation. A "warp modification operation" is the changing of sample data which is temporally behind the current sample.
- *
- * The VCR engine will find the last common sample between the current input buffer and the provided one.
- * Then, the closest savestate prior to that sample will be loaded and recording will be resumed with the modified inputs up to the sample the function was called at.
- *
- * This operation is long-running and status is reported via the WarpModifyStatusChanged message.
- * A successful warp modify operation can be detected by the status changing from warping to none with no errors inbetween.
- *
- * If the provided buffer is identical to the current input buffer (in both content and size), the operation will succeed with no seek.
- *
- * If the provided buffer is larger than the current input buffer and the first differing input is after the current sample, the operation will succeed with no seek.
- * The input buffer will be overwritten with the provided buffer and when the modified frames are reached in the future, they will be "applied" like in playback mode.
- *
- * If the provided buffer is smaller than the current input buffer, the VCR engine will seek to the last frame and otherwise perform the warp modification as normal.
- *
- * An empty input buffer will cause the operation to fail.
- *
- * \param inputs The input buffer to use.
- * \return The operation result
- */
-EXPORT core_result CALL core_vcr_begin_warp_modify(const std::vector<core_buttons>& inputs);
+    /**
+     * Begins a warp modification operation. A "warp modification operation" is the changing of sample data which is temporally behind the current sample.
+     *
+     * The VCR engine will find the last common sample between the current input buffer and the provided one.
+     * Then, the closest savestate prior to that sample will be loaded and recording will be resumed with the modified inputs up to the sample the function was called at.
+     *
+     * This operation is long-running and status is reported via the WarpModifyStatusChanged message.
+     * A successful warp modify operation can be detected by the status changing from warping to none with no errors inbetween.
+     *
+     * If the provided buffer is identical to the current input buffer (in both content and size), the operation will succeed with no seek.
+     *
+     * If the provided buffer is larger than the current input buffer and the first differing input is after the current sample, the operation will succeed with no seek.
+     * The input buffer will be overwritten with the provided buffer and when the modified frames are reached in the future, they will be "applied" like in playback mode.
+     *
+     * If the provided buffer is smaller than the current input buffer, the VCR engine will seek to the last frame and otherwise perform the warp modification as normal.
+     *
+     * An empty input buffer will cause the operation to fail.
+     *
+     * \param inputs The input buffer to use.
+     * \return The operation result
+     */
+    std::function<core_result(const std::vector<core_buttons>& inputs)> vcr_begin_warp_modify;
 
-/**
- * Gets the warp modify status
- */
-EXPORT bool CALL core_vcr_get_warp_modify_status();
+    /**
+     * Gets the warp modify status
+     */
+    std::function<bool()> vcr_get_warp_modify_status;
 
-/**
- * Gets the first differing frame when performing a warp modify operation.
- * If no warp modify operation is active, the function returns SIZE_MAX.
- */
-EXPORT size_t CALL core_vcr_get_warp_modify_first_difference_frame();
+    /**
+     * Gets the first differing frame when performing a warp modify operation.
+     * If no warp modify operation is active, the function returns SIZE_MAX.
+     */
+    std::function<size_t()> vcr_get_warp_modify_first_difference_frame;
 
-/**
- * Gets the current seek savestate frames.
- * Keys are frame numbers, values are unimportant and abscence of a seek savestate at a frame is marked by the respective key not existing.
- */
-EXPORT void CALL core_vcr_get_seek_savestate_frames(std::unordered_map<size_t, bool>& map);
+    /**
+     * Gets the current seek savestate frames.
+     * Keys are frame numbers, values are unimportant and abscence of a seek savestate at a frame is marked by the respective key not existing.
+     */
+    std::function<void(std::unordered_map<size_t, bool>& map)> vcr_get_seek_savestate_frames;
 
-/**
- * Gets whether a seek savestate exists at the specified frame.
- * The returned state changes when the <c>SeekSavestatesChanged</c> message is sent.
- */
-EXPORT bool CALL core_vcr_has_seek_savestate_at_frame(size_t frame);
+    /**
+     * Gets whether a seek savestate exists at the specified frame.
+     * The returned state changes when the <c>SeekSavestatesChanged</c> message is sent.
+     */
+    std::function<bool(size_t frame)> vcr_has_seek_savestate_at_frame;
 
 #pragma endregion
 
 #pragma region Tracelog
-/**
- * \brief Starts trace logging to the specified file.
- * \param path The output path.
- * \param binary Whether log output is in a binary format.
- * \param append Whether log output will be appended to the file.
- */
-EXPORT void CALL core_tl_start(std::filesystem::path path, bool binary, bool append);
+    /**
+     * \brief Starts trace logging to the specified file.
+     * \param path The output path.
+     * \param binary Whether log output is in a binary format.
+     * \param append Whether log output will be appended to the file.
+     */
+    std::function<void(std::filesystem::path path, bool binary, bool append)> tl_start;
 
-/**
- * \brief Stops trace logging.
- */
-EXPORT void CALL core_tl_stop();
+    /**
+     * \brief Stops trace logging.
+     */
+    std::function<void()> tl_stop;
 
 #pragma endregion
 
 #pragma region Savestates
 
-/**
- * \brief Executes a savestate operation to a path.
- * \param path The savestate's path.
- * \param job The job to set.
- * \param callback The callback to call when the operation is complete.
- * \param ignore_warnings Whether warnings, such as those about ROM compatibility, shouldn't be shown.
- * \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are originating from the emu thread.
- * \return Whether the operation was enqueued.
- */
-EXPORT bool CALL core_st_do_file(const std::filesystem::path& path, core_st_job job, const core_st_callback& callback, bool ignore_warnings);
+    /**
+     * \brief Executes a savestate operation to a path.
+     * \param path The savestate's path.
+     * \param job The job to set.
+     * \param callback The callback to call when the operation is complete.
+     * \param ignore_warnings Whether warnings, such as those about ROM compatibility, shouldn't be shown.
+     * \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are originating from the emu thread.
+     * \return Whether the operation was enqueued.
+     */
+    std::function<bool(const std::filesystem::path& path, core_st_job job, const core_st_callback& callback, bool ignore_warnings)> st_do_file;
 
-/**
- * Executes a savestate operation in-memory.
- * \param buffer The buffer to use for the operation. Can be empty if the <see cref="job"/> is <see cref="e_st_job::save"/>.
- * \param job The job to set.
- * \param callback The callback to call when the operation is complete.
- * \param ignore_warnings Whether warnings, such as those about ROM compatibility, shouldn't be shown.
- * \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are originating from the emu thread.
- * \return Whether the operation was enqueued.
- */
-EXPORT bool CALL core_st_do_memory(const std::vector<uint8_t>& buffer, core_st_job job, const core_st_callback& callback, bool ignore_warnings);
+    /**
+     * Executes a savestate operation in-memory.
+     * \param buffer The buffer to use for the operation. Can be empty if the <see cref="job"/> is <see cref="e_st_job::save"/>.
+     * \param job The job to set.
+     * \param callback The callback to call when the operation is complete.
+     * \param ignore_warnings Whether warnings, such as those about ROM compatibility, shouldn't be shown.
+     * \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are originating from the emu thread.
+     * \return Whether the operation was enqueued.
+     */
+    std::function<bool(const std::vector<uint8_t>& buffer, core_st_job job, const core_st_callback& callback, bool ignore_warnings)> st_do_memory;
 
-/**
- * Gets the undo savestate buffer. Will be empty will no undo savestate is available.
- */
-EXPORT void CALL core_st_get_undo_savestate(std::vector<uint8_t>& buffer);
+    /**
+     * Gets the undo savestate buffer. Will be empty will no undo savestate is available.
+     */
+    std::function<void(std::vector<uint8_t>& buffer)> st_get_undo_savestate;
 
 #pragma endregion
 
 #pragma region Debugger
 
-/**
- * \brief Gets whether execution is resumed.
- */
-EXPORT bool CALL core_dbg_get_resumed();
+    /**
+     * \brief Gets whether execution is resumed.
+     */
+    std::function<bool()> dbg_get_resumed;
 
-/**
- * \brief Sets execution resumed status.
- */
-EXPORT void CALL core_dbg_set_is_resumed(bool);
+    /**
+     * \brief Sets execution resumed status.
+     */
+    std::function<void(bool)> dbg_set_is_resumed;
 
-/**
- * Steps execution by one instruction.
- */
-EXPORT void CALL core_dbg_step();
+    /**
+     * Steps execution by one instruction.
+     */
+    std::function<void()> dbg_step;
 
-/**
- * \brief Gets whether DMA reads are allowed. If false, reads should return 0xFF.
- */
-EXPORT bool CALL core_dbg_get_dma_read_enabled();
+    /**
+     * \brief Gets whether DMA reads are allowed. If false, reads should return 0xFF.
+     */
+    std::function<bool()> dbg_get_dma_read_enabled;
 
-/**
- * \brief Sets whether DMA reads are allowed.
- */
-EXPORT void CALL core_dbg_set_dma_read_enabled(bool);
+    /**
+     * \brief Sets whether DMA reads are allowed.
+     */
+    std::function<void(bool)> dbg_set_dma_read_enabled;
 
-/**
- * \brief Gets whether the RSP is enabled.
- */
-EXPORT bool CALL core_dbg_get_rsp_enabled();
+    /**
+     * \brief Gets whether the RSP is enabled.
+     */
+    std::function<bool()> dbg_get_rsp_enabled;
 
-/**
- * \brief Sets whether the RSP is enabled.
- */
-EXPORT void CALL core_dbg_set_rsp_enabled(bool);
+    /**
+     * \brief Sets whether the RSP is enabled.
+     */
+    std::function<void(bool)> dbg_set_rsp_enabled;
 
-/**
- * \brief Disassembles an instruction at a given address.
- */
-EXPORT char* CALL core_dbg_disassemble(char* buf, uint32_t w, uint32_t pc);
+    /**
+     * \brief Disassembles an instruction at a given address.
+     * TODO: Refactor
+     */
+    std::function<char*(char* buf, uint32_t w, uint32_t pc)> dbg_disassemble;
 
 #pragma endregion
 
 #pragma region Cheats
 
-/**
- * \brief Compiles a cheat code from code.
- * \param code The cheat code. Must be in the GameShark format.
- * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
- * \return Whether the compilation was successful.
- */
-EXPORT bool CALL core_cht_compile(const std::wstring& code, core_cheat& cheat);
+    /**
+     * \brief Compiles a cheat code from code.
+     * \param code The cheat code. Must be in the GameShark format.
+     * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
+     * \return Whether the compilation was successful.
+     */
+    std::function<bool(const std::wstring& code, core_cheat& cheat)> cht_compile;
 
-/**
- * \brief Gets the cheat override stack.
- */
-EXPORT void CALL core_cht_get_override_stack(std::stack<std::vector<core_cheat>>&);
+    /**
+     * \brief Gets the cheat override stack.
+     */
+    std::function<void(std::stack<std::vector<core_cheat>>&)> cht_get_override_stack;
 
-/**
- * \brief Gets the cheat list.
- * \remarks The returned cheat list may not be the one set via core_cht_set_list, as the core can apply cheat overrides.
- */
-EXPORT void CALL core_cht_get_list(std::vector<core_cheat>&);
+    /**
+     * \brief Gets the cheat list.
+     * \remarks The returned cheat list may not be the one set via core_cht_set_list, as the core can apply cheat overrides.
+     */
+    std::function<void(std::vector<core_cheat>&)> cht_get_list;
 
-/**
- * \brief Sets the cheat list.
- * \remarks If a core cheat override is active, core_cht_set_list will do nothing.
- */
-EXPORT void CALL core_cht_set_list(const std::vector<core_cheat>&);
+    /**
+     * \brief Sets the cheat list.
+     * \remarks If a core cheat override is active, core_cht_set_list will do nothing.
+     */
+    std::function<void(const std::vector<core_cheat>&)> cht_set_list;
 
 #pragma endregion
+};
 
 #ifdef __cplusplus
 }
@@ -859,5 +856,13 @@ void core_rdram_store(uint8_t* rdram, const uint32_t addr, T value)
 }
 
 #pragma endregion
+
+/**
+ * \brief Initializes the core with the specified parameters.
+ * \remarks
+ * The core must be initialized before any other functions are called.
+ * The core parameters must be valid for the lifetime of the core.
+ */
+EXPORT core_result CALL core_init(core_params* params, core_ctx** ctx);
 
 #endif

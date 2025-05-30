@@ -126,8 +126,8 @@ static void log_crash(const std::wstring& additional_exception_info)
     g_view_logger->critical(L"Audio: {}", g_config.selected_audio_plugin);
     g_view_logger->critical(L"Input: {}", g_config.selected_input_plugin);
     g_view_logger->critical(L"RSP: {}", g_config.selected_rsp_plugin);
-    g_view_logger->critical(L"VCR Task: {}", static_cast<int>(core_vcr_get_task()));
-    g_view_logger->critical(L"Core Executing: {}", core_vr_get_launched());
+    g_view_logger->critical(L"VCR Task: {}", static_cast<int>(g_core_ctx->vcr_get_task()));
+    g_view_logger->critical(L"Core Executing: {}", g_core_ctx->vr_get_launched());
     g_view_logger->critical(additional_exception_info);
 
     g_view_logger->critical("STL Stacktrace:");

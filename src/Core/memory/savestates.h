@@ -21,3 +21,7 @@ void st_do_work();
  * Clears the work queue and the undo savestate.
  */
 void st_on_core_stop();
+
+bool st_do_file(const std::filesystem::path& path, core_st_job job, const core_st_callback& callback, bool ignore_warnings);
+bool st_do_memory(const std::vector<uint8_t>& buffer, core_st_job job, const core_st_callback& callback, bool ignore_warnings);
+void st_get_undo_savestate(std::vector<uint8_t>& buffer);

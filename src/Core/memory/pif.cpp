@@ -678,7 +678,7 @@ void update_pif_read()
                             if (frame_advance_outstanding == 1)
                             {
                                 --frame_advance_outstanding;
-                                core_vr_pause_emu();
+                                g_ctx.vr_pause_emu();
                             }
                             else if (frame_advance_outstanding > 1)
                             {
@@ -724,7 +724,7 @@ void update_pif_read()
                     // we handle raw data-mode controllers here:
                     // this is incompatible with VCR!
                     if (g_core->controls[channel].Present &&
-                        g_core->controls[channel].RawData && core_vcr_get_task() == task_idle)
+                        g_core->controls[channel].RawData && g_ctx.vcr_get_task() == task_idle)
                     {
                         g_core->plugin_funcs.input_read_controller(channel, &PIF_RAMb[i]);
                         auto ptr = (core_buttons*)&PIF_RAMb[i + 3];

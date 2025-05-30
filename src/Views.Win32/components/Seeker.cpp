@@ -32,7 +32,7 @@ namespace Seeker
             break;
         case WM_DESTROY:
             KillTimer(hwnd, refresh_timer);
-            core_vcr_stop_seek();
+            g_core_ctx->vcr_stop_seek();
             break;
         case WM_CLOSE:
             EndDialog(hwnd, IDCANCEL);
@@ -44,12 +44,12 @@ namespace Seeker
             break;
         case WM_TIMER:
             {
-                if (!core_vcr_is_seeking())
+                if (!g_core_ctx->vcr_is_seeking())
                 {
                     break;
                 }
                 std::pair<size_t, size_t> pair;
-                core_vcr_get_seek_completion(pair);
+                g_core_ctx->vcr_get_seek_completion(pair);
                 auto [current, total] = pair;
                 const auto str = std::format(L"Seeked {:.2f}%", static_cast<float>(current) / static_cast<float>(total) * 100.0);
                 SetDlgItemText(hwnd, IDC_SEEKER_STATUS, str.c_str());
@@ -67,9 +67,9 @@ namespace Seeker
                 break;
             case IDC_SEEKER_START:
                 {
-                    if (core_vcr_is_seeking())
+                    if (g_core_ctx->vcr_is_seeking())
                     {
-                        core_vcr_stop_seek();
+                        g_core_ctx->vcr_stop_seek();
                         break;
                     }
 
@@ -79,7 +79,7 @@ namespace Seeker
                         SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, L"Seek savestates disabled. Seeking backwards will be slower.");
                     }
 
-                    if (core_vcr_begin_seek(g_config.seeker_value, true) != Res_Ok)
+                    if (g_core_ctx->vcr_begin_seek(g_config.seeker_value, true) != Res_Ok)
                     {
                         SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
                         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, L"Couldn't seek");

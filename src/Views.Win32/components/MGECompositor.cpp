@@ -91,7 +91,7 @@ void MGECompositor::init()
 
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const std::any& data) {
         const auto value = std::any_cast<bool>(data);
-        ShowWindow(mge_hwnd, value && core_vr_get_mge_available() ? SW_SHOW : SW_HIDE);
+        ShowWindow(mge_hwnd, value && g_core_ctx->vr_get_mge_available() ? SW_SHOW : SW_HIDE);
     });
 }
 

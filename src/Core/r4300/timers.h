@@ -19,3 +19,5 @@ void timer_new_frame();
  * \brief To be called when a VI is generated
  */
 void timer_new_vi();
+
+void vr_on_speed_modifier_changed();

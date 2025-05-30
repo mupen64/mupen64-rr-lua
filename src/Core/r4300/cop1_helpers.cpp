@@ -26,7 +26,7 @@ void fail_float(const std::wstring& msg)
     if (choice == 0)
     {
         g_core->submit_task([] {
-            core_vr_close_rom(true);
+            g_ctx.vr_close_rom(true);
         });
     }
 }

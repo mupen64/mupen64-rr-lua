@@ -16,7 +16,7 @@ FILE* log_file;
 char traceLoggingBuf[0x10000];
 char* traceLoggingPointer = traceLoggingBuf;
 
-bool core_vr_is_tracelog_active()
+bool vr_is_tracelog_active()
 {
     return enabled;
 }
@@ -332,7 +332,7 @@ void tracelog_log_interp_ops()
     PC->s_ops();
 }
 
-void core_tl_start(std::filesystem::path path, bool binary, bool append)
+void tl_start(std::filesystem::path path, bool binary, bool append)
 {
     use_binary = binary;
     _wfopen_s(&log_file, path.wstring().c_str(), L"wb");
@@ -340,11 +340,11 @@ void core_tl_start(std::filesystem::path path, bool binary, bool append)
     enabled = true;
     if (interpcore == 0)
     {
-        core_vr_recompile(UINT32_MAX);
+        vr_recompile(UINT32_MAX);
     }
 }
 
-void core_tl_stop()
+void tl_stop()
 {
     enabled = false;
     flush_buf();

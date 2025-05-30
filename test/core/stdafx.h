@@ -6,4 +6,5 @@
 
 #include <Core/stdafx.h>
 #include <Core/include/core_api.h>
-#include <catch2/catch_amalgamated.hpp>
+#include <catch_amalgamated.hpp>
+#include <fakeit.hpp>

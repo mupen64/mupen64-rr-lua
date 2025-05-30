@@ -19,7 +19,7 @@ static void run_auto(const int id, const std::filesystem::path& path)
     {
     case IDC_LIST_ROMS:
         ThreadPool::submit_task([=] {
-            const auto result = core_vr_start_rom(path);
+            const auto result = g_core_ctx->vr_start_rom(path);
             show_error_dialog_for_result(result);
         });
         break;
@@ -29,7 +29,7 @@ static void run_auto(const int id, const std::filesystem::path& path)
         Messenger::Message::ReadonlyChanged,
         (bool)g_config.core.vcr_readonly);
         ThreadPool::submit_task([=] {
-            core_vcr_start_playback(path);
+            g_core_ctx->vcr_start_playback(path);
         });
         break;
     case IDC_LIST_SCRIPTS:

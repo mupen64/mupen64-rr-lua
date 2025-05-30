@@ -169,7 +169,7 @@ void dma_pi_write()
             uint32_t rdram_address2 = pi_register.pi_dram_addr_reg + i + 0xa0000000;
 
             ((unsigned char*)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-            !core_dbg_get_dma_read_enabled()
+            !g_ctx.dbg_get_dma_read_enabled()
             ? 0xFF
             : rom[(((pi_register.pi_cart_addr_reg - 0x10000000) & 0x3FFFFFF) + i) ^ S8];
 
@@ -187,7 +187,7 @@ void dma_pi_write()
         for (i = 0; i < longueur; i++)
         {
             ((unsigned char*)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-            !core_dbg_get_dma_read_enabled()
+            !g_ctx.dbg_get_dma_read_enabled()
             ? 0xFF
             : rom[(((pi_register.pi_cart_addr_reg - 0x10000000) & 0x3FFFFFF) + i) ^ S8];
         }

@@ -5,17 +5,18 @@
  */
 
 #include "stdafx.h"
-#include "savestates.h"
-#include <libdeflate.h>
 #include <Core.h>
+#include <IIOHelperService.h>
+#include <libdeflate.h>
+#include <include/core_api.h>
+#include <memory/flashram.h>
+#include <memory/memory.h>
+#include <memory/savestates.h>
+#include <memory/summercart.h>
 #include <r4300/interrupt.h>
 #include <r4300/r4300.h>
 #include <r4300/rom.h>
-#include <include/core_api.h>
-#include <IIOHelperService.h>
-#include "flashram.h"
-#include "memory.h"
-#include "summercart.h"
+#include <r4300/vcr.h>
 
 // st that comes from no delay fix mupen, it has some differences compared to new st:
 // - one frame of input is "embedded", that is the pif ram holds already fetched controller info.
@@ -133,7 +134,7 @@ std::vector<uint8_t> generate_savestate()
     memset(g_event_queue_buf, 0, sizeof(g_event_queue_buf));
 
     core_vcr_freeze_info freeze{};
-    uint32_t movie_active = core_vcr_freeze(&freeze);
+    uint32_t movie_active = vcr_freeze(&freeze);
 
     // NOTE: This saving needs to be done **after** the fixing block, as it is now. See previous regression in f9d58f639c798cbc26bbb808b1c3dbd834ffe2d9.
     save_flashram_infos(g_flashram_buf);
@@ -187,7 +188,7 @@ std::vector<uint8_t> generate_savestate()
         g_core->io_service->vecwrite(b, freeze.input_buffer.data(), freeze.input_buffer.size() * sizeof(core_buttons));
     }
 
-    if (core_vr_get_mge_available() && g_core->cfg->st_screenshot)
+    if (vr_get_mge_available() && g_core->cfg->st_screenshot)
     {
         int32_t width;
         int32_t height;
@@ -387,9 +388,9 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         freeze.input_buffer.resize(sizeof(core_buttons) * (freeze.length_samples + 1));
         g_core->io_service->memread(&ptr, freeze.input_buffer.data(), freeze.input_buffer.size());
 
-        const auto code = core_vcr_unfreeze(freeze);
+        const auto code = vcr_unfreeze(freeze);
 
-        if (!task.ignore_warnings && code != Res_Ok && core_vcr_get_task() != task_idle)
+        if (!task.ignore_warnings && code != Res_Ok && vcr_get_task() != task_idle)
         {
             std::wstring err_str = L"Failed to restore movie, ";
             switch (code)
@@ -424,7 +425,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
     }
     else
     {
-        if (!task.ignore_warnings && (core_vcr_get_task() == task_recording || core_vcr_get_task() == task_playback))
+        if (!task.ignore_warnings && (vcr_get_task() == task_recording || vcr_get_task() == task_playback))
         {
             const auto result = g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
                                                         L"The savestate is not from a movie. Loading it might desynchronize the movie.\r\nAre you sure you want to continue?",
@@ -471,7 +472,7 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         load_memory_from_buffer(g_first_block);
 
         // NOTE: We don't want to restore screen buffer while seeking, since it creates a int16_t ugly flicker when the movie restarts by loading state
-        if (core_vr_get_mge_available() && video_buffer && !core_vcr_is_seeking())
+        if (vr_get_mge_available() && video_buffer && !vcr_is_seeking())
         {
             int32_t current_width, current_height;
             g_core->plugin_funcs.video_get_video_size(&current_width, &current_height);
@@ -705,7 +706,7 @@ bool can_push_work()
     return core_executing;
 }
 
-bool core_st_do_file(const std::filesystem::path& path, const core_st_job job, const core_st_callback& callback, bool ignore_warnings)
+bool st_do_file(const std::filesystem::path& path, const core_st_job job, const core_st_callback& callback, bool ignore_warnings)
 {
     std::scoped_lock lock(g_task_mutex);
 
@@ -745,7 +746,7 @@ bool core_st_do_file(const std::filesystem::path& path, const core_st_job job, c
     return true;
 }
 
-bool core_st_do_memory(const std::vector<uint8_t>& buffer, const core_st_job job, const core_st_callback& callback, bool ignore_warnings)
+bool st_do_memory(const std::vector<uint8_t>& buffer, const core_st_job job, const core_st_callback& callback, bool ignore_warnings)
 {
     std::scoped_lock lock(g_task_mutex);
 
@@ -784,7 +785,7 @@ bool core_st_do_memory(const std::vector<uint8_t>& buffer, const core_st_job job
     return true;
 }
 
-void core_st_get_undo_savestate(std::vector<uint8_t>& buffer)
+void st_get_undo_savestate(std::vector<uint8_t>& buffer)
 {
     std::scoped_lock lock(g_task_mutex);
     buffer.clear();

@@ -45,7 +45,7 @@ namespace EncodingManager
 
     void readscreen_plugin(int32_t* width = nullptr, int32_t* height = nullptr)
     {
-        if (core_vr_get_mge_available())
+        if (g_core_ctx->vr_get_mge_available())
         {
             MGECompositor::copy_video(m_video_buf);
             MGECompositor::get_video_size(width, height);
@@ -208,7 +208,7 @@ namespace EncodingManager
     {
         if (g_config.capture_mode == 0)
         {
-            if (!core_vr_get_mge_available() && !g_core.plugin_funcs.video_read_screen)
+            if (!g_core_ctx->vr_get_mge_available() && !g_core.plugin_funcs.video_read_screen)
             {
                 DialogService::show_dialog(L"The current video plugin has no readScreen implementation.\nPlugin capture is not possible.", L"Capture", fsvc_error);
                 stop_capture();
@@ -227,7 +227,7 @@ namespace EncodingManager
         }
         else if (g_config.capture_mode == 3)
         {
-            if (!core_vr_get_mge_available() && !g_core.plugin_funcs.video_read_screen)
+            if (!g_core_ctx->vr_get_mge_available() && !g_core.plugin_funcs.video_read_screen)
             {
                 DialogService::show_dialog(L"The current video plugin has no readScreen implementation.\nHybrid capture is not possible.", L"Capture", fsvc_error);
                 stop_capture();
@@ -245,7 +245,7 @@ namespace EncodingManager
     {
         if (g_config.capture_mode == 0)
         {
-            if (core_vr_get_mge_available())
+            if (g_core_ctx->vr_get_mge_available())
             {
                 MGECompositor::get_video_size(width, height);
             }
@@ -358,7 +358,7 @@ namespace EncodingManager
         .path = m_current_path,
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
-        .fps = core_vr_get_vis_per_second(core_vr_get_rom_header()->Country_code),
+        .fps = g_core_ctx->vr_get_vis_per_second(g_core_ctx->vr_get_rom_header()->Country_code),
         .arate = (uint32_t)m_audio_freq,
         .ask_for_encoding_settings = ask_for_encoding_settings,
         });
@@ -383,27 +383,27 @@ namespace EncodingManager
 
     void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_encoding_settings, const std::function<void(bool)>& callback)
     {
-        core_vr_wait_increment();
+        g_core_ctx->vr_wait_increment();
         ThreadPool::submit_task([=] {
             const auto result = start_capture_impl(path, encoder_type, ask_for_encoding_settings);
             if (callback)
             {
                 callback(result);
             }
-            core_vr_wait_decrement();
+            g_core_ctx->vr_wait_decrement();
         });
     }
 
     void stop_capture(const std::function<void(bool)>& callback)
     {
-        core_vr_wait_increment();
+        g_core_ctx->vr_wait_increment();
         ThreadPool::submit_task([=] {
             const auto result = stop_capture_impl();
             if (callback)
             {
                 callback(result);
             }
-            core_vr_wait_decrement();
+            g_core_ctx->vr_wait_decrement();
         });
     }
 
