@@ -1495,7 +1495,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 
         g_core->log_trace(L"[VCR] vcr_begin_seek_impl: playback, slow path");
 
-        const auto result = vcr_start_playback(vcr.movie_path);
+        const auto result = g_ctx.vcr_start_playback(vcr.movie_path);
         if (result != Res_Ok)
         {
             g_core->log_error(std::format(L"[VCR] vcr_begin_seek_impl: core_vcr_start_playback failed with error code {}", static_cast<int32_t>(result)));

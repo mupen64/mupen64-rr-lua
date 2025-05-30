@@ -67,7 +67,7 @@
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
     <ItemDefinitionGroup>
         <ClCompile>
-            <AdditionalIncludeDirectories>src/;test/core;lib/;lib/catch2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>src/;src/Core;test/core;lib/;lib/catch2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
             <WarningLevel>Level3</WarningLevel>
             <SDLCheck>true</SDLCheck>
             <CompileAs>CompileAsCpp</CompileAs>

@@ -6,27 +6,40 @@
 
 #include <stdafx.h>
 #include <Core/r4300/vcr.h>
+#include <Core/r4300/r4300.h>
 
 extern t_vcr_state vcr;
 static core_cfg cfg{};
 static core_params params{};
 static core_ctx* ctx = nullptr;
-static fakeit::Mock<IIOHelperService> io_service{};
+// static fakeit::Mock<IIOHelperService> io_service{};
+static IIOHelperService real_io_helper_service{};
 
 #pragma region Integration
 
 static void prepare_test()
 {
-    io_service.Reset();
+    // io_service.Reset();
 
     vcr = {};
     cfg = {};
     params.cfg = &cfg;
-    params.io_service = &io_service.get();
+    // params.io_service = &io_service.get();
+    params.io_service = &real_io_helper_service;
     params.plugin_funcs.input_get_keys = [](int32_t controller, core_buttons* keys) {
     };
     params.plugin_funcs.input_set_keys = [](int32_t controller, core_buttons keys) {
     };
+
+    // fakeit::When(Method(io_service, str_nth_occurence)).AlwaysDo([&](const std::string& s, const std::string& delim, int n) {
+    //     return real_io_helper_service.str_nth_occurence(s, delim, n);
+    // });
+    // fakeit::When(Method(io_service, string_to_wstring)).AlwaysDo([&](const auto& o) {
+    //     return real_io_helper_service.string_to_wstring(o);
+    // });
+    // fakeit::When(Method(io_service, wstring_to_string)).AlwaysDo([&](const auto& o) {
+    //     return real_io_helper_service.wstring_to_string(o);
+    // });
 }
 
 
@@ -244,6 +257,8 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
                                 .vcr = {
                                 .task = task_playback,
                                 .hdr = {
+                                .magic = 0x1a34364d,
+                                .version = 3,
                                 .length_samples = 5,
                                 .controller_flags = CONTROLLER_X_PRESENT(0),
                                 },
@@ -264,6 +279,8 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
                                 .vcr = {
                                 .task = task_playback,
                                 .hdr = {
+                                .magic = 0x1a34364d,
+                                .version = 3,
                                 .length_samples = 5,
                                 .controller_flags = CONTROLLER_X_PRESENT(0),
                                 },
@@ -287,14 +304,20 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
     params.callbacks.seek_completed = [&] {
         seek_completed = true;
     };
-
-    // Return the header + inputs as bytes when calling read_file_buffer
-    std::vector<uint8_t> fake_bytes(sizeof(vcr.hdr) + vcr.inputs.size() * sizeof(core_buttons));
-    std::memcpy(fake_bytes.data(), &vcr.hdr, sizeof(vcr.hdr));
-    std::memcpy(fake_bytes.data() + sizeof(vcr.hdr), vcr.inputs.data(), vcr.inputs.size() * sizeof(core_buttons));
-    fakeit::When(Method(io_service, read_file_buffer)).Return(fake_bytes);
-
     core_init(&params, &ctx);
+
+
+    ctx->vr_start_rom = [](const std::wstring& path) {
+        emu_launched = true;
+        core_executing = true;
+        return Res_Ok;
+    };
+
+    ctx->vcr_start_playback = [](const std::wstring& path) {
+        vcr.task = task_playback;
+        vcr.current_sample = 0;
+        return Res_Ok;
+    };
 
     const auto result = ctx->vcr_begin_seek(param.str, false);
     REQUIRE(result == Res_Ok);
