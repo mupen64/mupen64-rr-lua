@@ -10,6 +10,7 @@
 extern t_vcr_state vcr;
 static core_cfg cfg{};
 static core_params params{};
+static core_ctx* ctx = nullptr;
 static fakeit::Mock<IIOHelperService> io_service{};
 
 #pragma region Integration
@@ -35,7 +36,7 @@ TEST_CASE("reset_pending_returns_unmodified_input", "vcr_on_controller_poll")
 
     const auto INPUT_VALUE = 0xDEAD;
 
-    core_init(&params);
+    core_init(&params, &ctx);
 
     vcr.reset_pending = true;
 
@@ -51,7 +52,7 @@ TEST_CASE("seek_savestate_loading_returns_unmodified_input", "vcr_on_controller_
 
     const auto INPUT_VALUE = 0xDEAD;
 
-    core_init(&params);
+    core_init(&params, &ctx);
 
     vcr.seek_savestate_loading = true;
 
@@ -70,7 +71,7 @@ TEST_CASE("idle_task_returns_input_from_getkeys", "vcr_on_controller_poll")
     params.plugin_funcs.input_get_keys = [](int32_t index, core_buttons* input) {
         *input = {INPUT_VALUE};
     };
-    core_init(&params);
+    core_init(&params, &ctx);
 
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
@@ -82,7 +83,7 @@ TEST_CASE("playback_returns_correct_input", "vcr_on_controller_poll")
 {
     prepare_test();
 
-    core_init(&params);
+    core_init(&params, &ctx);
 
     const auto inputs = std::vector<core_buttons>{
     {1},
@@ -112,7 +113,7 @@ TEST_CASE("record_appends_input", "vcr_on_controller_poll")
     {3},
     {4}};
 
-    core_init(&params);
+    core_init(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -136,7 +137,7 @@ TEST_CASE("seek_continues_when_end_not_reached", "vcr_on_controller_poll")
     {3},
     {4}};
 
-    core_init(&params);
+    core_init(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -161,7 +162,7 @@ TEST_CASE("seek_stops_when_end_reached", "vcr_on_controller_poll")
     {3},
     {4}};
 
-    core_init(&params);
+    core_init(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -196,7 +197,7 @@ TEST_CASE("input_callback_called_when_using_input_buffer_during_recording", "vcr
     {3},
     {4}};
 
-    core_init(&params);
+    core_init(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -229,12 +230,6 @@ TEST_CASE("sample_length_gets_clamped_to_buffer_max", "read_movie_header")
     vcr_read_movie_header(bytes, &out_hdr);
 
     REQUIRE(out_hdr.length_samples == 2);
-}
-
-
-core_result core_vr_start_rom2(std::filesystem::path path)
-{
-    return Res_Ok;
 }
 
 TEST_CASE("seek_stops_at_expected_frame", "seek")
@@ -299,12 +294,9 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
     std::memcpy(fake_bytes.data() + sizeof(vcr.hdr), vcr.inputs.data(), vcr.inputs.size() * sizeof(core_buttons));
     fakeit::When(Method(io_service, read_file_buffer)).Return(fake_bytes);
 
-    extern core_result core_vr_start_rom(std::filesystem::path path);
-    memcpy(core_vr_start_rom, core_vr_start_rom2, sizeof(void*));
-    
-    core_init(&params);
+    core_init(&params, &ctx);
 
-    const auto result = core_vcr_begin_seek(param.str, false);
+    const auto result = ctx->vcr_begin_seek(param.str, false);
     REQUIRE(result == Res_Ok);
 
     while (!seek_completed)
@@ -315,6 +307,5 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
 
     REQUIRE(vcr.current_sample == param.expected_frame + 1);
 }
-
 
 #pragma endregion
