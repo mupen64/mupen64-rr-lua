@@ -293,8 +293,52 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
                                 },
                                 .current_sample = 3,
                                 },
+                                .str = L"+1",
+                                .expected_frame = 4,
+                                },
+
+                                seek_test_params{
+                                .vcr = {
+                                .task = task_playback,
+                                .hdr = {
+                                .magic = 0x1a34364d,
+                                .version = 3,
+                                .length_samples = 5,
+                                .controller_flags = CONTROLLER_X_PRESENT(0),
+                                },
+                                .inputs = {
+                                core_buttons{0x01},
+                                core_buttons{0x02},
+                                core_buttons{0x03},
+                                core_buttons{0x04},
+                                core_buttons{0x05},
+                                },
+                                .current_sample = 3,
+                                },
                                 .str = L"-1",
                                 .expected_frame = 2,
+                                },
+
+                                seek_test_params{
+                                .vcr = {
+                                .task = task_playback,
+                                .hdr = {
+                                .magic = 0x1a34364d,
+                                .version = 3,
+                                .length_samples = 5,
+                                .controller_flags = CONTROLLER_X_PRESENT(0),
+                                },
+                                .inputs = {
+                                core_buttons{0x01},
+                                core_buttons{0x02},
+                                core_buttons{0x03},
+                                core_buttons{0x04},
+                                core_buttons{0x05},
+                                },
+                                .current_sample = 3,
+                                },
+                                .str = L"^1",
+                                .expected_frame = 4,
                                 });
 
     prepare_test();
