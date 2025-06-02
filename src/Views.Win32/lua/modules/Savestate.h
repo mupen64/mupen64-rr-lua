@@ -121,7 +121,7 @@ namespace LuaCore::Savestate
                     lua_pcall(L, 2, 0, 0);
                 });
             },
-                              ignore_warnings);
+                                     ignore_warnings);
         });
         return 0;
     }

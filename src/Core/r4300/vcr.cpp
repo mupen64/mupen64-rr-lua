@@ -1554,7 +1554,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
                 g_core->log_info(std::format(L"[VCR] Seek savestate at frame {} loaded!", closest_key));
                 vcr.seek_savestate_loading = false;
             },
-                              false);
+                               false);
         });
 
         return Res_Ok;

@@ -111,13 +111,7 @@ namespace PianoRoll
         std::pair<size_t, size_t> pair{};
         g_core_ctx->vcr_get_seek_completion(pair);
 
-        return !g_core_ctx->vcr_get_warp_modify_status()
-        && pair.second == SIZE_MAX
-        && g_core_ctx->vcr_get_task() == task_recording
-        && !g_core_ctx->vcr_is_seeking()
-        && !g_config.core.vcr_readonly
-        && g_config.core.seek_savestate_interval > 0
-        && g_core_ctx->vr_get_paused();
+        return !g_core_ctx->vcr_get_warp_modify_status() && pair.second == SIZE_MAX && g_core_ctx->vcr_get_task() == task_recording && !g_core_ctx->vcr_is_seeking() && !g_config.core.vcr_readonly && g_config.core.seek_savestate_interval > 0 && g_core_ctx->vr_get_paused();
     }
 
     /**

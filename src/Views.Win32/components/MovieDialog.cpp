@@ -397,7 +397,7 @@ refresh:
 MovieDialog::t_result MovieDialog::show(bool readonly)
 {
     const auto rom_hdr = g_core_ctx->vr_get_rom_header();
-    
+
     is_readonly = readonly;
     user_result.path = std::format(L"{} ({}).m64", io_service.string_to_wstring((char*)rom_hdr->nom), g_core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code));
     user_result.start_flag = g_config.last_movie_type;

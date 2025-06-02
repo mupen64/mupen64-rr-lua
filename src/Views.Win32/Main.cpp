@@ -1768,7 +1768,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                             Statusbar::post(L"Failed to undo load");
                         },
-                                          false);
+                                                 false);
                     });
                 }
                 break;
