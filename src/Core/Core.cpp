@@ -32,7 +32,7 @@ static void log_dummy(const std::wstring&)
 {
 }
 
-EXPORT core_result CALL core_init(core_params* params, core_ctx** ctx)
+EXPORT core_result CALL core_create(core_params* params, core_ctx** ctx)
 {
     g_core = params;
 

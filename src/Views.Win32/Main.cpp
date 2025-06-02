@@ -2361,7 +2361,7 @@ static core_result init_core()
 
     setup_dummy_info();
 
-    return core_init(&g_core, &g_core_ctx);
+    return core_create(&g_core, &g_core_ctx);
 }
 
 static void main_dispatcher_init()

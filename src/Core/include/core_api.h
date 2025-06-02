@@ -889,11 +889,9 @@ void core_rdram_store(uint8_t* rdram, const uint32_t addr, T value)
 #pragma endregion
 
 /**
- * \brief Initializes the core with the specified parameters.
- * \remarks
- * The core must be initialized before any other functions are called.
- * The core parameters must be valid for the lifetime of the core.
+ * \brief Creates a core instance with the specified parameters.
+ * \remark Only one core instance is currently supported.
  */
-EXPORT core_result CALL core_init(core_params* params, core_ctx** ctx);
+EXPORT core_result CALL core_create(core_params* params, core_ctx** ctx);
 
 #endif
