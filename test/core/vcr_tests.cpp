@@ -49,7 +49,7 @@ TEST_CASE("reset_pending_returns_unmodified_input", "vcr_on_controller_poll")
 
     const auto INPUT_VALUE = 0xDEAD;
 
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     vcr.reset_pending = true;
 
@@ -65,7 +65,7 @@ TEST_CASE("seek_savestate_loading_returns_unmodified_input", "vcr_on_controller_
 
     const auto INPUT_VALUE = 0xDEAD;
 
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     vcr.seek_savestate_loading = true;
 
@@ -84,7 +84,7 @@ TEST_CASE("idle_task_returns_input_from_getkeys", "vcr_on_controller_poll")
     params.plugin_funcs.input_get_keys = [](int32_t index, core_buttons* input) {
         *input = {INPUT_VALUE};
     };
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
@@ -96,7 +96,7 @@ TEST_CASE("playback_returns_correct_input", "vcr_on_controller_poll")
 {
     prepare_test();
 
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     const auto inputs = std::vector<core_buttons>{
     {1},
@@ -126,7 +126,7 @@ TEST_CASE("record_appends_input", "vcr_on_controller_poll")
     {3},
     {4}};
 
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -150,7 +150,7 @@ TEST_CASE("seek_continues_when_end_not_reached", "vcr_on_controller_poll")
     {3},
     {4}};
 
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -175,7 +175,7 @@ TEST_CASE("seek_stops_when_end_reached", "vcr_on_controller_poll")
     {3},
     {4}};
 
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -210,7 +210,7 @@ TEST_CASE("input_callback_called_when_using_input_buffer_during_recording", "vcr
     {3},
     {4}};
 
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -304,7 +304,7 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
     params.callbacks.seek_completed = [&] {
         seek_completed = true;
     };
-    core_init(&params, &ctx);
+    core_create(&params, &ctx);
 
 
     ctx->vr_start_rom = [](const std::wstring& path) {
