@@ -40,12 +40,6 @@ bool write_movie_impl(const core_vcr_movie_header* hdr, const std::vector<core_b
 {
     g_core->log_info(std::format(L"[VCR] write_movie_impl to {}...", vcr.movie_path.wstring()));
 
-    FILE* f = nullptr;
-    if (fopen_s(&f, path.string().c_str(), "wb+"))
-    {
-        return false;
-    }
-
     core_vcr_movie_header hdr_copy = *hdr;
 
     if (!g_core->cfg->vcr_write_extended_format)
@@ -57,10 +51,12 @@ bool write_movie_impl(const core_vcr_movie_header* hdr, const std::vector<core_b
         memset(&hdr_copy.extended_data, 0, sizeof(hdr_copy.extended_flags));
     }
 
-    fwrite(&hdr_copy, sizeof(core_vcr_movie_header), 1, f);
-    fwrite(inputs.data(), sizeof(core_buttons), hdr_copy.length_samples, f);
-    fclose(f);
-    return true;
+    std::vector<uint8_t> out_buf(sizeof(core_vcr_movie_header) + sizeof(core_buttons) * hdr_copy.length_samples);
+    std::memcpy(out_buf.data(), &hdr_copy, sizeof(core_vcr_movie_header));
+    std::memcpy(out_buf.data() + sizeof(core_vcr_movie_header), inputs.data(), sizeof(core_buttons) * hdr_copy.length_samples);
+    const auto written = g_core->io_service->write_file_buffer(path, out_buf);
+    
+    return written;
 }
 
 // Writes the movie header + inputs to current movie_path
@@ -108,45 +104,45 @@ std::filesystem::path find_accompanying_file_for_movie(std::filesystem::path pat
     // A.B.m64 -> A.st, A.B.st
     // A.B.C.m64->A.st, A.B.st, A.B.C.st
 
-    static char drive[260] = {0};
-    static char dir[260] = {0};
-    static char filename[260] = {0};
+    static wchar_t drive[_MAX_DRIVE] = {0};
+    static wchar_t dir[_MAX_DIR] = {0};
+    static wchar_t filename[_MAX_PATH] = {0};
 
-    memset(drive, 0, std::size(drive));
-    memset(dir, 0, std::size(dir));
-    memset(filename, 0, std::size(filename));
+    memset(drive, 0, sizeof(drive));
+    memset(dir, 0, sizeof(dir));
+    memset(filename, 0, sizeof(filename));
 
-    _splitpath_s(path.string().c_str(), drive, _countof(drive), dir, _countof(dir), filename, _countof(filename), nullptr, 0);
+    _wsplitpath_s(path.wstring().c_str(), drive, _countof(drive), dir, _countof(dir), filename, _countof(filename), nullptr, 0);
 
     size_t i = 0;
     while (true)
     {
-        auto result = g_core->io_service->str_nth_occurence(filename, ".", i + 1);
-        std::string matched_filename = "";
+        const auto result = g_core->io_service->str_nth_occurence(filename, L".", i + 1);
+        std::wstring matched_filename;
 
         // Standard case, no st sharing
-        if (result == std::string::npos)
+        if (result == std::wstring::npos)
         {
             matched_filename = filename;
         }
         else
         {
-            matched_filename = std::string(filename).substr(0, result);
+            matched_filename = std::wstring(filename).substr(0, result);
         }
 
-        std::string st;
+        std::wstring st;
 
         for (const auto& ext : extensions)
         {
             // FIXME: Port this function to Unicode so we don't have to wstring_to_string the extension!!!
-            st = std::string(drive) + std::string(dir) + matched_filename + g_core->io_service->wstring_to_string(ext);
+            st = std::wstring(drive) + std::wstring(dir) + matched_filename + ext;
             if (std::filesystem::exists(st))
             {
                 return st;
             }
         }
 
-        if (result == std::string::npos)
+        if (result == std::wstring::npos)
         {
             // Failed the existence checks at all permutations, failed search...
             return "";
@@ -825,24 +821,24 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
 
 // Generates a savestate path for a newly created movie.
 // Consists of the movie path, but with the stem trimmed at the first dot and with the specified extension (must contain dot)
-std::filesystem::path get_path_for_new_movie(std::filesystem::path path, const std::string& extension = ".st")
+std::filesystem::path get_path_for_new_movie(std::filesystem::path path, const std::wstring& extension = L".st")
 {
-    auto result = g_core->io_service->str_nth_occurence(path.stem().string(), ".", 1);
+    auto result = g_core->io_service->str_nth_occurence(path.stem().wstring(), L".", 1);
 
     // Standard case, no st shortcutting
-    if (result == std::string::npos)
+    if (result == std::wstring::npos)
     {
         path.replace_extension(extension);
         return path;
     }
 
-    char drive[260]{};
-    char dir[260]{};
-    _splitpath_s(path.string().c_str(), drive, _countof(drive), dir, _countof(dir), nullptr, 0, nullptr, 0);
+    wchar_t drive[_MAX_DRIVE]{};
+    wchar_t dir[_MAX_DIR]{};
+    _wsplitpath_s(path.wstring().c_str(), drive, _countof(drive), dir, _countof(dir), nullptr, 0, nullptr, 0);
 
-    auto stem = path.stem().string().substr(0, result);
+    auto stem = path.stem().wstring().substr(0, result);
 
-    return std::string(drive) + std::string(dir) + stem + extension;
+    return std::wstring(drive) + std::wstring(dir) + stem + extension;
 }
 
 core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description)
@@ -867,7 +863,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     const auto cheat_data = cht_serialize();
     if (!cheat_data.empty())
     {
-        const auto cheat_path = get_path_for_new_movie(path, ".cht");
+        const auto cheat_path = get_path_for_new_movie(path, L".cht");
         g_core->log_info(std::format(L"Writing movie cheat data to {}...", cheat_path.wstring()));
 
         std::wofstream file(cheat_path, std::ios::out);
@@ -1045,7 +1041,7 @@ core_result vcr_replace_author_info(const std::filesystem::path& path, const std
 
     FILE* f = nullptr;
 
-    if (fopen_s(&f, path.string().c_str(), "rb+"))
+    if (_wfopen_s(&f, path.wstring().c_str(), L"rb+"))
     {
         return VCR_BadFile;
     }
