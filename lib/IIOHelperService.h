@@ -26,39 +26,34 @@ public:
 
     virtual std::vector<uint8_t> read_file_buffer(const std::filesystem::path& path)
     {
-        FILE* f = nullptr;
-
-        if (_wfopen_s(&f, path.wstring().c_str(), L"rb"))
+        std::ifstream file(path, std::ios::binary | std::ios::ate);
+        if (!file)
         {
             return {};
         }
 
-        fseek(f, 0, SEEK_END);
-        long len = ftell(f);
-        fseek(f, 0, SEEK_SET);
+        const auto size = file.tellg();
+        file.seekg(0, std::ios::beg);
 
-        std::vector<uint8_t> b;
-        b.resize(len);
+        std::vector<uint8_t> buffer(size);
+        if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
+        {
+            return {};
+        }
 
-        fread(b.data(), sizeof(uint8_t), len, f);
-
-        fclose(f);
-        return b;
+        return buffer;
     }
 
     virtual bool write_file_buffer(const std::filesystem::path& path, std::span<uint8_t> data)
     {
-        FILE* f = nullptr;
-
-        if (fopen_s(&f, path.string().c_str(), "wb"))
+        std::ofstream out(path, std::ios::binary);
+        if (!out)
         {
             return false;
         }
 
-        fwrite(data.data(), sizeof(uint8_t), data.size(), f);
-        fclose(f);
-
-        return true;
+        out.write(reinterpret_cast<const char*>(data.data()), data.size());
+        return out.good();
     }
 
     virtual std::vector<uint8_t> auto_decompress(std::vector<uint8_t>& vec, size_t initial_size)
@@ -211,11 +206,11 @@ public:
         }
     }
 
-    virtual size_t str_nth_occurence(const std::string& str, const std::string& searched, size_t nth)
+    virtual size_t str_nth_occurence(const std::wstring& str, const std::wstring& searched, size_t nth)
     {
         if (searched.empty() || nth <= 0)
         {
-            return std::string::npos;
+            return std::wstring::npos;
         }
 
         size_t pos = 0;
@@ -224,9 +219,9 @@ public:
         while (count < nth)
         {
             pos = str.find(searched, pos);
-            if (pos == std::string::npos)
+            if (pos == std::wstring::npos)
             {
-                return std::string::npos;
+                return std::wstring::npos;
             }
             count++;
             if (count < nth)
