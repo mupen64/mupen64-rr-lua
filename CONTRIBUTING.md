@@ -78,7 +78,8 @@ If you only have the stacktrace from `mupen.log`:
 
 # Code Style
 
-Code formatting must, to the furthest possible extent, abide by the [.clang-format](https://github.com/mkdasher/mupen64-rr-lua-/blob/master/.clang-format) file provided in the repository root.
+Code formatting must abide by the [.clang-format](https://github.com/mkdasher/mupen64-rr-lua-/blob/master/.clang-format) file provided in the repository root.
+Failure to comply will fail the check-format workflow.
 
 # Plugin Guidelines
 
@@ -91,3 +92,11 @@ Code formatting must, to the furthest possible extent, abide by the [.clang-form
     1. Watch out for implicit COM initialization through DirectInput!
 - Write persistent config to the registry, not the filesystem.
     1. Play fair, don't pollute the user's Mupen directory if possible.
+
+# Pre-Merge and Release Checklist
+
+Before merging a pull request into main or pushing out a release, verify that:
+
+- All tests pass
+- Code is architecturally sound
+- Unicode-containing filesystem paths are consumed correctly
