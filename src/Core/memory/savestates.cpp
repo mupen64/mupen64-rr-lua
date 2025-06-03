@@ -234,9 +234,7 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
         compressed_buffer.resize(final_size);
 
         // write compressed st to disk
-        FILE* f = nullptr;
-
-        if (fopen_s(&f, new_st_path.string().c_str(), "wb"))
+        if (!g_core->io_service->write_file_buffer(new_st_path, compressed_buffer))
         {
             task.callback(core_st_callback_info{
                           .result = ST_FileWriteError,
@@ -246,9 +244,6 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
                           st);
             return;
         }
-
-        fwrite(compressed_buffer.data(), compressed_buffer.size(), 1, f);
-        fclose(f);
     }
 
     task.callback(core_st_callback_info{
