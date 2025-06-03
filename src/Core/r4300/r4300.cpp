@@ -1987,7 +1987,7 @@ void core_start()
 bool open_core_file_stream(const std::filesystem::path& path, FILE** file)
 {
     g_core->log_info(std::format(L"[Core] Opening core stream from {}...", path.wstring()));
-    
+
     if (!exists(path))
     {
         FILE* f = nullptr;

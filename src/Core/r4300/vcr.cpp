@@ -55,7 +55,7 @@ bool write_movie_impl(const core_vcr_movie_header* hdr, const std::vector<core_b
     std::memcpy(out_buf.data(), &hdr_copy, sizeof(core_vcr_movie_header));
     std::memcpy(out_buf.data() + sizeof(core_vcr_movie_header), inputs.data(), sizeof(core_buttons) * hdr_copy.length_samples);
     const auto written = g_core->io_service->write_file_buffer(path, out_buf);
-    
+
     return written;
 }
 
