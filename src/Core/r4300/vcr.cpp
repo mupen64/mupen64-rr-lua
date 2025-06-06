@@ -603,14 +603,11 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
             *input = vcr.inputs[effective_index];
 
             const auto prev_input = *input;
-            // NOTE: We want to notify Lua of inputs but won't actually accept the new values
-            g_core->callbacks.input(input, index);
             *input = prev_input;
         }
         else
         {
             g_core->plugin_funcs.input_get_keys(index, input);
-            g_core->callbacks.input(input, index);
         }
     }
 
@@ -709,7 +706,6 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
         });
     }
 
-    g_core->callbacks.input(input, index);
     vcr.current_sample++;
     g_core->callbacks.current_sample_changed(vcr.current_sample);
 }
@@ -777,10 +773,10 @@ void vcr_create_seek_savestates()
     }
 }
 
+
 void vcr_on_controller_poll(int32_t index, core_buttons* input)
 {
-    // NOTE: We mutate m_task and send task change messages in here, so we need to acquire the lock (what if playback start thread decides to beat us up midway through input poll? right...)
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
     // NOTE: When we call reset_rom from another thread, we only request a reset to happen in the future.
     // Until the reset, the emu thread keeps running and potentially generating many frames.
@@ -801,8 +797,7 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
     if (vcr.task == task_idle)
     {
         g_core->plugin_funcs.input_get_keys(index, input);
-        g_core->callbacks.input(input, index);
-        return;
+        goto call_input_callback;
     }
 
     vcr_stop_seek_if_needed();
@@ -815,6 +810,12 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
     vcr_handle_recording(index, input);
 
     vcr_handle_playback(index, input);
+
+call_input_callback:
+    // Since the callback might want to call VCR functions, we have to release the lock to avoid deadlocking in situations with interlocked threads (e.g. UI and Emu)
+    // In addition, we have to be careful to only call this function after we're done with VCR work as to avoid reentrancy issues.
+    lock.unlock();
+    g_core->callbacks.input(input, index);
 }
 
 // Generates a savestate path for a newly created movie.
