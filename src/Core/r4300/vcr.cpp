@@ -368,7 +368,7 @@ bool vcr_freeze(vcr_freeze_info& freeze)
 
 core_result vcr_unfreeze(const vcr_freeze_info& freeze)
 {
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
     // Unfreezing isn't valid during idle state
     if (g_ctx.vcr_get_task() == task_idle)
@@ -405,7 +405,6 @@ core_result vcr_unfreeze(const vcr_freeze_info& freeze)
     // Instead, we'll just update the current sample.
     if (vcr.task == task_recording && vcr.seek_to_frame.has_value())
     {
-        g_core->callbacks.current_sample_changed(vcr.current_sample);
         goto finish;
     }
 
@@ -415,9 +414,6 @@ core_result vcr_unfreeze(const vcr_freeze_info& freeze)
         // and make it the input data for the current movie, then continue
         // writing new input data at the currentFrame pointer
         vcr.task = task_recording;
-        g_core->callbacks.task_changed(vcr.task);
-        g_core->callbacks.current_sample_changed(vcr.current_sample);
-        g_core->callbacks.rerecords_changed(get_rerecord_count());
 
         // update header with new ROM info
         if (last_task == task_playback)
@@ -425,7 +421,6 @@ core_result vcr_unfreeze(const vcr_freeze_info& freeze)
 
         set_rerecord_count(get_rerecord_count() + 1);
         g_core->cfg->total_rerecords++;
-        g_core->callbacks.rerecords_changed(get_rerecord_count());
 
         if (!vcr.warp_modify_active)
         {
@@ -450,15 +445,16 @@ core_result vcr_unfreeze(const vcr_freeze_info& freeze)
         // this will cause a desync if the savestate is not in sync
         // with the on-disk recording data, but it's easily solved
         // by loading another savestate or playing the movie from the beginning
-
         write_movie();
         vcr.task = task_playback;
-        g_core->callbacks.task_changed(vcr.task);
-        g_core->callbacks.current_sample_changed(vcr.current_sample);
-        g_core->callbacks.rerecords_changed(get_rerecord_count());
     }
 
 finish:
+    lock.unlock();
+    
+    g_core->callbacks.task_changed(vcr.task);
+    g_core->callbacks.current_sample_changed(vcr.current_sample);
+    g_core->callbacks.rerecords_changed(get_rerecord_count());
     g_core->callbacks.frame();
     g_core->callbacks.unfreeze_completed();
 
