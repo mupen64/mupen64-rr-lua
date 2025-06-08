@@ -27,6 +27,7 @@ struct t_vcr_state {
     int32_t current_vi = -1;
 
     bool reset_requested{};
+    std::queue<std::function<void()>> post_controller_poll_callbacks{};
 };
 
 

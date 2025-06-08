@@ -451,7 +451,7 @@ core_result vcr_unfreeze(const vcr_freeze_info& freeze)
 
 finish:
     lock.unlock();
-    
+
     g_core->callbacks.task_changed(vcr.task);
     g_core->callbacks.current_sample_changed(vcr.current_sample);
     g_core->callbacks.rerecords_changed(get_rerecord_count());
@@ -495,7 +495,9 @@ void vcr_create_n_frame_savestate(size_t frame)
             {
                 g_core->log_info(std::format(L"[VCR] Map too large! Purging seek savestate at frame {}...", i));
                 vcr.seek_savestates.erase(i);
-                g_core->callbacks.seek_savestate_changed((size_t)i);
+                vcr.post_controller_poll_callbacks.emplace([=] {
+                    g_core->callbacks.seek_savestate_changed((size_t)i);
+                });
                 break;
             }
         }
@@ -620,7 +622,6 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
     }
 
     vcr.current_sample++;
-    g_core->callbacks.current_sample_changed(vcr.current_sample);
 
     if (vcr.reset_requested)
     {
@@ -643,6 +644,10 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
             }
         });
     }
+
+    vcr.post_controller_poll_callbacks.emplace([=] {
+        g_core->callbacks.current_sample_changed(vcr.current_sample);
+    });
 }
 
 void vcr_handle_playback(int32_t index, core_buttons* input)
@@ -665,8 +670,10 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
 
         if (g_core->cfg->is_movie_loop_enabled)
         {
-            g_core->callbacks.loop_movie();
             g_ctx.vcr_start_playback(vcr.movie_path);
+            vcr.post_controller_poll_callbacks.emplace([=] {
+                g_core->callbacks.loop_movie();
+            });
             return;
         }
 
@@ -709,7 +716,9 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
     }
 
     vcr.current_sample++;
-    g_core->callbacks.current_sample_changed(vcr.current_sample);
+    vcr.post_controller_poll_callbacks.emplace([=] {
+        g_core->callbacks.current_sample_changed(vcr.current_sample);
+    });
 }
 
 void vcr_stop_seek_if_needed()
@@ -817,6 +826,11 @@ call_input_callback:
     // Since the callback might want to call VCR functions, we have to release the lock to avoid deadlocking in situations with interlocked threads (e.g. UI and Emu)
     // In addition, we have to be careful to only call this function after we're done with VCR work as to avoid reentrancy issues.
     lock.unlock();
+    while (!vcr.post_controller_poll_callbacks.empty())
+    {
+        vcr.post_controller_poll_callbacks.front()();
+        vcr.post_controller_poll_callbacks.pop();
+    }
     g_core->callbacks.input(input, index);
 }
 
@@ -1316,7 +1330,7 @@ core_result vcr_start_playback(std::filesystem::path path)
 
         g_core->submit_task([=] {
             g_ctx.st_do_file(st_path, core_st_job_load, [](const core_st_callback_info& info, auto) {
-                std::scoped_lock lock(vcr_mtx);
+                std::unique_lock lock(vcr_mtx);
 
                 if (info.result != Res_Ok)
                 {
@@ -1341,11 +1355,10 @@ core_result vcr_start_playback(std::filesystem::path path)
         vcr.task = task_start_playback_from_reset;
     }
 
+    lock.unlock();
     g_core->callbacks.task_changed(vcr.task);
     g_core->callbacks.current_sample_changed(vcr.current_sample);
     g_core->callbacks.rerecords_changed(get_rerecord_count());
-
-    // FIXME: Move this into the actual starting sections, and document it :p
     g_core->callbacks.play_movie();
 
     return Res_Ok;
@@ -1404,14 +1417,9 @@ size_t vcr_find_closest_savestate_before_frame(size_t frame)
 
 core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume, bool warp_modify)
 {
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
-    if (vcr.seek_to_frame.has_value())
-    {
-        return VCR_SeekAlreadyRunning;
-    }
-
-    if (vcr.seek_savestate_loading)
+    if (vcr.seek_savestate_loading || vcr.seek_to_frame.has_value())
     {
         return VCR_SeekAlreadyRunning;
     }
@@ -1441,7 +1449,6 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 
     vcr.seek_to_frame = std::make_optional(frame);
     vcr.seek_pause_at_end = pause_at_end;
-    g_core->callbacks.seek_status_changed();
 
     if (!warp_modify && pause_at_end && vcr.current_sample == frame + 1)
     {
@@ -1458,7 +1465,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
     // We need to backtrack somehow if we're ahead of the frame
     if (vcr.current_sample <= frame)
     {
-        return Res_Ok;
+        goto finish;
     }
 
     if (vcr.task == task_playback)
@@ -1494,7 +1501,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
                                    false);
             });
 
-            return Res_Ok;
+            goto finish;
         }
 
         g_core->log_trace(L"[VCR] vcr_begin_seek_impl: playback, slow path");
@@ -1507,7 +1514,8 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
             g_core->callbacks.seek_status_changed();
             return result;
         }
-        return Res_Ok;
+
+        goto finish;
     }
 
     if (vcr.task == task_recording)
@@ -1536,7 +1544,7 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
             {
                 g_core->log_info(std::format(L"[VCR] Erasing now-invalidated seek savestate at frame {}...", sample));
                 vcr.seek_savestates.erase(sample);
-                g_core->callbacks.seek_savestate_changed((size_t)sample);
+                g_core->callbacks.seek_savestate_changed(sample);
             }
         }
 
@@ -1560,9 +1568,12 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
             },
                                false);
         });
-
-        return Res_Ok;
     }
+
+finish:
+
+    lock.unlock();
+    g_core->callbacks.seek_status_changed();
 
     return Res_Ok;
 }
@@ -1576,7 +1587,7 @@ void vcr_stop_seek()
 {
     // We need to acquire the mutex here, as this function is also called during input poll
     // and having two of these running at the same time is bad for obvious reasons
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
     if (!vcr.seek_to_frame.has_value())
     {
@@ -1585,14 +1596,16 @@ void vcr_stop_seek()
     }
 
     vcr.seek_to_frame.reset();
-    g_core->callbacks.seek_status_changed();
-    g_core->callbacks.seek_completed();
 
     if (vcr.warp_modify_active)
     {
         vcr.warp_modify_active = false;
-        g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
     }
+
+    lock.unlock();
+    g_core->callbacks.seek_status_changed();
+    g_core->callbacks.seek_completed();
+    g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
 }
 
 bool vcr_is_seeking()
@@ -1732,7 +1745,7 @@ size_t vcr_find_first_input_difference(const std::vector<core_buttons>& first, c
 
 core_result vcr_begin_warp_modify(const std::vector<core_buttons>& inputs)
 {
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
     if (vcr.warp_modify_active)
     {
@@ -1755,10 +1768,9 @@ core_result vcr_begin_warp_modify(const std::vector<core_buttons>& inputs)
     {
         g_core->log_info(L"[VCR] Warp modify inputs are identical to current input buffer, doing nothing...");
 
-        vcr.warp_modify_active = true;
-        g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
-
         vcr.warp_modify_active = false;
+
+        lock.unlock();
         g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
 
         return Res_Ok;
@@ -1771,10 +1783,9 @@ core_result vcr_begin_warp_modify(const std::vector<core_buttons>& inputs)
         vcr.inputs = inputs;
         vcr.hdr.length_samples = vcr.inputs.size();
 
-        vcr.warp_modify_active = true;
-        g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
-
         vcr.warp_modify_active = false;
+
+        lock.unlock();
         g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
 
         return Res_Ok;
@@ -1789,14 +1800,15 @@ core_result vcr_begin_warp_modify(const std::vector<core_buttons>& inputs)
         return result;
     }
 
-    vcr.warp_modify_active = true;
+    g_core->log_info(std::format(L"[VCR] Warp modify started at frame {}", vcr.current_sample));
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = vcr.inputs.size();
-    g_core->log_info(std::format(L"[VCR] Warp modify started at frame {}", vcr.current_sample));
-    g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
-
+    vcr.warp_modify_active = true;
     g_ctx.vr_resume_emu();
+
+    lock.unlock();
+    g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);
 
     return Res_Ok;
 }
