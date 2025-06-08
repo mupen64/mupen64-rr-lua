@@ -1086,7 +1086,7 @@ void vcr_get_seek_completion(std::pair<size_t, size_t>& pair)
 
 core_result vcr_stop_record()
 {
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
     if (!vcr_is_task_recording(vcr.task))
     {
@@ -1110,7 +1110,9 @@ core_result vcr_stop_record()
         g_core->log_info(std::format(L"[VCR] Recording stopped. Recorded %ld input samples", vcr.hdr.length_samples));
     }
 
+    lock.unlock();
     g_core->callbacks.task_changed(vcr.task);
+
     return Res_Ok;
 }
 
