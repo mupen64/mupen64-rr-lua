@@ -844,7 +844,7 @@ std::filesystem::path get_path_for_new_movie(std::filesystem::path path, const s
 
 core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description)
 {
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
     if (flags != MOVIE_START_FROM_SNAPSHOT && flags != MOVIE_START_FROM_NOTHING && flags != MOVIE_START_FROM_EEPROM && flags != MOVIE_START_FROM_EXISTING_SNAPSHOT)
     {
@@ -905,7 +905,6 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
 
     // FIXME: Do we want to reset this every time?
     g_core->cfg->vcr_readonly = 0;
-    g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
 
     const core_vcr_movie_header default_hdr{};
     memset(&vcr.hdr, 0, sizeof(core_vcr_movie_header));
@@ -1006,9 +1005,13 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     vcr.current_sample = 0;
     vcr.current_vi = 0;
 
+    lock.unlock();
+
     g_core->callbacks.task_changed(vcr.task);
     g_core->callbacks.current_sample_changed(vcr.current_sample);
     g_core->callbacks.rerecords_changed(get_rerecord_count());
+    g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
+
     return Res_Ok;
 }
 
