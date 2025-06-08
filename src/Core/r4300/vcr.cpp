@@ -503,7 +503,7 @@ void vcr_create_n_frame_savestate(size_t frame)
 
     g_core->log_info(std::format(L"[VCR] Creating seek savestate at frame {}...", frame));
     g_ctx.st_do_memory({}, core_st_job_save, [frame](const core_st_callback_info& info, const auto& buf) {
-        std::scoped_lock lock(vcr_mtx);
+        std::unique_lock lock(vcr_mtx);
 
         if (info.result != Res_Ok)
         {
@@ -513,7 +513,9 @@ void vcr_create_n_frame_savestate(size_t frame)
 
         g_core->log_info(std::format(L"[VCR] Seek savestate at frame {} of size {} completed", frame, buf.size()));
         vcr.seek_savestates[frame] = buf;
-        g_core->callbacks.seek_savestate_changed((size_t)frame);
+
+        lock.unlock();
+        g_core->callbacks.seek_savestate_changed(frame);
     },
                        false);
 }
@@ -527,7 +529,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
         g_core->submit_task([clear_eeprom] {
             const auto result = vr_reset_rom(clear_eeprom, false);
 
-            std::scoped_lock lock(vcr_mtx);
+            std::unique_lock lock(vcr_mtx);
             vcr.reset_pending = false;
 
             if (result != Res_Ok)
@@ -540,6 +542,8 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
             vcr.current_sample = 0;
             vcr.current_vi = 0;
             vcr.task = task_recording;
+
+            lock.unlock();
             g_core->callbacks.task_changed(vcr.task);
             g_core->callbacks.current_sample_changed(vcr.current_sample);
             g_core->callbacks.rerecords_changed(get_rerecord_count());
@@ -553,7 +557,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
         g_core->submit_task([clear_eeprom] {
             const auto result = vr_reset_rom(clear_eeprom, false);
 
-            std::scoped_lock lock(vcr_mtx);
+            std::unique_lock lock(vcr_mtx);
             vcr.reset_pending = false;
 
             if (result != Res_Ok)
@@ -566,6 +570,8 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
             vcr.current_sample = 0;
             vcr.current_vi = 0;
             vcr.task = task_playback;
+
+            lock.unlock();
             g_core->callbacks.task_changed(vcr.task);
             g_core->callbacks.current_sample_changed(vcr.current_sample);
             g_core->callbacks.rerecords_changed(get_rerecord_count());
@@ -1316,6 +1322,8 @@ core_result vcr_start_playback(std::filesystem::path path)
 
                 g_core->log_info(L"[VCR] Starting playback from snapshot...");
                 vcr.task = task_playback;
+
+                lock.unlock();
                 g_core->callbacks.task_changed(vcr.task);
                 g_core->callbacks.current_sample_changed(vcr.current_sample);
                 g_core->callbacks.rerecords_changed(get_rerecord_count());
