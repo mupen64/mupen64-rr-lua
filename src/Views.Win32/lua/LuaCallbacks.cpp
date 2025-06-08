@@ -25,7 +25,11 @@ struct t_atwindowmessage_context {
 
 static t_atwindowmessage_context atwindowmessage_ctx{};
 static int current_input_n = 0;
-static const std::function pcall_no_params_fn = pcall_no_params;
+
+static int pcall_no_params(lua_State* L)
+{
+    return lua_pcall(L, 0, 0, 0);
+}
 
 const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State*)>> CALLBACK_FUNC_MAP = {
 {LuaCallbacks::REG_ATINPUT, [](auto l) -> int {
@@ -51,7 +55,7 @@ static std::function<int(lua_State*)> get_function_for_callback(const LuaCallbac
     {
         return CALLBACK_FUNC_MAP.at(key);
     }
-    return pcall_no_params_fn;
+    return pcall_no_params;
 }
 
 core_buttons LuaCallbacks::get_last_controller_data(int index)

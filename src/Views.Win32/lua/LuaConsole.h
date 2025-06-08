@@ -9,11 +9,6 @@
 constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
 static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 
-static int pcall_no_params(lua_State* L)
-{
-    return lua_pcall(L, 0, 0, 0);
-}
-
 /**
  * \brief Initializes the lua subsystem
  */
