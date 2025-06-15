@@ -250,8 +250,9 @@ static void on_readonly_changed(std::any data)
 
 static void on_rerecords_changed(std::any data)
 {
-    auto value = std::any_cast<uint64_t>(data);
-    post(std::format(L"{} rr", value), Statusbar::Section::Rerecords);
+    const auto value = std::any_cast<uint64_t>(data);
+    const auto str = std::format(L"{} rr", format_short(value));
+    post(str, Statusbar::Section::Rerecords);
 }
 
 static void on_task_changed(std::any data)

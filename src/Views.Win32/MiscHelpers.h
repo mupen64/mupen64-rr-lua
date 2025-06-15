@@ -399,3 +399,21 @@ static std::string load_resource_as_string(const int id, const LPCWSTR type)
     const auto data = static_cast<const char*>(LockResource(rc_data));
     return std::string(data, size);
 }
+
+/**
+ * \brief Formats a value according to short formatting rules.
+ * \param value The value to format.
+ * \return A formatted string representing the value in a short format (e.g., 1.23k for 1230).
+ */
+static std::wstring format_short(const uint64_t value)
+{
+    if (value < 1'000)
+        return std::to_wstring(value);
+
+    auto str = std::format(L"{:.2f}k", (double)value / 1000.0);
+
+    while (!str.empty() && str.find('.') < str.find('k') && (str.back() == '0' || str.back() == '.'))
+        str.pop_back();
+
+    return str;
+}
