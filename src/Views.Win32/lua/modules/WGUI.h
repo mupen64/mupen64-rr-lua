@@ -341,7 +341,7 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
-        
+
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
         SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
         SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
@@ -417,7 +417,7 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
-        
+
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
         SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
         SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
@@ -476,7 +476,7 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
-        
+
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
         SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
         SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
@@ -498,7 +498,7 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
-        
+
         int left = luaL_checknumber(L, 1);
         int top = luaL_checknumber(L, 2);
         int right = luaL_checknumber(L, 3);
@@ -564,7 +564,7 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
-        
+
         size_t key = luaL_checkinteger(L, 1);
 
         if (!lua->rctx.image_pool.contains(key))
@@ -835,7 +835,7 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
-        
+
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
 
@@ -885,7 +885,7 @@ namespace LuaCore::Wgui
     {
         auto lua = get_lua_class(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
-        
+
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
         ::MoveToEx(lua->rctx.gdi_back_dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2), NULL);
         ::LineTo(lua->rctx.gdi_back_dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
