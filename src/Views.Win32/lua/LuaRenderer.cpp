@@ -81,7 +81,10 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATUPDATESCREEN);
 
-            BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
+            if (lua->rctx.has_gdi_content)
+            {
+                BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
+            }
 
             ValidateRect(hwnd, nullptr);
 
@@ -317,8 +320,9 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context* ctx)
     });
 }
 
-void LuaRenderer::ensure_gdi_renderer_created(t_lua_rendering_context* ctx)
+void LuaRenderer::mark_gdi_content_present(t_lua_rendering_context* ctx)
 {
+    ctx->has_gdi_content = true;
 }
 
 void LuaRenderer::loadscreen_reset(t_lua_rendering_context* ctx)

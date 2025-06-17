@@ -48,9 +48,9 @@ namespace LuaRenderer
     void ensure_d2d_renderer_created(t_lua_rendering_context*);
 
     /**
-     * \brief Ensures that the GDI renderer is created for a Lua environment. Does nothing if the renderer already exists.
+     * \brief Tells the renderer that GDI content is present in the rendering context.
      */
-    void ensure_gdi_renderer_created(t_lua_rendering_context*);
+    void mark_gdi_content_present(t_lua_rendering_context*);
 
     /**
      * \brief Resets the loadscreen graphics.

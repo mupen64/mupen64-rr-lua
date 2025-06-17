@@ -340,7 +340,8 @@ namespace LuaCore::Wgui
     static int LuaTextOut(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
+        
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
         SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
         SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
@@ -415,7 +416,8 @@ namespace LuaCore::Wgui
     static int LuaDrawText(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
+        
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
         SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
         SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
@@ -473,7 +475,8 @@ namespace LuaCore::Wgui
     static int LuaDrawTextAlt(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
+        
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
         SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
         SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
@@ -494,6 +497,8 @@ namespace LuaCore::Wgui
     static int DrawRect(lua_State* L)
     {
         auto lua = get_lua_class(L);
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
+        
         int left = luaL_checknumber(L, 1);
         int top = luaL_checknumber(L, 2);
         int right = luaL_checknumber(L, 3);
@@ -558,6 +563,8 @@ namespace LuaCore::Wgui
     static int DrawImage(lua_State* L)
     {
         auto lua = get_lua_class(L);
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
+        
         size_t key = luaL_checkinteger(L, 1);
 
         if (!lua->rctx.image_pool.contains(key))
@@ -706,7 +713,7 @@ namespace LuaCore::Wgui
     {
         // Get lua instance stored in script class
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         // stack should look like
         //--------
@@ -788,7 +795,7 @@ namespace LuaCore::Wgui
     static int FillRectAlpha(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         int x = luaL_checknumber(L, 1);
         int y = luaL_checknumber(L, 2);
@@ -807,7 +814,7 @@ namespace LuaCore::Wgui
     static int FillRect(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         COLORREF color = RGB(
         luaL_checknumber(L, 5),
@@ -827,7 +834,8 @@ namespace LuaCore::Wgui
     static int DrawEllipse(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
+        
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
 
@@ -843,7 +851,7 @@ namespace LuaCore::Wgui
     static int DrawPolygon(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         POINT p[0x100];
         luaL_checktype(L, 1, LUA_TTABLE);
@@ -876,7 +884,8 @@ namespace LuaCore::Wgui
     static int DrawLine(lua_State* L)
     {
         auto lua = get_lua_class(L);
-
+        LuaRenderer::mark_gdi_content_present(&lua->rctx);
+        
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
         ::MoveToEx(lua->rctx.gdi_back_dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2), NULL);
         ::LineTo(lua->rctx.gdi_back_dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
