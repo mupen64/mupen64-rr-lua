@@ -16,6 +16,11 @@
 
 constexpr auto LUA_PROP_NAME = L"lua_env";
 
+struct t_lua_manager_state {
+    HWND mgr_hwnd{};
+    HWND inst_hwnd{};
+};
+
 core_buttons last_controller_data[4];
 core_buttons new_controller_data[4];
 bool overwrite_controller_data[4];
@@ -27,6 +32,8 @@ std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map;
 std::string mupen_api_lua_code;
 std::string inspect_lua_code;
 std::string shims_lua_code;
+
+t_lua_manager_state g_lua_mgr = {};
 
 t_lua_environment* get_lua_class(lua_State* lua_state)
 {
@@ -64,6 +71,49 @@ void set_button_state(HWND wnd, bool state)
     //     SetWindowText(state_button, L"Run");
     //     EnableWindow(stop_button, FALSE);
     // }
+}
+
+INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+
+    // lparam is a lua environment pointer
+    return FALSE;
+}
+
+INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        {
+            g_lua_mgr.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)0);
+
+            RECT mgr_rc{};
+            GetClientRect(hwnd, &mgr_rc);
+
+            RECT inst_rc{};
+            GetClientRect(g_lua_mgr.inst_hwnd, &inst_rc);
+
+            RECT effective_rc = mgr_rc;
+            AdjustWindowRect(&effective_rc, GetWindowLong(hwnd, GWL_STYLE), FALSE);
+
+            SetWindowPos(hwnd, 0, 0, 0, effective_rc.right + inst_rc.right, effective_rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
+            SetWindowPos(g_lua_mgr.inst_hwnd, nullptr, mgr_rc.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+
+            return TRUE;
+        }
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        return TRUE;
+    case WM_DESTROY:
+        DestroyWindow(g_lua_mgr.inst_hwnd);
+        g_lua_mgr.inst_hwnd = nullptr;
+        g_lua_mgr.mgr_hwnd = nullptr;
+        break;
+    default:
+        break;
+    }
+    return FALSE;
 }
 
 // TODO: REIMPLEMENT
@@ -190,34 +240,6 @@ void set_button_state(HWND wnd, bool state)
 //     return FALSE;
 // }
 
-HWND lua_create()
-{
-    // TODO: REIMPLEMENT
-
-    // HWND hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUAWINDOW), g_main_hwnd, lua_dialog_proc);
-    // ShowWindow(hwnd, SW_SHOW);
-    // return hwnd;
-    return 0;
-}
-
-void lua_create_and_run(const std::wstring& path)
-{
-    assert(is_on_gui_thread());
-
-    g_view_logger->info("Creating lua window...");
-    auto hwnd = lua_create();
-
-    // TODO: REIMPLEMENT
-
-    g_view_logger->info("Setting path...");
-    // set the textbox content to match the path
-    // SetWindowText(GetDlgItem(hwnd, IDC_TEXTBOX_LUASCRIPTPATH), path.c_str());
-
-    g_view_logger->info("Simulating run button click...");
-    // click run button
-    // SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTATE, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTATE));
-}
-
 
 void lua_close_all_scripts()
 {
@@ -255,6 +277,21 @@ void lua_init()
     shims_lua_code = load_resource_as_string(IDR_SHIMS_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
 }
 
+void LuaManager::show_manager_dialog()
+{
+    if (g_lua_mgr.mgr_hwnd)
+    {
+        BringWindowToTop(g_lua_mgr.mgr_hwnd);
+        return;
+    }
+    g_lua_mgr.mgr_hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUA_MANAGER), g_main_hwnd, lua_manager_dialog_proc);
+    ShowWindow(g_lua_mgr.mgr_hwnd, SW_SHOW);
+}
+
+void LuaManager::add_and_run(const std::filesystem::path& path)
+{
+    // TODO: Implement this
+}
 
 static void rebuild_lua_env_map()
 {

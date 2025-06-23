@@ -62,7 +62,7 @@ struct t_config {
     t_hotkey take_screenshot_hotkey{};
     t_hotkey play_latest_movie_hotkey{};
     t_hotkey load_latest_script_hotkey{};
-    t_hotkey new_lua_hotkey{};
+    t_hotkey show_lua_manager_hotkey{};
     t_hotkey close_all_lua_hotkey{};
     t_hotkey load_rom_hotkey{};
     t_hotkey close_rom_hotkey{};

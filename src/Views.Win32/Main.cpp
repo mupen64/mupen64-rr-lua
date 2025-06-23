@@ -986,7 +986,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             }
             else if (extension == ".lua")
             {
-                lua_create_and_run(path.wstring().c_str());
+                LuaManager::add_and_run(path);
             }
             break;
         }
@@ -1372,12 +1372,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     }
                 }
                 break;
-            case IDM_LOAD_LUA:
-                {
-                    lua_create();
-                }
+            case IDM_SHOW_LUA_MANAGER:
+                LuaManager::show_manager_dialog();
                 break;
-
             case IDM_CLOSE_ALL_LUA:
                 lua_close_all_scripts();
                 break;
@@ -1967,7 +1964,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (path.empty())
                         break;
 
-                    lua_create_and_run(path);
+                    LuaManager::add_and_run(path);
                 }
                 break;
             }

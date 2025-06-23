@@ -106,7 +106,7 @@ static void start_lua()
         stream << cli_params.lua.wstring();
         while (std::getline(stream, script, L';'))
         {
-            lua_create_and_run(script);
+            LuaManager::add_and_run(script);
         }
     });
 }

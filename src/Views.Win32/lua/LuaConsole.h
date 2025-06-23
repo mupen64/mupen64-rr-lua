@@ -10,21 +10,27 @@ constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
 static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 
 /**
+ * A module responsible for implementing Lua script management functionality.
+ */
+namespace LuaManager
+{
+    /**
+     * \brief Shows the lua manager dialog.
+     */
+    void show_manager_dialog();
+
+    /**
+     * \brief Adds a lua script to the lua manager and runs it.
+     * \param path The path to the lua script to add and run.
+     */
+    void add_and_run(const std::filesystem::path& path);
+} // namespace LuaManager
+
+
+/**
  * \brief Initializes the lua subsystem
  */
 void lua_init();
-
-/**
- * \brief Creates a lua window and runs the specified script
- * \param path The script's path
- */
-void lua_create_and_run(const std::wstring& path);
-
-/**
- * \brief Creates a lua window
- * \return The window's handle
- */
-HWND lua_create();
 
 /**
  * \brief Stops all lua scripts

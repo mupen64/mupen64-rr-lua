@@ -196,11 +196,11 @@ static t_config get_default_config()
     .down_cmd = IDM_LOAD_LATEST_LUA,
     };
 
-    config.new_lua_hotkey = {
-    .identifier = L"New Lua Instance",
+    config.show_lua_manager_hotkey = {
+    .identifier = L"Show Lua Manager",
     .key = 'N',
     .ctrl = true,
-    .down_cmd = IDM_LOAD_LUA,
+    .down_cmd = IDM_SHOW_LUA_MANAGER,
     };
 
     config.close_all_lua_hotkey = {
