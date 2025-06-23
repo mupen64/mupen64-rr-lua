@@ -655,7 +655,8 @@ void on_emu_launched_changed(std::any data)
             for (const HWND hwnd : g_previously_running_luas)
             {
                 // click start button
-                SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTATE, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTATE));
+                // TODO: REIMPLEMENT
+                // SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BUTTON_LUASTATE, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_BUTTON_LUASTATE));
             }
 
             g_previously_running_luas.clear();
