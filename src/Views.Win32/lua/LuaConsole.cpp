@@ -76,6 +76,18 @@ void set_button_state(HWND wnd, bool state)
 INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 
+    switch (msg)
+    {
+    case WM_DESTROY:
+        if (lua)
+        {
+            destroy_lua_environment(lua);
+        }
+        RemoveProp(hwnd, LUA_PROP_NAME);
+        return TRUE;
+    default:
+        break;
+    }
     // lparam is a lua environment pointer
     return FALSE;
 }
@@ -109,6 +121,34 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         DestroyWindow(g_lua_mgr.inst_hwnd);
         g_lua_mgr.inst_hwnd = nullptr;
         g_lua_mgr.mgr_hwnd = nullptr;
+        break;
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case IDC_INSTANCES:
+            {
+                if (HIWORD(wparam) != LBN_SELCHANGE)
+                {
+                    break;
+                }
+
+                const auto index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_INSTANCES));
+                if (index == LB_ERR)
+                {
+                    break;
+                }
+
+
+                break;
+            }
+        case IDC_ADD_INSTANCE:
+            {
+            
+                break;
+            }
+        default:
+            break;
+        }
         break;
     default:
         break;
