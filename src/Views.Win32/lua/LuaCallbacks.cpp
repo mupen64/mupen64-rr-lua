@@ -190,7 +190,7 @@ bool invoke_callbacks_with_key_impl(const t_lua_environment& lua, const std::fun
         if (function(lua.L))
         {
             const char* str = lua_tostring(lua.L, -1);
-            print_con(lua.hwnd, io_service.string_to_wstring(str) + L"\r\n");
+            print_con(lua, io_service.string_to_wstring(str) + L"\r\n");
             g_view_logger->info("Lua error: {}", str);
             return false;
         }

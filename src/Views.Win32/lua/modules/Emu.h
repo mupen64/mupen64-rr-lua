@@ -255,7 +255,7 @@ namespace LuaCore::Emu
     static int ConsoleWriteLua(lua_State* L)
     {
         auto lua = get_lua_class(L);
-        print_con(lua->hwnd, io_service.string_to_wstring(luaL_checkstring(L, 1)) + L"\r\n");
+        print_con(*lua, io_service.string_to_wstring(luaL_checkstring(L, 1)) + L"\r\n");
         return 0;
     }
 

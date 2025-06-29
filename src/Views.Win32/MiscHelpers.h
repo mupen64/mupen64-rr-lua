@@ -6,6 +6,28 @@
 
 #pragma once
 
+typedef struct {
+    WORD dlgVer;
+    WORD signature;
+    DWORD helpID;
+    DWORD exStyle;
+    DWORD style;
+    WORD cDlgItems;
+    short x;
+    short y;
+    short cx;
+    short cy;
+    uint16_t* menu;
+    uint16_t* windowClass;
+    WCHAR* title;
+    WORD pointsize;
+    WORD weight;
+    BYTE italic;
+    BYTE charset;
+    WCHAR* typeface;
+} DLGTEMPLATEEX;
+
+
 /**
  * \brief Records the execution time of a scope
  */
@@ -398,6 +420,41 @@ static std::string load_resource_as_string(const int id, const LPCWSTR type)
     const auto size = SizeofResource(hinst, rc);
     const auto data = static_cast<const char*>(LockResource(rc_data));
     return std::string(data, size);
+}
+
+/**
+ * \brief Loads a resource as an extended dialog template.
+ * \param id The resource id.
+ * \param dlg_template A pointer to a pointer that will receive the dialog template.
+ * \return Whether the resource was successfully loaded.
+ */
+static bool load_resource_as_dialog_template(const int id, DLGTEMPLATEEX** dlg_template)
+{
+    *dlg_template = nullptr;
+
+    const HINSTANCE hinst = GetModuleHandle(nullptr);
+
+    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), RT_DIALOG);
+    if (!rc)
+    {
+        return false;
+    }
+
+    const HGLOBAL rc_data = LoadResource(hinst, rc);
+    if (!rc_data)
+    {
+        return false;
+    }
+
+    const auto data = static_cast<DLGTEMPLATEEX*>(LockResource(rc_data));
+    if (!data)
+    {
+        return false;
+    }
+
+    *dlg_template = data;
+
+    return true;
 }
 
 /**

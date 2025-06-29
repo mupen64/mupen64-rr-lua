@@ -40,19 +40,19 @@ namespace LuaCore::Global
                     str = str.substr(1, str.size() - 2);
                 }
 
-                print_con(lua->hwnd, str);
+                print_con(*lua, str);
             }
             else
             {
-                print_con(lua->hwnd, L"???");
+                print_con(*lua, L"???");
             }
             lua_pop(L, 2);
 
             if (i < nargs)
-                print_con(lua->hwnd, L"\t");
+                print_con(*lua, L"\t");
         }
 
-        print_con(lua->hwnd, L"\r\n");
+        print_con(*lua, L"\r\n");
         return 0;
     }
 

@@ -60,12 +60,21 @@ struct t_lua_rendering_context {
     int bkmode{};
 };
 
+struct t_lua_environment;
+
+struct t_lua_wnd_ctx {
+    HWND hwnd{};
+    std::filesystem::path path{};
+    std::wstring logs{};
+    t_lua_environment* env{};
+};
+
 /**
  * \brief Describes a Lua instance.
  */
 struct t_lua_environment {
     std::filesystem::path path;
-    HWND hwnd;
+    t_lua_wnd_ctx* wnd_ctx;
     lua_State* L;
     t_lua_rendering_context rctx;
 };
