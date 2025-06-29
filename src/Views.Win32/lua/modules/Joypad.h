@@ -17,7 +17,7 @@ namespace LuaCore::Joypad
         }
         lua_newtable(L);
 #define A(a, s)                                    \
-    lua_pushboolean(L, last_controller_data[i].a); \
+    lua_pushboolean(L, g_last_controller_data[i].a); \
     lua_setfield(L, -2, s)
         A(dr, "right");
         A(dl, "left");
@@ -34,9 +34,9 @@ namespace LuaCore::Joypad
         A(r, "R");
         A(l, "L");
 #undef A
-        lua_pushinteger(L, last_controller_data[i].x);
+        lua_pushinteger(L, g_last_controller_data[i].x);
         lua_setfield(L, -2, "Y");
-        lua_pushinteger(L, last_controller_data[i].y);
+        lua_pushinteger(L, g_last_controller_data[i].y);
         lua_setfield(L, -2, "X");
         return 1;
     }
@@ -61,7 +61,7 @@ namespace LuaCore::Joypad
         lua_pushvalue(L, a_2);
 #define A(a, s)                                      \
     lua_getfield(L, -1, s);                          \
-    new_controller_data[i].a = lua_toboolean(L, -1); \
+    g_new_controller_data[i].a = lua_toboolean(L, -1); \
     lua_pop(L, 1)
         A(dr, "right");
         A(dl, "left");
@@ -78,12 +78,12 @@ namespace LuaCore::Joypad
         A(r, "R");
         A(l, "L");
         lua_getfield(L, -1, "Y");
-        new_controller_data[i].x = lua_tointeger(L, -1);
+        g_new_controller_data[i].x = lua_tointeger(L, -1);
         lua_pop(L, 1);
         lua_getfield(L, -1, "X");
-        new_controller_data[i].y = lua_tointeger(L, -1);
+        g_new_controller_data[i].y = lua_tointeger(L, -1);
         lua_pop(L, 1);
-        overwrite_controller_data[i] = true;
+        g_overwrite_controller_data[i] = true;
 #undef A
         return 1;
     }

@@ -41,17 +41,17 @@ extern std::vector<t_lua_environment*> g_lua_environments;
 /**
  * \brief The controller data at time of the last input poll
  */
-extern core_buttons last_controller_data[4];
+extern core_buttons g_last_controller_data[4];
 
 /**
  * \brief The modified control data to be pushed the next frame
  */
-extern core_buttons new_controller_data[4];
+extern core_buttons g_new_controller_data[4];
 
 /**
  * \brief Whether the <c>new_controller_data</c> of a controller should be pushed the next frame
  */
-extern bool overwrite_controller_data[4];
+extern bool g_overwrite_controller_data[4];
 
 /**
  * \brief Amount of call_input calls.
