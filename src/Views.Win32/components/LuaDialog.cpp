@@ -235,17 +235,17 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
                     break;
                 }
 
-                const auto index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_INSTANCES));
-                if (index == LB_ERR || index >= g_lua_instance_wnd_ctxs.size())
-                {
-                    break;
-                }
-
                 if (IsWindow(g_dlg.inst_hwnd))
                 {
                     DestroyWindow(g_dlg.inst_hwnd);
                 }
 
+                const auto index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_INSTANCES));
+                if (index == LB_ERR || index >= g_lua_instance_wnd_ctxs.size())
+                {
+                    break;
+                }
+            
                 const auto param = g_lua_instance_wnd_ctxs[index].get();
                 g_dlg.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
 
@@ -303,6 +303,9 @@ void LuaDialog::close_all()
 {
     stop_all();
     g_lua_instance_wnd_ctxs.clear();
+    SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
+    ListBox_SetCurSel(GetDlgItem(g_dlg.mgr_hwnd, IDC_INSTANCES), 0);
+    SendMessage(g_dlg.mgr_hwnd, WM_COMMAND, MAKEWPARAM(IDC_INSTANCES, LBN_SELCHANGE), 0);
 }
 
 void LuaDialog::store_running_scripts()
