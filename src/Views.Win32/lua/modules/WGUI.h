@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 #include <lua/LuaRenderer.h>
 
 namespace LuaCore::Wgui
@@ -142,7 +142,7 @@ namespace LuaCore::Wgui
 
     static int GetGUIInfo(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         RECT rect;
         GetClientRect(g_main_hwnd, &rect);
@@ -159,7 +159,7 @@ namespace LuaCore::Wgui
     {
         assert(is_on_gui_thread());
 
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         RECT clientRect, wndRect;
         GetWindowRect(g_main_hwnd, &wndRect);
@@ -228,7 +228,7 @@ namespace LuaCore::Wgui
 
     static int set_brush(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         if (lua->rctx.brush)
         {
@@ -246,7 +246,7 @@ namespace LuaCore::Wgui
 
     static int set_pen(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         if (lua->rctx.pen)
         {
@@ -266,14 +266,14 @@ namespace LuaCore::Wgui
 
     static int set_text_color(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         lua->rctx.col = StrToColor(io_service.string_to_wstring(lua_tostring(L, 1)));
         return 0;
     }
 
     static int SetBackgroundColor(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         auto s = io_service.string_to_wstring(lua_tostring(L, 1));
 
@@ -292,7 +292,7 @@ namespace LuaCore::Wgui
 
     static int SetFont(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LOGFONT font = {0};
 
         if (lua->rctx.font)
@@ -339,7 +339,7 @@ namespace LuaCore::Wgui
 
     static int LuaTextOut(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
@@ -397,7 +397,7 @@ namespace LuaCore::Wgui
 
     static int GetTextExtent(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         auto string = io_service.string_to_wstring(luaL_checkstring(L, 1));
 
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
@@ -415,7 +415,7 @@ namespace LuaCore::Wgui
 
     static int LuaDrawText(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
@@ -474,7 +474,7 @@ namespace LuaCore::Wgui
 
     static int LuaDrawTextAlt(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
@@ -496,7 +496,7 @@ namespace LuaCore::Wgui
 
     static int DrawRect(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         int left = luaL_checknumber(L, 1);
@@ -514,7 +514,7 @@ namespace LuaCore::Wgui
 
     static int LuaLoadImage(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         std::wstring path = io_service.string_to_wstring(luaL_checkstring(L, 1));
 
         auto img = new Gdiplus::Bitmap(path.c_str());
@@ -533,7 +533,7 @@ namespace LuaCore::Wgui
 
     static int DeleteImage(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         size_t key = luaL_checkinteger(L, 1);
 
         if (key == 0)
@@ -562,7 +562,7 @@ namespace LuaCore::Wgui
 
     static int DrawImage(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         size_t key = luaL_checkinteger(L, 1);
@@ -662,7 +662,7 @@ namespace LuaCore::Wgui
 
     static int LoadScreen(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         // Copy screen into the loadscreen dc
         auto dc = GetDC(g_main_hwnd);
@@ -680,14 +680,14 @@ namespace LuaCore::Wgui
 
     static int LoadScreenReset(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::loadscreen_reset(&lua->rctx);
         return 0;
     }
 
     static int GetImageInfo(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         size_t key = luaL_checkinteger(L, 1);
 
         if (!lua->rctx.image_pool.contains(key))
@@ -712,7 +712,7 @@ namespace LuaCore::Wgui
     static int FillPolygonAlpha(lua_State* L)
     {
         // Get lua instance stored in script class
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         // stack should look like
@@ -776,7 +776,7 @@ namespace LuaCore::Wgui
 
     static int FillEllipseAlpha(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         int x = luaL_checknumber(L, 1);
         int y = luaL_checknumber(L, 2);
@@ -794,7 +794,7 @@ namespace LuaCore::Wgui
 
     static int FillRectAlpha(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         int x = luaL_checknumber(L, 1);
@@ -813,7 +813,7 @@ namespace LuaCore::Wgui
 
     static int FillRect(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         COLORREF color = RGB(
@@ -833,7 +833,7 @@ namespace LuaCore::Wgui
 
     static int DrawEllipse(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
@@ -850,7 +850,7 @@ namespace LuaCore::Wgui
 
     static int DrawPolygon(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         POINT p[0x100];
@@ -883,7 +883,7 @@ namespace LuaCore::Wgui
 
     static int DrawLine(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
         LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
         SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
@@ -894,7 +894,7 @@ namespace LuaCore::Wgui
 
     static int SetClip(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
 
         auto rgn = CreateRectRgn(luaL_checkinteger(L, 1),
@@ -909,7 +909,7 @@ namespace LuaCore::Wgui
 
     static int ResetClip(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         SelectClipRgn(lua->rctx.gdi_back_dc, NULL);
         return 0;

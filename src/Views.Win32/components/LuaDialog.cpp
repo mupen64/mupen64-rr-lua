@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
 #include <components/FilePicker.h>
 #include <components/LuaDialog.h>
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 
 // wParam: either nullptr, or a pointer to a t_instance_context whose running state has changed
 #define MUPM_RUNNING_STATE_CHANGED (WM_USER + 24)
@@ -58,7 +58,7 @@ static void stop(t_instance_context& ctx)
         return;
     }
 
-    destroy_lua_environment(ctx.env);
+    LuaManager::destroy_environment(ctx.env);
     ctx.env = nullptr;
 }
 
@@ -66,7 +66,7 @@ static void start(t_instance_context* ctx, const std::filesystem::path& path)
 {
     SendMessage(ctx->hwnd, WM_COMMAND, MAKEWPARAM(IDC_STOP, BN_CLICKED), 0);
 
-    const auto result = create_lua_environment(
+    const auto result = LuaManager::create_environment(
     path,
     [=] {
         PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);

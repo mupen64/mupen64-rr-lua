@@ -32,7 +32,7 @@
 #include <components/UpdateChecker.h>
 #include <components/LuaDialog.h>
 #include <lua/LuaCallbacks.h>
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 #include <lua/LuaRenderer.h>
 #include <ThreadPool.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -2394,7 +2394,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
-    lua_init();
+    LuaManager::init();
 
     CrashManager::init();
     MGECompositor::init();

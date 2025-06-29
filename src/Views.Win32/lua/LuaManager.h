@@ -9,22 +9,32 @@
 constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
 static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 
-/**
- * \brief Initializes the lua subsystem
- */
-void lua_init();
+namespace LuaManager
+{
+    /**
+     * \brief Initializes the lua subsystem.
+     */
+    void init();
 
-/**
- * \brief Creates a lua environment.
- * \param path The script path.
- * \return The newly created lua environment or an error message if the operation failed.
- */
-std::expected<t_lua_environment*, std::wstring> create_lua_environment(const std::filesystem::path& path, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback);
+    /**
+     * \brief Gets the Lua environment associated with a Lua state, or nullptr if none exists.
+     */
+    t_lua_environment* get_environment_for_state(lua_State* lua_state);
 
-/**
- * \brief Destroys a lua environment.
- */
-void destroy_lua_environment(t_lua_environment*);
+    /**
+     * \brief Creates a lua environment.
+     * \param path The script path.
+     * \return The newly created lua environment or an error message if the operation failed.
+     */
+    std::expected<t_lua_environment*, std::wstring> create_environment(const std::filesystem::path& path, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback);
+
+    /**
+     * \brief Destroys a lua environment.
+     */
+    void destroy_environment(t_lua_environment*);
+
+} // namespace LuaManager
+
 
 void* lua_tocallback(lua_State* L, int i);
 void lua_pushcallback(lua_State* L, void* key);
@@ -50,8 +60,3 @@ extern bool overwrite_controller_data[4];
  * \brief Amount of call_input calls.
  */
 extern size_t g_input_count;
-
-/**
- * \brief Gets the Lua environment associated with a lua state.
- */
-t_lua_environment* get_lua_class(lua_State* lua_state);

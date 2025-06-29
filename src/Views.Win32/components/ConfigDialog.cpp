@@ -13,7 +13,7 @@
 #include <capture/EncodingManager.h>
 #include <components/configdialog.h>
 #include <components/FilePicker.h>
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)

@@ -14,7 +14,7 @@ namespace LuaCore::IOHelper
     // IO
     static int LuaFileDialog(lua_State* L)
     {
-        auto lua = get_lua_class(L);
+        auto lua = LuaManager::get_environment_for_state(L);
 
         BetterEmulationLock lock;
 

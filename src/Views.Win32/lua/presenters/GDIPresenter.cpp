@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include "GDIPresenter.h"
-#include "lua/LuaConsole.h"
+#include <lua/presenters/GDIPresenter.h>
+#include <lua/LuaManager.h>
 
 GDIPresenter::~GDIPresenter()
 {

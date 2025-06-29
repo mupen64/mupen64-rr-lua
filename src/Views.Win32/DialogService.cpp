@@ -8,7 +8,6 @@
 #include <Config.h>
 #include <DialogService.h>
 #include <components/Statusbar.h>
-#include <lua/LuaConsole.h>
 
 std::unordered_map<std::string, size_t> dialog_choice_map;
 

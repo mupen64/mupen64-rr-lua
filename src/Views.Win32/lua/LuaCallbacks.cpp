@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <lua/LuaCallbacks.h>
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 
 // OPTIMIZATION: If no lua scripts are running, skip the deeper lua path
 // This is an unsynchronized access to the map from the emu thread!
@@ -225,7 +225,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 
     while (!destruction_queue.empty())
     {
-        destroy_lua_environment(destruction_queue.front());
+        LuaManager::destroy_environment(destruction_queue.front());
         destruction_queue.pop();
     }
 }

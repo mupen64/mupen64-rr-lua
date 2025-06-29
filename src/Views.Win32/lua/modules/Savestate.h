@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Main.h>
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 
 namespace LuaCore::Savestate
 {
@@ -55,7 +55,7 @@ namespace LuaCore::Savestate
             g_core_ctx->vr_wait_decrement();
             g_core_ctx->st_do_file(path, job, [=](const core_st_callback_info& info, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
-                    if (!get_lua_class(L))
+                    if (!LuaManager::get_environment_for_state(L))
                     {
                         return;
                     }
@@ -82,7 +82,7 @@ namespace LuaCore::Savestate
             g_core_ctx->vr_wait_decrement();
             g_core_ctx->st_do_file(get_st_with_slot_path(slot), job, [=](const core_st_callback_info& info, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
-                    if (!get_lua_class(L))
+                    if (!LuaManager::get_environment_for_state(L))
                     {
                         return;
                     }
@@ -111,7 +111,7 @@ namespace LuaCore::Savestate
             const auto buffer = std::vector<uint8_t>(buffer_str, buffer_str + buffer_len);
             g_core_ctx->st_do_memory(buffer, job, [=](const core_st_callback_info& info, const std::vector<uint8_t>& buf) {
                 g_main_window_dispatcher->invoke([=] {
-                    if (!get_lua_class(L))
+                    if (!LuaManager::get_environment_for_state(L))
                     {
                         return;
                     }

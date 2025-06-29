@@ -274,7 +274,7 @@
         <ClInclude Include="src\Views.Win32\Main.h" />
         <ClInclude Include="src\Views.Win32\Config.h" />
         <ClInclude Include="src\Views.Win32\lua\LuaTypes.h" />
-        <ClInclude Include="src\Views.Win32\lua\LuaConsole.h" />
+        <ClInclude Include="src\Views.Win32\lua\LuaManager.h" />
         <ClInclude Include="src\Views.Win32\lua\LuaCallbacks.h" />
         <ClInclude Include="src\Views.Win32\lua\LuaRegistry.h" />
         <ClInclude Include="src\Views.Win32\lua\LuaRenderer.h" />
@@ -339,7 +339,7 @@
         <ClCompile Include="src\Views.Win32\components\LuaDialog.cpp" />
         <ClCompile Include="src\Views.Win32\Loggers.cpp"/>
         <ClCompile Include="src\Views.Win32\Main.cpp"/>
-        <ClCompile Include="src\Views.Win32\lua\LuaConsole.cpp"/>
+        <ClCompile Include="src\Views.Win32\lua\LuaManager.cpp" />
         <ClCompile Include="src\Views.Win32\lua\LuaCallbacks.cpp"/>
         <ClCompile Include="src\Views.Win32\lua\LuaRegistry.cpp"/>
         <ClCompile Include="src\Views.Win32\lua\LuaRenderer.cpp" />

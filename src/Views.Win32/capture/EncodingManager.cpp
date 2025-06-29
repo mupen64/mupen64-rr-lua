@@ -16,7 +16,7 @@
 #include <components/Dispatcher.h>
 #include <components/MGECompositor.h>
 #include <lua/LuaRenderer.h>
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 
 namespace EncodingManager
 {

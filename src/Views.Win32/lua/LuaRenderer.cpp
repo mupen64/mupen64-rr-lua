@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
 #include <DialogService.h>
 #include <components/Statusbar.h>
-#include <lua/LuaConsole.h>
+#include <lua/LuaManager.h>
 #include <lua/LuaRenderer.h>
 #include <lua/presenters/DCompPresenter.h>
 #include <lua/presenters/GDIPresenter.h>
@@ -55,7 +55,7 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             if (!success)
             {
-                destroy_lua_environment(lua);
+                LuaManager::destroy_environment(lua);
             }
 
             return 0;
@@ -90,7 +90,7 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             if (!success)
             {
-                destroy_lua_environment(lua);
+                LuaManager::destroy_environment(lua);
             }
 
             return 0;
