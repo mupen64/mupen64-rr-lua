@@ -43,10 +43,14 @@ namespace LuaDialog
     void load_running_scripts();
 
     /**
-     * \brief Prints text to the console of a Lua context.
-     * \param ctx The Lua context to print to.
+     * \brief Prints text to the console associated with a Lua environment.
+     * \param ctx The Lua environment to print to.
      * \param text The text to print.
      */
-    void print(t_lua_wnd_ctx& ctx, const std::wstring& text);
+    void print(const t_lua_environment& ctx, const std::wstring& text);
 
+    /**
+     * \brief Gets the handle of the Lua manager dialog window, or nullptr if the dialog is not open.
+     */
+    HWND hwnd();
 } // namespace LuaDialog

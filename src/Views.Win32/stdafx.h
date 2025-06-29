@@ -43,6 +43,7 @@ extern "C" {
 #include <commdlg.h>
 #include <unordered_set>
 #include <stacktrace>
+#include <expected>
 
 #include <Loggers.h>
 #include <MiscHelpers.h>

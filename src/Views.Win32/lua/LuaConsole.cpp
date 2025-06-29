@@ -5,14 +5,12 @@
  */
 
 #include "stdafx.h"
-#include "LuaConsole.h"
-#include "Config.h"
-#include "DialogService.h"
-#include "LuaCallbacks.h"
-#include "LuaRegistry.h"
+#include <lua/LuaConsole.h>
+#include <Config.h>
+#include <DialogService.h>
+#include <lua/LuaCallbacks.h>
+#include <lua/LuaRegistry.h>
 #include <lua/LuaRenderer.h>
-
-const auto INSTANCE_CTX_PROP = L"mup_lua_prop";
 
 core_buttons last_controller_data[4];
 core_buttons new_controller_data[4];
@@ -72,26 +70,25 @@ void destroy_lua_environment(t_lua_environment* lua)
     std::erase_if(g_lua_environments, [=](const t_lua_environment* v) {
         return v == lua;
     });
-    lua->wnd_ctx->env = nullptr;
     rebuild_lua_env_map();
 
     lua_close(lua->L);
     lua->L = nullptr;
-    lua->wnd_ctx->destroyed();
+    lua->destroyed();
     LuaRenderer::destroy_renderer(&lua->rctx);
 
     g_view_logger->info("Lua destroyed");
 }
 
-std::string create_lua_environment(const std::filesystem::path& path, t_lua_wnd_ctx* inst_wnd_ctx, const std::function<void(const std::wstring& path)>& print_callback)
+std::expected<t_lua_environment*, std::wstring> create_lua_environment(const std::filesystem::path& path, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback)
 {
     assert(is_on_gui_thread());
 
     auto lua = new t_lua_environment();
 
     lua->path = path;
+    lua->destroyed = destroyed_callback;
     lua->print = print_callback;
-    lua->wnd_ctx = inst_wnd_ctx;
     lua->rctx = LuaRenderer::default_rendering_context();
 
     lua->L = luaL_newstate();
@@ -101,7 +98,6 @@ std::string create_lua_environment(const std::filesystem::path& path, t_lua_wnd_
 
     // NOTE: We need to add the lua to the global map already since it may receive callbacks while its executing the global code
     g_lua_environments.push_back(lua);
-    inst_wnd_ctx->env = lua;
     rebuild_lua_env_map();
 
     bool has_error = false;
@@ -140,20 +136,21 @@ std::string create_lua_environment(const std::filesystem::path& path, t_lua_wnd_
         has_error = true;
     }
 
-    std::string error_msg;
     if (has_error)
     {
         g_lua_environments.pop_back();
-        inst_wnd_ctx->env = nullptr;
         rebuild_lua_env_map();
 
-        error_msg = lua_tostring(lua->L, -1);
+        const auto error = io_service.string_to_wstring(lua_tostring(lua->L, -1));
         destroy_lua_environment(lua);
+
         delete lua;
         lua = nullptr;
+
+        return std::unexpected(error);
     }
 
-    return error_msg;
+    return lua;
 }
 
 

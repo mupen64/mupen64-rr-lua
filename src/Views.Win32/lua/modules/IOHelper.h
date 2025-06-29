@@ -7,6 +7,7 @@
 #pragma once
 
 #include <components/FilePicker.h>
+#include <components/LuaDialog.h>
 
 namespace LuaCore::IOHelper
 {
@@ -22,7 +23,9 @@ namespace LuaCore::IOHelper
 
         std::wstring path;
 
-        EnableWindow(lua->wnd_ctx->hwnd, FALSE);
+        const auto lua_dialog_hwnd = LuaDialog::hwnd();
+        EnableWindow(lua_dialog_hwnd, FALSE);
+
         if (type == 0)
         {
             path = FilePicker::show_open_dialog(L"o_lua_api", g_main_hwnd, filter);
@@ -31,7 +34,8 @@ namespace LuaCore::IOHelper
         {
             path = FilePicker::show_save_dialog(L"s_lua_api", g_main_hwnd, filter);
         }
-        EnableWindow(lua->wnd_ctx->hwnd, TRUE);
+
+        EnableWindow(lua_dialog_hwnd, TRUE);
         lua_pushstring(L, io_service.wstring_to_string(path).c_str());
         return 1;
     }

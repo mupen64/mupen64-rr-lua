@@ -3,81 +3,122 @@
 #include <components/LuaDialog.h>
 #include <lua/LuaConsole.h>
 
+// wParam: either nullptr, or a pointer to a t_instance_context whose running state has changed
 #define MUPM_RUNNING_STATE_CHANGED (WM_USER + 24)
+
 #define MUPM_REBUILD_INSTANCE_LIST (WM_USER + 25)
+
+struct t_instance_context {
+    HWND hwnd{};
+    std::filesystem::path typed_path{};
+    std::wstring logs{};
+    t_lua_environment* env{};
+};
 
 struct t_dialog_state {
     HWND mgr_hwnd{};
     HWND inst_hwnd{};
     RECT initial_rect{};
-    std::vector<std::shared_ptr<t_lua_wnd_ctx>> stored_running_environments{};
+    std::vector<std::shared_ptr<t_instance_context>> stored_contexts{};
 };
 
-static t_dialog_state g_lua_mgr{};
-static std::vector<std::shared_ptr<t_lua_wnd_ctx>> g_lua_instance_wnd_ctxs{};
+static t_dialog_state g_dlg{};
+static std::vector<std::shared_ptr<t_instance_context>> g_lua_instance_wnd_ctxs{};
 
-static void lua_instance_stop(const t_lua_wnd_ctx& ctx)
+static void print(t_instance_context& ctx, const std::wstring& text)
+{
+    constexpr auto max_buffer = 0x7000;
+
+    if (IsWindow(ctx.hwnd))
+    {
+        HWND con_wnd = GetDlgItem(ctx.hwnd, IDC_LOG);
+        int length = GetWindowTextLength(con_wnd);
+        if (length >= max_buffer)
+        {
+            SendMessage(con_wnd, EM_SETSEL, 0, length / 2);
+            SendMessage(con_wnd, EM_REPLACESEL, false, (LPARAM) "");
+            length = GetWindowTextLength(con_wnd);
+        }
+        SendMessage(con_wnd, EM_SETSEL, length, length);
+        SendMessage(con_wnd, EM_REPLACESEL, false, (LPARAM)text.c_str());
+    }
+
+    ctx.logs += text;
+
+    if (ctx.logs.size() > max_buffer)
+    {
+        ctx.logs.erase(0, ctx.logs.size() - max_buffer);
+    }
+}
+
+static void stop(t_instance_context& ctx)
 {
     if (!ctx.env)
     {
         return;
     }
+
     destroy_lua_environment(ctx.env);
+    ctx.env = nullptr;
 }
 
-static void lua_instance_start(t_lua_wnd_ctx* ctx, const std::filesystem::path& path)
+static void start(t_instance_context* ctx, const std::filesystem::path& path)
 {
     SendMessage(ctx->hwnd, WM_COMMAND, MAKEWPARAM(IDC_STOP, BN_CLICKED), 0);
 
-    const auto error = create_lua_environment(path, ctx, [=](const std::wstring& text) {
-        LuaDialog::print(*ctx, text);
+    const auto result = create_lua_environment(
+    path,
+    [=] {
+        PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+    },
+    [=](const std::wstring& text) {
+        print(*ctx, text);
     });
 
-    if (!error.empty())
+    if (!result.has_value())
     {
-        LuaDialog::print(*ctx, io_service.string_to_wstring(error));
+        print(*ctx, result.error());
         return;
     }
+
+    ctx->env = result.value();
 
     PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
 }
 
-static std::shared_ptr<t_lua_wnd_ctx> add_and_select_instance(const std::filesystem::path& path)
+static std::shared_ptr<t_instance_context> add_and_select_instance(const std::filesystem::path& path)
 {
-    const auto ctx = std::make_shared<t_lua_wnd_ctx>();
-    ctx->path = path;
-    ctx->destroyed = [=] {
-        PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
-    };
+    const auto ctx = std::make_shared<t_instance_context>();
+    ctx->typed_path = path;
 
     g_lua_instance_wnd_ctxs.insert(g_lua_instance_wnd_ctxs.begin(), ctx);
 
-    if (!IsWindow(g_lua_mgr.mgr_hwnd))
+    if (!IsWindow(g_dlg.mgr_hwnd))
     {
         return ctx;
     }
 
-    SendMessage(g_lua_mgr.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
-    ListBox_SetCurSel(GetDlgItem(g_lua_mgr.mgr_hwnd, IDC_INSTANCES), 0);
-    SendMessage(g_lua_mgr.mgr_hwnd, WM_COMMAND, MAKEWPARAM(IDC_INSTANCES, LBN_SELCHANGE), 0);
+    SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
+    ListBox_SetCurSel(GetDlgItem(g_dlg.mgr_hwnd, IDC_INSTANCES), 0);
+    SendMessage(g_dlg.mgr_hwnd, WM_COMMAND, MAKEWPARAM(IDC_INSTANCES, LBN_SELCHANGE), 0);
 
     return ctx;
 }
 
 INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    auto ctx = (t_lua_wnd_ctx*)GetWindowLongPtr(hwnd, GWL_USERDATA);
+    auto ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWL_USERDATA);
 
     switch (msg)
     {
     case WM_INITDIALOG:
         SetWindowLongPtr(hwnd, GWL_USERDATA, lparam);
 
-        ctx = (t_lua_wnd_ctx*)GetWindowLongPtr(hwnd, GWL_USERDATA);
+        ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWL_USERDATA);
 
         ctx->hwnd = hwnd;
 
-        Edit_SetText(GetDlgItem(hwnd, IDC_PATH), ctx->path.c_str());
+        Edit_SetText(GetDlgItem(hwnd, IDC_PATH), ctx->env ? ctx->env->path.c_str() : ctx->typed_path.c_str());
         Edit_SetText(GetDlgItem(hwnd, IDC_LOG), ctx->logs.c_str());
 
         PostMessage(hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
@@ -107,7 +148,7 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
                     break;
                 }
 
-                ctx->path = path;
+                ctx->typed_path = path;
 
                 Edit_SetText(GetDlgItem(hwnd, IDC_PATH), path.c_str());
                 break;
@@ -117,11 +158,11 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
                 wchar_t path[MAX_PATH]{};
                 Edit_GetText(GetDlgItem(ctx->hwnd, IDC_PATH), path, std::size(path));
 
-                lua_instance_start(ctx, path);
+                start(ctx, path);
                 break;
             }
         case IDC_STOP:
-            lua_instance_stop(*ctx);
+            stop(*ctx);
             break;
         case IDC_CLEAR:
             ctx->logs = L"";
@@ -159,7 +200,7 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
             SetWindowPos(hwnd, 0, 0, 0, effective_rc.right + dlg_rect.right, effective_rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
 
-            g_lua_mgr.initial_rect = mgr_rc;
+            g_dlg.initial_rect = mgr_rc;
 
             PostMessage(hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 
@@ -169,9 +210,9 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         DestroyWindow(hwnd);
         return TRUE;
     case WM_DESTROY:
-        DestroyWindow(g_lua_mgr.inst_hwnd);
-        g_lua_mgr.inst_hwnd = nullptr;
-        g_lua_mgr.mgr_hwnd = nullptr;
+        DestroyWindow(g_dlg.inst_hwnd);
+        g_dlg.inst_hwnd = nullptr;
+        g_dlg.mgr_hwnd = nullptr;
         break;
     case MUPM_REBUILD_INSTANCE_LIST:
         {
@@ -179,7 +220,7 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             ListBox_ResetContent(hlb);
             for (const auto& ctx : g_lua_instance_wnd_ctxs)
             {
-                const auto index = ListBox_AddString(hlb, ctx->path.stem().c_str());
+                const auto index = ListBox_AddString(hlb, ctx->typed_path.stem().c_str());
                 ListBox_SetItemData(hlb, index, reinterpret_cast<LPARAM>(ctx.get()));
             }
             break;
@@ -200,15 +241,15 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
                     break;
                 }
 
-                if (IsWindow(g_lua_mgr.inst_hwnd))
+                if (IsWindow(g_dlg.inst_hwnd))
                 {
-                    DestroyWindow(g_lua_mgr.inst_hwnd);
+                    DestroyWindow(g_dlg.inst_hwnd);
                 }
 
                 const auto param = g_lua_instance_wnd_ctxs[index].get();
-                g_lua_mgr.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
+                g_dlg.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
 
-                SetWindowPos(g_lua_mgr.inst_hwnd, nullptr, g_lua_mgr.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+                SetWindowPos(g_dlg.inst_hwnd, nullptr, g_dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
                 break;
             }
@@ -234,27 +275,27 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
 void LuaDialog::show()
 {
-    if (g_lua_mgr.mgr_hwnd)
+    if (g_dlg.mgr_hwnd)
     {
-        BringWindowToTop(g_lua_mgr.mgr_hwnd);
+        BringWindowToTop(g_dlg.mgr_hwnd);
         return;
     }
-    g_lua_mgr.mgr_hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUA_MANAGER), g_main_hwnd, lua_manager_dialog_proc);
-    ShowWindow(g_lua_mgr.mgr_hwnd, SW_SHOW);
+    g_dlg.mgr_hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUA_MANAGER), g_main_hwnd, lua_manager_dialog_proc);
+    ShowWindow(g_dlg.mgr_hwnd, SW_SHOW);
 }
 
 void LuaDialog::add_and_start(const std::filesystem::path& path)
 {
     show();
     const auto ctx = add_and_select_instance(path);
-    lua_instance_start(ctx.get(), path);
+    start(ctx.get(), path);
 }
 
 void LuaDialog::stop_all()
 {
     for (const auto& ctx : g_lua_instance_wnd_ctxs)
     {
-        lua_instance_stop(*ctx.get());
+        stop(*ctx.get());
     }
 }
 
@@ -266,48 +307,43 @@ void LuaDialog::close_all()
 
 void LuaDialog::store_running_scripts()
 {
-    g_lua_mgr.stored_running_environments.clear();
+    g_dlg.stored_contexts.clear();
     for (const auto& ctx : g_lua_instance_wnd_ctxs)
     {
         if (!ctx->env)
         {
             continue;
         }
-        g_lua_mgr.stored_running_environments.emplace_back(ctx);
+        g_dlg.stored_contexts.emplace_back(ctx);
     }
 }
 
 void LuaDialog::load_running_scripts()
 {
-    for (const auto& ctx : g_lua_mgr.stored_running_environments)
+    for (const auto& ctx : g_dlg.stored_contexts)
     {
-        lua_instance_start(ctx.get(), ctx->path);
+        start(ctx.get(), ctx->typed_path);
     }
-    g_lua_mgr.stored_running_environments.clear();
+    g_dlg.stored_contexts.clear();
 }
 
-void LuaDialog::print(t_lua_wnd_ctx& ctx, const std::wstring& text)
+void LuaDialog::print(const t_lua_environment& ctx, const std::wstring& text)
 {
-    constexpr auto max_buffer = 0x7000;
-
-    if (IsWindow(ctx.hwnd))
+    // Find the context for the given Lua environment
+    for (const auto& wnd_ctx : g_lua_instance_wnd_ctxs)
     {
-        HWND con_wnd = GetDlgItem(ctx.hwnd, IDC_LOG);
-        int length = GetWindowTextLength(con_wnd);
-        if (length >= max_buffer)
+        if (!wnd_ctx->env || wnd_ctx->env != &ctx)
         {
-            SendMessage(con_wnd, EM_SETSEL, 0, length / 2);
-            SendMessage(con_wnd, EM_REPLACESEL, false, (LPARAM) "");
-            length = GetWindowTextLength(con_wnd);
+            continue;
         }
-        SendMessage(con_wnd, EM_SETSEL, length, length);
-        SendMessage(con_wnd, EM_REPLACESEL, false, (LPARAM)text.c_str());
-    }
 
-    ctx.logs += text;
+        ::print(*wnd_ctx, text);
 
-    if (ctx.logs.size() > max_buffer)
-    {
-        ctx.logs.erase(0, ctx.logs.size() - max_buffer);
+        return;
     }
+}
+
+HWND LuaDialog::hwnd()
+{
+    return g_dlg.mgr_hwnd;
 }

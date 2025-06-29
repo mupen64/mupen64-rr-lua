@@ -15,15 +15,14 @@ static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 void lua_init();
 
 /**
- * \brief Creates a lua environment, adding it to the global map and running it if the operation succeeds
- * \param path The script path
- * \param inst_wnd_ctx The associated context.
- * \return An error string, or an empty string if the operation succeeded
+ * \brief Creates a lua environment.
+ * \param path The script path.
+ * \return The newly created lua environment or an error message if the operation failed.
  */
-std::string create_lua_environment(const std::filesystem::path& path, t_lua_wnd_ctx* inst_wnd_ctx, const std::function<void(const std::wstring& path)>& print_callback);
+std::expected<t_lua_environment*, std::wstring> create_lua_environment(const std::filesystem::path& path, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback);
 
 /**
- * \brief Stops, destroys and removes a lua environment from the environment map
+ * \brief Destroys a lua environment.
  */
 void destroy_lua_environment(t_lua_environment*);
 
