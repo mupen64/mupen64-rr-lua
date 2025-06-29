@@ -191,7 +191,7 @@ namespace EncodingManager
             // Then, blit the GDI back DCs
             for (auto& lua : g_lua_environments)
             {
-                TransparentBlt(hy_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, LUA_GDI_COLOR_MASK);
+                TransparentBlt(hy_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::LUA_GDI_COLOR_MASK);
             }
 
             BITMAPINFO bmp_info{};

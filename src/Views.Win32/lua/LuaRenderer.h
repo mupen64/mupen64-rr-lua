@@ -5,6 +5,8 @@
  */
 namespace LuaRenderer
 {
+    constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
+
     /**
      * \brief Initializes the subsystem.
      */
@@ -57,4 +59,8 @@ namespace LuaRenderer
      */
     void loadscreen_reset(t_lua_rendering_context*);
 
+    /**
+     * \brief Gets a brush containing a color that, when drawn to the GDI back dc, will be interpreted as an alpha mask by the renderer.
+     */
+    HBRUSH alpha_mask_brush();
 } // namespace LuaRenderer

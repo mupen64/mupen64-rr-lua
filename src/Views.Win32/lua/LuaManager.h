@@ -6,9 +6,6 @@
 
 #pragma once
 
-constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
-static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
-
 namespace LuaManager
 {
     /**

@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
+#include <lua/LuaRenderer.h>
 #include <lua/presenters/GDIPresenter.h>
-#include <lua/LuaManager.h>
 
 GDIPresenter::~GDIPresenter()
 {
@@ -34,8 +34,8 @@ bool GDIPresenter::init(HWND hwnd)
     ReleaseDC(hwnd, gdi_dc);
 
     // 2. Make the provided window (which must have WS_EX_LAYERED) mask out our clear color, then fill the back DC with that color (effectively clearing it)
-    SetLayeredWindowAttributes(hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
-    FillRect(m_gdi_back_dc, &rect, g_alpha_mask_brush);
+    SetLayeredWindowAttributes(hwnd, LuaRenderer::LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
+    FillRect(m_gdi_back_dc, &rect, LuaRenderer::alpha_mask_brush());
 
     // 3. Create a D2D1 RT and point it to our back DC
     D2D1_RENDER_TARGET_PROPERTIES props =
@@ -84,10 +84,10 @@ void GDIPresenter::end_present()
 
 void GDIPresenter::blit(HDC hdc, RECT rect)
 {
-    TransparentBlt(hdc, 0, 0, m_size.width, m_size.height, m_gdi_back_dc, 0, 0, m_size.width, m_size.height, LUA_GDI_COLOR_MASK);
+    TransparentBlt(hdc, 0, 0, m_size.width, m_size.height, m_gdi_back_dc, 0, 0, m_size.width, m_size.height, LuaRenderer::LUA_GDI_COLOR_MASK);
 }
 
 D2D1::ColorF GDIPresenter::adjust_clear_color(const D2D1::ColorF color) const
 {
-    return D2D1::ColorF(LUA_GDI_COLOR_MASK);
+    return D2D1::ColorF(LuaRenderer::LUA_GDI_COLOR_MASK);
 }
