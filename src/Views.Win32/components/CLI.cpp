@@ -16,7 +16,7 @@
 #include <components/CLI.h>
 #include <components/Compare.h>
 #include <components/Dispatcher.h>
-#include <lua/LuaConsole.h>
+#include <components/LuaDialog.h>
 
 struct t_cli_params {
     std::filesystem::path rom{};
@@ -106,7 +106,7 @@ static void start_lua()
         stream << cli_params.lua.wstring();
         while (std::getline(stream, script, L';'))
         {
-            LuaManager::add_and_run(script);
+            LuaDialog::add_and_start(script);
         }
     });
 }

@@ -270,6 +270,7 @@
         <ClInclude Include="src\Views.Win32\components\FilePicker.h" />
         <ClInclude Include="src\Views.Win32\components\CLI.h" />
         <ClInclude Include="src\Views.Win32\components\SettingsListView.h" />
+        <ClInclude Include="src\Views.Win32\components\LuaDialog.h" />
         <ClInclude Include="src\Views.Win32\Main.h" />
         <ClInclude Include="src\Views.Win32\Config.h" />
         <ClInclude Include="src\Views.Win32\lua\LuaTypes.h" />
@@ -335,6 +336,7 @@
         <ClCompile Include="src\Views.Win32\components\FilePicker.cpp" />
         <ClCompile Include="src\Views.Win32\components\CLI.cpp"/>
         <ClCompile Include="src\Views.Win32\components\SettingsListView.cpp"/>
+        <ClCompile Include="src\Views.Win32\components\LuaDialog.cpp" />
         <ClCompile Include="src\Views.Win32\Loggers.cpp"/>
         <ClCompile Include="src\Views.Win32\Main.cpp"/>
         <ClCompile Include="src\Views.Win32\lua\LuaConsole.cpp"/>

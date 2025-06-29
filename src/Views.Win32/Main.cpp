@@ -30,6 +30,7 @@
 #include <components/Seeker.h>
 #include <components/Statusbar.h>
 #include <components/UpdateChecker.h>
+#include <components/LuaDialog.h>
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaConsole.h>
 #include <lua/LuaRenderer.h>
@@ -608,8 +609,10 @@ void on_task_changed(std::any data)
 
 void on_emu_stopping(std::any)
 {
-    LuaManager::save_running_scripts();
-    g_main_window_dispatcher->invoke(lua_stop_all_scripts);
+    g_main_window_dispatcher->invoke([] {
+        LuaDialog::store_running_scripts();
+        LuaDialog::stop_all();
+    });
 }
 
 void on_emu_launched_changed(std::any data)
@@ -643,7 +646,7 @@ void on_emu_launched_changed(std::any data)
                 RecentMenu::add(g_config.recent_rom_paths, rom_path.wstring(), g_config.is_recent_rom_paths_frozen, ID_RECENTROMS_FIRST, g_recent_roms_menu);
             }
 
-            LuaManager::recall_and_start_scripts();
+            LuaDialog::load_running_scripts();
         }
 
         if (!value && previous_value)
@@ -970,7 +973,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             }
             else if (extension == ".lua")
             {
-                LuaManager::add_and_run(path);
+                LuaDialog::add_and_start(path);
             }
             break;
         }
@@ -1189,7 +1192,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (confirm_user_exit())
         {
-            lua_close_all_scripts();
+            LuaDialog::close_all();
+
             std::thread([] {
                 g_core_ctx->vr_close_rom(true);
                 g_main_window_dispatcher->invoke([] {
@@ -1357,10 +1361,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             case IDM_SHOW_LUA_MANAGER:
-                LuaManager::show_manager_dialog();
+                LuaDialog::show();
                 break;
             case IDM_CLOSE_ALL_LUA:
-                lua_close_all_scripts();
+                LuaDialog::close_all();
                 break;
             case IDM_DEBUG_WARP_MODIFY:
                 {
@@ -1948,7 +1952,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (path.empty())
                         break;
 
-                    LuaManager::add_and_run(path);
+                    LuaDialog::add_and_start(path);
                 }
                 break;
             }

@@ -67,6 +67,7 @@ struct t_lua_wnd_ctx {
     std::filesystem::path path{};
     std::wstring logs{};
     t_lua_environment* env{};
+    std::function<void()> destroyed{};
 };
 
 /**
@@ -74,7 +75,10 @@ struct t_lua_wnd_ctx {
  */
 struct t_lua_environment {
     std::filesystem::path path;
+    // TODO: Remove wnd_ctx from lua_environment - the LuaConsole implementation shouldn't really know about it...
     t_lua_wnd_ctx* wnd_ctx;
     lua_State* L;
     t_lua_rendering_context rctx;
+
+    std::function<void(const std::wstring& path)> print{};
 };
