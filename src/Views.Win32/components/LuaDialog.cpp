@@ -76,6 +76,7 @@ static void start(t_instance_context* ctx, const std::filesystem::path& path)
     path,
     [=] {
         PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+        PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
     },
     [=](const std::wstring& text) {
         print(*ctx, text);
@@ -90,6 +91,7 @@ static void start(t_instance_context* ctx, const std::filesystem::path& path)
     ctx->env = result.value();
 
     PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+    PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 }
 
 static std::shared_ptr<t_instance_context> add_and_select_instance(const std::filesystem::path& path)
@@ -130,8 +132,8 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
         PostMessage(hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
 
         ResizeAnchor::add_anchors(hwnd, {
-                                        {GetDlgItem(hwnd, IDC_PATH), ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right },
-                                        {GetDlgItem(hwnd, IDC_BROWSE), ResizeAnchor::AnchorFlags::Right },
+                                        {GetDlgItem(hwnd, IDC_PATH), ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right},
+                                        {GetDlgItem(hwnd, IDC_BROWSE), ResizeAnchor::AnchorFlags::Right},
                                         {GetDlgItem(hwnd, IDC_LOG), ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right | ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom},
                                         });
         break;
@@ -234,7 +236,14 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             ListBox_ResetContent(hlb);
             for (const auto& ctx : g_lua_instance_wnd_ctxs)
             {
-                const auto index = ListBox_AddString(hlb, ctx->typed_path.stem().c_str());
+                std::wstring display_name;
+                if (ctx->env)
+                {
+                    display_name += L"* ";
+                }
+                display_name += ctx->typed_path.filename().wstring();
+
+                const auto index = ListBox_AddString(hlb, display_name.c_str());
                 ListBox_SetItemData(hlb, index, reinterpret_cast<LPARAM>(ctx.get()));
             }
             break;
