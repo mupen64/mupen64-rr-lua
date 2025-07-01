@@ -295,6 +295,7 @@
         <ClInclude Include="src\Views.Win32\Messenger.h" />
         <ClInclude Include="src\Views.Win32\Plugin.h" />
         <ClInclude Include="src\Views.Win32\resource.h" />
+        <ClInclude Include="src\Views.Win32\ResizeAnchor.h" />
     </ItemGroup>
     <ItemGroup>
         <ClCompile Include="src\Views.Win32\stdafx.cpp">
@@ -347,6 +348,7 @@
         <ClCompile Include="src\Views.Win32\lua\presenters\GDIPresenter.cpp"/>
         <ClCompile Include="src\Views.Win32\Messenger.cpp"/>
         <ClCompile Include="src\Views.Win32\Plugin.cpp"/>
+        <ClCompile Include="src\Views.Win32\ResizeAnchor.cpp"/>
     </ItemGroup>
     <ItemGroup>
         <Image Include="src\Views.Win32\icons\flag_unknown.ico"/>

@@ -1,4 +1,10 @@
-﻿#include "stdafx.h"
+﻿/*
+ * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "stdafx.h"
 #include <components/FilePicker.h>
 #include <components/LuaDialog.h>
 #include <lua/LuaManager.h>
@@ -122,6 +128,12 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
         Edit_SetText(GetDlgItem(hwnd, IDC_LOG), ctx->logs.c_str());
 
         PostMessage(hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+
+        ResizeAnchor::add_anchors(hwnd, {
+                                        {GetDlgItem(hwnd, IDC_PATH), ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right },
+                                        {GetDlgItem(hwnd, IDC_BROWSE), ResizeAnchor::AnchorFlags::Right },
+                                        {GetDlgItem(hwnd, IDC_LOG), ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right | ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom},
+                                        });
         break;
     case WM_DESTROY:
         ctx->hwnd = nullptr;
@@ -204,6 +216,8 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
             PostMessage(hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 
+            ResizeAnchor::add_anchors(hwnd, {{GetDlgItem(hwnd, IDC_ADD_INSTANCE), ResizeAnchor::AnchorFlags::Bottom}, {GetDlgItem(hwnd, IDC_INSTANCES), ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
+
             return TRUE;
         }
     case WM_CLOSE:
@@ -237,6 +251,7 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
                 if (IsWindow(g_dlg.inst_hwnd))
                 {
+                    ResizeAnchor::remove_anchor(hwnd, g_dlg.inst_hwnd);
                     DestroyWindow(g_dlg.inst_hwnd);
                 }
 
@@ -245,11 +260,13 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
                 {
                     break;
                 }
-            
+
                 const auto param = g_lua_instance_wnd_ctxs[index].get();
                 g_dlg.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
 
                 SetWindowPos(g_dlg.inst_hwnd, nullptr, g_dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+
+                ResizeAnchor::add_anchors(hwnd, {{g_dlg.inst_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right | ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
 
                 break;
             }

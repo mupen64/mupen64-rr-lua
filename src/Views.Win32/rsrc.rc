@@ -415,7 +415,7 @@ BEGIN
     PUSHBUTTON      "Clear",IDC_CLEAR,4,24,50,14
     PUSHBUTTON      "Stop",IDC_STOP,56,24,50,14,WS_DISABLED
     PUSHBUTTON      "Start",IDC_START,108,24,50,14
-    EDITTEXT        IDC_LOG,4,44,208,136,ES_MULTILINE | ES_READONLY | WS_VSCROLL
+    EDITTEXT        IDC_LOG,4,44,208,149,ES_MULTILINE | ES_READONLY | WS_VSCROLL
 END
 
 /////////////////////////////////////////////////////////////////////////////
