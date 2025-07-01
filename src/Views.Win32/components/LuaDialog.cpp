@@ -68,29 +68,29 @@ static void stop(t_instance_context& ctx)
     ctx.env = nullptr;
 }
 
-static void start(t_instance_context* ctx, const std::filesystem::path& path)
+static void start(t_instance_context& ctx, const std::filesystem::path& path)
 {
-    SendMessage(ctx->hwnd, WM_COMMAND, MAKEWPARAM(IDC_STOP, BN_CLICKED), 0);
+    SendMessage(ctx.hwnd, WM_COMMAND, MAKEWPARAM(IDC_STOP, BN_CLICKED), 0);
 
     const auto result = LuaManager::create_environment(
     path,
-    [=] {
-        PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+    [&] {
+        PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
         PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
     },
-    [=](const std::wstring& text) {
-        print(*ctx, text);
+    [&](const std::wstring& text) {
+        print(ctx, text);
     });
 
     if (!result.has_value())
     {
-        print(*ctx, result.error());
+        print(ctx, result.error());
         return;
     }
 
-    ctx->env = result.value();
+    ctx.env = result.value();
 
-    PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+    PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
     PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 }
 
@@ -172,7 +172,7 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
                 wchar_t path[MAX_PATH]{};
                 Edit_GetText(GetDlgItem(ctx->hwnd, IDC_PATH), path, std::size(path));
 
-                start(ctx, path);
+                start(*ctx, path);
                 break;
             }
         case IDC_STOP:
@@ -248,6 +248,51 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             }
             break;
         }
+    case WM_CONTEXTMENU:
+        {
+            const HWND lb_hwnd = GetDlgItem(hwnd, IDC_INSTANCES);
+
+            if (wparam != (WPARAM)lb_hwnd)
+            {
+                break;
+            }
+
+            const auto item_count = ListBox_GetCount(lb_hwnd);
+
+            if (item_count == 0)
+            {
+                break;
+            }
+
+            const auto selected_index = ListBox_GetCurSel(lb_hwnd);
+            if (selected_index == LB_ERR || selected_index >= item_count)
+            {
+                break;
+            }
+
+            const auto& selected_ctx = g_lua_instance_wnd_ctxs[selected_index];
+
+            HMENU h_menu = CreatePopupMenu();
+            const int disable_if_stopped = selected_ctx->env ? MF_ENABLED : MF_DISABLED;
+            AppendMenu(h_menu, MF_ENABLED | MF_STRING, 1, selected_ctx->env ? L"Restart" : L"Start");
+            AppendMenu(h_menu, disable_if_stopped | MF_STRING, 2, L"Stop");
+        
+            const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), hwnd, 0);
+
+            switch (offset)
+            {
+            case 1:
+                start(*selected_ctx, selected_ctx->typed_path);
+                break;
+            case 2:
+                stop(*selected_ctx);
+                break;
+            default:
+                break;
+            }
+
+            break;
+        }
     case WM_COMMAND:
         switch (LOWORD(wparam))
         {
@@ -314,7 +359,7 @@ void LuaDialog::add_and_start(const std::filesystem::path& path)
 {
     show();
     const auto ctx = add_and_select_instance(path);
-    start(ctx.get(), path);
+    start(*ctx, path);
 }
 
 void LuaDialog::stop_all()
@@ -351,7 +396,7 @@ void LuaDialog::load_running_scripts()
 {
     for (const auto& ctx : g_dlg.stored_contexts)
     {
-        start(ctx.get(), ctx->typed_path);
+        start(*ctx, ctx->typed_path);
     }
     g_dlg.stored_contexts.clear();
 }
