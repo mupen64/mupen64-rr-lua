@@ -5,6 +5,7 @@
  */
 
 #include "stdafx.h"
+#include <Messenger.h>
 #include <components/FilePicker.h>
 #include <components/LuaDialog.h>
 #include <lua/LuaManager.h>
@@ -82,6 +83,8 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
     [&](const std::wstring& text) {
         print(ctx, text);
     });
+
+    Messenger::broadcast(Messenger::Message::ScriptStarted, path);
 
     if (!result.has_value())
     {
