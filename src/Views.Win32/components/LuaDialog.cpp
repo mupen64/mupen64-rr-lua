@@ -155,7 +155,7 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
         ctx->hwnd = hwnd;
 
-        Edit_SetText(GetDlgItem(hwnd, IDC_PATH), ctx->env ? ctx->env->path.c_str() : ctx->typed_path.c_str());
+        Edit_SetText(GetDlgItem(hwnd, IDC_PATH), ctx->typed_path.c_str());
         Edit_SetText(GetDlgItem(hwnd, IDC_LOG), ctx->logs.c_str());
 
         PostMessage(hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
