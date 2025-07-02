@@ -33,7 +33,7 @@ static void run_auto(const int id, const std::filesystem::path& path)
         });
         break;
     case IDC_LIST_SCRIPTS:
-        LuaDialog::add_and_start(path);
+        LuaDialog::start_and_add_if_needed(path);
         break;
     default:
         break;

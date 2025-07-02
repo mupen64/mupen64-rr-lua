@@ -23,6 +23,12 @@ namespace LuaDialog
     void add_and_start(const std::filesystem::path& path);
 
     /**
+     * \brief Starts a Lua script if it's already present in the Lua instance manager, or adds and runs it if it's not present.
+     * \param path The path to the lua script to start.
+     */
+    void start_and_add_if_needed(const std::filesystem::path& path);
+
+    /**
      * \brief Stops all running Lua scripts.
      */
     void stop_all();

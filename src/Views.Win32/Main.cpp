@@ -973,7 +973,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             }
             else if (extension == ".lua")
             {
-                LuaDialog::add_and_start(path);
+                LuaDialog::start_and_add_if_needed(path);
             }
             break;
         }
@@ -1952,7 +1952,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (path.empty())
                         break;
 
-                    LuaDialog::add_and_start(path);
+                    LuaDialog::start_and_add_if_needed(path);
                 }
                 break;
             }
