@@ -98,7 +98,10 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
     PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 }
 
-static std::shared_ptr<t_instance_context> add_and_select_instance(const std::filesystem::path& path)
+/**
+ * \brief Inserts an instance to the front of the list of Lua instances, and returns a pointer to the context.
+ */
+static std::shared_ptr<t_instance_context> add_instance(const std::filesystem::path& path)
 {
     const auto ctx = std::make_shared<t_instance_context>();
     ctx->typed_path = path;
@@ -111,6 +114,20 @@ static std::shared_ptr<t_instance_context> add_and_select_instance(const std::fi
     }
 
     SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
+}
+
+/**
+ * \brief Performs the same operation as `add_instance`, but also selects the newly added instance in the manager dialog.
+ */
+static std::shared_ptr<t_instance_context> add_and_select_instance(const std::filesystem::path& path)
+{
+    const auto ctx = add_instance(path);
+
+    if (!IsWindow(g_dlg.mgr_hwnd))
+    {
+        return ctx;
+    }
+
     ListBox_SetCurSel(GetDlgItem(g_dlg.mgr_hwnd, IDC_INSTANCES), 0);
     SendMessage(g_dlg.mgr_hwnd, WM_COMMAND, MAKEWPARAM(IDC_INSTANCES, LBN_SELCHANGE), 0);
 
@@ -143,6 +160,26 @@ static void create_placeholder_dialog(t_dialog_state& dlg)
     SetWindowPos(dlg.placeholder_hwnd, nullptr, dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
     ResizeAnchor::add_anchors(dlg.mgr_hwnd, {{dlg.placeholder_hwnd, ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
     ResizeAnchor::add_anchors(dlg.placeholder_hwnd, {{GetDlgItem(dlg.placeholder_hwnd, IDC_STATIC), ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+}
+
+/**
+ * \brief Adds recent scripts to the instance list. If the script is already in the list, it will not be added again.
+ */
+static void add_recent_scripts_to_instance_list()
+{
+    for (const auto& path : g_config.recent_lua_script_paths)
+    {
+        const bool already_present = std::ranges::find_if(
+                                     g_lua_instance_wnd_ctxs,
+                                     [&](const auto& ctx) {
+                                         return ctx->typed_path == path;
+                                     }) != g_lua_instance_wnd_ctxs.end();
+
+        if (!already_present)
+        {
+            add_instance(path);
+        }
+    }
 }
 
 INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -256,6 +293,8 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             ResizeAnchor::add_anchors(hwnd, {{GetDlgItem(hwnd, IDC_ADD_INSTANCE), ResizeAnchor::AnchorFlags::Bottom}, {GetDlgItem(hwnd, IDC_INSTANCES), ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
 
             create_placeholder_dialog(g_dlg);
+
+            add_recent_scripts_to_instance_list();
 
             return TRUE;
         }
