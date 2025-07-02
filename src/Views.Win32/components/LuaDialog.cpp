@@ -194,6 +194,8 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
                 ctx->typed_path = path;
 
                 Edit_SetText(GetDlgItem(hwnd, IDC_PATH), path.c_str());
+                SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
+
                 break;
             }
         case IDC_START:
@@ -274,7 +276,8 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
                 {
                     display_name += L"* ";
                 }
-                display_name += ctx->typed_path.filename().wstring();
+                const auto& effective_path = ctx->env ? ctx->env->path : ctx->typed_path;
+                display_name += effective_path.filename().wstring();
 
                 const auto index = ListBox_AddString(hlb, display_name.c_str());
                 ListBox_SetItemData(hlb, index, reinterpret_cast<LPARAM>(ctx.get()));
@@ -363,14 +366,14 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
                         }
 
                         destroy_placeholder_dialog(g_dlg);
-                    
+
                         const auto param = g_lua_instance_wnd_ctxs[index].get();
                         g_dlg.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
 
                         SetWindowPos(g_dlg.inst_hwnd, nullptr, g_dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
                         ResizeAnchor::add_anchors(hwnd, {{g_dlg.inst_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right | ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
-                    
+
                         break;
                     }
                 case LBN_DBLCLK:
