@@ -521,6 +521,7 @@
 #define IDC_STOP 40121
 #define IDC_START 40122
 #define IDC_LOG 40123
+#define IDD_LUA_INSTANCE_PLACEHOLDER 40124
 #define IDC_STATIC -1
 
 // Next default values for new objects

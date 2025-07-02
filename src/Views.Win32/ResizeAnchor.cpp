@@ -69,6 +69,22 @@ static LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
                     const auto dist = ctx->initial_rects[hwnd].right - ctx->initial_rects[anchor_hwnd].left;
                     SetWindowPos(anchor_hwnd, nullptr, wnd_rc.right - dist, ctl_rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
                 }
+
+                const bool invalidate = static_cast<bool>(anchor_type & AnchorFlags::Invalidate);
+                const bool erase = static_cast<bool>(anchor_type & AnchorFlags::Erase);
+                if (invalidate || erase)
+                {
+                    UINT flags{};
+                    if (invalidate)
+                    {
+                        flags |= RDW_INVALIDATE;
+                    }
+                    if (erase)
+                    {
+                        flags |= RDW_ERASE;
+                    }
+                    RedrawWindow(anchor_hwnd, nullptr, nullptr, flags);
+                }
             }
             break;
         }
@@ -137,7 +153,7 @@ bool ResizeAnchor::add_anchors(HWND hwnd, const std::vector<std::pair<HWND, Anch
     SetProp(hwnd, CTX_PROP, ctx);
 
     SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
-
+    
     return true;
 }
 

@@ -24,6 +24,7 @@ struct t_instance_context {
 struct t_dialog_state {
     HWND mgr_hwnd{};
     HWND inst_hwnd{};
+    HWND placeholder_hwnd{};
     RECT initial_rect{};
     std::vector<std::shared_ptr<t_instance_context>> stored_contexts{};
 };
@@ -113,6 +114,34 @@ static std::shared_ptr<t_instance_context> add_and_select_instance(const std::fi
     return ctx;
 }
 
+/**
+ * \brief Destroys the placeholder dialog if it exists, removing its anchors from the manager dialog.
+ */
+static void destroy_placeholder_dialog(t_dialog_state& dlg)
+{
+    if (!IsWindow(dlg.placeholder_hwnd))
+    {
+        return;
+    }
+
+    ResizeAnchor::remove_anchor(dlg.mgr_hwnd, dlg.placeholder_hwnd);
+    DestroyWindow(dlg.placeholder_hwnd);
+    dlg.placeholder_hwnd = nullptr;
+}
+
+/**
+ * \brief Creates the placeholder dialog that is shown when no Lua instance is selected, destroying any existing placeholder dialog first.
+ */
+static void create_placeholder_dialog(t_dialog_state& dlg)
+{
+    destroy_placeholder_dialog(dlg);
+
+    dlg.placeholder_hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE_PLACEHOLDER), dlg.mgr_hwnd, nullptr);
+    SetWindowPos(dlg.placeholder_hwnd, nullptr, dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+    ResizeAnchor::add_anchors(dlg.mgr_hwnd, {{dlg.placeholder_hwnd, ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+    ResizeAnchor::add_anchors(dlg.placeholder_hwnd, {{GetDlgItem(dlg.placeholder_hwnd, IDC_STATIC), ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+}
+
 INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     auto ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWL_USERDATA);
@@ -189,7 +218,6 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
     default:
         break;
     }
-    // lparam is a lua environment pointer
     return FALSE;
 }
 
@@ -199,6 +227,8 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     {
     case WM_INITDIALOG:
         {
+            g_dlg.mgr_hwnd = hwnd;
+
             // Grow the manager dialog to fit the instance dialog (we need to manually load the template and read its width)
             DLGTEMPLATEEX* dlg_template{};
             load_resource_as_dialog_template(IDD_LUA_INSTANCE, &dlg_template);
@@ -216,9 +246,11 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
             g_dlg.initial_rect = mgr_rc;
 
-            PostMessage(hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
+            SendMessage(hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 
             ResizeAnchor::add_anchors(hwnd, {{GetDlgItem(hwnd, IDC_ADD_INSTANCE), ResizeAnchor::AnchorFlags::Bottom}, {GetDlgItem(hwnd, IDC_INSTANCES), ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
+
+            create_placeholder_dialog(g_dlg);
 
             return TRUE;
         }
@@ -226,6 +258,7 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         DestroyWindow(hwnd);
         return TRUE;
     case WM_DESTROY:
+        destroy_placeholder_dialog(g_dlg);
         DestroyWindow(g_dlg.inst_hwnd);
         g_dlg.inst_hwnd = nullptr;
         g_dlg.mgr_hwnd = nullptr;
@@ -325,16 +358,19 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
                         const auto index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_INSTANCES));
                         if (index == LB_ERR || index >= g_lua_instance_wnd_ctxs.size())
                         {
+                            create_placeholder_dialog(g_dlg);
                             break;
                         }
 
+                        destroy_placeholder_dialog(g_dlg);
+                    
                         const auto param = g_lua_instance_wnd_ctxs[index].get();
                         g_dlg.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
 
                         SetWindowPos(g_dlg.inst_hwnd, nullptr, g_dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 
                         ResizeAnchor::add_anchors(hwnd, {{g_dlg.inst_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right | ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
-
+                    
                         break;
                     }
                 case LBN_DBLCLK:
@@ -384,7 +420,7 @@ void LuaDialog::show()
         BringWindowToTop(g_dlg.mgr_hwnd);
         return;
     }
-    g_dlg.mgr_hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUA_MANAGER), g_main_hwnd, lua_manager_dialog_proc);
+    CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUA_MANAGER), g_main_hwnd, lua_manager_dialog_proc);
     ShowWindow(g_dlg.mgr_hwnd, SW_SHOW);
 }
 

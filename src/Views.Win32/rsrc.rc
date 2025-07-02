@@ -418,6 +418,13 @@ BEGIN
     EDITTEXT        IDC_LOG,4,44,208,149,ES_MULTILINE | ES_READONLY | WS_VSCROLL
 END
 
+IDD_LUA_INSTANCE_PLACEHOLDER DIALOGEX 0, 0, 220, 200
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+        LTEXT       "Select a Lua Instance for more details.",IDC_STATIC,5,5,205,188,SS_CENTER | SS_CENTERIMAGE | SS_NOPREFIX
+END
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Icon

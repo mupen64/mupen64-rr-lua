@@ -9,19 +9,34 @@
 namespace ResizeAnchor
 {
     /**
-     * \brief Flags used to specify how a window should be anchored to its parent window.
-     * \details
-     * Left will keep the window's X position relative to the parent window constant. This is a no-op on its own.
-     * Right will maintain the right edge of the window at a constant distance from the right edge of the parent window.
-     * Top will keep the window's Y position relative to the parent window constant. This is a no-op on its own.
-     * Bottom will maintain the bottom edge of the window at a constant distance from the bottom edge of the parent window.
-     * The flags can be combined using the bitwise OR operator to anchor a window on multiple sides, thereby causing the anchors to "pull" the window apart and growing it in the specified directions.
+     * \brief Flags used to specify a window's anchor behaviour.
+     * \details The flags can be combined using the bitwise OR operator to anchor a window on multiple sides, thereby causing the anchors to "pull" the window apart and growing it in the specified directions.
      */
     enum class AnchorFlags : uint64_t {
+        /**
+         * \brief Keep the window's X position relative to the parent window constant. This is a no-op on its own.
+         */
         Left = 1 << 1,
+        /**
+         * \brief Maintain the right edge of the window at a constant distance from the right edge of the parent window.
+         */
         Right = 1 << 2,
+        /**
+         * \brief Keep the window's Y position relative to the parent window constant. This is a no-op on its own.
+         */
         Top = 1 << 3,
+        /**
+         * \brief Maintain the bottom edge of the window at a constant distance from the bottom edge of the parent window.
+         */
         Bottom = 1 << 4,
+        /**
+         * \brief Invalidates the window when resized.
+         */
+        Invalidate = 1 << 5,
+        /**
+         * \brief Erases the window graphics when resized.
+         */
+        Erase = 1 << 6,
     };
 
     constexpr AnchorFlags operator|(AnchorFlags a, AnchorFlags b)
@@ -37,6 +52,7 @@ namespace ResizeAnchor
     constexpr AnchorFlags FULL_ANCHOR = AnchorFlags::Left | AnchorFlags::Right | AnchorFlags::Top | AnchorFlags::Bottom;
     constexpr AnchorFlags HORIZONTAL_ANCHOR = AnchorFlags::Left | AnchorFlags::Right;
     constexpr AnchorFlags VERTICAL_ANCHOR = AnchorFlags::Top | AnchorFlags::Bottom;
+    constexpr AnchorFlags INVALIDATE_ERASE = AnchorFlags::Invalidate | AnchorFlags::Erase;
 
     /**
      * \brief Adds anchors to a window.
