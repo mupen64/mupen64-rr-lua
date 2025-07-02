@@ -312,8 +312,46 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         {
         case IDC_INSTANCES:
             {
-                if (HIWORD(wparam) != LBN_SELCHANGE)
+                switch (HIWORD(wparam))
                 {
+                case LBN_SELCHANGE:
+                    {
+                        if (IsWindow(g_dlg.inst_hwnd))
+                        {
+                            ResizeAnchor::remove_anchor(hwnd, g_dlg.inst_hwnd);
+                            DestroyWindow(g_dlg.inst_hwnd);
+                        }
+
+                        const auto index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_INSTANCES));
+                        if (index == LB_ERR || index >= g_lua_instance_wnd_ctxs.size())
+                        {
+                            break;
+                        }
+
+                        const auto param = g_lua_instance_wnd_ctxs[index].get();
+                        g_dlg.inst_hwnd = CreateDialogParam(g_app_instance, MAKEINTRESOURCE(IDD_LUA_INSTANCE), hwnd, lua_instance_dialog_proc, (LPARAM)param);
+
+                        SetWindowPos(g_dlg.inst_hwnd, nullptr, g_dlg.initial_rect.right, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+
+                        ResizeAnchor::add_anchors(hwnd, {{g_dlg.inst_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right | ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom}});
+
+                        break;
+                    }
+                case LBN_DBLCLK:
+                    {
+                        const auto index = ListBox_GetCurSel(GetDlgItem(hwnd, IDC_INSTANCES));
+                        if (index == LB_ERR || index >= g_lua_instance_wnd_ctxs.size())
+                        {
+                            break;
+                        }
+
+                        const auto& ctx = g_lua_instance_wnd_ctxs[index];
+
+                        start(*ctx, ctx->typed_path);
+
+                        break;
+                    }
+                default:
                     break;
                 }
 
