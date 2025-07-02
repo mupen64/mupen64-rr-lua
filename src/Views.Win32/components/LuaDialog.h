@@ -15,13 +15,7 @@ namespace LuaDialog
      * \brief Shows the Lua manager dialog.
      */
     void show();
-
-    /**
-     * \brief Adds a lua script to the Lua instance manager and starts it. Also shows the Lua manager dialog and selects the new script in the list.
-     * \param path The path to the lua script to add and run.
-     */
-    void add_and_start(const std::filesystem::path& path);
-
+    
     /**
      * \brief Starts a Lua script if it's already present in the Lua instance manager, or adds and runs it if it's not present.
      * \param path The path to the lua script to start.

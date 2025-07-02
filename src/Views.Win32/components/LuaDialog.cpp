@@ -469,9 +469,9 @@ void LuaDialog::show()
     ShowWindow(g_dlg.mgr_hwnd, SW_SHOW);
 }
 
-void LuaDialog::add_and_start(const std::filesystem::path& path)
+static void add_and_start(const std::filesystem::path& path)
 {
-    show();
+    LuaDialog::show();
     const auto ctx = add_and_select_instance(path);
     start(*ctx, path);
 }
