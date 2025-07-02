@@ -274,10 +274,13 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
             HMENU h_menu = CreatePopupMenu();
             const int disable_if_stopped = selected_ctx->env ? MF_ENABLED : MF_DISABLED;
-            AppendMenu(h_menu, MF_ENABLED | MF_STRING, 1, selected_ctx->env ? L"Restart" : L"Start");
+            AppendMenu(h_menu, MF_STRING, 1, selected_ctx->env ? L"Restart" : L"Start");
             AppendMenu(h_menu, disable_if_stopped | MF_STRING, 2, L"Stop");
-        
-            const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), hwnd, 0);
+            AppendMenu(h_menu, MF_STRING, 3, L"Remove");
+            AppendMenu(h_menu, MF_SEPARATOR, 4, L"");
+            AppendMenu(h_menu, MF_STRING, 5, L"Stop All");
+
+            const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), hwnd, nullptr);
 
             switch (offset)
             {
@@ -286,6 +289,17 @@ INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPA
                 break;
             case 2:
                 stop(*selected_ctx);
+                break;
+            case 3:
+                stop(*selected_ctx);
+                g_lua_instance_wnd_ctxs.erase(g_lua_instance_wnd_ctxs.begin() + selected_index);
+                PostMessage(hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
+                break;
+            case 5:
+                for (const auto& ctx : g_lua_instance_wnd_ctxs)
+                {
+                    stop(*ctx);
+                }
                 break;
             default:
                 break;
