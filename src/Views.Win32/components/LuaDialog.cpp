@@ -132,9 +132,9 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
         PostMessage(hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
 
         ResizeAnchor::add_anchors(hwnd, {
-                                        {GetDlgItem(hwnd, IDC_PATH), ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right},
+                                        {GetDlgItem(hwnd, IDC_PATH), ResizeAnchor::HORIZONTAL_ANCHOR},
                                         {GetDlgItem(hwnd, IDC_BROWSE), ResizeAnchor::AnchorFlags::Right},
-                                        {GetDlgItem(hwnd, IDC_LOG), ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Right | ResizeAnchor::AnchorFlags::Top | ResizeAnchor::AnchorFlags::Bottom},
+                                        {GetDlgItem(hwnd, IDC_LOG), ResizeAnchor::FULL_ANCHOR},
                                         });
         break;
     case WM_DESTROY:

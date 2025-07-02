@@ -24,15 +24,19 @@ namespace ResizeAnchor
         Bottom = 1 << 4,
     };
 
-    inline AnchorFlags operator|(AnchorFlags a, AnchorFlags b)
+    constexpr AnchorFlags operator|(AnchorFlags a, AnchorFlags b)
     {
         return static_cast<AnchorFlags>(static_cast<uint64_t>(a) | static_cast<uint64_t>(b));
     }
 
-    inline AnchorFlags operator&(AnchorFlags a, AnchorFlags b)
+    constexpr AnchorFlags operator&(AnchorFlags a, AnchorFlags b)
     {
         return static_cast<AnchorFlags>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
     }
+
+    constexpr AnchorFlags FULL_ANCHOR = AnchorFlags::Left | AnchorFlags::Right | AnchorFlags::Top | AnchorFlags::Bottom;
+    constexpr AnchorFlags HORIZONTAL_ANCHOR = AnchorFlags::Left | AnchorFlags::Right;
+    constexpr AnchorFlags VERTICAL_ANCHOR = AnchorFlags::Top | AnchorFlags::Bottom;
 
     /**
      * \brief Adds anchors to a window.
