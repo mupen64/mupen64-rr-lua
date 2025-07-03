@@ -40,6 +40,7 @@ static void print(t_instance_context& ctx, const std::wstring& text)
     if (IsWindow(ctx.hwnd))
     {
         HWND con_wnd = GetDlgItem(ctx.hwnd, IDC_LOG);
+        SetWindowRedraw(con_wnd, false);
         int length = GetWindowTextLength(con_wnd);
         if (length >= max_buffer)
         {
@@ -49,6 +50,7 @@ static void print(t_instance_context& ctx, const std::wstring& text)
         }
         SendMessage(con_wnd, EM_SETSEL, length, length);
         SendMessage(con_wnd, EM_REPLACESEL, false, (LPARAM)text.c_str());
+        SetWindowRedraw(con_wnd, true);
     }
 
     ctx.logs += text;
