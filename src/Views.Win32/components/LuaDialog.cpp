@@ -33,6 +33,9 @@ struct t_dialog_state {
 static t_dialog_state g_dlg{};
 static std::vector<std::shared_ptr<t_instance_context>> g_lua_instance_wnd_ctxs{};
 
+/**
+ * \brief Prints text to an instance.
+ */
 static void print(t_instance_context& ctx, const std::wstring& text)
 {
     constexpr auto max_buffer = 0x7000;
@@ -61,6 +64,9 @@ static void print(t_instance_context& ctx, const std::wstring& text)
     }
 }
 
+/**
+ * \brief Stops the Lua environment associated with the given context if it exists.
+ */
 static void stop(t_instance_context& ctx)
 {
     if (!ctx.env)
@@ -72,6 +78,9 @@ static void stop(t_instance_context& ctx)
     ctx.env = nullptr;
 }
 
+/**
+ * \brief Starts a Lua environment for the given context using the specified script path.
+ */
 static void start(t_instance_context& ctx, const std::filesystem::path& path)
 {
     stop(ctx);
@@ -184,7 +193,17 @@ static void add_recent_scripts_to_instance_list()
     }
 }
 
-INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+/**
+ * \brief Adds a new Lua instance and starts it immediately. Shows the Lua dialog if it is not already visible.
+ */
+static void add_and_start(const std::filesystem::path& path)
+{
+    LuaDialog::show();
+    const auto ctx = add_and_select_instance(path);
+    start(*ctx, path);
+}
+
+static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     auto ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWL_USERDATA);
 
@@ -265,7 +284,7 @@ INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
     return FALSE;
 }
 
-INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
@@ -469,13 +488,6 @@ void LuaDialog::show()
     }
     CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_LUA_MANAGER), g_main_hwnd, lua_manager_dialog_proc);
     ShowWindow(g_dlg.mgr_hwnd, SW_SHOW);
-}
-
-static void add_and_start(const std::filesystem::path& path)
-{
-    LuaDialog::show();
-    const auto ctx = add_and_select_instance(path);
-    start(*ctx, path);
 }
 
 void LuaDialog::start_and_add_if_needed(const std::filesystem::path& path)
