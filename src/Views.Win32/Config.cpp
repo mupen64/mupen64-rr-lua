@@ -198,7 +198,7 @@ static t_config get_default_config()
 
     config.show_lua_manager_hotkey = {
     .identifier = L"Show Lua Manager",
-    .key = 'N',
+    .key = 'B',
     .ctrl = true,
     .down_cmd = IDM_SHOW_LUA_MANAGER,
     };
