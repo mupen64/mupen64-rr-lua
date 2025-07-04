@@ -588,7 +588,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons* input)
     }
 }
 
-void vcr_handle_recording(int32_t index, core_buttons* input)
+void vcr_handle_recording(std::unique_lock<std::recursive_mutex>& lock, int32_t index, core_buttons* input)
 {
     if (vcr.task != task_recording)
     {
@@ -612,15 +612,26 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
         if (use_inputs_from_buffer)
         {
             *input = vcr.inputs[effective_index];
-
             auto dummy_input = *input;
+
+            lock.unlock();
             g_core->callbacks.input(&dummy_input, index);
+            lock.lock();
         }
         else
         {
             g_core->plugin_funcs.input_get_keys(index, input);
+            lock.unlock();
             g_core->callbacks.input(input, index);
+            lock.lock();
         }
+    }
+
+    // The VCR state might have changed while the mutex was unlocked. Account for that here.
+    // FIXME: Is this enough?
+    if (vcr.task != task_recording)
+    {
+        return;
     }
 
     if (!use_inputs_from_buffer)
@@ -831,7 +842,7 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
 
     vcr_create_seek_savestates();
 
-    vcr_handle_recording(index, input);
+    vcr_handle_recording(lock, index, input);
 
     vcr_handle_playback(index, input);
 
