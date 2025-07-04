@@ -9,3 +9,7 @@
 os.execute = function() print("os.execute is not available in an untrusted Lua environment.") end
 
 io.popen = function() print("io.popen is not available in an untrusted Lua environment.") end
+
+os.remove = function() print("os.remove is not available in an untrusted Lua environment.") end
+
+os.rename = function() print("os.rename is not available in an untrusted Lua environment.") end
