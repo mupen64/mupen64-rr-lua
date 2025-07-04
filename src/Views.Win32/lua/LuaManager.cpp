@@ -80,7 +80,7 @@ t_lua_environment* LuaManager::get_environment_for_state(lua_State* lua_state)
     return g_lua_env_map[lua_state];
 }
 
-std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(const std::filesystem::path& path, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback)
+std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(const std::filesystem::path& path, const bool trusted, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback)
 {
     assert(is_on_gui_thread());
 
@@ -133,7 +133,7 @@ std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(c
         }
     }
 
-    {
+    if (!trusted) {
         ScopeTimer timer("sandbox.lua injection", g_view_logger.get());
         if (luaL_dostring(lua->L, g_sandbox_lua_code.c_str()))
         {

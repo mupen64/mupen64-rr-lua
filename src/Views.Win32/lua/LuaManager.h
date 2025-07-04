@@ -21,9 +21,10 @@ namespace LuaManager
     /**
      * \brief Creates a lua environment.
      * \param path The script path.
+     * \param trusted Whether the Lua environment is running in trusted mode. See sandbox.lua for more details.
      * \return The newly created lua environment or an error message if the operation failed.
      */
-    std::expected<t_lua_environment*, std::wstring> create_environment(const std::filesystem::path& path, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback);
+    std::expected<t_lua_environment*, std::wstring> create_environment(const std::filesystem::path& path, bool trusted, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback);
 
     /**
      * \brief Destroys a lua environment.
