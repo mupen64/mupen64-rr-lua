@@ -645,6 +645,8 @@ TEST_CASE("input_buffer_doesnt_change_if_seeking_while_recording", "vcr_unfreeze
     REQUIRE(vcr.current_sample == 0);
 }
 
+// TODO: More coverage for vcr_unfreeze!
+
 /*
  * Tests that vcr_on_controller_poll unlocks the VCR mutex during the input callback when idle.
  * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also try to lock the VCR mutex.
@@ -787,8 +789,5 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
 }
-
-
-// TODO: More tests for vcr_unfreeze!
 
 #pragma endregion
