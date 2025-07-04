@@ -38,6 +38,8 @@ IDR_API_LUA_FILE        TEXTFILE                "..\\api.lua"
 
 IDR_SHIMS_LUA_FILE      TEXTFILE                "..\\shims.lua"
 
+IDR_SANDBOX_LUA_FILE    TEXTFILE                "..\\sandbox.lua"
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu

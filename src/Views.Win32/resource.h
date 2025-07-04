@@ -522,6 +522,7 @@
 #define IDC_START 40122
 #define IDC_LOG 40123
 #define IDD_LUA_INSTANCE_PLACEHOLDER 40124
+#define IDR_SANDBOX_LUA_FILE 40125
 #define IDC_STATIC -1
 
 // Next default values for new objects

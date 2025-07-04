@@ -46,6 +46,3 @@ movie.begin_seek_to = function() print('movie.begin_seek_to has been deprecated,
 
 -- movie.get_seek_info is not available anymore due to fundamental unshimmable changes in the seek API.
 movie.get_seek_info = function() print('movie.get_seek_info has been deprecated, use movie.begin_seek instead') end
-
--- movie.get_seek_info is not available anymore due to security risks.
-os.execute = function() print('os.execute is disabled') end

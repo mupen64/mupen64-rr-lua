@@ -20,6 +20,7 @@ size_t g_input_count{};
 std::string g_mupen_api_lua_code{};
 std::string g_inspect_lua_code{};
 std::string g_shims_lua_code{};
+std::string g_sandbox_lua_code{};
 
 std::vector<t_lua_environment*> g_lua_environments{};
 std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map{};
@@ -67,6 +68,7 @@ void LuaManager::init()
     g_mupen_api_lua_code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
     g_inspect_lua_code = load_resource_as_string(IDR_INSPECT_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
     g_shims_lua_code = load_resource_as_string(IDR_SHIMS_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
+    g_sandbox_lua_code = load_resource_as_string(IDR_SANDBOX_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
 }
 
 t_lua_environment* LuaManager::get_environment_for_state(lua_State* lua_state)
@@ -111,6 +113,8 @@ std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(c
 
     LuaRegistry::register_functions(lua->L);
 
+    // FIXME: SECURITY: Don't execute the Lua code if any of the injections fail!!!
+    
     {
         ScopeTimer timer("inspect.lua injection", g_view_logger.get());
         if (luaL_dostring(lua->L, g_inspect_lua_code.c_str()))
@@ -123,6 +127,15 @@ std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(c
     {
         ScopeTimer timer("shims.lua injection", g_view_logger.get());
         if (luaL_dostring(lua->L, g_shims_lua_code.c_str()))
+        {
+            // Shouldn't happen...
+            has_error = true;
+        }
+    }
+
+    {
+        ScopeTimer timer("sandbox.lua injection", g_view_logger.get());
+        if (luaL_dostring(lua->L, g_sandbox_lua_code.c_str()))
         {
             // Shouldn't happen...
             has_error = true;
