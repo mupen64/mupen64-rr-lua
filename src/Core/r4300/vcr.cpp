@@ -669,7 +669,7 @@ void vcr_handle_recording(std::unique_lock<std::recursive_mutex>& lock, int32_t 
     });
 }
 
-void vcr_handle_playback(int32_t index, core_buttons* input)
+void vcr_handle_playback(std::unique_lock<std::recursive_mutex>& lock, int32_t index, core_buttons* input)
 {
     if (vcr.task != task_playback)
     {
@@ -710,7 +710,6 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
 
     // Use inputs from movie, also notify input plugin of override via setKeys
     *input = vcr.inputs[vcr.current_sample + index];
-    g_core->plugin_funcs.input_set_keys(index, *input);
 
     // no readable code because 120 star tas can't get this right >:(
     if (input->value == 0xC000)
@@ -734,7 +733,14 @@ void vcr_handle_playback(int32_t index, core_buttons* input)
         });
     }
 
+    g_core->plugin_funcs.input_set_keys(index, *input);
+
+    lock.unlock();
     g_core->callbacks.input(input, index);
+    lock.lock();
+
+    // We don't need to account for state changes during the unlocked period here, as we don't do any more immediate state-dependent work.
+
     vcr.current_sample++;
     vcr.post_controller_poll_callbacks.emplace([=] {
         g_core->callbacks.current_sample_changed(vcr.current_sample);
@@ -828,10 +834,10 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
     if (vcr.task == task_idle)
     {
         g_core->plugin_funcs.input_get_keys(index, input);
-        
+
         lock.unlock();
         g_core->callbacks.input(input, index);
-        
+
         return;
     }
 
@@ -844,7 +850,7 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
 
     vcr_handle_recording(lock, index, input);
 
-    vcr_handle_playback(index, input);
+    vcr_handle_playback(lock, index, input);
 
     // Since the callback might want to call VCR functions, we have to release the lock to avoid deadlocking in situations with interlocked threads (e.g. UI and Emu)
     // In addition, we have to be careful to only call this function after we're done with VCR work as to avoid reentrancy issues.
