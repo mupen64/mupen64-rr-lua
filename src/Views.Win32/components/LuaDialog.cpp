@@ -19,6 +19,7 @@ struct t_instance_context {
     HWND hwnd{};
     std::filesystem::path typed_path{};
     std::wstring logs{};
+    bool trusted{};
     t_lua_environment* env{};
 };
 
@@ -87,6 +88,7 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
 
     const auto result = LuaManager::create_environment(
     path,
+    ctx.trusted,
     [&] {
         PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
         PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
@@ -278,6 +280,34 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
             break;
         }
         break;
+    case WM_NOTIFY:
+        switch (((LPNMHDR)lparam)->code)
+        {
+        case BCN_DROPDOWN:
+            {
+                const auto nmbcdd = (NMBCDROPDOWN*)lparam;
+                if (nmbcdd->hdr.idFrom == IDC_START)
+                {
+                    POINT pt{};
+                    GetCursorPos(&pt);
+                    
+                    HMENU h_menu = CreatePopupMenu();
+                    AppendMenu(h_menu, MF_STRING | (ctx->trusted ? MF_CHECKED : 0), 1, L"Trusted Mode");
+                    const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
+
+                    if (offset == 1)
+                    {
+                        ctx->trusted ^= true;
+                    }
+
+                    return TRUE;
+                }
+                break;
+            }
+        default:
+            break;
+        }
+        return FALSE;
     default:
         break;
     }
