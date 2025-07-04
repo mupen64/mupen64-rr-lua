@@ -153,7 +153,7 @@ bool ResizeAnchor::add_anchors(HWND hwnd, const std::vector<std::pair<HWND, Anch
     SetProp(hwnd, CTX_PROP, ctx);
 
     SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
-    
+
     return true;
 }
 
