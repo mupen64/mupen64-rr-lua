@@ -818,7 +818,7 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
     {
         g_core->plugin_funcs.input_get_keys(index, input);
         
-        // lock.unlock();
+        lock.unlock();
         g_core->callbacks.input(input, index);
         
         return;
