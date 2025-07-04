@@ -9,6 +9,7 @@
 #include <Core/r4300/r4300.h>
 
 extern t_vcr_state vcr;
+extern std::recursive_mutex vcr_mtx;
 static core_cfg cfg{};
 static core_params params{};
 static core_ctx* ctx = nullptr;
@@ -643,6 +644,134 @@ TEST_CASE("input_buffer_doesnt_change_if_seeking_while_recording", "vcr_unfreeze
     REQUIRE(vcr.inputs[2].value == 0xCAFE);
     REQUIRE(vcr.current_sample == 0);
 }
+
+/*
+ * Tests that vcr_on_controller_poll unlocks the VCR mutex during the input callback when idle.
+ * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also try to lock the VCR mutex.
+ */
+TEST_CASE("mutex_unlocked_during_input_callback_called_while_idle", "vcr_on_controller_poll")
+{
+    prepare_test();
+    params.callbacks.input = [&](core_buttons* input, int index) {
+        bool unlocked;
+        std::thread([&] {
+            unlocked = vcr_mtx.try_lock();
+        })
+        .join();
+
+        REQUIRE(unlocked);
+    };
+    core_create(&params, &ctx);
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+}
+
+/*
+ * Tests that vcr_on_controller_poll unlocks the VCR mutex during the input callback when recording (standard appending path).
+ * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also try to lock the VCR mutex.
+ */
+TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_1", "vcr_on_controller_poll")
+{
+    prepare_test();
+    params.callbacks.input = [&](core_buttons* input, int index) {
+        bool unlocked;
+        std::thread([&] {
+            unlocked = vcr_mtx.try_lock();
+        })
+        .join();
+
+        REQUIRE(unlocked);
+    };
+
+    const auto inputs = std::vector<core_buttons>{
+    {1},
+    {2},
+    {3},
+    {4}};
+
+    core_create(&params, &ctx);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_recording;
+    vcr.current_sample = 4;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+}
+
+/*
+ * Tests that vcr_on_controller_poll unlocks the VCR mutex during the input callback when recording (pseudo-playback path).
+ * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also try to lock the VCR mutex.
+ */
+TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_2", "vcr_on_controller_poll")
+{
+    prepare_test();
+    params.callbacks.input = [&](core_buttons* input, int index) {
+        bool unlocked;
+        std::thread([&] {
+            unlocked = vcr_mtx.try_lock();
+        })
+        .join();
+
+        REQUIRE(unlocked);
+    };
+
+    const auto inputs = std::vector<core_buttons>{
+    {1},
+    {2},
+    {3},
+    {4}};
+
+    core_create(&params, &ctx);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_recording;
+    vcr.current_sample = 2;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+}
+
+/*
+ * Tests that vcr_on_controller_poll unlocks the VCR mutex during the input callback when playing back.
+ * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also try to lock the VCR mutex.
+ */
+TEST_CASE("mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_controller_poll")
+{
+    prepare_test();
+    params.callbacks.input = [&](core_buttons* input, int index) {
+        bool unlocked;
+        std::thread([&] {
+            unlocked = vcr_mtx.try_lock();
+        })
+        .join();
+
+        REQUIRE(unlocked);
+    };
+
+    const auto inputs = std::vector<core_buttons>{
+    {1},
+    {2},
+    {3},
+    {4}};
+
+    core_create(&params, &ctx);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_playback;
+    vcr.current_sample = 3;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+}
+
 
 // TODO: More tests for vcr_unfreeze!
 

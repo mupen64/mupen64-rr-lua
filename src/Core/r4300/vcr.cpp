@@ -32,7 +32,7 @@ constexpr auto CONTROLLER_RUMBLEPAK_MISMATCH = L"Controller {} has a Rumble Pak 
 constexpr auto CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH = L"Controller {} does not have a Memory or Rumble Pak in the movie.\nPlayback might desynchronize.\n";
 
 t_vcr_state vcr{};
-static std::recursive_mutex vcr_mtx{};
+std::recursive_mutex vcr_mtx{};
 
 bool vcr_is_task_recording(core_vcr_task task);
 
@@ -613,9 +613,8 @@ void vcr_handle_recording(int32_t index, core_buttons* input)
         {
             *input = vcr.inputs[effective_index];
 
-            const auto prev_input = *input;
-            g_core->callbacks.input(input, index);
-            *input = prev_input;
+            auto dummy_input = *input;
+            g_core->callbacks.input(&dummy_input, index);
         }
         else
         {
@@ -818,7 +817,10 @@ void vcr_on_controller_poll(int32_t index, core_buttons* input)
     if (vcr.task == task_idle)
     {
         g_core->plugin_funcs.input_get_keys(index, input);
+        
+        // lock.unlock();
         g_core->callbacks.input(input, index);
+        
         return;
     }
 
