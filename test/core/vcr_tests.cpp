@@ -656,6 +656,10 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_idle", "vcr_on_cont
         bool unlocked;
         std::thread([&] {
             unlocked = vcr_mtx.try_lock();
+            if (unlocked)
+            {
+                vcr_mtx.unlock();
+            }
         })
         .join();
 
@@ -678,6 +682,10 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_1", "vcr_
         bool unlocked;
         std::thread([&] {
             unlocked = vcr_mtx.try_lock();
+            if (unlocked)
+            {
+                vcr_mtx.unlock();
+            }
         })
         .join();
 
@@ -713,6 +721,10 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_2", "vcr_
         bool unlocked;
         std::thread([&] {
             unlocked = vcr_mtx.try_lock();
+            if (unlocked)
+            {
+                vcr_mtx.unlock();
+            }
         })
         .join();
 
@@ -748,6 +760,10 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_
         bool unlocked;
         std::thread([&] {
             unlocked = vcr_mtx.try_lock();
+            if (unlocked)
+            {
+                vcr_mtx.unlock();
+            }
         })
         .join();
 
