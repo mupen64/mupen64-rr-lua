@@ -300,6 +300,8 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
                         ctx->trusted ^= true;
                     }
 
+                    PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
+
                     return TRUE;
                 }
                 break;
@@ -371,6 +373,11 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
                 }
                 const auto& effective_path = ctx->env ? ctx->env->path : ctx->typed_path;
                 display_name += effective_path.filename().wstring();
+
+                if (ctx->trusted)
+                {
+                    display_name += L" (trusted)";
+                }
 
                 const auto index = ListBox_AddString(hlb, display_name.c_str());
                 ListBox_SetItemData(hlb, index, reinterpret_cast<LPARAM>(ctx.get()));
