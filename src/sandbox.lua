@@ -7,3 +7,5 @@
 -- Disables potentially dangerous APIs.
 
 os.execute = function() print("os.execute is not available in an untrusted Lua environment.") end
+
+io.popen = function() print("io.popen is not available in an untrusted Lua environment.") end
