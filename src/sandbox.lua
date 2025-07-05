@@ -6,10 +6,26 @@
 
 -- Disables potentially dangerous APIs.
 
-os.execute = function() print("os.execute is not available in an untrusted Lua environment.") end
+local function warn_trust(func_name)
+    print(string.format("Blocked call to '%s': this function is dangerous and not allowed in untrusted Lua environments. To enable it, turn on 'Trusted Mode' from the 'Start' dropdown.", func_name))
+end
 
-io.popen = function() print("io.popen is not available in an untrusted Lua environment.") end
+os.execute = function()
+    warn_trust("os.execute")
+    return false, nil, nil
+end
 
-os.remove = function() print("os.remove is not available in an untrusted Lua environment.") end
+io.popen = function()
+    warn_trust("io.popen")
+    return nil, nil
+end
 
-os.rename = function() print("os.rename is not available in an untrusted Lua environment.") end
+os.remove = function()
+    warn_trust("os.remove")
+    return false, nil
+end
+
+os.rename = function()
+    warn_trust("os.rename")
+    return false, nil
+end
