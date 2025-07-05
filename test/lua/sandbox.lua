@@ -9,3 +9,7 @@
 os.execute("start calc.exe")
 
 io.popen("start calc.exe")
+
+os.remove("a.txt")
+
+os.rename("a.txt", "b.txt")
