@@ -102,51 +102,42 @@ std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(c
 
     bool has_error = false;
 
+    if (luaL_dostring(lua->L, g_mupen_api_lua_code.c_str()))
     {
-        ScopeTimer timer("mupenapi.lua injection", g_view_logger.get());
-        if (luaL_dostring(lua->L, g_mupen_api_lua_code.c_str()))
-        {
-            // Shouldn't happen...
-            has_error = true;
-        }
+        has_error = true;
+        goto fail;
     }
 
     LuaRegistry::register_functions(lua->L);
 
-    // FIXME: SECURITY: Don't execute the Lua code if any of the injections fail!!!
-    
+    if (luaL_dostring(lua->L, g_inspect_lua_code.c_str()))
     {
-        ScopeTimer timer("inspect.lua injection", g_view_logger.get());
-        if (luaL_dostring(lua->L, g_inspect_lua_code.c_str()))
-        {
-            // Shouldn't happen...
-            has_error = true;
-        }
+        has_error = true;
+        goto fail;
     }
 
+    if (luaL_dostring(lua->L, g_shims_lua_code.c_str()))
     {
-        ScopeTimer timer("shims.lua injection", g_view_logger.get());
-        if (luaL_dostring(lua->L, g_shims_lua_code.c_str()))
-        {
-            // Shouldn't happen...
-            has_error = true;
-        }
+        has_error = true;
+        goto fail;
     }
 
-    if (!trusted) {
-        ScopeTimer timer("sandbox.lua injection", g_view_logger.get());
+    if (!trusted)
+    {
         if (luaL_dostring(lua->L, g_sandbox_lua_code.c_str()))
         {
-            // Shouldn't happen...
             has_error = true;
+            goto fail;
         }
     }
 
+    // NOTE: We don't want to reach luaL_dofile if the prelude scripts failed, as that would potentially compromise security (if the sandbox script fails for example).
     if (luaL_dofile(lua->L, lua->path.string().c_str()))
     {
         has_error = true;
     }
 
+fail:
     if (has_error)
     {
         g_lua_environments.pop_back();
