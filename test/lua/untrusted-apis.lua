@@ -4,7 +4,7 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
--- Tries to call dangerous APIs. These calls shouldn't work in an untrusted Lua environment.
+-- Tries to call APIs protected by the sandbox. Run this script in untrusted mode and verify that all assertions pass.
 
 local tests = {}
 tests[#tests + 1] = function()
