@@ -19,8 +19,12 @@ struct t_instance_context {
     HWND hwnd{};
     std::filesystem::path typed_path{};
     std::wstring logs{};
-    bool trusted{};
     t_lua_environment* env{};
+
+    [[nodiscard]] bool trusted() const
+    {
+        return g_config.trusted_lua_paths.contains(typed_path);
+    }
 };
 
 struct t_dialog_state {
@@ -88,7 +92,7 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
 
     const auto result = LuaManager::create_environment(
     path,
-    ctx.trusted,
+    ctx.trusted(),
     [&] {
         PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
         PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
@@ -290,14 +294,21 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
                 {
                     POINT pt{};
                     GetCursorPos(&pt);
-                    
+
                     HMENU h_menu = CreatePopupMenu();
-                    AppendMenu(h_menu, MF_STRING | (ctx->trusted ? MF_CHECKED : 0), 1, L"Trusted Mode");
+                    AppendMenu(h_menu, MF_STRING | (ctx->trusted() ? MF_CHECKED : 0), 1, L"Trusted Mode");
                     const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
 
                     if (offset == 1)
                     {
-                        ctx->trusted ^= true;
+                        if (ctx->trusted())
+                        {
+                            g_config.trusted_lua_paths.erase(ctx->typed_path);
+                        }
+                        else
+                        {
+                            g_config.trusted_lua_paths[ctx->typed_path] = L"";
+                        }
                     }
 
                     PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
@@ -374,7 +385,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
                 const auto& effective_path = ctx->env ? ctx->env->path : ctx->typed_path;
                 display_name += effective_path.filename().wstring();
 
-                if (ctx->trusted)
+                if (ctx->trusted())
                 {
                     display_name += L" (trusted)";
                 }

@@ -449,6 +449,11 @@ struct t_config {
     /// A map of dialog IDs to their default choices for silent mode.
     /// </summary>
     std::map<std::wstring, std::wstring> silent_mode_dialog_choices;
+
+    /// <summary>
+    /// A map of trusted Lua script paths. If a Lua script path is present in this map, it will be trusted.
+    /// </summary>
+    std::map<std::wstring, std::wstring> trusted_lua_paths;
 };
 
 extern t_config g_config;

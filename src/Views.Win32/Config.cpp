@@ -831,6 +831,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
     HANDLE_VALUE(seeker_value)
     HANDLE_P_VALUE(multi_frame_advance_count)
     HANDLE_VALUE(silent_mode_dialog_choices)
+    HANDLE_VALUE(trusted_lua_paths)
 }
 
 static std::filesystem::path get_config_path()
