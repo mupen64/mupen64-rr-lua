@@ -1690,7 +1690,8 @@ bool vcr_is_task_recording(core_vcr_task task)
 
 static void vcr_clear_seek_savestates()
 {
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
+
     g_core->log_info(L"[VCR] Clearing seek savestates...");
 
     std::vector<size_t> prev_seek_savestate_keys;
@@ -1702,6 +1703,7 @@ static void vcr_clear_seek_savestates()
 
     vcr.seek_savestates.clear();
 
+    lock.unlock();
     for (const auto frame : prev_seek_savestate_keys)
     {
         g_core->callbacks.seek_savestate_changed(frame);
