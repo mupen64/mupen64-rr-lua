@@ -97,6 +97,15 @@ void set_rerecord_count(const uint64_t value)
     vcr.hdr.extended_data.rerecord_count = static_cast<uint32_t>(value >> 32);
 }
 
+void execute_post_unlock_callbacks(std::queue<std::function<void()>>& callbacks)
+{
+    while (!callbacks.empty())
+    {
+        callbacks.front()();
+        callbacks.pop();
+    }
+}
+
 std::filesystem::path find_accompanying_file_for_movie(std::filesystem::path path, const std::vector<std::wstring>& extensions = {L".st", L".savestate"})
 {
     // To allow multiple m64s to reference on st, we construct the st name from the m64 name up to the first point only
@@ -1132,38 +1141,6 @@ core_vcr_seek_info vcr_get_seek_info()
     return info;
 }
 
-core_result vcr_stop_record()
-{
-    std::unique_lock lock(vcr_mtx);
-
-    if (!vcr_is_task_recording(vcr.task))
-    {
-        return Res_Ok;
-    }
-
-    if (vcr.task == task_start_recording_from_reset)
-    {
-        vcr.task = task_idle;
-        g_core->log_info(L"[VCR] Removing files (nothing recorded)");
-        _unlink(std::filesystem::path(vcr.movie_path).replace_extension(".m64").string().c_str());
-        _unlink(std::filesystem::path(vcr.movie_path).replace_extension(".st").string().c_str());
-    }
-
-    if (vcr.task == task_recording)
-    {
-        write_movie();
-
-        vcr.task = task_idle;
-
-        g_core->log_info(std::format(L"[VCR] Recording stopped. Recorded %ld input samples", vcr.hdr.length_samples));
-    }
-
-    lock.unlock();
-    g_core->callbacks.task_changed(vcr.task);
-
-    return Res_Ok;
-}
-
 bool show_controller_warning(const core_vcr_movie_header& header)
 {
     for (int32_t i = 0; i < 4; ++i)
@@ -1617,16 +1594,16 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 finish:
 
     lock.unlock();
-    
+
     while (!post_unlock_callbacks.empty())
     {
         post_unlock_callbacks.front()();
         post_unlock_callbacks.pop();
     }
-    
+
     g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
     g_core->callbacks.seek_status_changed();
-    
+
     return Res_Ok;
 }
 
@@ -1665,33 +1642,13 @@ bool vcr_is_seeking()
     return vcr.seek_to_frame.has_value();
 }
 
-core_result vcr_stop_playback()
-{
-    std::unique_lock lock(vcr_mtx);
-
-    if (!is_task_playback(vcr.task))
-        return Res_Ok;
-
-    vcr.task = task_idle;
-    cht_layer_pop();
-
-    lock.unlock();
-
-    g_core->callbacks.task_changed(vcr.task);
-    g_core->callbacks.stop_movie();
-
-    return Res_Ok;
-}
-
 bool vcr_is_task_recording(core_vcr_task task)
 {
     return task == task_recording || task == task_start_recording_from_reset || task == task_start_recording_from_existing_snapshot || task == task_start_recording_from_snapshot;
 }
 
-static void vcr_clear_seek_savestates()
+static void vcr_clear_seek_savestates(std::queue<std::function<void()>>& post_unlock_callbacks)
 {
-    std::unique_lock lock(vcr_mtx);
-
     g_core->log_info(L"[VCR] Clearing seek savestates...");
 
     std::vector<size_t> prev_seek_savestate_keys;
@@ -1703,41 +1660,79 @@ static void vcr_clear_seek_savestates()
 
     vcr.seek_savestates.clear();
 
-    lock.unlock();
     for (const auto frame : prev_seek_savestate_keys)
     {
-        g_core->callbacks.seek_savestate_changed(frame);
-    }
-}
-
-static void setkeys_with_zero()
-{
-    core_buttons zero = {0};
-    for (int i = 0; i < 4; i++)
-    {
-        g_core->plugin_funcs.input_set_keys(i, zero);
+        post_unlock_callbacks.emplace([=] {
+            g_core->callbacks.seek_savestate_changed(frame);
+        });
     }
 }
 
 core_result vcr_stop_all()
 {
-    vcr_clear_seek_savestates();
+    std::unique_lock lock(vcr_mtx);
+    std::queue<std::function<void()>> post_unlock_callbacks{};
 
-    switch (vcr.task)
+    const bool is_recording = vcr.task == task_start_recording_from_reset || vcr.task == task_start_recording_from_snapshot || vcr.task == task_recording;
+    const bool is_playback = vcr.task == task_start_playback_from_reset || vcr.task == task_start_playback_from_snapshot || vcr.task == task_playback;
+
+    if (!is_recording && !is_playback)
     {
-    case task_start_recording_from_reset:
-    case task_start_recording_from_snapshot:
-    case task_recording:
-        setkeys_with_zero();
-        return vcr_stop_record();
-    case task_start_playback_from_reset:
-    case task_start_playback_from_snapshot:
-    case task_playback:
-        setkeys_with_zero();
-        return vcr_stop_playback();
-    default:
         return Res_Ok;
     }
+
+    vcr_clear_seek_savestates(post_unlock_callbacks);
+
+    if (is_recording || is_playback)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            g_core->plugin_funcs.input_set_keys(i, {.value = 0});
+        }
+    }
+
+    if (is_recording)
+    {
+        if (vcr.task == task_start_recording_from_reset)
+        {
+            vcr.task = task_idle;
+            g_core->log_info(L"[VCR] Removing files (nothing recorded)");
+            _unlink(std::filesystem::path(vcr.movie_path).replace_extension(".m64").string().c_str());
+            _unlink(std::filesystem::path(vcr.movie_path).replace_extension(".st").string().c_str());
+        }
+
+        if (vcr.task == task_recording)
+        {
+            write_movie();
+
+            vcr.task = task_idle;
+
+            g_core->log_info(std::format(L"[VCR] Recording stopped. Recorded %ld input samples", vcr.hdr.length_samples));
+        }
+
+        lock.unlock();
+
+        execute_post_unlock_callbacks(post_unlock_callbacks);
+        g_core->callbacks.task_changed(vcr.task);
+
+        return Res_Ok;
+    }
+
+    if (is_playback)
+    {
+        vcr.task = task_idle;
+        cht_layer_pop();
+
+        lock.unlock();
+
+        execute_post_unlock_callbacks(post_unlock_callbacks);
+        g_core->callbacks.task_changed(vcr.task);
+        g_core->callbacks.stop_movie();
+
+        return Res_Ok;
+    }
+
+    return Res_Ok;
 }
 
 std::filesystem::path vcr_get_path()
