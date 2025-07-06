@@ -1450,6 +1450,9 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 {
     std::unique_lock lock(vcr_mtx);
 
+    // Queue of functions to call at the end of the function after the lock is released
+    std::queue<std::function<void()>> post_unlock_callbacks{};
+
     if (vcr.seek_savestate_loading || vcr.seek_to_frame.has_value())
     {
         return VCR_SeekAlreadyRunning;
@@ -1510,7 +1513,6 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 
             // FIXME: Might be better to have read-only as an individual flag for each savestate, cause as it is now, we're overwriting global state for  this...
             g_core->cfg->vcr_readonly = true;
-            g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
 
             const auto closest_key = vcr_find_closest_savestate_before_frame(frame);
 
@@ -1547,6 +1549,8 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
         {
             g_core->log_error(std::format(L"[VCR] vcr_begin_seek_impl: core_vcr_start_playback failed with error code {}", static_cast<int32_t>(result)));
             vcr.seek_to_frame.reset();
+
+            lock.unlock();
             g_core->callbacks.seek_status_changed();
             return result;
         }
@@ -1580,7 +1584,9 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
             {
                 g_core->log_info(std::format(L"[VCR] Erasing now-invalidated seek savestate at frame {}...", sample));
                 vcr.seek_savestates.erase(sample);
-                g_core->callbacks.seek_savestate_changed(sample);
+                post_unlock_callbacks.push([=] {
+                    g_core->callbacks.seek_savestate_changed(sample);
+                });
             }
         }
 
@@ -1611,8 +1617,16 @@ core_result vcr_begin_seek_impl(std::wstring str, bool pause_at_end, bool resume
 finish:
 
     lock.unlock();
+    
+    while (!post_unlock_callbacks.empty())
+    {
+        post_unlock_callbacks.front()();
+        post_unlock_callbacks.pop();
+    }
+    
+    g_core->callbacks.readonly_changed((bool)g_core->cfg->vcr_readonly);
     g_core->callbacks.seek_status_changed();
-
+    
     return Res_Ok;
 }
 
@@ -1662,7 +1676,7 @@ core_result vcr_stop_playback()
     cht_layer_pop();
 
     lock.unlock();
-    
+
     g_core->callbacks.task_changed(vcr.task);
     g_core->callbacks.stop_movie();
 
