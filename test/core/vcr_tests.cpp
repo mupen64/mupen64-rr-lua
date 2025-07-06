@@ -30,6 +30,23 @@ static void prepare_test()
     };
 }
 
+/**
+ * \brief Checks whether the VCR lock is held by trying to grab it from a separate thread.
+ */
+static bool is_vcr_lock_held()
+{
+    bool unlocked;
+    std::thread([&] {
+        unlocked = vcr_mtx.try_lock();
+        if (unlocked)
+        {
+            vcr_mtx.unlock();
+        }
+    })
+    .join();
+    return !unlocked;
+}
+
 #pragma region Integration
 
 TEST_CASE("reset_pending_returns_unmodified_input", "vcr_on_controller_poll")
@@ -655,17 +672,7 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_idle", "vcr_on_cont
 {
     prepare_test();
     params.callbacks.input = [&](core_buttons* input, int index) {
-        bool unlocked;
-        std::thread([&] {
-            unlocked = vcr_mtx.try_lock();
-            if (unlocked)
-            {
-                vcr_mtx.unlock();
-            }
-        })
-        .join();
-
-        REQUIRE(unlocked);
+        REQUIRE(!is_vcr_lock_held());
     };
     core_create(&params, &ctx);
 
@@ -681,17 +688,7 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_1", "vcr_
 {
     prepare_test();
     params.callbacks.input = [&](core_buttons* input, int index) {
-        bool unlocked;
-        std::thread([&] {
-            unlocked = vcr_mtx.try_lock();
-            if (unlocked)
-            {
-                vcr_mtx.unlock();
-            }
-        })
-        .join();
-
-        REQUIRE(unlocked);
+        REQUIRE(!is_vcr_lock_held());
     };
 
     const auto inputs = std::vector<core_buttons>{
@@ -720,17 +717,7 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_2", "vcr_
 {
     prepare_test();
     params.callbacks.input = [&](core_buttons* input, int index) {
-        bool unlocked;
-        std::thread([&] {
-            unlocked = vcr_mtx.try_lock();
-            if (unlocked)
-            {
-                vcr_mtx.unlock();
-            }
-        })
-        .join();
-
-        REQUIRE(unlocked);
+        REQUIRE(!is_vcr_lock_held());
     };
 
     const auto inputs = std::vector<core_buttons>{
@@ -759,17 +746,7 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_
 {
     prepare_test();
     params.callbacks.input = [&](core_buttons* input, int index) {
-        bool unlocked;
-        std::thread([&] {
-            unlocked = vcr_mtx.try_lock();
-            if (unlocked)
-            {
-                vcr_mtx.unlock();
-            }
-        })
-        .join();
-
-        REQUIRE(unlocked);
+        REQUIRE(!is_vcr_lock_held());
     };
 
     const auto inputs = std::vector<core_buttons>{
@@ -802,10 +779,10 @@ TEST_CASE("stopping_vcr_during_input_callback_while_recording_doesnt_do_recordin
     };
 
     const auto inputs = std::vector<core_buttons>{
-        {1},
-        {2},
-        {3},
-        {4}};
+    {1},
+    {2},
+    {3},
+    {4}};
 
     core_create(&params, &ctx);
 
