@@ -1653,16 +1653,18 @@ bool vcr_is_seeking()
 
 core_result vcr_stop_playback()
 {
-    std::scoped_lock lock(vcr_mtx);
+    std::unique_lock lock(vcr_mtx);
 
     if (!is_task_playback(vcr.task))
         return Res_Ok;
 
     vcr.task = task_idle;
+    cht_layer_pop();
+
+    lock.unlock();
+    
     g_core->callbacks.task_changed(vcr.task);
     g_core->callbacks.stop_movie();
-
-    cht_layer_pop();
 
     return Res_Ok;
 }
