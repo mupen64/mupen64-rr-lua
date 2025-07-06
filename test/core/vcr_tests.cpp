@@ -790,4 +790,37 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_
     vcr_on_controller_poll(0, &input);
 }
 
+
+/*
+ * Tests that stopping the VCR during an input callback while recording does not perform any recording work.
+ */
+TEST_CASE("stopping_vcr_during_input_callback_while_recording_doesnt_do_recording_work", "vcr_on_controller_poll")
+{
+    prepare_test();
+    params.callbacks.input = [&](core_buttons* input, int index) {
+        vcr_stop_all();
+    };
+
+    const auto inputs = std::vector<core_buttons>{
+        {1},
+        {2},
+        {3},
+        {4}};
+
+    core_create(&params, &ctx);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_recording;
+    vcr.current_sample = 4;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    REQUIRE(vcr.task == task_idle);
+    REQUIRE(vcr.hdr.length_samples == inputs.size());
+    REQUIRE(vcr.current_sample == 4);
+}
+
 #pragma endregion
