@@ -800,4 +800,33 @@ TEST_CASE("stopping_vcr_during_input_callback_while_recording_doesnt_do_recordin
     REQUIRE(vcr.current_sample == 4);
 }
 
+/*
+ * Tests that the VCR mutex is unlocked during callbacks invoked when calling vcr_stop_all with playback task.
+ */
+TEST_CASE("mutex_unlocked_during_callbacks_with_playback_task", "vcr_stop_all")
+{
+    prepare_test();
+
+    bool task_changed_called = false;
+    params.callbacks.task_changed = [&](auto) {
+        task_changed_called = true;
+        REQUIRE(!is_vcr_lock_held());
+    };
+
+    bool stop_movie_called = false;
+    params.callbacks.stop_movie = [&] {
+        stop_movie_called = true;
+        REQUIRE(!is_vcr_lock_held());
+    };
+
+    core_create(&params, &ctx);
+
+    vcr.task = task_playback;
+
+    vcr_stop_all();
+
+    REQUIRE(task_changed_called);
+    REQUIRE(stop_movie_called);
+}
+
 #pragma endregion
