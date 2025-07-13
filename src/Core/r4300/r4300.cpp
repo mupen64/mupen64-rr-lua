@@ -2051,7 +2051,7 @@ void audio_thread()
             continue;
         }
 
-        if (g_ctx.vcr_is_seeking())
+        if (vcr.seek_to_frame.has_value())
         {
             continue;
         }
