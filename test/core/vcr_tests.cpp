@@ -8,8 +8,6 @@
 #include <Core/r4300/vcr.h>
 #include <Core/r4300/r4300.h>
 
-extern t_vcr_state vcr;
-extern std::recursive_mutex vcr_mtx;
 static core_cfg cfg{};
 static core_params params{};
 static core_ctx* ctx = nullptr;

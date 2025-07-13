@@ -45,6 +45,7 @@ struct vcr_freeze_info {
 };
 
 extern t_vcr_state vcr;
+extern std::mutex vcr_mtx;
 
 /**
  * \brief Notifies VCR engine about controller being polled
