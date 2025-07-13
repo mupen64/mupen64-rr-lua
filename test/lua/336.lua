@@ -4,6 +4,15 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
-emu.atinput(function ()
-    movie.stop()
-end)
+local function evil()
+    for i = 1, 100, 1 do
+        emu.samplecount()
+        emu.inputcount()
+        emu.framecount()
+        movie.get_seek_completion()
+    end
+end
+
+emu.atinput(evil)
+emu.atvi(evil)
+emu.atdrawd2d(evil)
