@@ -689,7 +689,7 @@ void on_speed_modifier_changed(std::any data)
 
     const auto vis_per_second = g_core_ctx->vr_get_vis_per_second(g_core_ctx->vr_get_rom_header()->Country_code);
     const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
-    
+
     Statusbar::post(std::format(L"Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
 }
 
