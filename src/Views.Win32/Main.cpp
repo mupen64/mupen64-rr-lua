@@ -1872,14 +1872,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             case IDM_SPEED_DOWN:
             case IDM_SPEED_UP:
-            {
-                constexpr auto base_increment = 5;
-                const auto increment = LOWORD(wParam) == IDM_SPEED_UP ? base_increment : -base_increment;
-                g_config.core.fps_modifier = clamp(g_config.core.fps_modifier + increment, base_increment, 1000);
-                g_core_ctx->vr_on_speed_modifier_changed();
-                Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
-                break;
-            }
+                {
+                    constexpr auto base_increment = 5;
+                    const auto increment = LOWORD(wParam) == IDM_SPEED_UP ? base_increment : -base_increment;
+                    g_config.core.fps_modifier = clamp(g_config.core.fps_modifier + increment, base_increment, 1000);
+                    g_core_ctx->vr_on_speed_modifier_changed();
+                    Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
+                    break;
+                }
             case IDM_SPEED_RESET:
                 g_config.core.fps_modifier = 100;
                 g_core_ctx->vr_on_speed_modifier_changed();
