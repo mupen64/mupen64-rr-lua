@@ -16,6 +16,8 @@ static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LuaRenderer::LUA_GDI_COLOR_M
 
 static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    runtime_assert(is_on_gui_thread(), L"LuaRenderer::d2d_overlay_wndproc called from non-GUI thread");
+
     switch (msg)
     {
     case WM_PAINT:
@@ -248,6 +250,8 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
 
     if (ctx->presenter)
     {
+        SetWindowLongPtr(ctx->d2d_overlay_hwnd, GWLP_USERDATA, 0);
+
         ctx->dw_text_layouts.clear();
         ctx->dw_text_sizes.clear();
 
@@ -271,6 +275,8 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
 
     if (ctx->gdi_back_dc)
     {
+        SetWindowLongPtr(ctx->gdi_overlay_hwnd, GWLP_USERDATA, 0);
+
         ReleaseDC(ctx->gdi_overlay_hwnd, ctx->gdi_front_dc);
         DestroyWindow(ctx->gdi_overlay_hwnd);
         SelectObject(ctx->gdi_back_dc, nullptr);
