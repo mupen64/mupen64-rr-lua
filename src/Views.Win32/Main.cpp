@@ -5,15 +5,18 @@
  */
 
 #include "stdafx.h"
-#include <components/CLI.h>
+#include <ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
 #include <Plugin.h>
+#include <ThreadPool.h>
 #include <strsafe.h>
 #include <capture/EncodingManager.h>
 #include <components/AboutDialog.h>
+#include <components/AppActions.h>
 #include <components/Benchmark.h>
+#include <components/CLI.h>
 #include <components/Cheats.h>
 #include <components/Compare.h>
 #include <components/ConfigDialog.h>
@@ -21,6 +24,7 @@
 #include <components/CrashManager.h>
 #include <components/Dispatcher.h>
 #include <components/FilePicker.h>
+#include <components/LuaDialog.h>
 #include <components/MGECompositor.h>
 #include <components/MovieDialog.h>
 #include <components/PianoRoll.h>
@@ -30,11 +34,9 @@
 #include <components/Seeker.h>
 #include <components/Statusbar.h>
 #include <components/UpdateChecker.h>
-#include <components/LuaDialog.h>
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaManager.h>
 #include <lua/LuaRenderer.h>
-#include <ThreadPool.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 #define VIEW_BENCHMARK_SUPPORT
@@ -938,9 +940,6 @@ void open_console()
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    // TODO: Remove...
-    wchar_t path_buffer[_MAX_PATH]{};
-
     switch (Message)
     {
     case WM_INVALIDATE_LUA:
@@ -1183,14 +1182,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
 
         g_main_menu = GetMenu(hwnd);
+
         g_recent_roms_menu = GetSubMenu(GetSubMenu(g_main_menu, 0), 5);
         g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 6);
         g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
 
-        GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
+        AppActions::add();
+        ActionManager::build_menu();
+
         MGECompositor::create(hwnd);
         PianoRoll::init();
         ConfigDialog::init();
+
         return TRUE;
     case WM_DESTROY:
         Config::save();
@@ -1970,6 +1973,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             }
+
+            {
+                const auto id = LOWORD(wParam);
+                if (ActionManager::handle_menu_interaction(id))
+                {
+                    break;
+                }
+            }
         }
         break;
     default:
@@ -2428,7 +2439,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     wc.lpszClassName = WND_CLASS;
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszMenuName = MAKEINTRESOURCE(IDR_MYMENU);
+    wc.lpszMenuName = MAKEINTRESOURCE(IDM_MAIN);
     RegisterClassEx(&wc);
 
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height);

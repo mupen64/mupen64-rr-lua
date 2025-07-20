@@ -247,6 +247,7 @@
         <ClInclude Include="lib\IIOHelperService.h" />
         <ClInclude Include="src\Views.Win32\MiscHelpers.h"/>
         <ClInclude Include="src\Views.Win32\ThreadPool.h" />
+        <ClInclude Include="src\Views.Win32\ActionManager.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\VFWEncoder.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\Encoder.h"/>
         <ClInclude Include="src\Views.Win32\capture\encoders\FFmpegEncoder.h"/>
@@ -274,6 +275,7 @@
         <ClInclude Include="src\Views.Win32\components\FilePicker.h" />
         <ClInclude Include="src\Views.Win32\components\CLI.h" />
         <ClInclude Include="src\Views.Win32\components\SettingsListView.h" />
+        <ClInclude Include="src\Views.Win32\components\AppActions.h" />
         <ClInclude Include="src\Views.Win32\components\LuaDialog.h" />
         <ClInclude Include="src\Views.Win32\Main.h" />
         <ClInclude Include="src\Views.Win32\Config.h" />
@@ -320,6 +322,7 @@
         <ClCompile Include="src\Views.Win32\capture\EncodingManager.cpp" />
         <ClCompile Include="src\Views.Win32\capture\Resampler.cpp" />
         <ClCompile Include="src\Views.Win32\Config.cpp" />
+        <ClCompile Include="src\Views.Win32\ActionManager.cpp" />
         <ClCompile Include="src\Views.Win32\DialogService.cpp" />
         <ClCompile Include="src\Views.Win32\components\Compare.cpp" />
         <ClCompile Include="src\Views.Win32\components\Benchmark.cpp" />
@@ -341,6 +344,7 @@
         <ClCompile Include="src\Views.Win32\components\FilePicker.cpp" />
         <ClCompile Include="src\Views.Win32\components\CLI.cpp"/>
         <ClCompile Include="src\Views.Win32\components\SettingsListView.cpp"/>
+        <ClCompile Include="src\Views.Win32\components\AppActions.cpp" />
         <ClCompile Include="src\Views.Win32\components\LuaDialog.cpp" />
         <ClCompile Include="src\Views.Win32\Loggers.cpp"/>
         <ClCompile Include="src\Views.Win32\Main.cpp"/>

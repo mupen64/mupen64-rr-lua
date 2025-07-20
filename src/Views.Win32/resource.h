@@ -5,7 +5,7 @@
 #define MAX_LUA_OPEN_AND_RUN_INSTANCES 100
 #define MIN_WINDOW_H 100
 #define MIN_WINDOW_W 100
-#define IDR_MYMENU 101
+#define IDM_MAIN 101
 #define IDM_SETTINGS 105
 #define IDD_SEEKER 107
 #define IDD_RUNNER 109
@@ -523,6 +523,7 @@
 #define IDC_LOG 40123
 #define IDD_LUA_INSTANCE_PLACEHOLDER 40124
 #define IDR_SANDBOX_LUA_FILE 40125
+#define IDM_DUMMY 40126
 #define IDC_STATIC -1
 
 // Next default values for new objects
