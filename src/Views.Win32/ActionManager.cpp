@@ -7,22 +7,41 @@
 #include "stdafx.h"
 #include <ActionManager.h>
 
-struct t_command_node {
-    std::wstring name{};
-    size_t hash{};
-    std::vector<t_command_node> children{};
-};
-
 struct t_action_manager {
     std::vector<ActionManager::t_action> actions{};
     std::unordered_map<std::wstring, int32_t> action_name_menu_map{};
-    t_command_node command_tree{L"root"};
+    ActionManager::t_command_node command_tree{L"root"};
 };
-
 
 static t_action_manager g_mgr{};
 
-std::wstring ActionManager::t_action::t_hotkey::to_wstring() const
+static void build_menu();
+
+static void iterate_all_children_and_self(ActionManager::t_command_node& node, const std::function<void(ActionManager::t_command_node& node)>& predicate)
+{
+    predicate(node);
+    for (auto& child : node.children)
+    {
+        iterate_all_children_and_self(child, predicate);
+    }
+}
+
+static ActionManager::t_command_node* find_command_node_by_name(const std::wstring& name)
+{
+    const std::wstring last_segment = io_service.trim(name.substr(name.find_last_of(L'>') + 1));
+
+    ActionManager::t_command_node* found_node = nullptr;
+    iterate_all_children_and_self(g_mgr.command_tree, [&](ActionManager::t_command_node& node) {
+        if (node.name == last_segment)
+        {
+            found_node = &node;
+        }
+    });
+
+    return found_node;
+}
+
+std::wstring ActionManager::t_hotkey::to_wstring() const
 {
     wchar_t buf[260]{};
     const int k = this->key;
@@ -197,9 +216,9 @@ void ActionManager::add(t_action action)
         return a.name == action.name;
     });
 
-    action.id = std::hash<std::wstring>{}(action.name);
-
     g_mgr.actions.emplace_back(action);
+
+    build_menu();
 }
 
 std::optional<std::reference_wrapper<ActionManager::t_action>> ActionManager::get_by_name(const std::wstring& name)
@@ -219,25 +238,28 @@ std::vector<ActionManager::t_action> ActionManager::get_actions()
     return g_mgr.actions;
 }
 
-bool ActionManager::handle_menu_interaction(int id)
+bool ActionManager::handle_menu_interaction(size_t id)
 {
+    g_view_logger->info(L"interaction {}", id);
 
-    // if (!MENU_ACTION_NAME_MAP.contains(id))
-    // {
-    //     return false;
-    // }
-    //
-    // const auto& action_optional = ActionManager::get_by_name(MENU_ACTION_NAME_MAP.at(id));
-    // if (!action_optional.has_value())
-    // {
-    //     g_view_logger->warn(L"Action '{}' expected but not found", MENU_ACTION_NAME_MAP.at(id));
-    //     return false;
-    // }
-    //
-    // action_optional->get().down_callback();
-    //
-    // return true;
-    return false;
+    t_action* action = nullptr;
+    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+        if (node.menu_id == id)
+        {
+            action = node.action;
+        }
+    });
+
+    if (!action)
+    {
+        return false;
+    }
+
+    g_view_logger->info(L"interaction >>> {}", action->name);
+
+    action->down_callback();
+
+    return true;
 }
 
 static void set_menu_accelerator(int element_id, const wchar_t* acc)
@@ -254,19 +276,10 @@ static void set_menu_accelerator(int element_id, const wchar_t* acc)
     ModifyMenu(GetMenu(g_main_hwnd), element_id, MF_BYCOMMAND | MF_STRING, element_id, string);
 }
 
-static void set_hotkey_menu_accelerators(const ActionManager::t_action::t_hotkey& hotkey, const int menu_item_id)
+static void set_hotkey_menu_accelerators(const ActionManager::t_hotkey& hotkey, const int menu_item_id)
 {
     const auto hotkey_str = hotkey.to_wstring();
     set_menu_accelerator(menu_item_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
-}
-
-static void iterate_all_children_and_self(t_command_node& node, const std::function<void(t_command_node& node)>& predicate)
-{
-    predicate(node);
-    for (auto& child : node.children)
-    {
-        iterate_all_children_and_self(child, predicate);
-    }
 }
 
 /**
@@ -275,55 +288,60 @@ static void iterate_all_children_and_self(t_command_node& node, const std::funct
  */
 static void build_command_tree()
 {
-    g_mgr.command_tree = t_command_node{L"root"};
+    g_mgr.command_tree = ActionManager::t_command_node{L"root"};
 
     for (const auto& action : g_mgr.actions)
     {
-        const std::wstring& name = action.name;
-        std::wstringstream ss(name);
-        std::wstring segment;
-        std::vector<std::wstring> parts;
-
-        while (std::getline(ss, segment, L'>'))
+        std::vector<std::wstring> parts = io_service.split_wstring(action.name, L">");
+        for (auto& part : parts)
         {
-            size_t start = segment.find_first_not_of(L" \t");
-            size_t end = segment.find_last_not_of(L" \t");
-            if (start != std::wstring::npos && end != std::wstring::npos)
-                parts.push_back(segment.substr(start, end - start + 1));
+            part = io_service.trim(part);
         }
 
-        t_command_node* current = &g_mgr.command_tree;
+        ActionManager::t_command_node* current = &g_mgr.command_tree;
 
         for (const auto& part : parts)
         {
-            auto it = std::find_if(
-            current->children.begin(),
-            current->children.end(),
-            [&](const t_command_node& node) {
-                return node.name == part;
-            });
+            auto it = std::ranges::find_if(current->children,
+                                           [&](const ActionManager::t_command_node& node) {
+                                               return node.name == part;
+                                           });
 
             if (it != current->children.end())
             {
-                current = &(*it);
+                current = &*it;
             }
             else
             {
-                current->children.push_back(t_command_node{part});
+                current->children.push_back(ActionManager::t_command_node{part});
                 current = &current->children.back();
             }
         }
     }
 
-    iterate_all_children_and_self(g_mgr.command_tree, [](t_command_node& node) {
-        node.hash = std::hash<std::wstring>{}(node.name);
+    size_t menu_id_counter = 0;
+    iterate_all_children_and_self(g_mgr.command_tree, [&](ActionManager::t_command_node& node) {
+        assert(node.menu_id <= IDM_RESERVED_END);
+        node.menu_id = (uint16_t)menu_id_counter;
+        menu_id_counter++;
     });
+
+    for (auto& action : g_mgr.actions)
+    {
+        const auto command = find_command_node_by_name(action.name);
+        if (!command)
+        {
+            g_view_logger->error(L"Failed to find command node for action: {}", action.name);
+            continue;
+        }
+        command->action = &action;
+    }
 }
 
 /**
  * \brief Logs the structure of the command tree to the logger.
  */
-static void log_menu_structure(const t_command_node& node, size_t depth = 0)
+static void log_menu_structure(const ActionManager::t_command_node& node, size_t depth = 0)
 {
     if (depth == 0)
     {
@@ -331,7 +349,7 @@ static void log_menu_structure(const t_command_node& node, size_t depth = 0)
     }
 
     std::wstring indent(depth * 2, L' ');
-    g_view_logger->info(L"{}{} hash {}", indent, node.name, node.hash);
+    g_view_logger->info(L"{} {} (ID: {})", indent, node.name, node.menu_id);
 
     for (const auto& child : node.children)
     {
@@ -347,12 +365,13 @@ static void log_menu_structure(const t_command_node& node, size_t depth = 0)
 /**
  * \brief Adds menu items to the specified parent menu based on the command tree structure.
  */
-static void add_menu_items(const t_command_node& node, const HMENU parent_menu, const size_t depth = 0)
+static void add_menu_items(const ActionManager::t_command_node& node, const HMENU parent_menu, const size_t depth = 0)
 {
     for (const auto& command : node.children)
     {
         if (!command.children.empty())
         {
+            // Special case: if this isn't a
             HMENU new_menu = CreatePopupMenu();
             InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_POPUP, (UINT_PTR)new_menu, command.name.c_str());
             add_menu_items(command, new_menu, depth + 1);
@@ -360,11 +379,11 @@ static void add_menu_items(const t_command_node& node, const HMENU parent_menu, 
         }
 
         // For leaves, we just add a normal menu item
-        InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.hash, command.name.c_str());
+        InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.menu_id, command.name.c_str());
     }
 }
 
-void ActionManager::build_menu()
+static void build_menu()
 {
     build_command_tree();
 
@@ -383,7 +402,7 @@ void ActionManager::build_menu()
     add_menu_items(g_mgr.command_tree.children.at(0), main_menu);
 
     // 3. Add all other externally-registered commands
-    t_command_node root_copy = g_mgr.command_tree;
+    ActionManager::t_command_node root_copy = g_mgr.command_tree;
     root_copy.children.erase(root_copy.children.begin());
     add_menu_items(root_copy, main_menu);
 }

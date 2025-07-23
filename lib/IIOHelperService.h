@@ -206,6 +206,31 @@ public:
         }
     }
 
+    virtual std::wstring ltrim(const std::wstring& str)
+    {
+        std::wstring s = str;
+        s.erase(s.begin(), std::ranges::find_if(s, [](const wchar_t ch) {
+                    return !iswspace(ch);
+                }));
+        return s;
+    }
+
+    virtual std::wstring rtrim(const std::wstring& str)
+    {
+        std::wstring s = str;
+        s.erase(std::find_if(s.rbegin(), s.rend(), [](const wchar_t ch) {
+                    return !iswspace(ch);
+                })
+                .base(),
+                s.end());
+        return s;
+    }
+
+    virtual std::wstring trim(const std::wstring& str)
+    {
+        return ltrim(rtrim(str));
+    }
+
     virtual size_t str_nth_occurence(const std::wstring& str, const std::wstring& searched, size_t nth)
     {
         if (searched.empty() || nth <= 0)

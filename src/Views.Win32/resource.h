@@ -2,9 +2,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by rsrc.rc
 //
-#define MAX_LUA_OPEN_AND_RUN_INSTANCES 100
-#define MIN_WINDOW_H 100
-#define MIN_WINDOW_W 100
+#define IDM_RESERVED_BEGIN 0
+#define IDM_RESERVED_END 100
 #define IDM_MAIN 101
 #define IDM_SETTINGS 105
 #define IDD_SEEKER 107

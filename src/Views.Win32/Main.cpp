@@ -1188,7 +1188,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
 
         AppActions::add();
-        ActionManager::build_menu();
 
         MGECompositor::create(hwnd);
         PianoRoll::init();
@@ -1222,8 +1221,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_GETMINMAXINFO:
         {
             LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
-            lpMMI->ptMinTrackSize.x = MIN_WINDOW_W;
-            lpMMI->ptMinTrackSize.y = MIN_WINDOW_H;
+            lpMMI->ptMinTrackSize.x = 100;
+            lpMMI->ptMinTrackSize.y = 100;
             // this might break small res with gfx plugin!!!
         }
         break;
