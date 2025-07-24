@@ -5,18 +5,22 @@
  */
 
 #include "stdafx.h"
+#include <ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
 #include <Plugin.h>
-#include <components/SettingsListView.h>
 #include <capture/EncodingManager.h>
-#include <components/configdialog.h>
 #include <components/FilePicker.h>
+#include <components/SettingsListView.h>
+#include <components/configdialog.h>
 #include <lua/LuaManager.h>
 
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
+
+// Local copy of the action path<->hotkey map from g_config, but flattened into a vector
+std::vector<std::pair<std::wstring, t_hotkey>> hotkey_scratchpad;
 
 /**
  * Represents a group of options in the settings.
@@ -37,7 +41,7 @@ typedef struct
 /**
  * Represents a settings option.
  */
-typedef struct OptionsItem {
+struct t_options_item {
     enum class Type {
         Invalid,
         Bool,
@@ -113,8 +117,9 @@ typedef struct OptionsItem {
 
         if (type == Type::Hotkey)
         {
-            const auto hotkey_ptr = reinterpret_cast<t_hotkey*>(data);
-            return hotkey_ptr->to_wstring();
+            const auto i = reinterpret_cast<size_t>(data);
+            const auto& hotkey = hotkey_scratchpad[i].second;
+            return hotkey.to_wstring();
         }
 
         for (auto [name, val] : possible_values)
@@ -177,8 +182,7 @@ typedef struct OptionsItem {
             *data = *(int32_t*)default_equivalent;
         }
     }
-
-} t_options_item;
+};
 
 t_plugin_discovery_result plugin_discovery_result;
 std::vector<t_options_group> g_option_groups;
@@ -990,7 +994,6 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     t_options_group hotkey_group = {
     .id = id++,
     .name = L"Hotkeys"};
-
     groups = {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group, lua_group, debug_group, hotkey_group};
 
     options = {
@@ -1352,17 +1355,6 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .type = t_options_item::Type::Bool,
     },
     };
-
-    for (const auto hotkey : g_config_hotkeys)
-    {
-        options.push_back(t_options_item{
-        .group_id = hotkey_group.id,
-        .name = hotkey->identifier,
-        .tooltip = std::format(L"{} hotkey.\nAction down: #{}\nAction up: #{}", hotkey->identifier, (int32_t)hotkey->down_cmd, (int32_t)hotkey->up_cmd),
-        .data = reinterpret_cast<int32_t*>(hotkey),
-        .type = t_options_item::Type::Hotkey,
-        });
-    }
 }
 
 LRESULT CALLBACK InlineEditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
@@ -1488,18 +1480,19 @@ static void handle_hotkey_conflict(const HWND hwnd, t_hotkey* current_hotkey)
     }
 
     std::vector<t_hotkey*> conflicting_hotkeys;
-    for (const auto hotkey : g_config_hotkeys)
-    {
-        if (hotkey == current_hotkey)
-        {
-            continue;
-        }
-
-        if (hotkey->key == current_hotkey->key && hotkey->ctrl == current_hotkey->ctrl && hotkey->shift == current_hotkey->shift && hotkey->alt == current_hotkey->alt)
-        {
-            conflicting_hotkeys.push_back(hotkey);
-        }
-    }
+    // TODO: REIMPLEMENT!
+    // for (const auto hotkey : g_config_hotkeys)
+    // {
+    //     if (hotkey == current_hotkey)
+    //     {
+    //         continue;
+    //     }
+    //
+    //     if (hotkey->key == current_hotkey->key && hotkey->ctrl == current_hotkey->ctrl && hotkey->shift == current_hotkey->shift && hotkey->alt == current_hotkey->alt)
+    //     {
+    //         conflicting_hotkeys.push_back(hotkey);
+    //     }
+    // }
 
     if (conflicting_hotkeys.empty())
     {
@@ -1509,7 +1502,8 @@ static void handle_hotkey_conflict(const HWND hwnd, t_hotkey* current_hotkey)
     std::wstring conflicting_hotkey_identifiers;
     for (const auto hotkey : conflicting_hotkeys)
     {
-        conflicting_hotkey_identifiers += L"- " + hotkey->identifier + L"\n";
+        // TODO: REIMPLEMENT!
+        // conflicting_hotkey_identifiers += L"- " + hotkey->identifier + L"\n";
     }
 
     const auto str = std::format(L"The key combination {} is already used by the following hotkey(s):\n\n{}\nHow would you like to proceed?",
@@ -1553,13 +1547,13 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     }
 
     // For bools, just flip the value...
-    if (option_item.type == OptionsItem::Type::Bool)
+    if (option_item.type == t_options_item::Type::Bool)
     {
         *option_item.data ^= true;
     }
 
     // For enums, cycle through the possible values
-    if (option_item.type == OptionsItem::Type::Enum)
+    if (option_item.type == t_options_item::Type::Enum)
     {
         // 1. Find the index of the currently selected item, while falling back to the first possible value if there's no match
         size_t current_value = option_item.possible_values[0].second;
@@ -1599,14 +1593,14 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     }
 
     // For strings, allow editing in a dialog (since it might be a multiline string and we can't really handle that below)
-    if (option_item.type == OptionsItem::Type::String)
+    if (option_item.type == t_options_item::Type::String)
     {
         g_edit_option_item_index = i;
         DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), hwnd, EditStringDialogProc, 0);
     }
 
     // For numbers, create a textbox over the value cell for inline editing
-    if (option_item.type == OptionsItem::Type::Number)
+    if (option_item.type == t_options_item::Type::Number)
     {
         if (g_edit_hwnd)
         {
@@ -1635,21 +1629,22 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     }
 
     // For hotkeys, accept keyboard inputs
-    if (option_item.type == OptionsItem::Type::Hotkey)
+    if (option_item.type == t_options_item::Type::Hotkey)
     {
-        t_hotkey* hotkey = (t_hotkey*)option_item.data;
-
-        t_hotkey prev_hotkey_data = *hotkey;
+        const auto i = (size_t)option_item.data;
+        auto hotkey = hotkey_scratchpad[i].second;
 
         g_hotkey_active_index = std::make_optional(i);
         ListView_Update(g_lv_hwnd, i);
         RedrawWindow(g_lv_hwnd, nullptr, nullptr, RDW_UPDATENOW);
-        get_user_hotkey(hotkey);
+        get_user_hotkey(&hotkey);
         g_hotkey_active_index.reset();
 
-        handle_hotkey_conflict(hwnd, hotkey);
+        handle_hotkey_conflict(hwnd, &hotkey);
 
         advance_listview_selection(g_lv_hwnd);
+
+        hotkey_scratchpad[i].second = hotkey;
     }
 
     ListView_Update(g_lv_hwnd, i);
@@ -1699,18 +1694,19 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
 
                 int32_t image = 50;
 
-                if (options_item.type == OptionsItem::Type::String)
+                if (options_item.type == t_options_item::Type::String)
                 {
                     image = *(std::wstring*)default_value_ptr == *options_item.data_str ? 50 : 1;
                 }
-                else if (options_item.type == OptionsItem::Type::Hotkey)
+                else if (options_item.type == t_options_item::Type::Hotkey)
                 {
-                    auto default_hotkey = (t_hotkey*)default_value_ptr;
-                    auto current_hotkey = (t_hotkey*)options_item.data;
-
-                    bool same = default_hotkey->key == current_hotkey->key && default_hotkey->ctrl == current_hotkey->ctrl && default_hotkey->alt == current_hotkey->alt && default_hotkey->shift == current_hotkey->shift;
-
-                    image = same ? 50 : 1;
+                    // TODO: Reimplement! There is no concept of a default hotkey in the new system.
+                    // auto default_hotkey = (t_hotkey*)default_value_ptr;
+                    // const auto i = (size_t)options_item.data;
+                    // const auto hotkey = hotkey_scratchpad[i].second;
+                    // const bool same = default_hotkey->key == hotkey.key && default_hotkey->ctrl == hotkey.ctrl && default_hotkey->alt == hotkey.alt && default_hotkey->shift == hotkey.shift;
+                    // image = same ? 50 : 1;
+                    image = 50;
                 }
                 else
                 {
@@ -1756,7 +1752,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
         {
             auto str = reinterpret_cast<wchar_t*>(l_param);
 
-            if (g_option_items[g_edit_option_item_index].type == OptionsItem::Type::Number)
+            if (g_option_items[g_edit_option_item_index].type == t_options_item::Type::Number)
             {
                 try
                 {
@@ -1795,7 +1791,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             HMENU h_menu = CreatePopupMenu();
             AppendMenu(h_menu, MF_STRING | (readonly ? MF_DISABLED : MF_ENABLED), 1, L"Reset to default");
             AppendMenu(h_menu, MF_STRING, 2, L"More info...");
-            if (option_item.type == OptionsItem::Type::Hotkey)
+            if (option_item.type == t_options_item::Type::Hotkey)
             {
                 AppendMenu(h_menu, MF_SEPARATOR, 3, L"");
                 AppendMenu(h_menu, MF_STRING, 4, L"Clear");
@@ -1847,13 +1843,10 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 DialogService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
             }
 
-            if (offset == 4 && option_item.type == OptionsItem::Type::Hotkey)
+            if (offset == 4 && option_item.type == t_options_item::Type::Hotkey)
             {
-                auto current_hotkey = (t_hotkey*)option_item.data;
-                current_hotkey->key = 0;
-                current_hotkey->ctrl = 0;
-                current_hotkey->alt = 0;
-                current_hotkey->shift = 0;
+                const auto i = (size_t)option_item.data;
+                hotkey_scratchpad[i].second = {};
                 ListView_Update(g_lv_hwnd, i);
             }
 
@@ -1917,6 +1910,24 @@ void ConfigDialog::init()
 
 void ConfigDialog::show_app_settings()
 {
+    hotkey_scratchpad.clear();
+    for (const auto pair : g_config.hotkeys)
+    {
+        hotkey_scratchpad.emplace_back(pair.first, pair.second);
+    }
+    
+    size_t i = 0;
+    for (const auto& key : g_config.hotkeys | std::views::keys)
+    {
+        g_option_items.push_back(t_options_item{
+        .group_id = g_option_groups.back().id,
+        .name = key,
+        .data = (int32_t*)i,
+        .type = t_options_item::Type::Hotkey,
+        });
+        i++;
+    }
+
     PROPSHEETPAGE psp[3] = {{0}};
     for (auto& i : psp)
     {
@@ -1956,6 +1967,8 @@ void ConfigDialog::show_app_settings()
 
     Config::save();
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+
+    g_option_items.erase(g_option_items.end() - i, g_option_items.end());
 }
 
 typedef struct {

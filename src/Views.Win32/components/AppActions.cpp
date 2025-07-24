@@ -1,9 +1,15 @@
 ﻿#include "stdafx.h"
-#include <components/AppActions.h>
+#include <DialogService.h>
 #include <ActionManager.h>
-#include <resource.h>
-#include <components/FilePicker.h>
 #include <ThreadPool.h>
+#include <components/AppActions.h>
+#include <components/ConfigDialog.h>
+#include <components/FilePicker.h>
+
+static void stub()
+{
+    DialogService::show_dialog(L"ActionManager::stub", L"Stub", fsvc_error);
+}
 
 static void load_rom()
 {
@@ -20,8 +26,19 @@ static void load_rom()
     }
 }
 
+static void show_settings()
+{
+    BetterEmulationLock lock;
+    ConfigDialog::show_app_settings();
+}
+
 void AppActions::add()
 {
-    ActionManager::add(L"Mupen64 > File > Load ROM...", load_rom);
-    ActionManager::associate_hotkey(L"Mupen64 > File > Load ROM...", {'O', true});
+    ActionManager::add_and_associate_hotkey(L"Mupen64 > File > Load ROM...", {'O', true}, load_rom);
+    ActionManager::add_and_associate_hotkey(L"Mupen64 > File > Close ROM", {'W', true}, stub);
+    ActionManager::add_and_associate_hotkey(L"Mupen64 > File > Reset ROM", {'R', true}, stub);
+    ActionManager::add_and_associate_hotkey(L"Mupen64 > File > Load Latest ROM", {'O', true, true}, stub);
+    ActionManager::add_and_associate_hotkey(L"Mupen64 > File > Exit", {VK_F4, true}, stub);
+
+    ActionManager::add_and_associate_hotkey(L"Mupen64 > Options > Settings...", {'S', true}, show_settings);
 }

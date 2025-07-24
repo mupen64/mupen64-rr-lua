@@ -7,31 +7,7 @@
 #include "stdafx.h"
 #include <ActionManager.h>
 
-/**
- * \brief Represents an action.
- */
-struct t_action {
-    /**
-     * \brief The action's qualified path, consisting of a category, subcategories, and an action name.
-     * \details Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
-     */
-    std::wstring path{};
-
-    /**
-     * \brief The hotkey associated with the action. Is considered "nothing" if the key is 0 and all modifiers are false.
-     */
-    ActionManager::t_hotkey hotkey{};
-
-    /**
-     * \brief The callback to be invoked when the action is initially triggered.
-     */
-    std::function<void()> down_callback{};
-
-    /**
-     * \brief The callback to be invoked when the action has been released. Can be null.
-     */
-    std::function<void()> up_callback{};
-};
+using t_action = ActionManager::t_action;
 
 /**
  * \brief Represents a command associated with an action as part of a tree structure.
@@ -54,181 +30,6 @@ struct t_action_manager {
 static t_action_manager g_mgr{};
 
 static void build_menu();
-
-
-bool ActionManager::t_hotkey::is_nothing() const
-{
-    return !this->ctrl && !this->shift && !this->alt && this->key == 0;
-}
-
-std::wstring ActionManager::t_hotkey::to_wstring() const
-{
-    wchar_t buf[260]{};
-    const int k = this->key;
-
-    if (!this->ctrl && !this->shift && !this->alt && !this->key)
-    {
-        return L"(nothing)";
-    }
-
-    if (this->ctrl)
-        StrCat(buf, L"Ctrl ");
-    if (this->shift)
-        StrCat(buf, L"Shift ");
-    if (this->alt)
-        StrCat(buf, L"Alt ");
-    if (k)
-    {
-        wchar_t buf2[64]{};
-        if ((k >= 0x30 && k <= 0x39) || (k >= 0x41 && k <= 0x5A))
-            wsprintf(buf2, L"%c", static_cast<char>(k));
-        else if (k >= VK_F1 && k <= VK_F24)
-            wsprintf(buf2, L"F%d", k - (VK_F1 - 1));
-        else if (k >= VK_NUMPAD0 && k <= VK_NUMPAD9)
-            wsprintf(buf2, L"Num%d", k - VK_NUMPAD0);
-        else
-            switch (k)
-            {
-            case VK_LBUTTON:
-                StrCpy(buf2, L"LMB");
-                break;
-            case VK_RBUTTON:
-                StrCpy(buf2, L"RMB");
-                break;
-            case VK_MBUTTON:
-                StrCpy(buf2, L"MMB");
-                break;
-            case VK_XBUTTON1:
-                StrCpy(buf2, L"XMB1");
-                break;
-            case VK_XBUTTON2:
-                StrCpy(buf2, L"XMB2");
-                break;
-            case VK_SPACE:
-                StrCpy(buf2, L"Space");
-                break;
-            case VK_BACK:
-                StrCpy(buf2, L"Backspace");
-                break;
-            case VK_TAB:
-                StrCpy(buf2, L"Tab");
-                break;
-            case VK_CLEAR:
-                StrCpy(buf2, L"Clear");
-                break;
-            case VK_RETURN:
-                StrCpy(buf2, L"Enter");
-                break;
-            case VK_PAUSE:
-                StrCpy(buf2, L"Pause");
-                break;
-            case VK_CAPITAL:
-                StrCpy(buf2, L"Caps");
-                break;
-            case VK_PRIOR:
-                StrCpy(buf2, L"PageUp");
-                break;
-            case VK_NEXT:
-                StrCpy(buf2, L"PageDn");
-                break;
-            case VK_END:
-                StrCpy(buf2, L"End");
-                break;
-            case VK_HOME:
-                StrCpy(buf2, L"Home");
-                break;
-            case VK_LEFT:
-                StrCpy(buf2, L"Left");
-                break;
-            case VK_UP:
-                StrCpy(buf2, L"Up");
-                break;
-            case VK_RIGHT:
-                StrCpy(buf2, L"Right");
-                break;
-            case VK_DOWN:
-                StrCpy(buf2, L"Down");
-                break;
-            case VK_SELECT:
-                StrCpy(buf2, L"Select");
-                break;
-            case VK_PRINT:
-                StrCpy(buf2, L"Print");
-                break;
-            case VK_SNAPSHOT:
-                StrCpy(buf2, L"PrintScrn");
-                break;
-            case VK_INSERT:
-                StrCpy(buf2, L"Insert");
-                break;
-            case VK_DELETE:
-                StrCpy(buf2, L"Delete");
-                break;
-            case VK_HELP:
-                StrCpy(buf2, L"Help");
-                break;
-            case VK_MULTIPLY:
-                StrCpy(buf2, L"Num*");
-                break;
-            case VK_ADD:
-                StrCpy(buf2, L"Num+");
-                break;
-            case VK_SUBTRACT:
-                StrCpy(buf2, L"Num-");
-                break;
-            case VK_DECIMAL:
-                StrCpy(buf2, L"Num.");
-                break;
-            case VK_DIVIDE:
-                StrCpy(buf2, L"Num/");
-                break;
-            case VK_NUMLOCK:
-                StrCpy(buf2, L"NumLock");
-                break;
-            case VK_SCROLL:
-                StrCpy(buf2, L"ScrollLock");
-                break;
-            case /*VK_OEM_PLUS*/ 0xBB:
-                StrCpy(buf2, L"=+");
-                break;
-            case /*VK_OEM_MINUS*/ 0xBD:
-                StrCpy(buf2, L"-_");
-                break;
-            case /*VK_OEM_COMMA*/ 0xBC:
-                StrCpy(buf2, L",");
-                break;
-            case /*VK_OEM_PERIOD*/ 0xBE:
-                StrCpy(buf2, L".");
-                break;
-            case VK_OEM_7:
-                StrCpy(buf2, L"'\"");
-                break;
-            case VK_OEM_6:
-                StrCpy(buf2, L"]}");
-                break;
-            case VK_OEM_5:
-                StrCpy(buf2, L"\\|");
-                break;
-            case VK_OEM_4:
-                StrCpy(buf2, L"[{");
-                break;
-            case VK_OEM_3:
-                StrCpy(buf2, L"`~");
-                break;
-            case VK_OEM_2:
-                StrCpy(buf2, L"/?");
-                break;
-            case VK_OEM_1:
-                StrCpy(buf2, L";:");
-                break;
-            default:
-                wsprintf(buf2, L"(%d)", k);
-                break;
-            }
-        StrCat(buf, buf2);
-    }
-    return buf;
-}
 
 /**
  * \brief Splits a fully-qualified action path into its components.
@@ -361,30 +162,31 @@ bool ActionManager::associate_hotkey(const std::wstring& path, const t_hotkey& h
     }
 
     action->hotkey = hotkey;
+    g_config.hotkeys[path] = hotkey;
 
     build_menu();
+
+    return true;
 }
 
-//
-// These functions are commented out for now, because we **really** don't want to expose the internal action type or anything else for now.
-//
+bool ActionManager::add_and_associate_hotkey(const std::wstring& path, const t_hotkey& hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback)
+{
+    if (!add(path, down_callback, up_callback))
+    {
+        return false;
+    }
 
-// std::optional<std::reference_wrapper<t_action>> ActionManager::get_by_path(const std::wstring& path)
-// {
-//     for (auto& action : g_mgr.actions)
-//     {
-//         if (action.path == path)
-//         {
-//             return action;
-//         }
-//     }
-//     return std::nullopt;
-// }
-//
-// std::vector<t_action> ActionManager::get_actions()
-// {
-//     return g_mgr.actions;
-// }
+    if (!associate_hotkey(path, hotkey))
+    {
+        std::erase_if(g_mgr.actions, [&](const t_action& a) {
+            return a.path == path;
+        });
+        build_menu();
+        return false;
+    }
+
+    return true;
+}
 
 bool ActionManager::handle_menu_interaction(size_t id)
 {
@@ -408,6 +210,30 @@ bool ActionManager::handle_menu_interaction(size_t id)
     action->down_callback();
 
     return true;
+}
+
+void ActionManager::invoke(const std::wstring& path)
+{
+    if (!validate_action_path(path))
+    {
+        g_view_logger->error(L"ActionManager::invoke: Malformed action path '{}'.", path);
+        return;
+    }
+
+    t_action* action = find_action_by_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error(L"ActionManager::invoke: Action with path '{}' not found.", path);
+        return;
+    }
+
+    action->down_callback();
+}
+
+std::vector<t_action> ActionManager::get_actions()
+{
+    return g_mgr.actions;
 }
 
 /**
@@ -528,10 +354,10 @@ static void set_menu_accelerator_text(const HMENU menu_bar, const uint16_t menu_
     ModifyMenu(menu_bar, menu_id, MF_BYCOMMAND | MF_STRING, menu_id, menu_text.c_str());
 }
 
-static void set_hotkey_menu_accelerators(const HMENU menu_bar, const uint16_t menu_id, const ActionManager::t_hotkey& hotkey)
+static void set_hotkey_menu_accelerators(const HMENU menu_bar, const uint16_t menu_id, const t_hotkey& hotkey)
 {
     const auto hotkey_str = hotkey.to_wstring();
-    set_menu_accelerator_text(menu_bar, menu_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
+    set_menu_accelerator_text(menu_bar, menu_id, hotkey.is_nothing() ? L"" : hotkey_str.c_str());
 }
 
 static void build_menu()
