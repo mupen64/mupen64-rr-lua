@@ -22,5 +22,6 @@ static void load_rom()
 
 void AppActions::add()
 {
-    ActionManager::add({.name = L"Mupen64 > File > Load ROM...", .hotkey = {.key = 'O', .ctrl = true}, .down_callback = load_rom});
+    ActionManager::add(L"Mupen64 > File > Load ROM...", load_rom);
+    ActionManager::associate_hotkey(L"Mupen64 > File > Load ROM...", {'O', true});
 }

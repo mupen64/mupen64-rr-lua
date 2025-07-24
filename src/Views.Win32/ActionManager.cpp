@@ -7,38 +7,58 @@
 #include "stdafx.h"
 #include <ActionManager.h>
 
+/**
+ * \brief Represents an action.
+ */
+struct t_action {
+    /**
+     * \brief The action's qualified path, consisting of a category, subcategories, and an action name.
+     * \details Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+     */
+    std::wstring path{};
+
+    /**
+     * \brief The hotkey associated with the action. Is considered "nothing" if the key is 0 and all modifiers are false.
+     */
+    ActionManager::t_hotkey hotkey{};
+
+    /**
+     * \brief The callback to be invoked when the action is initially triggered.
+     */
+    std::function<void()> down_callback{};
+
+    /**
+     * \brief The callback to be invoked when the action has been released. Can be null.
+     */
+    std::function<void()> up_callback{};
+};
+
+/**
+ * \brief Represents a command associated with an action as part of a tree structure.
+ */
+struct t_command_node {
+    /**
+     * \brief The name of the node, which corresponds to a segment of the fully-qualified action path.
+     */
+    std::wstring name{};
+    uint16_t menu_id{};
+    t_action* action{};
+    std::vector<t_command_node> children{};
+};
+
 struct t_action_manager {
-    std::vector<ActionManager::t_action> actions{};
-    std::unordered_map<std::wstring, int32_t> action_name_menu_map{};
-    ActionManager::t_command_node command_tree{L"root"};
+    std::vector<t_action> actions{};
+    t_command_node command_tree{L"root"};
 };
 
 static t_action_manager g_mgr{};
 
 static void build_menu();
 
-static void iterate_all_children_and_self(ActionManager::t_command_node& node, const std::function<void(ActionManager::t_command_node& node)>& predicate)
+
+bool ActionManager::t_hotkey::is_nothing() const
 {
-    predicate(node);
-    for (auto& child : node.children)
-    {
-        iterate_all_children_and_self(child, predicate);
-    }
-}
-
-static ActionManager::t_command_node* find_command_node_by_name(const std::wstring& name)
-{
-    const std::wstring last_segment = io_service.trim(name.substr(name.find_last_of(L'>') + 1));
-
-    ActionManager::t_command_node* found_node = nullptr;
-    iterate_all_children_and_self(g_mgr.command_tree, [&](ActionManager::t_command_node& node) {
-        if (node.name == last_segment)
-        {
-            found_node = &node;
-        }
-    });
-
-    return found_node;
+    return !this->ctrl && !this->shift && !this->alt && this->key == 0;
 }
 
 std::wstring ActionManager::t_hotkey::to_wstring() const
@@ -210,33 +230,156 @@ std::wstring ActionManager::t_hotkey::to_wstring() const
     return buf;
 }
 
-void ActionManager::add(t_action action)
+/**
+ * \brief Splits a fully-qualified action path into its components.
+ */
+static std::vector<std::wstring> split_action_path(const std::wstring& path)
 {
+    std::vector<std::wstring> parts = io_service.split_wstring(path, L">");
+    for (auto& part : parts)
+    {
+        part = io_service.trim(part);
+    }
+    return parts;
+}
+
+/**
+ * \brief Performs a depth-first iteration over the command tree, applying the given predicate to each node. The predicate is also applied to the initial node itself.
+ */
+static void iterate_all_children_and_self(t_command_node& node, const std::function<void(t_command_node& node)>& predicate)
+{
+    predicate(node);
+    for (auto& child : node.children)
+    {
+        iterate_all_children_and_self(child, predicate);
+    }
+}
+
+/**
+ * \brief Walks the command tree to find the command node corresponding to the "Name" segment of the fully-qualified action path.
+ */
+static t_command_node* find_command_node_matching_path_name(const std::wstring& path)
+{
+    const auto segments = split_action_path(path);
+
+    if (segments.empty())
+    {
+        return nullptr;
+    }
+
+    const auto& last_segment = segments.back();
+
+    t_command_node* found_node = nullptr;
+    iterate_all_children_and_self(g_mgr.command_tree, [&](t_command_node& node) {
+        if (node.name == last_segment)
+        {
+            found_node = &node;
+        }
+    });
+
+    return found_node;
+}
+
+/**
+ * \brief Tries to find an action by its fully-qualified path.
+ */
+static t_action* find_action_by_path(const std::wstring& path)
+{
+    for (auto& a : g_mgr.actions)
+    {
+        if (a.path == path)
+        {
+            return &a;
+        }
+    }
+    return nullptr;
+}
+
+/**
+ * \brief Checks whether the given fully-qualified action path is valid.
+ */
+static bool validate_action_path(const std::wstring& path)
+{
+    if (path.empty())
+    {
+        g_view_logger->error(L"Action path cannot be empty.");
+        return false;
+    }
+
+    if (path.find(L'>') == std::wstring::npos)
+    {
+        g_view_logger->error(L"Action path must contain at least one '>'.");
+        return false;
+    }
+
+    return true;
+}
+
+bool ActionManager::add(const std::wstring& path, const std::function<void()>& down_callback, const std::function<void()>& up_callback)
+{
+    t_action action{};
+    action.path = path;
+    action.down_callback = down_callback;
+    action.up_callback = up_callback;
+
+    if (!validate_action_path(action.path))
+    {
+        g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", path);
+        return false;
+    }
+
     std::erase_if(g_mgr.actions, [&](const t_action& a) {
-        return a.name == action.name;
+        return a.path == action.path;
     });
 
     g_mgr.actions.emplace_back(action);
 
     build_menu();
+
+    return true;
 }
 
-std::optional<std::reference_wrapper<ActionManager::t_action>> ActionManager::get_by_name(const std::wstring& name)
+bool ActionManager::associate_hotkey(const std::wstring& path, const t_hotkey& hotkey)
 {
-    for (auto& action : g_mgr.actions)
+    if (!validate_action_path(path))
     {
-        if (action.name == name)
-        {
-            return action;
-        }
+        g_view_logger->error(L"ActionManager::associate_hotkey: Malformed action path '{}'.", path);
+        return false;
     }
-    return std::nullopt;
+
+    t_action* action = find_action_by_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error(L"ActionManager::associate_hotkey: Action with path '{}' not found.", path);
+        return false;
+    }
+
+    action->hotkey = hotkey;
+
+    build_menu();
 }
 
-std::vector<ActionManager::t_action> ActionManager::get_actions()
-{
-    return g_mgr.actions;
-}
+//
+// These functions are commented out for now, because we **really** don't want to expose the internal action type or anything else for now.
+//
+
+// std::optional<std::reference_wrapper<t_action>> ActionManager::get_by_path(const std::wstring& path)
+// {
+//     for (auto& action : g_mgr.actions)
+//     {
+//         if (action.path == path)
+//         {
+//             return action;
+//         }
+//     }
+//     return std::nullopt;
+// }
+//
+// std::vector<t_action> ActionManager::get_actions()
+// {
+//     return g_mgr.actions;
+// }
 
 bool ActionManager::handle_menu_interaction(size_t id)
 {
@@ -255,55 +398,31 @@ bool ActionManager::handle_menu_interaction(size_t id)
         return false;
     }
 
-    g_view_logger->info(L"interaction >>> {}", action->name);
+    g_view_logger->info(L"interaction >>> {}", action->path);
 
     action->down_callback();
 
     return true;
 }
 
-static void set_menu_accelerator(int element_id, const wchar_t* acc)
-{
-    wchar_t string[256] = {0};
-    GetMenuString(GetMenu(g_main_hwnd), element_id, string, std::size(string), MF_BYCOMMAND);
-
-    auto tab = wcschr(string, '\t');
-    if (tab)
-        *tab = '\0';
-    if (StrCmp(acc, L""))
-        wsprintf(string, L"%s\t%s", string, acc);
-
-    ModifyMenu(GetMenu(g_main_hwnd), element_id, MF_BYCOMMAND | MF_STRING, element_id, string);
-}
-
-static void set_hotkey_menu_accelerators(const ActionManager::t_hotkey& hotkey, const int menu_item_id)
-{
-    const auto hotkey_str = hotkey.to_wstring();
-    set_menu_accelerator(menu_item_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
-}
-
 /**
- * \brief Builds a tree structure containing command nodes based on the currently registered actions' names.
+ * \brief Builds a tree structure containing command nodes based on the currently registered actions' paths.
  * The tree structure allows for hierarchical organization of commands, where each node represents, for example, a menu.
  */
 static void build_command_tree()
 {
-    g_mgr.command_tree = ActionManager::t_command_node{L"root"};
+    g_mgr.command_tree = t_command_node{L"root"};
 
     for (const auto& action : g_mgr.actions)
     {
-        std::vector<std::wstring> parts = io_service.split_wstring(action.name, L">");
-        for (auto& part : parts)
-        {
-            part = io_service.trim(part);
-        }
+        std::vector<std::wstring> parts = split_action_path(action.path);
 
-        ActionManager::t_command_node* current = &g_mgr.command_tree;
+        t_command_node* current = &g_mgr.command_tree;
 
         for (const auto& part : parts)
         {
             auto it = std::ranges::find_if(current->children,
-                                           [&](const ActionManager::t_command_node& node) {
+                                           [&](const t_command_node& node) {
                                                return node.name == part;
                                            });
 
@@ -313,14 +432,14 @@ static void build_command_tree()
             }
             else
             {
-                current->children.push_back(ActionManager::t_command_node{part});
+                current->children.push_back(t_command_node{part});
                 current = &current->children.back();
             }
         }
     }
 
     size_t menu_id_counter = 0;
-    iterate_all_children_and_self(g_mgr.command_tree, [&](ActionManager::t_command_node& node) {
+    iterate_all_children_and_self(g_mgr.command_tree, [&](t_command_node& node) {
         assert(node.menu_id <= IDM_RESERVED_END);
         node.menu_id = (uint16_t)menu_id_counter;
         menu_id_counter++;
@@ -328,10 +447,10 @@ static void build_command_tree()
 
     for (auto& action : g_mgr.actions)
     {
-        const auto command = find_command_node_by_name(action.name);
+        const auto command = find_command_node_matching_path_name(action.path);
         if (!command)
         {
-            g_view_logger->error(L"Failed to find command node for action: {}", action.name);
+            g_view_logger->error(L"Failed to find command node for action: {}", action.path);
             continue;
         }
         command->action = &action;
@@ -341,7 +460,7 @@ static void build_command_tree()
 /**
  * \brief Logs the structure of the command tree to the logger.
  */
-static void log_menu_structure(const ActionManager::t_command_node& node, size_t depth = 0)
+static void log_menu_structure(const t_command_node& node, size_t depth = 0)
 {
     if (depth == 0)
     {
@@ -365,22 +484,49 @@ static void log_menu_structure(const ActionManager::t_command_node& node, size_t
 /**
  * \brief Adds menu items to the specified parent menu based on the command tree structure.
  */
-static void add_menu_items(const ActionManager::t_command_node& node, const HMENU parent_menu, const size_t depth = 0)
+static void add_menu_items(const t_command_node& node, const HMENU parent_menu, const size_t depth = 0)
 {
     for (const auto& command : node.children)
     {
         if (!command.children.empty())
         {
-            // Special case: if this isn't a
             HMENU new_menu = CreatePopupMenu();
             InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_POPUP, (UINT_PTR)new_menu, command.name.c_str());
             add_menu_items(command, new_menu, depth + 1);
             continue;
         }
 
-        // For leaves, we just add a normal menu item
         InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.menu_id, command.name.c_str());
     }
+}
+
+
+static void set_menu_accelerator_text(const HMENU menu_bar, const uint16_t menu_id, const std::wstring& text)
+{
+    wchar_t str[256] = {0};
+    GetMenuString(menu_bar, menu_id, str, std::size(str), MF_BYCOMMAND);
+
+    std::wstring menu_text(str);
+
+    // Remove any existing accelerator text
+    const size_t tab_pos = menu_text.find(L'\t');
+    if (tab_pos != std::wstring::npos)
+        menu_text = menu_text.substr(0, tab_pos);
+
+    // Append accelerator text if there's any
+    if (!text.empty())
+    {
+        menu_text += L'\t';
+        menu_text += text;
+    }
+
+    ModifyMenu(menu_bar, menu_id, MF_BYCOMMAND | MF_STRING, menu_id, menu_text.c_str());
+}
+
+static void set_hotkey_menu_accelerators(const HMENU menu_bar, const uint16_t menu_id, const ActionManager::t_hotkey& hotkey)
+{
+    const auto hotkey_str = hotkey.to_wstring();
+    set_menu_accelerator_text(menu_bar, menu_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
 }
 
 static void build_menu()
@@ -402,7 +548,15 @@ static void build_menu()
     add_menu_items(g_mgr.command_tree.children.at(0), main_menu);
 
     // 3. Add all other externally-registered commands
-    ActionManager::t_command_node root_copy = g_mgr.command_tree;
+    t_command_node root_copy = g_mgr.command_tree;
     root_copy.children.erase(root_copy.children.begin());
     add_menu_items(root_copy, main_menu);
+
+    // 4. Apply the accelerator text to all menu items.
+    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+        if (node.action)
+        {
+            set_hotkey_menu_accelerators(main_menu, node.menu_id, node.action->hotkey);
+        }
+    });
 }

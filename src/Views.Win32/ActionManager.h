@@ -19,62 +19,26 @@ namespace ActionManager
         bool ctrl{};
         bool shift{};
         bool alt{};
+        [[nodiscard]] bool is_nothing() const;
         [[nodiscard]] std::wstring to_wstring() const;
     };
 
     /**
-     * \brief Represents an action.
+     * \brief Adds the specified action to the action registry, removing any existing action with the same path.
+     * \param path The action's qualified path, consisting of a category, subcategories, and an action name. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+     * \param down_callback The callback to be invoked when the action is initially triggered.
+     * \param up_callback The callback to be invoked when the action has been released. Can be null.
+     * \remarks Whether the operation succeeded.
      */
-    struct t_action {
-        /**
-         * \brief The action's name.
-         * \details Must be in the format "Category > Subcategory[] > Name". There can be an arbitrary number of subcategories.
-         */
-        std::wstring name{};
-
-        /**
-         * \brief The hotkey associated with the action.
-         */
-        t_hotkey hotkey{};
-
-        /**
-         * \brief The callback to be invoked when the action is initially triggered.
-         */
-        std::function<void()> down_callback{};
-
-        /**
-         * \brief The callback to be invoked when the action has been released. Can be null.
-         */
-        std::function<void()> up_callback{};
-    };
+    bool add(const std::wstring& path, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {});
 
     /**
-     * \brief Represents a command associated with an action as part of a tree structure.
+     * \brief Associates a hotkey with an action by its path.
+     * \param path The qualified path of the action to associate the hotkey with, consisting of a category, subcategories, and an action name. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+     * \param hotkey The hotkey to associate with the action.
+     * \return Whether the operation succeeded.
      */
-    struct t_command_node {
-        std::wstring name{};
-        t_action* action{};
-        uint16_t menu_id{};
-        std::vector<t_command_node> children{};
-    };
-    
-    /**
-     * \brief Adds the specified action to the action registry, removing any existing action with the same name.
-     * \param action The action to add.
-     */
-    void add(t_action action);
-
-    /**
-     * \brief Gets a reference to an action by its name.
-     * \param name The name of the action to retrieve.
-     * \return A reference to the action if found, otherwise std::nullopt.
-     */
-    std::optional<std::reference_wrapper<t_action>> get_by_name(const std::wstring& name);
-
-    /**
-     * \brief Gets the actions in the action registry.
-     */
-    std::vector<t_action> get_actions();
+    bool associate_hotkey(const std::wstring& path, const t_hotkey& hotkey);
 
     /**
      * \brief Handles interactions with a menu item. The interaction will only be handled if the menu was built by the ActionManager.

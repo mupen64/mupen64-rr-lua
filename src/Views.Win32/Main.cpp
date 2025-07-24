@@ -301,10 +301,10 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
     return true;
 }
 
-void set_menu_accelerator(int element_id, const wchar_t* acc)
+void set_menu_accelerator(int menu_id, const wchar_t* acc)
 {
     wchar_t string[256] = {0};
-    GetMenuString(GetMenu(g_main_hwnd), element_id, string, std::size(string), MF_BYCOMMAND);
+    GetMenuString(GetMenu(g_main_hwnd), menu_id, string, std::size(string), MF_BYCOMMAND);
 
     auto tab = wcschr(string, '\t');
     if (tab)
@@ -312,7 +312,7 @@ void set_menu_accelerator(int element_id, const wchar_t* acc)
     if (StrCmp(acc, L""))
         wsprintf(string, L"%s\t%s", string, acc);
 
-    ModifyMenu(GetMenu(g_main_hwnd), element_id, MF_BYCOMMAND | MF_STRING, element_id, string);
+    ModifyMenu(GetMenu(g_main_hwnd), menu_id, MF_BYCOMMAND | MF_STRING, menu_id, string);
 }
 
 void set_hotkey_menu_accelerators(t_hotkey* hotkey, int menu_item_id)
