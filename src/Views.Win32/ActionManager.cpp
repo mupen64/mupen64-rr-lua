@@ -240,6 +240,11 @@ static std::vector<std::wstring> split_action_path(const std::wstring& path)
     {
         part = io_service.trim(part);
     }
+
+    std::erase_if(parts, [](const std::wstring& part) {
+        return part.empty();
+    });
+
     return parts;
 }
 
