@@ -169,25 +169,6 @@ bool ActionManager::associate_hotkey(const std::wstring& path, const t_hotkey& h
     return true;
 }
 
-bool ActionManager::add_and_associate_hotkey(const std::wstring& path, const t_hotkey& hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback)
-{
-    if (!add(path, down_callback, up_callback))
-    {
-        return false;
-    }
-
-    if (!associate_hotkey(path, hotkey))
-    {
-        std::erase_if(g_mgr.actions, [&](const t_action& a) {
-            return a.path == path;
-        });
-        build_menu();
-        return false;
-    }
-
-    return true;
-}
-
 bool ActionManager::handle_menu_interaction(size_t id)
 {
     g_view_logger->info(L"interaction {}", id);

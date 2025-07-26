@@ -58,14 +58,7 @@ namespace ActionManager
      * \return Whether the operation succeeded.
      */
     bool associate_hotkey(const std::wstring& path, const t_hotkey& hotkey);
-
-    /**
-     * \brief Performs the combined action of adding an action and associating a hotkey with it.
-     * \return Whether the operation succeeded.
-     * \remarks Will unregister the action if hotkey association fails. See <c>add</c> and <c>associate_hotkey</c> for more details.
-     */
-    bool add_and_associate_hotkey(const std::wstring& path, const t_hotkey& hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {});
-
+    
     /**
      * \brief Handles interactions with a menu item. The interaction will only be handled if the menu was built by the ActionManager.
      * \param id The menu item's ID.
