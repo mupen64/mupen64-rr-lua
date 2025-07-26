@@ -162,8 +162,13 @@ bool ActionManager::associate_hotkey(const std::wstring& path, const t_hotkey& h
     }
 
     action->hotkey = hotkey;
+    if (!g_config.hotkeys.contains(path))
+    {
+        g_config.inital_hotkeys[path] = hotkey;
+    }
     g_config.hotkeys[path] = hotkey;
 
+    
     build_menu();
 
     return true;

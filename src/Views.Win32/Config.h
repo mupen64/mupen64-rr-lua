@@ -372,6 +372,11 @@ struct t_config {
     /// A map of fully-qualified action paths to a hotkey assigned to them.
     /// </summary>
     std::map<std::wstring, t_hotkey> hotkeys;
+
+    /// <summary>
+    /// A map of fully-qualified action paths to the hotkey which was assigned to them the first time the action was assigned a hotkey.
+    /// </summary>
+    std::map<std::wstring, t_hotkey> inital_hotkeys;
 };
 
 extern t_config g_config;
