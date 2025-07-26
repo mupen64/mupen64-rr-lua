@@ -10,12 +10,15 @@
 
 const auto D2D_OVERLAY_CLASS = L"lua_d2d_overlay";
 const auto GDI_OVERLAY_CLASS = L"lua_gdi_overlay";
+const auto CTX_PROP = L"lua_ctx";
 
 static bool d2d_drawing = false;
 static HBRUSH g_alpha_mask_brush = CreateSolidBrush(LuaRenderer::LUA_GDI_COLOR_MASK);
 
 static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    runtime_assert(is_on_gui_thread(), L"LuaRenderer::d2d_overlay_wndproc called from non-GUI thread");
+
     switch (msg)
     {
     case WM_PAINT:
@@ -30,7 +33,7 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             d2d_drawing = true;
 
-            auto lua = (t_lua_environment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            auto lua = (t_lua_environment*)GetProp(hwnd, CTX_PROP);
 
             if (!lua)
             {
@@ -61,6 +64,9 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             return 0;
         }
+    case WM_NCDESTROY:
+        RemoveProp(hwnd, CTX_PROP);
+        break;
     default:
         break;
     }
@@ -73,7 +79,7 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
     {
     case WM_PAINT:
         {
-            auto lua = (t_lua_environment*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            auto lua = (t_lua_environment*)GetProp(hwnd, CTX_PROP);
 
             if (!lua)
             {
@@ -96,6 +102,9 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             return 0;
         }
+    case WM_NCDESTROY:
+        RemoveProp(hwnd, CTX_PROP);
+        break;
     default:
         break;
     }
@@ -216,9 +225,9 @@ void LuaRenderer::create_renderer(t_lua_rendering_context* ctx, t_lua_environmen
     FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
     ctx->d2d_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width, ctx->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
-
-    SetWindowLongPtr(ctx->d2d_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)env);
-    SetWindowLongPtr(ctx->gdi_overlay_hwnd, GWLP_USERDATA, (LONG_PTR)env);
+    
+    SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, env);
+    SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, env);
 
     if (!g_config.lazy_renderer_init)
     {
@@ -233,8 +242,8 @@ void LuaRenderer::pre_destroy_renderer(t_lua_rendering_context* ctx)
 {
     g_view_logger->info("Pre-destroying Lua renderer...");
     ctx->ignore_create_renderer = true;
-    SetWindowLongPtr(ctx->gdi_overlay_hwnd, GWLP_USERDATA, 0);
-    SetWindowLongPtr(ctx->d2d_overlay_hwnd, GWLP_USERDATA, 0);
+    SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, nullptr);
+    SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, nullptr);
 }
 
 void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
@@ -248,6 +257,8 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
 
     if (ctx->presenter)
     {
+        SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, nullptr);
+
         ctx->dw_text_layouts.clear();
         ctx->dw_text_sizes.clear();
 
@@ -271,6 +282,8 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
 
     if (ctx->gdi_back_dc)
     {
+        SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, nullptr);
+
         ReleaseDC(ctx->gdi_overlay_hwnd, ctx->gdi_front_dc);
         DestroyWindow(ctx->gdi_overlay_hwnd);
         SelectObject(ctx->gdi_back_dc, nullptr);

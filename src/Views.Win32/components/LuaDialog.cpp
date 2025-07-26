@@ -211,14 +211,14 @@ static void add_and_start(const std::filesystem::path& path)
 
 static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    auto ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWL_USERDATA);
+    auto ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
     switch (msg)
     {
     case WM_INITDIALOG:
-        SetWindowLongPtr(hwnd, GWL_USERDATA, lparam);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
 
-        ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWL_USERDATA);
+        ctx = (t_instance_context*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
         ctx->hwnd = hwnd;
 
