@@ -32,26 +32,26 @@ static void show_settings()
     ConfigDialog::show_app_settings();
 }
 
-static void add_and_associate_hotkey_from_config(const std::wstring& path, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {})
+static void add_and_associate_hotkey_from_config(const std::wstring& path, const t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {})
 {
-    if (!ActionManager::add(path, down_callback, up_callback))
+    if (!g_config.hotkeys.contains(path))
     {
-        g_view_logger->error(L"Failed to add action for path '{}'.", path);
-        return;
+        g_config.hotkeys[path] = default_hotkey;
     }
 
-    if (!ActionManager::associate_hotkey(path, g_config.hotkeys[path]))
-    {
-        g_view_logger->error(L"Failed to associate hotkey for path '{}'.", path);
-    }
+    bool success = ActionManager::add(path, down_callback, up_callback);
+    runtime_assert(success, std::format(L"Failed to add action for path '{}'.", path));
+
+    success = ActionManager::associate_hotkey(path, g_config.hotkeys[path]);
+    runtime_assert(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
 }
 
 void AppActions::add()
 {
-    add_and_associate_hotkey_from_config(L"Mupen64 > File > Load ROM...", load_rom);
-    add_and_associate_hotkey_from_config(L"Mupen64 > File > Close ROM", stub);
-    add_and_associate_hotkey_from_config(L"Mupen64 > File > Reset ROM", stub);
-    add_and_associate_hotkey_from_config(L"Mupen64 > File > Load Latest ROM", stub);
-    add_and_associate_hotkey_from_config(L"Mupen64 > File > Exit", stub);
-    add_and_associate_hotkey_from_config(L"Mupen64 > Options > Settings...", show_settings);
+    add_and_associate_hotkey_from_config(L"Mupen64 > File > Load ROM...", {.key = 'O', .ctrl = true}, load_rom);
+    add_and_associate_hotkey_from_config(L"Mupen64 > File > Close ROM", {.key = 'W', .ctrl = true}, stub);
+    add_and_associate_hotkey_from_config(L"Mupen64 > File > Reset ROM", {.key = 'R', .ctrl = true}, stub);
+    add_and_associate_hotkey_from_config(L"Mupen64 > File > Load Latest ROM", {.key = 'O', .ctrl = true, .shift = true}, stub);
+    add_and_associate_hotkey_from_config(L"Mupen64 > File > Exit", {.key = VK_F4, .alt = true}, stub);
+    add_and_associate_hotkey_from_config(L"Mupen64 > Options > Settings...", {.key = 'S', .ctrl = true}, show_settings);
 }
