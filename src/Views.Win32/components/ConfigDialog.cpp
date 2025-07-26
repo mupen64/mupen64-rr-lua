@@ -1915,7 +1915,7 @@ void ConfigDialog::show_app_settings()
     {
         hotkey_scratchpad.emplace_back(pair.first, pair.second);
     }
-    
+
     size_t i = 0;
     for (const auto& key : g_config.hotkeys | std::views::keys)
     {
@@ -1962,14 +1962,17 @@ void ConfigDialog::show_app_settings()
 
     const bool cancelled = !PropertySheet(&psh);
 
-    for (const auto& pair : hotkey_scratchpad)
-    {
-        g_config.hotkeys[pair.first] = pair.second;
-    }
-    
     if (cancelled)
     {
         g_config = g_prev_config;
+    }
+    else
+    {
+        for (const auto& pair : hotkey_scratchpad)
+        {
+            g_config.hotkeys[pair.first] = pair.second;
+            ActionManager::associate_hotkey(pair.first, pair.second);
+        }
     }
 
     Config::save();
