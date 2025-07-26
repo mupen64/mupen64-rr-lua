@@ -34,7 +34,16 @@ static void show_settings()
 
 static void add_and_associate_hotkey_from_config(const std::wstring& path, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {})
 {
-    ActionManager::add_and_associate_hotkey(path, g_config.hotkeys[path], down_callback, up_callback);
+    if (!ActionManager::add(path, down_callback, up_callback))
+    {
+        g_view_logger->error(L"Failed to add action for path '{}'.", path);
+        return;
+    }
+
+    if (!ActionManager::associate_hotkey(path, g_config.hotkeys[path]))
+    {
+        g_view_logger->error(L"Failed to associate hotkey for path '{}'.", path);
+    }
 }
 
 void AppActions::add()
