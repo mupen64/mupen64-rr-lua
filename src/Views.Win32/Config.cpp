@@ -199,53 +199,59 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
     const auto key = process_field_name(field_name);
 
     // Structure:
-    // [action name]
+    // [action_fullpath]
     // key
     // ctrl
     // shift
     // alt
 
+    const auto prefix = std::string("action_");
+
     if (is_reading)
     {
-        for (auto& [action_path, hotkey] : value)
+        for (const auto& pair : ini)
         {
-            if (!ini.has(io_service.wstring_to_string(action_path)))
+            if (!pair.first.starts_with(prefix))
             {
                 continue;
             }
 
-            const auto entry = ini[io_service.wstring_to_string(action_path)];
+            const auto action_path = pair.first.substr(prefix.size());
 
-            const auto key = entry.get("key");
+            t_hotkey hotkey{};
+
+            const auto key = pair.second.get("key");
             if (!key.empty())
             {
                 hotkey.key = std::stoi(key);
             }
 
-            const auto ctrl = entry.get("ctrl");
+            const auto ctrl = pair.second.get("ctrl");
             if (!ctrl.empty())
             {
                 hotkey.ctrl = std::stoi(ctrl);
             }
 
-            const auto shift = entry.get("shift");
+            const auto shift = pair.second.get("shift");
             if (!shift.empty())
             {
                 hotkey.shift = std::stoi(shift);
             }
 
-            const auto alt = entry.get("alt");
+            const auto alt = pair.second.get("alt");
             if (!alt.empty())
             {
                 hotkey.alt = std::stoi(alt);
             }
+
+            g_config.hotkeys[io_service.string_to_wstring(action_path)] = hotkey;
         }
     }
     else
     {
         for (const auto& [action_path, hotkey] : value)
         {
-            const auto action_key = io_service.wstring_to_string(action_path);
+            const auto action_key = prefix + io_service.wstring_to_string(action_path);
             ini[action_key]["key"] = std::to_string(hotkey.key);
             ini[action_key]["ctrl"] = std::to_string(hotkey.ctrl);
             ini[action_key]["shift"] = std::to_string(hotkey.shift);

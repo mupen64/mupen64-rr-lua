@@ -1960,14 +1960,20 @@ void ConfigDialog::show_app_settings()
 
     g_prev_config = g_config;
 
-    if (!PropertySheet(&psh))
+    const bool cancelled = !PropertySheet(&psh);
+
+    for (const auto& pair : hotkey_scratchpad)
+    {
+        g_config.hotkeys[pair.first] = pair.second;
+    }
+    
+    if (cancelled)
     {
         g_config = g_prev_config;
     }
 
     Config::save();
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
-
     g_option_items.erase(g_option_items.end() - i, g_option_items.end());
 }
 
