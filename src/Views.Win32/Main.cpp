@@ -301,35 +301,6 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
     return true;
 }
 
-void set_menu_accelerator(int menu_id, const wchar_t* acc)
-{
-    wchar_t string[256] = {0};
-    GetMenuString(GetMenu(g_main_hwnd), menu_id, string, std::size(string), MF_BYCOMMAND);
-
-    auto tab = wcschr(string, '\t');
-    if (tab)
-        *tab = '\0';
-    if (StrCmp(acc, L""))
-        wsprintf(string, L"%s\t%s", string, acc);
-
-    ModifyMenu(GetMenu(g_main_hwnd), menu_id, MF_BYCOMMAND | MF_STRING, menu_id, string);
-}
-
-void set_hotkey_menu_accelerators(t_hotkey* hotkey, int menu_item_id)
-{
-    const auto hotkey_str = hotkey->to_wstring();
-    set_menu_accelerator(menu_item_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
-}
-
-void SetDlgItemHotkeyAndMenu(HWND hwnd, int idc, t_hotkey* hotkey, int menuItemID)
-{
-    const auto hotkey_str = hotkey->to_wstring();
-    SetDlgItemText(hwnd, idc, hotkey_str.c_str());
-
-    set_menu_accelerator(menuItemID,
-                         hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
-}
-
 const wchar_t* get_input_text()
 {
     static wchar_t text[1024]{};

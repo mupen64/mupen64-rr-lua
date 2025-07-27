@@ -170,12 +170,14 @@ struct t_options_item {
         }
         else if (type == Type::Hotkey)
         {
-            auto default_hotkey = (t_hotkey*)default_equivalent;
-            auto current_hotkey = (t_hotkey*)data;
-            current_hotkey->key = default_hotkey->key;
-            current_hotkey->ctrl = default_hotkey->ctrl;
-            current_hotkey->alt = default_hotkey->alt;
-            current_hotkey->shift = default_hotkey->shift;
+            const auto default_hotkey = g_config.inital_hotkeys[name];
+            for (auto& pair : hotkey_scratchpad)
+            {
+                if (pair.first == name)
+                {
+                    pair.second = default_hotkey;
+                }
+            }
         }
         else
         {
@@ -1968,10 +1970,9 @@ void ConfigDialog::show_app_settings()
     }
     else
     {
-        for (const auto& pair : hotkey_scratchpad)
+        for (const auto& [path, hotkey] : hotkey_scratchpad)
         {
-            g_config.hotkeys[pair.first] = pair.second;
-            ActionManager::associate_hotkey(pair.first, pair.second);
+            ActionManager::associate_hotkey(path, hotkey);
         }
     }
 

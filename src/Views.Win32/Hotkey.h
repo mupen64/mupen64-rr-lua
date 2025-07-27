@@ -14,6 +14,14 @@ struct t_hotkey {
     bool ctrl{};
     bool shift{};
     bool alt{};
+
+    /**
+     * \brief Gets whether the hotkey has no key or modifier set.
+     */
     [[nodiscard]] bool is_nothing() const;
+
+    /**
+     * \brief Gets the string representation of the hotkey.
+     */
     [[nodiscard]] std::wstring to_wstring() const;
 };

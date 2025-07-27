@@ -157,18 +157,19 @@ bool ActionManager::associate_hotkey(const std::wstring& path, const t_hotkey& h
 
     if (!action)
     {
-        g_view_logger->error(L"ActionManager::associate_hotkey: Action with path '{}' not found.", path);
+        g_view_logger->error(L"ActionManager::associate_hotkey: Action '{}' not found.", path);
         return false;
     }
 
-    action->hotkey = hotkey;
     if (!g_config.hotkeys.contains(path))
     {
+        g_view_logger->info(L"ActionManager::associate_hotkey: Initial hotkey registered for '{}': {}.", path, hotkey.to_wstring());
         g_config.inital_hotkeys[path] = hotkey;
     }
+
+    g_view_logger->info(L"ActionManager::associate_hotkey: Hotkey registered for '{}': {}.", path, hotkey.to_wstring());
     g_config.hotkeys[path] = hotkey;
 
-    
     build_menu();
 
     return true;
@@ -176,8 +177,6 @@ bool ActionManager::associate_hotkey(const std::wstring& path, const t_hotkey& h
 
 bool ActionManager::handle_menu_interaction(size_t id)
 {
-    g_view_logger->info(L"interaction {}", id);
-
     t_action* action = nullptr;
     iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
         if (node.menu_id == id)
@@ -191,8 +190,7 @@ bool ActionManager::handle_menu_interaction(size_t id)
         return false;
     }
 
-    g_view_logger->info(L"interaction >>> {}", action->path);
-
+    g_view_logger->info(L"ActionManager::handle_menu_interaction: Invoking '{}' (#{}).", action->path, id);
     action->down_callback();
 
     return true;
@@ -281,11 +279,11 @@ static void log_menu_structure(const t_command_node& node, size_t depth = 0)
 {
     if (depth == 0)
     {
-        g_view_logger->info(L"---- Menu structure ----");
+        g_view_logger->debug(L"---- Menu structure ----");
     }
 
     std::wstring indent(depth * 2, L' ');
-    g_view_logger->info(L"{} {} (ID: {})", indent, node.name, node.menu_id);
+    g_view_logger->debug(L"{} {} (ID: {})", indent, node.name, node.menu_id);
 
     for (const auto& child : node.children)
     {
@@ -294,7 +292,7 @@ static void log_menu_structure(const t_command_node& node, size_t depth = 0)
 
     if (depth == 0)
     {
-        g_view_logger->info(L"---- End of menu structure ----");
+        g_view_logger->debug(L"---- End of menu structure ----");
     }
 }
 
@@ -317,7 +315,9 @@ static void add_menu_items(const t_command_node& node, const HMENU parent_menu, 
     }
 }
 
-
+/**
+ * \brief Sets the accelerator text for a menu item, replacing any existing accelerator text.
+ */
 static void set_menu_accelerator_text(const HMENU menu_bar, const uint16_t menu_id, const std::wstring& text)
 {
     wchar_t str[256] = {0};
@@ -340,7 +340,10 @@ static void set_menu_accelerator_text(const HMENU menu_bar, const uint16_t menu_
     ModifyMenu(menu_bar, menu_id, MF_BYCOMMAND | MF_STRING, menu_id, menu_text.c_str());
 }
 
-static void set_hotkey_menu_accelerators(const HMENU menu_bar, const uint16_t menu_id, const t_hotkey& hotkey)
+/**
+ * \brief Sets the accelerator text for a menu item based on the specified hotkey.
+ */
+static void set_menu_accelerator_text_from_hotkey(const HMENU menu_bar, const uint16_t menu_id, const t_hotkey& hotkey)
 {
     const auto hotkey_str = hotkey.to_wstring();
     set_menu_accelerator_text(menu_bar, menu_id, hotkey.is_nothing() ? L"" : hotkey_str.c_str());
@@ -350,10 +353,10 @@ static void build_menu()
 {
     build_command_tree();
 
-    log_menu_structure(g_mgr.command_tree);
+    // log_menu_structure(g_mgr.command_tree);
 
     // 1. Delete all existing menu items
-    HMENU main_menu = GetMenu(g_main_hwnd);
+    const HMENU main_menu = GetMenu(g_main_hwnd);
     const auto menu_count = GetMenuItemCount(main_menu);
     for (int i = 0; i < menu_count; ++i)
     {
@@ -373,7 +376,8 @@ static void build_menu()
     iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
         if (node.action)
         {
-            set_hotkey_menu_accelerators(main_menu, node.menu_id, node.action->hotkey);
+            const t_hotkey hotkey = g_config.hotkeys.contains(node.action->path) ? g_config.hotkeys[node.action->path] : t_hotkey{};
+            set_menu_accelerator_text_from_hotkey(main_menu, node.menu_id, hotkey);
         }
     });
 }

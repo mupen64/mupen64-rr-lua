@@ -24,11 +24,6 @@ namespace ActionManager
         std::wstring path{};
 
         /**
-         * \brief The hotkey associated with the action. Is considered "nothing" if the key is 0 and all modifiers are false.
-         */
-        t_hotkey hotkey{};
-
-        /**
          * \brief The callback to be invoked when the action is initially triggered.
          */
         std::function<void()> down_callback{};
@@ -52,13 +47,15 @@ namespace ActionManager
     bool add(const std::wstring& path, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {});
 
     /**
-     * \brief Associates a hotkey with an action by its path.
+     * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
      * \param path The qualified path of the action to associate the hotkey with, consisting of a category, subcategories, and an action name. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
      * \param hotkey The hotkey to associate with the action.
      * \return Whether the operation succeeded.
+     * \details This updates the action<->hotkey associations in the config.
+     * \details If this is the first time the hotkey is associated with the action.
      */
     bool associate_hotkey(const std::wstring& path, const t_hotkey& hotkey);
-    
+
     /**
      * \brief Handles interactions with a menu item. The interaction will only be handled if the menu was built by the ActionManager.
      * \param id The menu item's ID.
