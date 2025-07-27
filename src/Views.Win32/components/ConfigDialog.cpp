@@ -1887,8 +1887,9 @@ void ConfigDialog::show_app_settings()
 
     for (auto& option_item : g_option_items)
     {
+        const auto initial_value = option_item.current_value.get();
         option_item.initial_value = t_options_item::t_readonly_property([=] {
-            return option_item.current_value.get();
+            return initial_value;
         });
     }
 
