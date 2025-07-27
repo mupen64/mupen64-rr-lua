@@ -475,16 +475,18 @@ static std::wstring format_short(const uint64_t value)
     return str;
 }
 
-/**
- * \brief Asserts a condition at runtime and logs a message if the condition is false.
- * \param condition The condition to assert.
- * \param message The message to log if the assertion fails.
- */
-static void runtime_assert(const bool condition, const std::wstring& message)
+static void runtime_assert_fail(const std::wstring& message)
 {
-    if (!condition)
-    {
-        g_view_logger->critical(L"Runtime assertion failed: {}", message);
-        std::terminate();
-    }
+    g_view_logger->critical(L"Runtime assertion failed: {}", message);
+    std::terminate();
 }
+
+#define runtime_assert(condition, message) \
+    do                                     \
+    {                                      \
+        if (!(condition))                  \
+        {                                  \
+            runtime_assert_fail(message);  \
+        }                                  \
+    }                                      \
+    while (0)

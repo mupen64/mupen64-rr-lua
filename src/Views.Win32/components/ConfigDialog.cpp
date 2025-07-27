@@ -16,17 +16,19 @@
 #include <components/configdialog.h>
 #include <lua/LuaManager.h>
 
+#include <algorithm>
+
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
 
 // Local copy of the action path<->hotkey map from g_config, but flattened into a vector
-std::vector<std::pair<std::wstring, t_hotkey>> hotkey_scratchpad;
+// We need to keep this because the hotkeys might be modified during the config by dodgy Lua scripts lol...
+std::vector<std::pair<std::wstring, t_hotkey>> g_hotkey_scratchpad;
 
 /**
  * Represents a group of options in the settings.
  */
-typedef struct
-{
+struct t_options_group {
     /**
      * The group's unique identifier.
      */
@@ -36,7 +38,7 @@ typedef struct
      * The group's name.
      */
     std::wstring name;
-} t_options_group;
+};
 
 /**
  * Represents a settings option.
@@ -51,30 +53,28 @@ struct t_options_item {
         Hotkey,
     };
 
-    /**
-     * The group this option belongs to.
-     */
-    size_t group_id = -1;
+    typedef std::variant<int32_t, std::wstring, t_hotkey> data_variant;
 
-    /**
-     * The option's name.
-     */
-    std::wstring name;
+    struct t_readonly_property {
+        std::function<data_variant()> get{};
 
-    /**
-     * The option's tooltip.
-     */
-    std::wstring tooltip;
+        explicit t_readonly_property(const std::function<data_variant()>& get)
+        {
+            this->get = get;
+        }
+    };
 
-    /**
-     * The option's backing data.
-     */
-    int32_t* data = nullptr;
 
-    /**
-     * The option's backing data as a string, used when type == Type::String
-     */
-    std::wstring* data_str;
+    struct t_readwrite_property : t_readonly_property {
+        std::function<void(const data_variant&)> set{};
+
+        t_readwrite_property(const std::function<data_variant()>& get, const std::function<void(const data_variant&)>& set) :
+            t_readonly_property(get)
+        {
+            this->set = set;
+        }
+    };
+
 
     /**
      * The option's backing data type.
@@ -82,10 +82,29 @@ struct t_options_item {
     Type type = Type::Invalid;
 
     /**
-     * Possible predefined values (e.g.: enum values) for an option along with a name.
-     *
-     * Only applicable when <c>type == Type::Enum<c>.
+     * The group this option belongs to.
      */
+    size_t group_id = -1;
+
+    /**
+     * The option's display name.
+     */
+    std::wstring name{};
+
+    /**
+     * The option's tooltip, or an empty string if no tooltip is set.
+     */
+    std::wstring tooltip{};
+
+    t_readwrite_property current_value;
+
+    t_readonly_property initial_value = t_readonly_property([] -> data_variant {
+        runtime_assert(false, L"Initial value not set for option");
+        return data_variant{};
+    });
+
+    t_readonly_property default_value;
+
     std::vector<std::pair<std::wstring, int32_t>> possible_values = {};
 
     /**
@@ -98,92 +117,12 @@ struct t_options_item {
     /**
      * Gets the value name for the current backing data, or a fallback name if no match is found.
      */
-    std::wstring get_value_name() const
-    {
-        if (type == Type::Bool)
-        {
-            return *data ? L"On" : L"Off";
-        }
-
-        if (type == Type::Number)
-        {
-            return std::to_wstring(*data);
-        }
-
-        if (type == Type::String)
-        {
-            return *data_str;
-        }
-
-        if (type == Type::Hotkey)
-        {
-            const auto i = reinterpret_cast<size_t>(data);
-            const auto& hotkey = hotkey_scratchpad[i].second;
-            return hotkey.to_wstring();
-        }
-
-        for (auto [name, val] : possible_values)
-        {
-            if (*data == val)
-            {
-                return name;
-            }
-        }
-
-        return std::format(L"Unknown value ({})", *data);
-    }
-
-    /**
-     * Gets the option's default value from another config struct.
-     */
-    void* get_default_value_ptr(const t_config* config) const
-    {
-        // Find the field offset for the option relative to g_config and grab the equivalent from the default config
-        size_t field_offset;
-        if (type == Type::String)
-        {
-            field_offset = (char*)data_str - (char*)&g_config;
-        }
-        else
-        {
-            field_offset = (char*)data - (char*)&g_config;
-        }
-
-        if (type == Type::String)
-        {
-            return (std::string*)((char*)config + field_offset);
-        }
-
-        return (int32_t*)((char*)config + field_offset);
-    }
+    [[nodiscard]] std::wstring get_value_name() const;
 
     /**
      * Resets the value of the option to the default value.
      */
-    void reset_to_default()
-    {
-        void* default_equivalent = get_default_value_ptr(&g_default_config);
-
-        if (type == Type::String)
-        {
-            *data_str = *(std::wstring*)default_equivalent;
-        }
-        else if (type == Type::Hotkey)
-        {
-            const auto default_hotkey = g_config.inital_hotkeys[name];
-            for (auto& pair : hotkey_scratchpad)
-            {
-                if (pair.first == name)
-                {
-                    pair.second = default_hotkey;
-                }
-            }
-        }
-        else
-        {
-            *data = *(int32_t*)default_equivalent;
-        }
-    }
+    void reset_to_default();
 };
 
 t_plugin_discovery_result plugin_discovery_result;
@@ -202,11 +141,49 @@ std::thread g_plugin_discovery_thread;
 // Whether a plugin rescan is needed. Set when modifying the plugin path.
 bool g_plugin_discovery_rescan = false;
 
+std::wstring t_options_item::get_value_name() const
+{
+    const auto value = current_value.get();
+
+    switch (type)
+    {
+    case Type::Bool:
+        return std::get<int32_t>(value) != 0 ? L"On" : L"Off";
+    case Type::Number:
+        return std::to_wstring(std::get<int32_t>(value));
+    case Type::Enum:
+        {
+            const auto enum_value = std::get<int32_t>(value);
+
+            for (const auto& [name, val] : possible_values)
+            {
+                if (enum_value == val)
+                {
+                    return name;
+                }
+            }
+
+            return std::format(L"Unknown ({})", enum_value);
+        }
+    case Type::String:
+        return std::get<std::wstring>(value);
+    case Type::Hotkey:
+        return std::get<t_hotkey>(value).to_wstring();
+    default:
+        runtime_assert(false, L"Unhandled option type in t_options_item::get_value_name");
+    }
+}
+
+void t_options_item::reset_to_default()
+{
+    current_value.set(default_value.get());
+}
+
 /// <summary>
 /// Waits until the user inputs a valid key sequence, then fills out the hotkey
 /// </summary>
 /// <returns>
-/// Whether a hotkey has successfully been picked
+/// Whether a hotkey has succ   essfully been picked
 /// </returns>
 int32_t get_user_hotkey(t_hotkey* hotkey)
 {
@@ -998,143 +975,150 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .name = L"Hotkeys"};
     groups = {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group, lua_group, debug_group, hotkey_group};
 
+#define RPROP(T, x) t_options_item::t_readonly_property([] { \
+    return g_default_config.x;                               \
+})
+
+#define RWPROP(T, x) t_options_item::t_readwrite_property([] {                                            \
+    return g_config.x;                                                                                    \
+},                                                                                                        \
+                                                          [](const t_options_item::data_variant& value) { \
+                                                              g_config.x = std::get<T>(value);            \
+                                                          })
+
+#define GENPROPS(T, x) .current_value = RWPROP(T, x), .default_value = RPROP(T, x)
+
     options = {
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Pause when unfocused",
     .tooltip = L"Pause emulation when the main window isn't in focus.",
-    .data = &g_config.is_unfocused_pause_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, is_unfocused_pause_enabled),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Automatic Update Checking",
     .tooltip = L"Enables automatic update checking. Requires an internet connection.",
-    .data = &g_config.automatic_update_checking,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, automatic_update_checking),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Silent Mode",
     .tooltip = L"Suppresses all dialogs and chooses reasonable defaults for multiple-choice dialogs.\nCan cause data loss during normal usage; only enable in automation scenarios!",
-    .data = &g_config.silent_mode,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, silent_mode),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Keep working directory",
     .tooltip = L"Keep the working directory specified by the caller program at startup.\nWhen disabled, mupen changes the working directory to its current path.",
-    .data = &g_config.keep_default_working_directory,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, keep_default_working_directory),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Async Plugin Discovery",
     .tooltip = L"Whether plugins discovery is performed asynchronously. Removes potential waiting times in the config dialog.",
-    .data = &g_config.plugin_discovery_async,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, plugin_discovery_async),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Auto-increment Slot",
     .tooltip = L"Automatically increment the save slot upon saving a state.",
-    .data = &g_config.increment_slot,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, increment_slot),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = statusbar_group.id,
     .name = L"Layout",
     .tooltip = L"The statusbar layout preset.\nClassic - The legacy layout\nModern - The new layout containing additional information\nModern+ - The new layout, but with a section for read-only status",
-    .data = &g_config.statusbar_layout,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, statusbar_layout),
     .possible_values = {
     std::make_pair(L"Classic", (int32_t)t_config::StatusbarLayout::Classic),
     std::make_pair(L"Modern", (int32_t)t_config::StatusbarLayout::Modern),
     std::make_pair(L"Modern+", (int32_t)t_config::StatusbarLayout::ModernWithReadOnly),
     },
     },
+    t_options_item{.type = t_options_item::Type::Bool, .group_id = statusbar_group.id, .name = L"Zero-index", .tooltip = L"Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.", GENPROPS(int32_t, vcr_0_index)},
     t_options_item{
-    .group_id = statusbar_group.id,
-    .name = L"Zero-index",
-    .tooltip = L"Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.",
-    .data = &g_config.vcr_0_index,
     .type = t_options_item::Type::Bool,
-    },
-    t_options_item{
     .group_id = statusbar_group.id,
     .name = L"Scale down to fit window",
     .tooltip = L"Whether the statusbar is allowed to scale its segments down.",
-    .data = &g_config.statusbar_scale_down,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, statusbar_scale_down),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = statusbar_group.id,
     .name = L"Scale up to fill window",
     .tooltip = L"Whether the statusbar is allowed to scale its segments up.",
-    .data = &g_config.statusbar_scale_up,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, statusbar_scale_up),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = seek_piano_roll_group.id,
     .name = L"Savestate Interval",
     .tooltip = L"The interval at which to create savestates for seeking. Piano Roll is exclusively read-only if this value is 0.\nHigher numbers will reduce the seek duration at cost of emulator performance, a value of 1 is not allowed.\n0 - Seek savestate generation disabled\nRecommended: 100",
-    .data = &g_config.core.seek_savestate_interval,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.seek_savestate_interval),
     .is_readonly = [] {
         return g_core_ctx->vcr_get_task() != task_idle;
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = seek_piano_roll_group.id,
     .name = L"Savestate Max Count",
     .tooltip = L"The maximum amount of savestates to keep in memory for seeking.\nHigher numbers might cause an out of memory exception.",
-    .data = &g_config.core.seek_savestate_max_count,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.seek_savestate_max_count),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = seek_piano_roll_group.id,
     .name = L"Constrain edit to column",
     .tooltip = L"Whether piano roll edits are constrained to the column they started on.",
-    .data = &g_config.piano_roll_constrain_edit_to_column,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, piano_roll_constrain_edit_to_column),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = seek_piano_roll_group.id,
     .name = L"History size",
     .tooltip = L"Maximum size of the history list.",
-    .data = &g_config.piano_roll_undo_stack_size,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, piano_roll_undo_stack_size),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = seek_piano_roll_group.id,
     .name = L"Keep selection visible",
     .tooltip = L"Whether the piano roll will try to keep the selection visible.",
-    .data = &g_config.piano_roll_keep_selection_visible,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, piano_roll_keep_selection_visible),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = seek_piano_roll_group.id,
     .name = L"Keep playhead visible",
     .tooltip = L"Whether the piano roll will try to keep the playhead visible.",
-    .data = &g_config.piano_roll_keep_playhead_visible,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, piano_roll_keep_playhead_visible),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = capture_group.id,
     .name = L"Delay",
     .tooltip = L"Miliseconds to wait before capturing a frame. Useful for syncing with external programs.",
-    .data = &g_config.capture_delay,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, capture_delay),
     },
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = capture_group.id,
     .name = L"Encoder",
     .tooltip = L"The encoder to use when generating an output file.\nVFW - Slow but stable (recommended)\nFFmpeg - Fast but less stable",
-    .data = &g_config.encoder_type,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, encoder_type),
     .possible_values = {
     std::make_pair(L"VFW", (int32_t)t_config::EncoderType::VFW),
     std::make_pair(L"FFmpeg (experimental)", (int32_t)t_config::EncoderType::FFmpeg),
@@ -1144,11 +1128,11 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = capture_group.id,
     .name = L"Mode",
     .tooltip = L"The video source to use for capturing video frames.\nPlugin - Captures frames solely from the video plugin\nWindow - Captures frames from the main window\nScreen - Captures screenshots of the current display and crops them to Mupen\nHybrid - Combines video plugin capture and internal Lua composition (recommended)",
-    .data = &g_config.capture_mode,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, capture_mode),
     .possible_values = {
     std::make_pair(L"Plugin", 0),
     std::make_pair(L"Window", 1),
@@ -1160,11 +1144,11 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = capture_group.id,
     .name = L"Sync",
     .tooltip = L"The strategy to use for synchronizing video and audio during capture.\nNone - No synchronization\nAudio - Audio is synchronized to video\nVideo - Video is synchronized to audio",
-    .data = &g_config.synchronization_mode,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, synchronization_mode),
     .possible_values = {
     std::make_pair(L"None", 0),
     std::make_pair(L"Audio", 1),
@@ -1175,32 +1159,32 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::String,
     .group_id = capture_group.id,
     .name = L"FFmpeg Path",
     .tooltip = L"The path to the FFmpeg executable to use for capturing.",
-    .data_str = &g_config.ffmpeg_path,
-    .type = t_options_item::Type::String,
+    GENPROPS(std::wstring, ffmpeg_path),
     .is_readonly = [] {
         return EncodingManager::is_capturing();
     },
     },
     t_options_item{
+    .type = t_options_item::Type::String,
     .group_id = capture_group.id,
     .name = L"FFmpeg Arguments",
     .tooltip = L"The argument format string to be passed to FFmpeg when capturing.",
-    .data_str = &g_config.ffmpeg_final_options,
-    .type = t_options_item::Type::String,
+    GENPROPS(std::wstring, ffmpeg_final_options),
     .is_readonly = [] {
         return EncodingManager::is_capturing();
     },
     },
 
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = core_group.id,
     .name = L"Type",
     .tooltip = L"The core type to utilize for emulation.\nInterpreter - Slow and relatively accurate\nDynamic Recompiler - Fast, possibly less accurate, and only for x86 processors\nPure Interpreter - Very slow and accurate",
-    .data = &g_config.core.core_type,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, core.core_type),
     .possible_values = {
     std::make_pair(L"Interpreter", 0),
     std::make_pair(L"Dynamic Recompiler", 1),
@@ -1211,104 +1195,104 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Undo Savestate Load",
     .tooltip = L"Whether undo savestate load functionality is enabled.",
-    .data = &g_config.core.st_undo_load,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.st_undo_load),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"Counter Factor",
     .tooltip = L"The CPU's counter factor.\nValues above 1 are effectively 'lagless'.",
-    .data = &g_config.core.counter_factor,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.counter_factor),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"Max Lag Frames",
     .tooltip = L"The maximum amount of lag frames before the core emits a warning\n0 - Disabled",
-    .data = &g_config.core.max_lag,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.max_lag),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"WiiVC Mode",
     .tooltip = L"Enables WiiVC emulation.",
-    .data = &g_config.core.wii_vc_emulation,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.wii_vc_emulation),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Emulate Float Crashes",
     .tooltip = L"Emulate float operation-related crashes which would also crash on real hardware",
-    .data = &g_config.core.float_exception_emulation,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.float_exception_emulation),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"Fast-Forward Skip Frequency",
     .tooltip = L"Skip rendering every nth frame when in fast-forward mode.\n0 - Render nothing\n1 - Render every frame\nn - Render every nth frame",
-    .data = &g_config.core.frame_skip_frequency,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.frame_skip_frequency),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Emulate SD Card",
     .tooltip = L"Enable SD card emulation.\nRequires a VHD-formatted SD card file named card.vhd in the same folder as Mupen.",
-    .data = &g_config.core.use_summercart,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.use_summercart),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Instant Savestate Update",
     .tooltip = L"Saves and loads game graphics to savestates to allow instant graphics updates when loading savestates.\nGreatly increases savestate saving and loading time.",
-    .data = &g_config.core.st_screenshot,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.st_screenshot),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Skip rendering lag",
     .tooltip = L"Prevents calls to updateScreen during lag.\nMight improve performance on some video plugins at the cost of stability.",
-    .data = &g_config.core.skip_rendering_lag,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.skip_rendering_lag),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"ROM Cache Size",
     .tooltip = L"Size of the ROM cache.\nImproves ROM loading performance at the cost of data staleness and high memory usage.\n0 - Disabled\nn - Maximum of n ROMs kept in cache",
-    .data = &g_config.core.rom_cache_size,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.rom_cache_size),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = vcr_group.id,
     .name = L"Movie Backups",
     .tooltip = L"Generate a backup of the currently recorded movie when loading a savestate.\nBackups are saved in the backups folder.",
-    .data = &g_config.core.vcr_backups,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.vcr_backups),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = vcr_group.id,
     .name = L"Extended Movie Format",
     .tooltip = L"Whether movies are written using the new extended format.\nUseful when opening movies in external programs which don't handle the new format correctly.\nIf disabled, the extended format sections are set to 0.",
-    .data = &g_config.core.vcr_write_extended_format,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.vcr_write_extended_format),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = vcr_group.id,
     .name = L"Record Resets",
     .tooltip = L"Record manually performed resets to the current movie.\nThese resets will be repeated when the movie is played back.",
-    .data = &g_config.core.is_reset_recording_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.is_reset_recording_enabled),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = lua_group.id,
     .name = L"Presenter",
     .tooltip = L"The presenter type to use for displaying and capturing Lua graphics.\nRecommended: DirectComposition",
-    .data = &g_config.presenter_type,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, presenter_type),
     .possible_values = {
     std::make_pair(L"DirectComposition", (int32_t)t_config::PresenterType::DirectComposition),
     std::make_pair(L"GDI", (int32_t)t_config::PresenterType::GDI),
@@ -1318,43 +1302,43 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = lua_group.id,
     .name = L"Lazy Renderer Initialization",
     .tooltip = L"Enables lazy Lua renderer initialization. Greatly speeds up start and stop times for certain scripts.",
-    .data = &g_config.lazy_renderer_init,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, lazy_renderer_init),
     .is_readonly = [] {
         return !g_lua_environments.empty();
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = lua_group.id,
     .name = L"Fast Dispatcher",
     .tooltip = L"Enables a low-latency dispatcher implementation. Can improve performance with Lua scripts.\nDisable if the UI is stuttering heavily or if you're using a low-end machine.",
-    .data = &g_config.fast_dispatcher,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, fast_dispatcher),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = debug_group.id,
     .name = L"Delay Plugin Discovery",
     .tooltip = L"Whether the plugin discovery process is artificially lengthened.\nDo not enable unless you are debugging the plugin discovery system or its surrounding components.",
-    .data = &g_config.plugin_discovery_delayed,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, plugin_discovery_delayed),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = debug_group.id,
     .name = L"Audio Delay",
     .tooltip = L"Whether to delay audio interrupts.",
-    .data = &g_config.core.is_audio_delay_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.is_audio_delay_enabled),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = debug_group.id,
     .name = L"Compiled Jump",
     .tooltip = L"Whether the Dynamic Recompiler core compiles jumps.",
-    .data = &g_config.core.is_compiled_jump_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.is_compiled_jump_enabled),
     },
     };
 }
@@ -1421,11 +1405,13 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
     {
     case WM_INITDIALOG:
         {
-            auto option_item = g_option_items[g_edit_option_item_index];
-            auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+            const auto option_item = g_option_items[g_edit_option_item_index];
+            const auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+
+            const auto current_value = std::get<std::wstring>(option_item.current_value.get());
 
             SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
-            Edit_SetText(edit_hwnd, option_item.data_str->data());
+            Edit_SetText(edit_hwnd, current_value.c_str());
 
             SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
             break;
@@ -1435,13 +1421,14 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
         {
         case IDOK:
             {
-                auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+                auto option_item = g_option_items[g_edit_option_item_index];
+                const auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
 
                 auto len = Edit_GetTextLength(edit_hwnd) + 1;
                 auto str = static_cast<wchar_t*>(calloc(len, sizeof(wchar_t)));
                 Edit_GetText(edit_hwnd, str, len);
 
-                *g_option_items[g_edit_option_item_index].data_str = str;
+                option_item.current_value.set(std::wstring(str));
 
                 free(str);
 
@@ -1450,6 +1437,8 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
             }
         case IDCANCEL:
             EndDialog(wnd, 1);
+            break;
+        default:
             break;
         }
         break;
@@ -1551,17 +1540,17 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     // For bools, just flip the value...
     if (option_item.type == t_options_item::Type::Bool)
     {
-        *option_item.data ^= true;
+        option_item.current_value.set(!std::get<int32_t>(option_item.current_value.get()));
     }
 
     // For enums, cycle through the possible values
     if (option_item.type == t_options_item::Type::Enum)
     {
         // 1. Find the index of the currently selected item, while falling back to the first possible value if there's no match
-        size_t current_value = option_item.possible_values[0].second;
+        int32_t current_value = option_item.possible_values[0].second;
         for (const auto& [_, possible_value] : option_item.possible_values)
         {
-            if (*option_item.data == possible_value)
+            if (std::get<int32_t>(option_item.current_value.get()) == possible_value)
             {
                 current_value = possible_value;
                 break;
@@ -1573,10 +1562,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
         int32_t max_possible_value = INT32_MIN;
         for (const auto& [_, val] : option_item.possible_values)
         {
-            if (val > max_possible_value)
-            {
-                max_possible_value = val;
-            }
+            max_possible_value = std::max(val, max_possible_value);
             if (val < min_possible_value)
             {
                 min_possible_value = val;
@@ -1591,7 +1577,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
         }
 
         // 3. Apply the change
-        *option_item.data = current_value;
+        option_item.current_value.set(current_value);
     }
 
     // For strings, allow editing in a dialog (since it might be a multiline string and we can't really handle that below)
@@ -1625,7 +1611,8 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
 
         SetWindowSubclass(g_edit_hwnd, InlineEditBoxProc, 0, 0);
 
-        Edit_SetText(g_edit_hwnd, std::to_wstring(*option_item.data).c_str());
+        const auto value = std::get<int32_t>(option_item.current_value.get());
+        Edit_SetText(g_edit_hwnd, std::to_wstring(value).c_str());
 
         PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM)g_edit_hwnd, TRUE);
     }
@@ -1633,8 +1620,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     // For hotkeys, accept keyboard inputs
     if (option_item.type == t_options_item::Type::Hotkey)
     {
-        const auto i = (size_t)option_item.data;
-        auto hotkey = hotkey_scratchpad[i].second;
+        auto hotkey = std::get<t_hotkey>(option_item.current_value.get());
 
         g_hotkey_active_index = std::make_optional(i);
         ListView_Update(g_lv_hwnd, i);
@@ -1646,7 +1632,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
 
         advance_listview_selection(g_lv_hwnd);
 
-        hotkey_scratchpad[i].second = hotkey;
+        option_item.current_value.set(hotkey);
     }
 
     ListView_Update(g_lv_hwnd, i);
@@ -1690,32 +1676,11 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             };
 
             auto get_item_image = [](size_t i) {
-                const auto options_item = g_option_items[i];
+                const auto& option_item = g_option_items[i];
 
-                void* default_value_ptr = options_item.get_default_value_ptr(&g_prev_config);
+                int32_t image = option_item.initial_value.get() == option_item.current_value.get() ? 50 : 1;
 
-                int32_t image = 50;
-
-                if (options_item.type == t_options_item::Type::String)
-                {
-                    image = *(std::wstring*)default_value_ptr == *options_item.data_str ? 50 : 1;
-                }
-                else if (options_item.type == t_options_item::Type::Hotkey)
-                {
-                    // TODO: Reimplement! There is no concept of a default hotkey in the new system.
-                    // auto default_hotkey = (t_hotkey*)default_value_ptr;
-                    // const auto i = (size_t)options_item.data;
-                    // const auto hotkey = hotkey_scratchpad[i].second;
-                    // const bool same = default_hotkey->key == hotkey.key && default_hotkey->ctrl == hotkey.ctrl && default_hotkey->alt == hotkey.alt && default_hotkey->shift == hotkey.shift;
-                    // image = same ? 50 : 1;
-                    image = 50;
-                }
-                else
-                {
-                    image = *(int32_t*)default_value_ptr == *options_item.data ? 50 : 1;
-                }
-
-                if (options_item.is_readonly())
+                if (option_item.is_readonly())
                 {
                     image = 0;
                 }
@@ -1752,14 +1717,15 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
         }
     case WM_EDIT_END:
         {
+            auto option_item = g_option_items[g_edit_option_item_index];
             auto str = reinterpret_cast<wchar_t*>(l_param);
 
-            if (g_option_items[g_edit_option_item_index].type == t_options_item::Type::Number)
+            if (option_item.type == t_options_item::Type::Number)
             {
                 try
                 {
-                    auto result = std::stoi(str);
-                    *g_option_items[g_edit_option_item_index].data = result;
+                    int32_t result = std::stoi(str);
+                    option_item.current_value.set(result);
                 }
                 catch (...)
                 {
@@ -1768,7 +1734,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             }
             else
             {
-                *g_option_items[g_edit_option_item_index].data_str = str;
+                option_item.current_value.set(std::wstring(str));
             }
 
             ListView_Update(g_lv_hwnd, g_edit_option_item_index);
@@ -1793,11 +1759,6 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             HMENU h_menu = CreatePopupMenu();
             AppendMenu(h_menu, MF_STRING | (readonly ? MF_DISABLED : MF_ENABLED), 1, L"Reset to default");
             AppendMenu(h_menu, MF_STRING, 2, L"More info...");
-            if (option_item.type == t_options_item::Type::Hotkey)
-            {
-                AppendMenu(h_menu, MF_SEPARATOR, 3, L"");
-                AppendMenu(h_menu, MF_STRING, 4, L"Clear");
-            }
             AppendMenu(h_menu, MF_SEPARATOR, 100, L"");
             AppendMenu(h_menu, MF_STRING, 5, L"Reset all to default");
 
@@ -1808,8 +1769,6 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 break;
             }
 
-            void* default_equivalent = option_item.get_default_value_ptr(&g_default_config);
-
             if (offset == 1)
             {
                 option_item.reset_to_default();
@@ -1819,21 +1778,16 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
 
             if (offset == 2)
             {
-                // Show a MessageBox with the tooltip and all possible values along with the default value.
-
                 std::wstring str;
-
                 str += option_item.tooltip;
-
                 if (!option_item.possible_values.empty())
                 {
                     str += L"\r\n\r\n";
-
-                    for (auto pair : option_item.possible_values)
+                    for (const auto& pair : option_item.possible_values)
                     {
                         str += std::format(L"{} - {}", pair.second, pair.first);
 
-                        if (pair.second == *(int32_t*)default_equivalent)
+                        if (pair.second == std::get<int32_t>(option_item.current_value.get()))
                         {
                             str += L" (default)";
                         }
@@ -1843,13 +1797,6 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 }
 
                 DialogService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
-            }
-
-            if (offset == 4 && option_item.type == t_options_item::Type::Hotkey)
-            {
-                const auto i = (size_t)option_item.data;
-                hotkey_scratchpad[i].second = {};
-                ListView_Update(g_lv_hwnd, i);
             }
 
             if (offset == 5)
@@ -1912,22 +1859,37 @@ void ConfigDialog::init()
 
 void ConfigDialog::show_app_settings()
 {
-    hotkey_scratchpad.clear();
+    g_hotkey_scratchpad.clear();
     for (const auto pair : g_config.hotkeys)
     {
-        hotkey_scratchpad.emplace_back(pair.first, pair.second);
+        g_hotkey_scratchpad.emplace_back(pair.first, pair.second);
     }
 
     size_t i = 0;
-    for (const auto& key : g_config.hotkeys | std::views::keys)
+    for (const auto& path : g_config.hotkeys | std::views::keys)
     {
         g_option_items.push_back(t_options_item{
-        .group_id = g_option_groups.back().id,
-        .name = key,
-        .data = (int32_t*)i,
         .type = t_options_item::Type::Hotkey,
+        .group_id = g_option_groups.back().id,
+        .name = path,
+        .current_value = t_options_item::t_readwrite_property([=] {
+            return g_hotkey_scratchpad[i].second;
+        },
+                                                              [=](const t_options_item::data_variant& value) {
+                                                                  g_hotkey_scratchpad[i].second = std::get<t_hotkey>(value);
+                                                              }),
+        .default_value = t_options_item::t_readonly_property([=] {
+            return g_config.inital_hotkeys.at(path);
+        }),
         });
         i++;
+    }
+
+    for (auto& option_item : g_option_items)
+    {
+        option_item.initial_value = t_options_item::t_readonly_property([=] {
+            return option_item.current_value.get();
+        });
     }
 
     PROPSHEETPAGE psp[3] = {{0}};
@@ -1970,7 +1932,7 @@ void ConfigDialog::show_app_settings()
     }
     else
     {
-        for (const auto& [path, hotkey] : hotkey_scratchpad)
+        for (const auto& [path, hotkey] : g_hotkey_scratchpad)
         {
             ActionManager::associate_hotkey(path, hotkey);
         }
