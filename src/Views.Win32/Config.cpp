@@ -205,7 +205,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
     // shift
     // alt
 
-    const auto prefix = std::string("action_");
+    const auto prefix = io_service.wstring_to_string(std::format(L"{}_", field_name));
 
     if (is_reading)
     {
