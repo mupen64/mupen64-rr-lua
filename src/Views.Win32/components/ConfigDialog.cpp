@@ -1460,70 +1460,72 @@ void advance_listview_selection(HWND lvhwnd)
 }
 
 /**
- * Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
+ * Tries applying the specified htokey to the option item. Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
  */
-static void handle_hotkey_conflict(const HWND hwnd, t_hotkey* current_hotkey)
+static void try_apply_hotkey(const HWND hwnd, const t_hotkey& new_hotkey, const t_options_item& option_item)
 {
-    const bool current_hotkey_unbound = current_hotkey->key == 0 && current_hotkey->ctrl == 0 && current_hotkey->shift == 0 && current_hotkey->alt == 0;
-    if (current_hotkey_unbound)
+    if (new_hotkey.is_nothing())
     {
+        option_item.current_value.set(t_hotkey{});
         return;
     }
 
-    std::vector<t_hotkey*> conflicting_hotkeys;
-    // TODO: REIMPLEMENT!
-    // for (const auto hotkey : g_config_hotkeys)
-    // {
-    //     if (hotkey == current_hotkey)
-    //     {
-    //         continue;
-    //     }
-    //
-    //     if (hotkey->key == current_hotkey->key && hotkey->ctrl == current_hotkey->ctrl && hotkey->shift == current_hotkey->shift && hotkey->alt == current_hotkey->alt)
-    //     {
-    //         conflicting_hotkeys.push_back(hotkey);
-    //     }
-    // }
+    std::vector<std::pair<std::wstring, t_hotkey>> conflicting_hotkeys;
+
+    for (const auto& pair : g_hotkey_scratchpad)
+    {
+        if (pair.first == option_item.name)
+        {
+            continue;
+        }
+
+        if (pair.second == new_hotkey)
+        {
+            conflicting_hotkeys.emplace_back(pair);
+        }
+    }
 
     if (conflicting_hotkeys.empty())
     {
+        option_item.current_value.set(new_hotkey);
         return;
     }
 
     std::wstring conflicting_hotkey_identifiers;
-    for (const auto hotkey : conflicting_hotkeys)
+    for (const auto& pair : conflicting_hotkeys)
     {
-        // TODO: REIMPLEMENT!
-        // conflicting_hotkey_identifiers += L"- " + hotkey->identifier + L"\n";
+        conflicting_hotkey_identifiers += L"- " + pair.first + L"\n";
     }
 
-    const auto str = std::format(L"The key combination {} is already used by the following hotkey(s):\n\n{}\nHow would you like to proceed?",
-                                 current_hotkey->to_wstring(),
+    const auto str = std::format(L"The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
+                                 new_hotkey.to_wstring(),
                                  conflicting_hotkey_identifiers);
 
-    const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Discard Others", L"Discard Current", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
+    const auto choice = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
 
-    if (result == 0)
+    switch (choice)
     {
-        for (const auto hotkey : conflicting_hotkeys)
+    case 0:
+        for (const auto& pair : conflicting_hotkeys)
         {
-            hotkey->key = 0;
-            hotkey->ctrl = 0;
-            hotkey->shift = 0;
-            hotkey->alt = 0;
+            auto it = std::ranges::find_if(g_option_items, [&pair](const t_options_item& item) {
+                return item.name == pair.first;
+            });
+            if (it != g_option_items.end())
+            {
+                it->current_value.set(t_hotkey{});
+                ListView_Update(g_lv_hwnd, std::distance(g_option_items.begin(), it));
+            }
         }
-
-        ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
-
-        return;
-    }
-
-    if (result == 1)
-    {
-        current_hotkey->key = 0;
-        current_hotkey->ctrl = 0;
-        current_hotkey->shift = 0;
-        current_hotkey->alt = 0;
+        break;
+    case 1:
+        option_item.current_value.set(t_hotkey{});
+        break;
+    case 2:
+        option_item.current_value.set(new_hotkey);
+        break;
+    default:
+        break;
     }
 }
 
@@ -1628,11 +1630,9 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
         get_user_hotkey(&hotkey);
         g_hotkey_active_index.reset();
 
-        handle_hotkey_conflict(hwnd, &hotkey);
-
         advance_listview_selection(g_lv_hwnd);
 
-        option_item.current_value.set(hotkey);
+        try_apply_hotkey(hwnd, hotkey, option_item);
     }
 
     ListView_Update(g_lv_hwnd, i);
