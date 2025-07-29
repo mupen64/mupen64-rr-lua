@@ -122,7 +122,12 @@ struct t_options_item {
     /**
      * Resets the value of the option to the default value.
      */
-    void reset_to_default();
+    void reset_to_default() const;
+
+    /**
+     * \brief Gets neatly formatted information about the option.
+     */
+    std::wstring get_friendly_info() const;
 };
 
 t_plugin_discovery_result plugin_discovery_result;
@@ -174,9 +179,34 @@ std::wstring t_options_item::get_value_name() const
     }
 }
 
-void t_options_item::reset_to_default()
+void t_options_item::reset_to_default() const
 {
     current_value.set(default_value.get());
+}
+
+std::wstring t_options_item::get_friendly_info() const
+{
+    std::wstring str = tooltip.empty() ? L"(no further information available)" : tooltip;
+
+    if (possible_values.empty())
+    {
+        return str;
+    }
+
+    str += L"\r\n\r\n";
+    for (const auto& pair : possible_values)
+    {
+        str += std::format(L"{} - {}", pair.second, pair.first);
+
+        if (pair.second == std::get<int32_t>(current_value.get()))
+        {
+            str += L" (default)";
+        }
+
+        str += L"\r\n";
+    }
+    
+    return str;
 }
 
 /// <summary>
@@ -1760,6 +1790,11 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             AppendMenu(h_menu, MF_STRING | (readonly ? MF_DISABLED : MF_ENABLED), 1, L"Reset to default");
             AppendMenu(h_menu, MF_STRING, 2, L"More info...");
             AppendMenu(h_menu, MF_SEPARATOR, 100, L"");
+            if (option_item.type == t_options_item::Type::Hotkey)
+            {
+                AppendMenu(h_menu, MF_STRING, 3, L"Clear");
+                AppendMenu(h_menu, MF_SEPARATOR, 101, L"");
+            }
             AppendMenu(h_menu, MF_STRING, 5, L"Reset all to default");
 
             const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(l_param), GET_Y_LPARAM(l_param), hwnd, 0);
@@ -1769,71 +1804,58 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 break;
             }
 
-            if (offset == 1)
+            switch (offset)
             {
+            case 1:
                 option_item.reset_to_default();
-
                 ListView_Update(g_lv_hwnd, i);
-            }
-
-            if (offset == 2)
-            {
-                std::wstring str;
-                str += option_item.tooltip;
-                if (!option_item.possible_values.empty())
+                break;
+            case 2:
+                DialogService::show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(), fsvc_information, hwnd);
+                break;
+            case 3:
+                option_item.current_value.set(t_hotkey{});
+                ListView_Update(g_lv_hwnd, i);
+                break;
+            case 5:
                 {
-                    str += L"\r\n\r\n";
-                    for (const auto& pair : option_item.possible_values)
+                    // If some settings can't be changed, we'll bail
+                    bool can_all_be_changed = true;
+
+                    for (const auto& item : g_option_items)
                     {
-                        str += std::format(L"{} - {}", pair.second, pair.first);
+                        if (!item.is_readonly())
+                            continue;
 
-                        if (pair.second == std::get<int32_t>(option_item.current_value.get()))
-                        {
-                            str += L" (default)";
-                        }
-
-                        str += L"\r\n";
+                        can_all_be_changed = false;
+                        break;
                     }
-                }
 
-                DialogService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
-            }
+                    if (!can_all_be_changed)
+                    {
+                        DialogService::show_dialog(L"Some settings can't be reset, as they are currently read-only. Try again with emulation stopped.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
+                        break;
+                    }
 
-            if (offset == 5)
-            {
-                // If some settings can't be changed, we'll bail
-                bool can_all_be_changed = true;
+                    const auto result = DialogService::show_ask_dialog(VIEW_DLG_RESET_SETTINGS, L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
 
-                for (const auto& item : g_option_items)
-                {
-                    if (!item.is_readonly())
-                        continue;
+                    if (!result)
+                    {
+                        break;
+                    }
 
-                    can_all_be_changed = false;
+                    for (auto& v : g_option_items)
+                    {
+                        v.reset_to_default();
+                    }
+
+                    ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
                     break;
                 }
-
-                if (!can_all_be_changed)
-                {
-                    DialogService::show_dialog(L"Some settings can't be reset, as they are currently read-only. Try again with emulation stopped.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
-                    goto destroy_menu;
-                }
-
-                const auto result = DialogService::show_ask_dialog(VIEW_DLG_RESET_SETTINGS, L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
-
-                if (!result)
-                {
-                    goto destroy_menu;
-                }
-
-                for (auto& v : g_option_items)
-                {
-                    v.reset_to_default();
-                }
-                ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
+            default:
+                break;
             }
 
-        destroy_menu:
             DestroyMenu(h_menu);
         }
         break;
