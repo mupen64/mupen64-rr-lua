@@ -7,7 +7,11 @@
 #include "stdafx.h"
 #include <ActionManager.h>
 
-using t_action = ActionManager::t_action;
+using t_action_params = ActionManager::t_action_params;
+
+struct t_action {
+    t_action_params params{};
+};
 
 /**
  * \brief Represents a command associated with an action as part of a tree structure.
@@ -109,7 +113,7 @@ static t_action* find_action_by_path(const std::wstring& path)
 {
     for (auto& a : g_mgr.actions)
     {
-        if (a.path == path)
+        if (a.params.path == path)
         {
             return &a;
         }
@@ -137,21 +141,19 @@ static bool validate_action_path(const std::wstring& path)
     return true;
 }
 
-bool ActionManager::add(const std::wstring& path, const std::function<void()>& down_callback, const std::function<void()>& up_callback)
+bool ActionManager::add(const t_action_params& params)
 {
     t_action action{};
-    action.path = path;
-    action.down_callback = down_callback;
-    action.up_callback = up_callback;
+    action.params = params;
 
-    if (!validate_action_path(action.path))
+    if (!validate_action_path(action.params.path))
     {
-        g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", path);
+        g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", params.path);
         return false;
     }
 
     std::erase_if(g_mgr.actions, [&](const t_action& a) {
-        return a.path == action.path;
+        return a.params.path == action.params.path;
     });
 
     g_mgr.actions.emplace_back(action);
@@ -206,8 +208,8 @@ bool ActionManager::handle_menu_interaction(size_t id)
         return false;
     }
 
-    g_view_logger->info(L"ActionManager::handle_menu_interaction: Invoking '{}' (#{}).", action->path, id);
-    action->down_callback();
+    g_view_logger->info(L"ActionManager::handle_menu_interaction: Invoking '{}' (#{}).", action->params.path, id);
+    action->params.down_callback();
 
     return true;
 }
@@ -228,12 +230,7 @@ void ActionManager::invoke(const std::wstring& path)
         return;
     }
 
-    action->down_callback();
-}
-
-std::vector<t_action> ActionManager::get_actions()
-{
-    return g_mgr.actions;
+    action->params.down_callback();
 }
 
 /**
@@ -246,7 +243,7 @@ static void build_command_tree()
 
     for (const auto& action : g_mgr.actions)
     {
-        std::vector<std::wstring> parts = split_action_path(action.path);
+        std::vector<std::wstring> parts = split_action_path(action.params.path);
 
         t_command_node* current = &g_mgr.command_tree;
 
@@ -278,10 +275,10 @@ static void build_command_tree()
 
     for (auto& action : g_mgr.actions)
     {
-        const auto command = find_command_node_matching_path_name(action.path);
+        const auto command = find_command_node_matching_path_name(action.params.path);
         if (!command)
         {
-            g_view_logger->error(L"Failed to find command node for action: {}", action.path);
+            g_view_logger->error(L"Failed to find command node for action: {}", action.params.path);
             continue;
         }
         command->action = &action;
@@ -373,11 +370,25 @@ static void set_menu_accelerator_text_from_hotkey(const HMENU menu_bar, const ui
     set_menu_accelerator_text(menu_bar, menu_id, hotkey.is_nothing() ? L"" : hotkey_str.c_str());
 }
 
+/**
+ * \brief Updates the enabled states of all menu items using the value from the action enabled function.
+ */
+static void update_menu_enabled_states()
+{
+    const HMENU main_menu = GetMenu(g_main_hwnd);
+    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+        if (!node.action)
+        {
+            return;
+        }
+        const bool enabled = node.action->params.get_enabled();
+        EnableMenuItem(main_menu, node.menu_id, enabled ? MF_ENABLED : MF_GRAYED);
+    });
+}
+
 static void build_menu()
 {
     build_command_tree();
-
-    // log_menu_structure(g_mgr.command_tree);
 
     // 1. Delete all existing menu items
     const HMENU main_menu = GetMenu(g_main_hwnd);
@@ -400,8 +411,11 @@ static void build_menu()
     iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
         if (node.action)
         {
-            const Hotkey::t_hotkey hotkey = g_config.hotkeys.contains(node.action->path) ? g_config.hotkeys[node.action->path] : Hotkey::t_hotkey{};
+            const Hotkey::t_hotkey hotkey = g_config.hotkeys.contains(node.action->params.path) ? g_config.hotkeys[node.action->params.path] : Hotkey::t_hotkey{};
             set_menu_accelerator_text_from_hotkey(main_menu, node.menu_id, hotkey);
         }
     });
+
+    // 5. Update the enabled states of all menu items.
+    update_menu_enabled_states();
 }

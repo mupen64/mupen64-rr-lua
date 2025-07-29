@@ -15,11 +15,11 @@ namespace ActionManager
 {
     // TODO: "Menu mixin" support, which allows arbitrary menu items to be added after a specific action.
     // TODO: Checkable "action" menu item support... Oof...
-    
+
     /**
-     * \brief Represents an action.
+     * \brief Represents action creation parameters.
      */
-    struct t_action {
+    struct t_action_params {
         /**
          * \brief The action's qualified path, consisting of a category, subcategories, and an action name.
          * \details Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
@@ -29,22 +29,36 @@ namespace ActionManager
         /**
          * \brief The callback to be invoked when the action is initially triggered.
          */
-        std::function<void()> down_callback{};
+        std::function<void()> down_callback = [] {
+        };
 
         /**
          * \brief The callback to be invoked when the action has been released. Can be null.
          */
-        std::function<void()> up_callback{};
+        std::function<void()> up_callback = [] {
+        };
+
+        /**
+         * \brief The function used to determine whether the action is enabled.
+         */
+        std::function<bool()> get_enabled = [] {
+            return true;
+        };
+
+        /**
+         * \brief The function used to determine whether the action is "active". The active state means a checked state in the menu.
+         */
+        std::function<bool()> get_active = [] {
+            return false;
+        };
     };
 
     /**
      * \brief Adds the specified action to the action registry, removing any existing action with the same path.
-     * \param path The action's qualified path, consisting of a category, subcategories, and an action name. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories. If the action name ends with " ---", it will have a separator appended after it.
-     * \param down_callback The callback to be invoked when the action is initially triggered.
-     * \param up_callback The callback to be invoked when the action has been released. Can be null.
+     * \param params The action parameters.
      * \remarks Whether the operation succeeded.
      */
-    bool add(const std::wstring& path, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {});
+    bool add(const t_action_params& params);
 
     /**
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
@@ -68,9 +82,4 @@ namespace ActionManager
      * \param path The qualified path of the action to invoke.
      */
     void invoke(const std::wstring& path);
-
-    /**
-     * \brief Gets a copy of all currently registered actions.
-     */
-    std::vector<t_action> get_actions();
 } // namespace ActionManager
