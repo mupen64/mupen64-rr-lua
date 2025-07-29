@@ -194,7 +194,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
     }
 }
 
-static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::map<std::wstring, t_hotkey>& value)
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::map<std::wstring, Hotkey::t_hotkey>& value)
 {
     const auto key = process_field_name(field_name);
 
@@ -218,7 +218,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
 
             const auto action_path = pair.first.substr(prefix.size());
 
-            t_hotkey hotkey{};
+            Hotkey::t_hotkey hotkey{};
 
             const auto key = pair.second.get("key");
             if (!key.empty())

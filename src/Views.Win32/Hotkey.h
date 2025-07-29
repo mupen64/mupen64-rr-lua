@@ -7,26 +7,40 @@
 #pragma once
 
 /**
- * \brief Represents a combination of key + modifier combination.
+ * \brief A module responsible for providing the hotkey structure and related functionality.
  */
-struct t_hotkey {
-    int32_t key{};
-    bool ctrl{};
-    bool shift{};
-    bool alt{};
+namespace Hotkey
+{
+    /**
+     * \brief Represents a combination of key + modifier combination.
+     */
+    struct t_hotkey {
+        int32_t key{};
+        bool ctrl{};
+        bool shift{};
+        bool alt{};
+
+        /**
+         * \brief Gets whether the hotkey has no key or modifier set.
+         */
+        [[nodiscard]] bool is_nothing() const;
+
+        /**
+         * \brief Gets the string representation of the hotkey.
+         */
+        [[nodiscard]] std::wstring to_wstring() const;
+
+        bool operator==(const t_hotkey& other) const
+        {
+            return key == other.key && ctrl == other.ctrl && shift == other.shift && alt == other.alt;
+        }
+    };
 
     /**
-     * \brief Gets whether the hotkey has no key or modifier set.
+     * \brief Shows a dialog prompting the user to enter a hotkey.
+     * \param hwnd The parent window handle for the dialog.
+     * \param headline The headline to display in the dialog.
+     * \param hotkey The hotkey to set.
      */
-    [[nodiscard]] bool is_nothing() const;
-
-    /**
-     * \brief Gets the string representation of the hotkey.
-     */
-    [[nodiscard]] std::wstring to_wstring() const;
-
-    bool operator==(const t_hotkey& other) const
-    {
-        return key == other.key && ctrl == other.ctrl && shift == other.shift && alt == other.alt;
-    }
-};
+    void show_prompt(HWND hwnd, const std::wstring& headline, t_hotkey& hotkey);
+} // namespace Hotkey

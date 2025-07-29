@@ -23,7 +23,7 @@
 
 // Local copy of the action path<->hotkey map from g_config, but flattened into a vector
 // We need to keep this because the hotkeys might be modified during the config by dodgy Lua scripts lol...
-std::vector<std::pair<std::wstring, t_hotkey>> g_hotkey_scratchpad;
+std::vector<std::pair<std::wstring, Hotkey::t_hotkey>> g_hotkey_scratchpad;
 
 /**
  * Represents a group of options in the settings.
@@ -53,7 +53,7 @@ struct t_options_item {
         Hotkey,
     };
 
-    typedef std::variant<int32_t, std::wstring, t_hotkey> data_variant;
+    typedef std::variant<int32_t, std::wstring, Hotkey::t_hotkey> data_variant;
 
     struct t_readonly_property {
         std::function<data_variant()> get{};
@@ -138,9 +138,6 @@ HWND g_edit_hwnd;
 size_t g_edit_option_item_index;
 t_config g_prev_config;
 
-// Index of the hotkey currently being entered, if any
-std::optional<size_t> g_hotkey_active_index;
-
 std::thread g_plugin_discovery_thread;
 
 // Whether a plugin rescan is needed. Set when modifying the plugin path.
@@ -173,7 +170,7 @@ std::wstring t_options_item::get_value_name() const
     case Type::String:
         return std::get<std::wstring>(value);
     case Type::Hotkey:
-        return std::get<t_hotkey>(value).to_wstring();
+        return std::get<Hotkey::t_hotkey>(value).to_wstring();
     default:
         runtime_assert(false, L"Unhandled option type in t_options_item::get_value_name");
     }
@@ -205,150 +202,8 @@ std::wstring t_options_item::get_friendly_info() const
 
         str += L"\r\n";
     }
-    
+
     return str;
-}
-
-/// <summary>
-/// Waits until the user inputs a valid key sequence, then fills out the hotkey
-/// </summary>
-/// <returns>
-/// Whether a hotkey has succ   essfully been picked
-/// </returns>
-int32_t get_user_hotkey(t_hotkey* hotkey)
-{
-    MSG msg;
-    int i, j;
-    int lc = 0, ls = 0, la = 0;
-    for (i = 0; i < 500; i++)
-    {
-        SleepEx(10, TRUE);
-        for (j = 8; j < 254; j++)
-        {
-            while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE))
-                ;
-
-            if (j == VK_LCONTROL || j == VK_RCONTROL || j == VK_LMENU || j == VK_RMENU || j == VK_LSHIFT || j == VK_RSHIFT)
-                continue;
-
-            if (GetAsyncKeyState(VK_RBUTTON))
-            {
-                return 1;
-            }
-
-            if (GetAsyncKeyState(VK_MBUTTON))
-            {
-                hotkey->key = VK_MBUTTON;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-                return 1;
-            }
-
-            if (GetAsyncKeyState(VK_XBUTTON1))
-            {
-                hotkey->key = VK_XBUTTON1;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-                return 1;
-            }
-
-            if (GetAsyncKeyState(VK_XBUTTON2))
-            {
-                hotkey->key = VK_XBUTTON2;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-                return 1;
-            }
-
-            if (GetAsyncKeyState(j) & 0x8000)
-            {
-                // HACK to avoid exiting all the way out of the dialog on pressing escape to clear a hotkeys
-                // or continually re-activating the button on trying to assign space as a hotkeys
-                if (j == VK_ESCAPE)
-                    return 0;
-
-                if (j == VK_CONTROL)
-                {
-                    lc = 1;
-                    continue;
-                }
-                if (j == VK_SHIFT)
-                {
-                    ls = 1;
-                    continue;
-                }
-                if (j == VK_MENU)
-                {
-                    la = 1;
-                    continue;
-                }
-                if (j != VK_ESCAPE)
-                {
-                    hotkey->key = j;
-                    hotkey->shift = GetAsyncKeyState(VK_SHIFT) ? 1 : 0;
-                    hotkey->ctrl = GetAsyncKeyState(VK_CONTROL) ? 1 : 0;
-                    hotkey->alt = GetAsyncKeyState(VK_MENU) ? 1 : 0;
-                    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                        ;
-
-                    return 1;
-                }
-
-                hotkey->key = 0;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-
-                return 0;
-            }
-            if (j == VK_CONTROL && lc)
-            {
-                hotkey->key = 0;
-                hotkey->shift = 0;
-                hotkey->ctrl = 1;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-
-                return 1;
-            }
-            if (j == VK_SHIFT && ls)
-            {
-                hotkey->key = 0;
-                hotkey->shift = 1;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-
-                return 1;
-            }
-            if (j == VK_MENU && la)
-            {
-                hotkey->key = 0;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 1;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-
-                return 1;
-            }
-        }
-    }
-    // we checked all keys and none of them was pressed, so give up
-    return 0;
 }
 
 INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
@@ -1492,15 +1347,15 @@ void advance_listview_selection(HWND lvhwnd)
 /**
  * Tries applying the specified htokey to the option item. Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
  */
-static void try_apply_hotkey(const HWND hwnd, const t_hotkey& new_hotkey, const t_options_item& option_item)
+static void try_apply_hotkey(const HWND hwnd, const Hotkey::t_hotkey& new_hotkey, const t_options_item& option_item)
 {
     if (new_hotkey.is_nothing())
     {
-        option_item.current_value.set(t_hotkey{});
+        option_item.current_value.set(Hotkey::t_hotkey{});
         return;
     }
 
-    std::vector<std::pair<std::wstring, t_hotkey>> conflicting_hotkeys;
+    std::vector<std::pair<std::wstring, Hotkey::t_hotkey>> conflicting_hotkeys;
 
     for (const auto& pair : g_hotkey_scratchpad)
     {
@@ -1543,13 +1398,13 @@ static void try_apply_hotkey(const HWND hwnd, const t_hotkey& new_hotkey, const 
             });
             if (it != g_option_items.end())
             {
-                it->current_value.set(t_hotkey{});
+                it->current_value.set(Hotkey::t_hotkey{});
                 ListView_Update(g_lv_hwnd, std::distance(g_option_items.begin(), it));
             }
         }
         break;
     case 1:
-        option_item.current_value.set(t_hotkey{});
+        option_item.current_value.set(Hotkey::t_hotkey{});
         break;
     case 2:
         option_item.current_value.set(new_hotkey);
@@ -1652,14 +1507,10 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     // For hotkeys, accept keyboard inputs
     if (option_item.type == t_options_item::Type::Hotkey)
     {
-        auto hotkey = std::get<t_hotkey>(option_item.current_value.get());
+        auto hotkey = std::get<Hotkey::t_hotkey>(option_item.current_value.get());
 
-        g_hotkey_active_index = std::make_optional(i);
-        ListView_Update(g_lv_hwnd, i);
-        RedrawWindow(g_lv_hwnd, nullptr, nullptr, RDW_UPDATENOW);
-        get_user_hotkey(&hotkey);
-        g_hotkey_active_index.reset();
-
+        Hotkey::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", option_item.name), hotkey);
+        
         advance_listview_selection(g_lv_hwnd);
 
         try_apply_hotkey(hwnd, hotkey, option_item);
@@ -1722,11 +1573,6 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 if (subitem == 0)
                 {
                     return g_option_items[i].name;
-                }
-
-                if (g_hotkey_active_index.has_value() && g_hotkey_active_index.value() == i)
-                {
-                    return std::wstring(L"... (RMB to cancel)");
                 }
 
                 return g_option_items[i].get_value_name();
@@ -1814,7 +1660,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 DialogService::show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(), fsvc_information, hwnd);
                 break;
             case 3:
-                option_item.current_value.set(t_hotkey{});
+                option_item.current_value.set(Hotkey::t_hotkey{});
                 ListView_Update(g_lv_hwnd, i);
                 break;
             case 5:
@@ -1898,7 +1744,7 @@ void ConfigDialog::show_app_settings()
             return g_hotkey_scratchpad[i].second;
         },
                                                               [=](const t_options_item::data_variant& value) {
-                                                                  g_hotkey_scratchpad[i].second = std::get<t_hotkey>(value);
+                                                                  g_hotkey_scratchpad[i].second = std::get<Hotkey::t_hotkey>(value);
                                                               }),
         .default_value = t_options_item::t_readonly_property([=] {
             return g_config.inital_hotkeys.at(path);

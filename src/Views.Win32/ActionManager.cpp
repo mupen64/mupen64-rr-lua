@@ -145,7 +145,7 @@ bool ActionManager::add(const std::wstring& path, const std::function<void()>& d
     return true;
 }
 
-bool ActionManager::associate_hotkey(const std::wstring& path, const t_hotkey& hotkey)
+bool ActionManager::associate_hotkey(const std::wstring& path, const Hotkey::t_hotkey& hotkey)
 {
     if (!validate_action_path(path))
     {
@@ -343,7 +343,7 @@ static void set_menu_accelerator_text(const HMENU menu_bar, const uint16_t menu_
 /**
  * \brief Sets the accelerator text for a menu item based on the specified hotkey.
  */
-static void set_menu_accelerator_text_from_hotkey(const HMENU menu_bar, const uint16_t menu_id, const t_hotkey& hotkey)
+static void set_menu_accelerator_text_from_hotkey(const HMENU menu_bar, const uint16_t menu_id, const Hotkey::t_hotkey& hotkey)
 {
     const auto hotkey_str = hotkey.to_wstring();
     set_menu_accelerator_text(menu_bar, menu_id, hotkey.is_nothing() ? L"" : hotkey_str.c_str());
@@ -376,7 +376,7 @@ static void build_menu()
     iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
         if (node.action)
         {
-            const t_hotkey hotkey = g_config.hotkeys.contains(node.action->path) ? g_config.hotkeys[node.action->path] : t_hotkey{};
+            const Hotkey::t_hotkey hotkey = g_config.hotkeys.contains(node.action->path) ? g_config.hotkeys[node.action->path] : Hotkey::t_hotkey{};
             set_menu_accelerator_text_from_hotkey(main_menu, node.menu_id, hotkey);
         }
     });

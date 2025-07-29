@@ -32,7 +32,7 @@ static void show_settings()
     ConfigDialog::show_app_settings();
 }
 
-static void add_and_associate_with_default_hotkey(const std::wstring& path, const t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {})
+static void add_and_associate_with_default_hotkey(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback = {})
 {
     bool success = ActionManager::add(path, down_callback, up_callback);
     runtime_assert(success, std::format(L"Failed to add action for path '{}'.", path));

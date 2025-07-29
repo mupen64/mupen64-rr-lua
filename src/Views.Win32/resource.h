@@ -522,6 +522,8 @@
 #define IDD_LUA_INSTANCE_PLACEHOLDER 40124
 #define IDR_SANDBOX_LUA_FILE 40125
 #define IDM_DUMMY 40126
+#define IDD_HOTKEY 40127
+#define IDC_CURRENT_HOTKEY 40128
 #define IDC_STATIC -1
 
 // Next default values for new objects

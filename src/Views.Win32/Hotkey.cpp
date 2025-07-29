@@ -7,12 +7,17 @@
 #include "stdafx.h"
 #include <Hotkey.h>
 
-bool t_hotkey::is_nothing() const
+struct t_hotkey_dialog_params {
+    std::wstring headline{};
+    Hotkey::t_hotkey hotkey{};
+};
+
+bool Hotkey::t_hotkey::is_nothing() const
 {
     return !this->ctrl && !this->shift && !this->alt && this->key == 0;
 }
 
-std::wstring t_hotkey::to_wstring() const
+std::wstring Hotkey::t_hotkey::to_wstring() const
 {
     wchar_t buf[260]{};
     const int k = this->key;
@@ -179,4 +184,106 @@ std::wstring t_hotkey::to_wstring() const
         StrCat(buf, buf2);
     }
     return buf;
+}
+
+static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
+{
+    const auto params = reinterpret_cast<t_hotkey_dialog_params*>(ref_data);
+
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, hotkey_button_subclass_proc, id);
+        break;
+    case WM_GETDLGCODE:
+        return DLGC_WANTALLKEYS;
+    case WM_CHAR:
+        return TRUE;
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+        if (wparam == VK_CONTROL)
+        {
+            params->hotkey.ctrl = true;
+        }
+        else if (wparam == VK_SHIFT)
+        {
+            params->hotkey.shift = true;
+        }
+        else if (wparam == VK_MENU)
+        {
+            params->hotkey.alt = true;
+        }
+        else
+        {
+            params->hotkey.key = wparam;
+            EndDialog(GetParent(hwnd), IDOK);
+        }
+
+
+        SetDlgItemText(GetParent(hwnd), IDC_CURRENT_HOTKEY, params->hotkey.to_wstring().c_str());
+        return TRUE;
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+}
+static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    const auto prop_key = L"IDD_HOTKEY_Params";
+    auto params = static_cast<t_hotkey_dialog_params*>(GetProp(hwnd, prop_key));
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        {
+            SetProp(hwnd, prop_key, reinterpret_cast<t_hotkey_dialog_params*>(lparam));
+            params = reinterpret_cast<t_hotkey_dialog_params*>(lparam);
+
+            Static_SetText(GetDlgItem(hwnd, IDC_STATIC), params->headline.c_str());
+            SetFocus(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY));
+
+            SetWindowSubclass(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY), hotkey_button_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(params));
+            return TRUE;
+        }
+    case WM_CLOSE:
+        EndDialog(hwnd, IDCANCEL);
+        return TRUE;
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case IDOK:
+            EndDialog(hwnd, IDOK);
+            return TRUE;
+        case IDCANCEL:
+            EndDialog(hwnd, IDCANCEL);
+            return TRUE;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+    return FALSE;
+}
+
+void Hotkey::show_prompt(const HWND hwnd, const std::wstring& headline, t_hotkey& hotkey)
+{
+    const auto prev_hotkey = hotkey;
+
+    hotkey = {};
+    auto params = new t_hotkey_dialog_params{.headline = headline, .hotkey = hotkey};
+
+    INT_PTR result = DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_HOTKEY), hwnd, dlgproc, reinterpret_cast<LPARAM>(params));
+
+    if (result == IDOK)
+    {
+        hotkey = params->hotkey;
+    }
+    else
+    {
+        hotkey = prev_hotkey;
+    }
+
+    delete params;
 }

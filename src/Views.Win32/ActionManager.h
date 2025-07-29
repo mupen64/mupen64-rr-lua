@@ -54,7 +54,7 @@ namespace ActionManager
      * \details This updates the action<->hotkey associations in the config.
      * \details If this is the first time the hotkey is associated with the action.
      */
-    bool associate_hotkey(const std::wstring& path, const t_hotkey& hotkey);
+    bool associate_hotkey(const std::wstring& path, const Hotkey::t_hotkey& hotkey);
 
     /**
      * \brief Handles interactions with a menu item. The interaction will only be handled if the menu was built by the ActionManager.
