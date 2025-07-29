@@ -141,6 +141,38 @@ static bool validate_action_path(const std::wstring& path)
     return true;
 }
 
+/**
+ * \brief Updates the enabled states of all menu items.
+ */
+static void update_menu_enabled_states()
+{
+    const HMENU main_menu = GetMenu(g_main_hwnd);
+    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+        if (!node.action)
+        {
+            return;
+        }
+        const bool enabled = node.action->params.get_enabled();
+        EnableMenuItem(main_menu, node.menu_id, enabled ? MF_ENABLED : MF_GRAYED);
+    });
+}
+
+/**
+ * \brief Updates the active states of all menu items.
+ */
+static void update_menu_active_states()
+{
+    const HMENU main_menu = GetMenu(g_main_hwnd);
+    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+        if (!node.action)
+        {
+            return;
+        }
+        const bool checked = node.action->params.get_active();
+        CheckMenuItem(main_menu, node.menu_id, checked ? MF_CHECKED : MF_UNCHECKED);
+    });
+}
+
 bool ActionManager::add(const t_action_params& params)
 {
     t_action action{};
@@ -191,6 +223,61 @@ bool ActionManager::associate_hotkey(const std::wstring& path, const Hotkey::t_h
     build_menu();
 
     return true;
+}
+
+void ActionManager::notify_enabled_changed(const std::wstring& path)
+{
+    if (!validate_action_path(path))
+    {
+        g_view_logger->error(L"ActionManager::notify_enabled_changed: Malformed action path '{}'.", path);
+        return;
+    }
+
+    t_action* action = find_action_by_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error(L"ActionManager::notify_enabled_changed: Action '{}' not found.", path);
+        return;
+    }
+
+    // TODO: Optimize to only update one menu item instead of the whole menu
+    g_view_logger->info(L"ActionManager::notify_enabled_changed: Action '{}' enabled state changed.", path);
+    update_menu_enabled_states();
+}
+
+void ActionManager::notify_active_changed(const std::wstring& path)
+{
+    if (!validate_action_path(path))
+    {
+        g_view_logger->error(L"ActionManager::notify_active_changed: Malformed action path '{}'.", path);
+        return;
+    }
+
+    t_action* action = find_action_by_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error(L"ActionManager::notify_active_changed: Action '{}' not found.", path);
+        return;
+    }
+
+    // TODO: Optimize to only update one menu item instead of the whole menu
+    g_view_logger->info(L"ActionManager::notify_active_changed: Action '{}' checked state changed.", path);
+    update_menu_active_states();
+}
+
+std::wstring ActionManager::get_action_friendly_name(const std::wstring& path)
+{
+    const auto node = find_command_node_matching_path_name(path);
+
+    if (!node)
+    {
+        g_view_logger->error(L"ActionManager::get_action_friendly_name: Action '{}' has no node.", path);
+        return L"";
+    }
+
+    return node->display_name;
 }
 
 bool ActionManager::handle_menu_interaction(size_t id)
@@ -370,22 +457,6 @@ static void set_menu_accelerator_text_from_hotkey(const HMENU menu_bar, const ui
     set_menu_accelerator_text(menu_bar, menu_id, hotkey.is_nothing() ? L"" : hotkey_str.c_str());
 }
 
-/**
- * \brief Updates the enabled states of all menu items using the value from the action enabled function.
- */
-static void update_menu_enabled_states()
-{
-    const HMENU main_menu = GetMenu(g_main_hwnd);
-    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
-        if (!node.action)
-        {
-            return;
-        }
-        const bool enabled = node.action->params.get_enabled();
-        EnableMenuItem(main_menu, node.menu_id, enabled ? MF_ENABLED : MF_GRAYED);
-    });
-}
-
 static void build_menu()
 {
     build_command_tree();
@@ -416,6 +487,7 @@ static void build_menu()
         }
     });
 
-    // 5. Update the enabled states of all menu items.
+    // 5. Update the enabled and checked states of all menu items.
     update_menu_enabled_states();
+    update_menu_active_states();
 }

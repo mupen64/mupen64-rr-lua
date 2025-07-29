@@ -71,6 +71,25 @@ namespace ActionManager
     bool associate_hotkey(const std::wstring& path, const Hotkey::t_hotkey& hotkey);
 
     /**
+     * \brief Notifies the ActionManager that the enabled state of an action has changed.
+     * \param path The qualified path of the action whose enabled state has changed.
+     */
+    void notify_enabled_changed(const std::wstring& path);
+
+    /**
+     * \brief Notifies the ActionManager that the active state of an action has changed.
+     * \param path The qualified path of the action whose active state has changed.
+     */
+    void notify_active_changed(const std::wstring& path);
+
+    /**
+     * \brief Retrieves the action's friendly name based on its path.
+     * \param path The action's qualified path.
+     * \return The action's friendly name or an empty string if the action is not found.
+     */
+    std::wstring get_action_friendly_name(const std::wstring& path);
+
+    /**
      * \brief Handles interactions with a menu item. The interaction will only be handled if the menu was built by the ActionManager.
      * \param id The menu item's ID.
      * \return Whether the interaction was handled.

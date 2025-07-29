@@ -1510,7 +1510,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
         auto hotkey = std::get<Hotkey::t_hotkey>(option_item.current_value.get());
 
         Hotkey::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", option_item.name), hotkey);
-        
+
         advance_listview_selection(g_lv_hwnd);
 
         try_apply_hotkey(hwnd, hotkey, option_item);
@@ -1733,13 +1733,20 @@ void ConfigDialog::show_app_settings()
         g_hotkey_scratchpad.emplace_back(pair.first, pair.second);
     }
 
+    // Ugh...
+    std::ranges::sort(g_hotkey_scratchpad, [](const auto& a, const auto& b) {
+        return ActionManager::get_action_friendly_name(a.first) < ActionManager::get_action_friendly_name(b.first);
+    });
+
+    // TODO: Have multiple groups... This is horrendous
+    
     size_t i = 0;
-    for (const auto& path : g_config.hotkeys | std::views::keys)
+    for (const auto& path : g_hotkey_scratchpad | std::views::keys)
     {
         g_option_items.push_back(t_options_item{
         .type = t_options_item::Type::Hotkey,
         .group_id = g_option_groups.back().id,
-        .name = path,
+        .name = ActionManager::get_action_friendly_name(path),
         .current_value = t_options_item::t_readwrite_property([=] {
             return g_hotkey_scratchpad[i].second;
         },
