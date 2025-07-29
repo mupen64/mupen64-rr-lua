@@ -1188,44 +1188,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_INITMENU:
         {
-            const auto core_executing = g_core_ctx->vr_get_launched();
-            const auto vcr_active = g_core_ctx->vcr_get_task() != task_idle;
-
-            ModifyMenu(g_main_menu, IDM_MULTI_FRAME_ADVANCE, MF_BYCOMMAND | MF_STRING, IDM_MULTI_FRAME_ADVANCE, std::format(L"Multi-Frame Advance {}x", g_config.multi_frame_advance_count).c_str());
-            // TODO: We might need to re-apply the menu accelerators here?
-
-            EnableMenuItem(g_main_menu, IDM_CLOSE_ROM, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_RESET_ROM, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_PAUSE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SPEED_DOWN, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SPEED_UP, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SPEED_RESET, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_FRAMEADVANCE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_MULTI_FRAME_ADVANCE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SCREENSHOT, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SAVE_SLOT, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_LOAD_SLOT, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SAVE_STATE_AS, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_LOAD_STATE_AS, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_UNDO_LOAD_STATE, (core_executing && g_config.core.st_undo_load) ? MF_ENABLED : MF_GRAYED);
-            for (int i = IDM_SELECT_1; i < IDM_SELECT_10; ++i)
-            {
-                EnableMenuItem(g_main_menu, i, core_executing ? MF_ENABLED : MF_GRAYED);
-            }
-            EnableMenuItem(g_main_menu, IDM_FULLSCREEN, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_STATUSBAR, !core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_START_MOVIE_RECORDING, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_STOP_MOVIE, vcr_active ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_CREATE_MOVIE_BACKUP, vcr_active ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_TRACELOG, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_COREDBG, (core_executing && g_config.core.core_type == 2) ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SEEKER, (core_executing && vcr_active) ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_PIANO_ROLL, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_CHEATS, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_START_CAPTURE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_START_CAPTURE_PRESET, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_STOP_CAPTURE, (core_executing && EncodingManager::is_capturing()) ? MF_ENABLED : MF_GRAYED);
-
+        
             CheckMenuItem(g_main_menu, IDM_STATUSBAR, g_config.is_statusbar_enabled ? MF_CHECKED : MF_UNCHECKED);
             CheckMenuItem(g_main_menu, IDM_FREEZE_RECENT_ROMS, g_config.is_recent_rom_paths_frozen ? MF_CHECKED : MF_UNCHECKED);
             CheckMenuItem(g_main_menu, IDM_FREEZE_RECENT_MOVIES, g_config.is_recent_movie_paths_frozen ? MF_CHECKED : MF_UNCHECKED);
@@ -1389,15 +1352,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     g_core_ctx->tl_start(path, result == IDYES, false);
                     ModifyMenu(g_main_menu, IDM_TRACELOG, MF_BYCOMMAND | MF_STRING, IDM_TRACELOG, L"Stop &Trace Logger");
                 }
-                break;
-            case IDM_CLOSE_ROM:
-                if (!confirm_user_exit())
-                    break;
-                ThreadPool::submit_task([] {
-                    const auto result = g_core_ctx->vr_close_rom(true);
-                    show_error_dialog_for_result(result);
-                },
-                                        ASYNC_KEY_CLOSE_ROM);
                 break;
             case IDM_FASTFORWARD_ON:
                 g_fast_forward = true;
