@@ -17,9 +17,25 @@ struct t_command_node {
      * \brief The name of the node, which corresponds to a segment of the fully-qualified action path.
      */
     std::wstring name{};
+    std::wstring display_name{};
     uint16_t menu_id{};
     t_action* action{};
     std::vector<t_command_node> children{};
+    bool has_separator{};
+
+    explicit t_command_node(const std::wstring& name)
+    {
+        const std::wstring separator_suffix = L" ---";
+
+        this->name = name;
+        this->display_name = name;
+
+        if (name.ends_with(separator_suffix))
+        {
+            this->has_separator = true;
+            this->display_name = name.substr(0, name.size() - separator_suffix.size());
+        }
+    }
 };
 
 struct t_action_manager {
@@ -226,7 +242,7 @@ std::vector<t_action> ActionManager::get_actions()
  */
 static void build_command_tree()
 {
-    g_mgr.command_tree = t_command_node{L"root"};
+    g_mgr.command_tree = t_command_node(L"root");
 
     for (const auto& action : g_mgr.actions)
     {
@@ -247,7 +263,7 @@ static void build_command_tree()
             }
             else
             {
-                current->children.push_back(t_command_node{part});
+                current->children.emplace_back(part);
                 current = &current->children.back();
             }
         }
@@ -306,12 +322,20 @@ static void add_menu_items(const t_command_node& node, const HMENU parent_menu, 
         if (!command.children.empty())
         {
             HMENU new_menu = CreatePopupMenu();
-            InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_POPUP, (UINT_PTR)new_menu, command.name.c_str());
+            InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_POPUP, (UINT_PTR)new_menu, command.display_name.c_str());
+            if (command.has_separator)
+            {
+                InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+            }
             add_menu_items(command, new_menu, depth + 1);
             continue;
         }
 
-        InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.menu_id, command.name.c_str());
+        InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.menu_id, command.display_name.c_str());
+        if (command.has_separator)
+        {
+            InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+        }
     }
 }
 

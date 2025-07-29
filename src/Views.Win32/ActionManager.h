@@ -13,6 +13,9 @@
  */
 namespace ActionManager
 {
+    // TODO: "Menu mixin" support, which allows arbitrary menu items to be added after a specific action.
+    // TODO: Checkable "action" menu item support... Oof...
+    
     /**
      * \brief Represents an action.
      */
@@ -34,12 +37,9 @@ namespace ActionManager
         std::function<void()> up_callback{};
     };
 
-
-    // TODO: Add functionality for adding separators by specifying an action name of "---".
-
     /**
      * \brief Adds the specified action to the action registry, removing any existing action with the same path.
-     * \param path The action's qualified path, consisting of a category, subcategories, and an action name. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+     * \param path The action's qualified path, consisting of a category, subcategories, and an action name. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories. If the action name ends with " ---", it will have a separator appended after it.
      * \param down_callback The callback to be invoked when the action is initially triggered.
      * \param up_callback The callback to be invoked when the action has been released. Can be null.
      * \remarks Whether the operation succeeded.
