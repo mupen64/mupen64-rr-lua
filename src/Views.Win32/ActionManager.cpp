@@ -12,6 +12,7 @@ using t_action_params = ActionManager::t_action_params;
 struct t_action {
     t_action_params params{};
 };
+const std::wstring separator_suffix = L" ---";
 
 /**
  * \brief Represents a command associated with an action as part of a tree structure.
@@ -21,7 +22,6 @@ struct t_command_node {
      * \brief The name of the node, which corresponds to a segment of the fully-qualified action path.
      */
     std::wstring name{};
-    std::wstring display_name{};
     uint16_t menu_id{};
     t_action* action{};
     std::vector<t_command_node> children{};
@@ -29,16 +29,24 @@ struct t_command_node {
 
     explicit t_command_node(const std::wstring& name)
     {
-        const std::wstring separator_suffix = L" ---";
-
         this->name = name;
-        this->display_name = name;
+        this->has_separator = name.ends_with(separator_suffix);
+    }
 
-        if (name.ends_with(separator_suffix))
+    [[nodiscard]] std::wstring display_name() const
+    {
+        auto display_name = has_separator ? name.substr(0, name.size() - separator_suffix.size()) : name;
+
+        if (action && action->params.get_real_name)
         {
-            this->has_separator = true;
-            this->display_name = name.substr(0, name.size() - separator_suffix.size());
+            const auto real_name = action->params.get_real_name();
+            if (!real_name.empty())
+            {
+                display_name = real_name;
+            }
         }
+
+        return display_name;
     }
 };
 
@@ -241,8 +249,10 @@ void ActionManager::notify_enabled_changed(const std::wstring& path)
         return;
     }
 
-    // TODO: Optimize to only update one menu item instead of the whole menu
-    g_view_logger->info(L"ActionManager::notify_enabled_changed: Action '{}' enabled state changed.", path);
+    g_view_logger->info(L"ActionManager::notify_enabled_changed: Action '{}' enabled changed.", path);
+
+    // TODO: Implement this properly by the spec
+
     update_menu_enabled_states();
 }
 
@@ -262,9 +272,16 @@ void ActionManager::notify_active_changed(const std::wstring& path)
         return;
     }
 
-    // TODO: Optimize to only update one menu item instead of the whole menu
-    g_view_logger->info(L"ActionManager::notify_active_changed: Action '{}' checked state changed.", path);
+    g_view_logger->info(L"ActionManager::notify_active_changed: Action '{}' checked changed.", path);
+
+    // TODO: Implement this properly by the spec
     update_menu_active_states();
+}
+
+void ActionManager::notify_real_name_changed(const std::wstring& path)
+{
+    // TODO: Implement this properly by the spec
+    build_menu();
 }
 
 std::wstring ActionManager::get_action_friendly_name(const std::wstring& path)
@@ -277,7 +294,7 @@ std::wstring ActionManager::get_action_friendly_name(const std::wstring& path)
         return L"";
     }
 
-    return node->display_name;
+    return node->display_name();
 }
 
 bool ActionManager::handle_menu_interaction(size_t id)
@@ -406,7 +423,7 @@ static void add_menu_items(const t_command_node& node, const HMENU parent_menu, 
         if (!command.children.empty())
         {
             HMENU new_menu = CreatePopupMenu();
-            InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_POPUP, (UINT_PTR)new_menu, command.display_name.c_str());
+            InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_POPUP, (UINT_PTR)new_menu, command.display_name().c_str());
             if (command.has_separator)
             {
                 InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
@@ -415,7 +432,7 @@ static void add_menu_items(const t_command_node& node, const HMENU parent_menu, 
             continue;
         }
 
-        InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.menu_id, command.display_name.c_str());
+        InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.menu_id, command.display_name().c_str());
         if (command.has_separator)
         {
             InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);

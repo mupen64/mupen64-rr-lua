@@ -13,9 +13,6 @@
  */
 namespace ActionManager
 {
-    // TODO: "Menu mixin" support, which allows arbitrary menu items to be added after a specific action.
-    // TODO: Checkable "action" menu item support... Oof...
-
     /**
      * \brief Represents action creation parameters.
      */
@@ -51,6 +48,14 @@ namespace ActionManager
         std::function<bool()> get_active = [] {
             return false;
         };
+
+        /**
+         * \brief The function used to determine the function's real name, which is an override for the path-derived display name.
+         * If this function is null or returns an empty string, the action's display name will be derived from its path.
+         */
+        std::function<std::wstring()> get_real_name = [] {
+            return L"";
+        };
     };
 
     /**
@@ -72,16 +77,22 @@ namespace ActionManager
 
     /**
      * \brief Notifies the ActionManager that the enabled state of an action has changed.
-     * \param path The qualified path of the action whose enabled state has changed.
+     * \param path The qualified path of the action whose enabled state has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
      */
     void notify_enabled_changed(const std::wstring& path);
 
     /**
      * \brief Notifies the ActionManager that the active state of an action has changed.
-     * \param path The qualified path of the action whose active state has changed.
+     * \param path The qualified path of the action whose active state has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
      */
     void notify_active_changed(const std::wstring& path);
 
+    /**
+     * \brief Notifies the ActionManager that the real name of an action has changed.
+     * \param path The qualified path of the action whose real name has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
+     */
+    void notify_real_name_changed(const std::wstring& path);
+    
     /**
      * \brief Retrieves the action's friendly name based on its path.
      * \param path The action's qualified path.
