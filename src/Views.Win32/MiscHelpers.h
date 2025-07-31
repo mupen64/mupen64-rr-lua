@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <DialogService.h>
+
 typedef struct {
     WORD dlgVer;
     WORD signature;
@@ -477,7 +479,7 @@ static std::wstring format_short(const uint64_t value)
 
 static void runtime_assert_fail(const std::wstring& message)
 {
-    g_view_logger->critical(L"Runtime assertion failed: {}", message);
+    DialogService::show_dialog(message.c_str(), L"Failed Runtime Assertion", fsvc_error);
     std::terminate();
 }
 

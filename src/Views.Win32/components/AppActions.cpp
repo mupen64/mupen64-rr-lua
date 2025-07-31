@@ -23,11 +23,46 @@ static void load_rom()
 
     if (!path.empty())
     {
-        ThreadPool::submit_task([path] {
+        ThreadPool::submit_task([=] {
             const auto result = g_core_ctx->vr_start_rom(path);
             show_error_dialog_for_result(result);
         });
     }
+}
+
+static void load_recent_rom(size_t i)
+{
+    if (g_config.recent_rom_paths.size() <= i)
+    {
+        return;
+    }
+
+    const auto path = g_config.recent_rom_paths[i];
+
+    ThreadPool::submit_task([=] {
+        const auto result = g_core_ctx->vr_start_rom(path);
+        show_error_dialog_for_result(result);
+    });
+}
+
+static void load_recent_movie(size_t i)
+{
+    if (g_config.recent_movie_paths.size() <= i)
+    {
+        return;
+    }
+
+    runtime_assert(false, L"TODO");
+}
+
+static void load_recent_script(size_t i)
+{
+    if (g_config.recent_lua_script_paths.size() <= i)
+    {
+        return;
+    }
+
+    runtime_assert(false, L"TODO");
 }
 
 static void close_rom()
@@ -79,20 +114,46 @@ static bool always_enabled()
 
 #pragma endregion
 
-static void add_and_associate_with_default_hotkey(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {})
+static void add_and_associate_with_default_hotkey(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_real_name = {})
 {
-    bool success = ActionManager::add({.path = path,
-                                       .down_callback = down_callback,
-                                       .get_enabled = get_enabled ? get_enabled : [] {
-                                           return true;
-                                       },
-                                       .get_active = get_active ? get_active : [] {
-                                           return false;
-                                       }});
+    bool success = ActionManager::add({
+    .path = path,
+    .down_callback = down_callback,
+    .get_enabled = get_enabled ? get_enabled : [] {
+        return true;
+    },
+    .get_active = get_active ? get_active : [] {
+        return false;
+    },
+    .get_real_name = get_real_name,
+    });
     runtime_assert(success, std::format(L"Failed to add action for path '{}'.", path));
 
     success = ActionManager::associate_hotkey(path, g_config.hotkeys.contains(path) ? g_config.hotkeys[path] : default_hotkey);
     runtime_assert(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
+}
+
+static void generate_path_recent_menu(const std::wstring& base_path, const std::vector<std::wstring>* paths, const std::function<void(size_t)>& callback)
+{
+    for (size_t i = 0; i < 10; ++i)
+    {
+        const auto get_real_name = [=] -> std::wstring {
+            if (paths->size() > i)
+            {
+                return std::filesystem::path(paths->at(i)).filename();
+            }
+            return L"(nothing)";
+        };
+
+        const auto path = std::format(L"{} > Item #{}", base_path, i + 1);
+        
+        add_and_associate_with_default_hotkey(path, {}, [=] {
+            callback(i);
+        },
+                                              {},
+                                              {},
+                                              get_real_name);
+    }
 }
 
 void AppActions::add()
@@ -105,6 +166,7 @@ void AppActions::add()
     add_and_associate_with_default_hotkey(L"Mupen64 > File > Recent ROMs > Freeze ---", {}, stub, always_enabled, [] {
         return g_config.is_recent_rom_paths_frozen;
     });
+    generate_path_recent_menu(L"Mupen64 > File > Recent ROMs", &g_config.recent_rom_paths, load_recent_rom);
     add_and_associate_with_default_hotkey(L"Mupen64 > File > Load Latest ROM ---", {.key = 'O', .ctrl = true, .shift = true}, stub);
     add_and_associate_with_default_hotkey(L"Mupen64 > File > Exit", {.key = VK_F4, .alt = true}, stub);
 
@@ -123,16 +185,19 @@ void AppActions::add()
     add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, stub, enable_when_emu_launched);
     add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, stub, enable_when_emu_launched);
     add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Multi-Frame Advance Reset ---", {.key = 'E', .ctrl = true, .shift = true}, stub, enable_when_emu_launched);
-    for (int i = 0; i < 10; ++i)
+    for (size_t i = 0; i < 10; ++i)
     {
-        const auto key = i < 9 ? '1' + i : '0';
-        add_and_associate_with_default_hotkey(std::format(L"Mupen64 > Emulation > Current Save State > Slot {}", i + 1), {.key = key}, stub, enable_when_emu_launched, [=] {
+        const int32_t key = i < 9 ? '1' + i : '0';
+
+        const auto get_active = [=] {
             return g_config.st_slot == i;
-        });
+        };
+
+        add_and_associate_with_default_hotkey(std::format(L"Mupen64 > Emulation > Current Save State > Slot {}", i + 1), {.key = key}, stub, enable_when_emu_launched, get_active);
     }
 
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Full Screen", {.key = VK_RETURN, .alt = true}, stub, enable_when_emu_launched, [] {
+    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Full Screen ---", {.key = VK_RETURN, .alt = true}, stub, enable_when_emu_launched, [] {
         // FIXME
         return false;
     });
@@ -149,10 +214,11 @@ void AppActions::add()
     add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Start Movie Playback ---", {.key = 'P', .ctrl = true, .shift = true}, stub);
     add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Stop Movie", {.key = 'C', .ctrl = true, .shift = true}, stub, enable_when_emu_launched_and_vcr_active);
     add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Create Movie Backup ---", {.key = 'B', .ctrl = true, .shift = true}, stub, enable_when_emu_launched_and_vcr_active);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Recent Movies --- > Reset", {}, stub);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Recent Movies --- > Freeze ---", {}, stub, always_enabled, [] {
+    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Recent Movies > Reset", {}, stub);
+    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Recent Movies > Freeze ---", {}, stub, always_enabled, [] {
         return g_config.is_recent_movie_paths_frozen;
     });
+    generate_path_recent_menu(L"Mupen64 > Movie > Recent Movies", &g_config.recent_movie_paths, load_recent_movie);
     add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Load Latest Movie ---", {.key = 'T', .ctrl = true, .shift = true}, stub);
     add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Loop Movie Playback", {.key = 'L', .shift = true}, stub, always_enabled, [] {
         return g_config.core.is_movie_loop_enabled;
@@ -179,11 +245,14 @@ void AppActions::add()
     add_and_associate_with_default_hotkey(L"Mupen64 > Help > Check for Updates", {}, stub);
     add_and_associate_with_default_hotkey(L"Mupen64 > Help > About Mupen64", {}, stub);
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > New Instance...", {.key = 'N', .ctrl = true}, stub);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Recent Scripts --- > Reset", {}, stub);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Recent Scripts --- > Freeze ---", {}, stub, always_enabled, [] {
+    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > New Instance... ---", {.key = 'N', .ctrl = true}, stub);
+    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Recent Scripts > Reset", {}, stub);
+    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Recent Scripts > Freeze ---", {}, stub, always_enabled, [] {
         return g_config.is_recent_scripts_frozen;
     });
+    generate_path_recent_menu(L"Mupen64 > Lua Script > Recent Scripts", &g_config.recent_lua_script_paths, load_recent_script);
     add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Load Latest Script ---", {.key = 'K', .ctrl = true, .shift = true}, stub);
     add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Close All", {.key = 'W', .ctrl = true, .shift = true}, stub);
+
+    ActionManager::notify_real_name_changed(L"stub");
 }
