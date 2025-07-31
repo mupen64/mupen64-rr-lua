@@ -63,7 +63,7 @@ void Loggers::init()
 
     for (auto& logger : LOGGERS)
     {
-        logger->set_level(spdlog::level::trace);
+        logger->set_level(spdlog::level::err);
         logger->flush_on(spdlog::level::err);
     }
 }

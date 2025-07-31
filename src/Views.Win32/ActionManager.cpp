@@ -15,10 +15,7 @@ struct t_action {
     t_action_params params{};
 };
 
-/**
- * \brief Represents a command associated with an action as part of a tree structure.
- */
-struct t_command_node {
+struct t_menu_item {
     uint16_t id{};
     size_t position_under_parent{};
     HMENU popup_handle{};
@@ -26,14 +23,14 @@ struct t_command_node {
     bool has_menu{};
 
     t_action* action{};
-    std::vector<t_command_node> children{};
+    std::vector<t_menu_item> children{};
     bool has_separator{};
 
 private:
     std::wstring m_raw_name{};
 
 public:
-    explicit t_command_node(const std::wstring& name)
+    explicit t_menu_item(const std::wstring& name)
     {
         this->m_raw_name = name;
         this->has_separator = name.ends_with(SEPARATOR_SUFFIX);
@@ -49,7 +46,7 @@ public:
 
 struct t_action_manager {
     std::vector<t_action> actions{};
-    t_command_node command_tree{L"Root"};
+    t_menu_item menu{L"Root"};
     size_t menu_id_counter{};
     bool batched_work{};
 };
@@ -59,7 +56,7 @@ static t_action_manager g_mgr{};
 static void build_menu();
 
 
-std::wstring t_command_node::display_name() const
+std::wstring t_menu_item::display_name() const
 {
     auto display_name = has_separator ? m_raw_name.substr(0, m_raw_name.size() - SEPARATOR_SUFFIX.size()) : m_raw_name;
 
@@ -96,7 +93,7 @@ static std::vector<std::wstring> split_action_path(const std::wstring& path)
 /**
  * \brief Performs a depth-first iteration over the command tree, applying the given predicate to each node. The predicate is also applied to the initial node itself.
  */
-static void iterate_all_children_and_self(t_command_node& node, const std::function<void(t_command_node& node)>& predicate)
+static void iterate_all_children_and_self(t_menu_item& node, const std::function<void(t_menu_item& node)>& predicate)
 {
     predicate(node);
     for (auto& child : node.children)
@@ -108,7 +105,7 @@ static void iterate_all_children_and_self(t_command_node& node, const std::funct
 /**
  * \brief Walks the command tree to find the command node corresponding to the "Name" segment of the fully-qualified action path.
  */
-static t_command_node* find_command_node_matching_path_name(const std::wstring& path)
+static t_menu_item* find_command_node_matching_path_name(const std::wstring& path)
 {
     const auto segments = split_action_path(path);
 
@@ -119,8 +116,8 @@ static t_command_node* find_command_node_matching_path_name(const std::wstring& 
 
     const auto& last_segment = segments.back();
 
-    t_command_node* found_node = nullptr;
-    iterate_all_children_and_self(g_mgr.command_tree, [&](t_command_node& node) {
+    t_menu_item* found_node = nullptr;
+    iterate_all_children_and_self(g_mgr.menu, [&](t_menu_item& node) {
         if (node.raw_name() == last_segment)
         {
             found_node = &node;
@@ -171,7 +168,7 @@ static bool validate_action_path(const std::wstring& path)
 static void update_menu_enabled_states()
 {
     const HMENU main_menu = GetMenu(g_main_hwnd);
-    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+    iterate_all_children_and_self(g_mgr.menu, [&](const t_menu_item& node) {
         if (!node.action)
         {
             return;
@@ -187,7 +184,7 @@ static void update_menu_enabled_states()
 static void update_menu_active_states()
 {
     const HMENU main_menu = GetMenu(g_main_hwnd);
-    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+    iterate_all_children_and_self(g_mgr.menu, [&](const t_menu_item& node) {
         if (!node.action)
         {
             return;
@@ -202,7 +199,7 @@ static void update_menu_active_states()
  */
 static void update_menu_names()
 {
-    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+    iterate_all_children_and_self(g_mgr.menu, [&](const t_menu_item& node) {
         if (!node.has_menu)
         {
             return;
@@ -377,7 +374,7 @@ std::wstring ActionManager::get_action_friendly_name(const std::wstring& path)
 bool ActionManager::handle_menu_interaction(size_t id)
 {
     t_action* action = nullptr;
-    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+    iterate_all_children_and_self(g_mgr.menu, [&](const t_menu_item& node) {
         if (node.id == id)
         {
             action = node.action;
@@ -415,23 +412,22 @@ void ActionManager::invoke(const std::wstring& path)
 }
 
 /**
- * \brief Builds a tree structure containing command nodes based on the currently registered actions' paths.
- * The tree structure allows for hierarchical organization of commands, where each node represents, for example, a menu.
+ * \brief Builds the initial menu tree based on the registered actions' paths.
  */
-static void build_command_tree()
+static void build_initial_menu_tree()
 {
-    g_mgr.command_tree = t_command_node(L"Root");
+    g_mgr.menu = t_menu_item(L"Root");
 
     for (const auto& action : g_mgr.actions)
     {
         std::vector<std::wstring> parts = split_action_path(action.params.path);
 
-        t_command_node* current = &g_mgr.command_tree;
+        t_menu_item* current = &g_mgr.menu;
 
         for (const auto& part : parts)
         {
             auto it = std::ranges::find_if(current->children,
-                                           [&](const t_command_node& node) {
+                                           [&](const t_menu_item& node) {
                                                return node.raw_name() == part;
                                            });
 
@@ -462,7 +458,7 @@ static void build_command_tree()
 /**
  * \brief Logs the structure of the command tree to the logger.
  */
-static void log_menu_structure(const t_command_node& node, size_t depth = 0)
+static void log_menu_structure(const t_menu_item& node, size_t depth = 0)
 {
     if (depth == 0)
     {
@@ -486,7 +482,7 @@ static void log_menu_structure(const t_command_node& node, size_t depth = 0)
 /**
  * \brief Adds menu items to the specified parent menu based on the command tree structure.
  */
-static void add_menu_items(t_command_node& node, const HMENU parent_menu, const size_t depth = 0)
+static void add_menu_items(t_menu_item& node, const HMENU parent_menu, const size_t depth = 0)
 {
     g_mgr.menu_id_counter++;
     runtime_assert(g_mgr.menu_id_counter <= IDM_RESERVED_END, std::format(L"Menu ID counter overflow: {} (max {})", g_mgr.menu_id_counter, IDM_RESERVED_END));
@@ -523,7 +519,7 @@ static void add_menu_items(t_command_node& node, const HMENU parent_menu, const 
 
 static void build_menu()
 {
-    build_command_tree();
+    build_initial_menu_tree();
 
     // 1. Delete all existing menu items
     const HMENU main_menu_bar = GetMenu(g_main_hwnd);
@@ -535,13 +531,13 @@ static void build_menu()
 
     // 2. Add the built-in commands (flat) followed by the other ones.
     g_mgr.menu_id_counter = 0;
-    for (auto& node : g_mgr.command_tree.children.at(0).children)
+    for (auto& node : g_mgr.menu.children.at(0).children)
     {
         add_menu_items(node, main_menu_bar);
     }
-    for (size_t i = 1; i < g_mgr.command_tree.children.size(); ++i)
+    for (size_t i = 1; i < g_mgr.menu.children.size(); ++i)
     {
-        for (auto& node : g_mgr.command_tree.children[i].children)
+        for (auto& node : g_mgr.menu.children[i].children)
         {
             add_menu_items(node, main_menu_bar);
         }
