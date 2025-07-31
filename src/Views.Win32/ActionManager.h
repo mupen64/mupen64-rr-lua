@@ -76,6 +76,16 @@ namespace ActionManager
     bool associate_hotkey(const std::wstring& path, const Hotkey::t_hotkey& hotkey);
 
     /**
+     * \brief Begins a batch operation. Batches all updates caused by <c>add</c> and <c>associate_hotkey</c> into one at the end of the operation.
+     */
+    void begin_batch_work();
+
+    /**
+     * \brief Ends a batch operation.
+     */
+    void end_batch_work();
+    
+    /**
      * \brief Notifies the ActionManager that the enabled state of an action has changed.
      * \param path The qualified path of the action whose enabled state has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
      */

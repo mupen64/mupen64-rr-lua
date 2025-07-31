@@ -158,6 +158,8 @@ static void generate_path_recent_menu(const std::wstring& base_path, const std::
 
 void AppActions::add()
 {
+    ActionManager::begin_batch_work();
+    
     add_and_associate_with_default_hotkey(L"Mupen64 > File > Load ROM...", {.key = 'O', .ctrl = true}, load_rom);
     add_and_associate_with_default_hotkey(L"Mupen64 > File > Close ROM", {.key = 'W', .ctrl = true}, close_rom, enable_when_emu_launched);
     add_and_associate_with_default_hotkey(L"Mupen64 > File > Reset ROM", {.key = 'R', .ctrl = true}, stub, enable_when_emu_launched);
@@ -254,5 +256,5 @@ void AppActions::add()
     add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Load Latest Script ---", {.key = 'K', .ctrl = true, .shift = true}, stub);
     add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Close All", {.key = 'W', .ctrl = true, .shift = true}, stub);
 
-    ActionManager::notify_real_name_changed(L"stub");
+    ActionManager::end_batch_work();
 }

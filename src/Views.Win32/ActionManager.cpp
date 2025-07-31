@@ -9,55 +9,71 @@
 
 using t_action_params = ActionManager::t_action_params;
 
+const std::wstring SEPARATOR_SUFFIX = L" ---";
+
 struct t_action {
     t_action_params params{};
 };
-const std::wstring separator_suffix = L" ---";
 
 /**
  * \brief Represents a command associated with an action as part of a tree structure.
  */
 struct t_command_node {
-    /**
-     * \brief The name of the node, which corresponds to a segment of the fully-qualified action path.
-     */
-    std::wstring name{};
-    uint16_t menu_id{};
+    uint16_t id{};
+    size_t position_under_parent{};
+    HMENU popup_handle{};
+    HMENU parent_menu{};
+    bool has_menu{};
+
     t_action* action{};
     std::vector<t_command_node> children{};
     bool has_separator{};
 
+private:
+    std::wstring m_raw_name{};
+
+public:
     explicit t_command_node(const std::wstring& name)
     {
-        this->name = name;
-        this->has_separator = name.ends_with(separator_suffix);
+        this->m_raw_name = name;
+        this->has_separator = name.ends_with(SEPARATOR_SUFFIX);
     }
 
-    [[nodiscard]] std::wstring display_name() const
+    [[nodiscard]] auto raw_name() const
     {
-        auto display_name = has_separator ? name.substr(0, name.size() - separator_suffix.size()) : name;
-
-        if (action && action->params.get_real_name)
-        {
-            const auto real_name = action->params.get_real_name();
-            if (!real_name.empty())
-            {
-                display_name = real_name;
-            }
-        }
-
-        return display_name;
+        return m_raw_name;
     }
+
+    [[nodiscard]] std::wstring display_name() const;
 };
 
 struct t_action_manager {
     std::vector<t_action> actions{};
-    t_command_node command_tree{L"root"};
+    t_command_node command_tree{L"Root"};
+    size_t menu_id_counter{};
+    bool batched_work{};
 };
 
 static t_action_manager g_mgr{};
 
 static void build_menu();
+
+
+std::wstring t_command_node::display_name() const
+{
+    auto display_name = has_separator ? m_raw_name.substr(0, m_raw_name.size() - SEPARATOR_SUFFIX.size()) : m_raw_name;
+
+    if (action && action->params.get_real_name)
+    {
+        const auto real_name = action->params.get_real_name();
+        if (!real_name.empty())
+        {
+            display_name = real_name;
+        }
+    }
+
+    return display_name;
+}
 
 /**
  * \brief Splits a fully-qualified action path into its components.
@@ -105,7 +121,7 @@ static t_command_node* find_command_node_matching_path_name(const std::wstring& 
 
     t_command_node* found_node = nullptr;
     iterate_all_children_and_self(g_mgr.command_tree, [&](t_command_node& node) {
-        if (node.name == last_segment)
+        if (node.raw_name() == last_segment)
         {
             found_node = &node;
         }
@@ -161,7 +177,7 @@ static void update_menu_enabled_states()
             return;
         }
         const bool enabled = node.action->params.get_enabled();
-        EnableMenuItem(main_menu, node.menu_id, enabled ? MF_ENABLED : MF_GRAYED);
+        EnableMenuItem(main_menu, node.id, enabled ? MF_ENABLED : MF_GRAYED);
     });
 }
 
@@ -177,7 +193,51 @@ static void update_menu_active_states()
             return;
         }
         const bool checked = node.action->params.get_active();
-        CheckMenuItem(main_menu, node.menu_id, checked ? MF_CHECKED : MF_UNCHECKED);
+        CheckMenuItem(main_menu, node.id, checked ? MF_CHECKED : MF_UNCHECKED);
+    });
+}
+
+/**
+ * \brief Updates the names of all menu items.
+ */
+static void update_menu_names()
+{
+    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
+        if (!node.has_menu)
+        {
+            return;
+        }
+
+        auto display_name = node.display_name();
+
+        // Add the accelerator text if there is any :P
+        if (node.action && g_config.hotkeys.contains(node.action->params.path))
+        {
+            const auto hotkey = g_config.hotkeys[node.action->params.path];
+            if (!hotkey.is_nothing())
+            {
+                display_name += std::format(L"\t{}", hotkey.to_wstring());
+            }
+        }
+
+        MENUITEMINFO mii{};
+        mii.cbSize = sizeof(MENUITEMINFO);
+        mii.fMask = MIIM_STRING;
+        mii.dwTypeData = const_cast<LPWSTR>(display_name.c_str());
+        mii.cch = display_name.length();
+
+        if (node.children.empty())
+        {
+            if (!SetMenuItemInfo(node.parent_menu, node.id, false, &mii))
+            {
+                g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of '{}'.", display_name);
+            }
+        }
+
+        if (!SetMenuItemInfo(node.parent_menu, node.position_under_parent, TRUE, &mii))
+        {
+            g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of popup '{}'.", display_name);
+        }
     });
 }
 
@@ -198,7 +258,10 @@ bool ActionManager::add(const t_action_params& params)
 
     g_mgr.actions.emplace_back(action);
 
-    build_menu();
+    if (!g_mgr.batched_work)
+    {
+        build_menu();
+    }
 
     return true;
 }
@@ -221,16 +284,30 @@ bool ActionManager::associate_hotkey(const std::wstring& path, const Hotkey::t_h
 
     if (!g_config.hotkeys.contains(path))
     {
-        g_view_logger->info(L"ActionManager::associate_hotkey: Initial hotkey registered for '{}': {}.", path, hotkey.to_wstring());
+        g_view_logger->debug(L"ActionManager::associate_hotkey: Initial hotkey registered for '{}': {}.", path, hotkey.to_wstring());
         g_config.inital_hotkeys[path] = hotkey;
     }
 
-    g_view_logger->info(L"ActionManager::associate_hotkey: Hotkey registered for '{}': {}.", path, hotkey.to_wstring());
+    g_view_logger->debug(L"ActionManager::associate_hotkey: Hotkey registered for '{}': {}.", path, hotkey.to_wstring());
     g_config.hotkeys[path] = hotkey;
 
-    build_menu();
+    if (!g_mgr.batched_work)
+    {
+        build_menu();
+    }
 
     return true;
+}
+
+void ActionManager::begin_batch_work()
+{
+    g_mgr.batched_work = true;
+}
+
+void ActionManager::end_batch_work()
+{
+    g_mgr.batched_work = false;
+    build_menu();
 }
 
 void ActionManager::notify_enabled_changed(const std::wstring& path)
@@ -249,7 +326,7 @@ void ActionManager::notify_enabled_changed(const std::wstring& path)
         return;
     }
 
-    g_view_logger->info(L"ActionManager::notify_enabled_changed: Action '{}' enabled changed.", path);
+    g_view_logger->debug(L"ActionManager::notify_enabled_changed: Action '{}' enabled changed.", path);
 
     // TODO: Implement this properly by the spec
 
@@ -272,7 +349,7 @@ void ActionManager::notify_active_changed(const std::wstring& path)
         return;
     }
 
-    g_view_logger->info(L"ActionManager::notify_active_changed: Action '{}' checked changed.", path);
+    g_view_logger->debug(L"ActionManager::notify_active_changed: Action '{}' checked changed.", path);
 
     // TODO: Implement this properly by the spec
     update_menu_active_states();
@@ -281,7 +358,7 @@ void ActionManager::notify_active_changed(const std::wstring& path)
 void ActionManager::notify_real_name_changed(const std::wstring& path)
 {
     // TODO: Implement this properly by the spec
-    build_menu();
+    update_menu_names();
 }
 
 std::wstring ActionManager::get_action_friendly_name(const std::wstring& path)
@@ -301,7 +378,7 @@ bool ActionManager::handle_menu_interaction(size_t id)
 {
     t_action* action = nullptr;
     iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
-        if (node.menu_id == id)
+        if (node.id == id)
         {
             action = node.action;
         }
@@ -312,7 +389,7 @@ bool ActionManager::handle_menu_interaction(size_t id)
         return false;
     }
 
-    g_view_logger->info(L"ActionManager::handle_menu_interaction: Invoking '{}' (#{}).", action->params.path, id);
+    g_view_logger->debug(L"ActionManager::handle_menu_interaction: Invoking '{}' (#{}).", action->params.path, id);
     action->params.down_callback();
 
     return true;
@@ -343,7 +420,7 @@ void ActionManager::invoke(const std::wstring& path)
  */
 static void build_command_tree()
 {
-    g_mgr.command_tree = t_command_node(L"root");
+    g_mgr.command_tree = t_command_node(L"Root");
 
     for (const auto& action : g_mgr.actions)
     {
@@ -355,7 +432,7 @@ static void build_command_tree()
         {
             auto it = std::ranges::find_if(current->children,
                                            [&](const t_command_node& node) {
-                                               return node.name == part;
+                                               return node.raw_name() == part;
                                            });
 
             if (it != current->children.end())
@@ -369,13 +446,6 @@ static void build_command_tree()
             }
         }
     }
-
-    size_t menu_id_counter = 0;
-    iterate_all_children_and_self(g_mgr.command_tree, [&](t_command_node& node) {
-        assert(node.menu_id <= IDM_RESERVED_END);
-        node.menu_id = (uint16_t)menu_id_counter;
-        menu_id_counter++;
-    });
 
     for (auto& action : g_mgr.actions)
     {
@@ -400,7 +470,7 @@ static void log_menu_structure(const t_command_node& node, size_t depth = 0)
     }
 
     std::wstring indent(depth * 2, L' ');
-    g_view_logger->debug(L"{} {} (ID: {})", indent, node.name, node.menu_id);
+    g_view_logger->debug(L"{} {}", indent, node.raw_name());
 
     for (const auto& child : node.children)
     {
@@ -416,62 +486,39 @@ static void log_menu_structure(const t_command_node& node, size_t depth = 0)
 /**
  * \brief Adds menu items to the specified parent menu based on the command tree structure.
  */
-static void add_menu_items(const t_command_node& node, const HMENU parent_menu, const size_t depth = 0)
+static void add_menu_items(t_command_node& node, const HMENU parent_menu, const size_t depth = 0)
 {
-    for (const auto& command : node.children)
+    g_mgr.menu_id_counter++;
+    runtime_assert(g_mgr.menu_id_counter <= IDM_RESERVED_END, std::format(L"Menu ID counter overflow: {} (max {})", g_mgr.menu_id_counter, IDM_RESERVED_END));
+
+    node.id = (uint16_t)g_mgr.menu_id_counter;
+    node.parent_menu = parent_menu;
+    node.position_under_parent = GetMenuItemCount(parent_menu);
+    node.has_menu = true;
+
+    if (node.children.empty())
     {
-        if (!command.children.empty())
+        AppendMenu(parent_menu, MF_STRING, node.id, node.display_name().c_str());
+
+        if (node.has_separator)
         {
-            HMENU new_menu = CreatePopupMenu();
-            InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_POPUP, (UINT_PTR)new_menu, command.display_name().c_str());
-            if (command.has_separator)
-            {
-                InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-            }
-            add_menu_items(command, new_menu, depth + 1);
-            continue;
+            AppendMenu(parent_menu, MF_SEPARATOR, 0, nullptr);
         }
-
-        InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_STRING, command.menu_id, command.display_name().c_str());
-        if (command.has_separator)
-        {
-            InsertMenu(parent_menu, GetMenuItemCount(parent_menu), MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-        }
-    }
-}
-
-/**
- * \brief Sets the accelerator text for a menu item, replacing any existing accelerator text.
- */
-static void set_menu_accelerator_text(const HMENU menu_bar, const uint16_t menu_id, const std::wstring& text)
-{
-    wchar_t str[256] = {0};
-    GetMenuString(menu_bar, menu_id, str, std::size(str), MF_BYCOMMAND);
-
-    std::wstring menu_text(str);
-
-    // Remove any existing accelerator text
-    const size_t tab_pos = menu_text.find(L'\t');
-    if (tab_pos != std::wstring::npos)
-        menu_text = menu_text.substr(0, tab_pos);
-
-    // Append accelerator text if there's any
-    if (!text.empty())
-    {
-        menu_text += L'\t';
-        menu_text += text;
+        return;
     }
 
-    ModifyMenu(menu_bar, menu_id, MF_BYCOMMAND | MF_STRING, menu_id, menu_text.c_str());
-}
+    node.popup_handle = CreatePopupMenu();
+    AppendMenu(parent_menu, MF_STRING | MF_POPUP, (UINT_PTR)node.popup_handle, node.display_name().c_str());
 
-/**
- * \brief Sets the accelerator text for a menu item based on the specified hotkey.
- */
-static void set_menu_accelerator_text_from_hotkey(const HMENU menu_bar, const uint16_t menu_id, const Hotkey::t_hotkey& hotkey)
-{
-    const auto hotkey_str = hotkey.to_wstring();
-    set_menu_accelerator_text(menu_bar, menu_id, hotkey.is_nothing() ? L"" : hotkey_str.c_str());
+    if (node.has_separator)
+    {
+        AppendMenu(parent_menu, MF_SEPARATOR, 0, nullptr);
+    }
+
+    for (auto& child_node : node.children)
+    {
+        add_menu_items(child_node, node.popup_handle, depth + 1);
+    }
 }
 
 static void build_menu()
@@ -479,32 +526,30 @@ static void build_menu()
     build_command_tree();
 
     // 1. Delete all existing menu items
-    const HMENU main_menu = GetMenu(g_main_hwnd);
-    const auto menu_count = GetMenuItemCount(main_menu);
+    const HMENU main_menu_bar = GetMenu(g_main_hwnd);
+    const auto menu_count = GetMenuItemCount(main_menu_bar);
     for (int i = 0; i < menu_count; ++i)
     {
-        DeleteMenu(main_menu, 0, MF_BYPOSITION);
+        DeleteMenu(main_menu_bar, 0, MF_BYPOSITION);
     }
 
-    // 2. Add the built-in commands first. We stomp the hierarchy down by one level for this, so we don't have a top-level menu called "Mupen64".
-    // The built-in commands are assumed to be the first child of the root node in the command tree.
-    add_menu_items(g_mgr.command_tree.children.at(0), main_menu);
-
-    // 3. Add all other externally-registered commands
-    t_command_node root_copy = g_mgr.command_tree;
-    root_copy.children.erase(root_copy.children.begin());
-    add_menu_items(root_copy, main_menu);
-
-    // 4. Apply the accelerator text to all menu items.
-    iterate_all_children_and_self(g_mgr.command_tree, [&](const t_command_node& node) {
-        if (node.action)
+    // 2. Add the built-in commands (flat) followed by the other ones.
+    g_mgr.menu_id_counter = 0;
+    for (auto& node : g_mgr.command_tree.children.at(0).children)
+    {
+        add_menu_items(node, main_menu_bar);
+    }
+    for (size_t i = 1; i < g_mgr.command_tree.children.size(); ++i)
+    {
+        for (auto& node : g_mgr.command_tree.children[i].children)
         {
-            const Hotkey::t_hotkey hotkey = g_config.hotkeys.contains(node.action->params.path) ? g_config.hotkeys[node.action->params.path] : Hotkey::t_hotkey{};
-            set_menu_accelerator_text_from_hotkey(main_menu, node.menu_id, hotkey);
+            add_menu_items(node, main_menu_bar);
         }
-    });
+    }
 
-    // 5. Update the enabled and checked states of all menu items.
+
+    // 5. Update all the stuff relevant to the menu.
     update_menu_enabled_states();
     update_menu_active_states();
+    update_menu_names();
 }
