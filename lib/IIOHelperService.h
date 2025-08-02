@@ -360,6 +360,26 @@ public:
         return ret;
     }
 
+    /**
+     * \brief Joins a vector of strings into a single string with a specified delimiter.
+     * \param vec The vector of strings to join.
+     * \param delimiter The delimiter to use between the strings.
+     * \return A single string containing all elements of the vector separated by the delimiter.
+     */
+    virtual std::wstring join_wstring(const std::vector<std::wstring>& vec, const std::wstring& delimiter)
+    {
+        std::wostringstream s;
+        for (const auto& i : vec)
+        {
+            if (&i != &vec[0])
+            {
+                s << delimiter;
+            }
+            s << i;
+        }
+        return s.str();
+    }
+
     struct t_path_segment_info {
         std::wstring drive{};
         std::wstring dir{};

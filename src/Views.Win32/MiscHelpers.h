@@ -479,6 +479,9 @@ static std::wstring format_short(const uint64_t value)
 
 static void runtime_assert_fail(const std::wstring& message)
 {
+#if defined(_DEBUG)
+    __debugbreak();
+#endif
     DialogService::show_dialog(message.c_str(), L"Failed Runtime Assertion", fsvc_error);
     std::terminate();
 }
