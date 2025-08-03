@@ -253,6 +253,23 @@ static void multi_frame_advance()
     g_core_ctx->vr_resume_emu();
 }
 
+static void fastforward_enable()
+{
+    g_fast_forward = true;
+    Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
+}
+
+static void fastforward_disable()
+{
+    g_fast_forward = true;
+    Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
+}
+
+static bool fastforward_active()
+{
+    return g_fast_forward;
+}
+
 static void screenshot()
 {
     g_core.plugin_funcs.video_capture_screen(get_screenshots_directory().string().data());
@@ -388,6 +405,11 @@ static void toggle_fullscreen()
 {
     g_view_plugin_funcs.video_change_window();
     g_fullscreen ^= true;
+}
+
+static bool fullscreen_active()
+{
+    return g_fullscreen;
 }
 
 static void show_plugin_settings_dialog(const std::unique_ptr<Plugin>& plugin)
@@ -763,11 +785,12 @@ static bool always_enabled()
 
 #pragma endregion
 
-static void add_and_associate_with_default_hotkey(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_real_name = {})
+static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_real_name = {})
 {
     bool success = ActionManager::add({
     .path = path,
     .down_callback = down_callback,
+    .up_callback = up_callback,
     .get_enabled = get_enabled ? get_enabled : [] {
         return true;
     },
@@ -782,7 +805,12 @@ static void add_and_associate_with_default_hotkey(const std::wstring& path, cons
     runtime_assert(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
 }
 
-static void generate_path_recent_menu(const std::wstring& base_path, std::vector<std::wstring>* paths, int32_t* frozen, const std::function<void(size_t)>& callback)
+static void add_action(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_real_name = {})
+{
+    add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_real_name);
+}
+
+static void generate_path_recent_menu(const std::wstring& base_path, const Hotkey::t_hotkey& load_first_hotkey, std::vector<std::wstring>* paths, int32_t* frozen, const std::function<void(size_t)>& callback)
 {
     const auto reset_list = [=] {
         paths->clear();
@@ -797,8 +825,8 @@ static void generate_path_recent_menu(const std::wstring& base_path, std::vector
     };
 
 
-    add_and_associate_with_default_hotkey(std::format(L"{} > Reset", base_path), {}, reset_list);
-    add_and_associate_with_default_hotkey(std::format(L"{} > Freeze ---", base_path), {}, toggle_frozen, always_enabled, get_frozen);
+    add_action(std::format(L"{} > Reset", base_path), {}, reset_list);
+    add_action(std::format(L"{} > Freeze ---", base_path), {}, toggle_frozen, always_enabled, get_frozen);
 
     for (size_t i = 0; i < 10; ++i)
     {
@@ -812,12 +840,14 @@ static void generate_path_recent_menu(const std::wstring& base_path, std::vector
 
         const auto path = std::format(L"{} > Item #{}", base_path, i + 1);
 
-        add_and_associate_with_default_hotkey(path, {}, [=] {
+        Hotkey::t_hotkey hotkey = i == 0 ? load_first_hotkey : Hotkey::t_hotkey{};
+
+        add_action(path, hotkey, [=] {
             callback(i);
         },
-                                              {},
-                                              {},
-                                              get_real_name);
+                   {},
+                   {},
+                   get_real_name);
     }
 }
 
@@ -825,28 +855,29 @@ void AppActions::add()
 {
     ActionManager::begin_batch_work();
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > File > Load ROM...", {.key = 'O', .ctrl = true}, load_rom);
-    add_and_associate_with_default_hotkey(L"Mupen64 > File > Close ROM", {.key = 'W', .ctrl = true}, close_rom, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > File > Reset ROM", {.key = 'R', .ctrl = true}, reset_rom, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > File > Refresh ROM List ---", {.key = VK_F5, .ctrl = true}, refresh_rombrowser);
-    generate_path_recent_menu(L"Mupen64 > File > Recent ROMs ---", &g_config.recent_rom_paths, &g_config.is_recent_rom_paths_frozen, load_recent_rom);
-    add_and_associate_with_default_hotkey(L"Mupen64 > File > Exit", {.key = VK_F4, .alt = true}, exit_app);
+    add_action(L"Mupen64 > File > Load ROM...", {.key = 'O', .ctrl = true}, load_rom);
+    add_action(L"Mupen64 > File > Close ROM", {.key = 'W', .ctrl = true}, close_rom, enable_when_emu_launched);
+    add_action(L"Mupen64 > File > Reset ROM", {.key = 'R', .ctrl = true}, reset_rom, enable_when_emu_launched);
+    add_action(L"Mupen64 > File > Refresh ROM List ---", {.key = VK_F5, .ctrl = true}, refresh_rombrowser);
+    generate_path_recent_menu(L"Mupen64 > File > Recent ROMs ---", {.key = 'O', .ctrl = true, .shift = true}, &g_config.recent_rom_paths, &g_config.is_recent_rom_paths_frozen, load_recent_rom);
+    add_action(L"Mupen64 > File > Exit", {.key = VK_F4, .alt = true}, exit_app);
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Pause", {.key = VK_PAUSE}, pause_emu, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Speed Down", {.key = VK_OEM_MINUS}, speed_down, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Speed Up", {.key = VK_OEM_PLUS}, speed_up, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Reset Speed", {.key = VK_OEM_PLUS, .ctrl = true}, speed_reset, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Frame Advance", {.key = VK_OEM_5}, frame_advance, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Multi-Frame Advance", {.key = VK_OEM_5, .ctrl = true}, multi_frame_advance, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Take Screenshot ---", {.key = VK_F12}, screenshot, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Save State", {.key = 'I'}, save_slot, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Load State", {.key = 'P'}, load_slot, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Save State As...", {.key = 'N', .ctrl = true}, save_state_as, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Load State As...", {.key = 'M', .ctrl = true}, load_state_as, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Undo Load State ---", {.key = 'Z', .ctrl = true}, undo_load_state, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, multi_frame_advance_increment, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, multi_frame_advance_decrement, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Emulation > Multi-Frame Advance Reset ---", {.key = 'E', .ctrl = true, .shift = true}, multi_frame_advance, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Pause", {.key = VK_PAUSE}, pause_emu, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Speed Down", {.key = VK_OEM_MINUS}, speed_down, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Speed Up", {.key = VK_OEM_PLUS}, speed_up, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Reset Speed", {.key = VK_OEM_PLUS, .ctrl = true}, speed_reset, enable_when_emu_launched);
+    add_action_with_up(L"Mupen64 > Emulation > Fast-Forward", {.key = VK_TAB}, fastforward_enable, fastforward_disable, enable_when_emu_launched, fastforward_active);
+    add_action(L"Mupen64 > Emulation > Frame Advance", {.key = VK_OEM_5}, frame_advance, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance", {.key = VK_OEM_5, .ctrl = true}, multi_frame_advance, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Take Screenshot ---", {.key = VK_F12}, screenshot, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Save State", {.key = 'I'}, save_slot, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Load State", {.key = 'P'}, load_slot, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Save State As...", {.key = 'N', .ctrl = true}, save_state_as, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Load State As...", {.key = 'M', .ctrl = true}, load_state_as, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Undo Load State ---", {.key = 'Z', .ctrl = true}, undo_load_state, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, multi_frame_advance_increment, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, multi_frame_advance_decrement, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance Reset ---", {.key = 'E', .ctrl = true, .shift = true}, multi_frame_advance, enable_when_emu_launched);
     for (size_t i = 0; i < 10; ++i)
     {
         const int32_t key = i < 9 ? '1' + i : '0';
@@ -859,57 +890,54 @@ void AppActions::add()
             set_save_slot(i);
         };
 
-        add_and_associate_with_default_hotkey(std::format(L"Mupen64 > Emulation > Current Save State > Slot {}", i + 1), {.key = key}, set_slot, enable_when_emu_launched, get_active);
+        add_action(std::format(L"Mupen64 > Emulation > Current Save State > Slot {}", i + 1), {.key = key}, set_slot, enable_when_emu_launched, get_active);
     }
 
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Full Screen ---", {.key = VK_RETURN, .alt = true}, toggle_fullscreen, enable_when_emu_launched, [] {
-        // FIXME
-        return false;
-    });
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Plugin Settings --- > Video Settings", {}, show_video_plugin_settings);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Plugin Settings --- > Audio Settings", {}, show_audio_plugin_settings);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Plugin Settings --- > Input Settings", {}, show_input_plugin_settings);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Plugin Settings --- > RSP Settings", {}, show_rsp_plugin_settings);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Show Statusbar ---", {.key = 'S', .alt = true}, toggle_statusbar, always_enabled, [] {
+    add_action(L"Mupen64 > Options > Full Screen ---", {.key = VK_RETURN, .alt = true}, toggle_fullscreen, enable_when_emu_launched, fastforward_active);
+    add_action(L"Mupen64 > Options > Plugin Settings --- > Video Settings", {}, show_video_plugin_settings);
+    add_action(L"Mupen64 > Options > Plugin Settings --- > Audio Settings", {}, show_audio_plugin_settings);
+    add_action(L"Mupen64 > Options > Plugin Settings --- > Input Settings", {}, show_input_plugin_settings);
+    add_action(L"Mupen64 > Options > Plugin Settings --- > RSP Settings", {}, show_rsp_plugin_settings);
+    add_action(L"Mupen64 > Options > Show Statusbar ---", {.key = 'S', .alt = true}, toggle_statusbar, always_enabled, [] {
         return g_config.is_statusbar_enabled;
     });
-    add_and_associate_with_default_hotkey(L"Mupen64 > Options > Settings...", {.key = 'S', .ctrl = true}, show_settings_dialog);
+    add_action(L"Mupen64 > Options > Settings...", {.key = 'S', .ctrl = true}, show_settings_dialog);
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Start Movie Recording", {.key = 'R', .ctrl = true, .shift = true}, start_movie_recording, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Start Movie Playback ---", {.key = 'P', .ctrl = true, .shift = true}, start_movie_playback);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Stop Movie", {.key = 'C', .ctrl = true, .shift = true}, stop_movie, enable_when_emu_launched_and_vcr_active);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Create Movie Backup ---", {.key = 'B', .ctrl = true, .shift = true}, create_movie_backup, enable_when_emu_launched_and_vcr_active);
-    generate_path_recent_menu(L"Mupen64 > Movie > Recent Movies ---", &g_config.recent_movie_paths, &g_config.is_recent_movie_paths_frozen, load_recent_movie);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Loop Movie Playback", {.key = 'L', .shift = true}, toggle_movie_loop, always_enabled, [] {
+    add_action(L"Mupen64 > Movie > Start Movie Recording", {.key = 'R', .ctrl = true, .shift = true}, start_movie_recording, enable_when_emu_launched);
+    add_action(L"Mupen64 > Movie > Start Movie Playback ---", {.key = 'P', .ctrl = true, .shift = true}, start_movie_playback);
+    add_action(L"Mupen64 > Movie > Stop Movie", {.key = 'C', .ctrl = true, .shift = true}, stop_movie, enable_when_emu_launched_and_vcr_active);
+    add_action(L"Mupen64 > Movie > Create Movie Backup ---", {.key = 'B', .ctrl = true, .shift = true}, create_movie_backup, enable_when_emu_launched_and_vcr_active);
+    generate_path_recent_menu(L"Mupen64 > Movie > Recent Movies ---", {.key = 'T', .ctrl = true, .shift = true}, &g_config.recent_movie_paths, &g_config.is_recent_movie_paths_frozen, load_recent_movie);
+    add_action(L"Mupen64 > Movie > Loop Movie Playback", {.key = 'L', .shift = true}, toggle_movie_loop, always_enabled, [] {
         return g_config.core.is_movie_loop_enabled;
     });
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Read-Only", {.key = 'R', .shift = true}, toggle_readonly, always_enabled, [] {
+    add_action(L"Mupen64 > Movie > Read-Only", {.key = 'R', .shift = true}, toggle_readonly, always_enabled, [] {
         return g_config.core.vcr_readonly;
     });
-    add_and_associate_with_default_hotkey(L"Mupen64 > Movie > Wait at Movie End", {}, toggle_wait_at_movie_end, always_enabled, [] {
+    add_action(L"Mupen64 > Movie > Wait at Movie End", {}, toggle_wait_at_movie_end, always_enabled, [] {
         return g_config.core.wait_at_movie_end;
     });
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Show RAM Start", {}, show_ram_start);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Show Statistics ---", {}, show_statistics);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Start Trace Logger...", {}, start_tracelog, enable_when_emu_launched_and_core_is_pure_interpreter);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Stop Trace Logger ---", {}, stop_tracelog, enable_when_tracelog_active);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Core Debugger", {}, show_debugger, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Run...", {}, show_run_dialog);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Cheats", {}, show_cheat_dialog, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Seek To...", {}, show_seek_dialog, enable_when_emu_launched_and_vcr_active);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Piano Roll ---", {}, show_piano_roll, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Video Capture > Start Capture...", {}, start_capture_normal, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Video Capture > Start from Preset...", {}, start_capture_from_preset, enable_when_emu_launched);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Utilities > Video Capture > Stop Capture", {}, stop_capture, enable_when_emu_launched_and_capturing);
+    add_action(L"Mupen64 > Utilities > Show RAM Start", {}, show_ram_start);
+    add_action(L"Mupen64 > Utilities > Show Statistics ---", {}, show_statistics);
+    add_action(L"Mupen64 > Utilities > Start Trace Logger...", {}, start_tracelog, enable_when_emu_launched_and_core_is_pure_interpreter);
+    add_action(L"Mupen64 > Utilities > Stop Trace Logger ---", {}, stop_tracelog, enable_when_tracelog_active);
+    add_action(L"Mupen64 > Utilities > Core Debugger", {}, show_debugger, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Run...", {}, show_run_dialog);
+    add_action(L"Mupen64 > Utilities > Cheats", {}, show_cheat_dialog, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Seek To...", {}, show_seek_dialog, enable_when_emu_launched_and_vcr_active);
+    add_action(L"Mupen64 > Utilities > Piano Roll ---", {}, show_piano_roll, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Video Capture > Start Capture...", {}, start_capture_normal, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Video Capture > Start from Preset...", {}, start_capture_from_preset, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Video Capture > Stop Capture", {}, stop_capture, enable_when_emu_launched_and_capturing);
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Help > Check for Updates", {}, check_for_updates);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Help > About Mupen64", {}, show_about_dialog);
+    add_action(L"Mupen64 > Help > Check for Updates", {}, check_for_updates);
+    add_action(L"Mupen64 > Help > About Mupen64", {}, show_about_dialog);
 
-    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > New Instance... ---", {.key = 'N', .ctrl = true}, show_lua_dialog);
-    generate_path_recent_menu(L"Mupen64 > Lua Script > Recent Scripts ---", &g_config.recent_lua_script_paths, &g_config.is_recent_scripts_frozen, load_recent_script);
-    add_and_associate_with_default_hotkey(L"Mupen64 > Lua Script > Close All", {.key = 'W', .ctrl = true, .shift = true}, close_all_lua_scripts);
+    add_action(L"Mupen64 > Lua Script > New Instance... ---", {.key = 'N', .ctrl = true}, show_lua_dialog);
+    generate_path_recent_menu(L"Mupen64 > Lua Script > Recent Scripts ---", {.key = 'K', .ctrl = true, .shift = true}, &g_config.recent_lua_script_paths, &g_config.is_recent_scripts_frozen, load_recent_script);
+    add_action(L"Mupen64 > Lua Script > Close All", {.key = 'W', .ctrl = true, .shift = true}, close_all_lua_scripts);
 
     ActionManager::end_batch_work();
 }
