@@ -725,11 +725,16 @@ static void stop_capture()
 
 #pragma region Help
 
-static void check_for_updates()
+static void check_for_updates(const bool manual)
 {
     ThreadPool::submit_task([=] {
-        UpdateChecker::check(true);
+        UpdateChecker::check(manual);
     });
+}
+
+static void check_for_updates_manual()
+{
+    check_for_updates(true);
 }
 
 static void show_about_dialog()
@@ -950,7 +955,7 @@ void AppActions::add()
     add_action(L"Mupen64 > Utilities > Video Capture > Start from Preset...", {}, start_capture_from_preset, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Stop Capture", {}, stop_capture, enable_when_emu_launched_and_capturing);
 
-    add_action(L"Mupen64 > Help > Check for Updates", {}, check_for_updates);
+    add_action(L"Mupen64 > Help > Check for Updates", {}, check_for_updates_manual);
     add_action(L"Mupen64 > Help > About Mupen64", {}, show_about_dialog);
 
     add_action(L"Mupen64 > Lua Script > New Instance... ---", {.key = 'N', .ctrl = true}, show_lua_dialog);
@@ -958,4 +963,6 @@ void AppActions::add()
     add_action(L"Mupen64 > Lua Script > Close All", {.key = 'W', .ctrl = true, .shift = true}, close_all_lua_scripts);
 
     ActionManager::end_batch_work();
+
+    check_for_updates(false);
 }

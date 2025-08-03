@@ -565,7 +565,7 @@ void on_script_started(std::any data)
 {
     g_main_window_dispatcher->invoke([=] {
         auto value = std::any_cast<std::filesystem::path>(data);
-        RecentMenu::add(g_config.recent_lua_script_paths, value.wstring(), g_config.is_recent_scripts_frozen, ID_LUA_RECENT, g_recent_lua_menu);
+        RecentMenu::add(g_config.recent_lua_script_paths, value.wstring(), g_config.is_recent_scripts_frozen);
     });
 }
 
@@ -585,7 +585,7 @@ void on_task_changed(std::any data)
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) || task_is_playback(value) && !task_is_playback(previous_value) && !g_core_ctx->vcr_get_path().empty())
         {
-            RecentMenu::add(g_config.recent_movie_paths, g_core_ctx->vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen, ID_RECENTMOVIES_FIRST, g_recent_movies_menu);
+            RecentMenu::add(g_config.recent_movie_paths, g_core_ctx->vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen);
         }
 
         update_titlebar();
@@ -630,7 +630,7 @@ void on_emu_launched_changed(std::any data)
             const auto rom_path = g_core_ctx->vr_get_rom_path();
             if (!rom_path.empty())
             {
-                RecentMenu::add(g_config.recent_rom_paths, rom_path.wstring(), g_config.is_recent_rom_paths_frozen, ID_RECENTROMS_FIRST, g_recent_roms_menu);
+                RecentMenu::add(g_config.recent_rom_paths, rom_path.wstring(), g_config.is_recent_rom_paths_frozen);
             }
 
             LuaDialog::load_running_scripts();
@@ -1124,19 +1124,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             // this might break small res with gfx plugin!!!
         }
         break;
-    case WM_INITMENU:
-        {
-            RecentMenu::build(g_config.recent_rom_paths, ID_RECENTROMS_FIRST, g_recent_roms_menu);
-            RecentMenu::build(g_config.recent_movie_paths, ID_RECENTMOVIES_FIRST, g_recent_movies_menu);
-            RecentMenu::build(g_config.recent_lua_script_paths, ID_LUA_RECENT, g_recent_lua_menu);
-        }
-        break;
     case WM_ENTERMENULOOP:
         g_in_menu_loop = true;
         g_paused_before_menu = g_core_ctx->vr_get_paused();
         g_core_ctx->vr_pause_emu();
         break;
-
     case WM_EXITMENULOOP:
         // This message is sent when we escape the blocking menu loop, including situations where the clicked menu spawns a dialog.
         // In those situations, we would unpause the game here (since this message is sent first), and then pause it again in the menu item message handler.
@@ -1172,214 +1164,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 g_core_ctx->vr_resume_emu();
             }
             break;
-
         case WA_INACTIVE:
             g_paused_before_focus = g_core_ctx->vr_get_paused();
             g_core_ctx->vr_pause_emu();
             break;
         default:
             break;
-        }
-        break;
-    case WM_COMMAND:
-        {
-            switch (LOWORD(wParam))
-            {
-            case IDM_SHOW_LUA_MANAGER:
-                break;
-            case IDM_CLOSE_ALL_LUA:
-                break;
-            case IDM_DEBUG_WARP_MODIFY:
-                {
-                    auto inputs = g_core_ctx->vcr_get_inputs();
-                    inputs[inputs.size() - 10].a = 1;
-
-                    auto result = g_core_ctx->vcr_begin_warp_modify(inputs);
-                    show_error_dialog_for_result(result);
-
-                    break;
-                }
-            case IDM_BENCHMARK_MESSENGER:
-                {
-                    ScopeTimer timer("Messenger", g_view_logger.get());
-                    for (int i = 0; i < 10'000'000; ++i)
-                    {
-                        Messenger::broadcast(Messenger::Message::None, 5);
-                    }
-                }
-                break;
-            case IDM_BENCHMARK_LUA_CALLBACK:
-                {
-                    DialogService::show_dialog(L"Make sure the Lua script is running and the registered atreset body is empty.", L"Benchmark Lua Callback", fsvc_information);
-                    ScopeTimer timer("100,000,000x call_reset", g_view_logger.get());
-                    for (int i = 0; i < 100'000'000; ++i)
-                    {
-                        LuaCallbacks::call_reset();
-                    }
-                    DialogService::show_dialog(std::format(L"100,000,000 atreset callback invocations took {}ms", timer.momentary_ms()).c_str(), L"Benchmark Lua Callback", fsvc_information);
-                }
-                break;
-            case IDM_FASTFORWARD_ON:
-                g_fast_forward = true;
-                Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
-                break;
-            case IDM_FASTFORWARD_OFF:
-                g_fast_forward = false;
-                Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
-                break;
-            case IDM_GS_ON:
-                break;
-            case IDM_GS_OFF:
-                break;
-            case IDM_LOOP_MOVIE:
-                break;
-            case EMU_PLAY:
-                g_core_ctx->vr_resume_emu();
-                break;
-
-            case IDM_RESET_ROM:
-                {
-
-                    break;
-                }
-            case IDM_ABOUT:
-                {
-                }
-                break;
-            case IDM_CHECK_FOR_UPDATES:
-
-                break;
-            case IDM_COREDBG:
-                break;
-            case IDM_SEEKER:
-                {
-                    BetterEmulationLock lock;
-                    Seeker::show();
-                }
-                break;
-            case IDM_RUNNER:
-                {
-                }
-                break;
-            case IDM_PIANO_ROLL:
-                break;
-            case IDM_CHEATS:
-                {
-                    BetterEmulationLock lock;
-                    Cheats::show();
-                }
-                break;
-            case IDM_LOAD_ROM:
-                {
-                    BetterEmulationLock lock;
-
-                    const auto path = FilePicker::show_open_dialog(L"o_rom", g_main_hwnd, L"*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
-
-                    if (!path.empty())
-                    {
-                        ThreadPool::submit_task([path] {
-                            const auto result = g_core_ctx->vr_start_rom(path);
-                            show_error_dialog_for_result(result);
-                        });
-                    }
-                }
-                break;
-            case IDM_SCREENSHOT:
-                break;
-            case IDM_RESET_RECENT_ROMS:
-                g_config.recent_rom_paths.clear();
-                break;
-            case IDM_RESET_RECENT_MOVIES:
-                g_config.recent_movie_paths.clear();
-                break;
-            case IDM_RESET_RECENT_LUA:
-                g_config.recent_lua_script_paths.clear();
-                break;
-            case IDM_FREEZE_RECENT_ROMS:
-                g_config.is_recent_rom_paths_frozen ^= true;
-                break;
-            case IDM_FREEZE_RECENT_MOVIES:
-                g_config.is_recent_movie_paths_frozen ^= true;
-                break;
-            case IDM_FREEZE_RECENT_LUA:
-                g_config.is_recent_scripts_frozen ^= true;
-                break;
-            case IDM_LOAD_LATEST_LUA:
-                SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(ID_LUA_RECENT, 0), 0);
-                break;
-            case IDM_LOAD_LATEST_ROM:
-                SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(ID_RECENTROMS_FIRST, 0), 0);
-                break;
-            case IDM_PLAY_LATEST_MOVIE:
-                SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(ID_RECENTMOVIES_FIRST, 0), 0);
-                break;
-            case IDM_STATUSBAR:
-                break;
-            case IDM_SPEED_DOWN:
-            case IDM_SPEED_UP:
-                {
-                    break;
-                }
-            case IDM_SPEED_RESET:
-                break;
-            default:
-                if (LOWORD(wParam) >= IDM_SELECT_1 && LOWORD(wParam) <= IDM_SELECT_10)
-                {
-                    auto slot = LOWORD(wParam) - IDM_SELECT_1;
-                    g_config.st_slot = slot;
-                    Messenger::broadcast(Messenger::Message::SlotChanged, static_cast<size_t>(g_config.st_slot));
-                }
-                else if (LOWORD(wParam) >= ID_SAVE_1 && LOWORD(wParam) <= ID_SAVE_10)
-                {
-                    auto slot = LOWORD(wParam) - ID_SAVE_1;
-                    g_core_ctx->vr_wait_increment();
-
-                    g_config.st_slot = slot;
-                    Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
-
-                    ThreadPool::submit_task([=] {
-                        g_core_ctx->vr_wait_decrement();
-                        g_core_ctx->st_do_file(get_st_with_slot_path(slot), core_st_job_save, nullptr, false);
-                    });
-                }
-                else if (LOWORD(wParam) >= ID_LOAD_1 && LOWORD(wParam) <= ID_LOAD_10)
-                {
-                    auto slot = LOWORD(wParam) - ID_LOAD_1;
-                    g_core_ctx->vr_wait_increment();
-
-                    g_config.st_slot = slot;
-                    Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
-
-                    ThreadPool::submit_task([=] {
-                        g_core_ctx->vr_wait_decrement();
-                        g_core_ctx->st_do_file(get_st_with_slot_path(slot), core_st_job_load, nullptr, false);
-                    });
-                }
-                else if (LOWORD(wParam) >= ID_RECENTROMS_FIRST &&
-                         LOWORD(wParam) < (ID_RECENTROMS_FIRST + g_config.recent_rom_paths.size()))
-                {
-                    auto path = RecentMenu::element_at(g_config.recent_rom_paths, ID_RECENTROMS_FIRST, LOWORD(wParam));
-                    if (path.empty())
-                        break;
-
-                    ThreadPool::submit_task([path] {
-                        const auto result = g_core_ctx->vr_start_rom(path);
-                        show_error_dialog_for_result(result);
-                    },
-                                            ASYNC_KEY_START_ROM);
-                }
-                else if (LOWORD(wParam) >= ID_RECENTMOVIES_FIRST &&
-                         LOWORD(wParam) < (ID_RECENTMOVIES_FIRST + g_config.recent_movie_paths.size()))
-                {
-                }
-                else if (LOWORD(wParam) >= ID_LUA_RECENT && LOWORD(wParam) < (ID_LUA_RECENT + g_config.recent_lua_script_paths.size()))
-                {
-                    auto path = RecentMenu::element_at(g_config.recent_lua_script_paths, ID_LUA_RECENT, LOWORD(wParam));
-                    if (path.empty())
-                        break;
-                }
-                break;
-            }
         }
         break;
     default:
@@ -1869,7 +1659,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Statusbar::create();
     RomBrowser::create();
     AppActions::update_core_fast_forward();
-    
+
     Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
     Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
     Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
@@ -1885,8 +1675,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
         DialogService::show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.", L"Error", fsvc_error);
         return -1;
     }
-
-    PostMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
 
     MSG msg{};
 
