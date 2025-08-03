@@ -267,7 +267,24 @@ static void fastforward_disable()
 
 static bool fastforward_active()
 {
-    return g_fast_forward;
+    // Whatever...
+    return false;
+}
+
+static void gs_button_enable()
+{
+    g_core_ctx->vr_set_gs_button(true);
+}
+
+static void gs_button_disable()
+{
+    g_core_ctx->vr_set_gs_button(false);
+}
+
+static bool gs_button_active()
+{
+    // Whatever...
+    return false;
 }
 
 static void screenshot()
@@ -867,6 +884,7 @@ void AppActions::add()
     add_action(L"Mupen64 > Emulation > Speed Up", {.key = VK_OEM_PLUS}, speed_up, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Reset Speed", {.key = VK_OEM_PLUS, .ctrl = true}, speed_reset, enable_when_emu_launched);
     add_action_with_up(L"Mupen64 > Emulation > Fast-Forward", {.key = VK_TAB}, fastforward_enable, fastforward_disable, enable_when_emu_launched, fastforward_active);
+    add_action_with_up(L"Mupen64 > Emulation > GS Button", {.key = 'G'}, gs_button_enable, gs_button_disable, enable_when_emu_launched, gs_button_active);
     add_action(L"Mupen64 > Emulation > Frame Advance", {.key = VK_OEM_5}, frame_advance, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance", {.key = VK_OEM_5, .ctrl = true}, multi_frame_advance, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Take Screenshot ---", {.key = VK_F12}, screenshot, enable_when_emu_launched);

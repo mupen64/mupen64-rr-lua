@@ -1228,15 +1228,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
                 break;
             case IDM_GS_ON:
-                g_core_ctx->vr_set_gs_button(true);
                 break;
             case IDM_GS_OFF:
-                g_core_ctx->vr_set_gs_button(false);
                 break;
             case IDM_LOOP_MOVIE:
                 break;
-
-
             case EMU_PLAY:
                 g_core_ctx->vr_resume_emu();
                 break;
