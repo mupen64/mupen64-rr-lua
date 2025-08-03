@@ -45,15 +45,6 @@ IDR_SANDBOX_LUA_FILE    TEXTFILE                "..\\sandbox.lua"
 // Menu
 //
 
-IDM_MAIN MENU
-BEGIN
-POPUP " "
-    BEGIN
-        MENUITEM " ", IDM_DUMMY
-    END
-END
-
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog

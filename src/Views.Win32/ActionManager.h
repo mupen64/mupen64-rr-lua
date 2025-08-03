@@ -13,6 +13,8 @@
  */
 namespace ActionManager
 {
+    const std::wstring SEPARATOR_SUFFIX = L" ---";
+
     /**
      * \brief Represents action creation parameters.
      */
@@ -58,6 +60,12 @@ namespace ActionManager
         };
     };
 
+    struct t_action {
+        t_action_params params{};
+
+        [[nodiscard]] std::wstring display_name() const;
+    };
+
     /**
      * \brief Adds the specified action to the action registry, removing any existing action with the same path.
      * \param params The action parameters.
@@ -84,7 +92,7 @@ namespace ActionManager
      * \brief Ends a batch operation.
      */
     void end_batch_work();
-    
+
     /**
      * \brief Notifies the ActionManager that the enabled state of an action has changed.
      * \param path The qualified path of the action whose enabled state has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
@@ -102,21 +110,26 @@ namespace ActionManager
      * \param path The qualified path of the action whose real name has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
      */
     void notify_real_name_changed(const std::wstring& path);
+
+    /**
+     * \brief Gets the display name for an action or part of an action.
+     * \param path The qualified or unqualified path of the action to get the display name for. Can be missing arbitrary segments.
+     * \return The action's display name or an empty string if the display name couldn't be resolved.
+     */
+    std::wstring get_display_name(const std::wstring& path);
+
+    /**
+     * \brief Gets a copy of all registered actions.
+     */
+    std::vector<t_action> get_actions();
+
+    /**
+     * \brief Gets the segments of an action's path.
+     * \param path The fully-qualified path of the action to get the segments for.
+     * \return A vector of segments, where each segment is a part of the path.
+     */
+    std::vector<std::wstring> get_path_segments(const std::wstring& path);
     
-    /**
-     * \brief Retrieves the action's friendly name based on its path.
-     * \param path The action's qualified path.
-     * \return The action's friendly name or an empty string if the action is not found.
-     */
-    std::wstring get_action_friendly_name(const std::wstring& path);
-
-    /**
-     * \brief Handles interactions with a menu item. The interaction will only be handled if the menu was built by the ActionManager.
-     * \param id The menu item's ID.
-     * \return Whether the interaction was handled.
-     */
-    bool handle_menu_interaction(size_t id);
-
     /**
      * \brief Manually invokes an action by its path.
      * \param path The qualified path of the action to invoke.

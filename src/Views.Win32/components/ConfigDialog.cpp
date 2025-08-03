@@ -1735,7 +1735,7 @@ void ConfigDialog::show_app_settings()
 
     // Ugh...
     std::ranges::sort(g_hotkey_scratchpad, [](const auto& a, const auto& b) {
-        return ActionManager::get_action_friendly_name(a.first) < ActionManager::get_action_friendly_name(b.first);
+        return ActionManager::get_display_name(a.first) < ActionManager::get_display_name(b.first);
     });
 
     // TODO: Have multiple groups... This is horrendous
@@ -1746,7 +1746,7 @@ void ConfigDialog::show_app_settings()
         g_option_items.push_back(t_options_item{
         .type = t_options_item::Type::Hotkey,
         .group_id = g_option_groups.back().id,
-        .name = ActionManager::get_action_friendly_name(path),
+        .name = ActionManager::get_display_name(path),
         .current_value = t_options_item::t_readwrite_property([=] {
             return g_hotkey_scratchpad[i].second;
         },

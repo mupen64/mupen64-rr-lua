@@ -14,6 +14,7 @@
 #include <strsafe.h>
 #include <capture/EncodingManager.h>
 #include <components/AboutDialog.h>
+#include <components/ActionMenu.h>
 #include <components/AppActions.h>
 #include <components/Benchmark.h>
 #include <components/CLI.h>
@@ -1147,7 +1148,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 6);
         g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
 
+        ActionMenu::init();
+        
         AppActions::add();
+        ActionMenu::add_managed_menu(hwnd);
 
         MGECompositor::create(hwnd);
         PianoRoll::init();
@@ -1864,14 +1868,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             }
-
-            {
-                const auto id = LOWORD(wParam);
-                if (ActionManager::handle_menu_interaction(id))
-                {
-                    break;
-                }
-            }
         }
         break;
     default:
@@ -2330,7 +2326,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     wc.lpszClassName = WND_CLASS;
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszMenuName = MAKEINTRESOURCE(IDM_MAIN);
     RegisterClassEx(&wc);
 
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height);

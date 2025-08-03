@@ -4,7 +4,6 @@
 //
 #define IDM_RESERVED_BEGIN 0
 #define IDM_RESERVED_END 200
-#define IDM_MAIN 200
 #define IDD_SEEKER 201
 #define IDD_RUNNER 202
 #define IDD_MOVIE_EDITOR 203
