@@ -1808,10 +1808,12 @@ void ConfigDialog::show_app_settings()
     }
     else
     {
+        ActionManager::begin_batch_work();
         for (const auto& [path, hotkey] : g_hotkey_scratchpad)
         {
             ActionManager::associate_hotkey(path, hotkey);
         }
+        ActionManager::end_batch_work();
     }
 
     Config::save();
