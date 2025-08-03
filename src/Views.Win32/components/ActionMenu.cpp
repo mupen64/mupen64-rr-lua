@@ -1,4 +1,10 @@
-﻿#include "stdafx.h"
+﻿/*
+ * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "stdafx.h"
 #include <ActionManager.h>
 #include <Messenger.h>
 #include <components/ActionMenu.h>
@@ -286,9 +292,9 @@ static void build_menu(t_action_menu_context& ctx)
     g_am_ctx.actions = ActionManager::get_actions();
 
     reset_menu(ctx);
-    
+
     build_initial_menu_tree(ctx);
-    
+
     const HMENU main_menu_bar = GetMenu(ctx.hwnd);
 
     ctx.menu_id_counter = 0;
