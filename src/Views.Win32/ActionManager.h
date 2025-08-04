@@ -66,7 +66,6 @@ namespace ActionManager
 
         /**
          * \brief The function used to determine the function's real name, which is an override for the path-derived display name.
-         * If this function is null or returns an empty string, the action's display name will be derived from its path.
          */
         std::function<std::wstring()> get_real_name = [] {
             return L"";
