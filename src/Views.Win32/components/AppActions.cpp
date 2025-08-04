@@ -860,7 +860,7 @@ static void generate_path_recent_menu(const std::wstring& base_path, const Hotke
             return L"(nothing)";
         };
 
-        const auto path = std::format(L"{} > Item #{}", base_path, i + 1);
+        const auto path = std::format(L"{} > Load Recent Item {}", base_path, i + 1);
 
         Hotkey::t_hotkey hotkey = i == 0 ? load_first_hotkey : Hotkey::t_hotkey{};
 
