@@ -354,20 +354,26 @@ static void action_registry_changed()
     }
 }
 
-static void action_enabled_changed(const std::wstring& path)
+static void action_enabled_changed(const std::vector<ActionManager::t_action*>& actions)
 {
+    g_view_logger->info(L"{} actions enabled changed", actions.size());
+
     // TODO: Implement this in a more performant way if bottlenecks happen
     action_registry_changed();
 }
 
-static void action_active_changed(const std::wstring& path)
+static void action_active_changed(const std::vector<ActionManager::t_action*>& actions)
 {
+    g_view_logger->info(L"{} actions active changed", actions.size());
+
     // TODO: Implement this in a more performant way if bottlenecks happen
     action_registry_changed();
 }
 
-static void action_real_name_changed(const std::wstring& path)
+static void action_real_name_changed(const std::vector<ActionManager::t_action*>& actions)
 {
+    g_view_logger->info(L"{} actions real name changed", actions.size());
+
     // TODO: Implement this in a more performant way if bottlenecks happen
     action_registry_changed();
 }
@@ -378,13 +384,16 @@ void ActionMenu::init()
         action_registry_changed();
     });
     Messenger::subscribe(Messenger::Message::ActionEnabledChanged, [](const auto& any) {
-        action_enabled_changed(std::any_cast<std::wstring>(any));
+        const auto ref = std::any_cast<std::vector<ActionManager::t_action*>>(any);
+        action_enabled_changed(ref);
     });
     Messenger::subscribe(Messenger::Message::ActionActiveChanged, [](const auto& any) {
-        action_active_changed(std::any_cast<std::wstring>(any));
+        const auto ref = std::any_cast<std::vector<ActionManager::t_action*>>(any);
+        action_active_changed(ref);
     });
     Messenger::subscribe(Messenger::Message::ActionRealNameChanged, [](const auto& any) {
-        action_real_name_changed(std::any_cast<std::wstring>(any));
+        const auto ref = std::any_cast<std::vector<ActionManager::t_action*>>(any);
+        action_real_name_changed(ref);
     });
 }
 

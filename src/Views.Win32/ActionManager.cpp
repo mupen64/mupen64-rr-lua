@@ -42,6 +42,25 @@ static t_action* find_action_by_path(const std::wstring& path)
     return nullptr;
 }
 
+static std::vector<t_action*> find_actions_under_path(const std::wstring& path)
+{
+    const auto normalized_path = normalize_path(path);
+    const auto segments = ActionManager::get_path_segments(normalized_path);
+
+    std::vector<t_action*> actions;
+
+    for (auto& action : g_mgr.actions)
+    {
+        const auto action_segments = ActionManager::get_path_segments(action.params.path);
+        if (std::equal(segments.begin(), segments.end(), action_segments.begin()))
+        {
+            actions.push_back(&action);
+        }
+    }
+
+    return actions;
+}
+
 /**
  * \brief Checks whether the given fully-qualified action path is valid.
  */
@@ -168,66 +187,24 @@ void ActionManager::notify_enabled_changed(const std::wstring& path)
 {
     const auto normalized_path = normalize_path(path);
 
-    if (!validate_action_path(normalized_path))
-    {
-        g_view_logger->error(L"ActionManager::notify_enabled_changed: Malformed action path '{}'.", normalized_path);
-        return;
-    }
-
-    t_action* action = find_action_by_path(normalized_path);
-
-    if (!action)
-    {
-        g_view_logger->error(L"ActionManager::notify_enabled_changed: Action '{}' not found.", normalized_path);
-        return;
-    }
-
-    g_view_logger->debug(L"ActionManager::notify_enabled_changed: Action '{}' enabled changed.", normalized_path);
-    Messenger::broadcast(Messenger::Message::ActionEnabledChanged, action);
+    const auto actions = find_actions_under_path(normalized_path);
+    Messenger::broadcast(Messenger::Message::ActionEnabledChanged, actions);
 }
 
 void ActionManager::notify_active_changed(const std::wstring& path)
 {
     const auto normalized_path = normalize_path(path);
 
-    if (!validate_action_path(normalized_path))
-    {
-        g_view_logger->error(L"ActionManager::notify_active_changed: Malformed action path '{}'.", normalized_path);
-        return;
-    }
-
-    t_action* action = find_action_by_path(normalized_path);
-
-    if (!action)
-    {
-        g_view_logger->error(L"ActionManager::notify_active_changed: Action '{}' not found.", normalized_path);
-        return;
-    }
-
-    g_view_logger->debug(L"ActionManager::notify_active_changed: Action '{}' checked changed.", normalized_path);
-    Messenger::broadcast(Messenger::Message::ActionActiveChanged, action);
+    const auto actions = find_actions_under_path(normalized_path);
+    Messenger::broadcast(Messenger::Message::ActionActiveChanged, actions);
 }
 
 void ActionManager::notify_real_name_changed(const std::wstring& path)
 {
     const auto normalized_path = normalize_path(path);
 
-    if (!validate_action_path(normalized_path))
-    {
-        g_view_logger->error(L"ActionManager::notify_real_name_changed: Malformed action path '{}'.", normalized_path);
-        return;
-    }
-
-    t_action* action = find_action_by_path(normalized_path);
-
-    if (!action)
-    {
-        g_view_logger->error(L"ActionManager::notify_real_name_changed: Action '{}' not found.", normalized_path);
-        return;
-    }
-
-    g_view_logger->debug(L"ActionManager::notify_real_name_changed: Action '{}' real name changed.", normalized_path);
-    Messenger::broadcast(Messenger::Message::ActionRealNameChanged, action);
+    const auto actions = find_actions_under_path(normalized_path);
+    Messenger::broadcast(Messenger::Message::ActionRealNameChanged, actions);
 }
 
 std::wstring ActionManager::get_display_name(const std::wstring& path)

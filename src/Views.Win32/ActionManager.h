@@ -13,17 +13,30 @@
  */
 namespace ActionManager
 {
+    /**
+     * \brief The suffix for action path segments that are used to indicate a separator.
+     */
     const std::wstring SEPARATOR_SUFFIX = L" ---";
+
+    /**
+     * \brief A fully-qualified action path. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+     */
+    using fq_action_path = std::wstring;
+
+    /**
+     * \brief A partially-qualified action path. Must be in the same format as <c>fq_action_path</c>, but can be missing the name segment.
+     * This is used to refer to actions without specifying the full path, such as when notifying about changes.
+     */
+    using pq_action_path = std::wstring;
 
     /**
      * \brief Represents action creation parameters.
      */
     struct t_action_params {
         /**
-         * \brief The action's qualified path, consisting of a category, subcategories, and an action name.
-         * \details Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+         * \brief The action's path.
          */
-        std::wstring path{};
+        fq_action_path path{};
 
         /**
          * \brief The callback to be invoked when the action is initially triggered.
@@ -75,13 +88,13 @@ namespace ActionManager
 
     /**
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
-     * \param path The qualified path of the action to associate the hotkey with, consisting of a category, subcategories, and an action name. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+     * \param path The action path.
      * \param hotkey The hotkey to associate with the action.
      * \return Whether the operation succeeded.
      * \details This updates the action<->hotkey associations in the config.
      * \details If this is the first time the hotkey is associated with the action.
      */
-    bool associate_hotkey(const std::wstring& path, const Hotkey::t_hotkey& hotkey);
+    bool associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey);
 
     /**
      * \brief Begins a batch operation. Batches all updates caused by <c>add</c> and <c>associate_hotkey</c> into one at the end of the operation.
@@ -94,29 +107,29 @@ namespace ActionManager
     void end_batch_work();
 
     /**
-     * \brief Notifies the ActionManager that the enabled state of an action has changed.
-     * \param path The qualified path of the action whose enabled state has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
+     * \brief Notifies about the enabled state of an action or a group of actions changing.
+     * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
      */
-    void notify_enabled_changed(const std::wstring& path);
+    void notify_enabled_changed(const pq_action_path& path);
 
     /**
-     * \brief Notifies the ActionManager that the active state of an action has changed.
-     * \param path The qualified path of the action whose active state has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
+     * \brief Notifies about the active state of an action or a group of actions changing.
+     * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
      */
-    void notify_active_changed(const std::wstring& path);
+    void notify_active_changed(const pq_action_path& path);
 
     /**
-     * \brief Notifies the ActionManager that the real name of an action has changed.
-     * \param path The qualified path of the action whose real name has changed. If the path doesn't end with an action's name, all actions under that category or subcategory will be considered changed.
+     * \brief Notifies about the real name of an action or a group of actions changing.
+     * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
      */
-    void notify_real_name_changed(const std::wstring& path);
+    void notify_real_name_changed(const pq_action_path& path);
 
     /**
-     * \brief Gets the display name for an action or part of an action.
-     * \param path The qualified or unqualified path of the action to get the display name for. Can be missing arbitrary segments.
+     * \brief Gets the display name for an action.
+     * \param path The action path.
      * \return The action's display name or an empty string if the display name couldn't be resolved.
      */
-    std::wstring get_display_name(const std::wstring& path);
+    std::wstring get_display_name(const pq_action_path& path);
 
     /**
      * \brief Gets a copy of all registered actions.
@@ -125,11 +138,11 @@ namespace ActionManager
 
     /**
      * \brief Gets the segments of an action's path.
-     * \param path The fully-qualified path of the action to get the segments for.
+     * \param path The qualified or partially-qualified path to split.
      * \return A vector of segments, where each segment is a part of the path.
      */
-    std::vector<std::wstring> get_path_segments(const std::wstring& path);
-    
+    std::vector<std::wstring> get_path_segments(const pq_action_path& path);
+
     /**
      * \brief Manually invokes an action by its path.
      * \param path The qualified path of the action to invoke.
