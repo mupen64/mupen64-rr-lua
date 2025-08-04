@@ -103,7 +103,7 @@ namespace ActionManager
      * \return Whether the action is active.
      */
     bool is_action_active(const fq_action_path& path);
-    
+
     /**
      * \brief Begins a batch operation. Batches all updates caused by <c>add</c> and <c>associate_hotkey</c> into one at the end of the operation.
      */

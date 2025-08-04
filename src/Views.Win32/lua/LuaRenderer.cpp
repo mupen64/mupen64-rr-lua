@@ -225,7 +225,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context* ctx, t_lua_environmen
     FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
     ctx->d2d_overlay_hwnd = CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width, ctx->dc_size.height, g_main_hwnd, nullptr, g_app_instance, nullptr);
-    
+
     SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, env);
     SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, env);
 
