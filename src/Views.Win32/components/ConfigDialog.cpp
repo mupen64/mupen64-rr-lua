@@ -855,10 +855,7 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .id = id++,
     .name = L"Debug"};
 
-    t_options_group hotkey_group = {
-    .id = id++,
-    .name = L"Hotkeys"};
-    groups = {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group, lua_group, debug_group, hotkey_group};
+    groups = {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group, lua_group, debug_group};
 
 #define RPROP(T, x) t_options_item::t_readonly_property([] { \
     return g_default_config.x;                               \
@@ -1727,37 +1724,67 @@ void ConfigDialog::init()
 
 void ConfigDialog::show_app_settings()
 {
+    const auto prev_option_group_size = g_option_groups.size();
+    const auto prev_option_items_size = g_option_items.size();
+
     g_hotkey_scratchpad.clear();
-    for (const auto pair : g_config.hotkeys)
-    {
-        g_hotkey_scratchpad.emplace_back(pair.first, pair.second);
-    }
 
-    // Ugh...
-    std::ranges::sort(g_hotkey_scratchpad, [](const auto& a, const auto& b) {
-        return ActionManager::get_display_name(a.first) < ActionManager::get_display_name(b.first);
-    });
-
-    // TODO: Have multiple groups... This is horrendous
-    
-    size_t i = 0;
-    for (const auto& path : g_hotkey_scratchpad | std::views::keys)
+    /*
+     * Generate option groups with names based on the first segment of the paths (we make an exception for the "Mupen64" group: we look one level deeper there because the hierarchy is massive)
+     *
+     * Mupen64 > File > Load ROM... is grouped under "File"
+     * Mupen64 > Emulation > Pause is grouped under "Emulation"
+     * SM64Lua > Match Yaw is grouped under "SM64Lua"
+     *
+     * We also build the hotkey scratchpad and the items here because it's convenient
+     */
+    std::vector<t_options_group> hotkey_groups{};
+    size_t group_id = g_option_groups.back().id + 1;
+    for (const auto& path : g_config.hotkeys | std::views::keys)
     {
-        g_option_items.push_back(t_options_item{
-        .type = t_options_item::Type::Hotkey,
-        .group_id = g_option_groups.back().id,
-        .name = ActionManager::get_display_name(path),
-        .current_value = t_options_item::t_readwrite_property([=] {
-            return g_hotkey_scratchpad[i].second;
-        },
-                                                              [=](const t_options_item::data_variant& value) {
-                                                                  g_hotkey_scratchpad[i].second = std::get<Hotkey::t_hotkey>(value);
-                                                              }),
-        .default_value = t_options_item::t_readonly_property([=] {
-            return g_config.inital_hotkeys.at(path);
-        }),
+        const auto segments = ActionManager::get_path_segments(path);
+        const auto is_builtin = segments[0] == L"Mupen64";
+        std::wstring relevant_segment = is_builtin ? segments[1] : segments[0];
+        std::wstring name = is_builtin ? std::format(L"Mupen64 > {}", relevant_segment) : std::format(L"{}", relevant_segment);
+
+        const auto found = std::ranges::find_if(hotkey_groups, [&](const t_options_group& group) {
+            return group.name == name;
         });
-        i++;
+
+        if (found != hotkey_groups.end())
+        {
+            continue;
+        }
+
+        const auto group = t_options_group{
+        .id = group_id++,
+        .name = name};
+
+        hotkey_groups.push_back(group);
+
+        const auto actions = ActionManager::get_actions(name);
+
+        for (const auto& action : actions)
+        {
+            g_hotkey_scratchpad.emplace_back(action.params.path, g_config.hotkeys.at(action.params.path));
+
+            const auto scratchpad_index = g_hotkey_scratchpad.size() - 1;
+
+            g_option_items.push_back(t_options_item{
+            .type = t_options_item::Type::Hotkey,
+            .group_id = hotkey_groups.back().id,
+            .name = ActionManager::get_display_name(action.params.path, true),
+            .current_value = t_options_item::t_readwrite_property([=] {
+                return g_hotkey_scratchpad[scratchpad_index].second;
+            },
+                                                                  [=](const t_options_item::data_variant& value) {
+                                                                      g_hotkey_scratchpad[scratchpad_index].second = std::get<Hotkey::t_hotkey>(value);
+                                                                  }),
+            .default_value = t_options_item::t_readonly_property([=] {
+                return g_config.inital_hotkeys.at(path);
+            }),
+            });
+        }
     }
 
     for (auto& option_item : g_option_items)
@@ -1767,6 +1794,8 @@ void ConfigDialog::show_app_settings()
             return initial_value;
         });
     }
+
+    g_option_groups.insert(g_option_groups.end(), hotkey_groups.begin(), hotkey_groups.end());
 
     PROPSHEETPAGE psp[3] = {{0}};
     for (auto& i : psp)
@@ -1816,9 +1845,11 @@ void ConfigDialog::show_app_settings()
         ActionManager::end_batch_work();
     }
 
+    g_option_items.erase(g_option_items.begin() + prev_option_items_size, g_option_items.end());
+    g_option_groups.erase(g_option_groups.begin() + prev_option_group_size, g_option_groups.end());
+
     Config::save();
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
-    g_option_items.erase(g_option_items.end() - i, g_option_items.end());
 }
 
 typedef struct {

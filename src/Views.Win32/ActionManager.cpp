@@ -81,7 +81,7 @@ static bool validate_action_path(const std::wstring& path)
     return true;
 }
 
-std::wstring t_action::display_name() const
+std::wstring t_action::display_name(bool ignore_real_name) const
 {
     const auto normalized_path = normalize_path(params.path);
     const auto segments = get_path_segments(normalized_path);
@@ -99,7 +99,7 @@ std::wstring t_action::display_name() const
         display_name = name;
     }
 
-    if (params.get_real_name)
+    if (params.get_real_name && !ignore_real_name)
     {
         const auto real_name = params.get_real_name();
         if (!real_name.empty())
@@ -207,7 +207,7 @@ void ActionManager::notify_real_name_changed(const std::wstring& path)
     Messenger::broadcast(Messenger::Message::ActionRealNameChanged, actions);
 }
 
-std::wstring ActionManager::get_display_name(const std::wstring& path)
+std::wstring ActionManager::get_display_name(const std::wstring& path, bool ignore_real_name)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -227,12 +227,26 @@ std::wstring ActionManager::get_display_name(const std::wstring& path)
         return name;
     }
 
-    return item->display_name();
+    return item->display_name(ignore_real_name);
 }
 
-std::vector<t_action> ActionManager::get_actions()
+std::vector<t_action> ActionManager::get_actions(const pq_action_path& path)
 {
-    return g_mgr.actions;
+    if (path.empty())
+    {
+        return g_mgr.actions;
+    }
+
+    const auto normalized_path = normalize_path(path);
+    const auto actions = find_actions_under_path(normalized_path);
+
+    std::vector<t_action> result;
+    result.reserve(actions.size());
+    for (const auto& action : actions)
+    {
+        result.push_back(*action);
+    }
+    return result;
 }
 
 std::vector<std::wstring> ActionManager::get_path_segments(const std::wstring& path)

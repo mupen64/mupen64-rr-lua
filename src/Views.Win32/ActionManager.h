@@ -76,7 +76,7 @@ namespace ActionManager
     struct t_action {
         t_action_params params{};
 
-        [[nodiscard]] std::wstring display_name() const;
+        [[nodiscard]] std::wstring display_name(bool ignore_real_name = false) const;
     };
 
     /**
@@ -127,14 +127,16 @@ namespace ActionManager
     /**
      * \brief Gets the display name for an action.
      * \param path The action path.
+     * \param ignore_real_name Whether to ignore the real name override.
      * \return The action's display name or an empty string if the display name couldn't be resolved.
      */
-    std::wstring get_display_name(const pq_action_path& path);
+    std::wstring get_display_name(const pq_action_path& path, bool ignore_real_name = false);
 
     /**
      * \brief Gets a copy of all registered actions.
+     * \param path The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
      */
-    std::vector<t_action> get_actions();
+    std::vector<t_action> get_actions(const pq_action_path& path = L"");
 
     /**
      * \brief Gets the segments of an action's path.

@@ -39,7 +39,8 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
             const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
             bool hit = false;
 
-            for (const auto& [path, hotkey] : g_config.hotkeys)
+            const auto hotkeys = g_config.hotkeys;
+            for (const auto& [path, hotkey] : hotkeys)
             {
                 const auto down = (lmb && !ctx->last_lmb && hotkey.key == VK_LBUTTON) || (rmb && !ctx->last_rmb && hotkey.key == VK_RBUTTON) || (mmb && !ctx->last_mmb && hotkey.key == VK_MBUTTON) || (xmb1 && !ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) || (xmb2 && !ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
                 const auto up = (!lmb && ctx->last_lmb && hotkey.key == VK_LBUTTON) || (!rmb && ctx->last_rmb && hotkey.key == VK_RBUTTON) || (!mmb && ctx->last_mmb && hotkey.key == VK_MBUTTON) || (!xmb1 && ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) || (!xmb2 && ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
@@ -81,8 +82,9 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
             bool hit = false;
 
             const bool is_down = (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN);
-        
-            for (const auto& [path, hotkey] : g_config.hotkeys)
+
+            const auto hotkeys = g_config.hotkeys;
+            for (const auto& [path, hotkey] : hotkeys)
             {
                 if ((int)wParam == hotkey.key && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
                 {
