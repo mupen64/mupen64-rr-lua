@@ -206,6 +206,11 @@ public:
         }
     }
 
+    /**
+     * \brief Removes leading whitespace from a string.
+     * \param str The string to trim.
+     * \return A new string with leading whitespace removed.
+     */
     virtual std::wstring ltrim(const std::wstring& str)
     {
         std::wstring s = str;
@@ -215,6 +220,11 @@ public:
         return s;
     }
 
+    /**
+     * \brief Removes trailing whitespace from a string.
+     * \param str The string to trim.
+     * \return A new string with trailing whitespace removed.
+     */
     virtual std::wstring rtrim(const std::wstring& str)
     {
         std::wstring s = str;
@@ -226,6 +236,11 @@ public:
         return s;
     }
 
+    /**
+     * \brief Removes leading and trailing whitespace from a string.
+     * \param str The string to trim.
+     * \return A new string with leading and trailing whitespace removed.
+     */
     virtual std::wstring trim(const std::wstring& str)
     {
         return ltrim(rtrim(str));
