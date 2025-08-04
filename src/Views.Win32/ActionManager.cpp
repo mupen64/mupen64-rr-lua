@@ -283,7 +283,6 @@ std::vector<std::wstring> ActionManager::get_actions_matching_filter(const pq_ac
 {
     if (path.empty())
     {
-
         std::vector<std::wstring> result;
         result.reserve(g_mgr.actions.size());
         for (const auto& action : g_mgr.actions)
