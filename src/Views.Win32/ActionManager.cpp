@@ -282,6 +282,11 @@ void ActionManager::invoke(const std::wstring& path, bool down)
         return;
     }
 
+    if (action->params.get_enabled && !action->params.get_enabled())
+    {
+        return;
+    }
+    
     if (down)
     {
         action->params.down_callback();
