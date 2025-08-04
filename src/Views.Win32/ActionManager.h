@@ -73,12 +73,6 @@ namespace ActionManager
         };
     };
 
-    struct t_action {
-        t_action_params params{};
-
-        [[nodiscard]] std::wstring display_name(bool ignore_real_name = false) const;
-    };
-
     /**
      * \brief Adds the specified action to the action registry, removing any existing action with the same path.
      * \param params The action parameters.
@@ -96,6 +90,20 @@ namespace ActionManager
      */
     bool associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey);
 
+    /**
+     * \brief Checks if an action is enabled.
+     * \param path The fully-qualified action path to check.
+     * \return Whether the action is enabled.
+     */
+    bool is_action_enabled(const fq_action_path& path);
+
+    /**
+     * \brief Checks if an action is active.
+     * \param path The fully-qualified action path to check.
+     * \return Whether the action is active.
+     */
+    bool is_action_active(const fq_action_path& path);
+    
     /**
      * \brief Begins a batch operation. Batches all updates caused by <c>add</c> and <c>associate_hotkey</c> into one at the end of the operation.
      */
@@ -133,10 +141,10 @@ namespace ActionManager
     std::wstring get_display_name(const pq_action_path& path, bool ignore_real_name = false);
 
     /**
-     * \brief Gets a copy of all registered actions.
+     * \brief Gets all action paths that match the specified filter.
      * \param path The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
      */
-    std::vector<t_action> get_actions(const pq_action_path& path = L"");
+    std::vector<std::wstring> get_actions_matching_filter(const pq_action_path& path = L"");
 
     /**
      * \brief Gets the segments of an action's path.

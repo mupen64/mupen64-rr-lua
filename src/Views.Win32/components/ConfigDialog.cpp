@@ -1740,9 +1740,9 @@ void ConfigDialog::show_app_settings()
      */
     std::vector<t_options_group> hotkey_groups{};
     size_t group_id = g_option_groups.back().id + 1;
-    for (const auto& [params] : ActionManager::get_actions())
+    for (const auto& action_matching_filter : ActionManager::get_actions_matching_filter())
     {
-        const auto segments = ActionManager::get_path_segments(params.path);
+        const auto segments = ActionManager::get_path_segments(action_matching_filter);
         const auto is_builtin = segments[0] == L"Mupen64";
         std::wstring relevant_segment = is_builtin ? segments[1] : segments[0];
         std::wstring name = is_builtin ? std::format(L"Mupen64 > {}", relevant_segment) : std::format(L"{}", relevant_segment);
@@ -1762,18 +1762,18 @@ void ConfigDialog::show_app_settings()
 
         hotkey_groups.push_back(group);
 
-        const auto actions = ActionManager::get_actions(name);
+        const auto actions = ActionManager::get_actions_matching_filter(name);
 
         for (const auto& action : actions)
         {
-            g_hotkey_scratchpad.emplace_back(action.params.path, g_config.hotkeys.at(action.params.path));
+            g_hotkey_scratchpad.emplace_back(action, g_config.hotkeys.at(action));
 
             const auto scratchpad_index = g_hotkey_scratchpad.size() - 1;
 
             g_option_items.push_back(t_options_item{
             .type = t_options_item::Type::Hotkey,
             .group_id = hotkey_groups.back().id,
-            .name = ActionManager::get_display_name(action.params.path, true),
+            .name = ActionManager::get_display_name(action, true),
             .current_value = t_options_item::t_readwrite_property([=] {
                 return g_hotkey_scratchpad[scratchpad_index].second;
             },
@@ -1781,7 +1781,7 @@ void ConfigDialog::show_app_settings()
                                                                       g_hotkey_scratchpad[scratchpad_index].second = std::get<Hotkey::t_hotkey>(value);
                                                                   }),
             .default_value = t_options_item::t_readonly_property([=] {
-                return g_config.inital_hotkeys.at(params.path);
+                return g_config.inital_hotkeys.at(action);
             }),
             });
         }

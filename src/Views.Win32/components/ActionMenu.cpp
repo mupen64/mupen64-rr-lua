@@ -18,7 +18,7 @@ struct t_menu_item {
     HMENU parent_menu{};
     bool has_menu{};
 
-    ActionManager::t_action* action{};
+    std::wstring action_path{};
     std::vector<t_menu_item> children{};
 
 private:
@@ -52,8 +52,7 @@ struct t_action_menu_context {
 
 struct t_action_menu_global_context {
     std::vector<t_action_menu_context*> active_contexts{};
-    // Actions acquired from the ActionManager, just a copy which is updated every time we see fit
-    std::vector<ActionManager::t_action> actions{};
+    std::vector<std::wstring> actions{};
 };
 
 static t_action_menu_global_context g_am_ctx{};
@@ -100,11 +99,12 @@ static void update_menu_enabled_states(t_action_menu_context& ctx)
 {
     const HMENU main_menu = GetMenu(ctx.hwnd);
     ctx.menu.iterate_children_and_self([&](const t_menu_item& item) {
-        if (!item.action)
+        if (item.action_path.empty())
         {
             return;
         }
-        const bool enabled = item.action->params.get_enabled();
+
+        const bool enabled = ActionManager::is_action_enabled(item.action_path);
         EnableMenuItem(main_menu, item.id, enabled ? MF_ENABLED : MF_GRAYED);
     });
 }
@@ -116,12 +116,13 @@ static void update_menu_active_states(t_action_menu_context& ctx)
 {
     const HMENU main_menu = GetMenu(ctx.hwnd);
     ctx.menu.iterate_children_and_self([&](const t_menu_item& item) {
-        if (!item.action)
+        if (item.action_path.empty())
         {
             return;
         }
-        const bool checked = item.action->params.get_active();
-        CheckMenuItem(main_menu, item.id, checked ? MF_CHECKED : MF_UNCHECKED);
+
+        const bool active = ActionManager::is_action_active(item.action_path);
+        CheckMenuItem(main_menu, item.id, active ? MF_CHECKED : MF_UNCHECKED);
     });
 }
 
@@ -139,9 +140,9 @@ static void update_menu_names(t_action_menu_context& ctx)
         auto display_name = ActionManager::get_display_name(item.raw_path());
 
         // Add the accelerator text if there is any :P
-        if (item.action && g_config.hotkeys.contains(item.action->params.path))
+        if (!item.action_path.empty() && g_config.hotkeys.contains(item.action_path))
         {
-            const auto hotkey = g_config.hotkeys[item.action->params.path];
+            const auto hotkey = g_config.hotkeys[item.action_path];
             if (!hotkey.is_nothing())
             {
                 display_name += std::format(L"\t{}", hotkey.to_wstring());
@@ -169,28 +170,25 @@ static void update_menu_names(t_action_menu_context& ctx)
     });
 }
 
-
 static bool handle_menu_interaction(t_action_menu_context& ctx, size_t id)
 {
-    ActionManager::t_action* action = nullptr;
+    std::wstring found_action_path;
     ctx.menu.iterate_children_and_self([&](const t_menu_item& item) {
         if (item.id == id)
         {
-            action = item.action;
+            found_action_path = item.action_path;
         }
     });
 
-    if (!action)
+    if (found_action_path.empty())
     {
         return false;
     }
 
-    g_view_logger->debug(L"ActionManager::handle_menu_interaction: Invoking '{}' (#{}).", action->params.path, id);
-    action->params.down_callback();
+    ActionManager::invoke(found_action_path);
 
     return true;
 }
-
 
 /**
  * \brief Builds the initial menu tree based on the registered actions' paths.
@@ -199,9 +197,9 @@ static void build_initial_menu_tree(t_action_menu_context& ctx)
 {
     ctx.menu = t_menu_item(L"Root");
 
-    for (const auto& action : g_am_ctx.actions)
+    for (const auto& path : g_am_ctx.actions)
     {
-        std::vector<std::wstring> parts = ActionManager::get_path_segments(action.params.path);
+        std::vector<std::wstring> parts = ActionManager::get_path_segments(path);
 
         t_menu_item* current = &ctx.menu;
 
@@ -226,11 +224,11 @@ static void build_initial_menu_tree(t_action_menu_context& ctx)
         }
     }
 
-    for (auto& action : g_am_ctx.actions)
+    for (auto& path : g_am_ctx.actions)
     {
-        const auto item = find_item_by_path(ctx, action.params.path);
-        runtime_assert(item, std::format(L"ActionManager::build_initial_menu_tree: Action '{}' has no node.", action.params.path));
-        item->action = &action;
+        const auto item = find_item_by_path(ctx, path);
+        runtime_assert(item, std::format(L"ActionManager::build_initial_menu_tree: Action '{}' has no node.", path));
+        item->action_path = path;
     }
 }
 
@@ -289,7 +287,7 @@ static void reset_menu(t_action_menu_context& ctx)
 
 static void build_menu(t_action_menu_context& ctx)
 {
-    g_am_ctx.actions = ActionManager::get_actions();
+    g_am_ctx.actions = ActionManager::get_actions_matching_filter();
 
     reset_menu(ctx);
 
