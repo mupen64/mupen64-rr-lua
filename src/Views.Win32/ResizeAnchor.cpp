@@ -20,7 +20,7 @@ struct t_anchor_context {
     bool first_resize{};
 };
 
-static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
+static LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
     auto ctx = static_cast<t_anchor_context*>(GetProp(hwnd, CTX_PROP));
 
@@ -89,7 +89,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
             break;
         }
     case WM_NCDESTROY:
-        RemoveWindowSubclass(hwnd, action_menu_wnd_subclass_proc, sId);
+        RemoveWindowSubclass(hwnd, wnd_subclass_proc, sId);
         RemoveProp(hwnd, CTX_PROP);
         delete ctx;
         ctx = nullptr;
@@ -152,7 +152,7 @@ bool ResizeAnchor::add_anchors(HWND hwnd, const std::vector<std::pair<HWND, Anch
 
     SetProp(hwnd, CTX_PROP, ctx);
 
-    SetWindowSubclass(hwnd, action_menu_wnd_subclass_proc, 0, 0);
+    SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
 
     return true;
 }
