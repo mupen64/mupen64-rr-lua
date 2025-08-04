@@ -242,13 +242,13 @@
         </Link>
     </ItemDefinitionGroup>
     <ItemGroup>
-        <ClInclude Include="src\Views.Win32\Hotkey.h" />
         <ClInclude Include="src\Views.Win32\stdafx.h"/>
         <ClInclude Include="lib\microlru.h"/>
         <ClInclude Include="lib\IIOHelperService.h" />
         <ClInclude Include="src\Views.Win32\MiscHelpers.h"/>
         <ClInclude Include="src\Views.Win32\ThreadPool.h" />
         <ClInclude Include="src\Views.Win32\ActionManager.h" />
+        <ClInclude Include="src\Views.Win32\Hotkey.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\VFWEncoder.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\Encoder.h"/>
         <ClInclude Include="src\Views.Win32\capture\encoders\FFmpegEncoder.h"/>
@@ -307,7 +307,6 @@
         <ClInclude Include="src\Views.Win32\ResizeAnchor.h" />
     </ItemGroup>
     <ItemGroup>
-        <ClCompile Include="src\Views.Win32\Hotkey.cpp" />
         <ClCompile Include="src\Views.Win32\stdafx.cpp">
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
             <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -327,6 +326,7 @@
         <ClCompile Include="src\Views.Win32\capture\Resampler.cpp" />
         <ClCompile Include="src\Views.Win32\Config.cpp" />
         <ClCompile Include="src\Views.Win32\ActionManager.cpp" />
+        <ClCompile Include="src\Views.Win32\Hotkey.cpp" />
         <ClCompile Include="src\Views.Win32\DialogService.cpp" />
         <ClCompile Include="src\Views.Win32\components\Compare.cpp" />
         <ClCompile Include="src\Views.Win32\components\Benchmark.cpp" />
