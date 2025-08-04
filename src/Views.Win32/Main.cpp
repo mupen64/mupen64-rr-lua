@@ -28,7 +28,7 @@
 #include <components/LuaDialog.h>
 #include <components/MGECompositor.h>
 #include <components/PianoRoll.h>
-#include <components/RecentMenu.h>
+#include <components/RecentItems.h>
 #include <components/RomBrowser.h>
 #include <components/Seeker.h>
 #include <components/Statusbar.h>

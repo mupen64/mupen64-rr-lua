@@ -257,7 +257,7 @@
         <ClInclude Include="src\Views.Win32\DialogService.h"/>
         <ClInclude Include="src\Views.Win32\components\Benchmark.h" />
         <ClInclude Include="src\Views.Win32\components\PianoRoll.h" />
-        <ClInclude Include="src\Views.Win32\components\RecentMenu.h" />
+        <ClInclude Include="src\Views.Win32\components\RecentItems.h" />
         <ClInclude Include="src\Views.Win32\components\UpdateChecker.h" />
         <ClInclude Include="src\Views.Win32\components\Compare.h" />
         <ClInclude Include="src\Views.Win32\Loggers.h" />
@@ -339,7 +339,7 @@
         <ClCompile Include="src\Views.Win32\components\MGECompositor.cpp" />
         <ClCompile Include="src\Views.Win32\components\MovieDialog.cpp" />
         <ClCompile Include="src\Views.Win32\components\PianoRoll.cpp" />
-        <ClCompile Include="src\Views.Win32\components\RecentMenu.cpp" />
+        <ClCompile Include="src\Views.Win32\components\RecentItems.cpp" />
         <ClCompile Include="src\Views.Win32\components\RomBrowser.cpp" />
         <ClCompile Include="src\Views.Win32\components\Runner.cpp" />
         <ClCompile Include="src\Views.Win32\components\Seeker.cpp" />
