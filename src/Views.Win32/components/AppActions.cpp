@@ -900,7 +900,7 @@ void AppActions::add()
     add_action(L"Mupen64 > Emulation > Undo Load State ---", {.key = 'Z', .ctrl = true}, undo_load_state, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, multi_frame_advance_increment, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, multi_frame_advance_decrement, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Multi-Frame Advance Reset ---", {.key = 'E', .ctrl = true, .shift = true}, multi_frame_advance, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance Reset ---", {.key = 'E', .ctrl = true, .shift = true}, multi_frame_advance_reset, enable_when_emu_launched);
     for (size_t i = 0; i < 10; ++i)
     {
         const int32_t key = i < 9 ? '1' + i : '0';
