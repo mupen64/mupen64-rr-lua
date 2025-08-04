@@ -148,5 +148,5 @@ namespace ActionManager
      * \param path The qualified path of the action to invoke.
      * \param down Whether the invocation is a down (press) or up (release) action.
      */
-    void invoke(const std::wstring& path, const bool down = true);
+    void invoke(const std::wstring& path, bool down = true);
 } // namespace ActionManager
