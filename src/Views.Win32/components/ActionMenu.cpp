@@ -333,6 +333,12 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
         delete ctx;
         ctx = nullptr;
         break;
+    case WM_INITMENU:
+        update_menu_enabled_states(*ctx);
+        update_menu_active_states(*ctx);
+        update_menu_names(*ctx);
+        DrawMenuBar(ctx->hwnd);
+        break;
     case WM_COMMAND:
         if (handle_menu_interaction(*ctx, LOWORD(wParam)))
         {
@@ -354,47 +360,13 @@ static void action_registry_changed()
     }
 }
 
-static void action_enabled_changed(const std::vector<ActionManager::t_action*>& actions)
-{
-    g_view_logger->info(L"{} actions enabled changed", actions.size());
-
-    // TODO: Implement this in a more performant way if bottlenecks happen
-    action_registry_changed();
-}
-
-static void action_active_changed(const std::vector<ActionManager::t_action*>& actions)
-{
-    g_view_logger->info(L"{} actions active changed", actions.size());
-
-    // TODO: Implement this in a more performant way if bottlenecks happen
-    action_registry_changed();
-}
-
-static void action_real_name_changed(const std::vector<ActionManager::t_action*>& actions)
-{
-    g_view_logger->info(L"{} actions real name changed", actions.size());
-
-    // TODO: Implement this in a more performant way if bottlenecks happen
-    action_registry_changed();
-}
-
 void ActionMenu::init()
 {
     Messenger::subscribe(Messenger::Message::ActionRegistryChanged, [](const auto& any) {
         action_registry_changed();
     });
-    Messenger::subscribe(Messenger::Message::ActionEnabledChanged, [](const auto& any) {
-        const auto ref = std::any_cast<std::vector<ActionManager::t_action*>>(any);
-        action_enabled_changed(ref);
-    });
-    Messenger::subscribe(Messenger::Message::ActionActiveChanged, [](const auto& any) {
-        const auto ref = std::any_cast<std::vector<ActionManager::t_action*>>(any);
-        action_active_changed(ref);
-    });
-    Messenger::subscribe(Messenger::Message::ActionRealNameChanged, [](const auto& any) {
-        const auto ref = std::any_cast<std::vector<ActionManager::t_action*>>(any);
-        action_real_name_changed(ref);
-    });
+
+    // NOTE: We don't handle ActionEnabledChanged/ActionActiveChanged/ActionRealNameChanged here because we update the menu in-place in WM_INITMENU
 }
 
 bool ActionMenu::add_managed_menu(const HWND hwnd)

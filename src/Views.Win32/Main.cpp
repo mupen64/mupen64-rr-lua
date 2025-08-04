@@ -589,7 +589,6 @@ void on_task_changed(std::any data)
         }
 
         update_titlebar();
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
         previous_value = value;
     });
 }
@@ -642,7 +641,6 @@ void on_emu_launched_changed(std::any data)
             SetWindowPos(g_main_hwnd, nullptr, 0, 0, g_config.window_width, g_config.window_height, SWP_NOMOVE);
         }
 
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
         previous_value = value;
     });
 }
@@ -666,7 +664,6 @@ void on_capturing_changed(std::any data)
         }
 
         update_titlebar();
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
     });
 }
 
@@ -683,7 +680,6 @@ void on_speed_modifier_changed(std::any data)
 void on_emu_paused_changed(std::any data)
 {
     g_core.callbacks.frame();
-    SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
 }
 
 void on_vis_since_input_poll_exceeded(std::any)
@@ -708,7 +704,6 @@ void on_movie_loop_changed(std::any data)
 {
     auto value = std::any_cast<bool>(data);
     Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
-    SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
 }
 
 void on_fullscreen_changed(std::any data)
@@ -716,7 +711,6 @@ void on_fullscreen_changed(std::any data)
     g_main_window_dispatcher->invoke([=] {
         auto value = std::any_cast<bool>(data);
         ShowCursor(!value);
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
     });
 }
 
