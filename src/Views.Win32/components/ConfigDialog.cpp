@@ -1740,9 +1740,9 @@ void ConfigDialog::show_app_settings()
      */
     std::vector<t_options_group> hotkey_groups{};
     size_t group_id = g_option_groups.back().id + 1;
-    for (const auto& path : g_config.hotkeys | std::views::keys)
+    for (const auto& [params] : ActionManager::get_actions())
     {
-        const auto segments = ActionManager::get_path_segments(path);
+        const auto segments = ActionManager::get_path_segments(params.path);
         const auto is_builtin = segments[0] == L"Mupen64";
         std::wstring relevant_segment = is_builtin ? segments[1] : segments[0];
         std::wstring name = is_builtin ? std::format(L"Mupen64 > {}", relevant_segment) : std::format(L"{}", relevant_segment);
@@ -1781,7 +1781,7 @@ void ConfigDialog::show_app_settings()
                                                                       g_hotkey_scratchpad[scratchpad_index].second = std::get<Hotkey::t_hotkey>(value);
                                                                   }),
             .default_value = t_options_item::t_readonly_property([=] {
-                return g_config.inital_hotkeys.at(path);
+                return g_config.inital_hotkeys.at(params.path);
             }),
             });
         }
