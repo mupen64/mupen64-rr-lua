@@ -24,6 +24,7 @@
 #include <components/CrashManager.h>
 #include <components/Dispatcher.h>
 #include <components/FilePicker.h>
+#include <components/HotkeyTracker.h>
 #include <components/LuaDialog.h>
 #include <components/MGECompositor.h>
 #include <components/PianoRoll.h>
@@ -872,133 +873,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             }
             break;
         }
-    case WM_SETCURSOR:
-        {
-            static bool last_lmb = false;
-            static bool last_rmb = false;
-            static bool last_mmb = false;
-            static bool last_xmb1 = false;
-            static bool last_xmb2 = false;
-            bool lmb = GetAsyncKeyState(VK_LBUTTON) & 0x8000;
-            bool rmb = GetAsyncKeyState(VK_RBUTTON) & 0x8000;
-            bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
-            bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
-            bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
-
-            BOOL hit = FALSE;
-            // TODO: REIMPLEMENT, also move this to the ActionManager!!!
-            // for (t_hotkey* hotkey : g_config_hotkeys)
-            // {
-            //     const auto down =
-            //     (lmb && !last_lmb && hotkey->key == VK_LBUTTON) || (rmb && !last_rmb && hotkey->key == VK_RBUTTON) || (mmb && !last_mmb && hotkey->key == VK_MBUTTON) || (xmb1 && !last_xmb1 && hotkey->key == VK_XBUTTON1) || (xmb2 && !last_xmb2 && hotkey->key == VK_XBUTTON2);
-            //     const auto up =
-            //     (!lmb && last_lmb && hotkey->key == VK_LBUTTON) || (!rmb && last_rmb && hotkey->key == VK_RBUTTON) || (!mmb && last_mmb && hotkey->key == VK_MBUTTON) || (!xmb1 && last_xmb1 && hotkey->key == VK_XBUTTON1) || (!xmb2 && last_xmb2 && hotkey->key == VK_XBUTTON2);
-            //
-            //     if (down)
-            //     {
-            //         // We only want to send it if the corresponding menu item exists and is enabled
-            //         const auto state = GetMenuState(g_main_menu, hotkey->down_cmd, MF_BYCOMMAND);
-            //         if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-            //         {
-            //             g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-            //             continue;
-            //         }
-            //         g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-            //         SendMessage(g_main_hwnd, WM_COMMAND, hotkey->down_cmd, 0);
-            //         hit = TRUE;
-            //     }
-            //     if (up)
-            //     {
-            //         // We only want to send it if the corresponding menu item exists and is enabled
-            //         const auto state = GetMenuState(g_main_menu, hotkey->up_cmd, MF_BYCOMMAND);
-            //         if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-            //         {
-            //             g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-            //             continue;
-            //         }
-            //         g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-            //         SendMessage(g_main_hwnd, WM_COMMAND, hotkey->up_cmd, 0);
-            //         hit = TRUE;
-            //     }
-            // }
-
-            last_lmb = lmb;
-            last_rmb = rmb;
-            last_mmb = mmb;
-            last_xmb1 = xmb1;
-            last_xmb2 = xmb2;
-
-            if (!hit)
-                return DefWindowProc(hwnd, Message, wParam, lParam);
-            break;
-        }
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        {
-            BOOL hit = FALSE;
-            // TODO: REIMPLEMENT! Move to action manager
-            // for (t_hotkey* hotkey : g_config_hotkeys)
-            // {
-            //     if ((int)wParam == hotkey->key)
-            //     {
-            //         if (((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) == hotkey->shift && ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) == hotkey->ctrl && ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) == hotkey->alt)
-            //         {
-            //             // We only want to send it if the corresponding menu item exists and is enabled
-            //             const auto state = GetMenuState(g_main_menu, hotkey->down_cmd, MF_BYCOMMAND);
-            //             if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-            //             {
-            //                 g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-            //                 continue;
-            //             }
-            //             g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-            //             SendMessage(g_main_hwnd, WM_COMMAND, hotkey->down_cmd, 0);
-            //             hit = TRUE;
-            //         }
-            //     }
-            // }
-
-            if (g_core.plugin_funcs.input_key_down && g_core_ctx->vr_get_launched())
-                g_core.plugin_funcs.input_key_down(wParam, lParam);
-            if (!hit)
-                return DefWindowProc(hwnd, Message, wParam, lParam);
-            break;
-        }
+        if (g_core.plugin_funcs.input_key_down && g_core_ctx->vr_get_launched())
+            g_core.plugin_funcs.input_key_down(wParam, lParam);
+        break;
     case WM_SYSKEYUP:
     case WM_KEYUP:
-        {
-            BOOL hit = FALSE;
-            // TODO: Move to action manager!!!
-            // for (t_hotkey* hotkey : g_config_hotkeys)
-            // {
-            //     if (hotkey->up_cmd == 0)
-            //     {
-            //         continue;
-            //     }
-            //
-            //     if ((int)wParam == hotkey->key)
-            //     {
-            //         if (((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) == hotkey->shift && ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) == hotkey->ctrl && ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) == hotkey->alt)
-            //         {
-            //             // We only want to send it if the corresponding menu item exists and is enabled
-            //             auto state = GetMenuState(g_main_menu, hotkey->up_cmd, MF_BYCOMMAND);
-            //             if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-            //             {
-            //                 g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-            //                 continue;
-            //             }
-            //             g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-            //             SendMessage(g_main_hwnd, WM_COMMAND, hotkey->up_cmd, 0);
-            //             hit = TRUE;
-            //         }
-            //     }
-            // }
-
-            if (g_core.plugin_funcs.input_key_up && g_core_ctx->vr_get_launched())
-                g_core.plugin_funcs.input_key_up(wParam, lParam);
-            if (!hit)
-                return DefWindowProc(hwnd, Message, wParam, lParam);
-            break;
-        }
+        if (g_core.plugin_funcs.input_key_up && g_core_ctx->vr_get_launched())
+            g_core.plugin_funcs.input_key_up(wParam, lParam);
+        break;
     case WM_MOUSEWHEEL:
         g_last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
@@ -1080,6 +964,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         AppActions::add();
         ActionMenu::add_managed_menu(hwnd);
+        HotkeyTracker::attach(hwnd);
 
         MGECompositor::create(hwnd);
         PianoRoll::init();

@@ -261,7 +261,7 @@ static void fastforward_enable()
 
 static void fastforward_disable()
 {
-    g_fast_forward = true;
+    g_fast_forward = false;
     Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
 }
 

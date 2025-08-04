@@ -277,6 +277,7 @@
         <ClInclude Include="src\Views.Win32\components\CLI.h" />
         <ClInclude Include="src\Views.Win32\components\SettingsListView.h" />
         <ClInclude Include="src\Views.Win32\components\ActionMenu.h" />
+        <ClInclude Include="src\Views.Win32\components\HotkeyTracker.h" />
         <ClInclude Include="src\Views.Win32\components\AppActions.h" />
         <ClInclude Include="src\Views.Win32\components\LuaDialog.h" />
         <ClInclude Include="src\Views.Win32\Main.h" />
@@ -348,6 +349,7 @@
         <ClCompile Include="src\Views.Win32\components\CLI.cpp"/>
         <ClCompile Include="src\Views.Win32\components\SettingsListView.cpp"/>
         <ClCompile Include="src\Views.Win32\components\ActionMenu.cpp" />
+        <ClCompile Include="src\Views.Win32\components\HotkeyTracker.cpp" />
         <ClCompile Include="src\Views.Win32\components\AppActions.cpp" />
         <ClCompile Include="src\Views.Win32\components\LuaDialog.cpp" />
         <ClCompile Include="src\Views.Win32\Loggers.cpp"/>
