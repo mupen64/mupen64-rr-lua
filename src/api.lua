@@ -18,6 +18,7 @@ movie = {}
 savestate = {}
 iohelper = {}
 avi = {}
+action = {}
 
 Mupen = {
     ---@enum Result
@@ -101,7 +102,7 @@ Mupen = {
 
 ---The `lua_tostring` c function converts numbers to strings, so numbers are
 ---acceptable to pass into some functions that use that function.
----@alias tostringusable string|number 
+---@alias tostringusable string|number
 
 
 -- Global Functions
@@ -374,7 +375,7 @@ function emu.ismainwindowinforeground() end
 --#region
 
 ---A representation of an 8 byte integer (quad word) as two 4 byte integers.
----@alias qword [integer, integer] 
+---@alias qword [integer, integer]
 
 ---Reinterprets the bits of a 4 byte integer `n` as a float and returns it.
 ---This does not convert from an int to a float, but reinterprets the memory.
@@ -847,7 +848,8 @@ function d2d.draw_line(x1, y1, x2, y2, thickness, brush) end
 ---@param brush brush pass 0 if you don't know what you're doing
 ---@return nil
 function d2d.draw_text(x1, y1, x2, y2, text, fontname, fontsize, fontweight,
-                       fontstyle, horizalign, vertalign, options, brush) end
+                       fontstyle, horizalign, vertalign, options, brush)
+end
 
 ---Returns the width and height of the specified text.
 ---@param text string
@@ -894,7 +896,8 @@ function d2d.fill_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, brush) end
 ---@param brush brush
 ---@return nil
 function d2d.draw_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, thickness,
-                                    brush) end
+                                    brush)
+end
 
 ---Loads an image file from `path` which you can then access through `identifier`.
 ---@param path string
@@ -920,7 +923,8 @@ function d2d.free_image(identifier) end
 ---@param identifier number
 ---@return nil
 function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
-                        srcy2, opacity, interpolation, identifier) end
+                        srcy2, opacity, interpolation, identifier)
+end
 
 ---Returns the width and height of the image at `identifier`.
 ---@nodiscard
@@ -1277,5 +1281,36 @@ function avi.startcapture(filename) end
 ---Stops avi recording.
 ---@return nil
 function avi.stopcapture() end
+
+--#endregion
+
+
+-- action functions
+--#region
+
+---@class ActionParams
+---@field path string The path of the action.
+---@field down_callback fun() The callback to be invoked when the action is initially triggered.
+---@field up_callback fun()? The callback to be invoked when the action has been released.
+---@field get_enabled fun()? The function used to determine whether the action is enabled.
+---@field get_active fun()? The function used to determine whether the action is "active". The active state means a checked state in the menu.
+---@field get_real_name fun()? The function used to determine the function's real name, which is an override for the path-derived display name.
+
+---@class Hotkey
+---@field key Keys The key that is pressed to trigger the hotkey.
+---@field ctrl boolean Whether the control modifier is pressed.
+---@field shift boolean Whether the shift modifier is pressed.
+---@field alt boolean Whether the alt modifier is pressed.
+
+---Adds the specified action to the action registry, removing any existing action with the same path.
+---@param params ActionParams The action parameters.
+---@return boolean # Whether the operation succeeded.
+function action.add(params) end
+
+---Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
+---@param path string The action path.
+---@param hotkey Hotkey The hotkey to associate with the action.
+---@return boolean # Whether the operation succeeded.
+function action.associate_hotkey(path, hotkey) end
 
 --#endregion
