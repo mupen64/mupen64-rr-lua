@@ -30,6 +30,11 @@ namespace ActionManager
     using pq_action_path = std::wstring;
 
     /**
+     * \brief A fully or partially-qualified action path.
+     */
+    using aq_action_path = std::wstring;
+
+    /**
      * \brief Represents action creation parameters.
      */
     struct t_action_params {
@@ -117,19 +122,19 @@ namespace ActionManager
      * \brief Notifies about the enabled state of an action or a group of actions changing.
      * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
      */
-    void notify_enabled_changed(const pq_action_path& path);
+    void notify_enabled_changed(const aq_action_path& path);
 
     /**
      * \brief Notifies about the active state of an action or a group of actions changing.
      * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
      */
-    void notify_active_changed(const pq_action_path& path);
+    void notify_active_changed(const aq_action_path& path);
 
     /**
      * \brief Notifies about the real name of an action or a group of actions changing.
      * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
      */
-    void notify_real_name_changed(const pq_action_path& path);
+    void notify_real_name_changed(const aq_action_path& path);
 
     /**
      * \brief Gets the display name for an action.
@@ -143,14 +148,14 @@ namespace ActionManager
      * \brief Gets all action paths that match the specified filter.
      * \param path The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
      */
-    std::vector<std::wstring> get_actions_matching_filter(const pq_action_path& path = L"");
+    std::vector<std::wstring> get_actions_matching_filter(const aq_action_path& path = L"");
 
     /**
      * \brief Gets the segments of an action's path.
-     * \param path The qualified or partially-qualified path to split.
+     * \param path The path to split.
      * \return A vector of segments, where each segment is a part of the path.
      */
-    std::vector<std::wstring> get_path_segments(const pq_action_path& path);
+    std::vector<std::wstring> get_path_segments(const aq_action_path& path);
 
     /**
      * \brief Manually invokes an action by its path.
