@@ -33,24 +33,18 @@ static std::wstring normalize_path(const std::wstring& path)
     return io_service.join_wstring(parts, L">");
 }
 
-/**
- * \brief Tries to find an action by its fully-qualified path.
- */
-static t_action* find_action_by_path(const std::wstring& path)
-{
-    for (auto& a : g_mgr.actions)
-    {
-        if (a.params.path == path)
-        {
-            return &a;
-        }
-    }
-    return nullptr;
-}
-
 static std::vector<t_action*> find_actions_under_path(const std::wstring& path)
 {
     const auto normalized_path = normalize_path(path);
+
+    for (auto& action : g_mgr.actions)
+    {
+        if (action.params.path == normalized_path)
+        {
+            return {&action};
+        }
+    }
+
     const auto segments = ActionManager::get_path_segments(normalized_path);
 
     std::vector<t_action*> actions;
@@ -123,9 +117,7 @@ bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t
         return false;
     }
 
-    t_action* action = find_action_by_path(normalized_path);
-
-    if (!action)
+    if (find_actions_under_path(normalized_path).empty())
     {
         g_view_logger->error(L"ActionManager::associate_hotkey: Action '{}' not found.", normalized_path);
         return false;
@@ -158,13 +150,21 @@ bool ActionManager::is_action_enabled(const fq_action_path& path)
         return false;
     }
 
-    const t_action* action = find_action_by_path(normalized_path);
+    const auto actions = find_actions_under_path(normalized_path);
 
-    if (!action)
+    if (actions.empty())
     {
         g_view_logger->error(L"ActionManager::is_action_enabled: Action '{}' not found.", normalized_path);
         return false;
     }
+
+    if (actions.size() > 1)
+    {
+        g_view_logger->error(L"ActionManager::is_action_enabled: Expected fully-qualified path, but got partially-qualified one.");
+        return false;
+    }
+
+    const auto action = actions.front();
 
     if (action->params.get_enabled)
     {
@@ -184,13 +184,21 @@ bool ActionManager::is_action_active(const fq_action_path& path)
         return false;
     }
 
-    const t_action* action = find_action_by_path(normalized_path);
+    const auto actions = find_actions_under_path(normalized_path);
 
-    if (!action)
+    if (actions.empty())
     {
         g_view_logger->error(L"ActionManager::is_action_active: Action '{}' not found.", normalized_path);
         return false;
     }
+
+    if (actions.size() > 1)
+    {
+        g_view_logger->error(L"ActionManager::is_action_active: Expected fully-qualified path, but got partially-qualified one.");
+        return false;
+    }
+
+    const auto action = actions.front();
 
     if (action->params.get_active)
     {
@@ -239,9 +247,9 @@ std::wstring ActionManager::get_display_name(const aq_action_path& path, bool ig
 {
     const auto normalized_path = normalize_path(path);
 
-    const auto action = find_action_by_path(normalized_path);
+    const auto actions = find_actions_under_path(normalized_path);
 
-    if (!action)
+    if (actions.empty() || actions.size() > 1)
     {
         // Probably an unqualified path, we go the other route
         auto name = get_path_segments(path).back();
@@ -254,6 +262,8 @@ std::wstring ActionManager::get_display_name(const aq_action_path& path, bool ig
 
         return name;
     }
+
+    const auto action = actions.front();
 
     const auto segments = get_path_segments(normalized_path);
     const auto& name = segments.back();
@@ -332,13 +342,21 @@ void ActionManager::invoke(const fq_action_path& path, const bool up)
         return;
     }
 
-    t_action* action = find_action_by_path(normalized_path);
+    const auto actions = find_actions_under_path(normalized_path);
 
-    if (!action)
+    if (actions.empty())
     {
         g_view_logger->error(L"ActionManager::invoke: Action with path '{}' not found.", normalized_path);
         return;
     }
+
+    if (actions.size() > 1)
+    {
+        g_view_logger->error(L"ActionManager::invoke: Expected fully-qualified path, but got partially-qualified one.");
+        return;
+    }
+
+    const auto action = actions.front();
 
     if (action->params.get_enabled && !action->params.get_enabled())
     {
