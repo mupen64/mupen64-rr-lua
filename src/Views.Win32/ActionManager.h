@@ -63,7 +63,7 @@ namespace ActionManager
         };
 
         /**
-         * \brief The function used to determine whether the action is "active". The active state means a checked state in the menu.
+         * \brief The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state.
          */
         std::function<bool()> get_active = [] {
             return false;
