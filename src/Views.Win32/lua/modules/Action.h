@@ -150,6 +150,8 @@ namespace LuaCore::Action
 
     static int add(lua_State* L)
     {
+        auto lua = LuaManager::get_environment_for_state(L);
+
         ActionManager::t_action_params params;
         std::function<void()> free_params;
         if (!check_action_params(L, params, free_params))
@@ -157,10 +159,16 @@ namespace LuaCore::Action
             lua_pushboolean(L, false);
             return 1;
         }
+
         // FIXME: We need to free the param callbacks eventually. When do we do that, maybe when the actions are removed (which would require a new message broadcasted by the ActionManager)???
         // FIXME: We also need to remember to remove actions registered by scripts when they stop
 
         const auto result = ActionManager::add(params);
+
+        if (result)
+        {
+            lua->registered_actions.emplace_back(params.path);
+        }
 
         lua_pushboolean(L, result);
         return 1;

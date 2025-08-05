@@ -119,6 +119,23 @@ bool ActionManager::remove(const aq_action_path& path)
         return false;
     }
 
+    // Call the on_removed callbacks first and before removing anything - we don't want weirdness if the callbacks do some bullshit like calling back into the ActionManager...
+    for (const auto& action_to_be_removed : actions)
+    {
+        for (const auto& existing_action : g_mgr.actions)
+        {
+            if (existing_action.params.path != action_to_be_removed->params.path)
+            {
+                continue;
+            }
+
+            if (existing_action.params.on_removed)
+            {
+                existing_action.params.on_removed();
+            }
+        }
+    }
+
     for (const auto& action_to_be_removed : actions)
     {
         std::erase_if(g_mgr.actions, [&](const t_action& a) {

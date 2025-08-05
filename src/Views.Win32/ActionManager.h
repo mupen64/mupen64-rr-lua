@@ -56,6 +56,12 @@ namespace ActionManager
         };
 
         /**
+         * \brief The callback to be invoked prior to the action being removed from the registry.
+         */
+        std::function<void()> on_removed = [] {
+        };
+        
+        /**
          * \brief The function used to determine whether the action is enabled.
          */
         std::function<bool()> get_enabled = [] {

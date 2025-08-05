@@ -74,6 +74,9 @@ struct t_lua_environment {
     lua_State* L;
     t_lua_rendering_context rctx;
 
+    // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
+    std::vector<std::wstring> registered_actions{};
+
     std::function<void()> destroyed{};
     std::function<void(const std::wstring& path)> print{};
 };

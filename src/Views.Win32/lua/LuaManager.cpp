@@ -5,10 +5,11 @@
  */
 
 #include "stdafx.h"
-#include <lua/LuaManager.h>
+#include <ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <lua/LuaCallbacks.h>
+#include <lua/LuaManager.h>
 #include <lua/LuaRegistry.h>
 #include <lua/LuaRenderer.h>
 
@@ -199,6 +200,13 @@ void LuaManager::destroy_environment(t_lua_environment* lua)
     LuaRenderer::pre_destroy_renderer(&lua->rctx);
 
     LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATSTOP);
+
+    ActionManager::begin_batch_work();
+    for (const auto& action : lua->registered_actions)
+    {
+        ActionManager::remove(action);
+    }
+    ActionManager::end_batch_work();
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
     // After this point, it's game over and no callbacks will be called anymore.
