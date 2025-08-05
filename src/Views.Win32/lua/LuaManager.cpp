@@ -55,10 +55,21 @@ void* lua_tocallback(lua_State* L, const int i)
     return key;
 }
 
-void lua_pushcallback(lua_State* L, void* key)
+void lua_pushcallback(lua_State* L, void* key, bool free)
 {
     lua_pushlightuserdata(L, key);
     lua_gettable(L, LUA_REGISTRYINDEX);
+    if (free)
+    {
+        lua_freecallback(L, key);
+    }
+}
+
+void lua_freecallback(lua_State* L, void* key)
+{
+    lua_pushlightuserdata(L, key);
+    lua_pushnil(L);
+    lua_settable(L, LUA_REGISTRYINDEX);
     free(key);
     key = nullptr;
 }

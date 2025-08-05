@@ -36,7 +36,8 @@ namespace LuaManager
 #define lua_getwstring(L, i) io_service.string_to_wstring(lua_tostring(L, i))
 
 void* lua_tocallback(lua_State* L, int i);
-void lua_pushcallback(lua_State* L, void* key);
+void lua_pushcallback(lua_State* L, void* key, bool free = true);
+void lua_freecallback(lua_State* L, void* key);
 
 extern std::vector<t_lua_environment*> g_lua_environments;
 
