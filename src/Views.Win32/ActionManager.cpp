@@ -58,7 +58,7 @@ static std::vector<t_action*> find_actions_under_path(const std::wstring& path)
     for (auto& action : g_mgr.actions)
     {
         const auto action_segments = ActionManager::get_path_segments(action.params.path);
-        if (std::equal(segments.begin(), segments.end(), action_segments.begin()))
+        if (action_segments.size() >= segments.size() && std::equal(segments.begin(), segments.end(), action_segments.begin()))
         {
             actions.push_back(&action);
         }
