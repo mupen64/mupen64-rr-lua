@@ -302,10 +302,7 @@ static void build_menu(t_action_menu_context& ctx)
     }
     for (size_t i = 1; i < ctx.menu.children.size(); ++i)
     {
-        for (auto& item : ctx.menu.children[i].children)
-        {
-            add_menu_items(ctx, item, main_menu_bar);
-        }
+        add_menu_items(ctx, ctx.menu.children[i], main_menu_bar);
     }
 
     // 3. Update all the stuff relevant to the menu.
