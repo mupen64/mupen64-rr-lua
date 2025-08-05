@@ -85,6 +85,13 @@ namespace ActionManager
     bool add(const t_action_params& params);
 
     /**
+     * \brief Removes an action or a group of actions by their path.
+     * \param path The action path.
+     * \return Whether the operation succeeded.
+     */
+    bool remove(const aq_action_path& path);
+    
+    /**
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
      * \param path The action path.
      * \param hotkey The hotkey to associate with the action.
@@ -109,7 +116,7 @@ namespace ActionManager
     bool is_action_active(const fq_action_path& path);
 
     /**
-     * \brief Begins a batch operation. Batches all updates caused by <c>add</c> and <c>associate_hotkey</c> into one at the end of the operation.
+     * \brief Begins a batch operation. Batches all updates caused by <c>add</c>, <c>remove</c>, and <c>associate_hotkey</c> into one at the end of the operation.
      */
     void begin_batch_work();
 

@@ -107,6 +107,33 @@ bool ActionManager::add(const t_action_params& params)
     return true;
 }
 
+bool ActionManager::remove(const aq_action_path& path)
+{
+    const auto normalized_path = normalize_path(path);
+
+    const auto actions = find_actions_under_path(normalized_path);
+
+    if (actions.empty())
+    {
+        g_view_logger->error(L"ActionManager::remove: Action '{}' not found.", normalized_path);
+        return false;
+    }
+
+    for (const auto& action_to_be_removed : actions)
+    {
+        std::erase_if(g_mgr.actions, [&](const t_action& a) {
+            return a.params.path == action_to_be_removed->params.path;
+        });
+    }
+
+    if (!g_mgr.batched_work)
+    {
+        Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
+    }
+
+    return true;
+}
+
 bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey)
 {
     const auto normalized_path = normalize_path(path);

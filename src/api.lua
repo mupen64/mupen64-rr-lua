@@ -1378,6 +1378,11 @@ function hotkey.prompt(caption) end
 ---@return boolean # Whether the operation succeeded.
 function action.add(params) end
 
+---Removes an action or a group of actions by their path.
+---@param path AnyQualifiedActionPath The action path.
+---@return boolean # Whether the operation succeeded.
+function action.remove(path) end
+
 ---Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
 ---@param path FullyQualifiedActionPath The action path.
 ---@param hotkey Hotkey The hotkey to associate with the action.
