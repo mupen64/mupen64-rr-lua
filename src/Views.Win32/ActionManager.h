@@ -120,19 +120,19 @@ namespace ActionManager
 
     /**
      * \brief Notifies about the enabled state of an action or a group of actions changing.
-     * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
+     * \param path The action path.
      */
     void notify_enabled_changed(const aq_action_path& path);
 
     /**
      * \brief Notifies about the active state of an action or a group of actions changing.
-     * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
+     * \param path The action path.
      */
     void notify_active_changed(const aq_action_path& path);
 
     /**
      * \brief Notifies about the real name of an action or a group of actions changing.
-     * \param path The action path. If the path is unqualified, all actions under the last category or subcategory will be considered changed.
+     * \param path The action path.
      */
     void notify_real_name_changed(const aq_action_path& path);
 
