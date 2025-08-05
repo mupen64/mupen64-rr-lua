@@ -895,8 +895,8 @@ void AppActions::add()
     add_action(L"Mupen64 > Emulation > Take Screenshot ---", {.key = VK_F12}, screenshot, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Save State", {.key = 'I'}, save_slot, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Load State", {.key = 'P'}, load_slot, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Save State As...", {.key = 'N', .ctrl = true}, save_state_as, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Load State As...", {.key = 'M', .ctrl = true}, load_state_as, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Save State As...", {}, save_state_as, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Load State As...", {}, load_state_as, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Undo Load State ---", {.key = 'Z', .ctrl = true}, undo_load_state, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, multi_frame_advance_increment, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, multi_frame_advance_decrement, enable_when_emu_launched);
