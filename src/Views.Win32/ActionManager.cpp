@@ -319,7 +319,7 @@ std::vector<std::wstring> ActionManager::get_path_segments(const std::wstring& p
     return parts;
 }
 
-void ActionManager::invoke(const std::wstring& path, bool down)
+void ActionManager::invoke(const std::wstring& path, const bool up)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -342,7 +342,7 @@ void ActionManager::invoke(const std::wstring& path, bool down)
         return;
     }
 
-    if (down)
+    if (!up)
     {
         action->params.down_callback();
     }

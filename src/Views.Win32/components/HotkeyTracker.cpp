@@ -47,13 +47,13 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
 
                 if (down)
                 {
-                    ActionManager::invoke(path, true);
+                    ActionManager::invoke(path);
                     hit = true;
                 }
 
                 if (up)
                 {
-                    ActionManager::invoke(path, false);
+                    ActionManager::invoke(path, true);
                     hit = true;
                 }
             }
@@ -81,14 +81,14 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
             const bool alt = GetKeyState(VK_MENU) & 0x8000;
             bool hit = false;
 
-            const bool is_down = (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN);
+            const bool is_up = (msg == WM_KEYUP || msg == WM_SYSKEYUP);
 
             const auto hotkeys = g_config.hotkeys;
             for (const auto& [path, hotkey] : hotkeys)
             {
                 if ((int)wParam == hotkey.key && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
                 {
-                    ActionManager::invoke(path, is_down);
+                    ActionManager::invoke(path, is_up);
                     hit = true;
                 }
             }

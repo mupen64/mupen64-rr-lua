@@ -160,7 +160,7 @@ namespace ActionManager
     /**
      * \brief Manually invokes an action by its path.
      * \param path The qualified path of the action to invoke.
-     * \param down Whether the invocation is a down (press) or up (release) action.
+     * \param up Whether the invocation is considered as "releasing" the action.
      */
-    void invoke(const std::wstring& path, bool down = true);
+    void invoke(const std::wstring& path, bool up = false);
 } // namespace ActionManager
