@@ -8,6 +8,7 @@
 
 #include <ActionManager.h>
 #include <lua/LuaManager.h>
+#include <lua/modules/Hotkey.h>
 
 namespace LuaCore::Action
 {
@@ -23,42 +24,125 @@ namespace LuaCore::Action
         lua_pop(L, 1);
 
         lua_getfield(L, 1, "down_callback");
+
         auto down_callback = lua_tocallback(L, -1);
         params.down_callback = [=] {
             if (!LuaManager::get_environment_for_state(L))
             {
                 return;
             }
+
             lua_pushcallback(L, down_callback, false);
             lua_pcall(L, 0, 0, 0);
         };
+
         lua_pop(L, 1);
 
         lua_getfield(L, 1, "up_callback");
-        // TODO: Implement
+
+        auto up_callback = lua_optcallback(L, -1);
+        if (up_callback)
+        {
+            params.up_callback = [=] {
+                if (!LuaManager::get_environment_for_state(L))
+                {
+                    return;
+                }
+
+                lua_pushcallback(L, up_callback, false);
+                lua_pcall(L, 0, 0, 0);
+            };
+        }
 
         lua_pop(L, 1);
 
         lua_getfield(L, 1, "get_enabled");
-        auto get_enabled = lua_tocallback(L, -1);
-        // TODO: Implement
+
+        auto get_enabled = lua_optcallback(L, -1);
+        if (get_enabled)
+        {
+            params.get_enabled = [=] -> bool {
+                if (!LuaManager::get_environment_for_state(L))
+                {
+                    return false;
+                }
+
+                lua_pushcallback(L, get_enabled, false);
+                lua_pcall(L, 0, 1, 0);
+
+                bool enabled = false;
+                if (lua_isboolean(L, -1))
+                {
+                    enabled = lua_toboolean(L, -1);
+                    lua_pop(L, 1);
+                }
+
+                return enabled;
+            };
+        }
 
         lua_pop(L, 1);
 
         lua_getfield(L, 1, "get_active");
-        auto get_active = lua_tocallback(L, -1);
-        // TODO: Implement
+
+        auto get_active = lua_optcallback(L, -1);
+        if (get_active)
+        {
+            params.get_active = [=] -> bool {
+                if (!LuaManager::get_environment_for_state(L))
+                {
+                    return false;
+                }
+
+                lua_pushcallback(L, get_active, false);
+                lua_pcall(L, 0, 1, 0);
+
+                bool active = false;
+                if (lua_isboolean(L, -1))
+                {
+                    active = lua_toboolean(L, -1);
+                    lua_pop(L, 1);
+                }
+
+                return active;
+            };
+        }
 
         lua_pop(L, 1);
 
         lua_getfield(L, 1, "get_real_name");
-        auto get_real_name = lua_tocallback(L, -1);
-        // TODO: Implement
+
+        auto get_real_name = lua_optcallback(L, -1);
+        if (get_real_name)
+        {
+            params.get_real_name = [=] -> std::wstring {
+                if (!LuaManager::get_environment_for_state(L))
+                {
+                    return L"";
+                }
+
+                lua_pushcallback(L, get_real_name, false);
+                lua_pcall(L, 0, 1, 0);
+
+                std::wstring real_name;
+                if (lua_isstring(L, -1))
+                {
+                    real_name = lua_towstring(L, -1);
+                    lua_pop(L, 1);
+                }
+
+                return real_name;
+            };
+        }
 
         lua_pop(L, 1);
 
         free_params = [=] {
             lua_freecallback(L, down_callback);
+            lua_freecallback(L, up_callback);
+            lua_freecallback(L, get_enabled);
+            lua_freecallback(L, get_active);
+            lua_freecallback(L, get_real_name);
         };
 
         return true;
@@ -73,6 +157,8 @@ namespace LuaCore::Action
             lua_pushboolean(L, false);
             return 1;
         }
+        // FIXME: We need to free the param callbacks eventually. When do we do that, maybe when the actions are removed (which would require a new message broadcasted by the ActionManager)???
+        // FIXME: We also need to remember to remove actions registered by scripts when they stop 
 
         const auto result = ActionManager::add(params);
 
