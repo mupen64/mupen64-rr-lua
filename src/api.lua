@@ -18,6 +18,7 @@ movie = {}
 savestate = {}
 iohelper = {}
 avi = {}
+hotkey = {}
 action = {}
 
 Mupen = {
@@ -1285,6 +1286,23 @@ function avi.stopcapture() end
 --#endregion
 
 
+-- hotkey functions
+--#region
+
+---@class Hotkey Represents a combination of keys.
+---@field key Keys The key that is pressed to trigger the hotkey.
+---@field ctrl boolean Whether the control modifier is pressed.
+---@field shift boolean Whether the shift modifier is pressed.
+---@field alt boolean Whether the alt modifier is pressed.
+
+---Shows a dialog prompting the user to enter a hotkey.
+---@param caption string The headline to display in the dialog.
+---@return Hotkey|nil The hotkey that was entered, or `nil` if the user cancelled the dialog.
+function hotkey.prompt(caption) end
+
+--#endregion
+
+
 -- action functions
 --#region
 
@@ -1295,12 +1313,6 @@ function avi.stopcapture() end
 ---@field get_enabled fun()? The function used to determine whether the action is enabled.
 ---@field get_active fun()? The function used to determine whether the action is "active". The active state means a checked state in the menu.
 ---@field get_real_name fun()? The function used to determine the function's real name, which is an override for the path-derived display name.
-
----@class Hotkey
----@field key Keys The key that is pressed to trigger the hotkey.
----@field ctrl boolean Whether the control modifier is pressed.
----@field shift boolean Whether the shift modifier is pressed.
----@field alt boolean Whether the alt modifier is pressed.
 
 ---Adds the specified action to the action registry, removing any existing action with the same path.
 ---@param params ActionParams The action parameters.
