@@ -44,15 +44,39 @@ static void rebuild_lua_env_map()
     }
 }
 
-void* lua_tocallback(lua_State* L, const int i)
+void* lua_optcallback(lua_State* L, int i)
 {
+    if (!lua_isfunction(L, i))
+    {
+        return nullptr;
+    }
+
     void* key = calloc(1, sizeof(void*));
+
+    if (!key)
+    {
+        luaL_error(L, "Couldn't allocate memory for callback");
+        return nullptr;
+    }
+
     lua_pushvalue(L, i);
     lua_pushlightuserdata(L, key);
     lua_pushvalue(L, -2);
     lua_settable(L, LUA_REGISTRYINDEX);
     lua_pop(L, 1);
+
     return key;
+}
+
+void* lua_tocallback(lua_State* L, const int i)
+{
+    if (!lua_isfunction(L, i))
+    {
+        luaL_error(L, "Expected a function at argument %d", i);
+        return nullptr;
+    }
+
+    return lua_optcallback(L, i);
 }
 
 void lua_pushcallback(lua_State* L, void* key, bool free)
@@ -67,6 +91,10 @@ void lua_pushcallback(lua_State* L, void* key, bool free)
 
 void lua_freecallback(lua_State* L, void* key)
 {
+    if (key == nullptr)
+    {
+        return;
+    }
     lua_pushlightuserdata(L, key);
     lua_pushnil(L);
     lua_settable(L, LUA_REGISTRYINDEX);
