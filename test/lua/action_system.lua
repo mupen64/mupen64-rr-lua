@@ -7,7 +7,7 @@
 -- Sets up some actions.
 
 local result = action.add({
-    path = "My Cool Lua > Do Something Cool ---",
+    path = "My Cool Lua > Do Something Cool",
     down_callback = function()
         print("Hello World!")
     end
@@ -15,7 +15,7 @@ local result = action.add({
 
 assert(result)
 
-local result = action.associate_hotkey( "My Cool Lua > Do Something Cool ---", {
+local result = action.associate_hotkey("My Cool Lua > Do Something Cool", {
     key = string.byte("U"),
     ctrl = true,
 })
