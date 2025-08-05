@@ -834,21 +834,23 @@ static void add_action(const std::wstring& path, const Hotkey::t_hotkey& default
 
 static void generate_path_recent_menu(const std::wstring& base_path, const Hotkey::t_hotkey& load_first_hotkey, std::vector<std::wstring>* paths, int32_t* frozen, const std::function<void(size_t)>& callback)
 {
+    const auto freeze_action = std::format(L"{} > Freeze ---", base_path);
+    
     const auto reset_list = [=] {
         paths->clear();
     };
 
     const auto toggle_frozen = [=] {
-        *frozen = !*frozen;
+        *frozen = *frozen == 0 ? 1 : 0;
+        ActionManager::notify_active_changed(freeze_action);
     };
 
     const auto get_frozen = [=] {
-        return frozen;
+        return *frozen;
     };
 
-
     add_action(std::format(L"{} > Reset", base_path), {}, reset_list);
-    add_action(std::format(L"{} > Freeze ---", base_path), {}, toggle_frozen, always_enabled, get_frozen);
+    add_action(freeze_action, {}, toggle_frozen, always_enabled, get_frozen);
 
     for (size_t i = 0; i < 10; ++i)
     {
