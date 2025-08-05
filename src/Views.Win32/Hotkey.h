@@ -39,8 +39,8 @@ namespace Hotkey
     /**
      * \brief Shows a dialog prompting the user to enter a hotkey.
      * \param hwnd The parent window handle for the dialog.
-     * \param headline The headline to display in the dialog.
+     * \param caption The headline to display in the dialog.
      * \param hotkey The hotkey to set.
      */
-    void show_prompt(HWND hwnd, const std::wstring& headline, t_hotkey& hotkey);
+    void show_prompt(HWND hwnd, const std::wstring& caption, t_hotkey& hotkey);
 } // namespace Hotkey
