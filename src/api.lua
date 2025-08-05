@@ -1306,9 +1306,9 @@ function hotkey.prompt(caption) end
 -- action functions
 --#region
 
----@alias FullyQualifiedActionPath string A fully-qualified action path. Must be in the format `"Category > Subcategory[] > Name"`. There can be an arbitrary number of subcategories.
+---@alias FullyQualifiedActionPath string A fully-qualified action path in the format `"Category > Subcategory[] > Name"`.
 
----@alias PartiallyQualifiedActionPath string A partially-qualified action path. Must be in the same format as [FullyQualifiedActionPath](lua://FullyQualifiedActionPath), but *can* be missing the name segment.
+---@alias PartiallyQualifiedActionPath string A partially-qualified action path in the format `"Category > Subcategory[]"`. This is used to refer to actions without specifying the full path, such as when notifying about changes.
 
 ---@alias AnyQualifiedActionPath FullyQualifiedActionPath | PartiallyQualifiedActionPath A fully or partially-qualified action path.
 

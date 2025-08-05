@@ -19,12 +19,12 @@ namespace ActionManager
     const std::wstring SEPARATOR_SUFFIX = L" ---";
 
     /**
-     * \brief A fully-qualified action path. Must be in the format <c>"Category > Subcategory[] > Name"</c>. There can be an arbitrary number of subcategories.
+     * \brief A fully-qualified action path in the format <c>"Category > Subcategory[] > Name"</c>.
      */
     using fq_action_path = std::wstring;
 
     /**
-     * \brief A partially-qualified action path. Must be in the same format as <c>fq_action_path</c>, but can be missing the name segment.
+     * \brief A partially-qualified action path in the format <c>"Category > Subcategory[]"</c>.
      * This is used to refer to actions without specifying the full path, such as when notifying about changes.
      */
     using pq_action_path = std::wstring;
