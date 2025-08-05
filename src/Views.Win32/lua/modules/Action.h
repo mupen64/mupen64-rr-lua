@@ -158,7 +158,7 @@ namespace LuaCore::Action
             return 1;
         }
         // FIXME: We need to free the param callbacks eventually. When do we do that, maybe when the actions are removed (which would require a new message broadcasted by the ActionManager)???
-        // FIXME: We also need to remember to remove actions registered by scripts when they stop 
+        // FIXME: We also need to remember to remove actions registered by scripts when they stop
 
         const auto result = ActionManager::add(params);
 
@@ -184,52 +184,72 @@ namespace LuaCore::Action
 
     static int begin_batch_work(lua_State* L)
     {
-        // TODO: Implement
+        ActionManager::begin_batch_work();
         return 0;
     }
 
     static int end_batch_work(lua_State* L)
     {
-        // TODO: Implement
+        ActionManager::end_batch_work();
         return 0;
     }
 
     static int notify_enabled_changed(lua_State* L)
     {
-        // TODO: Implement
+        const auto path = lua_getwstring(L, 1);
+        ActionManager::notify_enabled_changed(path);
         return 0;
     }
 
     static int notify_active_changed(lua_State* L)
     {
-        // TODO: Implement
+        const auto path = lua_getwstring(L, 1);
+        ActionManager::notify_active_changed(path);
         return 0;
     }
 
     static int notify_real_name_changed(lua_State* L)
     {
-        // TODO: Implement
+        const auto path = lua_getwstring(L, 1);
+        ActionManager::notify_real_name_changed(path);
         return 0;
     }
 
     static int get_display_name(lua_State* L)
     {
-        // TODO: Implement
-        lua_pushstring(L, "");
+        const auto path = lua_getwstring(L, 1);
+        const auto ignore_real_name = (bool)luaL_opt(L, lua_toboolean, 2, false);
+
+        const auto result = ActionManager::get_display_name(path, ignore_real_name);
+
+        lua_pushstring(L, io_service.wstring_to_string(result).c_str());
         return 1;
     }
 
     static int get_actions_matching_filter(lua_State* L)
     {
-        // TODO: Implement
+        const auto path = lua_getwstring(L, 1);
+
+        const auto actions = ActionManager::get_actions_matching_filter(path);
+
         lua_newtable(L);
+        size_t i = 1;
+        for (const auto& action : actions)
+        {
+            lua_pushstring(L, io_service.wstring_to_string(action).c_str());
+            lua_seti(L, -2, i++);
+        }
+
         return 1;
     }
 
     static int invoke(lua_State* L)
     {
-        // TODO: Implement
-        lua_newtable(L);
-        return 1;
+        const auto path = lua_getwstring(L, 1);
+        const auto up = (bool)luaL_opt(L, lua_toboolean, 2, false);
+
+        ActionManager::invoke(path, up);
+
+        return 0;
     }
 } // namespace LuaCore::Action
