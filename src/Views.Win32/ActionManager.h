@@ -137,12 +137,12 @@ namespace ActionManager
     void notify_real_name_changed(const aq_action_path& path);
 
     /**
-     * \brief Gets the display name for an action.
+     * \brief Gets the display name for an action or nicely formats the path if the path is partially-qualified.
      * \param path The action path.
      * \param ignore_real_name Whether to ignore the real name override.
      * \return The action's display name or an empty string if the display name couldn't be resolved.
      */
-    std::wstring get_display_name(const pq_action_path& path, bool ignore_real_name = false);
+    std::wstring get_display_name(const aq_action_path& path, bool ignore_real_name = false);
 
     /**
      * \brief Gets all action paths that match the specified filter.
