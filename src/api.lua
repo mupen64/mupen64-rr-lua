@@ -1290,7 +1290,7 @@ function avi.stopcapture() end
 --#region
 
 ---@class Hotkey Represents a combination of keys.
----@field key Keys The key that is pressed to trigger the hotkey.
+---@field key integer The key that is pressed to trigger the hotkey. Note that this is a virtual keycode.
 ---@field ctrl boolean Whether the control modifier is pressed.
 ---@field shift boolean Whether the shift modifier is pressed.
 ---@field alt boolean Whether the alt modifier is pressed.

@@ -6,12 +6,45 @@
 
 #pragma once
 
+#include <lua/LuaManager.h>
+
 namespace LuaCore::Hotkey
 {
+    static void push_hotkey(lua_State* L, const ::Hotkey::t_hotkey& hotkey)
+    {
+        lua_newtable(L);
+
+        lua_pushstring(L, "key");
+        lua_pushinteger(L, hotkey.key);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "ctrl");
+        lua_pushboolean(L, hotkey.ctrl);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "shift");
+        lua_pushboolean(L, hotkey.shift);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "alt");
+        lua_pushboolean(L, hotkey.alt);
+        lua_settable(L, -3);
+    }
+
     static int prompt(lua_State* L)
     {
-        // TODO: Implement
-        lua_pushboolean(L, 1);
+        const auto caption = lua_getwstring(L, 1);
+
+        ::Hotkey::t_hotkey hotkey{};
+
+        const bool confirmed = ::Hotkey::show_prompt(g_main_hwnd, caption, hotkey);
+
+        if (!confirmed)
+        {
+            return 0;
+        }
+    
+        push_hotkey(L, hotkey);
         return 1;
     }
 } // namespace LuaCore::Hotkey

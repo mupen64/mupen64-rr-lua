@@ -33,6 +33,7 @@ namespace LuaManager
 
 } // namespace LuaManager
 
+#define lua_getwstring(L, i) io_service.string_to_wstring(lua_tostring(L, i))
 
 void* lua_tocallback(lua_State* L, int i);
 void lua_pushcallback(lua_State* L, void* key);
