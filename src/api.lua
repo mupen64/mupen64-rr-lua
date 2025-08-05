@@ -99,6 +99,59 @@ Mupen = {
         -- The plugin doesn't export a GetDllInfo function
         pl_no_get_dll_info = 33,
     },
+
+    ---@enum VKeycodes
+    ---An enum containing virtual keycodes.
+    VKeycodes = {
+        VK_LBUTTON = 0x01, -- Left mouse button
+        VK_RBUTTON = 0x02, -- Right mouse button
+        VK_CANCEL = 0x03, -- Control‑break
+        VK_MBUTTON = 0x04, -- Middle mouse button
+        VK_XBUTTON1 = 0x05, -- X1 mouse button
+        VK_XBUTTON2 = 0x06, -- X2 mouse button
+        -- 0x07 Reserved
+        VK_BACK = 0x08,  -- Backspace
+        VK_TAB = 0x09,   -- Tab
+        -- 0x0A–0B Reserved
+        VK_CLEAR = 0x0C, -- Clear
+        VK_RETURN = 0x0D, -- Enter
+        -- 0x0E–0F Unassigned
+        VK_SHIFT = 0x10, -- Shift
+        VK_CONTROL = 0x11, -- Ctrl
+        VK_MENU = 0x12,  -- Alt (Menu)
+        VK_PAUSE = 0x13, -- Pause
+        VK_CAPITAL = 0x14, -- Caps Lock
+        VK_KANA = 0x15,  -- IME Kana / Hangul
+        VK_IME_ON = 0x16, -- IME On
+        VK_JUNJA = 0x17, -- IME Junja
+        VK_FINAL = 0x18, -- IME Final
+        VK_HANJA = 0x19, -- IME Hanja / Kanji
+        VK_IME_OFF = 0x1A, -- IME Off
+        VK_ESCAPE = 0x1B, -- Escape
+        VK_CONVERT = 0x1C, -- IME Convert
+        VK_NONCONVERT = 0x1D, -- IME Nonconvert
+        VK_ACCEPT = 0x1E, -- IME Accept
+        VK_MODECHANGE = 0x1F, -- IME Mode Change
+        VK_SPACE = 0x20, -- Spacebar
+        VK_PRIOR = 0x21, -- Page Up
+        VK_NEXT = 0x22,  -- Page Down
+        VK_END = 0x23,   -- End
+        VK_HOME = 0x24,  -- Home
+        VK_LEFT = 0x25,  -- Left Arrow
+        VK_UP = 0x26,    -- Up Arrow
+        VK_RIGHT = 0x27, -- Right Arrow
+        VK_DOWN = 0x28,  -- Down Arrow
+        VK_SELECT = 0x29, -- Select
+        VK_PRINT = 0x2A, -- Print
+        VK_EXECUTE = 0x2B, -- Execute
+        VK_SNAPSHOT = 0x2C, -- Print Screen
+        VK_INSERT = 0x2D, -- Insert
+        VK_DELETE = 0x2E, -- Delete
+        VK_HELP = 0x2F,  -- Help
+        VK_LWIN = 0x5B,  -- Left Windows
+        VK_RWIN = 0x5C,  -- Right Windows
+        VK_APPS = 0x5D,  -- Applications (Menu) key
+    }
 }
 
 ---The `lua_tostring` c function converts numbers to strings, so numbers are
@@ -1290,7 +1343,7 @@ function avi.stopcapture() end
 --#region
 
 ---@class Hotkey Represents a combination of keys.
----@field key integer The key that is pressed to trigger the hotkey. Note that this is a virtual keycode.
+---@field key VKeycodes The key that is pressed to trigger the hotkey. Note that this is a virtual keycode.
 ---@field ctrl boolean Whether the control modifier is pressed.
 ---@field shift boolean Whether the shift modifier is pressed.
 ---@field alt boolean Whether the alt modifier is pressed.
