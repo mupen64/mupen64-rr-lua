@@ -41,6 +41,7 @@ namespace Hotkey
      * \param hwnd The parent window handle for the dialog.
      * \param caption The headline to display in the dialog.
      * \param hotkey The hotkey to set.
+     * \return Whether the user confirmed the dialog. If the user cancelled the dialog, the hotkey won't have changed.
      */
-    void show_prompt(HWND hwnd, const std::wstring& caption, t_hotkey& hotkey);
+    bool show_prompt(HWND hwnd, const std::wstring& caption, t_hotkey& hotkey);
 } // namespace Hotkey

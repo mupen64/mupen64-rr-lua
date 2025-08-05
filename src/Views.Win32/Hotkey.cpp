@@ -267,16 +267,17 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return FALSE;
 }
 
-void Hotkey::show_prompt(const HWND hwnd, const std::wstring& caption, t_hotkey& hotkey)
+bool Hotkey::show_prompt(const HWND hwnd, const std::wstring& caption, t_hotkey& hotkey)
 {
     const auto prev_hotkey = hotkey;
 
     hotkey = {};
     auto params = new t_hotkey_dialog_params{.headline = caption, .hotkey = hotkey};
 
-    INT_PTR result = DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_HOTKEY), hwnd, dlgproc, reinterpret_cast<LPARAM>(params));
+    const INT_PTR result = DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_HOTKEY), hwnd, dlgproc, reinterpret_cast<LPARAM>(params));
+    const bool confirmed = result == IDOK;
 
-    if (result == IDOK)
+    if (confirmed)
     {
         hotkey = params->hotkey;
     }
@@ -286,4 +287,6 @@ void Hotkey::show_prompt(const HWND hwnd, const std::wstring& caption, t_hotkey&
     }
 
     delete params;
+
+    return confirmed;
 }
