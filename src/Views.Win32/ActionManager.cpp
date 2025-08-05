@@ -9,6 +9,9 @@
 #include <Messenger.h>
 
 using t_action_params = ActionManager::t_action_params;
+using fq_action_path = ActionManager::fq_action_path;
+using pq_action_path = ActionManager::pq_action_path;
+using aq_action_path = ActionManager::aq_action_path;
 
 struct t_action {
     t_action_params params{};
@@ -110,7 +113,7 @@ bool ActionManager::add(const t_action_params& params)
     return true;
 }
 
-bool ActionManager::associate_hotkey(const std::wstring& path, const Hotkey::t_hotkey& hotkey)
+bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -208,7 +211,7 @@ void ActionManager::end_batch_work()
     Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
 }
 
-void ActionManager::notify_enabled_changed(const std::wstring& path)
+void ActionManager::notify_enabled_changed(const aq_action_path& path)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -216,7 +219,7 @@ void ActionManager::notify_enabled_changed(const std::wstring& path)
     Messenger::broadcast(Messenger::Message::ActionEnabledChanged, actions);
 }
 
-void ActionManager::notify_active_changed(const std::wstring& path)
+void ActionManager::notify_active_changed(const aq_action_path& path)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -224,7 +227,7 @@ void ActionManager::notify_active_changed(const std::wstring& path)
     Messenger::broadcast(Messenger::Message::ActionActiveChanged, actions);
 }
 
-void ActionManager::notify_real_name_changed(const std::wstring& path)
+void ActionManager::notify_real_name_changed(const aq_action_path& path)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -232,7 +235,7 @@ void ActionManager::notify_real_name_changed(const std::wstring& path)
     Messenger::broadcast(Messenger::Message::ActionRealNameChanged, actions);
 }
 
-std::wstring ActionManager::get_display_name(const std::wstring& path, bool ignore_real_name)
+std::wstring ActionManager::get_display_name(const aq_action_path& path, bool ignore_real_name)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -279,11 +282,11 @@ std::wstring ActionManager::get_display_name(const std::wstring& path, bool igno
     return display_name;
 }
 
-std::vector<std::wstring> ActionManager::get_actions_matching_filter(const pq_action_path& path)
+std::vector<fq_action_path> ActionManager::get_actions_matching_filter(const aq_action_path& path)
 {
     if (path.empty())
     {
-        std::vector<std::wstring> result;
+        std::vector<fq_action_path> result;
         result.reserve(g_mgr.actions.size());
         for (const auto& action : g_mgr.actions)
         {
@@ -295,7 +298,7 @@ std::vector<std::wstring> ActionManager::get_actions_matching_filter(const pq_ac
     const auto normalized_path = normalize_path(path);
     const auto actions = find_actions_under_path(normalized_path);
 
-    std::vector<std::wstring> result;
+    std::vector<fq_action_path> result;
     result.reserve(actions.size());
     for (const auto& action : actions)
     {
@@ -304,9 +307,9 @@ std::vector<std::wstring> ActionManager::get_actions_matching_filter(const pq_ac
     return result;
 }
 
-std::vector<std::wstring> ActionManager::get_path_segments(const std::wstring& path)
+std::vector<fq_action_path> ActionManager::get_path_segments(const aq_action_path& path)
 {
-    std::vector<std::wstring> parts = io_service.split_wstring(path, L">");
+    std::vector<fq_action_path> parts = io_service.split_wstring(path, L">");
     for (auto& part : parts)
     {
         part = io_service.trim(part);
@@ -319,7 +322,7 @@ std::vector<std::wstring> ActionManager::get_path_segments(const std::wstring& p
     return parts;
 }
 
-void ActionManager::invoke(const std::wstring& path, const bool up)
+void ActionManager::invoke(const fq_action_path& path, const bool up)
 {
     const auto normalized_path = normalize_path(path);
 

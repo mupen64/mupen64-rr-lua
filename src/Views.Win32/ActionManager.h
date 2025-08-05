@@ -148,19 +148,19 @@ namespace ActionManager
      * \brief Gets all action paths that match the specified filter.
      * \param path The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
      */
-    std::vector<std::wstring> get_actions_matching_filter(const aq_action_path& path = L"");
+    std::vector<fq_action_path> get_actions_matching_filter(const aq_action_path& path = L"");
 
     /**
      * \brief Gets the segments of an action's path.
      * \param path The path to split.
      * \return A vector of segments, where each segment is a part of the path.
      */
-    std::vector<std::wstring> get_path_segments(const aq_action_path& path);
+    std::vector<fq_action_path> get_path_segments(const aq_action_path& path);
 
     /**
      * \brief Manually invokes an action by its path.
      * \param path The qualified path of the action to invoke.
      * \param up Whether the invocation is considered as "releasing" the action.
      */
-    void invoke(const std::wstring& path, bool up = false);
+    void invoke(const fq_action_path& path, bool up = false);
 } // namespace ActionManager
