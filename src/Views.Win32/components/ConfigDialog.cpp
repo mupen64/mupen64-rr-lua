@@ -1766,7 +1766,14 @@ void ConfigDialog::show_app_settings()
 
         for (const auto& action : actions)
         {
-            g_hotkey_scratchpad.emplace_back(action, g_config.hotkeys.at(action));
+            if (g_config.hotkeys.contains(action))
+            {
+                g_hotkey_scratchpad.emplace_back(action, g_config.hotkeys.at(action));
+            }
+            else
+            {
+                g_hotkey_scratchpad.emplace_back(action, Hotkey::t_hotkey{});
+            }
 
             const auto scratchpad_index = g_hotkey_scratchpad.size() - 1;
 
