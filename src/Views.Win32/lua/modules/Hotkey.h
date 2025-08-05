@@ -31,6 +31,32 @@ namespace LuaCore::Hotkey
         lua_settable(L, -3);
     }
 
+    static bool check_hotkey(lua_State* L, int i, ::Hotkey::t_hotkey& hotkey)
+    {
+        if (!lua_istable(L, i))
+        {
+            return false;
+        }
+
+        lua_getfield(L, i, "key");
+        hotkey.key = luaL_opt(L, lua_tointeger, -1, 0);
+        lua_pop(L, 1);
+
+        lua_getfield(L, i, "ctrl");
+        hotkey.ctrl = luaL_opt(L, lua_toboolean, -1, false);
+        lua_pop(L, 1);
+
+        lua_getfield(L, i, "shift");
+        hotkey.shift = luaL_opt(L, lua_toboolean, -1, false);
+        lua_pop(L, 1);
+
+        lua_getfield(L, i, "alt");
+        hotkey.alt = luaL_opt(L, lua_toboolean, -1, false);
+        lua_pop(L, 1);
+
+        return true;
+    }
+
     static int prompt(lua_State* L)
     {
         const auto caption = lua_getwstring(L, 1);
@@ -43,7 +69,7 @@ namespace LuaCore::Hotkey
         {
             return 0;
         }
-    
+
         push_hotkey(L, hotkey);
         return 1;
     }
