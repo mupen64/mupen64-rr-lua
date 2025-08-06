@@ -33,6 +33,9 @@ static std::wstring normalize_path(const std::wstring& path)
     return io_service.join_wstring(parts, L">");
 }
 
+/**
+ * \brief Finds all actions that are under the given path. Can be used with unnormalized paths.
+ */
 static std::vector<t_action*> find_actions_under_path(const std::wstring& path)
 {
     const auto normalized_path = normalize_path(path);
@@ -109,13 +112,11 @@ bool ActionManager::add(const t_action_params& params)
 
 bool ActionManager::remove(const aq_action_path& path)
 {
-    const auto normalized_path = normalize_path(path);
-
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = find_actions_under_path(path);
 
     if (actions.empty())
     {
-        g_view_logger->error(L"ActionManager::remove: Action '{}' not found.", normalized_path);
+        g_view_logger->error(L"ActionManager::remove: Action '{}' not found.", path);
         return false;
     }
 
@@ -200,19 +201,11 @@ bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t
 
 bool ActionManager::is_action_enabled(const fq_action_path& path)
 {
-    const auto normalized_path = normalize_path(path);
-
-    if (!validate_action_path(normalized_path))
-    {
-        g_view_logger->error(L"ActionManager::is_action_enabled: Malformed action path '{}'.", normalized_path);
-        return false;
-    }
-
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = find_actions_under_path(path);
 
     if (actions.empty())
     {
-        g_view_logger->error(L"ActionManager::is_action_enabled: Action '{}' not found.", normalized_path);
+        g_view_logger->error(L"ActionManager::is_action_enabled: Action '{}' not found.", path);
         return false;
     }
 
@@ -234,19 +227,11 @@ bool ActionManager::is_action_enabled(const fq_action_path& path)
 
 bool ActionManager::is_action_active(const fq_action_path& path)
 {
-    const auto normalized_path = normalize_path(path);
-
-    if (!validate_action_path(normalized_path))
-    {
-        g_view_logger->error(L"ActionManager::is_action_active: Malformed action path '{}'.", normalized_path);
-        return false;
-    }
-
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = find_actions_under_path(path);
 
     if (actions.empty())
     {
-        g_view_logger->error(L"ActionManager::is_action_active: Action '{}' not found.", normalized_path);
+        g_view_logger->error(L"ActionManager::is_action_active: Action '{}' not found.", path);
         return false;
     }
 
@@ -279,25 +264,19 @@ void ActionManager::end_batch_work()
 
 void ActionManager::notify_enabled_changed(const aq_action_path& path)
 {
-    const auto normalized_path = normalize_path(path);
-
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = find_actions_under_path(path);
     Messenger::broadcast(Messenger::Message::ActionEnabledChanged, actions);
 }
 
 void ActionManager::notify_active_changed(const aq_action_path& path)
 {
-    const auto normalized_path = normalize_path(path);
-
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = find_actions_under_path(path);
     Messenger::broadcast(Messenger::Message::ActionActiveChanged, actions);
 }
 
 void ActionManager::notify_real_name_changed(const aq_action_path& path)
 {
-    const auto normalized_path = normalize_path(path);
-
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = find_actions_under_path(path);
     Messenger::broadcast(Messenger::Message::ActionRealNameChanged, actions);
 }
 
@@ -363,8 +342,7 @@ std::vector<fq_action_path> ActionManager::get_actions_matching_filter(const aq_
         return result;
     }
 
-    const auto normalized_path = normalize_path(path);
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = find_actions_under_path(path);
 
     std::vector<fq_action_path> result;
     result.reserve(actions.size());
@@ -372,6 +350,7 @@ std::vector<fq_action_path> ActionManager::get_actions_matching_filter(const aq_
     {
         result.push_back(action->params.path);
     }
+    
     return result;
 }
 
