@@ -27,11 +27,6 @@
 #include <components/Statusbar.h>
 #include <components/UpdateChecker.h>
 
-// TODO: Move this into a struct?
-bool g_paused_before_menu;
-bool g_in_menu_loop;
-bool g_fullscreen;
-
 bool confirm_user_exit()
 {
     BetterEmulationLock lock;
@@ -80,14 +75,14 @@ bool confirm_user_exit()
 
 void AppActions::update_core_fast_forward()
 {
-    g_core_ctx->vr_set_fast_forward(g_fast_forward || g_core_ctx->vcr_is_seeking() || CLI::wants_fast_forward() || Compare::active());
+    g_core_ctx->vr_set_fast_forward(g_main_wnd.fast_forward || g_core_ctx->vcr_is_seeking() || CLI::wants_fast_forward() || Compare::active());
 }
 
 std::filesystem::path get_screenshots_directory()
 {
     if (g_config.is_default_screenshots_directory_used)
     {
-        return g_app_path / L"screenshots\\";
+        return g_main_wnd.app_path / L"screenshots\\";
     }
     return g_config.screenshots_directory;
 }
@@ -182,16 +177,15 @@ static void exit_app()
 static void pause_emu()
 {
     // FIXME: While this is a beautiful and clean solution, there has to be a better way to handle this
-    // We're too close to release to care tho
-    if (g_in_menu_loop)
+    if (g_main_wnd.in_menu_loop)
     {
-        if (g_paused_before_menu)
+        if (g_main_wnd.paused_before_menu)
         {
             g_core_ctx->vr_resume_emu();
-            g_paused_before_menu = false;
+            g_main_wnd.paused_before_menu = false;
             return;
         }
-        g_paused_before_menu = true;
+        g_main_wnd.paused_before_menu = true;
         g_core_ctx->vr_pause_emu();
     }
     else
@@ -231,7 +225,7 @@ static void speed_reset()
 
 static void frame_advance()
 {
-    g_fast_forward = false;
+    g_main_wnd.fast_forward = false;
     AppActions::update_core_fast_forward();
     g_core_ctx->vr_frame_advance(1);
     g_core_ctx->vr_resume_emu();
@@ -255,13 +249,13 @@ static void multi_frame_advance()
 
 static void fastforward_enable()
 {
-    g_fast_forward = true;
+    g_main_wnd.fast_forward = true;
     Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
 }
 
 static void fastforward_disable()
 {
-    g_fast_forward = false;
+    g_main_wnd.fast_forward = false;
     Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
 }
 
@@ -421,12 +415,12 @@ static void set_save_slot(const size_t slot)
 static void toggle_fullscreen()
 {
     g_view_plugin_funcs.video_change_window();
-    g_fullscreen ^= true;
+    g_main_wnd.fullscreen ^= true;
 }
 
 static bool fullscreen_active()
 {
-    return g_fullscreen;
+    return g_main_wnd.fullscreen;
 }
 
 static void show_plugin_settings_dialog(const std::unique_ptr<Plugin>& plugin)
@@ -835,7 +829,7 @@ static void add_action(const std::wstring& path, const Hotkey::t_hotkey& default
 static void generate_path_recent_menu(const std::wstring& base_path, const Hotkey::t_hotkey& load_first_hotkey, std::vector<std::wstring>* paths, int32_t* frozen, const std::function<void(size_t)>& callback)
 {
     const auto freeze_action = std::format(L"{} > Freeze ---", base_path);
-    
+
     const auto reset_list = [=] {
         paths->clear();
     };

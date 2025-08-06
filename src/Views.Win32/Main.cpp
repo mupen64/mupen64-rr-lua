@@ -45,6 +45,8 @@
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
 
+t_main_window_context g_main_wnd{};
+
 static HANDLE dispatcher_event{};
 static HANDLE dispatcher_done_event{};
 
@@ -59,19 +61,13 @@ DWORD g_ui_thread_id;
 HWND g_hwnd_plug;
 MMRESULT g_ui_timer;
 HWND g_main_hwnd;
-HMENU g_main_menu;
-HMENU g_recent_roms_menu;
-HMENU g_recent_movies_menu;
-HMENU g_recent_lua_menu;
 HINSTANCE g_app_instance;
-std::filesystem::path g_app_path;
 std::shared_ptr<Dispatcher> g_main_window_dispatcher;
 
 int g_last_wheel_delta = 0;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
 bool g_emu_starting;
-bool g_fast_forward;
 
 ULONG_PTR gdi_plus_token;
 
@@ -84,12 +80,12 @@ constexpr auto WND_CLASS = L"myWindowClass";
 
 BetterEmulationLock::BetterEmulationLock()
 {
-    if (g_in_menu_loop)
+    if (g_main_wnd.in_menu_loop)
     {
-        was_paused = g_paused_before_menu;
+        was_paused = g_main_wnd.paused_before_menu;
 
         // This fires before WM_EXITMENULOOP (which restores the paused_before_menu state), so we need to trick it...
-        g_paused_before_menu = true;
+        g_main_wnd.paused_before_menu = true;
     }
     else
     {
@@ -420,7 +416,7 @@ std::filesystem::path get_plugins_directory()
 {
     if (g_config.is_default_plugins_directory_used)
     {
-        return g_app_path / L"plugin\\";
+        return g_main_wnd.app_path / L"plugin\\";
     }
     return g_config.plugins_directory;
 }
@@ -953,13 +949,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_CREATE:
         SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
-
-        g_main_menu = GetMenu(hwnd);
-
-        g_recent_roms_menu = GetSubMenu(GetSubMenu(g_main_menu, 0), 5);
-        g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 6);
-        g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
-
+        
         ActionMenu::init();
 
         AppActions::add();
@@ -1004,8 +994,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_ENTERMENULOOP:
-        g_in_menu_loop = true;
-        g_paused_before_menu = g_core_ctx->vr_get_paused();
+        g_main_wnd.in_menu_loop = true;
+        g_main_wnd.paused_before_menu = g_core_ctx->vr_get_paused();
         g_core_ctx->vr_pause_emu();
         break;
     case WM_EXITMENULOOP:
@@ -1014,8 +1004,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         // It's almost guaranteed that a game frame will pass between those messages, so we need to wait a bit on another thread before unpausing.
         std::thread([] {
             Sleep(60);
-            g_in_menu_loop = false;
-            if (g_paused_before_menu)
+            g_main_wnd.in_menu_loop = false;
+            if (g_main_wnd.paused_before_menu)
             {
                 g_core_ctx->vr_pause_emu();
             }
@@ -1070,7 +1060,7 @@ std::filesystem::path get_saves_directory()
 {
     if (g_config.is_default_saves_directory_used)
     {
-        return g_app_path / L"save\\";
+        return g_main_wnd.app_path / L"save\\";
     }
     return g_config.saves_directory;
 }
@@ -1445,7 +1435,7 @@ void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
     {
-        SetCurrentDirectory(g_app_path.c_str());
+        SetCurrentDirectory(g_main_wnd.app_path.c_str());
     }
 
     wchar_t cwd[MAX_PATH] = {0};
@@ -1465,7 +1455,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info(get_mupen_name());
 
     g_app_instance = hInstance;
-    g_app_path = get_app_full_path();
+    g_main_wnd.app_path = get_app_full_path();
     set_cwd();
 
     Config::init();
@@ -1479,10 +1469,10 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
         return 1;
     }
 
-    CreateDirectory((g_app_path / L"save").c_str(), NULL);
-    CreateDirectory((g_app_path / L"screenshots").c_str(), NULL);
-    CreateDirectory((g_app_path / L"plugin").c_str(), NULL);
-    CreateDirectory((g_app_path / L"backups").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"save").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"screenshots").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"plugin").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"backups").c_str(), NULL);
 
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);

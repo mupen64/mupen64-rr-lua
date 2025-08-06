@@ -12,10 +12,6 @@
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
 
-extern bool g_paused_before_menu;
-extern bool g_in_menu_loop;
-extern bool g_fullscreen;
-
 /**
  * \brief A module responsible for implementing standard application actions.
  */

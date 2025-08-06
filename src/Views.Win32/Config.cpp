@@ -386,7 +386,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
 
 static std::filesystem::path get_config_path()
 {
-    return g_app_path / CONFIG_FILE_NAME;
+    return g_main_wnd.app_path / CONFIG_FILE_NAME;
 }
 
 /**
