@@ -1392,7 +1392,7 @@ function action.remove(filter) end
 ---@return boolean # Whether the operation succeeded.
 function action.associate_hotkey(path, hotkey, overwrite_existing) end
 
----Begins a batch operation. Batches all updates caused by [action.add](lua://action.add) and [action.associate_hotkey](lua://action.associate_hotkey) into one at the end of the operation.
+---Begins a batch operation. Batches all updates caused by [action.add](lua://action.add), [action.remove](lua://action.remove), and [action.associate_hotkey](lua://action.associate_hotkey) into one at the succeeding call to [action.end_batch_work](lua://action.end_batch_work).
 function action.begin_batch_work() end
 
 ---Ends a batch operation.
