@@ -247,7 +247,7 @@ bool ActionManager::get_action_active(const action_path& path)
         return action->params.get_active();
     }
 
-    return true;
+    return false;
 }
 
 void ActionManager::begin_batch_work()
