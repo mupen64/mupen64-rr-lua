@@ -37,3 +37,13 @@ assert(action.add({
         end
     end
 }))
+
+for i = 1, 10, 1 do
+    assert(action.add({
+        path = "My Cool Lua > Some Items > Item " .. i,
+        down_callback = function()
+            local removed_items = action.remove("My Cool Lua > Some Items > Item " .. i)
+            print("removed items", removed_items)
+        end
+    }))
+end
