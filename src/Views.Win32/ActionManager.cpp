@@ -351,9 +351,9 @@ std::vector<action_path> ActionManager::get_actions_matching_filter(const action
     return result;
 }
 
-std::vector<action_path> ActionManager::get_segments(const action_filter& filter)
+std::vector<action_filter> ActionManager::get_segments(const action_filter& filter)
 {
-    std::vector<action_path> parts = io_service.split_wstring(filter, L">");
+    std::vector<action_filter> parts = io_service.split_wstring(filter, L">");
     for (auto& part : parts)
     {
         part = io_service.trim(part);

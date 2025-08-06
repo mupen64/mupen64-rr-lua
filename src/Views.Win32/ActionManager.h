@@ -141,7 +141,7 @@ namespace ActionManager
      * \param filter A filter.
      * \return A vector of the filter's segments.
      */
-    std::vector<action_path> get_segments(const action_filter& filter);
+    std::vector<action_filter> get_segments(const action_filter& filter);
 
     /**
      * \brief Gets whether an action is enabled.
