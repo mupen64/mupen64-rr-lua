@@ -12,7 +12,7 @@
 namespace Hotkey
 {
     /**
-     * \brief Represents a combination of key + modifier combination.
+     * \brief Represents a combination of a key and modifiers.
      */
     struct t_hotkey {
         int32_t key{};
