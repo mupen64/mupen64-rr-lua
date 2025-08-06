@@ -48,35 +48,27 @@ namespace ActionManager
         /**
          * \brief The callback to be invoked when the action has been released. Can be null.
          */
-        std::function<void()> up_callback = [] {
-        };
+        std::function<void()> up_callback;
 
         /**
-         * \brief The callback to be invoked prior to the action being removed from the registry.
+         * \brief The callback to be invoked prior to the action being removed from the registry. Can be null.
          */
-        std::function<void()> on_removed = [] {
-        };
+        std::function<void()> on_removed;
 
         /**
-         * \brief The function used to determine whether the action is enabled.
+         * \brief The function used to determine whether the action is enabled. If null, the action will be considered enabled.
          */
-        std::function<bool()> get_enabled = [] {
-            return true;
-        };
+        std::function<bool()> get_enabled;
 
         /**
-         * \brief The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state.
+         * \brief The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state. If null, the action will be considered inactive.
          */
-        std::function<bool()> get_active = [] {
-            return false;
-        };
+        std::function<bool()> get_active;
 
         /**
-         * \brief The function used to determine the function's real name, which is an override for the path-derived display name.
+         * \brief The function used to determine the function's display name. If null, the display name will be derived from the path.
          */
-        std::function<std::wstring()> get_real_name = [] {
-            return L"";
-        };
+        std::function<std::wstring()> get_real_name;
     };
 
     /**

@@ -1370,10 +1370,10 @@ function hotkey.prompt(caption) end
 ---@class ActionParams
 ---@field path ActionPath The action's path.
 ---@field down_callback fun() The callback to be invoked when the action is initially triggered.
----@field up_callback fun()? The callback to be invoked when the action has been released.
----@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled.
----@field get_active (fun(): boolean)? The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state.
----@field get_real_name (fun(): string)? The function used to determine the function's real name, which is an override for the path-derived display name.
+---@field up_callback fun()? The callback to be invoked when the action has been released. Can be null.
+---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled. If null, the action will be considered enabled.
+---@field get_active (fun(): boolean)? The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state. If null, the action will be considered inactive.
+---@field get_real_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 
 ---Adds an action to the action registry. Any action with the same path will be replaced.
 ---@param params ActionParams The action parameters.
