@@ -110,10 +110,22 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
 
 bool HotkeyTracker::attach(const HWND hwnd)
 {
-    auto context = new t_hotkey_tracker_context();
-    SetProp(hwnd, HOTKEY_TRACKER_CTX, context);
+    auto context = std::make_unique<t_hotkey_tracker_context>();
 
-    SetWindowSubclass(hwnd, action_menu_wnd_subclass_proc, 0, (DWORD_PTR)context);
+    if (!SetProp(hwnd, HOTKEY_TRACKER_CTX, context.get()))
+    {
+        g_view_logger->error(L"HotkeyTracker::attach: Couldn't set context property");
+        return false;
+    }
+
+    if (!SetWindowSubclass(hwnd, action_menu_wnd_subclass_proc, 0, (DWORD_PTR)context.get()))
+    {
+        g_view_logger->error(L"HotkeyTracker::attach: Couldn't set window subclass");
+        RemoveProp(hwnd, HOTKEY_TRACKER_CTX);
+        return false;
+    }
+
+    (void)context.release();
 
     return true;
 }
