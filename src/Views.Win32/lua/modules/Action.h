@@ -12,7 +12,7 @@
 
 namespace LuaCore::Action
 {
-    static bool check_action_params(lua_State* L, ActionManager::t_action_params& params, std::function<void()>& free_params)
+    static bool check_action_params(lua_State* L, ActionManager::t_action_params& params)
     {
         if (lua_gettop(L) < 1 || !lua_istable(L, 1))
         {
@@ -137,7 +137,7 @@ namespace LuaCore::Action
 
         lua_pop(L, 1);
 
-        free_params = [=] {
+        params.on_removed = [=] {
             lua_freecallback(L, down_callback);
             lua_freecallback(L, up_callback);
             lua_freecallback(L, get_enabled);
@@ -153,8 +153,7 @@ namespace LuaCore::Action
         auto lua = LuaManager::get_environment_for_state(L);
 
         ActionManager::t_action_params params;
-        std::function<void()> free_params;
-        if (!check_action_params(L, params, free_params))
+        if (!check_action_params(L, params))
         {
             lua_pushboolean(L, false);
             return 1;
