@@ -273,13 +273,13 @@ void ActionManager::notify_active_changed(const action_filter& filter)
     Messenger::broadcast(Messenger::Message::ActionActiveChanged, actions);
 }
 
-void ActionManager::notify_real_name_changed(const action_filter& filter)
+void ActionManager::notify_display_name_changed(const action_filter& filter)
 {
     const auto actions = get_action_ptrs_matching_filter(filter);
     Messenger::broadcast(Messenger::Message::ActionRealNameChanged, actions);
 }
 
-std::wstring ActionManager::get_display_name(const action_filter& filter, bool ignore_real_name)
+std::wstring ActionManager::get_display_name(const action_filter& filter, bool ignore_override)
 {
     const auto normalized_path = normalize_filter(filter);
 
@@ -317,12 +317,12 @@ std::wstring ActionManager::get_display_name(const action_filter& filter, bool i
         display_name = name;
     }
 
-    if (action->params.get_real_name && !ignore_real_name)
+    if (action->params.get_display_name && !ignore_override)
     {
-        const auto real_name = action->params.get_real_name();
-        if (!real_name.empty())
+        const auto override_display_name = action->params.get_display_name();
+        if (!override_display_name.empty())
         {
-            display_name = real_name;
+            display_name = override_display_name;
         }
     }
 

@@ -1373,7 +1373,7 @@ function hotkey.prompt(caption) end
 ---@field up_callback fun()? The callback to be invoked when the action has been released. Can be null.
 ---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled. If null, the action will be considered enabled.
 ---@field get_active (fun(): boolean)? The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state. If null, the action will be considered inactive.
----@field get_real_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
+---@field get_display_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 
 ---Adds an action to the action registry. Any action with the same path will be replaced.
 ---@param params ActionParams The action parameters.
@@ -1406,15 +1406,15 @@ function action.notify_enabled_changed(filter) end
 ---@param filter ActionFilter A filter.
 function action.notify_active_changed(filter) end
 
----Notifies about the real name of actions matching a filter changing.
+---Notifies about the display name of actions matching a filter changing.
 ---@param filter ActionFilter A filter.
-function action.notify_real_name_changed(filter) end
+function action.notify_display_name_changed(filter) end
 
 ---Gets the display name for a given filter.
 ---@param filter ActionFilter A filter.
----@param ignore_real_name boolean? Whether to ignore the real name override.
+---@param ignore_override boolean? Whether to ignore the display name override.
 ---@return string # The action's display name or an empty string if the display name couldn't be resolved.
-function action.get_display_name(filter, ignore_real_name) end
+function action.get_display_name(filter, ignore_override) end
 
 ---Gets all action paths that match the specified filter.
 ---@param filter ActionFilter? The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.

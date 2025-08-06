@@ -227,7 +227,7 @@ const luaL_Reg ACTION_FUNCS[] = {
 {"end_batch_work", LuaCore::Action::end_batch_work},
 {"notify_enabled_changed", LuaCore::Action::notify_enabled_changed},
 {"notify_active_changed", LuaCore::Action::notify_active_changed},
-{"notify_real_name_changed", LuaCore::Action::notify_real_name_changed},
+{"notify_display_name_changed", LuaCore::Action::notify_display_name_changed},
 {"get_display_name", LuaCore::Action::get_display_name},
 {"get_actions_matching_filter", LuaCore::Action::get_actions_matching_filter},
 {"invoke", LuaCore::Action::invoke},

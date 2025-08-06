@@ -110,28 +110,28 @@ namespace LuaCore::Action
 
         lua_pop(L, 1);
 
-        lua_getfield(L, 1, "get_real_name");
+        lua_getfield(L, 1, "get_display_name");
 
-        auto get_real_name = lua_optcallback(L, -1);
-        if (get_real_name)
+        auto get_display_name = lua_optcallback(L, -1);
+        if (get_display_name)
         {
-            params.get_real_name = [=] -> std::wstring {
+            params.get_display_name = [=] -> std::wstring {
                 if (!LuaManager::get_environment_for_state(L))
                 {
                     return L"";
                 }
 
-                lua_pushcallback(L, get_real_name, false);
+                lua_pushcallback(L, get_display_name, false);
                 lua_pcall(L, 0, 1, 0);
 
-                std::wstring real_name;
+                std::wstring display_name;
                 if (lua_isstring(L, -1))
                 {
-                    real_name = lua_towstring(L, -1);
+                    display_name = lua_towstring(L, -1);
                     lua_pop(L, 1);
                 }
 
-                return real_name;
+                return display_name;
             };
         }
 
@@ -142,7 +142,7 @@ namespace LuaCore::Action
             lua_freecallback(L, up_callback);
             lua_freecallback(L, get_enabled);
             lua_freecallback(L, get_active);
-            lua_freecallback(L, get_real_name);
+            lua_freecallback(L, get_display_name);
         };
 
         return true;
@@ -213,19 +213,19 @@ namespace LuaCore::Action
         return 0;
     }
 
-    static int notify_real_name_changed(lua_State* L)
+    static int notify_display_name_changed(lua_State* L)
     {
         const auto filter = lua_getwstring(L, 1);
-        ActionManager::notify_real_name_changed(filter);
+        ActionManager::notify_display_name_changed(filter);
         return 0;
     }
 
     static int get_display_name(lua_State* L)
     {
         const auto filter = lua_getwstring(L, 1);
-        const auto ignore_real_name = (bool)luaL_opt(L, lua_toboolean, 2, false);
+        const auto ignore_override = (bool)luaL_opt(L, lua_toboolean, 2, false);
 
-        const auto result = ActionManager::get_display_name(filter, ignore_real_name);
+        const auto result = ActionManager::get_display_name(filter, ignore_override);
 
         lua_pushstring(L, io_service.wstring_to_string(result).c_str());
         return 1;

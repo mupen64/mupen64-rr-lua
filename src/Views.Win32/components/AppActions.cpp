@@ -801,7 +801,7 @@ static bool always_enabled()
 
 #pragma endregion
 
-static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_real_name = {})
+static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_display_name = {})
 {
     bool success = ActionManager::add({
     .path = path,
@@ -813,7 +813,7 @@ static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey&
     .get_active = get_active ? get_active : [] {
         return false;
     },
-    .get_real_name = get_real_name,
+    .get_display_name = get_display_name,
     });
     runtime_assert(success, std::format(L"Failed to add action for path '{}'.", path));
 
@@ -821,9 +821,9 @@ static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey&
     runtime_assert(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
 }
 
-static void add_action(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_real_name = {})
+static void add_action(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_display_name = {})
 {
-    add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_real_name);
+    add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_display_name);
 }
 
 static void generate_path_recent_menu(const std::wstring& base_path, const Hotkey::t_hotkey& load_first_hotkey, std::vector<std::wstring>* paths, int32_t* frozen, const std::function<void(size_t)>& callback)
@@ -848,7 +848,7 @@ static void generate_path_recent_menu(const std::wstring& base_path, const Hotke
 
     for (size_t i = 0; i < 10; ++i)
     {
-        const auto get_real_name = [=] -> std::wstring {
+        const auto get_display_name = [=] -> std::wstring {
             if (paths->size() > i)
             {
                 return std::filesystem::path(paths->at(i)).filename();
@@ -865,7 +865,7 @@ static void generate_path_recent_menu(const std::wstring& base_path, const Hotke
         },
                    {},
                    {},
-                   get_real_name);
+                   get_display_name);
     }
 }
 

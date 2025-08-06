@@ -68,7 +68,7 @@ namespace ActionManager
         /**
          * \brief The function used to determine the function's display name. If null, the display name will be derived from the path.
          */
-        std::function<std::wstring()> get_real_name;
+        std::function<std::wstring()> get_display_name;
     };
 
     /**
@@ -117,18 +117,18 @@ namespace ActionManager
     void notify_active_changed(const action_filter& filter);
 
     /**
-     * \brief Notifies about the real name of actions matching a filter changing.
+     * \brief Notifies about the display name of actions matching a filter changing.
      * \param filter A filter.
      */
-    void notify_real_name_changed(const action_filter& filter);
+    void notify_display_name_changed(const action_filter& filter);
 
     /**
      * \brief Gets the display name for a given filter.
      * \param filter A filter.
-     * \param ignore_real_name Whether to ignore the real name override.
+     * \param ignore_override Whether to ignore the display name override.
      * \return The action's display name or an empty string if the display name couldn't be resolved.
      */
-    std::wstring get_display_name(const action_filter& filter, bool ignore_real_name = false);
+    std::wstring get_display_name(const action_filter& filter, bool ignore_override = false);
 
     /**
      * \brief Gets all action paths that match the specified filter.

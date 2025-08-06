@@ -18,7 +18,7 @@ assert(action.add({
     down_callback = function()
         print("the displayed name is: " .. action.get_display_name("My Cool Lua > Dynamically Named Action! ---"))
     end,
-    get_real_name = function()
+    get_display_name = function()
         return "The time is " .. os.date("%H:%M:%S", os.time())
     end,
 }))
