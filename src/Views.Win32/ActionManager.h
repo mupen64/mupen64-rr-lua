@@ -19,20 +19,16 @@ namespace ActionManager
     const std::wstring SEPARATOR_SUFFIX = L" ---";
 
     /**
-     * \brief A fully-qualified action path in the format <c>"Category > Subcategory[] > Name"</c>.
+     * \brief An action filter that can be either a fully-qualified or partially-qualified `"Category > Subcategory[] [ > Name ]"`.
+     * This is usually used to refer to groups of actions, but can also refer to a single action.
      */
-    using fq_action_path = std::wstring;
+    using action_filter = std::wstring;
 
     /**
-     * \brief A partially-qualified action path in the format <c>"Category > Subcategory[]"</c>.
-     * This is used to refer to actions without specifying the full path, such as when notifying about changes.
+     * \brief A fully-qualified action path in the format `"Category > Subcategory[] > Name"`.
+     * An action path is a subset of the action filter that is guaranteed to be fully-qualified, meaning it contains all segments of the path.
      */
-    using pq_action_path = std::wstring;
-
-    /**
-     * \brief A fully or partially-qualified action path.
-     */
-    using aq_action_path = std::wstring;
+    using action_path = std::wstring;
 
     /**
      * \brief Represents action creation parameters.
@@ -41,7 +37,7 @@ namespace ActionManager
         /**
          * \brief The action's path.
          */
-        fq_action_path path{};
+        action_path path{};
 
         /**
          * \brief The callback to be invoked when the action is initially triggered.
@@ -84,43 +80,27 @@ namespace ActionManager
     };
 
     /**
-     * \brief Adds the specified action to the action registry, removing any existing action with the same path.
+     * \brief Adds an action to the action registry. Any action with the same path will be replaced.
      * \param params The action parameters.
      * \remarks Whether the operation succeeded.
      */
     bool add(const t_action_params& params);
 
     /**
-     * \brief Removes an action or a group of actions by their path.
-     * \param path The action path.
+     * \brief Removes actions matching the specified filter.
+     * \param filter A filter.
      * \return Whether the operation succeeded.
      */
-    bool remove(const aq_action_path& path);
+    bool remove(const action_filter& filter);
 
     /**
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
-     * \param path The action path.
+     * \param path A path.
      * \param hotkey The hotkey to associate with the action.
      * \param overwrite_existing Whether the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action has no hotkey associated with it already.
      * \return Whether the operation succeeded.
-     * \details This updates the action<->hotkey associations in the config.
-     * \details If this is the first time the hotkey is associated with the action.
      */
-    bool associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing = true);
-
-    /**
-     * \brief Checks if an action is enabled.
-     * \param path The fully-qualified action path to check.
-     * \return Whether the action is enabled.
-     */
-    bool is_action_enabled(const fq_action_path& path);
-
-    /**
-     * \brief Checks if an action is active.
-     * \param path The fully-qualified action path to check.
-     * \return Whether the action is active.
-     */
-    bool is_action_active(const fq_action_path& path);
+    bool associate_hotkey(const action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing = true);
 
     /**
      * \brief Begins a batch operation. Batches all updates caused by <c>add</c>, <c>remove</c>, and <c>associate_hotkey</c> into one at the end of the operation.
@@ -133,48 +113,62 @@ namespace ActionManager
     void end_batch_work();
 
     /**
-     * \brief Notifies about the enabled state of an action or a group of actions changing.
-     * \param path The action path.
+     * \brief Notifies about the enabled state of actions matching a filter changing.
+     * \param filter A filter.
      */
-    void notify_enabled_changed(const aq_action_path& path);
+    void notify_enabled_changed(const action_filter& filter);
 
     /**
-     * \brief Notifies about the active state of an action or a group of actions changing.
-     * \param path The action path.
+     * \brief Notifies about the active state of actions matching a filter changing.
+     * \param filter A filter.
      */
-    void notify_active_changed(const aq_action_path& path);
+    void notify_active_changed(const action_filter& filter);
 
     /**
-     * \brief Notifies about the real name of an action or a group of actions changing.
-     * \param path The action path.
+     * \brief Notifies about the real name of actions matching a filter changing.
+     * \param filter A filter.
      */
-    void notify_real_name_changed(const aq_action_path& path);
+    void notify_real_name_changed(const action_filter& filter);
 
     /**
-     * \brief Gets the display name for an action or nicely formats the path if the path is partially-qualified.
-     * \param path The action path.
+     * \brief Gets the display name for a given filter.
+     * \param filter A filter.
      * \param ignore_real_name Whether to ignore the real name override.
      * \return The action's display name or an empty string if the display name couldn't be resolved.
      */
-    std::wstring get_display_name(const aq_action_path& path, bool ignore_real_name = false);
+    std::wstring get_display_name(const action_filter& filter, bool ignore_real_name = false);
 
     /**
      * \brief Gets all action paths that match the specified filter.
-     * \param path The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
+     * \param filter The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
      */
-    std::vector<fq_action_path> get_actions_matching_filter(const aq_action_path& path = L"");
+    std::vector<action_path> get_actions_matching_filter(const action_filter& filter = L"");
 
     /**
-     * \brief Gets the segments of an action's path.
-     * \param path The path to split.
-     * \return A vector of segments, where each segment is a part of the path.
+     * \brief Gets the segments of a filter.
+     * \param filter A filter.
+     * \return A vector of the filter's segments.
      */
-    std::vector<fq_action_path> get_path_segments(const aq_action_path& path);
+    std::vector<action_path> get_segments(const action_filter& filter);
+
+    /**
+     * \brief Gets whether an action is enabled.
+     * \param path A path.
+     * \return The actions' enabled state.
+     */
+    bool get_action_enabled(const action_path& path);
+
+    /**
+     * \brief Gets whether an action is active.
+     * \param path A path.
+     * \return The actions' active state.
+     */
+    bool get_action_active(const action_path& path);
 
     /**
      * \brief Manually invokes an action by its path.
-     * \param path The qualified path of the action to invoke.
+     * \param path A path.
      * \param up Whether the invocation is considered as "releasing" the action.
      */
-    void invoke(const fq_action_path& path, bool up = false);
+    void invoke(const action_path& path, bool up = false);
 } // namespace ActionManager

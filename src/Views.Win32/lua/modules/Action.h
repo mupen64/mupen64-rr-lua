@@ -201,31 +201,31 @@ namespace LuaCore::Action
 
     static int notify_enabled_changed(lua_State* L)
     {
-        const auto path = lua_getwstring(L, 1);
-        ActionManager::notify_enabled_changed(path);
+        const auto filter = lua_getwstring(L, 1);
+        ActionManager::notify_enabled_changed(filter);
         return 0;
     }
 
     static int notify_active_changed(lua_State* L)
     {
-        const auto path = lua_getwstring(L, 1);
-        ActionManager::notify_active_changed(path);
+        const auto filter = lua_getwstring(L, 1);
+        ActionManager::notify_active_changed(filter);
         return 0;
     }
 
     static int notify_real_name_changed(lua_State* L)
     {
-        const auto path = lua_getwstring(L, 1);
-        ActionManager::notify_real_name_changed(path);
+        const auto filter = lua_getwstring(L, 1);
+        ActionManager::notify_real_name_changed(filter);
         return 0;
     }
 
     static int get_display_name(lua_State* L)
     {
-        const auto path = lua_getwstring(L, 1);
+        const auto filter = lua_getwstring(L, 1);
         const auto ignore_real_name = (bool)luaL_opt(L, lua_toboolean, 2, false);
 
-        const auto result = ActionManager::get_display_name(path, ignore_real_name);
+        const auto result = ActionManager::get_display_name(filter, ignore_real_name);
 
         lua_pushstring(L, io_service.wstring_to_string(result).c_str());
         return 1;
@@ -233,9 +233,9 @@ namespace LuaCore::Action
 
     static int get_actions_matching_filter(lua_State* L)
     {
-        const auto path = lua_getwstring(L, 1);
+        const auto filter = lua_getwstring(L, 1);
 
-        const auto actions = ActionManager::get_actions_matching_filter(path);
+        const auto actions = ActionManager::get_actions_matching_filter(filter);
 
         lua_newtable(L);
         size_t i = 1;

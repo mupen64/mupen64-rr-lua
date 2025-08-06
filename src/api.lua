@@ -1359,32 +1359,34 @@ function hotkey.prompt(caption) end
 -- action functions
 --#region
 
----@alias FullyQualifiedActionPath string A fully-qualified action path in the format `"Category > Subcategory[] > Name"`.
+---@alias ActionFilter string
+---An action filter that can be either a fully-qualified or partially-qualified `"Category > Subcategory[] [ > Name ]"`.
+---This is usually used to refer to groups of actions, but can also refer to a single action.
 
----@alias PartiallyQualifiedActionPath string A partially-qualified action path in the format `"Category > Subcategory[]"`. This is used to refer to actions without specifying the full path, such as when notifying about changes.
-
----@alias AnyQualifiedActionPath FullyQualifiedActionPath | PartiallyQualifiedActionPath A fully or partially-qualified action path.
+---@alias ActionPath string
+---A fully-qualified action path in the format `"Category > Subcategory[] > Name"`.
+---An action path is a subset of the action filter that is guaranteed to be fully-qualified, meaning it contains all segments of the path.
 
 ---@class ActionParams
----@field path FullyQualifiedActionPath The path of the action.
+---@field path ActionPath The action's path.
 ---@field down_callback fun() The callback to be invoked when the action is initially triggered.
 ---@field up_callback fun()? The callback to be invoked when the action has been released.
 ---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled.
 ---@field get_active (fun(): boolean)? The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state.
 ---@field get_real_name (fun(): string)? The function used to determine the function's real name, which is an override for the path-derived display name.
 
----Adds the specified action to the action registry, removing any existing action with the same path.
+---Adds an action to the action registry. Any action with the same path will be replaced.
 ---@param params ActionParams The action parameters.
 ---@return boolean # Whether the operation succeeded.
 function action.add(params) end
 
----Removes an action or a group of actions by their path.
----@param path AnyQualifiedActionPath The action path.
+---Removes actions matching the specified filter.
+---@param filter ActionFilter A filter.
 ---@return boolean # Whether the operation succeeded.
-function action.remove(path) end
+function action.remove(filter) end
 
 ---Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
----@param path FullyQualifiedActionPath The action path.
+---@param path ActionPath A path.
 ---@param hotkey Hotkey The hotkey to associate with the action.
 ---@param overwrite_existing boolean? Whether the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action has no hotkey associated with it already.
 ---@return boolean # Whether the operation succeeded.
@@ -1396,31 +1398,31 @@ function action.begin_batch_work() end
 ---Ends a batch operation.
 function action.end_batch_work() end
 
----Notifies about the enabled state of an action or a group of actions changing.
----@param path AnyQualifiedActionPath The action path.
-function action.notify_enabled_changed(path) end
+---Notifies about the enabled state of actions matching a filter changing.
+---@param filter ActionFilter A filter.
+function action.notify_enabled_changed(filter) end
 
----Notifies about the active state of an action or a group of actions changing.
----@param path AnyQualifiedActionPath The action path.
-function action.notify_active_changed(path) end
+---Notifies about the active state of actions matching a filter changing.
+---@param filter ActionFilter A filter.
+function action.notify_active_changed(filter) end
 
----Notifies about the real name of an action or a group of actions changing.
----@param path AnyQualifiedActionPath The action path.
-function action.notify_real_name_changed(path) end
+---Notifies about the real name of actions matching a filter changing.
+---@param filter ActionFilter A filter.
+function action.notify_real_name_changed(filter) end
 
----Gets the display name for an action or nicely formats the path if the path is partially-qualified.
----@param path AnyQualifiedActionPath The action path.
+---Gets the display name for a given filter.
+---@param filter ActionFilter A filter.
 ---@param ignore_real_name boolean? Whether to ignore the real name override.
 ---@return string # The action's display name or an empty string if the display name couldn't be resolved.
-function action.get_display_name(path, ignore_real_name) end
+function action.get_display_name(filter, ignore_real_name) end
 
 ---Gets all action paths that match the specified filter.
----@param path AnyQualifiedActionPath? The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
----@return string[] # The list of action paths that match the filter.
-function action.get_actions_matching_filter(path) end
+---@param filter ActionFilter? The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
+---@return ActionPath[] # The list of action paths that match the filter.
+function action.get_actions_matching_filter(filter) end
 
 ---Manually invokes an action by its path.
----@param path FullyQualifiedActionPath The qualified path of the action to invoke.
+---@param path ActionPath A path.
 ---@param up boolean? Whether the invocation is considered as "releasing" the action.
 function action.invoke(path, up) end
 

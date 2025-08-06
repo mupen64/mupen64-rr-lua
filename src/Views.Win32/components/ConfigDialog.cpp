@@ -1742,7 +1742,7 @@ void ConfigDialog::show_app_settings()
     size_t group_id = g_option_groups.back().id + 1;
     for (const auto& action_matching_filter : ActionManager::get_actions_matching_filter())
     {
-        const auto segments = ActionManager::get_path_segments(action_matching_filter);
+        const auto segments = ActionManager::get_segments(action_matching_filter);
         const auto is_builtin = segments[0] == L"Mupen64";
         std::wstring relevant_segment = is_builtin ? segments[1] : segments[0];
         std::wstring name = is_builtin ? std::format(L"Mupen64 > {}", relevant_segment) : std::format(L"{}", relevant_segment);

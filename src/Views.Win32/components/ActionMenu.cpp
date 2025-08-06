@@ -61,7 +61,7 @@ t_menu_item::t_menu_item(const std::wstring& path)
 {
     this->m_path = path;
 
-    const auto name = ActionManager::get_path_segments(path).back();
+    const auto name = ActionManager::get_segments(path).back();
     this->m_has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
 }
 
@@ -104,7 +104,7 @@ static void update_menu_enabled_states(t_action_menu_context& ctx)
             return;
         }
 
-        const bool enabled = ActionManager::is_action_enabled(item.action_path);
+        const bool enabled = ActionManager::get_action_enabled(item.action_path);
         EnableMenuItem(main_menu, item.id, enabled ? MF_ENABLED : MF_GRAYED);
     });
 }
@@ -121,7 +121,7 @@ static void update_menu_active_states(t_action_menu_context& ctx)
             return;
         }
 
-        const bool active = ActionManager::is_action_active(item.action_path);
+        const bool active = ActionManager::get_action_active(item.action_path);
         CheckMenuItem(main_menu, item.id, active ? MF_CHECKED : MF_UNCHECKED);
     });
 }
@@ -199,7 +199,7 @@ static void build_initial_menu_tree(t_action_menu_context& ctx)
 
     for (const auto& path : g_am_ctx.actions)
     {
-        std::vector<std::wstring> parts = ActionManager::get_path_segments(path);
+        std::vector<std::wstring> parts = ActionManager::get_segments(path);
 
         t_menu_item* current = &ctx.menu;
 

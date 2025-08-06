@@ -20,5 +20,5 @@ namespace RecentMenu
      * \param val The value to add.
      * \param frozen Whether the list is frozen.
      */
-    void add(const ActionManager::pq_action_path& menu_path, std::vector<std::wstring>& vec, std::wstring val, bool frozen);
+    void add(const ActionManager::action_filter& menu_path, std::vector<std::wstring>& vec, std::wstring val, bool frozen);
 } // namespace RecentMenu

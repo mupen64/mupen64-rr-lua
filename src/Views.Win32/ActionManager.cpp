@@ -9,9 +9,8 @@
 #include <Messenger.h>
 
 using t_action_params = ActionManager::t_action_params;
-using fq_action_path = ActionManager::fq_action_path;
-using pq_action_path = ActionManager::pq_action_path;
-using aq_action_path = ActionManager::aq_action_path;
+using action_path = ActionManager::action_path;
+using action_filter = ActionManager::action_filter;
 
 struct t_action {
     t_action_params params{};
@@ -25,36 +24,36 @@ struct t_action_manager {
 static t_action_manager g_mgr{};
 
 /**
- * \brief Normalizes an action's path by deconstructing it into segments, then reconstructing it with a consistent format.
+ * \brief Normalizes a filter by deconstructing it into segments, then reconstructing it with a consistent format.
  */
-static std::wstring normalize_path(const std::wstring& path)
+static action_filter normalize_filter(const action_filter& filter)
 {
-    const auto parts = ActionManager::get_path_segments(path);
+    const auto parts = ActionManager::get_segments(filter);
     return io_service.join_wstring(parts, L">");
 }
 
 /**
- * \brief Finds all actions that are under the given path. Can be used with unnormalized paths.
+ * \brief Finds all actions using the given filter.
  */
-static std::vector<t_action*> find_actions_under_path(const std::wstring& path)
+static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filter& filter)
 {
-    const auto normalized_path = normalize_path(path);
+    const auto normalized_filter = normalize_filter(filter);
 
     for (auto& action : g_mgr.actions)
     {
-        if (action.params.path == normalized_path)
+        if (action.params.path == normalized_filter)
         {
             return {&action};
         }
     }
 
-    const auto segments = ActionManager::get_path_segments(normalized_path);
+    const auto segments = ActionManager::get_segments(normalized_filter);
 
     std::vector<t_action*> actions;
 
     for (auto& action : g_mgr.actions)
     {
-        const auto action_segments = ActionManager::get_path_segments(action.params.path);
+        const auto action_segments = ActionManager::get_segments(action.params.path);
         if (action_segments.size() >= segments.size() && std::equal(segments.begin(), segments.end(), action_segments.begin()))
         {
             actions.push_back(&action);
@@ -88,7 +87,7 @@ bool ActionManager::add(const t_action_params& params)
 {
     t_action action{};
     action.params = params;
-    action.params.path = normalize_path(action.params.path);
+    action.params.path = normalize_filter(action.params.path);
 
     if (!validate_action_path(action.params.path))
     {
@@ -110,13 +109,13 @@ bool ActionManager::add(const t_action_params& params)
     return true;
 }
 
-bool ActionManager::remove(const aq_action_path& path)
+bool ActionManager::remove(const action_filter& filter)
 {
-    const auto actions = find_actions_under_path(path);
+    const auto actions = get_action_ptrs_matching_filter(filter);
 
     if (actions.empty())
     {
-        g_view_logger->error(L"ActionManager::remove: Action '{}' not found.", path);
+        g_view_logger->error(L"ActionManager::remove: Action '{}' not found.", filter);
         return false;
     }
 
@@ -152,9 +151,9 @@ bool ActionManager::remove(const aq_action_path& path)
     return true;
 }
 
-bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing)
+bool ActionManager::associate_hotkey(const action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing)
 {
-    const auto normalized_path = normalize_path(path);
+    const auto normalized_path = normalize_filter(path);
 
     if (!validate_action_path(normalized_path))
     {
@@ -162,7 +161,7 @@ bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t
         return false;
     }
 
-    if (find_actions_under_path(normalized_path).empty())
+    if (get_action_ptrs_matching_filter(normalized_path).empty())
     {
         g_view_logger->error(L"ActionManager::associate_hotkey: Action '{}' not found.", normalized_path);
         return false;
@@ -199,9 +198,9 @@ bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t
     return true;
 }
 
-bool ActionManager::is_action_enabled(const fq_action_path& path)
+bool ActionManager::get_action_enabled(const action_path& path)
 {
-    const auto actions = find_actions_under_path(path);
+    const auto actions = get_action_ptrs_matching_filter(path);
 
     if (actions.empty())
     {
@@ -225,9 +224,9 @@ bool ActionManager::is_action_enabled(const fq_action_path& path)
     return true;
 }
 
-bool ActionManager::is_action_active(const fq_action_path& path)
+bool ActionManager::get_action_active(const action_path& path)
 {
-    const auto actions = find_actions_under_path(path);
+    const auto actions = get_action_ptrs_matching_filter(path);
 
     if (actions.empty())
     {
@@ -262,34 +261,35 @@ void ActionManager::end_batch_work()
     Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
 }
 
-void ActionManager::notify_enabled_changed(const aq_action_path& path)
+void ActionManager::notify_enabled_changed(const action_filter& filter)
 {
-    const auto actions = find_actions_under_path(path);
+    const auto actions = get_action_ptrs_matching_filter(filter);
     Messenger::broadcast(Messenger::Message::ActionEnabledChanged, actions);
 }
 
-void ActionManager::notify_active_changed(const aq_action_path& path)
+void ActionManager::notify_active_changed(const action_filter& filter)
 {
-    const auto actions = find_actions_under_path(path);
+    const auto actions = get_action_ptrs_matching_filter(filter);
     Messenger::broadcast(Messenger::Message::ActionActiveChanged, actions);
 }
 
-void ActionManager::notify_real_name_changed(const aq_action_path& path)
+void ActionManager::notify_real_name_changed(const action_filter& filter)
 {
-    const auto actions = find_actions_under_path(path);
+    const auto actions = get_action_ptrs_matching_filter(filter);
     Messenger::broadcast(Messenger::Message::ActionRealNameChanged, actions);
 }
 
-std::wstring ActionManager::get_display_name(const aq_action_path& path, bool ignore_real_name)
+std::wstring ActionManager::get_display_name(const action_filter& filter, bool ignore_real_name)
 {
-    const auto normalized_path = normalize_path(path);
+    const auto normalized_path = normalize_filter(filter);
 
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = get_action_ptrs_matching_filter(normalized_path);
 
     if (actions.empty() || actions.size() > 1)
     {
-        // Probably an unqualified path, we go the other route
-        auto name = get_path_segments(path).back();
+        // It's a filter, not a fully-qualified action path. We don't look up anything, but just do some formatting instead.
+
+        auto name = get_segments(filter).back();
         const auto has_separator = name.ends_with(SEPARATOR_SUFFIX);
 
         if (has_separator)
@@ -302,7 +302,7 @@ std::wstring ActionManager::get_display_name(const aq_action_path& path, bool ig
 
     const auto action = actions.front();
 
-    const auto segments = get_path_segments(normalized_path);
+    const auto segments = get_segments(normalized_path);
     const auto& name = segments.back();
     const bool has_separator = name.ends_with(SEPARATOR_SUFFIX);
 
@@ -329,12 +329,13 @@ std::wstring ActionManager::get_display_name(const aq_action_path& path, bool ig
     return display_name;
 }
 
-std::vector<fq_action_path> ActionManager::get_actions_matching_filter(const aq_action_path& path)
+std::vector<action_path> ActionManager::get_actions_matching_filter(const action_filter& filter)
 {
-    if (path.empty())
+    std::vector<action_path> result;
+    result.reserve(g_mgr.actions.size());
+
+    if (filter.empty())
     {
-        std::vector<fq_action_path> result;
-        result.reserve(g_mgr.actions.size());
         for (const auto& action : g_mgr.actions)
         {
             result.emplace_back(action.params.path);
@@ -342,21 +343,18 @@ std::vector<fq_action_path> ActionManager::get_actions_matching_filter(const aq_
         return result;
     }
 
-    const auto actions = find_actions_under_path(path);
-
-    std::vector<fq_action_path> result;
-    result.reserve(actions.size());
+    const auto actions = get_action_ptrs_matching_filter(filter);
     for (const auto& action : actions)
     {
         result.push_back(action->params.path);
     }
-    
+
     return result;
 }
 
-std::vector<fq_action_path> ActionManager::get_path_segments(const aq_action_path& path)
+std::vector<action_path> ActionManager::get_segments(const action_filter& filter)
 {
-    std::vector<fq_action_path> parts = io_service.split_wstring(path, L">");
+    std::vector<action_path> parts = io_service.split_wstring(filter, L">");
     for (auto& part : parts)
     {
         part = io_service.trim(part);
@@ -369,9 +367,9 @@ std::vector<fq_action_path> ActionManager::get_path_segments(const aq_action_pat
     return parts;
 }
 
-void ActionManager::invoke(const fq_action_path& path, const bool up)
+void ActionManager::invoke(const action_path& path, const bool up)
 {
-    const auto normalized_path = normalize_path(path);
+    const auto normalized_path = normalize_filter(path);
 
     if (!validate_action_path(normalized_path))
     {
@@ -379,7 +377,7 @@ void ActionManager::invoke(const fq_action_path& path, const bool up)
         return;
     }
 
-    const auto actions = find_actions_under_path(normalized_path);
+    const auto actions = get_action_ptrs_matching_filter(normalized_path);
 
     if (actions.empty())
     {

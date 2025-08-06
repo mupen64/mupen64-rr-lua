@@ -8,7 +8,7 @@
 #include <components/RecentItems.h>
 #include <ActionManager.h>
 
-void RecentMenu::add(const ActionManager::pq_action_path& menu_path, std::vector<std::wstring>& vec, std::wstring val, const bool frozen)
+void RecentMenu::add(const ActionManager::action_filter& menu_path, std::vector<std::wstring>& vec, std::wstring val, const bool frozen)
 {
     assert(is_on_gui_thread());
 
