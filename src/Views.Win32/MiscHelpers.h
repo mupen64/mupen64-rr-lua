@@ -63,6 +63,32 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> m_start_time;
 };
 
+class WindowDisabler {
+public:
+    explicit WindowDisabler(const HWND hwnd) :
+        m_hwnd(hwnd)
+    {
+        if (!IsWindow(hwnd))
+        {
+            m_hwnd = nullptr;
+            return;
+        }
+        m_prev_enabled = IsWindowEnabled(m_hwnd);
+        EnableWindow(hwnd, FALSE);
+    }
+
+    ~WindowDisabler()
+    {
+        if (IsWindow(m_hwnd))
+        {
+            EnableWindow(m_hwnd, m_prev_enabled);
+        }
+    }
+
+private:
+    HWND m_hwnd{};
+    bool m_prev_enabled{};
+};
 static RECT get_window_rect_client_space(HWND parent, HWND child)
 {
     RECT offset_client = {0};

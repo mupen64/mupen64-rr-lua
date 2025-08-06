@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <components/LuaDialog.h>
 #include <lua/LuaManager.h>
 
 namespace LuaCore::Hotkey
@@ -59,6 +60,8 @@ namespace LuaCore::Hotkey
 
     static int prompt(lua_State* L)
     {
+        WindowDisabler disabler(LuaDialog::hwnd());
+
         const auto caption = lua_getwstring(L, 1);
 
         ::Hotkey::t_hotkey hotkey{};
