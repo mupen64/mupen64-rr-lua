@@ -158,7 +158,7 @@ namespace LuaCore::Action
             lua_pushboolean(L, false);
             return 1;
         }
-        
+
         const auto result = ActionManager::add(params);
 
         if (result)

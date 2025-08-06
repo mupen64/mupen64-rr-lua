@@ -949,7 +949,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_CREATE:
         SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
-        
+
         ActionMenu::init();
 
         AppActions::add();

@@ -60,7 +60,7 @@ namespace ActionManager
          */
         std::function<void()> on_removed = [] {
         };
-        
+
         /**
          * \brief The function used to determine whether the action is enabled.
          */
@@ -96,7 +96,7 @@ namespace ActionManager
      * \return Whether the operation succeeded.
      */
     bool remove(const aq_action_path& path);
-    
+
     /**
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
      * \param path The action path.
