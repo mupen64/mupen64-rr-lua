@@ -74,7 +74,7 @@ namespace ActionManager
     /**
      * \brief Adds an action to the action registry. Any action with the same path will be replaced.
      * \param params The action parameters.
-     * \remarks Whether the operation succeeded.
+     * \return Whether the operation succeeded.
      */
     bool add(const t_action_params& params);
 
