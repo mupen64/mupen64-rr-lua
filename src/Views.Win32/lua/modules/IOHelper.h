@@ -24,7 +24,7 @@ namespace LuaCore::IOHelper
         const int32_t type = luaL_checkinteger(L, 2);
 
         std::wstring path;
-        
+
         if (type == 0)
         {
             path = FilePicker::show_open_dialog(L"o_lua_api", g_main_hwnd, filter);
