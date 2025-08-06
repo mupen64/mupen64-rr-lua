@@ -244,7 +244,7 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
                 hotkey.alt = std::stoi(alt);
             }
 
-            g_config.hotkeys[io_service.string_to_wstring(action_path)] = hotkey;
+            value[io_service.string_to_wstring(action_path)] = hotkey;
         }
     }
     else
