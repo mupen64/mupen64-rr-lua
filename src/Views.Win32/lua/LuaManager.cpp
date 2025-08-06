@@ -80,27 +80,27 @@ void* lua_tocallback(lua_State* L, const int i)
     return lua_optcallback(L, i);
 }
 
-void lua_pushcallback(lua_State* L, void* key, bool free)
+void lua_pushcallback(lua_State* L, void* token, bool free)
 {
-    lua_pushlightuserdata(L, key);
+    lua_pushlightuserdata(L, token);
     lua_gettable(L, LUA_REGISTRYINDEX);
     if (free)
     {
-        lua_freecallback(L, key);
+        lua_freecallback(L, token);
     }
 }
 
-void lua_freecallback(lua_State* L, void* key)
+void lua_freecallback(lua_State* L, void* token)
 {
-    if (key == nullptr)
+    if (token == nullptr)
     {
         return;
     }
-    lua_pushlightuserdata(L, key);
+    lua_pushlightuserdata(L, token);
     lua_pushnil(L);
     lua_settable(L, LUA_REGISTRYINDEX);
-    free(key);
-    key = nullptr;
+    free(token);
+    token = nullptr;
 }
 
 void LuaManager::init()

@@ -36,10 +36,36 @@ namespace LuaManager
 #define lua_getwstring(L, i) io_service.string_to_wstring(lua_tostring(L, i))
 #define lua_towstring(L, i) lua_getwstring(L, i)
 
+/**
+ * \brief Converts a Lua function at the given index to a callback. Errors if the function is not a valid Lua function or not present.
+ * \param L The Lua state.
+ * \param i The index of the function in the Lua stack.
+ * \return A pointer to the callback token, or nullptr if the function is not a valid Lua function or not present.
+ */
 void* lua_tocallback(lua_State* L, int i);
+
+/**
+ * \brief Converts a Lua function at the given index to a callback.
+ * \param L The Lua state.
+ * \param i The index of the function in the Lua stack.
+ * \return A pointer to the callback token, or nullptr if the function is not a valid Lua function or not present.
+ */
 void* lua_optcallback(lua_State* L, int i);
-void lua_pushcallback(lua_State* L, void* key, bool free = true);
-void lua_freecallback(lua_State* L, void* key);
+
+/**
+ * \brief Pushes a callback's Lua function onto the stack.
+ * \param L The Lua state.
+ * \param token A callback token.
+ * \param free Whether to free the callback token after pushing it onto the stack. If true, the callback will be freed after being pushed.
+ */
+void lua_pushcallback(lua_State* L, void* token, bool free = true);
+
+/**
+ * \brief Frees a callback token from the Lua registry.
+ * \param L The Lua state.
+ * \param token A callback token.
+ */
+void lua_freecallback(lua_State* L, void* token);
 
 extern std::vector<t_lua_environment*> g_lua_environments;
 
