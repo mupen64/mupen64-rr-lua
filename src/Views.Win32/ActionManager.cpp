@@ -151,7 +151,7 @@ bool ActionManager::remove(const aq_action_path& path)
     return true;
 }
 
-bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey)
+bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing)
 {
     const auto normalized_path = normalize_path(path);
 
@@ -167,14 +167,28 @@ bool ActionManager::associate_hotkey(const fq_action_path& path, const Hotkey::t
         return false;
     }
 
-    if (!g_config.hotkeys.contains(normalized_path))
+    if (overwrite_existing)
     {
-        g_view_logger->debug(L"ActionManager::associate_hotkey: Initial hotkey registered for '{}': {}.", normalized_path, hotkey.to_wstring());
-        g_config.inital_hotkeys[normalized_path] = hotkey;
-    }
+        if (!g_config.hotkeys.contains(normalized_path))
+        {
+            g_view_logger->debug(L"ActionManager::associate_hotkey: Initial hotkey registered for '{}': {}.", normalized_path, hotkey.to_wstring());
+            g_config.inital_hotkeys[normalized_path] = hotkey;
+        }
 
-    g_view_logger->debug(L"ActionManager::associate_hotkey: Hotkey registered for '{}': {}.", normalized_path, hotkey.to_wstring());
-    g_config.hotkeys[normalized_path] = hotkey;
+        g_view_logger->debug(L"ActionManager::associate_hotkey: Hotkey registered for '{}': {}.", normalized_path, hotkey.to_wstring());
+        g_config.hotkeys[normalized_path] = hotkey;
+    }
+    else
+    {
+        if (!g_config.hotkeys.contains(normalized_path))
+        {
+            g_config.hotkeys[normalized_path] = hotkey;
+        }
+        else
+        {
+            g_view_logger->debug(L"ActionManager::associate_hotkey: {} is already registered, doing nothing.", normalized_path, hotkey.to_wstring());
+        }
+    }
 
     if (!g_mgr.batched_work)
     {

@@ -179,8 +179,9 @@ namespace LuaCore::Action
             lua_pushboolean(L, false);
             return 1;
         }
+        const auto overwrite_existing = (bool)luaL_opt(L, lua_toboolean, 3, false);
 
-        const auto result = ActionManager::associate_hotkey(path, hotkey);
+        const auto result = ActionManager::associate_hotkey(path, hotkey, overwrite_existing);
 
         lua_pushboolean(L, result);
         return 1;

@@ -1847,7 +1847,7 @@ void ConfigDialog::show_app_settings()
         ActionManager::begin_batch_work();
         for (const auto& [path, hotkey] : g_hotkey_scratchpad)
         {
-            ActionManager::associate_hotkey(path, hotkey);
+            ActionManager::associate_hotkey(path, hotkey, true);
         }
         ActionManager::end_batch_work();
     }

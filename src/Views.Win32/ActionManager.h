@@ -101,11 +101,12 @@ namespace ActionManager
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
      * \param path The action path.
      * \param hotkey The hotkey to associate with the action.
+     * \param overwrite_existing Whether the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action has no hotkey associated with it already. 
      * \return Whether the operation succeeded.
      * \details This updates the action<->hotkey associations in the config.
      * \details If this is the first time the hotkey is associated with the action.
      */
-    bool associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey);
+    bool associate_hotkey(const fq_action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing = true);
 
     /**
      * \brief Checks if an action is enabled.

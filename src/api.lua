@@ -1386,8 +1386,9 @@ function action.remove(path) end
 ---Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
 ---@param path FullyQualifiedActionPath The action path.
 ---@param hotkey Hotkey The hotkey to associate with the action.
+---@param overwrite_existing boolean? Whether the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action has no hotkey associated with it already.
 ---@return boolean # Whether the operation succeeded.
-function action.associate_hotkey(path, hotkey) end
+function action.associate_hotkey(path, hotkey, overwrite_existing) end
 
 ---Begins a batch operation. Batches all updates caused by [action.add](lua://action.add) and [action.associate_hotkey](lua://action.associate_hotkey) into one at the end of the operation.
 function action.begin_batch_work() end

@@ -817,7 +817,7 @@ static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey&
     });
     runtime_assert(success, std::format(L"Failed to add action for path '{}'.", path));
 
-    success = ActionManager::associate_hotkey(path, g_config.hotkeys.contains(path) ? g_config.hotkeys[path] : default_hotkey);
+    success = ActionManager::associate_hotkey(path, default_hotkey, false);
     runtime_assert(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
 }
 
