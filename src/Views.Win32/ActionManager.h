@@ -101,7 +101,7 @@ namespace ActionManager
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
      * \param path The action path.
      * \param hotkey The hotkey to associate with the action.
-     * \param overwrite_existing Whether the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action has no hotkey associated with it already. 
+     * \param overwrite_existing Whether the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action has no hotkey associated with it already.
      * \return Whether the operation succeeded.
      * \details This updates the action<->hotkey associations in the config.
      * \details If this is the first time the hotkey is associated with the action.
