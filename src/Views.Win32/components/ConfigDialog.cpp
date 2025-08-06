@@ -2279,9 +2279,7 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
                 {
                     goto destroy_menu;
                 }
-
-                // TODO: Implement this
-
+                
                 ListView_RedrawItems(lvhwnd, 0, ListView_GetItemCount(lvhwnd));
             }
 
