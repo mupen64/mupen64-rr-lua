@@ -81,9 +81,9 @@ namespace ActionManager
     /**
      * \brief Removes actions matching the specified filter.
      * \param filter A filter.
-     * \return Whether the operation succeeded.
+     * \return A vector containing the paths of the actions that were removed.
      */
-    bool remove(const action_filter& filter);
+    std::vector<action_path> remove(const action_filter& filter);
 
     /**
      * \brief Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.

@@ -109,15 +109,12 @@ bool ActionManager::add(const t_action_params& params)
     return true;
 }
 
-bool ActionManager::remove(const action_filter& filter)
+std::vector<action_path> ActionManager::remove(const action_filter& filter)
 {
     const auto actions = get_action_ptrs_matching_filter(filter);
 
-    if (actions.empty())
-    {
-        g_view_logger->error(L"ActionManager::remove: Action '{}' not found.", filter);
-        return false;
-    }
+    std::vector<action_path> removed_paths;
+    removed_paths.reserve(actions.size());
 
     // Call the on_removed callbacks first and before removing anything - we don't want weirdness if the callbacks do some bullshit like calling back into the ActionManager...
     for (const auto& action_to_be_removed : actions)
@@ -133,6 +130,8 @@ bool ActionManager::remove(const action_filter& filter)
             {
                 existing_action.params.on_removed();
             }
+
+            removed_paths.emplace_back(existing_action.params.path);
         }
     }
 
@@ -148,7 +147,7 @@ bool ActionManager::remove(const action_filter& filter)
         Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
     }
 
-    return true;
+    return removed_paths;
 }
 
 bool ActionManager::associate_hotkey(const action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing)
