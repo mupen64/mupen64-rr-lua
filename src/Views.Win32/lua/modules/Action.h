@@ -170,6 +170,24 @@ namespace LuaCore::Action
         return 1;
     }
 
+    static int remove(lua_State* L)
+    {
+        const auto filter = lua_getwstring(L, 1);
+
+        const auto removed_actions = ActionManager::remove(filter);
+
+        lua_newtable(L);
+        size_t i = 1;
+        for (const auto& action : removed_actions)
+        {
+            lua_pushstring(L, io_service.wstring_to_string(action).c_str());
+            lua_seti(L, -2, i++);
+        }
+
+        return 1;
+    }
+
+
     static int associate_hotkey(lua_State* L)
     {
         const auto path = lua_getwstring(L, 1);

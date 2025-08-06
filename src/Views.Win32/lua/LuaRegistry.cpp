@@ -222,6 +222,7 @@ const luaL_Reg HOTKEY_FUNCS[] = {
 
 const luaL_Reg ACTION_FUNCS[] = {
 {"add", LuaCore::Action::add},
+{"remove", LuaCore::Action::remove},
 {"associate_hotkey", LuaCore::Action::associate_hotkey},
 {"begin_batch_work", LuaCore::Action::begin_batch_work},
 {"end_batch_work", LuaCore::Action::end_batch_work},
