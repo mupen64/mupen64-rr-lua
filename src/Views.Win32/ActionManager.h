@@ -21,6 +21,7 @@ namespace ActionManager
     /**
      * \brief An action filter that can be either a fully-qualified or partially-qualified `"Category > Subcategory[] [ > Name ]"`.
      * This is usually used to refer to groups of actions, but can also refer to a single action.
+     * If the filter is empty, all actions will be matched.
      */
     using action_filter = std::wstring;
 
@@ -132,7 +133,7 @@ namespace ActionManager
 
     /**
      * \brief Gets all action paths that match the specified filter.
-     * \param filter The action path filter. If the path is unqualified, all actions under the last category or subcategory will be returned. If the path is empty, all actions will be returned.
+     * \param filter A filter.
      */
     std::vector<action_path> get_actions_matching_filter(const action_filter& filter = L"");
 

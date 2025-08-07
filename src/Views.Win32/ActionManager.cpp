@@ -39,6 +39,18 @@ static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filte
 {
     const auto normalized_filter = normalize_filter(filter);
 
+    std::vector<t_action*> actions;
+
+    if (normalized_filter.empty())
+    {
+        actions.reserve(g_mgr.actions.size());
+        for (auto& action : g_mgr.actions)
+        {
+            actions.push_back(&action);
+        }
+        return actions;
+    }
+
     for (auto& action : g_mgr.actions)
     {
         if (action.params.path == normalized_filter)
@@ -48,8 +60,6 @@ static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filte
     }
 
     const auto segments = ActionManager::get_segments(normalized_filter);
-
-    std::vector<t_action*> actions;
 
     for (auto& action : g_mgr.actions)
     {
@@ -330,22 +340,14 @@ std::wstring ActionManager::get_display_name(const action_filter& filter, bool i
 
 std::vector<action_path> ActionManager::get_actions_matching_filter(const action_filter& filter)
 {
-    std::vector<action_path> result;
-    result.reserve(g_mgr.actions.size());
-
-    if (filter.empty())
-    {
-        for (const auto& action : g_mgr.actions)
-        {
-            result.emplace_back(action.params.path);
-        }
-        return result;
-    }
-
     const auto actions = get_action_ptrs_matching_filter(filter);
+
+    std::vector<action_path> result;
+    result.reserve(actions.size());
+
     for (const auto& action : actions)
     {
-        result.push_back(action->params.path);
+        result.emplace_back(action->params.path);
     }
 
     return result;
