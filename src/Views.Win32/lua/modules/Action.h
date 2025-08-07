@@ -20,6 +20,11 @@ namespace LuaCore::Action
         }
 
         lua_getfield(L, 1, "path");
+        if (!lua_isstring(L, -1))
+        {
+            lua_pop(L, 1);
+            return false;
+        }
         params.path = lua_getwstring(L, -1);
         lua_pop(L, 1);
 
