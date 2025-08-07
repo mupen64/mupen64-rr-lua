@@ -183,6 +183,7 @@ bool ActionManager::associate_hotkey(const action_path& path, const Hotkey::t_ho
         if (!g_config.hotkeys.contains(normalized_path))
         {
             g_config.hotkeys[normalized_path] = hotkey;
+            g_config.inital_hotkeys[normalized_path] = hotkey;
         }
         else
         {
