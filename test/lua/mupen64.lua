@@ -40,7 +40,7 @@ lust.describe('mupen64', function()
 
     lust.describe('actions', function()
         lust.describe('add', function()
-            lust.before(function()
+            lust.after(function()
                 action.remove("Test")
             end)
 
@@ -105,10 +105,10 @@ lust.describe('mupen64', function()
             end)
         end)
         lust.describe('remove', function()
-            lust.before(function()
+            lust.after(function()
                 action.remove("Test")
             end)
-            
+
             lust.it('errors_when_filter_is_nil', function()
                 local func = function()
                     action.remove(nil)
@@ -144,6 +144,290 @@ lust.describe('mupen64', function()
                 end
                 -- Can't test for crashes in Lua, so this is just a smoke test.
                 lust.expect(true).to.be.truthy()
+            end)
+        end)
+
+        lust.describe('associate_hotkey', function()
+            lust.after(function()
+                action.remove("Test")
+            end)
+
+            lust.it('errors_when_path_is_nil', function()
+                local func = function()
+                    action.associate_hotkey(nil, {})
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_path_is_not_string', function()
+                local func = function()
+                    action.associate_hotkey({}, {})
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_hotkey_is_nil', function()
+                local func = function()
+                    action.add({
+                        path = "Test > Something",
+                        down_callback = function() end
+                    })
+                    action.associate_hotkey("Test > Something", nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_hotkey_is_not_table', function()
+                local func = function()
+                    action.add({
+                        path = "Test > Something",
+                        down_callback = function() end
+                    })
+                    action.associate_hotkey("Test > Something", 5)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_overwrite_existing_is_not_boolean', function()
+                local func = function()
+                    action.add({
+                        path = "Test > Something",
+                        down_callback = function() end
+                    })
+                    action.associate_hotkey("Test > Something", 5, 5)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('works_when_parameters_valid', function()
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function() end
+                })
+                local result = action.associate_hotkey("Test > Something", { key = Mupen.VKeycodes.VK_TAB }, true)
+                lust.expect(result).to.be.truthy()
+            end)
+        end)
+
+        lust.describe('batch_work', function()
+            lust.it('doesnt_error', function()
+                action.begin_batch_work()
+                action.end_batch_work()
+            end)
+        end)
+
+        lust.describe('notify_enabled_changed', function()
+            lust.after(function()
+                action.remove("Test")
+            end)
+            lust.it('errors_when_filter_is_nil', function()
+                local func = function()
+                    action.notify_enabled_changed(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_filter_is_not_string', function()
+                local func = function()
+                    action.notify_enabled_changed({})
+                end
+                lust.expect(func).to.fail()
+            end)
+            -- A test like "calls_callback_on_affected_actions" is not applicable because we can't know when the callback will be called.
+        end)
+
+        lust.describe('notify_active_changed', function()
+            lust.after(function()
+                action.remove("Test")
+            end)
+            lust.it('errors_when_filter_is_nil', function()
+                local func = function()
+                    action.notify_active_changed(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_filter_is_not_string', function()
+                local func = function()
+                    action.notify_active_changed({})
+                end
+                lust.expect(func).to.fail()
+            end)
+        end)
+
+        lust.describe('notify_display_name_changed', function()
+            lust.after(function()
+                action.remove("Test")
+            end)
+            lust.it('errors_when_filter_is_nil', function()
+                local func = function()
+                    action.notify_display_name_changed(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_filter_is_not_string', function()
+                local func = function()
+                    action.notify_display_name_changed({})
+                end
+                lust.expect(func).to.fail()
+            end)
+        end)
+
+        lust.describe('get_display_name', function()
+            lust.after(function()
+                action.remove("Test")
+            end)
+            lust.it('errors_when_filter_is_nil', function()
+                local func = function()
+                    action.get_display_name(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_filter_is_not_string', function()
+                local func = function()
+                    action.get_display_name({})
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('returns_correct_name_when_no_action_matched', function()
+                local name = action.get_display_name("Test >    Something")
+                lust.expect(name).to.equal("Something")
+            end)
+            lust.it('returns_correct_name_when_no_action_matched_with_separator', function()
+                local name = action.get_display_name("Test >    Something ---")
+                lust.expect(name).to.equal("Something")
+            end)
+            lust.it('returns_correct_name_when_action_matched', function()
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function() end
+                })
+                local name = action.get_display_name("Test >    Something")
+                lust.expect(name).to.equal("Something")
+            end)
+            lust.it('returns_correct_name_when_action_matched_with_separator', function()
+                action.add({
+                    path = "Test > Something---",
+                    down_callback = function() end
+                })
+                local name = action.get_display_name("Test >    Something ---")
+                lust.expect(name).to.equal("Something")
+            end)
+            lust.it('uses_display_name', function()
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function() end,
+                    get_display_name = function()
+                        return "Hi!"
+                    end
+                })
+                local name = action.get_display_name("Test >    Something")
+                lust.expect(name).to.equal("Hi!")
+            end)
+            lust.it('doesnt_use_display_name_when_ignore_override_true', function()
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function() end,
+                    get_display_name = function()
+                        return "Hi!"
+                    end
+                })
+                local name = action.get_display_name("Test >    Something", true)
+                lust.expect(name).to.equal("Something")
+            end)
+            lust.it('doesnt_use_display_name_when_ignore_override_true_with_separator', function()
+                action.add({
+                    path = "Test > Something ---",
+                    down_callback = function() end,
+                    get_display_name = function()
+                        return "Hi!"
+                    end
+                })
+                local name = action.get_display_name("Test >    Something---", true)
+                lust.expect(name).to.equal("Something")
+            end)
+        end)
+
+        lust.describe('get_actions_matching_filter', function()
+            lust.after(function()
+                action.remove("Test")
+            end)
+            lust.it('errors_when_filter_is_nil', function()
+                local func = function()
+                    action.get_actions_matching_filter(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_filter_is_not_string', function()
+                local func = function()
+                    action.get_actions_matching_filter({})
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('returns_all_actions_when_filter_empty', function()
+                local result = action.get_actions_matching_filter("")
+                -- Flaky: we can't guarantee the number of actions, but we can check that there are roughly enough to be the entire built-in menu.
+                lust.expect(#result > 50).to.be.truthy()
+            end)
+            lust.it('returns_correct_actions', function()
+                local actions = {
+                    "Test>Something>A",
+                    "Test>B"
+                }
+                for _, path in pairs(actions) do
+                    action.add({
+                        path = path,
+                        down_callback = function() end
+                    })
+                end
+
+                local result
+
+                result = action.get_actions_matching_filter("Test")
+                lust.expect(result).to.equal(actions)
+
+                result = action.get_actions_matching_filter("Test > Something")
+                lust.expect(result).to.equal({
+                    "Test>Something>A"
+                })
+            end)
+        end)
+
+        lust.describe('invoke', function()
+            lust.after(function()
+                action.remove("Test")
+            end)
+
+            lust.it('errors_when_path_is_nil', function()
+                local func = function()
+                    action.invoke(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_path_is_not_string', function()
+                local func = function()
+                    action.invoke({})
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('calls_down_callback', function()
+                local called = false
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function()
+                        called = true
+                    end
+                })
+
+                action.invoke("Test > Something")
+                lust.expect(called).to.be.truthy()
+            end)
+            lust.it('calls_up_callback', function()
+                local called = false
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function()
+                    end,
+                    up_callback = function()
+                        called = true
+                    end
+                })
+
+                action.invoke("Test > Something", true)
+                lust.expect(called).to.be.truthy()
             end)
         end)
     end)
