@@ -16,7 +16,7 @@ namespace ActionManager
     /**
      * \brief The character used to separate segments in action paths and filters.
      */
-    const wchar_t SEPARATOR_CHAR = L'>';
+    const std::wstring SEGMENT_SEPARATOR = L">";
 
     /**
      * \brief The suffix for action path and filters segments that are used to indicate a separator.
