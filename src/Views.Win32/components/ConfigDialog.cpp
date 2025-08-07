@@ -1399,6 +1399,7 @@ static void try_apply_hotkey(const HWND hwnd, const Hotkey::t_hotkey& new_hotkey
                 ListView_Update(g_lv_hwnd, std::distance(g_option_items.begin(), it));
             }
         }
+        option_item.current_value.set(new_hotkey);
         break;
     case 1:
         option_item.current_value.set(Hotkey::t_hotkey{});
