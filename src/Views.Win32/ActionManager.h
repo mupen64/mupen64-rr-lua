@@ -14,9 +14,14 @@
 namespace ActionManager
 {
     /**
-     * \brief The suffix for action path segments that are used to indicate a separator.
+     * \brief The character used to separate segments in action paths and filters.
      */
-    const std::wstring SEPARATOR_SUFFIX = L" ---";
+    const wchar_t SEPARATOR_CHAR = L'>';
+
+    /**
+     * \brief The suffix for action path and filters segments that are used to indicate a separator.
+     */
+    const std::wstring SEPARATOR_SUFFIX = L"---";
 
     /**
      * \brief An action filter that can be either a fully-qualified or partially-qualified `"Category > Subcategory[] [ > Name ]"`.
@@ -143,6 +148,13 @@ namespace ActionManager
      * \return A vector of the filter's segments.
      */
     std::vector<action_filter> get_segments(const action_filter& filter);
+
+    /**
+     * \brief Normalizes a filter by splitting it into segments and joining them back together using the segment separator.
+     * \param filter A filter.
+     * \return The normalized filter.
+     */
+    action_filter normalize_filter(const action_filter& filter);
 
     /**
      * \brief Gets whether an action is enabled.

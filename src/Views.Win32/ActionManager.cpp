@@ -24,20 +24,11 @@ struct t_action_manager {
 static t_action_manager g_mgr{};
 
 /**
- * \brief Normalizes a filter by deconstructing it into segments, then reconstructing it with a consistent format.
- */
-static action_filter normalize_filter(const action_filter& filter)
-{
-    const auto parts = ActionManager::get_segments(filter);
-    return io_service.join_wstring(parts, L">");
-}
-
-/**
  * \brief Finds all actions using the given filter.
  */
 static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filter& filter)
 {
-    const auto normalized_filter = normalize_filter(filter);
+    const auto normalized_filter = ActionManager::normalize_filter(filter);
 
     std::vector<t_action*> actions;
 
@@ -355,7 +346,7 @@ std::vector<action_path> ActionManager::get_actions_matching_filter(const action
 
 std::vector<action_filter> ActionManager::get_segments(const action_filter& filter)
 {
-    std::vector<action_filter> parts = io_service.split_wstring(filter, L">");
+    std::vector<action_filter> parts = io_service.split_wstring(filter, std::to_wstring(SEPARATOR_CHAR));
     for (auto& part : parts)
     {
         part = io_service.trim(part);
@@ -366,6 +357,12 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter& filt
     });
 
     return parts;
+}
+
+ActionManager::action_filter ActionManager::normalize_filter(const action_filter& filter)
+{
+    const auto parts = get_segments(filter);
+    return io_service.join_wstring(parts, std::to_wstring(SEPARATOR_CHAR));
 }
 
 void ActionManager::invoke(const action_path& path, const bool up)
