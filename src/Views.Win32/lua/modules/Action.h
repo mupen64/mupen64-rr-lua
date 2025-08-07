@@ -168,7 +168,7 @@ namespace LuaCore::Action
 
         if (result)
         {
-            lua->registered_actions.emplace_back(params.path);
+            lua->registered_actions.emplace_back(ActionManager::normalize_filter(params.path));
         }
 
         lua_pushboolean(L, result);
@@ -177,6 +177,8 @@ namespace LuaCore::Action
 
     static int remove(lua_State* L)
     {
+        auto lua = LuaManager::get_environment_for_state(L);
+
         const auto filter = lua_getwstring(L, 1);
 
         const auto removed_actions = ActionManager::remove(filter);
@@ -185,6 +187,9 @@ namespace LuaCore::Action
         size_t i = 1;
         for (const auto& action : removed_actions)
         {
+            std::erase_if(lua->registered_actions, [&](const auto& registered_action) {
+                return registered_action == action;
+            });
             lua_pushstring(L, io_service.wstring_to_string(action).c_str());
             lua_seti(L, -2, i++);
         }
