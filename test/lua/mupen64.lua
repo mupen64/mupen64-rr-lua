@@ -40,27 +40,37 @@ lust.describe('mupen64', function()
 
     lust.describe('actions', function()
         lust.describe('add', function()
-            lust.it('returns_false_when_params_are_nil', function()
-                local result = action.add(nil)
-                lust.expect(result).to.equal(false)
+            lust.before(function()
+                action.remove("Test")
+            end)
+
+            lust.it('errors_when_params_are_nil', function()
+                local func = function()
+                    action.add(nil)
+                end
+                lust.expect(func).to.fail()
             end)
             lust.it('returns_false_when_params_are_not_table', function()
-                local result = action.add(4)
-                lust.expect(result).to.equal(false)
+                local func = function()
+                    action.add(4)
+                end
+                lust.expect(func).to.fail()
             end)
-            lust.it('returns_false_when_path_missing', function()
-                local result = action.add({})
-                lust.expect(result).to.equal(false)
+            lust.it('errors_when_path_missing', function()
+                local func = function()
+                    action.add({})
+                end
+                lust.expect(func).to.fail()
             end)
             lust.it('errors_when_params_are_missing_down_callback', function()
                 local func = function()
                     action.add({
-                        path = "Test > Something",
+                        path = "Test > Something"
                     })
                 end
                 lust.expect(func).to.fail()
             end)
-            lust.it('returns_true_when_path_malformed', function()
+            lust.it('returns_false_when_path_malformed', function()
                 local result = action.add({
                     path = "Test",
                     down_callback = function() end
@@ -94,6 +104,47 @@ lust.describe('mupen64', function()
                 lust.expect(second_called).to.equal(true)
             end)
         end)
-        
+        lust.describe('remove', function()
+            lust.before(function()
+                action.remove("Test")
+            end)
+            
+            lust.it('errors_when_filter_is_nil', function()
+                local func = function()
+                    action.remove(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('returns_matched_actions_correctly', function()
+                local actions = {
+                    "Test>1",
+                    "Test>2>A",
+                    "Test>3",
+                    "Test>4>B>C",
+                }
+
+                for _, value in pairs(actions) do
+                    action.add({
+                        path = value,
+                        down_callback = function() end,
+                    })
+                end
+
+                local result = action.remove("Test")
+
+                lust.expect(result).to.equal(actions)
+            end)
+            lust.it('doesnt_crash_when_action_is_removed_twice', function()
+                for i = 1, 2, 1 do
+                    action.add({
+                        path = "Test>Something",
+                        down_callback = function() end
+                    })
+                    lust.expect(action.remove("Test>Something")).to.equal({ "Test>Something" })
+                end
+                -- Can't test for crashes in Lua, so this is just a smoke test.
+                lust.expect(true).to.be.truthy()
+            end)
+        end)
     end)
 end)
