@@ -294,7 +294,7 @@ std::wstring ActionManager::get_display_name(const action_filter& filter, bool i
 
         if (has_separator)
         {
-            name = name.substr(0, name.size() - SEPARATOR_SUFFIX.size());
+            name = io_service.trim(name.substr(0, name.size() - SEPARATOR_SUFFIX.size()));
         }
 
         return name;
