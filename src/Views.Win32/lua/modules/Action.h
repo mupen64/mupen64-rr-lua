@@ -189,12 +189,7 @@ namespace LuaCore::Action
     static int associate_hotkey(lua_State* L)
     {
         const auto path = luaL_checkwstring(L, 1);
-        ::Hotkey::t_hotkey hotkey;
-        if (!Hotkey::check_hotkey(L, 2, hotkey))
-        {
-            lua_pushboolean(L, false);
-            return 1;
-        }
+        const auto hotkey = Hotkey::check_hotkey(L, 2);
         const auto overwrite_existing = (bool)luaL_opt(L, lua_toboolean, 3, false);
 
         const auto result = ActionManager::associate_hotkey(path, hotkey, overwrite_existing);

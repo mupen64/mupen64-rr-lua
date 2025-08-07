@@ -32,12 +32,14 @@ namespace LuaCore::Hotkey
         lua_settable(L, -3);
     }
 
-    static bool check_hotkey(lua_State* L, int i, ::Hotkey::t_hotkey& hotkey)
+    static ::Hotkey::t_hotkey check_hotkey(lua_State* L, int i)
     {
+        ::Hotkey::t_hotkey hotkey{};
+        
         if (!lua_istable(L, i))
         {
             luaL_error(L, "Expected a table at argument %d", i);
-            return false;
+            return hotkey;
         }
 
         lua_getfield(L, i, "key");
@@ -56,7 +58,7 @@ namespace LuaCore::Hotkey
         hotkey.alt = luaL_opt(L, lua_toboolean, -1, false);
         lua_pop(L, 1);
 
-        return true;
+        return hotkey;
     }
 
     static int prompt(lua_State* L)
