@@ -37,4 +37,63 @@ lust.describe('mupen64', function()
             end)
         end)
     end)
+
+    lust.describe('actions', function()
+        lust.describe('add', function()
+            lust.it('returns_false_when_params_are_nil', function()
+                local result = action.add(nil)
+                lust.expect(result).to.equal(false)
+            end)
+            lust.it('returns_false_when_params_are_not_table', function()
+                local result = action.add(4)
+                lust.expect(result).to.equal(false)
+            end)
+            lust.it('returns_false_when_path_missing', function()
+                local result = action.add({})
+                lust.expect(result).to.equal(false)
+            end)
+            lust.it('errors_when_params_are_missing_down_callback', function()
+                local func = function()
+                    action.add({
+                        path = "Test > Something",
+                    })
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('returns_true_when_path_malformed', function()
+                local result = action.add({
+                    path = "Test",
+                    down_callback = function() end
+                })
+                lust.expect(result).to.equal(false)
+            end)
+            lust.it('returns_true_when_params_valid', function()
+                local result = action.add({
+                    path = "Test > Something",
+                    down_callback = function() end
+                })
+                lust.expect(result).to.equal(true)
+            end)
+            lust.it('replaces_action_with_existing_path', function()
+                local first_called = false
+                local second_called = false
+
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function() first_called = true end,
+                })
+
+                action.add({
+                    path = "Test > Something",
+                    down_callback = function() second_called = true end
+                })
+
+                action.invoke("Test > Something")
+
+                lust.expect(first_called).to.equal(false)
+                lust.expect(second_called).to.equal(true)
+            end)
+        end)
+        
+    end)
 end)
