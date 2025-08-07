@@ -39,7 +39,7 @@ namespace LuaManager
  * \param i The index of the function in the Lua stack.
  * \return A pointer to the callback token.
  */
-void* lua_tocallback(lua_State* L, int i);
+uintptr_t* lua_tocallback(lua_State* L, int i);
 
 /**
  * \brief Converts a Lua function at the given index to a callback.
@@ -47,7 +47,7 @@ void* lua_tocallback(lua_State* L, int i);
  * \param i The index of the function in the Lua stack.
  * \return A pointer to the callback token, or nullptr if the function is not a valid Lua function or not present.
  */
-void* lua_optcallback(lua_State* L, int i);
+uintptr_t* lua_optcallback(lua_State* L, int i);
 
 /**
  * \brief Pushes a callback's Lua function onto the stack.
@@ -55,14 +55,14 @@ void* lua_optcallback(lua_State* L, int i);
  * \param token A callback token.
  * \param free Whether to free the callback token after pushing it onto the stack. If true, the callback will be freed after being pushed.
  */
-void lua_pushcallback(lua_State* L, void* token, bool free = true);
+void lua_pushcallback(lua_State* L, uintptr_t* token, bool free = true);
 
 /**
  * \brief Frees a callback token from the Lua registry.
  * \param L The Lua state.
  * \param token A callback token.
  */
-void lua_freecallback(lua_State* L, void* token);
+void lua_freecallback(lua_State* L, uintptr_t* token);
 
 /**
  * \brief Gets the wide string at the given index in the Lua stack. Errors if the value is not a string or not present.
