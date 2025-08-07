@@ -33,14 +33,11 @@ namespace LuaManager
 
 } // namespace LuaManager
 
-#define lua_getwstring(L, i) io_service.string_to_wstring(lua_tostring(L, i))
-#define lua_towstring(L, i) lua_getwstring(L, i)
-
 /**
  * \brief Converts a Lua function at the given index to a callback. Errors if the function is not a valid Lua function or not present.
  * \param L The Lua state.
  * \param i The index of the function in the Lua stack.
- * \return A pointer to the callback token, or nullptr if the function is not a valid Lua function or not present.
+ * \return A pointer to the callback token.
  */
 void* lua_tocallback(lua_State* L, int i);
 
@@ -66,6 +63,14 @@ void lua_pushcallback(lua_State* L, void* token, bool free = true);
  * \param token A callback token.
  */
 void lua_freecallback(lua_State* L, void* token);
+
+/**
+ * \brief Gets the wide string at the given index in the Lua stack. Errors if the value is not a string or not present.
+ * \param L The Lua state.
+ * \param i The index of the value in the Lua stack.
+ * \return The wide string at the given index in the Lua stack.
+ */
+std::wstring luaL_checkwstring(lua_State* L, int i);
 
 extern std::vector<t_lua_environment*> g_lua_environments;
 

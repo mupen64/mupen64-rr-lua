@@ -12,20 +12,18 @@
 
 namespace LuaCore::Action
 {
-    static bool check_action_params(lua_State* L, ActionManager::t_action_params& params)
+    static ActionManager::t_action_params check_action_params(lua_State* L, int index)
     {
-        if (lua_gettop(L) < 1 || !lua_istable(L, 1))
+        if (lua_gettop(L) < 1 || !lua_istable(L, index))
         {
-            return false;
+            luaL_error(L, "Expected a table at argument 1");
+            std::unreachable();
         }
 
+        ActionManager::t_action_params params{};
+
         lua_getfield(L, 1, "path");
-        if (!lua_isstring(L, -1))
-        {
-            lua_pop(L, 1);
-            return false;
-        }
-        params.path = lua_getwstring(L, -1);
+        params.path = luaL_checkwstring(L, -1);
         lua_pop(L, 1);
 
         lua_getfield(L, 1, "down_callback");
@@ -129,12 +127,7 @@ namespace LuaCore::Action
                 lua_pushcallback(L, get_display_name, false);
                 lua_pcall(L, 0, 1, 0);
 
-                std::wstring display_name;
-                if (lua_isstring(L, -1))
-                {
-                    display_name = lua_towstring(L, -1);
-                    lua_pop(L, 1);
-                }
+                const auto display_name = luaL_checkwstring(L, -1);
 
                 return display_name;
             };
@@ -150,19 +143,14 @@ namespace LuaCore::Action
             lua_freecallback(L, get_display_name);
         };
 
-        return true;
+        return params;
     }
 
     static int add(lua_State* L)
     {
         auto lua = LuaManager::get_environment_for_state(L);
 
-        ActionManager::t_action_params params;
-        if (!check_action_params(L, params))
-        {
-            lua_pushboolean(L, false);
-            return 1;
-        }
+        const auto params = check_action_params(L, 1);
 
         const auto result = ActionManager::add(params);
 
@@ -179,7 +167,7 @@ namespace LuaCore::Action
     {
         auto lua = LuaManager::get_environment_for_state(L);
 
-        const auto filter = lua_getwstring(L, 1);
+        const auto filter = luaL_checkwstring(L, 1);
 
         const auto removed_actions = ActionManager::remove(filter);
 
@@ -200,7 +188,7 @@ namespace LuaCore::Action
 
     static int associate_hotkey(lua_State* L)
     {
-        const auto path = lua_getwstring(L, 1);
+        const auto path = luaL_checkwstring(L, 1);
         ::Hotkey::t_hotkey hotkey;
         if (!Hotkey::check_hotkey(L, 2, hotkey))
         {
@@ -229,28 +217,28 @@ namespace LuaCore::Action
 
     static int notify_enabled_changed(lua_State* L)
     {
-        const auto filter = lua_getwstring(L, 1);
+        const auto filter = luaL_checkwstring(L, 1);
         ActionManager::notify_enabled_changed(filter);
         return 0;
     }
 
     static int notify_active_changed(lua_State* L)
     {
-        const auto filter = lua_getwstring(L, 1);
+        const auto filter = luaL_checkwstring(L, 1);
         ActionManager::notify_active_changed(filter);
         return 0;
     }
 
     static int notify_display_name_changed(lua_State* L)
     {
-        const auto filter = lua_getwstring(L, 1);
+        const auto filter = luaL_checkwstring(L, 1);
         ActionManager::notify_display_name_changed(filter);
         return 0;
     }
 
     static int get_display_name(lua_State* L)
     {
-        const auto filter = lua_getwstring(L, 1);
+        const auto filter = luaL_checkwstring(L, 1);
         const auto ignore_override = (bool)luaL_opt(L, lua_toboolean, 2, false);
 
         const auto result = ActionManager::get_display_name(filter, ignore_override);
@@ -261,7 +249,7 @@ namespace LuaCore::Action
 
     static int get_actions_matching_filter(lua_State* L)
     {
-        const auto filter = lua_getwstring(L, 1);
+        const auto filter = luaL_checkwstring(L, 1);
 
         const auto actions = ActionManager::get_actions_matching_filter(filter);
 
@@ -278,7 +266,7 @@ namespace LuaCore::Action
 
     static int invoke(lua_State* L)
     {
-        const auto path = lua_getwstring(L, 1);
+        const auto path = luaL_checkwstring(L, 1);
         const auto up = (bool)luaL_opt(L, lua_toboolean, 2, false);
 
         ActionManager::invoke(path, up);

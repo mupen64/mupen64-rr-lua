@@ -62,7 +62,7 @@ namespace LuaCore::Hotkey
     {
         WindowDisabler disabler(LuaDialog::hwnd());
 
-        const auto caption = lua_getwstring(L, 1);
+        const auto caption = luaL_checkwstring(L, 1);
 
         ::Hotkey::t_hotkey hotkey{};
 

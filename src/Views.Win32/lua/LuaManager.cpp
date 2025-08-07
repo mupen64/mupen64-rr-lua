@@ -74,7 +74,7 @@ void* lua_tocallback(lua_State* L, const int i)
     if (!lua_isfunction(L, i))
     {
         luaL_error(L, "Expected a function at argument %d", i);
-        return nullptr;
+        std::unreachable();
     }
 
     return lua_optcallback(L, i);
@@ -101,6 +101,22 @@ void lua_freecallback(lua_State* L, void* token)
     lua_settable(L, LUA_REGISTRYINDEX);
     free(token);
     token = nullptr;
+}
+
+std::wstring luaL_checkwstring(lua_State* L, int i)
+{
+    if (!lua_isstring(L, i))
+    {
+        luaL_error(L, "Expected a string at argument %d", i);
+    }
+
+    const auto str = lua_tostring(L, i);
+    if (str == nullptr)
+    {
+        luaL_error(L, "Expected a string at argument %d", i);
+    }
+
+    return io_service.string_to_wstring(str);
 }
 
 void LuaManager::init()
