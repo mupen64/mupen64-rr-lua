@@ -36,6 +36,7 @@ namespace LuaCore::Hotkey
     {
         if (!lua_istable(L, i))
         {
+            luaL_error(L, "Expected a table at argument %d", i);
             return false;
         }
 
