@@ -361,7 +361,7 @@ void ActionMenu::init()
         action_registry_changed();
     });
 
-    // NOTE: We don't handle ActionEnabledChanged/ActionActiveChanged/ActionRealNameChanged here because we update the menu in-place in WM_INITMENU
+    // NOTE: We don't handle ActionEnabledChanged/ActionActiveChanged/ActionDisplayNameChanged here because we update the menu in-place in WM_INITMENU
 }
 
 bool ActionMenu::add_managed_menu(const HWND hwnd)

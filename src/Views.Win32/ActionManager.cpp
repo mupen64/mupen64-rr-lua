@@ -277,7 +277,7 @@ void ActionManager::notify_active_changed(const action_filter& filter)
 void ActionManager::notify_display_name_changed(const action_filter& filter)
 {
     const auto actions = get_action_ptrs_matching_filter(filter);
-    Messenger::broadcast(Messenger::Message::ActionRealNameChanged, actions);
+    Messenger::broadcast(Messenger::Message::ActionDisplayNameChanged, actions);
 }
 
 std::wstring ActionManager::get_display_name(const action_filter& filter, bool ignore_override)

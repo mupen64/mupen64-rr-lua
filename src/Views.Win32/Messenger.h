@@ -180,7 +180,7 @@ namespace Messenger
         ActionRegistryChanged,
         ActionEnabledChanged,
         ActionActiveChanged,
-        ActionRealNameChanged,
+        ActionDisplayNameChanged,
     };
 
     using t_user_callback = std::function<void(std::any)>;
