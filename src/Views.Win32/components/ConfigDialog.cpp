@@ -1722,65 +1722,89 @@ void ConfigDialog::init()
 {
     get_config_listview_items(g_option_groups, g_option_items);
 }
-
-void ConfigDialog::show_app_settings()
+/**
+ * \brief Generate option groups with names based on the path segments
+ * e.g.:
+ * Mupen64 > File > Load ROM... is grouped under "Mupen64 > File"
+ * Mupen64 > Emulation > Pause is grouped under "Mupen64 > Emulation"
+ * Mupen64 > Emulation > Frame Advance is grouped under "Mupen64 > Emulation"
+ * SM64Lua > Match Yaw is grouped under "SM64Lua"
+ */
+static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
 {
-    const auto prev_option_group_size = g_option_groups.size();
-    const auto prev_option_items_size = g_option_items.size();
+    std::vector<std::wstring> unique_group_names;
+    const auto all_actions = ActionManager::get_actions_matching_filter(L"");
 
-    g_hotkey_scratchpad.clear();
-
-    /*
-     * Generate option groups with names based on the first segment of the paths (we make an exception for the "Mupen64" group: we look one level deeper there because the hierarchy is massive)
-     *
-     * Mupen64 > File > Load ROM... is grouped under "File"
-     * Mupen64 > Emulation > Pause is grouped under "Emulation"
-     * SM64Lua > Match Yaw is grouped under "SM64Lua"
-     *
-     * We also build the hotkey scratchpad and the items here because it's convenient
-     */
-    std::vector<t_options_group> hotkey_groups{};
-    size_t group_id = g_option_groups.back().id + 1;
-    for (const auto& action_matching_filter : ActionManager::get_actions_matching_filter(L""))
+    for (const auto& path : all_actions)
     {
-        const auto segments = ActionManager::get_segments(action_matching_filter);
-        const auto is_builtin = segments[0] == L"Mupen64";
-        std::wstring relevant_segment = is_builtin ? segments[1] : segments[0];
-        std::wstring name = is_builtin ? std::format(L"Mupen64 > {}", relevant_segment) : std::format(L"{}", relevant_segment);
+        std::vector<std::wstring> segments = ActionManager::get_segments(path);
 
-        const auto found = std::ranges::find_if(hotkey_groups, [&](const t_options_group& group) {
-            return group.name == name;
-        });
-
-        if (found != hotkey_groups.end())
+        if (segments.size() <= 1)
         {
             continue;
         }
 
-        const auto group = t_options_group{
-        .id = group_id++,
-        .name = name};
+        segments.pop_back();
 
-        hotkey_groups.push_back(group);
+        std::wstring group_name;
+        for (size_t i = 0; i < segments.size(); ++i)
+        {
+            if (i > 0)
+            {
+                group_name += ActionManager::SEGMENT_SEPARATOR;
+            }
+            group_name += segments[i];
+        }
 
-        const auto actions = ActionManager::get_actions_matching_filter(name);
+        if (std::ranges::find(unique_group_names, group_name) == unique_group_names.end())
+        {
+            unique_group_names.emplace_back(group_name);
+        }
+    }
+
+    std::vector<t_options_group> groups;
+    groups.reserve(unique_group_names.size());
+
+    for (const auto& name : unique_group_names)
+    {
+        groups.emplace_back(t_options_group{
+        .id = base_id++,
+        .name = name});
+    }
+
+    return groups;
+}
+
+
+void ConfigDialog::show_app_settings()
+{
+    g_hotkey_scratchpad.clear();
+
+    const auto prev_option_group_size = g_option_groups.size();
+    const auto prev_option_items_size = g_option_items.size();
+
+    auto option_groups = generate_hotkey_groups(g_option_groups.back().id + 1);
+
+    for (const auto& group : option_groups)
+    {
+        const auto actions = ActionManager::get_actions_matching_filter(group.name);
 
         for (const auto& action : actions)
         {
-            if (g_config.hotkeys.contains(action))
+            const auto action_segments = ActionManager::get_segments(action);
+            const auto group_segments = ActionManager::get_segments(group.name);
+
+            if (action_segments.at(action_segments.size() - 2) != group_segments.back())
             {
-                g_hotkey_scratchpad.emplace_back(action, g_config.hotkeys.at(action));
-            }
-            else
-            {
-                g_hotkey_scratchpad.emplace_back(action, Hotkey::t_hotkey{});
+                continue;
             }
 
-            const auto scratchpad_index = g_hotkey_scratchpad.size() - 1;
+            const auto scratchpad_index = g_hotkey_scratchpad.size();
+            g_hotkey_scratchpad.emplace_back(action, g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{});
 
-            g_option_items.push_back(t_options_item{
+            const t_options_item item = {
             .type = t_options_item::Type::Hotkey,
-            .group_id = hotkey_groups.back().id,
+            .group_id = group.id,
             .name = ActionManager::get_display_name(action, true),
             .current_value = t_options_item::t_readwrite_property([=] {
                 return g_hotkey_scratchpad[scratchpad_index].second;
@@ -1791,7 +1815,9 @@ void ConfigDialog::show_app_settings()
             .default_value = t_options_item::t_readonly_property([=] {
                 return g_config.inital_hotkeys.at(action);
             }),
-            });
+            };
+
+            g_option_items.emplace_back(item);
         }
     }
 
@@ -1803,7 +1829,19 @@ void ConfigDialog::show_app_settings()
         });
     }
 
-    g_option_groups.insert(g_option_groups.end(), hotkey_groups.begin(), hotkey_groups.end());
+    // We beautify the names here, a bit annoying because we have to reconstruct them
+    for (auto& option_group : option_groups)
+    {
+        auto segments = ActionManager::get_segments(option_group.name);
+        for (auto& segment : segments)
+        {
+            segment = ActionManager::get_display_name(segment, true);
+        }
+        const auto name = io_service.join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+        option_group.name = name;
+    }
+
+    g_option_groups.insert(g_option_groups.end(), option_groups.begin(), option_groups.end());
 
     PROPSHEETPAGE psp[3] = {{0}};
     for (auto& i : psp)

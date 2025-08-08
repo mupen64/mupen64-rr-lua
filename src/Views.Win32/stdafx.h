@@ -49,6 +49,7 @@ extern "C" {
 #include <stacktrace>
 #include <expected>
 #include <ranges>
+#include <set>
 
 #include <Loggers.h>
 #include <MiscHelpers.h>
