@@ -87,7 +87,7 @@ namespace ActionManager
     /**
      * \brief Removes actions matching the specified filter.
      * \param filter A filter.
-     * \return A vector containing the paths of the actions that were removed.
+     * \return A collection containing the paths of the actions that were removed.
      */
     std::vector<action_path> remove(const action_filter& filter);
 
@@ -139,13 +139,14 @@ namespace ActionManager
     /**
      * \brief Gets all action paths that match the specified filter.
      * \param filter A filter.
+     * \return A collection of action paths that match the filter.
      */
-    std::vector<action_path> get_actions_matching_filter(const action_filter& filter = L"");
+    std::vector<action_path> get_actions_matching_filter(const action_filter& filter);
 
     /**
      * \brief Gets the segments of a filter.
      * \param filter A filter.
-     * \return A vector of the filter's segments.
+     * \return A collection of the filter's segments.
      */
     std::vector<action_filter> get_segments(const action_filter& filter);
 

@@ -245,7 +245,6 @@ namespace LuaCore::Action
     static int get_actions_matching_filter(lua_State* L)
     {
         const auto filter = luaL_checkwstring(L, 1);
-
         const auto actions = ActionManager::get_actions_matching_filter(filter);
 
         lua_newtable(L);

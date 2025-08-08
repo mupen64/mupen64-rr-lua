@@ -287,7 +287,7 @@ static void reset_menu(t_action_menu_context& ctx)
 
 static void build_menu(t_action_menu_context& ctx)
 {
-    g_am_ctx.actions = ActionManager::get_actions_matching_filter();
+    g_am_ctx.actions = ActionManager::get_actions_matching_filter(L"");
 
     reset_menu(ctx);
 

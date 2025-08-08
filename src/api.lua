@@ -1383,7 +1383,7 @@ function action.add(params) end
 
 ---Removes actions matching the specified filter.
 ---@param filter ActionFilter A filter.
----@return boolean # Whether the operation succeeded.
+---@return ActionPath[] # A collection containing the paths of the actions that were removed.
 function action.remove(filter) end
 
 ---Associates a hotkey with an action by its path, while replacing any existing hotkey association for that action.
@@ -1418,8 +1418,8 @@ function action.notify_display_name_changed(filter) end
 function action.get_display_name(filter, ignore_override) end
 
 ---Gets all action paths that match the specified filter.
----@param filter ActionFilter? A filter. If nil, `""` is assumed.
----@return ActionPath[] # The list of action paths that match the filter.
+---@param filter ActionFilter A filter.
+---@return ActionPath[] # A collection of action paths that match the filter.
 function action.get_actions_matching_filter(filter) end
 
 ---Manually invokes an action by its path.

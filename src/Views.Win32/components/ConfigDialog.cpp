@@ -1741,7 +1741,7 @@ void ConfigDialog::show_app_settings()
      */
     std::vector<t_options_group> hotkey_groups{};
     size_t group_id = g_option_groups.back().id + 1;
-    for (const auto& action_matching_filter : ActionManager::get_actions_matching_filter())
+    for (const auto& action_matching_filter : ActionManager::get_actions_matching_filter(L""))
     {
         const auto segments = ActionManager::get_segments(action_matching_filter);
         const auto is_builtin = segments[0] == L"Mupen64";
