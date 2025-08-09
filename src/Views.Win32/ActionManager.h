@@ -107,7 +107,7 @@ namespace ActionManager
     bool associate_hotkey(const action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing = true);
 
     /**
-     * \brief Begins a batch operation. Batches all updates caused by <c>add</c>, <c>remove</c>, and <c>associate_hotkey</c> into one at the succeeding call to <c>end_batch_work</c>.
+     * \brief Begins a batch operation. Batches all updates caused by `add`, `remove`, and `associate_hotkey` into one at the succeeding call to `end_batch_work`.
      */
     void begin_batch_work();
 
