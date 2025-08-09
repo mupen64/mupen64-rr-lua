@@ -219,8 +219,8 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
             EndDialog(GetParent(hwnd), IDOK);
         }
 
-
         SetDlgItemText(GetParent(hwnd), IDC_CURRENT_HOTKEY, params->hotkey.to_wstring().c_str());
+        
         return TRUE;
     default:
         break;
