@@ -1733,7 +1733,7 @@ void ConfigDialog::init()
 static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
 {
     std::vector<std::wstring> unique_group_names;
-    const auto all_actions = ActionManager::get_actions_matching_filter(L"");
+    const auto all_actions = ActionManager::get_actions_matching_filter(L"*");
 
     for (const auto& path : all_actions)
     {
@@ -1787,7 +1787,7 @@ void ConfigDialog::show_app_settings()
 
     for (const auto& group : option_groups)
     {
-        const auto actions = ActionManager::get_actions_matching_filter(group.name);
+        const auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group.name));
 
         for (const auto& action : actions)
         {

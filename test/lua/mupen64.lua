@@ -41,7 +41,7 @@ lust.describe('mupen64', function()
     lust.describe('actions', function()
         lust.describe('add', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
 
             lust.it('errors_when_params_are_nil', function()
@@ -106,7 +106,7 @@ lust.describe('mupen64', function()
         end)
         lust.describe('remove', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
 
             lust.it('errors_when_filter_is_nil', function()
@@ -130,7 +130,7 @@ lust.describe('mupen64', function()
                     })
                 end
 
-                local result = action.remove("Test")
+                local result = action.remove("Test > *")
 
                 lust.expect(result).to.equal(actions)
             end)
@@ -149,7 +149,7 @@ lust.describe('mupen64', function()
 
         lust.describe('associate_hotkey', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
 
             lust.it('errors_when_path_is_nil', function()
@@ -194,6 +194,14 @@ lust.describe('mupen64', function()
                 end
                 lust.expect(func).to.fail()
             end)
+            lust.it('fails_when_path_is_unqualified', function()
+                action.add({
+                    path = "Test > Something > Child",
+                    down_callback = function() end
+                })
+                local result = action.associate_hotkey("Test > Something", {})
+                lust.expect(result).to.equal(false)
+            end)
             lust.it('works_when_parameters_valid', function()
                 action.add({
                     path = "Test > Something",
@@ -213,7 +221,7 @@ lust.describe('mupen64', function()
 
         lust.describe('notify_enabled_changed', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
             lust.it('errors_when_filter_is_nil', function()
                 local func = function()
@@ -232,7 +240,7 @@ lust.describe('mupen64', function()
 
         lust.describe('notify_active_changed', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
             lust.it('errors_when_filter_is_nil', function()
                 local func = function()
@@ -250,7 +258,7 @@ lust.describe('mupen64', function()
 
         lust.describe('notify_display_name_changed', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
             lust.it('errors_when_filter_is_nil', function()
                 local func = function()
@@ -268,7 +276,7 @@ lust.describe('mupen64', function()
 
         lust.describe('get_display_name', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
             lust.it('errors_when_filter_is_nil', function()
                 local func = function()
@@ -343,7 +351,7 @@ lust.describe('mupen64', function()
 
         lust.describe('get_actions_matching_filter', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
             lust.it('errors_when_filter_is_nil', function()
                 local func = function()
@@ -357,16 +365,51 @@ lust.describe('mupen64', function()
                 end
                 lust.expect(func).to.fail()
             end)
-            lust.it('returns_all_actions_when_filter_empty', function()
+            lust.it('matches_even_with_whitespace_and_extra_separators', function()
+                action.add({
+                    path = "Test>X",
+                    down_callback = function() end
+                })
+
+                local result = action.get_actions_matching_filter(" Test  >  X ")
+                lust.expect(result).to.equal({ "Test>X" })
+            end)
+            lust.it('wildcard_requires_additional_segments', function()
+                action.add({
+                    path = "Test>X",
+                    down_callback = function() end
+                })
+
+                local result = action.get_actions_matching_filter("Test > *")
+                lust.expect(result).to.equal({ "Test>X" })
+
+                result = action.get_actions_matching_filter("Test > X > *")
+                lust.expect(result).to.equal({})
+            end)
+            lust.it('returns_empty_for_empty_filter', function()
                 local result = action.get_actions_matching_filter("")
+                lust.expect(result).to.equal({})
+            end)
+            lust.it('does_not_match_partial_paths_without_wildcard', function()
+                action.add({
+                    path = "Test>X",
+                    down_callback = function() end
+                })
+
+                local result = action.get_actions_matching_filter("Test")
+                lust.expect(result).to.equal({})
+            end)
+            lust.it('returns_correct_actions_wildcard_special_case', function()
+                local result = action.get_actions_matching_filter("*")
                 -- Flaky: we can't guarantee the number of actions, but we can check that there are roughly enough to be the entire built-in menu.
                 lust.expect(#result > 50).to.be.truthy()
             end)
             lust.it('returns_correct_actions', function()
                 local actions = {
-                    "Test>Something>A",
+                    "Test>Something--->A",
                     "Test>B"
                 }
+
                 for _, path in pairs(actions) do
                     action.add({
                         path = path,
@@ -377,18 +420,24 @@ lust.describe('mupen64', function()
                 local result
 
                 result = action.get_actions_matching_filter("Test")
+                lust.expect(result).to.equal({})
+
+                result = action.get_actions_matching_filter("Test >    *")
                 lust.expect(result).to.equal(actions)
 
-                result = action.get_actions_matching_filter("Test > Something")
+                result = action.get_actions_matching_filter("Test  > Something---")
+                lust.expect(result).to.equal({})
+
+                result = action.get_actions_matching_filter("Test>Something---> *")
                 lust.expect(result).to.equal({
-                    "Test>Something>A"
+                    "Test>Something--->A"
                 })
             end)
         end)
 
         lust.describe('invoke', function()
             lust.after(function()
-                action.remove("Test")
+                action.remove("Test > *")
             end)
 
             lust.it('errors_when_path_is_nil', function()

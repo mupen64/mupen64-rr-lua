@@ -1360,9 +1360,14 @@ function hotkey.prompt(caption) end
 --#region
 
 ---@alias ActionFilter string
----An action filter that can be either a fully-qualified or partially-qualified `"Category > Subcategory[] [ > Name ]"`.
----This is usually used to refer to groups of actions, but can also refer to a single action.
----If the filter is empty, all actions will be matched.
+---An action filter that can be used to match actions in the action registry.
+---Can be in the format `[Category[] | *] > [Name | *]`.
+---The `*` wildcard can be used to match any child from that segment onwards.
+---The wildcard must always be the last segment in the filter: wildcard-based wide lookups like `A > * > C` aren't supported.
+---Example queries:
+---`*` - matches all actions.
+---`Mupen64 > File > *` - matches "Mupen64 > File > Load ROM...", "Mupen64 > File > Recent ROMs > Load Recent Item #5", etc...
+---`Mupen64 > File` - matches nothing, because `File` has no action associated with it.
 
 ---@alias ActionPath string
 ---A fully-qualified action path in the format `"Category > Subcategory[] > Name"`.

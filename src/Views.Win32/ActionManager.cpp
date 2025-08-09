@@ -29,39 +29,65 @@ static t_action_manager g_mgr{};
 static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filter& filter)
 {
     const auto normalized_filter = ActionManager::normalize_filter(filter);
+    std::vector<t_action*> result;
 
-    std::vector<t_action*> actions;
-
-    if (normalized_filter.empty())
+    // Special case: pure wildcard filter, matches everything.
+    if (normalized_filter == L"*")
     {
-        actions.reserve(g_mgr.actions.size());
+        result.reserve(g_mgr.actions.size());
         for (auto& action : g_mgr.actions)
         {
-            actions.push_back(&action);
+            result.emplace_back(&action);
         }
-        return actions;
+        return result;
     }
+
+    const auto filter_segments = ActionManager::get_segments(normalized_filter);
+    if (filter_segments.empty())
+    {
+        return result;
+    }
+
+    const bool has_wildcard = filter_segments.back() == L"*";
+    const size_t filter_segments_to_compare = has_wildcard ? filter_segments.size() - 1 : filter_segments.size();
 
     for (auto& action : g_mgr.actions)
     {
-        if (action.params.path == normalized_filter)
+        const auto path_segments = ActionManager::get_segments(action.params.path);
+
+        if (has_wildcard)
         {
-            return {&action};
+            // The path must have more segments than the filter if the filter ends with a wildcard, otherwise we aren't deep enough.
+            if (path_segments.size() <= filter_segments_to_compare)
+            {
+                continue;
+            }
+        }
+        else
+        {
+            if (path_segments.size() != filter_segments_to_compare)
+            {
+                continue;
+            }
+        }
+
+        bool is_match = true;
+        for (size_t i = 0; i < filter_segments_to_compare; ++i)
+        {
+            if (path_segments[i] != filter_segments[i])
+            {
+                is_match = false;
+                break;
+            }
+        }
+
+        if (is_match)
+        {
+            result.emplace_back(&action);
         }
     }
 
-    const auto segments = ActionManager::get_segments(normalized_filter);
-
-    for (auto& action : g_mgr.actions)
-    {
-        const auto action_segments = ActionManager::get_segments(action.params.path);
-        if (action_segments.size() >= segments.size() && std::equal(segments.begin(), segments.end(), action_segments.begin()))
-        {
-            actions.push_back(&action);
-        }
-    }
-
-    return actions;
+    return result;
 }
 
 /**
