@@ -154,7 +154,31 @@ bool ActionManager::add(const t_action_params& params)
         g_view_logger->error(L"ActionManager::add: Action with path '{}' already exists.", normalized_path);
         return false;
     }
-    
+
+
+    // > If adding the action causes another action to gain a direct child (e.g. there's an action `A > B`, and we're adding `A > B > C`), the operation will fail.
+    const auto segments = get_segments(normalized_path);
+    if (segments.size() > 1)
+    {
+        // a. Build the potential parent path by removing the last segment
+        std::wstring potential_parent_path;
+        for (size_t i = 0; i < segments.size() - 1; ++i)
+        {
+            if (i > 0)
+            {
+                potential_parent_path += SEGMENT_SEPARATOR;
+            }
+            potential_parent_path += segments[i];
+        }
+
+        // b. Check if this potential parent exists
+        if (get_single_action_ptr_matching_path(potential_parent_path) != nullptr)
+        {
+            g_view_logger->error(L"ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.", normalized_path, potential_parent_path);
+            return false;
+        }
+    }
+
     t_action action{};
     action.params = params;
     action.params.path = normalized_path;
