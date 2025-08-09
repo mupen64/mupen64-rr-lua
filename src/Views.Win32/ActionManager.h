@@ -27,7 +27,7 @@ namespace ActionManager
      * \brief An action filter that can be used to match actions in the action registry.
      * Can be in the format `[Category[] | *] > [Name | *]`.
      * The `*` wildcard can be used to match any child from that segment onwards.
-     * The wildcard must always be the last segment in the filter: wildcard-based wide lookups like `A > * > C` aren't supported.  
+     * The wildcard must always be the last segment in the filter: wildcard-based wide lookups like `A > * > C` aren't supported.
      *
      * Example queries:
      * `*` - matches all actions.

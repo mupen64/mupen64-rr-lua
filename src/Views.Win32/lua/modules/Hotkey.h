@@ -35,7 +35,7 @@ namespace LuaCore::Hotkey
     static ::Hotkey::t_hotkey check_hotkey(lua_State* L, int i)
     {
         ::Hotkey::t_hotkey hotkey{};
-        
+
         if (!lua_istable(L, i))
         {
             luaL_error(L, "Expected a table at argument %d", i);
