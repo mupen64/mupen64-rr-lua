@@ -1375,7 +1375,7 @@ function hotkey.prompt(caption) end
 
 ---@class ActionParams
 ---@field path ActionPath The action's path.
----@field down_callback fun() The callback to be invoked when the action is initially triggered.
+---@field down_callback fun()? The callback to be invoked when the action is initially triggered. Can be null.
 ---@field up_callback fun()? The callback to be invoked when the action has been released. Can be null.
 ---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled. If null, the action will be considered enabled.
 ---@field get_active (fun(): boolean)? The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state. If null, the action will be considered inactive.

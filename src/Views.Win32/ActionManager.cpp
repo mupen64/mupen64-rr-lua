@@ -413,7 +413,10 @@ void ActionManager::invoke(const action_path& path, const bool up)
 
     if (!up)
     {
-        action->params.down_callback();
+        if (action->params.down_callback)
+        {
+            action->params.down_callback();
+        }
     }
     else
     {

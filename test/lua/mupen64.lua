@@ -62,25 +62,15 @@ lust.describe('mupen64', function()
                 end
                 lust.expect(func).to.fail()
             end)
-            lust.it('errors_when_params_are_missing_down_callback', function()
-                local func = function()
-                    action.add({
-                        path = "Test > Something"
-                    })
-                end
-                lust.expect(func).to.fail()
-            end)
             lust.it('returns_false_when_path_malformed', function()
                 local result = action.add({
                     path = "Test",
-                    down_callback = function() end
                 })
                 lust.expect(result).to.equal(false)
             end)
             lust.it('returns_true_when_params_valid', function()
                 local result = action.add({
                     path = "Test > Something",
-                    down_callback = function() end
                 })
                 lust.expect(result).to.equal(true)
             end)
@@ -126,7 +116,6 @@ lust.describe('mupen64', function()
                 for _, value in pairs(actions) do
                     action.add({
                         path = value,
-                        down_callback = function() end,
                     })
                 end
 
@@ -138,7 +127,6 @@ lust.describe('mupen64', function()
                 for i = 1, 2, 1 do
                     action.add({
                         path = "Test>Something",
-                        down_callback = function() end
                     })
                     lust.expect(action.remove("Test>Something")).to.equal({ "Test>Something" })
                 end
@@ -168,7 +156,6 @@ lust.describe('mupen64', function()
                 local func = function()
                     action.add({
                         path = "Test > Something",
-                        down_callback = function() end
                     })
                     action.associate_hotkey("Test > Something", nil)
                 end
@@ -178,7 +165,6 @@ lust.describe('mupen64', function()
                 local func = function()
                     action.add({
                         path = "Test > Something",
-                        down_callback = function() end
                     })
                     action.associate_hotkey("Test > Something", 5)
                 end
@@ -188,7 +174,6 @@ lust.describe('mupen64', function()
                 local func = function()
                     action.add({
                         path = "Test > Something",
-                        down_callback = function() end
                     })
                     action.associate_hotkey("Test > Something", 5, 5)
                 end
@@ -201,7 +186,6 @@ lust.describe('mupen64', function()
             lust.it('returns_false_when_path_isnt_fully_qualified', function()
                 action.add({
                     path = "Test > Something",
-                    down_callback = function() end
                 })
                 local result = action.associate_hotkey("Test > *", {})
                 lust.expect(result).to.equal(false)
@@ -209,7 +193,6 @@ lust.describe('mupen64', function()
             lust.it('works_when_parameters_valid', function()
                 action.add({
                     path = "Test > Something",
-                    down_callback = function() end
                 })
                 local result = action.associate_hotkey("Test > Something", { key = Mupen.VKeycodes.VK_TAB }, true)
                 lust.expect(result).to.be.truthy()
@@ -305,7 +288,6 @@ lust.describe('mupen64', function()
             lust.it('returns_correct_name_when_action_matched', function()
                 action.add({
                     path = "Test > Something",
-                    down_callback = function() end
                 })
                 local name = action.get_display_name("Test >    Something")
                 lust.expect(name).to.equal("Something")
@@ -313,7 +295,6 @@ lust.describe('mupen64', function()
             lust.it('returns_correct_name_when_action_matched_with_separator', function()
                 action.add({
                     path = "Test > Something---",
-                    down_callback = function() end
                 })
                 local name = action.get_display_name("Test >    Something ---")
                 lust.expect(name).to.equal("Something")
@@ -321,7 +302,6 @@ lust.describe('mupen64', function()
             lust.it('uses_display_name', function()
                 action.add({
                     path = "Test > Something",
-                    down_callback = function() end,
                     get_display_name = function()
                         return "Hi!"
                     end
@@ -332,7 +312,6 @@ lust.describe('mupen64', function()
             lust.it('doesnt_use_display_name_when_ignore_override_true', function()
                 action.add({
                     path = "Test > Something",
-                    down_callback = function() end,
                     get_display_name = function()
                         return "Hi!"
                     end
@@ -343,7 +322,6 @@ lust.describe('mupen64', function()
             lust.it('doesnt_use_display_name_when_ignore_override_true_with_separator', function()
                 action.add({
                     path = "Test > Something ---",
-                    down_callback = function() end,
                     get_display_name = function()
                         return "Hi!"
                     end
@@ -372,7 +350,6 @@ lust.describe('mupen64', function()
             lust.it('matches_even_with_whitespace_and_extra_separators', function()
                 action.add({
                     path = "Test>X",
-                    down_callback = function() end
                 })
 
                 local result = action.get_actions_matching_filter(" Test  >  X ")
@@ -381,7 +358,6 @@ lust.describe('mupen64', function()
             lust.it('wildcard_requires_additional_segments', function()
                 action.add({
                     path = "Test>X",
-                    down_callback = function() end
                 })
 
                 local result = action.get_actions_matching_filter("Test > *")
@@ -397,7 +373,6 @@ lust.describe('mupen64', function()
             lust.it('does_not_match_partial_paths_without_wildcard', function()
                 action.add({
                     path = "Test>X",
-                    down_callback = function() end
                 })
 
                 local result = action.get_actions_matching_filter("Test")
@@ -417,7 +392,6 @@ lust.describe('mupen64', function()
                 for _, path in pairs(actions) do
                     action.add({
                         path = path,
-                        down_callback = function() end
                     })
                 end
 

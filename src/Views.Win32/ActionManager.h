@@ -52,10 +52,9 @@ namespace ActionManager
         action_path path{};
 
         /**
-         * \brief The callback to be invoked when the action is initially triggered.
+         * \brief The callback to be invoked when the action is initially triggered. Can be null.
          */
-        std::function<void()> down_callback = [] {
-        };
+        std::function<void()> down_callback;
 
         /**
          * \brief The callback to be invoked when the action has been released. Can be null.

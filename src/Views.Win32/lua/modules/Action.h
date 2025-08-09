@@ -28,16 +28,19 @@ namespace LuaCore::Action
 
         lua_getfield(L, 1, "down_callback");
 
-        auto down_callback = lua_tocallback(L, -1);
-        params.down_callback = [=] {
-            if (!LuaManager::get_environment_for_state(L))
-            {
-                return;
-            }
+        auto down_callback = lua_optcallback(L, -1);
+        if (down_callback)
+        {
+            params.down_callback = [=] {
+                if (!LuaManager::get_environment_for_state(L))
+                {
+                    return;
+                }
 
-            lua_pushcallback(L, down_callback, false);
-            lua_pcall(L, 0, 0, 0);
-        };
+                lua_pushcallback(L, down_callback, false);
+                lua_pcall(L, 0, 0, 0);
+            };
+        }
 
         lua_pop(L, 1);
 
