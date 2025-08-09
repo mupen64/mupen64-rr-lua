@@ -24,8 +24,9 @@ namespace ActionManager
     const std::wstring SEPARATOR_SUFFIX = L"---";
 
     /**
-     * \brief An action filter that can be either a fully-qualified or partially-qualified `"Category > Subcategory[] [ > Name ]"`.
+     * \brief An action filter that can be either a fully-qualified or partially-qualified path in the format `"Category > Subcategory[] [ > Name ]"`.
      * This is usually used to refer to groups of actions, but can also refer to a single action.
+     * If the name segment is missing, all actions under the last subcategory will be matched.
      * If the filter is empty, all actions will be matched.
      */
     using action_filter = std::wstring;
