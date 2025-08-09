@@ -194,12 +194,16 @@ lust.describe('mupen64', function()
                 end
                 lust.expect(func).to.fail()
             end)
-            lust.it('fails_when_path_is_unqualified', function()
+            lust.it('returns_false_when_action_doesnt_exist', function()
+                local result = action.associate_hotkey("Test > Something", {})
+                lust.expect(result).to.equal(false)
+            end)
+            lust.it('returns_false_when_path_isnt_fully_qualified', function()
                 action.add({
-                    path = "Test > Something > Child",
+                    path = "Test > Something",
                     down_callback = function() end
                 })
-                local result = action.associate_hotkey("Test > Something", {})
+                local result = action.associate_hotkey("Test > *", {})
                 lust.expect(result).to.equal(false)
             end)
             lust.it('works_when_parameters_valid', function()

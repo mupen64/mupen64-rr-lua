@@ -91,6 +91,34 @@ static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filte
 }
 
 /**
+ * \brief Tries to resolve a fully-qualified action path to a single action pointer.
+ */
+static t_action* get_single_action_ptr_matching_path(const action_path& path)
+{
+    if (path.contains(L"*"))
+    {
+        g_view_logger->error(L"ActionManager::get_single_action_ptr_matching_filter: Expected path without wildcard.");
+        return nullptr;
+    }
+
+    const auto actions = get_action_ptrs_matching_filter(path);
+
+    if (actions.empty())
+    {
+        g_view_logger->error(L"ActionManager::get_single_action_ptr_matching_filter: Action not found.");
+        return nullptr;
+    }
+
+    if (actions.size() > 1)
+    {
+        g_view_logger->error(L"ActionManager::get_single_action_ptr_matching_filter: Expected filter to resolve to only one action.");
+        return nullptr;
+    }
+
+    return actions.front();
+}
+
+/**
  * \brief Checks whether the given fully-qualified action path is valid.
  */
 static bool validate_action_path(const std::wstring& path)
@@ -179,19 +207,15 @@ std::vector<action_path> ActionManager::remove(const action_filter& filter)
 
 bool ActionManager::associate_hotkey(const action_path& path, const Hotkey::t_hotkey& hotkey, bool overwrite_existing)
 {
-    const auto normalized_path = normalize_filter(path);
+    t_action* action = get_single_action_ptr_matching_path(path);
 
-    if (!validate_action_path(normalized_path))
+    if (!action)
     {
-        g_view_logger->error(L"ActionManager::associate_hotkey: Malformed action path '{}'.", normalized_path);
+        g_view_logger->error(L"ActionManager::associate_hotkey: '{}' didn't resolve to an action", path);
         return false;
     }
 
-    if (get_action_ptrs_matching_filter(normalized_path).empty())
-    {
-        g_view_logger->error(L"ActionManager::associate_hotkey: Action '{}' not found.", normalized_path);
-        return false;
-    }
+    const auto normalized_path = action->params.path;
 
     if (overwrite_existing)
     {
@@ -211,10 +235,6 @@ bool ActionManager::associate_hotkey(const action_path& path, const Hotkey::t_ho
             g_config.hotkeys[normalized_path] = hotkey;
             g_config.inital_hotkeys[normalized_path] = hotkey;
         }
-        else
-        {
-            g_view_logger->debug(L"ActionManager::associate_hotkey: {} is already registered, doing nothing.", normalized_path, hotkey.to_wstring());
-        }
     }
 
     if (!g_mgr.batched_work)
@@ -227,21 +247,13 @@ bool ActionManager::associate_hotkey(const action_path& path, const Hotkey::t_ho
 
 bool ActionManager::get_action_enabled(const action_path& path)
 {
-    const auto actions = get_action_ptrs_matching_filter(path);
+    t_action* action = get_single_action_ptr_matching_path(path);
 
-    if (actions.empty())
+    if (!action)
     {
-        g_view_logger->error(L"ActionManager::is_action_enabled: Action '{}' not found.", path);
+        g_view_logger->error(L"ActionManager::get_action_enabled: '{}' didn't resolve to an action", path);
         return false;
     }
-
-    if (actions.size() > 1)
-    {
-        g_view_logger->error(L"ActionManager::is_action_enabled: Expected fully-qualified path, but got partially-qualified one.");
-        return false;
-    }
-
-    const auto action = actions.front();
 
     if (action->params.get_enabled)
     {
@@ -253,21 +265,13 @@ bool ActionManager::get_action_enabled(const action_path& path)
 
 bool ActionManager::get_action_active(const action_path& path)
 {
-    const auto actions = get_action_ptrs_matching_filter(path);
+    t_action* action = get_single_action_ptr_matching_path(path);
 
-    if (actions.empty())
+    if (!action)
     {
-        g_view_logger->error(L"ActionManager::is_action_active: Action '{}' not found.", path);
+        g_view_logger->error(L"ActionManager::get_action_active: '{}' didn't resolve to an action", path);
         return false;
     }
-
-    if (actions.size() > 1)
-    {
-        g_view_logger->error(L"ActionManager::is_action_active: Expected fully-qualified path, but got partially-qualified one.");
-        return false;
-    }
-
-    const auto action = actions.front();
 
     if (action->params.get_active)
     {
@@ -394,29 +398,13 @@ ActionManager::action_filter ActionManager::normalize_filter(const action_filter
 
 void ActionManager::invoke(const action_path& path, const bool up)
 {
-    const auto normalized_path = normalize_filter(path);
+    t_action* action = get_single_action_ptr_matching_path(path);
 
-    if (!validate_action_path(normalized_path))
+    if (!action)
     {
-        g_view_logger->error(L"ActionManager::invoke: Malformed action path '{}'.", normalized_path);
+        g_view_logger->error(L"ActionManager::invoke: '{}' didn't resolve to an action", path);
         return;
     }
-
-    const auto actions = get_action_ptrs_matching_filter(normalized_path);
-
-    if (actions.empty())
-    {
-        g_view_logger->error(L"ActionManager::invoke: Action with path '{}' not found.", normalized_path);
-        return;
-    }
-
-    if (actions.size() > 1)
-    {
-        g_view_logger->error(L"ActionManager::invoke: Expected fully-qualified path, but got partially-qualified one.");
-        return;
-    }
-
-    const auto action = actions.front();
 
     if (action->params.get_enabled && !action->params.get_enabled())
     {
