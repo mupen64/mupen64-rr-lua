@@ -1370,8 +1370,8 @@ function hotkey.prompt(caption) end
 ---`Mupen64 > File` - matches nothing, because `File` has no action associated with it.
 
 ---@alias ActionPath string
----A fully-qualified action path in the format `"Category > Subcategory[] > Name"`.
----An action path is a subset of the action filter that is guaranteed to be fully-qualified, meaning it contains all segments of the path.
+---A fully-qualified action path in the format `"Category[] > Name"`.
+---An action path is a subset of the action filter that contains no wildcards and is used to uniquely identify an action.
 
 ---@class ActionParams
 ---@field path ActionPath The action's path.
