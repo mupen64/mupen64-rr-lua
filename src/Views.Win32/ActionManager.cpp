@@ -140,19 +140,24 @@ static bool validate_action_path(const std::wstring& path)
 
 bool ActionManager::add(const t_action_params& params)
 {
-    t_action action{};
-    action.params = params;
-    action.params.path = normalize_filter(action.params.path);
+    const auto normalized_path = normalize_filter(params.path);
 
-    if (!validate_action_path(action.params.path))
+    if (!validate_action_path(normalized_path))
     {
-        g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", params.path);
+        g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", normalized_path);
         return false;
     }
 
-    std::erase_if(g_mgr.actions, [&](const t_action& a) {
-        return a.params.path == action.params.path;
-    });
+    // > If an action with the same path already exists, the operation will fail.
+    if (get_single_action_ptr_matching_path(normalized_path) != nullptr)
+    {
+        g_view_logger->error(L"ActionManager::add: Action with path '{}' already exists.", normalized_path);
+        return false;
+    }
+    
+    t_action action{};
+    action.params = params;
+    action.params.path = normalized_path;
 
     g_mgr.actions.emplace_back(action);
 

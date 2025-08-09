@@ -74,24 +74,17 @@ lust.describe('mupen64', function()
                 })
                 lust.expect(result).to.equal(true)
             end)
-            lust.it('replaces_action_with_existing_path', function()
-                local first_called = false
-                local second_called = false
-
+            lust.it('fails_if_action_already_exists', function()
                 action.add({
                     path = "Test > Something",
-                    down_callback = function() first_called = true end,
                 })
 
-                action.add({
+                local result = action.add({
                     path = "Test > Something",
                     down_callback = function() second_called = true end
                 })
 
-                action.invoke("Test > Something")
-
-                lust.expect(first_called).to.equal(false)
-                lust.expect(second_called).to.equal(true)
+                lust.expect(result).to.equal(false)
             end)
         end)
         lust.describe('remove', function()

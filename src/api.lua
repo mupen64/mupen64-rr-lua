@@ -1381,7 +1381,8 @@ function hotkey.prompt(caption) end
 ---@field get_active (fun(): boolean)? The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state. If null, the action will be considered inactive.
 ---@field get_display_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 
----Adds an action to the action registry. Any action with the same path will be replaced.
+---Adds an action to the action registry.
+---If an action with the same path already exists, the operation will fail.
 ---@param params ActionParams The action parameters.
 ---@return boolean # Whether the operation succeeded.
 function action.add(params) end

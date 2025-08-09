@@ -83,7 +83,8 @@ namespace ActionManager
     };
 
     /**
-     * \brief Adds an action to the action registry. Any action with the same path will be replaced.
+     * \brief Adds an action to the action registry.
+     * If an action with the same path already exists, the operation will fail.
      * \param params The action parameters.
      * \return Whether the operation succeeded.
      */
