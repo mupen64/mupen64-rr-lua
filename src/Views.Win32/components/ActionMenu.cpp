@@ -29,9 +29,9 @@ public:
     explicit t_menu_item(const std::wstring& path);
 
     /**
-     * \brief Performs a depth-first iteration over the menu item tree, applying the given predicate to each item. The predicate is also applied to the initial item itself.
+     * \brief Performs a depth-first iteration over the menu item tree, applying the given action to each item. The action is also applied to the initial item itself.
      */
-    void iterate_children_and_self(const std::function<void(t_menu_item& item)>& predicate);
+    void iterate_children_and_self(const std::function<void(t_menu_item& item)>& action);
 
     [[nodiscard]] auto raw_path() const
     {
@@ -65,12 +65,12 @@ t_menu_item::t_menu_item(const std::wstring& path)
     this->m_has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
 }
 
-void t_menu_item::iterate_children_and_self(const std::function<void(t_menu_item& item)>& predicate)
+void t_menu_item::iterate_children_and_self(const std::function<void(t_menu_item& item)>& action)
 {
-    predicate(*this);
+    action(*this);
     for (auto& child : children)
     {
-        child.iterate_children_and_self(predicate);
+        child.iterate_children_and_self(action);
     }
 }
 
