@@ -23,12 +23,20 @@ namespace LuaManager
     /**
      * \brief Creates a lua environment.
      * \param path The script path.
-     * \param trusted Whether the Lua environment is running in trusted mode. See sandbox.lua for more details.
      * \param destroying_callback A callback that is called when the Lua environment is destroyed.
      * \param print_callback A callback that is called when the Lua environment prints text.
      * \return The newly created lua environment or an error message if the operation failed.
      */
-    std::expected<t_lua_environment*, std::wstring> create_environment(const std::filesystem::path& path, bool trusted, const t_lua_environment::destroying_func& destroying_callback, const t_lua_environment::print_func& print_callback);
+    std::expected<t_lua_environment*, std::wstring> create_environment(const std::filesystem::path& path, const t_lua_environment::destroying_func& destroying_callback, const t_lua_environment::print_func& print_callback);
+
+    /**
+     * \brief Begins code execution in the a Lua environment.
+     * \param env The Lua environment to start.
+     * \param trusted Whether the Lua environment is running in trusted mode. See sandbox.lua for more details.
+     * \return An error message if the operation failed.
+     * \details Environments can only be started once. If you wish to restart an environment, you create a new environment and start that.
+     */
+    std::expected<void, std::wstring> start_environment(t_lua_environment* env, bool trusted);
 
     /**
      * \brief Destroys a lua environment.

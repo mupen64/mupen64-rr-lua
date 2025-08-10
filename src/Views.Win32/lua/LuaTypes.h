@@ -77,6 +77,7 @@ struct t_lua_environment {
     std::filesystem::path path;
     lua_State* L;
     t_lua_rendering_context rctx;
+    bool started{};
 
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};

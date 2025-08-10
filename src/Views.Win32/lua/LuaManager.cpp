@@ -134,9 +134,9 @@ t_lua_environment* LuaManager::get_environment_for_state(lua_State* lua_state)
     return g_lua_env_map[lua_state];
 }
 
-std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(const std::filesystem::path& path, const bool trusted, const t_lua_environment::destroying_func& destroying_callback, const t_lua_environment::print_func& print_callback)
+std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(const std::filesystem::path& path, const t_lua_environment::destroying_func& destroying_callback, const t_lua_environment::print_func& print_callback)
 {
-    assert(is_on_gui_thread());
+    runtime_assert(is_on_gui_thread(), L"not on GUI thread");
 
     auto lua = new t_lua_environment();
 
@@ -144,33 +144,43 @@ std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(c
     lua->destroying = destroying_callback;
     lua->print = print_callback;
     lua->rctx = LuaRenderer::default_rendering_context();
-
     lua->L = luaL_newstate();
+
     lua_atpanic(lua->L, at_panic);
     LuaRegistry::register_functions(lua->L);
     LuaRenderer::create_renderer(&lua->rctx, lua);
 
-    // NOTE: We need to add the lua to the global map already since it may receive callbacks while its executing the global code
-    g_lua_environments.push_back(lua);
+    return lua;
+}
+
+std::expected<void, std::wstring> LuaManager::start_environment(t_lua_environment* env, const bool trusted)
+{
+    if (env->started)
+    {
+        return std::unexpected(L"Lua environment already started");
+    }
+
+    // We need to put it in the environment list before executing any user code so calls into the Mupen API...
+    g_lua_environments.push_back(env);
     rebuild_lua_env_map();
 
     bool has_error = false;
 
-    if (luaL_dostring(lua->L, g_mupen_api_lua_code.c_str()))
+    if (luaL_dostring(env->L, g_mupen_api_lua_code.c_str()))
     {
         has_error = true;
         goto fail;
     }
 
-    LuaRegistry::register_functions(lua->L);
+    LuaRegistry::register_functions(env->L);
 
-    if (luaL_dostring(lua->L, g_inspect_lua_code.c_str()))
+    if (luaL_dostring(env->L, g_inspect_lua_code.c_str()))
     {
         has_error = true;
         goto fail;
     }
 
-    if (luaL_dostring(lua->L, g_shims_lua_code.c_str()))
+    if (luaL_dostring(env->L, g_shims_lua_code.c_str()))
     {
         has_error = true;
         goto fail;
@@ -178,7 +188,7 @@ std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(c
 
     if (!trusted)
     {
-        if (luaL_dostring(lua->L, g_sandbox_lua_code.c_str()))
+        if (luaL_dostring(env->L, g_sandbox_lua_code.c_str()))
         {
             has_error = true;
             goto fail;
@@ -186,7 +196,7 @@ std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(c
     }
 
     // NOTE: We don't want to reach luaL_dofile if the prelude scripts failed, as that would potentially compromise security (if the sandbox script fails for example).
-    if (luaL_dofile(lua->L, lua->path.string().c_str()))
+    if (luaL_dofile(env->L, env->path.string().c_str()))
     {
         has_error = true;
     }
@@ -197,16 +207,18 @@ fail:
         g_lua_environments.pop_back();
         rebuild_lua_env_map();
 
-        const auto error = io_service.string_to_wstring(lua_tostring(lua->L, -1));
-        destroy_environment(lua);
+        const auto error = io_service.string_to_wstring(lua_tostring(env->L, -1));
+        destroy_environment(env);
 
-        delete lua;
-        lua = nullptr;
+        delete env;
+        env = nullptr;
 
         return std::unexpected(error);
     }
 
-    return lua;
+    env->started = true;
+
+    return {};
 }
 
 void LuaManager::destroy_environment(t_lua_environment* lua)
@@ -214,7 +226,7 @@ void LuaManager::destroy_environment(t_lua_environment* lua)
     runtime_assert(lua && lua->L, L"LuaManager::destroy_environment: Lua environment is already destroyed");
 
     lua->destroying(lua);
-    
+
     LuaRenderer::pre_destroy_renderer(&lua->rctx);
 
     LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATSTOP);
@@ -236,6 +248,6 @@ void LuaManager::destroy_environment(t_lua_environment* lua)
     lua_close(lua->L);
     lua->L = nullptr;
     LuaRenderer::destroy_renderer(&lua->rctx);
-    
+
     g_view_logger->info("Lua destroyed");
 }

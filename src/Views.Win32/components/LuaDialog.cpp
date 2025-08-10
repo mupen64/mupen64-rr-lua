@@ -104,7 +104,6 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
 
     const auto result = LuaManager::create_environment(
     path,
-    ctx.trusted(),
     [](const t_lua_environment* env) {
         const auto ctx = get_instance_context(env);
         
@@ -126,8 +125,6 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
         print(*ctx, text);
     });
 
-    Messenger::broadcast(Messenger::Message::ScriptStarted, path);
-
     if (!result.has_value())
     {
         print(ctx, result.error());
@@ -135,7 +132,17 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
     }
 
     ctx.env = result.value();
+    
+    const auto start_result = LuaManager::start_environment(result.value(), ctx.trusted());
 
+    if (!start_result.has_value())
+    {
+        ctx.env = nullptr;
+        print(ctx, start_result.error());
+        return;
+    }
+
+    Messenger::broadcast(Messenger::Message::ScriptStarted, path);
     PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
     PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 }
