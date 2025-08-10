@@ -7,20 +7,7 @@
 #pragma once
 
 #include <core_types.h>
-
-struct t_hotkey {
-    std::wstring identifier{};
-    int32_t key{};
-    int32_t ctrl{};
-    int32_t shift{};
-    int32_t alt{};
-    int32_t down_cmd{};
-    int32_t up_cmd{};
-    /**
-     * \brief Gets the wstring representation of the hotkey.
-     */
-    std::wstring to_wstring();
-};
+#include <Hotkey.h>
 
 struct t_config {
 
@@ -39,80 +26,6 @@ struct t_config {
         Modern,
         ModernWithReadOnly
     };
-
-#pragma region Hotkeys
-    t_hotkey fast_forward_hotkey{};
-    t_hotkey gs_hotkey{};
-    t_hotkey speed_down_hotkey{};
-    t_hotkey speed_up_hotkey{};
-    t_hotkey speed_reset_hotkey{};
-    t_hotkey frame_advance_hotkey{};
-    t_hotkey multi_frame_advance_hotkey{};
-    t_hotkey multi_frame_advance_inc_hotkey{};
-    t_hotkey multi_frame_advance_dec_hotkey{};
-    t_hotkey multi_frame_advance_reset_hotkey{};
-    t_hotkey pause_hotkey{};
-    t_hotkey toggle_read_only_hotkey{};
-    t_hotkey toggle_wait_at_movie_end_hotkey{};
-    t_hotkey toggle_movie_loop_hotkey{};
-    t_hotkey start_movie_playback_hotkey{};
-    t_hotkey start_movie_recording_hotkey{};
-    t_hotkey stop_movie_hotkey{};
-    t_hotkey create_movie_backup_hotkey{};
-    t_hotkey take_screenshot_hotkey{};
-    t_hotkey play_latest_movie_hotkey{};
-    t_hotkey load_latest_script_hotkey{};
-    t_hotkey show_lua_manager_hotkey{};
-    t_hotkey close_all_lua_hotkey{};
-    t_hotkey load_rom_hotkey{};
-    t_hotkey close_rom_hotkey{};
-    t_hotkey reset_rom_hotkey{};
-    t_hotkey load_latest_rom_hotkey{};
-    t_hotkey fullscreen_hotkey{};
-    t_hotkey settings_hotkey{};
-    t_hotkey toggle_statusbar_hotkey{};
-    t_hotkey refresh_rombrowser_hotkey{};
-    t_hotkey seek_to_frame_hotkey{};
-    t_hotkey run_hotkey{};
-    t_hotkey piano_roll_hotkey{};
-    t_hotkey cheats_hotkey{};
-    t_hotkey save_current_hotkey{};
-    t_hotkey load_current_hotkey{};
-    t_hotkey save_as_hotkey{};
-    t_hotkey load_as_hotkey{};
-    t_hotkey undo_load_state_hotkey{};
-    t_hotkey save_to_slot_1_hotkey{};
-    t_hotkey save_to_slot_2_hotkey{};
-    t_hotkey save_to_slot_3_hotkey{};
-    t_hotkey save_to_slot_4_hotkey{};
-    t_hotkey save_to_slot_5_hotkey{};
-    t_hotkey save_to_slot_6_hotkey{};
-    t_hotkey save_to_slot_7_hotkey{};
-    t_hotkey save_to_slot_8_hotkey{};
-    t_hotkey save_to_slot_9_hotkey{};
-    t_hotkey save_to_slot_10_hotkey{};
-    t_hotkey load_from_slot_1_hotkey{};
-    t_hotkey load_from_slot_2_hotkey{};
-    t_hotkey load_from_slot_3_hotkey{};
-    t_hotkey load_from_slot_4_hotkey{};
-    t_hotkey load_from_slot_5_hotkey{};
-    t_hotkey load_from_slot_6_hotkey{};
-    t_hotkey load_from_slot_7_hotkey{};
-    t_hotkey load_from_slot_8_hotkey{};
-    t_hotkey load_from_slot_9_hotkey{};
-    t_hotkey load_from_slot_10_hotkey{};
-    t_hotkey select_slot_1_hotkey{};
-    t_hotkey select_slot_2_hotkey{};
-    t_hotkey select_slot_3_hotkey{};
-    t_hotkey select_slot_4_hotkey{};
-    t_hotkey select_slot_5_hotkey{};
-    t_hotkey select_slot_6_hotkey{};
-    t_hotkey select_slot_7_hotkey{};
-    t_hotkey select_slot_8_hotkey{};
-    t_hotkey select_slot_9_hotkey{};
-    t_hotkey select_slot_10_hotkey{};
-
-#pragma endregion
 
     /// <summary>
     /// The core config.
@@ -454,11 +367,20 @@ struct t_config {
     /// A map of trusted Lua script paths. If a Lua script path is present in this map, it will be trusted.
     /// </summary>
     std::map<std::wstring, std::wstring> trusted_lua_paths;
+
+    /// <summary>
+    /// A map of fully-qualified action paths to a hotkey assigned to them.
+    /// </summary>
+    std::map<std::wstring, Hotkey::t_hotkey> hotkeys;
+
+    /// <summary>
+    /// A map of fully-qualified action paths to the hotkey which was assigned to them the first time the action was assigned a hotkey.
+    /// </summary>
+    std::map<std::wstring, Hotkey::t_hotkey> inital_hotkeys;
 };
 
 extern t_config g_config;
 extern const t_config g_default_config;
-extern std::vector<t_hotkey*> g_config_hotkeys;
 
 namespace Config
 {

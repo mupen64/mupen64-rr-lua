@@ -5,10 +5,11 @@
  */
 
 #include "stdafx.h"
-#include <lua/LuaManager.h>
+#include <ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <lua/LuaCallbacks.h>
+#include <lua/LuaManager.h>
 #include <lua/LuaRegistry.h>
 #include <lua/LuaRenderer.h>
 
@@ -24,6 +25,7 @@ std::string g_sandbox_lua_code{};
 
 std::vector<t_lua_environment*> g_lua_environments{};
 std::unordered_map<lua_State*, t_lua_environment*> g_lua_env_map{};
+std::unordered_map<void*, bool> g_valid_callback_tokens{};
 
 static int at_panic(lua_State* L)
 {
@@ -44,23 +46,75 @@ static void rebuild_lua_env_map()
     }
 }
 
-void* lua_tocallback(lua_State* L, const int i)
+uintptr_t* lua_optcallback(lua_State* L, int i)
 {
-    void* key = calloc(1, sizeof(void*));
+    if (!lua_isfunction(L, i))
+    {
+        return nullptr;
+    }
+
+    const auto key = new uintptr_t();
+    g_valid_callback_tokens[key] = true;
+
     lua_pushvalue(L, i);
     lua_pushlightuserdata(L, key);
     lua_pushvalue(L, -2);
     lua_settable(L, LUA_REGISTRYINDEX);
     lua_pop(L, 1);
+
     return key;
 }
 
-void lua_pushcallback(lua_State* L, void* key)
+uintptr_t* lua_tocallback(lua_State* L, const int i)
 {
-    lua_pushlightuserdata(L, key);
+    if (!lua_isfunction(L, i))
+    {
+        luaL_error(L, "Expected a function at argument %d", i);
+        return nullptr;
+    }
+
+    return lua_optcallback(L, i);
+}
+
+void lua_pushcallback(lua_State* L, uintptr_t* token, bool free)
+{
+    lua_pushlightuserdata(L, token);
     lua_gettable(L, LUA_REGISTRYINDEX);
-    free(key);
-    key = nullptr;
+    if (free)
+    {
+        lua_freecallback(L, token);
+    }
+}
+
+void lua_freecallback(lua_State* L, uintptr_t* token)
+{
+    if (!g_valid_callback_tokens.contains(token))
+    {
+        return;
+    }
+
+    lua_pushlightuserdata(L, token);
+    lua_pushnil(L);
+    lua_settable(L, LUA_REGISTRYINDEX);
+
+    g_valid_callback_tokens.erase(token);
+    delete token;
+}
+
+std::wstring luaL_checkwstring(lua_State* L, int i)
+{
+    if (!lua_isstring(L, i))
+    {
+        luaL_error(L, "Expected a string at argument %d", i);
+    }
+
+    const auto str = lua_tostring(L, i);
+    if (str == nullptr)
+    {
+        luaL_error(L, "Expected a string at argument %d", i);
+    }
+
+    return io_service.string_to_wstring(str);
 }
 
 void LuaManager::init()
@@ -164,6 +218,13 @@ void LuaManager::destroy_environment(t_lua_environment* lua)
     LuaRenderer::pre_destroy_renderer(&lua->rctx);
 
     LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATSTOP);
+
+    ActionManager::begin_batch_work();
+    for (const auto& action : lua->registered_actions)
+    {
+        ActionManager::remove(action);
+    }
+    ActionManager::end_batch_work();
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
     // After this point, it's game over and no callbacks will be called anymore.

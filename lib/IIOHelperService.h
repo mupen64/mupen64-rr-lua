@@ -206,6 +206,46 @@ public:
         }
     }
 
+    /**
+     * \brief Removes leading whitespace from a string.
+     * \param str The string to trim.
+     * \return A new string with leading whitespace removed.
+     */
+    virtual std::wstring ltrim(const std::wstring& str)
+    {
+        std::wstring s = str;
+        s.erase(s.begin(), std::ranges::find_if(s, [](const wchar_t ch) {
+                    return !iswspace(ch);
+                }));
+        return s;
+    }
+
+    /**
+     * \brief Removes trailing whitespace from a string.
+     * \param str The string to trim.
+     * \return A new string with trailing whitespace removed.
+     */
+    virtual std::wstring rtrim(const std::wstring& str)
+    {
+        std::wstring s = str;
+        s.erase(std::find_if(s.rbegin(), s.rend(), [](const wchar_t ch) {
+                    return !iswspace(ch);
+                })
+                .base(),
+                s.end());
+        return s;
+    }
+
+    /**
+     * \brief Removes leading and trailing whitespace from a string.
+     * \param str The string to trim.
+     * \return A new string with leading and trailing whitespace removed.
+     */
+    virtual std::wstring trim(const std::wstring& str)
+    {
+        return ltrim(rtrim(str));
+    }
+
     virtual size_t str_nth_occurence(const std::wstring& str, const std::wstring& searched, size_t nth)
     {
         if (searched.empty() || nth <= 0)
@@ -333,6 +373,26 @@ public:
         }
 
         return ret;
+    }
+
+    /**
+     * \brief Joins a vector of strings into a single string with a specified delimiter.
+     * \param vec The vector of strings to join.
+     * \param delimiter The delimiter to use between the strings.
+     * \return A single string containing all elements of the vector separated by the delimiter.
+     */
+    virtual std::wstring join_wstring(const std::vector<std::wstring>& vec, const std::wstring& delimiter)
+    {
+        std::wostringstream s;
+        for (const auto& i : vec)
+        {
+            if (&i != &vec[0])
+            {
+                s << delimiter;
+            }
+            s << i;
+        }
+        return s.str();
     }
 
     struct t_path_segment_info {

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <DialogService.h>
+
 typedef struct {
     WORD dlgVer;
     WORD signature;
@@ -61,6 +63,32 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> m_start_time;
 };
 
+class WindowDisabler {
+public:
+    explicit WindowDisabler(const HWND hwnd) :
+        m_hwnd(hwnd)
+    {
+        if (!IsWindow(hwnd))
+        {
+            m_hwnd = nullptr;
+            return;
+        }
+        m_prev_enabled = IsWindowEnabled(m_hwnd);
+        EnableWindow(hwnd, FALSE);
+    }
+
+    ~WindowDisabler()
+    {
+        if (IsWindow(m_hwnd))
+        {
+            EnableWindow(m_hwnd, m_prev_enabled);
+        }
+    }
+
+private:
+    HWND m_hwnd{};
+    bool m_prev_enabled{};
+};
 static RECT get_window_rect_client_space(HWND parent, HWND child)
 {
     RECT offset_client = {0};
@@ -475,16 +503,21 @@ static std::wstring format_short(const uint64_t value)
     return str;
 }
 
-/**
- * \brief Asserts a condition at runtime and logs a message if the condition is false.
- * \param condition The condition to assert.
- * \param message The message to log if the assertion fails.
- */
-static void runtime_assert(const bool condition, const std::wstring& message)
+static void runtime_assert_fail(const std::wstring& message)
 {
-    if (!condition)
-    {
-        g_view_logger->critical(L"Runtime assertion failed: {}", message);
-        std::terminate();
-    }
+#if defined(_DEBUG)
+    __debugbreak();
+#endif
+    DialogService::show_dialog(message.c_str(), L"Failed Runtime Assertion", fsvc_error);
+    std::terminate();
 }
+
+#define runtime_assert(condition, message) \
+    do                                     \
+    {                                      \
+        if (!(condition))                  \
+        {                                  \
+            runtime_assert_fail(message);  \
+        }                                  \
+    }                                      \
+    while (0)

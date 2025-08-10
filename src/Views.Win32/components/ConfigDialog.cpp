@@ -5,24 +5,30 @@
  */
 
 #include "stdafx.h"
+#include <ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
 #include <Plugin.h>
-#include <components/SettingsListView.h>
 #include <capture/EncodingManager.h>
-#include <components/configdialog.h>
 #include <components/FilePicker.h>
+#include <components/SettingsListView.h>
+#include <components/configdialog.h>
 #include <lua/LuaManager.h>
+
+#include <algorithm>
 
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
 
+// Local copy of the action path<->hotkey map from g_config, but flattened into a vector
+// We need to keep this because the hotkeys might be modified during the config by dodgy Lua scripts lol...
+std::vector<std::pair<std::wstring, Hotkey::t_hotkey>> g_hotkey_scratchpad;
+
 /**
  * Represents a group of options in the settings.
  */
-typedef struct
-{
+struct t_options_group {
     /**
      * The group's unique identifier.
      */
@@ -32,12 +38,12 @@ typedef struct
      * The group's name.
      */
     std::wstring name;
-} t_options_group;
+};
 
 /**
  * Represents a settings option.
  */
-typedef struct OptionsItem {
+struct t_options_item {
     enum class Type {
         Invalid,
         Bool,
@@ -47,30 +53,28 @@ typedef struct OptionsItem {
         Hotkey,
     };
 
-    /**
-     * The group this option belongs to.
-     */
-    size_t group_id = -1;
+    typedef std::variant<int32_t, std::wstring, Hotkey::t_hotkey> data_variant;
 
-    /**
-     * The option's name.
-     */
-    std::wstring name;
+    struct t_readonly_property {
+        std::function<data_variant()> get{};
 
-    /**
-     * The option's tooltip.
-     */
-    std::wstring tooltip;
+        explicit t_readonly_property(const std::function<data_variant()>& get)
+        {
+            this->get = get;
+        }
+    };
 
-    /**
-     * The option's backing data.
-     */
-    int32_t* data = nullptr;
 
-    /**
-     * The option's backing data as a string, used when type == Type::String
-     */
-    std::wstring* data_str;
+    struct t_readwrite_property : t_readonly_property {
+        std::function<void(const data_variant&)> set{};
+
+        t_readwrite_property(const std::function<data_variant()>& get, const std::function<void(const data_variant&)>& set) :
+            t_readonly_property(get)
+        {
+            this->set = set;
+        }
+    };
+
 
     /**
      * The option's backing data type.
@@ -78,10 +82,29 @@ typedef struct OptionsItem {
     Type type = Type::Invalid;
 
     /**
-     * Possible predefined values (e.g.: enum values) for an option along with a name.
-     *
-     * Only applicable when <c>type == Type::Enum<c>.
+     * The group this option belongs to.
      */
+    size_t group_id = -1;
+
+    /**
+     * The option's display name.
+     */
+    std::wstring name{};
+
+    /**
+     * The option's tooltip, or an empty string if no tooltip is set.
+     */
+    std::wstring tooltip{};
+
+    t_readwrite_property current_value;
+
+    t_readonly_property initial_value = t_readonly_property([] -> data_variant {
+        runtime_assert(false, L"Initial value not set for option");
+        return data_variant{};
+    });
+
+    t_readonly_property default_value;
+
     std::vector<std::pair<std::wstring, int32_t>> possible_values = {};
 
     /**
@@ -94,91 +117,18 @@ typedef struct OptionsItem {
     /**
      * Gets the value name for the current backing data, or a fallback name if no match is found.
      */
-    std::wstring get_value_name() const
-    {
-        if (type == Type::Bool)
-        {
-            return *data ? L"On" : L"Off";
-        }
-
-        if (type == Type::Number)
-        {
-            return std::to_wstring(*data);
-        }
-
-        if (type == Type::String)
-        {
-            return *data_str;
-        }
-
-        if (type == Type::Hotkey)
-        {
-            const auto hotkey_ptr = reinterpret_cast<t_hotkey*>(data);
-            return hotkey_ptr->to_wstring();
-        }
-
-        for (auto [name, val] : possible_values)
-        {
-            if (*data == val)
-            {
-                return name;
-            }
-        }
-
-        return std::format(L"Unknown value ({})", *data);
-    }
-
-    /**
-     * Gets the option's default value from another config struct.
-     */
-    void* get_default_value_ptr(const t_config* config) const
-    {
-        // Find the field offset for the option relative to g_config and grab the equivalent from the default config
-        size_t field_offset;
-        if (type == Type::String)
-        {
-            field_offset = (char*)data_str - (char*)&g_config;
-        }
-        else
-        {
-            field_offset = (char*)data - (char*)&g_config;
-        }
-
-        if (type == Type::String)
-        {
-            return (std::string*)((char*)config + field_offset);
-        }
-
-        return (int32_t*)((char*)config + field_offset);
-    }
+    [[nodiscard]] std::wstring get_value_name() const;
 
     /**
      * Resets the value of the option to the default value.
      */
-    void reset_to_default()
-    {
-        void* default_equivalent = get_default_value_ptr(&g_default_config);
+    void reset_to_default() const;
 
-        if (type == Type::String)
-        {
-            *data_str = *(std::wstring*)default_equivalent;
-        }
-        else if (type == Type::Hotkey)
-        {
-            auto default_hotkey = (t_hotkey*)default_equivalent;
-            auto current_hotkey = (t_hotkey*)data;
-            current_hotkey->key = default_hotkey->key;
-            current_hotkey->ctrl = default_hotkey->ctrl;
-            current_hotkey->alt = default_hotkey->alt;
-            current_hotkey->shift = default_hotkey->shift;
-        }
-        else
-        {
-            *data = *(int32_t*)default_equivalent;
-        }
-    }
-
-} t_options_item;
+    /**
+     * \brief Gets neatly formatted information about the option.
+     */
+    std::wstring get_friendly_info() const;
+};
 
 t_plugin_discovery_result plugin_discovery_result;
 std::vector<t_options_group> g_option_groups;
@@ -188,154 +138,72 @@ HWND g_edit_hwnd;
 size_t g_edit_option_item_index;
 t_config g_prev_config;
 
-// Index of the hotkey currently being entered, if any
-std::optional<size_t> g_hotkey_active_index;
-
 std::thread g_plugin_discovery_thread;
 
 // Whether a plugin rescan is needed. Set when modifying the plugin path.
 bool g_plugin_discovery_rescan = false;
 
-/// <summary>
-/// Waits until the user inputs a valid key sequence, then fills out the hotkey
-/// </summary>
-/// <returns>
-/// Whether a hotkey has successfully been picked
-/// </returns>
-int32_t get_user_hotkey(t_hotkey* hotkey)
+std::wstring t_options_item::get_value_name() const
 {
-    MSG msg;
-    int i, j;
-    int lc = 0, ls = 0, la = 0;
-    for (i = 0; i < 500; i++)
+    const auto value = current_value.get();
+
+    switch (type)
     {
-        SleepEx(10, TRUE);
-        for (j = 8; j < 254; j++)
+    case Type::Bool:
+        return std::get<int32_t>(value) != 0 ? L"On" : L"Off";
+    case Type::Number:
+        return std::to_wstring(std::get<int32_t>(value));
+    case Type::Enum:
         {
-            while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE))
-                ;
+            const auto enum_value = std::get<int32_t>(value);
 
-            if (j == VK_LCONTROL || j == VK_RCONTROL || j == VK_LMENU || j == VK_RMENU || j == VK_LSHIFT || j == VK_RSHIFT)
-                continue;
-
-            if (GetAsyncKeyState(VK_RBUTTON))
+            for (const auto& [name, val] : possible_values)
             {
-                return 1;
-            }
-
-            if (GetAsyncKeyState(VK_MBUTTON))
-            {
-                hotkey->key = VK_MBUTTON;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-                return 1;
-            }
-
-            if (GetAsyncKeyState(VK_XBUTTON1))
-            {
-                hotkey->key = VK_XBUTTON1;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-                return 1;
-            }
-
-            if (GetAsyncKeyState(VK_XBUTTON2))
-            {
-                hotkey->key = VK_XBUTTON2;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-                return 1;
-            }
-
-            if (GetAsyncKeyState(j) & 0x8000)
-            {
-                // HACK to avoid exiting all the way out of the dialog on pressing escape to clear a hotkeys
-                // or continually re-activating the button on trying to assign space as a hotkeys
-                if (j == VK_ESCAPE)
-                    return 0;
-
-                if (j == VK_CONTROL)
+                if (enum_value == val)
                 {
-                    lc = 1;
-                    continue;
+                    return name;
                 }
-                if (j == VK_SHIFT)
-                {
-                    ls = 1;
-                    continue;
-                }
-                if (j == VK_MENU)
-                {
-                    la = 1;
-                    continue;
-                }
-                if (j != VK_ESCAPE)
-                {
-                    hotkey->key = j;
-                    hotkey->shift = GetAsyncKeyState(VK_SHIFT) ? 1 : 0;
-                    hotkey->ctrl = GetAsyncKeyState(VK_CONTROL) ? 1 : 0;
-                    hotkey->alt = GetAsyncKeyState(VK_MENU) ? 1 : 0;
-                    while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                        ;
-
-                    return 1;
-                }
-
-                hotkey->key = 0;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-
-                return 0;
             }
-            if (j == VK_CONTROL && lc)
-            {
-                hotkey->key = 0;
-                hotkey->shift = 0;
-                hotkey->ctrl = 1;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
 
-                return 1;
-            }
-            if (j == VK_SHIFT && ls)
-            {
-                hotkey->key = 0;
-                hotkey->shift = 1;
-                hotkey->ctrl = 0;
-                hotkey->alt = 0;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-
-                return 1;
-            }
-            if (j == VK_MENU && la)
-            {
-                hotkey->key = 0;
-                hotkey->shift = 0;
-                hotkey->ctrl = 0;
-                hotkey->alt = 1;
-                while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-                    ;
-
-                return 1;
-            }
+            return std::format(L"Unknown ({})", enum_value);
         }
+    case Type::String:
+        return std::get<std::wstring>(value);
+    case Type::Hotkey:
+        return std::get<Hotkey::t_hotkey>(value).to_wstring();
+    default:
+        runtime_assert(false, L"Unhandled option type in t_options_item::get_value_name");
     }
-    // we checked all keys and none of them was pressed, so give up
-    return 0;
+}
+
+void t_options_item::reset_to_default() const
+{
+    current_value.set(default_value.get());
+}
+
+std::wstring t_options_item::get_friendly_info() const
+{
+    std::wstring str = tooltip.empty() ? L"(no further information available)" : tooltip;
+
+    if (possible_values.empty())
+    {
+        return str;
+    }
+
+    str += L"\r\n\r\n";
+    for (const auto& pair : possible_values)
+    {
+        str += std::format(L"{} - {}", pair.second, pair.first);
+
+        if (pair.second == std::get<int32_t>(current_value.get()))
+        {
+            str += L" (default)";
+        }
+
+        str += L"\r\n";
+    }
+
+    return str;
 }
 
 INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
@@ -987,149 +855,152 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .id = id++,
     .name = L"Debug"};
 
-    t_options_group hotkey_group = {
-    .id = id++,
-    .name = L"Hotkeys"};
+    groups = {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group, lua_group, debug_group};
 
-    groups = {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group, lua_group, debug_group, hotkey_group};
+#define RPROP(T, x) t_options_item::t_readonly_property([] { \
+    return g_default_config.x;                               \
+})
+
+#define RWPROP(T, x) t_options_item::t_readwrite_property([] {                                            \
+    return g_config.x;                                                                                    \
+},                                                                                                        \
+                                                          [](const t_options_item::data_variant& value) { \
+                                                              g_config.x = std::get<T>(value);            \
+                                                          })
+
+#define GENPROPS(T, x) .current_value = RWPROP(T, x), .default_value = RPROP(T, x)
 
     options = {
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Pause when unfocused",
     .tooltip = L"Pause emulation when the main window isn't in focus.",
-    .data = &g_config.is_unfocused_pause_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, is_unfocused_pause_enabled),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Automatic Update Checking",
     .tooltip = L"Enables automatic update checking. Requires an internet connection.",
-    .data = &g_config.automatic_update_checking,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, automatic_update_checking),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Silent Mode",
     .tooltip = L"Suppresses all dialogs and chooses reasonable defaults for multiple-choice dialogs.\nCan cause data loss during normal usage; only enable in automation scenarios!",
-    .data = &g_config.silent_mode,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, silent_mode),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Keep working directory",
     .tooltip = L"Keep the working directory specified by the caller program at startup.\nWhen disabled, mupen changes the working directory to its current path.",
-    .data = &g_config.keep_default_working_directory,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, keep_default_working_directory),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Async Plugin Discovery",
     .tooltip = L"Whether plugins discovery is performed asynchronously. Removes potential waiting times in the config dialog.",
-    .data = &g_config.plugin_discovery_async,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, plugin_discovery_async),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = interface_group.id,
     .name = L"Auto-increment Slot",
     .tooltip = L"Automatically increment the save slot upon saving a state.",
-    .data = &g_config.increment_slot,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, increment_slot),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = statusbar_group.id,
     .name = L"Layout",
     .tooltip = L"The statusbar layout preset.\nClassic - The legacy layout\nModern - The new layout containing additional information\nModern+ - The new layout, but with a section for read-only status",
-    .data = &g_config.statusbar_layout,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, statusbar_layout),
     .possible_values = {
     std::make_pair(L"Classic", (int32_t)t_config::StatusbarLayout::Classic),
     std::make_pair(L"Modern", (int32_t)t_config::StatusbarLayout::Modern),
     std::make_pair(L"Modern+", (int32_t)t_config::StatusbarLayout::ModernWithReadOnly),
     },
     },
+    t_options_item{.type = t_options_item::Type::Bool, .group_id = statusbar_group.id, .name = L"Zero-index", .tooltip = L"Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.", GENPROPS(int32_t, vcr_0_index)},
     t_options_item{
-    .group_id = statusbar_group.id,
-    .name = L"Zero-index",
-    .tooltip = L"Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.",
-    .data = &g_config.vcr_0_index,
     .type = t_options_item::Type::Bool,
-    },
-    t_options_item{
     .group_id = statusbar_group.id,
     .name = L"Scale down to fit window",
     .tooltip = L"Whether the statusbar is allowed to scale its segments down.",
-    .data = &g_config.statusbar_scale_down,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, statusbar_scale_down),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = statusbar_group.id,
     .name = L"Scale up to fill window",
     .tooltip = L"Whether the statusbar is allowed to scale its segments up.",
-    .data = &g_config.statusbar_scale_up,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, statusbar_scale_up),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = seek_piano_roll_group.id,
     .name = L"Savestate Interval",
     .tooltip = L"The interval at which to create savestates for seeking. Piano Roll is exclusively read-only if this value is 0.\nHigher numbers will reduce the seek duration at cost of emulator performance, a value of 1 is not allowed.\n0 - Seek savestate generation disabled\nRecommended: 100",
-    .data = &g_config.core.seek_savestate_interval,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.seek_savestate_interval),
     .is_readonly = [] {
         return g_core_ctx->vcr_get_task() != task_idle;
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = seek_piano_roll_group.id,
     .name = L"Savestate Max Count",
     .tooltip = L"The maximum amount of savestates to keep in memory for seeking.\nHigher numbers might cause an out of memory exception.",
-    .data = &g_config.core.seek_savestate_max_count,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.seek_savestate_max_count),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = seek_piano_roll_group.id,
     .name = L"Constrain edit to column",
     .tooltip = L"Whether piano roll edits are constrained to the column they started on.",
-    .data = &g_config.piano_roll_constrain_edit_to_column,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, piano_roll_constrain_edit_to_column),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = seek_piano_roll_group.id,
     .name = L"History size",
     .tooltip = L"Maximum size of the history list.",
-    .data = &g_config.piano_roll_undo_stack_size,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, piano_roll_undo_stack_size),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = seek_piano_roll_group.id,
     .name = L"Keep selection visible",
     .tooltip = L"Whether the piano roll will try to keep the selection visible.",
-    .data = &g_config.piano_roll_keep_selection_visible,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, piano_roll_keep_selection_visible),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = seek_piano_roll_group.id,
     .name = L"Keep playhead visible",
     .tooltip = L"Whether the piano roll will try to keep the playhead visible.",
-    .data = &g_config.piano_roll_keep_playhead_visible,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, piano_roll_keep_playhead_visible),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = capture_group.id,
     .name = L"Delay",
     .tooltip = L"Miliseconds to wait before capturing a frame. Useful for syncing with external programs.",
-    .data = &g_config.capture_delay,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, capture_delay),
     },
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = capture_group.id,
     .name = L"Encoder",
     .tooltip = L"The encoder to use when generating an output file.\nVFW - Slow but stable (recommended)\nFFmpeg - Fast but less stable",
-    .data = &g_config.encoder_type,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, encoder_type),
     .possible_values = {
     std::make_pair(L"VFW", (int32_t)t_config::EncoderType::VFW),
     std::make_pair(L"FFmpeg (experimental)", (int32_t)t_config::EncoderType::FFmpeg),
@@ -1139,11 +1010,11 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = capture_group.id,
     .name = L"Mode",
     .tooltip = L"The video source to use for capturing video frames.\nPlugin - Captures frames solely from the video plugin\nWindow - Captures frames from the main window\nScreen - Captures screenshots of the current display and crops them to Mupen\nHybrid - Combines video plugin capture and internal Lua composition (recommended)",
-    .data = &g_config.capture_mode,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, capture_mode),
     .possible_values = {
     std::make_pair(L"Plugin", 0),
     std::make_pair(L"Window", 1),
@@ -1155,11 +1026,11 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = capture_group.id,
     .name = L"Sync",
     .tooltip = L"The strategy to use for synchronizing video and audio during capture.\nNone - No synchronization\nAudio - Audio is synchronized to video\nVideo - Video is synchronized to audio",
-    .data = &g_config.synchronization_mode,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, synchronization_mode),
     .possible_values = {
     std::make_pair(L"None", 0),
     std::make_pair(L"Audio", 1),
@@ -1170,32 +1041,32 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::String,
     .group_id = capture_group.id,
     .name = L"FFmpeg Path",
     .tooltip = L"The path to the FFmpeg executable to use for capturing.",
-    .data_str = &g_config.ffmpeg_path,
-    .type = t_options_item::Type::String,
+    GENPROPS(std::wstring, ffmpeg_path),
     .is_readonly = [] {
         return EncodingManager::is_capturing();
     },
     },
     t_options_item{
+    .type = t_options_item::Type::String,
     .group_id = capture_group.id,
     .name = L"FFmpeg Arguments",
     .tooltip = L"The argument format string to be passed to FFmpeg when capturing.",
-    .data_str = &g_config.ffmpeg_final_options,
-    .type = t_options_item::Type::String,
+    GENPROPS(std::wstring, ffmpeg_final_options),
     .is_readonly = [] {
         return EncodingManager::is_capturing();
     },
     },
 
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = core_group.id,
     .name = L"Type",
     .tooltip = L"The core type to utilize for emulation.\nInterpreter - Slow and relatively accurate\nDynamic Recompiler - Fast, possibly less accurate, and only for x86 processors\nPure Interpreter - Very slow and accurate",
-    .data = &g_config.core.core_type,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, core.core_type),
     .possible_values = {
     std::make_pair(L"Interpreter", 0),
     std::make_pair(L"Dynamic Recompiler", 1),
@@ -1206,104 +1077,104 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Undo Savestate Load",
     .tooltip = L"Whether undo savestate load functionality is enabled.",
-    .data = &g_config.core.st_undo_load,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.st_undo_load),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"Counter Factor",
     .tooltip = L"The CPU's counter factor.\nValues above 1 are effectively 'lagless'.",
-    .data = &g_config.core.counter_factor,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.counter_factor),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"Max Lag Frames",
     .tooltip = L"The maximum amount of lag frames before the core emits a warning\n0 - Disabled",
-    .data = &g_config.core.max_lag,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.max_lag),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"WiiVC Mode",
     .tooltip = L"Enables WiiVC emulation.",
-    .data = &g_config.core.wii_vc_emulation,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.wii_vc_emulation),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Emulate Float Crashes",
     .tooltip = L"Emulate float operation-related crashes which would also crash on real hardware",
-    .data = &g_config.core.float_exception_emulation,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.float_exception_emulation),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"Fast-Forward Skip Frequency",
     .tooltip = L"Skip rendering every nth frame when in fast-forward mode.\n0 - Render nothing\n1 - Render every frame\nn - Render every nth frame",
-    .data = &g_config.core.frame_skip_frequency,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.frame_skip_frequency),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Emulate SD Card",
     .tooltip = L"Enable SD card emulation.\nRequires a VHD-formatted SD card file named card.vhd in the same folder as Mupen.",
-    .data = &g_config.core.use_summercart,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.use_summercart),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Instant Savestate Update",
     .tooltip = L"Saves and loads game graphics to savestates to allow instant graphics updates when loading savestates.\nGreatly increases savestate saving and loading time.",
-    .data = &g_config.core.st_screenshot,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.st_screenshot),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = core_group.id,
     .name = L"Skip rendering lag",
     .tooltip = L"Prevents calls to updateScreen during lag.\nMight improve performance on some video plugins at the cost of stability.",
-    .data = &g_config.core.skip_rendering_lag,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.skip_rendering_lag),
     },
     t_options_item{
+    .type = t_options_item::Type::Number,
     .group_id = core_group.id,
     .name = L"ROM Cache Size",
     .tooltip = L"Size of the ROM cache.\nImproves ROM loading performance at the cost of data staleness and high memory usage.\n0 - Disabled\nn - Maximum of n ROMs kept in cache",
-    .data = &g_config.core.rom_cache_size,
-    .type = t_options_item::Type::Number,
+    GENPROPS(int32_t, core.rom_cache_size),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = vcr_group.id,
     .name = L"Movie Backups",
     .tooltip = L"Generate a backup of the currently recorded movie when loading a savestate.\nBackups are saved in the backups folder.",
-    .data = &g_config.core.vcr_backups,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.vcr_backups),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = vcr_group.id,
     .name = L"Extended Movie Format",
     .tooltip = L"Whether movies are written using the new extended format.\nUseful when opening movies in external programs which don't handle the new format correctly.\nIf disabled, the extended format sections are set to 0.",
-    .data = &g_config.core.vcr_write_extended_format,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.vcr_write_extended_format),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = vcr_group.id,
     .name = L"Record Resets",
     .tooltip = L"Record manually performed resets to the current movie.\nThese resets will be repeated when the movie is played back.",
-    .data = &g_config.core.is_reset_recording_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.is_reset_recording_enabled),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Enum,
     .group_id = lua_group.id,
     .name = L"Presenter",
     .tooltip = L"The presenter type to use for displaying and capturing Lua graphics.\nRecommended: DirectComposition",
-    .data = &g_config.presenter_type,
-    .type = t_options_item::Type::Enum,
+    GENPROPS(int32_t, presenter_type),
     .possible_values = {
     std::make_pair(L"DirectComposition", (int32_t)t_config::PresenterType::DirectComposition),
     std::make_pair(L"GDI", (int32_t)t_config::PresenterType::GDI),
@@ -1313,56 +1184,45 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = lua_group.id,
     .name = L"Lazy Renderer Initialization",
     .tooltip = L"Enables lazy Lua renderer initialization. Greatly speeds up start and stop times for certain scripts.",
-    .data = &g_config.lazy_renderer_init,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, lazy_renderer_init),
     .is_readonly = [] {
         return !g_lua_environments.empty();
     },
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = lua_group.id,
     .name = L"Fast Dispatcher",
     .tooltip = L"Enables a low-latency dispatcher implementation. Can improve performance with Lua scripts.\nDisable if the UI is stuttering heavily or if you're using a low-end machine.",
-    .data = &g_config.fast_dispatcher,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, fast_dispatcher),
     },
 
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = debug_group.id,
     .name = L"Delay Plugin Discovery",
     .tooltip = L"Whether the plugin discovery process is artificially lengthened.\nDo not enable unless you are debugging the plugin discovery system or its surrounding components.",
-    .data = &g_config.plugin_discovery_delayed,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, plugin_discovery_delayed),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = debug_group.id,
     .name = L"Audio Delay",
     .tooltip = L"Whether to delay audio interrupts.",
-    .data = &g_config.core.is_audio_delay_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.is_audio_delay_enabled),
     },
     t_options_item{
+    .type = t_options_item::Type::Bool,
     .group_id = debug_group.id,
     .name = L"Compiled Jump",
     .tooltip = L"Whether the Dynamic Recompiler core compiles jumps.",
-    .data = &g_config.core.is_compiled_jump_enabled,
-    .type = t_options_item::Type::Bool,
+    GENPROPS(int32_t, core.is_compiled_jump_enabled),
     },
     };
-
-    for (const auto hotkey : g_config_hotkeys)
-    {
-        options.push_back(t_options_item{
-        .group_id = hotkey_group.id,
-        .name = hotkey->identifier,
-        .tooltip = std::format(L"{} hotkey.\nAction down: #{}\nAction up: #{}", hotkey->identifier, (int32_t)hotkey->down_cmd, (int32_t)hotkey->up_cmd),
-        .data = reinterpret_cast<int32_t*>(hotkey),
-        .type = t_options_item::Type::Hotkey,
-        });
-    }
 }
 
 LRESULT CALLBACK InlineEditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
@@ -1427,11 +1287,13 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
     {
     case WM_INITDIALOG:
         {
-            auto option_item = g_option_items[g_edit_option_item_index];
-            auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+            const auto option_item = g_option_items[g_edit_option_item_index];
+            const auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+
+            const auto current_value = std::get<std::wstring>(option_item.current_value.get());
 
             SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
-            Edit_SetText(edit_hwnd, option_item.data_str->data());
+            Edit_SetText(edit_hwnd, current_value.c_str());
 
             SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
             break;
@@ -1441,13 +1303,14 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
         {
         case IDOK:
             {
-                auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
+                auto option_item = g_option_items[g_edit_option_item_index];
+                const auto edit_hwnd = GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT);
 
                 auto len = Edit_GetTextLength(edit_hwnd) + 1;
                 auto str = static_cast<wchar_t*>(calloc(len, sizeof(wchar_t)));
                 Edit_GetText(edit_hwnd, str, len);
 
-                *g_option_items[g_edit_option_item_index].data_str = str;
+                option_item.current_value.set(std::wstring(str));
 
                 free(str);
 
@@ -1456,6 +1319,8 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
             }
         case IDCANCEL:
             EndDialog(wnd, 1);
+            break;
+        default:
             break;
         }
         break;
@@ -1477,68 +1342,73 @@ void advance_listview_selection(HWND lvhwnd)
 }
 
 /**
- * Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
+ * Tries applying the specified htokey to the option item. Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
  */
-static void handle_hotkey_conflict(const HWND hwnd, t_hotkey* current_hotkey)
+static void try_apply_hotkey(const HWND hwnd, const Hotkey::t_hotkey& new_hotkey, const t_options_item& option_item)
 {
-    const bool current_hotkey_unbound = current_hotkey->key == 0 && current_hotkey->ctrl == 0 && current_hotkey->shift == 0 && current_hotkey->alt == 0;
-    if (current_hotkey_unbound)
+    if (new_hotkey.is_nothing())
     {
+        option_item.current_value.set(Hotkey::t_hotkey{});
         return;
     }
 
-    std::vector<t_hotkey*> conflicting_hotkeys;
-    for (const auto hotkey : g_config_hotkeys)
+    std::vector<std::pair<std::wstring, Hotkey::t_hotkey>> conflicting_hotkeys;
+
+    for (const auto& pair : g_hotkey_scratchpad)
     {
-        if (hotkey == current_hotkey)
+        if (pair.first == option_item.name)
         {
             continue;
         }
 
-        if (hotkey->key == current_hotkey->key && hotkey->ctrl == current_hotkey->ctrl && hotkey->shift == current_hotkey->shift && hotkey->alt == current_hotkey->alt)
+        if (pair.second == new_hotkey)
         {
-            conflicting_hotkeys.push_back(hotkey);
+            conflicting_hotkeys.emplace_back(pair);
         }
     }
 
     if (conflicting_hotkeys.empty())
     {
+        option_item.current_value.set(new_hotkey);
         return;
     }
 
     std::wstring conflicting_hotkey_identifiers;
-    for (const auto hotkey : conflicting_hotkeys)
+    for (const auto& pair : conflicting_hotkeys)
     {
-        conflicting_hotkey_identifiers += L"- " + hotkey->identifier + L"\n";
+        conflicting_hotkey_identifiers += L"- " + pair.first + L"\n";
     }
 
-    const auto str = std::format(L"The key combination {} is already used by the following hotkey(s):\n\n{}\nHow would you like to proceed?",
-                                 current_hotkey->to_wstring(),
+    const auto str = std::format(L"The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
+                                 new_hotkey.to_wstring(),
                                  conflicting_hotkey_identifiers);
 
-    const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Discard Others", L"Discard Current", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
+    const auto choice = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
 
-    if (result == 0)
+    switch (choice)
     {
-        for (const auto hotkey : conflicting_hotkeys)
+    case 0:
+        for (const auto& pair : conflicting_hotkeys)
         {
-            hotkey->key = 0;
-            hotkey->ctrl = 0;
-            hotkey->shift = 0;
-            hotkey->alt = 0;
+            auto it = std::ranges::find_if(g_option_items, [&pair](const t_options_item& item) {
+                return item.name == pair.first;
+            });
+            if (it != g_option_items.end())
+            {
+                it->current_value.set(Hotkey::t_hotkey{});
+                ListView_Update(g_lv_hwnd, std::distance(g_option_items.begin(), it));
+            }
         }
-
-        ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
-
-        return;
-    }
-
-    if (result == 1)
-    {
-        current_hotkey->key = 0;
-        current_hotkey->ctrl = 0;
-        current_hotkey->shift = 0;
-        current_hotkey->alt = 0;
+        option_item.current_value.set(new_hotkey);
+        break;
+    case 1:
+        option_item.current_value.set(Hotkey::t_hotkey{});
+        break;
+    case 2:
+        option_item.current_value.set(new_hotkey);
+        break;
+    default:
+        break;
     }
 }
 
@@ -1553,19 +1423,19 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     }
 
     // For bools, just flip the value...
-    if (option_item.type == OptionsItem::Type::Bool)
+    if (option_item.type == t_options_item::Type::Bool)
     {
-        *option_item.data ^= true;
+        option_item.current_value.set(!std::get<int32_t>(option_item.current_value.get()));
     }
 
     // For enums, cycle through the possible values
-    if (option_item.type == OptionsItem::Type::Enum)
+    if (option_item.type == t_options_item::Type::Enum)
     {
         // 1. Find the index of the currently selected item, while falling back to the first possible value if there's no match
-        size_t current_value = option_item.possible_values[0].second;
+        int32_t current_value = option_item.possible_values[0].second;
         for (const auto& [_, possible_value] : option_item.possible_values)
         {
-            if (*option_item.data == possible_value)
+            if (std::get<int32_t>(option_item.current_value.get()) == possible_value)
             {
                 current_value = possible_value;
                 break;
@@ -1577,10 +1447,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
         int32_t max_possible_value = INT32_MIN;
         for (const auto& [_, val] : option_item.possible_values)
         {
-            if (val > max_possible_value)
-            {
-                max_possible_value = val;
-            }
+            max_possible_value = std::max(val, max_possible_value);
             if (val < min_possible_value)
             {
                 min_possible_value = val;
@@ -1595,18 +1462,18 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
         }
 
         // 3. Apply the change
-        *option_item.data = current_value;
+        option_item.current_value.set(current_value);
     }
 
     // For strings, allow editing in a dialog (since it might be a multiline string and we can't really handle that below)
-    if (option_item.type == OptionsItem::Type::String)
+    if (option_item.type == t_options_item::Type::String)
     {
         g_edit_option_item_index = i;
         DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), hwnd, EditStringDialogProc, 0);
     }
 
     // For numbers, create a textbox over the value cell for inline editing
-    if (option_item.type == OptionsItem::Type::Number)
+    if (option_item.type == t_options_item::Type::Number)
     {
         if (g_edit_hwnd)
         {
@@ -1629,27 +1496,22 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
 
         SetWindowSubclass(g_edit_hwnd, InlineEditBoxProc, 0, 0);
 
-        Edit_SetText(g_edit_hwnd, std::to_wstring(*option_item.data).c_str());
+        const auto value = std::get<int32_t>(option_item.current_value.get());
+        Edit_SetText(g_edit_hwnd, std::to_wstring(value).c_str());
 
         PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM)g_edit_hwnd, TRUE);
     }
 
     // For hotkeys, accept keyboard inputs
-    if (option_item.type == OptionsItem::Type::Hotkey)
+    if (option_item.type == t_options_item::Type::Hotkey)
     {
-        t_hotkey* hotkey = (t_hotkey*)option_item.data;
+        auto hotkey = std::get<Hotkey::t_hotkey>(option_item.current_value.get());
 
-        t_hotkey prev_hotkey_data = *hotkey;
-
-        g_hotkey_active_index = std::make_optional(i);
-        ListView_Update(g_lv_hwnd, i);
-        RedrawWindow(g_lv_hwnd, nullptr, nullptr, RDW_UPDATENOW);
-        get_user_hotkey(hotkey);
-        g_hotkey_active_index.reset();
-
-        handle_hotkey_conflict(hwnd, hotkey);
+        Hotkey::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", option_item.name), hotkey);
 
         advance_listview_selection(g_lv_hwnd);
+
+        try_apply_hotkey(hwnd, hotkey, option_item);
     }
 
     ListView_Update(g_lv_hwnd, i);
@@ -1693,31 +1555,11 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             };
 
             auto get_item_image = [](size_t i) {
-                const auto options_item = g_option_items[i];
+                const auto& option_item = g_option_items[i];
 
-                void* default_value_ptr = options_item.get_default_value_ptr(&g_prev_config);
+                int32_t image = option_item.initial_value.get() == option_item.current_value.get() ? 50 : 1;
 
-                int32_t image = 50;
-
-                if (options_item.type == OptionsItem::Type::String)
-                {
-                    image = *(std::wstring*)default_value_ptr == *options_item.data_str ? 50 : 1;
-                }
-                else if (options_item.type == OptionsItem::Type::Hotkey)
-                {
-                    auto default_hotkey = (t_hotkey*)default_value_ptr;
-                    auto current_hotkey = (t_hotkey*)options_item.data;
-
-                    bool same = default_hotkey->key == current_hotkey->key && default_hotkey->ctrl == current_hotkey->ctrl && default_hotkey->alt == current_hotkey->alt && default_hotkey->shift == current_hotkey->shift;
-
-                    image = same ? 50 : 1;
-                }
-                else
-                {
-                    image = *(int32_t*)default_value_ptr == *options_item.data ? 50 : 1;
-                }
-
-                if (options_item.is_readonly())
+                if (option_item.is_readonly())
                 {
                     image = 0;
                 }
@@ -1729,11 +1571,6 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 if (subitem == 0)
                 {
                     return g_option_items[i].name;
-                }
-
-                if (g_hotkey_active_index.has_value() && g_hotkey_active_index.value() == i)
-                {
-                    return std::wstring(L"... (RMB to cancel)");
                 }
 
                 return g_option_items[i].get_value_name();
@@ -1754,14 +1591,15 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
         }
     case WM_EDIT_END:
         {
+            auto option_item = g_option_items[g_edit_option_item_index];
             auto str = reinterpret_cast<wchar_t*>(l_param);
 
-            if (g_option_items[g_edit_option_item_index].type == OptionsItem::Type::Number)
+            if (option_item.type == t_options_item::Type::Number)
             {
                 try
                 {
-                    auto result = std::stoi(str);
-                    *g_option_items[g_edit_option_item_index].data = result;
+                    int32_t result = std::stoi(str);
+                    option_item.current_value.set(result);
                 }
                 catch (...)
                 {
@@ -1770,7 +1608,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             }
             else
             {
-                *g_option_items[g_edit_option_item_index].data_str = str;
+                option_item.current_value.set(std::wstring(str));
             }
 
             ListView_Update(g_lv_hwnd, g_edit_option_item_index);
@@ -1795,12 +1633,12 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             HMENU h_menu = CreatePopupMenu();
             AppendMenu(h_menu, MF_STRING | (readonly ? MF_DISABLED : MF_ENABLED), 1, L"Reset to default");
             AppendMenu(h_menu, MF_STRING, 2, L"More info...");
-            if (option_item.type == OptionsItem::Type::Hotkey)
-            {
-                AppendMenu(h_menu, MF_SEPARATOR, 3, L"");
-                AppendMenu(h_menu, MF_STRING, 4, L"Clear");
-            }
             AppendMenu(h_menu, MF_SEPARATOR, 100, L"");
+            if (option_item.type == t_options_item::Type::Hotkey)
+            {
+                AppendMenu(h_menu, MF_STRING, 3, L"Clear");
+                AppendMenu(h_menu, MF_SEPARATOR, 101, L"");
+            }
             AppendMenu(h_menu, MF_STRING, 5, L"Reset all to default");
 
             const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(l_param), GET_Y_LPARAM(l_param), hwnd, 0);
@@ -1810,88 +1648,58 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 break;
             }
 
-            void* default_equivalent = option_item.get_default_value_ptr(&g_default_config);
-
-            if (offset == 1)
+            switch (offset)
             {
+            case 1:
                 option_item.reset_to_default();
-
                 ListView_Update(g_lv_hwnd, i);
-            }
-
-            if (offset == 2)
-            {
-                // Show a MessageBox with the tooltip and all possible values along with the default value.
-
-                std::wstring str;
-
-                str += option_item.tooltip;
-
-                if (!option_item.possible_values.empty())
+                break;
+            case 2:
+                DialogService::show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(), fsvc_information, hwnd);
+                break;
+            case 3:
+                option_item.current_value.set(Hotkey::t_hotkey{});
+                ListView_Update(g_lv_hwnd, i);
+                break;
+            case 5:
                 {
-                    str += L"\r\n\r\n";
+                    // If some settings can't be changed, we'll bail
+                    bool can_all_be_changed = true;
 
-                    for (auto pair : option_item.possible_values)
+                    for (const auto& item : g_option_items)
                     {
-                        str += std::format(L"{} - {}", pair.second, pair.first);
+                        if (!item.is_readonly())
+                            continue;
 
-                        if (pair.second == *(int32_t*)default_equivalent)
-                        {
-                            str += L" (default)";
-                        }
-
-                        str += L"\r\n";
+                        can_all_be_changed = false;
+                        break;
                     }
-                }
 
-                DialogService::show_dialog(str.c_str(), L"Information", fsvc_information, hwnd);
-            }
+                    if (!can_all_be_changed)
+                    {
+                        DialogService::show_dialog(L"Some settings can't be reset, as they are currently read-only. Try again with emulation stopped.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
+                        break;
+                    }
 
-            if (offset == 4 && option_item.type == OptionsItem::Type::Hotkey)
-            {
-                auto current_hotkey = (t_hotkey*)option_item.data;
-                current_hotkey->key = 0;
-                current_hotkey->ctrl = 0;
-                current_hotkey->alt = 0;
-                current_hotkey->shift = 0;
-                ListView_Update(g_lv_hwnd, i);
-            }
+                    const auto result = DialogService::show_ask_dialog(VIEW_DLG_RESET_SETTINGS, L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
 
-            if (offset == 5)
-            {
-                // If some settings can't be changed, we'll bail
-                bool can_all_be_changed = true;
+                    if (!result)
+                    {
+                        break;
+                    }
 
-                for (const auto& item : g_option_items)
-                {
-                    if (!item.is_readonly())
-                        continue;
+                    for (auto& v : g_option_items)
+                    {
+                        v.reset_to_default();
+                    }
 
-                    can_all_be_changed = false;
+                    ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
                     break;
                 }
-
-                if (!can_all_be_changed)
-                {
-                    DialogService::show_dialog(L"Some settings can't be reset, as they are currently read-only. Try again with emulation stopped.\nNo changes have been made to the settings.", L"Reset all to default", fsvc_warning, hwnd);
-                    goto destroy_menu;
-                }
-
-                const auto result = DialogService::show_ask_dialog(VIEW_DLG_RESET_SETTINGS, L"Are you sure you want to reset all settings to default?", L"Reset all to default", false, hwnd);
-
-                if (!result)
-                {
-                    goto destroy_menu;
-                }
-
-                for (auto& v : g_option_items)
-                {
-                    v.reset_to_default();
-                }
-                ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
+            default:
+                break;
             }
 
-        destroy_menu:
             DestroyMenu(h_menu);
         }
         break;
@@ -1914,9 +1722,127 @@ void ConfigDialog::init()
 {
     get_config_listview_items(g_option_groups, g_option_items);
 }
+/**
+ * \brief Generate option groups with names based on the path segments
+ * e.g.:
+ * Mupen64 > File > Load ROM... is grouped under "Mupen64 > File"
+ * Mupen64 > Emulation > Pause is grouped under "Mupen64 > Emulation"
+ * Mupen64 > Emulation > Frame Advance is grouped under "Mupen64 > Emulation"
+ * SM64Lua > Match Yaw is grouped under "SM64Lua"
+ */
+static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
+{
+    std::vector<std::wstring> unique_group_names;
+    const auto all_actions = ActionManager::get_actions_matching_filter(L"*");
+
+    for (const auto& path : all_actions)
+    {
+        std::vector<std::wstring> segments = ActionManager::get_segments(path);
+
+        if (segments.size() <= 1)
+        {
+            continue;
+        }
+
+        segments.pop_back();
+
+        std::wstring group_name;
+        for (size_t i = 0; i < segments.size(); ++i)
+        {
+            if (i > 0)
+            {
+                group_name += ActionManager::SEGMENT_SEPARATOR;
+            }
+            group_name += segments[i];
+        }
+
+        if (std::ranges::find(unique_group_names, group_name) == unique_group_names.end())
+        {
+            unique_group_names.emplace_back(group_name);
+        }
+    }
+
+    std::vector<t_options_group> groups;
+    groups.reserve(unique_group_names.size());
+
+    for (const auto& name : unique_group_names)
+    {
+        groups.emplace_back(t_options_group{
+        .id = base_id++,
+        .name = name});
+    }
+
+    return groups;
+}
+
 
 void ConfigDialog::show_app_settings()
 {
+    g_hotkey_scratchpad.clear();
+
+    const auto prev_option_group_size = g_option_groups.size();
+    const auto prev_option_items_size = g_option_items.size();
+
+    auto option_groups = generate_hotkey_groups(g_option_groups.back().id + 1);
+
+    for (const auto& group : option_groups)
+    {
+        const auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group.name));
+
+        for (const auto& action : actions)
+        {
+            const auto action_segments = ActionManager::get_segments(action);
+            const auto group_segments = ActionManager::get_segments(group.name);
+
+            if (action_segments.at(action_segments.size() - 2) != group_segments.back())
+            {
+                continue;
+            }
+
+            const auto scratchpad_index = g_hotkey_scratchpad.size();
+            g_hotkey_scratchpad.emplace_back(action, g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{});
+
+            const t_options_item item = {
+            .type = t_options_item::Type::Hotkey,
+            .group_id = group.id,
+            .name = ActionManager::get_display_name(action, true),
+            .current_value = t_options_item::t_readwrite_property([=] {
+                return g_hotkey_scratchpad[scratchpad_index].second;
+            },
+                                                                  [=](const t_options_item::data_variant& value) {
+                                                                      g_hotkey_scratchpad[scratchpad_index].second = std::get<Hotkey::t_hotkey>(value);
+                                                                  }),
+            .default_value = t_options_item::t_readonly_property([=] {
+                return g_config.inital_hotkeys.at(action);
+            }),
+            };
+
+            g_option_items.emplace_back(item);
+        }
+    }
+
+    for (auto& option_item : g_option_items)
+    {
+        const auto initial_value = option_item.current_value.get();
+        option_item.initial_value = t_options_item::t_readonly_property([=] {
+            return initial_value;
+        });
+    }
+
+    // We beautify the names here, a bit annoying because we have to reconstruct them
+    for (auto& option_group : option_groups)
+    {
+        auto segments = ActionManager::get_segments(option_group.name);
+        for (auto& segment : segments)
+        {
+            segment = ActionManager::get_display_name(segment, true);
+        }
+        const auto name = io_service.join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+        option_group.name = name;
+    }
+
+    g_option_groups.insert(g_option_groups.end(), option_groups.begin(), option_groups.end());
+
     PROPSHEETPAGE psp[3] = {{0}};
     for (auto& i : psp)
     {
@@ -1949,10 +1875,24 @@ void ConfigDialog::show_app_settings()
 
     g_prev_config = g_config;
 
-    if (!PropertySheet(&psh))
+    const bool cancelled = !PropertySheet(&psh);
+
+    if (cancelled)
     {
         g_config = g_prev_config;
     }
+    else
+    {
+        ActionManager::begin_batch_work();
+        for (const auto& [path, hotkey] : g_hotkey_scratchpad)
+        {
+            ActionManager::associate_hotkey(path, hotkey, true);
+        }
+        ActionManager::end_batch_work();
+    }
+
+    g_option_items.erase(g_option_items.begin() + prev_option_items_size, g_option_items.end());
+    g_option_groups.erase(g_option_groups.begin() + prev_option_group_size, g_option_groups.end());
 
     Config::save();
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
@@ -2378,8 +2318,6 @@ INT_PTR CALLBACK plugin_cfg(const HWND hwnd, const UINT message, const WPARAM w_
                 {
                     goto destroy_menu;
                 }
-
-                // TODO: Implement this
 
                 ListView_RedrawItems(lvhwnd, 0, ListView_GetItemCount(lvhwnd));
             }

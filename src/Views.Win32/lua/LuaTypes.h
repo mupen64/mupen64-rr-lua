@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <ActionManager.h>
 #include <lua/presenters/Presenter.h>
 
 /**
@@ -77,6 +78,9 @@ struct t_lua_environment {
     lua_State* L;
     t_lua_rendering_context rctx;
 
+    // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
+    std::vector<ActionManager::action_path> registered_actions{};
+  
     destroying_func destroying{};
     print_func print{};
 };

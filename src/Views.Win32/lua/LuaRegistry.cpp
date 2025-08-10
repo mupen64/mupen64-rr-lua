@@ -5,11 +5,13 @@
  */
 
 #include "stdafx.h"
-#include "LuaRegistry.h"
+#include <lua/LuaRegistry.h>
 #include <lua/modules/AVI.h>
+#include <lua/modules/Action.h>
 #include <lua/modules/D2D.h>
 #include <lua/modules/Emu.h>
 #include <lua/modules/Global.h>
+#include <lua/modules/Hotkey.h>
 #include <lua/modules/IOHelper.h>
 #include <lua/modules/Input.h>
 #include <lua/modules/Joypad.h>
@@ -214,6 +216,24 @@ const luaL_Reg AVI_FUNCS[] = {
 {"stopcapture", LuaCore::Avi::StopCapture},
 {NULL, NULL}};
 
+const luaL_Reg HOTKEY_FUNCS[] = {
+{"prompt", LuaCore::Hotkey::prompt},
+{NULL, NULL}};
+
+const luaL_Reg ACTION_FUNCS[] = {
+{"add", LuaCore::Action::add},
+{"remove", LuaCore::Action::remove},
+{"associate_hotkey", LuaCore::Action::associate_hotkey},
+{"begin_batch_work", LuaCore::Action::begin_batch_work},
+{"end_batch_work", LuaCore::Action::end_batch_work},
+{"notify_enabled_changed", LuaCore::Action::notify_enabled_changed},
+{"notify_active_changed", LuaCore::Action::notify_active_changed},
+{"notify_display_name_changed", LuaCore::Action::notify_display_name_changed},
+{"get_display_name", LuaCore::Action::get_display_name},
+{"get_actions_matching_filter", LuaCore::Action::get_actions_matching_filter},
+{"invoke", LuaCore::Action::invoke},
+{NULL, NULL}};
+
 // end lua funcs
 
 void register_as_package(lua_State* lua_state, const char* name, const luaL_Reg regs[])
@@ -247,6 +267,8 @@ void LuaRegistry::register_functions(lua_State* L)
     register_as_package(L, "savestate", SAVESTATE_FUNCS);
     register_as_package(L, "iohelper", IOHELPER_FUNCS);
     register_as_package(L, "avi", AVI_FUNCS);
+    register_as_package(L, "hotkey", HOTKEY_FUNCS);
+    register_as_package(L, "action", ACTION_FUNCS);
 
     // NOTE: The default os.exit implementation calls C++ destructors before closing the main window (WM_CLOSE + WM_DESTROY),
     // thereby ripping the program apart for the remaining section of time until the exit, which causes extremely unpredictable crashes and an impossible program state.

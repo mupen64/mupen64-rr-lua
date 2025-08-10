@@ -170,13 +170,13 @@ namespace LuaCore::Emu
 
     static int GetFastForward(lua_State* L)
     {
-        lua_pushboolean(L, g_fast_forward);
+        lua_pushboolean(L, g_main_wnd.fast_forward);
         return 1;
     }
 
     static int SetFastForward(lua_State* L)
     {
-        g_fast_forward = lua_toboolean(L, 1);
+        g_main_wnd.fast_forward = lua_toboolean(L, 1);
         Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
         return 0;
     }

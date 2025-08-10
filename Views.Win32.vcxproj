@@ -247,6 +247,8 @@
         <ClInclude Include="lib\IIOHelperService.h" />
         <ClInclude Include="src\Views.Win32\MiscHelpers.h"/>
         <ClInclude Include="src\Views.Win32\ThreadPool.h" />
+        <ClInclude Include="src\Views.Win32\ActionManager.h" />
+        <ClInclude Include="src\Views.Win32\Hotkey.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\VFWEncoder.h" />
         <ClInclude Include="src\Views.Win32\capture\encoders\Encoder.h"/>
         <ClInclude Include="src\Views.Win32\capture\encoders\FFmpegEncoder.h"/>
@@ -255,7 +257,7 @@
         <ClInclude Include="src\Views.Win32\DialogService.h"/>
         <ClInclude Include="src\Views.Win32\components\Benchmark.h" />
         <ClInclude Include="src\Views.Win32\components\PianoRoll.h" />
-        <ClInclude Include="src\Views.Win32\components\RecentMenu.h" />
+        <ClInclude Include="src\Views.Win32\components\RecentItems.h" />
         <ClInclude Include="src\Views.Win32\components\UpdateChecker.h" />
         <ClInclude Include="src\Views.Win32\components\Compare.h" />
         <ClInclude Include="src\Views.Win32\Loggers.h" />
@@ -274,6 +276,9 @@
         <ClInclude Include="src\Views.Win32\components\FilePicker.h" />
         <ClInclude Include="src\Views.Win32\components\CLI.h" />
         <ClInclude Include="src\Views.Win32\components\SettingsListView.h" />
+        <ClInclude Include="src\Views.Win32\components\ActionMenu.h" />
+        <ClInclude Include="src\Views.Win32\components\HotkeyTracker.h" />
+        <ClInclude Include="src\Views.Win32\components\AppActions.h" />
         <ClInclude Include="src\Views.Win32\components\LuaDialog.h" />
         <ClInclude Include="src\Views.Win32\Main.h" />
         <ClInclude Include="src\Views.Win32\Config.h" />
@@ -293,6 +298,8 @@
         <ClInclude Include="src\Views.Win32\lua\modules\Movie.h" />
         <ClInclude Include="src\Views.Win32\lua\modules\Savestate.h" />
         <ClInclude Include="src\Views.Win32\lua\modules\WGUI.h" />
+        <ClInclude Include="src\Views.Win32\lua\modules\Action.h" />
+        <ClInclude Include="src\Views.Win32\lua\modules\Hotkey.h" />
         <ClInclude Include="src\Views.Win32\lua\presenters\DCompPresenter.h" />
         <ClInclude Include="src\Views.Win32\lua\presenters\GDIPresenter.h" />
         <ClInclude Include="src\Views.Win32\lua\presenters\Presenter.h" />
@@ -320,6 +327,8 @@
         <ClCompile Include="src\Views.Win32\capture\EncodingManager.cpp" />
         <ClCompile Include="src\Views.Win32\capture\Resampler.cpp" />
         <ClCompile Include="src\Views.Win32\Config.cpp" />
+        <ClCompile Include="src\Views.Win32\ActionManager.cpp" />
+        <ClCompile Include="src\Views.Win32\Hotkey.cpp" />
         <ClCompile Include="src\Views.Win32\DialogService.cpp" />
         <ClCompile Include="src\Views.Win32\components\Compare.cpp" />
         <ClCompile Include="src\Views.Win32\components\Benchmark.cpp" />
@@ -332,7 +341,7 @@
         <ClCompile Include="src\Views.Win32\components\MGECompositor.cpp" />
         <ClCompile Include="src\Views.Win32\components\MovieDialog.cpp" />
         <ClCompile Include="src\Views.Win32\components\PianoRoll.cpp" />
-        <ClCompile Include="src\Views.Win32\components\RecentMenu.cpp" />
+        <ClCompile Include="src\Views.Win32\components\RecentItems.cpp" />
         <ClCompile Include="src\Views.Win32\components\RomBrowser.cpp" />
         <ClCompile Include="src\Views.Win32\components\Runner.cpp" />
         <ClCompile Include="src\Views.Win32\components\Seeker.cpp" />
@@ -341,6 +350,9 @@
         <ClCompile Include="src\Views.Win32\components\FilePicker.cpp" />
         <ClCompile Include="src\Views.Win32\components\CLI.cpp"/>
         <ClCompile Include="src\Views.Win32\components\SettingsListView.cpp"/>
+        <ClCompile Include="src\Views.Win32\components\ActionMenu.cpp" />
+        <ClCompile Include="src\Views.Win32\components\HotkeyTracker.cpp" />
+        <ClCompile Include="src\Views.Win32\components\AppActions.cpp" />
         <ClCompile Include="src\Views.Win32\components\LuaDialog.cpp" />
         <ClCompile Include="src\Views.Win32\Loggers.cpp"/>
         <ClCompile Include="src\Views.Win32\Main.cpp"/>

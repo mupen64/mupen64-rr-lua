@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <MiscHelpers.h>
 #include <components/FilePicker.h>
 #include <components/LuaDialog.h>
 
@@ -17,14 +18,12 @@ namespace LuaCore::IOHelper
         auto lua = LuaManager::get_environment_for_state(L);
 
         BetterEmulationLock lock;
+        WindowDisabler disabler(LuaDialog::hwnd());
 
         auto filter = io_service.string_to_wstring(std::string(luaL_checkstring(L, 1)));
         const int32_t type = luaL_checkinteger(L, 2);
 
         std::wstring path;
-
-        const auto lua_dialog_hwnd = LuaDialog::hwnd();
-        EnableWindow(lua_dialog_hwnd, FALSE);
 
         if (type == 0)
         {
@@ -35,7 +34,6 @@ namespace LuaCore::IOHelper
             path = FilePicker::show_save_dialog(L"s_lua_api", g_main_hwnd, filter);
         }
 
-        EnableWindow(lua_dialog_hwnd, TRUE);
         lua_pushstring(L, io_service.wstring_to_string(path).c_str());
         return 1;
     }

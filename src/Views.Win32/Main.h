@@ -33,18 +33,22 @@ extern HINSTANCE g_app_instance;
 extern HWND g_hwnd_plug;
 extern DWORD start_rom_id;
 
-extern std::filesystem::path g_app_path;
 extern std::shared_ptr<Dispatcher> g_main_window_dispatcher;
+
+struct t_main_window_context {
+    bool paused_before_menu{};
+    bool in_menu_loop{};
+    bool fullscreen{};
+    bool fast_forward{};
+    std::filesystem::path app_path{};
+};
+
+extern t_main_window_context g_main_wnd;
 
 /**
  * \brief Whether the statusbar needs to be updated with new input information
  */
 extern bool is_primary_statusbar_invalidated;
-
-/**
- * The view ff flag. Combined with other flags to determine the core fast-forward value.
- */
-extern bool g_fast_forward;
 
 std::wstring get_mupen_name();
 

@@ -12,7 +12,6 @@
 static t_config get_default_config();
 
 t_config g_config;
-std::vector<t_hotkey*> g_config_hotkeys;
 
 #ifdef _M_X64
 #define CONFIG_FILE_NAME L"config-x64.ini"
@@ -51,474 +50,6 @@ static t_config get_default_config()
 {
     t_config config = {};
 
-    config.fast_forward_hotkey = {
-    .identifier = L"Fast-forward",
-    .key = VK_TAB,
-    .down_cmd = IDM_FASTFORWARD_ON,
-    .up_cmd = IDM_FASTFORWARD_OFF};
-
-    config.gs_hotkey = {
-    .identifier = L"GS Button",
-    .key = 'G',
-    .down_cmd = IDM_GS_ON,
-    .up_cmd = IDM_GS_OFF};
-
-    config.speed_down_hotkey = {
-    .identifier = L"Speed down",
-    .key = VK_OEM_MINUS,
-    .down_cmd = IDM_SPEED_DOWN,
-    };
-
-    config.speed_up_hotkey = {
-    .identifier = L"Speed up",
-    .key = VK_OEM_PLUS,
-    .down_cmd = IDM_SPEED_UP,
-    };
-
-    config.speed_reset_hotkey = {
-    .identifier = L"Speed reset",
-    .key = VK_OEM_PLUS,
-    .ctrl = 1,
-    .down_cmd = IDM_SPEED_RESET,
-    };
-
-    config.frame_advance_hotkey = {
-    .identifier = L"Frame advance",
-    .key = VK_OEM_5,
-    .down_cmd = IDM_FRAMEADVANCE,
-    };
-
-    config.multi_frame_advance_hotkey = {
-    .identifier = L"Multi-Frame advance",
-    .key = VK_OEM_5,
-    .ctrl = 1,
-    .down_cmd = IDM_MULTI_FRAME_ADVANCE,
-    };
-
-    config.multi_frame_advance_inc_hotkey = {
-    .identifier = L"Multi-Frame advance increment",
-    .key = 'E',
-    .ctrl = 1,
-    .down_cmd = IDM_MULTI_FRAME_ADVANCE_INC,
-    };
-
-    config.multi_frame_advance_dec_hotkey = {
-    .identifier = L"Multi-Frame advance decrement",
-    .key = 'Q',
-    .ctrl = 1,
-    .down_cmd = IDM_MULTI_FRAME_ADVANCE_DEC,
-    };
-
-    config.multi_frame_advance_reset_hotkey = {
-    .identifier = L"Multi-Frame advance reset",
-    .key = 'E',
-    .ctrl = 1,
-    .shift = 1,
-    .down_cmd = IDM_MULTI_FRAME_ADVANCE_RESET,
-    };
-
-    config.pause_hotkey = {
-    .identifier = L"Pause",
-    .key = VK_PAUSE,
-    .down_cmd = IDM_PAUSE,
-    };
-
-    config.toggle_read_only_hotkey = {
-    .identifier = L"Toggle read-only",
-    .key = 'R',
-    .shift = true,
-    .down_cmd = IDM_VCR_READONLY,
-    };
-
-    config.toggle_wait_at_movie_end_hotkey = {
-    .identifier = L"Toggle Wait at Movie End",
-    .down_cmd = IDM_WAIT_AT_MOVIE_END,
-    };
-
-    config.toggle_movie_loop_hotkey = {
-    .identifier = L"Toggle movie loop",
-    .key = 'L',
-    .shift = true,
-    .down_cmd = IDM_LOOP_MOVIE,
-    };
-
-    config.start_movie_playback_hotkey = {
-    .identifier = L"Start movie playback",
-    .key = 'P',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_START_MOVIE_PLAYBACK,
-    };
-
-    config.start_movie_recording_hotkey = {
-    .identifier = L"Start movie recording",
-    .key = 'R',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_START_MOVIE_RECORDING,
-    };
-
-    config.stop_movie_hotkey = {
-    .identifier = L"Stop movie",
-    .key = 'C',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_STOP_MOVIE,
-    };
-
-    config.create_movie_backup_hotkey = {
-    .identifier = L"Create Movie Backup",
-    .key = 'B',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_CREATE_MOVIE_BACKUP,
-    };
-
-    config.take_screenshot_hotkey = {
-    .identifier = L"Take screenshot",
-    .key = VK_F12,
-    .down_cmd = IDM_SCREENSHOT,
-    };
-
-    config.play_latest_movie_hotkey = {
-    .identifier = L"Play latest movie",
-    .key = 'T',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_PLAY_LATEST_MOVIE,
-    };
-
-    config.load_latest_script_hotkey = {
-    .identifier = L"Load latest script",
-    .key = 'K',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_LOAD_LATEST_LUA,
-    };
-
-    config.show_lua_manager_hotkey = {
-    .identifier = L"Show Lua Manager",
-    .key = 'B',
-    .ctrl = true,
-    .down_cmd = IDM_SHOW_LUA_MANAGER,
-    };
-
-    config.close_all_lua_hotkey = {
-    .identifier = L"Close all Lua Instances",
-    .key = 'W',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_CLOSE_ALL_LUA,
-    };
-
-    config.load_rom_hotkey = {
-    .identifier = L"Load ROM",
-    .key = 'O',
-    .ctrl = true,
-    .down_cmd = IDM_LOAD_ROM,
-    };
-
-    config.close_rom_hotkey = {
-    .identifier = L"Close ROM",
-    .key = 'W',
-    .ctrl = true,
-    .down_cmd = IDM_CLOSE_ROM,
-    };
-
-    config.reset_rom_hotkey = {
-    .identifier = L"Reset ROM",
-    .key = 'R',
-    .ctrl = true,
-    .down_cmd = IDM_RESET_ROM,
-    };
-
-    config.load_latest_rom_hotkey = {
-    .identifier = L"Load Latest ROM",
-    .key = 'O',
-    .ctrl = true,
-    .shift = true,
-    .down_cmd = IDM_LOAD_LATEST_ROM,
-    };
-
-    config.fullscreen_hotkey = {
-    .identifier = L"Toggle Fullscreen",
-    .key = VK_RETURN,
-    .alt = true,
-    .down_cmd = IDM_FULLSCREEN,
-    };
-
-    config.settings_hotkey = {
-    .identifier = L"Show Settings",
-    .key = 'S',
-    .ctrl = true,
-    .down_cmd = IDM_SETTINGS,
-    };
-
-    config.toggle_statusbar_hotkey = {
-    .identifier = L"Toggle Statusbar",
-    .key = 'S',
-    .alt = true,
-    .down_cmd = IDM_STATUSBAR,
-    };
-
-    config.refresh_rombrowser_hotkey = {
-    .identifier = L"Refresh Rombrowser",
-    .key = VK_F5,
-    .ctrl = true,
-    .down_cmd = IDM_REFRESH_ROMBROWSER,
-    };
-
-    config.seek_to_frame_hotkey = {
-    .identifier = L"Seek to frame",
-    .key = 'G',
-    .ctrl = true,
-    .down_cmd = IDM_SEEKER,
-    };
-
-    config.run_hotkey = {
-    .identifier = L"Run",
-    .key = 'P',
-    .ctrl = true,
-    .down_cmd = IDM_RUNNER,
-    };
-
-    config.piano_roll_hotkey = {
-    .identifier = L"Open Piano Roll",
-    .key = 'U',
-    .ctrl = true,
-    .down_cmd = IDM_PIANO_ROLL,
-    };
-
-    config.cheats_hotkey = {
-    .identifier = L"Open Cheats dialog",
-    .key = 'K',
-    .ctrl = true,
-    .down_cmd = IDM_CHEATS,
-    };
-
-    config.save_current_hotkey = {
-    .identifier = L"Save to current slot",
-    .key = 'I',
-    .down_cmd = IDM_SAVE_SLOT,
-    };
-
-    config.load_current_hotkey = {
-    .identifier = L"Load from current slot",
-    .key = 'P',
-    .down_cmd = IDM_LOAD_SLOT,
-    };
-
-    config.save_as_hotkey = {
-    .identifier = L"Save state as",
-    .key = 'N',
-    .ctrl = true,
-    .down_cmd = IDM_SAVE_STATE_AS,
-    };
-
-    config.load_as_hotkey = {
-    .identifier = L"Load state as",
-    .key = 'M',
-    .ctrl = true,
-    .down_cmd = IDM_LOAD_STATE_AS,
-    };
-
-    config.undo_load_state_hotkey = {
-    .identifier = L"Undo load state",
-    .key = 'Z',
-    .ctrl = true,
-    .down_cmd = IDM_UNDO_LOAD_STATE,
-    };
-
-    config.save_to_slot_1_hotkey = {
-    .identifier = L"Save to slot 1",
-    .key = '1',
-    .shift = true,
-    .down_cmd = ID_SAVE_1,
-    };
-
-    config.save_to_slot_2_hotkey = {
-    .identifier = L"Save to slot 2",
-    .key = '2',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 1,
-    };
-
-    config.save_to_slot_3_hotkey = {
-    .identifier = L"Save to slot 3",
-    .key = '3',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 2,
-    };
-
-    config.save_to_slot_4_hotkey = {
-    .identifier = L"Save to slot 4",
-    .key = '4',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 3,
-    };
-
-    config.save_to_slot_5_hotkey = {
-    .identifier = L"Save to slot 5",
-    .key = '5',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 4,
-    };
-
-    config.save_to_slot_6_hotkey = {
-    .identifier = L"Save to slot 6",
-    .key = '6',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 5,
-    };
-
-    config.save_to_slot_7_hotkey = {
-    .identifier = L"Save to slot 7",
-    .key = '7',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 6,
-    };
-
-    config.save_to_slot_8_hotkey = {
-    .identifier = L"Save to slot 8",
-    .key = '8',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 7,
-    };
-
-    config.save_to_slot_9_hotkey = {
-    .identifier = L"Save to slot 9",
-    .key = '9',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 8,
-    };
-
-    config.save_to_slot_10_hotkey = {
-    .identifier = L"Save to slot 10",
-    .key = '0',
-    .shift = true,
-    .down_cmd = ID_SAVE_1 + 9,
-    };
-
-    config.load_from_slot_1_hotkey = {
-    .identifier = L"Load from slot 1",
-    .key = VK_F1,
-    .down_cmd = ID_LOAD_1,
-    };
-
-    config.load_from_slot_2_hotkey = {
-    .identifier = L"Load from slot 2",
-    .key = VK_F2,
-    .down_cmd = ID_LOAD_1 + 1,
-    };
-
-    config.load_from_slot_3_hotkey = {
-    .identifier = L"Load from slot 3",
-    .key = VK_F3,
-    .down_cmd = ID_LOAD_1 + 2,
-    };
-
-    config.load_from_slot_4_hotkey = {
-    .identifier = L"Load from slot 4",
-    .key = VK_F4,
-    .down_cmd = ID_LOAD_1 + 3,
-    };
-
-    config.load_from_slot_5_hotkey = {
-    .identifier = L"Load from slot 5",
-    .key = VK_F5,
-    .down_cmd = ID_LOAD_1 + 4,
-    };
-
-    config.load_from_slot_6_hotkey = {
-    .identifier = L"Load from slot 6",
-    .key = VK_F6,
-    .down_cmd = ID_LOAD_1 + 5,
-    };
-
-    config.load_from_slot_7_hotkey = {
-    .identifier = L"Load from slot 7",
-    .key = VK_F7,
-    .down_cmd = ID_LOAD_1 + 6,
-    };
-
-    config.load_from_slot_8_hotkey = {
-    .identifier = L"Load from slot 8",
-    .key = VK_F8,
-    .down_cmd = ID_LOAD_1 + 7,
-    };
-
-    config.load_from_slot_9_hotkey = {
-    .identifier = L"Load from slot 9",
-    .key = VK_F9,
-    .down_cmd = ID_LOAD_1 + 8,
-    };
-
-    config.load_from_slot_10_hotkey = {
-    .identifier = L"Load from slot 10",
-    .key = VK_F10,
-    .down_cmd = ID_LOAD_1 + 9,
-    };
-
-    config.select_slot_1_hotkey = {
-    .identifier = L"Select slot 1",
-    .key = '1',
-    .down_cmd = IDM_SELECT_1,
-    };
-
-    config.select_slot_2_hotkey = {
-    .identifier = L"Select slot 2",
-    .key = '2',
-    .down_cmd = IDM_SELECT_1 + 1,
-    };
-
-    config.select_slot_3_hotkey = {
-    .identifier = L"Select slot 3",
-    .key = '3',
-    .down_cmd = IDM_SELECT_1 + 2,
-    };
-
-    config.select_slot_4_hotkey = {
-    .identifier = L"Select slot 4",
-    .key = '4',
-    .down_cmd = IDM_SELECT_1 + 3,
-    };
-
-    config.select_slot_5_hotkey = {
-    .identifier = L"Select slot 5",
-    .key = '5',
-    .down_cmd = IDM_SELECT_1 + 4,
-    };
-
-    config.select_slot_6_hotkey = {
-    .identifier = L"Select slot 6",
-    .key = '6',
-    .down_cmd = IDM_SELECT_1 + 5,
-    };
-
-    config.select_slot_7_hotkey = {
-    .identifier = L"Select slot 7",
-    .key = '7',
-    .down_cmd = IDM_SELECT_1 + 6,
-    };
-
-    config.select_slot_8_hotkey = {
-    .identifier = L"Select slot 8",
-    .key = '8',
-    .down_cmd = IDM_SELECT_1 + 7,
-    };
-
-    config.select_slot_9_hotkey = {
-    .identifier = L"Select slot 9",
-    .key = '9',
-    .down_cmd = IDM_SELECT_1 + 8,
-    };
-
-    config.select_slot_10_hotkey = {
-    .identifier = L"Select slot 10",
-    .key = '0',
-    .down_cmd = IDM_SELECT_1 + 9,
-    };
-
     for (const auto& pair : DIALOG_SILENT_MODE_CHOICES)
     {
         config.silent_mode_dialog_choices[io_service.string_to_wstring(pair.first)] = std::to_wstring(pair.second);
@@ -539,31 +70,6 @@ static std::string process_field_name(const std::wstring& field_name)
     }
 
     return str;
-}
-
-static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, int32_t is_reading, t_hotkey* hotkey)
-{
-    const auto key = process_field_name(field_name);
-
-    if (is_reading)
-    {
-        if (!ini.has(key))
-        {
-            return;
-        }
-
-        hotkey->key = std::stoi(ini[key]["key"]);
-        hotkey->ctrl = std::stoi(ini[key]["ctrl"]);
-        hotkey->shift = std::stoi(ini[key]["shift"]);
-        hotkey->alt = std::stoi(ini[key]["alt"]);
-    }
-    else
-    {
-        ini[key]["key"] = std::to_string(hotkey->key);
-        ini[key]["ctrl"] = std::to_string(hotkey->ctrl);
-        ini[key]["shift"] = std::to_string(hotkey->shift);
-        ini[key]["alt"] = std::to_string(hotkey->alt);
-    }
 }
 
 static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, int32_t* value)
@@ -688,6 +194,72 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
     }
 }
 
+static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::map<std::wstring, Hotkey::t_hotkey>& value)
+{
+    const auto key = process_field_name(field_name);
+
+    // Structure:
+    // [action_fullpath]
+    // key
+    // ctrl
+    // shift
+    // alt
+
+    const auto prefix = io_service.wstring_to_string(std::format(L"{}_", field_name));
+
+    if (is_reading)
+    {
+        for (const auto& pair : ini)
+        {
+            if (!pair.first.starts_with(prefix))
+            {
+                continue;
+            }
+
+            const auto action_path = pair.first.substr(prefix.size());
+
+            Hotkey::t_hotkey hotkey{};
+
+            const auto key = pair.second.get("key");
+            if (!key.empty())
+            {
+                hotkey.key = std::stoi(key);
+            }
+
+            const auto ctrl = pair.second.get("ctrl");
+            if (!ctrl.empty())
+            {
+                hotkey.ctrl = std::stoi(ctrl);
+            }
+
+            const auto shift = pair.second.get("shift");
+            if (!shift.empty())
+            {
+                hotkey.shift = std::stoi(shift);
+            }
+
+            const auto alt = pair.second.get("alt");
+            if (!alt.empty())
+            {
+                hotkey.alt = std::stoi(alt);
+            }
+
+            value[io_service.string_to_wstring(action_path)] = hotkey;
+        }
+    }
+    else
+    {
+        for (const auto& [action_path, hotkey] : value)
+        {
+            const auto action_key = prefix + io_service.wstring_to_string(action_path);
+            ini[action_key]["key"] = std::to_string(hotkey.key);
+            ini[action_key]["ctrl"] = std::to_string(hotkey.ctrl);
+            ini[action_key]["shift"] = std::to_string(hotkey.shift);
+            ini[action_key]["alt"] = std::to_string(hotkey.alt);
+        }
+    }
+}
+
 static void handle_config_value(mINI::INIStructure& ini, const std::wstring& field_name, const int32_t is_reading, std::vector<int32_t>& value)
 {
     std::vector<std::wstring> string_values;
@@ -707,25 +279,6 @@ static void handle_config_value(mINI::INIStructure& ini, const std::wstring& fie
     }
 }
 
-const auto first_offset = offsetof(t_config, fast_forward_hotkey);
-const auto last_offset = offsetof(t_config, select_slot_10_hotkey);
-
-static std::vector<t_hotkey*> collect_hotkeys(const t_config* config)
-{
-    // NOTE:
-    // last_offset should contain the offset of the last hotkey
-    // this also requires that the hotkeys are laid out contiguously, or else the pointer arithmetic fails
-    // i recommend inserting your new hotkeys before the savestate hotkeys... pretty please
-    std::vector<t_hotkey*> vec;
-    for (size_t i = 0; i < ((last_offset - first_offset) / sizeof(t_hotkey)) + 1; i++)
-    {
-        auto hotkey = &(((t_hotkey*)config)[i]);
-        vec.push_back(hotkey);
-    }
-
-    return vec;
-}
-
 static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
 {
 #define HANDLE_P_VALUE(x) handle_config_value(ini, L#x, is_reading, &g_config.x);
@@ -735,11 +288,6 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
     {
         // We need to fill the config with latest default values first, because some "new" fields might not exist in the ini
         g_config = get_default_config();
-    }
-
-    for (auto& hotkey : g_config_hotkeys)
-    {
-        handle_config_value(ini, hotkey->identifier, is_reading, hotkey);
     }
 
     HANDLE_VALUE(ignored_version)
@@ -832,11 +380,13 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure& ini)
     HANDLE_P_VALUE(multi_frame_advance_count)
     HANDLE_VALUE(silent_mode_dialog_choices)
     HANDLE_VALUE(trusted_lua_paths)
+    HANDLE_VALUE(hotkeys)
+    HANDLE_VALUE(inital_hotkeys)
 }
 
 static std::filesystem::path get_config_path()
 {
-    return g_app_path / CONFIG_FILE_NAME;
+    return g_main_wnd.app_path / CONFIG_FILE_NAME;
 }
 
 /**
@@ -877,179 +427,8 @@ static void config_patch(t_config& cfg)
     }
 }
 
-
-std::wstring t_hotkey::to_wstring()
-{
-    wchar_t buf[260]{};
-    const int k = this->key;
-
-    if (!this->ctrl && !this->shift && !this->alt && !this->key)
-    {
-        return L"(nothing)";
-    }
-
-    if (this->ctrl)
-        StrCat(buf, L"Ctrl ");
-    if (this->shift)
-        StrCat(buf, L"Shift ");
-    if (this->alt)
-        StrCat(buf, L"Alt ");
-    if (k)
-    {
-        wchar_t buf2[64]{};
-        if ((k >= 0x30 && k <= 0x39) || (k >= 0x41 && k <= 0x5A))
-            wsprintf(buf2, L"%c", static_cast<char>(k));
-        else if (k >= VK_F1 && k <= VK_F24)
-            wsprintf(buf2, L"F%d", k - (VK_F1 - 1));
-        else if (k >= VK_NUMPAD0 && k <= VK_NUMPAD9)
-            wsprintf(buf2, L"Num%d", k - VK_NUMPAD0);
-        else
-            switch (k)
-            {
-            case VK_LBUTTON:
-                StrCpy(buf2, L"LMB");
-                break;
-            case VK_RBUTTON:
-                StrCpy(buf2, L"RMB");
-                break;
-            case VK_MBUTTON:
-                StrCpy(buf2, L"MMB");
-                break;
-            case VK_XBUTTON1:
-                StrCpy(buf2, L"XMB1");
-                break;
-            case VK_XBUTTON2:
-                StrCpy(buf2, L"XMB2");
-                break;
-            case VK_SPACE:
-                StrCpy(buf2, L"Space");
-                break;
-            case VK_BACK:
-                StrCpy(buf2, L"Backspace");
-                break;
-            case VK_TAB:
-                StrCpy(buf2, L"Tab");
-                break;
-            case VK_CLEAR:
-                StrCpy(buf2, L"Clear");
-                break;
-            case VK_RETURN:
-                StrCpy(buf2, L"Enter");
-                break;
-            case VK_PAUSE:
-                StrCpy(buf2, L"Pause");
-                break;
-            case VK_CAPITAL:
-                StrCpy(buf2, L"Caps");
-                break;
-            case VK_PRIOR:
-                StrCpy(buf2, L"PageUp");
-                break;
-            case VK_NEXT:
-                StrCpy(buf2, L"PageDn");
-                break;
-            case VK_END:
-                StrCpy(buf2, L"End");
-                break;
-            case VK_HOME:
-                StrCpy(buf2, L"Home");
-                break;
-            case VK_LEFT:
-                StrCpy(buf2, L"Left");
-                break;
-            case VK_UP:
-                StrCpy(buf2, L"Up");
-                break;
-            case VK_RIGHT:
-                StrCpy(buf2, L"Right");
-                break;
-            case VK_DOWN:
-                StrCpy(buf2, L"Down");
-                break;
-            case VK_SELECT:
-                StrCpy(buf2, L"Select");
-                break;
-            case VK_PRINT:
-                StrCpy(buf2, L"Print");
-                break;
-            case VK_SNAPSHOT:
-                StrCpy(buf2, L"PrintScrn");
-                break;
-            case VK_INSERT:
-                StrCpy(buf2, L"Insert");
-                break;
-            case VK_DELETE:
-                StrCpy(buf2, L"Delete");
-                break;
-            case VK_HELP:
-                StrCpy(buf2, L"Help");
-                break;
-            case VK_MULTIPLY:
-                StrCpy(buf2, L"Num*");
-                break;
-            case VK_ADD:
-                StrCpy(buf2, L"Num+");
-                break;
-            case VK_SUBTRACT:
-                StrCpy(buf2, L"Num-");
-                break;
-            case VK_DECIMAL:
-                StrCpy(buf2, L"Num.");
-                break;
-            case VK_DIVIDE:
-                StrCpy(buf2, L"Num/");
-                break;
-            case VK_NUMLOCK:
-                StrCpy(buf2, L"NumLock");
-                break;
-            case VK_SCROLL:
-                StrCpy(buf2, L"ScrollLock");
-                break;
-            case /*VK_OEM_PLUS*/ 0xBB:
-                StrCpy(buf2, L"=+");
-                break;
-            case /*VK_OEM_MINUS*/ 0xBD:
-                StrCpy(buf2, L"-_");
-                break;
-            case /*VK_OEM_COMMA*/ 0xBC:
-                StrCpy(buf2, L",");
-                break;
-            case /*VK_OEM_PERIOD*/ 0xBE:
-                StrCpy(buf2, L".");
-                break;
-            case VK_OEM_7:
-                StrCpy(buf2, L"'\"");
-                break;
-            case VK_OEM_6:
-                StrCpy(buf2, L"]}");
-                break;
-            case VK_OEM_5:
-                StrCpy(buf2, L"\\|");
-                break;
-            case VK_OEM_4:
-                StrCpy(buf2, L"[{");
-                break;
-            case VK_OEM_3:
-                StrCpy(buf2, L"`~");
-                break;
-            case VK_OEM_2:
-                StrCpy(buf2, L"/?");
-                break;
-            case VK_OEM_1:
-                StrCpy(buf2, L";:");
-                break;
-            default:
-                wsprintf(buf2, L"(%d)", k);
-                break;
-            }
-        StrCat(buf, buf2);
-    }
-    return buf;
-}
-
 void Config::init()
 {
-    g_config_hotkeys = collect_hotkeys(&g_config);
 }
 
 void Config::save()

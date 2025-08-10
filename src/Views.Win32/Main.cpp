@@ -5,15 +5,18 @@
  */
 
 #include "stdafx.h"
-#include <components/CLI.h>
+#include <ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
 #include <Plugin.h>
+#include <ThreadPool.h>
 #include <strsafe.h>
 #include <capture/EncodingManager.h>
-#include <components/AboutDialog.h>
+#include <components/ActionMenu.h>
+#include <components/AppActions.h>
 #include <components/Benchmark.h>
+#include <components/CLI.h>
 #include <components/Cheats.h>
 #include <components/Compare.h>
 #include <components/ConfigDialog.h>
@@ -21,20 +24,17 @@
 #include <components/CrashManager.h>
 #include <components/Dispatcher.h>
 #include <components/FilePicker.h>
+#include <components/HotkeyTracker.h>
+#include <components/LuaDialog.h>
 #include <components/MGECompositor.h>
-#include <components/MovieDialog.h>
 #include <components/PianoRoll.h>
-#include <components/RecentMenu.h>
+#include <components/RecentItems.h>
 #include <components/RomBrowser.h>
-#include <components/Runner.h>
 #include <components/Seeker.h>
 #include <components/Statusbar.h>
-#include <components/UpdateChecker.h>
-#include <components/LuaDialog.h>
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaManager.h>
 #include <lua/LuaRenderer.h>
-#include <ThreadPool.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 #define VIEW_BENCHMARK_SUPPORT
@@ -44,6 +44,8 @@
 #define ASYNC_KEY_START_ROM (2)
 #define ASYNC_KEY_RESET_ROM (3)
 #define ASYNC_KEY_PLAY_MOVIE (4)
+
+t_main_window_context g_main_wnd{};
 
 static HANDLE dispatcher_event{};
 static HANDLE dispatcher_done_event{};
@@ -59,22 +61,13 @@ DWORD g_ui_thread_id;
 HWND g_hwnd_plug;
 MMRESULT g_ui_timer;
 HWND g_main_hwnd;
-HMENU g_main_menu;
-HMENU g_recent_roms_menu;
-HMENU g_recent_movies_menu;
-HMENU g_recent_lua_menu;
 HINSTANCE g_app_instance;
-std::filesystem::path g_app_path;
 std::shared_ptr<Dispatcher> g_main_window_dispatcher;
 
 int g_last_wheel_delta = 0;
-bool g_paused_before_menu;
 bool g_paused_before_focus;
-bool g_in_menu_loop;
 bool g_vis_since_input_poll_warning_dismissed;
 bool g_emu_starting;
-bool g_fast_forward;
-bool fullscreen{};
 
 ULONG_PTR gdi_plus_token;
 
@@ -84,6 +77,34 @@ std::shared_ptr<Plugin> g_input_plugin;
 std::shared_ptr<Plugin> g_rsp_plugin;
 
 constexpr auto WND_CLASS = L"myWindowClass";
+
+BetterEmulationLock::BetterEmulationLock()
+{
+    if (g_main_wnd.in_menu_loop)
+    {
+        was_paused = g_main_wnd.paused_before_menu;
+
+        // This fires before WM_EXITMENULOOP (which restores the paused_before_menu state), so we need to trick it...
+        g_main_wnd.paused_before_menu = true;
+    }
+    else
+    {
+        was_paused = g_core_ctx->vr_get_paused();
+        g_core_ctx->vr_pause_emu();
+    }
+}
+
+BetterEmulationLock::~BetterEmulationLock()
+{
+    if (was_paused)
+    {
+        g_core_ctx->vr_pause_emu();
+    }
+    else
+    {
+        g_core_ctx->vr_resume_emu();
+    }
+}
 
 std::wstring get_mupen_name()
 {
@@ -172,7 +193,7 @@ static void prompt_plugin_change()
     if (result == 1)
     {
         g_config.settings_tab = 0;
-        SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_SETTINGS, 0), 0);
+        ActionManager::invoke(L"Mupen64 > Options > Settings...");
     }
 }
 
@@ -299,35 +320,6 @@ bool show_error_dialog_for_result(const core_result result, void* hwnd)
     return true;
 }
 
-void set_menu_accelerator(int element_id, const wchar_t* acc)
-{
-    wchar_t string[256] = {0};
-    GetMenuString(GetMenu(g_main_hwnd), element_id, string, std::size(string), MF_BYCOMMAND);
-
-    auto tab = wcschr(string, '\t');
-    if (tab)
-        *tab = '\0';
-    if (StrCmp(acc, L""))
-        wsprintf(string, L"%s\t%s", string, acc);
-
-    ModifyMenu(GetMenu(g_main_hwnd), element_id, MF_BYCOMMAND | MF_STRING, element_id, string);
-}
-
-void set_hotkey_menu_accelerators(t_hotkey* hotkey, int menu_item_id)
-{
-    const auto hotkey_str = hotkey->to_wstring();
-    set_menu_accelerator(menu_item_id, hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
-}
-
-void SetDlgItemHotkeyAndMenu(HWND hwnd, int idc, t_hotkey* hotkey, int menuItemID)
-{
-    const auto hotkey_str = hotkey->to_wstring();
-    SetDlgItemText(hwnd, idc, hotkey_str.c_str());
-
-    set_menu_accelerator(menuItemID,
-                         hotkey_str == L"(nothing)" ? L"" : hotkey_str.c_str());
-}
-
 const wchar_t* get_input_text()
 {
     static wchar_t text[1024]{};
@@ -420,20 +412,11 @@ const wchar_t* get_status_text()
     return text;
 }
 
-std::filesystem::path get_screenshots_directory()
-{
-    if (g_config.is_default_screenshots_directory_used)
-    {
-        return g_app_path / L"screenshots\\";
-    }
-    return g_config.screenshots_directory;
-}
-
 std::filesystem::path get_plugins_directory()
 {
     if (g_config.is_default_plugins_directory_used)
     {
-        return g_app_path / L"plugin\\";
+        return g_main_wnd.app_path / L"plugin\\";
     }
     return g_config.plugins_directory;
 }
@@ -579,7 +562,7 @@ void on_script_started(std::any data)
 {
     g_main_window_dispatcher->invoke([=] {
         auto value = std::any_cast<std::filesystem::path>(data);
-        RecentMenu::add(g_config.recent_lua_script_paths, value.wstring(), g_config.is_recent_scripts_frozen, ID_LUA_RECENT, g_recent_lua_menu);
+        RecentMenu::add(L"Mupen64 > Lua Script > Recent Scripts ---", g_config.recent_lua_script_paths, value.wstring(), g_config.is_recent_scripts_frozen);
     });
 }
 
@@ -599,11 +582,10 @@ void on_task_changed(std::any data)
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) || task_is_playback(value) && !task_is_playback(previous_value) && !g_core_ctx->vcr_get_path().empty())
         {
-            RecentMenu::add(g_config.recent_movie_paths, g_core_ctx->vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen, ID_RECENTMOVIES_FIRST, g_recent_movies_menu);
+            RecentMenu::add(L"Mupen64 > Movie > Recent Movies ---", g_config.recent_movie_paths, g_core_ctx->vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen);
         }
 
         update_titlebar();
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
         previous_value = value;
     });
 }
@@ -644,7 +626,7 @@ void on_emu_launched_changed(std::any data)
             const auto rom_path = g_core_ctx->vr_get_rom_path();
             if (!rom_path.empty())
             {
-                RecentMenu::add(g_config.recent_rom_paths, rom_path.wstring(), g_config.is_recent_rom_paths_frozen, ID_RECENTROMS_FIRST, g_recent_roms_menu);
+                RecentMenu::add(L"Mupen64 > File > Recent ROMs ---", g_config.recent_rom_paths, rom_path.wstring(), g_config.is_recent_rom_paths_frozen);
             }
 
             LuaDialog::load_running_scripts();
@@ -656,7 +638,6 @@ void on_emu_launched_changed(std::any data)
             SetWindowPos(g_main_hwnd, nullptr, 0, 0, g_config.window_width, g_config.window_height, SWP_NOMOVE);
         }
 
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
         previous_value = value;
     });
 }
@@ -680,7 +661,6 @@ void on_capturing_changed(std::any data)
         }
 
         update_titlebar();
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
     });
 }
 
@@ -697,7 +677,6 @@ void on_speed_modifier_changed(std::any data)
 void on_emu_paused_changed(std::any data)
 {
     g_core.callbacks.frame();
-    SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
 }
 
 void on_vis_since_input_poll_exceeded(std::any)
@@ -722,7 +701,6 @@ void on_movie_loop_changed(std::any data)
 {
     auto value = std::any_cast<bool>(data);
     Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
-    SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
 }
 
 void on_fullscreen_changed(std::any data)
@@ -730,26 +708,11 @@ void on_fullscreen_changed(std::any data)
     g_main_window_dispatcher->invoke([=] {
         auto value = std::any_cast<bool>(data);
         ShowCursor(!value);
-        SendMessage(g_main_hwnd, WM_INITMENU, 0, 0);
     });
-}
-
-void apply_menu_item_accelerator_text()
-{
-    for (auto hotkey : g_config_hotkeys)
-    {
-        // Only set accelerator if hotkey has a down command and the command is valid menu item identifier
-        const auto state = GetMenuState(GetMenu(g_main_hwnd), hotkey->down_cmd, MF_BYCOMMAND);
-        if (hotkey->down_cmd && state != -1)
-        {
-            set_hotkey_menu_accelerators(hotkey, hotkey->down_cmd);
-        }
-    }
 }
 
 void on_config_loaded(std::any)
 {
-    apply_menu_item_accelerator_text();
     RomBrowser::build();
 }
 
@@ -765,43 +728,11 @@ void on_warp_modify_status_changed(std::any data)
     LuaCallbacks::call_warp_modify_status_changed(value);
 }
 
-void update_core_fast_forward(std::any)
-{
-    g_core_ctx->vr_set_fast_forward(g_fast_forward || g_core_ctx->vcr_is_seeking() || CLI::wants_fast_forward() || Compare::active());
-}
 
 void on_emu_starting_changed(std::any data)
 {
     g_emu_starting = std::any_cast<bool>(data);
     update_titlebar();
-}
-
-BetterEmulationLock::BetterEmulationLock()
-{
-    if (g_in_menu_loop)
-    {
-        was_paused = g_paused_before_menu;
-
-        // This fires before WM_EXITMENULOOP (which restores the paused_before_menu state), so we need to trick it...
-        g_paused_before_menu = true;
-    }
-    else
-    {
-        was_paused = g_core_ctx->vr_get_paused();
-        g_core_ctx->vr_pause_emu();
-    }
-}
-
-BetterEmulationLock::~BetterEmulationLock()
-{
-    if (was_paused)
-    {
-        g_core_ctx->vr_pause_emu();
-    }
-    else
-    {
-        g_core_ctx->vr_resume_emu();
-    }
 }
 
 t_window_info get_window_info()
@@ -827,52 +758,6 @@ t_window_info get_window_info()
 }
 
 #pragma endregion
-
-bool confirm_user_exit()
-{
-    BetterEmulationLock lock;
-
-    if (g_config.silent_mode)
-    {
-        return true;
-    }
-
-    std::wstring final_message;
-    std::vector<std::pair<bool, std::wstring>> messages = {
-    {g_core_ctx->vcr_get_task() == task_recording, L"Movie recording"},
-    {EncodingManager::is_capturing(), L"Capture"},
-    {g_core_ctx->vr_is_tracelog_active(), L"Trace logging"}};
-
-    std::vector<std::wstring> active_messages;
-    for (const auto& [is_active, msg] : messages)
-    {
-        if (!is_active)
-        {
-            continue;
-        }
-
-        active_messages.push_back(msg);
-    }
-
-    if (active_messages.empty())
-    {
-        return true;
-    }
-
-    for (size_t i = 0; i < active_messages.size(); ++i)
-    {
-        final_message += active_messages[i];
-        if (i < active_messages.size() - 1)
-        {
-            final_message += L", ";
-        }
-    }
-    final_message += L" is running. Are you sure you want to close the ROM?";
-
-    const bool result = DialogService::show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message.c_str(), L"Close ROM", true);
-
-    return result;
-}
 
 bool is_on_gui_thread()
 {
@@ -938,9 +823,6 @@ void open_console()
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    // TODO: Remove...
-    wchar_t path_buffer[_MAX_PATH]{};
-
     switch (Message)
     {
     case WM_INVALIDATE_LUA:
@@ -987,130 +869,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             }
             break;
         }
-    case WM_SETCURSOR:
-        {
-            static bool last_lmb = false;
-            static bool last_rmb = false;
-            static bool last_mmb = false;
-            static bool last_xmb1 = false;
-            static bool last_xmb2 = false;
-            bool lmb = GetAsyncKeyState(VK_LBUTTON) & 0x8000;
-            bool rmb = GetAsyncKeyState(VK_RBUTTON) & 0x8000;
-            bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
-            bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
-            bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
-
-            BOOL hit = FALSE;
-            for (t_hotkey* hotkey : g_config_hotkeys)
-            {
-                const auto down =
-                (lmb && !last_lmb && hotkey->key == VK_LBUTTON) || (rmb && !last_rmb && hotkey->key == VK_RBUTTON) || (mmb && !last_mmb && hotkey->key == VK_MBUTTON) || (xmb1 && !last_xmb1 && hotkey->key == VK_XBUTTON1) || (xmb2 && !last_xmb2 && hotkey->key == VK_XBUTTON2);
-                const auto up =
-                (!lmb && last_lmb && hotkey->key == VK_LBUTTON) || (!rmb && last_rmb && hotkey->key == VK_RBUTTON) || (!mmb && last_mmb && hotkey->key == VK_MBUTTON) || (!xmb1 && last_xmb1 && hotkey->key == VK_XBUTTON1) || (!xmb2 && last_xmb2 && hotkey->key == VK_XBUTTON2);
-
-                if (down)
-                {
-                    // We only want to send it if the corresponding menu item exists and is enabled
-                    const auto state = GetMenuState(g_main_menu, hotkey->down_cmd, MF_BYCOMMAND);
-                    if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-                    {
-                        g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-                        continue;
-                    }
-                    g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-                    SendMessage(g_main_hwnd, WM_COMMAND, hotkey->down_cmd, 0);
-                    hit = TRUE;
-                }
-                if (up)
-                {
-                    // We only want to send it if the corresponding menu item exists and is enabled
-                    const auto state = GetMenuState(g_main_menu, hotkey->up_cmd, MF_BYCOMMAND);
-                    if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-                    {
-                        g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-                        continue;
-                    }
-                    g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-                    SendMessage(g_main_hwnd, WM_COMMAND, hotkey->up_cmd, 0);
-                    hit = TRUE;
-                }
-            }
-
-            last_lmb = lmb;
-            last_rmb = rmb;
-            last_mmb = mmb;
-            last_xmb1 = xmb1;
-            last_xmb2 = xmb2;
-
-            if (!hit)
-                return DefWindowProc(hwnd, Message, wParam, lParam);
-            break;
-        }
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        {
-            BOOL hit = FALSE;
-            for (t_hotkey* hotkey : g_config_hotkeys)
-            {
-                if ((int)wParam == hotkey->key)
-                {
-                    if (((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) == hotkey->shift && ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) == hotkey->ctrl && ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) == hotkey->alt)
-                    {
-                        // We only want to send it if the corresponding menu item exists and is enabled
-                        const auto state = GetMenuState(g_main_menu, hotkey->down_cmd, MF_BYCOMMAND);
-                        if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-                        {
-                            g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-                            continue;
-                        }
-                        g_view_logger->info(L"Sent down {} ({})", hotkey->identifier.c_str(), hotkey->down_cmd);
-                        SendMessage(g_main_hwnd, WM_COMMAND, hotkey->down_cmd, 0);
-                        hit = TRUE;
-                    }
-                }
-            }
-
-            if (g_core.plugin_funcs.input_key_down && g_core_ctx->vr_get_launched())
-                g_core.plugin_funcs.input_key_down(wParam, lParam);
-            if (!hit)
-                return DefWindowProc(hwnd, Message, wParam, lParam);
-            break;
-        }
+        if (g_core.plugin_funcs.input_key_down && g_core_ctx->vr_get_launched())
+            g_core.plugin_funcs.input_key_down(wParam, lParam);
+        break;
     case WM_SYSKEYUP:
     case WM_KEYUP:
-        {
-            BOOL hit = FALSE;
-            for (t_hotkey* hotkey : g_config_hotkeys)
-            {
-                if (hotkey->up_cmd == 0)
-                {
-                    continue;
-                }
-
-                if ((int)wParam == hotkey->key)
-                {
-                    if (((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) == hotkey->shift && ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) == hotkey->ctrl && ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) == hotkey->alt)
-                    {
-                        // We only want to send it if the corresponding menu item exists and is enabled
-                        auto state = GetMenuState(g_main_menu, hotkey->up_cmd, MF_BYCOMMAND);
-                        if (state != -1 && (state & MF_DISABLED || state & MF_GRAYED))
-                        {
-                            g_view_logger->info(L"Dismissed {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-                            continue;
-                        }
-                        g_view_logger->info(L"Sent up {} ({})", hotkey->identifier.c_str(), hotkey->up_cmd);
-                        SendMessage(g_main_hwnd, WM_COMMAND, hotkey->up_cmd, 0);
-                        hit = TRUE;
-                    }
-                }
-            }
-
-            if (g_core.plugin_funcs.input_key_up && g_core_ctx->vr_get_launched())
-                g_core.plugin_funcs.input_key_up(wParam, lParam);
-            if (!hit)
-                return DefWindowProc(hwnd, Message, wParam, lParam);
-            break;
-        }
+        if (g_core.plugin_funcs.input_key_up && g_core_ctx->vr_get_launched())
+            g_core.plugin_funcs.input_key_up(wParam, lParam);
+        break;
     case WM_MOUSEWHEEL:
         g_last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
@@ -1182,15 +950,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
 
-        g_main_menu = GetMenu(hwnd);
-        g_recent_roms_menu = GetSubMenu(GetSubMenu(g_main_menu, 0), 5);
-        g_recent_movies_menu = GetSubMenu(GetSubMenu(g_main_menu, 3), 6);
-        g_recent_lua_menu = GetSubMenu(GetSubMenu(g_main_menu, 6), 2);
+        ActionMenu::init();
 
-        GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
+        AppActions::add();
+        ActionMenu::add_managed_menu(hwnd);
+        HotkeyTracker::attach(hwnd);
+
         MGECompositor::create(hwnd);
         PianoRoll::init();
         ConfigDialog::init();
+
         return TRUE;
     case WM_DESTROY:
         Config::save();
@@ -1219,85 +988,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_GETMINMAXINFO:
         {
             LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
-            lpMMI->ptMinTrackSize.x = MIN_WINDOW_W;
-            lpMMI->ptMinTrackSize.y = MIN_WINDOW_H;
+            lpMMI->ptMinTrackSize.x = 100;
+            lpMMI->ptMinTrackSize.y = 100;
             // this might break small res with gfx plugin!!!
         }
         break;
-    case WM_INITMENU:
-        {
-            const auto core_executing = g_core_ctx->vr_get_launched();
-            const auto vcr_active = g_core_ctx->vcr_get_task() != task_idle;
-
-            ModifyMenu(g_main_menu, IDM_MULTI_FRAME_ADVANCE, MF_BYCOMMAND | MF_STRING, IDM_MULTI_FRAME_ADVANCE, std::format(L"Multi-Frame Advance {}x", g_config.multi_frame_advance_count).c_str());
-            apply_menu_item_accelerator_text();
-
-            EnableMenuItem(g_main_menu, IDM_CLOSE_ROM, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_RESET_ROM, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_PAUSE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SPEED_DOWN, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SPEED_UP, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SPEED_RESET, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_FRAMEADVANCE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_MULTI_FRAME_ADVANCE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SCREENSHOT, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SAVE_SLOT, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_LOAD_SLOT, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SAVE_STATE_AS, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_LOAD_STATE_AS, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_UNDO_LOAD_STATE, (core_executing && g_config.core.st_undo_load) ? MF_ENABLED : MF_GRAYED);
-            for (int i = IDM_SELECT_1; i < IDM_SELECT_10; ++i)
-            {
-                EnableMenuItem(g_main_menu, i, core_executing ? MF_ENABLED : MF_GRAYED);
-            }
-            EnableMenuItem(g_main_menu, IDM_FULLSCREEN, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_STATUSBAR, !core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_START_MOVIE_RECORDING, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_STOP_MOVIE, vcr_active ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_CREATE_MOVIE_BACKUP, vcr_active ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_TRACELOG, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_COREDBG, (core_executing && g_config.core.core_type == 2) ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_SEEKER, (core_executing && vcr_active) ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_PIANO_ROLL, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_CHEATS, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_START_CAPTURE, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_START_CAPTURE_PRESET, core_executing ? MF_ENABLED : MF_GRAYED);
-            EnableMenuItem(g_main_menu, IDM_STOP_CAPTURE, (core_executing && EncodingManager::is_capturing()) ? MF_ENABLED : MF_GRAYED);
-
-            CheckMenuItem(g_main_menu, IDM_STATUSBAR, g_config.is_statusbar_enabled ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_FREEZE_RECENT_ROMS, g_config.is_recent_rom_paths_frozen ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_FREEZE_RECENT_MOVIES, g_config.is_recent_movie_paths_frozen ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_FREEZE_RECENT_LUA, g_config.is_recent_scripts_frozen ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_LOOP_MOVIE, g_config.core.is_movie_loop_enabled ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_VCR_READONLY, g_config.core.vcr_readonly ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_WAIT_AT_MOVIE_END, g_config.core.wait_at_movie_end ? MF_CHECKED : MF_UNCHECKED);
-            CheckMenuItem(g_main_menu, IDM_FULLSCREEN, fullscreen ? MF_CHECKED : MF_UNCHECKED);
-
-            for (int i = IDM_SELECT_1; i < IDM_SELECT_10; ++i)
-            {
-                CheckMenuItem(g_main_menu, i, MF_UNCHECKED);
-            }
-            CheckMenuItem(g_main_menu, IDM_SELECT_1 + g_config.st_slot, MF_CHECKED);
-
-            RecentMenu::build(g_config.recent_rom_paths, ID_RECENTROMS_FIRST, g_recent_roms_menu);
-            RecentMenu::build(g_config.recent_movie_paths, ID_RECENTMOVIES_FIRST, g_recent_movies_menu);
-            RecentMenu::build(g_config.recent_lua_script_paths, ID_LUA_RECENT, g_recent_lua_menu);
-        }
-        break;
     case WM_ENTERMENULOOP:
-        g_in_menu_loop = true;
-        g_paused_before_menu = g_core_ctx->vr_get_paused();
+        g_main_wnd.in_menu_loop = true;
+        g_main_wnd.paused_before_menu = g_core_ctx->vr_get_paused();
         g_core_ctx->vr_pause_emu();
         break;
-
     case WM_EXITMENULOOP:
         // This message is sent when we escape the blocking menu loop, including situations where the clicked menu spawns a dialog.
         // In those situations, we would unpause the game here (since this message is sent first), and then pause it again in the menu item message handler.
         // It's almost guaranteed that a game frame will pass between those messages, so we need to wait a bit on another thread before unpausing.
         std::thread([] {
             Sleep(60);
-            g_in_menu_loop = false;
-            if (g_paused_before_menu)
+            g_main_wnd.in_menu_loop = false;
+            if (g_main_wnd.paused_before_menu)
             {
                 g_core_ctx->vr_pause_emu();
             }
@@ -1325,651 +1033,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 g_core_ctx->vr_resume_emu();
             }
             break;
-
         case WA_INACTIVE:
             g_paused_before_focus = g_core_ctx->vr_get_paused();
             g_core_ctx->vr_pause_emu();
             break;
         default:
             break;
-        }
-        break;
-    case WM_COMMAND:
-        {
-            switch (LOWORD(wParam))
-            {
-            case IDM_VIDEO_SETTINGS:
-            case IDM_INPUT_SETTINGS:
-            case IDM_AUDIO_SETTINGS:
-            case IDM_RSP_SETTINGS:
-                {
-                    BetterEmulationLock lock;
-
-                    // FIXME: Is it safe to load multiple plugin instances? This assumes they cooperate and dont overwrite eachother's files...
-                    // It does seem fine tho, since the config dialog is modal and core is paused
-                    g_hwnd_plug = g_main_hwnd;
-                    std::unique_ptr<Plugin> plugin;
-                    switch (LOWORD(wParam))
-                    {
-                    case IDM_VIDEO_SETTINGS:
-                        plugin = Plugin::create(g_config.selected_video_plugin).second;
-                        break;
-                    case IDM_INPUT_SETTINGS:
-                        plugin = Plugin::create(g_config.selected_input_plugin).second;
-                        break;
-                    case IDM_AUDIO_SETTINGS:
-                        plugin = Plugin::create(g_config.selected_audio_plugin).second;
-                        break;
-                    case IDM_RSP_SETTINGS:
-                        plugin = Plugin::create(g_config.selected_rsp_plugin).second;
-                        break;
-                    }
-                    if (plugin != nullptr)
-                    {
-                        plugin->config();
-                    }
-                }
-                break;
-            case IDM_SHOW_LUA_MANAGER:
-                LuaDialog::show();
-                break;
-            case IDM_CLOSE_ALL_LUA:
-                LuaDialog::close_all();
-                break;
-            case IDM_DEBUG_WARP_MODIFY:
-                {
-                    auto inputs = g_core_ctx->vcr_get_inputs();
-                    inputs[inputs.size() - 10].a = 1;
-
-                    auto result = g_core_ctx->vcr_begin_warp_modify(inputs);
-                    show_error_dialog_for_result(result);
-
-                    break;
-                }
-            case IDM_BENCHMARK_MESSENGER:
-                {
-                    ScopeTimer timer("Messenger", g_view_logger.get());
-                    for (int i = 0; i < 10'000'000; ++i)
-                    {
-                        Messenger::broadcast(Messenger::Message::None, 5);
-                    }
-                }
-                break;
-            case IDM_BENCHMARK_LUA_CALLBACK:
-                {
-                    DialogService::show_dialog(L"Make sure the Lua script is running and the registered atreset body is empty.", L"Benchmark Lua Callback", fsvc_information);
-                    ScopeTimer timer("100,000,000x call_reset", g_view_logger.get());
-                    for (int i = 0; i < 100'000'000; ++i)
-                    {
-                        LuaCallbacks::call_reset();
-                    }
-                    DialogService::show_dialog(std::format(L"100,000,000 atreset callback invocations took {}ms", timer.momentary_ms()).c_str(), L"Benchmark Lua Callback", fsvc_information);
-                }
-                break;
-            case IDM_TRACELOG:
-                {
-                    if (g_core_ctx->vr_is_tracelog_active())
-                    {
-                        g_core_ctx->tl_stop();
-                        ModifyMenu(g_main_menu, IDM_TRACELOG, MF_BYCOMMAND | MF_STRING, IDM_TRACELOG, L"Start &Trace Logger...");
-                        break;
-                    }
-
-                    auto path = FilePicker::show_save_dialog(L"s_tracelog", g_main_hwnd, L"*.log");
-
-                    if (path.empty())
-                    {
-                        break;
-                    }
-
-                    auto result = MessageBox(g_main_hwnd, L"Should the trace log be generated in a binary format?", L"Trace Logger", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
-
-                    g_core_ctx->tl_start(path, result == IDYES, false);
-                    ModifyMenu(g_main_menu, IDM_TRACELOG, MF_BYCOMMAND | MF_STRING, IDM_TRACELOG, L"Stop &Trace Logger");
-                }
-                break;
-            case IDM_CLOSE_ROM:
-                if (!confirm_user_exit())
-                    break;
-                ThreadPool::submit_task([] {
-                    const auto result = g_core_ctx->vr_close_rom(true);
-                    show_error_dialog_for_result(result);
-                },
-                                        ASYNC_KEY_CLOSE_ROM);
-                break;
-            case IDM_FASTFORWARD_ON:
-                g_fast_forward = true;
-                Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
-                break;
-            case IDM_FASTFORWARD_OFF:
-                g_fast_forward = false;
-                Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
-                break;
-            case IDM_GS_ON:
-                g_core_ctx->vr_set_gs_button(true);
-                break;
-            case IDM_GS_OFF:
-                g_core_ctx->vr_set_gs_button(false);
-                break;
-            case IDM_PAUSE:
-                {
-                    // FIXME: While this is a beautiful and clean solution, there has to be a better way to handle this
-                    // We're too close to release to care tho
-                    if (g_in_menu_loop)
-                    {
-                        if (g_paused_before_menu)
-                        {
-                            g_core_ctx->vr_resume_emu();
-                            g_paused_before_menu = false;
-                            break;
-                        }
-                        g_paused_before_menu = true;
-                        g_core_ctx->vr_pause_emu();
-                    }
-                    else
-                    {
-                        if (g_core_ctx->vr_get_paused())
-                        {
-                            g_core_ctx->vr_resume_emu();
-                            break;
-                        }
-                        g_core_ctx->vr_pause_emu();
-                    }
-
-                    break;
-                }
-
-            case IDM_FRAMEADVANCE:
-                g_fast_forward = false;
-                update_core_fast_forward(nullptr);
-                g_core_ctx->vr_frame_advance(1);
-                g_core_ctx->vr_resume_emu();
-                break;
-            case IDM_MULTI_FRAME_ADVANCE:
-                if (g_config.multi_frame_advance_count > 0)
-                {
-                    g_core_ctx->vr_frame_advance(g_config.multi_frame_advance_count);
-                }
-                else
-                {
-                    ThreadPool::submit_task([] {
-                        const auto result = g_core_ctx->vcr_begin_seek(std::to_wstring(g_config.multi_frame_advance_count), true);
-                        show_error_dialog_for_result(result);
-                    });
-                }
-                g_core_ctx->vr_resume_emu();
-                break;
-            case IDM_MULTI_FRAME_ADVANCE_INC:
-                g_config.multi_frame_advance_count++;
-                if (g_config.multi_frame_advance_count == 0)
-                {
-                    g_config.multi_frame_advance_count++;
-                }
-                Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
-                break;
-            case IDM_MULTI_FRAME_ADVANCE_DEC:
-                g_config.multi_frame_advance_count--;
-                if (g_config.multi_frame_advance_count == 0)
-                {
-                    g_config.multi_frame_advance_count--;
-                }
-                Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
-                break;
-            case IDM_MULTI_FRAME_ADVANCE_RESET:
-                g_config.multi_frame_advance_count = g_default_config.multi_frame_advance_count;
-                Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
-                break;
-            case IDM_VCR_READONLY:
-                g_config.core.vcr_readonly ^= true;
-                Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-                break;
-            case IDM_WAIT_AT_MOVIE_END:
-                g_config.core.wait_at_movie_end ^= true;
-                break;
-            case IDM_LOOP_MOVIE:
-                g_config.core.is_movie_loop_enabled ^= true;
-                Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
-                break;
-
-
-            case EMU_PLAY:
-                g_core_ctx->vr_resume_emu();
-                break;
-
-            case IDM_RESET_ROM:
-                {
-                    const bool reset_will_continue_recording = g_config.core.is_reset_recording_enabled && g_core_ctx->vcr_get_task() == task_recording;
-
-                    if (!reset_will_continue_recording && !confirm_user_exit())
-                        break;
-
-                    ThreadPool::submit_task([] {
-                        const auto result = g_core_ctx->vr_reset_rom(false, true);
-                        show_error_dialog_for_result(result);
-                    },
-                                            ASYNC_KEY_RESET_ROM);
-                    break;
-                }
-            case IDM_SETTINGS:
-                {
-                    BetterEmulationLock lock;
-                    ConfigDialog::show_app_settings();
-                }
-                break;
-            case IDM_ABOUT:
-                {
-                    BetterEmulationLock lock;
-                    AboutDialog::show();
-                }
-                break;
-            case IDM_CHECK_FOR_UPDATES:
-                ThreadPool::submit_task([=] {
-                    UpdateChecker::check(lParam != 1);
-                });
-                break;
-            case IDM_COREDBG:
-                CoreDbg::show();
-                break;
-            case IDM_SEEKER:
-                {
-                    BetterEmulationLock lock;
-                    Seeker::show();
-                }
-                break;
-            case IDM_RUNNER:
-                {
-                    BetterEmulationLock lock;
-                    Runner::show();
-                }
-                break;
-            case IDM_PIANO_ROLL:
-                PianoRoll::show();
-                break;
-            case IDM_CHEATS:
-                {
-                    BetterEmulationLock lock;
-                    Cheats::show();
-                }
-                break;
-            case IDM_RAMSTART:
-                {
-                    BetterEmulationLock lock;
-
-                    wchar_t ram_start[20] = {0};
-                    wsprintfW(ram_start, L"0x%p", static_cast<void*>(g_core_ctx->rdram));
-
-                    wchar_t proc_name[MAX_PATH] = {0};
-                    GetModuleFileName(NULL, proc_name, MAX_PATH);
-
-                    IIOHelperService::t_path_segment_info info;
-                    if (!io_service.get_path_segment_info(proc_name, info))
-                    {
-                        break;
-                    }
-
-                    const auto stroop_line = std::format(
-                    L"<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" endianness=\"little\" autoDetect=\"true\"/>",
-                    info.filename,
-                    ram_start);
-
-                    const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
-
-                    const auto result = DialogService::show_multiple_choice_dialog(
-                    VIEW_DLG_RAMSTART,
-                    {L"Copy STROOP config line", L"Close"},
-                    str.c_str(),
-                    L"Show RAM Start",
-                    fsvc_information);
-
-                    if (result == 0)
-                    {
-                        copy_to_clipboard(g_main_hwnd, stroop_line);
-                    }
-
-                    break;
-                }
-            case IDM_STATS:
-                {
-                    BetterEmulationLock lock;
-
-                    auto str = std::format(L"Total playtime: {}\r\nTotal rerecords: {}", format_duration(g_config.core.total_frames / 30), g_config.core.total_rerecords);
-
-                    MessageBoxW(g_main_hwnd,
-                                str.c_str(),
-                                L"Statistics",
-                                MB_ICONINFORMATION);
-                    break;
-                }
-            case IDM_CONSOLE:
-                open_console();
-                break;
-            case IDM_LOAD_ROM:
-                {
-                    BetterEmulationLock lock;
-
-                    const auto path = FilePicker::show_open_dialog(L"o_rom", g_main_hwnd, L"*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
-
-                    if (!path.empty())
-                    {
-                        ThreadPool::submit_task([path] {
-                            const auto result = g_core_ctx->vr_start_rom(path);
-                            show_error_dialog_for_result(result);
-                        });
-                    }
-                }
-                break;
-            case IDM_EXIT:
-                DestroyWindow(g_main_hwnd);
-                break;
-            case IDM_FULLSCREEN:
-                g_view_plugin_funcs.video_change_window();
-                fullscreen ^= true;
-                break;
-            case IDM_REFRESH_ROMBROWSER:
-                if (!g_core_ctx->vr_get_launched())
-                {
-                    RomBrowser::build();
-                }
-                break;
-            case IDM_SAVE_SLOT:
-                g_core_ctx->vr_wait_increment();
-                if (g_config.increment_slot)
-                {
-                    g_config.st_slot >= 9 ? g_config.st_slot = 0 : g_config.st_slot++;
-                    Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
-                }
-                ThreadPool::submit_task([=] {
-                    g_core_ctx->vr_wait_decrement();
-                    g_core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_save, nullptr, false);
-                });
-                break;
-            case IDM_SAVE_STATE_AS:
-                {
-                    BetterEmulationLock lock;
-
-                    auto path = FilePicker::show_save_dialog(L"s_savestate", hwnd, L"*.st;*.savestate");
-                    if (path.empty())
-                    {
-                        break;
-                    }
-
-                    g_core_ctx->vr_wait_increment();
-                    ThreadPool::submit_task([=] {
-                        g_core_ctx->vr_wait_decrement();
-                        g_core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
-                    });
-                }
-                break;
-            case IDM_LOAD_SLOT:
-                g_core_ctx->vr_wait_increment();
-                ThreadPool::submit_task([=] {
-                    g_core_ctx->vr_wait_decrement();
-                    g_core_ctx->st_do_file(get_st_with_slot_path(g_config.st_slot), core_st_job_load, nullptr, false);
-                });
-                break;
-            case IDM_LOAD_STATE_AS:
-                {
-                    BetterEmulationLock lock;
-
-                    auto path = FilePicker::show_open_dialog(L"o_state", hwnd, L"*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
-                    if (path.empty())
-                    {
-                        break;
-                    }
-
-                    g_core_ctx->vr_wait_increment();
-                    ThreadPool::submit_task([=] {
-                        g_core_ctx->vr_wait_decrement();
-                        g_core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
-                    });
-                }
-                break;
-            case IDM_UNDO_LOAD_STATE:
-                {
-                    g_core_ctx->vr_wait_increment();
-                    ThreadPool::submit_task([=] {
-                        g_core_ctx->vr_wait_decrement();
-
-                        std::vector<uint8_t> buf{};
-                        g_core_ctx->st_get_undo_savestate(buf);
-
-                        if (buf.empty())
-                        {
-                            Statusbar::post(L"No load to undo");
-                            return;
-                        }
-
-                        g_core_ctx->st_do_memory(buf, core_st_job_load, [](const core_st_callback_info& info, auto) {
-                            if (info.result == Res_Ok)
-                            {
-                                Statusbar::post(L"Undid load");
-                                return;
-                            }
-
-                            if (info.result == Res_Cancelled)
-                            {
-                                return;
-                            }
-
-                            Statusbar::post(L"Failed to undo load");
-                        },
-                                                 false);
-                    });
-                }
-                break;
-            case IDM_START_MOVIE_RECORDING:
-                {
-                    BetterEmulationLock lock;
-
-                    auto movie_dialog_result = MovieDialog::show(false);
-
-                    if (movie_dialog_result.path.empty())
-                    {
-                        break;
-                    }
-
-                    g_core_ctx->vr_wait_increment();
-                    g_core.submit_task([=] {
-                        auto vcr_result = g_core_ctx->vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag, io_service.wstring_to_string(movie_dialog_result.author), io_service.wstring_to_string(movie_dialog_result.description));
-                        g_core_ctx->vr_wait_decrement();
-                        if (!show_error_dialog_for_result(vcr_result))
-                        {
-                            g_config.last_movie_author = movie_dialog_result.author;
-                            Statusbar::post(L"Recording replay");
-                        }
-                    });
-                }
-                break;
-            case IDM_START_MOVIE_PLAYBACK:
-                {
-                    BetterEmulationLock lock;
-
-                    auto result = MovieDialog::show(true);
-
-                    if (result.path.empty())
-                    {
-                        break;
-                    }
-
-                    g_core_ctx->vcr_replace_author_info(result.path, io_service.wstring_to_string(result.author), io_service.wstring_to_string(result.description));
-
-                    g_config.core.pause_at_frame = result.pause_at;
-                    g_config.core.pause_at_last_frame = result.pause_at_last;
-
-                    ThreadPool::submit_task([result] {
-                        auto vcr_result = g_core_ctx->vcr_start_playback(result.path);
-                        show_error_dialog_for_result(vcr_result);
-                    });
-                }
-                break;
-            case IDM_STOP_MOVIE:
-                g_core_ctx->vr_wait_increment();
-                g_core.submit_task([] {
-                    g_core_ctx->vcr_stop_all();
-                    g_core_ctx->vr_wait_decrement();
-                });
-                break;
-            case IDM_CREATE_MOVIE_BACKUP:
-                {
-                    const auto result = g_core_ctx->vcr_write_backup();
-                    show_error_dialog_for_result(result);
-                    break;
-                }
-            case IDM_START_CAPTURE_PRESET:
-            case IDM_START_CAPTURE:
-                {
-                    if (!g_core_ctx->vr_get_launched())
-                    {
-                        break;
-                    }
-
-                    BetterEmulationLock lock;
-
-                    auto path = FilePicker::show_save_dialog(L"s_capture", hwnd, L"*.avi");
-                    if (path.empty())
-                    {
-                        break;
-                    }
-
-                    bool ask_preset = LOWORD(wParam) == IDM_START_CAPTURE;
-
-                    EncodingManager::start_capture(path, (t_config::EncoderType)g_config.encoder_type, ask_preset, [](const auto result) {
-                        if (result)
-                        {
-                            Statusbar::post(L"Capture started...");
-                        }
-                    });
-
-                    break;
-                }
-            case IDM_STOP_CAPTURE:
-                EncodingManager::stop_capture([](const auto result) {
-                    if (result)
-                    {
-                        Statusbar::post(L"Capture stopped");
-                    }
-                });
-                break;
-            case IDM_SCREENSHOT:
-                g_core.plugin_funcs.video_capture_screen(get_screenshots_directory().string().data());
-                break;
-            case IDM_RESET_RECENT_ROMS:
-                g_config.recent_rom_paths.clear();
-                break;
-            case IDM_RESET_RECENT_MOVIES:
-                g_config.recent_movie_paths.clear();
-                break;
-            case IDM_RESET_RECENT_LUA:
-                g_config.recent_lua_script_paths.clear();
-                break;
-            case IDM_FREEZE_RECENT_ROMS:
-                g_config.is_recent_rom_paths_frozen ^= true;
-                break;
-            case IDM_FREEZE_RECENT_MOVIES:
-                g_config.is_recent_movie_paths_frozen ^= true;
-                break;
-            case IDM_FREEZE_RECENT_LUA:
-                g_config.is_recent_scripts_frozen ^= true;
-                break;
-            case IDM_LOAD_LATEST_LUA:
-                SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(ID_LUA_RECENT, 0), 0);
-                break;
-            case IDM_LOAD_LATEST_ROM:
-                SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(ID_RECENTROMS_FIRST, 0), 0);
-                break;
-            case IDM_PLAY_LATEST_MOVIE:
-                SendMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(ID_RECENTMOVIES_FIRST, 0), 0);
-                break;
-            case IDM_STATUSBAR:
-                g_config.is_statusbar_enabled ^= true;
-                Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
-                break;
-            case IDM_SPEED_DOWN:
-            case IDM_SPEED_UP:
-                {
-                    constexpr auto base_increment = 5;
-                    const auto increment = LOWORD(wParam) == IDM_SPEED_UP ? base_increment : -base_increment;
-                    g_config.core.fps_modifier = clamp(g_config.core.fps_modifier + increment, base_increment, 1000);
-                    g_core_ctx->vr_on_speed_modifier_changed();
-                    Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
-                    break;
-                }
-            case IDM_SPEED_RESET:
-                g_config.core.fps_modifier = 100;
-                g_core_ctx->vr_on_speed_modifier_changed();
-                Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
-                break;
-            default:
-                if (LOWORD(wParam) >= IDM_SELECT_1 && LOWORD(wParam) <= IDM_SELECT_10)
-                {
-                    auto slot = LOWORD(wParam) - IDM_SELECT_1;
-                    g_config.st_slot = slot;
-                    Messenger::broadcast(Messenger::Message::SlotChanged, static_cast<size_t>(g_config.st_slot));
-                }
-                else if (LOWORD(wParam) >= ID_SAVE_1 && LOWORD(wParam) <= ID_SAVE_10)
-                {
-                    auto slot = LOWORD(wParam) - ID_SAVE_1;
-                    g_core_ctx->vr_wait_increment();
-
-                    g_config.st_slot = slot;
-                    Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
-
-                    ThreadPool::submit_task([=] {
-                        g_core_ctx->vr_wait_decrement();
-                        g_core_ctx->st_do_file(get_st_with_slot_path(slot), core_st_job_save, nullptr, false);
-                    });
-                }
-                else if (LOWORD(wParam) >= ID_LOAD_1 && LOWORD(wParam) <= ID_LOAD_10)
-                {
-                    auto slot = LOWORD(wParam) - ID_LOAD_1;
-                    g_core_ctx->vr_wait_increment();
-
-                    g_config.st_slot = slot;
-                    Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
-
-                    ThreadPool::submit_task([=] {
-                        g_core_ctx->vr_wait_decrement();
-                        g_core_ctx->st_do_file(get_st_with_slot_path(slot), core_st_job_load, nullptr, false);
-                    });
-                }
-                else if (LOWORD(wParam) >= ID_RECENTROMS_FIRST &&
-                         LOWORD(wParam) < (ID_RECENTROMS_FIRST + g_config.recent_rom_paths.size()))
-                {
-                    auto path = RecentMenu::element_at(g_config.recent_rom_paths, ID_RECENTROMS_FIRST, LOWORD(wParam));
-                    if (path.empty())
-                        break;
-
-                    ThreadPool::submit_task([path] {
-                        const auto result = g_core_ctx->vr_start_rom(path);
-                        show_error_dialog_for_result(result);
-                    },
-                                            ASYNC_KEY_START_ROM);
-                }
-                else if (LOWORD(wParam) >= ID_RECENTMOVIES_FIRST &&
-                         LOWORD(wParam) < (ID_RECENTMOVIES_FIRST + g_config.recent_movie_paths.size()))
-                {
-                    auto path = RecentMenu::element_at(g_config.recent_movie_paths, ID_RECENTMOVIES_FIRST, LOWORD(wParam));
-                    if (path.empty())
-                        break;
-
-                    g_config.core.vcr_readonly = true;
-                    Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-                    ThreadPool::submit_task([path] {
-                        auto result = g_core_ctx->vcr_start_playback(path);
-                        show_error_dialog_for_result(result);
-                    },
-                                            ASYNC_KEY_PLAY_MOVIE);
-                }
-                else if (LOWORD(wParam) >= ID_LUA_RECENT && LOWORD(wParam) < (ID_LUA_RECENT + g_config.recent_lua_script_paths.size()))
-                {
-                    auto path = RecentMenu::element_at(g_config.recent_lua_script_paths, ID_LUA_RECENT, LOWORD(wParam));
-                    if (path.empty())
-                        break;
-
-                    LuaDialog::start_and_add_if_needed(path);
-                }
-                break;
-            }
         }
         break;
     default:
@@ -1991,7 +1060,7 @@ std::filesystem::path get_saves_directory()
 {
     if (g_config.is_default_saves_directory_used)
     {
-        return g_app_path / L"save\\";
+        return g_main_wnd.app_path / L"save\\";
     }
     return g_config.saves_directory;
 }
@@ -2366,7 +1435,7 @@ void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
     {
-        SetCurrentDirectory(g_app_path.c_str());
+        SetCurrentDirectory(g_main_wnd.app_path.c_str());
     }
 
     wchar_t cwd[MAX_PATH] = {0};
@@ -2386,7 +1455,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info(get_mupen_name());
 
     g_app_instance = hInstance;
-    g_app_path = get_app_full_path();
+    g_main_wnd.app_path = get_app_full_path();
     set_cwd();
 
     Config::init();
@@ -2400,10 +1469,10 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
         return 1;
     }
 
-    CreateDirectory((g_app_path / L"save").c_str(), NULL);
-    CreateDirectory((g_app_path / L"screenshots").c_str(), NULL);
-    CreateDirectory((g_app_path / L"plugin").c_str(), NULL);
-    CreateDirectory((g_app_path / L"backups").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"save").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"screenshots").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"plugin").c_str(), NULL);
+    CreateDirectory((g_main_wnd.app_path / L"backups").c_str(), NULL);
 
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
@@ -2428,7 +1497,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     wc.lpszClassName = WND_CLASS;
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszMenuName = MAKEINTRESOURCE(IDR_MYMENU);
     RegisterClassEx(&wc);
 
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height);
@@ -2449,13 +1517,17 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe(Messenger::Message::ConfigLoaded, on_config_loaded);
     Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed);
     Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed);
-    Messenger::subscribe(Messenger::Message::FastForwardNeedsUpdate, update_core_fast_forward);
-    Messenger::subscribe(Messenger::Message::SeekStatusChanged, update_core_fast_forward);
+    Messenger::subscribe(Messenger::Message::FastForwardNeedsUpdate, [](auto) {
+        AppActions::update_core_fast_forward();
+    });
+    Messenger::subscribe(Messenger::Message::SeekStatusChanged, [](auto) {
+        AppActions::update_core_fast_forward();
+    });
     Messenger::subscribe(Messenger::Message::EmuStartingChanged, on_emu_starting_changed);
 
     Statusbar::create();
     RomBrowser::create();
-    update_core_fast_forward(nullptr);
+    AppActions::update_core_fast_forward();
 
     Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
     Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
@@ -2472,8 +1544,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
         DialogService::show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.", L"Error", fsvc_error);
         return -1;
     }
-
-    PostMessage(g_main_hwnd, WM_COMMAND, MAKEWPARAM(IDM_CHECK_FOR_UPDATES, 0), 1);
 
     MSG msg{};
 
