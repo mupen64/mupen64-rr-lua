@@ -38,6 +38,18 @@ struct t_dialog_state {
 static t_dialog_state g_dlg{};
 static std::vector<std::shared_ptr<t_instance_context>> g_lua_instance_wnd_ctxs{};
 
+static t_instance_context* get_instance_context(const t_lua_environment* env)
+{
+    for (const auto& ctx : g_lua_instance_wnd_ctxs)
+    {
+        if (ctx->env == env)
+        {
+            return ctx.get();
+        }
+    }
+    return nullptr;
+}
+
 /**
  * \brief Prints text to an instance.
  */
@@ -93,12 +105,25 @@ static void start(t_instance_context& ctx, const std::filesystem::path& path)
     const auto result = LuaManager::create_environment(
     path,
     ctx.trusted(),
-    [&] {
-        PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+    [](const t_lua_environment* env) {
+        const auto ctx = get_instance_context(env);
+        
+        if (ctx)
+        {
+            ctx->env = nullptr;
+            PostMessage(ctx->hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
+        }
+
         PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
     },
-    [&](const std::wstring& text) {
-        print(ctx, text);
+    [](const t_lua_environment* env, const std::wstring& text) {
+        const auto ctx = get_instance_context(env);
+        if (!ctx)
+        {
+            return;
+        }
+
+        print(*ctx, text);
     });
 
     Messenger::broadcast(Messenger::Message::ScriptStarted, path);

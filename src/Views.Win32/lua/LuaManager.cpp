@@ -80,14 +80,14 @@ t_lua_environment* LuaManager::get_environment_for_state(lua_State* lua_state)
     return g_lua_env_map[lua_state];
 }
 
-std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(const std::filesystem::path& path, const bool trusted, const std::function<void()>& destroyed_callback, const std::function<void(const std::wstring& path)>& print_callback)
+std::expected<t_lua_environment*, std::wstring> LuaManager::create_environment(const std::filesystem::path& path, const bool trusted, const t_lua_environment::destroying_func& destroying_callback, const t_lua_environment::print_func& print_callback)
 {
     assert(is_on_gui_thread());
 
     auto lua = new t_lua_environment();
 
     lua->path = path;
-    lua->destroyed = destroyed_callback;
+    lua->destroying = destroying_callback;
     lua->print = print_callback;
     lua->rctx = LuaRenderer::default_rendering_context();
 
@@ -157,9 +157,13 @@ fail:
 
 void LuaManager::destroy_environment(t_lua_environment* lua)
 {
+    runtime_assert(lua && lua->L, L"LuaManager::destroy_environment: Lua environment is already destroyed");
+
+    lua->destroying(lua);
+    
     LuaRenderer::pre_destroy_renderer(&lua->rctx);
 
-    LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATSTOP);
+    LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATSTOP);
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
     // After this point, it's game over and no callbacks will be called anymore.
@@ -170,8 +174,7 @@ void LuaManager::destroy_environment(t_lua_environment* lua)
 
     lua_close(lua->L);
     lua->L = nullptr;
-    lua->destroyed();
     LuaRenderer::destroy_renderer(&lua->rctx);
-
+    
     g_view_logger->info("Lua destroyed");
 }

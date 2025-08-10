@@ -257,7 +257,7 @@ namespace LuaCore::Emu
         auto lua = LuaManager::get_environment_for_state(L);
         const auto str = io_service.string_to_wstring(luaL_checkstring(L, 1));
 
-        lua->print(str + L"\r\n");
+        lua->print(lua, str + L"\r\n");
         return 0;
     }
 
