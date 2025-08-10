@@ -156,25 +156,27 @@ bool ActionManager::add(const t_action_params& params)
     }
 
 
-    // > If adding the action causes another action to gain a direct child (e.g. there's an action `A > B`, and we're adding `A > B > C`), the operation will fail.
+    // > If adding the action causes another action to gain a direct child (e.g. there's an action `A > B`, and we're adding `A > B > C > D`), the operation will fail.
     const auto segments = get_segments(normalized_path);
-    if (segments.size() > 1)
+
+    // 1. Look for an action at each segment
+    for (size_t i = 0; i < segments.size(); ++i)
     {
-        // a. Build the potential parent path by removing the last segment
-        std::wstring potential_parent_path;
-        for (size_t i = 0; i < segments.size() - 1; ++i)
+        // a. Build the path for each segment
+        std::wstring segment_slice;
+        for (size_t j = 0; j <= i; ++j)
         {
-            if (i > 0)
+            if (j > 0)
             {
-                potential_parent_path += SEGMENT_SEPARATOR;
+                segment_slice += SEGMENT_SEPARATOR;
             }
-            potential_parent_path += segments[i];
+            segment_slice += segments[j];
         }
 
         // b. Check if this potential parent exists
-        if (get_single_action_ptr_matching_path(potential_parent_path) != nullptr)
+        if (get_single_action_ptr_matching_path(segment_slice) != nullptr)
         {
-            g_view_logger->error(L"ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.", normalized_path, potential_parent_path);
+            g_view_logger->error(L"ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.", normalized_path, segment_slice);
             return false;
         }
     }

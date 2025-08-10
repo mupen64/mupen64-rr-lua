@@ -85,7 +85,7 @@ namespace ActionManager
     /**
      * \brief Adds an action to the action registry.
      * If an action with the same path already exists, the operation will fail.
-     * If adding the action causes another action to gain a direct child (e.g. there's an action `A > B`, and we're adding `A > B > C`), the operation will fail. To add the action, delete the original action (`A > B`) first.
+     * If adding the action causes another action to gain a direct child (e.g. there's an action `A > B`, and we're adding `A > B > C > D`), the operation will fail. To add the action, delete the original action (`A > B`) first.
      * \param params The action parameters.
      * \return Whether the operation succeeded.
      */

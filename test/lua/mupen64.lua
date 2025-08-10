@@ -87,16 +87,31 @@ lust.describe('mupen64', function()
                 lust.expect(result).to.equal(false)
             end)
             lust.it('fails_if_causes_action_to_have_direct_child', function()
-                local result1 = action.add({
+                local result = action.add({
                     path = "Test > A",
                 })
 
-                local result2 = action.add({
+                lust.expect(result).to.equal(true)
+
+                result = action.add({
                     path = "Test > A > B",
                 })
 
-                lust.expect(result1).to.equal(true)
-                lust.expect(result2).to.equal(false)
+                lust.expect(result).to.equal(false)
+
+                action.remove("Test > *")
+
+                local result = action.add({
+                    path = "Test > A > B",
+                })
+
+                lust.expect(result).to.equal(true)
+
+                result = action.add({
+                    path = "Test > A > B > C > D",
+                })
+
+                lust.expect(result).to.equal(false)
             end)
         end)
         lust.describe('remove', function()
