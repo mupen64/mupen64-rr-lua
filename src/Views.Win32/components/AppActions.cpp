@@ -889,10 +889,38 @@ void AppActions::add()
     add_action(L"Mupen64 > Emulation > Frame Advance", {.key = VK_OEM_5}, frame_advance, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance", {.key = VK_OEM_5, .ctrl = true}, multi_frame_advance, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Take Screenshot ---", {.key = VK_F12}, screenshot, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Save State", {.key = 'I'}, save_slot, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Load State", {.key = 'P'}, load_slot, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Save State As...", {}, save_state_as, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Load State As...", {}, load_state_as, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Save State > Save Current Slot", {.key = 'I'}, save_slot, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Save State > Save as File... ---", {}, save_state_as, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Load State > Load Current Slot", {.key = 'P'}, load_slot, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Load State > Load from File... ---", {}, load_state_as, enable_when_emu_launched);
+    for (size_t i = 0; i < 10; ++i)
+    {
+        const int32_t save_key = i < 9 ? '1' + i : '0';
+        const int32_t load_key = VK_F1 + i;
+
+        const auto do_work = [=](const core_st_job job) {
+            g_core_ctx->vr_wait_increment();
+
+            g_config.st_slot = i;
+            Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
+
+            ThreadPool::submit_task([=] {
+                g_core_ctx->vr_wait_decrement();
+                g_core_ctx->st_do_file(get_st_with_slot_path(i), job, nullptr, false);
+            });
+        };
+
+        const auto save = [=] {
+            do_work(core_st_job_save);
+        };
+
+        const auto load = [=] {
+            do_work(core_st_job_load);
+        };
+
+        add_action(std::format(L"Mupen64 > Emulation > Save State > Save Slot {}", i + 1), {.key = save_key, .shift = true}, save, enable_when_emu_launched);
+        add_action(std::format(L"Mupen64 > Emulation > Load State > Load Slot {}", i + 1), {.key = load_key}, load, enable_when_emu_launched);
+    }
     add_action(L"Mupen64 > Emulation > Undo Load State ---", {.key = 'Z', .ctrl = true}, undo_load_state, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, multi_frame_advance_increment, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, multi_frame_advance_decrement, enable_when_emu_launched);
