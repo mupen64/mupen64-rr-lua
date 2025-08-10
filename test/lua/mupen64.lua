@@ -86,7 +86,7 @@ lust.describe('mupen64', function()
 
                 lust.expect(result).to.equal(false)
             end)
-            lust.it('fails_if_causes_action_to_have_direct_child', function()
+            lust.it('fails_if_causes_action_to_have_child', function()
                 local result = action.add({
                     path = "Test > A",
                 })
