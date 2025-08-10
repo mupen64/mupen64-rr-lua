@@ -45,12 +45,12 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
             if (!lua->rctx.presenter)
             {
                 // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
-                success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATDRAWD2D);
+                success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
             }
             else
             {
                 lua->rctx.presenter->begin_present();
-                success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATDRAWD2D);
+                success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
                 lua->rctx.presenter->end_present();
             }
 
@@ -86,7 +86,7 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
                 break;
             }
 
-            const bool success = LuaCallbacks::invoke_callbacks_with_key(*lua, LuaCallbacks::REG_ATUPDATESCREEN);
+            const bool success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);
 
             if (lua->rctx.has_gdi_content)
             {

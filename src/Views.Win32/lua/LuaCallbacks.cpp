@@ -172,34 +172,38 @@ void LuaCallbacks::call_warp_modify_status_changed(const int32_t status)
     });
 }
 
-bool invoke_callbacks_with_key_impl(const t_lua_environment& lua, const std::function<int(lua_State*)>& function, LuaCallbacks::callback_key key)
+bool invoke_callbacks_with_key_impl(const t_lua_environment* lua, const std::function<int(lua_State*)>& function, LuaCallbacks::callback_key key)
 {
-    assert(is_on_gui_thread());
+    runtime_assert(is_on_gui_thread(), L"not on GUI thread");
 
-    lua_rawgeti(lua.L, LUA_REGISTRYINDEX, key);
-    if (lua_isnil(lua.L, -1))
+    lua_State* L = lua->L;
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
+    if (lua_isnil(L, -1))
     {
-        lua_pop(lua.L, 1);
+        lua_pop(L, 1);
         return true;
     }
-    int n = luaL_len(lua.L, -1);
-    for (LUA_INTEGER i = 0; i < n; i++)
+
+    const lua_Integer n = luaL_len(L, -1);
+    
+    for (lua_Integer i = 0; i < n; i++)
     {
-        lua_pushinteger(lua.L, 1 + i);
-        lua_gettable(lua.L, -2);
-        if (function(lua.L))
+        lua_pushinteger(L, 1 + i);
+        lua_gettable(L, -2);
+        if (function(L))
         {
-            const char* str = lua_tostring(lua.L, -1);
-            lua.print(io_service.string_to_wstring(str) + L"\r\n");
+            const char* str = lua_tostring(L, -1);
+            lua->print(lua, io_service.string_to_wstring(str) + L"\r\n");
             g_view_logger->info("Lua error: {}", str);
             return false;
         }
     }
-    lua_pop(lua.L, 1);
+    lua_pop(L, 1);
     return true;
 }
 
-bool LuaCallbacks::invoke_callbacks_with_key(const t_lua_environment& lua, callback_key key)
+bool LuaCallbacks::invoke_callbacks_with_key(const t_lua_environment* lua, const callback_key key)
 {
     const auto func = get_function_for_callback(key);
     return invoke_callbacks_with_key_impl(lua, func, key);
@@ -217,7 +221,7 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 
     for (const auto& lua : g_lua_environments)
     {
-        if (!invoke_callbacks_with_key_impl(*lua, function, key))
+        if (!invoke_callbacks_with_key_impl(lua, function, key))
         {
             destruction_queue.push(lua);
         }

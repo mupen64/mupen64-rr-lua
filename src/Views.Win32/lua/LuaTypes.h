@@ -71,13 +71,16 @@ struct t_lua_rendering_context {
  * \brief Describes a Lua instance.
  */
 struct t_lua_environment {
+    using destroying_func = std::function<void(const t_lua_environment* env)>;
+    using print_func = std::function<void(const t_lua_environment* env, const std::wstring& text)>;
+
     std::filesystem::path path;
     lua_State* L;
     t_lua_rendering_context rctx;
 
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};
-
-    std::function<void()> destroyed{};
-    std::function<void(const std::wstring& path)> print{};
+  
+    destroying_func destroying{};
+    print_func print{};
 };
