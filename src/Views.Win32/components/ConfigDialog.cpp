@@ -1352,15 +1352,15 @@ static void try_apply_hotkey(const HWND hwnd, const Hotkey::t_hotkey& new_hotkey
         return;
     }
 
+    if (std::get<Hotkey::t_hotkey>(option_item.current_value.get()) == new_hotkey)
+    {
+        return;
+    }
+
     std::vector<std::pair<std::wstring, Hotkey::t_hotkey>> conflicting_hotkeys;
 
     for (const auto& pair : g_hotkey_scratchpad)
     {
-        if (pair.first == option_item.name)
-        {
-            continue;
-        }
-
         if (pair.second == new_hotkey)
         {
             conflicting_hotkeys.emplace_back(pair);
