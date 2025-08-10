@@ -156,7 +156,7 @@ bool ActionManager::add(const t_action_params& params)
     }
 
 
-    // > If adding the action causes another action to gain a direct child (e.g. there's an action `A > B`, and we're adding `A > B > C > D`), the operation will fail.
+    // > If adding the action causes another action to gain a child (e.g. there's an action `A > B`, and we're adding `A > B > C > D`), the operation will fail.
     const auto segments = get_segments(normalized_path);
 
     // 1. Look for an action at each segment
