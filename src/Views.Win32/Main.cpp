@@ -838,10 +838,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
             if (extension == ".n64" || extension == ".z64" || extension == ".v64" || extension == ".rom")
             {
-                ThreadPool::submit_task([path] {
-                    const auto result = g_core_ctx->vr_start_rom(path);
-                    show_error_dialog_for_result(result);
-                });
+                AppActions::load_rom_from_path(path);
             }
             else if (extension == ".m64")
             {

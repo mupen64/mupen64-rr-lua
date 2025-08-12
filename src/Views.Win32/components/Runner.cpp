@@ -10,6 +10,7 @@
 #include <ThreadPool.h>
 #include <components/LuaDialog.h>
 #include <components/Runner.h>
+#include <components/AppActions.h>
 
 static int32_t last_selected_id = -1;
 
@@ -18,10 +19,7 @@ static void run_auto(const int id, const std::filesystem::path& path)
     switch (id)
     {
     case IDC_LIST_ROMS:
-        ThreadPool::submit_task([=] {
-            const auto result = g_core_ctx->vr_start_rom(path);
-            show_error_dialog_for_result(result);
-        });
+        AppActions::load_rom_from_path(path);
         break;
     case IDC_LIST_MOVIES:
         g_config.core.vcr_readonly = true;

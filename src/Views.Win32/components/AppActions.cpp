@@ -78,6 +78,14 @@ void AppActions::update_core_fast_forward()
     g_core_ctx->vr_set_fast_forward(g_main_wnd.fast_forward || g_core_ctx->vcr_is_seeking() || CLI::wants_fast_forward() || Compare::active());
 }
 
+void AppActions::load_rom_from_path(const std::wstring& path)
+{
+    ThreadPool::submit_task([=] {
+        const auto result = g_core_ctx->vr_start_rom(path);
+        show_error_dialog_for_result(result);
+    });
+}
+
 std::filesystem::path get_screenshots_directory()
 {
     if (g_config.is_default_screenshots_directory_used)
@@ -97,14 +105,6 @@ static void stub()
 
 #pragma region File
 
-static void load_rom_from_path(const std::wstring& path)
-{
-    ThreadPool::submit_task([=] {
-        const auto result = g_core_ctx->vr_start_rom(path);
-        show_error_dialog_for_result(result);
-    });
-}
-
 static void load_rom()
 {
     BetterEmulationLock lock;
@@ -116,7 +116,7 @@ static void load_rom()
         return;
     }
 
-    load_rom_from_path(path);
+    AppActions::load_rom_from_path(path);
 }
 
 static void load_recent_rom(size_t i)
@@ -128,7 +128,7 @@ static void load_recent_rom(size_t i)
 
     const auto path = g_config.recent_rom_paths[i];
 
-    load_rom_from_path(path);
+    AppActions::load_rom_from_path(path);
 }
 
 static void close_rom()

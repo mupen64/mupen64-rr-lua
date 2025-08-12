@@ -23,4 +23,10 @@ namespace AppActions
     void add();
 
     void update_core_fast_forward();
+
+    /**
+     * \brief Starts loading a ROM from the given path.
+     * \param path A path.
+     */
+    void load_rom_from_path(const std::wstring& path);
 } // namespace AppActions

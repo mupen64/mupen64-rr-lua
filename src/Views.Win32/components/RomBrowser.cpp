@@ -9,7 +9,7 @@
 #include <Uxtheme.h>
 #include <components/RomBrowser.h>
 #include <components/Statusbar.h>
-#include <ThreadPool.h>
+#include <components/AppActions.h>
 #include <Messenger.h>
 
 using t_rombrowser_entry = struct s_rombrowser_entry {
@@ -383,10 +383,7 @@ namespace RomBrowser
                 item.iItem = i;
                 ListView_GetItem(rombrowser_hwnd, &item);
                 auto path = rombrowser_entries[item.lParam]->path;
-                ThreadPool::submit_task([path] {
-                    const auto result = g_core_ctx->vr_start_rom(path);
-                    show_error_dialog_for_result(result);
-                });
+                AppActions::load_rom_from_path(path);
             }
             break;
         }
