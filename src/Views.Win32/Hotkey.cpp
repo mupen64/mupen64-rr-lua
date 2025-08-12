@@ -257,6 +257,10 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDCANCEL:
             EndDialog(hwnd, IDCANCEL);
             return TRUE;
+        case IDC_CLEAR:
+            params->hotkey = {};
+            EndDialog(hwnd, IDOK);
+            break;
         default:
             break;
         }
