@@ -228,6 +228,7 @@ static void frame_advance()
 {
     g_main_wnd.fast_forward = false;
     AppActions::update_core_fast_forward();
+
     g_core_ctx->vr_frame_advance(1);
     g_core_ctx->vr_resume_emu();
 }
@@ -268,11 +269,13 @@ static bool fastforward_active()
 static void gs_button_enable()
 {
     g_core_ctx->vr_set_gs_button(true);
+    ActionManager::notify_active_changed(L"Mupen64 > Emulation > GS Button");
 }
 
 static void gs_button_disable()
 {
     g_core_ctx->vr_set_gs_button(false);
+    ActionManager::notify_active_changed(L"Mupen64 > Emulation > GS Button");
 }
 
 static bool gs_button_active()
@@ -419,6 +422,7 @@ static void toggle_fullscreen()
 {
     g_view_plugin_funcs.video_change_window();
     g_main_wnd.fullscreen ^= true;
+    ActionManager::notify_active_changed(L"Mupen64 > Options > Full Screen ---");
 }
 
 static bool fullscreen_active()
@@ -878,7 +882,10 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(L"Mupen64 > *");
     });
     Messenger::subscribe(Messenger::Message::EmuPausedChanged, [](const auto&) {
-        ActionManager::notify_enabled_changed(L"Mupen64 > Emulation > Pause");
+        ActionManager::notify_active_changed(L"Mupen64 > Emulation > Pause");
+    });
+    Messenger::subscribe(Messenger::Message::FastForwardNeedsUpdate, [](const auto&) {
+        ActionManager::notify_active_changed(L"Mupen64 > Emulation > Fast-Forward");
     });
     Messenger::subscribe(Messenger::Message::CapturingChanged, [](const auto&) {
         ActionManager::notify_enabled_changed(L"Mupen64 > Utilities > Video Capture > *");
