@@ -967,14 +967,14 @@ void AppActions::add()
     });
 
     add_action(L"Mupen64 > Utilities > Show RAM Start", {}, show_ram_start);
-    add_action(L"Mupen64 > Utilities > Show Statistics ---", {}, show_statistics);
+    add_action(L"Mupen64 > Utilities > Statistics", {}, show_statistics);
+    add_action(L"Mupen64 > Utilities > Debugger", {}, show_debugger, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Cheats", {}, show_cheat_dialog, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Piano Roll", {}, show_piano_roll, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Run...", {}, show_run_dialog);
+    add_action(L"Mupen64 > Utilities > Seek To... ---", {}, show_seek_dialog, enable_when_emu_launched_and_vcr_active);
     add_action(L"Mupen64 > Utilities > Start Trace Logger...", {}, start_tracelog, enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(L"Mupen64 > Utilities > Stop Trace Logger ---", {}, stop_tracelog, enable_when_tracelog_active);
-    add_action(L"Mupen64 > Utilities > Core Debugger", {}, show_debugger, enable_when_emu_launched);
-    add_action(L"Mupen64 > Utilities > Run...", {}, show_run_dialog);
-    add_action(L"Mupen64 > Utilities > Cheats", {}, show_cheat_dialog, enable_when_emu_launched);
-    add_action(L"Mupen64 > Utilities > Seek To...", {}, show_seek_dialog, enable_when_emu_launched_and_vcr_active);
-    add_action(L"Mupen64 > Utilities > Piano Roll ---", {}, show_piano_roll, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Start Capture...", {}, start_capture_normal, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Start from Preset...", {}, start_capture_from_preset, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Stop Capture", {}, stop_capture, enable_when_emu_launched_and_capturing);
