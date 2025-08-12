@@ -110,8 +110,14 @@ HWND SettingsListView::create(const t_settings_listview_context& ctx)
         ListView_InsertItem(lvhwnd, &lv_item);
     }
 
+    // 1st column fits header
     ListView_SetColumnWidth(lvhwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-    ListView_SetColumnWidth(lvhwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
+
+    // 2nd column fills remaining space
+    const auto first_column_width = ListView_GetColumnWidth(lvhwnd, 0);
+    RECT lv_rc{};
+    GetClientRect(lvhwnd, &lv_rc);
+    ListView_SetColumnWidth(lvhwnd, 1, lv_rc.right - first_column_width);
 
     return lvhwnd;
 }
