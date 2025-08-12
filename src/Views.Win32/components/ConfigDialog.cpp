@@ -45,7 +45,6 @@ struct t_options_group {
  */
 struct t_options_item {
     enum class Type {
-        Invalid,
         Bool,
         Number,
         Enum,
@@ -79,7 +78,7 @@ struct t_options_item {
     /**
      * The option's backing data type.
      */
-    Type type = Type::Invalid;
+    Type type;
 
     /**
      * The group this option belongs to.
@@ -188,6 +187,7 @@ std::wstring t_options_item::get_value_name() const
     default:
         runtime_assert(false, L"Unhandled option type in t_options_item::get_value_name");
     }
+    return L"";
 }
 
 void t_options_item::reset_to_default() const
