@@ -14,12 +14,19 @@ using action_filter = ActionManager::action_filter;
 
 struct t_action {
     t_action_params params{};
+
+    bool enabled{};
+    bool active{};
+    std::wstring raw_name{};
+    std::wstring display_name{};
+
     bool pressed{};
 };
 
 struct t_action_manager {
     std::vector<t_action> actions{};
     bool batched_work{};
+    std::vector<std::wstring> batch_new_actions{};
 };
 
 static t_action_manager g_mgr{};
@@ -191,6 +198,13 @@ bool ActionManager::add(const t_action_params& params)
     if (!g_mgr.batched_work)
     {
         Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
+        notify_display_name_changed(action.params.path);
+        notify_active_changed(action.params.path);
+        notify_enabled_changed(action.params.path);
+    }
+    else
+    {
+        g_mgr.batch_new_actions.emplace_back(normalized_path);
     }
 
     return true;
@@ -287,12 +301,7 @@ bool ActionManager::get_action_enabled(const action_path& path)
         return false;
     }
 
-    if (action->params.get_enabled)
-    {
-        return action->params.get_enabled();
-    }
-
-    return true;
+    return action->enabled;
 }
 
 bool ActionManager::get_action_active(const action_path& path)
@@ -305,12 +314,7 @@ bool ActionManager::get_action_active(const action_path& path)
         return false;
     }
 
-    if (action->params.get_active)
-    {
-        return action->params.get_active();
-    }
-
-    return false;
+    return action->active;
 }
 
 void ActionManager::begin_batch_work()
@@ -322,74 +326,88 @@ void ActionManager::end_batch_work()
 {
     g_mgr.batched_work = false;
     Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
+    for (const auto& new_action : g_mgr.batch_new_actions)
+    {
+        notify_display_name_changed(new_action);
+        notify_active_changed(new_action);
+        notify_enabled_changed(new_action);
+    }
 }
 
 void ActionManager::notify_enabled_changed(const action_filter& filter)
 {
     const auto actions = get_action_ptrs_matching_filter(filter);
+    for (auto& action : actions)
+    {
+        action->enabled = action->params.get_enabled ? action->params.get_enabled() : true;
+    }
     Messenger::broadcast(Messenger::Message::ActionEnabledChanged, actions);
 }
 
 void ActionManager::notify_active_changed(const action_filter& filter)
 {
     const auto actions = get_action_ptrs_matching_filter(filter);
+    for (auto& action : actions)
+    {
+        action->active = action->params.get_active ? action->params.get_active() : false;
+    }
     Messenger::broadcast(Messenger::Message::ActionActiveChanged, actions);
 }
 
 void ActionManager::notify_display_name_changed(const action_filter& filter)
 {
     const auto actions = get_action_ptrs_matching_filter(filter);
+    for (auto& action : actions)
+    {
+        const auto segments = get_segments(action->params.path);
+        const auto& name = segments.back();
+        const bool has_separator = name.ends_with(SEPARATOR_SUFFIX);
+
+        std::wstring display_name;
+
+        if (has_separator)
+        {
+            display_name = name.substr(0, name.size() - SEPARATOR_SUFFIX.size());
+        }
+        else
+        {
+            display_name = name;
+        }
+
+        action->raw_name = display_name;
+
+        if (action->params.get_display_name)
+        {
+            const auto override_display_name = action->params.get_display_name();
+            if (!override_display_name.empty())
+            {
+                display_name = override_display_name;
+            }
+        }
+
+        action->display_name = display_name;
+    }
     Messenger::broadcast(Messenger::Message::ActionDisplayNameChanged, actions);
 }
 
 std::wstring ActionManager::get_display_name(const action_filter& filter, bool ignore_override)
 {
-    const auto normalized_path = normalize_filter(filter);
-
-    const auto actions = get_action_ptrs_matching_filter(normalized_path);
+    const auto actions = get_action_ptrs_matching_filter(filter);
 
     if (actions.empty() || actions.size() > 1)
     {
         // It's a filter, not a fully-qualified action path. We don't look up anything, but just do some formatting instead.
-
         auto name = get_segments(filter).back();
-        const auto has_separator = name.ends_with(SEPARATOR_SUFFIX);
-
-        if (has_separator)
+        if (name.ends_with(SEPARATOR_SUFFIX))
         {
             name = io_service.trim(name.substr(0, name.size() - SEPARATOR_SUFFIX.size()));
         }
-
         return name;
     }
 
     const auto action = actions.front();
 
-    const auto segments = get_segments(normalized_path);
-    const auto& name = segments.back();
-    const bool has_separator = name.ends_with(SEPARATOR_SUFFIX);
-
-    std::wstring display_name;
-
-    if (has_separator)
-    {
-        display_name = name.substr(0, name.size() - SEPARATOR_SUFFIX.size());
-    }
-    else
-    {
-        display_name = name;
-    }
-
-    if (action->params.get_display_name && !ignore_override)
-    {
-        const auto override_display_name = action->params.get_display_name();
-        if (!override_display_name.empty())
-        {
-            display_name = override_display_name;
-        }
-    }
-
-    return display_name;
+    return ignore_override ? action->raw_name : action->display_name;
 }
 
 std::vector<action_path> ActionManager::get_actions_matching_filter(const action_filter& filter)

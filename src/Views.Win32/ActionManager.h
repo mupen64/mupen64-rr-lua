@@ -144,6 +144,20 @@ namespace ActionManager
     std::wstring get_display_name(const action_filter& filter, bool ignore_override = false);
 
     /**
+     * \brief Gets whether an action is enabled.
+     * \param path A path.
+     * \return The actions' enabled state.
+     */
+    bool get_action_enabled(const action_path& path);
+
+    /**
+     * \brief Gets whether an action is active.
+     * \param path A path.
+     * \return The actions' active state.
+     */
+    bool get_action_active(const action_path& path);
+    
+    /**
      * \brief Gets all action paths that match the specified filter.
      * \param filter A filter.
      * \return A collection of action paths that match the filter.
@@ -163,20 +177,6 @@ namespace ActionManager
      * \return The normalized filter.
      */
     action_filter normalize_filter(const action_filter& filter);
-
-    /**
-     * \brief Gets whether an action is enabled.
-     * \param path A path.
-     * \return The actions' enabled state.
-     */
-    bool get_action_enabled(const action_path& path);
-
-    /**
-     * \brief Gets whether an action is active.
-     * \param path A path.
-     * \return The actions' active state.
-     */
-    bool get_action_active(const action_path& path);
 
     /**
      * \brief Manually invokes an action by its path. If the action has an up callback, is already pressed down, and `up` is false, only the up callback will be invoked.
