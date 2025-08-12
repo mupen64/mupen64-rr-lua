@@ -115,6 +115,11 @@ struct t_options_item {
     };
 
     /**
+     * Gets the name of the option item.
+     */
+    [[nodiscard]] std::wstring get_name() const;
+
+    /**
      * Gets the value name for the current backing data, or a fallback name if no match is found.
      */
     [[nodiscard]] std::wstring get_value_name() const;
@@ -142,6 +147,15 @@ std::thread g_plugin_discovery_thread;
 
 // Whether a plugin rescan is needed. Set when modifying the plugin path.
 bool g_plugin_discovery_rescan = false;
+
+std::wstring t_options_item::get_name() const
+{
+    if (type  == Type::Hotkey)
+    {
+        return ActionManager::get_display_name(name, true);
+    }
+    return name;
+}
 
 std::wstring t_options_item::get_value_name() const
 {
@@ -1570,7 +1584,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             auto get_item_text = [](size_t i, size_t subitem) {
                 if (subitem == 0)
                 {
-                    return g_option_items[i].name;
+                    return g_option_items[i].get_name();
                 }
 
                 return g_option_items[i].get_value_name();
@@ -1805,7 +1819,7 @@ void ConfigDialog::show_app_settings()
             const t_options_item item = {
             .type = t_options_item::Type::Hotkey,
             .group_id = group.id,
-            .name = ActionManager::get_display_name(action, true),
+            .name = action,
             .current_value = t_options_item::t_readwrite_property([=] {
                 return g_hotkey_scratchpad[scratchpad_index].second;
             },
