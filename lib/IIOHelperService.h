@@ -171,22 +171,29 @@ public:
         return res;
     }
 
-    // FIXME: Use template...
-
     virtual std::vector<std::wstring> split_wstring(const std::wstring& s, const std::wstring& delimiter)
     {
-        size_t pos_start = 0, pos_end;
-        const size_t delim_len = delimiter.length();
         std::vector<std::wstring> res;
+        res.reserve(4);
+
+        if (delimiter.empty())
+        {
+            res.push_back(s);
+            return res;
+        }
+
+        size_t pos_start = 0;
+        size_t pos_end;
+        const size_t delim_len = delimiter.length();
 
         while ((pos_end = s.find(delimiter, pos_start)) != std::wstring::npos)
         {
-            std::wstring token = s.substr(pos_start, pos_end - pos_start);
+            res.emplace_back(s, pos_start, pos_end - pos_start);
             pos_start = pos_end + delim_len;
-            res.push_back(token);
         }
 
-        res.emplace_back(s.substr(pos_start));
+        res.emplace_back(s, pos_start, s.size() - pos_start);
+
         return res;
     }
 

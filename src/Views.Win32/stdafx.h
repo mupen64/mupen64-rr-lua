@@ -50,6 +50,7 @@ extern "C" {
 #include <expected>
 #include <ranges>
 #include <set>
+#include <cwctype>
 
 #include <Loggers.h>
 #include <MiscHelpers.h>
