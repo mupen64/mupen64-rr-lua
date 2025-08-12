@@ -250,7 +250,19 @@ public:
      */
     virtual std::wstring trim(const std::wstring& str)
     {
-        return ltrim(rtrim(str));
+        if (str.empty())
+            return {};
+
+        size_t start = 0;
+        size_t end = str.size();
+
+        while (start < end && iswspace(str[start]))
+            ++start;
+
+        while (end > start && iswspace(str[end - 1]))
+            --end;
+
+        return str.substr(start, end - start);
     }
 
     virtual size_t str_nth_occurence(const std::wstring& str, const std::wstring& searched, size_t nth)
