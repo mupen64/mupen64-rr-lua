@@ -16,6 +16,7 @@ struct t_action {
     t_action_params params{};
 
     std::wstring raw_name{};
+    std::vector<std::wstring> segments{};
 
     std::optional<std::wstring> display_name{};
     std::optional<bool> enabled{};
@@ -61,19 +62,17 @@ static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filte
 
     for (auto& action : g_mgr.actions)
     {
-        const auto path_segments = ActionManager::get_segments(action.params.path);
-
         if (has_wildcard)
         {
             // The path must have more segments than the filter if the filter ends with a wildcard, otherwise we aren't deep enough.
-            if (path_segments.size() <= filter_segments_to_compare)
+            if (action.segments.size() <= filter_segments_to_compare)
             {
                 continue;
             }
         }
         else
         {
-            if (path_segments.size() != filter_segments_to_compare)
+            if (action.segments.size() != filter_segments_to_compare)
             {
                 continue;
             }
@@ -82,7 +81,7 @@ static std::vector<t_action*> get_action_ptrs_matching_filter(const action_filte
         bool is_match = true;
         for (size_t i = 0; i < filter_segments_to_compare; ++i)
         {
-            if (path_segments[i] != filter_segments[i])
+            if (action.segments[i] != filter_segments[i])
             {
                 is_match = false;
                 break;
@@ -167,8 +166,7 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
 {
     for (auto& action : actions)
     {
-        const auto segments = ActionManager::get_segments(action->params.path);
-        const auto& name = segments.back();
+        const auto& name = action->segments.back();
         const bool has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
 
         std::wstring display_name;
@@ -276,6 +274,7 @@ bool ActionManager::add(const t_action_params& params)
     t_action action{};
     action.params = params;
     action.params.path = normalized_path;
+    action.segments = segments;
 
     g_mgr.actions.emplace_back(action);
 
