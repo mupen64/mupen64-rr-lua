@@ -688,7 +688,6 @@ void on_vis_since_input_poll_exceeded(std::any)
 
     if (g_config.silent_mode || DialogService::show_ask_dialog(VIEW_DLG_LAG_EXCEEDED, L"An unusual execution pattern was detected. Continuing might leave the emulator in an unusable state.\r\nWould you like to terminate emulation?", L"Warning", true))
     {
-        // TODO: Send IDM_CLOSE_ROM instead... probably better :P
         ThreadPool::submit_task([] {
             const auto result = g_core_ctx->vr_close_rom(true);
             show_error_dialog_for_result(result);
