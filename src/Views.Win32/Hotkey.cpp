@@ -220,7 +220,7 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
         }
 
         SetDlgItemText(GetParent(hwnd), IDC_CURRENT_HOTKEY, params->hotkey.to_wstring().c_str());
-        
+
         return TRUE;
     default:
         break;
@@ -259,6 +259,30 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             return TRUE;
         default:
             break;
+        }
+        break;
+    case WM_LBUTTONDOWN:
+        params->hotkey.key = VK_LBUTTON;
+        EndDialog(hwnd, IDOK);
+        break;
+    case WM_RBUTTONDOWN:
+        params->hotkey.key = VK_RBUTTON;
+        EndDialog(hwnd, IDOK);
+        break;
+    case WM_MBUTTONDOWN:
+        params->hotkey.key = VK_MBUTTON;
+        EndDialog(hwnd, IDOK);
+        break;
+    case WM_XBUTTONDOWN:
+        if (HIWORD(wparam) == XBUTTON1)
+        {
+            params->hotkey.key = VK_XBUTTON1;
+            EndDialog(hwnd, IDOK);
+        }
+        if (HIWORD(wparam) == XBUTTON2)
+        {
+            params->hotkey.key = VK_XBUTTON2;
+            EndDialog(hwnd, IDOK);
         }
         break;
     default:
