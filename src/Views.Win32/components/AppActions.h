@@ -18,6 +18,11 @@
 namespace AppActions
 {
     /**
+     * \brief Initializes the module.
+     */
+    void init();
+    
+    /**
      * \brief Adds the standard app actions to the action registry.
      */
     void add();

@@ -20,10 +20,10 @@ void RecentMenu::add(const ActionManager::action_filter& menu_path, std::vector<
     {
         vec.pop_back();
     }
-    std::erase_if(vec, [&](const auto str) {
+    std::erase_if(vec, [&](const auto& str) {
         return io_service.iequals(str, val) || std::filesystem::path(str).compare(val) == 0;
     });
     vec.insert(vec.begin(), val);
 
-    ActionManager::notify_display_name_changed(menu_path);
+    ActionManager::notify_display_name_changed(std::format(L"{} > *", menu_path));
 }

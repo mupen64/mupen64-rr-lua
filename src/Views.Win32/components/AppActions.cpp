@@ -21,6 +21,7 @@
 #include <components/LuaDialog.h>
 #include <components/MovieDialog.h>
 #include <components/PianoRoll.h>
+#include <components/RecentItems.h>
 #include <components/RomBrowser.h>
 #include <components/Runner.h>
 #include <components/Seeker.h>
@@ -848,7 +849,7 @@ static void generate_path_recent_menu(const std::wstring& base_path, const Hotke
     add_action(std::format(L"{} > Reset", base_path), {}, reset_list);
     add_action(freeze_action, {}, toggle_frozen, always_enabled, get_frozen);
 
-    for (size_t i = 0; i < 10; ++i)
+    for (size_t i = 0; i < RecentMenu::MAX_RECENT_ITEMS; ++i)
     {
         const auto get_display_name = [=] -> std::wstring {
             if (paths->size() > i)
@@ -869,6 +870,39 @@ static void generate_path_recent_menu(const std::wstring& base_path, const Hotke
                    {},
                    get_display_name);
     }
+}
+
+void AppActions::init()
+{
+    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > *");
+    });
+    Messenger::subscribe(Messenger::Message::EmuPausedChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Emulation > Pause");
+    });
+    Messenger::subscribe(Messenger::Message::CapturingChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Utilities > Video Capture > *");
+    });
+    Messenger::subscribe(Messenger::Message::StatusbarVisibilityChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Options > Show Statusbar ---");
+    });
+    Messenger::subscribe(Messenger::Message::MovieLoopChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Movie > Loop Movie Playback");
+    });
+    Messenger::subscribe(Messenger::Message::ReadonlyChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Movie > Read-Only");
+    });
+    Messenger::subscribe(Messenger::Message::TaskChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Movie > Stop Movie");
+        ActionManager::notify_enabled_changed(L"Mupen64 > Movie > Create Movie Backup ---");
+        ActionManager::notify_enabled_changed(L"Mupen64 > Utilities > Seek To... ---");
+    });
+    Messenger::subscribe(Messenger::Message::SlotChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Emulation > Current Save State > *");
+    });
+    Messenger::subscribe(Messenger::Message::FullscreenChanged, [](const auto&) {
+        ActionManager::notify_enabled_changed(L"Mupen64 > Options > Full Screen ---");
+    });
 }
 
 void AppActions::add()

@@ -48,6 +48,9 @@ struct t_action_menu_context {
     HWND hwnd{};
     t_menu_item menu{L"Root"};
     size_t menu_id_counter{};
+    std::set<std::wstring> enabled_state_invalidated_actions{};
+    std::set<std::wstring> active_state_invalidated_actions{};
+    std::set<std::wstring> display_name_invalidated_actions{};
 };
 
 struct t_action_menu_global_context {
@@ -91,86 +94,108 @@ static t_menu_item* find_item_by_path(t_action_menu_context& ctx, const std::wst
     return found_item;
 }
 
-
 /**
- * \brief Updates the enabled states of all menu items.
+ * \brief Gets the effective display name for the given menu item, including any accelerator text if applicable.
  */
-static void update_menu_enabled_states(t_action_menu_context& ctx)
+static std::wstring get_display_name(const t_menu_item& item)
 {
-    const HMENU main_menu = GetMenu(ctx.hwnd);
-    ctx.menu.iterate_children_and_self([&](const t_menu_item& item) {
-        if (item.action_path.empty())
-        {
-            return;
-        }
+    auto display_name = ActionManager::get_display_name(item.raw_path());
 
-        const bool enabled = ActionManager::get_action_enabled(item.action_path);
-        EnableMenuItem(main_menu, item.id, enabled ? MF_ENABLED : MF_GRAYED);
-    });
+    // Add the accelerator text if there is any :P
+    if (!item.action_path.empty() && g_config.hotkeys.contains(item.action_path))
+    {
+        const auto hotkey = g_config.hotkeys[item.action_path];
+        if (!hotkey.is_nothing())
+        {
+            display_name += std::format(L"\t{}", hotkey.to_wstring());
+        }
+    }
+
+    return display_name;
 }
 
 /**
- * \brief Updates the active states of all menu items.
+ * \brief Updates the display names of the specified menu items.
  */
-static void update_menu_active_states(t_action_menu_context& ctx)
+static void update_display_names(t_action_menu_context& ctx, const std::set<std::wstring>& actions)
 {
-    const HMENU main_menu = GetMenu(ctx.hwnd);
-    ctx.menu.iterate_children_and_self([&](const t_menu_item& item) {
-        if (item.action_path.empty())
+    MENUITEMINFO mii{};
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_STRING;
+
+    for (const auto& action : actions)
+    {
+        const auto item = find_item_by_path(ctx, action);
+        if (!item)
+        {
+            continue;
+        }
+        if (!item->has_menu)
         {
             return;
         }
 
-        const bool active = ActionManager::get_action_active(item.action_path);
-        CheckMenuItem(main_menu, item.id, active ? MF_CHECKED : MF_UNCHECKED);
-    });
-}
+        const auto display_name = get_display_name(*item);
 
-/**
- * \brief Updates the names of all menu items.
- */
-static void update_menu_names(t_action_menu_context& ctx)
-{
-    ctx.menu.iterate_children_and_self([&](const t_menu_item& item) {
-        if (!item.has_menu)
-        {
-            return;
-        }
-
-        auto display_name = ActionManager::get_display_name(item.raw_path());
-
-        // Add the accelerator text if there is any :P
-        if (!item.action_path.empty() && g_config.hotkeys.contains(item.action_path))
-        {
-            const auto hotkey = g_config.hotkeys[item.action_path];
-            if (!hotkey.is_nothing())
-            {
-                display_name += std::format(L"\t{}", hotkey.to_wstring());
-            }
-        }
-
-        MENUITEMINFO mii{};
-        mii.cbSize = sizeof(MENUITEMINFO);
-        mii.fMask = MIIM_STRING;
         mii.dwTypeData = const_cast<LPWSTR>(display_name.c_str());
         mii.cch = display_name.length();
 
-        if (item.children.empty())
+        if (item->children.empty())
         {
-            if (!SetMenuItemInfo(item.parent_menu, item.id, false, &mii))
+            if (!SetMenuItemInfo(item->parent_menu, item->id, false, &mii))
             {
                 g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of '{}'.", display_name);
             }
         }
 
-        if (!SetMenuItemInfo(item.parent_menu, item.position_under_parent, TRUE, &mii))
+        if (!SetMenuItemInfo(item->parent_menu, item->position_under_parent, TRUE, &mii))
         {
             g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of popup '{}'.", display_name);
         }
-    });
+    }
 }
 
-static bool handle_menu_interaction(t_action_menu_context& ctx, size_t id)
+/**
+ * \brief Updates the enabled states of the specified menu items.
+ */
+static void update_enabled_states(t_action_menu_context& ctx, const std::set<std::wstring>& actions)
+{
+    const HMENU main_menu = GetMenu(ctx.hwnd);
+
+    for (const auto& action : actions)
+    {
+        const auto item = find_item_by_path(ctx, action);
+        if (!item)
+        {
+            continue;
+        }
+
+        const bool enabled = ActionManager::get_action_enabled(action);
+        EnableMenuItem(main_menu, item->id, enabled ? MF_ENABLED : MF_GRAYED);
+    }
+}
+
+/**
+ * \brief Updates the active states of the specified menu items.
+ */
+static void update_active_states(t_action_menu_context& ctx, const std::set<std::wstring>& actions)
+{
+    const HMENU main_menu = GetMenu(ctx.hwnd);
+
+    for (const auto& action : actions)
+    {
+        const auto item = find_item_by_path(ctx, action);
+        if (!item)
+        {
+            continue;
+        }
+
+        const bool active = ActionManager::get_action_active(action);
+        CheckMenuItem(main_menu, item->id, active ? MF_CHECKED : MF_UNCHECKED);
+    }
+}
+
+static bool handle_menu_interaction(t_action_menu_context& ctx, const size_t id)
 {
     std::wstring found_action_path;
     ctx.menu.iterate_children_and_self([&](const t_menu_item& item) {
@@ -245,20 +270,39 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
     item.position_under_parent = GetMenuItemCount(parent_menu);
     item.has_menu = true;
 
+    const auto display_name = get_display_name(item);
+    const auto enabled = ActionManager::get_action_enabled(item.raw_path());
+    const auto active = ActionManager::get_action_active(item.raw_path());
+
+    auto initialize_menu_item_state = [&] {
+        if (!enabled)
+        {
+            EnableMenuItem(parent_menu, item.id, MF_DISABLED);
+        }
+
+        if (active)
+        {
+            CheckMenuItem(parent_menu, item.id, MF_CHECKED);
+        }
+    };
+
     if (item.children.empty())
     {
-        AppendMenu(parent_menu, MF_STRING, item.id, L" ");
-
+        AppendMenu(parent_menu, MF_STRING, item.id, display_name.c_str());
+        initialize_menu_item_state();
+        
         if (item.has_separator())
         {
             AppendMenu(parent_menu, MF_SEPARATOR, 0, nullptr);
         }
+
         return;
     }
 
     item.popup_handle = CreatePopupMenu();
-    AppendMenu(parent_menu, MF_STRING | MF_POPUP, (UINT_PTR)item.popup_handle, L" ");
-
+    AppendMenu(parent_menu, MF_STRING | MF_POPUP, (UINT_PTR)item.popup_handle, display_name.c_str());
+    initialize_menu_item_state();
+    
     if (item.has_separator())
     {
         AppendMenu(parent_menu, MF_SEPARATOR, 0, nullptr);
@@ -287,28 +331,24 @@ static void reset_menu(t_action_menu_context& ctx)
 
 static void build_menu(t_action_menu_context& ctx)
 {
-    g_am_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
-
     reset_menu(ctx);
 
     build_initial_menu_tree(ctx);
 
     const HMENU main_menu_bar = GetMenu(ctx.hwnd);
 
-    ctx.menu_id_counter = 0;
-    for (auto& item : ctx.menu.children.at(0).children)
+    if (!ctx.menu.children.empty())
     {
-        add_menu_items(ctx, item, main_menu_bar);
+        ctx.menu_id_counter = 0;
+        for (auto& item : ctx.menu.children.at(0).children)
+        {
+            add_menu_items(ctx, item, main_menu_bar);
+        }
+        for (size_t i = 1; i < ctx.menu.children.size(); ++i)
+        {
+            add_menu_items(ctx, ctx.menu.children[i], main_menu_bar);
+        }
     }
-    for (size_t i = 1; i < ctx.menu.children.size(); ++i)
-    {
-        add_menu_items(ctx, ctx.menu.children[i], main_menu_bar);
-    }
-
-    // 3. Update all the stuff relevant to the menu.
-    update_menu_enabled_states(ctx);
-    update_menu_active_states(ctx);
-    update_menu_names(ctx);
 
     DrawMenuBar(ctx.hwnd);
 }
@@ -329,11 +369,17 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
         ctx = nullptr;
         break;
     case WM_INITMENU:
-        update_menu_enabled_states(*ctx);
-        update_menu_active_states(*ctx);
-        update_menu_names(*ctx);
-        DrawMenuBar(ctx->hwnd);
-        break;
+        {
+            update_enabled_states(*ctx, ctx->enabled_state_invalidated_actions);
+            update_active_states(*ctx, ctx->active_state_invalidated_actions);
+            update_display_names(*ctx, ctx->display_name_invalidated_actions);
+            DrawMenuBar(ctx->hwnd);
+
+            ctx->enabled_state_invalidated_actions.clear();
+            ctx->active_state_invalidated_actions.clear();
+            ctx->display_name_invalidated_actions.clear();
+            break;
+        }
     case WM_COMMAND:
         if (handle_menu_interaction(*ctx, LOWORD(wParam)))
         {
@@ -347,21 +393,50 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-static void action_registry_changed()
-{
-    for (const auto& ctx : g_am_ctx.active_contexts)
-    {
-        build_menu(*ctx);
-    }
-}
-
 void ActionMenu::init()
 {
     Messenger::subscribe(Messenger::Message::ActionRegistryChanged, [](const auto& any) {
-        action_registry_changed();
+        g_am_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
+        for (const auto& ctx : g_am_ctx.active_contexts)
+        {
+            build_menu(*ctx);
+        }
     });
 
-    // NOTE: We don't handle ActionEnabledChanged/ActionActiveChanged/ActionDisplayNameChanged here because we update the menu in-place in WM_INITMENU
+    // OPTIMIZATION: Instead of updating **all** menu item states on WM_INITMENU,
+    // we subscribe to the change notifications and store a set of "invalidated" menu items and only update the changed items in WM_INITMENU.
+    Messenger::subscribe(Messenger::Message::ActionDisplayNameChanged, [](const auto& any) {
+        const auto actions = std::any_cast<std::vector<std::wstring>>(any);
+        for (const auto& action : actions)
+        {
+            for (const auto& ctx : g_am_ctx.active_contexts)
+            {
+                ctx->display_name_invalidated_actions.insert(action);
+            }
+        }
+    });
+
+    Messenger::subscribe(Messenger::Message::ActionEnabledChanged, [](const auto& any) {
+        const auto actions = std::any_cast<std::vector<std::wstring>>(any);
+        for (const auto& action : actions)
+        {
+            for (const auto& ctx : g_am_ctx.active_contexts)
+            {
+                ctx->enabled_state_invalidated_actions.insert(action);
+            }
+        }
+    });
+
+    Messenger::subscribe(Messenger::Message::ActionActiveChanged, [](const auto& any) {
+        const auto actions = std::any_cast<std::vector<std::wstring>>(any);
+        for (const auto& action : actions)
+        {
+            for (const auto& ctx : g_am_ctx.active_contexts)
+            {
+                ctx->active_state_invalidated_actions.insert(action);
+            }
+        }
+    });
 }
 
 bool ActionMenu::add_managed_menu(const HWND hwnd)
@@ -373,8 +448,6 @@ bool ActionMenu::add_managed_menu(const HWND hwnd)
     SetProp(hwnd, MANAGED_MENU_CTX, context);
 
     SetWindowSubclass(hwnd, action_menu_wnd_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(context));
-
-    build_menu(*context);
 
     return true;
 }

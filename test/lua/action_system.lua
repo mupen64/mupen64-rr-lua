@@ -27,9 +27,11 @@ assert(action.add({
             action.get_display_name(CHANGE_NAME_ACTION))
         if str then
             display_name = str
+            action.notify_display_name_changed(CHANGE_NAME_ACTION)
         end
     end,
     get_display_name = function()
+        print(os.clock())
         return display_name
     end,
 }))

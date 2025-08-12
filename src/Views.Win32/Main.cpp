@@ -948,8 +948,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         ActionMenu::init();
 
-        AppActions::add();
         ActionMenu::add_managed_menu(hwnd);
+        AppActions::add();
         HotkeyTracker::attach(hwnd);
 
         MGECompositor::create(hwnd);
@@ -1482,6 +1482,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     CLI::init();
     Seeker::init();
     CoreDbg::init();
+    AppActions::init();
 
     WNDCLASSEX wc = {0};
     wc.cbSize = sizeof(WNDCLASSEX);

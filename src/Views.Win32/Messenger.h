@@ -178,9 +178,12 @@ namespace Messenger
         DebuggerResumedChanged,
 
         ActionRegistryChanged,
-        ActionEnabledChanged,
-        ActionActiveChanged,
+
         ActionDisplayNameChanged,
+        
+        ActionEnabledChanged,
+        
+        ActionActiveChanged,
     };
 
     using t_user_callback = std::function<void(std::any)>;
