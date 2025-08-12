@@ -261,8 +261,7 @@ static void fastforward_disable()
 
 static bool fastforward_active()
 {
-    // Whatever...
-    return false;
+    return g_main_wnd.fast_forward;
 }
 
 static void gs_button_enable()
@@ -277,8 +276,11 @@ static void gs_button_disable()
 
 static bool gs_button_active()
 {
-    // Whatever...
-    return false;
+    if (!g_core_ctx->vr_get_core_executing())
+    {
+        return false;
+    }
+    return g_core_ctx->vr_get_gs_button();
 }
 
 static void screenshot()
