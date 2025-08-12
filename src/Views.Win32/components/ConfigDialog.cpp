@@ -83,7 +83,7 @@ struct t_options_item {
     /**
      * The group this option belongs to.
      */
-    size_t group_id = -1;
+    size_t group_id;
 
     /**
      * The option's display name.
@@ -149,7 +149,7 @@ bool g_plugin_discovery_rescan = false;
 
 std::wstring t_options_item::get_name() const
 {
-    if (type  == Type::Hotkey)
+    if (type == Type::Hotkey)
     {
         return ActionManager::get_display_name(name, true);
     }
@@ -170,9 +170,9 @@ std::wstring t_options_item::get_value_name() const
         {
             const auto enum_value = std::get<int32_t>(value);
 
-            for (const auto& [name, val] : possible_values)
+            for (const auto& pair : possible_values)
             {
-                if (enum_value == val)
+                if (enum_value == pair.second)
                 {
                     return name;
                 }
@@ -256,8 +256,8 @@ INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, L
             {
                 if (!pair.second.empty())
                 {
-                    lv_item.lParam = i;
-                    lv_item.iItem = i;
+                    lv_item.lParam = (int)i;
+                    lv_item.iItem = (int)i;
                     ListView_InsertItem(g_pldlv_hwnd, &lv_item);
                 }
 
@@ -1239,17 +1239,17 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     };
 }
 
-LRESULT CALLBACK InlineEditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
+LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
     {
     case WM_GETDLGCODE:
         {
-            if (wParam == VK_RETURN)
+            if (wparam == VK_RETURN)
             {
                 goto apply;
             }
-            if (wParam == VK_ESCAPE)
+            if (wparam == VK_ESCAPE)
             {
                 DestroyWindow(hwnd);
             }
@@ -1258,7 +1258,7 @@ LRESULT CALLBACK InlineEditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
     case WM_KILLFOCUS:
         goto apply;
     case WM_NCDESTROY:
-        RemoveWindowSubclass(hwnd, InlineEditBoxProc, sId);
+        RemoveWindowSubclass(hwnd, inline_edit_subclass_proc, id);
         g_edit_hwnd = nullptr;
         break;
     default:
@@ -1266,7 +1266,7 @@ LRESULT CALLBACK InlineEditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
     }
 
 def:
-    return DefSubclassProc(hwnd, msg, wParam, lParam);
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
 
 apply:
 
@@ -1295,7 +1295,7 @@ apply:
     goto def;
 }
 
-INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK edit_string_dlgproc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
@@ -1312,8 +1312,11 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
             SetFocus(GetDlgItem(wnd, IDC_TEXTBOX_LUAPROMPT));
             break;
         }
+    case WM_CLOSE:
+        EndDialog(wnd, IDCANCEL);
+        break;
     case WM_COMMAND:
-        switch (LOWORD(wParam))
+        switch (LOWORD(wparam))
         {
         case IDOK:
             {
@@ -1328,15 +1331,17 @@ INT_PTR CALLBACK EditStringDialogProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
 
                 free(str);
 
-                EndDialog(wnd, 0);
+                EndDialog(wnd, IDOK);
                 break;
             }
         case IDCANCEL:
-            EndDialog(wnd, 1);
+            EndDialog(wnd, IDCANCEL);
             break;
         default:
             break;
         }
+        break;
+    default:
         break;
     }
     return FALSE;
@@ -1483,7 +1488,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     if (option_item.type == t_options_item::Type::String)
     {
         g_edit_option_item_index = i;
-        DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), hwnd, EditStringDialogProc, 0);
+        DialogBoxParam(g_app_instance, MAKEINTRESOURCE(IDD_LUAINPUTPROMPT), hwnd, edit_string_dlgproc, 0);
     }
 
     // For numbers, create a textbox over the value cell for inline editing
@@ -1508,7 +1513,7 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
 
         SendMessage(g_edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(g_lv_hwnd, WM_GETFONT, 0, 0), 0);
 
-        SetWindowSubclass(g_edit_hwnd, InlineEditBoxProc, 0, 0);
+        SetWindowSubclass(g_edit_hwnd, inline_edit_subclass_proc, 0, 0);
 
         const auto value = std::get<int32_t>(option_item.current_value.get());
         Edit_SetText(g_edit_hwnd, std::to_wstring(value).c_str());
@@ -2059,7 +2064,7 @@ bool begin_plugin_lv_edit(t_plugin_cfg_params* params, HWND dlghwnd, HWND lvhwnd
 
         SendMessage(g_edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(lvhwnd, WM_GETFONT, 0, 0), 0);
 
-        SetWindowSubclass(g_edit_hwnd, InlineEditBoxProc, 0, 0);
+        SetWindowSubclass(g_edit_hwnd, inline_edit_subclass_proc, 0, 0);
 
         Edit_SetText(g_edit_hwnd, std::to_wstring(cfg_item_get_value<int32_t>(&option_item)).c_str());
 
