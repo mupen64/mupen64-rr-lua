@@ -179,9 +179,9 @@ namespace ActionManager
     bool get_action_active(const action_path& path);
 
     /**
-     * \brief Manually invokes an action by its path.
+     * \brief Manually invokes an action by its path. If the action has an up callback, is already pressed down, and `up` is false, only the up callback will be invoked.
      * \param path A path.
-     * \param up Whether the invocation is considered as "releasing" the action.
+     * \param up If true, the action is considered to be released, otherwise it is considered to be pressed down.
      */
     void invoke(const action_path& path, bool up = false);
 } // namespace ActionManager

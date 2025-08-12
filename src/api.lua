@@ -1429,9 +1429,9 @@ function action.get_display_name(filter, ignore_override) end
 ---@return ActionPath[] # A collection of action paths that match the filter.
 function action.get_actions_matching_filter(filter) end
 
----Manually invokes an action by its path.
+---Manually invokes an action by its path. If the action has an up callback, is already pressed down, and `up` is false, only the up callback will be invoked.
 ---@param path ActionPath A path.
----@param up boolean? Whether the invocation is considered as "releasing" the action.
+---@param up boolean? If true, the action is considered to be released, otherwise it is considered to be pressed down.
 function action.invoke(path, up) end
 
 --#endregion

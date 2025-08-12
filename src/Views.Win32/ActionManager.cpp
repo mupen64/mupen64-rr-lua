@@ -14,6 +14,7 @@ using action_filter = ActionManager::action_filter;
 
 struct t_action {
     t_action_params params{};
+    bool pressed{};
 };
 
 struct t_action_manager {
@@ -442,18 +443,29 @@ void ActionManager::invoke(const action_path& path, const bool up)
         return;
     }
 
-    if (!up)
+    if (up)
     {
-        if (action->params.down_callback)
-        {
-            action->params.down_callback();
-        }
-    }
-    else
-    {
+        action->pressed = false;
+
         if (action->params.up_callback)
         {
             action->params.up_callback();
         }
+    }
+    else
+    {
+        if (action->params.up_callback && action->pressed)
+        {
+            action->params.up_callback();
+            action->pressed = false;
+            return;
+        }
+
+        if (action->params.down_callback)
+        {
+            action->params.down_callback();
+        }
+
+        action->pressed = true;
     }
 }
