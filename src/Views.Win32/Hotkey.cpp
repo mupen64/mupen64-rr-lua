@@ -261,14 +261,6 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         }
         break;
-    case WM_LBUTTONDOWN:
-        params->hotkey.key = VK_LBUTTON;
-        EndDialog(hwnd, IDOK);
-        break;
-    case WM_RBUTTONDOWN:
-        params->hotkey.key = VK_RBUTTON;
-        EndDialog(hwnd, IDOK);
-        break;
     case WM_MBUTTONDOWN:
         params->hotkey.key = VK_MBUTTON;
         EndDialog(hwnd, IDOK);

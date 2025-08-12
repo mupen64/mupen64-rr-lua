@@ -32,8 +32,6 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
         break;
     case WM_SETCURSOR:
         {
-            const bool lmb = GetAsyncKeyState(VK_LBUTTON) & 0x8000;
-            const bool rmb = GetAsyncKeyState(VK_RBUTTON) & 0x8000;
             const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
             const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
             const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
@@ -42,8 +40,8 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
             const auto hotkeys = g_config.hotkeys;
             for (const auto& [path, hotkey] : hotkeys)
             {
-                const auto down = (lmb && !ctx->last_lmb && hotkey.key == VK_LBUTTON) || (rmb && !ctx->last_rmb && hotkey.key == VK_RBUTTON) || (mmb && !ctx->last_mmb && hotkey.key == VK_MBUTTON) || (xmb1 && !ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) || (xmb2 && !ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
-                const auto up = (!lmb && ctx->last_lmb && hotkey.key == VK_LBUTTON) || (!rmb && ctx->last_rmb && hotkey.key == VK_RBUTTON) || (!mmb && ctx->last_mmb && hotkey.key == VK_MBUTTON) || (!xmb1 && ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) || (!xmb2 && ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
+                const auto down = (mmb && !ctx->last_mmb && hotkey.key == VK_MBUTTON) || (xmb1 && !ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) || (xmb2 && !ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
+                const auto up = (!mmb && ctx->last_mmb && hotkey.key == VK_MBUTTON) || (!xmb1 && ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) || (!xmb2 && ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
 
                 if (down)
                 {
@@ -58,8 +56,6 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
                 }
             }
 
-            ctx->last_lmb = lmb;
-            ctx->last_rmb = rmb;
             ctx->last_mmb = mmb;
             ctx->last_xmb1 = xmb1;
             ctx->last_xmb2 = xmb2;
