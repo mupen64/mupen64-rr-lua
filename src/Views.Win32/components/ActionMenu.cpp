@@ -316,23 +316,23 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
     }
 }
 
-static void reset_menu(t_action_menu_context& ctx)
+/**
+ * \brief Deletes the current menu of the context's window and sets it to a new menu.
+ */
+static void reset_menu(const t_action_menu_context& ctx)
 {
-    if (!IsMenu(GetMenu(ctx.hwnd)))
-    {
-        SetMenu(ctx.hwnd, CreateMenu());
-    }
+    const HMENU prev_menu = GetMenu(ctx.hwnd);
 
-    const HMENU main_menu_bar = GetMenu(ctx.hwnd);
-    const auto menu_count = GetMenuItemCount(main_menu_bar);
-    for (int i = 0; i < menu_count; ++i)
-    {
-        DeleteMenu(main_menu_bar, 0, MF_BYPOSITION);
-    }
+    SetMenu(ctx.hwnd, CreateMenu());
+
+    if (IsMenu(prev_menu))
+        DestroyMenu(prev_menu);
 }
 
 static void build_menu(t_action_menu_context& ctx)
 {
+    SetWindowRedraw(ctx.hwnd, false);
+
     reset_menu(ctx);
 
     build_initial_menu_tree(ctx);
@@ -352,6 +352,7 @@ static void build_menu(t_action_menu_context& ctx)
         }
     }
 
+    SetWindowRedraw(ctx.hwnd, true);
     DrawMenuBar(ctx.hwnd);
 }
 
