@@ -573,6 +573,7 @@ static void toggle_readonly()
 static void toggle_wait_at_movie_end()
 {
     g_config.core.wait_at_movie_end ^= true;
+    ActionManager::notify_active_changed(L"Mupen64 > Movie > Wait at Movie End");
 }
 
 #pragma endregion
