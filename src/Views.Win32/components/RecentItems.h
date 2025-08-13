@@ -17,7 +17,7 @@ namespace RecentMenu
      * \brief The maximum number of recent items to keep in the menu.
      */
     const size_t MAX_RECENT_ITEMS = 5;
-    
+
     /**
      * \brief Adds a new recent item to the specified recent item vector.
      * \param menu_path The path to the relevant recent menu.

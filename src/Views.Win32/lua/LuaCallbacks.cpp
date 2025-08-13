@@ -186,7 +186,7 @@ bool invoke_callbacks_with_key_impl(const t_lua_environment* lua, const std::fun
     }
 
     const lua_Integer n = luaL_len(L, -1);
-    
+
     for (lua_Integer i = 0; i < n; i++)
     {
         lua_pushinteger(L, 1 + i);

@@ -180,9 +180,9 @@ namespace Messenger
         ActionRegistryChanged,
 
         ActionDisplayNameChanged,
-        
+
         ActionEnabledChanged,
-        
+
         ActionActiveChanged,
     };
 

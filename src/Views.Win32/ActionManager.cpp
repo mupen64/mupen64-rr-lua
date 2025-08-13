@@ -28,11 +28,9 @@ struct t_action {
 struct t_action_manager {
     std::vector<t_action> actions{};
     bool batched_work{};
-    MicroLRU::Cache<action_filter, std::vector<std::wstring>> segment_cache{256,
-                                                                            [](const std::vector<std::wstring>&) {
+    MicroLRU::Cache<action_filter, std::vector<std::wstring>> segment_cache{256, [](const std::vector<std::wstring>&) {
                                                                             }};
-    MicroLRU::Cache<action_filter, std::vector<t_action*>> filter_result_cache{256,
-                                                                               [](const std::vector<t_action*>&) {
+    MicroLRU::Cache<action_filter, std::vector<t_action*>> filter_result_cache{256, [](const std::vector<t_action*>&) {
                                                                                }};
 };
 
@@ -293,7 +291,7 @@ bool ActionManager::add(const t_action_params& params)
 
     g_mgr.actions.emplace_back(action);
     g_mgr.filter_result_cache.clear();
-    
+
     if (!g_mgr.batched_work)
     {
         notify_action_registry_changed();
@@ -336,7 +334,7 @@ std::vector<action_path> ActionManager::remove(const action_filter& filter)
     }
 
     g_mgr.filter_result_cache.clear();
-    
+
     if (!g_mgr.batched_work)
     {
         Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);

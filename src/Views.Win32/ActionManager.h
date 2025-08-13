@@ -156,7 +156,7 @@ namespace ActionManager
      * \return The actions' active state.
      */
     bool get_action_active(const action_path& path);
-    
+
     /**
      * \brief Gets all action paths that match the specified filter.
      * \param filter A filter.

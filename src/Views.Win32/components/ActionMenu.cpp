@@ -290,7 +290,7 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
     {
         AppendMenu(parent_menu, MF_STRING, item.id, display_name.c_str());
         initialize_menu_item_state();
-        
+
         if (item.has_separator())
         {
             AppendMenu(parent_menu, MF_SEPARATOR, 0, nullptr);
@@ -302,7 +302,7 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
     item.popup_handle = CreatePopupMenu();
     AppendMenu(parent_menu, MF_STRING | MF_POPUP, (UINT_PTR)item.popup_handle, display_name.c_str());
     initialize_menu_item_state();
-    
+
     if (item.has_separator())
     {
         AppendMenu(parent_menu, MF_SEPARATOR, 0, nullptr);

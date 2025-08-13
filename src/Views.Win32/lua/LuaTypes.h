@@ -81,7 +81,7 @@ struct t_lua_environment {
 
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};
-  
+
     destroying_func destroying{};
     print_func print{};
 };
