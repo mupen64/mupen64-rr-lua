@@ -269,13 +269,13 @@ static bool fastforward_active()
 static void gs_button_enable()
 {
     g_core_ctx->vr_set_gs_button(true);
-    ActionManager::notify_active_changed(L"Mupen64 > Emulation > GS Button");
+    ActionManager::notify_active_changed(L"Mupen64 > Emulation > GS Button ---");
 }
 
 static void gs_button_disable()
 {
     g_core_ctx->vr_set_gs_button(false);
-    ActionManager::notify_active_changed(L"Mupen64 > Emulation > GS Button");
+    ActionManager::notify_active_changed(L"Mupen64 > Emulation > GS Button ---");
 }
 
 static bool gs_button_active()
@@ -285,11 +285,6 @@ static bool gs_button_active()
         return false;
     }
     return g_core_ctx->vr_get_gs_button();
-}
-
-static void screenshot()
-{
-    g_core.plugin_funcs.video_capture_screen(get_screenshots_directory().string().data());
 }
 
 static void save_slot()
@@ -680,6 +675,11 @@ static void show_piano_roll()
     PianoRoll::show();
 }
 
+static void screenshot()
+{
+    g_core.plugin_funcs.video_capture_screen(get_screenshots_directory().string().data());
+}
+
 static void start_capture(const bool ask_preset)
 {
     if (!g_core_ctx->vr_get_launched())
@@ -902,7 +902,7 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(L"Mupen64 > Utilities > Seek To... ---");
     });
     Messenger::subscribe(Messenger::Message::SlotChanged, [](const auto&) {
-        ActionManager::notify_active_changed(L"Mupen64 > Emulation > Current Save State > *");
+        ActionManager::notify_active_changed(L"Mupen64 > Emulation > Current State Slot > *");
     });
     Messenger::subscribe(Messenger::Message::FullscreenChanged, [](const auto&) {
         ActionManager::notify_enabled_changed(L"Mupen64 > Options > Full Screen ---");
@@ -925,10 +925,12 @@ void AppActions::add()
     add_action(L"Mupen64 > Emulation > Speed Up", {.key = VK_OEM_PLUS}, speed_up, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Reset Speed", {.key = VK_OEM_PLUS, .ctrl = true}, speed_reset, enable_when_emu_launched);
     add_action_with_up(L"Mupen64 > Emulation > Fast-Forward", {.key = VK_TAB}, fastforward_enable, fastforward_disable, enable_when_emu_launched, fastforward_active);
-    add_action_with_up(L"Mupen64 > Emulation > GS Button", {.key = 'G'}, gs_button_enable, gs_button_disable, enable_when_emu_launched, gs_button_active);
+    add_action_with_up(L"Mupen64 > Emulation > GS Button ---", {.key = 'G'}, gs_button_enable, gs_button_disable, enable_when_emu_launched, gs_button_active);
     add_action(L"Mupen64 > Emulation > Frame Advance", {.key = VK_OEM_5}, frame_advance, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Multi-Frame Advance", {.key = VK_OEM_5, .ctrl = true}, multi_frame_advance, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Take Screenshot ---", {.key = VK_F12}, screenshot, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, multi_frame_advance_increment, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, multi_frame_advance_decrement, enable_when_emu_launched);
+    add_action(L"Mupen64 > Emulation > Multi-Frame Advance Reset ---", {.key = 'E', .ctrl = true, .shift = true}, multi_frame_advance_reset, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Save State > Save Current Slot", {.key = 'I'}, save_slot, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Save State > Save as File... ---", {}, save_state_as, enable_when_emu_launched);
     add_action(L"Mupen64 > Emulation > Load State > Load Current Slot", {.key = 'P'}, load_slot, enable_when_emu_launched);
@@ -961,10 +963,6 @@ void AppActions::add()
         add_action(std::format(L"Mupen64 > Emulation > Save State > Save Slot {}", i + 1), {.key = save_key, .shift = true}, save, enable_when_emu_launched);
         add_action(std::format(L"Mupen64 > Emulation > Load State > Load Slot {}", i + 1), {.key = load_key}, load, enable_when_emu_launched);
     }
-    add_action(L"Mupen64 > Emulation > Undo Load State ---", {.key = 'Z', .ctrl = true}, undo_load_state, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Multi-Frame Advance +1", {.key = 'E', .ctrl = true}, multi_frame_advance_increment, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Multi-Frame Advance -1", {.key = 'Q', .ctrl = true}, multi_frame_advance_decrement, enable_when_emu_launched);
-    add_action(L"Mupen64 > Emulation > Multi-Frame Advance Reset ---", {.key = 'E', .ctrl = true, .shift = true}, multi_frame_advance_reset, enable_when_emu_launched);
     for (size_t i = 0; i < 10; ++i)
     {
         const int32_t key = i < 9 ? '1' + i : '0';
@@ -977,8 +975,9 @@ void AppActions::add()
             set_save_slot(i);
         };
 
-        add_action(std::format(L"Mupen64 > Emulation > Current Save State > Slot {}", i + 1), {.key = key}, set_slot, enable_when_emu_launched, get_active);
+        add_action(std::format(L"Mupen64 > Emulation > Current State Slot > Slot {}", i + 1), {.key = key}, set_slot, enable_when_emu_launched, get_active);
     }
+    add_action(L"Mupen64 > Emulation > Undo Load State", {.key = 'Z', .ctrl = true}, undo_load_state, enable_when_emu_launched);
 
 
     add_action(L"Mupen64 > Options > Full Screen ---", {.key = VK_RETURN, .alt = true}, toggle_fullscreen, enable_when_emu_launched, fastforward_active);
@@ -1015,6 +1014,7 @@ void AppActions::add()
     add_action(L"Mupen64 > Utilities > Seek To... ---", {}, show_seek_dialog, enable_when_emu_launched_and_vcr_active);
     add_action(L"Mupen64 > Utilities > Start Trace Logger...", {}, start_tracelog, enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(L"Mupen64 > Utilities > Stop Trace Logger ---", {}, stop_tracelog, enable_when_tracelog_active);
+    add_action(L"Mupen64 > Utilities > Take Screenshot ---", {.key = VK_F12}, screenshot, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Start Capture...", {}, start_capture_normal, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Start Capture from Preset... ---", {}, start_capture_from_preset, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Stop Capture", {}, stop_capture, enable_when_emu_launched_and_capturing);
