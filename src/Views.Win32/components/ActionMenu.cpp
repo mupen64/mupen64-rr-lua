@@ -140,17 +140,9 @@ static void update_display_names(t_action_menu_context& ctx, const std::set<std:
         mii.dwTypeData = const_cast<LPWSTR>(display_name.c_str());
         mii.cch = display_name.length();
 
-        if (item->children.empty())
-        {
-            if (!SetMenuItemInfo(item->parent_menu, item->id, false, &mii))
-            {
-                g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of '{}'.", display_name);
-            }
-        }
-
         if (!SetMenuItemInfo(item->parent_menu, item->position_under_parent, TRUE, &mii))
         {
-            g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of popup '{}'.", display_name);
+            g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of '{}'.", display_name);
         }
     }
 }
