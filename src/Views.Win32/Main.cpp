@@ -1498,7 +1498,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height);
 
-    CreateWindow(WND_CLASS, get_mupen_name().c_str(), WS_OVERLAPPEDWINDOW | WS_EX_COMPOSITED, g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height, NULL, NULL, g_app_instance, NULL);
+    CreateWindow(WND_CLASS, get_mupen_name().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x, g_config.window_y, g_config.window_width, g_config.window_height, NULL, NULL, g_app_instance, NULL);
     ShowWindow(g_main_hwnd, nShowCmd);
 
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, on_emu_launched_changed);
