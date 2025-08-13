@@ -887,13 +887,13 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(L"Mupen64 > Utilities > Video Capture > *");
     });
     Messenger::subscribe(Messenger::Message::StatusbarVisibilityChanged, [](const auto&) {
-        ActionManager::notify_enabled_changed(L"Mupen64 > Options > Show Statusbar ---");
+        ActionManager::notify_active_changed(L"Mupen64 > Options > Show Statusbar ---");
     });
     Messenger::subscribe(Messenger::Message::MovieLoopChanged, [](const auto&) {
-        ActionManager::notify_enabled_changed(L"Mupen64 > Movie > Loop Movie Playback");
+        ActionManager::notify_active_changed(L"Mupen64 > Movie > Loop Movie Playback");
     });
     Messenger::subscribe(Messenger::Message::ReadonlyChanged, [](const auto&) {
-        ActionManager::notify_enabled_changed(L"Mupen64 > Movie > Read-Only");
+        ActionManager::notify_active_changed(L"Mupen64 > Movie > Read-Only");
     });
     Messenger::subscribe(Messenger::Message::TaskChanged, [](const auto&) {
         ActionManager::notify_enabled_changed(L"Mupen64 > Movie > Stop Movie");
@@ -901,7 +901,7 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(L"Mupen64 > Utilities > Seek To... ---");
     });
     Messenger::subscribe(Messenger::Message::SlotChanged, [](const auto&) {
-        ActionManager::notify_enabled_changed(L"Mupen64 > Emulation > Current Save State > *");
+        ActionManager::notify_active_changed(L"Mupen64 > Emulation > Current Save State > *");
     });
     Messenger::subscribe(Messenger::Message::FullscreenChanged, [](const auto&) {
         ActionManager::notify_enabled_changed(L"Mupen64 > Options > Full Screen ---");
