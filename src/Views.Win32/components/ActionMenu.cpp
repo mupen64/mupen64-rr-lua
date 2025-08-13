@@ -33,12 +33,12 @@ public:
      */
     void iterate_children_and_self(const std::function<void(t_menu_item& item)>& action);
 
-    [[nodiscard]] auto raw_path() const
+    [[nodiscard]] const auto& raw_path() const
     {
         return m_path;
     }
 
-    [[nodiscard]] bool has_separator() const
+    [[nodiscard]] const bool& has_separator() const
     {
         return m_has_separator;
     }
