@@ -888,7 +888,7 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(L"Mupen64 > Utilities > Video Capture > *");
     });
     Messenger::subscribe(Messenger::Message::StatusbarVisibilityChanged, [](const auto&) {
-        ActionManager::notify_active_changed(L"Mupen64 > Options > Show Statusbar ---");
+        ActionManager::notify_active_changed(L"Mupen64 > Options > Statusbar ---");
     });
     Messenger::subscribe(Messenger::Message::MovieLoopChanged, [](const auto&) {
         ActionManager::notify_active_changed(L"Mupen64 > Movie > Loop Movie Playback");
@@ -985,7 +985,7 @@ void AppActions::add()
     add_action(L"Mupen64 > Options > Plugin Settings --- > Audio Settings", {}, show_audio_plugin_settings);
     add_action(L"Mupen64 > Options > Plugin Settings --- > Input Settings", {}, show_input_plugin_settings);
     add_action(L"Mupen64 > Options > Plugin Settings --- > RSP Settings", {}, show_rsp_plugin_settings);
-    add_action(L"Mupen64 > Options > Show Statusbar ---", {.key = 'S', .alt = true}, toggle_statusbar, always_enabled, [] {
+    add_action(L"Mupen64 > Options > Statusbar ---", {.key = 'S', .alt = true}, toggle_statusbar, always_enabled, [] {
         return g_config.is_statusbar_enabled;
     });
     add_action(L"Mupen64 > Options > Settings...", {.key = 'S', .ctrl = true}, show_settings_dialog);
