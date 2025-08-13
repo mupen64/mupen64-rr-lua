@@ -224,9 +224,9 @@ static void build_initial_menu_tree(t_action_menu_context& ctx)
             path_up_to_here += parts[i];
 
             const auto it = std::ranges::find_if(current->children,
-                                           [&](const t_menu_item& item) {
-                                               return item.raw_path() == path_up_to_here;
-                                           });
+                                                 [&](const t_menu_item& item) {
+                                                     return item.raw_path() == path_up_to_here;
+                                                 });
 
             if (it != current->children.end())
             {
@@ -262,7 +262,7 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
     item.has_menu = true;
 
     const bool has_action = !item.action_path.empty();
-    
+
     const auto display_name = get_display_name(item);
     const auto enabled = has_action ? ActionManager::get_enabled(item.raw_path()) : true;
     const auto active = has_action ? ActionManager::get_active(item.raw_path()) : true;
@@ -328,7 +328,7 @@ static void build_menu(t_action_menu_context& ctx)
     reset_menu(ctx);
 
     build_initial_menu_tree(ctx);
-    
+
     if (!ctx.menu.children.empty())
     {
         ctx.menu_id_counter = 0;
