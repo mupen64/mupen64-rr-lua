@@ -408,7 +408,7 @@ std::wstring ActionManager::get_display_name(const action_filter& filter, bool i
     return ignore_override ? action->raw_name : action->display_name.value();
 }
 
-bool ActionManager::get_action_enabled(const action_path& path)
+bool ActionManager::get_enabled(const action_path& path)
 {
     t_action* action = get_single_action_ptr_matching_path(path);
 
@@ -426,7 +426,7 @@ bool ActionManager::get_action_enabled(const action_path& path)
     return action->enabled.value();
 }
 
-bool ActionManager::get_action_active(const action_path& path)
+bool ActionManager::get_active(const action_path& path)
 {
     t_action* action = get_single_action_ptr_matching_path(path);
 
@@ -472,7 +472,6 @@ void ActionManager::notify_active_changed(const action_filter& filter)
     const auto updated_actions = update_active_states(get_action_ptrs_matching_filter(filter));
     Messenger::broadcast(Messenger::Message::ActionActiveChanged, updated_actions);
 }
-
 
 std::vector<action_path> ActionManager::get_actions_matching_filter(const action_filter& filter)
 {
@@ -536,23 +535,23 @@ void ActionManager::invoke(const action_path& path, const bool up)
     {
         action->pressed = false;
 
-        if (action->params.up_callback)
+        if (action->params.on_release)
         {
-            action->params.up_callback();
+            action->params.on_release();
         }
     }
     else
     {
-        if (action->params.up_callback && action->pressed)
+        if (action->params.on_release && action->pressed)
         {
-            action->params.up_callback();
+            action->params.on_release();
             action->pressed = false;
             return;
         }
 
-        if (action->params.down_callback)
+        if (action->params.on_press)
         {
-            action->params.down_callback();
+            action->params.on_press();
         }
 
         action->pressed = true;

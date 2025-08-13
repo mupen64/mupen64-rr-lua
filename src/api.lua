@@ -103,54 +103,54 @@ Mupen = {
     ---@enum VKeycodes
     ---An enum containing virtual keycodes.
     VKeycodes = {
-        VK_LBUTTON = 0x01, -- Left mouse button
-        VK_RBUTTON = 0x02, -- Right mouse button
-        VK_CANCEL = 0x03, -- Control‑break
-        VK_MBUTTON = 0x04, -- Middle mouse button
-        VK_XBUTTON1 = 0x05, -- X1 mouse button
-        VK_XBUTTON2 = 0x06, -- X2 mouse button
+        VK_LBUTTON = 0x01,    -- Left mouse button
+        VK_RBUTTON = 0x02,    -- Right mouse button
+        VK_CANCEL = 0x03,     -- Control‑break
+        VK_MBUTTON = 0x04,    -- Middle mouse button
+        VK_XBUTTON1 = 0x05,   -- X1 mouse button
+        VK_XBUTTON2 = 0x06,   -- X2 mouse button
         -- 0x07 Reserved
-        VK_BACK = 0x08,  -- Backspace
-        VK_TAB = 0x09,   -- Tab
+        VK_BACK = 0x08,       -- Backspace
+        VK_TAB = 0x09,        -- Tab
         -- 0x0A–0B Reserved
-        VK_CLEAR = 0x0C, -- Clear
-        VK_RETURN = 0x0D, -- Enter
+        VK_CLEAR = 0x0C,      -- Clear
+        VK_RETURN = 0x0D,     -- Enter
         -- 0x0E–0F Unassigned
-        VK_SHIFT = 0x10, -- Shift
-        VK_CONTROL = 0x11, -- Ctrl
-        VK_MENU = 0x12,  -- Alt (Menu)
-        VK_PAUSE = 0x13, -- Pause
-        VK_CAPITAL = 0x14, -- Caps Lock
-        VK_KANA = 0x15,  -- IME Kana / Hangul
-        VK_IME_ON = 0x16, -- IME On
-        VK_JUNJA = 0x17, -- IME Junja
-        VK_FINAL = 0x18, -- IME Final
-        VK_HANJA = 0x19, -- IME Hanja / Kanji
-        VK_IME_OFF = 0x1A, -- IME Off
-        VK_ESCAPE = 0x1B, -- Escape
-        VK_CONVERT = 0x1C, -- IME Convert
+        VK_SHIFT = 0x10,      -- Shift
+        VK_CONTROL = 0x11,    -- Ctrl
+        VK_MENU = 0x12,       -- Alt (Menu)
+        VK_PAUSE = 0x13,      -- Pause
+        VK_CAPITAL = 0x14,    -- Caps Lock
+        VK_KANA = 0x15,       -- IME Kana / Hangul
+        VK_IME_ON = 0x16,     -- IME On
+        VK_JUNJA = 0x17,      -- IME Junja
+        VK_FINAL = 0x18,      -- IME Final
+        VK_HANJA = 0x19,      -- IME Hanja / Kanji
+        VK_IME_OFF = 0x1A,    -- IME Off
+        VK_ESCAPE = 0x1B,     -- Escape
+        VK_CONVERT = 0x1C,    -- IME Convert
         VK_NONCONVERT = 0x1D, -- IME Nonconvert
-        VK_ACCEPT = 0x1E, -- IME Accept
+        VK_ACCEPT = 0x1E,     -- IME Accept
         VK_MODECHANGE = 0x1F, -- IME Mode Change
-        VK_SPACE = 0x20, -- Spacebar
-        VK_PRIOR = 0x21, -- Page Up
-        VK_NEXT = 0x22,  -- Page Down
-        VK_END = 0x23,   -- End
-        VK_HOME = 0x24,  -- Home
-        VK_LEFT = 0x25,  -- Left Arrow
-        VK_UP = 0x26,    -- Up Arrow
-        VK_RIGHT = 0x27, -- Right Arrow
-        VK_DOWN = 0x28,  -- Down Arrow
-        VK_SELECT = 0x29, -- Select
-        VK_PRINT = 0x2A, -- Print
-        VK_EXECUTE = 0x2B, -- Execute
-        VK_SNAPSHOT = 0x2C, -- Print Screen
-        VK_INSERT = 0x2D, -- Insert
-        VK_DELETE = 0x2E, -- Delete
-        VK_HELP = 0x2F,  -- Help
-        VK_LWIN = 0x5B,  -- Left Windows
-        VK_RWIN = 0x5C,  -- Right Windows
-        VK_APPS = 0x5D,  -- Applications (Menu) key
+        VK_SPACE = 0x20,      -- Spacebar
+        VK_PRIOR = 0x21,      -- Page Up
+        VK_NEXT = 0x22,       -- Page Down
+        VK_END = 0x23,        -- End
+        VK_HOME = 0x24,       -- Home
+        VK_LEFT = 0x25,       -- Left Arrow
+        VK_UP = 0x26,         -- Up Arrow
+        VK_RIGHT = 0x27,      -- Right Arrow
+        VK_DOWN = 0x28,       -- Down Arrow
+        VK_SELECT = 0x29,     -- Select
+        VK_PRINT = 0x2A,      -- Print
+        VK_EXECUTE = 0x2B,    -- Execute
+        VK_SNAPSHOT = 0x2C,   -- Print Screen
+        VK_INSERT = 0x2D,     -- Insert
+        VK_DELETE = 0x2E,     -- Delete
+        VK_HELP = 0x2F,       -- Help
+        VK_LWIN = 0x5B,       -- Left Windows
+        VK_RWIN = 0x5C,       -- Right Windows
+        VK_APPS = 0x5D,       -- Applications (Menu) key
     }
 }
 
@@ -1375,11 +1375,11 @@ function hotkey.prompt(caption) end
 
 ---@class ActionParams
 ---@field path ActionPath The action's path.
----@field down_callback fun()? The callback to be invoked when the action is initially triggered. Can be null.
----@field up_callback fun()? The callback to be invoked when the action has been released. Can be null.
+---@field on_press fun()? The callback to be invoked when the action is pressed. Can be null.
+---@field on_release fun()? The callback to be invoked when the action is released. Can be null.
+---@field get_display_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 ---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled. If null, the action will be considered enabled.
 ---@field get_active (fun(): boolean)? The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state. If null, the action will be considered inactive.
----@field get_display_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 
 ---Adds an action to the action registry.
 ---If an action with the same path already exists, the operation will fail.
@@ -1406,6 +1406,10 @@ function action.begin_batch_work() end
 ---Ends a batch operation.
 function action.end_batch_work() end
 
+---Notifies about the display name of actions matching a filter changing.
+---@param filter ActionFilter A filter.
+function action.notify_display_name_changed(filter) end
+
 ---Notifies about the enabled state of actions matching a filter changing.
 ---@param filter ActionFilter A filter.
 function action.notify_enabled_changed(filter) end
@@ -1413,10 +1417,6 @@ function action.notify_enabled_changed(filter) end
 ---Notifies about the active state of actions matching a filter changing.
 ---@param filter ActionFilter A filter.
 function action.notify_active_changed(filter) end
-
----Notifies about the display name of actions matching a filter changing.
----@param filter ActionFilter A filter.
-function action.notify_display_name_changed(filter) end
 
 ---Gets the display name for a given filter.
 ---@param filter ActionFilter A filter.

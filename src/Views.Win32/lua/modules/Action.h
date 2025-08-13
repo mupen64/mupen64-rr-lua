@@ -26,37 +26,59 @@ namespace LuaCore::Action
         params.path = luaL_checkwstring(L, -1);
         lua_pop(L, 1);
 
-        lua_getfield(L, 1, "down_callback");
+        lua_getfield(L, 1, "on_press");
 
-        auto down_callback = lua_optcallback(L, -1);
-        if (down_callback)
+        auto on_press = lua_optcallback(L, -1);
+        if (on_press)
         {
-            params.down_callback = [=] {
+            params.on_press = [=] {
                 if (!LuaManager::get_environment_for_state(L))
                 {
                     return;
                 }
 
-                lua_pushcallback(L, down_callback, false);
+                lua_pushcallback(L, on_press, false);
                 lua_pcall(L, 0, 0, 0);
             };
         }
 
         lua_pop(L, 1);
 
-        lua_getfield(L, 1, "up_callback");
+        lua_getfield(L, 1, "on_release");
 
-        auto up_callback = lua_optcallback(L, -1);
-        if (up_callback)
+        auto on_release = lua_optcallback(L, -1);
+        if (on_release)
         {
-            params.up_callback = [=] {
+            params.on_release = [=] {
                 if (!LuaManager::get_environment_for_state(L))
                 {
                     return;
                 }
 
-                lua_pushcallback(L, up_callback, false);
+                lua_pushcallback(L, on_release, false);
                 lua_pcall(L, 0, 0, 0);
+            };
+        }
+
+        lua_pop(L, 1);
+
+        lua_getfield(L, 1, "get_display_name");
+
+        auto get_display_name = lua_optcallback(L, -1);
+        if (get_display_name)
+        {
+            params.get_display_name = [=] -> std::wstring {
+                if (!LuaManager::get_environment_for_state(L))
+                {
+                    return L"";
+                }
+
+                lua_pushcallback(L, get_display_name, false);
+                lua_pcall(L, 0, 1, 0);
+
+                const auto display_name = luaL_checkwstring(L, -1);
+
+                return display_name;
             };
         }
 
@@ -116,31 +138,9 @@ namespace LuaCore::Action
 
         lua_pop(L, 1);
 
-        lua_getfield(L, 1, "get_display_name");
-
-        auto get_display_name = lua_optcallback(L, -1);
-        if (get_display_name)
-        {
-            params.get_display_name = [=] -> std::wstring {
-                if (!LuaManager::get_environment_for_state(L))
-                {
-                    return L"";
-                }
-
-                lua_pushcallback(L, get_display_name, false);
-                lua_pcall(L, 0, 1, 0);
-
-                const auto display_name = luaL_checkwstring(L, -1);
-
-                return display_name;
-            };
-        }
-
-        lua_pop(L, 1);
-
         params.on_removed = [=] {
-            lua_freecallback(L, down_callback);
-            lua_freecallback(L, up_callback);
+            lua_freecallback(L, on_press);
+            lua_freecallback(L, on_release);
             lua_freecallback(L, get_enabled);
             lua_freecallback(L, get_active);
             lua_freecallback(L, get_display_name);
@@ -213,6 +213,13 @@ namespace LuaCore::Action
         return 0;
     }
 
+    static int notify_display_name_changed(lua_State* L)
+    {
+        const auto filter = luaL_checkwstring(L, 1);
+        ActionManager::notify_display_name_changed(filter);
+        return 0;
+    }
+
     static int notify_enabled_changed(lua_State* L)
     {
         const auto filter = luaL_checkwstring(L, 1);
@@ -224,13 +231,6 @@ namespace LuaCore::Action
     {
         const auto filter = luaL_checkwstring(L, 1);
         ActionManager::notify_active_changed(filter);
-        return 0;
-    }
-
-    static int notify_display_name_changed(lua_State* L)
-    {
-        const auto filter = luaL_checkwstring(L, 1);
-        ActionManager::notify_display_name_changed(filter);
         return 0;
     }
 

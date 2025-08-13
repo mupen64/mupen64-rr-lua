@@ -15,14 +15,14 @@ local RANDOM_ITEM_ACTION = "Action API Demo > Click Child to Remove It > Item %d
 
 assert(action.add({
     path = SAY_HELLO_WORLD_ACTION,
-    down_callback = function()
+    on_press = function()
         print("Hello World!")
     end
 }))
 
 assert(action.add({
     path = CHANGE_NAME_ACTION,
-    down_callback = function()
+    on_press = function()
         local str = input.prompt("Action display name",
             action.get_display_name(CHANGE_NAME_ACTION))
         if str then
@@ -38,7 +38,7 @@ assert(action.add({
 
 assert(action.add({
     path = CHANGE_HOTKEY_ACTION,
-    down_callback = function()
+    on_press = function()
         local hotkey = hotkey.prompt("Change the hotkey of that other action")
         if hotkey then
             assert(action.associate_hotkey(CHANGE_NAME_ACTION, hotkey, true))
@@ -50,7 +50,7 @@ for i = 1, 10, 1 do
     local path = string.format(RANDOM_ITEM_ACTION, i)
     assert(action.add({
         path = path,
-        down_callback = function()
+        on_press = function()
             local removed_items = action.remove(path)
             print("removed items", removed_items)
         end

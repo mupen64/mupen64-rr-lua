@@ -449,11 +449,11 @@ lust.describe('mupen64', function()
                 end
                 lust.expect(func).to.fail()
             end)
-            lust.it('calls_down_callback', function()
+            lust.it('calls_on_press', function()
                 local called = false
                 action.add({
                     path = "Test > Something",
-                    down_callback = function()
+                    on_press = function()
                         called = true
                     end
                 })
@@ -461,11 +461,11 @@ lust.describe('mupen64', function()
                 action.invoke("Test > Something")
                 lust.expect(called).to.be.truthy()
             end)
-            lust.it('calls_up_callback', function()
+            lust.it('calls_on_release', function()
                 local called = false
                 action.add({
                     path = "Test > Something",
-                    up_callback = function()
+                    on_release = function()
                         called = true
                     end
                 })
@@ -473,16 +473,16 @@ lust.describe('mupen64', function()
                 action.invoke("Test > Something", true)
                 lust.expect(called).to.be.truthy()
             end)
-            lust.it('calls_up_callback_when_pressing_again_while_pressed', function()
+            lust.it('calls_on_release_when_pressing_again_while_pressed', function()
                 local down = 0
                 local up = 0
 
                 action.add({
                     path = "Test > Something",
-                    down_callback = function()
+                    on_press = function()
                         down = down + 1
                     end,
-                    up_callback = function()
+                    on_release = function()
                         up = up + 1
                     end,
                 })

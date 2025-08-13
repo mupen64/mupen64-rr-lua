@@ -170,7 +170,7 @@ static void update_enabled_states(t_action_menu_context& ctx, const std::set<std
             continue;
         }
 
-        const bool enabled = ActionManager::get_action_enabled(action);
+        const bool enabled = ActionManager::get_enabled(action);
         EnableMenuItem(main_menu, item->id, enabled ? MF_ENABLED : MF_GRAYED);
     }
 }
@@ -190,7 +190,7 @@ static void update_active_states(t_action_menu_context& ctx, const std::set<std:
             continue;
         }
 
-        const bool active = ActionManager::get_action_active(action);
+        const bool active = ActionManager::get_active(action);
         CheckMenuItem(main_menu, item->id, active ? MF_CHECKED : MF_UNCHECKED);
     }
 }
@@ -271,8 +271,8 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
     item.has_menu = true;
 
     const auto display_name = get_display_name(item);
-    const auto enabled = ActionManager::get_action_enabled(item.raw_path());
-    const auto active = ActionManager::get_action_active(item.raw_path());
+    const auto enabled = ActionManager::get_enabled(item.raw_path());
+    const auto active = ActionManager::get_active(item.raw_path());
 
     auto initialize_menu_item_state = [&] {
         if (!enabled)

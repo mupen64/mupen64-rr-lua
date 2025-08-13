@@ -808,19 +808,15 @@ static bool always_enabled()
 
 #pragma endregion
 
-static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& down_callback, const std::function<void()>& up_callback, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_display_name = {})
+static void add_action_with_up(const std::wstring& path, const Hotkey::t_hotkey& default_hotkey, const std::function<void()>& on_press, const std::function<void()>& on_release, const std::function<bool()>& get_enabled = {}, const std::function<bool()>& get_active = {}, const std::function<std::wstring()>& get_display_name = {})
 {
     bool success = ActionManager::add({
     .path = path,
-    .down_callback = down_callback,
-    .up_callback = up_callback,
-    .get_enabled = get_enabled ? get_enabled : [] {
-        return true;
-    },
-    .get_active = get_active ? get_active : [] {
-        return false;
-    },
+    .on_press = on_press,
+    .on_release = on_release,
     .get_display_name = get_display_name,
+    .get_enabled = get_enabled,
+    .get_active = get_active,
     });
     runtime_assert(success, std::format(L"Failed to add action for path '{}'.", path));
 

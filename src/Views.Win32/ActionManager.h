@@ -52,19 +52,24 @@ namespace ActionManager
         action_path path{};
 
         /**
-         * \brief The callback to be invoked when the action is initially triggered. Can be null.
+         * \brief The callback to be invoked when the action is pressed. Can be null.
          */
-        std::function<void()> down_callback;
+        std::function<void()> on_press;
 
         /**
-         * \brief The callback to be invoked when the action has been released. Can be null.
+         * \brief The callback to be invoked when the action is released. Can be null.
          */
-        std::function<void()> up_callback;
+        std::function<void()> on_release;
 
         /**
          * \brief The callback to be invoked prior to the action being removed from the registry. Can be null.
          */
         std::function<void()> on_removed;
+
+        /**
+         * \brief The function used to determine the function's display name. If null, the display name will be derived from the path.
+         */
+        std::function<std::wstring()> get_display_name;
 
         /**
          * \brief The function used to determine whether the action is enabled. If null, the action will be considered enabled.
@@ -75,11 +80,6 @@ namespace ActionManager
          * \brief The function used to determine whether the action is "active". The active state usually means a checked or toggled UI state. If null, the action will be considered inactive.
          */
         std::function<bool()> get_active;
-
-        /**
-         * \brief The function used to determine the function's display name. If null, the display name will be derived from the path.
-         */
-        std::function<std::wstring()> get_display_name;
     };
 
     /**
@@ -118,6 +118,12 @@ namespace ActionManager
     void end_batch_work();
 
     /**
+     * \brief Notifies about the display name of actions matching a filter changing.
+     * \param filter A filter.
+     */
+    void notify_display_name_changed(const action_filter& filter);
+
+    /**
      * \brief Notifies about the enabled state of actions matching a filter changing.
      * \param filter A filter.
      */
@@ -128,12 +134,6 @@ namespace ActionManager
      * \param filter A filter.
      */
     void notify_active_changed(const action_filter& filter);
-
-    /**
-     * \brief Notifies about the display name of actions matching a filter changing.
-     * \param filter A filter.
-     */
-    void notify_display_name_changed(const action_filter& filter);
 
     /**
      * \brief Gets the display name for a given filter.
@@ -148,14 +148,14 @@ namespace ActionManager
      * \param path A path.
      * \return The actions' enabled state.
      */
-    bool get_action_enabled(const action_path& path);
+    bool get_enabled(const action_path& path);
 
     /**
      * \brief Gets whether an action is active.
      * \param path A path.
      * \return The actions' active state.
      */
-    bool get_action_active(const action_path& path);
+    bool get_active(const action_path& path);
 
     /**
      * \brief Gets all action paths that match the specified filter.
