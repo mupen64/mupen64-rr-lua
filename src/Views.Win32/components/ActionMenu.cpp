@@ -272,9 +272,11 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
     item.position_under_parent = GetMenuItemCount(parent_menu);
     item.has_menu = true;
 
+    const bool has_action = !item.action_path.empty();
+    
     const auto display_name = get_display_name(item);
-    const auto enabled = ActionManager::get_enabled(item.raw_path());
-    const auto active = ActionManager::get_active(item.raw_path());
+    const auto enabled = has_action ? ActionManager::get_enabled(item.raw_path()) : true;
+    const auto active = has_action ? ActionManager::get_active(item.raw_path()) : true;
 
     auto initialize_menu_item_state = [&] {
         if (!enabled)
