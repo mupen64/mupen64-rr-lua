@@ -1016,7 +1016,7 @@ void AppActions::add()
     add_action(L"Mupen64 > Utilities > Start Trace Logger...", {}, start_tracelog, enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(L"Mupen64 > Utilities > Stop Trace Logger ---", {}, stop_tracelog, enable_when_tracelog_active);
     add_action(L"Mupen64 > Utilities > Video Capture > Start Capture...", {}, start_capture_normal, enable_when_emu_launched);
-    add_action(L"Mupen64 > Utilities > Video Capture > Start from Preset...", {}, start_capture_from_preset, enable_when_emu_launched);
+    add_action(L"Mupen64 > Utilities > Video Capture > Start Capture from Preset... ---", {}, start_capture_from_preset, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Video Capture > Stop Capture", {}, stop_capture, enable_when_emu_launched_and_capturing);
 
     add_action(L"Mupen64 > Help > Check for Updates", {}, check_for_updates_manual);
