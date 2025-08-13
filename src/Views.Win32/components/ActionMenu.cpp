@@ -46,6 +46,7 @@ public:
 
 struct t_action_menu_context {
     HWND hwnd{};
+    HMENU menu_bar{};
     t_menu_item menu{L"Root"};
     size_t menu_id_counter{};
     std::set<std::wstring> enabled_state_invalidated_actions{};
@@ -152,8 +153,6 @@ static void update_display_names(t_action_menu_context& ctx, const std::set<std:
  */
 static void update_enabled_states(t_action_menu_context& ctx, const std::set<std::wstring>& actions)
 {
-    const HMENU main_menu = GetMenu(ctx.hwnd);
-
     for (const auto& action : actions)
     {
         const auto item = find_item_by_path(ctx, action);
@@ -163,7 +162,7 @@ static void update_enabled_states(t_action_menu_context& ctx, const std::set<std
         }
 
         const bool enabled = ActionManager::get_enabled(action);
-        EnableMenuItem(main_menu, item->id, enabled ? MF_ENABLED : MF_GRAYED);
+        EnableMenuItem(ctx.menu_bar, item->id, enabled ? MF_ENABLED : MF_GRAYED);
     }
 }
 
@@ -172,8 +171,6 @@ static void update_enabled_states(t_action_menu_context& ctx, const std::set<std
  */
 static void update_active_states(t_action_menu_context& ctx, const std::set<std::wstring>& actions)
 {
-    const HMENU main_menu = GetMenu(ctx.hwnd);
-
     for (const auto& action : actions)
     {
         const auto item = find_item_by_path(ctx, action);
@@ -183,7 +180,7 @@ static void update_active_states(t_action_menu_context& ctx, const std::set<std:
         }
 
         const bool active = ActionManager::get_active(action);
-        CheckMenuItem(main_menu, item->id, active ? MF_CHECKED : MF_UNCHECKED);
+        CheckMenuItem(ctx.menu_bar, item->id, active ? MF_CHECKED : MF_UNCHECKED);
     }
 }
 
@@ -313,11 +310,12 @@ static void add_menu_items(t_action_menu_context& ctx, t_menu_item& item, const 
 /**
  * \brief Deletes the current menu of the context's window and sets it to a new menu.
  */
-static void reset_menu(const t_action_menu_context& ctx)
+static void reset_menu(t_action_menu_context& ctx)
 {
     const HMENU prev_menu = GetMenu(ctx.hwnd);
 
-    SetMenu(ctx.hwnd, CreateMenu());
+    ctx.menu_bar = CreateMenu();
+    SetMenu(ctx.hwnd, ctx.menu_bar);
 
     if (IsMenu(prev_menu))
         DestroyMenu(prev_menu);
@@ -330,19 +328,17 @@ static void build_menu(t_action_menu_context& ctx)
     reset_menu(ctx);
 
     build_initial_menu_tree(ctx);
-
-    const HMENU main_menu_bar = GetMenu(ctx.hwnd);
-
+    
     if (!ctx.menu.children.empty())
     {
         ctx.menu_id_counter = 0;
         for (auto& item : ctx.menu.children.at(0).children)
         {
-            add_menu_items(ctx, item, main_menu_bar);
+            add_menu_items(ctx, item, ctx.menu_bar);
         }
         for (size_t i = 1; i < ctx.menu.children.size(); ++i)
         {
-            add_menu_items(ctx, ctx.menu.children[i], main_menu_bar);
+            add_menu_items(ctx, ctx.menu.children[i], ctx.menu_bar);
         }
     }
 
