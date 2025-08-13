@@ -153,7 +153,6 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_COMMAND:
         switch (LOWORD(wparam))
         {
-        case IDC_OK:
         case IDOK:
             {
                 wchar_t text[MAX_PATH] = {0};
@@ -196,7 +195,6 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 EndDialog(hwnd, IDOK);
             }
             break;
-        case IDC_CANCEL:
         case IDCANCEL:
             user_result.path.clear();
             is_closing = true;
