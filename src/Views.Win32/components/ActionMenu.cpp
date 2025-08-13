@@ -225,14 +225,16 @@ static void build_initial_menu_tree(t_action_menu_context& ctx)
     for (const auto& path : g_am_ctx.actions)
     {
         std::vector<std::wstring> parts = ActionManager::get_segments(path);
+        std::wstring path_up_to_here;
+        path_up_to_here.reserve(parts.size() * 20);
 
         t_menu_item* current = &ctx.menu;
 
-        for (int i = 0; i < parts.size(); ++i)
+        for (size_t i = 0; i < parts.size(); ++i)
         {
-            std::wstring path_up_to_here = io_service.join_wstring(std::vector(parts.begin(), parts.begin() + i + 1), L">");
+            path_up_to_here += parts[i];
 
-            auto it = std::ranges::find_if(current->children,
+            const auto it = std::ranges::find_if(current->children,
                                            [&](const t_menu_item& item) {
                                                return item.raw_path() == path_up_to_here;
                                            });
@@ -246,14 +248,14 @@ static void build_initial_menu_tree(t_action_menu_context& ctx)
                 current->children.emplace_back(path_up_to_here);
                 current = &current->children.back();
             }
-        }
-    }
 
-    for (auto& path : g_am_ctx.actions)
-    {
-        const auto item = find_item_by_path(ctx, path);
-        runtime_assert(item, std::format(L"ActionManager::build_initial_menu_tree: Action '{}' has no node.", path));
-        item->action_path = path;
+            if (i == parts.size() - 1)
+            {
+                current->action_path = path;
+            }
+
+            path_up_to_here += ActionManager::SEGMENT_SEPARATOR;
+        }
     }
 }
 
