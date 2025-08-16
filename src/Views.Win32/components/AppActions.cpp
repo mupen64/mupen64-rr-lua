@@ -14,6 +14,7 @@
 #include <components/AppActions.h>
 #include <components/CLI.h>
 #include <components/Cheats.h>
+#include <components/CommandPalette.h>
 #include <components/Compare.h>
 #include <components/ConfigDialog.h>
 #include <components/CoreDbg.h>
@@ -23,7 +24,6 @@
 #include <components/PianoRoll.h>
 #include <components/RecentItems.h>
 #include <components/RomBrowser.h>
-#include <components/Runner.h>
 #include <components/Seeker.h>
 #include <components/Statusbar.h>
 #include <components/UpdateChecker.h>
@@ -652,10 +652,10 @@ static void show_debugger()
     CoreDbg::show();
 }
 
-static void show_run_dialog()
+static void show_command_palette()
 {
     BetterEmulationLock lock;
-    Runner::show();
+    CommandPalette::show();
 }
 
 static void show_cheat_dialog()
@@ -1005,12 +1005,12 @@ void AppActions::add()
         return g_config.core.wait_at_movie_end;
     });
 
+    add_action(L"Mupen64 > Utilities > Command Palette", {.key = 'P', .ctrl = true}, show_command_palette);
     add_action(L"Mupen64 > Utilities > Show RAM Start", {}, show_ram_start);
     add_action(L"Mupen64 > Utilities > Statistics", {}, show_statistics);
     add_action(L"Mupen64 > Utilities > Debugger", {}, show_debugger, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Cheats", {}, show_cheat_dialog, enable_when_emu_launched);
     add_action(L"Mupen64 > Utilities > Piano Roll", {}, show_piano_roll, enable_when_emu_launched);
-    add_action(L"Mupen64 > Utilities > Run...", {}, show_run_dialog);
     add_action(L"Mupen64 > Utilities > Seek To... ---", {}, show_seek_dialog, enable_when_emu_launched_and_vcr_active);
     add_action(L"Mupen64 > Utilities > Start Trace Logger...", {}, start_tracelog, enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(L"Mupen64 > Utilities > Stop Trace Logger ---", {}, stop_tracelog, enable_when_tracelog_active);

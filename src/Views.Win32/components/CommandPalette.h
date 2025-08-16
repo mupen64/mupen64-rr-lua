@@ -7,12 +7,12 @@
 #pragma once
 
 /**
- * \brief A module responsible for implementing the runner dialog.
+ * \brief A module responsible for implementing a command palette.
  */
-namespace Runner
+namespace CommandPalette
 {
     /**
-     * \brief Shows the runner dialog
+     * \brief Shows the command palette.
      */
     void show();
-} // namespace Runner
+} // namespace CommandPalette

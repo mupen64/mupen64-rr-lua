@@ -270,7 +270,6 @@
         <ClInclude Include="src\Views.Win32\components\MGECompositor.h" />
         <ClInclude Include="src\Views.Win32\components\MovieDialog.h" />
         <ClInclude Include="src\Views.Win32\components\RomBrowser.h" />
-        <ClInclude Include="src\Views.Win32\components\Runner.h" />
         <ClInclude Include="src\Views.Win32\components\Seeker.h" />
         <ClInclude Include="src\Views.Win32\components\Statusbar.h" />
         <ClInclude Include="src\Views.Win32\components\FilePicker.h" />
@@ -280,6 +279,7 @@
         <ClInclude Include="src\Views.Win32\components\HotkeyTracker.h" />
         <ClInclude Include="src\Views.Win32\components\AppActions.h" />
         <ClInclude Include="src\Views.Win32\components\LuaDialog.h" />
+        <ClInclude Include="src\Views.Win32\components\CommandPalette.h" />
         <ClInclude Include="src\Views.Win32\Main.h" />
         <ClInclude Include="src\Views.Win32\Config.h" />
         <ClInclude Include="src\Views.Win32\lua\LuaTypes.h" />
@@ -343,7 +343,6 @@
         <ClCompile Include="src\Views.Win32\components\PianoRoll.cpp" />
         <ClCompile Include="src\Views.Win32\components\RecentItems.cpp" />
         <ClCompile Include="src\Views.Win32\components\RomBrowser.cpp" />
-        <ClCompile Include="src\Views.Win32\components\Runner.cpp" />
         <ClCompile Include="src\Views.Win32\components\Seeker.cpp" />
         <ClCompile Include="src\Views.Win32\components\Statusbar.cpp" />
         <ClCompile Include="src\Views.Win32\components\UpdateChecker.cpp" />
@@ -354,6 +353,7 @@
         <ClCompile Include="src\Views.Win32\components\HotkeyTracker.cpp" />
         <ClCompile Include="src\Views.Win32\components\AppActions.cpp" />
         <ClCompile Include="src\Views.Win32\components\LuaDialog.cpp" />
+        <ClCompile Include="src\Views.Win32\components\CommandPalette.cpp"/>
         <ClCompile Include="src\Views.Win32\Loggers.cpp"/>
         <ClCompile Include="src\Views.Win32\Main.cpp"/>
         <ClCompile Include="src\Views.Win32\lua\LuaManager.cpp" />

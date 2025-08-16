@@ -35,6 +35,7 @@ extern "C" {
 #include <mmsystem.h>
 #include <wincodec.h>
 #include <gdiplus.h>
+#include <Uxtheme.h>
 #include <d2d1.h>
 #include <d2d1_3.h>
 #include <d2d1helper.h>
