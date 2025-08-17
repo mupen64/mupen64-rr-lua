@@ -19,6 +19,7 @@ struct t_command_palette_context {
     HWND hwnd{};
     HWND listbox_hwnd{};
     HWND edit_hwnd{};
+    HTHEME theme{};
     std::wstring search_query{};
     std::vector<t_action_stored_state> actions{};
 };
@@ -80,7 +81,7 @@ static void build_listbox()
     {
         ListBox_SetCurSel(g_ctx.listbox_hwnd, 0);
     }
-    
+
     SetWindowRedraw(g_ctx.listbox_hwnd, TRUE);
 }
 
@@ -140,6 +141,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
     {
     case WM_INITDIALOG:
         {
+            g_ctx.theme = OpenThemeData(hwnd, L"BUTTON");
             g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_EDIT);
             g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
             const auto actions = ActionManager::get_actions_matching_filter(L"*");
@@ -203,6 +205,9 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 
             break;
         }
+    case WM_DESTROY:
+        CloseThemeData(g_ctx.theme);
+        break;
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;
@@ -280,21 +285,44 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                         bg_brush = GetSysColorBrush(COLOR_WINDOW);
                     }
 
+                    // 1. Draw the background
                     FillRect(pdis->hDC, &pdis->rcItem, bg_brush);
+
+                    // 2. Draw the checkbox if applicable
+                    int checkbox_width = 0;
+                    if (action->active)
+                    {
+                        SIZE checkbox_size{};
+                        GetThemePartSize(g_ctx.theme, nullptr, BP_CHECKBOX, CBS_CHECKEDNORMAL, nullptr, TS_TRUE, &checkbox_size);
+                        checkbox_width = checkbox_size.cx;
+
+                        RECT rc = pdis->rcItem;
+                        rc.right = rc.left + checkbox_width;
+                        rc.bottom = rc.top + checkbox_width;
+                        DrawThemeBackground(g_ctx.theme, pdis->hDC, BP_CHECKBOX, CBS_CHECKEDNORMAL, &rc, nullptr);
+                    }
+
+                    // 3. Draw the action and hotkey text
+                    RECT text_rc = pdis->rcItem;
+                    if (checkbox_width > 0)
+                    {
+                        text_rc.left += checkbox_width + 2;
+                    }
 
                     SetBkMode(pdis->hDC, TRANSPARENT);
                     SetTextColor(pdis->hDC, text_color);
 
                     const auto draw_flag = action->enabled ? 0 : DSS_DISABLED;
 
-                    DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->display_name.c_str(), 0, pdis->rcItem.left, pdis->rcItem.top, pdis->rcItem.right - pdis->rcItem.left, pdis->rcItem.bottom - pdis->rcItem.top, draw_flag | DST_TEXT);
+                    DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->display_name.c_str(), 0, text_rc.left, text_rc.top, text_rc.right - text_rc.left, text_rc.bottom - text_rc.top, draw_flag | DST_TEXT);
 
                     SIZE sz;
                     GetTextExtentPoint32(pdis->hDC, action->hotkey_display_name.c_str(), (int)action->hotkey_display_name.length(), &sz);
-                    const int x = pdis->rcItem.right - sz.cx;
+                    const int x = text_rc.right - sz.cx;
 
-                    DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->hotkey_display_name.c_str(), 0, x, pdis->rcItem.top, sz.cx, pdis->rcItem.bottom - pdis->rcItem.top, draw_flag | DSS_RIGHT | DST_TEXT);
+                    DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->hotkey_display_name.c_str(), 0, x, text_rc.top, sz.cx, text_rc.bottom - text_rc.top, draw_flag | DSS_RIGHT | DST_TEXT);
 
+                    // 4. Draw the focus rect
                     if (pdis->itemState & ODS_FOCUS)
                     {
                         DrawFocusRect(pdis->hDC, &pdis->rcItem);
