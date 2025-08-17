@@ -7,7 +7,8 @@
 #include "stdafx.h"
 #include <components/CommandPalette.h>
 
-struct t_action_stored_state {
+struct t_listbox_item {
+    bool is_group_header{};
     std::wstring path{};
     std::wstring display_name{};
     std::wstring hotkey_display_name{};
@@ -21,7 +22,7 @@ struct t_command_palette_context {
     HWND edit_hwnd{};
     HTHEME theme{};
     std::wstring search_query{};
-    std::vector<t_action_stored_state> actions{};
+    std::vector<t_listbox_item> items{};
 };
 
 static t_command_palette_context g_ctx{};
@@ -36,7 +37,13 @@ static bool invoke_action_at_index(int32_t i)
         return false;
     }
 
-    const auto action = reinterpret_cast<t_action_stored_state*>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
+    const auto action = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
+
+    if (action->is_group_header)
+    {
+        return false;
+    }
+    
     ActionManager::invoke(action->path);
 
     return true;
@@ -47,8 +54,6 @@ static bool invoke_action_at_index(int32_t i)
  */
 static void build_listbox()
 {
-    const auto prev_selected_index = ListBox_GetCurSel(g_ctx.listbox_hwnd);
-
     const auto normalize = [](std::wstring str) -> std::wstring {
         std::ranges::transform(str, str.begin(), toupper);
         str = io_service.trim(str);
@@ -59,9 +64,9 @@ static void build_listbox()
 
     SetWindowRedraw(g_ctx.listbox_hwnd, FALSE);
     ListBox_ResetContent(g_ctx.listbox_hwnd);
-    SendMessage(g_ctx.listbox_hwnd, LB_INITSTORAGE, g_ctx.actions.size(), (LPARAM)(g_ctx.actions.size() * 30 * sizeof(wchar_t)));
+    SendMessage(g_ctx.listbox_hwnd, LB_INITSTORAGE, g_ctx.items.size(), (LPARAM)(g_ctx.items.size() * 30 * sizeof(wchar_t)));
 
-    for (const auto& action : g_ctx.actions)
+    for (const auto& action : g_ctx.items)
     {
         const auto normalized_action = normalize(action.display_name);
         const auto normalized_hotkey = normalize(action.hotkey_display_name);
@@ -144,24 +149,78 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             g_ctx.theme = OpenThemeData(hwnd, L"BUTTON");
             g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_EDIT);
             g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
-            const auto actions = ActionManager::get_actions_matching_filter(L"*");
 
-            g_ctx.actions.reserve(actions.size());
-            for (const auto& action : actions)
+            std::vector<std::wstring> unique_group_names;
+            const auto all_actions = ActionManager::get_actions_matching_filter(L"*");
+
+            for (const auto& path : all_actions)
             {
-                t_action_stored_state state{};
-                state.path = action;
-                state.display_name = ActionManager::get_display_name(action, true);
-                state.enabled = ActionManager::get_enabled(action);
-                state.active = ActionManager::get_active(action);
+                std::vector<std::wstring> segments = ActionManager::get_segments(path);
 
-                const auto hotkey = g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{};
-                if (!hotkey.is_nothing())
+                if (segments.size() <= 1)
                 {
-                    state.hotkey_display_name = hotkey.to_wstring();
+                    continue;
                 }
 
-                g_ctx.actions.push_back(state);
+                segments.pop_back();
+
+                std::wstring group_name;
+                for (size_t i = 0; i < segments.size(); ++i)
+                {
+                    if (i > 0)
+                    {
+                        group_name += ActionManager::SEGMENT_SEPARATOR;
+                    }
+                    group_name += segments[i];
+                }
+
+                if (std::ranges::find(unique_group_names, group_name) == unique_group_names.end())
+                {
+                    unique_group_names.emplace_back(group_name);
+                }
+            }
+
+            for (const auto& group : unique_group_names)
+            {
+                const auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group));
+
+                auto segments = ActionManager::get_segments(group);
+                for (auto& segment : segments)
+                {
+                    segment = ActionManager::get_display_name(segment, true);
+                }
+                const auto name = io_service.join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+
+                t_listbox_item state{};
+                state.is_group_header = true;
+                state.display_name = name;
+                state.enabled = true;
+                g_ctx.items.push_back(state);
+
+                for (const auto& action : actions)
+                {
+                    const auto action_segments = ActionManager::get_segments(action);
+                    const auto group_segments = ActionManager::get_segments(group);
+
+                    if (action_segments.at(action_segments.size() - 2) != group_segments.back())
+                    {
+                        continue;
+                    }
+
+                    t_listbox_item state{};
+                    state.path = action;
+                    state.display_name = ActionManager::get_display_name(action, true);
+                    state.enabled = ActionManager::get_enabled(action);
+                    state.active = ActionManager::get_active(action);
+
+                    const auto hotkey = g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{};
+                    if (!hotkey.is_nothing())
+                    {
+                        state.hotkey_display_name = hotkey.to_wstring();
+                    }
+
+                    g_ctx.items.push_back(state);
+                }
             }
 
 
@@ -269,7 +328,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             case ODA_SELECT:
             case ODA_DRAWENTIRE:
                 {
-                    const auto action = reinterpret_cast<t_action_stored_state*>(ListBox_GetItemData(g_ctx.listbox_hwnd, pdis->itemID));
+                    const auto action = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, pdis->itemID));
 
                     COLORREF text_color;
                     HBRUSH bg_brush;
@@ -297,32 +356,56 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                         checkbox_width = checkbox_size.cx;
 
                         RECT rc = pdis->rcItem;
+                        rc.left += 12;
                         rc.right = rc.left + checkbox_width;
                         rc.bottom = rc.top + checkbox_width;
                         DrawThemeBackground(g_ctx.theme, pdis->hDC, BP_CHECKBOX, CBS_CHECKEDNORMAL, &rc, nullptr);
                     }
 
-                    // 3. Draw the action and hotkey text
-                    RECT text_rc = pdis->rcItem;
-                    if (checkbox_width > 0)
-                    {
-                        text_rc.left += checkbox_width + 2;
-                    }
-
+                    // 3. Draw the action and hotkey text if applicable
                     SetBkMode(pdis->hDC, TRANSPARENT);
                     SetTextColor(pdis->hDC, text_color);
 
-                    const auto draw_flag = action->enabled ? 0 : DSS_DISABLED;
+                    if (!action->is_group_header)
+                    {
+                        RECT text_rc = pdis->rcItem;
+                        text_rc.left += 12;
+                        if (checkbox_width > 0)
+                        {
+                            text_rc.left += checkbox_width + 4;
+                        }
 
-                    DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->display_name.c_str(), 0, text_rc.left, text_rc.top, text_rc.right - text_rc.left, text_rc.bottom - text_rc.top, draw_flag | DST_TEXT);
+                        const auto draw_flag = action->enabled ? 0 : DSS_DISABLED;
 
-                    SIZE sz;
-                    GetTextExtentPoint32(pdis->hDC, action->hotkey_display_name.c_str(), (int)action->hotkey_display_name.length(), &sz);
-                    const int x = text_rc.right - sz.cx;
+                        DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->display_name.c_str(), 0, text_rc.left, text_rc.top, text_rc.right - text_rc.left, text_rc.bottom - text_rc.top, draw_flag | DST_TEXT);
 
-                    DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->hotkey_display_name.c_str(), 0, x, text_rc.top, sz.cx, text_rc.bottom - text_rc.top, draw_flag | DSS_RIGHT | DST_TEXT);
+                        SIZE sz;
+                        GetTextExtentPoint32(pdis->hDC, action->hotkey_display_name.c_str(), (int)action->hotkey_display_name.length(), &sz);
+                        const int x = text_rc.right - sz.cx;
 
-                    // 4. Draw the focus rect
+                        DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->hotkey_display_name.c_str(), 0, x, text_rc.top, sz.cx, text_rc.bottom - text_rc.top, draw_flag | DSS_RIGHT | DST_TEXT);
+                    }
+
+                    // 4. Draw the group header if applicable
+                    if (action->is_group_header)
+                    {
+                        const RECT text_rc = pdis->rcItem;
+
+                        DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)action->display_name.c_str(), 0, text_rc.left, text_rc.top, text_rc.right - text_rc.left, text_rc.bottom - text_rc.top, DST_TEXT);
+
+                        HPEN pen = CreatePen(PS_DOT, 1, text_color);
+                        HGDIOBJ prev_obj = SelectObject(pdis->hDC, pen);
+
+                        SIZE sz;
+                        GetTextExtentPoint32(pdis->hDC, action->display_name.c_str(), (int)action->display_name.length(), &sz);
+
+                        MoveToEx(pdis->hDC, text_rc.left + sz.cx + 4, text_rc.top + (text_rc.bottom - text_rc.top) / 2, nullptr);
+                        LineTo(pdis->hDC, text_rc.right, text_rc.top + (text_rc.bottom - text_rc.top) / 2);
+
+                        SelectObject(pdis->hDC, prev_obj);
+                    }
+
+                    // 5. Draw the focus rect
                     if (pdis->itemState & ODS_FOCUS)
                     {
                         DrawFocusRect(pdis->hDC, &pdis->rcItem);
