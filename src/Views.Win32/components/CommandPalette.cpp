@@ -374,6 +374,12 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             break;
         }
         break;
+    case WM_ACTIVATE:
+        if (wparam == WA_INACTIVE)
+        {
+            DestroyWindow(hwnd);
+        }
+        break;
     case WM_MEASUREITEM:
         {
             const auto pmis = (PMEASUREITEMSTRUCT)lparam;
@@ -493,5 +499,6 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 void CommandPalette::show()
 {
     g_ctx = {};
-    DialogBox(g_app_instance, MAKEINTRESOURCE(IDD_COMMAND_PALETTE), g_main_hwnd, command_palette_proc);
+    const HWND hwnd = CreateDialog(g_app_instance, MAKEINTRESOURCE(IDD_COMMAND_PALETTE), g_main_hwnd, command_palette_proc);
+    ShowWindow(hwnd, SW_SHOW);
 }
