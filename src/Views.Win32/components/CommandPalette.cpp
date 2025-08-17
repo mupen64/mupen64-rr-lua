@@ -17,6 +17,8 @@ struct t_listbox_item {
 
     t_listbox_item() = default;
     explicit t_listbox_item(const std::wstring& action);
+    
+    [[nodiscard]] bool selectable() const;
 };
 
 struct t_command_palette_context {
@@ -45,6 +47,11 @@ t_listbox_item::t_listbox_item(const std::wstring& action)
     }
 }
 
+bool t_listbox_item::selectable() const
+{
+    return !is_group_header && enabled;
+}
+
 /**
  * \brief Tries to invoke the action at the specified index. Closes the command palette if successful.
  */
@@ -67,6 +74,23 @@ static bool invoke_action_at_index(int32_t i)
     ActionManager::invoke(action->path);
 
     return true;
+}
+
+/**
+ * \brief Finds the index of the first selectable item in the item collection.
+ */
+static int32_t find_index_of_first_selectable_item()
+{
+    int32_t i = 0;
+    for (const auto& item : g_ctx.items)
+    {
+        if (item.selectable())
+        {
+            return i;
+        }
+        i++;
+    }
+    return LB_ERR;
 }
 
 /**
@@ -147,7 +171,7 @@ static void build_listbox()
             }
 
             const t_listbox_item item{action};
-            
+
             return !action_matches_query(item, normalized_query);
         });
 
@@ -155,7 +179,7 @@ static void build_listbox()
         {
             continue;
         }
-        
+
         t_listbox_item state{};
         state.is_group_header = true;
         state.display_name = name;
@@ -177,11 +201,8 @@ static void build_listbox()
         ListBox_AddItemData(g_ctx.listbox_hwnd, reinterpret_cast<LPARAM>(&item));
     }
 
-    if (ListBox_GetCount(g_ctx.listbox_hwnd) > 0)
-    {
-        ListBox_SetCurSel(g_ctx.listbox_hwnd, 0);
-    }
-
+    ListBox_SetCurSel(g_ctx.listbox_hwnd, find_index_of_first_selectable_item());
+    
     SetWindowRedraw(g_ctx.listbox_hwnd, TRUE);
 }
 
@@ -208,9 +229,8 @@ static void adjust_listbox_selection(const int32_t by)
         }
 
         const auto item = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, new_index));
-        const auto can_be_selected = !item->is_group_header && item->enabled;
 
-        if (can_be_selected)
+        if (item->selectable())
         {
             break;
         }
