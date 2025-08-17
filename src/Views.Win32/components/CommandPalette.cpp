@@ -27,6 +27,7 @@ struct t_command_palette_context {
     HWND hwnd{};
     HWND listbox_hwnd{};
     HWND edit_hwnd{};
+    bool closing{};
     HTHEME button_theme{};
     std::wstring search_query{};
     std::vector<std::wstring> actions{};
@@ -72,7 +73,7 @@ static bool invoke_action_at_index(int32_t i)
         return false;
     }
 
-    EndDialog(g_ctx.hwnd, IDOK);
+    SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
 
     ActionManager::invoke(action->path);
 
@@ -255,7 +256,7 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, 
     case WM_SYSKEYDOWN:
         if (wparam == VK_ESCAPE)
         {
-            EndDialog(GetParent(hwnd), IDCANCEL);
+            SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
             return FALSE;
         }
         if (wparam == VK_UP)
@@ -337,7 +338,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         CloseThemeData(g_ctx.button_theme);
         break;
     case WM_CLOSE:
-        EndDialog(hwnd, IDCANCEL);
+        g_ctx.closing = true;
+        DestroyWindow(g_ctx.hwnd);
         break;
     case WM_COMMAND:
         switch (LOWORD(wparam))
@@ -375,9 +377,9 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         }
         break;
     case WM_ACTIVATE:
-        if (wparam == WA_INACTIVE)
+        if (wparam == WA_INACTIVE && !g_ctx.closing)
         {
-            DestroyWindow(hwnd);
+            PostMessage(hwnd, WM_CLOSE, 0, 0);
         }
         break;
     case WM_MEASUREITEM:
