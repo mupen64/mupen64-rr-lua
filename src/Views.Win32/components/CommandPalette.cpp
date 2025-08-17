@@ -366,7 +366,21 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             switch (HIWORD(wparam))
             {
             case LBN_DBLCLK:
-                invoke_action_at_index(ListBox_GetCurSel(g_ctx.listbox_hwnd));
+                {
+                    const int32_t index = ListBox_GetCurSel(g_ctx.listbox_hwnd);
+                    if (index == LB_ERR)
+                    {
+                        break;
+                    }
+                
+                    const auto item = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, index));
+
+                    Hotkey::t_hotkey hotkey = g_config.hotkeys.contains(item->path) ? g_config.hotkeys.at(item->path) : Hotkey::t_hotkey{};
+                    Hotkey::show_prompt(g_main_hwnd, std::format(L"Choose a hotkey for {}", item->display_name), hotkey);
+                    Hotkey::try_associate_hotkey(g_main_hwnd, item->path, hotkey);
+
+                    SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
+                }
                 break;
             default:
                 break;

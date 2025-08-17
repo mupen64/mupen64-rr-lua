@@ -44,4 +44,13 @@ namespace Hotkey
      * \return Whether the user confirmed the dialog. If the user cancelled the dialog, the hotkey won't have changed.
      */
     bool show_prompt(HWND hwnd, const std::wstring& caption, t_hotkey& hotkey);
+
+    /**
+     * \brief Tries associating the specified action with the specified hotkey. Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
+     * \param hwnd The parent window handle for the conflict dialog.
+     * \param action The action to associate the hotkey with.
+     * \param new_hotkey The new hotkey to associate with the action.
+     */
+    void try_associate_hotkey(HWND hwnd, const std::wstring& action, const Hotkey::t_hotkey& new_hotkey);
+
 } // namespace Hotkey

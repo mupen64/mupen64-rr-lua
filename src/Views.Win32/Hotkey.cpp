@@ -310,3 +310,64 @@ bool Hotkey::show_prompt(const HWND hwnd, const std::wstring& caption, t_hotkey&
 
     return confirmed;
 }
+
+void Hotkey::try_associate_hotkey(const HWND hwnd, const std::wstring& action, const t_hotkey& new_hotkey)
+{
+    if (new_hotkey.is_nothing())
+    {
+        g_config.hotkeys[action] = t_hotkey{};
+        return;
+    }
+
+    if (g_config.hotkeys[action] == new_hotkey)
+    {
+        return;
+    }
+
+    std::vector<std::pair<std::wstring, t_hotkey>> conflicting_hotkeys;
+
+    for (const auto& pair : g_config.hotkeys)
+    {
+        if (pair.first != action && pair.second == new_hotkey)
+        {
+            conflicting_hotkeys.emplace_back(pair);
+        }
+    }
+
+    if (conflicting_hotkeys.empty())
+    {
+        g_config.hotkeys[action] = new_hotkey;
+        return;
+    }
+
+    std::wstring conflicting_hotkey_identifiers;
+    for (const auto& action : conflicting_hotkeys | std::views::keys)
+    {
+        conflicting_hotkey_identifiers += std::format(L"- {}\n", action);
+    }
+
+    const auto str = std::format(L"The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
+                                 new_hotkey.to_wstring(),
+                                 conflicting_hotkey_identifiers);
+
+    const size_t choice = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
+
+    switch (choice)
+    {
+    case 0:
+        for (const auto& action : conflicting_hotkeys | std::views::keys)
+        {
+            g_config.hotkeys[action] = t_hotkey{};
+        }
+        g_config.hotkeys[action] = new_hotkey;
+        break;
+    case 1:
+        g_config.hotkeys[action] = {};
+        break;
+    case 2:
+        g_config.hotkeys[action] = new_hotkey;
+        break;
+    default:
+        break;
+    }
+}
