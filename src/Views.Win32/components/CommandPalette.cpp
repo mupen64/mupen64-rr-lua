@@ -27,7 +27,7 @@ struct t_command_palette_context {
     HWND hwnd{};
     HWND listbox_hwnd{};
     HWND edit_hwnd{};
-    HTHEME theme{};
+    HTHEME button_theme{};
     std::wstring search_query{};
     std::vector<std::wstring> actions{};
     std::vector<t_listbox_item> items{};
@@ -287,7 +287,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
     case WM_INITDIALOG:
         {
             g_ctx.hwnd = hwnd;
-            g_ctx.theme = OpenThemeData(hwnd, L"BUTTON");
+            g_ctx.button_theme = OpenThemeData(hwnd, L"BUTTON");
             g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_EDIT);
             g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
             g_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
@@ -334,7 +334,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             break;
         }
     case WM_DESTROY:
-        CloseThemeData(g_ctx.theme);
+        CloseThemeData(g_ctx.button_theme);
         break;
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
@@ -418,14 +418,14 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                     if (action->active)
                     {
                         SIZE checkbox_size{};
-                        GetThemePartSize(g_ctx.theme, nullptr, BP_CHECKBOX, CBS_CHECKEDNORMAL, nullptr, TS_TRUE, &checkbox_size);
+                        GetThemePartSize(g_ctx.button_theme, nullptr, BP_CHECKBOX, CBS_CHECKEDNORMAL, nullptr, TS_TRUE, &checkbox_size);
                         checkbox_width = checkbox_size.cx;
 
                         RECT rc = pdis->rcItem;
                         rc.left += 12;
                         rc.right = rc.left + checkbox_width;
                         rc.bottom = rc.top + checkbox_width;
-                        DrawThemeBackground(g_ctx.theme, pdis->hDC, BP_CHECKBOX, CBS_CHECKEDNORMAL, &rc, nullptr);
+                        DrawThemeBackground(g_ctx.button_theme, pdis->hDC, BP_CHECKBOX, CBS_CHECKEDNORMAL, &rc, nullptr);
                     }
 
                     // 3. Draw the action and hotkey text if applicable
