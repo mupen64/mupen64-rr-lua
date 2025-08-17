@@ -365,6 +365,13 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         case IDC_COMMAND_PALETTE_LIST:
             switch (HIWORD(wparam))
             {
+            case LBN_SELCHANGE:
+                SetWindowRedraw(g_ctx.listbox_hwnd, FALSE);
+                adjust_listbox_selection(-1);
+                adjust_listbox_selection(1);
+                SetWindowRedraw(g_ctx.listbox_hwnd, TRUE);
+                InvalidateRect(g_ctx.listbox_hwnd, nullptr, TRUE);
+                break;
             case LBN_DBLCLK:
                 {
                     const int32_t index = ListBox_GetCurSel(g_ctx.listbox_hwnd);
@@ -372,7 +379,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                     {
                         break;
                     }
-                
+
                     const auto item = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, index));
 
                     Hotkey::t_hotkey hotkey = g_config.hotkeys.contains(item->path) ? g_config.hotkeys.at(item->path) : Hotkey::t_hotkey{};
