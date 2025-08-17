@@ -14,6 +14,9 @@ struct t_listbox_item {
     std::wstring hotkey_display_name{};
     bool enabled{};
     bool active{};
+
+    t_listbox_item() = default;
+    explicit t_listbox_item(const std::wstring& action);
 };
 
 struct t_command_palette_context {
@@ -22,10 +25,25 @@ struct t_command_palette_context {
     HWND edit_hwnd{};
     HTHEME theme{};
     std::wstring search_query{};
+    std::vector<std::wstring> actions{};
     std::vector<t_listbox_item> items{};
 };
 
 static t_command_palette_context g_ctx{};
+
+t_listbox_item::t_listbox_item(const std::wstring& action)
+{
+    path = action;
+    display_name = ActionManager::get_display_name(action, true);
+    enabled = ActionManager::get_enabled(action);
+    active = ActionManager::get_active(action);
+
+    const auto hotkey = g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{};
+    if (!hotkey.is_nothing())
+    {
+        hotkey_display_name = hotkey.to_wstring();
+    }
+}
 
 /**
  * \brief Tries to invoke the action at the specified index. Closes the command palette if successful.
@@ -62,25 +80,101 @@ static void build_listbox()
         return str;
     };
 
+    const auto action_matches_query = [&](const t_listbox_item& item, const std::wstring& query) -> bool {
+        if (query.empty())
+        {
+            return true;
+        }
+        const auto normalized_action = normalize(item.display_name);
+        const auto normalized_hotkey = normalize(item.hotkey_display_name);
+
+        const auto matches = normalized_action.contains(query) || normalized_hotkey.contains(query);
+
+        return matches;
+    };
+
+    g_ctx.items = {};
+
     const auto normalized_query = normalize(g_ctx.search_query);
 
-    SetWindowRedraw(g_ctx.listbox_hwnd, FALSE);
-    ListBox_ResetContent(g_ctx.listbox_hwnd);
-    SendMessage(g_ctx.listbox_hwnd, LB_INITSTORAGE, g_ctx.items.size(), (LPARAM)(g_ctx.items.size() * 30 * sizeof(wchar_t)));
+    std::vector<std::wstring> unique_group_names;
 
-    for (const auto& action : g_ctx.items)
+    for (const auto& path : g_ctx.actions)
     {
-        const auto normalized_action = normalize(action.display_name);
-        const auto normalized_hotkey = normalize(action.hotkey_display_name);
+        std::vector<std::wstring> segments = ActionManager::get_segments(path);
 
-        const auto matches = normalized_action.contains(normalized_query) || normalized_hotkey.contains(normalized_query);
-
-        if (!normalized_query.empty() && !matches)
+        if (segments.size() <= 1)
         {
             continue;
         }
 
-        ListBox_AddItemData(g_ctx.listbox_hwnd, reinterpret_cast<LPARAM>(&action));
+        segments.pop_back();
+
+        std::wstring group_name;
+        for (size_t i = 0; i < segments.size(); ++i)
+        {
+            if (i > 0)
+            {
+                group_name += ActionManager::SEGMENT_SEPARATOR;
+            }
+            group_name += segments[i];
+        }
+
+        if (std::ranges::find(unique_group_names, group_name) == unique_group_names.end())
+        {
+            unique_group_names.emplace_back(group_name);
+        }
+    }
+
+    for (const auto& group : unique_group_names)
+    {
+        auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group));
+
+        auto segments = ActionManager::get_segments(group);
+        for (auto& segment : segments)
+        {
+            segment = ActionManager::get_display_name(segment, true);
+        }
+        const auto name = io_service.join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+
+        std::erase_if(actions, [&](const auto& action) {
+            const auto action_segments = ActionManager::get_segments(action);
+            const auto group_segments = ActionManager::get_segments(group);
+
+            if (action_segments.at(action_segments.size() - 2) != group_segments.back())
+            {
+                return true;
+            }
+
+            const t_listbox_item item{action};
+            
+            return !action_matches_query(item, normalized_query);
+        });
+
+        if (actions.empty())
+        {
+            continue;
+        }
+        
+        t_listbox_item state{};
+        state.is_group_header = true;
+        state.display_name = name;
+        state.enabled = true;
+        g_ctx.items.push_back(state);
+
+        for (const auto& action : actions)
+        {
+            g_ctx.items.emplace_back(action);
+        }
+    }
+
+    SetWindowRedraw(g_ctx.listbox_hwnd, FALSE);
+    ListBox_ResetContent(g_ctx.listbox_hwnd);
+    SendMessage(g_ctx.listbox_hwnd, LB_INITSTORAGE, g_ctx.items.size(), 0);
+
+    for (const auto& item : g_ctx.items)
+    {
+        ListBox_AddItemData(g_ctx.listbox_hwnd, reinterpret_cast<LPARAM>(&item));
     }
 
     if (ListBox_GetCount(g_ctx.listbox_hwnd) > 0)
@@ -173,79 +267,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             g_ctx.theme = OpenThemeData(hwnd, L"BUTTON");
             g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_EDIT);
             g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
-
-            std::vector<std::wstring> unique_group_names;
-            const auto all_actions = ActionManager::get_actions_matching_filter(L"*");
-
-            for (const auto& path : all_actions)
-            {
-                std::vector<std::wstring> segments = ActionManager::get_segments(path);
-
-                if (segments.size() <= 1)
-                {
-                    continue;
-                }
-
-                segments.pop_back();
-
-                std::wstring group_name;
-                for (size_t i = 0; i < segments.size(); ++i)
-                {
-                    if (i > 0)
-                    {
-                        group_name += ActionManager::SEGMENT_SEPARATOR;
-                    }
-                    group_name += segments[i];
-                }
-
-                if (std::ranges::find(unique_group_names, group_name) == unique_group_names.end())
-                {
-                    unique_group_names.emplace_back(group_name);
-                }
-            }
-
-            for (const auto& group : unique_group_names)
-            {
-                const auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group));
-
-                auto segments = ActionManager::get_segments(group);
-                for (auto& segment : segments)
-                {
-                    segment = ActionManager::get_display_name(segment, true);
-                }
-                const auto name = io_service.join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
-
-                t_listbox_item state{};
-                state.is_group_header = true;
-                state.display_name = name;
-                state.enabled = true;
-                g_ctx.items.push_back(state);
-
-                for (const auto& action : actions)
-                {
-                    const auto action_segments = ActionManager::get_segments(action);
-                    const auto group_segments = ActionManager::get_segments(group);
-
-                    if (action_segments.at(action_segments.size() - 2) != group_segments.back())
-                    {
-                        continue;
-                    }
-
-                    t_listbox_item state{};
-                    state.path = action;
-                    state.display_name = ActionManager::get_display_name(action, true);
-                    state.enabled = ActionManager::get_enabled(action);
-                    state.active = ActionManager::get_active(action);
-
-                    const auto hotkey = g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{};
-                    if (!hotkey.is_nothing())
-                    {
-                        state.hotkey_display_name = hotkey.to_wstring();
-                    }
-
-                    g_ctx.items.push_back(state);
-                }
-            }
+            g_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
 
 
             // 1. Remove the titlebar
