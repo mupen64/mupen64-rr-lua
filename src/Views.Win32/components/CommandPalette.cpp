@@ -28,7 +28,7 @@ struct t_command_palette_context {
 static t_command_palette_context g_ctx{};
 
 /**
- * \brief Tries to invoke the action at the specified index.
+ * \brief Tries to invoke the action at the specified index. Closes the command palette if successful.
  */
 static bool invoke_action_at_index(int32_t i)
 {
@@ -43,6 +43,8 @@ static bool invoke_action_at_index(int32_t i)
     {
         return false;
     }
+
+    EndDialog(g_ctx.hwnd, IDOK);
 
     ActionManager::invoke(action->path);
 
@@ -151,11 +153,7 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, 
         }
         if (wparam == VK_RETURN)
         {
-            if (invoke_action_at_index(ListBox_GetCurSel(g_ctx.listbox_hwnd)))
-            {
-                EndDialog(GetParent(hwnd), IDOK);
-            }
-
+            invoke_action_at_index(ListBox_GetCurSel(g_ctx.listbox_hwnd));
             return FALSE;
         }
         break;
@@ -171,6 +169,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
     {
     case WM_INITDIALOG:
         {
+            g_ctx.hwnd = hwnd;
             g_ctx.theme = OpenThemeData(hwnd, L"BUTTON");
             g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_EDIT);
             g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
@@ -320,10 +319,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             switch (HIWORD(wparam))
             {
             case LBN_DBLCLK:
-                if (invoke_action_at_index(ListBox_GetCurSel(g_ctx.listbox_hwnd)))
-                {
-                    EndDialog(hwnd, IDOK);
-                }
+                invoke_action_at_index(ListBox_GetCurSel(g_ctx.listbox_hwnd));
                 break;
             default:
                 break;
