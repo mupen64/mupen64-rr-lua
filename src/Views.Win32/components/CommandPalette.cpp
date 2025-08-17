@@ -43,7 +43,7 @@ static bool invoke_action_at_index(int32_t i)
     {
         return false;
     }
-    
+
     ActionManager::invoke(action->path);
 
     return true;
@@ -81,7 +81,6 @@ static void build_listbox()
         ListBox_AddItemData(g_ctx.listbox_hwnd, reinterpret_cast<LPARAM>(&action));
     }
 
-
     if (ListBox_GetCount(g_ctx.listbox_hwnd) > 0)
     {
         ListBox_SetCurSel(g_ctx.listbox_hwnd, 0);
@@ -90,6 +89,40 @@ static void build_listbox()
     SetWindowRedraw(g_ctx.listbox_hwnd, TRUE);
 }
 
+/**
+ * \brief Moves the selection in the listbox by the specified amount.
+ */
+static void adjust_listbox_selection(const int32_t by)
+{
+    const int32_t count = ListBox_GetCount(g_ctx.listbox_hwnd);
+    const auto initial_index = ListBox_GetCurSel(g_ctx.listbox_hwnd);
+
+    int32_t new_index = initial_index;
+
+    size_t attempts = 0;
+    while (true)
+    {
+        new_index = wrapping_clamp(new_index + by, 0, count - 1);
+        attempts++;
+
+        if (new_index == LB_ERR || new_index >= count || attempts > count)
+        {
+            new_index = initial_index;
+            break;
+        }
+        
+        const auto item = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, new_index));
+        const auto can_be_selected = !item->is_group_header && item->enabled;
+
+        if (can_be_selected)
+        {
+            break;
+        }
+    }
+
+    ListBox_SetCurSel(g_ctx.listbox_hwnd, new_index);
+    ListBox_SetTopIndex(g_ctx.listbox_hwnd, new_index);
+}
 static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
@@ -108,20 +141,12 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, 
         }
         if (wparam == VK_UP)
         {
-            const auto selected_index = ListBox_GetCurSel(g_ctx.listbox_hwnd);
-            const auto count = ListBox_GetCount(g_ctx.listbox_hwnd);
-            const auto new_index = wrapping_clamp(selected_index - 1, 0, count - 1);
-            ListBox_SetCurSel(g_ctx.listbox_hwnd, new_index);
-            ListBox_SetTopIndex(g_ctx.listbox_hwnd, new_index);
+            adjust_listbox_selection(-1);
             return FALSE;
         }
         if (wparam == VK_DOWN)
         {
-            const auto selected_index = ListBox_GetCurSel(g_ctx.listbox_hwnd);
-            const auto count = ListBox_GetCount(g_ctx.listbox_hwnd);
-            const auto new_index = wrapping_clamp(selected_index + 1, 0, count - 1);
-            ListBox_SetCurSel(g_ctx.listbox_hwnd, new_index);
-            ListBox_SetTopIndex(g_ctx.listbox_hwnd, new_index);
+            adjust_listbox_selection(1);
             return FALSE;
         }
         if (wparam == VK_RETURN)
