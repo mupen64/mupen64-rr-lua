@@ -382,6 +382,11 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 
                     const auto item = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, index));
 
+                    if (!item->selectable())
+                    {
+                        break;
+                    }
+                
                     Hotkey::t_hotkey hotkey = g_config.hotkeys.contains(item->path) ? g_config.hotkeys.at(item->path) : Hotkey::t_hotkey{};
                     Hotkey::show_prompt(g_main_hwnd, std::format(L"Choose a hotkey for {}", item->display_name), hotkey);
                     Hotkey::try_associate_hotkey(g_main_hwnd, item->path, hotkey);
