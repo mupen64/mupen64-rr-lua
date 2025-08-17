@@ -10,14 +10,16 @@
 struct t_listbox_item {
     bool is_group_header{};
     std::wstring path{};
-    std::wstring display_name{};
+    std::wstring group_name{};
     std::wstring hotkey_display_name{};
+
+    std::wstring display_name{};
     bool enabled{};
     bool active{};
 
     t_listbox_item() = default;
-    explicit t_listbox_item(const std::wstring& action);
-    
+    explicit t_listbox_item(const std::wstring& action, const std::wstring& group);
+
     [[nodiscard]] bool selectable() const;
 };
 
@@ -33,18 +35,19 @@ struct t_command_palette_context {
 
 static t_command_palette_context g_ctx{};
 
-t_listbox_item::t_listbox_item(const std::wstring& action)
+t_listbox_item::t_listbox_item(const std::wstring& action, const std::wstring& group)
 {
     path = action;
-    display_name = ActionManager::get_display_name(action, true);
-    enabled = ActionManager::get_enabled(action);
-    active = ActionManager::get_active(action);
-
+    group_name = group;
     const auto hotkey = g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{};
     if (!hotkey.is_nothing())
     {
         hotkey_display_name = hotkey.to_wstring();
     }
+
+    display_name = ActionManager::get_display_name(action, true);
+    enabled = ActionManager::get_enabled(action);
+    active = ActionManager::get_active(action);
 }
 
 bool t_listbox_item::selectable() const
@@ -109,10 +112,12 @@ static void build_listbox()
         {
             return true;
         }
+
         const auto normalized_action = normalize(item.display_name);
+        const auto normalized_group_name = normalize(item.group_name);
         const auto normalized_hotkey = normalize(item.hotkey_display_name);
 
-        const auto matches = normalized_action.contains(query) || normalized_hotkey.contains(query);
+        const auto matches = normalized_action.contains(query) || normalized_group_name.contains(query) || normalized_hotkey.contains(query);
 
         return matches;
     };
@@ -170,9 +175,7 @@ static void build_listbox()
                 return true;
             }
 
-            const t_listbox_item item{action};
-
-            return !action_matches_query(item, normalized_query);
+            return !action_matches_query(t_listbox_item(action, group), normalized_query);
         });
 
         if (actions.empty())
@@ -188,7 +191,7 @@ static void build_listbox()
 
         for (const auto& action : actions)
         {
-            g_ctx.items.emplace_back(action);
+            g_ctx.items.emplace_back(action, group);
         }
     }
 
@@ -202,7 +205,7 @@ static void build_listbox()
     }
 
     ListBox_SetCurSel(g_ctx.listbox_hwnd, find_index_of_first_selectable_item());
-    
+
     SetWindowRedraw(g_ctx.listbox_hwnd, TRUE);
 }
 
