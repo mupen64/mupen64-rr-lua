@@ -552,3 +552,29 @@ static std::wstring format_short(const uint64_t value)
 
     return str;
 }
+
+/**
+ * \brief Ensures that the specified index in the listbox is visible.
+ * \param hwnd The handle to the listbox.
+ * \param index The index to ensure is visible.
+ */
+static void listbox_ensure_visible(const HWND hwnd, const int32_t index)
+{
+    const int sel = ListBox_GetCurSel(hwnd);
+
+    if (sel == LB_ERR)
+        return;
+
+    const int top = ListBox_GetTopIndex(hwnd);
+
+    RECT rc;
+    GetClientRect(hwnd, &rc);
+
+    const int item_height = ListBox_GetItemHeight(hwnd, 0);
+    const int visible_count = (rc.bottom - rc.top) / item_height;
+
+    if (sel < top || sel >= top + visible_count)
+    {
+        ListBox_SetTopIndex(hwnd, sel);
+    }
+}

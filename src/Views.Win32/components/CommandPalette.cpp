@@ -110,7 +110,7 @@ static void adjust_listbox_selection(const int32_t by)
             new_index = initial_index;
             break;
         }
-        
+
         const auto item = reinterpret_cast<t_listbox_item*>(ListBox_GetItemData(g_ctx.listbox_hwnd, new_index));
         const auto can_be_selected = !item->is_group_header && item->enabled;
 
@@ -121,7 +121,7 @@ static void adjust_listbox_selection(const int32_t by)
     }
 
     ListBox_SetCurSel(g_ctx.listbox_hwnd, new_index);
-    ListBox_SetTopIndex(g_ctx.listbox_hwnd, new_index);
+    listbox_ensure_visible(g_ctx.listbox_hwnd, new_index);
 }
 static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
