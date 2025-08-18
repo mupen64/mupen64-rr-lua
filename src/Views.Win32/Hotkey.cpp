@@ -311,11 +311,22 @@ bool Hotkey::show_prompt(const HWND hwnd, const std::wstring& caption, t_hotkey&
     return confirmed;
 }
 
-void Hotkey::try_associate_hotkey(const HWND hwnd, const std::wstring& action, const t_hotkey& new_hotkey)
+void Hotkey::try_associate_hotkey(const HWND hwnd, const std::wstring& action, const t_hotkey& new_hotkey, const bool through_action_manager)
 {
+    const auto set_hotkey = [=](const std::wstring& action, const t_hotkey& hotkey) {
+        if (through_action_manager)
+        {
+            ActionManager::associate_hotkey(action, hotkey);
+        }
+        else
+        {
+            g_config.hotkeys[action] = hotkey;
+        }
+    };
+
     if (new_hotkey.is_nothing())
     {
-        ActionManager::associate_hotkey(action, {});
+        set_hotkey(action, {});
         return;
     }
 
@@ -336,7 +347,7 @@ void Hotkey::try_associate_hotkey(const HWND hwnd, const std::wstring& action, c
 
     if (conflicting_hotkeys.empty())
     {
-        ActionManager::associate_hotkey(action, new_hotkey);
+        set_hotkey(action, new_hotkey);
         return;
     }
 
@@ -357,15 +368,15 @@ void Hotkey::try_associate_hotkey(const HWND hwnd, const std::wstring& action, c
     case 0:
         for (const auto& action : conflicting_hotkeys | std::views::keys)
         {
-            ActionManager::associate_hotkey(action, {});
+            set_hotkey(action, {});
         }
-        ActionManager::associate_hotkey(action, new_hotkey);
+        set_hotkey(action, new_hotkey);
         break;
     case 1:
-        ActionManager::associate_hotkey(action, {});
+        set_hotkey(action, {});
         break;
     case 2:
-        ActionManager::associate_hotkey(action, new_hotkey);
+        set_hotkey(action, new_hotkey);
         break;
     default:
         break;

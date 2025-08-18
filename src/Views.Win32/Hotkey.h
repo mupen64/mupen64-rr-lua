@@ -50,7 +50,8 @@ namespace Hotkey
      * \param hwnd The parent window handle for the conflict dialog.
      * \param action The action to associate the hotkey with.
      * \param new_hotkey The new hotkey to associate with the action.
+     * \param through_action_manager Whether the ActionManager should be called to associate the hotkey. If false, the hotkey will only be set in the config.
      */
-    void try_associate_hotkey(HWND hwnd, const std::wstring& action, const Hotkey::t_hotkey& new_hotkey);
+    void try_associate_hotkey(HWND hwnd, const std::wstring& action, const t_hotkey& new_hotkey, bool through_action_manager = true);
 
 } // namespace Hotkey

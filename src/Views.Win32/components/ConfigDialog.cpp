@@ -21,10 +21,6 @@
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
 
-// Local copy of the action path<->hotkey map from g_config, but flattened into a vector
-// We need to keep this because the hotkeys might be modified during the config by dodgy Lua scripts lol...
-std::vector<std::pair<std::wstring, Hotkey::t_hotkey>> g_hotkey_scratchpad;
-
 /**
  * Represents a group of options in the settings.
  */
@@ -1360,77 +1356,6 @@ void advance_listview_selection(HWND lvhwnd)
     ListView_EnsureVisible(lvhwnd, i + 1, false);
 }
 
-/**
- * Tries applying the specified htokey to the option item. Checks for a hotkey conflict and, if necessary, prompts the user to fix the conflict.
- */
-static void try_apply_hotkey(const HWND hwnd, const Hotkey::t_hotkey& new_hotkey, const t_options_item& option_item)
-{
-    if (new_hotkey.is_nothing())
-    {
-        option_item.current_value.set(Hotkey::t_hotkey{});
-        return;
-    }
-
-    if (std::get<Hotkey::t_hotkey>(option_item.current_value.get()) == new_hotkey)
-    {
-        return;
-    }
-
-    std::vector<std::pair<std::wstring, Hotkey::t_hotkey>> conflicting_hotkeys;
-
-    for (const auto& pair : g_hotkey_scratchpad)
-    {
-        if (pair.second == new_hotkey)
-        {
-            conflicting_hotkeys.emplace_back(pair);
-        }
-    }
-
-    if (conflicting_hotkeys.empty())
-    {
-        option_item.current_value.set(new_hotkey);
-        return;
-    }
-
-    std::wstring conflicting_hotkey_identifiers;
-    for (const auto& pair : conflicting_hotkeys)
-    {
-        conflicting_hotkey_identifiers += L"- " + pair.first + L"\n";
-    }
-
-    const auto str = std::format(L"The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
-                                 new_hotkey.to_wstring(),
-                                 conflicting_hotkey_identifiers);
-
-    const auto choice = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict", fsvc_warning, hwnd);
-
-    switch (choice)
-    {
-    case 0:
-        for (const auto& pair : conflicting_hotkeys)
-        {
-            auto it = std::ranges::find_if(g_option_items, [&pair](const t_options_item& item) {
-                return item.name == pair.first;
-            });
-            if (it != g_option_items.end())
-            {
-                it->current_value.set(Hotkey::t_hotkey{});
-                ListView_Update(g_lv_hwnd, std::distance(g_option_items.begin(), it));
-            }
-        }
-        option_item.current_value.set(new_hotkey);
-        break;
-    case 1:
-        option_item.current_value.set(Hotkey::t_hotkey{});
-        break;
-    case 2:
-        option_item.current_value.set(new_hotkey);
-        break;
-    default:
-        break;
-    }
-}
-
 bool begin_settings_lv_edit(HWND hwnd, int i)
 {
     auto option_item = g_option_items[i];
@@ -1530,7 +1455,9 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
 
         advance_listview_selection(g_lv_hwnd);
 
-        try_apply_hotkey(hwnd, hotkey, option_item);
+        Hotkey::try_associate_hotkey(hwnd, option_item.name, hotkey, false);
+
+        ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
     }
 
     ListView_Update(g_lv_hwnd, i);
@@ -1797,8 +1724,6 @@ static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
 
 void ConfigDialog::show_app_settings()
 {
-    g_hotkey_scratchpad.clear();
-
     const auto prev_option_group_size = g_option_groups.size();
     const auto prev_option_items_size = g_option_items.size();
 
@@ -1818,18 +1743,15 @@ void ConfigDialog::show_app_settings()
                 continue;
             }
 
-            const auto scratchpad_index = g_hotkey_scratchpad.size();
-            g_hotkey_scratchpad.emplace_back(action, g_config.hotkeys.contains(action) ? g_config.hotkeys.at(action) : Hotkey::t_hotkey{});
-
             const t_options_item item = {
             .type = t_options_item::Type::Hotkey,
             .group_id = group.id,
             .name = action,
             .current_value = t_options_item::t_readwrite_property([=] {
-                return g_hotkey_scratchpad[scratchpad_index].second;
+                return g_config.hotkeys.at(action);
             },
                                                                   [=](const t_options_item::data_variant& value) {
-                                                                      g_hotkey_scratchpad[scratchpad_index].second = std::get<Hotkey::t_hotkey>(value);
+                                                                      g_config.hotkeys[action] = std::get<Hotkey::t_hotkey>(value);
                                                                   }),
             .default_value = t_options_item::t_readonly_property([=] {
                 return g_config.inital_hotkeys.at(action);
@@ -1900,15 +1822,13 @@ void ConfigDialog::show_app_settings()
     {
         g_config = g_prev_config;
     }
-    else
+
+    ActionManager::begin_batch_work();
+    for (const auto& [action, hotkey] : g_config.hotkeys)
     {
-        ActionManager::begin_batch_work();
-        for (const auto& [path, hotkey] : g_hotkey_scratchpad)
-        {
-            ActionManager::associate_hotkey(path, hotkey, true);
-        }
-        ActionManager::end_batch_work();
+        ActionManager::associate_hotkey(action, hotkey, true);
     }
+    ActionManager::end_batch_work();
 
     g_option_items.erase(g_option_items.begin() + prev_option_items_size, g_option_items.end());
     g_option_groups.erase(g_option_groups.begin() + prev_option_group_size, g_option_groups.end());
