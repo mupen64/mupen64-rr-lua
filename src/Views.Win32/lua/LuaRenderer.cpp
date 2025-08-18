@@ -255,26 +255,24 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context* ctx)
     DeleteObject(ctx->pen);
     DeleteObject(ctx->font);
 
-    if (ctx->presenter)
+    for (const auto bmp : ctx->image_pool | std::views::values)
+    {
+        delete bmp;
+    }
+
+    ctx->dw_text_layouts.clear();
+    ctx->dw_text_sizes.clear();
+    ctx->image_pool.clear();
+    ctx->d2d_render_target_stack = {};
+
+    if (IsWindow(ctx->d2d_overlay_hwnd))
     {
         SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, nullptr);
-
-        ctx->dw_text_layouts.clear();
-        ctx->dw_text_sizes.clear();
-
-        while (!ctx->d2d_render_target_stack.empty())
-        {
-            ctx->d2d_render_target_stack.pop();
-        }
-
-        for (auto& [_, val] : ctx->image_pool)
-        {
-            delete val;
-        }
-        ctx->image_pool.clear();
-
         DestroyWindow(ctx->d2d_overlay_hwnd);
+    }
 
+    if (ctx->presenter)
+    {
         delete ctx->presenter;
         ctx->presenter = nullptr;
         CoUninitialize();
