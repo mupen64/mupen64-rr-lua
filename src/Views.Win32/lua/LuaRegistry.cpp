@@ -8,6 +8,7 @@
 #include <lua/LuaRegistry.h>
 #include <lua/modules/AVI.h>
 #include <lua/modules/Action.h>
+#include <lua/modules/Clipboard.h>
 #include <lua/modules/D2D.h>
 #include <lua/modules/Emu.h>
 #include <lua/modules/Global.h>
@@ -237,6 +238,13 @@ const luaL_Reg ACTION_FUNCS[] = {
 {"invoke", LuaCore::Action::invoke},
 {NULL, NULL}};
 
+const luaL_Reg CLIPBOARD_FUNCS[] = {
+    {"get", LuaCore::Clipboard::get},
+    {"get_content_type", LuaCore::Clipboard::get_content_type},
+    {"set", LuaCore::Clipboard::set},
+    {"clear", LuaCore::Clipboard::clear},
+    {NULL, NULL}};
+
 const std::pair<std::string, lua_CFunction> OVERRIDE_FUNCS[] = {
 {"os.exit", LuaCore::Global::Exit}};
 
@@ -290,6 +298,7 @@ void LuaRegistry::register_functions(lua_State* L)
     register_as_package(L, "avi", AVI_FUNCS);
     register_as_package(L, "hotkey", HOTKEY_FUNCS);
     register_as_package(L, "action", ACTION_FUNCS);
+    register_as_package(L, "clipboard", CLIPBOARD_FUNCS);
     for (const auto& [name, func] : OVERRIDE_FUNCS)
     {
         register_function(L, io_service.string_to_wstring(name), func);

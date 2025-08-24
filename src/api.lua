@@ -20,6 +20,7 @@ iohelper = {}
 avi = {}
 hotkey = {}
 action = {}
+clipboard = {}
 
 Mupen = {
     ---@enum Result
@@ -102,7 +103,7 @@ Mupen = {
 
     ---@alias VKeycode integer
     ---A virtual keycode.
-    
+
     ---@enum VKeycodes
     -- A complete enum of Windows Virtual-Key codes.
     VKeycodes = {
@@ -1621,5 +1622,32 @@ function action.get_actions_matching_filter(filter) end
 ---@param path ActionPath A path.
 ---@param up boolean? If true, the action is considered to be released, otherwise it is considered to be pressed down.
 function action.invoke(path, up) end
+
+--#endregion
+
+
+-- clipboard functions
+--#region
+
+---@alias ClipboardContentType "text"
+
+---Gets the clipboard content as text.
+---@param type ClipboardContentType["text"] The clipboard content type.
+---@return string? The clipboard content in the desired type, or `nil` if the clipboard content isn't of the same type as requested.
+function clipboard.get(type) end
+
+---Gets the content type of the current clipboard contents.
+---@return "text" | nil # The clipboard content type, or `nil` if the clipboard is empty.
+function clipboard.get_content_type() end
+
+---Sets the clipboard content to the specified text.
+---@param type ClipboardContentType["text"] The clipboard content type.
+---@param value string The new clipboard value.
+---@return boolean # Whether the operation succeeded.
+function clipboard.set(type, value) end
+
+---Clears the clipboard.
+---@return boolean # Whether the operation succeeded.
+function clipboard.clear() end
 
 --#endregion
