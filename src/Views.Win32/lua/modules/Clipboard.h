@@ -127,6 +127,13 @@ namespace LuaCore::Clipboard
             std::unreachable();
         }
 
+        if (!src_data)
+        {
+            CloseClipboard();
+            lua_pushboolean(L, false);
+            return 1;
+        }
+
         const HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, src_data_size);
         if (!hg)
         {
