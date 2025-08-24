@@ -395,6 +395,10 @@ void genc_eq_s()
     fld_preg32_dword(EAX);
     fucomip_fpreg(1);
     ffree_fpreg(0);
+    if (g_core->cfg->c_eq_s_nan_accurate)
+    {
+        jp_rj(12);
+    }
     jne_rj(12);
     or_m32_imm32((uint32_t*)&FCR31, 0x800000); // 10
     jmp_imm_short(10); // 2

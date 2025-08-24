@@ -195,6 +195,12 @@ struct core_cfg {
     int32_t float_exception_emulation;
 
     /// <summary>
+    /// Whether the C_EQ_S instruction produces `(NaN == any) == false` when using the Dynamic Recompiler core.
+    /// The legacy behaviour is `(NaN == any) == true`, but this option is kept for backwards-compatibility.
+    /// </summary>
+    int32_t c_eq_s_nan_accurate = 0;
+
+    /// <summary>
     /// Whether audio interrupts will be delayed
     /// </summary>
     int32_t is_audio_delay_enabled = 1;
