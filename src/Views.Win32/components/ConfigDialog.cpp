@@ -1230,10 +1230,10 @@ void get_config_listview_items(std::vector<t_options_group>& groups, std::vector
     .group_id = debug_group.id,
     .name = L"Accurate C.EQ.S",
     .tooltip = L"Whether the C_EQ_S instruction produces `(NaN == any) == false` when using the Dynamic Recompiler core.\nThe legacy behaviour is `(NaN == any) == true`, but this option is kept for backwards-compatibility.",
+    GENPROPS(int32_t, core.c_eq_s_nan_accurate),
     .is_readonly = [] {
         return g_core_ctx->vr_get_launched();
     },
-    GENPROPS(int32_t, core.c_eq_s_nan_accurate),
     },
     };
 }
