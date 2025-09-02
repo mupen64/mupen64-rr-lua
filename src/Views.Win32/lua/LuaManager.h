@@ -102,6 +102,14 @@ std::wstring luaL_optwstring(lua_State* L, int i, const std::wstring& def);
  */
 std::wstring lua_pushwstring(lua_State* L, const std::wstring& str);
 
+/**
+ * \brief Gets the boolean at the given index in the Lua stack. Errors if the value is not a boolean or not present.
+ * \param L The Lua state.
+ * \param i The index of the value in the Lua stack.
+ * \return The boolean at the given index in the Lua stack.
+ */
+bool luaL_checkboolean(lua_State* L, int i);
+
 extern std::vector<t_lua_environment*> g_lua_environments;
 
 /**

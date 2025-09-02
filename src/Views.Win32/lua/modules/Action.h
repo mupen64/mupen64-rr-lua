@@ -300,4 +300,21 @@ namespace LuaCore::Action
 
         return 0;
     }
+
+    static int lock_hotkeys(lua_State* L)
+    {
+        const bool lock = luaL_checkboolean(L, 1);
+
+        ActionManager::lock_hotkeys(lock);
+
+        return 0;
+    }
+
+    static int get_hotkeys_locked(lua_State* L)
+    {
+        const bool locked = ActionManager::get_hotkeys_locked();
+
+        lua_pushboolean(L, locked);
+        return 1;
+    }
 } // namespace LuaCore::Action

@@ -24,6 +24,7 @@ local display_name = ""
 local SAY_HELLO_WORLD_ACTION = "Action API Demo > Print 'Hello World!'"
 local CHANGE_NAME_ACTION = "Action API Demo > Change Name of This Action..."
 local CHANGE_HOTKEY_ACTION = "Action API Demo > Change Hotkey..."
+local TOGGLE_HOTKEY_LOCK_ACTION = "Action API Demo > Lock/Unlock Hotkeys"
 local RANDOM_ITEM_ACTION = "Action API Demo > Click Child to Remove It > Item %d"
 
 assert(action.add({
@@ -56,6 +57,14 @@ assert(action.add({
         if hotkey then
             assert(action.associate_hotkey(CHANGE_NAME_ACTION, hotkey, true))
         end
+    end
+}))
+
+assert(action.add({
+    path = TOGGLE_HOTKEY_LOCK_ACTION,
+    on_press = function()
+        action.lock_hotkeys(not action.get_hotkeys_locked())
+        print("Hotkeys are now " .. (action.get_hotkeys_locked() and "locked" or "unlocked"))
     end
 }))
 

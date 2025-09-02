@@ -32,6 +32,11 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
         break;
     case WM_SETCURSOR:
         {
+            if (ActionManager::get_hotkeys_locked())
+            {
+                break;
+            }
+
             const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
             const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
             const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
@@ -72,6 +77,11 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
         {
+            if (ActionManager::get_hotkeys_locked())
+            {
+                break;
+            }
+
             const bool shift = GetKeyState(VK_SHIFT) & 0x8000;
             const bool ctrl = GetKeyState(VK_CONTROL) & 0x8000;
             const bool alt = GetKeyState(VK_MENU) & 0x8000;

@@ -134,6 +134,16 @@ std::wstring lua_pushwstring(lua_State* L, const std::wstring& str)
     return str;
 }
 
+bool luaL_checkboolean(lua_State* L, int i)
+{
+    if (!lua_isboolean(L, i))
+    {
+        luaL_error(L, "Expected a boolean at argument %d", i);
+    }
+
+    return lua_toboolean(L, i);
+}
+
 void LuaManager::init()
 {
     g_mupen_api_lua_code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));

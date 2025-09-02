@@ -28,6 +28,7 @@ struct t_action {
 struct t_action_manager {
     std::vector<t_action> actions{};
     bool batched_work{};
+    bool lock_hotkeys{};
     MicroLRU::Cache<action_filter, std::vector<std::wstring>> segment_cache{256, [](const std::vector<std::wstring>&) {
                                                                             }};
     MicroLRU::Cache<action_filter, std::vector<t_action*>> filter_result_cache{256, [](const std::vector<t_action*>&) {
@@ -582,4 +583,14 @@ void ActionManager::invoke(const action_path& path, const bool up)
 
         action->pressed = true;
     }
+}
+
+void ActionManager::lock_hotkeys(const bool lock)
+{
+    g_mgr.lock_hotkeys = lock;
+}
+
+bool ActionManager::get_hotkeys_locked()
+{
+    return g_mgr.lock_hotkeys;
 }

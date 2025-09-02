@@ -229,6 +229,8 @@ const luaL_Reg ACTION_FUNCS[] = {
 {"get_activatability", LuaCore::Action::get_activatability},
 {"get_actions_matching_filter", LuaCore::Action::get_actions_matching_filter},
 {"invoke", LuaCore::Action::invoke},
+{"lock_hotkeys", LuaCore::Action::lock_hotkeys},
+{"get_hotkeys_locked", LuaCore::Action::get_hotkeys_locked},
 {NULL, NULL}};
 
 const luaL_Reg CLIPBOARD_FUNCS[] = {

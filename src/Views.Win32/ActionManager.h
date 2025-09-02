@@ -191,4 +191,15 @@ namespace ActionManager
      * \param up If true, the action is considered to be released, otherwise it is considered to be pressed down.
      */
     void invoke(const action_path& path, bool up = false);
+
+    /**
+     * \brief Locks or unlocks action invocations from hotkeys.
+     * \param lock Whether to lock or unlock action invocations from hotkeys.
+     */
+    void lock_hotkeys(bool lock);
+
+    /**
+     * \return Whether action invocations from hotkeys are currently locked.
+     */
+    bool get_hotkeys_locked();
 } // namespace ActionManager

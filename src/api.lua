@@ -1615,6 +1615,13 @@ function action.get_actions_matching_filter(filter) end
 ---@param up boolean? If true, the action is considered to be released, otherwise it is considered to be pressed down.
 function action.invoke(path, up) end
 
+---Locks or unlocks action invocations from hotkeys.
+---@param lock boolean Whether to lock or unlock action invocations from hotkeys.
+function action.lock_hotkeys(lock) end
+
+---@return boolean # Whether action invocations from hotkeys are currently locked.
+function action.get_hotkeys_locked() end
+
 --#endregion
 
 
