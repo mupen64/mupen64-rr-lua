@@ -18,6 +18,8 @@
 #include <r4300/rom.h>
 #include <r4300/vcr.h>
 
+constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1 << 31);
+
 // st that comes from no delay fix mupen, it has some differences compared to new st:
 // - one frame of input is "embedded", that is the pif ram holds already fetched controller info.
 // - execution continues at exception handler (after input poll) at 0x80000180.
@@ -62,7 +64,6 @@ uint8_t g_first_block[0xA02BB4 - 32]{};
 
 // The undo savestate buffer.
 std::vector<uint8_t> g_undo_savestate;
-
 void get_paths_for_task(const t_savestate_task& task, std::filesystem::path& st_path, std::filesystem::path& sd_path)
 {
     sd_path = g_core->get_saves_directory() / (const char*)ROM_HEADER.nom;
@@ -73,6 +74,11 @@ void get_paths_for_task(const t_savestate_task& task, std::filesystem::path& st_
 void load_memory_from_buffer(uint8_t* p)
 {
     MiscHelpers::memread(&p, &rdram_register, sizeof(core_rdram_reg));
+    if (rdram_register.rdram_device_manuf & RDRAM_DEVICE_MANUF_NEW_FIX_BIT)
+    {
+        rdram_register.rdram_device_manuf &= ~RDRAM_DEVICE_MANUF_NEW_FIX_BIT; // remove the trick
+        g_st_skip_dma = true; // tell dma.c to skip it
+    }
     MiscHelpers::memread(&p, &MI_register, sizeof(core_mips_reg));
     MiscHelpers::memread(&p, &pi_register, sizeof(core_pi_reg));
     MiscHelpers::memread(&p, &sp_register, sizeof(core_sp_reg));
@@ -135,7 +141,19 @@ std::vector<uint8_t> generate_savestate()
 
     vcr_freeze_info freeze{};
     uint32_t movie_active = vcr_freeze(freeze);
-
+    
+    // NOTE: Some savestates don't have an SI interrupt in the queue, which means that a dma_si_read call which should have happened prior to the save didn't happen.
+    // In that case, we "finish up" the dma by performing its final part manually.
+    if (get_event(SI_INT) == 0)
+    {
+        g_core->log_warn(L"[ST] Finishing up DMA...");
+        for (size_t i = 0; i < 64 / 4; i++)
+            rdram[si_register.si_dram_addr / 4 + i] = std::byteswap(PIF_RAM[i]);
+        update_count();
+        add_interrupt_event(SI_INT, 0x900);
+        g_st_skip_dma = true;
+    }
+    
     // NOTE: This saving needs to be done **after** the fixing block, as it is now. See previous regression in f9d58f639c798cbc26bbb808b1c3dbd834ffe2d9.
     save_flashram_infos(g_flashram_buf);
     const int32_t event_queue_len = save_eventqueue_infos(g_event_queue_buf);
@@ -479,18 +497,6 @@ void savestates_load_immediate_impl(const t_savestate_task& task)
         }
     }
 
-    // NOTE: Some savestates don't have an SI interrupt in the queue, which means that a dma_si_read call which should have happened prior to the save didn't happen.
-    // In that case, we "finish up" the dma by performing its final part manually.
-    if (get_event(SI_INT) == 0)
-    {
-        g_core->log_warn(L"[ST] Finishing up DMA...");
-        for (size_t i = 0; i < 64 / 4; i++)
-            rdram[si_register.si_dram_addr / 4 + i] = std::byteswap(PIF_RAM[i]);
-        update_count();
-        add_interrupt_event(SI_INT, 0x900);
-        g_st_skip_dma = true;
-    }
-
     g_core->callbacks.load_state();
     task.callback(core_st_callback_info{
                   .result = Res_Ok,
@@ -671,6 +677,8 @@ void st_do_work()
 
     for (const auto& task : g_tasks)
     {
+        g_core->log_info(std::format(L"---------- Savestate {}:", (task.job == core_st_job_save) ? L"save" : L"load"));
+
         if (task.job == core_st_job_save)
         {
             savestates_save_immediate_impl(task);
@@ -680,6 +688,7 @@ void st_do_work()
             savestates_load_immediate_impl(task);
         }
 
+        g_core->log_warn(L"[ST] INTERRUPT QUEUE AT END OF ST TASK:");
         extern void print_queue();
         print_queue();
     }
