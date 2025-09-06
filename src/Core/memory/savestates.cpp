@@ -275,6 +275,9 @@ void savestates_save_immediate_impl(const t_savestate_task& task)
 
 void savestates_load_immediate_impl(const t_savestate_task& task)
 {
+    // This might have been set previously by a save operation. Keeping it breaks loading because we might skip DMA when it's not needed.
+    g_st_skip_dma = false;
+    
     // TODO: Reimplement timing
 
     memset(g_event_queue_buf, 0, sizeof(g_event_queue_buf));
