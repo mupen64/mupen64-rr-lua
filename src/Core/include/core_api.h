@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "core_types.h"
+
 #define EXPORT
 #define CALL
-
-#include "core_types.h"
 
 #ifdef __cplusplus
 extern "C" {
