@@ -21,11 +21,3 @@
 #endif
 
 #define PLUGIN_NAME L"No Video " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
-
-#define EXPORT __declspec(dllexport)
-#define CALL _cdecl
-
-extern "C" {
-EXPORT void CALL GetDllInfo(core_plugin_info* info);
-EXPORT void CALL DllAbout(void* hParent);
-}

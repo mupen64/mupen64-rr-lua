@@ -21,9 +21,6 @@
     </ItemGroup>
     <PropertyGroup Label="Globals">
         <VCProjectVersion>15.0</VCProjectVersion>
-        <ProjectGuid>{F7BB4103-21BA-4728-8CC3-EEDE1E142DF3}</ProjectGuid>
-        <Keyword>Win32Proj</Keyword>
-        <RootNamespace>Plugins.Video.Dummy</RootNamespace>
         <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
     </PropertyGroup>
     <PropertyGroup>
@@ -69,6 +66,13 @@
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
         <LinkIncremental>false</LinkIncremental>
     </PropertyGroup>
+
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <PreprocessorDefinitions>CORE_PLUGIN_WITH_CALLBACKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+    
     <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
         <ClCompile>
             <PrecompiledHeader>NotUsing</PrecompiledHeader>
