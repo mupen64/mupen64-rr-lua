@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="Shared.props"/>
+    <Import Project="Core.Dependencies.props"/>
+    <Import Project="Plugins.props"/>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+
+    <PropertyGroup Label="Globals">
+        <ProjectGuid>{AC3A50BB-9B86-3F80-9B31-A26EDB76EEF9}</ProjectGuid>
+    </PropertyGroup>
+    
+    <ImportGroup Label="ExtensionTargets">
+    </ImportGroup>
+
+    <PropertyGroup>
+        <OutDir>build\Views.Win32\plugin\</OutDir>
+        <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build\$(ProjectName)\obj-x86-debug\</IntDir>
+        <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build\$(ProjectName)\obj-x86-release\</IntDir>
+        <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">build\$(ProjectName)\obj-x64-debug\</IntDir>
+        <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">build\$(ProjectName)\obj-x64-release\</IntDir>
+        <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">no-input-x86-sse2-debug</TargetName>
+        <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">no-input-x86-sse2-release</TargetName>
+        <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">no-input-x64-avx2-debug</TargetName>
+        <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">no-input-x64-avx2-release</TargetName>
+    </PropertyGroup>
+
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+        <Link>
+            <ProgramDatabaseFile>build\$(ProjectName)\no-input-sse2-debug.pdb</ProgramDatabaseFile>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+        <Link>
+            <ProgramDatabaseFile>build\$(ProjectName)\no-input-sse2-release.pdb</ProgramDatabaseFile>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <Link>
+            <ProgramDatabaseFile>build\$(ProjectName)\no-input-avx2-debug.pdb</ProgramDatabaseFile>
+        </Link>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <Link>
+            <ProgramDatabaseFile>build\$(ProjectName)\no-input-avx2-release.pdb</ProgramDatabaseFile>
+        </Link>
+    </ItemDefinitionGroup>
+
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <AdditionalIncludeDirectories>src/;src/Core/include;src/Plugins.Input.Dummy;lib/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <BufferSecurityCheck>true</BufferSecurityCheck>
+            <WarningLevel>Level4</WarningLevel>
+            <DisableSpecificWarnings>4018;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+            <CompileAs>CompileAsCpp</CompileAs>
+            <LanguageStandard>stdcpplatest</LanguageStandard>
+            <UseFullPaths>false</UseFullPaths>
+            <SDLCheck>true</SDLCheck>
+            <MultiProcessorCompilation>true</MultiProcessorCompilation>
+            <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+            <PrecompiledHeader>NotUsing</PrecompiledHeader>
+            <FloatingPointModel>Strict</FloatingPointModel>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+        </ClCompile>
+        <Link>
+            <AdditionalDependencies>Comctl32.lib;uxtheme.lib;Msimg32.lib;Gdiplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+            <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+            <SubSystem>Windows</SubSystem>
+            <RandomizedBaseAddress>false</RandomizedBaseAddress>
+            <DataExecutionPrevention>false</DataExecutionPrevention>
+            <LargeAddressAware>true</LargeAddressAware>
+        </Link>
+    </ItemDefinitionGroup>
+
+    <ItemGroup>
+        <ClCompile Include="src\Plugins.Input.Dummy\Main.cpp" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ClInclude Include="src\Plugins.Input.Dummy\Main.h" />
+    </ItemGroup>
+</Project>
