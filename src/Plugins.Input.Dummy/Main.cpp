@@ -44,3 +44,8 @@ EXPORT void CALL DllAbout(void* hParent)
 
     MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);
 }
+
+EXPORT void CALL InitiateControllers(core_input_info ControlInfo)
+{
+    ControlInfo.controllers[0].Present = true;
+}
