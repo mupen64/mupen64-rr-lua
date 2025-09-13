@@ -7,7 +7,7 @@
 </h1>
 
 <p align="center">
-  Powerful N64 TASing emulator with Lua scripting support
+  Advanced N64 TASing emulator
 </p>
 
 <p align="center">
