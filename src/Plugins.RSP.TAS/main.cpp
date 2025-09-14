@@ -185,7 +185,6 @@ void on_rom_closed()
 
     g_audio_ucode_func = nullptr;
     g_rsp_alive = false;
-    g_config_readonly = false;
 }
 
 uint32_t do_rsp_cycles(uint32_t Cycles)

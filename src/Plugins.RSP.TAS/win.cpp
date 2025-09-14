@@ -126,11 +126,6 @@ EXPORT void CALL GetDllInfo(core_plugin_info* PluginInfo)
     PluginInfo->unused_byteswapped = 1;
 }
 
-EXPORT void CALL RomOpen(void)
-{
-    g_config_readonly = true;
-}
-
 EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t* CycleCount)
 {
     rsp = Rsp_Info;

@@ -11,10 +11,7 @@
 
 t_config config = {};
 t_config default_config = {};
-const wchar_t* cfg_groups[] = {L"General"};
-int32_t g_config_readonly{};
 t_config prev_config = {};
-
 
 INT_PTR CALLBACK ConfigDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {

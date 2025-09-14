@@ -111,32 +111,8 @@ static void CLEARBUFF()
     uint32_t addr = (uint32_t)(inst1 & 0xffff);
     uint32_t count = (uint32_t)(inst2 & 0xffff);
     addr &= 0xFFFC;
-    // #ifndef SAFE_MEMORY
-#if 1
     memset(BufferSpace + addr, 0, (count + 3) & 0xFFFC);
-#else
-    __asm {
-		mov ecx, dword ptr [count];
-		add edx, dword ptr [addr];
-		mov eax, dword ptr [BufferSpace];
-        // add edx, 05c0h;
-		push edi
-moretodo:
-		test ecx, ecx;
-		jz isDoneNow;
-		mov edi, edx;
-		xor edi, 3
-		mov byte ptr [eax+edi], 0;
-		dec ecx;
-		inc edi;
-		jmp moretodo
-isDoneNow:
-		pop edi;
-    }
-#endif
 }
-
-// FILE *dfile = fopen ("d:\\envmix.txt", "wt");
 
 static void ENVMIXER()
 {
@@ -221,22 +197,6 @@ static void ENVMIXER()
     {
         if (LAdderStart != LTrg)
         {
-            /*			__asm{
-                            mov ecx, dword ptr [LAdderEnd];
-                            mov eax, dword ptr [LRamp];
-                            imul ecx;
-                            shrd eax, edx, 16;
-                            //shl edx, 16;
-                            //shr eax, 16;
-                            //add eax, edx;
-                            mov dword ptr [LAdderEnd], eax;
-                            mov eax, dword ptr [LAdderStart];
-                            mov dword ptr [LAcc], eax;
-                            mov dword ptr [LAdderStart], ecx;
-                            sub ecx, eax;
-                            sar ecx, 3;
-                            mov dword ptr [LVol], ecx;
-                        }*/
             LAcc = LAdderStart;
             LVol = (LAdderEnd - LAdderStart) >> 3;
             LAdderEnd = ((int64_t)LAdderEnd * (int64_t)LRamp) >> 16;
@@ -250,21 +210,6 @@ static void ENVMIXER()
 
         if (RAdderStart != RTrg)
         {
-            /*			__asm {
-                            mov ecx, dword ptr [RAdderEnd];
-                            mov eax, dword ptr [RRamp];
-                            imul ecx;
-                            shl edx, 16;
-                            shr eax, 16;
-                            add eax, edx;
-                            mov dword ptr [RAdderEnd], eax;
-                            mov eax, dword ptr [RAdderStart];
-                            mov dword ptr [RAcc], eax;
-                            mov dword ptr [RAdderStart], ecx;
-                            sub ecx, eax;
-                            sar ecx, 3;
-                            mov dword ptr [RVol], ecx;
-                        }*/
             RAcc = RAdderStart;
             RVol = (RAdderEnd - RAdderStart) >> 3;
             RAdderEnd = ((int64_t)RAdderEnd * (int64_t)RRamp) >> 16;
@@ -357,33 +302,8 @@ static void ENVMIXER()
                 }
             }
 
-            // fprintf (dfile, "%04X ", (LAcc>>16));
-
-            /*MainL = (((int64_t)Dry*2 * (int64_t)(LAcc>>16)) + 0x8000) >> 16;
-            MainR = (((int64_t)Dry*2 * (int64_t)(RAcc>>16)) + 0x8000) >> 16;
-            AuxL  = (((int64_t)Wet*2 * (int64_t)(LAcc>>16)) + 0x8000) >> 16;
-            AuxR  = (((int64_t)Wet*2 * (int64_t)(RAcc>>16)) + 0x8000) >> 16;*/
-            /*
-                    if (MainL>32767) MainL = 32767;
-                    else if (MainL<-32768) MainL = -32768;
-                    if (MainR>32767) MainR = 32767;
-                    else if (MainR<-32768) MainR = -32768;
-                    if (AuxL>32767) AuxL = 32767;
-                    else if (AuxL<-32768) AuxR = -32768;
-                    if (AuxR>32767) AuxR = 32767;
-                    else if (AuxR<-32768) AuxR = -32768;*/
-            /*
-            MainR = (Dry * RTrg + 0x10000) >> 15;
-            MainL = (Dry * LTrg + 0x10000) >> 15;
-            AuxR  = (Wet * RTrg + 0x8000)  >> 16;
-            AuxL  = (Wet * LTrg + 0x8000)  >> 16;*/
-
-            o1 += (/*(o1*0x7fff)+*/ (i1 * MainR) + 0x4000) >> 15;
-            a1 += (/*(a1*0x7fff)+*/ (i1 * MainL) + 0x4000) >> 15;
-
-            /*		o1=((int64_t)(((int64_t)o1*0xfffe)+((int64_t)i1*MainR*2)+0x8000)>>16);
-
-                    a1=((int64_t)(((int64_t)a1*0xfffe)+((int64_t)i1*MainL*2)+0x8000)>>16);*/
+            o1 += ((i1 * MainR) + 0x4000) >> 15;
+            a1 += ((i1 * MainL) + 0x4000) >> 15;
 
             if (o1 > 32767)
                 o1 = 32767;
@@ -399,11 +319,8 @@ static void ENVMIXER()
             aux1[ptr ^ 1] = a1;
             if (AuxIncRate)
             {
-                // a2=((int64_t)(((int64_t)a2*0xfffe)+((int64_t)i1*AuxR*2)+0x8000)>>16);
-
-                // a3=((int64_t)(((int64_t)a3*0xfffe)+((int64_t)i1*AuxL*2)+0x8000)>>16);
-                a2 += (/*(a2*0x7fff)+*/ (i1 * AuxR) + 0x4000) >> 15;
-                a3 += (/*(a3*0x7fff)+*/ (i1 * AuxL) + 0x4000) >> 15;
+                a2 += ((i1 * AuxR) + 0x4000) >> 15;
+                a3 += ((i1 * AuxL) + 0x4000) >> 15;
 
                 if (a2 > 32767)
                     a2 = 32767;
@@ -421,9 +338,6 @@ static void ENVMIXER()
             ptr++;
         }
     }
-
-    /*LAcc = LAdderEnd;
-    RAcc = RAdderEnd;*/
 
     *(int16_t*)(hleMixerWorkArea + 0) = Wet; // 0-1
     *(int16_t*)(hleMixerWorkArea + 2) = Dry; // 2-3
@@ -543,10 +457,7 @@ static void RESAMPLE()
     uint32_t dstPtr = (AudioOutBuffer / 2);
     int32_t temp;
     int32_t accum;
-    /*
-        if (addy > (1024*1024*8))
-            addy = (inst2 & 0xffffff);
-    */
+
     srcPtr -= 4;
 
     if ((Flags & 0x1) == 0)
@@ -559,34 +470,14 @@ static void RESAMPLE()
     else
     {
         for (int x = 0; x < 4; x++)
-            src[(srcPtr + x) ^ 1] = 0; //*(uint16_t *)(rsp.rdram+((addy+x)^2));
+            src[(srcPtr + x) ^ 1] = 0;
     }
-
-    if ((Flags & 0x2))
-        //		__asm int 3;
-        do
-        {
-        }
-        while (0);
 
     for (int i = 0; i < ((AudioCount + 0xf) & 0xFFF0) / 2; i++)
     {
-        // location = (((Accum * 0x40) >> 0x10) * 8);
         location = (Accum >> 0xa) << 0x3;
         lut = (int16_t*)(((uint8_t*)ResampleLUT) + location);
 
-        // mov eax, dword ptr [src+srcPtr];
-        // movsx edx, word ptr [lut];
-        // shl edx, 1
-        // imul edx
-        // test eax, 08000h
-        // setz ecx
-        // shl ecx, 16
-        // xor eax, 08000h
-        // add eax, ecx
-        // and edx, 0f000h
-
-        // imul
         temp = ((int32_t) * (int16_t*)(src + ((srcPtr + 0) ^ 1)) * ((int32_t)((int16_t)lut[0])));
         accum = (int32_t)(temp >> 15);
 
@@ -612,6 +503,7 @@ static void RESAMPLE()
     }
     for (int x = 0; x < 4; x++)
         ((uint16_t*)rsp.rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
+    
     // memcpy (RSWORK, src+srcPtr, 0x8);
     *(uint16_t*)(rsp.rdram + addy + 10) = Accum;
 }
@@ -652,25 +544,14 @@ static void SETVOL()
     if (flags & A_LEFT)
     {
         // Set the Ramping values Target, Ramp
-        // loopval = (((uint32_t)vol << 0x10) | (uint32_t)voltarg);
-        VolTrg_Left = *(int16_t*)&inst1; // m_LeftVol
-        // VolRamp_Left = (int32_t)inst2;
-        VolRamp_Left = *(int32_t*)&inst2; //(uint16_t)(inst2) | (int32_t)(int16_t)(inst2 << 0x10);
-        // fprintf (dfile, "Ramp Left: %f\n", (float)VolRamp_Left/65536.0);
-        // fprintf (dfile, "Ramp Left: %08X\n", inst2);
-        // VolRamp_Left = (int16_t)voltarg;	// m_LeftVolTarget
-        // VolRate_Left = (int16_t)volrate;	// m_LeftVolRate
+        VolTrg_Left = *(int16_t*)&inst1;
+        VolRamp_Left = *(int32_t*)&inst2;
     }
     else
     {
         // A_RIGHT
-        VolTrg_Right = *(int16_t*)&inst1; // m_RightVol
-        // VolRamp_Right = (int32_t)inst2;
-        VolRamp_Right = *(int32_t*)&inst2; //(uint16_t)(inst2 >> 0x10) | (int32_t)(int16_t)(inst2 << 0x10);
-        // fprintf (dfile, "Ramp Right: %f\n", (float)VolRamp_Right/65536.0);
-        // fprintf (dfile, "Ramp Right: %08X\n", inst2);
-        // VolRamp_Right = (int16_t)voltarg;	// m_RightVolTarget
-        // VolRate_Right = (int16_t)volrate;	// m_RightVolRate
+        VolTrg_Right = *(int16_t*)&inst1;
+        VolRamp_Right = *(int32_t*)&inst2;
     }
 }
 
@@ -681,21 +562,7 @@ static void UNKNOWN()
 static void SETLOOP()
 {
     loopval = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    // VolTrg_Left  = (int16_t)(loopval>>16);		// m_LeftVol
-    // VolRamp_Left = (int16_t)(loopval);	// m_LeftVolTarget
 }
-
-/*
-void assert(bool _a_)	{
-    if (!(_a_)) {
-        char szError [512];
-        sprintf(szError,"PC = %08X\n\nError localized at...\n\n  Line:\t %d\n  File:\t %s\n  Time:\t %s\n\nIgnore and continue?",sp_reg_pc, __LINE__,__FILE__,__TIMESTAMP__);
-        MessageBox (NULL, szError, "Assert", MB_OK);
-        __asm int 3;
-        rsp_reg.halt = 1;
-    }
-}
-*/
 
 static void ADPCM()
 {
@@ -704,7 +571,6 @@ static void ADPCM()
     WORD Gain = (uint16_t)(inst1 & 0xffff);
     DWORD Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
     WORD inPtr = 0;
-    // short *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
     short* out = (short*)(BufferSpace + AudioOutBuffer);
     BYTE* in = (BYTE*)(BufferSpace + AudioInBuffer);
     short count = (short)AudioCount;
@@ -715,10 +581,6 @@ static void ADPCM()
     WORD j;
     int a[8];
     short *book1, *book2;
-    /*
-        if (Address > (1024*1024*8))
-            Address = (inst2 & 0xffffff);
-    */
     memset(out, 0, 32);
 
     if (!(Flags & 0x1))
@@ -977,9 +839,6 @@ static void SEGMENT()
 {
     // Should work
     SEGMENTS[(inst2 >> 24) & 0xf] = (inst2 & 0xffffff);
-    /*	if (SEGMENTS[(inst2>>24)&0xf] > (8*1024*1024))
-            MessageBox (NULL, "Invalid Segment Size", "Just a test", MB_OK);
-    */
 }
 
 static void SETBUFF()
@@ -1028,10 +887,6 @@ static void LOADADPCM()
     // Loads an ADPCM table - Works 100% Now 03-13-01
     uint32_t v0;
     v0 = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    /*	if (v0 > (1024*1024*8))
-            v0 = (inst2 & 0xffffff);*/
-    // memcpy (dmem+0x4c0, rsp.rdram+v0, inst1&0xffff); // Could prolly get away with not putting this in dmem
-    // assert ((inst1&0xffff) <= 0x80);
     uint16_t* table = (uint16_t*)(rsp.rdram + v0);
     for (uint32_t x = 0; x < ((inst1 & 0xffff) >> 0x4); x++)
     {
@@ -1124,37 +979,3 @@ SPNOOP, ADPCM, CLEARBUFF, ENVMIXER, LOADBUFF, RESAMPLE, SAVEBUFF, UNKNOWN,
 SETBUFF, SETVOL, DMEMMOVE, LOADADPCM, MIXER, INTERLEAVE, UNKNOWN, SETLOOP,
 SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP,
 SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP, SPNOOP};
-
-/*  BACKUPS
-void MIXER () { // Fixed a sign issue... 03-14-01
-    uint16_t dmemin  = (uint16_t)(inst2 >> 0x10);
-    uint16_t dmemout = (uint16_t)(inst2 & 0xFFFF);
-    uint16_t gain    = (uint16_t)(inst1 & 0xFFFF);
-    uint8_t  flags   = (uint8_t)((inst1 >> 16) & 0xff);
-    uint64_t temp;
-
-    if (AudioCount == 0)
-        return;
-
-    for (int x=0; x < AudioCount; x+=2) { // I think I can do this a lot easier
-        temp = (int64_t)(*(int16_t *)(BufferSpace+dmemout+x)) * (int64_t)((int16_t)(0x7FFF)*2);
-
-        if (temp & 0x8000)
-            temp = (temp^0x8000) + 0x10000;
-        else
-            temp = (temp^0x8000);
-
-        temp = (temp & 0xFFFFFFFFFFFF);
-
-        temp += ((*(int16_t *)(BufferSpace+dmemin+x) * (int64_t)((int16_t)gain*2))) & 0xFFFFFFFFFFFF;
-
-        temp = (int32_t)(temp >> 16);
-        if ((int32_t)temp > 32767)
-            temp = 32767;
-        if ((int32_t)temp < -32768)
-            temp = -32768;
-
-        *(uint16_t *)(BufferSpace+dmemout+x) = (uint16_t)(temp & 0xFFFF);
-    }
-}
-*/

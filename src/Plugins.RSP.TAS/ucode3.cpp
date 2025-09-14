@@ -33,24 +33,6 @@ extern uint16_t adpcmtable[0x88];
 
 extern uint8_t BufferSpace[0x10000];
 
-/*
-static void SETVOL3 () { // Swapped Rate_Left and Vol
-    uint8_t Flags = (uint8_t)(inst1 >> 0x10);
-    if (Flags & 0x4) { // 288
-        if (Flags & 0x2) { // 290
-            VolTrg_Left  = *(int16_t*)&inst1;
-            VolRamp_Left = *(int32_t*)&inst2;
-        } else {
-            VolTrg_Right  = *(int16_t*)&inst1;
-            VolRamp_Right = *(int32_t*)&inst2;
-        }
-    } else {
-        Vol_Left	= *(int16_t*)&inst1;
-        Env_Dry		= (int16_t)(*(int32_t*)&inst2 >> 0x10);
-        Env_Wet		= *(int16_t*)&inst2;
-    }
-}
-*/
 static void SETVOL3()
 {
     uint8_t Flags = (uint8_t)(inst1 >> 0x10);
@@ -137,16 +119,7 @@ static void ENVMIXER3()
         RVol = *(int32_t*)(hleMixerWorkArea + 18); // 18-19
         LSig = *(int16_t*)(hleMixerWorkArea + 20); // 20-21
         RSig = *(int16_t*)(hleMixerWorkArea + 22); // 22-23
-        // uint32_t test  = *(int32_t *)(hleMixerWorkArea + 24); // 22-23
-        // if (test != 0x13371337)
-        //	__asm int 3;
     }
-
-
-    // if(!(flags&A_AUX)) {
-    //	AuxIncRate=0;
-    //	aux2=aux3=zero;
-    // }
 
     for (int y = 0; y < (0x170 / 2); y++)
     {
@@ -261,7 +234,6 @@ static void ENVMIXER3()
     *(int32_t*)(hleMixerWorkArea + 18) = RVol; // 18-19
     *(int16_t*)(hleMixerWorkArea + 20) = LSig; // 20-21
     *(int16_t*)(hleMixerWorkArea + 22) = RSig; // 22-23
-    //*(uint32_t *)(hleMixerWorkArea + 24) = 0x13371337; // 22-23
     memcpy(rsp.rdram + addy, (uint8_t*)hleMixerWorkArea, 80);
 }
 
@@ -270,7 +242,7 @@ static void ENVMIXER3o()
 {
     uint8_t flags = (uint8_t)((inst1 >> 16) & 0xff);
     uint32_t addy = (inst2 & 0xFFFFFF); // + SEGMENTS[(inst2>>24)&0xf];
-    // static FILE *dfile = fopen ("d:\\envmix.txt", "wt");
+
     //  ********* Make sure these conditions are met... ***********
     if ((AudioInBuffer | AudioOutBuffer | AudioAuxA | AudioAuxC | AudioAuxE | AudioCount) & 0x3)
     {
@@ -279,7 +251,7 @@ static void ENVMIXER3o()
         L"Unaligned EnvMixer... please report this to Azimer with the following information: RomTitle, Place in the rom it occurred, and any save state just before the error",
         L"AudioHLE Error", MB_OK);
     }
-    // ------------------------------------------------------------
+    
     short* inp = (short*)(BufferSpace + 0x4F0);
     short* out = (short*)(BufferSpace + 0x9D0);
     short* aux1 = (short*)(BufferSpace + 0xB40);
@@ -299,7 +271,6 @@ static void ENVMIXER3o()
     int32_t LTrg, RTrg;
     int16_t Wet, Dry;
 
-    // fprintf (dfile, "\n----------------------------------------------------\n");
     Vol_Right = (*(int16_t*)&inst1);
     if (flags & A_INIT)
     {
@@ -309,10 +280,8 @@ static void ENVMIXER3o()
         RAcc = ((int32_t)(int16_t)Vol_Right << 16);
         Wet = Env_Wet;
         Dry = Env_Dry; // Save Wet/Dry values
-        // LTrg = (VolTrg_Left << 16); RTrg = (VolTrg_Right << 16); // Save Current Left/Right Targets
         LTrg = VolTrg_Left * 0x10000;
         RTrg = VolTrg_Right * 0x10000;
-        // fprintf (dfile, "Vol_Left = %08X LVol = %08X\n", Vol_Left, LVol);
     }
     else
     {
@@ -334,9 +303,7 @@ static void ENVMIXER3o()
         AuxIncRate = 0;
         aux2 = aux3 = zero;
     }
-
-    // fprintf (dfile, "LTrg = %08X, LVol = %08X\n", LTrg, LVol);
-
+    
     for (int x = 0; x < (0x170 / 2); x++)
     {
         i1 = (int)inp[x ^ 1];
@@ -389,26 +356,11 @@ static void ENVMIXER3o()
                 RVol = 0;
             }
         }
-
-        // fprintf (dfile, "%04X ", (LAcc>>16));
-
+        
         MainL = ((Dry * (LAcc >> 16)) + 0x4000) >> 15;
         MainR = ((Dry * (RAcc >> 16)) + 0x4000) >> 15;
         AuxL = ((Wet * (LAcc >> 16)) + 0x4000) >> 15;
         AuxR = ((Wet * (RAcc >> 16)) + 0x4000) >> 15;
-        /*if (MainL>32767) MainL = 32767;
-        else if (MainL<-32768) MainL = -32768;
-        if (MainR>32767) MainR = 32767;
-        else if (MainR<-32768) MainR = -32768;
-        if (AuxL>32767) AuxL = 32767;
-        else if (AuxL<-32768) AuxR = -32768;
-        if (AuxR>32767) AuxR = 32767;
-        else if (AuxR<-32768) AuxR = -32768;*/
-        /*
-        MainR = (Dry * RTrg + 0x10000) >> 15;
-        MainL = (Dry * LTrg + 0x10000) >> 15;
-        AuxR  = (Wet * RTrg + 0x8000)  >> 16;
-        AuxL  = (Wet * LTrg + 0x8000)  >> 16;*/
 
         o1 += (/*(o1*0x7fff)+*/ (i1 * MainR) + 0x4000) >> 15;
 
@@ -456,86 +408,6 @@ static void ENVMIXER3o()
     *(int32_t*)(hleMixerWorkArea + 14) = RAcc; // 14-15
     memcpy(rsp.rdram + addy, (uint8_t*)hleMixerWorkArea, 80);
 }
-
-/*
-static void ENVMIXER3 () { // Borrowed from RCP...
-    uint8_t  flags = (uint8_t)((inst1 >> 16) & 0xff);
-    uint32_t addy = (inst2 & 0xffffff);// + SEGMENTS[(inst2>>24)&0xf];
-
-    short *inp=(short *)(BufferSpace+0x4F0);
-    short *out=(short *)(BufferSpace+0x9D0);
-    short *aux1=(short *)(BufferSpace+0xB40);
-    short *aux2=(short *)(BufferSpace+0xCB0);
-    short *aux3=(short *)(BufferSpace+0xE20);
-
-    Vol_Right = (inst1 & 0xffff); // Needed for future references
-
-    int i1,o1,a1,a2,a3;
-    int MainR;
-    int MainL;
-    int AuxR;
-    int AuxL;
-
-    WORD AuxIncRate=1;
-    short zero[8];
-    memset(zero,0,16);
-    if(flags & A_INIT) {
-        MainR = (Env_Dry * VolTrg_Right + 0x10000) >> 15;
-        MainL = (Env_Dry * VolTrg_Left  + 0x10000) >> 15;
-        AuxR  = (Env_Wet * VolTrg_Right + 0x8000)  >> 16;
-        AuxL  = (Env_Wet * VolTrg_Left  + 0x8000)  >> 16;
-    } else {
-        memcpy((uint8_t *)hleMixerWorkArea, (rsp.rdram+addy), 80);
-        MainR=hleMixerWorkArea[0];
-        MainL=hleMixerWorkArea[2];
-        AuxR=hleMixerWorkArea[4];
-        AuxL=hleMixerWorkArea[6];
-    }
-    if(!(flags&A_AUX))
-    {
-        AuxIncRate=0;
-        aux2=aux3=zero;
-    }
-    for(int i=0;i<(0x170/2);i++)
-    {
-        i1=(int)*(inp++);
-        o1=(int)*out;
-        a1=(int)*aux1;
-        a2=(int)*aux2;
-        a3=(int)*aux3;
-
-        o1=((o1*0x7fff)+(i1*MainR)+0x10000)>>15;
-        a2=((a2*0x7fff)+(i1*AuxR)+0x8000)>>16;
-
-        a1=((a1*0x7fff)+(i1*MainL)+0x10000)>>15;
-        a3=((a3*0x7fff)+(i1*AuxL)+0x8000)>>16;
-
-        if(o1>32767) o1=32767;
-        else if(o1<-32768) o1=-32768;
-
-        if(a1>32767) a1=32767;
-        else if(a1<-32768) a1=-32768;
-
-        if(a2>32767) a2=32767;
-        else if(a2<-32768) a2=-32768;
-
-        if(a3>32767) a3=32767;
-        else if(a3<-32768) a3=-32768;
-
-        *(out++)=o1;
-        *(aux1++)=a1;
-        *aux2=a2;
-        *aux3=a3;
-        aux2+=AuxIncRate;
-        aux3+=AuxIncRate;
-    }
-    hleMixerWorkArea[0]=MainR;
-    hleMixerWorkArea[2]=MainL;
-    hleMixerWorkArea[4]=AuxR;
-    hleMixerWorkArea[6]=AuxL;
-    memcpy(rsp.rdram+addy, (uint8_t *)hleMixerWorkArea,80);
-}*/
-
 
 static void CLEARBUFF3()
 {
@@ -657,20 +529,10 @@ static void ADPCM3()
     {
         if (Flags & 0x2)
         {
-            /*
-                        for(int i=0;i<16;i++)
-                        {
-                            out[i]=*(short *)&rsp.rdram[(loopval+i*2)^2];
-                        }*/
             memcpy(out, &rsp.rdram[loopval], 32);
         }
         else
         {
-            /*
-                        for(int i=0;i<16;i++)
-                        {
-                            out[i]=*(short *)&rsp.rdram[(Address+i*2)^2];
-                        }*/
             memcpy(out, &rsp.rdram[Address], 32);
         }
     }

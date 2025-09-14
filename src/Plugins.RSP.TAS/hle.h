@@ -63,16 +63,10 @@ typedef struct
 } OSTask_t;
 
 void jpg_uncompress(OSTask_t* task);
-/*void ucode1(OSTask_t *task);
-void ucode2(OSTask_t *task);
-void ucode3(OSTask_t *task);
-void init_ucode1();
-void init_ucode2();*/
 
 extern uint32_t inst1, inst2;
 extern uint16_t AudioInBuffer, AudioOutBuffer, AudioCount;
 extern uint16_t AudioAuxA, AudioAuxC, AudioAuxE;
 extern uint32_t loopval; // Value set by A_SETLOOP : Possible conflict with SETVOLUME???
-// extern uint32_t UCData, UDataLen;
 
 #endif

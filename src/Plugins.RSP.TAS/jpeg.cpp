@@ -19,9 +19,7 @@ static struct
 } jpg_data;
 
 static short* q[3];
-
 static short* pic;
-
 static unsigned long len1, len2;
 
 void jpg_uncompress(OSTask_t* task)

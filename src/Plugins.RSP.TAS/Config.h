@@ -49,7 +49,6 @@ struct t_config {
 };
 
 extern t_config config;
-extern int32_t g_config_readonly;
 
 /**
  * \brief Saves the config
