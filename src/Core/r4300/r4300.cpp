@@ -178,9 +178,10 @@ bool vr_get_frame_advance()
     return frame_advance_outstanding;
 }
 
-void critical_stop()
+void critical_stop(const std::wstring& message)
 {
-    g_core->log_error(L"Critical error, stopping emulation\n");
+    const auto formatted = std::format(L"A critical emulation error has occured: {}.\n\nEmulation will now stop.", message);
+    g_core->show_dialog(formatted.c_str(), L"Critical Error", fsvc_error);
     g_core->submit_task([] {
         (void)g_ctx.vr_close_rom(true);
     });
@@ -209,7 +210,7 @@ void NI()
         g_core->log_info(std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)SP_DMEM[(PC->addr - 0xa4000000) / 4]));
     else
         g_core->log_info(std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)rdram[(PC->addr - 0x80000000) / 4]));
-    critical_stop();
+    critical_stop(L"Executed NI. See logs for more info");
 }
 
 void RESERVED()
@@ -219,7 +220,7 @@ void RESERVED()
         g_core->log_info(std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)SP_DMEM[(PC->addr - 0xa4000000) / 4]));
     else
         g_core->log_info(std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)rdram[(PC->addr - 0x80000000) / 4]));
-    critical_stop();
+    critical_stop(L"Executed RESERVED. See logs for more info");
 }
 
 void FIN_BLOCK()

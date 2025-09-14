@@ -16,8 +16,8 @@ void MFC0()
     switch (PC->f.r.nrd)
     {
     case 1:
-        g_core->log_error(L"lecture de Random");
-        critical_stop();
+        critical_stop(L"MFC0 unimplemented operation");
+        break;
     default:
         rrt32 = reg_cop0[PC->f.r.nrd];
         sign_extended(core_rrt);
@@ -33,8 +33,7 @@ void MTC0()
         core_Index = core_rrt & 0x8000003F;
         if ((core_Index & 0x3F) > 31)
         {
-            g_core->log_error(L"il y a plus de 32 TLB");
-            critical_stop();
+            critical_stop(L"TLB Index too high in MTC0");
         }
         break;
     case 1: // Random
@@ -108,13 +107,14 @@ void MTC0()
         PC--;
         break;
     case 13: // Cause
-        if (core_rrt != 0)
+        if (core_rrt == 0)
         {
-            g_core->log_error(L"écriture dans Cause");
-            critical_stop();
+            core_Cause = core_rrt;
         }
         else
-            core_Cause = core_rrt;
+        {
+            critical_stop(L"MTC0 core_rrt != 0 cause");
+        }
         break;
     case 14: // EPC
         core_EPC = core_rrt;
@@ -139,8 +139,8 @@ void MTC0()
         core_TagHi = 0;
         break;
     default:
-        g_core->log_error(std::format(L"unknown mtc0 write : {}\n", PC->f.r.nrd));
-        critical_stop();
+        critical_stop(std::format(L"unknown mtc0 write : {}\n", PC->f.r.nrd));
+        break;
     }
     PC++;
 }

@@ -30,8 +30,7 @@ extern uint32_t next_vi;
 
 static void NI()
 {
-    g_core->log_info(std::format(L"NI:{:#06x}", vr_op));
-    critical_stop();
+    critical_stop(std::format(L"NI:{:#06x}", vr_op));
 }
 
 static void SLL()
@@ -417,8 +416,7 @@ static void TEQ()
 {
     if (core_rrs == core_rrt)
     {
-        g_core->log_error(L"trap exception in teq");
-        critical_stop();
+        critical_stop(L"trap exception in teq");
     }
     interp_addr += 4;
 }
@@ -949,8 +947,7 @@ static void ERET()
     update_count();
     if (core_Status & 0x4)
     {
-        g_core->log_info(L"erreur dans ERET");
-        critical_stop();
+        critical_stop(L"!(core_Status & 0x4) in ERET");
     }
     else
     {
@@ -973,8 +970,8 @@ static void MFC0()
     switch (PC->f.r.nrd)
     {
     case 1:
-        g_core->log_info(L"lecture de Random");
-        critical_stop();
+        critical_stop(L"MFC0 invalid read");
+        break;
     default:
         rrt32 = reg_cop0[PC->f.r.nrd];
         sign_extended(core_rrt);
@@ -990,8 +987,7 @@ static void MTC0()
         core_Index = core_rrt & 0x8000003F;
         if ((core_Index & 0x3F) > 31)
         {
-            g_core->log_info(L"il y a plus de 32 TLB");
-            critical_stop();
+            critical_stop(L"MTC0 TLB Index too high");
         }
         break;
     case 1: // Random
@@ -1066,13 +1062,14 @@ static void MTC0()
         interp_addr -= 4;
         break;
     case 13: // Cause
-        if (core_rrt != 0)
+        if (core_rrt == 0)
         {
-            g_core->log_info(L"écriture dans Cause");
-            critical_stop();
+            core_Cause = core_rrt;
         }
         else
-            core_Cause = core_rrt;
+        {
+            critical_stop(L"MTC0 core_rrt != 0 Cause");
+        }
         break;
     case 14: // EPC
         core_EPC = core_rrt;
@@ -1097,8 +1094,7 @@ static void MTC0()
         core_TagHi = 0;
         break;
     default:
-        g_core->log_info(std::format(L"unknown mtc0 write : {}", PC->f.r.nrd));
-        critical_stop();
+        critical_stop(std::format(L"Unknown mtc0 write to {}", PC->f.r.nrd));
     }
     interp_addr += 4;
 }
@@ -3102,9 +3098,7 @@ void prefetch()
         }
         else
         {
-            // unmapped memory exception
-            g_core->log_info(std::format(L"Exception, attempt to prefetch unmapped memory at: {:#08x}\n", (int32_t)interp_addr));
-            critical_stop();
+            critical_stop(std::format(L"Attempted to prefetch unmapped memory at {:#08x}", (int32_t)interp_addr));
         }
     }
     else

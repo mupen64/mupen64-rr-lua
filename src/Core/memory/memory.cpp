@@ -3491,8 +3491,7 @@ void read_sc_regh()
 
 void read_sc_regd()
 {
-    g_core->show_dialog(L"read_sc_regd not supported by RCP", L"Core", fsvc_error);
-    critical_stop();
+    critical_stop(L"read_sc_regd not supported by RCP");
 }
 
 void write_sc_reg()

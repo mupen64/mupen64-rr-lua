@@ -256,12 +256,11 @@ void dma_si_write()
 {
     if (si_register.si_pif_addr_wr64b != 0x1FC007C0)
     {
-        g_core->log_warn(L"unknown SI use");
-        critical_stop();
+        critical_stop(L"Unknown SI use");
     }
     if (!check_register_validity(&si_register))
     {
-        critical_stop();
+        critical_stop(L"Invalid SI register contents in dma_si_write");
         return;
     }
     for (int32_t i = 0; i < (64 / 4); i++)
@@ -275,13 +274,12 @@ void dma_si_read()
 {
     if (si_register.si_pif_addr_rd64b != 0x1FC007C0)
     {
-        g_core->log_warn(L"unknown SI use");
-        critical_stop();
+        critical_stop(L"Unknown SI use");
     }
     update_pif_read();
     if (!check_register_validity(&si_register))
     {
-        critical_stop();
+        critical_stop(L"Invalid SI register contents in dma_si_read");
         return;
     }
     for (int32_t i = 0; i < (64 / 4); i++)

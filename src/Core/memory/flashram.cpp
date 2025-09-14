@@ -126,8 +126,7 @@ void flashram_command(uint32_t command)
         case STATUS_MODE:
             break;
         default:
-            g_core->log_warn(std::format(L"unknown flashram command with mode:{:#06x}", (int32_t)mode));
-            critical_stop();
+            critical_stop(std::format(L"Unknown flashram command with mode {:#06x}", (int32_t)mode));
         }
         mode = NOPES_MODE;
         break;
@@ -166,8 +165,7 @@ void dma_read_flashram()
             break;
         }
     default:
-        g_core->log_warn(std::format(L"unknown dma_read_flashram:{:#06x}", mode));
-        critical_stop();
+        critical_stop(std::format(L"Unknown dma_read_flashram {:#06x}", mode));
     }
 }
 
@@ -179,7 +177,6 @@ void dma_write_flashram()
         write_pointer = pi_register.pi_dram_addr_reg;
         break;
     default:
-        g_core->log_warn(std::format(L"unknown dma_read_flashram:{:#06x}", mode));
-        critical_stop();
+        critical_stop(std::format(L"Unknown dma_read_flashram {:#06x}", mode));
     }
 }

@@ -360,8 +360,7 @@ void ERET()
     update_count();
     if (core_Status & 0x4)
     {
-        g_core->log_error(L"erreur dans ERET");
-        critical_stop();
+        critical_stop(L"Unexpected status register value in ERET");
     }
     else
     {
