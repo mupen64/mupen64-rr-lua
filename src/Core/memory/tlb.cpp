@@ -361,7 +361,7 @@ void ERET()
     if (core_Status & 0x4)
     {
         g_core->log_error(L"erreur dans ERET");
-        stop = 1;
+        critical_stop();
     }
     else
     {

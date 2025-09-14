@@ -17,7 +17,7 @@ void MFC0()
     {
     case 1:
         g_core->log_error(L"lecture de Random");
-        stop = 1;
+        critical_stop();
     default:
         rrt32 = reg_cop0[PC->f.r.nrd];
         sign_extended(core_rrt);
@@ -34,7 +34,7 @@ void MTC0()
         if ((core_Index & 0x3F) > 31)
         {
             g_core->log_error(L"il y a plus de 32 TLB");
-            stop = 1;
+            critical_stop();
         }
         break;
     case 1: // Random
@@ -111,7 +111,7 @@ void MTC0()
         if (core_rrt != 0)
         {
             g_core->log_error(L"écriture dans Cause");
-            stop = 1;
+            critical_stop();
         }
         else
             core_Cause = core_rrt;
@@ -140,7 +140,7 @@ void MTC0()
         break;
     default:
         g_core->log_error(std::format(L"unknown mtc0 write : {}\n", PC->f.r.nrd));
-        stop = 1;
+        critical_stop();
     }
     PC++;
 }

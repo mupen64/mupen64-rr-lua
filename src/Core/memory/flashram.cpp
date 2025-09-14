@@ -127,7 +127,7 @@ void flashram_command(uint32_t command)
             break;
         default:
             g_core->log_warn(std::format(L"unknown flashram command with mode:{:#06x}", (int32_t)mode));
-            stop = 1;
+            critical_stop();
         }
         mode = NOPES_MODE;
         break;
@@ -167,7 +167,7 @@ void dma_read_flashram()
         }
     default:
         g_core->log_warn(std::format(L"unknown dma_read_flashram:{:#06x}", mode));
-        stop = 1;
+        critical_stop();
     }
 }
 
@@ -180,6 +180,6 @@ void dma_write_flashram()
         break;
     default:
         g_core->log_warn(std::format(L"unknown dma_read_flashram:{:#06x}", mode));
-        stop = 1;
+        critical_stop();
     }
 }

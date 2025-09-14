@@ -393,7 +393,7 @@ void TEQ()
     if (core_rrs == core_rrt)
     {
         g_core->log_info(L"trap exception in teq");
-        stop = 1;
+        critical_stop();
     }
     PC++;
 }

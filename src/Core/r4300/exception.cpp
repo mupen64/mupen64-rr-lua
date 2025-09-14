@@ -18,7 +18,7 @@ extern uint32_t interp_addr;
 void address_error_exception()
 {
     g_core->log_error(L"address_error_exception");
-    stop = 1;
+    critical_stop();
 }
 
 // Unused, an TLB entry is marked as invalid
@@ -28,17 +28,17 @@ void TLB_invalid_exception()
     {
         skip_jump = 1;
         g_core->log_error(L"delay slot\nTLB refill exception");
-        stop = 1;
+        critical_stop();
     }
     g_core->log_error(L"TLB invalid exception");
-    stop = 1;
+    critical_stop();
 }
 
 // Unused, 64-bit miss (is this even used on n64?)
 void XTLB_refill_exception(uint64_t addresse)
 {
     g_core->log_error(L"XTLB refill exception");
-    stop = 1;
+    critical_stop();
 }
 
 // Means no such virtual->physical translation exists
@@ -149,21 +149,21 @@ void TLB_refill_exception(uint32_t address, int32_t w)
 void TLB_mod_exception()
 {
     g_core->log_error(L"TLB mod exception");
-    stop = 1;
+    critical_stop();
 }
 
 // Unused
 void integer_overflow_exception()
 {
     g_core->log_error(L"integer overflow exception");
-    stop = 1;
+    critical_stop();
 }
 
 // Unused, handled somewhere else
 void coprocessor_unusable_exception()
 {
     g_core->log_error(L"coprocessor_unusable_exception");
-    stop = 1;
+    critical_stop();
 }
 
 // General handler, passes execution to default n64 handler

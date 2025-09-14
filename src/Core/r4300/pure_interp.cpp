@@ -31,7 +31,7 @@ extern uint32_t next_vi;
 static void NI()
 {
     g_core->log_info(std::format(L"NI:{:#06x}", vr_op));
-    stop = 1;
+    critical_stop();
 }
 
 static void SLL()
@@ -418,7 +418,7 @@ static void TEQ()
     if (core_rrs == core_rrt)
     {
         g_core->log_error(L"trap exception in teq");
-        stop = 1;
+        critical_stop();
     }
     interp_addr += 4;
 }
@@ -950,7 +950,7 @@ static void ERET()
     if (core_Status & 0x4)
     {
         g_core->log_info(L"erreur dans ERET");
-        stop = 1;
+        critical_stop();
     }
     else
     {
@@ -974,7 +974,7 @@ static void MFC0()
     {
     case 1:
         g_core->log_info(L"lecture de Random");
-        stop = 1;
+        critical_stop();
     default:
         rrt32 = reg_cop0[PC->f.r.nrd];
         sign_extended(core_rrt);
@@ -991,7 +991,7 @@ static void MTC0()
         if ((core_Index & 0x3F) > 31)
         {
             g_core->log_info(L"il y a plus de 32 TLB");
-            stop = 1;
+            critical_stop();
         }
         break;
     case 1: // Random
@@ -1069,7 +1069,7 @@ static void MTC0()
         if (core_rrt != 0)
         {
             g_core->log_info(L"écriture dans Cause");
-            stop = 1;
+            critical_stop();
         }
         else
             core_Cause = core_rrt;
@@ -1098,7 +1098,7 @@ static void MTC0()
         break;
     default:
         g_core->log_info(std::format(L"unknown mtc0 write : {}", PC->f.r.nrd));
-        stop = 1;
+        critical_stop();
     }
     interp_addr += 4;
 }
@@ -3104,7 +3104,7 @@ void prefetch()
         {
             // unmapped memory exception
             g_core->log_info(std::format(L"Exception, attempt to prefetch unmapped memory at: {:#08x}\n", (int32_t)interp_addr));
-            stop = 1;
+            critical_stop();
         }
     }
     else
@@ -3140,17 +3140,10 @@ void pure_interpreter()
     g_core->log_info(std::format(L"core_executing: {}", (bool)core_executing));
     while (!stop)
     {
-        // if (interp_addr == 0x10022d08) stop = 1;
-        // g_core->log_info(L"addr: %x", interp_addr);
         prefetch();
-
-        // if (Count > 0x2000000) g_core->log_info(L"inter:%x,%x", interp_addr,op);
-        // if ((Count+debug_count) > 0xabaa2c) stop=1;
         interp_ops[((vr_op >> 26) & 0x3F)]();
         g_vr_beq_ignore_jmp = false;
 
-        // Count = (uint32_t)Count + 2;
-        // if (interp_addr == 0x80000180) last_addr = interp_addr;
         while (!g_ctx.dbg_get_resumed())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
