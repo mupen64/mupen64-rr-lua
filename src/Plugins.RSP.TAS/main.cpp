@@ -7,9 +7,7 @@
 #include "win.h"
 #include "Config.h"
 #include "hle.h"
-
-#define EXPORT __declspec(dllexport)
-#define CALL _cdecl
+#include "disasm.h"
 
 core_rsp_info rsp;
 
@@ -40,10 +38,45 @@ void (*g_audio_ucode_func)() = nullptr;
  */
 void* plugin_load(const std::filesystem::path& path);
 
-/**
- * \brief Handles unknown RSP tasks.
- */
-void handle_unknown_task(const OSTask_t* task, uint32_t sum);
+
+void handle_unknown_task(const OSTask_t* task, const uint32_t sum)
+{
+    const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum, static_cast<void*>(rsp.sp_pc_reg));
+    MessageBox(NULL, message.c_str(), L"unknown task", MB_OK);
+
+    FILE* f;
+
+    if (task->ucode_size <= 0x1000)
+    {
+        f = fopen("imem.dat", "wb");
+        fwrite(rsp.rdram + task->ucode, task->ucode_size, 1, f);
+        fclose(f);
+
+        f = fopen("dmem.dat", "wb");
+        fwrite(rsp.rdram + task->ucode_data, task->ucode_data_size, 1, f);
+        fclose(f);
+
+        f = fopen("disasm.txt", "wb");
+        memcpy(rsp.dmem, rsp.rdram + task->ucode_data, task->ucode_data_size);
+        memcpy(rsp.imem + 0x80, rsp.rdram + task->ucode, 0xF7F);
+        disasm(f, (unsigned long*)(rsp.imem));
+        fclose(f);
+    }
+    else
+    {
+        f = fopen("imem.dat", "wb");
+        fwrite(rsp.imem, 0x1000, 1, f);
+        fclose(f);
+
+        f = fopen("dmem.dat", "wb");
+        fwrite(rsp.dmem, 0x1000, 1, f);
+        fclose(f);
+
+        f = fopen("disasm.txt", "wb");
+        disasm(f, (unsigned long*)(rsp.imem));
+        fclose(f);
+    }
+}
 
 void audio_ucode_mario()
 {
@@ -140,7 +173,22 @@ int audio_ucode(OSTask_t* task)
     return 0;
 }
 
-EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
+bool rsp_alive()
+{
+    return g_rsp_alive;
+}
+
+void on_rom_closed()
+{
+    memset(rsp.dmem, 0, 0x1000);
+    memset(rsp.imem, 0, 0x1000);
+
+    g_audio_ucode_func = nullptr;
+    g_rsp_alive = false;
+    g_config_readonly = false;
+}
+
+uint32_t do_rsp_cycles(uint32_t Cycles)
 {
     OSTask_t* task = (OSTask_t*)(rsp.dmem + 0xFC0);
     unsigned int i, sum = 0;
@@ -265,37 +313,4 @@ EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
     handle_unknown_task(task, sum);
 
     return Cycles;
-}
-
-EXPORT void CALL CloseDLL(void)
-{
-}
-
-EXPORT void CALL GetDllInfo(core_plugin_info* PluginInfo)
-{
-    PluginInfo->ver = 0x0101;
-    PluginInfo->type = (int16_t)plugin_rsp;
-    strncpy(PluginInfo->name, PLUGIN_NAME, std::size(PluginInfo->name));
-    PluginInfo->unused_normal_memory = 1;
-    PluginInfo->unused_byteswapped = 1;
-}
-
-EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t* CycleCount)
-{
-    rsp = Rsp_Info;
-}
-
-EXPORT void CALL RomOpen(void)
-{
-    g_config_readonly = true;
-}
-
-EXPORT void CALL RomClosed(void)
-{
-    memset(rsp.dmem, 0, 0x1000);
-    memset(rsp.imem, 0, 0x1000);
-
-    g_audio_ucode_func = nullptr;
-    g_rsp_alive = false;
-    g_config_readonly = false;
 }
