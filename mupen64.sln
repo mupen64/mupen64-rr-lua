@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Plugins.Input.Dummy", "Plug
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Plugins.RSP.Dummy", "Plugins.RSP.Dummy.vcxproj", "{4F5EFD1C-DA86-3D5E-A7B1-FA2F88C308FB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Plugins.RSP.TAS", "Plugins.RSP.TAS.vcxproj", "{157BF47D-665C-3A75-B4B0-FBEB86435B74}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -81,6 +83,14 @@ Global
 		{4F5EFD1C-DA86-3D5E-A7B1-FA2F88C308FB}.Release|x86.Build.0 = Release|Win32
 		{4F5EFD1C-DA86-3D5E-A7B1-FA2F88C308FB}.Release|x64.ActiveCfg = Release|x64
 		{4F5EFD1C-DA86-3D5E-A7B1-FA2F88C308FB}.Release|x64.Build.0 = Release|x64
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Debug|x86.ActiveCfg = Debug|Win32
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Debug|x86.Build.0 = Debug|Win32
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Debug|x64.ActiveCfg = Debug|x64
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Debug|x64.Build.0 = Debug|x64
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Release|x86.ActiveCfg = Release|Win32
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Release|x86.Build.0 = Release|Win32
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Release|x64.ActiveCfg = Release|x64
+		{157BF47D-665C-3A75-B4B0-FBEB86435B74}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
