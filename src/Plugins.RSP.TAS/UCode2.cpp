@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "win.h"
-#include "hle.h"
+#include "Main.h"
+#include "HLE.h"
 
 extern uint8_t BufferSpace[0x10000];
 

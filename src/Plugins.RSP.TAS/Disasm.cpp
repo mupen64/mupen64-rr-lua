@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "win.h"
+#include "Main.h"
 
 void disasm(FILE* f, unsigned long t[0x1000 / 4])
 {

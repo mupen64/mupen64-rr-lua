@@ -75,24 +75,22 @@
     </ItemDefinitionGroup>
 
     <ItemGroup>
-        <ClCompile Include="src\Plugins.RSP.TAS\win.cpp"/>
-        <ClCompile Include="src\Plugins.RSP.TAS\jpeg.cpp"/>
-        <ClCompile Include="src\Plugins.RSP.TAS\main.cpp"/>
+        <ClCompile Include="src\Plugins.RSP.TAS\JPEG.cpp" />
+        <ClCompile Include="src\Plugins.RSP.TAS\Main.cpp" />
         <ClCompile Include="src\Plugins.RSP.TAS\Config.cpp"/>
-        <ClCompile Include="src\Plugins.RSP.TAS\disasm.cpp"/>
-        <ClCompile Include="src\Plugins.RSP.TAS\ucode1.cpp"/>
-        <ClCompile Include="src\Plugins.RSP.TAS\ucode2.cpp"/>
-        <ClCompile Include="src\Plugins.RSP.TAS\ucode3.cpp"/>
-        <ClCompile Include="src\Plugins.RSP.TAS\ucode3mp3.cpp"/>
+        <ClCompile Include="src\Plugins.RSP.TAS\Disasm.cpp" />
+        <ClCompile Include="src\Plugins.RSP.TAS\UCode1.cpp" />
+        <ClCompile Include="src\Plugins.RSP.TAS\UCode2.cpp" />
+        <ClCompile Include="src\Plugins.RSP.TAS\UCode3.cpp" />
+        <ClCompile Include="src\Plugins.RSP.TAS\MP3.cpp" />
     </ItemGroup>
 
     <ItemGroup>
         <ClInclude Include="src\Common\MiscHelpers.h"/>
-        <ClInclude Include="src\Plugins.RSP.TAS\main.h" />
-        <ClInclude Include="src\Plugins.RSP.TAS\win.h"/>
-        <ClInclude Include="src\Plugins.RSP.TAS\hle.h"/>
-        <ClInclude Include="src\Plugins.RSP.TAS\disasm.h"/>
+        <ClInclude Include="src\Plugins.RSP.TAS\Main.h" />
+        <ClInclude Include="src\Plugins.RSP.TAS\HLE.h" />
+        <ClInclude Include="src\Plugins.RSP.TAS\Disasm.h" />
         <ClInclude Include="src\Plugins.RSP.TAS\Config.h"/>
-        <ClInclude Include="src\Plugins.RSP.TAS\resource.h"/>
+        <ClInclude Include="src\Plugins.RSP.TAS\Resource.h" />
     </ItemGroup>
 </Project>

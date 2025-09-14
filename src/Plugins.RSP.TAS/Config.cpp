@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "win.h"
+#include "Main.h"
 #include "Config.h"
 
 #define CONFIG_PATH "hacktarux-azimer-rsp-hle.cfg"

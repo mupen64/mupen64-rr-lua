@@ -4,18 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef HLE_H
-#define HLE_H
+#pragma once
 
-#ifdef _BIG_ENDIAN
-#define S 0
-#define S8 0
-#else
 #define S 1
 #define S8 3
-#endif
 
-// #define ACMD_SIZE               32
 /*
  * Audio flags
  */
@@ -68,5 +61,3 @@ extern uint32_t inst1, inst2;
 extern uint16_t AudioInBuffer, AudioOutBuffer, AudioCount;
 extern uint16_t AudioAuxA, AudioAuxC, AudioAuxE;
 extern uint32_t loopval; // Value set by A_SETLOOP : Possible conflict with SETVOLUME???
-
-#endif

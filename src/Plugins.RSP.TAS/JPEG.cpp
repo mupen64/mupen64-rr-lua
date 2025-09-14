@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "win.h"
+#include "Main.h"
 #include "core_plugin.h"
 #include "hle.h"
 
