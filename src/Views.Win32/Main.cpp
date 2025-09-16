@@ -1141,11 +1141,11 @@ static core_result init_core()
     g_main_ctx.core.callbacks.play_movie = LuaCallbacks::call_play_movie;
     g_main_ctx.core.callbacks.stop_movie = [] {
         LuaCallbacks::call_stop_movie();
-        if (EncodingManager::is_capturing())
+        if (g_config.stop_capture_at_movie_end && EncodingManager::is_capturing())
             EncodingManager::stop_capture();
     };
     g_main_ctx.core.callbacks.loop_movie = [] {
-        if (EncodingManager::is_capturing())
+        if (g_config.stop_capture_at_movie_end && EncodingManager::is_capturing())
             EncodingManager::stop_capture();
     };
     g_main_ctx.core.callbacks.save_state = LuaCallbacks::call_save_state;

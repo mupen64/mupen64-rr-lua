@@ -159,6 +159,8 @@ struct t_config {
     /// </summary>
     int32_t capture_mode = 3;
 
+    int32_t stop_capture_at_movie_end;
+
     /// <summary>
     /// The presenter to use for Lua scripts
     /// </summary>

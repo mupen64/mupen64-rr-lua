@@ -997,6 +997,13 @@ std::vector<t_options_group> get_static_option_groups()
     },
     });
     capture_group.items.emplace_back(t_options_item{
+    .type = t_options_item::Type::Bool,
+    .group_id = capture_group.id,
+    .name = L"Stop at Movie End",
+    .tooltip = L"Whether capturing is automatically stopped when a movie ends.",
+    GENPROPS(int32_t, stop_capture_at_movie_end),
+    });
+    capture_group.items.emplace_back(t_options_item{
     .type = t_options_item::Type::Enum,
     .group_id = capture_group.id,
     .name = L"Sync",
