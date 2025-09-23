@@ -842,7 +842,10 @@ static void generate_path_recent_menu(const std::wstring &base_path, const Hotke
 {
     const auto freeze_action = std::format(L"{} > Freeze ---", base_path);
 
-    const auto reset_list = [=] { paths->clear(); };
+    const auto reset_list = [=] {
+        paths->clear();
+        ActionManager::notify_display_name_changed(std::format(L"{} > *", base_path));
+    };
 
     const auto toggle_frozen = [=] {
         *frozen = *frozen == 0 ? 1 : 0;
