@@ -280,7 +280,6 @@ static void copy_rgb24_buffer_to_rgb32()
         for (int x = 0; x < width; ++x)
         {
             std::memcpy(drow, srow, 3);
-            drow[3] = 0xFF;
 
             srow += 3;
             drow += 4;
@@ -300,10 +299,18 @@ static void recreate_mge_context_d3d()
         return;
     }
 
-    free(mge_context.buffer);
-    free(mge_context.rgba_buffer);
-    mge_context.buffer = malloc(mge_context.width * mge_context.height * 3);
-    mge_context.rgba_buffer = malloc(mge_context.width * mge_context.height * 4);
+    _aligned_free(mge_context.buffer);
+    _aligned_free(mge_context.rgba_buffer);
+
+    const auto rgb24_buffer_size = mge_context.width * mge_context.height * 3;
+    const auto rgba32_buffer_size = mge_context.width * mge_context.height * 4;
+
+    mge_context.buffer = _aligned_malloc(rgb24_buffer_size, 16);
+    mge_context.rgba_buffer = _aligned_malloc(rgba32_buffer_size, 16);
+    runtime_assert(mge_context.buffer && mge_context.rgba_buffer, L"Failed to allocate MGE buffers");
+
+    ZeroMemory(mge_context.buffer, rgb24_buffer_size);
+    ZeroMemory(mge_context.rgba_buffer, rgba32_buffer_size);
 
     RECT rc;
     GetClientRect(mge_context.hwnd, &rc);
@@ -376,7 +383,7 @@ void MGECompositor::update_screen()
 
     g_main_ctx.core.plugin_funcs.video_read_video(&mge_context.buffer);
 
-    copy_rgb24_buffer_to_rgb32();
+    expand_rgb24();
     upload_rgb32_buffer();
     render_and_present();
 
@@ -405,7 +412,7 @@ void MGECompositor::load_screen(void *data)
 {
     memcpy(mge_context.buffer, data, mge_context.width * mge_context.height * 3);
 
-    copy_rgb24_buffer_to_rgb32();
+    expand_rgb24();
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
     upload_rgb32_buffer();
     render_and_present();
