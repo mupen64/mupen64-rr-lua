@@ -228,25 +228,25 @@ static void upload_rgb32_buffer()
 
 static void render_and_present()
 {
-    if (!mge_context.context || !mge_context.rtv || !mge_context.srv) return;
+    runtime_assert(mge_context.context && mge_context.rtv && mge_context.srv, L"D3D context not initialized");
 
     ID3D11RenderTargetView *rtv = mge_context.rtv.Get();
     mge_context.context->OMSetRenderTargets(1, &rtv, nullptr);
 
     ComPtr<ID3D11Texture2D> bb;
-    if (SUCCEEDED(mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&bb))))
-    {
-        D3D11_TEXTURE2D_DESC bbdesc;
-        bb->GetDesc(&bbdesc);
-        D3D11_VIEWPORT vp;
-        vp.TopLeftX = 0;
-        vp.TopLeftY = 0;
-        vp.Width = (float)bbdesc.Width;
-        vp.Height = (float)bbdesc.Height;
-        vp.MinDepth = 0.0f;
-        vp.MaxDepth = 1.0f;
-        mge_context.context->RSSetViewports(1, &vp);
-    }
+    HRESULT hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&bb));
+    runtime_assert_hr(hr, L"GetBuffer");
+
+    D3D11_TEXTURE2D_DESC bbdesc;
+    bb->GetDesc(&bbdesc);
+    D3D11_VIEWPORT vp;
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = (float)bbdesc.Width;
+    vp.Height = (float)bbdesc.Height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    mge_context.context->RSSetViewports(1, &vp);
 
     mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), CLEAR_COLOR);
 
