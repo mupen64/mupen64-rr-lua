@@ -188,10 +188,9 @@ static void destroy_d3d_resources()
     mge_context.sampler.Reset();
 }
 
-static bool ensure_texture_exists_with_size(const int w, const int h)
+static void ensure_texture_exists_with_size(const int w, const int h)
 {
-    if (!mge_context.device) return false;
-    if (mge_context.texture && mge_context.last_width == w && mge_context.last_height == h) return true;
+    if (mge_context.texture && mge_context.last_width == w && mge_context.last_height == h) return;
 
     mge_context.srv.Reset();
     mge_context.texture.Reset();
@@ -220,10 +219,9 @@ static bool ensure_texture_exists_with_size(const int w, const int h)
 
     mge_context.last_width = w;
     mge_context.last_height = h;
-    return true;
 }
 
-static void upload_to_texture(const void *buf, const int width, const int height)
+static void upload_rgb32_buffer()
 {
     if (!mge_context.texture) return;
 
@@ -231,11 +229,12 @@ static void upload_to_texture(const void *buf, const int width, const int height
     db.left = 0;
     db.top = 0;
     db.front = 0;
-    db.right = width;
-    db.bottom = height;
+    db.right = mge_context.width;
+    db.bottom = mge_context.height;
     db.back = 1;
 
-    mge_context.context->UpdateSubresource(mge_context.texture.Get(), 0, &db, buf, width * 4, 0);
+    mge_context.context->UpdateSubresource(mge_context.texture.Get(), 0, &db, mge_context.rgba_buffer,
+                                           mge_context.width * 4, 0);
 }
 
 static void render_and_present()
@@ -290,17 +289,21 @@ static void copy_rgb24_buffer_to_rgb32()
     const auto src = static_cast<const uint8_t *>(mge_context.buffer);
     const auto dst = static_cast<uint8_t *>(mge_context.rgba_buffer);
 
-    constexpr int src_bpp = 3;
-    for (int y = 0; y < mge_context.height; ++y)
+    const int width = mge_context.width;
+    const int height = mge_context.height;
+
+    for (int y = 0; y < height; ++y)
     {
-        const uint8_t *srow = src + y * (mge_context.width * src_bpp);
-        uint8_t *drow = dst + y * (mge_context.width * 4);
-        for (int x = 0; x < mge_context.width; ++x)
+        const uint8_t *srow = src + y * width * 3;
+        uint8_t *drow = dst + y * width * 4;
+
+        for (int x = 0; x < width; ++x)
         {
-            drow[x * 4 + 0] = srow[x * src_bpp + 0];
-            drow[x * 4 + 1] = srow[x * src_bpp + 1];
-            drow[x * 4 + 2] = srow[x * src_bpp + 2];
-            drow[x * 4 + 3] = 0xFF;
+            std::memcpy(drow, srow, 3);
+            drow[3] = 0xFF;
+
+            srow += 3;
+            drow += 4;
         }
     }
 }
@@ -378,14 +381,8 @@ void MGECompositor::update_screen()
     g_main_ctx.core.plugin_funcs.video_read_video(&mge_context.buffer);
 
     copy_rgb24_buffer_to_rgb32();
-
-    if (!ensure_texture_exists_with_size(mge_context.width, mge_context.height))
-    {
-        return;
-    }
-
-    upload_to_texture(mge_context.rgba_buffer, mge_context.width, mge_context.height);
-
+    ensure_texture_exists_with_size(mge_context.width, mge_context.height);
+    upload_rgb32_buffer();
     render_and_present();
 
     mge_context.last_width = mge_context.width;
@@ -413,9 +410,8 @@ void MGECompositor::load_screen(void *data)
 {
     memcpy(mge_context.buffer, data, mge_context.width * mge_context.height * 3);
 
-    if (ensure_texture_exists_with_size(mge_context.width, mge_context.height))
-    {
-        upload_to_texture(mge_context.buffer, mge_context.width, mge_context.height);
-        render_and_present();
-    }
+    copy_rgb24_buffer_to_rgb32();
+    ensure_texture_exists_with_size(mge_context.width, mge_context.height);
+    upload_rgb32_buffer();
+    render_and_present();
 }
