@@ -383,7 +383,7 @@ void MGECompositor::update_screen()
 
     g_main_ctx.core.plugin_funcs.video_read_video(&mge_context.buffer);
 
-    expand_rgb24();
+    copy_rgb24_buffer_to_rgb32();
     upload_rgb32_buffer();
     render_and_present();
 
@@ -412,7 +412,7 @@ void MGECompositor::load_screen(void *data)
 {
     memcpy(mge_context.buffer, data, mge_context.width * mge_context.height * 3);
 
-    expand_rgb24();
+    copy_rgb24_buffer_to_rgb32();
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
     upload_rgb32_buffer();
     render_and_present();
