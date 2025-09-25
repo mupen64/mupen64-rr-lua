@@ -11,6 +11,7 @@
 using Microsoft::WRL::ComPtr;
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
+constexpr float CLEAR_COLOR[4] = {0, 0, 0, 1};
 
 const std::string VERTEX_SHADER = R"(
     cbuffer CB : register(b0) {}
@@ -149,6 +150,13 @@ static bool create_d3d(const HWND hwnd)
                                                &mge_context.ps);
     runtime_assert_hr(hr, L"CreatePixelShader");
 
+    // Set up the pipeline
+    mge_context.context->VSSetShader(mge_context.vs.Get(), nullptr, 0);
+    mge_context.context->PSSetShader(mge_context.ps.Get(), nullptr, 0);
+    ID3D11SamplerState *samps[] = {mge_context.sampler.Get()};
+    mge_context.context->PSSetSamplers(0, 1, samps);
+    mge_context.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
     return true;
 }
 
@@ -240,29 +248,21 @@ static void render_and_present()
         mge_context.context->RSSetViewports(1, &vp);
     }
 
-    // Clear (optional)
-    constexpr float clear_color[4] = {0, 0, 0, 1};
-    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), clear_color);
+    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), CLEAR_COLOR);
 
-    // Set pipeline
-    mge_context.context->VSSetShader(mge_context.vs.Get(), nullptr, 0);
-    mge_context.context->PSSetShader(mge_context.ps.Get(), nullptr, 0);
+    // Bind SRV
     ID3D11ShaderResourceView *srvs[] = {mge_context.srv.Get()};
     mge_context.context->PSSetShaderResources(0, 1, srvs);
-    ID3D11SamplerState *samps[] = {mge_context.sampler.Get()};
-    mge_context.context->PSSetSamplers(0, 1, samps);
 
-    mge_context.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    // Draw 6 vertices, no vertex buffer (VS uses SV_VertexID)
+    // Draw fullscreen quad
     mge_context.context->Draw(6, 0);
+
+    // Unbind SRV to allow UpdateSubresource
+    ID3D11ShaderResourceView *null_srv[1] = {nullptr};
+    mge_context.context->PSSetShaderResources(0, 1, null_srv);
 
     HRESULT hr = mge_context.swapchain->Present(0, 0);
     runtime_assert_hr(hr, L"Present");
-
-    // Unbind SRV to allow mapping texture next frame on some drivers
-    ID3D11ShaderResourceView *null_srv[1] = {nullptr};
-    mge_context.context->PSSetShaderResources(0, 1, null_srv);
 }
 
 static void copy_rgb24_buffer_to_rgb32()
