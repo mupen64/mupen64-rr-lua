@@ -261,8 +261,7 @@ static void render_and_present()
     ID3D11ShaderResourceView *null_srv[1] = {nullptr};
     mge_context.context->PSSetShaderResources(0, 1, null_srv);
 
-    HRESULT hr = mge_context.swapchain->Present(0, 0);
-    runtime_assert_hr(hr, L"Present");
+    (void)mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 }
 
 static void copy_rgb24_buffer_to_rgb32()
