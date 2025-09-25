@@ -8,110 +8,11 @@
 #include "MGECompositor.h"
 #include <Messenger.h>
 
-#include <d3d11.h>
-#include <dxgi.h>
-#include <d3dcompiler.h>
-#include <wrl/client.h>
 using Microsoft::WRL::ComPtr;
-
-#pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
 
-struct t_mge_context
-{
-    int32_t last_width{};
-    int32_t last_height{};
-    int32_t width{};
-    int32_t height{};
-    void *buffer{};
-    void *rgba_buffer{};
-
-    HWND hwnd{};
-
-    ComPtr<ID3D11Device> device;
-    ComPtr<ID3D11DeviceContext> context;
-    ComPtr<IDXGISwapChain> swapchain;
-    ComPtr<ID3D11RenderTargetView> rtv;
-    ComPtr<ID3D11Texture2D> texture;
-    ComPtr<ID3D11ShaderResourceView> srv;
-    ComPtr<ID3D11SamplerState> sampler;
-    ComPtr<ID3D11VertexShader> vs;
-    ComPtr<ID3D11PixelShader> ps;
-};
-
-static t_mge_context mge_context{};
-
-static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_SIZE:
-        return 0;
-    default:
-        break;
-    }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
-}
-
-static bool create_d3d_for_hwnd(const HWND hwnd)
-{
-    DXGI_SWAP_CHAIN_DESC scdesc = {};
-    scdesc.BufferDesc.Width = 0;
-    scdesc.BufferDesc.Height = 0;
-    scdesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    scdesc.SampleDesc.Count = 1;
-    scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    scdesc.BufferCount = 1;
-    scdesc.OutputWindow = hwnd;
-    scdesc.Windowed = TRUE;
-    scdesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    scdesc.Flags = 0;
-
-    UINT createFlags = 0;
-#if defined(_DEBUG)
-    createFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-    D3D_FEATURE_LEVEL feature_levels[] = {D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0};
-
-    ID3D11Device *device_raw{};
-    ID3D11DeviceContext *context_raw{};
-    IDXGISwapChain *swap_raw{};
-
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createFlags, feature_levels,
-                                               ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &scdesc, &swap_raw,
-                                               &device_raw, nullptr, &context_raw);
-    runtime_assert_hr(hr, L"D3D11CreateDeviceAndSwapChain");
-
-    mge_context.device.Attach(device_raw);
-    mge_context.context.Attach(context_raw);
-    mge_context.swapchain.Attach(swap_raw);
-
-    // create RTV for swapchain back buffer
-    ComPtr<ID3D11Texture2D> back_buffer;
-    hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
-    runtime_assert_hr(hr, L"GetBuffer");
-
-    hr = mge_context.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &mge_context.rtv);
-    runtime_assert_hr(hr, L"CreateRenderTargetView");
-
-    // Point sampler for nearest-neighbour scaling
-    D3D11_SAMPLER_DESC sampdesc = {};
-    sampdesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-    sampdesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampdesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampdesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampdesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    sampdesc.MinLOD = 0;
-    sampdesc.MaxLOD = D3D11_FLOAT32_MAX;
-    mge_context.device->CreateSamplerState(&sampdesc, &mge_context.sampler);
-
-    // Compile minimal shaders (vertex shader using SV_VertexID to generate a fullscreen quad)
-    const auto vs_src = R"(
+const std::string VERTEX_SHADER = R"(
     cbuffer CB : register(b0) {}
     struct VSOut { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; };
     VSOut main(uint vid : SV_VertexID)
@@ -142,7 +43,7 @@ static bool create_d3d_for_hwnd(const HWND hwnd)
     }
     )";
 
-    const auto ps_src = R"(
+const std::string FRAGMENT_SHADER = R"(
     Texture2D tex : register(t0);
     SamplerState samp : register(s0);
     struct PSIn { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; };
@@ -153,11 +54,91 @@ static bool create_d3d_for_hwnd(const HWND hwnd)
     }
     )";
 
+struct t_mge_context
+{
+    int32_t last_width{};
+    int32_t last_height{};
+    int32_t width{};
+    int32_t height{};
+    void *buffer{};
+    void *rgba_buffer{};
+
+    HWND hwnd{};
+
+    ComPtr<ID3D11Device> device;
+    ComPtr<ID3D11DeviceContext> context;
+    ComPtr<IDXGISwapChain> swapchain;
+    ComPtr<ID3D11RenderTargetView> rtv;
+    ComPtr<ID3D11Texture2D> texture;
+    ComPtr<ID3D11ShaderResourceView> srv;
+    ComPtr<ID3D11SamplerState> sampler;
+    ComPtr<ID3D11VertexShader> vs;
+    ComPtr<ID3D11PixelShader> ps;
+};
+
+static t_mge_context mge_context{};
+
+static bool create_d3d(const HWND hwnd)
+{
+    DXGI_SWAP_CHAIN_DESC scdesc = {};
+    scdesc.BufferDesc.Width = 0;
+    scdesc.BufferDesc.Height = 0;
+    scdesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    scdesc.SampleDesc.Count = 1;
+    scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    scdesc.BufferCount = 1;
+    scdesc.OutputWindow = hwnd;
+    scdesc.Windowed = TRUE;
+    scdesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    scdesc.Flags = 0;
+
+    UINT flags = 0;
+#if defined(_DEBUG)
+    flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+    D3D_FEATURE_LEVEL feature_levels[] = {D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0};
+
+    ID3D11Device *device_raw{};
+    ID3D11DeviceContext *context_raw{};
+    IDXGISwapChain *swap_raw{};
+
+    HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels,
+                                               ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &scdesc, &swap_raw,
+                                               &device_raw, nullptr, &context_raw);
+    runtime_assert_hr(hr, L"D3D11CreateDeviceAndSwapChain");
+
+    mge_context.device.Attach(device_raw);
+    mge_context.context.Attach(context_raw);
+    mge_context.swapchain.Attach(swap_raw);
+
+    // create RTV for swapchain back buffer
+    ComPtr<ID3D11Texture2D> back_buffer;
+    hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
+    runtime_assert_hr(hr, L"GetBuffer");
+
+    hr = mge_context.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &mge_context.rtv);
+    runtime_assert_hr(hr, L"CreateRenderTargetView");
+
+    // Point sampler for nearest-neighbour scaling
+    D3D11_SAMPLER_DESC sampdesc = {};
+    sampdesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampdesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampdesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampdesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampdesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampdesc.MinLOD = 0;
+    sampdesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = mge_context.device->CreateSamplerState(&sampdesc, &mge_context.sampler);
+    runtime_assert_hr(hr, L"CreateSamplerState");
+
     ComPtr<ID3DBlob> vs_blob, ps_blob, err_blob;
-    hr = D3DCompile(vs_src, strlen(vs_src), nullptr, nullptr, nullptr, "main", "vs_4_0", 0, 0, &vs_blob, &err_blob);
+    hr = D3DCompile(VERTEX_SHADER.data(), VERTEX_SHADER.size(), nullptr, nullptr, nullptr, "main", "vs_4_0", 0, 0,
+                    &vs_blob, &err_blob);
     runtime_assert_hr(hr, L"D3DCompile");
 
-    hr = D3DCompile(ps_src, strlen(ps_src), nullptr, nullptr, nullptr, "main", "ps_4_0", 0, 0, &ps_blob, &err_blob);
+    hr = D3DCompile(FRAGMENT_SHADER.data(), FRAGMENT_SHADER.size(), nullptr, nullptr, nullptr, "main", "ps_4_0", 0, 0,
+                    &ps_blob, &err_blob);
     runtime_assert_hr(hr, L"D3DCompile");
 
     hr = mge_context.device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr,
@@ -171,7 +152,7 @@ static bool create_d3d_for_hwnd(const HWND hwnd)
     return true;
 }
 
-static void destroy_d3d_resources()
+static void destroy_d3d()
 {
     mge_context.srv.Reset();
     mge_context.texture.Reset();
@@ -312,7 +293,9 @@ static void recreate_mge_context_d3d()
 {
     g_view_logger->info("Creating MGE (D3D11) context with size {}x{}...", mge_context.width, mge_context.height);
 
-    if (!mge_context.device && !create_d3d_for_hwnd(mge_context.hwnd))
+    create_d3d(mge_context.hwnd);
+
+    if (!mge_context.device && !create_d3d(mge_context.hwnd))
     {
         g_view_logger->error("Failed to create D3D device/swapchain for MGE compositor.");
         return;
@@ -343,6 +326,21 @@ static void recreate_mge_context_d3d()
     }
 
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
+}
+
+static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_SIZE:
+        return 0;
+    case WM_NCDESTROY:
+        destroy_d3d();
+        break;
+    default:
+        break;
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
 void MGECompositor::create(HWND hwnd)
