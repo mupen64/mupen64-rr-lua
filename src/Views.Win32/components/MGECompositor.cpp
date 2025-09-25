@@ -372,14 +372,12 @@ void MGECompositor::update_screen()
     if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
     {
         MoveWindow(mge_context.hwnd, 0, 0, mge_context.width, mge_context.height, TRUE);
-
         recreate_mge_context_d3d();
     }
 
     g_main_ctx.core.plugin_funcs.video_read_video(&mge_context.buffer);
 
     copy_rgb24_buffer_to_rgb32();
-    ensure_texture_exists_with_size(mge_context.width, mge_context.height);
     upload_rgb32_buffer();
     render_and_present();
 
