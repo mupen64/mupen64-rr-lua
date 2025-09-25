@@ -103,6 +103,8 @@ static void runtime_assert_fail(const std::wstring &message)
         }                                                                                                              \
     } while (0)
 
+#define runtime_assert_hr(hr, message) runtime_assert(!FAILED(hr), message)
+
 static RECT get_window_rect_client_space(HWND parent, HWND child)
 {
     RECT offset_client = {0};

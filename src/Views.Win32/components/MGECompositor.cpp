@@ -28,6 +28,7 @@ struct t_mge_context
     int32_t width{};
     int32_t height{};
     void *buffer{};
+    void *rgba_buffer{};
 
     HWND hwnd{};
 
@@ -56,15 +57,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-static void log_hr(const char *what, HRESULT hr)
-{
-    if (FAILED(hr) && g_view_logger)
-    {
-        g_view_logger->error("{} failed: 0x{:08X}", what, static_cast<unsigned>(hr));
-    }
-}
-
-static bool create_d3d_for_hwnd(HWND target_hwnd)
+static bool create_d3d_for_hwnd(const HWND hwnd)
 {
     DXGI_SWAP_CHAIN_DESC scdesc = {};
     scdesc.BufferDesc.Width = 0;
@@ -73,7 +66,7 @@ static bool create_d3d_for_hwnd(HWND target_hwnd)
     scdesc.SampleDesc.Count = 1;
     scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     scdesc.BufferCount = 1;
-    scdesc.OutputWindow = target_hwnd;
+    scdesc.OutputWindow = hwnd;
     scdesc.Windowed = TRUE;
     scdesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     scdesc.Flags = 0;
@@ -92,12 +85,7 @@ static bool create_d3d_for_hwnd(HWND target_hwnd)
     HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createFlags, feature_levels,
                                                ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &scdesc, &swap_raw,
                                                &device_raw, nullptr, &context_raw);
-
-    if (FAILED(hr))
-    {
-        log_hr("D3D11CreateDeviceAndSwapChain", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"D3D11CreateDeviceAndSwapChain");
 
     mge_context.device.Attach(device_raw);
     mge_context.context.Attach(context_raw);
@@ -106,18 +94,10 @@ static bool create_d3d_for_hwnd(HWND target_hwnd)
     // create RTV for swapchain back buffer
     ComPtr<ID3D11Texture2D> back_buffer;
     hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
-    if (FAILED(hr))
-    {
-        log_hr("GetBuffer", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"GetBuffer");
 
     hr = mge_context.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &mge_context.rtv);
-    if (FAILED(hr))
-    {
-        log_hr("CreateRenderTargetView", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"CreateRenderTargetView");
 
     // Point sampler for nearest-neighbour scaling
     D3D11_SAMPLER_DESC sampdesc = {};
@@ -175,34 +155,18 @@ static bool create_d3d_for_hwnd(HWND target_hwnd)
 
     ComPtr<ID3DBlob> vs_blob, ps_blob, err_blob;
     hr = D3DCompile(vs_src, strlen(vs_src), nullptr, nullptr, nullptr, "main", "vs_4_0", 0, 0, &vs_blob, &err_blob);
-    if (FAILED(hr))
-    {
-        if (err_blob) g_view_logger->error("VS compile: {}", static_cast<const char *>(err_blob->GetBufferPointer()));
-        log_hr("D3DCompile VS", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"D3DCompile");
+
     hr = D3DCompile(ps_src, strlen(ps_src), nullptr, nullptr, nullptr, "main", "ps_4_0", 0, 0, &ps_blob, &err_blob);
-    if (FAILED(hr))
-    {
-        if (err_blob) g_view_logger->error("PS compile: {}", static_cast<const char *>(err_blob->GetBufferPointer()));
-        log_hr("D3DCompile PS", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"D3DCompile");
 
     hr = mge_context.device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr,
                                                 &mge_context.vs);
-    if (FAILED(hr))
-    {
-        log_hr("CreateVertexShader", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"CreateVertexShader");
+
     hr = mge_context.device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr,
                                                &mge_context.ps);
-    if (FAILED(hr))
-    {
-        log_hr("CreatePixelShader", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"CreatePixelShader");
 
     return true;
 }
@@ -239,76 +203,48 @@ static bool ensure_texture_exists_with_size(const int w, const int h)
     desc.ArraySize = 1;
     desc.Format = TEXTURE_FORMAT;
     desc.SampleDesc.Count = 1;
-    desc.Usage = D3D11_USAGE_DYNAMIC;
+    desc.Usage = D3D11_USAGE_DEFAULT;
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
     HRESULT hr = mge_context.device->CreateTexture2D(&desc, nullptr, &mge_context.texture);
-    if (FAILED(hr))
-    {
-        log_hr("CreateTexture2D", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"CreateTexture2D");
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
     srvd.Format = desc.Format;
     srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srvd.Texture2D.MipLevels = 1;
     hr = mge_context.device->CreateShaderResourceView(mge_context.texture.Get(), &srvd, &mge_context.srv);
-    if (FAILED(hr))
-    {
-        log_hr("CreateShaderResourceView", hr);
-        return false;
-    }
+    runtime_assert_hr(hr, L"CreateShaderResourceView");
 
     mge_context.last_width = w;
     mge_context.last_height = h;
     return true;
 }
 
-static void upload_frame_to_texture(const void *src_buffer, const int src_width, const int src_height)
+static void upload_to_texture(const void *buf, const int width, const int height)
 {
     if (!mge_context.texture) return;
-    D3D11_MAPPED_SUBRESOURCE mapped;
-    const HRESULT hr = mge_context.context->Map(mge_context.texture.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-    if (FAILED(hr))
-    {
-        log_hr("Map texture", hr);
-        return;
-    }
 
-    const auto src = static_cast<const uint8_t *>(src_buffer);
-    const auto dst = static_cast<uint8_t *>(mapped.pData);
-    const int dst_pitch = static_cast<int>(mapped.RowPitch);
+    D3D11_BOX db = {};
+    db.left = 0;
+    db.top = 0;
+    db.front = 0;
+    db.right = width;
+    db.bottom = height;
+    db.back = 1;
 
-    constexpr int src_bpp = 3;
-    for (int y = 0; y < src_height; ++y)
-    {
-        const uint8_t *srow = src + y * (src_width * src_bpp);
-        uint8_t *drow = dst + y * dst_pitch;
-        for (int x = 0; x < src_width; ++x)
-        {
-            drow[x * 4 + 0] = srow[x * src_bpp + 0];
-            drow[x * 4 + 1] = srow[x * src_bpp + 1];
-            drow[x * 4 + 2] = srow[x * src_bpp + 2];
-            drow[x * 4 + 3] = 0xFF;
-        }
-    }
-
-    mge_context.context->Unmap(mge_context.texture.Get(), 0);
+    mge_context.context->UpdateSubresource(mge_context.texture.Get(), 0, &db, buf, width * 4, 0);
 }
 
-// Render the texture to the back buffer and present
 static void render_and_present()
 {
     if (!mge_context.context || !mge_context.rtv || !mge_context.srv) return;
 
-    // Set render target
     ID3D11RenderTargetView *rtv = mge_context.rtv.Get();
     mge_context.context->OMSetRenderTargets(1, &rtv, nullptr);
 
-    // Set viewport to the swapchain size (query back buffer desc)
     ComPtr<ID3D11Texture2D> bb;
     if (SUCCEEDED(mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&bb))))
     {
@@ -325,8 +261,8 @@ static void render_and_present()
     }
 
     // Clear (optional)
-    float clearColor[4] = {0, 0, 0, 1};
-    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), clearColor);
+    constexpr float clear_color[4] = {0, 0, 0, 1};
+    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), clear_color);
 
     // Set pipeline
     mge_context.context->VSSetShader(mge_context.vs.Get(), nullptr, 0);
@@ -342,11 +278,31 @@ static void render_and_present()
     mge_context.context->Draw(6, 0);
 
     HRESULT hr = mge_context.swapchain->Present(0, 0);
-    if (FAILED(hr)) log_hr("Present", hr);
+    runtime_assert_hr(hr, L"Present");
 
     // Unbind SRV to allow mapping texture next frame on some drivers
-    ID3D11ShaderResourceView *nullSRV[1] = {nullptr};
-    mge_context.context->PSSetShaderResources(0, 1, nullSRV);
+    ID3D11ShaderResourceView *null_srv[1] = {nullptr};
+    mge_context.context->PSSetShaderResources(0, 1, null_srv);
+}
+
+static void copy_rgb24_buffer_to_rgb32()
+{
+    const auto src = static_cast<const uint8_t *>(mge_context.buffer);
+    const auto dst = static_cast<uint8_t *>(mge_context.rgba_buffer);
+
+    constexpr int src_bpp = 3;
+    for (int y = 0; y < mge_context.height; ++y)
+    {
+        const uint8_t *srow = src + y * (mge_context.width * src_bpp);
+        uint8_t *drow = dst + y * (mge_context.width * 4);
+        for (int x = 0; x < mge_context.width; ++x)
+        {
+            drow[x * 4 + 0] = srow[x * src_bpp + 0];
+            drow[x * 4 + 1] = srow[x * src_bpp + 1];
+            drow[x * 4 + 2] = srow[x * src_bpp + 2];
+            drow[x * 4 + 3] = 0xFF;
+        }
+    }
 }
 
 static void recreate_mge_context_d3d()
@@ -360,7 +316,9 @@ static void recreate_mge_context_d3d()
     }
 
     free(mge_context.buffer);
+    free(mge_context.rgba_buffer);
     mge_context.buffer = malloc(mge_context.width * mge_context.height * 3);
+    mge_context.rgba_buffer = malloc(mge_context.width * mge_context.height * 4);
 
     RECT rc;
     GetClientRect(mge_context.hwnd, &rc);
@@ -371,15 +329,14 @@ static void recreate_mge_context_d3d()
     {
         mge_context.rtv.Reset();
         HRESULT hr = mge_context.swapchain->ResizeBuffers(1, w, h, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        if (FAILED(hr)) log_hr("ResizeBuffers", hr);
+        runtime_assert_hr(hr, L"ResizeBuffers");
 
         ComPtr<ID3D11Texture2D> backBuffer;
         hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-        if (SUCCEEDED(hr))
-        {
-            hr = mge_context.device->CreateRenderTargetView(backBuffer.Get(), nullptr, &mge_context.rtv);
-            if (FAILED(hr)) log_hr("CreateRenderTargetView (after resize)", hr);
-        }
+        runtime_assert_hr(hr, L"GetBuffer");
+
+        hr = mge_context.device->CreateRenderTargetView(backBuffer.Get(), nullptr, &mge_context.rtv);
+        runtime_assert_hr(hr, L"CreateRenderTargetView");
     }
 
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
@@ -420,12 +377,14 @@ void MGECompositor::update_screen()
 
     g_main_ctx.core.plugin_funcs.video_read_video(&mge_context.buffer);
 
+    copy_rgb24_buffer_to_rgb32();
+
     if (!ensure_texture_exists_with_size(mge_context.width, mge_context.height))
     {
         return;
     }
 
-    upload_frame_to_texture(mge_context.buffer, mge_context.width, mge_context.height);
+    upload_to_texture(mge_context.rgba_buffer, mge_context.width, mge_context.height);
 
     render_and_present();
 
@@ -456,7 +415,7 @@ void MGECompositor::load_screen(void *data)
 
     if (ensure_texture_exists_with_size(mge_context.width, mge_context.height))
     {
-        upload_frame_to_texture(mge_context.buffer, mge_context.width, mge_context.height);
+        upload_to_texture(mge_context.buffer, mge_context.width, mge_context.height);
         render_and_present();
     }
 }
