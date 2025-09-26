@@ -75,6 +75,8 @@ std::wstring t_options_item::get_value_name() const
         return std::get<std::wstring>(value);
     case Type::Hotkey:
         return std::get<Hotkey::t_hotkey>(value).to_wstring();
+    case Type::Folder:
+        return std::get<std::wstring>(value);
     default:
         runtime_assert(false, L"Unhandled option type in t_options_item::get_value_name");
     }
@@ -138,8 +140,8 @@ bool t_options_item::edit(const HWND hwnd)
         catch (...)
         {
         }
+        break;
     }
-    break;
     case Type::Enum: {
         // 1. Find the index of the currently selected item, while falling back to the first possible value if there's
         // no match
@@ -181,14 +183,25 @@ bool t_options_item::edit(const HWND hwnd)
             current_value.set(result.value());
             return true;
         }
+        break;
     }
-    break;
     case Type::Hotkey: {
         auto hotkey = std::get<Hotkey::t_hotkey>(current_value.get());
         Hotkey::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", name), hotkey);
         Hotkey::try_associate_hotkey(hwnd, name, hotkey, false);
         return true;
     }
+    case Type::Folder: {
+        const auto path = FilePicker::show_folder_dialog(this->name, hwnd);
+        if (!path.empty())
+        {
+            current_value.set(path);
+            return true;
+        }
+        break;
+    }
+    default:
+        break;
     }
 
     return false;
@@ -668,23 +681,23 @@ std::vector<t_options_group> get_static_option_groups()
 
 #define GENPROPS(T, x) .current_value = RWPROP(T, x), .default_value = RPROP(T, x)
 
-    paths_group.items.push_back({.type = t_options_item::Type::String,
+    paths_group.items.push_back({.type = t_options_item::Type::Folder,
                                  .group_id = paths_group.id,
                                  .name = L"Plugin Folder",
                                  .tooltip = L"The path to the plugin folder.",
                                  GENPROPS(std::wstring, plugins_directory)});
-    paths_group.items.push_back({.type = t_options_item::Type::String,
+    paths_group.items.push_back({.type = t_options_item::Type::Folder,
                                  .group_id = paths_group.id,
                                  .name = L"Save Data Folder",
                                  .tooltip = L"The path to the save data folder.",
                                  GENPROPS(std::wstring, saves_directory),
                                  .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_core_executing(); }});
-    paths_group.items.push_back({.type = t_options_item::Type::String,
+    paths_group.items.push_back({.type = t_options_item::Type::Folder,
                                  .group_id = paths_group.id,
                                  .name = L"Screenshot Folder",
                                  .tooltip = L"The path to the screenshot folder.",
                                  GENPROPS(std::wstring, screenshots_directory)});
-    paths_group.items.push_back({.type = t_options_item::Type::String,
+    paths_group.items.push_back({.type = t_options_item::Type::Folder,
                                  .group_id = paths_group.id,
                                  .name = L"Backup Folder",
                                  .tooltip = L"The path to the movie backup folder.",

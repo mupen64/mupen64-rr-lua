@@ -23,6 +23,7 @@ struct t_options_item
         Enum,
         String,
         Hotkey,
+        Folder,
     };
 
     typedef std::variant<int32_t, std::wstring, Hotkey::t_hotkey> data_variant;
