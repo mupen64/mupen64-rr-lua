@@ -651,7 +651,7 @@ std::vector<t_options_group> get_static_option_groups()
 {
     size_t id = 0;
 
-    t_options_group paths_group = {.id = id++, .name = L"Paths"};
+    t_options_group folders_group = {.id = id++, .name = L"Folders"};
 
     t_options_group rombrowser_group = {.id = id++, .name = L"Rombrowser"};
 
@@ -681,27 +681,27 @@ std::vector<t_options_group> get_static_option_groups()
 
 #define GENPROPS(T, x) .current_value = RWPROP(T, x), .default_value = RPROP(T, x)
 
-    paths_group.items.push_back({.type = t_options_item::Type::Folder,
-                                 .group_id = paths_group.id,
-                                 .name = L"Plugin Folder",
-                                 .tooltip = L"The path to the plugin folder.",
-                                 GENPROPS(std::wstring, plugins_directory)});
-    paths_group.items.push_back({.type = t_options_item::Type::Folder,
-                                 .group_id = paths_group.id,
-                                 .name = L"Save Data Folder",
-                                 .tooltip = L"The path to the save data folder.",
-                                 GENPROPS(std::wstring, saves_directory),
-                                 .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_core_executing(); }});
-    paths_group.items.push_back({.type = t_options_item::Type::Folder,
-                                 .group_id = paths_group.id,
-                                 .name = L"Screenshot Folder",
-                                 .tooltip = L"The path to the screenshot folder.",
-                                 GENPROPS(std::wstring, screenshots_directory)});
-    paths_group.items.push_back({.type = t_options_item::Type::Folder,
-                                 .group_id = paths_group.id,
-                                 .name = L"Backup Folder",
-                                 .tooltip = L"The path to the movie backup folder.",
-                                 GENPROPS(std::wstring, backups_directory)});
+    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+                                   .group_id = folders_group.id,
+                                   .name = L"Plugin Folder",
+                                   .tooltip = L"The path to the plugin folder.",
+                                   GENPROPS(std::wstring, plugins_directory)});
+    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+                                   .group_id = folders_group.id,
+                                   .name = L"Save Data Folder",
+                                   .tooltip = L"The path to the save data folder.",
+                                   GENPROPS(std::wstring, saves_directory),
+                                   .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_core_executing(); }});
+    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+                                   .group_id = folders_group.id,
+                                   .name = L"Screenshot Folder",
+                                   .tooltip = L"The path to the screenshot folder.",
+                                   GENPROPS(std::wstring, screenshots_directory)});
+    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+                                   .group_id = folders_group.id,
+                                   .name = L"Backup Folder",
+                                   .tooltip = L"The path to the movie backup folder.",
+                                   GENPROPS(std::wstring, backups_directory)});
 
     interface_group.items.emplace_back(
         t_options_item{.type = t_options_item::Type::Bool,
