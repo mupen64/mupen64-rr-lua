@@ -78,6 +78,7 @@ struct t_config
     /// </summary>
     int32_t plugin_discovery_async = 1;
 
+    std::wstring rom_directory = L".\\roms\\";
     std::wstring plugins_directory = L".\\plugin\\";
     std::wstring saves_directory = L".\\save\\";
     std::wstring screenshots_directory = L".\\screenshots\\";
@@ -107,11 +108,6 @@ struct t_config
     /// Whether the rom browser will recursively search for roms beginning in the specified directories
     /// </summary>
     int32_t is_rombrowser_recursion_enabled;
-
-    /// <summary>
-    /// The paths to directories which are searched for roms
-    /// </summary>
-    std::vector<std::wstring> rombrowser_rom_paths;
 
     /// <summary>
     /// The strategy to use when capturing video

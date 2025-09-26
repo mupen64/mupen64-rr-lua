@@ -34,19 +34,13 @@ std::vector<std::wstring> find_available_roms()
     // we aggregate all file paths and only filter them after we're done
     if (g_config.is_rombrowser_recursion_enabled)
     {
-        for (auto path : g_config.rombrowser_rom_paths)
-        {
-            auto file_paths = get_files_in_subdirectories(path);
-            rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
-        }
+        auto file_paths = get_files_in_subdirectories(g_config.rom_directory);
+        rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
     }
     else
     {
-        for (auto path : g_config.rombrowser_rom_paths)
-        {
-            auto file_paths = g_main_ctx.io_service.get_files_with_extension_in_directory(path, L"*");
-            rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
-        }
+        auto file_paths = g_main_ctx.io_service.get_files_with_extension_in_directory(g_config.rom_directory, L"*");
+        rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
     }
 
     std::vector<std::wstring> filtered_rom_paths;
