@@ -1326,12 +1326,20 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
         AppendMenu(h_menu, MF_STRING | (readonly ? MF_DISABLED : MF_ENABLED), 1, L"Reset to default");
         AppendMenu(h_menu, MF_STRING, 2, L"More info...");
         AppendMenu(h_menu, MF_SEPARATOR, 100, L"");
-        if (option_item.type == t_options_item::Type::Hotkey)
+        switch (option_item.type)
         {
-            AppendMenu(h_menu, MF_STRING, 3, L"Clear");
-            AppendMenu(h_menu, MF_SEPARATOR, 101, L"");
+        case t_options_item::Type::Hotkey:
+            AppendMenu(h_menu, MF_STRING, 4, L"Clear");
+            AppendMenu(h_menu, MF_SEPARATOR, 100, L"");
+            break;
+        case t_options_item::Type::Folder:
+            AppendMenu(h_menu, MF_STRING, 5, L"Show in Explorer");
+            AppendMenu(h_menu, MF_SEPARATOR, 100, L"");
+            break;
+        default:
+            break;
         }
-        AppendMenu(h_menu, MF_STRING, 5, L"Reset all to default");
+        AppendMenu(h_menu, MF_STRING, 3, L"Reset all to default");
 
         const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(l_param),
                                             GET_Y_LPARAM(l_param), hwnd, 0);
@@ -1351,11 +1359,16 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             DialogService::show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(),
                                        fsvc_information, hwnd);
             break;
-        case 3:
+        case 4:
             option_item.current_value.set(Hotkey::t_hotkey::make_empty());
             ListView_Update(g_lv_hwnd, i);
             break;
         case 5: {
+            const auto path = std::get<std::wstring>(option_item.current_value.get());
+            ShellExecute(hwnd, L"open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+            break;
+        }
+        case 3: {
             // If some settings can't be changed, we'll bail
             bool can_all_be_changed = true;
 
