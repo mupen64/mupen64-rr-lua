@@ -598,11 +598,17 @@ std::vector<t_options_group> get_static_option_groups()
 
 #define RPROP(T, x) t_options_item::t_readonly_property([] { return g_default_config.x; })
 
-#define RWPROP(T, x)                                                                                                   \
-    t_options_item::t_readwrite_property(                                                                              \
-        [] { return g_config.x; }, [](const t_options_item::data_variant &value) { g_config.x = std::get<T>(value); })
+#define RWPROP(T, x, c)                                                                                                \
+    t_options_item::t_readwrite_property([] { return g_config.x; },                                                    \
+                                         [](const t_options_item::data_variant &value) {                               \
+                                             g_config.x = std::get<T>(value);                                          \
+                                             do                                                                        \
+                                             {                                                                         \
+                                                 c                                                                     \
+                                             } while (0);                                                              \
+                                         })
 
-#define GENPROPS(T, x) .current_value = RWPROP(T, x), .default_value = RPROP(T, x)
+#define GENPROPS(T, x, c) .current_value = RWPROP(T, x, c), .default_value = RPROP(T, x)
 
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
@@ -613,7 +619,7 @@ std::vector<t_options_group> get_static_option_groups()
                                    .group_id = folders_group.id,
                                    .name = L"Plugins",
                                    .tooltip = L"The path to the plugin folder.",
-                                   GENPROPS(std::wstring, plugins_directory)});
+                                   GENPROPS(std::wstring, plugins_directory, { g_plugin_discovery_rescan = true; })});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
                                    .name = L"Save Data",
