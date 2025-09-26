@@ -303,71 +303,11 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
 
         SendMessage(GetDlgItem(hwnd, IDC_RECURSION), BM_SETCHECK,
                     g_config.is_rombrowser_recursion_enabled ? BST_CHECKED : BST_UNCHECKED, 0);
-
-        if (g_config.is_default_plugins_directory_used)
-        {
-            SendMessage(GetDlgItem(hwnd, IDC_DEFAULT_PLUGINS_CHECK), BM_SETCHECK, BST_CHECKED, 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_PLUGINS_DIR), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_PLUGINS_DIR), FALSE);
-        }
-        if (g_config.is_default_saves_directory_used)
-        {
-            SendMessage(GetDlgItem(hwnd, IDC_DEFAULT_SAVES_CHECK), BM_SETCHECK, BST_CHECKED, 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_SAVES_DIR), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_SAVES_DIR), FALSE);
-        }
-        if (g_config.is_default_screenshots_directory_used)
-        {
-            SendMessage(GetDlgItem(hwnd, IDC_DEFAULT_SCREENSHOTS_CHECK), BM_SETCHECK, BST_CHECKED, 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_SCREENSHOTS_DIR), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_SCREENSHOTS_DIR), FALSE);
-        }
-        if (g_config.is_default_backups_directory_used)
-        {
-            SendMessage(GetDlgItem(hwnd, IDC_DEFAULT_BACKUPS_CHECK), BM_SETCHECK, BST_CHECKED, 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_BACKUPS_DIR), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_BACKUPS_DIR), FALSE);
-        }
-
-        SetDlgItemText(hwnd, IDC_PLUGINS_DIR, g_config.plugins_directory.c_str());
-        SetDlgItemText(hwnd, IDC_SAVES_DIR, g_config.saves_directory.c_str());
-        SetDlgItemText(hwnd, IDC_SCREENSHOTS_DIR, g_config.screenshots_directory.c_str());
-        SetDlgItemText(hwnd, IDC_BACKUPS_DIR, g_config.backups_directory.c_str());
-
-        if (g_main_ctx.core_ctx->vr_get_launched())
-        {
-            EnableWindow(GetDlgItem(hwnd, IDC_DEFAULT_SAVES_CHECK), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_SAVES_DIR), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_SAVES_DIR), FALSE);
-        }
         break;
     case WM_COMMAND:
         switch (LOWORD(w_param))
         {
-        case IDC_PLUGINS_DIR: {
-            const auto prev_plugins_dir = g_config.plugins_directory;
 
-            GetDlgItemText(hwnd, IDC_PLUGINS_DIR, path, std::size(path));
-            g_config.plugins_directory = path;
-
-            if (g_config.plugins_directory != prev_plugins_dir)
-            {
-                g_plugin_discovery_rescan = true;
-            }
-            break;
-        }
-        case IDC_SAVES_DIR:
-            GetDlgItemText(hwnd, IDC_SAVES_DIR, path, std::size(path));
-            g_config.saves_directory = path;
-            break;
-        case IDC_SCREENSHOTS_DIR:
-            GetDlgItemText(hwnd, IDC_SCREENSHOTS_DIR, path, std::size(path));
-            g_config.screenshots_directory = path;
-            break;
-        case IDC_BACKUPS_DIR:
-            GetDlgItemText(hwnd, IDC_BACKUPS_DIR, path, std::size(path));
-            g_config.backups_directory = path;
-            break;
         case IDC_RECURSION:
             g_config.is_rombrowser_recursion_enabled = IsDlgButtonChecked(hwnd, IDC_RECURSION) == BST_CHECKED;
             break;
@@ -395,81 +335,9 @@ INT_PTR CALLBACK directories_cfg(const HWND hwnd, const UINT message, const WPAR
             g_config.rombrowser_rom_paths.clear();
             build_rom_browser_path_list(hwnd);
             break;
-        case IDC_DEFAULT_PLUGINS_CHECK: {
-            const auto prev = g_config.is_default_plugins_directory_used;
-            g_config.is_default_plugins_directory_used =
-                IsDlgButtonChecked(hwnd, IDC_DEFAULT_PLUGINS_CHECK) == BST_CHECKED;
-            EnableWindow(GetDlgItem(hwnd, IDC_PLUGINS_DIR), !g_config.is_default_plugins_directory_used);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_PLUGINS_DIR), !g_config.is_default_plugins_directory_used);
-            if (g_config.is_default_plugins_directory_used != prev)
-            {
-                g_plugin_discovery_rescan = true;
-            }
-        }
-        break;
-        case IDC_DEFAULT_BACKUPS_CHECK: {
-            g_config.is_default_backups_directory_used =
-                IsDlgButtonChecked(hwnd, IDC_DEFAULT_BACKUPS_CHECK) == BST_CHECKED;
-            EnableWindow(GetDlgItem(hwnd, IDC_BACKUPS_DIR), !g_config.is_default_backups_directory_used);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_BACKUPS_DIR), !g_config.is_default_backups_directory_used);
-        }
-        break;
         case IDC_PLUGIN_DIRECTORY_HELP: {
             MessageBox(hwnd, L"Changing the plugin directory may introduce bugs to some plugins.", L"Info",
                        MB_ICONINFORMATION | MB_OK);
-        }
-        break;
-        case IDC_CHOOSE_PLUGINS_DIR: {
-            const auto path = FilePicker::show_folder_dialog(L"f_plugins", hwnd);
-            if (path.empty())
-            {
-                break;
-            }
-            g_config.plugins_directory = path;
-            SetDlgItemText(hwnd, IDC_PLUGINS_DIR, g_config.plugins_directory.c_str());
-        }
-        break;
-        case IDC_DEFAULT_SAVES_CHECK: {
-            g_config.is_default_saves_directory_used = IsDlgButtonChecked(hwnd, IDC_DEFAULT_SAVES_CHECK) == BST_CHECKED;
-            EnableWindow(GetDlgItem(hwnd, IDC_SAVES_DIR), !g_config.is_default_saves_directory_used);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_SAVES_DIR), !g_config.is_default_saves_directory_used);
-        }
-        break;
-        case IDC_CHOOSE_SAVES_DIR: {
-            const auto path = FilePicker::show_folder_dialog(L"f_saves", hwnd);
-            if (path.empty())
-            {
-                break;
-            }
-            g_config.saves_directory = path;
-            SetDlgItemText(hwnd, IDC_SAVES_DIR, g_config.saves_directory.c_str());
-        }
-        break;
-        case IDC_DEFAULT_SCREENSHOTS_CHECK: {
-            g_config.is_default_screenshots_directory_used =
-                IsDlgButtonChecked(hwnd, IDC_DEFAULT_SCREENSHOTS_CHECK) == BST_CHECKED;
-            EnableWindow(GetDlgItem(hwnd, IDC_SCREENSHOTS_DIR), !g_config.is_default_screenshots_directory_used);
-            EnableWindow(GetDlgItem(hwnd, IDC_CHOOSE_SCREENSHOTS_DIR), !g_config.is_default_screenshots_directory_used);
-        }
-        break;
-        case IDC_CHOOSE_SCREENSHOTS_DIR: {
-            const auto path = FilePicker::show_folder_dialog(L"f_screenshots", hwnd);
-            if (path.empty())
-            {
-                break;
-            }
-            g_config.screenshots_directory = path;
-            SetDlgItemText(hwnd, IDC_SCREENSHOTS_DIR, g_config.screenshots_directory.c_str());
-        }
-        break;
-        case IDC_CHOOSE_BACKUPS_DIR: {
-            const auto path = FilePicker::show_folder_dialog(L"f_backups", hwnd);
-            if (path.empty())
-            {
-                break;
-            }
-            g_config.backups_directory = path;
-            SetDlgItemText(hwnd, IDC_BACKUPS_DIR, g_config.backups_directory.c_str());
         }
         break;
         default:
@@ -770,6 +638,10 @@ std::vector<t_options_group> get_static_option_groups()
 {
     size_t id = 0;
 
+    t_options_group paths_group = {.id = id++, .name = L"Paths"};
+
+    t_options_group rombrowser_group = {.id = id++, .name = L"Rombrowser"};
+
     t_options_group interface_group = {.id = id++, .name = L"Interface"};
 
     t_options_group statusbar_group = {.id = id++, .name = L"Statusbar"};
@@ -795,6 +667,28 @@ std::vector<t_options_group> get_static_option_groups()
         [] { return g_config.x; }, [](const t_options_item::data_variant &value) { g_config.x = std::get<T>(value); })
 
 #define GENPROPS(T, x) .current_value = RWPROP(T, x), .default_value = RPROP(T, x)
+
+    paths_group.items.push_back({.type = t_options_item::Type::String,
+                                 .group_id = paths_group.id,
+                                 .name = L"Plugin Folder",
+                                 .tooltip = L"The path to the plugin folder.",
+                                 GENPROPS(std::wstring, plugins_directory)});
+    paths_group.items.push_back({.type = t_options_item::Type::String,
+                                 .group_id = paths_group.id,
+                                 .name = L"Save Data Folder",
+                                 .tooltip = L"The path to the save data folder.",
+                                 GENPROPS(std::wstring, saves_directory),
+                                 .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_core_executing(); }});
+    paths_group.items.push_back({.type = t_options_item::Type::String,
+                                 .group_id = paths_group.id,
+                                 .name = L"Screenshot Folder",
+                                 .tooltip = L"The path to the screenshot folder.",
+                                 GENPROPS(std::wstring, screenshots_directory)});
+    paths_group.items.push_back({.type = t_options_item::Type::String,
+                                 .group_id = paths_group.id,
+                                 .name = L"Backup Folder",
+                                 .tooltip = L"The path to the movie backup folder.",
+                                 GENPROPS(std::wstring, backups_directory)});
 
     interface_group.items.emplace_back(
         t_options_item{.type = t_options_item::Type::Bool,
@@ -1159,8 +1053,9 @@ std::vector<t_options_group> get_static_option_groups()
         .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
     });
 
-    return {interface_group, statusbar_group, seek_piano_roll_group, flow_group, capture_group, core_group, vcr_group,
-            lua_group,       debug_group};
+    return {paths_group, rombrowser_group, interface_group, statusbar_group, seek_piano_roll_group,
+            flow_group,  capture_group,    core_group,      vcr_group,       lua_group,
+            debug_group};
 }
 
 LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,

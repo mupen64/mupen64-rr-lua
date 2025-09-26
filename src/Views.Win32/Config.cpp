@@ -356,14 +356,9 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(statusbar_scale_up)
     HANDLE_P_VALUE(statusbar_layout)
     HANDLE_P_VALUE(plugin_discovery_async)
-    HANDLE_P_VALUE(is_default_plugins_directory_used)
-    HANDLE_P_VALUE(is_default_saves_directory_used)
-    HANDLE_P_VALUE(is_default_screenshots_directory_used)
-    HANDLE_P_VALUE(is_default_backups_directory_used)
     HANDLE_VALUE(plugins_directory)
     HANDLE_VALUE(saves_directory)
     HANDLE_VALUE(screenshots_directory)
-    HANDLE_VALUE(states_path)
     HANDLE_VALUE(backups_directory)
     HANDLE_VALUE(recent_rom_paths)
     HANDLE_P_VALUE(is_recent_rom_paths_frozen)
@@ -615,36 +610,20 @@ void Config::load()
 
 std::filesystem::path Config::plugin_directory()
 {
-    if (g_config.is_default_plugins_directory_used)
-    {
-        return g_main_ctx.app_path / L"plugin\\";
-    }
     return g_config.plugins_directory;
 }
 
 std::filesystem::path Config::save_directory()
 {
-    if (g_config.is_default_saves_directory_used)
-    {
-        return g_main_ctx.app_path / L"save\\";
-    }
     return g_config.saves_directory;
 }
 
 std::filesystem::path Config::screenshot_directory()
 {
-    if (g_config.is_default_screenshots_directory_used)
-    {
-        return g_main_ctx.app_path / L"screenshots\\";
-    }
     return g_config.screenshots_directory;
 }
 
 std::filesystem::path Config::backup_directory()
 {
-    if (g_config.is_default_backups_directory_used)
-    {
-        return "backups\\";
-    }
     return g_config.backups_directory;
 }
