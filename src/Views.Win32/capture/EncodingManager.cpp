@@ -59,9 +59,9 @@ void readscreen_plugin(int32_t *width = nullptr, int32_t *height = nullptr)
         void *buf = nullptr;
         int32_t w;
         int32_t h;
-        g_view_plugin_funcs.video_read_screen(&buf, &w, &h);
+        g_plugin_funcs.video_read_screen(&buf, &w, &h);
         memcpy(m_video_buf, buf, w * h * 3);
-        g_view_plugin_funcs.video_dll_crt_free(buf);
+        g_plugin_funcs.video_dll_crt_free(buf);
 
         if (width)
         {
@@ -230,7 +230,7 @@ void read_screen()
  */
 static bool check_readscreen_available()
 {
-    bool has_no_mge_or_readscreen = !PluginUtil::mge_available() && !g_view_plugin_funcs.video_read_screen;
+    bool has_no_mge_or_readscreen = !PluginUtil::mge_available() && !g_plugin_funcs.video_read_screen;
     if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && has_no_mge_or_readscreen)
     {
         DialogService::show_dialog(READSCREEN_MISSING_MSG, L"Capture", fsvc_error);
@@ -248,15 +248,15 @@ void get_video_dimensions(int32_t *width, int32_t *height)
         {
             MGECompositor::get_video_size(width, height);
         }
-        else if (g_main_ctx.core.plugin_funcs.video_get_video_size)
+        else if (g_plugin_funcs.video_get_video_size)
         {
-            g_main_ctx.core.plugin_funcs.video_get_video_size(width, height);
+            g_plugin_funcs.video_get_video_size(width, height);
         }
         else
         {
             void *buf = nullptr;
-            g_view_plugin_funcs.video_read_screen(&buf, width, height);
-            g_view_plugin_funcs.video_dll_crt_free(buf);
+            g_plugin_funcs.video_read_screen(&buf, width, height);
+            g_plugin_funcs.video_dll_crt_free(buf);
         }
     }
     else if (g_config.capture_mode == 1 || g_config.capture_mode == 2 || g_config.capture_mode == 3)

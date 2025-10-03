@@ -414,7 +414,7 @@ static void set_save_slot(const size_t slot)
 
 static void toggle_fullscreen()
 {
-    g_view_plugin_funcs.video_change_window();
+    g_plugin_funcs.video_change_window();
     g_main_ctx.fullscreen ^= true;
     ActionManager::notify_active_changed(AppActions::FULL_SCREEN);
 }
@@ -671,7 +671,7 @@ static void show_piano_roll()
 
 static void screenshot()
 {
-    g_view_plugin_funcs.video_capture_screen(Config::screenshot_directory().string().data());
+    g_plugin_funcs.video_capture_screen(Config::screenshot_directory().string().data());
 }
 
 static void start_capture(const bool ask_preset)

@@ -1985,7 +1985,7 @@ void audio_thread()
             continue;
         }
 
-        g_core->plugin_funcs.audio_ai_update(0);
+        g_core->audio_ai_update(0);
     }
     g_core->log_info(L"Sound thread exiting...");
 }
@@ -1998,9 +1998,7 @@ void emu_thread()
 
     init_memory();
 
-    g_core->plugin_funcs.video_rom_open();
-    g_core->plugin_funcs.input_rom_open();
-    g_core->plugin_funcs.audio_rom_open();
+    g_core->callbacks.emu_starting();
 
     dynacore = g_core->cfg->core_type;
 
@@ -2017,14 +2015,7 @@ void emu_thread()
 
     st_on_core_stop();
 
-    g_core->plugin_funcs.video_rom_closed();
-    g_core->plugin_funcs.audio_rom_closed();
-    g_core->plugin_funcs.input_rom_closed();
-    g_core->plugin_funcs.rsp_rom_closed();
-    g_core->plugin_funcs.video_close_dll();
-    g_core->plugin_funcs.audio_close_dll_audio();
-    g_core->plugin_funcs.input_close_dll();
-    g_core->plugin_funcs.rsp_close_dll();
+    g_core->callbacks.emu_stopped();
 
     emu_paused = true;
     emu_launched = false;

@@ -670,7 +670,7 @@ void vcr_handle_recording(int32_t index, core_buttons *input)
         }
         else
         {
-            g_core->plugin_funcs.input_get_keys(index, input);
+            g_core->input_get_keys(index, input);
 
             {
                 vcr_anti_lock bypass;
@@ -752,8 +752,8 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
             return;
         }
 
-        g_core->plugin_funcs.input_set_keys(index, {0});
-        g_core->plugin_funcs.input_get_keys(index, input);
+        g_core->input_set_keys(index, {0});
+        g_core->input_get_keys(index, input);
         return;
     }
 
@@ -794,7 +794,7 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
         });
     }
 
-    g_core->plugin_funcs.input_set_keys(index, *input);
+    g_core->input_set_keys(index, *input);
 
     {
         vcr_anti_lock bypass;
@@ -901,7 +901,7 @@ void vcr_on_controller_poll(int32_t index, core_buttons *input)
 
     if (vcr.task == task_idle)
     {
-        g_core->plugin_funcs.input_get_keys(index, input);
+        g_core->input_get_keys(index, input);
 
         {
             vcr_anti_lock bypass;
@@ -1845,7 +1845,7 @@ core_result vcr_stop_all()
     {
         for (int i = 0; i < 4; i++)
         {
-            g_core->plugin_funcs.input_set_keys(i, {.value = 0});
+            g_core->input_set_keys(i, {.value = 0});
         }
     }
 

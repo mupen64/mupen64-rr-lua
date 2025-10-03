@@ -118,7 +118,7 @@ static int subscribe_atwarpmodifystatuschanged(lua_State *L)
 
 static int Screenshot(lua_State *L)
 {
-    g_view_plugin_funcs.video_capture_screen((char *)luaL_checkstring(L, 1));
+    g_plugin_funcs.video_capture_screen((char *)luaL_checkstring(L, 1));
     return 0;
 }
 

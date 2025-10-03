@@ -31,7 +31,7 @@ static DLLABOUT dll_about{};
 static DLLCONFIG dll_config{};
 static DLLTEST dll_test{};
 
-view_plugin_funcs g_view_plugin_funcs{};
+plugin_funcs g_plugin_funcs{};
 
 #pragma region Dummy Functions
 
@@ -162,28 +162,27 @@ void load_gfx(HMODULE handle)
     RECEIVEEXTENDEDFUNCS receive_extended_funcs;
     FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
-    FUNC(g_view_plugin_funcs.video_change_window, CHANGEWINDOW, dummy_void, "ChangeWindow");
-    FUNC(g_main_ctx.core.plugin_funcs.video_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
+    FUNC(g_plugin_funcs.video_change_window, CHANGEWINDOW, dummy_void, "ChangeWindow");
+    FUNC(g_plugin_funcs.video_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(initiate_gfx, INITIATEGFX, dummy_initiate_gfx, "InitiateGFX");
-    FUNC(g_main_ctx.core.plugin_funcs.video_process_dlist, PROCESSDLIST, dummy_void, "ProcessDList");
-    FUNC(g_main_ctx.core.plugin_funcs.video_process_rdp_list, PROCESSRDPLIST, dummy_void, "ProcessRDPList");
-    FUNC(g_main_ctx.core.plugin_funcs.video_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
-    FUNC(g_main_ctx.core.plugin_funcs.video_rom_open, ROMOPEN, dummy_void, "RomOpen");
-    FUNC(g_main_ctx.core.plugin_funcs.video_show_cfb, SHOWCFB, dummy_void, "ShowCFB");
-    FUNC(g_view_plugin_funcs.video_update_screen, UPDATESCREEN, dummy_void, "UpdateScreen");
-    FUNC(g_main_ctx.core.plugin_funcs.video_vi_status_changed, VISTATUSCHANGED, dummy_void, "ViStatusChanged");
-    FUNC(g_main_ctx.core.plugin_funcs.video_vi_width_changed, VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
-    FUNC(g_view_plugin_funcs.video_move_screen, MOVESCREEN, dummy_move_screen, "MoveScreen");
-    FUNC(g_view_plugin_funcs.video_capture_screen, CAPTURESCREEN, nullptr, "CaptureScreen");
-    FUNC(g_view_plugin_funcs.video_read_screen, READSCREEN, (READSCREEN)GetProcAddress(handle, "ReadScreen2"),
-         "ReadScreen");
-    FUNC(g_main_ctx.core.plugin_funcs.video_get_video_size, GETVIDEOSIZE, nullptr, "mge_get_video_size");
-    FUNC(g_view_plugin_funcs.video_read_video, READVIDEO, nullptr, "mge_read_video");
-    FUNC(g_main_ctx.core.plugin_funcs.video_fb_read, FBREAD, dummy_fb_read, "FBRead");
-    FUNC(g_main_ctx.core.plugin_funcs.video_fb_write, FBWRITE, dummy_fb_write, "FBWrite");
-    FUNC(g_main_ctx.core.plugin_funcs.video_fb_get_frame_buffer_info, FBGETFRAMEBUFFERINFO,
-         dummy_fb_get_framebuffer_info, "FBGetFrameBufferInfo");
-    g_view_plugin_funcs.video_dll_crt_free = get_free_function_in_module(handle);
+    FUNC(g_plugin_funcs.video_process_dlist, PROCESSDLIST, dummy_void, "ProcessDList");
+    FUNC(g_plugin_funcs.video_process_rdp_list, PROCESSRDPLIST, dummy_void, "ProcessRDPList");
+    FUNC(g_plugin_funcs.video_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
+    FUNC(g_plugin_funcs.video_rom_open, ROMOPEN, dummy_void, "RomOpen");
+    FUNC(g_plugin_funcs.video_show_cfb, SHOWCFB, dummy_void, "ShowCFB");
+    FUNC(g_plugin_funcs.video_update_screen, UPDATESCREEN, dummy_void, "UpdateScreen");
+    FUNC(g_plugin_funcs.video_vi_status_changed, VISTATUSCHANGED, dummy_void, "ViStatusChanged");
+    FUNC(g_plugin_funcs.video_vi_width_changed, VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
+    FUNC(g_plugin_funcs.video_move_screen, MOVESCREEN, dummy_move_screen, "MoveScreen");
+    FUNC(g_plugin_funcs.video_capture_screen, CAPTURESCREEN, nullptr, "CaptureScreen");
+    FUNC(g_plugin_funcs.video_read_screen, READSCREEN, (READSCREEN)GetProcAddress(handle, "ReadScreen2"), "ReadScreen");
+    FUNC(g_plugin_funcs.video_get_video_size, GETVIDEOSIZE, nullptr, "mge_get_video_size");
+    FUNC(g_plugin_funcs.video_read_video, READVIDEO, nullptr, "mge_read_video");
+    FUNC(g_plugin_funcs.video_fb_read, FBREAD, dummy_fb_read, "FBRead");
+    FUNC(g_plugin_funcs.video_fb_write, FBWRITE, dummy_fb_write, "FBWrite");
+    FUNC(g_plugin_funcs.video_fb_get_frame_buffer_info, FBGETFRAMEBUFFERINFO, dummy_fb_get_framebuffer_info,
+         "FBGetFrameBufferInfo");
+    g_plugin_funcs.video_dll_crt_free = get_free_function_in_module(handle);
 
     gfx_info.main_hwnd = g_main_ctx.hwnd;
     gfx_info.statusbar_hwnd = g_config.is_statusbar_enabled ? Statusbar::hwnd() : nullptr;
@@ -217,7 +216,7 @@ void load_gfx(HMODULE handle)
     gfx_info.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
     gfx_info.check_interrupts = dummy_void;
 
-    receive_extended_funcs(&g_view_plugin_funcs.video_extended_funcs);
+    receive_extended_funcs(&g_plugin_funcs.video_extended_funcs);
     initiate_gfx(gfx_info);
 }
 
@@ -229,11 +228,10 @@ void load_input(uint16_t version, HMODULE handle)
     RECEIVEEXTENDEDFUNCS receive_extended_funcs;
     FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
-    FUNC(g_main_ctx.core.plugin_funcs.input_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
-    FUNC(g_main_ctx.core.plugin_funcs.input_controller_command, CONTROLLERCOMMAND, dummy_controller_command,
-         "ControllerCommand");
-    FUNC(g_main_ctx.core.plugin_funcs.input_get_keys, GETKEYS, dummy_get_keys, "GetKeys");
-    FUNC(g_main_ctx.core.plugin_funcs.input_set_keys, SETKEYS, dummy_set_keys, "SetKeys");
+    FUNC(g_plugin_funcs.input_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
+    FUNC(g_plugin_funcs.input_controller_command, CONTROLLERCOMMAND, dummy_controller_command, "ControllerCommand");
+    FUNC(g_plugin_funcs.input_get_keys, GETKEYS, dummy_get_keys, "GetKeys");
+    FUNC(g_plugin_funcs.input_set_keys, SETKEYS, dummy_set_keys, "SetKeys");
     if (version == 0x0101)
     {
         FUNC(initiate_controllers, INITIATECONTROLLERS, dummy_initiate_controllers, "InitiateControllers");
@@ -242,11 +240,11 @@ void load_input(uint16_t version, HMODULE handle)
     {
         FUNC(old_initiate_controllers, OLD_INITIATECONTROLLERS, nullptr, "InitiateControllers");
     }
-    FUNC(g_main_ctx.core.plugin_funcs.input_read_controller, READCONTROLLER, dummy_read_controller, "ReadController");
-    FUNC(g_main_ctx.core.plugin_funcs.input_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
-    FUNC(g_main_ctx.core.plugin_funcs.input_rom_open, ROMOPEN, dummy_void, "RomOpen");
-    FUNC(g_view_plugin_funcs.input_key_down, KEYDOWN, dummy_key_down, "WM_KeyDown");
-    FUNC(g_view_plugin_funcs.input_key_up, KEYUP, dummy_key_up, "WM_KeyUp");
+    FUNC(g_plugin_funcs.input_read_controller, READCONTROLLER, dummy_read_controller, "ReadController");
+    FUNC(g_plugin_funcs.input_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
+    FUNC(g_plugin_funcs.input_rom_open, ROMOPEN, dummy_void, "RomOpen");
+    FUNC(g_plugin_funcs.input_key_down, KEYDOWN, dummy_key_down, "WM_KeyDown");
+    FUNC(g_plugin_funcs.input_key_up, KEYUP, dummy_key_up, "WM_KeyUp");
 
     control_info.main_hwnd = g_main_ctx.hwnd;
     control_info.hinst = g_main_ctx.hinst;
@@ -259,7 +257,7 @@ void load_input(uint16_t version, HMODULE handle)
         controller.RawData = 0;
         controller.Plugin = (int32_t)ce_none;
     }
-    receive_extended_funcs(&g_view_plugin_funcs.input_extended_funcs);
+    receive_extended_funcs(&g_plugin_funcs.input_extended_funcs);
     if (version == 0x0101)
     {
         initiate_controllers(control_info);
@@ -277,16 +275,15 @@ void load_audio(HMODULE handle)
     RECEIVEEXTENDEDFUNCS receive_extended_funcs;
     FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
-    FUNC(g_main_ctx.core.plugin_funcs.audio_close_dll_audio, CLOSEDLL, dummy_void, "CloseDLL");
-    FUNC(g_main_ctx.core.plugin_funcs.audio_ai_dacrate_changed, AIDACRATECHANGED, dummy_ai_dacrate_changed,
-         "AiDacrateChanged");
-    FUNC(g_main_ctx.core.plugin_funcs.audio_ai_len_changed, AILENCHANGED, dummy_void, "AiLenChanged");
-    FUNC(g_main_ctx.core.plugin_funcs.audio_ai_read_length, AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
+    FUNC(g_plugin_funcs.audio_close_dll_audio, CLOSEDLL, dummy_void, "CloseDLL");
+    FUNC(g_plugin_funcs.audio_ai_dacrate_changed, AIDACRATECHANGED, dummy_ai_dacrate_changed, "AiDacrateChanged");
+    FUNC(g_plugin_funcs.audio_ai_len_changed, AILENCHANGED, dummy_void, "AiLenChanged");
+    FUNC(g_plugin_funcs.audio_ai_read_length, AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
     FUNC(initiate_audio, INITIATEAUDIO, dummy_initiate_audio, "InitiateAudio");
-    FUNC(g_main_ctx.core.plugin_funcs.audio_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
-    FUNC(g_main_ctx.core.plugin_funcs.audio_rom_open, ROMOPEN, dummy_void, "RomOpen");
-    FUNC(g_main_ctx.core.plugin_funcs.audio_process_alist, PROCESSALIST, dummy_void, "ProcessAList");
-    FUNC(g_main_ctx.core.plugin_funcs.audio_ai_update, AIUPDATE, dummy_ai_update, "AiUpdate");
+    FUNC(g_plugin_funcs.audio_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
+    FUNC(g_plugin_funcs.audio_rom_open, ROMOPEN, dummy_void, "RomOpen");
+    FUNC(g_plugin_funcs.audio_process_alist, PROCESSALIST, dummy_void, "ProcessAList");
+    FUNC(g_plugin_funcs.audio_ai_update, AIUPDATE, dummy_ai_update, "AiUpdate");
 
     audio_info.main_hwnd = g_main_ctx.hwnd;
     audio_info.hinst = g_main_ctx.hinst;
@@ -305,7 +302,7 @@ void load_audio(HMODULE handle)
 
     audio_info.check_interrupts = dummy_void;
 
-    receive_extended_funcs(&g_view_plugin_funcs.audio_extended_funcs);
+    receive_extended_funcs(&g_plugin_funcs.audio_extended_funcs);
     initiate_audio(audio_info);
 }
 
@@ -316,10 +313,10 @@ void load_rsp(HMODULE handle)
     RECEIVEEXTENDEDFUNCS receive_extended_funcs;
     FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
-    FUNC(g_main_ctx.core.plugin_funcs.rsp_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
-    FUNC(g_main_ctx.core.plugin_funcs.rsp_do_rsp_cycles, DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
+    FUNC(g_plugin_funcs.rsp_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
+    FUNC(g_plugin_funcs.rsp_do_rsp_cycles, DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
     FUNC(initiate_rsp, INITIATERSP, dummy_initiate_rsp, "InitiateRSP");
-    FUNC(g_main_ctx.core.plugin_funcs.rsp_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
+    FUNC(g_plugin_funcs.rsp_rom_closed, ROMCLOSED, dummy_void, "RomClosed");
 
     rsp_info.byteswapped = 1;
     rsp_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -344,12 +341,12 @@ void load_rsp(HMODULE handle)
     rsp_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
     rsp_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
     rsp_info.check_interrupts = dummy_void;
-    rsp_info.process_dlist_list = g_main_ctx.core.plugin_funcs.video_process_dlist;
-    rsp_info.process_alist_list = g_main_ctx.core.plugin_funcs.audio_process_alist;
-    rsp_info.process_rdp_list = g_main_ctx.core.plugin_funcs.video_process_rdp_list;
-    rsp_info.show_cfb = g_main_ctx.core.plugin_funcs.video_show_cfb;
+    rsp_info.process_dlist_list = g_plugin_funcs.video_process_dlist;
+    rsp_info.process_alist_list = g_plugin_funcs.audio_process_alist;
+    rsp_info.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
+    rsp_info.show_cfb = g_plugin_funcs.video_show_cfb;
 
-    receive_extended_funcs(&g_view_plugin_funcs.rsp_extended_funcs);
+    receive_extended_funcs(&g_plugin_funcs.rsp_extended_funcs);
 
     int32_t i = 4;
     initiate_rsp(rsp_info, (uint32_t *)&i);
@@ -627,10 +624,10 @@ void setup_dummy_info()
     dummy_rsp_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
     dummy_rsp_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
     dummy_rsp_info.check_interrupts = dummy_void;
-    dummy_rsp_info.process_dlist_list = g_main_ctx.core.plugin_funcs.video_process_dlist;
-    dummy_rsp_info.process_alist_list = g_main_ctx.core.plugin_funcs.audio_process_alist;
-    dummy_rsp_info.process_rdp_list = g_main_ctx.core.plugin_funcs.video_process_rdp_list;
-    dummy_rsp_info.show_cfb = g_main_ctx.core.plugin_funcs.video_show_cfb;
+    dummy_rsp_info.process_dlist_list = g_plugin_funcs.video_process_dlist;
+    dummy_rsp_info.process_alist_list = g_plugin_funcs.audio_process_alist;
+    dummy_rsp_info.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
+    dummy_rsp_info.show_cfb = g_plugin_funcs.video_show_cfb;
 }
 
 t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
@@ -687,5 +684,31 @@ core_plugin_extended_funcs PluginUtil::rsp_extended_funcs()
 
 bool PluginUtil::mge_available()
 {
-    return g_view_plugin_funcs.video_read_video && g_main_ctx.core.plugin_funcs.video_get_video_size;
+    return g_plugin_funcs.video_read_video && g_plugin_funcs.video_get_video_size;
+}
+
+void PluginUtil::arm_core()
+{
+    g_main_ctx.core.video_process_dlist = g_plugin_funcs.video_process_dlist;
+    g_main_ctx.core.video_process_rdp_list = g_plugin_funcs.video_process_rdp_list;
+    g_main_ctx.core.video_show_cfb = g_plugin_funcs.video_show_cfb;
+    g_main_ctx.core.video_vi_status_changed = g_plugin_funcs.video_vi_status_changed;
+    g_main_ctx.core.video_vi_width_changed = g_plugin_funcs.video_vi_width_changed;
+    g_main_ctx.core.video_get_video_size = g_plugin_funcs.video_get_video_size;
+    g_main_ctx.core.video_fb_read = g_plugin_funcs.video_fb_read;
+    g_main_ctx.core.video_fb_write = g_plugin_funcs.video_fb_write;
+    g_main_ctx.core.video_fb_get_frame_buffer_info = g_plugin_funcs.video_fb_get_frame_buffer_info;
+
+    g_main_ctx.core.audio_ai_dacrate_changed = g_plugin_funcs.audio_ai_dacrate_changed;
+    g_main_ctx.core.audio_ai_len_changed = g_plugin_funcs.audio_ai_len_changed;
+    g_main_ctx.core.audio_ai_read_length = g_plugin_funcs.audio_ai_read_length;
+    g_main_ctx.core.audio_process_alist = g_plugin_funcs.audio_process_alist;
+    g_main_ctx.core.audio_ai_update = g_plugin_funcs.audio_ai_update;
+
+    g_main_ctx.core.input_controller_command = g_plugin_funcs.input_controller_command;
+    g_main_ctx.core.input_get_keys = g_plugin_funcs.input_get_keys;
+    g_main_ctx.core.input_set_keys = g_plugin_funcs.input_set_keys;
+    g_main_ctx.core.input_read_controller = g_plugin_funcs.input_read_controller;
+
+    g_main_ctx.core.rsp_do_rsp_cycles = g_plugin_funcs.rsp_do_rsp_cycles;
 }

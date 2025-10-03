@@ -457,7 +457,7 @@ void update_screen()
     }
     else
     {
-        g_view_plugin_funcs.video_update_screen();
+        g_plugin_funcs.video_update_screen();
     }
 }
 
@@ -805,13 +805,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     }
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        if (g_view_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
-            g_view_plugin_funcs.input_key_down(wParam, lParam);
+        if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
+            g_plugin_funcs.input_key_down(wParam, lParam);
         break;
     case WM_SYSKEYUP:
     case WM_KEYUP:
-        if (g_view_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
-            g_view_plugin_funcs.input_key_up(wParam, lParam);
+        if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
+            g_plugin_funcs.input_key_up(wParam, lParam);
         break;
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
@@ -829,7 +829,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_MOVE: {
         if (g_main_ctx.core_ctx->vr_get_launched())
         {
-            g_view_plugin_funcs.video_move_screen((int)wParam, lParam);
+            g_plugin_funcs.video_move_screen((int)wParam, lParam);
         }
 
         if (IsIconic(g_main_ctx.hwnd))
@@ -1150,6 +1150,22 @@ static core_result init_core()
     g_main_ctx.core.callbacks.emu_starting_changed = [](bool value) {
         Messenger::broadcast(Messenger::Message::EmuStartingChanged, value);
     };
+    g_main_ctx.core.callbacks.emu_starting = [] {
+        PluginUtil::arm_core();
+        g_plugin_funcs.video_rom_open();
+        g_plugin_funcs.input_rom_open();
+        g_plugin_funcs.audio_rom_open();
+    };
+    g_main_ctx.core.callbacks.emu_stopped = [] {
+        g_plugin_funcs.video_rom_closed();
+        g_plugin_funcs.audio_rom_closed();
+        g_plugin_funcs.input_rom_closed();
+        g_plugin_funcs.rsp_rom_closed();
+        g_plugin_funcs.video_close_dll();
+        g_plugin_funcs.audio_close_dll_audio();
+        g_plugin_funcs.input_close_dll();
+        g_plugin_funcs.rsp_close_dll();
+    };
     g_main_ctx.core.callbacks.emu_stopping = []() { Messenger::broadcast(Messenger::Message::EmuStopping, nullptr); };
     g_main_ctx.core.callbacks.reset_completed = []() {
         Messenger::broadcast(Messenger::Message::ResetCompleted, nullptr);
@@ -1235,10 +1251,10 @@ static core_result init_core()
         copy(g_rsp_plugin, rsp);
     };
 
-    g_view_plugin_funcs.video_extended_funcs = PluginUtil::video_extended_funcs();
-    g_view_plugin_funcs.audio_extended_funcs = PluginUtil::audio_extended_funcs();
-    g_view_plugin_funcs.input_extended_funcs = PluginUtil::input_extended_funcs();
-    g_view_plugin_funcs.rsp_extended_funcs = PluginUtil::rsp_extended_funcs();
+    g_plugin_funcs.video_extended_funcs = PluginUtil::video_extended_funcs();
+    g_plugin_funcs.audio_extended_funcs = PluginUtil::audio_extended_funcs();
+    g_plugin_funcs.input_extended_funcs = PluginUtil::input_extended_funcs();
+    g_plugin_funcs.rsp_extended_funcs = PluginUtil::rsp_extended_funcs();
 
     const auto result = core_create(&g_main_ctx.core, &g_main_ctx.core_ctx);
 

@@ -41,6 +41,8 @@ extern "C"
         std::function<void(bool)> emu_paused_changed = [](bool) {};
         std::function<void(bool)> emu_launched_changed = [](bool) {};
         std::function<void(bool)> emu_starting_changed = [](bool) {};
+        std::function<void()> emu_starting = [] {};
+        std::function<void()> emu_stopped = [] {};
         std::function<void()> emu_stopping = [] {};
         std::function<void()> reset_completed = [] {};
         std::function<void(int32_t)> speed_modifier_changed = [](int32_t) {};
@@ -57,62 +59,6 @@ extern "C"
         std::function<void()> lag_limit_exceeded = [] {};
         std::function<void()> seek_status_changed = [] {};
     };
-
-    /**
-     * \brief The plugin function collection.
-     */
-    typedef struct
-    {
-
-// TODO: Maybe implement dummy substitutions in the core?
-#pragma region Video
-        CLOSEDLL video_close_dll;
-        ROMCLOSED video_rom_closed;
-        ROMOPEN video_rom_open;
-
-        PROCESSDLIST video_process_dlist;
-        PROCESSRDPLIST video_process_rdp_list;
-        SHOWCFB video_show_cfb;
-        VISTATUSCHANGED video_vi_status_changed;
-        VIWIDTHCHANGED video_vi_width_changed;
-        GETVIDEOSIZE video_get_video_size;
-        FBREAD video_fb_read;
-        FBWRITE video_fb_write;
-        FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
-#pragma endregion
-
-#pragma region Audio
-        CLOSEDLL audio_close_dll_audio;
-        ROMCLOSED audio_rom_closed;
-        ROMOPEN audio_rom_open;
-
-        AIDACRATECHANGED audio_ai_dacrate_changed;
-        AILENCHANGED audio_ai_len_changed;
-        AIREADLENGTH audio_ai_read_length;
-        PROCESSALIST audio_process_alist;
-        AIUPDATE audio_ai_update;
-#pragma endregion
-
-#pragma region Input
-        CLOSEDLL input_close_dll;
-        ROMCLOSED input_rom_closed;
-        ROMOPEN input_rom_open;
-
-        CONTROLLERCOMMAND input_controller_command;
-        GETKEYS input_get_keys;
-        SETKEYS input_set_keys;
-        READCONTROLLER input_read_controller;
-
-#pragma endregion
-
-#pragma region RSP
-        CLOSEDLL rsp_close_dll;
-        ROMCLOSED rsp_rom_closed;
-
-        DORSPCYCLES rsp_do_rsp_cycles;
-#pragma endregion
-
-    } core_plugin_funcs;
 
 #pragma region Dialog IDs
 
@@ -148,11 +94,6 @@ extern "C"
          * \brief The core callbacks.
          */
         core_callbacks callbacks;
-
-        /**
-         * \brief The plugin functions.
-         */
-        core_plugin_funcs plugin_funcs;
 
         core_controller controls[4]{};
 
@@ -302,6 +243,29 @@ extern "C"
          */
         void (*st_pre_callback)(const core_st_callback_info &info, const std::vector<uint8_t> &buffer) =
             [](const core_st_callback_info &, const std::vector<uint8_t> &) {};
+
+        PROCESSDLIST video_process_dlist;
+        PROCESSRDPLIST video_process_rdp_list;
+        SHOWCFB video_show_cfb;
+        VISTATUSCHANGED video_vi_status_changed;
+        VIWIDTHCHANGED video_vi_width_changed;
+        GETVIDEOSIZE video_get_video_size;
+        FBREAD video_fb_read;
+        FBWRITE video_fb_write;
+        FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
+
+        AIDACRATECHANGED audio_ai_dacrate_changed;
+        AILENCHANGED audio_ai_len_changed;
+        AIREADLENGTH audio_ai_read_length;
+        PROCESSALIST audio_process_alist;
+        AIUPDATE audio_ai_update;
+
+        CONTROLLERCOMMAND input_controller_command;
+        GETKEYS input_get_keys;
+        SETKEYS input_set_keys;
+        READCONTROLLER input_read_controller;
+
+        DORSPCYCLES rsp_do_rsp_cycles;
     };
 
     struct core_ctx

@@ -374,7 +374,7 @@ void MGECompositor::init()
 
 void MGECompositor::update_screen()
 {
-    g_main_ctx.core.plugin_funcs.video_get_video_size(&mge_context.width, &mge_context.height);
+    g_plugin_funcs.video_get_video_size(&mge_context.width, &mge_context.height);
 
     if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
     {
@@ -382,7 +382,7 @@ void MGECompositor::update_screen()
         recreate_mge_context_d3d();
     }
 
-    g_view_plugin_funcs.video_read_video(&mge_context.buffer);
+    g_plugin_funcs.video_read_video(&mge_context.buffer);
 
     copy_rgb24_buffer_to_rgb32();
     upload_rgb32_buffer();

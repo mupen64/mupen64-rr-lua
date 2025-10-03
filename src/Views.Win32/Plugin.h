@@ -6,13 +6,22 @@
 
 #pragma once
 
-/**
- * \brief Plugin functions used solely in the view.
- */
-struct view_plugin_funcs
+struct plugin_funcs
 {
-    CHANGEWINDOW video_change_window = nullptr;
     core_plugin_extended_funcs video_extended_funcs;
+    ROMOPEN video_rom_open;
+    ROMCLOSED video_rom_closed;
+    CLOSEDLL video_close_dll;
+    PROCESSDLIST video_process_dlist;
+    PROCESSRDPLIST video_process_rdp_list;
+    SHOWCFB video_show_cfb;
+    VISTATUSCHANGED video_vi_status_changed;
+    VIWIDTHCHANGED video_vi_width_changed;
+    GETVIDEOSIZE video_get_video_size;
+    FBREAD video_fb_read;
+    FBWRITE video_fb_write;
+    FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
+    CHANGEWINDOW video_change_window = nullptr;
     UPDATESCREEN video_update_screen;
     READSCREEN video_read_screen;
     DLLCRTFREE video_dll_crt_free;
@@ -21,12 +30,30 @@ struct view_plugin_funcs
     READVIDEO video_read_video;
 
     core_plugin_extended_funcs audio_extended_funcs;
+    ROMOPEN audio_rom_open;
+    ROMCLOSED audio_rom_closed;
+    CLOSEDLL audio_close_dll_audio;
+    AIDACRATECHANGED audio_ai_dacrate_changed;
+    AILENCHANGED audio_ai_len_changed;
+    AIREADLENGTH audio_ai_read_length;
+    PROCESSALIST audio_process_alist;
+    AIUPDATE audio_ai_update;
+    CLOSEDLL input_close_dll;
+    ROMCLOSED input_rom_closed;
+    ROMOPEN input_rom_open;
 
     core_plugin_extended_funcs input_extended_funcs;
+    CONTROLLERCOMMAND input_controller_command;
+    GETKEYS input_get_keys;
+    SETKEYS input_set_keys;
+    READCONTROLLER input_read_controller;
     KEYDOWN input_key_down;
     KEYUP input_key_up;
 
     core_plugin_extended_funcs rsp_extended_funcs;
+    CLOSEDLL rsp_close_dll;
+    ROMCLOSED rsp_rom_closed;
+    DORSPCYCLES rsp_do_rsp_cycles;
 };
 
 class Plugin
@@ -111,7 +138,7 @@ typedef struct
 
 } t_plugin_discovery_result;
 
-extern view_plugin_funcs g_view_plugin_funcs;
+extern plugin_funcs g_plugin_funcs;
 
 /// <summary>
 /// Initializes dummy info used by per-plugin functions
@@ -151,5 +178,10 @@ core_plugin_extended_funcs rsp_extended_funcs();
  * \return Whether MGE functionality is currently available.
  */
 bool mge_available();
+
+/**
+ * \brief Sets the core plugin functions based on the currently loaded plugin function set.
+ */
+void arm_core();
 
 } // namespace PluginUtil
