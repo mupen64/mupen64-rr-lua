@@ -21,7 +21,7 @@ struct plugin_funcs
     FBREAD video_fb_read;
     FBWRITE video_fb_write;
     FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
-    CHANGEWINDOW video_change_window = nullptr;
+    CHANGEWINDOW video_change_window;
     UPDATESCREEN video_update_screen;
     READSCREEN video_read_screen;
     DLLCRTFREE video_dll_crt_free;
