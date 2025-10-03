@@ -5,7 +5,6 @@
  */
 
 #include "Main.h"
-#include "core_plugin.h"
 #include "hle.h"
 
 static struct
@@ -18,23 +17,23 @@ static struct
     unsigned long m3;
 } jpg_data;
 
-static short* q[3];
-static short* pic;
+static short *q[3];
+static short *pic;
 static unsigned long len1, len2;
 
-void jpg_uncompress(OSTask_t* task)
+void jpg_uncompress(OSTask_t *task)
 {
     int i, w;
     short *temp1, *temp2;
-    short* data = (short*)(rsp.rdram + task->ucode_data);
+    short *data = (short *)(rsp.rdram + task->ucode_data);
     short m[8 * 32];
 
     if (!task->flags & 1)
     {
         memcpy(&jpg_data, rsp.rdram + task->data_ptr, task->data_size);
-        q[0] = (short*)(rsp.rdram + jpg_data.m1);
-        q[1] = (short*)(rsp.rdram + jpg_data.m2);
-        q[2] = (short*)(rsp.rdram + jpg_data.m3);
+        q[0] = (short *)(rsp.rdram + jpg_data.m1);
+        q[1] = (short *)(rsp.rdram + jpg_data.m2);
+        q[2] = (short *)(rsp.rdram + jpg_data.m3);
 
         if (jpg_data.h == 0)
         {
@@ -51,10 +50,10 @@ void jpg_uncompress(OSTask_t* task)
     {
         MessageBox(NULL, L"jpg_uncompress: !flags", L"Error", MB_OK | MB_ICONERROR);
     }
-    pic = (short*)(rsp.rdram + jpg_data.pic);
+    pic = (short *)(rsp.rdram + jpg_data.pic);
 
-    temp1 = (short*)malloc((jpg_data.h + 4) * 64 * 2);
-    temp2 = (short*)malloc((jpg_data.h + 4) * 64 * 2);
+    temp1 = (short *)malloc((jpg_data.h + 4) * 64 * 2);
+    temp2 = (short *)malloc((jpg_data.h + 4) * 64 * 2);
     w = jpg_data.w;
 
     do
@@ -144,24 +143,44 @@ void jpg_uncompress(OSTask_t* task)
 
             for (j = 0; j < 8; j++)
             {
-                m[8 * 8 + j] = (((long)temp2[i * 64 + 1 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 7 * 8 + j] * (long)data[2 * 8 + 1 ^ S] * 2)) >> 16;
-                m[9 * 8 + j] = (((long)temp2[i * 64 + 5 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 3 * 8 + j] * (long)data[2 * 8 + 3 ^ S] * 2)) >> 16;
-                m[10 * 8 + j] = (((long)temp2[i * 64 + 3 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 5 * 8 + j] * (long)data[2 * 8 + 4 ^ S] * 2)) >> 16;
-                m[11 * 8 + j] = (((long)temp2[i * 64 + 7 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 1 * 8 + j] * (long)data[2 * 8 + 5 ^ S] * 2)) >> 16;
+                m[8 * 8 + j] = (((long)temp2[i * 64 + 1 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                ((long)temp2[i * 64 + 7 * 8 + j] * (long)data[2 * 8 + 1 ^ S] * 2)) >>
+                               16;
+                m[9 * 8 + j] = (((long)temp2[i * 64 + 5 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                ((long)temp2[i * 64 + 3 * 8 + j] * (long)data[2 * 8 + 3 ^ S] * 2)) >>
+                               16;
+                m[10 * 8 + j] = (((long)temp2[i * 64 + 3 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                 ((long)temp2[i * 64 + 5 * 8 + j] * (long)data[2 * 8 + 4 ^ S] * 2)) >>
+                                16;
+                m[11 * 8 + j] = (((long)temp2[i * 64 + 7 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                 ((long)temp2[i * 64 + 1 * 8 + j] * (long)data[2 * 8 + 5 ^ S] * 2)) >>
+                                16;
 
-                m[6 * 8 + j] = (((long)temp2[i * 64 + 0 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 4 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >> 16;
+                m[6 * 8 + j] = (((long)temp2[i * 64 + 0 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                ((long)temp2[i * 64 + 4 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >>
+                               16;
 
                 m[5 * 8 + j] = m[11 * 8 + j] - m[10 * 8 + j];
                 m[4 * 8 + j] = m[8 * 8 + j] - m[9 * 8 + j];
                 m[12 * 8 + j] = m[8 * 8 + j] + m[9 * 8 + j];
                 m[15 * 8 + j] = m[11 * 8 + j] + m[10 * 8 + j];
 
-                m[13 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[4 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >> 16;
-                m[14 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[4 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >> 16;
+                m[13 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                 ((long)m[4 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >>
+                                16;
+                m[14 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                 ((long)m[4 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >>
+                                16;
 
-                m[4 * 8 + j] = (((long)temp2[i * 64 + 0 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 4 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >> 16;
-                m[5 * 8 + j] = (((long)temp2[i * 64 + 6 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 2 * 8 + j] * (long)data[3 * 8 + 4 ^ S] * 2)) >> 16;
-                m[7 * 8 + j] = (((long)temp2[i * 64 + 2 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)temp2[i * 64 + 6 * 8 + j] * (long)data[3 * 8 + 3 ^ S] * 2)) >> 16;
+                m[4 * 8 + j] = (((long)temp2[i * 64 + 0 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                ((long)temp2[i * 64 + 4 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >>
+                               16;
+                m[5 * 8 + j] = (((long)temp2[i * 64 + 6 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                ((long)temp2[i * 64 + 2 * 8 + j] * (long)data[3 * 8 + 4 ^ S] * 2)) >>
+                               16;
+                m[7 * 8 + j] = (((long)temp2[i * 64 + 2 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                ((long)temp2[i * 64 + 6 * 8 + j] * (long)data[3 * 8 + 3 ^ S] * 2)) >>
+                               16;
 
                 m[8 * 8 + j] = m[4 * 8 + j] + m[5 * 8 + j];
                 m[9 * 8 + j] = m[6 * 8 + j] + m[7 * 8 + j];
@@ -187,40 +206,64 @@ void jpg_uncompress(OSTask_t* task)
 
             for (j = 0; j < 8; j++)
             {
-                m[8 * 8 + j] = (((long)m[25 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[31 * 8 + j] * (long)data[2 * 8 + 1 ^ S] * 2)) >> 16;
-                m[9 * 8 + j] = (((long)m[29 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)m[27 * 8 + j] * (long)data[2 * 8 + 3 ^ S] * 2)) >> 16;
-                m[10 * 8 + j] = (((long)m[27 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)m[29 * 8 + j] * (long)data[2 * 8 + 4 ^ S] * 2)) >> 16;
-                m[11 * 8 + j] = (((long)m[31 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[25 * 8 + j] * (long)data[2 * 8 + 5 ^ S] * 2)) >> 16;
+                m[8 * 8 + j] = (((long)m[25 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                ((long)m[31 * 8 + j] * (long)data[2 * 8 + 1 ^ S] * 2)) >>
+                               16;
+                m[9 * 8 + j] = (((long)m[29 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                ((long)m[27 * 8 + j] * (long)data[2 * 8 + 3 ^ S] * 2)) >>
+                               16;
+                m[10 * 8 + j] = (((long)m[27 * 8 + j] * (long)data[2 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                 ((long)m[29 * 8 + j] * (long)data[2 * 8 + 4 ^ S] * 2)) >>
+                                16;
+                m[11 * 8 + j] = (((long)m[31 * 8 + j] * (long)data[2 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                 ((long)m[25 * 8 + j] * (long)data[2 * 8 + 5 ^ S] * 2)) >>
+                                16;
 
-                m[6 * 8 + j] = (((long)m[24 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[28 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >> 16;
+                m[6 * 8 + j] = (((long)m[24 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                ((long)m[28 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >>
+                               16;
 
                 m[5 * 8 + j] = m[11 * 8 + j] - m[10 * 8 + j];
                 m[4 * 8 + j] = m[8 * 8 + j] - m[9 * 8 + j];
                 m[12 * 8 + j] = m[8 * 8 + j] + m[9 * 8 + j];
                 m[15 * 8 + j] = m[11 * 8 + j] + m[10 * 8 + j];
 
-                m[13 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[4 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >> 16;
-                m[14 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[4 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >> 16;
+                m[13 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                 ((long)m[4 * 8 + j] * (long)data[3 * 8 + 1 ^ S] * 2)) >>
+                                16;
+                m[14 * 8 + j] = (((long)m[5 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                 ((long)m[4 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >>
+                                16;
 
-                m[4 * 8 + j] = (((long)m[24 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 + ((long)m[28 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >> 16;
-                m[5 * 8 + j] = (((long)m[30 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)m[26 * 8 + j] * (long)data[3 * 8 + 4 ^ S] * 2)) >> 16;
-                m[7 * 8 + j] = (((long)m[26 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 + ((long)m[30 * 8 + j] * (long)data[3 * 8 + 3 ^ S] * 2)) >> 16;
+                m[4 * 8 + j] = (((long)m[24 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2) + 0x8000 +
+                                ((long)m[28 * 8 + j] * (long)data[3 * 8 + 0 ^ S] * 2)) >>
+                               16;
+                m[5 * 8 + j] = (((long)m[30 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                ((long)m[26 * 8 + j] * (long)data[3 * 8 + 4 ^ S] * 2)) >>
+                               16;
+                m[7 * 8 + j] = (((long)m[26 * 8 + j] * (long)data[3 * 8 + 2 ^ S] * 2) + 0x8000 +
+                                ((long)m[30 * 8 + j] * (long)data[3 * 8 + 3 ^ S] * 2)) >>
+                               16;
 
                 m[8 * 8 + j] = m[4 * 8 + j] + m[5 * 8 + j];
                 m[9 * 8 + j] = m[6 * 8 + j] + m[7 * 8 + j];
                 m[10 * 8 + j] = m[6 * 8 + j] - m[7 * 8 + j];
                 m[11 * 8 + j] = m[4 * 8 + j] - m[5 * 8 + j];
 
-                accum = ((long)m[8 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 + ((long)m[15 * 8 + j] * (long)data[1 ^ S] * 2);
+                accum = ((long)m[8 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 +
+                        ((long)m[15 * 8 + j] * (long)data[1 ^ S] * 2);
                 temp1[i * 64 + 0 * 8 + j] = (short)(accum >> 16);
                 temp1[i * 64 + 7 * 8 + j] = (accum + ((long)m[15 * 8 + j] * (long)data[2 ^ S] * 2)) >> 16;
-                accum = ((long)m[9 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 + ((long)m[14 * 8 + j] * (long)data[1 ^ S] * 2);
+                accum = ((long)m[9 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 +
+                        ((long)m[14 * 8 + j] * (long)data[1 ^ S] * 2);
                 temp1[i * 64 + 1 * 8 + j] = (short)(accum >> 16);
                 temp1[i * 64 + 6 * 8 + j] = (accum + ((long)m[14 * 8 + j] * (long)data[2 ^ S] * 2)) >> 16;
-                accum = ((long)m[10 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 + ((long)m[13 * 8 + j] * (long)data[1 ^ S] * 2);
+                accum = ((long)m[10 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 +
+                        ((long)m[13 * 8 + j] * (long)data[1 ^ S] * 2);
                 temp1[i * 64 + 2 * 8 + j] = (short)(accum >> 16);
                 temp1[i * 64 + 5 * 8 + j] = (accum + ((long)m[13 * 8 + j] * (long)data[2 ^ S] * 2)) >> 16;
-                accum = ((long)m[11 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 + ((long)m[12 * 8 + j] * (long)data[1 ^ S] * 2);
+                accum = ((long)m[11 * 8 + j] * (long)data[1 ^ S] * 2) + 0x8000 +
+                        ((long)m[12 * 8 + j] * (long)data[1 ^ S] * 2);
                 temp1[i * 64 + 3 * 8 + j] = (short)(accum >> 16);
                 temp1[i * 64 + 4 * 8 + j] = (accum + ((long)m[12 * 8 + j] * (long)data[2 ^ S] * 2)) >> 16;
             }
@@ -236,8 +279,7 @@ void jpg_uncompress(OSTask_t* task)
         }
         else
         {
-            for (i = 0; i < 8; i++)
-                m[9 * 8 + i] = m[10 * 8 + i] = m[11 * 8 + i] = m[12 * 8 + i] = 0;
+            for (i = 0; i < 8; i++) m[9 * 8 + i] = m[10 * 8 + i] = m[11 * 8 + i] = m[12 * 8 + i] = 0;
             m[9 * 8 + 0] = m[10 * 8 + 2] = m[11 * 8 + 4] = m[12 * 8 + 6] = data[6 ^ S];
             m[9 * 8 + 1] = m[10 * 8 + 3] = m[11 * 8 + 5] = m[12 * 8 + 7] = data[7 ^ S];
             for (i = 0; i < 8; i++)
@@ -253,16 +295,28 @@ void jpg_uncompress(OSTask_t* task)
                     int k;
                     for (k = 0; k < 8; k++)
                     {
-                        m[16 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 0] + (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 1] + (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 2] + (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 3]);
+                        m[16 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 0] +
+                                                (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 1] +
+                                                (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 2] +
+                                                (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 3]);
 
-                        m[15 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 4] + (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 5] + (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 6] + (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 7]);
+                        m[15 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 4] +
+                                                (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 5] +
+                                                (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 6] +
+                                                (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 64 + 7]);
 
                         m[18 * 8 + k] = temp1[i * 128 + j * 16 + k] + m[4 * 8 + 7];
                         m[17 * 8 + k] = temp1[i * 128 + j * 16 + 64 + k] + m[4 * 8 + 7];
 
-                        m[14 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 0] + (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 1] + (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 2] + (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 3]);
+                        m[14 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 0] +
+                                                (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 1] +
+                                                (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 2] +
+                                                (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 3]);
 
-                        m[13 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 4] + (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 5] + (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 6] + (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 7]);
+                        m[13 * 8 + k] = (short)((long)m[9 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 4] +
+                                                (long)m[10 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 5] +
+                                                (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 6] +
+                                                (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 7]);
 
                         m[24 * 8 + k] = (short)(((long)m[16 * 8 + k] * (unsigned short)m[4 * 8 + 0]) >> 16);
                         m[23 * 8 + k] = (short)(((long)m[15 * 8 + k] * (unsigned short)m[4 * 8 + 0]) >> 16);
@@ -383,15 +437,16 @@ void jpg_uncompress(OSTask_t* task)
                         m[27 * 8 + k] = (short)((long)m[27 * 8 + k] * (long)m[1 * 8 + 5]);
                         m[28 * 8 + k] = (short)((long)m[28 * 8 + k] * (long)m[1 * 8 + 5]);
 
-                        pic[i * 128 + j * 32 + 16 + k ^ S] = m[24 * 8 + k] | m[26 * 8 + k] | m[28 * 8 + k] | m[1 * 8 + 6];
-                        pic[i * 128 + j * 32 + 24 + k ^ S] = m[23 * 8 + k] | m[25 * 8 + k] | m[27 * 8 + k] | m[1 * 8 + 6];
+                        pic[i * 128 + j * 32 + 16 + k ^ S] =
+                            m[24 * 8 + k] | m[26 * 8 + k] | m[28 * 8 + k] | m[1 * 8 + 6];
+                        pic[i * 128 + j * 32 + 24 + k ^ S] =
+                            m[23 * 8 + k] | m[25 * 8 + k] | m[27 * 8 + k] | m[1 * 8 + 6];
                     }
                 }
             }
         }
         pic += len1 / 2;
-    }
-    while (w-- != 1 && !(*rsp.sp_status_reg & 0x80));
+    } while (w-- != 1 && !(*rsp.sp_status_reg & 0x80));
 
     pic -= len1 * jpg_data.w / 2;
     free(temp2);

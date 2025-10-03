@@ -283,6 +283,7 @@
         <ClInclude Include="src\Views.Win32\Plugin.h" />
         <ClInclude Include="src\Views.Win32\resource.h" />
         <ClInclude Include="src\Views.Win32\ResizeAnchor.h" />
+        <ClInclude Include="src\Views.Win32\ViewPlugin.h"/>
     </ItemGroup>
     <ItemGroup>
         <ClCompile Include="src\Views.Win32\stdafx.cpp">

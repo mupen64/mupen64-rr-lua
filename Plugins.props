@@ -69,7 +69,7 @@
 
     <ItemDefinitionGroup>
         <ClCompile>
-            <PreprocessorDefinitions>CORE_PLUGIN_WITH_CALLBACKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <PreprocessorDefinitions>PLUGIN_WITH_CALLBACKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
         </ClCompile>
     </ItemDefinitionGroup>
     

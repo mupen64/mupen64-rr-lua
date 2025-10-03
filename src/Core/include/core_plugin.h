@@ -5,19 +5,16 @@
  */
 
 /*
- * Describes the Mupen64 Plugin API.
+ * Describes the Mupen64 core-side Plugin API.
  *
- * This header can be used standalone by Mupen64 plugins, just make sure to define CORE_PLUGIN_WITH_CALLBACKS first.
+ * This header can be used standalone by Mupen64 plugins.
  *
  */
 
 #pragma once
 
-#ifdef __cplusplus
 extern "C"
 {
-#endif
-
     /**
      * \brief Describes a controller.
      */
@@ -225,60 +222,15 @@ extern "C"
         };
     } core_buttons;
 
-    /**
-     * \brief Exposes an extended set of functions to plugins.
-     */
-    typedef struct
-    {
-        /**
-         * \brief Size of the structure in bytes.
-         */
-        uint32_t size;
-
-        /**
-         * \brief Logs the specified message at the trace level.
-         */
-        void (*log_trace)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the info level.
-         */
-        void (*log_info)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the warning level.
-         */
-        void (*log_warn)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the error level.
-         */
-        void (*log_error)(const wchar_t *);
-    } core_plugin_extended_funcs;
-
-    typedef void(__cdecl *CLOSEDLL)();
-    typedef void(__cdecl *DLLABOUT)(void *);
-    typedef void(__cdecl *DLLCONFIG)(void *);
-    typedef void(__cdecl *DLLTEST)(void *);
-    typedef void(__cdecl *GETDLLINFO)(core_plugin_info *);
     typedef void(__cdecl *ROMCLOSED)();
     typedef void(__cdecl *ROMOPEN)();
-    typedef void(__cdecl *RECEIVEEXTENDEDFUNCS)(core_plugin_extended_funcs *);
 
-    typedef void(__cdecl *CHANGEWINDOW)();
-    typedef int32_t(__cdecl *INITIATEGFX)(core_gfx_info);
     typedef void(__cdecl *PROCESSDLIST)();
     typedef void(__cdecl *PROCESSRDPLIST)();
     typedef void(__cdecl *SHOWCFB)();
-    typedef void(__cdecl *UPDATESCREEN)();
     typedef void(__cdecl *VISTATUSCHANGED)();
     typedef void(__cdecl *VIWIDTHCHANGED)();
-    typedef void(__cdecl *READSCREEN)(void **, int32_t *, int32_t *);
-    typedef void(__cdecl *DLLCRTFREE)(void *);
-    typedef void(__cdecl *MOVESCREEN)(int32_t, int32_t);
-    typedef void(__cdecl *CAPTURESCREEN)(char *);
     typedef void(__cdecl *GETVIDEOSIZE)(int32_t *, int32_t *);
-    typedef void(__cdecl *READVIDEO)(void **);
     typedef void(__cdecl *FBREAD)(uint32_t);
     typedef void(__cdecl *FBWRITE)(uint32_t addr, uint32_t size);
     typedef void(__cdecl *FBGETFRAMEBUFFERINFO)(void *);
@@ -286,108 +238,16 @@ extern "C"
     typedef void(__cdecl *AIDACRATECHANGED)(int32_t system_type);
     typedef void(__cdecl *AILENCHANGED)();
     typedef uint32_t(__cdecl *AIREADLENGTH)();
-    typedef int32_t(__cdecl *INITIATEAUDIO)(core_audio_info);
     typedef void(__cdecl *PROCESSALIST)();
     typedef void(__cdecl *AIUPDATE)(int32_t wait);
 
     typedef void(__cdecl *CONTROLLERCOMMAND)(int32_t controller, unsigned char *command);
     typedef void(__cdecl *GETKEYS)(int32_t controller, core_buttons *keys);
     typedef void(__cdecl *SETKEYS)(int32_t controller, core_buttons keys);
-    typedef void(__cdecl *OLD_INITIATECONTROLLERS)(void *hwnd, core_controller controls[4]);
-    typedef void(__cdecl *INITIATECONTROLLERS)(core_input_info control_info);
     typedef void(__cdecl *READCONTROLLER)(int32_t controller, unsigned char *command);
-    typedef void(__cdecl *KEYDOWN)(uint32_t wParam, int32_t lParam);
-    typedef void(__cdecl *KEYUP)(uint32_t wParam, int32_t lParam);
 
     typedef uint32_t(__cdecl *DORSPCYCLES)(uint32_t);
-    typedef void(__cdecl *INITIATERSP)(core_rsp_info rsp_info, uint32_t *cycles);
-
-#if defined(CORE_PLUGIN_WITH_CALLBACKS)
-
-    // ReSharper disable CppInconsistentNaming
-
-#define EXPORT __declspec(dllexport)
-#define CALL _cdecl
-
-#pragma region Base
-
-    EXPORT void CALL CloseDLL(void);
-    EXPORT void CALL DllAbout(void *hParent);
-    EXPORT void CALL DllConfig(void *hParent);
-    EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo);
-    EXPORT void CALL RomClosed(void);
-    EXPORT void CALL RomOpen(void);
-    /**
-     * Called by the core to provide the plugin with a set of extended functions.
-     * The plugin can store this pointer for use throughout its lifetime.
-     * This function is called before the plugin-specific InitiateXXX function.
-     */
-    EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *);
-
-#pragma endregion
-
-#pragma region Video
-
-    EXPORT void CALL CaptureScreen(const char *Directory);
-    EXPORT void CALL ChangeWindow(void);
-    EXPORT int CALL InitiateGFX(core_gfx_info Gfx_Info);
-    EXPORT void CALL MoveScreen(int xpos, int ypos);
-    EXPORT void CALL ProcessDList(void);
-    EXPORT void CALL ProcessRDPList(void);
-    EXPORT void CALL ShowCFB(void);
-    EXPORT void CALL UpdateScreen(void);
-    EXPORT void CALL ViStatusChanged(void);
-    EXPORT void CALL ViWidthChanged(void);
-    EXPORT void CALL mge_get_video_size(long *width, long *height);
-    EXPORT void CALL mge_read_video(void **);
-
-#pragma endregion
-
-#pragma region Audio
-
-    EXPORT void CALL AiDacrateChanged(int32_t SystemType);
-    EXPORT void CALL AiLenChanged(void);
-    EXPORT uint32_t CALL AiReadLength(void);
-    EXPORT void CALL AiUpdate(int32_t Wait);
-    EXPORT void CALL DllTest(void *hParent);
-    EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info);
-    EXPORT void CALL ProcessAList(void);
-
-#pragma endregion
-
-#pragma region Input
-
-    EXPORT void CALL ControllerCommand(int32_t Control, uint8_t *Command);
-    EXPORT void CALL GetKeys(int32_t Control, core_buttons *Keys);
-    EXPORT void CALL SetKeys(int32_t controller, core_buttons keys);
-#if defined(CORE_PLUGIN_INPUT_OLD_INITIATE_CONTROLLERS)
-    EXPORT void CALL InitiateControllers(void *hwnd, core_controller controls[4]);
-#else
-    EXPORT void CALL InitiateControllers(core_input_info ControlInfo);
-#endif
-    EXPORT void CALL ReadController(int Control, uint8_t *Command);
-    EXPORT void CALL WM_KeyDown(uint32_t wParam, uint32_t lParam);
-    EXPORT void CALL WM_KeyUp(uint32_t wParam, uint32_t lParam);
-
-#pragma endregion
-
-#pragma region RSP
-
-    EXPORT uint32_t DoRspCycles(uint32_t Cycles);
-    EXPORT void InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount);
-
-#pragma endregion
-
-#undef EXPORT
-#undef CALL
-
-    // ReSharper restore CppInconsistentNaming
-
-#endif
-
-#ifdef __cplusplus
 }
-#endif
 
 inline bool operator==(const core_buttons &lhs, const core_buttons &rhs)
 {
