@@ -23,8 +23,8 @@ static void prepare_test()
     cfg = {};
     params.cfg = &cfg;
     params.io_service = &io_helper_service;
-    params.plugin_funcs.input_get_keys = [](int32_t, core_buttons *) {};
-    params.plugin_funcs.input_set_keys = [](int32_t, core_buttons) {};
+    params.input_get_keys = [](int32_t, core_buttons *) {};
+    params.input_set_keys = [](int32_t, core_buttons) {};
 }
 
 /**
@@ -83,7 +83,7 @@ TEST_CASE("idle_task_returns_input_from_getkeys", "vcr_on_controller_poll")
 
     const auto INPUT_VALUE = 0xDEAD;
 
-    params.plugin_funcs.input_get_keys = [](int32_t index, core_buttons *input) { *input = {INPUT_VALUE}; };
+    params.input_get_keys = [](int32_t index, core_buttons *input) { *input = {INPUT_VALUE}; };
     core_create(&params, &ctx);
 
     core_buttons input{};
