@@ -6,6 +6,11 @@
 
 #pragma once
 
+#include <Core/stdafx.h>
+#include <core_api.h>
+#include <Views.Win32/ViewPlugin.h>
+#include <PlatformService.h>
+
 #define PLUGIN_VERSION L"1.0.0"
 
 #ifdef _M_X64
