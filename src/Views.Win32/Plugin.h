@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <ViewPlugin.h>
+
 struct plugin_funcs
 {
     core_plugin_extended_funcs video_extended_funcs;
