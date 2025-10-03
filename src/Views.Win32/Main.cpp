@@ -1150,22 +1150,8 @@ static core_result init_core()
     g_main_ctx.core.callbacks.emu_starting_changed = [](bool value) {
         Messenger::broadcast(Messenger::Message::EmuStartingChanged, value);
     };
-    g_main_ctx.core.callbacks.emu_starting = [] {
-        PluginUtil::arm_core();
-        g_plugin_funcs.video_rom_open();
-        g_plugin_funcs.input_rom_open();
-        g_plugin_funcs.audio_rom_open();
-    };
-    g_main_ctx.core.callbacks.emu_stopped = [] {
-        g_plugin_funcs.video_rom_closed();
-        g_plugin_funcs.audio_rom_closed();
-        g_plugin_funcs.input_rom_closed();
-        g_plugin_funcs.rsp_rom_closed();
-        g_plugin_funcs.video_close_dll();
-        g_plugin_funcs.audio_close_dll_audio();
-        g_plugin_funcs.input_close_dll();
-        g_plugin_funcs.rsp_close_dll();
-    };
+    g_main_ctx.core.callbacks.emu_starting = [] { PluginUtil::start_plugins(); };
+    g_main_ctx.core.callbacks.emu_stopped = [] { PluginUtil::stop_plugins(); };
     g_main_ctx.core.callbacks.emu_stopping = []() { Messenger::broadcast(Messenger::Message::EmuStopping, nullptr); };
     g_main_ctx.core.callbacks.reset_completed = []() {
         Messenger::broadcast(Messenger::Message::ResetCompleted, nullptr);

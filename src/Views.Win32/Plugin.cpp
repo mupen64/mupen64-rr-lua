@@ -687,7 +687,7 @@ bool PluginUtil::mge_available()
     return g_plugin_funcs.video_read_video && g_plugin_funcs.video_get_video_size;
 }
 
-void PluginUtil::arm_core()
+void PluginUtil::start_plugins()
 {
     g_main_ctx.core.video_process_dlist = g_plugin_funcs.video_process_dlist;
     g_main_ctx.core.video_process_rdp_list = g_plugin_funcs.video_process_rdp_list;
@@ -711,4 +711,20 @@ void PluginUtil::arm_core()
     g_main_ctx.core.input_read_controller = g_plugin_funcs.input_read_controller;
 
     g_main_ctx.core.rsp_do_rsp_cycles = g_plugin_funcs.rsp_do_rsp_cycles;
+
+    g_plugin_funcs.video_rom_open();
+    g_plugin_funcs.input_rom_open();
+    g_plugin_funcs.audio_rom_open();
+}
+
+void PluginUtil::stop_plugins()
+{
+    g_plugin_funcs.video_rom_closed();
+    g_plugin_funcs.audio_rom_closed();
+    g_plugin_funcs.input_rom_closed();
+    g_plugin_funcs.rsp_rom_closed();
+    g_plugin_funcs.video_close_dll();
+    g_plugin_funcs.audio_close_dll_audio();
+    g_plugin_funcs.input_close_dll();
+    g_plugin_funcs.rsp_close_dll();
 }

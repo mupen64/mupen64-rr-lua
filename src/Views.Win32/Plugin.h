@@ -180,8 +180,13 @@ core_plugin_extended_funcs rsp_extended_funcs();
 bool mge_available();
 
 /**
- * \brief Sets the core plugin functions based on the currently loaded plugin function set.
+ * \brief Prepares and starts the currently loaded plugins to be used by the core.
  */
-void arm_core();
+void start_plugins();
+
+/**
+ * \brief Stops and unloads the currently loaded plugins.
+ */
+void stop_plugins();
 
 } // namespace PluginUtil
