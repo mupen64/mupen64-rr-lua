@@ -3,6 +3,7 @@ Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hac
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
+
 cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
 project(mupen64-rr
   VERSION 1.3.0
@@ -10,13 +11,12 @@ project(mupen64-rr
   LANGUAGES C CXX
 )
 
+message("The C compiler is: ${CMAKE_C_COMPILER}")
+message("The C++ compiler is: ${CMAKE_CXX_COMPILER}")
+
 # initial checks
 if(NOT WIN32)
   message(WARNING "This build setup has not been tested outside of Windows. You're on your own; good luck.")
-endif()
-
-if(WIN32 AND NOT DEFINED MUPEN64_VCPKG_TOOLCHAIN)
-  message(FATAL_ERROR "Please use the provided toolchain file on Windows.")
 endif()
 
 # version suffix
@@ -25,6 +25,7 @@ message(STATUS "Full version name: ${PROJECT_VERSION}${MUPEN64RR_VERSION_SUFFIX}
 
 # build output
 set(MUPEN64RR_OUT_DIR "${PROJECT_BINARY_DIR}/out/")
+set(MUPEN64RR_PLUGIN_OUT_DIR "${PROJECT_BINARY_DIR}/out/plugin/")
 
 # default build type
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -63,7 +64,7 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
   )
 endif()
 
-# Extra config options for specific compilers
+# Extra config options for specific compilers/OSes
 # ===========================================
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -72,6 +73,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # - disable Windows Data Execution Prevention (DEP)
   # - enable the program to use pointers larger than 2GB
   add_link_options(/DYNAMICBASE:NO /NXCOMPAT:NO /LARGEADDRESSAWARE)
+endif()
+if (WIN32)
+  # Use UTF-16 versions of functions
+  add_compile_definitions(UNICODE)
 endif()
 
 # Subdirectories

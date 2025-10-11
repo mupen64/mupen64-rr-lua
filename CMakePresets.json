@@ -11,10 +11,30 @@
       }
     },
     {
-      "name": "vcpkg-win64",
+      "name": "vcpkg-win64-x86",
       "inherits": "common",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake"
+      },
+      "architecture": {
+        "value": "Win32",
+        "strategy": "external"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vcpkg-win64-x64",
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
       },
       "condition": {
         "type": "equals",
