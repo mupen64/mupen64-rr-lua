@@ -26,11 +26,25 @@ You'll need:
 - Visual Studio (for the compiler, CMake, Ninja and vcpkg)
 
 ## Windows/CMake
-In order for the compiler to work, you'll need to be in a VS developer environment (Command Prompt or PowerShell). The architecture will be set by the target architecture (x86 or x64) used in the command prompt. Use the `vcpkg-win64` preset as shown below.
-```
-cmake --preset vcpkg-win64
+In order for the compiler to work, you'll need to be in a VS developer environment. Then, use one of the two available presets that use the `vcpkg-win64.cmake` toolchain file:
+- `vcpkg-win64-x86`: 32-bit build
+- `vcpkg-win64-x64`: 64-bit build
+
+The only difference between the two presets is the `architecture` field, which informs IDEs how to setup the Visual Studio environment. If you're running from the command line, ensure that you're using the correct Visual Studio environment for your target architecture.
+
+From here, it's the usual CMake workflow. I have yet to see if VSCode and Visual Studio can both autodetect that the build folder is `build/`, but they should be able to.
+```sh
+cmake --preset vcpkg-win64-x86
 cmake --build build
 ```
+
+### Visual Studio Code + CMake Tools
+You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
+
+## CMake Options
+| OPTION                    | DESCRIPTION                                                           |
+|---------------------------|-----------------------------------------------------------------------|
+| `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
 
 # Commit Style
 
