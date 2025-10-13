@@ -301,6 +301,8 @@ TEST_CASE("sample_length_gets_clamped_to_buffer_max", "read_movie_header")
     hdr.version = 3;
     hdr.length_samples = 3;
 
+    core_create(&params, &ctx);
+    
     std::vector<uint8_t> bytes(sizeof(hdr));
     std::memcpy(bytes.data(), &hdr, sizeof(hdr));
     bytes.insert(bytes.end(), {0, 0, 0, 0});
