@@ -12,6 +12,7 @@
     },
     {
       "name": "vcpkg-win64-x86",
+      "description": "32-bit debug build on 64-bit Windows",
       "inherits": "common",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake"
@@ -27,20 +28,28 @@
       }
     },
     {
-      "name": "vcpkg-win64-x64",
-      "inherits": "common",
+      "name": "vcpkg-win64-x86-release",
+      "description": "32-bit release build on 64-bit Windows",
+      "inherits": "vcpkg-win64-x86",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake"
-      },
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "vcpkg-win64-x86",
+      "configurePreset": "vcpkg-win64-x86"
+    },
+    {
+      "name": "vcpkg-win64-x86-release",
+      "configurePreset": "vcpkg-win64-x86-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "vcpkg-win64-x86-all",
+      "configurePreset": "vcpkg-win64-x86"
     }
   ]
 }

@@ -34,10 +34,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT is_multi_config)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "The build type to use with CMake. [Debug;Release;MinSizeRel;RelWithDebInfo]")
 endif()
 
-# CMake modules
-# =======================================
-include(CTest)
-
 # Libraries
 # =======================================
 
@@ -63,6 +59,11 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
     INTERFACE_LINK_LIBRARIES "${LUA_LIBRARIES}"
   )
 endif()
+
+# CMake modules
+# =======================================
+include(CTest)
+include(Catch)
 
 # Extra config options for specific compilers/OSes
 # ===========================================

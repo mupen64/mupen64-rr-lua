@@ -1,3 +1,14 @@
+#[===[
+Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+
+SPDX-License-Identifier: GPL-2.0-or-later
+]===]
+
+block()
+if (NOT BUILD_TESTING)
+    return()
+endif()
+
 add_executable(Mupen64RR.Core.Tests
     "stdafx.h"
     "vcr_tests.cpp"
@@ -11,4 +22,5 @@ target_link_libraries(Mupen64RR.Core.Tests PRIVATE
     Catch2::Catch2WithMain
     Mupen64RR.Core._TestIncludes
 )
-add_test(NAME "core-tests" COMMAND Mupen64RR.Core.Tests)
+catch_discover_tests(Mupen64RR.Core.Tests)
+endblock()
