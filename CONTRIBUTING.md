@@ -21,29 +21,31 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ```
 
 # Compiling
+Only Windows is supported for now, though the CMake infrastructure is intended to ease the development of cross-platform code (for whoever decides to work on that).
 
+## Windows/CMake
 You'll need:
 - Visual Studio (for the compiler, CMake, Ninja and vcpkg)
 
-## Windows/CMake
-In order for the compiler to work, you'll need to be in a VS developer environment. Then, use one of the two available presets that use the `vcpkg-win64.cmake` toolchain file:
-- `vcpkg-win64-x86`: 32-bit build
-- `vcpkg-win64-x64`: 64-bit build
-
-The only difference between the two presets is the `architecture` field, which informs IDEs how to setup the Visual Studio environment. If you're running from the command line, ensure that you're using the correct Visual Studio environment for your target architecture.
-
-From here, it's the usual CMake workflow. I have yet to see if VSCode and Visual Studio can both autodetect that the build folder is `build/`, but they should be able to.
+In order for the compiler to work, you'll need to be in a VS developer environment. Then, simply use the provided `vcpkg-win64-x86` preset to compile and build. If you want to change any settings, do so on the command line or via `CMakeUserPresets.json`.
 ```sh
 cmake --preset vcpkg-win64-x86
 cmake --build build
 ```
+
+The core VCR tests are integrated with CMake, so running the tests is easy:
+```sh
+ctest --test-dir build
+```
+
+Presets have been provided for building and testing. These are intended for IDEs, so that they can properly autodetect things. Feel free to contribute IDE launch settings as appropriate.
 
 ### Visual Studio Code + CMake Tools
 You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
 
 ## CMake Options
 | OPTION                    | DESCRIPTION                                                           |
-|---------------------------|-----------------------------------------------------------------------|
+|:-------------------------:|-----------------------------------------------------------------------|
 | `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
 
 # Commit Style
