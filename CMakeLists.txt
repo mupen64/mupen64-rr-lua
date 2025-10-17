@@ -26,6 +26,7 @@ message(STATUS "Full version name: ${PROJECT_VERSION}${MUPEN64RR_VERSION_SUFFIX}
 # build output
 set(MUPEN64RR_OUT_DIR "${PROJECT_BINARY_DIR}/out/")
 set(MUPEN64RR_PLUGIN_OUT_DIR "${PROJECT_BINARY_DIR}/out/plugin/")
+set(MUPEN64RR_TEST_OUT_DIR "${PROJECT_BINARY_DIR}/test/out/")
 
 # default build type
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)

@@ -19,7 +19,7 @@ end
 
 path_root = trim_to_nth_last_component(debug.getinfo(1).source:sub(2), 3)
 
-lib_path = path_root .. "\\lib\\"
+lib_path = path_root .. "\\vendor\\lua-modules\\"
 
 ---@module "lust"
 lust = dofile(lib_path .. 'lust.lua').nocolor()

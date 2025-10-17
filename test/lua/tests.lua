@@ -11,9 +11,9 @@
 
 dofile(debug.getinfo(1).source:sub(2):gsub("[^\\]+$", "") .. 'test_prelude.lua')
 
-local libsocket_path = path_root .. "lib\\luasocket\\"
-local libsocket_dll_path = libsocket_path .. "socket\\core.dll"
-package.cpath = libsocket_path .. "?.dll;" .. package.cpath
+local testlib_path = path_root .. "build\\test\\Lua.Testlib\\"
+local testlib_dll_path = testlib_path .. "luatestlib.dll"
+package.cpath = testlib_path .. "?.dll;" .. package.cpath
 
 lust.describe('mupen64', function()
     lust.describe('shims', function()
@@ -190,14 +190,14 @@ lust.describe('mupen64', function()
         lust.describe('package.loadlib', function()
             lust.it('returns_correct_values_in_untrusted_environment', function()
                 print_suppression_wrapper_begin()
-                local lib = package.loadlib(libsocket_dll_path, "luaopen_testlib")
+                local lib = package.loadlib(testlib_dll_path, "luaopen_testlib")
                 print_suppression_wrapper_end()
 
                 lust.expect(lib).to.equal(nil)
             end)
             lust.it('prints_warning_message_in_untrusted_environment', function()
                 print_test_wrapper(function()
-                    local lib = package.loadlib(libsocket_dll_path, "luaopen_testlib")
+                    local lib = package.loadlib(testlib_dll_path, "luaopen_testlib")
                 end)
             end)
         end)

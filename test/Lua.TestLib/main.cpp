@@ -28,7 +28,7 @@ luaL_Reg TESTLIB_FUNCTIONS[] = {
   {NULL, NULL}
 };
 
-EXPORT int CALL luaopen_testlib(lua_State* L) {
+EXPORT int luaopen_testlib(lua_State* L) {
   luaL_newlib(L, TESTLIB_FUNCTIONS);
   lua_setglobal(L, "testlib");
   return 0;

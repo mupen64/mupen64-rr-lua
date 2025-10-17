@@ -16,6 +16,9 @@ add_executable(Mupen64RR.Core.Tests
 set_target_properties(Mupen64RR.Core.Tests PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
+    OUTPUT_NAME "Core.Tests"
+    RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_TEST_OUT_DIR}"
+    PDB_OUTPUT_DIRECTORY "${MUPEN64RR_TEST_OUT_DIR}"
 )
 target_precompile_headers(Mupen64RR.Core.Tests PRIVATE "stdafx.h")
 target_link_libraries(Mupen64RR.Core.Tests PRIVATE
