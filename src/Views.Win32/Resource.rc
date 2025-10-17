@@ -14,10 +14,10 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Neutral (Default) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUD)
-LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -123,7 +123,6 @@ BEGIN
     CONTROL         "Start",IDC_RADIO_FROM_START,"Button",BS_AUTORADIOBUTTON,246,84,78,8
     CONTROL         "Savestate",IDC_RADIO_FROM_ST,"Button",BS_AUTORADIOBUTTON,246,96,78,8
     CONTROL         "EEPROM",IDC_RADIO_FROM_EEPROM,"Button",BS_AUTORADIOBUTTON,246,108,78,8
-    CONTROL         "Existing Savestate",IDC_RADIO_FROM_EXISTING_ST,"Button",BS_AUTORADIOBUTTON,246,120,78,8
     GROUPBOX        "Pause at",IDC_STATIC,240,138,96,60
     LTEXT           "Frame",IDC_STATIC,246,150,21,12,SS_CENTERIMAGE
     EDITTEXT        IDC_PAUSEAT_FIELD,270,150,33,13,ES_AUTOHSCROLL | ES_NUMBER

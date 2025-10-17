@@ -80,8 +80,7 @@ static size_t count_input_changes(const std::vector<core_buttons> &buttons)
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     // List of dialog item IDs that shouldn't be interactable when in a specific mode
-    const std::vector disabled_on_play = {IDC_RADIO_FROM_START, IDC_RADIO_FROM_ST, IDC_RADIO_FROM_EEPROM,
-                                          IDC_RADIO_FROM_EXISTING_ST};
+    const std::vector disabled_on_play = {IDC_RADIO_FROM_START, IDC_RADIO_FROM_ST, IDC_RADIO_FROM_EEPROM};
     const std::vector disabled_on_record = {IDC_PAUSE_AT_END, IDC_PAUSEAT_FIELD};
 
     switch (msg)
@@ -162,32 +161,6 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
             g_config.last_movie_type = user_result.start_flag;
 
-            if (user_result.start_flag == MOVIE_START_FROM_EXISTING_SNAPSHOT)
-            {
-                // The default directory we open the file dialog window in is the
-                // parent directory of the last savestate that the user saved or loaded
-                std::filesystem::path path =
-                    FilePicker::show_open_dialog(L"o_movie_existing_snapshot", hwnd, L"*.st;*.savestate");
-
-                if (path.empty())
-                {
-                    break;
-                }
-
-                path.replace_extension(L".exe");
-
-                if (exists(path))
-                {
-                    const auto str =
-                        std::format(L"{} already exists. Are you sure want to overwrite this movie?", path.wstring());
-                    if (!DialogService::show_ask_dialog(VIEW_DLG_MOVIE_OVERWRITE_WARNING, str.c_str(), L"VCR", true,
-                                                        hwnd))
-                    {
-                        break;
-                    }
-                }
-            }
-
             EndDialog(hwnd, IDOK);
         }
         break;
@@ -242,12 +215,6 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE), 1);
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE_TEXT), 1);
             user_result.start_flag = MOVIE_START_FROM_SNAPSHOT;
-            break;
-        case IDC_RADIO_FROM_EXISTING_ST:
-            EnableWindow(GetDlgItem(hwnd, IDC_MOVIE_BROWSE), 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE), 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE_TEXT), 0);
-            user_result.start_flag = MOVIE_START_FROM_EXISTING_SNAPSHOT;
             break;
         case IDC_RADIO_FROM_START:
             EnableWindow(GetDlgItem(hwnd, IDC_MOVIE_BROWSE), 1);
@@ -349,7 +316,6 @@ refresh:
     SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, g_main_ctx.io_service.string_to_wstring(header.description).c_str());
 
     CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.startFlags == MOVIE_START_FROM_SNAPSHOT);
-    CheckDlgButton(hwnd, IDC_RADIO_FROM_EXISTING_ST, header.startFlags == MOVIE_START_FROM_EXISTING_SNAPSHOT);
     CheckDlgButton(hwnd, IDC_RADIO_FROM_START, header.startFlags == MOVIE_START_FROM_NOTHING);
     CheckDlgButton(hwnd, IDC_RADIO_FROM_EEPROM, header.startFlags == MOVIE_START_FROM_EEPROM);
 

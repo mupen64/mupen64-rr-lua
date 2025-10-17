@@ -25,7 +25,6 @@ constexpr auto ROM_COUNTRY_WARNING_MESSAGE = L"The movie was recorded on a {} RO
 constexpr auto ROM_CRC_WARNING_MESSAGE =
     L"The movie was recorded with a ROM that has CRC \"0x%X\",\nbut you are using a ROM with CRC \"0x%X\".\r\nPlayback "
     L"might desynchronize. Are you sure you want to continue?";
-constexpr auto TRUNCATE_MESSAGE = L"Failed to truncate the movie file. The movie may be corrupted.";
 constexpr auto WII_VC_MISMATCH_A_WARNING_MESSAGE =
     L"The movie was recorded with WiiVC mode enabled, but is being played back with it disabled.\r\nPlayback might "
     L"desynchronize. Are you sure you want to continue?";
@@ -35,8 +34,6 @@ constexpr auto WII_VC_MISMATCH_B_WARNING_MESSAGE =
 constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
     L"The movie was recorded prior to the extended format being available, but contains data in an extended format "
     L"section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
-constexpr auto WARP_MODIFY_SEEKBACK_FAILED_MESSAGE =
-    L"Failed to seek back during a warp modify operation, error code {}.\r\nPiano roll might be desynced.";
 constexpr auto CHEAT_ERROR_ASK_MESSAGE = L"This movie has a cheat file associated with it, but it could not be "
                                          L"loaded.\r\nPlayback might desynchronize. Are you sure you want to continue?";
 constexpr auto CONTROLLER_ON_OFF_MISMATCH =
@@ -964,8 +961,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
 {
     std::unique_lock lock(vcr_mtx);
 
-    if (flags != MOVIE_START_FROM_SNAPSHOT && flags != MOVIE_START_FROM_NOTHING && flags != MOVIE_START_FROM_EEPROM &&
-        flags != MOVIE_START_FROM_EXISTING_SNAPSHOT)
+    if (flags != MOVIE_START_FROM_SNAPSHOT && flags != MOVIE_START_FROM_NOTHING && flags != MOVIE_START_FROM_EEPROM)
     {
         return VCR_InvalidStartType;
     }
@@ -1076,49 +1072,6 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
                 // TODO: Also, what about clearing the input on first frame
             },
             true);
-    }
-    else if (flags & MOVIE_START_FROM_EXISTING_SNAPSHOT)
-    {
-        // TODO: Verify that this flag still works after st task rewrite
-
-        g_core->log_info(L"[VCR] Loading state...");
-        auto st_path = find_accompanying_file_for_movie(vcr.movie_path);
-        if (st_path.empty())
-        {
-            return VCR_InvalidSavestate;
-        }
-
-        // set this to the normal snapshot flag to maintain compatibility
-        vcr.hdr.startFlags = MOVIE_START_FROM_SNAPSHOT;
-        vcr.task = task_start_recording_from_existing_snapshot;
-
-        g_core->submit_task([=] {
-            g_ctx.st_do_file(
-                st_path, core_st_job_load,
-                [](const core_st_callback_info &info, auto &&...) {
-                    std::unique_lock lock(vcr_mtx);
-
-                    if (info.result != Res_Ok)
-                    {
-                        g_core->show_dialog(
-                            L"Failed to load savestate while starting recording.\nRecording will be stopped.", L"VCR",
-                            fsvc_error);
-
-                        {
-                            vcr_anti_lock bypass;
-                            g_ctx.vcr_stop_all();
-                        }
-
-                        return;
-                    }
-
-                    g_core->log_info(L"[VCR] Starting recording from existing snapshot...");
-                    vcr.task = task_recording;
-                    // FIXME: Doesn't this need a message broadcast?
-                    // TODO: Also, what about clearing the input on first frame
-                },
-                true);
-        });
     }
     else
     {
@@ -1802,7 +1755,7 @@ bool vcr_is_seeking()
 bool vcr_is_task_recording(core_vcr_task task)
 {
     return task == task_recording || task == task_start_recording_from_reset ||
-           task == task_start_recording_from_existing_snapshot || task == task_start_recording_from_snapshot;
+           task == task_start_recording_from_snapshot;
 }
 
 static void vcr_clear_seek_savestates(std::queue<std::function<void()>> &post_unlock_callbacks)

@@ -485,7 +485,6 @@ enum
     MOVIE_START_FROM_SNAPSHOT = (1 << 0),
     MOVIE_START_FROM_NOTHING = (1 << 1),
     MOVIE_START_FROM_EEPROM = (1 << 2),
-    MOVIE_START_FROM_EXISTING_SNAPSHOT = (1 << 3)
 };
 
 #define CONTROLLER_X_PRESENT(x) (1 << (x))
@@ -685,7 +684,6 @@ typedef enum
     task_idle,
     task_start_recording_from_reset,
     task_start_recording_from_snapshot,
-    task_start_recording_from_existing_snapshot,
     task_recording,
     task_start_playback_from_reset,
     task_start_playback_from_snapshot,

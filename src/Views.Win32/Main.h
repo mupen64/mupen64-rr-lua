@@ -72,7 +72,7 @@ static bool task_is_playback(const core_vcr_task task)
 static bool vcr_is_task_recording(const core_vcr_task task)
 {
     return task == task_recording || task == task_start_recording_from_reset ||
-           task == task_start_recording_from_existing_snapshot || task == task_start_recording_from_snapshot;
+           task == task_start_recording_from_snapshot;
 }
 
 /**
