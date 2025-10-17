@@ -48,6 +48,12 @@ You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your work
 |:-------------------------:|-----------------------------------------------------------------------|
 | `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
 
+### CLion
+
+Make sure to set the CMake profile to use the `vcpkg-win64-x86` preset, enabling it if needed.
+
+If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
+
 # Commit Style
 
 Merge commits to the `main` branch *must* adhere to [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification). 
