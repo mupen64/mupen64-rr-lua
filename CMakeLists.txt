@@ -20,7 +20,12 @@ if(NOT WIN32)
 endif()
 
 # version suffix
-set(MUPEN64RR_VERSION_SUFFIX "")
+if (DEFINED ENV{VERSION_SUFFIX})
+  set(MUPEN64RR_VERSION_SUFFIX "$ENV{VERSION_SUFFIX}")
+else()
+  set(MUPEN64RR_VERSION_SUFFIX "")
+endif()
+
 message(STATUS "Full version name: ${PROJECT_VERSION}${MUPEN64RR_VERSION_SUFFIX}")
 
 # build output
