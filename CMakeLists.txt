@@ -81,6 +81,11 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # - enable the program to use pointers larger than 2GB
   # - disable the generation of a manifest file (since it's pulled in internally via the resource script)
   add_link_options(/DYNAMICBASE:NO /NXCOMPAT:NO /LARGEADDRESSAWARE /MANIFEST:NO)
+
+  # Include compile options to enable AVX2 on x64 builds
+  if ("${VCPKG_TARGET_TRIPLET}" MATCHES "^x64")
+    add_compile_options(/arch:AVX2)
+  endif()
 endif()
 if (WIN32)
   # Use UTF-16 versions of functions

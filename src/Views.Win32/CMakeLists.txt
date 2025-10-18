@@ -10,7 +10,6 @@ add_library(Mupen64RR.Views.Win32.Headers INTERFACE
 set_target_properties(Mupen64RR.Views.Win32.Headers PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
-    OUTPUT_NAME mupen64
 )
 target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "include")
 

@@ -58,6 +58,6 @@ jobs:
       - name: "Upload x86-sse2 build"
         uses: actions/upload-artifact@v4
         with:
-          name: mupen-x86-sse2
+          name: mupen
           path: build/out
           retention-days: 14
