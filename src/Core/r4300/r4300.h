@@ -69,7 +69,7 @@ void pure_interpreter();
 extern void jump_to_func();
 void update_count();
 int32_t check_cop1_unusable();
-void critical_stop(const std::wstring &message = L"Unknown error");
+void critical_stop(std::string_view message = "Unknown error");
 
 core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
 

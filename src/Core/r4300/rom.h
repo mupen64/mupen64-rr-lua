@@ -24,4 +24,4 @@ void rom_byteswap(uint8_t *rom);
 
 core_rom_header *rom_get_rom_header();
 uint32_t rom_get_vis_per_second(uint16_t country_code);
-std::wstring rom_country_code_to_country_name(uint16_t country_code);
+std::string rom_country_code_to_country_name(uint16_t country_code);

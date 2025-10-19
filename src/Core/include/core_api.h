@@ -100,22 +100,22 @@ extern "C"
         /**
          * \brief Logs the specified message at the trace level.
          */
-        void (*log_trace)(const std::wstring &);
+        void (*log_trace)(const std::string &);
 
         /**
          * \brief Logs the specified message at the info level.
          */
-        void (*log_info)(const std::wstring &);
+        void (*log_info)(const std::string &);
 
         /**
          * \brief Logs the specified message at the warning level.
          */
-        void (*log_warn)(const std::wstring &);
+        void (*log_warn)(const std::string &);
 
         /**
          * \brief Logs the specified message at the error level.
          */
-        void (*log_error)(const std::wstring &);
+        void (*log_error)(const std::string &);
 
         /**
          * \brief Loads the plugins specified by the config paths.
@@ -165,8 +165,8 @@ extern "C"
          * the index specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<size_t(const std::string &id, const std::vector<std::wstring> &choices, const wchar_t *str,
-                             const wchar_t *title, core_dialog_type type)>
+        std::function<size_t(const std::string &id, const std::vector<std::string> &choices, const char *str,
+                             const char *title, core_dialog_type type)>
             show_multiple_choice_dialog;
 
         /**
@@ -179,7 +179,7 @@ extern "C"
          * the value specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<bool(const std::string &id, const wchar_t *str, const wchar_t *title, bool warning)>
+        std::function<bool(const std::string &id, const char *str, const char *title, bool warning)>
             show_ask_dialog;
 
         /**
@@ -188,12 +188,12 @@ extern "C"
          * \param title The dialog title.
          * \param type The dialog's tone.
          */
-        std::function<void(const wchar_t *str, const wchar_t *title, core_dialog_type type)> show_dialog;
+        std::function<void(const char *str, const char *title, core_dialog_type type)> show_dialog;
 
         /**
          * \brief Shows text in the notification section of the statusbar.
          */
-        std::function<void(const wchar_t *str)> show_statusbar;
+        std::function<void(const char *str)> show_statusbar;
 
         /**
          * \brief Updates the screen.
@@ -212,7 +212,7 @@ extern "C"
          * \param predicate A predicate which determines if the rom matches.
          * \return The rom's path, or an empty string if no rom was found.
          */
-        std::wstring (*find_available_rom)(const std::function<bool(const core_rom_header &)> &predicate);
+        std::string (*find_available_rom)(const std::function<bool(const core_rom_header &)> &predicate);
 
         /**
          * \return Whether MGE functionality is currently available.
@@ -409,7 +409,7 @@ extern "C"
          * \param country_code A rom's country code.
          * \return The rom's country name.
          */
-        std::function<std::wstring(uint16_t country_code)> vr_country_code_to_country_name;
+        std::function<std::string(uint16_t country_code)> vr_country_code_to_country_name;
 
         /**
          * \brief Updates internal timings after the speed modifier changes.
@@ -501,7 +501,7 @@ extern "C"
          *	"^n" - Sample n from the end
          *
          */
-        std::function<core_result(std::wstring str, bool pause_at_end)> vcr_begin_seek;
+        std::function<core_result(std::string str, bool pause_at_end)> vcr_begin_seek;
 
         /**
          * \brief Stops the current seek operation
@@ -720,7 +720,7 @@ extern "C"
          * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
          * \return Whether the compilation was successful.
          */
-        std::function<bool(const std::wstring &code, core_cheat &cheat)> cht_compile;
+        std::function<bool(const std::string &code, core_cheat &cheat)> cht_compile;
 
         /**
          * \brief Gets the cheat override stack.

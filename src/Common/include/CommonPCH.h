@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <any>
+#include <array>
 #include <atomic>
 #include <bit>
 #include <cassert>
@@ -17,6 +18,7 @@
 #include <format>
 #include <fstream>
 #include <functional>
+#include <initializer_list>
 #include <locale>
 #include <map>
 #include <memory>

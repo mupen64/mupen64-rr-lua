@@ -30,7 +30,7 @@ extern uint32_t next_vi;
 
 static void NI()
 {
-    critical_stop(std::format(L"NI:{:#06x}", vr_op));
+    critical_stop(std::format("NI:{:#06x}", vr_op));
 }
 
 static void SLL()
@@ -197,7 +197,7 @@ static void DIV()
         sign_extended(hi);
     }
     else
-        g_core->log_info(L"div");
+        g_core->log_info("div");
     interp_addr += 4;
 }
 
@@ -211,7 +211,7 @@ static void DIVU()
         sign_extended(hi);
     }
     else
-        g_core->log_info(L"divu");
+        g_core->log_info("divu");
     interp_addr += 4;
 }
 
@@ -300,7 +300,7 @@ static void DDIV()
         hi = (int64_t)core_rrs % (int64_t)core_rrt;
     }
     else
-        g_core->log_info(L"ddiv");
+        g_core->log_info("ddiv");
     interp_addr += 4;
 }
 
@@ -312,7 +312,7 @@ static void DDIVU()
         hi = (uint64_t)core_rrs % (uint64_t)core_rrt;
     }
     else
-        g_core->log_info(L"ddivu");
+        g_core->log_info("ddivu");
     interp_addr += 4;
 }
 
@@ -414,7 +414,7 @@ static void TEQ()
 {
     if (core_rrs == core_rrt)
     {
-        critical_stop(L"trap exception in teq");
+        critical_stop("trap exception in teq");
     }
     interp_addr += 4;
 }
@@ -617,7 +617,7 @@ static void BLTZAL()
         if (local_rs < 0) interp_addr += (local_immediate - 1) * 4;
     }
     else
-        g_core->log_error(L"erreur dans bltzal");
+        g_core->log_error("erreur dans bltzal");
     last_addr = interp_addr;
     if (next_interrupt <= core_Count) gen_interrupt();
 }
@@ -652,7 +652,7 @@ static void BGEZAL()
         if (local_rs >= 0) interp_addr += (local_immediate - 1) * 4;
     }
     else
-        g_core->log_error(L"erreur dans bgezal");
+        g_core->log_error("erreur dans bgezal");
     last_addr = interp_addr;
     if (next_interrupt <= core_Count) gen_interrupt();
 }
@@ -692,7 +692,7 @@ static void BLTZALL()
             interp_addr += 8;
     }
     else
-        g_core->log_error(L"erreur dans bltzall");
+        g_core->log_error("erreur dans bltzall");
     last_addr = interp_addr;
     if (next_interrupt <= core_Count) gen_interrupt();
 }
@@ -732,7 +732,7 @@ static void BGEZALL()
             interp_addr += 8;
     }
     else
-        g_core->log_info(L"erreur dans bgezall");
+        g_core->log_info("erreur dans bgezall");
     last_addr = interp_addr;
     if (next_interrupt <= core_Count) gen_interrupt();
 }
@@ -922,7 +922,7 @@ static void ERET()
     update_count();
     if (core_Status & 0x4)
     {
-        critical_stop(L"!(core_Status & 0x4) in ERET");
+        critical_stop("!(core_Status & 0x4) in ERET");
     }
     else
     {
@@ -945,7 +945,7 @@ static void MFC0()
     switch (PC->f.r.nrd)
     {
     case 1:
-        critical_stop(L"MFC0 invalid read");
+        critical_stop("MFC0 invalid read");
         break;
     default:
         rrt32 = reg_cop0[PC->f.r.nrd];
@@ -962,7 +962,7 @@ static void MTC0()
         core_Index = core_rrt & 0x8000003F;
         if ((core_Index & 0x3F) > 31)
         {
-            critical_stop(L"MTC0 TLB Index too high");
+            critical_stop("MTC0 TLB Index too high");
         }
         break;
     case 1: // Random
@@ -1040,7 +1040,7 @@ static void MTC0()
         }
         else
         {
-            critical_stop(L"MTC0 core_rrt != 0 Cause");
+            critical_stop("MTC0 core_rrt != 0 Cause");
         }
         break;
     case 14: // EPC
@@ -1066,7 +1066,7 @@ static void MTC0()
         core_TagHi = 0;
         break;
     default:
-        critical_stop(std::format(L"Unknown mtc0 write to {}", PC->f.r.nrd));
+        critical_stop(std::format("Unknown mtc0 write to {}", PC->f.r.nrd));
     }
     interp_addr += 4;
 }
@@ -1237,7 +1237,7 @@ static void DIV_S()
 {
     if ((FCR31 & 0x400) && *reg_cop1_simple[core_cfft] == 0)
     {
-        g_core->log_info(L"div_s by 0");
+        g_core->log_info("div_s by 0");
     }
     set_rounding();
     CHECK_INPUT(*reg_cop1_simple[core_cffs]);
@@ -1610,7 +1610,7 @@ static void DIV_D()
         /*FCR31 |= 0x8000;
         Cause = 15 << 2;
         exception_general();*/
-        g_core->log_info(L"div_d by 0");
+        g_core->log_info("div_d by 0");
         // return;
     }
     set_rounding();
@@ -2052,7 +2052,7 @@ static void CTC1()
         rounding_mode = MUP_ROUND_FLOOR;
         break;
     }
-    // if ((FCR31 >> 7) & 0x1F) g_core->log_info(L"FPU Exception enabled : {:#06x}\n",
+    // if ((FCR31 >> 7) & 0x1F) g_core->log_info("FPU Exception enabled : {:#06x}\n",
     //				   (int32_t)((FCR31 >> 7) & 0x1F));
     set_rounding();
     interp_addr += 4;
@@ -3012,23 +3012,23 @@ void prefetch()
     fscanf(f, "%x", &comp);
     if (comp != interp_addr)
       {
-         g_core->log_info(L"diff@%x, line:{}", interp_addr, line);
+         g_core->log_info("diff@%x, line:{}", interp_addr, line);
          stop=1;
       }*/
     // line++;
-    // if ((debug_count+Count) > 0x50fe000) g_core->log_info(L"line:{}", line);
+    // if ((debug_count+Count) > 0x50fe000) g_core->log_info("line:{}", line);
     /*if ((debug_count+Count) > 0xb70000)
-      g_core->log_info(L"count:%x, add:%x, op:%x, l{}\n", (int32_t)(Count+debug_count),
+      g_core->log_info("count:%x, add:%x, op:%x, l{}\n", (int32_t)(Count+debug_count),
          interp_addr, op, line);*/
     //}
-    // g_core->log_info(L"addr:%x", interp_addr);
+    // g_core->log_info("addr:%x", interp_addr);
     if ((interp_addr >= 0x80000000) && (interp_addr < 0xc0000000))
     {
         if (/*(interp_addr >= 0x80000000) && */ (interp_addr < 0x80800000))
         {
             vr_op = *(uint32_t *)&((unsigned char *)rdram)[(interp_addr & 0xFFFFFF)];
             /*if ((debug_count+Count) > 0xabaa20)
-              g_core->log_info(L"count:%x, add:%x, op:%x, l{}\n", (int32_t)(Count+debug_count),
+              g_core->log_info("count:%x, add:%x, op:%x, l{}\n", (int32_t)(Count+debug_count),
                  interp_addr, op, line);*/
             prefetch_opcode(vr_op);
         }
@@ -3044,7 +3044,7 @@ void prefetch()
         }
         else
         {
-            critical_stop(std::format(L"Attempted to prefetch unmapped memory at {:#08x}", (int32_t)interp_addr));
+            critical_stop(std::format("Attempted to prefetch unmapped memory at {:#08x}", (int32_t)interp_addr));
         }
     }
     else
@@ -3076,7 +3076,7 @@ void pure_interpreter()
     last_addr = interp_addr;
     core_executing = true;
     g_core->callbacks.core_executing_changed(core_executing);
-    g_core->log_info(std::format(L"core_executing: {}", (bool)core_executing));
+    g_core->log_info(std::format("core_executing: {}", (bool)core_executing));
     while (!stop)
     {
         prefetch();

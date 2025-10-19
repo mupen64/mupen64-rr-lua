@@ -29,7 +29,7 @@ extern "C"
     // ReSharper restore CppInconsistentNaming
 }
 
-static void log_dummy(const std::wstring &)
+static void log_dummy(const std::string &)
 {
 }
 

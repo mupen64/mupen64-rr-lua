@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <core_api.h>
+
 struct t_vcr_state
 {
     std::filesystem::path movie_path{};
@@ -76,7 +78,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
 core_result vcr_replace_author_info(const std::filesystem::path &path, const std::string &author,
                                     const std::string &description);
 core_vcr_seek_info vcr_get_seek_info();
-core_result vcr_begin_seek(std::wstring str, bool pause_at_end);
+core_result vcr_begin_seek(std::string str, bool pause_at_end);
 void vcr_stop_seek();
 bool vcr_is_seeking();
 bool vcr_freeze(vcr_freeze_info &freeze);

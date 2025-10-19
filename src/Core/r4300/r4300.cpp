@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "rom.h"
 #include <CommonPCH.h>
 #include <Core.h>
+#include <format>
 #include <memory/memory.h>
 #include <memory/pif.h>
 #include <memory/savestates.h>
@@ -94,30 +96,26 @@ void vr_invalidate_visuals()
 
 std::filesystem::path get_sram_path()
 {
-    return std::format(L"{}{} {}.sra", g_core->get_saves_directory().wstring(),
-                       g_core->io_service->string_to_wstring((const char *)ROM_HEADER.nom),
-                       g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.sra", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return g_core->get_saves_directory() / filename;
 }
 
 std::filesystem::path get_eeprom_path()
 {
-    return std::format(L"{}{} {}.eep", g_core->get_saves_directory().wstring(),
-                       g_core->io_service->string_to_wstring((const char *)ROM_HEADER.nom),
-                       g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.eep", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return g_core->get_saves_directory() / filename;
 }
 
 std::filesystem::path get_flashram_path()
 {
-    return std::format(L"{}{} {}.fla", g_core->get_saves_directory().wstring(),
-                       g_core->io_service->string_to_wstring((const char *)ROM_HEADER.nom),
-                       g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.fla", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return g_core->get_saves_directory() / filename;
 }
 
 std::filesystem::path get_mempak_path()
 {
-    return std::format(L"{}{} {}.mpk", g_core->get_saves_directory().wstring(),
-                       g_core->io_service->string_to_wstring((const char *)ROM_HEADER.nom),
-                       g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.mpk", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    return g_core->get_saves_directory() / filename;
 }
 
 void vr_resume_emu_impl(bool force)
@@ -186,11 +184,11 @@ bool vr_get_frame_advance()
     return frame_advance_outstanding;
 }
 
-void critical_stop(const std::wstring &message)
+void critical_stop(std::string_view message)
 {
     const auto formatted =
-        std::format(L"A critical emulation error has occured: {}.\n\nEmulation will now stop.", message);
-    g_core->show_dialog(formatted.c_str(), L"Critical Error", fsvc_error);
+        std::format("A critical emulation error has occured: {}.\n\nEmulation will now stop.", message);
+    g_core->show_dialog(formatted.c_str(), "Critical Error", fsvc_error);
     g_core->submit_task([] { (void)g_ctx.vr_close_rom(true); });
 }
 
@@ -211,27 +209,27 @@ std::filesystem::path vr_get_rom_path()
 
 void NI()
 {
-    g_core->log_error(std::format(L"NI() @ {:#06x}\n", (int32_t)PC->addr));
-    g_core->log_error(L"opcode not implemented : ");
+    g_core->log_error(std::format("NI() @ {:#06x}\n", (int32_t)PC->addr));
+    g_core->log_error("opcode not implemented : ");
     if (PC->addr >= 0xa4000000 && PC->addr < 0xa4001000)
         g_core->log_info(
-            std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)SP_DMEM[(PC->addr - 0xa4000000) / 4]));
+            std::format("{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)SP_DMEM[(PC->addr - 0xa4000000) / 4]));
     else
         g_core->log_info(
-            std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)rdram[(PC->addr - 0x80000000) / 4]));
-    critical_stop(L"Executed NI. See logs for more info");
+            std::format("{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)rdram[(PC->addr - 0x80000000) / 4]));
+    critical_stop("Executed NI. See logs for more info");
 }
 
 void RESERVED()
 {
-    g_core->log_info(L"reserved opcode : ");
+    g_core->log_info("reserved opcode : ");
     if (PC->addr >= 0xa4000000 && PC->addr < 0xa4001000)
         g_core->log_info(
-            std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)SP_DMEM[(PC->addr - 0xa4000000) / 4]));
+            std::format("{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)SP_DMEM[(PC->addr - 0xa4000000) / 4]));
     else
         g_core->log_info(
-            std::format(L"{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)rdram[(PC->addr - 0x80000000) / 4]));
-    critical_stop(L"Executed RESERVED. See logs for more info");
+            std::format("{:#06x}:{:#06x}", (int32_t)PC->addr, (int32_t)rdram[(PC->addr - 0x80000000) / 4]));
+    critical_stop("Executed RESERVED. See logs for more info");
 }
 
 void FIN_BLOCK()
@@ -1398,7 +1396,7 @@ void LD()
 void SC()
 {
     /*PC++;
-    g_core->log_info(L"SC");
+    g_core->log_info("SC");
     if (llbit) {
        address = lsaddr;
        word = (uint32_t)(core_lsrt & 0xFFFFFFFF);
@@ -1466,7 +1464,7 @@ void NOTCOMPILED()
         {
             if ((paddr & 0x1FFFFFFF) >= 0x10000000)
             {
-                // g_core->log_info(L"not compiled rom:{:#06x}", paddr);
+                // g_core->log_info("not compiled rom:{:#06x}", paddr);
                 recompile_block(
                     (int32_t *)rom +
                         ((((paddr - (PC->addr - blocks[PC->addr >> 12]->start)) & 0x1FFFFFFF) - 0x10000000) >> 2),
@@ -1478,7 +1476,7 @@ void NOTCOMPILED()
                     blocks[PC->addr >> 12], PC->addr);
         }
         else
-            g_core->log_info(L"not compiled exception");
+            g_core->log_info("not compiled exception");
     }
     PC->ops();
     if (dynacore) dyna_jump();
@@ -1528,7 +1526,7 @@ uint32_t jump_to_address;
 inline void jump_to_func()
 {
     // #ifdef _DEBUG
-    //	g_core->log_info(L"dyna jump: {:#08x}", addr);
+    //	g_core->log_info("dyna jump: {:#08x}", addr);
     // #endif
     uint32_t paddr;
     if (skip_jump) return;
@@ -1578,7 +1576,7 @@ void update_count()
     {
         if (PC->addr < last_addr)
         {
-            g_core->log_info(L"PC->addr < last_addr");
+            g_core->log_info("PC->addr < last_addr");
         }
         core_Count = core_Count + (PC->addr - last_addr) / 2;
         last_addr = PC->addr;
@@ -1607,14 +1605,14 @@ void init_blocks()
 
 void print_stop_debug()
 {
-    g_core->log_info(std::format(L"PC={:#08x}:{:#08x}", PC->addr, rdram[(PC->addr & 0xFFFFFF) / 4]));
+    g_core->log_info(std::format("PC={:#08x}:{:#08x}", PC->addr, rdram[(PC->addr & 0xFFFFFF) / 4]));
     for (int32_t j = 0; j < 16; j++)
-        g_core->log_info(std::format(L"reg[{}]:{:#08x}{:#08x}        reg[{}]:{:#08x}{:#08x}", j,
+        g_core->log_info(std::format("reg[{}]:{:#08x}{:#08x}        reg[{}]:{:#08x}{:#08x}", j,
                                      (uint32_t)(reg[j] >> 32), (uint32_t)reg[j], j + 16, (uint32_t)(reg[j + 16] >> 32),
                                      (uint32_t)reg[j + 16]));
-    g_core->log_info(std::format(L"hi:{:#08x}{:#08x}        lo:{:#08x}{:#08x}", (uint32_t)(hi >> 32), (uint32_t)hi,
+    g_core->log_info(std::format("hi:{:#08x}{:#08x}        lo:{:#08x}{:#08x}", (uint32_t)(hi >> 32), (uint32_t)hi,
                                  (uint32_t)(lo >> 32), (uint32_t)lo));
-    g_core->log_info(std::format(L"Executed {} ({:#08x}) instructions", debug_count, debug_count));
+    g_core->log_info(std::format("Executed {} ({:#08x}) instructions", debug_count, debug_count));
 }
 
 void core_start()
@@ -1624,7 +1622,7 @@ void core_start()
 
     j = 0;
     debug_count = 0;
-    g_core->log_info(L"demarrage r4300");
+    g_core->log_info("demarrage r4300");
     memcpy((char *)SP_DMEM + 0x40, rom + 0x40, 0xFBC);
     delay_slot = 0;
     stop = 0;
@@ -1853,12 +1851,12 @@ void core_start()
 
     if (!dynacore)
     {
-        g_core->log_info(L"interpreter");
+        g_core->log_info("interpreter");
         init_blocks();
         last_addr = PC->addr;
         core_executing = true;
         g_core->callbacks.core_executing_changed(core_executing);
-        g_core->log_info(std::format(L"core_executing: {}", (bool)core_executing));
+        g_core->log_info(std::format("core_executing: {}", (bool)core_executing));
         while (!stop)
         {
             PC->ops();
@@ -1874,7 +1872,7 @@ void core_start()
     else
     {
         dynacore = 1;
-        g_core->log_info(L"dynamic recompiler");
+        g_core->log_info("dynamic recompiler");
         init_blocks();
 
         auto code_addr = actual->code + (actual->block[0x40 / 4].local_addr);
@@ -1915,19 +1913,19 @@ void core_start()
 
 bool open_core_file_stream(const std::filesystem::path &path, FILE **file)
 {
-    g_core->log_info(std::format(L"[Core] Opening core stream from {}...", path.wstring()));
+    g_core->log_info(std::format("[Core] Opening core stream from {}...", path.string()));
 
     if (!exists(path))
     {
         FILE *f = nullptr;
-        if (_wfopen_s(&f, path.wstring().c_str(), L"w"))
+        if (_wfopen_s(&f, path.wstring().c_str(), "w"))
         {
             return false;
         }
         fflush(f);
         fclose(f);
     }
-    *file = _wfsopen(path.wstring().c_str(), L"rb+", _SH_DENYNO);
+    *file = _wfsopen(path.wstring().c_str(), "rb+", _SH_DENYNO);
     return *file != nullptr;
 }
 
@@ -1965,7 +1963,7 @@ void clear_save_data()
 
 void audio_thread()
 {
-    g_core->log_info(L"Sound thread entering...");
+    g_core->log_info("Sound thread entering...");
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -1987,7 +1985,7 @@ void audio_thread()
 
         g_core->audio_ai_update(0);
     }
-    g_core->log_info(L"Sound thread exiting...");
+    g_core->log_info("Sound thread exiting...");
 }
 
 void emu_thread()
@@ -2009,7 +2007,7 @@ void emu_thread()
     g_core->callbacks.reset();
 
     g_core->log_info(std::format(
-        L"[Core] Emu thread entry took {}ms",
+        "[Core] Emu thread entry took {}ms",
         static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000)));
     core_start();
 
@@ -2046,7 +2044,7 @@ core_result vr_close_rom_impl(bool stop_vcr)
 
     g_core->callbacks.emu_stopping();
 
-    g_core->log_info(L"[Core] Stopping emulation thread...");
+    g_core->log_info("[Core] Stopping emulation thread...");
 
     stop = 1;
 
@@ -2074,7 +2072,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
         auto result = vr_close_rom_impl(true);
         if (result != Res_Ok)
         {
-            g_core->log_info(L"[Core] Failed to close rom before starting rom.");
+            g_core->log_info("[Core] Failed to close rom before starting rom.");
             return result;
         }
     }
@@ -2134,7 +2132,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     g_ctx.vr_on_speed_modifier_changed();
 
     g_core->log_info(std::format(
-        L"[Core] vr_start_rom entry took {}ms",
+        "[Core] vr_start_rom entry took {}ms",
         static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000)));
 
     emu_paused = false;
