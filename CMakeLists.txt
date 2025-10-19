@@ -86,10 +86,13 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   if ("${VCPKG_TARGET_TRIPLET}" MATCHES "^x64")
     add_compile_options(/arch:AVX2)
   endif()
+  
+  # Enable UTF-8 in Windows-adjacent APIs where possible
+  add_compile_options(/utf-8)
 endif()
 if (WIN32)
   # Use UTF-16 versions of functions
-  add_compile_definitions(UNICODE)
+  add_compile_definitions(UNICODE _UNICODE)
 endif()
 
 # Subdirectories
