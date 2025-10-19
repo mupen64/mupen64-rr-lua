@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "core_types.h"
 #include <CommonPCH.h>
 #include <PlatformService.h>
 #include <Core.h>
@@ -164,6 +165,8 @@ static std::filesystem::path find_accompanying_file_for_movie(std::filesystem::p
                 return st_path;
             }
         }
+
+        dot_pos = filename.find('.', dot_pos + 1);
     } while (dot_pos != std::string::npos);
 
     // we've tried everything, return the empty path
@@ -1102,11 +1105,14 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
 core_result vcr_replace_author_info(const std::filesystem::path &path, const std::string &author,
                                     const std::string &description)
 {
-    // We don't want to fopen with rb+ as it changes the last modified date, unless the author info actually needs to
-    // change, so we skip that step if the values remain identical
+    // 0. validate lengths
+    if (author.size() > 222 || description.size() > 256)
+    {
+        return VCR_InvalidFormat;
+    }
 
     // 1. Read movie header
-    const auto buf = g_core->io_service->read_file_buffer(path);
+    const auto buf = IOUtils::read_entire_file(path);
 
     if (buf.empty())
     {
@@ -1128,37 +1134,32 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, const std
         return Res_Ok;
     }
 
-    // TODO: Don't use C file APIs, use read_file_buffer+write_file_buffer from IIOHelperService instead!!!
-    FILE *f = nullptr;
+    // 3. prepare padded buffers for output
+    std::string author_out;
+    author_out.reserve(222);
+    author_out.assign(author);
+    author_out.resize(222, '\0');
 
-    if (_wfopen_s(&f, path.wstring().c_str(), L"rb+"))
+    std::string description_out;
+    description_out.reserve(256);
+    description_out.assign(description);
+    description_out.resize(256, '\0');
+
+
+    // 4. actually write the file
     {
-        return VCR_BadFile;
+        std::fstream file(path, std::ios::in | std::ios::out | std::ios::binary);
+        if (!file.is_open()) {
+            return VCR_BadFile;
+        }
+
+        file.seekg(0x222, std::ios::beg);
+        file.write(author_out.data(), author_out.size());
+
+        file.seekg(0x256, std::ios::beg);
+        file.write(description_out.data(), description_out.size());
     }
 
-    if (author.size() > 222 || description.size() > 256)
-    {
-        return VCR_InvalidFormat;
-    }
-
-    fseek(f, 0x222, SEEK_SET);
-    for (int32_t i = 0; i < 222; ++i)
-    {
-        fputc(0, f);
-    }
-    fseek(f, 0x222, SEEK_SET);
-    fwrite(author.data(), 1, author.size(), f);
-
-    fseek(f, 0x300, SEEK_SET);
-    for (int32_t i = 0; i < 256; ++i)
-    {
-        fputc(0, f);
-    }
-    fseek(f, 0x300, SEEK_SET);
-    fwrite(description.data(), 1, description.size(), f);
-
-    fflush(f);
-    fclose(f);
     return Res_Ok;
 }
 

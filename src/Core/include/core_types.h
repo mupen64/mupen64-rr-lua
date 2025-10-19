@@ -731,10 +731,10 @@ typedef struct
 typedef struct CoreCheat
 {
     // The script's name. FIXME: This should be read from the script
-    std::wstring name = L"Unnamed Cheat";
+    std::string name = "Unnamed Cheat";
 
     // The script's code. Mutating after creation does nothing unless instructions are recompiled.
-    std::wstring code;
+    std::string code;
 
     // Whether the cheat is active.
     bool active = true;

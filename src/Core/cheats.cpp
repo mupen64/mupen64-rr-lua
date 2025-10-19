@@ -4,51 +4,58 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "MiscHelpers.h"
 #include <CommonPCH.h>
 #include <Core.h>
+#include <charconv>
 #include <memory/memory.h>
 #include <cheats.h>
 #include <r4300/r4300.h>
+#include <string>
 
 static std::recursive_mutex cheats_mutex;
 static std::vector<core_cheat> host_cheats;
 static std::stack<std::vector<core_cheat>> cheat_stack;
 
-bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
+bool core_cht_compile(std::string_view code, core_cheat &cheat)
 {
     core_cheat compiled_cheat{};
-
-    auto lines = MiscHelpers::split_wstring(code, L"\n");
 
     bool serial = false;
     size_t serial_count = 0;
     size_t serial_offset = 0;
     size_t serial_diff = 0;
 
-    for (const auto &line : lines)
+    for (auto line : MiscHelpers::split_string(code, "\n"))
     {
         if (line[0] == '$' || line[0] == '-' || line.size() < 13)
         {
-            g_core->log_info(L"[GS] Line skipped");
+            g_core->log_info("[GS] Line skipped");
             continue;
         }
 
         auto opcode = line.substr(0, 2);
 
-        uint32_t address = std::stoul(line.substr(2, 6), nullptr, 16);
-        uint32_t val;
-        if (line.substr(8, 1) == L" ")
+        uint32_t address = 0;
+        uint32_t val = 0;
+
         {
-            val = std::stoul(line.substr(9, 4), nullptr, 16);
-        }
-        else
-        {
-            val = std::stoul(line.substr(10, 4), nullptr, 16);
+            std::from_chars_result result;
+
+            result = std::from_chars(&line[2], &line[8], address, 16);
+            if (result.ec != std::errc{}) return false;
+
+            if (line[8] == ' ')
+                result = std::from_chars(&line[9], &line[13], val, 16);
+            else
+                result = std::from_chars(&line[10], &line[14], val, 16);
+
+            if (result.ec != std::errc{}) return false;
         }
 
         if (serial)
         {
-            g_core->log_info(std::format(L"[GS] Compiling {} serial byte writes...", serial_count));
+            g_core->log_info(std::format("[GS] Compiling {} serial byte writes...", serial_count));
 
             for (size_t i = 0; i < serial_count; ++i)
             {
@@ -63,7 +70,7 @@ bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
             continue;
         }
 
-        if (opcode == L"80" || opcode == L"A0")
+        if (opcode == "80" || opcode == "A0")
         {
             // Write byte
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
@@ -71,7 +78,7 @@ bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
                 return true;
             }));
         }
-        else if (opcode == L"81" || opcode == L"A1")
+        else if (opcode == "81" || opcode == "A1")
         {
             // Write word
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
@@ -79,7 +86,7 @@ bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
                 return true;
             }));
         }
-        else if (opcode == L"88")
+        else if (opcode == "88")
         {
             // Write byte if GS button pressed
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
@@ -90,7 +97,7 @@ bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
                 return true;
             }));
         }
-        else if (opcode == L"89")
+        else if (opcode == "89")
         {
             // Write word if GS button pressed
             compiled_cheat.instructions.emplace_back(std::make_tuple(false, [=] {
@@ -101,31 +108,31 @@ bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
                 return true;
             }));
         }
-        else if (opcode == L"D0")
+        else if (opcode == "D0")
         {
             // Byte equality comparison
             compiled_cheat.instructions.emplace_back(
                 std::make_tuple(true, [=] { return core_rdram_load<uint8_t>(rdramb, address) == (val & 0xFF); }));
         }
-        else if (opcode == L"D1")
+        else if (opcode == "D1")
         {
             // Word equality comparison
             compiled_cheat.instructions.emplace_back(
                 std::make_tuple(true, [=] { return core_rdram_load<uint16_t>(rdramb, address) == val; }));
         }
-        else if (opcode == L"D2")
+        else if (opcode == "D2")
         {
             // Byte inequality comparison
             compiled_cheat.instructions.emplace_back(
                 std::make_tuple(true, [=] { return core_rdram_load<uint8_t>(rdramb, address) != (val & 0xFF); }));
         }
-        else if (opcode == L"D3")
+        else if (opcode == "D3")
         {
             // Word inequality comparison
             compiled_cheat.instructions.emplace_back(
                 std::make_tuple(true, [=] { return core_rdram_load<uint16_t>(rdramb, address) != val; }));
         }
-        else if (opcode == L"50")
+        else if (opcode == "50")
         {
             // Enter serial mode, which writes multiple bytes for example
             serial = true;
@@ -135,7 +142,7 @@ bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
         }
         else
         {
-            g_core->log_error(std::format(L"[GS] Illegal instruction {}\n", opcode.c_str()));
+            g_core->log_error(std::format("[GS] Illegal instruction {}\n", opcode));
             return false;
         }
     }
@@ -148,45 +155,30 @@ bool core_cht_compile(const std::wstring &code, core_cheat &cheat)
 
 bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_cheat> &cheats)
 {
-    FILE *f = nullptr;
-
-    if (_wfopen_s(&f, path.wstring().c_str(), L"r"))
+    std::ifstream file(path);
+    if (!file.is_open())
     {
-        g_core->log_error(std::format(L"cht_read_from_file failed to open file {}", path.wstring()));
+        g_core->log_error(std::format("cht_read_from_file failed to open file {}", path.string()));
         return false;
     }
 
-    fseek(f, 0, SEEK_END);
-    const auto len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    std::string str;
-    str.resize(len + sizeof(char));
-    fread(str.data(), sizeof(char), len, f);
-
-    fclose(f);
-
-    std::wstring wstr = g_core->io_service->string_to_wstring(str);
-
-    const auto lines = MiscHelpers::split_wstring(wstr, L"\n");
+    file.seekg(0, std::ios::end);
+    const size_t len = file.tellg();
+    file.seekg(0, std::ios::beg);
 
     bool reading_cheat_code = false;
     cheats.clear();
 
-    for (const auto &line : lines)
+    for (auto line : IOUtils::iter_lines(file))
     {
-        if (line.empty())
-        {
-            continue;
-        }
+        if (line.empty()) continue;
 
         if (reading_cheat_code && !cheats.empty())
         {
-            auto &cheat = cheats.back();
-            cheat.code += line + L"\n";
+            std::format_to(std::back_inserter(cheats.back().code), "{}\n", line);
         }
 
-        if (line.starts_with(L"--"))
+        if (line.starts_with("--"))
         {
             reading_cheat_code = true;
             core_cheat cheat{};
@@ -206,20 +198,21 @@ bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_chea
     return true;
 }
 
-std::wstring cht_serialize()
+std::string cht_serialize()
 {
     std::scoped_lock lock(cheats_mutex);
 
     if (host_cheats.empty())
     {
-        return L"";
+        return "";
     }
 
-    std::wstring str;
+    std::string str;
     for (const auto &cheat : host_cheats)
     {
-        str += std::format(L"--{}\n", cheat.name);
-        str += cheat.code + L"\n";
+        constexpr auto CHEAT_FORMAT = "--{}\n"
+                                      "{}\n";
+        std::format_to(std::back_inserter(str), CHEAT_FORMAT, cheat.name, cheat.code);
     }
 
     return str;
@@ -245,7 +238,7 @@ void core_cht_set_list(const std::vector<core_cheat> &list)
 
     if (!cheat_stack.empty())
     {
-        g_core->log_warn(std::format(L"core_cht_set_list ignored due to cheat stack not being empty"));
+        g_core->log_warn(std::format("core_cht_set_list ignored due to cheat stack not being empty"));
         return;
     }
 
@@ -256,7 +249,7 @@ void cht_layer_push(const std::vector<core_cheat> &cheats)
 {
     std::scoped_lock lock(cheats_mutex);
 
-    g_core->log_info(std::format(L"cht_layer_push pushing {} cheats", cheats.size()));
+    g_core->log_info(std::format("cht_layer_push pushing {} cheats", cheats.size()));
 
     cheat_stack.push(cheats);
 }

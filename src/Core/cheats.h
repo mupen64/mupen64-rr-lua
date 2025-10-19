@@ -33,4 +33,4 @@ bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_chea
  * \brief Serializes the host-provided cheat collection to a string which can be understood by cht_read_from_file. If
  * the collection is empty, an empty string is returned.
  */
-std::wstring cht_serialize();
+std::string cht_serialize();

@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 add_library(Mupen64RR.Common INTERFACE
     "include/CommonPCH.h"
+    "include/IOUtils.h"
     "include/MiscHelpers.h"
     "include/PlatformService.h"
 )

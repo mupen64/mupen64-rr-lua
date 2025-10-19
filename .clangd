@@ -7,3 +7,5 @@ CompileFlags:
 #     IgnoreHeader:
 #     - "core_(api|plugin|types).h"
 #     - "CommonPCH.h"
+Completion:
+  HeaderInsertion: Never
