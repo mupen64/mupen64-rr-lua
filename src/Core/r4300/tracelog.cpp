@@ -331,7 +331,7 @@ void tracelog_log_interp_ops()
 void tl_start(std::filesystem::path path, bool binary, bool append)
 {
     use_binary = binary;
-    _wfopen_s(&log_file, path.wstring().c_str(), L"wb");
+    IOUtils::path_fopen_s(log_file, path, "wb");
 
     enabled = true;
     if (interpcore == 0)

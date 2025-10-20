@@ -80,7 +80,7 @@ static void sd_read()
 
     if (count > 131072) return;
 
-    if (_wfopen_s(&fp, path.wstring().c_str(), L"rb"))
+    if (IOUtils::path_fopen_s(fp, path, "rb"))
     {
         sd_error("Could not open SD image file.", "SD read error");
     }
@@ -122,7 +122,7 @@ static void sd_write()
 
     if (count > 131072) return;
 
-    if (_wfopen_s(&fp, path.wstring().c_str(), L"r+b"))
+    if (IOUtils::path_fopen_s(fp, path, "r+b"))
     {
         sd_error("Could not open SD image file.", "SD write error");
     }
@@ -161,9 +161,9 @@ void save_summercart(const std::filesystem::path &path)
 
     if ((buf = malloc(512 * (n = 128))))
     {
-        if (_wfopen_s(&sdf, smc_path.wstring().c_str(), L"rb") == 0)
+        if (IOUtils::path_fopen_s(sdf, smc_path, "rb") == 0)
         {
-            if (_wfopen_s(&stf, path.wstring().c_str(), L"wb") == 0)
+            if (IOUtils::path_fopen_s(stf, path, "wb") == 0)
             {
                 vhd_copy(&vhd, stf, sdf, buf, n);
                 fwrite(&summercart, 1, sizeof(struct summercart), stf);
@@ -191,9 +191,9 @@ void load_summercart(const std::filesystem::path &path)
     const auto smc_path = g_core->get_summercart_path();
     if ((buf = malloc(512 * (n = 128))))
     {
-        if (_wfopen_s(&stf, smc_path.wstring().c_str(), L"rb") == 0)
+        if (IOUtils::path_fopen_s(stf, smc_path, "rb") == 0)
         {
-            if (_wfopen_s(&sdf, path.wstring().c_str(), L"wb") == 0)
+            if (IOUtils::path_fopen_s(sdf, path, "wb") == 0)
             {
                 vhd_copy(&vhd, sdf, stf, buf, n);
                 fread(&summercart, 1, sizeof(struct summercart), stf);

@@ -96,25 +96,29 @@ void vr_invalidate_visuals()
 
 std::filesystem::path get_sram_path()
 {
-    auto filename = std::format("{} {}.sra", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.sra", (const char *)ROM_HEADER.nom,
+                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
     return g_core->get_saves_directory() / filename;
 }
 
 std::filesystem::path get_eeprom_path()
 {
-    auto filename = std::format("{} {}.eep", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.eep", (const char *)ROM_HEADER.nom,
+                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
     return g_core->get_saves_directory() / filename;
 }
 
 std::filesystem::path get_flashram_path()
 {
-    auto filename = std::format("{} {}.fla", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.fla", (const char *)ROM_HEADER.nom,
+                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
     return g_core->get_saves_directory() / filename;
 }
 
 std::filesystem::path get_mempak_path()
 {
-    auto filename = std::format("{} {}.mpk", (const char*) ROM_HEADER.nom, g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
+    auto filename = std::format("{} {}.mpk", (const char *)ROM_HEADER.nom,
+                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
     return g_core->get_saves_directory() / filename;
 }
 
@@ -1918,14 +1922,14 @@ bool open_core_file_stream(const std::filesystem::path &path, FILE **file)
     if (!exists(path))
     {
         FILE *f = nullptr;
-        if (_wfopen_s(&f, path.wstring().c_str(), "w"))
+        if (IOUtils::path_fopen_s(f, path, "w"))
         {
             return false;
         }
         fflush(f);
         fclose(f);
     }
-    *file = _wfsopen(path.wstring().c_str(), "rb+", _SH_DENYNO);
+    *file = IOUtils::path_fopen_shared(path, "rb+");
     return *file != nullptr;
 }
 

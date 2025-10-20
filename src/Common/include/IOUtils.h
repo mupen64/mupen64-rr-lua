@@ -4,11 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <Windows.h>
+#endif
+
 namespace IOUtils
 {
 
+// FILE AND IOSTREAM UTILITIES
+// ==============================
+
 // reads a file from beginning to end.
-std::vector<uint8_t> read_entire_file(const std::filesystem::path &path)
+inline std::vector<uint8_t> read_entire_file(const std::filesystem::path &path)
 {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open())
@@ -29,7 +37,7 @@ std::vector<uint8_t> read_entire_file(const std::filesystem::path &path)
 }
 
 // overwrites the contents of a file with the provided buffer.
-bool write_entire_file(const std::filesystem::path &path, std::span<uint8_t> data)
+inline bool write_entire_file(const std::filesystem::path &path, std::span<uint8_t> data)
 {
     std::ofstream out(path, std::ios::binary);
     if (!out.is_open())
@@ -111,6 +119,68 @@ template <class IStreamT, class CharT, class Traits>
 inline auto iter_lines(IStreamT &stream)
 {
     return std::ranges::subrange{details::IOLineIterator<IStreamT, CharT, Traits>(stream), details::IOLineSentinel()};
+}
+
+// WINDOWS UTF-16 CONVERSION
+// ==============================
+
+#ifdef _WIN32
+
+inline std::wstring to_wide_string(std::string_view str) {
+    using namespace std::string_literals;
+
+    assert(str.size() < INT_MAX / 2); // sanity check
+
+    if (str.empty()) {
+        return L""s;
+    }
+
+    // return code
+    int rc;
+
+    // figure out how much space we need
+    rc = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), str.size(), nullptr, 0);
+    if (rc == 0) {
+        throw std::system_error(rc, std::system_category(), "invalid UTF-8");
+    }
+
+    // This is the only safe way to do it, it's a bit of a shame there's no way to turn an arbitrary allocation
+    // into a vector/string/whatever
+    std::wstring output;
+    output.resize(static_cast<size_t>(rc), L'\0');
+
+    rc = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), str.size(), output.data(), output.size());
+    if (rc == 0) {
+        throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
+    }
+
+    return output;
+}
+
+#endif
+
+// PORTABLE EQUIVALENTS
+// ==============================
+
+// Portable version of fopen_s using std::filesystem::path.
+inline errno_t path_fopen_s(FILE*& stream, const std::filesystem::path& path, const char* mode) {
+#ifdef _WIN32
+    auto mode_wc = to_wide_string(mode);
+    return _wfopen_s(&stream, path.c_str(), mode_wc.c_str());
+#else
+    return fopen_s(&stream, path.c_str(), mode);
+#endif
+}
+
+// Portable version of Windows `_wfsopen(path, mode, _SH_DENYNO)`.
+inline FILE* path_fopen_shared(const std::filesystem::path& path, const char* mode) {
+#ifdef _WIN32
+    auto mode_wc = to_wide_string(mode);
+    return _wfsopen(path.c_str(), mode_wc.c_str(), _SH_DENYNO);
+#else
+    // Linux file locks are opt-in.
+    return fopen(path.c_str(), mode);
+#endif
 }
 
 } // namespace IOUtils
