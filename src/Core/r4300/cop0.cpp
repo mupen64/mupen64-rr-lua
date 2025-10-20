@@ -16,7 +16,7 @@ void MFC0()
     switch (PC->f.r.nrd)
     {
     case 1:
-        critical_stop(L"MFC0 unimplemented operation");
+        critical_stop("MFC0 unimplemented operation");
         break;
     default:
         rrt32 = reg_cop0[PC->f.r.nrd];
@@ -33,7 +33,7 @@ void MTC0()
         core_Index = core_rrt & 0x8000003F;
         if ((core_Index & 0x3F) > 31)
         {
-            critical_stop(L"TLB Index too high in MTC0");
+            critical_stop("TLB Index too high in MTC0");
         }
         break;
     case 1: // Random
@@ -110,7 +110,7 @@ void MTC0()
         }
         else
         {
-            critical_stop(L"MTC0 core_rrt != 0 cause");
+            critical_stop("MTC0 core_rrt != 0 cause");
         }
         break;
     case 14: // EPC
@@ -136,7 +136,7 @@ void MTC0()
         core_TagHi = 0;
         break;
     default:
-        critical_stop(std::format(L"unknown mtc0 write : {}\n", PC->f.r.nrd));
+        critical_stop(std::format("unknown mtc0 write : {}\n", PC->f.r.nrd));
         break;
     }
     PC++;

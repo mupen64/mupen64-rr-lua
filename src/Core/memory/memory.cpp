@@ -994,7 +994,7 @@ int32_t init_memory()
     fast_memory = 1;
     firstFrameBufferSetting = 1;
 
-    g_core->log_info(L"memory initialized");
+    g_core->log_info("memory initialized");
     return 0;
 }
 
@@ -1225,7 +1225,7 @@ void update_SP()
         }
         else
         {
-            // g_core->log_info(L"other task");
+            // g_core->log_info("other task");
             rsp_register.rsp_pc &= 0xFFF;
             if (!g_vr_fast_forward || !g_core->cfg->fastforward_silent)
             {
@@ -1238,7 +1238,7 @@ void update_SP()
             update_count();
             add_interrupt_event(SP_INT, 0 /*100*/);
         }
-        // g_core->log_info(L"unknown task type");
+        // g_core->log_info("unknown task type");
         /*if (hle) execute_dlist();
         //if (hle) processDList();
         else sp_register.halt = 0;*/
@@ -3155,23 +3155,23 @@ void read_flashram_status()
     }
     else
     {
-        g_core->log_error(L"unknown read in read_flashram_status");
+        g_core->log_error("unknown read in read_flashram_status");
     }
 }
 
 void read_flashram_statusb()
 {
-    g_core->log_error(L"read_flashram_statusb");
+    g_core->log_error("read_flashram_statusb");
 }
 
 void read_flashram_statush()
 {
-    g_core->log_error(L"read_flashram_statush");
+    g_core->log_error("read_flashram_statush");
 }
 
 void read_flashram_statusd()
 {
-    g_core->log_error(L"read_flashram_statusd");
+    g_core->log_error("read_flashram_statusd");
 }
 
 void write_flashram_dummy()
@@ -3199,23 +3199,23 @@ void write_flashram_command()
     }
     else
     {
-        g_core->log_error(L"unknown write in write_flashram_command");
+        g_core->log_error("unknown write in write_flashram_command");
     }
 }
 
 void write_flashram_commandb()
 {
-    g_core->log_error(L"write_flashram_commandb");
+    g_core->log_error("write_flashram_commandb");
 }
 
 void write_flashram_commandh()
 {
-    g_core->log_error(L"write_flashram_commandh");
+    g_core->log_error("write_flashram_commandh");
 }
 
 void write_flashram_commandd()
 {
-    g_core->log_error(L"write_flashram_commandd");
+    g_core->log_error("write_flashram_commandd");
 }
 
 static uint32_t lastwrite = 0;
@@ -3356,7 +3356,7 @@ void read_sc_regh()
 
 void read_sc_regd()
 {
-    critical_stop(L"read_sc_regd not supported by RCP");
+    critical_stop("read_sc_regd not supported by RCP");
 }
 
 void write_sc_reg()

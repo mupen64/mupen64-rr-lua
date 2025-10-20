@@ -129,7 +129,7 @@ void timer_new_vi()
             {
                 // sleep time is unreasonable, log it and reset related state
                 const auto casted = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_time).count();
-                g_core->log_info(std::format(L"Invalid timer: %lld ms", casted));
+                g_core->log_info(std::format("Invalid timer: %lld ms", casted));
                 sleep_time = sleep_time.zero();
             }
         }

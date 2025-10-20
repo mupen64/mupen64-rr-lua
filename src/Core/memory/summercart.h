@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <CommonPCH.h>
+
 struct summercart
 {
     char buffer[8192];

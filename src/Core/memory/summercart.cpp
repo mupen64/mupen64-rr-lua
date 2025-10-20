@@ -48,23 +48,23 @@ static void vhd_copy(struct vhd *vhd, FILE *dst, FILE *src, void *buf, uint32_t 
 
 struct summercart summercart;
 
-static int32_t sd_error(const wchar_t *text, const wchar_t *caption)
+static int32_t sd_error(const char *text, const char *caption)
 {
     g_core->show_dialog(text, caption, fsvc_error);
     return -1;
 }
 
-static int32_t sd_seek(FILE *fp, const wchar_t *caption)
+static int32_t sd_seek(FILE *fp, const char *caption)
 {
     struct vhd vhd;
     uint32_t sector = summercart.sd_sector;
     uint32_t count = summercart.data1;
-    if (fseek(fp, -512, SEEK_END)) return sd_error(L"Seek(1) error.", caption);
-    if (fread(&vhd, 1, sizeof(struct vhd), fp) != sizeof(struct vhd)) return sd_error(L"Read error.", caption);
-    if (memcmp(vhd.cookie, "conectix", 8)) return sd_error(L"Invalid VHD file.", caption);
-    if (std::byteswap(vhd.type) != 2) return sd_error(L"Invalid VHD type: must be a fixed disk.", caption);
+    if (fseek(fp, -512, SEEK_END)) return sd_error("Seek(1) error.", caption);
+    if (fread(&vhd, 1, sizeof(struct vhd), fp) != sizeof(struct vhd)) return sd_error("Read error.", caption);
+    if (memcmp(vhd.cookie, "conectix", 8)) return sd_error("Invalid VHD file.", caption);
+    if (std::byteswap(vhd.type) != 2) return sd_error("Invalid VHD type: must be a fixed disk.", caption);
     if ((int64_t)sector + count > std::byteswap(vhd.disk_size) / 512) return -1;
-    if (fseek(fp, 512 * (int64_t)sector, SEEK_SET)) return sd_error(L"Seek(2) error.", caption);
+    if (fseek(fp, 512 * (int64_t)sector, SEEK_SET)) return sd_error("Seek(2) error.", caption);
     return 0;
 }
 
@@ -82,12 +82,12 @@ static void sd_read()
 
     if (_wfopen_s(&fp, path.wstring().c_str(), L"rb"))
     {
-        sd_error(L"Could not open SD image file.", L"SD read error");
+        sd_error("Could not open SD image file.", "SD read error");
     }
     else
     {
         char s = S8;
-        if (!sd_seek(fp, L"SD read error"))
+        if (!sd_seek(fp, "SD read error"))
         {
             if (addr >= 0x1ffe0000 && addr + size <= 0x1ffe2000)
             {
@@ -124,11 +124,11 @@ static void sd_write()
 
     if (_wfopen_s(&fp, path.wstring().c_str(), L"r+b"))
     {
-        sd_error(L"Could not open SD image file.", L"SD write error");
+        sd_error("Could not open SD image file.", "SD write error");
     }
     else
     {
-        if (!sd_seek(fp, L"SD write error"))
+        if (!sd_seek(fp, "SD write error"))
         {
             if (addr >= 0x1ffe0000 && addr + size <= 0x1ffe2000)
             {
@@ -171,14 +171,14 @@ void save_summercart(const std::filesystem::path &path)
                 fclose(stf);
             }
             else
-                sd_error(L"Could not open SD state file.", L"Save error");
+                sd_error("Could not open SD state file.", "Save error");
             fclose(sdf);
         }
         else
-            sd_error(L"Could not open SD image file.", L"Save error");
+            sd_error("Could not open SD image file.", "Save error");
     }
     else
-        sd_error(L"Could not allocate buffer.", L"Save error");
+        sd_error("Could not allocate buffer.", "Save error");
 }
 
 void load_summercart(const std::filesystem::path &path)
@@ -201,15 +201,15 @@ void load_summercart(const std::filesystem::path &path)
                 fclose(sdf);
             }
             else
-                sd_error(L"Could not open SD image file.", L"Load error");
+                sd_error("Could not open SD image file.", "Load error");
             fclose(stf);
         }
         else
-            sd_error(L"Could not open SD state file.", L"Load error");
+            sd_error("Could not open SD state file.", "Load error");
         free(buf);
     }
     else
-        sd_error(L"Could not allocate buffer.", L"Load error");
+        sd_error("Could not allocate buffer.", "Load error");
 }
 
 void init_summercart()

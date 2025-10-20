@@ -976,7 +976,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
         const auto cheat_path = get_path_for_new_movie(path, ".cht");
         g_core->log_info(std::format("Writing movie cheat data to {}...", cheat_path.string()));
 
-        std::wofstream file(cheat_path, std::ios::out);
+        std::ofstream file(cheat_path, std::ios::out);
         if (!file)
         {
             g_core->log_error("core_vcr_start_record cheat std::wofstream failed");

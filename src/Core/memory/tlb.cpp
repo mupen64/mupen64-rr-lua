@@ -348,7 +348,7 @@ void ERET()
     update_count();
     if (core_Status & 0x4)
     {
-        critical_stop(L"Unexpected status register value in ERET");
+        critical_stop("Unexpected status register value in ERET");
     }
     else
     {

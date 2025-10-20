@@ -74,7 +74,7 @@ class IOLineIterator
     IOLineIterator &operator++()
     {
         assert(!m_stream->fail());
-        std::getline(m_stream, m_line);
+        std::getline(*m_stream, m_line);
         return *this;
     }
 

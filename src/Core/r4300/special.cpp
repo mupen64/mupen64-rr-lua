@@ -175,7 +175,7 @@ void DIV()
         sign_extended(hi);
     }
     else
-        g_core->log_info(L"div");
+        g_core->log_info("div");
     PC++;
 }
 
@@ -189,7 +189,7 @@ void DIVU()
         sign_extended(hi);
     }
     else
-        g_core->log_info(L"divu");
+        g_core->log_info("divu");
     PC++;
 }
 
@@ -277,7 +277,7 @@ void DDIV()
         lo = (int64_t)core_rrs / (int64_t)core_rrt;
         hi = (int64_t)core_rrs % (int64_t)core_rrt;
     }
-    //   else g_core->log_info(L"ddiv");
+    //   else g_core->log_info("ddiv");
     PC++;
 }
 
@@ -288,7 +288,7 @@ void DDIVU()
         lo = (uint64_t)core_rrs / (uint64_t)core_rrt;
         hi = (uint64_t)core_rrs % (uint64_t)core_rrt;
     }
-    //   else g_core->log_info(L"ddivu");
+    //   else g_core->log_info("ddivu");
     PC++;
 }
 
@@ -390,7 +390,7 @@ void TEQ()
 {
     if (core_rrs == core_rrt)
     {
-        critical_stop(L"Trap exception in TEQ");
+        critical_stop("Trap exception in TEQ");
     }
     PC++;
 }

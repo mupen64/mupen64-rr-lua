@@ -146,7 +146,7 @@ std::vector<uint8_t> generate_savestate()
     // manually.
     if (get_event(SI_INT) == 0)
     {
-        g_core->log_warn(L"[ST] Finishing up DMA...");
+        g_core->log_warn("[ST] Finishing up DMA...");
         for (size_t i = 0; i < 64 / 4; i++) rdram[si_register.si_dram_addr / 4 + i] = std::byteswap(PIF_RAM[i]);
         update_count();
         add_interrupt_event(SI_INT, 0x900);
@@ -211,7 +211,7 @@ std::vector<uint8_t> generate_savestate()
         int32_t width;
         int32_t height;
         g_core->video_get_video_size(&width, &height);
-        g_core->log_trace(std::format(L"Writing screen buffer to savestate, width: {}, height: {}", width, height));
+        g_core->log_trace(std::format("Writing screen buffer to savestate, width: {}, height: {}", width, height));
 
         void *video = malloc(width * height * 3);
         g_core->copy_video(video);
@@ -327,11 +327,11 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     {
         auto result = g_core->show_ask_dialog(
             CORE_DLG_ST_HASH_MISMATCH,
-            std::format(L"The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe "
-                        L"emulator may crash. Are you sure you want to continue?",
-                        g_core->io_service->string_to_wstring(md5))
+            std::format("The savestate was created on a rom with hash {}, but is being loaded on another rom.\r\nThe "
+                        "emulator may crash. Are you sure you want to continue?",
+                        md5)
                 .c_str(),
-            L"Savestate", true);
+            "Savestate", true);
 
         if (!result)
         {
@@ -396,26 +396,26 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
 
         if (!task.ignore_warnings && code != Res_Ok && vcr_get_task() != task_idle)
         {
-            std::wstring err_str = L"Failed to restore movie, ";
+            std::string err_str = "Failed to restore movie, ";
             switch (code)
             {
             case VCR_NotFromThisMovie:
-                err_str += L"the savestate is not from this movie.";
+                err_str += "the savestate is not from this movie.";
                 break;
             case VCR_InvalidFrame:
-                err_str += L"the savestate frame is outside the bounds of the movie.";
+                err_str += "the savestate frame is outside the bounds of the movie.";
                 break;
             case VCR_InvalidFormat:
-                err_str += L"the savestate freeze buffer format is invalid.";
+                err_str += "the savestate freeze buffer format is invalid.";
                 break;
             default:
-                err_str += L"an unknown error has occured.";
+                err_str += "an unknown error has occured.";
                 break;
             }
-            err_str += L" Loading the savestate might desynchronize the movie.\r\nAre you sure you want to continue?";
+            err_str += " Loading the savestate might desynchronize the movie.\r\nAre you sure you want to continue?";
 
             const auto result =
-                g_core->show_ask_dialog(CORE_DLG_ST_UNFREEZE_WARNING, err_str.c_str(), L"Savestate", true);
+                g_core->show_ask_dialog(CORE_DLG_ST_UNFREEZE_WARNING, err_str.c_str(), "Savestate", true);
             if (!result)
             {
                 task.callback(
@@ -432,9 +432,9 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
         {
             const auto result =
                 g_core->show_ask_dialog(CORE_DLG_ST_NOT_FROM_MOVIE,
-                                        L"The savestate is not from a movie. Loading it might desynchronize the "
-                                        L"movie.\r\nAre you sure you want to continue?",
-                                        L"Savestate", true);
+                                        "The savestate is not from a movie. Loading it might desynchronize the "
+                                        "movie.\r\nAre you sure you want to continue?",
+                                        "Savestate", true);
             if (!result)
             {
                 task.callback(
@@ -450,7 +450,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
 
     {
         g_core->log_trace(
-            std::format(L"[Savestates] {} bytes remaining", decompressed_buf.size() - (ptr - decompressed_buf.data())));
+            std::format("[Savestates] {} bytes remaining", decompressed_buf.size() - (ptr - decompressed_buf.data())));
         int32_t video_width = 0;
         int32_t video_height = 0;
         void *video_buffer = nullptr;
@@ -461,7 +461,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
 
             if (!memcmp(scr_section, screen_section, sizeof(screen_section)))
             {
-                g_core->log_trace(std::format(L"[Savestates] Restoring screen buffer..."));
+                g_core->log_trace(std::format("[Savestates] Restoring screen buffer..."));
                 MiscHelpers::memread(&ptr, &video_width, sizeof(video_width));
                 MiscHelpers::memread(&ptr, &video_height, sizeof(video_height));
 
@@ -502,12 +502,12 @@ failedLoad:
     if (interp_addr == 0x80000180 || (PC->addr == 0x80000180 && !dynacore)) g_vr_beq_ignore_jmp = true;
     if (!dynacore && interpcore)
     {
-        // g_core->log_info(L".st jump: {:#06x}, stopped here:{:#06x}", interp_addr, last_addr);
+        // g_core->log_info(".st jump: {:#06x}, stopped here:{:#06x}", interp_addr, last_addr);
         last_addr = interp_addr;
     }
     else
     {
-        // g_core->log_info(L".st jump: {:#06x}, stopped here:{:#06x}", PC->addr, last_addr);
+        // g_core->log_info(".st jump: {:#06x}, stopped here:{:#06x}", PC->addr, last_addr);
         last_addr = PC->addr;
     }
 }
@@ -518,7 +518,7 @@ failedLoad:
 void savestates_simplify_tasks()
 {
     std::scoped_lock lock(g_task_mutex);
-    g_core->log_info(L"[ST] Simplifying task queue...");
+    g_core->log_info("[ST] Simplifying task queue...");
 
     std::vector<size_t> duplicate_indicies{};
 
@@ -542,7 +542,7 @@ void savestates_simplify_tasks()
 
             if (other_task.medium == core_st_medium_path && task.params.path == other_task.params.path)
             {
-                g_core->log_trace(std::format(L"[ST] Found duplicate slot task at index {}", j));
+                g_core->log_trace(std::format("[ST] Found duplicate slot task at index {}", j));
                 duplicate_indicies.push_back(j);
             }
         }
@@ -563,8 +563,9 @@ void savestates_warn_if_load_after_save()
     {
         if (task.job == core_st_job_save && encountered_load)
         {
-            g_core->log_warn(std::format(L"[ST] A savestate save task is scheduled after a load task. This may cause "
-                                         L"unexpected behavior for the caller."));
+            // tood
+            g_core->log_warn("[ST] A savestate save task is scheduled after a load task. This may cause "
+                             "unexpected behavior for the caller.");
             break;
         }
 
@@ -581,27 +582,27 @@ void savestates_warn_if_load_after_save()
 void savestates_log_tasks()
 {
     std::scoped_lock lock(g_task_mutex);
-    g_core->log_info(L"[ST] Begin task dump");
+    g_core->log_info("[ST] Begin task dump");
     savestates_warn_if_load_after_save();
     for (const auto &task : g_tasks)
     {
-        std::wstring job_str = (task.job == core_st_job_save) ? L"Save" : L"Load";
-        std::wstring medium_str;
+        std::string job_str = (task.job == core_st_job_save) ? "Save" : "Load";
+        std::string medium_str;
         switch (task.medium)
         {
         case core_st_medium_path:
-            medium_str = L"Path";
+            medium_str = "Path";
             break;
         case core_st_medium_memory:
-            medium_str = L"Memory";
+            medium_str = "Memory";
             break;
         default:
-            medium_str = L"Unknown";
+            medium_str = "Unknown";
             break;
         }
-        g_core->log_info(std::format(L"[ST] \tTask: Job = {}, Medium = {}", job_str, medium_str));
+        g_core->log_info(std::format("[ST] \tTask: Job = {}, Medium = {}", job_str, medium_str));
     }
-    g_core->log_info(L"[ST] End task dump");
+    g_core->log_info("[ST] End task dump");
 }
 
 /**
@@ -620,11 +621,11 @@ void savestates_create_undo_point()
 
     if (!queue_contains_load)
     {
-        g_core->log_trace(L"[ST] Skipping undo point creation: no load in queue.");
+        g_core->log_trace("[ST] Skipping undo point creation: no load in queue.");
         return;
     }
 
-    g_core->log_trace(L"[ST] Inserting undo point creation into task queue...");
+    g_core->log_trace("[ST] Inserting undo point creation into task queue...");
 
     const t_savestate_task task = {
         .job = core_st_job_save,
@@ -665,7 +666,7 @@ void st_do_work()
 
     for (const auto &task : g_tasks)
     {
-        g_core->log_info(std::format(L"---------- Savestate {}:", (task.job == core_st_job_save) ? L"save" : L"load"));
+        g_core->log_info(std::format("---------- Savestate {}:", (task.job == core_st_job_save) ? "save" : "load"));
 
         if (task.job == core_st_job_save)
         {
@@ -676,7 +677,7 @@ void st_do_work()
             savestates_load_immediate_impl(task);
         }
 
-        g_core->log_warn(L"[ST] INTERRUPT QUEUE AT END OF ST TASK:");
+        g_core->log_warn("[ST] INTERRUPT QUEUE AT END OF ST TASK:");
         extern void print_queue();
         print_queue();
     }
@@ -705,7 +706,7 @@ bool st_do_file(const std::filesystem::path &path, const core_st_job job, const 
 
     if (!can_push_work())
     {
-        g_core->log_trace(L"[ST] do_file: Can't enqueue work.");
+        g_core->log_trace("[ST] do_file: Can't enqueue work.");
         if (callback)
         {
             callback(
@@ -743,7 +744,7 @@ bool st_do_memory(const std::vector<uint8_t> &buffer, const core_st_job job, con
 
     if (!can_push_work())
     {
-        g_core->log_trace(L"[ST] do_memory: Can't enqueue work.");
+        g_core->log_trace("[ST] do_memory: Can't enqueue work.");
         if (callback)
         {
             callback(core_st_callback_info{.result = ST_CoreNotLaunched,

@@ -23,7 +23,7 @@ static bool validate_dma()
 {
     if (si_register.si_pif_addr_wr64b != 0x1FC007C0)
     {
-        critical_stop(std::format(L"Unknown SI DMA PIF address {:#08x}", si_register.si_pif_addr_wr64b));
+        critical_stop(std::format("Unknown SI DMA PIF address {:#08x}", si_register.si_pif_addr_wr64b));
         return false;
     }
 
@@ -83,7 +83,7 @@ void dma_pi_read()
         return;
     }
     else
-        g_core->log_warn(L"unknown dma read");
+        g_core->log_warn("unknown dma read");
 
     pi_register.read_pi_status_reg |= 1;
     update_count();
@@ -116,7 +116,7 @@ void dma_pi_write()
         {
         }
         else
-            g_core->log_warn(std::format(L"unknown dma write:{:#06x}", (int32_t)pi_register.pi_cart_addr_reg));
+            g_core->log_warn(std::format("unknown dma write:{:#06x}", (int32_t)pi_register.pi_cart_addr_reg));
 
         pi_register.read_pi_status_reg |= 1;
         update_count();
@@ -263,7 +263,7 @@ void dma_si_write()
     }
     if (!check_register_validity(&si_register))
     {
-        critical_stop(L"Invalid SI register contents in dma_si_write");
+        critical_stop("Invalid SI register contents in dma_si_write");
         return;
     }
     for (int32_t i = 0; i < (64 / 4); i++) PIF_RAM[i] = std::byteswap(rdram[si_register.si_dram_addr / 4 + i]);
@@ -283,7 +283,7 @@ void dma_si_read()
 
     if (!check_register_validity(&si_register))
     {
-        critical_stop(L"Invalid SI register contents in dma_si_read");
+        critical_stop("Invalid SI register contents in dma_si_read");
         return;
     }
 

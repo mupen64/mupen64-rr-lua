@@ -2269,7 +2269,7 @@ void init_block(int32_t *source, precomp_block *block)
 {
     int32_t i, length, already_exist = 1;
     static int32_t init_length;
-    // g_core->log_info(L"init block recompiled {:#06x}\n", (int32_t)block->start);
+    // g_core->log_info("init block recompiled {:#06x}\n", (int32_t)block->start);
 
     length = (block->end - block->start) / 4;
 
@@ -2493,7 +2493,7 @@ void recompile_block(int32_t *source, precomp_block *block, uint32_t func)
         block->max_code_length = max_code_length;
         free_assembler(&block->jumps_table, &block->jumps_number);
     }
-    // g_core->log_info(L"block recompiled ({:#06x}-%x)\n", (int32_t)func, (int32_t)(block->start+i*4));
+    // g_core->log_info("block recompiled ({:#06x}-%x)\n", (int32_t)func, (int32_t)(block->start+i*4));
     // getchar();
 }
 
@@ -2568,7 +2568,7 @@ void vr_recompile(uint32_t addr)
 {
     if (addr == UINT32_MAX)
     {
-        g_core->log_info(L"core_vr_recompile all blocks");
+        g_core->log_info("core_vr_recompile all blocks");
         memset(invalid_code, 1, 0x100000);
         return;
     }

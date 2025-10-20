@@ -17,7 +17,7 @@ extern uint32_t interp_addr;
 // Unused, this seems to be handled in pure_interp.c prefetch()
 void address_error_exception()
 {
-    critical_stop(L"address_error_exception");
+    critical_stop("address_error_exception");
 }
 
 // Unused, an TLB entry is marked as invalid
@@ -26,22 +26,22 @@ void TLB_invalid_exception()
     if (delay_slot)
     {
         skip_jump = 1;
-        critical_stop(L"Delay Slot - TLB refill exception");
+        critical_stop("Delay Slot - TLB refill exception");
     }
-    critical_stop(L"TLB invalid exception");
+    critical_stop("TLB invalid exception");
 }
 
 // Unused, 64-bit miss (is this even used on n64?)
 void XTLB_refill_exception(uint64_t addresse)
 {
-    critical_stop(L"XTLB refill exception");
+    critical_stop("XTLB refill exception");
 }
 
 // Means no such virtual->physical translation exists
 void TLB_refill_exception(uint32_t address, int32_t w)
 {
     int32_t usual_handler = 0, i;
-    // g_core->log_error(L"TLB_refill_exception:{:#06x}\n", address);
+    // g_core->log_error("TLB_refill_exception:{:#06x}\n", address);
     if (!dynacore && w != 2) update_count();
     if (w == 1)
         core_Cause = (3 << 2);
@@ -137,19 +137,19 @@ void TLB_refill_exception(uint32_t address, int32_t w)
 // Unused, aka TLB modified Exception, entry is not writable
 void TLB_mod_exception()
 {
-    critical_stop(L"TLB mod exception");
+    critical_stop("TLB mod exception");
 }
 
 // Unused
 void integer_overflow_exception()
 {
-    critical_stop(L"integer overflow exception");
+    critical_stop("integer overflow exception");
 }
 
 // Unused, handled somewhere else
 void coprocessor_unusable_exception()
 {
-    critical_stop(L"coprocessor_unusable_exception");
+    critical_stop("coprocessor_unusable_exception");
 }
 
 // General handler, passes execution to default n64 handler
@@ -165,7 +165,7 @@ void exception_general()
     else
         core_EPC = interp_addr;
 
-    // g_core->log_error(L"exception, Cause: {:#06x} EPC: {:#06x} \n", Cause, EPC);
+    // g_core->log_error("exception, Cause: {:#06x} EPC: {:#06x} \n", Cause, EPC);
 
     // Highest bit of Cause tells if exception has been executed in branch delay slot
     // delay_slot seems to always be 0 or 1, why is there reference to 3 ?
