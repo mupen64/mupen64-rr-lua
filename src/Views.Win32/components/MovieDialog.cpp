@@ -251,9 +251,10 @@ refresh:
     ListView_DeleteAllItems(grid_hwnd);
 
     metadata.emplace_back(std::make_pair(
-        L"ROM", std::format(L"{} ({}, {})", g_main_ctx.io_service.string_to_wstring((char *)header.rom_name),
-                            g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country),
-                            std::format(L"{:#08x}", header.rom_crc1))));
+        L"ROM",
+        std::format(L"{} ({}, {})", g_main_ctx.io_service.string_to_wstring((char *)header.rom_name),
+                    IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country)),
+                    std::format(L"{:#08x}", header.rom_crc1))));
 
     metadata.emplace_back(
         std::make_pair(L"Length", std::format(L"{} ({} input)", header.length_vis, header.length_samples)));
@@ -345,8 +346,9 @@ MovieDialog::t_result MovieDialog::show(bool readonly)
     const auto rom_hdr = g_main_ctx.core_ctx->vr_get_rom_header();
 
     is_readonly = readonly;
-    user_result.path = std::format(L"{} ({}).m64", g_main_ctx.io_service.string_to_wstring((char *)rom_hdr->nom),
-                                   g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code));
+    user_result.path = std::format(
+        L"{} ({}).m64", g_main_ctx.io_service.string_to_wstring((char *)rom_hdr->nom),
+        IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code)));
     user_result.start_flag = g_config.last_movie_type;
     user_result.author = g_config.last_movie_author;
     user_result.description = L"";

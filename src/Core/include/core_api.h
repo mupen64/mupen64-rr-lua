@@ -212,7 +212,7 @@ extern "C"
          * \param predicate A predicate which determines if the rom matches.
          * \return The rom's path, or an empty string if no rom was found.
          */
-        std::string (*find_available_rom)(const std::function<bool(const core_rom_header &)> &predicate);
+        std::filesystem::path (*find_available_rom)(const std::function<bool(const core_rom_header &)> &predicate);
 
         /**
          * \return Whether MGE functionality is currently available.

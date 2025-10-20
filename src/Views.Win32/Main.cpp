@@ -386,7 +386,7 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
     const auto fname =
         std::format(L"{} {}.st{}", g_main_ctx.io_service.string_to_wstring((const char *)hdr->nom),
-                    g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code), std::to_wstring(slot));
+                    IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)), std::to_wstring(slot));
     return Config::save_directory() / fname;
 }
 
@@ -1122,18 +1122,30 @@ static core_result init_core()
     g_main_ctx.core.get_saves_directory = Config::save_directory;
     g_main_ctx.core.get_backups_directory = Config::backup_directory;
     g_main_ctx.core.get_summercart_path = get_summercart_path;
-    g_main_ctx.core.show_multiple_choice_dialog = [](const std::string &id, const std::vector<std::wstring> &choices,
-                                                     const wchar_t *str, const wchar_t *title, core_dialog_type type) {
-        return DialogService::show_multiple_choice_dialog(id, choices, str, title, type);
+    g_main_ctx.core.show_multiple_choice_dialog = [](const std::string &id, const std::vector<std::string> &choices,
+                                                     const char *str, const char *title, core_dialog_type type) {
+        auto choices_wide = choices |
+                            std::views::transform([](std::string value) { return IOUtils::to_wide_string(value); }) |
+                            std::ranges::to<std::vector>();
+        auto str_wide = IOUtils::to_wide_string(str);
+        auto title_wide = IOUtils::to_wide_string(title);
+
+        return DialogService::show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(), type);
     };
-    g_main_ctx.core.show_ask_dialog = [](const std::string &id, const wchar_t *str, const wchar_t *title,
-                                         bool warning) {
-        return DialogService::show_ask_dialog(id, str, title, warning);
+    g_main_ctx.core.show_ask_dialog = [](const std::string &id, const char *str, const char *title, bool warning) {
+        auto str_wide = IOUtils::to_wide_string(str);
+        auto title_wide = IOUtils::to_wide_string(title);
+        return DialogService::show_ask_dialog(id, str_wide.c_str(), title_wide.c_str(), warning);
     };
-    g_main_ctx.core.show_dialog = [](const wchar_t *str, const wchar_t *title, core_dialog_type type) {
-        DialogService::show_dialog(str, title, type);
+    g_main_ctx.core.show_dialog = [](const char* str, const char* title, core_dialog_type type) {
+        auto str_wide = IOUtils::to_wide_string(str);
+        auto title_wide = IOUtils::to_wide_string(title);
+        DialogService::show_dialog(str_wide.c_str(), title_wide.c_str(), type);
     };
-    g_main_ctx.core.show_statusbar = DialogService::show_statusbar;
+    g_main_ctx.core.show_statusbar = [](const char* str) {
+        auto str_wide = IOUtils::to_wide_string(str);
+        DialogService::show_statusbar(str_wide.c_str());
+    };
     g_main_ctx.core.update_screen = update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;

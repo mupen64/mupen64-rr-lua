@@ -406,7 +406,7 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
     struct seek_test_params
     {
         t_vcr_state vcr{};
-        std::wstring str{};
+        std::string str{};
         size_t expected_frame{};
     };
 
@@ -432,7 +432,7 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
                         },
                     .current_sample = 0,
                 },
-            .str = L"3",
+            .str = "3",
             .expected_frame = 3,
         },
 
@@ -457,7 +457,7 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
                         },
                     .current_sample = 3,
                 },
-            .str = L"+1",
+            .str = "+1",
             .expected_frame = 4,
         },
 
@@ -482,7 +482,7 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
                         },
                     .current_sample = 3,
                 },
-            .str = L"-1",
+            .str = "-1",
             .expected_frame = 2,
         },
 
@@ -507,7 +507,7 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
                         },
                     .current_sample = 3,
                 },
-            .str = L"^1",
+            .str = "^1",
             .expected_frame = 4,
         });
 

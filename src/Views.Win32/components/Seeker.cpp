@@ -83,7 +83,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                                L"Seek savestates disabled. Seeking backwards will be slower.");
             }
 
-            if (g_main_ctx.core_ctx->vcr_begin_seek(g_config.seeker_value, true) != Res_Ok)
+            if (g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(g_config.seeker_value), true) != Res_Ok)
             {
                 SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
                 SetDlgItemText(hwnd, IDC_SEEKER_STATUS, L"Couldn't seek");

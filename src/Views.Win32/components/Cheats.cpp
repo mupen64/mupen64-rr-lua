@@ -36,7 +36,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             core_cheat script;
 
             if (!g_main_ctx.core_ctx->cht_compile(
-                    L"D033AFA1 0020\n8133B1BC 4220\nD033AFA1 0020\n8133B17C 0300\nD033AFA1 0020\n8133B17E 0880",
+                    "D033AFA1 0020\n8133B1BC 4220\nD033AFA1 0020\n8133B17C 0300\nD033AFA1 0020\n8133B17E 0880",
                     script))
             {
                 break;
@@ -97,14 +97,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 
             core_cheat script;
 
-            if (!g_main_ctx.core_ctx->cht_compile(code, script))
+            if (!g_main_ctx.core_ctx->cht_compile(IOUtils::to_utf8_string(code), script))
             {
                 DialogService::show_dialog(L"Cheat code could not be compiled.\r\nVerify that the syntax is correct",
                                            L"Cheats", fsvc_error);
                 break;
             }
 
-            script.name = name;
+            script.name = IOUtils::to_utf8_string(name);
             script.active = prev_active;
 
             cheats[selected_index] = script;
@@ -133,8 +133,8 @@ update_selection: {
     g_main_ctx.core_ctx->cht_get_list(cheats);
 
     CheckDlgButton(hwnd, IDC_CHECK_CHEAT_ENABLED, cheats[selected_index].active ? BST_CHECKED : BST_UNCHECKED);
-    SetDlgItemText(hwnd, IDC_EDIT_CHEAT, cheats[selected_index].code.c_str());
-    Edit_SetText(GetDlgItem(hwnd, IDC_EDIT_CHEAT_NAME), cheats[selected_index].name.c_str());
+    SetDlgItemText(hwnd, IDC_EDIT_CHEAT, IOUtils::to_wide_string(cheats[selected_index].code).c_str());
+    Edit_SetText(GetDlgItem(hwnd, IDC_EDIT_CHEAT_NAME), IOUtils::to_wide_string(cheats[selected_index].name).c_str());
 }
     return FALSE;
 
@@ -146,8 +146,8 @@ rebuild_list: {
     g_main_ctx.core_ctx->cht_get_list(cheats);
     for (const auto &script : cheats)
     {
-        auto name = !script.active ? script.name + L" (Disabled)" : script.name;
-        ListBox_AddString(lb_hwnd, name.c_str());
+        auto name = !script.active ? script.name + " (Disabled)" : script.name;
+        ListBox_AddString(lb_hwnd, IOUtils::to_wide_string(name).c_str());
     }
     ListBox_SetCurSel(lb_hwnd, prev_index);
     goto update_selection;

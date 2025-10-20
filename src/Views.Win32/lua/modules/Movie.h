@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "stdafx.h"
 #include <ThreadPool.h>
 
 namespace LuaCore::Movie
@@ -63,7 +64,7 @@ static int SetVCRReadOnly(lua_State *L)
 
 static int begin_seek(lua_State *L)
 {
-    auto str = g_main_ctx.io_service.string_to_wstring(lua_tostring(L, 1));
+    auto str = std::string(lua_tostring(L, 1));
     bool pause_at_end = lua_toboolean(L, 2);
 
     lua_pushinteger(L, static_cast<int32_t>(g_main_ctx.core_ctx->vcr_begin_seek(str, pause_at_end)));

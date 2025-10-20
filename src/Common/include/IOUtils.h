@@ -126,12 +126,14 @@ inline auto iter_lines(IStreamT &stream)
 
 #ifdef _WIN32
 
-inline std::wstring to_wide_string(std::string_view str) {
+inline std::wstring to_wide_string(std::string_view str)
+{
     using namespace std::string_literals;
 
     assert(str.size() < INT_MAX / 2); // sanity check
 
-    if (str.empty()) {
+    if (str.empty())
+    {
         return L""s;
     }
 
@@ -140,7 +142,8 @@ inline std::wstring to_wide_string(std::string_view str) {
 
     // figure out how much space we need
     rc = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), str.size(), nullptr, 0);
-    if (rc == 0) {
+    if (rc == 0)
+    {
         throw std::system_error(rc, std::system_category(), "invalid UTF-8");
     }
 
@@ -150,8 +153,42 @@ inline std::wstring to_wide_string(std::string_view str) {
     output.resize(static_cast<size_t>(rc), L'\0');
 
     rc = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), str.size(), output.data(), output.size());
-    if (rc == 0) {
+    if (rc == 0)
+    {
         throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
+    }
+
+    return output;
+}
+
+inline std::string to_utf8_string(std::wstring_view wstr)
+{
+    using namespace std::string_literals;
+
+    assert(wstr.size() < INT_MAX / 2); // sanity check
+
+    if (wstr.empty())
+    {
+        return ""s;
+    }
+
+    // return code
+    int rc;
+
+    // figure out how much space we need
+    rc = WideCharToMultiByte(CP_UTF8, MB_ERR_INVALID_CHARS, wstr.data(), wstr.size(), nullptr, 0, 0, nullptr);
+    if (rc == 0) {
+        throw std::system_error(rc, std::system_category(), "invalid UTF-16");
+    }
+
+    // This is the only safe way to do it, it's a bit of a shame there's no way to turn an arbitrary allocation
+    // into a vector/string/whatever
+    std::string output;
+    output.resize(static_cast<size_t>(rc), '\0');
+
+    rc = WideCharToMultiByte(CP_UTF8, MB_ERR_INVALID_CHARS, wstr.data(), wstr.size(), output.data(), output.size(), 0, nullptr);
+    if (rc == 0) {
+        throw std::system_error(rc, std::system_category(), "invalid UTF-16");
     }
 
     return output;
@@ -163,7 +200,8 @@ inline std::wstring to_wide_string(std::string_view str) {
 // ==============================
 
 // Portable version of fopen_s using std::filesystem::path.
-inline errno_t path_fopen_s(FILE*& stream, const std::filesystem::path& path, const char* mode) {
+inline errno_t path_fopen_s(FILE *&stream, const std::filesystem::path &path, const char *mode)
+{
 #ifdef _WIN32
     auto mode_wc = to_wide_string(mode);
     return _wfopen_s(&stream, path.c_str(), mode_wc.c_str());
@@ -173,7 +211,8 @@ inline errno_t path_fopen_s(FILE*& stream, const std::filesystem::path& path, co
 }
 
 // Portable version of Windows `_wfsopen(path, mode, _SH_DENYNO)`.
-inline FILE* path_fopen_shared(const std::filesystem::path& path, const char* mode) {
+inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mode)
+{
 #ifdef _WIN32
     auto mode_wc = to_wide_string(mode);
     return _wfsopen(path.c_str(), mode_wc.c_str(), _SH_DENYNO);

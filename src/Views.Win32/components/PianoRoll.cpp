@@ -1225,7 +1225,7 @@ handle_mouse_move:
             goto def;
         }
 
-        ThreadPool::submit_task([=] { g_main_ctx.core_ctx->vcr_begin_seek(std::to_wstring(lplvhtti.iItem), true); });
+        ThreadPool::submit_task([=] { g_main_ctx.core_ctx->vcr_begin_seek(std::to_string(lplvhtti.iItem), true); });
         return 0;
     }
 

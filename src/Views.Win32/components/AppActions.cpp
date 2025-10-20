@@ -237,7 +237,7 @@ static void multi_frame_advance()
     {
         ThreadPool::submit_task([] {
             const auto result =
-                g_main_ctx.core_ctx->vcr_begin_seek(std::to_wstring(g_config.multi_frame_advance_count), true);
+                g_main_ctx.core_ctx->vcr_begin_seek(std::to_string(g_config.multi_frame_advance_count), true);
             show_error_dialog_for_result(result);
         });
     }
