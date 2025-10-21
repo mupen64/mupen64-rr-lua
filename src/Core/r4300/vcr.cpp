@@ -87,7 +87,7 @@ bool write_movie_impl(const core_vcr_movie_header *hdr, const std::vector<core_b
     std::memcpy(out_buf.data(), &hdr_copy, sizeof(core_vcr_movie_header));
     std::memcpy(out_buf.data() + sizeof(core_vcr_movie_header), inputs.data(),
                 sizeof(core_buttons) * hdr_copy.length_samples);
-    const auto written = g_core->io_service->write_file_buffer(path, out_buf);
+    const auto written = IOUtils::write_entire_file(path, out_buf);
 
     return written;
 }
@@ -323,7 +323,7 @@ core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *
     new_header.rom_country = -1;
     strcpy_s(new_header.rom_name, sizeof(new_header.rom_name), "(no ROM)");
 
-    auto buf = g_core->io_service->read_file_buffer(path);
+    auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
     {
         return VCR_BadFile;
@@ -344,7 +344,7 @@ core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<core_b
         return result;
     }
 
-    auto buf = g_core->io_service->read_file_buffer(path);
+    auto buf = IOUtils::read_entire_file(path);
 
     if (buf.size() < sizeof(core_vcr_movie_header) + sizeof(core_buttons) * header.length_samples)
     {
@@ -1216,7 +1216,7 @@ core_result vcr_start_playback(std::filesystem::path path)
 {
     std::unique_lock lock(vcr_mtx);
 
-    auto movie_buf = g_core->io_service->read_file_buffer(path);
+    auto movie_buf = IOUtils::read_entire_file(path);
 
     if (movie_buf.empty())
     {

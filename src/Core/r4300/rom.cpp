@@ -152,7 +152,7 @@ bool rom_load(std::filesystem::path path)
         return true;
     }
 
-    auto rom_buf = g_core->io_service->read_file_buffer(path);
+    auto rom_buf = IOUtils::read_entire_file(path);
     auto decompressed_rom = MiscHelpers::auto_decompress(rom_buf, 8000000);
 
     if (decompressed_rom.empty())

@@ -252,7 +252,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         compressed_buffer.resize(final_size);
 
         // write compressed st to disk
-        if (!g_core->io_service->write_file_buffer(new_st_path, compressed_buffer))
+        if (!IOUtils::write_entire_file(new_st_path, compressed_buffer))
         {
             task.callback(
                 core_st_callback_info{
@@ -288,7 +288,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     switch (task.medium)
     {
     case core_st_medium_path:
-        st_buf = g_core->io_service->read_file_buffer(new_st_path);
+        st_buf = IOUtils::read_entire_file(new_st_path);
         break;
     case core_st_medium_memory:
         st_buf = task.params.buffer;
