@@ -222,4 +222,24 @@ inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mo
 #endif
 }
 
+// Gets the path of the current executable file.
+inline std::filesystem::path exe_path() {
+#ifdef _WIN32
+    wchar_t path_buffer[MAX_PATH] = {L'\0'};
+    int rc;
+
+    rc = GetModuleFileNameW(NULL, path_buffer, sizeof(path_buffer) / sizeof(wchar_t));
+    if (rc == 0) {
+        throw std::system_error(GetLastError(), std::system_category());
+    }
+    return std::filesystem::path(path_buffer);
+#endif
+}
+// Gets the path of the current executable file.
+inline std::filesystem::path exe_path_cached() {
+    // this ensures that the exe path is cached.
+    static std::filesystem::path cached_path = exe_path();
+    return cached_path;
+}
+
 } // namespace IOUtils

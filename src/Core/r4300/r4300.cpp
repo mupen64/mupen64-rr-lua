@@ -1935,10 +1935,15 @@ bool open_core_file_stream(const std::filesystem::path &path, FILE **file)
 
 void clear_save_data()
 {
-    open_core_file_stream(get_eeprom_path(), &g_eeprom_file);
-    open_core_file_stream(get_sram_path(), &g_sram_file);
-    open_core_file_stream(get_flashram_path(), &g_fram_file);
-    open_core_file_stream(get_mempak_path(), &g_mpak_file);
+    // TODO: this assumes the files open.
+    if (!open_core_file_stream(get_eeprom_path(), &g_eeprom_file))
+        abort();
+    if (!open_core_file_stream(get_sram_path(), &g_sram_file))
+        abort();
+    if (!open_core_file_stream(get_flashram_path(), &g_fram_file))
+        abort();
+    if (!open_core_file_stream(get_mempak_path(), &g_mpak_file))
+        abort();
 
     {
         memset(sram, 0, sizeof(sram));

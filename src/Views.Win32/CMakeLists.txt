@@ -137,6 +137,11 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
+# Dependencies of the resource file that actually matter.
+set_source_files_properties(
+    SOURCES "Resource.rc" PROPERTIES OBJECT_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/app.manifest"
+)
 target_precompile_headers(Mupen64RR.Views.Win32 PRIVATE "stdafx.h")
 target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Win32 PRIVATE

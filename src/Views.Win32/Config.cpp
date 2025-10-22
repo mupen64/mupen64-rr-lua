@@ -609,20 +609,20 @@ void Config::load()
 
 std::filesystem::path Config::plugin_directory()
 {
-    return g_config.plugins_directory;
+    return IOUtils::exe_path_cached().parent_path() / g_config.plugins_directory;
 }
 
 std::filesystem::path Config::save_directory()
 {
-    return g_config.saves_directory;
+    return IOUtils::exe_path_cached().parent_path() / g_config.saves_directory;
 }
 
 std::filesystem::path Config::screenshot_directory()
 {
-    return g_config.screenshots_directory;
+    return IOUtils::exe_path_cached().parent_path() / g_config.screenshots_directory;
 }
 
 std::filesystem::path Config::backup_directory()
 {
-    return g_config.backups_directory;
+    return IOUtils::exe_path_cached().parent_path() / g_config.backups_directory;
 }
