@@ -102,7 +102,7 @@ set_target_properties(Mupen64RR.Core PROPERTIES
 target_include_directories(Mupen64RR.Core PUBLIC "include")
 target_include_directories(Mupen64RR.Core PRIVATE ".")
 target_link_libraries(Mupen64RR.Core PRIVATE
-    libdeflate::libdeflate_static
+    libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
     vendor::aladdin-md5
 )
 target_link_libraries(Mupen64RR.Core PUBLIC

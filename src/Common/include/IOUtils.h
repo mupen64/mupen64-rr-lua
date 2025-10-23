@@ -3,10 +3,13 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+#pragma once
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define NOMINMAX
 #include <Windows.h>
+#if defined(__linux__)
+#include <stdio.h>
 #endif
 
 namespace IOUtils
@@ -243,13 +246,18 @@ inline std::string to_utf8_string(std::wstring_view wstr)
 // ==============================
 
 // Portable version of fopen_s using std::filesystem::path.
-inline errno_t path_fopen_s(FILE *&stream, const std::filesystem::path &path, const char *mode)
+inline int path_fopen_s(FILE *&stream, const std::filesystem::path &path, const char *mode)
 {
 #ifdef _WIN32
     auto mode_wc = to_wide_string(mode);
     return _wfopen_s(&stream, path.c_str(), mode_wc.c_str());
 #else
-    return fopen_s(&stream, path.c_str(), mode);
+    FILE* ptr = fopen(path.c_str(), mode);
+    if (ptr == nullptr)
+        return errno;
+
+    stream = ptr;
+    return 0;
 #endif
 }
 

@@ -6,9 +6,7 @@
 
 #pragma once
 
-#include <cassert>
 #include <libdeflate.h>
-#include <string_view>
 
 /**
  * \brief A module providing various miscellaneous helper functions.
