@@ -219,7 +219,7 @@ inline std::string to_utf8_string(std::wstring_view wstr)
     int rc;
 
     // figure out how much space we need
-    rc = WideCharToMultiByte(CP_UTF8, MB_ERR_INVALID_CHARS, wstr.data(), wstr.size(), nullptr, 0, 0, nullptr);
+    rc = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr.data(), wstr.size(), nullptr, 0, 0, nullptr);
     if (rc == 0)
     {
         throw std::system_error(rc, std::system_category(), "invalid UTF-16");
@@ -230,7 +230,7 @@ inline std::string to_utf8_string(std::wstring_view wstr)
     std::string output;
     output.resize(static_cast<size_t>(rc), '\0');
 
-    rc = WideCharToMultiByte(CP_UTF8, MB_ERR_INVALID_CHARS, wstr.data(), wstr.size(), output.data(), output.size(), 0,
+    rc = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr.data(), wstr.size(), output.data(), output.size(), 0,
                              nullptr);
     if (rc == 0)
     {
