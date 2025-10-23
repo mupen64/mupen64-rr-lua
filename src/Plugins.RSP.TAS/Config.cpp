@@ -65,8 +65,8 @@ void config_save()
 void config_load()
 {
     printf("[RSP] Loading config...\n");
-
-    auto buffer = g_platform_service.read_file_buffer(CONFIG_PATH);
+    
+    auto buffer = IOUtils::read_entire_file(CONFIG_PATH);
     t_config loaded_config;
 
     if (buffer.empty() || buffer.size() != sizeof(t_config))

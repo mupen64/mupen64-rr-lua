@@ -27,7 +27,7 @@ uint32_t inst2;
 void (*g_audio_ucode_func)() = nullptr;
 HINSTANCE g_instance;
 std::filesystem::path g_app_path;
-PlatformService g_platform_service;
+// PlatformService g_platform_service;
 static uint8_t fake_header[0x1000];
 static uint32_t fake_AI_DRAM_ADDR_REG;
 static uint32_t fake_AI_LEN_REG;

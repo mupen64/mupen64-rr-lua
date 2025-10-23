@@ -6,7 +6,7 @@
 
 #include "Main.h"
 
-PlatformService platform_service;
+// PlatformService platform_service;
 
 // ReSharper disable once CppInconsistentNaming
 BOOL APIENTRY DllMain(HMODULE hmod, const DWORD reason, LPVOID)
@@ -29,7 +29,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *info)
 {
     info->ver = 0x0101;
     info->type = plugin_rsp;
-    strncpy_s(info->name, platform_service.wstring_to_string(PLUGIN_NAME).c_str(), std::size(info->name));
+    strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));
 }
 
 EXPORT void CALL DllAbout(void *hParent)

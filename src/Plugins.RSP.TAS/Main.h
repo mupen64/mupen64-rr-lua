@@ -29,7 +29,7 @@
 
 extern HINSTANCE g_instance;
 extern std::filesystem::path g_app_path;
-extern PlatformService g_platform_service;
+// extern PlatformService g_platform_service;
 
 bool rsp_alive();
 void on_rom_closed();
