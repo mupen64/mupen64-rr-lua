@@ -29,8 +29,14 @@ std::mutex rombrowser_mutex;
 
 std::vector<std::wstring> find_available_roms()
 {
-    auto abs_rom_directory = IOUtils::exe_path_cached().parent_path() / g_config.rom_directory;
+    const auto abs_rom_directory = std::filesystem::weakly_canonical(IOUtils::exe_path_cached().parent_path() / g_config.rom_directory);
 
+    if (!std::filesystem::exists(abs_rom_directory) ||
+        !std::filesystem::is_directory(abs_rom_directory))
+    {
+        return {};
+    }
+    
     std::vector<std::wstring> rom_paths;
     std::vector<std::wstring> filtered_rom_paths;
 
