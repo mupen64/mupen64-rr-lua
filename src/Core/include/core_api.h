@@ -88,7 +88,7 @@ extern "C"
         /**
          * \brief An IIOHelperService implementation.
          */
-        PlatformService *io_service;
+        // PlatformService *io_service;
 
         /**
          * \brief The core callbacks.

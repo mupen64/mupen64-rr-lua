@@ -20,7 +20,7 @@ static int LuaFileDialog(lua_State *L)
     BetterEmulationLock lock;
     WindowDisabler disabler(LuaDialog::hwnd());
 
-    auto filter = g_main_ctx.io_service.string_to_wstring(std::string(luaL_checkstring(L, 1)));
+    auto filter = IOUtils::to_wide_string(std::string(luaL_checkstring(L, 1)));
     const int32_t type = luaL_checkinteger(L, 2);
 
     std::wstring path;
@@ -34,7 +34,7 @@ static int LuaFileDialog(lua_State *L)
         path = FilePicker::show_save_dialog(L"s_lua_api", g_main_ctx.hwnd, filter);
     }
 
-    lua_pushstring(L, g_main_ctx.io_service.wstring_to_string(path).c_str());
+    lua_pushstring(L, IOUtils::to_utf8_string(path).c_str());
     return 1;
 }
 } // namespace LuaCore::IOHelper

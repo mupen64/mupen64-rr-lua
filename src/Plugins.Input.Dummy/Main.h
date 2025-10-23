@@ -9,7 +9,7 @@
 #include <CommonPCH.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
-#include <PlatformService.h>
+// #include <PlatformService.h>
 
 #define PLUGIN_VERSION L"1.0.0"
 

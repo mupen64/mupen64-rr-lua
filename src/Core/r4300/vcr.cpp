@@ -6,7 +6,7 @@
 
 #include "core_types.h"
 #include <CommonPCH.h>
-#include <PlatformService.h>
+// #include <PlatformService.h>
 #include <Core.h>
 #include <cassert>
 #include <cheats.h>
@@ -314,7 +314,7 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
 
 core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *header)
 {
-    if (path.extension() != ".m64")
+    if (path.extension().compare(L".m64") != 0)
     {
         return VCR_InvalidFormat;
     }

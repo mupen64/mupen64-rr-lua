@@ -6,7 +6,7 @@
 
 #include <CommonPCH.h>
 #include <core_api.h>
-#include <PlatformService.h>
+// #include <PlatformService.h>
 #include <Main.h>
 
 PlatformService platform_service;

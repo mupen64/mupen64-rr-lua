@@ -32,7 +32,7 @@ static int print(lua_State *L)
         const char *inspected_value = lua_tostring(L, -1);
         if (inspected_value)
         {
-            auto str = g_main_ctx.io_service.string_to_wstring(inspected_value);
+            auto str = IOUtils::to_wide_string(inspected_value);
 
             // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
             if (str.size() > 1 &&
@@ -87,7 +87,7 @@ static int tostringexs(lua_State *L)
         const char *inspected_value = lua_tostring(L, -1);
         if (inspected_value)
         {
-            auto str = g_main_ctx.io_service.string_to_wstring(inspected_value);
+            auto str = IOUtils::to_wide_string(inspected_value);
 
             // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
             if (str.size() > 1 && str[0] == '"' && str[str.size() - 1] == '"')
@@ -106,7 +106,7 @@ static int tostringexs(lua_State *L)
         if (i < nargs) final_str += L"\t";
     }
 
-    lua_pushstring(L, g_main_ctx.io_service.wstring_to_string(final_str).c_str());
+    lua_pushstring(L, IOUtils::to_utf8_string(final_str).c_str());
     return 1;
 }
 

@@ -66,5 +66,5 @@ extern "C"
 #include <Main.h>
 #include <lua/LuaTypes.h>
 #include <Config.h>
-#include <PlatformService.h>
+// #include <PlatformService.h>
 #include <ResizeAnchor.h>

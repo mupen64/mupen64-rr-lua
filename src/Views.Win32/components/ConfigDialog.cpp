@@ -445,7 +445,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             const int i = SendDlgItemMessage(hwnd, id, CB_GETCOUNT, 0, 0);
             SendDlgItemMessage(
                 hwnd, id, CB_ADDSTRING, 0,
-                reinterpret_cast<LPARAM>(g_main_ctx.io_service.string_to_wstring(plugin->name()).c_str()));
+                reinterpret_cast<LPARAM>(IOUtils::to_wide_string(plugin->name()).c_str()));
             SendDlgItemMessage(hwnd, id, CB_SETITEMDATA, i, (LPARAM)plugin.get());
         }
 

@@ -385,7 +385,7 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
     const auto fname =
-        std::format(L"{} {}.st{}", g_main_ctx.io_service.string_to_wstring((const char *)hdr->nom),
+        std::format(L"{} {}.st{}", IOUtils::to_wide_string((const char *)hdr->nom),
                     IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)), std::to_wstring(slot));
     return Config::save_directory() / fname;
 }
@@ -487,16 +487,14 @@ void update_titlebar()
 
     if (g_main_ctx.core_ctx->vr_get_launched())
     {
-        text += std::format(L" - {}", g_main_ctx.io_service.string_to_wstring(
+        text += std::format(L" - {}", IOUtils::to_wide_string(
                                           reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
     }
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {
-        PlatformService::t_path_segment_info info;
-        g_main_ctx.io_service.get_path_segment_info(g_main_ctx.core_ctx->vcr_get_path(), info);
-
-        text += std::format(L" - {}", info.filename);
+        auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
+        text += std::format(L" - {}", vcr_filename.c_str());
     }
 
     if (EncodingManager::is_capturing())
@@ -737,10 +735,8 @@ std::filesystem::path get_app_full_path()
 
     app_path.resize(app_path_len);
 
-    PlatformService::t_path_segment_info info;
-    g_main_ctx.io_service.get_path_segment_info(app_path, info);
-
-    return info.drive + info.dir;
+    // equals drive + dir
+    return std::filesystem::path(app_path).parent_path();
 }
 
 void open_console()
@@ -1028,7 +1024,7 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
 static core_result init_core()
 {
     g_main_ctx.core.cfg = &g_config.core;
-    g_main_ctx.core.io_service = &g_main_ctx.io_service;
+    // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
     g_main_ctx.core.callbacks.vi = [] {
         LuaCallbacks::call_interval();

@@ -200,7 +200,7 @@ static int draw_text(lua_State *L)
 
         IDWriteTextFormat *text_format;
 
-        lua->rctx.dw_factory->CreateTextFormat(g_main_ctx.io_service.string_to_wstring(font_name).c_str(), nullptr,
+        lua->rctx.dw_factory->CreateTextFormat(IOUtils::to_wide_string(font_name).c_str(), nullptr,
                                                static_cast<DWRITE_FONT_WEIGHT>(font_weight),
                                                static_cast<DWRITE_FONT_STYLE>(font_style), DWRITE_FONT_STRETCH_NORMAL,
                                                font_size, L"", &text_format);
@@ -210,7 +210,7 @@ static int draw_text(lua_State *L)
 
         IDWriteTextLayout *text_layout;
 
-        auto wtext = g_main_ctx.io_service.string_to_wstring(text);
+        auto wtext = IOUtils::to_wide_string(text);
         lua->rctx.dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format,
                                                rectangle.right - rectangle.left, rectangle.bottom - rectangle.top,
                                                &text_layout);
@@ -253,7 +253,7 @@ static int measure_text(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
-    std::wstring text = g_main_ctx.io_service.string_to_wstring(std::string(luaL_checkstring(L, 1)));
+    std::wstring text = IOUtils::to_wide_string(std::string(luaL_checkstring(L, 1)));
     std::string font_name = std::string(luaL_checkstring(L, 2));
     float font_size = luaL_checknumber(L, 3);
     float max_width = luaL_checknumber(L, 4);
@@ -276,7 +276,7 @@ static int measure_text(lua_State *L)
     {
         IDWriteTextFormat *text_format;
 
-        lua->rctx.dw_factory->CreateTextFormat(g_main_ctx.io_service.string_to_wstring(font_name).c_str(), NULL,
+        lua->rctx.dw_factory->CreateTextFormat(IOUtils::to_wide_string(font_name).c_str(), NULL,
                                                DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
                                                DWRITE_FONT_STRETCH_NORMAL, font_size, L"", &text_format);
 
@@ -369,7 +369,7 @@ static int load_image(lua_State *L)
 
     CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pIWICFactory));
 
-    HRESULT hr = pIWICFactory->CreateDecoderFromFilename(g_main_ctx.io_service.string_to_wstring(path).c_str(), NULL,
+    HRESULT hr = pIWICFactory->CreateDecoderFromFilename(IOUtils::to_wide_string(path).c_str(), NULL,
                                                          GENERIC_READ, WICDecodeMetadataCacheOnLoad, &pDecoder);
 
     if (!SUCCEEDED(hr))

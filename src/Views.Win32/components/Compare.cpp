@@ -37,7 +37,7 @@ void Compare::compare(size_t current_sample)
             const auto expected_path = save_dir / std::format(L"cmp_expected_{}.st", current_sample - compare_interval);
             const auto actual_path = save_dir / std::format(L"cmp_actual_{}.st", current_sample - compare_interval);
 
-            if (g_main_ctx.io_service.files_are_equal(expected_path, actual_path))
+            if (IOUtils::file_contents_equal(expected_path, actual_path) == 1)
             {
                 g_view_logger->info("MATCH at frame {}", current_sample - compare_interval);
             }

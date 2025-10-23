@@ -37,10 +37,10 @@ EXPORT core_result CALL core_create(core_params *params, core_ctx **ctx)
 {
     g_core = params;
 
-    if (!g_core->io_service)
-    {
-        return IN_MissingComponent;
-    }
+    // if (!g_core->io_service)
+    // {
+    //     return IN_MissingComponent;
+    // }
 
     if (!g_core->log_trace)
     {

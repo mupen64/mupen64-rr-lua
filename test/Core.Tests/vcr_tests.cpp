@@ -11,7 +11,7 @@
 static core_cfg cfg{};
 static core_params params{};
 static core_ctx *ctx = nullptr;
-static PlatformService io_helper_service{};
+// static PlatformService io_helper_service{};
 
 /**
  * \brief Initializes the test environment by resetting the vcr state and core parameters, as well as filling out some
@@ -22,7 +22,7 @@ static void prepare_test()
     vcr = {};
     cfg = {};
     params.cfg = &cfg;
-    params.io_service = &io_helper_service;
+    // params.io_service = &io_helper_service;
     params.input_get_keys = [](int32_t, core_buttons *) {};
     params.input_set_keys = [](int32_t, core_buttons) {};
 }

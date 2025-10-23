@@ -29,7 +29,7 @@ std::unordered_map<void *, bool> g_valid_callback_tokens{};
 
 static int at_panic(lua_State *L)
 {
-    const auto message = g_main_ctx.io_service.string_to_wstring(lua_tostring(L, -1));
+    const auto message = IOUtils::to_wide_string(lua_tostring(L, -1));
 
     g_view_logger->info(L"Lua panic: {}", message);
     DialogService::show_dialog(message.c_str(), L"Lua", fsvc_error);
@@ -114,7 +114,7 @@ std::wstring luaL_checkwstring(lua_State *L, int i)
         luaL_error(L, "Expected a string at argument %d", i);
     }
 
-    return g_main_ctx.io_service.string_to_wstring(str);
+    return IOUtils::to_wide_string(str);
 }
 
 std::wstring luaL_optwstring(lua_State *L, int i, const std::wstring &def)
@@ -129,7 +129,7 @@ std::wstring luaL_optwstring(lua_State *L, int i, const std::wstring &def)
 
 std::wstring lua_pushwstring(lua_State *L, const std::wstring &str)
 {
-    const auto s = g_main_ctx.io_service.wstring_to_string(str);
+    const auto s = IOUtils::to_utf8_string(str);
     lua_pushstring(L, s.c_str());
     return str;
 }
@@ -237,7 +237,7 @@ fail:
         g_lua_environments.pop_back();
         rebuild_lua_env_map();
 
-        const auto error = g_main_ctx.io_service.string_to_wstring(lua_tostring(env->L, -1));
+        const auto error = IOUtils::to_wide_string(lua_tostring(env->L, -1));
         destroy_environment(env);
 
         delete env;

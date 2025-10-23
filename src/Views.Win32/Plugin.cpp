@@ -417,9 +417,8 @@ void Plugin::config(const HWND hwnd)
         if (!dll_config)
         {
             DialogService::show_dialog(
-                std::format(L"'{}' has no configuration.", g_main_ctx.io_service.string_to_wstring(this->name()))
-                    .c_str(),
-                L"Plugin", fsvc_error, hwnd);
+                std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
+                fsvc_error, hwnd);
             goto cleanup;
         }
 
@@ -542,15 +541,20 @@ void Plugin::initiate()
 t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
 {
     std::vector<std::unique_ptr<Plugin>> plugins;
-    const auto files = g_main_ctx.io_service.get_files_with_extension_in_directory(directory, L"dll");
-
     std::vector<std::pair<std::filesystem::path, std::wstring>> results;
-    for (const auto &file : files)
+
+    // this will fail to match files with the extension not lowercased, but I don't think this is a big deal.
+    auto dll_files = std::filesystem::directory_iterator(directory) |
+                     std::views::filter([](const std::filesystem::directory_entry &entry) {
+                         return entry.is_regular_file() && entry.path().extension().compare(L".dll") == 0;
+                     }) |
+                     std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
+
+    for (const auto &file : dll_files)
     {
         auto [result, plugin] = Plugin::create(file);
 
         results.emplace_back(file, result);
-
         if (!result.empty()) continue;
 
         plugins.emplace_back(std::move(plugin));

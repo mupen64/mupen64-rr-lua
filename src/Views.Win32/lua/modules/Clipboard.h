@@ -17,7 +17,7 @@ static int32_t validate_type(lua_State *L, const std::wstring &type)
     const auto it = std::ranges::find_if(KNOWN_TYPES, [&](const auto &pair) { return pair.first == type; });
     if (it == KNOWN_TYPES.end())
     {
-        luaL_error(L, "Unknown clipboard type: %s", g_main_ctx.io_service.wstring_to_string(type).c_str());
+        luaL_error(L, "Unknown clipboard type: %s", IOUtils::to_utf8_string(type).c_str());
     }
     return it->second;
 }
@@ -59,7 +59,7 @@ static int get(lua_State *L)
     if (type == L"text")
     {
         const std::wstring text = (LPCWSTR)cb_data;
-        lua_pushstring(L, g_main_ctx.io_service.wstring_to_string(text).c_str());
+        lua_pushstring(L, IOUtils::to_utf8_string(text).c_str());
     }
     else
     {
@@ -81,7 +81,7 @@ static int get_content_type(lua_State *L)
             continue;
         }
 
-        lua_pushstring(L, g_main_ctx.io_service.wstring_to_string(name).c_str());
+        lua_pushstring(L, IOUtils::to_utf8_string(name).c_str());
         return 1;
     }
 

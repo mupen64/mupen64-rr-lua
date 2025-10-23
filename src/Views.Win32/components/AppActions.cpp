@@ -485,8 +485,8 @@ static void start_movie_recording()
     g_main_ctx.core.submit_task([=] {
         auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(
             movie_dialog_result.path, movie_dialog_result.start_flag,
-            g_main_ctx.io_service.wstring_to_string(movie_dialog_result.author),
-            g_main_ctx.io_service.wstring_to_string(movie_dialog_result.description));
+            IOUtils::to_utf8_string(movie_dialog_result.author),
+            IOUtils::to_utf8_string(movie_dialog_result.description));
         g_main_ctx.core_ctx->vr_wait_decrement();
         if (!show_error_dialog_for_result(vcr_result))
         {
@@ -507,8 +507,8 @@ static void start_movie_playback()
         return;
     }
 
-    g_main_ctx.core_ctx->vcr_replace_author_info(result.path, g_main_ctx.io_service.wstring_to_string(result.author),
-                                                 g_main_ctx.io_service.wstring_to_string(result.description));
+    g_main_ctx.core_ctx->vcr_replace_author_info(result.path, IOUtils::to_utf8_string(result.author),
+                                                 IOUtils::to_utf8_string(result.description));
 
     g_config.core.pause_at_frame = result.pause_at;
     g_config.core.pause_at_last_frame = result.pause_at_last;
@@ -585,15 +585,11 @@ static void show_ram_start()
     wchar_t proc_name[MAX_PATH] = {0};
     GetModuleFileName(NULL, proc_name, MAX_PATH);
 
-    PlatformService::t_path_segment_info info;
-    if (!g_main_ctx.io_service.get_path_segment_info(proc_name, info))
-    {
-        return;
-    }
+    auto exe_filename = IOUtils::exe_path_cached().filename();
 
     const auto stroop_line = std::format(L"<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
                                          L"endianness=\"little\" autoDetect=\"true\"/>",
-                                         info.filename, ram_start);
+                                         exe_filename.c_str(), ram_start);
 
     const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
 

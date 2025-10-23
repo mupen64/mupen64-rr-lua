@@ -53,7 +53,7 @@ static t_config get_default_config()
 
     for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
     {
-        config.silent_mode_dialog_choices[g_main_ctx.io_service.string_to_wstring(pair.first)] =
+        config.silent_mode_dialog_choices[IOUtils::to_wide_string(pair.first)] =
             std::to_wstring(pair.second);
     }
 
@@ -62,7 +62,7 @@ static t_config get_default_config()
 
 static std::string process_field_name(const std::wstring &field_name)
 {
-    std::string str = g_main_ctx.io_service.wstring_to_string(field_name);
+    std::string str = IOUtils::to_utf8_string(field_name);
 
     // We don't want the "core." prefix in the ini file...
     // This isn't too great of an approach though because it can cause silent key collisions but whatever
@@ -131,11 +131,11 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         {
             return;
         }
-        value = g_main_ctx.io_service.string_to_wstring(ini[FLAT_FIELD_KEY][key]);
+        value = IOUtils::to_wide_string(ini[FLAT_FIELD_KEY][key]);
     }
     else
     {
-        ini[FLAT_FIELD_KEY][key] = g_main_ctx.io_service.wstring_to_string(value);
+        ini[FLAT_FIELD_KEY][key] = IOUtils::to_utf8_string(value);
     }
 }
 
@@ -154,7 +154,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
 
         for (size_t i = 0; i < ini[key].size(); i++)
         {
-            value.push_back(g_main_ctx.io_service.string_to_wstring(ini[key][std::to_string(i)]));
+            value.push_back(IOUtils::to_wide_string(ini[key][std::to_string(i)]));
         }
     }
     else
@@ -166,7 +166,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         // 1 = b.m64
         for (size_t i = 0; i < value.size(); i++)
         {
-            ini[key][std::to_string(i)] = g_main_ctx.io_service.wstring_to_string(value[i]);
+            ini[key][std::to_string(i)] = IOUtils::to_utf8_string(value[i]);
         }
     }
 }
@@ -186,8 +186,8 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         auto &map = ini[key];
         for (auto &pair : map)
         {
-            value[g_main_ctx.io_service.string_to_wstring(pair.first)] =
-                g_main_ctx.io_service.string_to_wstring(pair.second);
+            value[IOUtils::to_wide_string(pair.first)] =
+                IOUtils::to_wide_string(pair.second);
         }
     }
     else
@@ -197,8 +197,8 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         // value = value
         for (auto &pair : value)
         {
-            ini[key][g_main_ctx.io_service.wstring_to_string(pair.first)] =
-                g_main_ctx.io_service.wstring_to_string(pair.second);
+            ini[key][IOUtils::to_utf8_string(pair.first)] =
+                IOUtils::to_utf8_string(pair.second);
         }
     }
 }
@@ -215,7 +215,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
     // shift
     // alt
 
-    const auto prefix = g_main_ctx.io_service.wstring_to_string(std::format(L"{}_", field_name));
+    const auto prefix = IOUtils::to_utf8_string(std::format(L"{}_", field_name));
 
     if (is_reading)
     {
@@ -290,14 +290,14 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
                 }
             }
 
-            value[g_main_ctx.io_service.string_to_wstring(action_path)] = hotkey;
+            value[IOUtils::to_wide_string(action_path)] = hotkey;
         }
     }
     else
     {
         for (const auto &[action_path, hotkey] : value)
         {
-            const auto action_key = prefix + g_main_ctx.io_service.wstring_to_string(action_path);
+            const auto action_key = prefix + IOUtils::to_utf8_string(action_path);
             ini[action_key]["key"] = std::to_string(hotkey.key);
             ini[action_key]["ctrl"] = std::to_string(hotkey.ctrl);
             ini[action_key]["shift"] = std::to_string(hotkey.shift);
@@ -462,7 +462,7 @@ static void config_patch(t_config &cfg)
 
     for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
     {
-        const auto key = g_main_ctx.io_service.string_to_wstring(pair.first);
+        const auto key = IOUtils::to_wide_string(pair.first);
         if (!cfg.silent_mode_dialog_choices.contains(key))
         {
             cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
@@ -498,7 +498,7 @@ static void migrate_config(t_config &config, const mINI::INIStructure &ini)
         }
 
         g_view_logger->info(L"[Config] Migrating {} -> {} ({})",
-                            g_main_ctx.io_service.string_to_wstring(old_section_name), action, hotkey.to_wstring());
+                            IOUtils::to_wide_string(old_section_name), action, hotkey.to_wstring());
         config.hotkeys[action] = hotkey;
         config.inital_hotkeys[action] = hotkey;
     };

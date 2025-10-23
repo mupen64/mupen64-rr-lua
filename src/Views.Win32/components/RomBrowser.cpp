@@ -29,22 +29,34 @@ std::mutex rombrowser_mutex;
 
 std::vector<std::wstring> find_available_roms()
 {
+    auto abs_rom_directory = IOUtils::exe_path_cached().parent_path() / g_config.rom_directory;
+
     std::vector<std::wstring> rom_paths;
+    std::vector<std::wstring> filtered_rom_paths;
 
     // we aggregate all file paths and only filter them after we're done
-    auto abs_rom_directory = IOUtils::exe_path_cached().parent_path() / g_config.rom_directory;
-    if (g_config.is_rombrowser_recursion_enabled)
-    {
-        auto file_paths = get_files_in_subdirectories(abs_rom_directory);
-        rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
-    }
-    else
-    {
-        auto file_paths = g_main_ctx.io_service.get_files_with_extension_in_directory(abs_rom_directory, L"*");
-        rom_paths.insert(rom_paths.end(), file_paths.begin(), file_paths.end());
-    }
+    if (g_config.is_rombrowser_recursion_enabled) {
+        auto path_iter = std::filesystem::recursive_directory_iterator(abs_rom_directory) | 
+        std::views::filter([](const std::filesystem::directory_entry& entry) {
+            return entry.is_regular_file();
+        }) | 
+        std::views::transform([](const std::filesystem::directory_entry& entry) {
+            return entry.path();
+        });
 
-    std::vector<std::wstring> filtered_rom_paths;
+        std::ranges::copy(path_iter, std::back_inserter(rom_paths));
+    }
+    else {
+        auto path_iter = std::filesystem::directory_iterator(abs_rom_directory) | 
+        std::views::filter([](const std::filesystem::directory_entry& entry) {
+            return entry.is_regular_file();
+        }) | 
+        std::views::transform([](const std::filesystem::directory_entry& entry) {
+            return entry.path();
+        });
+
+        std::ranges::copy(path_iter, std::back_inserter(rom_paths));
+    }
 
     std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](std::wstring val) {
         wchar_t c_extension[_MAX_EXT] = {0};
@@ -349,7 +361,7 @@ notify(LPARAM lparam)
             {
                 g_view_logger->error("Failed to copy rom name");
             }
-            StrNCpy(plvdi->item.pszText, g_main_ctx.io_service.string_to_wstring(str).c_str(), plvdi->item.cchTextMax);
+            StrNCpy(plvdi->item.pszText, IOUtils::to_wide_string(str).c_str(), plvdi->item.cchTextMax);
             break;
         }
         case 2: {

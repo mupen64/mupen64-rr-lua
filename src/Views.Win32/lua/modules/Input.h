@@ -196,7 +196,7 @@ static int LuaGetKeyNameText(lua_State *L)
         return 1;
     }
 
-    lua_pushstring(L, g_main_ctx.io_service.wstring_to_string(name).c_str());
+    lua_pushstring(L, IOUtils::to_utf8_string(name).c_str());
     return 1;
 }
 

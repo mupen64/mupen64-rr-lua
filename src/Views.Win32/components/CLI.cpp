@@ -296,7 +296,7 @@ void CLI::init()
     // EmuLaunchedChanged. The work is started, but then the rom is reset. At that point, the dacrate changes and breaks
     // the capture in some cases. To avoid this, we store the movie's start flag prior to doing anything, and ignore the
     // first EmuLaunchedChanged if it's set.
-    const auto movie_path = cli_params.rom.extension() == ".m64" ? cli_params.rom : cli_params.m64;
+    const auto movie_path = (cli_params.rom.extension().compare(L".m64") == 0) ? cli_params.rom : cli_params.m64;
     if (!movie_path.empty())
     {
         core_vcr_movie_header hdr{};
@@ -323,7 +323,7 @@ void CLI::init()
         Compare::start(false, compare_interval);
     }
 
-    cli_state.rom_is_movie = cli_params.rom.extension() == ".m64";
+    cli_state.rom_is_movie = cli_params.rom.extension().compare(L".m64");
 
     log_cli_params(cli_params);
 }

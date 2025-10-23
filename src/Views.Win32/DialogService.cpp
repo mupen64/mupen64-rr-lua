@@ -17,7 +17,7 @@ size_t DialogService::show_multiple_choice_dialog(const std::string &id, const s
 {
     if (g_config.silent_mode)
     {
-        const auto default_index = g_config.silent_mode_dialog_choices[g_main_ctx.io_service.string_to_wstring(id)];
+        const auto default_index = g_config.silent_mode_dialog_choices[IOUtils::to_wide_string(id)];
         g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str,
                              default_index);
         return std::stoi(default_index);
