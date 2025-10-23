@@ -20,7 +20,11 @@
 core_params *g_core{};
 core_ctx g_ctx{};
 
+#if defined(_WIN32)
 #define CORE_EXPORT __declspec(dllexport)
+#else
+#define CORE_EXPORT
+#endif
 
 extern "C"
 {

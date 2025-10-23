@@ -8,7 +8,7 @@
 #if defined(_WIN32)
 #define NOMINMAX
 #include <Windows.h>
-#if defined(__linux__)
+#elif defined(__linux__)
 #include <stdio.h>
 #endif
 
