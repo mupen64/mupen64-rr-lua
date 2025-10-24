@@ -187,7 +187,8 @@ inline std::wstring to_wide_string(std::string_view str)
     rc = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), str.size(), nullptr, 0);
     if (rc == 0)
     {
-        throw std::system_error(rc, std::system_category(), "invalid UTF-8");
+        // throw std::system_error(rc, std::system_category(), "invalid UTF-8");
+        return L""s;
     }
 
     // This is the only safe way to do it, it's a bit of a shame there's no way to turn an arbitrary allocation
@@ -198,7 +199,8 @@ inline std::wstring to_wide_string(std::string_view str)
     rc = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str.data(), str.size(), output.data(), output.size());
     if (rc == 0)
     {
-        throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
+        // throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
+        return L""s;
     }
 
     return output;
@@ -222,7 +224,8 @@ inline std::string to_utf8_string(std::wstring_view wstr)
     rc = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr.data(), wstr.size(), nullptr, 0, 0, nullptr);
     if (rc == 0)
     {
-        throw std::system_error(rc, std::system_category(), "invalid UTF-16");
+        // throw std::system_error(rc, std::system_category(), "invalid UTF-16");
+        return ""s;
     }
 
     // This is the only safe way to do it, it's a bit of a shame there's no way to turn an arbitrary allocation
@@ -234,7 +237,8 @@ inline std::string to_utf8_string(std::wstring_view wstr)
                              nullptr);
     if (rc == 0)
     {
-        throw std::system_error(rc, std::system_category(), "invalid UTF-16");
+        // throw std::system_error(rc, std::system_category(), "invalid UTF-16");
+        return ""s;
     }
 
     return output;

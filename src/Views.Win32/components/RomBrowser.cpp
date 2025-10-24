@@ -29,41 +29,42 @@ std::mutex rombrowser_mutex;
 
 std::vector<std::wstring> find_available_roms()
 {
-    const auto abs_rom_directory = std::filesystem::weakly_canonical(IOUtils::exe_path_cached().parent_path() / g_config.rom_directory);
+    const auto abs_rom_directory =
+        std::filesystem::weakly_canonical(IOUtils::exe_path_cached().parent_path() / g_config.rom_directory);
 
-    if (!std::filesystem::exists(abs_rom_directory) ||
-        !std::filesystem::is_directory(abs_rom_directory))
+    if (!std::filesystem::exists(abs_rom_directory) || !std::filesystem::is_directory(abs_rom_directory))
     {
         return {};
     }
-    
+
     std::vector<std::wstring> rom_paths;
     std::vector<std::wstring> filtered_rom_paths;
 
     // we aggregate all file paths and only filter them after we're done
-    if (g_config.is_rombrowser_recursion_enabled) {
-        auto path_iter = std::filesystem::recursive_directory_iterator(abs_rom_directory) | 
-        std::views::filter([](const std::filesystem::directory_entry& entry) {
-            return entry.is_regular_file();
-        }) | 
-        std::views::transform([](const std::filesystem::directory_entry& entry) {
-            return entry.path();
-        });
+    if (std::filesystem::is_directory(abs_rom_directory))
+    {
+        // this filters a directory iterator to get the paths of all regular files.
+        auto only_file_paths =
+            std::views::filter([](const std::filesystem::directory_entry &entry) { return entry.is_regular_file(); }) |
+            std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
 
-        std::ranges::copy(path_iter, std::back_inserter(rom_paths));
+        if (g_config.is_rombrowser_recursion_enabled)
+        {
+            auto path_iter = std::filesystem::recursive_directory_iterator(abs_rom_directory) | only_file_paths;
+            std::ranges::copy(path_iter, std::back_inserter(rom_paths));
+        }
+        else
+        {
+            auto path_iter = std::filesystem::directory_iterator(abs_rom_directory) | only_file_paths;
+            std::ranges::copy(path_iter, std::back_inserter(rom_paths));
+        }
     }
-    else {
-        auto path_iter = std::filesystem::directory_iterator(abs_rom_directory) | 
-        std::views::filter([](const std::filesystem::directory_entry& entry) {
-            return entry.is_regular_file();
-        }) | 
-        std::views::transform([](const std::filesystem::directory_entry& entry) {
-            return entry.path();
-        });
-
-        std::ranges::copy(path_iter, std::back_inserter(rom_paths));
+    else
+    {
+        g_main_ctx.core.log_warn("ROM directory does not exist; no ROMs will show in the ROM browser");
     }
 
+    // logically this should be bundled into the filter pipeline but I'm too lazy
     std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](std::wstring val) {
         wchar_t c_extension[_MAX_EXT] = {0};
         if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
