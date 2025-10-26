@@ -2089,7 +2089,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     g_core->callbacks.emu_starting_changed(true);
 
     // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
-    if (path.extension().compare(L".m64") == 0)
+    if (path.extension().compare(MUPEN64_PATH_T(".m64")) == 0)
     {
         core_vcr_movie_header movie_header{};
         const auto result = g_ctx.vcr_parse_header(path, &movie_header);
@@ -2102,7 +2102,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
         const auto matching_rom = g_core->find_available_rom([&](auto header) {
             MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
             return movie_header.rom_crc1 == header.CRC1 &&
-                   !_strnicmp((const char *)header.nom, movie_header.rom_name, 20);
+                   !StrUtils::c_nicmp((const char *)header.nom, movie_header.rom_name, 20);
         });
 
         if (matching_rom.empty())

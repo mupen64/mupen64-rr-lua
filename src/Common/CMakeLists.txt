@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Common INTERFACE
     "include/CommonPCH.h"
     "include/IOUtils.h"
+    "include/StrUtils.h"
     "include/MiscHelpers.h"
 )
 set_target_properties(Mupen64RR.Common PROPERTIES

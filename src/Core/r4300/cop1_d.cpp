@@ -6,6 +6,7 @@
 
 #include <CommonPCH.h>
 #include <Core.h>
+#include <cmath>
 #include <r4300/cop1_helpers.h>
 #include <r4300/macros.h>
 #include <r4300/ops.h>
@@ -219,7 +220,7 @@ void C_F_D()
 void C_UN_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
         FCR31 |= 0x800000;
     else
         FCR31 &= ~0x800000;
@@ -229,7 +230,7 @@ void C_UN_D()
 void C_EQ_D()
 {
     if (check_cop1_unusable()) return;
-    if (!isnan(*reg_cop1_double[core_cffs]) && !isnan(*reg_cop1_double[core_cfft]) &&
+    if (!std::isnan(*reg_cop1_double[core_cffs]) && !std::isnan(*reg_cop1_double[core_cfft]) &&
         *reg_cop1_double[core_cffs] == *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
     else
@@ -240,7 +241,7 @@ void C_EQ_D()
 void C_UEQ_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]) ||
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]) ||
         *reg_cop1_double[core_cffs] == *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
     else
@@ -251,7 +252,7 @@ void C_UEQ_D()
 void C_OLT_D()
 {
     if (check_cop1_unusable()) return;
-    if (!isnan(*reg_cop1_double[core_cffs]) && !isnan(*reg_cop1_double[core_cfft]) &&
+    if (!std::isnan(*reg_cop1_double[core_cffs]) && !std::isnan(*reg_cop1_double[core_cfft]) &&
         *reg_cop1_double[core_cffs] < *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
     else
@@ -262,7 +263,7 @@ void C_OLT_D()
 void C_ULT_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]) ||
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]) ||
         *reg_cop1_double[core_cffs] < *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
     else
@@ -273,7 +274,7 @@ void C_ULT_D()
 void C_OLE_D()
 {
     if (check_cop1_unusable()) return;
-    if (!isnan(*reg_cop1_double[core_cffs]) && !isnan(*reg_cop1_double[core_cfft]) &&
+    if (!std::isnan(*reg_cop1_double[core_cffs]) && !std::isnan(*reg_cop1_double[core_cfft]) &&
         *reg_cop1_double[core_cffs] <= *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
     else
@@ -284,7 +285,7 @@ void C_OLE_D()
 void C_ULE_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]) ||
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]) ||
         *reg_cop1_double[core_cffs] <= *reg_cop1_double[core_cfft])
         FCR31 |= 0x800000;
     else
@@ -294,7 +295,7 @@ void C_ULE_D()
 
 void C_SF_D()
 {
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }
@@ -304,7 +305,7 @@ void C_SF_D()
 
 void C_NGLE_D()
 {
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }
@@ -314,7 +315,7 @@ void C_NGLE_D()
 
 void C_SEQ_D()
 {
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }
@@ -327,7 +328,7 @@ void C_SEQ_D()
 
 void C_NGL_D()
 {
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }
@@ -341,7 +342,7 @@ void C_NGL_D()
 void C_LT_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }
@@ -355,7 +356,7 @@ void C_LT_D()
 void C_NGE_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }
@@ -369,7 +370,7 @@ void C_NGE_D()
 void C_LE_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }
@@ -383,7 +384,7 @@ void C_LE_D()
 void C_NGT_D()
 {
     if (check_cop1_unusable()) return;
-    if (isnan(*reg_cop1_double[core_cffs]) || isnan(*reg_cop1_double[core_cfft]))
+    if (std::isnan(*reg_cop1_double[core_cffs]) || std::isnan(*reg_cop1_double[core_cfft]))
     {
         fail_float_input();
     }

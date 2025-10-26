@@ -529,7 +529,7 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
         return g_mgr.segment_cache.get(filter).value();
     }
 
-    std::vector<action_filter> parts = MiscHelpers::split_wstring(filter, SEGMENT_SEPARATOR);
+    std::vector<action_filter> parts = StrUtils::split_wstring(filter, SEGMENT_SEPARATOR);
     for (auto &part : parts)
     {
         part = MiscHelpers::trim(part);

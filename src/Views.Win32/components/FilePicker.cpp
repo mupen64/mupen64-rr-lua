@@ -20,7 +20,7 @@ static std::wstring fix_filter(const std::wstring &filter)
 
 static std::wstring get_default_extension(const std::wstring &filter)
 {
-    const auto wildcards = MiscHelpers::split_wstring(filter, L";");
+    const auto wildcards = StrUtils::split_wstring(filter, L";");
 
     if (wildcards.empty()) return L"";
 

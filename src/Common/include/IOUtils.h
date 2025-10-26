@@ -89,6 +89,14 @@ inline int file_contents_equal(const std::filesystem::path &path1, const std::fi
     return 1;
 }
 
+#ifdef _WIN32
+// Selects the platform-native path type for strings and characters.
+#define MUPEN64_PATH_T(s) L##s
+#else
+// Selects the platform-native path type for strings and characters.
+#define MUPEN64_PATH_T(s) s
+#endif
+
 // IOSTREAM UTILITIES
 // ==============================
 

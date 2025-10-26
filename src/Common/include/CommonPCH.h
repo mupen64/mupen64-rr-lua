@@ -40,5 +40,6 @@
 #include <vector>
 #include <xxh64.h>
 #include "MiscHelpers.h"
+#include "StrUtils.h"
 #include "IOUtils.h"
 // #include "PlatformService.h"

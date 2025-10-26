@@ -33,7 +33,7 @@ void fail_float_convert();
     {                                                                                                                  \
         if (g_core->cfg->float_exception_emulation && !(fabs(x) > LARGEST_DENORMAL(x)))                                \
         {                                                                                                              \
-            if (isnan(x))                                                                                              \
+            if (std::isnan(x))                                                                                              \
             {                                                                                                          \
                 fail_float_output();                                                                                   \
                 return;                                                                                                \

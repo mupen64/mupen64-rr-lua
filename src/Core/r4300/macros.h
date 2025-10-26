@@ -6,12 +6,16 @@
 
 #pragma once
 
-#ifdef _M_X64
+#if defined(_M_X64) || defined(__x86_64__)
 #include <immintrin.h>
 #include <stdint.h>
 #include <fenv.h>
-#include <intrin.h>
 #include <stdio.h>
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 #endif
 
 #define sign_extended(a) a = (int64_t)((int32_t)a)
@@ -76,7 +80,7 @@
 #define CODE_BLOCK_SIZE 5000
 #define JUMP_TABLE_SIZE 1000
 
-#ifdef _M_X64
+#if defined(_M_X64) || defined(__x86_64__)
 
 #define MUP_ROUND_TRUNC FE_TOWARDZERO
 #define MUP_ROUND_NEAREST FE_TONEAREST
