@@ -1626,7 +1626,7 @@ void core_start()
 
     j = 0;
     debug_count = 0;
-    g_core->log_info("demarrage r4300");
+    g_core->log_info("starting r4300 core");
     memcpy((char *)SP_DMEM + 0x40, rom + 0x40, 0xFBC);
     delay_slot = 0;
     stop = 0;
@@ -1853,8 +1853,23 @@ void core_start()
     init_interrupt();
     interpcore = 0;
 
-    if (!dynacore)
+    // set a default mode if one wasn't set
+    // cached interpreter if dynarec disabled
+    // dynarec if enabled
+    #if defined(MUPEN64_DISABLE_DYNAREC)
+    if (dynacore > 2) dynacore = 0;
+    #else
+    if (dynacore > 2) dynacore = 1;
+    #endif
+
+    switch (dynacore)
     {
+    #if defined(MUPEN64_DISABLE_DYNAREC)
+    case 1:
+        g_core->log_info("dynarec is disabled, switching to cached interpreter");
+    #endif
+    case 0: {
+        // cached interpreter
         g_core->log_info("interpreter");
         init_blocks();
         last_addr = PC->addr;
@@ -1867,15 +1882,10 @@ void core_start()
             g_vr_beq_ignore_jmp = false;
         }
     }
-    else if (dynacore == 2)
-    {
-        dynacore = 0;
-        interpcore = 1;
-        pure_interpreter();
-    }
-    else
-    {
-        dynacore = 1;
+    break;
+    #if !defined(MUPEN64_DISABLE_DYNAREC)
+    case 1: {
+        // dynamic recompiler
         g_core->log_info("dynamic recompiler");
         init_blocks();
 
@@ -1885,6 +1895,53 @@ void core_start()
         dyna_start(code);
         PC++;
     }
+    break;
+    #endif
+    case 2: {
+        // pure interpreter
+        dynacore = 0;
+        interpcore = 1;
+        pure_interpreter();
+    }
+    break;
+    default:
+        g_core->log_error("this should not happen (dynarec > 2).");
+        abort();
+    }
+
+    // if (dynacore == 0)
+    // {
+    //     g_core->log_info("interpreter");
+    //     init_blocks();
+    //     last_addr = PC->addr;
+    //     core_executing = true;
+    //     g_core->callbacks.core_executing_changed(core_executing);
+    //     g_core->log_info(std::format("core_executing: {}", (bool)core_executing));
+    //     while (!stop)
+    //     {
+    //         PC->ops();
+    //         g_vr_beq_ignore_jmp = false;
+    //     }
+    // }
+    // else if (dynacore == 2)
+    // {
+    //     dynacore = 0;
+    //     interpcore = 1;
+    //     pure_interpreter();
+    // }
+    // else
+    // {
+    //     dynacore = 1;
+    //     g_core->log_info("dynamic recompiler");
+    //     init_blocks();
+
+    //     auto code_addr = actual->code + (actual->block[0x40 / 4].local_addr);
+
+    //     code = (void (*)(void))(code_addr);
+    //     dyna_start(code);
+    //     PC++;
+    // }
+
     debug_count += core_Count;
     print_stop_debug();
     for (i = 0; i < 0x100000; i++)
@@ -1936,14 +1993,10 @@ bool open_core_file_stream(const std::filesystem::path &path, FILE **file)
 void clear_save_data()
 {
     // TODO: this assumes the files open.
-    if (!open_core_file_stream(get_eeprom_path(), &g_eeprom_file))
-        abort();
-    if (!open_core_file_stream(get_sram_path(), &g_sram_file))
-        abort();
-    if (!open_core_file_stream(get_flashram_path(), &g_fram_file))
-        abort();
-    if (!open_core_file_stream(get_mempak_path(), &g_mpak_file))
-        abort();
+    if (!open_core_file_stream(get_eeprom_path(), &g_eeprom_file)) abort();
+    if (!open_core_file_stream(get_sram_path(), &g_sram_file)) abort();
+    if (!open_core_file_stream(get_flashram_path(), &g_fram_file)) abort();
+    if (!open_core_file_stream(get_mempak_path(), &g_mpak_file)) abort();
 
     {
         memset(sram, 0, sizeof(sram));

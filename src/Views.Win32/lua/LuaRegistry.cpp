@@ -245,7 +245,7 @@ void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg 
 
 static void register_function(lua_State *L, const std::wstring &name, const lua_CFunction &func)
 {
-    const auto parts = StrUtils::split_wstring(name, L".");
+    const auto parts = StrUtils::split_wstring(name, L".") | std::ranges::to<std::vector>();
 
     RT_ASSERT(parts.size() == 2, L"Accessor invalid");
 

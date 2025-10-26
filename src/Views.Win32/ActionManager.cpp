@@ -529,13 +529,19 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
         return g_mgr.segment_cache.get(filter).value();
     }
 
-    std::vector<action_filter> parts = StrUtils::split_wstring(filter, SEGMENT_SEPARATOR);
-    for (auto &part : parts)
-    {
-        part = MiscHelpers::trim(part);
-    }
+    // std::vector<action_filter> parts = StrUtils::split_wstring(filter, SEGMENT_SEPARATOR);
+    // for (auto &part : parts)
+    // {
+    //     part = MiscHelpers::trim(part);
+    // }
 
-    std::erase_if(parts, [](const std::wstring &part) { return part.empty(); });
+    // std::erase_if(parts, [](const std::wstring &part) { return part.empty(); });
+
+    auto parts = StrUtils::split_wstring(filter, SEGMENT_SEPARATOR) |
+                 std::views::transform([](std::wstring_view part) { return StrUtils::ctrim_wstring(part); }) |
+                 std::views::filter([](std::wstring_view part) { return !part.empty(); }) |
+                 std::views::transform([](std::wstring_view part) { return std::wstring(part); }) |
+                 std::ranges::to<std::vector<action_filter>>();
 
     g_mgr.segment_cache.add(filter, parts);
 

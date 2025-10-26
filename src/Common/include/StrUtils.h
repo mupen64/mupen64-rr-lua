@@ -105,8 +105,28 @@ inline int c_nicmp(const char* a, const char* b, size_t n) {
     return strncasecmp(a, b, n);
 #else
     #error unknown operating system!
-#endif
-    
+#endif  
+}
+
+// Trims whitespace from the start and end of a string_view (as determined by isspace()).
+inline std::string_view ctrim_string(std::string_view str) {
+    auto start_iter = std::find_if(str.begin(), str.end(), [](char c) { return !isspace(c); });
+    auto end_iter = std::find_if(str.rbegin(), str.rend(), [](char c) { return !isspace(c); }).base();
+
+    size_t start_idx = start_iter - str.begin();
+    size_t len = end_iter - start_iter;
+
+    return str.substr(start_idx, len);
+}
+// Trims whitespace from the start and end of a wstring_view (as determined by isspace()).
+inline std::wstring_view ctrim_wstring(std::wstring_view str) {
+    auto start_iter = std::find_if(str.begin(), str.end(), [](wchar_t c) { return !iswspace(c); });
+    auto end_iter = std::find_if(str.rbegin(), str.rend(), [](wchar_t c) { return !iswspace(c); }).base();
+
+    size_t start_idx = start_iter - str.begin();
+    size_t len = end_iter - start_iter;
+
+    return str.substr(start_idx, len);
 }
 
 } // namespace StrUtils

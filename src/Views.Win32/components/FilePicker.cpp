@@ -23,10 +23,9 @@ static std::wstring get_default_extension(const std::wstring &filter)
     const auto wildcards = StrUtils::split_wstring(filter, L";");
 
     if (wildcards.empty()) return L"";
-
-    const auto &first_wildcard = wildcards[0];
-
-    return first_wildcard.substr(2);
+    
+    const auto first_wildcard = *wildcards.begin();
+    return std::wstring(first_wildcard.substr(2));
 }
 
 std::filesystem::path FilePicker::show_open_dialog(const std::wstring &id, HWND hwnd, const std::wstring &filter)
