@@ -518,13 +518,13 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
     params.callbacks.seek_completed = [&] { seek_completed = true; };
     core_create(&params, &ctx);
 
-    ctx->vr_start_rom = [](const std::wstring &path) {
+    ctx->vr_start_rom = [](std::filesystem::path path) {
         emu_launched = true;
         core_executing = true;
         return Res_Ok;
     };
 
-    ctx->vcr_start_playback = [](const std::wstring &path) {
+    ctx->vcr_start_playback = [](std::filesystem::path path) {
         vcr.task = task_playback;
         vcr.current_sample = 0;
         return Res_Ok;
