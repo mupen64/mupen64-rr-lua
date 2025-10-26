@@ -117,7 +117,7 @@ inline int32_t convert_double_to_int32(double d)
     return _mm_cvtsd_si32(_mm_set_sd(d));
 }
 
-inline bool read_x87_status_word() {
+inline uint16_t read_x87_status_word() {
     return _mm_getcsr() & 0x3F;
 }
 
@@ -140,6 +140,10 @@ inline bool read_x87_status_word() {
 #define set_floor() __asm { fldcw floor_mode }
 #define clear_x87_exceptions() __asm { fclex }
 // #define read_x87_status_word() __asm { fstsw x87_status_word }
+
+inline uint16_t read_x87_status_word() {
+    return _status87() & 0x3F;
+}
 
 // asm converter that respects rounding modes
 #define FLOAT_CONVERT(input_width, output_width)                                                                       \

@@ -100,7 +100,7 @@ inline auto split_wstring(std::wstring_view str, std::wstring_view delim)
 // Case-insensitive comparison of C strings.
 inline int c_icmp(const char* a, const char* b) {
 #if defined(_WIN32)
-    return _stricmp(a, b, n);
+    return _stricmp(a, b);
 #elif defined (__unix__)  || (defined(__APPLE__) && defined(__MACH__))
     return strcasecmp(a, b);
 #else
@@ -129,7 +129,7 @@ inline std::string_view ctrim_string(std::string_view str) {
 
     return str.substr(start_idx, len);
 }
-// Trims whitespace from the start and end of a wstring_view (as determined by isspace()).
+// Trims whitespace from the start and end of a wstring_view (as determined by iswspace()).
 inline std::wstring_view ctrim_wstring(std::wstring_view str) {
     auto start_iter = std::find_if(str.begin(), str.end(), [](wchar_t c) { return !iswspace(c); });
     auto end_iter = std::find_if(str.rbegin(), str.rend(), [](wchar_t c) { return !iswspace(c); }).base();

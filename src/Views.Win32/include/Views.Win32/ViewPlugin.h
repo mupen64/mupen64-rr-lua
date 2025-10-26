@@ -156,8 +156,8 @@ extern "C"
 #pragma endregion
 
     // ReSharper restore CppInconsistentNaming
+#else
 #undef EXPORT
 #undef CALL
-
 #endif
 }
