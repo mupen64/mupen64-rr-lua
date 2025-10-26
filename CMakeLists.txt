@@ -16,7 +16,7 @@ message("The C++ compiler is: ${CMAKE_CXX_COMPILER}")
 
 # initial checks
 if(NOT WIN32)
-  message(WARNING "This build setup has not been tested outside of Windows. You're on your own; good luck.")
+  message(WARNING "Building on platforms other than Windows is experimental. You're on your own, good luck.")
 endif()
 
 # version suffix
