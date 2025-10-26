@@ -23,11 +23,16 @@ set(_toolchain_sanitizer_values "" "-asan")
 set(MUPEN64RR_USE_SANITIZER OFF CACHE STRING "Specifies a sanitizer to compile with. [${_toolchain_sanitizer_keys}]")
 
 # validate sanitizer option
+block()
 list(FIND _toolchain_sanitizer_keys "${MUPEN64RR_USE_SANITIZER}" _key_index)
-if ("${_key_index}" LESS 0)
+
+if("${_key_index}" LESS 0)
   message(FATAL_ERROR "expected MUPEN64RR_USE_SANITIZER to be one of [${_toolchain_sanitizer_keys}]")
 endif()
+
 list(GET _toolchain_sanitizer_values "${_key_index}" _vcpkg_san_suffix)
+set(_vcpkg_san_suffix "${_vcpkg_san_suffix}" PARENT_SCOPE)
+endblock()
 
 # CONFIGURATION
 # =========================================================
@@ -43,6 +48,21 @@ if("${_cl_exe_path}" MATCHES [=[/Host(.+)/(.+)/cl\.exe$]=])
 else()
   message(FATAL_ERROR "Failed to determine host/target architectures!")
 endif()
+
+# Set target architecture based on the _vs_target_arch value
+block()
+set(_arch_keys x86 x64 ARM64)
+set(_arch_values x86 AMD64 ARM64)
+
+list(FIND _arch_keys "${_vs_target_arch}" _index)
+
+if("${_index}" LESS 0)
+  message(FATAL_ERROR "Failed to match host/target architectures!")
+endif()
+
+list(GET _arch_values "${_index}" _sys_proc)
+set(CMAKE_SYSTEM_PROCESSOR "${_sys_proc}" CACHE INTERNAL "The current target architecture for CMake.")
+endblock()
 
 # Find the toolchain file using the current environment
 if(NOT DEFINED CACHE{MUPEN64RR_VCPKG_TOOLCHAIN})
@@ -62,7 +82,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INT
 set(CMAKE_C_FLAGS_DEBUG_INIT)
 set(CMAKE_CXX_FLAGS_DEBUG_INIT)
 
-if ("${MUPEN64RR_USE_SANITIZER}" STREQUAL "ASAN")
+if("${MUPEN64RR_USE_SANITIZER}" STREQUAL "ASAN")
   list(APPEND CMAKE_C_FLAGS_DEBUG_INIT "/fsanitize=address")
   list(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT "/fsanitize=address")
 endif()
@@ -71,8 +91,6 @@ endif()
 set(VCPKG_TARGET_TRIPLET "${_vs_target_arch}-windows-static${_vcpkg_san_suffix}" CACHE INTERNAL "target triplet for vcpkg")
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/vcpkg-triplets")
 message(STATUS "VS architecture set to: ${_vs_target_arch}")
-
-
 
 # hand off the rest to vcpkg
 include(${MUPEN64RR_VCPKG_TOOLCHAIN})

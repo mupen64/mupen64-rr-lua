@@ -242,7 +242,9 @@ void FIN_BLOCK()
     {
         jump_to((PC - 1)->addr + 4);
         PC->ops();
+        #ifdef MUPEN64RR_ENABLE_DYNAREC
         if (dynacore) dyna_jump();
+        #endif
     }
     else
     {
@@ -259,7 +261,9 @@ void FIN_BLOCK()
         else
             PC->ops();
 
+        #ifdef MUPEN64RR_ENABLE_DYNAREC
         if (dynacore) dyna_jump();
+        #endif
     }
 }
 
@@ -1483,7 +1487,9 @@ void NOTCOMPILED()
             g_core->log_info("not compiled exception");
     }
     PC->ops();
+    #ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore) dyna_jump();
+    #endif
     //*return_address = (uint32_t)(blocks[PC->addr>>12]->code + PC->local_addr);
     // else
     // PC->ops();
@@ -1554,7 +1560,9 @@ inline void jump_to_func()
     }
     PC = actual->block + ((addr - actual->start) >> 2);
 
+    #ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore) dyna_jump();
+    #endif
 }
 #undef addr
 
@@ -1856,7 +1864,7 @@ void core_start()
     // set a default mode if one wasn't set
     // cached interpreter if dynarec disabled
     // dynarec if enabled
-    #if defined(MUPEN64_DISABLE_DYNAREC)
+    #if !defined(MUPEN64RR_ENABLE_DYNAREC)
     if (dynacore > 2) dynacore = 0;
     #else
     if (dynacore > 2) dynacore = 1;
@@ -1864,7 +1872,7 @@ void core_start()
 
     switch (dynacore)
     {
-    #if defined(MUPEN64_DISABLE_DYNAREC)
+    #if !defined(MUPEN64RR_ENABLE_DYNAREC)
     case 1:
         g_core->log_info("dynarec is disabled, switching to cached interpreter");
     #endif
@@ -1883,7 +1891,7 @@ void core_start()
         }
     }
     break;
-    #if !defined(MUPEN64_DISABLE_DYNAREC)
+    #if defined(MUPEN64RR_ENABLE_DYNAREC)
     case 1: {
         // dynamic recompiler
         g_core->log_info("dynamic recompiler");
@@ -1908,39 +1916,6 @@ void core_start()
         g_core->log_error("this should not happen (dynarec > 2).");
         abort();
     }
-
-    // if (dynacore == 0)
-    // {
-    //     g_core->log_info("interpreter");
-    //     init_blocks();
-    //     last_addr = PC->addr;
-    //     core_executing = true;
-    //     g_core->callbacks.core_executing_changed(core_executing);
-    //     g_core->log_info(std::format("core_executing: {}", (bool)core_executing));
-    //     while (!stop)
-    //     {
-    //         PC->ops();
-    //         g_vr_beq_ignore_jmp = false;
-    //     }
-    // }
-    // else if (dynacore == 2)
-    // {
-    //     dynacore = 0;
-    //     interpcore = 1;
-    //     pure_interpreter();
-    // }
-    // else
-    // {
-    //     dynacore = 1;
-    //     g_core->log_info("dynamic recompiler");
-    //     init_blocks();
-
-    //     auto code_addr = actual->code + (actual->block[0x40 / 4].local_addr);
-
-    //     code = (void (*)(void))(code_addr);
-    //     dyna_start(code);
-    //     PC++;
-    // }
 
     debug_count += core_Count;
     print_stop_debug();

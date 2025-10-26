@@ -114,11 +114,13 @@ void TLB_refill_exception(uint32_t address, int32_t w)
     else
         last_addr = PC->addr;
 
+    #ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore)
     {
         dyna_jump();
         if (!dyna_interp) delay_slot = 0;
     }
+    #endif
 
     if (!dynacore || dyna_interp)
     {
@@ -191,11 +193,13 @@ void exception_general()
         jump_to(0x80000180);
         last_addr = PC->addr;
     }
+    #ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore)
     {
         dyna_jump();
         if (!dyna_interp) delay_slot = 0;
     }
+    #endif
     if (!dynacore || dyna_interp)
     {
         dyna_interp = 0;

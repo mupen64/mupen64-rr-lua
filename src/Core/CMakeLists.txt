@@ -76,23 +76,9 @@ add_library(Mupen64RR.Core STATIC
     "r4300/special.cpp"
     "r4300/timers.cpp"
     "r4300/tracelog.cpp"
-    "r4300/vcr.cpp"
-    "r4300/x86/assemble.cpp"
-    "r4300/x86/gbc.cpp"
-    "r4300/x86/gcop0.cpp"
-    "r4300/x86/gcop1.cpp"
-    "r4300/x86/gcop1_d.cpp"
-    "r4300/x86/gcop1_helpers.cpp"
-    "r4300/x86/gcop1_l.cpp"
-    "r4300/x86/gcop1_s.cpp"
-    "r4300/x86/gcop1_w.cpp"
-    "r4300/x86/gr4300.cpp"
-    "r4300/x86/gregimm.cpp"
-    "r4300/x86/gspecial.cpp"
-    "r4300/x86/gtlb.cpp"
-    "r4300/x86/regcache.cpp"
-    "r4300/x86/rjump.cpp"
     "r4300/bc.cpp"
+    
+    "r4300/vcr.cpp"
 )
 set_target_properties(Mupen64RR.Core PROPERTIES
     CXX_STANDARD 23
@@ -109,6 +95,28 @@ target_link_libraries(Mupen64RR.Core PUBLIC
     Mupen64RR.Common
     Mupen64RR.Core.Headers
 )
+
+# options: disable dynarec
+if (MUPEN64RR_ENABLE_DYNAREC)
+    target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
+    target_sources(Mupen64RR.Core PRIVATE 
+        "r4300/x86/assemble.cpp"
+        "r4300/x86/gbc.cpp"
+        "r4300/x86/gcop0.cpp"
+        "r4300/x86/gcop1.cpp"
+        "r4300/x86/gcop1_d.cpp"
+        "r4300/x86/gcop1_helpers.cpp"
+        "r4300/x86/gcop1_l.cpp"
+        "r4300/x86/gcop1_s.cpp"
+        "r4300/x86/gcop1_w.cpp"
+        "r4300/x86/gr4300.cpp"
+        "r4300/x86/gregimm.cpp"
+        "r4300/x86/gspecial.cpp"
+        "r4300/x86/gtlb.cpp"
+        "r4300/x86/regcache.cpp"
+        "r4300/x86/rjump.cpp"
+    )
+endif()
 
 # FOR TESTING ONLY. DO NOT USE OTHERWISE.
 add_library(Mupen64RR.Core._TestIncludes INTERFACE)
