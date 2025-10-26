@@ -91,9 +91,11 @@ inline int file_contents_equal(const std::filesystem::path &path1, const std::fi
 
 #ifdef _WIN32
 // Selects the platform-native path type for strings and characters.
+// This is a minor optimization for Windows which avoids the char -> wchar_t conversion at runtime.
 #define MUPEN64_PATH_T(s) L##s
 #else
 // Selects the platform-native path type for strings and characters.
+// This is a minor optimization for Windows which avoids the char -> wchar_t conversion at runtime.
 #define MUPEN64_PATH_T(s) s
 #endif
 

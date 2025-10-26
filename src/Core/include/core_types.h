@@ -15,15 +15,18 @@
 typedef enum
 {
 
-#pragma region Generic
+    // Generic
+    // ==========================================
+
     // The operation completed successfully
     Res_Ok,
 
     // The operation was cancelled by the user
     Res_Cancelled,
-#pragma endregion
 
-#pragma region VCR
+    // VCR
+    // ==========================================
+
     // The provided data has an invalid format
     VCR_InvalidFormat,
     // The provided file is inaccessible or does not exist
@@ -62,9 +65,10 @@ typedef enum
     VCR_SeekSavestateLoadFailed,
     // The seek operation can't be initiated because the seek savestate interval is 0
     VCR_SeekSavestateIntervalZero,
-#pragma endregion
 
-#pragma region VR
+    // VR
+    // ==========================================
+
     // Couldn't find a rom matching the provided movie
     VR_NoMatchingRom,
     // An error occured during plugin loading
@@ -75,9 +79,10 @@ typedef enum
     VR_NotRunning,
     // Failed to open core streams
     VR_FileOpenFailed,
-#pragma endregion
 
-#pragma region Savestates
+    // Savestates
+    // ==========================================
+
     // The core isn't launched
     ST_CoreNotLaunched,
     // The savestate file wasn't found
@@ -90,19 +95,20 @@ typedef enum
     ST_EventQueueTooLong,
     // The CPU registers contained invalid values
     ST_InvalidRegisters,
-#pragma endregion
 
-#pragma region Plugins
+    // Plugins
+    // ==========================================
+
     // The plugin library couldn't be loaded
     Pl_LoadLibraryFailed,
     // The plugin doesn't export a GetDllInfo function
     Pl_NoGetDllInfo,
-#pragma endregion
 
-#pragma region Init
+    // Init
+    // ==========================================
+
     // The core params are missing a critical component.
     IN_MissingComponent,
-#pragma endregion
 
 } core_result;
 
@@ -267,7 +273,8 @@ struct core_cfg
     int32_t render_throttling = 1;
 };
 
-#pragma region Emulator
+// #pragma region Emulator
+// ==========================================
 
 typedef std::common_type_t<std::chrono::duration<int64_t, std::ratio<1, 1000000000>>,
                            std::chrono::duration<int64_t, std::ratio<1, 1000000000>>>
@@ -478,7 +485,8 @@ typedef struct
 
 #pragma endregion
 
-#pragma region VCR
+// #pragma region VCR
+// ==========================================
 
 enum
 {
@@ -713,7 +721,8 @@ struct core_vcr_seek_info
 
 #pragma endregion
 
-#pragma region Debugger
+// #pragma region Debugger
+// ==========================================
 
 typedef struct
 {
@@ -723,7 +732,8 @@ typedef struct
 
 #pragma endregion
 
-#pragma region Cheats
+// #pragma region Cheats
+// ==========================================
 
 /**
  * \brief Represents a cheat.
@@ -746,7 +756,8 @@ typedef struct CoreCheat
 
 #pragma endregion
 
-#pragma region Savestates
+// #pragma region Savestates
+// ==========================================
 
 typedef enum
 {
@@ -787,7 +798,8 @@ using core_st_callback = std::function<void(const core_st_callback_info &, const
 
 #pragma endregion
 
-#pragma region Host API Types
+// #pragma region Host API Types
+// ==========================================
 
 /**
  * The tone of a dialog.

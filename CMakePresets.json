@@ -34,6 +34,16 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
+    },
+    {
+      "name": "sys-linux64-x64",
+      "description": "64-bit debug build on 64-bit Linux",
+      "inherits": "common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
     }
   ],
   "buildPresets": [
@@ -44,12 +54,20 @@
     {
       "name": "vcpkg-win64-x86-release",
       "configurePreset": "vcpkg-win64-x86-release"
+    },
+    {
+      "name": "sys-linux64-x64",
+      "configurePreset": "sys-linux64-x64"
     }
   ],
   "testPresets": [
     {
       "name": "vcpkg-win64-x86-all",
       "configurePreset": "vcpkg-win64-x86"
+    },
+    {
+      "name": "sys-linux64-x64-all",
+      "configurePreset": "sys-linux64-x64"
     }
   ]
 }

@@ -206,7 +206,7 @@ static void set_rom_info(core_vcr_movie_header *header)
         header->num_controllers++;
     }
 
-    strncpy_s(header->rom_name, sizeof(header->rom_name), (const char *)ROM_HEADER.nom, 32);
+    strncpy(header->rom_name, (const char *)ROM_HEADER.nom, 32);
     header->rom_crc1 = ROM_HEADER.CRC1;
     header->rom_country = ROM_HEADER.Country_code;
 
@@ -273,17 +273,17 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
                     if (i != 56 + 64)
                         memmove(new_header.rsp_plugin_name, new_header.reserved_bytes + i, 256 - 64 - 64 - 64);
                     else
-                        strncpy_s(new_header.rsp_plugin_name, sizeof(new_header.rsp_plugin_name), "(unknown)", 64);
+                        strncpy(new_header.rsp_plugin_name, "(unknown)", 64);
 
-                    strncpy_s(new_header.input_plugin_name, sizeof(new_header.input_plugin_name), "(unknown)", 64);
+                    strncpy(new_header.input_plugin_name, "(unknown)", 64);
                 }
-                strncpy_s(new_header.audio_plugin_name, sizeof(new_header.audio_plugin_name), "(unknown)", 64);
+                strncpy(new_header.audio_plugin_name, "(unknown)", 64);
             }
-            strncpy_s(new_header.video_plugin_name, sizeof(new_header.video_plugin_name), "(unknown)", 64);
+            strncpy(new_header.video_plugin_name, "(unknown)", 64);
         }
         // attempt to convert old author and description to utf8
-        strncpy_s(new_header.author, sizeof(new_header.author), new_header.old_author_info, 48);
-        strncpy_s(new_header.description, sizeof(new_header.description), new_header.old_description, 80);
+        strncpy(new_header.author, new_header.old_author_info, 48);
+        strncpy(new_header.description, new_header.old_description, 80);
     }
     if (new_header.version == 3 && buf.size() < sizeof(core_vcr_movie_header))
     {
@@ -321,7 +321,7 @@ core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *
 
     core_vcr_movie_header new_header = {};
     new_header.rom_country = -1;
-    strcpy_s(new_header.rom_name, sizeof(new_header.rom_name), "(no ROM)");
+    strncpy(new_header.rom_name, "(no ROM)", sizeof(new_header.rom_name));
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
@@ -1079,14 +1079,16 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     {
         author.resize(sizeof(core_vcr_movie_header::author));
     }
-    strncpy_s(vcr.hdr.author, sizeof(vcr.hdr.author), author.data(), author.size());
+    author.copy(vcr.hdr.author, sizeof(vcr.hdr.author));
+    // strncpy_s(vcr.hdr.author, sizeof(vcr.hdr.author), author.data(), author.size());
 
     memset(vcr.hdr.description, 0, sizeof(core_vcr_movie_header::description));
     if (description.size() > sizeof(core_vcr_movie_header::description))
     {
         description.resize(sizeof(core_vcr_movie_header::description));
     }
-    strncpy_s(vcr.hdr.description, sizeof(vcr.hdr.description), description.data(), description.size());
+    description.copy(vcr.hdr.description, sizeof(vcr.hdr.description));
+    // strncpy_s(vcr.hdr.description, sizeof(vcr.hdr.description), description.data(), description.size());
 
     vcr.current_sample = 0;
     vcr.current_vi = 0;
@@ -1295,7 +1297,7 @@ core_result vcr_start_playback(std::filesystem::path path)
         }
     }
 
-    if (_stricmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
+    if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
     {
         bool proceed = g_core->show_ask_dialog(
             CORE_DLG_VCR_ROM_NAME_WARNING,
@@ -1801,8 +1803,14 @@ core_result vcr_stop_all()
         {
             vcr.task = task_idle;
             g_core->log_info("[VCR] Removing files (nothing recorded)");
-            _unlink(std::filesystem::path(vcr.movie_path).replace_extension(".m64").string().c_str());
-            _unlink(std::filesystem::path(vcr.movie_path).replace_extension(".st").string().c_str());
+
+            auto current_path = std::filesystem::path(vcr.movie_path);
+            
+            current_path.replace_extension(MUPEN64_PATH_T(".m64"));
+            std::filesystem::remove(current_path);
+
+            current_path.replace_extension(MUPEN64_PATH_T(".st"));
+            std::filesystem::remove(current_path);
         }
 
         if (vcr.task == task_recording)

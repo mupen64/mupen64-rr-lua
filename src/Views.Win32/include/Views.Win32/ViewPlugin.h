@@ -13,6 +13,16 @@
 
 #pragma once
 
+#include "core_plugin.h"
+
+#ifdef _WIN32
+#define EXPORT __declspec(dllexport)
+#define CALL __cdecl
+#else
+#define EXPORT
+#define CALL
+#endif
+
 extern "C"
 {
     /**
@@ -46,37 +56,35 @@ extern "C"
         void (*log_error)(const wchar_t *);
     };
 
-    typedef void(__cdecl *CLOSEDLL)();
-    typedef void(__cdecl *DLLABOUT)(void *);
-    typedef void(__cdecl *DLLCONFIG)(void *);
-    typedef void(__cdecl *DLLTEST)(void *);
-    typedef void(__cdecl *GETDLLINFO)(core_plugin_info *);
-    typedef void(__cdecl *RECEIVEEXTENDEDFUNCS)(core_plugin_extended_funcs *);
+    typedef void(CALL *CLOSEDLL)();
+    typedef void(CALL *DLLABOUT)(void *);
+    typedef void(CALL *DLLCONFIG)(void *);
+    typedef void(CALL *DLLTEST)(void *);
+    typedef void(CALL *GETDLLINFO)(core_plugin_info *);
+    typedef void(CALL *RECEIVEEXTENDEDFUNCS)(core_plugin_extended_funcs *);
 
-    typedef void(__cdecl *CHANGEWINDOW)();
-    typedef int32_t(__cdecl *INITIATEGFX)(core_gfx_info);
-    typedef void(__cdecl *UPDATESCREEN)();
-    typedef void(__cdecl *READSCREEN)(void **, int32_t *, int32_t *);
-    typedef void(__cdecl *DLLCRTFREE)(void *);
-    typedef void(__cdecl *MOVESCREEN)(int32_t, int32_t);
-    typedef void(__cdecl *CAPTURESCREEN)(char *);
-    typedef void(__cdecl *READVIDEO)(void **);
+    typedef void(CALL *CHANGEWINDOW)();
+    typedef int32_t(CALL *INITIATEGFX)(core_gfx_info);
+    typedef void(CALL *UPDATESCREEN)();
+    typedef void(CALL *READSCREEN)(void **, int32_t *, int32_t *);
+    typedef void(CALL *DLLCRTFREE)(void *);
+    typedef void(CALL *MOVESCREEN)(int32_t, int32_t);
+    typedef void(CALL *CAPTURESCREEN)(char *);
+    typedef void(CALL *READVIDEO)(void **);
 
-    typedef int32_t(__cdecl *INITIATEAUDIO)(core_audio_info);
+    typedef int32_t(CALL *INITIATEAUDIO)(core_audio_info);
 
-    typedef void(__cdecl *OLD_INITIATECONTROLLERS)(void *hwnd, core_controller controls[4]);
-    typedef void(__cdecl *INITIATECONTROLLERS)(core_input_info control_info);
-    typedef void(__cdecl *KEYDOWN)(uint32_t wParam, int32_t lParam);
-    typedef void(__cdecl *KEYUP)(uint32_t wParam, int32_t lParam);
+    typedef void(CALL *OLD_INITIATECONTROLLERS)(void *hwnd, core_controller controls[4]);
+    typedef void(CALL *INITIATECONTROLLERS)(core_input_info control_info);
+    typedef void(CALL *KEYDOWN)(uint32_t wParam, int32_t lParam);
+    typedef void(CALL *KEYUP)(uint32_t wParam, int32_t lParam);
 
-    typedef void(__cdecl *INITIATERSP)(core_rsp_info rsp_info, uint32_t *cycles);
+    typedef void(CALL *INITIATERSP)(core_rsp_info rsp_info, uint32_t *cycles);
 
 #if defined(PLUGIN_WITH_CALLBACKS)
 
     // ReSharper disable CppInconsistentNaming
 
-#define EXPORT __declspec(dllexport)
-#define CALL _cdecl
 
 #pragma region Base
 
@@ -148,6 +156,8 @@ extern "C"
 #pragma endregion
 
     // ReSharper restore CppInconsistentNaming
+#undef EXPORT
+#undef CALL
 
 #endif
 }

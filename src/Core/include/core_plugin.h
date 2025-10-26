@@ -13,6 +13,14 @@
 
 #pragma once
 
+#ifdef _WIN32
+#define EXPORT __declspec(dllexport)
+#define CALL __cdecl
+#else
+#define EXPORT
+#define CALL
+#endif
+
 extern "C"
 {
     /**
@@ -121,7 +129,7 @@ extern "C"
         uint32_t *vi_v_burst_reg;
         uint32_t *vi_x_scale_reg;
         uint32_t *vi_y_scale_reg;
-        void(__cdecl *check_interrupts)(void);
+        void(CALL *check_interrupts)(void);
     } core_gfx_info;
 
     /**
@@ -143,7 +151,7 @@ extern "C"
         uint32_t *ai_status_reg;
         uint32_t *ai_dacrate_reg;
         uint32_t *ai_bitrate_reg;
-        void(__cdecl *check_interrupts)(void);
+        void(CALL *check_interrupts)(void);
     } core_audio_info;
 
     /**
@@ -186,11 +194,11 @@ extern "C"
         uint32_t *dpc_bufbusy_reg;
         uint32_t *dpc_pipebusy_reg;
         uint32_t *dpc_tmem_reg;
-        void(__cdecl *check_interrupts)(void);
-        void(__cdecl *process_dlist_list)(void);
-        void(__cdecl *process_alist_list)(void);
-        void(__cdecl *process_rdp_list)(void);
-        void(__cdecl *show_cfb)(void);
+        void(CALL *check_interrupts)(void);
+        void(CALL *process_dlist_list)(void);
+        void(CALL *process_alist_list)(void);
+        void(CALL *process_rdp_list)(void);
+        void(CALL *show_cfb)(void);
     } core_rsp_info;
 
     /**
@@ -222,34 +230,37 @@ extern "C"
         };
     } core_buttons;
 
-    typedef void(__cdecl *ROMCLOSED)();
-    typedef void(__cdecl *ROMOPEN)();
+    typedef void(CALL *ROMCLOSED)();
+    typedef void(CALL *ROMOPEN)();
 
-    typedef void(__cdecl *PROCESSDLIST)();
-    typedef void(__cdecl *PROCESSRDPLIST)();
-    typedef void(__cdecl *SHOWCFB)();
-    typedef void(__cdecl *VISTATUSCHANGED)();
-    typedef void(__cdecl *VIWIDTHCHANGED)();
-    typedef void(__cdecl *GETVIDEOSIZE)(int32_t *, int32_t *);
-    typedef void(__cdecl *FBREAD)(uint32_t);
-    typedef void(__cdecl *FBWRITE)(uint32_t addr, uint32_t size);
-    typedef void(__cdecl *FBGETFRAMEBUFFERINFO)(void *);
+    typedef void(CALL *PROCESSDLIST)();
+    typedef void(CALL *PROCESSRDPLIST)();
+    typedef void(CALL *SHOWCFB)();
+    typedef void(CALL *VISTATUSCHANGED)();
+    typedef void(CALL *VIWIDTHCHANGED)();
+    typedef void(CALL *GETVIDEOSIZE)(int32_t *, int32_t *);
+    typedef void(CALL *FBREAD)(uint32_t);
+    typedef void(CALL *FBWRITE)(uint32_t addr, uint32_t size);
+    typedef void(CALL *FBGETFRAMEBUFFERINFO)(void *);
 
-    typedef void(__cdecl *AIDACRATECHANGED)(int32_t system_type);
-    typedef void(__cdecl *AILENCHANGED)();
-    typedef uint32_t(__cdecl *AIREADLENGTH)();
-    typedef void(__cdecl *PROCESSALIST)();
-    typedef void(__cdecl *AIUPDATE)(int32_t wait);
+    typedef void(CALL *AIDACRATECHANGED)(int32_t system_type);
+    typedef void(CALL *AILENCHANGED)();
+    typedef uint32_t(CALL *AIREADLENGTH)();
+    typedef void(CALL *PROCESSALIST)();
+    typedef void(CALL *AIUPDATE)(int32_t wait);
 
-    typedef void(__cdecl *CONTROLLERCOMMAND)(int32_t controller, unsigned char *command);
-    typedef void(__cdecl *GETKEYS)(int32_t controller, core_buttons *keys);
-    typedef void(__cdecl *SETKEYS)(int32_t controller, core_buttons keys);
-    typedef void(__cdecl *READCONTROLLER)(int32_t controller, unsigned char *command);
+    typedef void(CALL *CONTROLLERCOMMAND)(int32_t controller, unsigned char *command);
+    typedef void(CALL *GETKEYS)(int32_t controller, core_buttons *keys);
+    typedef void(CALL *SETKEYS)(int32_t controller, core_buttons keys);
+    typedef void(CALL *READCONTROLLER)(int32_t controller, unsigned char *command);
 
-    typedef uint32_t(__cdecl *DORSPCYCLES)(uint32_t);
+    typedef uint32_t(CALL *DORSPCYCLES)(uint32_t);
 }
 
 inline bool operator==(const core_buttons &lhs, const core_buttons &rhs)
 {
     return lhs.value == rhs.value;
 }
+
+#undef EXPORT
+#undef CALL

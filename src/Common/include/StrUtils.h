@@ -98,6 +98,17 @@ inline auto split_wstring(std::wstring_view str, std::wstring_view delim)
 }
 
 // Case-insensitive comparison of C strings.
+inline int c_icmp(const char* a, const char* b) {
+#if defined(_WIN32)
+    return _stricmp(a, b, n);
+#elif defined (__unix__)  || (defined(__APPLE__) && defined(__MACH__))
+    return strcasecmp(a, b);
+#else
+    #error unknown operating system!
+#endif  
+}
+
+// Case-insensitive comparison of C strings. (with a length limit)
 inline int c_nicmp(const char* a, const char* b, size_t n) {
 #if defined(_WIN32)
     return _strnicmp(a, b, n);

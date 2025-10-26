@@ -12,9 +12,6 @@
 
 #include "core_types.h"
 
-#define EXPORT
-#define CALL
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -804,6 +801,6 @@ template <typename T> void core_rdram_store(uint8_t *rdram, const uint32_t addr,
  * \brief Creates a core instance with the specified parameters.
  * \remark Only one core instance is currently supported.
  */
-EXPORT core_result CALL core_create(core_params *params, core_ctx **ctx);
+core_result core_create(core_params *params, core_ctx **ctx);
 
 #endif

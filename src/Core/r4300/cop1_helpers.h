@@ -33,7 +33,7 @@ void fail_float_convert();
     {                                                                                                                  \
         if (g_core->cfg->float_exception_emulation && !(fabs(x) > LARGEST_DENORMAL(x)))                                \
         {                                                                                                              \
-            if (std::isnan(x))                                                                                              \
+            if (std::isnan(x))                                                                                         \
             {                                                                                                          \
                 fail_float_output();                                                                                   \
                 return;                                                                                                \
@@ -68,7 +68,7 @@ void fail_float_convert();
     {                                                                                                                  \
         if (g_core->cfg->float_exception_emulation)                                                                    \
         {                                                                                                              \
-            read_x87_status_word();                                                                                    \
+            int16_t x87_status_word = read_x87_status_word();                                                          \
             if (x87_status_word & 1)                                                                                   \
             {                                                                                                          \
                 fail_float_convert();                                                                                  \

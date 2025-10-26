@@ -37,7 +37,7 @@ static void log_dummy(const std::string &)
 {
 }
 
-EXPORT core_result CALL core_create(core_params *params, core_ctx **ctx)
+core_result core_create(core_params *params, core_ctx **ctx)
 {
     g_core = params;
 

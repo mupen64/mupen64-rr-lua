@@ -215,9 +215,14 @@ bool rom_load(std::filesystem::path path)
         md5_append(&state, rom, rom_size);
         md5_finish(&state, digest);
 
-        char arg[256] = {0};
-        for (size_t i = 0; i < 16; i++) sprintf_s(arg + i * 2, std::size(arg) - i * 2, "%02X", digest[i]);
-        strcpy_s(rom_md5, sizeof(rom_md5), arg);
+        // extra insurance for weird safety bugs
+        char str_temp[256] = {0};
+        char* sp = &str_temp[0];
+        for (size_t i = 0; i < 16; i++) {
+            sp = std::format_to(sp, "{:02X}", digest[i]);
+        }
+        *sp = '\0';
+        strncpy(rom_md5, str_temp, sizeof(rom_md5));
     }
 
     auto roml = (uint32_t *)rom;
