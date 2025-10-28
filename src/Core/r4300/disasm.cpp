@@ -441,12 +441,12 @@ static char *sfmt(char *b, const char *f, ...)
             break;
         }
         case 'u': {
-            uint16_t n = va_arg(v, uint16_t);
+            uint16_t n = (uint16_t) va_arg(v, uint32_t);
             HEX4();
             break;
         }
         case 's': {
-            uint16_t n = va_arg(v, uint16_t);
+            uint16_t n = (uint16_t) va_arg(v, uint32_t);
             if (n < 0x8000)
             {
                 *q = '+';
@@ -469,7 +469,7 @@ static char *sfmt(char *b, const char *f, ...)
             break;
         }
         case 'a': {
-            uint8_t n = va_arg(v, uint8_t);
+            uint8_t n = (uint8_t) va_arg(v, uint32_t);
             q[0] = x[n >> 4];
             q[1] = x[n & 0xF];
             q += 2;

@@ -82,6 +82,12 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
   )
 endif()
 
+# Linux-only for now: Qt
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  find_package(Qt6 REQUIRED COMPONENTS Widgets)
+  qt6_standard_project_setup()
+endif()
+
 # CMake modules
 # =======================================
 

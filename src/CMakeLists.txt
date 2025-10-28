@@ -34,3 +34,5 @@ if (MUPEN64RR_BUILD_WIN32)
     # TAS RSP
     add_subdirectory(Plugins.RSP.TAS)
 endif()
+
+add_subdirectory(Views.Qt6)
