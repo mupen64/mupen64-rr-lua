@@ -5,12 +5,36 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "mupen64.exe (x86, VS)",
             "type": "cppvsdbg",
             "request": "launch",
-            "name": "mupen64.exe (x86, VS)",
             "program": "${workspaceFolder}/build/out/mupen64.exe",
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build Project"
+        },
+        {
+            "name": "mupen64 (x64, GDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/out/mupen64",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }

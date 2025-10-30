@@ -1,5 +1,5 @@
-#ifndef MAIN_WINDOW_HPP_INCLUDED
-#define MAIN_WINDOW_HPP_INCLUDED
+#ifndef UI_MAIN_WINDOW_HPP_INCLUDED
+#define UI_MAIN_WINDOW_HPP_INCLUDED
 
 #include <qwindow.h>
 #include <QtGui>

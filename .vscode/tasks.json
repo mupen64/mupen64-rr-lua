@@ -3,7 +3,7 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "Build Project",
+            "label": "Build Project (Windows)",
             "command": "${workspaceFolder}\\.vscode\\build.bat",
             "options": {
                 "shell": {

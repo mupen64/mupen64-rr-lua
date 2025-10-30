@@ -1,10 +1,8 @@
 qt_add_executable(Mupen64RR.Views.Qt6
-    "MainWindow.hpp"
-
-    "MainWindow.cpp"
     "main.cpp"
-
-    "MainWindow.ui"
+    "ui/MainWindow.hpp"
+    "ui/MainWindow.cpp"
+    "ui/MainWindow.ui"
 )
 set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
     CXX_STANDARD 23
@@ -19,5 +17,6 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.Common
     Mupen64RR.Core
     Qt6::Widgets
+    spdlog::spdlog
 )
 
