@@ -889,6 +889,11 @@ function wgui.loadimage(path) end
 ---@param idx integer The identifier of the image to clear. If it is 0, clear all iamges.
 function wgui.deleteimage(idx) end
 
+---Saves an image to the specified path.
+---@param idx integer The identifier of the image to save.
+---@param path string The path to save the image to. Currently only supports saving as `.png`.
+function wgui.saveimage(idx, path) end
+
 ---Draws the image at index `idx` at the specified coordinates.
 ---@param idx integer
 ---@param x integer

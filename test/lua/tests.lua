@@ -107,6 +107,47 @@ lust.describe('mupen64', function()
         end)
     end)
 
+    lust.describe('wgui', function()
+        local TEST_ROOT = "../../test/lua/"
+        local VALID_IMAGE = TEST_ROOT .. "image.png"
+        local NONEXISTENT_IMAGE = TEST_ROOT .. "nonexistent.png"
+        local OUTPUT_IMAGE_PNG = TEST_ROOT .. "output.png"
+
+        lust.describe('loadimage', function()
+            lust.it('loads_valid_image', function()
+                local idx = wgui.loadimage(VALID_IMAGE)
+                lust.expect(idx).to.be.a('number')
+            end)
+            lust.it('errors_loading_nonexistent_image', function()
+                local func = function()
+                    wgui.loadimage(NONEXISTENT_IMAGE)
+                end
+                lust.expect(func).to.fail()
+            end)
+        end)
+
+        lust.describe('saveimage', function()
+            lust.it('saves_loaded_image', function()
+                local idx = wgui.loadimage(VALID_IMAGE)
+                local result = wgui.saveimage(idx, OUTPUT_IMAGE_PNG)
+                lust.expect(result).to.equal(true)
+            end)
+            lust.it('errors_saving_non_loaded_image', function()
+                local func = function()
+                    wgui.saveimage(9999, OUTPUT_IMAGE_PNG)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_saving_unsupported_format', function()
+                local idx = wgui.loadimage(VALID_IMAGE)
+                local func = function()
+                    wgui.saveimage(idx, TEST_ROOT .. "output_image.jpg")
+                end
+                lust.expect(func).to.fail()
+            end)
+        end)
+    end)
+
     lust.describe('trust', function()
         local function print_test_wrapper(func)
             __prev_print = print
