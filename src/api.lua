@@ -891,7 +891,7 @@ function wgui.deleteimage(idx) end
 
 ---Saves an image to the specified path.
 ---@param idx integer The identifier of the image to save.
----@param path string The path to save the image to. Currently only supports saving as `.png`.
+---@param path string The path to save the image to. The file extension determines the file format.
 function wgui.saveimage(idx, path) end
 
 ---Draws the image at index `idx` at the specified coordinates.

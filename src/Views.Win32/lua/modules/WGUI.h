@@ -25,7 +25,7 @@ const std::unordered_map<std::wstring, COLORREF> color_map = {
     {L"purple", 0xFFFF0080},
 };
 
-static std::optional<CLSID> get_encoder_clsid_for_format(const wchar_t *format)
+static std::optional<CLSID> get_encoder_clsid_for_extension(const std::wstring_view extension)
 {
     UINT num = 0, size = 0;
     Gdiplus::GetImageEncodersSize(&num, &size);
@@ -39,11 +39,18 @@ static std::optional<CLSID> get_encoder_clsid_for_format(const wchar_t *format)
 
     for (UINT i = 0; i < num; ++i)
     {
-        if (wcscmp(image_codec_info[i].MimeType, format) == 0)
+        const auto extension_pattern = std::wstring(image_codec_info[i].FilenameExtension);
+        const auto allowed_extensions = StrUtils::split_wstring(extension_pattern, L";");
+
+        for (auto ext : allowed_extensions)
         {
-            const auto clsid = image_codec_info[i].Clsid;
-            free(image_codec_info);
-            return clsid;
+            ext = ext.substr(1); // remove the '*'
+            if (MiscHelpers::iequals(ext, extension))
+            {
+                const auto clsid = image_codec_info[i].Clsid;
+                free(image_codec_info);
+                return clsid;
+            }
         }
     }
 
@@ -469,17 +476,12 @@ static int save_image(lua_State *L)
     const auto key = luaL_checkinteger(L, 1);
     const std::filesystem::path path = luaL_checkwstring(L, 2);
 
-    if (!MiscHelpers::iequals(path.extension().wstring(), L".png"))
-    {
-        luaL_error(L, "Argument #2: Only .png format is supported");
-    }
-
     if (!lua->rctx.image_pool.contains(key))
     {
         luaL_error(L, "Argument #1: Image index doesn't exist");
     }
 
-    const auto clsid = get_encoder_clsid_for_format(L"image/png");
+    const auto clsid = get_encoder_clsid_for_extension(path.extension().wstring());
     if (!clsid.has_value())
     {
         lua_pushboolean(L, false);
