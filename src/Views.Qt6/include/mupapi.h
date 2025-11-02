@@ -13,14 +13,23 @@
 
 #include "core_types.h"
 #include <core_plugin.h>
+#include <cstdint>
+#include <type_traits>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <windows.h>
-#endif
 
-#ifdef __linux__
-#include <X11/X.h>
+#define EXPORT __declspec(dllexport)
+#define CALL __cdecl
+#elif defined(__linux__)
+#include <X11/Xlib.h>
+#include <xcb/xcb.h>
 #include <wayland-client-protocol.h>
+
+#define EXPORT
+#define CALL
+#else
+#error Unsupported platform!
 #endif
 
 #ifdef __cplusplus
@@ -28,7 +37,6 @@ extern "C"
 {
 #endif
 
-#define MUPAPI_PLUGIN_DECLS
 #ifdef MUPAPI_PLUGIN_DECLS
 #define MUPAPI_DEFINE_FN(rt_type, name, ...)                                                                           \
     rt_type name(__VA_ARGS__);                                                                                         \
@@ -59,27 +67,127 @@ extern "C"
         /**
          * @brief Logs the specified message at the trace level.
          */
-        void (*log_trace)(const char *);
+        void (CALL *log_trace)(const char *);
 
         /**
          * @brief Logs the specified message at the info level.
          */
-        void (*log_info)(const char *);
+        void (CALL *log_info)(const char *);
 
         /**
          * @brief Logs the specified message at the warning level.
          */
-        void (*log_warn)(const char *);
+        void (CALL *log_warn)(const char *);
 
         /**
          * @brief Logs the specified message at the error level.
          */
-        void (*log_error)(const char *);
-    } core_forward_funcs;
+        void (CALL *log_error)(const char *);
+    } mup_core_functions;
+
+    /**
+     * \brief Describes information about a video plugin.
+     */
+    typedef struct
+    {
+        int32_t byteswapped;
+        uint8_t *rom;
+        uint8_t *rdram;
+        uint8_t *dmem;
+        uint8_t *imem;
+        uint32_t *mi_intr_reg;
+        uint32_t *dpc_start_reg;
+        uint32_t *dpc_end_reg;
+        uint32_t *dpc_current_reg;
+        uint32_t *dpc_status_reg;
+        uint32_t *dpc_clock_reg;
+        uint32_t *dpc_bufbusy_reg;
+        uint32_t *dpc_pipebusy_reg;
+        uint32_t *dpc_tmem_reg;
+        uint32_t *vi_status_reg;
+        uint32_t *vi_origin_reg;
+        uint32_t *vi_width_reg;
+        uint32_t *vi_intr_reg;
+        uint32_t *vi_v_current_line_reg;
+        uint32_t *vi_timing_reg;
+        uint32_t *vi_v_sync_reg;
+        uint32_t *vi_h_sync_reg;
+        uint32_t *vi_leap_reg;
+        uint32_t *vi_h_start_reg;
+        uint32_t *vi_v_start_reg;
+        uint32_t *vi_v_burst_reg;
+        uint32_t *vi_x_scale_reg;
+        uint32_t *vi_y_scale_reg;
+        void(CALL *check_interrupts)(void);
+    } core_gfx_info;
+
+    /**
+     * \brief Describes information about an audio plugin.
+     */
+    typedef struct
+    {
+        int32_t byteswapped;
+        uint8_t *rom;
+        uint8_t *rdram;
+        uint8_t *dmem;
+        uint8_t *imem;
+        uint32_t *mi_intr_reg;
+        uint32_t *ai_dram_addr_reg;
+        uint32_t *ai_len_reg;
+        uint32_t *ai_control_reg;
+        uint32_t *ai_status_reg;
+        uint32_t *ai_dacrate_reg;
+        uint32_t *ai_bitrate_reg;
+        void(CALL *check_interrupts)(void);
+    } core_audio_info;
+
+    /**
+     * \brief Describes information about an input plugin.
+     */
+    typedef struct
+    {
+        int32_t byteswapped;
+        uint8_t *header;
+        core_controller *controllers;
+    } core_input_info;
+
+    /**
+     * \brief Describes information about an RSP plugin.
+     */
+    typedef struct
+    {
+        int32_t byteswapped;
+        uint8_t *rdram;
+        uint8_t *dmem;
+        uint8_t *imem;
+        uint32_t *mi_intr_reg;
+        uint32_t *sp_mem_addr_reg;
+        uint32_t *sp_dram_addr_reg;
+        uint32_t *sp_rd_len_reg;
+        uint32_t *sp_wr_len_reg;
+        uint32_t *sp_status_reg;
+        uint32_t *sp_dma_full_reg;
+        uint32_t *sp_dma_busy_reg;
+        uint32_t *sp_pc_reg;
+        uint32_t *sp_semaphore_reg;
+        uint32_t *dpc_start_reg;
+        uint32_t *dpc_end_reg;
+        uint32_t *dpc_current_reg;
+        uint32_t *dpc_status_reg;
+        uint32_t *dpc_clock_reg;
+        uint32_t *dpc_bufbusy_reg;
+        uint32_t *dpc_pipebusy_reg;
+        uint32_t *dpc_tmem_reg;
+        void (CALL *check_interrupts)(void);
+        void (CALL *process_dlist_list)(void);
+        void (CALL *process_alist_list)(void);
+        void (CALL *process_rdp_list)(void);
+        void (CALL *show_cfb)(void);
+    } core_rsp_info;
 
     /**
      * @brief Marks a window system, that is, an interface by which graphical apps can create and display windows.
-     * 
+     *
      */
     enum mup_wm_platform
     {
@@ -92,14 +200,10 @@ extern "C"
          */
         MUP_WM_X11,
         /**
-         * @brief Wayland. 
+         * @brief Wayland.
          * @note This API uses libwayland's types.
          */
         MUP_WM_WAYLAND,
-        /**
-         * @brief Cocoa, the native API on macOS.
-         */
-        MUP_WM_COCOA,
     };
 
     /**
@@ -109,21 +213,42 @@ extern "C"
     {
         mup_wm_platform platform;
         union {
-#ifdef _WIN32
+#if defined(_WIN32)
             HWND win32_hwnd;
-#endif
-#ifdef __linux__
-            XID x11_xid;
-            wl_surface* wl_surface_ptr;
+#elif defined(__linux__)
+        xcb_window_t x11_xid;
+        wl_surface *wl_surface;
+#else
+#error Unsupported platform!
 #endif
         } handle;
     } mup_wm_handle;
+
+    typedef struct
+    {
+        mup_wm_platform platform;
+        union {
+#if defined(_WIN32)
+            char dummy;
+#elif defined(__linux__)
+        struct
+        {
+            Display *x11_xlib_display;
+            xcb_connection_t *x11_xcb_connection;
+        };
+        wl_display *wl_display;
+#else
+#error Unsupported platform!
+#endif
+        } handle;
+    } mupv_display_handle;
 
     /**
      * @brief An exported window handle, usually to pass to a child process.
      * @note On Wayland, this struct retains ownership of the string containing the ID handle.
      */
-    typedef struct {
+    typedef struct
+    {
         mup_wm_platform platform;
         union {
 #ifdef _WIN32
@@ -145,28 +270,31 @@ extern "C"
      * @param exe_dir The directory in which mupen64(.exe) is located.
      * @param fwd_funcs A table with functions passed from the core.
      */
-    MUPAPI_DEFINE_FN(core_result, mup_init, const char *exe_dir, const core_forward_funcs *fwd_funcs);
+    MUPAPI_DEFINE_FN(core_result, mup_init, const char *exe_dir, const mup_core_functions *fwd_funcs);
 
     /**
      * @brief Cleans up all plugin resources. Should be called immediately before unloading.
      */
-    MUPAPI_DEFINE_FN(void, mup_cleanup);
+    MUPAPI_DEFINE_FN(void, mup_drop);
 
     /**
      * @brief Displays the configuration GUI for this plugin.
-     * 
-     * Plugins are generally expected to create a subprocess and parent their window to `parent_window`.
-     * 
+     *
+     * Plugins are generally expected to create a subprocess and parent their window to `parent_window`,
+     * though platforms which allow multiple event loops per program (e.g. Windows) may do this in-process.
+     *
+     * Do not
+     *
      * @param parent_window The *exported* plugin handle.
      */
     MUPAPI_DEFINE_FN(void, mup_show_config, mup_wm_export_handle parent_window);
 
     /**
      * @brief Requests information from this plugin.
-     * 
+     *
      * @param plugin_info A non-null pointer to a core_plugin_info struct to be filled with the needed information.
      */
-    MUPAPI_DEFINE_FN(void, mup_get_info, core_plugin_info* plugin_info);
+    MUPAPI_DEFINE_FN(void, mup_get_info, core_plugin_info *plugin_info);
 
     /**
      * @brief Called just before the emulator starts execution.
@@ -178,10 +306,146 @@ extern "C"
      */
     MUPAPI_DEFINE_FN(void, mup_rom_closed);
 
-    
+    // video
+    // =============================
 
+    enum mupv_backend
+    {
+        MUPV_BK_RASTER = 0,
+        MUPV_BK_OPENGL,
+        MUPV_BK_VULKAN,
+        MUPV_BK_DIRECTX,
+    };
 
+    typedef struct
+    {
+        uint32_t width;
+        uint32_t height;
+        mupv_backend backend;
+    } mupv_wm_settings;
 
+    /**
+     * @brief Returns the default mupv_wm_settings.
+     * @return a mupv_wm_settings object with default values.
+     */
+    inline mupv_wm_settings mupv_wm_settings_default()
+    {
+        return mupv_wm_settings{.width = 640, .height = 480, .backend = MUPV_BK_OPENGL};
+    }
+
+    /**
+     * @brief Called to initialize the graphics plugin and request window settings.
+     * Do not expect any window system information from `core_info`, these are left for compatibility with older
+     * plugins.
+     *
+     * @param core_info Various pointers to objects inside the core.
+     * @param wm_settings The window settings to be used by this plugin's child window, to be filled by this function.
+     */
+    MUPAPI_DEFINE_FN(void, mupv_init, core_gfx_info core_info, mupv_wm_settings *wm_settings);
+
+    /**
+     * @brief Called to pass the newly-created child window to the graphics plugin.
+     *
+     * The plugin may complete initialization here.
+     *
+     * @param child_window the child window handle the plugin will render into.
+     */
+    MUPAPI_DEFINE_FN(void, mupv_receive_child_window, mup_wm_handle child_window);
+
+    MUPAPI_DEFINE_FN(void, mupv_process_d_list);
+    MUPAPI_DEFINE_FN(void, mupv_process_rdp_list);
+    MUPAPI_DEFINE_FN(void, mupv_show_cfb);
+    MUPAPI_DEFINE_FN(void, mupv_vi_status_changed);
+    MUPAPI_DEFINE_FN(void, mupv_vi_width_changed);
+    MUPAPI_DEFINE_FN(void, mupv_get_video_size, int32_t *p_width, int32_t *p_height);
+    MUPAPI_DEFINE_FN(void, mupv_fb_read, uint32_t addr);
+    MUPAPI_DEFINE_FN(void, mupv_fb_write, uint32_t addr, uint32_t size);
+    MUPAPI_DEFINE_FN(void, mupv_fb_write, uint32_t addr, uint32_t size);
+    MUPAPI_DEFINE_FN(void, mupv_get_fb_info, void *fb_info);
+
+#ifdef __cplusplus
+    // sanity check vs core headers
+    static_assert(std::is_same_v<fp_mupv_process_d_list, PROCESSDLIST>);
+    static_assert(std::is_same_v<fp_mupv_process_rdp_list, PROCESSRDPLIST>);
+    static_assert(std::is_same_v<fp_mupv_show_cfb, SHOWCFB>);
+    static_assert(std::is_same_v<fp_mupv_vi_status_changed, VISTATUSCHANGED>);
+    static_assert(std::is_same_v<fp_mupv_vi_width_changed, VIWIDTHCHANGED>);
+    static_assert(std::is_same_v<fp_mupv_get_video_size, GETVIDEOSIZE>);
+    static_assert(std::is_same_v<fp_mupv_fb_read, FBREAD>);
+    static_assert(std::is_same_v<fp_mupv_fb_write, FBWRITE>);
+    static_assert(std::is_same_v<fp_mupv_get_fb_info, FBGETFRAMEBUFFERINFO>);
+#endif
+
+    // audio
+    // =============================
+
+    /**
+     * @brief Called to initialize this audio plugin.
+     * Do not expect any window system information from `core_info`, these are left for compatibility with older
+     * plugins.
+     *
+     * @param core_info Various pointers to objects inside the core.
+     */
+    MUPAPI_DEFINE_FN(void, mupa_init, core_audio_info core_info);
+
+    MUPAPI_DEFINE_FN(void, mupa_ai_dacrate_changed, int32_t system_type);
+    MUPAPI_DEFINE_FN(void, mupa_ai_len_changed);
+    MUPAPI_DEFINE_FN(uint32_t, mupa_ai_read_length);
+    MUPAPI_DEFINE_FN(void, mupa_process_a_list);
+    MUPAPI_DEFINE_FN(void, mupa_ai_update, int32_t wait);
+
+#ifdef __cplusplus
+    // sanity check vs core headers
+    static_assert(std::is_same_v<fp_mupa_ai_dacrate_changed, AIDACRATECHANGED>);
+    static_assert(std::is_same_v<fp_mupa_ai_len_changed, AILENCHANGED>);
+    static_assert(std::is_same_v<fp_mupa_ai_read_length, AIREADLENGTH>);
+    static_assert(std::is_same_v<fp_mupa_process_a_list, PROCESSALIST>);
+    static_assert(std::is_same_v<fp_mupa_ai_update, AIUPDATE>);
+#endif
+
+    // input
+    // =============================
+
+    /**
+     * @brief Called to initialize this input plugin.
+     * Do not expect any window system information from `core_info`, these are left for compatibility with older
+     * plugins.
+     *
+     * @param core_info Various pointers to objects inside the core.
+     */
+    MUPAPI_DEFINE_FN(void, mupi_init, core_input_info core_info);
+
+    MUPAPI_DEFINE_FN(void, mupi_controller_command, int32_t controller, unsigned char *command);
+    MUPAPI_DEFINE_FN(void, mupi_get_keys, int32_t controller, core_buttons *keys);
+    MUPAPI_DEFINE_FN(void, mupi_set_keys, int32_t controller, core_buttons keys);
+    MUPAPI_DEFINE_FN(void, mupi_read_controller, int32_t controller, unsigned char *command);
+
+#ifdef __cplusplus
+    // sanity check vs core headers
+    static_assert(std::is_same_v<fp_mupi_controller_command, CONTROLLERCOMMAND>);
+    static_assert(std::is_same_v<fp_mupi_get_keys, GETKEYS>);
+    static_assert(std::is_same_v<fp_mupi_set_keys, SETKEYS>);
+    static_assert(std::is_same_v<fp_mupi_read_controller, READCONTROLLER>);
+#endif
+
+    // rsp
+    // =============================
+
+    /**
+     * @brief Called to initialize this RSP plugin.
+     * Do not expect any window system information from `core_info`, these are left for compatibility with older
+     * plugins.
+     *
+     * @param core_info Various pointers to objects inside the core.
+     */
+    MUPAPI_DEFINE_FN(void, mupr_init, core_rsp_info core_info);
+
+    MUPAPI_DEFINE_FN(uint32_t, mupr_do_rsp_cycles, uint32_t count);
+
+#ifdef __cplusplus
+    // sanity check vs core headers
+    static_assert(std::is_same_v<fp_mupr_do_rsp_cycles, DORSPCYCLES>);
+#endif
 #undef MUPAPI_DEFINE_FN
 
 #ifdef __cplusplus

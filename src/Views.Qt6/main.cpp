@@ -6,8 +6,6 @@
 
 #include <chrono>
 #include <qapplication.h>
-#include "ui/MainWindow.hpp"
-#include "model/Core.hpp"
 
 #include <core_api.h>
 #include <spdlog/common.h>
