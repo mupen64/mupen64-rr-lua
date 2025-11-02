@@ -61,7 +61,9 @@ if("${_index}" LESS 0)
 endif()
 
 list(GET _arch_values "${_index}" _sys_proc)
-set(CMAKE_SYSTEM_PROCESSOR "${_sys_proc}" CACHE INTERNAL "The current target architecture for CMake.")
+
+set(CMAKE_SYSTEM_NAME "Windows" CACHE INTERNAL "CMAKE_SYSTEM_NAME" FORCE)
+set(CMAKE_SYSTEM_PROCESSOR "${_sys_proc}" CACHE INTERNAL "CMAKE_SYSTEM_PROCESSOR" FORCE)
 endblock()
 
 # Find the toolchain file using the current environment
