@@ -101,6 +101,9 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
   set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
 endif()
 
+# define _DEBUG for debug builds
+add_compile_definitions("$<$<CONFIG:Debug,RelWithDebInfo>:_DEBUG>")
+
 
 
 # Subdirectories

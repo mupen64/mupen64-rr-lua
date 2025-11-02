@@ -97,7 +97,7 @@ target_link_libraries(Mupen64RR.Core PUBLIC
 )
 
 # options: disable dynarec
-if (MUPEN64RR_ENABLE_DYNAREC)
+if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
     target_sources(Mupen64RR.Core PRIVATE 
         "r4300/x86/assemble.cpp"
