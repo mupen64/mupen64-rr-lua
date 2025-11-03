@@ -20,6 +20,7 @@
 #include <lua/modules/Movie.h>
 #include <lua/modules/Savestate.h>
 #include <lua/modules/WGUI.h>
+#include <lua/modules/DGfx.h>
 
 // these begin and end comments help to generate documentation
 // please don't remove them
@@ -225,6 +226,7 @@ const luaL_Reg CLIPBOARD_FUNCS[] = {{"get", LuaCore::Clipboard::get},
                                     {"clear", LuaCore::Clipboard::clear},
                                     {NULL, NULL}};
 
+const luaL_Reg DGFX_FUNCS[] = {{"add", LuaCore::DGfx::add}, {NULL, NULL}};
 // end lua funcs
 
 const std::pair<std::string, lua_CFunction> OVERRIDE_FUNCS[] = {{"os.exit", LuaCore::Global::Exit}};
@@ -277,6 +279,7 @@ void LuaRegistry::register_functions(lua_State *L)
     register_as_package(L, "hotkey", HOTKEY_FUNCS);
     register_as_package(L, "action", ACTION_FUNCS);
     register_as_package(L, "clipboard", CLIPBOARD_FUNCS);
+    register_as_package(L, "dgfx", DGFX_FUNCS);
     for (const auto &[name, func] : OVERRIDE_FUNCS)
     {
         register_function(L, IOUtils::to_wide_string(name), func);

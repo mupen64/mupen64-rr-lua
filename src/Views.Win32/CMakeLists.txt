@@ -69,6 +69,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/modules/Movie.h"
     "lua/modules/Savestate.h"
     "lua/modules/WGUI.h"
+    "lua/modules/DGfx.h"
     "lua/modules/Action.h"
     "lua/modules/Hotkey.h"
     "lua/modules/Clipboard.h"

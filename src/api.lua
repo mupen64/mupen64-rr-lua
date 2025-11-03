@@ -21,6 +21,7 @@ avi = {}
 hotkey = {}
 action = {}
 clipboard = {}
+dgfx = {}
 
 Mupen = {
     ---@enum Result
@@ -1312,7 +1313,7 @@ function input.get() end
 ---@return table
 function input.diff(t1, t2) end
 
----Opens a dialog in which the user can input text. 
+---Opens a dialog in which the user can input text.
 ---If the dialog is cancelled, `nil` is returned.
 ---@nodiscard
 ---@param title string? The title of the text box. Defaults to `"input:"`.
@@ -1654,5 +1655,33 @@ function clipboard.set(type, value) end
 ---Clears the clipboard.
 ---@return boolean # Whether the operation succeeded.
 function clipboard.clear() end
+
+--#endregion
+
+-- lgfx functions
+--#region
+
+---@enum DGfxCommandType
+DGfxCommandType = {
+    UNKNOWN = 1,
+    RECT = 2,
+    FILLED_RECT = 3
+}
+
+---@alias DGfxColor integer
+---A 32-bit integer representing a color in ARGB format.
+
+---@alias DGfxRectangleCommand { color: DGfxColor, thickness: number, x: number, y: number, w: number, h: number }
+---@alias DGfxFilledRectangleCommand { color: DGfxColor, x: number, y: number, w: number, h: number }
+
+---Adds a batch of commands to the DGfx command list.
+---@param type DGfxCommandType.RECT The type of command to add.
+---@param command DGfxRectangleCommand[] The command batch.
+function dgfx.add(type, command) end
+
+---Adds a batch of commands to the DGfx command list.
+---@param type DGfxCommandType.FILLED_RECT The type of command to add.
+---@param command DGfxFilledRectangleCommand[] The command batch.
+function dgfx.add(type, command) end
 
 --#endregion

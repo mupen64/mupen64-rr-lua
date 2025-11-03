@@ -9,6 +9,39 @@
 #include <ActionManager.h>
 #include <lua/presenters/Presenter.h>
 
+enum class DGfxCommandType : uint8_t
+{
+    Unknown = 1,
+    Rectangle = 2,
+    FilledRectangle = 3,
+};
+
+struct DGfxRectangleCommand
+{
+    D2D1::ColorF color = D2D1::ColorF(D2D1::ColorF::Black);
+    D2D1_RECT_F rectangle = D2D1::RectF(0, 0, 0, 0);
+    float thickness = 1.0f;
+};
+
+struct DGfxFilledRectangleCommand
+{
+    D2D1::ColorF color = D2D1::ColorF(D2D1::ColorF::Black);
+    D2D1_RECT_F rectangle = D2D1::RectF(0, 0, 0, 0);
+};
+
+struct DGfxCommand
+{
+    DGfxCommandType type;
+
+    union {
+        DGfxRectangleCommand rectangle_cmd;
+        DGfxFilledRectangleCommand filled_rectangle_cmd;
+    };
+
+    DGfxCommand() : type(DGfxCommandType::Unknown) {};
+    ~DGfxCommand() = default;
+};
+
 /**
  * \brief Represents a Lua rendering context.
  */
@@ -58,6 +91,8 @@ struct t_lua_rendering_context
     // Whether to ignore create_renderer() and ensure_d2d_renderer_created() calls. Used to avoid tearing down and
     // re-creating a renderer when stopping a script.
     bool ignore_create_renderer{};
+
+    std::vector<DGfxCommand> dgfx_commands{};
 
     HDC loadscreen_dc{};
     HBITMAP loadscreen_bmp{};

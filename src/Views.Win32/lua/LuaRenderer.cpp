@@ -7,6 +7,7 @@
 #include <lua/presenters/GDIPresenter.h>
 #include <lua/presenters/Presenter.h>
 #include <lua/LuaCallbacks.h>
+#include <lua/modules/DGfx.h>
 
 const auto D2D_OVERLAY_CLASS = L"lua_d2d_overlay";
 const auto GDI_OVERLAY_CLASS = L"lua_gdi_overlay";
@@ -46,11 +47,13 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
         {
             // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
             success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
+            LuaCore::DGfx::draw(*lua);
         }
         else
         {
             lua->rctx.presenter->begin_present();
             success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
+            LuaCore::DGfx::draw(*lua);
             lua->rctx.presenter->end_present();
         }
 
