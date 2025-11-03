@@ -1661,27 +1661,46 @@ function clipboard.clear() end
 -- lgfx functions
 --#region
 
----@enum DGfxCommandType
+---@enum DGfxCommandTypeEnum
 DGfxCommandType = {
     UNKNOWN = 1,
-    RECT = 2,
-    FILLED_RECT = 3
+    CLEAR = 2,
+    RECT = 3,
+    FILLED_RECT = 4,
+    ROUNDED_RECT = 5,
+    FILLED_ROUNDED_RECT = 6,
+    ELLIPSE = 7,
+    FILLED_ELLIPSE = 8,
+    LINE = 9,
+    TEXT = 10,
+    IMAGE = 11,
 }
 
 ---@alias DGfxColor integer
 ---A 32-bit integer representing a color in ARGB format.
 
+---@alias DGfxClearCommand { color: DGfxColor }
 ---@alias DGfxRectangleCommand { color: DGfxColor, thickness: number, x: number, y: number, w: number, h: number }
 ---@alias DGfxFilledRectangleCommand { color: DGfxColor, x: number, y: number, w: number, h: number }
+---@alias DGfxRoundedRectangleCommand { color: DGfxColor, thickness: number, x: number, y: number, w: number, h: number, rx: number, ry: number }
+---@alias DGfxFilledRoundedRectangleCommand { color: DGfxColor, x: number, y: number, w: number, h: number, rx: number, ry: number }
+---@alias DGfxEllipseCommand { color: DGfxColor, thickness: number, x: number, y: number, w: number, h: number }
+---@alias DGfxFilledEllipseCommand { color: DGfxColor, x: number, y: number, w: number, h: number }
+---@alias DGfxLineCommand { color: DGfxColor, thickness: number, x1: number, y1: number, x2: number, y2: number }
+---@alias DGfxTextCommand { color: DGfxColor, font_name: string, font_size: number, bold: boolean, italic: boolean, x: number, y: number, text: string }
+---@alias DGfxImageCommand { x: number, y: number, w: number, h: number, src_x: number, src_y: number, src_w: number, src_h: number, rotate: number, id: integer }
 
----Adds a batch of commands to the DGfx command list.
----@param type DGfxCommandType.RECT The type of command to add.
----@param command DGfxRectangleCommand[] The command batch.
-function dgfx.add(type, command) end
-
----Adds a batch of commands to the DGfx command list.
----@param type DGfxCommandType.FILLED_RECT The type of command to add.
----@param command DGfxFilledRectangleCommand[] The command batch.
-function dgfx.add(type, command) end
+---@overload fun(type: DGfxCommandTypeEnum.CLEAR, commands: DGfxClearCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.RECT, commands: DGfxRectangleCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.FILLED_RECT, commands: DGfxFilledRectangleCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.ROUNDED_RECT, commands: DGfxRoundedRectangleCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.FILLED_ROUNDED_RECT, commands: DGfxFilledRoundedRectangleCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.ELLIPSE, commands: DGfxEllipseCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.FILLED_ELLIPSE, commands: DGfxFilledEllipseCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.LINE, commands: DGfxLineCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.TEXT, commands: DGfxTextCommand[])
+---@overload fun(type: DGfxCommandTypeEnum.IMAGE, commands: DGfxImageCommand[])
+---Adds drawing commands to the command list.
+function dgfx.add(type, commands) end
 
 --#endregion
