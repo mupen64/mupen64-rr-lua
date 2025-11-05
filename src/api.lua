@@ -1,12 +1,12 @@
+--
+-- Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+--
+-- SPDX-License-Identifier: GPL-2.0-or-later
+--
+
 ---@meta
 
 -- version 1.2.0.1
-
--- This file has meta definitions for the functions implemented in mupen64.
--- https://github.com/mupen64/mupen64-rr-lua/blob/master/src/Views.Win32/lua/LuaRegistry.cpp
-
--- Additional (and very outdated) documentation can be found here:
--- https://docs.google.com/document/d/1SWd-oAFBKsGmwUs0qGiOrk3zfX9wYHhi3x5aKPQS_o0
 
 emu = {}
 memory = {}
@@ -24,6 +24,11 @@ clipboard = {}
 dgfx = {}
 
 Mupen = {
+    _VERSION = '1.3.0-6',
+    _URL = 'https://github.com/mupen64/mupen64-rr-lua',
+    _DESCRIPTION = 'Mupen64 Lua Scripting API',
+    _LICENSE = 'GPL-2',
+
     ---@enum Result
     ---An enum containing results that can be returned by the core.
     result = {

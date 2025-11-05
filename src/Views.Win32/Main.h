@@ -77,8 +77,9 @@ static bool vcr_is_task_recording(const core_vcr_task task)
 
 /**
  * \return The friendly name of the emulator.
+ * \param simple If true, returns a simplified name with only the app name and version number.
  */
-std::wstring get_mupen_name();
+std::wstring get_mupen_name(bool simple = false);
 
 /**
  * \return Information about the current window size.

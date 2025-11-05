@@ -239,7 +239,7 @@ static int GetMupenVersion(lua_State *L)
     // 0 = name + version number
     // 1 = version number
 
-    std::wstring version = get_mupen_name();
+    std::wstring version = get_mupen_name(true);
 
     if (type > 0)
     {

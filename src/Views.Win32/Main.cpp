@@ -90,7 +90,7 @@ BetterEmulationLock::~BetterEmulationLock()
     }
 }
 
-std::wstring get_mupen_name()
+std::wstring get_mupen_name(bool simple)
 {
 #ifdef _DEBUG
 #define BUILD_TARGET_INFO L"-debug"
@@ -116,6 +116,11 @@ std::wstring get_mupen_name()
     if (version_suffix.empty())
     {
         // version_suffix = L"-rc5";
+    }
+
+    if (simple)
+    {
+        return BASE_NAME CURRENT_VERSION + version_suffix;
     }
 
     return BASE_NAME CURRENT_VERSION + version_suffix + ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
@@ -386,7 +391,8 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
     const auto fname =
         std::format(L"{} {}.st{}", IOUtils::to_wide_string((const char *)hdr->nom),
-                    IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)), std::to_wstring(slot));
+                    IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)),
+                    std::to_wstring(slot));
     return Config::save_directory() / fname;
 }
 
@@ -487,8 +493,8 @@ void update_titlebar()
 
     if (g_main_ctx.core_ctx->vr_get_launched())
     {
-        text += std::format(L" - {}", IOUtils::to_wide_string(
-                                          reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        text += std::format(
+            L" - {}", IOUtils::to_wide_string(reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
     }
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
@@ -1133,12 +1139,12 @@ static core_result init_core()
         auto title_wide = IOUtils::to_wide_string(title);
         return DialogService::show_ask_dialog(id, str_wide.c_str(), title_wide.c_str(), warning);
     };
-    g_main_ctx.core.show_dialog = [](const char* str, const char* title, core_dialog_type type) {
+    g_main_ctx.core.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
         auto str_wide = IOUtils::to_wide_string(str);
         auto title_wide = IOUtils::to_wide_string(title);
         DialogService::show_dialog(str_wide.c_str(), title_wide.c_str(), type);
     };
-    g_main_ctx.core.show_statusbar = [](const char* str) {
+    g_main_ctx.core.show_statusbar = [](const char *str) {
         auto str_wide = IOUtils::to_wide_string(str);
         DialogService::show_statusbar(str_wide.c_str());
     };

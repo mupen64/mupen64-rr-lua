@@ -102,7 +102,7 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
 endif()
 
 # define _DEBUG for debug builds
-add_compile_definitions("$<$<CONFIG:Debug,RelWithDebInfo>:_DEBUG>")
+add_compile_definitions("$<$<CONFIG:Debug>:_DEBUG>")
 
 
 

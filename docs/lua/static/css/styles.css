@@ -1,0 +1,149 @@
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI",
+		system-ui, "Ubuntu", "Droid Sans", sans-serif;
+	font-weight: bold;
+	font-size: large;
+	color: #cccccc; /*text color, might change later*/
+	background-color: #202020;
+}
+
+.sidebar {
+	font-family: inherit;
+	font-weight: inherit;
+	font-size: inherit;
+	background-color: #2b2b2b;
+	height: 100%;
+	width: 15%;
+	min-width: 320px;
+	max-width: 400px;
+	position: fixed;
+	top: 0;
+	left: 0;
+	overflow-y: scroll;
+	z-index: 1;
+	/* Hide scrollbar for IE, Edge and Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.sidebar::-webkit-scrollbar {
+	display: none;
+}
+
+.sidebarheader {
+	margin-bottom: 20px;
+}
+
+.sidebar button {
+	color: inherit;
+}
+
+.sidebar a {
+	color: #bababa;
+	text-decoration: none;
+}
+
+.sidebar a:hover {
+	text-decoration: underline;
+}
+
+.logo {
+	/*this is the most cursed way of centering i've seen*/
+	margin: auto;
+	width: fit-content;
+	margin-top: 5%;
+	margin-bottom: 5%;
+}
+
+.logolabel {
+	text-align: center;
+}
+
+.collapsible {
+	background-color: inherit;
+	font-family: inherit;
+	font-weight: inherit;
+	font-size: inherit;
+	padding: 3%;
+	cursor: pointer;
+	text-align: left;
+}
+
+.funcList {
+	background-color: #3c3c3c;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.1s ease-out;
+}
+
+.funcListItem {
+	background-color: inherit;
+	font-family: inherit;
+	font-weight: inherit;
+	font-size: medium;
+	border: none;
+	padding-top: 1.5%;
+	padding-bottom: 1.5%;
+	cursor: pointer;
+	text-align: center;
+	width: 100%;
+	text-decoration: none;
+}
+
+.funcListItem:hover {
+	background-color: #505050;
+}
+
+.funcListItem a:hover {
+	text-decoration: underline;
+}
+
+.active,
+.collapsible:hover {
+	background-color: #505050;
+}
+
+pre {
+	/*make sure code snippet text wraps*/
+	white-space: pre-wrap;
+}
+
+.docBody {
+	margin-left: clamp(320px, 15%, 400px);
+	text-align: left;
+}
+
+/* Make function definitions briefly highlight
+when accessed through a sidebar link, to draw
+users' attention to their on-screen location */
+
+@keyframes fade {
+	from {
+		background-color: #8f0000 /*#6a0c0c*/;
+	}
+	to {
+		background-color: #101010;
+	}
+}
+
+@-webkit-keyframes fade {
+	from {
+		background-color: #8f0000 /*#6a0c0c*/;
+	}
+	to {
+		background-color: #101010;
+	}
+}
+
+.highlight {
+	animation: fade 1500ms 1;
+	-webkit-animation: fade 1500ms 1;
+}
+
+/* This is here so that code blocks will
+also be included in the highlighting */
+.highlight .codehilite {
+	animation: fade 1500ms 1;
+	-webkit-animation: fade 1500ms 1;
+}
