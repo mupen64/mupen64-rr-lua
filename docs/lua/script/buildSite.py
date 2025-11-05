@@ -63,7 +63,7 @@ type LineNums = dict[int, LuaFunc]
 
 def transform_links(text: str, line_nums: LineNums) -> str:
     markdown_link_pattern = re.compile(
-        r"\[(?P<link_text>.+)\]\(.*mupen.*\.lua\#(?P<line_num>\d+)\)"
+        r"\[(?P<link_text>[^\]]+)\]\([^\)]*api\.lua\#(?P<line_num>\d+)\)"
     )
 
     def replace(x: re.Match[str]):
@@ -469,7 +469,7 @@ def write_output(data: str):
 def ensure_working_dir():
     cwd = os.getcwd()
     if cwd.endswith("script"):
-        os.chdir("../")
+        os.chdir("../../../")
 
 
 def main():

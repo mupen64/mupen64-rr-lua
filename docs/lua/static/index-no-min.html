@@ -1861,7 +1861,7 @@ If adding the action causes another action to gain a child (e.g. there's an acti
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">boolean</span>
 </code></pre></div></div><div name="actionBegin_batch_work"><hr />
 <h1><a id="actionBegin_batch_work">action.begin_batch_work</a></h1>
-<p>Begins a batch operation. Batches all updates caused by <a href="file:///d%3A/Lua/MupenLuaDoc/mupen64-rr-lua/src/api.lua#1560">action.add</a>, <a href="file:///d%3A/Lua/MupenLuaDoc/mupen64-rr-lua/src/api.lua#1565">action.remove</a>, and <a href="file:///d%3A/Lua/MupenLuaDoc/mupen64-rr-lua/src/api.lua#1572">action.associate_hotkey</a> into one at the succeeding call to <a href="#actionEnd_batch_work">action.end_batch_work</a>.</p>
+<p>Begins a batch operation. Batches all updates caused by <a href="#actionAdd">action.add</a>, <a href="#actionRemove">action.remove</a>, and <a href="#actionAssociate_hotkey">action.associate_hotkey</a> into one at the succeeding call to <a href="#actionEnd_batch_work">action.end_batch_work</a>.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">action</span><span class="p">.</span><span class="nf">begin_batch_work</span><span class="p">()</span>
 </code></pre></div></div><div name="actionEnd_batch_work"><hr />
 <h1><a id="actionEnd_batch_work">action.end_batch_work</a></h1>
