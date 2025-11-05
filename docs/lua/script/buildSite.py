@@ -10,8 +10,9 @@ from dataclasses import dataclass
 
 
 # RUN "pip install -r requirements.txt" BEFORE RUNNING THIS SCRIPT. This script
-# assumes the working directory is the base git directory (not /script). It is
-# recommended that you run this with VS Code instead of the command line
+# assumes the working directory is the base git directory (not
+# /docs/lua/script). This is the default behavior in VSCode if you have the root
+# directory opened.
 
 # Command to generate pygments.css (run inside the css folder):
 # pygmentize -S pastie -f html -a .codehilite > pygments.css
@@ -177,7 +178,7 @@ def read_api_file(path: str) -> DepMessages:
 
 
 def load_example(fn: LuaFunc) -> str | None:
-    example_filename = f"examples/{fn.module}/{fn.name}.lua"
+    example_filename = f"docs/lua/examples/{fn.module}/{fn.name}.lua"
     try:
         with open(example_filename, "rt", encoding="utf-8") as f:
             return f.read()
@@ -450,7 +451,7 @@ def add_footer(html: StringAccumulator):
 
 
 def write_output(data: str):
-    with open("docs/index.html", "w", encoding="utf-8") as file:
+    with open("docs/lua/static/index.html", "w", encoding="utf-8") as file:
         file.write(
             minify_html.minify(
                 data,
@@ -461,7 +462,7 @@ def write_output(data: str):
             )
         )
 
-    with open("docs/index-no-min.html", "w", encoding="utf-8") as file:
+    with open("docs/lua/static/index-no-min.html", "w", encoding="utf-8") as file:
         file.write(data)
 
 
@@ -473,9 +474,9 @@ def ensure_working_dir():
 
 def main():
     # Config
-    api_filepath = "mupen64-rr-lua/src/api.lua"
-    cpp_filepath = "mupen64-rr-lua/src/Views.Win32/lua/LuaRegistry.cpp"
-    docs_filepath = "export/doc.json"
+    api_filepath = "src/api.lua"
+    cpp_filepath = "src/Views.Win32/lua/LuaRegistry.cpp"
+    docs_filepath = "docs/lua/export/doc.json"
     skipped_functions: list[LuaFunc] = []
     included_aliases: list[str] = []
 
