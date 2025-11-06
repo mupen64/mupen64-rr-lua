@@ -475,6 +475,9 @@ static void start_movie_recording()
     BetterEmulationLock lock;
 
     auto movie_dialog_result = MovieDialog::show(false, [](const auto &result) {
+
+        // TODO: Check if there are movies which share a savestate and also warn the user about that
+        
         if (std::filesystem::exists(result.path))
         {
             const auto overwrite = DialogService::show_ask_dialog(
