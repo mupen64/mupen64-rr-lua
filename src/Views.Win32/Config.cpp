@@ -519,6 +519,7 @@ static void migrate_config(t_config &config, const mINI::INIStructure &ini)
     migrate_hotkey("Toggle movie loop", AppActions::LOOP_MOVIE_PLAYBACK);
     migrate_hotkey("Start movie playback", AppActions::START_MOVIE_PLAYBACK);
     migrate_hotkey("Start movie recording", AppActions::START_MOVIE_RECORDING);
+    migrate_hotkey("Continue movie recording", AppActions::CONTINUE_MOVIE_RECORDING);
     migrate_hotkey("Stop movie", AppActions::STOP_MOVIE);
     migrate_hotkey("Create Movie Backup", AppActions::CREATE_MOVIE_BACKUP);
     migrate_hotkey("Take screenshot", AppActions::SCREENSHOT);

@@ -29,9 +29,9 @@ constexpr auto ROM_NAME_WARNING_MESSAGE = "The movie was recorded on the rom '{}
                                           "'{}'.\r\nPlayback might desynchronize. Are you sure you want to continue?";
 constexpr auto ROM_COUNTRY_WARNING_MESSAGE = "The movie was recorded on a {} ROM, but is being played back on "
                                              "{}.\r\nPlayback might desynchronize. Are you sure you want to continue?";
-constexpr auto ROM_CRC_WARNING_MESSAGE =
-    "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
-    "might desynchronize. Are you sure you want to continue?";
+constexpr auto ROM_CRC_WARNING_MESSAGE = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
+                                         "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
+                                         "might desynchronize. Are you sure you want to continue?";
 constexpr auto WII_VC_MISMATCH_A_WARNING_MESSAGE =
     "The movie was recorded with WiiVC mode enabled, but is being played back with it disabled.\r\nPlayback might "
     "desynchronize. Are you sure you want to continue?";
@@ -160,7 +160,8 @@ static std::filesystem::path find_accompanying_file_for_movie(std::filesystem::p
             std::format_to(std::back_inserter(st_filename), "{}{}", matched, ext);
 
             std::filesystem::path st_path = path.replace_filename(st_filename);
-            if (std::filesystem::exists(st_path)) {
+            if (std::filesystem::exists(st_path))
+            {
                 // we have our match
                 return st_path;
             }
@@ -171,7 +172,6 @@ static std::filesystem::path find_accompanying_file_for_movie(std::filesystem::p
 
     // we've tried everything, return the empty path
     return std::filesystem::path();
-
 }
 
 static std::filesystem::path find_accompanying_file_for_movie(const std::filesystem::path &path,
@@ -940,7 +940,8 @@ std::filesystem::path get_path_for_new_movie(std::filesystem::path path, std::st
     auto stem_dot_pos = stem.find('.');
 
     // Standard case, no st shortcutting
-    if (stem_dot_pos == std::string::npos) {
+    if (stem_dot_pos == std::string::npos)
+    {
         path.replace_extension(extension);
         return path;
     }
@@ -1104,6 +1105,36 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     return Res_Ok;
 }
 
+core_result vcr_continue_recording()
+{
+    std::unique_lock lock(vcr_mtx);
+
+    if (vcr.task != task_playback && vcr.task != task_start_playback_from_reset &&
+        vcr.task != task_start_playback_from_snapshot)
+    {
+        return VCR_NeedsPlayback;
+    }
+
+    if (g_core->cfg->vcr_backups)
+    {
+        write_backup_impl();
+    }
+
+    vcr.task = task_recording;
+    vcr.inputs.resize(vcr.current_sample);
+    vcr.hdr.length_samples = vcr.inputs.size();
+    vcr.hdr.length_vis = vcr.current_vi;
+    set_rom_info(&vcr.hdr);
+    write_movie();
+
+    {
+        vcr_anti_lock bypass;
+        g_core->callbacks.task_changed(vcr.task);
+    }
+
+    return Res_Ok;
+}
+
 core_result vcr_replace_author_info(const std::filesystem::path &path, const std::string &author,
                                     const std::string &description)
 {
@@ -1147,11 +1178,11 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, const std
     description_out.assign(description);
     description_out.resize(256, '\0');
 
-
     // 4. actually write the file
     {
         std::fstream file(path, std::ios::in | std::ios::out | std::ios::binary);
-        if (!file.is_open()) {
+        if (!file.is_open())
+        {
             return VCR_BadFile;
         }
 
@@ -1301,10 +1332,7 @@ core_result vcr_start_playback(std::filesystem::path path)
     {
         bool proceed = g_core->show_ask_dialog(
             CORE_DLG_VCR_ROM_NAME_WARNING,
-            std::format(ROM_NAME_WARNING_MESSAGE, header.rom_name,
-                        (char *)ROM_HEADER.nom)
-                .c_str(),
-            "VCR", true);
+            std::format(ROM_NAME_WARNING_MESSAGE, header.rom_name, (char *)ROM_HEADER.nom).c_str(), "VCR", true);
 
         if (!proceed)
         {
@@ -1582,8 +1610,7 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
                     [=](const core_st_callback_info &info, auto &&...) {
                         if (info.result != Res_Ok)
                         {
-                            g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR",
-                                                fsvc_error);
+                            g_core->show_dialog("Failed to load seek savestate for seek operation.", "VCR", fsvc_error);
                             vcr.seek_savestate_loading = false;
 
                             {
@@ -1805,7 +1832,7 @@ core_result vcr_stop_all()
             g_core->log_info("[VCR] Removing files (nothing recorded)");
 
             auto current_path = std::filesystem::path(vcr.movie_path);
-            
+
             current_path.replace_extension(MUPEN64_PATH_T(".m64"));
             std::filesystem::remove(current_path);
 

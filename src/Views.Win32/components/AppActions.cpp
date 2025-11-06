@@ -483,16 +483,26 @@ static void start_movie_recording()
 
     g_main_ctx.core_ctx->vr_wait_increment();
     g_main_ctx.core.submit_task([=] {
-        auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(
-            movie_dialog_result.path, movie_dialog_result.start_flag,
-            IOUtils::to_utf8_string(movie_dialog_result.author),
-            IOUtils::to_utf8_string(movie_dialog_result.description));
+        auto vcr_result =
+            g_main_ctx.core_ctx->vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag,
+                                                  IOUtils::to_utf8_string(movie_dialog_result.author),
+                                                  IOUtils::to_utf8_string(movie_dialog_result.description));
         g_main_ctx.core_ctx->vr_wait_decrement();
         if (!show_error_dialog_for_result(vcr_result))
         {
             g_config.last_movie_author = movie_dialog_result.author;
             Statusbar::post(L"Recording replay");
         }
+    });
+}
+
+static void continue_movie_recording()
+{
+    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.core.submit_task([] {
+        const auto result = g_main_ctx.core_ctx->vcr_continue_recording();
+        g_main_ctx.core_ctx->vr_wait_decrement();
+        show_error_dialog_for_result(result);
     });
 }
 
@@ -792,6 +802,13 @@ static bool enable_when_emu_launched_and_vcr_active()
     return g_main_ctx.core_ctx->vr_get_launched() && g_main_ctx.core_ctx->vcr_get_task() != task_idle;
 }
 
+static bool enable_during_playback()
+{
+    const auto task = g_main_ctx.core_ctx->vcr_get_task();
+    return g_main_ctx.core_ctx->vr_get_launched() && (task == task_playback || task == task_start_playback_from_reset ||
+                                                      task == task_start_playback_from_snapshot);
+}
+
 static bool enable_when_emu_launched_and_capturing()
 {
     return g_main_ctx.core_ctx->vr_get_launched() && EncodingManager::is_capturing();
@@ -900,6 +917,7 @@ void AppActions::init()
                          [](const auto &) { ActionManager::notify_active_changed(READONLY); });
     Messenger::subscribe(Messenger::Message::TaskChanged, [](const auto &) {
         ActionManager::notify_enabled_changed(STOP_MOVIE);
+        ActionManager::notify_enabled_changed(CONTINUE_MOVIE_RECORDING);
         ActionManager::notify_enabled_changed(CREATE_MOVIE_BACKUP);
         ActionManager::notify_enabled_changed(SEEK_TO);
     });
@@ -995,6 +1013,8 @@ void AppActions::add()
     add_action(START_MOVIE_RECORDING, Hotkey::t_hotkey('R', true, true), start_movie_recording,
                enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK, Hotkey::t_hotkey('P', true, true), start_movie_playback);
+    add_action(CONTINUE_MOVIE_RECORDING, Hotkey::t_hotkey::make_empty(), continue_movie_recording,
+               enable_during_playback);
     add_action(STOP_MOVIE, Hotkey::t_hotkey('C', true, true), stop_movie, enable_when_emu_launched_and_vcr_active);
     add_action(CREATE_MOVIE_BACKUP, Hotkey::t_hotkey('B', true, true), create_movie_backup,
                enable_when_emu_launched_and_vcr_active);

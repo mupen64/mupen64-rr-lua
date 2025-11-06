@@ -234,6 +234,10 @@ bool show_error_dialog_for_result(const core_result result, void *hwnd)
         module = L"VCR";
         error = L"The operation requires a playback or recording task.";
         break;
+    case VCR_NeedsPlayback:
+        module = L"VCR";
+        error = L"The operation requires a playback task.";
+        break;
     case VCR_InvalidStartType:
         module = L"VCR";
         error = L"The provided start type is invalid.";

@@ -985,4 +985,71 @@ TEST_CASE("mutex_unlocked_during_emu_paused_changed_callback", "vcr_on_vi")
     REQUIRE(called);
 }
 
+TEST_CASE("fails_when_not_playback", "vcr_continue_recording")
+{
+    prepare_test();
+    core_create(&params, &ctx);
+
+    vcr.task = task_idle;
+    const auto result = vcr_continue_recording();
+    REQUIRE(result == VCR_NeedsPlayback);
+}
+
+TEST_CASE("changes_task_and_header_and_inputs", "vcr_continue_recording")
+{
+    prepare_test();
+
+    params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {
+
+    };
+    
+    core_create(&params, &ctx);
+
+    cfg.vcr_backups = false;
+
+    vcr.task = task_playback;
+    vcr.hdr.length_samples = 5;
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
+    vcr.current_sample = 2;
+
+    const auto result = vcr_continue_recording();
+
+    REQUIRE(result == Res_Ok);
+    REQUIRE(vcr.task == task_recording);
+    REQUIRE(vcr.hdr.length_samples == 2);
+    REQUIRE(vcr.inputs.size() == 2);
+    REQUIRE(vcr.inputs[0].value == 1);
+    REQUIRE(vcr.inputs[1].value == 2);
+}
+
+
+TEST_CASE("invokes_task_callback_correctly", "vcr_continue_recording")
+{
+    prepare_test();
+
+    params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {
+
+    };
+    bool called{};
+    params.callbacks.task_changed = [&](const auto&) {
+        called = true;
+        REQUIRE(!is_vcr_lock_held());
+    };
+
+    core_create(&params, &ctx);
+
+    cfg.vcr_backups = false;
+
+    vcr.task = task_playback;
+    vcr.hdr.length_samples = 5;
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
+    vcr.current_sample = 2;
+
+    const auto result = vcr_continue_recording();
+
+    REQUIRE(called);
+}
+
 #pragma endregion
