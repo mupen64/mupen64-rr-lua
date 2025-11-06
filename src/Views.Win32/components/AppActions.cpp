@@ -474,7 +474,17 @@ static void start_movie_recording()
 {
     BetterEmulationLock lock;
 
-    auto movie_dialog_result = MovieDialog::show(false);
+    auto movie_dialog_result = MovieDialog::show(false, [](const auto &result) {
+        if (std::filesystem::exists(result.path))
+        {
+            const auto overwrite = DialogService::show_ask_dialog(
+                VIEW_DLG_OVERWRITE_MOVIE, L"The specified movie file already exists. Do you want to overwrite it?",
+                L"Overwrite Movie", true, result.hwnd);
+            return overwrite;
+        }
+
+        return true;
+    });
 
     if (movie_dialog_result.path.empty())
     {
@@ -483,10 +493,10 @@ static void start_movie_recording()
 
     g_main_ctx.core_ctx->vr_wait_increment();
     g_main_ctx.core.submit_task([=] {
-        auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(
-            movie_dialog_result.path, movie_dialog_result.start_flag,
-            IOUtils::to_utf8_string(movie_dialog_result.author),
-            IOUtils::to_utf8_string(movie_dialog_result.description));
+        auto vcr_result =
+            g_main_ctx.core_ctx->vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag,
+                                                  IOUtils::to_utf8_string(movie_dialog_result.author),
+                                                  IOUtils::to_utf8_string(movie_dialog_result.description));
         g_main_ctx.core_ctx->vr_wait_decrement();
         if (!show_error_dialog_for_result(vcr_result))
         {

@@ -13,6 +13,7 @@ namespace MovieDialog
 {
 struct t_result
 {
+    HWND hwnd;
     std::filesystem::path path;
     unsigned short start_flag;
     std::wstring author;
@@ -24,8 +25,9 @@ struct t_result
 /**
  * \brief Shows a movie inspector dialog.
  * \param readonly Whether the movie is being viewed in read-only mode.
+ * \param on_confirm A callback invoked when the user confirms their choices. Returns whether the dialog should close.
  * \return The user's interaction result.
  */
-t_result show(bool readonly);
+t_result show(bool readonly, const std::function<bool(const t_result &)> &on_confirm = [](auto &...) { return true; });
 
 } // namespace MovieDialog

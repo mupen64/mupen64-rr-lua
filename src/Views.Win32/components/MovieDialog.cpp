@@ -13,6 +13,7 @@
 struct t_movie_dialog_context
 {
     MovieDialog::t_result user_result{};
+    std::function<bool(const MovieDialog::t_result &)> on_confirm{};
     bool is_readonly{};
     HWND grid_hwnd{};
     bool is_closing{};
@@ -91,6 +92,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     switch (msg)
     {
     case WM_INITDIALOG: {
+        g_ctx.user_result.hwnd = hwnd;
         RECT grid_rect = get_window_rect_client_space(hwnd, GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
         DestroyWindow(GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
 
@@ -133,18 +135,10 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
         return FALSE;
     }
-    case WM_DESTROY: {
-        wchar_t author[sizeof(core_vcr_movie_header::author)] = {0};
-        GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
-        g_ctx.user_result.author = author;
-
-        wchar_t description[sizeof(core_vcr_movie_header::description)] = {0};
-        GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
-        g_ctx.user_result.description = description;
-
+    case WM_DESTROY:
         DestroyWindow(g_ctx.grid_hwnd);
         break;
-    }
+
     case WM_CLOSE:
         g_ctx.user_result.path.clear();
         g_ctx.is_closing = true;
@@ -167,6 +161,21 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             g_ctx.user_result.pause_at_last = IsDlgButtonChecked(hwnd, IDC_PAUSE_AT_END);
 
             g_config.last_movie_type = g_ctx.user_result.start_flag;
+
+            wchar_t author[sizeof(core_vcr_movie_header::author)] = {0};
+            GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
+            g_ctx.user_result.author = author;
+            g_config.last_movie_author = g_ctx.user_result.author;
+
+            wchar_t description[sizeof(core_vcr_movie_header::description)] = {0};
+            GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
+            g_ctx.user_result.description = description;
+
+            const bool should_close = g_ctx.on_confirm(g_ctx.user_result);
+            if (!should_close)
+            {
+                break;
+            }
 
             EndDialog(hwnd, IDOK);
         }
@@ -343,11 +352,12 @@ refresh:
     return FALSE;
 }
 
-MovieDialog::t_result MovieDialog::show(bool readonly)
+MovieDialog::t_result MovieDialog::show(bool readonly, const std::function<bool(const t_result &)> &on_confirm)
 {
     const auto rom_hdr = g_main_ctx.core_ctx->vr_get_rom_header();
 
     g_ctx.is_readonly = readonly;
+    g_ctx.on_confirm = on_confirm;
     g_ctx.user_result.path = std::format(
         L"{} ({}).m64", IOUtils::to_wide_string((char *)rom_hdr->nom),
         IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code)));
