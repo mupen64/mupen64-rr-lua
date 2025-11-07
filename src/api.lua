@@ -6,8 +6,6 @@
 
 ---@meta
 
--- version 1.2.0.1
-
 emu = {}
 memory = {}
 wgui = {}
@@ -24,7 +22,7 @@ clipboard = {}
 dgfx = {}
 
 Mupen = {
-    _VERSION = '1.3.0-6',
+    _VERSION = '1.3.0-7',
     _URL = 'https://github.com/mupen64/mupen64-rr-lua',
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',

@@ -109,6 +109,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.vcr_read_movie_inputs = vcr_read_movie_inputs;
     g_ctx.vcr_start_playback = vcr_start_playback;
     g_ctx.vcr_start_record = vcr_start_record;
+    g_ctx.vcr_continue_recording = vcr_continue_recording;
     g_ctx.vcr_replace_author_info = vcr_replace_author_info;
     g_ctx.vcr_get_seek_info = vcr_get_seek_info;
     g_ctx.vcr_begin_seek = vcr_begin_seek;

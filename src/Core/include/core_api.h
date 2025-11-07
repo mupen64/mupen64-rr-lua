@@ -176,8 +176,7 @@ extern "C"
          * the value specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<bool(const std::string &id, const char *str, const char *title, bool warning)>
-            show_ask_dialog;
+        std::function<bool(const std::string &id, const char *str, const char *title, bool warning)> show_ask_dialog;
 
         /**
          * \brief Shows the user a dialog.
@@ -469,6 +468,12 @@ extern "C"
                                   std::string description)>
             vcr_start_record;
 
+        /**
+         * \brief Continues recording a movie.
+         * \return The operation result
+         */
+        std::function<core_result()> vcr_continue_recording;
+        
         /**
          * \brief Replaces the author and description information of a movie
          * \param path The movie's path

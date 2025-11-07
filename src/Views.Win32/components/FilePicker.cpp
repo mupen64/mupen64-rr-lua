@@ -23,7 +23,7 @@ static std::wstring get_default_extension(const std::wstring &filter)
     const auto wildcards = StrUtils::split_wstring(filter, L";");
 
     if (wildcards.empty()) return L"";
-    
+
     const auto first_wildcard = *wildcards.begin();
     return std::wstring(first_wildcard.substr(2));
 }
@@ -48,7 +48,12 @@ std::filesystem::path FilePicker::show_open_dialog(const std::wstring &id, HWND 
     ofn.lpstrInitialDir = restored_path.c_str();
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_ENABLESIZING;
 
-    if (GetOpenFileName(&ofn))
+    const auto result = GetOpenFileName(&ofn);
+
+    // NOTE: Common file dialogs change the cwd...
+    set_cwd();
+
+    if (result)
     {
         g_config.persistent_folder_paths[id] = ofn.lpstrFile;
         return g_config.persistent_folder_paths[id];
@@ -79,7 +84,12 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring &id, HWND 
     ofn.lpstrDefExt = default_extension.c_str();
     ofn.Flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_EXTENSIONDIFFERENT;
 
-    if (GetSaveFileName(&ofn))
+    const auto result = GetSaveFileName(&ofn);
+
+    // NOTE: Common file dialogs change the cwd...
+    set_cwd();
+
+    if (result)
     {
         g_config.persistent_folder_paths[id] = ofn.lpstrFile;
         return g_config.persistent_folder_paths[id];
@@ -142,6 +152,9 @@ std::filesystem::path FilePicker::show_folder_dialog(const std::wstring &id, HWN
         // probably valid path, store it
         g_config.persistent_folder_paths[id] = final_path;
     }
+
+    // NOTE: Even these COM file dialogs change the cwd...
+    set_cwd();
 
     return final_path;
 }

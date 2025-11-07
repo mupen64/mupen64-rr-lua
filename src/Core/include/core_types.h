@@ -51,6 +51,8 @@ typedef enum
     VCR_InvalidExtendedVersion,
     // The operation requires a playback or recording task
     VCR_NeedsPlaybackOrRecording,
+    // The operation requires a playback task
+    VCR_NeedsPlayback,
     // The provided start type is invalid.
     VCR_InvalidStartType,
     // Another warp modify operation is already running
