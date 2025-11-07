@@ -137,10 +137,15 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
-# Dependencies of the resource file that actually matter.
+# Dependencies of the resource file. These are specified manually,
+# but it wouldn't be impossible to write a scanner to gather this info automagically.
 set_source_files_properties(
     SOURCES "Resource.rc" PROPERTIES OBJECT_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/app.manifest"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../api.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../shims.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../sandbox.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
 )
 target_precompile_headers(Mupen64RR.Views.Win32 PRIVATE "stdafx.h")
 target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
