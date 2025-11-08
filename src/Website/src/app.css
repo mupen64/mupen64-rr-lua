@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@theme {
+	--font-sans: 'Titillium Web', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+html {
+	@apply bg-gray-100 text-black dark:bg-[#232323] dark:text-gray-100;
+}
+button,
+.button {
+	@apply flex flex-row items-center gap-2 rounded-md px-4 py-2;
+}
+
+button.primary,
+.button.primary {
+	@apply border-2 border-white bg-red-600 font-semibold shadow-md shadow-red-400 outline-2 outline-black hover:bg-red-700 active:bg-red-800;
+}
+
+button.secondary,
+.button.secondary {
+	@apply bg-red-600 font-semibold shadow-sm hover:bg-red-700 active:bg-red-800;
+}
+
+a.link::before {
+	content: '🔗 ';
+}
+
+a.link {
+	@apply border-b-[1px] border-dashed border-b-red-600 hover:font-bold;
+}
+
+.card {
+	@apply flex flex-col gap-2 rounded-2xl border-t-2 border-b-2 border-t-red-600/20 border-b-red-600/50 p-4 shadow-md dark:bg-[#272727];
+}
