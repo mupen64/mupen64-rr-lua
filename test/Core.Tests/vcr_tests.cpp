@@ -332,6 +332,30 @@ TEST_CASE("input_callback_override_works_when_idle", "vcr_on_controller_poll")
     REQUIRE(input.value == 0xDEAD);
 }
 
+
+TEST_CASE("input_callback_called_on_last_frame_of_movie", "vcr_on_controller_poll")
+{
+    prepare_test();
+
+    static bool called = false;
+    params.callbacks.input = [](core_buttons *input, int index) { called = true; };
+
+    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+
+    core_create(&params, &ctx);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_playback;
+    vcr.current_sample = 4;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    REQUIRE(called);
+}
+
 /*
  * Tests that overriding inputs during recording using the `input` callback causes the correct overriden sample to be
  * inputted.

@@ -750,6 +750,10 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
 
         g_core->input_set_keys(index, {0});
         g_core->input_get_keys(index, input);
+        {
+            vcr_anti_lock bypass;
+            g_core->callbacks.input(input, index);
+        }
         return;
     }
 
