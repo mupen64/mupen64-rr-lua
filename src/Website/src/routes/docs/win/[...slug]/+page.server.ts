@@ -5,13 +5,16 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { error, redirect } from '@sveltejs/kit';
 import { doc_filesystem_to_friendly_name } from '$lib/helpers/DocNameConverter';
+import { get_doc_paths } from '$lib/helpers/DocFetcher';
 
 const DOCS_DIR = '../../docs/win';
 
 export const load: PageServerLoad = async ({ params }) => {
 
+    const doc_paths = await get_doc_paths();
+
     if (params.slug == "") {
-        redirect(307, '/docs/win/home');
+        redirect(307, `/docs/win/${doc_paths[0]}`);
     }
 
     const file_path = path.join(DOCS_DIR, `${params.slug}.md`);
