@@ -3,9 +3,9 @@
 	import mupen64 from '$lib/assets/mupen64.svg';
 	import sm64luaredux from '$lib/assets/sm64luaredux.png';
 	import ugui from '$lib/assets/ugui.png';
-	import lua from '$lib/assets/lua.svg';
+	import { doc_filesystem_to_friendly_name } from '$lib/helpers/DocNameConverter';
 
-	let { children } = $props();
+	let { children, data } = $props();
 </script>
 
 <svelte:head>
@@ -18,9 +18,21 @@
 		<span>Mupen64</span>
 	</a>
 
-	<a href="/docs/win" class="flex flex-row items-center gap-2 py-2 hover:underline">
-		<span>General Docs</span>
-	</a>
+	<div class="group">
+		<a href="/docs/win" class=" flex flex-row items-center gap-2 py-2 hover:underline">
+			<span>General Docs</span>
+		</a>
+
+		<div
+			class="bg-surface-light-3 dark:bg-surface-3 absolute hidden flex-col p-2 group-hover:flex"
+		>
+			{#each data.files as file}
+				<a href="/docs/win/{file}" class="flex flex-row items-center gap-2 py-2 hover:underline">
+					<span>{doc_filesystem_to_friendly_name(file)}</span>
+				</a>
+			{/each}
+		</div>
+	</div>
 
 	<a href="/docs/lua" class="flex flex-row items-center gap-2 py-2 hover:underline">
 		<span>Lua Docs</span>
