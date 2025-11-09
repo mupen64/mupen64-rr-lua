@@ -23,19 +23,6 @@
 		{/snippet}
 	</Hero>
 
-	<section
-		id="projects"
-		class=" bg-gradient-to-b from-red-700 via-red-800 to-red-700 p-8 text-white"
-	>
-		<div class="mx-auto flex h-full max-w-6xl flex-row items-center justify-center gap-4">
-			<hr class="w-15 border-2 border-dashed border-red-600" />
-			<p class="text-3xl font-bold">All Projects</p>
-			<a class="button secondary" href="/ugui">ugui</a>
-			<a class="button secondary" href="/sm64luaredux">SM64 Lua Redux</a>
-			<hr class="w-15 border-2 border-dashed border-red-600" />
-		</div>
-	</section>
-
 	<section id="showcase" class="p-16 pb-0">
 		<div class="mx-auto max-w-6xl">
 			<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
@@ -120,24 +107,6 @@
 					<p class="text-xl font-semibold">🎮 Cheats</p>
 					<p class="text-sm">Support for GameShark cheats and GS button emulation.</p>
 				</div>
-			</div>
-		</div>
-	</section>
-
-	<section id="wiki" class="p-16 pb-0">
-		<div class="mx-auto max-w-6xl">
-			<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-				<p>Wiki</p>
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-			</div>
-
-			<div class="flex flex-row flex-wrap justify-center gap-8">
-				<p>
-					Visit the <a class="link" href="https://github.com/mupen64/mupen64-rr-lua/wiki"
-						>Mupen64 Wiki</a
-					> for documentation about Mupen64.
-				</p>
 			</div>
 		</div>
 	</section>

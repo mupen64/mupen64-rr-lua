@@ -22,6 +22,4 @@ The easiest way to get started using Mupen64 is by visiting the [Mupen64 Homepag
 
 If any issues arise or you need help, join the [Mupen64 Community Discord](https://discord.gg/eZXbmguKEq).
 
-Visit the [Mupen64 Wiki](https://github.com/mkdasher/mupen64-rr-lua-/wiki/Contributing) for documentation!
-
 Cutting-edge features with potential instability are available for download as a zipped binary under the latest commit's artifact.

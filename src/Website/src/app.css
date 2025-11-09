@@ -4,11 +4,17 @@
 
 @theme {
 	--font-sans: 'Titillium Web', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	--color-surface-1: oklch(0.2562 0 0);
+	--color-surface-2: oklch(0.2771 0 0);
+	--color-surface-1-light: oklch(0.9 0 0);
+	--color-surface-2-light: oklch(0.92 0 0);
+
 }
 
 html {
-	@apply bg-gray-100 text-black dark:bg-[#232323] dark:text-gray-100;
+	@apply bg-surface-1-light dark:bg-surface-1 text-black dark:text-gray-100;
 }
+
 button,
 .button {
 	@apply flex flex-row items-center gap-2 rounded-md px-4 py-2;
