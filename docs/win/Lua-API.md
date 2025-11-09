@@ -1,0 +1,1 @@
+For Mupen64 Lua API documentation, see https://wade7wastaken.github.io/MupenLuaDoc/

@@ -1,0 +1,345 @@
+This page contains a breakdown of all menu actions along with their functionality and is hierarchically structured like the in-app menus.
+
+# File
+
+## Load ROM...
+
+Starts emulation with the specified ROM.
+
+If the ROM is invalid or any other errors preventing an emulation start happen, an error dialog will be shown.
+
+## Close ROM
+
+Stops emulation.
+ 
+If tasks such as movie playback, recording, or video capture are running, you will be prompted prior to confirm the close action.
+
+## Reset ROM
+
+Resets emulation, remaining on the same ROM as before.
+
+## Recent ROMs
+
+Contains a list of the most recently used ROMs, with the latest ones at the top.
+
+The list can be frozen, which prevents it being changed, or reset, which clears all items.
+
+## Exit
+
+Exits the program.
+
+# Emulation
+
+## Pause
+
+Pauses or unpauses emulation.
+
+## Speed Down
+
+Decreases the emulator's speed by 5%.
+
+## Speed Up
+
+Increases the emulator's speed by 5%.
+
+## Reset Speed
+
+Resets the emulator's speed to 100%.
+
+## Fast-Forward
+
+Toggles unlimited emulation speed.
+
+## GS Button
+
+Toggles the GameShark trigger button. Only has an effect when cheats utilizing the GameShark button state are active.
+
+## Frame Advance
+
+Advances the emulator by one frame.
+
+The emulator will remain paused after the frame advance operation completes and can be unpaused manually.
+
+## Multi-Frame Advance
+
+Advances the emulator by the amount of frames specified in the menu item's name.
+
+If the amount of frames to advance by is negative, the emulator will try to go backwards in time. This currently requires a movie to be active.
+
+The emulator will remain paused after the frame advance operation completes and can be unpaused manually.
+
+## Multi-Frame Advance -1
+
+Decrements the Multi-Frame Advance index by 1.
+
+## Multi-Frame Advance +1
+
+Increments the Multi-Frame Advance index by 1.
+
+## Multi-Frame Advance Reset
+
+Sets the Multi-Frame Advance index to 0.
+
+## Save State
+
+### Save Current Slot
+
+Saves a state to the currently selected slot.
+
+The current slot can be seen in the last segment of the statusbar and ranges from 1 to 10.
+
+Slot-based savestates are saved to disk in the directory specified in `Options > Settings... > Directories > Use default (/save)`
+
+### Save as File
+
+Saves a state to a file.
+
+### Save Slot 1-10
+
+Saves a state and sets the current slot to the specified slot.
+
+## Load State
+
+### Load Current Slot
+
+Loads a state from the currently selected slot.
+
+The same rules apply as for saving a state, with some additional exceptions.
+
+If a movie is being recorded or played back, loading a state from created in another movie (or none at all) might cause a desync and requires user confirmation.
+
+If the desired savestate was created on another ROM, loading it might destabilize the emulator and thus also requires user confirmation.
+
+### Load from File
+
+Loads a state from a file.
+
+### Load Slot 1-10
+
+Loads a state and sets the current slot to the specified slot.
+
+## Current State Slot
+
+### Slot 1-10
+
+Sets the current slot to the specified slot.
+
+## Undo Load Slot
+
+Restores the game state prior to the most recent state load.
+
+## Take Screenshot
+
+Takes a screenshot of the current game view.
+
+This operation is implemented by the video plugin and can vary in quality and stability.
+
+
+
+## Save State As...
+
+Same as saving a savestate to a slot, but to a file.
+
+## Load State As...
+
+Same as loading a savestate from a slot, but from a file.
+
+## Undo Load State
+
+Restores the state which was present prior to loading the most recent savestate.
+
+The accompanying option must be enabled in the settings for this to work.
+
+# Options
+
+## Full Screen
+
+Toggles the full-screen mode.
+
+This operation is implemented by the video plugin and can vary in quality and stability.
+
+## Plugin Settings
+
+### Video Settings
+
+Shows the settings dialog for the currently selected video plugin.
+
+### Audio Settings
+
+Shows the settings dialog for the currently selected audio plugin.
+
+### Input Settings
+
+Shows the settings dialog for the currently selected input plugin.
+
+### RSP Settings
+
+Shows the settings dialog for the currently selected RSP plugin.
+
+## Statusbar
+
+Shows or hides the statusbar.
+
+## Settings
+
+Shows the settings dialog.
+
+# Movie
+
+## Start Movie Recording...
+
+Shows the movie dialog, allowing you to specify various parameters about the movie before starting a recording.
+
+## Start Movie Playback...
+
+Shows the movie dialog, allowing you to choose a movie.
+
+If a movie is being recorded or played back already, the task will be stopped without a prompt.
+
+If emulation isn't running, the emulator will try to find and use the most appropriate ROM in your ROM library (as specified by `Options > Settings... > Directories > Rombrowser`). Should no matching ROM be found, an error message will be displayed.
+
+## Stop Movie
+
+Stops playing back or recording a movie.
+
+## Recent Movies
+
+Contains a list of the most recently played or recorded movies, with the latest ones at the top.
+
+The list can be frozen, which prevents it being changed, or reset, which clears all items.
+
+## Load Latest Movie
+
+Starts movie playback with the first element in the recent movie list.
+
+## Loop Movie Playback
+
+Enables or disables movie playback looping.
+
+If enabled, movies will restart from the beginning once they've played to the end.
+
+## Read-Only
+
+Enables or disables read-only mode.
+
+If enabled, rerecording is disabled and it becomes impossible to modify the currently playing movie.
+
+This means that loading a savestate created during the currently playing movie won't begin recording from the point of the savestate onwards, but keep the playback state. Additionally, the Piano Roll also enters read-only mode and disallows modification of inputs.
+
+## Wait at Movie End
+
+Toggles waiting at movie end.
+
+If enabled, the emulator will pause at the last frame of a movie during playback and not allow unpausing until you either load a savestate from a different frame or reset the ROM.
+
+# Utilities
+
+## Show RAM start...
+
+Shows the address of the RDRAM buffer and allows copying an auto-generated Config.xml entry for [STROOP](https://github.com/SM64-TAS-ABC/STROOP).
+
+## Show Statistics...
+
+Shows statistics about your usage of the program.
+
+The playtime is measured in game time.
+
+## Start Trace Logger...
+
+Starts or stops the trace logger.
+
+The trace logger can generate logs for both the interpreted and recompiled cores.
+
+The log format, either text or binary, can be chosen by the user.
+
+## CoreDbg...
+
+Shows the CoreDbg dialog.
+
+Only available when using the Pure Interpreter core.
+
+CoreDbg is a rudimentary debugger which allows pausing and stepping through the emulator core's execution. It also provides other features for testing, such as a cartridge tilt (DMA read interference), or RSP toggle.
+
+## Run...
+
+Shows the Run dialog.
+
+The Run dialog displays recently used items from all recent lists.
+
+Double-clicking an item or selecting it and pressing "Ok" will execute the associated action with the specified item, such as starting emulation with a ROM or playing a movie.
+
+## Cheats...
+
+Shows the Cheats dialog.
+
+(TODO: Needs separate page)
+
+## Seek To...
+
+Shows the Seeker dialog.
+
+Requires movie recording or playback to be active.
+
+Allows navigating to a specific frame in a movie.
+
+The target frame input must follow the seek frame format:
+
+- Absolute mode (e.g.: `490`, seeks to frame 490 in the movie)
+- Now-relative mode (e.g.: `+100`, seeks to 100 frames from now, or `-100`, which seeks to 100 frames before the current frame)
+- End-relative mode (e.g.: `^80`, seeks to the 80th-to-last frame)
+
+As seek operations can be long-running, the Seeker will display the progress until the operation is finished.
+
+## Piano Roll
+
+Shows the Piano Roll dialog.
+
+(TODO: Needs separate page)
+
+## Video Capture
+
+### Start Capture...
+
+Starts a video capture with the current capture settings.
+
+### Start From Preset...
+
+Starts a video capture with the current capture settings and using the last selected codec preset.
+
+Requires a non-preset capture to have been started prior.
+
+Only affects capture with the VFW encoder.
+
+### Stop Capture
+
+Stops the currently running video capture.
+
+# Help
+
+## Check For Updates
+
+Checks for updates by comparing the running program's version to that of the latest GitHub release.
+
+If an update is available, you will get an option to download the new executable.
+
+## About
+
+Shows information about the program.
+
+# Lua Script
+
+## Show Instances
+
+Shows the Lua Instances dialog.
+
+(TODO: Needs separate page)
+
+## Recent Scripts
+
+Contains a list of the most recently used scripts, with the latest ones at the top.
+
+The list can be frozen, which prevents it being changed, or reset, which clears all items.
+
+## Close All
+
+Stops all running Lua scripts.

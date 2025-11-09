@@ -1,0 +1,1 @@
+See [CONTRIBUTING.md](https://github.com/mupen64/mupen64-rr-lua/blob/master/CONTRIBUTING.md).
