@@ -13,7 +13,7 @@
 </svelte:head>
 
 <div
-	class="bg-surface-2 h-15 flex flex-row items-center justify-center gap-4 overflow-x-auto overflow-y-hidden whitespace-nowrap"
+	class="bg-surface-2-light dark:bg-surface-2 h-15 flex flex-row items-center justify-center gap-4 overflow-x-auto overflow-y-hidden whitespace-nowrap"
 >
 	<div class="group">
 		<a href="/" class="flex flex-row items-center gap-2 py-2 hover:underline">
@@ -21,7 +21,7 @@
 			<span class="hidden md:block">Mupen64</span>
 		</a>
 
-		<div class="bg-surface-light-3 dark:bg-surface-3 absolute hidden flex-col p-2 group-hover:flex">
+		<div class="bg-surface-3-light dark:bg-surface-3 absolute hidden flex-col p-2 group-hover:flex">
 			<a href="/docs/lua" class="flex flex-row items-center gap-2 py-2 hover:underline">
 				<span>Lua Docs</span>
 			</a>
