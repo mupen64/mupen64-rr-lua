@@ -11,22 +11,10 @@
 
 namespace Mupen
 {
-class Core
-{
-  public:
-    static void init(core_cfg config);
-    static Core& instance();
-    static void shutdown();
-
-    core_ctx *operator->() { return m_ctx; }
-
-  private:
-    Core(core_cfg config);
-    ~Core();
-
-    core_params m_params;
-    core_ctx *m_ctx;
-};
+    extern core_cfg g_core_cfg;
+    extern core_params g_core_params;
+    extern core_ctx* g_core_ctx;
+    void init_core(core_cfg config);
 } // namespace Mupen
 
 #endif

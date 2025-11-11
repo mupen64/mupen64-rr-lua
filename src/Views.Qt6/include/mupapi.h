@@ -37,10 +37,11 @@ extern "C"
 {
 #endif
 
+#define MUPAPI_PLUGIN_DECLS
 #ifdef MUPAPI_PLUGIN_DECLS
 #define MUPAPI_DEFINE_FN(rt_type, name, ...)                                                                           \
     rt_type name(__VA_ARGS__);                                                                                         \
-    typedef rt_type (*fp_##name)(__VA_ARGS__);
+    typedef rt_type (CALL *fp_##name)(__VA_ARGS__);
 #else
 #define MUPAPI_DEFINE_FN(rt_type, name, ...) typedef rt_type (*fp_##name)(__VA_ARGS__);
 #endif
@@ -280,17 +281,15 @@ extern "C"
     /**
      * @brief Displays the configuration GUI for this plugin.
      *
-     * Plugins are generally expected to create a subprocess and parent their window to `parent_window`,
-     * though platforms which allow multiple event loops per program (e.g. Windows) may do this in-process.
-     *
-     * Do not
+     * Plugins should create a subprocess and parent their window to `parent_window`, though platforms which 
+     * allow multiple event loops per program (e.g. Windows) may do this in-process.
      *
      * @param parent_window The *exported* plugin handle.
      */
     MUPAPI_DEFINE_FN(void, mup_show_config, mup_wm_export_handle parent_window);
 
     /**
-     * @brief Requests information from this plugin.
+     * @brief Requests information from this plugin. This may be called before `mup_init`.
      *
      * @param plugin_info A non-null pointer to a core_plugin_info struct to be filled with the needed information.
      */

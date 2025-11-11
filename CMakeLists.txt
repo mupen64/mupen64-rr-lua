@@ -30,6 +30,16 @@ if (NOT "${WIN32}")
   set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
 
+
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  set(MUPEN64RR_BUILD_QT6 ON CACHE BOOL "If on, enables the Qt6 view and plugins.")
+else()
+  set(MUPEN64RR_BUILD_QT6 OFF CACHE BOOL "If on, enables the Qt6 view and plugins.")
+endif()
+
+# Basic initial config
+# =======================================
+
 # initial checks
 if(NOT WIN32)
   message(WARNING "Building on platforms other than Windows is experimental. You're on your own, good luck.")
@@ -82,10 +92,13 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
   )
 endif()
 
-# Linux-only for now: Qt
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+# If Qt6 enabled...
+if (MUPEN64RR_BUILD_QT6)
   find_package(Qt6 REQUIRED COMPONENTS Widgets)
   qt6_standard_project_setup()
+  
+  # we're boosting it (TODO: configure vcpkg with the needed libs)
+  find_package(Boost REQUIRED COMPONENTS system filesystem)
 endif()
 
 # CMake modules

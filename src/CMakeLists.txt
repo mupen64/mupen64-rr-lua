@@ -35,4 +35,16 @@ if (MUPEN64RR_BUILD_WIN32)
     add_subdirectory(Plugins.RSP.TAS)
 endif()
 
-add_subdirectory(Views.Qt6)
+if (MUPEN64RR_BUILD_QT6)
+    # VIEW
+    # ============================
+
+    add_subdirectory(Views.Qt6)
+
+    # BUNDLED PLUGINS
+    # ============================
+
+    # dummy plugins
+    add_subdirectory(Plugins.Qt6.NoAudio)
+    
+endif()
