@@ -32,7 +32,7 @@ namespace Mupen
     core_ctx* g_core_ctx = nullptr;
 
 void core_init(core_cfg config) {
-    g_core_cfg = config;
+    g_core_cfg = std::move(config);
     g_core_params = {
         .cfg = &g_core_cfg,
         .callbacks = {},
@@ -52,6 +52,10 @@ void core_init(core_cfg config) {
         .log_error = [](const std::string& str) {
             core_logger().error(str);
         },
+
+        // 
+        .load_plugins = []() { return false; },
+        .initiate_plugins = []() {},
     };
 }
 }

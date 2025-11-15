@@ -61,11 +61,6 @@ extern "C"
         uint32_t size;
 
         /**
-         * @brief Opaque pointer for the core, to be passed into forwarded functions.
-         */
-        void *core_ptr;
-
-        /**
          * @brief Logs the specified message at the trace level.
          */
         void (CALL *log_trace)(const char *);
