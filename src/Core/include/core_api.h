@@ -97,22 +97,22 @@ extern "C"
         /**
          * \brief Logs the specified message at the trace level.
          */
-        void (*log_trace)(const std::string &);
+        void (*log_trace)(std::string_view);
 
         /**
          * \brief Logs the specified message at the info level.
          */
-        void (*log_info)(const std::string &);
+        void (*log_info)(std::string_view);
 
         /**
          * \brief Logs the specified message at the warning level.
          */
-        void (*log_warn)(const std::string &);
+        void (*log_warn)(std::string_view);
 
         /**
          * \brief Logs the specified message at the error level.
          */
-        void (*log_error)(const std::string &);
+        void (*log_error)(std::string_view);
 
         /**
          * \brief Loads the plugins specified by the config paths.
@@ -162,7 +162,7 @@ extern "C"
          * the index specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<size_t(const std::string &id, const std::vector<std::string> &choices, const char *str,
+        std::function<size_t(std::string_view id, const std::vector<std::string> &choices, const char *str,
                              const char *title, core_dialog_type type)>
             show_multiple_choice_dialog;
 
@@ -176,7 +176,7 @@ extern "C"
          * the value specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<bool(const std::string &id, const char *str, const char *title, bool warning)> show_ask_dialog;
+        std::function<bool(std::string_view id, const char *str, const char *title, bool warning)> show_ask_dialog;
 
         /**
          * \brief Shows the user a dialog.
@@ -481,8 +481,8 @@ extern "C"
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(const std::filesystem::path &path, const std::string &author,
-                                  const std::string &description)>
+        std::function<core_result(const std::filesystem::path &path, std::string_view author,
+                                  std::string_view description)>
             vcr_replace_author_info;
 
         /**
@@ -722,7 +722,7 @@ extern "C"
          * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
          * \return Whether the compilation was successful.
          */
-        std::function<bool(const std::string &code, core_cheat &cheat)> cht_compile;
+        std::function<bool(std::string_view code, core_cheat &cheat)> cht_compile;
 
         /**
          * \brief Gets the cheat override stack.

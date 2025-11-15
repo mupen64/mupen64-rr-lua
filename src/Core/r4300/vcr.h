@@ -76,8 +76,8 @@ core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<core_b
 core_result vcr_start_playback(std::filesystem::path path);
 core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description);
 core_result vcr_continue_recording();
-core_result vcr_replace_author_info(const std::filesystem::path &path, const std::string &author,
-                                    const std::string &description);
+core_result vcr_replace_author_info(const std::filesystem::path &path, std::string_view author,
+                                    std::string_view description);
 core_vcr_seek_info vcr_get_seek_info();
 core_result vcr_begin_seek(std::string str, bool pause_at_end);
 void vcr_stop_seek();
