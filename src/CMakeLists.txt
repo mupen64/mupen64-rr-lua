@@ -13,7 +13,7 @@ add_subdirectory(Common)
 add_subdirectory(Core)
 
 
-if (WIN32)
+if (MUPEN64RR_BUILD_WIN32)
     # VIEW
     # ============================
 
