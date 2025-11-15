@@ -1118,17 +1118,17 @@ static core_result init_core()
     g_main_ctx.core.callbacks.seek_status_changed = []() {
         Messenger::broadcast(Messenger::Message::SeekStatusChanged, nullptr);
     };
-    g_main_ctx.core.log_trace = [](const auto &str) { g_core_logger->trace(str); };
-    g_main_ctx.core.log_info = [](const auto &str) { g_core_logger->info(str); };
-    g_main_ctx.core.log_warn = [](const auto &str) { g_core_logger->warn(str); };
-    g_main_ctx.core.log_error = [](const auto &str) { g_core_logger->error(str); };
+    g_main_ctx.core.log_trace = [](std::string_view str) { g_core_logger->trace(str); };
+    g_main_ctx.core.log_info = [](std::string_view str) { g_core_logger->info(str); };
+    g_main_ctx.core.log_warn = [](std::string_view str) { g_core_logger->warn(str); };
+    g_main_ctx.core.log_error = [](std::string_view str) { g_core_logger->error(str); };
     g_main_ctx.core.load_plugins = PluginUtil::load_plugins;
     g_main_ctx.core.initiate_plugins = PluginUtil::initiate_plugins;
     g_main_ctx.core.submit_task = [](const auto cb) { ThreadPool::submit_task(cb); };
     g_main_ctx.core.get_saves_directory = Config::save_directory;
     g_main_ctx.core.get_backups_directory = Config::backup_directory;
     g_main_ctx.core.get_summercart_path = get_summercart_path;
-    g_main_ctx.core.show_multiple_choice_dialog = [](const std::string &id, const std::vector<std::string> &choices,
+    g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title, core_dialog_type type) {
         auto choices_wide = choices |
                             std::views::transform([](std::string value) { return IOUtils::to_wide_string(value); }) |
@@ -1138,7 +1138,7 @@ static core_result init_core()
 
         return DialogService::show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(), type);
     };
-    g_main_ctx.core.show_ask_dialog = [](const std::string &id, const char *str, const char *title, bool warning) {
+    g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
         auto str_wide = IOUtils::to_wide_string(str);
         auto title_wide = IOUtils::to_wide_string(title);
         return DialogService::show_ask_dialog(id, str_wide.c_str(), title_wide.c_str(), warning);

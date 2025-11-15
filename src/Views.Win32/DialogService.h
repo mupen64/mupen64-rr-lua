@@ -23,7 +23,7 @@ namespace DialogService
  * specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function
  * will return the last choice.
  */
-size_t show_multiple_choice_dialog(const std::string &id, const std::vector<std::wstring> &choices, const wchar_t *str,
+size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices, const wchar_t *str,
                                    const wchar_t *title = nullptr, core_dialog_type type = fsvc_warning,
                                    void *hwnd = nullptr, const wchar_t *details = nullptr);
 
@@ -38,7 +38,7 @@ size_t show_multiple_choice_dialog(const std::string &id, const std::vector<std:
  * specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this function
  * will return the last choice.
  */
-bool show_ask_dialog(const std::string &id, const wchar_t *str, const wchar_t *title = nullptr, bool warning = false,
+bool show_ask_dialog(std::string_view id, const wchar_t *str, const wchar_t *title = nullptr, bool warning = false,
                      void *hwnd = nullptr);
 
 /**
