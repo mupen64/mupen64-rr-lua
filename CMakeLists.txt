@@ -98,7 +98,7 @@ if (MUPEN64RR_BUILD_QT6)
   qt6_standard_project_setup()
   
   # we're boosting it (TODO: configure vcpkg with the needed libs)
-  find_package(Boost REQUIRED COMPONENTS system filesystem)
+  find_package(Boost REQUIRED COMPONENTS filesystem)
 endif()
 
 # CMake modules

@@ -2,7 +2,6 @@
 #include "core_api.h"
 #include "core_plugin.h"
 #include "mupapi.h"
-#include "util/exepath.hpp"
 #include <boost/dll.hpp>
 #include <boost/filesystem/detail/path_traits.hpp>
 #include <stdexcept>
@@ -113,7 +112,7 @@ PluginInfo extract_plugin_info(const std::filesystem::path &path)
     return {.path = path, .info = std::move(info)};
 }
 
-PluginSet::PluginSet(std::filesystem::path video_path, std::filesystem::path audio_path,
+PluginSet::PluginSet(mup_core_functions core_functions, std::filesystem::path video_path, std::filesystem::path audio_path,
                      std::filesystem::path input_path, std::filesystem::path rsp_path)
     : m_video_plugin(bfs::path(video_path)), m_audio_plugin(bfs::path(audio_path)),
       m_input_plugin(bfs::path(input_path)), m_rsp_plugin(bfs::path(rsp_path))
@@ -138,16 +137,15 @@ PluginSet::PluginSet(std::filesystem::path video_path, std::filesystem::path aud
         if (info.type != plugin_rsp) throw std::invalid_argument("RSP plugin path does not point to an RSP plugin");
 
         auto exe_path_str = boost::dll::program_location().string();
-        auto core_functions = mup_core_functions {
-            .size = sizeof(mup_core_functions),
-        };
 
         m_video_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
         m_audio_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
         m_input_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
         m_rsp_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
     }
+}
 
+PluginSet::~PluginSet() {
     
 }
 
@@ -277,8 +275,6 @@ void PluginSet::initiate_rsp(core_ctx &ctx, core_params& params)
         .dpc_pipebusy_reg = &ctx.dpc_register->dpc_pipebusy,
         .dpc_tmem_reg = &ctx.dpc_register->dpc_tmem,
         .check_interrupts = dummy_void,
-        // RSP is initialized last because it needs callbacks to the other plugins,
-        // this is completely f
         .process_dlist_list = params.video_process_dlist,
         .process_alist_list = params.audio_process_alist,
         .process_rdp_list = params.video_process_rdp_list,
