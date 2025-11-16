@@ -35,6 +35,7 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.Views.Qt6.Headers
     Qt6::Widgets
     Boost::boost
+    Boost::filesystem
     spdlog::spdlog
 )
 

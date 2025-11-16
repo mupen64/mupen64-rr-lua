@@ -1,7 +1,6 @@
 #ifndef UI_MAIN_WINDOW_HPP_INCLUDED
 #define UI_MAIN_WINDOW_HPP_INCLUDED
 
-#include <qwindow.h>
 #include <QtGui>
 #include <memory>
 #include "ui_MainWindow.h"

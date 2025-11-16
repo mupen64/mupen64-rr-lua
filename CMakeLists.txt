@@ -26,8 +26,8 @@ if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
 endif()
 
 set(MUPEN64RR_BUILD_WIN32 ON CACHE BOOL "If on, enables the Win32 view and plugins.")
-if (NOT "${WIN32}")
-  set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
+if (NOT WIN32)
+  set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
 
 
@@ -98,7 +98,7 @@ if (MUPEN64RR_BUILD_QT6)
   qt6_standard_project_setup()
   
   # we're boosting it (TODO: configure vcpkg with the needed libs)
-  find_package(Boost REQUIRED COMPONENTS filesystem)
+  find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
 endif()
 
 # CMake modules
