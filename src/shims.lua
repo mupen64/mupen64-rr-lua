@@ -18,7 +18,7 @@ end
 emu.debugview = print
 
 -- emu.setgfx deprecated, no-op
-emu.setgfx = function (_) end
+emu.setgfx = function(_) end
 
 -- emu.isreadonly deprecated, forwarded to movie.get_readonly
 emu.isreadonly = movie.get_readonly
@@ -52,3 +52,19 @@ memory.recompilenow = memory.recompile
 
 -- memory.recompilenext deprecated, forwarded to memory.recompile
 memory.recompilenext = memory.recompile
+
+---Saves a savestate to `filename`.
+---@param filename string
+---@return nil
+---@deprecated This function is not guaranteed to succeed successfully or at any specific point in time. Use `savestate.do_file` instead.
+function savestate.savefile(filename)
+    savestate.do_file(filename, "save")
+end
+
+---Loads a savestate from `filename`.
+---@param filename string
+---@return nil
+---@deprecated This function is not guaranteed to succeed successfully or at any specific point in time. Use `savestate.do_file` instead.
+function savestate.loadfile(filename)
+    savestate.do_file(filename, "load")
+end

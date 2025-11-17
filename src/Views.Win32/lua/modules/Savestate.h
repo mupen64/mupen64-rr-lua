@@ -11,32 +11,6 @@
 
 namespace LuaCore::Savestate
 {
-static int SaveFileSavestate(lua_State *L)
-{
-    const std::string path = lua_tostring(L, 1);
-
-    g_main_ctx.core_ctx->vr_wait_increment();
-    ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
-    });
-
-    return 0;
-}
-
-static int LoadFileSavestate(lua_State *L)
-{
-    const std::string path = lua_tostring(L, 1);
-
-    g_main_ctx.core_ctx->vr_wait_increment();
-    ThreadPool::submit_task([=] {
-        g_main_ctx.core_ctx->vr_wait_decrement();
-        g_main_ctx.core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
-    });
-
-    return 0;
-}
-
 static core_st_job lua_to_savestate_job(lua_State *l, const int i)
 {
     const std::string str = lua_tostring(l, i);
