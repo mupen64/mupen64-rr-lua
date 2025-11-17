@@ -54,8 +54,14 @@
 			<img src={mupen64} alt="Mupen64 Logo" class="object-fit w-10" />
 			<p class="text-2xl font-bold">Mupen64 Organization</p>
 		</div>
-		<a class="link" href="https://github.com/mupen64/website">Website source on GitHub</a>
-		<p>© 2025 Mupen64 Organization</p>
+		<p class="mb-5 max-w-2xl text-center">
+			The Mupen64 Organization is a shared-ownership organization maintained by developers around
+			the world.
+			<br />
+			Feel free to contribute!
+		</p>
+
+		<a class="link" href="https://github.com/mupen64">© 2025 Mupen64 Organization</a>
 		<p>Licensed under GNU GPL v2 License</p>
 	</div>
 </footer>

@@ -36,7 +36,7 @@
 		</div>
 	</section>
 
-	<section id="features" class="p-16 pb-0">
+	<section id="features" class="p-16">
 		<div class="mx-auto max-w-6xl">
 			<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
 				<hr class="w-15 border-2 border-dashed border-red-600" />
@@ -107,25 +107,6 @@
 					<p class="text-xl font-semibold">🎮 Cheats</p>
 					<p class="text-sm">Support for GameShark cheats and GS button emulation.</p>
 				</div>
-			</div>
-		</div>
-	</section>
-
-	<section id="projects" class="p-16">
-		<div class="mx-auto max-w-6xl">
-			<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-				<p>About Us</p>
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-			</div>
-
-			<div class="flex w-full flex-col items-center justify-center gap-8">
-				<p class="text-center">
-					The Mupen64 Organization is a shared-ownership organization maintained by developers
-					around the world.
-					<br />
-					Feel free to contribute!
-				</p>
 			</div>
 		</div>
 	</section>
