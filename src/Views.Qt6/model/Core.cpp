@@ -7,11 +7,15 @@
 #include "Core.hpp"
 #include "Plugin.hpp"
 #include "core_api.h"
+#include "core_types.h"
 #include "mupapi.h"
+#include <boost/dll/runtime_symbol_info.hpp>
 #include <cassert>
 #include <exception>
+#include <filesystem>
 #include <functional>
 #include <future>
+#include <memory>
 #include <optional>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
@@ -38,17 +42,17 @@ core_ctx *g_core_ctx = nullptr;
 
 static std::optional<PluginPaths> g_plugin_paths = std::nullopt;
 static std::optional<PluginSet> g_curr_plugins = std::nullopt;
-static std::optional<std::function<mup_wm_handle(const mupv_wm_settings &)>> g_create_window = std::nullopt;
+static std::unique_ptr<ICoreService> g_core_service = nullptr;
 
 void core_log(spdlog::level::level_enum level, std::string_view message)
 {
     core_logger().log(level, message);
 }
 
-void core_init(core_cfg config, const std::function<mup_wm_handle(const mupv_wm_settings &)> &create_window)
+void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
 {
     g_core_cfg = std::move(config);
-    g_create_window = create_window;
+    g_core_service = std::move(core_service);
 
     g_core_params = core_params{
         .cfg = &g_core_cfg,
@@ -100,15 +104,47 @@ void core_init(core_cfg config, const std::function<mup_wm_handle(const mupv_wm_
         .initiate_plugins =
             []() {
                 assert(g_curr_plugins.has_value());
-                assert(g_create_window.has_value());
+                assert(g_core_service.get() != nullptr);
                 g_curr_plugins->resolve_functions_to(g_core_params);
-                g_curr_plugins->initiate_all(*g_core_ctx, g_core_params, *g_create_window);
+                g_curr_plugins->initiate_all(*g_core_ctx, g_core_params, *g_core_service);
             },
         .submit_task =
             [](const std::function<void()> &fn) {
                 // this is entirely a set-and-forget thing.
                 std::ignore = std::async(fn);
             },
+        .get_saves_directory =
+            []() {
+                auto boost_dir = boost::dll::program_location();
+                auto saves_dir = std::filesystem::path(boost_dir.c_str()).parent_path() / "saves";
+                if (!std::filesystem::is_directory(saves_dir)) std::filesystem::create_directory(saves_dir);
+                return saves_dir;
+            },
+        .get_backups_directory =
+            []() {
+                auto boost_dir = boost::dll::program_location();
+                auto saves_dir = std::filesystem::path(boost_dir.c_str()).parent_path() / "backups";
+                if (!std::filesystem::is_directory(saves_dir)) std::filesystem::create_directory(saves_dir);
+                return saves_dir;
+            },
+        .show_multiple_choice_dialog = [](const std::string &id, const std::vector<std::string> &choices, const char *str, const char *title, core_dialog_type type) {
+            return g_core_service->show_choice_dialog(id, choices, title, str, type); 
+        },
+        .show_ask_dialog = [](const std::string &id, const char *str, const char *title, bool warning) {
+            using namespace std::literals;
+            static const std::array yes_no_choices = std::array {"Yes"s, "No"s};
+
+            auto type = warning? fsvc_warning : fsvc_information;
+            auto res = g_core_service->show_choice_dialog(id, yes_no_choices, title, str, type) == 0;
+            return false; 
+        },
+        .show_dialog = [](const char *str, const char *title, core_dialog_type type) {
+            g_core_service->show_info_dialog(title, str, type);
+        },
+        .find_available_rom =
+            [](const std::function<bool(const core_rom_header &)> &predicate) { return std::filesystem::path(""); },
+        .mge_available = []() { return false; },
+        .load_screen = [](void *data) {},
     };
 }
 } // namespace Mupen

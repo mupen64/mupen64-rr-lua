@@ -1,4 +1,5 @@
 #include "Plugin.hpp"
+#include "Core.hpp"
 #include "core_api.h"
 #include "core_plugin.h"
 #include "mupapi.h"
@@ -179,7 +180,7 @@ void PluginSet::resolve_functions_to(core_params &params)
 }
 
 void PluginSet::initiate_video(core_ctx &ctx,
-                               const std::function<mup_wm_handle(const mupv_wm_settings &)> &create_window)
+                               const ICoreService& core_service)
 {
     auto gfx_info = core_gfx_info{
         .byteswapped = 1,
@@ -216,7 +217,7 @@ void PluginSet::initiate_video(core_ctx &ctx,
     m_video_plugin.MUP_FN(mupv_init)(gfx_info, &wm_settings);
 
     // pass child window to gfx
-    auto wm_handle = create_window(wm_settings);
+    auto wm_handle = core_service.setup_window(wm_settings);
     m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
 }
 
@@ -283,10 +284,9 @@ void PluginSet::initiate_rsp(core_ctx &ctx, core_params& params)
     m_rsp_plugin.MUP_FN(mupr_init)(rsp_info);
 }
 
-void PluginSet::initiate_all(core_ctx &ctx, core_params &params,
-                             const std::function<mup_wm_handle(const mupv_wm_settings &)> &create_window)
+void PluginSet::initiate_all(core_ctx &ctx, core_params &params, const ICoreService& core_service)
 {
-    initiate_video(ctx, create_window);
+    initiate_video(ctx, core_service);
     initiate_audio(ctx);
     initiate_input(ctx, params);
     initiate_rsp(ctx, params);

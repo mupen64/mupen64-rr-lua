@@ -1,6 +1,7 @@
 #ifndef MODEL_PLUGIN_HPP_INCLUDED
 #define MODEL_PLUGIN_HPP_INCLUDED
 
+#include "Core.hpp"
 #include "core_api.h"
 #include "core_plugin.h"
 #include "mupapi.h"
@@ -74,11 +75,10 @@ class PluginSet final
      * @param ctx A core_ctx created using core_create.
      * @param create_window A callback to the frontend to create a window using the provided settings.
      */
-    void initiate_all(core_ctx &ctx, core_params &params,
-                      const std::function<mup_wm_handle(const mupv_wm_settings &)> &create_window);
+    void initiate_all(core_ctx &ctx, core_params &params, const ICoreService& core_service);
 
   private:
-    void initiate_video(core_ctx &ctx, const std::function<mup_wm_handle(const mupv_wm_settings &)> &create_window);
+    void initiate_video(core_ctx &ctx, const ICoreService& core_service);
     void initiate_audio(core_ctx &ctx);
     void initiate_input(core_ctx &ctx, core_params &params);
     void initiate_rsp(core_ctx &ctx, core_params &params);
