@@ -1139,8 +1139,8 @@ core_result vcr_continue_recording()
     return Res_Ok;
 }
 
-core_result vcr_replace_author_info(const std::filesystem::path &path, const std::string &author,
-                                    const std::string &description)
+core_result vcr_replace_author_info(const std::filesystem::path &path, std::string_view author,
+                                    std::string_view description)
 {
     // 0. validate lengths
     if (author.size() > 222 || description.size() > 256)
@@ -1165,7 +1165,8 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, const std
     }
 
     // 2. Compare author and description fields, and don't do any work if they remained identical
-    if (!strcmp(hdr.author, author.c_str()) && !strcmp(hdr.description, description.c_str()))
+    
+    if (author == std::string_view(hdr.author) && description == std::string_view(hdr.description))
     {
         g_core->log_info("[VCR] Movie author or description didn't change, returning early...");
         return Res_Ok;

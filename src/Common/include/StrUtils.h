@@ -140,4 +140,29 @@ inline std::wstring_view ctrim_wstring(std::wstring_view str) {
     return str.substr(start_idx, len);
 }
 
+template <class CharT, class Traits = std::char_traits<CharT>>
+struct StringHash {
+    using is_transparent = void;
+
+    size_t operator()(std::basic_string_view<CharT, Traits> str) const {
+        return std::hash<std::basic_string_view<CharT, Traits>> {}(str);
+    }
+
+    size_t operator()(const CharT* str) const {
+        return std::hash<std::basic_string_view<CharT, Traits>> {}(str);
+    }
+
+    size_t operator()(const std::basic_string<CharT, Traits>& str) const {
+        return std::hash<std::basic_string<CharT, Traits>> {}(str);
+    }
+};
+
+// map using std::string as the key that can perform efficient lookup with other string types.
+template <class V>
+using unordered_string_map = std::unordered_map<std::string, V, StringHash<char>, std::equal_to<>>;
+
+// map using std::wstring as the key that can perform efficient lookup with other string types.
+template <class V>
+using unordered_wstring_map = std::unordered_map<std::wstring, V, StringHash<wchar_t>, std::equal_to<>>;
+
 } // namespace StrUtils

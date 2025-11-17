@@ -33,7 +33,7 @@ extern "C"
     // ReSharper restore CppInconsistentNaming
 }
 
-static void log_dummy(const std::string &)
+static void log_dummy(std::string_view)
 {
 }
 
