@@ -69,6 +69,20 @@ class PluginSet final
      * @param params The core_params struct to save the function pointers to
      */
     void resolve_functions_to(core_params &params);
+
+    /**
+     * @brief Copies the names of the 4 plugins into the 4 provided pointers.
+     *
+     * The pointers, if non-null, should point to a slice of at least 64 bytes in length.
+     * Names obtained will be trimmed to this length. If null, no copy is performed.
+     * 
+     * @param video Pointer to store the video plugin's name to.
+     * @param audio Pointer to store the audio plugin's name to.
+     * @param input Pointer to store the input plugin's name to.
+     * @param rsp Pointer to store the RSP plugin's name to.
+     */
+    void extract_names(char* video, char* audio, char* input, char* rsp);
+
     /**
      * @brief Performs plugin-specific init for all 4 plugins.
      *
@@ -87,6 +101,11 @@ class PluginSet final
     boost::dll::shared_library m_audio_plugin;
     boost::dll::shared_library m_input_plugin;
     boost::dll::shared_library m_rsp_plugin;
+
+    fp_mup_get_info m_video_get_info = nullptr;
+    fp_mup_get_info m_audio_get_info = nullptr;
+    fp_mup_get_info m_input_get_info = nullptr;
+    fp_mup_get_info m_rsp_get_info = nullptr;
 };
 } // namespace Mupen
 

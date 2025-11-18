@@ -37,7 +37,6 @@ extern "C"
 {
 #endif
 
-#define MUPAPI_PLUGIN_DECLS
 #ifdef MUPAPI_PLUGIN_DECLS
 #define MUPAPI_DEFINE_FN(rt_type, name, ...)                                                                           \
     rt_type name(__VA_ARGS__);                                                                                         \

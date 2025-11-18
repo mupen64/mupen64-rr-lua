@@ -5,6 +5,7 @@
 #include "mupapi.h"
 #include <boost/dll.hpp>
 #include <boost/filesystem/detail/path_traits.hpp>
+#include <cstring>
 #include <stdexcept>
 
 namespace dll = boost::dll;
@@ -113,41 +114,77 @@ PluginInfo extract_plugin_info(const std::filesystem::path &path)
     return {.path = path, .info = std::move(info)};
 }
 
-PluginSet::PluginSet(mup_core_functions core_functions, std::filesystem::path video_path, std::filesystem::path audio_path,
-                     std::filesystem::path input_path, std::filesystem::path rsp_path)
+PluginSet::PluginSet(mup_core_functions core_functions, std::filesystem::path video_path,
+                     std::filesystem::path audio_path, std::filesystem::path input_path, std::filesystem::path rsp_path)
     : m_video_plugin(bfs::path(video_path)), m_audio_plugin(bfs::path(audio_path)),
       m_input_plugin(bfs::path(input_path)), m_rsp_plugin(bfs::path(rsp_path))
 {
-    {
-        // check that all 4 plugins are the correct type
-        core_plugin_info info = {};
+    // check that all 4 plugins are the correct type
+    core_plugin_info info = {};
 
-        m_video_plugin.MUP_FN(mup_get_info)(&info);
-        if (info.type != plugin_video) throw std::invalid_argument("video plugin path does not point to a video plugin");
+    m_video_get_info = m_video_plugin.MUP_FN(mup_get_info);
+    m_audio_get_info = m_audio_plugin.MUP_FN(mup_get_info);
+    m_input_get_info = m_input_plugin.MUP_FN(mup_get_info);
+    m_rsp_get_info = m_rsp_plugin.MUP_FN(mup_get_info);
 
-        info = {};
-        m_audio_plugin.MUP_FN(mup_get_info)(&info);
-        if (info.type != plugin_audio) throw std::invalid_argument("audio plugin path does not point to an audio plugin");
+    m_video_get_info(&info);
+    if (info.type != plugin_video) throw std::invalid_argument("video plugin path does not point to a video plugin");
 
-        info = {};
-        m_input_plugin.MUP_FN(mup_get_info)(&info);
-        if (info.type != plugin_input) throw std::invalid_argument("input plugin path does not point to an input plugin");
+    info = {};
+    m_audio_get_info(&info);
+    if (info.type != plugin_audio) throw std::invalid_argument("audio plugin path does not point to an audio plugin");
 
-        info = {};
-        m_rsp_plugin.MUP_FN(mup_get_info)(&info);
-        if (info.type != plugin_rsp) throw std::invalid_argument("RSP plugin path does not point to an RSP plugin");
+    info = {};
+    m_input_get_info(&info);
+    if (info.type != plugin_input) throw std::invalid_argument("input plugin path does not point to an input plugin");
 
-        auto exe_path_str = boost::dll::program_location().string();
+    info = {};
+    m_rsp_get_info(&info);
+    if (info.type != plugin_rsp) throw std::invalid_argument("RSP plugin path does not point to an RSP plugin");
 
-        m_video_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
-        m_audio_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
-        m_input_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
-        m_rsp_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
-    }
+    auto exe_path_str = boost::dll::program_location().string();
+
+    m_video_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
+    m_audio_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
+    m_input_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
+    m_rsp_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
 }
 
-PluginSet::~PluginSet() {
-    
+PluginSet::~PluginSet()
+{
+    // This is called to free any remaining resources before unloading the libraries.
+    m_video_plugin.MUP_FN(mup_drop)();
+    m_audio_plugin.MUP_FN(mup_drop)();
+    m_input_plugin.MUP_FN(mup_drop)();
+    m_rsp_plugin.MUP_FN(mup_drop)();
+}
+
+void PluginSet::extract_names(char* video, char* audio, char* input, char* rsp) {
+    core_plugin_info info;
+
+    if (video != nullptr) {
+        info = {};
+        m_video_get_info(&info);
+        strncpy(video, info.name, 64);
+    }
+
+    if (audio != nullptr) {
+        info = {};
+        m_audio_get_info(&info);
+        strncpy(audio, info.name, 64);
+    }
+
+    if (input != nullptr) {
+        info = {};
+        m_input_get_info(&info);
+        strncpy(input, info.name, 64);
+    }
+
+    if (rsp != nullptr) {
+        info = {};
+        m_rsp_get_info(&info);
+        strncpy(rsp, info.name, 64);
+    }
 }
 
 void PluginSet::resolve_functions_to(core_params &params)
@@ -179,8 +216,7 @@ void PluginSet::resolve_functions_to(core_params &params)
     params.rsp_do_rsp_cycles = m_rsp_plugin.MUP_FN(mupr_do_rsp_cycles);
 }
 
-void PluginSet::initiate_video(core_ctx &ctx,
-                               const ICoreService& core_service)
+void PluginSet::initiate_video(core_ctx &ctx, const ICoreService &core_service)
 {
     auto gfx_info = core_gfx_info{
         .byteswapped = 1,
@@ -250,7 +286,7 @@ void PluginSet::initiate_input(core_ctx &ctx, core_params &params)
     m_input_plugin.MUP_FN(mupi_init)(input_info);
 }
 
-void PluginSet::initiate_rsp(core_ctx &ctx, core_params& params)
+void PluginSet::initiate_rsp(core_ctx &ctx, core_params &params)
 {
     auto rsp_info = core_rsp_info{
         .byteswapped = 1,
@@ -284,7 +320,7 @@ void PluginSet::initiate_rsp(core_ctx &ctx, core_params& params)
     m_rsp_plugin.MUP_FN(mupr_init)(rsp_info);
 }
 
-void PluginSet::initiate_all(core_ctx &ctx, core_params &params, const ICoreService& core_service)
+void PluginSet::initiate_all(core_ctx &ctx, core_params &params, const ICoreService &core_service)
 {
     initiate_video(ctx, core_service);
     initiate_audio(ctx);
