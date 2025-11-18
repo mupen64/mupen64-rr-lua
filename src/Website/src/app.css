@@ -1,0 +1,71 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@theme {
+	--font-sans: 'Titillium Web', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	--color-surface-1: oklch(0.2562 0 0);
+	--color-surface-2: oklch(0.2771 0 0);
+	--color-surface-3: oklch(0.32 0 0);
+	--color-surface-1-light: oklch(0.95 0 0);
+	--color-surface-2-light: oklch(0.9 0 0);
+	--color-surface-3-light: oklch(0.87 0 0);
+}
+
+html {
+	@apply bg-surface-1-light dark:bg-surface-1 text-black dark:text-gray-100;
+}
+
+button,
+.button {
+	@apply flex flex-row items-center gap-2 rounded-md px-4 py-2;
+}
+
+button.primary,
+.button.primary {
+	@apply border-2 border-white bg-red-600 font-semibold shadow-md shadow-red-400 outline-2 outline-black hover:bg-red-700 active:bg-red-800;
+}
+
+button.secondary,
+.button.secondary {
+	@apply bg-red-600 font-semibold shadow-sm hover:bg-red-700 active:bg-red-800;
+}
+
+a.link::before {
+	content: '🔗 ';
+}
+
+a.link {
+	@apply border-b-[1px] border-dashed border-b-red-600 hover:font-bold;
+}
+
+.card {
+	@apply flex flex-col gap-2 rounded-2xl border-t-2 border-b-2 border-t-red-600/20 border-b-red-600/50 p-4 shadow-md dark:bg-[#272727];
+}
+
+.note::before {
+	content: 'ℹ️ Note';
+	@apply font-bold; 
+}
+
+.note {
+	@apply my-2 p-2 pr-10 border-l-2 border-blue-500 text-blue-500 bg-blue-300/10;
+}
+
+.warn::before {
+	content: '⚠️ Warning';
+	@apply font-bold; 
+}
+
+.warn {
+	@apply my-2 p-2 pr-10 border-l-2 border-yellow-500 text-yellow-500 bg-yellow-300/10;
+}
+
+.caution::before {
+	content: '🛑 Caution';
+	@apply font-bold; 
+}
+
+.caution {
+	@apply my-2 p-2 pr-10 border-l-2 border-red-500 text-red-500 bg-red-300/10;
+}
