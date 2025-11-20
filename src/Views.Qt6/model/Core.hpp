@@ -7,6 +7,7 @@
 #ifndef MODEL_CORE_HPP_INCLUDED
 #define MODEL_CORE_HPP_INCLUDED
 
+#include "Plugin.hpp"
 #include "core_types.h"
 #include "mupapi.h"
 #include <core_api.h>
@@ -66,7 +67,11 @@ class ICoreService
     virtual mup_wm_handle setup_window(const mupv_wm_settings &settings) const = 0;
 };
 
-void init_core(core_cfg config, std::unique_ptr<ICoreService> &&core_service);
+void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service);
+
+void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin_paths);
+
+void core_stop();
 
 void core_log(spdlog::level::level_enum level, std::string_view message);
 } // namespace Mupen

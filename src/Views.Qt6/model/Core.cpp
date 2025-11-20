@@ -67,7 +67,16 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
 
     g_core_params = core_params{
         .cfg = &g_core_cfg,
-        .callbacks = {.emu_stopped = []() {}},
+        .callbacks =
+            {
+                .emu_stopped =
+                    []() {
+                        std::scoped_lock _lock(core_state_mutex());
+                        g_rom_path = std::nullopt;
+                        g_plugin_paths = std::nullopt;
+                        g_curr_plugins = std::nullopt;
+                    },
+            },
         .controls = {},
 
         // CORE HOOKS
@@ -161,7 +170,7 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
                 assert(g_curr_plugins.has_value());
                 g_curr_plugins->extract_names(video, audio, input, rsp);
             },
-        };
+    };
 }
 
 void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin_paths)

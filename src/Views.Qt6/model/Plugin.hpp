@@ -1,7 +1,6 @@
 #ifndef MODEL_PLUGIN_HPP_INCLUDED
 #define MODEL_PLUGIN_HPP_INCLUDED
 
-#include "Core.hpp"
 #include "core_api.h"
 #include "core_plugin.h"
 #include "mupapi.h"
@@ -11,6 +10,8 @@
 
 namespace Mupen
 {
+
+class ICoreService;
 
 struct PluginPaths
 {
