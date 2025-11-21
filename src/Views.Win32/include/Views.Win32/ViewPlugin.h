@@ -137,7 +137,7 @@ extern "C"
     /**
      * \brief Exposes an extended set of functions to plugins.
      */
-    struct core_forward_funcs
+    struct core_plugin_extended_funcs
     {
         /**
          * \brief Size of the structure in bytes.
@@ -170,7 +170,7 @@ extern "C"
     typedef void(CALL *DLLCONFIG)(void *);
     typedef void(CALL *DLLTEST)(void *);
     typedef void(CALL *GETDLLINFO)(core_plugin_info *);
-    typedef void(CALL *RECEIVEEXTENDEDFUNCS)(core_forward_funcs *);
+    typedef void(CALL *RECEIVEEXTENDEDFUNCS)(core_plugin_extended_funcs *);
 
     typedef void(CALL *CHANGEWINDOW)();
     typedef int32_t(CALL *INITIATEGFX)(core_gfx_info);
