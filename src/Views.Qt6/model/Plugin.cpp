@@ -12,6 +12,18 @@ namespace dll = boost::dll;
 namespace bfs = boost::filesystem;
 
 #define MUP_FN(name) get<fp_##name>(#name)
+#define MUP_GET(dest, lib, name, dummy)                                                                                \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (lib.has(#name))                                                                                            \
+        {                                                                                                              \
+            dest = lib.get<fp_##name>(#name);                                                                           \
+        }                                                                                                              \
+        else                                                                                                           \
+        {                                                                                                              \
+            dest = dummy;                                                                                              \
+        }                                                                                                              \
+    } while (false);
 
 #pragma region Dummy Functions
 
@@ -87,7 +99,7 @@ static void CALL dummy_fb_write(uint32_t, uint32_t)
 {
 }
 
-static void CALL dummy_fb_get_framebuffer_info(void *)
+static void CALL dummy_get_fb_info(void *)
 {
 }
 
@@ -159,28 +171,33 @@ PluginSet::~PluginSet()
     m_rsp_plugin.MUP_FN(mup_drop)();
 }
 
-void PluginSet::extract_names(char* video, char* audio, char* input, char* rsp) {
+void PluginSet::extract_names(char *video, char *audio, char *input, char *rsp)
+{
     core_plugin_info info;
 
-    if (video != nullptr) {
+    if (video != nullptr)
+    {
         info = {};
         m_video_get_info(&info);
         strncpy(video, info.name, 64);
     }
 
-    if (audio != nullptr) {
+    if (audio != nullptr)
+    {
         info = {};
         m_audio_get_info(&info);
         strncpy(audio, info.name, 64);
     }
 
-    if (input != nullptr) {
+    if (input != nullptr)
+    {
         info = {};
         m_input_get_info(&info);
         strncpy(input, info.name, 64);
     }
 
-    if (rsp != nullptr) {
+    if (rsp != nullptr)
+    {
         info = {};
         m_rsp_get_info(&info);
         strncpy(rsp, info.name, 64);
@@ -190,30 +207,30 @@ void PluginSet::extract_names(char* video, char* audio, char* input, char* rsp) 
 void PluginSet::resolve_functions_to(core_params &params)
 {
     // video plugin
-    params.video_process_dlist = m_video_plugin.MUP_FN(mupv_process_d_list);
-    params.video_process_rdp_list = m_video_plugin.MUP_FN(mupv_process_rdp_list);
-    params.video_show_cfb = m_video_plugin.MUP_FN(mupv_show_cfb);
-    params.video_vi_status_changed = m_video_plugin.MUP_FN(mupv_vi_status_changed);
-    params.video_vi_width_changed = m_video_plugin.MUP_FN(mupv_vi_width_changed);
-    params.video_fb_read = m_video_plugin.MUP_FN(mupv_fb_read);
-    params.video_fb_write = m_video_plugin.MUP_FN(mupv_fb_write);
-    params.video_fb_get_frame_buffer_info = m_video_plugin.MUP_FN(mupv_get_fb_info);
+    MUP_GET(params.video_process_dlist, m_video_plugin, mupv_process_d_list, dummy_void);
+    MUP_GET(params.video_process_rdp_list, m_video_plugin, mupv_process_rdp_list, dummy_void);
+    MUP_GET(params.video_show_cfb, m_video_plugin, mupv_show_cfb, dummy_void);
+    MUP_GET(params.video_vi_status_changed, m_video_plugin, mupv_vi_status_changed, dummy_void);
+    MUP_GET(params.video_vi_width_changed, m_video_plugin, mupv_vi_width_changed, dummy_void);
+    MUP_GET(params.video_fb_read, m_video_plugin, mupv_fb_read, dummy_fb_read);
+    MUP_GET(params.video_fb_write, m_video_plugin, mupv_fb_write, dummy_fb_write);
+    MUP_GET(params.video_fb_get_frame_buffer_info, m_video_plugin, mupv_get_fb_info, dummy_get_fb_info);
 
     // audio plugin
-    params.audio_ai_dacrate_changed = m_audio_plugin.MUP_FN(mupa_ai_dacrate_changed);
-    params.audio_ai_len_changed = m_audio_plugin.MUP_FN(mupa_ai_len_changed);
-    params.audio_ai_read_length = m_audio_plugin.MUP_FN(mupa_ai_read_length);
-    params.audio_process_alist = m_audio_plugin.MUP_FN(mupa_process_a_list);
-    params.audio_ai_update = m_audio_plugin.MUP_FN(mupa_ai_update);
+    MUP_GET(params.audio_ai_dacrate_changed, m_audio_plugin, mupa_ai_dacrate_changed, dummy_ai_dacrate_changed);
+    MUP_GET(params.audio_ai_len_changed, m_audio_plugin, mupa_ai_len_changed, dummy_void);
+    MUP_GET(params.audio_ai_read_length, m_audio_plugin, mupa_ai_read_length, dummy_ai_read_length);
+    MUP_GET(params.audio_process_alist, m_audio_plugin, mupa_process_a_list, dummy_void);
+    MUP_GET(params.audio_ai_update, m_audio_plugin, mupa_ai_update, dummy_ai_update);
 
     // input plugin
-    params.input_controller_command = m_input_plugin.MUP_FN(mupi_controller_command);
-    params.input_get_keys = m_input_plugin.MUP_FN(mupi_get_keys);
-    params.input_set_keys = m_input_plugin.MUP_FN(mupi_set_keys);
-    params.input_read_controller = m_input_plugin.MUP_FN(mupi_read_controller);
+    MUP_GET(params.input_controller_command, m_input_plugin, mupi_controller_command, dummy_controller_command);
+    MUP_GET(params.input_get_keys, m_input_plugin, mupi_get_keys, dummy_get_keys);
+    MUP_GET(params.input_set_keys, m_input_plugin, mupi_set_keys, dummy_set_keys);
+    MUP_GET(params.input_read_controller, m_input_plugin, mupi_read_controller, dummy_read_controller);
 
     // rsp plugin
-    params.rsp_do_rsp_cycles = m_rsp_plugin.MUP_FN(mupr_do_rsp_cycles);
+    MUP_GET(params.rsp_do_rsp_cycles, m_rsp_plugin, mupr_do_rsp_cycles, dummy_do_rsp_cycles);
 }
 
 void PluginSet::initiate_video(core_ctx &ctx, const ICoreService &core_service)
