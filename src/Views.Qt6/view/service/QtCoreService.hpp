@@ -23,7 +23,7 @@ class QtCoreService final : Mupen::ICoreService
      * not to see this dialog, returns the last chosen option.
      */
     virtual size_t show_choice_dialog(std::string_view id, std::span<const std::string> choices, std::string_view title,
-                                      std::string_view message, core_dialog_type type) const;
+                                      std::string_view message, core_dialog_type type);
 
     /**
      * @brief Display an info dialog with an "OK" button.
@@ -32,7 +32,7 @@ class QtCoreService final : Mupen::ICoreService
      * @param message The message of the dialog.
      * @param type The icon to display alongside the dialog text.
      */
-    virtual void show_info_dialog(std::string_view title, std::string_view message, core_dialog_type type) const;
+    virtual void show_info_dialog(std::string_view title, std::string_view message, core_dialog_type type);
 
     /**
      * @brief Assuming the UI is switched into game view, requests that the render window be created and sized.
@@ -40,7 +40,7 @@ class QtCoreService final : Mupen::ICoreService
      * @param settings The settings to apply.
      * @return mup_wm_handle A handle to the set-up window.
      */
-    virtual mup_wm_handle setup_window(const mupv_wm_settings &settings) const;
+    virtual mup_wm_handle setup_window(const mupv_wm_settings &settings);
 
   private:
     MainWindow *m_main_window;

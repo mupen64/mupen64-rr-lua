@@ -15,7 +15,7 @@
  * not to see this dialog, returns the last chosen option.
  */
 size_t QtCoreService::show_choice_dialog(std::string_view id, std::span<const std::string> choices,
-                                         std::string_view title, std::string_view message, core_dialog_type type) const
+                                         std::string_view title, std::string_view message, core_dialog_type type)
 {
     {
         auto saved = m_saved_choices.find(id);
@@ -25,7 +25,17 @@ size_t QtCoreService::show_choice_dialog(std::string_view id, std::span<const st
             return saved->second;
         }
     }
-    // QMetaObject::invokeMethod()
+    std::pair<size_t, bool> result;
+    bool call_worked = QMetaObject::invokeMethod(m_main_window, &MainWindow::showChoiceDialog, &result);
+    assert(call_worked);
+
+    // save the choice if needed
+    if (result.second)
+    {
+        m_saved_choices.emplace(std::piecewise_construct, std::forward_as_tuple(id),
+                                std::forward_as_tuple(result.first));
+    }
+    return result.first;
 }
 
 /**
@@ -35,8 +45,9 @@ size_t QtCoreService::show_choice_dialog(std::string_view id, std::span<const st
  * @param message The message of the dialog.
  * @param type The icon to display alongside the dialog text.
  */
-void QtCoreService::show_info_dialog(std::string_view title, std::string_view message, core_dialog_type type) const
+void QtCoreService::show_info_dialog(std::string_view title, std::string_view message, core_dialog_type type)
 {
+    
 }
 
 /**
@@ -45,6 +56,7 @@ void QtCoreService::show_info_dialog(std::string_view title, std::string_view me
  * @param settings The settings to apply.
  * @return mup_wm_handle A handle to the set-up window.
  */
-mup_wm_handle QtCoreService::setup_window(const mupv_wm_settings &settings) const
+mup_wm_handle QtCoreService::setup_window(const mupv_wm_settings &settings)
 {
+    return mup_wm_handle {};
 }

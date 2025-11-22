@@ -304,7 +304,8 @@ extern "C"
 
     enum mupv_backend
     {
-        MUPV_BK_RASTER = 0,
+        MUPV_BK_NONE = 0,
+        MUPV_BK_RASTER,
         MUPV_BK_OPENGL,
         MUPV_BK_VULKAN,
         MUPV_BK_DIRECTX,

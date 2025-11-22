@@ -233,7 +233,7 @@ void PluginSet::resolve_functions_to(core_params &params)
     MUP_GET(params.rsp_do_rsp_cycles, m_rsp_plugin, mupr_do_rsp_cycles, dummy_do_rsp_cycles);
 }
 
-void PluginSet::initiate_video(core_ctx &ctx, const ICoreService &core_service)
+void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
 {
     auto gfx_info = core_gfx_info{
         .byteswapped = 1,
@@ -266,12 +266,14 @@ void PluginSet::initiate_video(core_ctx &ctx, const ICoreService &core_service)
         .vi_y_scale_reg = &ctx.vi_register->vi_y_scale,
     };
     // init and request window settings
-    auto wm_settings = mupv_wm_settings{};
+    auto wm_settings = mupv_wm_settings_default();
     m_video_plugin.MUP_FN(mupv_init)(gfx_info, &wm_settings);
 
-    // pass child window to gfx
-    auto wm_handle = core_service.setup_window(wm_settings);
-    m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
+    if (wm_settings.backend != MUPV_BK_NONE) {
+        // pass child window to gfx
+        auto wm_handle = core_service.setup_window(wm_settings);
+        m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
+    }
 }
 
 void PluginSet::initiate_audio(core_ctx &ctx)
@@ -337,7 +339,7 @@ void PluginSet::initiate_rsp(core_ctx &ctx, core_params &params)
     m_rsp_plugin.MUP_FN(mupr_init)(rsp_info);
 }
 
-void PluginSet::initiate_all(core_ctx &ctx, core_params &params, const ICoreService &core_service)
+void PluginSet::initiate_all(core_ctx &ctx, core_params &params, ICoreService &core_service)
 {
     initiate_video(ctx, core_service);
     initiate_audio(ctx);

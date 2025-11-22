@@ -49,7 +49,7 @@ class ICoreService
      * not to see this dialog, returns the last chosen option.
      */
     virtual size_t show_choice_dialog(std::string_view id, std::span<const std::string> choices, std::string_view title,
-                                      std::string_view message, core_dialog_type type) const = 0;
+                                      std::string_view message, core_dialog_type type) = 0;
 
     /**
      * @brief Display an info dialog with an "OK" button.
@@ -58,7 +58,7 @@ class ICoreService
      * @param message The message of the dialog.
      * @param type The icon to display alongside the dialog text.
      */
-    virtual void show_info_dialog(std::string_view title, std::string_view message, core_dialog_type type) const = 0;
+    virtual void show_info_dialog(std::string_view title, std::string_view message, core_dialog_type type) = 0;
 
     /**
      * @brief Assuming the UI is switched into game view, requests that the render window be created and sized.
@@ -66,7 +66,7 @@ class ICoreService
      * @param settings The settings to apply.
      * @return mup_wm_handle A handle to the set-up window.
      */
-    virtual mup_wm_handle setup_window(const mupv_wm_settings &settings) const = 0;
+    virtual mup_wm_handle setup_window(const mupv_wm_settings &settings) = 0;
 };
 
 void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service);
