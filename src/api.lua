@@ -1440,16 +1440,6 @@ function movie.begin_warp_modify(inputs) end
 -- savestate functions
 --#region
 
----Saves a savestate to `filename`.
----@param filename string
----@return nil
-function savestate.savefile(filename) end
-
----Loads a savestate from `filename`.
----@param filename string
----@return nil
-function savestate.loadfile(filename) end
-
 ---A byte buffer encoded as a string.
 ---@alias ByteBuffer string
 

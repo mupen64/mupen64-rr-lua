@@ -95,6 +95,34 @@ lust.describe('mupen64', function()
                 lust.expect(printed_str:find("deprecated") ~= nil).to.equal(true)
             end)
         end)
+        lust.describe('savestate', function()
+            lust.it('savefile_calls_dofile', function()
+                local FILENAME = "test.st"
+
+                __prev_savestate_do_file = savestate.do_file
+                savestate.do_file = function(filename, mode)
+                    lust.expect(filename).to.equal(FILENAME)
+                    lust.expect(mode).to.equal("save")
+                end
+
+                savestate.savefile(FILENAME)
+
+                savestate.do_file = __prev_savestate_do_file
+            end)
+            lust.it('loadfile_calls_dofile', function()
+                local FILENAME = "test.st"
+
+                __prev_savestate_do_file = savestate.do_file
+                savestate.do_file = function(filename, mode)
+                    lust.expect(filename).to.equal(FILENAME)
+                    lust.expect(mode).to.equal("load")
+                end
+
+                savestate.loadfile(FILENAME)
+
+                savestate.do_file = __prev_savestate_do_file
+            end)
+        end)
         lust.describe('input', function()
             lust.it('map_virtual_key_ex_exists_and_prints_deprecation', function()
                 __prev_print = print

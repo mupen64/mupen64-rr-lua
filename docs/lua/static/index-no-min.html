@@ -556,14 +556,6 @@
                 <a href="#savestateFuncs">SAVESTATE FUNCTIONS</a>
             </div>
             <div class="funcList">
-                <a href="#savestateSavefile">
-                    <button class="funcListItem" onclick="highlightFunc('savestateSavefile')">SAVESTATE.SAVEFILE</button>
-                </a>
-                
-                <a href="#savestateLoadfile">
-                    <button class="funcListItem" onclick="highlightFunc('savestateLoadfile')">SAVESTATE.LOADFILE</button>
-                </a>
-                
                 <a href="#savestateDo_file">
                     <button class="funcListItem" onclick="highlightFunc('savestateDo_file')">SAVESTATE.DO_FILE</button>
                 </a>
@@ -1649,7 +1641,7 @@ For example, if <code>t1</code> is the inputs for this frame, and <code>t2</code
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">table</span>
 </code></pre></div></div><div name="inputPrompt"><hr />
 <h1><a id="inputPrompt">input.prompt</a></h1>
-<p>Opens a dialog in which the user can input text. 
+<p>Opens a dialog in which the user can input text.
 If the dialog is cancelled, <code>nil</code> is returned.</p>
 <p>@<em>param</em> <code>title</code> — The title of the text box. Defaults to <code>"input:"</code>.</p>
 <p>@<em>param</em> <code>placeholder</code> — The text box is filled with this string when it opens. Defaults to <code>""</code>.</p>
@@ -1753,17 +1745,7 @@ It will error if no movie is playing.</p>
 <p>Begins a warp modify.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">movie</span><span class="p">.</span><span class="nf">begin_warp_modify</span><span class="p">(</span><span class="nv">inputs</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">[</span><span class="nc">string</span><span class="p">]:</span><span class="w"> </span><span class="nc">boolean</span><span class="w"> </span><span class="p">}[])</span>
 </code></pre></div></div><hr />
-<h1><a id="savestateFuncs">SAVESTATE</a> FUNCTIONS</h1><div name="savestateSavefile"><hr />
-<h1><a id="savestateSavefile">savestate.savefile</a></h1>
-<p>Saves a savestate to <code>filename</code>.</p>
-<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">savestate</span><span class="p">.</span><span class="nf">savefile</span><span class="p">(</span><span class="nv">filename</span><span class="p">:</span><span class="w"> </span><span class="nc">string</span><span class="p">)</span>
-<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
-</code></pre></div></div><div name="savestateLoadfile"><hr />
-<h1><a id="savestateLoadfile">savestate.loadfile</a></h1>
-<p>Loads a savestate from <code>filename</code>.</p>
-<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">savestate</span><span class="p">.</span><span class="nf">loadfile</span><span class="p">(</span><span class="nv">filename</span><span class="p">:</span><span class="w"> </span><span class="nc">string</span><span class="p">)</span>
-<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
-</code></pre></div></div><div name="savestateDo_file"><hr />
+<h1><a id="savestateFuncs">SAVESTATE</a> FUNCTIONS</h1><div name="savestateDo_file"><hr />
 <h1><a id="savestateDo_file">savestate.do_file</a></h1>
 <p>Executes a savestate operation to a path.</p>
 <p>@<em>param</em> <code>path</code> — The savestate's path.</p>

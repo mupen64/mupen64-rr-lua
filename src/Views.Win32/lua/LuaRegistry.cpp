@@ -187,8 +187,7 @@ const luaL_Reg MOVIE_FUNCS[] = {{"play", LuaCore::Movie::play},
                                 {"begin_warp_modify", LuaCore::Movie::begin_warp_modify},
                                 {NULL, NULL}};
 
-const luaL_Reg SAVESTATE_FUNCS[] = {{"savefile", LuaCore::Savestate::SaveFileSavestate},
-                                    {"loadfile", LuaCore::Savestate::LoadFileSavestate},
+const luaL_Reg SAVESTATE_FUNCS[] = {
                                     {"do_file", LuaCore::Savestate::do_file},
                                     {"do_slot", LuaCore::Savestate::do_slot},
                                     {"do_memory", LuaCore::Savestate::do_memory},
