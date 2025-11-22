@@ -7,17 +7,17 @@
 #ifndef MODEL_CORE_HPP_INCLUDED
 #define MODEL_CORE_HPP_INCLUDED
 
-#include "Plugin.hpp"
-#include "core_types.h"
-#include "mupapi.h"
 #include <core_api.h>
 #include <memory>
 #include <span>
 #include <spdlog/common.h>
 #include <string>
 #include <string_view>
-#include <vector>
 
+#include "Plugin.hpp"
+#include "core_types.h"
+#include "mupapi.h"
+#include "StrUtils.h"
 namespace Mupen
 {
 extern core_cfg g_core_cfg;
@@ -33,7 +33,9 @@ extern core_ctx *g_core_ctx;
 class ICoreService
 {
   public:
-    virtual ~ICoreService();
+    ICoreService() {}
+
+    virtual ~ICoreService() {}
 
     /**
      * @brief Display a multiple-choice dialog, if the user has not requested to hide it.

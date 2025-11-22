@@ -17,9 +17,11 @@ qt_add_executable(Mupen64RR.Views.Qt6
     "model/Core.cpp"
     "model/Plugin.hpp"
     "model/Plugin.cpp"
-    "ui/MainWindow.hpp"
-    "ui/MainWindow.cpp"
-    "ui/MainWindow.ui"
+    "view/service/QtCoreService.hpp"
+    "view/service/QtCoreService.cpp"
+    "view/MainWindow.hpp"
+    "view/MainWindow.cpp"
+    "view/MainWindow.ui"
 )
 set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
     CXX_STANDARD 23

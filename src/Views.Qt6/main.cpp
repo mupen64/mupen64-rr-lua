@@ -4,15 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "ui/MainWindow.hpp"
-#include <chrono>
-#include <qapplication.h>
+#include "view/MainWindow.hpp"
+#include <QApplication>
 
 #include <core_api.h>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
-#include <thread>
 
 int main(int argc, char *argv[])
 {
