@@ -59,7 +59,7 @@ class PluginSet final
      * @param input_path path to the input plugin
      * @param rsp_path path to the rsp plugin
      */
-    PluginSet(mup_core_functions core_funcs, std::filesystem::path video_path, std::filesystem::path audio_path,
+    PluginSet(core_plugin_extended_funcs core_funcs, std::filesystem::path video_path, std::filesystem::path audio_path,
               std::filesystem::path input_path, std::filesystem::path rsp_path);
 
     ~PluginSet();

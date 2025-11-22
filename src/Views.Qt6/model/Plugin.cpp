@@ -126,7 +126,7 @@ PluginInfo extract_plugin_info(const std::filesystem::path &path)
     return {.path = path, .info = std::move(info)};
 }
 
-PluginSet::PluginSet(mup_core_functions core_functions, std::filesystem::path video_path,
+PluginSet::PluginSet(core_plugin_extended_funcs core_functions, std::filesystem::path video_path,
                      std::filesystem::path audio_path, std::filesystem::path input_path, std::filesystem::path rsp_path)
     : m_video_plugin(bfs::path(video_path)), m_audio_plugin(bfs::path(audio_path)),
       m_input_plugin(bfs::path(input_path)), m_rsp_plugin(bfs::path(rsp_path))

@@ -78,7 +78,7 @@ extern "C"
          * @brief Logs the specified message at the error level.
          */
         void (CALL *log_error)(const char *);
-    } mup_core_functions;
+    } core_plugin_extended_funcs;
 
     /**
      * \brief Describes information about a video plugin.
@@ -265,7 +265,7 @@ extern "C"
      * @param exe_dir The directory in which mupen64(.exe) is located.
      * @param fwd_funcs A table with functions passed from the core.
      */
-    MUPAPI_DEFINE_FN(core_result, mup_init, const char *exe_dir, const mup_core_functions *fwd_funcs);
+    MUPAPI_DEFINE_FN(core_result, mup_init, const char *exe_dir, const core_plugin_extended_funcs *fwd_funcs);
 
     /**
      * @brief Cleans up all plugin resources. Should be called immediately before unloading.

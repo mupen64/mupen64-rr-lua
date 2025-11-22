@@ -90,8 +90,8 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
             []() {
                 assert(g_curr_plugins.has_value());
 
-                auto core_functions = mup_core_functions{
-                    .size = sizeof(mup_core_functions),
+                auto core_functions = core_plugin_extended_funcs{
+                    .size = sizeof(core_plugin_extended_funcs),
                     .log_trace = [](const char *x) { core_log(spdlog::level::trace, x); },
                     .log_info = [](const char *x) { core_log(spdlog::level::info, x); },
                     .log_warn = [](const char *x) { core_log(spdlog::level::warn, x); },
