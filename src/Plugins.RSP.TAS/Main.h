@@ -29,7 +29,7 @@
 
 extern HINSTANCE g_instance;
 extern std::filesystem::path g_app_path;
-extern core_plugin_extended_funcs* g_ef;
+extern core_plugin_extended_funcs *g_ef;
 
 bool rsp_alive();
 void on_rom_closed();

@@ -53,8 +53,7 @@ static t_config get_default_config()
 
     for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
     {
-        config.silent_mode_dialog_choices[IOUtils::to_wide_string(pair.first)] =
-            std::to_wstring(pair.second);
+        config.silent_mode_dialog_choices[IOUtils::to_wide_string(pair.first)] = std::to_wstring(pair.second);
     }
 
     return config;
@@ -186,8 +185,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         auto &map = ini[key];
         for (auto &pair : map)
         {
-            value[IOUtils::to_wide_string(pair.first)] =
-                IOUtils::to_wide_string(pair.second);
+            value[IOUtils::to_wide_string(pair.first)] = IOUtils::to_wide_string(pair.second);
         }
     }
     else
@@ -197,8 +195,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         // value = value
         for (auto &pair : value)
         {
-            ini[key][IOUtils::to_utf8_string(pair.first)] =
-                IOUtils::to_utf8_string(pair.second);
+            ini[key][IOUtils::to_utf8_string(pair.first)] = IOUtils::to_utf8_string(pair.second);
         }
     }
 }
@@ -497,8 +494,8 @@ static void migrate_config(t_config &config, const mINI::INIStructure &ini)
         {
         }
 
-        g_view_logger->info(L"[Config] Migrating {} -> {} ({})",
-                            IOUtils::to_wide_string(old_section_name), action, hotkey.to_wstring());
+        g_view_logger->info(L"[Config] Migrating {} -> {} ({})", IOUtils::to_wide_string(old_section_name), action,
+                            hotkey.to_wstring());
         config.hotkeys[action] = hotkey;
         config.inital_hotkeys[action] = hotkey;
     };

@@ -20,16 +20,13 @@
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-
 #endif
-
-
 
 // https://github.com/mupen64plus/mupen64plus-core/blob/e170c409fb006aa38fd02031b5eefab6886ec125/src/device/r4300/recomp.c#L995
 
 #if defined(__linux__)
 static std::mutex page_size_map_lock;
-static std::unordered_map<void*, size_t> page_alloc_sizes;
+static std::unordered_map<void *, size_t> page_alloc_sizes;
 #endif
 
 void *malloc_exec(size_t size)
@@ -37,9 +34,8 @@ void *malloc_exec(size_t size)
 #ifdef _WIN32
     return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 #elif defined(__linux__)
-    void* block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (block == MAP_FAILED)
-        return NULL;
+    void *block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (block == MAP_FAILED) return NULL;
 
     // allocation succeeded
     {

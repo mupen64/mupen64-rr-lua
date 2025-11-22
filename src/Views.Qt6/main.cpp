@@ -14,10 +14,11 @@
 #include <spdlog/spdlog.h>
 #include <thread>
 
-int main(int argc, char* argv[]) {
-  QApplication app(argc, argv);
-  // start the Qt mainloop
-  MainWindow mainWindow;
-  mainWindow.show();
-  return QApplication::exec();
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    // start the Qt mainloop
+    MainWindow mainWindow;
+    mainWindow.show();
+    return QApplication::exec();
 }

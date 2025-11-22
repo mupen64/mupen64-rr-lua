@@ -36,20 +36,20 @@ static uint32_t fake_AI_STATUS_REG;
 static uint32_t fake_AI_DACRATE_REG;
 static uint32_t fake_AI_BITRATE_REG;
 
-static void log_shim(const wchar_t* str)
+static void log_shim(const wchar_t *str)
 {
     wprintf(str);
 }
 
 static core_plugin_extended_funcs ef_shim = {
-.size = sizeof(core_plugin_extended_funcs),
-.log_trace = log_shim,
-.log_info = log_shim,
-.log_warn = log_shim,
-.log_error = log_shim,
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = log_shim,
+    .log_info = log_shim,
+    .log_warn = log_shim,
+    .log_error = log_shim,
 };
 
-core_plugin_extended_funcs* g_ef = &ef_shim;
+core_plugin_extended_funcs *g_ef = &ef_shim;
 
 /**
  * \brief Loads the audio plugin's globals
@@ -385,7 +385,7 @@ EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
     return do_rsp_cycles(Cycles);
 }
 
-EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs* funcs)
+EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
 }
