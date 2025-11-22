@@ -16,34 +16,38 @@ MainWindow::MainWindow(QMainWindow *parent) : QMainWindow(parent)
     connect(ui.actCloseRom, &QAction::triggered, this, &MainWindow::onCloseRom);
 }
 
-std::pair<size_t, bool> MainWindow::showChoiceDialog(const std::vector<QString>& choices, const QString &title,
+std::pair<size_t, bool> MainWindow::showChoiceDialog(const std::vector<QString> &choices, const QString &title,
                                                      const QString &text, QMessageBox::Icon icon)
 {
-  using namespace Qt::StringLiterals;
-  // list of push buttons for choices (to be checked after)
-  auto buttonList = std::vector<QPushButton*> {};
-  buttonList.reserve(choices.size());
+    // list of push buttons for choices (to be checked after)
+    auto buttonList = std::vector<QPushButton *>{};
+    buttonList.reserve(choices.size());
 
-  // setup the dialog
-  auto messageBox = QMessageBox(icon, title, text, QMessageBox::NoButton, this);
+    // setup the dialog
+    auto messageBox = QMessageBox(icon, title, text, QMessageBox::NoButton, this);
 
+    // setup buttons and checkbox
+    for (auto &choice : choices)
+    {
+        auto choiceBtn = new QPushButton(choice);
+        buttonList.push_back(choiceBtn);
+        messageBox.addButton(choiceBtn, QMessageBox::NoRole);
+    }
 
-  // setup buttons and checkbox
-  for (auto& choice : choices) {
-    auto choiceBtn = new QPushButton(choice);
-    buttonList.push_back(choiceBtn);
-    messageBox.addButton(choiceBtn, QMessageBox::NoRole);
-  }
+    auto choiceCheckbox = new QCheckBox(tr("Don't show again"));
+    messageBox.setCheckBox(choiceCheckbox);
 
-  auto choiceCheckbox = new QCheckBox(tr("Don't show again"));
-  messageBox.setCheckBox(choiceCheckbox);
+    // show the dialog
+    messageBox.exec();
 
-  // show the dialog
-  messageBox.exec();
-  
-  size_t index = std::ranges::find(buttonList, messageBox.clickedButton()) - buttonList.begin();
-  bool dontShowAgain = choiceCheckbox->isChecked();
-  return {index, dontShowAgain};
+    size_t index = std::ranges::find(buttonList, messageBox.clickedButton()) - buttonList.begin();
+    bool dontShowAgain = choiceCheckbox->isChecked();
+    return {index, dontShowAgain};
+}
+std::pair<size_t, bool> MainWindow::showInfoDialog(const QString &title, const QString &text, QMessageBox::Icon icon)
+{
+    auto messageBox = QMessageBox(icon, title, text, QMessageBox::Ok, this);
+    messageBox.exec();
 }
 
 void MainWindow::onOpenRom(bool state)

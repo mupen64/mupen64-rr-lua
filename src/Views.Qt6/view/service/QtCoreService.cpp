@@ -1,5 +1,7 @@
 #include "QtCoreService.hpp"
 #include <QMessageBox>
+#include <ranges>
+#include <vector>
 #include "StrUtils.h"
 #include "../utils.hpp"
 
@@ -25,8 +27,28 @@ size_t QtCoreService::show_choice_dialog(std::string_view id, std::span<const st
             return saved->second;
         }
     }
+
     std::pair<size_t, bool> result;
-    bool call_worked = QMetaObject::invokeMethod(m_main_window, &MainWindow::showChoiceDialog, &result);
+
+    auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<std::vector>();
+    auto qt_title = str_to_qstring(title);
+    auto qt_message = str_to_qstring(message);
+    auto qt_icon = QMessageBox::NoIcon;
+    switch (type)
+    {
+    case fsvc_error:
+        qt_icon = QMessageBox::Critical;
+        break;
+    case fsvc_warning:
+        qt_icon = QMessageBox::Warning;
+        break;
+    case fsvc_information:
+        qt_icon = QMessageBox::Information;
+        break;
+    }
+
+    bool call_worked = QMetaObject::invokeMethod(m_main_window, &MainWindow::showChoiceDialog, qReturnArg(result),
+                                                 qt_choices, qt_title, qt_message, qt_icon);
     assert(call_worked);
 
     // save the choice if needed
@@ -47,8 +69,27 @@ size_t QtCoreService::show_choice_dialog(std::string_view id, std::span<const st
  */
 void QtCoreService::show_info_dialog(std::string_view title, std::string_view message, core_dialog_type type)
 {
-    
+    auto qt_title = str_to_qstring(title);
+    auto qt_message = str_to_qstring(message);
+    auto qt_icon = QMessageBox::NoIcon;
+    switch (type)
+    {
+    case fsvc_error:
+        qt_icon = QMessageBox::Critical;
+        break;
+    case fsvc_warning:
+        qt_icon = QMessageBox::Warning;
+        break;
+    case fsvc_information:
+        qt_icon = QMessageBox::Information;
+        break;
+    }
+
+    bool call_worked =
+        QMetaObject::invokeMethod(m_main_window, &MainWindow::showInfoDialog, qt_title, qt_message, qt_icon);
+    assert(call_worked);
 }
+
 
 /**
  * @brief Assuming the UI is switched into game view, requests that the render window be created and sized.
@@ -58,5 +99,5 @@ void QtCoreService::show_info_dialog(std::string_view title, std::string_view me
  */
 mup_wm_handle QtCoreService::setup_window(const mupv_wm_settings &settings)
 {
-    return mup_wm_handle {};
+    return mup_wm_handle{};
 }

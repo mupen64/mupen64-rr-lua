@@ -324,7 +324,7 @@ extern "C"
      */
     inline mupv_wm_settings mupv_wm_settings_default()
     {
-        return mupv_wm_settings{.width = 640, .height = 480, .backend = MUPV_BK_OPENGL};
+        return mupv_wm_settings{.width = 0, .height = 0, .backend = MUPV_BK_NONE};
     }
 
     /**
