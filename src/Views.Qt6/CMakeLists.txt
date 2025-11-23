@@ -1,3 +1,9 @@
+#[===[
+Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+
+SPDX-License-Identifier: GPL-2.0-or-later
+]===]
+
 add_library(Mupen64RR.Views.Qt6.Headers INTERFACE
     "include/mupapi.h"
 )
@@ -13,15 +19,18 @@ target_link_libraries(Mupen64RR.Views.Qt6.Headers INTERFACE
 
 qt_add_executable(Mupen64RR.Views.Qt6
     "main.cpp"
-    "model/Core.hpp"
     "model/Core.cpp"
-    "model/Plugin.hpp"
+    "model/Core.hpp"
+    "model/Logging.cpp"
+    "model/Logging.hpp"
     "model/Plugin.cpp"
-    "view/service/QtCoreService.hpp"
+    "model/Plugin.hpp"
     "view/service/QtCoreService.cpp"
-    "view/MainWindow.hpp"
+    "view/service/QtCoreService.hpp"
     "view/MainWindow.cpp"
+    "view/MainWindow.hpp"
     "view/MainWindow.ui"
+    "view/Utils.hpp"
 )
 set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
     CXX_STANDARD 23

@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "view/MainWindow.hpp"
 #include <QApplication>
 
-#include <core_api.h>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
+
+#include "view/MainWindow.hpp"
+#include "view/service/QtCoreService.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -18,5 +19,8 @@ int main(int argc, char *argv[])
     // start the Qt mainloop
     MainWindow mainWindow;
     mainWindow.show();
+
+    Mupen::core_init(core_cfg{}, std::unique_ptr<Mupen::ICoreService>(new QtCoreService(&mainWindow)));
+
     return QApplication::exec();
 }

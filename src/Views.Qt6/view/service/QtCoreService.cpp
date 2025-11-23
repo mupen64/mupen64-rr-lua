@@ -1,9 +1,15 @@
+/*
+ * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #include "QtCoreService.hpp"
 #include <QMessageBox>
 #include <ranges>
 #include <vector>
 #include "StrUtils.h"
-#include "../utils.hpp"
+#include "../Utils.hpp"
 
 /**
  * @brief Display a multiple-choice dialog, if the user has not requested to hide it.

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #ifndef MODEL_PLUGIN_HPP_INCLUDED
 #define MODEL_PLUGIN_HPP_INCLUDED
 
@@ -53,13 +59,12 @@ class PluginSet final
     /**
      * @brief Creates a new plugin set using the 4 plugins.
      *
-     * @param core_funcs A series of functions forwarded by the core.
      * @param video_path path to the video plugin
      * @param audio_path path to the audio plugin
      * @param input_path path to the input plugin
      * @param rsp_path path to the rsp plugin
      */
-    PluginSet(core_plugin_extended_funcs core_funcs, std::filesystem::path video_path, std::filesystem::path audio_path,
+    PluginSet(std::filesystem::path video_path, std::filesystem::path audio_path,
               std::filesystem::path input_path, std::filesystem::path rsp_path);
 
     ~PluginSet();

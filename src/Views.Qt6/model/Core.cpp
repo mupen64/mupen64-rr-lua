@@ -5,11 +5,7 @@
  */
 
 #include "Core.hpp"
-#include "Plugin.hpp"
-#include "core_api.h"
-#include "core_types.h"
-#include "mupapi.h"
-#include <boost/dll/runtime_symbol_info.hpp>
+
 #include <cassert>
 #include <exception>
 #include <filesystem>
@@ -18,20 +14,21 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <spdlog/common.h>
-#include <spdlog/logger.h>
 #include <tuple>
 #include <utility>
 
+#include <boost/dll/runtime_symbol_info.hpp>
+#include <spdlog/common.h>
+#include <spdlog/logger.h>
+
+#include "core_api.h"
+#include "core_types.h"
+
+#include "Plugin.hpp"
+#include "Logging.hpp"
+
 namespace
 {
-
-// core logger
-spdlog::logger &core_logger()
-{
-    static spdlog::logger logger("mupen64");
-    return logger;
-}
 
 std::mutex &core_state_mutex()
 {
@@ -54,7 +51,7 @@ static std::unique_ptr<ICoreService> g_core_service = nullptr;
 
 void core_log(spdlog::level::level_enum level, std::string_view message)
 {
-    core_logger().log(level, message);
+    Mupen::core_log().log(level, message);
 }
 
 void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
@@ -81,32 +78,23 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
 
         // CORE HOOKS
         // =====================
-        .log_trace = [](std::string_view str) { core_logger().trace(str); },
-        .log_info = [](std::string_view str) { core_logger().info(str); },
-        .log_warn = [](std::string_view str) { core_logger().warn(str); },
-        .log_error = [](std::string_view str) { core_logger().error(str); },
+        .log_trace = [](std::string_view str) { Mupen::core_log().trace(str); },
+        .log_info = [](std::string_view str) { Mupen::core_log().info(str); },
+        .log_warn = [](std::string_view str) { Mupen::core_log().warn(str); },
+        .log_error = [](std::string_view str) { Mupen::core_log().error(str); },
 
         .load_plugins =
             []() {
                 assert(g_curr_plugins.has_value());
 
-                auto core_functions = core_plugin_extended_funcs{
-                    .size = sizeof(core_plugin_extended_funcs),
-                    .log_trace = [](const char *x) { core_log(spdlog::level::trace, x); },
-                    .log_info = [](const char *x) { core_log(spdlog::level::info, x); },
-                    .log_warn = [](const char *x) { core_log(spdlog::level::warn, x); },
-                    .log_error = [](const char *x) { core_log(spdlog::level::err, x); },
-                };
-
                 if (!g_plugin_paths.has_value())
                 {
-                    core_logger().error("Plugin paths missing!");
+                    core_log().error("Plugin paths missing!");
                     return false;
                 }
                 try
                 {
                     auto plugins = PluginSet{
-                        core_functions,
                         g_plugin_paths->video_path,
                         g_plugin_paths->audio_path,
                         g_plugin_paths->input_path,
@@ -117,7 +105,7 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
                 }
                 catch (const std::exception &except)
                 {
-                    core_logger().error(except.what());
+                    core_log().error(except.what());
                     return false;
                 }
             },

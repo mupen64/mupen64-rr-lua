@@ -1,10 +1,16 @@
+/*
+ * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #ifndef SERVICE_QT_CORE_SERVICE_HPP_INCLUDED
 #define SERVICE_QT_CORE_SERVICE_HPP_INCLUDED
 
 #include "../view/MainWindow.hpp"
 #include "../model/Core.hpp"
 
-class QtCoreService final : Mupen::ICoreService
+class QtCoreService final : public Mupen::ICoreService
 {
   public:
     QtCoreService(MainWindow *main_window) : Mupen::ICoreService(), m_main_window(main_window), m_saved_choices() {}

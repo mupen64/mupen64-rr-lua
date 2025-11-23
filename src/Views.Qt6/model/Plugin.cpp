@@ -1,12 +1,22 @@
+/*
+ * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #include "Plugin.hpp"
-#include "Core.hpp"
+#include <cstring>
+#include <stdexcept>
+
+#include <boost/dll.hpp>
+#include <boost/filesystem/detail/path_traits.hpp>
+
 #include "core_api.h"
 #include "core_plugin.h"
 #include "mupapi.h"
-#include <boost/dll.hpp>
-#include <boost/filesystem/detail/path_traits.hpp>
-#include <cstring>
-#include <stdexcept>
+
+#include "Core.hpp"
+#include "Logging.hpp"
 
 namespace dll = boost::dll;
 namespace bfs = boost::filesystem;
@@ -17,7 +27,7 @@ namespace bfs = boost::filesystem;
     {                                                                                                                  \
         if (lib.has(#name))                                                                                            \
         {                                                                                                              \
-            dest = lib.get<fp_##name>(#name);                                                                           \
+            dest = lib.get<fp_##name>(#name);                                                                          \
         }                                                                                                              \
         else                                                                                                           \
         {                                                                                                              \
@@ -25,7 +35,8 @@ namespace bfs = boost::filesystem;
         }                                                                                                              \
     } while (false);
 
-#pragma region Dummy Functions
+// DUMMY FUNCTIONS
+// =============================================
 
 static uint32_t CALL dummy_do_rsp_cycles(uint32_t Cycles)
 {
@@ -107,7 +118,36 @@ static void CALL dummy_move_screen(int32_t, int32_t)
 {
 }
 
-#pragma endregion
+// logging callbacks for plugins
+// =============================================
+static core_plugin_extended_funcs video_ext_funcs{
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = [](const char *msg) { Mupen::video_log().trace(msg); },
+    .log_info = [](const char *msg) { Mupen::video_log().info(msg); },
+    .log_warn = [](const char *msg) { Mupen::video_log().warn(msg); },
+    .log_error = [](const char *msg) { Mupen::video_log().error(msg); },
+};
+static core_plugin_extended_funcs audio_ext_funcs{
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = [](const char *msg) { Mupen::audio_log().trace(msg); },
+    .log_info = [](const char *msg) { Mupen::audio_log().info(msg); },
+    .log_warn = [](const char *msg) { Mupen::audio_log().warn(msg); },
+    .log_error = [](const char *msg) { Mupen::audio_log().error(msg); },
+};
+static core_plugin_extended_funcs input_ext_funcs{
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = [](const char *msg) { Mupen::input_log().trace(msg); },
+    .log_info = [](const char *msg) { Mupen::input_log().info(msg); },
+    .log_warn = [](const char *msg) { Mupen::input_log().warn(msg); },
+    .log_error = [](const char *msg) { Mupen::input_log().error(msg); },
+};
+static core_plugin_extended_funcs rsp_ext_funcs{
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = [](const char *msg) { Mupen::rsp_log().trace(msg); },
+    .log_info = [](const char *msg) { Mupen::rsp_log().info(msg); },
+    .log_warn = [](const char *msg) { Mupen::rsp_log().warn(msg); },
+    .log_error = [](const char *msg) { Mupen::rsp_log().error(msg); },
+};
 
 namespace Mupen
 {
@@ -126,8 +166,8 @@ PluginInfo extract_plugin_info(const std::filesystem::path &path)
     return {.path = path, .info = std::move(info)};
 }
 
-PluginSet::PluginSet(core_plugin_extended_funcs core_functions, std::filesystem::path video_path,
-                     std::filesystem::path audio_path, std::filesystem::path input_path, std::filesystem::path rsp_path)
+PluginSet::PluginSet(std::filesystem::path video_path, std::filesystem::path audio_path,
+                     std::filesystem::path input_path, std::filesystem::path rsp_path)
     : m_video_plugin(bfs::path(video_path)), m_audio_plugin(bfs::path(audio_path)),
       m_input_plugin(bfs::path(input_path)), m_rsp_plugin(bfs::path(rsp_path))
 {
@@ -156,10 +196,10 @@ PluginSet::PluginSet(core_plugin_extended_funcs core_functions, std::filesystem:
 
     auto exe_path_str = boost::dll::program_location().string();
 
-    m_video_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
-    m_audio_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
-    m_input_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
-    m_rsp_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &core_functions);
+    m_video_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &video_ext_funcs);
+    m_audio_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &audio_ext_funcs);
+    m_input_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &input_ext_funcs);
+    m_rsp_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &rsp_ext_funcs);
 }
 
 PluginSet::~PluginSet()
@@ -269,7 +309,8 @@ void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
     auto wm_settings = mupv_wm_settings_default();
     m_video_plugin.MUP_FN(mupv_init)(gfx_info, &wm_settings);
 
-    if (wm_settings.backend != MUPV_BK_NONE) {
+    if (wm_settings.backend != MUPV_BK_NONE)
+    {
         // pass child window to gfx
         auto wm_handle = core_service.setup_window(wm_settings);
         m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
