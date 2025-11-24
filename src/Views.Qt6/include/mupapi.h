@@ -22,11 +22,10 @@
 #define EXPORT __declspec(dllexport)
 #define CALL __cdecl
 #elif defined(__linux__)
-#include <X11/Xlib.h>
 #include <xcb/xcb.h>
 #include <wayland-client-protocol.h>
 
-#define EXPORT
+#define EXPORT __attribute__ ((visibility ("default")))
 #define CALL
 #else
 #error Unsupported platform!
@@ -47,6 +46,8 @@ extern "C"
 
     // types
     // =============================
+
+    typedef struct _XDisplay Display;
 
     /**
      * @brief A list of forwarded functions that can be passed to child plugins.
@@ -250,7 +251,7 @@ extern "C"
             HWND win32_hwnd;
 #endif
 #ifdef __linux__
-            XID x11_xid;
+            xcb_window_t x11_xid;
             const char *wl_foreign_id;
 #endif
         } handle;

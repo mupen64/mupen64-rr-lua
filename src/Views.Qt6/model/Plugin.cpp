@@ -7,6 +7,7 @@
 #include "Plugin.hpp"
 #include <cstring>
 #include <stdexcept>
+#include <type_traits>
 
 #include <boost/dll.hpp>
 #include <boost/filesystem/detail/path_traits.hpp>
@@ -21,13 +22,13 @@
 namespace dll = boost::dll;
 namespace bfs = boost::filesystem;
 
-#define MUP_FN(name) get<fp_##name>(#name)
+#define MUP_FN(name) get<std::remove_pointer_t<fp_##name>>(#name)
 #define MUP_GET(dest, lib, name, dummy)                                                                                \
     do                                                                                                                 \
     {                                                                                                                  \
         if (lib.has(#name))                                                                                            \
         {                                                                                                              \
-            dest = lib.get<fp_##name>(#name);                                                                          \
+            dest = lib.get<std::remove_pointer_t<fp_##name>>(#name);                                                                          \
         }                                                                                                              \
         else                                                                                                           \
         {                                                                                                              \
@@ -173,7 +174,7 @@ PluginSet::PluginSet(std::filesystem::path video_path, std::filesystem::path aud
 {
     // check that all 4 plugins are the correct type
     core_plugin_info info = {};
-
+    
     m_video_get_info = m_video_plugin.MUP_FN(mup_get_info);
     m_audio_get_info = m_audio_plugin.MUP_FN(mup_get_info);
     m_input_get_info = m_input_plugin.MUP_FN(mup_get_info);

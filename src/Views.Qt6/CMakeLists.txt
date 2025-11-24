@@ -49,4 +49,5 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Boost::filesystem
     spdlog::spdlog
 )
+target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE dl)
 
