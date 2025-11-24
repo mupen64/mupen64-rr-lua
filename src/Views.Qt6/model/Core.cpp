@@ -85,7 +85,7 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
 
         .load_plugins =
             []() {
-                assert(g_curr_plugins.has_value());
+                assert(!g_curr_plugins.has_value());
 
                 if (!g_plugin_paths.has_value())
                 {
@@ -159,6 +159,11 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
                 g_curr_plugins->extract_names(video, audio, input, rsp);
             },
     };
+
+    auto res = ::core_create(&g_core_params, &g_core_ctx);
+    if (res != Res_Ok) {
+        core_log().critical("Core failed to load! ({})", (int) res);
+    }
 }
 
 void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin_paths)
@@ -170,5 +175,9 @@ void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin
     }
 
     g_core_ctx->vr_start_rom(rom_path);
+}
+
+void core_stop() {
+    g_core_ctx->vr_close_rom(true);
 }
 } // namespace Mupen

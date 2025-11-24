@@ -19,18 +19,20 @@ message(STATUS "The C++ compiler is: ${CMAKE_CXX_COMPILER}")
 
 # The dynamic recompiler will not work correctly on x86_64, so it is completely disabled for safety's sake.
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
+
+if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
   set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
 endif()
 
 # Win32 view can only be built on Windows.
 set(MUPEN64RR_BUILD_WIN32 ON CACHE BOOL "If on, enables the Win32 view and plugins.")
-if (NOT WIN32)
+
+if(NOT WIN32)
   set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
 
 # Qt view is targeting Linux first, then Windows afterwards.
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   set(MUPEN64RR_BUILD_QT6 ON CACHE BOOL "If on, enables the Qt6 view and plugins.")
 else()
   set(MUPEN64RR_BUILD_QT6 OFF CACHE BOOL "If on, enables the Qt6 view and plugins.")
@@ -45,7 +47,7 @@ if(NOT WIN32)
 endif()
 
 # version suffix
-if (DEFINED ENV{VERSION_SUFFIX})
+if(DEFINED ENV{VERSION_SUFFIX})
   set(MUPEN64RR_VERSION_SUFFIX "$ENV{VERSION_SUFFIX}")
 else()
   set(MUPEN64RR_VERSION_SUFFIX "")
@@ -63,7 +65,7 @@ set(CMAKE_SHARED_MODULE_PREFIX "")
 # default build type
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
-if(NOT CMAKE_BUILD_TYPE AND NOT is_multi_config)
+if(NOT "${CMAKE_BUILD_TYPE}" AND NOT "${is_multi_config}")
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "The build type to use with CMake. [Debug;Release;MinSizeRel;RelWithDebInfo]")
 endif()
 
@@ -94,24 +96,22 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
 endif()
 
 # If Qt6 enabled...
-if (MUPEN64RR_BUILD_QT6)
+if(MUPEN64RR_BUILD_QT6)
   find_package(Qt6 REQUIRED COMPONENTS Widgets)
   qt6_standard_project_setup()
-  
+
   # we're boosting it (TODO: configure vcpkg with the needed libs)
   find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
 endif()
 
 # CMake modules
 # =======================================
-
 include(CTest)
 include(Catch)
 
 # Extra config options for specific compilers/OSes
 # ===========================================
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
   # - disable Windows Data Execution Prevention (DEP)
@@ -120,23 +120,26 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_link_options(/DYNAMICBASE:NO /NXCOMPAT:NO /LARGEADDRESSAWARE /MANIFEST:NO)
 
   # Include compile options to enable AVX2 on x64 builds
-  if ("${VCPKG_TARGET_TRIPLET}" MATCHES "^x64")
+  if("${VCPKG_TARGET_TRIPLET}" MATCHES "^x64")
     add_compile_options(/arch:AVX2)
   endif()
-  
+
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
 endif()
-if (WIN32)
+
+if(WIN32)
   # Use UTF-16 versions of functions
   add_compile_definitions(UNICODE _UNICODE)
 endif()
 
-
 # define _DEBUG for debug builds
-add_compile_definitions("$<$<CONFIG:Debug>:_DEBUG>")
-
-
+if(is_multi_config)
+  add_compile_definitions("$<$<CONFIG:Debug>:_DEBUG>")
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  message(STATUS "defining _DEBUG")
+  add_compile_definitions(_DEBUG)
+endif()
 
 # Subdirectories
 # ===========================================

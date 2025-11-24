@@ -5,21 +5,34 @@
  */
 
 #include "MainWindow.hpp"
-#include <iostream>
 
 #include <QAction>
 #include <QCheckBox>
+#include <QFileDialog>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QString>
 
 #include "moc_MainWindow.cpp"
 
-MainWindow::MainWindow(QMainWindow *parent) : QMainWindow(parent)
+#include <boost/dll/runtime_symbol_info.hpp>
+
+#include "../model/Core.hpp"
+#include "../model/Logging.hpp"
+#include "../model/Plugin.hpp"
+
+MainWindow::MainWindow(QMainWindow *parent)
+    : QMainWindow(parent), m_openRomDialog(new QFileDialog(this, tr("Open ROM...")))
 {
+    using namespace Qt::Literals;
     ui.setupUi(this);
+
+    m_openRomDialog->setFileMode(QFileDialog::ExistingFile);
+    m_openRomDialog->setNameFilter(u"N64 ROM (*.n64 *.v64 *.z64)"_s);
+
     connect(ui.actOpenRom, &QAction::triggered, this, &MainWindow::onOpenRom);
     connect(ui.actCloseRom, &QAction::triggered, this, &MainWindow::onCloseRom);
+    connect(m_openRomDialog.get(), &QFileDialog::fileSelected, this, &MainWindow::onOpenRom1);
 }
 
 std::pair<size_t, bool> MainWindow::showChoiceDialog(const std::vector<QString> &choices, const QString &title,
@@ -50,7 +63,7 @@ std::pair<size_t, bool> MainWindow::showChoiceDialog(const std::vector<QString> 
     bool dontShowAgain = choiceCheckbox->isChecked();
     return {index, dontShowAgain};
 }
-std::pair<size_t, bool> MainWindow::showInfoDialog(const QString &title, const QString &text, QMessageBox::Icon icon)
+void MainWindow::showInfoDialog(const QString &title, const QString &text, QMessageBox::Icon icon)
 {
     auto messageBox = QMessageBox(icon, title, text, QMessageBox::Ok, this);
     messageBox.exec();
@@ -58,12 +71,27 @@ std::pair<size_t, bool> MainWindow::showInfoDialog(const QString &title, const Q
 
 void MainWindow::onOpenRom(bool state)
 {
-    std::cout << "open rom\n";
+    m_openRomDialog->open();
+}
+void MainWindow::onOpenRom1(const QString &qsPath)
+{
     ui.pager->setCurrentIndex(1);
+
+    auto exeDir = std::filesystem::path(boost::dll::program_location().parent_path().c_str());
+    auto pluginDir = exeDir / "plugin";
+    auto hardcodedPlugins = Mupen::PluginPaths{
+        .video_path = pluginDir / "no-video.so",
+        .audio_path = pluginDir / "no-audio.so",
+        .input_path = pluginDir / "no-input.so",
+        .rsp_path = pluginDir / "no-rsp.so",
+    };
+
+    auto path = QFileInfo(qsPath).filesystemFilePath();
+    Mupen::core_start(path, hardcodedPlugins);
 }
 
 void MainWindow::onCloseRom(bool state)
 {
-    std::cout << "close rom\n";
+    Mupen::core_stop();
     ui.pager->setCurrentIndex(0);
 }

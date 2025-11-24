@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/out/mupen64.exe",
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "Build Project"
+            "preLaunchTask": "Build Project (Windows)"
         },
         {
             "name": "mupen64 (x64, GDB)",

@@ -13,10 +13,10 @@ namespace Mupen {
   static const spdlog::sinks_init_list& sink_init_list() {
     static spdlog::sinks_init_list sinks {
       std::make_shared<spdlog::sinks::basic_file_sink_mt>([]() {
-        auto file_path = boost::dll::program_location() / "mupen.log";
+        auto file_path = boost::dll::program_location().parent_path() / "mupen.log";
         return file_path.string();
       }()),
-#ifndef _DEBUG
+#ifdef _DEBUG
       // ANSI escape codes work on recent Windows
       std::make_shared<spdlog::sinks::ansicolor_stderr_sink_mt>(),
 #endif

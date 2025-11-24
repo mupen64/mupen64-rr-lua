@@ -45,7 +45,9 @@ if (MUPEN64RR_BUILD_QT6)
     # ============================
 
     # dummy plugins
+    add_subdirectory(Plugins.Qt6.NoVideo)
     add_subdirectory(Plugins.Qt6.NoAudio)
     add_subdirectory(Plugins.Qt6.NoInput)
+    add_subdirectory(Plugins.Qt6.NoRSP)
     
 endif()
