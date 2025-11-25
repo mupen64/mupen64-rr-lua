@@ -28,7 +28,7 @@ namespace bfs = boost::filesystem;
     {                                                                                                                  \
         if (lib.has(#name))                                                                                            \
         {                                                                                                              \
-            dest = lib.get<std::remove_pointer_t<fp_##name>>(#name);                                                                          \
+            dest = lib.get<std::remove_pointer_t<fp_##name>>(#name);                                                   \
         }                                                                                                              \
         else                                                                                                           \
         {                                                                                                              \
@@ -48,17 +48,21 @@ static void CALL dummy_void()
 {
 }
 
-static int32_t CALL dummy_initiate_gfx(core_gfx_info)
+static int32_t CALL dummy_mupv_init(core_gfx_info)
 {
     return 1;
 }
 
-static int32_t CALL dummy_initiate_audio(core_audio_info)
+static int32_t CALL dummy_mupa_init(core_audio_info)
 {
     return 1;
 }
 
-static void CALL dummy_initiate_controllers(core_input_info)
+static void CALL dummy_mupi_init(core_input_info)
+{
+}
+
+static void CALL dummy_mupr_init(core_rsp_info, uint32_t *)
 {
 }
 
@@ -96,10 +100,6 @@ static void CALL dummy_key_down(uint32_t, int32_t)
 }
 
 static void CALL dummy_key_up(uint32_t, int32_t)
-{
-}
-
-static void CALL dummy_initiate_rsp(core_rsp_info, uint32_t *)
 {
 }
 
@@ -174,17 +174,19 @@ PluginSet::PluginSet(std::filesystem::path video_path, std::filesystem::path aud
 {
     // check that all 4 plugins are the correct type
     core_plugin_info info = {};
-    
+
     m_video_get_info = m_video_plugin.MUP_FN(mup_get_info);
     m_audio_get_info = m_audio_plugin.MUP_FN(mup_get_info);
     m_input_get_info = m_input_plugin.MUP_FN(mup_get_info);
     m_rsp_get_info = m_rsp_plugin.MUP_FN(mup_get_info);
 
     m_video_get_info(&info);
+    core_log().info("video plugin type: {}", (int)info.type);
     if (info.type != plugin_video) throw std::invalid_argument("video plugin path does not point to a video plugin");
 
     info = {};
     m_audio_get_info(&info);
+    core_log().info("audio plugin type: {}", (int)info.type);
     if (info.type != plugin_audio) throw std::invalid_argument("audio plugin path does not point to an audio plugin");
 
     info = {};
@@ -206,10 +208,10 @@ PluginSet::PluginSet(std::filesystem::path video_path, std::filesystem::path aud
 PluginSet::~PluginSet()
 {
     // This is called to free any remaining resources before unloading the libraries.
-    m_video_plugin.MUP_FN(mup_drop)();
-    m_audio_plugin.MUP_FN(mup_drop)();
-    m_input_plugin.MUP_FN(mup_drop)();
-    m_rsp_plugin.MUP_FN(mup_drop)();
+    if (m_video_plugin.is_loaded()) m_video_plugin.MUP_FN(mup_drop)();
+    if (m_audio_plugin.is_loaded()) m_audio_plugin.MUP_FN(mup_drop)();
+    if (m_input_plugin.is_loaded()) m_input_plugin.MUP_FN(mup_drop)();
+    if (m_rsp_plugin.is_loaded()) m_rsp_plugin.MUP_FN(mup_drop)();
 }
 
 void PluginSet::extract_names(char *video, char *audio, char *input, char *rsp)
@@ -276,6 +278,8 @@ void PluginSet::resolve_functions_to(core_params &params)
 
 void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
 {
+    if (!m_video_plugin.has("mupv_init"))
+        return;
     auto gfx_info = core_gfx_info{
         .byteswapped = 1,
         .rom = ctx.rom,
@@ -310,16 +314,20 @@ void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
     auto wm_settings = mupv_wm_settings_default();
     m_video_plugin.MUP_FN(mupv_init)(gfx_info, &wm_settings);
 
-    if (wm_settings.backend != MUPV_BK_NONE)
+    // pass child window to gfx
+    if (wm_settings.backend == MUPV_BK_NONE)
+        return;
+    auto wm_handle = core_service.setup_window(wm_settings);
+    m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
+
     {
-        // pass child window to gfx
-        auto wm_handle = core_service.setup_window(wm_settings);
-        m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
     }
 }
 
 void PluginSet::initiate_audio(core_ctx &ctx)
 {
+    if (!m_audio_plugin.has("mupa_init"))
+        return;
     auto audio_info = core_audio_info{
         .byteswapped = 1,
         .rom = ctx.rom,
@@ -344,11 +352,15 @@ void PluginSet::initiate_input(core_ctx &ctx, core_params &params)
         .header = ctx.rom,
         .controllers = params.controls,
     };
+    if (!m_input_plugin.has("mupi_init"))
+        return;
     m_input_plugin.MUP_FN(mupi_init)(input_info);
 }
 
 void PluginSet::initiate_rsp(core_ctx &ctx, core_params &params)
 {
+    if (!m_rsp_plugin.has("mupr_init"))
+        return;
     auto rsp_info = core_rsp_info{
         .byteswapped = 1,
         .rdram = (uint8_t *)ctx.rdram,

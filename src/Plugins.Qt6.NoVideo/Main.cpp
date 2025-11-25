@@ -22,6 +22,6 @@ EXPORT void CALL mup_drop()
 EXPORT void CALL mup_get_info(core_plugin_info *info)
 {
     info->ver = 0x0101;
-    info->type = plugin_audio;
+    info->type = plugin_video;
     strncpy(info->name, PLUGIN_NAME, sizeof(info->name));
 }

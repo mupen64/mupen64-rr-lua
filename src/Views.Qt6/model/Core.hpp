@@ -74,8 +74,6 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service);
 void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin_paths);
 
 void core_stop();
-
-void core_log(spdlog::level::level_enum level, std::string_view message);
 } // namespace Mupen
 
 #endif
