@@ -149,6 +149,8 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
             },
         .show_dialog = [](const char *str, const char *title,
                           core_dialog_type type) { g_core_service->show_info_dialog(title, str, type); },
+        .update_screen = []() {},
+        .copy_video = [](void*) {},
         .find_available_rom =
             [](const std::function<bool(const core_rom_header &)> &predicate) { return std::filesystem::path(""); },
         .mge_available = []() { return false; },
@@ -161,8 +163,9 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
     };
 
     auto res = ::core_create(&g_core_params, &g_core_ctx);
-    if (res != Res_Ok) {
-        core_log().critical("Core failed to load! ({})", (int) res);
+    if (res != Res_Ok)
+    {
+        core_log().critical("Core failed to load! ({})", (int)res);
     }
 }
 
@@ -177,7 +180,8 @@ void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin
     g_core_ctx->vr_start_rom(rom_path);
 }
 
-void core_stop() {
+void core_stop()
+{
     g_core_ctx->vr_close_rom(true);
 }
 } // namespace Mupen
