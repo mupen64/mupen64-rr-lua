@@ -5,8 +5,6 @@
  */
 
 #include "SoundDriver.h"
-#include "WaveOut.h"
-#include <cassert>
 
 // Load the buffer from the AI interface to our emulated buffer
 void SoundDriver::AI_LenChanged(u8* start, u32 length)

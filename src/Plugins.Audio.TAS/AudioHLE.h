@@ -7,7 +7,6 @@
 #pragma once
 
 #include "Common.h"
-#include "Types.h"
 
 /* Audio commands: ABI 1 */
 /*

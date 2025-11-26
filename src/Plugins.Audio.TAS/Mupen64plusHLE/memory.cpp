@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <string.h>
-#include <assert.h>
-#include <cstdint>
+#include "../Common.h"
 #include "../Types.h"
 
 /*

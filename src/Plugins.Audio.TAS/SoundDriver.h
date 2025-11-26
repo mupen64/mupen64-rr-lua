@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <windows.h>
 #include "SoundDriverInterface.h"
 
 #define SND_IS_NOT_EMPTY 0x4000000

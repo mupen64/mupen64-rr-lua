@@ -4,11 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "common.h"
-#include "XAudio2SoundDriver.h"
-#include <stdio.h>
-#include <cassert>
 #include "SoundDriverFactory.h"
+#include "XAudio2SoundDriver.h"
 
 bool XAudio2SoundDriver::ClassRegistered = SoundDriverFactory::RegisterSoundDriver(SND_DRIVER_XA2, CreateSoundDriver, "XAudio2 Driver", 15);
 

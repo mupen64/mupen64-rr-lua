@@ -6,10 +6,7 @@
 
 #pragma once
 
-#include <windows.h>
-
 #include "SoundDriver.h"
-#include <xaudio2.h>
 
 class VoiceCallback : public IXAudio2VoiceCallback {
 public:

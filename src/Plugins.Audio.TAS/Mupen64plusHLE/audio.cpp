@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <assert.h>
-#include <stddef.h>
+#include "../Common.h"
 #include "../Types.h"
 #include "arithmetics.h"
 

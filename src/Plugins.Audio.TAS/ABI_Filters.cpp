@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-/* memset() and memcpy() */
-#include <string.h>
-
 #include "audiohle.h"
 
 /*

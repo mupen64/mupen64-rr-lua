@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include "common.h"
+#include "Common.h"
 #include "Configuration.h"
 
 class SoundDriverInterface {
