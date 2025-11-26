@@ -26,22 +26,17 @@ struct t_trivial_config
 
 class Configuration
 {
-  protected:
+  public:
     static const int MAX_FOLDER_LENGTH = 500;
     static const int MAX_DEVICE_LENGTH = 100;
 
-    static INT_PTR CALLBACK ConfigProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-    static INT_PTR CALLBACK AdvancedProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-    static INT_PTR CALLBACK SettingsProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-    static unsigned long configVolume;
     static char configAudioLogFolder[MAX_FOLDER_LENGTH];
     static t_trivial_config currentSettings;
 
     static void setAIEmulation(bool value) { currentSettings.ai_emulation = value; }
     static void setSyncAudio(bool value) { currentSettings.sync_audio = value; }
     static void setForceSync(bool value) { currentSettings.force_sync = value; }
-    static void setVolume(unsigned long value) { configVolume = value; }
+    static void setVolume(unsigned long value) { currentSettings.volume = value; }
     static void setFrequency(unsigned long value) { currentSettings.frequency = value; }
     static void setBitRate(unsigned long value) { currentSettings.bit_rate = value; }
     static void setBufferLevel(unsigned long value) { currentSettings.buffer_level = value; }
@@ -52,7 +47,6 @@ class Configuration
 
     static void ResetAdvancedPage(HWND hDlg);
 
-  public:
     static bool RomRunning;
     static void LoadSettings();
     static void SaveSettings();
@@ -61,7 +55,7 @@ class Configuration
     static void ConfigDialog(HWND hParent);
 
     static bool getAIEmulation() { return currentSettings.ai_emulation; }
-    static unsigned long getVolume() { return configVolume; }
+    static unsigned long getVolume() { return currentSettings.volume; }
     static bool getForceSync() { return currentSettings.force_sync; }
     static bool getSyncAudio() { return currentSettings.sync_audio; }
     static unsigned long getFrequency() { return currentSettings.frequency; }

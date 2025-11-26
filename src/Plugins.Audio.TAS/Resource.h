@@ -3,10 +3,6 @@
 // Used by resource.rc
 //
 #define IDD_CONFIG 101
-#define IDD_PROPPAGE_GENERAL 107
-#define IDD_PROPPAGE_ADVANCED 108
-#define IDD_PROPPAGE_LOGGING 109
-#define IDC_AUDIOSYNC 1000
 #define IDC_AI 1001
 #define IDC_OLDSYNC 1002
 #define IDC_VOLUME 1003
