@@ -32,7 +32,7 @@ EXPORT void CALL DllAbout(void* hParent)
     const auto msg = PLUGIN_FULL_NAME "\n"
                                       "Part of the Mupen64 project family."
                                       "\n\n"
-                                      "https://github.com/mupen64/better-azi";
+                                      "https://github.com/mupen64/mupen64-rr-lua";
 
     MessageBox((HWND)hParent, msg, "About", MB_ICONINFORMATION | MB_OK);
 }
