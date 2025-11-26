@@ -16,7 +16,6 @@ add_library(Mupen64RR.Plugins.Audio.TAS MODULE
     "SoundDriverInterface.h"
     "SoundDriverFactory.h"
     "SoundDriver.h"
-    "Settings.h"
     "Types.h"
     "DirectSoundDriver.h"
     "Configuration.h"

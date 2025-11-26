@@ -21,21 +21,6 @@ OSVERSIONINFOEX OSInfo;
 core_audio_info AudioInfo;
 u32 Dacrate = 0;
 
-
-void SetTimerResolution()
-{
-    const HMODULE hmod = GetModuleHandle("ntdll.dll");
-    if (!hmod)
-    {
-        return;
-    }
-
-    typedef LONG(NTAPI * tNtSetTimerResolution)(IN ULONG DesiredResolution, IN Boolean SetResolution, OUT PULONG CurrentResolution);
-    tNtSetTimerResolution NtSetTimerResolution = (tNtSetTimerResolution)GetProcAddress(hmod, "NtSetTimerResolution");
-    ULONG CurrentResolution = 0;
-    NtSetTimerResolution(10000, TRUE, &CurrentResolution);
-}
-
 bool WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     hInstance = hinstDLL;
@@ -70,18 +55,11 @@ EXPORT Boolean CALL InitiateAudio(core_audio_info Audio_Info)
         delete snd;
     }
 
-    if (Configuration::getResTimer() == true)
-    {
-        SetTimerResolution();
-    }
-
     memcpy(&AudioInfo, &Audio_Info, sizeof(core_audio_info));
     DRAM = Audio_Info.rdram;
     DMEM = Audio_Info.dmem;
     IMEM = Audio_Info.imem;
 
-    Configuration::Header = (t_romheader*)Audio_Info.rom;
-    Configuration::LoadDefaults();
     Configuration::LoadSettings();
     snd = SoundDriverFactory::CreateSoundDriver(Configuration::getDriver());
 

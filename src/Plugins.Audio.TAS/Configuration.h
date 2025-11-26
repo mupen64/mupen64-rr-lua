@@ -7,39 +7,27 @@
 #pragma once
 
 #include "common.h"
-#include "Settings.h"
-#include <windows.h>
-#include <string.h>
 
-typedef struct
+struct t_trivial_config
 {
-    u16 validation; /* 0x00 */
-    u8 compression; /* 0x02 */
-    u8 unknown1; /* 0x03 */
-    u32 clockrate; /* 0x04 */
-    u32 programcounter; /* 0x08 */
-    u32 release; /* 0x0c */
-    u32 crc1; /* 0x10 */
-    u32 crc2; /* 0x14 */
-    u64 unknown2; /* 0x18 */
+    int32_t version = 1;
+    int32_t sync_audio{};
+    int32_t force_sync{};
+    int32_t ai_emulation{};
+    int32_t volume{};
+    int32_t driver = (int32_t)SoundDriverType::SND_DRIVER_DS8;
+    int32_t buffer_level = 3;
+    int32_t buffer_fps = 45;
+    int32_t backend_fps = 90;
+    int32_t disallow_sleep_xa2{};
+    int32_t disallow_sleep_ds8{};
+    int32_t frequency = 44100;
+    int32_t bit_rate = 16;
+};
 
-    u8 name[20]; /* 0x20 - 0x33 */
-
-    u8 unknown3; /* 0x34 */
-    u8 unknown4; /* 0x35 */
-    u8 unknown5; /* 0x36 */
-    u8 unknown6; /* 0x37 */
-    u8 unknown7; /* 0x38 */
-    u8 unknown8; /* 0x39 */
-    u8 unknown9; /* 0x3a */
-    u8 manufacturerid; /* 0x3b */
-    u16 cartridgeid; /* 0x3c */
-    u8 countrycode; /* 0x3e */
-    u8 unknown10; /* 0x3f */
-} t_romheader;
-
-class Configuration {
-protected:
+class Configuration
+{
+  protected:
     static const int MAX_FOLDER_LENGTH = 500;
     static const int MAX_DEVICE_LENGTH = 100;
 
@@ -49,52 +37,45 @@ protected:
 
     static unsigned long configVolume;
     static char configAudioLogFolder[MAX_FOLDER_LENGTH];
-    static SoundDriverType configDriver;
-    static Settings currentSettings;
+    static t_trivial_config currentSettings;
 
-    static void setAIEmulation(bool value) { currentSettings.configAIEmulation = value; }
-    static void setSyncAudio(bool value) { currentSettings.configSyncAudio = value; }
-    static void setForceSync(bool value) { currentSettings.configForceSync = value; }
+    static void setAIEmulation(bool value) { currentSettings.ai_emulation = value; }
+    static void setSyncAudio(bool value) { currentSettings.sync_audio = value; }
+    static void setForceSync(bool value) { currentSettings.force_sync = value; }
     static void setVolume(unsigned long value) { configVolume = value; }
-    static void setDriver(SoundDriverType value) { configDriver = value; }
-    static void setFrequency(unsigned long value) { currentSettings.configFrequency = value; }
-    static void setBitRate(unsigned long value) { currentSettings.configBitRate = value; }
-    static void setBufferLevel(unsigned long value) { currentSettings.configBufferLevel = value; }
-    static void setBufferFPS(unsigned long value) { currentSettings.configBufferFPS = value; }
-    static void setBackendFPS(unsigned long value) { currentSettings.configBackendFPS = value; }
-    static void setDisallowSleepXA2(bool value) { currentSettings.configDisallowSleepXA2 = value; }
-    static void setDisallowSleepDS8(bool value) { currentSettings.configDisallowSleepDS8 = value; }
-    static void setResTimer(bool value) { currentSettings.configResTimer = value; }
+    static void setDriver(SoundDriverType value) { currentSettings.driver = (int32_t)value; }
+    static void setFrequency(unsigned long value) { currentSettings.frequency = value; }
+    static void setBitRate(unsigned long value) { currentSettings.bit_rate = value; }
+    static void setBufferLevel(unsigned long value) { currentSettings.buffer_level = value; }
+    static void setBufferFPS(unsigned long value) { currentSettings.buffer_fps = value; }
+    static void setBackendFPS(unsigned long value) { currentSettings.backend_fps = value; }
+    static void setDisallowSleepXA2(bool value) { currentSettings.disallow_sleep_xa2 = value; }
+    static void setDisallowSleepDS8(bool value) { currentSettings.disallow_sleep_ds8 = value; }
 
     static void ResetAdvancedPage(HWND hDlg);
 
-public:
-    static t_romheader* Header;
+  public:
     static bool RomRunning;
-    static void LoadDefaults();
     static void LoadSettings();
     static void SaveSettings();
     static bool config_load();
-    static bool config_load_rom();
     static bool config_save();
-    static bool config_save_rom();
     static void ConfigDialog(HWND hParent);
 
-    static bool getAIEmulation() { return currentSettings.configAIEmulation; }
+    static bool getAIEmulation() { return currentSettings.ai_emulation; }
     static unsigned long getVolume() { return configVolume; }
-    static bool getForceSync() { return currentSettings.configForceSync; }
-    static bool getSyncAudio() { return currentSettings.configSyncAudio; }
-    static SoundDriverType getDriver() { return configDriver; }
-    static unsigned long getFrequency() { return currentSettings.configFrequency; }
-    static unsigned long getBitRate() { return currentSettings.configBitRate; }
-    static unsigned long getBufferLevel() { return currentSettings.configBufferLevel; }
-    static unsigned long getBufferFPS() { return currentSettings.configBufferFPS; }
-    static unsigned long getBackendFPS() { return currentSettings.configBackendFPS; }
-    static bool getDisallowSleepXA2() { return currentSettings.configDisallowSleepXA2; }
-    static bool getDisallowSleepDS8() { return currentSettings.configDisallowSleepDS8; }
-    static bool getResTimer() { return currentSettings.configResTimer; }
+    static bool getForceSync() { return currentSettings.force_sync; }
+    static bool getSyncAudio() { return currentSettings.sync_audio; }
+    static SoundDriverType getDriver() { return (SoundDriverType)currentSettings.driver; }
+    static unsigned long getFrequency() { return currentSettings.frequency; }
+    static unsigned long getBitRate() { return currentSettings.bit_rate; }
+    static unsigned long getBufferLevel() { return currentSettings.buffer_level; }
+    static unsigned long getBufferFPS() { return currentSettings.buffer_fps; }
+    static unsigned long getBackendFPS() { return currentSettings.backend_fps; }
+    static bool getDisallowSleepXA2() { return currentSettings.disallow_sleep_xa2; }
+    static bool getDisallowSleepDS8() { return currentSettings.disallow_sleep_ds8; }
 
-    static char* getAudioLogFolder()
+    static char *getAudioLogFolder()
     {
         static char retVal[MAX_FOLDER_LENGTH];
         strcpy(retVal, configAudioLogFolder);

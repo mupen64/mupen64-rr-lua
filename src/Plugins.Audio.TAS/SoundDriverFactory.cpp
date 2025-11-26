@@ -91,7 +91,7 @@ const char* SoundDriverFactory::GetDriverDescription(SoundDriverType driver)
         if (driver == FactoryDrivers[x].DriverType)
             return FactoryDrivers[x].Description;
     }
-    return "Error";
+    return "None";
 }
 
 bool SoundDriverFactory::DriverExists(SoundDriverType driver)
