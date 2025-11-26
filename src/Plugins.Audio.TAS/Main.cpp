@@ -6,15 +6,11 @@
 
 #include "common.h"
 #include "SoundDriverInterface.h"
-#include "SoundDriverFactory.h"
 #include "audiohle.h"
-#include <string.h> // memcpy(), strcpy()
-#include <stdio.h> // needed for configuration
-#include <cassert>
+#include "DirectSoundDriver.h"
 
-SoundDriverInterface* snd = NULL;
+SoundDriverInterface *snd = NULL;
 bool ai_delayed_carry;
-bool bBackendChanged = false;
 bool first_time = true;
 HINSTANCE hInstance;
 OSVERSIONINFOEX OSInfo;
@@ -27,7 +23,7 @@ bool WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-EXPORT void CALL DllAbout(void* hParent)
+EXPORT void CALL DllAbout(void *hParent)
 {
     const auto msg = PLUGIN_FULL_NAME "\n"
                                       "Part of the Mupen64 project family."
@@ -37,14 +33,9 @@ EXPORT void CALL DllAbout(void* hParent)
     MessageBox((HWND)hParent, msg, "About", MB_ICONINFORMATION | MB_OK);
 }
 
-EXPORT void CALL DllConfig(void* hParent)
+EXPORT void CALL DllConfig(void *hParent)
 {
-    SoundDriverType currentDriver = Configuration::getDriver();
     Configuration::ConfigDialog((HWND)hParent);
-    if (currentDriver != Configuration::getDriver())
-    {
-        bBackendChanged = true;
-    }
 }
 
 EXPORT Boolean CALL InitiateAudio(core_audio_info Audio_Info)
@@ -61,10 +52,9 @@ EXPORT Boolean CALL InitiateAudio(core_audio_info Audio_Info)
     IMEM = Audio_Info.imem;
 
     Configuration::LoadSettings();
-    snd = SoundDriverFactory::CreateSoundDriver(Configuration::getDriver());
+    snd = DirectSoundDriver::CreateSoundDriver();
 
-    if (snd == NULL)
-        return FALSE;
+    if (snd == NULL) return FALSE;
 
     snd->AI_Startup();
     ai_delayed_carry = false;
@@ -82,7 +72,7 @@ EXPORT void CALL CloseDLL(void)
     }
 }
 
-EXPORT void CALL GetDllInfo(core_plugin_info* PluginInfo)
+EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 {
     PluginInfo->unused_byteswapped = TRUE;
     PluginInfo->unused_normal_memory = FALSE;
@@ -99,8 +89,7 @@ EXPORT void CALL ProcessAList(void)
         first_time = false;
         Configuration::LoadSettings();
     }
-    if (snd == NULL)
-        return;
+    if (snd == NULL) return;
     HLEStart();
 }
 
@@ -118,20 +107,8 @@ EXPORT void CALL RomClosed(void)
     Configuration::LoadSettings();
     DEBUG_OUTPUT "Call: RomClosed()\n";
     Dacrate = 0; // Forces a revisit to initialize audio
-    if (snd == NULL)
-        return;
-    if (bBackendChanged == true)
-    {
-        snd->AI_Shutdown();
-        delete snd;
-        snd = SoundDriverFactory::CreateSoundDriver(Configuration::getDriver());
-        snd->AI_Startup();
-        bBackendChanged = false;
-    }
-    else
-    {
-        snd->AI_ResetAudio();
-    }
+    if (snd == NULL) return;
+    snd->AI_ResetAudio();
 }
 
 EXPORT void CALL AiDacrateChanged(int SystemType)
@@ -140,10 +117,8 @@ EXPORT void CALL AiDacrateChanged(int SystemType)
 
     ai_delayed_carry = false;
     DEBUG_OUTPUT "Call: AiDacrateChanged()\n";
-    if (snd == NULL)
-        return;
-    if (Dacrate == *AudioInfo.ai_dacrate_reg)
-        return;
+    if (snd == NULL) return;
+    if (Dacrate == *AudioInfo.ai_dacrate_reg) return;
 
     Dacrate = *AudioInfo.ai_dacrate_reg & 0x00003FFF;
 
@@ -189,11 +164,9 @@ EXPORT void CALL AiLenChanged(void)
     u32 address = *AudioInfo.ai_dram_addr_reg & 0x00FFFFF8;
     u32 length = *AudioInfo.ai_len_reg & 0x3FFF8;
 
-    if (snd == NULL)
-        return;
+    if (snd == NULL) return;
 
-    if (ai_delayed_carry)
-        address += 0x2000;
+    if (ai_delayed_carry) address += 0x2000;
 
     if ((address + length & 0x1FFF) == 0)
         ai_delayed_carry = true;
@@ -205,8 +178,7 @@ EXPORT void CALL AiLenChanged(void)
 
 EXPORT u32 CALL AiReadLength(void)
 {
-    if (snd == NULL)
-        return 0;
+    if (snd == NULL) return 0;
     *AudioInfo.ai_len_reg = snd->AI_ReadLength();
     return *AudioInfo.ai_len_reg;
 }

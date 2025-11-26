@@ -15,7 +15,6 @@ struct t_trivial_config
     int32_t force_sync{};
     int32_t ai_emulation{};
     int32_t volume{};
-    int32_t driver = (int32_t)SoundDriverType::SND_DRIVER_DS8;
     int32_t buffer_level = 3;
     int32_t buffer_fps = 45;
     int32_t backend_fps = 90;
@@ -43,7 +42,6 @@ class Configuration
     static void setSyncAudio(bool value) { currentSettings.sync_audio = value; }
     static void setForceSync(bool value) { currentSettings.force_sync = value; }
     static void setVolume(unsigned long value) { configVolume = value; }
-    static void setDriver(SoundDriverType value) { currentSettings.driver = (int32_t)value; }
     static void setFrequency(unsigned long value) { currentSettings.frequency = value; }
     static void setBitRate(unsigned long value) { currentSettings.bit_rate = value; }
     static void setBufferLevel(unsigned long value) { currentSettings.buffer_level = value; }
@@ -66,7 +64,6 @@ class Configuration
     static unsigned long getVolume() { return configVolume; }
     static bool getForceSync() { return currentSettings.force_sync; }
     static bool getSyncAudio() { return currentSettings.sync_audio; }
-    static SoundDriverType getDriver() { return (SoundDriverType)currentSettings.driver; }
     static unsigned long getFrequency() { return currentSettings.frequency; }
     static unsigned long getBitRate() { return currentSettings.bit_rate; }
     static unsigned long getBufferLevel() { return currentSettings.buffer_level; }

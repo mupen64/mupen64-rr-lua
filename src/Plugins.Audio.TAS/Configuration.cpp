@@ -7,10 +7,6 @@
 #include "Configuration.h"
 #include "resource.h"
 #include "SoundDriverInterface.h"
-#include "SoundDriverFactory.h"
-#include <windows.h>
-#include <cassert>
-#include <commctrl.h>
 
 #define SUBKEY "Software\\N64 Emulation\\DLL\\TAS Audio"
 #define CONFIG_VALUE "Config"
@@ -227,16 +223,8 @@ INT_PTR CALLBACK Configuration::SettingsProc(HWND hDlg, UINT uMsg, WPARAM wParam
     {
     case WM_INITDIALOG:
         SendMessage(GetDlgItem(hDlg, IDC_DEVICE), CB_RESETCONTENT, 0, 0);
-        SendMessage(GetDlgItem(hDlg, IDC_BACKEND), CB_RESETCONTENT, 0, 0);
         SendMessage(GetDlgItem(hDlg, IDC_DEVICE), CB_ADDSTRING, 0, (LPARAM)(char *)"Default");
         SendMessage(GetDlgItem(hDlg, IDC_DEVICE), CB_SETCURSEL, 0, 0);
-        for (x = SND_DRIVER_DS8; x <= SND_DRIVER_XA2; x++)
-        {
-            const auto type = (SoundDriverType)x;
-            SendMessage(GetDlgItem(hDlg, IDC_BACKEND), CB_ADDSTRING, 0,
-                        (LPARAM)SoundDriverFactory::GetDriverDescription(type));                
-        }
-        SendMessage(GetDlgItem(hDlg, IDC_BACKEND), CB_SETCURSEL, currentSettings.driver - 1, 0);
         SendMessage(GetDlgItem(hDlg, IDC_VOLUME), TBM_SETPOS, TRUE, configVolume);
         SendMessage(GetDlgItem(hDlg, IDC_VOLUME), TBM_SETTICFREQ, 20, 0);
         SendMessage(GetDlgItem(hDlg, IDC_VOLUME), TBM_SETRANGEMIN, FALSE, 0);
@@ -255,9 +243,6 @@ INT_PTR CALLBACK Configuration::SettingsProc(HWND hDlg, UINT uMsg, WPARAM wParam
         {
             configVolume = (unsigned long)SendMessage(GetDlgItem(hDlg, IDC_VOLUME), TBM_GETPOS, 0, 0);
             snd->SetVolume(configVolume);
-
-            x = SendMessage(GetDlgItem(hDlg, IDC_BACKEND), CB_GETCURSEL, 0, 0);
-            currentSettings.driver = x + 1;
         }
         break;
     case WM_COMMAND:

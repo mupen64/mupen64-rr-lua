@@ -8,15 +8,12 @@
 #include <stdio.h>
 #include <cassert>
 #include "DirectSoundDriver.h"
-#include "SoundDriverFactory.h"
 
 #define DS_SEGMENTS 4
 #define LOCK_SIZE sLOCK_SIZE
 #define TOTAL_SIZE (LOCK_SIZE * DS_SEGMENTS)
 #define MAXBUFFER 27000
 #define BUFFSIZE (writeLoc - readLoc)
-
-bool DirectSoundDriver::ClassRegistered = SoundDriverFactory::RegisterSoundDriver(SND_DRIVER_DS8, CreateSoundDriver, "DirectSound 8 Driver", 20);
 
 static DWORD sLOCK_SIZE;
 static DWORD last_pos = 0, write_pos = 0, play_pos = 0, next_pos = 0;

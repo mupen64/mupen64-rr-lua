@@ -9,16 +9,12 @@
 #include <CommonPCH.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
-#include <xaudio2.h>
 #include "Types.h"
+#include <windows.h>
+#include <cassert>
+#include <commctrl.h>
 
 #define DEBUG_OUTPUT
-
-enum SoundDriverType {
-    SND_DRIVER_NOSOUND,
-    SND_DRIVER_DS8,
-    SND_DRIVER_XA2,
-};
 
 extern core_audio_info AudioInfo;
 
