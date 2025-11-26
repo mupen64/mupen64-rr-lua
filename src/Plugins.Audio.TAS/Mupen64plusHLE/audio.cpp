@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include "../my_types.h"
+#include "../Types.h"
 #include "arithmetics.h"
 
 #define S16(hex)                           \

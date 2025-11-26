@@ -10,7 +10,7 @@
 #include "hle_external.h"
 #include "hle_internal.h"
 #include "memory.h"
-#include "../my_types.h"
+#include "../Types.h"
 
 /* various constants */
 enum {
