@@ -44,9 +44,11 @@ Presets have been provided for building and testing. These are intended for IDEs
 You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
 
 ## CMake Options
-| OPTION                    | DESCRIPTION                                                           |
-|:-------------------------:|-----------------------------------------------------------------------|
-| `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
+- `MUPEN64RR_USE_SANITIZER` - enables sanitizers, [`{OFF, ASAN}`, default `OFF`]
+- `MUPEN64RR_ENABLE_DYNAREC` - enables the dynamic recompiler when `ON`. Default enabled when compiling for x86, forced `OFF` otherwise.
+- `MUPEN64RR_BUILD_WIN32` - enables the Win32 view and plugins. Default `ON` when compiling for Windows, forced `OFF` otherwise.
+- `MUPEN64RR_BUILD_QT` - enables the Qt6 view and plugins. Default `ON` when compiling for Linux, forced `OFF` otherwise.
+
 
 ### CLion
 
