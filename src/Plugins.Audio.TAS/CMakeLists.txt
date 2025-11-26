@@ -7,13 +7,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Plugins.Audio.TAS MODULE
     "Mupen64plusHLE/ucodes.h"
     "Mupen64plusHLE/memory.h"
-    "Mupen64plusHLE/hle.h"
     "Mupen64plusHLE/hle_internal.h"
     "Mupen64plusHLE/hle_external.h"
     "Mupen64plusHLE/common.h"
     "Mupen64plusHLE/audio.h"
     "Mupen64plusHLE/arithmetics.h"
-    "Mupen64plusHLE/alist.h"
     "XAudio2SoundDriver.h"
     "WaveOut.h"
     "SoundDriverLegacy.h"
