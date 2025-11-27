@@ -113,13 +113,6 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                     Configuration::currentSettings.disallow_sleep_ds8 ? BST_CHECKED : BST_UNCHECKED, 0);
         SendMessage(GetDlgItem(hwnd, IDC_DISALLOWXA2), BM_SETCHECK,
                     Configuration::currentSettings.disallow_sleep_xa2 ? BST_CHECKED : BST_UNCHECKED, 0);
-        char textPos[20];
-        sprintf(textPos, "%li", Configuration::currentSettings.buffer_level);
-        SetDlgItemText(hwnd, IDC_BUFFERS_TEXT, (LPCSTR)textPos);
-        sprintf(textPos, "%li ms", 1000 / Configuration::currentSettings.backend_fps);
-        SetDlgItemText(hwnd, IDC_SLIDER_BACKFPS_TEXT, (LPCSTR)textPos);
-        sprintf(textPos, "%li ms", 1000 / Configuration::currentSettings.buffer_fps);
-        SetDlgItemText(hwnd, IDC_SLIDER_BUFFERFPS_TEXT, (LPCSTR)textPos);
 
         SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_RESETCONTENT, 0, 0);
         SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_ADDSTRING, 0, (LPARAM)(char *)"Default");
@@ -128,6 +121,10 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETTICFREQ, 20, 0);
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETRANGEMIN, FALSE, 0);
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETRANGEMAX, FALSE, 100);
+
+        SendMessage(hwnd, WM_HSCROLL, 0, (LPARAM)GetDlgItem(hwnd, IDC_BUFFERS));
+        SendMessage(hwnd, WM_HSCROLL, 0, (LPARAM)GetDlgItem(hwnd, IDC_SLIDER_BACKFPS));
+        SendMessage(hwnd, WM_HSCROLL, 0, (LPARAM)GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS));
 
         break;
     case WM_CLOSE:
@@ -186,12 +183,12 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                 break;
             case IDC_SLIDER_BACKFPS:
                 dwPosition = (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_GETPOS, 0, 0);
-                sprintf(textPos, "%li ms", (DWORD)(1000 / (dwPosition * 15)));
+                sprintf(textPos, "%li FPS", (DWORD)((dwPosition * 15)));
                 SetDlgItemText(hwnd, IDC_SLIDER_BACKFPS_TEXT, (LPCSTR)textPos);
                 break;
             case IDC_SLIDER_BUFFERFPS:
                 dwPosition = (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_GETPOS, 0, 0);
-                sprintf(textPos, "%li ms", (DWORD)(1000 / (dwPosition * 15)));
+                sprintf(textPos, "%li FPS", (DWORD)((dwPosition * 15)));
                 SetDlgItemText(hwnd, IDC_SLIDER_BUFFERFPS_TEXT, (LPCSTR)textPos);
                 break;
             }
