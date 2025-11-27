@@ -9,6 +9,7 @@
 #include <CommonPCH.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
+#include <IOUtils.h>
 #include "Types.h"
 #include <windows.h>
 #include <cassert>
@@ -26,21 +27,21 @@ void ChangeABI(int type); /* type 0 = SafeMode */
 #define MI_INTR_AI 0x04 /* Bit 2: AI intr */
 #define AI_CONTROL_DMA_ON 0x01
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION L"1.0.0"
 
 #ifdef _M_X64
 #define PLUGIN_ARCH " x64"
 #else
-#define PLUGIN_ARCH " "
+#define PLUGIN_ARCH L" "
 #endif
 
 #ifdef _DEBUG
-#define PLUGIN_TARGET " Debug"
+#define PLUGIN_TARGET L" Debug"
 #else
-#define PLUGIN_TARGET " "
+#define PLUGIN_TARGET L" "
 #endif
 
-#define PLUGIN_FULL_NAME "TAS Audio " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
+#define PLUGIN_FULL_NAME L"TAS Audio " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
 
 /**
  * \brief Remaps a value from one range to another.

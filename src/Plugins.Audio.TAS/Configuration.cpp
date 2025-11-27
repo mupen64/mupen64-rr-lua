@@ -8,8 +8,8 @@
 #include "resource.h"
 #include "SoundDriverInterface.h"
 
-#define SUBKEY "Software\\N64 Emulation\\DLL\\TAS Audio"
-#define CONFIG_VALUE "Config"
+#define SUBKEY L"Software\\N64 Emulation\\DLL\\TAS Audio"
+#define CONFIG_VALUE L"Config"
 
 extern HINSTANCE hInstance;
 extern SoundDriverInterface *snd;
@@ -115,7 +115,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
                     Configuration::currentSettings.disallow_sleep_xa2 ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_RESETCONTENT, 0, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_ADDSTRING, 0, (LPARAM)(char *)"Default");
+        SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_ADDSTRING, 0, (LPARAM)L"Default");
         SendMessage(GetDlgItem(hwnd, IDC_DEVICE), CB_SETCURSEL, 0, 0);
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETPOS, TRUE, Configuration::currentSettings.volume);
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETTICFREQ, 20, 0);
@@ -170,28 +170,26 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         }
         break;
     case WM_HSCROLL:
-        if (lParam != 0)
+        if (lParam == 0) break;
+        switch (GetDlgCtrlID((HWND)lParam))
         {
-            char textPos[20];
-            unsigned long dwPosition;
-            switch (GetDlgCtrlID((HWND)lParam))
-            {
-            case IDC_BUFFERS:
-                dwPosition = (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_BUFFERS), TBM_GETPOS, 0, 0);
-                sprintf(textPos, "%li", dwPosition);
-                SetDlgItemText(hwnd, IDC_BUFFERS_TEXT, (LPCSTR)textPos);
-                break;
-            case IDC_SLIDER_BACKFPS:
-                dwPosition = (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_GETPOS, 0, 0);
-                sprintf(textPos, "%li FPS", (DWORD)((dwPosition * 15)));
-                SetDlgItemText(hwnd, IDC_SLIDER_BACKFPS_TEXT, (LPCSTR)textPos);
-                break;
-            case IDC_SLIDER_BUFFERFPS:
-                dwPosition = (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_GETPOS, 0, 0);
-                sprintf(textPos, "%li FPS", (DWORD)((dwPosition * 15)));
-                SetDlgItemText(hwnd, IDC_SLIDER_BUFFERFPS_TEXT, (LPCSTR)textPos);
-                break;
-            }
+        case IDC_BUFFERS: {
+            const uint32_t dwPosition = (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_BUFFERS), TBM_GETPOS, 0, 0);
+            SetDlgItemText(hwnd, IDC_BUFFERS_TEXT, std::format(L"{}", dwPosition).c_str());
+            break;
+        }
+        case IDC_SLIDER_BACKFPS: {
+            const uint32_t dwPosition =
+                (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_GETPOS, 0, 0);
+            SetDlgItemText(hwnd, IDC_SLIDER_BACKFPS_TEXT, std::format(L"{} FPS", dwPosition * 15).c_str());
+            break;
+        }
+        case IDC_SLIDER_BUFFERFPS: {
+            const uint32_t dwPosition =
+                (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_GETPOS, 0, 0);
+            SetDlgItemText(hwnd, IDC_SLIDER_BUFFERFPS_TEXT, std::format(L"{} FPS", dwPosition * 15).c_str());
+            break;
+        }
         }
         break;
     default:

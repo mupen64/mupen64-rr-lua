@@ -50,7 +50,6 @@ set_target_properties(Mupen64RR.Plugins.Audio.TAS PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
-remove_definitions(-DUNICODE -D_UNICODE) # FIXME: Support Unicode
 target_include_directories(Mupen64RR.Plugins.Audio.TAS PRIVATE ".")
 target_link_libraries(Mupen64RR.Plugins.Audio.TAS PRIVATE Mupen64RR.Plugins.Win32.Common)
 target_link_libraries(Mupen64RR.Plugins.Audio.TAS PRIVATE

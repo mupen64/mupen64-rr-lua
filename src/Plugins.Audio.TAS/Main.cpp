@@ -30,7 +30,7 @@ EXPORT void CALL DllAbout(void *hParent)
                                       "\n\n"
                                       "https://github.com/mupen64/mupen64-rr-lua";
 
-    MessageBox((HWND)hParent, msg, "About", MB_ICONINFORMATION | MB_OK);
+    MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);
 }
 
 EXPORT void CALL DllConfig(void *hParent)
@@ -76,7 +76,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 {
     PluginInfo->unused_byteswapped = TRUE;
     PluginInfo->unused_normal_memory = FALSE;
-    strcpy_s(PluginInfo->name, 100, PLUGIN_FULL_NAME);
+    strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_FULL_NAME).c_str());
     PluginInfo->type = plugin_audio;
     PluginInfo->ver = 0x0101;
 }

@@ -60,7 +60,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
             WaitForSingleObject(ac->hMutex, INFINITE);
             if FAILED (lpdsbuff->GetCurrentPosition((unsigned long *)&play_pos, NULL))
             {
-                MessageBox(NULL, "Error getting audio position...", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
+                MessageBox(NULL, L"Error getting audio position...", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
                 goto _exit_;
             }
             ReleaseMutex(ac->hMutex);
@@ -94,7 +94,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
         WaitForSingleObject(ac->hMutex, INFINITE);
         if (DS_OK != lpdsbuff->Lock(write_pos, LOCK_SIZE, &lpvPtr1, &dwBytes1, &lpvPtr2, &dwBytes2, 0))
         {
-            MessageBox(NULL, "Error locking sound buffer", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
+            MessageBox(NULL, L"Error locking sound buffer", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
             goto _exit_;
         }
 
@@ -107,7 +107,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
 
         if FAILED (lpdsbuff->Unlock(lpvPtr1, dwBytes1, lpvPtr2, dwBytes2))
         {
-            MessageBox(NULL, "Error unlocking sound buffer", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
+            MessageBox(NULL, L"Error unlocking sound buffer", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
             goto _exit_;
         }
 
