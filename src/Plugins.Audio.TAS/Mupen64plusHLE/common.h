@@ -6,6 +6,8 @@
 
 #pragma once
 
+#define clamp_s16(x) (int16_t)std::clamp((int16_t)(x), (int16_t)INT16_MIN, (int16_t)INT16_MAX)
+
 void SetupMusyX();
 void ProcessMusyX_v1();
 void ProcessMusyX_v2();

@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "common.h"
 #include "../Common.h"
 #include "../Types.h"
-#include "arithmetics.h"
 
 #define S16(hex)                           \
     ((hex) & 0x8000u)                      \

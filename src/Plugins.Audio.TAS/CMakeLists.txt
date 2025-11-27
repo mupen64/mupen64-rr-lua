@@ -11,7 +11,6 @@ add_library(Mupen64RR.Plugins.Audio.TAS MODULE
     "Mupen64plusHLE/hle_external.h"
     "Mupen64plusHLE/common.h"
     "Mupen64plusHLE/audio.h"
-    "Mupen64plusHLE/arithmetics.h"
     "SoundDriverInterface.h"
     "SoundDriver.h"
     "Types.h"

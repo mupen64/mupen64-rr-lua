@@ -42,17 +42,3 @@ void ChangeABI(int type); /* type 0 = SafeMode */
 #define PLUGIN_FULL_NAME L"TAS Audio " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
 
 extern core_plugin_extended_funcs* g_ef;
-
-/**
- * \brief Remaps a value from one range to another.
- * \param value The value to remap.
- * \param from1 The lower bound of the source range.
- * \param to1 The upper bound of the source range.
- * \param from2 The lower bound of the target range.
- * \param to2 The upper bound of the target range.
- * \return The value, remapped to the target range.
- */
-template <typename T> static T remap(const T value, const T from1, const T to1, const T from2, const T to2)
-{
-    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
-}

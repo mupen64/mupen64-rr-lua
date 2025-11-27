@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "common.h"
 #include "../Common.h"
-#include "arithmetics.h"
 #include "audio.h"
 #include "hle_external.h"
 #include "hle_internal.h"
