@@ -26,14 +26,14 @@ if (MUPEN64RR_BUILD_WIN32)
     include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Common.cmake")
 
     # dummy plugins
-    add_subdirectory(Plugins.Audio.Dummy)
-    add_subdirectory(Plugins.Input.Dummy)
-    add_subdirectory(Plugins.RSP.Dummy)
-    add_subdirectory(Plugins.Video.Dummy)
+    add_subdirectory(Plugins.Win32.DummyAudio)
+    add_subdirectory(Plugins.Win32.DummyInput)
+    add_subdirectory(Plugins.Win32.DummyRSP)
+    add_subdirectory(Plugins.Win32.DummyVideo)
 
     # TAS plugins
-    add_subdirectory(Plugins.Audio.TAS)
-    add_subdirectory(Plugins.RSP.TAS)
+    add_subdirectory(Plugins.Win32.TASAudio)
+    add_subdirectory(Plugins.Win32.TASRSP)
 endif()
 
 if (MUPEN64RR_BUILD_QT6)
