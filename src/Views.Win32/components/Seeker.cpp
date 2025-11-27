@@ -56,7 +56,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
         const float effective_progress =
-            remap(static_cast<float>(info.current_sample), static_cast<float>(info.seek_start_sample),
+            MiscHelpers::remap(static_cast<float>(info.current_sample), static_cast<float>(info.seek_start_sample),
                   static_cast<float>(info.seek_target_sample), 0.0f, 1.0f);
         const auto str = std::format(L"Seeked {:.2f}%", effective_progress * 100.0);
         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, str.c_str());
