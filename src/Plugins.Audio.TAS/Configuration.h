@@ -8,13 +8,14 @@
 
 #include "common.h"
 
+#pragma pack(push, 1)
 struct t_trivial_config
 {
     int32_t version = 1;
     int32_t sync_audio{};
     int32_t force_sync{};
     int32_t ai_emulation{};
-    int32_t volume{};
+    int32_t volume = 100;
     int32_t buffer_level = 3;
     int32_t buffer_fps = 45;
     int32_t backend_fps = 90;
@@ -23,6 +24,7 @@ struct t_trivial_config
     int32_t frequency = 44100;
     int32_t bit_rate = 16;
 };
+#pragma pack(pop)
 
 class Configuration
 {

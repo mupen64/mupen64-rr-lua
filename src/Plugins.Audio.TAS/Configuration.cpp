@@ -93,8 +93,8 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 
         SendMessage(GetDlgItem(hwnd, IDC_OLDSYNC), BM_SETCHECK,
                     Configuration::currentSettings.force_sync ? BST_CHECKED : BST_UNCHECKED, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_AI), BM_SETCHECK, Configuration::currentSettings.ai_emulation ? BST_CHECKED : BST_UNCHECKED,
-                    0);
+        SendMessage(GetDlgItem(hwnd, IDC_AI), BM_SETCHECK,
+                    Configuration::currentSettings.ai_emulation ? BST_CHECKED : BST_UNCHECKED, 0);
         SendMessage(GetDlgItem(hwnd, IDC_BUFFERS), TBM_SETTICFREQ, 1, 0);
         SendMessage(GetDlgItem(hwnd, IDC_BUFFERS), TBM_SETRANGEMIN, FALSE, 2);
         SendMessage(GetDlgItem(hwnd, IDC_BUFFERS), TBM_SETRANGEMAX, FALSE, 9);
@@ -102,11 +102,13 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_SETTICFREQ, 1, 0);
         SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_SETRANGEMIN, FALSE, 1);
         SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_SETRANGEMAX, FALSE, 8);
-        SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_SETPOS, TRUE, Configuration::currentSettings.backend_fps / 15);
+        SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BACKFPS), TBM_SETPOS, TRUE,
+                    Configuration::currentSettings.backend_fps / 15);
         SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_SETTICFREQ, 1, 0);
         SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_SETRANGEMIN, FALSE, 1);
         SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_SETRANGEMAX, FALSE, 8);
-        SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_SETPOS, TRUE, Configuration::currentSettings.buffer_fps / 15);
+        SendMessage(GetDlgItem(hwnd, IDC_SLIDER_BUFFERFPS), TBM_SETPOS, TRUE,
+                    Configuration::currentSettings.buffer_fps / 15);
         SendMessage(GetDlgItem(hwnd, IDC_DISALLOWDS8), BM_SETCHECK,
                     Configuration::currentSettings.disallow_sleep_ds8 ? BST_CHECKED : BST_UNCHECKED, 0);
         SendMessage(GetDlgItem(hwnd, IDC_DISALLOWXA2), BM_SETCHECK,
@@ -126,14 +128,6 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETTICFREQ, 20, 0);
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETRANGEMIN, FALSE, 0);
         SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETRANGEMAX, FALSE, 100);
-        if (Configuration::currentSettings.volume == 100)
-        {
-            SendMessage(GetDlgItem(hwnd, IDC_MUTE), BM_SETCHECK, BST_CHECKED, 0);
-        }
-        else
-        {
-            SendMessage(GetDlgItem(hwnd, IDC_MUTE), BM_SETCHECK, BST_UNCHECKED, 0);
-        }
 
         break;
     case WM_CLOSE:
@@ -174,19 +168,6 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 
             EndDialog(hwnd, IDCANCEL);
             break;
-        case IDC_MUTE:
-            if (IsDlgButtonChecked(hwnd, IDC_MUTE))
-            {
-                SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETPOS, TRUE, 100);
-                snd->SetVolume(100);
-            }
-            else
-            {
-                SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_SETPOS, TRUE, Configuration::currentSettings.volume);
-                snd->SetVolume(Configuration::currentSettings.volume);
-            }
-            break;
-
         default:
             break;
         }
@@ -216,25 +197,6 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             }
         }
         break;
-    case WM_VSCROLL: {
-        short int userReq = LOWORD(wParam);
-        if (userReq == TB_ENDTRACK || userReq == TB_THUMBTRACK)
-        {
-            unsigned long dwPosition = (unsigned long)SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_GETPOS, 0, 0);
-            if (dwPosition == 100)
-            {
-                SendMessage(GetDlgItem(hwnd, IDC_MUTE), BM_SETCHECK, BST_CHECKED, 0);
-            }
-            else
-            {
-                SendMessage(GetDlgItem(hwnd, IDC_MUTE), BM_SETCHECK, BST_UNCHECKED, 0);
-            }
-
-            Configuration::setVolume(dwPosition);
-            snd->SetVolume(dwPosition);
-        }
-        break;
-    }
     default:
         break;
     }

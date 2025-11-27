@@ -21,12 +21,12 @@ static DWORD last_play = 0;
 static LPVOID lpvPtr1, lpvPtr2;
 static DWORD dwBytes1, dwBytes2;
 static DWORD DMALen[3] = {0, 0, 0};
-static BYTE* DMAData[3] = {NULL, NULL, NULL};
+static BYTE *DMAData[3] = {NULL, NULL, NULL};
 
 static LPDIRECTSOUNDBUFFER lpdsbuff = NULL;
 static LPDIRECTSOUNDBUFFER lpdsb = NULL;
 
-DWORD WINAPI AudioThreadProc(DirectSoundDriver* ac)
+DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
 {
     ac->threadRunning = true;
     lpdsbuff = ac->lpdsbuf;
@@ -34,8 +34,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver* ac)
     while (lpdsbuff == NULL)
     {
         Sleep(1);
-        if (ac->audioIsDone == true)
-            goto _exit_;
+        if (ac->audioIsDone == true) goto _exit_;
     }
     DEBUG_OUTPUT "DS8: Audio Thread Started...\n";
 
@@ -52,16 +51,14 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver* ac)
     { // While the thread is still alive
         while (last_pos == write_pos)
         { // Cycle around until a new buffer position is available
-            if (lpdsbuff == NULL)
-                return 0;
+            if (lpdsbuff == NULL) return 0;
             // Check to see if the audio pointer moved on to the next segment
             if (write_pos == last_pos)
             {
-                if (Configuration::getDisallowSleepDS8() == false || write_pos == 0)
-                    Sleep(1);
+                if (Configuration::getDisallowSleepDS8() == false || write_pos == 0) Sleep(1);
             }
             WaitForSingleObject(ac->hMutex, INFINITE);
-            if FAILED (lpdsbuff->GetCurrentPosition((unsigned long*)&play_pos, NULL))
+            if FAILED (lpdsbuff->GetCurrentPosition((unsigned long *)&play_pos, NULL))
             {
                 MessageBox(NULL, "Error getting audio position...", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
                 goto _exit_;
@@ -89,8 +86,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver* ac)
         {
             next_pos -= LOCK_SIZE * DS_SEGMENTS;
         }
-        if (ac->audioIsDone == true)
-            break;
+        if (ac->audioIsDone == true) break;
 
         // Fill queue buffer here with LOCK_SIZE
         // TODO: Add buffer processing command here....
@@ -102,10 +98,10 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver* ac)
             goto _exit_;
         }
 
-        ac->LoadAiBuffer((BYTE*)lpvPtr1, dwBytes1);
+        ac->LoadAiBuffer((BYTE *)lpvPtr1, dwBytes1);
         if (dwBytes2)
         {
-            ac->LoadAiBuffer((BYTE*)lpvPtr2, dwBytes2);
+            ac->LoadAiBuffer((BYTE *)lpvPtr2, dwBytes2);
             DEBUG_OUTPUT "P";
         }
 
@@ -123,7 +119,6 @@ _exit_:
     ReleaseMutex(ac->hMutex);
     ac->threadRunning = false;
 }
-
 
 //------------------------------------------------------------------------
 
@@ -222,8 +217,7 @@ BOOL DirectSoundDriver::Initialize()
 
     ReleaseMutex(hMutex);
 
-    if (SampleRate > 0)
-        SetFrequency(SampleRate);
+    if (SampleRate > 0) SetFrequency(SampleRate);
 
     DEBUG_OUTPUT "DS8: Init Success...\n";
 
@@ -275,7 +269,8 @@ void DirectSoundDriver::SetFrequency(u32 Frequency2)
     printf("DS8: SetFrequency()\n");
     StopAudio();
 
-    sLOCK_SIZE = (u32)(Frequency / Configuration::getBackendFPS()) * 4; //(Frequency / 80) * 4;// 0x600;// (22050 / 30) * 4;// 0x4000;// (Frequency / 60) * 4;
+    sLOCK_SIZE = (u32)(Frequency / Configuration::getBackendFPS()) *
+                 4; //(Frequency / 80) * 4;// 0x600;// (22050 / 30) * 4;// 0x4000;// (Frequency / 60) * 4;
     SampleRate = Frequency;
     SegmentSize = 0; // Trash it... we need to redo the Frequency anyway...
     SetSegmentSize(LOCK_SIZE);
@@ -290,16 +285,14 @@ void DirectSoundDriver::SetFrequency(u32 Frequency2)
 
 void DirectSoundDriver::AiUpdate(BOOL Wait)
 {
-    if (Wait)
-        WaitMessage();
+    if (Wait) WaitMessage();
 }
 
 // Management functions
 // TODO: For silent emulation... the Audio should still be "processed" somehow...
 void DirectSoundDriver::StopAudio()
 {
-    if (!audioIsPlaying)
-        return;
+    if (!audioIsPlaying) return;
     DEBUG_OUTPUT "DS8: StopAudio()\n";
     if (lpdsbuf != NULL)
     {
@@ -322,8 +315,7 @@ void DirectSoundDriver::StopAudio()
 
 void DirectSoundDriver::StartAudio()
 {
-    if (audioIsPlaying)
-        return;
+    if (audioIsPlaying) return;
     DEBUG_OUTPUT "DS8: StartAudio()\n";
     audioIsPlaying = TRUE;
     audioIsDone = false;
@@ -337,7 +329,8 @@ void DirectSoundDriver::StartAudio()
     }
     else
     {
-        this->handleAudioThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AudioThreadProc, this, 0, &this->dwAudioThreadId);
+        this->handleAudioThread =
+            CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AudioThreadProc, this, 0, &this->dwAudioThreadId);
     }
     if (lpdsbuf != NULL)
     {
@@ -348,11 +341,7 @@ void DirectSoundDriver::StartAudio()
 
 void DirectSoundDriver::SetVolume(u32 volume)
 {
-    DWORD ds_volume = (DWORD)volume * -25;
-    if (volume == 100)
-        ds_volume = (DWORD)DSBVOLUME_MIN;
-    if (volume == 0)
-        ds_volume = DSBVOLUME_MAX;
-    if (lpdsb != NULL)
-        lpdsb->SetVolume(ds_volume);
+    const auto ds_volume =
+        std::clamp(remap<int>(volume, 0, 100, DSBVOLUME_MIN, DSBVOLUME_MAX), DSBVOLUME_MIN, DSBVOLUME_MAX);
+    if (lpdsb != NULL) lpdsb->SetVolume(ds_volume);
 }

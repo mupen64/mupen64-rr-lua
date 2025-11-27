@@ -1,13 +1,13 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-
+#include <Windows.h>
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "windows.h"
+
 #define IDC_STATIC -1
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -50,70 +50,43 @@ END
 // Dialog
 //
 
-IDD_CONFIG DIALOGEX 0, 0, 201, 300
+IDD_CONFIG DIALOGEX 0, 0, 200, 230
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Audio Configuration"
-FONT 8, "MS Shell Dlg", 0, 0, 0x0
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Disable if the emulator handles its own AI emulation.",IDC_STATIC,36,172,177,14
-    CONTROL         "Force Old Audio Sync",IDC_OLDSYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,25,87,86,10
-    CONTROL         "Emulate Audio Interface",IDC_AI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,161,116,9
-    COMBOBOX        IDC_DEVICE,229,32,165,132,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        IDC_DIRECTORY,261,66,134,14,ES_AUTOHSCROLL | WS_DISABLED
-    PUSHBUTTON      "Start",IDC_START,227,89,50,14,WS_DISABLED
-    PUSHBUTTON      "Stop",IDC_STOP,285,89,50,14,WS_DISABLED
-    PUSHBUTTON      "&Browse",IDC_BROWSE,343,89,50,14,WS_DISABLED
-    EDITTEXT        IDC_EDIT2,282,134,66,12,ES_AUTOHSCROLL | WS_DISABLED,WS_EX_STATICEDGE
-    EDITTEXT        IDC_EDIT3,282,151,66,12,ES_AUTOHSCROLL | WS_DISABLED,WS_EX_STATICEDGE
-    EDITTEXT        IDC_EDIT1,282,169,66,12,ES_AUTOHSCROLL | WS_DISABLED,WS_EX_STATICEDGE
-    EDITTEXT        IDC_EDIT5,282,185,66,12,ES_AUTOHSCROLL | WS_DISABLED,WS_EX_STATICEDGE
-    EDITTEXT        IDC_EDIT6,282,201,66,12,ES_AUTOHSCROLL | WS_DISABLED,WS_EX_STATICEDGE
-    CONTROL         "",IDC_VOLUME,"msctls_trackbar32",TBS_AUTOTICKS | TBS_VERT | TBS_BOTH | WS_BORDER | WS_TABSTOP,362,132,32,67,WS_EX_STATICEDGE
-    LTEXT           "Designed for use with Project64 2.1.0.1",IDC_STATIC,24,10,163,10
-    GROUPBOX        "Playback Options",IDC_STATIC,17,23,200,120
-    GROUPBOX        "Volume",IDC_STATIC,357,121,45,94
-    CONTROL         "Mute",IDC_MUTE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,362,201,32,10
-    LTEXT           "Mute:",IDC_STATIC,228,169,53,8
-    LTEXT           "Volume Up:",IDC_STATIC,228,137,53,8
-    LTEXT           "Volume Down:",IDC_STATIC,228,153,53,8
-    GROUPBOX        "Emulation Options",IDC_STATIC,16,148,200,70
-    GROUPBOX        "Audio Logging",IDC_STATIC,221,52,181,68
-    LTEXT           "Directory:",IDC_STATIC,229,68,31,8
-    GROUPBOX        "Shortcut Keys",IDC_STATIC,221,121,132,96
-    LTEXT           "Start Audio Log:",IDC_STATIC,228,186,53,8
-    LTEXT           "Stop Audio Log:",IDC_STATIC,228,204,53,8
-    GROUPBOX        "Playback Device",IDC_STATIC,222,23,180,28
-    LTEXT           "Old school Audio Sync.  Works well for emulators with poor Speed Limiter but will not work with some other games.  Use is not recommended.",IDC_STATIC,37,99,133,35
-    LTEXT           "Gracefully services buffer overruns by waiting for space to be available rather than skipping the buffer completely.",IDC_STATIC,37,52,172,29
-    DEFPUSHBUTTON   "&OK",IDOK,133,80,60,14
-    PUSHBUTTON      "Cancel",IDCANCEL,71,80,60,14
+    CONTROL "Playback Options", IDC_STATIC, BUTTON, BS_GROUPBOX, 10, 5, 180, 60
 
-    COMBOBOX        IDC_DEVICE,27,31,165,132,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "",IDC_VOLUME,"msctls_trackbar32",TBS_AUTOTICKS | TBS_VERT | TBS_BOTH | WS_BORDER | WS_TABSTOP,213,27,32,67,WS_EX_STATICEDGE
-    GROUPBOX        "Volume",IDC_STATIC,208,16,45,94
-    CONTROL         "Mute",IDC_MUTE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,96,32,10
-    GROUPBOX        "Output Device",IDC_STATIC,19,20,180,28
+    CONTROL "Device", IDC_STATIC, STATIC, SS_LEFT, 16, 20, 42, 8
+    CONTROL "", IDC_DEVICE, COMBOBOX, CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP, 62, 20, 120, 13
 
-    CONTROL         "Emulate Audio Interface",IDC_AI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,205,21,116,9
-    GROUPBOX        "Emulation Options",IDC_STATIC,194,7,167,62
-    CONTROL         "Force Old Audio Sync",IDC_OLDSYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,38,86,10
-    GROUPBOX        "Buffer Options",IDC_STATIC,7,7,178,127
-    GROUPBOX        "Playback Tweaks",IDC_STATIC,194,74,172,60
-    LTEXT           "Buffer FPS",IDC_STATIC,16,67,35,8
-    LTEXT           "Backend FPS",IDC_STATIC,16,89,42,8
-    CONTROL         "",IDC_SLIDER_BUFFERFPS,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,60,67,92,13,WS_EX_STATICEDGE
-    CONTROL         "",IDC_SLIDER_BACKFPS,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,60,89,92,13,WS_EX_STATICEDGE
-    LTEXT           "Buffers",IDC_STATIC,16,110,24,8
-    CONTROL         "",IDC_BUFFERS,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,60,110,92,13,WS_EX_STATICEDGE
-    LTEXT           "__________________________________",IDC_STATIC,20,52,139,8
-    LTEXT           "1000ms",IDC_SLIDER_BUFFERFPS_TEXT,155,70,27,8
-    LTEXT           "1000ms",IDC_SLIDER_BACKFPS_TEXT,155,90,26,8
-    LTEXT           "90",IDC_BUFFERS_TEXT,155,111,9,8
-    CONTROL         "Disallow Thread Yielding DS8",IDC_DISALLOWDS8,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,203,107,116,9
-    CONTROL         "Disallow Thread Yielding XA2",IDC_DISALLOWXA2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,203,120,116,9
-    COMBOBOX        IDC_COMBO2,248,87,108,30,CBS_DROPDOWNLIST | CBS_SORT | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Frequency",IDC_STATIC,203,89,35,8
+    CONTROL "Volume", IDC_STATIC, STATIC, SS_LEFT, 16, 40, 42, 8
+    CONTROL "", IDC_VOLUME, "msctls_trackbar32", TBS_HORZ | WS_TABSTOP, 60, 40, 120, 13
+
+    CONTROL "Emulation Options", IDC_STATIC, BUTTON, BS_GROUPBOX, 10, 74, 180, 130
+
+    CONTROL "Buffers", IDC_STATIC, STATIC, SS_LEFT, 16, 88, 35, 8
+    CONTROL "", IDC_BUFFERS, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, 86, 92, 13
+    LTEXT "", IDC_BUFFERS_TEXT, 158, 88, 27, 8
+
+    CONTROL "Backend FPS", IDC_STATIC, STATIC, SS_LEFT, 16, 108, 42, 8
+    CONTROL "", IDC_SLIDER_BACKFPS, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, 106, 92, 13
+    LTEXT "", IDC_SLIDER_BACKFPS_TEXT, 158, 108, 27, 8
+
+    CONTROL "Buffer FPS", IDC_STATIC, STATIC, SS_LEFT, 16, 130, 24, 8
+    CONTROL "", IDC_SLIDER_BUFFERFPS, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, 128, 92, 13
+    LTEXT "", IDC_SLIDER_BUFFERFPS_TEXT, 158, 130, 27, 8
+
+    CONTROL "Emulate Audio Interface", IDC_AI, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, 152, 116, 9
+    CONTROL "Force Old Audio Sync", IDC_OLDSYNC, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, 166, 86, 10
+    CONTROL "Disallow Thread Yielding DS8", IDC_DISALLOWDS8, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, 180, 116, 9
+
+    DEFPUSHBUTTON "&OK", IDOK, 87, 210, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 140, 210, 50, 14
 END
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
