@@ -31,7 +31,8 @@ if (MUPEN64RR_BUILD_WIN32)
     add_subdirectory(Plugins.RSP.Dummy)
     add_subdirectory(Plugins.Video.Dummy)
 
-    # TAS RSP
+    # TAS plugins
+    add_subdirectory(Plugins.Audio.TAS)
     add_subdirectory(Plugins.RSP.TAS)
 endif()
 

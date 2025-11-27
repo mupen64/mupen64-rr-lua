@@ -1,0 +1,134 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+#include <Windows.h>
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+
+#define IDC_STATIC -1
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CONFIG DIALOGEX 0, 0, 200, 230
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Audio Configuration"
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL "Playback Options", IDC_STATIC, BUTTON, BS_GROUPBOX, 10, 5, 180, 60
+
+    CONTROL "Device", IDC_STATIC, STATIC, SS_LEFT, 16, 20, 42, 8
+    CONTROL "", IDC_DEVICE, COMBOBOX, CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP, 62, 20, 120, 13
+
+    CONTROL "Volume", IDC_STATIC, STATIC, SS_LEFT, 16, 40, 42, 8
+    CONTROL "", IDC_VOLUME, "msctls_trackbar32", TBS_HORZ | WS_TABSTOP, 60, 40, 120, 13
+
+    CONTROL "Emulation Options", IDC_STATIC, BUTTON, BS_GROUPBOX, 10, 74, 180, 130
+
+    CONTROL "Buffers", IDC_STATIC, STATIC, SS_LEFT, 16, 88, 42, 8
+    CONTROL "", IDC_BUFFERS, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, 86, 92, 13
+    LTEXT "", IDC_BUFFERS_TEXT, 158, 88, 27, 8
+
+    CONTROL "Backend FPS", IDC_STATIC, STATIC, SS_LEFT, 16, 108, 42, 8
+    CONTROL "", IDC_SLIDER_BACKFPS, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, 106, 92, 13
+    LTEXT "", IDC_SLIDER_BACKFPS_TEXT, 158, 108, 27, 8
+
+    CONTROL "Buffer FPS", IDC_STATIC, STATIC, SS_LEFT, 16, 130, 42, 8
+    CONTROL "", IDC_SLIDER_BUFFERFPS, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, 128, 92, 13
+    LTEXT "", IDC_SLIDER_BUFFERFPS_TEXT, 158, 130, 27, 8
+
+    CONTROL "Emulate Audio Interface", IDC_AI, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, 152, 116, 9
+    CONTROL "Force Old Audio Sync", IDC_OLDSYNC, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, 166, 86, 10
+    CONTROL "Disallow Thread Yielding DS8", IDC_DISALLOWDS8, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, 180, 116, 9
+
+    PUSHBUTTON "Cancel", IDCANCEL, 87, 210, 50, 14
+    DEFPUSHBUTTON "&OK", IDOK, 140, 210, 50, 14
+END
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_CONFIG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 410
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 244
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_PROPPAGE_ADVANCED AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
