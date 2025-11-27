@@ -43,6 +43,8 @@ void ChangeABI(int type); /* type 0 = SafeMode */
 
 #define PLUGIN_FULL_NAME L"TAS Audio " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
 
+extern core_plugin_extended_funcs* g_ef;
+
 /**
  * \brief Remaps a value from one range to another.
  * \param value The value to remap.

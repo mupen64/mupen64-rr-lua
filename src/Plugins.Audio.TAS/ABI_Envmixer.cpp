@@ -124,8 +124,7 @@ void ENVMIXER()
     u32 addy = t9 & 0xFFFFFF; // + SEGMENTS[(t9>>24)&0xf];
     // static
     //  ********* Make sure these conditions are met... ***********
-    /*if ((AudioInBuffer | AudioOutBuffer | AudioAuxA | AudioAuxC | AudioAuxE | AudioCount) & 0x3) {
-    MessageBox (NULL, "Unaligned EnvMixer... please report this to Azimer with the following information: RomTitle, Place in the rom it occurred, and any save state just before the error", "AudioHLE Error", MB_OK);
+    /*if ((AudioInBuffer | AudioOutBuffer | AudioAuxA | AudioAuxC | AudioAuxE | AudioCount) & 0x3)) fail();
     }*/
     // ------------------------------------------------------------
     s16* inp = LoadBufferSpace(AudioInBuffer);

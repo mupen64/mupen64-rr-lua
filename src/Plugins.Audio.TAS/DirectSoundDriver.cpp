@@ -60,7 +60,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
             WaitForSingleObject(ac->hMutex, INFINITE);
             if FAILED (lpdsbuff->GetCurrentPosition((unsigned long *)&play_pos, NULL))
             {
-                MessageBox(NULL, L"Error getting audio position...", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
+                g_ef->log_error(L"GetCurrentPosition");
                 goto _exit_;
             }
             ReleaseMutex(ac->hMutex);
@@ -94,7 +94,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
         WaitForSingleObject(ac->hMutex, INFINITE);
         if (DS_OK != lpdsbuff->Lock(write_pos, LOCK_SIZE, &lpvPtr1, &dwBytes1, &lpvPtr2, &dwBytes2, 0))
         {
-            MessageBox(NULL, L"Error locking sound buffer", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
+            g_ef->log_error(L"Failed to lock sound buffer");
             goto _exit_;
         }
 
@@ -107,7 +107,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
 
         if FAILED (lpdsbuff->Unlock(lpvPtr1, dwBytes1, lpvPtr2, dwBytes2))
         {
-            MessageBox(NULL, L"Error unlocking sound buffer", PLUGIN_FULL_NAME, MB_OK | MB_ICONSTOP);
+            g_ef->log_error(L"Failed to unlock sound buffer");
             goto _exit_;
         }
 
@@ -266,7 +266,8 @@ void DirectSoundDriver::SetFrequency(u32 Frequency2)
 {
     DWORD Frequency = Frequency2;
 
-    printf("DS8: SetFrequency()\n");
+    g_ef->log_info(std::format(L"Setting frequency to {}", Frequency).c_str());
+
     StopAudio();
 
     sLOCK_SIZE = (u32)(Frequency / Configuration::getBackendFPS()) *

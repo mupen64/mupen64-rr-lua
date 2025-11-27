@@ -9,6 +9,19 @@
 #include "audiohle.h"
 #include "DirectSoundDriver.h"
 
+static void log_shim(const wchar_t *str)
+{
+    wprintf(str);
+}
+
+static core_plugin_extended_funcs ef_shim = {
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = log_shim,
+    .log_info = log_shim,
+    .log_warn = log_shim,
+    .log_error = log_shim,
+};
+
 SoundDriverInterface *snd = NULL;
 bool ai_delayed_carry;
 bool first_time = true;
@@ -16,11 +29,20 @@ HINSTANCE hInstance;
 OSVERSIONINFOEX OSInfo;
 core_audio_info AudioInfo;
 u32 Dacrate = 0;
+core_plugin_extended_funcs *g_ef = &ef_shim;
+
+
+
 
 bool WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     hInstance = hinstDLL;
     return TRUE;
+}
+
+EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
+{
+    g_ef = funcs;
 }
 
 EXPORT void CALL DllAbout(void *hParent)
