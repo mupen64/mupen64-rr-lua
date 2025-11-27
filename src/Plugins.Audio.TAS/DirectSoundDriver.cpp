@@ -341,7 +341,17 @@ void DirectSoundDriver::StartAudio()
 
 void DirectSoundDriver::SetVolume(u32 volume)
 {
-    const auto ds_volume =
-        std::clamp(remap<int>(volume, 0, 100, DSBVOLUME_MIN, DSBVOLUME_MAX), DSBVOLUME_MIN, DSBVOLUME_MAX);
+    LONG ds_volume;
+
+    if (volume == 0)
+    {
+        ds_volume = DSBVOLUME_MIN;
+    }
+    else
+    {
+        float v = volume / 100.0f;
+        ds_volume = (LONG)(20.0f * log10f(v) * 100.0f);
+        ds_volume = std::clamp(ds_volume, (LONG)DSBVOLUME_MIN, (LONG)DSBVOLUME_MAX);
+    }
     if (lpdsb != NULL) lpdsb->SetVolume(ds_volume);
 }
