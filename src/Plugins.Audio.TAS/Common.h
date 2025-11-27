@@ -15,8 +15,6 @@
 #include <cassert>
 #include <commctrl.h>
 
-#define DEBUG_OUTPUT
-
 extern core_audio_info AudioInfo;
 
 void HLEStart();

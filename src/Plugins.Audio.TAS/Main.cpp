@@ -85,7 +85,6 @@ EXPORT Boolean CALL InitiateAudio(core_audio_info Audio_Info)
 
 EXPORT void CALL CloseDLL(void)
 {
-    DEBUG_OUTPUT "Call: CloseDLL()\n";
     if (snd != NULL)
     {
         snd->AI_Shutdown();
@@ -117,7 +116,6 @@ EXPORT void CALL ProcessAList(void)
 
 EXPORT void CALL RomOpen(void)
 {
-    DEBUG_OUTPUT "Call: RomOpen()\n";
     Configuration::RomRunning = true;
     first_time = false;
     Configuration::LoadSettings();
@@ -127,7 +125,6 @@ EXPORT void CALL RomClosed(void)
 {
     Configuration::RomRunning = false;
     Configuration::LoadSettings();
-    DEBUG_OUTPUT "Call: RomClosed()\n";
     Dacrate = 0; // Forces a revisit to initialize audio
     if (snd == NULL) return;
     snd->AI_ResetAudio();
@@ -138,7 +135,6 @@ EXPORT void CALL AiDacrateChanged(int SystemType)
     u32 video_clock;
 
     ai_delayed_carry = false;
-    DEBUG_OUTPUT "Call: AiDacrateChanged()\n";
     if (snd == NULL) return;
     if (Dacrate == *AudioInfo.ai_dacrate_reg) return;
 
@@ -176,8 +172,8 @@ EXPORT void CALL AiDacrateChanged(int SystemType)
     else if (Frequency > 47000 && Frequency < 49000)
         Frequency = 48000;
     else
-        DEBUG_OUTPUT "Unable to standardize Frequeny!\n";
-    DEBUG_OUTPUT "Frequency = %i\n", Frequency;
+        g_ef->log_error(std::format(L"Unknown AI Frequency {}", Frequency).c_str());
+    
     snd->AI_SetFrequency(Frequency);
 }
 

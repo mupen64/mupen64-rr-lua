@@ -36,7 +36,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
         Sleep(1);
         if (ac->audioIsDone == true) goto _exit_;
     }
-    DEBUG_OUTPUT "DS8: Audio Thread Started...\n";
+    g_ef->log_trace(L"Audio thread started");
 
     DWORD dwStatus;
     IDirectSoundBuffer_GetStatus(lpdsbuff, &dwStatus);
@@ -71,11 +71,6 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
                 write_pos = play_pos / LOCK_SIZE * LOCK_SIZE - LOCK_SIZE;
             last_play = play_pos;
         }
-        // This means we had a buffer segment skipped skip
-        if (next_pos != write_pos)
-        {
-            DEBUG_OUTPUT "A";
-        }
 
         // Store our last position
         last_pos = write_pos;
@@ -102,7 +97,6 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
         if (dwBytes2)
         {
             ac->LoadAiBuffer((BYTE *)lpvPtr2, dwBytes2);
-            DEBUG_OUTPUT "P";
         }
 
         if FAILED (lpdsbuff->Unlock(lpvPtr1, dwBytes1, lpvPtr2, dwBytes2))
@@ -115,7 +109,7 @@ DWORD WINAPI AudioThreadProc(DirectSoundDriver *ac)
     }
 
 _exit_:
-    DEBUG_OUTPUT "DS8: Audio Thread Terminated...\n";
+    g_ef->log_trace(L"Audio thread exiting");
     ReleaseMutex(ac->hMutex);
     ac->threadRunning = false;
 }
@@ -166,7 +160,6 @@ BOOL DirectSoundDriver::Initialize()
     DeInitialize();
     SampleRate = 0;
 
-    DEBUG_OUTPUT "DS8: Initialize()\n";
     hMutex = CreateMutex(NULL, FALSE, NULL);
 
     WaitForSingleObject(hMutex, INFINITE);
@@ -175,13 +168,13 @@ BOOL DirectSoundDriver::Initialize()
 
     if (FAILED(hr))
     {
-        DEBUG_OUTPUT "DS8: Unable to DirectSoundCreate\n";
+        g_ef->log_error(L"DS8: Unable to DirectSoundCreate");
         return -2;
     }
 
     if (FAILED(hr = IDirectSound_SetCooperativeLevel(lpds, (HWND)AudioInfo.main_hwnd, DSSCL_PRIORITY)))
     {
-        DEBUG_OUTPUT "DS8: Failed to SetCooperativeLevel\n";
+        g_ef->log_error(L"DS8: Failed to SetCooperativeLevel");
         return -1;
     }
 
@@ -219,8 +212,6 @@ BOOL DirectSoundDriver::Initialize()
 
     if (SampleRate > 0) SetFrequency(SampleRate);
 
-    DEBUG_OUTPUT "DS8: Init Success...\n";
-
     DMALen[0] = DMALen[1] = 0;
     DMAData[0] = DMAData[1] = NULL;
     return FALSE;
@@ -228,7 +219,6 @@ BOOL DirectSoundDriver::Initialize()
 
 void DirectSoundDriver::DeInitialize()
 {
-    DEBUG_OUTPUT "DS8: DeInitialize()\n";
     audioIsDone = true;
     StopAudio();
     if (lpdsbuf)
@@ -256,7 +246,6 @@ void DirectSoundDriver::DeInitialize()
     readLoc = writeLoc = remainingBytes = 0;
     DMALen[0] = DMALen[1] = 0;
     DMAData[0] = DMAData[1] = NULL;
-    DEBUG_OUTPUT "DS8: DeInitialize() complete\n";
 }
 
 // ---------BLAH--------
@@ -275,13 +264,11 @@ void DirectSoundDriver::SetFrequency(u32 Frequency2)
     SampleRate = Frequency;
     SegmentSize = 0; // Trash it... we need to redo the Frequency anyway...
     SetSegmentSize(LOCK_SIZE);
-    DEBUG_OUTPUT "DS8: Frequency: %li - SegmentSize: %li\n", Frequency, SegmentSize;
     lastLength = 0;
     writeLoc = 0x0000;
     readLoc = 0x0000;
     remainingBytes = 0;
     StartAudio();
-    DEBUG_OUTPUT "DS8: SetFrequency() Complete\n";
 }
 
 void DirectSoundDriver::AiUpdate(BOOL Wait)
@@ -294,7 +281,6 @@ void DirectSoundDriver::AiUpdate(BOOL Wait)
 void DirectSoundDriver::StopAudio()
 {
     if (!audioIsPlaying) return;
-    DEBUG_OUTPUT "DS8: StopAudio()\n";
     if (lpdsbuf != NULL)
     {
         lpdsbuf->Stop();
@@ -305,19 +291,16 @@ void DirectSoundDriver::StopAudio()
     {
         if (WaitForSingleObjectEx(this->handleAudioThread, 1000, false) != WAIT_OBJECT_0)
         {
-            DEBUG_OUTPUT "DS8: Unsafe Thread Termination\n";
             TerminateThread(this->handleAudioThread, 0);
         }
         this->threadRunning = false;
     }
     this->handleAudioThread = NULL;
-    DEBUG_OUTPUT "DS8: StopAudio() complete\n";
 }
 
 void DirectSoundDriver::StartAudio()
 {
     if (audioIsPlaying) return;
-    DEBUG_OUTPUT "DS8: StartAudio()\n";
     audioIsPlaying = TRUE;
     audioIsDone = false;
     writeLoc = 0x0000;
@@ -325,7 +308,6 @@ void DirectSoundDriver::StartAudio()
     remainingBytes = 0;
     if (this->handleAudioThread != NULL)
     {
-        DEBUG_OUTPUT "Audiothread != NULL";
         assert(0);
     }
     else
@@ -337,7 +319,6 @@ void DirectSoundDriver::StartAudio()
     {
         IDirectSoundBuffer_Play(lpdsbuf, 0, 0, DSBPLAY_LOOPING);
     }
-    DEBUG_OUTPUT "DS8: StartAudio() Complete\n";
 }
 
 void DirectSoundDriver::SetVolume(u32 volume)

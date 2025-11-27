@@ -20,10 +20,6 @@ void SoundDriver::AI_LenChanged(u8* start, u32 length)
     // Bleed off some of this buffer to smooth out audio (buffer overflow handling)
     if (length < m_MaxBufferSize && Configuration::getSyncAudio())
     {
-        if (m_MaxBufferSize == m_BufferRemaining)
-        {
-            DEBUG_OUTPUT "B"; // Debug that we overflowed (shouldn't happen with locked FPS)
-        }
         while (m_MaxBufferSize == m_BufferRemaining)
         {
             Sleep(1);
@@ -38,7 +34,6 @@ void SoundDriver::AI_LenChanged(u8* start, u32 length)
 
     if (m_AI_DMASecondaryBytes > 0)
     {
-        DEBUG_OUTPUT "X";
         s32 tmp = m_AI_DMASecondaryBytes - m_AI_DMAPrimaryBytes;
         if (tmp > 0)
         {
@@ -80,10 +75,6 @@ void SoundDriver::AI_LenChanged(u8* start, u32 length)
     // Bleed off some of this buffer to smooth out audio
     if (length < m_MaxBufferSize && Configuration::getSyncAudio() == true && m_AI_DMASecondaryBytes > 0)
     {
-        if (m_MaxBufferSize == m_BufferRemaining)
-        {
-            DEBUG_OUTPUT "O"; // Debug that we overflowed (shouldn't happen with locked FPS)
-        }
         while (m_MaxBufferSize == m_BufferRemaining)
         {
             Sleep(1);
@@ -281,9 +272,6 @@ u32 SoundDriver::LoadAiBuffer(u8* start, u32 length)
     }
 
     // Step 2: Fill bytesToMove with silence
-    if (bytesToMove == length)
-        DEBUG_OUTPUT "S";
-
     while (bytesToMove > 0)
     {
         *(u32*)(ptrStart + writePtr) = lastSample;
