@@ -425,67 +425,6 @@ static std::wstring get_desktop_path()
 }
 
 /**
- * \brief Limits a value to a specific range
- * \param value The value to limit
- * \param min The lower bound
- * \param max The upper bound
- * \return The value, limited to the specified range
- */
-template <typename T> static T clamp(const T value, const T min, const T max)
-{
-    if (value > max)
-    {
-        return max;
-    }
-    if (value < min)
-    {
-        return min;
-    }
-    return value;
-}
-
-/**
- * \brief Remaps a value from one range to another.
- * \param value The value to remap.
- * \param from1 The lower bound of the source range.
- * \param to1 The upper bound of the source range.
- * \param from2 The lower bound of the target range.
- * \param to2 The upper bound of the target range.
- * \return The value, remapped to the target range.
- */
-template <typename T> static T remap(const T value, const T from1, const T to1, const T from2, const T to2)
-{
-    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
-}
-
-/**
- * \brief Limits a value to a specific range, wrapping around if it exceeds the bounds.
- * \param value The value to limit.
- * \param min The lower bound.
- * \param max The upper bound.
- * \return The value, limited to the specified range.
- */
-template <typename T> static T wrapping_clamp(const T value, T min, T max)
-{
-    static_assert(std::is_integral_v<T>, "wrapping_clamp only supports integral types");
-
-    if (min == max)
-    {
-        return min;
-    }
-
-    if (min > max)
-    {
-        std::swap(min, max);
-    }
-
-    const T range = max - min + 1;
-    T offset = (value - min) % range;
-    if (offset < 0) offset += range;
-    return min + offset;
-}
-
-/**
  * \brief Formats a duration into a string of format HH:MM:SS
  * \param seconds The duration in seconds
  * \return The formatted duration

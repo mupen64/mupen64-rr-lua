@@ -348,7 +348,7 @@ static void adjust_listbox_selection(const int32_t by)
     size_t attempts = 0;
     while (true)
     {
-        new_index = wrapping_clamp(new_index + by, 0, count - 1);
+        new_index = MiscHelpers::wrapping_clamp(new_index + by, 0, count - 1);
         attempts++;
 
         if (new_index == LB_ERR || new_index >= count || attempts > count)

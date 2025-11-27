@@ -196,7 +196,7 @@ static void pause_emu()
 
 static void increment_speed(const int value)
 {
-    g_config.core.fps_modifier = clamp(g_config.core.fps_modifier + value, 5, 1000);
+    g_config.core.fps_modifier = std::clamp(g_config.core.fps_modifier + value, 5, 1000);
     g_main_ctx.core_ctx->vr_on_speed_modifier_changed();
     Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
 }
