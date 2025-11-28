@@ -7,25 +7,12 @@
 #pragma once
 
 #include <CommonPCH.h>
+#include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 #include <resource.h>
 
-#define PLUGIN_VERSION "1.0.1"
-
-#ifdef _M_X64
-#define PLUGIN_ARCH " x64"
-#else
-#define PLUGIN_ARCH " "
-#endif
-
-#ifdef _DEBUG
-#define PLUGIN_TARGET " Debug"
-#else
-#define PLUGIN_TARGET " "
-#endif
-
-#define PLUGIN_NAME "TAS RSP " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP", L"1.0.1")
 
 extern HINSTANCE g_instance;
 extern std::filesystem::path g_app_path;

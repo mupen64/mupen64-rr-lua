@@ -365,7 +365,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 {
     PluginInfo->ver = 0x0101;
     PluginInfo->type = (int16_t)plugin_rsp;
-    strncpy(PluginInfo->name, PLUGIN_NAME, std::size(PluginInfo->name));
+    strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = 1;
     PluginInfo->unused_byteswapped = 1;
 }

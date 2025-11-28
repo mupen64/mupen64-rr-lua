@@ -8,21 +8,8 @@
 
 #include <CommonPCH.h>
 #include <DummyPluginStub.h>
+#include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 
-#define PLUGIN_VERSION L"1.0.0"
-
-#ifdef _M_X64
-#define PLUGIN_ARCH L" x64"
-#else
-#define PLUGIN_ARCH L" "
-#endif
-
-#ifdef _DEBUG
-#define PLUGIN_TARGET L" Debug"
-#else
-#define PLUGIN_TARGET L" "
-#endif
-
-#define PLUGIN_NAME L"No RSP " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No RSP", L"1.0.0")

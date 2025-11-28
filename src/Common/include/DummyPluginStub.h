@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define DUMMY_PLUGIN_STUB_IMPL(plugin_type)                                                                                   \
+#define DUMMY_PLUGIN_STUB_IMPL(plugin_type)                                                                            \
                                                                                                                        \
     BOOL APIENTRY DllMain(HMODULE hmod, const DWORD reason, LPVOID)                                                    \
     {                                                                                                                  \
@@ -16,7 +16,7 @@
     EXPORT void CALL GetDllInfo(core_plugin_info *info)                                                                \
     {                                                                                                                  \
         info->ver = 0x0101;                                                                                            \
-        info->type = plugin_type;                                                                                             \
+        info->type = plugin_type;                                                                                      \
         strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));                    \
     }                                                                                                                  \
                                                                                                                        \

@@ -47,10 +47,10 @@ EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 
 EXPORT void CALL DllAbout(void *hParent)
 {
-    const auto msg = PLUGIN_FULL_NAME "\n"
-                                      "Part of the Mupen64 project family."
-                                      "\n\n"
-                                      "https://github.com/mupen64/mupen64-rr-lua";
+    const auto msg = PLUGIN_NAME L"\n"
+                                      L"Part of the Mupen64 project family."
+                                      L"\n\n"
+                                      L"https://github.com/mupen64/mupen64-rr-lua";
 
     MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);
 }
@@ -97,7 +97,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 {
     PluginInfo->unused_byteswapped = TRUE;
     PluginInfo->unused_normal_memory = FALSE;
-    strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_FULL_NAME).c_str());
+    strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->type = plugin_audio;
     PluginInfo->ver = 0x0101;
 }

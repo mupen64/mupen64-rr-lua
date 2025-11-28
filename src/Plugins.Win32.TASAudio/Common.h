@@ -7,6 +7,7 @@
 #pragma once
 
 #include <CommonPCH.h>
+#include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 #include <IOUtils.h>
@@ -25,20 +26,6 @@ void ChangeABI(int type); /* type 0 = SafeMode */
 #define MI_INTR_AI 0x04 /* Bit 2: AI intr */
 #define AI_CONTROL_DMA_ON 0x01
 
-#define PLUGIN_VERSION L"1.0.0"
-
-#ifdef _M_X64
-#define PLUGIN_ARCH " x64"
-#else
-#define PLUGIN_ARCH L" "
-#endif
-
-#ifdef _DEBUG
-#define PLUGIN_TARGET L" Debug"
-#else
-#define PLUGIN_TARGET L" "
-#endif
-
-#define PLUGIN_FULL_NAME L"TAS Audio " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Audio", L"1.0.0")
 
 extern core_plugin_extended_funcs* g_ef;
