@@ -38,7 +38,7 @@ extern "C"
 
 #ifdef MUPAPI_PLUGIN_DECLS
 #define MUPAPI_DEFINE_FN(rt_type, name, ...)                                                                           \
-    rt_type name(__VA_ARGS__);                                                                                         \
+    extern "C" rt_type name(__VA_ARGS__);                                                                                         \
     typedef rt_type (CALL *fp_##name)(__VA_ARGS__);
 #else
 #define MUPAPI_DEFINE_FN(rt_type, name, ...) typedef rt_type (*fp_##name)(__VA_ARGS__);

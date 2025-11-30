@@ -81,7 +81,7 @@ void MainWindow::onOpenRom1(const QString &qsPath)
     auto pluginDir = exeDir / "plugin";
     auto hardcodedPlugins = Mupen::PluginPaths{
         .video_path = pluginDir / "no-video.so",
-        .audio_path = pluginDir / "no-audio.so",
+        .audio_path = pluginDir / "audio-pan64.so",
         .input_path = pluginDir / "no-input.so",
         .rsp_path = pluginDir / "TASRSP.so",
     };

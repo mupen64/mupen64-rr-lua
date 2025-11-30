@@ -169,6 +169,7 @@ int audio_ucode(OSTask_t *task)
         }
     }
 
+    // TODO: add config process
     // if (config.ucode_cache_verify)
     // {
     //     audio_ucode_verify_cache(task);

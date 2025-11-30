@@ -100,8 +100,10 @@ if(MUPEN64RR_BUILD_QT6)
   find_package(Qt6 REQUIRED COMPONENTS Widgets)
   qt6_standard_project_setup()
 
-  # we're boosting it (TODO: configure vcpkg with the needed libs)
+  # libraries needed for Qt6 plugins, specifically
   find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
+  find_package(SampleRate CONFIG REQUIRED)
+  pkg_check_modules(portaudiocpp IMPORTED_TARGET GLOBAL "portaudiocpp")
 endif()
 
 # CMake modules
@@ -131,6 +133,11 @@ endif()
 if(WIN32)
   # Use UTF-16 versions of functions
   add_compile_definitions(UNICODE _UNICODE)
+elseif(UNIX)
+  # Compile with -fvisibility=hidden
+  set(CMAKE_C_VISIBILITY_PRESET "hidden")
+  set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
+  set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 endif()
 
 # define _DEBUG for debug builds
