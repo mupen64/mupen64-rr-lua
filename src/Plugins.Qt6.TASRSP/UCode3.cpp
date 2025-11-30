@@ -28,7 +28,7 @@ extern int16_t VolTrg_Right;
 extern int32_t VolRamp_Right;
 // extern uint16_t VolRate_Right;
 
-extern short hleMixerWorkArea[256];
+extern int16_t hleMixerWorkArea[256];
 extern uint16_t adpcmtable[0x88];
 
 extern uint8_t BufferSpace[0x10000];
@@ -65,18 +65,18 @@ static void ENVMIXER3()
     uint8_t flags = (uint8_t)((inst1 >> 16) & 0xff);
     uint32_t addy = (inst2 & 0xFFFFFF);
 
-    short *inp = (short *)(BufferSpace + 0x4F0);
-    short *out = (short *)(BufferSpace + 0x9D0);
-    short *aux1 = (short *)(BufferSpace + 0xB40);
-    short *aux2 = (short *)(BufferSpace + 0xCB0);
-    short *aux3 = (short *)(BufferSpace + 0xE20);
+    int16_t *inp = (int16_t *)(BufferSpace + 0x4F0);
+    int16_t *out = (int16_t *)(BufferSpace + 0x9D0);
+    int16_t *aux1 = (int16_t *)(BufferSpace + 0xB40);
+    int16_t *aux2 = (int16_t *)(BufferSpace + 0xCB0);
+    int16_t *aux3 = (int16_t *)(BufferSpace + 0xE20);
     int32_t MainR;
     int32_t MainL;
     int32_t AuxR;
     int32_t AuxL;
     int i1, o1, a1, a2, a3;
     uint16_t AuxIncRate = 1;
-    short zero[8];
+    int16_t zero[8];
     memset(zero, 0, 16);
 
     int32_t LAdder, LAcc, LVol;
@@ -252,11 +252,11 @@ static void ENVMIXER3o()
         //            L"AudioHLE Error", MB_OK);
     }
 
-    short *inp = (short *)(BufferSpace + 0x4F0);
-    short *out = (short *)(BufferSpace + 0x9D0);
-    short *aux1 = (short *)(BufferSpace + 0xB40);
-    short *aux2 = (short *)(BufferSpace + 0xCB0);
-    short *aux3 = (short *)(BufferSpace + 0xE20);
+    int16_t *inp = (int16_t *)(BufferSpace + 0x4F0);
+    int16_t *out = (int16_t *)(BufferSpace + 0x9D0);
+    int16_t *aux1 = (int16_t *)(BufferSpace + 0xB40);
+    int16_t *aux2 = (int16_t *)(BufferSpace + 0xCB0);
+    int16_t *aux3 = (int16_t *)(BufferSpace + 0xE20);
 
     int MainR;
     int MainL;
@@ -264,7 +264,7 @@ static void ENVMIXER3o()
     int AuxL;
     int i1, o1, a1, a2, a3;
     uint16_t AuxIncRate = 1;
-    short zero[8];
+    int16_t zero[8];
     memset(zero, 0, 16);
     int32_t LVol, RVol;
     int32_t LAcc, RAcc;
@@ -509,17 +509,17 @@ static void ADPCM3()
     // uint16_t Gain=(uint16_t)(inst1&0xffff);
     uint32_t Address = (inst1 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
     uint16_t inPtr = (inst2 >> 12) & 0xf;
-    // short *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
-    short *out = (short *)(BufferSpace + (inst2 & 0xfff) + 0x4f0);
+    // int16_t *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
+    int16_t *out = (int16_t *)(BufferSpace + (inst2 & 0xfff) + 0x4f0);
     uint8_t *in = (uint8_t *)(BufferSpace + ((inst2 >> 12) & 0xf) + 0x4f0);
-    short count = (short)((inst2 >> 16) & 0xfff);
+    int16_t count = (int16_t)((inst2 >> 16) & 0xfff);
     uint8_t icode;
     uint8_t code;
     int vscale;
     uint16_t index;
     uint16_t j;
     int a[8];
-    short *book1, *book2;
+    int16_t *book1, *book2;
 
     memset(out, 0, 32);
 
@@ -550,7 +550,7 @@ static void ADPCM3()
         code = BufferSpace[(0x4f0 + inPtr) ^ 3];
         index = code & 0xf;
         index <<= 4; // index into the adpcm code table
-        book1 = (short *)&adpcmtable[index];
+        book1 = (int16_t *)&adpcmtable[index];
         book2 = book1 + 8;
         code >>= 4;                             // upper nibble is scale
         vscale = (0x8000 >> ((12 - code) - 1)); // very strange. 0x8000 would be .5 in 16:16 format
@@ -563,7 +563,7 @@ static void ADPCM3()
         inPtr++; // coded adpcm data lies next
         j = 0;
         while (j < 8) // loop of 8, for 8 coded nibbles from 4 bytes
-        // which yields 8 short pcm values
+        // which yields 8 int16_t pcm values
         {
             icode = BufferSpace[(0x4f0 + inPtr) ^ 3];
             inPtr++;
@@ -588,14 +588,14 @@ static void ADPCM3()
             icode = BufferSpace[(0x4f0 + inPtr) ^ 3];
             inPtr++;
 
-            inp2[j] = (short)((icode & 0xf0) << 8); // this will in effect be signed
+            inp2[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
             if (code < 12)
                 inp2[j] = ((int)((int)inp2[j] * (int)vscale) >> 16);
             else
                 int catchme = 1;
             j++;
 
-            inp2[j] = (short)((icode & 0xf) << 12);
+            inp2[j] = (int16_t)((icode & 0xf) << 12);
             if (code < 12)
                 inp2[j] = ((int)((int)inp2[j] * (int)vscale) >> 16);
             else
@@ -764,9 +764,9 @@ static void RESAMPLE3()
     uint32_t Accum = 0;
     uint32_t location;
     int16_t *lut;
-    short *dst;
+    int16_t *dst;
     int16_t *src;
-    dst = (short *)(BufferSpace);
+    dst = (int16_t *)(BufferSpace);
     src = (int16_t *)(BufferSpace);
     uint32_t srcPtr = ((((inst2 >> 2) & 0xfff) + 0x4f0) / 2);
     uint32_t dstPtr; //=(AudioOutBuffer/2);

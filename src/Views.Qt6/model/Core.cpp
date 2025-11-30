@@ -66,13 +66,18 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
         .cfg = &g_core_cfg,
         .callbacks =
             {
+                .emu_starting = []() { std::scoped_lock _lock(core_state_mutex()); },
                 .emu_stopped =
                     []() {
-                        std::scoped_lock _lock(core_state_mutex());
-                        g_rom_path = std::nullopt;
-                        g_plugin_paths = std::nullopt;
-                        g_curr_plugins = std::nullopt;
+                        {
+                            std::scoped_lock _lock(core_state_mutex());
+                            g_curr_plugins->call_rom_closed();
+                            g_rom_path = std::nullopt;
+                            g_plugin_paths = std::nullopt;
+                            g_curr_plugins = std::nullopt;
+                        }
                     },
+                
             },
         .controls = {},
 
@@ -94,6 +99,7 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
                 }
                 try
                 {
+                    std::scoped_lock _lock(core_state_mutex());
                     auto plugins = PluginSet{
                         g_plugin_paths->video_path,
                         g_plugin_paths->audio_path,
@@ -111,10 +117,12 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
             },
         .initiate_plugins =
             []() {
+                std::scoped_lock _lock(core_state_mutex());
                 assert(g_curr_plugins.has_value());
                 assert(g_core_service.get() != nullptr);
                 g_curr_plugins->resolve_functions_to(g_core_params);
                 g_curr_plugins->initiate_all(*g_core_ctx, g_core_params, *g_core_service);
+                g_curr_plugins->call_rom_opened();
             },
         .submit_task =
             [](const std::function<void()> &fn) {
@@ -150,7 +158,7 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
         .show_dialog = [](const char *str, const char *title,
                           core_dialog_type type) { g_core_service->show_info_dialog(title, str, type); },
         .update_screen = []() {},
-        .copy_video = [](void*) {},
+        .copy_video = [](void *) {},
         .find_available_rom =
             [](const std::function<bool(const core_rom_header &)> &predicate) { return std::filesystem::path(""); },
         .mge_available = []() { return false; },

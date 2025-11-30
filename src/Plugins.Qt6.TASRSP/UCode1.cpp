@@ -69,7 +69,7 @@ int16_t Env_Wet; // 0x001E(T8)
 
 uint8_t BufferSpace[0x10000];
 
-short hleMixerWorkArea[256];
+int16_t hleMixerWorkArea[256];
 uint16_t adpcmtable[0x88];
 
 uint16_t ResampleLUT[0x200] = {
@@ -113,18 +113,18 @@ static void ENVMIXER()
     Place in the rom it occurred, and any save state just before the error", "AudioHLE Error", MB_OK);
     }*/
     // ------------------------------------------------------------
-    short *inp = (short *)(BufferSpace + AudioInBuffer);
-    short *out = (short *)(BufferSpace + AudioOutBuffer);
-    short *aux1 = (short *)(BufferSpace + AudioAuxA);
-    short *aux2 = (short *)(BufferSpace + AudioAuxC);
-    short *aux3 = (short *)(BufferSpace + AudioAuxE);
+    int16_t *inp = (int16_t *)(BufferSpace + AudioInBuffer);
+    int16_t *out = (int16_t *)(BufferSpace + AudioOutBuffer);
+    int16_t *aux1 = (int16_t *)(BufferSpace + AudioAuxA);
+    int16_t *aux2 = (int16_t *)(BufferSpace + AudioAuxC);
+    int16_t *aux3 = (int16_t *)(BufferSpace + AudioAuxE);
     int32_t MainR;
     int32_t MainL;
     int32_t AuxR;
     int32_t AuxL;
     int i1, o1, a1, a2, a3;
     uint16_t AuxIncRate = 1;
-    short zero[8];
+    int16_t zero[8];
     memset(zero, 0, 16);
     int32_t LVol, RVol;
     int32_t LAcc, RAcc;
@@ -346,11 +346,11 @@ static void ENVMIXERo()
     uint8_t flags = (uint8_t)((inst1 >> 16) & 0xff);
     uint32_t addy = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
 
-    short *inp = (short *)(BufferSpace + AudioInBuffer);
-    short *out = (short *)(BufferSpace + AudioOutBuffer);
-    short *aux1 = (short *)(BufferSpace + AudioAuxA);
-    short *aux2 = (short *)(BufferSpace + AudioAuxC);
-    short *aux3 = (short *)(BufferSpace + AudioAuxE);
+    int16_t *inp = (int16_t *)(BufferSpace + AudioInBuffer);
+    int16_t *out = (int16_t *)(BufferSpace + AudioOutBuffer);
+    int16_t *aux1 = (int16_t *)(BufferSpace + AudioAuxA);
+    int16_t *aux2 = (int16_t *)(BufferSpace + AudioAuxC);
+    int16_t *aux3 = (int16_t *)(BufferSpace + AudioAuxE);
 
     int i1, o1, a1, a2, a3;
     int MainR;
@@ -359,7 +359,7 @@ static void ENVMIXERo()
     int AuxL;
 
     uint16_t AuxIncRate = 1;
-    short zero[8];
+    int16_t zero[8];
     memset(zero, 0, 16);
     if (flags & A_INIT)
     {
@@ -437,9 +437,9 @@ static void RESAMPLE()
     uint32_t Accum = 0;
     uint32_t location;
     int16_t *lut, *lut2;
-    short *dst;
+    int16_t *dst;
     int16_t *src;
-    dst = (short *)(BufferSpace);
+    dst = (int16_t *)(BufferSpace);
     src = (int16_t *)(BufferSpace);
     uint32_t srcPtr = (AudioInBuffer / 2);
     uint32_t dstPtr = (AudioOutBuffer / 2);
@@ -554,16 +554,16 @@ static void ADPCM()
     uint16_t Gain = (uint16_t)(inst1 & 0xffff);
     uint32_t Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
     uint16_t inPtr = 0;
-    short *out = (short *)(BufferSpace + AudioOutBuffer);
+    int16_t *out = (int16_t *)(BufferSpace + AudioOutBuffer);
     uint8_t *in = (uint8_t *)(BufferSpace + AudioInBuffer);
-    short count = (short)AudioCount;
+    int16_t count = (int16_t)AudioCount;
     uint8_t icode;
     uint8_t code;
     int vscale;
     uint16_t index;
     uint16_t j;
     int a[8];
-    short *book1, *book2;
+    int16_t *book1, *book2;
     memset(out, 0, 32);
 
     if (!(Flags & 0x1))
@@ -593,7 +593,7 @@ static void ADPCM()
         code = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
         index = code & 0xf;
         index <<= 4; // index into the adpcm code table
-        book1 = (short *)&adpcmtable[index];
+        book1 = (int16_t *)&adpcmtable[index];
         book2 = book1 + 8;
         code >>= 4;                             // upper nibble is scale
         vscale = (0x8000 >> ((12 - code) - 1)); // very strange. 0x8000 would be .5 in 16:16 format
@@ -606,7 +606,7 @@ static void ADPCM()
         inPtr++; // coded adpcm data lies next
         j = 0;
         while (j < 8) // loop of 8, for 8 coded nibbles from 4 bytes
-        // which yields 8 short pcm values
+        // which yields 8 int16_t pcm values
         {
             icode = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
             inPtr++;
@@ -631,14 +631,14 @@ static void ADPCM()
             icode = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
             inPtr++;
 
-            inp2[j] = (short)((icode & 0xf0) << 8); // this will in effect be signed
+            inp2[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
             if (code < 12)
                 inp2[j] = ((int)((int)inp2[j] * (int)vscale) >> 16);
             else
                 int catchme = 1;
             j++;
 
-            inp2[j] = (short)((icode & 0xf) << 12);
+            inp2[j] = (int16_t)((icode & 0xf) << 12);
             if (code < 12)
                 inp2[j] = ((int)((int)inp2[j] * (int)vscale) >> 16);
             else

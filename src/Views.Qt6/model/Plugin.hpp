@@ -10,6 +10,7 @@
 #include "core_api.h"
 #include "core_plugin.h"
 #include "mupapi.h"
+#include <array>
 #include <boost/dll/shared_library.hpp>
 #include <filesystem>
 #include <utility>
@@ -40,21 +41,10 @@ class PluginSet final
   public:
     PluginSet() = delete;
     PluginSet(const PluginSet &) = delete;
-    PluginSet(PluginSet &&src)
-        : m_video_plugin(std::move(src.m_video_plugin)), m_audio_plugin(std::move(src.m_audio_plugin)),
-          m_input_plugin(std::move(src.m_input_plugin)), m_rsp_plugin(std::move(src.m_rsp_plugin))
-    {
-    }
+    PluginSet(PluginSet &&src) = default;
 
     PluginSet &operator=(const PluginSet &) = delete;
-    PluginSet &operator=(PluginSet &&src)
-    {
-        m_video_plugin = std::move(src.m_video_plugin);
-        m_audio_plugin = std::move(src.m_audio_plugin);
-        m_input_plugin = std::move(src.m_input_plugin);
-        m_rsp_plugin = std::move(src.m_rsp_plugin);
-        return *this;
-    }
+    PluginSet &operator=(PluginSet &&src) = default;
 
     /**
      * @brief Creates a new plugin set using the 4 plugins.
@@ -97,6 +87,15 @@ class PluginSet final
      */
     void initiate_all(core_ctx &ctx, core_params &params, ICoreService& core_service);
 
+    /**
+     * @brief Calls `mup_rom_opened` on all the plugins.
+     */
+    void call_rom_opened();
+    /**
+     * @brief Calls `mup_rom_closed` on all the plugins.
+     */
+    void call_rom_closed();
+
   private:
     void initiate_video(core_ctx &ctx, ICoreService& core_service);
     void initiate_audio(core_ctx &ctx);
@@ -112,6 +111,9 @@ class PluginSet final
     fp_mup_get_info m_audio_get_info = nullptr;
     fp_mup_get_info m_input_get_info = nullptr;
     fp_mup_get_info m_rsp_get_info = nullptr;
+
+    std::array<fp_mup_rom_opened, 4> m_rom_opened_all;
+    std::array<fp_mup_rom_closed, 4> m_rom_closed_all;
 };
 } // namespace Mupen
 

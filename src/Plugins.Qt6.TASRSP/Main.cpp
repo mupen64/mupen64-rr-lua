@@ -77,7 +77,7 @@ void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
         f = fopen("disasm.txt", "wb");
         memcpy(rsp.dmem, rsp.rdram + task->ucode_data, task->ucode_data_size);
         memcpy(rsp.imem + 0x80, rsp.rdram + task->ucode, 0xF7F);
-        disasm(f, (unsigned long *)(rsp.imem));
+        disasm(f, (uint32_t *)(rsp.imem));
         fclose(f);
     }
     else
@@ -91,7 +91,7 @@ void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
         fclose(f);
 
         f = fopen("disasm.txt", "wb");
-        disasm(f, (unsigned long *)(rsp.imem));
+        disasm(f, (uint32_t *)(rsp.imem));
         fclose(f);
     }
 }
@@ -113,13 +113,13 @@ void audio_ucode_zelda()
 
 int audio_ucode_detect_type(const OSTask_t *task)
 {
-    if (*(unsigned long *)(rsp.rdram + task->ucode_data + 0) != 0x1)
+    if (*(uint32_t *)(rsp.rdram + task->ucode_data + 0) != 0x1)
     {
         if (*(rsp.rdram + task->ucode_data + (0 ^ 3 - S8)) == 0xF) return 4;
         return 3;
     }
 
-    if (*(unsigned long *)(rsp.rdram + task->ucode_data + 0x30) == 0xF0000F00) return 1;
+    if (*(uint32_t *)(rsp.rdram + task->ucode_data + 0x30) == 0xF0000F00) return 1;
     return 2;
 }
 
@@ -176,7 +176,7 @@ int audio_ucode(OSTask_t *task)
 
     g_audio_ucode_func();
 
-    const auto p_alist = (unsigned long *)(rsp.rdram + task->data_ptr);
+    const auto p_alist = (uint32_t *)(rsp.rdram + task->data_ptr);
 
     for (unsigned int i = 0; i < task->data_size / 4; i += 2)
     {
@@ -339,25 +339,3 @@ EXPORT void CALL mup_rom_closed() {
 EXPORT uint32_t CALL mupr_do_rsp_cycles(uint32_t cycles) {
     return do_rsp_cycles(cycles);
 }
-
-
-
-// EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount)
-// {
-//     rsp = Rsp_Info;
-// }
-
-// EXPORT void CALL RomClosed()
-// {
-//     on_rom_closed();
-// }
-
-// EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
-// {
-//     return do_rsp_cycles(Cycles);
-// }
-
-// EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
-// {
-//     g_ef = funcs;
-// }

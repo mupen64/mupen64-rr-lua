@@ -6,6 +6,7 @@
 
 #include "Plugin.hpp"
 #include <cstring>
+#include <future>
 #include <stdexcept>
 #include <type_traits>
 
@@ -35,6 +36,7 @@ namespace bfs = boost::filesystem;
             dest = dummy;                                                                                              \
         }                                                                                                              \
     } while (false);
+#define MUP_GET2(lib, name, dummy) (lib.has(#name)) ? lib.get<std::remove_pointer_t<fp_##name>>(#name) : dummy
 
 // DUMMY FUNCTIONS
 // =============================================
@@ -203,6 +205,20 @@ PluginSet::PluginSet(std::filesystem::path video_path, std::filesystem::path aud
     m_audio_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &audio_ext_funcs);
     m_input_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &input_ext_funcs);
     m_rsp_plugin.MUP_FN(mup_init)(exe_path_str.c_str(), &rsp_ext_funcs);
+
+    // resolve common functions that *we* care about
+    m_rom_opened_all = {
+        MUP_GET2(m_video_plugin, mup_rom_opened, dummy_void),
+        MUP_GET2(m_audio_plugin, mup_rom_opened, dummy_void),
+        MUP_GET2(m_input_plugin, mup_rom_opened, dummy_void),
+        MUP_GET2(m_rsp_plugin, mup_rom_opened, dummy_void),
+    };
+    m_rom_closed_all = {
+        MUP_GET2(m_video_plugin, mup_rom_closed, dummy_void),
+        MUP_GET2(m_audio_plugin, mup_rom_closed, dummy_void),
+        MUP_GET2(m_input_plugin, mup_rom_closed, dummy_void),
+        MUP_GET2(m_rsp_plugin, mup_rom_closed, dummy_void),
+    };
 }
 
 PluginSet::~PluginSet()
@@ -278,8 +294,7 @@ void PluginSet::resolve_functions_to(core_params &params)
 
 void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
 {
-    if (!m_video_plugin.has("mupv_init"))
-        return;
+    if (!m_video_plugin.has("mupv_init")) return;
     auto gfx_info = core_gfx_info{
         .byteswapped = 1,
         .rom = ctx.rom,
@@ -315,19 +330,14 @@ void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
     m_video_plugin.MUP_FN(mupv_init)(gfx_info, &wm_settings);
 
     // pass child window to gfx
-    if (wm_settings.backend == MUPV_BK_NONE)
-        return;
+    if (wm_settings.backend == MUPV_BK_NONE) return;
     auto wm_handle = core_service.setup_window(wm_settings);
     m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
-
-    {
-    }
 }
 
 void PluginSet::initiate_audio(core_ctx &ctx)
 {
-    if (!m_audio_plugin.has("mupa_init"))
-        return;
+    if (!m_audio_plugin.has("mupa_init")) return;
     auto audio_info = core_audio_info{
         .byteswapped = 1,
         .rom = ctx.rom,
@@ -352,15 +362,13 @@ void PluginSet::initiate_input(core_ctx &ctx, core_params &params)
         .header = ctx.rom,
         .controllers = params.controls,
     };
-    if (!m_input_plugin.has("mupi_init"))
-        return;
+    if (!m_input_plugin.has("mupi_init")) return;
     m_input_plugin.MUP_FN(mupi_init)(input_info);
 }
 
 void PluginSet::initiate_rsp(core_ctx &ctx, core_params &params)
 {
-    if (!m_rsp_plugin.has("mupr_init"))
-        return;
+    if (!m_rsp_plugin.has("mupr_init")) return;
     auto rsp_info = core_rsp_info{
         .byteswapped = 1,
         .rdram = (uint8_t *)ctx.rdram,
@@ -395,9 +403,32 @@ void PluginSet::initiate_rsp(core_ctx &ctx, core_params &params)
 
 void PluginSet::initiate_all(core_ctx &ctx, core_params &params, ICoreService &core_service)
 {
-    initiate_video(ctx, core_service);
-    initiate_audio(ctx);
-    initiate_input(ctx, params);
-    initiate_rsp(ctx, params);
+    // run all inits concurrently. wait until they finish.
+    auto video_init = std::async([&]() { initiate_video(ctx, core_service); });
+    auto audio_init = std::async([&]() { initiate_audio(ctx); });
+    auto input_init = std::async([&]() { initiate_input(ctx, params); });
+    auto rsp_init = std::async([&]() { initiate_rsp(ctx, params); });
+
+    video_init.wait();
+    audio_init.wait();
+    input_init.wait();
+    rsp_init.wait();
 }
+
+void PluginSet::call_rom_opened()
+{
+    for (auto mup_rom_opened : m_rom_opened_all)
+    {
+        mup_rom_opened();
+    }
+}
+
+void PluginSet::call_rom_closed()
+{
+    for (auto mup_rom_closed : m_rom_closed_all)
+    {
+        mup_rom_closed();
+    }
+}
+
 } // namespace Mupen

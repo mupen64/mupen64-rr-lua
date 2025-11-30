@@ -71,17 +71,17 @@ static void ADPCM2()
     uint16_t Gain = (uint16_t)(inst1 & 0xffff);
     uint32_t Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
     uint16_t inPtr = 0;
-    // short *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
-    short *out = (short *)(BufferSpace + AudioOutBuffer);
+    // int16_t *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
+    int16_t *out = (int16_t *)(BufferSpace + AudioOutBuffer);
     uint8_t *in = (uint8_t *)(BufferSpace + AudioInBuffer);
-    short count = (short)AudioCount;
+    int16_t count = (int16_t)AudioCount;
     uint8_t icode;
     uint8_t code;
     int vscale;
     uint16_t index;
     uint16_t j;
     int a[8];
-    short *book1, *book2;
+    int16_t *book1, *book2;
 
     uint8_t srange;
     uint8_t inpinc;
@@ -116,7 +116,7 @@ static void ADPCM2()
             /*
                         for(int i=0;i<16;i++)
                         {
-                            out[i]=*(short *)&rsp.rdram[(loopval+i*2)^2];
+                            out[i]=*(int16_t *)&rsp.rdram[(loopval+i*2)^2];
                         }*/
             memcpy(out, &rsp.rdram[loopval], 32);
         }
@@ -125,7 +125,7 @@ static void ADPCM2()
             /*
                         for(int i=0;i<16;i++)
                         {
-                            out[i]=*(short *)&rsp.rdram[(Address+i*2)^2];
+                            out[i]=*(int16_t *)&rsp.rdram[(Address+i*2)^2];
                         }*/
             memcpy(out, &rsp.rdram[Address], 32);
         }
@@ -141,7 +141,7 @@ static void ADPCM2()
         code = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
         index = code & 0xf;
         index <<= 4;
-        book1 = (short *)&adpcmtable[index];
+        book1 = (int16_t *)&adpcmtable[index];
         book2 = book1 + 8;
         code >>= 4;
         vscale = (0x8000 >> ((srange - code) - 1));
@@ -430,9 +430,9 @@ static void RESAMPLE2()
     uint32_t Accum = 0;
     uint32_t location;
     int16_t *lut;
-    short *dst;
+    int16_t *dst;
     int16_t *src;
-    dst = (short *)(BufferSpace);
+    dst = (int16_t *)(BufferSpace);
     src = (int16_t *)(BufferSpace);
     uint32_t srcPtr = (AudioInBuffer / 2);
     uint32_t dstPtr = (AudioOutBuffer / 2);
@@ -700,13 +700,13 @@ static void DUPLICATE2()
 
 /*
 static void INTERL2 () { // Make your own...
-    short Count = inst1 & 0xffff;
+    int16_t Count = inst1 & 0xffff;
     uint16_t  Out   = inst2 & 0xffff;
     uint16_t In     = (inst2 >> 16);
 
-    short *src,*dst,tmp;
-    src=(short *)&BufferSpace[In];
-    dst=(short *)&BufferSpace[Out];
+    int16_t *src,*dst,tmp;
+    src=(int16_t *)&BufferSpace[In];
+    dst=(int16_t *)&BufferSpace[Out];
     while(Count)
     {
         *(dst++)=*(src++);
@@ -732,7 +732,7 @@ static void INTERL2 () { // Make your own...
 
 static void INTERL2()
 {
-    short Count = inst1 & 0xffff;
+    int16_t Count = inst1 & 0xffff;
     uint16_t Out = inst2 & 0xffff;
     uint16_t In = (inst2 >> 16);
 
@@ -741,7 +741,7 @@ static void INTERL2()
     dst = (uint8_t *)(BufferSpace); //[Out];
     while (Count)
     {
-        *(short *)(dst + (Out ^ 3)) = *(short *)(src + (In ^ 3));
+        *(int16_t *)(dst + (Out ^ 3)) = *(int16_t *)(src + (In ^ 3));
         Out += 2;
         In += 4;
         Count--;
@@ -788,7 +788,7 @@ static void INTERLEAVE2()
 
 static void ADDMIXER()
 {
-    short Count = (inst1 >> 12) & 0x00ff0;
+    int16_t Count = (inst1 >> 12) & 0x00ff0;
     uint16_t InBuffer = (inst2 >> 16);
     uint16_t OutBuffer = inst2 & 0xffff;
 
@@ -853,26 +853,26 @@ static void FILTER2()
     if (t4 == 0)
     {
         //				memcpy (dmem+0xFB0, rsp.rdram+(inst2&0xFFFFFF), 0x20);
-        lutt5 = (short *)(save + 0x10);
+        lutt5 = (int16_t *)(save + 0x10);
     }
 
-    lutt5 = (short *)(save + 0x10);
+    lutt5 = (int16_t *)(save + 0x10);
 
-    //			lutt5 = (short *)(dmem + 0xFC0);
-    //			lutt6 = (short *)(dmem + 0xFE0);
+    //			lutt5 = (int16_t *)(dmem + 0xFC0);
+    //			lutt6 = (int16_t *)(dmem + 0xFE0);
     for (x = 0; x < 8; x++)
     {
         int32_t a;
         a = (lutt5[x] + lutt6[x]) >> 1;
-        lutt5[x] = lutt6[x] = (short)a;
+        lutt5[x] = lutt6[x] = (int16_t)a;
     }
-    short *inp1, *inp2;
+    int16_t *inp1, *inp2;
     int32_t out1[8];
     int16_t outbuff[0x3c0], *outp;
     uint32_t inPtr = (uint32_t)(inst1 & 0xffff);
-    inp1 = (short *)(save);
+    inp1 = (int16_t *)(save);
     outp = outbuff;
-    inp2 = (short *)(BufferSpace + inPtr);
+    inp2 = (int16_t *)(BufferSpace + inPtr);
     for (x = 0; x < cnt; x += 0x10)
     {
         out1[1] = inp1[0] * lutt6[6];

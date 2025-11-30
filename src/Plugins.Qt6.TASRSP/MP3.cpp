@@ -269,26 +269,26 @@ static void InnerLoop()
     v[16] = -v[16] - v[17];
     v[2] = v[18] + v[19];
     // ** Store v[11] -> (T6 + 0)**
-    *(int16_t *)(mp3data + ((t6 + (short)0x0))) = (short)v[11];
+    *(int16_t *)(mp3data + ((t6 + (int16_t)0x0))) = (int16_t)v[11];
 
     v[11] = -v[11];
     // ** Store v[16] -> (T3 + 0)**
-    *(int16_t *)(mp3data + ((t3 + (short)0x0))) = (short)v[16];
+    *(int16_t *)(mp3data + ((t3 + (int16_t)0x0))) = (int16_t)v[16];
     // ** Store v[11] -> (T5 + 0)**
-    *(int16_t *)(mp3data + ((t5 + (short)0x0))) = (short)v[11];
+    *(int16_t *)(mp3data + ((t5 + (int16_t)0x0))) = (int16_t)v[11];
     // 0x13E8 - Verified....
     v[2] = -v[2];
     // ** Store v[2] -> (T2 + 0)**
-    *(int16_t *)(mp3data + ((t2 + (short)0x0))) = (short)v[2];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0x0))) = (int16_t)v[2];
     v[3] = (((v[18] - v[19]) * 0x16A09) >> 0x10) + v[2];
     // ** Store v[3] -> (T0 + 0)**
-    *(int16_t *)(mp3data + ((t0 + (short)0x0))) = (short)v[3];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0x0))) = (int16_t)v[3];
     // 0x1400 - Verified
     v[4] = -v[20] - v[21];
     v[6] = v[22] + v[23];
     v[5] = ((v[20] - v[21]) * 0x16A09) >> 0x10;
     // ** Store v[4] -> (T3 + 0xFF80)
-    *(int16_t *)(mp3data + ((t3 + (short)0xFF80))) = (short)v[4];
+    *(int16_t *)(mp3data + ((t3 + (int16_t)0xFF80))) = (int16_t)v[4];
     v[7] = ((v[22] - v[23]) * 0x2D413) >> 0x10;
     v[5] = v[5] - v[4];
     v[7] = v[7] - v[5];
@@ -296,11 +296,11 @@ static void InnerLoop()
     v[5] = v[5] - v[6];
     v[4] = -v[4] - v[6];
     // *** Store v[7] -> (T1 + 0xFF80)
-    *(int16_t *)(mp3data + ((t1 + (short)0xFF80))) = (short)v[7];
+    *(int16_t *)(mp3data + ((t1 + (int16_t)0xFF80))) = (int16_t)v[7];
     // *** Store v[4] -> (T2 + 0xFF80)
-    *(int16_t *)(mp3data + ((t2 + (short)0xFF80))) = (short)v[4];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0xFF80))) = (int16_t)v[4];
     // *** Store v[5] -> (T0 + 0xFF80)
-    *(int16_t *)(mp3data + ((t0 + (short)0xFF80))) = (short)v[5];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0xFF80))) = (int16_t)v[5];
     v[8] = v[24] + v[25];
 
     v[9] = ((v[24] - v[25]) * 0x16A09) >> 0x10;
@@ -321,25 +321,25 @@ static void InnerLoop()
     v[17] = v[13] - v[10];
     v[9] = v[9] + v[14];
     // ** Store v[9] -> (T6 + 0x40)
-    *(int16_t *)(mp3data + ((t6 + (short)0x40))) = (short)v[9];
+    *(int16_t *)(mp3data + ((t6 + (int16_t)0x40))) = (int16_t)v[9];
     v[11] = v[11] - v[13];
     // ** Store v[17] -> (T0 + 0xFFC0)
-    *(int16_t *)(mp3data + ((t0 + (short)0xFFC0))) = (short)v[17];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0xFFC0))) = (int16_t)v[17];
     v[12] = v[8] - v[12];
     // ** Store v[11] -> (T0 + 0x40)
-    *(int16_t *)(mp3data + ((t0 + (short)0x40))) = (short)v[11];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0x40))) = (int16_t)v[11];
     v[8] = -v[8];
     // ** Store v[15] -> (T1 + 0xFFC0)
-    *(int16_t *)(mp3data + ((t1 + (short)0xFFC0))) = (short)v[15];
+    *(int16_t *)(mp3data + ((t1 + (int16_t)0xFFC0))) = (int16_t)v[15];
     v[10] = -v[10] - v[12];
     // ** Store v[12] -> (T2 + 0x40)
-    *(int16_t *)(mp3data + ((t2 + (short)0x40))) = (short)v[12];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0x40))) = (int16_t)v[12];
     // ** Store v[8] -> (T3 + 0xFFC0)
-    *(int16_t *)(mp3data + ((t3 + (short)0xFFC0))) = (short)v[8];
+    *(int16_t *)(mp3data + ((t3 + (int16_t)0xFFC0))) = (int16_t)v[8];
     // ** Store v[14] -> (T5 + 0x40)
-    *(int16_t *)(mp3data + ((t5 + (short)0x40))) = (short)v[14];
+    *(int16_t *)(mp3data + ((t5 + (int16_t)0x40))) = (int16_t)v[14];
     // ** Store v[10] -> (T2 + 0xFFC0)
-    *(int16_t *)(mp3data + ((t2 + (short)0xFFC0))) = (short)v[10];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0xFFC0))) = (int16_t)v[10];
     // 0x14FC - Verified...
 
     // Part 6 - 100% Accurate
@@ -420,7 +420,7 @@ static void InnerLoop()
     // Part 7: - 100% Accurate + SSV - Unoptimized
 
     v[0] = (v[17] + v[16]) >> 1;
-    v[1] = ((v[17] * (int)((short)0xA57E * 2)) + (v[16] * 0xB504)) >> 0x10;
+    v[1] = ((v[17] * (int)((int16_t)0xA57E * 2)) + (v[16] * 0xB504)) >> 0x10;
     v[2] = -v[18] - v[19];
     v[3] = ((v[18] - v[19]) * 0x16A09) >> 0x10;
     v[4] = v[20] + v[21] + v[0];
@@ -429,14 +429,14 @@ static void InnerLoop()
     v[7] = (((v[22] - v[23]) * 0x2D413) >> 0x10) + v[0] + v[1] + v[3];
     // 0x16A8
     // Save v[0] -> (T3 + 0xFFE0)
-    *(int16_t *)(mp3data + ((t3 + (short)0xFFE0))) = (short)-v[0];
+    *(int16_t *)(mp3data + ((t3 + (int16_t)0xFFE0))) = (int16_t)-v[0];
     v[8] = v[24] + v[25];
     v[9] = ((v[24] - v[25]) * 0x16A09) >> 0x10;
     v[10] = ((v[26] + v[27]) << 1) + v[8];
     v[11] = (((v[26] - v[27]) * 0x2D413) >> 0x10) + v[8] + v[9];
     v[12] = v[4] - ((v[28] + v[29]) << 1);
     // ** Store v12 -> (T2 + 0x20)
-    *(int16_t *)(mp3data + ((t2 + (short)0x20))) = (short)v[12];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0x20))) = (int16_t)v[12];
     v[13] = (((v[28] - v[29]) * 0x2D413) >> 0x10) - v[12] - v[5];
     v[14] = v[30] + v[31];
     v[14] = v[14] + v[14];
@@ -444,51 +444,51 @@ static void InnerLoop()
     v[14] = v[6] - v[14];
     v[15] = (((v[30] - v[31]) * 0x5A827) >> 0x10) - v[7];
     // Store v14 -> (T5 + 0x20)
-    *(int16_t *)(mp3data + ((t5 + (short)0x20))) = (short)v[14];
+    *(int16_t *)(mp3data + ((t5 + (int16_t)0x20))) = (int16_t)v[14];
     v[14] = v[14] + v[1];
     // Store v[14] -> (T6 + 0x20)
-    *(int16_t *)(mp3data + ((t6 + (short)0x20))) = (short)v[14];
+    *(int16_t *)(mp3data + ((t6 + (int16_t)0x20))) = (int16_t)v[14];
     // Store v[15] -> (T1 + 0xFFE0)
-    *(int16_t *)(mp3data + ((t1 + (short)0xFFE0))) = (short)v[15];
+    *(int16_t *)(mp3data + ((t1 + (int16_t)0xFFE0))) = (int16_t)v[15];
     v[9] = v[9] + v[10];
     v[1] = v[1] + v[6];
     v[6] = v[10] - v[6];
     v[1] = v[9] - v[1];
     // Store v[6] -> (T5 + 0x60)
-    *(int16_t *)(mp3data + ((t5 + (short)0x60))) = (short)v[6];
+    *(int16_t *)(mp3data + ((t5 + (int16_t)0x60))) = (int16_t)v[6];
     v[10] = v[10] + v[2];
     v[10] = v[4] - v[10];
     // Store v[10] -> (T2 + 0xFFA0)
-    *(int16_t *)(mp3data + ((t2 + (short)0xFFA0))) = (short)v[10];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0xFFA0))) = (int16_t)v[10];
     v[12] = v[2] - v[12];
     // Store v[12] -> (T2 + 0xFFE0)
-    *(int16_t *)(mp3data + ((t2 + (short)0xFFE0))) = (short)v[12];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0xFFE0))) = (int16_t)v[12];
     v[5] = v[4] + v[5];
     v[4] = v[8] - v[4];
     // Store v[4] -> (T2 + 0x60)
-    *(int16_t *)(mp3data + ((t2 + (short)0x60))) = (short)v[4];
+    *(int16_t *)(mp3data + ((t2 + (int16_t)0x60))) = (int16_t)v[4];
     v[0] = v[0] - v[8];
     // Store v[0] -> (T3 + 0xFFA0)
-    *(int16_t *)(mp3data + ((t3 + (short)0xFFA0))) = (short)v[0];
+    *(int16_t *)(mp3data + ((t3 + (int16_t)0xFFA0))) = (int16_t)v[0];
     v[7] = v[7] - v[11];
     // Store v[7] -> (T1 + 0xFFA0)
-    *(int16_t *)(mp3data + ((t1 + (short)0xFFA0))) = (short)v[7];
+    *(int16_t *)(mp3data + ((t1 + (int16_t)0xFFA0))) = (int16_t)v[7];
     v[11] = v[11] - v[3];
     // Store v[1] -> (T6 + 0x60)
-    *(int16_t *)(mp3data + ((t6 + (short)0x60))) = (short)v[1];
+    *(int16_t *)(mp3data + ((t6 + (int16_t)0x60))) = (int16_t)v[1];
     v[11] = v[11] - v[5];
     // Store v[11] -> (T0 + 0x60)
-    *(int16_t *)(mp3data + ((t0 + (short)0x60))) = (short)v[11];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0x60))) = (int16_t)v[11];
     v[3] = v[3] - v[13];
     // Store v[3] -> (T0 + 0x20)
-    *(int16_t *)(mp3data + ((t0 + (short)0x20))) = (short)v[3];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0x20))) = (int16_t)v[3];
     v[13] = v[13] + v[2];
     // Store v[13] -> (T0 + 0xFFE0)
-    *(int16_t *)(mp3data + ((t0 + (short)0xFFE0))) = (short)v[13];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0xFFE0))) = (int16_t)v[13];
     // v[2] = ;
     v[2] = (v[5] - v[2]) - v[9];
     // Store v[2] -> (T0 + 0xFFA0)
-    *(int16_t *)(mp3data + ((t0 + (short)0xFFA0))) = (short)v[2];
+    *(int16_t *)(mp3data + ((t0 + (int16_t)0xFFA0))) = (int16_t)v[2];
     // 0x7A8 - Verified...
 
     // Step 8 - Dewindowing
@@ -512,10 +512,10 @@ static void InnerLoop()
 
         for (i = 7; i >= 0; i--)
         {
-            v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (short)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-            v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (short)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
-            v6 += ((int)*(int16_t *)(mp3data + (addptr) + 0x20) * (short)DeWindowLUT[offset + 0x20] + 0x4000) >> 0xF;
-            v8 += ((int)*(int16_t *)(mp3data + (addptr) + 0x30) * (short)DeWindowLUT[offset + 0x28] + 0x4000) >> 0xF;
+            v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
+            v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
+            v6 += ((int)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >> 0xF;
+            v8 += ((int)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >> 0xF;
             addptr += 2;
             offset++;
         }
@@ -535,12 +535,12 @@ static void InnerLoop()
     v2 = v4 = 0;
     for (i = 0; i < 4; i++)
     {
-        v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (short)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-        v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (short)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
+        v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
+        v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
         addptr += 2;
         offset++;
-        v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (short)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-        v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (short)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
+        v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
+        v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
         addptr += 2;
         offset++;
     }
@@ -567,17 +567,17 @@ static void InnerLoop()
 
         for (i = 0; i < 4; i++)
         {
-            v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x20) * (short)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-            v2 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x20) * (short)DeWindowLUT[offset + 0x01] + 0x4000) >>
+            v2 += ((int)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
+            v2 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x20) * (int16_t)DeWindowLUT[offset + 0x01] + 0x4000) >>
                   0xF;
-            v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x30) * (short)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
-            v4 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x30) * (short)DeWindowLUT[offset + 0x09] + 0x4000) >>
+            v4 += ((int)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
+            v4 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x30) * (int16_t)DeWindowLUT[offset + 0x09] + 0x4000) >>
                   0xF;
-            v6 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (short)DeWindowLUT[offset + 0x20] + 0x4000) >> 0xF;
-            v6 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x00) * (short)DeWindowLUT[offset + 0x21] + 0x4000) >>
+            v6 += ((int)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >> 0xF;
+            v6 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x00) * (int16_t)DeWindowLUT[offset + 0x21] + 0x4000) >>
                   0xF;
-            v8 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (short)DeWindowLUT[offset + 0x28] + 0x4000) >> 0xF;
-            v8 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x10) * (short)DeWindowLUT[offset + 0x29] + 0x4000) >>
+            v8 += ((int)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >> 0xF;
+            v8 -= ((int)*(int16_t *)(mp3data + ((addptr + 2)) + 0x10) * (int16_t)DeWindowLUT[offset + 0x29] + 0x4000) >>
                   0xF;
             addptr += 4;
             offset += 2;
