@@ -1,0 +1,363 @@
+/*
+ * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Main.h"
+#include "HLE.h"
+#include "Disasm.h"
+#include "mupapi.h"
+#include <cstdint>
+
+#define UCODE_MARIO (1)
+#define UCODE_BANJO (2)
+#define UCODE_ZELDA (3)
+
+core_rsp_info rsp;
+bool g_rsp_alive = false;
+extern void (*ABI1[0x20])();
+extern void (*ABI2[0x20])();
+extern void (*ABI3[0x20])();
+void (*ABI[0x20])();
+uint32_t inst1;
+uint32_t inst2;
+void (*g_audio_ucode_func)() = nullptr;
+// HINSTANCE g_instance;
+// std::filesystem::path g_app_path;
+// PlatformService g_platform_service;
+static uint8_t fake_header[0x1000];
+static uint32_t fake_AI_DRAM_ADDR_REG;
+static uint32_t fake_AI_LEN_REG;
+static uint32_t fake_AI_CONTROL_REG;
+static uint32_t fake_AI_STATUS_REG;
+static uint32_t fake_AI_DACRATE_REG;
+static uint32_t fake_AI_BITRATE_REG;
+
+static void log_shim(const char *str)
+{
+    puts(str);
+}
+
+static core_plugin_extended_funcs ef_shim = {
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = log_shim,
+    .log_info = log_shim,
+    .log_warn = log_shim,
+    .log_error = log_shim,
+};
+
+const core_plugin_extended_funcs *g_ef = &ef_shim;
+
+/**
+ * \brief Loads the audio plugin's globals
+ * \param path Path to an audio plugin dll
+ * \returns Handle to the audio plugin, or nullptr.
+ */
+void *plugin_load(const std::filesystem::path &path);
+
+void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
+{
+    const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum,
+                                     static_cast<void *>(rsp.sp_pc_reg));
+    // MessageBox(NULL, message.c_str(), L"unknown task", MB_OK);
+
+    FILE *f;
+
+    if (task->ucode_size <= 0x1000)
+    {
+        f = fopen("imem.dat", "wb");
+        fwrite(rsp.rdram + task->ucode, task->ucode_size, 1, f);
+        fclose(f);
+
+        f = fopen("dmem.dat", "wb");
+        fwrite(rsp.rdram + task->ucode_data, task->ucode_data_size, 1, f);
+        fclose(f);
+
+        f = fopen("disasm.txt", "wb");
+        memcpy(rsp.dmem, rsp.rdram + task->ucode_data, task->ucode_data_size);
+        memcpy(rsp.imem + 0x80, rsp.rdram + task->ucode, 0xF7F);
+        disasm(f, (unsigned long *)(rsp.imem));
+        fclose(f);
+    }
+    else
+    {
+        f = fopen("imem.dat", "wb");
+        fwrite(rsp.imem, 0x1000, 1, f);
+        fclose(f);
+
+        f = fopen("dmem.dat", "wb");
+        fwrite(rsp.dmem, 0x1000, 1, f);
+        fclose(f);
+
+        f = fopen("disasm.txt", "wb");
+        disasm(f, (unsigned long *)(rsp.imem));
+        fclose(f);
+    }
+}
+
+void audio_ucode_mario()
+{
+    memcpy(ABI, ABI1, sizeof(ABI[0]) * 0x20);
+}
+
+void audio_ucode_banjo()
+{
+    memcpy(ABI, ABI2, sizeof(ABI[0]) * 0x20);
+}
+
+void audio_ucode_zelda()
+{
+    memcpy(ABI, ABI3, sizeof(ABI[0]) * 0x20);
+}
+
+int audio_ucode_detect_type(const OSTask_t *task)
+{
+    if (*(unsigned long *)(rsp.rdram + task->ucode_data + 0) != 0x1)
+    {
+        if (*(rsp.rdram + task->ucode_data + (0 ^ 3 - S8)) == 0xF) return 4;
+        return 3;
+    }
+
+    if (*(unsigned long *)(rsp.rdram + task->ucode_data + 0x30) == 0xF0000F00) return 1;
+    return 2;
+}
+
+void audio_ucode_verify_cache(const OSTask_t *task)
+{
+    // In debug mode, we want to verify that the ucode type hasn't changed
+    const auto ucode_type = audio_ucode_detect_type(task);
+
+    switch (ucode_type)
+    {
+    case UCODE_MARIO:
+        assert(g_audio_ucode_func == audio_ucode_mario);
+        break;
+    case UCODE_BANJO:
+        assert(g_audio_ucode_func == audio_ucode_banjo);
+        break;
+    case UCODE_ZELDA:
+        assert(g_audio_ucode_func == audio_ucode_zelda);
+        break;
+    default:
+        break;
+    }
+}
+
+int audio_ucode(OSTask_t *task)
+{
+    if (!g_audio_ucode_func)
+    {
+        const auto ucode_type = audio_ucode_detect_type(task);
+
+        printf("[RSP] Detected ucode type: %d\n", ucode_type);
+
+        switch (ucode_type)
+        {
+        case UCODE_MARIO:
+            g_audio_ucode_func = audio_ucode_mario;
+            break;
+        case UCODE_BANJO:
+            g_audio_ucode_func = audio_ucode_banjo;
+            break;
+        case UCODE_ZELDA:
+            g_audio_ucode_func = audio_ucode_zelda;
+            break;
+        default:
+            printf("[RSP] Unknown ucode type: %d\n", ucode_type);
+            return -1;
+        }
+    }
+
+    // if (config.ucode_cache_verify)
+    // {
+    //     audio_ucode_verify_cache(task);
+    // }
+
+    g_audio_ucode_func();
+
+    const auto p_alist = (unsigned long *)(rsp.rdram + task->data_ptr);
+
+    for (unsigned int i = 0; i < task->data_size / 4; i += 2)
+    {
+        inst1 = p_alist[i];
+        inst2 = p_alist[i + 1];
+        ABI[inst1 >> 24]();
+    }
+
+    return 0;
+}
+
+bool rsp_alive()
+{
+    return g_rsp_alive;
+}
+
+void on_rom_closed()
+{
+    memset(rsp.dmem, 0, 0x1000);
+    memset(rsp.imem, 0, 0x1000);
+
+    g_audio_ucode_func = nullptr;
+    g_rsp_alive = false;
+}
+
+uint32_t do_rsp_cycles(uint32_t Cycles)
+{
+    OSTask_t *task = (OSTask_t *)(rsp.dmem + 0xFC0);
+    unsigned int i, sum = 0;
+
+    g_rsp_alive = true;
+
+    if (task->type == 1 && task->data_ptr != 0)
+    {
+        if (rsp.process_dlist_list)
+        {
+            rsp.process_dlist_list();
+        }
+        *rsp.sp_status_reg |= 0x0203;
+        if ((*rsp.sp_status_reg & 0x40) != 0)
+        {
+            *rsp.mi_intr_reg |= 0x1;
+            rsp.check_interrupts();
+        }
+
+        *rsp.dpc_status_reg &= ~0x0002;
+        return Cycles;
+    }
+
+    if (task->type == 7)
+    {
+        rsp.show_cfb();
+    }
+
+    *rsp.sp_status_reg |= 0x203;
+    if ((*rsp.sp_status_reg & 0x40) != 0)
+    {
+        *rsp.mi_intr_reg |= 0x1;
+        rsp.check_interrupts();
+    }
+
+    if (task->ucode_size <= 0x1000)
+    {
+        for (i = 0; i < task->ucode_size / 2; i++) sum += *(rsp.rdram + task->ucode + i);
+    }
+    else
+        for (i = 0; i < 0x1000 / 2; i++)
+        {
+            sum += *(rsp.imem + i);
+        }
+
+    if (task->ucode_size > 0x1000)
+    {
+        switch (sum)
+        {
+        case 0x9E2: // banjo tooie (U) boot code
+        {
+            int i, j;
+            memcpy(rsp.imem + 0x120, rsp.rdram + 0x1e8, 0x1e8);
+            for (j = 0; j < 0xfc; j++)
+                for (i = 0; i < 8; i++)
+                    *(rsp.rdram + (0x2fb1f0 + j * 0xff0 + i ^ S8)) = *(rsp.imem + (0x120 + j * 8 + i ^ S8));
+        }
+            return Cycles;
+        case 0x9F2: // banjo tooie (E) + zelda oot (E) boot code
+        {
+            int i, j;
+            memcpy(rsp.imem + 0x120, rsp.rdram + 0x1e8, 0x1e8);
+            for (j = 0; j < 0xfc; j++)
+                for (i = 0; i < 8; i++)
+                    *(rsp.rdram + (0x2fb1f0 + j * 0xff0 + i ^ S8)) = *(rsp.imem + (0x120 + j * 8 + i ^ S8));
+        }
+            return Cycles;
+        }
+    }
+    else
+    {
+        switch (task->type)
+        {
+        case 2: // audio
+            if (audio_ucode(task) == 0) return Cycles;
+            break;
+        case 4: // jpeg
+            switch (sum)
+            {
+            case 0x278: // used by zelda during boot
+                *rsp.sp_status_reg |= 0x200;
+                return Cycles;
+            case 0x2e4fc: // uncompress
+                jpg_uncompress(task);
+                return Cycles;
+            default:
+                // MessageBox(NULL, std::format(L"unknown jpeg: sum: {}", sum).c_str(), L"Error", MB_OK | MB_ICONERROR);
+                break;
+            }
+            break;
+        }
+    }
+
+    handle_unknown_task(task, sum);
+
+    return Cycles;
+}
+
+char *getExtension(char *str)
+{
+    if (strlen(str) > 3)
+        return str + strlen(str) - 3;
+    else
+        return NULL;
+}
+
+EXPORT core_result CALL mup_init(const char *exe_dir, const core_plugin_extended_funcs *fwd_funcs)
+{
+    g_ef = fwd_funcs;
+    return Res_Ok;
+}
+
+EXPORT void CALL mup_drop()
+{
+}
+
+EXPORT void CALL mup_get_info(core_plugin_info *info)
+{
+    info->ver = 0x0101;
+    info->type = plugin_rsp;
+    strncpy(info->name, PLUGIN_NAME, sizeof(info->name));
+    info->unused_normal_memory = 1;
+    info->unused_byteswapped = 1;
+}
+
+EXPORT void CALL mupr_init(core_rsp_info core_info) {
+    rsp = core_info;
+}
+
+EXPORT void CALL mup_rom_closed() {
+    on_rom_closed();
+}
+
+EXPORT uint32_t CALL mupr_do_rsp_cycles(uint32_t cycles) {
+    return do_rsp_cycles(cycles);
+}
+
+
+
+// EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount)
+// {
+//     rsp = Rsp_Info;
+// }
+
+// EXPORT void CALL RomClosed()
+// {
+//     on_rom_closed();
+// }
+
+// EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
+// {
+//     return do_rsp_cycles(Cycles);
+// }
+
+// EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
+// {
+//     g_ef = funcs;
+// }

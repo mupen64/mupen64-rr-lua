@@ -49,5 +49,8 @@ if (MUPEN64RR_BUILD_QT6)
     add_subdirectory(Plugins.Qt6.NoAudio)
     add_subdirectory(Plugins.Qt6.NoInput)
     add_subdirectory(Plugins.Qt6.NoRSP)
+
+    # TAS RSP
+    add_subdirectory(Plugins.Qt6.TASRSP)
     
 endif()
