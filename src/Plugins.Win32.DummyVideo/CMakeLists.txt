@@ -6,7 +6,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(Mupen64RR.Plugins.Win32.DummyVideo MODULE
     "Main.cpp"
-    "Main.h"
 )
 set_target_properties(Mupen64RR.Plugins.Win32.DummyVideo PROPERTIES
     CXX_STANDARD 23

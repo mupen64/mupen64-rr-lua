@@ -4,6 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Main.h"
+#include <CommonPCH.h>
+#include <DummyPluginStub.h>
+#include <VersionNameHelpers.h>
+#include <core_api.h>
+#include <Views.Win32/ViewPlugin.h>
+
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Video", L"1.0.0")
 
 DUMMY_PLUGIN_STUB_IMPL(plugin_video)
