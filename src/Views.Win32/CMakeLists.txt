@@ -142,9 +142,9 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
 set_source_files_properties(
     SOURCES "Resource.rc" PROPERTIES OBJECT_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/app.manifest"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../api.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../shims.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../sandbox.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/api.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/shims.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/sandbox.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
 )
 target_precompile_headers(Mupen64RR.Views.Win32 PRIVATE "stdafx.h")

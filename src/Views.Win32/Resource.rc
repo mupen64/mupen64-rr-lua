@@ -34,11 +34,11 @@ IDB_SOUND               BITMAP                  "icons\\plugin_audio.bmp"
 
 IDR_INSPECT_LUA_FILE    TEXTFILE                "..\\..\\vendor\\lua-modules\\inspect.lua"
 
-IDR_API_LUA_FILE        TEXTFILE                "..\\api.lua"
+IDR_API_LUA_FILE        TEXTFILE                "..\\Lua\\api.lua"
 
-IDR_SHIMS_LUA_FILE      TEXTFILE                "..\\shims.lua"
+IDR_SHIMS_LUA_FILE      TEXTFILE                "..\\Lua\\shims.lua"
 
-IDR_SANDBOX_LUA_FILE    TEXTFILE                "..\\sandbox.lua"
+IDR_SANDBOX_LUA_FILE    TEXTFILE                "..\\Lua\\sandbox.lua"
 
 /////////////////////////////////////////////////////////////////////////////
 //
