@@ -36,8 +36,8 @@ class SampleBuffer final
                 PaStreamCallbackFlags status_flags);
 
   private:
-    // std::vector<uint8_t> m_in_buffer;
-    // std::unique_ptr<Resampler> m_resampler;
+    std::vector<uint16_t> m_in_buffer;
+    std::unique_ptr<Resampler> m_resampler;
     uint64_t m_sample_count;
 
     uint32_t m_sample_rate;

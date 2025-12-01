@@ -37,7 +37,7 @@ class Resampler
 
     /**
      * @brief Resamples enough audio to fill the output buffer, assuming in_data contains enough data.
-     * @note All sample data is assumed to be 16-bit interleaved stereo.
+     * @note All sample data is assumed to be interleaved stereo.
      *
      * @param in_data A span containing the input sample data.
      * @param in_rate The input sample rate, in Hz.
@@ -45,7 +45,7 @@ class Resampler
      * @param out_rate The output sample rate, in Hz.
      * @return The number of input frames consumed.
      */
-    virtual size_t resample(std::span<uint8_t> in_data, uint32_t in_rate, std::span<uint8_t> out_data,
+    virtual size_t resample(std::span<uint16_t> in_data, uint32_t in_rate, std::span<float> out_data,
                             uint32_t out_rate) = 0;
 };
 
