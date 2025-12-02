@@ -1,5 +1,4 @@
-#ifndef N64_H
-#define N64_H
+#pragma once
 
 #include "Types.h"
 
@@ -39,5 +38,3 @@ extern u8* IMEM;
 extern u8* RDRAM;
 extern u64 TMEM[512];
 extern u32 RDRAMSize;
-
-#endif

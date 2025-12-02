@@ -1,5 +1,4 @@
-#ifndef TYPES_H
-#define TYPES_H
+#pragma once 
 
 using u8 = uint8_t; /* unsigned  8-bit */
 using u16 = uint16_t; /* unsigned 16-bit */
@@ -35,5 +34,3 @@ using f64 = double; /* double prec floating point */
 #ifndef NULL
 #define NULL 0
 #endif
-
-#endif TYPES_H

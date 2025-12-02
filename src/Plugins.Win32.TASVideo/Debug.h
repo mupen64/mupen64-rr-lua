@@ -1,3 +1,5 @@
+#pragma once
+
 #define DEBUG_LOW 0x1000
 #define DEBUG_MEDIUM 0x2000
 #define DEBUG_HIGH 0x4000

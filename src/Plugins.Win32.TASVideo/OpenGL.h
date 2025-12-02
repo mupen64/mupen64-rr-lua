@@ -1,5 +1,4 @@
-#ifndef OPENGL_H
-#define OPENGL_H
+#pragma once
 
 #include "glext.h"
 #include "wglext.h"
@@ -99,4 +98,3 @@ void OGL_ClearDepthBuffer();
 void OGL_ClearColorBuffer(float* color);
 void OGL_ResizeWindow();
 void OGL_SaveScreenshot();
-#endif

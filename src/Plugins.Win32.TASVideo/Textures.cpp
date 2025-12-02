@@ -11,9 +11,6 @@
 #include "2xSAI.h"
 #include "FrameBuffer.h"
 
-#include "xBRZ/xbrz.h"
-#include <hqx.h>
-
 TextureCache cache;
 
 using GetTexelFunc = u32 (*)(u64* src, u16 x, u16 i, u8 palette);

@@ -1,5 +1,4 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
+
 void Config_LoadConfig();
 void Config_Show(HWND parent);
-#endif

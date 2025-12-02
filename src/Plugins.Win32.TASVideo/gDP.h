@@ -1,5 +1,4 @@
-#ifndef GDP_H
-#define GDP_H
+#pragma once
 
 #include "FrameBuffer.h"
 
@@ -268,5 +267,3 @@ void gDPTileSync();
 void gDPPipeSync();
 void gDPLoadSync();
 void gDPNoOp();
-
-#endif

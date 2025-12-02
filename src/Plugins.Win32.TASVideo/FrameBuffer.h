@@ -1,5 +1,4 @@
-#ifndef FRAMEBUFFER_H
-#define FRAMEBUFFER_H
+#pragma once
 
 #include "Types.h"
 #include "Textures.h"
@@ -29,5 +28,3 @@ void FrameBuffer_RestoreBuffer(u32 address, u16 size, u16 width);
 void FrameBuffer_RemoveBuffer(u32 address);
 FrameBuffer* FrameBuffer_FindBuffer(u32 address);
 void FrameBuffer_ActivateBufferTexture(s16 t, FrameBuffer* buffer);
-
-#endif

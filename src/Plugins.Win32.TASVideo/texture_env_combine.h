@@ -1,5 +1,4 @@
-#ifndef TEXTURE_ENV_COMBINE_H
-#define TEXTURE_ENV_COMBINE_H
+#pragma once 
 
 struct TexEnvCombinerArg {
     GLenum source, operand;
@@ -79,4 +78,3 @@ void Update_texture_env_combine_Colors(TexEnvCombiner*);
 void Uninit_texture_env_combine();
 void BeginTextureUpdate_texture_env_combine();
 void EndTextureUpdate_texture_env_combine();
-#endif

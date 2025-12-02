@@ -1,5 +1,4 @@
-#ifndef _3DMATH_H
-#define _3DMATH_H
+#pragma once
 
 static void mat_cpy(float m0[4][4], float m1[4][4])
 {
@@ -74,5 +73,3 @@ static float dot_product(float v0[3], float v1[3])
 {
     return v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2];
 }
-
-#endif

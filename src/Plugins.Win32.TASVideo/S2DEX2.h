@@ -1,5 +1,4 @@
-#ifndef S2DEX2_H
-#define S2DEX2_H
+#pragma once 
 
 void S2DEX2_Init();
 
@@ -16,4 +15,3 @@ void S2DEX2_Init();
 #define S2DEX2_BG_1CYC 0x09
 #define S2DEX2_BG_COPY 0x0A
 #define S2DEX2_OBJ_RENDERMODE 0x0B
-#endif

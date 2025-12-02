@@ -1,5 +1,4 @@
-#ifndef GSP_H
-#define GSP_H
+#pragma once
 
 #include "GBI.h"
 #include "gDP.h"
@@ -146,4 +145,3 @@ void gSPObjMatrix(u32 mtx);
 void gSPObjSubMatrix(u32 mtx);
 void gSPSetDMAOffsets(u32 mtxoffset, u32 vtxoffset);
 void gSPSetVertexColorBase(u32 base);
-#endif

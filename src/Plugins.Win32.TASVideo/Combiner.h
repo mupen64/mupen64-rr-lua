@@ -1,5 +1,4 @@
-#ifndef COMBINER_H
-#define COMBINER_H
+#pragma once
 
 #include "glN64.h"
 #include "OpenGL.h"
@@ -346,4 +345,3 @@ void Combiner_SetCombineStates();
 void Combiner_Destroy();
 void Combiner_BeginTextureUpdate();
 void Combiner_EndTextureUpdate();
-#endif

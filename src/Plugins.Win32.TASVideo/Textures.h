@@ -1,5 +1,4 @@
-#ifndef TEXTURES_H
-#define TEXTURES_H
+#pragma once 
 
 #include "convert.h"
 
@@ -90,5 +89,3 @@ void TextureCache_ActivateTexture(u32 t, CachedTexture* texture);
 void TextureCache_ActivateNoise(u32 t);
 void TextureCache_ActivateDummy(u32 t);
 BOOL TextureCache_Verify();
-
-#endif

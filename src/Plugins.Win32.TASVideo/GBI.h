@@ -1,5 +1,5 @@
-#ifndef GBI_H
-#define GBI_H
+#pragma once
+
 #include "Types.h"
 
 // Microcode Types
@@ -780,5 +780,3 @@ void GBI_Destroy();
     G_MWO_bLIGHT_7 = ucode##_MWO_bLIGHT_7;     \
     G_MWO_aLIGHT_8 = ucode##_MWO_aLIGHT_8;     \
     G_MWO_bLIGHT_8 = ucode##_MWO_bLIGHT_8;
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef S2DEX_H
-#define S2DEX_H
+#pragma once 
 
 #define G_BGLT_LOADBLOCK 0x0033
 #define G_BGLT_LOADTILE 0xfff4
@@ -205,5 +204,3 @@ void S2DEX_Init();
 #define S2DEX_OBJ_LDTX_RECT 0xC3
 #define S2DEX_OBJ_LDTX_RECT_R 0xC4
 #define S2DEX_RDPHALF_0 0xE4
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef F3DDKR_H
-#define F3DDKR_H
+#pragma once
 
 #define F3DDKR_VTX_APPEND 0x00010000
 
@@ -10,4 +9,3 @@
 #define F3DDKR_DMA_OFFSETS 0xBF
 
 void F3DDKR_Init();
-#endif

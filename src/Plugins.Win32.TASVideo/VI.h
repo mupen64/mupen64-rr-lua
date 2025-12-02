@@ -1,5 +1,5 @@
-#ifndef VI_H
-#define VI_H
+#pragma once 
+
 #include "Types.h"
 
 struct VIInfo {
@@ -11,5 +11,3 @@ extern VIInfo VI;
 
 void VI_UpdateSize();
 void VI_UpdateScreen();
-
-#endif

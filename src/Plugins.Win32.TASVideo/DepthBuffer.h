@@ -1,5 +1,4 @@
-#ifndef DEPTHBUFFER_H
-#define DEPTHBUFFER_H
+#pragma once
 
 struct DepthBuffer {
     DepthBuffer *higher, *lower;
@@ -19,5 +18,3 @@ void DepthBuffer_Destroy();
 void DepthBuffer_SetBuffer(u32 address);
 void DepthBuffer_RemoveBuffer(u32 address);
 DepthBuffer* DepthBuffer_FindBuffer(u32 address);
-
-#endif

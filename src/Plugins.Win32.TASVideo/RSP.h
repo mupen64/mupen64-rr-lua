@@ -1,11 +1,9 @@
-#ifndef RSP_H
-#define RSP_H
+#pragma once 
 
-#include <windows.h>
+#include "Types.h"
 #include "N64.h"
 #include "GBI.h"
 #include "gSP.h"
-#include "Types.h"
 
 #define RSPMSG_CLOSE 0
 #define RSPMSG_START 1
@@ -36,5 +34,3 @@ void RSP_Init();
 void RSP_ProcessDList();
 DWORD WINAPI RSP_ThreadProc(LPVOID lpParameter);
 void RSP_LoadMatrix(f32 mtx[4][4], u32 address);
-
-#endif
