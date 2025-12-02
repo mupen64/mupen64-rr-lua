@@ -24,3 +24,6 @@ add_library(vendor::xxhash64 ALIAS xxhash64)
 
 add_subdirectory(hqx)
 add_library(vendor::hqx ALIAS hqx)
+
+add_subdirectory(xbrz)
+add_library(vendor::xbrz ALIAS xbrz)

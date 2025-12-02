@@ -5,10 +5,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
-    "xBRZ/xbrz.h"
-    "xBRZ/xbrz_tools.h"
-    "xBRZ/xbrz_config.h"
-    "xBRZ/xbrz_config.h"
     "wglext.h"
     "VI.h"
     "Types.h"
@@ -49,7 +45,6 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "3DMath.h"
     "2xSAI.h"
 
-    "xBRZ/xbrz.cpp"
     "VI.cpp"
     "Textures.cpp"
     "texture_env.cpp"
@@ -96,6 +91,7 @@ target_include_directories(Mupen64RR.Plugins.Win32.TASVideo PRIVATE ".")
 target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE 
     Mupen64RR.Plugins.Win32.Common
     vendor::hqx
+    vendor::xbrz
     GLEW::GLEW
 )
 target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
