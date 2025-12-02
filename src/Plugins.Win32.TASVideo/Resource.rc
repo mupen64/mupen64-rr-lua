@@ -1,0 +1,197 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+#include <Windows.h>
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DEBUGDLG DIALOGEX 0, 0, 489, 238
+STYLE DS_SETFONT | WS_VISIBLE | WS_CAPTION
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Video Debug Output"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Debug Level",IDC_STATIC,4,161,240,28
+    CONTROL         "High",IDC_DEBUGHIGH,"Button",BS_AUTORADIOBUTTON | WS_GROUP,14,173,31,10
+    CONTROL         "Medium",IDC_DEBUGMEDIUM,"Button",BS_AUTORADIOBUTTON,71,173,41,10
+    CONTROL         "Low",IDC_DEBUGLOW,"Button",BS_AUTORADIOBUTTON,138,173,29,10
+    GROUPBOX        "Show",IDC_STATIC,4,192,303,41
+    CONTROL         "Unhandled",IDC_SHOWUNHANDLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,216,51,10
+    CONTROL         "Unknown",IDC_SHOWUNKNOWN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,216,47,10
+    CONTROL         "Errors",IDC_SHOWERRORS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,204,34,10
+    CONTROL         "Handled",IDC_SHOWHANDLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,204,43,10
+    PUSHBUTTON      "Pause",IDC_PAUSE,320,219,50,14
+    PUSHBUTTON      "Step",IDC_STEP,376,219,50,14
+    PUSHBUTTON      "Run",IDC_RUN,435,219,50,14
+    CONTROL         "",IDC_DEBUGEDIT,"RichEdit20A",ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_BORDER | WS_VSCROLL | WS_TABSTOP,4,4,481,122
+    EDITTEXT        IDC_PC,87,132,40,14,ES_AUTOHSCROLL
+    LTEXT           "PC:",IDC_STATIC,71,135,12,8
+    EDITTEXT        IDC_PCI,47,131,16,14,ES_AUTOHSCROLL
+    LTEXT           "PC Index:",IDC_STATIC,11,134,32,8
+    LTEXT           "Command:",IDC_STATIC,144,134,34,8
+    LTEXT           "Word 0:",IDC_STATIC,210,134,26,8
+    LTEXT           "Word 1:",IDC_STATIC,284,134,26,8
+    EDITTEXT        IDC_W1,315,131,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_W0,239,131,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_CMD,181,131,17,14,ES_AUTOHSCROLL
+    CONTROL         "Texture",IDC_SHOWTEXTURE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,251,204,40,10
+    CONTROL         "Matrix",IDC_SHOWMATRIX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,143,216,35,10
+    CONTROL         "Vertex",IDC_SHOWVERTEX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,204,36,10
+    CONTROL         "Triangle",IDC_SHOWTRIANGLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,216,41,10
+    CONTROL         "Combine",IDC_SHOWCOMBINE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,251,216,43,10
+    CONTROL         "Ignored",IDC_SHOWIGNORED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,143,204,40,10
+    CONTROL         "Detailed",IDC_DEBUGDETAIL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,173,42,10
+END
+
+IDD_CONFIGDLG DIALOGEX 0, 0, 239, 193
+STYLE DS_ABSALIGN | DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION
+CAPTION "Video Configuration"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Display",IDC_STATIC,7,7,225,114
+    LTEXT           "Resolution:",IDC_STATIC,15,20,72,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_WINDOWEDRES,79,20,60,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "X:",IDC_STATIC,143,20,10,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_WINDOWED_X,153,20,27,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    LTEXT           "Y:",IDC_STATIC,183,20,10,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_WINDOWED_Y,192,20,27,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    CONTROL         "No border (Experimental)",IDC_SCISSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,35,96,10
+    CONTROL         "Force Bilinear Filtering",IDC_FORCEBILINEAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,35,86,10
+    CONTROL         "Enabled Dithered Alpha Testing",IDC_DITHEREDALPHATEST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,48,116,10
+    CONTROL         "Enable Fog",IDC_FOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,48,51,10
+    CONTROL         "Clear every frame",IDC_CLEAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,61,74,10
+    LTEXT           "Combiner:",IDC_STATIC2,16,75,36,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_COMBINER,59,75,107,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Textures",IDC_STATIC,7,123,225,46
+    LTEXT           "Texture Filter:",IDC_STATIC,15,135,48,8
+    COMBOBOX        IDC_TEXTUREFILTER,86,132,76,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_FSCALE,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,164,131,60,13
+    LTEXT           "Texture Cache Size:",IDC_STATIC,15,150,66,8
+    EDITTEXT        IDC_CACHEMEGS,87,147,22,14,ES_NUMBER,WS_EX_RIGHT
+    LTEXT           "MB",IDC_STATIC,111,150,10,8
+    PUSHBUTTON      "OK",IDOK,129,172,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,182,172,50,14
+END
+
+IDD_MICROCODEDLG DIALOGEX 0, 0, 226, 131
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Video Unknown Microcode"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,169,110,50,14
+    COMBOBOX        IDC_MICROCODE,46,98,87,80,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Microcode:",IDC_STATIC,7,100,36,8
+    LTEXT           "The game's microcode couldn't be automatically detected. Choose the closest matching microcode to continue graphics emulation.",IDC_STATIC,7,7,212,28
+    EDITTEXT        IDC_TEXTBOX,7,39,212,55,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DEBUGDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 485
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 233
+    END
+
+    IDD_CONFIGDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 232
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 186
+    END
+
+    IDD_MICROCODEDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 219
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 124
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_CONFIGDLG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_MICROCODEDLG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
