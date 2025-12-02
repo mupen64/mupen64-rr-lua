@@ -1,8 +1,5 @@
 #pragma once
 
-#include "glext.h"
-#include "wglext.h"
-#include "glATI.h"
 #include "gSP.h"
 
 struct GLVertex {

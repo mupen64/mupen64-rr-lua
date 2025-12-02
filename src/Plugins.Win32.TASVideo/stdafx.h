@@ -10,9 +10,11 @@
 #include <windowsx.h>
 #include <emmintrin.h>
 #include <intrin.h>
-#include "Types.h"
 #include <xbrz.h>
 #include <hqx.h>
+#include <GL/glext.h>
+#include <GL/wglext.h>
+#include "Types.h"
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))

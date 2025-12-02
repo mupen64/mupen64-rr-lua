@@ -5,7 +5,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
-    "wglext.h"
     "VI.h"
     "Types.h"
     "texture_env.h"
@@ -24,8 +23,6 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "L3D.h"
     "gSP.h"
     "glN64.h"
-    "glext.h"
-    "glATI.h"
     "gDP.h"
     "GBI.h"
     "FrameBuffer.h"
