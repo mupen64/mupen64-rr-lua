@@ -71,6 +71,7 @@ find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
+find_package(glew CONFIG REQUIRED) 
 
 # Lua, because Lua sucks
 find_package(Lua REQUIRED)
