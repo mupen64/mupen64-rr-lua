@@ -53,6 +53,7 @@ bool init_rsp_thread()
 
     SetEvent(RSP.threadMsg[RSPMSG_START]);
     WaitForSingleObject(RSP.threadFinished, INFINITE);
+    return true;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
