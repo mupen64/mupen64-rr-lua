@@ -18,6 +18,3 @@
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))
-
-#define EXPORT __declspec(dllexport)
-#define CALL _cdecl

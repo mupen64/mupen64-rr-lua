@@ -79,10 +79,6 @@ EXPORT void CALL CaptureScreen(char* Directory)
     }
 }
 
-EXPORT void CALL ChangeWindow(void)
-{
-}
-
 EXPORT void CALL DllAbout(void* hParent)
 {
     const auto msg = PLUGIN_NAME "\nPart of the Mupen64 project family.\n\nhttps://github.com/mupen64/TASVideo";
@@ -170,10 +166,6 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
     return TRUE;
 }
 
-EXPORT void CALL MoveScreen(int xpos, int ypos)
-{
-}
-
 EXPORT void CALL ProcessDList(void)
 {
     if (RSP.thread)
@@ -181,10 +173,6 @@ EXPORT void CALL ProcessDList(void)
         SetEvent(RSP.threadMsg[RSPMSG_PROCESSDLIST]);
         WaitForSingleObject(RSP.threadFinished, INFINITE);
     }
-}
-
-EXPORT void CALL ProcessRDPList(void)
-{
 }
 
 EXPORT void CALL RomClosed(void)
@@ -207,10 +195,6 @@ EXPORT void CALL RomOpen(void)
     OGL_ResizeWindow();
 }
 
-EXPORT void CALL ShowCFB(void)
-{
-}
-
 EXPORT void CALL UpdateScreen(void)
 {
     if (RSP.thread)
@@ -218,14 +202,6 @@ EXPORT void CALL UpdateScreen(void)
         SetEvent(RSP.threadMsg[RSPMSG_UPDATESCREEN]);
         WaitForSingleObject(RSP.threadFinished, INFINITE);
     }
-}
-
-EXPORT void CALL ViStatusChanged(void)
-{
-}
-
-EXPORT void CALL ViWidthChanged(void)
-{
 }
 
 // not to confuse with readscreen2 from mupen64plus specs (I think)
