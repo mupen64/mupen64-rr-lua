@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "glN64.h"
-#include "Debug.h"
 #include "Types.h"
 #include "RSP.h"
 #include "GBI.h"
@@ -44,10 +43,8 @@ void gSPLoadUcodeEx(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
 
     if ((((uc_start & 0x1FFFFFFF) + 4096) > RDRAMSize) || (((uc_dstart & 0x1FFFFFFF) + uc_dsize) > RDRAMSize))
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to loud ucode out of invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPLoadUcodeEx( 0x%08X, 0x%08X, %i );\n", uc_start, uc_dstart, uc_dsize);
-#endif
+        DebugMsg(L"// Attempting to loud ucode out of invalid address\n");
+        DebugMsg(L"gSPLoadUcodeEx( 0x%08X, 0x%08X, %i );\n", uc_start, uc_dstart, uc_dsize);
         return;
     }
 
@@ -58,10 +55,7 @@ void gSPLoadUcodeEx(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
     else
         SetEvent(RSP.threadMsg[RSPMSG_CLOSE]);
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Unknown microcode: 0x%08X, 0x%08X, %s\n", uc_crc, uc_dcrc, uc_str);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPLoadUcodeEx( 0x%08X, 0x%08X, %i );\n", uc_start, uc_dstart, uc_dsize);
-#endif
+    DebugMsg(L"gSPLoadUcodeEx( 0x%08X, 0x%08X, %i );\n", uc_start, uc_dstart, uc_dsize);
 }
 
 void gSPCombineMatrices()
@@ -165,9 +159,7 @@ void gSPProcessVertex(u32 v)
 
 void gSPNoOp()
 {
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_IGNORED, "gSPNoOp();\n");
-#endif
+    DebugMsg(L"gSPNoOp();\n");
 }
 
 void gSPMatrix(u32 matrix, u8 param)
@@ -177,14 +169,12 @@ void gSPMatrix(u32 matrix, u8 param)
 
     if (address + 64 > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_MATRIX, "// Attempting to load matrix from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPMatrix( 0x%08X, %s | %s | %s );\n",
+        DebugMsg(L"// Attempting to load matrix from invalid address\n");
+        DebugMsg(L"gSPMatrix( 0x%08X, %s | %s | %s );\n",
                  matrix,
                  (param & G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW",
                  (param & G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL",
                  (param & G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH");
-#endif
         return;
     }
 
@@ -204,10 +194,10 @@ void gSPMatrix(u32 matrix, u8 param)
             mat_cpy(gSP.matrix.modelView[gSP.matrix.modelViewi + 1], gSP.matrix.modelView[gSP.matrix.modelViewi]);
             gSP.matrix.modelViewi++;
         }
-#ifdef DEBUG
-        else
-            DebugMsg(DEBUG_ERROR | DEBUG_MATRIX, "// Modelview stack overflow\n");
-#endif
+        else 
+        {
+            DebugMsg(L"// Modelview stack overflow\n");
+        }
 
         if (param & G_MTX_LOAD)
             mat_cpy(gSP.matrix.modelView[gSP.matrix.modelViewi], mtx);
@@ -217,21 +207,19 @@ void gSPMatrix(u32 matrix, u8 param)
 
     gSP.changed |= CHANGED_MATRIX;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[0][0], mtx[0][1], mtx[0][2], mtx[0][3]);
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[1][0], mtx[1][1], mtx[1][2], mtx[1][3]);
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[2][0], mtx[2][1], mtx[2][2], mtx[2][3]);
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[3][0], mtx[3][1], mtx[3][2], mtx[3][3]);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPMatrix( 0x%08X, %s | %s | %s );\n",
+    DebugMsg(L"gSPMatrix( 0x%08X, %s | %s | %s );\n",
              matrix,
              (param & G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW",
              (param & G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL",
              (param & G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH");
-#endif
 }
 
 void gSPDMAMatrix(u32 matrix, u8 index, u8 multiply)
@@ -241,11 +229,9 @@ void gSPDMAMatrix(u32 matrix, u8 index, u8 multiply)
 
     if (address + 64 > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_MATRIX, "// Attempting to load matrix from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPDMAMatrix( 0x%08X, %i, %s );\n",
+        DebugMsg(L"// Attempting to load matrix from invalid address\n");
+        DebugMsg(L"gSPDMAMatrix( 0x%08X, %i, %s );\n",
                  matrix, index, multiply ? "TRUE" : "FALSE");
-#endif
         return;
     }
 
@@ -265,18 +251,17 @@ void gSPDMAMatrix(u32 matrix, u8 index, u8 multiply)
 
 
     gSP.changed |= CHANGED_MATRIX;
-#ifdef DEBUG
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[0][0], mtx[0][1], mtx[0][2], mtx[0][3]);
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[1][0], mtx[1][1], mtx[1][2], mtx[1][3]);
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[2][0], mtx[2][1], mtx[2][2], mtx[2][3]);
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_MATRIX, "// %12.6f %12.6f %12.6f %12.6f\n",
+    DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n",
              mtx[3][0], mtx[3][1], mtx[3][2], mtx[3][3]);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPDMAMatrix( 0x%08X, %i, %s );\n",
+    DebugMsg(L"gSPDMAMatrix( 0x%08X, %i, %s );\n",
              matrix, index, multiply ? "TRUE" : "FALSE");
-#endif
 }
 
 void gSPViewport(u32 v)
@@ -285,10 +270,8 @@ void gSPViewport(u32 v)
 
     if ((address + 16) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to load viewport from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPViewport( 0x%08X );\n", v);
-#endif
+        DebugMsg(L"// Attempting to load viewport from invalid address\n");
+        DebugMsg(L"gSPViewport( 0x%08X );\n", v);
         return;
     }
 
@@ -310,9 +293,7 @@ void gSPViewport(u32 v)
 
     gSP.changed |= CHANGED_VIEWPORT;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPViewport( 0x%08X );\n", v);
-#endif
+    DebugMsg(L"gSPViewport( 0x%08X );\n", v);
 }
 
 void gSPForceMatrix(u32 mptr)
@@ -321,10 +302,8 @@ void gSPForceMatrix(u32 mptr)
 
     if (address + 64 > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_MATRIX, "// Attempting to load from invalid address");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPForceMatrix( 0x%08X );\n", mptr);
-#endif
+        DebugMsg(L"// Attempting to load from invalid address");
+        DebugMsg(L"gSPForceMatrix( 0x%08X );\n", mptr);
         return;
     }
 
@@ -332,9 +311,7 @@ void gSPForceMatrix(u32 mptr)
 
     gSP.changed &= ~CHANGED_MATRIX;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPForceMatrix( 0x%08X );\n", mptr);
-#endif
+    DebugMsg(L"gSPForceMatrix( 0x%08X );\n", mptr);
 }
 
 void gSPLight(u32 l, s32 n)
@@ -344,11 +321,9 @@ void gSPLight(u32 l, s32 n)
 
     if ((address + sizeof(Light)) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to load light from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPLight( 0x%08X, LIGHT_%i );\n",
+        DebugMsg(L"// Attempting to load light from invalid address\n");
+        DebugMsg(L"gSPLight( 0x%08X, LIGHT_%i );\n",
                  l, n);
-#endif
         return;
     }
 
@@ -367,14 +342,12 @@ void gSPLight(u32 l, s32 n)
         vec_normalize(&gSP.lights[n].x);
     }
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED, "// x = %2.6f    y = %2.6f    z = %2.6f\n",
+    DebugMsg(L"// x = %2.6f    y = %2.6f    z = %2.6f\n",
              _FIXED2FLOAT(light->x, 7), _FIXED2FLOAT(light->y, 7), _FIXED2FLOAT(light->z, 7));
-    DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED, "// r = %3i    g = %3i   b = %3i\n",
+    DebugMsg(L"// r = %3i    g = %3i   b = %3i\n",
              light->r, light->g, light->b);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPLight( 0x%08X, LIGHT_%i );\n",
+    DebugMsg(L"gSPLight( 0x%08X, LIGHT_%i );\n",
              l, n);
-#endif
 }
 
 void gSPLookAt(u32 l)
@@ -387,11 +360,9 @@ void gSPVertex(u32 v, u32 n, u32 v0)
 
     if ((address + sizeof(Vertex) * n) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_VERTEX, "// Attempting to load vertices from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_VERTEX, "gSPVertex( 0x%08X, %i, %i );\n",
+        DebugMsg(L"// Attempting to load vertices from invalid address\n");
+        DebugMsg(L"gSPVertex( 0x%08X, %i, %i );\n",
                  v, n, v0);
-#endif
         return;
     }
 
@@ -423,38 +394,32 @@ void gSPVertex(u32 v, u32 n, u32 v0)
                 gSP.vertices[i].a = vertex->color.a * 0.0039215689f;
             }
 
-#ifdef DEBUG
-            DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_VERTEX, "// x = %6i    y = %6i    z = %6i \n",
+            DebugMsg(L"// x = %6i    y = %6i    z = %6i \n",
                      vertex->x, vertex->y, vertex->z);
-            DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_VERTEX, "// s = %5.5f    t = %5.5f    flag = %i \n",
+            DebugMsg(L"// s = %5.5f    t = %5.5f    flag = %i \n",
                      vertex->s, vertex->t, vertex->flag);
 
             if (gSP.geometryMode & G_LIGHTING)
             {
-                DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_VERTEX, "// nx = %2.6f    ny = %2.6f    nz = %2.6f\n",
+                DebugMsg(L"// nx = %2.6f    ny = %2.6f    nz = %2.6f\n",
                          _FIXED2FLOAT(vertex->normal.x, 7), _FIXED2FLOAT(vertex->normal.y, 7), _FIXED2FLOAT(vertex->normal.z, 7));
             }
             else
             {
-                DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED | DEBUG_VERTEX, "// r = %3u    g = %3u    b = %3u    a = %3u\n",
+                DebugMsg(L"// r = %3u    g = %3u    b = %3u    a = %3u\n",
                          vertex->color.r, vertex->color.g, vertex->color.b, vertex->color.a);
             }
-#endif
 
             gSPProcessVertex(i);
 
             vertex++;
         }
     }
-#ifdef DEBUG
     else
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_VERTEX, "// Attempting to load vertices past vertex buffer size\n");
-#endif
+        DebugMsg(L"// Attempting to load vertices past vertex buffer size\n");
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_VERTEX, "gSPVertex( 0x%08X, %i, %i );\n",
+    DebugMsg(L"gSPVertex( 0x%08X, %i, %i );\n",
              v, n, v0);
-#endif
 }
 
 void gSPCIVertex(u32 v, u32 n, u32 v0)
@@ -463,11 +428,9 @@ void gSPCIVertex(u32 v, u32 n, u32 v0)
 
     if ((address + sizeof(PDVertex) * n) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_VERTEX, "// Attempting to load vertices from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_VERTEX, "gSPCIVertex( 0x%08X, %i, %i );\n",
+        DebugMsg(L"// Attempting to load vertices from invalid address\n");
+        DebugMsg(L"gSPCIVertex( 0x%08X, %i, %i );\n",
                  v, n, v0);
-#endif
         return;
     }
 
@@ -506,15 +469,11 @@ void gSPCIVertex(u32 v, u32 n, u32 v0)
             vertex++;
         }
     }
-#ifdef DEBUG
     else
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_VERTEX, "// Attempting to load vertices past vertex buffer size\n");
-#endif
+        DebugMsg(L"// Attempting to load vertices past vertex buffer size\n");
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_VERTEX, "gSPCIVertex( 0x%08X, %i, %i );\n",
+    DebugMsg(L"gSPCIVertex( 0x%08X, %i, %i );\n",
              v, n, v0);
-#endif
 }
 
 void gSPDMAVertex(u32 v, u32 n, u32 v0)
@@ -523,11 +482,9 @@ void gSPDMAVertex(u32 v, u32 n, u32 v0)
 
     if ((address + 10 * n) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_VERTEX, "// Attempting to load vertices from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_VERTEX, "gSPDMAVertex( 0x%08X, %i, %i );\n",
+        DebugMsg(L"// Attempting to load vertices from invalid address\n");
+        DebugMsg(L"gSPDMAVertex( 0x%08X, %i, %i );\n",
                  v, n, v0);
-#endif
         return;
     }
 
@@ -559,15 +516,11 @@ void gSPDMAVertex(u32 v, u32 n, u32 v0)
             address += 10;
         }
     }
-#ifdef DEBUG
     else
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_VERTEX, "// Attempting to load vertices past vertex buffer size\n");
-#endif
+        DebugMsg(L"// Attempting to load vertices past vertex buffer size\n");
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_VERTEX, "gSPDMAVertex( 0x%08X, %i, %i );\n",
+    DebugMsg(L"gSPDMAVertex( 0x%08X, %i, %i );\n",
              v, n, v0);
-#endif
 }
 
 void gSPDisplayList(u32 dl)
@@ -576,43 +529,35 @@ void gSPDisplayList(u32 dl)
 
     if ((address + 8) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to load display list from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPDisplayList( 0x%08X );\n",
+        DebugMsg(L"// Attempting to load display list from invalid address\n");
+        DebugMsg(L"gSPDisplayList( 0x%08X );\n",
                  dl);
-#endif
         return;
     }
 
     if (RSP.PCi < (GBI.PCStackSize - 1))
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPDisplayList( 0x%08X );\n",
+        DebugMsg(L"\n");
+        DebugMsg(L"gSPDisplayList( 0x%08X );\n",
                  dl);
-#endif
         RSP.PCi++;
         RSP.PC[RSP.PCi] = address;
     }
-#ifdef DEBUG
     else
     {
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// PC stack overflow\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPDisplayList( 0x%08X );\n",
+        DebugMsg(L"// PC stack overflow\n");
+        DebugMsg(L"gSPDisplayList( 0x%08X );\n",
                  dl);
     }
-#endif
 }
 
 void gSPDMADisplayList(u32 dl, u32 n)
 {
     if ((dl + (n << 3)) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to load display list from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPDMADisplayList( 0x%08X, %i );\n",
+        DebugMsg(L"// Attempting to load display list from invalid address\n");
+        DebugMsg(L"gSPDMADisplayList( 0x%08X, %i );\n",
                  dl, n);
-#endif
         return;
     }
 
@@ -624,30 +569,14 @@ void gSPDMADisplayList(u32 dl, u32 n)
     {
         if ((RSP.PC[RSP.PCi] + 8) > RDRAMSize)
         {
-#ifdef DEBUG
-            switch (Debug.level)
-            {
-            case DEBUG_LOW:
-                DebugMsg(DEBUG_LOW | DEBUG_ERROR, "ATTEMPTING TO EXECUTE RSP COMMAND AT INVALID RDRAM LOCATION\n");
-                break;
-            case DEBUG_MEDIUM:
-                DebugMsg(DEBUG_MEDIUM | DEBUG_ERROR, "Attempting to execute RSP command at invalid RDRAM location\n");
-                break;
-            case DEBUG_HIGH:
-                DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to execute RSP command at invalid RDRAM location\n");
-                break;
-            }
-#endif
+            DebugMsg(L"ATTEMPTING TO EXECUTE RSP COMMAND AT INVALID RDRAM LOCATION\n");
             break;
         }
 
         u32 w0 = *(u32*)&RDRAM[RSP.PC[RSP.PCi]];
         u32 w1 = *(u32*)&RDRAM[RSP.PC[RSP.PCi] + 4];
 
-#ifdef DEBUG
-        DebugRSPState(RSP.PCi, RSP.PC[RSP.PCi], _SHIFTR(w0, 24, 8), w0, w1);
-        DebugMsg(DEBUG_LOW | DEBUG_HANDLED, "0x%08lX: CMD=0x%02lX W0=0x%08lX W1=0x%08lX\n", RSP.PC[RSP.PCi], _SHIFTR(w0, 24, 8), w0, w1);
-#endif
+        DebugMsg(L"0x%08lX: CMD=0x%02lX W0=0x%08lX W1=0x%08lX\n", RSP.PC[RSP.PCi], _SHIFTR(w0, 24, 8), w0, w1);
 
         RSP.PC[RSP.PCi] += 8;
         RSP.nextCmd = _SHIFTR(*(u32*)&RDRAM[RSP.PC[RSP.PCi]], 24, 8);
@@ -657,10 +586,8 @@ void gSPDMADisplayList(u32 dl, u32 n)
 
     RSP.PC[RSP.PCi] = curDL;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPDMADisplayList( 0x%08X, %i );\n",
+    DebugMsg(L"gSPDMADisplayList( 0x%08X, %i );\n",
              dl, n);
-#endif
 }
 
 void gSPBranchList(u32 dl)
@@ -669,18 +596,14 @@ void gSPBranchList(u32 dl)
 
     if ((address + 8) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to branch to display list at invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPBranchList( 0x%08X );\n",
+        DebugMsg(L"// Attempting to branch to display list at invalid address\n");
+        DebugMsg(L"gSPBranchList( 0x%08X );\n",
                  dl);
-#endif
         return;
     }
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPBranchList( 0x%08X );\n",
+    DebugMsg(L"gSPBranchList( 0x%08X );\n",
              dl);
-#endif
 
     RSP.PC[RSP.PCi] = address;
 }
@@ -691,21 +614,17 @@ void gSPBranchLessZ(u32 branchdl, u32 vtx, f32 zval)
 
     if ((address + 8) > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Specified display list at invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPBranchLessZ( 0x%08X, %i, %i );\n",
+        DebugMsg(L"// Specified display list at invalid address\n");
+        DebugMsg(L"gSPBranchLessZ( 0x%08X, %i, %i );\n",
                  branchdl, vtx, zval);
-#endif
         return;
     }
 
     if (gSP.vertices[vtx].z <= zval)
         RSP.PC[RSP.PCi] = address;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPBranchLessZ( 0x%08X, %i, %i );\n",
+    DebugMsg(L"gSPBranchLessZ( 0x%08X, %i, %i );\n",
              branchdl, vtx, zval);
-#endif
 }
 
 void gSPSetDMAOffsets(u32 mtxoffset, u32 vtxoffset)
@@ -713,20 +632,16 @@ void gSPSetDMAOffsets(u32 mtxoffset, u32 vtxoffset)
     gSP.DMAOffsets.mtx = mtxoffset;
     gSP.DMAOffsets.vtx = vtxoffset;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPSetDMAOffsets( 0x%08X, 0x%08X );\n",
+    DebugMsg(L"gSPSetDMAOffsets( 0x%08X, 0x%08X );\n",
              mtxoffset, vtxoffset);
-#endif
 }
 
 void gSPSetVertexColorBase(u32 base)
 {
     gSP.vertexColorBase = RSP_SegmentToPhysical(base);
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPSetVertexColorBase( 0x%08X );\n",
+    DebugMsg(L"gSPSetVertexColorBase( 0x%08X );\n",
              base);
-#endif
 }
 
 void gSPSprite2DBase(u32 base)
@@ -857,10 +772,8 @@ void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag)
         else
             OGL_AddTriangle(gSP.vertices, v0, v1, v2);
     }
-#ifdef DEBUG
     else
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_TRIANGLE, "// Vertex index out of range\n");
-#endif
+        DebugMsg(L"// Vertex index out of range\n");
 
     if (depthBuffer.current)
         depthBuffer.current->cleared = FALSE;
@@ -874,10 +787,8 @@ void gSP1Triangle(s32 v0, s32 v1, s32 v2, s32 flag)
 
     gSPFlushTriangles();
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "gSP1Triangle( %i, %i, %i, %i );\n",
+    DebugMsg(L"gSP1Triangle( %i, %i, %i, %i );\n",
              v0, v1, v2, flag);
-#endif
 }
 
 void gSP2Triangles(s32 v00, s32 v01, s32 v02, s32 flag0,
@@ -888,12 +799,10 @@ void gSP2Triangles(s32 v00, s32 v01, s32 v02, s32 flag0,
 
     gSPFlushTriangles();
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "gSP2Triangles( %i, %i, %i, %i,\n",
+    DebugMsg(L"gSP2Triangles( %i, %i, %i, %i,\n",
              v00, v01, v02, flag0);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "               %i, %i, %i, %i );\n",
+    DebugMsg(L"               %i, %i, %i, %i );\n",
              v10, v11, v12, flag1);
-#endif
 }
 
 void gSP4Triangles(s32 v00, s32 v01, s32 v02,
@@ -908,16 +817,14 @@ void gSP4Triangles(s32 v00, s32 v01, s32 v02,
 
     gSPFlushTriangles();
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "gSP4Triangles( %i, %i, %i,\n",
+    DebugMsg(L"gSP4Triangles( %i, %i, %i,\n",
              v00, v01, v02);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "               %i, %i, %i,\n",
+    DebugMsg(L"               %i, %i, %i,\n",
              v10, v11, v12);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "               %i, %i, %i,\n",
+    DebugMsg(L"               %i, %i, %i,\n",
              v20, v21, v22);
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "               %i, %i, %i );\n",
+    DebugMsg(L"               %i, %i, %i );\n",
              v30, v31, v32);
-#endif
 }
 
 void gSPDMATriangles(u32 tris, u32 n)
@@ -926,10 +833,8 @@ void gSPDMATriangles(u32 tris, u32 n)
 
     if (address + sizeof(DKRTriangle) * n > RDRAMSize)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_TRIANGLE, "// Attempting to load triangles from invalid address\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "gSPDMATriangles( 0x%08X, %i );\n");
-#endif
+        DebugMsg(L"// Attempting to load triangles from invalid address\n");
+        DebugMsg(L"gSPDMATriangles( 0x%08X, %i );\n");
         return;
     }
 
@@ -964,10 +869,8 @@ void gSPDMATriangles(u32 tris, u32 n)
 
     gSPFlushTriangles();
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "gSPDMATriangles( 0x%08X, %i );\n",
+    DebugMsg(L"gSPDMATriangles( 0x%08X, %i );\n",
              tris, n);
-#endif
 }
 
 void gSP1Quadrangle(s32 v0, s32 v1, s32 v2, s32 v3)
@@ -977,10 +880,8 @@ void gSP1Quadrangle(s32 v0, s32 v1, s32 v2, s32 v3)
 
     gSPFlushTriangles();
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TRIANGLE, "gSP1Quadrangle( %i, %i, %i, %i );\n",
+    DebugMsg(L"gSP1Quadrangle( %i, %i, %i, %i );\n",
              v0, v1, v2, v3);
-#endif
 }
 
 bool gSPCullVertices(u32 v0, u32 vn)
@@ -1054,25 +955,19 @@ void gSPCullDisplayList(u32 v0, u32 vn)
             RSP.PCi--;
         else
         {
-#ifdef DEBUG
-            DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED, "// End of display list, halting execution\n");
-#endif
+            DebugMsg(L"// End of display list, halting execution\n");
             RSP.halt = TRUE;
         }
-#ifdef DEBUG
-        DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED, "// Culling display list\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPCullDisplayList( %i, %i );\n\n",
+        DebugMsg(L"// Culling display list\n");
+        DebugMsg(L"gSPCullDisplayList( %i, %i );\n\n",
                  v0, vn);
-#endif
     }
-#ifdef DEBUG
     else
     {
-        DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED, "// Not culling display list\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPCullDisplayList( %i, %i );\n",
+        DebugMsg(L"// Not culling display list\n");
+        DebugMsg(L"gSPCullDisplayList( %i, %i );\n",
                  v0, vn);
     }
-#endif
 }
 
 void gSPPopMatrixN(u32 param, u32 num)
@@ -1083,15 +978,13 @@ void gSPPopMatrixN(u32 param, u32 num)
 
         gSP.changed |= CHANGED_MATRIX;
     }
-#ifdef DEBUG
     else
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_MATRIX, "// Attempting to pop matrix stack below 0\n");
+        DebugMsg(L"// Attempting to pop matrix stack below 0\n");
 
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPPopMatrixN( %s, %i );\n",
+    DebugMsg(L"gSPPopMatrixN( %s, %i );\n",
              (param == G_MTX_MODELVIEW) ? "G_MTX_MODELVIEW" : (param == G_MTX_PROJECTION) ? "G_MTX_PROJECTION"
                                                                                           : "G_MTX_INVALID",
              num);
-#endif
 }
 
 void gSPPopMatrix(u32 param)
@@ -1102,46 +995,38 @@ void gSPPopMatrix(u32 param)
 
         gSP.changed |= CHANGED_MATRIX;
     }
-#ifdef DEBUG
     else
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_MATRIX, "// Attempting to pop matrix stack below 0\n");
+        DebugMsg(L"// Attempting to pop matrix stack below 0\n");
 
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPPopMatrix( %s );\n",
+    DebugMsg(L"gSPPopMatrix( %s );\n",
              (param == G_MTX_MODELVIEW) ? "G_MTX_MODELVIEW" : (param == G_MTX_PROJECTION) ? "G_MTX_PROJECTION"
                                                                                           : "G_MTX_INVALID");
-#endif
 }
 
 void gSPSegment(s32 seg, s32 base)
 {
     if (seg > 0xF)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to load address into invalid segment\n",
+        DebugMsg(L"// Attempting to load address into invalid segment\n",
                  SegmentText[seg], base);
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPSegment( %s, 0x%08X );\n",
+        DebugMsg(L"gSPSegment( %s, 0x%08X );\n",
                  SegmentText[seg], base);
-#endif
         return;
     }
 
     if (base > RDRAMSize - 1)
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Attempting to load invalid address into segment array\n",
+        DebugMsg(L"// Attempting to load invalid address into segment array\n",
                  SegmentText[seg], base);
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPSegment( %s, 0x%08X );\n",
+        DebugMsg(L"gSPSegment( %s, 0x%08X );\n",
                  SegmentText[seg], base);
-#endif
         return;
     }
 
     gSP.segment[seg] = base;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPSegment( %s, 0x%08X );\n",
+    DebugMsg(L"gSPSegment( %s, 0x%08X );\n",
              SegmentText[seg], base);
-#endif
 }
 
 void gSPClipRatio(u32 r)
@@ -1157,11 +1042,9 @@ void gSPInsertMatrix(u32 where, u32 num)
 
     if ((where & 0x3) || (where > 0x3C))
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR | DEBUG_MATRIX, "// Invalid matrix elements\n");
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPInsertMatrix( 0x%02X, %i );\n",
+        DebugMsg(L"// Invalid matrix elements\n");
+        DebugMsg(L"gSPInsertMatrix( 0x%02X, %i );\n",
                  where, num);
-#endif
         return;
     }
 
@@ -1196,10 +1079,8 @@ void gSPInsertMatrix(u32 where, u32 num)
         gSP.matrix.combined[0][((where - 0x20) >> 1) + 1] = newValue;
     }
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_MATRIX, "gSPInsertMatrix( %s, %i );\n",
+    DebugMsg(L"gSPInsertMatrix( %s, %i );\n",
              MWOMatrixText[where >> 2], num);
-#endif
 }
 
 void gSPModifyVertex(u32 vtx, u32 where, u32 val)
@@ -1211,30 +1092,22 @@ void gSPModifyVertex(u32 vtx, u32 where, u32 val)
         gSP.vertices[vtx].g = _SHIFTR(val, 16, 8) * 0.0039215689f;
         gSP.vertices[vtx].b = _SHIFTR(val, 8, 8) * 0.0039215689f;
         gSP.vertices[vtx].a = _SHIFTR(val, 0, 8) * 0.0039215689f;
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPModifyVertex( %i, %s, 0x%08X );\n",
+        DebugMsg(L"gSPModifyVertex( %i, %s, 0x%08X );\n",
                  vtx, MWOPointText[(where - 0x10) >> 2], val);
-#endif
         break;
     case G_MWO_POINT_ST:
         gSP.vertices[vtx].s = _FIXED2FLOAT((s16)_SHIFTR(val, 16, 16), 5);
         gSP.vertices[vtx].t = _FIXED2FLOAT((s16)_SHIFTR(val, 0, 16), 5);
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPModifyVertex( %i, %s, 0x%08X );\n",
+        DebugMsg(L"gSPModifyVertex( %i, %s, 0x%08X );\n",
                  vtx, MWOPointText[(where - 0x10) >> 2], val);
-#endif
         break;
     case G_MWO_POINT_XYSCREEN:
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_UNHANDLED, "gSPModifyVertex( %i, %s, 0x%08X );\n",
+        DebugMsg(L"gSPModifyVertex( %i, %s, 0x%08X );\n",
                  vtx, MWOPointText[(where - 0x10) >> 2], val);
-#endif
         break;
     case G_MWO_POINT_ZSCREEN:
-#ifdef DEBUG
-        DebugMsg(DEBUG_HIGH | DEBUG_UNHANDLED, "gSPModifyVertex( %i, %s, 0x%08X );\n",
+        DebugMsg(L"gSPModifyVertex( %i, %s, 0x%08X );\n",
                  vtx, MWOPointText[(where - 0x10) >> 2], val);
-#endif
         break;
     }
 }
@@ -1243,15 +1116,11 @@ void gSPNumLights(s32 n)
 {
     if (n <= 8)
         gSP.numLights = n;
-#ifdef DEBUG
     else
-        DebugMsg(DEBUG_HIGH | DEBUG_ERROR, "// Setting an invalid number of lights\n");
-#endif
+        DebugMsg(L"// Setting an invalid number of lights\n");
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPNumLights( %i );\n",
+    DebugMsg(L"gSPNumLights( %i );\n",
              n);
-#endif
 }
 
 void gSPLightColor(u32 lightNum, u32 packedColor)
@@ -1264,10 +1133,8 @@ void gSPLightColor(u32 lightNum, u32 packedColor)
         gSP.lights[lightNum].g = _SHIFTR(packedColor, 16, 8) * 0.0039215689f;
         gSP.lights[lightNum].b = _SHIFTR(packedColor, 8, 8) * 0.0039215689f;
     }
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPLightColor( %i, 0x%08X );\n",
+    DebugMsg(L"gSPLightColor( %i, 0x%08X );\n",
              lightNum, packedColor);
-#endif
 }
 
 void gSPFogFactor(s16 fm, s16 fo)
@@ -1276,16 +1143,12 @@ void gSPFogFactor(s16 fm, s16 fo)
     gSP.fog.offset = fo;
 
     gSP.changed |= CHANGED_FOGPOSITION;
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPFogFactor( %i, %i );\n", fm, fo);
-#endif
+    DebugMsg(L"gSPFogFactor( %i, %i );\n", fm, fo);
 }
 
 void gSPPerspNormalize(u16 scale)
 {
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_UNHANDLED, "gSPPerspNormalize( %i );\n", scale);
-#endif
+    DebugMsg(L"gSPPerspNormalize( %i );\n", scale);
 }
 
 void gSPTexture(f32 sc, f32 tc, s32 level, s32 tile, s32 on)
@@ -1307,10 +1170,8 @@ void gSPTexture(f32 sc, f32 tc, s32 level, s32 tile, s32 on)
 
     gSP.changed |= CHANGED_TEXTURE;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED | DEBUG_TEXTURE, "gSPTexture( %f, %f, %i, %i, %i );\n",
+    DebugMsg(L"gSPTexture( %f, %f, %i, %i, %i );\n",
              sc, tc, level, tile, on);
-#endif
 }
 
 void gSPEndDisplayList()
@@ -1319,15 +1180,11 @@ void gSPEndDisplayList()
         RSP.PCi--;
     else
     {
-#ifdef DEBUG
-        DebugMsg(DEBUG_DETAIL | DEBUG_HANDLED, "// End of display list, halting execution\n");
-#endif
+        DebugMsg(L"// End of display list, halting execution\n");
         RSP.halt = TRUE;
     }
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPEndDisplayList();\n\n");
-#endif
+    DebugMsg(L"gSPEndDisplayList();\n\n");
 }
 
 void gSPGeometryMode(u32 clear, u32 set)
@@ -1336,8 +1193,7 @@ void gSPGeometryMode(u32 clear, u32 set)
 
     gSP.changed |= CHANGED_GEOMETRYMODE;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPGeometryMode( %s%s%s%s%s%s%s%s%s%s, %s%s%s%s%s%s%s%s%s%s );\n",
+    DebugMsg(L"gSPGeometryMode( %s%s%s%s%s%s%s%s%s%s, %s%s%s%s%s%s%s%s%s%s );\n",
              clear & G_SHADE ? "G_SHADE | " : "",
              clear & G_LIGHTING ? "G_LIGHTING | " : "",
              clear & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
@@ -1358,7 +1214,6 @@ void gSPGeometryMode(u32 clear, u32 set)
              set & G_CULL_BACK ? "G_CULL_BACK | " : "",
              set & G_FOG ? "G_FOG | " : "",
              set & G_CLIPPING ? "G_CLIPPING" : "");
-#endif
 }
 
 void gSPSetGeometryMode(u32 mode)
@@ -1366,8 +1221,7 @@ void gSPSetGeometryMode(u32 mode)
     gSP.geometryMode |= mode;
 
     gSP.changed |= CHANGED_GEOMETRYMODE;
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPSetGeometryMode( %s%s%s%s%s%s%s%s%s%s );\n",
+    DebugMsg(L"gSPSetGeometryMode( %s%s%s%s%s%s%s%s%s%s );\n",
              mode & G_SHADE ? "G_SHADE | " : "",
              mode & G_LIGHTING ? "G_LIGHTING | " : "",
              mode & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
@@ -1378,7 +1232,6 @@ void gSPSetGeometryMode(u32 mode)
              mode & G_CULL_BACK ? "G_CULL_BACK | " : "",
              mode & G_FOG ? "G_FOG | " : "",
              mode & G_CLIPPING ? "G_CLIPPING" : "");
-#endif
 }
 
 void gSPClearGeometryMode(u32 mode)
@@ -1387,8 +1240,7 @@ void gSPClearGeometryMode(u32 mode)
 
     gSP.changed |= CHANGED_GEOMETRYMODE;
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_HANDLED, "gSPClearGeometryMode( %s%s%s%s%s%s%s%s%s%s );\n",
+    DebugMsg(L"gSPClearGeometryMode( %s%s%s%s%s%s%s%s%s%s );\n",
              mode & G_SHADE ? "G_SHADE | " : "",
              mode & G_LIGHTING ? "G_LIGHTING | " : "",
              mode & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
@@ -1399,24 +1251,19 @@ void gSPClearGeometryMode(u32 mode)
              mode & G_CULL_BACK ? "G_CULL_BACK | " : "",
              mode & G_FOG ? "G_FOG | " : "",
              mode & G_CLIPPING ? "G_CLIPPING" : "");
-#endif
 }
 
 void gSPLine3D(s32 v0, s32 v1, s32 flag)
 {
     OGL_DrawLine(gSP.vertices, v0, v1, 1.5f);
 
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_UNHANDLED, "gSPLine3D( %i, %i, %i );\n", v0, v1, flag);
-#endif
+    DebugMsg(L"gSPLine3D( %i, %i, %i );\n", v0, v1, flag);
 }
 
 void gSPLineW3D(s32 v0, s32 v1, s32 wd, s32 flag)
 {
     OGL_DrawLine(gSP.vertices, v0, v1, 1.5f + wd * 0.5f);
-#ifdef DEBUG
-    DebugMsg(DEBUG_HIGH | DEBUG_UNHANDLED, "gSPLineW3D( %i, %i, %i, %i );\n", v0, v1, wd, flag);
-#endif
+    DebugMsg(L"gSPLineW3D( %i, %i, %i, %i );\n", v0, v1, wd, flag);
 }
 
 void gSPBgRect1Cyc(u32 bg)

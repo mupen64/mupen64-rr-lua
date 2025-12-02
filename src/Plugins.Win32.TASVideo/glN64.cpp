@@ -173,7 +173,7 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
     REG.VI_Y_SCALE = Gfx_Info.vi_y_scale_reg;
 
     CheckInterrupts = Gfx_Info.check_interrupts;
-
+    
     if (!init_rsp_thread())
     {
         return FALSE;

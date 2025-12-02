@@ -7,7 +7,6 @@
 #include "gDP.h"
 #include "RSP.h"
 #include "FrameBuffer.h"
-#include "Debug.h"
 
 VIInfo VI;
 

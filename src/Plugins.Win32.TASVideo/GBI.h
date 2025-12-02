@@ -179,7 +179,6 @@ static const int numMicrocodeTypes = 11;
 #define G_MWO_POINT_XYSCREEN 0x18
 #define G_MWO_POINT_ZSCREEN 0x1C
 
-#ifdef DEBUG
 static const char* MWOPointText[] =
 {
 "G_MWO_POINT_RGBA",
@@ -193,7 +192,6 @@ static const char* MWOMatrixText[] =
 "G_MWO_MATRIX_ZX_ZY_I", "G_MWO_MATRIX_ZZ_ZW_I", "G_MWO_MATRIX_WX_WY_I", "G_MWO_MATRIX_WZ_WW_I",
 "G_MWO_MATRIX_XX_XY_F", "G_MWO_MATRIX_XZ_XW_F", "G_MWO_MATRIX_YX_YY_F", "G_MWO_MATRIX_YZ_YW_F",
 "G_MWO_MATRIX_ZX_ZY_F", "G_MWO_MATRIX_ZZ_ZW_F", "G_MWO_MATRIX_WX_WY_F", "G_MWO_MATRIX_WZ_WW_F"};
-#endif
 
 // These flags change between ucodes
 extern u32 G_MTX_STACKSIZE;
@@ -240,7 +238,6 @@ extern u32 G_MWO_aLIGHT_8, G_MWO_bLIGHT_8;
 #define G_TX_MIRROR 0x1
 #define G_TX_CLAMP 0x2
 
-#ifdef DEBUG
 static const char* ImageFormatText[] =
 {
 "G_IM_FMT_RGBA",
@@ -265,7 +262,6 @@ static const char* SegmentText[] =
 "G_MWO_SEGMENT_4", "G_MWO_SEGMENT_5", "G_MWO_SEGMENT_6", "G_MWO_SEGMENT_7",
 "G_MWO_SEGMENT_8", "G_MWO_SEGMENT_9", "G_MWO_SEGMENT_A", "G_MWO_SEGMENT_B",
 "G_MWO_SEGMENT_C", "G_MWO_SEGMENT_D", "G_MWO_SEGMENT_E", "G_MWO_SEGMENT_F"};
-#endif
 
 #define G_NOOP 0x00
 
@@ -423,7 +419,6 @@ static const char* SegmentText[] =
 #define G_SC_EVEN_INTERLACE 2
 #define G_SC_ODD_INTERLACE 3
 
-#ifdef DEBUG
 static const char* AAEnableText = "AA_EN";
 static const char* DepthCompareText = "Z_CMP";
 static const char* DepthUpdateText = "Z_UPD";
@@ -495,7 +490,6 @@ static const char* DepthModeText[] =
 static const char* ScissorModeText[] =
 {
 "G_SC_NON_INTERLACE", "G_SC_INVALID", "G_SC_EVEN_INTERLACE", "G_SC_ODD_INTERLACE"};
-#endif
 
 /* Color combiner constants: */
 #define G_CCMUX_COMBINED 0
@@ -532,7 +526,6 @@ static const char* ScissorModeText[] =
 #define G_ACMUX_1 6
 #define G_ACMUX_0 7
 
-#ifdef DEBUG
 static const char* saRGBText[] =
 {
 "COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE",
@@ -617,7 +610,6 @@ static const char* aAText[] =
 "1",
 "0",
 };
-#endif
 
 extern u32 G_RDPHALF_1, G_RDPHALF_2, G_RDPHALF_CONT;
 extern u32 G_SPNOOP;

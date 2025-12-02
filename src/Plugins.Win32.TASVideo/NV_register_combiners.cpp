@@ -2,7 +2,6 @@
 #include "OpenGL.h"
 #include "Combiner.h"
 #include "NV_register_combiners.h"
-#include "Debug.h"
 #include "gDP.h"
 #include "gSP.h"
 
