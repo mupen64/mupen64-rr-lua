@@ -4,7 +4,6 @@
 #include "N64.h"
 #include "RSP.h"
 #include "Config.h"
-#include "MiscHelpers.h"
 
 HWND hWnd;
 HWND hStatusBar;
@@ -99,7 +98,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info* PluginInfo)
 {
     PluginInfo->ver = 0x100;
     PluginInfo->type = plugin_video;
-    strcpy(PluginInfo->name, MiscHelpers::wstring_to_string(PLUGIN_NAME).c_str());
+    strcpy(PluginInfo->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = FALSE;
     PluginInfo->unused_byteswapped = TRUE;
 }

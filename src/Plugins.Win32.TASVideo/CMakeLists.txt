@@ -19,7 +19,6 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "OpenGL.h"
     "NV_register_combiners.h"
     "N64.h"
-    "MiscHelpers.h"
     "L3DEX2.h"
     "L3DEX.h"
     "L3D.h"
