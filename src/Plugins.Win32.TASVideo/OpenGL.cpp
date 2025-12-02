@@ -32,7 +32,7 @@ void OGL_InitExtensions()
     GLenum glew = glewInit();
     if (glew != GLEW_OK)
     {
-        printf("Error initialising glew\n");
+        g_ef->log_error(L"Error initialising glew");
         return;
     }
 
@@ -261,10 +261,7 @@ bool OGL_Start()
 
     gSP.changed = gDP.changed = 0xFFFFFFFF;
     OGL_UpdateScale();
-#ifdef _DEBUG
-    printf("OpenGL %s\n", glGetString(GL_VERSION));
 
-#endif
     return TRUE;
 }
 

@@ -19,6 +19,21 @@ LONG windowedExStyle;
 RECT windowedRect;
 HMENU windowedMenu;
 
+static void log_shim(const wchar_t* str)
+{
+    wprintf(str);
+}
+
+static core_plugin_extended_funcs ef_shim = {
+.size = sizeof(core_plugin_extended_funcs),
+.log_trace = log_shim,
+.log_info = log_shim,
+.log_warn = log_shim,
+.log_error = log_shim,
+};
+
+core_plugin_extended_funcs* g_ef = &ef_shim;
+
 bool init_rsp_thread()
 {
     if (RSP.thread)
@@ -165,6 +180,11 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
     }
 
     return TRUE;
+}
+
+EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs* funcs)
+{
+    g_ef = funcs;
 }
 
 EXPORT void CALL ProcessDList(void)
