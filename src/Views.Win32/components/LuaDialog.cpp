@@ -59,6 +59,7 @@ static void update_config_paths()
     if (g_main_ctx.exiting) return;
 
     g_config.lua_paths.clear();    
+    g_config.lua_paths.reserve(g_lua_instance_wnd_ctxs.size());
     
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
