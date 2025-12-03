@@ -55,6 +55,9 @@ static t_instance_context *get_instance_context(const t_lua_environment *env)
  */
 static void update_config_paths()
 {
+    // Prevent updating config paths while the application is exiting so we don't write an empty list :P
+    if (g_main_ctx.exiting) return;
+
     g_config.lua_paths.clear();
 
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
@@ -185,6 +188,7 @@ static std::shared_ptr<t_instance_context> add_instance(const std::filesystem::p
     ctx->typed_path = path;
 
     g_lua_instance_wnd_ctxs.insert(g_lua_instance_wnd_ctxs.begin(), ctx);
+    update_config_paths();
 
     if (!IsWindow(g_dlg.mgr_hwnd))
     {
@@ -459,8 +463,6 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
             ListBox_SetItemData(hlb, index, reinterpret_cast<LPARAM>(ctx.get()));
         }
 
-        update_config_paths();
-
         break;
     }
     case WM_CONTEXTMENU: {
@@ -509,6 +511,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         case 3:
             stop(*selected_ctx);
             g_lua_instance_wnd_ctxs.erase(g_lua_instance_wnd_ctxs.begin() + selected_index);
+            update_config_paths();
             PostMessage(hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
             break;
         case 5:
@@ -601,11 +604,13 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
 void LuaDialog::show()
 {
-    // Add the config paths the first time, before the dialog is even shown so we don't have to do deal with automatic rebuilding.
+    // Add the config paths the first time, before the dialog is even shown so we don't have to do deal with automatic
+    // rebuilding.
     if (g_dlg.first_show)
     {
         g_dlg.first_show = false;
-        add_instances(std::vector<std::filesystem::path>(g_config.lua_paths.begin(), g_config.lua_paths.end()));
+        const auto paths = std::vector<std::filesystem::path>(g_config.lua_paths.begin(), g_config.lua_paths.end());
+        add_instances(paths);
     }
 
     if (g_dlg.mgr_hwnd)
@@ -648,6 +653,7 @@ void LuaDialog::close_all()
 {
     stop_all();
     g_lua_instance_wnd_ctxs.clear();
+    update_config_paths();
     SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
     ListBox_SetCurSel(GetDlgItem(g_dlg.mgr_hwnd, IDC_INSTANCES), 0);
     SendMessage(g_dlg.mgr_hwnd, WM_COMMAND, MAKEWPARAM(IDC_INSTANCES, LBN_SELCHANGE), 0);

@@ -40,6 +40,7 @@ struct t_main_context
     bool fullscreen{};
     bool fast_forward{};
     std::filesystem::path app_path{};
+    bool exiting{};
 };
 
 /**
