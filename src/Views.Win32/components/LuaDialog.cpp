@@ -58,11 +58,11 @@ static void update_config_paths()
     // Prevent updating config paths while the application is exiting so we don't write an empty list :P
     if (g_main_ctx.exiting) return;
 
-    g_config.lua_paths.clear();
-
+    g_config.lua_paths.clear();    
+    
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
-        g_config.lua_paths.push_back(ctx->typed_path);
+        g_config.lua_paths.insert(g_config.lua_paths.begin(), ctx->typed_path);
     }
 }
 
