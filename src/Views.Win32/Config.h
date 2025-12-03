@@ -322,6 +322,11 @@ struct t_config
     std::map<std::wstring, std::wstring> trusted_lua_paths;
 
     /// <summary>
+    /// The Lua Dialog's saved paths.
+    /// </summary>
+    std::vector<std::wstring> lua_paths;
+
+    /// <summary>
     /// A map of fully-qualified action paths to a hotkey assigned to them.
     /// </summary>
     std::map<std::wstring, Hotkey::t_hotkey> hotkeys;

@@ -31,6 +31,7 @@ struct t_dialog_state
     HWND inst_hwnd{};
     HWND placeholder_hwnd{};
     RECT initial_rect{};
+    bool first_show = true;
     std::vector<std::shared_ptr<t_instance_context>> stored_contexts{};
 };
 
@@ -47,6 +48,19 @@ static t_instance_context *get_instance_context(const t_lua_environment *env)
         }
     }
     return nullptr;
+}
+
+/**
+ * \brief Updates the config's lua_paths field to match the local Lua instances.
+ */
+static void update_config_paths()
+{
+    g_config.lua_paths.clear();
+
+    for (const auto &ctx : g_lua_instance_wnd_ctxs)
+    {
+        g_config.lua_paths.push_back(ctx->typed_path);
+    }
 }
 
 /**
@@ -180,6 +194,17 @@ static std::shared_ptr<t_instance_context> add_instance(const std::filesystem::p
     SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 
     return ctx;
+}
+
+/**
+ * \brief Inserts multiple instances to the list of Lua instances.
+ */
+static void add_instances(const std::vector<std::filesystem::path> &paths)
+{
+    for (const auto &path : paths)
+    {
+        add_instance(path);
+    }
 }
 
 /**
@@ -433,6 +458,9 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
             const auto index = ListBox_AddString(hlb, display_name.c_str());
             ListBox_SetItemData(hlb, index, reinterpret_cast<LPARAM>(ctx.get()));
         }
+
+        update_config_paths();
+
         break;
     }
     case WM_CONTEXTMENU: {
@@ -573,6 +601,13 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
 void LuaDialog::show()
 {
+    // Add the config paths the first time, before the dialog is even shown so we don't have to do deal with automatic rebuilding.
+    if (g_dlg.first_show)
+    {
+        g_dlg.first_show = false;
+        add_instances(std::vector<std::filesystem::path>(g_config.lua_paths.begin(), g_config.lua_paths.end()));
+    }
+
     if (g_dlg.mgr_hwnd)
     {
         BringWindowToTop(g_dlg.mgr_hwnd);
