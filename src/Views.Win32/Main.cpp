@@ -902,6 +902,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (confirm_user_exit())
         {
+            g_main_ctx.exiting = true;
+            
             LuaDialog::close_all();
 
             std::thread([] {

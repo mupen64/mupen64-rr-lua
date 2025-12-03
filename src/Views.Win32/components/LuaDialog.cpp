@@ -31,6 +31,7 @@ struct t_dialog_state
     HWND inst_hwnd{};
     HWND placeholder_hwnd{};
     RECT initial_rect{};
+    bool first_show = true;
     std::vector<std::shared_ptr<t_instance_context>> stored_contexts{};
 };
 
@@ -47,6 +48,23 @@ static t_instance_context *get_instance_context(const t_lua_environment *env)
         }
     }
     return nullptr;
+}
+
+/**
+ * \brief Updates the config's lua_paths field to match the local Lua instances.
+ */
+static void update_config_paths()
+{
+    // Prevent updating config paths while the application is exiting so we don't write an empty list :P
+    if (g_main_ctx.exiting) return;
+
+    g_config.lua_paths.clear();    
+    g_config.lua_paths.reserve(g_lua_instance_wnd_ctxs.size());
+    
+    for (const auto &ctx : g_lua_instance_wnd_ctxs)
+    {
+        g_config.lua_paths.insert(g_config.lua_paths.begin(), ctx->typed_path);
+    }
 }
 
 /**
@@ -117,7 +135,6 @@ static void start(t_instance_context &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
-
     const auto result = LuaManager::create_environment(
         path,
         [](const t_lua_environment *env) {
@@ -172,6 +189,7 @@ static std::shared_ptr<t_instance_context> add_instance(const std::filesystem::p
     ctx->typed_path = path;
 
     g_lua_instance_wnd_ctxs.insert(g_lua_instance_wnd_ctxs.begin(), ctx);
+    update_config_paths();
 
     if (!IsWindow(g_dlg.mgr_hwnd))
     {
@@ -181,6 +199,17 @@ static std::shared_ptr<t_instance_context> add_instance(const std::filesystem::p
     SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 
     return ctx;
+}
+
+/**
+ * \brief Inserts multiple instances to the list of Lua instances.
+ */
+static void add_instances(const std::vector<std::filesystem::path> &paths)
+{
+    for (const auto &path : paths)
+    {
+        add_instance(path);
+    }
 }
 
 /**
@@ -402,8 +431,6 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
         create_placeholder_dialog(g_dlg);
 
-        add_recent_scripts_to_instance_list();
-
         return TRUE;
     }
     case WM_CLOSE:
@@ -436,6 +463,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
             const auto index = ListBox_AddString(hlb, display_name.c_str());
             ListBox_SetItemData(hlb, index, reinterpret_cast<LPARAM>(ctx.get()));
         }
+
         break;
     }
     case WM_CONTEXTMENU: {
@@ -468,6 +496,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         AppendMenu(h_menu, MF_STRING, 3, L"Remove");
         AppendMenu(h_menu, MF_SEPARATOR, 4, L"");
         AppendMenu(h_menu, MF_STRING, 5, L"Stop All");
+        AppendMenu(h_menu, MF_STRING, 6, L"Add Recent Scripts");
 
         const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam),
                                             GET_Y_LPARAM(lparam), hwnd, nullptr);
@@ -483,6 +512,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         case 3:
             stop(*selected_ctx);
             g_lua_instance_wnd_ctxs.erase(g_lua_instance_wnd_ctxs.begin() + selected_index);
+            update_config_paths();
             PostMessage(hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
             break;
         case 5:
@@ -490,6 +520,9 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
             {
                 stop(*ctx);
             }
+            break;
+        case 6:
+            add_recent_scripts_to_instance_list();
             break;
         default:
             break;
@@ -572,6 +605,15 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
 void LuaDialog::show()
 {
+    // Add the config paths the first time, before the dialog is even shown so we don't have to deal with automatic
+    // rebuilding.
+    if (g_dlg.first_show)
+    {
+        g_dlg.first_show = false;
+        const auto paths = std::vector<std::filesystem::path>(g_config.lua_paths.begin(), g_config.lua_paths.end());
+        add_instances(paths);
+    }
+
     if (g_dlg.mgr_hwnd)
     {
         BringWindowToTop(g_dlg.mgr_hwnd);
@@ -593,7 +635,7 @@ void LuaDialog::start_and_add_if_needed(const std::filesystem::path &path)
     }
 
     const auto ctx = *existing_ctx;
-    
+
     LuaDialog::show();
     select_instance(*ctx);
 
@@ -612,6 +654,7 @@ void LuaDialog::close_all()
 {
     stop_all();
     g_lua_instance_wnd_ctxs.clear();
+    update_config_paths();
     SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
     ListBox_SetCurSel(GetDlgItem(g_dlg.mgr_hwnd, IDC_INSTANCES), 0);
     SendMessage(g_dlg.mgr_hwnd, WM_COMMAND, MAKEWPARAM(IDC_INSTANCES, LBN_SELCHANGE), 0);

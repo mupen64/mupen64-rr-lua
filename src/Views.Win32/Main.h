@@ -8,7 +8,7 @@
 
 #include <components/Dispatcher.h>
 
-#define CURRENT_VERSION L"1.3.0-7"
+#define CURRENT_VERSION L"1.3.0-8"
 
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)
@@ -40,6 +40,7 @@ struct t_main_context
     bool fullscreen{};
     bool fast_forward{};
     std::filesystem::path app_path{};
+    bool exiting{};
 };
 
 /**
