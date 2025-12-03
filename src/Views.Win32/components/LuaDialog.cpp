@@ -402,8 +402,6 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
         create_placeholder_dialog(g_dlg);
 
-        add_recent_scripts_to_instance_list();
-
         return TRUE;
     }
     case WM_CLOSE:
