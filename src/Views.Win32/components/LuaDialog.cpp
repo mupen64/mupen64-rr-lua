@@ -605,7 +605,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
 void LuaDialog::show()
 {
-    // Add the config paths the first time, before the dialog is even shown so we don't have to do deal with automatic
+    // Add the config paths the first time, before the dialog is even shown so we don't have to deal with automatic
     // rebuilding.
     if (g_dlg.first_show)
     {
