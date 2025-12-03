@@ -117,7 +117,6 @@ static void start(t_instance_context &ctx, const std::filesystem::path &path)
 {
     stop(ctx);
 
-
     const auto result = LuaManager::create_environment(
         path,
         [](const t_lua_environment *env) {
@@ -466,6 +465,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         AppendMenu(h_menu, MF_STRING, 3, L"Remove");
         AppendMenu(h_menu, MF_SEPARATOR, 4, L"");
         AppendMenu(h_menu, MF_STRING, 5, L"Stop All");
+        AppendMenu(h_menu, MF_STRING, 6, L"Add Recent Scripts");
 
         const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam),
                                             GET_Y_LPARAM(lparam), hwnd, nullptr);
@@ -488,6 +488,9 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
             {
                 stop(*ctx);
             }
+            break;
+        case 6:
+            add_recent_scripts_to_instance_list();
             break;
         default:
             break;
@@ -591,7 +594,7 @@ void LuaDialog::start_and_add_if_needed(const std::filesystem::path &path)
     }
 
     const auto ctx = *existing_ctx;
-    
+
     LuaDialog::show();
     select_instance(*ctx);
 
