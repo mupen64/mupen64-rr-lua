@@ -24,8 +24,4 @@
 #define PLUGIN_TARGET " "
 #endif
 
-#define PLUGIN_NAME "PAN64 " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
-
-// constexpr uint32_t 
-
-extern core_audio_info g_core_info;
+#define PLUGIN_NAME "No Audio Qt6 " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET

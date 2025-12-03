@@ -103,7 +103,7 @@ if(MUPEN64RR_BUILD_QT6)
   # libraries needed for Qt6 plugins, specifically
   find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
   find_package(SampleRate CONFIG REQUIRED)
-  pkg_check_modules(portaudiocpp IMPORTED_TARGET GLOBAL "portaudiocpp")
+  find_package(SDL2 CONFIG REQUIRED SDL2)
 endif()
 
 # CMake modules
