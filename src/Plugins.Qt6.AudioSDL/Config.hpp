@@ -8,6 +8,7 @@ namespace AudioSDL {
     uint32_t src_buffer_target = 2048;
     uint32_t dst_buffer_size = 1024;
     bool swap_channels = false;
+    bool audio_sync = true;
   };
 }
 
