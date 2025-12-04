@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#pragma once
+#ifndef AUDIOSDL_MAIN_HPP_INCLUDED
+#define AUDIOSDL_MAIN_HPP_INCLUDED
 
 #include <CommonPCH.h>
 #include <core_api.h>
@@ -24,4 +25,6 @@
 #define PLUGIN_TARGET " "
 #endif
 
-#define PLUGIN_NAME "No Audio Qt6 " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
+#define PLUGIN_NAME "Audio-SDL " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
+
+#endif

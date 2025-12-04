@@ -53,6 +53,6 @@ if (MUPEN64RR_BUILD_QT6)
 
     # TAS RSP
     add_subdirectory(Plugins.Qt6.TASRSP)
-    add_subdirectory(Plugins.Qt6.Pan64)
+    add_subdirectory(Plugins.Qt6.AudioSDL)
     
 endif()

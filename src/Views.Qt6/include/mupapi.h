@@ -263,10 +263,10 @@ extern "C"
     /**
      * @brief Initializes the plugin. Should be called immediately after loading.
      *
-     * @param exe_dir The directory in which mupen64(.exe) is located.
+     * @param plugin_dir The directory where plugins are stored.
      * @param fwd_funcs A table with functions passed from the core.
      */
-    MUPAPI_DEFINE_FN(core_result, mup_init, const char *exe_dir, const core_plugin_extended_funcs *fwd_funcs);
+    MUPAPI_DEFINE_FN(core_result, mup_init, const char *plugin_dir, const core_plugin_extended_funcs *fwd_funcs);
 
     /**
      * @brief Cleans up all plugin resources. Should be called immediately before unloading.

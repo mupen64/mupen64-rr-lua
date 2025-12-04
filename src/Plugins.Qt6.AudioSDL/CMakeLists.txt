@@ -5,13 +5,16 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Plugins.Qt6.AudioSDL MODULE
+    "Config.hpp"
     "Main.cpp"
-    "Main.h"
+    "Main.hpp"
+    "SDLBackend.cpp"
+    "SDLBackend.hpp"
 )
 set_target_properties(Mupen64RR.Plugins.Qt6.AudioSDL PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
-    OUTPUT_NAME "audio-sdl.so"
+    OUTPUT_NAME "audio-sdl"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )

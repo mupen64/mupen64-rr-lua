@@ -9,7 +9,7 @@
 #include <Main.h>
 
 
-EXPORT core_result CALL mup_init(const char *exe_dir, const core_plugin_extended_funcs *fwd_funcs)
+EXPORT core_result CALL mup_init(const char *plugin_dir, const core_plugin_extended_funcs *fwd_funcs)
 {
     return Res_Ok;
 }
