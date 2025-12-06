@@ -214,37 +214,42 @@ static int32_t find_index_of_first_selectable_item()
 }
 
 /**
- * \brief Builds the action listbox based on the current search query.
+ * \brief Normalizes a string for comparison.
  */
-static void build_listbox()
+static std::wstring normalize(std::wstring str)
 {
-    const auto normalize = [](std::wstring str) -> std::wstring {
-        std::ranges::transform(str, str.begin(), toupper);
-        str = MiscHelpers::trim(str);
-        return str;
-    };
+    std::ranges::transform(str, str.begin(), toupper);
+    str = MiscHelpers::trim(str);
+    return str;
+}
 
-    const auto action_matches_query = [&](const t_listbox_item &item, const std::wstring &query) -> bool {
-        if (query.empty())
-        {
-            return true;
-        }
+/**
+ * \brief Determines whether the given action item matches the search query.
+ */
+static bool action_matches_query(const t_listbox_item &item, const std::wstring_view query)
+{
+    if (query.empty())
+    {
+        return true;
+    }
 
-        const auto normalized_action = normalize(item.text);
-        const auto normalized_group_name = normalize(item.parent_group_name);
-        const auto normalized_hotkey = normalize(item.hint_text);
-        const auto normalized_raw_display_name = normalize(item.raw_display_name);
+    const auto normalized_action = normalize(item.text);
+    const auto normalized_group_name = normalize(item.parent_group_name);
+    const auto normalized_hotkey = normalize(item.hint_text);
+    const auto normalized_raw_display_name = normalize(item.raw_display_name);
 
-        const auto matches = normalized_action.contains(query) || normalized_group_name.contains(query) ||
-                             normalized_hotkey.contains(query) || normalized_raw_display_name.contains(query);
+    const auto matches = normalized_action.contains(query) || normalized_group_name.contains(query) ||
+                         normalized_hotkey.contains(query) || normalized_raw_display_name.contains(query);
 
-        return matches;
-    };
+    return matches;
+}
 
-    g_ctx.items = {};
-
-    const auto normalized_query = normalize(g_ctx.search_query);
-
+/**
+ * \brief Adds actions to the listbox item collection.
+ */
+static void add_actions(const std::wstring_view query)
+{
+    // 1. Collect groups
     std::vector<std::wstring> unique_group_names;
 
     for (const auto &path : g_ctx.actions)
@@ -274,6 +279,7 @@ static void build_listbox()
         }
     }
 
+    // 2. For each group, add matching actions
     for (const auto &group : unique_group_names)
     {
         auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group));
@@ -294,7 +300,7 @@ static void build_listbox()
                 return true;
             }
 
-            return !action_matches_query(t_listbox_item::make_action(action, group), normalized_query);
+            return !action_matches_query(t_listbox_item::make_action(action, group), query);
         });
 
         if (actions.empty())
@@ -309,15 +315,20 @@ static void build_listbox()
             g_ctx.items.emplace_back(t_listbox_item::make_action(action, group));
         }
     }
+}
 
-    // Add config groups and options
+/**
+ * \brief Adds configuration options to the listbox item collection.
+ */
+static void add_options(const std::wstring_view query)
+{
     g_ctx.option_groups = ConfigDialog::get_option_groups();
 
     for (auto &group : g_ctx.option_groups)
     {
         std::erase_if(group.items, [&](ConfigDialog::t_options_item &item) {
             return item.type == ConfigDialog::t_options_item::Type::Hotkey ||
-                   !action_matches_query(t_listbox_item::make_option(&item, group), normalized_query);
+                   !action_matches_query(t_listbox_item::make_option(&item, group), query);
         });
 
         if (group.items.empty())
@@ -332,6 +343,18 @@ static void build_listbox()
             g_ctx.items.emplace_back(t_listbox_item::make_option(&item, group));
         }
     }
+}
+/**
+ * \brief Builds the action listbox based on the current search query.
+ */
+static void build_listbox()
+{
+    g_ctx.items = {};
+
+    const auto normalized_query = normalize(g_ctx.search_query);
+
+    add_actions(normalized_query);
+    add_options(normalized_query);
 
     SetWindowRedraw(g_ctx.listbox_hwnd, FALSE);
     ListBox_ResetContent(g_ctx.listbox_hwnd);
