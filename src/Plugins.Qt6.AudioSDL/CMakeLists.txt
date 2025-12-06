@@ -5,9 +5,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Plugins.Qt6.AudioSDL MODULE
+    "resamplers/Swr.cpp"
+    "resamplers/Swr.hpp"
+
+    "BufferUtils.hpp"
     "Config.hpp"
     "Main.cpp"
     "Main.hpp"
+    "Resamplers.hpp"
     "SDLBackend.cpp"
     "SDLBackend.hpp"
 )
@@ -22,4 +27,5 @@ target_compile_definitions(Mupen64RR.Plugins.Qt6.AudioSDL PRIVATE "MUPAPI_PLUGIN
 target_link_libraries(Mupen64RR.Plugins.Qt6.AudioSDL PRIVATE 
     Mupen64RR.Views.Qt6.Headers
     SDL2::SDL2
+    PkgConfig::libswresample
 )
