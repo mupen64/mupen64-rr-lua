@@ -28,13 +28,15 @@ struct t_listbox_item
     size_t parent_group_id{};
     ConfigDialog::t_options_item *option_item{};
 
-    t_listbox_item() = default;
-    explicit t_listbox_item(const std::wstring &group_name);
-    explicit t_listbox_item(const std::wstring &action, const std::wstring &group);
-    explicit t_listbox_item(ConfigDialog::t_options_item *item, const ConfigDialog::t_options_group &group);
-    explicit t_listbox_item(const ConfigDialog::t_options_group &options_group);
+    static t_listbox_item make_group(const std::wstring &group_name);
+    static t_listbox_item make_action(const std::wstring &action, const std::wstring &group);
+    static t_listbox_item make_option(ConfigDialog::t_options_item *item, const ConfigDialog::t_options_group &group);
+    static t_listbox_item make_option_group(const ConfigDialog::t_options_group &options_group);
 
     [[nodiscard]] bool selectable() const;
+
+  private:
+    t_listbox_item() = default;
 };
 
 struct t_command_palette_context
@@ -54,54 +56,64 @@ struct t_command_palette_context
 
 static t_command_palette_context g_ctx{};
 
-t_listbox_item::t_listbox_item(const std::wstring &group_name)
+t_listbox_item t_listbox_item::make_group(const std::wstring &group_name)
 {
-    is_group = true;
-    text = group_name;
-    enabled = true;
+    t_listbox_item item{};
+    item.is_group = true;
+    item.text = group_name;
+    item.enabled = true;
+    return item;
 }
 
-t_listbox_item::t_listbox_item(const std::wstring &action, const std::wstring &group)
+t_listbox_item t_listbox_item::make_action(const std::wstring &action, const std::wstring &group)
 {
-    path = action;
-    parent_group_name = group;
+    t_listbox_item item{};
+
+    item.path = action;
+    item.parent_group_name = group;
     const auto hotkey = g_config.hotkeys.at(action);
     if (!hotkey.is_empty())
     {
-        hint_text = hotkey.to_wstring();
+        item.hint_text = hotkey.to_wstring();
     }
 
-    text = ActionManager::get_display_name(action);
-    raw_display_name = ActionManager::get_display_name(action, true);
-    enabled = ActionManager::get_enabled(action);
-    active = ActionManager::get_active(action);
-    activatable = ActionManager::get_activatability(action);
+    item.text = ActionManager::get_display_name(action);
+    item.raw_display_name = ActionManager::get_display_name(action, true);
+    item.enabled = ActionManager::get_enabled(action);
+    item.active = ActionManager::get_active(action);
+    item.activatable = ActionManager::get_activatability(action);
+    return item;
 }
 
-t_listbox_item::t_listbox_item(ConfigDialog::t_options_item *item, const ConfigDialog::t_options_group &options_group)
+t_listbox_item t_listbox_item::make_option(ConfigDialog::t_options_item *options_item,
+                                           const ConfigDialog::t_options_group &group)
 {
-    text = item->get_name();
-    parent_group_name = options_group.name;
-    hint_text = item->get_value_name();
-    enabled = !item->is_readonly();
-    active = false;
-    activatable = false;
-    parent_group_id = options_group.id;
-    option_item = item;
+    t_listbox_item item{};
+    item.text = options_item->get_name();
+    item.parent_group_name = group.name;
+    item.hint_text = options_item->get_value_name();
+    item.enabled = !options_item->is_readonly();
+    item.active = false;
+    item.activatable = false;
+    item.parent_group_id = group.id;
+    item.option_item = options_item;
 
-    if (item->type == ConfigDialog::t_options_item::Type::Bool)
+    if (options_item->type == ConfigDialog::t_options_item::Type::Bool)
     {
-        active = std::get<int32_t>(item->current_value.get()) != 0;
-        activatable = true;
-        hint_text = L"";
+        item.active = std::get<int32_t>(options_item->current_value.get()) != 0;
+        item.activatable = true;
+        item.hint_text = L"";
     }
+    return item;
 }
 
-t_listbox_item::t_listbox_item(const ConfigDialog::t_options_group &options_group)
+t_listbox_item t_listbox_item::make_option_group(const ConfigDialog::t_options_group &options_group)
 {
-    is_group = true;
-    text = options_group.name;
-    enabled = true;
+    t_listbox_item item{};
+    item.is_group = true;
+    item.text = options_group.name;
+    item.enabled = true;
+    return item;
 }
 
 bool t_listbox_item::selectable() const
@@ -282,7 +294,7 @@ static void build_listbox()
                 return true;
             }
 
-            return !action_matches_query(t_listbox_item(action, group), normalized_query);
+            return !action_matches_query(t_listbox_item::make_action(action, group), normalized_query);
         });
 
         if (actions.empty())
@@ -290,11 +302,11 @@ static void build_listbox()
             continue;
         }
 
-        g_ctx.items.emplace_back(name);
+        g_ctx.items.emplace_back(t_listbox_item::make_group(name));
 
         for (const auto &action : actions)
         {
-            g_ctx.items.emplace_back(action, group);
+            g_ctx.items.emplace_back(t_listbox_item::make_action(action, group));
         }
     }
 
@@ -305,7 +317,7 @@ static void build_listbox()
     {
         std::erase_if(group.items, [&](ConfigDialog::t_options_item &item) {
             return item.type == ConfigDialog::t_options_item::Type::Hotkey ||
-                   !action_matches_query(t_listbox_item(&item, group), normalized_query);
+                   !action_matches_query(t_listbox_item::make_option(&item, group), normalized_query);
         });
 
         if (group.items.empty())
@@ -313,11 +325,11 @@ static void build_listbox()
             continue;
         }
 
-        g_ctx.items.emplace_back(group);
+        g_ctx.items.emplace_back(t_listbox_item::make_option_group(group));
 
         for (auto &item : group.items)
         {
-            g_ctx.items.emplace_back(&item, group);
+            g_ctx.items.emplace_back(t_listbox_item::make_option(&item, group));
         }
     }
 
