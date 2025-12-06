@@ -27,7 +27,7 @@ namespace RomBrowser
 {
 std::mutex rombrowser_mutex;
 
-std::vector<std::wstring> find_available_roms()
+std::vector<std::filesystem::path> discover_roms()
 {
     const auto abs_rom_directory =
         std::filesystem::weakly_canonical(IOUtils::exe_path_cached().parent_path() / g_config.rom_directory);
@@ -37,8 +37,8 @@ std::vector<std::wstring> find_available_roms()
         return {};
     }
 
-    std::vector<std::wstring> rom_paths;
-    std::vector<std::wstring> filtered_rom_paths;
+    std::vector<std::filesystem::path> rom_paths;
+    std::vector<std::filesystem::path> filtered_rom_paths;
 
     // we aggregate all file paths and only filter them after we're done
     if (std::filesystem::is_directory(abs_rom_directory))
@@ -65,7 +65,7 @@ std::vector<std::wstring> find_available_roms()
     }
 
     // logically this should be bundled into the filter pipeline but I'm too lazy
-    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](std::wstring val) {
+    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](const auto val) {
         wchar_t c_extension[_MAX_EXT] = {0};
         if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
         {
@@ -239,7 +239,7 @@ void build_impl()
     }
     rombrowser_entries.clear();
 
-    auto rom_paths = find_available_roms();
+    auto rom_paths = discover_roms();
 
     LV_ITEM lv_item = {0};
     lv_item.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
@@ -413,7 +413,7 @@ notify(LPARAM lparam)
 
 std::filesystem::path find_available_rom(const std::function<bool(const core_rom_header &)> &predicate)
 {
-    auto rom_paths = find_available_roms();
+    auto rom_paths = discover_roms();
     for (auto rom_path : rom_paths)
     {
         FILE *f = nullptr;
@@ -448,6 +448,44 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
     }
 
     return L"";
+}
+
+std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const core_rom_header &)> &predicate)
+{
+    std::vector<std::filesystem::path> matching_roms;
+    auto rom_paths = discover_roms();
+    for (auto rom_path : rom_paths)
+    {
+        FILE *f = nullptr;
+        if (_wfopen_s(&f, rom_path.c_str(), L"rb"))
+        {
+            g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+            continue;
+        }
+
+        fseek(f, 0, SEEK_END);
+        uint64_t len = ftell(f);
+        fseek(f, 0, SEEK_SET);
+
+        if (len > sizeof(core_rom_header))
+        {
+            auto header = (core_rom_header *)malloc(sizeof(core_rom_header));
+            fread(header, sizeof(core_rom_header), 1, f);
+
+            g_main_ctx.core_ctx->vr_byteswap((uint8_t *)header);
+
+            if (predicate(*header))
+            {
+                matching_roms.push_back(rom_path);
+            }
+
+            free(header);
+        }
+
+        fclose(f);
+    }
+
+    return matching_roms;
 }
 
 void emu_launched_changed(std::any data)

@@ -34,4 +34,11 @@ LRESULT notify(LPARAM lparam);
  */
 std::filesystem::path find_available_rom(const std::function<bool(const core_rom_header &)> &predicate);
 
+/**
+ * \brief Finds ROMs from the available ROM list which match the predicate
+ * \param predicate A predicate which determines if the rom matches
+ * \return The rom paths.
+ */
+std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const core_rom_header &)> &predicate);
+
 } // namespace RomBrowser

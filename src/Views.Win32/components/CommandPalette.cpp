@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "RomBrowser.h"
 #include "stdafx.h"
 #include <components/CommandPalette.h>
 #include <components/ConfigDialog.h>
@@ -25,13 +26,13 @@ struct t_listbox_item
     std::wstring raw_display_name{};
 
     // (only applicable if option)
-    size_t parent_group_id{};
     ConfigDialog::t_options_item *option_item{};
 
     static t_listbox_item make_group(const std::wstring &group_name);
     static t_listbox_item make_action(const std::wstring &action, const std::wstring &group);
     static t_listbox_item make_option(ConfigDialog::t_options_item *item, const ConfigDialog::t_options_group &group);
     static t_listbox_item make_option_group(const ConfigDialog::t_options_group &options_group);
+    static t_listbox_item make_rom(const std::wstring &name);
 
     [[nodiscard]] bool selectable() const;
 
@@ -95,7 +96,6 @@ t_listbox_item t_listbox_item::make_option(ConfigDialog::t_options_item *options
     item.enabled = !options_item->is_readonly();
     item.active = false;
     item.activatable = false;
-    item.parent_group_id = group.id;
     item.option_item = options_item;
 
     if (options_item->type == ConfigDialog::t_options_item::Type::Bool)
@@ -112,6 +112,15 @@ t_listbox_item t_listbox_item::make_option_group(const ConfigDialog::t_options_g
     t_listbox_item item{};
     item.is_group = true;
     item.text = options_group.name;
+    item.enabled = true;
+    return item;
+}
+
+t_listbox_item t_listbox_item::make_rom(const std::wstring &name)
+{
+    t_listbox_item item{};
+    item.parent_group_name = L"ROMs";
+    item.text = name;
     item.enabled = true;
     return item;
 }
@@ -344,6 +353,29 @@ static void add_options(const std::wstring_view query)
         }
     }
 }
+
+/**
+ * \brief Adds known ROMs to the listbox item collection.
+ */
+static void add_roms(const std::wstring_view query)
+{
+    g_ctx.items.emplace_back(t_listbox_item::make_group(L"ROMs"));
+
+    const auto roms = RomBrowser::find_available_roms([&](const core_rom_header &header) {
+        const auto name = MiscHelpers::trim(std::wstring(header.nom, header.nom + 20));
+        return action_matches_query(t_listbox_item::make_rom(name), query);
+    });
+
+    for (const auto &rom : roms)
+    {
+        const auto item = t_listbox_item::make_rom(rom);
+        if (action_matches_query(item, query))
+        {
+            g_ctx.items.emplace_back(item);
+        }
+    }
+}
+
 /**
  * \brief Builds the action listbox based on the current search query.
  */
@@ -355,6 +387,7 @@ static void build_listbox()
 
     add_actions(normalized_query);
     add_options(normalized_query);
+    add_roms(normalized_query);
 
     SetWindowRedraw(g_ctx.listbox_hwnd, FALSE);
     ListBox_ResetContent(g_ctx.listbox_hwnd);
