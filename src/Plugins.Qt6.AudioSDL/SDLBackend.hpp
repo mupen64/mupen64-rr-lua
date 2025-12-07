@@ -35,8 +35,7 @@ class SDLBackend final
     uint32_t m_src_rate;
     uint32_t m_src_target;
 
-    util::buffer<uint16_t> m_src_buffer = {};
-    std::unique_ptr<IResampler_Old> m_resampler;
+    std::unique_ptr<IResampler> m_resampler;
     bool m_paused = true;
     bool m_error = false;
     std::chrono::steady_clock::time_point m_last_cb_time;

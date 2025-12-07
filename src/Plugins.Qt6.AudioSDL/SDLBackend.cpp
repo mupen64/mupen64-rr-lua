@@ -65,7 +65,7 @@ namespace AudioSDL
 {
 SDLBackend::SDLBackend(Config &&cfg)
     : m_src_rate(cfg.default_sample_rate), m_last_cb_time(std::chrono::steady_clock::now()),
-      m_resampler(new SwrResampler_Old())
+      m_resampler(new SwrResampler())
 {
     if (SDL_Init(SDL_BACKEND_INIT))
     {
@@ -127,14 +127,11 @@ void SDLBackend::reinit_stream()
     // configuration values are measured in output samples. Each "sample" actually consists of 2 elements
     // so we multiply by 2, then convert from output rate to input rate.
     size_t src_buffer_size = src_size_samples * 2 * (size_t)m_src_rate / (size_t)m_audio_spec.freq;
-    // {
-    //     static char log_buf[256];
-    //     snprintf(log_buf, sizeof(log_buf), "%zu, %zu, %zu -> %zu", (size_t)src_size_samples, (size_t)m_src_rate,
-    //     (size_t)m_audio_spec.freq, src_buffer_size); g_fwd_funcs->log_info(log_buf);
-    // }
-    m_src_buffer.reserve(src_buffer_size);
 
-    m_resampler->prepare(m_src_rate, (uint32_t)m_audio_spec.freq, m_audio_spec.samples);
+    m_resampler->prepare(m_src_rate, (uint32_t)m_audio_spec.freq,
+                         m_config.swap_channels ^ (std::endian::native == std::endian::little));
+    m_resampler->reserve_src(src_buffer_size);
+    m_resampler->reserve_dst(m_audio_spec.samples);
 }
 
 void SDLBackend::sdl_callback(unsigned char *data, int len_bytes)
@@ -143,28 +140,10 @@ void SDLBackend::sdl_callback(unsigned char *data, int len_bytes)
     m_last_cb_time = std::chrono::steady_clock::now();
 
     // compute number of needed samples
-    size_t new_rate = m_audio_spec.freq;
-    size_t old_rate = m_src_rate;
     size_t len_samples = len_bytes / 2;
-    size_t len_needed = len_samples * old_rate / new_rate + 4;
 
-    if ((m_src_buffer.size() > 0) && (m_src_buffer.size() >= len_needed))
+    if (!m_resampler->pull_samples(std::span<int16_t>((int16_t *)data, len_samples)))
     {
-        // resample
-        size_t resample_count = m_resampler->resample(std::span<uint16_t>(m_src_buffer.data(), len_needed),
-                                                      std::span<uint16_t>((uint16_t *)data, len_samples));
-
-        if (resample_count * 2 < len_samples) {
-            static char printout[256];
-            snprintf(printout, sizeof(printout), "%zu < %zu", resample_count * 2, len_samples);
-            g_fwd_funcs->log_info(printout);
-        }
-        // pop resampled bytes
-        m_src_buffer.erase(m_src_buffer.begin(), m_src_buffer.begin() + len_needed);
-    }
-    else
-    {
-        // buffer underrun!
         g_fwd_funcs->log_warn("hit buffer underrun");
         memset(data, 0, len_bytes);
     }
@@ -185,37 +164,7 @@ void SDLBackend::push_samples(const void *src, size_t len_bytes)
     // Lock the audio device.
     SDLAudioLock _lock(m_audio_device);
 
-    // ignore any incompletely-filled frames.
-    if (len_bytes % 4 != 0)
-    {
-        // this effectively does len_bytes - (len_bytes % 4).
-        len_bytes &= ~0x03;
-    }
-
-    size_t len_samples = len_bytes / 2;
-
-    // prepare to copy the necessary samples.
-    size_t len_prev = m_src_buffer.size();
-    if (len_prev + len_bytes > m_src_buffer.capacity())
-    {
-        // avoid any potential reallocation.
-        return;
-    }
-
-    m_src_buffer.resize(len_prev + len_bytes);
-    uint16_t *copy_start = m_src_buffer.data() + len_prev;
-
-    // Core RDRAM stores 32-bit words in native byte order.
-    // On little-endian systems, this means we have to switch
-    // the channels to make things sound right.
-    if (m_config.swap_channels ^ (std::endian::native == std::endian::little))
-    {
-        u16_swap_copy(copy_start, (uint16_t *)src, len_samples);
-    }
-    else
-    {
-        memcpy(copy_start, (uint16_t *)src, len_bytes);
-    }
+    m_resampler->push_samples(std::span<int16_t>((int16_t *)src, len_bytes / 2));
 }
 
 size_t SDLBackend::estimate_dst_frames_at_next_cb()
@@ -225,11 +174,8 @@ size_t SDLBackend::estimate_dst_frames_at_next_cb()
 
     auto now = chr::steady_clock::now();
 
-    // number of frames currently stored
-    size_t src_frames = m_src_buffer.size() / 2;
-
-    // compute the current number of available output frames
-    size_t dst_frames = (src_frames * (size_t)m_audio_spec.freq) / m_src_rate;
+    // find the current number of available output frames
+    size_t dst_frames = m_resampler->buffer_len_out();
 
     // assume that our audio buffer is filled fast enough to have a full buffer by the next call.
     // we can use this to estimate when the next call should be.
@@ -244,6 +190,7 @@ size_t SDLBackend::estimate_dst_frames_at_next_cb()
     }
 
     return dst_frames;
+    // return 0;
 }
 
 void SDLBackend::sync_audio()
@@ -254,12 +201,6 @@ void SDLBackend::sync_audio()
 
     size_t expected_frames = estimate_dst_frames_at_next_cb();
     size_t max_target_frames = m_src_target + ((size_t)m_audio_spec.freq * TIME_TOLERANCE_MS / 1000);
-
-    // {
-    //     static char log_buf[256];
-    //     snprintf(log_buf, sizeof(log_buf), "%zu : %zu", expected_frames, max_target_frames);
-    //     g_fwd_funcs->log_info(log_buf);
-    // }
 
     if (m_config.audio_sync && (expected_frames >= max_target_frames))
     {

@@ -87,11 +87,12 @@ SwrResampler::SwrResampler() : m_ctx(swr_alloc())
     av_opt_set_int(m_ctx.get(), "filter_type", SWR_FILTER_TYPE_KAISER, 0);
 }
 
-void SwrResampler::prepare(uint32_t src_rate, uint32_t dst_rate)
+void SwrResampler::prepare(uint32_t src_rate, uint32_t dst_rate, bool swap_channels)
 {
     // set sample rates, reinit the context
     av_opt_set_int(m_ctx.get(), "in_sample_rate", src_rate, 0);
     av_opt_set_int(m_ctx.get(), "out_sample_rate", dst_rate, 0);
+
     swr_init(m_ctx.get());
 }
 
@@ -111,9 +112,11 @@ bool SwrResampler::push_samples(std::span<const int16_t> samples)
     return true;
 }
 
-uint64_t SwrResampler::buffer_len_us()
+uint64_t SwrResampler::buffer_len_out()
 {
-    return swr_get_delay(m_ctx.get(), 1'000'000);
+    int64_t out_sample_rate = 0;
+    av_opt_get_int(m_ctx.get(), "out_sample_rate", 0, &out_sample_rate);
+    return swr_get_delay(m_ctx.get(), out_sample_rate);
 }
 
 bool SwrResampler::pull_samples(std::span<int16_t> samples)

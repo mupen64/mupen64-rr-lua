@@ -63,15 +63,15 @@ class SwrResampler : public IResampler
   public:
     SwrResampler();
 
-    virtual ~SwrResampler();
+    virtual ~SwrResampler() {}
 
-    virtual void prepare(uint32_t src_rate, uint32_t dst_rate);
+    virtual void prepare(uint32_t src_rate, uint32_t dst_rate, bool swap_channels) override;
 
-    virtual bool push_samples(std::span<const int16_t> samples);
+    virtual bool push_samples(std::span<const int16_t> samples) override;
 
-    virtual uint64_t buffer_len_us();
+    virtual uint64_t buffer_len_out() override;
 
-    virtual bool pull_samples(std::span<int16_t> samples);
+    virtual bool pull_samples(std::span<int16_t> samples) override;
 
   private:
     PSwrContext m_ctx;

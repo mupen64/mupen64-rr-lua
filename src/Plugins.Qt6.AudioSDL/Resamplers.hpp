@@ -28,8 +28,9 @@ class IResampler
      * 
      * @param src_rate the input sample rate
      * @param dst_rate the output sample rate
+     * @param swap_channels if true, swaps the two input channels.
      */
-    virtual void prepare(uint32_t src_rate, uint32_t dst_rate) = 0;
+    virtual void prepare(uint32_t src_rate, uint32_t dst_rate, bool swap_channels) = 0;
 
     /**
      * @brief If possible, allocates input buffers large enough to hold the specified number of frames.
@@ -52,9 +53,9 @@ class IResampler
     virtual bool push_samples(std::span<const int16_t> samples) = 0;
 
     /**
-     * @brief Returns, in microseconds, the amount of audio currently queued at the resampler.
+     * @brief Returns, in output samples, the amount of audio currently queued at the resampler.
      */
-    virtual uint64_t buffer_len_us() = 0;
+    virtual uint64_t buffer_len_out() = 0;
 
     /**
      * @brief Tries to pull a chunk of output frames from the resampler.
