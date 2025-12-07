@@ -1,4 +1,5 @@
 #include "SDLBackend.hpp"
+#include "Main.hpp"
 #include "resamplers/Swr.hpp"
 #include <SDL2/SDL.h>
 #include <SDL_audio.h>
@@ -7,6 +8,7 @@
 #include <bit>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <span>
@@ -75,6 +77,12 @@ SDLBackend::SDLBackend(Config &&cfg)
 
 SDLBackend::~SDLBackend()
 {
+
+    if (m_audio_device != 0)
+    {
+        SDL_PauseAudioDevice(m_audio_device, 1);
+        SDL_CloseAudioDevice(m_audio_device);
+    }
     SDL_QuitSubSystem(SDL_BACKEND_INIT);
 }
 
@@ -86,6 +94,8 @@ void SDLBackend::set_paused(bool paused)
 
 void SDLBackend::reinit_stream()
 {
+    m_error = false;
+
     if (m_audio_device != 0)
     {
         SDL_PauseAudioDevice(m_audio_device, 1);
@@ -116,15 +126,21 @@ void SDLBackend::reinit_stream()
 
     // configuration values are measured in output samples. Each "sample" actually consists of 2 elements
     // so we multiply by 2, then convert from output rate to input rate.
-    size_t src_buffer_size = (src_size_samples * 2 * (size_t)m_audio_spec.freq) / ((size_t)m_src_rate);
+    size_t src_buffer_size = src_size_samples * 2 * (size_t)m_src_rate / (size_t)m_audio_spec.freq;
+    // {
+    //     static char log_buf[256];
+    //     snprintf(log_buf, sizeof(log_buf), "%zu, %zu, %zu -> %zu", (size_t)src_size_samples, (size_t)m_src_rate,
+    //     (size_t)m_audio_spec.freq, src_buffer_size); g_fwd_funcs->log_info(log_buf);
+    // }
+    m_src_buffer.reserve(src_buffer_size);
 
-    m_src_buffer.reserve(src_size_samples);
+    m_resampler->prepare(m_src_rate, (uint32_t)m_audio_spec.freq, m_audio_spec.samples);
 }
 
 void SDLBackend::sdl_callback(unsigned char *data, int len_bytes)
 {
-    //
-    m_error = false;
+    // check the time
+    m_last_cb_time = std::chrono::steady_clock::now();
 
     // compute number of needed samples
     size_t new_rate = m_audio_spec.freq;
@@ -135,7 +151,8 @@ void SDLBackend::sdl_callback(unsigned char *data, int len_bytes)
     if ((m_src_buffer.size() > 0) && (m_src_buffer.size() >= len_needed))
     {
         // resample
-        m_resampler->resample(std::span<uint16_t>(m_src_buffer.data(), len_needed), std::span<uint16_t>((uint16_t*) data, len_samples));
+        m_resampler->resample(std::span<uint16_t>(m_src_buffer.data(), len_needed),
+                              std::span<uint16_t>((uint16_t *)data, len_samples));
 
         // pop resampled bytes
         m_src_buffer.erase(m_src_buffer.begin(), m_src_buffer.begin() + len_needed);
@@ -143,6 +160,7 @@ void SDLBackend::sdl_callback(unsigned char *data, int len_bytes)
     else
     {
         // buffer underrun!
+        g_fwd_funcs->log_warn("hit buffer underrun");
         memset(data, 0, len_bytes);
     }
 }
@@ -206,7 +224,7 @@ size_t SDLBackend::estimate_dst_frames_at_next_cb()
     size_t src_frames = m_src_buffer.size() / 2;
 
     // compute the current number of available output frames
-    size_t dst_frames = (src_frames * m_audio_spec.samples) / m_src_rate;
+    size_t dst_frames = (src_frames * (size_t)m_audio_spec.freq) / m_src_rate;
 
     // assume that our audio buffer is filled fast enough to have a full buffer by the next call.
     // we can use this to estimate when the next call should be.
@@ -232,11 +250,17 @@ void SDLBackend::sync_audio()
     size_t expected_frames = estimate_dst_frames_at_next_cb();
     size_t max_target_frames = m_src_target + ((size_t)m_audio_spec.freq * TIME_TOLERANCE_MS / 1000);
 
+    // {
+    //     static char log_buf[256];
+    //     snprintf(log_buf, sizeof(log_buf), "%zu : %zu", expected_frames, max_target_frames);
+    //     g_fwd_funcs->log_info(log_buf);
+    // }
+
     if (m_config.audio_sync && (expected_frames >= max_target_frames))
     {
         // figure out how long we need to delay the core.
         intmax_t wait_clock_period =
-            (expected_frames - m_src_rate) * clock_frac::den / ((intmax_t)m_audio_spec.freq * clock_frac::num);
+            ((expected_frames - m_src_target) * clock_frac::den) / ((intmax_t)m_audio_spec.freq * clock_frac::num);
         auto wait_duration = chr::steady_clock::duration(wait_clock_period);
 
         // If the core is ahead, have it wait here to sync up with the audio.

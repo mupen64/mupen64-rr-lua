@@ -341,6 +341,7 @@ void PluginSet::initiate_audio(core_ctx &ctx)
     auto audio_info = core_audio_info{
         .byteswapped = 1,
         .rom = ctx.rom,
+        .rdram = (uint8_t *)ctx.rdram,
         .dmem = (uint8_t *)ctx.SP_DMEM,
         .imem = (uint8_t *)ctx.SP_IMEM,
         .mi_intr_reg = &ctx.MI_register->mi_intr_reg,

@@ -1,9 +1,12 @@
 #ifndef AUDIOSDL_RESAMPLERS_SWR_HPP_INCLUDED
 #define AUDIOSDL_RESAMPLERS_SWR_HPP_INCLUDED
 
+extern "C"
+{
 #include <libavutil/frame.h>
 #include <libswresample/swresample.h>
 #include <span>
+}
 
 #include "../BufferUtils.hpp"
 #include "../Resamplers.hpp"

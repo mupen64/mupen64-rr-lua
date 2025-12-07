@@ -27,4 +27,6 @@
 
 #define PLUGIN_NAME "Audio-SDL " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
 
+extern const core_plugin_extended_funcs* g_fwd_funcs;
+
 #endif
