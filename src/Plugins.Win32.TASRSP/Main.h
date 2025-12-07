@@ -9,6 +9,7 @@
 #include <CommonPCH.h>
 #include <VersionNameHelpers.h>
 #include <core_api.h>
+
 #include <Views.Win32/ViewPlugin.h>
 #include <resource.h>
 

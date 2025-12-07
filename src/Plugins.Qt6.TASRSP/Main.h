@@ -7,6 +7,7 @@
 #pragma once
 
 #include <CommonPCH.h>
+#include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <mupapi.h>
 

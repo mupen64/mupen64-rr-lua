@@ -9,9 +9,6 @@
 #include "HLE.h"
 #include "Disasm.h"
 
-#define EXPORT __declspec(dllexport)
-#define CALL _cdecl
-
 #define UCODE_MARIO (1)
 #define UCODE_BANJO (2)
 #define UCODE_ZELDA (3)
@@ -25,7 +22,7 @@ void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
 void (*g_audio_ucode_func)() = nullptr;
-HINSTANCE g_instance;
+// HINSTANCE g_instance;
 std::filesystem::path g_app_path;
 // PlatformService g_platform_service;
 static uint8_t fake_header[0x1000];
