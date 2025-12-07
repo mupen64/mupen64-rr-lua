@@ -65,7 +65,7 @@ namespace AudioSDL
 {
 SDLBackend::SDLBackend(Config &&cfg)
     : m_src_rate(cfg.default_sample_rate), m_last_cb_time(std::chrono::steady_clock::now()),
-      m_resampler(new SwrResampler())
+      m_resampler(new SwrResampler_Old())
 {
     if (SDL_Init(SDL_BACKEND_INIT))
     {
