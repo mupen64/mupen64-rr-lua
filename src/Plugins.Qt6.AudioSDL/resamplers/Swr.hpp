@@ -14,7 +14,9 @@ extern "C"
 namespace AudioSDL
 {
 
-using PSwrContext = util::c_unique_ptr<SwrContext, [](SwrContext *ptr) { swr_free(&ptr); }>;
+inline void swr_delete(SwrContext* ptr) { swr_free(&ptr); }
+
+using PSwrContext = util::c_unique_ptr<SwrContext, swr_delete>;
 
 class SwrResampler : public IResampler
 {
@@ -23,9 +25,11 @@ class SwrResampler : public IResampler
 
     virtual ~SwrResampler() {}
 
-    virtual void prepare(uint32_t src_rate, uint32_t dst_rate, size_t dst_size);
+    virtual void prepare(uint32_t src_rate, uint32_t dst_rate, size_t dst_size) override;
 
-    virtual void resample(std::span<uint16_t> src, std::span<uint16_t> dst);
+    virtual size_t required_input(size_t out_frames) override;
+
+    virtual size_t resample(std::span<uint16_t> src, std::span<uint16_t> dst) override;
 
   private:
     PSwrContext m_ctx;

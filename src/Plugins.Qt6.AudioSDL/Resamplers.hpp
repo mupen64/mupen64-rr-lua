@@ -13,7 +13,9 @@ class IResampler
 
     virtual void prepare(uint32_t src_rate, uint32_t dst_rate, size_t dst_size) = 0;
 
-    virtual void resample(std::span<uint16_t> src, std::span<uint16_t> dst) = 0;
+    virtual size_t required_input(size_t out_frames) = 0;
+
+    virtual size_t resample(std::span<uint16_t> src, std::span<uint16_t> dst) = 0;
 };
 } // namespace AudioSDL
 

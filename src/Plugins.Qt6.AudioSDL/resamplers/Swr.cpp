@@ -1,4 +1,5 @@
 #include "Swr.hpp"
+#include <libavutil/mathematics.h>
 extern "C"
 {
 #include <libavutil/channel_layout.h>
@@ -32,7 +33,19 @@ void SwrResampler::prepare(uint32_t src_rate, uint32_t dst_rate, size_t dst_size
     swr_init(m_ctx.get());
 }
 
-void SwrResampler::resample(std::span<uint16_t> src, std::span<uint16_t> dst)
+size_t SwrResampler::required_input(size_t output_size) {
+    int64_t filter_size = 0;
+    int64_t in_sample_rate = 0;
+    int64_t out_sample_rate = 0;
+    av_opt_get_int(m_ctx.get(), "filter_size", 0, &filter_size);
+    av_opt_get_int(m_ctx.get(), "in_sample_rate", 0, &in_sample_rate);
+    av_opt_get_int(m_ctx.get(), "out_sample_rate", 0, &out_sample_rate);
+    
+    int64_t rescaled = av_rescale_rnd(output_size, in_sample_rate, out_sample_rate, AV_ROUND_UP);
+    return rescaled + filter_size;
+}
+
+size_t SwrResampler::resample(std::span<uint16_t> src, std::span<uint16_t> dst)
 {
     uint8_t *src_data = (uint8_t *)src.data();
     size_t src_frames = src.size() / 2;
@@ -44,6 +57,10 @@ void SwrResampler::resample(std::span<uint16_t> src, std::span<uint16_t> dst)
     {
         throw std::runtime_error("Resampling failed");
     }
+
+    
+
+    return res;
 }
 
 } // namespace AudioSDL

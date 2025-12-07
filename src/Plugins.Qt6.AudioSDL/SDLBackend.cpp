@@ -146,14 +146,19 @@ void SDLBackend::sdl_callback(unsigned char *data, int len_bytes)
     size_t new_rate = m_audio_spec.freq;
     size_t old_rate = m_src_rate;
     size_t len_samples = len_bytes / 2;
-    size_t len_needed = len_samples * old_rate / new_rate;
+    size_t len_needed = len_samples * old_rate / new_rate + 4;
 
     if ((m_src_buffer.size() > 0) && (m_src_buffer.size() >= len_needed))
     {
         // resample
-        m_resampler->resample(std::span<uint16_t>(m_src_buffer.data(), len_needed),
-                              std::span<uint16_t>((uint16_t *)data, len_samples));
+        size_t resample_count = m_resampler->resample(std::span<uint16_t>(m_src_buffer.data(), len_needed),
+                                                      std::span<uint16_t>((uint16_t *)data, len_samples));
 
+        if (resample_count * 2 < len_samples) {
+            static char printout[256];
+            snprintf(printout, sizeof(printout), "%zu < %zu", resample_count * 2, len_samples);
+            g_fwd_funcs->log_info(printout);
+        }
         // pop resampled bytes
         m_src_buffer.erase(m_src_buffer.begin(), m_src_buffer.begin() + len_needed);
     }
