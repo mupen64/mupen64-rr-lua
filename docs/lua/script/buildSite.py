@@ -474,7 +474,7 @@ def ensure_working_dir():
 
 def main():
     # Config
-    api_filepath = "src/api.lua"
+    api_filepath = "src/Lua/api.lua"
     cpp_filepath = "src/Views.Win32/lua/LuaRegistry.cpp"
     docs_filepath = "docs/lua/export/doc.json"
     skipped_functions: list[LuaFunc] = []
