@@ -9,7 +9,7 @@
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
 emu.set_ff(true)
-emu.pause(true)
+emu.pause(false)
 
 local buf = ""
 savestate.do_memory("", "save", function(result, data)
