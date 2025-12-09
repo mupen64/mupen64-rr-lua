@@ -392,7 +392,6 @@ function emu.atvi(f, unregister) end
 
 ---Similar to `emu.atvi`, but for wgui drawing commands.
 ---Only drawing functions from the wgui namespace will work here, those from d2d will not.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called after every VI frame.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -401,7 +400,6 @@ function emu.atupdatescreen(f, unregister) end
 
 ---Similar to `emu.atvi`, but for d2d and wgui drawing commands.
 ---Drawing functions from both the d2d and wgui namespaces will work here, but it's recommended to put wgui drawcalls into the `emu.atupdatescreen` callback for efficiency and compatibility reasons.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called after every VI frame.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -417,7 +415,6 @@ function emu.atdrawd2d(f, unregister) end
 function emu.atinput(f, unregister) end
 
 ---Calls the function `f` when the script is stopped.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called when the script is stopped.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -428,7 +425,6 @@ function emu.atstop(f, unregister) end
 ---The only message that can be received is WM_MOUSEWHEEL for compatibility.
 ---All other functionality as been deprecated.
 ---The message data is given to the function in 4 parameters.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(a: integer, b: integer, c: integer, d: integer): nil The function to be called when a window message is received. a: wnd, b: msg, c: wParam, d: lParam.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -436,7 +432,6 @@ function emu.atstop(f, unregister) end
 function emu.atwindowmessage(f, unregister) end
 
 ---Calls the function `f` constantly, even when the emulator is paused.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called constantly.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -444,7 +439,6 @@ function emu.atwindowmessage(f, unregister) end
 function emu.atinterval(f, unregister) end
 
 ---Calls the function `f` when a movie is played.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called when a movie is played.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -452,7 +446,6 @@ function emu.atinterval(f, unregister) end
 function emu.atplaymovie(f, unregister) end
 
 ---Calls the function `f` when a movie is stopped.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called when a movie is stopped.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -460,7 +453,6 @@ function emu.atplaymovie(f, unregister) end
 function emu.atstopmovie(f, unregister) end
 
 ---Calls the function `f` when a savestate is loaded.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called when a savestate is loaded.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -468,7 +460,6 @@ function emu.atstopmovie(f, unregister) end
 function emu.atloadstate(f, unregister) end
 
 ---Calls the function `f` when a savestate is saved.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called when a savestate is saved.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -476,7 +467,6 @@ function emu.atloadstate(f, unregister) end
 function emu.atsavestate(f, unregister) end
 
 ---Calls the function `f` when the emulator is reset.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called when the emulator is reset.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -484,14 +474,12 @@ function emu.atsavestate(f, unregister) end
 function emu.atreset(f, unregister) end
 
 ---Calls the function `f` when seek is completed.
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called when the seek is completed.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
 function emu.atseekcompleted(f, unregister) end
 
----Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(): nil The function to be called.
 ---@param unregister boolean? If true, then unregister the function `f`.

@@ -804,7 +804,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 <h1><a id="emuAtupdatescreen">emu.atupdatescreen</a></h1>
 <p>Similar to <code>emu.atvi</code>, but for wgui drawing commands.
 Only drawing functions from the wgui namespace will work here, those from d2d will not.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called after every VI frame.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -822,7 +821,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 <h1><a id="emuAtdrawd2d">emu.atdrawd2d</a></h1>
 <p>Similar to <code>emu.atvi</code>, but for d2d and wgui drawing commands.
 Drawing functions from both the d2d and wgui namespaces will work here, but it's recommended to put wgui drawcalls into the <code>emu.atupdatescreen</code> callback for efficiency and compatibility reasons.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called after every VI frame.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -850,7 +848,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtstop"><hr />
 <h1><a id="emuAtstop">emu.atstop</a></h1>
 <p>Calls the function <code>f</code> when the script is stopped.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when the script is stopped.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -868,7 +865,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 The only message that can be received is WM_MOUSEWHEEL for compatibility.
 All other functionality as been deprecated.
 The message data is given to the function in 4 parameters.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when a window message is received. a: wnd, b: msg, c: wParam, d: lParam.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -877,7 +873,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtinterval"><hr />
 <h1><a id="emuAtinterval">emu.atinterval</a></h1>
 <p>Calls the function <code>f</code> constantly, even when the emulator is paused.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called constantly.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -886,7 +881,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtplaymovie"><hr />
 <h1><a id="emuAtplaymovie">emu.atplaymovie</a></h1>
 <p>Calls the function <code>f</code> when a movie is played.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when a movie is played.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -895,7 +889,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtstopmovie"><hr />
 <h1><a id="emuAtstopmovie">emu.atstopmovie</a></h1>
 <p>Calls the function <code>f</code> when a movie is stopped.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when a movie is stopped.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -904,7 +897,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtloadstate"><hr />
 <h1><a id="emuAtloadstate">emu.atloadstate</a></h1>
 <p>Calls the function <code>f</code> when a savestate is loaded.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when a savestate is loaded.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -913,7 +905,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtsavestate"><hr />
 <h1><a id="emuAtsavestate">emu.atsavestate</a></h1>
 <p>Calls the function <code>f</code> when a savestate is saved.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when a savestate is saved.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -922,7 +913,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtreset"><hr />
 <h1><a id="emuAtreset">emu.atreset</a></h1>
 <p>Calls the function <code>f</code> when the emulator is reset.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when the emulator is reset.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -931,7 +921,6 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 </code></pre></div></div><div name="emuAtseekcompleted"><hr />
 <h1><a id="emuAtseekcompleted">emu.atseekcompleted</a></h1>
 <p>Calls the function <code>f</code> when seek is completed.
-Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
 If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called when the seek is completed.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
@@ -939,8 +928,7 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
 </code></pre></div></div><div name="emuAtwarpmodifystatuschanged"><hr />
 <h1><a id="emuAtwarpmodifystatuschanged">emu.atwarpmodifystatuschanged</a></h1>
-<p>Emulator execution may be running in parallel with this callback and it's therefore disallowed to call any functions that perform unsynchronized reads or writes from and to the emulator state, such as those from the memory namespace.
-If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
+<p>If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
 <p>@<em>param</em> <code>f</code> — The function to be called.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">atwarpmodifystatuschanged</span><span class="p">(</span><span class="nv">f</span><span class="p">:</span><span class="w"> </span><span class="nc">fun</span><span class="p">():</span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="nv">unregister</span><span class="err">?</span><span class="p">:</span><span class="w"> </span><span class="nc">boolean</span><span class="p">)</span>
