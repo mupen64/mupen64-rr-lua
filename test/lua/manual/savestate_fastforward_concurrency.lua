@@ -4,9 +4,12 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
--- Start the script while in fast-forward mode and ensure there's no error.
+-- Start the script and ensure there's no error.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
+
+emu.set_ff(true)
+emu.pause(true)
 
 local buf = ""
 savestate.do_memory("", "save", function(result, data)
