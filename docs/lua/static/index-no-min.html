@@ -1776,7 +1776,7 @@ It will error if no movie is playing.</p>
 </code></pre></div></div><div name="savestateDo_memory"><hr />
 <h1><a id="savestateDo_memory">savestate.do_memory</a></h1>
 <p>Executes a savestate operation in-memory.</p>
-<p>@<em>param</em> <code>buffer</code> — The buffer to use for the operation. Can be empty if the <code>job</code> is <code>save</code>.</p>
+<p>@<em>param</em> <code>buffer</code> — The buffer to use for the operation. If the <code>job</code> is <code>save</code>, this parameter is ignored.</p>
 <p>@<em>param</em> <code>job</code> — The job to set.</p>
 <p>@<em>param</em> <code>callback</code> — The callback to call when the operation is complete.</p>
 <p>@<em>param</em> <code>ignore_warnings</code> — Whether warnings, such as those about ROM compatibility, shouldn't be shown. Defaults to <code>false</code>.</p>
@@ -1787,6 +1787,15 @@ It will error if no movie is playing.</p>
 </code></pre></div>
 
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">savestate</span><span class="p">.</span><span class="nf">do_memory</span><span class="p">(</span><span class="nb">buffer</span><span class="p">:</span><span class="w"> </span><span class="nc">string</span><span class="p">,</span><span class="w"> </span><span class="nv">job</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;load&quot;</span><span class="p">|</span><span class="s2">&quot;save&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">callback</span><span class="p">:</span><span class="w"> </span><span class="nc">fun</span><span class="p">(</span><span class="nv">result</span><span class="p">:</span><span class="w"> </span><span class="nc">Result</span><span class="p">,</span><span class="w"> </span><span class="nv">data</span><span class="p">:</span><span class="w"> </span><span class="nc">string</span><span class="p">):</span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="nv">ignore_warnings</span><span class="p">:</span><span class="w"> </span><span class="nc">boolean</span><span class="p">|</span><span class="nc">nil</span><span class="p">)</span>
+</code></pre></div>
+
+<h4>Example:</h4>
+<div class="codehilite"><pre><span></span><code><span class="kd">local</span><span class="w"> </span><span class="nv">savestate_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+
+<span class="nv">savestate</span><span class="p">.</span><span class="nf">do_memory</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;save&quot;</span><span class="p">,</span><span class="w"> </span><span class="kr">function</span><span class="w"> </span><span class="p">(</span><span class="nv">result</span><span class="p">,</span><span class="w"> </span><span class="nv">data</span><span class="p">)</span>
+<span class="w">    </span><span class="nb">assert</span><span class="p">(</span><span class="nv">result</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nv">Mupen</span><span class="p">.</span><span class="py">result</span><span class="p">.</span><span class="py">res_ok</span><span class="p">)</span>
+<span class="w">    </span><span class="nv">savestate_buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data</span>
+<span class="kr">end</span><span class="p">)</span>
 </code></pre></div></div><hr />
 <h1><a id="iohelperFuncs">IOHELPER</a> FUNCTIONS</h1><div name="iohelperFilediag"><hr />
 <h1><a id="iohelperFilediag">iohelper.filediag</a></h1>

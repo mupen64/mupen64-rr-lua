@@ -1464,7 +1464,7 @@ function savestate.do_file(path, job, callback, ignore_warnings) end
 function savestate.do_slot(slot, job, callback, ignore_warnings) end
 
 ---Executes a savestate operation in-memory.
----@param buffer ByteBuffer The buffer to use for the operation. Can be empty if the `job` is `save`.
+---@param buffer ByteBuffer The buffer to use for the operation. If the `job` is `save`, this parameter is ignored.
 ---@param job SavestateJob The job to set.
 ---@param callback SavestateCallback The callback to call when the operation is complete.
 ---@param ignore_warnings boolean | nil Whether warnings, such as those about ROM compatibility, shouldn't be shown. Defaults to `false`.
