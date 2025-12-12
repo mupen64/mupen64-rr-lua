@@ -327,12 +327,7 @@ void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
     };
     // init and request window settings
     auto wm_settings = mupv_wm_settings_default();
-    m_video_plugin.MUP_FN(mupv_init)(gfx_info, &wm_settings);
-
-    // pass child window to gfx
-    if (wm_settings.backend == MUPV_BK_NONE) return;
-    auto wm_handle = core_service.setup_window(wm_settings);
-    m_video_plugin.MUP_FN(mupv_receive_child_window)(wm_handle);
+    m_video_plugin.MUP_FN(mupv_init)(gfx_info, mupv_wm_funcs {});
 }
 
 void PluginSet::initiate_audio(core_ctx &ctx)

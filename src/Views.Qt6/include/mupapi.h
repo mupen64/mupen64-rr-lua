@@ -181,6 +181,9 @@ extern "C"
         void (CALL *show_cfb)(void);
     } core_rsp_info;
 
+    // window handles and whatnot
+    // =============================
+
     /**
      * @brief Marks a window system, that is, an interface by which graphical apps can create and display windows.
      *
@@ -220,6 +223,9 @@ extern "C"
         } handle;
     } mup_wm_handle;
 
+    /**
+     * @brief A display handle, usually needed to initialize graphics contexts.
+     */
     typedef struct
     {
         mup_wm_platform platform;
@@ -237,7 +243,7 @@ extern "C"
 #error Unsupported platform!
 #endif
         } handle;
-    } mupv_display_handle;
+    } mup_display_handle;
 
     /**
      * @brief An exported window handle, usually to pass to a child process.
@@ -256,6 +262,48 @@ extern "C"
 #endif
         } handle;
     } mup_wm_export_handle;
+
+    // managed graphics API
+    // =============================
+
+    enum mup_gl_buffer_attr {
+        MUP_GL_COLOR_BITS = 0,
+        MUP_GL_RED_BITS,
+        MUP_GL_GREEN_BITS,
+        MUP_GL_BLUE_BITS,
+        MUP_GL_ALPHA_BITS,
+        MUP_GL_SAMPLES,
+    };
+
+    enum mup_gl_profile {
+        MUP_GL_COMPATIBILITY = 0,
+        MUP_GL_CORE,
+        MUP_GL_ES
+    };
+
+    typedef struct {
+        core_result (*request_attrs)(void* p_self, const mup_gl_buffer_attr* attrs, const int32_t* vals, size_t len);
+        core_result (*request_version)(void* p_self, mup_gl_profile profile, uint32_t major, uint32_t minor);
+
+        core_result (*query_attrs)(void* p_self, const mup_gl_buffer_attr* attrs, int32_t* vals, size_t len);
+        core_result (*query_version)(void* p_self, mup_gl_profile* profile, uint32_t* major, uint32_t* minor);
+        core_result (*query_default_fbo)(void* p_self, uint32_t* fbo);
+
+        core_result (*swap_buffers)(void* p_self);
+    } mupv_wm_gl_funcs;
+
+    typedef struct {
+        size_t size;
+        void* p_self;
+
+        core_result (*init_opengl)(void* p_self, mupv_wm_gl_funcs** gl_funcs);
+        core_result (*drop)(void* p_self);
+
+        core_result (*open_window)(void* p_self, uint32_t width, uint32_t height);
+        core_result (*close_window)(void* p_self);
+    } mupv_wm_funcs;
+
+
 
     // common definitions
     // =============================
@@ -334,18 +382,9 @@ extern "C"
      * plugins.
      *
      * @param core_info Various pointers to objects inside the core.
-     * @param wm_settings The window settings to be used by this plugin's child window, to be filled by this function.
+     * @param wm_funcs Functions that can be used to initialize a window and graphics context.
      */
-    MUPAPI_DEFINE_FN(void, mupv_init, core_gfx_info core_info, mupv_wm_settings *wm_settings);
-
-    /**
-     * @brief Called to pass the newly-created child window to the graphics plugin.
-     *
-     * The plugin may complete initialization here.
-     *
-     * @param child_window the child window handle the plugin will render into.
-     */
-    MUPAPI_DEFINE_FN(void, mupv_receive_child_window, mup_wm_handle child_window);
+    MUPAPI_DEFINE_FN(void, mupv_init, core_gfx_info core_info, mupv_wm_funcs wm_funcs);
 
     MUPAPI_DEFINE_FN(void, mupv_process_d_list);
     MUPAPI_DEFINE_FN(void, mupv_process_rdp_list);
@@ -354,7 +393,6 @@ extern "C"
     MUPAPI_DEFINE_FN(void, mupv_vi_width_changed);
     MUPAPI_DEFINE_FN(void, mupv_get_video_size, int32_t *p_width, int32_t *p_height);
     MUPAPI_DEFINE_FN(void, mupv_fb_read, uint32_t addr);
-    MUPAPI_DEFINE_FN(void, mupv_fb_write, uint32_t addr, uint32_t size);
     MUPAPI_DEFINE_FN(void, mupv_fb_write, uint32_t addr, uint32_t size);
     MUPAPI_DEFINE_FN(void, mupv_get_fb_info, void *fb_info);
 
