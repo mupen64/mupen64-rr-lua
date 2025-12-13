@@ -515,8 +515,8 @@ function emu.inputcount() end
 ---@return string version The Mupen version.
 function emu.getversion(type) end
 
----Pauses or unpauses the emulator.
----@param pause boolean True pauses the emulator and false resumes it.
+---Pauses or unpauses the emulator. Note that the pause parameter is inverted for compatibility reasons.
+---@param pause boolean False pauses the emulator and true resumes it.
 ---@return nil
 function emu.pause(pause) end
 
