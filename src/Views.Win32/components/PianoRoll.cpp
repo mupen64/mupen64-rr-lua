@@ -15,9 +15,6 @@ namespace PianoRoll
 #pragma region Variables
 const auto JOYSTICK_CLASS = L"PianoRollJoystick";
 
-// The piano roll dispatcher.
-std::shared_ptr<Dispatcher> g_piano_roll_dispatcher;
-
 // The piano roll dialog's handle.
 std::atomic<HWND> g_hwnd = nullptr;
 
@@ -102,21 +99,37 @@ size_t g_piano_roll_state_index;
 // Copy of seek savestate frame map from VCR.
 std::unordered_map<size_t, bool> g_seek_savestate_frames;
 
+std::vector<std::function<void()>> unsubscribe_funcs;
+
+bool g_can_modify_inputs = true;
+
+size_t current_sample;
+
 #pragma endregion
 
 #pragma region Implementations
 
-/**
- * Gets whether inputs can be modified. Affects both the piano roll and the joystick.
- */
-bool can_modify_inputs()
+void on_can_modify_inputs_changed()
 {
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+}
 
-    return !g_main_ctx.core_ctx->vcr_get_warp_modify_status() && info.seek_target_sample == SIZE_MAX &&
-           g_main_ctx.core_ctx->vcr_get_task() == task_recording && !g_main_ctx.core_ctx->vcr_is_seeking() &&
-           !g_config.core.vcr_readonly && g_config.core.seek_savestate_interval > 0 &&
-           g_main_ctx.core_ctx->vr_get_paused();
+void update_can_modify_inputs()
+{
+    ThreadPool::submit_task([] {
+        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+
+        const auto prev_can_modify_inputs = g_can_modify_inputs;
+        g_can_modify_inputs = !g_main_ctx.core_ctx->vcr_get_warp_modify_status() &&
+                              info.seek_target_sample == SIZE_MAX &&
+                              g_main_ctx.core_ctx->vcr_get_task() == task_recording &&
+                              !g_main_ctx.core_ctx->vcr_is_seeking() && !g_config.core.vcr_readonly &&
+                              g_config.core.seek_savestate_interval > 0 && g_main_ctx.core_ctx->vr_get_paused();
+
+        if (prev_can_modify_inputs != g_can_modify_inputs)
+        {
+            g_main_ctx.dispatcher->invoke([] { on_can_modify_inputs_changed(); });
+        }
+    });
 }
 
 /**
@@ -423,9 +436,9 @@ void apply_input_buffer(bool push_to_history = true)
         return;
     }
 
-    if (!can_modify_inputs())
+    if (!g_can_modify_inputs)
     {
-        g_view_logger->warn("[PianoRoll] Tried to call apply_input_buffer, but can_modify_inputs() == false.");
+        g_view_logger->warn("[PianoRoll] Tried to call apply_input_buffer, but g_can_modify_inputs == false.");
         return;
     }
 
@@ -434,8 +447,9 @@ void apply_input_buffer(bool push_to_history = true)
     // executed on core thread.
     ThreadPool::submit_task([=] {
         auto result = g_main_ctx.core_ctx->vcr_begin_warp_modify(g_piano_roll_state.inputs);
+        const auto inputs = g_main_ctx.core_ctx->vcr_get_inputs();
 
-        g_piano_roll_dispatcher->invoke([=] {
+        g_main_ctx.dispatcher->invoke([=] {
             if (result == Res_Ok)
             {
                 if (push_to_history)
@@ -451,7 +465,7 @@ void apply_input_buffer(bool push_to_history = true)
 
                 ListView_DeleteAllItems(g_lv_hwnd);
 
-                g_piano_roll_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
+                g_piano_roll_state.inputs = inputs;
                 ListView_SetItemCount(g_lv_hwnd, g_piano_roll_state.inputs.size());
                 g_view_logger->info(
                     "[PianoRoll] Pulled inputs from core for recording mode due to warp modify failing, count: {}",
@@ -520,7 +534,7 @@ bool redo()
  */
 void paste_inputs(bool merge)
 {
-    if (g_clipboard.empty() || g_piano_roll_state.selected_indicies.empty() || !can_modify_inputs())
+    if (g_clipboard.empty() || g_piano_roll_state.selected_indicies.empty() || !g_can_modify_inputs)
     {
         return;
     }
@@ -608,7 +622,7 @@ void paste_inputs(bool merge)
  */
 void clear_inputs_in_selection()
 {
-    if (g_piano_roll_state.selected_indicies.empty() || !can_modify_inputs())
+    if (g_piano_roll_state.selected_indicies.empty() || !g_can_modify_inputs)
     {
         return;
     }
@@ -632,7 +646,7 @@ void clear_inputs_in_selection()
  */
 void delete_inputs_in_selection()
 {
-    if (g_piano_roll_state.selected_indicies.empty() || !can_modify_inputs())
+    if (g_piano_roll_state.selected_indicies.empty() || !g_can_modify_inputs)
     {
         return;
     }
@@ -654,7 +668,7 @@ void delete_inputs_in_selection()
  */
 bool insert_frames(size_t count)
 {
-    if (!can_modify_inputs() || g_piano_roll_state.selected_indicies.empty())
+    if (!g_can_modify_inputs || g_piano_roll_state.selected_indicies.empty())
     {
         return false;
     }
@@ -675,32 +689,40 @@ bool insert_frames(size_t count)
 
 void update_groupbox_status_text()
 {
-    if (g_main_ctx.core_ctx->vcr_get_warp_modify_status())
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Warping...");
-        return;
-    }
+    ThreadPool::submit_task([] {
+        const auto warp_modify_active = g_main_ctx.core_ctx->vcr_get_warp_modify_status();
+        const auto paused = g_main_ctx.core_ctx->vr_get_paused();
 
-    if (!g_main_ctx.core_ctx->vr_get_paused())
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Resumed (readonly)");
-        return;
-    }
+        g_main_ctx.dispatcher->invoke([=] {
+            if (warp_modify_active)
+            {
+                SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Warping...");
+                return;
+            }
 
-    if (g_piano_roll_state.selected_indicies.empty())
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC, L"Input");
-    }
-    else if (g_piano_roll_state.selected_indicies.size() == 1)
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC,
-                       std::format(L"Input - Frame {}", g_piano_roll_state.selected_indicies[0]).c_str());
-    }
-    else
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC,
-                       std::format(L"Input - {} frames selected", g_piano_roll_state.selected_indicies.size()).c_str());
-    }
+            if (!paused)
+            {
+                SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Resumed (readonly)");
+                return;
+            }
+
+            if (g_piano_roll_state.selected_indicies.empty())
+            {
+                SetDlgItemText(g_hwnd, IDC_STATIC, L"Input");
+            }
+            else if (g_piano_roll_state.selected_indicies.size() == 1)
+            {
+                SetDlgItemText(g_hwnd, IDC_STATIC,
+                               std::format(L"Input - Frame {}", g_piano_roll_state.selected_indicies[0]).c_str());
+            }
+            else
+            {
+                SetDlgItemText(
+                    g_hwnd, IDC_STATIC,
+                    std::format(L"Input - {} frames selected", g_piano_roll_state.selected_indicies.size()).c_str());
+            }
+        });
+    });
 }
 
 /**
@@ -708,7 +730,7 @@ void update_groupbox_status_text()
  */
 bool can_joystick_be_modified()
 {
-    return !g_piano_roll_state.selected_indicies.empty() && can_modify_inputs();
+    return !g_piano_roll_state.selected_indicies.empty() && g_can_modify_inputs;
 }
 
 #pragma endregion
@@ -717,7 +739,9 @@ bool can_joystick_be_modified()
 
 void on_task_changed(std::any data)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] {
         auto value = std::any_cast<core_vcr_task>(data);
         static auto previous_value = value;
 
@@ -743,7 +767,9 @@ void on_task_changed(std::any data)
 
 void on_current_sample_changed(std::any data)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    current_sample = g_main_ctx.core_ctx->vcr_get_seek_info().current_sample;
+
+    g_main_ctx.dispatcher->invoke([=] {
         auto value = std::any_cast<int32_t>(data);
         static auto previous_value = value;
 
@@ -775,7 +801,7 @@ void on_current_sample_changed(std::any data)
 
 void on_unfreeze_completed(std::any)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    g_main_ctx.dispatcher->invoke([=] {
         if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
         {
             return;
@@ -806,7 +832,9 @@ void on_unfreeze_completed(std::any)
 
 void on_warp_modify_status_changed(std::any)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] {
         update_groupbox_status_text();
         RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
     });
@@ -814,12 +842,14 @@ void on_warp_modify_status_changed(std::any)
 
 void on_seek_completed(std::any)
 {
-    g_piano_roll_dispatcher->invoke([=] { RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE); });
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] { RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE); });
 }
 
 void on_seek_savestate_changed(std::any data)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    g_main_ctx.dispatcher->invoke([=] {
         auto value = std::any_cast<size_t>(data);
         g_main_ctx.core_ctx->vcr_get_seek_savestate_frames(g_seek_savestate_frames);
         ListView_Update(g_lv_hwnd, value);
@@ -834,7 +864,9 @@ void on_emu_paused_changed(std::any)
         return;
     }
 
-    g_piano_roll_dispatcher->invoke([=] {
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] {
         update_groupbox_status_text();
         RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
     });
@@ -959,7 +991,7 @@ lmb_up:
     goto def;
 
 mouse_move:
-    if (!can_modify_inputs())
+    if (!g_can_modify_inputs)
     {
         g_joy_drag = false;
     }
@@ -1033,7 +1065,7 @@ LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         }
 
         HMENU h_menu = CreatePopupMenu();
-        const auto base_style = can_modify_inputs() ? MF_ENABLED : MF_DISABLED;
+        const auto base_style = g_can_modify_inputs ? MF_ENABLED : MF_DISABLED;
         AppendMenu(h_menu, MF_STRING, 1, L"Copy\tCtrl+C");
         AppendMenu(h_menu, base_style | MF_STRING, 2, L"Paste\tCtrl+V");
         AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
@@ -1090,7 +1122,7 @@ LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         }
 
         // Don't start a dragging operation if we're trying to modify read-only inputs
-        if (!can_modify_inputs() && lplvhtti.iSubItem >= 4)
+        if (!g_can_modify_inputs && lplvhtti.iSubItem >= 4)
         {
             break;
         }
@@ -1229,7 +1261,7 @@ handle_mouse_move:
         return 0;
     }
 
-    if (!can_modify_inputs())
+    if (!g_can_modify_inputs)
     {
         goto def;
     }
@@ -1271,13 +1303,10 @@ handle_mouse_move:
 /**
  * The window procedure for the piano roll dialog.
  */
-LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
-    case WM_EXECUTE_DISPATCHER:
-        g_piano_roll_dispatcher->execute();
-        break;
     case WM_INITDIALOG: {
         // We create all the child controls here because windows dialog scaling would mess our stuff up when mixing
         // dialog manager and manual creation
@@ -1367,6 +1396,12 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_DESTROY:
+        g_view_logger->info("[PianoRoll] Unsubscribing from {} messages...", unsubscribe_funcs.size());
+        for (auto unsubscribe_func : unsubscribe_funcs)
+        {
+            unsubscribe_func();
+        }
+
         EnumChildWindows(
             hwnd,
             [](HWND hwnd, LPARAM) {
@@ -1459,9 +1494,7 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             switch (plvdi->item.iSubItem)
             {
             case 0: {
-                const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
-
-                if (info.current_sample == plvdi->item.iItem)
+                if (current_sample == plvdi->item.iItem)
                 {
                     plvdi->item.iImage = 0;
                 }
@@ -1525,33 +1558,23 @@ void show()
         return;
     }
 
-    std::thread([] {
-        g_piano_roll_dispatcher = std::make_shared<Dispatcher>(GetCurrentThreadId(), []() {
-            if (g_hwnd)
-            {
-                SendMessage(g_hwnd, WM_EXECUTE_DISPATCHER, 0, 0);
-            }
-        });
+    unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed));
+    unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::CurrentSampleChanged, on_current_sample_changed));
+    unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::UnfreezeCompleted, on_unfreeze_completed));
+    unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed));
+    unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed));
+    unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::SeekSavestateChanged, on_seek_savestate_changed));
+    unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::EmuPausedChanged, on_emu_paused_changed));
 
-        std::vector<std::function<void()>> unsubscribe_funcs;
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed));
-        unsubscribe_funcs.push_back(
-            Messenger::subscribe(Messenger::Message::CurrentSampleChanged, on_current_sample_changed));
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::UnfreezeCompleted, on_unfreeze_completed));
-        unsubscribe_funcs.push_back(
-            Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed));
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed));
-        unsubscribe_funcs.push_back(
-            Messenger::subscribe(Messenger::Message::SeekSavestateChanged, on_seek_savestate_changed));
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::EmuPausedChanged, on_emu_paused_changed));
+    g_hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PIANO_ROLL), g_main_ctx.hwnd, dialog_proc);
+    ShowWindow(g_hwnd, SW_SHOW);
+}
 
-        DialogBox(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PIANO_ROLL), 0, (DLGPROC)dialog_proc);
-
-        g_view_logger->info("[PianoRoll] Unsubscribing from {} messages...", unsubscribe_funcs.size());
-        for (auto unsubscribe_func : unsubscribe_funcs)
-        {
-            unsubscribe_func();
-        }
-    }).detach();
+HWND hwnd()
+{
+    return g_hwnd;
 }
 } // namespace PianoRoll
