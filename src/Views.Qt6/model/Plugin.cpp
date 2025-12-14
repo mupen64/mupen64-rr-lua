@@ -326,7 +326,6 @@ void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
         .vi_y_scale_reg = &ctx.vi_register->vi_y_scale,
     };
     // init and request window settings
-    auto wm_settings = mupv_wm_settings_default();
     m_video_plugin.MUP_FN(mupv_init)(gfx_info, mupv_wm_funcs {});
 }
 

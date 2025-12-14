@@ -266,38 +266,42 @@ extern "C"
     // managed graphics API
     // =============================
 
-    enum mup_gl_buffer_attr {
-        MUP_GL_COLOR_BITS = 0,
-        MUP_GL_RED_BITS,
-        MUP_GL_GREEN_BITS,
-        MUP_GL_BLUE_BITS,
-        MUP_GL_ALPHA_BITS,
-        MUP_GL_SAMPLES,
+    enum mupv_gl_buffer_attr {
+        MUPV_GL_COLOR_BITS = 0,
+        MUPV_GL_RED_BITS,
+        MUPV_GL_GREEN_BITS,
+        MUPV_GL_BLUE_BITS,
+        MUPV_GL_ALPHA_BITS,
+        MUPV_GL_SAMPLES,
     };
 
-    enum mup_gl_profile {
-        MUP_GL_COMPATIBILITY = 0,
-        MUP_GL_CORE,
-        MUP_GL_ES
+    enum mupv_gl_profile {
+        MUPV_GL_COMPATIBILITY = 0,
+        MUPV_GL_CORE,
+        MUPV_GL_ES
     };
 
     typedef struct {
-        core_result (*request_attrs)(void* p_self, const mup_gl_buffer_attr* attrs, const int32_t* vals, size_t len);
-        core_result (*request_version)(void* p_self, mup_gl_profile profile, uint32_t major, uint32_t minor);
+        core_result (*request_attrs)(void* p_self, const mupv_gl_buffer_attr* attrs, const int32_t* vals, size_t len);
+        core_result (*request_version)(void* p_self, mupv_gl_profile profile, uint32_t major, uint32_t minor);
 
-        core_result (*query_attrs)(void* p_self, const mup_gl_buffer_attr* attrs, int32_t* vals, size_t len);
-        core_result (*query_version)(void* p_self, mup_gl_profile* profile, uint32_t* major, uint32_t* minor);
+        core_result (*query_attrs)(void* p_self, const mupv_gl_buffer_attr* attrs, int32_t* vals, size_t len);
+        core_result (*query_version)(void* p_self, mupv_gl_profile* profile, uint32_t* major, uint32_t* minor);
         core_result (*query_default_fbo)(void* p_self, uint32_t* fbo);
 
         core_result (*swap_buffers)(void* p_self);
     } mupv_wm_gl_funcs;
 
+    enum mupv_graphics_api {
+        MUPV_API_OPENGL = 0
+    };
+
     typedef struct {
         size_t size;
         void* p_self;
 
-        core_result (*init_opengl)(void* p_self, mupv_wm_gl_funcs** gl_funcs);
-        core_result (*drop)(void* p_self);
+        core_result (*init)(void** pp_self, mupv_graphics_api api, void* funcs);
+        core_result (*drop)(void** pp_self);
 
         core_result (*open_window)(void* p_self, uint32_t width, uint32_t height);
         core_result (*close_window)(void* p_self);
@@ -351,35 +355,8 @@ extern "C"
     // video
     // =============================
 
-    enum mupv_backend
-    {
-        MUPV_BK_NONE = 0,
-        MUPV_BK_RASTER,
-        MUPV_BK_OPENGL,
-        MUPV_BK_VULKAN,
-        MUPV_BK_DIRECTX,
-    };
-
-    typedef struct
-    {
-        uint32_t width;
-        uint32_t height;
-        mupv_backend backend;
-    } mupv_wm_settings;
-
-    /**
-     * @brief Returns the default mupv_wm_settings.
-     * @return a mupv_wm_settings object with default values.
-     */
-    inline mupv_wm_settings mupv_wm_settings_default()
-    {
-        return mupv_wm_settings{.width = 0, .height = 0, .backend = MUPV_BK_NONE};
-    }
-
     /**
      * @brief Called to initialize the graphics plugin and request window settings.
-     * Do not expect any window system information from `core_info`, these are left for compatibility with older
-     * plugins.
      *
      * @param core_info Various pointers to objects inside the core.
      * @param wm_funcs Functions that can be used to initialize a window and graphics context.

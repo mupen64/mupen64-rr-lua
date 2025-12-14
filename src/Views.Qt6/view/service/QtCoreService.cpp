@@ -95,15 +95,3 @@ void QtCoreService::show_info_dialog(std::string_view title, std::string_view me
         QMetaObject::invokeMethod(m_main_window, &MainWindow::showInfoDialog, qt_title, qt_message, qt_icon);
     assert(call_worked);
 }
-
-
-/**
- * @brief Assuming the UI is switched into game view, requests that the render window be created and sized.
- *
- * @param settings The settings to apply.
- * @return mup_wm_handle A handle to the set-up window.
- */
-mup_wm_handle QtCoreService::setup_window(const mupv_wm_settings &settings)
-{
-    return mup_wm_handle{};
-}
