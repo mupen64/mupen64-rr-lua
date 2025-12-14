@@ -93,6 +93,7 @@ struct piano_roll_state
     bool readwrite = true;
 
     size_t current_sample{};
+    size_t previous_sample{};
 };
 
 static piano_roll_state piano_roll{};
@@ -407,8 +408,7 @@ static void push_state_to_history()
     }
 
     piano_roll.piano_roll_history.push_back(piano_roll.current_state);
-    piano_roll.state_index =
-        std::min(piano_roll.state_index + 1, piano_roll.piano_roll_history.size() - 1);
+    piano_roll.state_index = std::min(piano_roll.state_index + 1, piano_roll.piano_roll_history.size() - 1);
 
     g_view_logger->info("[PianoRoll] Undo stack size: {}. Current index: {}.", piano_roll.piano_roll_history.size(),
                         piano_roll.state_index);
@@ -545,9 +545,7 @@ static void paste_inputs(bool merge)
     {
         for (int i = 1; i < piano_roll.current_state.selected_indicies.size(); ++i)
         {
-            if (piano_roll.current_state.selected_indicies[i] -
-                    piano_roll.current_state.selected_indicies[i - 1] >
-                1)
+            if (piano_roll.current_state.selected_indicies[i] - piano_roll.current_state.selected_indicies[i - 1] > 1)
             {
                 selection_has_gaps = true;
                 break;
@@ -569,8 +567,7 @@ static void paste_inputs(bool merge)
             if (item.has_value() && i < piano_roll.current_state.inputs.size())
             {
                 piano_roll.current_state.inputs[i] =
-                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value}
-                          : item.value();
+                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
                 ListView_Update(piano_roll.lv_hwnd, i);
             }
 
@@ -590,8 +587,7 @@ static void paste_inputs(bool merge)
             if (item.has_value() && i < piano_roll.current_state.inputs.size() && included)
             {
                 piano_roll.current_state.inputs[i] =
-                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value}
-                          : item.value();
+                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
                 ListView_Update(piano_roll.lv_hwnd, i);
             }
 
@@ -649,8 +645,7 @@ static void delete_inputs_in_selection()
 
     std::vector selected_indicies(piano_roll.current_state.selected_indicies.begin(),
                                   piano_roll.current_state.selected_indicies.end());
-    piano_roll.current_state.inputs =
-        MiscHelpers::erase_indices(piano_roll.current_state.inputs, selected_indicies);
+    piano_roll.current_state.inputs = MiscHelpers::erase_indices(piano_roll.current_state.inputs, selected_indicies);
     ListView_RedrawItems(piano_roll.lv_hwnd, 0, ListView_GetItemCount(piano_roll.lv_hwnd));
     const int32_t offset =
         piano_roll.current_state.selected_indicies[piano_roll.current_state.selected_indicies.size() - 1] -
@@ -710,9 +705,8 @@ static void update_groupbox_status_text()
             }
             else if (piano_roll.current_state.selected_indicies.size() == 1)
             {
-                SetDlgItemText(
-                    piano_roll.hwnd, IDC_STATIC,
-                    std::format(L"Input - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
+                SetDlgItemText(piano_roll.hwnd, IDC_STATIC,
+                               std::format(L"Input - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
             }
             else
             {
@@ -763,35 +757,30 @@ static void on_task_changed(std::any data)
 
 static void on_current_sample_changed(std::any data)
 {
+    piano_roll.previous_sample = piano_roll.current_sample;
     piano_roll.current_sample = g_main_ctx.core_ctx->vcr_get_seek_info().current_sample;
 
+    if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
+    {
+        return;
+    }
+
+    if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+    {
+        return;
+    }
+
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<int32_t>(data);
-        static auto previous_value = value;
-
-        if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
-        {
-            goto exit;
-        }
-
-        if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
-        {
-            goto exit;
-        }
-
         if (g_main_ctx.core_ctx->vcr_get_task() == task_recording)
         {
             piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
             ListView_SetItemCountEx(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size(), LVSICF_NOSCROLL);
         }
 
-        ListView_Update(piano_roll.lv_hwnd, previous_value);
-        ListView_Update(piano_roll.lv_hwnd, value);
+        ListView_Update(piano_roll.lv_hwnd, piano_roll.previous_sample);
+        ListView_Update(piano_roll.lv_hwnd, piano_roll.current_sample);
 
         ensure_relevant_item_visible();
-
-    exit:
-        previous_value = value;
     });
 }
 
