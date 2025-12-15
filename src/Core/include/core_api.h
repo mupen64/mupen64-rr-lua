@@ -652,8 +652,8 @@ extern "C"
 
         /**
          * Executes a savestate operation in-memory.
-         * \param buffer The buffer to use for the operation. Can be empty if the <see cref="job"/> is <see
-         * cref="e_st_job::save"/>. \param job The job to set. \param callback The callback to call when the operation
+         * \param buffer The buffer to use for the operation. If the <see cref="job"/> is <see cref="e_st_job::save"/>, this parameter is ignored.
+         * \param job The job to set. \param callback The callback to call when the operation
          * is complete. \param ignore_warnings Whether warnings, such as those about ROM compatibility, shouldn't be
          * shown. \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are
          * originating from the emu thread. \return Whether the operation was enqueued.

@@ -10,31 +10,9 @@
 #include "Config.h"
 #include "Messenger.h"
 
-namespace PianoRoll
-{
-#pragma region Variables
 const auto JOYSTICK_CLASS = L"PianoRollJoystick";
 
-// The piano roll dispatcher.
-std::shared_ptr<Dispatcher> g_piano_roll_dispatcher;
-
-// The piano roll dialog's handle.
-std::atomic<HWND> g_hwnd = nullptr;
-
-// The piano roll listview's handle.
-HWND g_lv_hwnd = nullptr;
-
-// The piano roll joystick's handle.
-HWND g_joy_hwnd = nullptr;
-
-// The piano roll history listbox's handle.
-HWND g_hist_hwnd = nullptr;
-
-// The status text handle.
-HWND g_status_hwnd = nullptr;
-
-// Represents the current state of the piano roll.
-struct PianoRollState
+struct piano_roll_history_state
 {
     // The input buffer for the piano roll, which is a copy of the inputs from the core and is modified by the user.
     // When editing operations end, this buffer is provided to begin_warp_modify and thereby applied to the core,
@@ -45,84 +23,108 @@ struct PianoRollState
     std::vector<size_t> selected_indicies;
 };
 
-// Whether the current copy of the VCR inputs is desynced from the remote one.
-bool g_inputs_different;
-
-// The clipboard buffer for piano roll copy/paste operations. Must be sorted ascendingly.
-//
-// Due to allowing sparse ("extended") selections, we might have gaps in the clipboard buffer as well as the selected
-// indicies when pasting. When a gap-containing clipboard buffer is pasted into the piano roll, the selection acts as a
-// mask.
-//
-// A----
-// -----
-// @@@@@ << Gap!
-// -B---
-// A----
-//
-// results in...
-//
-// $$$$$ << Unaffected, outside of selection!
-// ----- [[[ Selection start
-// $$$$$ << Unaffected
-// -B---
-// $$$$$ <<< Unaffected ]]] Selection end
-//
-// This also applies for the inverse (gapless clipboard buffer and g_piano_roll_state.selected_indicies with gaps).
-//
-std::vector<std::optional<core_buttons>> g_clipboard{};
-
-// Whether a drag operation is happening
-bool g_lv_dragging = false;
-
-// The value of the cell under the mouse at the time when the drag operation started
-bool g_lv_drag_initial_value = false;
-
-// The column index of the drag operation.
-size_t g_lv_drag_column = 0;
-
-// Whether the drag operation should unset the affected buttons regardless of the initial value
-bool g_lv_drag_unset = false;
-
-// HACK: Flag used to not show context menu when dragging in the button columns
-bool g_lv_ignore_context_menu = false;
-
-// Whether a joystick drag operation is happening
-bool g_joy_drag = false;
-
-// The current piano roll state.
-PianoRollState g_piano_roll_state;
-
-// State history for the piano roll. Used by undo/redo.
-std::deque<PianoRollState> g_piano_roll_history;
-
-// Stack index for the piano roll undo/redo stack. 0 = top, 1 = 2nd from top, etc...
-size_t g_piano_roll_state_index;
-
-// Copy of seek savestate frame map from VCR.
-std::unordered_map<size_t, bool> g_seek_savestate_frames;
-
-#pragma endregion
-
-#pragma region Implementations
-
-/**
- * Gets whether inputs can be modified. Affects both the piano roll and the joystick.
- */
-bool can_modify_inputs()
+struct piano_roll_state
 {
-    const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+    HWND hwnd{};
+    HWND lv_hwnd{};
+    HWND joy_hwnd{};
+    HWND hist_hwnd{};
+    HWND status_hwnd{};
 
-    return !g_main_ctx.core_ctx->vcr_get_warp_modify_status() && info.seek_target_sample == SIZE_MAX &&
-           g_main_ctx.core_ctx->vcr_get_task() == task_recording && !g_main_ctx.core_ctx->vcr_is_seeking() &&
-           !g_config.core.vcr_readonly && g_config.core.seek_savestate_interval > 0 &&
-           g_main_ctx.core_ctx->vr_get_paused();
+    // The clipboard buffer for piano roll copy/paste operations. Must be sorted ascendingly.
+    //
+    // Due to allowing sparse ("extended") selections, we might have gaps in the clipboard buffer as well as the
+    // selected indicies when pasting. When a gap-containing clipboard buffer is pasted into the piano roll, the
+    // selection acts as a mask.
+    //
+    // A----
+    // -----
+    // @@@@@ << Gap!
+    // -B---
+    // A----
+    //
+    // results in...
+    //
+    // $$$$$ << Unaffected, outside of selection!
+    // ----- [[[ Selection start
+    // $$$$$ << Unaffected
+    // -B---
+    // $$$$$ <<< Unaffected ]]] Selection end
+    //
+    // This also applies for the inverse (gapless clipboard buffer and g_piano_roll_state.selected_indicies with gaps).
+    //
+    std::vector<std::optional<core_buttons>> clipboard{};
+
+    // Whether the current copy of the VCR inputs is desynced from the remote one.
+    bool inputs_different{};
+
+    // Whether a drag operation is happening
+    bool lv_dragging{};
+
+    // The value of the cell under the mouse at the time when the drag operation started
+    bool lv_drag_initial_value{};
+
+    // The column index of the drag operation.
+    size_t lv_drag_column{};
+
+    // Whether the drag operation should unset the affected buttons regardless of the initial value
+    bool lv_drag_unset{};
+
+    // HACK: Flag used to not show context menu when dragging in the button columns
+    bool lv_ignore_context_menu{};
+
+    // Whether a joystick drag operation is happening
+    bool joy_drag{};
+
+    // The current piano roll state.
+    piano_roll_history_state current_state{};
+
+    // State history for the piano roll. Used by undo/redo.
+    std::deque<piano_roll_history_state> piano_roll_history{};
+
+    // Stack index for the piano roll undo/redo stack. 0 = top, 1 = 2nd from top, etc...
+    size_t state_index{};
+
+    // Copy of seek savestate frame map from VCR.
+    std::unordered_map<size_t, bool> seek_savestate_frames{};
+
+    std::vector<std::function<void()>> unsubscribe_funcs{};
+
+    bool readwrite = true;
+
+    size_t current_sample{};
+    size_t previous_sample{};
+};
+
+static piano_roll_state piano_roll{};
+
+static void on_can_modify_inputs_changed()
+{
+}
+
+static void update_can_modify_inputs()
+{
+    ThreadPool::submit_task([] {
+        const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
+
+        const auto prev_can_modify_inputs = piano_roll.readwrite;
+        piano_roll.readwrite = !g_main_ctx.core_ctx->vcr_get_warp_modify_status() &&
+                               info.seek_target_sample == SIZE_MAX &&
+                               g_main_ctx.core_ctx->vcr_get_task() == task_recording &&
+                               !g_main_ctx.core_ctx->vcr_is_seeking() && !g_config.core.vcr_readonly &&
+                               g_config.core.seek_savestate_interval > 0 && g_main_ctx.core_ctx->vr_get_paused();
+
+        if (prev_can_modify_inputs != piano_roll.readwrite)
+        {
+            g_main_ctx.dispatcher->invoke([] { on_can_modify_inputs_changed(); });
+        }
+    });
 }
 
 /**
  * Gets whether a seek operation can be initiated.
  */
-bool can_seek()
+static bool can_seek()
 {
     return g_config.core.seek_savestate_interval > 0;
 }
@@ -130,9 +132,9 @@ bool can_seek()
 /**
  * Refreshes the piano roll listview and the joystick, re-querying the current inputs from the core.
  */
-void update_inputs()
+static void update_inputs()
 {
-    if (!g_hwnd)
+    if (!piano_roll.hwnd)
     {
         return;
     }
@@ -140,25 +142,25 @@ void update_inputs()
     // If VCR is idle, we can't really show anything.
     if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
     {
-        ListView_DeleteAllItems(g_lv_hwnd);
+        ListView_DeleteAllItems(piano_roll.lv_hwnd);
     }
 
     // In playback mode, the input buffer can't change so we're safe to only pull it once.
     if (g_main_ctx.core_ctx->vcr_get_task() == task_playback)
     {
-        SetWindowRedraw(g_lv_hwnd, false);
+        SetWindowRedraw(piano_roll.lv_hwnd, false);
 
-        ListView_DeleteAllItems(g_lv_hwnd);
+        ListView_DeleteAllItems(piano_roll.lv_hwnd);
 
-        g_piano_roll_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
-        ListView_SetItemCount(g_lv_hwnd, g_piano_roll_state.inputs.size());
+        piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
+        ListView_SetItemCount(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size());
         g_view_logger->info("[PianoRoll] Pulled inputs from core for playback mode, count: {}",
-                            g_piano_roll_state.inputs.size());
+                            piano_roll.current_state.inputs.size());
 
-        SetWindowRedraw(g_lv_hwnd, true);
+        SetWindowRedraw(piano_roll.lv_hwnd, true);
     }
 
-    RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+    RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
 }
 
 /**
@@ -167,7 +169,7 @@ void update_inputs()
  * \param i The column index. Must be in the range [3, 15] inclusive.
  * \return The button value at the given column index
  */
-unsigned get_input_value_from_column_index(core_buttons btn, size_t i)
+static unsigned get_input_value_from_column_index(core_buttons btn, size_t i)
 {
     switch (i)
     {
@@ -209,7 +211,7 @@ unsigned get_input_value_from_column_index(core_buttons btn, size_t i)
  * \param i The column index. Must be in the range [3, 15] inclusive.
  * \param value The button value to set
  */
-void set_input_value_from_column_index(core_buttons *btn, size_t i, bool value)
+static void set_input_value_from_column_index(core_buttons *btn, size_t i, bool value)
 {
     switch (i)
     {
@@ -263,7 +265,7 @@ void set_input_value_from_column_index(core_buttons *btn, size_t i, bool value)
  * \param i The column index. Must be in the range [3, 15] inclusive.
  * \return The name of the button at the specified column index.
  */
-const wchar_t *get_button_name_from_column_index(size_t i)
+static const wchar_t *get_button_name_from_column_index(size_t i)
 {
     switch (i)
     {
@@ -302,11 +304,11 @@ const wchar_t *get_button_name_from_column_index(size_t i)
 /**
  * Prints a dump of the clipboard
  */
-void print_clipboard_dump()
+static void print_clipboard_dump()
 {
     g_view_logger->info("[PianoRoll] ------------- Dump Begin -------------");
-    g_view_logger->info("[PianoRoll] Clipboard of length {}", g_clipboard.size());
-    for (auto item : g_clipboard)
+    g_view_logger->info("[PianoRoll] Clipboard of length {}", piano_roll.clipboard.size());
+    for (auto item : piano_roll.clipboard)
     {
         item.has_value() ? g_view_logger->info("[PianoRoll] {:#06x}", item.value().value)
                          : g_view_logger->info("[PianoRoll] ------");
@@ -317,57 +319,58 @@ void print_clipboard_dump()
 /**
  * Ensures that the currently relevant item is visible in the piano roll listview.
  */
-void ensure_relevant_item_visible()
+static void ensure_relevant_item_visible()
 {
-    const int32_t i = ListView_GetNextItem(g_lv_hwnd, -1, LVNI_SELECTED);
+    const int32_t i = ListView_GetNextItem(piano_roll.lv_hwnd, -1, LVNI_SELECTED);
     const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
     const auto current_sample =
-        std::min(ListView_GetItemCount(g_lv_hwnd), static_cast<int32_t>(info.current_sample) + 10);
+        std::min(ListView_GetItemCount(piano_roll.lv_hwnd), static_cast<int32_t>(info.current_sample) + 10);
     const auto playhead_sample =
         g_main_ctx.core_ctx->vcr_get_task() == task_recording ? current_sample - 1 : current_sample;
 
     if (g_config.piano_roll_keep_playhead_visible)
     {
-        ListView_EnsureVisible(g_lv_hwnd, playhead_sample, false);
+        ListView_EnsureVisible(piano_roll.lv_hwnd, playhead_sample, false);
     }
 
     if (g_config.piano_roll_keep_selection_visible && i != -1)
     {
-        ListView_EnsureVisible(g_lv_hwnd, i, false);
+        ListView_EnsureVisible(piano_roll.lv_hwnd, i, false);
     }
 }
 
 /**
  * Copies the selected inputs to the clipboard.
  */
-void copy_inputs()
+static void copy_inputs()
 {
-    if (g_piano_roll_state.selected_indicies.empty())
+    if (piano_roll.current_state.selected_indicies.empty())
     {
         return;
     }
 
-    if (g_piano_roll_state.selected_indicies.size() == 1)
+    if (piano_roll.current_state.selected_indicies.size() == 1)
     {
-        g_clipboard = {g_piano_roll_state.inputs[g_piano_roll_state.selected_indicies[0]]};
+        piano_roll.clipboard = {piano_roll.current_state.inputs[piano_roll.current_state.selected_indicies[0]]};
         return;
     }
 
-    const size_t min = g_piano_roll_state.selected_indicies[0];
-    const size_t max = g_piano_roll_state.selected_indicies[g_piano_roll_state.selected_indicies.size() - 1];
+    const size_t min = piano_roll.current_state.selected_indicies[0];
+    const size_t max =
+        piano_roll.current_state.selected_indicies[piano_roll.current_state.selected_indicies.size() - 1];
 
-    g_clipboard.clear();
-    g_clipboard.reserve(max - min);
+    piano_roll.clipboard.clear();
+    piano_roll.clipboard.reserve(max - min);
 
     for (auto i = min; i <= max; ++i)
     {
         // FIXME: Precompute this, create a map, do anything but not this bru
-        const bool gap =
-            std::ranges::find(g_piano_roll_state.selected_indicies, i) == g_piano_roll_state.selected_indicies.end();
+        const bool gap = std::ranges::find(piano_roll.current_state.selected_indicies, i) ==
+                         piano_roll.current_state.selected_indicies.end();
         // HACK: nullopt acquired via explicit constructor call...
         std::optional<core_buttons> opt;
-        g_clipboard.push_back(gap ? opt : g_piano_roll_state.inputs[i]);
+        piano_roll.clipboard.push_back(gap ? opt : piano_roll.current_state.inputs[i]);
     }
 
     print_clipboard_dump();
@@ -376,56 +379,56 @@ void copy_inputs()
 /**
  * Updates the history listbox with the current state of the undo/redo stack.
  */
-void update_history_listbox()
+static void update_history_listbox()
 {
-    SetWindowRedraw(g_hist_hwnd, false);
-    ListBox_ResetContent(g_hist_hwnd);
+    SetWindowRedraw(piano_roll.hist_hwnd, false);
+    ListBox_ResetContent(piano_roll.hist_hwnd);
 
-    for (size_t i = 0; i < g_piano_roll_history.size(); ++i)
+    for (size_t i = 0; i < piano_roll.piano_roll_history.size(); ++i)
     {
-        ListBox_AddString(g_hist_hwnd, std::format(L"Snapshot {}", i + 1).c_str());
+        ListBox_AddString(piano_roll.hist_hwnd, std::format(L"Snapshot {}", i + 1).c_str());
     }
 
-    ListBox_SetCurSel(g_hist_hwnd, g_piano_roll_state_index);
+    ListBox_SetCurSel(piano_roll.hist_hwnd, piano_roll.state_index);
 
-    SetWindowRedraw(g_hist_hwnd, true);
+    SetWindowRedraw(piano_roll.hist_hwnd, true);
 }
 
 /**
  * Pushes the current piano roll state to the history. Should be called after operations which change the piano roll
  * state.
  */
-void push_state_to_history()
+static void push_state_to_history()
 {
     g_view_logger->info("[PianoRoll] Pushing state to undo stack...");
 
-    if (g_piano_roll_history.size() > g_config.piano_roll_undo_stack_size)
+    if (piano_roll.piano_roll_history.size() > g_config.piano_roll_undo_stack_size)
     {
-        g_piano_roll_history.pop_back();
+        piano_roll.piano_roll_history.pop_back();
     }
 
-    g_piano_roll_history.push_back(g_piano_roll_state);
-    g_piano_roll_state_index = std::min(g_piano_roll_state_index + 1, g_piano_roll_history.size() - 1);
+    piano_roll.piano_roll_history.push_back(piano_roll.current_state);
+    piano_roll.state_index = std::min(piano_roll.state_index + 1, piano_roll.piano_roll_history.size() - 1);
 
-    g_view_logger->info("[PianoRoll] Undo stack size: {}. Current index: {}.", g_piano_roll_history.size(),
-                        g_piano_roll_state_index);
+    g_view_logger->info("[PianoRoll] Undo stack size: {}. Current index: {}.", piano_roll.piano_roll_history.size(),
+                        piano_roll.state_index);
     update_history_listbox();
 }
 
 /**
  * Applies the g_piano_roll_state.inputs buffer to the core.
  */
-void apply_input_buffer(bool push_to_history = true)
+static void apply_input_buffer(bool push_to_history = true)
 {
-    if (!g_inputs_different)
+    if (!piano_roll.inputs_different)
     {
         g_view_logger->trace("[PianoRoll] Ignoring apply_input_buffer because inputs didn't change.");
         return;
     }
 
-    if (!can_modify_inputs())
+    if (!piano_roll.readwrite)
     {
-        g_view_logger->warn("[PianoRoll] Tried to call apply_input_buffer, but can_modify_inputs() == false.");
+        g_view_logger->warn("[PianoRoll] Tried to call apply_input_buffer, but g_can_modify_inputs == false.");
         return;
     }
 
@@ -433,9 +436,10 @@ void apply_input_buffer(bool push_to_history = true)
     // Problem is that the VCR lock is already grabbed by the core thread because current sample changed message is
     // executed on core thread.
     ThreadPool::submit_task([=] {
-        auto result = g_main_ctx.core_ctx->vcr_begin_warp_modify(g_piano_roll_state.inputs);
+        auto result = g_main_ctx.core_ctx->vcr_begin_warp_modify(piano_roll.current_state.inputs);
+        const auto inputs = g_main_ctx.core_ctx->vcr_get_inputs();
 
-        g_piano_roll_dispatcher->invoke([=] {
+        g_main_ctx.dispatcher->invoke([=] {
             if (result == Res_Ok)
             {
                 if (push_to_history)
@@ -447,22 +451,22 @@ void apply_input_buffer(bool push_to_history = true)
             {
                 // Since we do optimistic updates, we need to revert the changes we made to the input buffer to avoid
                 // visual desync
-                SetWindowRedraw(g_lv_hwnd, false);
+                SetWindowRedraw(piano_roll.lv_hwnd, false);
 
-                ListView_DeleteAllItems(g_lv_hwnd);
+                ListView_DeleteAllItems(piano_roll.lv_hwnd);
 
-                g_piano_roll_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
-                ListView_SetItemCount(g_lv_hwnd, g_piano_roll_state.inputs.size());
+                piano_roll.current_state.inputs = inputs;
+                ListView_SetItemCount(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size());
                 g_view_logger->info(
                     "[PianoRoll] Pulled inputs from core for recording mode due to warp modify failing, count: {}",
-                    g_piano_roll_state.inputs.size());
+                    piano_roll.current_state.inputs.size());
 
-                SetWindowRedraw(g_lv_hwnd, true);
+                SetWindowRedraw(piano_roll.lv_hwnd, true);
 
-                show_error_dialog_for_result(result, g_hwnd);
+                show_error_dialog_for_result(result, piano_roll.hwnd);
             }
 
-            g_inputs_different = false;
+            piano_roll.inputs_different = false;
         });
     });
 }
@@ -471,12 +475,13 @@ void apply_input_buffer(bool push_to_history = true)
  * Sets the piano roll state to the specified value, updating everything accordingly and also applying the input buffer.
  * This is an expensive and slow operation.
  */
-void set_piano_roll_state(const PianoRollState piano_roll_state)
+static void set_piano_roll_state(const piano_roll_history_state state)
 {
-    g_piano_roll_state = piano_roll_state;
-    g_inputs_different = true;
-    ListView_SetItemCountEx(g_lv_hwnd, g_piano_roll_state.inputs.size(), LVSICF_NOSCROLL);
-    set_listview_selection(g_lv_hwnd, g_piano_roll_state.selected_indicies);
+    piano_roll.current_state = state;
+
+    piano_roll.inputs_different = true;
+    ListView_SetItemCountEx(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size(), LVSICF_NOSCROLL);
+    set_listview_selection(piano_roll.lv_hwnd, piano_roll.current_state.selected_indicies);
     apply_input_buffer(false);
     update_history_listbox();
 }
@@ -484,17 +489,17 @@ void set_piano_roll_state(const PianoRollState piano_roll_state)
 /**
  * Shifts the history index by the specified offset and applies the changes.
  */
-bool shift_history(int offset)
+static bool shift_history(int offset)
 {
-    auto new_index = g_piano_roll_state_index + offset;
+    auto new_index = piano_roll.state_index + offset;
 
-    if (new_index < 0 || new_index >= g_piano_roll_history.size())
+    if (new_index < 0 || new_index >= piano_roll.piano_roll_history.size())
     {
         return false;
     }
 
-    g_piano_roll_state_index = new_index;
-    set_piano_roll_state(g_piano_roll_history[g_piano_roll_state_index]);
+    piano_roll.state_index = new_index;
+    set_piano_roll_state(piano_roll.piano_roll_history[piano_roll.state_index]);
 
     return true;
 }
@@ -502,7 +507,7 @@ bool shift_history(int offset)
 /**
  * Restores the piano roll state to the last stored state.
  */
-bool undo()
+static bool undo()
 {
     return shift_history(-1);
 }
@@ -510,7 +515,7 @@ bool undo()
 /**
  * Restores the piano roll state to the next stored state.
  */
-bool redo()
+static bool redo()
 {
     return shift_history(1);
 }
@@ -518,15 +523,15 @@ bool redo()
 /**
  * Pastes the selected inputs from the clipboard into the piano roll.
  */
-void paste_inputs(bool merge)
+static void paste_inputs(bool merge)
 {
-    if (g_clipboard.empty() || g_piano_roll_state.selected_indicies.empty() || !can_modify_inputs())
+    if (piano_roll.clipboard.empty() || piano_roll.current_state.selected_indicies.empty() || !piano_roll.readwrite)
     {
         return;
     }
 
     bool clipboard_has_gaps = false;
-    for (auto item : g_clipboard)
+    for (auto item : piano_roll.clipboard)
     {
         if (!item.has_value())
         {
@@ -536,11 +541,11 @@ void paste_inputs(bool merge)
     }
 
     bool selection_has_gaps = false;
-    if (g_piano_roll_state.selected_indicies.size() > 1)
+    if (piano_roll.current_state.selected_indicies.size() > 1)
     {
-        for (int i = 1; i < g_piano_roll_state.selected_indicies.size(); ++i)
+        for (int i = 1; i < piano_roll.current_state.selected_indicies.size(); ++i)
         {
-            if (g_piano_roll_state.selected_indicies[i] - g_piano_roll_state.selected_indicies[i - 1] > 1)
+            if (piano_roll.current_state.selected_indicies[i] - piano_roll.current_state.selected_indicies[i - 1] > 1)
             {
                 selection_has_gaps = true;
                 break;
@@ -550,20 +555,20 @@ void paste_inputs(bool merge)
 
     g_view_logger->info("[PianoRoll] Clipboard/selection gaps: {}, {}", clipboard_has_gaps, selection_has_gaps);
 
-    SetWindowRedraw(g_lv_hwnd, false);
+    SetWindowRedraw(piano_roll.lv_hwnd, false);
 
-    if (g_piano_roll_state.selected_indicies.size() == 1)
+    if (piano_roll.current_state.selected_indicies.size() == 1)
     {
         // 1-sized selection indicates a bulk copy, where copy all the inputs over (and ignore the clipboard gaps)
-        size_t i = g_piano_roll_state.selected_indicies[0];
+        size_t i = piano_roll.current_state.selected_indicies[0];
 
-        for (auto item : g_clipboard)
+        for (auto item : piano_roll.clipboard)
         {
-            if (item.has_value() && i < g_piano_roll_state.inputs.size())
+            if (item.has_value() && i < piano_roll.current_state.inputs.size())
             {
-                g_piano_roll_state.inputs[i] =
-                    merge ? core_buttons{g_piano_roll_state.inputs[i].value | item.value().value} : item.value();
-                ListView_Update(g_lv_hwnd, i);
+                piano_roll.current_state.inputs[i] =
+                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
+                ListView_Update(piano_roll.lv_hwnd, i);
             }
 
             i++;
@@ -572,18 +577,18 @@ void paste_inputs(bool merge)
     else
     {
         // Standard case: selection is a mask
-        size_t i = g_piano_roll_state.selected_indicies[0];
+        size_t i = piano_roll.current_state.selected_indicies[0];
 
-        for (auto item : g_clipboard)
+        for (auto item : piano_roll.clipboard)
         {
-            const bool included = std::ranges::find(g_piano_roll_state.selected_indicies, i) !=
-                                  g_piano_roll_state.selected_indicies.end();
+            const bool included = std::ranges::find(piano_roll.current_state.selected_indicies, i) !=
+                                  piano_roll.current_state.selected_indicies.end();
 
-            if (item.has_value() && i < g_piano_roll_state.inputs.size() && included)
+            if (item.has_value() && i < piano_roll.current_state.inputs.size() && included)
             {
-                g_piano_roll_state.inputs[i] =
-                    merge ? core_buttons{g_piano_roll_state.inputs[i].value | item.value().value} : item.value();
-                ListView_Update(g_lv_hwnd, i);
+                piano_roll.current_state.inputs[i] =
+                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
+                ListView_Update(piano_roll.lv_hwnd, i);
             }
 
             i++;
@@ -591,133 +596,141 @@ void paste_inputs(bool merge)
     }
 
     // Move selection to allow cool block-wise pasting
-    const size_t offset = g_piano_roll_state.selected_indicies[g_piano_roll_state.selected_indicies.size() - 1] -
-                          g_piano_roll_state.selected_indicies[0] + 1;
-    shift_listview_selection(g_lv_hwnd, offset);
+    const size_t offset =
+        piano_roll.current_state.selected_indicies[piano_roll.current_state.selected_indicies.size() - 1] -
+        piano_roll.current_state.selected_indicies[0] + 1;
+    shift_listview_selection(piano_roll.lv_hwnd, offset);
 
     ensure_relevant_item_visible();
 
-    SetWindowRedraw(g_lv_hwnd, true);
+    SetWindowRedraw(piano_roll.lv_hwnd, true);
 
-    g_inputs_different = true;
+    piano_roll.inputs_different = true;
     apply_input_buffer();
 }
 
 /**
  * Zeroes out all inputs in the current selection
  */
-void clear_inputs_in_selection()
+static void clear_inputs_in_selection()
 {
-    if (g_piano_roll_state.selected_indicies.empty() || !can_modify_inputs())
+    if (piano_roll.current_state.selected_indicies.empty() || !piano_roll.readwrite)
     {
         return;
     }
 
-    SetWindowRedraw(g_lv_hwnd, false);
+    SetWindowRedraw(piano_roll.lv_hwnd, false);
 
-    for (auto i : g_piano_roll_state.selected_indicies)
+    for (auto i : piano_roll.current_state.selected_indicies)
     {
-        g_piano_roll_state.inputs[i] = {0};
-        ListView_Update(g_lv_hwnd, i);
+        piano_roll.current_state.inputs[i] = {0};
+        ListView_Update(piano_roll.lv_hwnd, i);
     }
 
-    SetWindowRedraw(g_lv_hwnd, true);
+    SetWindowRedraw(piano_roll.lv_hwnd, true);
 
-    g_inputs_different = true;
+    piano_roll.inputs_different = true;
     apply_input_buffer();
 }
 
 /**
  * Deletes all inputs in the current selection, removing them from the input buffer.
  */
-void delete_inputs_in_selection()
+static void delete_inputs_in_selection()
 {
-    if (g_piano_roll_state.selected_indicies.empty() || !can_modify_inputs())
+    if (piano_roll.current_state.selected_indicies.empty() || !piano_roll.readwrite)
     {
         return;
     }
 
-    std::vector selected_indicies(g_piano_roll_state.selected_indicies.begin(),
-                                  g_piano_roll_state.selected_indicies.end());
-    g_piano_roll_state.inputs = MiscHelpers::erase_indices(g_piano_roll_state.inputs, selected_indicies);
-    ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
-    const int32_t offset = g_piano_roll_state.selected_indicies[g_piano_roll_state.selected_indicies.size() - 1] -
-                           g_piano_roll_state.selected_indicies[0] + 1;
-    shift_listview_selection(g_lv_hwnd, -offset);
+    std::vector selected_indicies(piano_roll.current_state.selected_indicies.begin(),
+                                  piano_roll.current_state.selected_indicies.end());
+    piano_roll.current_state.inputs = MiscHelpers::erase_indices(piano_roll.current_state.inputs, selected_indicies);
+    ListView_RedrawItems(piano_roll.lv_hwnd, 0, ListView_GetItemCount(piano_roll.lv_hwnd));
+    const int32_t offset =
+        piano_roll.current_state.selected_indicies[piano_roll.current_state.selected_indicies.size() - 1] -
+        piano_roll.current_state.selected_indicies[0] + 1;
+    shift_listview_selection(piano_roll.lv_hwnd, -offset);
 
-    g_inputs_different = true;
+    piano_roll.inputs_different = true;
     apply_input_buffer();
 }
 
 /**
  * Appends the specified amount of empty frames at the start of the current selection.
  */
-bool insert_frames(size_t count)
+static bool insert_frames(size_t count)
 {
-    if (!can_modify_inputs() || g_piano_roll_state.selected_indicies.empty())
+    if (!piano_roll.readwrite || piano_roll.current_state.selected_indicies.empty())
     {
         return false;
     }
 
     for (int i = 0; i < count; ++i)
     {
-        g_piano_roll_state.inputs.insert(
-            g_piano_roll_state.inputs.begin() + g_piano_roll_state.selected_indicies[0] + 1, {0});
+        piano_roll.current_state.inputs.insert(
+            piano_roll.current_state.inputs.begin() + piano_roll.current_state.selected_indicies[0] + 1, {0});
     }
 
-    ListView_SetItemCountEx(g_lv_hwnd, g_piano_roll_state.inputs.size(), LVSICF_NOSCROLL);
+    ListView_SetItemCountEx(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size(), LVSICF_NOSCROLL);
 
-    g_inputs_different = true;
+    piano_roll.inputs_different = true;
     apply_input_buffer();
 
     return true;
 }
 
-void update_groupbox_status_text()
+static void update_groupbox_status_text()
 {
-    if (g_main_ctx.core_ctx->vcr_get_warp_modify_status())
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Warping...");
-        return;
-    }
+    ThreadPool::submit_task([] {
+        const auto warp_modify_active = g_main_ctx.core_ctx->vcr_get_warp_modify_status();
+        const auto paused = g_main_ctx.core_ctx->vr_get_paused();
 
-    if (!g_main_ctx.core_ctx->vr_get_paused())
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC, L"Input - Resumed (readonly)");
-        return;
-    }
+        g_main_ctx.dispatcher->invoke([=] {
+            if (warp_modify_active)
+            {
+                SetWindowText(piano_roll.hwnd, L"Piano Roll - Warping...");
+                return;
+            }
 
-    if (g_piano_roll_state.selected_indicies.empty())
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC, L"Input");
-    }
-    else if (g_piano_roll_state.selected_indicies.size() == 1)
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC,
-                       std::format(L"Input - Frame {}", g_piano_roll_state.selected_indicies[0]).c_str());
-    }
-    else
-    {
-        SetDlgItemText(g_hwnd, IDC_STATIC,
-                       std::format(L"Input - {} frames selected", g_piano_roll_state.selected_indicies.size()).c_str());
-    }
+            if (!paused)
+            {
+                SetWindowText(piano_roll.hwnd, L"Piano Roll - Resumed (readonly)");
+                return;
+            }
+
+            if (piano_roll.current_state.selected_indicies.empty())
+            {
+                SetWindowText(piano_roll.hwnd, L"Piano Roll");
+            }
+            else if (piano_roll.current_state.selected_indicies.size() == 1)
+            {
+                SetWindowText(piano_roll.hwnd,
+                              std::format(L"Piano Roll - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
+            }
+            else
+            {
+                SetWindowText(piano_roll.hwnd, std::format(L"Piano Roll - {} frames selected",
+                                                           piano_roll.current_state.selected_indicies.size())
+                                                   .c_str());
+            }
+        });
+    });
 }
 
 /**
  * Gets whether the joystick control can be interacted with by the user.
  */
-bool can_joystick_be_modified()
+static bool can_joystick_be_modified()
 {
-    return !g_piano_roll_state.selected_indicies.empty() && can_modify_inputs();
+    return !piano_roll.current_state.selected_indicies.empty() && piano_roll.readwrite;
 }
 
-#pragma endregion
-
-#pragma region Message Handlers
-
-void on_task_changed(std::any data)
+static void on_task_changed(std::any data)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] {
         auto value = std::any_cast<core_vcr_task>(data);
         static auto previous_value = value;
 
@@ -730,103 +743,103 @@ void on_task_changed(std::any data)
 
         if (g_config.core.seek_savestate_interval == 0)
         {
-            SetWindowText(g_status_hwnd, L"Piano Roll read-only.\nSeek savestates must be enabled.");
+            SetWindowText(piano_roll.status_hwnd, L"Piano Roll read-only.\nSeek savestates must be enabled.");
         }
         else
         {
-            SetWindowText(g_status_hwnd, L"");
+            SetWindowText(piano_roll.status_hwnd, L"");
         }
 
         previous_value = value;
     });
 }
 
-void on_current_sample_changed(std::any data)
+static void on_current_sample_changed(std::any data)
 {
-    g_piano_roll_dispatcher->invoke([=] {
-        auto value = std::any_cast<int32_t>(data);
-        static auto previous_value = value;
+    piano_roll.previous_sample = piano_roll.current_sample;
+    piano_roll.current_sample = g_main_ctx.core_ctx->vcr_get_seek_info().current_sample;
 
-        if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
-        {
-            goto exit;
-        }
+    if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
+    {
+        return;
+    }
 
-        if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
-        {
-            goto exit;
-        }
+    if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
+    {
+        return;
+    }
 
+    g_main_ctx.dispatcher->invoke([=] {
         if (g_main_ctx.core_ctx->vcr_get_task() == task_recording)
         {
-            g_piano_roll_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
-            ListView_SetItemCountEx(g_lv_hwnd, g_piano_roll_state.inputs.size(), LVSICF_NOSCROLL);
+            piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
+            ListView_SetItemCountEx(piano_roll.lv_hwnd, piano_roll.current_state.inputs.size(), LVSICF_NOSCROLL);
         }
 
-        ListView_Update(g_lv_hwnd, previous_value);
-        ListView_Update(g_lv_hwnd, value);
+        ListView_Update(piano_roll.lv_hwnd, piano_roll.previous_sample);
+        ListView_Update(piano_roll.lv_hwnd, piano_roll.current_sample);
 
         ensure_relevant_item_visible();
-
-    exit:
-        previous_value = value;
     });
 }
 
-void on_unfreeze_completed(std::any)
+static void on_unfreeze_completed(std::any)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    g_main_ctx.dispatcher->invoke([=] {
         if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
         {
             return;
         }
 
-        SetWindowRedraw(g_lv_hwnd, false);
+        SetWindowRedraw(piano_roll.lv_hwnd, false);
 
-        ListView_DeleteAllItems(g_lv_hwnd);
+        ListView_DeleteAllItems(piano_roll.lv_hwnd);
 
-        g_piano_roll_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
-
+        piano_roll.current_state.inputs = g_main_ctx.core_ctx->vcr_get_inputs();
         const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
 
         const auto item_count = g_main_ctx.core_ctx->vcr_get_task() == task_recording
-                                    ? std::min(info.current_sample, g_piano_roll_state.inputs.size())
-                                    : g_piano_roll_state.inputs.size();
+                                    ? std::min(info.current_sample, piano_roll.current_state.inputs.size())
+                                    : piano_roll.current_state.inputs.size();
 
         g_view_logger->info("[PianoRoll] Setting item count to {} (input count: {})...", item_count,
-                            g_piano_roll_state.inputs.size());
-        ListView_SetItemCountEx(g_lv_hwnd, item_count, LVSICF_NOSCROLL);
+                            piano_roll.current_state.inputs.size());
+        ListView_SetItemCountEx(piano_roll.lv_hwnd, item_count, LVSICF_NOSCROLL);
 
-        SetWindowRedraw(g_lv_hwnd, true);
+        SetWindowRedraw(piano_roll.lv_hwnd, true);
 
-        g_inputs_different = true;
+        piano_roll.inputs_different = true;
         ensure_relevant_item_visible();
     });
 }
 
-void on_warp_modify_status_changed(std::any)
+static void on_warp_modify_status_changed(std::any)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] {
         update_groupbox_status_text();
-        RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
     });
 }
 
-void on_seek_completed(std::any)
+static void on_seek_completed(std::any)
 {
-    g_piano_roll_dispatcher->invoke([=] { RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE); });
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] { RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE); });
 }
 
-void on_seek_savestate_changed(std::any data)
+static void on_seek_savestate_changed(std::any data)
 {
-    g_piano_roll_dispatcher->invoke([=] {
+    g_main_ctx.dispatcher->invoke([=] {
         auto value = std::any_cast<size_t>(data);
-        g_main_ctx.core_ctx->vcr_get_seek_savestate_frames(g_seek_savestate_frames);
-        ListView_Update(g_lv_hwnd, value);
+        g_main_ctx.core_ctx->vcr_get_seek_savestate_frames(piano_roll.seek_savestate_frames);
+        ListView_Update(piano_roll.lv_hwnd, value);
     });
 }
 
-void on_emu_paused_changed(std::any)
+static void on_emu_paused_changed(std::any)
 {
     // Redrawing during frame advance (paused on, then off next frame) causes ugly flicker, so we'll just not do that
     if (g_main_ctx.core_ctx->vr_get_frame_advance() && !g_main_ctx.core_ctx->vr_get_paused())
@@ -834,17 +847,15 @@ void on_emu_paused_changed(std::any)
         return;
     }
 
-    g_piano_roll_dispatcher->invoke([=] {
+    update_can_modify_inputs();
+
+    g_main_ctx.dispatcher->invoke([=] {
         update_groupbox_status_text();
-        RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
     });
 }
 
-#pragma endregion
-
-#pragma region Message Loops, Visuals
-
-void get_joystick_pens(HPEN *outline_pen, HPEN *line_pen, HPEN *tip_pen)
+static void get_joystick_pens(HPEN *outline_pen, HPEN *line_pen, HPEN *tip_pen)
 {
     if (can_joystick_be_modified())
     {
@@ -863,7 +874,7 @@ void get_joystick_pens(HPEN *outline_pen, HPEN *line_pen, HPEN *tip_pen)
 /**
  * The window procedure for the joystick control.
  */
-LRESULT CALLBACK joystick_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK joystick_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
@@ -872,11 +883,11 @@ LRESULT CALLBACK joystick_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         {
             break;
         }
-        g_joy_drag = true;
+        piano_roll.joy_drag = true;
         SetCapture(hwnd);
         goto mouse_move;
     case WM_LBUTTONUP:
-        if (!g_joy_drag)
+        if (!piano_roll.joy_drag)
         {
             break;
         }
@@ -891,10 +902,10 @@ LRESULT CALLBACK joystick_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         HPEN tip_pen;
         get_joystick_pens(&outline_pen, &line_pen, &tip_pen);
 
-        if (!g_piano_roll_state.selected_indicies.empty() &&
-            g_piano_roll_state.selected_indicies[0] < g_piano_roll_state.inputs.size())
+        if (!piano_roll.current_state.selected_indicies.empty() &&
+            piano_roll.current_state.selected_indicies[0] < piano_roll.current_state.inputs.size())
         {
-            input = g_piano_roll_state.inputs[g_piano_roll_state.selected_indicies[0]];
+            input = piano_roll.current_state.inputs[piano_roll.current_state.selected_indicies[0]];
         }
 
         g_view_logger->info("[PianoRoll] Joystick repaint, can_joystick_be_modified: {}", can_joystick_be_modified());
@@ -955,16 +966,16 @@ def:
 lmb_up:
     ReleaseCapture();
     apply_input_buffer();
-    g_joy_drag = false;
+    piano_roll.joy_drag = false;
     goto def;
 
 mouse_move:
-    if (!can_modify_inputs())
+    if (!piano_roll.readwrite)
     {
-        g_joy_drag = false;
+        piano_roll.joy_drag = false;
     }
 
-    if (!g_joy_drag)
+    if (!piano_roll.joy_drag)
     {
         goto def;
     }
@@ -994,46 +1005,45 @@ mouse_move:
     if (abs(x) <= 8) x = 0;
     if (abs(y) <= 8) y = 0;
 
-    SetWindowRedraw(g_lv_hwnd, false);
-    for (auto selected_index : g_piano_roll_state.selected_indicies)
+    SetWindowRedraw(piano_roll.lv_hwnd, false);
+    for (auto selected_index : piano_roll.current_state.selected_indicies)
     {
-        g_piano_roll_state.inputs[selected_index].x = y;
-        g_piano_roll_state.inputs[selected_index].y = x;
-        ListView_Update(g_lv_hwnd, selected_index);
+        piano_roll.current_state.inputs[selected_index].x = y;
+        piano_roll.current_state.inputs[selected_index].y = x;
+        ListView_Update(piano_roll.lv_hwnd, selected_index);
     }
-    SetWindowRedraw(g_lv_hwnd, true);
-    g_inputs_different = true;
-    RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+    SetWindowRedraw(piano_roll.lv_hwnd, true);
+    piano_roll.inputs_different = true;
+    RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
     goto def;
 }
 
 /**
  * Called when the selection in the piano roll listview changes.
  */
-void on_piano_roll_selection_changed()
+static void on_piano_roll_selection_changed()
 {
-    g_piano_roll_state.selected_indicies = get_listview_selection(g_lv_hwnd);
-
+    piano_roll.current_state.selected_indicies = get_listview_selection(piano_roll.lv_hwnd);
     update_groupbox_status_text();
-    RedrawWindow(g_joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+    RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
 }
 
 /**
  * The window procedure for the listview control.
  */
-LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR)
+static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR)
 {
     switch (msg)
     {
     case WM_CONTEXTMENU: {
-        if (g_lv_ignore_context_menu)
+        if (piano_roll.lv_ignore_context_menu)
         {
-            g_lv_ignore_context_menu = false;
+            piano_roll.lv_ignore_context_menu = false;
             break;
         }
 
         HMENU h_menu = CreatePopupMenu();
-        const auto base_style = can_modify_inputs() ? MF_ENABLED : MF_DISABLED;
+        const auto base_style = piano_roll.readwrite ? MF_ENABLED : MF_DISABLED;
         AppendMenu(h_menu, MF_STRING, 1, L"Copy\tCtrl+C");
         AppendMenu(h_menu, base_style | MF_STRING, 2, L"Paste\tCtrl+V");
         AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
@@ -1083,29 +1093,29 @@ LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         ScreenToClient(hwnd, &lplvhtti.pt);
         ListView_SubItemHitTest(hwnd, &lplvhtti);
 
-        if (lplvhtti.iItem < 0 || lplvhtti.iItem >= g_piano_roll_state.inputs.size())
+        if (lplvhtti.iItem < 0 || lplvhtti.iItem >= piano_roll.current_state.inputs.size())
         {
             g_view_logger->info("[PianoRoll] iItem out of range");
             goto def;
         }
 
         // Don't start a dragging operation if we're trying to modify read-only inputs
-        if (!can_modify_inputs() && lplvhtti.iSubItem >= 4)
+        if (!piano_roll.readwrite && lplvhtti.iSubItem >= 4)
         {
             break;
         }
 
-        g_lv_dragging = true;
-        g_lv_drag_column = lplvhtti.iSubItem;
+        piano_roll.lv_dragging = true;
+        piano_roll.lv_drag_column = lplvhtti.iSubItem;
 
         // Case for button dragging: store some info about the clicked button
         if (lplvhtti.iSubItem >= 4)
         {
-            auto input = g_piano_roll_state.inputs[lplvhtti.iItem];
+            auto input = piano_roll.current_state.inputs[lplvhtti.iItem];
 
-            g_lv_drag_initial_value = !get_input_value_from_column_index(input, g_lv_drag_column);
-            g_lv_drag_unset = GetKeyState(VK_RBUTTON) & 0x100;
-            g_lv_ignore_context_menu = GetKeyState(VK_RBUTTON) & 0x100;
+            piano_roll.lv_drag_initial_value = !get_input_value_from_column_index(input, piano_roll.lv_drag_column);
+            piano_roll.lv_drag_unset = GetKeyState(VK_RBUTTON) & 0x100;
+            piano_roll.lv_ignore_context_menu = GetKeyState(VK_RBUTTON) & 0x100;
         }
 
         goto handle_mouse_move;
@@ -1114,9 +1124,9 @@ LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         goto handle_mouse_move;
     case WM_LBUTTONUP:
     case WM_RBUTTONUP:
-        if (g_lv_dragging)
+        if (piano_roll.lv_dragging)
         {
-            g_lv_dragging = false;
+            piano_roll.lv_dragging = false;
             apply_input_buffer();
         }
         break;
@@ -1185,19 +1195,19 @@ handle_mouse_move:
 
     // Disable dragging if the corresponding mouse button was released. More reliable to do this here instead of
     // MOUSE_XBUTTONDOWN.
-    const bool prev_lv_dragging = g_lv_dragging;
+    const bool prev_lv_dragging = piano_roll.lv_dragging;
 
-    if (!g_lv_drag_unset && !(GetKeyState(VK_LBUTTON) & 0x100))
+    if (!piano_roll.lv_drag_unset && !(GetKeyState(VK_LBUTTON) & 0x100))
     {
-        g_lv_dragging = false;
+        piano_roll.lv_dragging = false;
     }
 
-    if (g_lv_drag_unset && !(GetKeyState(VK_RBUTTON) & 0x100))
+    if (piano_roll.lv_drag_unset && !(GetKeyState(VK_RBUTTON) & 0x100))
     {
-        g_lv_dragging = false;
+        piano_roll.lv_dragging = false;
     }
 
-    if (!g_lv_dragging)
+    if (!piano_roll.lv_dragging)
     {
         if (prev_lv_dragging)
         {
@@ -1211,14 +1221,14 @@ handle_mouse_move:
     ScreenToClient(hwnd, &lplvhtti.pt);
     ListView_SubItemHitTest(hwnd, &lplvhtti);
 
-    if (lplvhtti.iItem < 0 || lplvhtti.iItem >= g_piano_roll_state.inputs.size())
+    if (lplvhtti.iItem < 0 || lplvhtti.iItem >= piano_roll.current_state.inputs.size())
     {
         g_view_logger->info("[PianoRoll] iItem out of range");
         goto def;
     }
 
     // Case for dragging the playhead: seek to the desired frame
-    if (g_lv_drag_column == 0)
+    if (piano_roll.lv_drag_column == 0)
     {
         if (!can_seek())
         {
@@ -1229,7 +1239,7 @@ handle_mouse_move:
         return 0;
     }
 
-    if (!can_modify_inputs())
+    if (!piano_roll.readwrite)
     {
         goto def;
     }
@@ -1242,28 +1252,28 @@ handle_mouse_move:
     // During a drag operation, we just mutate the input vector in memory and update the listview without doing anything
     // with the core. Only when the drag ends do we actually apply the changes to the core via begin_warp_modify
 
-    const auto column = g_config.piano_roll_constrain_edit_to_column ? g_lv_drag_column : lplvhtti.iSubItem;
-    const auto new_value = g_lv_drag_unset ? 0 : g_lv_drag_initial_value;
+    const auto column = g_config.piano_roll_constrain_edit_to_column ? piano_roll.lv_drag_column : lplvhtti.iSubItem;
+    const auto new_value = piano_roll.lv_drag_unset ? 0 : piano_roll.lv_drag_initial_value;
 
-    SetWindowRedraw(g_lv_hwnd, false);
+    SetWindowRedraw(piano_roll.lv_hwnd, false);
 
-    set_input_value_from_column_index(&g_piano_roll_state.inputs[lplvhtti.iItem], column, new_value);
+    set_input_value_from_column_index(&piano_roll.current_state.inputs[lplvhtti.iItem], column, new_value);
     ListView_Update(hwnd, lplvhtti.iItem);
 
     // If we are editing a row inside the selection, we want to apply the same modify operation to the other selected
     // rows.
-    if (std::ranges::find(g_piano_roll_state.selected_indicies, lplvhtti.iItem) !=
-        g_piano_roll_state.selected_indicies.end())
+    if (std::ranges::find(piano_roll.current_state.selected_indicies, lplvhtti.iItem) !=
+        piano_roll.current_state.selected_indicies.end())
     {
-        for (const auto &i : g_piano_roll_state.selected_indicies)
+        for (const auto &i : piano_roll.current_state.selected_indicies)
         {
-            set_input_value_from_column_index(&g_piano_roll_state.inputs[i], column, new_value);
+            set_input_value_from_column_index(&piano_roll.current_state.inputs[i], column, new_value);
             ListView_Update(hwnd, i);
         }
     }
 
-    SetWindowRedraw(g_lv_hwnd, true);
-    g_inputs_different = true;
+    SetWindowRedraw(piano_roll.lv_hwnd, true);
+    piano_roll.inputs_different = true;
 
     goto def;
 }
@@ -1271,26 +1281,23 @@ handle_mouse_move:
 /**
  * The window procedure for the piano roll dialog.
  */
-LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
-    case WM_EXECUTE_DISPATCHER:
-        g_piano_roll_dispatcher->execute();
-        break;
     case WM_INITDIALOG: {
         // We create all the child controls here because windows dialog scaling would mess our stuff up when mixing
         // dialog manager and manual creation
-        g_hwnd = hwnd;
-        g_joy_hwnd = CreateWindowEx(WS_EX_STATICEDGE, JOYSTICK_CLASS, L"", WS_CHILD | WS_VISIBLE, 17, 30, 131, 131,
-                                    g_hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        piano_roll.hwnd = hwnd;
+        piano_roll.joy_hwnd = CreateWindowEx(WS_EX_STATICEDGE, JOYSTICK_CLASS, L"", WS_CHILD | WS_VISIBLE, 17, 30, 131,
+                                             131, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         CreateWindowEx(0, WC_STATIC, L"History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,
-                       131, 15, g_hwnd, nullptr, g_main_ctx.hinst, nullptr);
-        g_hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, L"",
-                                     WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, 17, 186,
-                                     131, 181, g_hwnd, nullptr, g_main_ctx.hinst, nullptr);
-        g_status_hwnd = CreateWindowEx(0, WC_STATIC, L"", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT, 17, 370, 131, 60,
-                                       g_hwnd, nullptr, g_main_ctx.hinst, nullptr);
+                       131, 15, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        piano_roll.hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, L"",
+                                              WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY,
+                                              17, 186, 131, 181, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        piano_roll.status_hwnd = CreateWindowEx(0, WC_STATIC, L"", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT, 17, 370,
+                                                131, 60, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
         // Some controls don't get the font set by default, so we do it manually
         EnumChildWindows(
@@ -1306,17 +1313,19 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         RECT grid_rect = get_window_rect_client_space(hwnd, GetDlgItem(hwnd, IDC_LIST_PIANO_ROLL));
 
-        g_lv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, nullptr, lv_style, grid_rect.left, grid_rect.top,
-                                   grid_rect.right - grid_rect.left, grid_rect.bottom - grid_rect.top, hwnd,
-                                   (HMENU)IDC_PIANO_ROLL_LV, g_main_ctx.hinst, nullptr);
-        SetWindowSubclass(g_lv_hwnd, list_view_proc, 0, 0);
+        piano_roll.lv_hwnd =
+            CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, nullptr, lv_style, grid_rect.left, grid_rect.top,
+                           grid_rect.right - grid_rect.left, grid_rect.bottom - grid_rect.top, hwnd,
+                           (HMENU)IDC_PIANO_ROLL_LV, g_main_ctx.hinst, nullptr);
+        SetWindowSubclass(piano_roll.lv_hwnd, list_view_proc, 0, 0);
 
-        ListView_SetExtendedListViewStyle(g_lv_hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+        ListView_SetExtendedListViewStyle(piano_roll.lv_hwnd,
+                                          LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
         HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK, 1, 0);
         ImageList_AddIcon(image_list, LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_CURRENT)));
         ImageList_AddIcon(image_list, LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_MARKER)));
-        ListView_SetImageList(g_lv_hwnd, image_list, LVSIL_SMALL);
+        ListView_SetImageList(piano_roll.lv_hwnd, image_list, LVSIL_SMALL);
 
         LVCOLUMN lv_column{};
         lv_column.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -1326,30 +1335,30 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-lvcolumnw#remarks
         lv_column.cx = 1;
         lv_column.pszText = const_cast<LPWSTR>(L"");
-        ListView_InsertColumn(g_lv_hwnd, 0, &lv_column);
+        ListView_InsertColumn(piano_roll.lv_hwnd, 0, &lv_column);
 
         lv_column.cx = 26;
         lv_column.pszText = const_cast<LPWSTR>(L"");
-        ListView_InsertColumn(g_lv_hwnd, 1, &lv_column);
+        ListView_InsertColumn(piano_roll.lv_hwnd, 1, &lv_column);
 
         lv_column.cx = 65;
         lv_column.pszText = const_cast<LPWSTR>(L"Frame");
-        ListView_InsertColumn(g_lv_hwnd, 2, &lv_column);
+        ListView_InsertColumn(piano_roll.lv_hwnd, 2, &lv_column);
 
         lv_column.cx = 40;
         lv_column.pszText = const_cast<LPWSTR>(L"X");
-        ListView_InsertColumn(g_lv_hwnd, 3, &lv_column);
+        ListView_InsertColumn(piano_roll.lv_hwnd, 3, &lv_column);
         lv_column.pszText = const_cast<LPWSTR>(L"Y");
-        ListView_InsertColumn(g_lv_hwnd, 4, &lv_column);
+        ListView_InsertColumn(piano_roll.lv_hwnd, 4, &lv_column);
 
         lv_column.cx = 30;
         for (int i = 4; i <= 15; ++i)
         {
             lv_column.pszText = const_cast<LPWSTR>(get_button_name_from_column_index(i));
-            ListView_InsertColumn(g_lv_hwnd, i + 1, &lv_column);
+            ListView_InsertColumn(piano_roll.lv_hwnd, i + 1, &lv_column);
         }
 
-        ListView_DeleteColumn(g_lv_hwnd, 0);
+        ListView_DeleteColumn(piano_roll.lv_hwnd, 0);
 
         // Manually call all the setup-related callbacks
         update_inputs();
@@ -1362,11 +1371,23 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         update_groupbox_status_text();
         update_history_listbox();
 
-        SendMessage(hwnd, WM_SIZE, 0, 0);
+        ResizeAnchor::add_anchors(
+            piano_roll.hwnd,
+            {
+                {piano_roll.lv_hwnd, ResizeAnchor::FULL_ANCHOR},
+                {piano_roll.joy_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
+                {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
+            });
 
         break;
     }
     case WM_DESTROY:
+        g_view_logger->info("[PianoRoll] Unsubscribing from {} messages...", piano_roll.unsubscribe_funcs.size());
+        for (auto unsubscribe_func : piano_roll.unsubscribe_funcs)
+        {
+            unsubscribe_func();
+        }
+
         EnumChildWindows(
             hwnd,
             [](HWND hwnd, LPARAM) {
@@ -1374,28 +1395,13 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 return TRUE;
             },
             0);
-        g_lv_hwnd = nullptr;
-        g_hist_hwnd = nullptr;
-        g_hwnd = nullptr;
+        piano_roll.lv_hwnd = nullptr;
+        piano_roll.hist_hwnd = nullptr;
+        piano_roll.hwnd = nullptr;
         break;
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;
-    case WM_SIZE: {
-        HWND gp_hwnd = GetDlgItem(hwnd, IDC_STATIC);
-
-        RECT rect{};
-        GetClientRect(hwnd, &rect);
-
-        RECT lv_rect = get_window_rect_client_space(hwnd, g_lv_hwnd);
-        RECT gp_rect = get_window_rect_client_space(hwnd, gp_hwnd);
-
-        SetWindowPos(g_lv_hwnd, nullptr, 0, 0, rect.right - 10 - lv_rect.left, rect.bottom - 10 - lv_rect.top,
-                     SWP_NOMOVE | SWP_NOZORDER);
-        SetWindowPos(gp_hwnd, nullptr, 0, 0, gp_rect.right - gp_rect.left, rect.bottom - 10 - gp_rect.top,
-                     SWP_NOMOVE | SWP_NOZORDER);
-        break;
-    }
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
@@ -1406,17 +1412,17 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         }
 
-        if ((HWND)lParam == g_hist_hwnd && HIWORD(wParam) == LBN_SELCHANGE)
+        if ((HWND)lParam == piano_roll.hist_hwnd && HIWORD(wParam) == LBN_SELCHANGE)
         {
-            auto index = ListBox_GetCurSel(g_hist_hwnd);
+            auto index = ListBox_GetCurSel(piano_roll.hist_hwnd);
 
-            if (index < 0 || index >= g_piano_roll_history.size())
+            if (index < 0 || index >= piano_roll.piano_roll_history.size())
             {
                 break;
             }
 
-            g_piano_roll_state_index = index;
-            set_piano_roll_state(g_piano_roll_history[index]);
+            piano_roll.state_index = index;
+            set_piano_roll_state(piano_roll.piano_roll_history[index]);
         }
         break;
     case WM_NOTIFY: {
@@ -1443,7 +1449,7 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case LVN_GETDISPINFO: {
             const auto plvdi = (NMLVDISPINFO *)lParam;
 
-            if (plvdi->item.iItem < 0 || plvdi->item.iItem >= g_piano_roll_state.inputs.size())
+            if (plvdi->item.iItem < 0 || plvdi->item.iItem >= piano_roll.current_state.inputs.size())
             {
                 g_view_logger->info("[PianoRoll] iItem out of range");
                 break;
@@ -1454,18 +1460,16 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 break;
             }
 
-            auto input = g_piano_roll_state.inputs[plvdi->item.iItem];
+            auto input = piano_roll.current_state.inputs[plvdi->item.iItem];
 
             switch (plvdi->item.iSubItem)
             {
             case 0: {
-                const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
-
-                if (info.current_sample == plvdi->item.iItem)
+                if (piano_roll.current_sample == plvdi->item.iItem)
                 {
                     plvdi->item.iImage = 0;
                 }
-                else if (g_seek_savestate_frames.contains(plvdi->item.iItem))
+                else if (piano_roll.seek_savestate_frames.contains(plvdi->item.iItem))
                 {
                     plvdi->item.iImage = 1;
                 }
@@ -1504,9 +1508,7 @@ LRESULT CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-#pragma endregion
-
-void init()
+void PianoRoll::init()
 {
     WNDCLASS wndclass = {0};
     wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
@@ -1517,41 +1519,32 @@ void init()
     RegisterClass(&wndclass);
 }
 
-void show()
+void PianoRoll::show()
 {
-    if (g_hwnd)
+    if (piano_roll.hwnd)
     {
-        BringWindowToTop(g_hwnd);
+        BringWindowToTop(piano_roll.hwnd);
         return;
     }
 
-    std::thread([] {
-        g_piano_roll_dispatcher = std::make_shared<Dispatcher>(GetCurrentThreadId(), []() {
-            if (g_hwnd)
-            {
-                SendMessage(g_hwnd, WM_EXECUTE_DISPATCHER, 0, 0);
-            }
-        });
+    piano_roll.unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed));
+    piano_roll.unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::CurrentSampleChanged, on_current_sample_changed));
+    piano_roll.unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::UnfreezeCompleted, on_unfreeze_completed));
+    piano_roll.unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed));
+    piano_roll.unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed));
+    piano_roll.unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::SeekSavestateChanged, on_seek_savestate_changed));
+    piano_roll.unsubscribe_funcs.push_back(
+        Messenger::subscribe(Messenger::Message::EmuPausedChanged, on_emu_paused_changed));
 
-        std::vector<std::function<void()>> unsubscribe_funcs;
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed));
-        unsubscribe_funcs.push_back(
-            Messenger::subscribe(Messenger::Message::CurrentSampleChanged, on_current_sample_changed));
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::UnfreezeCompleted, on_unfreeze_completed));
-        unsubscribe_funcs.push_back(
-            Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed));
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed));
-        unsubscribe_funcs.push_back(
-            Messenger::subscribe(Messenger::Message::SeekSavestateChanged, on_seek_savestate_changed));
-        unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::EmuPausedChanged, on_emu_paused_changed));
-
-        DialogBox(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PIANO_ROLL), 0, (DLGPROC)dialog_proc);
-
-        g_view_logger->info("[PianoRoll] Unsubscribing from {} messages...", unsubscribe_funcs.size());
-        for (auto unsubscribe_func : unsubscribe_funcs)
-        {
-            unsubscribe_func();
-        }
-    }).detach();
+    piano_roll.hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PIANO_ROLL), g_main_ctx.hwnd, dialog_proc);
+    ShowWindow(piano_roll.hwnd, SW_SHOW);
 }
-} // namespace PianoRoll
+
+HWND PianoRoll::hwnd()
+{
+    return piano_roll.hwnd;
+}

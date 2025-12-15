@@ -100,9 +100,10 @@ lust.describe('mupen64', function()
                 local FILENAME = "test.st"
 
                 __prev_savestate_do_file = savestate.do_file
-                savestate.do_file = function(filename, mode)
+                savestate.do_file = function(filename, mode, callback)
                     lust.expect(filename).to.equal(FILENAME)
                     lust.expect(mode).to.equal("save")
+                    lust.expect(callback).to.be.a('function')
                 end
 
                 savestate.savefile(FILENAME)
@@ -113,9 +114,10 @@ lust.describe('mupen64', function()
                 local FILENAME = "test.st"
 
                 __prev_savestate_do_file = savestate.do_file
-                savestate.do_file = function(filename, mode)
+                savestate.do_file = function(filename, mode, callback)
                     lust.expect(filename).to.equal(FILENAME)
                     lust.expect(mode).to.equal("load")
+                    lust.expect(callback).to.be.a('function')
                 end
 
                 savestate.loadfile(FILENAME)

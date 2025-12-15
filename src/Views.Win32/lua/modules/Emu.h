@@ -137,7 +137,10 @@ static int LuaPlaySound(lua_State *L)
 
 static int EmuPause(lua_State *L)
 {
-    if (!lua_toboolean(L, 1))
+    // COMPAT: Inverted for compatibility with older scripts
+    const auto pause = !lua_toboolean(L, 1);
+
+    if (pause)
     {
         g_main_ctx.core_ctx->vr_pause_emu();
     }

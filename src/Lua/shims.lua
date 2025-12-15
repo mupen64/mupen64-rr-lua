@@ -58,7 +58,7 @@ memory.recompilenext = memory.recompile
 ---@return nil
 ---@deprecated This function is not guaranteed to succeed successfully or at any specific point in time. Use `savestate.do_file` instead.
 function savestate.savefile(filename)
-    savestate.do_file(filename, "save")
+    savestate.do_file(filename, "save", function() end)
 end
 
 ---Loads a savestate from `filename`.
@@ -66,5 +66,5 @@ end
 ---@return nil
 ---@deprecated This function is not guaranteed to succeed successfully or at any specific point in time. Use `savestate.do_file` instead.
 function savestate.loadfile(filename)
-    savestate.do_file(filename, "load")
+    savestate.do_file(filename, "load", function() end)
 end

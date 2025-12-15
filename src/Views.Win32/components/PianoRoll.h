@@ -20,4 +20,9 @@ void init();
  * Shows the piano roll window.
  */
 void show();
+
+/**
+ * \brief Gets the HWND of the piano roll window. Might be invalid.
+ */
+HWND hwnd();
 } // namespace PianoRoll

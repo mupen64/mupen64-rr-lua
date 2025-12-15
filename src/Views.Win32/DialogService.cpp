@@ -9,14 +9,18 @@
 #include <DialogService.h>
 #include <components/Statusbar.h>
 
-// std::unordered_map<std::string, size_t> dialog_choice_map;
 StrUtils::unordered_string_map<size_t> dialog_choice_map;
+
+const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART};
 
 size_t DialogService::show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
                                                   const wchar_t *str, const wchar_t *title, core_dialog_type type,
                                                   void *hwnd, const wchar_t *details)
 {
-    if (g_config.silent_mode)
+
+    const auto silenced = std::ranges::find(ALWAYS_LOUD_IDS, id) == ALWAYS_LOUD_IDS.end() && g_config.silent_mode;
+
+    if (silenced)
     {
         const auto default_index = g_config.silent_mode_dialog_choices[IOUtils::to_wide_string(id)];
         g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str,

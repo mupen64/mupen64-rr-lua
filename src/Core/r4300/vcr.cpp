@@ -1527,8 +1527,6 @@ size_t vcr_find_closest_savestate_before_frame(size_t frame)
 
 static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool resume, bool warp_modify)
 {
-    std::unique_lock lock(vcr_mtx);
-
     // Queue of functions to call at the end of the function after the lock is released
     std::queue<std::function<void()>> post_unlock_callbacks{};
 
@@ -1743,6 +1741,7 @@ finish: {
 
 core_result vcr_begin_seek(std::string str, bool pause_at_end)
 {
+    std::unique_lock lock(vcr_mtx);
     return vcr_begin_seek_impl(str, pause_at_end, true, false);
 }
 
