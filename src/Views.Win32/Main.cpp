@@ -488,31 +488,35 @@ void ai_len_changed()
 
 void update_titlebar()
 {
-    std::wstring text = get_mupen_name();
+    ThreadPool::submit_task([] {
+        std::wstring text = get_mupen_name();
 
-    if (g_emu_starting)
-    {
-        text += L" - Starting...";
-    }
+        if (g_emu_starting)
+        {
+            text += L" - Starting...";
+        }
 
-    if (g_main_ctx.core_ctx->vr_get_launched())
-    {
-        text += std::format(
-            L" - {}", IOUtils::to_wide_string(reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
-    }
+        if (g_main_ctx.core_ctx->vr_get_launched())
+        {
+            text += std::format(L" - {}", IOUtils::to_wide_string(
+                                              reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
-    {
-        auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
-        text += std::format(L" - {}", vcr_filename.c_str());
-    }
+        if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
+        {
+            auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
+            text += std::format(L" - {}", vcr_filename.c_str());
+        }
 
-    if (EncodingManager::is_capturing())
-    {
-        text += std::format(L" - {}", EncodingManager::get_current_path().filename().wstring());
-    }
+        if (EncodingManager::is_capturing())
+        {
+            text += std::format(L" - {}", EncodingManager::get_current_path().filename().wstring());
+        }
 
-    SetWindowText(g_main_ctx.hwnd, text.c_str());
+        g_main_ctx.dispatcher->invoke([=] {
+            SetWindowText(g_main_ctx.hwnd, text.c_str());
+        });
+    });
 }
 
 #pragma region Change notifications
@@ -903,7 +907,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         if (confirm_user_exit())
         {
             g_main_ctx.exiting = true;
-            
+
             LuaDialog::close_all();
 
             std::thread([] {
@@ -1211,6 +1215,10 @@ static bool is_dialog_message(MSG *msg)
         return true;
     }
     if (IsWindow(Seeker::hwnd()) && IsDialogMessage(Seeker::hwnd(), msg))
+    {
+        return true;
+    }
+    if (IsWindow(PianoRoll::hwnd()) && IsDialogMessage(PianoRoll::hwnd(), msg))
     {
         return true;
     }
