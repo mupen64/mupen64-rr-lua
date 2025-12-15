@@ -31,7 +31,6 @@ struct t_dialog_state
     HWND inst_hwnd{};
     HWND placeholder_hwnd{};
     RECT initial_rect{};
-    bool first_show = true;
     std::vector<std::shared_ptr<t_instance_context>> stored_contexts{};
 };
 
@@ -58,9 +57,9 @@ static void update_config_paths()
     // Prevent updating config paths while the application is exiting so we don't write an empty list :P
     if (g_main_ctx.exiting) return;
 
-    g_config.lua_paths.clear();    
+    g_config.lua_paths.clear();
     g_config.lua_paths.reserve(g_lua_instance_wnd_ctxs.size());
-    
+
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
         g_config.lua_paths.insert(g_config.lua_paths.begin(), ctx->typed_path);
@@ -603,17 +602,14 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
     return FALSE;
 }
 
+void LuaDialog::init()
+{
+    const auto paths = std::vector<std::filesystem::path>(g_config.lua_paths.begin(), g_config.lua_paths.end());
+    add_instances(paths);
+}
+
 void LuaDialog::show()
 {
-    // Add the config paths the first time, before the dialog is even shown so we don't have to deal with automatic
-    // rebuilding.
-    if (g_dlg.first_show)
-    {
-        g_dlg.first_show = false;
-        const auto paths = std::vector<std::filesystem::path>(g_config.lua_paths.begin(), g_config.lua_paths.end());
-        add_instances(paths);
-    }
-
     if (g_dlg.mgr_hwnd)
     {
         BringWindowToTop(g_dlg.mgr_hwnd);

@@ -12,6 +12,11 @@
 namespace LuaDialog
 {
 /**
+ * \brief Initializes the Lua manager dialog module.
+ */
+void init();
+
+/**
  * \brief Shows the Lua manager dialog.
  */
 void show();
