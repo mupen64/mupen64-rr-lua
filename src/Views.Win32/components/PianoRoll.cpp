@@ -689,31 +689,30 @@ static void update_groupbox_status_text()
         g_main_ctx.dispatcher->invoke([=] {
             if (warp_modify_active)
             {
-                SetDlgItemText(piano_roll.hwnd, IDC_STATIC, L"Input - Warping...");
+                SetWindowText(piano_roll.hwnd, L"Piano Roll - Warping...");
                 return;
             }
 
             if (!paused)
             {
-                SetDlgItemText(piano_roll.hwnd, IDC_STATIC, L"Input - Resumed (readonly)");
+                SetWindowText(piano_roll.hwnd, L"Piano Roll - Resumed (readonly)");
                 return;
             }
 
             if (piano_roll.current_state.selected_indicies.empty())
             {
-                SetDlgItemText(piano_roll.hwnd, IDC_STATIC, L"Input");
+                SetWindowText(piano_roll.hwnd, L"Piano Roll");
             }
             else if (piano_roll.current_state.selected_indicies.size() == 1)
             {
-                SetDlgItemText(piano_roll.hwnd, IDC_STATIC,
-                               std::format(L"Input - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
+                SetWindowText(piano_roll.hwnd,
+                              std::format(L"Piano Roll - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
             }
             else
             {
-                SetDlgItemText(
-                    piano_roll.hwnd, IDC_STATIC,
-                    std::format(L"Input - {} frames selected", piano_roll.current_state.selected_indicies.size())
-                        .c_str());
+                SetWindowText(piano_roll.hwnd, std::format(L"Piano Roll - {} frames selected",
+                                                           piano_roll.current_state.selected_indicies.size())
+                                                   .c_str());
             }
         });
     });
@@ -1372,7 +1371,13 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         update_groupbox_status_text();
         update_history_listbox();
 
-        SendMessage(hwnd, WM_SIZE, 0, 0);
+        ResizeAnchor::add_anchors(
+            piano_roll.hwnd,
+            {
+                {piano_roll.lv_hwnd, ResizeAnchor::FULL_ANCHOR},
+                {piano_roll.joy_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
+                {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
+            });
 
         break;
     }
@@ -1397,21 +1402,6 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;
-    case WM_SIZE: {
-        HWND gp_hwnd = GetDlgItem(hwnd, IDC_STATIC);
-
-        RECT rect{};
-        GetClientRect(hwnd, &rect);
-
-        RECT lv_rect = get_window_rect_client_space(hwnd, piano_roll.lv_hwnd);
-        RECT gp_rect = get_window_rect_client_space(hwnd, gp_hwnd);
-
-        SetWindowPos(piano_roll.lv_hwnd, nullptr, 0, 0, rect.right - 10 - lv_rect.left, rect.bottom - 10 - lv_rect.top,
-                     SWP_NOMOVE | SWP_NOZORDER);
-        SetWindowPos(gp_hwnd, nullptr, 0, 0, gp_rect.right - gp_rect.left, rect.bottom - 10 - gp_rect.top,
-                     SWP_NOMOVE | SWP_NOZORDER);
-        break;
-    }
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
