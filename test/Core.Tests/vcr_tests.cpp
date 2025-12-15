@@ -332,7 +332,6 @@ TEST_CASE("input_callback_override_works_when_idle", "vcr_on_controller_poll")
     REQUIRE(input.value == 0xDEAD);
 }
 
-
 TEST_CASE("input_callback_called_on_last_frame_of_movie", "vcr_on_controller_poll")
 {
     prepare_test();
@@ -1026,7 +1025,7 @@ TEST_CASE("changes_task_and_header_and_inputs", "vcr_continue_recording")
     params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {
 
     };
-    
+
     core_create(&params, &ctx);
 
     cfg.vcr_backups = false;
@@ -1047,7 +1046,6 @@ TEST_CASE("changes_task_and_header_and_inputs", "vcr_continue_recording")
     REQUIRE(vcr.inputs[1].value == 2);
 }
 
-
 TEST_CASE("invokes_task_callback_correctly", "vcr_continue_recording")
 {
     prepare_test();
@@ -1056,7 +1054,7 @@ TEST_CASE("invokes_task_callback_correctly", "vcr_continue_recording")
 
     };
     bool called{};
-    params.callbacks.task_changed = [&](const auto&) {
+    params.callbacks.task_changed = [&](const auto &) {
         called = true;
         REQUIRE(!is_vcr_lock_held());
     };
@@ -1074,6 +1072,25 @@ TEST_CASE("invokes_task_callback_correctly", "vcr_continue_recording")
     const auto result = vcr_continue_recording();
 
     REQUIRE(called);
+}
+
+TEST_CASE("doesnt_deadlock", "vcr_begin_warp_modify")
+{
+    prepare_test();
+
+    core_create(&params, &ctx);
+
+    cfg.vcr_backups = false;
+
+    vcr.task = task_recording;
+    vcr.hdr.length_samples = 5;
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
+    vcr.current_sample = 4;
+
+    const auto result = vcr_begin_warp_modify({{0}, {0}, {0}, {0}});
+
+    REQUIRE(result == Res_Ok);
 }
 
 #pragma endregion
