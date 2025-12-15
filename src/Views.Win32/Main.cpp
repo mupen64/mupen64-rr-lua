@@ -894,6 +894,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         MGECompositor::create(hwnd);
         PianoRoll::init();
+        LuaDialog::init();
 
         return TRUE;
     case WM_DESTROY:
