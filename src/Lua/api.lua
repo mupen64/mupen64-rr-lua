@@ -1418,8 +1418,25 @@ function movie.is_seeking() end
 ---@return [integer, integer]
 function movie.get_seek_completion() end
 
----Begins a warp modify.
----@param inputs {[string]: boolean}[]
+---Begins a warp modification operation. A "warp modification operation" is the changing of sample data which is
+---temporally behind the current sample.
+---The VCR engine will find the last common sample between the current input buffer and the provided one.
+---Then, the closest savestate prior to that sample will be loaded and recording will be resumed with the
+---modified inputs up to the sample the function was called at.
+---This operation is long-running and status is reported via the WarpModifyStatusChanged message.
+---A successful warp modify operation can be detected by the status changing from warping to none with no errors
+---inbetween.
+---If the provided buffer is identical to the current input buffer (in both content and size), the operation
+---will succeed with no seek.
+---If the provided buffer is larger than the current input buffer and the first differing input is after the
+---current sample, the operation will succeed with no seek. The input buffer will be overwritten with the
+---provided buffer and when the modified frames are reached in the future, they will be "applied" like in
+---playback mode.
+---If the provided buffer is smaller than the current input buffer, the VCR engine will seek to the last frame
+---and otherwise perform the warp modification as normal.
+---An empty input buffer will cause the operation to fail.
+---@param inputs JoypadInputs[] The new input buffer to use for the warp modification. Note that the X/Y joystick values are mismatched: X is Y and Y is X. This behavior is kept for backwards compatibility.
+---@return Result # The operation result.
 function movie.begin_warp_modify(inputs) end
 
 --#endregion
