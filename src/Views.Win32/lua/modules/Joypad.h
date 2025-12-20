@@ -34,9 +34,9 @@ static int lua_get_joypad(lua_State *L)
     A(r, "R");
     A(l, "L");
 #undef A
-    lua_pushinteger(L, g_last_controller_data[i].x);
-    lua_setfield(L, -2, "Y");
     lua_pushinteger(L, g_last_controller_data[i].y);
+    lua_setfield(L, -2, "Y");
+    lua_pushinteger(L, g_last_controller_data[i].x);
     lua_setfield(L, -2, "X");
     return 1;
 }
@@ -78,10 +78,10 @@ static int lua_set_joypad(lua_State *L)
     A(r, "R");
     A(l, "L");
     lua_getfield(L, -1, "Y");
-    g_new_controller_data[i].x = lua_tointeger(L, -1);
+    g_new_controller_data[i].y = lua_tointeger(L, -1);
     lua_pop(L, 1);
     lua_getfield(L, -1, "X");
-    g_new_controller_data[i].y = lua_tointeger(L, -1);
+    g_new_controller_data[i].x = lua_tointeger(L, -1);
     lua_pop(L, 1);
     g_overwrite_controller_data[i] = true;
 #undef A

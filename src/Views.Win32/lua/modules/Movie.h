@@ -189,11 +189,11 @@ static int begin_warp_modify(lua_State *L)
                 auto value = luaL_checkinteger(L, -1);
                 if (key == "X")
                 {
-                    buttons.x = value;
+                    buttons.y = value;
                 }
                 if (key == "Y")
                 {
-                    buttons.y = value;
+                    buttons.x = value;
                 }
             }
             lua_pop(L, 1);

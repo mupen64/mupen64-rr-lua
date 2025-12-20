@@ -921,8 +921,8 @@ static LRESULT CALLBACK joystick_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
         const int mid_x = rect.right / 2;
         const int mid_y = rect.bottom / 2;
-        const int stick_x = (input.y + 128) * rect.right / 256;
-        const int stick_y = (-input.x + 128) * rect.bottom / 256;
+        const int stick_x = (input.x + 128) * rect.right / 256;
+        const int stick_y = (-input.y + 128) * rect.bottom / 256;
 
         FillRect(cdc, &rect, GetSysColorBrush(COLOR_BTNFACE));
 
@@ -1008,8 +1008,8 @@ mouse_move:
     SetWindowRedraw(piano_roll.lv_hwnd, false);
     for (auto selected_index : piano_roll.current_state.selected_indicies)
     {
-        piano_roll.current_state.inputs[selected_index].x = y;
-        piano_roll.current_state.inputs[selected_index].y = x;
+        piano_roll.current_state.inputs[selected_index].y = y;
+        piano_roll.current_state.inputs[selected_index].x = x;
         ListView_Update(piano_roll.lv_hwnd, selected_index);
     }
     SetWindowRedraw(piano_roll.lv_hwnd, true);
@@ -1484,10 +1484,10 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
                 StrNCpy(plvdi->item.pszText, std::to_wstring(plvdi->item.iItem).c_str(), plvdi->item.cchTextMax);
                 break;
             case 2:
-                StrNCpy(plvdi->item.pszText, std::to_wstring(input.y).c_str(), plvdi->item.cchTextMax);
+                StrNCpy(plvdi->item.pszText, std::to_wstring(input.x).c_str(), plvdi->item.cchTextMax);
                 break;
             case 3:
-                StrNCpy(plvdi->item.pszText, std::to_wstring(input.x).c_str(), plvdi->item.cchTextMax);
+                StrNCpy(plvdi->item.pszText, std::to_wstring(input.y).c_str(), plvdi->item.cchTextMax);
                 break;
             default: {
                 auto value = get_input_value_from_column_index(input, plvdi->item.iSubItem);
