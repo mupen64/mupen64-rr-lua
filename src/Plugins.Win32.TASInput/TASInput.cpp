@@ -249,8 +249,8 @@ LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, 
 
 apply:
 
-    char txt[MAX_PATH] = "\0";
-    SendMessage(hwnd, WM_GETTEXT, sizeof(txt), (LPARAM)txt);
+    wchar_t txt[MAX_PATH]{};
+    GetWindowText(hwnd, txt, std::size(txt));
     SendMessage(GetParent(GetParent(hwnd)), WM_EDIT_END, 0, (LPARAM)txt);
     DestroyWindow(hwnd);
 
