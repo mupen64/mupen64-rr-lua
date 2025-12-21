@@ -39,7 +39,7 @@
 #include <windowsx.h>
 #include <shellscalingapi.h>
 #include <core_plugin.h>
-#include <resource.h>
+#include <Resource.h>
 #include <gdiplus.h>
 #include <SDL3/SDL.h>
 #pragma warning(pop)

@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 add_library(Mupen64RR.Plugins.Win32.TASInput MODULE
     "TASInput.h"
-    "stdafx.h"
+    "Common.h"
     "resource.h"
     "NewConfig.h"
     "Helpers.h"
@@ -16,8 +16,7 @@ add_library(Mupen64RR.Plugins.Win32.TASInput MODULE
     "ConfigDialog.h"
     "Combo.h"
         
-    "TASInput.cpp"
-    "stdafx.cpp"
+    "TASInput.cpp" 
     "NewConfig.cpp"
     "Main.cpp"
     "JoystickControl.cpp"
@@ -25,7 +24,7 @@ add_library(Mupen64RR.Plugins.Win32.TASInput MODULE
     "ConfigDialog.cpp"
     "Combo.cpp"
 
-    "rsrc.rc"
+    "Resource.rc"
 )
 set_target_properties(Mupen64RR.Plugins.Win32.TASInput PROPERTIES
     CXX_STANDARD 23

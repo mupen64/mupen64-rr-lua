@@ -5,7 +5,7 @@
  */
 
 
-#include "stdafx.h"
+#include "Common.h"
 #include "GamepadManager.h"
 #include <Main.h>
 

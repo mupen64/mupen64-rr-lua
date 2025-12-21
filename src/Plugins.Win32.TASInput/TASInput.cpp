@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.h"
 #include <Combo.h>
 #include <ConfigDialog.h>
 #include <GamepadManager.h>
