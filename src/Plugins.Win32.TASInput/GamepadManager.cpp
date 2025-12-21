@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-
 #include "Common.h"
 #include "GamepadManager.h"
 #include <Main.h>
 
-struct gamepad_manager_context {
-    SDL_Gamepad* gamepad{};
+struct gamepad_manager_context
+{
+    SDL_Gamepad *gamepad{};
 };
 
 static gamepad_manager_context g_ctx;
@@ -30,7 +30,7 @@ static int32_t remap_axis(int16_t value, const bool is_y_axis)
     {
         g_ef->log_trace(std::format(L"x: {}", std::clamp(mapped, min_target, max_target)).c_str());
     }
-    
+
     return std::clamp(mapped, min_target, max_target);
 }
 
@@ -42,28 +42,23 @@ void GamepadManager::init()
     RT_ASSERT(SDL_Init(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), L"Failed to initialize SDL subsystems");
 }
 
-void GamepadManager::poll_events()
+void GamepadManager::on_sdl_event(const SDL_Event &e)
 {
-    SDL_Event e;
-    while (SDL_PollEvent(&e))
+    switch (e.type)
     {
-        switch (e.type)
+    case SDL_EVENT_GAMEPAD_ADDED: {
+        g_ctx.gamepad = SDL_OpenGamepad(e.gdevice.which);
+        break;
+    }
+    case SDL_EVENT_GAMEPAD_REMOVED:
+        if (g_ctx.gamepad)
         {
-        case SDL_EVENT_GAMEPAD_ADDED:
-            {
-                g_ctx.gamepad = SDL_OpenGamepad(e.gdevice.which);
-                break;
-            }
-        case SDL_EVENT_GAMEPAD_REMOVED:
-            if (g_ctx.gamepad)
-            {
-                SDL_CloseGamepad(g_ctx.gamepad);
-                g_ctx.gamepad = nullptr;
-            }
-            break;
-        default:
-            break;
+            SDL_CloseGamepad(g_ctx.gamepad);
+            g_ctx.gamepad = nullptr;
         }
+        break;
+    default:
+        break;
     }
 }
 
@@ -71,8 +66,7 @@ core_buttons GamepadManager::get_input()
 {
     core_buttons buttons{};
 
-    if (!g_ctx.gamepad)
-        return buttons;
+    if (!g_ctx.gamepad) return buttons;
 
     buttons.a = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_SOUTH);
     buttons.b = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_EAST);

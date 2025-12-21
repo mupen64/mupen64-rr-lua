@@ -11,18 +11,19 @@
  */
 namespace GamepadManager
 {
-    /**
-     * \brief Initializes the subsystem.
-     */
-    void init();
+/**
+ * \brief Initializes the subsystem.
+ */
+void init();
 
-    /**
-     * \brief Polls for gamepad events.
-     */
-    void poll_events();
+/**
+ * \brief Notifies of an SDL event.
+ * \brief e The SDL event.
+ */
+void on_sdl_event(const SDL_Event &e);
 
-    /**
-     * \brief Gets the current gamepad input state.
-     */
-    core_buttons get_input();
+/**
+ * \brief Gets the current gamepad input state.
+ */
+core_buttons get_input();
 } // namespace GamepadManager

@@ -1068,7 +1068,13 @@ static void ui_thread()
                 }
             }
 
-            GamepadManager::poll_events();
+            SDL_Event e;
+            while (SDL_PollEvent(&e))
+            {
+                GamepadManager::on_sdl_event(e);
+            }
+
+            
         }
     }
 
