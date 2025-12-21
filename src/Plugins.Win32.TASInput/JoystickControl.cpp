@@ -90,6 +90,9 @@ static void update_joystick_position(HWND hwnd, t_context* ctx)
     if (std::abs(ctx->y) <= 8)
         ctx->y = 0;
 
+    ctx->x = std::clamp(ctx->x, -128, 127);
+    ctx->y = std::clamp(ctx->y, -128, 127);
+    
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
     SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
 }
