@@ -9,10 +9,10 @@
 #define SUBKEY L"Software\\N64 Emulation\\DLL\\TASDI"
 
 struct t_controller_config {
-    int32_t dpad_right = 0;
-    int32_t dpad_left = 0;
-    int32_t dpad_down = 0;
-    int32_t dpad_up = 0;
+    int32_t dpad_right = SDL_GAMEPAD_BUTTON_INVALID;
+    int32_t dpad_left = SDL_GAMEPAD_BUTTON_INVALID;
+    int32_t dpad_down = SDL_GAMEPAD_BUTTON_INVALID;
+    int32_t dpad_up = SDL_GAMEPAD_BUTTON_INVALID;
 
     int32_t c_right = SDL_GAMEPAD_BUTTON_DPAD_RIGHT;
     int32_t c_left = SDL_GAMEPAD_BUTTON_DPAD_LEFT;
