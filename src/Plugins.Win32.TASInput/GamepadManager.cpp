@@ -7,6 +7,7 @@
 #include "Common.h"
 #include "GamepadManager.h"
 #include <Main.h>
+#include <NewConfig.h>
 
 struct gamepad_manager_context
 {
@@ -68,20 +69,20 @@ core_buttons GamepadManager::get_input()
 
     if (!g_ctx.gamepad) return buttons;
 
-    buttons.a = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_SOUTH);
-    buttons.b = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_EAST);
-    buttons.z = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_WEST);
-    buttons.start = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_START);
-    buttons.l = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
-    buttons.r = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+    buttons.a = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.a);
+    buttons.b = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.b);
+    buttons.z = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.z);
+    buttons.start = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.start);
+    buttons.l = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.l);
+    buttons.r = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.r);
 
-    buttons.du = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_DPAD_UP);
-    buttons.dd = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
-    buttons.dl = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
-    buttons.dr = SDL_GetGamepadButton(g_ctx.gamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+    buttons.du = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_up);
+    buttons.dd = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_down);
+    buttons.dl = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_left);
+    buttons.dr = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_right);
 
-    buttons.x = remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, SDL_GAMEPAD_AXIS_LEFTX), false);
-    buttons.y = -remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, SDL_GAMEPAD_AXIS_LEFTY), true);
+    buttons.x = remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.x), false);
+    buttons.y = -remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.y), true);
 
     return buttons;
 }

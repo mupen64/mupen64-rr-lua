@@ -4,9 +4,20 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef _CONFIG_H_INCLUDED__
-#define _CONFIG_H_INCLUDED__
+#pragma once
 
-void cfgdiag_show(HWND parent);
+namespace ConfigDialog
+{
+/**
+ * \brief Shows the configuration dialog.
+ * \param parent The parent window handle.
+ */
+void show(HWND parent);
 
-#endif
+/**
+ * \brief Notifies of an SDL event.
+ * \brief e The SDL event.
+ */
+void on_sdl_event(const SDL_Event &e);
+
+} // namespace ConfigDialog

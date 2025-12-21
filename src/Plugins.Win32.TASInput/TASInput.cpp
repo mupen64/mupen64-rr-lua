@@ -194,7 +194,7 @@ EXPORT void CALL DllAbout(void* hParent)
 
 EXPORT void CALL DllConfig(void* hParent)
 {
-    cfgdiag_show((HWND)hParent);
+    ConfigDialog::show((HWND)hParent);
 
     // TODO: Do we have to restart the dialogs here like in old version?
 }
@@ -1072,6 +1072,7 @@ static void ui_thread()
             while (SDL_PollEvent(&e))
             {
                 GamepadManager::on_sdl_event(e);
+                ConfigDialog::on_sdl_event(e);
             }
 
             
