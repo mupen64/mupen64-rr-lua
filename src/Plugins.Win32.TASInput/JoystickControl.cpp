@@ -214,8 +214,8 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 ctx->x += increment_x;
             }
 
-            ctx->x = wrapping_clamp(ctx->x, -1.0, 1.0);
-            ctx->y = wrapping_clamp(ctx->y, -1.0, 1.0);
+            ctx->x = MiscHelpers::wrapping_clamp_decimal(ctx->x, -1.0, 1.0);
+            ctx->y = MiscHelpers::wrapping_clamp_decimal(ctx->y, -1.0, 1.0);
 
             RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
             SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);

@@ -44,4 +44,4 @@
 #include <SDL3/SDL.h>
 #pragma warning(pop)
 
-#include <MiscHelpers.h>
+#include <Helpers.h>

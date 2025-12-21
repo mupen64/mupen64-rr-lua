@@ -9,7 +9,7 @@ add_library(Mupen64RR.Plugins.Win32.TASInput MODULE
     "stdafx.h"
     "resource.h"
     "NewConfig.h"
-    "MiscHelpers.h"
+    "Helpers.h"
     "Main.h"
     "JoystickControl.h"
     "GamepadManager.h"

@@ -10,7 +10,6 @@
 #include <GamepadManager.h>
 #include <JoystickControl.h>
 #include <Main.h>
-#include <MiscHelpers.h>
 #include <NewConfig.h>
 #include <TASInput.h>
 
@@ -204,7 +203,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info* info)
 {
     info->ver = 0x0100;
     info->type = plugin_input;
-    strncpy_s(info->name, wstring_to_string(PLUGIN_NAME).c_str(), std::size(info->name));
+    strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));
 }
 
 EXPORT void CALL GetKeys(int Control, core_buttons* Keys)
@@ -445,7 +444,7 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
             ctx->set_status(L"Recording new combo...");
             ctx->combos.push_back({.name = "Unnamed Combo"});
-            ctx->active_combo_index = ListBox_InsertString(ctx->combo_listbox, -1, string_to_wstring(ctx->combos.back().name).c_str());
+            ctx->active_combo_index = ListBox_InsertString(ctx->combo_listbox, -1, IOUtils::to_wide_string(ctx->combos.back().name).c_str());
             ListBox_SetCurSel(ctx->combo_listbox, ctx->active_combo_index);
             ctx->combo_task = ComboTask::Record;
             break;
@@ -530,9 +529,10 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             SetWindowText(ctx->hwnd, std::format(L"TASInput - Controller {}", ctx->controller_index + 1).c_str());
 
             SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
-            SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETPOS, TRUE, remap(new_config.x_scale[ctx->controller_index], 0, 1, 10, 2010));
+            SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETPOS, TRUE,
+                               (int)MiscHelpers::remap(new_config.x_scale[ctx->controller_index], 0.0f, 1.0f, 10.0f, 2010.0f));
             SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
-            SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETPOS, TRUE, remap(new_config.y_scale[ctx->controller_index], 0, 1, 10, 2010));
+            SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETPOS, TRUE, (int)MiscHelpers::remap(new_config.y_scale[ctx->controller_index], 0.0f, 1.0f, 10.0f, 2010.0f));
 
             SendMessage(GetDlgItem(ctx->hwnd, IDC_X_DOWN), WM_SETFONT, (WPARAM)icon_font, TRUE);
             SendMessage(GetDlgItem(ctx->hwnd, IDC_X_UP), WM_SETFONT, (WPARAM)icon_font, TRUE);
@@ -780,10 +780,10 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             case IDC_SLIDERY:
                 {
                     const auto id = LOWORD(wparam);
-                    const auto min = SendDlgItemMessage(ctx->hwnd, id, TBM_GETRANGEMIN, 0, 0);
-                    const auto max = SendDlgItemMessage(ctx->hwnd, id, TBM_GETRANGEMAX, 0, 0);
-                    const int pos = SendDlgItemMessage(ctx->hwnd, id, TBM_GETPOS, 0, 0);
-                    const auto scale = remap(pos, min, max, 0, 1);
+                    const auto min = (float)SendDlgItemMessage(ctx->hwnd, id, TBM_GETRANGEMIN, 0, 0);
+                    const auto max = (float)SendDlgItemMessage(ctx->hwnd, id, TBM_GETRANGEMAX, 0, 0);
+                    const auto pos = (float)SendDlgItemMessage(ctx->hwnd, id, TBM_GETPOS, 0, 0);
+                    const auto scale = MiscHelpers::remap(pos, min, max, 0.0f, 1.0f);
                     if (id == IDC_SLIDERX)
                     {
                         new_config.x_scale[ctx->controller_index] = scale;
@@ -875,7 +875,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         case IDC_X_UP:
             {
                 int increment = get_joystick_increment(LOWORD(wparam) == IDC_X_UP);
-                ctx->current_input.x = wrapping_clamp(ctx->current_input.x + increment, -128, 127);
+                ctx->current_input.x = MiscHelpers::wrapping_clamp(ctx->current_input.x + increment, -128, 127);
                 ctx->set_visuals(ctx->current_input);
             }
             break;
@@ -883,7 +883,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         case IDC_Y_UP:
             {
                 int increment = get_joystick_increment(LOWORD(wparam) == IDC_Y_UP);
-                ctx->current_input.y = wrapping_clamp(ctx->current_input.y + increment, -128, 127);
+                ctx->current_input.y = MiscHelpers::wrapping_clamp(ctx->current_input.y + increment, -128, 127);
                 ctx->set_visuals(ctx->current_input);
             }
             break;
@@ -1174,7 +1174,7 @@ void Status::load_combos(const std::filesystem::path& path)
 {
     g_ef->log_trace(std::format(L"Loading combos from {}...", path.c_str()).c_str());
 
-    auto buf = read_file_buffer(path);
+    auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
     {
         g_ef->log_error(L"read_file_buffer failed");
@@ -1186,7 +1186,7 @@ void Status::load_combos(const std::filesystem::path& path)
     ListBox_ResetContent(combo_listbox);
     for (const auto& combo : combos)
     {
-        ListBox_InsertString(combo_listbox, -1, string_to_wstring(combo.name).c_str());
+        ListBox_InsertString(combo_listbox, -1, IOUtils::to_wide_string(combo.name).c_str());
     }
 }
 
