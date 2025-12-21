@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <JoystickControl.h>
-
+#include <Main.h>
 #undef max
 
 #define WITH_VALID_CTX()            \
@@ -28,10 +28,10 @@ struct t_context {
         Relative
     };
 
-    double x{};
-    double y{};
-    double cursor_diff_x{};
-    double cursor_diff_y{};
+    int x{};
+    int y{};
+    int cursor_diff_x{};
+    int cursor_diff_y{};
     Mode mode = Mode::None;
     HDC front_dc{};
     HDC back_dc{};
@@ -46,12 +46,7 @@ struct t_context {
 
 using Mode = t_context::Mode;
 
-static double remap(const double value, const double from1, const double to1, const double from2, const double to2)
-{
-    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
-}
-
-static void get_cursor_to_joystick_position(const HWND hwnd, double& x, double& y)
+static void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
 {
     RECT rc{};
     GetClientRect(hwnd, &rc);
@@ -60,15 +55,16 @@ static void get_cursor_to_joystick_position(const HWND hwnd, double& x, double& 
     GetCursorPos(&pt);
     ScreenToClient(hwnd, &pt);
 
-    x = remap(pt.x, 0, rc.right, -1.0, 1.0);
-    y = remap(pt.y, 0, rc.bottom, -1.0, 1.0);
+    const int width = rc.right;
+    const int height = rc.bottom;
 
-    if (std::abs(x) > 1.0 || std::abs(y) > 1.0)
-    {
-        const auto div = std::max(std::abs(x), std::abs(y));
-        x /= div;
-        y /= div;
-    }
+    x = (pt.x - width / 2) * 128 / (width / 2);
+    y = (pt.y - height / 2) * 128 / (height / 2);
+
+    y = -y;
+
+    x = std::clamp(x, -128, 127);
+    y = std::clamp(y, -128, 127);
 }
 
 static void update_joystick_position(HWND hwnd, t_context* ctx)
@@ -89,10 +85,10 @@ static void update_joystick_position(HWND hwnd, t_context* ctx)
     RECT rc{};
     GetClientRect(hwnd, &rc);
 
-    if (abs(ctx->x) <= 8.0 / rc.right)
-        ctx->x = 0.0;
-    if (abs(ctx->y) <= 8.0 / rc.bottom)
-        ctx->y = 0.0;
+    if (std::abs(ctx->x) <= 8)
+        ctx->x = 0;
+    if (std::abs(ctx->y) <= 8)
+        ctx->y = 0;
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
     SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
@@ -194,8 +190,8 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             GetClientRect(hwnd, &rc);
 
             const auto increment_sign = delta > 0.0 ? 1.0 : -1.0;
-            const auto increment_x = 1.0 / rc.right * increment_sign;
-            const auto increment_y = -1.0 / rc.bottom * increment_sign;
+            const auto increment_x = 1.0 * increment_sign;
+            const auto increment_y = -1.0 * increment_sign;
 
             if (GetKeyState(VK_CONTROL) & 0x8000)
             {
@@ -203,19 +199,23 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             }
             else if (GetKeyState(VK_SHIFT) & 0x8000)
             {
-                const auto angle = increment_sign * M_PI / 180.0;
-                const auto cos_angle = cos(angle);
-                const auto sin_angle = sin(angle);
-                ctx->x = ctx->x * cos_angle - ctx->y * sin_angle;
-                ctx->y = ctx->x * sin_angle + ctx->y * cos_angle;
+                const double angle = increment_sign * 5.0 * M_PI / 180.0;
+                const double cos_angle = std::cos(angle);
+                const double sin_angle = std::sin(angle);
+
+                const double old_x = ctx->x;
+                const double old_y = ctx->y;
+
+                ctx->x = old_x * cos_angle - old_y * sin_angle;
+                ctx->y = old_x * sin_angle + old_y * cos_angle;
             }
             else
             {
                 ctx->x += increment_x;
             }
 
-            ctx->x = MiscHelpers::wrapping_clamp_decimal(ctx->x, -1.0, 1.0);
-            ctx->y = MiscHelpers::wrapping_clamp_decimal(ctx->y, -1.0, 1.0);
+            ctx->x = MiscHelpers::wrapping_clamp(ctx->x, -127, 128);
+            ctx->y = MiscHelpers::wrapping_clamp(ctx->y, -127, 128);
 
             RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
             SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
@@ -223,7 +223,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         break;
     case WM_MBUTTONDOWN:
         {
-            double x{}, y{};
+            int x{}, y{};
             get_cursor_to_joystick_position(hwnd, x, y);
 
             ctx->cursor_diff_x = x - ctx->x;
@@ -276,9 +276,8 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             rc.bottom -= 1;
             const float mid_x = rc.right / 2.0;
             const float mid_y = rc.bottom / 2.0;
-            const float stick_x = remap(ctx->x, -1.0, 1.0, 0.0, rc.right);
-            const float stick_y = remap(ctx->y, -1.0, 1.0, 0.0, rc.bottom);
-
+            const float stick_x = mid_x + ctx->x / 128.0f * (rc.right / 2.0f);
+            const float stick_y = mid_y - ctx->y / 128.0f * (rc.bottom / 2.0f);
             ctx->g->Clear(ctx->clear_color);
 
             const auto tip_size = ctx->outline_pen->GetWidth() * 8.0f;
@@ -317,18 +316,12 @@ void JoystickControl::register_class(HINSTANCE hinst)
 BOOL JoystickControl::get_position(HWND hwnd, int* x, int* y)
 {
     WITH_VALID_CTX()
-
-    RECT rc{};
-    GetClientRect(hwnd, &rc);
-
+    
     if (x)
-    {
-        *x = (int)std::round(remap(ctx->x, -1.0, 1.0, -128, 127));
-    }
+        *x = ctx->x;
+    
     if (y)
-    {
-        *y = (int)std::round(remap(ctx->y, 1.0, -1.0, -128, 127));
-    }
+        *y = ctx->y;
 
     return TRUE;
 }
@@ -337,8 +330,8 @@ BOOL JoystickControl::set_position(HWND hwnd, int x, int y)
 {
     WITH_VALID_CTX()
 
-    ctx->x = remap(x, -128, 127, -1.0, 1.0);
-    ctx->y = -remap(y, -128, 127, -1.0, 1.0);
+    ctx->x = x;
+    ctx->y = y;
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
     SendMessage(GetParent(hwnd), WM_JOYSTICK_POSITION_CHANGED, 1, 0);
