@@ -6,17 +6,17 @@
 
 #pragma once
 
-static void set_style(HWND hwnd, int domain, int style, bool value)
+static void set_style(const HWND hwnd, const int domain, const long style, const bool value)
 {
-    auto base = GetWindowLongA(hwnd, domain);
+    auto base = GetWindowLong(hwnd, domain);
 
     if (value)
     {
-        SetWindowLongA(hwnd, domain, base | style);
+        SetWindowLong(hwnd, domain, base | style);
     }
     else
     {
-        SetWindowLongA(hwnd, domain, base & ~style);
+        SetWindowLong(hwnd, domain, base & ~style);
     }
 }
 
