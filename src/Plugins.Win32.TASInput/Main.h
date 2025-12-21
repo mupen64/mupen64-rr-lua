@@ -9,21 +9,7 @@
 extern HINSTANCE g_inst;
 extern core_plugin_extended_funcs* g_ef;
 
-#define PLUGIN_VERSION L"2.0.0-rc4"
-
-#ifdef _M_X64
-#define PLUGIN_ARCH L" x64"
-#else
-#define PLUGIN_ARCH L" "
-#endif
-
-#ifdef _DEBUG
-#define PLUGIN_TARGET L" Debug"
-#else
-#define PLUGIN_TARGET L" "
-#endif
-
-#define PLUGIN_NAME L"TASInput " PLUGIN_VERSION PLUGIN_ARCH PLUGIN_TARGET
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input", L"2.0.0")
 
 #define NUMBER_OF_CONTROLS 4
 
