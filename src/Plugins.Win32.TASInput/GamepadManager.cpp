@@ -63,26 +63,79 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
     }
 }
 
+static bool is_button_held(const t_button_mapping &mapping)
+{
+    if (mapping.button != SDL_GAMEPAD_BUTTON_INVALID)
+    {
+        return SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)mapping.button) != 0;
+    }
+
+    if (mapping.key != SDL_SCANCODE_UNKNOWN)
+    {
+        const auto keyboard = SDL_GetKeyboardState(nullptr);
+        return keyboard[mapping.key] != 0;
+    }
+
+    return false;
+}
+
 core_buttons GamepadManager::get_input()
 {
     core_buttons buttons{};
 
     if (!g_ctx.gamepad) return buttons;
 
-    buttons.a = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.a);
-    buttons.b = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.b);
-    buttons.z = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.z);
-    buttons.start = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.start);
-    buttons.l = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.l);
-    buttons.r = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.r);
+    const auto keyboard = SDL_GetKeyboardState(nullptr);
 
-    buttons.du = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_up);
-    buttons.dd = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_down);
-    buttons.dl = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_left);
-    buttons.dr = SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)new_config.controller_config.dpad_right);
+    buttons.a = is_button_held(new_config.controller_config.a);
+    buttons.b = is_button_held(new_config.controller_config.b);
+    buttons.z = is_button_held(new_config.controller_config.z);
+    buttons.start = is_button_held(new_config.controller_config.start);
+    buttons.l = is_button_held(new_config.controller_config.l);
+    buttons.r = is_button_held(new_config.controller_config.r);
 
-    buttons.x = remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.x), false);
-    buttons.y = -remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.y), true);
+    buttons.du = is_button_held(new_config.controller_config.dpad_up);
+    buttons.dd = is_button_held(new_config.controller_config.dpad_down);
+    buttons.dl = is_button_held(new_config.controller_config.dpad_left);
+    buttons.dr = is_button_held(new_config.controller_config.dpad_right);
+
+    if (new_config.controller_config.x.axis == SDL_GAMEPAD_AXIS_INVALID)
+    {
+        if (new_config.controller_config.x.key_negative != SDL_SCANCODE_UNKNOWN &&
+            keyboard[new_config.controller_config.x.key_negative])
+        {
+            buttons.x -= 128;
+        }
+        if (new_config.controller_config.x.key_positive != SDL_SCANCODE_UNKNOWN &&
+            keyboard[new_config.controller_config.x.key_positive])
+        {
+            buttons.x += 127;
+        }
+    }
+    else
+    {
+        buttons.x =
+            remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.x.axis), false);
+    }
+
+    if (new_config.controller_config.y.axis == SDL_GAMEPAD_AXIS_INVALID)
+    {
+        if (new_config.controller_config.y.key_negative != SDL_SCANCODE_UNKNOWN &&
+            keyboard[new_config.controller_config.y.key_negative])
+        {
+            buttons.y -= 128;
+        }
+        if (new_config.controller_config.y.key_positive != SDL_SCANCODE_UNKNOWN &&
+            keyboard[new_config.controller_config.y.key_positive])
+        {
+            buttons.y += 127;
+        }
+    }
+    else
+    {
+        buttons.y =
+            -remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.y.axis), true);
+    }
 
     return buttons;
 }

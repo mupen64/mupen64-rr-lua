@@ -8,29 +8,44 @@
 
 #define SUBKEY L"Software\\N64 Emulation\\DLL\\TASDI"
 
-struct t_controller_config {
-    int32_t dpad_right = SDL_GAMEPAD_BUTTON_INVALID;
-    int32_t dpad_left = SDL_GAMEPAD_BUTTON_INVALID;
-    int32_t dpad_down = SDL_GAMEPAD_BUTTON_INVALID;
-    int32_t dpad_up = SDL_GAMEPAD_BUTTON_INVALID;
-
-    int32_t c_right = SDL_GAMEPAD_BUTTON_DPAD_RIGHT;
-    int32_t c_left = SDL_GAMEPAD_BUTTON_DPAD_LEFT;
-    int32_t c_down = SDL_GAMEPAD_BUTTON_DPAD_DOWN;
-    int32_t c_up = SDL_GAMEPAD_BUTTON_DPAD_UP;
-
-    int32_t a = SDL_GAMEPAD_BUTTON_SOUTH;
-    int32_t b = SDL_GAMEPAD_BUTTON_EAST;
-    int32_t z = SDL_GAMEPAD_BUTTON_WEST;
-    int32_t start = SDL_GAMEPAD_BUTTON_START;
-    int32_t l = SDL_GAMEPAD_BUTTON_LEFT_SHOULDER;
-    int32_t r = SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER;
-
-    int32_t x = SDL_GAMEPAD_AXIS_LEFTX;
-    int32_t y = SDL_GAMEPAD_AXIS_LEFTY;
+struct t_axis_mapping
+{
+    int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
+    int32_t key_negative = SDL_SCANCODE_UNKNOWN;
+    int32_t key_positive = SDL_SCANCODE_UNKNOWN;
 };
 
-typedef struct s_config {
+struct t_button_mapping
+{
+    int32_t button = SDL_GAMEPAD_BUTTON_INVALID;
+    int32_t key = SDL_SCANCODE_UNKNOWN;
+};
+
+struct t_controller_config
+{
+    t_button_mapping dpad_right = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping dpad_left = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping dpad_down = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping dpad_up = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+
+    t_button_mapping c_right = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping c_left = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping c_down = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping c_up = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+
+    t_button_mapping a = {SDL_GAMEPAD_BUTTON_SOUTH, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping b = {SDL_GAMEPAD_BUTTON_EAST, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping z = {SDL_GAMEPAD_BUTTON_WEST, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping start = {SDL_GAMEPAD_BUTTON_START, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping l = {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping r = {SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, SDL_SCANCODE_UNKNOWN};
+
+    t_axis_mapping x = {SDL_GAMEPAD_AXIS_LEFTX, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN};
+    t_axis_mapping y = {SDL_GAMEPAD_AXIS_LEFTY, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN};
+};
+
+typedef struct s_config
+{
     int32_t version = 5;
     int32_t always_on_top = false;
     int32_t float_from_parent = true;
@@ -46,7 +61,6 @@ typedef struct s_config {
     float y_scale[4] = {1, 1, 1, 1};
     t_controller_config controller_config;
 } t_config;
-
 
 extern t_config new_config;
 
