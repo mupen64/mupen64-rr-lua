@@ -20,7 +20,11 @@ int main(int argc, char *argv[])
     MainWindow mainWindow;
     mainWindow.show();
 
-    Mupen::core_init(core_cfg{}, std::unique_ptr<Mupen::ICoreService>(new QtCoreService(&mainWindow)));
+    Mupen::core_init(core_cfg{}, new QtCoreService(&mainWindow));
+
+    QObject::connect(&app, &QGuiApplication::lastWindowClosed, []() {
+        Mupen::core_drop();
+    });
 
     return QApplication::exec();
 }

@@ -48,18 +48,20 @@ static std::optional<std::filesystem::path> g_rom_path = std::nullopt;
 static std::optional<PluginPaths> g_plugin_paths = std::nullopt;
 static std::optional<PluginSet> g_curr_plugins = std::nullopt;
 static std::unique_ptr<ICoreService> g_core_service = nullptr;
+static std::unique_ptr<IWindowService> g_window_service = nullptr;
+
 
 void core_log(spdlog::level::level_enum level, std::string_view message)
 {
     Mupen::core_log().log(level, message);
 }
 
-void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
+void core_init(core_cfg config, ICoreService* core_service)
 {
     {
         std::scoped_lock _lock(core_state_mutex());
         g_core_cfg = std::move(config);
-        g_core_service = std::move(core_service);
+        g_core_service.reset(core_service);
     }
 
     g_core_params = core_params{
@@ -175,6 +177,11 @@ void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service)
     {
         core_log().critical("Core failed to load! ({})", (int)res);
     }
+}
+
+void core_drop() {
+    g_window_service.reset();
+    g_core_service.reset();
 }
 
 void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin_paths)

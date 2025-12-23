@@ -266,6 +266,8 @@ extern "C"
     // managed graphics API
     // =============================
 
+    typedef void (*mupv_fptr)(void);
+
     enum mupv_gl_buffer_attr {
         MUPV_GL_COLOR_BITS = 0,
         MUPV_GL_RED_BITS,
@@ -282,6 +284,8 @@ extern "C"
     };
 
     typedef struct {
+        mupv_fptr (*get_proc_address)(void* p_self);
+
         core_result (*request_attrs)(void* p_self, const mupv_gl_buffer_attr* attrs, const int32_t* vals, size_t len);
         core_result (*request_version)(void* p_self, mupv_gl_profile profile, uint32_t major, uint32_t minor);
 

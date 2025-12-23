@@ -7,11 +7,16 @@
 #ifndef VIEW_MAIN_WINDOW_HPP_INCLUDED
 #define VIEW_MAIN_WINDOW_HPP_INCLUDED
 
+#include <QFileDialog>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QRect>
+#include <QSize>
 #include <QString>
+#include <QWidget>
+
 #include <memory>
-#include <qfiledialog.h>
+
 #include "ui_MainWindow.h"
 
 class MainWindow : public QMainWindow
@@ -25,6 +30,8 @@ class MainWindow : public QMainWindow
 
     Q_INVOKABLE void showInfoDialog(const QString &title, const QString &message,
                                                        QMessageBox::Icon icon);
+
+    void addToGameWindow(QWidget* widget, QRect bounds);
 
   private slots:
     void onOpenRom(bool state);

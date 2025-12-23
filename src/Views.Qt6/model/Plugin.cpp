@@ -15,6 +15,7 @@
 
 #include "core_api.h"
 #include "core_plugin.h"
+#include "core_types.h"
 #include "mupapi.h"
 
 #include "Core.hpp"
@@ -325,6 +326,11 @@ void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
         .vi_x_scale_reg = &ctx.vi_register->vi_x_scale,
         .vi_y_scale_reg = &ctx.vi_register->vi_y_scale,
     };
+
+    auto wm_funcs = mupv_wm_funcs {
+        .init = nullptr,
+    };
+
     // init and request window settings
     m_video_plugin.MUP_FN(mupv_init)(gfx_info, mupv_wm_funcs {});
 }

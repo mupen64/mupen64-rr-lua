@@ -46,6 +46,8 @@ class IOpenGLService : public IWindowService
     virtual core_result query_version(mupv_gl_profile *profile, uint32_t *major, uint32_t *minor) = 0;
     virtual core_result query_default_fbo(uint32_t *fbo) = 0;
 
+    virtual mupv_fptr get_proc_address(const char* symbol) = 0;
+
     virtual core_result swap_buffers() = 0;
 };
 
@@ -93,11 +95,18 @@ class ICoreService
     virtual std::unique_ptr<IWindowService> init_window_service(mupv_graphics_api api) = 0;
 };
 
-void core_init(core_cfg config, std::unique_ptr<ICoreService> &&core_service);
+void core_init(core_cfg config, ICoreService* core_service);
+
+void core_drop();
 
 void core_start(const std::filesystem::path &rom_path, const PluginPaths &plugin_paths);
 
 void core_stop();
+
+void wm_init();
+
+void wm_drop();
+
 } // namespace Mupen
 
 #endif
