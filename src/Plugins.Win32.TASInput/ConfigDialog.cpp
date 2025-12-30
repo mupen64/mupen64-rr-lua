@@ -10,13 +10,173 @@
 #include <NewConfig.h>
 #include <GamepadManager.h>
 
+const auto editbox_ids = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,   IDC_E_LTRIG, IDC_E_RTRIG,
+                          IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT, IDC_E_CRIGHT,
+                          IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_UP,  IDC_EAS_DOWN};
+
+const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG,   IDC_B_LTRIG, IDC_B_RTRIG,
+                         IDC_B_DPLEFT, IDC_B_DPRIGHT, IDC_B_DPUP,  IDC_B_DPDOWN,  IDC_B_CLEFT, IDC_B_CRIGHT,
+                         IDC_B_CUP,    IDC_B_CDOWN,   IDC_BAS_UP,  IDC_BAS_RIGHT, IDC_BAS_UP,  IDC_BAS_DOWN};
+
 struct config_dialog_context
 {
     HWND hwnd{};
+    t_config prev_config{};
     std::variant<std::monostate, t_button_mapping *, t_axis_mapping *> target_value{};
 };
 
 static config_dialog_context g_ctx;
+
+static std::wstring virtual_keycode_to_string(int k)
+{
+    wchar_t buf2[64]{};
+    if ((k >= 0x30 && k <= 0x39) || (k >= 0x41 && k <= 0x5A))
+        wsprintf(buf2, L"%c", static_cast<char>(k));
+    else if (k >= VK_F1 && k <= VK_F24)
+        wsprintf(buf2, L"F%d", k - (VK_F1 - 1));
+    else if (k >= VK_NUMPAD0 && k <= VK_NUMPAD9)
+        wsprintf(buf2, L"Num%d", k - VK_NUMPAD0);
+    else
+        switch (k)
+        {
+        case VK_LBUTTON:
+            wcscpy(buf2, L"LMB");
+            break;
+        case VK_RBUTTON:
+            wcscpy(buf2, L"RMB");
+            break;
+        case VK_MBUTTON:
+            wcscpy(buf2, L"MMB");
+            break;
+        case VK_XBUTTON1:
+            wcscpy(buf2, L"XMB1");
+            break;
+        case VK_XBUTTON2:
+            wcscpy(buf2, L"XMB2");
+            break;
+        case VK_SPACE:
+            wcscpy(buf2, L"Space");
+            break;
+        case VK_BACK:
+            wcscpy(buf2, L"Backspace");
+            break;
+        case VK_TAB:
+            wcscpy(buf2, L"Tab");
+            break;
+        case VK_CLEAR:
+            wcscpy(buf2, L"Clear");
+            break;
+        case VK_RETURN:
+            wcscpy(buf2, L"Enter");
+            break;
+        case VK_PAUSE:
+            wcscpy(buf2, L"Pause");
+            break;
+        case VK_CAPITAL:
+            wcscpy(buf2, L"Caps");
+            break;
+        case VK_PRIOR:
+            wcscpy(buf2, L"PageUp");
+            break;
+        case VK_NEXT:
+            wcscpy(buf2, L"PageDn");
+            break;
+        case VK_END:
+            wcscpy(buf2, L"End");
+            break;
+        case VK_HOME:
+            wcscpy(buf2, L"Home");
+            break;
+        case VK_LEFT:
+            wcscpy(buf2, L"Left");
+            break;
+        case VK_UP:
+            wcscpy(buf2, L"Up");
+            break;
+        case VK_RIGHT:
+            wcscpy(buf2, L"Right");
+            break;
+        case VK_DOWN:
+            wcscpy(buf2, L"Down");
+            break;
+        case VK_SELECT:
+            wcscpy(buf2, L"Select");
+            break;
+        case VK_PRINT:
+            wcscpy(buf2, L"Print");
+            break;
+        case VK_SNAPSHOT:
+            wcscpy(buf2, L"PrintScrn");
+            break;
+        case VK_INSERT:
+            wcscpy(buf2, L"Insert");
+            break;
+        case VK_DELETE:
+            wcscpy(buf2, L"Delete");
+            break;
+        case VK_HELP:
+            wcscpy(buf2, L"Help");
+            break;
+        case VK_MULTIPLY:
+            wcscpy(buf2, L"Num*");
+            break;
+        case VK_ADD:
+            wcscpy(buf2, L"Num+");
+            break;
+        case VK_SUBTRACT:
+            wcscpy(buf2, L"Num-");
+            break;
+        case VK_DECIMAL:
+            wcscpy(buf2, L"Num.");
+            break;
+        case VK_DIVIDE:
+            wcscpy(buf2, L"Num/");
+            break;
+        case VK_NUMLOCK:
+            wcscpy(buf2, L"NumLock");
+            break;
+        case VK_SCROLL:
+            wcscpy(buf2, L"ScrollLock");
+            break;
+        case /*VK_OEM_PLUS*/ 0xBB:
+            wcscpy(buf2, L"=+");
+            break;
+        case /*VK_OEM_MINUS*/ 0xBD:
+            wcscpy(buf2, L"-_");
+            break;
+        case /*VK_OEM_COMMA*/ 0xBC:
+            wcscpy(buf2, L",");
+            break;
+        case /*VK_OEM_PERIOD*/ 0xBE:
+            wcscpy(buf2, L".");
+            break;
+        case VK_OEM_7:
+            wcscpy(buf2, L"'\"");
+            break;
+        case VK_OEM_6:
+            wcscpy(buf2, L"]}");
+            break;
+        case VK_OEM_5:
+            wcscpy(buf2, L"\\|");
+            break;
+        case VK_OEM_4:
+            wcscpy(buf2, L"[{");
+            break;
+        case VK_OEM_3:
+            wcscpy(buf2, L"`~");
+            break;
+        case VK_OEM_2:
+            wcscpy(buf2, L"/?");
+            break;
+        case VK_OEM_1:
+            wcscpy(buf2, L";:");
+            break;
+        default:
+            wsprintf(buf2, L"(%d)", k);
+            break;
+        }
+    return buf2;
+}
 
 static void update_editbox(int id, const t_button_mapping &mapping)
 {
@@ -27,10 +187,9 @@ static void update_editbox(int id, const t_button_mapping &mapping)
         return;
     }
 
-    if (mapping.key != SDL_SCANCODE_UNKNOWN)
+    if (mapping.key != 0)
     {
-        const auto str = IOUtils::to_wide_string(SDL_GetScancodeName((SDL_Scancode)mapping.key));
-        SetDlgItemText(g_ctx.hwnd, id, str.c_str());
+        SetDlgItemText(g_ctx.hwnd, id, virtual_keycode_to_string(mapping.key).c_str());
         return;
     }
 }
@@ -45,26 +204,20 @@ static void update_editbox(int id_negative, int id_positive, const t_axis_mappin
         return;
     }
 
-    if (mapping.key_negative != SDL_SCANCODE_UNKNOWN)
+    if (mapping.key_negative != 0)
     {
-        const auto str = IOUtils::to_wide_string(SDL_GetScancodeName((SDL_Scancode)mapping.key_negative));
-        SetDlgItemText(g_ctx.hwnd, id_negative, str.c_str());
+        SetDlgItemText(g_ctx.hwnd, id_negative, virtual_keycode_to_string(mapping.key_negative).c_str());
     }
 
-    if (mapping.key_positive != SDL_SCANCODE_UNKNOWN)
+    if (mapping.key_positive != 0)
     {
-        const auto str = IOUtils::to_wide_string(SDL_GetScancodeName((SDL_Scancode)mapping.key_positive));
-        SetDlgItemText(g_ctx.hwnd, id_positive, str.c_str());
+        SetDlgItemText(g_ctx.hwnd, id_positive, virtual_keycode_to_string(mapping.key_positive).c_str());
     }
 }
 
 static void update_editboxes()
 {
-    const auto buttons = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,   IDC_E_LTRIG, IDC_E_RTRIG,
-                          IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT, IDC_E_CRIGHT,
-                          IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_UP,  IDC_EAS_DOWN};
-
-    for (const auto btn : buttons)
+    for (const auto btn : editbox_ids)
     {
         SetDlgItemText(g_ctx.hwnd, btn, L"");
     }
@@ -126,7 +279,45 @@ static void begin_edit(int edit_id, t_axis_mapping *ptr)
 #define HANDLE_EDIT_BEGIN(btn_id, editbox_id, ptr)                                                                     \
     case btn_id:                                                                                                       \
         begin_edit(editbox_id, ptr);                                                                                   \
+        SetFocus(GetDlgItem(g_ctx.hwnd, btn_id));                                                                      \
         break;
+
+static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
+                                                    DWORD_PTR ref_data)
+{
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, hotkey_button_subclass_proc, id);
+        break;
+    case WM_GETDLGCODE:
+        return DLGC_WANTALLKEYS;
+    case WM_CHAR:
+        return TRUE;
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+
+        if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
+        {
+            (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
+            (*mapping)->key = wparam;
+            end_edit();
+        }
+
+        if (auto *mapping = std::get_if<t_axis_mapping *>(&g_ctx.target_value))
+        {
+            (*mapping)->axis = SDL_GAMEPAD_AXIS_INVALID;
+            (*mapping)->key_negative = 0;
+            (*mapping)->key_positive = 0;
+            end_edit();
+        }
+
+        return TRUE;
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+}
 
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -135,6 +326,12 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_INITDIALOG:
         g_ctx.hwnd = hwnd;
         update_editboxes();
+
+        for (const auto btn : button_ids)
+        {
+            SetWindowSubclass(GetDlgItem(hwnd, btn), hotkey_button_subclass_proc, 0, 0);
+        }
+
         break;
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
@@ -146,6 +343,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             EndDialog(hwnd, IDOK);
             break;
         case IDCANCEL:
+            new_config = g_ctx.prev_config;
             EndDialog(hwnd, IDCANCEL);
             break;
 
@@ -175,6 +373,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         default:
             break;
         }
+        break;
     default:
         break;
     }
@@ -183,7 +382,13 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void ConfigDialog::show(HWND parent)
 {
+    load_config();
+
+    g_ctx.prev_config = new_config;
+
     DialogBox(g_inst, MAKEINTRESOURCE(IDD_CONFIGDLG), parent, (DLGPROC)dlgproc);
+
+    save_config();
 }
 
 void ConfigDialog::on_sdl_event(const SDL_Event &e)
@@ -193,12 +398,14 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
         return;
     }
 
+    g_ef->log_trace(std::format(L"ConfigDialog::on_sdl_event: type={}", e.type).c_str());
+
     if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN)
     {
         if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
         {
             (*mapping)->button = e.gbutton.button;
-            (*mapping)->key = SDL_SCANCODE_UNKNOWN;
+            (*mapping)->key = 0;
             end_edit();
         }
     }
@@ -213,36 +420,18 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
             if (axis_value < -threshold)
             {
                 (*mapping)->axis = e.gaxis.axis;
-                (*mapping)->key_negative = SDL_SCANCODE_UNKNOWN;
-                (*mapping)->key_positive = SDL_SCANCODE_UNKNOWN;
+                (*mapping)->key_negative = 0;
+                (*mapping)->key_positive = 0;
                 end_edit();
             }
 
             else if (axis_value > threshold)
             {
                 (*mapping)->axis = e.gaxis.axis;
-                (*mapping)->key_negative = SDL_SCANCODE_UNKNOWN;
-                (*mapping)->key_positive = SDL_SCANCODE_UNKNOWN;
+                (*mapping)->key_negative = 0;
+                (*mapping)->key_positive = 0;
                 end_edit();
             }
-        }
-    }
-
-    if (e.type == SDL_EVENT_KEY_DOWN)
-    {
-        if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
-        {
-            (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
-            (*mapping)->key = e.key.scancode;
-            end_edit();
-        }
-
-        if (auto *mapping = std::get_if<t_axis_mapping *>(&g_ctx.target_value))
-        {
-            (*mapping)->axis = SDL_GAMEPAD_AXIS_INVALID;
-            (*mapping)->key_negative = SDL_SCANCODE_UNKNOWN;
-            (*mapping)->key_positive = SDL_SCANCODE_UNKNOWN;
-            end_edit();
         }
     }
 }

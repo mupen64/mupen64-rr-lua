@@ -11,37 +11,37 @@
 struct t_axis_mapping
 {
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
-    int32_t key_negative = SDL_SCANCODE_UNKNOWN;
-    int32_t key_positive = SDL_SCANCODE_UNKNOWN;
+    int32_t key_negative = 0;
+    int32_t key_positive = 0;
 };
 
 struct t_button_mapping
 {
     int32_t button = SDL_GAMEPAD_BUTTON_INVALID;
-    int32_t key = SDL_SCANCODE_UNKNOWN;
+    int32_t key = 0;
 };
 
 struct t_controller_config
 {
-    t_button_mapping dpad_right = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping dpad_left = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping dpad_down = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping dpad_up = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping dpad_right = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping dpad_left = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping dpad_down = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping dpad_up = {SDL_GAMEPAD_BUTTON_INVALID, 0};
 
-    t_button_mapping c_right = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping c_left = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping c_down = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping c_up = {SDL_GAMEPAD_BUTTON_INVALID, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping c_right = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping c_left = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping c_down = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping c_up = {SDL_GAMEPAD_BUTTON_INVALID, 0};
 
-    t_button_mapping a = {SDL_GAMEPAD_BUTTON_SOUTH, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping b = {SDL_GAMEPAD_BUTTON_EAST, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping z = {SDL_GAMEPAD_BUTTON_WEST, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping start = {SDL_GAMEPAD_BUTTON_START, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping l = {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_SCANCODE_UNKNOWN};
-    t_button_mapping r = {SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, SDL_SCANCODE_UNKNOWN};
+    t_button_mapping a = {SDL_GAMEPAD_BUTTON_SOUTH, 0};
+    t_button_mapping b = {SDL_GAMEPAD_BUTTON_EAST, 0};
+    t_button_mapping z = {SDL_GAMEPAD_BUTTON_WEST, 0};
+    t_button_mapping start = {SDL_GAMEPAD_BUTTON_START, 0};
+    t_button_mapping l = {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, 0};
+    t_button_mapping r = {SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, 0};
 
-    t_axis_mapping x = {SDL_GAMEPAD_AXIS_LEFTX, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN};
-    t_axis_mapping y = {SDL_GAMEPAD_AXIS_LEFTY, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN};
+    t_axis_mapping x = {SDL_GAMEPAD_AXIS_LEFTX, 0, 0};
+    t_axis_mapping y = {SDL_GAMEPAD_AXIS_LEFTY, 0, 0};
 };
 
 typedef struct s_config
