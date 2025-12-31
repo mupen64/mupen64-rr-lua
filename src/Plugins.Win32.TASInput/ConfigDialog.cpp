@@ -333,6 +333,8 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
 
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    Main::pump_sdl_events();
+    
     auto controller_config = &new_config.controller_config[g_ctx.selected_controller];
 
     switch (msg)

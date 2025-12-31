@@ -7,25 +7,27 @@
 #include "Common.h"
 #include <Main.h>
 #include <TASInput.h>
+#include <GamepadManager.h>
+#include <ConfigDialog.h>
 
 #define EXPORT __declspec(dllexport)
 #define CALL _cdecl
 
-static void log_shim(const wchar_t* str)
+static void log_shim(const wchar_t *str)
 {
     wprintf(str);
 }
 
 static core_plugin_extended_funcs ef_shim = {
-.size = sizeof(core_plugin_extended_funcs),
-.log_trace = log_shim,
-.log_info = log_shim,
-.log_warn = log_shim,
-.log_error = log_shim,
+    .size = sizeof(core_plugin_extended_funcs),
+    .log_trace = log_shim,
+    .log_info = log_shim,
+    .log_warn = log_shim,
+    .log_error = log_shim,
 };
 
 HINSTANCE g_inst;
-core_plugin_extended_funcs* g_ef = &ef_shim;
+core_plugin_extended_funcs *g_ef = &ef_shim;
 
 // ReSharper disable once CppInconsistentNaming
 int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
@@ -44,7 +46,17 @@ int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
     return TRUE;
 }
 
-EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs* funcs)
+EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
+}
+
+void Main::pump_sdl_events()
+{
+    SDL_Event e;
+    while (SDL_PollEvent(&e))
+    {
+        GamepadManager::on_sdl_event(e);
+        ConfigDialog::on_sdl_event(e);
+    }
 }

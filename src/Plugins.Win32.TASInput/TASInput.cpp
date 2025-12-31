@@ -1076,14 +1076,7 @@ static void ui_thread()
                 }
             }
 
-            SDL_Event e;
-            while (SDL_PollEvent(&e))
-            {
-                GamepadManager::on_sdl_event(e);
-                ConfigDialog::on_sdl_event(e);
-            }
-
-            
+            Main::pump_sdl_events();
         }
     }
 

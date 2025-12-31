@@ -7,8 +7,13 @@
 #pragma once
 
 extern HINSTANCE g_inst;
-extern core_plugin_extended_funcs* g_ef;
+extern core_plugin_extended_funcs *g_ef;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input", L"2.0.0")
 
 #define NUMBER_OF_CONTROLS 4
+
+namespace Main
+{
+void pump_sdl_events();
+}
