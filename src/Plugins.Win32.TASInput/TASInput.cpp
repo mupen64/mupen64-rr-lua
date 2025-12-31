@@ -747,7 +747,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     JOY(x, 0)
                     JOY(y, 1)
                 }
-                else
+                if(!new_config.relative_mode && !new_config.approach_mode)
                 {
                     // If either axis changed, just override both
                     if (controller_input.x != ctx->last_controller_input.x ||
@@ -758,6 +758,27 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     }
                 }
 
+                ctx->set_visuals(ctx->current_input);
+            }
+
+            if(new_config.approach_mode)
+            {
+                int x = ctx->current_input.x;
+                int y = ctx->current_input.y;
+
+                if(controller_input.x > 0)
+                    x += 2;
+                else if(controller_input.x < 0)
+                    x -= 2;
+
+                if(controller_input.y > 0)
+                    y += 2;
+                else if(controller_input.y < 0)
+                    y -= 2;
+
+                ctx->current_input.x = std::clamp(x, -128, 127);
+                ctx->current_input.y = std::clamp(y, -128, 127);
+                
                 ctx->set_visuals(ctx->current_input);
             }
             ctx->last_controller_input = controller_input;
@@ -1196,10 +1217,14 @@ bool Status::show_context_menu(int x, int y)
     if (is_mouse_over_control(joy_hwnd) || (GetKeyState(MOUSE_LBUTTONREDEFINITION) & 0x8000))
         return TRUE;
 
+    const auto prev_config = new_config;
+
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
 #define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_config, x), y)
     ADD_ITEM(hmenu, relative_mode, L"Relative");
+    ADD_ITEM(hmenu, approach_mode, L"Approach");
+    AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
     ADD_ITEM(hmenu, always_on_top, L"Always on top");
     ADD_ITEM(hmenu, float_from_parent, L"Float from parent");
     ADD_ITEM(hmenu, titlebar, L"Titlebar");
@@ -1213,6 +1238,16 @@ bool Status::show_context_menu(int x, int y)
         // offset is the offset into menu config struct of the field which was selected by user, we need to convert it from byte offset to int-width offset
         auto arr = reinterpret_cast<int32_t*>(&new_config);
         arr[offset / sizeof(int32_t)] ^= true;
+    }
+
+    // Apply mutually exclusive relative/approach toggle
+    if (new_config.relative_mode && !prev_config.relative_mode) 
+    {
+        new_config.approach_mode = false;
+    }
+    if (new_config.approach_mode && !prev_config.approach_mode) 
+    {
+        new_config.relative_mode = false;
     }
 
     for (auto status_dlg : status)
