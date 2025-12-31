@@ -1147,9 +1147,13 @@ void Status::start_edit(int id)
     SendMessage(combo_edit_box, WM_SETFONT, (WPARAM)SendMessage(combo_listbox, WM_GETFONT, 0, 0), 0);
     SetWindowSubclass(combo_edit_box, EditBoxProc, 0, 0);
 
-    char txt[MAX_PATH]{};
-    ListBox_GetText(combo_listbox, id, txt);
-    SendMessage(combo_edit_box, WM_SETTEXT, 0, (LPARAM)txt);
+    const auto len = ListBox_GetTextLen(combo_listbox, id);
+    if(len == LB_ERR) 
+        return;
+    std::wstring text(len, L'\0');
+    ListBox_GetText(combo_listbox, id, text.data());
+    
+    SendMessage(combo_edit_box, WM_SETTEXT, 0, (LPARAM)text.c_str());
     PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM)combo_edit_box, TRUE);
 }
 
