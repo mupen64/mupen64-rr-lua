@@ -12,7 +12,7 @@
 
 const auto editbox_ids = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,   IDC_E_LTRIG, IDC_E_RTRIG,
                           IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT, IDC_E_CRIGHT,
-                          IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_UP,  IDC_EAS_DOWN};
+                          IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_LEFT,  IDC_EAS_DOWN};
 
 const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG,   IDC_B_LTRIG,  IDC_B_RTRIG,
                          IDC_B_DPLEFT, IDC_B_DPRIGHT, IDC_B_DPUP,  IDC_B_DPDOWN,  IDC_B_CLEFT,  IDC_B_CRIGHT,
