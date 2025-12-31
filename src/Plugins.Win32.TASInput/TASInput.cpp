@@ -169,6 +169,7 @@ static HWND emulator_hwnd{};
 static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
+static std::thread main_thread;
 
 static int MOUSE_LBUTTONREDEFINITION = VK_LBUTTON;
 static int MOUSE_RBUTTONREDEFINITION = VK_RBUTTON;
@@ -1112,7 +1113,7 @@ EXPORT void CALL RomOpen()
 
     if (first_time)
     {
-        std::thread(ui_thread).detach();
+        main_thread = std::thread(ui_thread);
 
         first_time = false;
     }
@@ -1324,4 +1325,6 @@ void TASInput::on_detach()
         DeleteFont(icon_font);
         icon_font = {};
     }
+    
+    main_thread.join();
 }
