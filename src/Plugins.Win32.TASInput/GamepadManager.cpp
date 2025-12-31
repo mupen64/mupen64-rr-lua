@@ -91,45 +91,46 @@ core_buttons GamepadManager::get_input()
     buttons.dl = is_button_held(new_config.controller_config.dpad_left);
     buttons.dr = is_button_held(new_config.controller_config.dpad_right);
 
-    // if (new_config.controller_config.x.axis == SDL_GAMEPAD_AXIS_INVALID)
-    // {
-    //     if (new_config.controller_config.x.key_negative != 0 &&
-    //         keyboard[new_config.controller_config.x.key_negative])
-    //     {
-    //         buttons.x -= 128;
-    //     }
-    //     if (new_config.controller_config.x.key_positive != 0 &&
-    //         keyboard[new_config.controller_config.x.key_positive])
-    //     {
-    //         buttons.x += 127;
-    //     }
-    // }
-    // else
-    // {
-    //     buttons.x =
-    //         remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.x.axis),
-    //         false);
-    // }
+    if (new_config.controller_config.x.axis == SDL_GAMEPAD_AXIS_INVALID)
+    {
+        const auto negative_held = GetAsyncKeyState(new_config.controller_config.x.key_negative) & 0x8000;
+        const auto positive_held = GetAsyncKeyState(new_config.controller_config.x.key_positive) & 0x8000;
 
-    // if (new_config.controller_config.y.axis == SDL_GAMEPAD_AXIS_INVALID)
-    // {
-    //     if (new_config.controller_config.y.key_negative != 0 &&
-    //         keyboard[new_config.controller_config.y.key_negative])
-    //     {
-    //         buttons.y -= 128;
-    //     }
-    //     if (new_config.controller_config.y.key_positive != 0 &&
-    //         keyboard[new_config.controller_config.y.key_positive])
-    //     {
-    //         buttons.y += 127;
-    //     }
-    // }
-    // else
-    // {
-    //     buttons.y =
-    //         -remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.y.axis),
-    //         true);
-    // }
+        if (new_config.controller_config.x.key_negative != 0 && negative_held)
+        {
+            buttons.x -= 128;
+        }
+        if (new_config.controller_config.x.key_positive != 0 && positive_held)
+        {
+            buttons.x += 127;
+        }
+    }
+    else
+    {
+        buttons.x =
+            remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.x.axis), false);
+    }
+
+    if (new_config.controller_config.y.axis == SDL_GAMEPAD_AXIS_INVALID)
+    {
+        const auto negative_held = GetAsyncKeyState(new_config.controller_config.y.key_negative) & 0x8000;
+        const auto positive_held = GetAsyncKeyState(new_config.controller_config.y.key_positive) & 0x8000;
+
+        if (new_config.controller_config.y.key_negative != 0 && negative_held)
+        {
+            buttons.y -= 127;
+        }
+        if (new_config.controller_config.y.key_positive != 0 && positive_held)
+        {
+            buttons.y += 128;
+        }
+    }
+    else
+    {
+        buttons.y = remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)new_config.controller_config.y.axis), true);
+    }
+
+    buttons.y *= -1;
 
     return buttons;
 }

@@ -14,15 +14,16 @@ const auto editbox_ids = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,
                           IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT, IDC_E_CRIGHT,
                           IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_UP,  IDC_EAS_DOWN};
 
-const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG,   IDC_B_LTRIG, IDC_B_RTRIG,
-                         IDC_B_DPLEFT, IDC_B_DPRIGHT, IDC_B_DPUP,  IDC_B_DPDOWN,  IDC_B_CLEFT, IDC_B_CRIGHT,
-                         IDC_B_CUP,    IDC_B_CDOWN,   IDC_BAS_UP,  IDC_BAS_RIGHT, IDC_BAS_UP,  IDC_BAS_DOWN};
+const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG,   IDC_B_LTRIG,  IDC_B_RTRIG,
+                         IDC_B_DPLEFT, IDC_B_DPRIGHT, IDC_B_DPUP,  IDC_B_DPDOWN,  IDC_B_CLEFT,  IDC_B_CRIGHT,
+                         IDC_B_CUP,    IDC_B_CDOWN,   IDC_BAS_UP,  IDC_BAS_RIGHT, IDC_BAS_LEFT, IDC_BAS_DOWN};
 
 struct config_dialog_context
 {
     HWND hwnd{};
     t_config prev_config{};
     std::variant<std::monostate, t_button_mapping *, t_axis_mapping *> target_value{};
+    bool positive_target_axis{};
 };
 
 static config_dialog_context g_ctx;
@@ -239,6 +240,9 @@ static void update_editboxes()
     update_editbox(IDC_E_CRIGHT, new_config.controller_config.c_right);
     update_editbox(IDC_E_CUP, new_config.controller_config.c_up);
     update_editbox(IDC_E_CDOWN, new_config.controller_config.c_down);
+
+    update_editbox(IDC_EAS_LEFT, IDC_EAS_RIGHT, new_config.controller_config.x);
+    update_editbox(IDC_EAS_UP, IDC_EAS_DOWN, new_config.controller_config.y);
 }
 
 static bool is_editing()
@@ -307,8 +311,10 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
         if (auto *mapping = std::get_if<t_axis_mapping *>(&g_ctx.target_value))
         {
             (*mapping)->axis = SDL_GAMEPAD_AXIS_INVALID;
-            (*mapping)->key_negative = 0;
-            (*mapping)->key_positive = 0;
+            if (g_ctx.positive_target_axis)
+                (*mapping)->key_positive = wparam;
+            else
+                (*mapping)->key_negative = wparam;
             end_edit();
         }
 
@@ -346,6 +352,10 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             new_config = g_ctx.prev_config;
             EndDialog(hwnd, IDCANCEL);
             break;
+        case IDC_B_CLEAR:
+            new_config = t_config{};
+            update_editboxes();
+            break;
 
             HANDLE_EDIT_BEGIN(IDC_B_A, IDC_E_A, &new_config.controller_config.a)
             HANDLE_EDIT_BEGIN(IDC_B_B, IDC_E_B, &new_config.controller_config.b)
@@ -365,10 +375,22 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             HANDLE_EDIT_BEGIN(IDC_B_CUP, IDC_E_CUP, &new_config.controller_config.c_up)
             HANDLE_EDIT_BEGIN(IDC_B_CDOWN, IDC_E_CDOWN, &new_config.controller_config.c_down)
 
-            HANDLE_EDIT_BEGIN(IDC_BAS_LEFT, IDC_EAS_LEFT, &new_config.controller_config.x)
-            HANDLE_EDIT_BEGIN(IDC_BAS_RIGHT, IDC_EAS_RIGHT, &new_config.controller_config.x)
-            HANDLE_EDIT_BEGIN(IDC_BAS_UP, IDC_EAS_UP, &new_config.controller_config.y)
-            HANDLE_EDIT_BEGIN(IDC_BAS_DOWN, IDC_EAS_DOWN, &new_config.controller_config.y)
+        case IDC_BAS_LEFT:
+            begin_edit(IDC_EAS_LEFT, &new_config.controller_config.x);
+            g_ctx.positive_target_axis = false;
+            break;
+        case IDC_BAS_RIGHT:
+            begin_edit(IDC_EAS_RIGHT, &new_config.controller_config.x);
+            g_ctx.positive_target_axis = true;
+            break;
+        case IDC_BAS_UP:
+            begin_edit(IDC_EAS_UP, &new_config.controller_config.y);
+            g_ctx.positive_target_axis = false;
+            break;
+        case IDC_BAS_DOWN:
+            begin_edit(IDC_EAS_DOWN, &new_config.controller_config.y);
+            g_ctx.positive_target_axis = true;
+            break;
 
         default:
             break;
