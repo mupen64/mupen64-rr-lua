@@ -522,9 +522,9 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
             SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
             SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETPOS, TRUE,
-                               (int)MiscHelpers::remap(new_config.x_scale[ctx->controller_index], 0.0f, 1.0f, 10.0f, 2010.0f));
+                               (int)MiscHelpers::remap(new_config.controller_config[ctx->controller_index].x_scale, 0.0f, 1.0f, 10.0f, 2010.0f));
             SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
-            SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETPOS, TRUE, (int)MiscHelpers::remap(new_config.y_scale[ctx->controller_index], 0.0f, 1.0f, 10.0f, 2010.0f));
+            SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETPOS, TRUE, (int)MiscHelpers::remap(new_config.controller_config[ctx->controller_index].y_scale, 0.0f, 1.0f, 10.0f, 2010.0f));
 
             SendMessage(GetDlgItem(ctx->hwnd, IDC_X_DOWN), WM_SETFONT, (WPARAM)icon_font, TRUE);
             SendMessage(GetDlgItem(ctx->hwnd, IDC_X_UP), WM_SETFONT, (WPARAM)icon_font, TRUE);
@@ -778,11 +778,11 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     const auto scale = MiscHelpers::remap(pos, min, max, 0.0f, 1.0f);
                     if (id == IDC_SLIDERX)
                     {
-                        new_config.x_scale[ctx->controller_index] = scale;
+                        new_config.controller_config[ctx->controller_index].x_scale = scale;
                     }
                     else
                     {
-                        new_config.y_scale[ctx->controller_index] = scale;
+                        new_config.controller_config[ctx->controller_index].y_scale = scale;
                     }
                 }
                 break;

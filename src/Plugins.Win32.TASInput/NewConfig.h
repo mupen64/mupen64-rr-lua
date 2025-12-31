@@ -42,6 +42,9 @@ struct t_controller_config
 
     t_axis_mapping x = {SDL_GAMEPAD_AXIS_LEFTX, 0, 0};
     t_axis_mapping y = {SDL_GAMEPAD_AXIS_LEFTY, 0, 0};
+
+    float x_scale = 1.0f;
+    float y_scale = 1.0f;
 };
 
 typedef struct s_config
@@ -59,8 +62,6 @@ typedef struct s_config
     // Increments joystick position by the value of the magnitude slider when moving via keyboard or gamepad
     int32_t relative_mode = false;
     int32_t async_visual_updates = true;
-    float x_scale[4] = {1, 1, 1, 1};
-    float y_scale[4] = {1, 1, 1, 1};
     t_controller_config controller_config[4]{};
 } t_config;
 

@@ -133,5 +133,8 @@ core_buttons GamepadManager::get_input()
 
     buttons.y *= -1;
 
+    buttons.x = static_cast<int8_t>(buttons.x * controller_config.x_scale);
+    buttons.y = static_cast<int8_t>(buttons.y * controller_config.y_scale);
+
     return buttons;
 }
