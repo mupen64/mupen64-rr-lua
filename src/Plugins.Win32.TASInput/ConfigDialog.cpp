@@ -304,6 +304,9 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
         return DLGC_WANTALLKEYS;
     case WM_CHAR:
         return TRUE;
+    case WM_KILLFOCUS:
+        end_edit();
+        break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
 
