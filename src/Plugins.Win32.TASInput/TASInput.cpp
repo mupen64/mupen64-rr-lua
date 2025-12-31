@@ -1016,7 +1016,7 @@ static void show_activated_windows()
 
 static void create_dialog_for_status(Status* status, size_t i)
 {
-    status[i].hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_MAIN), nullptr, wndproc, (LPARAM)status);
+    status[i].hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_MAIN), nullptr, wndproc, reinterpret_cast<LPARAM>(status));
 }
 
 static void ui_thread()
