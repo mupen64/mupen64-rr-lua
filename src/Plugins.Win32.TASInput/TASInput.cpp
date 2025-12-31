@@ -953,6 +953,14 @@ EXPORT void CALL InitiateControllers(void* hMainWindow, core_controller Controls
         Controls[i].Present = new_config.controller_active[i];
         Controls[i].RawData = false;
         Controls[i].Plugin = ce_none;
+        if (new_config.controller_mempak[i])
+        {
+            Controls[i].Plugin |= ce_mempak;
+        }
+        if (new_config.controller_rumblepak[i])
+        {
+            Controls[i].Plugin |= ce_rumblepak;
+        }
     }
 }
 

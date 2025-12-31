@@ -46,20 +46,22 @@ struct t_controller_config
 
 typedef struct s_config
 {
-    int32_t version = 5;
+    int32_t version = 6;
     int32_t always_on_top = false;
     int32_t float_from_parent = true;
     int32_t titlebar = true;
     int32_t client_drag = true;
     int32_t dialog_expanded[4] = {0, 0, 0, 0};
     int32_t controller_active[4] = {1, 0, 0, 0};
+    int32_t controller_mempak[4] = {0, 0, 0, 0};
+    int32_t controller_rumblepak[4] = {0, 0, 0, 0};
     int32_t loop_combo = false;
     // Increments joystick position by the value of the magnitude slider when moving via keyboard or gamepad
     int32_t relative_mode = false;
     int32_t async_visual_updates = true;
     float x_scale[4] = {1, 1, 1, 1};
     float y_scale[4] = {1, 1, 1, 1};
-    t_controller_config controller_config;
+    t_controller_config controller_config[4]{};
 } t_config;
 
 extern t_config new_config;

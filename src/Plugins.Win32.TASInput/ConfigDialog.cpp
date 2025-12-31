@@ -22,6 +22,7 @@ struct config_dialog_context
 {
     HWND hwnd{};
     t_config prev_config{};
+    size_t selected_controller{};
     std::variant<std::monostate, t_button_mapping *, t_axis_mapping *> target_value{};
     bool positive_target_axis{};
 };
@@ -216,33 +217,38 @@ static void update_editbox(int id_negative, int id_positive, const t_axis_mappin
     }
 }
 
-static void update_editboxes()
+static void update_visuals()
 {
     for (const auto btn : editbox_ids)
     {
         SetDlgItemText(g_ctx.hwnd, btn, L"");
     }
 
-    update_editbox(IDC_E_A, new_config.controller_config.a);
-    update_editbox(IDC_E_B, new_config.controller_config.b);
-    update_editbox(IDC_E_START, new_config.controller_config.start);
+    const auto controller_config = new_config.controller_config[g_ctx.selected_controller];
 
-    update_editbox(IDC_E_ZTRIG, new_config.controller_config.z);
-    update_editbox(IDC_E_LTRIG, new_config.controller_config.l);
-    update_editbox(IDC_E_RTRIG, new_config.controller_config.r);
+    update_editbox(IDC_E_A, controller_config.a);
+    update_editbox(IDC_E_B, controller_config.b);
+    update_editbox(IDC_E_START, controller_config.start);
 
-    update_editbox(IDC_E_DPLEFT, new_config.controller_config.dpad_left);
-    update_editbox(IDC_E_DPRIGHT, new_config.controller_config.dpad_right);
-    update_editbox(IDC_E_DPUP, new_config.controller_config.dpad_up);
-    update_editbox(IDC_E_DPDOWN, new_config.controller_config.dpad_down);
+    update_editbox(IDC_E_ZTRIG, controller_config.z);
+    update_editbox(IDC_E_LTRIG, controller_config.l);
+    update_editbox(IDC_E_RTRIG, controller_config.r);
 
-    update_editbox(IDC_E_CLEFT, new_config.controller_config.c_left);
-    update_editbox(IDC_E_CRIGHT, new_config.controller_config.c_right);
-    update_editbox(IDC_E_CUP, new_config.controller_config.c_up);
-    update_editbox(IDC_E_CDOWN, new_config.controller_config.c_down);
+    update_editbox(IDC_E_DPLEFT, controller_config.dpad_left);
+    update_editbox(IDC_E_DPRIGHT, controller_config.dpad_right);
+    update_editbox(IDC_E_DPUP, controller_config.dpad_up);
+    update_editbox(IDC_E_DPDOWN, controller_config.dpad_down);
 
-    update_editbox(IDC_EAS_LEFT, IDC_EAS_RIGHT, new_config.controller_config.x);
-    update_editbox(IDC_EAS_UP, IDC_EAS_DOWN, new_config.controller_config.y);
+    update_editbox(IDC_E_CLEFT, controller_config.c_left);
+    update_editbox(IDC_E_CRIGHT, controller_config.c_right);
+    update_editbox(IDC_E_CUP, controller_config.c_up);
+    update_editbox(IDC_E_CDOWN, controller_config.c_down);
+
+    update_editbox(IDC_EAS_LEFT, IDC_EAS_RIGHT, controller_config.x);
+    update_editbox(IDC_EAS_UP, IDC_EAS_DOWN, controller_config.y);
+
+    CheckDlgButton(g_ctx.hwnd, IDC_CHECKACTIVE, new_config.controller_active[g_ctx.selected_controller]);
+    CheckDlgButton(g_ctx.hwnd, IDC_CHECKMEMPAK, new_config.controller_mempak[g_ctx.selected_controller]);
 }
 
 static bool is_editing()
@@ -253,7 +259,7 @@ static bool is_editing()
 static void end_edit()
 {
     g_ctx.target_value = std::monostate{};
-    update_editboxes();
+    update_visuals();
 }
 
 static void pre_begin_edit(int edit_id)
@@ -327,18 +333,28 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
 
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    auto controller_config = &new_config.controller_config[g_ctx.selected_controller];
+
     switch (msg)
     {
-    case WM_INITDIALOG:
+    case WM_INITDIALOG: {
         g_ctx.hwnd = hwnd;
-        update_editboxes();
+        update_visuals();
 
         for (const auto btn : button_ids)
         {
             SetWindowSubclass(GetDlgItem(hwnd, btn), hotkey_button_subclass_proc, 0, 0);
         }
 
+        const auto cb_hwnd = GetDlgItem(hwnd, IDC_COMBOCONT);
+        for (size_t i = 0; i < 4; i++)
+        {
+            ComboBox_AddString(cb_hwnd, std::format(L"Controller {}", i + 1).c_str());
+        }
+        ComboBox_SetCurSel(cb_hwnd, g_ctx.selected_controller);
+
         break;
+    }
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         return TRUE;
@@ -354,44 +370,61 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         case IDC_B_CLEAR:
             new_config = t_config{};
-            update_editboxes();
+            update_visuals();
             break;
+        case IDC_COMBOCONT: {
+            if (HIWORD(wparam) != CBN_SELCHANGE) break;
 
-            HANDLE_EDIT_BEGIN(IDC_B_A, IDC_E_A, &new_config.controller_config.a)
-            HANDLE_EDIT_BEGIN(IDC_B_B, IDC_E_B, &new_config.controller_config.b)
-            HANDLE_EDIT_BEGIN(IDC_B_START, IDC_E_START, &new_config.controller_config.start)
+            const auto index = ComboBox_GetCurSel(GetDlgItem(hwnd, IDC_COMBOCONT));
 
-            HANDLE_EDIT_BEGIN(IDC_B_ZTRIG, IDC_E_ZTRIG, &new_config.controller_config.z)
-            HANDLE_EDIT_BEGIN(IDC_B_LTRIG, IDC_E_LTRIG, &new_config.controller_config.l)
-            HANDLE_EDIT_BEGIN(IDC_B_RTRIG, IDC_E_RTRIG, &new_config.controller_config.r)
+            if (index == CB_ERR) break;
 
-            HANDLE_EDIT_BEGIN(IDC_B_DPLEFT, IDC_E_DPLEFT, &new_config.controller_config.dpad_left)
-            HANDLE_EDIT_BEGIN(IDC_B_DPRIGHT, IDC_E_DPRIGHT, &new_config.controller_config.dpad_right)
-            HANDLE_EDIT_BEGIN(IDC_B_DPUP, IDC_E_DPUP, &new_config.controller_config.dpad_up)
-            HANDLE_EDIT_BEGIN(IDC_B_DPDOWN, IDC_E_DPDOWN, &new_config.controller_config.dpad_down)
+            g_ctx.selected_controller = index;
+            update_visuals();
+            break;
+        }
+        case IDC_CHECKACTIVE: {
+            const auto checked = IsDlgButtonChecked(g_ctx.hwnd, IDC_CHECKACTIVE) == BST_CHECKED;
+            new_config.controller_active[g_ctx.selected_controller] = checked;
+            break;
+        }
+        case IDC_CHECKMEMPAK: {
+            const auto checked = IsDlgButtonChecked(g_ctx.hwnd, IDC_CHECKMEMPAK) == BST_CHECKED;
+            new_config.controller_mempak[g_ctx.selected_controller] = checked;
+            break;
+        }
 
-            HANDLE_EDIT_BEGIN(IDC_B_CLEFT, IDC_E_CLEFT, &new_config.controller_config.c_left)
-            HANDLE_EDIT_BEGIN(IDC_B_CRIGHT, IDC_E_CRIGHT, &new_config.controller_config.c_right)
-            HANDLE_EDIT_BEGIN(IDC_B_CUP, IDC_E_CUP, &new_config.controller_config.c_up)
-            HANDLE_EDIT_BEGIN(IDC_B_CDOWN, IDC_E_CDOWN, &new_config.controller_config.c_down)
+            HANDLE_EDIT_BEGIN(IDC_B_A, IDC_E_A, &controller_config->a)
+            HANDLE_EDIT_BEGIN(IDC_B_B, IDC_E_B, &controller_config->b)
+            HANDLE_EDIT_BEGIN(IDC_B_START, IDC_E_START, &controller_config->start)
 
+            HANDLE_EDIT_BEGIN(IDC_B_ZTRIG, IDC_E_ZTRIG, &controller_config->z)
+            HANDLE_EDIT_BEGIN(IDC_B_LTRIG, IDC_E_LTRIG, &controller_config->l)
+            HANDLE_EDIT_BEGIN(IDC_B_RTRIG, IDC_E_RTRIG, &controller_config->r)
+            HANDLE_EDIT_BEGIN(IDC_B_DPLEFT, IDC_E_DPLEFT, &controller_config->dpad_left)
+            HANDLE_EDIT_BEGIN(IDC_B_DPRIGHT, IDC_E_DPRIGHT, &controller_config->dpad_right)
+            HANDLE_EDIT_BEGIN(IDC_B_DPUP, IDC_E_DPUP, &controller_config->dpad_up)
+            HANDLE_EDIT_BEGIN(IDC_B_DPDOWN, IDC_E_DPDOWN, &controller_config->dpad_down)
+            HANDLE_EDIT_BEGIN(IDC_B_CLEFT, IDC_E_CLEFT, &controller_config->c_left)
+            HANDLE_EDIT_BEGIN(IDC_B_CRIGHT, IDC_E_CRIGHT, &controller_config->c_right)
+            HANDLE_EDIT_BEGIN(IDC_B_CUP, IDC_E_CUP, &controller_config->c_up)
+            HANDLE_EDIT_BEGIN(IDC_B_CDOWN, IDC_E_CDOWN, &controller_config->c_down)
         case IDC_BAS_LEFT:
-            begin_edit(IDC_EAS_LEFT, &new_config.controller_config.x);
+            begin_edit(IDC_EAS_LEFT, &controller_config->x);
             g_ctx.positive_target_axis = false;
             break;
         case IDC_BAS_RIGHT:
-            begin_edit(IDC_EAS_RIGHT, &new_config.controller_config.x);
+            begin_edit(IDC_EAS_RIGHT, &controller_config->x);
             g_ctx.positive_target_axis = true;
             break;
         case IDC_BAS_UP:
-            begin_edit(IDC_EAS_UP, &new_config.controller_config.y);
+            begin_edit(IDC_EAS_UP, &controller_config->y);
             g_ctx.positive_target_axis = false;
             break;
         case IDC_BAS_DOWN:
-            begin_edit(IDC_EAS_DOWN, &new_config.controller_config.y);
+            begin_edit(IDC_EAS_DOWN, &controller_config->y);
             g_ctx.positive_target_axis = true;
             break;
-
         default:
             break;
         }
