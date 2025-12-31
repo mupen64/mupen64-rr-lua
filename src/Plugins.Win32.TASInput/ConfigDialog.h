@@ -16,7 +16,7 @@ void show(HWND parent);
 
 /**
  * \brief Notifies of an SDL event.
- * \brief e The SDL event.
+ * \param e The SDL event.
  */
 void on_sdl_event(const SDL_Event &e);
 
