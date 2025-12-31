@@ -67,7 +67,7 @@ std::variant<t_combo, std::wstring> t_combo::deserialize(const std::span<uint8_t
     offset += sizeof(uint32_t);
 
     // 3. Read the samples data
-    size_t samples_byte_size = samples_size * sizeof(float);
+    size_t samples_byte_size = samples_size * sizeof(core_buttons);
     if (offset + samples_byte_size > data.size())
     {
         return L"Malformed samples.";
