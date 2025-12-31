@@ -58,12 +58,12 @@ static bool is_button_held(const t_button_mapping &mapping)
     return false;
 }
 
-core_buttons GamepadManager::get_input()
+core_buttons GamepadManager::get_input(const size_t i)
 {
     core_buttons buttons{};
 
-    const auto controller_config = new_config.controller_config[0];
-
+    const auto controller_config = new_config.controller_config[i];
+    
     buttons.a = is_button_held(controller_config.a);
     buttons.b = is_button_held(controller_config.b);
     buttons.z = is_button_held(controller_config.z);

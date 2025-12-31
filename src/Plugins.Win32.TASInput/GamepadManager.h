@@ -19,6 +19,7 @@ void on_sdl_event(const SDL_Event &e);
 
 /**
  * \brief Gets the current gamepad input state.
+ * \param i The controller index.
  */
-core_buttons get_input();
+core_buttons get_input(size_t i);
 } // namespace GamepadManager

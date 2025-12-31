@@ -684,7 +684,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         break;
         case WM_TIMER: {
-            core_buttons controller_input = GamepadManager::get_input();
+            core_buttons controller_input = GamepadManager::get_input(ctx->controller_index);
 
             if (controller_input.value != ctx->last_controller_input.value)
             {
