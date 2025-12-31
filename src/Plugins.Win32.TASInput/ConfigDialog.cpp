@@ -457,8 +457,6 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
         return;
     }
 
-    g_ef->log_trace(std::format(L"ConfigDialog::on_sdl_event: type={}", e.type).c_str());
-
     if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN)
     {
         if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))

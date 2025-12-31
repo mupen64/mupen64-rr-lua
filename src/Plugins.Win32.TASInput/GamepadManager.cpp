@@ -23,15 +23,6 @@ static int32_t remap_axis(int16_t value, const bool is_y_axis)
 
     const int32_t mapped = static_cast<int32_t>(value) * max_target / 32767;
 
-    if (is_y_axis)
-    {
-        g_ef->log_trace(std::format(L"y: {}", std::clamp(mapped, min_target, max_target)).c_str());
-    }
-    else
-    {
-        g_ef->log_trace(std::format(L"x: {}", std::clamp(mapped, min_target, max_target)).c_str());
-    }
-
     return std::clamp(mapped, min_target, max_target);
 }
 
