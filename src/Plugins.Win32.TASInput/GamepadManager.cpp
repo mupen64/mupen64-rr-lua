@@ -35,14 +35,6 @@ static int32_t remap_axis(int16_t value, const bool is_y_axis)
     return std::clamp(mapped, min_target, max_target);
 }
 
-void GamepadManager::init()
-{
-    SDL_SetHint(SDL_HINT_JOYSTICK_DIRECTINPUT, "0");
-    SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT, "0");
-    RT_ASSERT(SDL_Init(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), L"Failed to initialize SDL subsystems");
-}
-
 void GamepadManager::on_sdl_event(const SDL_Event &e)
 {
     switch (e.type)

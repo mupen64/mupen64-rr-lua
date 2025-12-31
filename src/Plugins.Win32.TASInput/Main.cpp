@@ -51,6 +51,14 @@ EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
     g_ef = funcs;
 }
 
+void Main::init_sdl()
+{
+    SDL_SetHint(SDL_HINT_JOYSTICK_DIRECTINPUT, "0");
+    SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT, "0");
+    RT_ASSERT(SDL_Init(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), L"Failed to initialize SDL subsystems");
+}
+
 void Main::pump_sdl_events()
 {
     SDL_Event e;

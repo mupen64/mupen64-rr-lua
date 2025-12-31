@@ -999,8 +999,8 @@ static void create_dialog_for_status(Status* status, size_t i)
 
 static void ui_thread()
 {
-    GamepadManager::init();
-
+    Main::init_sdl();
+    
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 

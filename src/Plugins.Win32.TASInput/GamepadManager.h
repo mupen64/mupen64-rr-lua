@@ -12,11 +12,6 @@
 namespace GamepadManager
 {
 /**
- * \brief Initializes the subsystem.
- */
-void init();
-
-/**
  * \brief Notifies of an SDL event.
  * \brief e The SDL event.
  */
