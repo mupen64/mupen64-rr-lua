@@ -135,7 +135,7 @@ struct Status {
 
     void start_edit(int);
 
-    void end_edit(int, char*);
+    void end_edit(int, wchar_t*);
 
     /**
      * \brief Updates the UI
@@ -399,7 +399,7 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->load_combos("combos.cmb");
         break;
     case WM_EDIT_END:
-        ctx->end_edit(ctx->renaming_combo_index, (char*)lparam);
+        ctx->end_edit(ctx->renaming_combo_index, (wchar_t*)lparam);
         ctx->combo_edit_box = nullptr;
         break;
     case WM_COMMAND:
@@ -1158,19 +1158,19 @@ void Status::start_edit(int id)
     PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM)combo_edit_box, TRUE);
 }
 
-void Status::end_edit(int id, char* name)
+void Status::end_edit(int id, wchar_t* name)
 {
     if (name != NULL)
     {
         ListBox_DeleteString(combo_listbox, id);
 
-        if (name[0] == NULL)
+        if (name[0] == L'\0')
         {
             combos.erase(combos.begin() + id);
         }
         else
         {
-            combos[id].name = name;
+            combos[id].name = IOUtils::to_utf8_string(name);
             ListBox_InsertString(combo_listbox, id, name);
         }
     }
