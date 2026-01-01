@@ -393,4 +393,25 @@ template <typename T> inline T wrapping_clamp(const T value, T min, T max)
     return min + offset;
 }
 
+/**
+ * \brief Limits a value to a specific range, wrapping around if it exceeds the bounds. The wrap around can only happen once.
+ * \param value The value to limit.
+ * \param min The lower bound.
+ * \param max The upper bound.
+ * \return The value, limited to the specified range.
+ */
+template <typename T>
+static T wrapping_clamp_decimal(T value, T min, T max)
+{
+    if (value < min)
+    {
+        return max - (min - value);
+    }
+    if (value > max)
+    {
+        return min + (value - max);
+    }
+    return value;
+}
+
 }; // namespace MiscHelpers

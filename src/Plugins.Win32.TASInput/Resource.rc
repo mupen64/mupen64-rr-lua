@@ -1,0 +1,266 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CONFIGDLG DIALOGEX 0, 0, 250, 237
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configure Controller"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    COMBOBOX        IDC_COMBOCONT,7,17,70,64,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Active",IDC_CHECKACTIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,30,10
+    CONTROL         "MemPak",IDC_CHECKMEMPAK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,39,32,38,10
+    LTEXT           "Current N64 Controller",IDC_STATIC,7,7,70,8
+
+    GROUPBOX        "Device List",IDC_STATIC,84,7,156,57,BS_LEFT
+    // LISTBOX         IDC_LDEVICES,89,18,146,41,LBS_MULTIPLESEL | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    LTEXT           "Device selection is currently not available.\r\nThe most recently connected gamepad will be used for inputs.",IDC_STATIC,89,18,146,41,SS_LEFT
+
+    GROUPBOX        "Buttons",IDC_STATIC,7,70,77,59,BS_LEFT
+    EDITTEXT        IDC_E_A,28,84,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_B,28,98,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_START,28,112,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    PUSHBUTTON      "A",IDC_B_A,12,84,13,10
+    PUSHBUTTON      "B",IDC_B_B,12,98,13,10
+    PUSHBUTTON      "S",IDC_B_START,12,112,13,10
+
+    GROUPBOX        "Analog Stick",IDC_STATIC,90,70,150,44,BS_LEFT
+    PUSHBUTTON      "U",IDC_BAS_UP,96,83,13,10
+    PUSHBUTTON      "L",IDC_BAS_LEFT,168,83,13,10
+    PUSHBUTTON      "R",IDC_BAS_RIGHT,168,98,13,10
+    PUSHBUTTON      "D",IDC_BAS_DOWN,96,98,13,10
+    EDITTEXT        IDC_EAS_UP,112,82,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_EAS_DOWN,112,97,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_EAS_LEFT,184,82,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_EAS_RIGHT,184,97,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+
+    GROUPBOX        "Triggers",IDC_STATIC,7,133,77,59,BS_LEFT
+    PUSHBUTTON      "Z",IDC_B_ZTRIG,12,147,13,10
+    PUSHBUTTON      "L",IDC_B_LTRIG,12,161,13,10
+    PUSHBUTTON      "R",IDC_B_RTRIG,12,175,13,10
+    EDITTEXT        IDC_E_ZTRIG,28,147,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_LTRIG,28,161,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_RTRIG,28,175,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    
+    GROUPBOX        "Digital Pad",IDC_STATIC,90,118,150,44,BS_LEFT
+    PUSHBUTTON      "U",IDC_B_DPUP,96,131,13,10
+    PUSHBUTTON      "D",IDC_B_DPDOWN,96,145,13,10
+    PUSHBUTTON      "L",IDC_B_DPLEFT,168,131,13,10
+    PUSHBUTTON      "R",IDC_B_DPRIGHT,168,146,13,10
+    EDITTEXT        IDC_E_DPUP,112,129,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_DPDOWN,112,144,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_DPLEFT,184,130,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_DPRIGHT,184,145,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+
+    GROUPBOX        "C Buttons",IDC_STATIC,90,165,150,44,BS_LEFT
+    PUSHBUTTON      "U",IDC_B_CUP,96,177,13,10
+    PUSHBUTTON      "D",IDC_B_CDOWN,96,192,13,10
+    PUSHBUTTON      "L",IDC_B_CLEFT,168,177,13,10
+    PUSHBUTTON      "R",IDC_B_CRIGHT,168,192,13,10
+    EDITTEXT        IDC_E_CUP,112,176,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_CDOWN,112,191,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_CLEFT,184,176,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    EDITTEXT        IDC_E_CRIGHT,184,191,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+
+    PUSHBUTTON      "Reset",IDC_B_CLEAR,7,216,40,14
+    PUSHBUTTON      "Presets",IDC_PRESETS,52,216,50,14,BS_SPLITBUTTON
+    DEFPUSHBUTTON   "OK",IDOK,135,216,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,190,216,50,14
+END
+
+IDD_COMBOS DIALOGEX 0, 0, 201, 180
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    CONTROL         "Idle",IDC_STATUS,"Static",SS_LEFTNOWORDWRAP | SS_CENTERIMAGE | WS_GROUP,6,0,156,8
+    LISTBOX         IDC_MACROLIST,6,8,156,168,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_CLIPSIBLINGS | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Record",IDC_RECORD,162,8,36,18
+    PUSHBUTTON      "Play",IDC_PLAY,162,26,36,18
+    CONTROL         "Pause",IDC_PAUSE,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,162,44,36,18
+    PUSHBUTTON      "Stop",IDC_STOP,162,62,36,18
+    CONTROL         "Loop",IDC_LOOP,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,162,80,36,17
+    PUSHBUTTON      "Rename",IDC_EDIT,162,104,36,18
+    PUSHBUTTON      "Import",IDC_IMPORT,162,122,36,18
+    PUSHBUTTON      "Export",IDC_SAVE,162,140,36,18
+    PUSHBUTTON      "Clear",IDC_CLEAR,162,158,36,18
+END
+
+IDD_MAIN DIALOGEX 0, 0, 201, 152
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_VISIBLE | WS_CAPTION
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_SLIDERX,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,102,24,96,12
+    CONTROL         "",IDC_SLIDERY,"msctls_trackbar32",TBS_NOTICKS | WS_TABSTOP,102,60,96,12
+    CONTROL         "L",IDC_CHECK_L,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,48,90,24,8
+    CONTROL         "D^",IDC_CHECK_DUP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,96,24,8
+    CONTROL         "S",IDC_CHECK_START,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,102,24,8
+    CONTROL         "D<",IDC_CHECK_DLEFT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,108,24,8
+    CONTROL         "D>",IDC_CHECK_DRIGHT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,30,108,24,8
+    CONTROL         "B",IDC_CHECK_B,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,114,36,8
+    CONTROL         "Dv",IDC_CHECK_DDOWN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,120,24,8
+    CONTROL         "A",IDC_CHECK_A,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,126,30,8
+    CONTROL         "Z",IDC_CHECK_Z,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,132,30,8
+    EDITTEXT        IDC_EDITX,114,6,48,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDITY,114,42,48,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Clear",IDC_CLEARINPUT,2,138,36,12
+    PUSHBUTTON      "More",IDC_EXPAND,162,138,36,12
+    CONTROL         "C^",IDC_CHECK_CUP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,96,24,8
+    CONTROL         "C<",IDC_CHECK_CLEFT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,108,24,8
+    CONTROL         "C>",IDC_CHECK_CRIGHT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,174,108,24,8
+    CONTROL         "Cv",IDC_CHECK_CDOWN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,162,120,24,8
+    CONTROL         "R",IDC_CHECK_R,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,90,24,8
+    PUSHBUTTON      "<",IDC_X_DOWN,162,6,18,12
+    PUSHBUTTON      ">",IDC_X_UP,180,6,18,12
+    PUSHBUTTON      "v",IDC_Y_DOWN,162,42,18,12
+    PUSHBUTTON      "^",IDC_Y_UP,180,42,18,12
+    CTEXT           "X",IDC_LABEL_X,102,6,12,12,SS_CENTERIMAGE
+    CTEXT           "Y",IDC_LABEL_Y,102,42,12,12,SS_CENTERIMAGE
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_CONFIGDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 362
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 230
+    END
+
+    IDD_COMBOS, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 314
+    END
+
+    IDD_MAIN, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 146
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,1,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Controller Plugin for N64 Emulators, specialized for TAS. Conforms to Zilmar's Input spec 1.0."
+            VALUE "CompanyName", " "
+            VALUE "FileDescription", "TAS Input Plugin"
+            VALUE "FileVersion", "1, 1, 0, 0"
+            VALUE "InternalName", "TASInput"
+            VALUE "LegalCopyright", "Copyright © 2001 Def, 2006 Nitsuja"
+            VALUE "OriginalFilename", "TASInput.dll"
+            VALUE "ProductName", "  TASInput"
+            VALUE "ProductVersion", "1, 1, 0, 0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_MAIN AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_COMBOS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

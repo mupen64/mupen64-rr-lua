@@ -1,0 +1,116 @@
+//{{NO_DEPENDENCIES}}
+// Von Microsoft Visual C++ generierte Includedatei.
+// Verwendet durch Resource.rc
+//
+#include <Windows.h>
+
+#define IDT_TIMER_STATUS_0 100
+
+#define IDC_COMBOCONT 1000
+#define IDC_CHECKACTIVE 1002
+#define IDC_LDEVICES 1003
+
+#define IDC_B_A 1004
+#define IDC_E_A 1005
+#define IDC_B_B 1006
+#define IDC_E_B 1007
+#define IDC_B_START 1008
+#define IDC_E_START 1009
+
+#define IDC_B_ZTRIG 1010
+#define IDC_E_ZTRIG 1011
+#define IDC_B_LTRIG 1012
+#define IDC_E_LTRIG 1013
+#define IDC_B_RTRIG 1014
+#define IDC_E_RTRIG 1015
+
+#define IDC_BAS_UP 1016
+#define IDC_EAS_UP 1017
+#define IDC_BAS_DOWN 1018
+#define IDC_EAS_DOWN 1019
+#define IDC_BAS_LEFT 1020
+#define IDC_EAS_LEFT 1021
+#define IDC_BAS_RIGHT 1022
+#define IDC_EAS_RIGHT 1023
+
+#define IDC_B_CUP 1024
+#define IDC_E_CUP 1025
+#define IDC_B_CDOWN 1026
+#define IDC_E_CDOWN 1027
+#define IDC_B_CLEFT 1028
+#define IDC_E_CLEFT 1029
+#define IDC_B_CRIGHT 1030
+#define IDC_E_CRIGHT 1031
+
+#define IDC_B_DPUP 1032
+#define IDC_E_DPUP 1033
+#define IDC_B_DPDOWN 1034
+#define IDC_E_DPDOWN 1035
+#define IDC_B_DPLEFT 1036
+#define IDC_E_DPLEFT 1038
+#define IDC_B_DPRIGHT 1039
+#define IDC_E_DPRIGHT 1040
+
+#define IDC_B_CLEAR 1045
+#define IDC_CHECKMEMPAK 1053
+
+#define IDC_STATUS 1137
+#define IDC_MACROLIST 1111
+#define IDC_RECORD 1131
+#define IDC_PLAY 1116
+#define IDC_PAUSE 1129
+#define IDC_STOP 1128
+#define IDC_LOOP 1130
+#define IDC_EDIT 1135
+#define IDC_IMPORT 1134
+#define IDC_SAVE 1136
+#define IDC_CLEAR 1133
+
+#define IDC_SLIDERX 1126
+#define IDC_SLIDERY 1127
+#define IDC_CHECK_L 1090
+#define IDC_CHECK_DUP 1100
+#define IDC_CHECK_START 1104
+#define IDC_CHECK_DLEFT 1101
+#define IDC_CHECK_DRIGHT 1102
+#define IDC_CHECK_B 1086
+#define IDC_CHECK_DDOWN 1103
+#define IDC_CHECK_A 1087
+#define IDC_CHECK_Z 1089
+
+#define IDC_EDITX 1067
+#define IDC_EDITY 1068
+#define IDC_CLEARINPUT 1122
+#define IDC_EXPAND 2106
+
+#define IDC_CHECK_CUP 1091
+#define IDC_CHECK_CLEFT 1092
+#define IDC_CHECK_CRIGHT 1093
+#define IDC_CHECK_CDOWN 1094
+#define IDC_CHECK_R 1088
+
+#define IDC_X_DOWN 2100
+#define IDC_X_UP 2101
+#define IDC_Y_DOWN 2102
+#define IDC_Y_UP 2103
+#define IDC_LABEL_X 2104
+#define IDC_LABEL_Y 2105
+
+#define IDC_STATIC 1999
+
+#define IDD_CONFIGDLG 2000
+#define IDD_MAIN 2001
+#define IDD_COMBOS 2002
+#define IDC_PRESETS 2003
+
+// Next default values for new objects
+//
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NO_MFC 1
+#define _APS_NEXT_RESOURCE_VALUE 107
+#define _APS_NEXT_COMMAND_VALUE 40001
+#define _APS_NEXT_CONTROL_VALUE 1138
+#define _APS_NEXT_SYMED_VALUE 101
+#endif
+#endif
