@@ -447,16 +447,16 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 GetCursorPos(&pt);
 
                 HMENU h_menu = CreatePopupMenu();
-                AppendMenu(h_menu, MF_STRING, 0, L"Gamepad");
-                AppendMenu(h_menu, MF_STRING, 1, L"Keyboard");
-                const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
+                AppendMenu(h_menu, MF_STRING, 1, L"Gamepad");
+                AppendMenu(h_menu, MF_STRING, 2, L"Keyboard");
+                const int clicked = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
 
-                if (offset == 0)
+                if (clicked == 1)
                 {
                     new_config.controller_config[g_ctx.selected_controller] = t_controller_config{};
                     update_visuals();
                 }
-                if (offset == 1)
+                if (clicked == 2)
                 {
                     new_config.controller_config[g_ctx.selected_controller] = t_controller_config::keyboard_config();
                     update_visuals();
