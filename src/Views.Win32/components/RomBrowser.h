@@ -11,6 +11,13 @@
  */
 namespace RomBrowser
 {
+struct t_simple_rom_info
+{
+    std::wstring path;
+    size_t size;
+    core_rom_header header;
+};
+
 /**
  * \brief Creates the rombrowser.
  */
