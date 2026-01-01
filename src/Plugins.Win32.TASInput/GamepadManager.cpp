@@ -31,6 +31,11 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
     switch (e.type)
     {
     case SDL_EVENT_GAMEPAD_ADDED:
+        if (g_ctx.gamepad)
+        {
+            SDL_CloseGamepad(g_ctx.gamepad);
+            g_ctx.gamepad = nullptr;
+        }
         g_ctx.gamepad = SDL_OpenGamepad(e.gdevice.which);
         break;
     case SDL_EVENT_GAMEPAD_REMOVED:
