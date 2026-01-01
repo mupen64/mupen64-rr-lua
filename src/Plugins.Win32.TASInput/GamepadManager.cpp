@@ -58,12 +58,33 @@ static bool is_button_held(const t_button_mapping &mapping)
     return false;
 }
 
+static int32_t get_axis(const t_axis_mapping &mapping, const bool is_y_axis)
+{
+    if (mapping.axis == SDL_GAMEPAD_AXIS_INVALID)
+    {
+        const auto negative_held = GetAsyncKeyState(mapping.key_negative) & 0x8000;
+        const auto positive_held = GetAsyncKeyState(mapping.key_positive) & 0x8000;
+
+        if (mapping.key_negative != 0 && negative_held)
+        {
+            return -128;
+        }
+        if (mapping.key_positive != 0 && positive_held)
+        {
+            return 127;
+        }
+        return 0;
+    }
+
+    return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis), is_y_axis);
+}
+
 core_buttons GamepadManager::get_input(const size_t i)
 {
     core_buttons buttons{};
 
     const auto controller_config = new_config.controller_config[i];
-    
+
     buttons.a = is_button_held(controller_config.a);
     buttons.b = is_button_held(controller_config.b);
     buttons.z = is_button_held(controller_config.z);
@@ -76,45 +97,8 @@ core_buttons GamepadManager::get_input(const size_t i)
     buttons.dl = is_button_held(controller_config.dpad_left);
     buttons.dr = is_button_held(controller_config.dpad_right);
 
-    if (controller_config.x.axis == SDL_GAMEPAD_AXIS_INVALID)
-    {
-        const auto negative_held = GetAsyncKeyState(controller_config.x.key_negative) & 0x8000;
-        const auto positive_held = GetAsyncKeyState(controller_config.x.key_positive) & 0x8000;
-
-        if (controller_config.x.key_negative != 0 && negative_held)
-        {
-            buttons.x -= 128;
-        }
-        if (controller_config.x.key_positive != 0 && positive_held)
-        {
-            buttons.x += 127;
-        }
-    }
-    else
-    {
-        buttons.x = remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)controller_config.x.axis), false);
-    }
-
-    if (controller_config.y.axis == SDL_GAMEPAD_AXIS_INVALID)
-    {
-        const auto negative_held = GetAsyncKeyState(controller_config.y.key_negative) & 0x8000;
-        const auto positive_held = GetAsyncKeyState(controller_config.y.key_positive) & 0x8000;
-
-        if (controller_config.y.key_negative != 0 && negative_held)
-        {
-            buttons.y -= 127;
-        }
-        if (controller_config.y.key_positive != 0 && positive_held)
-        {
-            buttons.y += 128;
-        }
-    }
-    else
-    {
-        buttons.y = remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)controller_config.y.axis), true);
-    }
-
-    buttons.y *= -1;
+    buttons.x = get_axis(controller_config.x, false);
+    buttons.y = -get_axis(controller_config.y, true);
 
     buttons.x = static_cast<int8_t>(buttons.x * controller_config.x_scale);
     buttons.y = static_cast<int8_t>(buttons.y * controller_config.y_scale);
