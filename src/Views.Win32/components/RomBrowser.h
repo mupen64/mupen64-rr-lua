@@ -48,4 +48,10 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
  */
 std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const core_rom_header &)> &predicate);
 
+/**
+ * \brief Gets the list of discovered ROMs. This list is cached and updated when the rombrowser is built.
+ * \return The discovered ROMs.
+ */
+std::vector<t_simple_rom_info> get_discovered_roms();
+
 } // namespace RomBrowser

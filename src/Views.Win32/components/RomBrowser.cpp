@@ -480,6 +480,11 @@ std::vector<std::filesystem::path> find_available_roms(const std::function<bool(
     return matching_roms;
 }
 
+std::vector<t_simple_rom_info> get_discovered_roms()
+{
+    return g_ctx.discovered_roms;
+}
+
 void emu_launched_changed(std::any data)
 {
     auto value = std::any_cast<bool>(data);
