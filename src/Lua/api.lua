@@ -21,7 +21,7 @@ action = {}
 clipboard = {}
 
 Mupen = {
-    _VERSION = '1.3.0-9',
+    _VERSION = '1.3.0-10',
     _URL = 'https://github.com/mupen64/mupen64-rr-lua',
     _DESCRIPTION = 'Mupen64 Lua Scripting API',
     _LICENSE = 'GPL-2',
