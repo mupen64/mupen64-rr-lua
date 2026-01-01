@@ -361,14 +361,13 @@ static void add_roms(const std::wstring_view query)
 {
     g_ctx.items.emplace_back(t_listbox_item::make_group(L"ROMs"));
 
-    const auto roms = RomBrowser::find_available_roms([&](const core_rom_header &header) {
-        const auto name = MiscHelpers::trim(std::wstring(header.nom, header.nom + 20));
-        return action_matches_query(t_listbox_item::make_rom(name), query);
-    });
+    const auto roms = RomBrowser::get_discovered_roms();
 
     for (const auto &rom : roms)
     {
-        const auto item = t_listbox_item::make_rom(rom);
+        const auto name = std::filesystem::path(rom.path).filename().wstring();
+
+        const auto item = t_listbox_item::make_rom(name);
         if (action_matches_query(item, query))
         {
             g_ctx.items.emplace_back(item);
