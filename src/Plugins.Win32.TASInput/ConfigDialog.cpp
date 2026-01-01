@@ -10,9 +10,9 @@
 #include <NewConfig.h>
 #include <GamepadManager.h>
 
-const auto editbox_ids = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,   IDC_E_LTRIG, IDC_E_RTRIG,
-                          IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT, IDC_E_CRIGHT,
-                          IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_LEFT,  IDC_EAS_DOWN};
+const auto editbox_ids = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,   IDC_E_LTRIG,  IDC_E_RTRIG,
+                          IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT,  IDC_E_CRIGHT,
+                          IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_LEFT, IDC_EAS_DOWN};
 
 const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG,   IDC_B_LTRIG,  IDC_B_RTRIG,
                          IDC_B_DPLEFT, IDC_B_DPRIGHT, IDC_B_DPUP,  IDC_B_DPDOWN,  IDC_B_CLEFT,  IDC_B_CRIGHT,
@@ -432,6 +432,40 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             begin_edit(IDC_EAS_DOWN, &controller_config->y);
             g_ctx.positive_target_axis = true;
             break;
+        default:
+            break;
+        }
+        break;
+    case WM_NOTIFY:
+        switch (((LPNMHDR)lparam)->code)
+        {
+        case BCN_DROPDOWN: {
+            const auto nmbcdd = (NMBCDROPDOWN *)lparam;
+            if (nmbcdd->hdr.idFrom == IDC_PRESETS)
+            {
+                POINT pt{};
+                GetCursorPos(&pt);
+
+                HMENU h_menu = CreatePopupMenu();
+                AppendMenu(h_menu, MF_STRING, 0, L"Gamepad");
+                AppendMenu(h_menu, MF_STRING, 1, L"Keyboard");
+                const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
+
+                if (offset == 0)
+                {
+                    new_config.controller_config[g_ctx.selected_controller] = t_controller_config{};
+                    update_visuals();
+                }
+                if (offset == 1)
+                {
+                    new_config.controller_config[g_ctx.selected_controller] = t_controller_config::keyboard_config();
+                    update_visuals();
+                }
+
+                return TRUE;
+            }
+            break;
+        }
         default:
             break;
         }

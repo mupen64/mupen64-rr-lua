@@ -101,6 +101,7 @@
 #define IDD_CONFIGDLG 2000
 #define IDD_MAIN 2001
 #define IDD_COMBOS 2002
+#define IDC_PRESETS 2003
 
 // Next default values for new objects
 //

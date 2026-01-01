@@ -45,6 +45,28 @@ struct t_controller_config
 
     float x_scale = 1.0f;
     float y_scale = 1.0f;
+
+    static t_controller_config keyboard_config()
+    {
+        t_controller_config config{};
+        config.a = {SDL_GAMEPAD_BUTTON_INVALID, 'X'};
+        config.b = {SDL_GAMEPAD_BUTTON_INVALID, 'Z'};
+        config.start = {SDL_GAMEPAD_BUTTON_INVALID, VK_RETURN};
+        config.z = {SDL_GAMEPAD_BUTTON_INVALID, 'A'};
+        config.l = {SDL_GAMEPAD_BUTTON_INVALID, 'S'};
+        config.r = {SDL_GAMEPAD_BUTTON_INVALID, 'D'};
+        config.dpad_up = {SDL_GAMEPAD_BUTTON_INVALID, VK_UP};
+        config.dpad_down = {SDL_GAMEPAD_BUTTON_INVALID, VK_DOWN};
+        config.dpad_left = {SDL_GAMEPAD_BUTTON_INVALID, VK_LEFT};
+        config.dpad_right = {SDL_GAMEPAD_BUTTON_INVALID, VK_RIGHT};
+        config.c_up = {SDL_GAMEPAD_BUTTON_INVALID, 'W'};
+        config.c_down = {SDL_GAMEPAD_BUTTON_INVALID, 'Q'};
+        config.c_left = {SDL_GAMEPAD_BUTTON_INVALID, 'E'};
+        config.c_right = {SDL_GAMEPAD_BUTTON_INVALID, 'R'};
+        config.x = {SDL_GAMEPAD_AXIS_INVALID, 'J', 'L'};
+        config.y = {SDL_GAMEPAD_AXIS_INVALID, 'I', 'K'};
+        return config;
+    }
 };
 
 typedef struct s_config
