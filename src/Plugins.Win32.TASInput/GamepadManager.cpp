@@ -52,6 +52,7 @@ static bool is_button_held(const t_button_mapping &mapping)
 {
     if (mapping.button != SDL_GAMEPAD_BUTTON_INVALID)
     {
+        if (g_ctx.gamepad == nullptr) return false;
         return SDL_GetGamepadButton(g_ctx.gamepad, (SDL_GamepadButton)mapping.button) != 0;
     }
 
@@ -80,6 +81,8 @@ static int32_t get_axis(const t_axis_mapping &mapping, const bool is_y_axis)
         }
         return 0;
     }
+
+    if (g_ctx.gamepad == nullptr) return 0;
 
     return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis), is_y_axis);
 }
