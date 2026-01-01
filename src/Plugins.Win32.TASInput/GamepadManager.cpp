@@ -16,14 +16,18 @@ struct gamepad_manager_context
 
 static gamepad_manager_context g_ctx;
 
-static int32_t remap_axis(int16_t value, const bool is_y_axis)
+static int32_t remap_axis(int16_t value)
 {
-    const int32_t min_target = is_y_axis ? -127 : -128;
-    const int32_t max_target = is_y_axis ? 128 : 127;
+    const float v = static_cast<float>(value) / 32767.0f;
+    const int32_t mapped = static_cast<int32_t>(std::lround(v * 128.0f));
+    return std::clamp(mapped, -128, 127);
+}
 
-    const int32_t mapped = static_cast<int32_t>(value) * max_target / 32767;
-
-    return std::clamp(mapped, min_target, max_target);
+int8_t saturating_negate(int8_t v)
+{
+    if (v == -128) return 127;
+    if (v == 127) return -128;
+    return -v;
 }
 
 void GamepadManager::on_sdl_event(const SDL_Event &e)
@@ -64,7 +68,7 @@ static bool is_button_held(const t_button_mapping &mapping)
     return false;
 }
 
-static int32_t get_axis(const t_axis_mapping &mapping, const bool is_y_axis)
+static int32_t get_axis(const t_axis_mapping &mapping)
 {
     if (mapping.axis == SDL_GAMEPAD_AXIS_INVALID)
     {
@@ -84,7 +88,7 @@ static int32_t get_axis(const t_axis_mapping &mapping, const bool is_y_axis)
 
     if (g_ctx.gamepad == nullptr) return 0;
 
-    return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis), is_y_axis);
+    return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis));
 }
 
 core_buttons GamepadManager::get_input(const size_t i)
@@ -105,8 +109,8 @@ core_buttons GamepadManager::get_input(const size_t i)
     buttons.dl = is_button_held(controller_config.dpad_left);
     buttons.dr = is_button_held(controller_config.dpad_right);
 
-    buttons.x = get_axis(controller_config.x, false);
-    buttons.y = -get_axis(controller_config.y, true);
+    buttons.x = get_axis(controller_config.x);
+    buttons.y = saturating_negate(get_axis(controller_config.y));
 
     buttons.x = static_cast<int8_t>(buttons.x * controller_config.x_scale);
     buttons.y = static_cast<int8_t>(buttons.y * controller_config.y_scale);
