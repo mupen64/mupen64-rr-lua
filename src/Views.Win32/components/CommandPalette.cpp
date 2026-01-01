@@ -36,6 +36,11 @@ struct t_listbox_item
 
     [[nodiscard]] bool selectable() const;
 
+    /**
+     * \brief Determines whether the given action item matches the search query.
+     */
+    [[nodiscard]] bool matches_query(const std::wstring_view query) const;
+
   private:
     t_listbox_item() = default;
 };
@@ -56,6 +61,16 @@ struct t_command_palette_context
 };
 
 static t_command_palette_context g_ctx{};
+
+/**
+ * \brief Normalizes a string for comparison.
+ */
+static std::wstring normalize(std::wstring str)
+{
+    std::ranges::transform(str, str.begin(), toupper);
+    str = MiscHelpers::trim(str);
+    return str;
+}
 
 t_listbox_item t_listbox_item::make_group(const std::wstring &group_name)
 {
@@ -128,6 +143,24 @@ t_listbox_item t_listbox_item::make_rom(const std::wstring &name)
 bool t_listbox_item::selectable() const
 {
     return !is_group && enabled;
+}
+
+bool t_listbox_item::matches_query(const std::wstring_view query) const
+{
+    if (query.empty())
+    {
+        return true;
+    }
+
+    const auto normalized_action = normalize(text);
+    const auto normalized_group_name = normalize(parent_group_name);
+    const auto normalized_hotkey = normalize(hint_text);
+    const auto normalized_raw_display_name = normalize(raw_display_name);
+
+    const auto matches = normalized_action.contains(query) || normalized_group_name.contains(query) ||
+                         normalized_hotkey.contains(query) || normalized_raw_display_name.contains(query);
+
+    return matches;
 }
 
 /**
@@ -223,37 +256,6 @@ static int32_t find_index_of_first_selectable_item()
 }
 
 /**
- * \brief Normalizes a string for comparison.
- */
-static std::wstring normalize(std::wstring str)
-{
-    std::ranges::transform(str, str.begin(), toupper);
-    str = MiscHelpers::trim(str);
-    return str;
-}
-
-/**
- * \brief Determines whether the given action item matches the search query.
- */
-static bool action_matches_query(const t_listbox_item &item, const std::wstring_view query)
-{
-    if (query.empty())
-    {
-        return true;
-    }
-
-    const auto normalized_action = normalize(item.text);
-    const auto normalized_group_name = normalize(item.parent_group_name);
-    const auto normalized_hotkey = normalize(item.hint_text);
-    const auto normalized_raw_display_name = normalize(item.raw_display_name);
-
-    const auto matches = normalized_action.contains(query) || normalized_group_name.contains(query) ||
-                         normalized_hotkey.contains(query) || normalized_raw_display_name.contains(query);
-
-    return matches;
-}
-
-/**
  * \brief Adds actions to the listbox item collection.
  */
 static void add_actions(const std::wstring_view query)
@@ -309,7 +311,7 @@ static void add_actions(const std::wstring_view query)
                 return true;
             }
 
-            return !action_matches_query(t_listbox_item::make_action(action, group), query);
+            return !t_listbox_item::make_action(action, group).matches_query(query);
         });
 
         if (actions.empty())
@@ -337,7 +339,7 @@ static void add_options(const std::wstring_view query)
     {
         std::erase_if(group.items, [&](ConfigDialog::t_options_item &item) {
             return item.type == ConfigDialog::t_options_item::Type::Hotkey ||
-                   !action_matches_query(t_listbox_item::make_option(&item, group), query);
+                   !t_listbox_item::make_option(&item, group).matches_query(query);
         });
 
         if (group.items.empty())
@@ -368,7 +370,7 @@ static void add_roms(const std::wstring_view query)
         const auto name = std::filesystem::path(rom.path).filename().wstring();
 
         const auto item = t_listbox_item::make_rom(name);
-        if (action_matches_query(item, query))
+        if (item.matches_query(query))
         {
             g_ctx.items.emplace_back(item);
         }
