@@ -34,7 +34,8 @@ BEGIN
     LTEXT           "Current N64 Controller",IDC_STATIC,7,7,70,8
 
     GROUPBOX        "Device List",IDC_STATIC,84,7,156,57,BS_LEFT
-    LISTBOX         IDC_LDEVICES,89,18,146,41,LBS_MULTIPLESEL | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    // LISTBOX         IDC_LDEVICES,89,18,146,41,LBS_MULTIPLESEL | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    LTEXT           "Device selection is currently not available.\r\nThe most recently connected gamepad will be used for inputs.",IDC_STATIC,89,18,146,41,SS_LEFT
 
     GROUPBOX        "Buttons",IDC_STATIC,7,70,77,59,BS_LEFT
     EDITTEXT        IDC_E_A,28,84,51,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
