@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by rsrc.rc
+// Used by Resource.rc
 //
 #define IDM_RESERVED_BEGIN 0
 #define IDM_RESERVED_END 9999

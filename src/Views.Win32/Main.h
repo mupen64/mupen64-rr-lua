@@ -8,7 +8,7 @@
 
 #include <components/Dispatcher.h>
 
-#define CURRENT_VERSION L"1.3.0-9"
+#define CURRENT_VERSION L"1.3.0-10"
 
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)

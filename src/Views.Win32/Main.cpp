@@ -312,7 +312,7 @@ const wchar_t *get_input_text()
     memset(text, 0, sizeof(text));
 
     core_buttons b = LuaCallbacks::get_last_controller_data(0);
-    wsprintf(text, L"(%d, %d) ", b.y, b.x);
+    wsprintf(text, L"(%d, %d) ", b.x, b.y);
     if (b.start) lstrcatW(text, L"S");
     if (b.z) lstrcatW(text, L"Z");
     if (b.a) lstrcatW(text, L"A");

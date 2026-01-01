@@ -225,8 +225,8 @@ extern "C"
             unsigned l : 1;
             unsigned reserved_1 : 1;
             unsigned reserved_2 : 1;
-            signed y : 8;
             signed x : 8;
+            signed y : 8;
         };
     } core_buttons;
 
