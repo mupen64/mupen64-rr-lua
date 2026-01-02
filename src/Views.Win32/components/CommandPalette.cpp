@@ -8,6 +8,7 @@
 #include "stdafx.h"
 #include <components/CommandPalette.h>
 #include <components/ConfigDialog.h>
+#include <components/AppActions.h>
 
 struct t_listbox_item
 {
@@ -295,6 +296,14 @@ static bool try_invoke(int32_t i)
             return true;
         }
         return false;
+    }
+
+    if (std::holds_alternative<t_listbox_item::t_rom_data>(item->data))
+    {
+        const auto &rom = std::get<t_listbox_item::t_rom_data>(item->data);
+        SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
+        AppActions::load_rom_from_path(rom.rom.path);
+        return true;
     }
 
     return true;
