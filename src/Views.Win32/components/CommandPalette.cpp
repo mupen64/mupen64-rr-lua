@@ -12,8 +12,6 @@
 
 struct t_listbox_item
 {
-    std::wstring parent_group_name{};
-
     struct t_group_data
     {
         std::wstring text;
@@ -49,17 +47,30 @@ struct t_listbox_item
     static t_listbox_item make_option_group(const ConfigDialog::t_options_group &options_group);
     static t_listbox_item make_rom(const RomBrowser::t_simple_rom_info &rom);
 
+    /**
+     * \return Whether the item is selectable.
+     */
     [[nodiscard]] bool selectable() const;
 
     /**
-     * \brief Determines whether the given action item matches the search query.
+     * \return Whether the item is enabled.
+     */
+    [[nodiscard]] bool enabled() const;
+
+    /**
+     * \return Whether the item matches the specified search query.
      */
     [[nodiscard]] bool matches_query(const std::wstring_view query) const;
 
+    /**
+     * \return The primary text to display for this item, if any.
+     */
     [[nodiscard]] std::optional<std::wstring> get_primary_text() const;
-    [[nodiscard]] std::optional<std::wstring> get_secondary_text() const;
 
-    [[nodiscard]] bool enabled() const;
+    /**
+     * \return The secondary text to display for this item, if any.
+     */
+    [[nodiscard]] std::optional<std::wstring> get_secondary_text() const;
 
   private:
     t_listbox_item() = default;
@@ -146,6 +157,13 @@ t_listbox_item t_listbox_item::make_rom(const RomBrowser::t_simple_rom_info &rom
 
 bool t_listbox_item::selectable() const
 {
+    if (!this->enabled()) return false;
+
+    if (std::holds_alternative<t_group_data>(data))
+    {
+        return false;
+    }
+
     if (std::holds_alternative<t_action_data>(data))
     {
         return std::get<t_action_data>(data).enabled;
@@ -156,12 +174,7 @@ bool t_listbox_item::selectable() const
         return std::get<t_option_data>(data).item->is_readonly() == false;
     }
 
-    if (std::holds_alternative<t_rom_data>(data))
-    {
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 bool t_listbox_item::matches_query(const std::wstring_view query) const
