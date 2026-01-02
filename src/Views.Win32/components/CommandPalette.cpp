@@ -259,6 +259,12 @@ std::optional<std::wstring> t_listbox_item::get_secondary_text() const
         return action.hotkey;
     }
 
+    if (std::holds_alternative<t_option_data>(data))
+    {
+        const auto &item = std::get<t_option_data>(data).item;
+        return item->get_value_name();
+    }
+
     return std::nullopt;
 }
 
@@ -471,7 +477,7 @@ static void add_options(const std::wstring_view query)
 
         for (auto &item : group.items)
         {
-            g_ctx.items.emplace_back(t_listbox_item::make_option(&item, group));
+            g_ctx.all_items.emplace_back(t_listbox_item::make_option(&item, group));
         }
     }
 }
