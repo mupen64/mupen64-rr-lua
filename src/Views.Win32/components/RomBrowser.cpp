@@ -13,21 +13,19 @@
 #include <components/AppActions.h>
 #include <Messenger.h>
 
-using t_rombrowser_entry = struct s_rombrowser_entry
-{
-    std::wstring path;
-    size_t size;
-    core_rom_header rom_header;
-};
-
-HWND rombrowser_hwnd = nullptr;
-std::vector<t_rombrowser_entry *> rombrowser_entries;
-
 namespace RomBrowser
 {
-std::mutex rombrowser_mutex;
 
-std::vector<std::wstring> find_available_roms()
+struct t_rombrowser_context
+{
+    HWND hwnd{};
+    std::vector<t_simple_rom_info> discovered_roms;
+    std::mutex mutex;
+};
+
+static t_rombrowser_context g_ctx{};
+
+std::vector<std::filesystem::path> discover_roms()
 {
     const auto abs_rom_directory =
         std::filesystem::weakly_canonical(IOUtils::exe_path_cached().parent_path() / g_config.rom_directory);
@@ -37,8 +35,8 @@ std::vector<std::wstring> find_available_roms()
         return {};
     }
 
-    std::vector<std::wstring> rom_paths;
-    std::vector<std::wstring> filtered_rom_paths;
+    std::vector<std::filesystem::path> rom_paths;
+    std::vector<std::filesystem::path> filtered_rom_paths;
 
     // we aggregate all file paths and only filter them after we're done
     if (std::filesystem::is_directory(abs_rom_directory))
@@ -65,7 +63,7 @@ std::vector<std::wstring> find_available_roms()
     }
 
     // logically this should be bundled into the filter pipeline but I'm too lazy
-    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](std::wstring val) {
+    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](const auto val) {
         wchar_t c_extension[_MAX_EXT] = {0};
         if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
         {
@@ -79,25 +77,25 @@ std::vector<std::wstring> find_available_roms()
 
 int CALLBACK rombrowser_compare(LPARAM lParam1, LPARAM lParam2, LPARAM _)
 {
-    auto first = rombrowser_entries[g_config.rombrowser_sort_ascending ? lParam1 : lParam2];
-    auto second = rombrowser_entries[g_config.rombrowser_sort_ascending ? lParam2 : lParam1];
+    auto first = g_ctx.discovered_roms[g_config.rombrowser_sort_ascending ? lParam1 : lParam2];
+    auto second = g_ctx.discovered_roms[g_config.rombrowser_sort_ascending ? lParam2 : lParam1];
 
     int32_t result = 0;
 
     switch (g_config.rombrowser_sorted_column)
     {
     case 0:
-        result = first->rom_header.Country_code - second->rom_header.Country_code;
+        result = first.header.Country_code - second.header.Country_code;
         break;
     case 1:
         // BUG: these are not null terminated!!!
-        result = _strcmpi((const char *)first->rom_header.nom, (const char *)second->rom_header.nom);
+        result = _strcmpi((const char *)first.header.nom, (const char *)second.header.nom);
         break;
     case 2:
-        result = _strcmpi((const char *)first->path.c_str(), (const char *)second->path.c_str());
+        result = _strcmpi((const char *)first.path.c_str(), (const char *)second.path.c_str());
         break;
     case 3:
-        result = first->size - second->size;
+        result = first.size - second.size;
         break;
     default:
         assert(false);
@@ -118,27 +116,26 @@ int CALLBACK rombrowser_compare(LPARAM lParam1, LPARAM lParam2, LPARAM _)
 
 void rombrowser_update_sort()
 {
-    ListView_SortItems(rombrowser_hwnd, rombrowser_compare, nullptr);
+    ListView_SortItems(g_ctx.hwnd, rombrowser_compare, nullptr);
 }
 
 void rombrowser_create()
 {
-    assert(rombrowser_hwnd == nullptr);
+    assert(g_ctx.hwnd == nullptr);
 
     RECT rcl{}, rtool{}, rstatus{};
     GetClientRect(g_main_ctx.hwnd, &rcl);
     GetWindowRect(Statusbar::hwnd(), &rstatus);
 
-    rombrowser_hwnd =
-        CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                       WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, 0,
-                       rtool.bottom - rtool.top, rcl.right - rcl.left,
-                       rcl.bottom - rcl.top - rtool.bottom + rtool.top - rstatus.bottom + rstatus.top, g_main_ctx.hwnd,
-                       (HMENU)IDC_ROMLIST, g_main_ctx.hinst, NULL);
-    ListView_SetExtendedListViewStyle(rombrowser_hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+    g_ctx.hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
+                                WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, 0,
+                                rtool.bottom - rtool.top, rcl.right - rcl.left,
+                                rcl.bottom - rcl.top - rtool.bottom + rtool.top - rstatus.bottom + rstatus.top,
+                                g_main_ctx.hwnd, (HMENU)IDC_ROMLIST, g_main_ctx.hinst, NULL);
+    ListView_SetExtendedListViewStyle(g_ctx.hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     // Explorer theme is better than default, because it has selection highlight
-    SetWindowTheme(rombrowser_hwnd, L"Explorer", NULL);
+    SetWindowTheme(g_ctx.hwnd, L"Explorer", NULL);
 
     const HIMAGELIST h_small = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK, 11, 0);
     HICON h_icon;
@@ -159,28 +156,28 @@ void rombrowser_create()
     ADD_ICON(IDI_DEMO);
     ADD_ICON(IDI_BETA);
 
-    ListView_SetImageList(rombrowser_hwnd, h_small, LVSIL_SMALL);
+    ListView_SetImageList(g_ctx.hwnd, h_small, LVSIL_SMALL);
 
     LVCOLUMN lv_column = {0};
     lv_column.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
     lv_column.iImage = 1;
     lv_column.cx = g_config.rombrowser_column_widths[0];
-    ListView_InsertColumn(rombrowser_hwnd, 0, &lv_column);
+    ListView_InsertColumn(g_ctx.hwnd, 0, &lv_column);
 
     lv_column.pszText = const_cast<LPWSTR>(L"Name");
     lv_column.cx = g_config.rombrowser_column_widths[1];
-    ListView_InsertColumn(rombrowser_hwnd, 1, &lv_column);
+    ListView_InsertColumn(g_ctx.hwnd, 1, &lv_column);
 
     lv_column.pszText = const_cast<LPWSTR>(L"Filename");
     lv_column.cx = g_config.rombrowser_column_widths[2];
-    ListView_InsertColumn(rombrowser_hwnd, 2, &lv_column);
+    ListView_InsertColumn(g_ctx.hwnd, 2, &lv_column);
 
     lv_column.pszText = const_cast<LPWSTR>(L"Size");
     lv_column.cx = g_config.rombrowser_column_widths[3];
-    ListView_InsertColumn(rombrowser_hwnd, 3, &lv_column);
+    ListView_InsertColumn(g_ctx.hwnd, 3, &lv_column);
 
-    BringWindowToTop(rombrowser_hwnd);
+    BringWindowToTop(g_ctx.hwnd);
 }
 
 int32_t rombrowser_country_code_to_image_index(uint16_t country_code)
@@ -219,7 +216,7 @@ int32_t rombrowser_country_code_to_image_index(uint16_t country_code)
 
 void build_impl()
 {
-    std::unique_lock lock(rombrowser_mutex, std::try_to_lock);
+    std::unique_lock lock(g_ctx.mutex, std::try_to_lock);
     if (!lock.owns_lock())
     {
         g_view_logger->info("[Rombrowser] build_impl busy!");
@@ -230,16 +227,12 @@ void build_impl()
 
     // we disable redrawing because it would repaint after every added rom
     // otherwise, which is slow and causes flicker
-    SendMessage(rombrowser_hwnd, WM_SETREDRAW, FALSE, 0);
+    SendMessage(g_ctx.hwnd, WM_SETREDRAW, FALSE, 0);
 
-    ListView_DeleteAllItems(rombrowser_hwnd);
-    for (auto entry : rombrowser_entries)
-    {
-        delete entry;
-    }
-    rombrowser_entries.clear();
+    ListView_DeleteAllItems(g_ctx.hwnd);
+    g_ctx.discovered_roms.clear();
 
-    auto rom_paths = find_available_roms();
+    auto rom_paths = discover_roms();
 
     LV_ITEM lv_item = {0};
     lv_item.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
@@ -259,10 +252,10 @@ void build_impl()
         const size_t len = ftell(f);
         fseek(f, 0, SEEK_SET);
 
-        auto rombrowser_entry = new t_rombrowser_entry;
-        rombrowser_entry->path = path;
-        rombrowser_entry->size = len;
-        rombrowser_entry->rom_header = {};
+        t_simple_rom_info rombrowser_entry;
+        rombrowser_entry.path = path;
+        rombrowser_entry.size = len;
+        rombrowser_entry.header = {};
 
         if (len > sizeof(core_rom_header))
         {
@@ -277,21 +270,21 @@ void build_impl()
             // terminator
             header.nom[sizeof(header.nom) - 1] = '\0';
 
-            rombrowser_entry->rom_header = header;
+            rombrowser_entry.header = header;
         }
 
         lv_item.lParam = i;
         lv_item.iItem = i;
-        lv_item.iImage = rombrowser_country_code_to_image_index(rombrowser_entry->rom_header.Country_code);
-        ListView_InsertItem(rombrowser_hwnd, &lv_item);
+        lv_item.iImage = rombrowser_country_code_to_image_index(rombrowser_entry.header.Country_code);
+        ListView_InsertItem(g_ctx.hwnd, &lv_item);
 
         fclose(f);
 
-        rombrowser_entries.push_back(rombrowser_entry);
+        g_ctx.discovered_roms.push_back(rombrowser_entry);
         i++;
     }
     rombrowser_update_sort();
-    SendMessage(rombrowser_hwnd, WM_SETREDRAW, TRUE, 0);
+    SendMessage(g_ctx.hwnd, WM_SETREDRAW, TRUE, 0);
 
     g_view_logger->info("Rombrowser loading took {}ms",
                         static_cast<int>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000));
@@ -305,7 +298,7 @@ void build()
 void rombrowser_update_size()
 {
     if (g_main_ctx.core_ctx->vr_get_launched()) return;
-    if (!IsWindow(rombrowser_hwnd)) return;
+    if (!IsWindow(g_ctx.hwnd)) return;
 
     // TODO: clean up this mess
     RECT rc, rc_main;
@@ -319,21 +312,20 @@ void rombrowser_update_size()
         GetWindowRect(Statusbar::hwnd(), &rc);
         n_height -= (WORD)(rc.bottom - rc.top);
     }
-    MoveWindow(rombrowser_hwnd, 0, y, n_width, n_height - y, TRUE);
+    MoveWindow(g_ctx.hwnd, 0, y, n_width, n_height - y, TRUE);
 }
 
 void invoke_selected_item()
 {
-    int32_t i = ListView_GetNextItem(rombrowser_hwnd, -1, LVNI_SELECTED);
+    int32_t i = ListView_GetNextItem(g_ctx.hwnd, -1, LVNI_SELECTED);
 
     if (i == -1) return;
 
     LVITEM item = {0};
     item.mask = LVIF_PARAM;
     item.iItem = i;
-    ListView_GetItem(rombrowser_hwnd, &item);
-    auto path = rombrowser_entries[item.lParam]->path;
-    AppActions::load_rom_from_path(path);
+    ListView_GetItem(g_ctx.hwnd, &item);
+    AppActions::load_rom_from_path(g_ctx.discovered_roms[item.lParam].path);
 }
 
 LRESULT
@@ -356,15 +348,15 @@ notify(LPARAM lparam)
     }
     case LVN_GETDISPINFO: {
         NMLVDISPINFO *plvdi = (NMLVDISPINFO *)lparam;
-        const t_rombrowser_entry *rombrowser_entry = rombrowser_entries[plvdi->item.lParam];
+        const t_simple_rom_info &rombrowser_entry = g_ctx.discovered_roms[plvdi->item.lParam];
         switch (plvdi->item.iSubItem)
         {
         case 1: {
             // NOTE: The name may not be null-terminated, so we NEED to limit the
             // size
             char str[sizeof(core_rom_header::nom) + 1] = {0};
-            if (strncpy_s(str, sizeof(str), (const char *)rombrowser_entry->rom_header.nom,
-                          sizeof(core_rom_header::nom)) != 0)
+            if (strncpy_s(str, sizeof(str), (const char *)rombrowser_entry.header.nom, sizeof(core_rom_header::nom)) !=
+                0)
             {
                 g_view_logger->error("Failed to copy rom name");
             }
@@ -373,13 +365,13 @@ notify(LPARAM lparam)
         }
         case 2: {
             wchar_t filename[MAX_PATH] = {0};
-            _wsplitpath_s(rombrowser_entry->path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr,
+            _wsplitpath_s(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr,
                           0);
             StrNCpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
             break;
         }
         case 3: {
-            const auto size = std::to_wstring(rombrowser_entry->size / (1024 * 1024)) + L" MB";
+            const auto size = std::to_wstring(rombrowser_entry.size / (1024 * 1024)) + L" MB";
             StrNCpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
             break;
         }
@@ -413,7 +405,7 @@ notify(LPARAM lparam)
 
 std::filesystem::path find_available_rom(const std::function<bool(const core_rom_header &)> &predicate)
 {
-    auto rom_paths = find_available_roms();
+    auto rom_paths = discover_roms();
     for (auto rom_path : rom_paths)
     {
         FILE *f = nullptr;
@@ -450,11 +442,54 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
     return L"";
 }
 
+std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const core_rom_header &)> &predicate)
+{
+    std::vector<std::filesystem::path> matching_roms;
+    auto rom_paths = discover_roms();
+    for (auto rom_path : rom_paths)
+    {
+        FILE *f = nullptr;
+        if (_wfopen_s(&f, rom_path.c_str(), L"rb"))
+        {
+            g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+            continue;
+        }
+
+        fseek(f, 0, SEEK_END);
+        uint64_t len = ftell(f);
+        fseek(f, 0, SEEK_SET);
+
+        if (len > sizeof(core_rom_header))
+        {
+            auto header = (core_rom_header *)malloc(sizeof(core_rom_header));
+            fread(header, sizeof(core_rom_header), 1, f);
+
+            g_main_ctx.core_ctx->vr_byteswap((uint8_t *)header);
+
+            if (predicate(*header))
+            {
+                matching_roms.push_back(rom_path);
+            }
+
+            free(header);
+        }
+
+        fclose(f);
+    }
+
+    return matching_roms;
+}
+
+std::vector<t_simple_rom_info> get_discovered_roms()
+{
+    return g_ctx.discovered_roms;
+}
+
 void emu_launched_changed(std::any data)
 {
     auto value = std::any_cast<bool>(data);
-    ShowWindow(rombrowser_hwnd, !value ? SW_SHOW : SW_HIDE);
-    EnableWindow(rombrowser_hwnd, !value);
+    ShowWindow(g_ctx.hwnd, !value ? SW_SHOW : SW_HIDE);
+    EnableWindow(g_ctx.hwnd, !value);
     rombrowser_update_size();
 }
 
@@ -467,7 +502,7 @@ void create()
     Messenger::subscribe(Messenger::Message::ConfigSaving, [](auto _) {
         for (int i = 0; i < g_config.rombrowser_column_widths.size(); ++i)
         {
-            g_config.rombrowser_column_widths[i] = ListView_GetColumnWidth(rombrowser_hwnd, i);
+            g_config.rombrowser_column_widths[i] = ListView_GetColumnWidth(g_ctx.hwnd, i);
         }
     });
 }
