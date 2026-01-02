@@ -326,18 +326,17 @@ static bool try_change_hotkey(int32_t i)
         return false;
     }
 
-    if (!std::holds_alternative<t_listbox_item::t_action_data>(item->data))
+    if (std::holds_alternative<t_listbox_item::t_action_data>(item->data))
     {
-        return false;
+        const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
+
+        Hotkey::t_hotkey hotkey = g_config.hotkeys.at(action.path);
+        Hotkey::show_prompt(g_main_ctx.hwnd, std::format(L"Choose a hotkey for {}", action.text), hotkey);
+        Hotkey::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
+        return true;
     }
 
-    const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
-
-    Hotkey::t_hotkey hotkey = g_config.hotkeys.at(action.path);
-    Hotkey::show_prompt(g_main_ctx.hwnd, std::format(L"Choose a hotkey for {}", action.text), hotkey);
-    Hotkey::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
-
-    return true;
+    return false;
 }
 
 /**
@@ -577,14 +576,15 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, 
             // from closing.
             EnableWindow(g_ctx.hwnd, false);
             g_ctx.dont_close_on_focus_loss = true;
-            try_change_hotkey(selected_index);
+            const auto success = try_change_hotkey(selected_index);
             EnableWindow(g_ctx.hwnd, true);
             g_ctx.dont_close_on_focus_loss = false;
+
+            if (!success) return FALSE;
 
             SetFocus(g_ctx.edit_hwnd);
             build_listbox();
 
-            // Advance selection to next item.
             ListBox_SetCurSel(g_ctx.listbox_hwnd, selected_index + 1);
 
             return FALSE;
@@ -776,7 +776,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             {
                 base_rc.left += checkbox_width + 4;
             }
-            if(std::holds_alternative<t_listbox_item::t_group_data>(item->data))
+            if (std::holds_alternative<t_listbox_item::t_group_data>(item->data))
             {
                 base_rc.left = 4;
             }
@@ -805,7 +805,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                           base_rc.bottom - base_rc.top, draw_flag | DSS_RIGHT | DST_TEXT);
             }
 
-            if(std::holds_alternative<t_listbox_item::t_group_data>(item->data))
+            if (std::holds_alternative<t_listbox_item::t_group_data>(item->data))
             {
                 const auto group = std::get<t_listbox_item::t_group_data>(item->data);
                 HPEN pen = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
@@ -814,8 +814,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                 SIZE sz;
                 GetTextExtentPoint32(pdis->hDC, group.text.c_str(), (int)group.text.length(), &sz);
 
-                MoveToEx(pdis->hDC, base_rc.left + sz.cx + 4, pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2,
-                         nullptr);
+                MoveToEx(pdis->hDC, base_rc.left + sz.cx + 4,
+                         pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2, nullptr);
                 LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2);
 
                 SelectObject(pdis->hDC, prev_obj);
