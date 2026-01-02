@@ -11,28 +11,42 @@
 
 struct t_listbox_item
 {
-    bool is_group{};
     std::wstring parent_group_name{};
 
-    std::wstring text{};
-    std::wstring hint_text{};
+    struct t_group_data
+    {
+        std::wstring text;
+    };
 
-    bool enabled{};
-    bool active{};
-    bool activatable{};
+    struct t_action_data
+    {
+        std::wstring text;
+        std::wstring path{};
+        std::wstring raw_display_name{};
+        std::wstring hotkey{};
 
-    // (only applicable if action)
-    std::wstring path{};
-    std::wstring raw_display_name{};
+        bool enabled{};
+        bool active{};
+        bool activatable{};
+    };
 
-    // (only applicable if option)
-    ConfigDialog::t_options_item *option_item{};
+    struct t_option_data
+    {
+        ConfigDialog::t_options_item *item{};
+    };
+
+    struct t_rom_data
+    {
+        RomBrowser::t_simple_rom_info rom{};
+    };
+
+    std::variant<t_group_data, t_action_data, t_option_data, t_rom_data> data{};
 
     static t_listbox_item make_group(const std::wstring &group_name);
     static t_listbox_item make_action(const std::wstring &action, const std::wstring &group);
     static t_listbox_item make_option(ConfigDialog::t_options_item *item, const ConfigDialog::t_options_group &group);
     static t_listbox_item make_option_group(const ConfigDialog::t_options_group &options_group);
-    static t_listbox_item make_rom(const std::wstring &name);
+    static t_listbox_item make_rom(const RomBrowser::t_simple_rom_info &rom);
 
     [[nodiscard]] bool selectable() const;
 
@@ -40,6 +54,11 @@ struct t_listbox_item
      * \brief Determines whether the given action item matches the search query.
      */
     [[nodiscard]] bool matches_query(const std::wstring_view query) const;
+
+    [[nodiscard]] std::optional<std::wstring> get_primary_text() const;
+    [[nodiscard]] std::optional<std::wstring> get_secondary_text() const;
+
+    [[nodiscard]] bool enabled() const;
 
   private:
     t_listbox_item() = default;
@@ -75,29 +94,23 @@ static std::wstring normalize(std::wstring str)
 t_listbox_item t_listbox_item::make_group(const std::wstring &group_name)
 {
     t_listbox_item item{};
-    item.is_group = true;
-    item.text = group_name;
-    item.enabled = true;
+    item.data = t_group_data{group_name};
     return item;
 }
 
 t_listbox_item t_listbox_item::make_action(const std::wstring &action, const std::wstring &group)
 {
-    t_listbox_item item{};
-
-    item.path = action;
-    item.parent_group_name = group;
     const auto hotkey = g_config.hotkeys.at(action);
-    if (!hotkey.is_empty())
-    {
-        item.hint_text = hotkey.to_wstring();
-    }
+    const auto hotkey_str = hotkey.is_empty() ? L"" : hotkey.to_wstring();
 
-    item.text = ActionManager::get_display_name(action);
-    item.raw_display_name = ActionManager::get_display_name(action, true);
-    item.enabled = ActionManager::get_enabled(action);
-    item.active = ActionManager::get_active(action);
-    item.activatable = ActionManager::get_activatability(action);
+    t_listbox_item item{};
+    item.data = t_action_data{.text = ActionManager::get_display_name(action),
+                              .path = action,
+                              .raw_display_name = ActionManager::get_display_name(action, true),
+                              .hotkey = hotkey_str,
+                              .enabled = ActionManager::get_enabled(action),
+                              .active = ActionManager::get_active(action),
+                              .activatable = ActionManager::get_activatability(action)};
     return item;
 }
 
@@ -105,44 +118,42 @@ t_listbox_item t_listbox_item::make_option(ConfigDialog::t_options_item *options
                                            const ConfigDialog::t_options_group &group)
 {
     t_listbox_item item{};
-    item.text = options_item->get_name();
-    item.parent_group_name = group.name;
-    item.hint_text = options_item->get_value_name();
-    item.enabled = !options_item->is_readonly();
-    item.active = false;
-    item.activatable = false;
-    item.option_item = options_item;
-
-    if (options_item->type == ConfigDialog::t_options_item::Type::Bool)
-    {
-        item.active = std::get<int32_t>(options_item->current_value.get()) != 0;
-        item.activatable = true;
-        item.hint_text = L"";
-    }
+    item.data = t_option_data{.item = options_item};
     return item;
 }
 
 t_listbox_item t_listbox_item::make_option_group(const ConfigDialog::t_options_group &options_group)
 {
     t_listbox_item item{};
-    item.is_group = true;
-    item.text = options_group.name;
-    item.enabled = true;
+    item.data = t_group_data{.text = options_group.name};
     return item;
 }
 
-t_listbox_item t_listbox_item::make_rom(const std::wstring &name)
+t_listbox_item t_listbox_item::make_rom(const RomBrowser::t_simple_rom_info &rom)
 {
     t_listbox_item item{};
-    item.parent_group_name = L"ROMs";
-    item.text = name;
-    item.enabled = true;
+    item.data = t_rom_data{.rom = rom};
     return item;
 }
 
 bool t_listbox_item::selectable() const
 {
-    return !is_group && enabled;
+    if (std::holds_alternative<t_action_data>(data))
+    {
+        return std::get<t_action_data>(data).enabled;
+    }
+
+    if (std::holds_alternative<t_option_data>(data))
+    {
+        return std::get<t_option_data>(data).item->is_readonly() == false;
+    }
+
+    if (std::holds_alternative<t_rom_data>(data))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 bool t_listbox_item::matches_query(const std::wstring_view query) const
@@ -152,15 +163,97 @@ bool t_listbox_item::matches_query(const std::wstring_view query) const
         return true;
     }
 
-    const auto normalized_action = normalize(text);
-    const auto normalized_group_name = normalize(parent_group_name);
-    const auto normalized_hotkey = normalize(hint_text);
-    const auto normalized_raw_display_name = normalize(raw_display_name);
+    if (std::holds_alternative<t_group_data>(data))
+    {
+        const auto &text = std::get<t_group_data>(data).text;
+        const auto normalized_text = normalize(text);
+        return normalized_text.contains(query);
+    }
 
-    const auto matches = normalized_action.contains(query) || normalized_group_name.contains(query) ||
-                         normalized_hotkey.contains(query) || normalized_raw_display_name.contains(query);
+    if (std::holds_alternative<t_rom_data>(data))
+    {
+        const auto &rom = std::get<t_rom_data>(data).rom;
+        const auto filename = std::filesystem::path(rom.path).filename().wstring();
+        const auto normalized_filename = normalize(filename);
+        return normalized_filename.contains(query);
+    }
 
-    return matches;
+    if (std::holds_alternative<t_action_data>(data))
+    {
+        const auto &action = std::get<t_action_data>(data);
+        const auto normalized_text = normalize(action.text);
+        const auto normalized_path = normalize(action.path);
+        const auto normalized_display_name = normalize(action.raw_display_name);
+
+        return normalized_display_name.contains(query) || normalized_text.contains(query) ||
+               normalized_path.contains(query);
+    }
+
+    if (std::holds_alternative<t_option_data>(data))
+    {
+        const auto &item = std::get<t_option_data>(data).item;
+        const auto display_name = item->get_name();
+        const auto normalized_display_name = normalize(display_name);
+        return normalized_display_name.contains(query);
+    }
+
+    RT_ASSERT(false, L"Unknown listbox item type in matches_query");
+
+    return false;
+}
+
+std::optional<std::wstring> t_listbox_item::get_primary_text() const
+{
+    if (std::holds_alternative<t_group_data>(data))
+    {
+        return std::get<t_group_data>(data).text;
+    }
+
+    if (std::holds_alternative<t_rom_data>(data))
+    {
+        const auto &rom = std::get<t_rom_data>(data).rom;
+        return std::filesystem::path(rom.path).filename().wstring();
+    }
+
+    if (std::holds_alternative<t_action_data>(data))
+    {
+        const auto &action = std::get<t_action_data>(data);
+        return action.text;
+    }
+
+    if (std::holds_alternative<t_option_data>(data))
+    {
+        const auto &item = std::get<t_option_data>(data).item;
+        return item->get_name();
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::wstring> t_listbox_item::get_secondary_text() const
+{
+    if (std::holds_alternative<t_action_data>(data))
+    {
+        const auto &action = std::get<t_action_data>(data);
+        return action.hotkey;
+    }
+
+    return std::nullopt;
+}
+
+bool t_listbox_item::enabled() const
+{
+    if (std::holds_alternative<t_action_data>(data))
+    {
+        return std::get<t_action_data>(data).enabled;
+    }
+
+    if (std::holds_alternative<t_option_data>(data))
+    {
+        return std::get<t_option_data>(data).item->is_readonly() == false;
+    }
+
+    return true;
 }
 
 /**
@@ -173,27 +266,25 @@ static bool try_invoke(int32_t i)
         return false;
     }
 
-    const auto action = reinterpret_cast<t_listbox_item *>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
+    const auto item = reinterpret_cast<t_listbox_item *>(ListBox_GetItemData(g_ctx.listbox_hwnd, i));
 
-    if (action->is_group)
+    if (std::holds_alternative<t_listbox_item::t_action_data>(item->data))
     {
-        return false;
-    }
-
-    if (!action->path.empty())
-    {
+        const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
         SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
-        ActionManager::invoke(action->path);
+        ActionManager::invoke(action.path);
         return true;
     }
 
-    if (action->option_item)
+    if (std::holds_alternative<t_listbox_item::t_option_data>(item->data))
     {
+        const auto &option = std::get<t_listbox_item::t_option_data>(item->data);
+
         // HACK: We want to keep the command palette open (in case the user cancels and wants to keep looking through
         // the command palette) while editing the option, but we also want to prevent it from closing
         EnableWindow(g_ctx.hwnd, false);
         g_ctx.dont_close_on_focus_loss = true;
-        const auto confirmed = action->option_item->edit(g_ctx.hwnd);
+        const auto confirmed = option.item->edit(g_ctx.hwnd);
         g_ctx.dont_close_on_focus_loss = false;
         EnableWindow(g_ctx.hwnd, true);
 
@@ -226,14 +317,16 @@ static bool try_change_hotkey(int32_t i)
         return false;
     }
 
-    if (item->path.empty())
+    if (!std::holds_alternative<t_listbox_item::t_action_data>(item->data))
     {
         return false;
     }
 
-    Hotkey::t_hotkey hotkey = g_config.hotkeys.at(item->path);
-    Hotkey::show_prompt(g_main_ctx.hwnd, std::format(L"Choose a hotkey for {}", item->text), hotkey);
-    Hotkey::try_associate_hotkey(g_main_ctx.hwnd, item->path, hotkey);
+    const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
+
+    Hotkey::t_hotkey hotkey = g_config.hotkeys.at(action.path);
+    Hotkey::show_prompt(g_main_ctx.hwnd, std::format(L"Choose a hotkey for {}", action.text), hotkey);
+    Hotkey::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
 
     return true;
 }
@@ -367,9 +460,7 @@ static void add_roms(const std::wstring_view query)
 
     for (const auto &rom : roms)
     {
-        const auto name = std::filesystem::path(rom.path).filename().wstring();
-
-        const auto item = t_listbox_item::make_rom(name);
+        const auto item = t_listbox_item::make_rom(rom);
         if (item.matches_query(query))
         {
             g_ctx.items.emplace_back(item);
@@ -619,6 +710,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         case ODA_DRAWENTIRE: {
             const auto item = reinterpret_cast<t_listbox_item *>(ListBox_GetItemData(g_ctx.listbox_hwnd, pdis->itemID));
 
+            const auto enabled = item->enabled();
+
             COLORREF text_color;
             HBRUSH bg_brush;
 
@@ -637,17 +730,20 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             FillRect(pdis->hDC, &pdis->rcItem, bg_brush);
 
             // 2. Draw the checkbox if applicable
+            const auto has_checkbox = std::holds_alternative<t_listbox_item::t_action_data>(item->data) &&
+                                      std::get<t_listbox_item::t_action_data>(item->data).activatable;
             int checkbox_width = 0;
-            if (item->activatable)
+            if (has_checkbox)
             {
+                const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
                 int32_t state_id;
-                if (item->enabled)
+                if (enabled)
                 {
-                    state_id = item->active ? CBS_CHECKEDNORMAL : CBS_UNCHECKEDNORMAL;
+                    state_id = action.active ? CBS_CHECKEDNORMAL : CBS_UNCHECKEDNORMAL;
                 }
                 else
                 {
-                    state_id = item->active ? CBS_CHECKEDDISABLED : CBS_UNCHECKEDDISABLED;
+                    state_id = action.active ? CBS_CHECKEDDISABLED : CBS_UNCHECKEDDISABLED;
                 }
 
                 SIZE checkbox_size{};
@@ -661,7 +757,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                 DrawThemeBackground(g_ctx.button_theme, pdis->hDC, BP_CHECKBOX, state_id, &rc, nullptr);
             }
 
-            // 3. Draw the display text if applicable
+            // 3. Draw the primary text if applicable
             SetBkMode(pdis->hDC, TRANSPARENT);
             SetTextColor(pdis->hDC, text_color);
 
@@ -671,51 +767,50 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             {
                 base_rc.left += checkbox_width + 4;
             }
-
-            if (!item->is_group)
+            if(std::holds_alternative<t_listbox_item::t_group_data>(item->data))
             {
-                const auto draw_flag = item->enabled ? 0 : DSS_DISABLED;
+                base_rc.left = 4;
+            }
 
-                DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)item->text.c_str(), 0, base_rc.left, base_rc.top,
+            const auto primary_text = item->get_primary_text();
+            if (primary_text.has_value())
+            {
+                const auto draw_flag = enabled ? 0 : DSS_DISABLED;
+
+                DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)primary_text->c_str(), 0, base_rc.left, base_rc.top,
                           base_rc.right - base_rc.left, base_rc.bottom - base_rc.top, draw_flag | DST_TEXT);
             }
 
-            // 4. Draw the hint text if applicable
-            if (!item->hint_text.empty())
+            // 4. Draw the secondary text if applicable
+            const auto secondary_text = item->get_secondary_text();
+            if (secondary_text.has_value())
             {
-                const auto hint_text = limit_wstring(item->hint_text, 30);
-
-                const auto draw_flag = item->enabled ? 0 : DSS_DISABLED;
+                const auto text = limit_wstring(*secondary_text, 30);
+                const auto draw_flag = enabled ? 0 : DSS_DISABLED;
 
                 SIZE sz;
-                GetTextExtentPoint32(pdis->hDC, hint_text.c_str(), (int)hint_text.size(), &sz);
+                GetTextExtentPoint32(pdis->hDC, text.c_str(), (int)text.size(), &sz);
                 const int x = base_rc.right - sz.cx;
 
-                DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)hint_text.c_str(), 0, x, base_rc.top, sz.cx,
+                DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)text.c_str(), 0, x, base_rc.top, sz.cx,
                           base_rc.bottom - base_rc.top, draw_flag | DSS_RIGHT | DST_TEXT);
             }
 
-            // 5. Draw the group header if applicable
-            if (item->is_group)
+            if(std::holds_alternative<t_listbox_item::t_group_data>(item->data))
             {
-                const RECT text_rc = pdis->rcItem;
-
-                DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)item->text.c_str(), 0, text_rc.left, text_rc.top,
-                          text_rc.right - text_rc.left, text_rc.bottom - text_rc.top, DST_TEXT);
-
-                HPEN pen = CreatePen(PS_DOT, 1, text_color);
+                const auto group = std::get<t_listbox_item::t_group_data>(item->data);
+                HPEN pen = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
                 HGDIOBJ prev_obj = SelectObject(pdis->hDC, pen);
 
                 SIZE sz;
-                GetTextExtentPoint32(pdis->hDC, item->text.c_str(), (int)item->text.length(), &sz);
+                GetTextExtentPoint32(pdis->hDC, group.text.c_str(), (int)group.text.length(), &sz);
 
-                MoveToEx(pdis->hDC, text_rc.left + sz.cx + 4, text_rc.top + (text_rc.bottom - text_rc.top) / 2,
+                MoveToEx(pdis->hDC, base_rc.left + sz.cx + 4, pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2,
                          nullptr);
-                LineTo(pdis->hDC, text_rc.right, text_rc.top + (text_rc.bottom - text_rc.top) / 2);
+                LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2);
 
                 SelectObject(pdis->hDC, prev_obj);
             }
-
             // 6. Draw the focus rect
             if (pdis->itemState & ODS_FOCUS)
             {
