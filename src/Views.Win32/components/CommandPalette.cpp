@@ -9,6 +9,7 @@
 #include <components/CommandPalette.h>
 #include <components/ConfigDialog.h>
 #include <components/AppActions.h>
+#include <Messenger.h>
 
 struct t_listbox_item
 {
@@ -318,6 +319,7 @@ static bool try_invoke(int32_t i)
         if (confirmed)
         {
             Config::apply_and_save();
+            Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
             SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
             return true;
         }
