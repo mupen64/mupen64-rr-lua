@@ -71,12 +71,19 @@ struct t_command_palette_context
     HWND text_hwnd{};
     HWND listbox_hwnd{};
     HWND edit_hwnd{};
+
+    HTHEME button_theme{};
+
     bool closing{};
     bool dont_close_on_focus_loss{};
-    HTHEME button_theme{};
+
+    // All items, built once when the command palette is shown.
+    std::vector<t_listbox_item> all_items{};
+    // Currently displayed items, filtered by search query.
+    std::vector<t_listbox_item> items{};
+
     std::wstring search_query{};
     std::vector<std::wstring> actions{};
-    std::vector<t_listbox_item> items{};
     std::vector<ConfigDialog::t_options_group> option_groups{};
 };
 
@@ -412,7 +419,7 @@ static void add_actions(const std::wstring_view query)
                 return true;
             }
 
-            return !t_listbox_item::make_action(action, group).matches_query(query);
+            return false;
         });
 
         if (actions.empty())
@@ -420,11 +427,11 @@ static void add_actions(const std::wstring_view query)
             continue;
         }
 
-        g_ctx.items.emplace_back(t_listbox_item::make_group(name));
+        g_ctx.all_items.emplace_back(t_listbox_item::make_group(name));
 
         for (const auto &action : actions)
         {
-            g_ctx.items.emplace_back(t_listbox_item::make_action(action, group));
+            g_ctx.all_items.emplace_back(t_listbox_item::make_action(action, group));
         }
     }
 }
@@ -439,8 +446,7 @@ static void add_options(const std::wstring_view query)
     for (auto &group : g_ctx.option_groups)
     {
         std::erase_if(group.items, [&](ConfigDialog::t_options_item &item) {
-            return item.type == ConfigDialog::t_options_item::Type::Hotkey ||
-                   !t_listbox_item::make_option(&item, group).matches_query(query);
+            return item.type == ConfigDialog::t_options_item::Type::Hotkey;
         });
 
         if (group.items.empty())
@@ -448,7 +454,7 @@ static void add_options(const std::wstring_view query)
             continue;
         }
 
-        g_ctx.items.emplace_back(t_listbox_item::make_option_group(group));
+        g_ctx.all_items.emplace_back(t_listbox_item::make_option_group(group));
 
         for (auto &item : group.items)
         {
@@ -462,45 +468,58 @@ static void add_options(const std::wstring_view query)
  */
 static void add_roms(const std::wstring_view query)
 {
-    const auto roms = RomBrowser::get_discovered_roms();
+    g_ctx.all_items.emplace_back(t_listbox_item::make_group(L"ROMs"));
 
-    std::vector<t_listbox_item> matching_roms;
-    matching_roms.reserve(roms.size());
-
-    for (const auto &rom : roms)
+    for (const auto &rom : RomBrowser::get_discovered_roms())
     {
-        const auto item = t_listbox_item::make_rom(rom);
-        if (item.matches_query(query))
-        {
-            matching_roms.emplace_back(item);
-        }
-    }
-
-    if (matching_roms.empty())
-    {
-        return;
-    }
-
-    g_ctx.items.emplace_back(t_listbox_item::make_group(L"ROMs"));
-
-    for (const auto &item : matching_roms)
-    {
-        g_ctx.items.emplace_back(item);
+        g_ctx.all_items.emplace_back(t_listbox_item::make_rom(rom));
     }
 }
 
 /**
- * \brief Builds the action listbox based on the current search query.
+ * \brief Collects all listbox items.
  */
-static void build_listbox()
+static void collect_items()
 {
-    g_ctx.items = {};
-
+    g_ctx.all_items = {};
     const auto normalized_query = normalize(g_ctx.search_query);
 
     add_actions(normalized_query);
     add_options(normalized_query);
     add_roms(normalized_query);
+}
+
+/**
+ * \brief Refreshes the listbox contents based on the current search query.
+ */
+static void refresh_listbox()
+{
+    g_ctx.items = {};
+
+    const auto normalized_query = normalize(g_ctx.search_query);
+    for (size_t i = 0; i < g_ctx.all_items.size(); i++)
+    {
+        const auto &item = g_ctx.all_items[i];
+
+        if (!std::holds_alternative<t_listbox_item::t_group_data>(item.data)) continue;
+
+        std::vector<t_listbox_item> matching_children;
+        for (size_t j = i + 1; j < g_ctx.all_items.size(); j++)
+        {
+            const auto &child_item = g_ctx.all_items[j];
+            if (std::holds_alternative<t_listbox_item::t_group_data>(child_item.data)) break;
+            if (child_item.matches_query(normalized_query)) matching_children.emplace_back(child_item);
+        }
+
+        if (!matching_children.empty())
+        {
+            g_ctx.items.emplace_back(item);
+            for (const auto &child_item : matching_children)
+            {
+                g_ctx.items.emplace_back(child_item);
+            }
+        }
+    }
 
     SetWindowRedraw(g_ctx.listbox_hwnd, FALSE);
     ListBox_ResetContent(g_ctx.listbox_hwnd);
@@ -596,7 +615,8 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, 
             if (!success) return FALSE;
 
             SetFocus(g_ctx.edit_hwnd);
-            build_listbox();
+            collect_items();
+            refresh_listbox();
 
             ListBox_SetCurSel(g_ctx.listbox_hwnd, selected_index + 1);
 
@@ -651,7 +671,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                      SWP_NOZORDER | SWP_FRAMECHANGED);
 
         // 4. Build the listbox
-        build_listbox();
+        collect_items();
+        refresh_listbox();
 
         // 5. Subclass the controls for key event handling
         SetWindowSubclass(g_ctx.edit_hwnd, keyboard_interaction_subclass_proc, 0, 0);
@@ -680,7 +701,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                 if (g_ctx.search_query != query)
                 {
                     g_ctx.search_query = query;
-                    build_listbox();
+                    refresh_listbox();
                 }
                 break;
             }
