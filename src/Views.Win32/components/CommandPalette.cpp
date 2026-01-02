@@ -462,17 +462,30 @@ static void add_options(const std::wstring_view query)
  */
 static void add_roms(const std::wstring_view query)
 {
-    g_ctx.items.emplace_back(t_listbox_item::make_group(L"ROMs"));
-
     const auto roms = RomBrowser::get_discovered_roms();
+
+    std::vector<t_listbox_item> matching_roms;
+    matching_roms.reserve(roms.size());
 
     for (const auto &rom : roms)
     {
         const auto item = t_listbox_item::make_rom(rom);
         if (item.matches_query(query))
         {
-            g_ctx.items.emplace_back(item);
+            matching_roms.emplace_back(item);
         }
+    }
+
+    if (matching_roms.empty())
+    {
+        return;
+    }
+
+    g_ctx.items.emplace_back(t_listbox_item::make_group(L"ROMs"));
+
+    for (const auto &item : matching_roms)
+    {
+        g_ctx.items.emplace_back(item);
     }
 }
 
