@@ -9,12 +9,14 @@
 #include <Messenger.h>
 
 using t_action_add_params = ActionManager::t_action_add_params;
+using t_action_params = ActionManager::t_action_params;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
 
 struct t_action
 {
     t_action_add_params add_params{};
+    t_action_params params{};
 
     std::wstring raw_name{};
     std::vector<std::wstring> segments{};
@@ -476,6 +478,19 @@ bool ActionManager::get_activatability(const action_path &path)
     }
 
     return action->add_params.get_active != nullptr;
+}
+
+bool ActionManager::set_params(const action_path &path, const t_action_params &params)
+{
+    t_action *action = get_single_action_ptr_matching_path(path);
+    if (!action)
+    {
+        g_view_logger->error(L"ActionManager::set_params: '{}' didn't resolve to an action", path);
+        return false;
+    }
+
+    action->params = params;
+    return true;
 }
 
 void ActionManager::begin_batch_work()

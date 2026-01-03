@@ -89,6 +89,41 @@ struct t_action_add_params
 };
 
 /**
+ * \brief Represents an action parameter.
+ */
+struct t_action_param
+{
+    /**
+     * \brief The key of the parameter.
+     */
+    std::wstring key{};
+
+    /**
+     * \brief The display name of the parameter.
+     */
+    std::wstring name{};
+
+    /**
+     * \brief Whether the parameter is required.
+     */
+    bool required{};
+
+    /**
+     * \brief A validator function that takes in a parameter value and optionally returns an error message if the
+     * validation failed.
+     */
+    std::function<std::optional<std::wstring>(std::wstring_view)> validator = [](const auto&) { return std::nullopt; };
+};
+
+/**
+ * \brief Represents an action's parameter set.
+ */
+struct t_action_params
+{
+    std::vector<t_action_param> params{};
+};
+
+/**
  * \brief Adds an action to the action registry.
  * If an action with the same path already exists, the operation will fail.
  * If adding the action causes another action to gain a child (e.g. there's an action `A > B`, and we're adding `A > B >
@@ -111,6 +146,14 @@ std::vector<action_path> remove(const action_filter &filter);
  * has no hotkey associated with it already. \return Whether the operation succeeded.
  */
 bool associate_hotkey(const action_path &path, const Hotkey::t_hotkey &hotkey, bool overwrite_existing = true);
+
+/**
+ * \brief Sets the action parameters for an action by its path.
+ * \param path A path.
+ * \param params The new action parameters.
+ * \return Whether the operation succeeded.
+ */
+bool set_params(const action_path &path, const t_action_params &params);
 
 /**
  * \brief Begins a batch operation. Batches all updates caused by `add`, `remove`, and `associate_hotkey` into one at
