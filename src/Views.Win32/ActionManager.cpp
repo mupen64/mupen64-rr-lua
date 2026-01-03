@@ -569,13 +569,65 @@ ActionManager::action_filter ActionManager::normalize_filter(const action_filter
     return MiscHelpers::join_wstring(parts, SEGMENT_SEPARATOR);
 }
 
-void ActionManager::invoke(const action_path &path, const bool up, const bool release_on_repress)
+static bool validate_params(const t_action &action, const std::vector<std::wstring_view> &params)
+{
+    const auto needs_params = !action.params.params.empty();
+
+    if (!needs_params)
+    {
+        return true;
+    }
+
+    const auto expected_param_count = action.params.params.size();
+
+    if (params.size() != expected_param_count)
+    {
+        g_view_logger->error(L"ActionManager::validate_params: Action '{}' expected {} parameters, but got {}.",
+                             action.add_params.path, expected_param_count, params.size());
+        return false;
+    }
+
+    for (size_t i = 0; i < expected_param_count; ++i)
+    {
+        const auto &param = action.params.params[i];
+        const auto &supplied_param = params[i];
+        if (param.required)
+        {
+            if (supplied_param.empty())
+            {
+                g_view_logger->error(L"ActionManager::validate_params: Action '{}' parameter '{}' is required, but no "
+                                     L"value was provided.",
+                                     action.add_params.path, param.key);
+                return false;
+            }
+
+            const auto validation_result = param.validator(supplied_param);
+            if (validation_result.has_value())
+            {
+                g_view_logger->error(
+                    L"ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
+                    action.add_params.path, param.key, validation_result.value());
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+void ActionManager::invoke(const action_path &path, const std::vector<std::wstring_view> &params, const bool up,
+                           const bool release_on_repress)
 {
     t_action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
     {
         g_view_logger->error(L"ActionManager::invoke: '{}' didn't resolve to an action", path);
+        return;
+    }
+
+    if (!validate_params(*action, params))
+    {
         return;
     }
 

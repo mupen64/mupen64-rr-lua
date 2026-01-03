@@ -238,11 +238,12 @@ action_filter normalize_filter(const action_filter &filter);
  * \brief Manually invokes an action by its path. If the action has an up callback, is already pressed down, and `up` is
  * false, only the up callback will be invoked.
  * \param path A path.
+ * \param params The action parameters.
  * \param up If true, the action is considered to be released, otherwise it is considered to be pressed down.
  * \param release_on_repress If true, if the action is already pressed down and `up` is false, the action will first be
  * released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
  */
-void invoke(const action_path &path, bool up = false, bool release_on_repress = true);
+void invoke(const action_path &path, const std::vector<std::wstring_view>& params = {}, bool up = false, bool release_on_repress = true);
 
 /**
  * \brief Locks or unlocks action invocations from hotkeys.
