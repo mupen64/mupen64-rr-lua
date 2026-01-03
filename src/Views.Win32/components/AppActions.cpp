@@ -1054,6 +1054,12 @@ void AppActions::add()
 
     ActionManager::add({
         .path = TEST,
+        .params = {ActionManager::t_action_param{
+            .key = L"food",
+            .name = L"Your favourite food",
+            .required = true,
+            .validator = [](const std::wstring_view value) { return std::nullopt; },
+        }},
         .on_press =
             [](const auto &params) {
                 for (const auto &pair : params)
@@ -1062,13 +1068,6 @@ void AppActions::add()
                 }
             },
     });
-
-    ActionManager::set_params(TEST, {.params = {ActionManager::t_action_param{
-                                         .key = L"food",
-                                         .name = L"Your favourite food",
-                                         .required = true,
-                                         .validator = [](const std::wstring_view value) { return std::nullopt; },
-                                     }}});
 
     ActionManager::invoke(TEST, {L"food"});
 

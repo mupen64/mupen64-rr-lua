@@ -9,7 +9,6 @@
 #include <Messenger.h>
 
 using t_action_add_params = ActionManager::t_action_add_params;
-using t_action_params = ActionManager::t_action_params;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
 using action_parameter_list = ActionManager::action_parameter_list;
@@ -17,7 +16,6 @@ using action_parameter_list = ActionManager::action_parameter_list;
 struct t_action
 {
     t_action_add_params add_params{};
-    t_action_params params{};
 
     std::wstring raw_name{};
     std::vector<std::wstring> segments{};
@@ -481,19 +479,6 @@ bool ActionManager::get_activatability(const action_path &path)
     return action->add_params.get_active != nullptr;
 }
 
-bool ActionManager::set_params(const action_path &path, const t_action_params &params)
-{
-    t_action *action = get_single_action_ptr_matching_path(path);
-    if (!action)
-    {
-        g_view_logger->error(L"ActionManager::set_params: '{}' didn't resolve to an action", path);
-        return false;
-    }
-
-    action->params = params;
-    return true;
-}
-
 void ActionManager::begin_batch_work()
 {
     g_mgr.batched_work = true;
@@ -580,12 +565,12 @@ static std::optional<action_parameter_list> validate_params(const t_action &acti
                                                             const std::vector<std::wstring_view> &params)
 {
     // Fast path: no parameters needed, we ignore any supplied parameters.
-    if (action.params.params.empty())
+    if (action.add_params.params.empty())
     {
         return std::make_optional<action_parameter_list>({});
     }
 
-    const auto expected_param_count = action.params.params.size();
+    const auto expected_param_count = action.add_params.params.size();
 
     // Mismatch in parameter count means immediate failure.
     if (params.size() != expected_param_count)
@@ -599,7 +584,7 @@ static std::optional<action_parameter_list> validate_params(const t_action &acti
 
     for (size_t i = 0; i < expected_param_count; ++i)
     {
-        const auto &param = action.params.params[i];
+        const auto &param = action.add_params.params[i];
         const auto &supplied_param = params[i];
         if (param.required)
         {

@@ -50,6 +50,33 @@ using action_path = std::wstring;
 using action_parameter_list = std::unordered_map<std::wstring, std::wstring>;
 
 /**
+ * \brief Represents an action parameter.
+ */
+struct t_action_param
+{
+    /**
+     * \brief The key of the parameter.
+     */
+    std::wstring key{};
+
+    /**
+     * \brief The display name of the parameter.
+     */
+    std::wstring name{};
+
+    /**
+     * \brief Whether the parameter is required.
+     */
+    bool required{};
+
+    /**
+     * \brief A validator function that takes in a parameter value and optionally returns an error message if the
+     * validation failed.
+     */
+    std::function<std::optional<std::wstring>(std::wstring_view)> validator = [](const auto &) { return std::nullopt; };
+};
+
+/**
  * \brief Represents action creation parameters.
  */
 struct t_action_add_params
@@ -60,10 +87,16 @@ struct t_action_add_params
     action_path path{};
 
     /**
-     * \brief The callback to be invoked when the action is pressed. Can be null.
-     * If this action has been assigned a parameter set via list using `set_params`, this callback receives a parameter list.
+     * \brief The action parameters.
      */
-    std::function<void(const action_parameter_list& params)> on_press;
+    std::vector<t_action_param> params{};
+
+    /**
+     * \brief The callback to be invoked when the action is pressed. Can be null.
+     * If this action has been assigned a parameter set via list using `set_params`, this callback receives a parameter
+     * list.
+     */
+    std::function<void(const action_parameter_list &params)> on_press;
 
     /**
      * \brief The callback to be invoked when the action is released. Can be null.
@@ -95,41 +128,6 @@ struct t_action_add_params
 };
 
 /**
- * \brief Represents an action parameter.
- */
-struct t_action_param
-{
-    /**
-     * \brief The key of the parameter.
-     */
-    std::wstring key{};
-
-    /**
-     * \brief The display name of the parameter.
-     */
-    std::wstring name{};
-
-    /**
-     * \brief Whether the parameter is required.
-     */
-    bool required{};
-
-    /**
-     * \brief A validator function that takes in a parameter value and optionally returns an error message if the
-     * validation failed.
-     */
-    std::function<std::optional<std::wstring>(std::wstring_view)> validator = [](const auto&) { return std::nullopt; };
-};
-
-/**
- * \brief Represents an action's parameter set.
- */
-struct t_action_params
-{
-    std::vector<t_action_param> params{};
-};
-
-/**
  * \brief Adds an action to the action registry.
  * If an action with the same path already exists, the operation will fail.
  * If adding the action causes another action to gain a child (e.g. there's an action `A > B`, and we're adding `A > B >
@@ -152,14 +150,6 @@ std::vector<action_path> remove(const action_filter &filter);
  * has no hotkey associated with it already. \return Whether the operation succeeded.
  */
 bool associate_hotkey(const action_path &path, const Hotkey::t_hotkey &hotkey, bool overwrite_existing = true);
-
-/**
- * \brief Sets the action parameters for an action by its path.
- * \param path A path.
- * \param params The new action parameters.
- * \return Whether the operation succeeded.
- */
-bool set_params(const action_path &path, const t_action_params &params);
 
 /**
  * \brief Begins a batch operation. Batches all updates caused by `add`, `remove`, and `associate_hotkey` into one at
@@ -249,7 +239,8 @@ action_filter normalize_filter(const action_filter &filter);
  * \param release_on_repress If true, if the action is already pressed down and `up` is false, the action will first be
  * released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
  */
-void invoke(const action_path &path, const std::vector<std::wstring_view>& params = {}, bool up = false, bool release_on_repress = true);
+void invoke(const action_path &path, const std::vector<std::wstring_view> &params = {}, bool up = false,
+            bool release_on_repress = true);
 
 /**
  * \brief Locks or unlocks action invocations from hotkeys.
