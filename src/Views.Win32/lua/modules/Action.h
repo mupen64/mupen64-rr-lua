@@ -31,12 +31,14 @@ static ActionManager::t_action_add_params check_action_add_params(lua_State *L, 
     auto on_press = lua_optcallback(L, -1);
     if (on_press)
     {
-        params.on_press = [=] {
+        params.on_press = [=](const auto& params) {
             if (!LuaManager::get_environment_for_state(L))
             {
                 return;
             }
 
+            // FIXME: Forward the parameter list!
+            
             lua_pushcallback(L, on_press, false);
             lua_pcall(L, 0, 0, 0);
         };

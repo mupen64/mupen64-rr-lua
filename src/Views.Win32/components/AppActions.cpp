@@ -839,7 +839,7 @@ static void add_action_with_up(const std::wstring &path, const Hotkey::t_hotkey 
 {
     bool success = ActionManager::add({
         .path = path,
-        .on_press = on_press,
+        .on_press = [=](const auto &) { on_press(); },
         .on_release = on_release,
         .get_display_name = get_display_name,
         .get_enabled = get_enabled,

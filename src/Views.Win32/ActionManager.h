@@ -45,6 +45,11 @@ using action_filter = std::wstring;
 using action_path = std::wstring;
 
 /**
+ * \brief Represents a collection of action parameter keys to their values.
+ */
+using action_parameter_list = std::unordered_map<std::wstring, std::wstring>;
+
+/**
  * \brief Represents action creation parameters.
  */
 struct t_action_add_params
@@ -56,8 +61,9 @@ struct t_action_add_params
 
     /**
      * \brief The callback to be invoked when the action is pressed. Can be null.
+     * If this action has been assigned a parameter set via list using `set_params`, this callback receives a parameter list.
      */
-    std::function<void()> on_press;
+    std::function<void(const action_parameter_list& params)> on_press;
 
     /**
      * \brief The callback to be invoked when the action is released. Can be null.

@@ -12,6 +12,7 @@ using t_action_add_params = ActionManager::t_action_add_params;
 using t_action_params = ActionManager::t_action_params;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
+using action_parameter_list = ActionManager::action_parameter_list;
 
 struct t_action
 {
@@ -569,23 +570,32 @@ ActionManager::action_filter ActionManager::normalize_filter(const action_filter
     return MiscHelpers::join_wstring(parts, SEGMENT_SEPARATOR);
 }
 
-static bool validate_params(const t_action &action, const std::vector<std::wstring_view> &params)
+/**
+ * \brief Validates the given parameters against the action's parameter definitions.
+ * \param action The action.
+ * \param params The parameters to validate.
+ * \return The validated parameter list, or nothing if validation failed.
+ */
+static std::optional<action_parameter_list> validate_params(const t_action &action,
+                                                            const std::vector<std::wstring_view> &params)
 {
-    const auto needs_params = !action.params.params.empty();
-
-    if (!needs_params)
+    // Fast path: no parameters needed, we ignore any supplied parameters.
+    if (action.params.params.empty())
     {
-        return true;
+        return std::make_optional<action_parameter_list>({});
     }
 
     const auto expected_param_count = action.params.params.size();
 
+    // Mismatch in parameter count means immediate failure.
     if (params.size() != expected_param_count)
     {
         g_view_logger->error(L"ActionManager::validate_params: Action '{}' expected {} parameters, but got {}.",
                              action.add_params.path, expected_param_count, params.size());
-        return false;
+        return std::nullopt;
     }
+
+    action_parameter_list param_list;
 
     for (size_t i = 0; i < expected_param_count; ++i)
     {
@@ -593,26 +603,30 @@ static bool validate_params(const t_action &action, const std::vector<std::wstri
         const auto &supplied_param = params[i];
         if (param.required)
         {
+            // Fail if required parameter is empty.
             if (supplied_param.empty())
             {
                 g_view_logger->error(L"ActionManager::validate_params: Action '{}' parameter '{}' is required, but no "
                                      L"value was provided.",
                                      action.add_params.path, param.key);
-                return false;
+                return std::nullopt;
             }
 
+            // Run validation, fail if that fails.
             const auto validation_result = param.validator(supplied_param);
             if (validation_result.has_value())
             {
                 g_view_logger->error(
                     L"ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
                     action.add_params.path, param.key, validation_result.value());
-                return false;
+                return std::nullopt;
             }
+
+            param_list[param.key] = std::wstring(supplied_param);
         }
     }
 
-    return true;
+    return param_list;
 }
 
 void ActionManager::invoke(const action_path &path, const std::vector<std::wstring_view> &params, const bool up,
@@ -626,7 +640,8 @@ void ActionManager::invoke(const action_path &path, const std::vector<std::wstri
         return;
     }
 
-    if (!validate_params(*action, params))
+    const auto param_list_opt = validate_params(*action, params);
+    if (!param_list_opt.has_value())
     {
         return;
     }
@@ -656,7 +671,7 @@ void ActionManager::invoke(const action_path &path, const std::vector<std::wstri
 
         if (action->add_params.on_press)
         {
-            action->add_params.on_press();
+            action->add_params.on_press(param_list_opt.value());
         }
 
         action->pressed = true;
