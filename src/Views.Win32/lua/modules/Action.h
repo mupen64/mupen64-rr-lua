@@ -12,7 +12,7 @@
 
 namespace LuaCore::Action
 {
-static ActionManager::t_action_params check_action_params(lua_State *L, int index)
+static ActionManager::t_action_add_params check_action_add_params(lua_State *L, int index)
 {
     if (lua_gettop(L) < 1 || !lua_istable(L, index))
     {
@@ -20,7 +20,7 @@ static ActionManager::t_action_params check_action_params(lua_State *L, int inde
         std::unreachable();
     }
 
-    ActionManager::t_action_params params{};
+    ActionManager::t_action_add_params params{};
 
     lua_getfield(L, 1, "path");
     params.path = luaL_checkwstring(L, -1);
@@ -153,7 +153,7 @@ static int add(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    const auto params = check_action_params(L, 1);
+    const auto params = check_action_add_params(L, 1);
 
     const auto result = ActionManager::add(params);
 

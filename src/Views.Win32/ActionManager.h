@@ -47,7 +47,7 @@ using action_path = std::wstring;
 /**
  * \brief Represents action creation parameters.
  */
-struct t_action_params
+struct t_action_add_params
 {
     /**
      * \brief The action's path.
@@ -95,7 +95,7 @@ struct t_action_params
  * C > D`), the operation will fail. To add the action, delete the original action (`A > B`) first. \param params The
  * action parameters. \return Whether the operation succeeded.
  */
-bool add(const t_action_params &params);
+bool add(const t_action_add_params &params);
 
 /**
  * \brief Removes actions matching the specified filter.

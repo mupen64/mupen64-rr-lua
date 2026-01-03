@@ -8,13 +8,13 @@
 #include <ActionManager.h>
 #include <Messenger.h>
 
-using t_action_params = ActionManager::t_action_params;
+using t_action_add_params = ActionManager::t_action_add_params;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
 
 struct t_action
 {
-    t_action_params params{};
+    t_action_add_params add_params{};
 
     std::wstring raw_name{};
     std::vector<std::wstring> segments{};
@@ -170,7 +170,7 @@ static std::vector<std::wstring> map_action_ptrs_to_paths(const std::vector<t_ac
 
     for (const auto &action : actions)
     {
-        paths.emplace_back(action->params.path);
+        paths.emplace_back(action->add_params.path);
     }
 
     return paths;
@@ -199,9 +199,9 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
 
         action->raw_name = display_name;
 
-        if (action->params.get_display_name)
+        if (action->add_params.get_display_name)
         {
-            const auto override_display_name = action->params.get_display_name();
+            const auto override_display_name = action->add_params.get_display_name();
             if (!override_display_name.empty())
             {
                 display_name = override_display_name;
@@ -220,7 +220,7 @@ static std::vector<std::wstring> update_enabled_states(const std::vector<t_actio
 {
     for (auto &action : actions)
     {
-        action->enabled = std::make_optional(action->params.get_enabled ? action->params.get_enabled() : true);
+        action->enabled = std::make_optional(action->add_params.get_enabled ? action->add_params.get_enabled() : true);
     }
     return map_action_ptrs_to_paths(actions);
 }
@@ -232,7 +232,7 @@ static std::vector<std::wstring> update_active_states(const std::vector<t_action
 {
     for (auto &action : actions)
     {
-        action->active = std::make_optional(action->params.get_active ? action->params.get_active() : false);
+        action->active = std::make_optional(action->add_params.get_active ? action->add_params.get_active() : false);
     }
     return map_action_ptrs_to_paths(actions);
 }
@@ -245,7 +245,7 @@ static void notify_action_registry_changed()
     Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
 }
 
-bool ActionManager::add(const t_action_params &params)
+bool ActionManager::add(const t_action_add_params &params)
 {
     const auto normalized_path = normalize_filter(params.path);
 
@@ -291,8 +291,8 @@ bool ActionManager::add(const t_action_params &params)
     }
 
     t_action action{};
-    action.params = params;
-    action.params.path = normalized_path;
+    action.add_params = params;
+    action.add_params.path = normalized_path;
     action.segments = segments;
 
     g_mgr.actions.emplace_back(action);
@@ -325,24 +325,24 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     {
         for (const auto &existing_action : g_mgr.actions)
         {
-            if (existing_action.params.path != action_to_be_removed->params.path)
+            if (existing_action.add_params.path != action_to_be_removed->add_params.path)
             {
                 continue;
             }
 
-            if (existing_action.params.on_removed)
+            if (existing_action.add_params.on_removed)
             {
-                existing_action.params.on_removed();
+                existing_action.add_params.on_removed();
             }
 
-            removed_paths.emplace_back(existing_action.params.path);
+            removed_paths.emplace_back(existing_action.add_params.path);
         }
     }
 
     for (const auto &action_to_be_removed : actions)
     {
         std::erase_if(g_mgr.actions,
-                      [&](const t_action &a) { return a.params.path == action_to_be_removed->params.path; });
+                      [&](const t_action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
     }
 
     g_mgr.filter_result_cache.clear();
@@ -365,7 +365,7 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey::t_ho
         return false;
     }
 
-    const auto normalized_path = action->params.path;
+    const auto normalized_path = action->add_params.path;
 
     RT_ASSERT(g_config.hotkeys.contains(normalized_path) && g_config.inital_hotkeys.contains(normalized_path),
               L"Action didn't have a hotkey entry.");
@@ -475,7 +475,7 @@ bool ActionManager::get_activatability(const action_path &path)
         return false;
     }
 
-    return action->params.get_active != nullptr;
+    return action->add_params.get_active != nullptr;
 }
 
 void ActionManager::begin_batch_work()
@@ -516,7 +516,7 @@ std::vector<action_path> ActionManager::get_actions_matching_filter(const action
 
     for (const auto &action : actions)
     {
-        result.emplace_back(action->params.path);
+        result.emplace_back(action->add_params.path);
     }
 
     return result;
@@ -564,7 +564,7 @@ void ActionManager::invoke(const action_path &path, const bool up, const bool re
         return;
     }
 
-    if (action->params.get_enabled && !action->params.get_enabled())
+    if (action->add_params.get_enabled && !action->add_params.get_enabled())
     {
         return;
     }
@@ -573,23 +573,23 @@ void ActionManager::invoke(const action_path &path, const bool up, const bool re
     {
         action->pressed = false;
 
-        if (action->params.on_release)
+        if (action->add_params.on_release)
         {
-            action->params.on_release();
+            action->add_params.on_release();
         }
     }
     else
     {
-        if (release_on_repress && action->params.on_release && action->pressed)
+        if (release_on_repress && action->add_params.on_release && action->pressed)
         {
-            action->params.on_release();
+            action->add_params.on_release();
             action->pressed = false;
             return;
         }
 
-        if (action->params.on_press)
+        if (action->add_params.on_press)
         {
-            action->params.on_press();
+            action->add_params.on_press();
         }
 
         action->pressed = true;

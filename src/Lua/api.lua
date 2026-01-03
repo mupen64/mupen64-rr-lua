@@ -1542,7 +1542,7 @@ function hotkey.prompt(caption) end
 ---A fully-qualified action path in the format `"Category[] > Name"`.
 ---An action path is a subset of the action filter that contains no wildcards and is used to uniquely identify an action.
 
----@class ActionParams
+---@class ActionAddParams
 ---@field path ActionPath The action's path.
 ---@field on_press fun()? The callback to be invoked when the action is pressed. Can be null.
 ---@field on_release fun()? The callback to be invoked when the action is released. Can be null.
@@ -1553,7 +1553,7 @@ function hotkey.prompt(caption) end
 ---Adds an action to the action registry.
 ---If an action with the same path already exists, the operation will fail.
 ---If adding the action causes another action to gain a child (e.g. there's an action `A > B`, and we're adding `A > B > C > D`), the operation will fail. To add the action, delete the original action (`A > B`) first.
----@param params ActionParams The action parameters.
+---@param params ActionAddParams The action parameters.
 ---@return boolean # Whether the operation succeeded.
 function action.add(params) end
 
