@@ -87,6 +87,8 @@ const std::wstring SHOW_INSTANCES = APP + L"Lua Script > Show Instances ---";
 const std::wstring RECENT_SCRIPTS = APP + L"Lua Script > Recent Scripts ---";
 const std::wstring CLOSE_ALL = APP + L"Lua Script > Close All";
 
+const std::wstring TEST = APP + L"Test > Parameterized Action...";
+
 /**
  * \brief Initializes the module.
  */

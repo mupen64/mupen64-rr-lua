@@ -1052,6 +1052,26 @@ void AppActions::add()
                               &g_config.is_recent_scripts_frozen, load_recent_script);
     add_action(CLOSE_ALL, Hotkey::t_hotkey('W', true, true), close_all_lua_scripts);
 
+    ActionManager::add({
+        .path = TEST,
+        .on_press =
+            [](const auto &params) {
+                for (const auto &pair : params)
+                {
+                    g_view_logger->info(L"Param: {} = {}", pair.first, pair.second);
+                }
+            },
+    });
+
+    ActionManager::set_params(TEST, {.params = {ActionManager::t_action_param{
+                                         .key = L"food",
+                                         .name = L"Your favourite food",
+                                         .required = true,
+                                         .validator = [](const std::wstring_view value) { return std::nullopt; },
+                                     }}});
+
+    ActionManager::invoke(TEST, {L"food"});
+
     ActionManager::end_batch_work();
 
     check_for_updates(false);
