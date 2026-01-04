@@ -153,6 +153,38 @@ static core_plugin_extended_funcs rsp_ext_funcs{
     .log_error = [](const char *msg) { Mupen::rsp_log().error(msg); },
 };
 
+// WM callbacks for graphics
+// =============================================
+static mupv_wm_funcs video_wm_funcs{
+    .size = sizeof(mupv_wm_funcs),
+    .p_self = nullptr,
+
+    .init =
+        [](void **pp_ctx, mupv_graphics_api api, void *funcs) {
+            auto ctx = Mupen::g_core_service->init_window_service(api);
+            ctx->populate_funcs(funcs);
+            *pp_ctx = ctx.release();
+            return Res_Ok;
+        },
+    .drop =
+        [](void **pp_ctx) {
+            delete (Mupen::IWindowService *)*pp_ctx;
+            *pp_ctx = nullptr;
+            return Res_Ok;
+        },
+    
+    .open_window =
+        [](void* p_ctx, uint32_t width, uint32_t height) {
+            auto ctx = (Mupen::IWindowService*) p_ctx;
+            return ctx->open_window(width, height);
+        },
+    .close_window = 
+        [](void* p_ctx) {
+            auto ctx = (Mupen::IWindowService*) p_ctx;
+            return ctx->close_window();
+        },
+};
+
 namespace Mupen
 {
 PluginInfo extract_plugin_info(const std::filesystem::path &path)
@@ -327,12 +359,12 @@ void PluginSet::initiate_video(core_ctx &ctx, ICoreService &core_service)
         .vi_y_scale_reg = &ctx.vi_register->vi_y_scale,
     };
 
-    auto wm_funcs = mupv_wm_funcs {
+    auto wm_funcs = mupv_wm_funcs{
         .init = nullptr,
     };
 
     // init and request window settings
-    m_video_plugin.MUP_FN(mupv_init)(gfx_info, mupv_wm_funcs {});
+    m_video_plugin.MUP_FN(mupv_init)(gfx_info, mupv_wm_funcs{});
 }
 
 void PluginSet::initiate_audio(core_ctx &ctx)

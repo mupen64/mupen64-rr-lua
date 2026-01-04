@@ -7,9 +7,12 @@
 #include "QtCoreService.hpp"
 #include <QMessageBox>
 #include <ranges>
+#include <stdexcept>
 #include <vector>
 #include "StrUtils.h"
 #include "../Utils.hpp"
+#include "mupapi.h"
+#include "QtOpenGLService.hpp"
 
 /**
  * @brief Display a multiple-choice dialog, if the user has not requested to hide it.
@@ -94,4 +97,15 @@ void QtCoreService::show_info_dialog(std::string_view title, std::string_view me
     bool call_worked =
         QMetaObject::invokeMethod(m_main_window, &MainWindow::showInfoDialog, qt_title, qt_message, qt_icon);
     assert(call_worked);
+}
+
+std::unique_ptr<Mupen::IWindowService> QtCoreService::init_window_service(mupv_graphics_api api)
+{
+    switch (api)
+    {
+    case MUPV_API_OPENGL:
+        return std::unique_ptr<Mupen::IWindowService>(new QtOpenGLService(m_main_window));
+    default:
+        throw std::invalid_argument("invalid graphics API value");
+    }
 }

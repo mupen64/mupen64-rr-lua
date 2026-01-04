@@ -43,11 +43,11 @@ namespace Mupen
 core_cfg g_core_cfg{};
 core_params g_core_params{};
 core_ctx *g_core_ctx = nullptr;
+std::unique_ptr<ICoreService> g_core_service = nullptr;
 
 static std::optional<std::filesystem::path> g_rom_path = std::nullopt;
 static std::optional<PluginPaths> g_plugin_paths = std::nullopt;
 static std::optional<PluginSet> g_curr_plugins = std::nullopt;
-static std::unique_ptr<ICoreService> g_core_service = nullptr;
 static std::unique_ptr<IWindowService> g_window_service = nullptr;
 
 

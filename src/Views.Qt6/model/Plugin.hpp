@@ -13,7 +13,6 @@
 #include <array>
 #include <boost/dll/shared_library.hpp>
 #include <filesystem>
-#include <utility>
 
 namespace Mupen
 {

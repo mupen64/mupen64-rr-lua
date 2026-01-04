@@ -23,6 +23,7 @@ namespace Mupen
 extern core_cfg g_core_cfg;
 extern core_params g_core_params;
 extern core_ctx *g_core_ctx;
+extern std::unique_ptr<ICoreService> g_core_service;
 
 class IWindowService
 {
@@ -32,6 +33,7 @@ class IWindowService
 
     virtual core_result open_window(uint32_t width, uint32_t height) = 0;
     virtual core_result close_window() = 0;
+    virtual void populate_funcs(void* p_funcs) = 0;
 };
 
 class IOpenGLService : public IWindowService

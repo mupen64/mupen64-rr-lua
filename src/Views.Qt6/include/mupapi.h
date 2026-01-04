@@ -247,7 +247,7 @@ extern "C"
 
     /**
      * @brief An exported window handle, usually to pass to a child process.
-     * @note On Wayland, this struct retains ownership of the string containing the ID handle.
+     * @note On Wayland, this struct retains ownership of the string containing the ID handle. The handle should be freed using `free()`.
      */
     typedef struct
     {
@@ -284,7 +284,7 @@ extern "C"
     };
 
     typedef struct {
-        mupv_fptr (*get_proc_address)(void* p_self);
+        mupv_fptr (*get_proc_address)(void* p_self, const char* sym);
 
         core_result (*request_attrs)(void* p_self, const mupv_gl_buffer_attr* attrs, const int32_t* vals, size_t len);
         core_result (*request_version)(void* p_self, mupv_gl_profile profile, uint32_t major, uint32_t minor);
