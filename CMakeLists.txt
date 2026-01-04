@@ -80,8 +80,6 @@ find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
-find_package(glew CONFIG REQUIRED) 
-find_package(sdl3 CONFIG REQUIRED) 
 
 # Lua, because Lua sucks
 find_package(Lua REQUIRED)
@@ -97,6 +95,8 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
 endif()
 
 if(MUPEN64RR_BUILD_WIN32)
+  find_package(glew CONFIG REQUIRED)
+  find_package(sdl3 CONFIG REQUIRED)
   pkg_check_modules(speexdsp REQUIRED IMPORTED_TARGET GLOBAL "speexdsp")
 endif()
 
@@ -107,7 +107,6 @@ if(MUPEN64RR_BUILD_QT6)
   qt6_standard_project_setup()
 
   find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
-  find_package(SampleRate CONFIG REQUIRED)
   find_package(SDL2 CONFIG REQUIRED SDL2)
   pkg_check_modules(libswresample IMPORTED_TARGET GLOBAL "libswresample")
 endif()
