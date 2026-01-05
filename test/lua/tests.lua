@@ -1013,6 +1013,33 @@ lust.describe('mupen64', function()
 
                 lust.expect(called).to.equal(false)
             end)
+            lust.it('calls_onpress_with_correct_params', function()
+                local received_params
+                action.add({
+                    path = "Test > Something",
+                    params = {
+                        {
+                            key = "param1",
+                            name = "Parameter 1",
+                            required = true,
+                            validator = function() end
+                        },
+                        {
+                            key = "param2",
+                            name = "Parameter 2",
+                            required = false,
+                            validator = function() end
+                        },
+                    },
+                    on_press = function(params)
+                        received_params = params
+                    end
+                })
+
+                action.invoke("Test > Something", { "aaa", "" })
+
+                lust.expect(received_params).to.equal({ "aaa", "" })
+            end)
         end)
 
         lust.describe('lock_hotkeys', function()
