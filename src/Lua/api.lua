@@ -1542,9 +1542,20 @@ function hotkey.prompt(caption) end
 ---A fully-qualified action path in the format `"Category[] > Name"`.
 ---An action path is a subset of the action filter that contains no wildcards and is used to uniquely identify an action.
 
+---@alias ActionParameterList { [string]: string }
+---Represents a collection of action parameter keys to their values.
+
+---@class ActionParam
+---@field key string The key of the parameter.
+---@field name string The display name of the parameter.
+---@field required boolean Whether the parameter is required.
+---@field validator fun(value: string): string? A validator function that takes in a parameter value and optionally returns an error message if the validation failed.
+---Represents an action parameter.
+
 ---@class ActionAddParams
 ---@field path ActionPath The action's path.
----@field on_press fun()? The callback to be invoked when the action is pressed. Can be null.
+---@field params ActionParam[]? The action parameters.
+---@field on_press fun(params: ActionParameterList)? The callback to be invoked when the action is pressed. Can be null. If this action has been assigned a parameter set via list using [action.set_params](lua://action.set_params), this callback receives a parameter list.
 ---@field on_release fun()? The callback to be invoked when the action is released. Can be null.
 ---@field get_display_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 ---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled. If null, the action will be considered enabled.
@@ -1615,9 +1626,11 @@ function action.get_actions_matching_filter(filter) end
 
 ---Manually invokes an action by its path. If the action has an up callback, is already pressed down, and `up` is false, only the up callback will be invoked.
 ---@param path ActionPath A path.
+---@param params ActionParameterList? The action parameters.
 ---@param up boolean? If true, the action is considered to be released, otherwise it is considered to be pressed down.
 ---@param release_on_repress boolean? If true, if the action is already pressed down and `up` is false, the action will first be released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
-function action.invoke(path, up, release_on_repress) end
+---@return boolean # Whether the operation succeeded.
+function action.invoke(path, params, up, release_on_repress) end
 
 ---Locks or unlocks action invocations from hotkeys.
 ---@param lock boolean Whether to lock or unlock action invocations from hotkeys.

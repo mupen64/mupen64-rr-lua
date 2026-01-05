@@ -65,6 +65,24 @@ uintptr_t *lua_optcallback(lua_State *L, int i)
     return key;
 }
 
+void lua_print_stack(lua_State *L)
+{
+    const int top = lua_gettop(L);
+    for (int i = 1; i <= top; ++i)
+    {
+        std::wstring str = std::format(L"{}: ", IOUtils::to_wide_string(luaL_typename(L, i)));
+
+        lua_getglobal(L, "tostringex");
+        lua_pushvalue(L, i);
+        lua_pcall(L, 1, 1, 0);
+        const char *s = lua_tostring(L, -1);
+        str += IOUtils::to_wide_string(s ? s : "(nil)");
+        lua_pop(L, 1);
+
+        g_view_logger->debug(L"stack[{}]: {}", i, str);
+    }
+}
+
 uintptr_t *lua_tocallback(lua_State *L, const int i)
 {
     if (!lua_isfunction(L, i))

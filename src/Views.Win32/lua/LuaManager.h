@@ -48,6 +48,8 @@ void destroy_environment(t_lua_environment *);
 
 } // namespace LuaManager
 
+void lua_print_stack(lua_State *L);
+
 /**
  * \brief Converts a Lua function at the given index to a callback. Errors if the function is not a valid Lua function
  * or not present. \param L The Lua state. \param i The index of the function in the Lua stack. \return A pointer to the
