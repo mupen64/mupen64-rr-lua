@@ -10,8 +10,31 @@
 printx = print
 
 -- table.getn deprecated, replaced by # prefix
-table.getn = function(t)
+table.getn = table.getn or function(t)
     return #t
+end
+
+-- unpack -> table.unpack
+unpack = unpack or table.unpack
+
+-- math.atan2 shim
+math.atan2 = math.atan2 or function(y, x)
+    if x > 0 then
+        return math.atan(y / x)
+    elseif x < 0 then
+        return math.atan(y / x) + (y >= 0 and math.pi or -math.pi)
+    elseif y > 0 then
+        return math.pi / 2
+    elseif y < 0 then
+        return -math.pi / 2
+    else
+        return 0
+    end
+end
+
+-- math.pow shim
+math.pow = math.pow or function(x, y)
+    return x ^ y
 end
 
 -- emu.debugview deprecated, forwarded to print
