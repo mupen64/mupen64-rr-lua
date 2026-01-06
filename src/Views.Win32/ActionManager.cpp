@@ -606,9 +606,9 @@ static std::optional<action_parameter_list> validate_params(const t_action &acti
                     action.add_params.path, param.key, validation_result.value());
                 return std::nullopt;
             }
-
-            param_list[param.key] = std::wstring(supplied_param);
         }
+
+        param_list[param.key] = std::wstring(supplied_param);
     }
 
     return param_list;

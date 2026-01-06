@@ -33,6 +33,7 @@ const std::wstring SPEED_RESET = APP + L"Emulation > Reset Speed";
 const std::wstring FAST_FORWARD = APP + L"Emulation > Fast-Forward";
 const std::wstring GS_BUTTON = APP + L"Emulation > GS Button ---";
 const std::wstring FRAME_ADVANCE = APP + L"Emulation > Frame Advance";
+const std::wstring MULTI_FRAME_ADVANCE_DIRECT = APP + L"Emulation > # Multi-Frame Advance...";
 const std::wstring MULTI_FRAME_ADVANCE = APP + L"Emulation > Multi-Frame Advance";
 const std::wstring MULTI_FRAME_ADVANCE_INCREMENT = APP + L"Emulation > Multi-Frame Advance +1";
 const std::wstring MULTI_FRAME_ADVANCE_DECREMENT = APP + L"Emulation > Multi-Frame Advance -1";

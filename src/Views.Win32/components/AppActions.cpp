@@ -227,21 +227,28 @@ static void frame_advance()
     g_main_ctx.core_ctx->vr_resume_emu();
 }
 
-static void multi_frame_advance()
+static void multi_frame_advance_direct(const ActionManager::action_parameter_list &params)
 {
-    if (g_config.multi_frame_advance_count > 0)
+    const size_t count = std::stoul(params.at(L"count"));
+
+    if (count > 0)
     {
-        g_main_ctx.core_ctx->vr_frame_advance(g_config.multi_frame_advance_count);
+        g_main_ctx.core_ctx->vr_frame_advance(count);
     }
     else
     {
-        ThreadPool::submit_task([] {
-            const auto result =
-                g_main_ctx.core_ctx->vcr_begin_seek(std::to_string(g_config.multi_frame_advance_count), true);
+        ThreadPool::submit_task([=] {
+            const auto result = g_main_ctx.core_ctx->vcr_begin_seek(std::to_string(count), true);
             show_error_dialog_for_result(result);
         });
     }
     g_main_ctx.core_ctx->vr_resume_emu();
+}
+
+static void multi_frame_advance()
+{
+    ActionManager::invoke(AppActions::MULTI_FRAME_ADVANCE_DIRECT,
+                          {{L"count", std::to_wstring(g_config.multi_frame_advance_count)}});
 }
 
 static void fastforward_enable()
@@ -859,6 +866,25 @@ static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default
     add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_display_name);
 }
 
+static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default_hotkey,
+                       const std::function<void(const ActionManager::action_parameter_list &)> &callback,
+                       const std::vector<ActionManager::t_action_param> &params,
+                       const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
+                       const std::function<std::wstring()> &get_display_name = {})
+{
+    bool success = ActionManager::add({
+        .path = path,
+        .on_press = callback,
+        .get_display_name = get_display_name,
+        .get_enabled = get_enabled,
+        .get_active = get_active,
+    });
+    RT_ASSERT(success, std::format(L"Failed to add action for path '{}'.", path));
+
+    success = ActionManager::associate_hotkey(path, default_hotkey, false);
+    RT_ASSERT(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
+}
+
 static void generate_path_recent_menu(const std::wstring &base_path, const Hotkey::t_hotkey &load_first_hotkey,
                                       std::vector<std::wstring> *paths, int32_t *frozen,
                                       const std::function<void(size_t)> &callback)
@@ -896,6 +922,24 @@ static void generate_path_recent_menu(const std::wstring &base_path, const Hotke
 
         add_action(path, hotkey, [=] { callback(i); }, {}, {}, get_display_name);
     }
+}
+
+static std::optional<std::wstring> int_validator(const std::wstring_view str)
+{
+    try
+    {
+        std::size_t pos;
+        std::stoi(str.data(), &pos);
+        if (pos != str.size())
+        {
+            return L"Value must be an integer.";
+        }
+    }
+    catch (const std::exception &)
+    {
+        return L"Value must be an integer.";
+    }
+    return std::nullopt;
 }
 
 void AppActions::init()
@@ -948,6 +992,11 @@ void AppActions::add()
     add_action_with_up(GS_BUTTON, Hotkey::t_hotkey('G'), gs_button_enable, gs_button_disable, enable_when_emu_launched,
                        gs_button_active);
     add_action(FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5), frame_advance, enable_when_emu_launched);
+    add_action(
+        MULTI_FRAME_ADVANCE_DIRECT, Hotkey::t_hotkey::make_empty(), multi_frame_advance_direct,
+        {{L"count",
+          ActionManager::t_action_param{.key = L"count", .name = L"Frame Count", .required = true, .validator = int_validator}}},
+        enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5, true), multi_frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey::t_hotkey('E', true), multi_frame_advance_increment,
                enable_when_emu_launched);
