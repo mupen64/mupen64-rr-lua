@@ -21,6 +21,32 @@ lust.describe('mupen64', function()
             lust.it('printx_forwarded_to_print', function()
                 lust.expect(printx).to.equal(print)
             end)
+            lust.describe('unpack', function()
+                lust.it('works', function()
+                    local t = { 1, 2 }
+
+                    local function sum(a, b)
+                        return a + b
+                    end
+
+                    local result = sum(unpack(t))
+                    lust.expect(result).to.equal(3)
+                end)
+            end)
+        end)
+        lust.describe('math', function()
+            lust.describe('atan2', function()
+                lust.it('works', function()
+                    local y, x = 1, 1
+                    local result = math.atan2(y, x)
+                    lust.expect(result).to.equal(math.pi / 4)
+                end)
+            end)
+            lust.describe('pow', function()
+                lust.it('works', function()
+                    lust.expect(math.pow(5, 6)).to.equal(5 ^ 6)
+                end)
+            end)
         end)
         lust.describe('table', function()
             lust.it('get_n_works', function()
