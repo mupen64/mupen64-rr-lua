@@ -1,17 +1,48 @@
 #include "QtOpenGLService.hpp"
 #include "core_types.h"
 #include "mupapi.h"
+#include <variant>
 
 QtOpenGLService::QtOpenGLService(MainWindow *main_window) : m_main_window(main_window)
 {
+    m_state = impl::OpenGLRequestState {
+        .buffer_attrs = {
+            8, // red bits
+            8, // green bits
+            8, // blue bits
+            0, // alpha bits
+            1, // multisampling
+        },
+        .profile = MUPV_GL_COMPATIBILITY,
+        .ver_major = 3,
+        .ver_minor = 3,
+    };
 }
 
 core_result QtOpenGLService::request_attrs(const mupv_gl_buffer_attr *attrs, const int32_t *vals, size_t len)
 {
+    // return a better error maybe
+    auto p_state = std::get_if<impl::OpenGLRequestState>(&m_state);
+    if (p_state == nullptr)
+        return Res_Cancelled;
+
+    for (size_t i = 0; i < len; i++) {
+        p_state->buffer_attrs[(size_t) attrs[i]] = vals[i];
+    }
+
     return Res_Ok;
 }
 core_result QtOpenGLService::request_version(mupv_gl_profile profile, uint32_t major, uint32_t minor)
 {
+    // return a better error maybe
+    auto p_state = std::get_if<impl::OpenGLRequestState>(&m_state);
+    if (p_state == nullptr)
+        return Res_Cancelled;
+
+    p_state->profile = profile;
+    p_state->ver_major = major;
+    p_state->ver_minor = minor;
+
     return Res_Ok;
 }
 

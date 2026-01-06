@@ -269,12 +269,12 @@ extern "C"
     typedef void (*mupv_fptr)(void);
 
     enum mupv_gl_buffer_attr {
-        MUPV_GL_COLOR_BITS = 0,
-        MUPV_GL_RED_BITS,
+        MUPV_GL_RED_BITS = 0,
         MUPV_GL_GREEN_BITS,
         MUPV_GL_BLUE_BITS,
         MUPV_GL_ALPHA_BITS,
         MUPV_GL_SAMPLES,
+        MUPV_GL_BUFFER_ATTRS_COUNT,
     };
 
     enum mupv_gl_profile {

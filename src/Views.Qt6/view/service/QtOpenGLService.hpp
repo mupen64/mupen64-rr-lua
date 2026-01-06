@@ -3,11 +3,16 @@
 
 #include "../view/MainWindow.hpp"
 #include "../model/Core.hpp"
+#include "mupapi.h"
+#include <array>
 #include <variant>
 
 namespace impl {
   struct OpenGLRequestState {
-
+    std::array<int, (size_t) MUPV_GL_BUFFER_ATTRS_COUNT> buffer_attrs;
+    mupv_gl_profile profile;
+    uint32_t ver_major;
+    uint32_t ver_minor;
   };
   struct OpenGLActiveState {
 
