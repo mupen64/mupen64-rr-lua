@@ -239,7 +239,7 @@ action_filter normalize_filter(const action_filter &filter);
  * \param release_on_repress If true, if the action is already pressed down and `up` is false, the action will first be
  * released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
  */
-void invoke(const action_path &path, const std::vector<std::wstring_view> &params = {}, bool up = false,
+void invoke(const action_path &path, const action_parameter_list &params = {}, bool up = false,
             bool release_on_repress = true);
 
 /**
