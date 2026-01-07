@@ -8,6 +8,11 @@
 
 void cht_execute();
 
+bool cht_compile(std::string_view code, core_cheat &cheat);
+void cht_get_override_stack(std::stack<std::vector<core_cheat>> &stack);
+void cht_get_list(std::vector<core_cheat> &list);
+void cht_set_list(const std::vector<core_cheat> &list);
+
 /**
  * \brief Pushes the specified cheat collection layer onto the execution stack.
  * This overrides the current execution list with the one provided until the cht_layer_pop function is called; the

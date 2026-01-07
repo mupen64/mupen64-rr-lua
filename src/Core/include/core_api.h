@@ -731,14 +731,14 @@ extern "C"
 
         /**
          * \brief Gets the cheat list.
-         * \remarks The returned cheat list may not be the one set via core_cht_set_list, as the core can apply cheat
+         * \remarks The returned cheat list may not be the one set via cht_set_list, as the core can apply cheat
          * overrides.
          */
         std::function<void(std::vector<core_cheat> &)> cht_get_list;
 
         /**
          * \brief Sets the cheat list.
-         * \remarks If a core cheat override is active, core_cht_set_list will do nothing.
+         * \remarks If a core cheat override is active, cht_set_list will do nothing.
          */
         std::function<void(const std::vector<core_cheat> &)> cht_set_list;
 

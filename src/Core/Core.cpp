@@ -16,6 +16,7 @@
 #include <r4300/timers.h>
 #include <r4300/tracelog.h>
 #include <r4300/vcr.h>
+#include <cheats.h>
 
 core_params *g_core{};
 core_ctx g_ctx{};
@@ -142,6 +143,10 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.dbg_get_rsp_enabled = dbg_get_rsp_enabled;
     g_ctx.dbg_set_rsp_enabled = dbg_set_rsp_enabled;
     g_ctx.dbg_disassemble = dbg_disassemble;
+    g_ctx.cht_compile = cht_compile;
+    g_ctx.cht_get_override_stack = cht_get_override_stack;
+    g_ctx.cht_get_list = cht_get_list;
+    g_ctx.cht_set_list = cht_set_list;
 
     *ctx = &g_ctx;
 

@@ -16,7 +16,7 @@ static std::recursive_mutex cheats_mutex;
 static std::vector<core_cheat> host_cheats;
 static std::stack<std::vector<core_cheat>> cheat_stack;
 
-bool core_cht_compile(std::string_view code, core_cheat &cheat)
+bool cht_compile(std::string_view code, core_cheat &cheat)
 {
     core_cheat compiled_cheat{};
 
@@ -190,7 +190,7 @@ bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_chea
     {
         // We need to patch up the names since the cheats are reconstructed when compiling
         const auto name = cheat.name;
-        core_cht_compile(cheat.code, cheat);
+        cht_compile(cheat.code, cheat);
         cheat.name = name;
     }
 
@@ -217,7 +217,7 @@ std::string cht_serialize()
     return str;
 }
 
-void core_cht_get_override_stack(std::stack<std::vector<core_cheat>> &stack)
+void cht_get_override_stack(std::stack<std::vector<core_cheat>> &stack)
 {
     std::scoped_lock lock(cheats_mutex);
 
@@ -231,13 +231,13 @@ void cht_get_list(std::vector<core_cheat> &list)
     list = cheat_stack.empty() ? host_cheats : cheat_stack.top();
 }
 
-void core_cht_set_list(const std::vector<core_cheat> &list)
+void cht_set_list(const std::vector<core_cheat> &list)
 {
     std::scoped_lock lock(cheats_mutex);
 
     if (!cheat_stack.empty())
     {
-        g_core->log_warn(std::format("core_cht_set_list ignored due to cheat stack not being empty"));
+        g_core->log_warn(std::format("cht_set_list ignored due to cheat stack not being empty"));
         return;
     }
 
