@@ -210,6 +210,13 @@ bool get_active(const action_path &path);
 bool get_activatability(const action_path &path);
 
 /**
+ * \brief Gets the parameters associated with an action.
+ * \param path A path.
+ * \return The action's parameters.
+ */
+std::vector<t_action_param> get_params(const action_path &path);
+
+/**
  * \brief Gets all action paths that match the specified filter.
  * \param filter A filter.
  * \return A collection of action paths that match the filter.

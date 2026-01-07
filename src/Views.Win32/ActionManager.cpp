@@ -8,6 +8,7 @@
 #include <ActionManager.h>
 #include <Messenger.h>
 
+using t_action_param = ActionManager::t_action_param;
 using t_action_add_params = ActionManager::t_action_add_params;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
@@ -477,6 +478,19 @@ bool ActionManager::get_activatability(const action_path &path)
     }
 
     return action->add_params.get_active != nullptr;
+}
+
+std::vector<t_action_param> ActionManager::get_params(const action_path &path)
+{
+    t_action *action = get_single_action_ptr_matching_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error(L"ActionManager::get_params: '{}' didn't resolve to an action", path);
+        return {};
+    }
+
+    return action->add_params.params;
 }
 
 void ActionManager::begin_batch_work()
