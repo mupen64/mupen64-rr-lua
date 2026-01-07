@@ -30,10 +30,6 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
     param.name = luaL_checkwstring(L, -1);
     lua_pop(L, 1);
 
-    lua_getfield(L, index, "required");
-    param.required = (bool)lua_toboolean(L, -1);
-    lua_pop(L, 1);
-
     lua_getfield(L, index, "validator");
     auto validator = lua_optcallback(L, -1);
     lua_pop(L, 1);

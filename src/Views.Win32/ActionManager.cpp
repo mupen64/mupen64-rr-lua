@@ -607,26 +607,13 @@ static bool validate_params(const t_action &action, const action_parameter_list 
 
         const auto &supplied_param = params.at(param.key);
 
-        if (param.required)
+        // Run validation, fail if that fails.
+        const auto validation_result = param.validator(supplied_param);
+        if (validation_result.has_value())
         {
-            // Fail if required parameter is empty.
-            if (supplied_param.empty())
-            {
-                g_view_logger->error(L"ActionManager::validate_params: Action '{}' parameter '{}' is required, but no "
-                                     L"value was provided.",
-                                     action.add_params.path, param.key);
-                return false;
-            }
-
-            // Run validation, fail if that fails.
-            const auto validation_result = param.validator(supplied_param);
-            if (validation_result.has_value())
-            {
-                g_view_logger->error(
-                    L"ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
-                    action.add_params.path, param.key, validation_result.value());
-                return false;
-            }
+            g_view_logger->error(L"ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
+                                 action.add_params.path, param.key, validation_result.value());
+            return false;
         }
     }
 

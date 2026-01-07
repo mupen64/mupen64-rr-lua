@@ -866,7 +866,7 @@ static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default
     add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_display_name);
 }
 
-static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default_hotkey,
+static void add_action(const std::wstring &path,
                        const std::function<void(const ActionManager::action_parameter_list &)> &callback,
                        const std::vector<ActionManager::t_action_param> &params,
                        const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
@@ -874,6 +874,7 @@ static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default
 {
     bool success = ActionManager::add({
         .path = path,
+        .params = params,
         .on_press = callback,
         .get_display_name = get_display_name,
         .get_enabled = get_enabled,
@@ -881,7 +882,7 @@ static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default
     });
     RT_ASSERT(success, std::format(L"Failed to add action for path '{}'.", path));
 
-    success = ActionManager::associate_hotkey(path, default_hotkey, false);
+    success = ActionManager::associate_hotkey(path, Hotkey::t_hotkey::make_empty(), false);
     RT_ASSERT(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
 }
 
@@ -992,11 +993,9 @@ void AppActions::add()
     add_action_with_up(GS_BUTTON, Hotkey::t_hotkey('G'), gs_button_enable, gs_button_disable, enable_when_emu_launched,
                        gs_button_active);
     add_action(FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5), frame_advance, enable_when_emu_launched);
-    add_action(
-        MULTI_FRAME_ADVANCE_DIRECT, Hotkey::t_hotkey::make_empty(), multi_frame_advance_direct,
-        {{L"count",
-          ActionManager::t_action_param{.key = L"count", .name = L"Frame Count", .required = true, .validator = int_validator}}},
-        enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE_DIRECT, multi_frame_advance_direct,
+               {{.key = L"count", .name = L"Frame Count", .validator = int_validator}},
+               enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5, true), multi_frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey::t_hotkey('E', true), multi_frame_advance_increment,
                enable_when_emu_launched);

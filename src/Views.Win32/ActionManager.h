@@ -65,11 +65,6 @@ struct t_action_param
     std::wstring name{};
 
     /**
-     * \brief Whether the parameter is required.
-     */
-    bool required{};
-
-    /**
      * \brief A validator function that takes in a parameter value and optionally returns an error message if the
      * validation failed.
      */
