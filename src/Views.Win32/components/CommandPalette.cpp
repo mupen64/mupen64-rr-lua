@@ -79,10 +79,12 @@ struct t_listbox_item
 
 struct t_command_palette_context
 {
+
     HWND hwnd{};
     HWND text_hwnd{};
     HWND listbox_hwnd{};
     HWND edit_hwnd{};
+    HWND status_hwnd{};
 
     HTHEME button_theme{};
 
@@ -97,6 +99,16 @@ struct t_command_palette_context
     std::wstring search_query{};
     std::vector<std::wstring> actions{};
     std::vector<ConfigDialog::t_options_group> option_groups{};
+
+    struct t_param_input_context
+    {
+        ActionManager::action_path action_path{};
+        size_t param_index{};
+        std::vector<ActionManager::t_action_param> ref_params{};
+        ActionManager::action_parameter_list filled_params{};
+    };
+
+    std::optional<t_param_input_context> param_input_ctx{};
 };
 
 static t_command_palette_context g_ctx{};
@@ -285,6 +297,78 @@ bool t_listbox_item::enabled() const
 }
 
 /**
+ * \brief Enters parameter input mode for the specified action item.
+ */
+static void enter_parameter_input_mode(const t_listbox_item *item)
+{
+    const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
+    const auto params = ActionManager::get_params(action.path);
+
+    g_ctx.param_input_ctx = t_command_palette_context::t_param_input_context{
+        .action_path = action.path,
+        .param_index = 0,
+        .ref_params = params,
+        .filled_params = {},
+    };
+
+    const auto &param_ctx = g_ctx.param_input_ctx.value();
+
+    SetWindowText(g_ctx.text_hwnd,
+                  std::format(L"Enter value for '{}':", param_ctx.ref_params[param_ctx.param_index].name).c_str());
+    SetWindowText(g_ctx.edit_hwnd, L"");
+
+    ShowWindow(g_ctx.listbox_hwnd, SW_HIDE);
+    ShowWindow(g_ctx.status_hwnd, SW_HIDE);
+}
+
+/**
+ * \brief Enters list mode, hiding the parameter input UI.
+ */
+static void enter_list_mode()
+{
+    g_ctx.param_input_ctx.reset();
+    SetWindowText(g_ctx.text_hwnd, L"Up/Down: Change selection, Enter: Invoke, F2: Bind Hotkey");
+    ShowWindow(g_ctx.listbox_hwnd, SW_SHOW);
+    ShowWindow(g_ctx.status_hwnd, SW_HIDE);
+}
+
+/**
+ * \brief Advances to the next parameter in parameter input mode.
+ */
+static void next_parameter()
+{
+    auto &param_input_ctx = g_ctx.param_input_ctx.value();
+    const auto &current_param = param_input_ctx.ref_params[param_input_ctx.param_index];
+
+    const auto input = get_window_text(g_ctx.edit_hwnd).value();
+
+    const auto &validator = current_param.validator;
+    const auto validation_result = validator(input);
+    if (validation_result.has_value())
+    {
+        const auto validation_message = validation_result.value();
+        SetWindowText(g_ctx.status_hwnd, std::format(L"Validation failed: '{}'", validation_message).c_str());
+        ShowWindow(g_ctx.status_hwnd, SW_SHOW);
+        return;
+    }
+
+    SetWindowText(g_ctx.text_hwnd, std::format(L"Enter value for '{}':", current_param.name).c_str());
+    SetWindowText(g_ctx.edit_hwnd, L"");
+    ShowWindow(g_ctx.status_hwnd, SW_HIDE);
+
+    param_input_ctx.filled_params[current_param.key] = input;
+    param_input_ctx.param_index++;
+
+    if (param_input_ctx.param_index >= param_input_ctx.ref_params.size())
+    {
+        // All parameters filled, invoke the action.
+        SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
+        ActionManager::invoke(param_input_ctx.action_path, param_input_ctx.filled_params);
+        return;
+    }
+}
+
+/**
  * \brief Tries to invoke the item at the specified index. Closes the command palette if successful.
  */
 static bool try_invoke(int32_t i)
@@ -299,6 +383,15 @@ static bool try_invoke(int32_t i)
     if (std::holds_alternative<t_listbox_item::t_action_data>(item->data))
     {
         const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
+        const auto params = ActionManager::get_params(action.path);
+
+        // If the action has parameters, we enter the parameter supplying flow.
+        if (!params.empty())
+        {
+            enter_parameter_input_mode(item);
+            return true;
+        }
+
         SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
         ActionManager::invoke(action.path);
         return true;
@@ -618,7 +711,11 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, 
         }
         if (wparam == VK_RETURN)
         {
-            try_invoke(ListBox_GetCurSel(g_ctx.listbox_hwnd));
+            if (g_ctx.param_input_ctx.has_value())
+                next_parameter();
+            else
+                try_invoke(ListBox_GetCurSel(g_ctx.listbox_hwnd));
+
             return FALSE;
         }
         if (wparam == VK_F2)
@@ -659,8 +756,10 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         g_ctx.button_theme = OpenThemeData(hwnd, L"BUTTON");
         g_ctx.text_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_TEXT);
         g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_EDIT);
+        g_ctx.status_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_STATUS_TEXT);
         g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
         g_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
+        g_ctx.param_input_ctx = std::nullopt;
 
         // 1. Remove the titlebar
         const LONG style = GetWindowLong(hwnd, GWL_STYLE);
@@ -701,6 +800,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 
         // 6. Set the focus to the edit control
         SetFocus(g_ctx.edit_hwnd);
+
+        enter_list_mode();
 
         break;
     }
