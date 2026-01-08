@@ -1011,7 +1011,7 @@ lust.describe('mupen64', function()
                     end
                 })
 
-                action.invoke("Test > Something", { "aaa", "" })
+                action.invoke("Test > Something", nil, nil, { "aaa", "" })
 
                 lust.expect(received_params).to.equal({ "aaa", "" })
             end)

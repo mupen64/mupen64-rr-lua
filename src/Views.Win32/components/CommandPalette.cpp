@@ -363,7 +363,7 @@ static void next_parameter()
     {
         // All parameters filled, invoke the action.
         SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
-        ActionManager::invoke(param_input_ctx.action_path, param_input_ctx.filled_params);
+        ActionManager::invoke(param_input_ctx.action_path, false, true, param_input_ctx.filled_params);
         return;
     }
 }

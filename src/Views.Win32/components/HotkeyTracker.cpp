@@ -40,7 +40,7 @@ static bool on_key(bool is_up, int32_t key)
             // HACK: Fast Forward is a special case: we don't want it to be constantly toggled on and off because it
             // messes up flow
             const bool release_on_repress = path != ActionManager::normalize_filter(AppActions::FAST_FORWARD);
-            ActionManager::invoke(path, {}, is_up, release_on_repress);
+            ActionManager::invoke(path, is_up, release_on_repress, {});
             hit = true;
         }
     }

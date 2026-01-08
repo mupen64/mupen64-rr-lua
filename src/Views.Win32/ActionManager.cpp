@@ -620,8 +620,8 @@ static bool validate_params(const t_action &action, const action_parameter_list 
     return true;
 }
 
-void ActionManager::invoke(const action_path &path, const action_parameter_list &params, const bool up,
-                           const bool release_on_repress)
+void ActionManager::invoke(const action_path &path, const bool up, const bool release_on_repress,
+                           const action_parameter_list &params)
 {
     t_action *action = get_single_action_ptr_matching_path(path);
 

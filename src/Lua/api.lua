@@ -1625,11 +1625,11 @@ function action.get_actions_matching_filter(filter) end
 
 ---Manually invokes an action by its path. If the action has an up callback, is already pressed down, and `up` is false, only the up callback will be invoked.
 ---@param path ActionPath A path.
----@param params ActionParameterList? The action parameters.
 ---@param up boolean? If true, the action is considered to be released, otherwise it is considered to be pressed down.
 ---@param release_on_repress boolean? If true, if the action is already pressed down and `up` is false, the action will first be released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
+---@param params ActionParameterList? The action parameters.
 ---@return boolean # Whether the operation succeeded.
-function action.invoke(path, params, up, release_on_repress) end
+function action.invoke(path, up, release_on_repress, params) end
 
 ---Locks or unlocks action invocations from hotkeys.
 ---@param lock boolean Whether to lock or unlock action invocations from hotkeys.

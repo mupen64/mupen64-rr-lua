@@ -424,11 +424,11 @@ static int get_actions_matching_filter(lua_State *L)
 static int invoke(lua_State *L)
 {
     const auto path = luaL_checkwstring(L, 1);
-    const auto params = lua_isnoneornil(L, 2) ? ActionManager::action_parameter_list{} : check_action_param_list(L, 2);
-    const auto up = (bool)luaL_opt(L, lua_toboolean, 3, false);
-    const auto release_on_repress = (bool)luaL_opt(L, lua_toboolean, 4, true);
+    const auto up = (bool)luaL_opt(L, lua_toboolean, 2, false);
+    const auto release_on_repress = (bool)luaL_opt(L, lua_toboolean, 3, true);
+    const auto params = lua_isnoneornil(L, 4) ? ActionManager::action_parameter_list{} : check_action_param_list(L, 4);
 
-    ActionManager::invoke(path, params, up, release_on_repress);
+    ActionManager::invoke(path, up, release_on_repress, params);
 
     return 0;
 }

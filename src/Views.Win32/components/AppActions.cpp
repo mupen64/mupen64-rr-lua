@@ -247,7 +247,7 @@ static void multi_frame_advance_direct(const ActionManager::action_parameter_lis
 
 static void multi_frame_advance()
 {
-    ActionManager::invoke(AppActions::MULTI_FRAME_ADVANCE_DIRECT,
+    ActionManager::invoke(AppActions::MULTI_FRAME_ADVANCE_DIRECT, false, true,
                           {{L"count", std::to_wstring(g_config.multi_frame_advance_count)}});
 }
 
@@ -994,8 +994,7 @@ void AppActions::add()
                        gs_button_active);
     add_action(FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5), frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DIRECT, multi_frame_advance_direct,
-               {{.key = L"count", .name = L"Frame Count", .validator = int_validator}},
-               enable_when_emu_launched);
+               {{.key = L"count", .name = L"Frame Count", .validator = int_validator}}, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5, true), multi_frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey::t_hotkey('E', true), multi_frame_advance_increment,
                enable_when_emu_launched);
