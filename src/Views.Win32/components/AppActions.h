@@ -56,6 +56,7 @@ const std::wstring RSP_SETTINGS = APP + L"Options > Plugin Settings --- > RSP Se
 const std::wstring STATUSBAR = APP + L"Options > Statusbar ---";
 const std::wstring SETTINGS = APP + L"Options > Settings";
 
+const std::wstring START_MOVIE_RECORDING_DIRECT = APP + L"Movie > # Start Movie Recording...";
 const std::wstring START_MOVIE_RECORDING = APP + L"Movie > Start Movie Recording";
 const std::wstring START_MOVIE_PLAYBACK = APP + L"Movie > Start Movie Playback";
 const std::wstring CONTINUE_MOVIE_RECORDING = APP + L"Movie > Continue Movie Recording ---";

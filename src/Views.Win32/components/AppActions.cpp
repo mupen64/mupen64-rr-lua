@@ -477,6 +477,30 @@ static void show_settings_dialog()
 
 #pragma region Movie
 
+static void start_movie_recording_direct(const ActionManager::action_parameter_list &params)
+{
+    const std::filesystem::path path = params.at(L"path");
+    const uint16_t start_flag = static_cast<uint16_t>(std::stoul(params.at(L"start_flag")));
+    const std::wstring author = params.at(L"author");
+    const std::wstring description = params.at(L"description");
+
+    if (path.empty())
+    {
+        return;
+    }
+
+    g_main_ctx.core_ctx->vr_wait_increment();
+    g_main_ctx.core.submit_task([=] {
+        auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(path, start_flag, IOUtils::to_utf8_string(author),
+                                                                IOUtils::to_utf8_string(description));
+        g_main_ctx.core_ctx->vr_wait_decrement();
+        if (!show_error_dialog_for_result(vcr_result))
+        {
+            g_config.last_movie_author = author;
+            Statusbar::post(L"Recording replay");
+        }
+    });
+}
 static void start_movie_recording()
 {
     BetterEmulationLock lock;
@@ -488,19 +512,13 @@ static void start_movie_recording()
         return;
     }
 
-    g_main_ctx.core_ctx->vr_wait_increment();
-    g_main_ctx.core.submit_task([=] {
-        auto vcr_result =
-            g_main_ctx.core_ctx->vcr_start_record(movie_dialog_result.path, movie_dialog_result.start_flag,
-                                                  IOUtils::to_utf8_string(movie_dialog_result.author),
-                                                  IOUtils::to_utf8_string(movie_dialog_result.description));
-        g_main_ctx.core_ctx->vr_wait_decrement();
-        if (!show_error_dialog_for_result(vcr_result))
-        {
-            g_config.last_movie_author = movie_dialog_result.author;
-            Statusbar::post(L"Recording replay");
-        }
-    });
+    ActionManager::invoke(AppActions::START_MOVIE_RECORDING_DIRECT, false, true,
+                          {
+                              {L"path", movie_dialog_result.path},
+                              {L"start_flag", std::to_wstring(movie_dialog_result.start_flag)},
+                              {L"author", movie_dialog_result.author},
+                              {L"description", movie_dialog_result.description},
+                          });
 }
 
 static void continue_movie_recording()
@@ -943,6 +961,16 @@ static std::optional<std::wstring> int_validator(const std::wstring_view str)
     return std::nullopt;
 }
 
+static std::optional<std::wstring> no_validator(const std::wstring_view)
+{
+    return std::nullopt;
+}
+
+static std::optional<std::wstring> nonempty_validator(const std::wstring_view str)
+{
+    return str.empty() ? std::make_optional(L"Value must not be empty.") : std::nullopt;
+}
+
 void AppActions::init()
 {
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged,
@@ -1057,6 +1085,14 @@ void AppActions::add()
                [] { return g_config.is_statusbar_enabled; });
     add_action(SETTINGS, Hotkey::t_hotkey('S', true), show_settings_dialog);
 
+    add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
+               std::vector<ActionManager::t_action_param>{
+                   {.key = L"path", .name = L"Path", .validator = nonempty_validator},
+                   {.key = L"start_flag", .name = L"Start Flag", .validator = int_validator},
+                   {.key = L"author", .name = L"Author (optional)", .validator = no_validator},
+                   {.key = L"description", .name = L"Description (optional)", .validator = no_validator},
+               },
+               enable_when_emu_launched);
     add_action(START_MOVIE_RECORDING, Hotkey::t_hotkey('R', true, true), start_movie_recording,
                enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK, Hotkey::t_hotkey('P', true, true), start_movie_playback);
