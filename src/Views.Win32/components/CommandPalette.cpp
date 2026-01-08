@@ -338,7 +338,7 @@ static void enter_list_mode()
 static void next_parameter()
 {
     auto &param_input_ctx = g_ctx.param_input_ctx.value();
-    const auto &current_param = param_input_ctx.ref_params[param_input_ctx.param_index];
+    auto &current_param = param_input_ctx.ref_params[param_input_ctx.param_index];
 
     const auto input = get_window_text(g_ctx.edit_hwnd).value();
 
@@ -351,12 +351,8 @@ static void next_parameter()
         ShowWindow(g_ctx.status_hwnd, SW_SHOW);
         return;
     }
-
-    SetWindowText(g_ctx.text_hwnd, std::format(L"Enter value for '{}':", current_param.name).c_str());
-    SetWindowText(g_ctx.edit_hwnd, L"");
-    ShowWindow(g_ctx.status_hwnd, SW_HIDE);
-
     param_input_ctx.filled_params[current_param.key] = input;
+
     param_input_ctx.param_index++;
 
     if (param_input_ctx.param_index >= param_input_ctx.ref_params.size())
@@ -366,6 +362,13 @@ static void next_parameter()
         ActionManager::invoke(param_input_ctx.action_path, false, true, param_input_ctx.filled_params);
         return;
     }
+
+    // Update UI for next parameter
+    current_param = param_input_ctx.ref_params[param_input_ctx.param_index];
+
+    SetWindowText(g_ctx.text_hwnd, std::format(L"Enter value for '{}':", current_param.name).c_str());
+    SetWindowText(g_ctx.edit_hwnd, L"");
+    ShowWindow(g_ctx.status_hwnd, SW_HIDE);
 }
 
 /**
