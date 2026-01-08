@@ -1548,7 +1548,6 @@ function hotkey.prompt(caption) end
 ---@class ActionParam
 ---@field key string The key of the parameter.
 ---@field name string The display name of the parameter.
----@field required boolean Whether the parameter is required.
 ---@field validator fun(value: string): string? A validator function that takes in a parameter value and optionally returns an error message if the validation failed.
 ---Represents an action parameter.
 

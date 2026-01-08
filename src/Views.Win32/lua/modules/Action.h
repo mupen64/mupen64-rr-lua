@@ -63,6 +63,55 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
     return {param, [=]() { lua_freecallback(L, validator); }};
 }
 
+static void push_action_params(lua_State *L, const ActionManager::action_parameter_list &params)
+{
+    lua_newtable(L);
+    size_t i = 1;
+    for (const auto &[key, value] : params)
+    {
+        lua_newtable(L);
+
+        lua_pushwstring(L, key);
+        lua_setfield(L, -2, "key");
+
+        lua_pushwstring(L, value);
+        lua_setfield(L, -2, "value");
+
+        lua_seti(L, -2, i++);
+    }
+}
+
+static ActionManager::action_parameter_list check_action_param_list(lua_State *L, int index)
+{
+    ActionManager::action_parameter_list params;
+
+    if (!lua_istable(L, index))
+    {
+        luaL_error(L, "Expected a table at argument %d", index);
+    }
+
+    if (index < 0) index = lua_gettop(L) + index + 1;
+
+    lua_pushnil(L);
+    while (lua_next(L, index) != 0)
+    {
+
+        if (!lua_isstring(L, -2) || !lua_isstring(L, -1))
+        {
+            luaL_error(L, "Action parameter table must contain string-to-string entries");
+        }
+
+        const auto key = IOUtils::to_wide_string(lua_tostring(L, -2));
+        const auto value = IOUtils::to_wide_string(lua_tostring(L, -1));
+
+        params.emplace(key, value);
+
+        lua_pop(L, 1);
+    }
+
+    return params;
+}
+
 static ActionManager::t_action_add_params check_action_add_params(lua_State *L, int index)
 {
     if (lua_gettop(L) < 1 || !lua_istable(L, index))
@@ -108,16 +157,15 @@ static ActionManager::t_action_add_params check_action_add_params(lua_State *L, 
     auto on_press = lua_optcallback(L, -1);
     if (on_press)
     {
-        params.on_press = [=](const auto &params) {
+        params.on_press = [=](const ActionManager::action_parameter_list &params) {
             if (!LuaManager::get_environment_for_state(L))
             {
                 return;
             }
 
-            // FIXME: Forward the parameter list!
-
             lua_pushcallback(L, on_press, false);
-            lua_pcall(L, 0, 0, 0);
+            push_action_params(L, params);
+            lua_pcall(L, 1, 1, 0);
         };
     }
 
@@ -376,10 +424,11 @@ static int get_actions_matching_filter(lua_State *L)
 static int invoke(lua_State *L)
 {
     const auto path = luaL_checkwstring(L, 1);
-    const auto up = (bool)luaL_opt(L, lua_toboolean, 2, false);
-    const auto release_on_repress = (bool)luaL_opt(L, lua_toboolean, 3, true);
+    const auto params = lua_isnoneornil(L, 2) ? ActionManager::action_parameter_list{} : check_action_param_list(L, 2);
+    const auto up = (bool)luaL_opt(L, lua_toboolean, 3, false);
+    const auto release_on_repress = (bool)luaL_opt(L, lua_toboolean, 4, true);
 
-    ActionManager::invoke(path, {}, up, release_on_repress);
+    ActionManager::invoke(path, params, up, release_on_repress);
 
     return 0;
 }

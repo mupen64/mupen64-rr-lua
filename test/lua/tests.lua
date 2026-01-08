@@ -958,7 +958,6 @@ lust.describe('mupen64', function()
                         {
                             key = "param1",
                             name = "Parameter 1",
-                            required = true,
                             validator = function() end
                         },
                     },
@@ -971,27 +970,6 @@ lust.describe('mupen64', function()
 
                 lust.expect(called).to.equal(false)
             end)
-            lust.it('doesnt_call_onpress_when_parameter_requirement_not_met', function()
-                local called = false
-                action.add({
-                    path = "Test > Something",
-                    params = {
-                        {
-                            key = "param1",
-                            name = "Parameter 1",
-                            required = true,
-                            validator = function() end
-                        },
-                    },
-                    on_press = function()
-                        called = true
-                    end
-                })
-
-                action.invoke("Test > Something", { "" })
-
-                lust.expect(called).to.equal(false)
-            end)
             lust.it('doesnt_call_onpress_when_validation_fails', function()
                 local called = false
                 action.add({
@@ -1000,7 +978,6 @@ lust.describe('mupen64', function()
                         {
                             key = "param1",
                             name = "Parameter 1",
-                            required = true,
                             validator = function() return "error" end
                         },
                     },
@@ -1021,13 +998,11 @@ lust.describe('mupen64', function()
                         {
                             key = "param1",
                             name = "Parameter 1",
-                            required = true,
                             validator = function() end
                         },
                         {
                             key = "param2",
                             name = "Parameter 2",
-                            required = false,
                             validator = function() end
                         },
                     },
