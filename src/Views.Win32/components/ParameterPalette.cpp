@@ -16,6 +16,8 @@ struct t_parameter_palette_context
 {
     HWND hwnd{};
     HWND header_hwnd{};
+    HWND subheader_hwnd{};
+    HWND secondary_hwnd{};
     HWND edit_hwnd{};
     HWND status_hwnd{};
 
@@ -29,12 +31,15 @@ struct t_parameter_palette_context
 
 static t_parameter_palette_context g_ctx{};
 
-static void update_header()
+static void update_page()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
+
+    SetWindowText(g_ctx.subheader_hwnd, std::format(L"{}:", current_param.name).c_str());
+
     const auto param_number = g_ctx.param_index + 1;
     const auto total_params = g_ctx.ref_params.size();
-    SetWindowText(g_ctx.header_hwnd, std::format(L"({} / {}) {}:", param_number, total_params, current_param.name).c_str());
+    SetWindowText(g_ctx.secondary_hwnd, std::format(L"Step {}/{}", param_number, total_params).c_str());
 }
 
 static bool try_apply_parameter()
@@ -52,7 +57,7 @@ static bool try_apply_parameter()
         return false;
     }
 
-    SetWindowText(g_ctx.status_hwnd, L"");
+    SetWindowText(g_ctx.status_hwnd, L"Press Enter to confirm.");
 
     g_ctx.filled_params[current_param.key] = input;
 
@@ -79,7 +84,7 @@ static void next_parameter()
         return;
     }
 
-    update_header();
+    update_page();
 
     SetWindowText(g_ctx.edit_hwnd, L"");
     SetWindowText(g_ctx.status_hwnd, L"");
@@ -100,7 +105,7 @@ static void update_dialog_position_and_size()
     rc.left = parent_rc.right / 2 - width / 2;
     rc.top = margin;
     rc.right = rc.left + width;
-    rc.bottom = rc.top + 90L;
+    rc.bottom = rc.top + 120L;
 
     MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
     SetWindowPos(g_ctx.hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
@@ -143,6 +148,8 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
     case WM_INITDIALOG: {
         g_ctx.hwnd = hwnd;
         g_ctx.header_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_HEADER);
+        g_ctx.subheader_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_SUBHEADER);
+        g_ctx.secondary_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_SECONDARY);
         g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_EDIT);
         g_ctx.status_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_STATUS);
 
@@ -153,6 +160,8 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
                                             {g_ctx.header_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
+                                            {g_ctx.subheader_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
+                                            {g_ctx.secondary_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                             {g_ctx.edit_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                             {g_ctx.status_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                         });
@@ -163,7 +172,10 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         // 5. Subclass the controls for key event handling
         SetWindowSubclass(g_ctx.edit_hwnd, keyboard_interaction_subclass_proc, 0, 0);
 
-        update_header();
+        const auto display_name = ActionManager::get_display_name(g_ctx.action_path);
+        SetWindowText(g_ctx.header_hwnd, std::format(L"{}", display_name).c_str());
+
+        update_page();
         update_dialog_position_and_size();
         try_apply_parameter();
 
