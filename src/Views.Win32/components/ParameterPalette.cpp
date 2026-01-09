@@ -151,7 +151,7 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         update_header();
         update_dialog_position_and_size();
 
-        Messenger::subscribe(Messenger::Message::MainWindowMoved,
+        g_ctx.unsubscribe_move_message = Messenger::subscribe(Messenger::Message::MainWindowMoved,
                              [](const auto &) { update_dialog_position_and_size(); });
 
         break;
