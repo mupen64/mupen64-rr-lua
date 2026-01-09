@@ -48,4 +48,10 @@ std::optional<std::wstring> nonempty(const std::wstring_view str)
 {
     return str.empty() ? std::make_optional(L"Value must not be empty.") : std::nullopt;
 }
+
+std::optional<std::wstring> seek_str(const std::wstring_view str)
+{
+    // TODO: Add VCR API for validating seek strings.
+    return std::nullopt;
+}
 } // namespace Validators

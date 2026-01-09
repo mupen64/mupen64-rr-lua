@@ -20,4 +20,6 @@ std::optional<std::wstring> none(const std::wstring_view);
 
 std::optional<std::wstring> nonempty(const std::wstring_view str);
 
+std::optional<std::wstring> seek_str(const std::wstring_view str);
+
 } // namespace Validators

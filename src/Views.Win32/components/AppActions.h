@@ -71,6 +71,7 @@ const std::wstring WAIT_AT_MOVIE_END = APP + L"Movie > Wait at Movie End";
 const std::wstring COMMAND_PALETTE = APP + L"Utilities > Command Palette ---";
 const std::wstring PIANO_ROLL = APP + L"Utilities > Piano Roll";
 const std::wstring CHEATS = APP + L"Utilities > Cheats";
+const std::wstring SEEK_TO_DIRECT = APP + L"Utilities > # Seek...";
 const std::wstring SEEK_TO = APP + L"Utilities > Seek...";
 const std::wstring USAGE_STATISTICS = APP + L"Utilities > Usage Statistics ---";
 const std::wstring CORE_INFORMATION = APP + L"Utilities > Core Information";

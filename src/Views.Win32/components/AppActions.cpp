@@ -707,6 +707,16 @@ static void show_cheat_dialog()
     Cheats::show();
 }
 
+static void seek_direct(const ActionManager::action_parameter_list &params)
+{
+    const auto frame_str = params.at(L"frame");
+
+    ThreadPool::submit_task([=] {
+        const auto result = g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(frame_str), true);
+        show_error_dialog_for_result(result);
+    });
+}
+
 static void show_seek_dialog()
 {
     BetterEmulationLock lock;
@@ -983,6 +993,7 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(STOP_MOVIE);
         ActionManager::notify_enabled_changed(CONTINUE_MOVIE_RECORDING);
         ActionManager::notify_enabled_changed(CREATE_MOVIE_BACKUP);
+        ActionManager::notify_enabled_changed(SEEK_TO_DIRECT);
         ActionManager::notify_enabled_changed(SEEK_TO);
     });
     Messenger::subscribe(Messenger::Message::SlotChanged,
@@ -1113,6 +1124,11 @@ void AppActions::add()
     add_action(COMMAND_PALETTE, Hotkey::t_hotkey('P', true), show_command_palette);
     add_action(PIANO_ROLL, Hotkey::t_hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
     add_action(CHEATS, Hotkey::t_hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
+    add_action(
+        SEEK_TO_DIRECT, seek_direct,
+        std::vector<ActionManager::t_action_param>{
+            {.key = L"frame", .name = L"Frame", .validator = Validators::seek_str},
+        });
     add_action(SEEK_TO, Hotkey::t_hotkey('G', true), show_seek_dialog, enable_when_emu_launched_and_vcr_active);
     add_action(USAGE_STATISTICS, Hotkey::t_hotkey::make_empty(), show_statistics);
     add_action(CORE_INFORMATION, Hotkey::t_hotkey::make_empty(), show_ram_start);
