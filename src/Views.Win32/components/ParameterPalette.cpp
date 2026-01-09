@@ -23,6 +23,8 @@ struct t_parameter_palette_context
     size_t param_index{};
     std::vector<ActionManager::t_action_param> ref_params{};
     ActionManager::action_parameter_list filled_params{};
+
+    std::function<void()> unsubscribe_move_message{};
 };
 
 static t_parameter_palette_context g_ctx{};
@@ -66,6 +68,28 @@ static void next_parameter()
     SetWindowText(g_ctx.edit_hwnd, L"");
 
     ShowWindow(g_ctx.status_hwnd, SW_HIDE);
+}
+
+/**
+ * \brief Updates the dialog position and size based on the parent window.
+ */
+static void update_dialog_position_and_size()
+{
+    RECT parent_rc{};
+    GetClientRect(g_main_ctx.hwnd, &parent_rc);
+
+    constexpr auto margin = 10;
+    const auto width = std::max(400L, parent_rc.right / 3 - margin);
+
+    RECT rc;
+    rc.left = parent_rc.right / 2 - width / 2;
+    rc.top = margin;
+    rc.right = rc.left + width;
+    rc.bottom = rc.top + 90L;
+
+    MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
+    SetWindowPos(g_ctx.hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
 }
 
 static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
@@ -118,33 +142,27 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
                                             {g_ctx.status_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                         });
 
-        // 3. Set a reasonable position and size for the dialog (centered horizontally, vertically top-justified)
-        RECT parent_rc{};
-        GetClientRect(g_main_ctx.hwnd, &parent_rc);
-
-        constexpr auto margin = 10;
-        const auto width = std::max(400L, parent_rc.right / 3 - margin);
-
-        RECT rc;
-        rc.left = parent_rc.right / 2 - width / 2;
-        rc.top = margin;
-        rc.right = rc.left + width;
-        rc.bottom = rc.top + 90L;
-
-        MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
-        SetWindowPos(hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-                     SWP_NOZORDER | SWP_FRAMECHANGED);
-
         // 4. Set the focus to the edit control
         SetFocus(g_ctx.edit_hwnd);
 
         // 5. Subclass the controls for key event handling
         SetWindowSubclass(g_ctx.edit_hwnd, keyboard_interaction_subclass_proc, 0, 0);
-        
+
         update_header();
+        update_dialog_position_and_size();
+
+        Messenger::subscribe(Messenger::Message::MainWindowMoved,
+                             [](const auto &) { update_dialog_position_and_size(); });
 
         break;
     }
+    case WM_DESTROY:
+        if (g_ctx.unsubscribe_move_message)
+        {
+            g_ctx.unsubscribe_move_message();
+            g_ctx.unsubscribe_move_message = {};
+        }
+        break;
     case WM_CLOSE:
         DestroyWindow(g_ctx.hwnd);
         break;

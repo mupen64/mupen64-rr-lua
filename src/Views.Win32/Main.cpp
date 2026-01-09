@@ -848,6 +848,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         GetWindowRect(g_main_ctx.hwnd, &rect);
         g_config.window_x = rect.left;
         g_config.window_y = rect.top;
+        
+        Messenger::broadcast(Messenger::Message::MainWindowMoved, nullptr);
+        
         break;
     }
     case WM_SIZE: {

@@ -54,6 +54,11 @@ enum class Message
     SizeChanged,
 
     /**
+     * \brief The main window moved.
+     */
+    MainWindowMoved,
+
+    /**
      * \brief The movie loop state changed
      */
     MovieLoopChanged,
