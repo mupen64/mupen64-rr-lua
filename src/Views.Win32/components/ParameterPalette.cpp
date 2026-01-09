@@ -32,14 +32,14 @@ static t_parameter_palette_context g_ctx{};
 static void update_header()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
-    SetWindowText(g_ctx.header_hwnd, std::format(L"{}:", current_param.name).c_str());
+    const auto param_number = g_ctx.param_index + 1;
+    const auto total_params = g_ctx.ref_params.size();
+    SetWindowText(g_ctx.header_hwnd, std::format(L"({} / {}) {}:", param_number, total_params, current_param.name).c_str());
 }
-/**
- * \brief Advances to the next parameter in parameter input mode.
- */
-static void next_parameter()
+
+static bool try_apply_parameter()
 {
-    auto &current_param = g_ctx.ref_params[g_ctx.param_index];
+    const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
 
     const auto input = get_window_text(g_ctx.edit_hwnd).value();
 
@@ -49,10 +49,25 @@ static void next_parameter()
     {
         const auto validation_message = validation_result.value();
         SetWindowText(g_ctx.status_hwnd, std::format(L"Validation failed. {}", validation_message).c_str());
-        ShowWindow(g_ctx.status_hwnd, SW_SHOW);
+        return false;
+    }
+
+    SetWindowText(g_ctx.status_hwnd, L"");
+
+    g_ctx.filled_params[current_param.key] = input;
+
+    return true;
+}
+
+/**
+ * \brief Advances to the next parameter in parameter input mode.
+ */
+static void next_parameter()
+{
+    if (!try_apply_parameter())
+    {
         return;
     }
-    g_ctx.filled_params[current_param.key] = input;
 
     g_ctx.param_index++;
 
@@ -65,9 +80,9 @@ static void next_parameter()
     }
 
     update_header();
-    SetWindowText(g_ctx.edit_hwnd, L"");
 
-    ShowWindow(g_ctx.status_hwnd, SW_HIDE);
+    SetWindowText(g_ctx.edit_hwnd, L"");
+    SetWindowText(g_ctx.status_hwnd, L"");
 }
 
 /**
@@ -150,9 +165,10 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         update_header();
         update_dialog_position_and_size();
+        try_apply_parameter();
 
         g_ctx.unsubscribe_move_message = Messenger::subscribe(Messenger::Message::MainWindowMoved,
-                             [](const auto &) { update_dialog_position_and_size(); });
+                                                              [](const auto &) { update_dialog_position_and_size(); });
 
         break;
     }
@@ -161,6 +177,24 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         {
             g_ctx.unsubscribe_move_message();
             g_ctx.unsubscribe_move_message = {};
+        }
+        break;
+
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case IDC_PARAMETER_PALETTE_EDIT:
+            switch (HIWORD(wparam))
+            {
+            case EN_CHANGE:
+                try_apply_parameter();
+                break;
+            default:
+                break;
+            }
+            break;
+        default:
+            break;
         }
         break;
     case WM_CLOSE:
