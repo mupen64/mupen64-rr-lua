@@ -305,6 +305,7 @@ static bool try_invoke(int32_t i)
         // If the action has parameters, we enter the parameter supplying flow.
         if (!params.empty())
         {
+            SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
             ParameterPalette::show(action.path);
             return true;
         }
