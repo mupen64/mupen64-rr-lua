@@ -18,6 +18,7 @@
 #include <components/Benchmark.h>
 #include <components/CLI.h>
 #include <components/CommandPalette.h>
+#include <components/ParameterPalette.h>
 #include <components/Compare.h>
 #include <components/ConfigDialog.h>
 #include <components/CoreDbg.h>
@@ -1212,6 +1213,10 @@ static bool is_dialog_message(MSG *msg)
         return true;
     }
     if (IsWindow(CommandPalette::hwnd()) && IsDialogMessage(CommandPalette::hwnd(), msg))
+    {
+        return true;
+    }
+    if (IsWindow(ParameterPalette::hwnd()) && IsDialogMessage(ParameterPalette::hwnd(), msg))
     {
         return true;
     }
