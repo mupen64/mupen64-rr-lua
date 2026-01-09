@@ -32,7 +32,7 @@ static t_parameter_palette_context g_ctx{};
 static void update_header()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
-    SetWindowText(g_ctx.header_hwnd, std::format(L"Enter value for '{}':", current_param.name).c_str());
+    SetWindowText(g_ctx.header_hwnd, std::format(L"{}:", current_param.name).c_str());
 }
 /**
  * \brief Advances to the next parameter in parameter input mode.
@@ -48,7 +48,7 @@ static void next_parameter()
     if (validation_result.has_value())
     {
         const auto validation_message = validation_result.value();
-        SetWindowText(g_ctx.status_hwnd, std::format(L"Validation failed: '{}'", validation_message).c_str());
+        SetWindowText(g_ctx.status_hwnd, std::format(L"Validation failed. {}", validation_message).c_str());
         ShowWindow(g_ctx.status_hwnd, SW_SHOW);
         return;
     }
