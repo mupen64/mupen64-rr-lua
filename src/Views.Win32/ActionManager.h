@@ -69,6 +69,11 @@ struct t_action_param
      * validation failed.
      */
     std::function<std::optional<std::wstring>(std::wstring_view)> validator = [](const auto &) { return std::nullopt; };
+
+    /**
+     * \brief A function that returns the initial value of the parameter. Can be null.
+     */
+    std::function<std::wstring()> get_initial_value{};
 };
 
 /**

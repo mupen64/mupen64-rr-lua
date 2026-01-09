@@ -60,7 +60,31 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
         };
     }
 
-    return {param, [=]() { lua_freecallback(L, validator); }};
+    lua_getfield(L, index, "get_initial_value");
+    auto get_initial_value = lua_optcallback(L, -1);
+    lua_pop(L, 1);
+
+    if (get_initial_value)
+    {
+        param.get_initial_value = [=]() -> std::wstring {
+            if (!LuaManager::get_environment_for_state(L))
+            {
+                return L"";
+            }
+
+            lua_pushcallback(L, get_initial_value, false);
+            lua_pcall(L, 0, 1, 0);
+
+            const auto initial_value = luaL_checkwstring(L, -1);
+            lua_pop(L, 1);
+            return initial_value;
+        };
+    }
+
+    return {param, [=]() {
+                lua_freecallback(L, validator);
+                lua_freecallback(L, get_initial_value);
+            }};
 }
 
 static void push_action_params(lua_State *L, const ActionManager::action_parameter_list &params)

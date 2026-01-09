@@ -31,7 +31,7 @@ struct t_parameter_palette_context
 
 static t_parameter_palette_context g_ctx{};
 
-static void update_page()
+static void on_page_changed()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
 
@@ -40,6 +40,11 @@ static void update_page()
     const auto param_number = g_ctx.param_index + 1;
     const auto total_params = g_ctx.ref_params.size();
     SetWindowText(g_ctx.secondary_hwnd, std::format(L"Step {}/{}", param_number, total_params).c_str());
+
+    const std::wstring initial_value = current_param.get_initial_value ? current_param.get_initial_value() : L"";
+    SetWindowText(g_ctx.edit_hwnd, initial_value.c_str());
+
+    SetWindowText(g_ctx.status_hwnd, L"");
 }
 
 static bool try_apply_parameter()
@@ -84,10 +89,7 @@ static void next_parameter()
         return;
     }
 
-    update_page();
-
-    SetWindowText(g_ctx.edit_hwnd, L"");
-    SetWindowText(g_ctx.status_hwnd, L"");
+    on_page_changed();
 }
 
 /**
@@ -175,7 +177,7 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         const auto display_name = ActionManager::get_display_name(g_ctx.action_path);
         SetWindowText(g_ctx.header_hwnd, std::format(L"{}", display_name).c_str());
 
-        update_page();
+        on_page_changed();
         update_dialog_position_and_size();
         try_apply_parameter();
 
