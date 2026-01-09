@@ -13,6 +13,11 @@
 namespace ActionMenu
 {
 /**
+ * \brief Prefix for action paths which should be hidden from menus.
+ */
+const wchar_t MENU_HIDDEN_ACTION_PREFIX = L'#';
+
+/**
  * \brief Initializes the ActionMenu module.
  */
 void init();

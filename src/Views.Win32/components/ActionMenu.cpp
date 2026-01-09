@@ -204,6 +204,18 @@ static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
 }
 
 /**
+ * \brief Determines whether the action represented by the given path segments should be visible in the menu.
+ */
+static bool is_visible_in_menu(const std::vector<std::wstring> &action_path_segments)
+{
+    if (action_path_segments.back()[0] == ActionMenu::MENU_HIDDEN_ACTION_PREFIX)
+    {
+        return false;
+    }
+    return true;
+}
+
+/**
  * \brief Builds the initial menu tree based on the registered actions' paths.
  */
 static void build_initial_menu_tree(t_action_menu_context &ctx)
@@ -215,6 +227,11 @@ static void build_initial_menu_tree(t_action_menu_context &ctx)
         std::vector<std::wstring> parts = ActionManager::get_segments(path);
         std::wstring path_up_to_here;
         path_up_to_here.reserve(parts.size() * 20);
+
+        if (!is_visible_in_menu(parts))
+        {
+            continue;
+        }
 
         t_menu_item *current = &ctx.menu;
 
