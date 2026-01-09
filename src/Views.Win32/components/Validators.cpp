@@ -30,6 +30,15 @@ std::optional<std::wstring> int32_t(const std::wstring_view str)
     return std::nullopt;
 }
 
+std::optional<std::wstring> int32_t_optional(const std::wstring_view str)
+{
+    if (str.empty())
+    {
+        return std::nullopt;
+    }
+    return int32_t(str);
+}
+
 std::optional<std::wstring> none(const std::wstring_view)
 {
     return std::nullopt;

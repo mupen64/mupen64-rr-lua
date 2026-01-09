@@ -14,6 +14,8 @@ namespace Validators
 
 std::optional<std::wstring> int32_t(const std::wstring_view str);
 
+std::optional<std::wstring> int32_t_optional(const std::wstring_view str);
+
 std::optional<std::wstring> none(const std::wstring_view);
 
 std::optional<std::wstring> nonempty(const std::wstring_view str);

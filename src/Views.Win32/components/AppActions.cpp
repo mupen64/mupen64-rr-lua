@@ -532,6 +532,26 @@ static void continue_movie_recording()
     });
 }
 
+static void start_movie_playback_direct(const ActionManager::action_parameter_list &params)
+{
+    const auto path = params.at(L"path");
+    const auto author = params.at(L"author");
+    const auto description = params.at(L"description");
+    const auto pause_at = params.at(L"pause_at").empty() ? 0 : std::stoul(params.at(L"pause_at"));
+    const auto pause_at_last = params.at(L"pause_at_last").empty() ? 0 : std::stoul(params.at(L"pause_at_last"));
+
+    g_main_ctx.core_ctx->vcr_replace_author_info(path, IOUtils::to_utf8_string(author),
+                                                 IOUtils::to_utf8_string(description));
+
+    g_config.core.pause_at_frame = pause_at;
+    g_config.core.pause_at_last_frame = pause_at_last;
+
+    ThreadPool::submit_task([=] {
+        const auto result = g_main_ctx.core_ctx->vcr_start_playback(path);
+        show_error_dialog_for_result(result);
+    });
+}
+
 static void start_movie_playback()
 {
     BetterEmulationLock lock;
@@ -543,16 +563,14 @@ static void start_movie_playback()
         return;
     }
 
-    g_main_ctx.core_ctx->vcr_replace_author_info(result.path, IOUtils::to_utf8_string(result.author),
-                                                 IOUtils::to_utf8_string(result.description));
-
-    g_config.core.pause_at_frame = result.pause_at;
-    g_config.core.pause_at_last_frame = result.pause_at_last;
-
-    ThreadPool::submit_task([result] {
-        auto vcr_result = g_main_ctx.core_ctx->vcr_start_playback(result.path);
-        show_error_dialog_for_result(vcr_result);
-    });
+    ActionManager::invoke(AppActions::START_MOVIE_PLAYBACK_DIRECT, false, true,
+                          {
+                              {L"path", result.path},
+                              {L"author", result.author},
+                              {L"description", result.description},
+                              {L"pause_at", std::to_wstring(result.pause_at)},
+                              {L"pause_at_last", std::to_wstring(result.pause_at_last)},
+                          });
 }
 
 static void stop_movie()
@@ -1068,6 +1086,15 @@ void AppActions::add()
                enable_when_emu_launched);
     add_action(START_MOVIE_RECORDING, Hotkey::t_hotkey('R', true, true), start_movie_recording,
                enable_when_emu_launched);
+    add_action(
+        START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
+        std::vector<ActionManager::t_action_param>{
+            {.key = L"path", .name = L"Path", .validator = Validators::nonempty},
+            {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
+            {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
+            {.key = L"pause_at", .name = L"Pause at frame (optional)", .validator = Validators::int32_t_optional},
+            {.key = L"pause_at_last", .name = L"Pause at last frame? (optional)", .validator = Validators::int32_t_optional},
+        });
     add_action(START_MOVIE_PLAYBACK, Hotkey::t_hotkey('P', true, true), start_movie_playback);
     add_action(CONTINUE_MOVIE_RECORDING, Hotkey::t_hotkey::make_empty(), continue_movie_recording,
                enable_during_playback);
