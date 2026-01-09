@@ -27,6 +27,7 @@
 #include <components/Seeker.h>
 #include <components/Statusbar.h>
 #include <components/UpdateChecker.h>
+#include <components/Validators.h>
 
 bool confirm_user_exit()
 {
@@ -943,34 +944,6 @@ static void generate_path_recent_menu(const std::wstring &base_path, const Hotke
     }
 }
 
-static std::optional<std::wstring> int_validator(const std::wstring_view str)
-{
-    try
-    {
-        std::size_t pos;
-        std::stoi(str.data(), &pos);
-        if (pos != str.size())
-        {
-            return L"Value must be an integer.";
-        }
-    }
-    catch (const std::exception &)
-    {
-        return L"Value must be an integer.";
-    }
-    return std::nullopt;
-}
-
-static std::optional<std::wstring> no_validator(const std::wstring_view)
-{
-    return std::nullopt;
-}
-
-static std::optional<std::wstring> nonempty_validator(const std::wstring_view str)
-{
-    return str.empty() ? std::make_optional(L"Value must not be empty.") : std::nullopt;
-}
-
 void AppActions::init()
 {
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged,
@@ -1022,7 +995,7 @@ void AppActions::add()
                        gs_button_active);
     add_action(FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5), frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DIRECT, multi_frame_advance_direct,
-               {{.key = L"count", .name = L"Frame Count", .validator = int_validator}}, enable_when_emu_launched);
+               {{.key = L"count", .name = L"Frame Count", .validator = Validators::int32_t}}, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5, true), multi_frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey::t_hotkey('E', true), multi_frame_advance_increment,
                enable_when_emu_launched);
@@ -1087,10 +1060,10 @@ void AppActions::add()
 
     add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
                std::vector<ActionManager::t_action_param>{
-                   {.key = L"path", .name = L"Path", .validator = nonempty_validator},
-                   {.key = L"start_flag", .name = L"Start Flag", .validator = int_validator},
-                   {.key = L"author", .name = L"Author (optional)", .validator = no_validator},
-                   {.key = L"description", .name = L"Description (optional)", .validator = no_validator},
+                   {.key = L"path", .name = L"Path", .validator = Validators::nonempty},
+                   {.key = L"start_flag", .name = L"Start Flag", .validator = Validators::int32_t},
+                   {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
+                   {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
                },
                enable_when_emu_launched);
     add_action(START_MOVIE_RECORDING, Hotkey::t_hotkey('R', true, true), start_movie_recording,
