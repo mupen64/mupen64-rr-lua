@@ -76,7 +76,7 @@ static bool try_apply_parameter()
     }
 
     g_ctx.filled_params[current_param.key] = input;
-    
+
     SetWindowText(g_ctx.status_hwnd, L"✔️ Press Enter to confirm.");
 
     return true;
@@ -85,11 +85,11 @@ static bool try_apply_parameter()
 /**
  * \brief Advances to the next parameter in parameter input mode.
  */
-static void next_parameter()
+static int next_parameter()
 {
     if (!try_apply_parameter())
     {
-        return;
+        return 0;
     }
 
     g_ctx.param_index++;
@@ -99,10 +99,27 @@ static void next_parameter()
         // All parameters filled, invoke the action.
         SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
         ActionManager::invoke(g_ctx.action_path, false, true, g_ctx.filled_params);
-        return;
+        return 2;
     }
 
     on_page_changed();
+
+    return 1;
+}
+
+/**
+ * \brief Tries to skip to the end by applying the current parameter and then all future ones with their initial values.
+ */
+static void try_skip_to_end()
+{
+    while (true)
+    {
+        const auto result = next_parameter();
+        if (result == 0 || result == 2)
+        {
+            break;
+        }
+    }
 }
 
 /**
@@ -146,7 +163,11 @@ static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, 
         }
         if (wparam == VK_RETURN)
         {
-            next_parameter();
+            if ((GetKeyState(VK_CONTROL) & 0x8000) != 0)
+                try_skip_to_end();
+            else
+                next_parameter();
+
             return FALSE;
         }
         break;
