@@ -59,14 +59,13 @@ static bool try_apply_parameter()
     if (validation_result.has_value())
     {
         const auto validation_message = validation_result.value();
-        SetWindowText(g_ctx.status_hwnd, std::format(L"Validation failed. {}", validation_message).c_str());
+        SetWindowText(g_ctx.status_hwnd, std::format(L"⚠️ {}", validation_message).c_str());
         return false;
     }
 
-    SetWindowText(g_ctx.status_hwnd, L"Press Enter to confirm.");
+    SetWindowText(g_ctx.status_hwnd, L"✔️ Press Enter to confirm.");
 
     g_ctx.filled_params[current_param.key] = input;
-
 
     // Add hints
     ComboBox_ResetContentKeepEdit(g_ctx.combo_hwnd);
@@ -172,7 +171,7 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         combo_info.cbSize = sizeof(COMBOBOXINFO);
         GetComboBoxInfo(g_ctx.combo_hwnd, &combo_info);
         g_ctx.edit_hwnd = combo_info.hwndItem;
-        
+
         // 1. Remove the titlebar
         const LONG style = GetWindowLong(hwnd, GWL_STYLE);
         SetWindowLong(hwnd, GWL_STYLE, style & ~WS_CAPTION);
