@@ -69,20 +69,16 @@ static bool try_apply_parameter()
 
 
     // Add hints
-    while(ComboBox_GetCount(g_ctx.combo_hwnd) > 0)
-    {
-        ComboBox_DeleteString(g_ctx.combo_hwnd, 0);
-    }
-    
-    if(current_param.get_hints)
+    ComboBox_ResetContentKeepEdit(g_ctx.combo_hwnd);
+    if (current_param.get_hints)
     {
         const auto hints = current_param.get_hints(input);
-        for(const auto& hint : hints)
+        for (const auto &hint : hints)
         {
             ComboBox_AddString(g_ctx.combo_hwnd, hint.c_str());
         }
     }
-    
+
     return true;
 }
 

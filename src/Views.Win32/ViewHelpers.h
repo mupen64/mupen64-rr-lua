@@ -85,6 +85,9 @@ class WindowDisabler
     bool m_prev_enabled{};
 };
 
+#define ComboBox_ResetContentKeepEdit(hwnd)                                                                            \
+    while (ComboBox_GetCount(hwnd) > 0) ComboBox_DeleteString(hwnd, 0);
+
 static void runtime_assert_fail(const std::wstring &message)
 {
 #if defined(_DEBUG)
