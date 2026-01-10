@@ -79,6 +79,12 @@ assert(action.add({
             end,
             get_initial_value = function()
                 return tostring(os.clock())
+            end,
+            get_hints = function (value)
+                return {
+                    "Current time is " .. tostring(os.clock()),
+                    "You entered: " .. tostring(value)
+                }
             end
         }
     }

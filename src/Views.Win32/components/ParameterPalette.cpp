@@ -18,6 +18,7 @@ struct t_parameter_palette_context
     HWND header_hwnd{};
     HWND subheader_hwnd{};
     HWND secondary_hwnd{};
+    HWND combo_hwnd{};
     HWND edit_hwnd{};
     HWND status_hwnd{};
 
@@ -66,6 +67,22 @@ static bool try_apply_parameter()
 
     g_ctx.filled_params[current_param.key] = input;
 
+
+    // Add hints
+    while(ComboBox_GetCount(g_ctx.combo_hwnd) > 0)
+    {
+        ComboBox_DeleteString(g_ctx.combo_hwnd, 0);
+    }
+    
+    if(current_param.get_hints)
+    {
+        const auto hints = current_param.get_hints(input);
+        for(const auto& hint : hints)
+        {
+            ComboBox_AddString(g_ctx.combo_hwnd, hint.c_str());
+        }
+    }
+    
     return true;
 }
 
@@ -152,9 +169,14 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         g_ctx.header_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_HEADER);
         g_ctx.subheader_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_SUBHEADER);
         g_ctx.secondary_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_SECONDARY);
-        g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_EDIT);
+        g_ctx.combo_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_COMBO);
         g_ctx.status_hwnd = GetDlgItem(hwnd, IDC_PARAMETER_PALETTE_STATUS);
 
+        COMBOBOXINFO combo_info{};
+        combo_info.cbSize = sizeof(COMBOBOXINFO);
+        GetComboBoxInfo(g_ctx.combo_hwnd, &combo_info);
+        g_ctx.edit_hwnd = combo_info.hwndItem;
+        
         // 1. Remove the titlebar
         const LONG style = GetWindowLong(hwnd, GWL_STYLE);
         SetWindowLong(hwnd, GWL_STYLE, style & ~WS_CAPTION);
@@ -164,12 +186,12 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
                                             {g_ctx.header_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                             {g_ctx.subheader_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                             {g_ctx.secondary_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
-                                            {g_ctx.edit_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
+                                            {g_ctx.combo_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                             {g_ctx.status_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                         });
 
         // 4. Set the focus to the edit control
-        SetFocus(g_ctx.edit_hwnd);
+        SetFocus(g_ctx.combo_hwnd);
 
         // 5. Subclass the controls for key event handling
         SetWindowSubclass(g_ctx.edit_hwnd, keyboard_interaction_subclass_proc, 0, 0);
@@ -197,10 +219,10 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
     case WM_COMMAND:
         switch (LOWORD(wparam))
         {
-        case IDC_PARAMETER_PALETTE_EDIT:
+        case IDC_PARAMETER_PALETTE_COMBO:
             switch (HIWORD(wparam))
             {
-            case EN_CHANGE:
+            case CBN_EDITCHANGE:
                 try_apply_parameter();
                 break;
             default:

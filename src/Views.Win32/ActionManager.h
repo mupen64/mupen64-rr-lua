@@ -74,6 +74,11 @@ struct t_action_param
      * \brief A function that returns the initial value of the parameter. Can be null.
      */
     std::function<std::wstring()> get_initial_value{};
+
+    /**
+     * \brief A function that returns hints for the parameter based on the current input. Can be null.
+     */
+    std::function<std::vector<std::wstring>(std::wstring_view)> get_hints{};
 };
 
 /**

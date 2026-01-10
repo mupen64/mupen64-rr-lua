@@ -81,9 +81,44 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
         };
     }
 
+    lua_getfield(L, index, "get_hints");
+    auto get_hints = lua_optcallback(L, -1);
+    lua_pop(L, 1);
+
+    if (get_hints)
+    {
+        param.get_hints = [=](const std::wstring_view input) -> std::vector<std::wstring> {
+            if (!LuaManager::get_environment_for_state(L))
+            {
+                return {};
+            }
+
+            lua_pushcallback(L, get_hints, false);
+            lua_pushwstring(L, std::wstring(input));
+            lua_pcall(L, 1, 1, 0);
+
+            std::vector<std::wstring> hints;
+            if (lua_istable(L, -1))
+            {
+                const int hints_table_index = lua_gettop(L);
+                const int hints_count = luaL_len(L, hints_table_index);
+                for (int i = 1; i <= hints_count; ++i)
+                {
+                    lua_geti(L, hints_table_index, i);
+                    const auto hint = luaL_checkwstring(L, -1);
+                    hints.push_back(hint);
+                    lua_pop(L, 1);
+                }
+            }
+            lua_pop(L, 1);
+            return hints;
+        };
+    }
+
     return {param, [=]() {
                 lua_freecallback(L, validator);
                 lua_freecallback(L, get_initial_value);
+                lua_freecallback(L, get_hints);
             }};
 }
 

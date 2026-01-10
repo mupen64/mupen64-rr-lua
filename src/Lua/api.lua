@@ -1550,6 +1550,7 @@ function hotkey.prompt(caption) end
 ---@field name string The display name of the parameter.
 ---@field validator fun(value: string): string? A validator function that takes in a parameter value and optionally returns an error message if the validation failed.
 ---@field get_initial_value fun(): string? A function that returns the initial value of the parameter. Can be null.
+---@field get_hints fun(value: string): string[]? A function that returns hints for the parameter based on the current input. Can be null.
 ---Represents an action parameter.
 
 ---@class ActionAddParams
