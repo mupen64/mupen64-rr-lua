@@ -54,4 +54,10 @@ std::optional<std::wstring> seek_str(const std::wstring_view str)
     // TODO: Add VCR API for validating seek strings.
     return std::nullopt;
 }
+
+std::optional<std::wstring> existing_path(const std::wstring_view str)
+{
+    return std::filesystem::exists(str) ? std::nullopt : std::make_optional(L"Path does not exist.");
+}
+
 } // namespace Validators

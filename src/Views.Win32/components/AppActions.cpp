@@ -1100,7 +1100,7 @@ void AppActions::add()
     add_action(
         START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
         std::vector<ActionManager::t_action_param>{
-            {.key = L"path", .name = L"Path", .validator = Validators::nonempty},
+            {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
             {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
             {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
             {.key = L"pause_at", .name = L"Pause at frame (optional)", .validator = Validators::int32_t_optional},

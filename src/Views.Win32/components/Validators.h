@@ -22,4 +22,6 @@ std::optional<std::wstring> nonempty(const std::wstring_view str);
 
 std::optional<std::wstring> seek_str(const std::wstring_view str);
 
+std::optional<std::wstring> existing_path(const std::wstring_view str);
+
 } // namespace Validators
