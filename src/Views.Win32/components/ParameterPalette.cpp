@@ -54,20 +54,7 @@ static bool try_apply_parameter()
 
     const auto input = get_window_text(g_ctx.edit_hwnd).value();
 
-    const auto &validator = current_param.validator;
-    const auto validation_result = validator(input);
-    if (validation_result.has_value())
-    {
-        const auto validation_message = validation_result.value();
-        SetWindowText(g_ctx.status_hwnd, std::format(L"⚠️ {}", validation_message).c_str());
-        return false;
-    }
-
-    SetWindowText(g_ctx.status_hwnd, L"✔️ Press Enter to confirm.");
-
-    g_ctx.filled_params[current_param.key] = input;
-
-    // Add hints
+    // 1. Update hints
     ComboBox_ResetContentKeepEdit(g_ctx.combo_hwnd);
     if (current_param.get_hints)
     {
@@ -77,6 +64,20 @@ static bool try_apply_parameter()
             ComboBox_AddString(g_ctx.combo_hwnd, hint.c_str());
         }
     }
+
+    // 2. Validate input
+    const auto &validator = current_param.validator;
+    const auto validation_result = validator(input);
+    if (validation_result.has_value())
+    {
+        const auto validation_message = validation_result.value();
+        SetWindowText(g_ctx.status_hwnd, std::format(L"⚠️ {}", validation_message).c_str());
+        return false;
+    }
+
+    g_ctx.filled_params[current_param.key] = input;
+    
+    SetWindowText(g_ctx.status_hwnd, L"✔️ Press Enter to confirm.");
 
     return true;
 }
