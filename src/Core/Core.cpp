@@ -128,6 +128,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.vcr_get_warp_modify_first_difference_frame = vcr_get_warp_modify_first_difference_frame;
     g_ctx.vcr_get_seek_savestate_frames = vcr_get_seek_savestate_frames;
     g_ctx.vcr_has_seek_savestate_at_frame = vcr_has_seek_savestate_at_frame;
+    g_ctx.vcr_try_resolve_seek_str = vcr_try_resolve_seek_str;
     g_ctx.tl_active = tl_active;
     g_ctx.tl_start = tl_start;
     g_ctx.tl_stop = tl_stop;

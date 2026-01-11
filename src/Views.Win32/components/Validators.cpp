@@ -51,8 +51,9 @@ std::optional<std::wstring> nonempty(const std::wstring_view str)
 
 std::optional<std::wstring> seek_str(const std::wstring_view str)
 {
-    // TODO: Add VCR API for validating seek strings.
-    return std::nullopt;
+    const auto utf8_str = IOUtils::to_utf8_string(std::wstring(str));
+    const auto result = g_main_ctx.core_ctx->vcr_try_resolve_seek_str(utf8_str);
+    return result.has_value() ? std::nullopt : std::make_optional(L"Invalid seek string.");
 }
 
 std::optional<std::wstring> existing_path(const std::wstring_view str)

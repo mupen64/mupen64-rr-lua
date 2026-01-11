@@ -611,6 +611,12 @@ extern "C"
          */
         std::function<bool(size_t frame)> vcr_has_seek_savestate_at_frame;
 
+        /**
+         * Tries to resolve a seek string into a frame number. 
+         * Returns std::nullopt if the string is invalid.
+         */
+        std::function<std::optional<size_t>(const std::string& str)> vcr_try_resolve_seek_str;
+
 #pragma endregion
 
 #pragma region Tracelog

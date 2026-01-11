@@ -1165,7 +1165,7 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, std::stri
     }
 
     // 2. Compare author and description fields, and don't do any work if they remained identical
-    
+
     if (author == std::string_view(hdr.author) && description == std::string_view(hdr.description))
     {
         g_core->log_info("[VCR] Movie author or description didn't change, returning early...");
@@ -1479,7 +1479,7 @@ static bool can_seek_to(size_t frame)
     return frame <= vcr.hdr.length_samples && frame > 0;
 }
 
-static size_t compute_sample_from_seek_string(const std::string &str)
+static std::optional<size_t> vcr_try_resolve_seek_str_impl(const std::string &str)
 {
     try
     {
@@ -1493,12 +1493,18 @@ static size_t compute_sample_from_seek_string(const std::string &str)
             return vcr.hdr.length_samples - std::stoi(str.substr(1));
         }
 
-        return std::stoi(str);
+        return std::make_optional(std::stoi(str));
     }
     catch (...)
     {
-        return SIZE_MAX;
+        return std::nullopt;
     }
+}
+
+std::optional<size_t> vcr_try_resolve_seek_str(const std::string &str)
+{
+    std::unique_lock lock(vcr_mtx);
+    return vcr_try_resolve_seek_str_impl(str);
 }
 
 size_t vcr_find_closest_savestate_before_frame(size_t frame)
@@ -1540,12 +1546,14 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
         return VCR_Idle;
     }
 
-    auto frame = compute_sample_from_seek_string(str);
+    const auto resolved_frame = vcr_try_resolve_seek_str_impl(str);
 
-    if (frame == SIZE_MAX || !can_seek_to(frame))
+    if (!resolved_frame.has_value() || !can_seek_to(resolved_frame.value()))
     {
         return VCR_InvalidFrame;
     }
+
+    auto frame = resolved_frame.value();
 
     // We need to adjust the end frame if we're pausing at the end... lol
     if (pause_at_end)
