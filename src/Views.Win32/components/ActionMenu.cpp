@@ -8,6 +8,7 @@
 #include <ActionManager.h>
 #include <Messenger.h>
 #include <components/ActionMenu.h>
+#include <components/ParameterPalette.h>
 
 const auto MANAGED_MENU_CTX = L"Mupen64_ManagedMenuContext";
 
@@ -198,6 +199,15 @@ static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
         return false;
     }
 
+    const auto params = ActionManager::get_params(found_action_path);
+
+    // Has params: hand off to ParameterPalette.
+    if (!params.empty())
+    {
+        ParameterPalette::show(found_action_path);
+        return true;
+    }
+    
     ActionManager::invoke(found_action_path);
 
     return true;
