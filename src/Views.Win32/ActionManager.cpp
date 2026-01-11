@@ -186,18 +186,19 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
     for (auto &action : actions)
     {
         const auto &name = action->segments.back();
-        const bool has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
-
         std::wstring display_name;
 
+        const bool has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
         if (has_separator)
-        {
             display_name = name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size());
-        }
         else
-        {
             display_name = name;
-        }
+
+        const bool has_menu_hidden_prefix = name.starts_with(ActionManager::MENU_HIDDEN_PREFIX);
+        if (has_menu_hidden_prefix) display_name = display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size());
+
+        const bool has_parameters = !action->add_params.params.empty();
+        if (has_parameters) display_name = L"> " + display_name;
 
         action->raw_name = display_name;
 

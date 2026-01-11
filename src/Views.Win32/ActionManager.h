@@ -24,6 +24,11 @@ const std::wstring SEGMENT_SEPARATOR = L">";
 const std::wstring SEPARATOR_SUFFIX = L"---";
 
 /**
+ * \brief The prefix for action paths that are hidden from the menu.
+ */
+const std::wstring MENU_HIDDEN_PREFIX = L"#";
+
+/**
  * \brief An action filter that can be used to match actions in the action registry.
  * Can be in the format `[Category[] | *] > [Name | *]`.
  * The `*` wildcard can be used to match any child from that segment onwards.

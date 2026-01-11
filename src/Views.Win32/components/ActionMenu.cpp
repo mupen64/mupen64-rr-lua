@@ -218,7 +218,7 @@ static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
  */
 static bool is_visible_in_menu(const std::vector<std::wstring> &action_path_segments)
 {
-    if (action_path_segments.back()[0] == ActionMenu::MENU_HIDDEN_ACTION_PREFIX)
+    if (action_path_segments.back().starts_with(ActionManager::MENU_HIDDEN_PREFIX))
     {
         return false;
     }
