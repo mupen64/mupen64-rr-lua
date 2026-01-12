@@ -966,7 +966,7 @@ lust.describe('mupen64', function()
                     end
                 })
 
-                action.invoke("Test > Something", {})
+                action.invoke("Test > Something", nil, nil, {})
 
                 lust.expect(called).to.equal(false)
             end)
@@ -986,7 +986,7 @@ lust.describe('mupen64', function()
                     end
                 })
 
-                action.invoke("Test > Something", { "aaa" })
+                action.invoke("Test > Something", nil, nil, { param1 = "aaa" })
 
                 lust.expect(called).to.equal(false)
             end)
@@ -1011,9 +1011,9 @@ lust.describe('mupen64', function()
                     end
                 })
 
-                action.invoke("Test > Something", nil, nil, { "aaa", "" })
+                action.invoke("Test > Something", nil, nil, { param1 = "aaa", param2 = "" })
 
-                lust.expect(received_params).to.equal({ "aaa", "" })
+                lust.expect(received_params).to.equal({ param1 = "aaa", param2 = "" })
             end)
         end)
 
