@@ -230,7 +230,7 @@ static void frame_advance()
 
 static void multi_frame_advance_direct(const ActionManager::action_parameter_list &params)
 {
-    const size_t count = std::stoul(params.at(L"count"));
+    const int32_t count = std::stoi(params.at(L"count"));
 
     if (count > 0)
     {
