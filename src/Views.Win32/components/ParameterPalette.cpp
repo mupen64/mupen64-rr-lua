@@ -32,6 +32,9 @@ struct t_parameter_palette_context
 
 static t_parameter_palette_context g_ctx{};
 
+/**
+ * \brief Updates the UI and resets the editbox when the current parameter page changes.
+ */
 static void on_page_changed()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
@@ -48,6 +51,9 @@ static void on_page_changed()
     SetWindowText(g_ctx.status_hwnd, L"");
 }
 
+/**
+ * \brief Tries to apply and store the current parameter input.
+ */
 static bool try_apply_parameter()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
