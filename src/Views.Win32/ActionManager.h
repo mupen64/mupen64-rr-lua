@@ -253,11 +253,11 @@ action_filter normalize_filter(const action_filter &filter);
  * \param path A path.
  * \param up If true, the action is considered to be released, otherwise it is considered to be pressed down.
  * \param release_on_repress If true, if the action is already pressed down and `up` is false, the action will first be
- * \param params The action parameters.
  * released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
+ * \param params The action parameters.
  */
-void invoke(const action_path &path, bool up = false,
-            bool release_on_repress = true, const action_parameter_list &params = {});
+void invoke(const action_path &path, bool up = false, bool release_on_repress = true,
+            const action_parameter_list &params = {});
 
 /**
  * \brief Locks or unlocks action invocations from hotkeys.
