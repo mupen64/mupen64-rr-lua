@@ -11,7 +11,7 @@
 
 #define CONFIG_VALUE L"Config"
 
-constexpr t_config default_config{};
+const t_config default_config{};
 t_config new_config{};
 
 void save_config()

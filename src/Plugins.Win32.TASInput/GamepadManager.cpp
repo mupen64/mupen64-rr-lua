@@ -54,6 +54,12 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
 
 static bool is_button_held(const t_button_mapping &mapping)
 {
+    if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
+    {
+        if (g_ctx.gamepad == nullptr) return false;
+        return std::abs(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis)) > AXIS_THRESHOLD;
+    }
+
     if (mapping.button != SDL_GAMEPAD_BUTTON_INVALID)
     {
         if (g_ctx.gamepad == nullptr) return false;

@@ -8,6 +8,8 @@
 
 #define SUBKEY L"Software\\N64 Emulation\\DLL\\TASDI"
 
+const auto AXIS_THRESHOLD = 16000;
+
 struct t_axis_mapping
 {
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
@@ -18,27 +20,30 @@ struct t_axis_mapping
 struct t_button_mapping
 {
     int32_t button = SDL_GAMEPAD_BUTTON_INVALID;
+    int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
     int32_t key = 0;
+
+    static t_button_mapping from_button(int32_t button) { return {button, SDL_GAMEPAD_AXIS_INVALID, 0}; }
 };
 
 struct t_controller_config
 {
-    t_button_mapping dpad_right = {SDL_GAMEPAD_BUTTON_INVALID, 0};
-    t_button_mapping dpad_left = {SDL_GAMEPAD_BUTTON_INVALID, 0};
-    t_button_mapping dpad_down = {SDL_GAMEPAD_BUTTON_INVALID, 0};
-    t_button_mapping dpad_up = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping dpad_right{};
+    t_button_mapping dpad_left{};
+    t_button_mapping dpad_down{};
+    t_button_mapping dpad_up{};
 
-    t_button_mapping c_right = {SDL_GAMEPAD_BUTTON_INVALID, 0};
-    t_button_mapping c_left = {SDL_GAMEPAD_BUTTON_INVALID, 0};
-    t_button_mapping c_down = {SDL_GAMEPAD_BUTTON_INVALID, 0};
-    t_button_mapping c_up = {SDL_GAMEPAD_BUTTON_INVALID, 0};
+    t_button_mapping c_right{};
+    t_button_mapping c_left{};
+    t_button_mapping c_down{};
+    t_button_mapping c_up{};
 
-    t_button_mapping a = {SDL_GAMEPAD_BUTTON_SOUTH, 0};
-    t_button_mapping b = {SDL_GAMEPAD_BUTTON_EAST, 0};
-    t_button_mapping z = {SDL_GAMEPAD_BUTTON_WEST, 0};
-    t_button_mapping start = {SDL_GAMEPAD_BUTTON_START, 0};
-    t_button_mapping l = {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, 0};
-    t_button_mapping r = {SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, 0};
+    t_button_mapping a = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_SOUTH);
+    t_button_mapping b = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_EAST);
+    t_button_mapping z = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_WEST);
+    t_button_mapping start = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_START);
+    t_button_mapping l = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+    t_button_mapping r = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
 
     t_axis_mapping x = {SDL_GAMEPAD_AXIS_LEFTX, 0, 0};
     t_axis_mapping y = {SDL_GAMEPAD_AXIS_LEFTY, 0, 0};

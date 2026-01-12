@@ -182,6 +182,13 @@ static std::wstring virtual_keycode_to_string(int k)
 
 static void update_editbox(int id, const t_button_mapping &mapping)
 {
+    if (mapping.axis != SDL_GAMEPAD_AXIS_INVALID)
+    {
+        const auto str = IOUtils::to_wide_string(SDL_GetGamepadStringForAxis((SDL_GamepadAxis)mapping.axis));
+        SetDlgItemText(g_ctx.hwnd, id, str.c_str());
+        return;
+    }
+
     if (mapping.button != SDL_GAMEPAD_BUTTON_INVALID)
     {
         const auto str = IOUtils::to_wide_string(SDL_GetGamepadStringForButton((SDL_GamepadButton)mapping.button));
@@ -506,24 +513,28 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
 
     if (e.type == SDL_EVENT_GAMEPAD_AXIS_MOTION)
     {
+        const int16_t axis_value = e.gaxis.value;
+
+        const auto moved = std::abs(axis_value) > AXIS_THRESHOLD;
+
         if (auto *mapping = std::get_if<t_axis_mapping *>(&g_ctx.target_value))
         {
-            const int16_t axis_value = e.gaxis.value;
-            const int32_t threshold = 16000;
-
-            if (axis_value < -threshold)
+            if (moved)
             {
                 (*mapping)->axis = e.gaxis.axis;
                 (*mapping)->key_negative = 0;
                 (*mapping)->key_positive = 0;
                 end_edit();
             }
+        }
 
-            else if (axis_value > threshold)
+        if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
+        {
+            if (moved)
             {
                 (*mapping)->axis = e.gaxis.axis;
-                (*mapping)->key_negative = 0;
-                (*mapping)->key_positive = 0;
+                (*mapping)->button = SDL_GAMEPAD_BUTTON_INVALID;
+                (*mapping)->key = 0;
                 end_edit();
             }
         }
