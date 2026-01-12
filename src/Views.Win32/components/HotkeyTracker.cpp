@@ -95,7 +95,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
 
             if (up)
             {
-                ActionManager::invoke(path, {}, true);
+                ActionManager::invoke(path, true, true);
                 hit = true;
             }
         }
