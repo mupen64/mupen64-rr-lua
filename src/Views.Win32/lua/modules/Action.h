@@ -125,18 +125,11 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
 static void push_action_params(lua_State *L, const ActionManager::action_parameter_list &params)
 {
     lua_newtable(L);
-    size_t i = 1;
     for (const auto &[key, value] : params)
     {
-        lua_newtable(L);
-
         lua_pushwstring(L, key);
-        lua_setfield(L, -2, "key");
-
         lua_pushwstring(L, value);
-        lua_setfield(L, -2, "value");
-
-        lua_seti(L, -2, i++);
+        lua_settable(L, -3); 
     }
 }
 
