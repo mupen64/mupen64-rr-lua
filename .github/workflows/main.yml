@@ -11,11 +11,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: DoozyX/clang-format-lint-action@v0.20
+      - uses: DoozyX/clang-format-lint-action@v0.18.2
         with:
           source: "./src ./test"
+          exclude: "./lib ./tools"
           extensions: "h,cpp"
-          clangFormatVersion: 20
+          clangFormatVersion: 18.1.8
+          style: file
   build:
     runs-on: windows-latest
 
