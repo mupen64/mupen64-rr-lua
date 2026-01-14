@@ -8,6 +8,7 @@
 #include <ActionManager.h>
 #include <components/AppActions.h>
 #include <components/HotkeyTracker.h>
+#include <components/ParameterPalette.h>
 
 const auto HOTKEY_TRACKER_CTX = L"Mupen64_HotkeyTrackerContext";
 
@@ -40,7 +41,15 @@ static bool on_key(bool is_up, int32_t key)
             // HACK: Fast Forward is a special case: we don't want it to be constantly toggled on and off because it
             // messes up flow
             const bool release_on_repress = path != ActionManager::normalize_filter(AppActions::FAST_FORWARD);
-            ActionManager::invoke(path, is_up, release_on_repress, {});
+
+            const auto params = ActionManager::get_params(path);
+
+            // Has params: hand off to ParameterPalette.
+            if (!params.empty())
+                ParameterPalette::show(path);
+            else
+                ActionManager::invoke(path, is_up, release_on_repress);
+
             hit = true;
         }
     }
@@ -87,16 +96,22 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
                             (!xmb1 && ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) ||
                             (!xmb2 && ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
 
+            hit = down || up;
+
             if (down)
             {
-                ActionManager::invoke(path);
-                hit = true;
+                const auto params = ActionManager::get_params(path);
+
+                // Has params: hand off to ParameterPalette.
+                if (!params.empty())
+                    ParameterPalette::show(path);
+                else
+                    ActionManager::invoke(path);
             }
 
             if (up)
             {
                 ActionManager::invoke(path, true, true);
-                hit = true;
             }
         }
 
