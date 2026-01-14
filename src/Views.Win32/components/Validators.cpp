@@ -89,4 +89,25 @@ std::optional<std::wstring> rom_path(const std::wstring_view str)
     return std::make_optional(L"Invalid ROM file extension.");
 }
 
+std::optional<std::wstring> lua_path(const std::wstring_view str)
+{
+    std::filesystem::path path(str);
+    if (!std::filesystem::exists(path))
+    {
+        return std::make_optional(L"Lua script path does not exist.");
+    }
+
+    const auto ext = path.extension().wstring();
+
+    for (const auto &valid_ext : VALID_LUA_EXTENSIONS)
+    {
+        if (ext == std::format(L".{}", valid_ext))
+        {
+            return std::nullopt;
+        }
+    }
+
+    return std::make_optional(L"Invalid Lua script file extension.");
+}
+
 } // namespace Validators

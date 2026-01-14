@@ -837,6 +837,13 @@ static void show_about_dialog()
 
 #pragma region Lua Script
 
+static void load_script_direct(const ActionManager::action_parameter_list &params)
+{
+    const std::filesystem::path path = params.at(L"path");
+
+    LuaDialog::start_and_add_if_needed(path);
+}
+
 static void show_lua_dialog()
 {
     LuaDialog::show();
@@ -851,7 +858,7 @@ static void load_recent_script(size_t i)
 
     const auto path = g_config.recent_lua_script_paths[i];
 
-    LuaDialog::start_and_add_if_needed(path);
+    ActionManager::invoke(AppActions::LOAD_SCRIPT_DIRECT, false, true, {{L"path", path}});
 }
 
 static void close_all_lua_scripts()
@@ -1181,6 +1188,10 @@ void AppActions::add()
     add_action(CHECK_FOR_UPDATES, Hotkey::t_hotkey::make_empty(), check_for_updates_manual);
     add_action(ABOUT, Hotkey::t_hotkey::make_empty(), show_about_dialog);
 
+    add_action(LOAD_SCRIPT_DIRECT, load_script_direct,
+               std::vector<ActionManager::t_action_param>{
+                   {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
+               });
     add_action(SHOW_INSTANCES, Hotkey::t_hotkey('N', true), show_lua_dialog);
     generate_path_recent_menu(RECENT_SCRIPTS, Hotkey::t_hotkey('K', true, true), &g_config.recent_lua_script_paths,
                               &g_config.is_recent_scripts_frozen, load_recent_script);

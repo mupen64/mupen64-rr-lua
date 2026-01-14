@@ -12,7 +12,9 @@
 namespace Validators
 {
 
-const std::vector<std::wstring> VALID_ROM_EXTENSIONS = {L"n64", L"z64", L"v64", L"rom", L"bin", L"zip", L"usa", L"eur", L"jap"};
+const std::vector<std::wstring> VALID_ROM_EXTENSIONS = {L"n64", L"z64", L"v64", L"rom", L"bin",
+                                                        L"zip", L"usa", L"eur", L"jap"};
+const std::vector<std::wstring> VALID_LUA_EXTENSIONS = {L"lua"};
 
 /**
  * \brief Validates whether the input string represents a valid 32-bit integer.
@@ -69,5 +71,12 @@ std::optional<std::wstring> existing_path(const std::wstring_view str);
  * \return An optional error message if the path does not exist, or std::nullopt if it exists.
  */
 std::optional<std::wstring> rom_path(const std::wstring_view str);
+
+/**
+ * \brief Validates whether the input string represents a valid Lua script path.
+ * \param str The input string to validate.
+ * \return An optional error message if the path does not exist, or std::nullopt if it exists.
+ */
+std::optional<std::wstring> lua_path(const std::wstring_view str);
 
 } // namespace Validators
