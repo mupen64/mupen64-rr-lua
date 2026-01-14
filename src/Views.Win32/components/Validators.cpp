@@ -59,4 +59,25 @@ std::optional<std::wstring> existing_path(const std::wstring_view str)
     return std::filesystem::exists(str) ? std::nullopt : std::make_optional(L"Path does not exist.");
 }
 
+std::optional<std::wstring> rom_path(const std::wstring_view str)
+{
+    std::filesystem::path path(str);
+    if (!std::filesystem::exists(path))
+    {
+        return std::make_optional(L"ROM path does not exist.");
+    }
+
+    const auto ext = path.extension().wstring();
+
+    for (const auto &valid_ext : VALID_ROM_EXTENSIONS)
+    {
+        if (ext == std::format(L".{}", valid_ext))
+        {
+            return std::nullopt;
+        }
+    }
+
+    return std::make_optional(L"Invalid ROM file extension.");
+}
+
 } // namespace Validators

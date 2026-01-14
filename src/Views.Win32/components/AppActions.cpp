@@ -99,6 +99,13 @@ static void stub()
 
 #pragma region File
 
+static void load_rom_direct(const ActionManager::action_parameter_list &params)
+{
+    const std::filesystem::path path = params.at(L"path");
+
+    AppActions::load_rom_from_path(path);
+}
+
 static void load_rom()
 {
     BetterEmulationLock lock;
@@ -111,7 +118,7 @@ static void load_rom()
         return;
     }
 
-    AppActions::load_rom_from_path(path);
+    ActionManager::invoke(AppActions::LOAD_ROM_DIRECT, false, true, {{L"path", path}});
 }
 
 static void load_recent_rom(size_t i)
@@ -123,7 +130,7 @@ static void load_recent_rom(size_t i)
 
     const auto path = g_config.recent_rom_paths[i];
 
-    AppActions::load_rom_from_path(path);
+    ActionManager::invoke(AppActions::LOAD_ROM_DIRECT, false, true, {{L"path", path}});
 }
 
 static void close_rom()
@@ -1006,6 +1013,10 @@ void AppActions::add()
 {
     ActionManager::begin_batch_work();
 
+    add_action(LOAD_ROM_DIRECT, load_rom_direct,
+               std::vector<ActionManager::t_action_param>{
+                   {.key = L"path", .name = L"Path", .validator = Validators::rom_path},
+               });
     add_action(LOAD_ROM, Hotkey::t_hotkey('O', true), load_rom);
     add_action(CLOSE_ROM, Hotkey::t_hotkey('W', true), close_rom, enable_when_emu_launched);
     add_action(RESET_ROM, Hotkey::t_hotkey('R', true), reset_rom, enable_when_emu_launched);
@@ -1104,7 +1115,9 @@ void AppActions::add()
             {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
             {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
             {.key = L"pause_at", .name = L"Pause at frame (optional)", .validator = Validators::int32_t_optional},
-            {.key = L"pause_at_last", .name = L"Pause at last frame? (optional)", .validator = Validators::int32_t_optional},
+            {.key = L"pause_at_last",
+             .name = L"Pause at last frame? (optional)",
+             .validator = Validators::int32_t_optional},
         });
     add_action(START_MOVIE_PLAYBACK, Hotkey::t_hotkey('P', true, true), start_movie_playback);
     add_action(CONTINUE_MOVIE_RECORDING, Hotkey::t_hotkey::make_empty(), continue_movie_recording,
@@ -1124,11 +1137,10 @@ void AppActions::add()
     add_action(COMMAND_PALETTE, Hotkey::t_hotkey('P', true), show_command_palette);
     add_action(PIANO_ROLL, Hotkey::t_hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
     add_action(CHEATS, Hotkey::t_hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
-    add_action(
-        SEEK_TO_DIRECT, seek_direct,
-        std::vector<ActionManager::t_action_param>{
-            {.key = L"frame", .name = L"Frame", .validator = Validators::seek_str},
-        });
+    add_action(SEEK_TO_DIRECT, seek_direct,
+               std::vector<ActionManager::t_action_param>{
+                   {.key = L"frame", .name = L"Frame", .validator = Validators::seek_str},
+               });
     add_action(SEEK_TO, Hotkey::t_hotkey('G', true), show_seek_dialog, enable_when_emu_launched_and_vcr_active);
     add_action(USAGE_STATISTICS, Hotkey::t_hotkey::make_empty(), show_statistics);
     add_action(CORE_INFORMATION, Hotkey::t_hotkey::make_empty(), show_ram_start);

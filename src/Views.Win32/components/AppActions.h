@@ -19,6 +19,7 @@ namespace AppActions
 {
 const std::wstring APP = L"Mupen64 > ";
 
+const std::wstring LOAD_ROM_DIRECT = APP + L"File > # Load ROM...";
 const std::wstring LOAD_ROM = APP + L"File > Load ROM...";
 const std::wstring CLOSE_ROM = APP + L"File > Close ROM";
 const std::wstring RESET_ROM = APP + L"File > Reset ROM";
