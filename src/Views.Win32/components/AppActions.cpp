@@ -743,20 +743,10 @@ static void screenshot()
     g_plugin_funcs.video_capture_screen(Config::screenshot_directory().string().data());
 }
 
-static void start_capture(const bool ask_preset)
+static void start_capture_direct(const ActionManager::action_parameter_list &params)
 {
-    if (!g_main_ctx.core_ctx->vr_get_launched())
-    {
-        return;
-    }
-
-    BetterEmulationLock lock;
-
-    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi");
-    if (path.empty())
-    {
-        return;
-    }
+    const auto path = params.at(L"path");
+    const auto ask_preset = params.at(L"ask_preset") == L"1";
 
     EncodingManager::start_capture(path, (t_config::EncoderType)g_config.encoder_type, ask_preset,
                                    [](const auto result) {
@@ -769,12 +759,36 @@ static void start_capture(const bool ask_preset)
 
 static void start_capture_normal()
 {
-    start_capture(true);
+    BetterEmulationLock lock;
+
+    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi");
+    if (path.empty())
+    {
+        return;
+    }
+
+    ActionManager::invoke(AppActions::VIDEO_CAPTURE_START_DIRECT, false, true,
+                          {
+                              {L"path", path},
+                              {L"ask_preset", L"0"},
+                          });
 }
 
 static void start_capture_from_preset()
 {
-    start_capture(false);
+    BetterEmulationLock lock;
+
+    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi");
+    if (path.empty())
+    {
+        return;
+    }
+
+    ActionManager::invoke(AppActions::VIDEO_CAPTURE_START_DIRECT, false, true,
+                          {
+                              {L"path", path},
+                              {L"ask_preset", L"1"},
+                          });
 }
 
 static void stop_capture()
@@ -1151,6 +1165,12 @@ void AppActions::add()
     add_action(START_TRACE_LOGGER, Hotkey::t_hotkey::make_empty(), start_tracelog,
                enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(STOP_TRACE_LOGGER, Hotkey::t_hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
+    add_action(VIDEO_CAPTURE_START_DIRECT, start_capture_direct,
+               std::vector<ActionManager::t_action_param>{
+                   {.key = L"path", .name = L"Path", .validator = Validators::nonempty},
+                   {.key = L"ask_preset", .name = L"Ask for preset?", .validator = Validators::boolean},
+               },
+               enable_when_emu_launched);
     add_action(VIDEO_CAPTURE_START, Hotkey::t_hotkey::make_empty(), start_capture_normal, enable_when_emu_launched);
     add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::t_hotkey::make_empty(), start_capture_from_preset,
                enable_when_emu_launched);

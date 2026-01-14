@@ -37,6 +37,15 @@ std::optional<std::wstring> int32_t_optional(const std::wstring_view str)
     return int32_t(str);
 }
 
+std::optional<std::wstring> boolean(const std::wstring_view str)
+{
+    if(str == L"0" || str == L"1")
+    {
+        return std::nullopt;
+    }
+    return L"Value must be either 0 or 1.";
+}
+
 std::optional<std::wstring> none(const std::wstring_view)
 {
     return std::nullopt;

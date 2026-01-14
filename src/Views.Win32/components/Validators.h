@@ -29,6 +29,13 @@ std::optional<std::wstring> int32_t(const std::wstring_view str);
 std::optional<std::wstring> int32_t_optional(const std::wstring_view str);
 
 /**
+ * \brief Validates whether the input string represents a boolean value (0 or 1).
+ * \param str The input string to validate.
+ * \return An optional error message if validation fails, or std::nullopt if validation succeeds or the string is empty.
+ */
+std::optional<std::wstring> boolean(const std::wstring_view str);
+
+/**
  * \brief A validator that always returns no error.
  * \param str The input string to validate.
  * \return Always returns std::nullopt.

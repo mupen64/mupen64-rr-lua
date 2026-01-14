@@ -80,6 +80,7 @@ const std::wstring DEBUGGER = APP + L"Utilities > Debugger";
 const std::wstring START_TRACE_LOGGER = APP + L"Utilities > Start Trace Logger...";
 const std::wstring STOP_TRACE_LOGGER = APP + L"Utilities > Stop Trace Logger ---";
 const std::wstring VIDEO_CAPTURE = APP + L"Utilities > Video Capture > ";
+const std::wstring VIDEO_CAPTURE_START_DIRECT = VIDEO_CAPTURE + L"# Start Capture...";
 const std::wstring VIDEO_CAPTURE_START = VIDEO_CAPTURE + L"Start Capture...";
 const std::wstring VIDEO_CAPTURE_START_PRESET = VIDEO_CAPTURE + L"Start Capture from Preset... ---";
 const std::wstring VIDEO_CAPTURE_STOP = VIDEO_CAPTURE + L"Stop Capture ---";
