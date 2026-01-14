@@ -14,8 +14,8 @@
 -- 5. The hotkey for "Change Name of This Action..." works (default Ctrl+U)
 -- 6. Pressing "Change Hotkey..." prompts for a new hotkey and changes the hotkey of "Change Name of This Action..."
 -- 7. Pressing "Click Child to Remove It > Item X" removes that action
--- 8. Stopping the script removes the "Action API Demo" menu.
---
+-- 8. Pressing "Parameterized Action..." prompts for a parameter with a prefilled value and a few hints, and prints it to the console. 
+-- 9. Stopping the script removes the "Action API Demo" menu.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
