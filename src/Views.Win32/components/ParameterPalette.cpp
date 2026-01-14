@@ -213,12 +213,13 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
                                             {g_ctx.status_hwnd, ResizeAnchor::HORIZONTAL_ANCHOR},
                                         });
 
-        // 4. Set the focus to the edit control
+        // 3. Set the focus to the edit control
         SetFocus(g_ctx.combo_hwnd);
 
-        // 5. Subclass the controls for key event handling
+        // 4. Subclass the controls for key event handling
         SetWindowSubclass(g_ctx.edit_hwnd, keyboard_interaction_subclass_proc, 0, 0);
 
+        // 5. Initialize header
         const auto display_name = ActionManager::get_display_name(g_ctx.action_path);
         SetWindowText(g_ctx.header_hwnd, std::format(L"{}", display_name).c_str());
 
