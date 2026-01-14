@@ -217,7 +217,7 @@ static ActionManager::t_action_add_params check_action_add_params(lua_State *L, 
 
             lua_pushcallback(L, on_press, false);
             push_action_params(L, params);
-            lua_pcall(L, 1, 1, 0);
+            lua_pcall(L, 1, 0, 0);
         };
     }
 
