@@ -15,7 +15,7 @@ std::optional<std::wstring> int32_t(const std::wstring_view str)
     try
     {
         std::size_t pos;
-        std::stoi(str.data(), &pos);
+        std::ignore = std::stoi(std::wstring(str), &pos);
         if (pos != str.size())
         {
             return L"Value must be an integer.";
