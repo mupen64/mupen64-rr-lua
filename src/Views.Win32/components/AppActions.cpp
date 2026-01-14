@@ -606,12 +606,15 @@ static void load_recent_movie(size_t i)
 
     g_config.core.vcr_readonly = true;
     Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-    ThreadPool::submit_task(
-        [=] {
-            const auto result = g_main_ctx.core_ctx->vcr_start_playback(path);
-            show_error_dialog_for_result(result);
-        },
-        ASYNC_KEY_PLAY_MOVIE);
+
+    ActionManager::invoke(AppActions::START_MOVIE_PLAYBACK_DIRECT, false, true,
+                          {
+                              {L"path", path},
+                              {L"author", L""},
+                              {L"description", L""},
+                              {L"pause_at", L"0"},
+                              {L"pause_at_last", L"0"},
+                          });
 }
 
 static void toggle_movie_loop()
