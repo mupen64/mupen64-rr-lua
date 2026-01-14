@@ -102,9 +102,7 @@ struct t_action_add_params
     std::vector<t_action_param> params{};
 
     /**
-     * \brief The callback to be invoked when the action is pressed. Can be null.
-     * If this action has been assigned a parameter set via list using `set_params`, this callback receives a parameter
-     * list.
+     * \brief The callback to be invoked when the action is pressed. If this action has parameters, they will be supplied as a parameter. Can be null.
      */
     std::function<void(const action_parameter_list &params)> on_press;
 

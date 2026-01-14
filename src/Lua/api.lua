@@ -1556,7 +1556,7 @@ function hotkey.prompt(caption) end
 ---@class ActionAddParams
 ---@field path ActionPath The action's path. If the path's final segment is prefixed with `#`, it won't be visible in the menu.
 ---@field params ActionParam[]? The action parameters.
----@field on_press fun(params: ActionParameterList)? The callback to be invoked when the action is pressed. Can be null. If this action has been assigned a parameter set via list using [action.set_params](lua://action.set_params), this callback receives a parameter list.
+---@field on_press fun(params: ActionParameterList)? The callback to be invoked when the action is pressed. If this action has parameters, they will be supplied as a parameter.
 ---@field on_release fun()? The callback to be invoked when the action is released. Can be null.
 ---@field get_display_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 ---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled. If null, the action will be considered enabled.
