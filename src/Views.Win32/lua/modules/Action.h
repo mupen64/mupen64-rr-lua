@@ -122,7 +122,7 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
             }};
 }
 
-static void push_action_params(lua_State *L, const ActionManager::action_parameter_list &params)
+static void push_action_params(lua_State *L, const ActionManager::action_argument_map &params)
 {
     lua_newtable(L);
     for (const auto &[key, value] : params)
@@ -133,9 +133,9 @@ static void push_action_params(lua_State *L, const ActionManager::action_paramet
     }
 }
 
-static ActionManager::action_parameter_list check_action_param_list(lua_State *L, int index)
+static ActionManager::action_argument_map check_action_param_list(lua_State *L, int index)
 {
-    ActionManager::action_parameter_list params;
+    ActionManager::action_argument_map params;
 
     if (!lua_istable(L, index))
     {
@@ -209,7 +209,7 @@ static ActionManager::t_action_add_params check_action_add_params(lua_State *L, 
     auto on_press = lua_optcallback(L, -1);
     if (on_press)
     {
-        params.on_press = [=](const ActionManager::action_parameter_list &params) {
+        params.on_press = [=](const ActionManager::action_argument_map &params) {
             if (!LuaManager::get_environment_for_state(L))
             {
                 return;
@@ -478,7 +478,7 @@ static int invoke(lua_State *L)
     const auto path = luaL_checkwstring(L, 1);
     const auto up = (bool)luaL_opt(L, lua_toboolean, 2, false);
     const auto release_on_repress = (bool)luaL_opt(L, lua_toboolean, 3, true);
-    const auto params = lua_isnoneornil(L, 4) ? ActionManager::action_parameter_list{} : check_action_param_list(L, 4);
+    const auto params = lua_isnoneornil(L, 4) ? ActionManager::action_argument_map{} : check_action_param_list(L, 4);
 
     ActionManager::invoke(path, up, release_on_repress, params);
 

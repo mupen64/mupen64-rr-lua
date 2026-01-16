@@ -25,7 +25,7 @@ struct t_parameter_palette_context
     ActionManager::action_path action_path{};
     size_t param_index{};
     std::vector<ActionManager::t_action_param> ref_params{};
-    ActionManager::action_parameter_list filled_params{};
+    ActionManager::action_argument_map filled_params{};
 
     std::function<void()> unsubscribe_move_message{};
 };

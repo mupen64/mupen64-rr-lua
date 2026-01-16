@@ -12,7 +12,7 @@ using t_action_param = ActionManager::t_action_param;
 using t_action_add_params = ActionManager::t_action_add_params;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
-using action_parameter_list = ActionManager::action_parameter_list;
+using action_argument_map = ActionManager::action_argument_map;
 
 struct t_action
 {
@@ -573,7 +573,7 @@ ActionManager::action_filter ActionManager::normalize_filter(const action_filter
  * \param params The parameters to validate.
  * \return Whether the parameters are valid.
  */
-static bool validate_params(const t_action &action, const action_parameter_list &params)
+static bool validate_params(const t_action &action, const action_argument_map &params)
 {
     // Fast path: no parameters needed, we ignore any supplied parameters.
     if (action.add_params.params.empty())
@@ -619,7 +619,7 @@ static bool validate_params(const t_action &action, const action_parameter_list 
 }
 
 void ActionManager::invoke(const action_path &path, const bool up, const bool release_on_repress,
-                           const action_parameter_list &params)
+                           const action_argument_map &params)
 {
     t_action *action = get_single_action_ptr_matching_path(path);
 

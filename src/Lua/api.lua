@@ -1542,7 +1542,7 @@ function hotkey.prompt(caption) end
 ---A fully-qualified action path in the format `"Category[] > Name"`.
 ---An action path is a subset of the action filter that contains no wildcards and is used to uniquely identify an action.
 
----@alias ActionParameterList { [string]: string }
+---@alias ActionArgumentMap { [string]: string }
 ---Represents a collection of action parameter keys to their values.
 
 ---@class ActionParam
@@ -1556,7 +1556,7 @@ function hotkey.prompt(caption) end
 ---@class ActionAddParams
 ---@field path ActionPath The action's path. If the path's final segment is prefixed with `#`, it won't be visible in the menu.
 ---@field params ActionParam[]? The action parameters.
----@field on_press fun(params: ActionParameterList)? The callback to be invoked when the action is pressed. If this action has parameters, they will be supplied as a parameter.
+---@field on_press fun(params: ActionArgumentMap)? The callback to be invoked when the action is pressed. If this action has parameters, they will be supplied as an argument map.
 ---@field on_release fun()? The callback to be invoked when the action is released. Can be null.
 ---@field get_display_name (fun(): string)? The function used to determine the function's display name. If null, the display name will be derived from the path.
 ---@field get_enabled (fun(): boolean)? The function used to determine whether the action is enabled. If null, the action will be considered enabled.
@@ -1629,7 +1629,7 @@ function action.get_actions_matching_filter(filter) end
 ---@param path ActionPath A path.
 ---@param up boolean? If true, the action is considered to be released, otherwise it is considered to be pressed down.
 ---@param release_on_repress boolean? If true, if the action is already pressed down and `up` is false, the action will first be released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
----@param params ActionParameterList? The action parameters.
+---@param params ActionArgumentMap? The action parameters.
 ---@return boolean # Whether the operation succeeded.
 function action.invoke(path, up, release_on_repress, params) end
 

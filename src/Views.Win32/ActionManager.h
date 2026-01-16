@@ -50,9 +50,9 @@ using action_filter = std::wstring;
 using action_path = std::wstring;
 
 /**
- * \brief Represents a collection of action parameter keys to their values.
+ * \brief Represents a collection of action arguments' keys to their values.
  */
-using action_parameter_list = std::unordered_map<std::wstring, std::wstring>;
+using action_argument_map = std::unordered_map<std::wstring, std::wstring>;
 
 /**
  * \brief Represents an action parameter.
@@ -102,9 +102,9 @@ struct t_action_add_params
     std::vector<t_action_param> params{};
 
     /**
-     * \brief The callback to be invoked when the action is pressed. If this action has parameters, they will be supplied as a parameter. Can be null.
+     * \brief The callback to be invoked when the action is pressed. If this action has parameters, they will be supplied as an argument map. Can be null.
      */
-    std::function<void(const action_parameter_list &params)> on_press;
+    std::function<void(const action_argument_map &params)> on_press;
 
     /**
      * \brief The callback to be invoked when the action is released. Can be null.
@@ -255,7 +255,7 @@ action_filter normalize_filter(const action_filter &filter);
  * \param params The action parameters.
  */
 void invoke(const action_path &path, bool up = false, bool release_on_repress = true,
-            const action_parameter_list &params = {});
+            const action_argument_map &params = {});
 
 /**
  * \brief Locks or unlocks action invocations from hotkeys.

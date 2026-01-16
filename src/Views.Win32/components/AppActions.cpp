@@ -99,7 +99,7 @@ static void stub()
 
 #pragma region File
 
-static void load_rom_direct(const ActionManager::action_parameter_list &params)
+static void load_rom_direct(const ActionManager::action_argument_map &params)
 {
     const std::filesystem::path path = params.at(L"path");
 
@@ -235,7 +235,7 @@ static void frame_advance()
     g_main_ctx.core_ctx->vr_resume_emu();
 }
 
-static void multi_frame_advance_direct(const ActionManager::action_parameter_list &params)
+static void multi_frame_advance_direct(const ActionManager::action_argument_map &params)
 {
     const int32_t count = std::stoi(params.at(L"count"));
 
@@ -485,7 +485,7 @@ static void show_settings_dialog()
 
 #pragma region Movie
 
-static void start_movie_recording_direct(const ActionManager::action_parameter_list &params)
+static void start_movie_recording_direct(const ActionManager::action_argument_map &params)
 {
     const std::filesystem::path path = params.at(L"path");
     const uint16_t start_flag = static_cast<uint16_t>(std::stoul(params.at(L"start_flag")));
@@ -539,7 +539,7 @@ static void continue_movie_recording()
     });
 }
 
-static void start_movie_playback_direct(const ActionManager::action_parameter_list &params)
+static void start_movie_playback_direct(const ActionManager::action_argument_map &params)
 {
     const auto path = params.at(L"path");
     const auto author = params.at(L"author");
@@ -717,7 +717,7 @@ static void show_cheat_dialog()
     Cheats::show();
 }
 
-static void seek_direct(const ActionManager::action_parameter_list &params)
+static void seek_direct(const ActionManager::action_argument_map &params)
 {
     const auto frame_str = params.at(L"frame");
 
@@ -743,7 +743,7 @@ static void screenshot()
     g_plugin_funcs.video_capture_screen(Config::screenshot_directory().string().data());
 }
 
-static void start_capture_direct(const ActionManager::action_parameter_list &params)
+static void start_capture_direct(const ActionManager::action_argument_map &params)
 {
     const auto path = params.at(L"path");
     const auto ask_preset = params.at(L"ask_preset") == L"1";
@@ -837,7 +837,7 @@ static void show_about_dialog()
 
 #pragma region Lua Script
 
-static void load_script_direct(const ActionManager::action_parameter_list &params)
+static void load_script_direct(const ActionManager::action_argument_map &params)
 {
     const std::filesystem::path path = params.at(L"path");
 
@@ -945,7 +945,7 @@ static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default
 }
 
 static void add_action(const std::wstring &path,
-                       const std::function<void(const ActionManager::action_parameter_list &)> &callback,
+                       const std::function<void(const ActionManager::action_argument_map &)> &callback,
                        const std::vector<ActionManager::t_action_param> &params,
                        const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
                        const std::function<std::wstring()> &get_display_name = {})
