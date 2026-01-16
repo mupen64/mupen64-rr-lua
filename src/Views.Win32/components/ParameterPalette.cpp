@@ -30,6 +30,13 @@ struct t_parameter_palette_context
     std::function<void()> unsubscribe_move_message{};
 };
 
+enum class NextParamResult
+{
+    Failed = 0,
+    Continue = 1,
+    Finished = 2
+};
+
 static t_parameter_palette_context g_ctx{};
 
 /**
@@ -91,26 +98,25 @@ static bool try_apply_parameter()
 /**
  * \brief Advances to the next parameter in parameter input mode.
  */
-static int next_parameter()
+static NextParamResult next_parameter()
 {
     if (!try_apply_parameter())
     {
-        return 0;
+        return NextParamResult::Failed;
     }
 
     g_ctx.param_index++;
 
     if (g_ctx.param_index >= g_ctx.ref_params.size())
     {
-        // All parameters filled, invoke the action.
         SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
         ActionManager::invoke(g_ctx.action_path, false, true, g_ctx.filled_params);
-        return 2;
+        return NextParamResult::Finished;
     }
 
     on_page_changed();
 
-    return 1;
+    return NextParamResult::Continue;
 }
 
 /**
@@ -121,7 +127,7 @@ static void try_skip_to_end()
     while (true)
     {
         const auto result = next_parameter();
-        if (result == 0 || result == 2)
+        if (result == NextParamResult::Failed || result == NextParamResult::Finished)
         {
             break;
         }
