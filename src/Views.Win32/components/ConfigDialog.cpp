@@ -42,7 +42,7 @@ bool g_plugin_discovery_rescan = false;
 struct t_tab_context
 {
     size_t tab_index;
-    
+
     // The groups to show in this tab.
     std::vector<std::wstring> groups;
 };
@@ -1287,7 +1287,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
     case WM_NOTIFY: {
         if (lpnmhdr->code == PSN_SETACTIVE)
         {
-            g_config.settings_tab = ctx->tab_index + 1;
+            g_config.settings_tab = ctx->tab_index;
 
             if (g_lv_hwnd)
             {
@@ -1435,47 +1435,62 @@ void ConfigDialog::show_app_settings()
         }
     }
 
-    PROPSHEETPAGE psp[9] = {{0}};
-    for (auto &i : psp)
+    std::vector<PROPSHEETPAGE> psp;
+    
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_PLUGINS),
+        .pszTitle = L"Plugins",
+        .pfnDlgProc = plugins_cfg,
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Folders",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Folders"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Visual",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Interface", L"Statusbar"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Emulation",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek / Piano Roll"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Capture",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Capture"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Lua",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Lua"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Debug",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Debug"}}),
+    });
+
+    for (auto &page : psp)
     {
-        i.dwSize = sizeof(PROPSHEETPAGE);
-        i.dwFlags = PSP_USETITLE;
-        i.hInstance = g_main_ctx.hinst;
+        page.dwSize = sizeof(PROPSHEETPAGE);
+        page.dwFlags = PSP_USETITLE;
+        page.hInstance = g_main_ctx.hinst;
     }
-
-    psp[0].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_PLUGINS);
-    psp[0].pfnDlgProc = plugins_cfg;
-    psp[0].pszTitle = L"Plugins";
-
-    psp[1].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[1].pfnDlgProc = generic_tab_proc;
-    psp[1].pszTitle = L"Folders";
-    psp[1].lParam = (LPARAM) new t_tab_context({.tab_index = 1, .groups = {L"Folders"}});
-
-    psp[2].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[2].pfnDlgProc = generic_tab_proc;
-    psp[2].pszTitle = L"Visual";
-    psp[2].lParam = (LPARAM) new t_tab_context({.tab_index = 2, .groups = {L"Interface", L"Statusbar"}});
-
-    psp[3].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[3].pfnDlgProc = generic_tab_proc;
-    psp[3].pszTitle = L"Emulation";
-    psp[3].lParam = (LPARAM) new t_tab_context({.tab_index = 5, .groups = {L"Core", L"VCR", L"Seek / Piano Roll"}});
-
-    psp[4].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[4].pfnDlgProc = generic_tab_proc;
-    psp[4].pszTitle = L"Capture";
-    psp[4].lParam = (LPARAM) new t_tab_context({.tab_index = 4, .groups = {L"Capture"}});
-
-    psp[5].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[5].pfnDlgProc = generic_tab_proc;
-    psp[5].pszTitle = L"Lua";
-    psp[5].lParam = (LPARAM) new t_tab_context({.tab_index = 6, .groups = {L"Lua"}});
-
-    psp[6].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[6].pfnDlgProc = generic_tab_proc;
-    psp[6].pszTitle = L"Debug";
-    psp[6].lParam = (LPARAM) new t_tab_context({.tab_index = 7, .groups = {L"Debug"}});
 
     PROPSHEETHEADER psh = {0};
     psh.dwSize = sizeof(PROPSHEETHEADER);
@@ -1483,9 +1498,9 @@ void ConfigDialog::show_app_settings()
     psh.hwndParent = g_main_ctx.hwnd;
     psh.hInstance = g_main_ctx.hinst;
     psh.pszCaption = L"Settings";
-    psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
+    psh.nPages = psp.size();
     psh.nStartPage = g_config.settings_tab;
-    psh.ppsp = (LPCPROPSHEETPAGE)&psp;
+    psh.ppsp = (LPCPROPSHEETPAGE)psp.data();
 
     g_prev_config = g_config;
 
