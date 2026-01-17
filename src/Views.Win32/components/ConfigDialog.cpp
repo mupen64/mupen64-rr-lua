@@ -39,6 +39,14 @@ std::thread g_plugin_discovery_thread;
 // Whether a plugin rescan is needed. Set when modifying the plugin path.
 bool g_plugin_discovery_rescan = false;
 
+struct t_tab_context
+{
+    size_t tab_index;
+    
+    // The groups to show in this tab.
+    std::vector<std::wstring> groups;
+};
+
 std::wstring t_options_item::get_name() const
 {
     if (type == Type::Hotkey)
@@ -568,15 +576,11 @@ std::vector<t_options_group> get_static_option_groups()
 
     t_options_group folders_group = {.id = id++, .name = L"Folders"};
 
-    t_options_group rombrowser_group = {.id = id++, .name = L"Rombrowser"};
-
     t_options_group interface_group = {.id = id++, .name = L"Interface"};
 
     t_options_group statusbar_group = {.id = id++, .name = L"Statusbar"};
 
     t_options_group seek_piano_roll_group = {.id = id++, .name = L"Seek / Piano Roll"};
-
-    t_options_group flow_group = {.id = id++, .name = L"Flow"};
 
     t_options_group capture_group = {.id = id++, .name = L"Capture"};
 
@@ -985,9 +989,8 @@ std::vector<t_options_group> get_static_option_groups()
         .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
     });
 
-    return {folders_group, rombrowser_group, interface_group, statusbar_group, seek_piano_roll_group,
-            flow_group,    capture_group,    core_group,      vcr_group,       lua_group,
-            debug_group};
+    return {folders_group, interface_group, statusbar_group, seek_piano_roll_group, capture_group, core_group,
+            vcr_group,     lua_group,       debug_group};
 }
 
 LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
@@ -1137,70 +1140,16 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     return true;
 }
 
-INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
+INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
 {
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
+    auto ctx = (t_tab_context *)GetProp(hwnd, L"tab_context");
 
     switch (message)
     {
     case WM_INITDIALOG: {
-        if (g_lv_hwnd)
-        {
-            DestroyWindow(g_lv_hwnd);
-        }
-
-        RECT grid_rect{};
-        GetClientRect(hwnd, &grid_rect);
-
-        std::vector<std::wstring> groups;
-        for (const auto &group : g_option_groups)
-        {
-            groups.push_back(group.name);
-        }
-
-        std::vector<std::pair<size_t, std::wstring>> items;
-        for (const auto &item : g_option_items)
-        {
-            items.emplace_back(item.group_id, item.name);
-        }
-
-        auto get_item_tooltip = [](size_t i) { return g_option_items[i].tooltip; };
-
-        auto edit_start = [=](size_t i) { begin_settings_lv_edit(hwnd, i); };
-
-        auto get_item_image = [](size_t i) {
-            const auto &option_item = g_option_items[i];
-
-            int32_t image = option_item.initial_value.get() == option_item.current_value.get() ? 50 : 1;
-
-            if (option_item.is_readonly())
-            {
-                image = 0;
-            }
-
-            return image;
-        };
-
-        auto get_item_text = [](size_t i, size_t subitem) {
-            if (subitem == 0)
-            {
-                return g_option_items[i].get_name();
-            }
-
-            return g_option_items[i].get_value_name();
-        };
-
-        g_lv_hwnd = SettingsListView::create({
-            .dlg_hwnd = hwnd,
-            .rect = grid_rect,
-            .on_edit_start = edit_start,
-            .groups = groups,
-            .items = items,
-            .get_item_tooltip = get_item_tooltip,
-            .get_item_text = get_item_text,
-            .get_item_image = get_item_image,
-        });
-
+        const auto ps = (PROPSHEETPAGE *)l_param;
+        SetProp(hwnd, L"tab_context", (HANDLE)ps->lParam);
         return TRUE;
     }
     case WM_EDIT_END: {
@@ -1331,10 +1280,87 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
         DestroyMenu(h_menu);
     }
     break;
+    case WM_DESTROY:
+        RemoveProp(hwnd, L"tab_context");
+        delete ctx;
+        break;
     case WM_NOTIFY: {
         if (lpnmhdr->code == PSN_SETACTIVE)
         {
-            g_config.settings_tab = 2;
+            g_config.settings_tab = ctx->tab_index + 1;
+
+            if (g_lv_hwnd)
+            {
+                DestroyWindow(g_lv_hwnd);
+                g_lv_hwnd = nullptr;
+            }
+
+            RECT grid_rect{};
+            GetClientRect(hwnd, &grid_rect);
+
+            std::vector<SettingsListView::t_group> groups;
+            for (size_t i = 0; i < g_option_groups.size(); ++i)
+            {
+                const auto &group = g_option_groups[i];
+
+                if (std::find(ctx->groups.begin(), ctx->groups.end(), group.name) == ctx->groups.end())
+                {
+                    continue;
+                }
+
+                groups.emplace_back(group.id, group.name);
+            }
+
+            std::vector<SettingsListView::t_item> items;
+            for (size_t i = 0; i < g_option_items.size(); ++i)
+            {
+                const auto &item = g_option_items[i];
+
+                if (std::find(ctx->groups.begin(), ctx->groups.end(), g_option_groups[item.group_id].name) ==
+                    ctx->groups.end())
+                {
+                    continue;
+                }
+
+                items.emplace_back(item.group_id, item.get_name());
+            }
+
+            auto get_item_tooltip = [=](size_t i) -> std::wstring { return g_option_items[i].tooltip; };
+
+            auto edit_start = [=](size_t i) { begin_settings_lv_edit(hwnd, i); };
+
+            auto get_item_image = [=](size_t i) {
+                const auto &option_item = g_option_items[i];
+
+                int32_t image = option_item.initial_value.get() == option_item.current_value.get() ? 50 : 1;
+
+                if (option_item.is_readonly())
+                {
+                    image = 0;
+                }
+
+                return image;
+            };
+
+            auto get_item_text = [=](size_t i, size_t subitem) {
+                if (subitem == 0)
+                {
+                    return g_option_items[i].get_name();
+                }
+
+                return g_option_items[i].get_value_name();
+            };
+
+            g_lv_hwnd = SettingsListView::create({
+                .dlg_hwnd = hwnd,
+                .rect = grid_rect,
+                .on_edit_start = edit_start,
+                .groups = groups,
+                .items = items,
+                .get_item_tooltip = get_item_tooltip,
+                .get_item_text = get_item_text,
+                .get_item_image = get_item_image,
+            });
         }
 
         return SettingsListView::notify(hwnd, g_lv_hwnd, l_param, w_param);
@@ -1409,7 +1435,7 @@ void ConfigDialog::show_app_settings()
         }
     }
 
-    PROPSHEETPAGE psp[2] = {{0}};
+    PROPSHEETPAGE psp[9] = {{0}};
     for (auto &i : psp)
     {
         i.dwSize = sizeof(PROPSHEETPAGE);
@@ -1422,8 +1448,34 @@ void ConfigDialog::show_app_settings()
     psp[0].pszTitle = L"Plugins";
 
     psp[1].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[1].pfnDlgProc = general_cfg;
-    psp[1].pszTitle = L"General";
+    psp[1].pfnDlgProc = generic_tab_proc;
+    psp[1].pszTitle = L"Folders";
+    psp[1].lParam = (LPARAM) new t_tab_context({.tab_index = 1, .groups = {L"Folders"}});
+
+    psp[2].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
+    psp[2].pfnDlgProc = generic_tab_proc;
+    psp[2].pszTitle = L"Visual";
+    psp[2].lParam = (LPARAM) new t_tab_context({.tab_index = 2, .groups = {L"Interface", L"Statusbar"}});
+
+    psp[3].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
+    psp[3].pfnDlgProc = generic_tab_proc;
+    psp[3].pszTitle = L"Emulation";
+    psp[3].lParam = (LPARAM) new t_tab_context({.tab_index = 5, .groups = {L"Core", L"VCR", L"Seek / Piano Roll"}});
+
+    psp[4].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
+    psp[4].pfnDlgProc = generic_tab_proc;
+    psp[4].pszTitle = L"Capture";
+    psp[4].lParam = (LPARAM) new t_tab_context({.tab_index = 4, .groups = {L"Capture"}});
+
+    psp[5].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
+    psp[5].pfnDlgProc = generic_tab_proc;
+    psp[5].pszTitle = L"Lua";
+    psp[5].lParam = (LPARAM) new t_tab_context({.tab_index = 6, .groups = {L"Lua"}});
+
+    psp[6].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
+    psp[6].pfnDlgProc = generic_tab_proc;
+    psp[6].pszTitle = L"Debug";
+    psp[6].lParam = (LPARAM) new t_tab_context({.tab_index = 7, .groups = {L"Debug"}});
 
     PROPSHEETHEADER psh = {0};
     psh.dwSize = sizeof(PROPSHEETHEADER);

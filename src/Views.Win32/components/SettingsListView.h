@@ -11,11 +11,15 @@
  */
 namespace SettingsListView
 {
+using t_group = std::pair<size_t, std::wstring>;
+using t_item = std::pair<size_t, std::wstring>;
+
 /**
  * \brief The context of a SettingsListView.
  */
-typedef struct
+struct t_settings_listview_context
 {
+
     /**
      * \brief The ListView's parent dialog.
      */
@@ -29,32 +33,33 @@ typedef struct
     /**
      * \brief A callback that is invoked when an item is about to be edited.
      */
-    std::function<void(size_t)> on_edit_start;
+    std::function<void(size_t index)> on_edit_start;
 
     /**
-     * \brief The ListView's groups.
+     * \brief The ListView's groups as a pair of group ID and group name.
      */
-    std::vector<std::wstring> groups;
+    std::vector<t_group> groups;
 
     /**
-     * \brief The ListView's items, as a pair of group indicies and item names.
+     * \brief The ListView's items as a pair of group ID and item name.
      */
-    std::vector<std::pair<size_t, std::wstring>> items;
+    std::vector<t_item> items;
 
     /**
      * \brief A callback that retrieves an item's tooltip from the second column.
      */
-    std::function<std::wstring(size_t)> get_item_tooltip;
+    std::function<std::wstring(size_t index)> get_item_tooltip;
+
     /**
      * \brief A callback that retrieves an item's text from an arbitrary column.
      */
-    std::function<std::wstring(size_t, size_t)> get_item_text;
+    std::function<std::wstring(size_t index, size_t column)> get_item_text;
 
     /**
      * \brief A callback that retrieves an item's image index.
      */
-    std::function<int32_t(size_t)> get_item_image;
-} t_settings_listview_context;
+    std::function<int32_t(size_t index)> get_item_image;
+};
 
 /**
  * \brief Creates a SettingsListView.

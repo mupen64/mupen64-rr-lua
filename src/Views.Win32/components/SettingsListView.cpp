@@ -86,11 +86,10 @@ HWND SettingsListView::create(const t_settings_listview_context &ctx)
     // TODO: Make groups collapsible
     // lvgroup.state = LVGS_COLLAPSIBLE;
 
-    for (int i = 0; i < ctx.groups.size(); ++i)
+    for (const auto &pair : ctx.groups)
     {
-        // FIXME: This is concerning, but seems to work
-        lvgroup.pszHeader = const_cast<wchar_t *>(ctx.groups[i].c_str());
-        lvgroup.iGroupId = i;
+        lvgroup.pszHeader = const_cast<wchar_t *>(pair.second.c_str());
+        lvgroup.iGroupId = pair.first;
         ListView_InsertGroup(lvhwnd, -1, &lvgroup);
     }
 
@@ -167,7 +166,7 @@ bool SettingsListView::notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM 
         item.iItem = getinfotip->iItem;
         ListView_GetItem(lvhwnd, &item);
 
-        const auto tooltip = ctx->get_item_tooltip(item.lParam);
+        const auto tooltip = ctx->get_item_tooltip(item.iItem);
 
         if (tooltip.empty())
         {
