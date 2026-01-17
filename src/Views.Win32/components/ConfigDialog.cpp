@@ -1045,55 +1045,6 @@ void advance_listview_selection(HWND lvhwnd)
     ListView_EnsureVisible(lvhwnd, i + 1, false);
 }
 
-bool begin_settings_lv_edit(t_tab_context &ctx, int i)
-{
-    auto option_item = g_option_items[i];
-
-    // TODO: Perhaps gray out readonly values too?
-    if (option_item.is_readonly())
-    {
-        return false;
-    }
-
-    // We use the default detached editing, except for numbers, which are edited inline.
-    if (option_item.type != t_options_item::Type::Number)
-    {
-        (void)option_item.edit(ctx.hwnd);
-        ListView_RedrawItems(ctx.lv_hwnd, 0, ListView_GetItemCount(ctx.lv_hwnd));
-        return true;
-    }
-
-    if (ctx.edit_hwnd)
-    {
-        DestroyWindow(ctx.edit_hwnd);
-    }
-
-    ctx.edit_option_item_index = i;
-
-    RECT item_rect{};
-    ListView_GetSubItemRect(ctx.lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
-
-    RECT lv_rect{};
-    GetClientRect(ctx.lv_hwnd, &lv_rect);
-
-    item_rect.right = lv_rect.right;
-
-    ctx.edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
-                                   item_rect.top, item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
-                                   ctx.hwnd, 0, g_main_ctx.hinst, 0);
-    SendMessage(ctx.edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(ctx.lv_hwnd, WM_GETFONT, 0, 0), 0);
-
-    SetWindowSubclass(ctx.edit_hwnd, inline_edit_subclass_proc, 0, 0);
-
-    const auto value = std::get<int32_t>(option_item.current_value.get());
-    Edit_SetText(ctx.edit_hwnd, std::to_wstring(value).c_str());
-
-    PostMessage(ctx.hwnd, WM_NEXTDLGCTL, (WPARAM)ctx.edit_hwnd, TRUE);
-
-    ListView_RedrawItems(ctx.lv_hwnd, 0, ListView_GetItemCount(ctx.lv_hwnd));
-    return true;
-}
-
 INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
 {
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
@@ -1260,6 +1211,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             }
 
             std::vector<SettingsListView::t_item> items;
+            std::unordered_map<size_t, size_t> local_item_to_global_item;
             for (size_t i = 0; i < g_option_items.size(); ++i)
             {
                 const auto &item = g_option_items[i];
@@ -1270,19 +1222,69 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                     continue;
                 }
 
+                local_item_to_global_item[items.size()] = i;
                 items.emplace_back(item.group_id, item.get_name());
             }
 
-            auto get_item_tooltip = [=](size_t i) -> std::wstring { return g_option_items[i].tooltip; };
+            auto get_item_tooltip = [=](size_t i) -> std::wstring {
+                const auto &global_item = g_option_items[local_item_to_global_item.at(i)];
+                return global_item.tooltip;
+            };
 
-            auto edit_start = [=](size_t i) { begin_settings_lv_edit(*ctx, i); };
+            auto edit_start = [=](size_t i) {
+                auto &global_item = g_option_items[local_item_to_global_item.at(i)];
+
+                // TODO: Perhaps gray out readonly values too?
+                if (global_item.is_readonly())
+                {
+                    return false;
+                }
+
+                // We use the default detached editing, except for numbers, which are edited inline.
+                if (global_item.type != t_options_item::Type::Number)
+                {
+                    (void)global_item.edit(ctx->hwnd);
+                    ListView_RedrawItems(ctx->lv_hwnd, 0, ListView_GetItemCount(ctx->lv_hwnd));
+                    return true;
+                }
+
+                if (ctx->edit_hwnd)
+                {
+                    DestroyWindow(ctx->edit_hwnd);
+                }
+
+                ctx->edit_option_item_index = i;
+
+                RECT item_rect{};
+                ListView_GetSubItemRect(ctx->lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
+
+                RECT lv_rect{};
+                GetClientRect(ctx->lv_hwnd, &lv_rect);
+
+                item_rect.right = lv_rect.right;
+
+                ctx->edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                                                item_rect.left, item_rect.top, item_rect.right - item_rect.left,
+                                                item_rect.bottom - item_rect.top, ctx->hwnd, 0, g_main_ctx.hinst, 0);
+                SendMessage(ctx->edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(ctx->lv_hwnd, WM_GETFONT, 0, 0), 0);
+
+                SetWindowSubclass(ctx->edit_hwnd, inline_edit_subclass_proc, 0, 0);
+
+                const auto value = std::get<int32_t>(global_item.current_value.get());
+                Edit_SetText(ctx->edit_hwnd, std::to_wstring(value).c_str());
+
+                PostMessage(ctx->hwnd, WM_NEXTDLGCTL, (WPARAM)ctx->edit_hwnd, TRUE);
+
+                ListView_RedrawItems(ctx->lv_hwnd, 0, ListView_GetItemCount(ctx->lv_hwnd));
+                return true;
+            };
 
             auto get_item_image = [=](size_t i) {
-                const auto &option_item = g_option_items[i];
+                const auto &global_item = g_option_items[local_item_to_global_item.at(i)];
 
-                int32_t image = option_item.initial_value.get() == option_item.current_value.get() ? 50 : 1;
+                int32_t image = global_item.initial_value.get() == global_item.current_value.get() ? 50 : 1;
 
-                if (option_item.is_readonly())
+                if (global_item.is_readonly())
                 {
                     image = 0;
                 }
@@ -1291,12 +1293,14 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             };
 
             auto get_item_text = [=](size_t i, size_t subitem) {
+                const auto &global_item = g_option_items[local_item_to_global_item.at(i)];
+
                 if (subitem == 0)
                 {
-                    return g_option_items[i].get_name();
+                    return global_item.get_name();
                 }
 
-                return g_option_items[i].get_value_name();
+                return global_item.get_value_name();
             };
 
             if (ctx->lv_hwnd)
