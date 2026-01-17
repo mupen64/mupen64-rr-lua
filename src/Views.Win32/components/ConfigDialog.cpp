@@ -29,9 +29,6 @@ t_plugin_discovery_result plugin_discovery_result;
 std::vector<t_options_group> g_option_groups;
 std::vector<t_options_item> g_option_items;
 static std::vector<t_options_group> g_static_option_groups;
-HWND g_lv_hwnd;
-HWND g_edit_hwnd;
-size_t g_edit_option_item_index;
 t_config g_prev_config;
 
 std::thread g_plugin_discovery_thread;
@@ -45,6 +42,11 @@ struct t_tab_context
 
     // The groups to show in this tab.
     std::vector<std::wstring> groups;
+
+    HWND hwnd;
+    HWND lv_hwnd;
+    HWND edit_hwnd;
+    size_t edit_option_item_index;
 };
 
 std::wstring t_options_item::get_name() const
@@ -1013,7 +1015,6 @@ LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, L
         goto apply;
     case WM_NCDESTROY:
         RemoveWindowSubclass(hwnd, inline_edit_subclass_proc, id);
-        g_edit_hwnd = nullptr;
         break;
     default:
         break;
@@ -1032,52 +1033,6 @@ apply:
     goto def;
 }
 
-INT_PTR CALLBACK edit_string_dlgproc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_INITDIALOG: {
-        const auto option_item = g_option_items[g_edit_option_item_index];
-        const auto edit_hwnd = GetDlgItem(wnd, IDC_EDIT);
-
-        const auto current_value = std::get<std::wstring>(option_item.current_value.get());
-
-        SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
-        Edit_SetText(edit_hwnd, current_value.c_str());
-
-        SetFocus(GetDlgItem(wnd, IDC_EDIT));
-        break;
-    }
-    case WM_CLOSE:
-        EndDialog(wnd, IDCANCEL);
-        break;
-    case WM_COMMAND:
-        switch (LOWORD(wparam))
-        {
-        case IDOK: {
-            const auto &option_item = g_option_items[g_edit_option_item_index];
-            const auto edit_hwnd = GetDlgItem(wnd, IDC_EDIT);
-
-            const auto str = get_window_text(edit_hwnd).value_or(L"");
-
-            option_item.current_value.set(str);
-
-            EndDialog(wnd, IDOK);
-            break;
-        }
-        case IDCANCEL:
-            EndDialog(wnd, IDCANCEL);
-            break;
-        default:
-            break;
-        }
-        break;
-    default:
-        break;
-    }
-    return FALSE;
-}
-
 /**
  * Advances a listview's selection by one.
  */
@@ -1090,7 +1045,7 @@ void advance_listview_selection(HWND lvhwnd)
     ListView_EnsureVisible(lvhwnd, i + 1, false);
 }
 
-bool begin_settings_lv_edit(HWND hwnd, int i)
+bool begin_settings_lv_edit(t_tab_context &ctx, int i)
 {
     auto option_item = g_option_items[i];
 
@@ -1103,40 +1058,39 @@ bool begin_settings_lv_edit(HWND hwnd, int i)
     // We use the default detached editing, except for numbers, which are edited inline.
     if (option_item.type != t_options_item::Type::Number)
     {
-        (void)option_item.edit(hwnd);
-        ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
+        (void)option_item.edit(ctx.hwnd);
+        ListView_RedrawItems(ctx.lv_hwnd, 0, ListView_GetItemCount(ctx.lv_hwnd));
         return true;
     }
 
-    if (g_edit_hwnd)
+    if (ctx.edit_hwnd)
     {
-        DestroyWindow(g_edit_hwnd);
+        DestroyWindow(ctx.edit_hwnd);
     }
 
-    g_edit_option_item_index = i;
+    ctx.edit_option_item_index = i;
 
     RECT item_rect{};
-    ListView_GetSubItemRect(g_lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
+    ListView_GetSubItemRect(ctx.lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
 
     RECT lv_rect{};
-    GetClientRect(g_lv_hwnd, &lv_rect);
+    GetClientRect(ctx.lv_hwnd, &lv_rect);
 
     item_rect.right = lv_rect.right;
 
-    g_edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
-                                 item_rect.top, item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
-                                 hwnd, 0, g_main_ctx.hinst, 0);
+    ctx.edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
+                                   item_rect.top, item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
+                                   ctx.hwnd, 0, g_main_ctx.hinst, 0);
+    SendMessage(ctx.edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(ctx.lv_hwnd, WM_GETFONT, 0, 0), 0);
 
-    SendMessage(g_edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(g_lv_hwnd, WM_GETFONT, 0, 0), 0);
-
-    SetWindowSubclass(g_edit_hwnd, inline_edit_subclass_proc, 0, 0);
+    SetWindowSubclass(ctx.edit_hwnd, inline_edit_subclass_proc, 0, 0);
 
     const auto value = std::get<int32_t>(option_item.current_value.get());
-    Edit_SetText(g_edit_hwnd, std::to_wstring(value).c_str());
+    Edit_SetText(ctx.edit_hwnd, std::to_wstring(value).c_str());
 
-    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM)g_edit_hwnd, TRUE);
+    PostMessage(ctx.hwnd, WM_NEXTDLGCTL, (WPARAM)ctx.edit_hwnd, TRUE);
 
-    ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
+    ListView_RedrawItems(ctx.lv_hwnd, 0, ListView_GetItemCount(ctx.lv_hwnd));
     return true;
 }
 
@@ -1153,7 +1107,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         return TRUE;
     }
     case WM_EDIT_END: {
-        auto option_item = g_option_items[g_edit_option_item_index];
+        auto option_item = g_option_items[ctx->edit_option_item_index];
         auto str = reinterpret_cast<wchar_t *>(l_param);
 
         if (option_item.type == t_options_item::Type::Number)
@@ -1173,19 +1127,18 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             option_item.current_value.set(std::wstring(str));
         }
 
-        ListView_Update(g_lv_hwnd, g_edit_option_item_index);
+        ListView_Update(ctx->lv_hwnd, ctx->edit_option_item_index);
 
         break;
     }
     case WM_CONTEXTMENU: {
-        int32_t i = ListView_GetNextItem(g_lv_hwnd, -1, LVNI_SELECTED);
-
+        int32_t i = ListView_GetNextItem(ctx->lv_hwnd, -1, LVNI_SELECTED);
         if (i == -1) break;
 
         LVITEM item = {0};
         item.mask = LVIF_PARAM;
         item.iItem = i;
-        ListView_GetItem(g_lv_hwnd, &item);
+        ListView_GetItem(ctx->lv_hwnd, &item);
 
         auto option_item = g_option_items[item.lParam];
         auto readonly = option_item.is_readonly();
@@ -1221,7 +1174,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         {
         case 1:
             option_item.reset_to_default();
-            ListView_Update(g_lv_hwnd, i);
+            ListView_Update(ctx->lv_hwnd, i);
             break;
         case 2:
             DialogService::show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(),
@@ -1229,7 +1182,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             break;
         case 4:
             option_item.current_value.set(Hotkey::t_hotkey::make_empty());
-            ListView_Update(g_lv_hwnd, i);
+            ListView_Update(ctx->lv_hwnd, i);
             break;
         case 5: {
             const auto path = std::get<std::wstring>(option_item.current_value.get());
@@ -1270,7 +1223,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 v.reset_to_default();
             }
 
-            ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
+            ListView_RedrawItems(ctx->lv_hwnd, 0, ListView_GetItemCount(ctx->lv_hwnd));
             break;
         }
         default:
@@ -1280,20 +1233,15 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         DestroyMenu(h_menu);
     }
     break;
-    case WM_DESTROY:
+    case WM_NCDESTROY:
         RemoveProp(hwnd, L"tab_context");
         delete ctx;
+        ctx = nullptr;
         break;
     case WM_NOTIFY: {
         if (lpnmhdr->code == PSN_SETACTIVE)
         {
             g_config.settings_tab = ctx->tab_index;
-
-            if (g_lv_hwnd)
-            {
-                DestroyWindow(g_lv_hwnd);
-                g_lv_hwnd = nullptr;
-            }
 
             RECT grid_rect{};
             GetClientRect(hwnd, &grid_rect);
@@ -1327,7 +1275,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 
             auto get_item_tooltip = [=](size_t i) -> std::wstring { return g_option_items[i].tooltip; };
 
-            auto edit_start = [=](size_t i) { begin_settings_lv_edit(hwnd, i); };
+            auto edit_start = [=](size_t i) { begin_settings_lv_edit(*ctx, i); };
 
             auto get_item_image = [=](size_t i) {
                 const auto &option_item = g_option_items[i];
@@ -1351,7 +1299,13 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 return g_option_items[i].get_value_name();
             };
 
-            g_lv_hwnd = SettingsListView::create({
+            if (ctx->lv_hwnd)
+            {
+                DestroyWindow(ctx->lv_hwnd);
+                ctx->lv_hwnd = nullptr;
+            }
+
+            ctx->lv_hwnd = SettingsListView::create({
                 .dlg_hwnd = hwnd,
                 .rect = grid_rect,
                 .on_edit_start = edit_start,
@@ -1363,7 +1317,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             });
         }
 
-        return SettingsListView::notify(hwnd, g_lv_hwnd, l_param, w_param);
+        return SettingsListView::notify(hwnd, ctx->lv_hwnd, l_param, w_param);
+        break;
     }
     default:
         return FALSE;
@@ -1436,7 +1391,7 @@ void ConfigDialog::show_app_settings()
     }
 
     std::vector<PROPSHEETPAGE> psp;
-    
+
     psp.push_back({
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_PLUGINS),
         .pszTitle = L"Plugins",
@@ -1461,7 +1416,8 @@ void ConfigDialog::show_app_settings()
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = L"Emulation",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek / Piano Roll"}}),
+        .lParam =
+            (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek / Piano Roll"}}),
     });
 
     psp.push_back({
