@@ -714,6 +714,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         // 6. Set the focus to the edit control
         SetFocus(g_ctx.edit_hwnd);
 
+        SendMessage(g_ctx.edit_hwnd, EM_SETCUEBANNER, TRUE, (LPARAM)L"Search actions, options, or ROMs");
+
         break;
     }
     case WM_DESTROY:
