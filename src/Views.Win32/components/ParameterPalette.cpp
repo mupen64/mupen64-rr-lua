@@ -208,9 +208,10 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         GetComboBoxInfo(g_ctx.combo_hwnd, &combo_info);
         g_ctx.edit_hwnd = combo_info.hwndItem;
 
-        // 1. Remove the titlebar
+        // 1. Remove the titlebar and prevent resizing.
         const LONG style = GetWindowLong(hwnd, GWL_STYLE);
         SetWindowLong(hwnd, GWL_STYLE, style & ~WS_CAPTION);
+        attach_no_resize_subproc(hwnd);
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
@@ -269,8 +270,6 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
     case WM_CLOSE:
         DestroyWindow(g_ctx.hwnd);
         break;
-    case WM_NCHITTEST:
-        return HTCLIENT;
     default:
         return FALSE;
     }

@@ -673,9 +673,10 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
         g_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
 
-        // 1. Remove the titlebar
+        // 1. Remove the titlebar and prevent resizing.
         const LONG style = GetWindowLong(hwnd, GWL_STYLE);
         SetWindowLong(hwnd, GWL_STYLE, style & ~WS_CAPTION);
+        attach_no_resize_subproc(hwnd);
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
@@ -765,8 +766,6 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             PostMessage(hwnd, WM_CLOSE, 0, 0);
         }
         break;
-    case WM_NCHITTEST:
-        return HTCLIENT;
     case WM_MEASUREITEM: {
         const auto pmis = (PMEASUREITEMSTRUCT)lparam;
         const auto scale = (double)GetDpiForWindow(hwnd) / 96.0;
