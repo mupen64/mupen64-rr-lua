@@ -418,6 +418,7 @@ std::wstring ActionManager::get_display_name(const action_filter &filter, bool i
 
     if (ignore_override)
     {
+        if (action->raw_name.empty()) update_display_names({action});
         return action->raw_name;
     }
 

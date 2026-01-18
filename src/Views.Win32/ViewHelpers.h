@@ -588,3 +588,40 @@ static void listbox_ensure_visible(const HWND hwnd, const int32_t index)
         ListBox_SetTopIndex(hwnd, sel);
     }
 }
+
+static LRESULT CALLBACK no_resize_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
+                                                DWORD_PTR ref_data)
+{
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, no_resize_subclass_proc, id);
+        break;
+    case WM_NCHITTEST: {
+        LRESULT hit = DefWindowProc(hwnd, msg, wparam, lparam);
+
+        switch (hit)
+        {
+        case HTLEFT:
+        case HTRIGHT:
+        case HTTOP:
+        case HTTOPLEFT:
+        case HTTOPRIGHT:
+        case HTBOTTOM:
+        case HTBOTTOMLEFT:
+        case HTBOTTOMRIGHT:
+            return HTCLIENT;
+        }
+
+        return hit;
+    }
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+}
+
+static void attach_no_resize_subproc(const HWND hwnd)
+{
+    SetWindowSubclass(hwnd, no_resize_subclass_proc, 0, 0);
+}

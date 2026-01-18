@@ -27,7 +27,9 @@ struct t_parameter_palette_context
     std::vector<ActionManager::t_action_param> ref_params{};
     ActionManager::action_argument_map filled_params{};
 
-    std::function<void()> unsubscribe_move_message{};
+    std::vector<std::function<void()>> unsubscribe_funcs{};
+
+    DLGTEMPLATEEX *dlg_template;
 };
 
 enum class NextParamResult
@@ -149,7 +151,7 @@ static void update_dialog_position_and_size()
     rc.left = parent_rc.right / 2 - width / 2;
     rc.top = margin;
     rc.right = rc.left + width;
-    rc.bottom = rc.top + 120L;
+    rc.bottom = rc.top + g_ctx.dlg_template->cy;
 
     MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
     SetWindowPos(g_ctx.hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
@@ -206,9 +208,10 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         GetComboBoxInfo(g_ctx.combo_hwnd, &combo_info);
         g_ctx.edit_hwnd = combo_info.hwndItem;
 
-        // 1. Remove the titlebar
+        // 1. Remove the titlebar and prevent resizing.
         const LONG style = GetWindowLong(hwnd, GWL_STYLE);
         SetWindowLong(hwnd, GWL_STYLE, style & ~WS_CAPTION);
+        attach_no_resize_subproc(hwnd);
 
         // 2. Add resize anchors
         ResizeAnchor::add_anchors(hwnd, {
@@ -233,16 +236,17 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         update_dialog_position_and_size();
         try_apply_parameter();
 
-        g_ctx.unsubscribe_move_message = Messenger::subscribe(Messenger::Message::MainWindowMoved,
-                                                              [](const auto &) { update_dialog_position_and_size(); });
+        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe(
+            Messenger::Message::MainWindowMoved, [](const auto &) { update_dialog_position_and_size(); }));
 
+        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe(
+            Messenger::Message::SizeChanged, [](const auto &) { update_dialog_position_and_size(); }));
         break;
     }
     case WM_DESTROY:
-        if (g_ctx.unsubscribe_move_message)
+        for (const auto &unsubscribe_func : g_ctx.unsubscribe_funcs)
         {
-            g_ctx.unsubscribe_move_message();
-            g_ctx.unsubscribe_move_message = {};
+            unsubscribe_func();
         }
         break;
 
@@ -277,6 +281,12 @@ void ParameterPalette::show(const ActionManager::action_path &action_path)
     g_ctx = {};
     g_ctx.action_path = action_path;
     g_ctx.ref_params = ActionManager::get_params(action_path);
+
+    if (!g_ctx.dlg_template)
+    {
+        const auto result = load_resource_as_dialog_template(IDD_PARAMETER_PALETTE, &g_ctx.dlg_template);
+        RT_ASSERT(result, L"Failed to load parameter palette dialog template");
+    }
 
     const HWND hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PARAMETER_PALETTE), g_main_ctx.hwnd, dlgproc);
     ShowWindow(hwnd, SW_SHOW);
