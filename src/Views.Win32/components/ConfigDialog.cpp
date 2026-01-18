@@ -1055,6 +1055,9 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
     case WM_INITDIALOG: {
         const auto ps = (PROPSHEETPAGE *)l_param;
         SetProp(hwnd, L"tab_context", (HANDLE)ps->lParam);
+
+        ctx = (t_tab_context *)GetProp(hwnd, L"tab_context");
+        ctx->hwnd = hwnd;
         return TRUE;
     }
     case WM_EDIT_END: {
@@ -1253,7 +1256,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                     DestroyWindow(ctx->edit_hwnd);
                 }
 
-                ctx->edit_option_item_index = i;
+                ctx->edit_option_item_index = local_item_to_global_item.at(i);
 
                 RECT item_rect{};
                 ListView_GetSubItemRect(ctx->lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
