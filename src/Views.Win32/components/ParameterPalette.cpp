@@ -27,7 +27,7 @@ struct t_parameter_palette_context
     std::vector<ActionManager::t_action_param> ref_params{};
     ActionManager::action_argument_map filled_params{};
 
-    std::function<void()> unsubscribe_move_message{};
+    std::vector<std::function<void()>> unsubscribe_funcs{};
 
     DLGTEMPLATEEX *dlg_template;
 };
@@ -235,16 +235,17 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         update_dialog_position_and_size();
         try_apply_parameter();
 
-        g_ctx.unsubscribe_move_message = Messenger::subscribe(Messenger::Message::MainWindowMoved,
-                                                              [](const auto &) { update_dialog_position_and_size(); });
+        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe(
+            Messenger::Message::MainWindowMoved, [](const auto &) { update_dialog_position_and_size(); }));
 
+        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe(
+            Messenger::Message::SizeChanged, [](const auto &) { update_dialog_position_and_size(); }));
         break;
     }
     case WM_DESTROY:
-        if (g_ctx.unsubscribe_move_message)
+        for (const auto &unsubscribe_func : g_ctx.unsubscribe_funcs)
         {
-            g_ctx.unsubscribe_move_message();
-            g_ctx.unsubscribe_move_message = {};
+            unsubscribe_func();
         }
         break;
 
