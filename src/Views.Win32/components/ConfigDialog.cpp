@@ -1201,16 +1201,14 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             GetClientRect(hwnd, &grid_rect);
 
             std::vector<SettingsListView::t_group> groups;
-            for (size_t i = 0; i < g_option_groups.size(); ++i)
+            for (const auto &wanted_group : ctx->groups)
             {
-                const auto &group = g_option_groups[i];
-
-                if (std::find(ctx->groups.begin(), ctx->groups.end(), group.name) == ctx->groups.end())
+                auto it = std::find_if(g_option_groups.begin(), g_option_groups.end(),
+                                       [&](const t_options_group &group) { return group.name == wanted_group; });
+                if (it != g_option_groups.end())
                 {
-                    continue;
+                    groups.emplace_back(it->id, it->name);
                 }
-
-                groups.emplace_back(group.id, group.name);
             }
 
             std::vector<SettingsListView::t_item> items;
