@@ -1325,7 +1325,6 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         }
 
         return SettingsListView::notify(hwnd, ctx->lv_hwnd, l_param, w_param);
-        break;
     }
     default:
         return FALSE;
