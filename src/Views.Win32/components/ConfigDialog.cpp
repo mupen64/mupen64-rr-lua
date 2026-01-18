@@ -47,6 +47,7 @@ struct t_tab_context
     HWND lv_hwnd;
     HWND edit_hwnd;
     size_t edit_option_item_index;
+    std::unordered_map<size_t, size_t> item_index_map;
 };
 
 std::wstring t_options_item::get_name() const
@@ -1094,7 +1095,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         item.iItem = i;
         ListView_GetItem(ctx->lv_hwnd, &item);
 
-        auto option_item = g_option_items[item.lParam];
+        auto& option_item = g_option_items[ctx->item_index_map.at(item.lParam)];
+        
         auto readonly = option_item.is_readonly();
 
         HMENU h_menu = CreatePopupMenu();
@@ -1212,7 +1214,6 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             }
 
             std::vector<SettingsListView::t_item> items;
-            std::unordered_map<size_t, size_t> local_item_to_global_item;
             for (size_t i = 0; i < g_option_items.size(); ++i)
             {
                 const auto &item = g_option_items[i];
@@ -1223,17 +1224,17 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                     continue;
                 }
 
-                local_item_to_global_item[items.size()] = i;
+                ctx->item_index_map[items.size()] = i;
                 items.emplace_back(item.group_id, item.get_name());
             }
 
             auto get_item_tooltip = [=](size_t i) -> std::wstring {
-                const auto &global_item = g_option_items[local_item_to_global_item.at(i)];
+                const auto &global_item = g_option_items[ctx->item_index_map.at(i)];
                 return global_item.tooltip;
             };
 
             auto edit_start = [=](size_t i) {
-                auto &global_item = g_option_items[local_item_to_global_item.at(i)];
+                auto &global_item = g_option_items[ctx->item_index_map.at(i)];
 
                 // TODO: Perhaps gray out readonly values too?
                 if (global_item.is_readonly())
@@ -1254,7 +1255,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                     DestroyWindow(ctx->edit_hwnd);
                 }
 
-                ctx->edit_option_item_index = local_item_to_global_item.at(i);
+                ctx->edit_option_item_index = ctx->item_index_map.at(i);
 
                 RECT item_rect{};
                 ListView_GetSubItemRect(ctx->lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
@@ -1281,7 +1282,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             };
 
             auto get_item_image = [=](size_t i) {
-                const auto &global_item = g_option_items[local_item_to_global_item.at(i)];
+                const auto &global_item = g_option_items[ctx->item_index_map.at(i)];
 
                 int32_t image = global_item.initial_value.get() == global_item.current_value.get() ? 50 : 1;
 
@@ -1294,7 +1295,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             };
 
             auto get_item_text = [=](size_t i, size_t subitem) {
-                const auto &global_item = g_option_items[local_item_to_global_item.at(i)];
+                const auto &global_item = g_option_items[ctx->item_index_map.at(i)];
 
                 if (subitem == 0)
                 {
