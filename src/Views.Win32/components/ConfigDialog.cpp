@@ -1062,7 +1062,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         return TRUE;
     }
     case WM_EDIT_END: {
-        auto option_item = g_option_items[ctx->edit_option_item_index];
+        auto option_item = g_option_items[ctx->item_index_map.at(ctx->edit_option_item_index)];
         auto str = reinterpret_cast<wchar_t *>(l_param);
 
         if (option_item.type == t_options_item::Type::Number)
@@ -1256,7 +1256,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                     DestroyWindow(ctx->edit_hwnd);
                 }
 
-                ctx->edit_option_item_index = ctx->item_index_map.at(i);
+                ctx->edit_option_item_index = i;
 
                 RECT item_rect{};
                 ListView_GetSubItemRect(ctx->lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
