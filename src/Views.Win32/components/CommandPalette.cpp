@@ -765,6 +765,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             PostMessage(hwnd, WM_CLOSE, 0, 0);
         }
         break;
+    case WM_NCHITTEST:
+        return HTCLIENT;
     case WM_MEASUREITEM: {
         const auto pmis = (PMEASUREITEMSTRUCT)lparam;
         const auto scale = (double)GetDpiForWindow(hwnd) / 96.0;

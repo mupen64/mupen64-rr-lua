@@ -28,6 +28,8 @@ struct t_parameter_palette_context
     ActionManager::action_argument_map filled_params{};
 
     std::function<void()> unsubscribe_move_message{};
+
+    DLGTEMPLATEEX *dlg_template;
 };
 
 enum class NextParamResult
@@ -149,7 +151,7 @@ static void update_dialog_position_and_size()
     rc.left = parent_rc.right / 2 - width / 2;
     rc.top = margin;
     rc.right = rc.left + width;
-    rc.bottom = rc.top + 120L;
+    rc.bottom = rc.top + g_ctx.dlg_template->cy;
 
     MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
     SetWindowPos(g_ctx.hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
@@ -266,6 +268,8 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
     case WM_CLOSE:
         DestroyWindow(g_ctx.hwnd);
         break;
+    case WM_NCHITTEST:
+        return HTCLIENT;
     default:
         return FALSE;
     }
@@ -277,6 +281,12 @@ void ParameterPalette::show(const ActionManager::action_path &action_path)
     g_ctx = {};
     g_ctx.action_path = action_path;
     g_ctx.ref_params = ActionManager::get_params(action_path);
+
+    if (!g_ctx.dlg_template)
+    {
+        const auto result = load_resource_as_dialog_template(IDD_PARAMETER_PALETTE, &g_ctx.dlg_template);
+        RT_ASSERT(result, L"Failed to load parameter palette dialog template");
+    }
 
     const HWND hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PARAMETER_PALETTE), g_main_ctx.hwnd, dlgproc);
     ShowWindow(hwnd, SW_SHOW);
