@@ -1095,8 +1095,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         item.iItem = i;
         ListView_GetItem(ctx->lv_hwnd, &item);
 
-        auto& option_item = g_option_items[ctx->item_index_map.at(item.lParam)];
-        
+        auto &option_item = g_option_items[ctx->item_index_map.at(item.lParam)];
+
         auto readonly = option_item.is_readonly();
 
         HMENU h_menu = CreatePopupMenu();
@@ -1166,7 +1166,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             }
 
             const auto result = DialogService::show_ask_dialog(
-                VIEW_DLG_RESET_SETTINGS, L"Are you sure you want to reset all settings to default?",
+                VIEW_DLG_RESET_SETTINGS,
+                L"Reset all settings to their default values?\nThis will reset settings on all pages.",
                 L"Reset all to default", false, hwnd);
 
             if (!result)
