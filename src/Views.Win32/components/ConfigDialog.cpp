@@ -1422,8 +1422,8 @@ void ConfigDialog::show_app_settings()
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = L"Emulation",
         .pfnDlgProc = generic_tab_proc,
-        .lParam =
-            (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek / Piano Roll", L"Debug"}}),
+        .lParam = (LPARAM) new t_tab_context(
+            {.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek / Piano Roll", L"Debug"}}),
     });
 
     psp.push_back({
@@ -1438,6 +1438,16 @@ void ConfigDialog::show_app_settings()
         .pszTitle = L"Lua",
         .pfnDlgProc = generic_tab_proc,
         .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Lua"}}),
+    });
+
+    std::vector<std::wstring> hotkey_groups;
+    for (size_t i = g_static_option_groups.size(); i < g_option_groups.size(); ++i)
+        hotkey_groups.emplace_back(g_option_groups[i].name);
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Hotkeys",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = hotkey_groups}),
     });
 
     for (auto &page : psp)
