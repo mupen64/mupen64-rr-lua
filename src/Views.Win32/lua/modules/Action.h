@@ -12,7 +12,7 @@
 
 namespace LuaCore::Action
 {
-static std::pair<ActionManager::t_action_param, std::function<void()>> check_action_param(lua_State *L, int index)
+static std::pair<ActionManager::t_action_param, t_action_param_meta> check_action_param(lua_State *L, int index)
 {
     if (lua_gettop(L) < 1 || !lua_istable(L, index))
     {
@@ -21,6 +21,7 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
     }
 
     ActionManager::t_action_param param{};
+    t_action_param_meta meta{};
 
     lua_getfield(L, index, "key");
     param.key = luaL_checkwstring(L, -1);
@@ -31,10 +32,10 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
     lua_pop(L, 1);
 
     lua_getfield(L, index, "validator");
-    auto validator = lua_optcallback(L, -1);
+    meta.validator = lua_optcallback(L, -1);
     lua_pop(L, 1);
 
-    if (validator)
+    if (meta.validator)
     {
         param.validator = [=](std::wstring_view value) -> std::optional<std::wstring> {
             if (!LuaManager::get_environment_for_state(L))
@@ -42,7 +43,7 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
                 return std::nullopt;
             }
 
-            lua_pushcallback(L, validator, false);
+            lua_pushcallback(L, meta.validator, false);
             lua_pushwstring(L, std::wstring(value));
             lua_pcall(L, 1, 1, 0);
 
@@ -61,10 +62,10 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
     }
 
     lua_getfield(L, index, "get_initial_value");
-    auto get_initial_value = lua_optcallback(L, -1);
+    meta.get_initial_value = lua_optcallback(L, -1);
     lua_pop(L, 1);
 
-    if (get_initial_value)
+    if (meta.get_initial_value)
     {
         param.get_initial_value = [=]() -> std::wstring {
             if (!LuaManager::get_environment_for_state(L))
@@ -72,7 +73,7 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
                 return L"";
             }
 
-            lua_pushcallback(L, get_initial_value, false);
+            lua_pushcallback(L, meta.get_initial_value, false);
             lua_pcall(L, 0, 1, 0);
 
             const auto initial_value = luaL_checkwstring(L, -1);
@@ -82,10 +83,10 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
     }
 
     lua_getfield(L, index, "get_hints");
-    auto get_hints = lua_optcallback(L, -1);
+    meta.get_hints = lua_optcallback(L, -1);
     lua_pop(L, 1);
 
-    if (get_hints)
+    if (meta.get_hints)
     {
         param.get_hints = [=](const std::wstring_view input) -> std::vector<std::wstring> {
             if (!LuaManager::get_environment_for_state(L))
@@ -93,7 +94,7 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
                 return {};
             }
 
-            lua_pushcallback(L, get_hints, false);
+            lua_pushcallback(L, meta.get_hints, false);
             lua_pushwstring(L, std::wstring(input));
             lua_pcall(L, 1, 1, 0);
 
@@ -115,11 +116,7 @@ static std::pair<ActionManager::t_action_param, std::function<void()>> check_act
         };
     }
 
-    return {param, [=]() {
-                lua_freecallback(L, validator);
-                lua_freecallback(L, get_initial_value);
-                lua_freecallback(L, get_hints);
-            }};
+    return {param, meta};
 }
 
 static void push_action_params(lua_State *L, const ActionManager::action_argument_map &params)
@@ -129,7 +126,7 @@ static void push_action_params(lua_State *L, const ActionManager::action_argumen
     {
         lua_pushwstring(L, key);
         lua_pushwstring(L, value);
-        lua_settable(L, -3); 
+        lua_settable(L, -3);
     }
 }
 
@@ -164,7 +161,8 @@ static ActionManager::action_argument_map check_action_param_list(lua_State *L, 
     return params;
 }
 
-static ActionManager::t_action_add_params check_action_add_params(lua_State *L, int index)
+static std::pair<ActionManager::t_action_add_params, std::vector<t_action_param_meta>> check_action_add_params(
+    lua_State *L, int index)
 {
     if (lua_gettop(L) < 1 || !lua_istable(L, index))
     {
@@ -179,7 +177,7 @@ static ActionManager::t_action_add_params check_action_add_params(lua_State *L, 
     lua_pop(L, 1);
 
     lua_getfield(L, 1, "params");
-    std::vector<std::function<void()>> param_free_funcs;
+    std::vector<t_action_param_meta> params_metas{};
     if (!lua_isnil(L, -1))
     {
         if (!lua_istable(L, -1))
@@ -195,9 +193,10 @@ static ActionManager::t_action_add_params check_action_add_params(lua_State *L, 
             lua_geti(L, params_table_index, i);
             int element_idx = lua_gettop(L);
 
-            auto [param, free_func] = check_action_param(L, element_idx);
+            auto [param, meta] = check_action_param(L, element_idx);
             params.params.push_back(param);
-            param_free_funcs.push_back(free_func);
+            params_metas.push_back(meta);
+
             lua_pop(L, 1);
         }
     }
@@ -324,26 +323,29 @@ static ActionManager::t_action_add_params check_action_add_params(lua_State *L, 
         lua_freecallback(L, get_active);
         lua_freecallback(L, get_display_name);
 
-        for (const auto &free_func : param_free_funcs)
+        for (const auto &meta : params_metas)
         {
-            free_func();
+            lua_freecallback(L, meta.validator);
+            lua_freecallback(L, meta.get_initial_value);
+            lua_freecallback(L, meta.get_hints);
         }
     };
 
-    return params;
+    return {params, params_metas};
 }
 
 static int add(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    const auto params = check_action_add_params(L, 1);
+    const auto [params, meta] = check_action_add_params(L, 1);
 
     const auto result = ActionManager::add(params);
 
     if (result)
     {
         lua->registered_actions.emplace_back(ActionManager::normalize_filter(params.path));
+        lua->param_meta_map[params.path] = meta;
     }
 
     lua_pushboolean(L, result);
@@ -459,14 +461,20 @@ static int get_activatability(lua_State *L)
 
 static int get_params(lua_State *L)
 {
+    auto lua = LuaManager::get_environment_for_state(L);
+
     const auto path = luaL_checkwstring(L, 1);
 
     const auto params = ActionManager::get_params(path);
 
+    const auto& meta_it = lua->param_meta_map[path];
+    
     lua_newtable(L);
     size_t i = 1;
     for (const auto &param : params)
     {
+        const auto& meta = meta_it[i - 1];
+
         lua_newtable(L);
 
         lua_pushwstring(L, param.key);
@@ -475,8 +483,15 @@ static int get_params(lua_State *L)
         lua_pushwstring(L, param.name);
         lua_setfield(L, -2, "name");
 
-        // FIXME: We need to also pass the functions back here, HAHAHA!!!
+        lua_pushcallback(L, meta.validator, false);
+        lua_setfield(L, -2, "validator");
 
+        lua_pushcallback(L, meta.get_initial_value, false);
+        lua_setfield(L, -2, "get_initial_value");
+
+        lua_pushcallback(L, meta.get_hints, false);
+        lua_setfield(L, -2, "get_hints");
+        
         lua_seti(L, -2, i++);
     }
 

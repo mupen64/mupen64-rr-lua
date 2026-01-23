@@ -69,6 +69,13 @@ struct t_lua_rendering_context
     int bkmode{};
 };
 
+struct t_action_param_meta
+{
+    uintptr_t *validator;
+    uintptr_t *get_initial_value;
+    uintptr_t *get_hints;
+};
+
 /**
  * \brief Describes a Lua instance.
  */
@@ -85,6 +92,9 @@ struct t_lua_environment
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};
 
+    std::unordered_map<std::wstring, std::vector<t_action_param_meta>> param_meta_map;
+
     destroying_func destroying{};
+
     print_func print{};
 };

@@ -64,6 +64,7 @@ extern "C"
 #include <Loggers.h>
 #include <ViewHelpers.h>
 #include <Main.h>
+#include <lua/LuaHelpers.h>
 #include <lua/LuaTypes.h>
 #include <Config.h>
 // #include <PlatformService.h>
