@@ -457,6 +457,32 @@ static int get_activatability(lua_State *L)
     return 1;
 }
 
+static int get_params(lua_State *L)
+{
+    const auto path = luaL_checkwstring(L, 1);
+
+    const auto params = ActionManager::get_params(path);
+
+    lua_newtable(L);
+    size_t i = 1;
+    for (const auto &param : params)
+    {
+        lua_newtable(L);
+
+        lua_pushwstring(L, param.key);
+        lua_setfield(L, -2, "key");
+
+        lua_pushwstring(L, param.name);
+        lua_setfield(L, -2, "name");
+
+        // FIXME: We need to also pass the functions back here, HAHAHA!!!
+
+        lua_seti(L, -2, i++);
+    }
+
+    return 1;
+}
+
 static int get_actions_matching_filter(lua_State *L)
 {
     const auto filter = luaL_checkwstring(L, 1);

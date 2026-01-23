@@ -1620,6 +1620,11 @@ function action.get_active(path) end
 ---@return boolean # The action's activatability.
 function action.get_activatability(path) end
 
+---Gets the parameters associated with an action.
+---@param path ActionPath A path.
+---@return ActionParam[] # The action's parameters.
+function action.get_params(path) end
+
 ---Gets all action paths that match the specified filter.
 ---@param filter ActionFilter A filter.
 ---@return ActionPath[] # A collection of action paths that match the filter.

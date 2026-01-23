@@ -809,6 +809,43 @@ lust.describe('mupen64', function()
             end)
         end)
 
+        lust.describe('get_params', function()
+            lust.after(function()
+                action.remove("Test > *")
+            end)
+            lust.it('errors_when_path_is_nil', function()
+                local func = function()
+                    action.get_params(nil)
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('errors_when_path_is_table', function()
+                local func = function()
+                    action.get_params({})
+                end
+                lust.expect(func).to.fail()
+            end)
+            lust.it('returns_empty_list_when_action_doesnt_exist', function()
+                local result = action.get_params("Test > Something")
+                lust.expect(result).to.equal({})
+            end)
+            lust.it('returns_params', function()
+                local params = {
+                    {
+                        key = "param1",
+                        name = "Parameter 1",
+                        validator = function() end
+                    }
+                }
+                action.add({
+                    path = "Test > Something",
+                    params = params
+                })
+                local result = action.get_params("Test > Something")
+                lust.expect(result).to.equal(params)
+            end)
+        end)
+
         lust.describe('get_actions_matching_filter', function()
             lust.after(function()
                 action.remove("Test > *")
