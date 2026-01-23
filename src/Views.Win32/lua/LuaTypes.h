@@ -71,9 +71,9 @@ struct t_lua_rendering_context
 
 struct t_action_param_meta
 {
-    uintptr_t *validator;
-    uintptr_t *get_initial_value;
-    uintptr_t *get_hints;
+    uintptr_t *validator{};
+    uintptr_t *get_initial_value{};
+    uintptr_t *get_hints{};
 };
 
 /**
