@@ -344,8 +344,9 @@ static int add(lua_State *L)
 
     if (result)
     {
-        lua->registered_actions.emplace_back(ActionManager::normalize_filter(params.path));
-        lua->param_meta_map[params.path] = meta;
+        const auto normalized_path = ActionManager::normalize_filter(params.path);
+        lua->registered_actions.emplace_back(normalized_path);
+        lua->param_meta_map[normalized_path] = meta;
     }
 
     lua_pushboolean(L, result);
@@ -466,8 +467,9 @@ static int get_params(lua_State *L)
     const auto path = luaL_checkwstring(L, 1);
 
     const auto params = ActionManager::get_params(path);
+    const auto normalized_path = ActionManager::normalize_filter(path);
 
-    const auto& meta_it = lua->param_meta_map[path];
+    const auto& meta_it = lua->param_meta_map[normalized_path];
     
     lua_newtable(L);
     size_t i = 1;

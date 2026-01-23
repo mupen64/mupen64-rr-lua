@@ -844,6 +844,21 @@ lust.describe('mupen64', function()
                 local result = action.get_params("Test > Something")
                 lust.expect(result).to.equal(params)
             end)
+            lust.it('returns_params_across_normalization_boundary', function()
+                local params = {
+                    {
+                        key = "param1",
+                        name = "Parameter 1",
+                        validator = function() end
+                    }
+                }
+                action.add({
+                    path = "Test >  Something  ",
+                    params = params
+                })
+                local result = action.get_params("Test>Something")
+                lust.expect(result).to.equal(params)
+            end)
         end)
 
         lust.describe('get_actions_matching_filter', function()
