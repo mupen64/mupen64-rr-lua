@@ -126,9 +126,10 @@ Failure to comply will fail the check-format workflow.
 
 Before merging a pull request into main or pushing out a release, verify that:
 
-1. The code is formatted according to the .clang-format file
-2. All tests pass
-3. The code is architecturally sound
-4. Unicode-containing filesystem paths are consumed correctly
-5. The wiki has been updated with any relevant changes
-6. The plugin API is backwards-compatible *(unless otherwise specified)*
+1. The code is formatted according to the `.clang-format` file
+2. The core tests (`test/Core.Tests`) pass
+3. The automatic Lua tests (`test/lua/tests.lua`) pass
+4. The manual Lua tests (`test/lua/manual/*.lua`) pass
+5. The general docs have been kept up-to-date
+6. The Lua docs have been rebuilt (`.\docs\lua\build_documentation.bat`)
+7. There are no regressions in plugin compatibility (test Jabo's plugins)
