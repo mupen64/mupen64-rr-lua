@@ -584,7 +584,9 @@ std::vector<t_options_group> get_static_option_groups()
 
     t_options_group statusbar_group = {.id = id++, .name = L"Statusbar"};
 
-    t_options_group seek_piano_roll_group = {.id = id++, .name = L"Seek / Piano Roll"};
+    t_options_group piano_roll_group = {.id = id++, .name = L"Piano Roll"};
+
+    t_options_group seek_group = {.id = id++, .name = L"Seek"};
 
     t_options_group capture_group = {.id = id++, .name = L"Capture"};
 
@@ -700,10 +702,38 @@ std::vector<t_options_group> get_static_option_groups()
                        .name = L"Scale up to fill window",
                        .tooltip = L"Whether the statusbar is allowed to scale its segments up.",
                        GENPROPS(int32_t, statusbar_scale_up)});
-
-    seek_piano_roll_group.items.emplace_back(t_options_item{
+    piano_roll_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = piano_roll_group.id,
+        .name = L"Constrain edit to column",
+        .tooltip = L"Whether piano roll edits are constrained to the column they started on.",
+        GENPROPS(int32_t, piano_roll_constrain_edit_to_column),
+    });
+    piano_roll_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
-        .group_id = seek_piano_roll_group.id,
+        .group_id = piano_roll_group.id,
+        .name = L"History size",
+        .tooltip = L"Maximum size of the history list.",
+        GENPROPS(int32_t, piano_roll_undo_stack_size),
+    });
+    piano_roll_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = piano_roll_group.id,
+        .name = L"Keep selection visible",
+        .tooltip = L"Whether the piano roll will try to keep the selection visible.",
+        GENPROPS(int32_t, piano_roll_keep_selection_visible),
+    });
+    piano_roll_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = piano_roll_group.id,
+        .name = L"Keep playhead visible",
+        .tooltip = L"Whether the piano roll will try to keep the playhead visible.",
+        GENPROPS(int32_t, piano_roll_keep_playhead_visible),
+    });
+
+    seek_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Number,
+        .group_id = seek_group.id,
         .name = L"Savestate Interval",
         .tooltip = L"The interval at which to create savestates for seeking. Piano Roll is exclusively read-only if "
                    L"this value is 0.\nHigher numbers will reduce the seek duration at cost of emulator performance, a "
@@ -711,41 +741,13 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.seek_savestate_interval),
         .is_readonly = [] { return g_main_ctx.core_ctx->vcr_get_task() != task_idle; },
     });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
+    seek_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
-        .group_id = seek_piano_roll_group.id,
+        .group_id = seek_group.id,
         .name = L"Savestate Max Count",
         .tooltip = L"The maximum amount of savestates to keep in memory for seeking.\nHigher numbers might cause an "
                    L"out of memory exception.",
         GENPROPS(int32_t, core.seek_savestate_max_count),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"Constrain edit to column",
-        .tooltip = L"Whether piano roll edits are constrained to the column they started on.",
-        GENPROPS(int32_t, piano_roll_constrain_edit_to_column),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"History size",
-        .tooltip = L"Maximum size of the history list.",
-        GENPROPS(int32_t, piano_roll_undo_stack_size),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"Keep selection visible",
-        .tooltip = L"Whether the piano roll will try to keep the selection visible.",
-        GENPROPS(int32_t, piano_roll_keep_selection_visible),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"Keep playhead visible",
-        .tooltip = L"Whether the piano roll will try to keep the playhead visible.",
-        GENPROPS(int32_t, piano_roll_keep_playhead_visible),
     });
 
     capture_group.items.emplace_back(t_options_item{
@@ -993,8 +995,8 @@ std::vector<t_options_group> get_static_option_groups()
         .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
     });
 
-    return {folders_group, interface_group, statusbar_group, seek_piano_roll_group, capture_group, core_group,
-            vcr_group,     lua_group,       debug_group};
+    return {folders_group, interface_group, statusbar_group, piano_roll_group, seek_group,
+            capture_group, core_group,      vcr_group,       lua_group,        debug_group};
 }
 
 LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
@@ -1416,15 +1418,15 @@ void ConfigDialog::show_app_settings()
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = L"Visual",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Interface", L"Statusbar"}}),
+        .lParam = (LPARAM) new t_tab_context(
+            {.tab_index = psp.size(), .groups = {L"Interface", L"Statusbar", L"Piano Roll"}}),
     });
 
     psp.push_back({
         .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
         .pszTitle = L"Emulation",
         .pfnDlgProc = generic_tab_proc,
-        .lParam = (LPARAM) new t_tab_context(
-            {.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek / Piano Roll", L"Debug"}}),
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek", L"Debug"}}),
     });
 
     psp.push_back({
