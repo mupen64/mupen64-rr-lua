@@ -1,7 +1,5 @@
 @echo off
 
-:: run this script where api.lua is located
-
 :: get the path of the lua language server
 for /d %%D in ("%USERPROFILE%\.vscode\extensions\sumneko.lua*") do (
 	set serverpath=%%D\server
@@ -13,3 +11,7 @@ for /d %%D in ("%USERPROFILE%\.vscode\extensions\sumneko.lua*") do (
 :: copy the documentation to the export directory
 move "%~dp0..\..\doc.json" "%~dp0export\doc.json"
 move "%~dp0..\..\doc.md" "%~dp0export\doc.md"
+
+:: run the python script
+python -m pip install -r "docs\lua\script\requirements.txt"
+python "docs\lua\script\buildSite.py"
