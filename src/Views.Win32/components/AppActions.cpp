@@ -861,6 +861,11 @@ static void load_recent_script(size_t i)
     ActionManager::invoke(AppActions::LOAD_SCRIPT_DIRECT, false, true, {{L"path", path}});
 }
 
+static void stop_all_lua_scripts()
+{
+    LuaDialog::stop_all();
+}
+
 static void close_all_lua_scripts()
 {
     LuaDialog::close_all();
@@ -1195,6 +1200,7 @@ void AppActions::add()
     add_action(SHOW_INSTANCES, Hotkey::t_hotkey('N', true), show_lua_dialog);
     generate_path_recent_menu(RECENT_SCRIPTS, Hotkey::t_hotkey('K', true, true), &g_config.recent_lua_script_paths,
                               &g_config.is_recent_scripts_frozen, load_recent_script);
+    add_action(STOP_ALL, Hotkey::t_hotkey::make_empty(), stop_all_lua_scripts);
     add_action(CLOSE_ALL, Hotkey::t_hotkey('W', true, true), close_all_lua_scripts);
 
     ActionManager::end_batch_work();

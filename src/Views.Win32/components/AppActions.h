@@ -92,6 +92,7 @@ const std::wstring ABOUT = APP + L"Help > About";
 const std::wstring LOAD_SCRIPT_DIRECT = APP + L"Lua Script > # Load Script...";
 const std::wstring SHOW_INSTANCES = APP + L"Lua Script > Show Instances ---";
 const std::wstring RECENT_SCRIPTS = APP + L"Lua Script > Recent Scripts ---";
+const std::wstring STOP_ALL = APP + L"Lua Script > Stop All";
 const std::wstring CLOSE_ALL = APP + L"Lua Script > Close All";
 
 /**
