@@ -104,6 +104,15 @@ struct Status
      */
     HWND combo_edit_box = nullptr;
 
+    struct t_set_visuals_request
+    {
+        core_buttons input;
+        bool needs_processing;
+    };
+
+    std::optional<t_set_visuals_request> pending_set_visuals_request{};
+    std::mutex pending_visuals_mutex{};
+
     std::vector<t_combo> combos{};
 
     bool last_lmb_down{};
@@ -146,6 +155,16 @@ struct Status
      * \param needs_processing Whether the UI values need per-frame processing.
      */
     void set_visuals(core_buttons input, bool needs_processing = true);
+
+    /**
+     * \brief Queues the UI to be updated at the next possible opportunity. Doesn't block the caller until the UI has
+     * updated.
+     * \param input The values to be shown in the UI
+     * \param needs_processing Whether the UI values need per-frame processing.
+     */
+    void set_visuals_lazy(core_buttons input, bool needs_processing = true);
+
+    void set_visuals_if_needed();
 
     /**
      * \brief Processes the input with steps such as autofire or combo overrides
@@ -223,7 +242,7 @@ EXPORT void CALL GetKeys(int Control, core_buttons *Keys)
 
 EXPORT void CALL SetKeys(int32_t controller, core_buttons keys)
 {
-    status[controller].set_visuals(keys, false);
+    status[controller].set_visuals_lazy(keys, false);
 }
 
 LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
@@ -362,6 +381,22 @@ void Status::set_visuals(core_buttons input, bool needs_processing)
     CheckDlgButton(hwnd, IDC_CHECK_DDOWN, input.dd);
 
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
+}
+
+void Status::set_visuals_lazy(core_buttons input, bool needs_processing)
+{
+    std::lock_guard lock(pending_visuals_mutex);
+    pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
+}
+
+void Status::set_visuals_if_needed()
+{
+    std::lock_guard lock(pending_visuals_mutex);
+    if (pending_set_visuals_request.has_value())
+    {
+        set_visuals(pending_set_visuals_request->input, pending_set_visuals_request->needs_processing);
+        pending_set_visuals_request.reset();
+    }
 }
 
 static int get_joystick_increment(const bool up)
@@ -682,6 +717,8 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     }
     break;
     case WM_TIMER: {
+        ctx->set_visuals_if_needed();
+
         core_buttons controller_input = GamepadManager::get_input(ctx->controller_index);
 
         if (controller_input.value != ctx->last_controller_input.value)
@@ -1222,7 +1259,7 @@ bool Status::show_context_menu(int x, int y)
         new_config.relative_mode = false;
     }
 
-    for (auto status_dlg : status)
+    for (auto& status_dlg : status)
     {
         if (status_dlg.ready && status_dlg.hwnd)
         {
