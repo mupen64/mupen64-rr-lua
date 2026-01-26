@@ -909,14 +909,14 @@ HWND CommandPalette::hwnd()
     return g_ctx.hwnd;
 }
 
-RECT CommandPalette::get_recommended_bounds(const std::optional<int32_t> prefered_height)
+RECT CommandPalette::get_recommended_bounds(const std::optional<int32_t> preferred_height)
 {
     RECT parent_rc{};
     GetClientRect(g_main_ctx.hwnd, &parent_rc);
 
     constexpr auto margin = 10;
     const auto width = std::max(400L, parent_rc.right / 3 - margin);
-    const auto height = prefered_height.value_or(std::max(300L, (long)(parent_rc.bottom * 0.75) - margin));
+    const auto height = preferred_height.value_or(std::max(300L, (long)(parent_rc.bottom * 0.75) - margin));
 
     RECT rc;
     rc.left = parent_rc.right / 2 - width / 2;
