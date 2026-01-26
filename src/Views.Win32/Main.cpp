@@ -1305,9 +1305,19 @@ static void enable_mitigations()
               L"Couldn't set process mitigation policy.");
 }
 
+/**
+ * \brief Calls `SetErrorMode` to disable miscellaneous error popups.
+ */
+static void set_error_mode()
+{
+    const UINT prev_mode = GetErrorMode();
+    SetErrorMode(prev_mode | SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+}
+
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
 {
     enable_mitigations();
+    set_error_mode();
 
 #ifdef _DEBUG
     open_console();
