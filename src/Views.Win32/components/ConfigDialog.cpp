@@ -425,7 +425,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
                     .c_str());
         }
 
-        EnableWindow(GetDlgItem(hwnd, IDC_PLUGIN_DISCOVERY_INFO), !broken_plugins.empty());
+        ShowWindow(GetDlgItem(hwnd, IDC_PLUGIN_DISCOVERY_INFO), !broken_plugins.empty() ? SW_SHOW : SW_HIDE);
 
         ComboBox_ResetContent(GetDlgItem(hwnd, IDC_COMBO_GFX));
         ComboBox_ResetContent(GetDlgItem(hwnd, IDC_COMBO_SOUND));
