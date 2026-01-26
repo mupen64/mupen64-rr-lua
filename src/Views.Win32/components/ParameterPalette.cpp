@@ -141,19 +141,7 @@ static void try_skip_to_end()
  */
 static void update_dialog_position_and_size()
 {
-    RECT parent_rc{};
-    GetClientRect(g_main_ctx.hwnd, &parent_rc);
-
-    constexpr auto margin = 10;
-    const auto width = std::max(400L, parent_rc.right / 3 - margin);
-
-    RECT rc;
-    rc.left = parent_rc.right / 2 - width / 2;
-    rc.top = margin;
-    rc.right = rc.left + width;
-    rc.bottom = rc.top + g_ctx.dlg_template->cy;
-
-    MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
+    const RECT rc = CommandPalette::get_recommended_bounds(g_ctx.dlg_template->cy);
     SetWindowPos(g_ctx.hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                  SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
 }

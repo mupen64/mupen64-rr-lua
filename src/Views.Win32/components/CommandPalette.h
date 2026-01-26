@@ -20,4 +20,11 @@ void show();
  * \brief Gets the HWND of the command palette window. Might be invalid.
  */
 HWND hwnd();
+
+/**
+ * \brief Gets the recommended screen-space bounds for a palette window.
+ * \param prefered_height The preferred height of the window. If not specified, a default height is calculated.
+ * \return The recommended bounds.
+ */
+RECT get_recommended_bounds(std::optional<int32_t> prefered_height = std::nullopt);
 } // namespace CommandPalette

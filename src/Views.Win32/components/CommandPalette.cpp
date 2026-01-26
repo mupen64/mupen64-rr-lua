@@ -11,6 +11,7 @@
 #include <components/AppActions.h>
 #include <components/ParameterPalette.h>
 #include <Messenger.h>
+#include "CommandPalette.h"
 
 struct t_listbox_item
 {
@@ -686,20 +687,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                                         });
 
         // 3. Set a reasonable position and size for the dialog (centered horizontally, vertically top-justified)
-        RECT parent_rc{};
-        GetClientRect(g_main_ctx.hwnd, &parent_rc);
-
-        constexpr auto margin = 10;
-        const auto width = std::max(400L, parent_rc.right / 3 - margin);
-        const auto height = std::max(100L, parent_rc.bottom / 2 - margin);
-
-        RECT rc;
-        rc.left = parent_rc.right / 2 - width / 2;
-        rc.top = margin;
-        rc.right = rc.left + width;
-        rc.bottom = rc.top + height;
-
-        MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
+        const RECT rc = CommandPalette::get_recommended_bounds();
         SetWindowPos(hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                      SWP_NOZORDER | SWP_FRAMECHANGED);
 
@@ -919,4 +907,23 @@ void CommandPalette::show()
 HWND CommandPalette::hwnd()
 {
     return g_ctx.hwnd;
+}
+
+RECT CommandPalette::get_recommended_bounds(const std::optional<int32_t> prefered_height)
+{
+    RECT parent_rc{};
+    GetClientRect(g_main_ctx.hwnd, &parent_rc);
+
+    constexpr auto margin = 10;
+    const auto width = std::max(400L, parent_rc.right / 3 - margin);
+    const auto height = prefered_height.value_or(std::max(300L, (long)(parent_rc.bottom * 0.75) - margin));
+
+    RECT rc;
+    rc.left = parent_rc.right / 2 - width / 2;
+    rc.top = margin;
+    rc.right = rc.left + width;
+    rc.bottom = rc.top + height;
+
+    MapWindowRect(g_main_ctx.hwnd, HWND_DESKTOP, &rc);
+    return rc;
 }
