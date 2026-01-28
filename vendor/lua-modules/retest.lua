@@ -37,6 +37,7 @@ retest.assertionless = {}
 
 retest.assertions = 0
 retest.tests = 0
+retest.incremental = false
 
 local function get_root()
   local node = retest.node
@@ -147,6 +148,10 @@ function retest.run()
         table.insert(retest.assertionless, deep_clone(node))
       end
 
+      if retest.incremental then
+        retest.report_node(node)
+      end
+
       local afters = {}
       local n = node
       while n do
@@ -173,6 +178,63 @@ function retest.run()
   retest.report()
 end
 
+---Formats a single node into one or more lines.
+---@param node TestNode
+---@return string[]
+function retest.format_node(node)
+  local function is_last_child(n)
+    if not n.parent then
+      return true
+    end
+    local siblings = n.parent.children or {}
+    return siblings[#siblings] == n
+  end
+
+  local function make_prefix(n)
+    local parts = {}
+    while n.parent do
+      if is_last_child(n.parent) then
+        table.insert(parts, 1, "   ")
+      else
+        table.insert(parts, 1, "│  ")
+      end
+      n = n.parent
+    end
+    return table.concat(parts)
+  end
+
+  local lines = {}
+  local prefix = make_prefix(node)
+  local connector = is_last_child(node) and "└─ " or "├─ "
+
+  if node.test then
+    if not node.result then
+      lines[1] = prefix .. connector .. "⚠️ " .. node.name .. " - NO ASSERTIONS"
+    elseif node.result.success then
+      lines[1] = prefix .. connector .. "✅ " .. node.name
+    else
+      lines[1] = prefix .. connector .. "❎ " .. node.name
+      if node.result.message then
+        lines[2] =
+            prefix
+            .. (is_last_child(node) and "   " or "│  ")
+            .. "  "
+            .. tostring(node.result.message)
+      end
+    end
+  else
+    lines[1] = prefix .. connector .. node.name
+  end
+
+  return lines
+end
+
+---Prints a single test or suite node.
+---@param node TestNode
+function retest.report_node(node)
+  emu.console(table.concat(retest.format_node(node), "\r\n"))
+end
+
 ---Reports the results of the tests to the console.
 function retest.report()
   local root = get_root()
@@ -182,51 +244,31 @@ function retest.report()
     lines[#lines + 1] = line
   end
 
-  ---@param node TestNode
-  ---@param prefix string
-  ---@param is_last boolean
-  local function report_node(node, prefix, is_last)
-    prefix = prefix or ""
-    local connector = is_last and "└─ " or "├─ "
-
+  local function visit(node)
     if node ~= root then
-      if node.test then
-        if not node.result then
-          emit(prefix .. connector .. "⚠️ " .. node.name .. " - NO ASSERTIONS")
-        else
-          if node.result.success then
-            emit(prefix .. connector .. "✅ " .. node.name)
-          else
-            emit(prefix .. connector .. "❎ " .. node.name)
-            if node.result.message then
-              emit(prefix .. (is_last and "   " or "│  ") .. "  " .. tostring(node.result.message))
-            end
-          end
-        end
-      else
-        emit(prefix .. connector .. node.name)
+      local formatted = retest.format_node(node)
+      for i = 1, #formatted do
+        emit(formatted[i])
       end
     end
 
-    local children = node.children or {}
-    local count = #children
-    for i, child in ipairs(children) do
-      local child_is_last = i == count
-      local child_prefix =
-          prefix
-          .. (node == root and "" or (is_last and "   " or "│  "))
-
-      report_node(child, child_prefix, child_is_last)
+    for _, child in ipairs(node.children or {}) do
+      visit(child)
     end
   end
 
-  report_node(root, "", true)
+  visit(root)
 
   emu.console(table.concat(lines, "\r\n"))
 
   local successes = retest.tests - #retest.failures - #retest.assertionless
-  print(string.format("%d PASSED, %d FAILED, %d WITHOUT ASSERTIONS, %d tests", successes, #retest.failures,
-    #retest.assertionless, retest.tests))
+  print(string.format(
+    "%d PASSED, %d FAILED, %d WITHOUT ASSERTIONS, %d tests",
+    successes,
+    #retest.failures,
+    #retest.assertionless,
+    retest.tests
+  ))
 end
 
 -- Assertions
