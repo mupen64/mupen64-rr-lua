@@ -16,57 +16,68 @@ local testlib_dll_path = testlib_path .. "luatestlib.dll"
 package.cpath = testlib_path .. "?.dll;" .. package.cpath
 
 retest.describe('mupen64', function()
-    retest.describe('shims', function()
-        retest.describe('global', function()
-            retest.it('printx_forwarded_to_print', function()
-                retest.expect(printx).to.equal(print)
-            end)
-            retest.describe('unpack', function()
-                retest.it('works', function()
-                    local t = { 1, 2 }
+    retest.describe('printx', function()
+        retest.it('forwarded_to_print', function()
+            retest.expect(printx).to.equal(print)
+        end)
+    end)
+    retest.describe('unpack', function()
+        retest.it('works', function()
+            local t = { 1, 2 }
 
-                    local function sum(a, b)
-                        return a + b
-                    end
+            local function sum(a, b)
+                return a + b
+            end
 
-                    local result = sum(unpack(t))
-                    retest.expect(result).to.equal(3)
-                end)
+            local result = sum(unpack(t))
+            retest.expect(result).to.equal(3)
+        end)
+    end)
+    retest.describe('math', function()
+        retest.describe('atan2', function()
+            retest.it('works', function()
+                local y, x = 1, 1
+                local result = math.atan2(y, x)
+                retest.expect(result).to.equal(math.pi / 4)
             end)
         end)
-        retest.describe('math', function()
-            retest.describe('atan2', function()
-                retest.it('works', function()
-                    local y, x = 1, 1
-                    local result = math.atan2(y, x)
-                    retest.expect(result).to.equal(math.pi / 4)
-                end)
-            end)
-            retest.describe('pow', function()
-                retest.it('works', function()
-                    retest.expect(math.pow(5, 6)).to.equal(5 ^ 6)
-                end)
+        retest.describe('pow', function()
+            retest.it('works', function()
+                retest.expect(math.pow(5, 6)).to.equal(5 ^ 6)
             end)
         end)
-        retest.describe('table', function()
-            retest.it('get_n_works', function()
+    end)
+    retest.describe('table', function()
+        retest.describe('getn', function()
+            retest.it('works', function()
                 retest.expect(table.getn({ 1, 2, 3 })).to.equal(3)
             end)
         end)
-        retest.describe('emu', function()
-            retest.it('debug_view_forwarded_to_print', function()
+    end)
+    retest.describe('emu', function()
+        retest.describe('debugview', function()
+            retest.it('forwarded_to_print', function()
                 retest.expect(emu.debugview).to.equal(print)
             end)
-            retest.it('setgfx_exists_and_is_noop', function()
+        end)
+
+        retest.describe('setgfx', function()
+            retest.it('exists_and_is_noop', function()
                 local func = function()
                     emu.setgfx("anything")
                 end
                 retest.expect(func).to_not.fail()
             end)
-            retest.it('isreadonly_forwarded_to_movie_get_readonly', function()
+        end)
+
+        retest.describe('isreadonly', function()
+            retest.it('forwarded_to_movie_get_readonly', function()
                 retest.expect(emu.isreadonly).to.equal(movie.get_readonly)
             end)
-            retest.it('getsystemmetrics_exists_and_prints_deprecation', function()
+        end)
+
+        retest.describe('getsystemmetrics', function()
+            retest.it('exists_and_prints_deprecation_warning', function()
                 __prev_print = print
                 local printed_str
                 print = function(str) printed_str = str end
@@ -76,31 +87,46 @@ retest.describe('mupen64', function()
                 print = __prev_print
                 retest.expect(printed_str:find("deprecated") ~= nil).to.equal(true)
             end)
-            retest.describe('getversion', function()
-                retest.it('full_version_equals_meta_version_with_prefix', function()
-                    local version = emu.getversion(0)
-                    retest.expect(version).to.equal("Mupen 64 " .. Mupen._VERSION)
-                end)
-                retest.it('short_version_equals_meta_version', function()
-                    local version = emu.getversion(1)
-                    retest.expect(version).to.equal(Mupen._VERSION)
-                end)
+        end)
+
+        retest.describe('getversion', function()
+            retest.it('full_version_equals_meta_version_with_prefix', function()
+                local version = emu.getversion(0)
+                retest.expect(version).to.equal("Mupen 64 " .. Mupen._VERSION)
+            end)
+            retest.it('short_version_equals_meta_version', function()
+                local version = emu.getversion(1)
+                retest.expect(version).to.equal(Mupen._VERSION)
             end)
         end)
-        retest.describe('movie', function()
-            retest.it('playmovie_forwarded_to_play', function()
+    end)
+    retest.describe('movie', function()
+        retest.describe('playmovie', function()
+            retest.it('forwarded_to_play', function()
                 retest.expect(movie.playmovie).to.equal(movie.play)
             end)
-            retest.it('stopmovie_forwarded_to_stop', function()
+        end)
+
+        retest.describe('stopmovie', function()
+            retest.it('forwarded_to_stop', function()
                 retest.expect(movie.stopmovie).to.equal(movie.stop)
             end)
-            retest.it('getmoviefilename_forwarded_to_get_filename', function()
+        end)
+
+        retest.describe('getmoviefilename', function()
+            retest.it('forwarded_to_get_filename', function()
                 retest.expect(movie.getmoviefilename).to.equal(movie.get_filename)
             end)
-            retest.it('isreadonly_forwarded_to_get_readonly', function()
+        end)
+
+        retest.describe('isreadonly', function()
+            retest.it('forwarded_to_get_readonly', function()
                 retest.expect(movie.isreadonly).to.equal(movie.get_readonly)
             end)
-            retest.it('begin_seek_to_exists_and_prints_deprecation', function()
+        end)
+
+        retest.describe('begin_seek_to', function()
+            retest.it('exists_and_prints_deprecation_warning', function()
                 __prev_print = print
                 local printed_str
                 print = function(str) printed_str = str end
@@ -110,7 +136,10 @@ retest.describe('mupen64', function()
                 print = __prev_print
                 retest.expect(printed_str:find("deprecated") ~= nil).to.equal(true)
             end)
-            retest.it('get_seek_info_exists_and_prints_deprecation', function()
+        end)
+
+        retest.describe('get_seek_info', function()
+            retest.it('exists_and_prints_deprecation_warning', function()
                 __prev_print = print
                 local printed_str
                 print = function(str) printed_str = str end
@@ -121,8 +150,11 @@ retest.describe('mupen64', function()
                 retest.expect(printed_str:find("deprecated") ~= nil).to.equal(true)
             end)
         end)
-        retest.describe('savestate', function()
-            retest.it('savefile_calls_dofile', function()
+    end)
+
+    retest.describe('savestate', function()
+        retest.describe('savefile', function()
+            retest.it('calls_dofile', function()
                 local FILENAME = "test.st"
 
                 __prev_savestate_do_file = savestate.do_file
@@ -136,7 +168,10 @@ retest.describe('mupen64', function()
 
                 savestate.do_file = __prev_savestate_do_file
             end)
-            retest.it('loadfile_calls_dofile', function()
+        end)
+
+        retest.describe('loadfile', function()
+            retest.it('calls_dofile', function()
                 local FILENAME = "test.st"
 
                 __prev_savestate_do_file = savestate.do_file
@@ -151,8 +186,11 @@ retest.describe('mupen64', function()
                 savestate.do_file = __prev_savestate_do_file
             end)
         end)
-        retest.describe('input', function()
-            retest.it('map_virtual_key_ex_exists_and_prints_deprecation', function()
+    end)
+
+    retest.describe('input', function()
+        retest.describe('map_virtual_key_ex', function()
+            retest.it('exists_and_prints_deprecation', function()
                 __prev_print = print
                 local printed_str
                 print = function(str) printed_str = str end
@@ -163,11 +201,16 @@ retest.describe('mupen64', function()
                 retest.expect(printed_str:find("deprecated") ~= nil).to.equal(true)
             end)
         end)
-        retest.describe('memory', function()
-            retest.it('recompilenow_forwarded_to_recompile', function()
+    end)
+
+    retest.describe('memory', function()
+        retest.describe('recompilenow', function()
+            retest.it('forwarded_to_recompile', function()
                 retest.expect(memory.recompilenow).to.equal(memory.recompile)
             end)
-            retest.it('recompilenext_forwarded_to_recompile', function()
+        end)
+        retest.describe('recompilenext', function()
+            retest.it('forwarded_to_recompile', function()
                 retest.expect(memory.recompilenext).to.equal(memory.recompile)
             end)
         end)
