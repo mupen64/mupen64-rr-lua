@@ -190,7 +190,7 @@ retest.describe('mupen64', function()
 
     retest.describe('input', function()
         retest.describe('map_virtual_key_ex', function()
-            retest.it('exists_and_prints_deprecation', function()
+            retest.it('exists_and_prints_deprecation_warning', function()
                 __prev_print = print
                 local printed_str
                 print = function(str) printed_str = str end
