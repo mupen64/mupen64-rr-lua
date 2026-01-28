@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 organization, original author of `lust` (bjornbytes).
+--
+-- SPDX-License-Identifier: GPL-2.0-or-later
+--
+
 --- ReTest
 --- Simple test library for Lua based on [retest](https://github.com/bjornbytes/retest).
 
