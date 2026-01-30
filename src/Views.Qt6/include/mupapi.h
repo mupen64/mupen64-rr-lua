@@ -395,8 +395,6 @@ extern "C"
 
     /**
      * @brief Called to initialize this audio plugin.
-     * Do not expect any window system information from `core_info`, these are left for compatibility with older
-     * plugins.
      *
      * @param core_info Various pointers to objects inside the core.
      */

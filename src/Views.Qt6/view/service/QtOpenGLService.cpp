@@ -1,7 +1,9 @@
 #include "QtOpenGLService.hpp"
 #include "core_types.h"
 #include "mupapi.h"
+#include <algorithm>
 #include <variant>
+
 
 QtOpenGLService::QtOpenGLService(MainWindow *main_window) : m_main_window(main_window)
 {
@@ -48,6 +50,14 @@ core_result QtOpenGLService::request_version(mupv_gl_profile profile, uint32_t m
 
 core_result QtOpenGLService::open_window(uint32_t width, uint32_t height)
 {
+    auto p_state = std::get_if<impl::OpenGLRequestState>(&m_state);
+    if (p_state == nullptr)
+        return Res_Cancelled;
+    
+    auto state = impl::OpenGLRequestState(std::move(*p_state));
+    m_state.emplace<std::monostate>();
+
+    
     return Res_Ok;
 }
 core_result QtOpenGLService::close_window()

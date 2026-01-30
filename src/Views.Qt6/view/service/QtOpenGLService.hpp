@@ -5,6 +5,7 @@
 #include "../model/Core.hpp"
 #include "mupapi.h"
 #include <array>
+#include <qopenglcontext.h>
 #include <variant>
 
 namespace impl {
@@ -15,7 +16,7 @@ namespace impl {
     uint32_t ver_minor;
   };
   struct OpenGLActiveState {
-
+    QOpenGLContext* p_context;
   };
 }
 

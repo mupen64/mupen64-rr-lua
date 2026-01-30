@@ -63,35 +63,9 @@ std::pair<size_t, bool> MainWindow::showChoiceDialog(const std::vector<QString> 
     bool dontShowAgain = choiceCheckbox->isChecked();
     return {index, dontShowAgain};
 }
+
 void MainWindow::showInfoDialog(const QString &title, const QString &text, QMessageBox::Icon icon)
 {
     auto messageBox = QMessageBox(icon, title, text, QMessageBox::Ok, this);
     messageBox.exec();
-}
-
-void MainWindow::onOpenRom(bool state)
-{
-    m_openRomDialog->open();
-}
-void MainWindow::onOpenRom1(const QString &qsPath)
-{
-    ui.pager->setCurrentIndex(1);
-
-    auto exeDir = std::filesystem::path(boost::dll::program_location().parent_path().c_str());
-    auto pluginDir = exeDir / "plugin";
-    auto hardcodedPlugins = Mupen::PluginPaths{
-        .video_path = pluginDir / "no-video.so",
-        .audio_path = pluginDir / "audio-sdl.so",
-        .input_path = pluginDir / "no-input.so",
-        .rsp_path = pluginDir / "TASRSP.so",
-    };
-
-    auto path = QFileInfo(qsPath).filesystemFilePath();
-    Mupen::core_start(path, hardcodedPlugins);
-}
-
-void MainWindow::onCloseRom(bool state)
-{
-    Mupen::core_stop();
-    ui.pager->setCurrentIndex(0);
 }

@@ -16,6 +16,8 @@
 #include <QWidget>
 
 #include <memory>
+#include <qsurfaceformat.h>
+#include <qtmetamacros.h>
 
 #include "ui_MainWindow.h"
 
@@ -28,14 +30,13 @@ class MainWindow : public QMainWindow
     Q_INVOKABLE std::pair<size_t, bool> showChoiceDialog(const std::vector<QString> &choices, const QString &title,
                                                          const QString &message, QMessageBox::Icon icon);
 
-    Q_INVOKABLE void showInfoDialog(const QString &title, const QString &message,
-                                                       QMessageBox::Icon icon);
+    Q_INVOKABLE void showInfoDialog(const QString &title, const QString &message, QMessageBox::Icon icon);
 
-    void addToGameWindow(QWidget* widget, QRect bounds);
+    // Q_INVOKABLE void setupOpenGL(const QSurfaceFormat& surfaceFormat, uint32_t width, uint32_t height);
 
   private slots:
     void onOpenRom(bool state);
-    void onOpenRom1(const QString& qsPath);
+    void onOpenRom1(const QString &qsPath);
 
     void onCloseRom(bool state);
 
