@@ -20,6 +20,7 @@
 #include <qobject.h>
 #include <qsurfaceformat.h>
 #include <qtmetamacros.h>
+#include <thread>
 
 #include "render/GLRenderWindow.hpp"
 #include "ui_MainWindow.h"
@@ -49,7 +50,7 @@ class MainWindow : public QMainWindow
     Ui::MainWindow ui;
     std::unique_ptr<QFileDialog> m_openRomDialog;
     std::unique_ptr<GLRenderWindow> m_glRenderTest;
-    std::unique_ptr<QThread> m_glTestThread;
+    std::unique_ptr<std::thread> m_glTestThread;
 };
 
 #endif
