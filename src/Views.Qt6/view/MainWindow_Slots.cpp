@@ -16,10 +16,12 @@
 // #include "moc_MainWindow.cpp"
 
 #include <boost/dll/runtime_symbol_info.hpp>
+#include <qthread.h>
 
 #include "../model/Core.hpp"
 #include "../model/Logging.hpp"
 #include "../model/Plugin.hpp"
+#include "render/GLRenderWindow.hpp"
 
 void MainWindow::onOpenRom(bool state)
 {
@@ -38,6 +40,11 @@ void MainWindow::onOpenRom1(const QString &qsPath)
         .rsp_path = pluginDir / "TASRSP.so",
     };
 
+    m_glRenderTest.reset(new GLRenderWindow(ui.gameWindowPage));
+
+    m_glRenderTest->container()->move(0, 0);
+    m_glRenderTest->container()->resize(640, 480);
+
     auto path = QFileInfo(qsPath).filesystemFilePath();
     Mupen::core_start(path, hardcodedPlugins);
 }
@@ -45,5 +52,8 @@ void MainWindow::onOpenRom1(const QString &qsPath)
 void MainWindow::onCloseRom(bool state)
 {
     Mupen::core_stop();
+    m_glRenderTest.reset();
     ui.pager->setCurrentIndex(0);
+
+    m_glRenderTest.reset();
 }

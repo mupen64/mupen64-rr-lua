@@ -22,7 +22,7 @@
 #include "../model/Plugin.hpp"
 
 MainWindow::MainWindow(QMainWindow *parent)
-    : QMainWindow(parent), m_openRomDialog(new QFileDialog(this, tr("Open ROM...")))
+    : QMainWindow(parent), m_openRomDialog(new QFileDialog(this, tr("Open ROM..."))), m_glRenderTest(nullptr), m_glTestThread(nullptr)
 {
     using namespace Qt::Literals;
     ui.setupUi(this);

@@ -13,12 +13,15 @@
 #include <QRect>
 #include <QSize>
 #include <QString>
+#include <QThread>
 #include <QWidget>
 
 #include <memory>
+#include <qobject.h>
 #include <qsurfaceformat.h>
 #include <qtmetamacros.h>
 
+#include "render/GLRenderWindow.hpp"
 #include "ui_MainWindow.h"
 
 class MainWindow : public QMainWindow
@@ -34,6 +37,8 @@ class MainWindow : public QMainWindow
 
     // Q_INVOKABLE void setupOpenGL(const QSurfaceFormat& surfaceFormat, uint32_t width, uint32_t height);
 
+    
+
   private slots:
     void onOpenRom(bool state);
     void onOpenRom1(const QString &qsPath);
@@ -43,6 +48,8 @@ class MainWindow : public QMainWindow
   private:
     Ui::MainWindow ui;
     std::unique_ptr<QFileDialog> m_openRomDialog;
+    std::unique_ptr<GLRenderWindow> m_glRenderTest;
+    std::unique_ptr<QThread> m_glTestThread;
 };
 
 #endif

@@ -13,12 +13,11 @@ public:
 
   virtual ~GLRenderWindow();
 
-  QWidget* getContainerUnsafe() {
-    m_owns_container = false;
+  QWidget* container() {
     return m_container;
   }
 
-  QOpenGLContext* getContext() {
+  QOpenGLContext* context() {
     return m_context;
   }
 
@@ -31,7 +30,6 @@ public:
 private:
   QWidget* m_container;
   QOpenGLContext* m_context;
-  bool m_owns_container;
 
 };
 

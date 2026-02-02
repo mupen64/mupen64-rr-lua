@@ -25,6 +25,8 @@ qt_add_executable(Mupen64RR.Views.Qt6
     "model/Logging.hpp"
     "model/Plugin.cpp"
     "model/Plugin.hpp"
+    "view/render/GLRenderWindow.cpp"
+    "view/render/GLRenderWindow.hpp"
     "view/service/QtCoreService.cpp"
     "view/service/QtCoreService.hpp"
     "view/service/QtOpenGLService.cpp"
