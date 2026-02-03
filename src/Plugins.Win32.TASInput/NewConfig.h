@@ -22,8 +22,6 @@ struct t_button_mapping
     int32_t button = SDL_GAMEPAD_BUTTON_INVALID;
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
     int32_t key = 0;
-
-    static t_button_mapping from_button(int32_t button) { return {button, SDL_GAMEPAD_AXIS_INVALID, 0}; }
 };
 
 struct t_controller_config
@@ -38,12 +36,12 @@ struct t_controller_config
     t_button_mapping c_down{};
     t_button_mapping c_up{};
 
-    t_button_mapping a = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_SOUTH);
-    t_button_mapping b = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_EAST);
-    t_button_mapping z = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_WEST);
-    t_button_mapping start = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_START);
-    t_button_mapping l = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
-    t_button_mapping r = t_button_mapping::from_button(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+    t_button_mapping a = {SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_AXIS_INVALID, 0};
+    t_button_mapping b = {SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_AXIS_INVALID, 0};
+    t_button_mapping z = {SDL_GAMEPAD_BUTTON_WEST, SDL_GAMEPAD_AXIS_INVALID, 0};
+    t_button_mapping start = {SDL_GAMEPAD_BUTTON_START, SDL_GAMEPAD_AXIS_INVALID, 0};
+    t_button_mapping l = {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_AXIS_INVALID, 0};
+    t_button_mapping r = {SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, SDL_GAMEPAD_AXIS_INVALID, 0};
 
     t_axis_mapping x = {SDL_GAMEPAD_AXIS_LEFTX, 0, 0};
     t_axis_mapping y = {SDL_GAMEPAD_AXIS_LEFTY, 0, 0};
@@ -54,20 +52,20 @@ struct t_controller_config
     static t_controller_config keyboard_config()
     {
         t_controller_config config{};
-        config.a = {SDL_GAMEPAD_BUTTON_INVALID, 'X'};
-        config.b = {SDL_GAMEPAD_BUTTON_INVALID, 'Z'};
-        config.start = {SDL_GAMEPAD_BUTTON_INVALID, VK_RETURN};
-        config.z = {SDL_GAMEPAD_BUTTON_INVALID, 'A'};
-        config.l = {SDL_GAMEPAD_BUTTON_INVALID, 'S'};
-        config.r = {SDL_GAMEPAD_BUTTON_INVALID, 'D'};
-        config.dpad_up = {SDL_GAMEPAD_BUTTON_INVALID, VK_UP};
-        config.dpad_down = {SDL_GAMEPAD_BUTTON_INVALID, VK_DOWN};
-        config.dpad_left = {SDL_GAMEPAD_BUTTON_INVALID, VK_LEFT};
-        config.dpad_right = {SDL_GAMEPAD_BUTTON_INVALID, VK_RIGHT};
-        config.c_up = {SDL_GAMEPAD_BUTTON_INVALID, 'W'};
-        config.c_down = {SDL_GAMEPAD_BUTTON_INVALID, 'Q'};
-        config.c_left = {SDL_GAMEPAD_BUTTON_INVALID, 'E'};
-        config.c_right = {SDL_GAMEPAD_BUTTON_INVALID, 'R'};
+        config.a = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'X'};
+        config.b = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'Z'};
+        config.start = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, VK_RETURN};
+        config.z = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'A'};
+        config.l = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'S'};
+        config.r = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'D'};
+        config.dpad_up = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, VK_UP};
+        config.dpad_down = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, VK_DOWN};
+        config.dpad_left = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, VK_LEFT};
+        config.dpad_right = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, VK_RIGHT};
+        config.c_up = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'W'};
+        config.c_down = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'Q'};
+        config.c_left = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'E'};
+        config.c_right = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_AXIS_INVALID, 'R'};
         config.x = {SDL_GAMEPAD_AXIS_INVALID, 'J', 'L'};
         config.y = {SDL_GAMEPAD_AXIS_INVALID, 'I', 'K'};
         return config;
