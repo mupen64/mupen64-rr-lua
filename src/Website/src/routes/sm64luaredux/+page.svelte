@@ -13,13 +13,7 @@
 		bg_color_from="#ffffff"
 		bg_color_to="#dddddd"
 		dark={false}
-	>
-		{#snippet button()}
-			<a href="https://github.com/mupen64/SM64LuaRedux/releases/latest" class="button primary bg-gray-600! shadow-black! text-white!"
-				>Download</a
-			>
-		{/snippet}
-	</Hero>
+	></Hero>
 
 	<section id="about" class="mb-12 p-16 pb-0">
 		<div class="mx-auto max-w-6xl">
