@@ -1,13 +1,12 @@
 import json
-import re
 import os
+import re
+from dataclasses import dataclass
 
 import markdown
 import minify_html
 from markdown.extensions.codehilite import CodeHiliteExtension
 from markdown.extensions.fenced_code import FencedCodeExtension
-from dataclasses import dataclass
-
 
 # RUN "pip install -r requirements.txt" BEFORE RUNNING THIS SCRIPT. This script
 # assumes the working directory is the base git directory (not
@@ -21,6 +20,7 @@ from dataclasses import dataclass
 # - use a proper templating engine instead of string accumulation
 
 OUT_DIR = "src/Website/static/docs/lua/"
+
 
 class StringAccumulator:
     def __init__(self):
@@ -342,14 +342,6 @@ def add_header(html: StringAccumulator):
         </head>
         <body>
             <div class="sidebar">
-            <div class="sidebarheader">
-                <div class="logo">
-                    <a href="index.html"><img src="/docs/lua/img/mupen_logo.png"></a>
-                </div>
-                <div class="logolabel">
-                    mupen64-rr-lua docs
-                </div>
-            </div>
     """
     )
 
@@ -465,6 +457,7 @@ def write_output(data: str):
 
     with open(f"{OUT_DIR}index-no-min.html", "w", encoding="utf-8") as file:
         file.write(data)
+
 
 def main():
     # Config
