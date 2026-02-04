@@ -12,12 +12,13 @@
 		bg_color_to,
 		dark
 	} = $props();
+
+	const bg_style = $derived(`
+	background: repeating-linear-gradient(45deg, ${bg_color_from} 0 1px, transparent 1px 20px), repeating-linear-gradient(-45deg, ${bg_color_from} 0 1px, transparent 1px 20px), linear-gradient(45deg, ${bg_color_from}, ${bg_color_to});
+	`);
 </script>
 
-<section
-	class="border-b border-base-100 p-16 shadow-lg"
-	style="background: linear-gradient(45deg, {bg_color_from}, {bg_color_to})"
->
+<section class="border-b border-base-100 p-16 shadow-lg" style={bg_style}>
 	<div class="mx-auto max-w-6xl">
 		<div
 			class="flex flex-row flex-wrap items-center justify-center gap-12 {dark

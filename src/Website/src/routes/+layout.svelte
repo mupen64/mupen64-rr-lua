@@ -79,23 +79,27 @@
 	<div class="navbar-end"></div>
 </div>
 
-{@render children?.()}
-
-<footer class="w-full">
-	<hr class="border-dashed border-gray-500" />
-	<div class="mt-10 mb-10 flex flex-col items-center justify-center text-center">
-		<div class="mb-5 flex flex-row items-center gap-2">
-			<img src={mupen64} alt="Mupen64 Logo" class="object-fit w-10" />
-			<p class="text-2xl font-bold">Mupen64 Organization</p>
-		</div>
-		<p class="mb-5 max-w-2xl text-center">
-			The Mupen64 Organization is a shared-ownership organization maintained by developers around
-			the world.
-			<br />
-			Feel free to contribute!
-		</p>
-
-		<a class="link" href="https://github.com/mupen64">© 2026 Mupen64 Organization</a>
-		<p>Licensed under GNU GPL v2 License</p>
+<div class="flex min-h-screen flex-col">
+	<div class="flex-1">
+		{@render children?.()}
 	</div>
-</footer>
+
+	<footer class="grid-300-45 w-full bg-base-200">
+		<hr class="border-dashed border-gray-500" />
+		<div class="flex flex-col items-center justify-center p-10 text-center">
+			<div class="mb-5 flex flex-row items-center gap-2">
+				<img src={mupen64} alt="Mupen64 Logo" class="object-fit w-10" />
+				<p class="text-2xl font-bold">Mupen64 Organization</p>
+			</div>
+			<p class="mb-5 max-w-2xl text-center">
+				The Mupen64 Organization is a shared-ownership organization maintained by developers around
+				the world.
+				<br />
+				Feel free to contribute!
+			</p>
+
+			<a class="link" href="https://github.com/mupen64">© 2026 Mupen64 Organization</a>
+			<p>Licensed under GNU GPL v2 License</p>
+		</div>
+	</footer>
+</div>
