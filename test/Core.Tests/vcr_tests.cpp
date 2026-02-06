@@ -25,6 +25,7 @@ static void prepare_test()
     // params.io_service = &io_helper_service;
     params.input_get_keys = [](int32_t, core_buttons *) {};
     params.input_set_keys = [](int32_t, core_buttons) {};
+    params.callbacks = {};
 }
 
 /**
