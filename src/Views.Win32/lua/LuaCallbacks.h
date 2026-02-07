@@ -11,26 +11,26 @@
  */
 namespace LuaCallbacks
 {
-using callback_key = const char*;
+using callback_key = uint8_t;
 
-constexpr callback_key REG_LUACLASS = "luaclass";
-constexpr callback_key REG_ATUPDATESCREEN = "atupdatescreen";
-constexpr callback_key REG_ATDRAWD2D = "atdrawd2d";
-constexpr callback_key REG_ATVI = "atvi";
-constexpr callback_key REG_ATINPUT = "atinput";
-constexpr callback_key REG_ATSTOP = "atstop";
-constexpr callback_key REG_SYNCBREAK = "syncbreak";
-constexpr callback_key REG_READBREAK = "readbreak";
-constexpr callback_key REG_WRITEBREAK = "writebreak";
-constexpr callback_key REG_WINDOWMESSAGE = "windowmessage";
-constexpr callback_key REG_ATINTERVAL = "atinterval";
-constexpr callback_key REG_ATPLAYMOVIE = "atplaymovie";
-constexpr callback_key REG_ATSTOPMOVIE = "atstopmovie";
-constexpr callback_key REG_ATLOADSTATE = "atloadstate";
-constexpr callback_key REG_ATSAVESTATE = "atsavestate";
-constexpr callback_key REG_ATRESET = "atreset";
-constexpr callback_key REG_ATSEEKCOMPLETED = "atseekcompleted";
-constexpr callback_key REG_ATWARPMODIFYSTATUSCHANGED = "atwarpmodifystatuschanged";
+constexpr callback_key REG_LUACLASS = 1;
+constexpr callback_key REG_ATUPDATESCREEN = 2;
+constexpr callback_key REG_ATDRAWD2D = 3;
+constexpr callback_key REG_ATVI = 4;
+constexpr callback_key REG_ATINPUT = 5;
+constexpr callback_key REG_ATSTOP = 6;
+constexpr callback_key REG_SYNCBREAK = 7;
+constexpr callback_key REG_READBREAK = 8;
+constexpr callback_key REG_WRITEBREAK = 9;
+constexpr callback_key REG_WINDOWMESSAGE = 10;
+constexpr callback_key REG_ATINTERVAL = 11;
+constexpr callback_key REG_ATPLAYMOVIE = 12;
+constexpr callback_key REG_ATSTOPMOVIE = 13;
+constexpr callback_key REG_ATLOADSTATE = 14;
+constexpr callback_key REG_ATSAVESTATE = 15;
+constexpr callback_key REG_ATRESET = 16;
+constexpr callback_key REG_ATSEEKCOMPLETED = 17;
+constexpr callback_key REG_ATWARPMODIFYSTATUSCHANGED = 18;
 
 /**
  * \brief Gets the last controller data for a controller index

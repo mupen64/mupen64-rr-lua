@@ -158,7 +158,7 @@ bool invoke_callbacks_with_key_impl(const t_lua_environment *lua, const std::fun
 
     lua_State *L = lua->L;
 
-    lua_getfield(L, LUA_REGISTRYINDEX, key);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))
     {
         lua_pop(L, 1);
@@ -216,13 +216,13 @@ void LuaCallbacks::invoke_callbacks_with_key_on_all_instances(callback_key key)
 
 static int register_function(lua_State *L, LuaCallbacks::callback_key key)
 {
-    lua_getfield(L, LUA_REGISTRYINDEX, key);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))
     {
         lua_pop(L, 1);
         lua_newtable(L);
-        lua_setfield(L, LUA_REGISTRYINDEX, key);
-        lua_getfield(L, LUA_REGISTRYINDEX, key);
+        lua_rawseti(L, LUA_REGISTRYINDEX, key);
+        lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     }
     int i = luaL_len(L, -1) + 1;
     lua_pushinteger(L, i);
@@ -234,7 +234,7 @@ static int register_function(lua_State *L, LuaCallbacks::callback_key key)
 
 static void unregister_function(lua_State *L, LuaCallbacks::callback_key key)
 {
-    lua_getfield(L, LUA_REGISTRYINDEX, key);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, key);
     if (lua_isnil(L, -1))
     {
         lua_pop(L, 1);
