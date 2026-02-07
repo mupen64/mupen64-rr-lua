@@ -6,31 +6,36 @@
 
 #pragma once
 
+#include <lua.h>
+
 /**
  * \brief A module responsible for implementing Lua callbacks.
  */
 namespace LuaCallbacks
 {
-using callback_key = uint8_t;
 
-constexpr callback_key REG_LUACLASS = 1;
-constexpr callback_key REG_ATUPDATESCREEN = 2;
-constexpr callback_key REG_ATDRAWD2D = 3;
-constexpr callback_key REG_ATVI = 4;
-constexpr callback_key REG_ATINPUT = 5;
-constexpr callback_key REG_ATSTOP = 6;
-constexpr callback_key REG_SYNCBREAK = 7;
-constexpr callback_key REG_READBREAK = 8;
-constexpr callback_key REG_WRITEBREAK = 9;
-constexpr callback_key REG_WINDOWMESSAGE = 10;
-constexpr callback_key REG_ATINTERVAL = 11;
-constexpr callback_key REG_ATPLAYMOVIE = 12;
-constexpr callback_key REG_ATSTOPMOVIE = 13;
-constexpr callback_key REG_ATLOADSTATE = 14;
-constexpr callback_key REG_ATSAVESTATE = 15;
-constexpr callback_key REG_ATRESET = 16;
-constexpr callback_key REG_ATSEEKCOMPLETED = 17;
-constexpr callback_key REG_ATWARPMODIFYSTATUSCHANGED = 18;
+// The Lua Reference Manual specifically advises against this, but this should
+// prevent reserved integer registry keys from being used.
+enum callback_key : uint8_t {
+    REG_LUACLASS = LUA_RIDX_LAST + 1,
+    REG_ATUPDATESCREEN,
+    REG_ATDRAWD2D,
+    REG_ATVI,
+    REG_ATINPUT,
+    REG_ATSTOP,
+    REG_SYNCBREAK,
+    REG_READBREAK,
+    REG_WRITEBREAK,
+    REG_WINDOWMESSAGE,
+    REG_ATINTERVAL,
+    REG_ATPLAYMOVIE,
+    REG_ATSTOPMOVIE,
+    REG_ATLOADSTATE,
+    REG_ATSAVESTATE,
+    REG_ATRESET,
+    REG_ATSEEKCOMPLETED,
+    REG_ATWARPMODIFYSTATUSCHANGED,
+};
 
 /**
  * \brief Gets the last controller data for a controller index
