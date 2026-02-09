@@ -17,6 +17,24 @@ package.cpath = testlib_path .. "?.dll;" .. package.cpath
 
 retest.print_raw = emu.console
 
+retest.attach_coverage(
+    {
+        { "emu",       emu },
+        { "memory",    memory },
+        { "wgui",      wgui },
+        { "d2d",       d2d },
+        { "input",     input },
+        { "joypad",    joypad },
+        { "movie",     movie },
+        { "savestate", savestate },
+        { "iohelper",  iohelper },
+        { "avi",       avi },
+        { "hotkey",    hotkey },
+        { "action",    action },
+        { "clipboard", clipboard },
+    }
+)
+
 retest.describe('mupen64', function()
     retest.describe('printx', function()
         retest.it('forwarded_to_print', function()
