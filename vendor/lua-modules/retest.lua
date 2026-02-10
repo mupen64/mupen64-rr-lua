@@ -61,6 +61,10 @@ retest.tests = 0
 ---@type CoverageTrackedTable[]
 retest.coverage_tracked_tables = {}
 
+---@type { [string]: boolean }
+---Mirrors the keys of coverage_tracked_tables for faster lookup in the debug hook.
+retest.coverage_tracked_functions = {}
+
 retest.covered_functions = 0
 retest.total_coverage_tracked_functions = 0
 
@@ -523,6 +527,25 @@ end
 ---This operation can't be undone.
 ---@param modules CoverageModule[] The modules to attach coverage tracking to.
 function retest.attach_coverage(modules)
+    if #retest.coverage_tracked_tables == 0 then
+        debug.sethook(function()
+            local info = debug.getinfo(2, 'f')
+            local fn = info.func
+            if not retest.coverage_tracked_functions[fn] then
+                return
+            end
+
+            local name = debug.getinfo(2, 'n').name
+            for _, tbl in pairs(retest.coverage_tracked_tables) do
+                local coverage_info = tbl.__coverage
+                if coverage_info.calls[name] ~= nil then
+                    coverage_info.calls[name] = coverage_info.calls[name] + 1
+                    break
+                end
+            end
+        end, 'c')
+    end
+
     for _, mod in ipairs(modules) do
         local name, obj = mod[1], mod[2]
 
@@ -533,23 +556,14 @@ function retest.attach_coverage(modules)
             covered_count = 0,
         }
 
-        for key, value in pairs(obj) do
-            if type(value) ~= 'function' then
-                goto continue
+        for k, v in pairs(obj) do
+            if type(v) == 'function' then
+                coverage_info.calls[k] = 0
+                retest.coverage_tracked_functions[v] = true
             end
-
-            coverage_info.calls[key] = 0
-            local original_func = value
-            obj[key] = function(...)
-                coverage_info.calls[key] = coverage_info.calls[key] + 1
-                return original_func(...)
-            end
-
-            ::continue::
         end
 
         obj.__coverage = coverage_info
-
         retest.coverage_tracked_tables[#retest.coverage_tracked_tables + 1] = obj
     end
 end
