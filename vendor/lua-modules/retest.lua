@@ -517,19 +517,11 @@ function retest.attach_coverage(modules)
     if #retest.coverage_tracked_tables == 0 then
         debug.sethook(function()
             local info = debug.getinfo(2, 'f')
-            local fn = info.func
-            if not retest.coverage_tracked_functions[fn] then
+            local entry = retest.coverage_tracked_functions[info.func]
+            if not entry then
                 return
             end
-
-            local name = debug.getinfo(2, 'n').name
-            for _, tbl in pairs(retest.coverage_tracked_tables) do
-                local coverage_info = tbl.__coverage
-                if coverage_info.calls[name] ~= nil then
-                    coverage_info.calls[name] = coverage_info.calls[name] + 1
-                    break
-                end
-            end
+            entry.coverage_info.calls[entry.key] = entry.coverage_info.calls[entry.key] + 1
         end, 'c')
     end
 
@@ -546,7 +538,7 @@ function retest.attach_coverage(modules)
         for k, v in pairs(obj) do
             if type(v) == 'function' then
                 coverage_info.calls[k] = 0
-                retest.coverage_tracked_functions[v] = true
+                retest.coverage_tracked_functions[v] = { coverage_info = coverage_info, key = k }
             end
         end
 
