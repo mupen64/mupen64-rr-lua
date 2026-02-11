@@ -5,7 +5,7 @@
 ---
 
 local retest = {
-    _VERSION = 'v1.0.0',
+    _VERSION = 'v0.0.1',
     _URL = 'https://github.com/Aurumaker72/retest',
     _DESCRIPTION = 'Retained-mode Lua testing library based on the lust library',
     _LICENSE = 'GPL-3',
