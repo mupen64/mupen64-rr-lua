@@ -136,6 +136,20 @@ end
 
 ---Runs all defined tests and suites, reporting results to the console.
 function retest.run()
+    retest.failures = {}
+    retest.assertionless = {}
+    retest.assertions = 0
+    retest.tests = 0
+    for _, tbl in pairs(retest.coverage_tracked_tables) do
+        local coverage_info = tbl.__coverage
+        coverage_info.covered_count = 0
+        for k, _ in pairs(coverage_info.calls) do
+            coverage_info.calls[k] = 0
+        end
+    end
+    retest.covered_functions = 0
+    retest.total_coverage_tracked_functions = 0
+
     local root = get_root()
 
     local function collect_hooks(node, field)
