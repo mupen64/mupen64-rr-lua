@@ -15,8 +15,6 @@ local testlib_path = path_root .. "build\\test\\Lua.Testlib\\"
 local testlib_dll_path = testlib_path .. "luatestlib.dll"
 package.cpath = testlib_path .. "?.dll;" .. package.cpath
 
-retest.print_raw = emu.console
-
 retest.attach_coverage(
     {
         { "emu",       emu },
@@ -1306,3 +1304,6 @@ retest.describe('mupen64', function()
 end)
 
 retest.run()
+
+local report = retest.report()
+emu.console(report)

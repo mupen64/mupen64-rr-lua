@@ -15,8 +15,6 @@ local retest = {
 
 ---@alias TestDelegate fun()
 
----@alias PrintRawDelegate fun(str: string)
-
 ---@class TestResult
 ---@field success boolean
 ---@field message string?
@@ -41,10 +39,6 @@ local retest = {
 ---@class CoverageModule
 ---@field [1] string The name of the module.
 ---@field [2] any The module.
-
----@type PrintRawDelegate
----The function used for printing raw output containing newlines.
-retest.print_raw = print
 
 ---@type TestNode
 retest.node = { name = 'root', children = {} }
@@ -220,15 +214,10 @@ function retest.run()
             end
         end
     end
-
-    retest.report()
-
-    retest.coverage_tracked_tables = {}
-    retest.covered_functions = 0
-    retest.total_coverage_tracked_functions = 0
 end
 
----Reports the results of the tests to the console.
+---Generates a report of the test results.
+---@return string # The report.
 function retest.report()
     local root = get_root()
     local lines = {}
@@ -275,15 +264,12 @@ function retest.report()
         end
     end
 
-    print('═══════ Tests ═══════')
+    emit('═══════ Tests ═══════')
     report_node(root, '', true)
 
-    retest.print_raw(table.concat(lines, '\r\n'))
-
     if #retest.coverage_tracked_tables > 0 then
-        print('═══════ Coverage ═══════')
+        emit('═══════ Coverage ═══════')
 
-        local str = ''
 
         for _, tbl in pairs(retest.coverage_tracked_tables) do
             local coverage_info = tbl.__coverage
@@ -291,31 +277,32 @@ function retest.report()
             local full_coverage = coverage_info.covered_count == dictlen(coverage_info.calls)
 
             if full_coverage then
-                str = str .. string.format('✅ %s - 100%% covered\r\n', tostring(coverage_info.name))
+                emit(string.format('✅ %s - 100%% covered', tostring(coverage_info.name)))
             else
                 local coverage_percentage = coverage_info.covered_count / dictlen(coverage_info.calls)
-                str = str ..
-                    string.format('❎ %s - %.2f%% covered\r\n', tostring(coverage_info.name), coverage_percentage * 100)
+                emit(string.format('❎ %s - %.2f%% covered', tostring(coverage_info.name), coverage_percentage * 100))
             end
 
             for func_name, count in pairs(coverage_info.calls) do
                 if count == 0 then
-                    str = str .. string.format('    ❎ %s\r\n', func_name)
+                    emit(string.format('    ❎ %s', func_name))
                 end
             end
         end
-
-        retest.print_raw(str)
     end
 
     local successes = retest.tests - #retest.failures - #retest.assertionless
-    print(string.format('%d PASSED, %d FAILED, %d WITHOUT ASSERTIONS, %d tests', successes, #retest.failures,
+
+    emit(string.format('%d PASSED, %d FAILED, %d WITHOUT ASSERTIONS, %d tests', successes, #retest.failures,
         #retest.assertionless, retest.tests))
+
     if #retest.coverage_tracked_tables > 0 then
         local coverage_percentage = retest.covered_functions / retest.total_coverage_tracked_functions
-        print(string.format('COVERAGE: %.2f%% (%d/%d functions)', coverage_percentage * 100,
+        emit(string.format('COVERAGE: %.2f%% (%d/%d functions)', coverage_percentage * 100,
             retest.covered_functions, retest.total_coverage_tracked_functions))
     end
+
+    return table.concat(lines, '\r\n')
 end
 
 -- Assertions
