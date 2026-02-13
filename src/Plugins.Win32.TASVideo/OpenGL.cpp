@@ -225,6 +225,7 @@ bool OGL_InitContext()
 
     OGL_InitExtensions();
     OGL_InitStates();
+    return TRUE;
 }
 
 bool OGL_DestroyContext()
