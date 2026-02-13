@@ -169,7 +169,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     switch (msg)
     {
     case WM_NCCREATE:
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG) new t_context());
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(new t_context()));
         create_dcs(hwnd, get_ctx(hwnd));
         break;
     case WM_NCDESTROY:

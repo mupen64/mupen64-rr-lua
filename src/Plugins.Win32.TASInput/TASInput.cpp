@@ -183,7 +183,7 @@ struct Status
     void get_input(core_buttons *keys);
 };
 
-static ULONG gdi_plus_token{};
+static ULONG_PTR gdi_plus_token{};
 static std::atomic<int64_t> frame_counter{};
 static std::atomic<bool> new_frame{};
 static std::atomic<bool> rom_open{};
