@@ -610,7 +610,7 @@ std::vector<t_options_group> get_static_option_groups()
                                              } while (0);                                                              \
                                          })
 
-#define GENPROPS(T, x, c) .current_value = RWPROP(T, x, c), .default_value = RPROP(T, x)
+#define GENPROPS(T, x, ...) .current_value = RWPROP(T, x, __VA_ARGS__), .default_value = RPROP(T, x)
 
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
