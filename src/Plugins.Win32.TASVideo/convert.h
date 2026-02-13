@@ -157,307 +157,166 @@ inline void unswap_copy(uint8_t *src, uint8_t *dst, u32 num_bytes)
     }
 }
 
+static inline u32 swapdword(u32 value)
+{
+    return ((value >> 24) & 0x000000FFu) | ((value >> 8) & 0x0000FF00u) | ((value << 8) & 0x00FF0000u) |
+           ((value << 24) & 0xFF000000u);
+}
+
+static inline u16 swapword(u16 value)
+{
+    return static_cast<u16>(((value >> 8) & 0x00FFu) | ((value << 8) & 0xFF00u));
+}
+
+static inline u8 expand5to8(u32 v)
+{
+    return static_cast<u8>((v << 3) | (v >> 2));
+}
+static inline u8 expand4to8(u32 v)
+{
+    return static_cast<u8>((v << 4) | v);
+}
+static inline u8 expand3to8(u32 v)
+{
+    return static_cast<u8>((v << 5) | (v << 2) | (v >> 1));
+}
+
 inline void DWordInterleave(void *mem, u32 numDWords)
 {
-    __asm {
-        mov esi, dword ptr [mem]
-        mov edi, dword ptr [mem]
-        add edi, 4
-        mov ecx, dword ptr [numDWords]
-        DWordInterleaveLoop:
-        mov eax, dword ptr [esi]
-        mov ebx, dword ptr [edi]
-        mov dword ptr [esi], ebx
-        mov dword ptr [edi], eax
-        add esi, 8
-        add edi, 8
-        loop DWordInterleaveLoop
+    auto base = reinterpret_cast<std::uint8_t *>(mem);
+    for (u32 i = 0; i < numDWords; ++i)
+    {
+        u32 *a = reinterpret_cast<u32 *>(base + i * 8);
+        u32 *b = reinterpret_cast<u32 *>(base + i * 8 + 4);
+        std::swap(*a, *b);
     }
 }
 
 inline void QWordInterleave(void *mem, u32 numDWords)
 {
-    __asm
+    auto base = reinterpret_cast<std::uint8_t *>(mem);
+    u32 iterations = (numDWords >> 1);
+    for (u32 i = 0; i < iterations; ++i)
     {
-        // Interleave the line on the qword
-        mov esi, dword ptr [mem]
-        mov edi, dword ptr [mem]
-        add edi, 8
-        mov ecx, dword ptr [numDWords]
-        shr ecx, 1
-        QWordInterleaveLoop:
-        mov eax, dword ptr [esi]
-        mov ebx, dword ptr [edi]
-        mov dword ptr [esi], ebx
-        mov dword ptr [edi], eax
-        add esi, 4
-        add edi, 4
-        mov eax, dword ptr [esi]
-        mov ebx, dword ptr [edi]
-        mov dword ptr [esi], ebx
-        mov dword ptr [edi], eax
-        add esi, 12
-        add edi, 12
-        loop QWordInterleaveLoop
-    }
-}
+        u32 *a1 = reinterpret_cast<u32 *>(base + i * 16 + 0);
+        u32 *b1 = reinterpret_cast<u32 *>(base + i * 16 + 8);
+        std::swap(*a1, *b1);
 
-inline u32 swapdword(u32 value)
-{
-    __asm
-    {
-        mov eax, dword ptr [value]
-        bswap eax
-    }
-}
-
-inline u16 swapword(u16 value)
-{
-    __asm
-    {
-        mov ax, word ptr [value]
-        xchg ah, al
+        u32 *a2 = reinterpret_cast<u32 *>(base + i * 16 + 4);
+        u32 *b2 = reinterpret_cast<u32 *>(base + i * 16 + 12);
+        std::swap(*a2, *b2);
     }
 }
 
 inline u16 RGBA8888_RGBA4444(u32 color)
 {
-    __asm
-    {
-        mov ebx, dword ptr [color]
-         // R
-        and bl, 0F0h
-        mov ah, bl
-
-         // G
-        shr bh, 4
-        or ah, bh
-
-        bswap ebx
-
-             // B
-        and bh, 0F0h
-        mov al, bh
-
-         // A
-        shr bl, 4
-        or al, bl
-    }
+    u8 a = static_cast<u8>((color >> 0) & 0xFFu);
+    u8 b = static_cast<u8>((color >> 8) & 0xFFu);
+    u8 g = static_cast<u8>((color >> 16) & 0xFFu);
+    u8 r = static_cast<u8>((color >> 24) & 0xFFu);
+    return static_cast<u16>(((a >> 4) << 12) | ((b >> 4) << 8) | ((g >> 4) << 4) | (r >> 4));
 }
 
 inline u32 RGBA5551_RGBA8888(u16 color)
 {
-    __asm
-    {
-        mov ebx, 00000000h
-        mov cx, word ptr [color]
-        xchg cl, ch
+    color = static_cast<u16>((color >> 8) | (color << 8));
 
-        mov bx, cx
-        and bx, 01h
-        mov al, byte ptr [One2Eight+ebx]
+    u32 a = (color & 0x0001);
+    u32 b = (color >> 1) & 0x1F;
+    u32 g = (color >> 6) & 0x1F;
+    u32 r = (color >> 11) & 0x1F;
 
-        mov bx, cx
-        shr bx, 01h
-        and bx, 1Fh
-        mov ah, byte ptr [Five2Eight+ebx]
+    auto expand5 = [](u32 v) { return (v << 3) | (v >> 2); };
+    auto expand1 = [](u32 v) { return v ? 0xFFu : 0x00u; };
 
-        bswap eax
+    u32 r8 = expand5(r);
+    u32 g8 = expand5(g);
+    u32 b8 = expand5(b);
+    u32 a8 = expand1(a);
 
-        mov bx, cx
-        shr bx, 06h
-        and bx, 1Fh
-        mov ah, byte ptr [Five2Eight+ebx]
-
-        mov bx, cx
-        shr bx, 0Bh
-        and bx, 1Fh
-        mov al, byte ptr [Five2Eight+ebx]
-    }
+    return (a8 << 24) | (b8 << 16) | (g8 << 8) | r8;
 }
 
-// Just swaps the word
 inline u16 RGBA5551_RGBA5551(u16 color)
 {
-    __asm
-    {
-        mov ax, word ptr [color]
-        xchg ah, al
-    }
+    return swapword(color);
 }
 
 inline u32 IA88_RGBA8888(u16 color)
 {
-    __asm
-    {
-        mov cx, word ptr [color]
-
-        mov al, ch
-        mov ah, cl
-
-        bswap eax
-
-        mov ah, cl
-        mov al, cl
-    }
+    u8 i = static_cast<u8>((color >> 8) & 0xFFu);
+    u8 a = static_cast<u8>((color >> 0) & 0xFFu);
+    return (static_cast<u32>(i) << 24) | (static_cast<u32>(a) << 16) | (static_cast<u32>(a) << 8) |
+           (static_cast<u32>(a) << 0);
 }
 
 inline u16 IA88_RGBA4444(u16 color)
 {
-    __asm
-    {
-        mov cx, word ptr [color]
-
-        shr cl, 4
-        mov ah, cl
-        shl cl, 4
-        or ah, cl
-        mov al, cl
-
-        shr ch, 4
-        or al, ch
-    }
+    u8 a4 = static_cast<u8>((color >> 4) & 0x0Fu);
+    u8 i4 = static_cast<u8>((color >> 12) & 0x0Fu);
+    return static_cast<u16>((a4 << 12) | (a4 << 8) | (a4 << 4) | i4);
 }
 
 inline u16 IA44_RGBA4444(u8 color)
 {
-    __asm
-    {
-        mov cl, byte ptr [color]
-        mov al, cl
-
-        shr cl, 4
-        mov ah, cl
-        shl cl, 4
-        or ah, cl
-    }
+    u16 i4 = static_cast<u16>((color >> 4) & 0xFu);
+    u16 a4 = static_cast<u16>(color & 0xFu);
+    return static_cast<u16>((i4 << 12) | (i4 << 8) | (i4 << 4) | a4);
 }
 
 inline u32 IA44_RGBA8888(u8 color)
 {
-    __asm
-    {
-        mov ebx, 00000000h
-        mov cl, byte ptr [color]
-
-        mov bl, cl
-        shr bl, 04h
-        mov ch, byte ptr [Four2Eight+ebx]
-
-        mov bl, cl
-        and bl, 0Fh
-        mov cl, byte ptr [Four2Eight+ebx]
-
-        mov al, cl
-        mov ah, ch
-
-        bswap eax
-
-        mov ah, ch
-        mov al, ch
-    }
+    u8 i4 = static_cast<u8>((color >> 4) & 0x0Fu);
+    u8 a4 = static_cast<u8>(color & 0x0Fu);
+    u8 i8 = static_cast<u8>((i4 << 4) | i4);
+    u8 a8 = static_cast<u8>((a4 << 4) | a4);
+    return (static_cast<u32>(a8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
+           (static_cast<u32>(i8) << 0);
 }
 
 inline u16 IA31_RGBA4444(u8 color)
 {
-    __asm
-    {
-        mov ebx, 00000000h
-        mov cl, byte ptr [color]
-
-        mov bl, cl
-        shr bl, 01h
-        mov ch, byte ptr [Three2Four+ebx]
-        mov ah, ch
-        shl ch, 4
-        or ah, ch
-        mov al, ch
-
-        mov bl, cl
-        and bl, 01h
-        mov ch, byte ptr [One2Four+ebx]
-        or al, ch
-    }
+    u32 i3 = (static_cast<u32>(color) >> 1) & 0x7u;
+    u32 a1 = static_cast<u32>(color) & 0x1u;
+    u8 i8 = static_cast<u8>((i3 * 255 + 3) / 7);
+    u8 a8 = static_cast<u8>(a1 ? 255u : 0u);
+    return (static_cast<u32>(a8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
+           (static_cast<u32>(i8) << 0);
 }
 
 inline u32 IA31_RGBA8888(u8 color)
 {
-    __asm
-    {
-        mov ebx, 00000000h
-        mov cl, byte ptr [color]
-
-        mov bl, cl
-        shr bl, 01h
-        mov ch, byte ptr [Three2Eight+ebx]
-
-        mov bl, cl
-        and bl, 01h
-        mov cl, byte ptr [One2Eight+ebx]
-
-        mov al, cl
-        mov ah, ch
-
-        bswap eax
-
-        mov ah, ch
-        mov al, ch
-    }
+    u32 i3 = (static_cast<u32>(color) >> 1) & 0x7u;
+    u32 a1 = static_cast<u32>(color) & 0x1u;
+    u8 i8 = static_cast<u8>((i3 * 255 + 3) / 7);
+    u8 a8 = static_cast<u8>(a1 ? 255u : 0u);
+    return (static_cast<u32>(i8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
+           (static_cast<u32>(a8) << 0);
 }
 
 inline u16 I8_RGBA4444(u8 color)
 {
-    __asm
-    {
-        mov cl, byte ptr [color]
-
-        shr cl, 4
-        mov al, cl
-        shl cl, 4
-        or al, cl
-        mov ah, al
-    }
+    u16 i4 = static_cast<u16>(color >> 4);
+    return static_cast<u16>((i4 << 12) | (i4 << 8) | (i4 << 4) | i4);
 }
 
 inline u32 I8_RGBA8888(u8 color)
 {
-    __asm
-    {
-        mov cl, byte ptr [color]
-
-        mov al, cl
-        mov ah, cl
-        bswap eax
-        mov ah, cl
-        mov al, cl
-    }
+    u8 i8 = color;
+    return (static_cast<u32>(i8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
+           (static_cast<u32>(i8) << 0);
 }
 
 inline u16 I4_RGBA4444(u8 color)
 {
-    __asm
-    {
-        mov cl, byte ptr [color]
-        mov al, cl
-        shl cl, 4
-        or al, cl
-        mov ah, al
-    }
+    u16 i4 = static_cast<u16>(color & 0xFu);
+    return static_cast<u16>((i4 << 12) | (i4 << 8) | (i4 << 4) | i4);
 }
 
 inline u32 I4_RGBA8888(u8 color)
 {
-    __asm
-    {
-        mov ebx, 00000000h
-
-        mov bl, byte ptr [color]
-        mov cl, byte ptr [Four2Eight+ebx]
-
-        mov al, cl
-        mov ah, cl
-        bswap eax
-        mov ah, cl
-        mov al, cl
-    }
+    u8 i4 = static_cast<u8>(color & 0xFu);
+    u8 i8 = static_cast<u8>((i4 << 4) | i4);
+    return (static_cast<u32>(i8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
+           (static_cast<u32>(i8) << 0);
 }
