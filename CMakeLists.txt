@@ -92,10 +92,7 @@ endif()
 include(CTest)
 include(Catch)
 
-# Extra config options for specific compilers/OSes
-# ===========================================
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if (WIN32)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
   # - disable Windows Data Execution Prevention (DEP)
@@ -110,8 +107,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
-endif()
-if (WIN32)
+
   # Use UTF-16 versions of functions
   add_compile_definitions(UNICODE _UNICODE)
 endif()

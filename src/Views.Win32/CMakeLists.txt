@@ -193,3 +193,5 @@ target_compile_definitions(Mupen64RR.Views.Win32 PRIVATE
     # "SPDLOG_WCHAR_TO_UTF8_SUPPORT"
     "VERSION_SUFFIX=L\"${MUPEN64RR_VERSION_SUFFIX}\""
 )
+
+target_link_options(Mupen64RR.Views.Win32 PRIVATE "/MANIFEST:NO")
