@@ -49,18 +49,18 @@ typedef struct _precomp_instr
         } cf;
     } f;
 
-    uint32_t addr;
-    uint32_t local_addr;
+    uintptr_t addr;
+    uintptr_t local_addr;
     reg_cache_struct reg_cache_infos;
     void (*s_ops)();
-    uint32_t src;
+    uintptr_t src;
 } precomp_instr;
 
 typedef struct _precomp_block
 {
     precomp_instr *block;
-    uint32_t start;
-    uint32_t end;
+    uintptr_t start;
+    uintptr_t end;
     unsigned char *code;
     uint32_t code_length;
     uint32_t max_code_length;

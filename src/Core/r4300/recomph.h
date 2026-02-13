@@ -13,7 +13,7 @@ extern int32_t max_code_length;
 extern unsigned char **inst_pointer;
 extern precomp_block *dst_block;
 extern int32_t jump_marker;
-extern uint32_t *return_address;
+extern uintptr_t *return_address;
 extern int32_t fast_memory;
 
 void passe2(precomp_instr *dest, int32_t start, int32_t end, precomp_block *block);
