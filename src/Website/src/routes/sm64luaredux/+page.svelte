@@ -7,7 +7,7 @@
 	<Hero
 		name="SM64 Lua Redux"
 		description="Powerful SM64 TASing utility."
-		version="5.3.0"
+		version="5.3.1"
 		logo={sm64luaredux}
 		repository="https://github.com/mupen64/SM64LuaRedux"
 		bg_color_from="#ffffff"
