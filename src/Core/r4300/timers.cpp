@@ -153,3 +153,8 @@ void timer_get_timings(float &fps, float &vis)
     vis = get_rate_per_second_from_deltas(timer.vi_deltas);
     timer.vi_deltas_mtx.unlock();
 }
+
+time_point timer_last_frame_time()
+{
+    return timer.last_frame_time;
+}

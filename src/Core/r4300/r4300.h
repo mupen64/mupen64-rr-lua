@@ -89,6 +89,7 @@ void vr_set_fast_forward(bool value);
 bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
 void vr_invalidate_visuals();
+bool vr_is_frame_skipped();
 
 #define jump_to(a)                                                                                                     \
     {                                                                                                                  \

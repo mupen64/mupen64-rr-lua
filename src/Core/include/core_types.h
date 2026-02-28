@@ -143,13 +143,9 @@ struct core_cfg
     int32_t fps_modifier = 100;
 
     /// <summary>
-    /// The frequency at which frames are skipped during fast-forward
-    /// <para/>
-    /// 0 = skip all frames
-    /// 1 = skip no frames
-    /// >0 = every nth frame is skipped
+    /// Throttles rendering FPS while fast-forwarding to improve performance
     /// </summary>
-    int32_t frame_skip_frequency = 8;
+    int32_t fastforward_fps = 60;
 
     /// <summary>
     /// Whether fast-forward will mute audio

@@ -68,7 +68,6 @@ void vcr_on_vi();
  */
 bool vcr_allows_core_pause();
 bool vcr_allows_core_unpause();
-bool vcr_is_frame_skipped();
 void vcr_request_reset();
 core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header *header);
 core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *header);

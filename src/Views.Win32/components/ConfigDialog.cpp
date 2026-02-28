@@ -882,10 +882,9 @@ std::vector<t_options_group> get_static_option_groups()
     core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
         .group_id = core_group.id,
-        .name = L"Fast-Forward Skip Frequency",
-        .tooltip = L"Skip rendering every nth frame when in fast-forward mode.\n0 - Render nothing\n1 - Render every "
-                   L"frame\nn - Render every nth frame",
-        GENPROPS(int32_t, core.frame_skip_frequency),
+        .name = L"Fast-Forward FPS",
+        .tooltip = L"Throttles FPS while fast-forwarding",
+        GENPROPS(int32_t, core.fastforward_fps),
     });
     core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,

@@ -12,3 +12,4 @@ void timer_new_frame();
 void timer_new_vi();
 void timer_on_speed_modifier_changed();
 void timer_get_timings(float &fps, float &vis);
+time_point timer_last_frame_time();
