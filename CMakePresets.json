@@ -17,11 +17,14 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake",
         "CMAKE_C_COMPILER": "clang-cl",
-        "CMAKE_CXX_COMPILER": "clang-cl",
-        "CMAKE_LINKER": "lld-link"
+        "CMAKE_CXX_COMPILER": "clang-cl"
       },
       "architecture": {
-        "value": "Win32",
+        "value": "x86",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x86",
         "strategy": "external"
       },
       "condition": {
