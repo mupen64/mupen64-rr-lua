@@ -112,6 +112,7 @@ _exit_:
     g_ef->log_trace(L"Audio thread exiting");
     ReleaseMutex(ac->hMutex);
     ac->threadRunning = false;
+    return 0;
 }
 
 //------------------------------------------------------------------------
