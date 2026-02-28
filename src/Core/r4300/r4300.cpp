@@ -63,6 +63,7 @@ uint32_t next_interrupt, CIC_Chip;
 precomp_instr *PC;
 char invalid_code[0x100000];
 std::atomic<bool> screen_invalidated = true;
+std::atomic<bool> screen_invalidated_frame = true;
 precomp_block *blocks[0x100000], *actual;
 int32_t rounding_mode = MUP_ROUND_NEAREST;
 int32_t trunc_mode = MUP_ROUND_TRUNC, round_mode = MUP_ROUND_NEAREST, ceil_mode = MUP_ROUND_CEIL,
@@ -74,7 +75,6 @@ bool g_vr_fast_forward;
 bool g_vr_frame_skipped;
 core_system_type g_sys_type;
 std::atomic<int32_t> g_wait_counter = 0;
-time_point g_last_frame_time;
 
 FILE *g_eeprom_file;
 FILE *g_sram_file;
@@ -92,6 +92,7 @@ FILE *g_mpak_file;
 void vr_invalidate_visuals()
 {
     screen_invalidated = true;
+    screen_invalidated_frame = true;
 }
 
 bool vr_is_frame_skipped()
@@ -100,41 +101,31 @@ bool vr_is_frame_skipped()
 
     if (frame_advance_outstanding > 1)
     {
-        g_last_frame_time = timer_last_frame_time();
         return true;
     }
 
     if (!g_core->cfg->render_throttling)
     {
-        g_last_frame_time = timer_last_frame_time();
         return false;
     }
 
     if (vcr.seek_to_frame.has_value())
     {
-        g_last_frame_time = timer_last_frame_time();
         return true;
     }
 
     if (!g_vr_fast_forward)
     {
-        g_last_frame_time = timer_last_frame_time();
         return false;
     }
 
-    const auto ms_between_frames = 1000.0 / static_cast<double>(g_core->cfg->fastforward_fps);
-
-    const auto time_since_last_frame = timer_last_frame_time() - g_last_frame_time;
-    const auto ms_since_last_frame = std::chrono::duration<double, std::milli>(time_since_last_frame).count();
-
-    const auto should_skip = ms_since_last_frame < ms_between_frames;
-
-    if (!should_skip)
+    if (screen_invalidated_frame)
     {
-        g_last_frame_time = timer_last_frame_time();
+        screen_invalidated_frame = false;
+        return false;
     }
 
-    return should_skip;
+    return true;
 }
 
 std::filesystem::path get_sram_path()
