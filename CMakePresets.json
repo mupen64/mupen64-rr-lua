@@ -36,29 +36,6 @@
       }
     },
     {
-      "name": "vcpkg-win64-x64",
-      "description": "64-bit debug build on 64-bit Windows",
-      "inherits": "vcpkg-win64-x86",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-cl",
-        "CMAKE_CXX_COMPILER": "clang-cl",
-        "CMAKE_LINKER": "lld-link"
-      }
-    },
-    {
-      "name": "vcpkg-win64-x64-release",
-      "description": "64-bit release build on 64-bit Windows",
-      "inherits": "vcpkg-win64-x86-release",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      }
-    },
-    {
       "name": "sys-linux64-x64",
       "description": "64-bit debug build on 64-bit Linux",
       "inherits": "common",
@@ -79,14 +56,6 @@
       "configurePreset": "vcpkg-win64-x86-release"
     },
     {
-      "name": "vcpkg-win64-x64",
-      "configurePreset": "vcpkg-win64-x64"
-    },
-    {
-      "name": "vcpkg-win64-x64-release",
-      "configurePreset": "vcpkg-win64-x64-release"
-    },
-    {
       "name": "sys-linux64-x64",
       "configurePreset": "sys-linux64-x64"
     }
@@ -95,10 +64,6 @@
     {
       "name": "vcpkg-win64-x86-all",
       "configurePreset": "vcpkg-win64-x86"
-    },
-    {
-      "name": "vcpkg-win64-x64-all",
-      "configurePreset": "vcpkg-win64-x64"
     },
     {
       "name": "sys-linux64-x64-all",
