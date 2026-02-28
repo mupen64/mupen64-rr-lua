@@ -143,11 +143,6 @@ struct core_cfg
     int32_t fps_modifier = 100;
 
     /// <summary>
-    /// Throttles rendering FPS while fast-forwarding to improve performance
-    /// </summary>
-    int32_t fastforward_fps = 60;
-
-    /// <summary>
     /// Whether fast-forward will mute audio
     /// This option improves performance by skipping additional do_rsp_cycles calls, but may cause issues
     /// </summary>

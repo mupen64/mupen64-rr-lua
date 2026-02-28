@@ -880,13 +880,6 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.float_exception_emulation),
     });
     core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
-        .group_id = core_group.id,
-        .name = L"Fast-Forward FPS",
-        .tooltip = L"Throttles FPS while fast-forwarding",
-        GENPROPS(int32_t, core.fastforward_fps),
-    });
-    core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
         .group_id = core_group.id,
         .name = L"Emulate SD Card",
