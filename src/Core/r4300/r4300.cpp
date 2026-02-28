@@ -1924,7 +1924,7 @@ void core_start()
         {
             if (blocks[i]->block)
             {
-                free(blocks[i]->block);
+                free_exec(blocks[i]->block);
                 blocks[i]->block = NULL;
             }
             if (blocks[i]->code)
