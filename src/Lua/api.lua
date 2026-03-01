@@ -339,6 +339,7 @@ Mupen = {
 ---@field keycode VKeycode? The virtual keycode, if the event is a key event.
 ---@field pressed boolean? Whether the key was pressed or released, if the event is a key event.
 ---@field text string? The typed character, if the event is a char event and the key corresponds to a character.
+---@field repeat boolean Whether the event is a repeat event (i.e. the key is being held down and this event is firing multiple times).
 
 -- Global Functions
 --#region

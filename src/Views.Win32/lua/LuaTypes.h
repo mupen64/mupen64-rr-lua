@@ -106,4 +106,5 @@ struct t_lua_key_event_args {
     std::optional<uint64_t> keycode;
     std::optional<bool> pressed;
     std::optional<std::wstring> text;
+    bool repeat;
 };

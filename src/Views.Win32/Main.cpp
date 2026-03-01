@@ -808,22 +808,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
-        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = true});
+    case WM_SYSKEYDOWN: {
+        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
+        
+        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = true, .repeat = repeat});
+
         if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_down(wParam, lParam);
         break;
+    }
     case WM_SYSKEYUP:
-    case WM_KEYUP:
-        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = false});
+    case WM_KEYUP: {
+        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = false, .repeat = false});
+
         if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_up(wParam, lParam);
         break;
+    }
     case WM_CHAR: {
+        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
         const auto chr = static_cast<wchar_t>(wParam);
+
         if (std::iswcntrl(chr)) break;
+
         const auto text = std::wstring(1, chr);
-        LuaCallbacks::call_atkey({.text = text});
+        LuaCallbacks::call_atkey({.text = text, .repeat = repeat});
         break;
     }
     case WM_MOUSEWHEEL:

@@ -72,6 +72,9 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
              lua_pushstring(l, IOUtils::to_utf8_string(atkey_ctx.text.value()).c_str());
              lua_settable(l, -3);
          }
+         lua_pushstring(l, "repeat");
+         lua_pushboolean(l, atkey_ctx.repeat);
+         lua_settable(l, -3);
          return lua_pcall(l, 1, 0, 0);
      }},
 
