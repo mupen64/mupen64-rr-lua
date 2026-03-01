@@ -809,14 +809,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     }
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
+        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = true});
         if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_down(wParam, lParam);
         break;
     case WM_SYSKEYUP:
     case WM_KEYUP:
+        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = false});
         if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_up(wParam, lParam);
         break;
+    case WM_CHAR: {
+        const auto chr = static_cast<wchar_t>(wParam);
+        if (std::iswcntrl(chr)) break;
+        const auto text = std::wstring(1, chr);
+        LuaCallbacks::call_atkey({.text = text});
+        break;
+    }
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
@@ -846,9 +855,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         GetWindowRect(g_main_ctx.hwnd, &rect);
         g_config.window_x = rect.left;
         g_config.window_y = rect.top;
-        
+
         Messenger::broadcast(Messenger::Message::MainWindowMoved, nullptr);
-        
+
         break;
     }
     case WM_SIZE: {

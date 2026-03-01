@@ -35,6 +35,7 @@ enum callback_key : uint8_t {
     REG_ATRESET,
     REG_ATSEEKCOMPLETED,
     REG_ATWARPMODIFYSTATUSCHANGED,
+    REG_ATKEY,
 };
 
 /**
@@ -98,6 +99,11 @@ void call_seek_completed();
  * \brief Notifies all lua instances of a warp modify operation's status changing
  */
 void call_warp_modify_status_changed(int32_t status);
+
+/**
+ * \brief Notifies all lua instances of a key event.
+ */
+void call_atkey(const t_lua_key_event_args &args);
 
 /**
  * \brief Invokes the registered callbacks with the specified key on the specified Lua environment.

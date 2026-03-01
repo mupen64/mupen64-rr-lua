@@ -116,6 +116,12 @@ static int subscribe_atwarpmodifystatuschanged(lua_State *L)
     return 0;
 }
 
+static int subscribe_atkey(lua_State *L)
+{
+    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATKEY);
+    return 0;
+}
+
 static int Screenshot(lua_State *L)
 {
     g_plugin_funcs.video_capture_screen((char *)luaL_checkstring(L, 1));

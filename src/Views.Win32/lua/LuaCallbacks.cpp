@@ -24,6 +24,7 @@ struct t_atwindowmessage_context
 };
 
 static t_atwindowmessage_context atwindowmessage_ctx{};
+static t_lua_key_event_args atkey_ctx{};
 static int current_input_n = 0;
 
 static int pcall_no_params(lua_State *L)
@@ -50,6 +51,30 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
          lua_pushinteger(l, g_main_ctx.core_ctx->vcr_get_warp_modify_status());
          return lua_pcall(l, 1, 0, 0);
      }},
+    {LuaCallbacks::REG_ATKEY,
+     [](auto l) -> int {
+         lua_newtable(l);
+         if (atkey_ctx.keycode.has_value())
+         {
+             lua_pushstring(l, "keycode");
+             lua_pushinteger(l, atkey_ctx.keycode.value());
+             lua_settable(l, -3);
+         }
+         if (atkey_ctx.pressed.has_value())
+         {
+             lua_pushstring(l, "pressed");
+             lua_pushboolean(l, atkey_ctx.pressed.value());
+             lua_settable(l, -3);
+         }
+         if (atkey_ctx.text.has_value())
+         {
+             lua_pushstring(l, "text");
+             lua_pushstring(l, IOUtils::to_utf8_string(atkey_ctx.text.value()).c_str());
+             lua_settable(l, -3);
+         }
+         return lua_pcall(l, 1, 0, 0);
+     }},
+
 };
 
 static std::function<int(lua_State *)> get_function_for_callback(const LuaCallbacks::callback_key key)
@@ -149,6 +174,13 @@ void LuaCallbacks::call_warp_modify_status_changed(const int32_t status)
 {
     RET_IF_EMPTY;
     g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATWARPMODIFYSTATUSCHANGED); });
+}
+
+void LuaCallbacks::call_atkey(const t_lua_key_event_args &args)
+{
+    RET_IF_EMPTY;
+    atkey_ctx = args;
+    g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATKEY); });
 }
 
 bool invoke_callbacks_with_key_impl(const t_lua_environment *lua, const std::function<int(lua_State *)> &function,
