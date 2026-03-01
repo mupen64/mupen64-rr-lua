@@ -491,9 +491,9 @@ function emu.atseekcompleted(f, unregister) end
 ---@return nil
 function emu.atwarpmodifystatuschanged(f, unregister) end
 
----Calls the function `f` when a key event happens.
+---Calls the function `f` when a keyboard event happens.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
----@param f fun(args: KeyEventArgs): nil The function to be called when a key event happens.
+---@param f fun(args: KeyEventArgs): nil The function to be called when a keyboard event happens.
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
 function emu.atkey(f, unregister) end
