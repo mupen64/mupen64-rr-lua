@@ -40,6 +40,12 @@ ctest --test-dir build
 
 Presets have been provided for building and testing. These are intended for IDEs, so that they can properly autodetect things. Feel free to contribute IDE launch settings as appropriate.
 
+On Linux with MinGW installed, you can also configure a Win32 cross-build with:
+```sh
+cmake --preset sys-linux64-win32
+cmake --build --preset sys-linux64-win32
+```
+
 ### Visual Studio Code + CMake Tools
 You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
 

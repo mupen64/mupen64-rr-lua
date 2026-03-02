@@ -42,6 +42,23 @@
       }
     },
     {
+      "name": "sys-linux64-win32",
+      "description": "32-bit Windows debug cross-build on 64-bit Linux",
+      "inherits": "common",
+      "binaryDir": "${sourceDir}/build-win32",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "Windows",
+        "CMAKE_SYSTEM_PROCESSOR": "x86",
+        "CMAKE_C_COMPILER": "i686-w64-mingw32-gcc",
+        "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "sys-linux64-x64",
       "description": "64-bit debug build on 64-bit Linux",
       "inherits": "common",
@@ -60,6 +77,10 @@
     {
       "name": "vcpkg-win64-x86-release",
       "configurePreset": "vcpkg-win64-x86-release"
+    },
+    {
+      "name": "sys-linux64-win32",
+      "configurePreset": "sys-linux64-win32"
     },
     {
       "name": "sys-linux64-x64",
