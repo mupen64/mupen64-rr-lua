@@ -45,7 +45,6 @@ static void rebuild_lua_env_map()
     }
 }
 
-
 void LuaManager::init()
 {
     g_mupen_api_lua_code = load_resource_as_string(IDR_API_LUA_FILE, MAKEINTRESOURCE(TEXTFILE));
@@ -136,8 +135,6 @@ std::expected<void, std::wstring> LuaManager::start_environment(t_lua_environmen
 fail:
     if (has_error)
     {
-        g_lua_environments.pop_back();
-        rebuild_lua_env_map();
 
         const auto error = IOUtils::to_wide_string(lua_tostring(env->L, -1));
         destroy_environment(env);
