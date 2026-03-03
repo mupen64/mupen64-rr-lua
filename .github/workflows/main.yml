@@ -43,7 +43,7 @@ jobs:
         shell: powershell
         run: echo "VERSION_SUFFIX is $env:VERSION_SUFFIX"
 
-      - name: Remove standalone LLVM from PATH
+      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
         shell: powershell
         run: |
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
@@ -79,6 +79,12 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
+
+      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
+        shell: powershell
+        run: |
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
+          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
