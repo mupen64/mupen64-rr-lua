@@ -14,16 +14,16 @@ body = """{% for group, commits in commits | group_by(attribute="group") %}
 {% endfor %}
 """
 trim = true
-postprocessors = [
-]
+postprocessors = []
 
 [git]
 conventional_commits = true
 filter_unconventional = true
 split_commits = false
 commit_preprocessors = []
-# regex for parsing and grouping commits
 commit_parsers = [
+  # We need to check raw_message because footer is currently broken
+  { field = "raw_message", pattern = "(?i)changelog:\\s*skip", skip = true },
   { message = "^feat", group = "✨ Features" },
   { message = "^perf", group = "⚡ Performance" },
   { message = "^security", group = "🛡️ Security" },
