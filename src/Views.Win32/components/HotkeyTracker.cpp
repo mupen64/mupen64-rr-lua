@@ -21,11 +21,11 @@ struct t_hotkey_tracker_context
     bool last_xmb2{};
 };
 
-static bool on_key(bool is_up, int32_t key)
+static std::optional<bool> on_key(bool is_up, int32_t key)
 {
     if (ActionManager::get_hotkeys_locked())
     {
-        return true;
+        return std::nullopt;
     }
 
     const bool shift = GetKeyState(VK_SHIFT) & 0x8000;
@@ -54,12 +54,7 @@ static bool on_key(bool is_up, int32_t key)
         }
     }
 
-    if (hit)
-    {
-        return true;
-    }
-
-    return false;
+    return hit;
 }
 
 static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
@@ -130,10 +125,8 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
     case WM_KEYUP:
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP: {
-        if (on_key(msg == WM_KEYUP || msg == WM_SYSKEYUP, (int)wParam))
-        {
-            return 0;
-        }
+        const auto result = on_key(msg == WM_KEYUP || msg == WM_SYSKEYUP, (int)wParam);
+        if (result.has_value() && result.value()) return 0;
         break;
     }
     case WM_NOTIFY: {
