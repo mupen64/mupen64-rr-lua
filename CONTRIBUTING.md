@@ -1,27 +1,12 @@
-# Copyright Header
-
-Every non-library file must contain the following header:
-
-```cpp
-/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
-```
-
-Every non-library CMake script must contain the following header:
-
-```cmake
-#[===[
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
-
-SPDX-License-Identifier: GPL-2.0-or-later
-]===]
-```
 
 # Compiling
+
 Only Windows is supported for now, though the CMake infrastructure is intended to ease the development of cross-platform code (for whoever decides to work on that).
+
+## CMake Options
+| OPTION                    | DESCRIPTION                                                           |
+|:-------------------------:|-----------------------------------------------------------------------|
+| `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
 
 ## Windows/CMake
 You'll need:
@@ -40,19 +25,25 @@ ctest --test-dir build
 
 Presets have been provided for building and testing. These are intended for IDEs, so that they can properly autodetect things. Feel free to contribute IDE launch settings as appropriate.
 
+
 ### Visual Studio Code + CMake Tools
 You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
-
-## CMake Options
-| OPTION                    | DESCRIPTION                                                           |
-|:-------------------------:|-----------------------------------------------------------------------|
-| `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
 
 ### CLion
 
 Make sure to set the CMake profile to use the `vcpkg-win64-x86` preset, enabling it if needed.
 
 If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
+
+# Copyright Header
+
+Every non-library file must contain a copyright header with this content:
+
+```
+Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+
+SPDX-License-Identifier: GPL-2.0-or-later
+```
 
 # Commit Style
 
@@ -70,36 +61,10 @@ fix(VCR): fix crash when playing a movie while holding B
 feat(ConfigDialog): add plugin config API
 ```
 
-# Changelogs
-
-Generate changelogs using [git-cliff](https://git-cliff.org/).
-
-# Program Structure
-
-Mupen64 is currently divided into two parts: its Core, and its Windows GUI.
-
-## <img src="https://github.com/user-attachments/assets/fa3b86d8-6bcf-4b65-a575-4ea2930a516c" width="64" align="center"/> Core 
-
-The core implements emulation functionality and defines an API which allows it to be driven externally.
-
-## <img src="https://github.com/user-attachments/assets/28439517-0e7a-41d6-829d-c2bd2f065d14" width="64" align="center"/> Views.Win32
-
-The Win32 implementation of a Mupen64 GUI.
-
-# Reading and using Crashlogs
-
-If you have a `mupen.dmp`, open it in WinDbg and run `!analyze-v`.
-
-If you only have the stacktrace from `mupen.log`:
-
-1. Identify the faulting address
-2. Open x32dbg
-3. Open the "Go to" dialog by pressing Ctrl + G
-4. Navigate to `0x00400000` + `[Your Address]`
-
 # Code Style
 
 Code formatting must abide by the [.clang-format](https://github.com/mupen64/mupen64-rr-lua/blob/master/.clang-format) file provided in the repository root.
+
 Failure to comply will fail the check-format workflow.
 
 # Plugin Guidelines
@@ -112,7 +77,7 @@ Failure to comply will fail the check-format workflow.
 - Write persistent config to the registry, not the filesystem.
     1. Play fair, don't pollute the user's Mupen directory if possible.
 
-# Pre-Merge and Release Checklist
+# Merge/Release Checklist
 
 Before merging a pull request into main or pushing out a release, verify that:
 
@@ -123,3 +88,32 @@ Before merging a pull request into main or pushing out a release, verify that:
 5. The general docs have been kept up-to-date
 6. The Lua docs have been rebuilt (`.\docs\lua\build_documentation.bat`)
 7. There are no regressions in plugin compatibility (test Jabo's plugins)
+
+### Release
+
+1. Generate a changelog using [git-cliff](https://git-cliff.org/)
+
+    ```
+    git-cliff -o CHANGELOG.md
+    ```
+
+2. Write a summary of the release in the `# Summary` section of the changelog.
+3. Create a GitHub release with the following parameters:
+
+    Title: [version number]
+
+    Description: [CHANGELOG.md]
+
+    Files: [latest `mupen64.exe` build artifact]
+
+
+# Reading and using Crashlogs
+
+If you have a `mupen.dmp`, open it in WinDbg and run `!analyze-v`.
+
+If you only have the stacktrace from `mupen.log`:
+
+1. Identify the faulting address
+2. Open x32dbg
+3. Open the "Go to" dialog by pressing Ctrl + G
+4. Navigate to `0x00400000` + `[Your Address]`
