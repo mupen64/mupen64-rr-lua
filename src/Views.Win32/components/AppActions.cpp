@@ -770,7 +770,7 @@ static void start_capture_normal()
     ActionManager::invoke(AppActions::VIDEO_CAPTURE_START_DIRECT, false, true,
                           {
                               {L"path", path},
-                              {L"ask_preset", L"0"},
+                              {L"ask_preset", L"1"},
                           });
 }
 
@@ -787,7 +787,7 @@ static void start_capture_from_preset()
     ActionManager::invoke(AppActions::VIDEO_CAPTURE_START_DIRECT, false, true,
                           {
                               {L"path", path},
-                              {L"ask_preset", L"1"},
+                              {L"ask_preset", L"0"},
                           });
 }
 
