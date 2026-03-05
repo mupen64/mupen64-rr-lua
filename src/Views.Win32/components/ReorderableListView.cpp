@@ -77,6 +77,9 @@ LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     switch (msg)
     {
     case WM_NCDESTROY:
+        RemoveProp(hwnd, CTX_KEY);
+        delete ctx;
+        ctx = nullptr;
         RemoveWindowSubclass(hwnd, listview_subclass_proc, id);
         break;
     case WM_MOUSEMOVE: {
