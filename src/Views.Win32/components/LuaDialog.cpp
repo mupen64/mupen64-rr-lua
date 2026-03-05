@@ -8,6 +8,7 @@
 #include <Messenger.h>
 #include <components/FilePicker.h>
 #include <components/LuaDialog.h>
+#include <components/ReorderableListView.h>
 #include <lua/LuaManager.h>
 
 // wParam: either nullptr, or a pointer to a t_instance_context whose running state has changed
@@ -437,6 +438,8 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         RECT lv_rc{};
         GetClientRect(g_dlg.lv_hwnd, &lv_rc);
         ListView_SetColumnWidth(g_dlg.lv_hwnd, 0, lv_rc.right);
+
+        ReorderableListView::make_reorderable(g_dlg.lv_hwnd, hwnd, {.on_reorder = move_instance_in_list});
 
         // Grow the manager dialog to fit the instance dialog (we need to manually load the template and read its width)
         DLGTEMPLATEEX *dlg_template{};
