@@ -135,14 +135,25 @@ LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
         int target = ListView_HitTest(hwnd, &hit);
 
-        if (target == -1) break;
+        if (target == -1)
+        {
+            // Out of bounds. We try to recover either a top or bottom drop based on the position of the cursor.
+            RECT rc;
+            GetClientRect(hwnd, &rc);
+            if (pt.y < 10) target = 0;
+            if (pt.y > rc.bottom / 2) target = ListView_GetItemCount(hwnd) - 1;
+        }
 
-        ctx->params.on_reorder(ctx->drag_start_index.value(), target);
+        if (target != -1) ctx->params.on_reorder(ctx->drag_start_index.value(), target);
+
         ctx->drag_start_index = std::nullopt;
         RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     }
     break;
-
+    case WM_MOUSELEAVE:
+        ctx->drag_start_index = std::nullopt;
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        break;
     case LVN_BEGINDRAG: {
         const auto lv = (NMLISTVIEW *)lparam;
         ctx->drag_start_index = lv->iItem;
