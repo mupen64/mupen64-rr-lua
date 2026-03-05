@@ -21,9 +21,26 @@ struct Context
 
 static void draw_reorder_bar(const Context &ctx, int index)
 {
-    RECT rc;
-    ListView_GetItemRect(ctx.lv_hwnd, index, &rc, LVIR_BOUNDS);
+    // Skip source row since for proper alignment
+    if (index > ctx.drag_start_index.value()) index++;
 
+    const auto item_count = ListView_GetItemCount(ctx.lv_hwnd);
+
+    RECT rc;
+    if (index != item_count)
+    {
+        ListView_GetItemRect(ctx.lv_hwnd, index, &rc, LVIR_BOUNDS);
+    }
+    else
+    {
+        // ListView_GetItemRect doesnt work for the last position, so we have to calculate it ourselves :(
+        RECT last_item_rc;
+        ListView_GetItemRect(ctx.lv_hwnd, item_count - 1, &last_item_rc, LVIR_BOUNDS);
+        rc.left = last_item_rc.left;
+        rc.right = last_item_rc.right;
+        rc.top = last_item_rc.bottom;
+        rc.bottom = rc.top + 1;
+    }
     HDC hdc = GetDC(ctx.lv_hwnd);
 
     SetROP2(hdc, R2_NOTXORPEN);
