@@ -520,7 +520,7 @@ void gen_interrupt()
         {
             g_core->log_trace("VI_INT (rdp done)");
             rdp_done = false;
-            g_core->callbacks.vi_origin_changed();
+            g_core->callbacks.frame_presented();
         }
         else
             g_core->log_trace("VI_INT");

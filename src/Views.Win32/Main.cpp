@@ -1049,16 +1049,16 @@ static core_result init_core()
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
     };
-    g_main_ctx.core.callbacks.vi_origin_changed = [] {
-        if (!EncodingManager::is_capturing()) return;
-        EncodingManager::append_video();
-    };
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
     g_main_ctx.core.callbacks.frame = [] {
         g_frame_changed = true;
 #ifdef VIEW_BENCHMARK_SUPPORT
         Benchmark::frame();
 #endif
+    };
+    g_main_ctx.core.callbacks.frame_presented = [] {
+        if (!EncodingManager::is_capturing()) return;
+        EncodingManager::append_video();
     };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
