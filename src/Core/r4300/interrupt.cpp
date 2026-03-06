@@ -17,6 +17,11 @@
 #include <r4300/timers.h>
 #include <memory/pif.h>
 
+#define DP_STATUS_REG 0xA410000C
+#define DP_BUSY 0x0400
+#define DP_PIPE_BUSY 0x0200
+#define DP_CMD_BUSY 0x0100
+
 typedef struct _interrupt_queue
 {
     int32_t type;
@@ -29,6 +34,7 @@ static interrupt_queue *q = NULL;
 interrupt_queue g_pool[128]{};
 uint8_t g_pool_used[sizeof(g_pool)]{};
 size_t g_known_unused_index = SIZE_MAX;
+bool rdp_done = false;
 
 /**
  * Allocates an item in the interrupt pool.
@@ -492,9 +498,7 @@ void gen_interrupt()
         }
 
         g_core->callbacks.vi();
-
         vcr_on_vi();
-
         timer_new_vi();
 
         if (vi_register.vi_v_sync == 0)
@@ -510,10 +514,16 @@ void gen_interrupt()
 
         remove_interrupt_event();
         add_interrupt_event_count(VI_INT, next_vi);
-        //++frame_count;
-        // total_vi += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
-        // starttime).count();
         MI_register.mi_intr_reg |= 0x08;
+
+        if (rdp_done)
+        {
+            g_core->log_trace("VI_INT (rdp done)");
+            rdp_done = false;
+            g_core->callbacks.vi_origin_changed();
+        }
+        else
+            g_core->log_trace("VI_INT");
         break;
     }
     case COMPARE_INT: // game can set Compare register to some value, and make a timer like that
@@ -587,7 +597,16 @@ void gen_interrupt()
         break;
 
     case DP_INT:
-        // g_core->log_info("DP, count: {:#06x}", q->count);
+
+        if (!(dpc_register.dpc_status & (DP_BUSY | DP_PIPE_BUSY | DP_CMD_BUSY)))
+        {
+            g_core->log_trace("DP_INT (done)");
+            rdp_done = true;
+        }
+        else
+        {
+            g_core->log_trace("DP_INT");
+        }
         remove_interrupt_event();
         dpc_register.dpc_status &= ~2;
         dpc_register.dpc_status |= 0x81;

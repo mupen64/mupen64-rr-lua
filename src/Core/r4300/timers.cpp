@@ -87,7 +87,6 @@ void timer_new_frame()
     timer.frame_deltas_mtx.unlock();
     timer.frame_deltas_ptr = (timer.frame_deltas_ptr + 1) % core_timer_max_deltas;
 
-    g_core->callbacks.frame();
     timer.last_frame_time = std::chrono::high_resolution_clock::now();
 }
 

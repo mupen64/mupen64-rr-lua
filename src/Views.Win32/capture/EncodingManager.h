@@ -65,9 +65,9 @@ void start_capture(std::filesystem::path path, t_config::EncoderType encoder_typ
 void stop_capture(const std::function<void(bool)> &callback = nullptr);
 
 /**
- * \brief Notifies the encoding manager of a new VI
+ * \brief Appends the current video frame to the capture.
  */
-void at_vi();
+void append_video();
 
 /**
  * \brief Notifies the encoding manager of the audio changing

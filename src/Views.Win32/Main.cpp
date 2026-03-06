@@ -467,16 +467,6 @@ void update_screen()
     }
 }
 
-void at_vi()
-{
-    if (!EncodingManager::is_capturing())
-    {
-        return;
-    }
-
-    EncodingManager::at_vi();
-}
-
 void ai_len_changed()
 {
     if (!EncodingManager::is_capturing())
@@ -648,7 +638,7 @@ void on_speed_modifier_changed(std::any data)
 
 void on_emu_paused_changed(std::any data)
 {
-    g_main_ctx.core.callbacks.frame();
+    g_frame_changed = true;
 }
 
 void on_vis_since_input_poll_exceeded(std::any)
@@ -810,7 +800,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
-        
+
         LuaCallbacks::call_atkey({.keycode = wParam, .pressed = true, .repeat = repeat});
 
         if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
@@ -1002,14 +992,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
-void on_new_frame()
-{
-    g_frame_changed = true;
-#ifdef VIEW_BENCHMARK_SUPPORT
-    Benchmark::frame();
-#endif
-}
-
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
     g_main_ctx.core_ctx->vr_invalidate_visuals();
@@ -1066,10 +1048,18 @@ static core_result init_core()
     g_main_ctx.core.callbacks.vi = [] {
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
-        at_vi();
+    };
+    g_main_ctx.core.callbacks.vi_origin_changed = [] {
+        if (!EncodingManager::is_capturing()) return;
+        EncodingManager::append_video();
     };
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
-    g_main_ctx.core.callbacks.frame = on_new_frame;
+    g_main_ctx.core.callbacks.frame = [] {
+        g_frame_changed = true;
+#ifdef VIEW_BENCHMARK_SUPPORT
+        Benchmark::frame();
+#endif
+    };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
     g_main_ctx.core.callbacks.play_movie = LuaCallbacks::call_play_movie;

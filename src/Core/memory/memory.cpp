@@ -1146,6 +1146,8 @@ void update_SP()
             add_interrupt_event(SP_INT, 1000);
             add_interrupt_event(DP_INT, 1000);
 
+            g_core->callbacks.frame();
+            
             // protecting new frame buffers
             if (g_core->video_fb_get_frame_buffer_info && g_core->video_fb_read && g_core->video_fb_write)
             {

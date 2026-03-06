@@ -360,11 +360,13 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
     get_video_dimensions(&m_video_width, &m_video_height);
     m_video_buf = (uint8_t *)malloc(m_video_width * m_video_height * 3);
 
+    const auto fps =
+        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code) / 2;
     const auto result = m_encoder->start(Encoder::Params{
         .path = m_current_path,
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
-        .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
+        .fps = (uint32_t)fps,
         .arate = (uint32_t)m_audio_freq,
         .ask_for_encoding_settings = ask_for_encoding_settings,
     });
@@ -414,7 +416,22 @@ void stop_capture(const std::function<void(bool)> &callback)
     });
 }
 
-void at_vi()
+uint64_t fnv1a_hash(const void *data, size_t len)
+{
+    const uint8_t *p = static_cast<const uint8_t *>(data);
+
+    uint64_t hash = 14695981039346656037ULL;
+
+    for (size_t i = 0; i < len; ++i)
+    {
+        hash ^= p[i];
+        hash *= 1099511628211ULL;
+    }
+
+    return hash;
+}
+
+void append_video()
 {
     std::lock_guard lock(m_mutex);
 
@@ -429,6 +446,14 @@ void at_vi()
     }
 
     read_screen();
+
+    const auto frame_hash = fnv1a_hash(m_video_buf, m_video_width * m_video_height * 3);
+    static uint64_t last_frame_hash = frame_hash;
+    if (frame_hash == last_frame_hash)
+        g_view_logger->warn("[EncodingManager] FRAME {} MATCHES LAST FRAME!", m_total_frames);
+    else
+        g_view_logger->warn("[EncodingManager] FRAME {} HASH {:#016x} -> {:#016x}", m_total_frames, last_frame_hash, frame_hash);
+    last_frame_hash = frame_hash;
 
     if (m_encoder->append_video(m_video_buf))
     {
