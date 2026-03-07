@@ -416,21 +416,6 @@ void stop_capture(const std::function<void(bool)> &callback)
     });
 }
 
-uint64_t fnv1a_hash(const void *data, size_t len)
-{
-    const uint8_t *p = static_cast<const uint8_t *>(data);
-
-    uint64_t hash = 14695981039346656037ULL;
-
-    for (size_t i = 0; i < len; ++i)
-    {
-        hash ^= p[i];
-        hash *= 1099511628211ULL;
-    }
-
-    return hash;
-}
-
 void append_video()
 {
     std::lock_guard lock(m_mutex);
@@ -447,13 +432,12 @@ void append_video()
 
     read_screen();
 
-    const auto frame_hash = fnv1a_hash(m_video_buf, m_video_width * m_video_height * 3);
-    static uint64_t last_frame_hash = frame_hash;
-    if (frame_hash == last_frame_hash)
-        g_view_logger->warn("[EncodingManager] FRAME {} MATCHES LAST FRAME!", m_total_frames);
-    else
-        g_view_logger->warn("[EncodingManager] FRAME {} HASH {:#016x} -> {:#016x}", m_total_frames, last_frame_hash, frame_hash);
+#ifdef _DEBUG
+    const auto frame_hash = MiscHelpers::fnv1a_hash(m_video_buf, m_video_width * m_video_height * 3);
+    static uint64_t last_frame_hash = 0;
+    RT_ASSERT(frame_hash != last_frame_hash, L"Identical consecutive frames detected during capture");
     last_frame_hash = frame_hash;
+#endif
 
     if (m_encoder->append_video(m_video_buf))
     {

@@ -414,4 +414,25 @@ template <typename T> static T wrapping_clamp_decimal(T value, T min, T max)
     return value;
 }
 
+/**
+ * \brief Computes the FNV-1a hash of the given data.
+ * \param data Pointer to the data to hash.
+ * \param len Length of the data in bytes.
+ * \return The computed hash.
+ */
+inline uint64_t fnv1a_hash(const void *data, size_t len)
+{
+    const uint8_t *p = static_cast<const uint8_t *>(data);
+
+    uint64_t hash = 14695981039346656037ULL;
+
+    for (size_t i = 0; i < len; ++i)
+    {
+        hash ^= p[i];
+        hash *= 1099511628211ULL;
+    }
+
+    return hash;
+}
+
 }; // namespace MiscHelpers
