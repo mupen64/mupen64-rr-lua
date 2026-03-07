@@ -612,10 +612,19 @@ extern "C"
         std::function<bool(size_t frame)> vcr_has_seek_savestate_at_frame;
 
         /**
-         * Tries to resolve a seek string into a frame number. 
+         * Tries to resolve a seek string into a frame number.
          * Returns std::nullopt if the string is invalid.
          */
-        std::function<std::optional<size_t>(const std::string& str)> vcr_try_resolve_seek_str;
+        std::function<std::optional<size_t>(const std::string &str)> vcr_try_resolve_seek_str;
+
+        /**
+         * Gets information about generated files for a movie.
+         * \param movie_path The path to the movie.
+         * \param flags The start flags.
+         * \return Information about the generated files.
+         */
+        std::function<core_vcr_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags)>
+            vcr_get_generated_file_info;
 
 #pragma endregion
 
