@@ -503,13 +503,13 @@ void gen_interrupt()
         // Seemingly, the best pacing is achieved by checking:
         // 1. if the RDP just went idle on the last DP interrupt
         // 2. if the VI origin changed on this VI interrupt
-        const auto vi_origin_changed = last_vi_origin != vi_register.vi_origin;
-        const auto new_present = rdp_done && vi_origin_changed;
+        const bool vi_origin_changed = last_vi_origin != vi_register.vi_origin;
+        const bool new_present = vi_origin_changed && rdp_done;
+
         g_core->callbacks.vi(new_present);
         vcr_on_vi();
         timer_new_vi();
-        
-        if (rdp_done) rdp_done = false;
+
         last_vi_origin = vi_register.vi_origin;
 
         if (vi_register.vi_v_sync == 0)
