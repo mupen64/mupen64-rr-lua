@@ -166,20 +166,13 @@ bool VFWEncoder::stop()
 
 bool VFWEncoder::append_video(uint8_t *image)
 {
-    bool result = true;
-
-    if (g_config.synchronization_mode == static_cast<int>(EncodingManager::Sync::None))
-    {
-        result = append_video_impl(image);
-        m_video_frame += 1.0;
-        return result;
-    }
-
     if (g_config.synchronization_mode != static_cast<int>(EncodingManager::Sync::Audio) &&
         g_config.synchronization_mode != static_cast<int>(EncodingManager::Sync::None))
     {
         return true;
     }
+
+    bool result = true;
 
     // AUDIO SYNC
     // This type of syncing assumes the audio is authoratative, and drops or duplicates frames to keep the video as
@@ -231,13 +224,6 @@ bool VFWEncoder::append_video(uint8_t *image)
 bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
     const int write_size = m_params.arate * 2;
-
-    if (g_config.synchronization_mode == static_cast<int>(EncodingManager::Sync::None))
-    {
-        write_sound(audio, length, m_params.arate, write_size, FALSE, bitrate);
-        last_sound = *(reinterpret_cast<long *>(audio + length) - 1);
-        return true;
-    }
 
     if (g_config.synchronization_mode == static_cast<int>(EncodingManager::Sync::Video) ||
         g_config.synchronization_mode == static_cast<int>(EncodingManager::Sync::None))
