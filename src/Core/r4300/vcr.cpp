@@ -1514,6 +1514,8 @@ core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::
 {
     core_vcr_generated_file_info info{};
 
+    info.movie_path = movie_path;
+
     if (flags & MOVIE_START_FROM_SNAPSHOT) info.st_path = get_path_for_new_movie(movie_path);
 
     const auto cheats = cht_serialize();
