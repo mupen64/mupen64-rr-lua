@@ -21,6 +21,7 @@
 #define DP_BUSY 0x0400
 #define DP_PIPE_BUSY 0x0200
 #define DP_CMD_BUSY 0x0100
+#define DP_IDLE(status) (((status) & (DP_BUSY | DP_PIPE_BUSY | DP_CMD_BUSY)) == 0)
 
 typedef struct _interrupt_queue
 {
@@ -35,6 +36,7 @@ interrupt_queue g_pool[128]{};
 uint8_t g_pool_used[sizeof(g_pool)]{};
 size_t g_known_unused_index = SIZE_MAX;
 bool rdp_done = false;
+uint32_t last_vi_origin{};
 
 /**
  * Allocates an item in the interrupt pool.
@@ -497,9 +499,18 @@ void gen_interrupt()
             screen_invalidated = false;
         }
 
-        g_core->callbacks.vi();
+        // Detecting when a new frame is being presented is a little bit tricky.
+        // Seemingly, the best pacing is achieved by checking:
+        // 1. if the RDP just went idle on the last DP interrupt
+        // 2. if the VI origin changed on this VI interrupt
+        const auto vi_origin_changed = last_vi_origin != vi_register.vi_origin;
+        const auto new_present = rdp_done && vi_origin_changed;
+        g_core->callbacks.vi(new_present);
         vcr_on_vi();
         timer_new_vi();
+        
+        if (rdp_done) rdp_done = false;
+        last_vi_origin = vi_register.vi_origin;
 
         if (vi_register.vi_v_sync == 0)
             vi_register.vi_delay = 500000;
@@ -515,12 +526,6 @@ void gen_interrupt()
         remove_interrupt_event();
         add_interrupt_event_count(VI_INT, next_vi);
         MI_register.mi_intr_reg |= 0x08;
-
-        if (rdp_done)
-        {
-            rdp_done = false;
-            g_core->callbacks.frame_presented();
-        }
         break;
     }
     case COMPARE_INT: // game can set Compare register to some value, and make a timer like that
@@ -594,7 +599,7 @@ void gen_interrupt()
         break;
 
     case DP_INT:
-        if (!(dpc_register.dpc_status & (DP_BUSY | DP_PIPE_BUSY | DP_CMD_BUSY))) rdp_done = true;
+        if (DP_IDLE(dpc_register.dpc_status)) rdp_done = true;
         remove_interrupt_event();
         dpc_register.dpc_status &= ~2;
         dpc_register.dpc_status |= 0x81;

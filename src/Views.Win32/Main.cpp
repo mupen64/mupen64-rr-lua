@@ -1045,9 +1045,11 @@ static core_result init_core()
     g_main_ctx.core.cfg = &g_config.core;
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
-    g_main_ctx.core.callbacks.vi = [] {
+    g_main_ctx.core.callbacks.vi = [](const bool new_present) {
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
+        if (!EncodingManager::is_capturing()) return;
+        EncodingManager::append_video(new_present);
     };
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
     g_main_ctx.core.callbacks.frame = [] {
@@ -1055,10 +1057,6 @@ static core_result init_core()
 #ifdef VIEW_BENCHMARK_SUPPORT
         Benchmark::frame();
 #endif
-    };
-    g_main_ctx.core.callbacks.frame_presented = [] {
-        if (!EncodingManager::is_capturing()) return;
-        EncodingManager::append_video();
     };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;

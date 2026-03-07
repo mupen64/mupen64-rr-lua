@@ -22,10 +22,9 @@ extern "C"
      */
     struct core_callbacks
     {
-        std::function<void()> vi = [] {};
+        std::function<void(bool new_present)> vi = [](const auto &...) {};
         std::function<void(core_buttons *input, int index)> input = [](core_buttons *, int) {};
         std::function<void()> frame = [] {};
-        std::function<void()> frame_presented = [] {};
         std::function<void()> interval = [] {};
         std::function<void()> ai_len_changed = [] {};
         std::function<void()> play_movie = [] {};
@@ -613,10 +612,10 @@ extern "C"
         std::function<bool(size_t frame)> vcr_has_seek_savestate_at_frame;
 
         /**
-         * Tries to resolve a seek string into a frame number. 
+         * Tries to resolve a seek string into a frame number.
          * Returns std::nullopt if the string is invalid.
          */
-        std::function<std::optional<size_t>(const std::string& str)> vcr_try_resolve_seek_str;
+        std::function<std::optional<size_t>(const std::string &str)> vcr_try_resolve_seek_str;
 
 #pragma endregion
 
