@@ -17,7 +17,6 @@
 #include <r4300/r4300.h>
 #include <r4300/rom.h>
 #include <r4300/vcr.h>
-#include "vcr.h"
 
 using namespace std::string_view_literals;
 
