@@ -518,12 +518,9 @@ void gen_interrupt()
 
         if (rdp_done)
         {
-            g_core->log_trace("VI_INT (rdp done)");
             rdp_done = false;
             g_core->callbacks.frame_presented();
         }
-        else
-            g_core->log_trace("VI_INT");
         break;
     }
     case COMPARE_INT: // game can set Compare register to some value, and make a timer like that
@@ -597,16 +594,7 @@ void gen_interrupt()
         break;
 
     case DP_INT:
-
-        if (!(dpc_register.dpc_status & (DP_BUSY | DP_PIPE_BUSY | DP_CMD_BUSY)))
-        {
-            g_core->log_trace("DP_INT (done)");
-            rdp_done = true;
-        }
-        else
-        {
-            g_core->log_trace("DP_INT");
-        }
+        if (!(dpc_register.dpc_status & (DP_BUSY | DP_PIPE_BUSY | DP_CMD_BUSY))) rdp_done = true;
         remove_interrupt_event();
         dpc_register.dpc_status &= ~2;
         dpc_register.dpc_status |= 0x81;
