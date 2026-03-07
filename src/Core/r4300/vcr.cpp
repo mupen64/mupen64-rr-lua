@@ -26,12 +26,12 @@ constexpr auto RAWDATA_WARNING_MESSAGE =
     "Warning: One of the active controllers of your input plugin is set to accept \"Raw Data\".\nThis can cause "
     "issues when recording and playing movies. Proceed?";
 constexpr auto ROM_NAME_WARNING_MESSAGE = "The movie was recorded on the rom '{}', but is being played back on "
-                                          "'{}'.\r\nPlayback might desynchronize. Are you sure you want to continue?";
+                                          "'{}'.\r\nPlayback might desynchronize. How do you want to continue?";
 constexpr auto ROM_COUNTRY_WARNING_MESSAGE = "The movie was recorded on a {} ROM, but is being played back on "
-                                             "{}.\r\nPlayback might desynchronize. Are you sure you want to continue?";
+                                             "{}.\r\nPlayback might desynchronize. How do you want to continue?";
 constexpr auto ROM_CRC_WARNING_MESSAGE = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
                                          "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
-                                         "might desynchronize. Are you sure you want to continue?";
+                                         "might desynchronize. How do you want to continue?";
 constexpr auto WII_VC_MISMATCH_A_WARNING_MESSAGE =
     "The movie was recorded with WiiVC mode enabled, but is being played back with it disabled.\r\nPlayback might "
     "desynchronize. Are you sure you want to continue?";
@@ -1252,6 +1252,33 @@ bool show_controller_warning(const core_vcr_movie_header &header)
     return true;
 }
 
+/**
+ * \brief Shows a dialog to the user warning about a ROM conflict between the movie and currently loaded ROM, and asks
+ * them how to proceed.
+ * \param id The dialog ID.
+ * \param message The message to show in the dialog.
+ * \param movie_path The path of the movie being loaded.
+ * \return A `core_result` indicating the user's choice, or `std::nullopt` if the user chose to play anyway.
+ */
+static std::optional<core_result> ask_user_rom_conflict(std::string_view id, const std::string &message,
+                                                        const std::filesystem::path &movie_path)
+{
+    const auto choice = g_core->show_multiple_choice_dialog(id, {"Switch ROM", "Play Anyway", "Cancel"},
+                                                            message.c_str(), "VCR", core_dialog_type::fsvc_warning);
+
+    if (choice == 0)
+    {
+        g_core->submit_task([=] {
+            g_ctx.vr_start_rom(movie_path);
+            g_ctx.vcr_start_playback(movie_path);
+        });
+        return Res_Cancelled;
+    }
+    if (choice == 2) return Res_Cancelled;
+
+    return std::nullopt;
+}
+
 core_result vcr_start_playback(std::filesystem::path path)
 {
     std::unique_lock lock(vcr_mtx);
@@ -1334,45 +1361,28 @@ core_result vcr_start_playback(std::filesystem::path path)
             g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, "VCR", fsvc_warning);
         }
     }
-
     if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
     {
-        bool proceed = g_core->show_ask_dialog(
-            CORE_DLG_VCR_ROM_NAME_WARNING,
-            std::format(ROM_NAME_WARNING_MESSAGE, header.rom_name, (char *)ROM_HEADER.nom).c_str(), "VCR", true);
-
-        if (!proceed)
-        {
-            return Res_Cancelled;
-        }
+        const auto ask_message = std::format(ROM_NAME_WARNING_MESSAGE, header.rom_name, (char *)ROM_HEADER.nom);
+        const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_NAME_WARNING, ask_message, path);
+        if (result.has_value()) return result.value();
     }
     else
     {
         if (header.rom_country != ROM_HEADER.Country_code)
         {
-            bool proceed = g_core->show_ask_dialog(
-                CORE_DLG_VCR_ROM_CCODE_WARNING,
-                std::format(ROM_COUNTRY_WARNING_MESSAGE, g_ctx.vr_country_code_to_country_name(header.rom_country),
-                            g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code))
-                    .c_str(),
-                "VCR", true);
-
-            if (!proceed)
-            {
-                return Res_Cancelled;
-            }
+            const auto source_country_name = g_ctx.vr_country_code_to_country_name(header.rom_country);
+            const auto current_country_name = g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code);
+            const auto ask_message =
+                std::format(ROM_COUNTRY_WARNING_MESSAGE, source_country_name, current_country_name);
+            const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CCODE_WARNING, ask_message, path);
+            if (result.has_value()) return result.value();
         }
         else if (header.rom_crc1 != ROM_HEADER.CRC1)
         {
-            // wchar_t str[512] = {0};
-            // swprintf_s(str, ROM_CRC_WARNING_MESSAGE, header.rom_crc1, ROM_HEADER.CRC1);
-            auto ask_message = std::format(ROM_CRC_WARNING_MESSAGE, header.rom_crc1, ROM_HEADER.CRC1);
-
-            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_ROM_CRC_WARNING, ask_message.c_str(), "VCR", true);
-            if (!proceed)
-            {
-                return Res_Cancelled;
-            }
+            const auto ask_message = std::format(ROM_CRC_WARNING_MESSAGE, header.rom_crc1, ROM_HEADER.CRC1);
+            const auto result = ask_user_rom_conflict(CORE_DLG_VCR_ROM_CRC_WARNING, ask_message, path);
+            if (result.has_value()) return result.value();
         }
     }
 
