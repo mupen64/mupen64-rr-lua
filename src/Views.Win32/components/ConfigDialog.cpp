@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -29,15 +29,26 @@ t_plugin_discovery_result plugin_discovery_result;
 std::vector<t_options_group> g_option_groups;
 std::vector<t_options_item> g_option_items;
 static std::vector<t_options_group> g_static_option_groups;
-HWND g_lv_hwnd;
-HWND g_edit_hwnd;
-size_t g_edit_option_item_index;
 t_config g_prev_config;
 
 std::thread g_plugin_discovery_thread;
 
 // Whether a plugin rescan is needed. Set when modifying the plugin path.
 bool g_plugin_discovery_rescan = false;
+
+struct t_tab_context
+{
+    size_t tab_index;
+
+    // The groups to show in this tab.
+    std::vector<std::wstring> groups;
+
+    HWND hwnd;
+    HWND lv_hwnd;
+    HWND edit_hwnd;
+    size_t edit_option_item_index;
+    std::unordered_map<size_t, size_t> item_index_map;
+};
 
 std::wstring t_options_item::get_name() const
 {
@@ -124,8 +135,8 @@ bool t_options_item::edit(const HWND hwnd)
     }
     case Type::Number: {
         const auto value = std::get<int32_t>(current_value.get());
-        const auto result =
-            TextEditDialog::show({.text = std::to_wstring(value), .caption = std::format(L"Edit value for {}", name)});
+        const auto result = TextEditDialog::show(
+            {.parent_hwnd = hwnd, .text = std::to_wstring(value), .caption = std::format(L"Edit value for {}", name)});
         if (!result.has_value())
         {
             break;
@@ -177,7 +188,8 @@ bool t_options_item::edit(const HWND hwnd)
     }
     case Type::String: {
         const auto value = std::get<std::wstring>(current_value.get());
-        const auto result = TextEditDialog::show({.text = value, .caption = std::format(L"Edit value for {}", name)});
+        const auto result = TextEditDialog::show(
+            {.parent_hwnd = hwnd, .text = value, .caption = std::format(L"Edit value for {}", name)});
         if (result.has_value())
         {
             current_value.set(result.value());
@@ -413,7 +425,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
                     .c_str());
         }
 
-        EnableWindow(GetDlgItem(hwnd, IDC_PLUGIN_DISCOVERY_INFO), !broken_plugins.empty());
+        ShowWindow(GetDlgItem(hwnd, IDC_PLUGIN_DISCOVERY_INFO), !broken_plugins.empty() ? SW_SHOW : SW_HIDE);
 
         ComboBox_ResetContent(GetDlgItem(hwnd, IDC_COMBO_GFX));
         ComboBox_ResetContent(GetDlgItem(hwnd, IDC_COMBO_SOUND));
@@ -443,9 +455,8 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             }
             // we add the string and associate a pointer to the plugin with the item
             const int i = SendDlgItemMessage(hwnd, id, CB_GETCOUNT, 0, 0);
-            SendDlgItemMessage(
-                hwnd, id, CB_ADDSTRING, 0,
-                reinterpret_cast<LPARAM>(IOUtils::to_wide_string(plugin->name()).c_str()));
+            SendDlgItemMessage(hwnd, id, CB_ADDSTRING, 0,
+                               reinterpret_cast<LPARAM>(IOUtils::to_wide_string(plugin->name()).c_str()));
             SendDlgItemMessage(hwnd, id, CB_SETITEMDATA, i, (LPARAM)plugin.get());
         }
 
@@ -569,15 +580,13 @@ std::vector<t_options_group> get_static_option_groups()
 
     t_options_group folders_group = {.id = id++, .name = L"Folders"};
 
-    t_options_group rombrowser_group = {.id = id++, .name = L"Rombrowser"};
-
     t_options_group interface_group = {.id = id++, .name = L"Interface"};
 
     t_options_group statusbar_group = {.id = id++, .name = L"Statusbar"};
 
-    t_options_group seek_piano_roll_group = {.id = id++, .name = L"Seek / Piano Roll"};
+    t_options_group piano_roll_group = {.id = id++, .name = L"Piano Roll"};
 
-    t_options_group flow_group = {.id = id++, .name = L"Flow"};
+    t_options_group seek_group = {.id = id++, .name = L"Seek"};
 
     t_options_group capture_group = {.id = id++, .name = L"Capture"};
 
@@ -601,7 +610,7 @@ std::vector<t_options_group> get_static_option_groups()
                                              } while (0);                                                              \
                                          })
 
-#define GENPROPS(T, x, c) .current_value = RWPROP(T, x, c), .default_value = RPROP(T, x)
+#define GENPROPS(T, x, ...) .current_value = RWPROP(T, x, __VA_ARGS__), .default_value = RPROP(T, x)
 
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
@@ -693,10 +702,38 @@ std::vector<t_options_group> get_static_option_groups()
                        .name = L"Scale up to fill window",
                        .tooltip = L"Whether the statusbar is allowed to scale its segments up.",
                        GENPROPS(int32_t, statusbar_scale_up)});
-
-    seek_piano_roll_group.items.emplace_back(t_options_item{
+    piano_roll_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = piano_roll_group.id,
+        .name = L"Constrain edit to column",
+        .tooltip = L"Whether piano roll edits are constrained to the column they started on.",
+        GENPROPS(int32_t, piano_roll_constrain_edit_to_column),
+    });
+    piano_roll_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
-        .group_id = seek_piano_roll_group.id,
+        .group_id = piano_roll_group.id,
+        .name = L"History size",
+        .tooltip = L"Maximum size of the history list.",
+        GENPROPS(int32_t, piano_roll_undo_stack_size),
+    });
+    piano_roll_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = piano_roll_group.id,
+        .name = L"Keep selection visible",
+        .tooltip = L"Whether the piano roll will try to keep the selection visible.",
+        GENPROPS(int32_t, piano_roll_keep_selection_visible),
+    });
+    piano_roll_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = piano_roll_group.id,
+        .name = L"Keep playhead visible",
+        .tooltip = L"Whether the piano roll will try to keep the playhead visible.",
+        GENPROPS(int32_t, piano_roll_keep_playhead_visible),
+    });
+
+    seek_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Number,
+        .group_id = seek_group.id,
         .name = L"Savestate Interval",
         .tooltip = L"The interval at which to create savestates for seeking. Piano Roll is exclusively read-only if "
                    L"this value is 0.\nHigher numbers will reduce the seek duration at cost of emulator performance, a "
@@ -704,41 +741,13 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.seek_savestate_interval),
         .is_readonly = [] { return g_main_ctx.core_ctx->vcr_get_task() != task_idle; },
     });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
+    seek_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
-        .group_id = seek_piano_roll_group.id,
+        .group_id = seek_group.id,
         .name = L"Savestate Max Count",
         .tooltip = L"The maximum amount of savestates to keep in memory for seeking.\nHigher numbers might cause an "
                    L"out of memory exception.",
         GENPROPS(int32_t, core.seek_savestate_max_count),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"Constrain edit to column",
-        .tooltip = L"Whether piano roll edits are constrained to the column they started on.",
-        GENPROPS(int32_t, piano_roll_constrain_edit_to_column),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"History size",
-        .tooltip = L"Maximum size of the history list.",
-        GENPROPS(int32_t, piano_roll_undo_stack_size),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"Keep selection visible",
-        .tooltip = L"Whether the piano roll will try to keep the selection visible.",
-        GENPROPS(int32_t, piano_roll_keep_selection_visible),
-    });
-    seek_piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
-        .group_id = seek_piano_roll_group.id,
-        .name = L"Keep playhead visible",
-        .tooltip = L"Whether the piano roll will try to keep the playhead visible.",
-        GENPROPS(int32_t, piano_roll_keep_playhead_visible),
     });
 
     capture_group.items.emplace_back(t_options_item{
@@ -871,18 +880,11 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.float_exception_emulation),
     });
     core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
-        .group_id = core_group.id,
-        .name = L"Fast-Forward Skip Frequency",
-        .tooltip = L"Skip rendering every nth frame when in fast-forward mode.\n0 - Render nothing\n1 - Render every "
-                   L"frame\nn - Render every nth frame",
-        GENPROPS(int32_t, core.frame_skip_frequency),
-    });
-    core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
         .group_id = core_group.id,
         .name = L"Emulate SD Card",
-        .tooltip = L"Enable SD card emulation.\nRequires a VHD-formatted SD card file named card.vhd in the save data folder.",
+        .tooltip =
+            L"Enable SD card emulation.\nRequires a VHD-formatted SD card file named card.vhd in the save data folder.",
         GENPROPS(int32_t, core.use_summercart),
     });
     core_group.items.emplace_back(t_options_item{
@@ -985,9 +987,8 @@ std::vector<t_options_group> get_static_option_groups()
         .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
     });
 
-    return {folders_group, rombrowser_group, interface_group, statusbar_group, seek_piano_roll_group,
-            flow_group,    capture_group,    core_group,      vcr_group,       lua_group,
-            debug_group};
+    return {folders_group, interface_group, statusbar_group, piano_roll_group, seek_group,
+            capture_group, core_group,      vcr_group,       lua_group,        debug_group};
 }
 
 LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
@@ -1010,7 +1011,6 @@ LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, L
         goto apply;
     case WM_NCDESTROY:
         RemoveWindowSubclass(hwnd, inline_edit_subclass_proc, id);
-        g_edit_hwnd = nullptr;
         break;
     default:
         break;
@@ -1029,52 +1029,6 @@ apply:
     goto def;
 }
 
-INT_PTR CALLBACK edit_string_dlgproc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
-    case WM_INITDIALOG: {
-        const auto option_item = g_option_items[g_edit_option_item_index];
-        const auto edit_hwnd = GetDlgItem(wnd, IDC_EDIT);
-
-        const auto current_value = std::get<std::wstring>(option_item.current_value.get());
-
-        SetWindowText(wnd, std::format(L"Edit '{}'", option_item.name).c_str());
-        Edit_SetText(edit_hwnd, current_value.c_str());
-
-        SetFocus(GetDlgItem(wnd, IDC_EDIT));
-        break;
-    }
-    case WM_CLOSE:
-        EndDialog(wnd, IDCANCEL);
-        break;
-    case WM_COMMAND:
-        switch (LOWORD(wparam))
-        {
-        case IDOK: {
-            const auto &option_item = g_option_items[g_edit_option_item_index];
-            const auto edit_hwnd = GetDlgItem(wnd, IDC_EDIT);
-
-            const auto str = get_window_text(edit_hwnd).value_or(L"");
-
-            option_item.current_value.set(str);
-
-            EndDialog(wnd, IDOK);
-            break;
-        }
-        case IDCANCEL:
-            EndDialog(wnd, IDCANCEL);
-            break;
-        default:
-            break;
-        }
-        break;
-    default:
-        break;
-    }
-    return FALSE;
-}
-
 /**
  * Advances a listview's selection by one.
  */
@@ -1087,124 +1041,23 @@ void advance_listview_selection(HWND lvhwnd)
     ListView_EnsureVisible(lvhwnd, i + 1, false);
 }
 
-bool begin_settings_lv_edit(HWND hwnd, int i)
-{
-    auto option_item = g_option_items[i];
-
-    // TODO: Perhaps gray out readonly values too?
-    if (option_item.is_readonly())
-    {
-        return false;
-    }
-
-    // We use the default detached editing, except for numbers, which are edited inline.
-    if (option_item.type != t_options_item::Type::Number)
-    {
-        (void)option_item.edit(hwnd);
-        ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
-        return true;
-    }
-
-    if (g_edit_hwnd)
-    {
-        DestroyWindow(g_edit_hwnd);
-    }
-
-    g_edit_option_item_index = i;
-
-    RECT item_rect{};
-    ListView_GetSubItemRect(g_lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
-
-    RECT lv_rect{};
-    GetClientRect(g_lv_hwnd, &lv_rect);
-
-    item_rect.right = lv_rect.right;
-
-    g_edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
-                                 item_rect.top, item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
-                                 hwnd, 0, g_main_ctx.hinst, 0);
-
-    SendMessage(g_edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(g_lv_hwnd, WM_GETFONT, 0, 0), 0);
-
-    SetWindowSubclass(g_edit_hwnd, inline_edit_subclass_proc, 0, 0);
-
-    const auto value = std::get<int32_t>(option_item.current_value.get());
-    Edit_SetText(g_edit_hwnd, std::to_wstring(value).c_str());
-
-    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM)g_edit_hwnd, TRUE);
-
-    ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
-    return true;
-}
-
-INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
+INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
 {
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
+    auto ctx = (t_tab_context *)GetProp(hwnd, L"tab_context");
 
     switch (message)
     {
     case WM_INITDIALOG: {
-        if (g_lv_hwnd)
-        {
-            DestroyWindow(g_lv_hwnd);
-        }
+        const auto ps = (PROPSHEETPAGE *)l_param;
+        SetProp(hwnd, L"tab_context", (HANDLE)ps->lParam);
 
-        RECT grid_rect{};
-        GetClientRect(hwnd, &grid_rect);
-
-        std::vector<std::wstring> groups;
-        for (const auto &group : g_option_groups)
-        {
-            groups.push_back(group.name);
-        }
-
-        std::vector<std::pair<size_t, std::wstring>> items;
-        for (const auto &item : g_option_items)
-        {
-            items.emplace_back(item.group_id, item.name);
-        }
-
-        auto get_item_tooltip = [](size_t i) { return g_option_items[i].tooltip; };
-
-        auto edit_start = [=](size_t i) { begin_settings_lv_edit(hwnd, i); };
-
-        auto get_item_image = [](size_t i) {
-            const auto &option_item = g_option_items[i];
-
-            int32_t image = option_item.initial_value.get() == option_item.current_value.get() ? 50 : 1;
-
-            if (option_item.is_readonly())
-            {
-                image = 0;
-            }
-
-            return image;
-        };
-
-        auto get_item_text = [](size_t i, size_t subitem) {
-            if (subitem == 0)
-            {
-                return g_option_items[i].get_name();
-            }
-
-            return g_option_items[i].get_value_name();
-        };
-
-        g_lv_hwnd = SettingsListView::create({
-            .dlg_hwnd = hwnd,
-            .rect = grid_rect,
-            .on_edit_start = edit_start,
-            .groups = groups,
-            .items = items,
-            .get_item_tooltip = get_item_tooltip,
-            .get_item_text = get_item_text,
-            .get_item_image = get_item_image,
-        });
-
+        ctx = (t_tab_context *)GetProp(hwnd, L"tab_context");
+        ctx->hwnd = hwnd;
         return TRUE;
     }
     case WM_EDIT_END: {
-        auto option_item = g_option_items[g_edit_option_item_index];
+        auto option_item = g_option_items[ctx->item_index_map.at(ctx->edit_option_item_index)];
         auto str = reinterpret_cast<wchar_t *>(l_param);
 
         if (option_item.type == t_options_item::Type::Number)
@@ -1224,21 +1077,21 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             option_item.current_value.set(std::wstring(str));
         }
 
-        ListView_Update(g_lv_hwnd, g_edit_option_item_index);
+        ListView_Update(ctx->lv_hwnd, ctx->edit_option_item_index);
 
         break;
     }
     case WM_CONTEXTMENU: {
-        int32_t i = ListView_GetNextItem(g_lv_hwnd, -1, LVNI_SELECTED);
-
+        int32_t i = ListView_GetNextItem(ctx->lv_hwnd, -1, LVNI_SELECTED);
         if (i == -1) break;
 
         LVITEM item = {0};
         item.mask = LVIF_PARAM;
         item.iItem = i;
-        ListView_GetItem(g_lv_hwnd, &item);
+        ListView_GetItem(ctx->lv_hwnd, &item);
 
-        auto option_item = g_option_items[item.lParam];
+        auto &option_item = g_option_items[ctx->item_index_map.at(item.lParam)];
+
         auto readonly = option_item.is_readonly();
 
         HMENU h_menu = CreatePopupMenu();
@@ -1272,7 +1125,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
         {
         case 1:
             option_item.reset_to_default();
-            ListView_Update(g_lv_hwnd, i);
+            ListView_Update(ctx->lv_hwnd, i);
             break;
         case 2:
             DialogService::show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(),
@@ -1280,7 +1133,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             break;
         case 4:
             option_item.current_value.set(Hotkey::t_hotkey::make_empty());
-            ListView_Update(g_lv_hwnd, i);
+            ListView_Update(ctx->lv_hwnd, i);
             break;
         case 5: {
             const auto path = std::get<std::wstring>(option_item.current_value.get());
@@ -1308,7 +1161,8 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
             }
 
             const auto result = DialogService::show_ask_dialog(
-                VIEW_DLG_RESET_SETTINGS, L"Are you sure you want to reset all settings to default?",
+                VIEW_DLG_RESET_SETTINGS,
+                L"Reset all settings to their default values?\nThis will reset settings on all pages.",
                 L"Reset all to default", false, hwnd);
 
             if (!result)
@@ -1321,7 +1175,7 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
                 v.reset_to_default();
             }
 
-            ListView_RedrawItems(g_lv_hwnd, 0, ListView_GetItemCount(g_lv_hwnd));
+            ListView_RedrawItems(ctx->lv_hwnd, 0, ListView_GetItemCount(ctx->lv_hwnd));
             break;
         }
         default:
@@ -1331,13 +1185,141 @@ INT_PTR CALLBACK general_cfg(const HWND hwnd, const UINT message, const WPARAM w
         DestroyMenu(h_menu);
     }
     break;
+    case WM_NCDESTROY:
+        RemoveProp(hwnd, L"tab_context");
+        delete ctx;
+        ctx = nullptr;
+        break;
     case WM_NOTIFY: {
         if (lpnmhdr->code == PSN_SETACTIVE)
         {
-            g_config.settings_tab = 2;
+            g_config.settings_tab = ctx->tab_index;
+
+            RECT grid_rect{};
+            GetClientRect(hwnd, &grid_rect);
+
+            std::vector<SettingsListView::t_group> groups;
+            for (const auto &wanted_group : ctx->groups)
+            {
+                auto it = std::find_if(g_option_groups.begin(), g_option_groups.end(),
+                                       [&](const t_options_group &group) { return group.name == wanted_group; });
+                if (it != g_option_groups.end())
+                {
+                    groups.emplace_back(it->id, it->name);
+                }
+            }
+
+            std::vector<SettingsListView::t_item> items;
+            for (size_t i = 0; i < g_option_items.size(); ++i)
+            {
+                const auto &item = g_option_items[i];
+
+                if (std::find(ctx->groups.begin(), ctx->groups.end(), g_option_groups[item.group_id].name) ==
+                    ctx->groups.end())
+                {
+                    continue;
+                }
+
+                ctx->item_index_map[items.size()] = i;
+                items.emplace_back(item.group_id, item.get_name());
+            }
+
+            auto get_item_tooltip = [=](size_t i) -> std::wstring {
+                const auto &global_item = g_option_items[ctx->item_index_map.at(i)];
+                return global_item.tooltip;
+            };
+
+            auto edit_start = [=](size_t i) {
+                auto &global_item = g_option_items[ctx->item_index_map.at(i)];
+
+                // TODO: Perhaps gray out readonly values too?
+                if (global_item.is_readonly())
+                {
+                    return false;
+                }
+
+                // We use the default detached editing, except for numbers, which are edited inline.
+                if (global_item.type != t_options_item::Type::Number)
+                {
+                    (void)global_item.edit(ctx->hwnd);
+                    ListView_RedrawItems(ctx->lv_hwnd, 0, ListView_GetItemCount(ctx->lv_hwnd));
+                    return true;
+                }
+
+                if (ctx->edit_hwnd)
+                {
+                    DestroyWindow(ctx->edit_hwnd);
+                }
+
+                ctx->edit_option_item_index = i;
+
+                RECT item_rect{};
+                ListView_GetSubItemRect(ctx->lv_hwnd, i, 1, LVIR_LABEL, &item_rect);
+
+                RECT lv_rect{};
+                GetClientRect(ctx->lv_hwnd, &lv_rect);
+
+                item_rect.right = lv_rect.right;
+
+                ctx->edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                                                item_rect.left, item_rect.top, item_rect.right - item_rect.left,
+                                                item_rect.bottom - item_rect.top, ctx->hwnd, 0, g_main_ctx.hinst, 0);
+                SendMessage(ctx->edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(ctx->lv_hwnd, WM_GETFONT, 0, 0), 0);
+
+                SetWindowSubclass(ctx->edit_hwnd, inline_edit_subclass_proc, 0, 0);
+
+                const auto value = std::get<int32_t>(global_item.current_value.get());
+                Edit_SetText(ctx->edit_hwnd, std::to_wstring(value).c_str());
+
+                PostMessage(ctx->hwnd, WM_NEXTDLGCTL, (WPARAM)ctx->edit_hwnd, TRUE);
+
+                ListView_RedrawItems(ctx->lv_hwnd, 0, ListView_GetItemCount(ctx->lv_hwnd));
+                return true;
+            };
+
+            auto get_item_image = [=](size_t i) {
+                const auto &global_item = g_option_items[ctx->item_index_map.at(i)];
+
+                int32_t image = global_item.initial_value.get() == global_item.current_value.get() ? 50 : 1;
+
+                if (global_item.is_readonly())
+                {
+                    image = 0;
+                }
+
+                return image;
+            };
+
+            auto get_item_text = [=](size_t i, size_t subitem) {
+                const auto &global_item = g_option_items[ctx->item_index_map.at(i)];
+
+                if (subitem == 0)
+                {
+                    return global_item.get_name();
+                }
+
+                return global_item.get_value_name();
+            };
+
+            ctx->lv_hwnd = SettingsListView::create({
+                .dlg_hwnd = hwnd,
+                .rect = grid_rect,
+                .on_edit_start = edit_start,
+                .groups = groups,
+                .items = items,
+                .get_item_tooltip = get_item_tooltip,
+                .get_item_text = get_item_text,
+                .get_item_image = get_item_image,
+            });
         }
 
-        return SettingsListView::notify(hwnd, g_lv_hwnd, l_param, w_param);
+        if (lpnmhdr->code == PSN_KILLACTIVE)
+        {
+            if (ctx->lv_hwnd) DestroyWindow(ctx->lv_hwnd);
+            if (ctx->edit_hwnd) DestroyWindow(ctx->edit_hwnd);
+        }
+
+        return SettingsListView::notify(hwnd, ctx->lv_hwnd, l_param, w_param);
     }
     default:
         return FALSE;
@@ -1409,21 +1391,66 @@ void ConfigDialog::show_app_settings()
         }
     }
 
-    PROPSHEETPAGE psp[2] = {{0}};
-    for (auto &i : psp)
+    std::vector<PROPSHEETPAGE> psp;
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_PLUGINS),
+        .pszTitle = L"Plugins",
+        .pfnDlgProc = plugins_cfg,
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Folders",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Folders"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Visual",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context(
+            {.tab_index = psp.size(), .groups = {L"Interface", L"Statusbar", L"Piano Roll"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Emulation",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Core", L"VCR", L"Seek", L"Debug"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Capture",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Capture"}}),
+    });
+
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Lua",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = {L"Lua"}}),
+    });
+
+    std::vector<std::wstring> hotkey_groups;
+    for (size_t i = g_static_option_groups.size(); i < g_option_groups.size(); ++i)
+        hotkey_groups.emplace_back(g_option_groups[i].name);
+    psp.push_back({
+        .pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL),
+        .pszTitle = L"Hotkeys",
+        .pfnDlgProc = generic_tab_proc,
+        .lParam = (LPARAM) new t_tab_context({.tab_index = psp.size(), .groups = hotkey_groups}),
+    });
+
+    for (auto &page : psp)
     {
-        i.dwSize = sizeof(PROPSHEETPAGE);
-        i.dwFlags = PSP_USETITLE;
-        i.hInstance = g_main_ctx.hinst;
+        page.dwSize = sizeof(PROPSHEETPAGE);
+        page.dwFlags = PSP_USETITLE;
+        page.hInstance = g_main_ctx.hinst;
     }
-
-    psp[0].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_PLUGINS);
-    psp[0].pfnDlgProc = plugins_cfg;
-    psp[0].pszTitle = L"Plugins";
-
-    psp[1].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GENERAL);
-    psp[1].pfnDlgProc = general_cfg;
-    psp[1].pszTitle = L"General";
 
     PROPSHEETHEADER psh = {0};
     psh.dwSize = sizeof(PROPSHEETHEADER);
@@ -1431,9 +1458,9 @@ void ConfigDialog::show_app_settings()
     psh.hwndParent = g_main_ctx.hwnd;
     psh.hInstance = g_main_ctx.hinst;
     psh.pszCaption = L"Settings";
-    psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
+    psh.nPages = psp.size();
     psh.nStartPage = g_config.settings_tab;
-    psh.ppsp = (LPCPROPSHEETPAGE)&psp;
+    psh.ppsp = (LPCPROPSHEETPAGE)psp.data();
 
     g_prev_config = g_config;
 

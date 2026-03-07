@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -89,6 +89,7 @@ void vr_set_fast_forward(bool value);
 bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
 void vr_invalidate_visuals();
+bool vr_is_frame_skipped();
 
 #define jump_to(a)                                                                                                     \
     {                                                                                                                  \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -25,7 +25,6 @@ std::string g_sandbox_lua_code{};
 
 std::vector<t_lua_environment *> g_lua_environments{};
 std::unordered_map<lua_State *, t_lua_environment *> g_lua_env_map{};
-std::unordered_map<void *, bool> g_valid_callback_tokens{};
 
 static int at_panic(lua_State *L)
 {
@@ -44,104 +43,6 @@ static void rebuild_lua_env_map()
     {
         g_lua_env_map[lua->L] = lua;
     }
-}
-
-uintptr_t *lua_optcallback(lua_State *L, int i)
-{
-    if (!lua_isfunction(L, i))
-    {
-        return nullptr;
-    }
-
-    const auto key = new uintptr_t();
-    g_valid_callback_tokens[key] = true;
-
-    lua_pushvalue(L, i);
-    lua_pushlightuserdata(L, key);
-    lua_pushvalue(L, -2);
-    lua_settable(L, LUA_REGISTRYINDEX);
-    lua_pop(L, 1);
-
-    return key;
-}
-
-uintptr_t *lua_tocallback(lua_State *L, const int i)
-{
-    if (!lua_isfunction(L, i))
-    {
-        luaL_error(L, "Expected a function at argument %d", i);
-        return nullptr;
-    }
-
-    return lua_optcallback(L, i);
-}
-
-void lua_pushcallback(lua_State *L, uintptr_t *token, bool free)
-{
-    lua_pushlightuserdata(L, token);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-    if (free)
-    {
-        lua_freecallback(L, token);
-    }
-}
-
-void lua_freecallback(lua_State *L, uintptr_t *token)
-{
-    if (!g_valid_callback_tokens.contains(token))
-    {
-        return;
-    }
-
-    lua_pushlightuserdata(L, token);
-    lua_pushnil(L);
-    lua_settable(L, LUA_REGISTRYINDEX);
-
-    g_valid_callback_tokens.erase(token);
-    delete token;
-}
-
-std::wstring luaL_checkwstring(lua_State *L, int i)
-{
-    if (!lua_isstring(L, i))
-    {
-        luaL_error(L, "Expected a string at argument %d", i);
-    }
-
-    const auto str = lua_tostring(L, i);
-    if (str == nullptr)
-    {
-        luaL_error(L, "Expected a string at argument %d", i);
-    }
-
-    return IOUtils::to_wide_string(str);
-}
-
-std::wstring luaL_optwstring(lua_State *L, int i, const std::wstring &def)
-{
-    if (lua_isnoneornil(L, i))
-    {
-        return def;
-    }
-
-    return luaL_checkwstring(L, i);
-}
-
-std::wstring lua_pushwstring(lua_State *L, const std::wstring &str)
-{
-    const auto s = IOUtils::to_utf8_string(str);
-    lua_pushstring(L, s.c_str());
-    return str;
-}
-
-bool luaL_checkboolean(lua_State *L, int i)
-{
-    if (!lua_isboolean(L, i))
-    {
-        luaL_error(L, "Expected a boolean at argument %d", i);
-    }
-
-    return lua_toboolean(L, i);
 }
 
 void LuaManager::init()
@@ -234,8 +135,6 @@ std::expected<void, std::wstring> LuaManager::start_environment(t_lua_environmen
 fail:
     if (has_error)
     {
-        g_lua_environments.pop_back();
-        rebuild_lua_env_map();
 
         const auto error = IOUtils::to_wide_string(lua_tostring(env->L, -1));
         destroy_environment(env);

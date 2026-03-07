@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -24,6 +24,11 @@ const std::wstring SEGMENT_SEPARATOR = L">";
 const std::wstring SEPARATOR_SUFFIX = L"---";
 
 /**
+ * \brief The prefix for action paths that are hidden from the menu.
+ */
+const std::wstring MENU_HIDDEN_PREFIX = L"#";
+
+/**
  * \brief An action filter that can be used to match actions in the action registry.
  * Can be in the format `[Category[] | *] > [Name | *]`.
  * The `*` wildcard can be used to match any child from that segment onwards.
@@ -45,9 +50,46 @@ using action_filter = std::wstring;
 using action_path = std::wstring;
 
 /**
+ * \brief Represents a collection of action arguments' keys to their values.
+ */
+using action_argument_map = std::unordered_map<std::wstring, std::wstring>;
+
+/**
+ * \brief Represents an action parameter.
+ */
+struct t_action_param
+{
+    /**
+     * \brief The key of the parameter.
+     */
+    std::wstring key{};
+
+    /**
+     * \brief The display name of the parameter.
+     */
+    std::wstring name{};
+
+    /**
+     * \brief A validator function that takes in a parameter value and optionally returns an error message if the
+     * validation failed.
+     */
+    std::function<std::optional<std::wstring>(std::wstring_view)> validator = [](const auto &) { return std::nullopt; };
+
+    /**
+     * \brief A function that returns the initial value of the parameter. Can be null.
+     */
+    std::function<std::wstring()> get_initial_value{};
+
+    /**
+     * \brief A function that returns hints for the parameter based on the current input. Can be null.
+     */
+    std::function<std::vector<std::wstring>(std::wstring_view)> get_hints{};
+};
+
+/**
  * \brief Represents action creation parameters.
  */
-struct t_action_params
+struct t_action_add_params
 {
     /**
      * \brief The action's path.
@@ -55,9 +97,14 @@ struct t_action_params
     action_path path{};
 
     /**
-     * \brief The callback to be invoked when the action is pressed. Can be null.
+     * \brief The action parameters.
      */
-    std::function<void()> on_press;
+    std::vector<t_action_param> params{};
+
+    /**
+     * \brief The callback to be invoked when the action is pressed. If this action has parameters, they will be supplied as an argument map. Can be null.
+     */
+    std::function<void(const action_argument_map &params)> on_press;
 
     /**
      * \brief The callback to be invoked when the action is released. Can be null.
@@ -95,7 +142,7 @@ struct t_action_params
  * C > D`), the operation will fail. To add the action, delete the original action (`A > B`) first. \param params The
  * action parameters. \return Whether the operation succeeded.
  */
-bool add(const t_action_params &params);
+bool add(const t_action_add_params &params);
 
 /**
  * \brief Removes actions matching the specified filter.
@@ -171,6 +218,13 @@ bool get_active(const action_path &path);
 bool get_activatability(const action_path &path);
 
 /**
+ * \brief Gets the parameters associated with an action.
+ * \param path A path.
+ * \return The action's parameters.
+ */
+std::vector<t_action_param> get_params(const action_path &path);
+
+/**
  * \brief Gets all action paths that match the specified filter.
  * \param filter A filter.
  * \return A collection of action paths that match the filter.
@@ -198,8 +252,10 @@ action_filter normalize_filter(const action_filter &filter);
  * \param up If true, the action is considered to be released, otherwise it is considered to be pressed down.
  * \param release_on_repress If true, if the action is already pressed down and `up` is false, the action will first be
  * released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
+ * \param params The action parameters.
  */
-void invoke(const action_path &path, bool up = false, bool release_on_repress = true);
+void invoke(const action_path &path, bool up = false, bool release_on_repress = true,
+            const action_argument_map &params = {});
 
 /**
  * \brief Locks or unlocks action invocations from hotkeys.

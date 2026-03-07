@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -58,8 +58,8 @@ INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         char disasm[32] = {};
         g_main_ctx.core_ctx->dbg_disassemble(disasm, g_ctx.cpu.opcode, g_ctx.cpu.address);
 
-        const auto str = std::format(L"{} ({:#08x}, {:#08x})", IOUtils::to_wide_string(disasm),
-                                     g_ctx.cpu.opcode, g_ctx.cpu.address);
+        const auto str =
+            std::format(L"{} ({:#08x}, {:#08x})", IOUtils::to_wide_string(disasm), g_ctx.cpu.opcode, g_ctx.cpu.address);
         ListBox_InsertString(g_ctx.list_hwnd, 0, str.c_str());
 
         if (ListBox_GetCount(g_ctx.list_hwnd) > 1024)

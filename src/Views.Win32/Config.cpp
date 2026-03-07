@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -53,8 +53,7 @@ static t_config get_default_config()
 
     for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
     {
-        config.silent_mode_dialog_choices[IOUtils::to_wide_string(pair.first)] =
-            std::to_wstring(pair.second);
+        config.silent_mode_dialog_choices[IOUtils::to_wide_string(pair.first)] = std::to_wstring(pair.second);
     }
 
     return config;
@@ -186,8 +185,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         auto &map = ini[key];
         for (auto &pair : map)
         {
-            value[IOUtils::to_wide_string(pair.first)] =
-                IOUtils::to_wide_string(pair.second);
+            value[IOUtils::to_wide_string(pair.first)] = IOUtils::to_wide_string(pair.second);
         }
     }
     else
@@ -197,8 +195,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         // value = value
         for (auto &pair : value)
         {
-            ini[key][IOUtils::to_utf8_string(pair.first)] =
-                IOUtils::to_utf8_string(pair.second);
+            ini[key][IOUtils::to_utf8_string(pair.first)] = IOUtils::to_utf8_string(pair.second);
         }
     }
 }
@@ -344,7 +341,6 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(core.total_frames)
     HANDLE_P_VALUE(core.core_type)
     HANDLE_P_VALUE(core.fps_modifier)
-    HANDLE_P_VALUE(core.frame_skip_frequency)
     HANDLE_P_VALUE(st_slot)
     HANDLE_P_VALUE(core.fastforward_silent)
     HANDLE_P_VALUE(core.rom_cache_size)
@@ -423,6 +419,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(multi_frame_advance_count)
     HANDLE_VALUE(silent_mode_dialog_choices)
     HANDLE_VALUE(trusted_lua_paths)
+    HANDLE_VALUE(lua_paths)
     HANDLE_VALUE(hotkeys)
     HANDLE_VALUE(inital_hotkeys)
 }
@@ -497,8 +494,8 @@ static void migrate_config(t_config &config, const mINI::INIStructure &ini)
         {
         }
 
-        g_view_logger->info(L"[Config] Migrating {} -> {} ({})",
-                            IOUtils::to_wide_string(old_section_name), action, hotkey.to_wstring());
+        g_view_logger->info(L"[Config] Migrating {} -> {} ({})", IOUtils::to_wide_string(old_section_name), action,
+                            hotkey.to_wstring());
         config.hotkeys[action] = hotkey;
         config.inital_hotkeys[action] = hotkey;
     };
@@ -519,6 +516,7 @@ static void migrate_config(t_config &config, const mINI::INIStructure &ini)
     migrate_hotkey("Toggle movie loop", AppActions::LOOP_MOVIE_PLAYBACK);
     migrate_hotkey("Start movie playback", AppActions::START_MOVIE_PLAYBACK);
     migrate_hotkey("Start movie recording", AppActions::START_MOVIE_RECORDING);
+    migrate_hotkey("Continue movie recording", AppActions::CONTINUE_MOVIE_RECORDING);
     migrate_hotkey("Stop movie", AppActions::STOP_MOVIE);
     migrate_hotkey("Create Movie Backup", AppActions::CREATE_MOVIE_BACKUP);
     migrate_hotkey("Take screenshot", AppActions::SCREENSHOT);

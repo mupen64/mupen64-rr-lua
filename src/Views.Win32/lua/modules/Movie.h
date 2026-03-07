@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -187,13 +187,14 @@ static int begin_warp_modify(lua_State *L)
             if (lua_tointeger(L, -1))
             {
                 auto value = luaL_checkinteger(L, -1);
+                // COMPAT: These are mismatched.
                 if (key == "X")
                 {
-                    buttons.x = value;
+                    buttons.y = value;
                 }
                 if (key == "Y")
                 {
-                    buttons.y = value;
+                    buttons.x = value;
                 }
             }
             lua_pop(L, 1);

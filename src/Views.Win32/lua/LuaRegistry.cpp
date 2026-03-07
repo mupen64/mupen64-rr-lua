@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -47,6 +47,7 @@ const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua},
                               {"atreset", LuaCore::Emu::subscribe_atreset},
                               {"atseekcompleted", LuaCore::Emu::subscribe_atseekcompleted},
                               {"atwarpmodifystatuschanged", LuaCore::Emu::subscribe_atwarpmodifystatuschanged},
+                              {"atkey", LuaCore::Emu::subscribe_atkey},
 
                               {"framecount", LuaCore::Emu::GetVICount},
                               {"samplecount", LuaCore::Emu::GetSampleCount},
@@ -187,9 +188,7 @@ const luaL_Reg MOVIE_FUNCS[] = {{"play", LuaCore::Movie::play},
                                 {"begin_warp_modify", LuaCore::Movie::begin_warp_modify},
                                 {NULL, NULL}};
 
-const luaL_Reg SAVESTATE_FUNCS[] = {{"savefile", LuaCore::Savestate::SaveFileSavestate},
-                                    {"loadfile", LuaCore::Savestate::LoadFileSavestate},
-                                    {"do_file", LuaCore::Savestate::do_file},
+const luaL_Reg SAVESTATE_FUNCS[] = {{"do_file", LuaCore::Savestate::do_file},
                                     {"do_slot", LuaCore::Savestate::do_slot},
                                     {"do_memory", LuaCore::Savestate::do_memory},
                                     {NULL, NULL}};
@@ -213,6 +212,7 @@ const luaL_Reg ACTION_FUNCS[] = {{"add", LuaCore::Action::add},
                                  {"get_enabled", LuaCore::Action::get_enabled},
                                  {"get_active", LuaCore::Action::get_active},
                                  {"get_activatability", LuaCore::Action::get_activatability},
+                                 {"get_params", LuaCore::Action::get_params},
                                  {"get_actions_matching_filter", LuaCore::Action::get_actions_matching_filter},
                                  {"invoke", LuaCore::Action::invoke},
                                  {"lock_hotkeys", LuaCore::Action::lock_hotkeys},

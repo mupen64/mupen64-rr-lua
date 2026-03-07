@@ -1,0 +1,70 @@
+@import 'tailwindcss';
+@plugin "daisyui";
+
+@theme {
+    --font-sans: 'Titillium Web', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+html {
+    background-color: var(--color-base-100);
+    background-image:
+        repeating-linear-gradient(0deg,
+            var(--color-base-200) 0 1px,
+            transparent 1px 20px),
+        repeating-linear-gradient(90deg,
+            var(--color-base-200) 0 1px,
+            transparent 1px 20px);
+}
+
+.grid-300-45 {
+    background-image:
+        repeating-linear-gradient(45deg,
+            var(--color-base-300) 0 1px,
+            transparent 1px 20px),
+        repeating-linear-gradient(-45deg,
+            var(--color-base-300) 0 1px,
+            transparent 1px 20px);
+}
+
+.card2 {
+    @apply card bg-base-200 p-4 border-base-300 border-2;
+}
+
+.material-symbols-sharp {
+    font-variation-settings:
+        'FILL' 1,
+        'wght' 600,
+        'GRAD' 0,
+        'opsz' 24
+}
+
+.note::before {
+    content: 'ℹ️ Note';
+    @apply font-bold;
+}
+
+.note {
+    @apply my-2 p-2 pr-10 border-l-2 border-blue-500 text-blue-500 bg-blue-300/10;
+}
+
+.warn::before {
+    content: '⚠️ Warning';
+    @apply font-bold;
+}
+
+.warn {
+    @apply my-2 p-2 pr-10 border-l-2 border-yellow-500 text-yellow-500 bg-yellow-300/10;
+}
+
+.caution::before {
+    content: '🛑 Caution';
+    @apply font-bold;
+}
+
+.caution {
+    @apply my-2 p-2 pr-10 border-l-2 border-red-500 text-red-500 bg-red-300/10;
+}
+
+.ol {
+    @apply pl-2 list-decimal list-inside my-4;
+}

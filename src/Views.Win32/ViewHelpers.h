@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -84,6 +84,12 @@ class WindowDisabler
     HWND m_hwnd{};
     bool m_prev_enabled{};
 };
+
+#define ComboBox_ResetContentKeepEdit(hwnd)                                                                            \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        while (ComboBox_GetCount(hwnd) > 0) ComboBox_DeleteString(hwnd, 0);                                            \
+    } while (0)
 
 static void runtime_assert_fail(const std::wstring &message)
 {
@@ -425,67 +431,6 @@ static std::wstring get_desktop_path()
 }
 
 /**
- * \brief Limits a value to a specific range
- * \param value The value to limit
- * \param min The lower bound
- * \param max The upper bound
- * \return The value, limited to the specified range
- */
-template <typename T> static T clamp(const T value, const T min, const T max)
-{
-    if (value > max)
-    {
-        return max;
-    }
-    if (value < min)
-    {
-        return min;
-    }
-    return value;
-}
-
-/**
- * \brief Remaps a value from one range to another.
- * \param value The value to remap.
- * \param from1 The lower bound of the source range.
- * \param to1 The upper bound of the source range.
- * \param from2 The lower bound of the target range.
- * \param to2 The upper bound of the target range.
- * \return The value, remapped to the target range.
- */
-template <typename T> static T remap(const T value, const T from1, const T to1, const T from2, const T to2)
-{
-    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
-}
-
-/**
- * \brief Limits a value to a specific range, wrapping around if it exceeds the bounds.
- * \param value The value to limit.
- * \param min The lower bound.
- * \param max The upper bound.
- * \return The value, limited to the specified range.
- */
-template <typename T> static T wrapping_clamp(const T value, T min, T max)
-{
-    static_assert(std::is_integral_v<T>, "wrapping_clamp only supports integral types");
-
-    if (min == max)
-    {
-        return min;
-    }
-
-    if (min > max)
-    {
-        std::swap(min, max);
-    }
-
-    const T range = max - min + 1;
-    T offset = (value - min) % range;
-    if (offset < 0) offset += range;
-    return min + offset;
-}
-
-/**
  * \brief Formats a duration into a string of format HH:MM:SS
  * \param seconds The duration in seconds
  * \return The formatted duration
@@ -642,4 +587,41 @@ static void listbox_ensure_visible(const HWND hwnd, const int32_t index)
     {
         ListBox_SetTopIndex(hwnd, sel);
     }
+}
+
+static LRESULT CALLBACK no_resize_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
+                                                DWORD_PTR ref_data)
+{
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, no_resize_subclass_proc, id);
+        break;
+    case WM_NCHITTEST: {
+        LRESULT hit = DefWindowProc(hwnd, msg, wparam, lparam);
+
+        switch (hit)
+        {
+        case HTLEFT:
+        case HTRIGHT:
+        case HTTOP:
+        case HTTOPLEFT:
+        case HTTOPRIGHT:
+        case HTBOTTOM:
+        case HTBOTTOMLEFT:
+        case HTBOTTOMRIGHT:
+            return HTCLIENT;
+        }
+
+        return hit;
+    }
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+}
+
+static void attach_no_resize_subproc(const HWND hwnd)
+{
+    SetWindowSubclass(hwnd, no_resize_subclass_proc, 0, 0);
 }

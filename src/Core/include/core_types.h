@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -51,6 +51,8 @@ typedef enum
     VCR_InvalidExtendedVersion,
     // The operation requires a playback or recording task
     VCR_NeedsPlaybackOrRecording,
+    // The operation requires a playback task
+    VCR_NeedsPlayback,
     // The provided start type is invalid.
     VCR_InvalidStartType,
     // Another warp modify operation is already running
@@ -139,15 +141,6 @@ struct core_cfg
     /// (100 = default)
     /// </summary>
     int32_t fps_modifier = 100;
-
-    /// <summary>
-    /// The frequency at which frames are skipped during fast-forward
-    /// <para/>
-    /// 0 = skip all frames
-    /// 1 = skip no frames
-    /// >0 = every nth frame is skipped
-    /// </summary>
-    int32_t frame_skip_frequency = 8;
 
     /// <summary>
     /// Whether fast-forward will mute audio

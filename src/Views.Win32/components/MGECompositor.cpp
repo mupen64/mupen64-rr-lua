@@ -80,7 +80,7 @@ struct t_mge_context
 
 static t_mge_context mge_context{};
 
-static bool create_d3d(const HWND hwnd)
+static void create_d3d(const HWND hwnd)
 {
     DXGI_SWAP_CHAIN_DESC scdesc = {};
     scdesc.BufferDesc.Width = 0;
@@ -157,8 +157,6 @@ static bool create_d3d(const HWND hwnd)
     ID3D11SamplerState *samps[] = {mge_context.sampler.Get()};
     mge_context.context->PSSetSamplers(0, 1, samps);
     mge_context.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    return true;
 }
 
 static void destroy_d3d()
@@ -166,10 +164,6 @@ static void destroy_d3d()
     mge_context.srv.Reset();
     mge_context.texture.Reset();
     mge_context.rtv.Reset();
-    if (mge_context.swapchain)
-    {
-        mge_context.swapchain->SetFullscreenState(FALSE, nullptr);
-    }
     mge_context.swapchain.Reset();
     mge_context.context.Reset();
     mge_context.device.Reset();
@@ -262,7 +256,7 @@ static void render_and_present()
     ID3D11ShaderResourceView *null_srv[1] = {nullptr};
     mge_context.context->PSSetShaderResources(0, 1, null_srv);
 
-    (void)mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
+    hr = mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 }
 
 static void copy_rgb24_buffer_to_rgb32()
@@ -292,12 +286,9 @@ static void recreate_mge_context_d3d()
 {
     g_view_logger->info("Creating MGE (D3D11) context with size {}x{}...", mge_context.width, mge_context.height);
 
-    create_d3d(mge_context.hwnd);
-
-    if (!mge_context.device && !create_d3d(mge_context.hwnd))
+    if (!mge_context.device)
     {
-        g_view_logger->error("Failed to create D3D device/swapchain for MGE compositor.");
-        return;
+        create_d3d(mge_context.hwnd);
     }
 
     _aligned_free(mge_context.buffer);
@@ -314,7 +305,7 @@ static void recreate_mge_context_d3d()
     ZeroMemory(mge_context.rgba_buffer, rgba32_buffer_size);
 
     RECT rc;
-    GetClientRect(mge_context.hwnd, &rc);
+    RT_ASSERT(GetClientRect(mge_context.hwnd, &rc), L"GetClientRect failed");
     const UINT w = static_cast<UINT>(rc.right - rc.left);
     const UINT h = static_cast<UINT>(rc.bottom - rc.top);
 

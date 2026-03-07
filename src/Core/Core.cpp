@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -16,6 +16,7 @@
 #include <r4300/timers.h>
 #include <r4300/tracelog.h>
 #include <r4300/vcr.h>
+#include <cheats.h>
 
 core_params *g_core{};
 core_ctx g_ctx{};
@@ -33,7 +34,7 @@ extern "C"
     // ReSharper restore CppInconsistentNaming
 }
 
-static void log_dummy(const std::string &)
+static void log_dummy(std::string_view)
 {
 }
 
@@ -109,6 +110,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.vcr_read_movie_inputs = vcr_read_movie_inputs;
     g_ctx.vcr_start_playback = vcr_start_playback;
     g_ctx.vcr_start_record = vcr_start_record;
+    g_ctx.vcr_continue_recording = vcr_continue_recording;
     g_ctx.vcr_replace_author_info = vcr_replace_author_info;
     g_ctx.vcr_get_seek_info = vcr_get_seek_info;
     g_ctx.vcr_begin_seek = vcr_begin_seek;
@@ -127,6 +129,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.vcr_get_warp_modify_first_difference_frame = vcr_get_warp_modify_first_difference_frame;
     g_ctx.vcr_get_seek_savestate_frames = vcr_get_seek_savestate_frames;
     g_ctx.vcr_has_seek_savestate_at_frame = vcr_has_seek_savestate_at_frame;
+    g_ctx.vcr_try_resolve_seek_str = vcr_try_resolve_seek_str;
     g_ctx.tl_active = tl_active;
     g_ctx.tl_start = tl_start;
     g_ctx.tl_stop = tl_stop;
@@ -141,6 +144,10 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.dbg_get_rsp_enabled = dbg_get_rsp_enabled;
     g_ctx.dbg_set_rsp_enabled = dbg_set_rsp_enabled;
     g_ctx.dbg_disassemble = dbg_disassemble;
+    g_ctx.cht_compile = cht_compile;
+    g_ctx.cht_get_override_stack = cht_get_override_stack;
+    g_ctx.cht_get_list = cht_get_list;
+    g_ctx.cht_set_list = cht_set_list;
 
     *ctx = &g_ctx;
 

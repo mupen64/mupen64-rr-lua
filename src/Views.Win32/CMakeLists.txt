@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -26,6 +26,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "capture/EncodingManager.h"
     "capture/Resampler.h"
     "DialogService.h"
+    "components/Validators.h"
     "components/Benchmark.h"
     "components/PianoRoll.h"
     "components/RecentItems.h"
@@ -50,9 +51,12 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "components/AppActions.h"
     "components/LuaDialog.h"
     "components/CommandPalette.h"
+    "components/ParameterPalette.h"
     "components/TextEditDialog.h"
+    "components/ReorderableListView.h"
     "Main.h"
     "Config.h"
+    "lua/LuaHelpers.h"
     "lua/LuaTypes.h"
     "lua/LuaManager.h"
     "lua/LuaCallbacks.h"
@@ -90,6 +94,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "ActionManager.cpp"
     "Hotkey.cpp"
     "DialogService.cpp"
+    "components/Validators.cpp"
     "components/Compare.cpp"
     "components/Benchmark.cpp"
     "components/Cheats.cpp"
@@ -113,9 +118,12 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "components/AppActions.cpp"
     "components/LuaDialog.cpp"
     "components/CommandPalette.cpp"
+    "components/ParameterPalette.cpp"
     "components/TextEditDialog.cpp"
+    "components/ReorderableListView.cpp"
     "Loggers.cpp"
     "Main.cpp"
+    "lua/LuaHelpers.cpp"
     "lua/LuaManager.cpp"
     "lua/LuaCallbacks.cpp"
     "lua/LuaRegistry.cpp"
@@ -137,10 +145,15 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
-# Dependencies of the resource file that actually matter.
+# Dependencies of the resource file. These are specified manually,
+# but it wouldn't be impossible to write a scanner to gather this info automagically.
 set_source_files_properties(
     SOURCES "Resource.rc" PROPERTIES OBJECT_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/app.manifest"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/api.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/shims.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Lua/sandbox.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
 )
 target_precompile_headers(Mupen64RR.Views.Win32 PRIVATE "stdafx.h")
 target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
@@ -182,3 +195,5 @@ target_compile_definitions(Mupen64RR.Views.Win32 PRIVATE
     # "SPDLOG_WCHAR_TO_UTF8_SUPPORT"
     "VERSION_SUFFIX=L\"${MUPEN64RR_VERSION_SUFFIX}\""
 )
+
+target_link_options(Mupen64RR.Views.Win32 PRIVATE "/MANIFEST:NO")

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -8,6 +8,7 @@
 #include <ActionManager.h>
 #include <Messenger.h>
 #include <components/ActionMenu.h>
+#include <components/ParameterPalette.h>
 
 const auto MANAGED_MENU_CTX = L"Mupen64_ManagedMenuContext";
 
@@ -198,9 +199,26 @@ static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
         return false;
     }
 
+    const auto params = ActionManager::get_params(found_action_path);
+
+    // Has params: hand off to ParameterPalette.
+    if (!params.empty())
+    {
+        ParameterPalette::show(found_action_path);
+        return true;
+    }
+    
     ActionManager::invoke(found_action_path);
 
     return true;
+}
+
+/**
+ * \brief Determines whether the action represented by the given path segments should be visible in the menu.
+ */
+static bool is_visible_in_menu(const std::vector<std::wstring> &action_path_segments)
+{
+    return !action_path_segments.back().starts_with(ActionManager::MENU_HIDDEN_PREFIX);
 }
 
 /**
@@ -215,6 +233,11 @@ static void build_initial_menu_tree(t_action_menu_context &ctx)
         std::vector<std::wstring> parts = ActionManager::get_segments(path);
         std::wstring path_up_to_here;
         path_up_to_here.reserve(parts.size() * 20);
+
+        if (!is_visible_in_menu(parts))
+        {
+            continue;
+        }
 
         t_menu_item *current = &ctx.menu;
 

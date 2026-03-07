@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -21,3 +21,9 @@ add_library(vendor::mini ALIAS mini)
 
 add_subdirectory(xxhash64)
 add_library(vendor::xxhash64 ALIAS xxhash64)
+
+add_subdirectory(hqx)
+add_library(vendor::hqx ALIAS hqx)
+
+add_subdirectory(xbrz)
+add_library(vendor::xbrz ALIAS xbrz)

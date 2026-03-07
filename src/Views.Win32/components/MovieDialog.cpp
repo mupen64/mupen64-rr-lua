@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -60,7 +60,7 @@ static size_t count_joystick_frames(const std::vector<core_buttons> &buttons)
     size_t accumulator = 0;
     for (const auto btn : buttons)
     {
-        if (btn.x != 0 || btn.y != 0)
+        if (btn.y != 0 || btn.x != 0)
         {
             accumulator++;
         }

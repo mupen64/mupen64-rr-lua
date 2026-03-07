@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -15,9 +15,9 @@
 void dyna_jump()
 {
     if (PC->reg_cache_infos.need_map)
-        *return_address = (uint32_t)(PC->reg_cache_infos.jump_wrapper);
+        *return_address = (uintptr_t)(PC->reg_cache_infos.jump_wrapper);
     else
-        *return_address = (uint32_t)(actual->code + PC->local_addr);
+        *return_address = (uintptr_t)(actual->code + PC->local_addr);
 }
 
 jmp_buf g_jmp_state;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -64,6 +64,7 @@ extern "C"
 #include <Loggers.h>
 #include <ViewHelpers.h>
 #include <Main.h>
+#include <lua/LuaHelpers.h>
 #include <lua/LuaTypes.h>
 #include <Config.h>
 // #include <PlatformService.h>

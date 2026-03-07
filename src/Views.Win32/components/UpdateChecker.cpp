@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -14,7 +14,7 @@
 
 namespace UpdateChecker
 {
-const std::wstring REPO_LATEST_RELEASE_URL = L"/repos/mkdasher/mupen64-rr-lua-/releases/latest";
+const std::wstring REPO_LATEST_RELEASE_URL = L"/repos/mupen64/mupen64-rr-lua/releases/latest";
 
 /**
  * Gets information about the latest release using the Github REST API.
@@ -101,45 +101,6 @@ std::string get_latest_release_as_json()
 }
 
 /**
- * Gets the download URL for the SSE2 build of Mupen in the provided release json.
- */
-std::string find_exe_download_url(nlohmann::json data)
-{
-    const auto assets = data["assets"];
-
-    if (!assets.is_array())
-    {
-        return "";
-    }
-
-    for (const auto &asset : assets)
-    {
-        const auto &name = asset["name"];
-
-        if (!name.is_string())
-        {
-            continue;
-        }
-
-        if (!name.get<std::string>().contains("sse2"))
-        {
-            continue;
-        }
-
-        const auto browser_download_url = asset["browser_download_url"];
-
-        if (!browser_download_url.is_string())
-        {
-            continue;
-        }
-
-        return browser_download_url.get<std::string>();
-    }
-
-    return "";
-}
-
-/**
  * Compares two version strings.
  *
  * Returns:
@@ -198,23 +159,6 @@ int version_compare(const std::wstring &version1, const std::wstring &version2)
         }
     }
     return 0;
-}
-
-/**
- * Downloads the executable from the specified release.
- */
-void download_executable(const nlohmann::json &data)
-{
-    const auto download_url = find_exe_download_url(data);
-
-    if (download_url.empty())
-    {
-        g_view_logger->error("[UpdateChecker] find_exe_download_url failed");
-        return;
-    }
-
-    ShellExecute(0, 0, IOUtils::to_wide_string(download_url).c_str(), 0, 0, SW_SHOW);
-    PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
 }
 
 void show_connectivity_error(bool manual)
@@ -296,11 +240,12 @@ show_prompt:
     switch (result)
     {
     case 0:
-        download_executable(data);
+        ShellExecute(0, 0, L"https://mupen64.com", 0, 0, SW_SHOW);
+        PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
         break;
     case 1: {
         const auto changelog = IOUtils::to_wide_string(body.get<std::string>());
-        TextEditDialog::show({.text = changelog, .caption = L"Changelog", .readonly = true});
+        TextEditDialog::show({.parent_hwnd = g_main_ctx.hwnd, .text = changelog, .caption = L"Changelog", .readonly = true});
         goto show_prompt;
     }
     case 2:

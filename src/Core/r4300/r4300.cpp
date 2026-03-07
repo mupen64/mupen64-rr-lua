@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -63,6 +63,7 @@ uint32_t next_interrupt, CIC_Chip;
 precomp_instr *PC;
 char invalid_code[0x100000];
 std::atomic<bool> screen_invalidated = true;
+std::atomic<bool> screen_invalidated_frame = true;
 precomp_block *blocks[0x100000], *actual;
 int32_t rounding_mode = MUP_ROUND_NEAREST;
 int32_t trunc_mode = MUP_ROUND_TRUNC, round_mode = MUP_ROUND_NEAREST, ceil_mode = MUP_ROUND_CEIL,
@@ -91,6 +92,40 @@ FILE *g_mpak_file;
 void vr_invalidate_visuals()
 {
     screen_invalidated = true;
+    screen_invalidated_frame = true;
+}
+
+bool vr_is_frame_skipped()
+{
+    std::unique_lock lock(vcr_mtx);
+
+    if (frame_advance_outstanding > 1)
+    {
+        return true;
+    }
+
+    if (!g_core->cfg->render_throttling)
+    {
+        return false;
+    }
+
+    if (vcr.seek_to_frame.has_value())
+    {
+        return true;
+    }
+
+    if (!g_vr_fast_forward)
+    {
+        return false;
+    }
+
+    if (screen_invalidated_frame)
+    {
+        screen_invalidated_frame = false;
+        return false;
+    }
+
+    return true;
 }
 
 std::filesystem::path get_sram_path()
@@ -241,9 +276,9 @@ void FIN_BLOCK()
     {
         jump_to((PC - 1)->addr + 4);
         PC->ops();
-        #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
         if (dynacore) dyna_jump();
-        #endif
+#endif
     }
     else
     {
@@ -260,9 +295,9 @@ void FIN_BLOCK()
         else
             PC->ops();
 
-        #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
         if (dynacore) dyna_jump();
-        #endif
+#endif
     }
 }
 
@@ -1486,9 +1521,9 @@ void NOTCOMPILED()
             g_core->log_info("not compiled exception");
     }
     PC->ops();
-    #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore) dyna_jump();
-    #endif
+#endif
     //*return_address = (uint32_t)(blocks[PC->addr>>12]->code + PC->local_addr);
     // else
     // PC->ops();
@@ -1559,9 +1594,9 @@ inline void jump_to_func()
     }
     PC = actual->block + ((addr - actual->start) >> 2);
 
-    #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore) dyna_jump();
-    #endif
+#endif
 }
 #undef addr
 
@@ -1860,21 +1895,21 @@ void core_start()
     init_interrupt();
     interpcore = 0;
 
-    // set a default mode if one wasn't set
-    // cached interpreter if dynarec disabled
-    // dynarec if enabled
-    #if !defined(MUPEN64RR_ENABLE_DYNAREC)
+// set a default mode if one wasn't set
+// cached interpreter if dynarec disabled
+// dynarec if enabled
+#if !defined(MUPEN64RR_ENABLE_DYNAREC)
     if (dynacore > 2) dynacore = 0;
-    #else
+#else
     if (dynacore > 2) dynacore = 1;
-    #endif
+#endif
 
     switch (dynacore)
     {
-    #if !defined(MUPEN64RR_ENABLE_DYNAREC)
+#if !defined(MUPEN64RR_ENABLE_DYNAREC)
     case 1:
         g_core->log_info("dynarec is disabled, switching to cached interpreter");
-    #endif
+#endif
     case 0: {
         // cached interpreter
         g_core->log_info("interpreter");
@@ -1890,7 +1925,7 @@ void core_start()
         }
     }
     break;
-    #if defined(MUPEN64RR_ENABLE_DYNAREC)
+#if defined(MUPEN64RR_ENABLE_DYNAREC)
     case 1: {
         // dynamic recompiler
         g_core->log_info("dynamic recompiler");
@@ -1903,7 +1938,7 @@ void core_start()
         PC++;
     }
     break;
-    #endif
+#endif
     case 2: {
         // pure interpreter
         dynacore = 0;
@@ -1924,7 +1959,7 @@ void core_start()
         {
             if (blocks[i]->block)
             {
-                free(blocks[i]->block);
+                free_exec(blocks[i]->block);
                 blocks[i]->block = NULL;
             }
             if (blocks[i]->code)

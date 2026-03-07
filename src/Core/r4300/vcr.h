@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -68,15 +68,15 @@ void vcr_on_vi();
  */
 bool vcr_allows_core_pause();
 bool vcr_allows_core_unpause();
-bool vcr_is_frame_skipped();
 void vcr_request_reset();
 core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header *header);
 core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *header);
 core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<core_buttons> &inputs);
 core_result vcr_start_playback(std::filesystem::path path);
 core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description);
-core_result vcr_replace_author_info(const std::filesystem::path &path, const std::string &author,
-                                    const std::string &description);
+core_result vcr_continue_recording();
+core_result vcr_replace_author_info(const std::filesystem::path &path, std::string_view author,
+                                    std::string_view description);
 core_vcr_seek_info vcr_get_seek_info();
 core_result vcr_begin_seek(std::string str, bool pause_at_end);
 void vcr_stop_seek();
@@ -96,3 +96,4 @@ bool vcr_get_warp_modify_status();
 size_t vcr_get_warp_modify_first_difference_frame();
 void vcr_get_seek_savestate_frames(std::unordered_map<size_t, bool> &map);
 bool vcr_has_seek_savestate_at_frame(size_t frame);
+std::optional<size_t> vcr_try_resolve_seek_str(const std::string& str);

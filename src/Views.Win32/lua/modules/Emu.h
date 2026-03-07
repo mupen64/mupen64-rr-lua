@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -116,6 +116,12 @@ static int subscribe_atwarpmodifystatuschanged(lua_State *L)
     return 0;
 }
 
+static int subscribe_atkey(lua_State *L)
+{
+    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATKEY);
+    return 0;
+}
+
 static int Screenshot(lua_State *L)
 {
     g_plugin_funcs.video_capture_screen((char *)luaL_checkstring(L, 1));
@@ -137,7 +143,10 @@ static int LuaPlaySound(lua_State *L)
 
 static int EmuPause(lua_State *L)
 {
-    if (!lua_toboolean(L, 1))
+    // COMPAT: Inverted for compatibility with older scripts
+    const auto pause = !lua_toboolean(L, 1);
+
+    if (pause)
     {
         g_main_ctx.core_ctx->vr_pause_emu();
     }
@@ -201,7 +210,10 @@ static int GetAddress(lua_State *L)
         void *pointer;
     };
 #define A(x, n) {x, &n}
-#define B(x, n) {x, n}
+#define B(x, n)                                                                                                        \
+    {                                                                                                                  \
+        x, n                                                                                                           \
+    }
     const NameAndVariable list[] = {A("rdram", g_main_ctx.core_ctx->rdram),
                                     A("rdram_register", g_main_ctx.core_ctx->rdram_register),
                                     A("MI_register", g_main_ctx.core_ctx->MI_register),

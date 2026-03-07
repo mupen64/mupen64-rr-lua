@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -440,12 +440,12 @@ void check_interrupt()
 
 void gen_interrupt()
 {
-    #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
     if (stop)
     {
         dyna_stop();
     }
-    #endif
+#endif
 
     if (skip_jump)
     {

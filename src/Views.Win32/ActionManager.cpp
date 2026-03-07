@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -8,13 +8,15 @@
 #include <ActionManager.h>
 #include <Messenger.h>
 
-using t_action_params = ActionManager::t_action_params;
+using t_action_param = ActionManager::t_action_param;
+using t_action_add_params = ActionManager::t_action_add_params;
 using action_path = ActionManager::action_path;
 using action_filter = ActionManager::action_filter;
+using action_argument_map = ActionManager::action_argument_map;
 
 struct t_action
 {
-    t_action_params params{};
+    t_action_add_params add_params{};
 
     std::wstring raw_name{};
     std::vector<std::wstring> segments{};
@@ -170,7 +172,7 @@ static std::vector<std::wstring> map_action_ptrs_to_paths(const std::vector<t_ac
 
     for (const auto &action : actions)
     {
-        paths.emplace_back(action->params.path);
+        paths.emplace_back(action->add_params.path);
     }
 
     return paths;
@@ -184,24 +186,22 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
     for (auto &action : actions)
     {
         const auto &name = action->segments.back();
+        std::wstring display_name = name;
+
         const bool has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
+        const bool has_menu_hidden_prefix = name.starts_with(ActionManager::MENU_HIDDEN_PREFIX);
 
-        std::wstring display_name;
+        if (has_separator) display_name = MiscHelpers::trim(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
+        if (has_menu_hidden_prefix) display_name = MiscHelpers::trim(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
 
-        if (has_separator)
-        {
-            display_name = name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size());
-        }
-        else
-        {
-            display_name = name;
-        }
-
+        const bool has_parameters = !action->add_params.params.empty();
+        if (has_parameters) display_name = L"> " + display_name;
+        
         action->raw_name = display_name;
 
-        if (action->params.get_display_name)
+        if (action->add_params.get_display_name)
         {
-            const auto override_display_name = action->params.get_display_name();
+            const auto override_display_name = action->add_params.get_display_name();
             if (!override_display_name.empty())
             {
                 display_name = override_display_name;
@@ -220,7 +220,7 @@ static std::vector<std::wstring> update_enabled_states(const std::vector<t_actio
 {
     for (auto &action : actions)
     {
-        action->enabled = std::make_optional(action->params.get_enabled ? action->params.get_enabled() : true);
+        action->enabled = std::make_optional(action->add_params.get_enabled ? action->add_params.get_enabled() : true);
     }
     return map_action_ptrs_to_paths(actions);
 }
@@ -232,7 +232,7 @@ static std::vector<std::wstring> update_active_states(const std::vector<t_action
 {
     for (auto &action : actions)
     {
-        action->active = std::make_optional(action->params.get_active ? action->params.get_active() : false);
+        action->active = std::make_optional(action->add_params.get_active ? action->add_params.get_active() : false);
     }
     return map_action_ptrs_to_paths(actions);
 }
@@ -245,7 +245,7 @@ static void notify_action_registry_changed()
     Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
 }
 
-bool ActionManager::add(const t_action_params &params)
+bool ActionManager::add(const t_action_add_params &params)
 {
     const auto normalized_path = normalize_filter(params.path);
 
@@ -291,8 +291,8 @@ bool ActionManager::add(const t_action_params &params)
     }
 
     t_action action{};
-    action.params = params;
-    action.params.path = normalized_path;
+    action.add_params = params;
+    action.add_params.path = normalized_path;
     action.segments = segments;
 
     g_mgr.actions.emplace_back(action);
@@ -325,24 +325,24 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     {
         for (const auto &existing_action : g_mgr.actions)
         {
-            if (existing_action.params.path != action_to_be_removed->params.path)
+            if (existing_action.add_params.path != action_to_be_removed->add_params.path)
             {
                 continue;
             }
 
-            if (existing_action.params.on_removed)
+            if (existing_action.add_params.on_removed)
             {
-                existing_action.params.on_removed();
+                existing_action.add_params.on_removed();
             }
 
-            removed_paths.emplace_back(existing_action.params.path);
+            removed_paths.emplace_back(existing_action.add_params.path);
         }
     }
 
     for (const auto &action_to_be_removed : actions)
     {
         std::erase_if(g_mgr.actions,
-                      [&](const t_action &a) { return a.params.path == action_to_be_removed->params.path; });
+                      [&](const t_action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
     }
 
     g_mgr.filter_result_cache.clear();
@@ -365,7 +365,7 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey::t_ho
         return false;
     }
 
-    const auto normalized_path = action->params.path;
+    const auto normalized_path = action->add_params.path;
 
     RT_ASSERT(g_config.hotkeys.contains(normalized_path) && g_config.inital_hotkeys.contains(normalized_path),
               L"Action didn't have a hotkey entry.");
@@ -418,6 +418,7 @@ std::wstring ActionManager::get_display_name(const action_filter &filter, bool i
 
     if (ignore_override)
     {
+        if (action->raw_name.empty()) update_display_names({action});
         return action->raw_name;
     }
 
@@ -475,7 +476,20 @@ bool ActionManager::get_activatability(const action_path &path)
         return false;
     }
 
-    return action->params.get_active != nullptr;
+    return action->add_params.get_active != nullptr;
+}
+
+std::vector<t_action_param> ActionManager::get_params(const action_path &path)
+{
+    t_action *action = get_single_action_ptr_matching_path(path);
+
+    if (!action)
+    {
+        g_view_logger->error(L"ActionManager::get_params: '{}' didn't resolve to an action", path);
+        return {};
+    }
+
+    return action->add_params.params;
 }
 
 void ActionManager::begin_batch_work()
@@ -516,7 +530,7 @@ std::vector<action_path> ActionManager::get_actions_matching_filter(const action
 
     for (const auto &action : actions)
     {
-        result.emplace_back(action->params.path);
+        result.emplace_back(action->add_params.path);
     }
 
     return result;
@@ -554,7 +568,59 @@ ActionManager::action_filter ActionManager::normalize_filter(const action_filter
     return MiscHelpers::join_wstring(parts, SEGMENT_SEPARATOR);
 }
 
-void ActionManager::invoke(const action_path &path, const bool up, const bool release_on_repress)
+/**
+ * \brief Validates the given parameters against the action's parameter definitions.
+ * \param action The action.
+ * \param params The parameters to validate.
+ * \return Whether the parameters are valid.
+ */
+static bool validate_params(const t_action &action, const action_argument_map &params)
+{
+    // Fast path: no parameters needed, we ignore any supplied parameters.
+    if (action.add_params.params.empty())
+    {
+        return true;
+    }
+
+    const auto expected_param_count = action.add_params.params.size();
+
+    // Mismatch in parameter count means immediate failure.
+    if (params.size() != expected_param_count)
+    {
+        g_view_logger->error(L"ActionManager::validate_params: Action '{}' expected {} parameters, but got {}.",
+                             action.add_params.path, expected_param_count, params.size());
+        return false;
+    }
+
+    for (size_t i = 0; i < expected_param_count; ++i)
+    {
+
+        const auto &param = action.add_params.params[i];
+
+        if (!params.contains(param.key))
+        {
+            g_view_logger->error(L"ActionManager::validate_params: Action '{}' missing parameter '{}'.",
+                                 action.add_params.path, param.key);
+            return false;
+        }
+
+        const auto &supplied_param = params.at(param.key);
+
+        // Run validation, fail if that fails.
+        const auto validation_result = param.validator(supplied_param);
+        if (validation_result.has_value())
+        {
+            g_view_logger->error(L"ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
+                                 action.add_params.path, param.key, validation_result.value());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void ActionManager::invoke(const action_path &path, const bool up, const bool release_on_repress,
+                           const action_argument_map &params)
 {
     t_action *action = get_single_action_ptr_matching_path(path);
 
@@ -564,7 +630,12 @@ void ActionManager::invoke(const action_path &path, const bool up, const bool re
         return;
     }
 
-    if (action->params.get_enabled && !action->params.get_enabled())
+    if (!validate_params(*action, params))
+    {
+        return;
+    }
+
+    if (action->add_params.get_enabled && !action->add_params.get_enabled())
     {
         return;
     }
@@ -573,23 +644,23 @@ void ActionManager::invoke(const action_path &path, const bool up, const bool re
     {
         action->pressed = false;
 
-        if (action->params.on_release)
+        if (action->add_params.on_release)
         {
-            action->params.on_release();
+            action->add_params.on_release();
         }
     }
     else
     {
-        if (release_on_repress && action->params.on_release && action->pressed)
+        if (release_on_repress && action->add_params.on_release && action->pressed)
         {
-            action->params.on_release();
+            action->add_params.on_release();
             action->pressed = false;
             return;
         }
 
-        if (action->params.on_press)
+        if (action->add_params.on_press)
         {
-            action->params.on_press();
+            action->add_params.on_press(params);
         }
 
         action->pressed = true;

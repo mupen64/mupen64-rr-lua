@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -8,7 +8,7 @@
 
 #include <components/Dispatcher.h>
 
-#define CURRENT_VERSION L"1.3.0-6"
+#define CURRENT_VERSION L"1.3.0-15"
 
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)
@@ -41,6 +41,7 @@ struct t_main_context
     bool fullscreen{};
     bool fast_forward{};
     std::filesystem::path app_path{};
+    bool exiting{};
 };
 
 /**

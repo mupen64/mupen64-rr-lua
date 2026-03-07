@@ -1,13 +1,12 @@
 import json
-import re
 import os
+import re
+from dataclasses import dataclass
 
 import markdown
 import minify_html
 from markdown.extensions.codehilite import CodeHiliteExtension
 from markdown.extensions.fenced_code import FencedCodeExtension
-from dataclasses import dataclass
-
 
 # RUN "pip install -r requirements.txt" BEFORE RUNNING THIS SCRIPT. This script
 # assumes the working directory is the base git directory (not
@@ -19,6 +18,8 @@ from dataclasses import dataclass
 
 # TODO:
 # - use a proper templating engine instead of string accumulation
+
+OUT_DIR = "src/Website/static/docs/lua/"
 
 
 class StringAccumulator:
@@ -341,14 +342,6 @@ def add_header(html: StringAccumulator):
         </head>
         <body>
             <div class="sidebar">
-            <div class="sidebarheader">
-                <div class="logo">
-                    <a href="index.html"><img src="/docs/lua/img/mupen_logo.png"></a>
-                </div>
-                <div class="logolabel">
-                    mupen64-rr-lua docs
-                </div>
-            </div>
     """
     )
 
@@ -451,7 +444,7 @@ def add_footer(html: StringAccumulator):
 
 
 def write_output(data: str):
-    with open("docs/lua/static/index.html", "w", encoding="utf-8") as file:
+    with open(f"{OUT_DIR}index.html", "w", encoding="utf-8") as file:
         file.write(
             minify_html.minify(
                 data,
@@ -462,25 +455,17 @@ def write_output(data: str):
             )
         )
 
-    with open("docs/lua/static/index-no-min.html", "w", encoding="utf-8") as file:
+    with open(f"{OUT_DIR}index-no-min.html", "w", encoding="utf-8") as file:
         file.write(data)
-
-
-def ensure_working_dir():
-    cwd = os.getcwd()
-    if cwd.endswith("script"):
-        os.chdir("../../../")
 
 
 def main():
     # Config
-    api_filepath = "src/api.lua"
+    api_filepath = "src/Lua/api.lua"
     cpp_filepath = "src/Views.Win32/lua/LuaRegistry.cpp"
     docs_filepath = "docs/lua/export/doc.json"
     skipped_functions: list[LuaFunc] = []
     included_aliases: list[str] = []
-
-    ensure_working_dir()
 
     cpp_functions = read_funcs_from_cpp_file(cpp_filepath)
     lua_functions = read_funcs_from_json_file(

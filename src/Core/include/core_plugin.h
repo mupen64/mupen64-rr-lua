@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -225,8 +225,8 @@ extern "C"
             unsigned l : 1;
             unsigned reserved_1 : 1;
             unsigned reserved_2 : 1;
-            signed y : 8;
             signed x : 8;
+            signed y : 8;
         };
     } core_buttons;
 

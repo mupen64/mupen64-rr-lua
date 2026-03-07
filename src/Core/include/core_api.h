@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -97,22 +97,22 @@ extern "C"
         /**
          * \brief Logs the specified message at the trace level.
          */
-        void (*log_trace)(const std::string &);
+        void (*log_trace)(std::string_view);
 
         /**
          * \brief Logs the specified message at the info level.
          */
-        void (*log_info)(const std::string &);
+        void (*log_info)(std::string_view);
 
         /**
          * \brief Logs the specified message at the warning level.
          */
-        void (*log_warn)(const std::string &);
+        void (*log_warn)(std::string_view);
 
         /**
          * \brief Logs the specified message at the error level.
          */
-        void (*log_error)(const std::string &);
+        void (*log_error)(std::string_view);
 
         /**
          * \brief Loads the plugins specified by the config paths.
@@ -162,7 +162,7 @@ extern "C"
          * the index specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<size_t(const std::string &id, const std::vector<std::string> &choices, const char *str,
+        std::function<size_t(std::string_view id, const std::vector<std::string> &choices, const char *str,
                              const char *title, core_dialog_type type)>
             show_multiple_choice_dialog;
 
@@ -176,8 +176,7 @@ extern "C"
          * the value specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<bool(const std::string &id, const char *str, const char *title, bool warning)>
-            show_ask_dialog;
+        std::function<bool(std::string_view id, const char *str, const char *title, bool warning)> show_ask_dialog;
 
         /**
          * \brief Shows the user a dialog.
@@ -470,14 +469,20 @@ extern "C"
             vcr_start_record;
 
         /**
+         * \brief Continues recording a movie.
+         * \return The operation result
+         */
+        std::function<core_result()> vcr_continue_recording;
+
+        /**
          * \brief Replaces the author and description information of a movie
          * \param path The movie's path
          * \param author The movie author's name
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(const std::filesystem::path &path, const std::string &author,
-                                  const std::string &description)>
+        std::function<core_result(const std::filesystem::path &path, std::string_view author,
+                                  std::string_view description)>
             vcr_replace_author_info;
 
         /**
@@ -606,6 +611,12 @@ extern "C"
          */
         std::function<bool(size_t frame)> vcr_has_seek_savestate_at_frame;
 
+        /**
+         * Tries to resolve a seek string into a frame number. 
+         * Returns std::nullopt if the string is invalid.
+         */
+        std::function<std::optional<size_t>(const std::string& str)> vcr_try_resolve_seek_str;
+
 #pragma endregion
 
 #pragma region Tracelog
@@ -647,8 +658,9 @@ extern "C"
 
         /**
          * Executes a savestate operation in-memory.
-         * \param buffer The buffer to use for the operation. Can be empty if the <see cref="job"/> is <see
-         * cref="e_st_job::save"/>. \param job The job to set. \param callback The callback to call when the operation
+         * \param buffer The buffer to use for the operation. If the <see cref="job"/> is <see cref="e_st_job::save"/>,
+         * this parameter is ignored.
+         * \param job The job to set. \param callback The callback to call when the operation
          * is complete. \param ignore_warnings Whether warnings, such as those about ROM compatibility, shouldn't be
          * shown. \warning The operation won't complete immediately. Must be called via AsyncExecutor unless calls are
          * originating from the emu thread. \return Whether the operation was enqueued.
@@ -717,7 +729,7 @@ extern "C"
          * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
          * \return Whether the compilation was successful.
          */
-        std::function<bool(const std::string &code, core_cheat &cheat)> cht_compile;
+        std::function<bool(std::string_view code, core_cheat &cheat)> cht_compile;
 
         /**
          * \brief Gets the cheat override stack.
@@ -726,14 +738,14 @@ extern "C"
 
         /**
          * \brief Gets the cheat list.
-         * \remarks The returned cheat list may not be the one set via core_cht_set_list, as the core can apply cheat
+         * \remarks The returned cheat list may not be the one set via cht_set_list, as the core can apply cheat
          * overrides.
          */
         std::function<void(std::vector<core_cheat> &)> cht_get_list;
 
         /**
          * \brief Sets the cheat list.
-         * \remarks If a core cheat override is active, core_cht_set_list will do nothing.
+         * \remarks If a core cheat override is active, cht_set_list will do nothing.
          */
         std::function<void(const std::vector<core_cheat> &)> cht_set_list;
 

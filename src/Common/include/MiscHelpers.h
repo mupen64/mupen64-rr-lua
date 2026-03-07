@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -281,7 +281,7 @@ template <class CharT, class Traits = std::char_traits<CharT>> class StringSplit
 
     template <class CharT2, class Traits2>
     inline friend auto ::MiscHelpers::split_basic_string(std::basic_string_view<CharT2, Traits2> str,
-                                   std::basic_string_view<CharT2, Traits2> delim);
+                                                         std::basic_string_view<CharT2, Traits2> delim);
 
     value_type operator*() const
     {
@@ -350,6 +350,68 @@ inline auto split_string(std::string_view str, std::string_view delim)
 inline auto split_wstring(std::wstring_view str, std::wstring_view delim)
 {
     return split_basic_string<wchar_t>(str, delim);
+}
+
+/**
+ * \brief Remaps a value from one range to another.
+ * \param value The value to remap.
+ * \param from1 The lower bound of the source range.
+ * \param to1 The upper bound of the source range.
+ * \param from2 The lower bound of the target range.
+ * \param to2 The upper bound of the target range.
+ * \return The value, remapped to the target range.
+ */
+template <typename T> inline T remap(const T value, const T from1, const T to1, const T from2, const T to2)
+{
+    return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
+}
+
+/**
+ * \brief Limits a value to a specific range, wrapping around if it exceeds the bounds.
+ * \param value The value to limit.
+ * \param min The lower bound.
+ * \param max The upper bound.
+ * \return The value, limited to the specified range.
+ */
+template <typename T> inline T wrapping_clamp(const T value, T min, T max)
+{
+    static_assert(std::is_integral_v<T>, "wrapping_clamp only supports integral types");
+
+    if (min == max)
+    {
+        return min;
+    }
+
+    if (min > max)
+    {
+        std::swap(min, max);
+    }
+
+    const T range = max - min + 1;
+    T offset = (value - min) % range;
+    if (offset < 0) offset += range;
+    return min + offset;
+}
+
+/**
+ * \brief Limits a value to a specific range, wrapping around if it exceeds the bounds. The wrap around can only happen
+ * once.
+ * \param value The value to limit.
+ * \param min The lower bound.
+ * \param max The upper bound.
+ * \return The value, limited to the specified range.
+ */
+template <typename T> static T wrapping_clamp_decimal(T value, T min, T max)
+{
+    if (value < min)
+    {
+        return max - (min - value);
+    }
+    if (value > max)
+    {
+        return min + (value - max);
+    }
+    return value;
 }
 
 }; // namespace MiscHelpers

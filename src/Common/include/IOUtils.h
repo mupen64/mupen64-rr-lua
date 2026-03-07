@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -60,15 +60,13 @@ inline int file_contents_equal(const std::filesystem::path &path1, const std::fi
     std::ifstream file1(path1, std::ios::in | std::ios::binary);
     std::ifstream file2(path2, std::ios::in | std::ios::binary);
 
-    if (file1.fail() || file2.fail())
-        return -1;
+    if (file1.fail() || file2.fail()) return -1;
 
     // compare file sizes using seekg()
     file1.seekg(0, std::ios::end);
     file2.seekg(0, std::ios::end);
 
-    if (file1.tellg() != file2.tellg())
-        return 0;
+    if (file1.tellg() != file2.tellg()) return 0;
 
     file1.seekg(0, std::ios::end);
     file2.seekg(0, std::ios::end);
@@ -76,13 +74,16 @@ inline int file_contents_equal(const std::filesystem::path &path1, const std::fi
     // files are same length, read char-by-char until we find something not equal.
     // normally this isn't efficient, but because C++ handles the buffering for us
     // it's no big deal.
-    while (!file1.eof() && !file2.eof()) {
+    while (!file1.eof() && !file2.eof())
+    {
         int c1 = file1.get();
         int c2 = file2.get();
-        if (c1 == std::char_traits<char>::eof() || c2 == std::char_traits<char>::eof()) {
+        if (c1 == std::char_traits<char>::eof() || c2 == std::char_traits<char>::eof())
+        {
             return -1;
         }
-        if (c1 != c2) {
+        if (c1 != c2)
+        {
             return 0;
         }
     }
@@ -266,9 +267,8 @@ inline int path_fopen_s(FILE *&stream, const std::filesystem::path &path, const 
     auto mode_wc = to_wide_string(mode);
     return _wfopen_s(&stream, path.c_str(), mode_wc.c_str());
 #else
-    FILE* ptr = fopen(path.c_str(), mode);
-    if (ptr == nullptr)
-        return errno;
+    FILE *ptr = fopen(path.c_str(), mode);
+    if (ptr == nullptr) return errno;
 
     stream = ptr;
     return 0;

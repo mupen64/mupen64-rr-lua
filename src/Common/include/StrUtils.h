@@ -26,7 +26,7 @@ template <class CharT, class Traits = std::char_traits<CharT>> class StringSplit
 
     template <class CharT2, class Traits2>
     inline friend auto ::StrUtils::split_basic_string(std::basic_string_view<CharT2, Traits2> str,
-                                                         std::basic_string_view<CharT2, Traits2> delim);
+                                                      std::basic_string_view<CharT2, Traits2> delim);
 
     value_type operator*() const
     {
@@ -98,29 +98,32 @@ inline auto split_wstring(std::wstring_view str, std::wstring_view delim)
 }
 
 // Case-insensitive comparison of C strings.
-inline int c_icmp(const char* a, const char* b) {
+inline int c_icmp(const char *a, const char *b)
+{
 #if defined(_WIN32)
     return _stricmp(a, b);
-#elif defined (__unix__)  || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     return strcasecmp(a, b);
 #else
-    #error unknown operating system!
-#endif  
+#error unknown operating system!
+#endif
 }
 
 // Case-insensitive comparison of C strings. (with a length limit)
-inline int c_nicmp(const char* a, const char* b, size_t n) {
+inline int c_nicmp(const char *a, const char *b, size_t n)
+{
 #if defined(_WIN32)
     return _strnicmp(a, b, n);
-#elif defined (__unix__)  || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     return strncasecmp(a, b, n);
 #else
-    #error unknown operating system!
-#endif  
+#error unknown operating system!
+#endif
 }
 
 // Trims whitespace from the start and end of a string_view (as determined by isspace()).
-inline std::string_view ctrim_string(std::string_view str) {
+inline std::string_view ctrim_string(std::string_view str)
+{
     auto start_iter = std::find_if(str.begin(), str.end(), [](char c) { return !isspace(c); });
     auto end_iter = std::find_if(str.rbegin(), str.rend(), [](char c) { return !isspace(c); }).base();
 
@@ -130,7 +133,8 @@ inline std::string_view ctrim_string(std::string_view str) {
     return str.substr(start_idx, len);
 }
 // Trims whitespace from the start and end of a wstring_view (as determined by iswspace()).
-inline std::wstring_view ctrim_wstring(std::wstring_view str) {
+inline std::wstring_view ctrim_wstring(std::wstring_view str)
+{
     auto start_iter = std::find_if(str.begin(), str.end(), [](wchar_t c) { return !iswspace(c); });
     auto end_iter = std::find_if(str.rbegin(), str.rend(), [](wchar_t c) { return !iswspace(c); }).base();
 
@@ -139,5 +143,29 @@ inline std::wstring_view ctrim_wstring(std::wstring_view str) {
 
     return str.substr(start_idx, len);
 }
+
+template <class CharT, class Traits = std::char_traits<CharT>> struct StringHash
+{
+    using is_transparent = void;
+
+    size_t operator()(std::basic_string_view<CharT, Traits> str) const
+    {
+        return std::hash<std::basic_string_view<CharT, Traits>>{}(str);
+    }
+
+    size_t operator()(const CharT *str) const { return std::hash<std::basic_string_view<CharT, Traits>>{}(str); }
+
+    size_t operator()(const std::basic_string<CharT, Traits> &str) const
+    {
+        return std::hash<std::basic_string<CharT, Traits>>{}(str);
+    }
+};
+
+// map using std::string as the key that can perform efficient lookup with other string types.
+template <class V> using unordered_string_map = std::unordered_map<std::string, V, StringHash<char>, std::equal_to<>>;
+
+// map using std::wstring as the key that can perform efficient lookup with other string types.
+template <class V>
+using unordered_wstring_map = std::unordered_map<std::wstring, V, StringHash<wchar_t>, std::equal_to<>>;
 
 } // namespace StrUtils

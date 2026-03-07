@@ -11,7 +11,7 @@ GITHUB_TOKEN = "YOUR_TOKEN_HERE"
 auth = Auth.Token(GITHUB_TOKEN)
 g = Github(auth=auth)
 
-repo = g.get_repo("mkdasher/mupen64-rr-lua-")
+repo = g.get_repo("mupen64/mupen64-rr-lua")
 
 inital_commit = repo.get_commit(START_COMMIT)
 initial_commit_date = inital_commit.commit.author.date

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -117,7 +117,8 @@ inline int32_t convert_double_to_int32(double d)
     return _mm_cvtsd_si32(_mm_set_sd(d));
 }
 
-inline uint16_t read_x87_status_word() {
+inline uint16_t read_x87_status_word()
+{
     return _mm_getcsr() & 0x3F;
 }
 
@@ -141,7 +142,8 @@ inline uint16_t read_x87_status_word() {
 #define clear_x87_exceptions() __asm { fclex }
 // #define read_x87_status_word() __asm { fstsw x87_status_word }
 
-inline uint16_t read_x87_status_word() {
+inline uint16_t read_x87_status_word()
+{
     return _status87() & 0x3F;
 }
 

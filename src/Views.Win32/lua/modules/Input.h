@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -205,7 +205,7 @@ static int prompt(lua_State *L)
     const auto caption = luaL_optwstring(L, 1, L"input:");
     const auto text = luaL_optwstring(L, 2, L"");
 
-    const auto result = TextEditDialog::show({.text = text, .caption = caption});
+    const auto result = TextEditDialog::show({.parent_hwnd = g_main_ctx.hwnd, .text = text, .caption = caption});
 
     if (result.has_value())
     {

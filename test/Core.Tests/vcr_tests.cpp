@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -25,6 +25,7 @@ static void prepare_test()
     // params.io_service = &io_helper_service;
     params.input_get_keys = [](int32_t, core_buttons *) {};
     params.input_set_keys = [](int32_t, core_buttons) {};
+    params.callbacks = {};
 }
 
 /**
@@ -330,6 +331,29 @@ TEST_CASE("input_callback_override_works_when_idle", "vcr_on_controller_poll")
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == 0xDEAD);
+}
+
+TEST_CASE("input_callback_called_on_last_frame_of_movie", "vcr_on_controller_poll")
+{
+    prepare_test();
+
+    static bool called = false;
+    params.callbacks.input = [](core_buttons *input, int index) { called = true; };
+
+    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+
+    core_create(&params, &ctx);
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_playback;
+    vcr.current_sample = 4;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    REQUIRE(called);
 }
 
 /*
@@ -983,6 +1007,91 @@ TEST_CASE("mutex_unlocked_during_emu_paused_changed_callback", "vcr_on_vi")
     vcr_on_vi();
 
     REQUIRE(called);
+}
+
+TEST_CASE("fails_when_not_playback", "vcr_continue_recording")
+{
+    prepare_test();
+    core_create(&params, &ctx);
+
+    vcr.task = task_idle;
+    const auto result = vcr_continue_recording();
+    REQUIRE(result == VCR_NeedsPlayback);
+}
+
+TEST_CASE("changes_task_and_header_and_inputs", "vcr_continue_recording")
+{
+    prepare_test();
+
+    params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {
+
+    };
+
+    core_create(&params, &ctx);
+
+    cfg.vcr_backups = false;
+
+    vcr.task = task_playback;
+    vcr.hdr.length_samples = 5;
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
+    vcr.current_sample = 2;
+
+    const auto result = vcr_continue_recording();
+
+    REQUIRE(result == Res_Ok);
+    REQUIRE(vcr.task == task_recording);
+    REQUIRE(vcr.hdr.length_samples == 2);
+    REQUIRE(vcr.inputs.size() == 2);
+    REQUIRE(vcr.inputs[0].value == 1);
+    REQUIRE(vcr.inputs[1].value == 2);
+}
+
+TEST_CASE("invokes_task_callback_correctly", "vcr_continue_recording")
+{
+    prepare_test();
+
+    params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {
+
+    };
+    bool called{};
+    params.callbacks.task_changed = [&](const auto &) {
+        called = true;
+        REQUIRE(!is_vcr_lock_held());
+    };
+
+    core_create(&params, &ctx);
+
+    cfg.vcr_backups = false;
+
+    vcr.task = task_playback;
+    vcr.hdr.length_samples = 5;
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
+    vcr.current_sample = 2;
+
+    const auto result = vcr_continue_recording();
+
+    REQUIRE(called);
+}
+
+TEST_CASE("doesnt_deadlock", "vcr_begin_warp_modify")
+{
+    prepare_test();
+
+    core_create(&params, &ctx);
+
+    cfg.vcr_backups = false;
+
+    vcr.task = task_recording;
+    vcr.hdr.length_samples = 5;
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
+    vcr.current_sample = 4;
+
+    const auto result = vcr_begin_warp_modify({{0}, {0}, {0}, {0}});
+
+    REQUIRE(result == Res_Ok);
 }
 
 #pragma endregion

@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+-- Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
 --
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
@@ -14,8 +14,8 @@
 -- 5. The hotkey for "Change Name of This Action..." works (default Ctrl+U)
 -- 6. Pressing "Change Hotkey..." prompts for a new hotkey and changes the hotkey of "Change Name of This Action..."
 -- 7. Pressing "Click Child to Remove It > Item X" removes that action
--- 8. Stopping the script removes the "Action API Demo" menu.
---
+-- 8. Pressing "Parameterized Action..." prompts for a parameter with a prefilled value and a few hints, and prints it to the console. 
+-- 9. Stopping the script removes the "Action API Demo" menu.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
@@ -24,6 +24,7 @@ local display_name = ""
 local SAY_HELLO_WORLD_ACTION = "Action API Demo > Print 'Hello World!'"
 local CHANGE_NAME_ACTION = "Action API Demo > Change Name of This Action..."
 local CHANGE_HOTKEY_ACTION = "Action API Demo > Change Hotkey..."
+local PARAMETERIZED_ACTION = "Action API Demo > Parameterized Action..."
 local TOGGLE_HOTKEY_LOCK_ACTION = "Action API Demo > Lock/Unlock Hotkeys"
 local RANDOM_ITEM_ACTION = "Action API Demo > Click Child to Remove It > Item %d"
 
@@ -58,6 +59,35 @@ assert(action.add({
             assert(action.associate_hotkey(CHANGE_NAME_ACTION, hotkey, true))
         end
     end
+}))
+
+assert(action.add({
+    path = PARAMETERIZED_ACTION,
+    on_press = function(params)
+        print(params)
+    end,
+    params = {
+        {
+            key = 'param1',
+            name = "First Parameter",
+            validator = function(str)
+                if #str > 1 then
+                    return nil
+                else
+                    return "Parameter must be at least 2 characters long"
+                end
+            end,
+            get_initial_value = function()
+                return tostring(os.clock())
+            end,
+            get_hints = function (value)
+                return {
+                    "Current time is " .. tostring(os.clock()),
+                    "You entered: " .. tostring(value)
+                }
+            end
+        }
+    }
 }))
 
 assert(action.add({

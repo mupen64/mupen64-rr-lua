@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -7,6 +7,11 @@
 #pragma once
 
 void cht_execute();
+
+bool cht_compile(std::string_view code, core_cheat &cheat);
+void cht_get_override_stack(std::stack<std::vector<core_cheat>> &stack);
+void cht_get_list(std::vector<core_cheat> &list);
+void cht_set_list(const std::vector<core_cheat> &list);
 
 /**
  * \brief Pushes the specified cheat collection layer onto the execution stack.

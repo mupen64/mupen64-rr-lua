@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -69,7 +69,7 @@ void print_rom_info()
     g_core->log_info(std::format("Version: {:#06x}", std::byteswap(ROM_HEADER.Release)));
     g_core->log_info(
         std::format("CRC: {:#06x} {:#06x}", std::byteswap(ROM_HEADER.CRC1), std::byteswap(ROM_HEADER.CRC2)));
-    g_core->log_info(std::format("Name: {}", (char*) ROM_HEADER.nom));
+    g_core->log_info(std::format("Name: {}", (char *)ROM_HEADER.nom));
     if (std::byteswap(ROM_HEADER.Manufacturer_ID) == 'N')
         g_core->log_info("Manufacturer: Nintendo");
     else
@@ -217,8 +217,9 @@ bool rom_load(std::filesystem::path path)
 
         // extra insurance for weird safety bugs
         char str_temp[256] = {0};
-        char* sp = &str_temp[0];
-        for (size_t i = 0; i < 16; i++) {
+        char *sp = &str_temp[0];
+        for (size_t i = 0; i < 16; i++)
+        {
             sp = std::format_to(sp, "{:02X}", digest[i]);
         }
         *sp = '\0';

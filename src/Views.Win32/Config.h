@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -320,6 +320,11 @@ struct t_config
     /// A map of trusted Lua script paths. If a Lua script path is present in this map, it will be trusted.
     /// </summary>
     std::map<std::wstring, std::wstring> trusted_lua_paths;
+
+    /// <summary>
+    /// The Lua Dialog's saved paths.
+    /// </summary>
+    std::vector<std::wstring> lua_paths;
 
     /// <summary>
     /// A map of fully-qualified action paths to a hotkey assigned to them.

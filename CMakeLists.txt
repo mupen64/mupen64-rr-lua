@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -11,8 +11,27 @@ project(mupen64-rr
   LANGUAGES C CXX
 )
 
-message("The C compiler is: ${CMAKE_C_COMPILER}")
-message("The C++ compiler is: ${CMAKE_CXX_COMPILER}")
+message(STATUS "The C compiler is: ${CMAKE_C_COMPILER}")
+message(STATUS "The C++ compiler is: ${CMAKE_CXX_COMPILER}")
+
+# Options
+# ===========================================
+
+# The dynamic recompiler will not work correctly on x86_64, so it is completely disabled for safety's sake.
+set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
+if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
+  set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
+endif()
+
+# The Windows view can, of course, only be compiled on Windows. 
+# This is in place to allow future frontends to be written separately.
+set(MUPEN64RR_BUILD_WIN32 ON CACHE BOOL "If on, enables the Win32 view and plugins.")
+if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+  set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
+endif()
+
+# Basic checks and setup
+# ===========================================
 
 # initial checks
 if(NOT WIN32)
@@ -52,6 +71,8 @@ find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
+find_package(glew CONFIG REQUIRED) 
+find_package(SDL3 CONFIG REQUIRED) 
 
 # Lua, because Lua sucks
 find_package(Lua REQUIRED)
@@ -71,10 +92,7 @@ endif()
 include(CTest)
 include(Catch)
 
-# Extra config options for specific compilers/OSes
-# ===========================================
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if (WIN32)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
   # - disable Windows Data Execution Prevention (DEP)
@@ -89,17 +107,12 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
-endif()
-if (WIN32)
+
   # Use UTF-16 versions of functions
   add_compile_definitions(UNICODE _UNICODE)
 endif()
 
-# The dynamic recompiler will not work correctly on x86_64, so it is completely disabled for safety's sake.
-set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
-  set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
-endif()
+
 
 # define _DEBUG for debug builds
 add_compile_definitions("$<$<CONFIG:Debug>:_DEBUG>")

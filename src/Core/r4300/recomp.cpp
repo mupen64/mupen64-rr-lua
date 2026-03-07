@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -26,7 +26,7 @@ precomp_block *dst_block;     // the current block that we are recompiling
 uint32_t src;                 // the current recompiled instruction
 int32_t fast_memory;
 
-uint32_t *return_address; // that's where the dynarec will restart when
+uintptr_t *return_address; // that's where the dynarec will restart when
 // going back from a C function
 
 static int32_t *SRC;      // currently recompiled instruction in the input stream
@@ -2772,10 +2772,10 @@ void init_block(int32_t *source, precomp_block *block)
 
     if (!block->block)
     {
-        block->block = (precomp_instr *)malloc(((length + 1) + (length >> 2)) * sizeof(precomp_instr));
+        block->block = (precomp_instr *)malloc_exec(((length + 1) + (length >> 2)) * sizeof(precomp_instr));
         already_exist = 0;
     }
-    #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore)
     {
         if (!block->code)
@@ -2796,7 +2796,7 @@ void init_block(int32_t *source, precomp_block *block)
         init_assembler(NULL, 0);
         init_cache(block->block);
     }
-    #endif
+#endif
 
     if (!already_exist)
     {
@@ -2821,7 +2821,7 @@ void init_block(int32_t *source, precomp_block *block)
             dst->ops = NOTCOMPILED;
         }
     }
-    #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore)
     {
         free_all_registers();
@@ -2830,7 +2830,7 @@ void init_block(int32_t *source, precomp_block *block)
         block->max_code_length = max_code_length;
         free_assembler(&block->jumps_table, &block->jumps_number);
     }
-    #endif
+#endif
 
     /* here we're marking the block as a valid code even if it's not compiled
      * yet as the game should have already set up the code correctly.
@@ -2908,7 +2908,7 @@ void recompile_block(int32_t *source, precomp_block *block, uint32_t func)
 
     block->hash = 0;
 
-    #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
     if (dynacore)
     {
         code_length = block->code_length;
@@ -2917,7 +2917,7 @@ void recompile_block(int32_t *source, precomp_block *block, uint32_t func)
         init_assembler(block->jumps_table, block->jumps_number);
         init_cache(block->block + (func & 0xFFF) / 4);
     }
-    #endif
+#endif
 
     for (i = (func & 0xFFF) / 4; /*i<length &&*/ finished != 2; i++)
     {
@@ -2957,9 +2957,9 @@ if (dynacore) genlink_subblock();
         if (delay_slot_compiled)
         {
             delay_slot_compiled--;
-            #ifdef MUPEN64RR_ENABLE_DYNAREC
+#ifdef MUPEN64RR_ENABLE_DYNAREC
             free_all_registers();
-            #endif
+#endif
         }
 
         if (i >= length - 2 + (length >> 2)) finished = 2;

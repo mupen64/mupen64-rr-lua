@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -1130,14 +1130,15 @@ void update_SP()
             // screen_updates and thus are stuck in incorrect state
             g_total_frames++;
             g_core->cfg->total_frames++;
-            g_vr_frame_skipped = vcr_is_frame_skipped();
+            timer_new_frame();
+            g_vr_frame_skipped = vr_is_frame_skipped();
+            
             if (!g_vr_frame_skipped)
             {
                 g_core->rsp_do_rsp_cycles(100);
             }
 
             rsp_register.rsp_pc |= save_pc;
-            timer_new_frame();
 
             MI_register.mi_intr_reg &= ~0x21;
             sp_register.sp_status_reg &= ~0x303;

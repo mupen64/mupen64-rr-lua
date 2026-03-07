@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -9,13 +9,18 @@
 #include <DialogService.h>
 #include <components/Statusbar.h>
 
-std::unordered_map<std::string, size_t> dialog_choice_map;
+StrUtils::unordered_string_map<size_t> dialog_choice_map;
 
-size_t DialogService::show_multiple_choice_dialog(const std::string &id, const std::vector<std::wstring> &choices,
+const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART};
+
+size_t DialogService::show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
                                                   const wchar_t *str, const wchar_t *title, core_dialog_type type,
                                                   void *hwnd, const wchar_t *details)
 {
-    if (g_config.silent_mode)
+
+    const auto silenced = std::ranges::find(ALWAYS_LOUD_IDS, id) == ALWAYS_LOUD_IDS.end() && g_config.silent_mode;
+
+    if (silenced)
     {
         const auto default_index = g_config.silent_mode_dialog_choices[IOUtils::to_wide_string(id)];
         g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str,
@@ -23,9 +28,10 @@ size_t DialogService::show_multiple_choice_dialog(const std::string &id, const s
         return std::stoi(default_index);
     }
 
-    if (dialog_choice_map.contains(id))
+    auto result = dialog_choice_map.find(id);
+    if (result != dialog_choice_map.end())
     {
-        const auto answer = dialog_choice_map[id];
+        const auto answer = result->second;
         g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', dont show again answer: {}", str,
                              answer);
         return answer;
@@ -78,7 +84,9 @@ size_t DialogService::show_multiple_choice_dialog(const std::string &id, const s
 
     if (dont_show_again)
     {
-        dialog_choice_map[id] = pressed_button;
+        // directly construct key
+        dialog_choice_map.emplace(std::piecewise_construct, std::forward_as_tuple(id),
+                                  std::forward_as_tuple(pressed_button));
     }
 
     g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', manual answer: {}, dont show again: {}",
@@ -87,7 +95,7 @@ size_t DialogService::show_multiple_choice_dialog(const std::string &id, const s
     return pressed_button;
 }
 
-bool DialogService::show_ask_dialog(const std::string &id, const wchar_t *str, const wchar_t *title, bool warning,
+bool DialogService::show_ask_dialog(std::string_view id, const wchar_t *str, const wchar_t *title, bool warning,
                                     void *hwnd)
 {
     return show_multiple_choice_dialog(id, {L"Yes", L"No"}, str, title, warning ? fsvc_warning : fsvc_information,

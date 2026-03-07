@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -18,6 +18,7 @@
 #include <components/Benchmark.h>
 #include <components/CLI.h>
 #include <components/CommandPalette.h>
+#include <components/ParameterPalette.h>
 #include <components/Compare.h>
 #include <components/ConfigDialog.h>
 #include <components/CoreDbg.h>
@@ -234,6 +235,10 @@ bool show_error_dialog_for_result(const core_result result, void *hwnd)
         module = L"VCR";
         error = L"The operation requires a playback or recording task.";
         break;
+    case VCR_NeedsPlayback:
+        module = L"VCR";
+        error = L"The operation requires a playback task.";
+        break;
     case VCR_InvalidStartType:
         module = L"VCR";
         error = L"The provided start type is invalid.";
@@ -308,7 +313,7 @@ const wchar_t *get_input_text()
     memset(text, 0, sizeof(text));
 
     core_buttons b = LuaCallbacks::get_last_controller_data(0);
-    wsprintf(text, L"(%d, %d) ", b.y, b.x);
+    wsprintf(text, L"(%d, %d) ", b.x, b.y);
     if (b.start) lstrcatW(text, L"S");
     if (b.z) lstrcatW(text, L"Z");
     if (b.a) lstrcatW(text, L"A");
@@ -484,31 +489,33 @@ void ai_len_changed()
 
 void update_titlebar()
 {
-    std::wstring text = get_mupen_name();
+    ThreadPool::submit_task([] {
+        std::wstring text = get_mupen_name();
 
-    if (g_emu_starting)
-    {
-        text += L" - Starting...";
-    }
+        if (g_emu_starting)
+        {
+            text += L" - Starting...";
+        }
 
-    if (g_main_ctx.core_ctx->vr_get_launched())
-    {
-        text += std::format(
-            L" - {}", IOUtils::to_wide_string(reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
-    }
+        if (g_main_ctx.core_ctx->vr_get_launched())
+        {
+            text += std::format(L" - {}", IOUtils::to_wide_string(
+                                              reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        }
 
-    if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
-    {
-        auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
-        text += std::format(L" - {}", vcr_filename.c_str());
-    }
+        if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
+        {
+            auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
+            text += std::format(L" - {}", vcr_filename.c_str());
+        }
 
-    if (EncodingManager::is_capturing())
-    {
-        text += std::format(L" - {}", EncodingManager::get_current_path().filename().wstring());
-    }
+        if (EncodingManager::is_capturing())
+        {
+            text += std::format(L" - {}", EncodingManager::get_current_path().filename().wstring());
+        }
 
-    SetWindowText(g_main_ctx.hwnd, text.c_str());
+        g_main_ctx.dispatcher->invoke([=] { SetWindowText(g_main_ctx.hwnd, text.c_str()); });
+    });
 }
 
 #pragma region Change notifications
@@ -801,19 +808,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
+    case WM_SYSKEYDOWN: {
+        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
+        
+        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = true, .repeat = repeat});
+
         if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_down(wParam, lParam);
         break;
+    }
     case WM_SYSKEYUP:
-    case WM_KEYUP:
+    case WM_KEYUP: {
+        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = false, .repeat = false});
+
         if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_up(wParam, lParam);
         break;
+    }
+    case WM_CHAR: {
+        const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
+        const auto chr = static_cast<wchar_t>(wParam);
+
+        if (std::iswcntrl(chr)) break;
+
+        const auto text = std::wstring(1, chr);
+        LuaCallbacks::call_atkey({.text = text, .repeat = repeat});
+        break;
+    }
     case WM_MOUSEWHEEL:
         g_main_ctx.last_wheel_delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
-        // https://github.com/mkdasher/mupen64-rr-lua-/issues/190
+        // https://github.com/mupen64/mupen64-rr-lua/issues/190
         LuaCallbacks::call_window_message(hwnd, Message, wParam, lParam);
         break;
     case WM_NOTIFY: {
@@ -839,6 +864,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         GetWindowRect(g_main_ctx.hwnd, &rect);
         g_config.window_x = rect.left;
         g_config.window_y = rect.top;
+
+        Messenger::broadcast(Messenger::Message::MainWindowMoved, nullptr);
+
         break;
     }
     case WM_SIZE: {
@@ -886,6 +914,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         MGECompositor::create(hwnd);
         PianoRoll::init();
+        LuaDialog::init();
 
         return TRUE;
     case WM_DESTROY:
@@ -898,6 +927,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (confirm_user_exit())
         {
+            g_main_ctx.exiting = true;
+
             LuaDialog::close_all();
 
             std::thread([] {
@@ -1114,17 +1145,17 @@ static core_result init_core()
     g_main_ctx.core.callbacks.seek_status_changed = []() {
         Messenger::broadcast(Messenger::Message::SeekStatusChanged, nullptr);
     };
-    g_main_ctx.core.log_trace = [](const auto &str) { g_core_logger->trace(str); };
-    g_main_ctx.core.log_info = [](const auto &str) { g_core_logger->info(str); };
-    g_main_ctx.core.log_warn = [](const auto &str) { g_core_logger->warn(str); };
-    g_main_ctx.core.log_error = [](const auto &str) { g_core_logger->error(str); };
+    g_main_ctx.core.log_trace = [](std::string_view str) { g_core_logger->trace(str); };
+    g_main_ctx.core.log_info = [](std::string_view str) { g_core_logger->info(str); };
+    g_main_ctx.core.log_warn = [](std::string_view str) { g_core_logger->warn(str); };
+    g_main_ctx.core.log_error = [](std::string_view str) { g_core_logger->error(str); };
     g_main_ctx.core.load_plugins = PluginUtil::load_plugins;
     g_main_ctx.core.initiate_plugins = PluginUtil::initiate_plugins;
     g_main_ctx.core.submit_task = [](const auto cb) { ThreadPool::submit_task(cb); };
     g_main_ctx.core.get_saves_directory = Config::save_directory;
     g_main_ctx.core.get_backups_directory = Config::backup_directory;
     g_main_ctx.core.get_summercart_path = get_summercart_path;
-    g_main_ctx.core.show_multiple_choice_dialog = [](const std::string &id, const std::vector<std::string> &choices,
+    g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title, core_dialog_type type) {
         auto choices_wide = choices |
                             std::views::transform([](std::string value) { return IOUtils::to_wide_string(value); }) |
@@ -1134,7 +1165,7 @@ static core_result init_core()
 
         return DialogService::show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(), type);
     };
-    g_main_ctx.core.show_ask_dialog = [](const std::string &id, const char *str, const char *title, bool warning) {
+    g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
         auto str_wide = IOUtils::to_wide_string(str);
         auto title_wide = IOUtils::to_wide_string(title);
         return DialogService::show_ask_dialog(id, str_wide.c_str(), title_wide.c_str(), warning);
@@ -1204,7 +1235,15 @@ static bool is_dialog_message(MSG *msg)
     {
         return true;
     }
+    if (IsWindow(ParameterPalette::hwnd()) && IsDialogMessage(ParameterPalette::hwnd(), msg))
+    {
+        return true;
+    }
     if (IsWindow(Seeker::hwnd()) && IsDialogMessage(Seeker::hwnd(), msg))
+    {
+        return true;
+    }
+    if (IsWindow(PianoRoll::hwnd()) && IsDialogMessage(PianoRoll::hwnd(), msg))
     {
         return true;
     }
@@ -1284,9 +1323,19 @@ static void enable_mitigations()
               L"Couldn't set process mitigation policy.");
 }
 
+/**
+ * \brief Calls `SetErrorMode` to disable miscellaneous error popups.
+ */
+static void set_error_mode()
+{
+    const UINT prev_mode = GetErrorMode();
+    SetErrorMode(prev_mode | SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+}
+
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
 {
     enable_mitigations();
+    set_error_mode();
 
 #ifdef _DEBUG
     open_console();

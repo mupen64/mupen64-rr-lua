@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -20,4 +20,9 @@ void init();
  * Shows the piano roll window.
  */
 void show();
+
+/**
+ * \brief Gets the HWND of the piano roll window. Might be invalid.
+ */
+HWND hwnd();
 } // namespace PianoRoll

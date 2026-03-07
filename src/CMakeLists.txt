@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -13,7 +13,7 @@ add_subdirectory(Common)
 add_subdirectory(Core)
 
 
-if (WIN32)
+if (MUPEN64RR_BUILD_WIN32)
     # VIEW
     # ============================
 
@@ -26,11 +26,14 @@ if (WIN32)
     include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Common.cmake")
 
     # dummy plugins
-    add_subdirectory(Plugins.Audio.Dummy)
-    add_subdirectory(Plugins.Input.Dummy)
-    add_subdirectory(Plugins.RSP.Dummy)
-    add_subdirectory(Plugins.Video.Dummy)
+    add_subdirectory(Plugins.Win32.DummyAudio)
+    add_subdirectory(Plugins.Win32.DummyInput)
+    add_subdirectory(Plugins.Win32.DummyRSP)
+    add_subdirectory(Plugins.Win32.DummyVideo)
 
-    # TAS RSP
-    add_subdirectory(Plugins.RSP.TAS)
+    # TAS plugins
+    add_subdirectory(Plugins.Win32.TASVideo)
+    add_subdirectory(Plugins.Win32.TASInput)
+    add_subdirectory(Plugins.Win32.TASAudio)
+    add_subdirectory(Plugins.Win32.TASRSP)
 endif()
