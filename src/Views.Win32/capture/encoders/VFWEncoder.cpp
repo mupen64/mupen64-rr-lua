@@ -181,41 +181,23 @@ bool VFWEncoder::append_video(uint8_t *image)
     // feed possibly freezing or jumping (though in practice this rarely happens - usually a loading scene just appears
     // shorter or something).
 
-    int audio_frames = (int)(m_audio_frame - m_video_frame + 0.1);
-    // i've seen a few games only do ~0.98 frames of audio for a frame, let's account for that here
-
     if (g_config.synchronization_mode == (int)EncodingManager::Sync::Audio)
     {
-        if (audio_frames < 0)
+        while (true)
         {
-            g_view_logger->error("[AVIEncoder] Audio frames became negative!");
-            return false;
-        }
+            const int overshot = (int)(m_audio_frame - (double)m_video_frame + 0.2);
+            if (overshot == 0) break;
+            
+            RT_ASSERT(overshot >= 0, L"Video is ahead of audio");
 
-        if (audio_frames == 0)
-        {
-            g_view_logger->warn("Dropped Frame! a/v: %Lg/%Lg", m_video_frame, m_audio_frame);
-        }
-        else if (audio_frames > 0)
-        {
             result = append_video_impl(image);
-            m_video_frame += 1.0;
-            audio_frames--;
-        }
-
-        // can this actually happen?
-        while (audio_frames > 0)
-        {
-            result = append_video_impl(image);
-            g_view_logger->warn("Duped Frame! a/v: %Lg/%Lg", m_video_frame, m_audio_frame);
-            m_video_frame += 1.0;
-            audio_frames--;
+            m_video_frame++;
         }
     }
     else
     {
         result = append_video_impl(image);
-        m_video_frame += 1.0;
+        m_video_frame++;
     }
 
     return result;
