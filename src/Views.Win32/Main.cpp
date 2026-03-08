@@ -762,6 +762,16 @@ void open_console()
     SetConsoleOutputCP(CP_UTF8);
 }
 
+static t_lua_key_event_args get_base_key_event_args()
+{
+    t_lua_key_event_args args;
+    args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+    args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
+    return args;
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message)
@@ -810,8 +820,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
-        
-        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = true, .repeat = repeat});
+
+        t_lua_key_event_args args = get_base_key_event_args();
+        args.keycode = wParam;
+        args.pressed = true;
+        args.repeat = repeat;
+
+        LuaCallbacks::call_atkey(args);
 
         if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_down(wParam, lParam);
@@ -819,20 +834,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     }
     case WM_SYSKEYUP:
     case WM_KEYUP: {
-        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = false, .repeat = false});
+        t_lua_key_event_args args = get_base_key_event_args();
+        args.keycode = wParam;
+        args.pressed = false;
+        args.repeat = false;
+
+        LuaCallbacks::call_atkey(args);
 
         if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_up(wParam, lParam);
         break;
     }
     case WM_CHAR: {
+        t_lua_key_event_args args = get_base_key_event_args();
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
         const auto chr = static_cast<wchar_t>(wParam);
 
         if (std::iswcntrl(chr)) break;
 
-        const auto text = std::wstring(1, chr);
-        LuaCallbacks::call_atkey({.text = text, .repeat = repeat});
+        args.text = std::wstring(1, chr);
+        args.repeat = repeat;
+        LuaCallbacks::call_atkey(args);
         break;
     }
     case WM_MOUSEWHEEL:
