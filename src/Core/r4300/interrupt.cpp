@@ -17,12 +17,6 @@
 #include <r4300/timers.h>
 #include <memory/pif.h>
 
-#define DP_STATUS_REG 0xA410000C
-#define DP_BUSY 0x0400
-#define DP_PIPE_BUSY 0x0200
-#define DP_CMD_BUSY 0x0100
-#define DP_IDLE(status) (((status) & (DP_BUSY | DP_PIPE_BUSY | DP_CMD_BUSY)) == 0)
-
 typedef struct _interrupt_queue
 {
     int32_t type;
@@ -35,7 +29,6 @@ static interrupt_queue *q = NULL;
 interrupt_queue g_pool[128]{};
 uint8_t g_pool_used[sizeof(g_pool)]{};
 size_t g_known_unused_index = SIZE_MAX;
-bool rdp_done = false;
 uint32_t last_vi_origin{};
 
 /**
@@ -499,14 +492,10 @@ void gen_interrupt()
             screen_invalidated = false;
         }
 
-        // Detecting when a new frame is being presented is a little bit tricky.
-        // Seemingly, the best pacing is achieved by checking:
-        // 1. if the RDP just went idle on the last DP interrupt
-        // 2. if the VI origin changed on this VI interrupt
+        // Detecting when a new frame is being presented requires checking if the VI origin changed.
         const bool vi_origin_changed = last_vi_origin != vi_register.vi_origin;
-        const bool new_present = vi_origin_changed && rdp_done;
 
-        g_core->callbacks.vi(new_present);
+        g_core->callbacks.vi(vi_origin_changed);
         vcr_on_vi();
         timer_new_vi();
 
@@ -599,7 +588,6 @@ void gen_interrupt()
         break;
 
     case DP_INT:
-        if (DP_IDLE(dpc_register.dpc_status)) rdp_done = true;
         remove_interrupt_event();
         dpc_register.dpc_status &= ~2;
         dpc_register.dpc_status |= 0x81;
