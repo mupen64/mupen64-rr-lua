@@ -10,10 +10,16 @@
 #include <DialogService.h>
 #include <components/FilePicker.h>
 
-static MovieDialog::t_result user_result{};
-static bool is_readonly{};
-static HWND grid_hwnd{};
-static bool is_closing{};
+struct t_movie_dialog_context
+{
+    MovieDialog::t_result user_result{};
+    std::function<bool(const MovieDialog::t_result &)> on_confirm{};
+    bool is_readonly{};
+    HWND grid_hwnd{};
+    bool is_closing{};
+};
+
+static t_movie_dialog_context g_ctx{};
 
 static size_t count_button_presses(const std::vector<core_buttons> &buttons, const int mask)
 {
@@ -86,29 +92,32 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     switch (msg)
     {
     case WM_INITDIALOG: {
+        g_ctx.user_result.hwnd = hwnd;
         RECT grid_rect = get_window_rect_client_space(hwnd, GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
         DestroyWindow(GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
 
-        grid_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                                   WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS,
-                                   grid_rect.left, grid_rect.top, grid_rect.right - grid_rect.left,
-                                   grid_rect.bottom - grid_rect.top, hwnd, nullptr, g_main_ctx.hinst, NULL);
+        g_ctx.grid_hwnd =
+            CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
+                           WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS,
+                           grid_rect.left, grid_rect.top, grid_rect.right - grid_rect.left,
+                           grid_rect.bottom - grid_rect.top, hwnd, nullptr, g_main_ctx.hinst, NULL);
 
-        ListView_SetExtendedListViewStyle(grid_hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+        ListView_SetExtendedListViewStyle(g_ctx.grid_hwnd,
+                                          LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
         LVCOLUMN lv_column = {0};
         lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
         lv_column.pszText = const_cast<LPWSTR>(L"Name");
-        ListView_InsertColumn(grid_hwnd, 0, &lv_column);
+        ListView_InsertColumn(g_ctx.grid_hwnd, 0, &lv_column);
         lv_column.pszText = const_cast<LPWSTR>(L"Value");
-        ListView_InsertColumn(grid_hwnd, 1, &lv_column);
+        ListView_InsertColumn(g_ctx.grid_hwnd, 1, &lv_column);
 
-        ListView_SetColumnWidth(grid_hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-        ListView_SetColumnWidth(grid_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
+        ListView_SetColumnWidth(g_ctx.grid_hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
+        ListView_SetColumnWidth(g_ctx.grid_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
 
-        SetWindowText(hwnd, is_readonly ? L"Play Movie" : L"Record Movie");
-        for (auto id : is_readonly ? disabled_on_play : disabled_on_record)
+        SetWindowText(hwnd, g_ctx.is_readonly ? L"Play Movie" : L"Record Movie");
+        for (auto id : g_ctx.is_readonly ? disabled_on_play : disabled_on_record)
         {
             EnableWindow(GetDlgItem(hwnd, id), false);
         }
@@ -119,28 +128,20 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         SetDlgItemText(hwnd, IDC_INI_AUTHOR, g_config.last_movie_author.c_str());
         SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, L"");
 
-        SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, user_result.path.wstring().c_str());
+        SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, g_ctx.user_result.path.wstring().c_str());
 
         // workaround because initial selected button is "Start"
         SetFocus(GetDlgItem(hwnd, IDC_INI_AUTHOR));
 
         return FALSE;
     }
-    case WM_DESTROY: {
-        wchar_t author[sizeof(core_vcr_movie_header::author)] = {0};
-        GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
-        user_result.author = author;
-
-        wchar_t description[sizeof(core_vcr_movie_header::description)] = {0};
-        GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
-        user_result.description = description;
-
-        DestroyWindow(grid_hwnd);
+    case WM_DESTROY:
+        DestroyWindow(g_ctx.grid_hwnd);
         break;
-    }
+
     case WM_CLOSE:
-        user_result.path.clear();
-        is_closing = true;
+        g_ctx.user_result.path.clear();
+        g_ctx.is_closing = true;
         EndDialog(hwnd, IDCANCEL);
         break;
     case WM_COMMAND:
@@ -151,26 +152,41 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             GetDlgItemText(hwnd, IDC_PAUSEAT_FIELD, text, std::size(text));
             if (lstrlenW(text) == 0)
             {
-                user_result.pause_at = -1;
+                g_ctx.user_result.pause_at = -1;
             }
             else
             {
-                user_result.pause_at = std::wcstoul(text, nullptr, 10);
+                g_ctx.user_result.pause_at = std::wcstoul(text, nullptr, 10);
             }
-            user_result.pause_at_last = IsDlgButtonChecked(hwnd, IDC_PAUSE_AT_END);
+            g_ctx.user_result.pause_at_last = IsDlgButtonChecked(hwnd, IDC_PAUSE_AT_END);
 
-            g_config.last_movie_type = user_result.start_flag;
+            g_config.last_movie_type = g_ctx.user_result.start_flag;
+
+            wchar_t author[sizeof(core_vcr_movie_header::author)] = {0};
+            GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
+            g_ctx.user_result.author = author;
+            g_config.last_movie_author = g_ctx.user_result.author;
+
+            wchar_t description[sizeof(core_vcr_movie_header::description)] = {0};
+            GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
+            g_ctx.user_result.description = description;
+
+            const bool should_close = g_ctx.on_confirm(g_ctx.user_result);
+            if (!should_close)
+            {
+                break;
+            }
 
             EndDialog(hwnd, IDOK);
         }
         break;
         case IDCANCEL:
-            user_result.path.clear();
-            is_closing = true;
+            g_ctx.user_result.path.clear();
+            g_ctx.is_closing = true;
             EndDialog(hwnd, IDCANCEL);
             break;
         case IDC_INI_MOVIEFILE: {
-            if (is_closing)
+            if (g_ctx.is_closing)
             {
                 g_view_logger->warn("[MovieDialog] Tried to update movie file path while closing dialog");
                 break;
@@ -178,16 +194,16 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
             wchar_t path[MAX_PATH] = {0};
             GetDlgItemText(hwnd, IDC_INI_MOVIEFILE, path, std::size(path));
-            user_result.path = path;
+            g_ctx.user_result.path = path;
 
             // User might not provide the m64 extension, so just force it to have that
-            user_result.path.replace_extension(".m64");
+            g_ctx.user_result.path.replace_extension(".m64");
 
             goto refresh;
         }
         case IDC_MOVIE_BROWSE: {
             std::wstring path;
-            if (is_readonly)
+            if (g_ctx.is_readonly)
             {
                 path = FilePicker::show_open_dialog(L"o_movie", hwnd, L"*.m64;*.rec");
             }
@@ -208,19 +224,19 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             EnableWindow(GetDlgItem(hwnd, IDC_MOVIE_BROWSE), 1);
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE), 1);
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE_TEXT), 1);
-            user_result.start_flag = MOVIE_START_FROM_EEPROM;
+            g_ctx.user_result.start_flag = MOVIE_START_FROM_EEPROM;
             break;
         case IDC_RADIO_FROM_ST:
             EnableWindow(GetDlgItem(hwnd, IDC_MOVIE_BROWSE), 1);
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE), 1);
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE_TEXT), 1);
-            user_result.start_flag = MOVIE_START_FROM_SNAPSHOT;
+            g_ctx.user_result.start_flag = MOVIE_START_FROM_SNAPSHOT;
             break;
         case IDC_RADIO_FROM_START:
             EnableWindow(GetDlgItem(hwnd, IDC_MOVIE_BROWSE), 1);
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE), 1);
             EnableWindow(GetDlgItem(hwnd, IDC_INI_MOVIEFILE_TEXT), 1);
-            user_result.start_flag = MOVIE_START_FROM_NOTHING;
+            g_ctx.user_result.start_flag = MOVIE_START_FROM_NOTHING;
             break;
         default:
             break;
@@ -234,21 +250,21 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 refresh:
     core_vcr_movie_header header = {};
 
-    if (g_main_ctx.core_ctx->vcr_parse_header(user_result.path, &header) != Res_Ok)
+    if (g_main_ctx.core_ctx->vcr_parse_header(g_ctx.user_result.path, &header) != Res_Ok)
     {
         return FALSE;
     }
 
     std::vector<core_buttons> inputs = {};
 
-    if (g_main_ctx.core_ctx->vcr_read_movie_inputs(user_result.path, inputs) != Res_Ok)
+    if (g_main_ctx.core_ctx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != Res_Ok)
     {
         return FALSE;
     }
 
     std::vector<std::pair<std::wstring, std::wstring>> metadata;
 
-    ListView_DeleteAllItems(grid_hwnd);
+    ListView_DeleteAllItems(g_ctx.grid_hwnd);
 
     metadata.emplace_back(std::make_pair(
         L"ROM",
@@ -323,33 +339,34 @@ refresh:
 
         lv_item.iSubItem = 0;
         lv_item.pszText = (LPTSTR)metadata[i].first.c_str();
-        ListView_InsertItem(grid_hwnd, &lv_item);
+        ListView_InsertItem(g_ctx.grid_hwnd, &lv_item);
 
         lv_item.iSubItem = 1;
         lv_item.pszText = (LPTSTR)metadata[i].second.c_str();
-        ListView_SetItem(grid_hwnd, &lv_item);
+        ListView_SetItem(g_ctx.grid_hwnd, &lv_item);
     }
 
-    ListView_SetColumnWidth(grid_hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
-    ListView_SetColumnWidth(grid_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
+    ListView_SetColumnWidth(g_ctx.grid_hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
+    ListView_SetColumnWidth(g_ctx.grid_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
 
     return FALSE;
 }
 
-MovieDialog::t_result MovieDialog::show(bool readonly)
+MovieDialog::t_result MovieDialog::show(bool readonly, const std::function<bool(const t_result &)> &on_confirm)
 {
     const auto rom_hdr = g_main_ctx.core_ctx->vr_get_rom_header();
 
-    is_readonly = readonly;
-    user_result.path = std::format(
+    g_ctx.is_readonly = readonly;
+    g_ctx.on_confirm = on_confirm;
+    g_ctx.user_result.path = std::format(
         L"{} ({}).m64", IOUtils::to_wide_string((char *)rom_hdr->nom),
         IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code)));
-    user_result.start_flag = g_config.last_movie_type;
-    user_result.author = g_config.last_movie_author;
-    user_result.description = L"";
-    is_closing = false;
+    g_ctx.user_result.start_flag = g_config.last_movie_type;
+    g_ctx.user_result.author = g_config.last_movie_author;
+    g_ctx.user_result.description = L"";
+    g_ctx.is_closing = false;
 
     DialogBox(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_MOVIE_DIALOG), g_main_ctx.hwnd, (DLGPROC)dlgproc);
 
-    return user_result;
+    return g_ctx.user_result;
 }

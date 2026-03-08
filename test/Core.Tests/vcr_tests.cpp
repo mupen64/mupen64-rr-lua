@@ -264,6 +264,70 @@ TEST_CASE("seek_stops_when_end_reached", "vcr_on_controller_poll")
     REQUIRE(!vcr.seek_to_frame.has_value());
 }
 
+static void remove_test_files()
+{
+    std::filesystem::remove("test.m64");
+    std::filesystem::remove("test.st");
+    std::filesystem::remove("test.cht");
+}
+
+TEST_CASE("produces_correct_paths_with_start_type_from_start", "vcr_get_generated_file_info")
+{
+    prepare_test();
+    core_create(&params, &ctx);
+    remove_test_files();
+
+    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_NOTHING);
+
+    REQUIRE(info.movie_path == "test.m64");
+    REQUIRE(info.st_path.empty());
+    REQUIRE(info.cht_path.empty());
+}
+
+TEST_CASE("produces_correct_paths_with_start_type_from_savestate", "vcr_get_generated_file_info")
+{
+    prepare_test();
+    core_create(&params, &ctx);
+    remove_test_files();
+
+    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_SNAPSHOT);
+
+    REQUIRE(info.movie_path == "test.m64");
+    REQUIRE(info.st_path == "test.st");
+    REQUIRE(info.cht_path.empty());
+}
+
+TEST_CASE("produces_correct_paths_with_start_type_from_eeprom", "vcr_get_generated_file_info")
+{
+    prepare_test();
+    core_create(&params, &ctx);
+    remove_test_files();
+
+    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
+
+    REQUIRE(info.movie_path == "test.m64");
+    REQUIRE(info.st_path.empty());
+    REQUIRE(info.cht_path.empty());
+}
+
+TEST_CASE("produces_correct_paths_with_cheats", "vcr_get_generated_file_info")
+{
+    prepare_test();
+    core_create(&params, &ctx);
+    remove_test_files();
+
+    core_cheat cheat
+    {
+    };
+    ctx->cht_set_list({cheat});
+
+    core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
+
+    REQUIRE(info.movie_path == "test.m64");
+    REQUIRE(info.st_path.empty());
+    REQUIRE(info.cht_path == "test.cht");
+}
+
 #pragma endregion
 
 #pragma region Unit

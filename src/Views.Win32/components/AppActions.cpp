@@ -497,6 +497,19 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
         return;
     }
 
+    const auto file_info = g_main_ctx.core_ctx->vcr_get_generated_file_info(path, start_flag);
+    const auto any_file_exists = std::filesystem::exists(file_info.movie_path) ||
+                                 (!file_info.st_path.empty() && std::filesystem::exists(file_info.st_path)) ||
+                                 (!file_info.cht_path.empty() && std::filesystem::exists(file_info.cht_path));
+    if (any_file_exists)
+    {
+        const auto overwrite = DialogService::show_ask_dialog(
+            VIEW_DLG_OVERWRITE_MOVIE,
+            L"The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
+            L"Overwrite Movie", true, g_main_ctx.hwnd);
+        if (!overwrite) return;
+    }
+
     g_main_ctx.core_ctx->vr_wait_increment();
     g_main_ctx.core.submit_task([=] {
         auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(path, start_flag, IOUtils::to_utf8_string(author),
@@ -1169,7 +1182,8 @@ void AppActions::add()
     add_action(SEEK_TO_DIRECT, seek_direct,
                std::vector<ActionManager::t_action_param>{
                    {.key = L"frame", .name = L"Frame", .validator = Validators::seek_str},
-               }, enable_when_emu_launched_and_vcr_active);
+               },
+               enable_when_emu_launched_and_vcr_active);
     add_action(SEEK_TO, Hotkey::t_hotkey('G', true), show_seek_dialog, enable_when_emu_launched_and_vcr_active);
     add_action(USAGE_STATISTICS, Hotkey::t_hotkey::make_empty(), show_statistics);
     add_action(CORE_INFORMATION, Hotkey::t_hotkey::make_empty(), show_ram_start);

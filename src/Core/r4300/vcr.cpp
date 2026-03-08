@@ -975,10 +975,12 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
         description = "(no description)";
     }
 
+    const auto file_info = g_ctx.vcr_get_generated_file_info(path, flags);
+
     const auto cheat_data = cht_serialize();
     if (!cheat_data.empty())
     {
-        const auto cheat_path = get_path_for_new_movie(path, ".cht");
+        const auto cheat_path = file_info.cht_path;
         g_core->log_info(std::format("Writing movie cheat data to {}...", cheat_path.string()));
 
         std::ofstream file(cheat_path, std::ios::out);
@@ -1047,7 +1049,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
         g_core->log_info("[VCR] Saving state...");
         vcr.task = task_start_recording_from_snapshot;
         g_ctx.st_do_file(
-            get_path_for_new_movie(vcr.movie_path), core_st_job_save,
+            file_info.st_path, core_st_job_save,
             [](const core_st_callback_info &info, auto &&...) {
                 std::unique_lock lock(vcr_mtx);
 
@@ -1505,6 +1507,20 @@ std::optional<size_t> vcr_try_resolve_seek_str(const std::string &str)
 {
     std::unique_lock lock(vcr_mtx);
     return vcr_try_resolve_seek_str_impl(str);
+}
+
+core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::path &movie_path, const uint16_t flags)
+{
+    core_vcr_generated_file_info info{};
+
+    info.movie_path = movie_path;
+
+    if (flags & MOVIE_START_FROM_SNAPSHOT) info.st_path = get_path_for_new_movie(movie_path);
+
+    const auto cheats = cht_serialize();
+    if (!cheats.empty()) info.cht_path = get_path_for_new_movie(movie_path, {".cht"});
+
+    return info;
 }
 
 size_t vcr_find_closest_savestate_before_frame(size_t frame)
