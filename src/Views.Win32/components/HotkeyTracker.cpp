@@ -38,6 +38,8 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
     {
         if ((int)key == hotkey.key && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
         {
+            if (ActionManager::get_enabled(path) == false) continue;
+
             // HACK: Fast Forward is a special case: we don't want it to be constantly toggled on and off because it
             // messes up flow
             const bool release_on_repress = path != ActionManager::normalize_filter(AppActions::FAST_FORWARD);
