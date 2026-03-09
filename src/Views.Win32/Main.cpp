@@ -12,7 +12,7 @@
 #include <Plugin.h>
 #include <ThreadPool.h>
 #include <strsafe.h>
-#include <capture/EncodingManager.h>
+#include <capture/CaptureManager.h>
 #include <components/ActionMenu.h>
 #include <components/AppActions.h>
 #include <components/Benchmark.h>
@@ -469,12 +469,12 @@ void update_screen()
 
 void ai_len_changed()
 {
-    if (!EncodingManager::is_capturing())
+    if (!CaptureManager::is_capturing())
     {
         return;
     }
 
-    EncodingManager::ai_len_changed();
+    CaptureManager::ai_len_changed();
 }
 
 void update_titlebar()
@@ -499,9 +499,9 @@ void update_titlebar()
             text += std::format(L" - {}", vcr_filename.c_str());
         }
 
-        if (EncodingManager::is_capturing())
+        if (CaptureManager::is_capturing())
         {
-            text += std::format(L" - {}", EncodingManager::get_current_path().filename().wstring());
+            text += std::format(L" - {}", CaptureManager::get_current_path().filename().wstring());
         }
 
         g_main_ctx.dispatcher->invoke([=] { SetWindowText(g_main_ctx.hwnd, text.c_str()); });
@@ -1029,15 +1029,15 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
     {
         Statusbar::post(get_input_text(), Statusbar::Section::Input);
 
-        if (EncodingManager::is_capturing())
+        if (CaptureManager::is_capturing())
         {
             if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
             {
-                Statusbar::post(std::format(L"{}", EncodingManager::get_video_frame()), Statusbar::Section::VCR);
+                Statusbar::post(std::format(L"{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
             }
             else
             {
-                Statusbar::post(std::format(L"{}({})", get_status_text(), EncodingManager::get_video_frame()),
+                Statusbar::post(std::format(L"{}({})", get_status_text(), CaptureManager::get_video_frame()),
                                 Statusbar::Section::VCR);
             }
         }
@@ -1070,7 +1070,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.vi = [](const bool new_present) {
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
-        if (EncodingManager::is_capturing()) EncodingManager::append_video(!new_present);
+        if (CaptureManager::is_capturing()) CaptureManager::append_video(!new_present);
     };
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
     g_main_ctx.core.callbacks.frame = [] {
@@ -1084,10 +1084,10 @@ static core_result init_core()
     g_main_ctx.core.callbacks.play_movie = LuaCallbacks::call_play_movie;
     g_main_ctx.core.callbacks.stop_movie = [] {
         LuaCallbacks::call_stop_movie();
-        if (g_config.stop_capture_at_movie_end && EncodingManager::is_capturing()) EncodingManager::stop_capture();
+        if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
     g_main_ctx.core.callbacks.loop_movie = [] {
-        if (g_config.stop_capture_at_movie_end && EncodingManager::is_capturing()) EncodingManager::stop_capture();
+        if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
     g_main_ctx.core.callbacks.save_state = LuaCallbacks::call_save_state;
     g_main_ctx.core.callbacks.load_state = LuaCallbacks::call_load_state;
@@ -1383,7 +1383,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     CrashManager::init();
     MGECompositor::init();
     LuaRenderer::init();
-    EncodingManager::init();
+    CaptureManager::init();
     CLI::init();
     Seeker::init();
     CoreDbg::init();

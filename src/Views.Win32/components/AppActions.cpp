@@ -10,7 +10,7 @@
 #include <Messenger.h>
 #include <ThreadPool.h>
 #include <Plugin.h>
-#include <capture/EncodingManager.h>
+#include <capture/CaptureManager.h>
 #include <components/AppActions.h>
 #include <components/CLI.h>
 #include <components/Cheats.h>
@@ -41,7 +41,7 @@ bool confirm_user_exit()
     std::wstring final_message;
     std::vector<std::pair<bool, std::wstring>> messages = {
         {g_main_ctx.core_ctx->vcr_get_task() == task_recording, L"Movie recording"},
-        {EncodingManager::is_capturing(), L"Capture"},
+        {CaptureManager::is_capturing(), L"Capture"},
         {g_main_ctx.core_ctx->tl_active(), L"Trace logging"}};
 
     std::vector<std::wstring> active_messages;
@@ -761,7 +761,7 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto path = params.at(L"path");
     const auto ask_preset = params.at(L"ask_preset") == L"1";
 
-    EncodingManager::start_capture(path, (t_config::EncoderType)g_config.encoder_type, ask_preset,
+    CaptureManager::start_capture(path, (t_config::EncoderType)g_config.encoder_type, ask_preset,
                                    [](const auto result) {
                                        if (result)
                                        {
@@ -806,7 +806,7 @@ static void start_capture_from_preset()
 
 static void stop_capture()
 {
-    EncodingManager::stop_capture([](const auto result) {
+    CaptureManager::stop_capture([](const auto result) {
         if (result)
         {
             Statusbar::post(L"Capture stopped");
@@ -914,7 +914,7 @@ static bool enable_during_playback()
 
 static bool enable_when_emu_launched_and_capturing()
 {
-    return g_main_ctx.core_ctx->vr_get_launched() && EncodingManager::is_capturing();
+    return g_main_ctx.core_ctx->vr_get_launched() && CaptureManager::is_capturing();
 }
 
 static bool enable_when_emu_launched_and_core_is_pure_interpreter()

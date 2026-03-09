@@ -11,7 +11,7 @@
 #include <ThreadPool.h>
 #include <argh.h>
 #include <nlohmann/json.hpp>
-#include <capture/EncodingManager.h>
+#include <capture/CaptureManager.h>
 #include <components/Benchmark.h>
 #include <components/CLI.h>
 #include <components/Compare.h>
@@ -119,7 +119,7 @@ static void start_capture()
         return;
     }
 
-    EncodingManager::start_capture(cli_params.avi.string().c_str(),
+    CaptureManager::start_capture(cli_params.avi.string().c_str(),
                                    static_cast<t_config::EncoderType>(g_config.encoder_type), false);
 }
 
@@ -132,7 +132,7 @@ static void on_movie_playback_stop()
 
     if (!cli_params.avi.empty())
     {
-        EncodingManager::stop_capture([](auto result) {
+        CaptureManager::stop_capture([](auto result) {
             if (!result) return;
             PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
         });

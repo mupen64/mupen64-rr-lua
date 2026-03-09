@@ -10,7 +10,7 @@
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
-#include <capture/EncodingManager.h>
+#include <capture/CaptureManager.h>
 #include <capture/encoders/VFWEncoder.h>
 #include <capture/encoders/Encoder.h>
 #include <capture/encoders/FFmpegEncoder.h>
@@ -19,7 +19,7 @@
 #include <lua/LuaRenderer.h>
 #include <lua/LuaManager.h>
 
-namespace EncodingManager
+namespace CaptureManager
 {
 constexpr auto READSCREEN_MISSING_MSG = L"The current video plugin doesn't support the current capture method.\nTry "
                                         L"using another video plugin or switching the capture mode.";
@@ -282,7 +282,7 @@ bool stop_capture_impl()
 
     if (!m_encoder->stop())
     {
-        DialogService::show_dialog(L"Failed to stop encoding.", L"Capture", fsvc_error);
+        DialogService::show_dialog(L"Failed to stop capturing.", L"Capture", fsvc_error);
         return false;
     }
 
@@ -306,12 +306,12 @@ bool stop_capture_impl()
 
     Messenger::broadcast(Messenger::Message::CapturingChanged, false);
 
-    g_view_logger->info("[EncodingManager]: Capture finished.");
+    g_view_logger->info("[CaptureManager]: Capture finished.");
     return true;
 }
 
 bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encoder_type,
-                        const bool ask_for_encoding_settings)
+                        const bool ask_for_capture_settings)
 {
     if (!check_readscreen_available())
     {
@@ -320,14 +320,14 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
 
     std::lock_guard lock(m_mutex);
 
-    g_view_logger->info("[EncodingManager]: Starting capture at {} x {}...", m_video_width, m_video_height);
+    g_view_logger->info("[CaptureManager]: Starting capture at {} x {}...", m_video_width, m_video_height);
 
     if (is_capturing())
     {
         if (!stop_capture_impl())
         {
             g_view_logger->info(
-                "[EncodingManager]: Couldn't start capture because the previous capture couldn't be stopped.");
+                "[CaptureManager]: Couldn't start capture because the previous capture couldn't be stopped.");
             return false;
         }
     }
@@ -366,7 +366,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
         .height = (uint32_t)m_video_height,
         .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
         .arate = (uint32_t)m_audio_freq,
-        .ask_for_encoding_settings = ask_for_encoding_settings,
+        .ask_for_capture_settings = ask_for_capture_settings,
     });
 
     if (result.has_value())
@@ -387,12 +387,12 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
     return true;
 }
 
-void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_encoding_settings,
+void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings,
                    const std::function<void(bool)> &callback)
 {
     g_main_ctx.core_ctx->vr_wait_increment();
     ThreadPool::submit_task([=] {
-        const auto result = start_capture_impl(path, encoder_type, ask_for_encoding_settings);
+        const auto result = start_capture_impl(path, encoder_type, ask_for_capture_settings);
         if (callback)
         {
             callback(result);
@@ -492,7 +492,7 @@ void ai_dacrate_changed(std::any data)
         assert(false);
         break;
     }
-    g_view_logger->info("[EncodingManager] m_audio_freq: {}", m_audio_freq);
+    g_view_logger->info("[CaptureManager] m_audio_freq: {}", m_audio_freq);
 }
 
 size_t get_video_frame()
@@ -514,4 +514,4 @@ void init()
 {
     Messenger::subscribe(Messenger::Message::DacrateChanged, ai_dacrate_changed);
 }
-} // namespace EncodingManager
+} // namespace CaptureManager

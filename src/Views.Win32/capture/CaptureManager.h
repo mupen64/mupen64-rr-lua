@@ -7,13 +7,13 @@
 #pragma once
 
 /**
- * Provides encoding functionality to the view.
+ * Provides capturing functionality to the view.
  * \warning This namespace is not thread-safe unless otherwise specified.
  */
-namespace EncodingManager
+namespace CaptureManager
 {
 /**
- * \brief Synchronization modes the encoding manager can abide by
+ * \brief Synchronization modes the capture manager can abide by
  */
 enum class Sync : int
 {
@@ -34,7 +34,7 @@ enum class Sync : int
 };
 
 /**
- * \brief Initializes the encoding manager
+ * \brief Initializes the capture manager
  */
 void init();
 
@@ -48,13 +48,13 @@ bool is_capturing();
  * \brief Starts capturing a video.
  * \param path The movie's path
  * \param encoder_type The encoder to use for capturing
- * \param ask_for_encoding_settings Whether the codec dialog should be shown. If false, the previously used codec or the
+ * \param ask_for_capture_settings Whether the codec dialog should be shown. If false, the previously used codec or the
  * default one will be used. \param callback The callback that will be invoked when the operation completes. Can be
  * null. \remarks This function must be called from a thread that isn't directly or indirectly interlocked with the
  * emulator thread. Emulation will be paused until the operation completes.
  */
 void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type,
-                   bool ask_for_encoding_settings = true, const std::function<void(bool)> &callback = nullptr);
+                   bool ask_for_capture_settings = true, const std::function<void(bool)> &callback = nullptr);
 
 /**
  * \brief Stops capturing a video.
@@ -71,7 +71,7 @@ void stop_capture(const std::function<void(bool)> &callback = nullptr);
 void append_video(bool duplicate_last = false);
 
 /**
- * \brief Notifies the encoding manager of the audio changing
+ * \brief Notifies the capture manager of the audio changing
  */
 void ai_len_changed();
 
@@ -84,4 +84,4 @@ size_t get_video_frame();
  * Gets the current output path.
  */
 std::filesystem::path get_current_path();
-} // namespace EncodingManager
+} // namespace CaptureManager

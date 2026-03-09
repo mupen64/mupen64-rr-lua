@@ -8,7 +8,7 @@
 #include <Config.h>
 #include <DialogService.h>
 
-#include <capture/EncodingManager.h>
+#include <capture/CaptureManager.h>
 #include <capture/Resampler.h>
 #include <capture/encoders/VFWEncoder.h>
 
@@ -55,7 +55,7 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     // NOTE: AVIFileCreateStream seems to change the cwd for some reason...
     set_cwd();
 
-    if (params.ask_for_encoding_settings && !m_splitting)
+    if (params.ask_for_capture_settings && !m_splitting)
     {
         LPAVICOMPRESSOPTIONS avi_options[1] = {&m_avi_options};
         if (!AVISaveOptions(g_main_ctx.hwnd, 0, 1, &m_video_stream, avi_options))
@@ -74,7 +74,7 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     {
         if (!load_options())
         {
-            return L"Failed to load options. Verify that the encoding preset file is present.";
+            return L"Failed to load options. Verify that the capture preset file is present.";
         }
     }
 
@@ -166,8 +166,8 @@ bool VFWEncoder::stop()
 
 bool VFWEncoder::append_video(uint8_t *image)
 {
-    if (g_config.synchronization_mode != static_cast<int>(EncodingManager::Sync::Audio) &&
-        g_config.synchronization_mode != static_cast<int>(EncodingManager::Sync::None))
+    if (g_config.synchronization_mode != static_cast<int>(CaptureManager::Sync::Audio) &&
+        g_config.synchronization_mode != static_cast<int>(CaptureManager::Sync::None))
     {
         return true;
     }
@@ -181,7 +181,7 @@ bool VFWEncoder::append_video(uint8_t *image)
     // feed possibly freezing or jumping (though in practice this rarely happens - usually a loading scene just appears
     // shorter or something).
 
-    if (g_config.synchronization_mode == (int)EncodingManager::Sync::Audio)
+    if (g_config.synchronization_mode == (int)CaptureManager::Sync::Audio)
     {
         while (true)
         {
@@ -207,8 +207,8 @@ bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
     const int write_size = m_params.arate * 2;
 
-    if (g_config.synchronization_mode == static_cast<int>(EncodingManager::Sync::Video) ||
-        g_config.synchronization_mode == static_cast<int>(EncodingManager::Sync::None))
+    if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
+        g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
     {
         // VIDEO SYNC
         // This is the original syncing code, which adds silence to the audio track to get it to line up with video.
@@ -223,12 +223,12 @@ bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 
         double_t desync = m_video_frame - m_audio_frame;
 
-        if (g_config.synchronization_mode == (int)EncodingManager::Sync::None) // HACK
+        if (g_config.synchronization_mode == (int)CaptureManager::Sync::None) // HACK
             desync = 0.0;
 
         if (desync > 1.0)
         {
-            g_view_logger->info("[EncodingManager]: Correcting for A/V desynchronization of %+Lf frames\n", desync);
+            g_view_logger->info("[CaptureManager]: Correcting for A/V desynchronization of %+Lf frames\n", desync);
             int len3 = (int)(m_params.arate / (long double)g_main_ctx.core_ctx->vr_get_vis_per_second(
                                                   g_main_ctx.core_ctx->vr_get_rom_header()->Country_code)) *
                        (int)desync;
@@ -246,7 +246,7 @@ bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
         }
         else if (desync <= -10.0)
         {
-            g_view_logger->info("[EncodingManager]: Waiting from A/V desynchronization of %+Lf frames\n", desync);
+            g_view_logger->info("[CaptureManager]: Waiting from A/V desynchronization of %+Lf frames\n", desync);
         }
     }
 
@@ -274,8 +274,8 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, co
             {
                 if ((len2 % 4) != 0)
                 {
-                    g_view_logger->info("[EncodingManager]: Warning: Possible stereo sound error detected.\n");
-                    fprintf(stderr, "[EncodingManager]: Warning: Possible stereo sound error detected.\n");
+                    g_view_logger->info("[CaptureManager]: Warning: Possible stereo sound error detected.\n");
+                    fprintf(stderr, "[CaptureManager]: Warning: Possible stereo sound error detected.\n");
                 }
 
                 const BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, len2 / m_sound_format.nBlockAlign, buf2,

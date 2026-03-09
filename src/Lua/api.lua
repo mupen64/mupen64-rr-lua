@@ -1511,7 +1511,7 @@ function iohelper.filediag(filter, type) end
 -- avi functions
 --#region
 
----Begins an avi recording using the previously saved encoding settings.
+---Begins an avi recording using the previously saved capture settings.
 ---It is saved to `filename`.
 ---@param filename string
 ---@return nil
