@@ -2137,6 +2137,30 @@ core_result vr_start_rom_impl(std::filesystem::path path)
 {
     auto start_time = std::chrono::high_resolution_clock::now();
 
+    // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
+    if (path.extension().compare(MUPEN64_PATH_T(".m64")) == 0)
+    {
+        core_vcr_movie_header movie_header{};
+        const auto result = g_ctx.vcr_parse_header(path, &movie_header);
+        if (result != Res_Ok)
+        {
+            return result;
+        }
+
+        const auto matching_rom = g_core->find_available_rom([&](auto header) {
+            MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
+            return movie_header.rom_crc1 == header.CRC1 &&
+                   !StrUtils::c_nicmp((const char *)header.nom, movie_header.rom_name, 20);
+        });
+
+        if (matching_rom.empty())
+        {
+            return VR_NoMatchingRom;
+        }
+
+        path = matching_rom;
+    }
+
     // We can't overwrite core. Emu needs to stop first, but that might fail...
     if (emu_launched)
     {
@@ -2149,33 +2173,6 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     }
 
     g_core->callbacks.emu_starting_changed(true);
-
-    // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
-    if (path.extension().compare(MUPEN64_PATH_T(".m64")) == 0)
-    {
-        core_vcr_movie_header movie_header{};
-        const auto result = g_ctx.vcr_parse_header(path, &movie_header);
-        if (result != Res_Ok)
-        {
-            g_core->callbacks.emu_starting_changed(false);
-            return result;
-        }
-
-        const auto matching_rom = g_core->find_available_rom([&](auto header) {
-            MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
-            return movie_header.rom_crc1 == header.CRC1 &&
-                   !StrUtils::c_nicmp((const char *)header.nom, movie_header.rom_name, 20);
-        });
-
-        if (matching_rom.empty())
-        {
-            g_core->callbacks.emu_starting_changed(false);
-            return VR_NoMatchingRom;
-        }
-
-        path = matching_rom;
-    }
-
     rom_path = path;
 
     if (!g_core->load_plugins())
