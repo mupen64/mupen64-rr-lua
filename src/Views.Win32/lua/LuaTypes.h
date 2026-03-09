@@ -104,7 +104,11 @@ struct t_lua_environment
  */
 struct t_lua_key_event_args {
     std::optional<uint64_t> keycode;
+    bool ctrl{};
+    bool alt{};
+    bool shift{};
+    bool meta{};
     std::optional<bool> pressed;
     std::optional<std::wstring> text;
-    bool repeat;
+    bool repeat{};
 };
