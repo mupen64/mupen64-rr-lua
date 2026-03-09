@@ -1070,8 +1070,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.vi = [](const bool new_present) {
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
-        if (!EncodingManager::is_capturing()) return;
-        EncodingManager::append_video(new_present);
+        if (EncodingManager::is_capturing()) EncodingManager::append_video(!new_present);
     };
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
     g_main_ctx.core.callbacks.frame = [] {
