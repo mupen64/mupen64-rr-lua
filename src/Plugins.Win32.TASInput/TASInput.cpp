@@ -1330,5 +1330,5 @@ void TASInput::on_detach()
         icon_font = {};
     }
 
-    main_thread.join();
+    if (main_thread.joinable()) main_thread.join();
 }
