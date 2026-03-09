@@ -26,7 +26,7 @@ def find_pattern_anomalies(video_path):
 
     anomalies = []
     total = len(frames)
-    i = 0
+    i = 1
     while i + 3 < total:
         f0, f1, f2, f3 = frames[i:i+4]
         pair1_same = frames_equal(f0, f1)
