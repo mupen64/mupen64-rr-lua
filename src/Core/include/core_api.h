@@ -22,7 +22,7 @@ extern "C"
      */
     struct core_callbacks
     {
-        std::function<void()> vi = [] {};
+        std::function<void(bool new_present)> vi = [](const auto &...) {};
         std::function<void(core_buttons *input, int index)> input = [](core_buttons *, int) {};
         std::function<void()> frame = [] {};
         std::function<void()> interval = [] {};

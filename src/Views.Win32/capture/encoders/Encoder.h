@@ -32,9 +32,9 @@ class Encoder
          */
         uint32_t arate;
         /**
-         * \brief Ask the user for encoding settings
+         * \brief Ask the user for capture settings
          */
-        bool ask_for_encoding_settings;
+        bool ask_for_capture_settings;
     };
 
     /**
@@ -43,15 +43,15 @@ class Encoder
     virtual ~Encoder() = default;
 
     /**
-     * \brief Starts encoding.
-     * \param params The parameters to encode with.
+     * \brief Starts capturing.
+     * \param params The parameters to capture with.
      * \return The error message if the operation failed, or an empty optional if it succeeded. An empty error message
      * means the user cancelled the starting.
      */
     virtual std::optional<std::wstring> start(Params params) = 0;
 
     /**
-     * \brief Stops encoding
+     * \brief Stops capturing
      * \return Whether the operation succeeded
      */
     virtual bool stop() = 0;

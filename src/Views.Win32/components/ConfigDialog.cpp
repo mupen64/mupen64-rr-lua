@@ -10,7 +10,7 @@
 #include <DialogService.h>
 #include <Messenger.h>
 #include <Plugin.h>
-#include <capture/EncodingManager.h>
+#include <capture/CaptureManager.h>
 #include <components/FilePicker.h>
 #include <components/SettingsListView.h>
 #include <components/TextEditDialog.h>
@@ -769,7 +769,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair(L"VFW", (int32_t)t_config::EncoderType::VFW),
                 std::make_pair(L"FFmpeg (experimental)", (int32_t)t_config::EncoderType::FFmpeg),
             },
-        .is_readonly = [] { return EncodingManager::is_capturing(); },
+        .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Enum,
@@ -787,7 +787,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair(L"Screen", 2),
                 std::make_pair(L"Hybrid", 3),
             },
-        .is_readonly = [] { return EncodingManager::is_capturing(); },
+        .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
@@ -809,7 +809,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair(L"Audio", 1),
                 std::make_pair(L"Video", 2),
             },
-        .is_readonly = [] { return EncodingManager::is_capturing(); },
+        .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::String,
@@ -817,7 +817,7 @@ std::vector<t_options_group> get_static_option_groups()
         .name = L"FFmpeg Path",
         .tooltip = L"The path to the FFmpeg executable to use for capturing.",
         GENPROPS(std::wstring, ffmpeg_path),
-        .is_readonly = [] { return EncodingManager::is_capturing(); },
+        .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::String,
@@ -825,7 +825,7 @@ std::vector<t_options_group> get_static_option_groups()
         .name = L"FFmpeg Arguments",
         .tooltip = L"The argument format string to be passed to FFmpeg when capturing.",
         GENPROPS(std::wstring, ffmpeg_final_options),
-        .is_readonly = [] { return EncodingManager::is_capturing(); },
+        .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
 
     core_group.items.emplace_back(t_options_item{

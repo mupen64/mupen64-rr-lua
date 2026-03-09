@@ -12,7 +12,7 @@
 #include <Plugin.h>
 #include <ThreadPool.h>
 #include <strsafe.h>
-#include <capture/EncodingManager.h>
+#include <capture/CaptureManager.h>
 #include <components/ActionMenu.h>
 #include <components/AppActions.h>
 #include <components/Benchmark.h>
@@ -467,24 +467,14 @@ void update_screen()
     }
 }
 
-void at_vi()
-{
-    if (!EncodingManager::is_capturing())
-    {
-        return;
-    }
-
-    EncodingManager::at_vi();
-}
-
 void ai_len_changed()
 {
-    if (!EncodingManager::is_capturing())
+    if (!CaptureManager::is_capturing())
     {
         return;
     }
 
-    EncodingManager::ai_len_changed();
+    CaptureManager::ai_len_changed();
 }
 
 void update_titlebar()
@@ -509,9 +499,9 @@ void update_titlebar()
             text += std::format(L" - {}", vcr_filename.c_str());
         }
 
-        if (EncodingManager::is_capturing())
+        if (CaptureManager::is_capturing())
         {
-            text += std::format(L" - {}", EncodingManager::get_current_path().filename().wstring());
+            text += std::format(L" - {}", CaptureManager::get_current_path().filename().wstring());
         }
 
         g_main_ctx.dispatcher->invoke([=] { SetWindowText(g_main_ctx.hwnd, text.c_str()); });
@@ -648,7 +638,7 @@ void on_speed_modifier_changed(std::any data)
 
 void on_emu_paused_changed(std::any data)
 {
-    g_main_ctx.core.callbacks.frame();
+    g_frame_changed = true;
 }
 
 void on_vis_since_input_poll_exceeded(std::any)
@@ -762,6 +752,16 @@ void open_console()
     SetConsoleOutputCP(CP_UTF8);
 }
 
+static t_lua_key_event_args get_base_key_event_args()
+{
+    t_lua_key_event_args args;
+    args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+    args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
+    return args;
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message)
@@ -810,8 +810,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
-        
-        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = true, .repeat = repeat});
+
+        t_lua_key_event_args args = get_base_key_event_args();
+        args.keycode = wParam;
+        args.pressed = true;
+        args.repeat = repeat;
+
+        LuaCallbacks::call_atkey(args);
 
         if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_down(wParam, lParam);
@@ -819,20 +824,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     }
     case WM_SYSKEYUP:
     case WM_KEYUP: {
-        LuaCallbacks::call_atkey({.keycode = wParam, .pressed = false, .repeat = false});
+        t_lua_key_event_args args = get_base_key_event_args();
+        args.keycode = wParam;
+        args.pressed = false;
+        args.repeat = false;
+
+        LuaCallbacks::call_atkey(args);
 
         if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
             g_plugin_funcs.input_key_up(wParam, lParam);
         break;
     }
     case WM_CHAR: {
+        t_lua_key_event_args args = get_base_key_event_args();
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
         const auto chr = static_cast<wchar_t>(wParam);
 
         if (std::iswcntrl(chr)) break;
 
-        const auto text = std::wstring(1, chr);
-        LuaCallbacks::call_atkey({.text = text, .repeat = repeat});
+        args.text = std::wstring(1, chr);
+        args.repeat = repeat;
+        LuaCallbacks::call_atkey(args);
         break;
     }
     case WM_MOUSEWHEEL:
@@ -1002,14 +1014,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
-void on_new_frame()
-{
-    g_frame_changed = true;
-#ifdef VIEW_BENCHMARK_SUPPORT
-    Benchmark::frame();
-#endif
-}
-
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
     g_main_ctx.core_ctx->vr_invalidate_visuals();
@@ -1025,15 +1029,15 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
     {
         Statusbar::post(get_input_text(), Statusbar::Section::Input);
 
-        if (EncodingManager::is_capturing())
+        if (CaptureManager::is_capturing())
         {
             if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
             {
-                Statusbar::post(std::format(L"{}", EncodingManager::get_video_frame()), Statusbar::Section::VCR);
+                Statusbar::post(std::format(L"{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
             }
             else
             {
-                Statusbar::post(std::format(L"{}({})", get_status_text(), EncodingManager::get_video_frame()),
+                Statusbar::post(std::format(L"{}({})", get_status_text(), CaptureManager::get_video_frame()),
                                 Statusbar::Section::VCR);
             }
         }
@@ -1063,22 +1067,27 @@ static core_result init_core()
     g_main_ctx.core.cfg = &g_config.core;
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
-    g_main_ctx.core.callbacks.vi = [] {
+    g_main_ctx.core.callbacks.vi = [](const bool new_present) {
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
-        at_vi();
+        if (CaptureManager::is_capturing()) CaptureManager::append_video(!new_present);
     };
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
-    g_main_ctx.core.callbacks.frame = on_new_frame;
+    g_main_ctx.core.callbacks.frame = [] {
+        g_frame_changed = true;
+#ifdef VIEW_BENCHMARK_SUPPORT
+        Benchmark::frame();
+#endif
+    };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
     g_main_ctx.core.callbacks.play_movie = LuaCallbacks::call_play_movie;
     g_main_ctx.core.callbacks.stop_movie = [] {
         LuaCallbacks::call_stop_movie();
-        if (g_config.stop_capture_at_movie_end && EncodingManager::is_capturing()) EncodingManager::stop_capture();
+        if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
     g_main_ctx.core.callbacks.loop_movie = [] {
-        if (g_config.stop_capture_at_movie_end && EncodingManager::is_capturing()) EncodingManager::stop_capture();
+        if (g_config.stop_capture_at_movie_end && CaptureManager::is_capturing()) CaptureManager::stop_capture();
     };
     g_main_ctx.core.callbacks.save_state = LuaCallbacks::call_save_state;
     g_main_ctx.core.callbacks.load_state = LuaCallbacks::call_load_state;
@@ -1374,7 +1383,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     CrashManager::init();
     MGECompositor::init();
     LuaRenderer::init();
-    EncodingManager::init();
+    CaptureManager::init();
     CLI::init();
     Seeker::init();
     CoreDbg::init();

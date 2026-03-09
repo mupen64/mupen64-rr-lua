@@ -337,6 +337,10 @@ Mupen = {
 
 ---@class KeyEventArgs
 ---@field keycode VKeycode? The virtual keycode, if the event is a key event.
+---@field ctrl boolean Whether the Ctrl key is held down.
+---@field alt boolean Whether the Alt key is held down.
+---@field shift boolean Whether the Shift key is held down.
+---@field meta boolean Whether the Meta key is held down.
 ---@field pressed boolean? Whether the key was pressed or released, if the event is a key event.
 ---@field text string? The typed character, if the event is a char event and the key corresponds to a character.
 ---@field repeat boolean Whether the event is a repeat event (i.e. the key is being held down and this event is firing multiple times).
@@ -492,6 +496,7 @@ function emu.atseekcompleted(f, unregister) end
 function emu.atwarpmodifystatuschanged(f, unregister) end
 
 ---Calls the function `f` when a keyboard event happens.
+---Keyboard presses that trigger hotkeys take priority over this event.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
 ---@param f fun(args: KeyEventArgs): nil The function to be called when a keyboard event happens.
 ---@param unregister boolean? If true, then unregister the function `f`.
@@ -1506,7 +1511,7 @@ function iohelper.filediag(filter, type) end
 -- avi functions
 --#region
 
----Begins an avi recording using the previously saved encoding settings.
+---Begins an avi recording using the previously saved capture settings.
 ---It is saved to `filename`.
 ---@param filename string
 ---@return nil

@@ -38,7 +38,7 @@ class VFWEncoder final : public Encoder
 
     size_t m_frame = 0;
     size_t m_sample = 0;
-    double_t m_video_frame = 0;
+    size_t m_video_frame = 0;
     double_t m_audio_frame = 0;
     uint8_t m_sound_buf[SOUND_BUF_SIZE];
     uint8_t m_sound_buf_empty[SOUND_BUF_SIZE];

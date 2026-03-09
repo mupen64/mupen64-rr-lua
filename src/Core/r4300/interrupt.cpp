@@ -29,6 +29,7 @@ static interrupt_queue *q = NULL;
 interrupt_queue g_pool[128]{};
 uint8_t g_pool_used[sizeof(g_pool)]{};
 size_t g_known_unused_index = SIZE_MAX;
+uint32_t last_vi_origin{};
 
 /**
  * Allocates an item in the interrupt pool.
@@ -491,11 +492,14 @@ void gen_interrupt()
             screen_invalidated = false;
         }
 
-        g_core->callbacks.vi();
+        // Detecting when a new frame is being presented requires checking if the VI origin changed.
+        const bool vi_origin_changed = last_vi_origin != vi_register.vi_origin;
 
+        g_core->callbacks.vi(vi_origin_changed);
         vcr_on_vi();
-
         timer_new_vi();
+
+        last_vi_origin = vi_register.vi_origin;
 
         if (vi_register.vi_v_sync == 0)
             vi_register.vi_delay = 500000;
@@ -510,9 +514,6 @@ void gen_interrupt()
 
         remove_interrupt_event();
         add_interrupt_event_count(VI_INT, next_vi);
-        //++frame_count;
-        // total_vi += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
-        // starttime).count();
         MI_register.mi_intr_reg |= 0x08;
         break;
     }
@@ -587,7 +588,6 @@ void gen_interrupt()
         break;
 
     case DP_INT:
-        // g_core->log_info("DP, count: {:#06x}", q->count);
         remove_interrupt_event();
         dpc_register.dpc_status &= ~2;
         dpc_register.dpc_status |= 0x81;
