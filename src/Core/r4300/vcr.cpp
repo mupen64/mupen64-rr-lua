@@ -1269,7 +1269,12 @@ static std::optional<core_result> ask_user_rom_conflict(std::string_view id, con
     if (choice == 0)
     {
         g_core->submit_task([=] {
-            g_ctx.vr_start_rom(movie_path);
+            const auto result = g_ctx.vr_close_rom(true);
+            if (result != Res_Ok)
+            {
+                g_core->log_error("vr_close_rom failed while switching ROM for movie playback");
+                return;
+            }
             g_ctx.vcr_start_playback(movie_path);
         });
         return Res_Cancelled;
