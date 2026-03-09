@@ -848,7 +848,7 @@ static void show_about_dialog()
 
 #pragma endregion
 
-#pragma region Lua Script
+#pragma region Scripts
 
 static void load_script_direct(const ActionManager::action_argument_map &params)
 {
