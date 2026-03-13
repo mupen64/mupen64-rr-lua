@@ -87,12 +87,14 @@ int CALLBACK rombrowser_compare(LPARAM lParam1, LPARAM lParam2, LPARAM _)
     case 0:
         result = first.header.Country_code - second.header.Country_code;
         break;
-    case 1:
-        // BUG: these are not null terminated!!!
-        result = _strcmpi((const char *)first.header.nom, (const char *)second.header.nom);
+    case 1: {
+        std::string first_name((const char *)first.header.nom, sizeof(first.header.nom));
+        std::string second_name((const char *)second.header.nom, sizeof(second.header.nom));
+        result = first_name.compare(second_name);
         break;
+    }
     case 2:
-        result = _strcmpi((const char *)first.path.c_str(), (const char *)second.path.c_str());
+        result = first.path.compare(second.path);
         break;
     case 3:
         result = first.size - second.size;
