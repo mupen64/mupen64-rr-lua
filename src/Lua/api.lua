@@ -1501,7 +1501,7 @@ function savestate.do_memory(buffer, job, callback, ignore_warnings) end
 ---Opens a file dialouge and returns the file path of the file chosen.
 ---@nodiscard
 ---@param filter string This string acts as a filter for what files can be chosen. For example `*.*` selects all files, where `*.txt` selects only text files.
----@param type integer Unknown.
+---@param type integer 0 for an open file dialog. 1 for a save file dialog.
 ---@return string
 function iohelper.filediag(filter, type) end
 
