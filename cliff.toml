@@ -7,17 +7,12 @@ This release does something.
 body = """{% for group, commits in commits | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits %}
-        <details>
-            <summary>
-             {% if commit.scope %}<b>{{ commit.scope }}</b> {% endif %}\
-                {% if commit.breaking %} (<b>breaking</b>) {% endif %}\
-                {{ commit.message | upper_first }}\
-            </summary>
-
-            #
-            
-            {{ commit.body }}
-        </details>
+        {% if commit.scope %}<b>{{ commit.scope }}</b> – {% endif %}\
+        {% if commit.breaking %} (<b>breaking</b>) {% endif %}\
+        {{ commit.message | upper_first }}\
+        \n
+        <small>{{ commit.body }}</small>
+        ##
     {% endfor %}
 {% endfor %}
 """
