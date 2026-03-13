@@ -303,7 +303,6 @@ static void build_impl()
 
 void build()
 {
-
     std::thread(build_impl).detach();
 }
 
