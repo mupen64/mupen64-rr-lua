@@ -233,8 +233,8 @@ static void build_impl()
     g_ctx.discovered_roms.clear();
     const auto rom_paths = discover_roms();
 
-    std::mutex result_mutex;
-    std::vector<t_simple_rom_info> results;
+    std::vector<t_simple_rom_info> results(rom_paths.size());
+
     auto worker = [&](size_t begin, size_t end) {
         for (size_t j = begin; j < end; ++j)
         {
@@ -266,8 +266,7 @@ static void build_impl()
 
             fclose(f);
 
-            std::lock_guard lock(result_mutex);
-            results.push_back(entry);
+            results[j] = std::move(entry);
         }
     };
 
