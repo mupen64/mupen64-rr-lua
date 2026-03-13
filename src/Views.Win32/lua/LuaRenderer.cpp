@@ -42,16 +42,16 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
         }
 
         bool success;
-        if (!lua->rctx->presenter)
+        if (!lua->rctx.presenter)
         {
             // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
             success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
         }
         else
         {
-            lua->rctx->presenter->begin_present();
+            lua->rctx.presenter->begin_present();
             success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
-            lua->rctx->presenter->end_present();
+            lua->rctx.presenter->end_present();
         }
 
         ValidateRect(hwnd, nullptr);
@@ -87,10 +87,10 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
         const bool success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);
 
-        if (lua->rctx->has_gdi_content)
+        if (lua->rctx.has_gdi_content)
         {
-            BitBlt(lua->rctx->gdi_front_dc, 0, 0, lua->rctx->dc_size.width, lua->rctx->dc_size.height,
-                   lua->rctx->gdi_back_dc, 0, 0, SRCCOPY);
+            BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height,
+                   lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
         }
 
         ValidateRect(hwnd, nullptr);
@@ -153,14 +153,14 @@ static void destroy_loadscreen(t_lua_rendering_context *ctx)
     ctx->loadscreen_dc = nullptr;
 }
 
-std::shared_ptr<t_lua_rendering_context> LuaRenderer::default_rendering_context()
+t_lua_rendering_context LuaRenderer::default_rendering_context()
 {
-    auto ctx = std::make_shared<t_lua_rendering_context>();
-    ctx->brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
-    ctx->pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
-    ctx->font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
-    ctx->col = ctx->bkcol = 0;
-    ctx->bkmode = TRANSPARENT;
+    t_lua_rendering_context ctx{};
+    ctx.brush = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
+    ctx.pen = static_cast<HPEN>(GetStockObject(BLACK_PEN));
+    ctx.font = static_cast<HFONT>(GetStockObject(SYSTEM_FONT));
+    ctx.col = ctx.bkcol = 0;
+    ctx.bkmode = TRANSPARENT;
     return ctx;
 }
 
@@ -170,8 +170,8 @@ void LuaRenderer::invalidate_visuals()
 
     for (const auto &lua : g_lua_environments)
     {
-        RedrawWindow(lua->rctx->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
-        RedrawWindow(lua->rctx->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        RedrawWindow(lua->rctx.d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        RedrawWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
     }
 }
 
@@ -181,8 +181,8 @@ void LuaRenderer::repaint_visuals()
 
     for (const auto &lua : g_lua_environments)
     {
-        RedrawWindow(lua->rctx->d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(lua->rctx->gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(lua->rctx.d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
     }
 }
 
@@ -348,6 +348,9 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
     }
 
     ctx->d2d_render_target_stack.push(ctx->presenter->dc());
+    ctx->d2d_brushes = MicroLRU::Cache<DGfxColor, ID2D1SolidColorBrush *>(512, [&](auto value) { value->Release(); });
+    ctx->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout *>(512, [&](auto value) { value->Release(); });
+    ctx->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
 }
 
 void LuaRenderer::mark_gdi_content_present(t_lua_rendering_context *ctx)

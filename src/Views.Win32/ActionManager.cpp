@@ -33,8 +33,10 @@ struct t_action_manager
     std::vector<t_action> actions{};
     bool batched_work{};
     bool lock_hotkeys{};
-    lru11::Cache<action_filter, std::vector<std::wstring>> segment_cache{256};
-    lru11::Cache<action_filter, std::vector<t_action *>> filter_result_cache{256};
+    MicroLRU::Cache<action_filter, std::vector<std::wstring>> segment_cache{256,
+                                                                            [](const std::vector<std::wstring> &) {}};
+    MicroLRU::Cache<action_filter, std::vector<t_action *>> filter_result_cache{256,
+                                                                                [](const std::vector<t_action *> &) {}};
 };
 
 static t_action_manager g_mgr{};
@@ -46,7 +48,7 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
 {
     if (g_mgr.filter_result_cache.contains(filter))
     {
-        return g_mgr.filter_result_cache.get(filter);
+        return g_mgr.filter_result_cache.get(filter).value();
     }
 
     const auto normalized_filter = ActionManager::normalize_filter(filter);
@@ -61,14 +63,14 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
             result.emplace_back(&action);
         }
 
-        g_mgr.filter_result_cache.insert(filter, result);
+        g_mgr.filter_result_cache.add(filter, result);
         return result;
     }
 
     const auto filter_segments = ActionManager::get_segments(normalized_filter);
     if (filter_segments.empty())
     {
-        g_mgr.filter_result_cache.insert(filter, result);
+        g_mgr.filter_result_cache.add(filter, result);
         return result;
     }
 
@@ -110,7 +112,7 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
         }
     }
 
-    g_mgr.filter_result_cache.insert(filter, result);
+    g_mgr.filter_result_cache.add(filter, result);
     return result;
 }
 
@@ -538,7 +540,7 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
 {
     if (g_mgr.segment_cache.contains(filter))
     {
-        return g_mgr.segment_cache.get(filter);
+        return g_mgr.segment_cache.get(filter).value();
     }
 
     // std::vector<action_filter> parts = StrUtils::split_wstring(filter, SEGMENT_SEPARATOR);
@@ -555,7 +557,7 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
                  std::views::transform([](std::wstring_view part) { return std::wstring(part); }) |
                  std::ranges::to<std::vector<action_filter>>();
 
-    g_mgr.segment_cache.insert(filter, parts);
+    g_mgr.segment_cache.add(filter, parts);
 
     return parts;
 }
