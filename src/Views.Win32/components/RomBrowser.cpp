@@ -280,8 +280,6 @@ static void build_impl()
     g_ctx.discovered_roms = std::move(results);
 
     g_main_ctx.dispatcher->invoke([] {
-        rombrowser_update_sort();
-
         for (size_t i = 0; i < g_ctx.discovered_roms.size(); i++)
         {
             const auto &entry = g_ctx.discovered_roms[i];
@@ -294,6 +292,8 @@ static void build_impl()
             lv_item.iImage = rombrowser_country_code_to_image_index(entry.header.Country_code);
             ListView_InsertItem(g_ctx.hwnd, &lv_item);
         }
+        rombrowser_update_sort();
+
         SendMessage(g_ctx.hwnd, WM_SETREDRAW, TRUE, 0);
     });
 
