@@ -11,51 +11,18 @@
 
 namespace LuaCore::D2D
 {
-typedef struct
+
+static ID2D1SolidColorBrush *get_solid_color_brush(t_lua_environment *lua, const DGfxColor color)
 {
-    uint64_t text_hash;
-    uint64_t font_name_hash;
-    int font_weight;
-    int font_style;
-    float font_size;
-    int horizontal_alignment;
-    int vertical_alignment;
-    float width;
-    float height;
-} t_text_layout_params;
-
-typedef struct
-{
-    uint64_t text_hash;
-    uint64_t font_name_hash;
-    float font_size;
-    float max_width;
-    float max_height;
-} t_text_measure_params;
-
-#define D2D_GET_RECT(L, idx)                                                                                           \
-    D2D1::RectF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                  \
-                luaL_checknumber(L, idx + 3))
-
-#define D2D_GET_COLOR(L, idx)                                                                                          \
-    D2D1::ColorF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                 \
-                 luaL_checknumber(L, idx + 3))
-
-#define D2D_GET_POINT(L, idx)                                                                                          \
-    D2D1_POINT_2F                                                                                                      \
-    {                                                                                                                  \
-        .x = (float)luaL_checknumber(L, idx), .y = (float)luaL_checknumber(L, idx + 1)                                 \
+    if (!lua->rctx.d2d_brushes.contains(color))
+    {
+        ID2D1SolidColorBrush *brush;
+        lua->rctx.d2d_render_target_stack.top()->CreateSolidColorBrush(color.d2d_color(), &brush);
+        lua->rctx.d2d_brushes.add(color, brush);
     }
 
-#define D2D_GET_ELLIPSE(L, idx)                                                                                        \
-    D2D1_ELLIPSE                                                                                                       \
-    {                                                                                                                  \
-        .point = D2D_GET_POINT(L, idx), .radiusX = (float)luaL_checknumber(L, idx + 2),                                \
-        .radiusY = (float)luaL_checknumber(L, idx + 3)                                                                 \
-    }
-
-#define D2D_GET_ROUNDED_RECT(L, idx)                                                                                   \
-    D2D1_ROUNDED_RECT(D2D_GET_RECT(L, idx), luaL_checknumber(L, idx + 5), luaL_checknumber(L, idx + 6))
+    return lua->rctx.d2d_brushes.get(color).value();
+}
 
 static int create_brush(lua_State *L)
 {

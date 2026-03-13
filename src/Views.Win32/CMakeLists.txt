@@ -64,6 +64,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/LuaRenderer.h"
     "lua/modules/AVI.h"
     "lua/modules/D2D.h"
+    "lua/modules/DGfx.h"
     "lua/modules/Emu.h"
     "lua/modules/Global.h"
     "lua/modules/Input.h"

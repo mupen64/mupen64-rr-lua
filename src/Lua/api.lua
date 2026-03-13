@@ -10,6 +10,7 @@ emu = {}
 memory = {}
 wgui = {}
 d2d = {}
+dgfx = {}
 input = {}
 joypad = {}
 movie = {}
@@ -329,6 +330,12 @@ Mupen = {
         VK_OEM_CLEAR = 0xFE, -- Clear key
     },
 
+    ---@enum DgfxCommandType
+    ---Represents the type of a DGfx drawing command.
+    DgfxCommandType = {
+        CLEAR = 1,
+        TEXT = 2,
+    }
 }
 
 ---The `lua_tostring` c function converts numbers to strings, so numbers are
@@ -1181,6 +1188,39 @@ function d2d.set_antialias_mode(mode) end
 ---@param callback fun()
 ---@return number
 function d2d.draw_to_image(width, height, callback) end
+
+--#endregion
+
+
+-- dgfx functions
+--#region
+
+---@alias DgfxColor { [1]: number, [2]: number, [3]: number, [4]: number }
+---Represents an RGBA color with channels in the range 0-1.
+
+---@class DgfxCommand
+---@field type DgfxCommandType
+
+---@class DgfxClearCommand : DgfxCommand
+---@field color DgfxColor
+
+---@class DgfxTextCommand : DgfxCommand
+---@field color DgfxColor
+---@field x number
+---@field y number
+---@field w number
+---@field h number
+---@field text string
+---@field font_name string
+---@field font_size number
+---@field font_weight integer
+---@field font_style integer
+---@field horizontal_alignment integer
+---@field vertical_alignment integer
+---@field options integer
+
+---@param commands DgfxCommand[]
+function dgfx.enqueue(commands) end
 
 --#endregion
 

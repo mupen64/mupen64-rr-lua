@@ -277,6 +277,7 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
         delete bmp;
     }
 
+    ctx->d2d_brushes.clear();
     ctx->dw_text_layouts.clear();
     ctx->dw_text_sizes.clear();
     ctx->image_pool.clear();
@@ -347,6 +348,7 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
     }
 
     ctx->d2d_render_target_stack.push(ctx->presenter->dc());
+    ctx->d2d_brushes = MicroLRU::Cache<DGfxColor, ID2D1SolidColorBrush *>(512, [&](auto value) { value->Release(); });
     ctx->dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout *>(512, [&](auto value) { value->Release(); });
     ctx->dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
 }

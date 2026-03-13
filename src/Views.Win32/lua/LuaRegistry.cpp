@@ -10,6 +10,7 @@
 #include <lua/modules/Action.h>
 #include <lua/modules/Clipboard.h>
 #include <lua/modules/D2D.h>
+#include <lua/modules/DGfx.h>
 #include <lua/modules/Emu.h>
 #include <lua/modules/Global.h>
 #include <lua/modules/Hotkey.h>
@@ -164,6 +165,8 @@ const luaL_Reg D2D_FUNCS[] = {{"create_brush", LuaCore::D2D::create_brush},
                               {"draw_to_image", LuaCore::D2D::draw_to_image},
                               {NULL, NULL}};
 
+const luaL_Reg DGFX_FUNCS[] = {{"enqueue", LuaCore::DGfx::enqueue}, {NULL, NULL}};
+
 const luaL_Reg INPUT_FUNCS[] = {{"get", LuaCore::Input::get_keys},
                                 {"diff", LuaCore::Input::GetKeyDifference},
                                 {"prompt", LuaCore::Input::prompt},
@@ -268,6 +271,7 @@ void LuaRegistry::register_functions(lua_State *L)
     register_as_package(L, "memory", MEMORY_FUNCS);
     register_as_package(L, "wgui", WGUI_FUNCS);
     register_as_package(L, "d2d", D2D_FUNCS);
+    register_as_package(L, "dgfx", DGFX_FUNCS);
     register_as_package(L, "input", INPUT_FUNCS);
     register_as_package(L, "joypad", JOYPAD_FUNCS);
     register_as_package(L, "movie", MOVIE_FUNCS);
