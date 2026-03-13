@@ -78,7 +78,7 @@ std::expected<t_lua_environment *, std::wstring> LuaManager::create_environment(
 
     lua_atpanic(lua->L, at_panic);
     LuaRegistry::register_functions(lua->L);
-    LuaRenderer::create_renderer(&lua->rctx, lua);
+    LuaRenderer::create_renderer(lua->rctx.get(), lua);
 
     return lua;
 }
@@ -158,7 +158,7 @@ void LuaManager::destroy_environment(t_lua_environment *lua)
 
     lua->destroying(lua);
 
-    LuaRenderer::pre_destroy_renderer(&lua->rctx);
+    LuaRenderer::pre_destroy_renderer(lua->rctx.get());
 
     ActionManager::begin_batch_work();
     for (const auto &action : lua->registered_actions)
@@ -174,7 +174,7 @@ void LuaManager::destroy_environment(t_lua_environment *lua)
 
     lua_close(lua->L);
     lua->L = nullptr;
-    LuaRenderer::destroy_renderer(&lua->rctx);
+    LuaRenderer::destroy_renderer(lua->rctx.get());
 
     g_view_logger->info("Lua destroyed");
 }

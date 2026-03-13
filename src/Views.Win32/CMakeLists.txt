@@ -168,7 +168,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     PkgConfig::speexdsp
     vendor::argh
     vendor::bs-thread-pool
-    vendor::microlru
+    vendor::lrucache11
     vendor::mini
 )
 # Windows library linkages

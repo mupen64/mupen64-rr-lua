@@ -68,13 +68,13 @@ struct t_lua_rendering_context
     IDWriteFactory *dw_factory{};
 
     // The cache for DirectWrite text size measurements
-    MicroLRU::Cache<DGfxColor, ID2D1SolidColorBrush *> d2d_brushes{};
+    lru11::Cache<DGfxColor, Microsoft::WRL::ComPtr<ID2D1SolidColorBrush>> d2d_brushes{512};
 
     // The cache for DirectWrite text layouts
-    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
+    lru11::Cache<uint64_t, Microsoft::WRL::ComPtr<IDWriteTextLayout>> dw_text_layouts{512};
 
     // The cache for DirectWrite text size measurements
-    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+    lru11::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{512};
 
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
@@ -116,7 +116,7 @@ struct t_lua_environment
 
     std::filesystem::path path;
     lua_State *L;
-    t_lua_rendering_context rctx;
+    std::shared_ptr<t_lua_rendering_context> rctx;
     bool started{};
 
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.

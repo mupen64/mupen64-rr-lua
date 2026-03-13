@@ -13,8 +13,8 @@ add_library(vendor::argh ALIAS argh)
 add_subdirectory(bs-thread-pool)
 add_library(vendor::bs-thread-pool ALIAS bs-thread-pool)
 
-add_subdirectory(microlru)
-add_library(vendor::microlru ALIAS microlru)
+add_subdirectory(lrucache11)
+add_library(vendor::lrucache11 ALIAS lrucache11)
 
 add_subdirectory(mini)
 add_library(vendor::mini ALIAS mini)

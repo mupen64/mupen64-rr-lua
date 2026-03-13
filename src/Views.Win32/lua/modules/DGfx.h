@@ -139,7 +139,7 @@ static void parse_text(lua_State *L, int i, DgfxTextCommand &out)
 
 static void clear_cmd(t_lua_environment &lua, const DgfxClearCommand &cmd)
 {
-    lua.rctx.d2d_render_target_stack.top()->Clear(lua.rctx.presenter->adjust_clear_color(cmd.color.d2d_color()));
+    lua.rctx->d2d_render_target_stack.top()->Clear(lua.rctx->presenter->adjust_clear_color(cmd.color.d2d_color()));
 }
 
 static void text_cmd(t_lua_environment &lua, const DgfxTextCommand &cmd)
@@ -166,11 +166,11 @@ static void text_cmd(t_lua_environment &lua, const DgfxTextCommand &cmd)
 
     uint64_t params_hash = xxh64::hash((const char *)&params, sizeof(params), 0);
 
-    if (!lua.rctx.dw_text_layouts.contains(params_hash))
+    if (!lua.rctx->dw_text_layouts.contains(params_hash))
     {
         IDWriteTextFormat *text_format;
 
-        lua.rctx.dw_factory->CreateTextFormat(IOUtils::to_wide_string(cmd.font_name).c_str(), nullptr,
+        lua.rctx->dw_factory->CreateTextFormat(IOUtils::to_wide_string(cmd.font_name).c_str(), nullptr,
                                               static_cast<DWRITE_FONT_WEIGHT>(cmd.font_weight),
                                               static_cast<DWRITE_FONT_STYLE>(cmd.font_style),
                                               DWRITE_FONT_STRETCH_NORMAL, cmd.font_size, L"", &text_format);
@@ -181,26 +181,26 @@ static void text_cmd(t_lua_environment &lua, const DgfxTextCommand &cmd)
         IDWriteTextLayout *text_layout;
 
         auto wtext = IOUtils::to_wide_string(cmd.text);
-        lua.rctx.dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, cmd.w, cmd.h, &text_layout);
+        lua.rctx->dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format, cmd.w, cmd.h, &text_layout);
 
-        lua.rctx.dw_text_layouts.add(params_hash, text_layout);
+        lua.rctx->dw_text_layouts.insert(params_hash, text_layout);
         text_format->Release();
     }
 
     const auto brush = D2D::get_solid_color_brush(&lua, cmd.color);
-    auto layout = lua.rctx.dw_text_layouts.get(params_hash);
-    lua.rctx.d2d_render_target_stack.top()->DrawTextLayout(
+    auto layout = lua.rctx->dw_text_layouts.get(params_hash);
+    lua.rctx->d2d_render_target_stack.top()->DrawTextLayout(
         {
             .x = cmd.x,
             .y = cmd.y,
         },
-        layout.value(), brush, static_cast<D2D1_DRAW_TEXT_OPTIONS>(cmd.options));
+        layout.Get(), brush, static_cast<D2D1_DRAW_TEXT_OPTIONS>(cmd.options));
 }
 
 static int enqueue(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
-    LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
+    LuaRenderer::ensure_d2d_renderer_created(lua->rctx.get());
 
     luaL_checktype(L, 1, LUA_TTABLE);
 

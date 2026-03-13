@@ -15,7 +15,7 @@ void init();
 /**
  * \brief Creates a new rendering context with the default values.
  */
-t_lua_rendering_context default_rendering_context();
+std::shared_ptr<t_lua_rendering_context> default_rendering_context();
 
 /**
  * \brief Invalidates all visual layers of all running Lua scripts.
