@@ -32,6 +32,7 @@ struct t_action_manager
 {
     std::vector<t_action> actions{};
     bool batched_work{};
+    bool work_happened{};
     bool lock_hotkeys{};
     MicroLRU::Cache<action_filter, std::vector<std::wstring>> segment_cache{256,
                                                                             [](const std::vector<std::wstring> &) {}};
@@ -191,12 +192,14 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
         const bool has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
         const bool has_menu_hidden_prefix = name.starts_with(ActionManager::MENU_HIDDEN_PREFIX);
 
-        if (has_separator) display_name = MiscHelpers::trim(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
-        if (has_menu_hidden_prefix) display_name = MiscHelpers::trim(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
+        if (has_separator)
+            display_name = MiscHelpers::trim(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
+        if (has_menu_hidden_prefix)
+            display_name = MiscHelpers::trim(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
 
         const bool has_parameters = !action->add_params.params.empty();
         if (has_parameters) display_name = L"> " + display_name;
-        
+
         action->raw_name = display_name;
 
         if (action->add_params.get_display_name)
@@ -304,6 +307,7 @@ bool ActionManager::add(const t_action_add_params &params)
         g_config.inital_hotkeys[normalized_path] = Hotkey::t_hotkey::make_unassigned();
     }
 
+    g_mgr.work_happened = true;
     if (!g_mgr.batched_work)
     {
         notify_action_registry_changed();
@@ -347,6 +351,7 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
 
     g_mgr.filter_result_cache.clear();
 
+    g_mgr.work_happened = true;
     if (!g_mgr.batched_work)
     {
         Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
@@ -390,6 +395,7 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey::t_ho
         }
     }
 
+    g_mgr.work_happened = true;
     if (!g_mgr.batched_work)
     {
         notify_action_registry_changed();
@@ -495,11 +501,13 @@ std::vector<t_action_param> ActionManager::get_params(const action_path &path)
 void ActionManager::begin_batch_work()
 {
     g_mgr.batched_work = true;
+    g_mgr.work_happened = false;
 }
 
 void ActionManager::end_batch_work()
 {
     g_mgr.batched_work = false;
+    if (!g_mgr.work_happened) return;
     notify_action_registry_changed();
 }
 
