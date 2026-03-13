@@ -214,7 +214,7 @@ int32_t rombrowser_country_code_to_image_index(uint16_t country_code)
     }
 }
 
-void build_impl()
+static void build_impl()
 {
     std::unique_lock lock(g_ctx.mutex, std::try_to_lock);
     if (!lock.owns_lock())
@@ -223,68 +223,79 @@ void build_impl()
         return;
     }
 
-    auto start_time = std::chrono::high_resolution_clock::now();
+    const auto start_time = std::chrono::high_resolution_clock::now();
 
-    // we disable redrawing because it would repaint after every added rom
-    // otherwise, which is slow and causes flicker
-    SendMessage(g_ctx.hwnd, WM_SETREDRAW, FALSE, 0);
+    g_main_ctx.dispatcher->invoke([] {
+        SendMessage(g_ctx.hwnd, WM_SETREDRAW, FALSE, 0);
+        ListView_DeleteAllItems(g_ctx.hwnd);
+    });
 
-    ListView_DeleteAllItems(g_ctx.hwnd);
     g_ctx.discovered_roms.clear();
+    const auto rom_paths = discover_roms();
 
-    auto rom_paths = discover_roms();
+    std::vector<t_simple_rom_info> results(rom_paths.size());
 
-    LV_ITEM lv_item = {0};
-    lv_item.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
-    lv_item.pszText = LPSTR_TEXTCALLBACK;
-
-    int32_t i = 0;
-    for (auto &path : rom_paths)
-    {
-        FILE *f = nullptr;
-        if (_wfopen_s(&f, path.c_str(), L"rb"))
+    auto worker = [&](size_t begin, size_t end) {
+        for (size_t j = begin; j < end; ++j)
         {
-            g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", path.c_str());
-            continue;
+            const auto &path = rom_paths[j];
+
+            FILE *f = nullptr;
+            if (_wfopen_s(&f, path.c_str(), L"rb")) continue;
+
+            fseek(f, 0, SEEK_END);
+            size_t len = ftell(f);
+            fseek(f, 0, SEEK_SET);
+
+            t_simple_rom_info entry{};
+            entry.path = path;
+            entry.size = len;
+
+            if (len > sizeof(core_rom_header))
+            {
+                core_rom_header header{};
+                fread(&header, sizeof(header), 1, f);
+
+                g_main_ctx.core_ctx->vr_byteswap((uint8_t *)&header);
+
+                MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
+                header.nom[sizeof(header.nom) - 1] = '\0';
+
+                entry.header = header;
+            }
+
+            fclose(f);
+
+            results[j] = std::move(entry);
         }
+    };
 
-        fseek(f, 0, SEEK_END);
-        const size_t len = ftell(f);
-        fseek(f, 0, SEEK_SET);
+    // Split the work across two threads since we're not heavily IO-bound on small reads.
+    size_t mid = rom_paths.size() / 2;
+    std::thread t1(worker, 0, mid);
+    std::thread t2(worker, mid, rom_paths.size());
+    t1.join();
+    t2.join();
 
-        t_simple_rom_info rombrowser_entry;
-        rombrowser_entry.path = path;
-        rombrowser_entry.size = len;
-        rombrowser_entry.header = {};
+    g_ctx.discovered_roms = std::move(results);
 
-        if (len > sizeof(core_rom_header))
+    g_main_ctx.dispatcher->invoke([] {
+        for (size_t i = 0; i < g_ctx.discovered_roms.size(); i++)
         {
-            core_rom_header header{};
-            fread(&header, sizeof(core_rom_header), 1, f);
+            const auto &entry = g_ctx.discovered_roms[i];
 
-            g_main_ctx.core_ctx->vr_byteswap((uint8_t *)&header);
-
-            MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
-
-            // We need this for later, because listview assumes it has a nul
-            // terminator
-            header.nom[sizeof(header.nom) - 1] = '\0';
-
-            rombrowser_entry.header = header;
+            LV_ITEM lv_item = {0};
+            lv_item.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
+            lv_item.pszText = LPSTR_TEXTCALLBACK;
+            lv_item.lParam = i;
+            lv_item.iItem = i;
+            lv_item.iImage = rombrowser_country_code_to_image_index(entry.header.Country_code);
+            ListView_InsertItem(g_ctx.hwnd, &lv_item);
         }
+        rombrowser_update_sort();
 
-        lv_item.lParam = i;
-        lv_item.iItem = i;
-        lv_item.iImage = rombrowser_country_code_to_image_index(rombrowser_entry.header.Country_code);
-        ListView_InsertItem(g_ctx.hwnd, &lv_item);
-
-        fclose(f);
-
-        g_ctx.discovered_roms.push_back(rombrowser_entry);
-        i++;
-    }
-    rombrowser_update_sort();
-    SendMessage(g_ctx.hwnd, WM_SETREDRAW, TRUE, 0);
+        SendMessage(g_ctx.hwnd, WM_SETREDRAW, TRUE, 0);
+    });
 
     g_view_logger->info("Rombrowser loading took {}ms",
                         static_cast<int>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000));
