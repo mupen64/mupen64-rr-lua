@@ -96,6 +96,10 @@
                     <button class="funcListItem" onclick="highlightFunc('emuAtwarpmodifystatuschanged')">EMU.ATWARPMODIFYSTATUSCHANGED</button>
                 </a>
                 
+                <a href="#emuAtkey">
+                    <button class="funcListItem" onclick="highlightFunc('emuAtkey')">EMU.ATKEY</button>
+                </a>
+                
                 <a href="#emuFramecount">
                     <button class="funcListItem" onclick="highlightFunc('emuFramecount')">EMU.FRAMECOUNT</button>
                 </a>
@@ -928,6 +932,15 @@ If <code>unregister</code> is set to true, the function <code>f</code> will no l
 <p>@<em>param</em> <code>f</code> — The function to be called.</p>
 <p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">atwarpmodifystatuschanged</span><span class="p">(</span><span class="nv">f</span><span class="p">:</span><span class="w"> </span><span class="nc">fun</span><span class="p">():</span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="nv">unregister</span><span class="err">?</span><span class="p">:</span><span class="w"> </span><span class="nc">boolean</span><span class="p">)</span>
+<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
+</code></pre></div></div><div name="emuAtkey"><hr />
+<h1><a id="emuAtkey">emu.atkey</a></h1>
+<p>Calls the function <code>f</code> when a keyboard event happens.
+Keyboard presses that trigger hotkeys take priority over this event.
+If <code>unregister</code> is set to true, the function <code>f</code> will no longer be called when this event occurs, but it will error if you never registered the function.</p>
+<p>@<em>param</em> <code>f</code> — The function to be called when a keyboard event happens.</p>
+<p>@<em>param</em> <code>unregister</code> — If true, then unregister the function <code>f</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">atkey</span><span class="p">(</span><span class="nv">f</span><span class="p">:</span><span class="w"> </span><span class="nc">fun</span><span class="p">(</span><span class="nv">args</span><span class="p">:</span><span class="w"> </span><span class="nc">KeyEventArgs</span><span class="p">):</span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="nv">unregister</span><span class="err">?</span><span class="p">:</span><span class="w"> </span><span class="nc">boolean</span><span class="p">)</span>
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
 </code></pre></div></div><div name="emuFramecount"><hr />
 <h1><a id="emuFramecount">emu.framecount</a></h1>
@@ -1804,13 +1817,13 @@ An empty input buffer will cause the operation to fail.</p>
 <h1><a id="iohelperFilediag">iohelper.filediag</a></h1>
 <p>Opens a file dialouge and returns the file path of the file chosen.</p>
 <p>@<em>param</em> <code>filter</code> — This string acts as a filter for what files can be chosen. For example <code>*.*</code> selects all files, where <code>*.txt</code> selects only text files.</p>
-<p>@<em>param</em> <code>type</code> — Unknown.</p>
+<p>@<em>param</em> <code>type</code> — 0 for an open file dialog. 1 for a save file dialog.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">iohelper</span><span class="p">.</span><span class="nf">filediag</span><span class="p">(</span><span class="nv">filter</span><span class="p">:</span><span class="w"> </span><span class="nc">string</span><span class="p">,</span><span class="w"> </span><span class="nv">type</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">)</span>
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">string</span>
 </code></pre></div></div><hr />
 <h1><a id="aviFuncs">AVI</a> FUNCTIONS</h1><div name="aviStartcapture"><hr />
 <h1><a id="aviStartcapture">avi.startcapture</a></h1>
-<p>Begins an avi recording using the previously saved encoding settings.
+<p>Begins an avi recording using the previously saved capture settings.
 It is saved to <code>filename</code>.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">avi</span><span class="p">.</span><span class="nf">startcapture</span><span class="p">(</span><span class="nv">filename</span><span class="p">:</span><span class="w"> </span><span class="nc">string</span><span class="p">)</span>
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
