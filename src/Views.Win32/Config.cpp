@@ -434,13 +434,10 @@ static std::filesystem::path get_config_path()
  */
 static void config_patch(t_config &cfg)
 {
-    // handle edge case: closing while minimized produces bogus values for position
-    if (cfg.window_x < -10'000 || cfg.window_y < -10'000)
+    if(!MonitorFromPoint({ cfg.window_x, cfg.window_y }, MONITOR_DEFAULTTONULL))
     {
         cfg.window_x = g_default_config.window_x;
         cfg.window_y = g_default_config.window_y;
-        cfg.window_width = g_default_config.window_width;
-        cfg.window_height = g_default_config.window_height;
     }
 
     if (cfg.rombrowser_column_widths.size() < 4)
