@@ -24,21 +24,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
-
-      - name: Set VERSION_SUFFIX
-        shell: powershell
-        run: |
-          $branch = git rev-parse --abbrev-ref HEAD
-          $commit = git rev-parse --short HEAD
-          $VERSION_SUFFIX = "-$branch-$commit"
-          echo "VERSION_SUFFIX=$VERSION_SUFFIX" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-
-      - name: Display VERSION_SUFFIX
-        shell: powershell
-        run: echo "VERSION_SUFFIX is $env:VERSION_SUFFIX"
 
       - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
         shell: powershell
@@ -46,18 +35,36 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
+      - name: Cache vcpkg
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./vcpkg/packages
+            ./vcpkg/installed
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Cache CMake build
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: cmake-build-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('CMakePresets.json') }}
+          restore-keys: |
+            cmake-build-${{ runner.os }}-${{ matrix.arch }}-
+
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --preset vcpkg-win64-x86
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build
+        run: cmake --build build --config Debug --parallel $env:NUMBER_OF_PROCESSORS
 
-      - name: "Upload build"
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: mupen-debug
+          name: mupen-release
           path: build/out
           retention-days: 14
   build-release:
@@ -69,6 +76,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
@@ -79,18 +87,36 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
+      - name: Cache vcpkg
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./vcpkg/packages
+            ./vcpkg/installed
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Cache CMake build
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: cmake-build-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('CMakePresets.json') }}
+          restore-keys: |
+            cmake-build-${{ runner.os }}-${{ matrix.arch }}-
+
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --preset vcpkg-win64-x86-release
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build
+        run: cmake --build build --config Release --parallel $env:NUMBER_OF_PROCESSORS
 
-      - name: "Upload build"
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: mupen-release
+          name: mupen-debug
           path: build/out
           retention-days: 14
   test:
