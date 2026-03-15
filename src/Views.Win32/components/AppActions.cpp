@@ -762,12 +762,12 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
     const auto ask_preset = params.at(L"ask_preset") == L"1";
 
     CaptureManager::start_capture(path, (t_config::EncoderType)g_config.encoder_type, ask_preset,
-                                   [](const auto result) {
-                                       if (result)
-                                       {
-                                           Statusbar::post(L"Capture started...");
-                                       }
-                                   });
+                                  [](const auto result) {
+                                      if (result)
+                                      {
+                                          Statusbar::post(L"Capture started...");
+                                      }
+                                  });
 }
 
 static void start_capture_normal()

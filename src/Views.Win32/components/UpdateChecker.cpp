@@ -245,7 +245,8 @@ show_prompt:
         break;
     case 1: {
         const auto changelog = IOUtils::to_wide_string(body.get<std::string>());
-        TextEditDialog::show({.parent_hwnd = g_main_ctx.hwnd, .text = changelog, .caption = L"Changelog", .readonly = true});
+        TextEditDialog::show(
+            {.parent_hwnd = g_main_ctx.hwnd, .text = changelog, .caption = L"Changelog", .readonly = true});
         goto show_prompt;
     }
     case 2:

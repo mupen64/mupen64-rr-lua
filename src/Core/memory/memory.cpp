@@ -1132,7 +1132,7 @@ void update_SP()
             g_core->cfg->total_frames++;
             timer_new_frame();
             g_vr_frame_skipped = vr_is_frame_skipped();
-            
+
             if (!g_vr_frame_skipped)
             {
                 g_core->rsp_do_rsp_cycles(100);
@@ -1147,7 +1147,7 @@ void update_SP()
             add_interrupt_event(DP_INT, 1000);
 
             g_core->callbacks.frame();
-            
+
             // protecting new frame buffers
             if (g_core->video_fb_get_frame_buffer_info && g_core->video_fb_read && g_core->video_fb_write)
             {
