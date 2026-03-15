@@ -454,7 +454,6 @@ static void RESAMPLE2()
         for (int x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0; //*(uint16_t *)(rsp.rdram+((addy+x)^2));
     }
 
-
     const auto output_samples = ((AudioCount + 0xf) & 0xFFF0) / 2;
     const auto lut_phases = 64;
     const auto lut_taps = 4;
