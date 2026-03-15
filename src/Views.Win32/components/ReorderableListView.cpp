@@ -140,8 +140,10 @@ LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             // Out of bounds. We try to recover either a top or bottom drop based on the position of the cursor.
             RECT rc;
             GetClientRect(hwnd, &rc);
-            if (pt.y < 1) target = 0;
-            else  target = ListView_GetItemCount(hwnd) - 1;
+            if (pt.y < 1)
+                target = 0;
+            else
+                target = ListView_GetItemCount(hwnd) - 1;
         }
 
         if (target != -1) ctx->params.on_reorder(ctx->drag_start_index.value(), target);

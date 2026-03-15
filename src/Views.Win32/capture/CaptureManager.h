@@ -53,8 +53,8 @@ bool is_capturing();
  * null. \remarks This function must be called from a thread that isn't directly or indirectly interlocked with the
  * emulator thread. Emulation will be paused until the operation completes.
  */
-void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type,
-                   bool ask_for_capture_settings = true, const std::function<void(bool)> &callback = nullptr);
+void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, bool ask_for_capture_settings = true,
+                   const std::function<void(bool)> &callback = nullptr);
 
 /**
  * \brief Stops capturing a video.
@@ -66,7 +66,8 @@ void stop_capture(const std::function<void(bool)> &callback = nullptr);
 
 /**
  * \brief Appends the current video frame to the capture.
- * \param duplicate_last Whether the appended frame should be a duplicate of the last appended frame. This is used for lag frames.
+ * \param duplicate_last Whether the appended frame should be a duplicate of the last appended frame. This is used for
+ * lag frames.
  */
 void append_video(bool duplicate_last = false);
 

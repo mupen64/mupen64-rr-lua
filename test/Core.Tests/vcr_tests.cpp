@@ -316,9 +316,7 @@ TEST_CASE("produces_correct_paths_with_cheats", "vcr_get_generated_file_info")
     core_create(&params, &ctx);
     remove_test_files();
 
-    core_cheat cheat
-    {
-    };
+    core_cheat cheat{};
     ctx->cht_set_list({cheat});
 
     core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);

@@ -96,5 +96,5 @@ bool vcr_get_warp_modify_status();
 size_t vcr_get_warp_modify_first_difference_frame();
 void vcr_get_seek_savestate_frames(std::unordered_map<size_t, bool> &map);
 bool vcr_has_seek_savestate_at_frame(size_t frame);
-std::optional<size_t> vcr_try_resolve_seek_str(const std::string& str);
-core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::path& movie_path, uint16_t flags);
+std::optional<size_t> vcr_try_resolve_seek_str(const std::string &str);
+core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags);

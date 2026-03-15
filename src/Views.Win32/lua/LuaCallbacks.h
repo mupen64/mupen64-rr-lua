@@ -16,7 +16,8 @@ namespace LuaCallbacks
 
 // The Lua Reference Manual specifically advises against this, but this should
 // prevent reserved integer registry keys from being used.
-enum callback_key : uint8_t {
+enum callback_key : uint8_t
+{
     REG_LUACLASS = LUA_RIDX_LAST + 1,
     REG_ATUPDATESCREEN,
     REG_ATDRAWD2D,

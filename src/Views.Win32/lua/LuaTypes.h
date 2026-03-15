@@ -102,7 +102,8 @@ struct t_lua_environment
 /**
  * \brief Represents the arguments for a key event callback. See `KeyEventArgs` in `api.lua`.
  */
-struct t_lua_key_event_args {
+struct t_lua_key_event_args
+{
     std::optional<uint64_t> keycode;
     bool ctrl{};
     bool alt{};

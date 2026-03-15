@@ -434,7 +434,7 @@ static std::filesystem::path get_config_path()
  */
 static void config_patch(t_config &cfg)
 {
-    if(!MonitorFromPoint({ cfg.window_x, cfg.window_y }, MONITOR_DEFAULTTONULL))
+    if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
     {
         cfg.window_x = g_default_config.window_x;
         cfg.window_y = g_default_config.window_y;
