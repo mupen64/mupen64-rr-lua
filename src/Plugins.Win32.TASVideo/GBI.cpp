@@ -92,20 +92,21 @@ INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM
 {
     switch (uMsg)
     {
-    case WM_INITDIALOG:
+    case WM_INITDIALOG: {
         EnableMenuItem(GetSystemMenu(hWndDlg, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
         for (int i = 0; i < numMicrocodeTypes; i++)
         {
-            SendDlgItemMessage(hWndDlg, IDC_MICROCODE, CB_ADDSTRING, 0, (LPARAM)MicrocodeTypes[i]);
+            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_MICROCODE), IOUtils::to_wide_string(MicrocodeTypes[i]).c_str());
         }
         SendDlgItemMessage(hWndDlg, IDC_MICROCODE, CB_SETCURSEL, 0, 0);
 
-        char text[1024];
-        sprintf(text, "Microcode CRC:\t\t0x%08x\r\nMicrocode Data CRC:\t0x%08x\r\nMicrocode Text:\t\t%s", uc_crc,
-                uc_dcrc, uc_str);
-        SendDlgItemMessage(hWndDlg, IDC_TEXTBOX, WM_SETTEXT, NULL, (LPARAM)text);
+        wchar_t text[1024]{};
+        wsprintf(text, L"Microcode CRC:\t\t0x%08x\r\nMicrocode Data CRC:\t0x%08x\r\nMicrocode Text:\t\t%hs", uc_crc,
+                 uc_dcrc, uc_str);
+        Edit_SetText(GetDlgItem(hWndDlg, IDC_TEXTBOX), text);
         return TRUE;
+    }
     case WM_CLOSE:
         return TRUE;
     case WM_COMMAND:
