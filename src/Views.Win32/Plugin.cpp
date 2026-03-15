@@ -12,6 +12,7 @@
 #include <Plugin.h>
 #include <components/ConfigDialog.h>
 #include <components/Statusbar.h>
+#include <ThreadPool.h>
 
 #define CALL _cdecl
 
@@ -778,19 +779,31 @@ bool PluginUtil::load_plugins()
 
 void PluginUtil::initiate_plugins()
 {
-    // HACK: We sleep between each plugin load, as that seems to remedy various plugins failing to initialize correctly.
-    auto gfx_plugin_thread = std::thread([] { video_plugin->initiate(); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    auto audio_plugin_thread = std::thread([] { audio_plugin->initiate(); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    auto input_plugin_thread = std::thread([] { input_plugin->initiate(); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    auto rsp_plugin_thread = std::thread([] { rsp_plugin->initiate(); });
+    ScopeTimer timer("PluginUtil::initiate_plugins", g_view_logger.get());
 
-    gfx_plugin_thread.join();
-    audio_plugin_thread.join();
-    input_plugin_thread.join();
-    rsp_plugin_thread.join();
+    std::latch done(4);
+
+    ThreadPool::submit_task([&] {
+        video_plugin->initiate();
+        done.count_down();
+    });
+
+    ThreadPool::submit_task([&] {
+        audio_plugin->initiate();
+        done.count_down();
+    });
+
+    ThreadPool::submit_task([&] {
+        input_plugin->initiate();
+        done.count_down();
+    });
+
+    ThreadPool::submit_task([&] {
+        rsp_plugin->initiate();
+        done.count_down();
+    });
+
+    done.wait();
 }
 
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
