@@ -506,6 +506,8 @@ bool is_capturing()
 
 void core_executing_changed(const std::any &data)
 {
+    std::lock_guard lock(m_mutex);
+
     auto value = std::any_cast<bool>(data);
 
     if (!value || !m_capturing) return;
