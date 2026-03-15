@@ -207,7 +207,7 @@ static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
         ParameterPalette::show(found_action_path);
         return true;
     }
-    
+
     ActionManager::invoke(found_action_path);
 
     return true;

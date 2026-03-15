@@ -470,13 +470,13 @@ static int get_params(lua_State *L)
     const auto params = ActionManager::get_params(path);
     const auto normalized_path = ActionManager::normalize_filter(path);
 
-    const auto& meta_it = lua->param_meta_map[normalized_path];
-    
+    const auto &meta_it = lua->param_meta_map[normalized_path];
+
     lua_newtable(L);
     size_t i = 1;
     for (const auto &param : params)
     {
-        const auto& meta = meta_it[i - 1];
+        const auto &meta = meta_it[i - 1];
 
         lua_newtable(L);
 
@@ -494,7 +494,7 @@ static int get_params(lua_State *L)
 
         lua_pushcallback(L, meta.get_hints, false);
         lua_setfield(L, -2, "get_hints");
-        
+
         lua_seti(L, -2, i++);
     }
 

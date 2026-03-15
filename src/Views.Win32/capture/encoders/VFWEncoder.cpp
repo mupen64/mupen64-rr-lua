@@ -187,7 +187,7 @@ bool VFWEncoder::append_video(uint8_t *image)
         {
             const int overshot = (int)(m_audio_frame - (double)m_video_frame + 0.2);
             if (overshot == 0) break;
-            
+
             RT_ASSERT(overshot >= 0, L"Video is ahead of audio");
 
             result = append_video_impl(image);

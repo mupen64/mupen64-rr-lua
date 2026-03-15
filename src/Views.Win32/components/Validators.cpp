@@ -39,7 +39,7 @@ std::optional<std::wstring> int32_t_optional(const std::wstring_view str)
 
 std::optional<std::wstring> boolean(const std::wstring_view str)
 {
-    if(str == L"0" || str == L"1")
+    if (str == L"0" || str == L"1")
     {
         return std::nullopt;
     }

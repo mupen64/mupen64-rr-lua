@@ -37,6 +37,7 @@ size_t m_total_frames = 0;
 uint8_t *m_video_buf = nullptr;
 int32_t m_video_width;
 int32_t m_video_height;
+static Encoder::Params m_encoder_params;
 
 std::atomic m_capturing = false;
 t_config::EncoderType m_encoder_type;
@@ -360,14 +361,15 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
     get_video_dimensions(&m_video_width, &m_video_height);
     m_video_buf = (uint8_t *)malloc(m_video_width * m_video_height * 3);
 
-    const auto result = m_encoder->start(Encoder::Params{
+    m_encoder_params = Encoder::Params{
         .path = m_current_path,
         .width = (uint32_t)m_video_width,
         .height = (uint32_t)m_video_height,
         .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
         .arate = (uint32_t)m_audio_freq,
         .ask_for_capture_settings = ask_for_capture_settings,
-    });
+    };
+    const auto result = m_encoder->start(m_encoder_params);
 
     if (result.has_value())
     {
@@ -470,14 +472,6 @@ void ai_dacrate_changed(std::any data)
 {
     auto type = std::any_cast<core_system_type>(data);
 
-    if (m_capturing)
-    {
-        DialogService::show_dialog(L"Audio frequency changed during capture.\r\nThe capture will be stopped.",
-                                   L"Capture", fsvc_error);
-        stop_capture();
-        return;
-    }
-
     m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
 
     switch (type)
@@ -510,8 +504,28 @@ bool is_capturing()
     return m_capturing;
 }
 
+void core_executing_changed(const std::any &data)
+{
+    std::lock_guard lock(m_mutex);
+
+    auto value = std::any_cast<bool>(data);
+
+    if (!value || !m_capturing) return;
+
+    const auto vis = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+
+    if (vis != m_encoder_params.fps)
+    {
+        DialogService::show_dialog(
+            L"Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", L"Capture",
+            fsvc_error);
+        stop_capture();
+    }
+}
+
 void init()
 {
     Messenger::subscribe(Messenger::Message::DacrateChanged, ai_dacrate_changed);
+    Messenger::subscribe(Messenger::Message::CoreExecutingChanged, core_executing_changed);
 }
 } // namespace CaptureManager

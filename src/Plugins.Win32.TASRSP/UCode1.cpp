@@ -459,32 +459,35 @@ static void RESAMPLE()
         for (int x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0;
     }
 
-    for (int i = 0; i < ((AudioCount + 0xf) & 0xFFF0) / 2; i++)
+    const auto output_samples = ((AudioCount + 0xf) & 0xFFF0) / 2;
+    const auto lut_phases = 64;
+    const auto lut_taps = 4;
+    for (int i = 0; i < output_samples; i++)
     {
-        location = (Accum >> 0xa) << 0x3;
-        lut = (int16_t *)(((uint8_t *)ResampleLUT) + location);
+        int phase = Accum >> 10;
+        int16_t *coeff = (int16_t *)((uint8_t *)ResampleLUT + (phase << 3));
 
-        temp = ((int32_t)*(int16_t *)(src + ((srcPtr + 0) ^ 1)) * ((int32_t)((int16_t)lut[0])));
-        accum = (int32_t)(temp >> 15);
+        int32_t sum = 0;
 
-        temp = ((int32_t)*(int16_t *)(src + ((srcPtr + 1) ^ 1)) * ((int32_t)((int16_t)lut[1])));
-        accum += (int32_t)(temp >> 15);
+        for (int tap = 0; tap < lut_taps; tap++)
+        {
+            int16_t sample = *(int16_t *)(src + ((srcPtr + tap) ^ 1));
+            int16_t c = coeff[tap];
 
-        temp = ((int32_t)*(int16_t *)(src + ((srcPtr + 2) ^ 1)) * ((int32_t)((int16_t)lut[2])));
-        accum += (int32_t)(temp >> 15);
+            sum += ((int32_t)sample * c) >> 15;
+        }
 
-        temp = ((int32_t)*(int16_t *)(src + ((srcPtr + 3) ^ 1)) * ((int32_t)((int16_t)lut[3])));
-        accum += (int32_t)(temp >> 15);
+        if (sum > 32767) sum = 32767;
+        if (sum < -32768) sum = -32768;
 
-        if (accum > 32767) accum = 32767;
-        if (accum < -32768) accum = -32768;
-
-        dst[dstPtr ^ 1] = (accum);
+        dst[dstPtr ^ 1] = (int16_t)sum;
         dstPtr++;
+
         Accum += Pitch;
         srcPtr += (Accum >> 16);
-        Accum &= 0xffff;
+        Accum &= 0xFFFF;
     }
+
     for (int x = 0; x < 4; x++) ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
 
     // memcpy (RSWORK, src+srcPtr, 0x8);
