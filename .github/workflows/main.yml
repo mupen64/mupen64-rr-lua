@@ -2,9 +2,6 @@ name: main
 
 on: [push]
 
-env:
-  DUMMY: a
-
 jobs:
   check-format:
     runs-on: ubuntu-latest
@@ -57,10 +54,6 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
 
-      - name: CMake Test
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: ctest --test-dir build
-
       - name: "Upload build"
         uses: actions/upload-artifact@v4
         with:
@@ -94,13 +87,39 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
 
-      - name: CMake Test
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: ctest --test-dir build
-
       - name: "Upload build"
         uses: actions/upload-artifact@v4
         with:
           name: mupen-release
           path: build/out
           retention-days: 14
+  test:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        arch: [x86]
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
+        shell: powershell
+        run: |
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
+          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+
+      - name: CMake Setup
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --preset vcpkg-win64-x86-release
+
+      - name: CMake Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
+
+      - name: CMake Test
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: ctest --test-dir build
