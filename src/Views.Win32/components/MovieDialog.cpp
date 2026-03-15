@@ -352,15 +352,25 @@ refresh:
     return FALSE;
 }
 
-MovieDialog::t_result MovieDialog::show(bool readonly, const std::function<bool(const t_result &)> &on_confirm)
+std::filesystem::path get_default_movie_path(bool readonly)
 {
     const auto rom_hdr = g_main_ctx.core_ctx->vr_get_rom_header();
 
+    if (g_config.recent_movie_paths.empty() || !readonly)
+    {
+        const auto rom_name = (char *)rom_hdr->nom;
+        const auto rom_country = g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code);
+        return std::format(L"{} ({}).m64", IOUtils::to_wide_string(rom_name), IOUtils::to_wide_string(rom_country));
+    }
+
+    return g_config.recent_movie_paths[0];
+}
+
+MovieDialog::t_result MovieDialog::show(bool readonly, const std::function<bool(const t_result &)> &on_confirm)
+{
     g_ctx.is_readonly = readonly;
     g_ctx.on_confirm = on_confirm;
-    g_ctx.user_result.path = std::format(
-        L"{} ({}).m64", IOUtils::to_wide_string((char *)rom_hdr->nom),
-        IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code)));
+    g_ctx.user_result.path = get_default_movie_path(readonly);
     g_ctx.user_result.start_flag = g_config.last_movie_type;
     g_ctx.user_result.author = g_config.last_movie_author;
     g_ctx.user_result.description = L"";
