@@ -38,6 +38,7 @@
 #include <thread>
 #include <variant>
 #include <vector>
+#include <latch>
 #include <xxh64.h>
 #include "MiscHelpers.h"
 #include "StrUtils.h"
