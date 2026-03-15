@@ -44,16 +44,6 @@ struct Status
     RECT initial_window_rect;
 
     /**
-     * \brief Whether the window is currently being dragged
-     */
-    bool is_dragging_window;
-
-    /**
-     * \brief The position of the cursor relative to the window origin at the drag operation's start
-     */
-    POINT dragging_window_cursor_diff;
-
-    /**
      * \brief The window's position. Used for restoring the position after dialog changes and its position is reset by
      * window manager
      */
@@ -531,11 +521,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     bool lmb_down = GetAsyncKeyState(MOUSE_LBUTTONREDEFINITION) & 0x8000;
     bool rmb_down = GetAsyncKeyState(MOUSE_RBUTTONREDEFINITION) & 0x8000;
 
-    if (!lmb_down && ctx)
-    {
-        ctx->is_dragging_window = false;
-    }
-
     switch (msg)
     {
     case WM_INITDIALOG: {
@@ -629,32 +614,15 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         }
 
-        POINT cursor_position{};
-        GetCursorPos(&cursor_position);
+        ReleaseCapture();
+        SendMessage(ctx->hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
 
-        RECT rect{};
-        GetWindowRect(ctx->hwnd, &rect);
-
-        ctx->is_dragging_window = true;
-        ctx->dragging_window_cursor_diff = {
-            cursor_position.x - rect.left,
-            cursor_position.y - rect.top,
-        };
-
-        break;
+        return 0;
     }
     case WM_SETCURSOR: {
         const bool lmb_just_up = !lmb_down && ctx->last_lmb_down;
         const bool rmb_just_up = !rmb_down && ctx->last_rmb_down;
         const bool rmb_just_down = rmb_down && !ctx->last_rmb_down;
-
-        if (ctx->is_dragging_window)
-        {
-            POINT cursor_position = {0};
-            GetCursorPos(&cursor_position);
-            SetWindowPos(ctx->hwnd, nullptr, cursor_position.x - ctx->dragging_window_cursor_diff.x,
-                         cursor_position.y - ctx->dragging_window_cursor_diff.y, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
-        }
 
         if (lmb_just_up || rmb_just_up)
         {
@@ -1259,7 +1227,7 @@ bool Status::show_context_menu(int x, int y)
         new_config.relative_mode = false;
     }
 
-    for (auto& status_dlg : status)
+    for (auto &status_dlg : status)
     {
         if (status_dlg.ready && status_dlg.hwnd)
         {
