@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "common.h"
+#include "Common.h"
 #include "SoundDriverInterface.h"
-#include "audiohle.h"
+#include "AudioHLE.h"
 #include "DirectSoundDriver.h"
 
 static void log_shim(const wchar_t *str)

@@ -10,7 +10,7 @@
 #include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
-#include <resource.h>
+#include <Resource.h>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP", L"1.0.1")
 

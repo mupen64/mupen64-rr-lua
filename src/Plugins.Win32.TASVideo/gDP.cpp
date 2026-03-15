@@ -6,7 +6,7 @@
 #include "gDP.h"
 #include "gSP.h"
 #include "Types.h"
-#include "Convert.h"
+#include "convert.h"
 #include "OpenGL.h"
 #include "CRC.h"
 #include "FrameBuffer.h"

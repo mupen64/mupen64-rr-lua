@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "audiohle.h"
+#include "AudioHLE.h"
 
 s16 Vol_Left;     // 0x0006(T8)
 s16 Vol_Right;    // 0x0008(T8)

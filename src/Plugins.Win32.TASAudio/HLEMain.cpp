@@ -7,7 +7,7 @@
 /* memset() and memcpy() */
 #include <string.h>
 #include "Mupen64plusHLE/common.h"
-#include "audiohle.h"
+#include "AudioHLE.h"
 // #include "RSP/rsp.h"
 
 // For pseudo-HLE code... :)

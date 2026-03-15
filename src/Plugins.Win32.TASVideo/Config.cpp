@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Config.h"
 #include "glN64.h"
-#include "Resource.h"
+#include "resource.h"
 #include "RSP.h"
 #include "Textures.h"
 #include "OpenGL.h"

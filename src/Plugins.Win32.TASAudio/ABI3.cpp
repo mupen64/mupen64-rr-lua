@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "audiohle.h"
+#include "AudioHLE.h"
 
 /*
 FFT = Fast Fourier Transform

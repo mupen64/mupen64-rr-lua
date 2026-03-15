@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "Common.h"
 
 #pragma pack(push, 1)
 struct t_trivial_config

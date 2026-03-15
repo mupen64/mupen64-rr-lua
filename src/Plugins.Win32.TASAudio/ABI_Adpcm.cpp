@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "audiohle.h"
+#include "AudioHLE.h"
 
 u16 adpcmtable[0x88];
 

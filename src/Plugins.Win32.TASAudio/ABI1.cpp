@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "audiohle.h"
+#include "AudioHLE.h"
 
 p_func ABI1[NUM_ABI_COMMANDS] = {
     SPNOOP,    ADPCM,  CLEARBUFF,  ENVMIXER, LOADBUFF, RESAMPLE, SAVEBUFF, UNKNOWN, SETBUFF, SETVOL, DMEMMOVE,

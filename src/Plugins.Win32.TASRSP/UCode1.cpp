@@ -5,7 +5,7 @@
  */
 
 #include "Main.h"
-#include "hle.h"
+#include "HLE.h"
 
 /******** DMEM Memory Map for ABI 1 ***************
 Address/Range		Description

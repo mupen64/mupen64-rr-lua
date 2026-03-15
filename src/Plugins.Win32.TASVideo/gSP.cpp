@@ -13,7 +13,7 @@
 #include "S2DEX.h"
 #include "VI.h"
 #include "DepthBuffer.h"
-#include "Resource.h"
+#include "resource.h"
 
 #define gSPFlushTriangles()                                                                                            \
     if ((OGL.numTriangles > 0) && (RSP.nextCmd != G_TRI1) && (RSP.nextCmd != G_TRI2) && (RSP.nextCmd != G_TRI4) &&     \

@@ -5,7 +5,7 @@
  */
 
 #include "Main.h"
-#include "hle.h"
+#include "HLE.h"
 
 static struct
 {

@@ -7,7 +7,7 @@
 /* memset() and memcpy() */
 #include <string.h>
 
-#include "audiohle.h"
+#include "AudioHLE.h"
 
 void CLEARBUFF()
 {

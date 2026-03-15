@@ -5,7 +5,7 @@
  */
 
 #include "Configuration.h"
-#include "resource.h"
+#include "Resource.h"
 #include "SoundDriverInterface.h"
 
 #define SUBKEY L"Software\\N64 Emulation\\DLL\\TAS Audio"

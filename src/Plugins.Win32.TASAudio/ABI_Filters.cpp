@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "audiohle.h"
+#include "AudioHLE.h"
 
 /*
  * Some combination of RSP LWC2 pack-type operations and vector multiply-

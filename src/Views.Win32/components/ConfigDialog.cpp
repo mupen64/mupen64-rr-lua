@@ -14,7 +14,7 @@
 #include <components/FilePicker.h>
 #include <components/SettingsListView.h>
 #include <components/TextEditDialog.h>
-#include <components/configdialog.h>
+#include <components/ConfigDialog.h>
 #include <lua/LuaManager.h>
 
 #include <algorithm>

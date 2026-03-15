@@ -15,7 +15,7 @@
 #include "F3DWRUS.h"
 #include "F3DPD.h"
 #include "Types.h"
-#include "Resource.h"
+#include "resource.h"
 #include "CRC.h"
 
 u32 uc_crc, uc_dcrc;
