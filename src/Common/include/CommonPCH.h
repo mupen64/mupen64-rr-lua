@@ -1,5 +1,6 @@
 #pragma once
 
+#pragma warning(push, 0)
 #include <algorithm>
 #include <any>
 #include <array>
@@ -42,4 +43,4 @@
 #include "MiscHelpers.h"
 #include "StrUtils.h"
 #include "IOUtils.h"
-// #include "PlatformService.h"
+#pragma warning(pop)

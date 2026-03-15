@@ -59,7 +59,7 @@ extern "C"
 #include <ranges>
 #include <set>
 #include <cwctype>
-#pragma warning pop
+#pragma warning(pop)
 
 #include <Loggers.h>
 #include <ViewHelpers.h>
