@@ -504,16 +504,19 @@ bool is_capturing()
     return m_capturing;
 }
 
-void core_executing_changed(const std::any &)
+void core_executing_changed(const std::any &data)
 {
-    if (!m_capturing) return;
+    auto value = std::any_cast<bool>(data);
+
+    if (!value || !m_capturing) return;
 
     const auto vis = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
 
     if (vis != m_encoder_params.fps)
     {
-        DialogService::show_dialog(L"Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", L"Capture",
-                                   fsvc_error);
+        DialogService::show_dialog(
+            L"Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", L"Capture",
+            fsvc_error);
         stop_capture();
     }
 }
