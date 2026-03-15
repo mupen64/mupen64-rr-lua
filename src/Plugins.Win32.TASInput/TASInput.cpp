@@ -1293,7 +1293,7 @@ void Status::on_config_changed()
         rect.right += 8;
         rect.bottom += 5;
     }
-    SetWindowPos(hwnd, nullptr, 0, 0, rect.right, rect.bottom, SWP_NOMOVE);
+    SetWindowPos(hwnd, nullptr, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOMOVE);
 
     const bool expanded = new_config.dialog_expanded[controller_index];
 
