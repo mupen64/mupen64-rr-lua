@@ -71,8 +71,11 @@ find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
-find_package(glew CONFIG REQUIRED) 
-find_package(SDL3 CONFIG REQUIRED) 
+
+if (MUPEN64RR_BUILD_WIN32)
+  find_package(glew CONFIG REQUIRED) 
+  find_package(SDL3 CONFIG REQUIRED) 
+endif()
 
 # Lua, because Lua sucks
 find_package(Lua REQUIRED)
