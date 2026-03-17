@@ -156,7 +156,7 @@ static void destroy_loadscreen(t_lua_rendering_context *ctx)
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR user, DWORD_PTR, DWORD_PTR)
 {
     const auto hwnd = (HWND)user;
-    RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
+    if (IsWindow(hwnd)) RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
 }
 
 static void restart_invalidation_timers(t_lua_rendering_context *ctx)
