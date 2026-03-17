@@ -274,6 +274,35 @@ retest.describe('mupen64', function()
     end)
 
     retest.describe('d2d', function()
+        retest.describe('get_target_fps', function()
+            retest.it('returns_number_or_nil', function()
+                local fps = d2d.get_target_fps()
+                retest.expect(type(fps) == 'number' or fps == nil).to.equal(true)
+            end)
+        end)
+
+        retest.describe('set_target_fps', function()
+            retest.it('sets_and_returns_target_fps', function()
+                local previous_fps = d2d.get_target_fps()
+
+                d2d.set_target_fps(30)
+                retest.expect(d2d.get_target_fps()).to.equal(30)
+
+                d2d.set_target_fps(previous_fps)
+            end)
+
+            retest.it('accepts_nil', function()
+                local previous_fps = d2d.get_target_fps()
+
+                local func = function()
+                    d2d.set_target_fps(nil)
+                end
+                retest.expect(func).to_not.fail()
+
+                d2d.set_target_fps(previous_fps)
+            end)
+        end)
+
         retest.describe('draw_to_image', function()
             retest.it('clamps_negative_sizes', function()
                 local img = d2d.draw_to_image(-10, -10, function() end)
