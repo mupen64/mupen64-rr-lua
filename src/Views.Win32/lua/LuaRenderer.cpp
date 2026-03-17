@@ -375,6 +375,10 @@ void LuaRenderer::loadscreen_reset(t_lua_rendering_context *ctx)
 void LuaRenderer::set_target_fps(t_lua_rendering_context *rctx, std::optional<float> fps)
 {
     if (rctx->target_fps == fps) return;
+    if (fps.has_value())
+    {
+        if (!std::isfinite(fps.value()) || fps.value() <= 0.0f) return;
+    }
 
     rctx->target_fps = fps;
     restart_invalidation_timers(rctx);
