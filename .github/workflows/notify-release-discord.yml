@@ -1,0 +1,10 @@
+name: Call org release notifier
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    uses: org/.github/.github/workflows/notify-release-discord.yml@main
+    secrets: inherit
