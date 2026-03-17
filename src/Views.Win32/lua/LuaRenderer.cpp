@@ -159,10 +159,15 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR user, DWORD_PTR, 
     if (IsWindow(hwnd)) RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
 }
 
-static void restart_invalidation_timers(t_lua_rendering_context *ctx)
+static void stop_invalidation_timers(t_lua_rendering_context *ctx)
 {
     timeKillEvent(ctx->d2d_timer);
     timeKillEvent(ctx->gdi_timer);
+}
+
+static void restart_invalidation_timers(t_lua_rendering_context *ctx)
+{
+    stop_invalidation_timers(ctx);
 
     const auto fps = ctx->target_fps.value_or(1000.0f);
     const auto ms = (UINT)std::round(1000.0f / fps);
@@ -271,6 +276,7 @@ void LuaRenderer::pre_destroy_renderer(t_lua_rendering_context *ctx)
     ctx->ignore_create_renderer = true;
     SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, nullptr);
     SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, nullptr);
+    stop_invalidation_timers(ctx);
 }
 
 void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
