@@ -352,7 +352,7 @@ refresh:
     return FALSE;
 }
 
-std::filesystem::path get_default_movie_path(bool readonly)
+static std::filesystem::path get_default_movie_path(bool readonly)
 {
     const auto rom_hdr = g_main_ctx.core_ctx->vr_get_rom_header();
 
