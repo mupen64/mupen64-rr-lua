@@ -358,7 +358,8 @@ static std::filesystem::path get_default_movie_path(bool readonly)
 
     if (g_config.recent_movie_paths.empty() || !readonly)
     {
-        const auto rom_name = (char *)rom_hdr->nom;
+        char rom_name[sizeof(rom_hdr->nom) + 1]{};
+        std::memcpy(rom_name, rom_hdr->nom, sizeof(rom_hdr->nom));
         const auto rom_country = g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code);
         return std::format(L"{} ({}).m64", IOUtils::to_wide_string(rom_name), IOUtils::to_wide_string(rom_country));
     }
