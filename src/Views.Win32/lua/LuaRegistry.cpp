@@ -139,7 +139,9 @@ const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush},
                                {"resetclip", LuaCore::Wgui::ResetClip},
                                {NULL, NULL}};
 
-const luaL_Reg D2D_FUNCS[] = {{"create_brush", LuaCore::D2D::create_brush},
+const luaL_Reg D2D_FUNCS[] = {{"get_target_fps", LuaCore::D2D::get_target_fps},
+                              {"set_target_fps", LuaCore::D2D::set_target_fps},
+                              {"create_brush", LuaCore::D2D::create_brush},
                               {"free_brush", LuaCore::D2D::free_brush},
 
                               {"clear", LuaCore::D2D::clear},

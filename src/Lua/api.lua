@@ -995,6 +995,14 @@ function wgui.resetclip() end
 
 ---@alias brush integer
 
+---Gets the target FPS of the `emu.atdrawd2d` callback.
+---@return number? # The target FPS, or nil.
+function d2d.get_target_fps() end
+
+---Sets the target FPS of the `emu.atdrawd2d` callback.
+---@param fps number? The target FPS. If nil, the target FPS will be the monitor's refresh rate.
+function d2d.set_target_fps(fps) end
+
 ---Creates a brush from a color and returns it. D2D colors range from 0 to 1.
 ---@param r number
 ---@param g number

@@ -57,6 +57,30 @@ typedef struct
 #define D2D_GET_ROUNDED_RECT(L, idx)                                                                                   \
     D2D1_ROUNDED_RECT(D2D_GET_RECT(L, idx), luaL_checknumber(L, idx + 5), luaL_checknumber(L, idx + 6))
 
+static int get_target_fps(lua_State *L)
+{
+    auto lua = LuaManager::get_environment_for_state(L);
+
+    if (lua->rctx.target_fps.has_value())
+        lua_pushnumber(L, lua->rctx.target_fps.value());
+    else
+        lua_pushnil(L);
+
+    return 1;
+}
+
+static int set_target_fps(lua_State *L)
+{
+    auto lua = LuaManager::get_environment_for_state(L);
+
+    std::optional<float> fps;
+    if (!lua_isnil(L, 1)) fps = (float)luaL_checknumber(L, 1);
+
+    LuaRenderer::set_target_fps(&lua->rctx, fps);
+
+    return 0;
+}
+
 static int create_brush(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
