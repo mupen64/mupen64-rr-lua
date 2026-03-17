@@ -18,12 +18,6 @@ void init();
 t_lua_rendering_context default_rendering_context();
 
 /**
- * \brief Invalidates all visual layers of all running Lua scripts.
- * \remarks Must be called from the UI thread.
- */
-void invalidate_visuals();
-
-/**
  * \brief Forces an immediate repaint of all visual layers of all running Lua scripts.
  * \remarks Must be called from the UI thread.
  */
@@ -58,6 +52,13 @@ void mark_gdi_content_present(t_lua_rendering_context *);
  * \brief Resets the loadscreen graphics.
  */
 void loadscreen_reset(t_lua_rendering_context *);
+
+/**
+ * \brief Sets the target FPS.
+ * \param rctx The lua rendering context.
+ * \param fps The target FPS. If std::nullopt, an FPS equal to the monitor refresh rate will be used.
+ */
+void set_target_fps(t_lua_rendering_context *rctx, std::optional<float> fps);
 
 /**
  * \brief Gets a brush containing a color that, when drawn to the GDI back dc, will be interpreted as an alpha mask by

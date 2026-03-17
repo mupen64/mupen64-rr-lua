@@ -59,6 +59,11 @@ struct t_lua_rendering_context
     // re-creating a renderer when stopping a script.
     bool ignore_create_renderer{};
 
+    std::optional<float> target_fps{};
+
+    MMRESULT d2d_timer{};
+    MMRESULT gdi_timer{};
+
     HDC loadscreen_dc{};
     HBITMAP loadscreen_bmp{};
 

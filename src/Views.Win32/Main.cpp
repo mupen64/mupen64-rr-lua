@@ -766,9 +766,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message)
     {
-    case WM_INVALIDATE_LUA:
-        LuaRenderer::invalidate_visuals();
-        break;
     case WM_DROPFILES: {
         auto drop = (HDROP)wParam;
         wchar_t fname[MAX_PATH] = {0};
@@ -1017,9 +1014,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
     g_main_ctx.core_ctx->vr_invalidate_visuals();
-
-    // This has to be posted to ui thread since it requires synchronized access to the lua map
-    PostMessage(g_main_ctx.hwnd, WM_INVALIDATE_LUA, 0, 0);
 
     static std::chrono::high_resolution_clock::time_point last_statusbar_update =
         std::chrono::high_resolution_clock::now();
