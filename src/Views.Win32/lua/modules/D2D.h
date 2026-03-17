@@ -74,7 +74,7 @@ static int set_target_fps(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
 
     std::optional<float> fps;
-    if (!lua_isnil(L, 1)) fps = (float)luaL_checknumber(L, 1);
+    if (!lua_isnoneornil(L, 1)) fps = (float)luaL_checknumber(L, 1);
 
     LuaRenderer::set_target_fps(&lua->rctx, fps);
 
