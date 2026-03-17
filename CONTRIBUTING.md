@@ -35,6 +35,19 @@ Make sure to set the CMake profile to use the `vcpkg-win64-x86` preset, enabling
 
 If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
 
+# Dependencies
+When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
+
+> **Note:** the Windows GUI components are gated behind `MUPEN64RR_BUILD_WIN32`. 
+
+```cmake
+# example: GLEW and SDL3 are specifically for the windows
+if (MUPEN64RR_BUILD_WIN32)
+  find_package(glew CONFIG REQUIRED) 
+  find_package(SDL3 CONFIG REQUIRED) 
+endif()
+```
+
 # Copyright Header
 
 Every non-library file must contain a copyright header with this content:
