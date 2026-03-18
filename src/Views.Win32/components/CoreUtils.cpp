@@ -69,112 +69,112 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
         return {};
     }
 
-    std::wstring module;
-    std::wstring error;
+    std::string module;
+    std::string error;
 
     switch (result)
     {
 #pragma region VCR
     case VCR_InvalidFormat:
-        module = L"VCR";
-        error = L"The provided data has an invalid format.";
+        module = "VCR";
+        error = "The provided data has an invalid format.";
         break;
     case VCR_BadFile:
-        module = L"VCR";
-        error = L"The provided file is inaccessible or does not exist.";
+        module = "VCR";
+        error = "The provided file is inaccessible or does not exist.";
         break;
     case VCR_InvalidSavestate:
-        module = L"VCR";
-        error = L"The movie's savestate is missing or invalid.";
+        module = "VCR";
+        error = "The movie's savestate is missing or invalid.";
         break;
     case VCR_InvalidFrame:
-        module = L"VCR";
-        error = L"The resulting frame is outside the bounds of the movie.";
+        module = "VCR";
+        error = "The resulting frame is outside the bounds of the movie.";
         break;
     case VCR_NoMatchingRom:
-        module = L"VCR";
-        error = L"There is no rom which matches this movie.";
+        module = "VCR";
+        error = "There is no rom which matches this movie.";
         break;
     case VCR_Idle:
-        module = L"VCR";
-        error = L"The VCR engine is idle, but must be active to complete this operation.";
+        module = "VCR";
+        error = "The VCR engine is idle, but must be active to complete this operation.";
         break;
     case VCR_NotFromThisMovie:
-        module = L"VCR";
-        error = L"The provided freeze buffer is not from the currently active movie.";
+        module = "VCR";
+        error = "The provided freeze buffer is not from the currently active movie.";
         break;
     case VCR_InvalidVersion:
-        module = L"VCR";
-        error = L"The movie's version is invalid.";
+        module = "VCR";
+        error = "The movie's version is invalid.";
         break;
     case VCR_InvalidExtendedVersion:
-        module = L"VCR";
-        error = L"The movie's extended version is invalid.";
+        module = "VCR";
+        error = "The movie's extended version is invalid.";
         break;
     case VCR_NeedsPlaybackOrRecording:
-        module = L"VCR";
-        error = L"The operation requires a playback or recording task.";
+        module = "VCR";
+        error = "The operation requires a playback or recording task.";
         break;
     case VCR_NeedsPlayback:
-        module = L"VCR";
-        error = L"The operation requires a playback task.";
+        module = "VCR";
+        error = "The operation requires a playback task.";
         break;
     case VCR_InvalidStartType:
-        module = L"VCR";
-        error = L"The provided start type is invalid.";
+        module = "VCR";
+        error = "The provided start type is invalid.";
         break;
     case VCR_WarpModifyAlreadyRunning:
-        module = L"VCR";
-        error = L"Another warp modify operation is already running.";
+        module = "VCR";
+        error = "Another warp modify operation is already running.";
         break;
     case VCR_WarpModifyNeedsRecordingTask:
-        module = L"VCR";
-        error = L"Warp modifications can only be performed during recording.";
+        module = "VCR";
+        error = "Warp modifications can only be performed during recording.";
         break;
     case VCR_WarpModifyEmptyInputBuffer:
-        module = L"VCR";
-        error = L"The provided input buffer is empty.";
+        module = "VCR";
+        error = "The provided input buffer is empty.";
         break;
     case VCR_SeekAlreadyRunning:
-        module = L"VCR";
-        error = L"Another seek operation is already running.";
+        module = "VCR";
+        error = "Another seek operation is already running.";
         break;
     case VCR_SeekSavestateLoadFailed:
-        module = L"VCR";
-        error = L"The seek operation could not be initiated due to a savestate not being loaded successfully.";
+        module = "VCR";
+        error = "The seek operation could not be initiated due to a savestate not being loaded successfully.";
         break;
     case VCR_SeekSavestateIntervalZero:
-        module = L"VCR";
-        error = L"The seek operation can't be initiated because the seek savestate interval is 0.";
+        module = "VCR";
+        error = "The seek operation can't be initiated because the seek savestate interval is 0.";
         break;
 #pragma endregion
 #pragma region VR
     case VR_NoMatchingRom:
-        module = L"Core";
-        error = L"The ROM couldn't be loaded.\r\nCouldn't find an appropriate ROM.";
+        module = "Core";
+        error = "The ROM couldn't be loaded.\r\nCouldn't find an appropriate ROM.";
         break;
     case VR_PluginError:
-        module = L"Core";
-        error = L"One or more plugins couldn't be loaded.\r\nVerify that you have selected all four plugins.";
+        module = "Core";
+        error = "One or more plugins couldn't be loaded.\r\nVerify that you have selected all four plugins.";
         break;
     case VR_RomInvalid:
-        module = L"Core";
-        error = L"The ROM couldn't be loaded.\r\nVerify that the ROM is a valid N64 ROM.";
+        module = "Core";
+        error = "The ROM couldn't be loaded.\r\nVerify that the ROM is a valid N64 ROM.";
         break;
     case VR_FileOpenFailed:
-        module = L"Core";
-        error = L"Failed to open streams to core files.\r\nVerify that Mupen is allowed disk access.";
+        module = "Core";
+        error = "Failed to open streams to core files.\r\nVerify that Mupen is allowed disk access.";
         break;
 #pragma endregion
 #pragma region Init
     case IN_MissingComponent:
-        module = L"Core";
-        error = L"The core params are missing a critical component.";
+        module = "Core";
+        error = "The core params are missing a critical component.";
         break;
 #pragma endregion
     default:
-        module = L"Unknown";
-        error = L"Unknown error.";
+        module = "Unknown";
+        error = "Unknown error.";
         break;
     }
     return {std::move(module), std::move(error)};
@@ -182,7 +182,7 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
 
 bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
 {
-    g_view_logger->error("CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result), hwnd);
+    g_view_logger->error("CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result), static_cast<void*>(hwnd));
 
     const auto [module, error] = get_error_message_for_result(result);
     if (error.empty()) return false;
