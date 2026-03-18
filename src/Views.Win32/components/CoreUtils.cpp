@@ -194,8 +194,9 @@ bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
     }
 
     const auto title = std::format("{} Error {}", module, static_cast<int32_t>(result));
-    DialogService::show_dialog(IOUtils::to_wide_string(error).c_str(), IOUtils::to_wide_string(title).c_str(),
-                               fsvc_error, hwnd);
+    const auto werror = IOUtils::to_wide_string(error);
+    const auto wtitle = IOUtils::to_wide_string(title);
+    DialogService::show_dialog(werror.c_str(), wtitle.c_str(), fsvc_error, hwnd);
 
     return true;
 }
