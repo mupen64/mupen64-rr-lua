@@ -85,9 +85,9 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
             const auto result =
                 g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(g_config.seeker_value), true);
-            const auto [module, error] = CoreUtils::get_error_message_for_result(result);
             if (result != Res_Ok)
             {
+                const auto [_, error] = CoreUtils::get_error_message_for_result(result);
                 SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
                 SetDlgItemText(hwnd, IDC_SEEKER_STATUS, IOUtils::to_wide_string(error).c_str());
                 break;
