@@ -42,121 +42,121 @@ Mupen = {
         -- ==========================================
 
         -- The provided data has an invalid format
-        vcr_invalid_format = 2,
+        vcr_invalid_format = 100,
 
         -- The provided file is inaccessible or does not exist
-        vcr_bad_file = 3,
+        vcr_bad_file = 101,
 
         -- The cheat data couldn't be written to disk
-        vcr_cheat_write_failed = 4,
+        vcr_cheat_write_failed = 102,
 
         -- The controller configuration is invalid
-        vcr_invalid_controllers = 5,
+        vcr_invalid_controllers = 103,
 
         -- The movie's savestate is missing or invalid
-        vcr_invalid_savestate = 6,
+        vcr_invalid_savestate = 104,
 
         -- The resulting frame is outside the bounds of the movie
-        vcr_invalid_frame = 7,
+        vcr_invalid_frame = 105,
 
         -- There is no rom which matches this movie
-        vcr_no_matching_rom = 8,
+        vcr_no_matching_rom = 106,
 
         -- The VCR engine is idle, but must be active to complete this operation
-        vcr_idle = 9,
+        vcr_idle = 107,
 
         -- The provided freeze buffer is not from the currently active movie
-        vcr_not_from_this_movie = 10,
+        vcr_not_from_this_movie = 108,
 
         -- The movie's version is invalid
-        vcr_invalid_version = 11,
+        vcr_invalid_version = 109,
 
         -- The movie's extended version is invalid
-        vcr_invalid_extended_version = 12,
+        vcr_invalid_extended_version = 110,
 
         -- The operation requires a playback or recording task
-        vcr_needs_playback_or_recording = 13,
+        vcr_needs_playback_or_recording = 111,
 
         -- The operation requires a playback task
-        vcr_needs_playback = 14,
+        vcr_needs_playback = 112,
 
         -- The provided start type is invalid
-        vcr_invalid_start_type = 15,
+        vcr_invalid_start_type = 113,
 
         -- Another warp modify operation is already running
-        vcr_warp_modify_already_running = 16,
+        vcr_warp_modify_already_running = 114,
 
         -- Warp modifications can only be performed during recording
-        vcr_warp_modify_needs_recording_task = 17,
+        vcr_warp_modify_needs_recording_task = 115,
 
         -- The provided input buffer is empty
-        vcr_warp_modify_empty_input_buffer = 18,
+        vcr_warp_modify_empty_input_buffer = 116,
 
         -- Another seek operation is already running
-        vcr_seek_already_running = 19,
+        vcr_seek_already_running = 117,
 
         -- The seek operation could not be initiated due to a savestate not being loaded successfully
-        vcr_seek_savestate_load_failed = 20,
+        vcr_seek_savestate_load_failed = 118,
 
         -- The seek operation can't be initiated because the seek savestate interval is 0
-        vcr_seek_savestate_interval_zero = 21,
+        vcr_seek_savestate_interval_zero = 119,
 
         -- The seek string is malformed
-        vcr_seek_string_malformed = 22,
+        vcr_seek_string_malformed = 120,
 
         -- VR
         -- ==========================================
 
         -- Couldn't find a rom matching the provided movie
-        vr_no_matching_rom = 23,
+        vr_no_matching_rom = 200,
 
         -- An error occured during plugin loading
-        vr_plugin_error = 24,
+        vr_plugin_error = 201,
 
         -- The ROM or alternative rom source is invalid
-        vr_rom_invalid = 25,
+        vr_rom_invalid = 202,
 
         -- The emulator isn't running yet
-        vr_not_running = 26,
+        vr_not_running = 203,
 
         -- Failed to open core streams
-        vr_file_open_failed = 27,
+        vr_file_open_failed = 204,
 
         -- Savestates
         -- ==========================================
 
         -- The core isn't launched
-        st_core_not_launched = 28,
+        st_core_not_launched = 300,
 
         -- The savestate file wasn't found
-        st_not_found = 29,
+        st_not_found = 301,
 
         -- The savestate couldn't be written to disk
-        st_file_write_error = 30,
+        st_file_write_error = 302,
 
         -- Couldn't decompress the savestate
-        st_decompression_error = 31,
+        st_decompression_error = 303,
 
         -- The event queue was too long
-        st_event_queue_too_long = 32,
+        st_event_queue_too_long = 304,
 
         -- The CPU registers contained invalid values
-        st_invalid_registers = 33,
+        st_invalid_registers = 305,
 
         -- Plugins
         -- ==========================================
 
         -- The plugin library couldn't be loaded
-        pl_load_library_failed = 34,
+        pl_load_library_failed = 400,
 
         -- The plugin doesn't export a GetDllInfo function
-        pl_no_get_dll_info = 35,
+        pl_no_get_dll_info = 401,
 
         -- Init
         -- ==========================================
 
-        -- The core params are missing a critical component.
-        in_missing_component = 36,
+        -- The core params are missing a critical component
+        in_missing_component = 500,
     },
 
     ---@alias VKeycode integer

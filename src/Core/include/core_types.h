@@ -14,105 +14,104 @@
  */
 typedef enum
 {
-
     // Generic
     // ==========================================
 
     // The operation completed successfully
-    Res_Ok,
+    Res_Ok = 0,
 
     // The operation was cancelled by the user
-    Res_Cancelled,
+    Res_Cancelled = 1,
 
     // VCR
     // ==========================================
 
     // The provided data has an invalid format
-    VCR_InvalidFormat,
+    VCR_InvalidFormat = 100,
     // The provided file is inaccessible or does not exist
-    VCR_BadFile,
+    VCR_BadFile = 101,
     // The cheat data couldn't be written to disk
-    VCR_CheatWriteFailed,
+    VCR_CheatWriteFailed = 102,
     // The controller configuration is invalid
-    VCR_InvalidControllers,
+    VCR_InvalidControllers = 103,
     // The movie's savestate is missing or invalid
-    VCR_InvalidSavestate,
+    VCR_InvalidSavestate = 104,
     // The resulting frame is outside the bounds of the movie
-    VCR_InvalidFrame,
+    VCR_InvalidFrame = 105,
     // There is no rom which matches this movie
-    VCR_NoMatchingRom,
+    VCR_NoMatchingRom = 106,
     // The VCR engine is idle, but must be active to complete this operation
-    VCR_Idle,
+    VCR_Idle = 107,
     // The provided freeze buffer is not from the currently active movie
-    VCR_NotFromThisMovie,
+    VCR_NotFromThisMovie = 108,
     // The movie's version is invalid
-    VCR_InvalidVersion,
+    VCR_InvalidVersion = 109,
     // The movie's extended version is invalid
-    VCR_InvalidExtendedVersion,
+    VCR_InvalidExtendedVersion = 110,
     // The operation requires a playback or recording task
-    VCR_NeedsPlaybackOrRecording,
+    VCR_NeedsPlaybackOrRecording = 111,
     // The operation requires a playback task
-    VCR_NeedsPlayback,
+    VCR_NeedsPlayback = 112,
     // The provided start type is invalid.
-    VCR_InvalidStartType,
+    VCR_InvalidStartType = 113,
     // Another warp modify operation is already running
-    VCR_WarpModifyAlreadyRunning,
+    VCR_WarpModifyAlreadyRunning = 114,
     // Warp modifications can only be performed during recording
-    VCR_WarpModifyNeedsRecordingTask,
+    VCR_WarpModifyNeedsRecordingTask = 115,
     // The provided input buffer is empty
-    VCR_WarpModifyEmptyInputBuffer,
+    VCR_WarpModifyEmptyInputBuffer = 116,
     // Another seek operation is already running
-    VCR_SeekAlreadyRunning,
+    VCR_SeekAlreadyRunning = 117,
     // The seek operation could not be initiated due to a savestate not being loaded successfully
-    VCR_SeekSavestateLoadFailed,
+    VCR_SeekSavestateLoadFailed = 118,
     // The seek operation can't be initiated because the seek savestate interval is 0
-    VCR_SeekSavestateIntervalZero,
+    VCR_SeekSavestateIntervalZero = 119,
     // The seek string is malformed
-    VCR_SeekStringMalformed,
+    VCR_SeekStringMalformed = 120,
 
     // VR
     // ==========================================
 
     // Couldn't find a rom matching the provided movie
-    VR_NoMatchingRom,
+    VR_NoMatchingRom = 200,
     // An error occured during plugin loading
-    VR_PluginError,
+    VR_PluginError = 201,
     // The ROM or alternative rom source is invalid
-    VR_RomInvalid,
+    VR_RomInvalid = 202,
     // The emulator isn't running yet
-    VR_NotRunning,
+    VR_NotRunning = 203,
     // Failed to open core streams
-    VR_FileOpenFailed,
+    VR_FileOpenFailed = 204,
 
     // Savestates
     // ==========================================
 
     // The core isn't launched
-    ST_CoreNotLaunched,
+    ST_CoreNotLaunched = 300,
     // The savestate file wasn't found
-    ST_NotFound,
+    ST_NotFound = 301,
     // The savestate couldn't be written to disk
-    ST_FileWriteError,
+    ST_FileWriteError = 302,
     // Couldn't decompress the savestate
-    ST_DecompressionError,
+    ST_DecompressionError = 303,
     // The event queue was too long
-    ST_EventQueueTooLong,
+    ST_EventQueueTooLong = 304,
     // The CPU registers contained invalid values
-    ST_InvalidRegisters,
+    ST_InvalidRegisters = 305,
 
     // Plugins
     // ==========================================
 
     // The plugin library couldn't be loaded
-    Pl_LoadLibraryFailed,
+    Pl_LoadLibraryFailed = 400,
     // The plugin doesn't export a GetDllInfo function
-    Pl_NoGetDllInfo,
+    Pl_NoGetDllInfo = 401,
 
     // Init
     // ==========================================
 
     // The core params are missing a critical component.
-    IN_MissingComponent,
+    IN_MissingComponent = 500,
 
 } core_result;
 
