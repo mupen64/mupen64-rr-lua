@@ -8,6 +8,7 @@
 #include <Messenger.h>
 #include <Config.h>
 #include <components/Seeker.h>
+#include <components/CoreUtils.h>
 
 #define WM_SEEK_COMPLETED (WM_USER + 11)
 
@@ -30,6 +31,9 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
         SetDlgItemText(hwnd, IDC_SEEKER_FRAME, g_config.seeker_value.c_str());
 
+        if (g_config.core.seek_savestate_interval == 0)
+            SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, L"Seek savestates disabled. Seeking backwards will be slower.");
+
         SetFocus(GetDlgItem(hwnd, IDC_SEEKER_FRAME));
         break;
     case WM_DESTROY:
@@ -45,7 +49,6 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_SEEK_COMPLETED:
         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, L"Seek completed");
         SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
-        SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, L"");
         KillTimer(hwnd, seeker.refresh_timer);
         break;
     case WM_TIMER: {
@@ -79,17 +82,14 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             }
 
             SetDlgItemText(hwnd, IDC_SEEKER_START, L"Stop");
-            if (g_config.core.seek_savestate_interval == 0)
-            {
-                SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT,
-                               L"Seek savestates disabled. Seeking backwards will be slower.");
-            }
 
-            if (g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(g_config.seeker_value), true) != Res_Ok)
+            const auto result =
+                g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(g_config.seeker_value), true);
+            const auto [module, error] = CoreUtils::get_error_message_for_result(result);
+            if (result != Res_Ok)
             {
                 SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
-                SetDlgItemText(hwnd, IDC_SEEKER_STATUS, L"Couldn't seek");
-                SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, L"");
+                SetDlgItemText(hwnd, IDC_SEEKER_STATUS, IOUtils::to_wide_string(error).c_str());
                 break;
             }
 
