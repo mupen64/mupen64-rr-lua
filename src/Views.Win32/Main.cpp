@@ -128,8 +128,6 @@ std::wstring get_mupen_name(bool simple)
     return BASE_NAME CURRENT_VERSION + version_suffix + ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
 }
 
-
-
 const wchar_t *get_input_text()
 {
     static wchar_t text[1024]{};
