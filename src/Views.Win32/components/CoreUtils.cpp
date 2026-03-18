@@ -9,12 +9,12 @@
 #include "Plugin.h"
 #include "AppActions.h"
 
-/// Prompts the user to change their plugin selection.
-static void prompt_plugin_change()
+// Prompts the user to change their plugin selection.
+static void prompt_plugin_change(HWND hwnd)
 {
     auto result = DialogService::show_multiple_choice_dialog(
         VIEW_DLG_PLUGIN_LOAD_ERROR, {L"Choose Default Plugins", L"Change Plugins", L"Cancel"},
-        L"One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", L"Core", fsvc_error);
+        L"One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", L"Core", fsvc_error, hwnd);
 
     if (result == 0)
     {
@@ -62,14 +62,12 @@ static void prompt_plugin_change()
     }
 }
 
-bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
+std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core_result result)
 {
     if (result == Res_Ok || result == Res_Cancelled || result == VCR_InvalidControllers)
     {
-        return false;
+        return {};
     }
-
-    g_view_logger->error("[View] show_error_dialog_for_result: CoreType::{}", static_cast<int32_t>(result));
 
     std::wstring module;
     std::wstring error;
@@ -157,7 +155,7 @@ bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
         break;
     case VR_PluginError:
         module = L"Core";
-        prompt_plugin_change();
+        error = L"One or more plugins couldn't be loaded.\r\nVerify that you have selected all four plugins.";
         break;
     case VR_RomInvalid:
         module = L"Core";
@@ -177,14 +175,27 @@ bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
     default:
         module = L"Unknown";
         error = L"Unknown error.";
+        break;
+    }
+    return {std::move(module), std::move(error)};
+}
+
+bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
+{
+    g_view_logger->error("CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result), hwnd);
+
+    const auto [module, error] = get_error_message_for_result(result);
+    if (error.empty()) return false;
+
+    if (result == VR_PluginError)
+    {
+        prompt_plugin_change(hwnd);
         return true;
     }
 
-    if (!error.empty())
-    {
-        const auto title = std::format(L"{} Error {}", module, static_cast<int32_t>(result));
-        DialogService::show_dialog(error.c_str(), title.c_str(), fsvc_error);
-    }
+    const auto title = std::format("{} Error {}", module, static_cast<int32_t>(result));
+    DialogService::show_dialog(IOUtils::to_wide_string(error).c_str(), IOUtils::to_wide_string(title).c_str(),
+                               fsvc_error, hwnd);
 
     return true;
 }
