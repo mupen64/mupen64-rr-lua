@@ -147,6 +147,10 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
         module = "VCR";
         error = "The seek operation can't be initiated because the seek savestate interval is 0.";
         break;
+    case VCR_SeekStringMalformed:
+        module = "VCR";
+        error = "The seek string is malformed.";
+        break;
 #pragma endregion
 #pragma region VR
     case VR_NoMatchingRom:
@@ -182,7 +186,8 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
 
 bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
 {
-    g_view_logger->error("CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result), static_cast<void*>(hwnd));
+    g_view_logger->error("CoreUtils::show_error_dialog_for_result({}, {})", static_cast<int32_t>(result),
+                         static_cast<void *>(hwnd));
 
     const auto [module, error] = get_error_message_for_result(result);
     if (error.empty()) return false;

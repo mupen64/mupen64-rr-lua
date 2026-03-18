@@ -67,6 +67,8 @@ typedef enum
     VCR_SeekSavestateLoadFailed,
     // The seek operation can't be initiated because the seek savestate interval is 0
     VCR_SeekSavestateIntervalZero,
+    // The seek string is malformed
+    VCR_SeekStringMalformed,
 
     // VR
     // ==========================================

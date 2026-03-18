@@ -1579,10 +1579,8 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
 
     const auto resolved_frame = vcr_try_resolve_seek_str_impl(str);
 
-    if (!resolved_frame.has_value() || !can_seek_to(resolved_frame.value()))
-    {
-        return VCR_InvalidFrame;
-    }
+    if (!resolved_frame.has_value()) return VCR_SeekStringMalformed;
+    if (!can_seek_to(resolved_frame.value())) return VCR_InvalidFrame;
 
     auto frame = resolved_frame.value();
 
