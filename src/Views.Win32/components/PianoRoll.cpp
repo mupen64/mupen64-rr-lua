@@ -9,6 +9,7 @@
 #include "ThreadPool.h"
 #include "Config.h"
 #include "Messenger.h"
+#include <components/CoreUtils.h>
 
 const auto JOYSTICK_CLASS = L"PianoRollJoystick";
 
@@ -463,7 +464,7 @@ static void apply_input_buffer(bool push_to_history = true)
 
                 SetWindowRedraw(piano_roll.lv_hwnd, true);
 
-                show_error_dialog_for_result(result, piano_roll.hwnd);
+                CoreUtils::show_error_dialog_for_result(result, piano_roll.hwnd);
             }
 
             piano_roll.inputs_different = false;

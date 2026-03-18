@@ -12,6 +12,7 @@
 #include <argh.h>
 #include <nlohmann/json.hpp>
 #include <capture/CaptureManager.h>
+#include <components/CoreUtils.h>
 #include <components/Benchmark.h>
 #include <components/CLI.h>
 #include <components/Compare.h>
@@ -65,12 +66,12 @@ static void start_rom()
         if (!cli_state.rom_is_movie)
         {
             const auto result = g_main_ctx.core_ctx->vr_start_rom(cli_params.rom);
-            show_error_dialog_for_result(result);
+            CoreUtils::show_error_dialog_for_result(result);
             return;
         }
 
         const auto result = g_main_ctx.core_ctx->vcr_start_playback(cli_params.rom);
-        show_error_dialog_for_result(result);
+        CoreUtils::show_error_dialog_for_result(result);
     });
 }
 
@@ -80,7 +81,7 @@ static void play_movie()
 
     g_config.core.vcr_readonly = true;
     auto result = g_main_ctx.core_ctx->vcr_start_playback(cli_params.m64);
-    show_error_dialog_for_result(result);
+    CoreUtils::show_error_dialog_for_result(result);
 }
 
 static void load_st()

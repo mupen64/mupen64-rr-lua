@@ -11,6 +11,7 @@
 #include <ThreadPool.h>
 #include <Plugin.h>
 #include <capture/CaptureManager.h>
+#include <components/CoreUtils.h>
 #include <components/AppActions.h>
 #include <components/CLI.h>
 #include <components/Cheats.h>
@@ -86,7 +87,7 @@ void AppActions::load_rom_from_path(const std::wstring &path)
 {
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vr_start_rom(path);
-        show_error_dialog_for_result(result);
+        CoreUtils::show_error_dialog_for_result(result);
     });
 }
 
@@ -140,7 +141,7 @@ static void close_rom()
     ThreadPool::submit_task(
         [] {
             const auto result = g_main_ctx.core_ctx->vr_close_rom(true);
-            show_error_dialog_for_result(result);
+            CoreUtils::show_error_dialog_for_result(result);
         },
         ASYNC_KEY_CLOSE_ROM);
 }
@@ -155,7 +156,7 @@ static void reset_rom()
     ThreadPool::submit_task(
         [] {
             const auto result = g_main_ctx.core_ctx->vr_reset_rom(false, true);
-            show_error_dialog_for_result(result);
+            CoreUtils::show_error_dialog_for_result(result);
         },
         ASYNC_KEY_RESET_ROM);
 }
@@ -247,7 +248,7 @@ static void multi_frame_advance_direct(const ActionManager::action_argument_map 
     {
         ThreadPool::submit_task([=] {
             const auto result = g_main_ctx.core_ctx->vcr_begin_seek(std::to_string(count), true);
-            show_error_dialog_for_result(result);
+            CoreUtils::show_error_dialog_for_result(result);
         });
     }
     g_main_ctx.core_ctx->vr_resume_emu();
@@ -515,7 +516,7 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
         auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(path, start_flag, IOUtils::to_utf8_string(author),
                                                                 IOUtils::to_utf8_string(description));
         g_main_ctx.core_ctx->vr_wait_decrement();
-        if (!show_error_dialog_for_result(vcr_result))
+        if (!CoreUtils::show_error_dialog_for_result(vcr_result))
         {
             g_config.last_movie_author = author;
             Statusbar::post(L"Recording replay");
@@ -548,7 +549,7 @@ static void continue_movie_recording()
     g_main_ctx.core.submit_task([] {
         const auto result = g_main_ctx.core_ctx->vcr_continue_recording();
         g_main_ctx.core_ctx->vr_wait_decrement();
-        show_error_dialog_for_result(result);
+        CoreUtils::show_error_dialog_for_result(result);
     });
 }
 
@@ -568,7 +569,7 @@ static void start_movie_playback_direct(const ActionManager::action_argument_map
 
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vcr_start_playback(path);
-        show_error_dialog_for_result(result);
+        CoreUtils::show_error_dialog_for_result(result);
     });
 }
 
@@ -605,7 +606,7 @@ static void stop_movie()
 static void create_movie_backup()
 {
     const auto result = g_main_ctx.core_ctx->vcr_write_backup();
-    show_error_dialog_for_result(result);
+    CoreUtils::show_error_dialog_for_result(result);
 }
 
 static void load_recent_movie(size_t i)
@@ -736,7 +737,7 @@ static void seek_direct(const ActionManager::action_argument_map &params)
 
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(frame_str), true);
-        show_error_dialog_for_result(result);
+        CoreUtils::show_error_dialog_for_result(result);
     });
 }
 
