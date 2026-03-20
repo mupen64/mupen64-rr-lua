@@ -633,3 +633,8 @@ std::filesystem::path Config::backup_directory()
 {
     return IOUtils::exe_path_cached().parent_path() / g_config.backups_directory;
 }
+
+std::filesystem::path Config::logs_directory()
+{
+    return IOUtils::exe_path_cached().parent_path() / L"logs";
+}

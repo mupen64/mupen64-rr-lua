@@ -376,4 +376,10 @@ std::filesystem::path screenshot_directory();
  * \brief Gets the path to the backup directory based on the current configuration.
  */
 std::filesystem::path backup_directory();
+
+/**
+ * \brief Gets the path to the logs directory. This is not based on the current configuration, but it's here for convenience.
+ */
+std::filesystem::path logs_directory();
+
 } // namespace Config
