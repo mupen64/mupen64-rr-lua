@@ -1087,6 +1087,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     g_main_ctx.app_path = get_app_full_path();
 
+    CreateDirectory(Config::logs_directory().c_str(), NULL);
+
     Loggers::init();
 
     g_view_logger->info("WinMain");
@@ -1103,7 +1105,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     CreateDirectory(Config::screenshot_directory().c_str(), NULL);
     CreateDirectory(Config::plugin_directory().c_str(), NULL);
     CreateDirectory(Config::backup_directory().c_str(), NULL);
-    CreateDirectory(Config::logs_directory().c_str(), NULL);
 
     const auto core_result = init_core();
     if (core_result != Res_Ok)
