@@ -885,9 +885,7 @@ static core_result init_core()
         if (CaptureManager::is_capturing()) CaptureManager::append_video(!new_present);
     };
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
-    g_main_ctx.core.callbacks.frame = [] {
-        g_frame_changed = true;
-    };
+    g_main_ctx.core.callbacks.frame = [] { g_frame_changed = true; };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
     g_main_ctx.core.callbacks.play_movie = LuaCallbacks::call_play_movie;
