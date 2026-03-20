@@ -1,0 +1,10 @@
+name: Call org release notifier
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    uses: mupen64/.github/.github/workflows/notify-release.yml@main
+    secrets: inherit
