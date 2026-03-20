@@ -48,9 +48,6 @@
 
 t_main_context g_main_ctx{};
 
-static HANDLE dispatcher_event{};
-static HANDLE dispatcher_done_event{};
-
 bool g_frame_changed = true;
 
 MMRESULT g_ui_timer;
@@ -1019,8 +1016,6 @@ static core_result init_core()
 static void main_dispatcher_init()
 {
     g_ui_thread_id = GetCurrentThreadId();
-    dispatcher_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    dispatcher_done_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     g_main_ctx.dispatcher =
         std::make_unique<Dispatcher>(g_ui_thread_id, [] { SendMessage(g_main_ctx.hwnd, WM_EXECUTE_DISPATCHER, 0, 0); });
 }
@@ -1063,43 +1058,6 @@ static bool is_dialog_message(MSG *msg)
         return true;
     }
     return false;
-}
-
-/**
- * \brief Pumps messages while giving priority to dispatcher execution.
- */
-static bool dispatcher_prioritized_message_pump(MSG *msg)
-{
-    const DWORD result = MsgWaitForMultipleObjectsEx(1, &dispatcher_event, INFINITE, QS_ALLEVENTS | QS_ALLINPUT,
-                                                     MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
-
-    if (result == WAIT_FAILED)
-    {
-        g_view_logger->critical("MsgWaitForMultipleObjects WAIT_FAILED");
-        return false;
-    }
-
-    if (result == WAIT_OBJECT_0 || WaitForSingleObjectEx(dispatcher_event, 0, FALSE) == WAIT_OBJECT_0)
-    {
-        g_main_ctx.dispatcher->execute();
-        SetEvent(dispatcher_done_event);
-    }
-
-    if (result == WAIT_OBJECT_0 + 1)
-    {
-        while (PeekMessage(msg, nullptr, 0, 0, PM_REMOVE))
-        {
-            if (is_dialog_message(msg))
-            {
-                continue;
-            }
-
-            TranslateMessage(msg);
-            DispatchMessage(msg);
-        }
-    }
-
-    return true;
 }
 
 /**
@@ -1240,17 +1198,11 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
         MsgWaitForMultipleObjects(0, nullptr, FALSE, INFINITE, QS_ALLEVENTS | QS_ALLINPUT);
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
-            if (msg.message == WM_QUIT) goto exit_loop;
+            if (msg.message == WM_QUIT) return (int)msg.wParam;
             if (is_dialog_message(&msg)) continue;
 
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
     }
-exit_loop:
-
-    CloseHandle(dispatcher_event);
-    CloseHandle(dispatcher_done_event);
-
-    return (int)msg.wParam;
 }
