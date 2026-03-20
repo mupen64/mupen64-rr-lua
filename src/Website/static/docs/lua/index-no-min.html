@@ -384,6 +384,14 @@
                 <a href="#d2dFuncs">D2D FUNCTIONS</a>
             </div>
             <div class="funcList">
+                <a href="#d2dGet_target_fps">
+                    <button class="funcListItem" onclick="highlightFunc('d2dGet_target_fps')">D2D.GET_TARGET_FPS</button>
+                </a>
+                
+                <a href="#d2dSet_target_fps">
+                    <button class="funcListItem" onclick="highlightFunc('d2dSet_target_fps')">D2D.SET_TARGET_FPS</button>
+                </a>
+                
                 <a href="#d2dCreate_brush">
                     <button class="funcListItem" onclick="highlightFunc('d2dCreate_brush')">D2D.CREATE_BRUSH</button>
                 </a>
@@ -1491,7 +1499,18 @@ Uses the GDI brush color for the background and a border of the GDI pen color.</
 <p>Resets the clip</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">wgui</span><span class="p">.</span><span class="nf">resetclip</span><span class="p">()</span>
 </code></pre></div></div><hr />
-<h1><a id="d2dFuncs">D2D</a> FUNCTIONS</h1><div name="d2dCreate_brush"><hr />
+<h1><a id="d2dFuncs">D2D</a> FUNCTIONS</h1><div name="d2dGet_target_fps"><hr />
+<h1><a id="d2dGet_target_fps">d2d.get_target_fps</a></h1>
+<p>Gets the target frequency of the <code>emu.atdrawd2d</code> and <code>emu.atupdatescreen</code> callbacks in FPS.</p>
+<p>@<em>return</em> — The target FPS, or nil.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">d2d</span><span class="p">.</span><span class="nf">get_target_fps</span><span class="p">()</span>
+<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">number</span><span class="err">?</span>
+</code></pre></div></div><div name="d2dSet_target_fps"><hr />
+<h1><a id="d2dSet_target_fps">d2d.set_target_fps</a></h1>
+<p>Sets the target frequency of the <code>emu.atdrawd2d</code> and <code>emu.atupdatescreen</code> callbacks in FPS.</p>
+<p>@<em>param</em> <code>fps</code> — The target FPS. If nil, the target FPS will be the monitor's refresh rate.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">d2d</span><span class="p">.</span><span class="nf">set_target_fps</span><span class="p">(</span><span class="nv">fps</span><span class="err">?</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">)</span>
+</code></pre></div></div><div name="d2dCreate_brush"><hr />
 <h1><a id="d2dCreate_brush">d2d.create_brush</a></h1>
 <p>Creates a brush from a color and returns it. D2D colors range from 0 to 1.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">d2d</span><span class="p">.</span><span class="nf">create_brush</span><span class="p">(</span><span class="nv">r</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">,</span><span class="w"> </span><span class="nv">g</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">,</span><span class="w"> </span><span class="nv">b</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">,</span><span class="w"> </span><span class="nv">a</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">)</span>
