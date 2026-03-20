@@ -52,7 +52,6 @@ static HANDLE dispatcher_event{};
 static HANDLE dispatcher_done_event{};
 
 bool g_frame_changed = true;
-bool g_exit = false;
 
 MMRESULT g_ui_timer;
 bool g_paused_before_focus;
@@ -751,7 +750,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         Config::save();
         timeKillEvent(g_ui_timer);
         Gdiplus::GdiplusShutdown(gdi_plus_token);
-        g_exit = true;
         PostQuitMessage(0);
         break;
     case WM_CLOSE:
@@ -1023,15 +1021,8 @@ static void main_dispatcher_init()
     g_ui_thread_id = GetCurrentThreadId();
     dispatcher_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     dispatcher_done_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    g_main_ctx.dispatcher = std::make_unique<Dispatcher>(g_ui_thread_id, [] {
-        if (g_config.fast_dispatcher)
-        {
-            SetEvent(dispatcher_event);
-            WaitForSingleObject(dispatcher_done_event, INFINITE);
-            return;
-        }
-        SendMessage(g_main_ctx.hwnd, WM_EXECUTE_DISPATCHER, 0, 0);
-    });
+    g_main_ctx.dispatcher =
+        std::make_unique<Dispatcher>(g_ui_thread_id, [] { SendMessage(g_main_ctx.hwnd, WM_EXECUTE_DISPATCHER, 0, 0); });
 }
 
 void set_cwd()
@@ -1108,25 +1099,6 @@ static bool dispatcher_prioritized_message_pump(MSG *msg)
         }
     }
 
-    return true;
-}
-
-/**
- * \brief Pumps messages in the default order.
- */
-static bool normal_message_pump(MSG *msg)
-{
-    MsgWaitForMultipleObjects(0, nullptr, FALSE, INFINITE, QS_ALLEVENTS | QS_ALLINPUT);
-    while (PeekMessage(msg, nullptr, 0, 0, PM_REMOVE))
-    {
-        if (is_dialog_message(msg))
-        {
-            continue;
-        }
-
-        TranslateMessage(msg);
-        DispatchMessage(msg);
-    }
     return true;
 }
 
@@ -1263,22 +1235,19 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     }
 
     MSG msg{};
-    while (!g_exit)
+    while (true)
     {
-        if (g_config.fast_dispatcher)
+        MsgWaitForMultipleObjects(0, nullptr, FALSE, INFINITE, QS_ALLEVENTS | QS_ALLINPUT);
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
-            if (!dispatcher_prioritized_message_pump(&msg))
-            {
-                break;
-            }
-            continue;
-        }
+            if (msg.message == WM_QUIT) goto exit_loop;
+            if (is_dialog_message(&msg)) continue;
 
-        if (!normal_message_pump(&msg))
-        {
-            break;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
     }
+exit_loop:
 
     CloseHandle(dispatcher_event);
     CloseHandle(dispatcher_done_event);

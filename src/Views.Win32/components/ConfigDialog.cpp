@@ -953,14 +953,6 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, lazy_renderer_init),
         .is_readonly = [] { return !g_lua_environments.empty(); },
     });
-    lua_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
-        .group_id = lua_group.id,
-        .name = L"Fast Dispatcher",
-        .tooltip = L"Enables a low-latency dispatcher implementation. Can improve performance with Lua "
-                   L"scripts.\nDisable if the UI is stuttering heavily or if you're using a low-end machine.",
-        GENPROPS(int32_t, fast_dispatcher),
-    });
 
     debug_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
