@@ -16,7 +16,6 @@
 #include <components/CoreUtils.h>
 #include <components/ActionMenu.h>
 #include <components/AppActions.h>
-#include <components/Benchmark.h>
 #include <components/CLI.h>
 #include <components/CommandPalette.h>
 #include <components/ParameterPalette.h>
@@ -37,8 +36,6 @@
 #include <lua/LuaManager.h>
 #include <lua/LuaRenderer.h>
 #include <spdlog/sinks/basic_file_sink.h>
-
-#define VIEW_BENCHMARK_SUPPORT
 
 // Throwaway actions which can be spammed get keys as to not clog up the async executor queue
 #define ASYNC_KEY_CLOSE_ROM (1)
@@ -890,9 +887,6 @@ static core_result init_core()
     g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
     g_main_ctx.core.callbacks.frame = [] {
         g_frame_changed = true;
-#ifdef VIEW_BENCHMARK_SUPPORT
-        Benchmark::frame();
-#endif
     };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
