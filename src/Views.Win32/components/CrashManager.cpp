@@ -8,8 +8,6 @@
 #include <Config.h>
 #include <components/CrashManager.h>
 
-const std::filesystem::path MINIDUMP_PATH = L"mupen.dmp";
-
 typedef struct StacktraceInfo
 {
     std::stacktrace stl_stacktrace{};
@@ -46,11 +44,17 @@ const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
 };
 #undef E
 
+static std::filesystem::path get_minidump_path()
+{
+    return g_main_ctx.app_path / L"logs" / L"mupen.dmp";
+}
+
 void create_minidump(EXCEPTION_POINTERS *e)
 {
     MINIDUMP_EXCEPTION_INFORMATION info{};
 
-    const HANDLE h_dump_file = CreateFile(MINIDUMP_PATH.wstring().c_str(), GENERIC_WRITE,
+    const auto minidump_path = get_minidump_path();
+    const HANDLE h_dump_file = CreateFile(minidump_path.wstring().c_str(), GENERIC_WRITE,
                                           FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
 
     info.ThreadId = GetCurrentThreadId();
