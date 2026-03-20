@@ -1104,7 +1104,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     CreateDirectory(Config::plugin_directory().c_str(), NULL);
     CreateDirectory(Config::backup_directory().c_str(), NULL);
     CreateDirectory(Config::logs_directory().c_str(), NULL);
-    
+
     const auto core_result = init_core();
     if (core_result != Res_Ok)
     {
