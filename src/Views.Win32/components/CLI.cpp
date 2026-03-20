@@ -13,7 +13,6 @@
 #include <nlohmann/json.hpp>
 #include <capture/CaptureManager.h>
 #include <components/CoreUtils.h>
-#include <components/Benchmark.h>
 #include <components/CLI.h>
 #include <components/Dispatcher.h>
 #include <components/LuaDialog.h>
@@ -25,7 +24,6 @@ struct t_cli_params
     std::filesystem::path st{};
     std::filesystem::path m64{};
     std::filesystem::path avi{};
-    std::filesystem::path benchmark{};
     bool close_on_movie_end{};
     bool wait_for_debugger{};
 };
@@ -49,7 +47,6 @@ static void log_cli_params(const t_cli_params &params)
     g_view_logger->trace("  st: {}", params.st.string());
     g_view_logger->trace("  m64: {}", params.m64.string());
     g_view_logger->trace("  avi: {}", params.avi.string());
-    g_view_logger->trace("  benchmark: {}", params.benchmark.string());
     g_view_logger->trace("  close_on_movie_end: {}", params.close_on_movie_end);
     g_view_logger->trace("  wait_for_debugger: {}", params.wait_for_debugger);
 }
@@ -137,14 +134,6 @@ static void on_movie_playback_stop()
             PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
         });
     }
-
-    if (!cli_params.benchmark.empty())
-    {
-        Benchmark::t_result result{};
-        Benchmark::stop(&result);
-        Benchmark::save_result_to_file(cli_params.benchmark, result);
-        PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
-    }
 }
 
 static void on_task_changed(std::any data)
@@ -172,11 +161,6 @@ static void on_core_executing_changed(std::any data)
     }
 
     cli_state.first_emu_launched = false;
-
-    if (!cli_params.benchmark.empty())
-    {
-        Benchmark::start();
-    }
 
     ThreadPool::submit_task([=] {
         g_view_logger->trace("[CLI] on_core_executing_changed -> load_st");
@@ -226,7 +210,6 @@ void CLI::init()
     cli_params.st = cmdl({"--st", "-st"}, "").str();
     cli_params.m64 = cmdl({"--movie", "-m64"}, "").str();
     cli_params.avi = cmdl({"--avi", "-avi"}, "").str();
-    cli_params.benchmark = cmdl({"--benchmark", "-b"}, "").str();
     cli_params.close_on_movie_end = cmdl["--close-on-movie-end"];
     cli_params.wait_for_debugger = cmdl["--wait-for-debugger"] || cmdl["--d"];
 
@@ -247,26 +230,6 @@ void CLI::init()
 
     // COMPAT: Old mupen closes emu when movie ends and avi flag is specified.
     if (!cli_params.avi.empty())
-    {
-        cli_params.close_on_movie_end = true;
-    }
-
-    if (!cli_params.benchmark.empty() && cli_params.m64.empty() && cli_params.rom.empty())
-    {
-        DialogService::show_dialog(L"Benchmark flag specified without a movie.\nThe benchmark won't be performed.",
-                                   L"CLI", fsvc_error);
-        cli_params.benchmark.clear();
-    }
-
-    if (!cli_params.benchmark.empty() && !cli_params.avi.empty())
-    {
-        DialogService::show_dialog(
-            L"Benchmark flag specified in combination with AVI.\nThe benchmark won't be performed.", L"CLI",
-            fsvc_error);
-        cli_params.benchmark.clear();
-    }
-
-    if (!cli_params.benchmark.empty())
     {
         cli_params.close_on_movie_end = true;
     }
@@ -307,5 +270,5 @@ void CLI::init()
 
 bool CLI::wants_fast_forward()
 {
-    return !cli_params.avi.empty() || !cli_params.benchmark.empty();
+    return !cli_params.avi.empty();
 }
