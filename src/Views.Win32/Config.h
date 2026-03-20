@@ -78,6 +78,7 @@ struct t_config
     std::wstring saves_directory = L".\\save\\";
     std::wstring screenshots_directory = L".\\screenshots\\";
     std::wstring backups_directory = L".\\backups\\";
+    std::wstring logs_directory = L".\\logs\\";
 
     /// <summary>
     /// The recently opened roms' paths
@@ -382,4 +383,10 @@ std::filesystem::path screenshot_directory();
  * \brief Gets the path to the backup directory based on the current configuration.
  */
 std::filesystem::path backup_directory();
+
+/**
+ * \brief Gets the path to the log directory based on the current configuration.
+ */
+std::filesystem::path log_directory();
+
 } // namespace Config
