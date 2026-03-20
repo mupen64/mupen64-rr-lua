@@ -35,31 +35,13 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      - name: Cache vcpkg
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./vcpkg/packages
-            ./vcpkg/installed
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-
-
-      - name: Cache CMake build
-        uses: actions/cache@v3
-        with:
-          path: build
-          key: cmake-build-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('CMakePresets.json') }}
-          restore-keys: |
-            cmake-build-${{ runner.os }}-${{ matrix.arch }}-
-
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --preset vcpkg-win64-x86
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build --config Debug --parallel $env:NUMBER_OF_PROCESSORS
+        run: cmake --build build
 
       - name: Upload build
         uses: actions/upload-artifact@v4
@@ -87,31 +69,13 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      - name: Cache vcpkg
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./vcpkg/packages
-            ./vcpkg/installed
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-
-
-      - name: Cache CMake build
-        uses: actions/cache@v3
-        with:
-          path: build
-          key: cmake-build-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('CMakePresets.json') }}
-          restore-keys: |
-            cmake-build-${{ runner.os }}-${{ matrix.arch }}-
-
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --preset vcpkg-win64-x86-release
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build --config Release --parallel $env:NUMBER_OF_PROCESSORS
+        run: cmake --build build
 
       - name: Upload build
         uses: actions/upload-artifact@v4
