@@ -16,16 +16,10 @@ std::shared_ptr<spdlog::logger> g_audio_logger;
 std::shared_ptr<spdlog::logger> g_input_logger;
 std::shared_ptr<spdlog::logger> g_rsp_logger;
 
-static std::filesystem::path log_path()
-{
-    return Config::log_directory() / "mupen.log";
-}
-
 void Loggers::init()
 {
-    const auto log_file_path = log_path();
-    HANDLE h_file = CreateFile(log_file_path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                               0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    HANDLE h_file = CreateFile(L"mupen.log", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 
     if (h_file != INVALID_HANDLE_VALUE)
     {
@@ -43,11 +37,11 @@ void Loggers::init()
     }
 
 #ifdef _DEBUG
-    spdlog::sinks_init_list sink_list = {std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file_path.string()),
+    spdlog::sinks_init_list sink_list = {std::make_shared<spdlog::sinks::basic_file_sink_mt>("mupen.log"),
                                          std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>()};
 #else
     spdlog::sinks_init_list sink_list = {
-        std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_file_path.string()),
+        std::make_shared<spdlog::sinks::basic_file_sink_mt>("mupen.log"),
     };
 #endif
 

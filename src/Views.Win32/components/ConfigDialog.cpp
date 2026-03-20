@@ -638,11 +638,6 @@ std::vector<t_options_group> get_static_option_groups()
                                    .name = L"Backup Folder",
                                    .tooltip = L"The path to the movie backup folder.",
                                    GENPROPS(std::wstring, backups_directory)});
-    folders_group.items.push_back({.type = t_options_item::Type::Folder,
-                                   .group_id = folders_group.id,
-                                   .name = L"Logs",
-                                   .tooltip = L"The path to the log folder.",
-                                   GENPROPS(std::wstring, logs_directory)});
 
     interface_group.items.emplace_back(
         t_options_item{.type = t_options_item::Type::Bool,

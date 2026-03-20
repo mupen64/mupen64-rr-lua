@@ -356,7 +356,6 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_VALUE(saves_directory)
     HANDLE_VALUE(screenshots_directory)
     HANDLE_VALUE(backups_directory)
-    HANDLE_VALUE(logs_directory)
     HANDLE_VALUE(recent_rom_paths)
     HANDLE_P_VALUE(is_recent_rom_paths_frozen)
     HANDLE_VALUE(recent_movie_paths)
@@ -634,9 +633,4 @@ std::filesystem::path Config::screenshot_directory()
 std::filesystem::path Config::backup_directory()
 {
     return IOUtils::exe_path_cached().parent_path() / g_config.backups_directory;
-}
-
-std::filesystem::path Config::log_directory()
-{
-    return IOUtils::exe_path_cached().parent_path() / g_config.logs_directory;
 }
