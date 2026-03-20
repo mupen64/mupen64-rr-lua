@@ -20,7 +20,6 @@
 #include <components/CLI.h>
 #include <components/CommandPalette.h>
 #include <components/ParameterPalette.h>
-#include <components/Compare.h>
 #include <components/ConfigDialog.h>
 #include <components/CoreDbg.h>
 #include <components/CrashManager.h>
@@ -936,7 +935,6 @@ static core_result init_core()
         Messenger::broadcast(Messenger::Message::WarpModifyStatusChanged, value);
     };
     g_main_ctx.core.callbacks.current_sample_changed = [](int32_t value) {
-        Compare::compare(value);
         Messenger::broadcast(Messenger::Message::CurrentSampleChanged, value);
     };
     g_main_ctx.core.callbacks.task_changed = [](core_vcr_task value) {

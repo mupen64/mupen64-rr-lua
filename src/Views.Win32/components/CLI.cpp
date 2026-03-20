@@ -15,7 +15,6 @@
 #include <components/CoreUtils.h>
 #include <components/Benchmark.h>
 #include <components/CLI.h>
-#include <components/Compare.h>
 #include <components/Dispatcher.h>
 #include <components/LuaDialog.h>
 
@@ -230,10 +229,6 @@ void CLI::init()
     cli_params.benchmark = cmdl({"--benchmark", "-b"}, "").str();
     cli_params.close_on_movie_end = cmdl["--close-on-movie-end"];
     cli_params.wait_for_debugger = cmdl["--wait-for-debugger"] || cmdl["--d"];
-    bool compare_control = cmdl["--cmp-ctl"] || cmdl["--compare-control"];
-    bool compare_actual = cmdl["--cmp-act"] || cmdl["--compare-actual"];
-    std::string compare_interval_str = cmdl({"--cmp-int", "--compare-interval"}, "100").str();
-    size_t compare_interval = std::stoi(compare_interval_str);
 
     if (cli_params.wait_for_debugger)
     {
@@ -303,25 +298,6 @@ void CLI::init()
         core_vcr_movie_header hdr{};
         g_main_ctx.core_ctx->vcr_parse_header(movie_path, &hdr);
         cli_state.is_movie_from_start = hdr.startFlags & MOVIE_START_FROM_NOTHING;
-    }
-
-    if (compare_control && compare_actual)
-    {
-        DialogService::show_dialog(
-            L"Can't activate more than one compare mode at once.\nThe comparison system will be disabled.", L"CLI",
-            fsvc_warning);
-        compare_control = false;
-        compare_actual = false;
-    }
-
-    if (compare_control)
-    {
-        Compare::start(true, compare_interval);
-    }
-
-    if (compare_actual)
-    {
-        Compare::start(false, compare_interval);
     }
 
     cli_state.rom_is_movie = cli_params.rom.extension().compare(L".m64");

@@ -16,7 +16,6 @@
 #include <components/CLI.h>
 #include <components/Cheats.h>
 #include <components/CommandPalette.h>
-#include <components/Compare.h>
 #include <components/ConfigDialog.h>
 #include <components/CoreDbg.h>
 #include <components/FilePicker.h>
@@ -80,7 +79,7 @@ bool confirm_user_exit()
 void AppActions::update_core_fast_forward()
 {
     g_main_ctx.core_ctx->vr_set_fast_forward(g_main_ctx.fast_forward || g_main_ctx.core_ctx->vcr_is_seeking() ||
-                                             CLI::wants_fast_forward() || Compare::active());
+                                             CLI::wants_fast_forward());
 }
 
 void AppActions::load_rom_from_path(const std::wstring &path)
