@@ -1179,7 +1179,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info(get_mupen_name());
 
     g_main_ctx.hinst = hInstance;
-    g_main_ctx.app_path = get_app_full_path();
     set_cwd();
 
     Config::init();
