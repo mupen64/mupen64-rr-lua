@@ -1087,7 +1087,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 
     g_main_ctx.app_path = get_app_full_path();
 
-    CreateDirectory(Config::logs_directory().c_str(), NULL);
+    std::filesystem::create_directories(Config::logs_directory());
 
     Loggers::init();
 
@@ -1101,10 +1101,10 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Config::load();
     main_dispatcher_init();
 
-    CreateDirectory(Config::save_directory().c_str(), NULL);
-    CreateDirectory(Config::screenshot_directory().c_str(), NULL);
-    CreateDirectory(Config::plugin_directory().c_str(), NULL);
-    CreateDirectory(Config::backup_directory().c_str(), NULL);
+    std::filesystem::create_directories(Config::save_directory());
+    std::filesystem::create_directories(Config::screenshot_directory());
+    std::filesystem::create_directories(Config::plugin_directory());
+    std::filesystem::create_directories(Config::backup_directory());
 
     const auto core_result = init_core();
     if (core_result != Res_Ok)
