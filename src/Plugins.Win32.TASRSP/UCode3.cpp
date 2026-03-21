@@ -919,7 +919,6 @@ extern "C"
     extern char *pDMEM;
 }
 
-void MP3();
 /*
  {
 //	return;

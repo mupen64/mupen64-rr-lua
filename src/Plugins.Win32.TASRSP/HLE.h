@@ -58,6 +58,7 @@ typedef struct
 } OSTask_t;
 
 void jpg_uncompress(OSTask_t *task);
+void MP3();
 
 extern uint32_t inst1, inst2;
 extern uint16_t AudioInBuffer, AudioOutBuffer, AudioCount;

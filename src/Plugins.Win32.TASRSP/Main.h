@@ -18,6 +18,10 @@ extern HINSTANCE g_instance;
 extern std::filesystem::path g_app_path;
 extern core_plugin_extended_funcs *g_ef;
 
+extern void (*ABI1[0x20])();
+extern void (*ABI2[0x20])();
+extern void (*ABI3[0x20])();
+
 bool rsp_alive();
 void on_rom_closed();
 uint32_t do_rsp_cycles(uint32_t Cycles);

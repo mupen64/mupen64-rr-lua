@@ -17,14 +17,12 @@
 #define UCODE_ZELDA (3)
 
 core_rsp_info rsp;
-bool g_rsp_alive = false;
-extern void (*ABI1[0x20])();
-extern void (*ABI2[0x20])();
-extern void (*ABI3[0x20])();
-void (*ABI[0x20])();
+static bool g_rsp_alive = false;
+
+static void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
-void (*g_audio_ucode_func)() = nullptr;
+static void (*g_audio_ucode_func)() = nullptr;
 HINSTANCE g_instance;
 std::filesystem::path g_app_path;
 // PlatformService g_platform_service;
@@ -58,7 +56,7 @@ core_plugin_extended_funcs *g_ef = &ef_shim;
  */
 void *plugin_load(const std::filesystem::path &path);
 
-void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
+static void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
 {
     const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum,
                                      static_cast<void *>(rsp.sp_pc_reg));
@@ -98,22 +96,22 @@ void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
     }
 }
 
-void audio_ucode_mario()
+static void audio_ucode_mario()
 {
     memcpy(ABI, ABI1, sizeof(ABI[0]) * 0x20);
 }
 
-void audio_ucode_banjo()
+static void audio_ucode_banjo()
 {
     memcpy(ABI, ABI2, sizeof(ABI[0]) * 0x20);
 }
 
-void audio_ucode_zelda()
+static void audio_ucode_zelda()
 {
     memcpy(ABI, ABI3, sizeof(ABI[0]) * 0x20);
 }
 
-int audio_ucode_detect_type(const OSTask_t *task)
+static int audio_ucode_detect_type(const OSTask_t *task)
 {
     if (*(uint32_t *)(rsp.rdram + task->ucode_data + 0) != 0x1)
     {
@@ -125,7 +123,7 @@ int audio_ucode_detect_type(const OSTask_t *task)
     return 2;
 }
 
-void audio_ucode_verify_cache(const OSTask_t *task)
+static void audio_ucode_verify_cache(const OSTask_t *task)
 {
     // In debug mode, we want to verify that the ucode type hasn't changed
     const auto ucode_type = audio_ucode_detect_type(task);
@@ -146,7 +144,7 @@ void audio_ucode_verify_cache(const OSTask_t *task)
     }
 }
 
-int audio_ucode(OSTask_t *task)
+static int audio_ucode(OSTask_t *task)
 {
     if (!g_audio_ucode_func)
     {
@@ -303,7 +301,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
     return Cycles;
 }
 
-std::filesystem::path get_app_full_path()
+static std::filesystem::path get_app_full_path()
 {
     char path[MAX_PATH] = {0};
 
@@ -316,7 +314,7 @@ std::filesystem::path get_app_full_path()
     return path;
 }
 
-char *getExtension(char *str)
+static char *getExtension(char *str)
 {
     if (strlen(str) > 3)
         return str + strlen(str) - 3;

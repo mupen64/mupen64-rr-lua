@@ -129,11 +129,11 @@ static void MP3AB0()
 
 static void InnerLoop();
 
-uint32_t inPtr, outPtr;
+static uint32_t inPtr, outPtr;
 
-uint32_t t6; // = 0x08A0; // I think these are temporary storage buffers
-uint32_t t5; // = 0x0AC0;
-uint32_t t4; // = (inst1 & 0x1E);
+static uint32_t t6; // = 0x08A0; // I think these are temporary storage buffers
+static uint32_t t5; // = 0x0AC0;
+static uint32_t t4; // = (inst1 & 0x1E);
 
 void MP3()
 {
@@ -524,8 +524,8 @@ static void InnerLoop()
         // Clamp(v0);
         // Clamp(v18);
         //  clamp???
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = v0;
-        *(int16_t *)(mp3data + ((outPtr + 2) ^ 2)) = v18;
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t) v0;
+        *(int16_t *)(mp3data + ((outPtr + 2) ^ 2)) = (int16_t) v18;
         outPtr += 4;
         addptr += 0x30;
         offset += 0x38;
@@ -549,13 +549,13 @@ static void InnerLoop()
     if (t4 & 0x2)
     {
         v2 = (v2 * *(uint32_t *)(mp3data + 0xCE8)) >> 0x10;
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = v2;
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t) v2;
     }
     else
     {
         v4 = (v4 * *(uint32_t *)(mp3data + 0xCE8)) >> 0x10;
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = v4;
-        mult4 = *(uint32_t *)(mp3data + 0xCE8);
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t) v4;
+        mult4 = (int32_t) *(uint32_t *)(mp3data + 0xCE8);
     }
     addptr -= 0x50;
 

@@ -566,7 +566,8 @@ static void ADPCM()
     uint16_t index;
     uint16_t j;
     int32_t a[8];
-    int16_t *book1, *book2;
+    int16_t *book1;
+    int16_t *book2;
     memset(out, 0, 32);
 
     if (!(Flags & 0x1))
