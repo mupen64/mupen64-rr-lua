@@ -295,28 +295,30 @@ void jpg_uncompress(OSTask_t *task)
                     int32_t k;
                     for (k = 0; k < 8; k++)
                     {
-                        m[16 * 8 + k] = (int16_t)((int32_t)m[9 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 0] +
-                                                (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 1] +
-                                                (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 2] +
-                                                (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 3]);
+                        m[16 * 8 + k] =
+                            (int16_t)((int32_t)m[9 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 0] +
+                                      (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 1] +
+                                      (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 2] +
+                                      (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 3]);
 
-                        m[15 * 8 + k] = (int16_t)((int32_t)m[9 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 4] +
-                                                (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 5] +
-                                                (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 6] +
-                                                (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 7]);
+                        m[15 * 8 + k] =
+                            (int16_t)((int32_t)m[9 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 4] +
+                                      (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 5] +
+                                      (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 6] +
+                                      (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 64 + 7]);
 
                         m[18 * 8 + k] = temp1[i * 128 + j * 16 + k] + m[4 * 8 + 7];
                         m[17 * 8 + k] = temp1[i * 128 + j * 16 + 64 + k] + m[4 * 8 + 7];
 
                         m[14 * 8 + k] = (int16_t)((int32_t)m[9 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 0] +
-                                                (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 1] +
-                                                (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 2] +
-                                                (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 3]);
+                                                  (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 1] +
+                                                  (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 2] +
+                                                  (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 3]);
 
                         m[13 * 8 + k] = (int16_t)((int32_t)m[9 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 4] +
-                                                (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 5] +
-                                                (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 6] +
-                                                (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 7]);
+                                                  (int32_t)m[10 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 5] +
+                                                  (int32_t)m[11 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 6] +
+                                                  (int32_t)m[12 * 8 + k] * (int32_t)temp1[256 + i * 32 + j * 8 + 7]);
 
                         m[24 * 8 + k] = (int16_t)(((int32_t)m[16 * 8 + k] * (uint16_t)m[4 * 8 + 0]) >> 16);
                         m[23 * 8 + k] = (int16_t)(((int32_t)m[15 * 8 + k] * (uint16_t)m[4 * 8 + 0]) >> 16);

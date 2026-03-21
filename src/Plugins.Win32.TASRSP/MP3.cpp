@@ -512,10 +512,14 @@ static void InnerLoop()
 
         for (i = 7; i >= 0; i--)
         {
-            v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-            v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
-            v6 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >> 0xF;
-            v8 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >> 0xF;
+            v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >>
+                  0xF;
+            v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >>
+                  0xF;
+            v6 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >>
+                  0xF;
+            v8 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >>
+                  0xF;
             addptr += 2;
             offset++;
         }
@@ -524,8 +528,8 @@ static void InnerLoop()
         // Clamp(v0);
         // Clamp(v18);
         //  clamp???
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t) v0;
-        *(int16_t *)(mp3data + ((outPtr + 2) ^ 2)) = (int16_t) v18;
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t)v0;
+        *(int16_t *)(mp3data + ((outPtr + 2) ^ 2)) = (int16_t)v18;
         outPtr += 4;
         addptr += 0x30;
         offset += 0x38;
@@ -549,13 +553,13 @@ static void InnerLoop()
     if (t4 & 0x2)
     {
         v2 = (v2 * *(uint32_t *)(mp3data + 0xCE8)) >> 0x10;
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t) v2;
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t)v2;
     }
     else
     {
         v4 = (v4 * *(uint32_t *)(mp3data + 0xCE8)) >> 0x10;
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t) v4;
-        mult4 = (int32_t) *(uint32_t *)(mp3data + 0xCE8);
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t)v4;
+        mult4 = (int32_t)*(uint32_t *)(mp3data + 0xCE8);
     }
     addptr -= 0x50;
 
@@ -567,17 +571,25 @@ static void InnerLoop()
 
         for (i = 0; i < 4; i++)
         {
-            v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-            v2 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x20) * (int16_t)DeWindowLUT[offset + 0x01] + 0x4000) >>
+            v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >>
                   0xF;
-            v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
-            v4 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x30) * (int16_t)DeWindowLUT[offset + 0x09] + 0x4000) >>
+            v2 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x20) * (int16_t)DeWindowLUT[offset + 0x01] +
+                   0x4000) >>
                   0xF;
-            v6 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >> 0xF;
-            v6 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x00) * (int16_t)DeWindowLUT[offset + 0x21] + 0x4000) >>
+            v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >>
                   0xF;
-            v8 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >> 0xF;
-            v8 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x10) * (int16_t)DeWindowLUT[offset + 0x29] + 0x4000) >>
+            v4 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x30) * (int16_t)DeWindowLUT[offset + 0x09] +
+                   0x4000) >>
+                  0xF;
+            v6 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >>
+                  0xF;
+            v6 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x00) * (int16_t)DeWindowLUT[offset + 0x21] +
+                   0x4000) >>
+                  0xF;
+            v8 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >>
+                  0xF;
+            v8 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x10) * (int16_t)DeWindowLUT[offset + 0x29] +
+                   0x4000) >>
                   0xF;
             addptr += 4;
             offset += 2;

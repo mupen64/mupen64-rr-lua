@@ -212,25 +212,32 @@ void disasm(FILE *f, uint32_t t[0x1000 / 4])
             fprintf(f, "BGTZ r%d, %x\n", (t[i] >> 21) & 0x1F, (i + 1) * 4 + (int16_t)(t[i] & 0xFFFF) * 4);
             break;
         case 8:
-            fprintf(f, "ADDI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
+            fprintf(f, "ADDI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F,
+                    (int32_t)((int16_t)(t[i] & 0xFFFF)));
             break;
         case 9:
-            fprintf(f, "ADDIU r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
+            fprintf(f, "ADDIU r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F,
+                    (int32_t)((int16_t)(t[i] & 0xFFFF)));
             break;
         case 10:
-            fprintf(f, "SLTI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
+            fprintf(f, "SLTI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F,
+                    (int32_t)((int16_t)(t[i] & 0xFFFF)));
             break;
         case 11:
-            fprintf(f, "SLTIU r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
+            fprintf(f, "SLTIU r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F,
+                    (int32_t)((int16_t)(t[i] & 0xFFFF)));
             break;
         case 12:
-            fprintf(f, "ANDI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
+            fprintf(f, "ANDI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F,
+                    (int32_t)((int16_t)(t[i] & 0xFFFF)));
             break;
         case 13:
-            fprintf(f, "ORI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
+            fprintf(f, "ORI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F,
+                    (int32_t)((int16_t)(t[i] & 0xFFFF)));
             break;
         case 14:
-            fprintf(f, "XORI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
+            fprintf(f, "XORI r%d, r%d, %d\n", (t[i] >> 16) & 0x1F, (t[i] >> 21) & 0x1F,
+                    (int32_t)((int16_t)(t[i] & 0xFFFF)));
             break;
         case 15:
             fprintf(f, "LUI r%d, %d\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)));
@@ -581,38 +588,46 @@ void disasm(FILE *f, uint32_t t[0x1000 / 4])
             fprintf(f, "unknown opcode\n");
             break;
         case 32:
-            fprintf(f, "LB r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "LB r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 33:
-            fprintf(f, "LH r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "LH r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 34:
             fprintf(f, "unknown opcode\n");
             break;
         case 35:
-            fprintf(f, "LW r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "LW r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 36:
-            fprintf(f, "LBU r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "LBU r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 37:
-            fprintf(f, "LHU r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "LHU r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 38:
         case 39:
             fprintf(f, "unknown opcode\n");
             break;
         case 40:
-            fprintf(f, "SB r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "SB r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 41:
-            fprintf(f, "SH r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "SH r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 42:
             fprintf(f, "unknown opcode\n");
             break;
         case 43:
-            fprintf(f, "SW r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)), (t[i] >> 21) & 0x1F);
+            fprintf(f, "SW r%d, %d(r%d)\n", (t[i] >> 16) & 0x1F, (int32_t)((int16_t)(t[i] & 0xFFFF)),
+                    (t[i] >> 21) & 0x1F);
             break;
         case 44:
         case 45:
