@@ -52,7 +52,8 @@ endif()
 # Set target architecture based on the _vs_target_arch value
 block()
 set(_arch_keys x86 x64 ARM64)
-set(_arch_values x86 AMD64 ARM64)
+set(_sys_proc_values x86 AMD64 ARM64)
+set(_comp_arch_values "i386-pc-windows-msvc" "x86_64-pc-windows-msvc" "aarch64-windows-msvc")
 
 list(FIND _arch_keys "${_vs_target_arch}" _index)
 
@@ -60,11 +61,21 @@ if("${_index}" LESS 0)
   message(FATAL_ERROR "Failed to match host/target architectures!")
 endif()
 
-list(GET _arch_values "${_index}" _sys_proc)
+list(GET _sys_proc_values "${_index}" _sys_proc)
+list(GET _comp_arch_values "${_index}" _comp_arch)
 
-set(CMAKE_SYSTEM_NAME "Windows" CACHE INTERNAL "CMAKE_SYSTEM_NAME" FORCE)
-set(CMAKE_SYSTEM_PROCESSOR "${_sys_proc}" CACHE INTERNAL "CMAKE_SYSTEM_PROCESSOR" FORCE)
+set(CMAKE_SYSTEM_NAME "Windows" PARENT_SCOPE)
+set(CMAKE_SYSTEM_PROCESSOR "${_sys_proc}" PARENT_SCOPE)
+set(CMAKE_C_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)
+set(CMAKE_CXX_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)
 endblock()
+
+# Set linker flags 
+message(STATUS "target: ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "host: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+# set(CMAKE_EXE_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
+# set(CMAKE_SHARED_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
+# set(CMAKE_MODULE_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
 
 # Find the toolchain file using the current environment
 if(NOT DEFINED CACHE{MUPEN64RR_VCPKG_TOOLCHAIN})
