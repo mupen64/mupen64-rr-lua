@@ -67,19 +67,19 @@ static void SETBUFF2()
 static void ADPCM2()
 {
     // Verified to be 100% Accurate...
-    BYTE Flags = (uint8_t)(inst1 >> 16) & 0xff;
-    WORD Gain = (uint16_t)(inst1 & 0xffff);
-    DWORD Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    WORD inPtr = 0;
+    uint8_t Flags = (uint8_t)(inst1 >> 16) & 0xff;
+    uint16_t Gain = (uint16_t)(inst1 & 0xffff);
+    uint32_t Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
+    uint16_t inPtr = 0;
     // short *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
     short *out = (short *)(BufferSpace + AudioOutBuffer);
-    BYTE *in = (BYTE *)(BufferSpace + AudioInBuffer);
+    uint8_t *in = (uint8_t *)(BufferSpace + AudioInBuffer);
     short count = (short)AudioCount;
-    BYTE icode;
-    BYTE code;
+    uint8_t icode;
+    uint8_t code;
     int vscale;
-    WORD index;
-    WORD j;
+    uint16_t index;
+    uint16_t j;
     int a[8];
     short *book1, *book2;
 
@@ -424,11 +424,11 @@ static void MIXER2()
 
 static void RESAMPLE2()
 {
-    BYTE Flags = (uint8_t)((inst1 >> 16) & 0xff);
-    DWORD Pitch = ((inst1 & 0xffff)) << 1;
+    uint8_t Flags = (uint8_t)((inst1 >> 16) & 0xff);
+    uint32_t Pitch = ((inst1 & 0xffff)) << 1;
     uint32_t addy = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    DWORD Accum = 0;
-    DWORD location;
+    uint32_t Accum = 0;
+    uint32_t location;
     int16_t *lut;
     short *dst;
     int16_t *src;
@@ -681,11 +681,11 @@ static void ENVMIXER2()
 
 static void DUPLICATE2()
 {
-    WORD Count = (inst1 >> 16) & 0xff;
-    WORD In = inst1 & 0xffff;
-    WORD Out = (inst2 >> 16);
+    uint16_t Count = (inst1 >> 16) & 0xff;
+    uint16_t In = inst1 & 0xffff;
+    uint16_t Out = (inst2 >> 16);
 
-    WORD buff[64];
+    uint16_t buff[64];
 
     memcpy(buff, BufferSpace + In, 128);
 
@@ -700,8 +700,8 @@ static void DUPLICATE2()
 /*
 static void INTERL2 () { // Make your own...
     short Count = inst1 & 0xffff;
-    WORD  Out   = inst2 & 0xffff;
-    WORD In     = (inst2 >> 16);
+    uint16_t  Out   = inst2 & 0xffff;
+    uint16_t In     = (inst2 >> 16);
 
     short *src,*dst,tmp;
     src=(short *)&BufferSpace[In];
@@ -732,12 +732,12 @@ static void INTERL2 () { // Make your own...
 static void INTERL2()
 {
     short Count = inst1 & 0xffff;
-    WORD Out = inst2 & 0xffff;
-    WORD In = (inst2 >> 16);
+    uint16_t Out = inst2 & 0xffff;
+    uint16_t In = (inst2 >> 16);
 
-    BYTE *src, *dst, tmp;
-    src = (BYTE *)(BufferSpace); //[In];
-    dst = (BYTE *)(BufferSpace); //[Out];
+    uint8_t *src, *dst, tmp;
+    src = (uint8_t *)(BufferSpace); //[In];
+    dst = (uint8_t *)(BufferSpace); //[Out];
     while (Count)
     {
         *(short *)(dst + (Out ^ 3)) = *(short *)(src + (In ^ 3));

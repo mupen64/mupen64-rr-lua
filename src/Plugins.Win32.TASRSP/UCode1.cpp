@@ -123,7 +123,7 @@ static void ENVMIXER()
     int32_t AuxR;
     int32_t AuxL;
     int i1, o1, a1, a2, a3;
-    WORD AuxIncRate = 1;
+    uint16_t AuxIncRate = 1;
     short zero[8];
     memset(zero, 0, 16);
     int32_t LVol, RVol;
@@ -358,7 +358,7 @@ static void ENVMIXERo()
     int AuxR;
     int AuxL;
 
-    WORD AuxIncRate = 1;
+    uint16_t AuxIncRate = 1;
     short zero[8];
     memset(zero, 0, 16);
     if (flags & A_INIT)
@@ -431,11 +431,11 @@ static void ENVMIXERo()
 
 static void RESAMPLE()
 {
-    BYTE Flags = (uint8_t)((inst1 >> 16) & 0xff);
-    DWORD Pitch = ((inst1 & 0xffff)) << 1;
+    uint8_t Flags = (uint8_t)((inst1 >> 16) & 0xff);
+    uint32_t Pitch = ((inst1 & 0xffff)) << 1;
     uint32_t addy = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    DWORD Accum = 0;
-    DWORD location;
+    uint32_t Accum = 0;
+    uint32_t location;
     int16_t *lut, *lut2;
     short *dst;
     int16_t *src;
@@ -553,18 +553,18 @@ static void SETLOOP()
 static void ADPCM()
 {
     // Work in progress! :)
-    BYTE Flags = (uint8_t)(inst1 >> 16) & 0xff;
-    WORD Gain = (uint16_t)(inst1 & 0xffff);
-    DWORD Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    WORD inPtr = 0;
+    uint8_t Flags = (uint8_t)(inst1 >> 16) & 0xff;
+    uint16_t Gain = (uint16_t)(inst1 & 0xffff);
+    uint32_t Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
+    uint16_t inPtr = 0;
     short *out = (short *)(BufferSpace + AudioOutBuffer);
-    BYTE *in = (BYTE *)(BufferSpace + AudioInBuffer);
+    uint8_t *in = (uint8_t *)(BufferSpace + AudioInBuffer);
     short count = (short)AudioCount;
-    BYTE icode;
-    BYTE code;
+    uint8_t icode;
+    uint8_t code;
     int vscale;
-    WORD index;
-    WORD j;
+    uint16_t index;
+    uint16_t j;
     int a[8];
     short *book1, *book2;
     memset(out, 0, 32);

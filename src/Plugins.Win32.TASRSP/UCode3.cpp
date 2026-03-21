@@ -75,7 +75,7 @@ static void ENVMIXER3()
     int32_t AuxR;
     int32_t AuxL;
     int i1, o1, a1, a2, a3;
-    WORD AuxIncRate = 1;
+    uint16_t AuxIncRate = 1;
     short zero[8];
     memset(zero, 0, 16);
 
@@ -263,7 +263,7 @@ static void ENVMIXER3o()
     int AuxR;
     int AuxL;
     int i1, o1, a1, a2, a3;
-    WORD AuxIncRate = 1;
+    uint16_t AuxIncRate = 1;
     short zero[8];
     memset(zero, 0, 16);
     int32_t LVol, RVol;
@@ -505,19 +505,19 @@ static void SETLOOP3()
 static void ADPCM3()
 {
     // Verified to be 100% Accurate...
-    BYTE Flags = (uint8_t)(inst2 >> 0x1c) & 0xff;
-    // WORD Gain=(uint16_t)(inst1&0xffff);
-    DWORD Address = (inst1 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
-    WORD inPtr = (inst2 >> 12) & 0xf;
+    uint8_t Flags = (uint8_t)(inst2 >> 0x1c) & 0xff;
+    // uint16_t Gain=(uint16_t)(inst1&0xffff);
+    uint32_t Address = (inst1 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
+    uint16_t inPtr = (inst2 >> 12) & 0xf;
     // short *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
     short *out = (short *)(BufferSpace + (inst2 & 0xfff) + 0x4f0);
-    BYTE *in = (BYTE *)(BufferSpace + ((inst2 >> 12) & 0xf) + 0x4f0);
+    uint8_t *in = (uint8_t *)(BufferSpace + ((inst2 >> 12) & 0xf) + 0x4f0);
     short count = (short)((inst2 >> 16) & 0xfff);
-    BYTE icode;
-    BYTE code;
+    uint8_t icode;
+    uint8_t code;
     int vscale;
-    WORD index;
-    WORD j;
+    uint16_t index;
+    uint16_t j;
     int a[8];
     short *book1, *book2;
 
@@ -758,11 +758,11 @@ static void ADPCM3()
 
 static void RESAMPLE3()
 {
-    BYTE Flags = (uint8_t)((inst2 >> 0x1e));
-    DWORD Pitch = ((inst2 >> 0xe) & 0xffff) << 1;
+    uint8_t Flags = (uint8_t)((inst2 >> 0x1e));
+    uint32_t Pitch = ((inst2 >> 0xe) & 0xffff) << 1;
     uint32_t addy = (inst1 & 0xffffff);
-    DWORD Accum = 0;
-    DWORD location;
+    uint32_t Accum = 0;
+    uint32_t location;
     int16_t *lut;
     short *dst;
     int16_t *src;
@@ -869,23 +869,23 @@ static void INTERLEAVE3()
 // static void UNKNOWN ();
 /*
 typedef struct {
-    BYTE sync;
+    uint8_t sync;
 
-    BYTE error_protection	: 1;	//  0=yes, 1=no
-    BYTE lay				: 2;	// 4-lay = layerI, II or III
-    BYTE version			: 1;	// 3=mpeg 1.0, 2=mpeg 2.5 0=mpeg 2.0
-    BYTE sync2				: 4;
+    uint8_t error_protection	: 1;	//  0=yes, 1=no
+    uint8_t lay				: 2;	// 4-lay = layerI, II or III
+    uint8_t version			: 1;	// 3=mpeg 1.0, 2=mpeg 2.5 0=mpeg 2.0
+    uint8_t sync2				: 4;
 
-    BYTE extension			: 1;    // Unknown
-    BYTE padding			: 1;    // padding
-    BYTE sampling_freq		: 2;	// see table below
-    BYTE bitrate_index		: 4;	//     see table below
+    uint8_t extension			: 1;    // Unknown
+    uint8_t padding			: 1;    // padding
+    uint8_t sampling_freq		: 2;	// see table below
+    uint8_t bitrate_index		: 4;	//     see table below
 
-    BYTE emphasis			: 2;	//see table below
-    BYTE original			: 1;	// 0=no 1=yes
-    BYTE copyright			: 1;	// 0=no 1=yes
-    BYTE mode_ext			: 2;    // used with "joint stereo" mode
-    BYTE mode				: 2;    // Channel Mode
+    uint8_t emphasis			: 2;	//see table below
+    uint8_t original			: 1;	// 0=no 1=yes
+    uint8_t copyright			: 1;	// 0=no 1=yes
+    uint8_t mode_ext			: 2;    // used with "joint stereo" mode
+    uint8_t mode				: 2;    // Channel Mode
 } mp3struct;
 
 mp3struct mp3;
@@ -909,7 +909,7 @@ static void MP3ADDY()
 extern "C"
 {
     void rsp_run();
-    void mp3setup(DWORD inst1, DWORD inst2, DWORD t8);
+    void mp3setup(uint32_t inst1, uint32_t inst2, uint32_t t8);
 }
 
 extern uint32_t base, dmembase;
