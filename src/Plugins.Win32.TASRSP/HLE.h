@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "core_plugin.h"
+
 #define S 1
 #define S8 3
 
@@ -30,29 +32,29 @@ extern core_rsp_info rsp;
 
 typedef struct
 {
-    unsigned long type;
-    unsigned long flags;
+    uint32_t type;
+    uint32_t flags;
 
-    unsigned long ucode_boot;
-    unsigned long ucode_boot_size;
+    uint32_t ucode_boot;
+    uint32_t ucode_boot_size;
 
-    unsigned long ucode;
-    unsigned long ucode_size;
+    uint32_t ucode;
+    uint32_t ucode_size;
 
-    unsigned long ucode_data;
-    unsigned long ucode_data_size;
+    uint32_t ucode_data;
+    uint32_t ucode_data_size;
 
-    unsigned long dram_stack;
-    unsigned long dram_stack_size;
+    uint32_t dram_stack;
+    uint32_t dram_stack_size;
 
-    unsigned long output_buff;
-    unsigned long output_buff_size;
+    uint32_t output_buff;
+    uint32_t output_buff_size;
 
-    unsigned long data_ptr;
-    unsigned long data_size;
+    uint32_t data_ptr;
+    uint32_t data_size;
 
-    unsigned long yield_data_ptr;
-    unsigned long yield_data_size;
+    uint32_t yield_data_ptr;
+    uint32_t yield_data_size;
 } OSTask_t;
 
 void jpg_uncompress(OSTask_t *task);

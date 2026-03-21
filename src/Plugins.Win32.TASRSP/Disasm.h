@@ -11,4 +11,4 @@
  * \param f File to write the disassembly to
  * \param t The instruction buffer
  */
-void disasm(FILE *f, unsigned long t[0x1000 / 4]);
+void disasm(FILE *f, uint32_t t[0x1000 / 4]);

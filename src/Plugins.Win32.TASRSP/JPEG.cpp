@@ -9,17 +9,17 @@
 
 static struct
 {
-    unsigned long pic;
+    uint32_t pic;
     long w;
     long h;
-    unsigned long m1;
-    unsigned long m2;
-    unsigned long m3;
+    uint32_t m1;
+    uint32_t m2;
+    uint32_t m3;
 } jpg_data;
 
 static short *q[3];
 static short *pic;
-static unsigned long len1, len2;
+static uint32_t len1, len2;
 
 void jpg_uncompress(OSTask_t *task)
 {
@@ -60,11 +60,11 @@ void jpg_uncompress(OSTask_t *task)
     {
         // quantification
         for (i = 0; i < (jpg_data.h + 2) * 64; i++)
-            temp1[i] = (short)((unsigned short)(pic[i ^ S] * q[0][(i & 0x3F) ^ S]) * (long)data[0 ^ S]);
+            temp1[i] = (short)((uint16_t)(pic[i ^ S] * q[0][(i & 0x3F) ^ S]) * (long)data[0 ^ S]);
         for (; i < (jpg_data.h + 3) * 64; i++)
-            temp1[i] = (short)((unsigned short)(pic[i ^ S] * q[1][(i & 0x3F) ^ S]) * (long)data[0 ^ S]);
+            temp1[i] = (short)((uint16_t)(pic[i ^ S] * q[1][(i & 0x3F) ^ S]) * (long)data[0 ^ S]);
         for (; i < (jpg_data.h + 4) * 64; i++)
-            temp1[i] = (short)((unsigned short)(pic[i ^ S] * q[2][(i & 0x3F) ^ S]) * (long)data[0 ^ S]);
+            temp1[i] = (short)((uint16_t)(pic[i ^ S] * q[2][(i & 0x3F) ^ S]) * (long)data[0 ^ S]);
 
         // zigzag
         for (i = 0; i < (jpg_data.h + 4); i++)
@@ -318,14 +318,14 @@ void jpg_uncompress(OSTask_t *task)
                                                 (long)m[11 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 6] +
                                                 (long)m[12 * 8 + k] * (long)temp1[256 + i * 32 + j * 8 + 7]);
 
-                        m[24 * 8 + k] = (short)(((long)m[16 * 8 + k] * (unsigned short)m[4 * 8 + 0]) >> 16);
-                        m[23 * 8 + k] = (short)(((long)m[15 * 8 + k] * (unsigned short)m[4 * 8 + 0]) >> 16);
-                        m[26 * 8 + k] = (short)(((long)m[14 * 8 + k] * (unsigned short)m[4 * 8 + 1]) >> 16);
-                        m[25 * 8 + k] = (short)(((long)m[13 * 8 + k] * (unsigned short)m[4 * 8 + 1]) >> 16);
-                        m[21 * 8 + k] = (short)(((long)m[16 * 8 + k] * (unsigned short)m[4 * 8 + 2]) >> 16);
-                        m[22 * 8 + k] = (short)(((long)m[15 * 8 + k] * (unsigned short)m[4 * 8 + 2]) >> 16);
-                        m[28 * 8 + k] = (short)(((long)m[14 * 8 + k] * (unsigned short)m[4 * 8 + 3]) >> 16);
-                        m[27 * 8 + k] = (short)(((long)m[13 * 8 + k] * (unsigned short)m[4 * 8 + 3]) >> 16);
+                        m[24 * 8 + k] = (short)(((long)m[16 * 8 + k] * (uint16_t)m[4 * 8 + 0]) >> 16);
+                        m[23 * 8 + k] = (short)(((long)m[15 * 8 + k] * (uint16_t)m[4 * 8 + 0]) >> 16);
+                        m[26 * 8 + k] = (short)(((long)m[14 * 8 + k] * (uint16_t)m[4 * 8 + 1]) >> 16);
+                        m[25 * 8 + k] = (short)(((long)m[13 * 8 + k] * (uint16_t)m[4 * 8 + 1]) >> 16);
+                        m[21 * 8 + k] = (short)(((long)m[16 * 8 + k] * (uint16_t)m[4 * 8 + 2]) >> 16);
+                        m[22 * 8 + k] = (short)(((long)m[15 * 8 + k] * (uint16_t)m[4 * 8 + 2]) >> 16);
+                        m[28 * 8 + k] = (short)(((long)m[14 * 8 + k] * (uint16_t)m[4 * 8 + 3]) >> 16);
+                        m[27 * 8 + k] = (short)(((long)m[13 * 8 + k] * (uint16_t)m[4 * 8 + 3]) >> 16);
 
                         m[24 * 8 + k] += m[16 * 8 + k];
                         m[23 * 8 + k] += m[15 * 8 + k];
@@ -354,15 +354,15 @@ void jpg_uncompress(OSTask_t *task)
                         m[27 * 8 + k] = m[27 * 8 + k] < m[4 * 8 + 4] ? m[27 * 8 + k] : m[4 * 8 + 4];
                         m[28 * 8 + k] = m[28 * 8 + k] < m[4 * 8 + 4] ? m[28 * 8 + k] : m[4 * 8 + 4];
 
-                        m[23 * 8 + k] = (short)(((long)m[23 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[24 * 8 + k] = (short)(((long)m[24 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[25 * 8 + k] = (short)(((long)m[25 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[26 * 8 + k] = (short)(((long)m[26 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[27 * 8 + k] = (short)(((long)m[27 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[28 * 8 + k] = (short)(((long)m[28 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
+                        m[23 * 8 + k] = (short)(((long)m[23 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[24 * 8 + k] = (short)(((long)m[24 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[25 * 8 + k] = (short)(((long)m[25 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[26 * 8 + k] = (short)(((long)m[26 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[27 * 8 + k] = (short)(((long)m[27 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[28 * 8 + k] = (short)(((long)m[28 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
 
-                        m[23 * 8 + k] = (short)((unsigned short)m[23 * 8 + k] * (long)m[1 * 8 + 3]);
-                        m[24 * 8 + k] = (short)((unsigned short)m[24 * 8 + k] * (long)m[1 * 8 + 3]);
+                        m[23 * 8 + k] = (short)((uint16_t)m[23 * 8 + k] * (long)m[1 * 8 + 3]);
+                        m[24 * 8 + k] = (short)((uint16_t)m[24 * 8 + k] * (long)m[1 * 8 + 3]);
                         m[25 * 8 + k] = (short)((long)m[25 * 8 + k] * (long)m[1 * 8 + 4]);
                         m[26 * 8 + k] = (short)((long)m[26 * 8 + k] * (long)m[1 * 8 + 4]);
                         m[27 * 8 + k] = (short)((long)m[27 * 8 + k] * (long)m[1 * 8 + 5]);
@@ -374,18 +374,18 @@ void jpg_uncompress(OSTask_t *task)
                         m[24 * 8 + k] |= m[26 * 8 + k];
                         m[23 * 8 + k] |= m[25 * 8 + k];
 
-                        m[20 * 8 + k] = (short)(((long)m[16 * 8 + k] * (unsigned short)m[4 * 8 + 0]) >> 16);
-                        m[19 * 8 + k] = (short)(((long)m[15 * 8 + k] * (unsigned short)m[4 * 8 + 0]) >> 16);
+                        m[20 * 8 + k] = (short)(((long)m[16 * 8 + k] * (uint16_t)m[4 * 8 + 0]) >> 16);
+                        m[19 * 8 + k] = (short)(((long)m[15 * 8 + k] * (uint16_t)m[4 * 8 + 0]) >> 16);
 
                         m[30 * 8 + k] = m[24 * 8 + k] | m[28 * 8 + k];
                         m[29 * 8 + k] = m[23 * 8 + k] | m[27 * 8 + k];
 
-                        m[26 * 8 + k] = (short)(((long)m[14 * 8 + k] * (unsigned short)m[4 * 8 + 1]) >> 16);
-                        m[25 * 8 + k] = (short)(((long)m[13 * 8 + k] * (unsigned short)m[4 * 8 + 1]) >> 16);
-                        m[21 * 8 + k] = (short)(((long)m[16 * 8 + k] * (unsigned short)m[4 * 8 + 2]) >> 16);
-                        m[22 * 8 + k] = (short)(((long)m[15 * 8 + k] * (unsigned short)m[4 * 8 + 2]) >> 16);
-                        m[28 * 8 + k] = (short)(((long)m[14 * 8 + k] * (unsigned short)m[4 * 8 + 3]) >> 16);
-                        m[27 * 8 + k] = (short)(((long)m[13 * 8 + k] * (unsigned short)m[4 * 8 + 3]) >> 16);
+                        m[26 * 8 + k] = (short)(((long)m[14 * 8 + k] * (uint16_t)m[4 * 8 + 1]) >> 16);
+                        m[25 * 8 + k] = (short)(((long)m[13 * 8 + k] * (uint16_t)m[4 * 8 + 1]) >> 16);
+                        m[21 * 8 + k] = (short)(((long)m[16 * 8 + k] * (uint16_t)m[4 * 8 + 2]) >> 16);
+                        m[22 * 8 + k] = (short)(((long)m[15 * 8 + k] * (uint16_t)m[4 * 8 + 2]) >> 16);
+                        m[28 * 8 + k] = (short)(((long)m[14 * 8 + k] * (uint16_t)m[4 * 8 + 3]) >> 16);
+                        m[27 * 8 + k] = (short)(((long)m[13 * 8 + k] * (uint16_t)m[4 * 8 + 3]) >> 16);
 
                         m[30 * 8 + k] |= m[1 * 8 + 6];
                         m[29 * 8 + k] |= m[1 * 8 + 6];
@@ -423,15 +423,15 @@ void jpg_uncompress(OSTask_t *task)
                         m[27 * 8 + k] = m[27 * 8 + k] < m[4 * 8 + 4] ? m[27 * 8 + k] : m[4 * 8 + 4];
                         m[28 * 8 + k] = m[28 * 8 + k] < m[4 * 8 + 4] ? m[28 * 8 + k] : m[4 * 8 + 4];
 
-                        m[23 * 8 + k] = (short)(((long)m[23 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[24 * 8 + k] = (short)(((long)m[24 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[25 * 8 + k] = (short)(((long)m[25 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[26 * 8 + k] = (short)(((long)m[26 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[27 * 8 + k] = (short)(((long)m[27 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
-                        m[28 * 8 + k] = (short)(((long)m[28 * 8 + k] * (unsigned short)m[4 * 8 + 6]) >> 16);
+                        m[23 * 8 + k] = (short)(((long)m[23 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[24 * 8 + k] = (short)(((long)m[24 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[25 * 8 + k] = (short)(((long)m[25 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[26 * 8 + k] = (short)(((long)m[26 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[27 * 8 + k] = (short)(((long)m[27 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
+                        m[28 * 8 + k] = (short)(((long)m[28 * 8 + k] * (uint16_t)m[4 * 8 + 6]) >> 16);
 
-                        m[23 * 8 + k] = (short)((unsigned short)m[23 * 8 + k] * (long)m[1 * 8 + 3]);
-                        m[24 * 8 + k] = (short)((unsigned short)m[24 * 8 + k] * (long)m[1 * 8 + 3]);
+                        m[23 * 8 + k] = (short)((uint16_t)m[23 * 8 + k] * (long)m[1 * 8 + 3]);
+                        m[24 * 8 + k] = (short)((uint16_t)m[24 * 8 + k] * (long)m[1 * 8 + 3]);
                         m[25 * 8 + k] = (short)((long)m[25 * 8 + k] * (long)m[1 * 8 + 4]);
                         m[26 * 8 + k] = (short)((long)m[26 * 8 + k] * (long)m[1 * 8 + 4]);
                         m[27 * 8 + k] = (short)((long)m[27 * 8 + k] * (long)m[1 * 8 + 5]);

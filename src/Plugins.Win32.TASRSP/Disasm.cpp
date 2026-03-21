@@ -6,7 +6,7 @@
 
 #include "Main.h"
 
-void disasm(FILE *f, unsigned long t[0x1000 / 4])
+void disasm(FILE *f, uint32_t t[0x1000 / 4])
 {
     int i;
 
