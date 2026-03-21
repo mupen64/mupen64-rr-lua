@@ -28,7 +28,7 @@ extern int16_t VolTrg_Right;
 extern int32_t VolRamp_Right;
 // extern uint16_t VolRate_Right;
 
-extern short hleMixerWorkArea[256];
+extern int16_t hleMixerWorkArea[256];
 extern uint16_t adpcmtable[0x88];
 
 extern uint8_t BufferSpace[0x10000];
@@ -65,18 +65,18 @@ static void ENVMIXER3()
     uint8_t flags = (uint8_t)((inst1 >> 16) & 0xff);
     uint32_t addy = (inst2 & 0xFFFFFF);
 
-    short *inp = (short *)(BufferSpace + 0x4F0);
-    short *out = (short *)(BufferSpace + 0x9D0);
-    short *aux1 = (short *)(BufferSpace + 0xB40);
-    short *aux2 = (short *)(BufferSpace + 0xCB0);
-    short *aux3 = (short *)(BufferSpace + 0xE20);
+    int16_t *inp = (int16_t *)(BufferSpace + 0x4F0);
+    int16_t *out = (int16_t *)(BufferSpace + 0x9D0);
+    int16_t *aux1 = (int16_t *)(BufferSpace + 0xB40);
+    int16_t *aux2 = (int16_t *)(BufferSpace + 0xCB0);
+    int16_t *aux3 = (int16_t *)(BufferSpace + 0xE20);
     int32_t MainR;
     int32_t MainL;
     int32_t AuxR;
     int32_t AuxL;
-    int i1, o1, a1, a2, a3;
+    int32_t i1, o1, a1, a2, a3;
     uint16_t AuxIncRate = 1;
-    short zero[8];
+    int16_t zero[8];
     memset(zero, 0, 16);
 
     int32_t LAdder, LAcc, LVol;
@@ -121,7 +121,7 @@ static void ENVMIXER3()
         RSig = *(int16_t *)(hleMixerWorkArea + 22);   // 22-23
     }
 
-    for (int y = 0; y < (0x170 / 2); y++)
+    for (int32_t y = 0; y < (0x170 / 2); y++)
     {
         // Left
         LAcc += LAdder;
@@ -252,19 +252,19 @@ static void ENVMIXER3o()
                    L"AudioHLE Error", MB_OK);
     }
 
-    short *inp = (short *)(BufferSpace + 0x4F0);
-    short *out = (short *)(BufferSpace + 0x9D0);
-    short *aux1 = (short *)(BufferSpace + 0xB40);
-    short *aux2 = (short *)(BufferSpace + 0xCB0);
-    short *aux3 = (short *)(BufferSpace + 0xE20);
+    int16_t *inp = (int16_t *)(BufferSpace + 0x4F0);
+    int16_t *out = (int16_t *)(BufferSpace + 0x9D0);
+    int16_t *aux1 = (int16_t *)(BufferSpace + 0xB40);
+    int16_t *aux2 = (int16_t *)(BufferSpace + 0xCB0);
+    int16_t *aux3 = (int16_t *)(BufferSpace + 0xE20);
 
-    int MainR;
-    int MainL;
-    int AuxR;
-    int AuxL;
-    int i1, o1, a1, a2, a3;
+    int32_t MainR;
+    int32_t MainL;
+    int32_t AuxR;
+    int32_t AuxL;
+    int32_t i1, o1, a1, a2, a3;
     uint16_t AuxIncRate = 1;
-    short zero[8];
+    int16_t zero[8];
     memset(zero, 0, 16);
     int32_t LVol, RVol;
     int32_t LAcc, RAcc;
@@ -304,15 +304,15 @@ static void ENVMIXER3o()
         aux2 = aux3 = zero;
     }
 
-    for (int x = 0; x < (0x170 / 2); x++)
+    for (int32_t x = 0; x < (0x170 / 2); x++)
     {
-        i1 = (int)inp[x ^ 1];
-        o1 = (int)out[x ^ 1];
-        a1 = (int)aux1[x ^ 1];
+        i1 = (int32_t)inp[x ^ 1];
+        o1 = (int32_t)out[x ^ 1];
+        a1 = (int32_t)aux1[x ^ 1];
         if (AuxIncRate)
         {
-            a2 = (int)aux2[x ^ 1];
-            a3 = (int)aux3[x ^ 1];
+            a2 = (int32_t)aux2[x ^ 1];
+            a3 = (int32_t)aux3[x ^ 1];
         }
         // TODO: here...
         // LAcc = (LTrg << 16);
@@ -425,7 +425,7 @@ static void MIXER3()
     int32_t gain = (int16_t)(inst1 & 0xFFFF) * 2;
     int32_t temp;
 
-    for (int x = 0; x < 0x170; x += 2)
+    for (int32_t x = 0; x < 0x170; x += 2)
     {
         // I think I can do this a lot easier
         temp = (*(int16_t *)(BufferSpace + dmemin + x) * gain) >> 16;
@@ -509,17 +509,17 @@ static void ADPCM3()
     // uint16_t Gain=(uint16_t)(inst1&0xffff);
     uint32_t Address = (inst1 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
     uint16_t inPtr = (inst2 >> 12) & 0xf;
-    // short *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
-    short *out = (short *)(BufferSpace + (inst2 & 0xfff) + 0x4f0);
+    // int16_t *out=(int16_t *)(testbuff+(AudioOutBuffer>>2));
+    int16_t *out = (int16_t *)(BufferSpace + (inst2 & 0xfff) + 0x4f0);
     uint8_t *in = (uint8_t *)(BufferSpace + ((inst2 >> 12) & 0xf) + 0x4f0);
-    short count = (short)((inst2 >> 16) & 0xfff);
+    int16_t count = (int16_t)((inst2 >> 16) & 0xfff);
     uint8_t icode;
     uint8_t code;
-    int vscale;
+    int32_t vscale;
     uint16_t index;
     uint16_t j;
-    int a[8];
-    short *book1, *book2;
+    int32_t a[8];
+    int16_t *book1, *book2;
 
     memset(out, 0, 32);
 
@@ -535,10 +535,10 @@ static void ADPCM3()
         }
     }
 
-    int l1 = out[15];
-    int l2 = out[14];
-    int inp1[8];
-    int inp2[8];
+    int32_t l1 = out[15];
+    int32_t l2 = out[14];
+    int32_t inp1[8];
+    int32_t inp2[8];
     out += 16;
     while (count > 0)
     {
@@ -550,7 +550,7 @@ static void ADPCM3()
         code = BufferSpace[(0x4f0 + inPtr) ^ 3];
         index = code & 0xf;
         index <<= 4; // index into the adpcm code table
-        book1 = (short *)&adpcmtable[index];
+        book1 = (int16_t *)&adpcmtable[index];
         book2 = book1 + 8;
         code >>= 4;                             // upper nibble is scale
         vscale = (0x8000 >> ((12 - code) - 1)); // very strange. 0x8000 would be .5 in 16:16 format
@@ -563,23 +563,23 @@ static void ADPCM3()
         inPtr++; // coded adpcm data lies next
         j = 0;
         while (j < 8) // loop of 8, for 8 coded nibbles from 4 bytes
-        // which yields 8 short pcm values
+        // which yields 8 int16_t pcm values
         {
             icode = BufferSpace[(0x4f0 + inPtr) ^ 3];
             inPtr++;
 
             inp1[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
             if (code < 12)
-                inp1[j] = ((int)((int)inp1[j] * (int)vscale) >> 16);
+                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
             else
-                int catchme = 1;
+                int32_t catchme = 1;
             j++;
 
             inp1[j] = (int16_t)((icode & 0xf) << 12);
             if (code < 12)
-                inp1[j] = ((int)((int)inp1[j] * (int)vscale) >> 16);
+                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
             else
-                int catchme = 1;
+                int32_t catchme = 1;
             j++;
         }
         j = 0;
@@ -588,80 +588,80 @@ static void ADPCM3()
             icode = BufferSpace[(0x4f0 + inPtr) ^ 3];
             inPtr++;
 
-            inp2[j] = (short)((icode & 0xf0) << 8); // this will in effect be signed
+            inp2[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
             if (code < 12)
-                inp2[j] = ((int)((int)inp2[j] * (int)vscale) >> 16);
+                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
             else
-                int catchme = 1;
+                int32_t catchme = 1;
             j++;
 
-            inp2[j] = (short)((icode & 0xf) << 12);
+            inp2[j] = (int16_t)((icode & 0xf) << 12);
             if (code < 12)
-                inp2[j] = ((int)((int)inp2[j] * (int)vscale) >> 16);
+                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
             else
-                int catchme = 1;
+                int32_t catchme = 1;
             j++;
         }
 
-        a[0] = (int)book1[0] * (int)l1;
-        a[0] += (int)book2[0] * (int)l2;
-        a[0] += (int)inp1[0] * (int)2048;
+        a[0] = (int32_t)book1[0] * (int32_t)l1;
+        a[0] += (int32_t)book2[0] * (int32_t)l2;
+        a[0] += (int32_t)inp1[0] * (int32_t)2048;
 
-        a[1] = (int)book1[1] * (int)l1;
-        a[1] += (int)book2[1] * (int)l2;
-        a[1] += (int)book2[0] * inp1[0];
-        a[1] += (int)inp1[1] * (int)2048;
+        a[1] = (int32_t)book1[1] * (int32_t)l1;
+        a[1] += (int32_t)book2[1] * (int32_t)l2;
+        a[1] += (int32_t)book2[0] * inp1[0];
+        a[1] += (int32_t)inp1[1] * (int32_t)2048;
 
-        a[2] = (int)book1[2] * (int)l1;
-        a[2] += (int)book2[2] * (int)l2;
-        a[2] += (int)book2[1] * inp1[0];
-        a[2] += (int)book2[0] * inp1[1];
-        a[2] += (int)inp1[2] * (int)2048;
+        a[2] = (int32_t)book1[2] * (int32_t)l1;
+        a[2] += (int32_t)book2[2] * (int32_t)l2;
+        a[2] += (int32_t)book2[1] * inp1[0];
+        a[2] += (int32_t)book2[0] * inp1[1];
+        a[2] += (int32_t)inp1[2] * (int32_t)2048;
 
-        a[3] = (int)book1[3] * (int)l1;
-        a[3] += (int)book2[3] * (int)l2;
-        a[3] += (int)book2[2] * inp1[0];
-        a[3] += (int)book2[1] * inp1[1];
-        a[3] += (int)book2[0] * inp1[2];
-        a[3] += (int)inp1[3] * (int)2048;
+        a[3] = (int32_t)book1[3] * (int32_t)l1;
+        a[3] += (int32_t)book2[3] * (int32_t)l2;
+        a[3] += (int32_t)book2[2] * inp1[0];
+        a[3] += (int32_t)book2[1] * inp1[1];
+        a[3] += (int32_t)book2[0] * inp1[2];
+        a[3] += (int32_t)inp1[3] * (int32_t)2048;
 
-        a[4] = (int)book1[4] * (int)l1;
-        a[4] += (int)book2[4] * (int)l2;
-        a[4] += (int)book2[3] * inp1[0];
-        a[4] += (int)book2[2] * inp1[1];
-        a[4] += (int)book2[1] * inp1[2];
-        a[4] += (int)book2[0] * inp1[3];
-        a[4] += (int)inp1[4] * (int)2048;
+        a[4] = (int32_t)book1[4] * (int32_t)l1;
+        a[4] += (int32_t)book2[4] * (int32_t)l2;
+        a[4] += (int32_t)book2[3] * inp1[0];
+        a[4] += (int32_t)book2[2] * inp1[1];
+        a[4] += (int32_t)book2[1] * inp1[2];
+        a[4] += (int32_t)book2[0] * inp1[3];
+        a[4] += (int32_t)inp1[4] * (int32_t)2048;
 
-        a[5] = (int)book1[5] * (int)l1;
-        a[5] += (int)book2[5] * (int)l2;
-        a[5] += (int)book2[4] * inp1[0];
-        a[5] += (int)book2[3] * inp1[1];
-        a[5] += (int)book2[2] * inp1[2];
-        a[5] += (int)book2[1] * inp1[3];
-        a[5] += (int)book2[0] * inp1[4];
-        a[5] += (int)inp1[5] * (int)2048;
+        a[5] = (int32_t)book1[5] * (int32_t)l1;
+        a[5] += (int32_t)book2[5] * (int32_t)l2;
+        a[5] += (int32_t)book2[4] * inp1[0];
+        a[5] += (int32_t)book2[3] * inp1[1];
+        a[5] += (int32_t)book2[2] * inp1[2];
+        a[5] += (int32_t)book2[1] * inp1[3];
+        a[5] += (int32_t)book2[0] * inp1[4];
+        a[5] += (int32_t)inp1[5] * (int32_t)2048;
 
-        a[6] = (int)book1[6] * (int)l1;
-        a[6] += (int)book2[6] * (int)l2;
-        a[6] += (int)book2[5] * inp1[0];
-        a[6] += (int)book2[4] * inp1[1];
-        a[6] += (int)book2[3] * inp1[2];
-        a[6] += (int)book2[2] * inp1[3];
-        a[6] += (int)book2[1] * inp1[4];
-        a[6] += (int)book2[0] * inp1[5];
-        a[6] += (int)inp1[6] * (int)2048;
+        a[6] = (int32_t)book1[6] * (int32_t)l1;
+        a[6] += (int32_t)book2[6] * (int32_t)l2;
+        a[6] += (int32_t)book2[5] * inp1[0];
+        a[6] += (int32_t)book2[4] * inp1[1];
+        a[6] += (int32_t)book2[3] * inp1[2];
+        a[6] += (int32_t)book2[2] * inp1[3];
+        a[6] += (int32_t)book2[1] * inp1[4];
+        a[6] += (int32_t)book2[0] * inp1[5];
+        a[6] += (int32_t)inp1[6] * (int32_t)2048;
 
-        a[7] = (int)book1[7] * (int)l1;
-        a[7] += (int)book2[7] * (int)l2;
-        a[7] += (int)book2[6] * inp1[0];
-        a[7] += (int)book2[5] * inp1[1];
-        a[7] += (int)book2[4] * inp1[2];
-        a[7] += (int)book2[3] * inp1[3];
-        a[7] += (int)book2[2] * inp1[4];
-        a[7] += (int)book2[1] * inp1[5];
-        a[7] += (int)book2[0] * inp1[6];
-        a[7] += (int)inp1[7] * (int)2048;
+        a[7] = (int32_t)book1[7] * (int32_t)l1;
+        a[7] += (int32_t)book2[7] * (int32_t)l2;
+        a[7] += (int32_t)book2[6] * inp1[0];
+        a[7] += (int32_t)book2[5] * inp1[1];
+        a[7] += (int32_t)book2[4] * inp1[2];
+        a[7] += (int32_t)book2[3] * inp1[3];
+        a[7] += (int32_t)book2[2] * inp1[4];
+        a[7] += (int32_t)book2[1] * inp1[5];
+        a[7] += (int32_t)book2[0] * inp1[6];
+        a[7] += (int32_t)inp1[7] * (int32_t)2048;
 
         for (j = 0; j < 8; j++)
         {
@@ -677,65 +677,65 @@ static void ADPCM3()
         l1 = a[6];
         l2 = a[7];
 
-        a[0] = (int)book1[0] * (int)l1;
-        a[0] += (int)book2[0] * (int)l2;
-        a[0] += (int)inp2[0] * (int)2048;
+        a[0] = (int32_t)book1[0] * (int32_t)l1;
+        a[0] += (int32_t)book2[0] * (int32_t)l2;
+        a[0] += (int32_t)inp2[0] * (int32_t)2048;
 
-        a[1] = (int)book1[1] * (int)l1;
-        a[1] += (int)book2[1] * (int)l2;
-        a[1] += (int)book2[0] * inp2[0];
-        a[1] += (int)inp2[1] * (int)2048;
+        a[1] = (int32_t)book1[1] * (int32_t)l1;
+        a[1] += (int32_t)book2[1] * (int32_t)l2;
+        a[1] += (int32_t)book2[0] * inp2[0];
+        a[1] += (int32_t)inp2[1] * (int32_t)2048;
 
-        a[2] = (int)book1[2] * (int)l1;
-        a[2] += (int)book2[2] * (int)l2;
-        a[2] += (int)book2[1] * inp2[0];
-        a[2] += (int)book2[0] * inp2[1];
-        a[2] += (int)inp2[2] * (int)2048;
+        a[2] = (int32_t)book1[2] * (int32_t)l1;
+        a[2] += (int32_t)book2[2] * (int32_t)l2;
+        a[2] += (int32_t)book2[1] * inp2[0];
+        a[2] += (int32_t)book2[0] * inp2[1];
+        a[2] += (int32_t)inp2[2] * (int32_t)2048;
 
-        a[3] = (int)book1[3] * (int)l1;
-        a[3] += (int)book2[3] * (int)l2;
-        a[3] += (int)book2[2] * inp2[0];
-        a[3] += (int)book2[1] * inp2[1];
-        a[3] += (int)book2[0] * inp2[2];
-        a[3] += (int)inp2[3] * (int)2048;
+        a[3] = (int32_t)book1[3] * (int32_t)l1;
+        a[3] += (int32_t)book2[3] * (int32_t)l2;
+        a[3] += (int32_t)book2[2] * inp2[0];
+        a[3] += (int32_t)book2[1] * inp2[1];
+        a[3] += (int32_t)book2[0] * inp2[2];
+        a[3] += (int32_t)inp2[3] * (int32_t)2048;
 
-        a[4] = (int)book1[4] * (int)l1;
-        a[4] += (int)book2[4] * (int)l2;
-        a[4] += (int)book2[3] * inp2[0];
-        a[4] += (int)book2[2] * inp2[1];
-        a[4] += (int)book2[1] * inp2[2];
-        a[4] += (int)book2[0] * inp2[3];
-        a[4] += (int)inp2[4] * (int)2048;
+        a[4] = (int32_t)book1[4] * (int32_t)l1;
+        a[4] += (int32_t)book2[4] * (int32_t)l2;
+        a[4] += (int32_t)book2[3] * inp2[0];
+        a[4] += (int32_t)book2[2] * inp2[1];
+        a[4] += (int32_t)book2[1] * inp2[2];
+        a[4] += (int32_t)book2[0] * inp2[3];
+        a[4] += (int32_t)inp2[4] * (int32_t)2048;
 
-        a[5] = (int)book1[5] * (int)l1;
-        a[5] += (int)book2[5] * (int)l2;
-        a[5] += (int)book2[4] * inp2[0];
-        a[5] += (int)book2[3] * inp2[1];
-        a[5] += (int)book2[2] * inp2[2];
-        a[5] += (int)book2[1] * inp2[3];
-        a[5] += (int)book2[0] * inp2[4];
-        a[5] += (int)inp2[5] * (int)2048;
+        a[5] = (int32_t)book1[5] * (int32_t)l1;
+        a[5] += (int32_t)book2[5] * (int32_t)l2;
+        a[5] += (int32_t)book2[4] * inp2[0];
+        a[5] += (int32_t)book2[3] * inp2[1];
+        a[5] += (int32_t)book2[2] * inp2[2];
+        a[5] += (int32_t)book2[1] * inp2[3];
+        a[5] += (int32_t)book2[0] * inp2[4];
+        a[5] += (int32_t)inp2[5] * (int32_t)2048;
 
-        a[6] = (int)book1[6] * (int)l1;
-        a[6] += (int)book2[6] * (int)l2;
-        a[6] += (int)book2[5] * inp2[0];
-        a[6] += (int)book2[4] * inp2[1];
-        a[6] += (int)book2[3] * inp2[2];
-        a[6] += (int)book2[2] * inp2[3];
-        a[6] += (int)book2[1] * inp2[4];
-        a[6] += (int)book2[0] * inp2[5];
-        a[6] += (int)inp2[6] * (int)2048;
+        a[6] = (int32_t)book1[6] * (int32_t)l1;
+        a[6] += (int32_t)book2[6] * (int32_t)l2;
+        a[6] += (int32_t)book2[5] * inp2[0];
+        a[6] += (int32_t)book2[4] * inp2[1];
+        a[6] += (int32_t)book2[3] * inp2[2];
+        a[6] += (int32_t)book2[2] * inp2[3];
+        a[6] += (int32_t)book2[1] * inp2[4];
+        a[6] += (int32_t)book2[0] * inp2[5];
+        a[6] += (int32_t)inp2[6] * (int32_t)2048;
 
-        a[7] = (int)book1[7] * (int)l1;
-        a[7] += (int)book2[7] * (int)l2;
-        a[7] += (int)book2[6] * inp2[0];
-        a[7] += (int)book2[5] * inp2[1];
-        a[7] += (int)book2[4] * inp2[2];
-        a[7] += (int)book2[3] * inp2[3];
-        a[7] += (int)book2[2] * inp2[4];
-        a[7] += (int)book2[1] * inp2[5];
-        a[7] += (int)book2[0] * inp2[6];
-        a[7] += (int)inp2[7] * (int)2048;
+        a[7] = (int32_t)book1[7] * (int32_t)l1;
+        a[7] += (int32_t)book2[7] * (int32_t)l2;
+        a[7] += (int32_t)book2[6] * inp2[0];
+        a[7] += (int32_t)book2[5] * inp2[1];
+        a[7] += (int32_t)book2[4] * inp2[2];
+        a[7] += (int32_t)book2[3] * inp2[3];
+        a[7] += (int32_t)book2[2] * inp2[4];
+        a[7] += (int32_t)book2[1] * inp2[5];
+        a[7] += (int32_t)book2[0] * inp2[6];
+        a[7] += (int32_t)inp2[7] * (int32_t)2048;
 
         for (j = 0; j < 8; j++)
         {
@@ -764,9 +764,9 @@ static void RESAMPLE3()
     uint32_t Accum = 0;
     uint32_t location;
     int16_t *lut;
-    short *dst;
+    int16_t *dst;
     int16_t *src;
-    dst = (short *)(BufferSpace);
+    dst = (int16_t *)(BufferSpace);
     src = (int16_t *)(BufferSpace);
     uint32_t srcPtr = ((((inst2 >> 2) & 0xfff) + 0x4f0) / 2);
     uint32_t dstPtr; //=(AudioOutBuffer/2);
@@ -789,26 +789,26 @@ static void RESAMPLE3()
 
     if ((Flags & 0x1) == 0)
     {
-        for (int x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp.rdram+addy, 0x8);
+        for (int32_t x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp.rdram+addy, 0x8);
             src[(srcPtr + x) ^ 1] = ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1];
         Accum = *(uint16_t *)(rsp.rdram + addy + 10);
     }
     else
     {
-        for (int x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0; //*(uint16_t *)(rsp.rdram+((addy+x)^2));
+        for (int32_t x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0; //*(uint16_t *)(rsp.rdram+((addy+x)^2));
     }
 
     const auto output_samples = 0x170 / 2;
     const auto lut_phases = 64;
     const auto lut_taps = 4;
 
-    for (int i = 0; i < output_samples; i++)
+    for (int32_t i = 0; i < output_samples; i++)
     {
-        const int phase = (Accum * lut_phases) >> 16;
+        const int32_t phase = (Accum * lut_phases) >> 16;
         const int16_t *coeff = (int16_t *)((uint8_t *)ResampleLUT + phase * lut_taps * sizeof(int16_t));
         int32_t accum = 0;
 
-        for (int tap = 0; tap < lut_taps; tap++)
+        for (int32_t tap = 0; tap < lut_taps; tap++)
         {
             int16_t sample = *(int16_t *)(src + ((srcPtr + tap) ^ 1));
             int16_t c = coeff[tap];
@@ -826,7 +826,7 @@ static void RESAMPLE3()
         srcPtr += (Accum >> 16);
         Accum &= 0xFFFF;
     }
-    for (int x = 0; x < 4; x++) ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
+    for (int32_t x = 0; x < 4; x++) ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
     *(uint16_t *)(rsp.rdram + addy + 10) = Accum;
 }
 
@@ -845,7 +845,7 @@ static void INTERLEAVE3()
     inSrcR = (uint16_t *)(BufferSpace + 0xb40);
     inSrcL = (uint16_t *)(BufferSpace + 0x9d0);
 
-    for (int x = 0; x < (0x170 / 4); x++)
+    for (int32_t x = 0; x < (0x170 / 4); x++)
     {
         Left = *(inSrcL++);
         Right = *(inSrcR++);
@@ -902,7 +902,7 @@ uint32_t setaddr;
 static void MP3ADDY()
 {
     setaddr = (inst2 & 0xffffff);
-    //__asm int 3;
+    //__asm int32_t 3;
     // fprintf (fp, "mp3addy: inst1: %08X, inst2: %08X, loopval: %08X\n", inst1, inst2, loopval);
 }
 
@@ -933,7 +933,7 @@ void MP3();
     ((uint32_t*)BufferSpace)[0x008/4] += base;
     ((uint32_t*)BufferSpace)[0xFFC/4] = loopval;
     ((uint32_t*)BufferSpace)[0xFF8/4] = dmembase;
-    //__asm int 3;
+    //__asm int32_t 3;
     memcpy (imem+0x238, rsp.rdram+((uint32_t*)BufferSpace)[0x008/4], 0x9C0);
     ((uint32_t*)BufferSpace)[0xFF4/4] = setaddr;
     pDMEM = (char *)BufferSpace;
