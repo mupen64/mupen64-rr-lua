@@ -1,0 +1,48 @@
+[
+  {
+    "label": "Delete cache and reconfigure",
+    "command": "./vsdev.cmd",
+    "args": [
+      "cmake",
+      "--fresh",
+      "--preset",
+      "vcpkg-win64-x86"
+    ]
+  },
+  {
+    "label": "Switch to debug",
+    "command": "./vsdev.cmd",
+    "args": [
+      "cmake",
+      "--preset",
+      "vcpkg-win64-x86"
+    ]
+  },
+  {
+    "label": "Switch to release",
+    "command": "./vsdev.cmd",
+    "args": [
+      "cmake",
+      "--preset",
+      "vcpkg-win64-x86-release"
+    ]
+  },
+  {
+    "label": "Build",
+    "command": "./vsdev.cmd",
+    "args": [
+      "cmake",
+      "--build",
+      "build"
+    ]
+  },
+  {
+    "label": "Test",
+    "command": "./vsdev.cmd",
+    "args": [
+      "ctest",
+      "--test-dir",
+      "build"
+    ]
+  }
+]

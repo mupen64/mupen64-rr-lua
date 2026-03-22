@@ -1,0 +1,10 @@
+[
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (CodeLLDB)",
+    "program": "./build/out/mupen64.exe",
+    "stopOnEntry": false,
+  }
+]

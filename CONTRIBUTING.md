@@ -10,7 +10,7 @@ Only Windows is supported for now, though the CMake infrastructure is intended t
 
 ## Windows/CMake
 You'll need:
-- Visual Studio (for the compiler, CMake, Ninja and vcpkg)
+- Visual Studio 2026 (for the compiler, CMake, Ninja and vcpkg)
 
 In order for the compiler to work, you'll need to be in a VS developer environment. Then, simply use the provided `vcpkg-win64-x86` preset to compile and build. If you want to change any settings, do so on the command line or via `CMakeUserPresets.json`.
 ```sh
@@ -34,6 +34,12 @@ You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your work
 Make sure to set the CMake profile to use the `vcpkg-win64-x86` preset, enabling it if needed.
 
 If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
+
+### Zed
+
+All tasks required for development are available in the task panel.
+
+Visual Studio 2026 must be installed on the `C:` drive.
 
 # Dependencies
 When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
