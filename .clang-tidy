@@ -30,16 +30,16 @@ WarningsAsErrors: ''
 CheckOptions:
   # === Types ===
   - key: readability-identifier-naming.ClassCase
-    value: PascalCase
+    value: CamelCase
 
   - key: readability-identifier-naming.StructCase
-    value: PascalCase
+    value: CamelCase
 
   - key: readability-identifier-naming.EnumCase
-    value: PascalCase
+    value: CamelCase
 
   - key: readability-identifier-naming.ConceptCase
-    value: PascalCase
+    value: CamelCase
 
 
   # === Functions ===
@@ -78,4 +78,4 @@ CheckOptions:
 
   # Enum constants (optional style choice)
   - key: readability-identifier-naming.EnumConstantCase
-    value: PascalCase
+    value: CamelCase
