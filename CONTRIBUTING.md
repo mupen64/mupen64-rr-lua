@@ -84,6 +84,8 @@ Code formatting must abide by the [.clang-format](https://github.com/mupen64/mup
 
 Failure to comply will fail the check-format workflow.
 
+Naming must abide by the [.clang-tidy](https://github.com/mupen64/mupen64-rr-lua/blob/master/.clang-tidy) file provided in the repository root.
+
 # Plugin Guidelines
 
 - Give your plugin a descriptive name.

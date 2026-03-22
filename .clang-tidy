@@ -27,3 +27,55 @@ Checks: >
   -readability-use-anyofallof,
   -readability-implicit-bool-conversion,
 WarningsAsErrors: ''
+CheckOptions:
+  # === Types ===
+  - key: readability-identifier-naming.ClassCase
+    value: PascalCase
+
+  - key: readability-identifier-naming.StructCase
+    value: PascalCase
+
+  - key: readability-identifier-naming.EnumCase
+    value: PascalCase
+
+  - key: readability-identifier-naming.ConceptCase
+    value: PascalCase
+
+
+  # === Functions ===
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+
+
+  # === Local Variables ===
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+
+
+  # === Global Variables ===
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: g_
+
+
+  # === Static Variables ===
+  - key: readability-identifier-naming.StaticVariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.StaticVariablePrefix
+    value: s_
+
+
+  # === (Optional but recommended) ===
+  # Constants (constexpr / const globals)
+  - key: readability-identifier-naming.ConstantCase
+    value: lower_case
+
+  # Enum constants (optional style choice)
+  - key: readability-identifier-naming.EnumConstantCase
+    value: PascalCase
