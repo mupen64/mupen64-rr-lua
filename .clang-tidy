@@ -71,11 +71,10 @@ CheckOptions:
     value: s_
 
 
-  # === (Optional but recommended) ===
-  # Constants (constexpr / const globals)
+  # Constants
   - key: readability-identifier-naming.ConstantCase
-    value: lower_case
+    value: UPPER_CASE
 
-  # Enum constants (optional style choice)
+  # Enum constants
   - key: readability-identifier-naming.EnumConstantCase
     value: CamelCase
