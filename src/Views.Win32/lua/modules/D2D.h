@@ -112,7 +112,7 @@ static int clear(lua_State *L)
 
     D2D1::ColorF color = D2D_GET_COLOR(L, 1);
 
-    lua->rctx.d2d_render_target_stack.top()->Clear(lua->rctx.presenter->adjust_clear_color(color));
+    lua->rctx.d2d_render_target_stack.top()->Clear(g_rctx.presenter->adjust_clear_color(color));
 
     return 0;
 }
@@ -223,13 +223,13 @@ static int draw_text(lua_State *L)
 
     uint64_t params_hash = xxh64::hash((const char *)&params, sizeof(params), 0);
 
-    if (!lua->rctx.dw_text_layouts.contains(params_hash))
+    if (!g_rctx.dw_text_layouts.contains(params_hash))
     {
         // g_view_logger->info("[Lua] Adding layout to cache... ({} elements)\n", lua->rctx.dw_text_layouts.size());
 
         IDWriteTextFormat *text_format;
 
-        lua->rctx.dw_factory->CreateTextFormat(
+        g_rctx.dw_factory->CreateTextFormat(
             IOUtils::to_wide_string(font_name).c_str(), nullptr, static_cast<DWRITE_FONT_WEIGHT>(font_weight),
             static_cast<DWRITE_FONT_STYLE>(font_style), DWRITE_FONT_STRETCH_NORMAL, font_size, L"", &text_format);
 
@@ -239,15 +239,15 @@ static int draw_text(lua_State *L)
         IDWriteTextLayout *text_layout;
 
         auto wtext = IOUtils::to_wide_string(text);
-        lua->rctx.dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format,
-                                               rectangle.right - rectangle.left, rectangle.bottom - rectangle.top,
-                                               &text_layout);
+        g_rctx.dw_factory->CreateTextLayout(wtext.c_str(), wtext.length(), text_format,
+                                            rectangle.right - rectangle.left, rectangle.bottom - rectangle.top,
+                                            &text_layout);
 
-        lua->rctx.dw_text_layouts.add(params_hash, text_layout);
+        g_rctx.dw_text_layouts.add(params_hash, text_layout);
         text_format->Release();
     }
 
-    auto layout = lua->rctx.dw_text_layouts.get(params_hash);
+    auto layout = g_rctx.dw_text_layouts.get(params_hash);
     lua->rctx.d2d_render_target_stack.top()->DrawTextLayout(
         {
             .x = rectangle.left,
@@ -300,29 +300,29 @@ static int measure_text(lua_State *L)
 
     uint64_t params_hash = xxh64::hash((const char *)&params, sizeof(params), 0);
 
-    if (!lua->rctx.dw_text_sizes.contains(params_hash))
+    if (!g_rctx.dw_text_sizes.contains(params_hash))
     {
         IDWriteTextFormat *text_format;
 
-        lua->rctx.dw_factory->CreateTextFormat(IOUtils::to_wide_string(font_name).c_str(), NULL,
-                                               DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-                                               DWRITE_FONT_STRETCH_NORMAL, font_size, L"", &text_format);
+        g_rctx.dw_factory->CreateTextFormat(IOUtils::to_wide_string(font_name).c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL,
+                                            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, font_size, L"",
+                                            &text_format);
 
         IDWriteTextLayout *text_layout;
 
-        lua->rctx.dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height,
-                                               &text_layout);
+        g_rctx.dw_factory->CreateTextLayout(text.c_str(), text.length(), text_format, max_width, max_height,
+                                            &text_layout);
 
         DWRITE_TEXT_METRICS text_metrics;
         text_layout->GetMetrics(&text_metrics);
 
-        lua->rctx.dw_text_sizes.add(params_hash, text_metrics);
+        g_rctx.dw_text_sizes.add(params_hash, text_metrics);
 
         text_format->Release();
         text_layout->Release();
     }
 
-    const auto text_metrics = lua->rctx.dw_text_sizes.get(params_hash).value();
+    const auto text_metrics = g_rctx.dw_text_sizes.get(params_hash).value();
 
     lua_newtable(L);
     lua_pushinteger(L, text_metrics.widthIncludingTrailingWhitespace);

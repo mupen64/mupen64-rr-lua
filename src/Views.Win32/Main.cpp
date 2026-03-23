@@ -695,6 +695,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
         RECT rect{};
         GetClientRect(g_main_ctx.hwnd, &rect);
+
+        RECT new_rect = rect;
+        if (Statusbar::hwnd())
+        {
+            RECT rc{};
+            GetWindowRect(Statusbar::hwnd(), &rc);
+            new_rect.bottom -= (WORD)(rc.bottom - rc.top);
+        }
+        LuaRenderer::resize(new_rect.right - new_rect.left, new_rect.bottom - new_rect.top);
+
         Messenger::broadcast(Messenger::Message::SizeChanged, rect);
 
         if (g_main_ctx.core_ctx->vr_get_launched())

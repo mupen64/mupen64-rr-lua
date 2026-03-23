@@ -597,7 +597,7 @@ static int LoadScreen(lua_State *L)
 
     // Copy screen into the loadscreen dc
     auto dc = GetDC(g_main_ctx.hwnd);
-    BitBlt(lua->rctx.loadscreen_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, dc, 0, 0, SRCCOPY);
+    BitBlt(lua->rctx.loadscreen_dc, 0, 0, g_rctx.dc_size.width, g_rctx.dc_size.height, dc, 0, 0, SRCCOPY);
     ReleaseDC(g_main_ctx.hwnd, dc);
 
     Gdiplus::Bitmap *out = new Gdiplus::Bitmap(lua->rctx.loadscreen_bmp, nullptr);

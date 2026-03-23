@@ -14,11 +14,7 @@
  */
 struct t_lua_rendering_context
 {
-    // The current presenter, or null
-    Presenter *presenter{};
-
-    // The Direct2D overlay control handle
-    HWND d2d_overlay_hwnd{};
+    bool d2d_initialized{};
 
     // The GDI/GDI+ overlay control handle
     HWND gdi_overlay_hwnd{};
@@ -33,18 +29,6 @@ struct t_lua_rendering_context
 
     // The bitmap for GDI/GDI+ drawings
     HBITMAP gdi_bmp{};
-
-    // Dimensions of the drawing surfaces
-    D2D1_SIZE_U dc_size{};
-
-    // The DirectWrite factory, whose lifetime is the renderer's
-    IDWriteFactory *dw_factory{};
-
-    // The cache for DirectWrite text layouts
-    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
-
-    // The cache for DirectWrite text size measurements
-    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
 
     // The stack of render targets. The top is used for D2D calls.
     std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
@@ -73,6 +57,30 @@ struct t_lua_rendering_context
     COLORREF col, bkcol{};
     int bkmode{};
 };
+
+struct LuaRendererContext
+{
+    // The current presenter, or null
+    Presenter *presenter{};
+
+    // The Direct2D overlay control handle
+    HWND d2d_overlay_hwnd{};
+
+    // Dimensions of the drawing surfaces
+    D2D1_SIZE_U dc_size{};
+
+    RECT window_rect{};
+
+    // The DirectWrite factory, whose lifetime is the renderer's
+    IDWriteFactory *dw_factory{};
+
+    // The cache for DirectWrite text layouts
+    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
+
+    // The cache for DirectWrite text size measurements
+    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+};
+
 
 struct t_action_param_meta
 {

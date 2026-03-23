@@ -13,6 +13,11 @@ constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
 void init();
 
 /**
+ * \brief Resizes the rendering context to the specified width and height.
+ */
+void resize(uint32_t width, uint32_t height);
+
+/**
  * \brief Creates a new rendering context with the default values.
  */
 t_lua_rendering_context default_rendering_context();
@@ -66,3 +71,5 @@ void set_target_fps(t_lua_rendering_context *rctx, std::optional<float> fps);
  */
 HBRUSH alpha_mask_brush();
 } // namespace LuaRenderer
+
+extern LuaRendererContext g_rctx;
