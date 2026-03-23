@@ -153,13 +153,24 @@ void LuaRenderer::resize(uint32_t width, uint32_t height)
     RT_ASSERT(result,
               L"Failed to initialize Lua presenter.\r\nVerify that your system supports the selected presenter.");
 
+    // The D2D rt stacks of all render contexts are invalidated now. We need to recreate those.
     for (const auto &env : g_lua_environments)
     {
+        RT_ASSERT(env->rctx.d2d_render_target_stack.size() == 1,
+                  L"Unexpected D2D render target stack size during presenter recreation. Resizing is not supported "
+                  L"during `d2d.draw_to_image`.");
+
         env->rctx.d2d_render_target_stack = {};
-        env->rctx.d2d_render_target_stack.push(g_rctx.presenter->dc());
-        BringWindowToTop(env->rctx.gdi_overlay_hwnd);
+
+        const auto dc = g_rctx.presenter->add_dc();
+        env->rctx.d2d_render_target_stack.push(dc);
     }
 
+    // Fix the messed up Z-Order. Ugh.
+    for (const auto &env : g_lua_environments)
+    {
+        BringWindowToTop(env->rctx.gdi_overlay_hwnd);
+    }
     BringWindowToTop(g_rctx.d2d_overlay_hwnd);
 }
 
@@ -257,6 +268,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
         CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, g_rctx.dc_size.width,
                        g_rctx.dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
     SetLayeredWindowAttributes(ctx->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
+    SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, env);
 
     ctx->gdi_front_dc = GetDC(ctx->gdi_overlay_hwnd);
 
@@ -267,9 +279,8 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     BringWindowToTop(ctx->gdi_overlay_hwnd);
     BringWindowToTop(g_rctx.d2d_overlay_hwnd);
 
-    SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, env);
-
-    ctx->d2d_render_target_stack.push(g_rctx.presenter->dc());
+    const auto dc = g_rctx.presenter->add_dc();
+    ctx->d2d_render_target_stack.push(dc);
 
     if (!g_config.lazy_renderer_init)
     {
