@@ -404,6 +404,34 @@ inline bool SetDarkThemeColors(HBRUSH &bg_brush, HDC hdc)
     return !!bg_brush;
 }
 
+inline void apply_to_control(HWND hwnd)
+{
+    wchar_t cls[32]{};
+    GetClassName(hwnd, cls, std::size(cls));
+    std::wstring class_name(cls);
+
+    if (class_name == WC_LISTVIEW)
+    {
+        InitListView(hwnd);
+        return;
+    }
+
+    _AllowDarkModeForWindow(hwnd, true);
+
+    if (class_name != WC_HEADER) SetWindowTheme(hwnd, L"Explorer", nullptr);
+}
+
+inline void apply_to_child_windows(HWND hwnd)
+{
+    EnumChildWindows(
+        hwnd,
+        [](HWND hwnd, LPARAM) -> BOOL {
+            apply_to_control(hwnd);
+            return TRUE;
+        },
+        0);
+}
+
 inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
                                           DWORD_PTR dwRefData)
 {
@@ -411,6 +439,19 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
     {
     case WM_NCDESTROY:
         RemoveWindowSubclass(hwnd, wnd_subclass_proc, sId);
+        break;
+    case WM_PARENTNOTIFY:
+        switch (LOWORD(wParam))
+        {
+        case WM_CREATE: {
+            const auto child_hwnd = reinterpret_cast<HWND>(lParam);
+            apply_to_control(child_hwnd);
+            break;
+        }
+
+        default:
+            break;
+        }
         break;
     default:
         break;
@@ -534,31 +575,10 @@ inline void attach(HWND hwnd)
 
     RefreshTitleBarThemeColor(hwnd);
 
-    // Visit all child windows and apply all the crappy hacks...
-    EnumChildWindows(
-        hwnd,
-        [](HWND hwnd, LPARAM) -> BOOL {
-            wchar_t cls[32]{};
-            GetClassName(hwnd, cls, std::size(cls));
-            std::wstring class_name(cls);
+    apply_to_child_windows(hwnd);
 
-            if (class_name == WC_LISTVIEW)
-            {
-                InitListView(hwnd);
-                return TRUE;
-            }
-            _AllowDarkModeForWindow(hwnd, true);
-
-            SetWindowTheme(hwnd, L"Explorer", nullptr);
-
-            return TRUE;
-        },
-        0);
-
-    if (is_top_level_window(hwnd))
-        SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
-    else
-        SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
+    SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
+    if (!is_top_level_window(hwnd)) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
 }
 
 } // namespace WinDarkMode
