@@ -59,6 +59,7 @@ extern "C"
 #include <ranges>
 #include <set>
 #include <cwctype>
+#include <WinDarkMode.h>
 #pragma warning(pop)
 
 #include <Loggers.h>

@@ -165,6 +165,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     PkgConfig::speexdsp
     vendor::argh
     vendor::bs-thread-pool
+    vendor::windarkmode
     vendor::microlru
     vendor::mini
 )
