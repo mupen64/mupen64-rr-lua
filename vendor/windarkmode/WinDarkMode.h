@@ -45,6 +45,7 @@
 #include <Uxtheme.h>
 #include <commdlg.h>
 #include <Vssym32.h>
+#include <dwmapi.h>
 #include <winerror.h>
 #include <cstdint>
 #include <string>
@@ -314,84 +315,85 @@ inline void FixDarkScrollBar()
     }
 }
 
-inline void InitListView(HWND hListView)
+inline void InitListView(HWND lv_hwnd)
 {
-    HWND hHeader = ListView_GetHeader(hListView);
+    _AllowDarkModeForWindow(lv_hwnd, true);
 
-    _AllowDarkModeForWindow(hListView, true);
-    _AllowDarkModeForWindow(hHeader, true);
+    HWND hdr_hwnd = ListView_GetHeader(lv_hwnd);
+    _AllowDarkModeForWindow(hdr_hwnd, true);
 
-    SetWindowSubclass(
-        hListView,
-        [](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR /*uIdSubclass*/,
-           DWORD_PTR dwRefData) -> LRESULT {
-            switch (uMsg)
+    const auto subclass = [](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR /*uIdSubclass*/,
+                             DWORD_PTR dwRefData) -> LRESULT {
+        switch (uMsg)
+        {
+        case WM_NOTIFY: {
+            if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
             {
-            case WM_NOTIFY: {
-                if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
+                LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
+                switch (nmcd->dwDrawStage)
                 {
-                    LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
-                    switch (nmcd->dwDrawStage)
-                    {
-                    case CDDS_PREPAINT:
-                        return CDRF_NOTIFYITEMDRAW;
-                    case CDDS_ITEMPREPAINT: {
-                        auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
-                        SetTextColor(nmcd->hdc, info->headerTextColor);
-                        return CDRF_DODEFAULT;
-                    }
-                    }
-                }
-            }
-            break;
-            case WM_THEMECHANGED: {
-                HWND hHeader = ListView_GetHeader(hWnd);
-                HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
-                if (hTheme)
-                {
-                    COLORREF color;
-                    if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color)))
-                    {
-                        ListView_SetTextColor(hWnd, color);
-                    }
-                    if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
-                    {
-                        ListView_SetTextBkColor(hWnd, color);
-                        ListView_SetBkColor(hWnd, color);
-                    }
-                    CloseThemeData(hTheme);
-                }
-
-                hTheme = OpenThemeData(hHeader, L"Header");
-                if (hTheme)
-                {
+                case CDDS_PREPAINT:
+                    return CDRF_NOTIFYITEMDRAW;
+                case CDDS_ITEMPREPAINT: {
                     auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
-                    GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->headerTextColor));
-                    CloseThemeData(hTheme);
+                    SetTextColor(nmcd->hdc, info->headerTextColor);
+                    return CDRF_DODEFAULT;
                 }
-
-                SendMessageW(hHeader, WM_THEMECHANGED, wParam, lParam);
-
-                RedrawWindow(hWnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
+                }
             }
-            break;
-            case WM_DESTROY: {
+        }
+        break;
+        case WM_THEMECHANGED: {
+            HWND hdr_hwnd = ListView_GetHeader(hWnd);
+            HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
+            if (hTheme)
+            {
+                COLORREF color;
+                if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color)))
+                {
+                    ListView_SetTextColor(hWnd, color);
+                }
+                if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
+                {
+                    ListView_SetTextBkColor(hWnd, color);
+                    ListView_SetBkColor(hWnd, color);
+                }
+                CloseThemeData(hTheme);
+            }
+
+            hTheme = OpenThemeData(hdr_hwnd, L"Header");
+            if (hTheme)
+            {
                 auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
-                delete info;
+                GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->headerTextColor));
+                CloseThemeData(hTheme);
             }
-            break;
-            }
-            return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-        },
-        0, reinterpret_cast<DWORD_PTR>(new SubclassInfo{}));
 
-    ListView_SetExtendedListViewStyle(hListView, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_HEADERDRAGDROP);
+            SendMessage(hdr_hwnd, WM_THEMECHANGED, wParam, lParam);
 
-    // Hide focus dots
-    SendMessageW(hListView, WM_CHANGEUISTATE, MAKELONG(UIS_SET, UISF_HIDEFOCUS), 0);
+            RedrawWindow(hWnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
+        }
+        break;
+        case WM_DESTROY: {
+            auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
+            delete info;
+        }
+        break;
+        }
+        return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    };
 
-    SetWindowTheme(hHeader, L"ItemsView", nullptr);   // DarkMode
-    SetWindowTheme(hListView, L"ItemsView", nullptr); // DarkMode
+    SetWindowSubclass(lv_hwnd, subclass, 0, reinterpret_cast<DWORD_PTR>(new SubclassInfo{}));
+
+    // FIXME: We force grid lines off because they look absolutely brutal in dark mode. Maybe we can override them?
+    const auto ex_style = ListView_GetExtendedListViewStyle(lv_hwnd);
+    ListView_SetExtendedListViewStyle(lv_hwnd, ex_style & ~LVS_EX_GRIDLINES);
+
+    // FIXME: Hide focus rectangle because it's white :/ Would be nice to override it instead.
+    SendMessage(lv_hwnd, WM_CHANGEUISTATE, MAKELONG(UIS_SET, UISF_HIDEFOCUS), 0);
+
+    SetWindowTheme(hdr_hwnd, L"ItemsView", L"Header");
+    SetWindowTheme(lv_hwnd, L"ItemsView", 0);
 }
 
 inline bool SetDarkThemeColors(HBRUSH &bg_brush, HDC hdc)
@@ -400,6 +402,21 @@ inline bool SetDarkThemeColors(HBRUSH &bg_brush, HDC hdc)
     SetTextColor(hdc, text_color);
     SetBkColor(hdc, bg_color);
     return !!bg_brush;
+}
+
+inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
+                                          DWORD_PTR dwRefData)
+{
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, wnd_subclass_proc, sId);
+        break;
+    default:
+        break;
+    }
+
+    return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
 inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
@@ -451,50 +468,48 @@ inline void init()
     using namespace Internal;
     auto RtlGetNtVersionNumbers = reinterpret_cast<fnRtlGetNtVersionNumbers>(
         GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetNtVersionNumbers"));
-    if (RtlGetNtVersionNumbers)
+    if (!RtlGetNtVersionNumbers) return;
+
+    DWORD major, minor;
+    RtlGetNtVersionNumbers(&major, &minor, &build_number);
+    build_number &= ~0xF0000000;
+
+    HMODULE hUxtheme = LoadLibraryEx(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (hUxtheme)
     {
-        DWORD major, minor;
-        RtlGetNtVersionNumbers(&major, &minor, &build_number);
-        build_number &= ~0xF0000000;
+        _OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(49)));
+        _RefreshImmersiveColorPolicyState =
+            reinterpret_cast<fnRefreshImmersiveColorPolicyState>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104)));
+        _GetIsImmersiveColorUsingHighContrast =
+            reinterpret_cast<fnGetIsImmersiveColorUsingHighContrast>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(106)));
+        _ShouldAppsUseDarkMode =
+            reinterpret_cast<fnShouldAppsUseDarkMode>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132)));
+        _AllowDarkModeForWindow =
+            reinterpret_cast<fnAllowDarkModeForWindow>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(133)));
 
-        HMODULE hUxtheme = LoadLibraryEx(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-        if (hUxtheme)
+        auto ord135 = GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135));
+        if (build_number < 18362)
+            _AllowDarkModeForApp = reinterpret_cast<fnAllowDarkModeForApp>(ord135);
+        else
+            _SetPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(ord135);
+
+        _IsDarkModeAllowedForWindow =
+            reinterpret_cast<fnIsDarkModeAllowedForWindow>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(137)));
+
+        _SetWindowCompositionAttribute = reinterpret_cast<fnSetWindowCompositionAttribute>(
+            GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowCompositionAttribute"));
+
+        if (_OpenNcThemeData && _RefreshImmersiveColorPolicyState && _ShouldAppsUseDarkMode &&
+            _AllowDarkModeForWindow && (_AllowDarkModeForApp || _SetPreferredAppMode) && _IsDarkModeAllowedForWindow)
         {
-            _OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(49)));
-            _RefreshImmersiveColorPolicyState =
-                reinterpret_cast<fnRefreshImmersiveColorPolicyState>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104)));
-            _GetIsImmersiveColorUsingHighContrast = reinterpret_cast<fnGetIsImmersiveColorUsingHighContrast>(
-                GetProcAddress(hUxtheme, MAKEINTRESOURCEA(106)));
-            _ShouldAppsUseDarkMode =
-                reinterpret_cast<fnShouldAppsUseDarkMode>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132)));
-            _AllowDarkModeForWindow =
-                reinterpret_cast<fnAllowDarkModeForWindow>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(133)));
+            dark_mode_supported = true;
 
-            auto ord135 = GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135));
-            if (build_number < 18362)
-                _AllowDarkModeForApp = reinterpret_cast<fnAllowDarkModeForApp>(ord135);
-            else
-                _SetPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(ord135);
+            AllowDarkModeForApp(true);
+            _RefreshImmersiveColorPolicyState();
 
-            _IsDarkModeAllowedForWindow =
-                reinterpret_cast<fnIsDarkModeAllowedForWindow>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(137)));
+            dark_mode_enabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
 
-            _SetWindowCompositionAttribute = reinterpret_cast<fnSetWindowCompositionAttribute>(
-                GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowCompositionAttribute"));
-
-            if (_OpenNcThemeData && _RefreshImmersiveColorPolicyState && _ShouldAppsUseDarkMode &&
-                _AllowDarkModeForWindow && (_AllowDarkModeForApp || _SetPreferredAppMode) &&
-                _IsDarkModeAllowedForWindow)
-            {
-                dark_mode_supported = true;
-
-                AllowDarkModeForApp(true);
-                _RefreshImmersiveColorPolicyState();
-
-                dark_mode_enabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
-
-                FixDarkScrollBar();
-            }
+            FixDarkScrollBar();
         }
     }
 
@@ -515,8 +530,9 @@ inline void attach(HWND hwnd)
     if (!dark_mode_supported) return;
 
     _AllowDarkModeForWindow(hwnd, true);
+    DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark_mode_enabled, sizeof(dark_mode_enabled));
+
     RefreshTitleBarThemeColor(hwnd);
-    FixDarkScrollBar();
 
     // Visit all child windows and apply all the crappy hacks...
     EnumChildWindows(
@@ -539,7 +555,10 @@ inline void attach(HWND hwnd)
         },
         0);
 
-    SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
+    if (is_top_level_window(hwnd))
+        SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
+    else
+        SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
 }
 
 } // namespace WinDarkMode
