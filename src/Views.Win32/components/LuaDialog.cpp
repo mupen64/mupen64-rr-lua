@@ -314,6 +314,8 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
     switch (msg)
     {
     case WM_INITDIALOG:
+        WinDarkMode::attach(hwnd);
+
         SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
 
         ctx = (t_instance_context *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
@@ -424,6 +426,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
     switch (msg)
     {
     case WM_INITDIALOG: {
+        WinDarkMode::attach(hwnd);
         g_dlg.mgr_hwnd = hwnd;
         g_dlg.lv_hwnd = GetDlgItem(hwnd, IDC_INSTANCES);
 

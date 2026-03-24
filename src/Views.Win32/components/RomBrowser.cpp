@@ -136,9 +136,6 @@ void rombrowser_create()
                                 g_main_ctx.hwnd, (HMENU)IDC_ROMLIST, g_main_ctx.hinst, NULL);
     ListView_SetExtendedListViewStyle(g_ctx.hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-    // Explorer theme is better than default, because it has selection highlight
-    SetWindowTheme(g_ctx.hwnd, L"Explorer", NULL);
-
     const HIMAGELIST h_small = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK, 11, 0);
     HICON h_icon;
 

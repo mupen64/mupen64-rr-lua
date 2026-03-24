@@ -1116,8 +1116,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
+    WinDarkMode::init();
     LuaManager::init();
-
     CrashManager::init();
     MGECompositor::init();
     LuaRenderer::init();
@@ -1184,6 +1184,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
                                    L"Error", fsvc_error);
         return -1;
     }
+
+    WinDarkMode::attach(g_main_ctx.hwnd);
 
     MSG msg{};
     while (true)
