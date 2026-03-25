@@ -703,7 +703,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         SetFocus(g_ctx.edit_hwnd);
 
         SendMessage(g_ctx.edit_hwnd, EM_SETCUEBANNER, TRUE, (LPARAM)L"Search actions, options, or ROMs");
-
+        WinDarkMode::attach(hwnd);
         break;
     }
     case WM_DESTROY:
@@ -789,7 +789,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             else
             {
                 text_color = GetSysColor(COLOR_WINDOWTEXT);
-                bg_brush = GetSysColorBrush(COLOR_WINDOW);
+                bg_brush = WinDarkMode::get_listbox_background_brush();
             }
 
             // 1. Draw the background

@@ -229,6 +229,8 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe(
             Messenger::Message::SizeChanged, [](const auto &) { update_dialog_position_and_size(); }));
+
+        WinDarkMode::attach(hwnd);
         break;
     }
     case WM_DESTROY:

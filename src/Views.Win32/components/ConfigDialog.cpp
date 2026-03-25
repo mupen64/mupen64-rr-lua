@@ -264,6 +264,7 @@ INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, L
         ListView_SetColumnWidth(g_pldlv_hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
         ListView_SetColumnWidth(g_pldlv_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
 
+        WinDarkMode::attach(hwnd);
         return TRUE;
     }
     case WM_NOTIFY: {
@@ -405,6 +406,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
 
         refresh_plugins_page(hwnd);
 
+        WinDarkMode::attach(hwnd);
         return TRUE;
     }
     case WM_PLUGIN_DISCOVERY_FINISHED: {
@@ -1046,6 +1048,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 
         ctx = (t_tab_context *)GetProp(hwnd, L"tab_context");
         ctx->hwnd = hwnd;
+        WinDarkMode::attach(hwnd);
         return TRUE;
     }
     case WM_EDIT_END: {
@@ -1259,6 +1262,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 SendMessage(ctx->edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(ctx->lv_hwnd, WM_GETFONT, 0, 0), 0);
 
                 SetWindowSubclass(ctx->edit_hwnd, inline_edit_subclass_proc, 0, 0);
+                WinDarkMode::attach(ctx->edit_hwnd);
 
                 const auto value = std::get<int32_t>(global_item.current_value.get());
                 Edit_SetText(ctx->edit_hwnd, std::to_wstring(value).c_str());
@@ -1370,6 +1374,18 @@ static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
     return groups;
 }
 
+static INT_PTR CALLBACK prop_sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case PSCB_INITIALIZED: {
+        WinDarkMode::attach(hwnd);
+        break;
+    }
+    }
+    return 0;
+}
+
 void ConfigDialog::show_app_settings()
 {
     const auto groups = get_option_groups();
@@ -1446,7 +1462,8 @@ void ConfigDialog::show_app_settings()
 
     PROPSHEETHEADER psh = {0};
     psh.dwSize = sizeof(PROPSHEETHEADER);
-    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW | PSH_NOCONTEXTHELP;
+    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW | PSH_NOCONTEXTHELP | PSH_USECALLBACK;
+    psh.pfnCallback = prop_sheet_callback;
     psh.hwndParent = g_main_ctx.hwnd;
     psh.hInstance = g_main_ctx.hinst;
     psh.pszCaption = L"Settings";

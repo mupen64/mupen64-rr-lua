@@ -133,6 +133,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         // workaround because initial selected button is "Start"
         SetFocus(GetDlgItem(hwnd, IDC_INI_AUTHOR));
 
+        WinDarkMode::attach(hwnd);
         return FALSE;
     }
     case WM_DESTROY:

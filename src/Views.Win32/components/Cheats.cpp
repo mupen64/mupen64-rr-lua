@@ -19,11 +19,9 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         {
             SetDlgItemText(hwnd, IDC_CHEAT_STATUS, L"Read-only: Cheats are overriden by the core.");
         }
+        WinDarkMode::attach(hwnd);
         goto rebuild_list;
     }
-    case WM_DESTROY:
-
-        break;
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;

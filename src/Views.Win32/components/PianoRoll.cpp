@@ -1381,6 +1381,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
                 {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
             });
 
+        WinDarkMode::attach(hwnd);
         break;
     }
     case WM_DESTROY:

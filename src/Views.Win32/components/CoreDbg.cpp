@@ -28,6 +28,7 @@ INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         g_ctx.list_hwnd = GetDlgItem(g_ctx.hwnd, IDC_COREDBG_LIST);
 
         CheckDlgButton(hwnd, IDC_COREDBG_RSP_TOGGLE, 1);
+        WinDarkMode::attach(hwnd);
         return TRUE;
     case WM_DESTROY:
         g_ctx.hwnd = nullptr;

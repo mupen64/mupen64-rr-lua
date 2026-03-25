@@ -35,6 +35,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, L"Seek savestates disabled. Seeking backwards will be slower.");
 
         SetFocus(GetDlgItem(hwnd, IDC_SEEKER_FRAME));
+        WinDarkMode::attach(hwnd);
         break;
     case WM_DESTROY:
         g_main_ctx.core_ctx->vcr_stop_seek();
