@@ -241,37 +241,38 @@ inline PIMAGE_THUNK_DATA find_delay_load_thunk_in_module(void *moduleBase, const
     return nullptr;
 }
 
-inline bool IsHighContrast()
+inline bool is_high_contrast()
 {
-    HIGHCONTRASTW highContrast = {sizeof(highContrast)};
-    if (SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(highContrast), &highContrast, FALSE))
-        return highContrast.dwFlags & HCF_HIGHCONTRASTON;
-    return false;
+    HIGHCONTRAST high_contrast{};
+    high_contrast.cbSize = sizeof(high_contrast);
+    if (!SystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, FALSE)) return false;
+    return high_contrast.dwFlags & HCF_HIGHCONTRASTON;
 }
 
-inline void RefreshTitleBarThemeColor(HWND hWnd)
+inline void refresh_titlebar(HWND hwnd)
 {
     BOOL dark = FALSE;
-    if (_IsDarkModeAllowedForWindow(hWnd) && _ShouldAppsUseDarkMode() && !IsHighContrast())
+    if (_IsDarkModeAllowedForWindow(hwnd) && _ShouldAppsUseDarkMode() && !is_high_contrast())
     {
         dark = TRUE;
     }
+
     if (build_number < 18362)
-        SetPropW(hWnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
+        SetProp(hwnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
     else if (_SetWindowCompositionAttribute)
     {
         WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &dark, sizeof(dark)};
-        _SetWindowCompositionAttribute(hWnd, &data);
+        _SetWindowCompositionAttribute(hwnd, &data);
     }
 }
 
-inline bool IsColorSchemeChangeMessage(UINT message, LPARAM lParam)
+inline bool is_theme_change_message(UINT message, LPARAM lparam)
 {
     if (message != WM_SETTINGCHANGE) return false;
 
     bool is = false;
-    if (lParam &&
-        CompareStringOrdinal(reinterpret_cast<LPCWCH>(lParam), -1, L"ImmersiveColorSet", -1, TRUE) == CSTR_EQUAL)
+    const auto lparam_str = reinterpret_cast<LPCWCH>(lparam);
+    if (lparam && CompareStringOrdinal(lparam_str, -1, L"ImmersiveColorSet", -1, TRUE) == CSTR_EQUAL)
     {
         _RefreshImmersiveColorPolicyState();
         is = true;
@@ -280,39 +281,29 @@ inline bool IsColorSchemeChangeMessage(UINT message, LPARAM lParam)
     return is;
 }
 
-inline void AllowDarkModeForApp(bool allow)
+inline void force_explorer_scrollbar()
 {
-    if (_AllowDarkModeForApp)
-        _AllowDarkModeForApp(allow);
-    else if (_SetPreferredAppMode)
-        _SetPreferredAppMode(allow ? AllowDark : Default);
-}
+    HMODULE comctl_mod = LoadLibraryExW(L"comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (!comctl_mod) return;
 
-inline void FixDarkScrollBar()
-{
-    HMODULE hComctl = LoadLibraryExW(L"comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-    if (hComctl)
-    {
-        auto addr = find_delay_load_thunk_in_module(hComctl, "uxtheme.dll", 49); // OpenNcThemeData
-        if (addr)
+    const auto addr = find_delay_load_thunk_in_module(comctl_mod, "uxtheme.dll", 49); // OpenNcThemeData
+    if (!addr) return;
+
+    DWORD prev_protect;
+    if (!VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), PAGE_READWRITE, &prev_protect)) return;
+
+    auto open_nc_theme_data_thunk = [](HWND hwnd, LPCWSTR class_list) -> HTHEME {
+        if (wcscmp(class_list, L"ScrollBar") == 0)
         {
-            DWORD oldProtect;
-            if (VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), PAGE_READWRITE, &oldProtect))
-            {
-                auto MyOpenThemeData = [](HWND hWnd, LPCWSTR classList) -> HTHEME {
-                    if (wcscmp(classList, L"ScrollBar") == 0)
-                    {
-                        hWnd = nullptr;
-                        classList = L"Explorer::ScrollBar";
-                    }
-                    return _OpenNcThemeData(hWnd, classList);
-                };
-
-                addr->u1.Function = reinterpret_cast<ULONG_PTR>(static_cast<fnOpenNcThemeData>(MyOpenThemeData));
-                VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), oldProtect, &oldProtect);
-            }
+            hwnd = nullptr;
+            class_list = L"Explorer::ScrollBar";
         }
-    }
+        return _OpenNcThemeData(hwnd, class_list);
+    };
+
+    addr->u1.Function = reinterpret_cast<ULONG_PTR>(static_cast<fnOpenNcThemeData>(open_nc_theme_data_thunk));
+
+    VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), prev_protect, &prev_protect);
 }
 
 inline void InitListView(HWND lv_hwnd)
@@ -396,19 +387,15 @@ inline void InitListView(HWND lv_hwnd)
     SetWindowTheme(lv_hwnd, L"ItemsView", 0);
 }
 
-inline bool SetDarkThemeColors(HBRUSH &bg_brush, HDC hdc)
-{
-    if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
-    SetTextColor(hdc, text_color);
-    SetBkColor(hdc, bg_color);
-    return !!bg_brush;
-}
-
 inline void apply_to_control(HWND hwnd)
 {
     wchar_t cls[32]{};
     GetClassName(hwnd, cls, std::size(cls));
     std::wstring class_name(cls);
+
+    // Don't touch the header, it's handled in InitListView.
+    // FIXME: Can standalone header controls exist? If so, this will break them.
+    if (class_name == WC_HEADER) return;
 
     if (class_name == WC_LISTVIEW)
     {
@@ -417,8 +404,7 @@ inline void apply_to_control(HWND hwnd)
     }
 
     _AllowDarkModeForWindow(hwnd, true);
-
-    if (class_name != WC_HEADER) SetWindowTheme(hwnd, L"Explorer", nullptr);
+    SetWindowTheme(hwnd, L"Explorer", nullptr);
 }
 
 inline void apply_to_child_windows(HWND hwnd)
@@ -470,11 +456,15 @@ inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         break;
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC: {
-        if (_ShouldAppsUseDarkMode() && !IsHighContrast() &&
-            SetDarkThemeColors(bg_brush, reinterpret_cast<HDC>(wParam)))
-        {
-            return reinterpret_cast<INT_PTR>(bg_brush);
-        }
+        if (!_ShouldAppsUseDarkMode() || is_high_contrast()) break;
+        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
+
+        const auto hdc = reinterpret_cast<HDC>(wParam);
+
+        SetTextColor(hdc, text_color);
+        SetBkColor(hdc, bg_color);
+
+        return reinterpret_cast<INT_PTR>(bg_brush);
     }
     break;
     default:
@@ -501,12 +491,25 @@ inline bool is_top_level_window(HWND hwnd)
 }; // namespace Internal
 
 /**
+ * @brief Options for `attach`. See `attach` for details.
+ */
+struct AttachOptions
+{
+    /**
+     * @brief Whether the window is a dialog. This is used to apply some dialog-specific dark mode fixes. If
+     * unspecified, the function will attempt to determine it automatically.
+     */
+    std::optional<bool> is_dialog = std::nullopt;
+};
+
+/**
  * @brief Initializes dark mode support. Call this once at the start of your program, preferrably in `WinMain` before
  * creating any windows.
  */
 inline void init()
 {
     using namespace Internal;
+
     auto RtlGetNtVersionNumbers = reinterpret_cast<fnRtlGetNtVersionNumbers>(
         GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetNtVersionNumbers"));
     if (!RtlGetNtVersionNumbers) return;
@@ -515,56 +518,54 @@ inline void init()
     RtlGetNtVersionNumbers(&major, &minor, &build_number);
     build_number &= ~0xF0000000;
 
-    HMODULE hUxtheme = LoadLibraryEx(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-    if (hUxtheme)
+    HMODULE h_ut = LoadLibraryEx(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (!h_ut) return;
+
+    _OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(h_ut, MAKEINTRESOURCEA(49)));
+    _RefreshImmersiveColorPolicyState =
+        reinterpret_cast<fnRefreshImmersiveColorPolicyState>(GetProcAddress(h_ut, MAKEINTRESOURCEA(104)));
+    _GetIsImmersiveColorUsingHighContrast =
+        reinterpret_cast<fnGetIsImmersiveColorUsingHighContrast>(GetProcAddress(h_ut, MAKEINTRESOURCEA(106)));
+    _ShouldAppsUseDarkMode = reinterpret_cast<fnShouldAppsUseDarkMode>(GetProcAddress(h_ut, MAKEINTRESOURCEA(132)));
+    _AllowDarkModeForWindow = reinterpret_cast<fnAllowDarkModeForWindow>(GetProcAddress(h_ut, MAKEINTRESOURCEA(133)));
+
+    auto ord135 = GetProcAddress(h_ut, MAKEINTRESOURCEA(135));
+    if (build_number < 18362)
+        _AllowDarkModeForApp = reinterpret_cast<fnAllowDarkModeForApp>(ord135);
+    else
+        _SetPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(ord135);
+
+    _IsDarkModeAllowedForWindow =
+        reinterpret_cast<fnIsDarkModeAllowedForWindow>(GetProcAddress(h_ut, MAKEINTRESOURCEA(137)));
+
+    _SetWindowCompositionAttribute = reinterpret_cast<fnSetWindowCompositionAttribute>(
+        GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowCompositionAttribute"));
+
+    if (_OpenNcThemeData && _RefreshImmersiveColorPolicyState && _ShouldAppsUseDarkMode && _AllowDarkModeForWindow &&
+        (_AllowDarkModeForApp || _SetPreferredAppMode) && _IsDarkModeAllowedForWindow)
     {
-        _OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(49)));
-        _RefreshImmersiveColorPolicyState =
-            reinterpret_cast<fnRefreshImmersiveColorPolicyState>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104)));
-        _GetIsImmersiveColorUsingHighContrast =
-            reinterpret_cast<fnGetIsImmersiveColorUsingHighContrast>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(106)));
-        _ShouldAppsUseDarkMode =
-            reinterpret_cast<fnShouldAppsUseDarkMode>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132)));
-        _AllowDarkModeForWindow =
-            reinterpret_cast<fnAllowDarkModeForWindow>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(133)));
+        dark_mode_supported = true;
 
-        auto ord135 = GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135));
-        if (build_number < 18362)
-            _AllowDarkModeForApp = reinterpret_cast<fnAllowDarkModeForApp>(ord135);
-        else
-            _SetPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(ord135);
+        if (_AllowDarkModeForApp)
+            _AllowDarkModeForApp(true);
+        else if (_SetPreferredAppMode)
+            _SetPreferredAppMode(AllowDark);
 
-        _IsDarkModeAllowedForWindow =
-            reinterpret_cast<fnIsDarkModeAllowedForWindow>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(137)));
+        _RefreshImmersiveColorPolicyState();
 
-        _SetWindowCompositionAttribute = reinterpret_cast<fnSetWindowCompositionAttribute>(
-            GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowCompositionAttribute"));
+        dark_mode_enabled = _ShouldAppsUseDarkMode() && !is_high_contrast();
 
-        if (_OpenNcThemeData && _RefreshImmersiveColorPolicyState && _ShouldAppsUseDarkMode &&
-            _AllowDarkModeForWindow && (_AllowDarkModeForApp || _SetPreferredAppMode) && _IsDarkModeAllowedForWindow)
-        {
-            dark_mode_supported = true;
-
-            AllowDarkModeForApp(true);
-            _RefreshImmersiveColorPolicyState();
-
-            dark_mode_enabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
-
-            FixDarkScrollBar();
-        }
+        force_explorer_scrollbar();
     }
-
-    if (!dark_mode_supported) return;
-
-    AllowDarkModeForApp(true);
 }
 
 /**
  * @brief Attaches dark mode support to a window.
  * @param hwnd The handle to the window.
+ * @param options Options for attaching. See `AttachOptions` for details.
  * @remarks Adding, changing, or removing child windows after this call is not properly supported yet.
  */
-inline void attach(HWND hwnd)
+inline void attach(HWND hwnd, const AttachOptions &options = {})
 {
     using namespace Internal;
 
@@ -573,12 +574,14 @@ inline void attach(HWND hwnd)
     _AllowDarkModeForWindow(hwnd, true);
     DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark_mode_enabled, sizeof(dark_mode_enabled));
 
-    RefreshTitleBarThemeColor(hwnd);
+    refresh_titlebar(hwnd);
 
     apply_to_child_windows(hwnd);
 
     SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
-    if (!is_top_level_window(hwnd)) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
+
+    const bool is_dialog = options.is_dialog.value_or(!is_top_level_window(hwnd));
+    if (is_dialog) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
 }
 
 } // namespace WinDarkMode
