@@ -49,6 +49,7 @@
 #include <winerror.h>
 #include <cstdint>
 #include <string>
+#include <unordered_set>
 
 #ifndef _UNICODE
 #error WinDarkMode requires a Unicode build.
@@ -64,6 +65,27 @@ constexpr COLORREF bg_color = 0x383838;
 constexpr COLORREF text_color = 0xFFFFFF;
 constexpr COLORREF listbox_bg_color = RGB(54, 54, 54);
 constexpr COLORREF listbox_fg_color = RGB(255, 255, 255);
+
+/**
+ * @brief The available themes.
+ */
+enum class Theme
+{
+    /**
+     * @brief The default light theme.
+     */
+    Light,
+
+    /**
+     * @brief The dark theme.
+     */
+    Dark,
+
+    /**
+     * @brief The user's preferred theme. Updates dynamically when the user changes their system theme.
+     */
+    System
+};
 
 /**
  * @brief Internal stuff. Don't reference these.
@@ -157,8 +179,12 @@ inline fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContr
 inline fnOpenNcThemeData _OpenNcThemeData{};
 inline fnShouldSystemUseDarkMode _ShouldSystemUseDarkMode{};
 inline fnSetPreferredAppMode _SetPreferredAppMode{};
+
+inline ULONG_PTR original_open_nc_theme_data{};
+
+inline Theme theme = Theme::Light;
+inline std::unordered_set<HWND> attached_windows;
 inline bool dark_mode_supported = false;
-inline bool dark_mode_enabled = false;
 inline DWORD build_number = 0;
 inline HBRUSH bg_brush = nullptr;
 inline HBRUSH listbox_bg_brush = nullptr;
@@ -253,17 +279,26 @@ inline bool is_high_contrast()
     return high_contrast.dwFlags & HCF_HIGHCONTRASTON;
 }
 
-inline void refresh_titlebar(HWND hwnd)
+inline Theme effective_theme()
 {
-    BOOL dark = FALSE;
-    if (_IsDarkModeAllowedForWindow(hwnd) && _ShouldAppsUseDarkMode() && !is_high_contrast())
-    {
-        dark = TRUE;
-    }
+    if (theme != Theme::System) return theme;
 
+    if (_ShouldAppsUseDarkMode() && !is_high_contrast())
+        return Theme::Dark;
+    else
+        return Theme::Light;
+};
+
+inline bool is_dark()
+{
+    return effective_theme() == Theme::Dark;
+}
+
+inline void refresh_titlebar(HWND hwnd, bool dark)
+{
     if (build_number < 18362)
         SetProp(hwnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
-    else if (_SetWindowCompositionAttribute)
+    if (_SetWindowCompositionAttribute)
     {
         WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &dark, sizeof(dark)};
         _SetWindowCompositionAttribute(hwnd, &data);
@@ -285,7 +320,7 @@ inline bool is_theme_change_message(UINT message, LPARAM lparam)
     return is;
 }
 
-inline void force_explorer_scrollbar()
+inline void patch_scrollbar(bool dark)
 {
     HMODULE comctl_mod = LoadLibraryExW(L"comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (!comctl_mod) return;
@@ -296,102 +331,125 @@ inline void force_explorer_scrollbar()
     DWORD prev_protect;
     if (!VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), PAGE_READWRITE, &prev_protect)) return;
 
-    auto open_nc_theme_data_thunk = [](HWND hwnd, LPCWSTR class_list) -> HTHEME {
-        if (wcscmp(class_list, L"ScrollBar") == 0)
-        {
-            hwnd = nullptr;
-            class_list = L"Explorer::ScrollBar";
-        }
-        return _OpenNcThemeData(hwnd, class_list);
-    };
+    if (!original_open_nc_theme_data) original_open_nc_theme_data = addr->u1.Function;
 
-    addr->u1.Function = reinterpret_cast<ULONG_PTR>(static_cast<fnOpenNcThemeData>(open_nc_theme_data_thunk));
+    if (dark)
+    {
+        auto open_nc_theme_data_thunk = [](HWND hwnd, LPCWSTR class_list) -> HTHEME {
+            if (wcscmp(class_list, L"ScrollBar") == 0)
+            {
+                hwnd = nullptr;
+                class_list = L"Explorer::ScrollBar";
+            }
+            return _OpenNcThemeData(hwnd, class_list);
+        };
+
+        addr->u1.Function = reinterpret_cast<ULONG_PTR>(static_cast<fnOpenNcThemeData>(open_nc_theme_data_thunk));
+    }
+    else
+    {
+        addr->u1.Function = original_open_nc_theme_data;
+    }
 
     VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), prev_protect, &prev_protect);
 }
 
-inline void InitListView(HWND lv_hwnd)
+static LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
+                                               DWORD_PTR dwRefData)
 {
-    _AllowDarkModeForWindow(lv_hwnd, true);
+    auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
 
-    HWND hdr_hwnd = ListView_GetHeader(lv_hwnd);
-    _AllowDarkModeForWindow(hdr_hwnd, true);
-
-    const auto subclass = [](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR /*uIdSubclass*/,
-                             DWORD_PTR dwRefData) -> LRESULT {
-        switch (uMsg)
+    switch (msg)
+    {
+    case WM_NCDESTROY: {
+        delete info;
+        RemoveWindowSubclass(hwnd, listview_subclass_proc, 0);
+        break;
+    }
+    case WM_NOTIFY: {
+        if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
         {
-        case WM_NOTIFY: {
-            if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
+            LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
+            switch (nmcd->dwDrawStage)
             {
-                LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
-                switch (nmcd->dwDrawStage)
-                {
-                case CDDS_PREPAINT:
-                    return CDRF_NOTIFYITEMDRAW;
-                case CDDS_ITEMPREPAINT: {
-                    auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
-                    SetTextColor(nmcd->hdc, info->headerTextColor);
-                    return CDRF_DODEFAULT;
-                }
-                }
+            case CDDS_PREPAINT:
+                return CDRF_NOTIFYITEMDRAW;
+            case CDDS_ITEMPREPAINT: {
+                SetTextColor(nmcd->hdc, info->headerTextColor);
+                return CDRF_DODEFAULT;
+            }
             }
         }
         break;
-        case WM_THEMECHANGED: {
-            HWND hdr_hwnd = ListView_GetHeader(hWnd);
-            HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
-            if (hTheme)
+    }
+    case WM_THEMECHANGED: {
+        HWND hdr_hwnd = ListView_GetHeader(hwnd);
+        HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
+        if (hTheme)
+        {
+            COLORREF color;
+            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color)))
             {
-                COLORREF color;
-                if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color)))
-                {
-                    ListView_SetTextColor(hWnd, color);
-                }
-                if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
-                {
-                    ListView_SetTextBkColor(hWnd, color);
-                    ListView_SetBkColor(hWnd, color);
-                }
-                CloseThemeData(hTheme);
+                ListView_SetTextColor(hwnd, color);
             }
-
-            hTheme = OpenThemeData(hdr_hwnd, L"Header");
-            if (hTheme)
+            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
             {
-                auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
-                GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->headerTextColor));
-                CloseThemeData(hTheme);
+                ListView_SetTextBkColor(hwnd, color);
+                ListView_SetBkColor(hwnd, color);
             }
-
-            SendMessage(hdr_hwnd, WM_THEMECHANGED, wParam, lParam);
-
-            RedrawWindow(hWnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
+            CloseThemeData(hTheme);
         }
+
+        hTheme = OpenThemeData(hdr_hwnd, L"Header");
+        if (hTheme)
+        {
+            GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->headerTextColor));
+            CloseThemeData(hTheme);
+        }
+
+        SendMessage(hdr_hwnd, WM_THEMECHANGED, wParam, lParam);
+
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
         break;
-        case WM_DESTROY: {
-            auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
-            delete info;
-        }
+    }
+    default:
         break;
-        }
-        return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-    };
-
-    SetWindowSubclass(lv_hwnd, subclass, 0, reinterpret_cast<DWORD_PTR>(new SubclassInfo{}));
-
-    // FIXME: We force grid lines off because they look absolutely brutal in dark mode. Maybe we can override them?
-    const auto ex_style = ListView_GetExtendedListViewStyle(lv_hwnd);
-    ListView_SetExtendedListViewStyle(lv_hwnd, ex_style & ~LVS_EX_GRIDLINES);
-
-    // FIXME: Hide focus rectangle because it's white :/ Would be nice to override it instead.
-    SendMessage(lv_hwnd, WM_CHANGEUISTATE, MAKELONG(UIS_SET, UISF_HIDEFOCUS), 0);
-
-    SetWindowTheme(hdr_hwnd, L"ItemsView", L"Header");
-    SetWindowTheme(lv_hwnd, L"ItemsView", 0);
+    }
+    return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-inline void apply_to_control(HWND hwnd)
+inline void update_listview(HWND lv_hwnd, bool dark)
+{
+    _AllowDarkModeForWindow(lv_hwnd, dark);
+
+    HWND hdr_hwnd = ListView_GetHeader(lv_hwnd);
+    _AllowDarkModeForWindow(hdr_hwnd, dark);
+
+    if (dark)
+        SetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(new SubclassInfo{}));
+    else
+        RemoveWindowSubclass(lv_hwnd, listview_subclass_proc, 0);
+
+    if (dark)
+    {
+        // FIXME: We force grid lines off because they look absolutely brutal in dark mode. Maybe we can override them?
+        const auto ex_style = ListView_GetExtendedListViewStyle(lv_hwnd);
+        ListView_SetExtendedListViewStyle(lv_hwnd, ex_style & ~LVS_EX_GRIDLINES);
+
+        // FIXME: Hide focus rectangle because it's white :/ Would be nice to override it instead.
+        SendMessage(lv_hwnd, WM_CHANGEUISTATE, MAKELONG(UIS_SET, UISF_HIDEFOCUS), 0);
+
+        SetWindowTheme(hdr_hwnd, L"ItemsView", L"Header");
+        SetWindowTheme(lv_hwnd, L"ItemsView", 0);
+    }
+    else
+    {
+        SetWindowTheme(hdr_hwnd, nullptr, nullptr);
+        SetWindowTheme(lv_hwnd, nullptr, nullptr);
+    }
+}
+
+inline void apply_to_control(HWND hwnd, bool dark)
 {
     wchar_t cls[32]{};
     GetClassName(hwnd, cls, std::size(cls));
@@ -403,7 +461,7 @@ inline void apply_to_control(HWND hwnd)
 
     if (class_name == WC_LISTVIEW)
     {
-        InitListView(hwnd);
+        update_listview(hwnd, dark);
         return;
     }
 
@@ -414,24 +472,31 @@ inline void apply_to_control(HWND hwnd)
         {WC_BUTTON, L"DarkMode_Explorer"},
     };
 
-    _AllowDarkModeForWindow(hwnd, true);
+    _AllowDarkModeForWindow(hwnd, dark);
 
-    if (theme_map.contains(class_name))
-
-        SetWindowTheme(hwnd, theme_map.at(class_name).c_str(), nullptr);
+    if (dark)
+    {
+        if (theme_map.contains(class_name))
+            SetWindowTheme(hwnd, theme_map.at(class_name).c_str(), nullptr);
+        else
+            SetWindowTheme(hwnd, L"DarkMode_Explorer", nullptr);
+    }
     else
-        SetWindowTheme(hwnd, L"DarkMode_Explorer", nullptr);
+    {
+        SetWindowTheme(hwnd, nullptr, nullptr);
+    }
 }
 
-inline void apply_to_child_windows(HWND hwnd)
+inline void apply_to_child_windows(HWND hwnd, bool dark)
 {
     EnumChildWindows(
         hwnd,
-        [](HWND hwnd, LPARAM) -> BOOL {
-            apply_to_control(hwnd);
+        [](HWND hwnd, LPARAM lparam) -> BOOL {
+            const auto dark = static_cast<bool>(lparam);
+            apply_to_control(hwnd, dark);
             return TRUE;
         },
-        0);
+        static_cast<LPARAM>(dark));
 }
 
 inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
@@ -447,10 +512,10 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         {
         case WM_CREATE: {
             const auto child_hwnd = reinterpret_cast<HWND>(lParam);
-            apply_to_control(child_hwnd);
+            const auto dark = is_dark();
+            apply_to_control(child_hwnd, dark);
             break;
         }
-
         default:
             break;
         }
@@ -472,7 +537,9 @@ inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         break;
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC: {
-        if (!_ShouldAppsUseDarkMode() || is_high_contrast()) break;
+        const auto dark = is_dark();
+        if (!dark) break;
+
         if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
 
         const auto hdc = reinterpret_cast<HDC>(wParam);
@@ -504,7 +571,15 @@ inline bool is_top_level_window(HWND hwnd)
     return false;
 }
 
-}; // namespace Internal
+inline void update_window_theme(HWND hwnd, bool dark)
+{
+    _AllowDarkModeForWindow(hwnd, dark);
+    DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
+    refresh_titlebar(hwnd, dark);
+    InvalidateRect(hwnd, nullptr, TRUE);
+}
+
+} // namespace Internal
 
 /**
  * @brief Options for `attach`. See `attach` for details.
@@ -561,22 +636,11 @@ inline void init()
         (_AllowDarkModeForApp || _SetPreferredAppMode) && _IsDarkModeAllowedForWindow)
     {
         dark_mode_supported = true;
-
-        if (_AllowDarkModeForApp)
-            _AllowDarkModeForApp(true);
-        else if (_SetPreferredAppMode)
-            _SetPreferredAppMode(AllowDark);
-
-        _RefreshImmersiveColorPolicyState();
-
-        dark_mode_enabled = _ShouldAppsUseDarkMode() && !is_high_contrast();
-
-        force_explorer_scrollbar();
     }
 }
 
 /**
- * @brief Attaches dark mode support to a window.
+ * @brief Attaches dark mode support to a window. If the window has already been attached to, no work will be done.
  * @param hwnd The handle to the window.
  * @param options Options for attaching. See `AttachOptions` for details.
  * @remarks Adding, changing, or removing child windows after this call is not properly supported yet.
@@ -585,19 +649,41 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
 {
     using namespace Internal;
 
-    if (!dark_mode_supported) return;
+    if (!dark_mode_supported || attached_windows.contains(hwnd)) return;
 
-    _AllowDarkModeForWindow(hwnd, true);
-    DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark_mode_enabled, sizeof(dark_mode_enabled));
+    attached_windows.insert(hwnd);
 
-    refresh_titlebar(hwnd);
+    const auto dark = is_dark();
+    update_window_theme(hwnd, dark);
 
-    apply_to_child_windows(hwnd);
-
+    apply_to_child_windows(hwnd, dark);
     SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
 
     const bool is_dialog = options.is_dialog.value_or(!is_top_level_window(hwnd));
     if (is_dialog) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
+}
+
+/**
+ * @brief Sets the app theme.
+ * @param theme The theme to set.
+ */
+inline void set(Theme theme)
+{
+    Internal::theme = theme;
+
+    using namespace Internal;
+
+    const auto dark = is_dark();
+
+    if (_AllowDarkModeForApp) _AllowDarkModeForApp(dark);
+    if (_SetPreferredAppMode) _SetPreferredAppMode(dark ? ForceDark : ForceLight);
+    _RefreshImmersiveColorPolicyState();
+    patch_scrollbar(dark);
+
+    for (const auto &hwnd : attached_windows)
+    {
+        update_window_theme(hwnd, dark);
+    }
 }
 
 /**
