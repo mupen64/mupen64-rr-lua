@@ -789,7 +789,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             else
             {
                 text_color = GetSysColor(COLOR_WINDOWTEXT);
-                bg_brush = WinDarkMode::get_listbox_background_brush();
+                bg_brush = WinDarkMode::get_listbox_bg_brush();
             }
 
             // 1. Draw the background

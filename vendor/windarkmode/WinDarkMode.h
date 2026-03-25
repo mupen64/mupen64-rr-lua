@@ -597,7 +597,11 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
     if (is_dialog) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
 }
 
-inline HBRUSH get_listbox_background_brush()
+/**
+ * @brief Gets a brush with the correct dark mode background color for listboxes. Useful for owner-drawn listboxes.
+ * @return A brush with the correct dark mode background color for listboxes.
+ */
+inline HBRUSH get_listbox_bg_brush()
 {
     using namespace Internal;
 
