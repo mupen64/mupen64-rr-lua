@@ -36,4 +36,7 @@ if (MUPEN64RR_BUILD_WIN32)
     add_subdirectory(Plugins.Win32.TASInput)
     add_subdirectory(Plugins.Win32.TASAudio)
     add_subdirectory(Plugins.Win32.TASRSP)
+
+    # New xplat plugins
+    add_subdirectory(Plugins.Win32.SDLAudio)
 endif()
