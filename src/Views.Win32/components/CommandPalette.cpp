@@ -788,8 +788,13 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             }
             else
             {
-                text_color = GetSysColor(COLOR_WINDOWTEXT);
+                text_color = WinDarkMode::listbox_fg_color;
                 bg_brush = WinDarkMode::get_listbox_bg_brush();
+            }
+
+            if (!enabled)
+            {
+                text_color = GetSysColor(COLOR_GRAYTEXT);
             }
 
             // 1. Draw the background
@@ -841,10 +846,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             const auto primary_text = item->get_primary_text();
             if (primary_text.has_value())
             {
-                const auto draw_flag = enabled ? 0 : DSS_DISABLED;
-
-                DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)primary_text->c_str(), 0, base_rc.left, base_rc.top,
-                          base_rc.right - base_rc.left, base_rc.bottom - base_rc.top, draw_flag | DST_TEXT);
+                DrawText(pdis->hDC, primary_text->c_str(), (int)primary_text->size(), &base_rc,
+                         DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             }
 
             // 4. Draw the secondary text if applicable
@@ -852,14 +855,13 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             if (secondary_text.has_value())
             {
                 const auto text = limit_wstring(*secondary_text, 30);
-                const auto draw_flag = enabled ? 0 : DSS_DISABLED;
 
                 SIZE sz;
                 GetTextExtentPoint32(pdis->hDC, text.c_str(), (int)text.size(), &sz);
                 const int x = base_rc.right - sz.cx;
 
-                DrawState(pdis->hDC, nullptr, nullptr, (LPARAM)text.c_str(), 0, x, base_rc.top, sz.cx,
-                          base_rc.bottom - base_rc.top, draw_flag | DSS_RIGHT | DST_TEXT);
+                DrawText(pdis->hDC, text.c_str(), (int)text.size(), &base_rc,
+                         DT_RIGHT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             }
 
             if (std::holds_alternative<t_listbox_item::t_group_data>(item->data))
