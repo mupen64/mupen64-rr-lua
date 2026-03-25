@@ -704,6 +704,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 
         SendMessage(g_ctx.edit_hwnd, EM_SETCUEBANNER, TRUE, (LPARAM)L"Search actions, options, or ROMs");
         WinDarkMode::attach(hwnd);
+
         break;
     }
     case WM_DESTROY:
@@ -762,6 +763,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         pmis->itemHeight = (UINT)(14.0 * scale);
         return TRUE;
     }
+    case WM_CTLCOLORLISTBOX:
+        return (INT_PTR)WinDarkMode::get_listbox_bg_brush();
     case WM_DRAWITEM: {
         const auto pdis = reinterpret_cast<PDRAWITEMSTRUCT>(lparam);
 
