@@ -38,8 +38,9 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     // SDL3 starts audio devices paused.
     m_paused = true;
 
-    // set the target buffer size for audio synchronization
+    // set some vars for audio sync
     m_src_target = std::max((int)config.src_buffer_target, m_buffer_size);
+    m_last_cb_time = std::chrono::steady_clock::now();
     // setup a callback to track when HW requests samples from us
     if (!SDL_SetAudioStreamGetCallback(
             m_stream,
