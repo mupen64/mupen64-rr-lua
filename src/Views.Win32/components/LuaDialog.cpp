@@ -277,6 +277,7 @@ static void create_placeholder_dialog(t_dialog_state &dlg)
                               {{dlg.placeholder_hwnd, ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
     ResizeAnchor::add_anchors(dlg.placeholder_hwnd, {{GetDlgItem(dlg.placeholder_hwnd, IDC_STATIC),
                                                       ResizeAnchor::FULL_ANCHOR | ResizeAnchor::INVALIDATE_ERASE}});
+    WinDarkMode::attach(dlg.placeholder_hwnd);
 }
 
 /**
