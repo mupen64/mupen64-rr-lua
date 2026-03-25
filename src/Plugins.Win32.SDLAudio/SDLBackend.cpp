@@ -17,11 +17,12 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
 {
 
     // request default audio settings
-    if (!SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &m_device_spec, &m_buffer_size))
-        throw std::runtime_error(SDL_GetError());
 
-    m_device_id = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &m_device_spec);
+    m_device_id = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
     if (!m_device_id) throw std::runtime_error(SDL_GetError());
+
+    if (!SDL_GetAudioDeviceFormat(m_device_id, &m_device_spec, &m_buffer_size))
+        throw std::runtime_error(SDL_GetError());
 
     m_input_spec = SDL_AudioSpec{
         .format = SDL_AUDIO_S16,

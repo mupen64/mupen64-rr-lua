@@ -5,6 +5,7 @@
  */
 
 #include "Config.hpp"
+#include "IOUtils.h"
 #include "SDLBackend.hpp"
 #include "core_plugin.h"
 #include <CommonPCH.h>
@@ -14,6 +15,8 @@
 #include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
+#include <exception>
+#include <format>
 #include <optional>
 #include <stdexcept>
 #include <utility>
@@ -84,16 +87,19 @@ EXPORT void CALL DllAbout(void *hParent)
 
 EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 {
-    if (!g_sdl_is_init)
-    {
-        if (!SDL_Init(SDL_INIT_NEEDED)) {
-            return 0;
-        }
-        g_sdl_is_init = true;
-    }
-
     g_audio_info.emplace(Audio_Info);
-    g_backend.emplace(SDLAudio::Config{}); // TODO: add config dialog
+
+    try
+    {
+        if (!SDL_Init(SDL_INIT_NEEDED))
+            throw std::runtime_error(SDL_GetError());
+        g_backend.emplace(SDLAudio::Config{}); // TODO: add config dialog
+    }
+    catch (std::exception &e)
+    {
+        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
+        return 0;
+    }
 
     return 1;
 }
@@ -111,18 +117,33 @@ EXPORT void CALL AiDacrateChanged(int32_t system_type)
 {
     // update sample rate
     if (!g_audio_info || !g_backend) return;
-    uint32_t sample_rate = compute_sample_rate(system_type, *g_audio_info->ai_dacrate_reg);
-    g_backend->set_sample_rate(sample_rate);
+    try
+    {
+        uint32_t sample_rate = compute_sample_rate(system_type, *g_audio_info->ai_dacrate_reg);
+        g_backend->set_sample_rate(sample_rate);
+    }
+    catch (std::exception &e)
+    {
+        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at AiDacrateChanged(): {}", e.what())).c_str());
+    }
 }
 
 EXPORT void CALL AiLenChanged(void)
 {
     // push new samples
+    if (!g_audio_info || !g_backend) return;
     uint32_t addr = *g_audio_info->ai_dram_addr_reg & 0x00FF'FFF8;
     uint32_t len = *g_audio_info->ai_len_reg & 0x0003'FFF8;
 
-    g_backend->push_samples(g_audio_info->rdram + addr, len);
-    g_backend->sync_audio();
+    try
+    {
+        g_backend->push_samples(g_audio_info->rdram + addr, len);
+        g_backend->sync_audio();
+    }
+    catch (std::exception &e)
+    {
+        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at AiLenChanged(): {}", e.what())).c_str());
+    }
 }
 
 EXPORT uint32_t CALL AiReadLength(void)
