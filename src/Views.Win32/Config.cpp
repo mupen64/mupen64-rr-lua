@@ -337,6 +337,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     }
 
     HANDLE_VALUE(ignored_version)
+    HANDLE_P_VALUE(theme)
     HANDLE_P_VALUE(core.total_rerecords)
     HANDLE_P_VALUE(core.total_frames)
     HANDLE_P_VALUE(core.core_type)

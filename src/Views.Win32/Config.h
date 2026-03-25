@@ -44,6 +44,11 @@ struct t_config
     std::wstring ignored_version;
 
     /// <summary>
+    /// The UI theme to use. 0 = Light, 1 = Dark, 2 = System Default.
+    /// </summary>
+    int32_t theme;
+
+    /// <summary>
     /// The current savestate slot index (0-9).
     /// </summary>
     int32_t st_slot;

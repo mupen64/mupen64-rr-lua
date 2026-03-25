@@ -492,6 +492,13 @@ void on_fullscreen_changed(std::any data)
 void on_config_loaded(std::any)
 {
     RomBrowser::build();
+    
+    WinDarkMode::Theme theme = WinDarkMode::Theme::System;
+    if (g_config.theme == 0)
+        theme = WinDarkMode::Theme::Light;
+    else if (g_config.theme == 1)
+        theme = WinDarkMode::Theme::Dark;
+    WinDarkMode::set(theme);
 }
 
 void on_seek_completed(std::any)
