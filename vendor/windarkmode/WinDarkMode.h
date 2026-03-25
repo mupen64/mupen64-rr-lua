@@ -60,6 +60,11 @@
 namespace WinDarkMode
 {
 
+constexpr COLORREF bg_color = 0x383838;
+constexpr COLORREF text_color = 0xFFFFFF;
+constexpr COLORREF listbox_bg_color = RGB(54, 54, 54);
+constexpr COLORREF listbox_fg_color = RGB(255, 255, 255);
+
 /**
  * @brief Internal stuff. Don't reference these.
  */
@@ -141,9 +146,6 @@ using fnShouldSystemUseDarkMode = bool(WINAPI *)();                             
 using fnSetPreferredAppMode = PreferredAppMode(WINAPI *)(PreferredAppMode appMode); // ordinal 135, in 1903
 using fnIsDarkModeAllowedForApp = bool(WINAPI *)();                                 // ordinal 139
 
-constexpr COLORREF bg_color = 0x383838;
-constexpr COLORREF text_color = 0xFFFFFF;
-
 inline fnSetWindowCompositionAttribute _SetWindowCompositionAttribute{};
 inline fnShouldAppsUseDarkMode _ShouldAppsUseDarkMode{};
 inline fnAllowDarkModeForWindow _AllowDarkModeForWindow{};
@@ -160,6 +162,7 @@ inline bool dark_mode_enabled = false;
 inline DWORD build_number = 0;
 inline HBRUSH bg_brush = nullptr;
 inline HBRUSH listbox_bg_brush = nullptr;
+inline HBRUSH listbox_fg_brush = nullptr;
 
 template <typename T, typename T1, typename T2> inline constexpr T rva_to_va(T1 base, T2 rva)
 {
@@ -605,8 +608,20 @@ inline HBRUSH get_listbox_bg_brush()
 {
     using namespace Internal;
 
-    if (!listbox_bg_brush) listbox_bg_brush = CreateSolidBrush(RGB(54, 54, 54));
+    if (!listbox_bg_brush) listbox_bg_brush = CreateSolidBrush(listbox_bg_color);
     return listbox_bg_brush;
+}
+
+/**
+ * @brief Gets a brush with the correct dark mode foreground color for listboxes. Useful for owner-drawn listboxes.
+ * @return A brush with the correct dark mode foreground color for listboxes.
+ */
+inline HBRUSH get_listbox_fg_brush()
+{
+    using namespace Internal;
+
+    if (!listbox_fg_brush) listbox_fg_brush = CreateSolidBrush(listbox_fg_color);
+    return listbox_fg_brush;
 }
 
 } // namespace WinDarkMode
