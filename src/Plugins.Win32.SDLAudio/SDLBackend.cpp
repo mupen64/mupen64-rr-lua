@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #include "SDLBackend.hpp"
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_error.h>
