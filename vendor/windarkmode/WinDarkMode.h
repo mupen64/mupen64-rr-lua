@@ -159,6 +159,7 @@ inline bool dark_mode_supported = false;
 inline bool dark_mode_enabled = false;
 inline DWORD build_number = 0;
 inline HBRUSH bg_brush = nullptr;
+inline HBRUSH listbox_bg_brush = nullptr;
 
 template <typename T, typename T1, typename T2> inline constexpr T rva_to_va(T1 base, T2 rva)
 {
@@ -403,8 +404,20 @@ inline void apply_to_control(HWND hwnd)
         return;
     }
 
+    const std::unordered_map<std::wstring, std::wstring> theme_map = {
+        {WC_EDIT, L"DarkMode_DarkTheme"},
+        {WC_TABCONTROL, L"DarkMode_DarkTheme"},
+        {WC_COMBOBOX, L"DarkMode_DarkTheme"},
+        {WC_BUTTON, L"DarkMode_Explorer"},
+    };
+
     _AllowDarkModeForWindow(hwnd, true);
-    SetWindowTheme(hwnd, L"Explorer", nullptr);
+
+    if (theme_map.contains(class_name))
+
+        SetWindowTheme(hwnd, theme_map.at(class_name).c_str(), nullptr);
+    else
+        SetWindowTheme(hwnd, L"DarkMode_Explorer", nullptr);
 }
 
 inline void apply_to_child_windows(HWND hwnd)
@@ -582,6 +595,14 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
 
     const bool is_dialog = options.is_dialog.value_or(!is_top_level_window(hwnd));
     if (is_dialog) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
+}
+
+inline HBRUSH get_listbox_background_brush()
+{
+    using namespace Internal;
+
+    if (!listbox_bg_brush) listbox_bg_brush = CreateSolidBrush(RGB(54, 54, 54));
+    return listbox_bg_brush;
 }
 
 } // namespace WinDarkMode
