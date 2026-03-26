@@ -449,7 +449,7 @@ inline void update_listview(HWND lv_hwnd, bool dark)
     }
 }
 
-inline void apply_to_control(HWND hwnd, bool dark)
+inline void update_control(HWND hwnd, bool dark)
 {
     wchar_t cls[32]{};
     GetClassName(hwnd, cls, std::size(cls));
@@ -487,13 +487,13 @@ inline void apply_to_control(HWND hwnd, bool dark)
     }
 }
 
-inline void apply_to_child_windows(HWND hwnd, bool dark)
+inline void update_children(HWND hwnd, bool dark)
 {
     EnumChildWindows(
         hwnd,
         [](HWND hwnd, LPARAM lparam) -> BOOL {
             const auto dark = static_cast<bool>(lparam);
-            apply_to_control(hwnd, dark);
+            update_control(hwnd, dark);
             return TRUE;
         },
         static_cast<LPARAM>(dark));
@@ -513,7 +513,7 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         case WM_CREATE: {
             const auto child_hwnd = reinterpret_cast<HWND>(lParam);
             const auto dark = is_dark();
-            apply_to_control(child_hwnd, dark);
+            update_control(child_hwnd, dark);
             break;
         }
         default:
@@ -576,7 +576,8 @@ inline void update_window_theme(HWND hwnd, bool dark)
     _AllowDarkModeForWindow(hwnd, dark);
     DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
     refresh_titlebar(hwnd, dark);
-    InvalidateRect(hwnd, nullptr, TRUE);
+    update_children(hwnd, dark);
+    InvalidateRect(hwnd, nullptr, false);
 }
 
 } // namespace Internal
@@ -656,7 +657,7 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
     const auto dark = is_dark();
     update_window_theme(hwnd, dark);
 
-    apply_to_child_windows(hwnd, dark);
+    update_children(hwnd, dark);
     SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
 
     const bool is_dialog = options.is_dialog.value_or(!is_top_level_window(hwnd));
