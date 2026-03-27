@@ -162,7 +162,7 @@ void LuaRenderer::resize(uint32_t width, uint32_t height)
 
         env->rctx.d2d_render_target_stack = {};
 
-        const auto dc = g_rctx.presenter->add_dc();
+        const auto dc = g_rctx.presenter->add_rt();
         env->rctx.d2d_render_target_stack.push(dc);
     }
 
@@ -279,7 +279,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     BringWindowToTop(ctx->gdi_overlay_hwnd);
     BringWindowToTop(g_rctx.d2d_overlay_hwnd);
 
-    const auto dc = g_rctx.presenter->add_dc();
+    const auto dc = g_rctx.presenter->add_rt();
     ctx->d2d_render_target_stack.push(dc);
 
     if (!g_config.lazy_renderer_init)

@@ -39,14 +39,14 @@ class Presenter
      * destroyed or remove_dc is called.
      * \return A pointer to the new render target. The presenter retains ownership of the render target.
      */
-    virtual ID2D1RenderTarget *add_dc() = 0;
+    virtual ID2D1RenderTarget *add_rt() = 0;
 
     /**
      * \brief Removes a Direct2D render target from the presenter's pool. The render target is identified by its
      * pointer.
      * \param dc The render target to remove.
      */
-    virtual void remove_dc(const ID2D1RenderTarget *dc) = 0;
+    virtual void remove_rt(const ID2D1RenderTarget *rt) = 0;
 
     /**
      * Gets the backing texture size

@@ -7,72 +7,151 @@
 #include "stdafx.h"
 #include "DCompPresenter.h"
 
-DCompPresenter::~DCompPresenter()
-{
-    m_cmp.d3d11_gdi_tex->Release();
-    m_cmp.d3d11_front_buffer->Release();
-    m_cmp.d3d11_surface->Release();
-    m_cmp.dxgi_surface->Release();
-    m_cmp.d2d_dc->Release();
-    m_cmp.d3d_dc->Release();
-    m_cmp.comp_device->Release();
-    m_cmp.comp_target->Release();
-    m_cmp.dxgi_swapchain->Release();
-    m_cmp.d2d_factory->Release();
-    m_cmp.d2d_device->Release();
-    m_cmp.comp_visual->Release();
-    m_cmp.d2d1_bitmap->Release();
-    m_cmp.dxgi_device->Release();
-    m_cmp.d3d11_device->Release();
-    m_cmp.dxgi_adapter->Release();
-    m_cmp.dxgi_factory->Release();
-}
-
 bool DCompPresenter::init(HWND hwnd)
 {
+    m_hwnd = hwnd;
+
     RECT rect{};
     GetClientRect(hwnd, &rect);
     m_size = {(UINT32)rect.right - rect.left, (UINT32)rect.bottom - rect.top};
 
-    const auto cmp = create_composition_context(hwnd, m_size);
+    CreateDXGIFactory2(0, IID_PPV_ARGS(m_cmp.dxgi_factory.GetAddressOf()));
+    m_cmp.dxgi_factory->EnumAdapters1(0, m_cmp.dxgi_adapter.GetAddressOf());
 
-    if (!cmp.has_value())
-    {
-        return false;
-    }
+    D3D11CreateDevice(m_cmp.dxgi_adapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr,
+                      D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0,
+                      D3D11_SDK_VERSION, m_cmp.d3d11_device.GetAddressOf(), nullptr, m_cmp.d3d_dc.GetAddressOf());
 
-    m_cmp = cmp.value();
+    m_cmp.d3d11_device->QueryInterface(m_cmp.dxgi_device.GetAddressOf());
+    m_cmp.dxgi_device->SetMaximumFrameLatency(1);
+
+    DCompositionCreateDevice(m_cmp.dxgi_device.Get(), IID_PPV_ARGS(m_cmp.comp_device.GetAddressOf()));
+    m_cmp.comp_device->CreateTargetForHwnd(hwnd, true, m_cmp.comp_target.GetAddressOf());
+    m_cmp.comp_device->CreateVisual(m_cmp.comp_visual.GetAddressOf());
+
+    DXGI_SWAP_CHAIN_DESC1 swapdesc{};
+    swapdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapdesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+    swapdesc.SampleDesc.Count = 1;
+    swapdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapdesc.BufferCount = 2;
+    swapdesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    swapdesc.Width = m_size.width;
+    swapdesc.Height = m_size.height;
+
+    m_cmp.dxgi_factory->CreateSwapChainForComposition(m_cmp.d3d11_device.Get(), &swapdesc, nullptr,
+                                                      m_cmp.dxgi_swapchain.GetAddressOf());
+    m_cmp.comp_visual->SetContent(m_cmp.dxgi_swapchain.Get());
+    m_cmp.comp_target->SetRoot(m_cmp.comp_visual.Get());
+
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, {}, m_cmp.d2d_factory.GetAddressOf());
+    m_cmp.d2d_factory->CreateDevice(m_cmp.dxgi_device.Get(), m_cmp.d2d_device.GetAddressOf());
+    m_cmp.d2d_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
+                                          m_cmp.d2d_dc.GetAddressOf());
+
+    D3D11_TEXTURE2D_DESC desc{};
+    desc.Width = m_size.width;
+    desc.Height = m_size.height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc = {.Count = 1, .Quality = 0};
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+
+    m_cmp.d3d11_device->CreateTexture2D(&desc, nullptr, m_cmp.d3d11_gdi_tex.GetAddressOf());
+    m_cmp.d3d11_gdi_tex->QueryInterface(m_cmp.dxgi_surface.GetAddressOf());
+
+    const UINT dpi = GetDpiForWindow(hwnd);
+    const D2D1_BITMAP_PROPERTIES1 props =
+        D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi, dpi);
+
+    m_cmp.d2d_dc->CreateBitmapFromDxgiSurface(m_cmp.dxgi_surface.Get(), props, m_cmp.d2d1_bitmap.GetAddressOf());
+    m_cmp.d2d_dc->SetTarget(m_cmp.d2d1_bitmap.Get());
+
+    m_cmp.dxgi_swapchain->GetBuffer(1, IID_PPV_ARGS(m_cmp.d3d11_front_buffer.GetAddressOf()));
+    m_cmp.dxgi_surface->QueryInterface(m_cmp.d3d11_surface.GetAddressOf());
 
     return true;
 }
 
-ID2D1RenderTarget *DCompPresenter::dc() const
+ID2D1RenderTarget *DCompPresenter::add_rt()
 {
-    return m_cmp.d2d_dc;
+    auto rt = std::make_unique<RenderTarget>();
+
+    D3D11_TEXTURE2D_DESC desc{};
+    desc.Width = m_size.width;
+    desc.Height = m_size.height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc = {.Count = 1, .Quality = 0};
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.MiscFlags = 0;
+
+    m_cmp.d3d11_device->CreateTexture2D(&desc, nullptr, rt->d3d_texture.GetAddressOf());
+
+    rt->d3d_texture->QueryInterface(rt->dxgi_surface.GetAddressOf());
+
+    const UINT dpi = GetDpiForWindow(m_hwnd);
+    const D2D1_BITMAP_PROPERTIES1 props =
+        D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi, dpi);
+
+    m_cmp.d2d_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
+                                          rt->device_context.GetAddressOf());
+
+    rt->device_context->CreateBitmapFromDxgiSurface(rt->dxgi_surface.Get(), props, rt->d2d_bitmap.GetAddressOf());
+    rt->device_context->SetTarget(rt->d2d_bitmap.Get());
+
+    auto *ptr = rt.get();
+    m_rts.push_back(std::move(rt));
+    return ptr->device_context.Get();
+}
+
+void DCompPresenter::remove_rt(const ID2D1RenderTarget *rt)
+{
+    auto it =
+        std::find_if(m_rts.begin(), m_rts.end(), [&](const auto &ctx) { return ctx->device_context.Get() == rt; });
+
+    RT_ASSERT(it != m_rts.end(), L"Render target not found");
+
+    m_rts.erase(it);
 }
 
 void DCompPresenter::begin_present()
 {
-    m_cmp.d2d_dc->BeginDraw();
-    m_cmp.d3d_dc->CopyResource(m_cmp.d3d11_surface, m_cmp.d3d11_front_buffer);
-    m_cmp.d2d_dc->SetTransform(D2D1::Matrix3x2F::Identity());
+    for (auto &ctx : m_rts)
+    {
+        ctx->device_context->BeginDraw();
+        ctx->device_context->SetTransform(D2D1::Matrix3x2F::Identity());
+    }
 }
 
 void DCompPresenter::end_present()
 {
-    m_cmp.d2d_dc->EndDraw();
+    // End drawing on all render targets
+    for (auto &rt : m_rts)
+    {
+        rt->device_context->EndDraw();
+    }
 
-    // 1. Copy Direct2D graphics to the GDI-compatible texture
-    ID3D11Resource *d2d_render_target = nullptr;
-    m_cmp.dxgi_surface->QueryInterface(&d2d_render_target);
-    m_cmp.d3d_dc->CopyResource(m_cmp.d3d11_gdi_tex, d2d_render_target);
-    d2d_render_target->Release();
+    Microsoft::WRL::ComPtr<ID3D11Resource> back_buffer;
+    m_cmp.dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
 
-    // 2. Copy the GDI-compatible texture to the swapchain's back buffer
-    ID3D11Resource *back_buffer = nullptr;
-    m_cmp.dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
-    m_cmp.d3d_dc->CopyResource(back_buffer, m_cmp.d3d11_gdi_tex);
-    back_buffer->Release();
+    for (auto &rt : m_rts)
+    {
+        // 1. Copy the rt contents to the GDI-compatible texture
+        Microsoft::WRL::ComPtr<ID3D11Resource> d2d_render_target;
+        rt->dxgi_surface->QueryInterface(d2d_render_target.GetAddressOf());
+        m_cmp.d3d_dc->CopyResource(m_cmp.d3d11_gdi_tex.Get(), d2d_render_target.Get());
+
+        // 2. Copy the rt contents to the swapchain's back buffer
+        m_cmp.d3d_dc->CopyResource(back_buffer.Get(), d2d_render_target.Get());
+    }
 
     m_cmp.dxgi_swapchain->Present(0, 0);
     m_cmp.comp_device->Commit();
@@ -80,19 +159,23 @@ void DCompPresenter::end_present()
 
 void DCompPresenter::blit(HDC hdc, RECT rect)
 {
-    // 1. Get our GDI-compatible D3D texture's DC
-    HDC dc;
-    IDXGISurface1 *dxgi_surface;
-    m_cmp.d3d11_gdi_tex->QueryInterface(&dxgi_surface);
-    dxgi_surface->GetDC(false, &dc);
+    for (auto &rt : m_rts)
+    {
+        // 1. Blit rt content to the GDI-compatible texture
+        m_cmp.d3d_dc->CopyResource(m_cmp.d3d11_gdi_tex.Get(), rt->d3d_texture.Get());
 
-    // 2. Blit our texture DC to the target DC, while preserving the alpha channel with AlphaBlend
-    AlphaBlend(hdc, 0, 0, m_size.width, m_size.height, dc, 0, 0, m_size.width, m_size.height,
-               {.BlendOp = AC_SRC_OVER, .BlendFlags = 0, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA});
+        // 2. Blit our texture DC to the target DC
+        HDC dc;
+        Microsoft::WRL::ComPtr<IDXGISurface1> dxgi_surface;
+        m_cmp.d3d11_gdi_tex->QueryInterface(dxgi_surface.GetAddressOf());
+        dxgi_surface->GetDC(false, &dc);
 
-    // 3. Cleanup
-    dxgi_surface->ReleaseDC(nullptr);
-    dxgi_surface->Release();
+        AlphaBlend(hdc, 0, 0, m_size.width, m_size.height, dc, 0, 0, m_size.width, m_size.height,
+                   {.BlendOp = AC_SRC_OVER, .BlendFlags = 0, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA});
+
+        // 3. Cleanup
+        dxgi_surface->ReleaseDC(nullptr);
+    }
 }
 
 D2D1_SIZE_U DCompPresenter::size()
