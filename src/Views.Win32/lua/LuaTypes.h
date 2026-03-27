@@ -31,7 +31,7 @@ struct t_lua_rendering_context
     HBITMAP gdi_bmp{};
 
     // The stack of render targets. The top is used for D2D calls.
-    std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
+    std::vector<ID2D1RenderTarget *> d2d_rts;
 
     // Pool of GDI+ images
     std::unordered_map<size_t, Gdiplus::Bitmap *> image_pool{};

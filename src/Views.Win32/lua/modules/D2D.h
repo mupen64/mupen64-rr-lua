@@ -89,7 +89,7 @@ static int create_brush(lua_State *L)
     D2D1::ColorF color = D2D_GET_COLOR(L, 1);
 
     ID2D1SolidColorBrush *brush;
-    lua->rctx.d2d_render_target_stack.top()->CreateSolidColorBrush(color, &brush);
+    lua->rctx.d2d_rts.back()->CreateSolidColorBrush(color, &brush);
 
     lua_pushinteger(L, (uint64_t)brush);
     return 1;
@@ -112,7 +112,7 @@ static int clear(lua_State *L)
 
     D2D1::ColorF color = D2D_GET_COLOR(L, 1);
 
-    lua->rctx.d2d_render_target_stack.top()->Clear(g_rctx.presenter->adjust_clear_color(color));
+    lua->rctx.d2d_rts.back()->Clear(g_rctx.presenter->adjust_clear_color(color));
 
     return 0;
 }
@@ -125,7 +125,7 @@ static int fill_rectangle(lua_State *L)
     D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 5);
 
-    lua->rctx.d2d_render_target_stack.top()->FillRectangle(&rectangle, brush);
+    lua->rctx.d2d_rts.back()->FillRectangle(&rectangle, brush);
 
     return 0;
 }
@@ -139,7 +139,7 @@ static int draw_rectangle(lua_State *L)
     float thickness = luaL_checknumber(L, 5);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 6);
 
-    lua->rctx.d2d_render_target_stack.top()->DrawRectangle(&rectangle, brush, thickness);
+    lua->rctx.d2d_rts.back()->DrawRectangle(&rectangle, brush, thickness);
 
     return 0;
 }
@@ -151,7 +151,7 @@ static int fill_ellipse(lua_State *L)
     D2D1_ELLIPSE ellipse = D2D_GET_ELLIPSE(L, 1);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 5);
 
-    lua->rctx.d2d_render_target_stack.top()->FillEllipse(&ellipse, brush);
+    lua->rctx.d2d_rts.back()->FillEllipse(&ellipse, brush);
 
     return 0;
 }
@@ -165,7 +165,7 @@ static int draw_ellipse(lua_State *L)
     float thickness = luaL_checknumber(L, 5);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 6);
 
-    lua->rctx.d2d_render_target_stack.top()->DrawEllipse(&ellipse, brush, thickness);
+    lua->rctx.d2d_rts.back()->DrawEllipse(&ellipse, brush, thickness);
 
     return 0;
 }
@@ -180,7 +180,7 @@ static int draw_line(lua_State *L)
     float thickness = luaL_checknumber(L, 5);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 6);
 
-    lua->rctx.d2d_render_target_stack.top()->DrawLine(point_a, point_b, brush, thickness);
+    lua->rctx.d2d_rts.back()->DrawLine(point_a, point_b, brush, thickness);
 
     return 0;
 }
@@ -248,7 +248,7 @@ static int draw_text(lua_State *L)
     }
 
     auto layout = g_rctx.dw_text_layouts.get(params_hash);
-    lua->rctx.d2d_render_target_stack.top()->DrawTextLayout(
+    lua->rctx.d2d_rts.back()->DrawTextLayout(
         {
             .x = rectangle.left,
             .y = rectangle.top,
@@ -263,7 +263,7 @@ static int set_text_antialias_mode(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
     float mode = luaL_checkinteger(L, 1);
-    lua->rctx.d2d_render_target_stack.top()->SetTextAntialiasMode((D2D1_TEXT_ANTIALIAS_MODE)mode);
+    lua->rctx.d2d_rts.back()->SetTextAntialiasMode((D2D1_TEXT_ANTIALIAS_MODE)mode);
     return 0;
 }
 
@@ -272,7 +272,7 @@ static int set_antialias_mode(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
     float mode = luaL_checkinteger(L, 1);
-    lua->rctx.d2d_render_target_stack.top()->SetAntialiasMode((D2D1_ANTIALIAS_MODE)mode);
+    lua->rctx.d2d_rts.back()->SetAntialiasMode((D2D1_ANTIALIAS_MODE)mode);
     return 0;
 }
 
@@ -340,7 +340,7 @@ static int push_clip(lua_State *L)
 
     D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
 
-    lua->rctx.d2d_render_target_stack.top()->PushAxisAlignedClip(rectangle, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+    lua->rctx.d2d_rts.back()->PushAxisAlignedClip(rectangle, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 
     return 0;
 }
@@ -350,7 +350,7 @@ static int pop_clip(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
-    lua->rctx.d2d_render_target_stack.top()->PopAxisAlignedClip();
+    lua->rctx.d2d_rts.back()->PopAxisAlignedClip();
 
     return 0;
 }
@@ -363,7 +363,7 @@ static int fill_rounded_rectangle(lua_State *L)
     D2D1_ROUNDED_RECT rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 7);
 
-    lua->rctx.d2d_render_target_stack.top()->FillRoundedRectangle(&rounded_rectangle, brush);
+    lua->rctx.d2d_rts.back()->FillRoundedRectangle(&rounded_rectangle, brush);
 
     return 0;
 }
@@ -377,7 +377,7 @@ static int draw_rounded_rectangle(lua_State *L)
     float thickness = luaL_checknumber(L, 7);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 8);
 
-    lua->rctx.d2d_render_target_stack.top()->DrawRoundedRectangle(&rounded_rectangle, brush, thickness);
+    lua->rctx.d2d_rts.back()->DrawRoundedRectangle(&rounded_rectangle, brush, thickness);
 
     return 0;
 }
@@ -412,7 +412,7 @@ static int load_image(lua_State *L)
     pConverter->Initialize(pSource, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.0f,
                            WICBitmapPaletteTypeMedianCut);
 
-    lua->rctx.d2d_render_target_stack.top()->CreateBitmapFromWicBitmap(pConverter, NULL, &bmp);
+    lua->rctx.d2d_rts.back()->CreateBitmapFromWicBitmap(pConverter, NULL, &bmp);
 
     pIWICFactory->Release();
     pDecoder->Release();
@@ -444,7 +444,7 @@ static int draw_image(lua_State *L)
     int interpolation = luaL_checkinteger(L, 10);
     auto bmp = (ID2D1Bitmap *)luaL_checkinteger(L, 11);
 
-    lua->rctx.d2d_render_target_stack.top()->DrawBitmap(
+    lua->rctx.d2d_rts.back()->DrawBitmap(
         bmp, destination_rectangle, opacity, (D2D1_BITMAP_INTERPOLATION_MODE)interpolation, source_rectangle);
 
     return 0;
@@ -476,16 +476,16 @@ static int draw_to_image(lua_State *L)
     float height = std::max((float)luaL_checknumber(L, 2), 1.0f);
 
     ID2D1BitmapRenderTarget *render_target;
-    lua->rctx.d2d_render_target_stack.top()->CreateCompatibleRenderTarget(D2D1::SizeF(width, height), &render_target);
+    lua->rctx.d2d_rts.back()->CreateCompatibleRenderTarget(D2D1::SizeF(width, height), &render_target);
 
     // With render target at top of stack, we hand control back to script and let it run its callback with rt-scoped
     // drawing
-    lua->rctx.d2d_render_target_stack.push(render_target);
+    lua->rctx.d2d_rts.emplace_back(render_target);
     render_target->BeginDraw();
     render_target->Clear(D2D1::ColorF(0, 0, 0, 0));
     lua_call(L, 0, 0);
     render_target->EndDraw();
-    lua->rctx.d2d_render_target_stack.pop();
+    lua->rctx.d2d_rts.pop_back();
 
     ID2D1Bitmap *bmp;
     render_target->GetBitmap(&bmp);

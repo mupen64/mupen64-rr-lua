@@ -156,14 +156,12 @@ void LuaRenderer::resize(uint32_t width, uint32_t height)
     // The D2D rt stacks of all render contexts are invalidated now. We need to recreate those.
     for (const auto &env : g_lua_environments)
     {
-        RT_ASSERT(env->rctx.d2d_render_target_stack.size() == 1,
+        RT_ASSERT(env->rctx.d2d_rts.size() == 1,
                   L"Unexpected D2D render target stack size during presenter recreation. Resizing is not supported "
                   L"during `d2d.draw_to_image`.");
 
-        env->rctx.d2d_render_target_stack = {};
-
         const auto dc = g_rctx.presenter->add_rt();
-        env->rctx.d2d_render_target_stack.push(dc);
+        env->rctx.d2d_rts = {dc};
     }
 
     // Fix the messed up Z-Order. Ugh.
@@ -280,7 +278,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     BringWindowToTop(g_rctx.d2d_overlay_hwnd);
 
     const auto dc = g_rctx.presenter->add_rt();
-    ctx->d2d_render_target_stack.push(dc);
+    ctx->d2d_rts.emplace_back(dc);
 
     if (!g_config.lazy_renderer_init)
     {
@@ -315,7 +313,6 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
     }
 
     ctx->image_pool.clear();
-    ctx->d2d_render_target_stack = {};
 
     if (ctx->gdi_back_dc)
     {
@@ -329,6 +326,11 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
         ctx->gdi_back_dc = nullptr;
         destroy_loadscreen(ctx);
     }
+
+    RT_ASSERT(ctx->d2d_rts.size() == 1, L"Unexpected D2D render target stack size during renderer "
+                                                        L"destruction. Was this called during `d2d.draw_to_image`?");
+    g_rctx.presenter->remove_rt(ctx->d2d_rts[0]);
+    ctx->d2d_rts.erase(ctx->d2d_rts.begin());
 }
 
 void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
