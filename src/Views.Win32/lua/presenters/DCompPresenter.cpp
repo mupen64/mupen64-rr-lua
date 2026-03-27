@@ -47,8 +47,6 @@ bool DCompPresenter::init(HWND hwnd)
 
     m_cmp.d3d11_device->CreateTexture2D(&desc, nullptr, m_cmp.d3d11_gdi_tex.GetAddressOf());
 
-    m_cmp.comp_device->Commit();
-
     return true;
 }
 
