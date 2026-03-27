@@ -23,7 +23,6 @@ bool DCompPresenter::init(HWND hwnd)
                       D3D11_SDK_VERSION, m_cmp.d3d11_device.GetAddressOf(), nullptr, m_cmp.d3d_dc.GetAddressOf());
 
     m_cmp.d3d11_device->QueryInterface(m_cmp.dxgi_device.GetAddressOf());
-    m_cmp.dxgi_device->SetMaximumFrameLatency(1);
 
     DCompositionCreateDevice(m_cmp.dxgi_device.Get(), IID_PPV_ARGS(m_cmp.comp_device.GetAddressOf()));
     m_cmp.comp_device->CreateTargetForHwnd(hwnd, true, m_cmp.comp_target.GetAddressOf());
