@@ -113,22 +113,8 @@ D2D1_SIZE_U GDIPresenter::size()
     return m_size;
 }
 
-void GDIPresenter::begin_present()
+void GDIPresenter::present()
 {
-    for (auto &ctx : m_render_target_contexts)
-    {
-        ctx.render_target->BeginDraw();
-        ctx.render_target->SetTransform(D2D1::Matrix3x2F::Identity());
-    }
-}
-
-void GDIPresenter::end_present()
-{
-    for (auto &ctx : m_render_target_contexts)
-    {
-        ctx.render_target->EndDraw();
-    }
-
     // Composite all render targets sequentially to the window
     auto main_dc = GetDC(m_hwnd);
     for (auto &ctx : m_render_target_contexts)

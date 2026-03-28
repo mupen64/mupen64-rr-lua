@@ -17,8 +17,7 @@ class GDIPresenter : public Presenter
     void remove_rt(const ID2D1RenderTarget *rt) override;
     void resize(D2D1_SIZE_U size) override;
     D2D1_SIZE_U size() override;
-    void begin_present() override;
-    void end_present() override;
+    void present() override;
     void blit(HDC hdc, RECT rect) override;
     D2D1::ColorF adjust_clear_color(D2D1::ColorF color) const override;
 

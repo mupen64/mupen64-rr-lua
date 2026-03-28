@@ -170,21 +170,10 @@ void DCompPresenter::resize(D2D1_SIZE_U size)
     }
 }
 
-void DCompPresenter::begin_present()
-{
-    for (auto &ctx : m_rts)
-    {
-        ctx->device_context->BeginDraw();
-        ctx->device_context->SetTransform(D2D1::Matrix3x2F::Identity());
-    }
-}
-
-void DCompPresenter::end_present()
+void DCompPresenter::present()
 {
     for (auto &rt : m_rts)
     {
-        rt->device_context->EndDraw();
-
         Microsoft::WRL::ComPtr<ID3D11Resource> back_buffer;
         rt->comp_swapchain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
         m_cmp.d3d_dc->CopyResource(back_buffer.Get(), rt->d3d_texture.Get());

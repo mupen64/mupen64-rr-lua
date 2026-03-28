@@ -67,14 +67,9 @@ class Presenter
     virtual D2D1::ColorF adjust_clear_color(const D2D1::ColorF color) const { return color; }
 
     /**
-     * Begins graphics presentation. Called before any painting happens.
+     * Presents the composited render targets.
      */
-    virtual void begin_present() = 0;
-
-    /**
-     * Ends graphics presentation. Called after all painting has happened.
-     */
-    virtual void end_present() = 0;
+    virtual void present() = 0;
 
     /**
      * \brief Blits the presenter's contents to a DC at the specified position

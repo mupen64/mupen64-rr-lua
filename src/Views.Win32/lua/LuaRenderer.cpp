@@ -36,12 +36,15 @@ static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
         d2d_drawing = true;
 
         bool success;
-        g_rctx.presenter->begin_present();
         for (const auto &env : g_lua_environments)
         {
+            const auto &d2d_rt = env->rctx.d2d_rts.back();
+            d2d_rt->BeginDraw();
+            d2d_rt->SetTransform(D2D1::Matrix3x2F::Identity());
             success = LuaCallbacks::invoke_callbacks_with_key(env, LuaCallbacks::REG_ATDRAWD2D);
+            d2d_rt->EndDraw();
         }
-        g_rctx.presenter->end_present();
+        g_rctx.presenter->present();
 
         // FIXME: How do we destroy the environments that errored out?
 
