@@ -155,8 +155,3 @@ EXPORT void CALL AiUpdate(int32_t wait)
 {
     // no-op
 }
-
-EXPORT void CALL ProcessAList(void)
-{
-    // no-op
-}

@@ -8,8 +8,22 @@
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_error.h>
 #include <algorithm>
+#include <bit>
+#include <cassert>
 #include <chrono>
+#include <cstdint>
 #include <stdexcept>
+#include <utility>
+
+static void swap_channels(void* data, size_t len) {
+    // This should always be true
+    assert(len % 4 == 0);
+
+    auto* end = (uint16_t*)((uint8_t*) data + len);
+    for (auto* ptr = (uint16_t*) data; ptr != end; ptr += 2) {
+        std::swap(ptr[0], ptr[1]);
+    }
+}
 
 namespace SDLAudio
 {
@@ -35,8 +49,8 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     if (!m_stream) throw std::runtime_error(SDL_GetError());
     if (!SDL_BindAudioStream(m_device_id, m_stream)) throw std::runtime_error(SDL_GetError());
 
-    // SDL3 starts audio devices paused.
-    m_paused = true;
+    // Pause the stream initially.
+    set_paused(true);
 
     // set some vars for audio sync
     m_src_target = std::max((int)config.src_buffer_target, m_buffer_size);
@@ -67,6 +81,9 @@ void SDLBackend::set_sample_rate(uint32_t sample_rate)
 
 void SDLBackend::push_samples(void *src, size_t len)
 {
+    // words are stored in DRAM in native order; big-endian pairs of samples will be swapped
+    if (m_config.swap_channels ^ (std::endian::native == std::endian::little))
+        swap_channels(src, len);
     SDL_PutAudioStreamData(m_stream, src, (int)len);
 }
 
@@ -105,7 +122,7 @@ size_t SDLBackend::estimate_dst_frames_at_next_cb()
     auto now = chr::steady_clock::now();
 
     // find the current number of available output frames
-    uint32_t bytes_per_frame = (((uint32_t)m_device_spec.format) & 0xFF) / 8;
+    uint32_t bytes_per_frame = SDL_AUDIO_BYTESIZE(m_device_spec.format);
     int dst_bytes = SDL_GetAudioStreamAvailable(m_stream);
     if (dst_bytes < 0)
         throw std::runtime_error(SDL_GetError());
