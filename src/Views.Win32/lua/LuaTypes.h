@@ -60,27 +60,14 @@ struct t_lua_rendering_context
 
 struct LuaRendererContext
 {
-    // The current presenter, or null
     Presenter *presenter{};
-
-    // The Direct2D overlay control handle
     HWND d2d_overlay_hwnd{};
-
-    // Dimensions of the drawing surfaces
-    D2D1_SIZE_U dc_size{};
-
+    D2D1_SIZE_U size{};
     RECT window_rect{};
-
-    // The DirectWrite factory, whose lifetime is the renderer's
-    IDWriteFactory *dw_factory{};
-
-    // The cache for DirectWrite text layouts
-    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
-
-    // The cache for DirectWrite text size measurements
-    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+    IDWriteFactory *dw_factory{}; // FIXME: Use ComPtr!!!
+    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts; // FIXME: Use ComPtr!!!
+    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes;
 };
-
 
 struct t_action_param_meta
 {

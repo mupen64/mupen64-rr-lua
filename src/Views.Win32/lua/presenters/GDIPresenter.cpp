@@ -103,6 +103,11 @@ void GDIPresenter::remove_rt(const ID2D1RenderTarget *dc)
     }
 }
 
+void GDIPresenter::resize(D2D1_SIZE_U size)
+{
+    m_size = size;
+}
+
 D2D1_SIZE_U GDIPresenter::size()
 {
     return m_size;

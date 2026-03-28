@@ -114,6 +114,15 @@ void DCompPresenter::remove_rt(const ID2D1RenderTarget *rt)
     m_rts.erase(it);
 }
 
+void DCompPresenter::resize(D2D1_SIZE_U size)
+{
+    if (size == m_size) return;
+
+    m_size = size;
+
+
+}
+
 void DCompPresenter::begin_present()
 {
     for (auto &ctx : m_rts)

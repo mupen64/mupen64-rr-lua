@@ -49,6 +49,12 @@ class Presenter
     virtual void remove_rt(const ID2D1RenderTarget *rt) = 0;
 
     /**
+     * \brief Resizes the presenter and its render targets. Render target handles remain valid.
+     * \param size The new size.
+     */
+    virtual void resize(D2D1_SIZE_U size) = 0;
+
+    /**
      * Gets the backing texture size
      */
     virtual D2D1_SIZE_U size() = 0;

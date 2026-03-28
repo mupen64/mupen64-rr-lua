@@ -73,8 +73,8 @@ static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, 
 
         if (lua->rctx.has_gdi_content)
         {
-            BitBlt(lua->rctx.gdi_front_dc, 0, 0, g_rctx.dc_size.width, g_rctx.dc_size.height, lua->rctx.gdi_back_dc, 0,
-                   0, SRCCOPY);
+            BitBlt(lua->rctx.gdi_front_dc, 0, 0, g_rctx.size.width, g_rctx.size.height, lua->rctx.gdi_back_dc, 0, 0,
+                   SRCCOPY);
         }
 
         ValidateRect(hwnd, nullptr);
@@ -109,41 +109,25 @@ void LuaRenderer::init()
     g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 }
 
-void LuaRenderer::resize(uint32_t width, uint32_t height)
+static void create_renderer_if_needed()
 {
-    width = std::max(width, 1u);
-    height = std::max(height, 1u);
+    if (IsWindow(g_rctx.d2d_overlay_hwnd)) return;
 
-    if (g_rctx.dc_size.width == width && g_rctx.dc_size.height == height) return;
+    auto hr = CoInitialize(nullptr);
+    RT_ASSERT(hr == S_OK || hr == RPC_E_CHANGED_MODE, L"Failed to initialize COM.");
 
-    g_rctx.dc_size = {width, height};
+    g_rctx.d2d_overlay_hwnd =
+        CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, g_rctx.size.width,
+                       g_rctx.size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+    RT_ASSERT(IsWindow(g_rctx.d2d_overlay_hwnd), L"Failed to create D2D overlay window.");
 
-    if (!IsWindow(g_rctx.d2d_overlay_hwnd))
-    {
-        auto hr = CoInitialize(nullptr);
-        RT_ASSERT(hr == S_OK || hr == RPC_E_CHANGED_MODE, L"Failed to initialize COM.");
+    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(g_rctx.dw_factory),
+                        reinterpret_cast<IUnknown **>(&g_rctx.dw_factory));
 
-        g_rctx.d2d_overlay_hwnd =
-            CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, g_rctx.dc_size.width,
-                           g_rctx.dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
-        const auto error = GetLastError();
+    g_rctx.dw_text_layouts = MicroLRU::Cache<uint64_t, IDWriteTextLayout *>(512, [&](auto value) { value->Release(); });
+    g_rctx.dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
 
-        DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(g_rctx.dw_factory),
-                            reinterpret_cast<IUnknown **>(&g_rctx.dw_factory));
-
-        g_rctx.dw_text_layouts =
-            MicroLRU::Cache<uint64_t, IDWriteTextLayout *>(512, [&](auto value) { value->Release(); });
-        g_rctx.dw_text_sizes = MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS>(512, [&](auto value) {});
-    }
-
-    SetWindowPos(g_rctx.d2d_overlay_hwnd, nullptr, 0, 0, g_rctx.dc_size.width, g_rctx.dc_size.height,
-                 SWP_NOZORDER | SWP_NOACTIVATE);
-    if (g_rctx.presenter)
-    {
-        delete g_rctx.presenter;
-        g_rctx.presenter = nullptr;
-    }
-
+    // FIXME: How do we handle presenter_type changing if this is only ran once at startup? :P
     if (g_config.presenter_type != (int32_t)t_config::PresenterType::GDI)
         g_rctx.presenter = new DCompPresenter();
     else
@@ -152,24 +136,22 @@ void LuaRenderer::resize(uint32_t width, uint32_t height)
     const auto result = g_rctx.presenter->init(g_rctx.d2d_overlay_hwnd);
     RT_ASSERT(result,
               L"Failed to initialize Lua presenter.\r\nVerify that your system supports the selected presenter.");
+}
 
-    // The D2D rt stacks of all render contexts are invalidated now. We need to recreate those.
-    for (const auto &env : g_lua_environments)
-    {
-        RT_ASSERT(env->rctx.d2d_rts.size() == 1,
-                  L"Unexpected D2D render target stack size during presenter recreation. Resizing is not supported "
-                  L"during `d2d.draw_to_image`.");
+void LuaRenderer::resize(uint32_t width, uint32_t height)
+{
+    width = std::max(width, 1u);
+    height = std::max(height, 1u);
 
-        const auto dc = g_rctx.presenter->add_rt();
-        env->rctx.d2d_rts = {dc};
-    }
+    if (g_rctx.size.width == width && g_rctx.size.height == height) return;
 
-    // Fix the messed up Z-Order. Ugh.
-    for (const auto &env : g_lua_environments)
-    {
-        BringWindowToTop(env->rctx.gdi_overlay_hwnd);
-    }
-    BringWindowToTop(g_rctx.d2d_overlay_hwnd);
+    g_rctx.size = {width, height};
+
+    create_renderer_if_needed();
+
+    SetWindowPos(g_rctx.d2d_overlay_hwnd, nullptr, 0, 0, g_rctx.size.width, g_rctx.size.height,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+    g_rctx.presenter->resize(g_rctx.size);
 }
 
 static void create_loadscreen(t_lua_rendering_context *ctx)
@@ -180,7 +162,7 @@ static void create_loadscreen(t_lua_rendering_context *ctx)
     }
     auto gdi_dc = GetDC(g_main_ctx.hwnd);
     ctx->loadscreen_dc = CreateCompatibleDC(gdi_dc);
-    ctx->loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, g_rctx.dc_size.width, g_rctx.dc_size.height);
+    ctx->loadscreen_bmp = CreateCompatibleBitmap(gdi_dc, g_rctx.size.width, g_rctx.size.height);
     SelectObject(ctx->loadscreen_dc, ctx->loadscreen_bmp);
     ReleaseDC(g_main_ctx.hwnd, gdi_dc);
 }
@@ -258,13 +240,13 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
 
     auto gdi_dc = GetDC(g_main_ctx.hwnd);
     ctx->gdi_back_dc = CreateCompatibleDC(gdi_dc);
-    ctx->gdi_bmp = CreateCompatibleBitmap(gdi_dc, g_rctx.dc_size.width, g_rctx.dc_size.height);
+    ctx->gdi_bmp = CreateCompatibleBitmap(gdi_dc, g_rctx.size.width, g_rctx.size.height);
     SelectObject(ctx->gdi_back_dc, ctx->gdi_bmp);
     ReleaseDC(g_main_ctx.hwnd, gdi_dc);
 
     ctx->gdi_overlay_hwnd =
-        CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, g_rctx.dc_size.width,
-                       g_rctx.dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
+        CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, g_rctx.size.width,
+                       g_rctx.size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
     SetLayeredWindowAttributes(ctx->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
     SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, env);
 
@@ -328,7 +310,7 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
     }
 
     RT_ASSERT(ctx->d2d_rts.size() == 1, L"Unexpected D2D render target stack size during renderer "
-                                                        L"destruction. Was this called during `d2d.draw_to_image`?");
+                                        L"destruction. Was this called during `d2d.draw_to_image`?");
     g_rctx.presenter->remove_rt(ctx->d2d_rts[0]);
     ctx->d2d_rts.erase(ctx->d2d_rts.begin());
 }
