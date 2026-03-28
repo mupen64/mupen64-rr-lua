@@ -120,7 +120,54 @@ void DCompPresenter::resize(D2D1_SIZE_U size)
 
     m_size = size;
 
+    // Recreate the GDI texture with the new size.
+    m_cmp.d3d11_gdi_tex.Reset();
+    {
+        D3D11_TEXTURE2D_DESC desc{};
+        desc.Width = m_size.width;
+        desc.Height = m_size.height;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        desc.SampleDesc = {.Count = 1, .Quality = 0};
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+        desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+        m_cmp.d3d11_device->CreateTexture2D(&desc, nullptr, m_cmp.d3d11_gdi_tex.GetAddressOf());
+    }
 
+    for (auto &rt : m_rts)
+    {
+        // All this stuff is invalidated...
+        rt->device_context->SetTarget(nullptr);
+        rt->d2d_bitmap.Reset();
+        rt->dxgi_surface.Reset();
+        rt->d3d_texture.Reset();
+
+        rt->comp_swapchain->ResizeBuffers(2, m_size.width, m_size.height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+
+        // Recreate the rt texture with the new size.
+        D3D11_TEXTURE2D_DESC desc{};
+        desc.Width = m_size.width;
+        desc.Height = m_size.height;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        desc.SampleDesc = {.Count = 1, .Quality = 0};
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+        desc.MiscFlags = 0;
+        m_cmp.d3d11_device->CreateTexture2D(&desc, nullptr, rt->d3d_texture.GetAddressOf());
+        rt->d3d_texture->QueryInterface(rt->dxgi_surface.GetAddressOf());
+
+        // Recreate the rt bitmap with the new size. Note that we keep device_context as-is (see above).
+        const UINT dpi = GetDpiForWindow(m_hwnd);
+        const D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(
+            D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+            D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi, dpi);
+        rt->device_context->CreateBitmapFromDxgiSurface(rt->dxgi_surface.Get(), props, rt->d2d_bitmap.GetAddressOf());
+        rt->device_context->SetTarget(rt->d2d_bitmap.Get());
+    }
 }
 
 void DCompPresenter::begin_present()
