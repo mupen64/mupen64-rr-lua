@@ -211,7 +211,7 @@ static int SetFont(lua_State *L)
     auto style = IOUtils::to_wide_string(luaL_optstring(L, 3, ""));
 
     // set the size of the font
-    font.lfHeight = -MulDiv(font_size, GetDeviceCaps(lua->rctx.gdi_back_dc, LOGPIXELSY), 72);
+    font.lfHeight = -MulDiv(font_size, GetDeviceCaps(lua->rctx.gdi_rt.dc, LOGPIXELSY), 72);
     lstrcpyn(font.lfFaceName, font_name.c_str(), LF_FACESIZE);
     font.lfCharSet = DEFAULT_CHARSET;
 
@@ -248,16 +248,16 @@ static int LuaTextOut(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
-    SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
-    SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
-    SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+    SetBkMode(lua->rctx.gdi_rt.dc, lua->rctx.bkmode);
+    SetBkColor(lua->rctx.gdi_rt.dc, lua->rctx.bkcol);
+    SetTextColor(lua->rctx.gdi_rt.dc, lua->rctx.col);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.font);
 
     int x = luaL_checknumber(L, 1);
     int y = luaL_checknumber(L, 2);
     auto text = IOUtils::to_wide_string(lua_tostring(L, 3));
 
-    ::TextOut(lua->rctx.gdi_back_dc, x, y, text.c_str(), text.size());
+    ::TextOut(lua->rctx.gdi_rt.dc, x, y, text.c_str(), text.size());
     return 0;
 }
 
@@ -306,10 +306,10 @@ static int GetTextExtent(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     auto string = IOUtils::to_wide_string(luaL_checkstring(L, 1));
 
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.font);
 
     SIZE size = {0};
-    GetTextExtentPoint32(lua->rctx.gdi_back_dc, string.c_str(), string.size(), &size);
+    GetTextExtentPoint32(lua->rctx.gdi_rt.dc, string.c_str(), string.size(), &size);
 
     lua_newtable(L);
     lua_pushinteger(L, size.cx);
@@ -324,10 +324,10 @@ static int LuaDrawText(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
-    SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
-    SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
-    SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+    SetBkMode(lua->rctx.gdi_rt.dc, lua->rctx.bkmode);
+    SetBkColor(lua->rctx.gdi_rt.dc, lua->rctx.bkcol);
+    SetTextColor(lua->rctx.gdi_rt.dc, lua->rctx.col);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.font);
 
     RECT rect = {0};
     UINT format = DT_NOPREFIX | DT_WORDBREAK;
@@ -374,7 +374,7 @@ static int LuaDrawText(lua_State *L)
     }
     auto str = IOUtils::to_wide_string(lua_tostring(L, 1));
 
-    ::DrawText(lua->rctx.gdi_back_dc, str.c_str(), -1, &rect, format);
+    ::DrawText(lua->rctx.gdi_rt.dc, str.c_str(), -1, &rect, format);
     return 0;
 }
 
@@ -383,10 +383,10 @@ static int LuaDrawTextAlt(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
-    SetBkMode(lua->rctx.gdi_back_dc, lua->rctx.bkmode);
-    SetBkColor(lua->rctx.gdi_back_dc, lua->rctx.bkcol);
-    SetTextColor(lua->rctx.gdi_back_dc, lua->rctx.col);
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
+    SetBkMode(lua->rctx.gdi_rt.dc, lua->rctx.bkmode);
+    SetBkColor(lua->rctx.gdi_rt.dc, lua->rctx.bkcol);
+    SetTextColor(lua->rctx.gdi_rt.dc, lua->rctx.col);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.font);
 
     RECT rect = {0};
     auto string = IOUtils::to_wide_string(lua_tostring(L, 1));
@@ -396,7 +396,7 @@ static int LuaDrawTextAlt(lua_State *L)
     rect.right = luaL_checkinteger(L, 5);
     rect.bottom = luaL_checkinteger(L, 6);
 
-    DrawTextEx(lua->rctx.gdi_back_dc, string.data(), -1, &rect, format, NULL);
+    DrawTextEx(lua->rctx.gdi_rt.dc, string.data(), -1, &rect, format, NULL);
     return 0;
 }
 
@@ -412,9 +412,9 @@ static int DrawRect(lua_State *L)
     int cornerW = luaL_optnumber(L, 5, 0);
     int cornerH = luaL_optnumber(L, 6, 0);
 
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
-    RoundRect(lua->rctx.gdi_back_dc, left, top, right, bottom, cornerW, cornerH);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.brush);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.pen);
+    RoundRect(lua->rctx.gdi_rt.dc, left, top, right, bottom, cornerW, cornerH);
     return 0;
 }
 
@@ -508,7 +508,7 @@ static int DrawImage(lua_State *L)
     // Gets the number of arguments
     unsigned int args = lua_gettop(L);
 
-    Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
+    Gdiplus::Graphics gfx(lua->rctx.gdi_rt.dc);
     Gdiplus::Bitmap *img = lua->rctx.image_pool[key];
 
     // Original DrawImage
@@ -689,7 +689,7 @@ static int FillPolygonAlpha(lua_State *L)
         // now stack again has only table at the bottom and color string on top, repeat
     }
 
-    Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
+    Gdiplus::Graphics gfx(lua->rctx.gdi_rt.dc);
     Gdiplus::SolidBrush brush(Gdiplus::Color(luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_checkinteger(L, 4),
                                              luaL_checkinteger(L, 5)));
     gfx.FillPolygon(&brush, pts.data(), n);
@@ -707,7 +707,7 @@ static int FillEllipseAlpha(lua_State *L)
     int h = luaL_checknumber(L, 4);
     auto col = IOUtils::to_wide_string(luaL_checkstring(L, 5));
 
-    Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
+    Gdiplus::Graphics gfx(lua->rctx.gdi_rt.dc);
     Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
 
     gfx.FillEllipse(&brush, x, y, w, h);
@@ -726,7 +726,7 @@ static int FillRectAlpha(lua_State *L)
     int h = luaL_checknumber(L, 4);
     auto col = IOUtils::to_wide_string(luaL_checkstring(L, 5));
 
-    Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
+    Gdiplus::Graphics gfx(lua->rctx.gdi_rt.dc);
     Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
 
     gfx.FillRectangle(&brush, x, y, w, h);
@@ -740,14 +740,14 @@ static int FillRect(lua_State *L)
     LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
     COLORREF color = RGB(luaL_checknumber(L, 5), luaL_checknumber(L, 6), luaL_checknumber(L, 7));
-    COLORREF colorold = SetBkColor(lua->rctx.gdi_back_dc, color);
+    COLORREF colorold = SetBkColor(lua->rctx.gdi_rt.dc, color);
     RECT rect;
     rect.left = luaL_checknumber(L, 1);
     rect.top = luaL_checknumber(L, 2);
     rect.right = luaL_checknumber(L, 3);
     rect.bottom = luaL_checknumber(L, 4);
-    ExtTextOut(lua->rctx.gdi_back_dc, 0, 0, ETO_OPAQUE, &rect, L"", 0, 0);
-    SetBkColor(lua->rctx.gdi_back_dc, colorold);
+    ExtTextOut(lua->rctx.gdi_rt.dc, 0, 0, ETO_OPAQUE, &rect, L"", 0, 0);
+    SetBkColor(lua->rctx.gdi_rt.dc, colorold);
     return 0;
 }
 
@@ -756,15 +756,15 @@ static int DrawEllipse(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.brush);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.pen);
 
     int left = luaL_checknumber(L, 1);
     int top = luaL_checknumber(L, 2);
     int right = luaL_checknumber(L, 3);
     int bottom = luaL_checknumber(L, 4);
 
-    ::Ellipse(lua->rctx.gdi_back_dc, left, top, right, bottom);
+    ::Ellipse(lua->rctx.gdi_rt.dc, left, top, right, bottom);
     return 0;
 }
 
@@ -795,9 +795,9 @@ static int DrawPolygon(lua_State *L)
         p[i].y = lua_tointeger(L, -1);
         lua_pop(L, 2);
     }
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.brush);
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
-    ::Polygon(lua->rctx.gdi_back_dc, p, n);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.brush);
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.pen);
+    ::Polygon(lua->rctx.gdi_rt.dc, p, n);
     return 0;
 }
 
@@ -806,9 +806,9 @@ static int DrawLine(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::mark_gdi_content_present(&lua->rctx);
 
-    SelectObject(lua->rctx.gdi_back_dc, lua->rctx.pen);
-    ::MoveToEx(lua->rctx.gdi_back_dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2), NULL);
-    ::LineTo(lua->rctx.gdi_back_dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
+    SelectObject(lua->rctx.gdi_rt.dc, lua->rctx.pen);
+    ::MoveToEx(lua->rctx.gdi_rt.dc, luaL_checknumber(L, 1), luaL_checknumber(L, 2), NULL);
+    ::LineTo(lua->rctx.gdi_rt.dc, luaL_checknumber(L, 3), luaL_checknumber(L, 4));
     return 0;
 }
 
@@ -819,7 +819,7 @@ static int SetClip(lua_State *L)
     auto rgn = CreateRectRgn(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2),
                              luaL_checkinteger(L, 1) + luaL_checkinteger(L, 3),
                              luaL_checkinteger(L, 2) + luaL_checkinteger(L, 4));
-    SelectClipRgn(lua->rctx.gdi_back_dc, rgn);
+    SelectClipRgn(lua->rctx.gdi_rt.dc, rgn);
     DeleteObject(rgn);
     return 0;
 }
@@ -828,7 +828,7 @@ static int ResetClip(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    SelectClipRgn(lua->rctx.gdi_back_dc, NULL);
+    SelectClipRgn(lua->rctx.gdi_rt.dc, NULL);
     return 0;
 }
 } // namespace LuaCore::Wgui

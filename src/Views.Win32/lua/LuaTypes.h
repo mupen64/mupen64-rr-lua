@@ -7,7 +7,14 @@
 #pragma once
 
 #include <ActionManager.h>
+
 #include <lua/presenters/Presenter.h>
+
+struct GDIRenderTarget
+{
+    HDC dc{};
+    HBITMAP bmp{};
+};
 
 /**
  * \brief Represents a Lua rendering context.
@@ -16,19 +23,8 @@ struct t_lua_rendering_context
 {
     bool d2d_initialized{};
 
-    // The GDI/GDI+ overlay control handle
-    HWND gdi_overlay_hwnd{};
-
     bool has_gdi_content{};
-
-    HDC gdi_front_dc{};
-
-    // The DC for GDI/GDI+ drawings
-    // This DC is special, since commands can be issued to it anytime and it's never cleared
-    HDC gdi_back_dc{};
-
-    // The bitmap for GDI/GDI+ drawings
-    HBITMAP gdi_bmp{};
+    GDIRenderTarget gdi_rt{};
 
     // The stack of render targets. The top is used for D2D calls.
     std::vector<ID2D1RenderTarget *> d2d_rts;
@@ -60,13 +56,15 @@ struct t_lua_rendering_context
 
 struct LuaRendererContext
 {
+    D2D1_SIZE_U size{};
+
     Presenter *presenter{};
     HWND d2d_overlay_hwnd{};
-    D2D1_SIZE_U size{};
-    RECT window_rect{};
-    IDWriteFactory *dw_factory{}; // FIXME: Use ComPtr!!!
+    IDWriteFactory *dw_factory{};                                   // FIXME: Use ComPtr!!!
     MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts; // FIXME: Use ComPtr!!!
     MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes;
+
+    HWND gdi_overlay_hwnd{};
 };
 
 struct t_action_param_meta
