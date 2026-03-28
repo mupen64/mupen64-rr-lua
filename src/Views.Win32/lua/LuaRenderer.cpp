@@ -264,11 +264,8 @@ void LuaRenderer::repaint_visuals()
 {
     assert(is_on_gui_thread());
 
-    for (const auto &lua : g_lua_environments)
-    {
-        RedrawWindow(g_rctx.gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(g_rctx.d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-    }
+    RedrawWindow(g_rctx.gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+    RedrawWindow(g_rctx.d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environment *env)
