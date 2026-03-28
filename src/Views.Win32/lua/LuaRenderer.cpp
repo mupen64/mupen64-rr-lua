@@ -255,10 +255,6 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     // If we don't fill up the DC with the key first, it never becomes "transparent"
     FillRect(ctx->gdi_back_dc, &g_rctx.window_rect, g_alpha_mask_brush);
 
-    // Bring the windows to top so they are above the MGE compositor
-    BringWindowToTop(ctx->gdi_overlay_hwnd);
-    BringWindowToTop(g_rctx.d2d_overlay_hwnd);
-
     const auto dc = g_rctx.presenter->add_rt();
     ctx->d2d_rts.emplace_back(dc);
 
