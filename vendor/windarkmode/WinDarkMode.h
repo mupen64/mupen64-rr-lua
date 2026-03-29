@@ -468,36 +468,6 @@ inline LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         }
         break;
     }
-    case WM_THEMECHANGED: {
-        HWND hdr_hwnd = ListView_GetHeader(hwnd);
-        HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
-        if (hTheme)
-        {
-            COLORREF color;
-            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color)))
-            {
-                ListView_SetTextColor(hwnd, color);
-            }
-            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
-            {
-                ListView_SetTextBkColor(hwnd, color);
-                ListView_SetBkColor(hwnd, color);
-            }
-            CloseThemeData(hTheme);
-        }
-
-        hTheme = OpenThemeData(hdr_hwnd, L"Header");
-        if (hTheme)
-        {
-            GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->hdr_text_color));
-            CloseThemeData(hTheme);
-        }
-
-        SendMessage(hdr_hwnd, WM_THEMECHANGED, wParam, lParam);
-
-        RedrawWindow(hwnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
-        break;
-    }
     default:
         break;
     }
@@ -576,8 +546,9 @@ inline void update_listview(HWND lv_hwnd, bool dark)
     HWND hdr_hwnd = ListView_GetHeader(lv_hwnd);
     _AllowDarkModeForWindow(hdr_hwnd, dark);
 
+    auto ctx = new ListViewContext{};
     if (dark)
-        SetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(new ListViewContext{}));
+        SetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(ctx));
     else
         RemoveWindowSubclass(lv_hwnd, listview_subclass_proc, 0);
 
@@ -597,6 +568,26 @@ inline void update_listview(HWND lv_hwnd, bool dark)
     {
         SetWindowTheme(hdr_hwnd, nullptr, nullptr);
         SetWindowTheme(lv_hwnd, nullptr, nullptr);
+    }
+
+    HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
+    if (hTheme)
+    {
+        COLORREF color;
+        if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color))) ListView_SetTextColor(lv_hwnd, color);
+        if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
+        {
+            ListView_SetTextBkColor(lv_hwnd, color);
+            ListView_SetBkColor(lv_hwnd, color);
+        }
+        CloseThemeData(hTheme);
+    }
+
+    hTheme = OpenThemeData(hdr_hwnd, L"Header");
+    if (hTheme)
+    {
+        GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(ctx->hdr_text_color));
+        CloseThemeData(hTheme);
     }
 }
 
