@@ -147,9 +147,14 @@ struct WINDOWCOMPOSITIONATTRIBDATA
     SIZE_T cbData;
 };
 
-struct SubclassInfo
+struct ListViewContext
 {
-    COLORREF headerTextColor;
+    COLORREF hdr_text_color;
+};
+
+struct TabControlContext
+{
+    // TODO: Implement hover highlights
 };
 
 using fnRtlGetNtVersionNumbers = void(WINAPI *)(LPDWORD major, LPDWORD minor, LPDWORD build);
@@ -354,10 +359,91 @@ inline void patch_scrollbar(bool dark)
     VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), prev_protect, &prev_protect);
 }
 
+static LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
+                                                 DWORD_PTR dwRefData)
+{
+    auto ctx = reinterpret_cast<TabControlContext *>(dwRefData);
+
+    switch (msg)
+    {
+    case WM_NCDESTROY: {
+        delete ctx;
+        RemoveWindowSubclass(hwnd, tabcontrol_subclass_proc, 0);
+        break;
+    }
+    case WM_ERASEBKGND: {
+        if (!(GetWindowLongPtr(hwnd, GWL_STYLE) & TCS_OWNERDRAWFIXED)) break;
+
+        RECT rc{};
+        GetClientRect(hwnd, &rc);
+        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
+        FillRect(reinterpret_cast<HDC>(wParam), &rc, bg_brush);
+        return TRUE;
+    }
+
+    case WM_PAINT: {
+        if (!(GetWindowLongPtr(hwnd, GWL_STYLE) & TCS_OWNERDRAWFIXED)) break;
+
+        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
+
+        PAINTSTRUCT ps{};
+        HDC hdc = BeginPaint(hwnd, &ps);
+
+        FillRect(hdc, &ps.rcPaint, bg_brush);
+
+        const int nTabs = TabCtrl_GetItemCount(hwnd);
+        const int nSelTab = TabCtrl_GetCurSel(hwnd);
+        const UINT id = static_cast<UINT>(GetDlgCtrlID(hwnd));
+
+        for (int i = 0; i < nTabs; i++)
+        {
+            DRAWITEMSTRUCT dis{};
+            dis.CtlType = ODT_TAB;
+            dis.CtlID = id;
+            dis.itemID = static_cast<UINT>(i);
+            dis.itemAction = ODA_DRAWENTIRE;
+            dis.itemState = (i == nSelTab) ? ODS_SELECTED : ODS_DEFAULT;
+            dis.hwndItem = hwnd;
+            dis.hDC = hdc;
+            TabCtrl_GetItemRect(hwnd, i, &dis.rcItem);
+
+            RECT rcIntersect{};
+            if (!IntersectRect(&rcIntersect, &ps.rcPaint, &dis.rcItem)) continue;
+
+            const bool selected = (i == nSelTab);
+            const COLORREF tabBg = selected ? RGB(0x50, 0x50, 0x50) : bg_color;
+            HBRUSH tabBrush = CreateSolidBrush(tabBg);
+            FillRect(hdc, &dis.rcItem, tabBrush);
+            DeleteObject(tabBrush);
+
+            wchar_t label[256]{};
+            TCITEMW tci{};
+            tci.mask = TCIF_TEXT;
+            tci.pszText = label;
+            tci.cchTextMax = static_cast<int>(std::size(label)) - 1;
+            TabCtrl_GetItem(hwnd, i, &tci);
+
+            SetBkMode(hdc, TRANSPARENT);
+            SetTextColor(hdc, selected ? text_color : RGB(0xC0, 0xC0, 0xC0));
+            HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
+            HFONT hOldFont = static_cast<HFONT>(SelectObject(hdc, hFont));
+            DrawTextW(hdc, label, -1, &dis.rcItem, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+            SelectObject(hdc, hOldFont);
+        }
+
+        EndPaint(hwnd, &ps);
+        return 0;
+    }
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
 static LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
                                                DWORD_PTR dwRefData)
 {
-    auto info = reinterpret_cast<SubclassInfo *>(dwRefData);
+    auto info = reinterpret_cast<ListViewContext *>(dwRefData);
 
     switch (msg)
     {
@@ -375,7 +461,7 @@ static LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
             case CDDS_PREPAINT:
                 return CDRF_NOTIFYITEMDRAW;
             case CDDS_ITEMPREPAINT: {
-                SetTextColor(nmcd->hdc, info->headerTextColor);
+                SetTextColor(nmcd->hdc, info->hdr_text_color);
                 return CDRF_DODEFAULT;
             }
             }
@@ -403,7 +489,7 @@ static LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         hTheme = OpenThemeData(hdr_hwnd, L"Header");
         if (hTheme)
         {
-            GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->headerTextColor));
+            GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->hdr_text_color));
             CloseThemeData(hTheme);
         }
 
@@ -420,13 +506,11 @@ static LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
 
 inline void update_listview(HWND lv_hwnd, bool dark)
 {
-    _AllowDarkModeForWindow(lv_hwnd, dark);
-
     HWND hdr_hwnd = ListView_GetHeader(lv_hwnd);
     _AllowDarkModeForWindow(hdr_hwnd, dark);
 
     if (dark)
-        SetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(new SubclassInfo{}));
+        SetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(new ListViewContext{}));
     else
         RemoveWindowSubclass(lv_hwnd, listview_subclass_proc, 0);
 
@@ -455,6 +539,8 @@ inline void update_control(HWND hwnd, bool dark)
     GetClassName(hwnd, cls, std::size(cls));
     std::wstring class_name(cls);
 
+    _AllowDarkModeForWindow(hwnd, dark);
+
     // Don't touch the header, it's handled in InitListView.
     // FIXME: Can standalone header controls exist? If so, this will break them.
     if (class_name == WC_HEADER) return;
@@ -465,14 +551,31 @@ inline void update_control(HWND hwnd, bool dark)
         return;
     }
 
+    if (class_name == WC_TABCONTROL)
+    {
+        SetWindowTheme(hwnd, dark ? L"DarkMode_DarkTheme" : nullptr, nullptr);
+
+        // We have to owner-draw it :(
+        const auto style = GetWindowLongPtr(hwnd, GWL_STYLE);
+        if (dark)
+            SetWindowLongPtr(hwnd, GWL_STYLE, style | TCS_OWNERDRAWFIXED);
+        else
+            SetWindowLongPtr(hwnd, GWL_STYLE, style & ~TCS_OWNERDRAWFIXED);
+
+        if (dark)
+            SetWindowSubclass(hwnd, tabcontrol_subclass_proc, 0, 0);
+        else
+            RemoveWindowSubclass(hwnd, tabcontrol_subclass_proc, 0);
+
+        InvalidateRect(hwnd, nullptr, TRUE);
+        return;
+    }
+
     const std::unordered_map<std::wstring, std::wstring> theme_map = {
         {WC_EDIT, L"DarkMode_DarkTheme"},
-        {WC_TABCONTROL, L"DarkMode_DarkTheme"},
         {WC_COMBOBOX, L"DarkMode_DarkTheme"},
         {WC_BUTTON, L"DarkMode_Explorer"},
     };
-
-    _AllowDarkModeForWindow(hwnd, dark);
 
     if (dark)
     {
