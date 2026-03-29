@@ -536,7 +536,9 @@ inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         RemoveWindowSubclass(hwnd, dlg_subclass_proc, sId);
         break;
     case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSTATIC: {
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLOREDIT: {
         const auto dark = is_dark();
         if (!dark) break;
 
