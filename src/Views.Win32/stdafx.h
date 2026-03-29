@@ -49,6 +49,7 @@ extern "C"
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 #include <dcomp.h>
+#include <dwmapi.h>
 #include <shlobj_core.h>
 #include <xxh64.h>
 #include <strsafe.h>

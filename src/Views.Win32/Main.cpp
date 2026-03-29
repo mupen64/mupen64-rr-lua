@@ -740,8 +740,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         return TRUE;
     case WM_DESTROY:
-        Config::save();
         timeKillEvent(g_ui_timer);
+        Config::save();
+        LuaRenderer::stop();
         Gdiplus::GdiplusShutdown(gdi_plus_token);
         PostQuitMessage(0);
         break;
