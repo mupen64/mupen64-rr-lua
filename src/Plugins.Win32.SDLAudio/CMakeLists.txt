@@ -7,6 +7,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Plugins.Win32.SDLAudio MODULE
     "Config.hpp"
     "Main.cpp"
+    "Main.hpp"
+    "Main_Win32.cpp"
+    "Main_Win32.hpp"
     "SDLBackend.cpp"
     "SDLBackend.hpp"
 )

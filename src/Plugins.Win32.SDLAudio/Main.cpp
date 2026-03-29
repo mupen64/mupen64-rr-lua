@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Main.hpp"
 #include "Config.hpp"
 #include "IOUtils.h"
 #include "SDLBackend.hpp"
+
 #include "core_plugin.h"
 #include <CommonPCH.h>
-#include <DummyPluginStub.h>
+
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_init.h>
 #include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
+
 #include <exception>
 #include <format>
 #include <optional>
 #include <stdexcept>
-#include <utility>
-#include <winnt.h>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"SDL Audio", L"1.0.0")
 
 static std::optional<core_audio_info> g_audio_info{};
 static std::optional<SDLAudio::SDLBackend> g_backend{};
@@ -52,11 +52,6 @@ static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
     return vi_clock / (dacrate + 1);
 }
 
-BOOL __stdcall DllMain(HMODULE hmod, const DWORD reason, LPVOID)
-{
-    return 1;
-}
-
 EXPORT void CALL CloseDLL(void)
 {
     if (g_backend.has_value()) g_backend.reset();
@@ -76,14 +71,6 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     PluginInfo->type = plugin_audio;
     PluginInfo->ver = 0x0101;
 }
-EXPORT void CALL DllAbout(void *hParent)
-{
-    const auto *msg = PLUGIN_NAME L"\n"
-                                  L"Part of the Mupen64 project family."
-                                  L"\n\n"
-                                  L"https://github.com/mupen64/mupen64-rr-lua";
-    MessageBoxW((HWND)hParent, msg, L"About", 0x00000040L | 0x00000000L);
-}
 
 EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 {
@@ -91,8 +78,7 @@ EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 
     try
     {
-        if (!SDL_Init(SDL_INIT_NEEDED))
-            throw std::runtime_error(SDL_GetError());
+        if (!SDL_Init(SDL_INIT_NEEDED)) throw std::runtime_error(SDL_GetError());
         g_backend.emplace(SDLAudio::Config{}); // TODO: add config dialog
     }
     catch (std::exception &e)
