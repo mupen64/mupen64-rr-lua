@@ -157,6 +157,10 @@ struct TabControlContext
     // TODO: Implement hover highlights
 };
 
+struct StatusBarContext
+{
+};
+
 using fnRtlGetNtVersionNumbers = void(WINAPI *)(LPDWORD major, LPDWORD minor, LPDWORD build);
 using fnSetWindowCompositionAttribute = BOOL(WINAPI *)(HWND hWnd, WINDOWCOMPOSITIONATTRIBDATA *);
 // 1809 17763
@@ -541,6 +545,139 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
+inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
+                                                DWORD_PTR dwRefData)
+{
+    auto *ctx = reinterpret_cast<StatusBarContext *>(dwRefData);
+
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        delete ctx;
+        RemoveWindowSubclass(hwnd, statusbar_subclass_proc, sId);
+        break;
+    case WM_ERASEBKGND:
+        return TRUE;
+    case WM_PAINT: {
+        PAINTSTRUCT ps{};
+        HDC hdc = BeginPaint(hwnd, &ps);
+
+        RECT rc_client{};
+        GetClientRect(hwnd, &rc_client);
+
+        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
+        FillRect(hdc, &rc_client, bg_brush);
+
+        const int part_count = static_cast<int>(SendMessage(hwnd, SB_GETPARTS, 0, 0));
+
+        std::vector<int> right_edges(static_cast<size_t>(part_count));
+        SendMessage(hwnd, SB_GETPARTS, static_cast<WPARAM>(part_count), reinterpret_cast<LPARAM>(right_edges.data()));
+
+        int borders[3]{};
+        SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
+
+        HPEN divider_pen = CreatePen(PS_SOLID, 1, RGB(80, 80, 80));
+        HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, divider_pen));
+
+        HFONT h_font = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
+        HFONT h_old_font = static_cast<HFONT>(SelectObject(hdc, h_font));
+
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, text_color);
+
+        const COLORREF sep_color = RGB(60, 60, 60);
+        HPEN sep_pen = CreatePen(PS_SOLID, 1, sep_color);
+        HPEN tmp_pen = static_cast<HPEN>(SelectObject(hdc, sep_pen));
+        MoveToEx(hdc, rc_client.left, rc_client.top, nullptr);
+        LineTo(hdc, rc_client.right, rc_client.top);
+        SelectObject(hdc, tmp_pen);
+        DeleteObject(sep_pen);
+
+        for (int i = 0; i < part_count; ++i)
+        {
+            RECT rc_part{};
+            SendMessage(hwnd, SB_GETRECT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(&rc_part));
+
+            RECT rc_intersect{};
+            if (!IntersectRect(&rc_intersect, &ps.rcPaint, &rc_part)) continue;
+
+            FillRect(hdc, &rc_part, bg_brush);
+
+            const bool is_last_part = (i == part_count - 1);
+            if (!is_last_part)
+            {
+                SelectObject(hdc, divider_pen);
+                MoveToEx(hdc, rc_part.right - 1, rc_part.top + 2, nullptr);
+                LineTo(hdc, rc_part.right - 1, rc_part.bottom - 2);
+            }
+
+            HICON h_icon = reinterpret_cast<HICON>(SendMessage(hwnd, SB_GETICON, static_cast<WPARAM>(i), 0));
+
+            RECT rc_text = rc_part;
+            rc_text.left += borders[0];
+
+            if (h_icon)
+            {
+                const int icon_size = GetSystemMetrics(SM_CYSMICON);
+                const int icon_y = rc_part.top + (rc_part.bottom - rc_part.top - icon_size) / 2;
+                DrawIconEx(hdc, rc_text.left, icon_y, h_icon, icon_size, icon_size, 0, nullptr, DI_NORMAL);
+                rc_text.left += icon_size + borders[2];
+            }
+
+            const LRESULT text_info = SendMessage(hwnd, SB_GETTEXTLENGTH, static_cast<WPARAM>(i), 0);
+            const int text_len = LOWORD(text_info);
+
+            if (text_len > 0)
+            {
+                std::wstring text(static_cast<size_t>(text_len) + 1, L'\0');
+                SendMessage(hwnd, SB_GETTEXT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(text.data()));
+                text.resize(static_cast<size_t>(text_len));
+
+                rc_text.right -= borders[0];
+                DrawTextW(hdc, text.c_str(), static_cast<int>(text.size()), &rc_text,
+                          DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+            }
+        }
+
+        const auto bar_style = GetWindowLongPtr(hwnd, GWL_STYLE);
+        if (bar_style & SBARS_SIZEGRIP)
+        {
+            constexpr int DOT = 2;
+            constexpr int GAP = 2;
+            constexpr int ROWS = 3;
+            const COLORREF dot_color = RGB(120, 120, 120);
+            HBRUSH dot_brush = CreateSolidBrush(dot_color);
+
+            const int base_x = rc_client.right - 2;
+            const int base_y = rc_client.bottom - 2;
+
+            for (int row = 0; row < ROWS; ++row)
+            {
+                for (int col = 0; col <= row; ++col)
+                {
+                    const int x = base_x - col * (DOT + GAP) - DOT;
+                    const int y = base_y - row * (DOT + GAP) - DOT;
+                    RECT dot_rc = {x, y, x + DOT, y + DOT};
+                    FillRect(hdc, &dot_rc, dot_brush);
+                }
+            }
+
+            DeleteObject(dot_brush);
+        }
+
+        SelectObject(hdc, h_old_font);
+        SelectObject(hdc, old_pen);
+        DeleteObject(divider_pen);
+        EndPaint(hwnd, &ps);
+        return 0;
+    }
+
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
 inline void update_listview(HWND lv_hwnd, bool dark)
 {
     HWND hdr_hwnd = ListView_GetHeader(lv_hwnd);
@@ -640,6 +777,21 @@ inline void update_control(HWND hwnd, bool dark)
                 RemoveWindowSubclass(hwnd, groupbox_subclass_proc, 0);
             return;
         }
+    }
+
+    if (class_name == STATUSCLASSNAME)
+    {
+        if (dark)
+        {
+            SetWindowTheme(hwnd, L"", L"");
+            SetWindowSubclass(hwnd, statusbar_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(new StatusBarContext{}));
+        }
+        else
+        {
+            RemoveWindowSubclass(hwnd, statusbar_subclass_proc, 0);
+            SetWindowTheme(hwnd, nullptr, nullptr);
+        }
+        return;
     }
 
     const std::unordered_map<std::wstring, std::wstring> theme_map = {
