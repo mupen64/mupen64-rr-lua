@@ -233,7 +233,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     ReleaseDC(g_main_ctx.hwnd, gdi_dc);
 
     ctx->gdi_overlay_hwnd =
-        CreateWindowEx(WS_EX_LAYERED, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width,
+        CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width,
                        ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
     SetLayeredWindowAttributes(ctx->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
 
@@ -243,19 +243,11 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
     ctx->d2d_overlay_hwnd =
-        CreateWindowEx(WS_EX_LAYERED, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width,
+        CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0, ctx->dc_size.width,
                        ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
-    // Bring the windows to top so they are above the MGE compositor
-    if (IsWindow(ctx->gdi_overlay_hwnd))
-    {
-        BringWindowToTop(ctx->gdi_overlay_hwnd);
-    }
-
-    if (IsWindow(ctx->d2d_overlay_hwnd))
-    {
-        BringWindowToTop(ctx->d2d_overlay_hwnd);
-    }
+    SetWindowPos(ctx->gdi_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    SetWindowPos(ctx->d2d_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
     SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, env);
     SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, env);
