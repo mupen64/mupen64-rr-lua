@@ -300,7 +300,6 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
     {
         delete ctx->presenter;
         ctx->presenter = nullptr;
-        CoUninitialize();
     }
 
     if (ctx->gdi_back_dc)
@@ -325,14 +324,6 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
     }
 
     g_view_logger->trace("[Lua] Creating D2D renderer...");
-
-    auto hr = CoInitialize(nullptr);
-    if (hr != S_OK && hr != S_FALSE && hr != RPC_E_CHANGED_MODE)
-    {
-        DialogService::show_dialog(L"Failed to initialize COM.\r\nVerify that your system is up-to-date.", L"Lua",
-                                   fsvc_error);
-        return;
-    }
 
     DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(ctx->dw_factory),
                         reinterpret_cast<IUnknown **>(&ctx->dw_factory));
