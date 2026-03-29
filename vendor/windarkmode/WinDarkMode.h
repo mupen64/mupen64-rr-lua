@@ -359,7 +359,7 @@ inline void patch_scrollbar(bool dark)
     VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), prev_protect, &prev_protect);
 }
 
-static LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
+inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
                                                  DWORD_PTR dwRefData)
 {
     auto ctx = reinterpret_cast<TabControlContext *>(dwRefData);
@@ -440,7 +440,7 @@ static LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-static LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
+inline LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
                                                DWORD_PTR dwRefData)
 {
     auto info = reinterpret_cast<ListViewContext *>(dwRefData);
@@ -498,6 +498,73 @@ static LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         RedrawWindow(hwnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
         break;
     }
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
+                                               DWORD_PTR dwRefData)
+{
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, groupbox_subclass_proc, sId);
+        break;
+
+    case WM_PAINT: {
+        PAINTSTRUCT ps{};
+        HDC hdc = BeginPaint(hwnd, &ps);
+
+        RECT rc{};
+        GetClientRect(hwnd, &rc);
+
+        HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
+        HFONT hOldFont = static_cast<HFONT>(SelectObject(hdc, hFont));
+
+        TEXTMETRIC tm{};
+        GetTextMetrics(hdc, &tm);
+        const int text_y_offset = tm.tmHeight / 2;
+
+        wchar_t label[256]{};
+        GetWindowTextW(hwnd, label, static_cast<int>(std::size(label)));
+
+        const int text_padding = 4;
+        SIZE text_size{};
+        GetTextExtentPoint32W(hdc, label, static_cast<int>(wcslen(label)), &text_size);
+
+        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
+        FillRect(hdc, &rc, bg_brush);
+
+        RECT frame_rc = rc;
+        frame_rc.top += text_y_offset;
+
+        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(100, 100, 100));
+        HPEN hOldPen = static_cast<HPEN>(SelectObject(hdc, hPen));
+        HBRUSH hOldBrush = static_cast<HBRUSH>(SelectObject(hdc, GetStockObject(NULL_BRUSH)));
+        Rectangle(hdc, frame_rc.left, frame_rc.top, frame_rc.right, frame_rc.bottom);
+        SelectObject(hdc, hOldPen);
+        SelectObject(hdc, hOldBrush);
+        DeleteObject(hPen);
+
+        if (label[0])
+        {
+            const int text_x = rc.left + 9;
+            RECT clear_rc = {text_x - text_padding, rc.top, text_x + text_size.cx + text_padding, rc.top + tm.tmHeight};
+            FillRect(hdc, &clear_rc, bg_brush);
+
+            SetBkMode(hdc, TRANSPARENT);
+            SetTextColor(hdc, text_color);
+            RECT text_rc = {text_x, rc.top, text_x + text_size.cx, rc.top + tm.tmHeight};
+            DrawTextW(hdc, label, -1, &text_rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+        }
+
+        SelectObject(hdc, hOldFont);
+        EndPaint(hwnd, &ps);
+        return 0;
+    }
+
     default:
         break;
     }
@@ -569,6 +636,19 @@ inline void update_control(HWND hwnd, bool dark)
 
         InvalidateRect(hwnd, nullptr, TRUE);
         return;
+    }
+
+    if (class_name == WC_BUTTON)
+    {
+        const auto style = GetWindowLongPtr(hwnd, GWL_STYLE) & 0xFL;
+        if (style == BS_GROUPBOX)
+        {
+            if (dark)
+                SetWindowSubclass(hwnd, groupbox_subclass_proc, 0, 0);
+            else
+                RemoveWindowSubclass(hwnd, groupbox_subclass_proc, 0);
+            return;
+        }
     }
 
     const std::unordered_map<std::wstring, std::wstring> theme_map = {
