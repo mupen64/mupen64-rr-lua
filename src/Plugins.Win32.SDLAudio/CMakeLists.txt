@@ -5,12 +5,13 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Plugins.Win32.SDLAudio MODULE
-    "Config.hpp"
     "Main.cpp"
-    "Main.hpp"
     "Main_Win32.cpp"
-    "Main_Win32.hpp"
     "SDLBackend.cpp"
+    
+    "Config.hpp"
+    "Main.hpp"
+    "Main_Win32.hpp"
     "SDLBackend.hpp"
 )
 set_target_properties(Mupen64RR.Plugins.Win32.SDLAudio PROPERTIES
@@ -20,7 +21,7 @@ set_target_properties(Mupen64RR.Plugins.Win32.SDLAudio PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_link_libraries(Mupen64RR.Plugins.Win32.SDLAudio PRIVATE 
+target_link_libraries(Mupen64RR.Plugins.Win32.SDLAudio PRIVATE
     Mupen64RR.Plugins.Win32.Common
     SDL3::SDL3
 )
