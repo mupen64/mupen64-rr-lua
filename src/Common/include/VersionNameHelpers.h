@@ -9,13 +9,13 @@
 #ifdef _M_X64
 #define VERSION_NAME_HELPER_ARCH L" x64"
 #else
-#define VERSION_NAME_HELPER_ARCH L" "
+#define VERSION_NAME_HELPER_ARCH L""
 #endif
 
 #ifdef _DEBUG
 #define VERSION_NAME_HELPER_TARGET L" Debug"
 #else
-#define VERSION_NAME_HELPER_TARGET L" "
+#define VERSION_NAME_HELPER_TARGET L""
 #endif
 
 #define VERSION_NAME_HELPER_GEN_NAME(base_name, version)                                                               \
