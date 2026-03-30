@@ -1116,7 +1116,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
-    const auto hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    const auto hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     RT_ASSERT(SUCCEEDED(hr), L"Failed to initialize COM.");
 
     LuaManager::init();
