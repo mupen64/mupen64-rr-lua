@@ -743,6 +743,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         Config::save();
         timeKillEvent(g_ui_timer);
         Gdiplus::GdiplusShutdown(gdi_plus_token);
+        CoUninitialize();
         PostQuitMessage(0);
         break;
     case WM_CLOSE:
