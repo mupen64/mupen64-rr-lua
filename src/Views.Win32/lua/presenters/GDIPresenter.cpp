@@ -61,6 +61,11 @@ D2D1_SIZE_U GDIPresenter::size()
     return m_size;
 }
 
+void GDIPresenter::resize(D2D1_SIZE_U size)
+{
+    
+}
+
 void GDIPresenter::begin_present()
 {
     m_d2d_render_target->BeginDraw();
