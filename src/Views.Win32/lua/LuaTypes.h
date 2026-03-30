@@ -60,9 +60,7 @@ struct t_lua_rendering_context
     bool ignore_create_renderer{};
 
     std::optional<float> target_fps{};
-
-    MMRESULT d2d_timer{};
-    MMRESULT gdi_timer{};
+    std::chrono::steady_clock::time_point last_render_time{};
 
     HDC loadscreen_dc{};
     HBITMAP loadscreen_bmp{};

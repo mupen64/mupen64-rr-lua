@@ -290,34 +290,33 @@ void ai_len_changed()
     CaptureManager::ai_len_changed();
 }
 
-void update_titlebar()
+static std::wstring get_titlebar_text()
+{
+    auto text = get_mupen_name();
+
+    if (g_emu_starting) text += L" - Starting...";
+
+    if (g_main_ctx.core_ctx->vr_get_launched())
+        text += std::format(
+            L" - {}", IOUtils::to_wide_string(reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+
+    if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
+    {
+        auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
+        text += std::format(L" - {}", vcr_filename.c_str());
+    }
+
+    if (CaptureManager::is_capturing())
+        text += std::format(L" - {}", CaptureManager::get_current_path().filename().wstring());
+
+    return text;
+}
+
+static void update_titlebar()
 {
     ThreadPool::submit_task([] {
-        std::wstring text = get_mupen_name();
-
-        if (g_emu_starting)
-        {
-            text += L" - Starting...";
-        }
-
-        if (g_main_ctx.core_ctx->vr_get_launched())
-        {
-            text += std::format(L" - {}", IOUtils::to_wide_string(
-                                              reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
-        }
-
-        if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
-        {
-            auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
-            text += std::format(L" - {}", vcr_filename.c_str());
-        }
-
-        if (CaptureManager::is_capturing())
-        {
-            text += std::format(L" - {}", CaptureManager::get_current_path().filename().wstring());
-        }
-
-        g_main_ctx.dispatcher->invoke([=] { SetWindowText(g_main_ctx.hwnd, text.c_str()); });
+        const auto text = get_titlebar_text();
+        g_main_ctx.dispatcher->invoke([&] { SetWindowText(g_main_ctx.hwnd, text.c_str()); });
     });
 }
 
@@ -747,9 +746,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         return TRUE;
     case WM_DESTROY:
-        Config::save();
         timeKillEvent(g_ui_timer);
+        Config::save();
+        LuaRenderer::stop();
         Gdiplus::GdiplusShutdown(gdi_plus_token);
+        CoUninitialize();
         PostQuitMessage(0);
         break;
     case WM_CLOSE:
@@ -1123,7 +1124,11 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
+    const auto hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    RT_ASSERT(SUCCEEDED(hr), L"Failed to initialize COM.");
+
     WinDarkMode::init();
+  
     LuaManager::init();
     CrashManager::init();
     MGECompositor::init();
@@ -1149,7 +1154,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y,
                         g_config.window_width, g_config.window_height);
 
-    CreateWindow(WND_CLASS, get_mupen_name().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x, g_config.window_y,
+    CreateWindow(WND_CLASS, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x, g_config.window_y,
                  g_config.window_width, g_config.window_height, NULL, NULL, g_main_ctx.hinst, NULL);
     ShowWindow(g_main_ctx.hwnd, nShowCmd);
 

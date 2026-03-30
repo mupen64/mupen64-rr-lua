@@ -30,6 +30,8 @@ static std::wstring get_default_extension(const std::wstring &filter)
 
 std::filesystem::path FilePicker::show_open_dialog(const std::wstring &id, HWND hwnd, const std::wstring &filter)
 {
+    RT_ASSERT(is_on_gui_thread(), L"FilePicker::show_open_dialog called from non-GUI thread");
+
     std::filesystem::path restored_path =
         g_config.persistent_folder_paths.contains(id) ? g_config.persistent_folder_paths[id] : get_desktop_path();
 
@@ -64,6 +66,8 @@ std::filesystem::path FilePicker::show_open_dialog(const std::wstring &id, HWND 
 
 std::filesystem::path FilePicker::show_save_dialog(const std::wstring &id, HWND hwnd, const std::wstring &filter)
 {
+    RT_ASSERT(is_on_gui_thread(), L"FilePicker::show_save_dialog called from non-GUI thread");
+
     std::filesystem::path restored_path =
         g_config.persistent_folder_paths.contains(id) ? g_config.persistent_folder_paths[id] : get_desktop_path();
 
@@ -100,10 +104,11 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring &id, HWND 
 
 std::filesystem::path FilePicker::show_folder_dialog(const std::wstring &id, HWND hwnd)
 {
+    RT_ASSERT(is_on_gui_thread(), L"FilePicker::show_folder_dialog called from non-GUI thread");
+
     std::filesystem::path restored_path =
         g_config.persistent_folder_paths.contains(id) ? g_config.persistent_folder_paths[id] : get_desktop_path();
 
-    COMInitializer com_initializer;
     std::wstring final_path;
     IFileDialog *pfd;
 

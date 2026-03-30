@@ -13,6 +13,11 @@ constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
 void init();
 
 /**
+ * \brief Stops the subsystem.
+ */
+void stop();
+
+/**
  * \brief Creates a new rendering context with the default values.
  */
 t_lua_rendering_context default_rendering_context();

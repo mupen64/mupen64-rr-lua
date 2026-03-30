@@ -1,8 +1,8 @@
-// MGECompositor_D3D11.cpp
-// Replace your GDI-based compositor with this D3D11-backed implementation.
-//
-// Build: link d3d11.lib dxgi.lib d3dcompiler.lib
-// (Add appropriate include/library paths if necessary.)
+/*
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 
 #include "stdafx.h"
 #include <components/MGECompositor.h>

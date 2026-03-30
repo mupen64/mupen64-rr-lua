@@ -335,35 +335,6 @@ static void set_listview_selection(const HWND hwnd, const std::vector<size_t> in
 }
 
 /**
- * \brief Initializes COM within the object's scope for the current thread
- */
-class COMInitializer
-{
-  public:
-    COMInitializer()
-    {
-        auto hr = CoInitialize(nullptr);
-        m_init = !(hr != S_OK && hr != S_FALSE && hr != RPC_E_CHANGED_MODE);
-
-        if (!m_init)
-        {
-            g_view_logger->info("[COMInitializer] Failed to initialize COM");
-        }
-    }
-
-    ~COMInitializer()
-    {
-        if (m_init)
-        {
-            CoUninitialize();
-        }
-    }
-
-  private:
-    bool m_init;
-};
-
-/**
  * \brief Gets all files under all subdirectory of a specific directory, including the directory's shallow files
  * \param directory The path joiner-terminated directory
  */
