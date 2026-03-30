@@ -117,8 +117,6 @@ static void resize(uint32_t width, uint32_t height)
 {
     for (const auto &lua : g_lua_environments)
     {
-        g_view_logger->info("Resizing to {} {}", lua->rctx.dc_size.width, lua->rctx.dc_size.height);
-
         if (lua->rctx.dc_size.width == width && lua->rctx.dc_size.height == height) continue;
 
         lua->rctx.dc_size = {width, height};
