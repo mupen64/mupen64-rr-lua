@@ -61,7 +61,7 @@ static void draw_lua()
             bf.BlendOp = AC_SRC_OVER;
             bf.SourceConstantAlpha = 255;
             bf.AlphaFormat = 0;
-            UpdateLayeredWindow(lua->rctx.gdi_overlay_hwnd, nullptr, &src_pt, &size, lua->rctx.gdi_back_dc, &src_pt,
+            UpdateLayeredWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, &size, lua->rctx.gdi_back_dc, &src_pt,
                                 LuaRenderer::LUA_GDI_COLOR_MASK, &bf, ULW_COLORKEY);
         }
 

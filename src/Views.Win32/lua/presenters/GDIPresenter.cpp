@@ -94,7 +94,7 @@ void GDIPresenter::end_present()
     bf.BlendOp = AC_SRC_OVER;
     bf.SourceConstantAlpha = 255;
     bf.AlphaFormat = 0;
-    UpdateLayeredWindow(m_hwnd, nullptr, &src_pt, &size, m_gdi_back_dc, &src_pt, m_mask_color, &bf,
+    UpdateLayeredWindow(m_hwnd, nullptr, nullptr, &size, m_gdi_back_dc, &src_pt, m_mask_color, &bf,
                         ULW_COLORKEY);
 }
 
