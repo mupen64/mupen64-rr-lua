@@ -129,6 +129,7 @@ static void resize(uint32_t width, uint32_t height)
         ReleaseDC(g_main_ctx.hwnd, gdi_dc);
         SelectObject(lua->rctx.gdi_back_dc, nullptr);
         DeleteObject(lua->rctx.gdi_bmp);
+        DeleteObject(lua->rctx.gdi_back_dc);
         lua->rctx.gdi_back_dc = new_back_dc;
         lua->rctx.gdi_bmp = new_bmp;
 
