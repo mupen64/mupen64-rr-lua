@@ -23,12 +23,6 @@ static void draw_lua()
 {
     const auto now = std::chrono::steady_clock::now();
 
-    // TODO: Maybe UpdateLayeredWindow here directly?
-    for (const auto &lua : g_lua_environments)
-    {
-        RedrawWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE);
-    }
-
     std::vector<t_lua_environment *> to_destroy;
     for (const auto &lua : g_lua_environments)
     {
