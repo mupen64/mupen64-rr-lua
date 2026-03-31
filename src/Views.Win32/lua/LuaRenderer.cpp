@@ -115,6 +115,9 @@ static void destroy_loadscreen(t_lua_rendering_context *ctx)
 
 static void resize(uint32_t width, uint32_t height)
 {
+    width = std::max(width, 1u);
+    height = std::max(height, 1u);
+
     for (const auto &lua : g_lua_environments)
     {
         if (lua->rctx.dc_size.width == width && lua->rctx.dc_size.height == height) continue;
