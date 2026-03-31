@@ -10,9 +10,7 @@
 #include "LuaRenderer.h"
 #include <Messenger.h>
 
-const auto D2D_OVERLAY_CLASS = L"lua_d2d_overlay";
-const auto GDI_OVERLAY_CLASS = L"lua_gdi_overlay";
-const auto CTX_PROP = L"lua_ctx";
+const auto OVERLAY_CLASS = L"lua_overlay";
 
 static bool d2d_drawing = false;
 static HBRUSH g_alpha_mask_brush;
@@ -42,17 +40,26 @@ static void draw_lua()
 
         if (time_since_last_render < target_frame_time) continue;
 
-        bool success;
+        bool success = true;
+
         if (!lua->rctx.presenter)
         {
             // NOTE: We have to invoke the callback because we're waiting for the script to issue a d2d call
-            success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
+            success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
         }
         else
         {
             lua->rctx.presenter->begin_present();
-            success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
+            success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
             lua->rctx.presenter->end_present();
+        }
+
+        success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);
+
+        if (lua->rctx.has_gdi_content)
+        {
+            BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height,
+                   lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
         }
 
         lua->rctx.last_render_time = now;
@@ -148,53 +155,10 @@ static void resize(uint32_t width, uint32_t height)
     }
 }
 
-static LRESULT CALLBACK d2d_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    RT_ASSERT(is_on_gui_thread(), L"LuaRenderer::d2d_overlay_wndproc called from non-GUI thread");
-
-    switch (msg)
-    {
-    case WM_NCDESTROY:
-        RemoveProp(hwnd, CTX_PROP);
-        break;
-    default:
-        break;
-    }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
-}
-
-static LRESULT CALLBACK gdi_overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT CALLBACK overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
-    case WM_PAINT: {
-        auto lua = (t_lua_environment *)GetProp(hwnd, CTX_PROP);
-
-        if (!lua)
-        {
-            break;
-        }
-
-        const bool success = LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);
-
-        if (lua->rctx.has_gdi_content)
-        {
-            BitBlt(lua->rctx.gdi_front_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height,
-                   lua->rctx.gdi_back_dc, 0, 0, SRCCOPY);
-        }
-
-        ValidateRect(hwnd, nullptr);
-
-        if (!success)
-        {
-            LuaManager::destroy_environment(lua);
-        }
-
-        return 0;
-    }
-    case WM_NCDESTROY:
-        RemoveProp(hwnd, CTX_PROP);
-        break;
     default:
         break;
     }
@@ -205,14 +169,10 @@ void LuaRenderer::init()
 {
     WNDCLASS wndclass = {0};
     wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-    wndclass.lpfnWndProc = (WNDPROC)d2d_overlay_wndproc;
+    wndclass.lpfnWndProc = (WNDPROC)overlay_wndproc;
     wndclass.hInstance = g_main_ctx.hinst;
     wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wndclass.lpszClassName = D2D_OVERLAY_CLASS;
-    RegisterClass(&wndclass);
-
-    wndclass.lpfnWndProc = (WNDPROC)gdi_overlay_wndproc;
-    wndclass.lpszClassName = GDI_OVERLAY_CLASS;
+    wndclass.lpszClassName = OVERLAY_CLASS;
     RegisterClass(&wndclass);
 
     g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
@@ -286,7 +246,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     ReleaseDC(g_main_ctx.hwnd, gdi_dc);
 
     ctx->gdi_overlay_hwnd =
-        CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT, GDI_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0,
+        CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT, OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0,
                        ctx->dc_size.width, ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
     SetLayeredWindowAttributes(ctx->gdi_overlay_hwnd, LUA_GDI_COLOR_MASK, 0, LWA_COLORKEY);
 
@@ -296,14 +256,11 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     FillRect(ctx->gdi_back_dc, &window_rect, g_alpha_mask_brush);
 
     ctx->d2d_overlay_hwnd =
-        CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT, D2D_OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0,
+        CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT, OVERLAY_CLASS, L"", WS_CHILD | WS_VISIBLE, 0, 0,
                        ctx->dc_size.width, ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
     SetWindowPos(ctx->gdi_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     SetWindowPos(ctx->d2d_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-    SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, env);
-    SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, env);
 
     if (!g_config.lazy_renderer_init)
     {
@@ -318,8 +275,6 @@ void LuaRenderer::pre_destroy_renderer(t_lua_rendering_context *ctx)
 {
     g_view_logger->info("Pre-destroying Lua renderer...");
     ctx->ignore_create_renderer = true;
-    SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, nullptr);
-    SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, nullptr);
 }
 
 void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
@@ -343,7 +298,6 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
 
     if (IsWindow(ctx->d2d_overlay_hwnd))
     {
-        SetProp(ctx->d2d_overlay_hwnd, CTX_PROP, nullptr);
         DestroyWindow(ctx->d2d_overlay_hwnd);
     }
 
@@ -355,8 +309,6 @@ void LuaRenderer::destroy_renderer(t_lua_rendering_context *ctx)
 
     if (ctx->gdi_back_dc)
     {
-        SetProp(ctx->gdi_overlay_hwnd, CTX_PROP, nullptr);
-
         ReleaseDC(ctx->gdi_overlay_hwnd, ctx->gdi_front_dc);
         DestroyWindow(ctx->gdi_overlay_hwnd);
         SelectObject(ctx->gdi_back_dc, nullptr);
