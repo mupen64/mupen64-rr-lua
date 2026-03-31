@@ -43,7 +43,7 @@ class Presenter
     virtual D2D1_SIZE_U size() = 0;
 
     /**
-     * \brief Resizes the presenter. Existing graphics may be clipped or distorted until the next present.
+     * \brief Resizes the presenter.
      * \param size The new size.
      */
     virtual void resize(D2D1_SIZE_U size) = 0;
