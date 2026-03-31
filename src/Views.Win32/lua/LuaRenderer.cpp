@@ -337,13 +337,9 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
                         reinterpret_cast<IUnknown **>(&ctx->dw_factory));
 
     if (g_config.presenter_type != (int32_t)t_config::PresenterType::GDI)
-    {
         ctx->presenter = new DCompPresenter();
-    }
     else
-    {
-        ctx->presenter = new GDIPresenter();
-    }
+        ctx->presenter = new GDIPresenter(LUA_GDI_COLOR_MASK);
 
     if (!ctx->presenter->init(ctx->d2d_overlay_hwnd))
     {

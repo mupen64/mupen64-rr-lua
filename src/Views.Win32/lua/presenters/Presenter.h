@@ -49,13 +49,6 @@ class Presenter
     virtual void resize(D2D1_SIZE_U size) = 0;
 
     /**
-     * \brief Adjusts the provided render target clear color to fit the presenter's clear color
-     * \param color The color to adjust
-     * \return The nearest clear color which fits the presenter
-     */
-    virtual D2D1::ColorF adjust_clear_color(const D2D1::ColorF color) const { return color; }
-
-    /**
      * Begins graphics presentation. Called before any painting happens.
      */
     virtual void begin_present() = 0;

@@ -5,7 +5,6 @@
  */
 
 #include "stdafx.h"
-#include <lua/LuaRenderer.h>
 #include <lua/presenters/GDIPresenter.h>
 
 GDIPresenter::~GDIPresenter()
@@ -71,7 +70,9 @@ void GDIPresenter::resize(D2D1_SIZE_U size)
     SelectObject(m_gdi_back_dc, m_gdi_bmp);
 
     RECT rect = {0, 0, (LONG)size.width, (LONG)size.height};
-    FillRect(m_gdi_back_dc, &rect, LuaRenderer::alpha_mask_brush());
+    const auto alpha_mask_brush = CreateSolidBrush(m_mask_color);
+    FillRect(m_gdi_back_dc, &rect, alpha_mask_brush);
+    DeleteObject(alpha_mask_brush);
 
     m_d2d_render_target->BindDC(m_gdi_back_dc, &rect);
 }
@@ -93,17 +94,12 @@ void GDIPresenter::end_present()
     bf.BlendOp = AC_SRC_OVER;
     bf.SourceConstantAlpha = 255;
     bf.AlphaFormat = 0;
-    UpdateLayeredWindow(m_hwnd, nullptr, &src_pt, &size, m_gdi_back_dc, &src_pt, LuaRenderer::LUA_GDI_COLOR_MASK, &bf,
+    UpdateLayeredWindow(m_hwnd, nullptr, &src_pt, &size, m_gdi_back_dc, &src_pt, m_mask_color, &bf,
                         ULW_COLORKEY);
 }
 
 void GDIPresenter::blit(HDC hdc, RECT rect)
 {
     TransparentBlt(hdc, 0, 0, m_size.width, m_size.height, m_gdi_back_dc, 0, 0, m_size.width, m_size.height,
-                   LuaRenderer::LUA_GDI_COLOR_MASK);
-}
-
-D2D1::ColorF GDIPresenter::adjust_clear_color(const D2D1::ColorF color) const
-{
-    return D2D1::ColorF(LuaRenderer::LUA_GDI_COLOR_MASK);
+                   m_mask_color);
 }

@@ -11,6 +11,12 @@
 class GDIPresenter : public Presenter
 {
   public:
+    /**
+     * Constructs a GDIPresenter with the given mask color.
+     *
+     * \param mask_color The color to use as the alpha mask.
+     */
+    GDIPresenter(COLORREF mask_color) : m_mask_color(mask_color) {};
     ~GDIPresenter() override;
     bool init(HWND hwnd) override;
     ID2D1RenderTarget *dc() const override;
@@ -19,7 +25,6 @@ class GDIPresenter : public Presenter
     void begin_present() override;
     void end_present() override;
     void blit(HDC hdc, RECT rect) override;
-    D2D1::ColorF adjust_clear_color(D2D1::ColorF color) const override;
 
   private:
     D2D1_SIZE_U m_size{};
@@ -28,4 +33,5 @@ class GDIPresenter : public Presenter
     ID2D1DCRenderTarget *m_d2d_render_target = nullptr;
     HDC m_gdi_back_dc = nullptr;
     HBITMAP m_gdi_bmp = nullptr;
+    COLORREF m_mask_color{};
 };
