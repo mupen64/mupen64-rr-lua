@@ -63,6 +63,8 @@ D2D1_SIZE_U GDIPresenter::size()
 
 void GDIPresenter::resize(D2D1_SIZE_U size)
 {
+    if (size == m_size) return;
+
     m_size = size;
 
     SelectObject(m_gdi_back_dc, nullptr);

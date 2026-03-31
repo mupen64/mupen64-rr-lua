@@ -60,6 +60,8 @@ D2D1_SIZE_U DCompPresenter::size()
 
 void DCompPresenter::resize(D2D1_SIZE_U size)
 {
+    if (size == m_size) return;
+
     m_size = size;
 
     // 1. Release size-dependent resources that must be recreated after a swapchain resize
