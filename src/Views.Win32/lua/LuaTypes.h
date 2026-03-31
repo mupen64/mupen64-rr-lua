@@ -25,8 +25,6 @@ struct t_lua_rendering_context
 
     bool has_gdi_content{};
 
-    HDC gdi_front_dc{};
-
     // The DC for GDI/GDI+ drawings
     // This DC is special, since commands can be issued to it anytime and it's never cleared
     HDC gdi_back_dc{};
