@@ -88,10 +88,6 @@ static int ResizeWindow(lua_State *L)
     SetWindowPos(g_main_ctx.hwnd, 0, 0, 0, w + (wndRect.right - clientRect.right),
                  h + (wndRect.bottom - clientRect.bottom), SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
 
-    // we need to recreate the renderer to accomodate for size changes (this cant be done in-place)
-    LuaRenderer::destroy_renderer(&lua->rctx);
-    LuaRenderer::create_renderer(&lua->rctx, lua);
-
     return 0;
 }
 

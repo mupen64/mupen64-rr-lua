@@ -61,6 +61,26 @@ D2D1_SIZE_U GDIPresenter::size()
     return m_size;
 }
 
+void GDIPresenter::resize(D2D1_SIZE_U size)
+{
+    if (size == m_size) return;
+
+    m_size = size;
+
+    SelectObject(m_gdi_back_dc, nullptr);
+    DeleteObject(m_gdi_bmp);
+
+    auto gdi_dc = GetDC(m_hwnd);
+    m_gdi_bmp = CreateCompatibleBitmap(gdi_dc, size.width, size.height);
+    ReleaseDC(m_hwnd, gdi_dc);
+    SelectObject(m_gdi_back_dc, m_gdi_bmp);
+
+    RECT rect = {0, 0, (LONG)size.width, (LONG)size.height};
+    FillRect(m_gdi_back_dc, &rect, LuaRenderer::alpha_mask_brush());
+
+    m_d2d_render_target->BindDC(m_gdi_back_dc, &rect);
+}
+
 void GDIPresenter::begin_present()
 {
     m_d2d_render_target->BeginDraw();

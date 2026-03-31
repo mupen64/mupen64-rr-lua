@@ -30,6 +30,8 @@ DCompPresenter::~DCompPresenter()
 
 bool DCompPresenter::init(HWND hwnd)
 {
+    m_hwnd = hwnd;
+
     RECT rect{};
     GetClientRect(hwnd, &rect);
     m_size = {(UINT32)rect.right - rect.left, (UINT32)rect.bottom - rect.top};
@@ -51,6 +53,56 @@ ID2D1RenderTarget *DCompPresenter::dc() const
     return m_cmp.d2d_dc;
 }
 
+D2D1_SIZE_U DCompPresenter::size()
+{
+    return m_size;
+}
+
+void DCompPresenter::resize(D2D1_SIZE_U size)
+{
+    if (size == m_size) return;
+
+    m_size = size;
+
+    // 1. Release size-dependent resources that must be recreated after a swapchain resize
+    m_cmp.d2d_dc->SetTarget(nullptr);
+    m_cmp.d2d1_bitmap->Release();
+    m_cmp.dxgi_surface->Release();
+    m_cmp.d3d11_front_buffer->Release();
+    m_cmp.d3d11_surface->Release();
+    m_cmp.d3d11_gdi_tex->Release();
+
+    // 2. Resize the swapchain buffers
+    m_cmp.dxgi_swapchain->ResizeBuffers(2, size.width, size.height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+
+    // 3. Recreate the GDI-compatible texture at the new size
+    D3D11_TEXTURE2D_DESC desc{};
+    desc.Width = size.width;
+    desc.Height = size.height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc = {.Count = 1, .Quality = 0};
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+
+    m_cmp.d3d11_device->CreateTexture2D(&desc, nullptr, &m_cmp.d3d11_gdi_tex);
+    m_cmp.d3d11_gdi_tex->QueryInterface(&m_cmp.dxgi_surface);
+
+    // 4. Recreate the D2D bitmap target from the new DXGI surface
+    const UINT dpi = GetDpiForWindow(m_hwnd);
+    const D2D1_BITMAP_PROPERTIES1 props =
+        D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi, dpi);
+
+    m_cmp.d2d_dc->CreateBitmapFromDxgiSurface(m_cmp.dxgi_surface, props, &m_cmp.d2d1_bitmap);
+    m_cmp.d2d_dc->SetTarget(m_cmp.d2d1_bitmap);
+
+    // 5. Re-acquire the front buffer and surface references from the resized swapchain
+    m_cmp.dxgi_swapchain->GetBuffer(1, IID_PPV_ARGS(&m_cmp.d3d11_front_buffer));
+    m_cmp.dxgi_surface->QueryInterface(&m_cmp.d3d11_surface);
+}
 void DCompPresenter::begin_present()
 {
     m_cmp.d2d_dc->BeginDraw();
@@ -93,9 +145,4 @@ void DCompPresenter::blit(HDC hdc, RECT rect)
     // 3. Cleanup
     dxgi_surface->ReleaseDC(nullptr);
     dxgi_surface->Release();
-}
-
-D2D1_SIZE_U DCompPresenter::size()
-{
-    return m_size;
 }

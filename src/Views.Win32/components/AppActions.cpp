@@ -170,7 +170,7 @@ static void refresh_rombrowser()
 
 static void exit_app()
 {
-    DestroyWindow(g_main_ctx.hwnd);
+    PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
 }
 
 #pragma endregion

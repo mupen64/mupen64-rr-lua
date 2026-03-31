@@ -732,8 +732,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_main_ctx.hwnd = hwnd;
         break;
     case WM_CREATE:
-        SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
-
         ActionMenu::init();
 
         ActionMenu::add_managed_menu(hwnd);
@@ -746,27 +744,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
         return TRUE;
     case WM_DESTROY:
+        g_main_ctx.exiting = true;
+        LuaDialog::close_all();
+
         timeKillEvent(g_ui_timer);
         Config::save();
-        LuaRenderer::stop();
         Gdiplus::GdiplusShutdown(gdi_plus_token);
         CoUninitialize();
         PostQuitMessage(0);
         break;
+    case WM_PREDESTROY:
+        // This needs the UI thread to still be responsive.
+        LuaRenderer::stop();
+        DestroyWindow(hwnd);
+        break;
     case WM_CLOSE:
-        if (confirm_user_exit())
-        {
-            g_main_ctx.exiting = true;
+        if (!confirm_user_exit()) return 0;
 
-            LuaDialog::close_all();
+        ThreadPool::submit_task([=] {
+            g_main_ctx.core_ctx->vr_close_rom(true);
 
-            std::thread([] {
-                g_main_ctx.core_ctx->vr_close_rom(true);
-                g_main_ctx.dispatcher->invoke([] { DestroyWindow(g_main_ctx.hwnd); });
-            }).detach();
-            break;
-        }
-        return 0;
+            PostMessage(hwnd, WM_PREDESTROY, 0, 0);
+        });
+        break;
     case WM_WINDOWPOSCHANGING: // allow gfx plugin to set arbitrary size
         return 0;
     case WM_GETMINMAXINFO: {
@@ -1154,7 +1154,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y,
                         g_config.window_width, g_config.window_height);
 
-    CreateWindow(WND_CLASS, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x, g_config.window_y,
+    CreateWindowEx(WS_EX_ACCEPTFILES, WND_CLASS, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x, g_config.window_y,
                  g_config.window_width, g_config.window_height, NULL, NULL, g_main_ctx.hinst, NULL);
     ShowWindow(g_main_ctx.hwnd, nShowCmd);
 
