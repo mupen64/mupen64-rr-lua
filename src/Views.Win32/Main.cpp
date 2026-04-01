@@ -1077,10 +1077,19 @@ static void set_error_mode()
     SetErrorMode(prev_mode | SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 }
 
+static bool is_running_under_wine()
+{
+    HMODULE ntdll = GetModuleHandle(L"ntdll.dll");
+    if (!ntdll) return false;
+
+    return GetProcAddress(ntdll, "wine_get_version") != nullptr;
+}
+
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
 {
     enable_mitigations();
     set_error_mode();
+    g_main_ctx.wine = is_running_under_wine();
 
 #ifdef _DEBUG
     open_console();
@@ -1146,8 +1155,9 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_view_logger->info("[View] Restoring window @ ({}|{}) {}x{}...", g_config.window_x, g_config.window_y,
                         g_config.window_width, g_config.window_height);
 
-    CreateWindowEx(WS_EX_ACCEPTFILES, WND_CLASS, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x, g_config.window_y,
-                 g_config.window_width, g_config.window_height, NULL, NULL, g_main_ctx.hinst, NULL);
+    CreateWindowEx(WS_EX_ACCEPTFILES, WND_CLASS, get_titlebar_text().c_str(), WS_OVERLAPPEDWINDOW, g_config.window_x,
+                   g_config.window_y, g_config.window_width, g_config.window_height, NULL, NULL, g_main_ctx.hinst,
+                   NULL);
     ShowWindow(g_main_ctx.hwnd, nShowCmd);
 
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, on_emu_launched_changed);
