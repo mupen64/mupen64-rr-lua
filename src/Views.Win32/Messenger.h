@@ -173,11 +173,6 @@ enum class Message
      */
     FastForwardNeedsUpdate,
 
-    /**
-     * \brief The CPU resumed state has changed
-     */
-    DebuggerResumedChanged,
-
     ActionRegistryChanged,
 
     ActionDisplayNameChanged,

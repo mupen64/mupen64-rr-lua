@@ -25,6 +25,23 @@ struct DebuggerState
 
 static DebuggerState s_dbg{};
 
+void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
+{
+    auto it = s_dbg.breakpoints.find(state.address);
+    if (it == s_dbg.breakpoints.end()) goto end;
+
+    s_dbg.advancing = false;
+    s_dbg.resumed = false;
+
+    for (auto &bp : it->second)
+    {
+        bp.callback(state);
+    }
+
+end:
+    while (!s_dbg.resumed) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+
 CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallback &callback)
 {
     CoreBreakpointId id = s_dbg.next_breakpoint_id++;
@@ -54,29 +71,10 @@ void dbg_set_resumed(bool value)
 {
     if (value) s_dbg.advancing = false;
     s_dbg.resumed = value;
-    g_core->callbacks.debugger_resumed_changed(s_dbg.resumed);
 }
 
 void dbg_step()
 {
     s_dbg.advancing = true;
     s_dbg.resumed = true;
-}
-
-void dbg_on_late_cycle(const core_dbg_cpu_state &state)
-{
-    s_dbg.cpu_state = state;
-
-    if (s_dbg.advancing)
-    {
-        s_dbg.advancing = false;
-        s_dbg.resumed = false;
-
-        g_core->callbacks.debugger_resumed_changed(s_dbg.resumed);
-    }
-
-    while (!s_dbg.resumed)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
 }

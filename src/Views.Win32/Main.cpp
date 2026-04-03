@@ -942,12 +942,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.dacrate_changed = [](core_system_type value) {
         Messenger::broadcast(Messenger::Message::DacrateChanged, value);
     };
-    g_main_ctx.core.callbacks.debugger_resumed_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::DebuggerResumedChanged, value);
-    };
-    g_main_ctx.core.callbacks.instruction = [](const core_dbg_cpu_state &state) {
- 
-    };
+
     g_main_ctx.core.callbacks.lag_limit_exceeded = []() {
         Messenger::broadcast(Messenger::Message::LagLimitExceeded, nullptr);
     };

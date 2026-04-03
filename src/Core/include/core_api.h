@@ -51,8 +51,6 @@ extern "C"
         std::function<void(size_t)> seek_savestate_changed = [](size_t) {};
         std::function<void(bool)> readonly_changed = [](bool) {};
         std::function<void(core_system_type)> dacrate_changed = [](core_system_type) {};
-        std::function<void(bool)> debugger_resumed_changed = [](const auto &...) {};
-        std::function<void(const core_dbg_cpu_state &state)> instruction = [](const auto &...) {};
         std::function<void()> lag_limit_exceeded = [] {};
         std::function<void()> seek_status_changed = [] {};
     };
