@@ -8,6 +8,7 @@
 
 emu = {}
 memory = {}
+debugger = {}
 wgui = {}
 d2d = {}
 input = {}
@@ -399,6 +400,10 @@ Mupen = {
 ---@field pressed boolean? Whether the key was pressed or released, if the event is a key event.
 ---@field text string? The typed character, if the event is a char event and the key corresponds to a character.
 ---@field repeat boolean Whether the event is a repeat event (i.e. the key is being held down and this event is firing multiple times).
+
+---@class CPUState
+---@field opcode integer
+---@field addr integer
 
 -- Global Functions
 --#region
@@ -820,6 +825,37 @@ function memory.recompile(addr) end
 
 ---Queues up a recompilation of all blocks.
 function memory.recompilenextall() end
+
+--#endregion
+
+
+-- debugger functions
+--#region
+
+---@alias BreakpointCallback fun(state: CPUState): nil
+
+---Places a breakpoint at the specified address.
+---The emulated processor will pause when the processor reaches this address.
+---To continue execution, it must be resumed manually using [`debugger.resume`](lua://debugger.resume) or [`debugger.step`](lua://debugger.step).
+---@param address integer The address to place the breakpoint at.
+---@param callback BreakpointCallback The callback function to call when the breakpoint is hit.
+function debugger.add_breakpoint(address, callback) end
+
+---Removes a breakpoint.
+---@param callback BreakpointCallback The callback function of the breakpoint to remove.
+function debugger.remove_breakpoint(callback) end
+
+---@return boolean # Whether the emulated processor is currently paused.
+function debugger.paused() end
+
+---Pauses the emulated processor.
+function debugger.pause() end
+
+---Resumes the emulated processor.
+function debugger.resume() end
+
+---Resumes the emulated processor and advances it by one instruction, then pauses again.
+function debugger.step() end
 
 --#endregion
 
