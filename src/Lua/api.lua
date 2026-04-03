@@ -847,9 +847,6 @@ function debugger.add_breakpoint(address, callback) end
 ---@param id BreakpointId The ID of the breakpoint to remove.
 function debugger.remove_breakpoint(id) end
 
----Pauses the emulated processor.
-function debugger.pause() end
-
 ---Resumes the emulated processor.
 function debugger.resume() end
 

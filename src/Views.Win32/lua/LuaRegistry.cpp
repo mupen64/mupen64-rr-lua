@@ -109,7 +109,6 @@ const luaL_Reg MEMORY_FUNCS[] = {
 
 const luaL_Reg DEBUGGER_FUNCS[] = {{"add_breakpoint", LuaCore::Debugger::add_breakpoint},
                                    {"remove_breakpoint", LuaCore::Debugger::remove_breakpoint},
-                                   {"pause", LuaCore::Debugger::pause},
                                    {"resume", LuaCore::Debugger::resume},
                                    {"step", LuaCore::Debugger::step},
                                    {"disassemble", LuaCore::Debugger::disassemble},

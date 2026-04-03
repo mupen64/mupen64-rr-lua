@@ -57,12 +57,6 @@ static int remove_breakpoint(lua_State *L)
     return 0;
 }
 
-static int pause(lua_State *L)
-{
-    g_main_ctx.core_ctx->dbg_set_resumed(false);
-    return 0;
-}
-
 static int resume(lua_State *L)
 {
     g_main_ctx.core_ctx->dbg_set_resumed(true);
