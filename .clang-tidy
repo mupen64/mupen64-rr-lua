@@ -75,6 +75,13 @@ CheckOptions:
   - key: readability-identifier-naming.ConstantCase
     value: UPPER_CASE
 
+  # Local const variables
+  - key: readability-identifier-naming.LocalConstantCase
+    value: lower_case
+
+  - key: readability-identifier-naming.LocalConstexprVariableCase
+    value: lower_case
+
   # Enum constants
   - key: readability-identifier-naming.EnumConstantCase
     value: CamelCase
