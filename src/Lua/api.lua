@@ -403,7 +403,7 @@ Mupen = {
 
 ---@class CPUState
 ---@field opcode integer
----@field addr integer
+---@field address integer
 
 -- Global Functions
 --#region
