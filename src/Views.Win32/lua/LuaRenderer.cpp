@@ -20,7 +20,7 @@ static MMRESULT render_timer{};
 static std::thread draw_thread;
 static std::atomic<bool> draw_thread_running{false};
 
-static void draw_lua()
+static void draw_lua(bool force)
 {
     const auto now = std::chrono::steady_clock::now();
 
@@ -33,7 +33,7 @@ static void draw_lua()
         const auto fps = lua->rctx.target_fps.value_or(1000.0f);
         const auto target_frame_time = 1000.0f / fps;
 
-        if (time_since_last_render < target_frame_time) continue;
+        if (time_since_last_render < target_frame_time && !force) continue;
 
         bool success = true;
 
@@ -81,7 +81,7 @@ static void draw_clock_proc()
 {
     while (draw_thread_running)
     {
-        g_main_ctx.dispatcher->invoke([]() { draw_lua(); });
+        g_main_ctx.dispatcher->invoke([]() { draw_lua(false); });
 
         DwmFlush();
     }
@@ -251,12 +251,7 @@ t_lua_rendering_context LuaRenderer::default_rendering_context()
 void LuaRenderer::repaint_visuals()
 {
     assert(is_on_gui_thread());
-
-    for (const auto &lua : g_lua_environments)
-    {
-        RedrawWindow(lua->rctx.d2d_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-        RedrawWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
-    }
+    draw_lua(true);
 }
 
 void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environment *env)
