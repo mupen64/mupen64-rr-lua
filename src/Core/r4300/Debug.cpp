@@ -38,6 +38,12 @@ void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
         }
     }
 
+    if (s_dbg.advancing)
+    {
+        s_dbg.advancing = false;
+        s_dbg.resumed = false;
+    }
+
     while (!s_dbg.resumed) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
