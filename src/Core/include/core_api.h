@@ -51,8 +51,8 @@ extern "C"
         std::function<void(size_t)> seek_savestate_changed = [](size_t) {};
         std::function<void(bool)> readonly_changed = [](bool) {};
         std::function<void(core_system_type)> dacrate_changed = [](core_system_type) {};
-        std::function<void(bool)> debugger_resumed_changed = [](bool) {};
-        std::function<void(core_dbg_cpu_state *)> debugger_cpu_state_changed = [](core_dbg_cpu_state *) {};
+        std::function<void(bool)> debugger_resumed_changed = [](const auto &...) {};
+        std::function<void(const core_dbg_cpu_state &state)> instruction = [](const auto &...) {};
         std::function<void()> lag_limit_exceeded = [] {};
         std::function<void()> seek_status_changed = [] {};
     };
@@ -686,6 +686,20 @@ extern "C"
 #pragma endregion
 
 #pragma region Debugger
+
+        /**
+         * \brief Adds a breakpoint at the given address with the given callback.
+         * \param address The address to break at.
+         * \param callback The callback to call when the breakpoint is hit.
+         * \return The ID of the breakpoint.
+         */
+        std::function<CoreBreakpointId(uintptr_t address, const CoreBreakpointCallback &callback)> dbg_add_breakpoint;
+
+        /**
+         * \brief Removes a breakpoint by its ID.
+         * \param id The ID of the breakpoint to remove.
+         */
+        std::function<void(const CoreBreakpointId &id)> dbg_remove_breakpoint;
 
         /**
          * \brief Gets whether execution is resumed.

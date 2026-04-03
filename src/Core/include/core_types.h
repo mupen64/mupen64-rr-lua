@@ -746,6 +746,9 @@ typedef struct
     uint32_t address;
 } core_dbg_cpu_state;
 
+using CoreBreakpointCallback = std::function<void(const core_dbg_cpu_state &state)>;
+using CoreBreakpointId = size_t;
+
 #pragma endregion
 
 // #pragma region Cheats
