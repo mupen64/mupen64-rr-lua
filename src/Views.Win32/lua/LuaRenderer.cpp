@@ -20,6 +20,8 @@ static MMRESULT render_timer{};
 static std::thread draw_thread;
 static std::atomic<bool> draw_thread_running{false};
 
+static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
+
 static void present_gdi_content(t_lua_environment *lua)
 {
     SIZE size = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
@@ -80,6 +82,8 @@ static void draw_lua(bool force)
     {
         LuaManager::destroy_environment(lua);
     }
+
+
 }
 
 static void draw_clock_proc()
@@ -159,10 +163,9 @@ static void resize(uint32_t width, uint32_t height)
 
         if (lua->rctx.presenter) lua->rctx.presenter->resize(lua->rctx.dc_size);
 
-        SetWindowPos(lua->rctx.gdi_overlay_hwnd, HWND_TOP, 0, 0, width, height,
-                     SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
-        SetWindowPos(lua->rctx.d2d_overlay_hwnd, HWND_TOP, 0, 0, width, height,
-                     SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+        const UINT overlay_swp_flags = SWP_NOACTIVATE | SWP_NOMOVE | (s_detached_overlays ? SWP_NOZORDER : 0);
+        SetWindowPos(lua->rctx.gdi_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
+        SetWindowPos(lua->rctx.d2d_overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
     }
 }
 
@@ -178,15 +181,8 @@ static LRESULT CALLBACK overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
 // Moves and orders the specified overlay windows to be on top of the main window.
 // If no hwnds are provided, all overlay windows from all Lua environments are updated.
-static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt)
+static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds)
 {
-    if (!s_detached_overlays) return;
-
-    RECT rc;
-    GetClientRect(g_main_ctx.hwnd, &rc);
-    POINT pt = {rc.left, rc.top};
-    ClientToScreen(g_main_ctx.hwnd, &pt);
-
     std::vector<HWND> wnds;
     if (hwnds.has_value())
         wnds = *hwnds;
@@ -199,12 +195,27 @@ static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnd
         }
     }
 
-    HWND above_main = GetWindow(g_main_ctx.hwnd, GW_HWNDPREV);
-    HWND insert_after = above_main ? above_main : HWND_TOP;
-
-    for (const auto &hwnd : wnds)
+    if (s_detached_overlays)
     {
-        SetWindowPos(hwnd, insert_after, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
+        RECT rc;
+        GetClientRect(g_main_ctx.hwnd, &rc);
+        POINT pt = {rc.left, rc.top};
+        ClientToScreen(g_main_ctx.hwnd, &pt);
+
+        HWND above_main = GetWindow(g_main_ctx.hwnd, GW_HWNDPREV);
+        HWND insert_after = above_main ? above_main : HWND_TOP;
+
+        for (const auto &hwnd : wnds)
+        {
+            SetWindowPos(hwnd, insert_after, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
+        }
+    }
+    else
+    {
+        for (const auto &hwnd : wnds)
+        {
+            SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+        }
     }
 }
 

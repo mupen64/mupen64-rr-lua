@@ -28,6 +28,11 @@ void create(HWND hwnd);
 void update_screen();
 
 /**
+ * \brief Returns the handle of the MGE control.
+ */
+HWND hwnd();
+
+/**
  * Gets the current video size from the MGE compositor.
  * \param width The video width. If null, the width is not written.
  * \param height The video height. If null, the height is not written.

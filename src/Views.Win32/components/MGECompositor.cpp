@@ -33,7 +33,7 @@ const std::string VERTEX_SHADER = R"(
             float2(0.0, 1.0),
             float2(1.0, 1.0),
             float2(0.0, 0.0),
-        
+
             float2(0.0, 0.0),
             float2(1.0, 1.0),
             float2(1.0, 0.0)
@@ -69,7 +69,7 @@ struct t_mge_context
 
     ComPtr<ID3D11Device> device;
     ComPtr<ID3D11DeviceContext> context;
-    ComPtr<IDXGISwapChain> swapchain;
+    ComPtr<IDXGISwapChain1> swapchain;
     ComPtr<ID3D11RenderTargetView> rtv;
     ComPtr<ID3D11Texture2D> texture;
     ComPtr<ID3D11ShaderResourceView> srv;
@@ -82,18 +82,6 @@ static t_mge_context mge_context{};
 
 static void create_d3d(const HWND hwnd)
 {
-    DXGI_SWAP_CHAIN_DESC scdesc = {};
-    scdesc.BufferDesc.Width = 0;
-    scdesc.BufferDesc.Height = 0;
-    scdesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    scdesc.SampleDesc.Count = 1;
-    scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    scdesc.BufferCount = 1;
-    scdesc.OutputWindow = hwnd;
-    scdesc.Windowed = TRUE;
-    scdesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    scdesc.Flags = 0;
-
     UINT flags = 0;
 #if defined(_DEBUG)
     flags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -103,16 +91,45 @@ static void create_d3d(const HWND hwnd)
 
     ID3D11Device *device_raw{};
     ID3D11DeviceContext *context_raw{};
-    IDXGISwapChain *swap_raw{};
 
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels,
-                                               ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &scdesc, &swap_raw,
-                                               &device_raw, nullptr, &context_raw);
-    RT_ASSERT_HR(hr, L"D3D11CreateDeviceAndSwapChain");
+    HRESULT hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels,
+                                   ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &device_raw, nullptr, &context_raw);
+    RT_ASSERT_HR(hr, L"D3D11CreateDevice");
 
     mge_context.device.Attach(device_raw);
     mge_context.context.Attach(context_raw);
+
+    ComPtr<IDXGIDevice> dxgi_device;
+    hr = mge_context.device.As(&dxgi_device);
+    RT_ASSERT_HR(hr, L"Get IDXGIDevice");
+
+    ComPtr<IDXGIAdapter> adapter;
+    hr = dxgi_device->GetAdapter(&adapter);
+    RT_ASSERT_HR(hr, L"GetAdapter");
+
+    ComPtr<IDXGIFactory2> factory;
+    hr = adapter->GetParent(IID_PPV_ARGS(&factory));
+    RT_ASSERT_HR(hr, L"GetParent IDXGIFactory2");
+
+    DXGI_SWAP_CHAIN_DESC1 scdesc = {};
+    scdesc.Width = 0;
+    scdesc.Height = 0;
+    scdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    scdesc.SampleDesc.Count = 1;
+    scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    scdesc.BufferCount = 2;
+    scdesc.Scaling = DXGI_SCALING_STRETCH;
+    scdesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    scdesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+    scdesc.Flags = 0;
+
+    IDXGISwapChain1 *swap_raw{};
+    hr = factory->CreateSwapChainForHwnd(mge_context.device.Get(), hwnd, &scdesc, nullptr, nullptr, &swap_raw);
+    RT_ASSERT_HR(hr, L"CreateSwapChainForHwnd");
+
     mge_context.swapchain.Attach(swap_raw);
+
+    factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
     // create RTV for swapchain back buffer
     ComPtr<ID3D11Texture2D> back_buffer;
@@ -312,7 +329,7 @@ static void recreate_mge_context_d3d()
     if (mge_context.swapchain)
     {
         mge_context.rtv.Reset();
-        HRESULT hr = mge_context.swapchain->ResizeBuffers(1, w, h, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+        HRESULT hr = mge_context.swapchain->ResizeBuffers(2, w, h, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
         RT_ASSERT_HR(hr, L"ResizeBuffers");
 
         ComPtr<ID3D11Texture2D> backBuffer;
@@ -381,6 +398,11 @@ void MGECompositor::update_screen()
 
     mge_context.last_width = mge_context.width;
     mge_context.last_height = mge_context.height;
+}
+
+HWND MGECompositor::hwnd()
+{
+    return mge_context.hwnd;
 }
 
 void MGECompositor::get_video_size(int32_t *width, int32_t *height)
