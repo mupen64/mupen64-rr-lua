@@ -68,4 +68,20 @@ static int step(lua_State *L)
     return 0;
 }
 
+static int disassemble(lua_State *L)
+{
+    lua_getfield(L, 1, "address");
+    const uintptr_t address = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, 1, "opcode");
+    const uint32_t opcode = luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    const auto str = g_main_ctx.core_ctx->dbg_disassemble({address, opcode});
+
+    lua_pushstring(L, str.c_str());
+    return 1;
+}
+
 } // namespace LuaCore::Debugger

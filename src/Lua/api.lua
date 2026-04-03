@@ -856,6 +856,11 @@ function debugger.resume() end
 ---Resumes the emulated processor and advances it by one instruction, then pauses again.
 function debugger.step() end
 
+---Disassembles an instruction based on a CPU state.
+---@param state CPUState The CPU state to disassemble an instruction from.
+---@return string The disassembled instruction.
+function debugger.disassemble(state) end
+
 --#endregion
 
 

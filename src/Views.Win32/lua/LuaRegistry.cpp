@@ -112,6 +112,7 @@ const luaL_Reg DEBUGGER_FUNCS[] = {{"add_breakpoint", LuaCore::Debugger::add_bre
                                    {"pause", LuaCore::Debugger::pause},
                                    {"resume", LuaCore::Debugger::resume},
                                    {"step", LuaCore::Debugger::step},
+                                   {"disassemble", LuaCore::Debugger::disassemble},
                                    {NULL, NULL}};
 
 const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush},

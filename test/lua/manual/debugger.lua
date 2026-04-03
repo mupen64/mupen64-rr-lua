@@ -11,6 +11,7 @@ dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_p
 local bp
 
 bp = debugger.add_breakpoint(2150719408, function(state)
-    print('breakpoint hit', state)
+    local str = debugger.disassemble(state)
+    print('breakpoint hit', state, str)
     debugger.remove_breakpoint(bp)
 end)
