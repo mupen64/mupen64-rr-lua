@@ -12,9 +12,6 @@ GDIPresenter::~GDIPresenter()
     SelectObject(m_gdi_back_dc, nullptr);
     DeleteObject(m_gdi_bmp);
     DeleteDC(m_gdi_back_dc);
-
-    m_d2d_factory->Release();
-    m_d2d_render_target->Release();
 }
 
 bool GDIPresenter::init(HWND hwnd)
@@ -36,8 +33,8 @@ bool GDIPresenter::init(HWND hwnd)
     D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
         D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
 
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_d2d_factory);
-    m_d2d_factory->CreateDCRenderTarget(&props, &m_d2d_render_target);
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_d2d_factory.GetAddressOf());
+    m_d2d_factory->CreateDCRenderTarget(&props, m_d2d_render_target.GetAddressOf());
 
     RECT dc_rect = {0, 0, (LONG)m_size.width, (LONG)m_size.height};
     m_d2d_render_target->BindDC(m_gdi_back_dc, &dc_rect);
@@ -47,7 +44,7 @@ bool GDIPresenter::init(HWND hwnd)
 
 ID2D1RenderTarget *GDIPresenter::dc() const
 {
-    return m_d2d_render_target;
+    return m_d2d_render_target.Get();
 }
 
 D2D1_SIZE_U GDIPresenter::size()
@@ -86,8 +83,7 @@ void GDIPresenter::present()
     bf.BlendOp = AC_SRC_OVER;
     bf.SourceConstantAlpha = 255;
     bf.AlphaFormat = 0;
-    UpdateLayeredWindow(m_hwnd, nullptr, nullptr, &size, m_gdi_back_dc, &src_pt, m_mask_color, &bf,
-                        ULW_COLORKEY);
+    UpdateLayeredWindow(m_hwnd, nullptr, nullptr, &size, m_gdi_back_dc, &src_pt, m_mask_color, &bf, ULW_COLORKEY);
 }
 
 void GDIPresenter::blit(HDC hdc, RECT rect)
