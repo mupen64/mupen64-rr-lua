@@ -32,7 +32,7 @@ static int add_breakpoint(lua_State *L)
     const auto id = g_main_ctx.core_ctx->dbg_add_breakpoint(
         address, [=](const core_dbg_cpu_state &state) { g_main_ctx.dispatcher->invoke([&] { functor(state); }); });
 
-    env->active_breakpoints.emplace_back(id);
+    env->active_breakpoints.emplace_back(std::make_pair(id, callback));
 
     lua_pushinteger(L, id);
     return 1;
@@ -45,7 +45,14 @@ static int remove_breakpoint(lua_State *L)
     const CoreBreakpointId id = luaL_checkinteger(L, 1);
 
     g_main_ctx.core_ctx->dbg_remove_breakpoint(id);
-    std::erase_if(env->active_breakpoints, [&](const CoreBreakpointId &v) { return v == id; });
+
+    const auto it = std::find_if(env->active_breakpoints.begin(), env->active_breakpoints.end(),
+                                 [&](const std::pair<CoreBreakpointId, uintptr_t *> &v) { return v.first == id; });
+    if (it != env->active_breakpoints.end())
+    {
+        lua_freecallback(L, it->second);
+        env->active_breakpoints.erase(it);
+    }
 
     return 0;
 }
