@@ -20,7 +20,6 @@
 #include <components/CommandPalette.h>
 #include <components/ParameterPalette.h>
 #include <components/ConfigDialog.h>
-#include <components/CoreDbg.h>
 #include <components/CrashManager.h>
 #include <components/Dispatcher.h>
 #include <components/HotkeyTracker.h>
@@ -1128,7 +1127,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     CaptureManager::init();
     CLI::init();
     Seeker::init();
-    CoreDbg::init();
     AppActions::init();
 
     WNDCLASSEX wc = {0};

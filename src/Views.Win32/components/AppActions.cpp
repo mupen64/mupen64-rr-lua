@@ -17,7 +17,6 @@
 #include <components/Cheats.h>
 #include <components/CommandPalette.h>
 #include <components/ConfigDialog.h>
-#include <components/CoreDbg.h>
 #include <components/FilePicker.h>
 #include <components/LuaDialog.h>
 #include <components/MovieDialog.h>
@@ -713,10 +712,6 @@ static void start_tracelog()
     g_main_ctx.core_ctx->tl_start(path, result == IDYES, false);
 }
 
-static void show_debugger()
-{
-    CoreDbg::show();
-}
 
 static void show_command_palette()
 {
@@ -1187,7 +1182,6 @@ void AppActions::add()
     add_action(SEEK_TO, Hotkey::t_hotkey('G', true), show_seek_dialog, enable_when_emu_launched_and_vcr_active);
     add_action(USAGE_STATISTICS, Hotkey::t_hotkey::make_empty(), show_statistics);
     add_action(CORE_INFORMATION, Hotkey::t_hotkey::make_empty(), show_ram_start);
-    add_action(DEBUGGER, Hotkey::t_hotkey::make_empty(), show_debugger, enable_when_emu_launched);
     add_action(START_TRACE_LOGGER, Hotkey::t_hotkey::make_empty(), start_tracelog,
                enable_when_emu_launched_and_core_is_pure_interpreter);
     add_action(STOP_TRACE_LOGGER, Hotkey::t_hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
