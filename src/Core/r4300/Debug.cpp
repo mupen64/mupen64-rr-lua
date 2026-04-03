@@ -29,17 +29,15 @@ static DebuggerState s_dbg{};
 void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
 {
     auto it = s_dbg.breakpoints.find(state.address);
-    if (it == s_dbg.breakpoints.end()) goto end;
-
-    s_dbg.advancing = false;
-    s_dbg.resumed = false;
-
-    for (auto &bp : it->second)
+    if (it != s_dbg.breakpoints.end())
     {
-        bp.callback(state);
+        auto bps_copy = it->second;
+        for (const auto &bp : bps_copy)
+        {
+            bp.callback(state);
+        }
     }
 
-end:
     while (!s_dbg.resumed) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
