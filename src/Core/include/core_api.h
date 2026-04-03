@@ -716,9 +716,10 @@ extern "C"
 
         /**
          * \brief Disassembles an instruction at a given address.
-         * TODO: Refactor
+         * \param state The CPU state to disassemble.
+         * \return The disassembled instruction as a string.
          */
-        std::function<char *(char *buf, uint32_t w, uint32_t pc)> dbg_disassemble;
+        std::function<std::string(const core_dbg_cpu_state &state)> dbg_disassemble;
 
 #pragma endregion
 

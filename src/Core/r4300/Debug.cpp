@@ -6,6 +6,7 @@
 
 #include <CommonPCH.h>
 #include <r4300/Debug.h>
+#include <r4300/disasm.h>
 #include <Core.h>
 
 struct Breakpoint
@@ -77,4 +78,20 @@ void dbg_step()
 {
     s_dbg.advancing = true;
     s_dbg.resumed = true;
+}
+
+std::string dbg_disassemble(const core_dbg_cpu_state &state)
+{
+    INSTDECODE decode;
+    DecodeInstruction(state.opcode, &decode);
+
+    char buf[120]{};
+    char *ptr = buf;
+    const char *op = GetOpecodeString(&decode);
+    while (*op) *ptr++ = *op++;
+    *ptr++ = ' ';
+
+    GetOperandString(ptr, &decode, state.address);
+
+    return std::string(buf);
 }
