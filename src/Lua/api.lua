@@ -850,8 +850,9 @@ function debugger.remove_breakpoint(id) end
 ---Resumes the emulated processor.
 function debugger.resume() end
 
----Resumes the emulated processor and advances it by one instruction, then pauses again.
-function debugger.step() end
+---Steps execution by one instruction.
+---@param callback BreakpointCallback The callback to call when the next instruction is about to be executed.
+function debugger.step(callback) end
 
 ---Disassembles an instruction based on a CPU state.
 ---@param state CPUState The CPU state to disassemble an instruction from.

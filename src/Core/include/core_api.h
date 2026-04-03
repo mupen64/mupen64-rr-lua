@@ -710,9 +710,10 @@ extern "C"
         std::function<void(bool)> dbg_set_resumed;
 
         /**
-         * Steps execution by one instruction.
+         * \brief Steps execution by one instruction.
+         * \param callback The callback to call when the next instruction is about to be executed.
          */
-        std::function<void()> dbg_step;
+        std::function<void(const CoreBreakpointCallback &callback)> dbg_step;
 
         /**
          * \brief Disassembles an instruction at a given address.

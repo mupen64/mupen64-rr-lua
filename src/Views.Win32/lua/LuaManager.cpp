@@ -168,9 +168,15 @@ void LuaManager::destroy_environment(t_lua_environment *lua)
     ActionManager::end_batch_work();
 
     // Remove any breakpoints registered by the script.
-    for (const auto &pair : lua->active_breakpoints) {
+    for (const auto &pair : lua->active_breakpoints)
+    {
         g_main_ctx.core_ctx->dbg_remove_breakpoint(pair.first);
         lua_freecallback(lua->L, pair.second);
+    }
+
+    for (auto callback : lua->step_callbacks)
+    {
+        lua_freecallback(lua->L, callback);
     }
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.

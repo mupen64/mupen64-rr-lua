@@ -11,6 +11,16 @@
 
 namespace LuaCore::Debugger
 {
+
+static void push_cpu_state(lua_State *L, const core_dbg_cpu_state &state)
+{
+    lua_newtable(L);
+    lua_pushinteger(L, state.address);
+    lua_setfield(L, -2, "address");
+    lua_pushinteger(L, state.opcode);
+    lua_setfield(L, -2, "opcode");
+}
+
 static int add_breakpoint(lua_State *L)
 {
     const auto env = LuaManager::get_environment_for_state(L);
@@ -21,11 +31,7 @@ static int add_breakpoint(lua_State *L)
     const auto functor = [=](const core_dbg_cpu_state &state) {
         if (!callback || !LuaManager::get_environment_for_state(L)) return;
         lua_pushcallback(L, callback, false);
-        lua_newtable(L);
-        lua_pushinteger(L, state.address);
-        lua_setfield(L, -2, "address");
-        lua_pushinteger(L, state.opcode);
-        lua_setfield(L, -2, "opcode");
+        push_cpu_state(L, state);
         lua_pcall(L, 1, 0, 0);
     };
 
@@ -65,7 +71,23 @@ static int resume(lua_State *L)
 
 static int step(lua_State *L)
 {
-    g_main_ctx.core_ctx->dbg_step();
+    const auto env = LuaManager::get_environment_for_state(L);
+
+    const auto callback = lua_optcallback(L, 1);
+
+    const auto functor = [=](const core_dbg_cpu_state &state) {
+        if (!callback || !LuaManager::get_environment_for_state(L)) return;
+        lua_pushcallback(L, callback, false);
+        push_cpu_state(L, state);
+        lua_pcall(L, 1, 0, 0);
+
+        lua_freecallback(L, callback);
+        std::erase(env->step_callbacks, callback);
+    };
+
+    g_main_ctx.core_ctx->dbg_step(functor);
+    env->step_callbacks.emplace_back(callback);
+
     return 0;
 }
 

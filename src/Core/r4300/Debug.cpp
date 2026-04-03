@@ -23,12 +23,15 @@ struct DebuggerState
     core_dbg_cpu_state cpu_state{};
     std::unordered_map<uintptr_t, std::vector<Breakpoint>> breakpoints;
     CoreBreakpointId next_breakpoint_id{0};
+    std::vector<CoreBreakpointCallback> step_callbacks;
 };
 
 static DebuggerState s_dbg{};
 
 void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
 {
+    std::lock_guard lock(s_dbg.mtx); // Deadlocks! Lol! This architecture sucks ^o^
+
     auto it = s_dbg.breakpoints.find(state.address);
     if (it != s_dbg.breakpoints.end())
     {
@@ -43,6 +46,10 @@ void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
     {
         s_dbg.advancing = false;
         s_dbg.resumed = false;
+
+        const auto step_callbacks = s_dbg.step_callbacks;
+        s_dbg.step_callbacks.clear();
+        for (const auto &callback : step_callbacks) callback(state);
     }
 
     while (!s_dbg.resumed) std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -83,11 +90,12 @@ void dbg_set_resumed(bool value)
     s_dbg.resumed = value;
 }
 
-void dbg_step()
+void dbg_step(const CoreBreakpointCallback &callback)
 {
     std::lock_guard lock(s_dbg.mtx);
     s_dbg.advancing = true;
     s_dbg.resumed = true;
+    s_dbg.step_callbacks.emplace_back(callback);
 }
 
 std::string dbg_disassemble(const core_dbg_cpu_state &state)

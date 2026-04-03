@@ -13,5 +13,5 @@ CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallb
 void dbg_remove_breakpoint(const CoreBreakpointId &id);
 bool dbg_get_resumed();
 void dbg_set_resumed(bool value);
-void dbg_step();
+void dbg_step(const CoreBreakpointCallback &callback);
 std::string dbg_disassemble(const core_dbg_cpu_state &state);

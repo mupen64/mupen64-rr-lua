@@ -98,6 +98,8 @@ struct t_lua_environment
     // All the breakpoints registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<std::pair<CoreBreakpointId, uintptr_t*>> active_breakpoints;
 
+    std::vector<uintptr_t*> step_callbacks;
+
     destroying_func destroying{};
 
     print_func print{};
