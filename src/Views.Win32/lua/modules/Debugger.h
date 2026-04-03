@@ -13,6 +13,8 @@ namespace LuaCore::Debugger
 {
 static int add_breakpoint(lua_State *L)
 {
+    const auto env = LuaManager::get_environment_for_state(L);
+
     const uintptr_t address = luaL_checkinteger(L, 1);
     const auto callback = lua_optcallback(L, 2);
 
@@ -30,14 +32,21 @@ static int add_breakpoint(lua_State *L)
     const auto id = g_main_ctx.core_ctx->dbg_add_breakpoint(
         address, [=](const core_dbg_cpu_state &state) { g_main_ctx.dispatcher->invoke([&] { functor(state); }); });
 
+    env->active_breakpoints.emplace_back(id);
+
     lua_pushinteger(L, id);
     return 1;
 }
 
 static int remove_breakpoint(lua_State *L)
 {
+    const auto env = LuaManager::get_environment_for_state(L);
+
     const CoreBreakpointId id = luaL_checkinteger(L, 1);
+
     g_main_ctx.core_ctx->dbg_remove_breakpoint(id);
+    std::erase_if(env->active_breakpoints, [&](const CoreBreakpointId &v) { return v == id; });
+
     return 0;
 }
 
