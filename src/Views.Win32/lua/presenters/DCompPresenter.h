@@ -24,22 +24,22 @@ class DCompPresenter : public Presenter
 
     HWND m_hwnd{};
     D2D1_SIZE_U m_size{};
-    Microsoft::WRL::ComPtr<IDXGIFactory2> m_dxgi_factory;
-    Microsoft::WRL::ComPtr<IDXGIAdapter1> m_dxgi_adapter;
-    Microsoft::WRL::ComPtr<IDXGIDevice1> m_dxgi_device;
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> m_dxgi_swapchain;
-    Microsoft::WRL::ComPtr<IDXGISurface1> m_dxgi_surface;
+    ComPtr<IDXGIFactory2> m_dxgi_factory;
+    ComPtr<IDXGIAdapter1> m_dxgi_adapter;
+    ComPtr<IDXGIDevice1> m_dxgi_device;
+    ComPtr<IDXGISwapChain1> m_dxgi_swapchain;
+    ComPtr<IDXGISurface1> m_dxgi_surface;
 
-    Microsoft::WRL::ComPtr<ID3D11Device> m_d3d_device;
-    Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_d3d_dc;
-    Microsoft::WRL::ComPtr<ID3D11Texture2D> m_d3d_gdi_tex;
+    ComPtr<ID3D11Device> m_d3d_device;
+    ComPtr<ID3D11DeviceContext> m_d3d_dc;
+    ComPtr<ID3D11Texture2D> m_d3d_gdi_tex;
 
-    Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_d2d_bitmap;
-    Microsoft::WRL::ComPtr<ID2D1Factory3> m_d2d_factory;
-    Microsoft::WRL::ComPtr<ID2D1Device2> m_d2d_device;
-    Microsoft::WRL::ComPtr<ID2D1DeviceContext2> m_d2d_dc;
+    ComPtr<ID2D1Bitmap1> m_d2d_bitmap;
+    ComPtr<ID2D1Factory3> m_d2d_factory;
+    ComPtr<ID2D1Device2> m_d2d_device;
+    ComPtr<ID2D1DeviceContext2> m_d2d_dc;
 
-    Microsoft::WRL::ComPtr<IDCompositionVisual> m_comp_visual;
-    Microsoft::WRL::ComPtr<IDCompositionDevice> m_comp_device;
-    Microsoft::WRL::ComPtr<IDCompositionTarget> m_comp_target;
+    ComPtr<IDCompositionVisual> m_comp_visual;
+    ComPtr<IDCompositionDevice> m_comp_device;
+    ComPtr<IDCompositionTarget> m_comp_target;
 };

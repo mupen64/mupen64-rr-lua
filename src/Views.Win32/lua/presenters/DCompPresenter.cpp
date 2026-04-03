@@ -109,7 +109,7 @@ void DCompPresenter::resize(D2D1_SIZE_U size)
 void DCompPresenter::present()
 {
     // Copy the D3D texture to the swapchain back buffer.
-    Microsoft::WRL::ComPtr<ID3D11Resource> back_buffer;
+    ComPtr<ID3D11Resource> back_buffer;
     m_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
     m_d3d_dc->CopyResource(back_buffer.Get(), m_d3d_gdi_tex.Get());
 

@@ -9,7 +9,6 @@
 #include <Plugin.h>
 #include <Messenger.h>
 
-using Microsoft::WRL::ComPtr;
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8X8_UNORM;
 constexpr float CLEAR_COLOR[4] = {0, 0, 0, 1};
@@ -89,15 +88,15 @@ static void create_d3d(const HWND hwnd)
 
     D3D_FEATURE_LEVEL feature_levels[] = {D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0};
 
-    ID3D11Device *device_raw{};
-    ID3D11DeviceContext *context_raw{};
+    ComPtr<ID3D11Device> device_raw;
+    ComPtr<ID3D11DeviceContext> context_raw;
 
     HRESULT hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels,
                                    ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &device_raw, nullptr, &context_raw);
     RT_ASSERT_HR(hr, L"D3D11CreateDevice");
 
-    mge_context.device.Attach(device_raw);
-    mge_context.context.Attach(context_raw);
+    mge_context.device.Attach(device_raw.Get());
+    mge_context.context.Attach(context_raw.Get());
 
     ComPtr<IDXGIDevice> dxgi_device;
     hr = mge_context.device.As(&dxgi_device);
@@ -123,15 +122,14 @@ static void create_d3d(const HWND hwnd)
     scdesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
     scdesc.Flags = 0;
 
-    IDXGISwapChain1 *swap_raw{};
+    ComPtr<IDXGISwapChain1> swap_raw;
     hr = factory->CreateSwapChainForHwnd(mge_context.device.Get(), hwnd, &scdesc, nullptr, nullptr, &swap_raw);
     RT_ASSERT_HR(hr, L"CreateSwapChainForHwnd");
 
-    mge_context.swapchain.Attach(swap_raw);
+    mge_context.swapchain.Attach(swap_raw.Get());
 
     factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
-    // create RTV for swapchain back buffer
     ComPtr<ID3D11Texture2D> back_buffer;
     hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
     RT_ASSERT_HR(hr, L"GetBuffer");
@@ -151,7 +149,9 @@ static void create_d3d(const HWND hwnd)
     hr = mge_context.device->CreateSamplerState(&sampdesc, &mge_context.sampler);
     RT_ASSERT_HR(hr, L"CreateSamplerState");
 
-    ComPtr<ID3DBlob> vs_blob, ps_blob, err_blob;
+    ComPtr<ID3DBlob> vs_blob;
+    ComPtr<ID3DBlob> ps_blob;
+    ComPtr<ID3DBlob> err_blob;
     hr = D3DCompile(VERTEX_SHADER.data(), VERTEX_SHADER.size(), nullptr, nullptr, nullptr, "main", "vs_4_0", 0, 0,
                     &vs_blob, &err_blob);
     RT_ASSERT_HR(hr, L"D3DCompile");
