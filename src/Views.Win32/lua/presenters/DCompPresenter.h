@@ -20,6 +20,8 @@ class DCompPresenter : public Presenter
     void blit(HDC hdc, RECT rect) override;
 
   private:
+    void create_size_dependent_resources();
+
     HWND m_hwnd{};
     D2D1_SIZE_U m_size{};
     Microsoft::WRL::ComPtr<IDXGIFactory2> m_dxgi_factory;
@@ -30,8 +32,6 @@ class DCompPresenter : public Presenter
 
     Microsoft::WRL::ComPtr<ID3D11Device> m_d3d_device;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_d3d_dc;
-    Microsoft::WRL::ComPtr<ID3D11Resource> m_d3d_surface;
-    Microsoft::WRL::ComPtr<ID3D11Resource> m_d3d_front_buffer;
     Microsoft::WRL::ComPtr<ID3D11Texture2D> m_d3d_gdi_tex;
 
     Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_d2d_bitmap;
