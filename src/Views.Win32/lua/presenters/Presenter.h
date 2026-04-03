@@ -49,14 +49,9 @@ class Presenter
     virtual void resize(D2D1_SIZE_U size) = 0;
 
     /**
-     * Begins graphics presentation. Called before any painting happens.
+     * Presents the presenter's contents to the screen.
      */
-    virtual void begin_present() = 0;
-
-    /**
-     * Ends graphics presentation. Called after all painting has happened.
-     */
-    virtual void end_present() = 0;
+    virtual void present() = 0;
 
     /**
      * \brief Blits the presenter's contents to a DC at the specified position

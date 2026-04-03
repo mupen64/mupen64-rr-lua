@@ -103,17 +103,9 @@ void DCompPresenter::resize(D2D1_SIZE_U size)
     m_cmp.dxgi_swapchain->GetBuffer(1, IID_PPV_ARGS(&m_cmp.d3d11_front_buffer));
     m_cmp.dxgi_surface->QueryInterface(&m_cmp.d3d11_surface);
 }
-void DCompPresenter::begin_present()
-{
-    m_cmp.d2d_dc->BeginDraw();
-    m_cmp.d3d_dc->CopyResource(m_cmp.d3d11_surface, m_cmp.d3d11_front_buffer);
-    m_cmp.d2d_dc->SetTransform(D2D1::Matrix3x2F::Identity());
-}
 
-void DCompPresenter::end_present()
+void DCompPresenter::present()
 {
-    m_cmp.d2d_dc->EndDraw();
-
     // 1. Copy Direct2D graphics to the GDI-compatible texture
     ID3D11Resource *d2d_render_target = nullptr;
     m_cmp.dxgi_surface->QueryInterface(&d2d_render_target);

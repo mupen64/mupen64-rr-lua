@@ -58,9 +58,14 @@ static void draw_lua(bool force)
         }
         else
         {
-            lua->rctx.presenter->begin_present();
+            const auto dc = lua->rctx.presenter->dc();
+            dc->BeginDraw();
+            dc->SetTransform(D2D1::Matrix3x2F::Identity());
+
             success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
-            lua->rctx.presenter->end_present();
+            dc->EndDraw();
+
+            lua->rctx.presenter->present();
         }
 
         // GDI Graphics. Ugh.
@@ -80,8 +85,6 @@ static void draw_lua(bool force)
     {
         LuaManager::destroy_environment(lua);
     }
-
-
 }
 
 static void draw_clock_proc()

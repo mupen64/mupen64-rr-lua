@@ -77,16 +77,8 @@ void GDIPresenter::resize(D2D1_SIZE_U size)
     m_d2d_render_target->BindDC(m_gdi_back_dc, &rect);
 }
 
-void GDIPresenter::begin_present()
+void GDIPresenter::present()
 {
-    m_d2d_render_target->BeginDraw();
-    m_d2d_render_target->SetTransform(D2D1::Matrix3x2F::Identity());
-}
-
-void GDIPresenter::end_present()
-{
-    m_d2d_render_target->EndDraw();
-
     SIZE size = {(LONG)m_size.width, (LONG)m_size.height};
     POINT src_pt = {0, 0};
 
