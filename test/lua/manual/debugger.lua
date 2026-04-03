@@ -4,6 +4,7 @@
 -- SPDX-License-Identifier: GPL-2.0-or-later
 --
 
+-- Start this script while in a level in SM64 and ensure that the breakpoint is hit.
 
 dofile(debug.getinfo(1).source:sub(2):gsub("\\[^\\]+\\[^\\]+$", "") .. '\\test_prelude.lua')
 
