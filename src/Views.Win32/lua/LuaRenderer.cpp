@@ -20,6 +20,19 @@ static MMRESULT render_timer{};
 static std::thread draw_thread;
 static std::atomic<bool> draw_thread_running{false};
 
+static void present_gdi_content(t_lua_environment *lua)
+{
+    SIZE size = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
+    POINT src_pt = {0, 0};
+
+    BLENDFUNCTION bf = {};
+    bf.BlendOp = AC_SRC_OVER;
+    bf.SourceConstantAlpha = 255;
+    bf.AlphaFormat = 0;
+    UpdateLayeredWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, &size, lua->rctx.gdi_back_dc, &src_pt,
+                        LuaRenderer::LUA_GDI_COLOR_MASK, &bf, ULW_COLORKEY);
+}
+
 static void draw_lua(bool force)
 {
     const auto now = std::chrono::steady_clock::now();
@@ -55,15 +68,7 @@ static void draw_lua(bool force)
 
         if (lua->rctx.has_gdi_content)
         {
-            SIZE size = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
-            POINT src_pt = {0, 0};
-
-            BLENDFUNCTION bf = {};
-            bf.BlendOp = AC_SRC_OVER;
-            bf.SourceConstantAlpha = 255;
-            bf.AlphaFormat = 0;
-            UpdateLayeredWindow(lua->rctx.gdi_overlay_hwnd, nullptr, nullptr, &size, lua->rctx.gdi_back_dc, &src_pt,
-                                LuaRenderer::LUA_GDI_COLOR_MASK, &bf, ULW_COLORKEY);
+            present_gdi_content(lua);
         }
 
         lua->rctx.last_render_time = now;
@@ -301,6 +306,8 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
 
     // This env isn't in g_lua_environments yet, so we provide these hwnds manually.
     move_and_order_overlays(std::vector<HWND>{ctx->gdi_overlay_hwnd, ctx->d2d_overlay_hwnd});
+
+    present_gdi_content(env);
 
     if (!g_config.lazy_renderer_init)
     {
