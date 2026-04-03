@@ -28,7 +28,7 @@ add_library(Mupen64RR.Core STATIC
     "memory/savestates.h"
     "memory/summercart.h"
     "memory/tlb.h"
-    "r4300/debugger.h"
+    "r4300/Debug.h"
     "r4300/ops.h"
     "r4300/cop1_helpers.h"
     "r4300/disasm.h"
@@ -57,7 +57,7 @@ add_library(Mupen64RR.Core STATIC
     "memory/savestates.cpp"
     "memory/summercart.cpp"
     "memory/tlb.cpp"
-    "r4300/debugger.cpp"
+    "r4300/Debug.cpp"
     "r4300/pure_interp.cpp"
     "r4300/cop0.cpp"
     "r4300/cop1.cpp"
@@ -77,7 +77,7 @@ add_library(Mupen64RR.Core STATIC
     "r4300/timers.cpp"
     "r4300/tracelog.cpp"
     "r4300/bc.cpp"
-    
+
     "r4300/vcr.cpp"
 )
 set_target_properties(Mupen64RR.Core PROPERTIES
@@ -99,7 +99,7 @@ target_link_libraries(Mupen64RR.Core PUBLIC
 # options: disable dynarec
 if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
-    target_sources(Mupen64RR.Core PRIVATE 
+    target_sources(Mupen64RR.Core PRIVATE
         "r4300/x86/assemble.cpp"
         "r4300/x86/gbc.cpp"
         "r4300/x86/gcop0.cpp"
