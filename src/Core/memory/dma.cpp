@@ -12,7 +12,6 @@
 #include "savestates.h"
 #include "summercart.h"
 #include <Core.h>
-#include <r4300/Debug.h>
 #include <r4300/interrupt.h>
 #include <r4300/macros.h>
 #include <r4300/ops.h>
