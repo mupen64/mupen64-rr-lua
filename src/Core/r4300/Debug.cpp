@@ -10,7 +10,7 @@
 
 struct DebuggerState
 {
-    bool resumed{true};
+    std::atomic<bool> resumed{true};
     bool advancing{};
     core_dbg_cpu_state cpu_state{};
 };
