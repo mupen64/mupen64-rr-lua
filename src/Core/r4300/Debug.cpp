@@ -11,7 +11,6 @@
 struct Breakpoint
 {
     CoreBreakpointId id;
-    uintptr_t address;
     CoreBreakpointCallback callback;
 };
 
@@ -20,7 +19,7 @@ struct DebuggerState
     std::atomic<bool> resumed{true};
     bool advancing{};
     core_dbg_cpu_state cpu_state{};
-    std::vector<Breakpoint> breakpoints;
+    std::unordered_map<uintptr_t, std::vector<Breakpoint>> breakpoints;
     CoreBreakpointId next_breakpoint_id{0};
 };
 
@@ -29,15 +28,21 @@ static DebuggerState s_dbg{};
 CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallback &callback)
 {
     CoreBreakpointId id = s_dbg.next_breakpoint_id++;
-    s_dbg.breakpoints.push_back({id, address, callback});
+    s_dbg.breakpoints[address].push_back({id, callback});
     return id;
 }
 
 void dbg_remove_breakpoint(const CoreBreakpointId &id)
 {
-    auto it = std::find_if(s_dbg.breakpoints.begin(), s_dbg.breakpoints.end(),
-                           [&](const Breakpoint &bp) { return bp.id == id; });
-    if (it != s_dbg.breakpoints.end()) s_dbg.breakpoints.erase(it);
+    for (auto &[address, bps] : s_dbg.breakpoints)
+    {
+        auto it = std::find_if(bps.begin(), bps.end(), [&](const Breakpoint &bp) { return bp.id == id; });
+        if (it != bps.end())
+        {
+            bps.erase(it);
+            break;
+        }
+    }
 }
 
 bool dbg_get_resumed()
