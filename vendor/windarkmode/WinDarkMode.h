@@ -61,10 +61,40 @@
 namespace WinDarkMode
 {
 
-constexpr COLORREF bg_color = 0x383838;
-constexpr COLORREF text_color = 0xFFFFFF;
-constexpr COLORREF listbox_bg_color = RGB(54, 54, 54);
-constexpr COLORREF listbox_fg_color = RGB(255, 255, 255);
+/**
+ * @brief Custom data associated with a theme.
+ */
+struct ThemeData
+{
+#define PAIR(name)                                                                                                     \
+    COLORREF name##_color{};                                                                                           \
+    HBRUSH name##_brush{};
+    PAIR(bg);
+    PAIR(text_1);
+    PAIR(text_2);
+    PAIR(listbox_bg);
+    PAIR(edit_bg);
+    PAIR(tab_normal);
+    PAIR(tab_hover);
+};
+
+constexpr ThemeData light_theme_data = {.bg_color = RGB(255, 255, 255),
+                                        .text_1_color = RGB(0, 0, 0),
+                                        .text_2_color = RGB(255, 255, 255),
+                                        .listbox_bg_color = RGB(255, 255, 255),
+                                        .edit_bg_color = RGB(255, 255, 255),
+                                        .tab_normal_color = RGB(243, 243, 243),
+                                        .tab_hover_color = RGB(249, 249, 249)};
+
+constexpr ThemeData dark_theme_data = {.bg_color = RGB(56, 56, 56),
+                                       .text_1_color = RGB(255, 255, 255),
+                                       .text_2_color = RGB(0, 0, 0),
+                                       .listbox_bg_color = RGB(30, 30, 30),
+                                       .edit_bg_color = RGB(30, 30, 30),
+                                       .tab_normal_color = RGB(243, 243, 243),
+                                       .tab_hover_color = RGB(249, 249, 249)};
+
+inline ThemeData theme_data = light_theme_data;
 
 /**
  * @brief The available themes.
@@ -380,20 +410,17 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
 
         RECT rc{};
         GetClientRect(hwnd, &rc);
-        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
-        FillRect(reinterpret_cast<HDC>(wParam), &rc, bg_brush);
+        FillRect(reinterpret_cast<HDC>(wParam), &rc, theme_data.bg_brush);
         return TRUE;
     }
 
     case WM_PAINT: {
         if (!(GetWindowLongPtr(hwnd, GWL_STYLE) & TCS_OWNERDRAWFIXED)) break;
 
-        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
-
         PAINTSTRUCT ps{};
         HDC hdc = BeginPaint(hwnd, &ps);
 
-        FillRect(hdc, &ps.rcPaint, bg_brush);
+        FillRect(hdc, &ps.rcPaint, theme_data.bg_brush);
 
         const int nTabs = TabCtrl_GetItemCount(hwnd);
         const int nSelTab = TabCtrl_GetCurSel(hwnd);
@@ -415,7 +442,7 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
             if (!IntersectRect(&rcIntersect, &ps.rcPaint, &dis.rcItem)) continue;
 
             const bool selected = (i == nSelTab);
-            const COLORREF tabBg = selected ? RGB(0x50, 0x50, 0x50) : bg_color;
+            const COLORREF tabBg = selected ? RGB(0x50, 0x50, 0x50) : theme_data.bg_color;
             HBRUSH tabBrush = CreateSolidBrush(tabBg);
             FillRect(hdc, &dis.rcItem, tabBrush);
             DeleteObject(tabBrush);
@@ -428,7 +455,7 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
             TabCtrl_GetItem(hwnd, i, &tci);
 
             SetBkMode(hdc, TRANSPARENT);
-            SetTextColor(hdc, selected ? text_color : RGB(0xC0, 0xC0, 0xC0));
+            SetTextColor(hdc, theme_data.text_1_color);
             HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
             HFONT hOldFont = static_cast<HFONT>(SelectObject(hdc, hFont));
             DrawTextW(hdc, label, -1, &dis.rcItem, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
@@ -508,7 +535,7 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         SIZE text_size{};
         GetTextExtentPoint32W(hdc, label, static_cast<int>(wcslen(label)), &text_size);
 
-        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
+        if (!bg_brush) bg_brush = CreateSolidBrush(theme_data.bg_color);
         FillRect(hdc, &rc, bg_brush);
 
         RECT frame_rc = rc;
@@ -529,7 +556,7 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
             FillRect(hdc, &clear_rc, bg_brush);
 
             SetBkMode(hdc, TRANSPARENT);
-            SetTextColor(hdc, text_color);
+            SetTextColor(hdc, theme_data.text_1_color);
             RECT text_rc = {text_x, rc.top, text_x + text_size.cx, rc.top + tm.tmHeight};
             DrawTextW(hdc, label, -1, &text_rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
         }
@@ -565,7 +592,7 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
         RECT rc_client{};
         GetClientRect(hwnd, &rc_client);
 
-        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
+        if (!bg_brush) bg_brush = CreateSolidBrush(theme_data.bg_color);
         FillRect(hdc, &rc_client, bg_brush);
 
         const int part_count = static_cast<int>(SendMessage(hwnd, SB_GETPARTS, 0, 0));
@@ -583,7 +610,7 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
         HFONT h_old_font = static_cast<HFONT>(SelectObject(hdc, h_font));
 
         SetBkMode(hdc, TRANSPARENT);
-        SetTextColor(hdc, text_color);
+        SetTextColor(hdc, theme_data.text_1_color);
 
         const COLORREF sep_color = RGB(60, 60, 60);
         HPEN sep_pen = CreatePen(PS_SOLID, 1, sep_color);
@@ -868,16 +895,13 @@ inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         const auto dark = is_dark();
         if (!dark) break;
 
-        if (!bg_brush) bg_brush = CreateSolidBrush(bg_color);
-
         const auto hdc = reinterpret_cast<HDC>(wParam);
 
-        SetTextColor(hdc, text_color);
-        SetBkColor(hdc, bg_color);
+        SetTextColor(hdc, theme_data.text_1_color);
+        SetBkColor(hdc, theme_data.bg_color);
 
-        return reinterpret_cast<INT_PTR>(bg_brush);
+        return reinterpret_cast<INT_PTR>(theme_data.bg_brush);
     }
-    break;
     default:
         break;
     }
@@ -905,7 +929,30 @@ inline void update_window_theme(HWND hwnd, bool dark)
     DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
     refresh_titlebar(hwnd, dark);
     update_children(hwnd, dark);
+
+    const auto prev_brush = (HBRUSH)GetClassLongPtr(hwnd, GCLP_HBRBACKGROUND);
+    if (prev_brush && prev_brush != theme_data.bg_brush) DeleteObject(prev_brush);
+    SetClassLongPtr(hwnd, GCLP_HBRBACKGROUND, (LONG_PTR)theme_data.bg_brush);
+
     InvalidateRect(hwnd, nullptr, false);
+}
+
+inline void update_theme_data(bool dark)
+{
+#define RECREATE(x)                                                                                                    \
+    if (theme_data.x##_brush)                                                                                          \
+    {                                                                                                                  \
+        DeleteObject(theme_data.x##_brush);                                                                            \
+        theme_data.x##_brush = nullptr;                                                                                \
+    }                                                                                                                  \
+    theme_data.x##_brush = CreateSolidBrush(dark ? dark_theme_data.x##_color : light_theme_data.x##_color);            \
+    theme_data.x##_color = dark ? dark_theme_data.x##_color : light_theme_data.x##_color;
+
+    RECREATE(bg)
+    RECREATE(text_1)
+    RECREATE(text_2)
+    RECREATE(listbox_bg)
+    RECREATE(edit_bg)
 }
 
 } // namespace Internal
@@ -998,11 +1045,15 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
  */
 inline void set(Theme theme)
 {
+    const auto prev_dark = Internal::is_dark();
+
     Internal::theme = theme;
 
     using namespace Internal;
 
     const auto dark = is_dark();
+
+    if (dark != prev_dark) update_theme_data(dark);
 
     if (_AllowDarkModeForApp) _AllowDarkModeForApp(dark);
     if (_SetPreferredAppMode) _SetPreferredAppMode(dark ? ForceDark : ForceLight);
@@ -1013,30 +1064,6 @@ inline void set(Theme theme)
     {
         update_window_theme(hwnd, dark);
     }
-}
-
-/**
- * @brief Gets a brush with the correct dark mode background color for listboxes. Useful for owner-drawn listboxes.
- * @return A brush with the correct dark mode background color for listboxes.
- */
-inline HBRUSH get_listbox_bg_brush()
-{
-    using namespace Internal;
-
-    if (!listbox_bg_brush) listbox_bg_brush = CreateSolidBrush(listbox_bg_color);
-    return listbox_bg_brush;
-}
-
-/**
- * @brief Gets a brush with the correct dark mode foreground color for listboxes. Useful for owner-drawn listboxes.
- * @return A brush with the correct dark mode foreground color for listboxes.
- */
-inline HBRUSH get_listbox_fg_brush()
-{
-    using namespace Internal;
-
-    if (!listbox_fg_brush) listbox_fg_brush = CreateSolidBrush(listbox_fg_color);
-    return listbox_fg_brush;
 }
 
 } // namespace WinDarkMode
