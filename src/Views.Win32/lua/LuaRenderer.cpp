@@ -13,9 +13,7 @@
 const auto OVERLAY_CLASS = L"lua_overlay";
 
 static bool s_detached_overlays{};
-static bool d2d_drawing = false;
 static HBRUSH g_alpha_mask_brush;
-static MMRESULT render_timer{};
 
 static std::thread draw_thread;
 static std::atomic<bool> draw_thread_running{false};
