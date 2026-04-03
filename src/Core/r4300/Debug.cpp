@@ -17,6 +17,7 @@ struct Breakpoint
 
 struct DebuggerState
 {
+    std::mutex mtx;
     std::atomic<bool> resumed{true};
     bool advancing{};
     core_dbg_cpu_state cpu_state{};
@@ -49,6 +50,7 @@ void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
 
 CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallback &callback)
 {
+    std::lock_guard lock(s_dbg.mtx);
     CoreBreakpointId id = s_dbg.next_breakpoint_id++;
     s_dbg.breakpoints[address].push_back({id, callback});
     return id;
@@ -56,6 +58,7 @@ CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallb
 
 void dbg_remove_breakpoint(const CoreBreakpointId &id)
 {
+    std::lock_guard lock(s_dbg.mtx);
     for (auto &[address, bps] : s_dbg.breakpoints)
     {
         auto it = std::find_if(bps.begin(), bps.end(), [&](const Breakpoint &bp) { return bp.id == id; });
@@ -69,17 +72,20 @@ void dbg_remove_breakpoint(const CoreBreakpointId &id)
 
 bool dbg_get_resumed()
 {
+    std::lock_guard lock(s_dbg.mtx);
     return s_dbg.resumed;
 }
 
 void dbg_set_resumed(bool value)
 {
+    std::lock_guard lock(s_dbg.mtx);
     if (value) s_dbg.advancing = false;
     s_dbg.resumed = value;
 }
 
 void dbg_step()
 {
+    std::lock_guard lock(s_dbg.mtx);
     s_dbg.advancing = true;
     s_dbg.resumed = true;
 }
