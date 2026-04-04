@@ -1,16 +1,15 @@
 #include "Main_Win32.hpp"
+#include "Config.hpp"
+#include "Config_Win32.hpp"
 #include <Views.Win32/ViewPlugin.h>
 #include <filesystem>
-#include <libloaderapi.h>
-#include <minwindef.h>
-#include <string>
 #include <vector>
-#include <winnt.h>
+#include <windows.h>
 
-HMODULE g_dll_handle = nullptr;
+HINSTANCE g_dll_handle = nullptr;
 std::filesystem::path g_dll_path {};
 
-BOOL __stdcall DllMain(HMODULE hmod, DWORD reason, LPVOID)
+BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
@@ -37,4 +36,9 @@ EXPORT void CALL DllAbout(void *hParent)
                                   L"\n\n"
                                   L"https://github.com/mupen64/mupen64-rr-lua";
     MessageBoxW((HWND)hParent, msg, L"About", 0x00000040L | 0x00000000L);
+}
+
+EXPORT void CALL DllConfig(void* hParent) {
+    SDLAudio::Config cfg {};
+    SDLAudio::show_config_win32((HWND) hParent, cfg);
 }

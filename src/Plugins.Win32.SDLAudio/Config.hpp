@@ -6,15 +6,18 @@
 
 #pragma once
 
+#include <ostream>
 namespace SDLAudio
 {
 struct Config
 {
     uint32_t default_sample_rate = 33600;
-    uint32_t src_buffer_size = 16384;
     uint32_t src_buffer_target = 2048;
-    uint32_t dst_buffer_size = 1024;
     bool swap_channels = false;
-    bool audio_sync = false;
+    bool audio_sync = true;
+
+    // void write_to(std::ostream& out);
+
+    // void read_from(std::istream& in);
 };
 } // namespace SDLAudio
