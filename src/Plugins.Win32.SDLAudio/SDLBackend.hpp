@@ -18,19 +18,19 @@ namespace SDLAudio
 class SDLBackend
 {
   public:
-    SDLBackend(Config&& config);
+    SDLBackend(Config &&config);
 
     ~SDLBackend();
 
-    SDLBackend(const SDLBackend&) = delete;
-    SDLBackend(SDLBackend&&) = delete;
+    SDLBackend(const SDLBackend &) = delete;
+    SDLBackend(SDLBackend &&) = delete;
 
-    SDLBackend& operator=(const SDLBackend&) = delete;
-    SDLBackend& operator=(SDLBackend&&) = delete;
+    SDLBackend &operator=(const SDLBackend &) = delete;
+    SDLBackend &operator=(SDLBackend &&) = delete;
 
     void set_sample_rate(uint32_t sample_rate);
 
-    void push_samples(void* src, size_t len);
+    void push_samples(void *src, size_t len);
 
     void sync_audio();
 
@@ -44,7 +44,7 @@ class SDLBackend
     SDL_AudioSpec m_device_spec;
     int m_buffer_size;
 
-    SDL_AudioStream* m_stream;
+    SDL_AudioStream *m_stream;
     SDL_AudioSpec m_input_spec;
     int m_src_target;
     bool m_paused = true;

@@ -9,4 +9,4 @@ extern core_plugin_extended_funcs *g_ef;
 extern std::filesystem::path g_dll_path;
 
 SDLAudio::Config read_config();
-void write_config(const SDLAudio::Config& config);
+void write_config(const SDLAudio::Config &config);

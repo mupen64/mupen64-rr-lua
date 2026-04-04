@@ -15,12 +15,14 @@
 #include <stdexcept>
 #include <utility>
 
-static void swap_channels(void* data, size_t len) {
+static void swap_channels(void *data, size_t len)
+{
     // This should always be true
     assert(len % 4 == 0);
 
-    auto* end = (uint16_t*)((uint8_t*) data + len);
-    for (auto* ptr = (uint16_t*) data; ptr != end; ptr += 2) {
+    auto *end = (uint16_t *)((uint8_t *)data + len);
+    for (auto *ptr = (uint16_t *)data; ptr != end; ptr += 2)
+    {
         std::swap(ptr[0], ptr[1]);
     }
 }
@@ -82,8 +84,7 @@ void SDLBackend::set_sample_rate(uint32_t sample_rate)
 void SDLBackend::push_samples(void *src, size_t len)
 {
     // words are stored in DRAM in native order; big-endian pairs of samples will be swapped
-    if (m_config.swap_channels ^ (std::endian::native == std::endian::little))
-        swap_channels(src, len);
+    if (m_config.swap_channels ^ (std::endian::native == std::endian::little)) swap_channels(src, len);
     SDL_PutAudioStreamData(m_stream, src, (int)len);
 }
 
@@ -124,8 +125,7 @@ size_t SDLBackend::estimate_dst_frames_at_next_cb()
     // find the current number of available output frames
     uint32_t bytes_per_frame = SDL_AUDIO_BYTESIZE(m_device_spec.format);
     int dst_bytes = SDL_GetAudioStreamAvailable(m_stream);
-    if (dst_bytes < 0)
-        throw std::runtime_error(SDL_GetError());
+    if (dst_bytes < 0) throw std::runtime_error(SDL_GetError());
     uint32_t dst_frames = dst_bytes / bytes_per_frame;
 
     // assume that our audio buffer is filled fast enough to have a full buffer by the next call.

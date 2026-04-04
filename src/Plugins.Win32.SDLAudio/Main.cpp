@@ -25,12 +25,11 @@
 #include <optional>
 #include <stdexcept>
 
-
 static std::optional<core_audio_info> g_audio_info{};
 static std::optional<SDLAudio::SDLBackend> g_backend{};
 core_plugin_extended_funcs *g_ef = nullptr;
 
-std::filesystem::path g_dll_path {}; // currently set in Main_Win32.cpp
+std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 static bool g_sdl_is_init = false;
 
 static const SDL_InitFlags SDL_INIT_NEEDED = SDL_INIT_AUDIO;
@@ -55,32 +54,38 @@ static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
     return vi_clock / (dacrate + 1);
 }
 
-static inline std::filesystem::path config_path() {
+static inline std::filesystem::path config_path()
+{
     return g_dll_path.parent_path() / "sdl-audio.conf.json";
 }
 
-SDLAudio::Config read_config() {
+SDLAudio::Config read_config()
+{
     SDLAudio::Config cfg;
     std::fstream fs(config_path(), std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::ate);
     fs.exceptions(std::ios_base::badbit);
-    
+
     // if the config file was missing or empty, write the default config
-    if (fs.tellg() == 0) {
+    if (fs.tellg() == 0)
+    {
         cfg.write_to(fs);
         return cfg;
     }
 
-    try {
+    try
+    {
         fs.seekg(0, std::ios_base::beg);
         cfg.read_from(fs);
     }
-    catch (const std::invalid_argument&) {
+    catch (const std::invalid_argument &)
+    {
         // if config is invalid, use defaults
         cfg = {};
     }
     return cfg;
 }
-void write_config(const SDLAudio::Config& config) {
+void write_config(const SDLAudio::Config &config)
+{
     std::ofstream fs(config_path());
     fs.exceptions(std::ios_base::badbit);
     config.write_to(fs);
@@ -108,10 +113,9 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 {
-    
+
     auto config_path = g_dll_path.parent_path() / "sdl-audio.conf.json";
     g_audio_info.emplace(Audio_Info);
-    
 
     try
     {

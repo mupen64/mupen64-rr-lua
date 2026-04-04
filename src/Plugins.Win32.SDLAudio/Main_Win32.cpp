@@ -21,7 +21,8 @@ BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
         DWORD gmfn_rc = GetModuleFileNameW(hmod, dll_path_buf.data(), dll_path_buf.size());
 
         // If the buffer isn't long enough, double the buffer size until it fits
-        while (gmfn_rc == dll_path_buf.size()) {
+        while (gmfn_rc == dll_path_buf.size())
+        {
             dll_path_buf.resize(dll_path_buf.size() * 2);
             gmfn_rc = GetModuleFileNameW(hmod, dll_path_buf.data(), dll_path_buf.size());
         }
@@ -40,11 +41,12 @@ EXPORT void CALL DllAbout(void *hParent)
     MessageBoxW((HWND)hParent, msg, L"About", 0x00000040L | 0x00000000L);
 }
 
-EXPORT void CALL DllConfig(void* hParent) {
+EXPORT void CALL DllConfig(void *hParent)
+{
     SDLAudio::Config cfg = read_config();
-    if (SDLAudio::show_config_win32((HWND) hParent, cfg)) {
-        if (g_ef)
-            g_ef->log_info(L"Saving config...");
+    if (SDLAudio::show_config_win32((HWND)hParent, cfg))
+    {
+        if (g_ef) g_ef->log_info(L"Saving config...");
         write_config(cfg);
     }
 }

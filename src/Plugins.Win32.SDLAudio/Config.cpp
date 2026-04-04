@@ -11,8 +11,7 @@ namespace SDLAudio
 void Config::read_from(std::istream &in)
 {
     nlohmann::json j = nlohmann::json::parse(in);
-    if (!j.is_object())
-        throw std::invalid_argument("invalid config");
+    if (!j.is_object()) throw std::invalid_argument("invalid config");
 
     swap_channels = j["swap_channels"];
     sync_audio = j["sync_audio"];
@@ -20,7 +19,7 @@ void Config::read_from(std::istream &in)
 
 void Config::write_to(std::ostream &out) const
 {
-    nlohmann::json j {
+    nlohmann::json j{
         {"swap_channels", swap_channels},
         {"sync_audio", sync_audio},
     };
