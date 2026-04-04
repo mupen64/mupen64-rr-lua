@@ -339,7 +339,8 @@ inline void refresh_titlebar(HWND hwnd, bool dark)
         SetProp(hwnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
     if (_SetWindowCompositionAttribute)
     {
-        WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &dark, sizeof(dark)};
+        BOOL dark2 = dark;
+        WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &dark2, sizeof(dark2)};
         _SetWindowCompositionAttribute(hwnd, &data);
     }
 }
@@ -936,7 +937,8 @@ inline bool is_top_level_window(HWND hwnd)
 inline void update_window_theme(HWND hwnd, bool dark)
 {
     _AllowDarkModeForWindow(hwnd, dark);
-    DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
+    BOOL dark2 = dark;
+    DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark2, sizeof(dark2));
     refresh_titlebar(hwnd, dark);
     update_children(hwnd, dark);
 
