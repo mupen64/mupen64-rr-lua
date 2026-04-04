@@ -10,7 +10,7 @@
 #include <memory/memory.h>
 #include <memory/tlb.h>
 #include <r4300/cop1_helpers.h>
-#include <r4300/debugger.h>
+#include <r4300/Debug.h>
 #include <r4300/exception.h>
 #include <r4300/interrupt.h>
 #include <r4300/macros.h>
@@ -3087,7 +3087,7 @@ void pure_interpreter()
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-        Debugger::on_late_cycle(vr_op, interp_addr);
+        dbg_on_late_cycle(vr_op, interp_addr);
     }
     PC->addr = interp_addr;
 }

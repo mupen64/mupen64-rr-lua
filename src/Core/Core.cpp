@@ -9,7 +9,7 @@
 #include <memory/memory.h>
 #include <memory/pif.h>
 #include <memory/savestates.h>
-#include <r4300/debugger.h>
+#include <r4300/Debug.h>
 #include <r4300/disasm.h>
 #include <r4300/r4300.h>
 #include <r4300/rom.h>
@@ -138,12 +138,8 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.st_do_memory = st_do_memory;
     g_ctx.st_get_undo_savestate = st_get_undo_savestate;
     g_ctx.dbg_get_resumed = dbg_get_resumed;
-    g_ctx.dbg_set_is_resumed = dbg_set_is_resumed;
+    g_ctx.dbg_set_resumed = dbg_set_resumed;
     g_ctx.dbg_step = dbg_step;
-    g_ctx.dbg_get_dma_read_enabled = dbg_get_dma_read_enabled;
-    g_ctx.dbg_set_dma_read_enabled = dbg_set_dma_read_enabled;
-    g_ctx.dbg_get_rsp_enabled = dbg_get_rsp_enabled;
-    g_ctx.dbg_set_rsp_enabled = dbg_set_rsp_enabled;
     g_ctx.dbg_disassemble = dbg_disassemble;
     g_ctx.cht_compile = cht_compile;
     g_ctx.cht_get_override_stack = cht_get_override_stack;

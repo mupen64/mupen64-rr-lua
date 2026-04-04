@@ -112,7 +112,12 @@ static int clear(lua_State *L)
 
     D2D1::ColorF color = D2D_GET_COLOR(L, 1);
 
-    lua->rctx.d2d_render_target_stack.top()->Clear(lua->rctx.presenter->adjust_clear_color(color));
+    // COMPAT: This is really what this did! It just ignores the specified color and uses the mask!
+    // We should probably do something about this hahaha
+    if (g_config.presenter_type == (int32_t)t_config::PresenterType::DirectComposition)
+        lua->rctx.d2d_render_target_stack.top()->Clear(color);
+    else
+        lua->rctx.d2d_render_target_stack.top()->Clear(D2D1::ColorF(LuaRenderer::LUA_GDI_COLOR_MASK));
 
     return 0;
 }

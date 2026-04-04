@@ -42,6 +42,7 @@ struct t_main_context
     bool fast_forward{};
     std::filesystem::path app_path{};
     bool exiting{};
+    bool wine{};
 };
 
 /**

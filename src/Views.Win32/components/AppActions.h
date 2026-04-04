@@ -76,7 +76,6 @@ const std::wstring SEEK_TO_DIRECT = APP + L"Utilities > # Seek...";
 const std::wstring SEEK_TO = APP + L"Utilities > Seek...";
 const std::wstring USAGE_STATISTICS = APP + L"Utilities > Usage Statistics ---";
 const std::wstring CORE_INFORMATION = APP + L"Utilities > Core Information";
-const std::wstring DEBUGGER = APP + L"Utilities > Debugger";
 const std::wstring START_TRACE_LOGGER = APP + L"Utilities > Start Trace Logger...";
 const std::wstring STOP_TRACE_LOGGER = APP + L"Utilities > Stop Trace Logger ---";
 const std::wstring VIDEO_CAPTURE = APP + L"Utilities > Video Capture > ";

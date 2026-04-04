@@ -695,32 +695,12 @@ extern "C"
         /**
          * \brief Sets execution resumed status.
          */
-        std::function<void(bool)> dbg_set_is_resumed;
+        std::function<void(bool)> dbg_set_resumed;
 
         /**
          * Steps execution by one instruction.
          */
         std::function<void()> dbg_step;
-
-        /**
-         * \brief Gets whether DMA reads are allowed. If false, reads should return 0xFF.
-         */
-        std::function<bool()> dbg_get_dma_read_enabled;
-
-        /**
-         * \brief Sets whether DMA reads are allowed.
-         */
-        std::function<void(bool)> dbg_set_dma_read_enabled;
-
-        /**
-         * \brief Gets whether the RSP is enabled.
-         */
-        std::function<bool()> dbg_get_rsp_enabled;
-
-        /**
-         * \brief Sets whether the RSP is enabled.
-         */
-        std::function<void(bool)> dbg_set_rsp_enabled;
 
         /**
          * \brief Disassembles an instruction at a given address.
