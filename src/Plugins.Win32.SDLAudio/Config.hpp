@@ -14,10 +14,10 @@ struct Config
     uint32_t default_sample_rate = 33600;
     uint32_t src_buffer_target = 2048;
     bool swap_channels = false;
-    bool audio_sync = true;
+    bool sync_audio = true;
 
-    // void write_to(std::ostream& out);
+    void write_to(std::ostream& out) const;
 
-    // void read_from(std::istream& in);
+    void read_from(std::istream& in);
 };
 } // namespace SDLAudio

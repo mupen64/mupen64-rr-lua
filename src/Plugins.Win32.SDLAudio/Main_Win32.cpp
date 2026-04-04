@@ -1,13 +1,15 @@
 #include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"
+#include "Main.hpp"
 #include <Views.Win32/ViewPlugin.h>
 #include <filesystem>
+#include <fstream>
+#include <stdexcept>
 #include <vector>
 #include <windows.h>
 
 HINSTANCE g_dll_handle = nullptr;
-std::filesystem::path g_dll_path {};
 
 BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
 {
@@ -39,6 +41,10 @@ EXPORT void CALL DllAbout(void *hParent)
 }
 
 EXPORT void CALL DllConfig(void* hParent) {
-    SDLAudio::Config cfg {};
-    SDLAudio::show_config_win32((HWND) hParent, cfg);
+    SDLAudio::Config cfg = read_config();
+    if (SDLAudio::show_config_win32((HWND) hParent, cfg)) {
+        if (g_ef)
+            g_ef->log_info(L"Saving config...");
+        write_config(cfg);
+    }
 }

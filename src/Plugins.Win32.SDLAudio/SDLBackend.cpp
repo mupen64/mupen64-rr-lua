@@ -96,7 +96,7 @@ void SDLBackend::sync_audio()
     size_t expected_frames = estimate_dst_frames_at_next_cb();
     size_t max_target_frames = m_src_target + ((size_t)m_device_spec.freq * TIME_TOLERANCE_MS / 1000);
 
-    if (m_config.audio_sync && (expected_frames >= max_target_frames))
+    if (m_config.sync_audio && (expected_frames >= max_target_frames))
     {
         // figure out how long we need to delay the core.
         intmax_t wait_clock_period =
