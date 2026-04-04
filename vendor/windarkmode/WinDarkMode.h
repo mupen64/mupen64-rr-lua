@@ -890,8 +890,7 @@ inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         break;
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLOREDIT: {
+    case WM_CTLCOLORBTN: {
         const auto dark = is_dark();
         if (!dark) break;
 
@@ -901,6 +900,17 @@ inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         SetBkColor(hdc, theme_data.bg_color);
 
         return reinterpret_cast<INT_PTR>(theme_data.bg_brush);
+    }
+    case WM_CTLCOLOREDIT: {
+        const auto dark = is_dark();
+        if (!dark) break;
+
+        const auto hdc = reinterpret_cast<HDC>(wParam);
+
+        SetTextColor(hdc, theme_data.text_1_color);
+        SetBkColor(hdc, theme_data.edit_bg_color);
+
+        return reinterpret_cast<INT_PTR>(theme_data.edit_bg_brush);
     }
     default:
         break;
