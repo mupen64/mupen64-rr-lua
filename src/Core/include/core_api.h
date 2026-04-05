@@ -700,22 +700,6 @@ extern "C"
         std::function<void(const CoreBreakpointId &id)> dbg_remove_breakpoint;
 
         /**
-         * \brief Gets whether execution is resumed.
-         */
-        std::function<bool()> dbg_get_resumed;
-
-        /**
-         * \brief Sets execution resumed status.
-         */
-        std::function<void(bool)> dbg_set_resumed;
-
-        /**
-         * \brief Steps execution by one instruction.
-         * \param callback The callback to call when the next instruction is about to be executed.
-         */
-        std::function<void(const CoreBreakpointCallback &callback)> dbg_step;
-
-        /**
          * \brief Disassembles an instruction at a given address.
          * \param state The CPU state to disassemble.
          * \return The disassembled instruction as a string.

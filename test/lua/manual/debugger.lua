@@ -13,15 +13,5 @@ local bp
 bp = debugger.add_breakpoint(2150719408, function(state)
     print('breakpoint hit', state, debugger.disassemble(state))
 
-    debugger.step(function(state)
-        print('stepped (1)', state, debugger.disassemble(state))
-
-        debugger.step(function(state)
-            print('stepped (2)', state, debugger.disassemble(state))
-
-            debugger.resume()
-        end)
-    end)
-
     debugger.remove_breakpoint(bp)
 end)

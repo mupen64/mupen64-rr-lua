@@ -63,34 +63,6 @@ static int remove_breakpoint(lua_State *L)
     return 0;
 }
 
-static int resume(lua_State *L)
-{
-    g_main_ctx.core_ctx->dbg_set_resumed(true);
-    return 0;
-}
-
-static int step(lua_State *L)
-{
-    const auto env = LuaManager::get_environment_for_state(L);
-
-    const auto callback = lua_optcallback(L, 1);
-
-    const auto functor = [=](const core_dbg_cpu_state &state) {
-        if (!callback || !LuaManager::get_environment_for_state(L)) return;
-        lua_pushcallback(L, callback, false);
-        push_cpu_state(L, state);
-        lua_pcall(L, 1, 0, 0);
-
-        lua_freecallback(L, callback);
-        std::erase(env->step_callbacks, callback);
-    };
-
-    g_main_ctx.core_ctx->dbg_step(functor);
-    env->step_callbacks.emplace_back(callback);
-
-    return 0;
-}
-
 static int disassemble(lua_State *L)
 {
     lua_getfield(L, 1, "address");

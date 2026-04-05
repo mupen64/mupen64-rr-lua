@@ -838,6 +838,7 @@ function memory.recompilenextall() end
 
 ---Places a breakpoint at the specified address.
 ---The emulated processor won't pause when it reaches this address. It can be paused manually using [`debugger.pause`](lua://debugger.pause).
+---This function can only be called outside a breakpoint callback.
 ---@param address integer The address to place the breakpoint at.
 ---@param callback BreakpointCallback The callback function to call when the breakpoint is hit.
 ---@return BreakpointId
@@ -846,13 +847,6 @@ function debugger.add_breakpoint(address, callback) end
 ---Removes a breakpoint.
 ---@param id BreakpointId The ID of the breakpoint to remove.
 function debugger.remove_breakpoint(id) end
-
----Resumes the emulated processor.
-function debugger.resume() end
-
----Steps execution by one instruction.
----@param callback BreakpointCallback The callback to call when the next instruction is about to be executed.
-function debugger.step(callback) end
 
 ---Disassembles an instruction based on a CPU state.
 ---@param state CPUState The CPU state to disassemble an instruction from.

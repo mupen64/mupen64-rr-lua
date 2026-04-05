@@ -5,9 +5,10 @@
  */
 
 #include <CommonPCH.h>
+#include <Core.h>
+#include <r4300/r4300.h>
 #include <r4300/Debug.h>
 #include <r4300/disasm.h>
-#include <Core.h>
 
 struct Breakpoint
 {
@@ -17,85 +18,51 @@ struct Breakpoint
 
 struct DebuggerState
 {
-    std::mutex mtx;
-    std::atomic<bool> resumed{true};
-    bool advancing{};
+    std::shared_mutex mtx;
+    std::atomic<uint32_t> breakpoint_count{0};
     core_dbg_cpu_state cpu_state{};
     std::unordered_map<uintptr_t, std::vector<Breakpoint>> breakpoints;
     CoreBreakpointId next_breakpoint_id{0};
-    std::vector<CoreBreakpointCallback> step_callbacks;
 };
 
 static DebuggerState s_dbg{};
 
 void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
 {
-    std::lock_guard lock(s_dbg.mtx); // Deadlocks! Lol! This architecture sucks ^o^
+    if (s_dbg.breakpoint_count == 0) return;
 
-    auto it = s_dbg.breakpoints.find(state.address);
-    if (it != s_dbg.breakpoints.end())
-    {
-        auto bps_copy = it->second;
-        for (const auto &bp : bps_copy)
-        {
-            bp.callback(state);
-        }
-    }
+    std::shared_lock lock(s_dbg.mtx);
+    const auto it = s_dbg.breakpoints.find(state.address);
+    if (it == s_dbg.breakpoints.end()) return;
 
-    if (s_dbg.advancing)
-    {
-        s_dbg.advancing = false;
-        s_dbg.resumed = false;
+    const auto bps_copy = it->second;
+    lock.unlock();
 
-        const auto step_callbacks = s_dbg.step_callbacks;
-        s_dbg.step_callbacks.clear();
-        for (const auto &callback : step_callbacks) callback(state);
-    }
-
-    while (!s_dbg.resumed) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    for (const auto &bp : bps_copy) bp.callback(state);
 }
 
 CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallback &callback)
 {
-    std::lock_guard lock(s_dbg.mtx);
+    std::unique_lock lock(s_dbg.mtx);
     CoreBreakpointId id = s_dbg.next_breakpoint_id++;
     s_dbg.breakpoints[address].push_back({id, callback});
+    s_dbg.breakpoint_count++;
     return id;
 }
 
 void dbg_remove_breakpoint(const CoreBreakpointId &id)
 {
-    std::lock_guard lock(s_dbg.mtx);
+    std::unique_lock lock(s_dbg.mtx);
     for (auto &[address, bps] : s_dbg.breakpoints)
     {
         auto it = std::find_if(bps.begin(), bps.end(), [&](const Breakpoint &bp) { return bp.id == id; });
         if (it != bps.end())
         {
             bps.erase(it);
+            s_dbg.breakpoint_count--;
             break;
         }
     }
-}
-
-bool dbg_get_resumed()
-{
-    std::lock_guard lock(s_dbg.mtx);
-    return s_dbg.resumed;
-}
-
-void dbg_set_resumed(bool value)
-{
-    std::lock_guard lock(s_dbg.mtx);
-    if (value) s_dbg.advancing = false;
-    s_dbg.resumed = value;
-}
-
-void dbg_step(const CoreBreakpointCallback &callback)
-{
-    std::lock_guard lock(s_dbg.mtx);
-    s_dbg.advancing = true;
-    s_dbg.resumed = true;
-    s_dbg.step_callbacks.emplace_back(callback);
 }
 
 std::string dbg_disassemble(const core_dbg_cpu_state &state)
