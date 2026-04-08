@@ -5,12 +5,22 @@
 #include <Views.Win32/ViewPlugin.h>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
+
 #include <windows.h>
-#include <winuser.h>
+#include <winerror.h>
+#include <winnt.h>
+#include <winreg.h>
 
 HINSTANCE g_dll_handle = nullptr;
+
+static constexpr wchar_t CFG_SUBKEY[] = L"Software\\N64 Emulation\\DLL\\TAS Audio";
+static constexpr wchar_t VALUE_CONFIG[] = L"Config";
+static constexpr wchar_t VALUE_VERSION[] = L"Version";
+static constexpr DWORD CUR_CONFIG_VERSION = 1;
 
 BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
 {
@@ -44,10 +54,91 @@ EXPORT void CALL DllAbout(void *hParent)
 
 EXPORT void CALL DllConfig(void *hParent)
 {
-    SDLAudio::Config cfg = read_config();
-    if (SDLAudio::show_config_win32((HWND)hParent, cfg))
+    SDLAudio::Config cfg = win32_read_config();
+    if (SDLAudio::win32_show_config((HWND)hParent, cfg))
     {
         if (g_ef) g_ef->log_info(L"Saving config...");
-        write_config(cfg);
+        win32_write_config(cfg);
     }
+}
+
+namespace
+{
+struct HKEYDelete
+{
+    void operator()(HKEY key) const { RegCloseKey(key); }
+};
+
+using SafeHKEY = std::unique_ptr<std::remove_pointer_t<HKEY>, HKEYDelete>;
+} // namespace
+
+SDLAudio::Config win32_read_config()
+{
+
+    SDLAudio::Config cfg;
+    HKEY key = 0;
+    if (RegOpenKeyEx(HKEY_CURRENT_USER, CFG_SUBKEY, 0, KEY_READ, &key) != ERROR_SUCCESS)
+    {
+        win32_write_config(cfg);
+        return cfg;
+    }
+
+    DWORD type = 0;
+    DWORD size = 0;
+
+    // Versioning system
+    DWORD version = 0;
+    size = sizeof(DWORD);
+    if (RegQueryValueEx(key, VALUE_VERSION, NULL, &type, (BYTE *)&version, &size) != ERROR_SUCCESS || type != REG_DWORD)
+    {
+        RegCloseKey(key);
+        win32_write_config(cfg);
+        return cfg;
+    }
+
+    // Overwrite config with default if version is wrong
+    if (version != CUR_CONFIG_VERSION)
+    {
+        RegCloseKey(key);
+        win32_write_config(cfg);
+        return cfg;
+    }
+
+    // Read the current config
+    if (RegQueryValueEx(key, VALUE_CONFIG, NULL, &type, (BYTE *)&cfg, &size) != ERROR_SUCCESS)
+    {
+        cfg = SDLAudio::Config{};
+        RegCloseKey(key);
+        win32_write_config(cfg);
+        return cfg;
+    }
+    RegCloseKey(key);
+    return cfg;
+}
+void win32_write_config(const SDLAudio::Config &config)
+{
+    HKEY key = 0;
+    if (RegCreateKeyEx(HKEY_CURRENT_USER, CFG_SUBKEY, 0, NULL, 0, KEY_WRITE, NULL, &key, NULL) != ERROR_SUCCESS)
+    {
+        // silently fail, should we try to make an error dialog show up?
+        return;
+    }
+
+    // Set version
+    if (RegSetValueEx(key, VALUE_VERSION, 0, REG_DWORD, (const BYTE *)(&CUR_CONFIG_VERSION), sizeof(DWORD)) !=
+        ERROR_SUCCESS)
+    {
+        RegCloseKey(key);
+        return;
+    }
+
+    // Set data
+    if (RegSetValueExW(key, VALUE_CONFIG, 0, REG_BINARY, (const BYTE *)&config, sizeof(SDLAudio::Config)) !=
+        ERROR_SUCCESS)
+    {
+        RegCloseKey(key);
+        return;
+    }
+
+    RegCloseKey(key);
 }
