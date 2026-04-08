@@ -26,6 +26,6 @@ void ChangeABI(int type); /* type 0 = SafeMode */
 #define MI_INTR_AI 0x04                /* Bit 2: AI intr */
 #define AI_CONTROL_DMA_ON 0x01
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Audio", L"1.0.0")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Audio (Legacy)", L"1.0.0")
 
 extern core_plugin_extended_funcs *g_ef;
