@@ -174,11 +174,6 @@ EXPORT void CALL AiLenChanged(void)
     }
 }
 
-EXPORT uint32_t CALL AiReadLength(void)
-{
-    return 0;
-}
-
 EXPORT void CALL AiUpdate(int32_t wait)
 {
     // no-op

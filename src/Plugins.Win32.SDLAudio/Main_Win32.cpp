@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <vector>
 #include <windows.h>
+#include <winuser.h>
 
 HINSTANCE g_dll_handle = nullptr;
 
@@ -18,13 +19,13 @@ BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
         g_dll_handle = hmod;
 
         std::vector<wchar_t> dll_path_buf(MAX_PATH, L'\0');
-        DWORD gmfn_rc = GetModuleFileNameW(hmod, dll_path_buf.data(), dll_path_buf.size());
+        DWORD gmfn_rc = GetModuleFileName(hmod, dll_path_buf.data(), dll_path_buf.size());
 
         // If the buffer isn't long enough, double the buffer size until it fits
         while (gmfn_rc == dll_path_buf.size())
         {
             dll_path_buf.resize(dll_path_buf.size() * 2);
-            gmfn_rc = GetModuleFileNameW(hmod, dll_path_buf.data(), dll_path_buf.size());
+            gmfn_rc = GetModuleFileName(hmod, dll_path_buf.data(), dll_path_buf.size());
         }
 
         // set the DLL path
@@ -38,7 +39,7 @@ EXPORT void CALL DllAbout(void *hParent)
                                   L"Part of the Mupen64 project family."
                                   L"\n\n"
                                   L"https://github.com/mupen64/mupen64-rr-lua";
-    MessageBoxW((HWND)hParent, msg, L"About", 0x00000040L | 0x00000000L);
+    MessageBox((HWND)hParent, msg, L"About", MB_ICONASTERISK);
 }
 
 EXPORT void CALL DllConfig(void *hParent)

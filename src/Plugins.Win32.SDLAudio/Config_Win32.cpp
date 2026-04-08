@@ -9,7 +9,7 @@
 
 static SDLAudio::Config *g_config_ptr = nullptr;
 
-static __stdcall int config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam)
+static CALLBACK INT_PTR config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
@@ -46,7 +46,7 @@ namespace SDLAudio
 bool show_config_win32(HWND parent, Config &config)
 {
     g_config_ptr = &config;
-    LRESULT res = DialogBoxW(g_dll_handle, MAKEINTRESOURCE(IDD_CONFIG), parent, config_dlgproc);
+    LRESULT res = DialogBoxW(g_dll_handle, MAKEINTRESOURCE(IDD_CONFIG), parent, &config_dlgproc);
     g_config_ptr = nullptr;
 
     return res == IDOK;

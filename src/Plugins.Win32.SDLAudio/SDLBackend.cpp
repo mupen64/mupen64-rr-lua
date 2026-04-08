@@ -73,6 +73,7 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
 
 SDLBackend::~SDLBackend()
 {
+    SDL_DestroyAudioStream(m_stream);
 }
 
 void SDLBackend::set_sample_rate(uint32_t sample_rate)
