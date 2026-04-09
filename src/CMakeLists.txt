@@ -36,7 +36,4 @@ if (MUPEN64RR_BUILD_WIN32)
     add_subdirectory(Plugins.Win32.TASInput)
     add_subdirectory(Plugins.Win32.TASAudio)
     add_subdirectory(Plugins.Win32.TASRSP)
-
-    # Legacy plugins
-    add_subdirectory(Plugins.Win32.TASAudioLegacy)
 endif()
