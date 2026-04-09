@@ -837,7 +837,7 @@ function memory.recompilenextall() end
 ---@alias BreakpointCallback fun(state: CPUState): nil
 
 ---Places a breakpoint at the specified address.
----The emulated processor won't pause when it reaches this address. It can be paused manually using [`debugger.pause`](lua://debugger.pause).
+---The emulated processor won't pause when it reaches this address.
 ---This function can only be called outside a breakpoint callback.
 ---@param address integer The address to place the breakpoint at.
 ---@param callback BreakpointCallback The callback function to call when the breakpoint is hit.
