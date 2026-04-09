@@ -105,7 +105,9 @@ SDLAudio::Config win32_read_config()
     }
 
     // Read the current config
-    if (RegQueryValueEx(key, VALUE_CONFIG, NULL, &type, (BYTE *)&cfg, &size) != ERROR_SUCCESS)
+    size = sizeof(SDLAudio::Config);
+    LSTATUS res = RegQueryValueEx(key, VALUE_CONFIG, NULL, NULL, (BYTE *)&cfg, &size);
+    if (res != ERROR_SUCCESS)
     {
         cfg = SDLAudio::Config{};
         RegCloseKey(key);
