@@ -74,6 +74,19 @@
 					</ul>
 				</details>
 			</li>
+
+			<li>
+				<details>
+					<summary>STROOP</summary>
+					<ul class="z-1 w-40 bg-base-100 p-2">
+						<li>
+							<a href={resolve('/stroop')}>
+								<span>Home</span>
+							</a>
+						</li>
+					</ul>
+				</details>
+			</li>
 		</ul>
 	</div>
 	<div class="navbar-end"></div>
