@@ -50,5 +50,6 @@ class SDLBackend
     bool m_paused = true;
 
     std::chrono::steady_clock::time_point m_last_cb_time;
+    std::chrono::steady_clock::time_point m_block_until_time;
 };
 } // namespace SDLAudio

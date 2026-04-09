@@ -56,7 +56,7 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
 
     // set some vars for audio sync
     m_src_target = std::max((int)config.src_buffer_target, m_buffer_size);
-    m_last_cb_time = std::chrono::steady_clock::now();
+    m_block_until_time = m_last_cb_time = std::chrono::steady_clock::now();
     // setup a callback to track when HW requests samples from us
     if (!SDL_SetAudioStreamGetCallback(
             m_stream,
@@ -84,6 +84,9 @@ void SDLBackend::set_sample_rate(uint32_t sample_rate)
 
 void SDLBackend::push_samples(void *src, size_t len)
 {
+    // if we are waiting for audio to catch up, just ignore these samples
+    if (std::chrono::steady_clock::now() < m_block_until_time)
+        return;
     // words are stored in DRAM in native order; big-endian pairs of samples will be swapped
     if (m_config.swap_channels ^ (std::endian::native == std::endian::little)) swap_channels(src, len);
     SDL_PutAudioStreamData(m_stream, src, (int)len);
@@ -91,23 +94,32 @@ void SDLBackend::push_samples(void *src, size_t len)
 
 void SDLBackend::sync_audio()
 {
-    constexpr size_t TIME_TOLERANCE_MS = 10;
+    constexpr size_t time_tolerance_ms = 10;
     namespace chr = std::chrono;
     using clock_frac = std::chrono::steady_clock::period;
 
     size_t expected_frames = estimate_dst_frames_at_next_cb();
-    size_t max_target_frames = m_src_target + ((size_t)m_device_spec.freq * TIME_TOLERANCE_MS / 1000);
+    size_t max_target_frames = m_src_target + ((size_t)m_device_spec.freq * time_tolerance_ms / 1000);
 
-    if (m_config.sync_audio && (expected_frames >= max_target_frames))
+    if (expected_frames >= max_target_frames)
     {
         // figure out how long we need to delay the core.
         intmax_t wait_clock_period =
             ((expected_frames - m_src_target) * clock_frac::den) / ((intmax_t)m_device_spec.freq * clock_frac::num);
         auto wait_duration = chr::steady_clock::duration(wait_clock_period);
 
-        // If the core is ahead, have it wait here to sync up with the audio.
         set_paused(false);
-        std::this_thread::sleep_for(wait_duration);
+
+        if (m_config.sync_audio)
+        {
+            // throttle the core here to sync up with the audio.
+            std::this_thread::sleep_for(wait_duration);
+        }
+        else
+        {
+            // block audio until the wait time is up
+            m_block_until_time = chr::steady_clock::now() + wait_duration;
+        }
     }
     else
     {
