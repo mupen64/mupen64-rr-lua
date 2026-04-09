@@ -5,11 +5,9 @@
 #include <windows.h>
 #include <windowsx.h>
 
-
-
 static SDLAudio::Config *g_config_ptr = nullptr;
 
-static CALLBACK INT_PTR config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam)
+static CALLBACK INT_PTR config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPARAM)
 {
     switch (msg)
     {

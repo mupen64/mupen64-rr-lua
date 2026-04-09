@@ -14,7 +14,7 @@ struct Config
     uint32_t default_sample_rate = 33600;
     uint32_t src_buffer_target = 2048;
     bool swap_channels = false;
-    bool sync_audio = true;
+    bool sync_audio = false;
 
     void write_to(std::ostream &out) const;
 
