@@ -30,9 +30,9 @@ static CALLBACK INT_PTR config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPA
             Trackbar_SetRangeMin(idc_volume, 0);
             Trackbar_SetRangeMax(idc_volume, 100);
             Trackbar_SetTickFreq(idc_volume, 10);
-            Trackbar_SetPos(idc_volume, (DWORD) g_config_ptr->volume_pct);
+            Trackbar_SetPos(idc_volume, (DWORD)g_config_ptr->volume_pct);
         }
-        SetDlgItemText(dialog, IDC_VOLUME_TXT, std::format(L"{}%", (DWORD) g_config_ptr->volume_pct).c_str());
+        SetDlgItemText(dialog, IDC_VOLUME_TXT, std::format(L"{}%", (DWORD)g_config_ptr->volume_pct).c_str());
 
         break;
     case WM_CLOSE: // "close" button clicked

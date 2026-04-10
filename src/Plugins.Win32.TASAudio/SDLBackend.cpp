@@ -78,7 +78,8 @@ SDLBackend::~SDLBackend()
     SDL_DestroyAudioStream(m_stream);
 }
 
-void SDLBackend::merge_cfg_live(const Config& config2) {
+void SDLBackend::merge_cfg_live(const Config &config2)
+{
     m_config.volume_pct = config2.volume_pct;
     update_cfg_live();
 }
@@ -92,8 +93,7 @@ void SDLBackend::set_sample_rate(uint32_t sample_rate)
 void SDLBackend::push_samples(void *src, size_t len)
 {
     // if we are waiting for audio to catch up, just ignore these samples
-    if (std::chrono::steady_clock::now() < m_block_until_time)
-        return;
+    if (std::chrono::steady_clock::now() < m_block_until_time) return;
     // words are stored in DRAM in native order; big-endian pairs of samples will be swapped
     if (m_config.swap_channels ^ (std::endian::native == std::endian::little)) swap_channels(src, len);
     SDL_PutAudioStreamData(m_stream, src, (int)len);
@@ -136,8 +136,9 @@ void SDLBackend::sync_audio()
     }
 }
 
-void SDLBackend::update_cfg_live() {
-    SDL_SetAudioStreamGain(m_stream, ((float) m_config.volume_pct) / 100.0f);
+void SDLBackend::update_cfg_live()
+{
+    SDL_SetAudioStreamGain(m_stream, ((float)m_config.volume_pct) / 100.0f);
 }
 
 size_t SDLBackend::estimate_dst_frames_at_next_cb()

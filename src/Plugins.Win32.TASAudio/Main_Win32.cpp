@@ -59,8 +59,7 @@ EXPORT void CALL DllConfig(void *hParent)
     {
         if (g_ef) g_ef->log_info(L"Saving config...");
         win32_write_config(cfg);
-        if (g_backend.has_value())
-            g_backend->merge_cfg_live(cfg);
+        if (g_backend.has_value()) g_backend->merge_cfg_live(cfg);
     }
 }
 

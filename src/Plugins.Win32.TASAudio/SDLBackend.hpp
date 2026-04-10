@@ -46,7 +46,7 @@ class SDLBackend
     void update_cfg_live();
 
     // Note: frame = pair of L/R samples.
-    // For sync/blocking, estimates how many output frames will be available 
+    // For sync/blocking, estimates how many output frames will be available
     // by the next audio callback.
     size_t estimate_dst_frames_at_next_cb();
 

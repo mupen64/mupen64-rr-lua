@@ -15,16 +15,12 @@ void Config::read_from(std::istream &in)
 
     swap_channels = j["swap_channels"];
     sync_audio = j["sync_audio"];
-    volume_pct = (uint32_t) j["volume_db"];
+    volume_pct = (uint32_t)j["volume_db"];
 }
 
 void Config::write_to(std::ostream &out) const
 {
-    nlohmann::json j{
-        {"swap_channels", swap_channels},
-        {"sync_audio", sync_audio},
-        {"volume_db", (uint32_t) volume_pct}
-    };
+    nlohmann::json j{{"swap_channels", swap_channels}, {"sync_audio", sync_audio}, {"volume_db", (uint32_t)volume_pct}};
 
     auto old_flags = out.flags();
     out << std::setw(2) << j << '\n';
