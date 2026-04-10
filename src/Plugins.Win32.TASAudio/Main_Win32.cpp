@@ -59,18 +59,10 @@ EXPORT void CALL DllConfig(void *hParent)
     {
         if (g_ef) g_ef->log_info(L"Saving config...");
         win32_write_config(cfg);
+        if (g_backend.has_value())
+            g_backend->merge_cfg_live(cfg);
     }
 }
-
-namespace
-{
-struct HKEYDelete
-{
-    void operator()(HKEY key) const { RegCloseKey(key); }
-};
-
-using SafeHKEY = std::unique_ptr<std::remove_pointer_t<HKEY>, HKEYDelete>;
-} // namespace
 
 SDLAudio::Config win32_read_config()
 {

@@ -27,7 +27,7 @@
 #include <stdexcept>
 
 static std::optional<core_audio_info> g_audio_info{};
-static std::optional<SDLAudio::SDLBackend> g_backend{};
+std::optional<SDLAudio::SDLBackend> g_backend{};
 core_plugin_extended_funcs *g_ef = nullptr;
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp

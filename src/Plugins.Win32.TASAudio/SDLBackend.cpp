@@ -33,7 +33,6 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
 {
 
     // request default audio settings
-
     m_device_id = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
     if (!m_device_id) throw std::runtime_error(SDL_GetError());
 
@@ -69,11 +68,19 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     {
         throw std::runtime_error(SDL_GetError());
     }
+
+    // update the live settings
+    update_cfg_live();
 }
 
 SDLBackend::~SDLBackend()
 {
     SDL_DestroyAudioStream(m_stream);
+}
+
+void SDLBackend::merge_cfg_live(const Config& config2) {
+    m_config.volume_pct = config2.volume_pct;
+    update_cfg_live();
 }
 
 void SDLBackend::set_sample_rate(uint32_t sample_rate)
@@ -98,6 +105,7 @@ void SDLBackend::sync_audio()
     namespace chr = std::chrono;
     using clock_frac = std::chrono::steady_clock::period;
 
+    // determine how many frames we expect by the next audio callback, and also, how many frames we want to have
     size_t expected_frames = estimate_dst_frames_at_next_cb();
     size_t max_target_frames = m_src_target + ((size_t)m_device_spec.freq * time_tolerance_ms / 1000);
 
@@ -126,6 +134,10 @@ void SDLBackend::sync_audio()
         // pause if we don't have enough audio.
         set_paused(expected_frames < m_buffer_size);
     }
+}
+
+void SDLBackend::update_cfg_live() {
+    SDL_SetAudioStreamGain(m_stream, ((float) m_config.volume_pct) / 100.0f);
 }
 
 size_t SDLBackend::estimate_dst_frames_at_next_cb()

@@ -28,15 +28,29 @@ class SDLBackend
     SDLBackend &operator=(const SDLBackend &) = delete;
     SDLBackend &operator=(SDLBackend &&) = delete;
 
+    // Merges newly set config settings that can be set live.
+    void merge_cfg_live(const Config &config2);
+
+    // Sets the sample rate.
     void set_sample_rate(uint32_t sample_rate);
 
+    // Tries to add new samples. Note that this may do nothing
+    // if the sample buffer is already too full.
     void push_samples(void *src, size_t len);
 
+    // Performs audio syncing/blocking.
     void sync_audio();
 
   private:
+    // Updates any config settings that can be adjusted live.
+    void update_cfg_live();
+
+    // Note: frame = pair of L/R samples.
+    // For sync/blocking, estimates how many output frames will be available 
+    // by the next audio callback.
     size_t estimate_dst_frames_at_next_cb();
 
+    // Pauses/unpauses the audio stream.
     void set_paused(bool paused);
 
     Config m_config;
