@@ -15,6 +15,7 @@ struct Config
     uint32_t src_buffer_target = 2048;
     bool swap_channels = false;
     bool sync_audio = false;
+    uint8_t volume_pct = 100;
 
     void write_to(std::ostream &out) const;
 
