@@ -20,6 +20,6 @@
 
 The easiest way to get started using Mupen64 is by visiting the [Mupen64 Homepage](https://mupen64.com) and downloading the repack there.
 
-If any issues arise or you need help, join the [Mupen64 Community Discord](https://discord.gg/eZXbmguKEq).
+If any issues arise or you need help, join the [Mupen64 Community Discord](https://discord.gg/hFANcme32k).
 
 Cutting-edge features with potential instability are available for download as a zipped binary under the latest commit's artifact.
