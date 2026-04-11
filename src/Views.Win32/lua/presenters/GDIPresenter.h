@@ -28,9 +28,9 @@ class GDIPresenter : public Presenter
   private:
     D2D1_SIZE_U m_size{};
     HWND m_hwnd = nullptr;
-    ID2D1Factory *m_d2d_factory = nullptr;
-    ID2D1DCRenderTarget *m_d2d_render_target = nullptr;
     HDC m_gdi_back_dc = nullptr;
     HBITMAP m_gdi_bmp = nullptr;
     COLORREF m_mask_color{};
+    Microsoft::WRL::ComPtr<ID2D1Factory> m_d2d_factory;
+    Microsoft::WRL::ComPtr<ID2D1DCRenderTarget> m_d2d_render_target;
 };

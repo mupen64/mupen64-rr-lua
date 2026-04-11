@@ -9,7 +9,6 @@
 #include <Plugin.h>
 #include <Messenger.h>
 
-using Microsoft::WRL::ComPtr;
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8X8_UNORM;
 constexpr float CLEAR_COLOR[4] = {0, 0, 0, 1};

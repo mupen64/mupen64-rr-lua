@@ -7,7 +7,10 @@
 -- Disables potentially dangerous APIs.
 
 local function warn_trust(func_name)
-    print(string.format("Blocked call to '%s': this function is dangerous and not allowed in untrusted Lua environments. To enable it, turn on 'Trusted Mode' from the 'Start' dropdown.", func_name))
+    print(string.format('This Lua script called the potentially malicious function \'%s\'.',
+        func_name))
+    print(
+        'If you\'re sure this script is safe, you can allow it to execute with elevated permissions by enabling \'Trusted Mode\' from the \'Start\' dropdown.')
 end
 
 os.execute = function()

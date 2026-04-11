@@ -60,6 +60,7 @@ extern "C"
 #include <ranges>
 #include <set>
 #include <cwctype>
+using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
 #include <Loggers.h>
