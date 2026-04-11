@@ -149,7 +149,7 @@ size_t SDLBackend::estimate_dst_frames_at_next_cb()
     auto now = chr::steady_clock::now();
 
     // find the current number of available output frames
-    uint32_t bytes_per_frame = SDL_AUDIO_BYTESIZE(m_device_spec.format);
+    uint32_t bytes_per_frame = SDL_AUDIO_BYTESIZE(m_device_spec.format) * m_device_spec.channels;
     int dst_bytes = SDL_GetAudioStreamAvailable(m_stream);
     if (dst_bytes < 0) throw std::runtime_error(SDL_GetError());
     uint32_t dst_frames = dst_bytes / bytes_per_frame;
