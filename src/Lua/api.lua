@@ -1066,7 +1066,7 @@ function wgui.resetclip() end
 ---@field srcy1 integer? The y-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
 ---@field srcx2 integer? The x-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcx1` plus the natural width of the image is assumed.
 ---@field srcy2 integer? The y-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcy1` plus the natural height of the image is assumed.
----@field color D2DColor? The color to tint the image with. If `nil`, the image is drawn without tinting. The alpha component of the color is treated as the opacity.
+---@field color D2DColor? The color to tint the image with. The RGB components are treated as multipliers, and the alpha component is treated as the opacity. If `nil`, the image is drawn without tinting.
 ---@field interpolation integer? The interpolation mode to use. 0: nearest neighbor, 1|nil: linear.
 
 ---Gets the target frequency of the `emu.atdrawd2d` and `emu.atupdatescreen` callbacks in FPS.
