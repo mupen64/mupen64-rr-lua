@@ -36,7 +36,7 @@ static int add_breakpoint(lua_State *L)
     };
 
     const auto id = g_main_ctx.core_ctx->dbg_add_breakpoint(
-        address, [=](const core_dbg_cpu_state &state) { g_main_ctx.dispatcher->invoke([&] { functor(state); }); });
+        address, [=](const core_dbg_cpu_state &state) { g_main_ctx.dispatcher->invoke([=] { functor(state); }); });
 
     env->active_breakpoints.emplace_back(std::make_pair(id, callback));
 
