@@ -534,23 +534,6 @@ static int free_image(lua_State *L)
     return 0;
 }
 
-static int draw_image(lua_State *L)
-{
-    auto lua = LuaManager::get_environment_for_state(L);
-    LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
-
-    D2D1_RECT_F destination_rectangle = D2D_GET_RECT(L, 1);
-    D2D1_RECT_F source_rectangle = D2D_GET_RECT(L, 5);
-    float opacity = luaL_checknumber(L, 9);
-    int interpolation = luaL_checkinteger(L, 10);
-    auto bmp = (ID2D1Bitmap *)luaL_checkinteger(L, 11);
-
-    lua->rctx.d2d_render_target_stack.top()->DrawBitmap(
-        bmp, destination_rectangle, opacity, (D2D1_BITMAP_INTERPOLATION_MODE)interpolation, source_rectangle);
-
-    return 0;
-}
-
 static int draw_image2(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
