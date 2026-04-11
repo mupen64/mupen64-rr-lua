@@ -9,4 +9,4 @@ extern HINSTANCE g_dll_handle;
 SDLAudio::Config win32_read_config();
 
 // Writes config info to the Win32 registry.
-void win32_write_config(const SDLAudio::Config &config);
+void win32_write_config(const SDLAudio::Config &cfg);

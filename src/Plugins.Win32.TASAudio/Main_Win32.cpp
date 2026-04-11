@@ -1,13 +1,12 @@
 #include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"
+#include "IOUtils.h"
 #include "Main.hpp"
 #include <Views.Win32/ViewPlugin.h>
 #include <filesystem>
-#include <fstream>
-#include <memory>
-#include <stdexcept>
-#include <type_traits>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include <windows.h>
@@ -76,11 +75,13 @@ SDLAudio::Config win32_read_config()
 
     DWORD type = 0;
     DWORD size = 0;
+    LSTATUS res = ERROR_SUCCESS;
 
     // Versioning system
     DWORD version = 0;
     size = sizeof(DWORD);
-    if (RegQueryValueEx(key, VALUE_VERSION, NULL, &type, (BYTE *)&version, &size) != ERROR_SUCCESS || type != REG_DWORD)
+    res = RegQueryValueEx(key, VALUE_VERSION, NULL, &type, (BYTE *)&version, &size);
+    if (res != ERROR_SUCCESS || type != REG_DWORD)
     {
         RegCloseKey(key);
         win32_write_config(cfg);
@@ -95,9 +96,20 @@ SDLAudio::Config win32_read_config()
         return cfg;
     }
 
-    // Read the current config
-    size = sizeof(SDLAudio::Config);
-    LSTATUS res = RegQueryValueEx(key, VALUE_CONFIG, NULL, NULL, (BYTE *)&cfg, &size);
+    // Determine length of current config string
+    size = 0;
+    res = RegQueryValueExW(key, VALUE_CONFIG, NULL, &type, NULL, &size);
+    if (res != ERROR_SUCCESS || type != REG_SZ)
+    {
+        cfg = SDLAudio::Config{};
+        RegCloseKey(key);
+        win32_write_config(cfg);
+        return cfg;
+    }
+
+    // Read config UTF-16 JSON
+    std::wstring cfg_wstr(size / sizeof(wchar_t), L'\0');
+    res = RegQueryValueEx(key, VALUE_CONFIG, NULL, NULL, (BYTE *)cfg_wstr.data(), &size);
     if (res != ERROR_SUCCESS)
     {
         cfg = SDLAudio::Config{};
@@ -105,10 +117,23 @@ SDLAudio::Config win32_read_config()
         win32_write_config(cfg);
         return cfg;
     }
+
+    // convert to UTF-8 and read into config
+    try {
+        std::stringstream sstr(IOUtils::to_utf8_string(cfg_wstr));
+        cfg.read_from(sstr);
+    }
+    catch (const std::exception& e) {
+        cfg = SDLAudio::Config{};
+        RegCloseKey(key);
+        win32_write_config(cfg);
+        return cfg;
+    }
+
     RegCloseKey(key);
     return cfg;
 }
-void win32_write_config(const SDLAudio::Config &config)
+void win32_write_config(const SDLAudio::Config &cfg)
 {
     HKEY key = 0;
     if (RegCreateKeyEx(HKEY_CURRENT_USER, CFG_SUBKEY, 0, NULL, 0, KEY_WRITE, NULL, &key, NULL) != ERROR_SUCCESS)
@@ -125,8 +150,16 @@ void win32_write_config(const SDLAudio::Config &config)
         return;
     }
 
-    // Set data
-    if (RegSetValueExW(key, VALUE_CONFIG, 0, REG_BINARY, (const BYTE *)&config, sizeof(SDLAudio::Config)) !=
+    // convert data to UTF-16 JSON
+    std::wstring cfg_wstr;
+    {
+        std::stringstream sstr;
+        cfg.write_to(sstr);
+        cfg_wstr = IOUtils::to_wide_string(sstr.str());
+    }
+
+    // write UTF-16 JSON
+    if (RegSetValueExW(key, VALUE_CONFIG, 0, REG_SZ, (const BYTE *)cfg_wstr.c_str(), (cfg_wstr.size() + 1) * sizeof(wchar_t)) !=
         ERROR_SUCCESS)
     {
         RegCloseKey(key);
