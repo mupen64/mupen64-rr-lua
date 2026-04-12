@@ -103,8 +103,8 @@ endif()
 # setup a few last values for vcpkg
 set(VCPKG_TARGET_TRIPLET "${_vs_target_arch}-windows${_vcpkg_static_suffix}${_vcpkg_san_suffix}" CACHE INTERNAL "target triplet for vcpkg")
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/vcpkg-triplets")
-set(VCPKG_APPLOCAL_DEPS CACHE BOOL "Automatically copy dependencies into the output directory for executables." OFF)
 message(STATUS "VS architecture set to: ${_vs_target_arch}")
 
 # hand off the rest to vcpkg
 include(${MUPEN64RR_VCPKG_TOOLCHAIN})
+set(VCPKG_APPLOCAL_DEPS OFF CACHE BOOL "Automatically copy dependencies into the output directory for executables." FORCE)
