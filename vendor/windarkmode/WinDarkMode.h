@@ -946,7 +946,7 @@ inline void update_window_theme(HWND hwnd, bool dark)
     if (prev_brush && prev_brush != theme_data.bg_brush) DeleteObject(prev_brush);
     SetClassLongPtr(hwnd, GCLP_HBRBACKGROUND, (LONG_PTR)theme_data.bg_brush);
 
-    InvalidateRect(hwnd, nullptr, false);
+    RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 }
 
 inline void update_theme_data(bool dark)
