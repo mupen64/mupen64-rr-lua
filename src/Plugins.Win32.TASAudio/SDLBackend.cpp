@@ -5,6 +5,7 @@
  */
 
 #include "SDLBackend.hpp"
+#include "Main.hpp"
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_error.h>
 #include <algorithm>
@@ -12,7 +13,10 @@
 #include <cassert>
 #include <chrono>
 #include <cstdint>
+#include <format>
+#include <iterator>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 static void swap_channels(void *data, size_t len)
@@ -50,18 +54,35 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     if (!m_stream) throw std::runtime_error(SDL_GetError());
     if (!SDL_BindAudioStream(m_device_id, m_stream)) throw std::runtime_error(SDL_GetError());
 
+    g_ef->log_info(std::format(L"Opened default audio device, buffer size = {}, target = {}", m_buffer_size,
+                               config.src_buffer_target)
+                       .c_str());
+
     // Pause the stream initially.
     set_paused(true);
 
     // set some vars for audio sync
     m_src_target = std::max((int)config.src_buffer_target, m_buffer_size);
+
+    // Buffer to inject silence when needed
+    m_silence_buf = std::vector<uint8_t>((m_src_target * m_input_spec.freq / m_device_spec.freq) * 2, 0);
+
+    // timestamps for audio sync
     m_block_until_time = m_last_cb_time = std::chrono::steady_clock::now();
     // setup a callback to track when HW requests samples from us
     if (!SDL_SetAudioStreamGetCallback(
             m_stream,
-            [](void *userdata, SDL_AudioStream * /*stream*/, int /*additional_amount*/, int /*total_amount*/) {
+            [](void *userdata, SDL_AudioStream * stream, int additional_amount, int /*total_amount*/) {
                 auto *self = (SDLBackend *)userdata;
 
+                if (additional_amount > 0)
+                {
+                    // If we don't have enough sound data queued up, just inject silence
+                    if (additional_amount > self->m_silence_buf.size()) {
+                        self->m_silence_buf.resize(additional_amount);
+                    }
+                    SDL_PutAudioStreamData(stream, self->m_silence_buf.data(), (int) self->m_silence_buf.size());
+                }
                 self->m_last_cb_time = std::chrono::steady_clock::now();
             },
             this))
@@ -76,6 +97,7 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
 SDLBackend::~SDLBackend()
 {
     SDL_DestroyAudioStream(m_stream);
+    SDL_CloseAudioDevice(m_device_id);
 }
 
 void SDLBackend::merge_cfg_live(const Config &config2)
@@ -93,7 +115,7 @@ void SDLBackend::set_sample_rate(uint32_t sample_rate)
 void SDLBackend::push_samples(void *src, size_t len)
 {
     // if we are waiting for audio to catch up, just ignore these samples
-    if (std::chrono::steady_clock::now() < m_block_until_time) return;
+    if (std::chrono::steady_clock::now() < m_block_until_time.load()) return;
     // words are stored in DRAM in native order; big-endian pairs of samples will be swapped
     if (m_config.swap_channels ^ (std::endian::native == std::endian::little)) swap_channels(src, len);
     SDL_PutAudioStreamData(m_stream, src, (int)len);
@@ -101,7 +123,7 @@ void SDLBackend::push_samples(void *src, size_t len)
 
 void SDLBackend::sync_audio()
 {
-    constexpr size_t time_tolerance_ms = 10;
+    constexpr size_t time_tolerance_ms = 30;
     namespace chr = std::chrono;
     using clock_frac = std::chrono::steady_clock::period;
 
@@ -132,7 +154,8 @@ void SDLBackend::sync_audio()
     else
     {
         // pause if we don't have enough audio.
-        set_paused(expected_frames < m_buffer_size);
+        bool need_more_frames = expected_frames < m_buffer_size;
+        set_paused(need_more_frames);
     }
 }
 
@@ -158,7 +181,7 @@ size_t SDLBackend::estimate_dst_frames_at_next_cb()
     // we can use this to estimate when the next call should be.
     intmax_t time_to_next_call =
         ((intmax_t)m_buffer_size * clock_frac::den) / ((intmax_t)m_device_spec.freq * clock_frac::num);
-    auto predicted_next_cb_time = m_last_cb_time + chr::steady_clock::duration(time_to_next_call);
+    auto predicted_next_cb_time = m_last_cb_time.load() + chr::steady_clock::duration(time_to_next_call);
 
     // if there's still time to go, count in however many samples should be added between now and callback time
     if (now < predicted_next_cb_time)

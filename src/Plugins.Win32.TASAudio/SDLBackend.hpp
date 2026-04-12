@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 
 #include <SDL3/SDL_audio.h>
@@ -14,6 +15,8 @@
 
 namespace SDLAudio
 {
+
+using Timepoint = std::chrono::steady_clock::time_point;
 
 class SDLBackend
 {
@@ -63,7 +66,9 @@ class SDLBackend
     int m_src_target;
     bool m_paused = true;
 
-    std::chrono::steady_clock::time_point m_last_cb_time;
-    std::chrono::steady_clock::time_point m_block_until_time;
+    std::vector<uint8_t> m_silence_buf;
+
+    std::atomic<Timepoint> m_last_cb_time;
+    std::atomic<Timepoint> m_block_until_time;
 };
 } // namespace SDLAudio
