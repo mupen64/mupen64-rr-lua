@@ -48,8 +48,11 @@
 #include <dwmapi.h>
 #include <winerror.h>
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #ifndef _UNICODE
 #error WinDarkMode requires a Unicode build.
@@ -91,8 +94,8 @@ constexpr ThemeData dark_theme_data = {.bg_color = RGB(56, 56, 56),
                                        .text_2_color = RGB(0, 0, 0),
                                        .listbox_bg_color = RGB(30, 30, 30),
                                        .edit_bg_color = RGB(30, 30, 30),
-                                       .tab_normal_color = RGB(243, 243, 243),
-                                       .tab_hover_color = RGB(249, 249, 249)};
+                                       .tab_normal_color = RGB(80, 80, 80),
+                                       .tab_hover_color = RGB(95, 95, 95)};
 
 inline ThemeData theme_data = light_theme_data;
 
@@ -225,9 +228,6 @@ inline Theme theme = Theme::Light;
 inline std::unordered_set<HWND> attached_windows;
 inline bool dark_mode_supported = false;
 inline DWORD build_number = 0;
-inline HBRUSH bg_brush = nullptr;
-inline HBRUSH listbox_bg_brush = nullptr;
-inline HBRUSH listbox_fg_brush = nullptr;
 
 template <typename T, typename T1, typename T2> inline constexpr T rva_to_va(T1 base, T2 rva)
 {
@@ -366,10 +366,18 @@ inline void patch_scrollbar(bool dark)
     if (!comctl_mod) return;
 
     const auto addr = find_delay_load_thunk_in_module(comctl_mod, "uxtheme.dll", 49); // OpenNcThemeData
-    if (!addr) return;
+    if (!addr)
+    {
+        FreeLibrary(comctl_mod);
+        return;
+    }
 
     DWORD prev_protect;
-    if (!VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), PAGE_READWRITE, &prev_protect)) return;
+    if (!VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), PAGE_READWRITE, &prev_protect))
+    {
+        FreeLibrary(comctl_mod);
+        return;
+    }
 
     if (!original_open_nc_theme_data) original_open_nc_theme_data = addr->u1.Function;
 
@@ -392,6 +400,7 @@ inline void patch_scrollbar(bool dark)
     }
 
     VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), prev_protect, &prev_protect);
+    FreeLibrary(comctl_mod);
 }
 
 inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
@@ -443,10 +452,7 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
             if (!IntersectRect(&rcIntersect, &ps.rcPaint, &dis.rcItem)) continue;
 
             const bool selected = (i == nSelTab);
-            const COLORREF tabBg = selected ? RGB(0x50, 0x50, 0x50) : theme_data.bg_color;
-            HBRUSH tabBrush = CreateSolidBrush(tabBg);
-            FillRect(hdc, &dis.rcItem, tabBrush);
-            DeleteObject(tabBrush);
+            FillRect(hdc, &dis.rcItem, selected ? theme_data.tab_normal_brush : theme_data.bg_brush);
 
             wchar_t label[256]{};
             TCITEMW tci{};
@@ -536,8 +542,7 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         SIZE text_size{};
         GetTextExtentPoint32W(hdc, label, static_cast<int>(wcslen(label)), &text_size);
 
-        if (!bg_brush) bg_brush = CreateSolidBrush(theme_data.bg_color);
-        FillRect(hdc, &rc, bg_brush);
+        FillRect(hdc, &rc, theme_data.bg_brush);
 
         RECT frame_rc = rc;
         frame_rc.top += text_y_offset;
@@ -554,7 +559,7 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         {
             const int text_x = rc.left + 9;
             RECT clear_rc = {text_x - text_padding, rc.top, text_x + text_size.cx + text_padding, rc.top + tm.tmHeight};
-            FillRect(hdc, &clear_rc, bg_brush);
+            FillRect(hdc, &clear_rc, theme_data.bg_brush);
 
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, theme_data.text_1_color);
@@ -593,8 +598,7 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
         RECT rc_client{};
         GetClientRect(hwnd, &rc_client);
 
-        if (!bg_brush) bg_brush = CreateSolidBrush(theme_data.bg_color);
-        FillRect(hdc, &rc_client, bg_brush);
+        FillRect(hdc, &rc_client, theme_data.bg_brush);
 
         const int part_count = static_cast<int>(SendMessage(hwnd, SB_GETPARTS, 0, 0));
 
@@ -629,7 +633,7 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
             RECT rc_intersect{};
             if (!IntersectRect(&rc_intersect, &ps.rcPaint, &rc_part)) continue;
 
-            FillRect(hdc, &rc_part, bg_brush);
+            FillRect(hdc, &rc_part, theme_data.bg_brush);
 
             const bool is_last_part = (i == part_count - 1);
             if (!is_last_part)
@@ -711,14 +715,16 @@ inline void update_listview(HWND lv_hwnd, bool dark)
     HWND hdr_hwnd = ListView_GetHeader(lv_hwnd);
     _AllowDarkModeForWindow(hdr_hwnd, dark);
 
-    auto ctx = new ListViewContext{};
-    if (dark)
-        SetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(ctx));
-    else
-        RemoveWindowSubclass(lv_hwnd, listview_subclass_proc, 0);
+    DWORD_PTR old_data = 0;
+    if (GetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, &old_data))
+        delete reinterpret_cast<ListViewContext *>(old_data);
 
+    ListViewContext *ctx = nullptr;
     if (dark)
     {
+        ctx = new ListViewContext{};
+        SetWindowSubclass(lv_hwnd, listview_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(ctx));
+
         // FIXME: We force grid lines off because they look absolutely brutal in dark mode. Maybe we can override them?
         const auto ex_style = ListView_GetExtendedListViewStyle(lv_hwnd);
         ListView_SetExtendedListViewStyle(lv_hwnd, ex_style & ~LVS_EX_GRIDLINES);
@@ -731,6 +737,7 @@ inline void update_listview(HWND lv_hwnd, bool dark)
     }
     else
     {
+        RemoveWindowSubclass(lv_hwnd, listview_subclass_proc, 0);
         SetWindowTheme(hdr_hwnd, nullptr, nullptr);
         SetWindowTheme(lv_hwnd, nullptr, nullptr);
     }
@@ -748,11 +755,14 @@ inline void update_listview(HWND lv_hwnd, bool dark)
         CloseThemeData(hTheme);
     }
 
-    hTheme = OpenThemeData(hdr_hwnd, L"Header");
-    if (hTheme)
+    if (ctx)
     {
-        GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(ctx->hdr_text_color));
-        CloseThemeData(hTheme);
+        hTheme = OpenThemeData(hdr_hwnd, L"Header");
+        if (hTheme)
+        {
+            GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(ctx->hdr_text_color));
+            CloseThemeData(hTheme);
+        }
     }
 }
 
@@ -809,6 +819,10 @@ inline void update_control(HWND hwnd, bool dark)
 
     if (class_name == STATUSCLASSNAME)
     {
+        DWORD_PTR old_data = 0;
+        if (GetWindowSubclass(hwnd, statusbar_subclass_proc, 0, &old_data))
+            delete reinterpret_cast<StatusBarContext *>(old_data);
+
         if (dark)
         {
             SetWindowTheme(hwnd, L"", L"");
@@ -822,7 +836,7 @@ inline void update_control(HWND hwnd, bool dark)
         return;
     }
 
-    const std::unordered_map<std::wstring, std::wstring> theme_map = {
+    static const std::unordered_map<std::wstring, std::wstring> theme_map = {
         {WC_EDIT, L"DarkMode_DarkTheme"},
         {WC_COMBOBOX, L"DarkMode_DarkTheme"},
         {WC_BUTTON, L"DarkMode_Explorer"},
@@ -943,7 +957,8 @@ inline void update_window_theme(HWND hwnd, bool dark)
     update_children(hwnd, dark);
 
     const auto prev_brush = (HBRUSH)GetClassLongPtr(hwnd, GCLP_HBRBACKGROUND);
-    if (prev_brush && prev_brush != theme_data.bg_brush) DeleteObject(prev_brush);
+    if (prev_brush && prev_brush != theme_data.bg_brush && GetObjectType(prev_brush) == OBJ_BRUSH)
+        DeleteObject(prev_brush);
     SetClassLongPtr(hwnd, GCLP_HBRBACKGROUND, (LONG_PTR)theme_data.bg_brush);
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
@@ -965,6 +980,8 @@ inline void update_theme_data(bool dark)
     RECREATE(text_2)
     RECREATE(listbox_bg)
     RECREATE(edit_bg)
+    RECREATE(tab_normal)
+    RECREATE(tab_hover)
 }
 
 } // namespace Internal
@@ -1024,6 +1041,7 @@ inline void init()
         (_AllowDarkModeForApp || _SetPreferredAppMode) && _IsDarkModeAllowedForWindow)
     {
         dark_mode_supported = true;
+        update_theme_data(is_dark());
     }
 }
 
@@ -1044,7 +1062,6 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
     const auto dark = is_dark();
     update_window_theme(hwnd, dark);
 
-    update_children(hwnd, dark);
     SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
 
     const bool is_dialog = options.is_dialog.value_or(!is_top_level_window(hwnd));
