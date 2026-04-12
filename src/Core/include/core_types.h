@@ -742,9 +742,12 @@ struct core_vcr_generated_file_info
 
 typedef struct
 {
+    uintptr_t address;
     uint32_t opcode;
-    uint32_t address;
 } core_dbg_cpu_state;
+
+using CoreBreakpointCallback = std::function<void(const core_dbg_cpu_state &state)>;
+using CoreBreakpointId = size_t;
 
 #pragma endregion
 

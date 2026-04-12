@@ -8,6 +8,7 @@
 
 emu = {}
 memory = {}
+debugger = {}
 wgui = {}
 d2d = {}
 input = {}
@@ -399,6 +400,10 @@ Mupen = {
 ---@field pressed boolean? Whether the key was pressed or released, if the event is a key event.
 ---@field text string? The typed character, if the event is a char event and the key corresponds to a character.
 ---@field repeat boolean Whether the event is a repeat event (i.e. the key is being held down and this event is firing multiple times).
+
+---@class CPUState
+---@field opcode integer
+---@field address integer
 
 -- Global Functions
 --#region
@@ -820,6 +825,33 @@ function memory.recompile(addr) end
 
 ---Queues up a recompilation of all blocks.
 function memory.recompilenextall() end
+
+--#endregion
+
+
+-- debugger functions
+--#region
+
+---@alias BreakpointId integer
+
+---@alias BreakpointCallback fun(state: CPUState): nil
+
+---Places a breakpoint at the specified address.
+---The emulated processor won't pause when it reaches this address.
+---This function can only be called outside a breakpoint callback.
+---@param address integer The address to place the breakpoint at.
+---@param callback BreakpointCallback The callback function to call when the breakpoint is hit.
+---@return BreakpointId
+function debugger.add_breakpoint(address, callback) end
+
+---Removes a breakpoint.
+---@param id BreakpointId The ID of the breakpoint to remove.
+function debugger.remove_breakpoint(id) end
+
+---Disassembles an instruction based on a CPU state.
+---@param state CPUState The CPU state to disassemble an instruction from.
+---@return string The disassembled instruction.
+function debugger.disassemble(state) end
 
 --#endregion
 
