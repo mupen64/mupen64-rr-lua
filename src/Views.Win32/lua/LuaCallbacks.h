@@ -41,11 +41,6 @@ enum callback_key : uint8_t
 };
 
 /**
- * \brief Gets the last controller data for a controller index
- */
-core_buttons get_last_controller_data(int index);
-
-/**
  * \brief Notifies all lua instances of a window message
  */
 void call_window_message(void *, unsigned int, unsigned int, long);

@@ -51,11 +51,6 @@ void destroy_environment(t_lua_environment *);
 extern std::vector<t_lua_environment *> g_lua_environments;
 
 /**
- * \brief The controller data at time of the last input poll
- */
-extern core_buttons g_last_controller_data[4];
-
-/**
  * \brief The modified control data to be pushed the next frame
  */
 extern core_buttons g_new_controller_data[4];

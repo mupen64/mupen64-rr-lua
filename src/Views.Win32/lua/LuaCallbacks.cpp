@@ -117,11 +117,6 @@ static std::function<int(lua_State *)> get_function_for_callback(const LuaCallba
     return pcall_no_params;
 }
 
-core_buttons LuaCallbacks::get_last_controller_data(int index)
-{
-    return g_last_controller_data[index];
-}
-
 void LuaCallbacks::call_window_message(void *wnd, unsigned int msg, unsigned int w, long l)
 {
     RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);
@@ -141,10 +136,6 @@ void LuaCallbacks::call_input(core_buttons *input, int index)
 {
     RET_IF_NOT_REGISTERED(REG_ATINPUT);
 
-    // NOTE: Special callback, we store the input data for all scripts to access via joypad.get(n)
-    // If they request a change via joypad.set(n, input), we change the input
-    g_last_controller_data[index] = *input;
-
     g_main_ctx.dispatcher->invoke([=] {
         current_input_n = index;
         invoke_callbacks_with_key_on_all_instances(REG_ATINPUT);
@@ -154,7 +145,7 @@ void LuaCallbacks::call_input(core_buttons *input, int index)
     if (g_overwrite_controller_data[index])
     {
         *input = g_new_controller_data[index];
-        g_last_controller_data[index] = *input;
+        g_main_ctx.last_controller_data[index] = *input;
         g_overwrite_controller_data[index] = false;
     }
 }

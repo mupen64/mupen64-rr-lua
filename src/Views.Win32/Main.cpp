@@ -124,7 +124,7 @@ const wchar_t *get_input_text()
     static wchar_t text[1024]{};
     memset(text, 0, sizeof(text));
 
-    core_buttons b = LuaCallbacks::get_last_controller_data(0);
+    core_buttons b = g_main_ctx.last_controller_data[0];
     wsprintf(text, L"(%d, %d) ", b.x, b.y);
     if (b.start) lstrcatW(text, L"S");
     if (b.z) lstrcatW(text, L"Z");
@@ -878,7 +878,10 @@ static core_result init_core()
         LuaCallbacks::call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::append_video(!new_present);
     };
-    g_main_ctx.core.callbacks.input = LuaCallbacks::call_input;
+    g_main_ctx.core.callbacks.input = [](core_buttons* input, int index) {
+        g_main_ctx.last_controller_data[index] = *input;
+        LuaCallbacks::call_input(input, index);
+    };
     g_main_ctx.core.callbacks.frame = [] { g_frame_changed = true; };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;
     g_main_ctx.core.callbacks.ai_len_changed = ai_len_changed;
