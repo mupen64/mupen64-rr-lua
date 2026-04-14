@@ -128,6 +128,6 @@ void register_or_unregister_function(lua_State *l, callback_key key);
  * \brief Unregisters all callbacks from the specified Lua environment.
  * \param l The Lua state.
  */
-void unregister_all(lua_State* l);
+void unregister_all(lua_State *l);
 
 } // namespace LuaCallbacks

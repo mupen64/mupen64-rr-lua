@@ -878,7 +878,7 @@ static core_result init_core()
         LuaCallbacks::call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::append_video(!new_present);
     };
-    g_main_ctx.core.callbacks.input = [](core_buttons* input, int index) {
+    g_main_ctx.core.callbacks.input = [](core_buttons *input, int index) {
         g_main_ctx.last_controller_data[index] = *input;
         LuaCallbacks::call_input(input, index);
     };
