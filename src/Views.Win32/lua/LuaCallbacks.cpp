@@ -12,7 +12,7 @@
     do                                                                                                                 \
     {                                                                                                                  \
         if (g_lua_environments.empty()) return;                                                                        \
-        if (m_ctx.callback_count_map[key] == 0) return;                                                                \
+        if (m_ctx.callback_count_map.at(key).load() == 0) return;                                                      \
     } while (false)
 
 struct t_atwindowmessage_context
