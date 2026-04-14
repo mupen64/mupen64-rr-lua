@@ -17,6 +17,7 @@
 #include <lua/modules/Input.h>
 #include <lua/modules/Joypad.h>
 #include <lua/modules/Memory.h>
+#include <lua/modules/Debugger.h>
 #include <lua/modules/Movie.h>
 #include <lua/modules/Savestate.h>
 #include <lua/modules/WGUI.h>
@@ -105,6 +106,11 @@ const luaL_Reg MEMORY_FUNCS[] = {
     {"recompilenextall", LuaCore::Memory::recompile_all},
 
     {NULL, NULL}};
+
+const luaL_Reg DEBUGGER_FUNCS[] = {{"add_breakpoint", LuaCore::Debugger::add_breakpoint},
+                                   {"remove_breakpoint", LuaCore::Debugger::remove_breakpoint},
+                                   {"disassemble", LuaCore::Debugger::disassemble},
+                                   {NULL, NULL}};
 
 const luaL_Reg WGUI_FUNCS[] = {{"setbrush", LuaCore::Wgui::set_brush},
                                {"setpen", LuaCore::Wgui::set_pen},
@@ -268,6 +274,7 @@ void LuaRegistry::register_functions(lua_State *L)
     register_as_package(L, nullptr, GLOBAL_FUNCS);
     register_as_package(L, "emu", EMU_FUNCS);
     register_as_package(L, "memory", MEMORY_FUNCS);
+    register_as_package(L, "debugger", DEBUGGER_FUNCS);
     register_as_package(L, "wgui", WGUI_FUNCS);
     register_as_package(L, "d2d", D2D_FUNCS);
     register_as_package(L, "input", INPUT_FUNCS);

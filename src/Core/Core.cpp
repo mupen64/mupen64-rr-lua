@@ -137,9 +137,8 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.st_do_file = st_do_file;
     g_ctx.st_do_memory = st_do_memory;
     g_ctx.st_get_undo_savestate = st_get_undo_savestate;
-    g_ctx.dbg_get_resumed = dbg_get_resumed;
-    g_ctx.dbg_set_resumed = dbg_set_resumed;
-    g_ctx.dbg_step = dbg_step;
+    g_ctx.dbg_add_breakpoint = dbg_add_breakpoint;
+    g_ctx.dbg_remove_breakpoint = dbg_remove_breakpoint;
     g_ctx.dbg_disassemble = dbg_disassemble;
     g_ctx.cht_compile = cht_compile;
     g_ctx.cht_get_override_stack = cht_get_override_stack;

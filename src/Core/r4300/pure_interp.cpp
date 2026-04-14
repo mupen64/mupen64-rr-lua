@@ -3079,15 +3079,16 @@ void pure_interpreter()
     g_core->log_info(std::format("core_executing: {}", (bool)core_executing));
     while (!stop)
     {
+        const uint32_t instr_addr = interp_addr;
+
         prefetch();
+
+        core_dbg_cpu_state state = {.address = instr_addr, .opcode = vr_op};
+
+        dbg_call_breakpoints_and_wait(state);
+
         interp_ops[((vr_op >> 26) & 0x3F)]();
         g_vr_beq_ignore_jmp = false;
-
-        while (!g_ctx.dbg_get_resumed())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-        dbg_on_late_cycle(vr_op, interp_addr);
     }
     PC->addr = interp_addr;
 }

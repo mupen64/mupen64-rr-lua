@@ -51,8 +51,6 @@ extern "C"
         std::function<void(size_t)> seek_savestate_changed = [](size_t) {};
         std::function<void(bool)> readonly_changed = [](bool) {};
         std::function<void(core_system_type)> dacrate_changed = [](core_system_type) {};
-        std::function<void(bool)> debugger_resumed_changed = [](bool) {};
-        std::function<void(core_dbg_cpu_state *)> debugger_cpu_state_changed = [](core_dbg_cpu_state *) {};
         std::function<void()> lag_limit_exceeded = [] {};
         std::function<void()> seek_status_changed = [] {};
     };
@@ -688,25 +686,25 @@ extern "C"
 #pragma region Debugger
 
         /**
-         * \brief Gets whether execution is resumed.
+         * \brief Adds a breakpoint at the given address with the given callback.
+         * \param address The address to break at.
+         * \param callback The callback to call when the breakpoint is hit.
+         * \return The ID of the breakpoint.
          */
-        std::function<bool()> dbg_get_resumed;
+        std::function<CoreBreakpointId(uintptr_t address, const CoreBreakpointCallback &callback)> dbg_add_breakpoint;
 
         /**
-         * \brief Sets execution resumed status.
+         * \brief Removes a breakpoint by its ID.
+         * \param id The ID of the breakpoint to remove.
          */
-        std::function<void(bool)> dbg_set_resumed;
-
-        /**
-         * Steps execution by one instruction.
-         */
-        std::function<void()> dbg_step;
+        std::function<void(const CoreBreakpointId &id)> dbg_remove_breakpoint;
 
         /**
          * \brief Disassembles an instruction at a given address.
-         * TODO: Refactor
+         * \param state The CPU state to disassemble.
+         * \return The disassembled instruction as a string.
          */
-        std::function<char *(char *buf, uint32_t w, uint32_t pc)> dbg_disassemble;
+        std::function<std::string(const core_dbg_cpu_state &state)> dbg_disassemble;
 
 #pragma endregion
 

@@ -11,15 +11,13 @@ project(mupen64-rr
   LANGUAGES C CXX
 )
 
-message(STATUS "The C compiler is: ${CMAKE_C_COMPILER}")
-message(STATUS "The C++ compiler is: ${CMAKE_CXX_COMPILER}")
-
 # Options
 # ===========================================
 
 # The dynamic recompiler will not work correctly on x86_64, so it is completely disabled for safety's sake.
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
 if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
+  message(STATUS "Target processor ${CMAKE_SYSTEM_PROCESSOR} is incompatible with the dynamic recompiler, disabling...")
   set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
 endif()
 
@@ -27,6 +25,7 @@ endif()
 # This is in place to allow future frontends to be written separately.
 set(MUPEN64RR_BUILD_WIN32 ON CACHE BOOL "If on, enables the Win32 view and plugins.")
 if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+  message(STATUS "Target system ${CMAKE_SYSTEM_NAME} is incompatible with the Win32 frontend, disabling...")
   set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
 

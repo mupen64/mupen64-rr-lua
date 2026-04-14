@@ -70,13 +70,6 @@ set(CMAKE_C_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)
 set(CMAKE_CXX_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)
 endblock()
 
-# Set linker flags 
-message(STATUS "target: ${CMAKE_SYSTEM_PROCESSOR}")
-message(STATUS "host: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
-# set(CMAKE_EXE_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
-# set(CMAKE_SHARED_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
-# set(CMAKE_MODULE_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
-
 # Find the toolchain file using the current environment
 if(NOT DEFINED CACHE{MUPEN64RR_VCPKG_TOOLCHAIN})
   set(

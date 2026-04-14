@@ -542,17 +542,3 @@ char *GetOperandString(char *buf, INSTDECODE *d, uint32_t pc)
     }
 #undef BRANCH
 }
-
-// max-size:27 = 9(opecode)+1(space)+16(operand)+1(NUL)
-char *dbg_disassemble(char *buf, uint32_t w, uint32_t pc)
-{
-    INSTDECODE decode;
-    const char *p;
-    DecodeInstruction(w, &decode);
-    for (p = GetOpecodeString(&decode); *p; p++)
-    {
-        *(buf++) = *p;
-    }
-    *(buf++) = ' ';
-    return GetOperandString(buf, &decode, pc);
-}

@@ -5,53 +5,78 @@
  */
 
 #include <CommonPCH.h>
-#include <r4300/Debug.h>
 #include <Core.h>
+#include <r4300/r4300.h>
+#include <r4300/Debug.h>
+#include <r4300/disasm.h>
+
+struct Breakpoint
+{
+    CoreBreakpointId id;
+    CoreBreakpointCallback callback;
+};
 
 struct DebuggerState
 {
-    std::atomic<bool> resumed{true};
-    bool advancing{};
+    std::shared_mutex mtx;
+    std::atomic<uint32_t> breakpoint_count{0};
     core_dbg_cpu_state cpu_state{};
+    std::unordered_map<uintptr_t, std::vector<Breakpoint>> breakpoints;
+    CoreBreakpointId next_breakpoint_id{0};
 };
 
 static DebuggerState s_dbg{};
 
-bool dbg_get_resumed()
+void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state)
 {
-    return s_dbg.resumed;
+    if (s_dbg.breakpoint_count == 0) return;
+
+    std::shared_lock lock(s_dbg.mtx);
+    const auto it = s_dbg.breakpoints.find(state.address);
+    if (it == s_dbg.breakpoints.end()) return;
+
+    const auto bps_copy = it->second;
+    lock.unlock();
+
+    for (const auto &bp : bps_copy) bp.callback(state);
 }
 
-void dbg_set_resumed(bool value)
+CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallback &callback)
 {
-    if (value) s_dbg.advancing = false;
-    s_dbg.resumed = value;
-    g_core->callbacks.debugger_resumed_changed(s_dbg.resumed);
+    std::unique_lock lock(s_dbg.mtx);
+    CoreBreakpointId id = s_dbg.next_breakpoint_id++;
+    s_dbg.breakpoints[address].push_back({id, callback});
+    s_dbg.breakpoint_count++;
+    return id;
 }
 
-void dbg_step()
+void dbg_remove_breakpoint(const CoreBreakpointId &id)
 {
-    s_dbg.advancing = true;
-    s_dbg.resumed = true;
-}
-
-void dbg_on_late_cycle(uint32_t opcode, uint32_t address)
-{
-    s_dbg.cpu_state = {
-        .opcode = opcode,
-        .address = address,
-    };
-
-    if (s_dbg.advancing)
+    std::unique_lock lock(s_dbg.mtx);
+    for (auto &[address, bps] : s_dbg.breakpoints)
     {
-        s_dbg.advancing = false;
-        s_dbg.resumed = false;
-        g_core->callbacks.debugger_cpu_state_changed(&s_dbg.cpu_state);
-        g_core->callbacks.debugger_resumed_changed(s_dbg.resumed);
+        auto it = std::find_if(bps.begin(), bps.end(), [&](const Breakpoint &bp) { return bp.id == id; });
+        if (it != bps.end())
+        {
+            bps.erase(it);
+            s_dbg.breakpoint_count--;
+            break;
+        }
     }
+}
 
-    while (!s_dbg.resumed)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+std::string dbg_disassemble(const core_dbg_cpu_state &state)
+{
+    INSTDECODE decode;
+    DecodeInstruction(state.opcode, &decode);
+
+    char buf[120]{};
+    char *ptr = buf;
+    const char *op = GetOpecodeString(&decode);
+    while (*op) *ptr++ = *op++;
+    *ptr++ = ' ';
+
+    GetOperandString(ptr, &decode, state.address);
+
+    return std::string(buf);
 }
