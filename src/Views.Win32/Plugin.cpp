@@ -538,11 +538,16 @@ void Plugin::initiate()
         break;
     }
 
+    bool compat_error = false;
+
     // Old MGE plugins with 24bpp mge_read_video aren't supported anymore.
-    if (!g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video"))
+    if (!g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video")) compat_error = true;
+
+    if (compat_error)
     {
-        const auto msg = std::format(L"The plugin {} is incompatible with this version of Mupen64.",
-                                     IOUtils::to_wide_string(m_name));
+        const auto msg =
+            std::format(L"The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
+                        IOUtils::to_wide_string(m_name));
         DialogService::show_dialog(msg.c_str(), L"Plugin Incompatibility", fsvc_error);
     }
 }
