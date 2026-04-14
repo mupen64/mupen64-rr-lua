@@ -36,7 +36,7 @@ class Dispatcher
   private:
     std::function<void()> m_execute_callback{};
     DWORD m_thread_id{};
-    std::queue<std::function<void()>> m_queue{};
+    std::function<void()> m_func{};
     std::mutex m_mutex{};
 
     uint64_t m_overhead_times[60]{};
