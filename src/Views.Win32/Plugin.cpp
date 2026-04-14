@@ -540,8 +540,9 @@ void Plugin::initiate()
 
     bool compat_error = false;
 
-    // Old MGE plugins with 24bpp mge_read_video aren't supported anymore.
-    if (!g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video")) compat_error = true;
+    // Old MGE video plugins with 24bpp mge_read_video aren't supported anymore.
+    if (m_type == plugin_video && !g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video"))
+        compat_error = true;
 
     if (compat_error)
     {
