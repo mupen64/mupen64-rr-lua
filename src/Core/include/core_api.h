@@ -196,7 +196,7 @@ extern "C"
 
         /**
          * \brief Writes the MGE compositor's current emulation front buffer into the destination buffer.
-         * \param buffer The video buffer. Must be at least of size <c>width * height * 3</c>, as acquired by
+         * \param buffer The video buffer. Must be at least of size <c>width * height * 4</c>, as acquired by
          * <c>plugin_funcs.get_video_size</c>.
          */
         void (*copy_video)(void *buffer);
@@ -216,7 +216,7 @@ extern "C"
         /**
          * \brief Fills the screen with the specified data.
          * The size of the buffer is determined by the resolution returned by the get_video_size (MGE) or readScreen
-         * (Non-MGE) functions. Note that the buffer format is 24bpp.
+         * (Non-MGE) functions. Note that the buffer format is 32bpp BGRA.
          */
         void (*load_screen)(void *data);
 

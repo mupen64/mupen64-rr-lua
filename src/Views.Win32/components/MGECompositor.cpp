@@ -10,7 +10,7 @@
 #include <Messenger.h>
 
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
-constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8X8_UNORM;
+constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
 constexpr float CLEAR_COLOR[4] = {0, 0, 0, 1};
 
 const std::string VERTEX_SHADER = R"(
@@ -61,7 +61,6 @@ struct t_mge_context
     int32_t last_height{};
     int32_t width{};
     int32_t height{};
-    void *buffer{};
     void *rgba_buffer{};
 
     HWND hwnd{};
@@ -275,28 +274,7 @@ static void render_and_present()
     hr = mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 }
 
-static void copy_rgb24_buffer_to_rgb32()
-{
-    const auto src = static_cast<const uint8_t *>(mge_context.buffer);
-    const auto dst = static_cast<uint8_t *>(mge_context.rgba_buffer);
 
-    const int width = mge_context.width;
-    const int height = mge_context.height;
-
-    for (int y = 0; y < height; ++y)
-    {
-        const uint8_t *srow = src + y * width * 3;
-        uint8_t *drow = dst + y * width * 4;
-
-        for (int x = 0; x < width; ++x)
-        {
-            std::memcpy(drow, srow, 3);
-
-            srow += 3;
-            drow += 4;
-        }
-    }
-}
 
 static void recreate_mge_context_d3d()
 {
@@ -307,18 +285,14 @@ static void recreate_mge_context_d3d()
         create_d3d(mge_context.hwnd);
     }
 
-    _aligned_free(mge_context.buffer);
     _aligned_free(mge_context.rgba_buffer);
 
-    const auto rgb24_buffer_size = mge_context.width * mge_context.height * 3;
-    const auto rgba32_buffer_size = mge_context.width * mge_context.height * 4;
+    const auto buffer_size = mge_context.width * mge_context.height * 4;
 
-    mge_context.buffer = _aligned_malloc(rgb24_buffer_size, 16);
-    mge_context.rgba_buffer = _aligned_malloc(rgba32_buffer_size, 16);
-    RT_ASSERT(mge_context.buffer && mge_context.rgba_buffer, L"Failed to allocate MGE buffers");
+    mge_context.rgba_buffer = _aligned_malloc(buffer_size, 16);
+    RT_ASSERT(mge_context.rgba_buffer, L"Failed to allocate MGE buffers");
 
-    ZeroMemory(mge_context.buffer, rgb24_buffer_size);
-    ZeroMemory(mge_context.rgba_buffer, rgba32_buffer_size);
+    ZeroMemory(mge_context.rgba_buffer, buffer_size);
 
     RECT rc;
     RT_ASSERT(GetClientRect(mge_context.hwnd, &rc), L"GetClientRect failed");
@@ -389,9 +363,8 @@ void MGECompositor::update_screen()
         recreate_mge_context_d3d();
     }
 
-    g_plugin_funcs.video_read_video(&mge_context.buffer);
+    g_plugin_funcs.video_read_video(&mge_context.rgba_buffer);
 
-    copy_rgb24_buffer_to_rgb32();
     upload_rgb32_buffer();
     render_and_present();
 
@@ -418,14 +391,13 @@ void MGECompositor::get_video_size(int32_t *width, int32_t *height)
 
 void MGECompositor::copy_video(void *buffer)
 {
-    memcpy(buffer, mge_context.buffer, mge_context.width * mge_context.height * 3);
+    memcpy(buffer, mge_context.rgba_buffer, mge_context.width * mge_context.height * 4);
 }
 
 void MGECompositor::load_screen(void *data)
 {
-    memcpy(mge_context.buffer, data, mge_context.width * mge_context.height * 3);
+    memcpy(mge_context.rgba_buffer, data, mge_context.width * mge_context.height * 4);
 
-    copy_rgb24_buffer_to_rgb32();
     ensure_texture_exists_with_size(mge_context.width, mge_context.height);
     upload_rgb32_buffer();
     render_and_present();

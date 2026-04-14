@@ -61,7 +61,7 @@ void readscreen_plugin(int32_t *width = nullptr, int32_t *height = nullptr)
         int32_t w;
         int32_t h;
         g_plugin_funcs.video_read_screen(&buf, &w, &h);
-        memcpy(m_video_buf, buf, w * h * 3);
+        memcpy(m_video_buf, buf, w * h * 4);
         g_plugin_funcs.video_dll_crt_free(buf);
 
         if (width)
@@ -91,10 +91,12 @@ void readscreen_window()
         bmp_info.bmiHeader.biWidth = m_video_width;
         bmp_info.bmiHeader.biHeight = m_video_height;
         bmp_info.bmiHeader.biPlanes = 1;
-        bmp_info.bmiHeader.biBitCount = 24;
+        bmp_info.bmiHeader.biBitCount = 32;
         bmp_info.bmiHeader.biCompression = BI_RGB;
 
         GetDIBits(compat_dc, bitmap, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4)
+            m_video_buf[i] = 0xFF;
 
         SelectObject(compat_dc, nullptr);
         DeleteObject(bitmap);
@@ -122,10 +124,12 @@ void readscreen_desktop()
         bmp_info.bmiHeader.biWidth = m_video_width;
         bmp_info.bmiHeader.biHeight = m_video_height;
         bmp_info.bmiHeader.biPlanes = 1;
-        bmp_info.bmiHeader.biBitCount = 24;
+        bmp_info.bmiHeader.biBitCount = 32;
         bmp_info.bmiHeader.biCompression = BI_RGB;
 
         GetDIBits(compat_dc, bitmap, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4)
+            m_video_buf[i] = 0xFF;
 
         SelectObject(compat_dc, nullptr);
         DeleteObject(bitmap);
@@ -162,7 +166,7 @@ void readscreen_hybrid()
             BITMAPINFO bmp_info{};
             bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
             bmp_info.bmiHeader.biPlanes = 1;
-            bmp_info.bmiHeader.biBitCount = 24;
+            bmp_info.bmiHeader.biBitCount = 32;
             bmp_info.bmiHeader.biWidth = raw_video_width;
             bmp_info.bmiHeader.biHeight = raw_video_height;
             bmp_info.bmiHeader.biCompression = BI_RGB;
@@ -194,10 +198,12 @@ void readscreen_hybrid()
         bmp_info.bmiHeader.biWidth = m_video_width;
         bmp_info.bmiHeader.biHeight = m_video_height;
         bmp_info.bmiHeader.biPlanes = 1;
-        bmp_info.bmiHeader.biBitCount = 24;
+        bmp_info.bmiHeader.biBitCount = 32;
         bmp_info.bmiHeader.biCompression = BI_RGB;
 
         GetDIBits(hy_dc, hy_bmp, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4)
+            m_video_buf[i] = 0xFF;
     });
 }
 
@@ -359,7 +365,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
 
     free(m_video_buf);
     get_video_dimensions(&m_video_width, &m_video_height);
-    m_video_buf = (uint8_t *)malloc(m_video_width * m_video_height * 3);
+    m_video_buf = (uint8_t *)malloc(m_video_width * m_video_height * 4);
 
     m_encoder_params = Encoder::Params{
         .path = m_current_path,

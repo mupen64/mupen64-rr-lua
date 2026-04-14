@@ -213,13 +213,13 @@ std::vector<uint8_t> generate_savestate()
         g_core->video_get_video_size(&width, &height);
         g_core->log_trace(std::format("Writing screen buffer to savestate, width: {}, height: {}", width, height));
 
-        void *video = malloc(width * height * 3);
+        void *video = malloc(width * height * 4);
         g_core->copy_video(video);
 
         MiscHelpers::vecwrite(b, screen_section, sizeof(screen_section));
         MiscHelpers::vecwrite(b, &width, sizeof(width));
         MiscHelpers::vecwrite(b, &height, sizeof(height));
-        MiscHelpers::vecwrite(b, video, width * height * 3);
+        MiscHelpers::vecwrite(b, video, width * height * 4);
 
         free(video);
     }
@@ -465,8 +465,15 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
                 MiscHelpers::memread(&ptr, &video_width, sizeof(video_width));
                 MiscHelpers::memread(&ptr, &video_height, sizeof(video_height));
 
-                video_buffer = malloc(video_width * video_height * 3);
-                MiscHelpers::memread(&ptr, video_buffer, video_width * video_height * 3);
+                const auto remaining_space = decompressed_buf.size() - (ptr - decompressed_buf.data());
+                const auto has_enough_space = remaining_space >= video_width * video_height * 4;
+                if (has_enough_space)
+                {
+                    video_buffer = malloc(video_width * video_height * 4);
+                    MiscHelpers::memread(&ptr, video_buffer, video_width * video_height * 4);
+                }
+                else
+                    g_core->log_error(std::format("[Savestates] Not enough space left in buffer for screen buffer"));
             }
         }
 
