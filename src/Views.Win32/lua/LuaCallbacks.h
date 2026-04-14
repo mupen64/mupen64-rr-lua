@@ -37,6 +37,7 @@ enum callback_key : uint8_t
     REG_ATSEEKCOMPLETED,
     REG_ATWARPMODIFYSTATUSCHANGED,
     REG_ATKEY,
+    _COUNT,
 };
 
 /**
@@ -127,4 +128,11 @@ void invoke_callbacks_with_key_on_all_instances(callback_key key);
  * \param key The callback key.
  */
 void register_or_unregister_function(lua_State *l, callback_key key);
+
+/**
+ * \brief Unregisters all callbacks from the specified Lua environment.
+ * \param l The Lua state.
+ */
+void unregister_all(lua_State* l);
+
 } // namespace LuaCallbacks
