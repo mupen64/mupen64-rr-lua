@@ -97,6 +97,8 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     glu32
     winmm
 )
-target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE 
-    "GLEW_STATIC"
-)
+if (MUPEN64RR_LINK_STATIC)
+    target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE 
+        "GLEW_STATIC"
+    )
+endif()

@@ -8,12 +8,12 @@
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaManager.h>
 
-// OPTIMIZATION: If no lua scripts are running, skip the deeper lua path
-// This is an unsynchronized access to the map from the emu thread!
-#define RET_IF_EMPTY                                                                                                   \
+#define RET_IF_NOT_REGISTERED(key)                                                                                     \
+    do                                                                                                                 \
     {                                                                                                                  \
         if (g_lua_environments.empty()) return;                                                                        \
-    }
+        if (m_ctx.callback_count_map.at(key).load() == 0) return;                                                      \
+    } while (false)
 
 struct t_atwindowmessage_context
 {
@@ -23,6 +23,18 @@ struct t_atwindowmessage_context
     LPARAM l_param;
 };
 
+struct LuaCallbacksContext
+{
+    std::unordered_map<LuaCallbacks::callback_key, std::atomic<size_t>> callback_count_map;
+
+    LuaCallbacksContext()
+    {
+        for (uint8_t i = LuaCallbacks::callback_key::REG_LUACLASS; i < LuaCallbacks::callback_key::_COUNT; ++i)
+            callback_count_map.emplace(static_cast<LuaCallbacks::callback_key>(i), 0);
+    }
+};
+
+static LuaCallbacksContext m_ctx{};
 static t_atwindowmessage_context atwindowmessage_ctx{};
 static t_lua_key_event_args atkey_ctx{};
 static int current_input_n = 0;
@@ -105,14 +117,9 @@ static std::function<int(lua_State *)> get_function_for_callback(const LuaCallba
     return pcall_no_params;
 }
 
-core_buttons LuaCallbacks::get_last_controller_data(int index)
-{
-    return g_last_controller_data[index];
-}
-
 void LuaCallbacks::call_window_message(void *wnd, unsigned int msg, unsigned int w, long l)
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);
 
     atwindowmessage_ctx = {.wnd = (HWND)wnd, .msg = msg, .w_param = w, .l_param = l};
 
@@ -121,17 +128,13 @@ void LuaCallbacks::call_window_message(void *wnd, unsigned int msg, unsigned int
 
 void LuaCallbacks::call_vi()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATVI);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATVI); });
 }
 
 void LuaCallbacks::call_input(core_buttons *input, int index)
 {
-    // NOTE: Special callback, we store the input data for all scripts to access via joypad.get(n)
-    // If they request a change via joypad.set(n, input), we change the input
-    g_last_controller_data[index] = *input;
-
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATINPUT);
 
     g_main_ctx.dispatcher->invoke([=] {
         current_input_n = index;
@@ -142,62 +145,62 @@ void LuaCallbacks::call_input(core_buttons *input, int index)
     if (g_overwrite_controller_data[index])
     {
         *input = g_new_controller_data[index];
-        g_last_controller_data[index] = *input;
+        g_main_ctx.last_controller_data[index] = *input;
         g_overwrite_controller_data[index] = false;
     }
 }
 
 void LuaCallbacks::call_interval()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATINTERVAL);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATINTERVAL); });
 }
 
 void LuaCallbacks::call_play_movie()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATPLAYMOVIE);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATPLAYMOVIE); });
 }
 
 void LuaCallbacks::call_stop_movie()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATSTOPMOVIE);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATSTOPMOVIE); });
 }
 
 void LuaCallbacks::call_load_state()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATLOADSTATE);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATLOADSTATE); });
 }
 
 void LuaCallbacks::call_save_state()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATSAVESTATE);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATSAVESTATE); });
 }
 
 void LuaCallbacks::call_reset()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATRESET);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATRESET); });
 }
 
 void LuaCallbacks::call_seek_completed()
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATSEEKCOMPLETED);
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATSEEKCOMPLETED); });
 }
 
 void LuaCallbacks::call_warp_modify_status_changed(const int32_t status)
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATWARPMODIFYSTATUSCHANGED);
     g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATWARPMODIFYSTATUSCHANGED); });
 }
 
 void LuaCallbacks::call_atkey(const t_lua_key_event_args &args)
 {
-    RET_IF_EMPTY;
+    RET_IF_NOT_REGISTERED(REG_ATKEY);
     atkey_ctx = args;
     g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATKEY); });
 }
@@ -320,10 +323,35 @@ void LuaCallbacks::register_or_unregister_function(lua_State *l, const callback_
     {
         lua_pop(l, 1);
         unregister_function(l, key);
+        m_ctx.callback_count_map[key]--;
     }
     else
     {
         if (lua_gettop(l) == 2) lua_pop(l, 1);
         register_function(l, key);
+        m_ctx.callback_count_map[key]++;
+    }
+}
+
+void LuaCallbacks::unregister_all(lua_State *l)
+{
+    for (auto &[key, count] : m_ctx.callback_count_map)
+    {
+        lua_rawgeti(l, LUA_REGISTRYINDEX, key);
+        if (lua_isnil(l, -1))
+        {
+            lua_pop(l, 1);
+            continue;
+        }
+
+        const int n = luaL_len(l, -1);
+        g_view_logger->trace(L"Unsubscribing {} functions of key {}...", n, static_cast<int>(key));
+
+        m_ctx.callback_count_map[key] -= n;
+
+        lua_newtable(l);
+        lua_rawseti(l, LUA_REGISTRYINDEX, key);
+
+        lua_pop(l, 0);
     }
 }

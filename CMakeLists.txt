@@ -16,15 +16,17 @@ project(mupen64-rr
 
 # The dynamic recompiler will not work correctly on x86_64, so it is completely disabled for safety's sake.
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
-if (NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
+
+if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
   message(STATUS "Target processor ${CMAKE_SYSTEM_PROCESSOR} is incompatible with the dynamic recompiler, disabling...")
   set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
 endif()
 
-# The Windows view can, of course, only be compiled on Windows. 
+# The Windows view can, of course, only be compiled on Windows.
 # This is in place to allow future frontends to be written separately.
 set(MUPEN64RR_BUILD_WIN32 ON CACHE BOOL "If on, enables the Win32 view and plugins.")
-if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+
+if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   message(STATUS "Target system ${CMAKE_SYSTEM_NAME} is incompatible with the Win32 frontend, disabling...")
   set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
@@ -38,7 +40,7 @@ if(NOT WIN32)
 endif()
 
 # version suffix
-if (DEFINED ENV{VERSION_SUFFIX})
+if(DEFINED ENV{VERSION_SUFFIX})
   set(MUPEN64RR_VERSION_SUFFIX "$ENV{VERSION_SUFFIX}")
 else()
   set(MUPEN64RR_VERSION_SUFFIX "")
@@ -71,9 +73,9 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 
-if (MUPEN64RR_BUILD_WIN32)
-  find_package(glew CONFIG REQUIRED) 
-  find_package(SDL3 CONFIG REQUIRED) 
+if(MUPEN64RR_BUILD_WIN32)
+  find_package(glew CONFIG REQUIRED)
+  find_package(SDL3 CONFIG REQUIRED)
 endif()
 
 # Lua, because Lua sucks
@@ -89,12 +91,31 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
   )
 endif()
 
+#[=======================[
+Copies all vcpkg dependencies into the target's folder.
+]=======================]
+function(mupen64rr_copy_vcpkg_deps target)
+  if (MUPEN64RR_LINK_STATIC)
+    return()
+  endif()
+  if (NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND DEFINED VCPKG_INSTALLED_DIR))
+    return()
+  endif()
+
+  add_custom_command(
+    TARGET "${target}" POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory 
+      "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin" "$<TARGET_FILE_DIR:${target}>"
+    VERBATIM
+  )
+endfunction()
+
 # CMake modules
 # =======================================
 include(CTest)
 include(Catch)
 
-if (WIN32)
+if(WIN32)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
   # - disable Windows Data Execution Prevention (DEP)
@@ -103,10 +124,10 @@ if (WIN32)
   add_link_options(/DYNAMICBASE:NO /NXCOMPAT:NO /LARGEADDRESSAWARE /MANIFEST:NO)
 
   # Include compile options to enable AVX2 on x64 builds
-  if ("${VCPKG_TARGET_TRIPLET}" MATCHES "^x64")
+  if("${VCPKG_TARGET_TRIPLET}" MATCHES "^x64")
     add_compile_options(/arch:AVX2)
   endif()
-  
+
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
 
@@ -114,12 +135,8 @@ if (WIN32)
   add_compile_definitions(UNICODE _UNICODE)
 endif()
 
-
-
 # define _DEBUG for debug builds
 add_compile_definitions("$<$<CONFIG:Debug>:_DEBUG>")
-
-
 
 # Subdirectories
 # ===========================================

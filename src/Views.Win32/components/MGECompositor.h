@@ -41,16 +41,16 @@ void get_video_size(int32_t *width, int32_t *height);
 
 /**
  * \brief Writes the MGE compositor's current emulation front buffer into the destination buffer.
- * \param buffer The video buffer. Must be at least of size <c>width * height * 3</c>, as acquired by
- * <c>mge_get_video_size</c>.
+ * \param buffer The video buffer. Must be at least of size <c>width * height * 4</c>, as acquired by
+ * <c>mge_get_video_size</c>. The buffer format is 32bpp BGRA.
  */
 void copy_video(void *buffer);
 
 /**
  * \brief Draws the given data to the MGE surface.
- * \param data The buffer holding video data. Must be at least of size <c>width * height * 3</c>, as acquired by
- * <c>mge_get_video_size</c>. \remarks The video buffer's size must match the current video size provided by
- * <c>get_video_size</c>.
+ * \param data The buffer holding video data. Must be at least of size <c>width * height * 4</c>, as acquired by
+ * <c>mge_get_video_size</c>. The buffer format is 32bpp BGRA. \remarks The video buffer's size must match the
+ * current video size provided by <c>get_video_size</c>.
  */
 void load_screen(void *data);
 } // namespace MGECompositor

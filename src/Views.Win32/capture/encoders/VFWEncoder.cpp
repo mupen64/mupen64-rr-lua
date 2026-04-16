@@ -24,9 +24,9 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     m_info_hdr.biWidth = params.width;
     m_info_hdr.biHeight = params.height;
     m_info_hdr.biPlanes = 1;
-    m_info_hdr.biBitCount = 24;
+    m_info_hdr.biBitCount = 32;
     m_info_hdr.biCompression = BI_RGB;
-    m_info_hdr.biSizeImage = params.width * params.height * 3;
+    m_info_hdr.biSizeImage = params.width * params.height * 4;
     m_info_hdr.biXPelsPerMeter = 0;
     m_info_hdr.biYPelsPerMeter = 0;
     m_info_hdr.biClrUsed = 0;

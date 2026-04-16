@@ -232,7 +232,7 @@ EXPORT void CALL ReadScreen2(void **dest, long *width, long *height)
     *width = OGL.width;
     *height = OGL.height;
 
-    *dest = malloc(OGL.height * OGL.width * 3);
+    *dest = malloc(OGL.height * OGL.width * 4);
     if (*dest == 0) return;
     gCapturedPixels = *dest;
     if (RSP.thread)
@@ -248,7 +248,7 @@ void CALL mge_get_video_size(long *width, long *height)
     *height = OGL.height;
 }
 
-void CALL mge_read_video(void **buffer)
+void CALL mge_read_video2(void **buffer)
 {
     extern void *gCapturedPixels;
     gCapturedPixels = *buffer;
