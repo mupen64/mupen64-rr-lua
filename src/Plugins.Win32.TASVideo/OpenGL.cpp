@@ -22,7 +22,7 @@ void OGL_ReadPixels()
     // glReadBuffer(GL_FRONT);
 
     glReadBuffer(GL_BACK);
-    glReadPixels(0, OGL.heightOffset, OGL.width, OGL.height, GL_BGR, GL_UNSIGNED_BYTE, gCapturedPixels);
+    glReadPixels(0, OGL.heightOffset, OGL.width, OGL.height, GL_BGRA, GL_UNSIGNED_BYTE, gCapturedPixels);
     glReadBuffer(oldMode); // restore old read buffer
 }
 
@@ -913,16 +913,16 @@ void OGL_SaveScreenshot()
     BITMAPINFOHEADER infoHeader;
     HANDLE hBitmapFile;
 
-    gCapturedPixels = malloc(OGL.width * OGL.height * 3);
+    gCapturedPixels = malloc(OGL.width * OGL.height * 4);
     OGL_ReadPixels();
 
     infoHeader.biSize = sizeof(BITMAPINFOHEADER);
     infoHeader.biWidth = OGL.width;
     infoHeader.biHeight = OGL.height;
     infoHeader.biPlanes = 1;
-    infoHeader.biBitCount = 24;
+    infoHeader.biBitCount = 32;
     infoHeader.biCompression = BI_RGB;
-    infoHeader.biSizeImage = OGL.width * OGL.height * 3;
+    infoHeader.biSizeImage = OGL.width * OGL.height * 4;
     infoHeader.biXPelsPerMeter = 0;
     infoHeader.biYPelsPerMeter = 0;
     infoHeader.biClrUsed = 0;

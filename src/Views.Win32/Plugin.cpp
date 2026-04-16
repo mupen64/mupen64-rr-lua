@@ -183,7 +183,7 @@ void load_gfx(HMODULE handle)
     FUNC(g_plugin_funcs.video_capture_screen, CAPTURESCREEN, nullptr, "CaptureScreen");
     FUNC(g_plugin_funcs.video_read_screen, READSCREEN, (READSCREEN)GetProcAddress(handle, "ReadScreen2"), "ReadScreen");
     FUNC(g_plugin_funcs.video_get_video_size, GETVIDEOSIZE, nullptr, "mge_get_video_size");
-    FUNC(g_plugin_funcs.video_read_video, READVIDEO, nullptr, "mge_read_video");
+    FUNC(g_plugin_funcs.video_read_video, READVIDEO, nullptr, "mge_read_video2");
     FUNC(g_plugin_funcs.video_fb_read, FBREAD, dummy_fb_read, "FBRead");
     FUNC(g_plugin_funcs.video_fb_write, FBWRITE, dummy_fb_write, "FBWrite");
     FUNC(g_plugin_funcs.video_fb_get_frame_buffer_info, FBGETFRAMEBUFFERINFO, dummy_fb_get_framebuffer_info,
@@ -536,6 +536,20 @@ void Plugin::initiate()
     case plugin_rsp:
         load_rsp(m_module);
         break;
+    }
+
+    bool compat_error = false;
+
+    // Old MGE video plugins with 24bpp mge_read_video aren't supported anymore.
+    if (m_type == plugin_video && !g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video"))
+        compat_error = true;
+
+    if (compat_error)
+    {
+        const auto msg =
+            std::format(L"The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
+                        IOUtils::to_wide_string(m_name));
+        DialogService::show_dialog(msg.c_str(), L"Plugin Incompatibility", fsvc_error);
     }
 }
 

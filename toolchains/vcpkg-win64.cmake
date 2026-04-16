@@ -20,6 +20,7 @@ endif()
 set(_toolchain_sanitizer_keys OFF ASAN)
 set(_toolchain_sanitizer_values "" "-asan")
 
+set(MUPEN64RR_LINK_STATIC OFF CACHE BOOL "If enabled, links dependencies statically.")
 set(MUPEN64RR_USE_SANITIZER OFF CACHE STRING "Specifies a sanitizer to compile with. [${_toolchain_sanitizer_keys}]")
 
 # validate sanitizer option
@@ -33,6 +34,12 @@ endif()
 list(GET _toolchain_sanitizer_values "${_key_index}" _vcpkg_san_suffix)
 set(_vcpkg_san_suffix "${_vcpkg_san_suffix}" PARENT_SCOPE)
 endblock()
+
+if (MUPEN64RR_LINK_STATIC)
+  set(_vcpkg_static_suffix "-static")
+else()
+  set(_vcpkg_static_suffix "")
+endif()
 
 # CONFIGURATION
 # =========================================================
@@ -70,13 +77,6 @@ set(CMAKE_C_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)
 set(CMAKE_CXX_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)
 endblock()
 
-# Set linker flags 
-message(STATUS "target: ${CMAKE_SYSTEM_PROCESSOR}")
-message(STATUS "host: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
-# set(CMAKE_EXE_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
-# set(CMAKE_SHARED_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
-# set(CMAKE_MODULE_LINKER_FLAGS_INIT "/machine:${_vs_target_arch}")
-
 # Find the toolchain file using the current environment
 if(NOT DEFINED CACHE{MUPEN64RR_VCPKG_TOOLCHAIN})
   set(
@@ -90,7 +90,7 @@ if(NOT EXISTS "${MUPEN64RR_VCPKG_TOOLCHAIN}")
 endif()
 
 # set some necessary settings to get compilation to work properly
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "MSVCRT variant needed to get things to work.")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE INTERNAL "MSVCRT variant needed to get things to work.")
 
 set(CMAKE_C_FLAGS_DEBUG_INIT)
 set(CMAKE_CXX_FLAGS_DEBUG_INIT)
@@ -101,9 +101,10 @@ if("${MUPEN64RR_USE_SANITIZER}" STREQUAL "ASAN")
 endif()
 
 # setup a few last values for vcpkg
-set(VCPKG_TARGET_TRIPLET "${_vs_target_arch}-windows-static${_vcpkg_san_suffix}" CACHE INTERNAL "target triplet for vcpkg")
+set(VCPKG_TARGET_TRIPLET "${_vs_target_arch}-windows${_vcpkg_static_suffix}${_vcpkg_san_suffix}" CACHE INTERNAL "target triplet for vcpkg")
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/vcpkg-triplets")
 message(STATUS "VS architecture set to: ${_vs_target_arch}")
 
 # hand off the rest to vcpkg
 include(${MUPEN64RR_VCPKG_TOOLCHAIN})
+set(VCPKG_APPLOCAL_DEPS OFF CACHE BOOL "Automatically copy dependencies into the output directory for executables." FORCE)

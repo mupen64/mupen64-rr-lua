@@ -13,7 +13,6 @@
 #include <lua/LuaRegistry.h>
 #include <lua/LuaRenderer.h>
 
-core_buttons g_last_controller_data[4]{};
 core_buttons g_new_controller_data[4]{};
 bool g_overwrite_controller_data[4]{};
 size_t g_input_count{};
@@ -178,6 +177,8 @@ void LuaManager::destroy_environment(t_lua_environment *lua)
     {
         lua_freecallback(lua->L, callback);
     }
+
+    LuaCallbacks::unregister_all(lua->L);
 
     // NOTE: We must do this *after* calling atstop, as the lua environment still has to exist for that.
     // After this point, it's game over and no callbacks will be called anymore.

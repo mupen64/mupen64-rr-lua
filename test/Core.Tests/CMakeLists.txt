@@ -13,6 +13,7 @@ add_executable(Mupen64RR.Core.Tests
     "stdafx.h"
     "vcr_tests.cpp"
 )
+mupen64rr_copy_vcpkg_deps(Mupen64RR.Core.Tests)
 set_target_properties(Mupen64RR.Core.Tests PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON

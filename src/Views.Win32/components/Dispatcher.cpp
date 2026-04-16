@@ -24,26 +24,22 @@ void Dispatcher::invoke(const std::function<void()> &func)
     }
 
     std::lock_guard lock(m_mutex);
-    m_queue.push(func);
+    m_func = func;
     m_execute_callback();
 }
 
 void Dispatcher::execute()
 {
-    if (m_queue.empty())
-    {
-        return;
-    }
+    if (m_func == nullptr) return;
+
+    RT_ASSERT(GetCurrentThreadId() == m_thread_id, L"Dispatcher::execute() called from incorrect thread");
 
 #ifdef DISPATCHER_OVERHEAD_LOGGING
     const auto execute_start = std::chrono::high_resolution_clock::now();
 #endif
 
-    while (!m_queue.empty())
-    {
-        m_queue.front()();
-        m_queue.pop();
-    }
+    m_func();
+    m_func = nullptr;
 
 #ifdef DISPATCHER_OVERHEAD_LOGGING
     const auto end = std::chrono::high_resolution_clock::now();

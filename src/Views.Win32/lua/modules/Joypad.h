@@ -17,7 +17,7 @@ static int lua_get_joypad(lua_State *L)
     }
     lua_newtable(L);
 #define A(a, s)                                                                                                        \
-    lua_pushboolean(L, g_last_controller_data[i].a);                                                                   \
+    lua_pushboolean(L, g_main_ctx.last_controller_data[i].a);                                                          \
     lua_setfield(L, -2, s)
     A(dr, "right");
     A(dl, "left");
@@ -34,9 +34,9 @@ static int lua_get_joypad(lua_State *L)
     A(r, "R");
     A(l, "L");
 #undef A
-    lua_pushinteger(L, g_last_controller_data[i].y);
+    lua_pushinteger(L, g_main_ctx.last_controller_data[i].y);
     lua_setfield(L, -2, "Y");
-    lua_pushinteger(L, g_last_controller_data[i].x);
+    lua_pushinteger(L, g_main_ctx.last_controller_data[i].x);
     lua_setfield(L, -2, "X");
     return 1;
 }

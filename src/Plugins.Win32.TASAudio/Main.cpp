@@ -1,93 +1,106 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Azimer, Bobby Smiles).
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.h"
-#include "SoundDriverInterface.h"
-#include "AudioHLE.h"
-#include "DirectSoundDriver.h"
+#include "Main.hpp"
+#include "Config.hpp"
+#include "IOUtils.h"
+#include "Main_Win32.hpp"
+#include "SDLBackend.hpp"
 
-static void log_shim(const wchar_t *str)
+#include "core_plugin.h"
+#include <CommonPCH.h>
+
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_init.h>
+#include <VersionNameHelpers.h>
+#include <core_api.h>
+#include <Views.Win32/ViewPlugin.h>
+
+#include <exception>
+#include <format>
+#include <fstream>
+#include <ios>
+#include <optional>
+#include <stdexcept>
+
+static std::optional<core_audio_info> g_audio_info{};
+std::optional<SDLAudio::SDLBackend> g_backend{};
+core_plugin_extended_funcs *g_ef = nullptr;
+
+std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
+static bool g_sdl_is_init = false;
+
+static const SDL_InitFlags SDL_INIT_NEEDED = SDL_INIT_AUDIO;
+
+static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
 {
-    wprintf(str);
-}
-
-static core_plugin_extended_funcs ef_shim = {
-    .size = sizeof(core_plugin_extended_funcs),
-    .log_trace = log_shim,
-    .log_info = log_shim,
-    .log_warn = log_shim,
-    .log_error = log_shim,
-};
-
-SoundDriverInterface *snd = NULL;
-bool ai_delayed_carry;
-bool first_time = true;
-HINSTANCE hInstance;
-OSVERSIONINFOEX OSInfo;
-core_audio_info AudioInfo;
-u32 Dacrate = 0;
-core_plugin_extended_funcs *g_ef = &ef_shim;
-
-bool WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    hInstance = hinstDLL;
-    return TRUE;
-}
-
-EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
-{
-    g_ef = funcs;
-}
-
-EXPORT void CALL DllAbout(void *hParent)
-{
-    const auto msg = PLUGIN_NAME L"\n"
-                                 L"Part of the Mupen64 project family."
-                                 L"\n\n"
-                                 L"https://github.com/mupen64/mupen64-rr-lua";
-
-    MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);
-}
-
-EXPORT void CALL DllConfig(void *hParent)
-{
-    Configuration::ConfigDialog((HWND)hParent);
-}
-
-EXPORT Boolean CALL InitiateAudio(core_audio_info Audio_Info)
-{
-    if (snd != NULL)
+    uint32_t vi_clock = 0;
+    switch (system_type)
     {
-        snd->AI_Shutdown();
-        delete snd;
+    case sys_ntsc:
+        vi_clock = 48681812;
+        break;
+    case sys_pal:
+        vi_clock = 49656530;
+        break;
+    default:
+        // fallback to NTSC
+        vi_clock = 48681812;
+        break;
     }
 
-    memcpy(&AudioInfo, &Audio_Info, sizeof(core_audio_info));
-    DRAM = Audio_Info.rdram;
-    DMEM = Audio_Info.dmem;
-    IMEM = Audio_Info.imem;
+    return vi_clock / (dacrate + 1);
+}
 
-    Configuration::LoadSettings();
-    snd = DirectSoundDriver::CreateSoundDriver();
+static inline std::filesystem::path config_path()
+{
+    return g_dll_path.parent_path() / "TASAudio.conf.json";
+}
 
-    if (snd == NULL) return FALSE;
+SDLAudio::Config read_config()
+{
+    SDLAudio::Config cfg;
+    std::fstream fs(config_path(), std::ios_base::in | std::ios_base::out | std::ios_base::app | std::ios_base::ate);
+    fs.exceptions(std::ios_base::badbit);
 
-    snd->AI_Startup();
-    ai_delayed_carry = false;
-    return TRUE;
+    // if the config file was missing or empty, write the default config
+    if (fs.tellg() == 0)
+    {
+        cfg.write_to(fs);
+        return cfg;
+    }
+
+    try
+    {
+        fs.seekg(0, std::ios_base::beg);
+        cfg.read_from(fs);
+    }
+    catch (const std::invalid_argument &)
+    {
+        // if config is invalid, use defaults
+        cfg = {};
+    }
+    return cfg;
+}
+void write_config(const SDLAudio::Config &config)
+{
+    std::ofstream fs(config_path());
+    fs.exceptions(std::ios_base::badbit);
+    config.write_to(fs);
 }
 
 EXPORT void CALL CloseDLL(void)
 {
-    if (snd != NULL)
-    {
-        snd->AI_Shutdown();
-        delete snd;
-        snd = NULL;
-    }
+    if (g_backend.has_value()) g_backend.reset();
+    SDL_QuitSubSystem(SDL_INIT_NEEDED);
+}
+
+EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *g_fwd_funcs)
+{
+    g_ef = g_fwd_funcs;
 }
 
 EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
@@ -99,111 +112,70 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     PluginInfo->ver = 0x0101;
 }
 
-EXPORT void CALL ProcessAList(void)
+EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 {
-    Configuration::RomRunning = true;
-    if (first_time)
+
+    auto config_path = g_dll_path.parent_path() / "sdl-audio.conf.json";
+    g_audio_info.emplace(Audio_Info);
+
+    try
     {
-        first_time = false;
-        Configuration::LoadSettings();
+        SDLAudio::Config cfg = win32_read_config();
+        if (!SDL_Init(SDL_INIT_NEEDED)) throw std::runtime_error(SDL_GetError());
+        g_backend.emplace(std::move(cfg)); // TODO: add config dialog
     }
-    if (snd == NULL) return;
-    HLEStart();
-}
-
-EXPORT void CALL RomOpen(void)
-{
-    Configuration::RomRunning = true;
-    first_time = false;
-    Configuration::LoadSettings();
-}
-
-EXPORT void CALL RomClosed(void)
-{
-    Configuration::RomRunning = false;
-    Configuration::LoadSettings();
-    Dacrate = 0; // Forces a revisit to initialize audio
-    if (snd == NULL) return;
-    snd->AI_ResetAudio();
-}
-
-EXPORT void CALL AiDacrateChanged(int SystemType)
-{
-    u32 video_clock;
-
-    ai_delayed_carry = false;
-    if (snd == NULL) return;
-    if (Dacrate == *AudioInfo.ai_dacrate_reg) return;
-
-    Dacrate = *AudioInfo.ai_dacrate_reg & 0x00003FFF;
-
-    switch (SystemType)
+    catch (std::exception &e)
     {
-    case 0:
-        video_clock = 48681812;
-        break;
-    case 1:
-        video_clock = 49656530;
-        break;
-    case 2:
-        video_clock = 48628316;
-        break;
-    default:
-        assert(FALSE);
+        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
+        return 0;
     }
 
-    u32 Frequency = video_clock / (Dacrate + 1);
+    return 1;
+}
 
-    if (Frequency > 7000 && Frequency < 9000)
-        Frequency = 8000;
-    else if (Frequency > 10000 && Frequency < 12000)
-        Frequency = 11025;
-    else if (Frequency > 18000 && Frequency < 20000)
-        Frequency = 19000;
-    else if (Frequency > 21000 && Frequency < 23000)
-        Frequency = 22050;
-    else if (Frequency > 31000 && Frequency < 33000)
-        Frequency = 32000;
-    else if (Frequency > 43000 && Frequency < 45000)
-        Frequency = 44100;
-    else if (Frequency > 47000 && Frequency < 49000)
-        Frequency = 48000;
-    else
-        g_ef->log_error(std::format(L"Unknown AI Frequency {}", Frequency).c_str());
+EXPORT void CALL RomOpen()
+{
+}
 
-    snd->AI_SetFrequency(Frequency);
+EXPORT void CALL RomClosed()
+{
+    if (g_backend.has_value()) g_backend.reset();
+}
+
+EXPORT void CALL AiDacrateChanged(int32_t system_type)
+{
+    // update sample rate
+    if (!g_audio_info || !g_backend) return;
+    try
+    {
+        uint32_t sample_rate = compute_sample_rate(system_type, *g_audio_info->ai_dacrate_reg);
+        g_backend->set_sample_rate(sample_rate);
+    }
+    catch (std::exception &e)
+    {
+        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at AiDacrateChanged(): {}", e.what())).c_str());
+    }
 }
 
 EXPORT void CALL AiLenChanged(void)
 {
-    u32 address = *AudioInfo.ai_dram_addr_reg & 0x00FFFFF8;
-    u32 length = *AudioInfo.ai_len_reg & 0x3FFF8;
+    // push new samples
+    if (!g_audio_info || !g_backend) return;
+    uint32_t addr = *g_audio_info->ai_dram_addr_reg & 0x00FF'FFF8;
+    uint32_t len = *g_audio_info->ai_len_reg & 0x0003'FFF8;
 
-    if (snd == NULL) return;
-
-    if (ai_delayed_carry) address += 0x2000;
-
-    if ((address + length & 0x1FFF) == 0)
-        ai_delayed_carry = true;
-    else
-        ai_delayed_carry = false;
-
-    snd->AI_LenChanged(AudioInfo.rdram + address, length);
-}
-
-EXPORT u32 CALL AiReadLength(void)
-{
-    if (snd == NULL) return 0;
-    *AudioInfo.ai_len_reg = snd->AI_ReadLength();
-    return *AudioInfo.ai_len_reg;
-}
-
-EXPORT void CALL AiUpdate(Boolean Wait)
-{
-    if (!snd)
+    try
     {
-        Sleep(1);
-        return;
+        g_backend->push_samples(g_audio_info->rdram + addr, len);
+        g_backend->sync_audio();
     }
-    snd->AI_Update(Wait);
+    catch (std::exception &e)
+    {
+        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at AiLenChanged(): {}", e.what())).c_str());
+    }
+}
+
+EXPORT void CALL AiUpdate(int32_t wait)
+{
+    // no-op
 }

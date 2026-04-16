@@ -61,7 +61,7 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     }
 
     m_silence_buffer = static_cast<uint8_t *>(calloc(params.arate, 1));
-    m_blank_buffer = static_cast<uint8_t *>(calloc(m_params.width * m_params.height * 3, 1));
+    m_blank_buffer = static_cast<uint8_t *>(calloc(m_params.width * m_params.height * 4, 1));
     m_dropped_frames = 0;
 
     m_video_thread = std::thread(&FFmpegEncoder::write_video_thread, this);
@@ -169,7 +169,7 @@ bool FFmpegEncoder::append_video(uint8_t *image)
 
     m_last_write_was_video = true;
 
-    auto buf = static_cast<uint8_t *>(malloc(m_params.width * m_params.height * 3));
+    auto buf = static_cast<uint8_t *>(malloc(m_params.width * m_params.height * 4));
 
     // HACK: If we run out of memory, we start writing empty video frames
     // This can happen when capturing at high resolutions, as ffmpeg might not start processing the pipe writes in time
@@ -186,7 +186,7 @@ bool FFmpegEncoder::append_video(uint8_t *image)
         return true;
     }
 
-    memcpy(buf, image, m_params.width * m_params.height * 3);
+    memcpy(buf, image, m_params.width * m_params.height * 4);
 
     {
         std::lock_guard lock(m_video_queue_mutex);
@@ -246,7 +246,7 @@ void FFmpegEncoder::write_video_thread()
         this->m_video_queue.pop();
         lock.unlock();
 
-        write_pipe_checked(m_video_pipe, (char *)pair.first, m_params.width * m_params.height * 3, true);
+        write_pipe_checked(m_video_pipe, (char *)pair.first, m_params.width * m_params.height * 4, true);
         if (pair.second)
         {
             free(pair.first);
