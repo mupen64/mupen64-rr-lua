@@ -118,7 +118,7 @@ function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
         srcy1 = srcy1,
         srcx2 = srcx2,
         srcy2 = srcy2,
-        color = { r = 1, g = 1, b = 1, a = opacity },
+        color = opacity == 1 and nil or { r = 1, g = 1, b = 1, a = opacity },
         interpolation = interpolation,
     })
 end
