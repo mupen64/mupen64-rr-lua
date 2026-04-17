@@ -46,7 +46,7 @@ typedef struct
     ID2D1Bitmap *bmp;
     D2D1_RECT_F destination_rectangle;
     D2D1_RECT_F source_rectangle;
-    std::optional<t_d2d_color> color;
+    t_d2d_color color;
     int interpolation;
 } t_draw_image_params;
 
@@ -126,27 +126,24 @@ static t_draw_image_params check_draw_image_params(lua_State *L, int index)
     lua_pop(L, 1);
 
     lua_getfield(L, index, "color");
+    params.color = {1.0f, 1.0f, 1.0f, 1.0f};
     if (!lua_isnoneornil(L, -1))
     {
-        t_d2d_color color{};
-
         lua_getfield(L, -1, "r");
-        color.r = lua_tonumber(L, -1);
+        params.color.r = lua_tonumber(L, -1);
         lua_pop(L, 1);
 
         lua_getfield(L, -1, "g");
-        color.g = lua_tonumber(L, -1);
+        params.color.g = lua_tonumber(L, -1);
         lua_pop(L, 1);
 
         lua_getfield(L, -1, "b");
-        color.b = lua_tonumber(L, -1);
+        params.color.b = lua_tonumber(L, -1);
         lua_pop(L, 1);
 
         lua_getfield(L, -1, "a");
-        color.a = lua_tonumber(L, -1);
+        params.color.a = lua_tonumber(L, -1);
         lua_pop(L, 1);
-
-        params.color = color;
     }
     lua_pop(L, 1);
 
@@ -540,16 +537,16 @@ static int draw_image2(lua_State *L)
     LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
     auto params = check_draw_image_params(L, 1);
+    const auto color = params.color;
 
-    if (!params.color)
+    // Fast path: no tint.
+    if (params.color.r == 1.0f && params.color.g == 1.0f && params.color.b == 1.0f)
     {
-        lua->rctx.d2d_render_target_stack.top()->DrawBitmap(params.bmp, params.destination_rectangle, 1.0f,
+        lua->rctx.d2d_render_target_stack.top()->DrawBitmap(params.bmp, params.destination_rectangle, params.color.a,
                                                             (D2D1_BITMAP_INTERPOLATION_MODE)params.interpolation,
                                                             params.source_rectangle);
         return 0;
     }
-
-    auto &color = *params.color;
 
     ComPtr<ID2D1DeviceContext> dc;
     const auto hr = lua->rctx.d2d_render_target_stack.top()->QueryInterface(IID_PPV_ARGS(dc.GetAddressOf()));
