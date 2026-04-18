@@ -95,8 +95,7 @@ void readscreen_window()
         bmp_info.bmiHeader.biCompression = BI_RGB;
 
         GetDIBits(compat_dc, bitmap, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
-        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4)
-            m_video_buf[i] = 0xFF;
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4) m_video_buf[i] = 0xFF;
 
         SelectObject(compat_dc, nullptr);
         DeleteObject(bitmap);
@@ -128,8 +127,7 @@ void readscreen_desktop()
         bmp_info.bmiHeader.biCompression = BI_RGB;
 
         GetDIBits(compat_dc, bitmap, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
-        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4)
-            m_video_buf[i] = 0xFF;
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4) m_video_buf[i] = 0xFF;
 
         SelectObject(compat_dc, nullptr);
         DeleteObject(bitmap);
@@ -202,8 +200,7 @@ void readscreen_hybrid()
         bmp_info.bmiHeader.biCompression = BI_RGB;
 
         GetDIBits(hy_dc, hy_bmp, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
-        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4)
-            m_video_buf[i] = 0xFF;
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4) m_video_buf[i] = 0xFF;
     });
 }
 

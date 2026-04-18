@@ -712,7 +712,6 @@ static void start_tracelog()
     g_main_ctx.core_ctx->tl_start(path, result == IDYES, false);
 }
 
-
 static void show_command_palette()
 {
     BetterEmulationLock lock;

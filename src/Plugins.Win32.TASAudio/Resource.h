@@ -6,4 +6,3 @@
 #define IDC_SYNC_AUDIO 1003
 #define IDC_VOLUME 1004
 #define IDC_VOLUME_TXT 1005
-
