@@ -577,9 +577,13 @@ static void InnerLoop()
     }
     else
     {
-        v4 = (v4 * *(uint32_t *)(mp3data + 0xCE8)) >> 0x10;
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t)v4;
-        mult4 = (int32_t)*(uint32_t *)(mp3data + 0xCE8);
+        uint32_t scale = *(uint32_t *)(mp3data + 0xCE8);
+
+        int32_t scaled = (v4 * (int32_t)scale) >> 16;
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t)scaled;
+
+        v4 = scaled;
+        mult4 = (int32_t)scale;
     }
     addptr -= 0x50;
 
