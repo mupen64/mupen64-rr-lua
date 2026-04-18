@@ -23,36 +23,36 @@ extern "C"
     struct core_callbacks
     {
         std::function<void(bool new_present)> vi = [](const auto &...) {};
-        std::function<void(core_buttons *input, int index)> input = [](core_buttons *, int) {};
-        std::function<void()> frame = [] {};
-        std::function<void()> interval = [] {};
-        std::function<void()> ai_len_changed = [] {};
-        std::function<void()> play_movie = [] {};
-        std::function<void()> stop_movie = [] {};
-        std::function<void()> loop_movie = [] {};
-        std::function<void()> save_state = [] {};
-        std::function<void()> load_state = [] {};
-        std::function<void()> reset = [] {};
-        std::function<void()> seek_completed = [] {};
-        std::function<void(bool)> core_executing_changed = [](bool) {};
-        std::function<void(bool)> emu_paused_changed = [](bool) {};
-        std::function<void(bool)> emu_launched_changed = [](bool) {};
-        std::function<void(bool)> emu_starting_changed = [](bool) {};
-        std::function<void()> emu_starting = [] {};
-        std::function<void()> emu_stopped = [] {};
-        std::function<void()> emu_stopping = [] {};
-        std::function<void()> reset_completed = [] {};
-        std::function<void(int32_t)> speed_modifier_changed = [](int32_t) {};
-        std::function<void(bool)> warp_modify_status_changed = [](bool) {};
-        std::function<void(int32_t)> current_sample_changed = [](int32_t) {};
-        std::function<void(core_vcr_task)> task_changed = [](core_vcr_task) {};
-        std::function<void(uint64_t)> rerecords_changed = [](uint64_t) {};
-        std::function<void()> unfreeze_completed = [] {};
-        std::function<void(size_t)> seek_savestate_changed = [](size_t) {};
-        std::function<void(bool)> readonly_changed = [](bool) {};
-        std::function<void(core_system_type)> dacrate_changed = [](core_system_type) {};
-        std::function<void()> lag_limit_exceeded = [] {};
-        std::function<void()> seek_status_changed = [] {};
+        std::function<void(core_buttons *input, int index)> input = [](const auto &...) {};
+        std::function<void()> frame = [](const auto &...) {};
+        std::function<void()> interval = [](const auto &...) {};
+        std::function<void()> ai_len_changed = [](const auto &...) {};
+        std::function<void()> play_movie = [](const auto &...) {};
+        std::function<void()> stop_movie = [](const auto &...) {};
+        std::function<void()> loop_movie = [](const auto &...) {};
+        std::function<void()> save_state = [](const auto &...) {};
+        std::function<void()> load_state = [](const auto &...) {};
+        std::function<void()> reset = [](const auto &...) {};
+        std::function<void()> seek_completed = [](const auto &...) {};
+        std::function<void(bool)> core_executing_changed = [](const auto &...) {};
+        std::function<void(bool)> emu_paused_changed = [](const auto &...) {};
+        std::function<void(bool)> emu_launched_changed = [](const auto &...) {};
+        std::function<void(bool)> emu_starting_changed = [](const auto &...) {};
+        std::function<void()> emu_starting = [](const auto &...) {};
+        std::function<void()> emu_stopped = [](const auto &...) {};
+        std::function<void()> emu_stopping = [](const auto &...) {};
+        std::function<void()> reset_completed = [](const auto &...) {};
+        std::function<void(int32_t)> speed_modifier_changed = [](const auto &...) {};
+        std::function<void(bool)> warp_modify_status_changed = [](const auto &...) {};
+        std::function<void(int32_t)> current_sample_changed = [](const auto &...) {};
+        std::function<void(core_vcr_task)> task_changed = [](const auto &...) {};
+        std::function<void(uint64_t)> rerecords_changed = [](const auto &...) {};
+        std::function<void()> unfreeze_completed = [](const auto &...) {};
+        std::function<void(size_t)> seek_savestate_changed = [](const auto &...) {};
+        std::function<void(bool)> readonly_changed = [](const auto &...) {};
+        std::function<void(core_system_type)> dacrate_changed = [](const auto &...) {};
+        std::function<void()> lag_limit_exceeded = [](const auto &...) {};
+        std::function<void()> seek_status_changed = [](const auto &...) {};
     };
 
 #pragma region Dialog IDs
@@ -81,74 +81,72 @@ extern "C"
         core_cfg *cfg;
 
         /**
-         * \brief An IIOHelperService implementation.
+         * \brief The core's controller configuration. Can be written to by the host during `initiate_plugins`.
          */
-        // PlatformService *io_service;
+        core_controller controls[4]{};
 
         /**
-         * \brief The core callbacks.
+         * \brief Optional callbacks for the core to invoke during emulation.
          */
         core_callbacks callbacks;
-
-        core_controller controls[4]{};
 
         /**
          * \brief Logs the specified message at the trace level.
          */
-        void (*log_trace)(std::string_view);
+        std::function<void(std::string_view)> log_trace = [](const auto &...) {};
 
         /**
          * \brief Logs the specified message at the info level.
          */
-        void (*log_info)(std::string_view);
+        std::function<void(std::string_view)> log_info = [](const auto &...) {};
 
         /**
          * \brief Logs the specified message at the warning level.
          */
-        void (*log_warn)(std::string_view);
+        std::function<void(std::string_view)> log_warn = [](const auto &...) {};
 
         /**
          * \brief Logs the specified message at the error level.
          */
-        void (*log_error)(std::string_view);
+        std::function<void(std::string_view)> log_error = [](const auto &...) {};
 
         /**
-         * \brief Loads the plugins specified by the config paths.
+         * \brief Loads plugins.
          * \return Whether the plugins were loaded successfully.
          */
-        bool (*load_plugins)(void);
+        std::function<bool()> load_plugins = []() { return false; };
 
         /**
-         * \brief Called after load_plugins, this function loads plugin functions into plugin_funcs and calls the
-         * "initiate" family of functions for all plugins. \remark This function must be infallible.
+         * \brief Loads plugin functions (see `video_*`, `audio_*`, `input_*`, `rsp_*` functions in this struct). Called
+         * after `load_plugins` on the emu thread.
          */
-        void (*initiate_plugins)(void);
+        std::function<void()> initiate_plugins = []() {};
 
         /**
          * \brief Executes a function asynchronously.
          * \param func The function to be executed.
          */
-        void (*submit_task)(const std::function<void()> &func);
+        std::function<void(const std::function<void()> &func)> submit_task = [](const auto &...) {};
 
         /**
-         * \brief Gets the directory in which savestates and persistent game saves should be stored.
+         * \brief Gets the path to the savestate and persistent game save directory.
          */
-        std::filesystem::path (*get_saves_directory)(void);
+        std::function<std::filesystem::path()> get_saves_directory = []() { return std::filesystem::path(); };
 
         /**
-         * \brief Gets the directory in which VCR backups should be stored.
+         * \brief Gets the path to the VCR backup directory.
          */
-        std::filesystem::path (*get_backups_directory)(void);
+        std::function<std::filesystem::path()> get_backups_directory = []() { return std::filesystem::path(); };
 
         /**
          * \brief Gets the path to the summercart directory.
          */
-        std::filesystem::path (*get_summercart_directory)(void);
+        std::function<std::filesystem::path()> get_summercart_directory = []() { return std::filesystem::path(); };
 
         /**
          * \brief Gets the path to the summercart vhd.
          */
-        std::filesystem::path (*get_summercart_path)(void);
+        std::function<std::filesystem::path()> get_summercart_path = []() { return std::filesystem::path(); };
 
         /**
          * Prompts the user to select from a provided collection of choices.
@@ -174,7 +172,8 @@ extern "C"
          * the value specified by the user's preferences in the view. If the user has chosen to not show the dialog
          * again, this function will return the last choice.
          */
-        std::function<bool(std::string_view id, const char *str, const char *title, bool warning)> show_ask_dialog;
+        std::function<bool(std::string_view id, const char *str, const char *title, bool warning)> show_ask_dialog =
+            [](const auto &...) { return true; };
 
         /**
          * \brief Shows the user a dialog.
@@ -182,43 +181,45 @@ extern "C"
          * \param title The dialog title.
          * \param type The dialog's tone.
          */
-        std::function<void(const char *str, const char *title, core_dialog_type type)> show_dialog;
+        std::function<void(const char *str, const char *title, core_dialog_type type)> show_dialog =
+            [](const auto &...) {};
 
         /**
          * \brief Shows text in the notification section of the statusbar.
          */
-        std::function<void(const char *str)> show_statusbar;
+        std::function<void(const char *str)> show_statusbar = [](const auto &...) {};
 
         /**
-         * \brief Updates the screen.
+         * \brief Notifies the host that new video data is available and the screen should be updated.
          */
-        void (*update_screen)(void);
+        std::function<void()> update_screen = [](const auto &...) {};
 
         /**
          * \brief Writes the MGE compositor's current emulation front buffer into the destination buffer.
          * \param buffer The video buffer. Must be at least of size <c>width * height * 4</c>, as acquired by
          * <c>plugin_funcs.get_video_size</c>.
          */
-        void (*copy_video)(void *buffer);
+        std::function<void(void *)> copy_video = [](const auto &...) {};
 
         /**
          * \brief Finds the first rom from the available ROM list which matches the predicate.
          * \param predicate A predicate which determines if the rom matches.
          * \return The rom's path, or an empty string if no rom was found.
          */
-        std::filesystem::path (*find_available_rom)(const std::function<bool(const core_rom_header &)> &predicate);
+        std::function<std::filesystem::path(const std::function<bool(const core_rom_header &)> &predicate)>
+            find_available_rom = [](const auto &...) { return std::filesystem::path(); };
 
         /**
          * \return Whether MGE functionality is currently available.
          */
-        bool (*mge_available)(void);
+        std::function<bool()> mge_available = []() { return false; };
 
         /**
          * \brief Fills the screen with the specified data.
          * The size of the buffer is determined by the resolution returned by the get_video_size (MGE) or readScreen
          * (Non-MGE) functions. Note that the buffer format is 32bpp BGRA.
          */
-        void (*load_screen)(void *data);
+        std::function<void(void *data)> load_screen = [](const auto &...) {};
 
         /**
          * \brief Gets the plugin names.
@@ -229,13 +230,13 @@ extern "C"
          * plugin name buffer. Destination must be at least 64 bytes large. If null, no data will be written. \note Must
          * be called after loading plugins and their globals.
          */
-        void (*get_plugin_names)(char *video, char *audio, char *input, char *rsp);
+        std::function<void(char *video, char *audio, char *input, char *rsp)> get_plugin_names = [](const auto &...) {};
 
         /**
          * \brief The savestate callback wrapper, which is invoked prior to individual savestate callbacks.
          * Can be used to display generic error information.
          */
-        void (*st_pre_callback)(const core_st_callback_info &info, const std::vector<uint8_t> &buffer) =
+        std::function<void(const core_st_callback_info &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
             [](const core_st_callback_info &, const std::vector<uint8_t> &) {};
 
         PROCESSDLIST video_process_dlist;
@@ -262,6 +263,10 @@ extern "C"
         DORSPCYCLES rsp_do_rsp_cycles;
     };
 
+    /**
+     * \brief The context of a core instance.
+     * There currently can't be multiple core instances running simultaneously.
+     */
     struct core_ctx
     {
         uint8_t *rom;
