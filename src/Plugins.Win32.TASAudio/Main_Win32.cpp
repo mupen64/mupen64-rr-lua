@@ -162,7 +162,7 @@ void win32_write_config(const SDLAudio::Config &cfg)
 
     // write UTF-16 JSON
     if (RegSetValueEx(key, VALUE_CONFIG, 0, REG_SZ, (const BYTE *)cfg_wstr.c_str(),
-                       (cfg_wstr.size() + 1) * sizeof(wchar_t)) != ERROR_SUCCESS)
+                      (cfg_wstr.size() + 1) * sizeof(wchar_t)) != ERROR_SUCCESS)
     {
         RegCloseKey(key);
         return;
