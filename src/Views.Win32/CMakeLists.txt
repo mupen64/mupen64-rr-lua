@@ -183,6 +183,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Dcomp
     D3D11
     DXGI
+    dxguid
     Dwmapi
     d3dcompiler
     Winhttp

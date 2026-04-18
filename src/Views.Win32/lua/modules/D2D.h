@@ -33,6 +33,23 @@ typedef struct
     float max_height;
 } t_text_measure_params;
 
+typedef struct
+{
+    float r;
+    float g;
+    float b;
+    float a;
+} t_d2d_color;
+
+typedef struct
+{
+    ID2D1Bitmap *bmp;
+    D2D1_RECT_F destination_rectangle;
+    D2D1_RECT_F source_rectangle;
+    t_d2d_color color;
+    int interpolation;
+} t_draw_image_params;
+
 #define D2D_GET_RECT(L, idx)                                                                                           \
     D2D1::RectF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                  \
                 luaL_checknumber(L, idx + 3))
@@ -56,6 +73,82 @@ typedef struct
 
 #define D2D_GET_ROUNDED_RECT(L, idx)                                                                                   \
     D2D1_ROUNDED_RECT(D2D_GET_RECT(L, idx), luaL_checknumber(L, idx + 5), luaL_checknumber(L, idx + 6))
+
+static t_draw_image_params check_draw_image_params(lua_State *L, int index)
+{
+    luaL_checktype(L, index, LUA_TTABLE);
+
+    t_draw_image_params params{};
+
+    lua_getfield(L, index, "identifier");
+    params.bmp = (ID2D1Bitmap *)luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+
+    D2D1_SIZE_U bmp_size = params.bmp->GetPixelSize();
+
+    lua_getfield(L, index, "destx1");
+    float destx1 = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "desty1");
+    float desty1 = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "destx2");
+    float destx2 = lua_isnoneornil(L, -1) ? destx1 + bmp_size.width : lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "desty2");
+    float desty2 = lua_isnoneornil(L, -1) ? desty1 + bmp_size.height : lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "srcx1");
+    float srcx1 = lua_isnoneornil(L, -1) ? 0 : lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "srcy1");
+    float srcy1 = lua_isnoneornil(L, -1) ? 0 : lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "srcx2");
+    float srcx2 = lua_isnoneornil(L, -1) ? srcx1 + bmp_size.width : lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "srcy2");
+    float srcy2 = lua_isnoneornil(L, -1) ? srcy1 + bmp_size.height : lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+    params.destination_rectangle = D2D1::RectF(destx1, desty1, destx2, desty2);
+    params.source_rectangle = D2D1::RectF(srcx1, srcy1, srcx2, srcy2);
+
+    lua_getfield(L, index, "interpolation");
+    params.interpolation = lua_isnoneornil(L, -1) ? 1 : lua_tointeger(L, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, index, "color");
+    params.color = {1.0f, 1.0f, 1.0f, 1.0f};
+    if (!lua_isnoneornil(L, -1))
+    {
+        lua_getfield(L, -1, "r");
+        params.color.r = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+
+        lua_getfield(L, -1, "g");
+        params.color.g = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+
+        lua_getfield(L, -1, "b");
+        params.color.b = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+
+        lua_getfield(L, -1, "a");
+        params.color.a = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+
+    return params;
+}
 
 static int get_target_fps(lua_State *L)
 {
@@ -438,19 +531,57 @@ static int free_image(lua_State *L)
     return 0;
 }
 
-static int draw_image(lua_State *L)
+static int draw_image2(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
     LuaRenderer::ensure_d2d_renderer_created(&lua->rctx);
 
-    D2D1_RECT_F destination_rectangle = D2D_GET_RECT(L, 1);
-    D2D1_RECT_F source_rectangle = D2D_GET_RECT(L, 5);
-    float opacity = luaL_checknumber(L, 9);
-    int interpolation = luaL_checkinteger(L, 10);
-    auto bmp = (ID2D1Bitmap *)luaL_checkinteger(L, 11);
+    auto params = check_draw_image_params(L, 1);
+    const auto color = params.color;
 
-    lua->rctx.d2d_render_target_stack.top()->DrawBitmap(
-        bmp, destination_rectangle, opacity, (D2D1_BITMAP_INTERPOLATION_MODE)interpolation, source_rectangle);
+    // Fast path: no tint.
+    if (params.color.r == 1.0f && params.color.g == 1.0f && params.color.b == 1.0f)
+    {
+        lua->rctx.d2d_render_target_stack.top()->DrawBitmap(params.bmp, params.destination_rectangle, params.color.a,
+                                                            (D2D1_BITMAP_INTERPOLATION_MODE)params.interpolation,
+                                                            params.source_rectangle);
+        return 0;
+    }
+
+    ComPtr<ID2D1DeviceContext> dc;
+    const auto hr = lua->rctx.d2d_render_target_stack.top()->QueryInterface(IID_PPV_ARGS(dc.GetAddressOf()));
+    RT_ASSERT_HR(hr, L"Failed to get ID2D1DeviceContext from render target");
+
+    ComPtr<ID2D1Effect> effect;
+    dc->CreateEffect(CLSID_D2D1ColorMatrix, effect.GetAddressOf());
+
+    effect->SetInput(0, params.bmp);
+    effect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, D2D1::Matrix5x4F(color.r, 0, 0, 0, 0, color.g, 0, 0, 0, 0,
+                                                                          color.b, 0, 0, 0, 0, color.a, 0, 0, 0, 0));
+
+    D2D1_MATRIX_3X2_F old_transform;
+    dc->GetTransform(&old_transform);
+
+    float src_w = params.source_rectangle.right - params.source_rectangle.left;
+    float src_h = params.source_rectangle.bottom - params.source_rectangle.top;
+    float dst_w = params.destination_rectangle.right - params.destination_rectangle.left;
+    float dst_h = params.destination_rectangle.bottom - params.destination_rectangle.top;
+    float scale_x = src_w > 0 ? dst_w / src_w : 1.0f;
+    float scale_y = src_h > 0 ? dst_h / src_h : 1.0f;
+
+    dc->SetTransform(
+        D2D1::Matrix3x2F::Scale(scale_x, scale_y) *
+        D2D1::Matrix3x2F::Translation(params.destination_rectangle.left, params.destination_rectangle.top) *
+        old_transform);
+
+    ComPtr<ID2D1Image> output;
+    effect->GetOutput(output.GetAddressOf());
+
+    D2D1_POINT_2F target_offset = D2D1::Point2F(0, 0);
+    dc->DrawImage(output.Get(), &target_offset, &params.source_rectangle, (D2D1_INTERPOLATION_MODE)params.interpolation,
+                  D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+    dc->SetTransform(old_transform);
 
     return 0;
 }

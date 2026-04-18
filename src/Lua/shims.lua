@@ -91,3 +91,34 @@ end
 function savestate.loadfile(filename)
     savestate.do_file(filename, "load", function() end)
 end
+
+---Draws an image by taking the pixels in the source rectangle of the image, and drawing them to the destination rectangle on the screen.
+---@deprecated Use [d2d.draw_image2](lua://d2d.draw_image2) instead.
+---@param destx1 integer
+---@param desty1 integer
+---@param destx2 integer
+---@param desty2 integer
+---@param srcx1 integer
+---@param srcy1 integer
+---@param srcx2 integer
+---@param srcy2 integer
+---@param opacity number
+---@param interpolation integer 0: nearest neighbor, 1: linear, -1: don't use.
+---@param identifier number
+---@return nil
+function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
+                        srcy2, opacity, interpolation, identifier)
+    d2d.draw_image2({
+        identifier = identifier,
+        destx1 = destx1,
+        desty1 = desty1,
+        destx2 = destx2,
+        desty2 = desty2,
+        srcx1 = srcx1,
+        srcy1 = srcy1,
+        srcx2 = srcx2,
+        srcy2 = srcy2,
+        color = opacity == 1 and nil or { r = 1, g = 1, b = 1, a = opacity },
+        interpolation = interpolation,
+    })
+end
