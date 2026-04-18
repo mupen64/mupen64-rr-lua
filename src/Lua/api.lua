@@ -1082,6 +1082,25 @@ function wgui.resetclip() end
 
 ---@alias brush integer
 
+---@class D2DColor
+---@field r number The red component of the color in the range [0, 1].
+---@field g number The green component of the color in the range [0, 1].
+---@field b number The blue component of the color in the range [0, 1].
+---@field a number The alpha component of the color in the range [0, 1].
+
+---@class D2DDrawImageParams
+---@field identifier integer The identifier of the image to draw, as returned by [d2d.load_image](lua://d2d.load_image).
+---@field destx1 integer The x-coordinate of the top-left corner of the destination rectangle.
+---@field desty1 integer The y-coordinate of the top-left corner of the destination rectangle.
+---@field destx2 integer? The x-coordinate of the bottom-right corner of the destination rectangle. If `nil`, `destx1` plus the natural width of the image is assumed.
+---@field desty2 integer? The y-coordinate of the bottom-right corner of the destination rectangle. If `nil`, `desty1` plus the natural height of the image is assumed.
+---@field srcx1 integer? The x-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
+---@field srcy1 integer? The y-coordinate of the top-left corner of the source rectangle. If `nil`, `0` is assumed.
+---@field srcx2 integer? The x-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcx1` plus the natural width of the image is assumed.
+---@field srcy2 integer? The y-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcy1` plus the natural height of the image is assumed.
+---@field color D2DColor? The color to tint the image with. The RGB components are treated as multipliers, and the alpha component is treated as the opacity. If `nil`, the image is drawn without tinting.
+---@field interpolation integer? The interpolation mode to use. 0: nearest neighbor, 1|nil: linear.
+
 ---Gets the target frequency of the `emu.atdrawd2d` and `emu.atupdatescreen` callbacks in FPS.
 ---@return number? # The target FPS, or nil.
 function d2d.get_target_fps() end
@@ -1237,22 +1256,9 @@ function d2d.load_image(path) end
 ---@return nil
 function d2d.free_image(identifier) end
 
----Draws an image by taking the pixels in the source rectangle of the image, and drawing them to the destination rectangle on the screen.
----@param destx1 integer
----@param desty1 integer
----@param destx2 integer
----@param desty2 integer
----@param srcx1 integer
----@param srcy1 integer
----@param srcx2 integer
----@param srcy2 integer
----@param opacity number
----@param interpolation integer 0: nearest neighbor, 1: linear, -1: don't use.
----@param identifier number
----@return nil
-function d2d.draw_image(destx1, desty1, destx2, desty2, srcx1, srcy1, srcx2,
-                        srcy2, opacity, interpolation, identifier)
-end
+---Draws an image with the specified parameters.
+---@param params D2DDrawImageParams The draw parameters.
+function d2d.draw_image2(params) end
 
 ---Returns the width and height of the image at `identifier`.
 ---@nodiscard

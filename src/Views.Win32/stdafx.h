@@ -27,8 +27,6 @@ extern "C"
 #include <resource.h>
 #include <ShlObj.h>
 #include <DbgHelp.h>
-#include <d2d1.h>
-#include <dwrite.h>
 #include <Shlwapi.h>
 #include <shellapi.h>
 #include <windowsx.h>
@@ -41,14 +39,12 @@ extern "C"
 #include <d2d1.h>
 #include <d2d1_3.h>
 #include <d2d1helper.h>
-#include <d2d1helper.h>
+#include <d2d1effects.h>
 #include <d3d11.h>
-#include <d2d1_3.h>
 #include <dcomp.h>
-#include <d3d11.h>
+#include <dwrite.h>
 #include <d3dcompiler.h>
 #include <wrl/client.h>
-#include <dcomp.h>
 #include <dwmapi.h>
 #include <shlobj_core.h>
 #include <xxh64.h>
