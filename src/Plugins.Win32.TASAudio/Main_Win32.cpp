@@ -119,11 +119,13 @@ SDLAudio::Config win32_read_config()
     }
 
     // convert to UTF-8 and read into config
-    try {
+    try
+    {
         std::stringstream sstr(IOUtils::to_utf8_string(cfg_wstr));
         cfg.read_from(sstr);
     }
-    catch (const std::exception& e) {
+    catch (const std::exception &e)
+    {
         cfg = SDLAudio::Config{};
         RegCloseKey(key);
         win32_write_config(cfg);
@@ -159,8 +161,8 @@ void win32_write_config(const SDLAudio::Config &cfg)
     }
 
     // write UTF-16 JSON
-    if (RegSetValueExW(key, VALUE_CONFIG, 0, REG_SZ, (const BYTE *)cfg_wstr.c_str(), (cfg_wstr.size() + 1) * sizeof(wchar_t)) !=
-        ERROR_SUCCESS)
+    if (RegSetValueEx(key, VALUE_CONFIG, 0, REG_SZ, (const BYTE *)cfg_wstr.c_str(),
+                      (cfg_wstr.size() + 1) * sizeof(wchar_t)) != ERROR_SUCCESS)
     {
         RegCloseKey(key);
         return;

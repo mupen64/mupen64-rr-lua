@@ -274,8 +274,6 @@ static void render_and_present()
     hr = mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
 }
 
-
-
 static void recreate_mge_context_d3d()
 {
     g_view_logger->info("Creating MGE (D3D11) context with size {}x{}...", mge_context.width, mge_context.height);

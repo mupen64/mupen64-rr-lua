@@ -96,9 +96,9 @@ struct t_lua_environment
     std::unordered_map<std::wstring, std::vector<t_action_param_meta>> param_meta_map;
 
     // All the breakpoints registered by the script. Stored so we can remove them when the script is destroyed.
-    std::vector<std::pair<CoreBreakpointId, uintptr_t*>> active_breakpoints;
+    std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;
 
-    std::vector<uintptr_t*> step_callbacks;
+    std::vector<uintptr_t *> step_callbacks;
 
     destroying_func destroying{};
 

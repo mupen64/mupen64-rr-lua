@@ -383,7 +383,8 @@ static void ENVMIXERo()
     }
     for (int32_t i = 0; i < AudioCount / 2; i++)
     {
-        i1 = (int32_t)*(inp++);
+        i1 = (int32_t)(*inp);
+        inp++;
         o1 = (int32_t)*out;
         a1 = (int32_t)*aux1;
         a2 = (int32_t)*aux2;

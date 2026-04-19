@@ -72,16 +72,17 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     // setup a callback to track when HW requests samples from us
     if (!SDL_SetAudioStreamGetCallback(
             m_stream,
-            [](void *userdata, SDL_AudioStream * stream, int additional_amount, int /*total_amount*/) {
+            [](void *userdata, SDL_AudioStream *stream, int additional_amount, int /*total_amount*/) {
                 auto *self = (SDLBackend *)userdata;
 
                 if (additional_amount > 0)
                 {
                     // If we don't have enough sound data queued up, just inject silence
-                    if (additional_amount > self->m_silence_buf.size()) {
+                    if (additional_amount > self->m_silence_buf.size())
+                    {
                         self->m_silence_buf.resize(additional_amount);
                     }
-                    SDL_PutAudioStreamData(stream, self->m_silence_buf.data(), (int) self->m_silence_buf.size());
+                    SDL_PutAudioStreamData(stream, self->m_silence_buf.data(), (int)self->m_silence_buf.size());
                 }
                 self->m_last_cb_time = std::chrono::steady_clock::now();
             },

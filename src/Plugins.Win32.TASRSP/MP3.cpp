@@ -512,14 +512,21 @@ static void InnerLoop()
 
         for (i = 7; i >= 0; i--)
         {
-            v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >>
-                  0xF;
-            v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >>
-                  0xF;
-            v6 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >>
-                  0xF;
-            v8 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >>
-                  0xF;
+            int16_t s0 = *(int16_t *)(mp3data + addptr + 0x00);
+            int16_t w0 = (int16_t)DeWindowLUT[offset + 0x00];
+            v2 += (((int32_t)s0 * w0) + 0x4000) >> 0xF;
+
+            int16_t s1 = *(int16_t *)(mp3data + addptr + 0x10);
+            int16_t w1 = (int16_t)DeWindowLUT[offset + 0x08];
+            v4 += (((int32_t)s1 * w1) + 0x4000) >> 0xF;
+
+            int16_t s2 = *(int16_t *)(mp3data + addptr + 0x20);
+            int16_t w2 = (int16_t)DeWindowLUT[offset + 0x20];
+            v6 += (((int32_t)s2 * w2) + 0x4000) >> 0xF;
+
+            int16_t s3 = *(int16_t *)(mp3data + addptr + 0x30);
+            int16_t w3 = (int16_t)DeWindowLUT[offset + 0x28];
+            v8 += (((int32_t)s3 * w3) + 0x4000) >> 0xF;
             addptr += 2;
             offset++;
         }
@@ -539,12 +546,25 @@ static void InnerLoop()
     v2 = v4 = 0;
     for (i = 0; i < 4; i++)
     {
-        v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-        v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
+        int16_t s0 = *(int16_t *)(mp3data + addptr + 0x00);
+        int16_t w0 = (int16_t)DeWindowLUT[offset + 0x00];
+        v2 += ((int32_t)s0 * w0 + 0x4000) >> 0xF;
+
+        int16_t s1 = *(int16_t *)(mp3data + addptr + 0x10);
+        int16_t w1 = (int16_t)DeWindowLUT[offset + 0x08];
+        v2 += ((int32_t)s1 * w1 + 0x4000) >> 0xF;
+
         addptr += 2;
         offset++;
-        v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >> 0xF;
-        v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >> 0xF;
+
+        int16_t s2 = *(int16_t *)(mp3data + addptr + 0x00);
+        int16_t w2 = (int16_t)DeWindowLUT[offset + 0x00];
+        v4 += ((int32_t)s2 * w2 + 0x4000) >> 0xF;
+
+        int16_t s3 = *(int16_t *)(mp3data + addptr + 0x10);
+        int16_t w3 = (int16_t)DeWindowLUT[offset + 0x08];
+        v4 += ((int32_t)s3 * w3 + 0x4000) >> 0xF;
+
         addptr += 2;
         offset++;
     }
@@ -557,9 +577,13 @@ static void InnerLoop()
     }
     else
     {
-        v4 = (v4 * *(uint32_t *)(mp3data + 0xCE8)) >> 0x10;
-        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t)v4;
-        mult4 = (int32_t)*(uint32_t *)(mp3data + 0xCE8);
+        uint32_t scale = *(uint32_t *)(mp3data + 0xCE8);
+
+        int32_t scaled = (v4 * (int32_t)scale) >> 16;
+        *(int16_t *)(mp3data + (outPtr ^ 2)) = (int16_t)scaled;
+
+        v4 = scaled;
+        mult4 = (int32_t)scale;
     }
     addptr -= 0x50;
 
@@ -571,26 +595,34 @@ static void InnerLoop()
 
         for (i = 0; i < 4; i++)
         {
-            v2 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x20) * (int16_t)DeWindowLUT[offset + 0x00] + 0x4000) >>
-                  0xF;
-            v2 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x20) * (int16_t)DeWindowLUT[offset + 0x01] +
-                   0x4000) >>
-                  0xF;
-            v4 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x30) * (int16_t)DeWindowLUT[offset + 0x08] + 0x4000) >>
-                  0xF;
-            v4 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x30) * (int16_t)DeWindowLUT[offset + 0x09] +
-                   0x4000) >>
-                  0xF;
-            v6 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x00) * (int16_t)DeWindowLUT[offset + 0x20] + 0x4000) >>
-                  0xF;
-            v6 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x00) * (int16_t)DeWindowLUT[offset + 0x21] +
-                   0x4000) >>
-                  0xF;
-            v8 += ((int32_t)*(int16_t *)(mp3data + (addptr) + 0x10) * (int16_t)DeWindowLUT[offset + 0x28] + 0x4000) >>
-                  0xF;
-            v8 -= ((int32_t)*(int16_t *)(mp3data + ((addptr + 2)) + 0x10) * (int16_t)DeWindowLUT[offset + 0x29] +
-                   0x4000) >>
-                  0xF;
+            int16_t s0 = *(int16_t *)(mp3data + addptr + 0x20);
+            int16_t s1 = *(int16_t *)(mp3data + addptr + 2 + 0x20);
+            int16_t w0 = (int16_t)DeWindowLUT[offset + 0x00];
+            int16_t w1 = (int16_t)DeWindowLUT[offset + 0x01];
+            v2 += ((int32_t)s0 * w0 + 0x4000) >> 0xF;
+            v2 -= ((int32_t)s1 * w1 + 0x4000) >> 0xF;
+
+            int16_t s2 = *(int16_t *)(mp3data + addptr + 0x30);
+            int16_t s3 = *(int16_t *)(mp3data + addptr + 2 + 0x30);
+            int16_t w2 = (int16_t)DeWindowLUT[offset + 0x08];
+            int16_t w3 = (int16_t)DeWindowLUT[offset + 0x09];
+            v4 += ((int32_t)s2 * w2 + 0x4000) >> 0xF;
+            v4 -= ((int32_t)s3 * w3 + 0x4000) >> 0xF;
+
+            int16_t s4 = *(int16_t *)(mp3data + addptr + 0x00);
+            int16_t s5 = *(int16_t *)(mp3data + addptr + 2 + 0x00);
+            int16_t w4 = (int16_t)DeWindowLUT[offset + 0x20];
+            int16_t w5 = (int16_t)DeWindowLUT[offset + 0x21];
+            v6 += ((int32_t)s4 * w4 + 0x4000) >> 0xF;
+            v6 -= ((int32_t)s5 * w5 + 0x4000) >> 0xF;
+
+            int16_t s6 = *(int16_t *)(mp3data + addptr + 0x10);
+            int16_t s7 = *(int16_t *)(mp3data + addptr + 2 + 0x10);
+            int16_t w6 = (int16_t)DeWindowLUT[offset + 0x28];
+            int16_t w7 = (int16_t)DeWindowLUT[offset + 0x29];
+            v8 += ((int32_t)s6 * w6 + 0x4000) >> 0xF;
+            v8 -= ((int32_t)s7 * w7 + 0x4000) >> 0xF;
+
             addptr += 4;
             offset += 2;
         }
