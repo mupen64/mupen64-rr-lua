@@ -1214,10 +1214,7 @@ void update_SP()
             // processAList();
             rsp_register.rsp_pc &= 0xFFF;
 
-            if (!g_vr_fast_forward || !g_core->cfg->fastforward_silent)
-            {
-                g_core->rsp_do_rsp_cycles(100);
-            }
+            g_core->rsp_do_rsp_cycles(100);
             rsp_register.rsp_pc |= save_pc;
 
             MI_register.mi_intr_reg &= ~0x1;
@@ -1230,10 +1227,7 @@ void update_SP()
         {
             // g_core->log_info("other task");
             rsp_register.rsp_pc &= 0xFFF;
-            if (!g_vr_fast_forward || !g_core->cfg->fastforward_silent)
-            {
-                g_core->rsp_do_rsp_cycles(100);
-            }
+            g_core->rsp_do_rsp_cycles(100);
             rsp_register.rsp_pc |= save_pc;
 
             MI_register.mi_intr_reg &= ~0x1;

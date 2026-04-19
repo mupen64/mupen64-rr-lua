@@ -379,9 +379,10 @@ extern "C"
         std::function<void(size_t)> vr_frame_advance;
 
         /**
-         * \brief Sets the fast-forward state.
+         * \brief Sets the speed mode.
+         * \param mode The speed mode to set.
          */
-        std::function<void(bool)> vr_set_fast_forward;
+        std::function<void(CoreSpeedMode mode)> vr_set_speed_mode;
 
         /**
          * \brief Gets the GS button state.
