@@ -2259,6 +2259,11 @@ core_result vr_reset_rom(bool reset_save_data, bool stop_vcr)
     return vr_reset_rom_impl(reset_save_data, stop_vcr);
 }
 
+CoreSpeedMode vr_get_speed_mode()
+{
+    return g_r4300.speed_mode;
+}
+
 void vr_set_speed_mode(CoreSpeedMode mode)
 {
     g_r4300.speed_mode = mode;

@@ -379,6 +379,12 @@ extern "C"
         std::function<void(size_t)> vr_frame_advance;
 
         /**
+         * \brief Gets the speed mode.
+         * \return The current speed mode.
+         */
+        std::function<CoreSpeedMode()> vr_get_speed_mode;
+
+        /**
          * \brief Sets the speed mode.
          * \param mode The speed mode to set.
          */

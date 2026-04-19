@@ -90,6 +90,7 @@ void vr_wait_decrement();
 core_result vr_start_rom(std::filesystem::path path);
 core_result vr_close_rom(bool stop_vcr);
 core_result vr_reset_rom(bool reset_save_data, bool stop_vcr);
+CoreSpeedMode vr_get_speed_mode();
 void vr_set_speed_mode(CoreSpeedMode mode);
 bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
