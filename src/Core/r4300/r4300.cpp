@@ -98,10 +98,9 @@ void vr_invalidate_visuals()
 
 bool vr_is_frame_skipped()
 {
-    if (g_r4300.speed_mode == CoreSpeedMode::UltraFastForward) return true;
-
-    if (frame_advance_outstanding > 1) return true;
     if (!g_core->cfg->render_throttling) return false;
+    if (g_r4300.speed_mode == CoreSpeedMode::UltraFastForward) return true;
+    if (frame_advance_outstanding > 1) return true;
 
     {
         std::unique_lock lock(vcr_mtx);
