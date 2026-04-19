@@ -81,14 +81,14 @@ memory.recompilenext = memory.recompile
 ---@return boolean
 function emu.get_ff()
     local mode = emu.get_speed_mode()
-    return mode == CoreSpeedMode.FastForward or mode == CoreSpeedMode.UltraFastForward
+    return mode == Mupen.CoreSpeedMode.FastForward or mode == Mupen.CoreSpeedMode.UltraFastForward
 end
 
 ---Sets whether fast forward is active.
 ---@deprecated Use `emu.set_speed_mode` instead.
 ---@param fast_forward boolean
 function emu.set_ff(fast_forward)
-    emu.set_speed_mode(fast_forward and CoreSpeedMode.FastForward or CoreSpeedMode.UltraFastForward)
+    emu.set_speed_mode(fast_forward and Mupen.CoreSpeedMode.FastForward or Mupen.CoreSpeedMode.UltraFastForward)
 end
 
 ---Saves a savestate to `filename`.
