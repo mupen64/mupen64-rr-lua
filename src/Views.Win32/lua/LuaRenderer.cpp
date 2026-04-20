@@ -440,8 +440,8 @@ void LuaRenderer::blit_all(HDC hdc)
     {
         if (!lua->rctx.presenter) continue;
 
-        lua->rctx.presenter->blit(
-            hdc, {0, 0, (LONG)lua->rctx.presenter->size().width, (LONG)lua->rctx.presenter->size().height});
+        const auto presenter_size = lua->rctx.presenter->size();
+        lua->rctx.presenter->blit(hdc, {0, 0, (LONG)presenter_size.width, (LONG)presenter_size.height});
     }
 
     for (const auto &lua : g_lua_environments)
