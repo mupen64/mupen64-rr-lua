@@ -49,6 +49,19 @@
     ]
   },
   {
+    "label": "Clean rebuild",
+    "allow_concurrent_runs": false,
+    "reveal": "no_focus",
+    "use_new_terminal": false,
+    "command": "./vsdev.cmd",
+    "args": [
+      "cmake",
+      "--build",
+      "build",
+      "--clean-first"
+    ]
+  },
+  {
     "label": "Test",
     "allow_concurrent_runs": false,
     "reveal": "no_focus",
