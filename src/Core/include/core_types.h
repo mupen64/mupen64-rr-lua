@@ -124,12 +124,12 @@ enum class CoreSpeedMode
     /**
      * \brief Normal speed mode. The speed cap is affected by the FPS modifier.
      */
-    Normal,
+    Normal = 0,
 
     /**
      * \brief Fast forward speed mode. The speed cap is not affected by the FPS modifier.
      */
-    FastForward,
+    FastForward = 1,
 
     /**
      * \brief Ultra fast forward speed mode. The speed cap is not affected by the FPS modifier.
@@ -137,7 +137,7 @@ enum class CoreSpeedMode
      * steps.
      * May affect video or audio fidelity.
      */
-    UltraFastForward
+    UltraFastForward = 2
 };
 
 struct core_cfg
