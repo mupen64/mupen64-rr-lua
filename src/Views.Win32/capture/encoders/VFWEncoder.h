@@ -30,6 +30,28 @@ class VFWEncoder final : public Encoder
     bool load_options();
     bool stop_impl(bool fail_stop = true);
 
+    enum class WorkType
+    {
+        Video,
+        Audio,
+    };
+
+    struct WorkItem
+    {
+        WorkType type{};
+        std::vector<uint8_t> data{};
+        uint8_t bitrate = 16;
+        size_t frame_count = 1;
+        bool force = false;
+    };
+
+    void worker_loop();
+    bool enqueue_work(WorkItem item);
+    void wait_for_all_work();
+
+    static constexpr size_t MAX_PENDING_WORK_ITEMS = 128;
+    static constexpr size_t MAX_PENDING_WORK_BYTES = 64 * 1024 * 1024;
+
     Params m_params{};
     AVICOMPRESSOPTIONS m_avi_options{};
 
@@ -57,4 +79,13 @@ class VFWEncoder final : public Encoder
     WAVEFORMATEX m_sound_format{};
 
     size_t m_avi_file_size = 0;
+
+    std::mutex m_work_mutex{};
+    std::condition_variable m_work_cv{};
+    std::condition_variable m_work_drained_cv{};
+    std::deque<WorkItem> m_work_queue{};
+    size_t m_pending_work_bytes = 0;
+    bool m_worker_running = false;
+    bool m_worker_stop_requested = false;
+    bool m_worker_failed = false;
 };
