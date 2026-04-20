@@ -75,7 +75,7 @@ CoreSpeedMode g_vr_speed_mode{};
 bool g_vr_frame_skipped;
 core_system_type g_sys_type;
 std::atomic<int32_t> g_wait_counter = 0;
-static r4300 g_r4300{};
+r4300 g_r4300{};
 
 FILE *g_eeprom_file;
 FILE *g_sram_file;

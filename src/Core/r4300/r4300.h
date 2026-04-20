@@ -17,7 +17,7 @@
 
 struct r4300
 {
-    CoreSpeedMode speed_mode;
+    std::atomic<CoreSpeedMode> speed_mode;
 };
 
 extern std::atomic<size_t> frame_advance_outstanding;
