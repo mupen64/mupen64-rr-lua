@@ -187,11 +187,11 @@ retest.describe('mupen64', function()
 
                 emu.set_speed_mode(previous)
             end)
-            retest.it('sets_ultra_fast_forward_when_false', function()
+            retest.it('sets_normal_when_false', function()
                 local previous = emu.get_speed_mode()
 
                 emu.set_ff(false)
-                retest.expect(emu.get_speed_mode()).to.equal(Mupen.CoreSpeedMode.UltraFastForward)
+                retest.expect(emu.get_speed_mode()).to.equal(Mupen.CoreSpeedMode.Normal)
 
                 emu.set_speed_mode(previous)
             end)
