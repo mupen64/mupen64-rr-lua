@@ -43,6 +43,7 @@ class VFWEncoder final : public Encoder
         uint8_t bitrate = 16;
         size_t frame_count = 1;
         bool force = false;
+        double_t desync = 0.0;
     };
 
     void worker_loop();
@@ -85,6 +86,7 @@ class VFWEncoder final : public Encoder
     std::condition_variable m_work_drained_cv{};
     std::deque<WorkItem> m_work_queue{};
     size_t m_pending_work_bytes = 0;
+    size_t m_work_in_flight = 0;
     bool m_worker_running = false;
     bool m_worker_stop_requested = false;
     bool m_worker_failed = false;

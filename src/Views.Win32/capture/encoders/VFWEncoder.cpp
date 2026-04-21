@@ -126,6 +126,7 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
         std::scoped_lock lock(m_work_mutex);
         m_work_queue.clear();
         m_pending_work_bytes = 0;
+        m_work_in_flight = 0;
         m_worker_stop_requested = false;
         m_worker_failed = false;
         m_worker_running = true;
@@ -146,6 +147,7 @@ bool VFWEncoder::stop_impl(const bool fail_stop)
         flush.type = WorkType::Audio;
         flush.force = true;
         flush.bitrate = 16;
+        flush.desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
         if (!enqueue_work(std::move(flush)))
         {
             m_worker_failed = true;
@@ -256,10 +258,18 @@ bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
         return false;
     }
 
+    if (length > 0)
+    {
+        m_audio_frame += ((length / 4) / (long double)m_params.arate) *
+                         g_main_ctx.core_ctx->vr_get_vis_per_second(
+                             g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+    }
+
     WorkItem item{};
     item.type = WorkType::Audio;
     item.bitrate = bitrate;
     item.force = false;
+    item.desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
     item.data.resize(length);
     if (length > 0)
     {
@@ -326,8 +336,6 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, co
 
     memcpy(m_sound_buf + sound_buf_pos, (char *)buf, len);
     sound_buf_pos += len;
-    m_audio_frame += ((len / 4) / (long double)m_params.arate) *
-                     g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
 
     return true;
 }
@@ -371,7 +379,7 @@ bool VFWEncoder::enqueue_work(WorkItem item)
 void VFWEncoder::wait_for_all_work()
 {
     std::unique_lock lock(m_work_mutex);
-    m_work_drained_cv.wait(lock, [this]() { return m_work_queue.empty(); });
+    m_work_drained_cv.wait(lock, [this]() { return m_work_queue.empty() && m_work_in_flight == 0; });
 }
 
 void VFWEncoder::worker_loop()
@@ -398,8 +406,8 @@ void VFWEncoder::worker_loop()
             item = std::move(m_work_queue.front());
             m_pending_work_bytes -= item.data.size();
             m_work_queue.pop_front();
+            ++m_work_in_flight;
             m_work_cv.notify_all();
-            if (m_work_queue.empty()) m_work_drained_cv.notify_all();
         }
 
         bool ok = true;
@@ -418,7 +426,7 @@ void VFWEncoder::worker_loop()
             if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
                 g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
             {
-                double_t desync = m_video_frame - m_audio_frame;
+                double_t desync = item.desync;
 
                 if (g_config.synchronization_mode == (int)CaptureManager::Sync::None) desync = 0.0;
 
@@ -462,6 +470,13 @@ void VFWEncoder::worker_loop()
             {
                 last_sound = *(reinterpret_cast<long *>(item.data.data() + item.data.size()) - 1);
             }
+        }
+
+        {
+            std::scoped_lock lock(m_work_mutex);
+            --m_work_in_flight;
+            if (m_work_queue.empty() && m_work_in_flight == 0)
+                m_work_drained_cv.notify_all();
         }
 
         if (!ok)
