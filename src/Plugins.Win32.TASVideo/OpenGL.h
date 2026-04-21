@@ -98,4 +98,3 @@ void OGL_UpdateScale();
 void OGL_ClearDepthBuffer();
 void OGL_ClearColorBuffer(float *color);
 void OGL_ResizeWindow();
-void OGL_SaveScreenshot();
