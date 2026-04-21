@@ -1318,12 +1318,12 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
     update_theme_data(dark);
     if (_FlushMenuThemes) _FlushMenuThemes();
     patch_scrollbar(dark);
-    update_window_theme(hwnd, dark);
-
     SetWindowSubclass(hwnd, wnd_subclass_proc, 0, 0);
 
     const bool is_dialog = options.is_dialog.value_or(!is_top_level_window(hwnd));
     if (is_dialog) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
+
+    update_window_theme(hwnd, dark);
 }
 
 /**
