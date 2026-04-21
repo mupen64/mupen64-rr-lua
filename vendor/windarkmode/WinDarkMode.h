@@ -72,6 +72,7 @@ struct ThemeData
 #define PAIR(name)                                                                                                     \
     COLORREF name##_color{};                                                                                           \
     HBRUSH name##_brush{};
+#define COLOR(name) COLORREF name##_color{};
     PAIR(bg);
     PAIR(text_1);
     PAIR(text_2);
@@ -80,6 +81,12 @@ struct ThemeData
     PAIR(tab_normal);
     PAIR(tab_hover);
     PAIR(disabled_text);
+    COLOR(groupbox_border);
+    COLOR(statusbar_border);
+    COLOR(statusbar_divider);
+    COLOR(statusbar_grip);
+#undef COLOR
+#undef PAIR
 };
 
 constexpr ThemeData light_theme_data = {.bg_color = RGB(255, 255, 255),
@@ -89,7 +96,11 @@ constexpr ThemeData light_theme_data = {.bg_color = RGB(255, 255, 255),
                                         .edit_bg_color = RGB(255, 255, 255),
                                         .tab_normal_color = RGB(243, 243, 243),
                                         .tab_hover_color = RGB(249, 249, 249),
-                                        .disabled_text_color = RGB(160, 160, 160)};
+                                        .disabled_text_color = RGB(160, 160, 160),
+                                        .groupbox_border_color = RGB(180, 180, 180),
+                                        .statusbar_border_color = RGB(200, 200, 200),
+                                        .statusbar_divider_color = RGB(180, 180, 180),
+                                        .statusbar_grip_color = RGB(180, 180, 180)};
 
 constexpr ThemeData dark_theme_data = {.bg_color = RGB(56, 56, 56),
                                        .text_1_color = RGB(255, 255, 255),
@@ -98,7 +109,11 @@ constexpr ThemeData dark_theme_data = {.bg_color = RGB(56, 56, 56),
                                        .edit_bg_color = RGB(30, 30, 30),
                                        .tab_normal_color = RGB(80, 80, 80),
                                        .tab_hover_color = RGB(95, 95, 95),
-                                       .disabled_text_color = RGB(128, 128, 128)};
+                                       .disabled_text_color = RGB(128, 128, 128),
+                                       .groupbox_border_color = RGB(100, 100, 100),
+                                       .statusbar_border_color = RGB(60, 60, 60),
+                                       .statusbar_divider_color = RGB(80, 80, 80),
+                                       .statusbar_grip_color = RGB(120, 120, 120)};
 
 inline ThemeData theme_data = light_theme_data;
 
@@ -624,7 +639,7 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         RECT frame_rc = rc;
         frame_rc.top += text_y_offset;
 
-        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(100, 100, 100));
+        HPEN hPen = CreatePen(PS_SOLID, 1, theme_data.groupbox_border_color);
         HPEN hOldPen = static_cast<HPEN>(SelectObject(hdc, hPen));
         HBRUSH hOldBrush = static_cast<HBRUSH>(SelectObject(hdc, GetStockObject(NULL_BRUSH)));
         Rectangle(hdc, frame_rc.left, frame_rc.top, frame_rc.right, frame_rc.bottom);
@@ -788,7 +803,7 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
         int borders[3]{};
         SendMessage(hwnd, SB_GETBORDERS, 0, reinterpret_cast<LPARAM>(borders));
 
-        HPEN divider_pen = CreatePen(PS_SOLID, 1, RGB(80, 80, 80));
+        HPEN divider_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_divider_color);
         HPEN old_pen = static_cast<HPEN>(SelectObject(hdc, divider_pen));
 
         HFONT h_font = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
@@ -797,8 +812,7 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
         SetBkMode(hdc, TRANSPARENT);
         SetTextColor(hdc, theme_data.text_1_color);
 
-        const COLORREF sep_color = RGB(60, 60, 60);
-        HPEN sep_pen = CreatePen(PS_SOLID, 1, sep_color);
+        HPEN sep_pen = CreatePen(PS_SOLID, 1, theme_data.statusbar_border_color);
         HPEN tmp_pen = static_cast<HPEN>(SelectObject(hdc, sep_pen));
         MoveToEx(hdc, rc_client.left, rc_client.top, nullptr);
         LineTo(hdc, rc_client.right, rc_client.top);
@@ -857,8 +871,7 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
             constexpr int DOT = 2;
             constexpr int GAP = 2;
             constexpr int ROWS = 3;
-            const COLORREF dot_color = RGB(120, 120, 120);
-            HBRUSH dot_brush = CreateSolidBrush(dot_color);
+            HBRUSH dot_brush = CreateSolidBrush(theme_data.statusbar_grip_color);
 
             const int base_x = rc_client.right - 2;
             const int base_y = rc_client.bottom - 2;
@@ -1260,6 +1273,13 @@ inline void update_theme_data(bool dark)
     RECREATE(tab_normal)
     RECREATE(tab_hover)
     RECREATE(disabled_text)
+
+#define UPDATE_COLOR(x) theme_data.x##_color = dark ? dark_theme_data.x##_color : light_theme_data.x##_color;
+    UPDATE_COLOR(groupbox_border)
+    UPDATE_COLOR(statusbar_border)
+    UPDATE_COLOR(statusbar_divider)
+    UPDATE_COLOR(statusbar_grip)
+#undef UPDATE_COLOR
 }
 
 } // namespace Internal
