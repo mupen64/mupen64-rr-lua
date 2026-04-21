@@ -85,16 +85,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-EXPORT void CALL CaptureScreen(char *Directory)
-{
-    screenDirectory = Directory;
-    if (RSP.thread)
-    {
-        SetEvent(RSP.threadMsg[RSPMSG_CAPTURESCREEN]);
-        WaitForSingleObject(RSP.threadFinished, INFINITE);
-    }
-}
-
 EXPORT void CALL DllAbout(void *hParent)
 {
     const auto msg = PLUGIN_NAME "\nPart of the Mupen64 project family.\n\nhttps://github.com/mupen64/TASVideo";
@@ -257,4 +247,46 @@ void CALL mge_read_video2(void **buffer)
         SetEvent(RSP.threadMsg[RSPMSG_READPIXELS]);
         WaitForSingleObject(RSP.threadFinished, INFINITE);
     }
+}
+
+EXPORT void CALL CaptureScreen(const char *directory)
+{
+    std::vector<std::uint8_t> video(OGL.width * OGL.height * 4);
+
+    void *ptr = video.data();
+    mge_read_video2(&ptr);
+
+    BITMAPINFOHEADER ihdr;
+    ihdr.biSize = sizeof(BITMAPINFOHEADER);
+    ihdr.biWidth = OGL.width;
+    ihdr.biHeight = OGL.height;
+    ihdr.biPlanes = 1;
+    ihdr.biBitCount = 32;
+    ihdr.biCompression = BI_RGB;
+    ihdr.biSizeImage = OGL.width * OGL.height * 4;
+    ihdr.biXPelsPerMeter = 0;
+    ihdr.biYPelsPerMeter = 0;
+    ihdr.biClrUsed = 0;
+    ihdr.biClrImportant = 0;
+
+    BITMAPFILEHEADER bhdr;
+    bhdr.bfType = 19778;
+    bhdr.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + ihdr.biSizeImage;
+    bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
+    bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    CreateDirectory(screenDirectory.c_str(), NULL);
+
+    const std::filesystem::path path = std::filesystem::path(directory) / std::format("screen{}.bmp", time(nullptr));
+
+    HANDLE hfile;
+    hfile = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    DWORD written;
+
+    WriteFile(hfile, &bhdr, sizeof(BITMAPFILEHEADER), &written, NULL);
+    WriteFile(hfile, &ihdr, sizeof(BITMAPINFOHEADER), &written, NULL);
+    WriteFile(hfile, video.data(), ihdr.biSizeImage, &written, NULL);
+
+    CloseHandle(hfile);
 }

@@ -122,12 +122,44 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     memset(m_sound_buf, 0, sizeof(m_sound_buf));
     last_sound = 0;
 
+    {
+        std::scoped_lock lock(m_work_mutex);
+        m_work_queue.clear();
+        m_pending_work_bytes = 0;
+        m_work_in_flight = 0;
+        m_worker_stop_requested = false;
+        m_worker_failed = false;
+        m_worker_running = true;
+    }
+
+    std::thread(&VFWEncoder::worker_loop, this).detach();
+
     return std::nullopt;
 }
 
 bool VFWEncoder::stop_impl(const bool fail_stop)
 {
-    write_sound(nullptr, 0, RESAMPLED_FREQ, RESAMPLED_FREQ * 2, TRUE, 16);
+    wait_for_all_work();
+
+    if (!m_worker_failed)
+    {
+        WorkItem flush{};
+        flush.type = WorkType::Audio;
+        flush.force = true;
+        flush.bitrate = 16;
+        flush.desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
+        if (!enqueue_work(std::move(flush)))
+        {
+            m_worker_failed = true;
+        }
+    }
+
+    {
+        std::unique_lock lock(m_work_mutex);
+        m_worker_stop_requested = true;
+        m_work_cv.notify_all();
+        m_work_drained_cv.wait(lock, [this]() { return !m_worker_running; });
+    }
 
     if (m_compressed_video_stream)
     {
@@ -156,7 +188,7 @@ bool VFWEncoder::stop_impl(const bool fail_stop)
         DeleteFile(m_params.path.wstring().c_str());
     }
 
-    return true;
+    return !m_worker_failed;
 }
 
 bool VFWEncoder::stop()
@@ -172,7 +204,12 @@ bool VFWEncoder::append_video(uint8_t *image)
         return true;
     }
 
-    bool result = true;
+    if (m_worker_failed)
+    {
+        return false;
+    }
+
+    size_t frame_count = 1;
 
     // AUDIO SYNC
     // This type of syncing assumes the audio is authoratative, and drops or duplicates frames to keep the video as
@@ -183,6 +220,7 @@ bool VFWEncoder::append_video(uint8_t *image)
 
     if (g_config.synchronization_mode == (int)CaptureManager::Sync::Audio)
     {
+        frame_count = 0;
         while (true)
         {
             const int overshot = (int)(m_audio_frame - (double)m_video_frame + 0.2);
@@ -190,70 +228,66 @@ bool VFWEncoder::append_video(uint8_t *image)
 
             RT_ASSERT(overshot >= 0, L"Video is ahead of audio");
 
-            result = append_video_impl(image);
-            m_video_frame++;
+            ++frame_count;
+            ++m_video_frame;
+        }
+
+        if (frame_count == 0)
+        {
+            return true;
         }
     }
     else
     {
-        result = append_video_impl(image);
-        m_video_frame++;
+        ++m_video_frame;
     }
 
-    return result;
+    WorkItem item{};
+    item.type = WorkType::Video;
+    item.frame_count = frame_count;
+    item.data.resize(m_info_hdr.biSizeImage);
+    memcpy(item.data.data(), image, m_info_hdr.biSizeImage);
+
+    return enqueue_work(std::move(item));
 }
 
 bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
-    const int write_size = m_params.arate * 2;
-
-    if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
-        g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
+    if (m_worker_failed)
     {
-        // VIDEO SYNC
-        // This is the original syncing code, which adds silence to the audio track to get it to line up with video.
-        // The N64 appears to have the ability to arbitrarily disable its sound processing facilities and no audio
-        // samples are generated. When this happens, the video track will drift away from the audio. This can happen at
-        // load boundaries in some games, for example.
-        //
-        // The only new difference here is that the desync flag is checked for being greater than 1.0 instead of 0.
-        // This is because the audio and video in mupen tend to always be diverged just a little bit, but stay in sync
-        // over time. Checking if desync is not 0 causes the audio stream to to get thrashed which results in clicks
-        // and pops.
-
-        double_t desync = m_video_frame - m_audio_frame;
-
-        if (g_config.synchronization_mode == (int)CaptureManager::Sync::None) // HACK
-            desync = 0.0;
-
-        if (desync > 1.0)
-        {
-            g_view_logger->info("[CaptureManager]: Correcting for A/V desynchronization of %+Lf frames\n", desync);
-            int len3 = (int)(m_params.arate / (long double)g_main_ctx.core_ctx->vr_get_vis_per_second(
-                                                  g_main_ctx.core_ctx->vr_get_rom_header()->Country_code)) *
-                       (int)desync;
-            len3 <<= 2;
-            const int empty_size = len3 > write_size ? write_size : len3;
-
-            for (int i = 0; i < empty_size; i += 4) *reinterpret_cast<long *>(m_sound_buf_empty + i) = last_sound;
-
-            while (len3 > write_size)
-            {
-                write_sound(m_sound_buf_empty, write_size, m_params.arate, write_size, FALSE, bitrate);
-                len3 -= write_size;
-            }
-            write_sound(m_sound_buf_empty, len3, m_params.arate, write_size, FALSE, bitrate);
-        }
-        else if (desync <= -10.0)
-        {
-            g_view_logger->info("[CaptureManager]: Waiting from A/V desynchronization of %+Lf frames\n", desync);
-        }
+        return false;
     }
 
-    write_sound(audio, length, m_params.arate, write_size, FALSE, bitrate);
-    last_sound = *(reinterpret_cast<long *>(audio + length) - 1);
+    const double_t desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
 
-    return true;
+    if (length > 0)
+    {
+        m_audio_frame +=
+            ((length / 4) / (long double)m_params.arate) *
+            g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+    }
+
+    if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) && desync > 1.0)
+    {
+        const long double vis_per_second =
+            g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+        int len3 = (int)(m_params.arate / vis_per_second) * (int)desync;
+        len3 <<= 2;
+        m_audio_frame += ((len3 / 4) / (long double)m_params.arate) * vis_per_second;
+    }
+
+    WorkItem item{};
+    item.type = WorkType::Audio;
+    item.bitrate = bitrate;
+    item.force = false;
+    item.desync = desync;
+    item.data.resize(length);
+    if (length > 0)
+    {
+        memcpy(item.data.data(), audio, length);
+    }
+
+    return enqueue_work(std::move(item));
 }
 
 bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, const int max_write_size,
@@ -313,19 +347,163 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, co
 
     memcpy(m_sound_buf + sound_buf_pos, (char *)buf, len);
     sound_buf_pos += len;
-    m_audio_frame += ((len / 4) / (long double)m_params.arate) *
-                     g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
 
     return true;
 }
 
 bool VFWEncoder::append_video_impl(uint8_t *image)
 {
-    LONG written_len;
+    LONG written_len = 0;
     BOOL ret = AVIStreamWrite(m_compressed_video_stream, m_frame++, 1, image, m_info_hdr.biSizeImage, AVIIF_KEYFRAME,
                               NULL, &written_len);
     m_avi_file_size += written_len;
-    return !ret;
+
+    if (ret != 0)
+    {
+        DialogService::show_dialog(
+            L"Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", L"AVI Encoder",
+            fsvc_error);
+    }
+
+    return ret == 0;
+}
+
+bool VFWEncoder::enqueue_work(WorkItem item)
+{
+    const size_t item_bytes = item.data.size();
+
+    std::unique_lock lock(m_work_mutex);
+    m_work_cv.wait(lock, [this, item_bytes]() {
+        return m_worker_failed || !m_worker_running ||
+               (m_work_queue.size() < MAX_PENDING_WORK_ITEMS &&
+                (m_pending_work_bytes + item_bytes) <= MAX_PENDING_WORK_BYTES);
+    });
+
+    if (m_worker_failed || !m_worker_running || m_worker_stop_requested) return false;
+
+    m_pending_work_bytes += item_bytes;
+    m_work_queue.emplace_back(std::move(item));
+    m_work_cv.notify_all();
+    return true;
+}
+
+void VFWEncoder::wait_for_all_work()
+{
+    std::unique_lock lock(m_work_mutex);
+    m_work_drained_cv.wait(lock,
+                           [this]() { return (m_work_queue.empty() && m_work_in_flight == 0) || !m_worker_running; });
+}
+
+void VFWEncoder::worker_loop()
+{
+    for (;;)
+    {
+        WorkItem item{};
+        {
+            std::unique_lock lock(m_work_mutex);
+            m_work_cv.wait(lock, [this]() { return m_worker_stop_requested || !m_work_queue.empty(); });
+
+            if (m_work_queue.empty())
+            {
+                if (m_worker_stop_requested)
+                {
+                    m_worker_running = false;
+                    m_work_cv.notify_all();
+                    m_work_drained_cv.notify_all();
+                    return;
+                }
+                continue;
+            }
+
+            item = std::move(m_work_queue.front());
+            m_pending_work_bytes -= item.data.size();
+            m_work_queue.pop_front();
+            ++m_work_in_flight;
+            m_work_cv.notify_all();
+        }
+
+        bool ok = true;
+        if (item.type == WorkType::Video)
+        {
+            for (size_t i = 0; i < item.frame_count; ++i)
+            {
+                ok = append_video_impl(item.data.data());
+                if (!ok) break;
+            }
+        }
+        else
+        {
+            const int write_size = m_params.arate * 2;
+
+            if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
+                g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
+            {
+                double_t desync = item.desync;
+
+                if (g_config.synchronization_mode == (int)CaptureManager::Sync::None) desync = 0.0;
+
+                if (desync > 1.0)
+                {
+                    g_view_logger->info("[CaptureManager]: Correcting for A/V desynchronization of %+Lf frames\n",
+                                        desync);
+                    int len3 = (int)(m_params.arate / (long double)g_main_ctx.core_ctx->vr_get_vis_per_second(
+                                                          g_main_ctx.core_ctx->vr_get_rom_header()->Country_code)) *
+                               (int)desync;
+                    len3 <<= 2;
+                    const int empty_size = len3 > write_size ? write_size : len3;
+
+                    for (int i = 0; i < empty_size; i += 4)
+                        *reinterpret_cast<long *>(m_sound_buf_empty + i) = last_sound;
+
+                    while (len3 > write_size)
+                    {
+                        ok =
+                            write_sound(m_sound_buf_empty, write_size, m_params.arate, write_size, FALSE, item.bitrate);
+                        if (!ok) break;
+
+                        len3 -= write_size;
+                    }
+                    if (ok) ok = write_sound(m_sound_buf_empty, len3, m_params.arate, write_size, FALSE, item.bitrate);
+                }
+                else if (desync <= -10.0)
+                {
+                    g_view_logger->info("[CaptureManager]: Waiting from A/V desynchronization of %+Lf frames\n",
+                                        desync);
+                }
+            }
+
+            if (ok)
+            {
+                ok = write_sound(item.data.empty() ? nullptr : item.data.data(), static_cast<int>(item.data.size()),
+                                 m_params.arate, write_size, item.force ? TRUE : FALSE, item.bitrate);
+            }
+
+            if (ok && !item.data.empty())
+            {
+                last_sound = *(reinterpret_cast<long *>(item.data.data() + item.data.size()) - 1);
+            }
+        }
+
+        {
+            std::scoped_lock lock(m_work_mutex);
+            --m_work_in_flight;
+            if (m_work_queue.empty() && m_work_in_flight == 0) m_work_drained_cv.notify_all();
+        }
+
+        if (!ok)
+        {
+            std::scoped_lock lock(m_work_mutex);
+            m_worker_failed = true;
+            m_worker_stop_requested = true;
+            m_work_queue.clear();
+            m_pending_work_bytes = 0;
+            m_work_in_flight = 0;
+            m_worker_running = false;
+            m_work_cv.notify_all();
+            m_work_drained_cv.notify_all();
+            return;
+        }
+    }
 }
 
 bool VFWEncoder::save_options() const

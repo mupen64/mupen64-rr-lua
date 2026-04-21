@@ -71,9 +71,6 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
             Combiner_Init();
             gSP.changed = gDP.changed = 0xFFFFFFFF;
             break;
-        case WAIT_OBJECT_0 + RSPMSG_CAPTURESCREEN:
-            OGL_SaveScreenshot();
-            break;
         case WAIT_OBJECT_0 + RSPMSG_READPIXELS:
             OGL_ReadPixels();
             break;

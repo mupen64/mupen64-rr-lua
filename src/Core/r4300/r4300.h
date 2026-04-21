@@ -15,6 +15,11 @@
 #include <r4300/rom.h>
 #include <include/core_types.h>
 
+struct r4300
+{
+    std::atomic<CoreSpeedMode> speed_mode;
+};
+
 extern std::atomic<size_t> frame_advance_outstanding;
 extern std::recursive_mutex g_emu_cs;
 
@@ -53,9 +58,9 @@ extern uint32_t jump_to_address;
 extern std::atomic<bool> screen_invalidated;
 extern int32_t vi_field;
 extern uint32_t next_vi;
-extern bool g_vr_fast_forward;
 extern bool g_vr_frame_skipped;
 extern core_system_type g_sys_type;
+extern r4300 g_r4300;
 
 extern FILE *g_eeprom_file;
 extern FILE *g_sram_file;
@@ -85,7 +90,8 @@ void vr_wait_decrement();
 core_result vr_start_rom(std::filesystem::path path);
 core_result vr_close_rom(bool stop_vcr);
 core_result vr_reset_rom(bool reset_save_data, bool stop_vcr);
-void vr_set_fast_forward(bool value);
+CoreSpeedMode vr_get_speed_mode();
+void vr_set_speed_mode(CoreSpeedMode mode);
 bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
 void vr_invalidate_visuals();

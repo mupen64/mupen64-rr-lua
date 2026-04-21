@@ -179,10 +179,17 @@ function retest.run()
             success, err = pcall(node.test)
             local has_new_assertions = retest.assertions > prev_assertions
 
-            node.result = has_new_assertions and {
-                success = success,
-                message = success and nil or err,
-            } or nil
+            if success then
+                node.result = has_new_assertions and {
+                    success = true,
+                    message = nil,
+                } or nil
+            else
+                node.result = {
+                    success = false,
+                    message = err,
+                }
+            end
 
             retest.tests = retest.tests + 1
             if node.result and not node.result.success then

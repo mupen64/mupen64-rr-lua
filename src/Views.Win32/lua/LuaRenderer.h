@@ -70,4 +70,9 @@ void set_target_fps(t_lua_rendering_context *rctx, std::optional<float> fps);
  * the renderer.
  */
 HBRUSH alpha_mask_brush();
+
+/**
+ * \brief Blits the graphics contents of all active Lua instances to the given HDC.
+ */
+void blit_all(HDC hdc);
 } // namespace LuaRenderer

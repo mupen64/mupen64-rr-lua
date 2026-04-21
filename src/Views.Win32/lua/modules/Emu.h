@@ -176,16 +176,17 @@ static int SetSpeed(lua_State *L)
     return 0;
 }
 
-static int GetFastForward(lua_State *L)
+static int get_speed_mode(lua_State *L)
 {
-    lua_pushboolean(L, g_main_ctx.fast_forward);
+    const auto mode = g_main_ctx.core_ctx->vr_get_speed_mode();
+    lua_pushinteger(L, (lua_Integer)mode);
     return 1;
 }
 
-static int SetFastForward(lua_State *L)
+static int set_speed_mode(lua_State *L)
 {
-    g_main_ctx.fast_forward = lua_toboolean(L, 1);
-    Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
+    const auto mode = (CoreSpeedMode)luaL_checkinteger(L, 1);
+    g_main_ctx.core_ctx->vr_set_speed_mode(mode);
     return 0;
 }
 

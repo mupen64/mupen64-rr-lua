@@ -71,10 +71,11 @@ int32_t trunc_mode = MUP_ROUND_TRUNC, round_mode = MUP_ROUND_NEAREST, ceil_mode 
 void (*code)();
 uint32_t next_vi;
 int32_t vi_field = 0;
-bool g_vr_fast_forward;
+CoreSpeedMode g_vr_speed_mode{};
 bool g_vr_frame_skipped;
 core_system_type g_sys_type;
 std::atomic<int32_t> g_wait_counter = 0;
+r4300 g_r4300{};
 
 FILE *g_eeprom_file;
 FILE *g_sram_file;
@@ -97,27 +98,16 @@ void vr_invalidate_visuals()
 
 bool vr_is_frame_skipped()
 {
-    std::unique_lock lock(vcr_mtx);
+    if (!g_core->cfg->render_throttling) return false;
+    if (g_r4300.speed_mode == CoreSpeedMode::UltraFastForward) return true;
+    if (frame_advance_outstanding > 1) return true;
 
-    if (frame_advance_outstanding > 1)
     {
-        return true;
+        std::unique_lock lock(vcr_mtx);
+        if (vcr.seek_to_frame.has_value()) return true;
     }
 
-    if (!g_core->cfg->render_throttling)
-    {
-        return false;
-    }
-
-    if (vcr.seek_to_frame.has_value())
-    {
-        return true;
-    }
-
-    if (!g_vr_fast_forward)
-    {
-        return false;
-    }
+    if (g_r4300.speed_mode == CoreSpeedMode::Normal) return false;
 
     if (screen_invalidated_frame)
     {
@@ -2039,20 +2029,9 @@ void audio_thread()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-        if (audio_thread_stop_requested == true)
-        {
-            break;
-        }
+        if (audio_thread_stop_requested == true) break;
 
-        if (g_vr_fast_forward && g_core->cfg->fastforward_silent)
-        {
-            continue;
-        }
-
-        if (vcr.seek_to_frame.has_value())
-        {
-            continue;
-        }
+        if (vcr.seek_to_frame.has_value()) continue;
 
         g_core->audio_ai_update(0);
     }
@@ -2280,9 +2259,14 @@ core_result vr_reset_rom(bool reset_save_data, bool stop_vcr)
     return vr_reset_rom_impl(reset_save_data, stop_vcr);
 }
 
-void vr_set_fast_forward(bool value)
+CoreSpeedMode vr_get_speed_mode()
 {
-    g_vr_fast_forward = value;
+    return g_r4300.speed_mode;
+}
+
+void vr_set_speed_mode(CoreSpeedMode mode)
+{
+    g_r4300.speed_mode = mode;
 }
 
 bool vr_get_gs_button()
