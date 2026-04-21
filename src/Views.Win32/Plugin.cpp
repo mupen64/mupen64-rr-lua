@@ -125,6 +125,11 @@ static void CALL dummy_move_screen(int32_t, int32_t)
 {
 }
 
+static void CALL dummy_capture_screen(char *)
+{
+    DialogService::show_dialog(L"The current video plugin doesn't support screenshots.", L"Screenshot", fsvc_error);
+}
+
 #pragma endregion
 
 #define FUNC(target, type, fallback, name)                                                                             \
@@ -180,7 +185,7 @@ void load_gfx(HMODULE handle)
     FUNC(g_plugin_funcs.video_vi_status_changed, VISTATUSCHANGED, dummy_void, "ViStatusChanged");
     FUNC(g_plugin_funcs.video_vi_width_changed, VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
     FUNC(g_plugin_funcs.video_move_screen, MOVESCREEN, dummy_move_screen, "MoveScreen");
-    FUNC(g_plugin_funcs.video_capture_screen, CAPTURESCREEN, nullptr, "CaptureScreen");
+    FUNC(g_plugin_funcs.video_capture_screen, CAPTURESCREEN, dummy_capture_screen, "CaptureScreen");
     FUNC(g_plugin_funcs.video_read_screen, READSCREEN, (READSCREEN)GetProcAddress(handle, "ReadScreen2"), "ReadScreen");
     FUNC(g_plugin_funcs.video_get_video_size, GETVIDEOSIZE, nullptr, "mge_get_video_size");
     FUNC(g_plugin_funcs.video_read_video, READVIDEO, nullptr, "mge_read_video2");
