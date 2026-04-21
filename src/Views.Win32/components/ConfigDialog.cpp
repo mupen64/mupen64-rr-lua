@@ -649,8 +649,8 @@ std::vector<t_options_group> get_static_option_groups()
                        GENPROPS(int32_t, theme),
                        .possible_values = {
                            std::make_pair(L"Light", 0),
-                           std::make_pair(L"Dark (Experimental)", 1),
-                           std::make_pair(L"System (Experimental)", 2),
+                           std::make_pair(L"Dark", 1),
+                           std::make_pair(L"System", 2),
                        }});
     interface_group.items.emplace_back(
         t_options_item{.type = t_options_item::Type::Bool,
