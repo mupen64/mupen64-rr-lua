@@ -279,7 +279,7 @@ inline fnSetPreferredAppMode _SetPreferredAppMode{};
 inline HMODULE h_uxtheme{};
 inline ULONG_PTR original_open_nc_theme_data{};
 
-inline Theme theme = Theme::Light;
+inline Theme theme = Theme::System;
 inline std::unordered_set<HWND> attached_windows;
 inline bool dark_mode_supported = false;
 inline DWORD build_number = 0;
@@ -1302,6 +1302,8 @@ inline void init()
         dark_mode_supported = true;
         update_theme_data(is_dark());
     }
+
+    WinDarkMode::set(theme);
 }
 
 /**
