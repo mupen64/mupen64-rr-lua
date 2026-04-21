@@ -79,6 +79,7 @@ struct ThemeData
     PAIR(edit_bg);
     PAIR(tab_normal);
     PAIR(tab_hover);
+    PAIR(disabled_text);
 };
 
 constexpr ThemeData light_theme_data = {.bg_color = RGB(255, 255, 255),
@@ -87,7 +88,8 @@ constexpr ThemeData light_theme_data = {.bg_color = RGB(255, 255, 255),
                                         .listbox_bg_color = RGB(255, 255, 255),
                                         .edit_bg_color = RGB(255, 255, 255),
                                         .tab_normal_color = RGB(243, 243, 243),
-                                        .tab_hover_color = RGB(249, 249, 249)};
+                                        .tab_hover_color = RGB(249, 249, 249),
+                                        .disabled_text_color = RGB(160, 160, 160)};
 
 constexpr ThemeData dark_theme_data = {.bg_color = RGB(56, 56, 56),
                                        .text_1_color = RGB(255, 255, 255),
@@ -95,7 +97,8 @@ constexpr ThemeData dark_theme_data = {.bg_color = RGB(56, 56, 56),
                                        .listbox_bg_color = RGB(30, 30, 30),
                                        .edit_bg_color = RGB(30, 30, 30),
                                        .tab_normal_color = RGB(80, 80, 80),
-                                       .tab_hover_color = RGB(95, 95, 95)};
+                                       .tab_hover_color = RGB(95, 95, 95),
+                                       .disabled_text_color = RGB(128, 128, 128)};
 
 inline ThemeData theme_data = light_theme_data;
 
@@ -718,7 +721,7 @@ inline LRESULT CALLBACK button_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam,
             const RECT text_rc = {rc.left + glyph_size.cx + 4, rc.top, rc.right, rc.bottom};
             const HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
             const HFONT hOldFont = hFont ? reinterpret_cast<HFONT>(SelectObject(hdc, hFont)) : nullptr;
-            SetTextColor(hdc, enabled ? theme_data.text_1_color : theme_data.text_2_color);
+            SetTextColor(hdc, enabled ? theme_data.text_1_color : theme_data.disabled_text_color);
             SetBkMode(hdc, TRANSPARENT);
             DrawText(hdc, label, -1, const_cast<LPRECT>(&text_rc), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
             if (hOldFont) SelectObject(hdc, hOldFont);
@@ -1231,6 +1234,7 @@ inline void update_theme_data(bool dark)
     RECREATE(edit_bg)
     RECREATE(tab_normal)
     RECREATE(tab_hover)
+    RECREATE(disabled_text)
 }
 
 } // namespace Internal
