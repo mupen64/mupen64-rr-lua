@@ -433,3 +433,22 @@ HBRUSH LuaRenderer::alpha_mask_brush()
 {
     return g_alpha_mask_brush;
 }
+
+void LuaRenderer::blit_all(HDC hdc)
+{
+    for (const auto &lua : g_lua_environments)
+    {
+        if (!lua->rctx.presenter) continue;
+
+        const auto presenter_size = lua->rctx.presenter->size();
+        lua->rctx.presenter->blit(hdc, {0, 0, (LONG)presenter_size.width, (LONG)presenter_size.height});
+    }
+
+    for (const auto &lua : g_lua_environments)
+    {
+        if (!lua->rctx.has_gdi_content) continue;
+
+        TransparentBlt(hdc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0,
+                       lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::LUA_GDI_COLOR_MASK);
+    }
+}

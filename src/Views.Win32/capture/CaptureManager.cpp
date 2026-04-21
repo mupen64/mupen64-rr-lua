@@ -174,22 +174,7 @@ void readscreen_hybrid()
                           m_video_buf, &bmp_info, DIB_RGB_COLORS, SRCCOPY);
         }
 
-        // First, composite the lua's dxgi surfaces
-        for (auto &lua : g_lua_environments)
-        {
-            if (lua->rctx.presenter)
-            {
-                lua->rctx.presenter->blit(
-                    hy_dc, {0, 0, (LONG)lua->rctx.presenter->size().width, (LONG)lua->rctx.presenter->size().height});
-            }
-        }
-
-        // Then, blit the GDI back DCs
-        for (auto &lua : g_lua_environments)
-        {
-            TransparentBlt(hy_dc, 0, 0, lua->rctx.dc_size.width, lua->rctx.dc_size.height, lua->rctx.gdi_back_dc, 0, 0,
-                           lua->rctx.dc_size.width, lua->rctx.dc_size.height, LuaRenderer::LUA_GDI_COLOR_MASK);
-        }
+        LuaRenderer::blit_all(hy_dc);
 
         BITMAPINFO bmp_info{};
         bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
