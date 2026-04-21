@@ -116,6 +116,30 @@ typedef enum
 
 } core_result;
 
+/**
+ * \brief The speed mode of the core.
+ */
+enum class CoreSpeedMode
+{
+    /**
+     * \brief Normal speed mode. The speed cap is affected by the FPS modifier.
+     */
+    Normal = 0,
+
+    /**
+     * \brief Fast forward speed mode. The speed cap is not affected by the FPS modifier.
+     */
+    FastForward = 1,
+
+    /**
+     * \brief Ultra fast forward speed mode. The speed cap is not affected by the FPS modifier.
+     * Achieves maximum performance by unconditionally skipping invalidation, RSP, and potentially other miscellaneous
+     * steps.
+     * May affect video or audio fidelity.
+     */
+    UltraFastForward = 2
+};
+
 struct core_cfg
 {
     /// <summary>
@@ -143,12 +167,6 @@ struct core_cfg
     /// (100 = default)
     /// </summary>
     int32_t fps_modifier = 100;
-
-    /// <summary>
-    /// Whether fast-forward will mute audio
-    /// This option improves performance by skipping additional do_rsp_cycles calls, but may cause issues
-    /// </summary>
-    int32_t fastforward_silent;
 
     /// <summary>
     /// Maximum number of entries into the rom cache

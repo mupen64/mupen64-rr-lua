@@ -96,7 +96,8 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.vr_close_rom = vr_close_rom;
     g_ctx.vr_reset_rom = vr_reset_rom;
     g_ctx.vr_frame_advance = vr_frame_advance;
-    g_ctx.vr_set_fast_forward = vr_set_fast_forward;
+    g_ctx.vr_get_speed_mode = vr_get_speed_mode;
+    g_ctx.vr_set_speed_mode = vr_set_speed_mode;
     g_ctx.vr_get_gs_button = vr_get_gs_button;
     g_ctx.vr_set_gs_button = vr_set_gs_button;
     g_ctx.vr_get_vis_per_second = rom_get_vis_per_second;

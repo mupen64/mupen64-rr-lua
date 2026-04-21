@@ -385,6 +385,21 @@ Mupen = {
         VK_OEM_CLEAR = 0xFE, -- Clear key
     },
 
+    ---The speed mode of the core.
+    ---@enum CoreSpeedMode
+    CoreSpeedMode = {
+        -- Normal speed mode. The speed cap is affected by the FPS modifier.
+        Normal = 0,
+
+        -- Fast forward speed mode. The speed cap is not affected by the FPS modifier.
+        FastForward = 1,
+
+        -- Ultra fast forward speed mode. The speed cap is not affected by the FPS modifier.
+        -- Achieves maximum performance by unconditionally skipping invalidation, RSP, and potentially other miscellaneous
+        -- steps.
+        -- May affect video or audio fidelity.
+        UltraFastForward = 2,
+    }
 }
 
 ---The `lua_tostring` c function converts numbers to strings, so numbers are
@@ -607,13 +622,13 @@ function emu.getpause() end
 ---@return integer speed_limit The current speed limit of the emulator.
 function emu.getspeed() end
 
----Gets whether fast forward is active.
----@return boolean
-function emu.get_ff() end
+---Gets the speed mode.
+---@return CoreSpeedMode
+function emu.get_speed_mode() end
 
----Sets whether fast forward is active.
----@param fast_forward boolean
-function emu.set_ff(fast_forward) end
+---Sets the speed mode.
+---@param mode CoreSpeedMode The speed mode to set.
+function emu.set_speed_mode(mode) end
 
 ---Sets the speed limit of the emulator.
 ---@param speed_limit integer The new speed limit of the emulator.

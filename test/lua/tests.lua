@@ -117,6 +117,86 @@ retest.describe('mupen64', function()
                 retest.expect(version).to.equal(Mupen._VERSION)
             end)
         end)
+        retest.describe('get_speed_mode', function()
+            retest.it('returns_a_number', function()
+                local mode = emu.get_speed_mode()
+                retest.expect(mode).to.be.a('number')
+            end)
+        end)
+
+        retest.describe('set_speed_mode', function()
+            retest.it('sets_normal_mode', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_speed_mode(Mupen.CoreSpeedMode.Normal)
+                retest.expect(emu.get_speed_mode()).to.equal(Mupen.CoreSpeedMode.Normal)
+
+                emu.set_speed_mode(previous)
+            end)
+            retest.it('sets_fast_forward_mode', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_speed_mode(Mupen.CoreSpeedMode.FastForward)
+                retest.expect(emu.get_speed_mode()).to.equal(Mupen.CoreSpeedMode.FastForward)
+
+                emu.set_speed_mode(previous)
+            end)
+            retest.it('sets_ultra_fast_forward_mode', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_speed_mode(Mupen.CoreSpeedMode.UltraFastForward)
+                retest.expect(emu.get_speed_mode()).to.equal(Mupen.CoreSpeedMode.UltraFastForward)
+
+                emu.set_speed_mode(previous)
+            end)
+        end)
+
+        retest.describe('get_ff', function()
+            retest.it('returns_false_when_normal', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_speed_mode(Mupen.CoreSpeedMode.Normal)
+                retest.expect(emu.get_ff()).to.equal(false)
+
+                emu.set_speed_mode(previous)
+            end)
+            retest.it('returns_true_when_fast_forward', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_speed_mode(Mupen.CoreSpeedMode.FastForward)
+                retest.expect(emu.get_ff()).to.equal(true)
+
+                emu.set_speed_mode(previous)
+            end)
+            retest.it('returns_true_when_ultra_fast_forward', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_speed_mode(Mupen.CoreSpeedMode.UltraFastForward)
+                retest.expect(emu.get_ff()).to.equal(true)
+
+                emu.set_speed_mode(previous)
+            end)
+        end)
+
+        retest.describe('set_ff', function()
+            retest.it('sets_fast_forward_when_true', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_ff(true)
+                retest.expect(emu.get_speed_mode()).to.equal(Mupen.CoreSpeedMode.FastForward)
+
+                emu.set_speed_mode(previous)
+            end)
+            retest.it('sets_normal_when_false', function()
+                local previous = emu.get_speed_mode()
+
+                emu.set_ff(false)
+                retest.expect(emu.get_speed_mode()).to.equal(Mupen.CoreSpeedMode.Normal)
+
+                emu.set_speed_mode(previous)
+            end)
+        end)
+
     end)
     retest.describe('movie', function()
         retest.describe('playmovie', function()

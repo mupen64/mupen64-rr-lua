@@ -169,7 +169,7 @@ enum class Message
     DacrateChanged,
 
     /**
-     * \brief The core fast-forward flag (g_vr_fast_forward) needs updating.
+     * \brief The core fast-forward flag needs updating.
      */
     FastForwardNeedsUpdate,
 
