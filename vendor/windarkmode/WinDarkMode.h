@@ -185,6 +185,7 @@ struct WINDOWCOMPOSITIONATTRIBDATA
 
 static constexpr UINT WDM_UAHDRAWMENU = 0x0091;
 static constexpr UINT WDM_UAHDRAWMENUITEM = 0x0092;
+static constexpr UINT WDM_REPAINT_SEPARATOR = WM_APP + 0x57;
 
 struct UAHMENU
 {
@@ -281,6 +282,7 @@ inline ULONG_PTR original_open_nc_theme_data{};
 
 inline Theme theme = Theme::System;
 inline std::unordered_set<HWND> attached_windows;
+inline std::unordered_set<HWND> pending_separator_repaint;
 inline bool dark_mode_supported = false;
 inline DWORD build_number = 0;
 
@@ -386,6 +388,26 @@ inline Theme effective_theme()
 inline bool is_dark()
 {
     return effective_theme() == Theme::Dark;
+}
+
+inline void paint_menu_separator(HWND hwnd)
+{
+    if (!GetMenu(hwnd)) return;
+
+    MENUBARINFO mbi{sizeof(mbi)};
+    if (!GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi)) return;
+
+    RECT rc_window{};
+    GetWindowRect(hwnd, &rc_window);
+
+    HDC hdc = GetWindowDC(hwnd);
+    if (hdc)
+    {
+        RECT rc_sep = {mbi.rcBar.left - rc_window.left, mbi.rcBar.bottom - rc_window.top,
+                       mbi.rcBar.right - rc_window.left, mbi.rcBar.bottom - rc_window.top + 1};
+        FillRect(hdc, &rc_sep, theme_data.bg_brush);
+        ReleaseDC(hwnd, hdc);
+    }
 }
 
 inline void refresh_titlebar(HWND hwnd, bool dark)
@@ -1049,6 +1071,7 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
     {
     case WM_NCDESTROY:
         RemoveWindowSubclass(hwnd, wnd_subclass_proc, sId);
+        pending_separator_repaint.erase(hwnd);
         break;
     case WM_SETTINGCHANGE:
         if (theme == Theme::System && is_theme_change_message(msg, lParam))
@@ -1064,23 +1087,18 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         const LRESULT result = DefSubclassProc(hwnd, msg, wParam, lParam);
         if (!is_dark()) return result;
 
-        HMENU hMenu = GetMenu(hwnd);
-        if (!hMenu) return result;
+        paint_menu_separator(hwnd);
 
-        MENUBARINFO mbi{sizeof(mbi)};
-        if (!GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi)) return result;
-
-        RECT rc_window{};
-        GetWindowRect(hwnd, &rc_window);
-
-        HDC hdc = GetWindowDC(hwnd);
-        if (hdc)
+        if (!pending_separator_repaint.contains(hwnd))
         {
-            RECT rc_sep = {mbi.rcBar.left - rc_window.left, mbi.rcBar.bottom - rc_window.top,
-                           mbi.rcBar.right - rc_window.left, mbi.rcBar.bottom - rc_window.top + 1};
-            FillRect(hdc, &rc_sep, theme_data.bg_brush);
-            ReleaseDC(hwnd, hdc);
+            pending_separator_repaint.insert(hwnd);
+            PostMessage(hwnd, WDM_REPAINT_SEPARATOR, 0, 0);
         }
+        return result;
+    }
+    case WM_NCACTIVATE: {
+        const LRESULT result = DefSubclassProc(hwnd, msg, wParam, lParam);
+        if (is_dark()) paint_menu_separator(hwnd);
         return result;
     }
     case WM_PARENTNOTIFY:
@@ -1097,6 +1115,12 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         }
         break;
     default:
+        if (msg == WDM_REPAINT_SEPARATOR)
+        {
+            pending_separator_repaint.erase(hwnd);
+            if (is_dark()) paint_menu_separator(hwnd);
+            return 0;
+        }
         if (msg == WDM_UAHDRAWMENU)
         {
             if (!is_dark()) break;
@@ -1107,6 +1131,7 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
             GetWindowRect(hwnd, &rc_win);
             RECT rc_menu = mbi.rcBar;
             OffsetRect(&rc_menu, -rc_win.left, -rc_win.top);
+            rc_menu.bottom += 1;
             FillRect(udm->hdc, &rc_menu, theme_data.bg_brush);
             return TRUE;
         }
