@@ -25,7 +25,7 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      # Manual runs have no version suffix, auto-runs set it to `alpha-{short_commit_hash}`
+      # Manual runs have no version suffix, auto-runs set it to `beta-{short_commit_hash}`
       - name: Set VERSION_SUFFIX
         shell: powershell
         run: |
@@ -33,7 +33,7 @@ jobs:
             echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
           } else {
             $hash = "${{ github.sha }}".Substring(0, 7)
-            echo "VERSION_SUFFIX=-alpha-$hash" >> $env:GITHUB_ENV
+            echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
           }
 
       - name: CMake Setup
@@ -71,7 +71,7 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      # Manual runs have no version suffix, auto-runs set it to `alpha-{short_commit_hash}`
+      # Manual runs have no version suffix, auto-runs set it to `beta-{short_commit_hash}`
       - name: Set VERSION_SUFFIX
         shell: powershell
         run: |
@@ -79,7 +79,7 @@ jobs:
             echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
           } else {
             $hash = "${{ github.sha }}".Substring(0, 7)
-            echo "VERSION_SUFFIX=-alpha-$hash" >> $env:GITHUB_ENV
+            echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
           }
 
       - name: CMake Setup
