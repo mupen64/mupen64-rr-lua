@@ -10,7 +10,6 @@
 #include <include/core_api.h>
 #include <memory/pif.h>
 #include <r4300/r4300.h>
-#include <r4300/vcr.h>
 
 struct timer_state
 {
