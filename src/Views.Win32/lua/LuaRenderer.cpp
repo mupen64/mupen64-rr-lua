@@ -311,6 +311,13 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
     // This env isn't in g_lua_environments yet, so we provide these hwnds manually.
     move_and_order_overlays(std::vector<HWND>{ctx->gdi_overlay_hwnd, ctx->d2d_overlay_hwnd});
 
+    // Put these over the MGE compositor.
+    if (!s_detached_overlays)
+    {
+        SetWindowPos(ctx->gdi_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+        SetWindowPos(ctx->d2d_overlay_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+    }
+
     present_gdi_content(env);
 
     if (!g_config.lazy_renderer_init)
