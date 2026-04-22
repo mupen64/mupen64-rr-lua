@@ -65,8 +65,8 @@ jobs:
         id: changelog
         run: |
           if [ -n "${{ steps.stable_tag.outputs.tag }}" ]; then
-            git cliff --from "${{ steps.stable_tag.outputs.tag }}" --unreleased \
-              --config cliff.toml --output CHANGELOG_DRAFT.md
+            git cliff --config cliff.toml --output CHANGELOG_DRAFT.md \
+              "${{ steps.stable_tag.outputs.tag }}..HEAD"
           else
             git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md \
               || git cliff --config cliff.toml --output CHANGELOG_DRAFT.md
