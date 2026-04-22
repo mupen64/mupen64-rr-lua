@@ -722,8 +722,15 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
         return;
     }
 
-    if (g_core->cfg->wait_at_movie_end && vcr.current_sample == (int32_t)vcr.hdr.length_samples - 1)
+    bool pausing_at_last = (g_core->cfg->pause_at_last_frame && vcr.current_sample == vcr.hdr.length_samples - 1);
+    bool pausing_at_n = (g_core->cfg->pause_at_frame != -1 && vcr.current_sample >= g_core->cfg->pause_at_frame - 1);
+    bool wait_at_end = g_core->cfg->wait_at_movie_end && vcr.current_sample == (int32_t)vcr.hdr.length_samples - 1;
+
+    if (pausing_at_last || pausing_at_n || wait_at_end)
     {
+        if (pausing_at_last) g_core->cfg->pause_at_last_frame = 0;
+        if (pausing_at_n) g_core->cfg->pause_at_frame = -1;
+
         vcr_anti_lock bypass;
         g_ctx.vr_pause_emu();
     }
@@ -2039,8 +2046,8 @@ core_result vcr_begin_warp_modify(const std::vector<core_buttons> &inputs)
 
     const auto target_sample = std::min(inputs.size(), (size_t)vcr.current_sample);
 
-    const auto result =
-        vcr_begin_seek_impl(std::to_string(target_sample), emu_paused || g_r4300.frame_advance_outstanding != 0, false, true);
+    const auto result = vcr_begin_seek_impl(std::to_string(target_sample),
+                                            emu_paused || g_r4300.frame_advance_outstanding != 0, false, true);
 
     if (result != Res_Ok)
     {
@@ -2104,25 +2111,4 @@ void vcr_on_vi()
     vcr.current_vi++;
 
     if (vcr.task == task_recording && !vcr.warp_modify_active) vcr.hdr.length_vis = vcr.current_vi;
-
-    if (vcr.task != task_playback) return;
-
-    bool pausing_at_last = (g_core->cfg->pause_at_last_frame && vcr.current_sample == vcr.hdr.length_samples);
-    bool pausing_at_n = (g_core->cfg->pause_at_frame != -1 && vcr.current_sample >= g_core->cfg->pause_at_frame);
-
-    if (pausing_at_last || pausing_at_n)
-    {
-        vcr_anti_lock bypass;
-        g_ctx.vr_pause_emu();
-    }
-
-    if (pausing_at_last)
-    {
-        g_core->cfg->pause_at_last_frame = 0;
-    }
-
-    if (pausing_at_n)
-    {
-        g_core->cfg->pause_at_frame = -1;
-    }
 }
