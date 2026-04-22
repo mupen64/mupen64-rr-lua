@@ -17,11 +17,11 @@
 
 struct r4300
 {
-    std::atomic<CoreSpeedMode> desired_speed_mode;
-    std::atomic<CoreSpeedMode> effective_speed_mode;
+    std::atomic<CoreSpeedMode> desired_speed_mode{CoreSpeedMode::Normal};
+    std::atomic<CoreSpeedMode> effective_speed_mode{CoreSpeedMode::Normal};
     std::atomic<bool> screen_invalidated_vi{true};
     std::atomic<bool> screen_invalidated_frame{true};
-    bool frame_skipped;
+    bool frame_skipped{false};
 };
 
 extern std::atomic<size_t> frame_advance_outstanding;
