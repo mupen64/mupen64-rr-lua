@@ -21,10 +21,10 @@ struct r4300
     std::atomic<CoreSpeedMode> effective_speed_mode{CoreSpeedMode::Normal};
     std::atomic<bool> screen_invalidated_vi{true};
     std::atomic<bool> screen_invalidated_frame{true};
+    std::atomic<size_t> frame_advance_outstanding{0};
     bool frame_skipped{false};
 };
 
-extern std::atomic<size_t> frame_advance_outstanding;
 extern std::recursive_mutex g_emu_cs;
 
 extern precomp_instr *PC;

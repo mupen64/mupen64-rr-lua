@@ -2040,7 +2040,7 @@ core_result vcr_begin_warp_modify(const std::vector<core_buttons> &inputs)
     const auto target_sample = std::min(inputs.size(), (size_t)vcr.current_sample);
 
     const auto result =
-        vcr_begin_seek_impl(std::to_string(target_sample), emu_paused || frame_advance_outstanding, false, true);
+        vcr_begin_seek_impl(std::to_string(target_sample), emu_paused || g_r4300.frame_advance_outstanding != 0, false, true);
 
     if (result != Res_Ok)
     {

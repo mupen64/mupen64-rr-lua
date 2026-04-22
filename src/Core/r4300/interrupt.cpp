@@ -486,7 +486,7 @@ void gen_interrupt()
 
         // NOTE: When frame advancing, screen_invalidated has a higher change of being false despite the fact it should
         // be true The update-limiting logic doesn't apply in frameadvance because there are no high-frequency updates
-        if (update || frame_advance_outstanding)
+        if (update)
         {
             g_core->update_screen();
             g_r4300.screen_invalidated_vi = false;

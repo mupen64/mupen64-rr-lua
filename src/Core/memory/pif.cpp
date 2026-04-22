@@ -359,7 +359,7 @@ void update_pif_read()
 {
     // g_core->log_info("pif entry");
     int32_t i = 0, channel = 0;
-    bool once = emu_paused || (frame_advance_outstanding > 0) ||
+    bool once = emu_paused || (g_r4300.frame_advance_outstanding > 0) ||
                 g_wait_counter; // used to pause only once during controller routine
     bool stAllowed = true;      // used to disallow .st being loaded after any controller has already been read
 #ifdef DEBUG_PIF
@@ -401,15 +401,15 @@ void update_pif_read()
 
                         if (g_wait_counter == 0)
                         {
-                            if (frame_advance_outstanding == 1)
+                            if (g_r4300.frame_advance_outstanding == 1)
                             {
-                                --frame_advance_outstanding;
+                                --g_r4300.frame_advance_outstanding;
                                 vr_update_effective_speed_mode();
                                 g_ctx.vr_pause_emu();
                             }
-                            else if (frame_advance_outstanding > 1)
+                            else if (g_r4300.frame_advance_outstanding > 1)
                             {
-                                --frame_advance_outstanding;
+                                --g_r4300.frame_advance_outstanding;
                                 vr_update_effective_speed_mode();
                             }
                         }

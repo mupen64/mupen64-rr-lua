@@ -40,7 +40,6 @@ volatile bool emu_launched = false;
 volatile bool emu_paused = false;
 volatile bool core_executing = false;
 volatile bool emu_resetting = false;
-std::atomic<size_t> frame_advance_outstanding = 0;
 size_t g_total_frames = 0;
 bool gs_button = false;
 
@@ -173,7 +172,7 @@ void vr_frame_advance(size_t count)
         return;
     }
 
-    frame_advance_outstanding = count;
+    g_r4300.frame_advance_outstanding = count;
     vr_update_effective_speed_mode();
     vr_resume_emu();
 }
@@ -185,7 +184,7 @@ bool vr_get_paused()
 
 bool vr_get_frame_advance()
 {
-    return frame_advance_outstanding;
+    return g_r4300.frame_advance_outstanding;
 }
 
 void critical_stop(std::string_view message)
@@ -203,7 +202,7 @@ void vr_update_effective_speed_mode()
         g_r4300.effective_speed_mode = CoreSpeedMode::Normal;
         return;
     }
-    if (frame_advance_outstanding > 1)
+    if (g_r4300.frame_advance_outstanding > 1)
     {
         g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
         return;
@@ -2231,7 +2230,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     // right now it's hacked to exit to the GUI then re-load the ROM,
     // but it should be possible to reset the game while it's still running
     // simply by clearing out some memory and maybe notifying the plugins...
-    frame_advance_outstanding = 0;
+    g_r4300.frame_advance_outstanding = 0;
     emu_resetting = true;
     vr_update_effective_speed_mode();
 
