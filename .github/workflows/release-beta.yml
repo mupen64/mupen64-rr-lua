@@ -1,0 +1,62 @@
+name: Beta Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g. 1.2.0)"
+        required: true
+        type: string
+
+jobs:
+  beta-release:
+    name: Create Beta Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Get latest commit hash
+        id: commit
+        run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Download mupen-release artifact from latest main run
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: main.yml
+          branch: main
+          name: mupen-release
+          path: ./release-artifact
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Generate changelog with git-cliff
+        id: changelog
+        run: |
+          git cliff --latest --config cliff.toml --output CHANGELOG_DRAFT.md || git cliff --config cliff.toml --output CHANGELOG_DRAFT.md
+          {
+            echo 'body<<EOF'
+            cat CHANGELOG_DRAFT.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create draft beta release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}-beta-${{ steps.commit.outputs.short_hash }}
+          name: ${{ inputs.version }}-beta-${{ steps.commit.outputs.short_hash }}
+          body: ${{ steps.changelog.outputs.body }}
+          prerelease: true
+          draft: true
+          files: ./release-artifact/**
