@@ -103,60 +103,115 @@ std::string get_latest_release_as_json()
 /**
  * Compares two version strings.
  *
+ * Version strings may take the following forms:
+ *   MAJOR.MINOR.PATCH
+ *   MAJOR.MINOR.PATCH-N
+ *   MAJOR.MINOR.PATCH-beta-HASH
+ *   MAJOR.MINOR.PATCH-N-beta-HASH
+ *
  * Returns:
  * 1 if LHS > RHS
  * 0 if LHS = RHS
  * -1 if LHS < RHS
  */
-int version_compare(const std::wstring &version1, const std::wstring &version2)
+static int version_compare(const std::wstring &version1, const std::wstring &version2, bool beta_aware = false)
 {
-    auto split_version = [](const std::wstring &version) {
-        std::vector parts(4, 0);
-        const std::size_t dash_pos = version.find(L'-');
-        std::wstring main_part = dash_pos != std::wstring::npos ? version.substr(0, dash_pos) : version;
-        const std::wstring sub_part = dash_pos != std::wstring::npos ? version.substr(dash_pos + 1) : L"";
+    auto parse_version = [](const std::wstring &version, bool beta_aware) {
+        std::vector<int> parts(4, 0);
 
-        std::wstringstream ss(main_part);
-        for (int i = 0; i < 3 && std::getline(ss, main_part, L'.'); ++i)
+        const size_t dot1 = version.find(L'.');
+        if (dot1 == std::wstring::npos)
         {
             try
             {
-                parts[i] = std::stoi(main_part);
+                parts[0] = std::stoi(version);
             }
             catch (...)
             {
-                parts[i] = 0;
             }
+            return parts;
         }
 
-        if (!sub_part.empty())
+        const size_t dot2 = version.find(L'.', dot1 + 1);
+        try
+        {
+            parts[0] = std::stoi(version.substr(0, dot1));
+        }
+        catch (...)
+        {
+        }
+
+        if (dot2 == std::wstring::npos)
         {
             try
             {
-                parts[3] = std::stoi(sub_part);
+                parts[1] = std::stoi(version.substr(dot1 + 1));
             }
             catch (...)
             {
-                parts[3] = 0;
             }
+            return parts;
+        }
+
+        try
+        {
+            parts[1] = std::stoi(version.substr(dot1 + 1, dot2 - dot1 - 1));
+        }
+        catch (...)
+        {
+        }
+
+        const std::wstring remainder = version.substr(dot2 + 1);
+        const size_t dash1 = remainder.find(L'-');
+        const std::wstring patch_str = dash1 != std::wstring::npos ? remainder.substr(0, dash1) : remainder;
+        const std::wstring suffix = dash1 != std::wstring::npos ? remainder.substr(dash1 + 1) : L"";
+
+        try
+        {
+            parts[2] = std::stoi(patch_str);
+        }
+        catch (...)
+        {
+        }
+
+        if (suffix.empty()) return parts;
+
+        const bool is_beta = suffix.contains(L"beta");
+
+        int commit_count = 0;
+        const size_t dash_in_suffix = suffix.find(L'-');
+        const std::wstring first_token =
+            dash_in_suffix != std::wstring::npos ? suffix.substr(0, dash_in_suffix) : suffix;
+        const bool first_is_number =
+            !first_token.empty() && std::all_of(first_token.begin(), first_token.end(), ::iswdigit);
+
+        if (first_is_number) try
+            {
+                commit_count = std::stoi(first_token);
+            }
+            catch (...)
+            {
+            }
+
+        if (beta_aware)
+        {
+            parts[3] = (commit_count * 2) + (is_beta ? 1 : 0);
+        }
+        else
+        {
+            parts[3] = commit_count;
         }
 
         return parts;
     };
 
-    const std::vector<int> parts1 = split_version(version1);
-    const std::vector<int> parts2 = split_version(version2);
+    const std::vector<int> parts1 = parse_version(version1, beta_aware);
+    const std::vector<int> parts2 = parse_version(version2, beta_aware);
 
     for (int i = 0; i < 4; ++i)
     {
-        if (parts1[i] > parts2[i])
-        {
-            return 1;
-        }
-        if (parts1[i] < parts2[i])
-        {
-            return -1;
-        }
+        if (parts1[i] > parts2[i]) return 1;
+        if (parts1[i] < parts2[i]) return -1;
     }
     return 0;
 }
