@@ -38,7 +38,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          workflow: main.yml
+          workflow: build.yml
           branch: main
           name: mupen-release
           path: ./release-artifact

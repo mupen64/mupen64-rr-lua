@@ -1,20 +1,8 @@
-name: main
+name: Build
 
 on: [push]
 
 jobs:
-  check-format:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-      - uses: DoozyX/clang-format-lint-action@v0.18.2
-        with:
-          source: "./src ./test"
-          exclude: "./lib ./tools"
-          extensions: "h,cpp"
-          clangFormatVersion: 18.1.8
-          style: file
   build-debug:
     runs-on: windows-latest
 
