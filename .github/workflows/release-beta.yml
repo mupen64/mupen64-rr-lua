@@ -43,6 +43,19 @@ jobs:
           name: mupen-release
           path: ./release-artifact
 
+      - name: Zip release artifact
+        run: |
+          zip -r mupen64-rr-lua-${{ inputs.version }}-beta-${{ steps.commit.outputs.short_hash }}.zip \
+            ./release-artifact/
+
+      - name: Get latest stable release tag
+        id: stable_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=$(gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
       - name: Install git-cliff
         uses: taiki-e/install-action@v2
         with:
@@ -51,7 +64,13 @@ jobs:
       - name: Generate changelog with git-cliff
         id: changelog
         run: |
-          git cliff --latest --config cliff.toml --output CHANGELOG_DRAFT.md || git cliff --config cliff.toml --output CHANGELOG_DRAFT.md
+          if [ -n "${{ steps.stable_tag.outputs.tag }}" ]; then
+            git cliff --from "${{ steps.stable_tag.outputs.tag }}" --unreleased \
+              --config cliff.toml --output CHANGELOG_DRAFT.md
+          else
+            git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md \
+              || git cliff --config cliff.toml --output CHANGELOG_DRAFT.md
+          fi
           {
             echo 'body<<EOF'
             cat CHANGELOG_DRAFT.md
@@ -66,4 +85,4 @@ jobs:
           body: ${{ steps.changelog.outputs.body }}
           prerelease: true
           draft: true
-          files: ./release-artifact/**
+          files: mupen64-rr-lua-${{ inputs.version }}-beta-${{ steps.commit.outputs.short_hash }}.zip
