@@ -90,6 +90,8 @@ bool timer_new_frame()
 
     timer.last_frame_time = std::chrono::high_resolution_clock::now();
 
+    if (!g_core->cfg->render_throttling) return false;
+
     // If the screen isn't invalidated, we skip the frame outright.
     if (!g_r4300.screen_invalidated_frame) return true;
 
