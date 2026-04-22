@@ -404,11 +404,13 @@ void update_pif_read()
                             if (frame_advance_outstanding == 1)
                             {
                                 --frame_advance_outstanding;
+                                vr_update_effective_speed_mode();
                                 g_ctx.vr_pause_emu();
                             }
                             else if (frame_advance_outstanding > 1)
                             {
                                 --frame_advance_outstanding;
+                                vr_update_effective_speed_mode();
                             }
                         }
 

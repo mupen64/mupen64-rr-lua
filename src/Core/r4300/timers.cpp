@@ -91,13 +91,18 @@ bool timer_new_frame()
 
     timer.last_frame_time = std::chrono::high_resolution_clock::now();
 
+    // If the screen isn't invalidated, we skip the frame outright.
     if (!g_r4300.screen_invalidated_frame) return true;
-    bool prev_screen_invalidated = g_r4300.screen_invalidated_frame;
-    g_r4300.screen_invalidated_frame = false;
 
-    if (g_r4300.effective_speed_mode != CoreSpeedMode::Normal) return g_r4300.screen_invalidated_frame;
+    // In normal and ff modes, we want to just do standard throttling.
+    if (g_r4300.effective_speed_mode == CoreSpeedMode::Normal ||
+        g_r4300.effective_speed_mode == CoreSpeedMode::FastForward)
+    {
+        g_r4300.screen_invalidated_frame = false;
+        return false;
+    }
 
-    return false;
+    return true;
 }
 
 static void timer_sleep(std::chrono::time_point<std::chrono::high_resolution_clock> &current_vi_time)

@@ -8,6 +8,9 @@
 
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
+/**
+ * \return Whether the new frame should be visually skipped.
+ */
 bool timer_new_frame();
 void timer_new_vi();
 void timer_on_speed_modifier_changed();

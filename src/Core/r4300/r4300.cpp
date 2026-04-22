@@ -2232,6 +2232,7 @@ core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_res
     // simply by clearing out some memory and maybe notifying the plugins...
     frame_advance_outstanding = 0;
     emu_resetting = true;
+    vr_update_effective_speed_mode();
 
     core_result result = g_ctx.vr_close_rom(stop_vcr);
     if (result != Res_Ok)
