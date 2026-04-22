@@ -208,11 +208,6 @@ void vr_update_effective_speed_mode()
         g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
         return;
     }
-    if (g_r4300.desired_speed_mode != CoreSpeedMode::Normal)
-    {
-        g_r4300.effective_speed_mode = g_r4300.desired_speed_mode;
-        return;
-    }
 
     {
         std::unique_lock lock(vcr_mtx);
@@ -221,6 +216,12 @@ void vr_update_effective_speed_mode()
             g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
             return;
         }
+    }
+
+    if (g_r4300.desired_speed_mode != CoreSpeedMode::Normal)
+    {
+        g_r4300.effective_speed_mode = g_r4300.desired_speed_mode;
+        return;
     }
 
     g_r4300.effective_speed_mode = CoreSpeedMode::Normal;
