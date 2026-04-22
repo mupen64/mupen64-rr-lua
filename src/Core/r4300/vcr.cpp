@@ -1763,6 +1763,8 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
     }
 
 finish: {
+    vr_update_effective_speed_mode();
+
     vcr_anti_lock bypass;
     while (!post_unlock_callbacks.empty())
     {
@@ -1803,6 +1805,7 @@ void vcr_stop_seek()
 
     {
         vcr_anti_lock bypass;
+        vr_update_effective_speed_mode();
         g_core->callbacks.seek_status_changed();
         g_core->callbacks.seek_completed();
         g_core->callbacks.warp_modify_status_changed(vcr.warp_modify_active);

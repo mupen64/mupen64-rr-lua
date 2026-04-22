@@ -62,8 +62,6 @@ uint64_t debug_count = 0;
 uint32_t next_interrupt, CIC_Chip;
 precomp_instr *PC;
 char invalid_code[0x100000];
-std::atomic<bool> screen_invalidated = true;
-std::atomic<bool> screen_invalidated_frame = true;
 precomp_block *blocks[0x100000], *actual;
 int32_t rounding_mode = MUP_ROUND_NEAREST;
 int32_t trunc_mode = MUP_ROUND_TRUNC, round_mode = MUP_ROUND_NEAREST, ceil_mode = MUP_ROUND_CEIL,
@@ -72,7 +70,6 @@ void (*code)();
 uint32_t next_vi;
 int32_t vi_field = 0;
 CoreSpeedMode g_vr_speed_mode{};
-bool g_vr_frame_skipped;
 core_system_type g_sys_type;
 std::atomic<int32_t> g_wait_counter = 0;
 r4300 g_r4300{};
@@ -92,30 +89,8 @@ FILE *g_mpak_file;
 
 void vr_invalidate_visuals()
 {
-    screen_invalidated = true;
-    screen_invalidated_frame = true;
-}
-
-bool vr_is_frame_skipped()
-{
-    if (!g_core->cfg->render_throttling) return false;
-    if (g_r4300.speed_mode == CoreSpeedMode::UltraFastForward) return true;
-    if (frame_advance_outstanding > 1) return true;
-
-    {
-        std::unique_lock lock(vcr_mtx);
-        if (vcr.seek_to_frame.has_value()) return true;
-    }
-
-    if (g_r4300.speed_mode == CoreSpeedMode::Normal) return false;
-
-    if (screen_invalidated_frame)
-    {
-        screen_invalidated_frame = false;
-        return false;
-    }
-
-    return true;
+    g_r4300.screen_invalidated_vi = true;
+    g_r4300.screen_invalidated_frame = true;
 }
 
 std::filesystem::path get_sram_path()
@@ -199,6 +174,7 @@ void vr_frame_advance(size_t count)
     }
 
     frame_advance_outstanding = count;
+    vr_update_effective_speed_mode();
     vr_resume_emu();
 }
 
@@ -218,6 +194,36 @@ void critical_stop(std::string_view message)
         std::format("A critical emulation error has occured: {}.\n\nEmulation will now stop.", message);
     g_core->show_dialog(formatted.c_str(), "Critical Error", fsvc_error);
     g_core->submit_task([] { (void)g_ctx.vr_close_rom(true); });
+}
+
+void vr_update_effective_speed_mode()
+{
+    if (!g_core->cfg->render_throttling)
+    {
+        g_r4300.effective_speed_mode = CoreSpeedMode::Normal;
+        return;
+    }
+    if (frame_advance_outstanding > 1)
+    {
+        g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
+        return;
+    }
+    if (g_r4300.desired_speed_mode != CoreSpeedMode::Normal)
+    {
+        g_r4300.effective_speed_mode = g_r4300.desired_speed_mode;
+        return;
+    }
+
+    {
+        std::unique_lock lock(vcr_mtx);
+        if (vcr.seek_to_frame.has_value())
+        {
+            g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
+            return;
+        }
+    }
+
+    g_r4300.effective_speed_mode = CoreSpeedMode::Normal;
 }
 
 bool vr_get_core_executing()
@@ -2261,12 +2267,13 @@ core_result vr_reset_rom(bool reset_save_data, bool stop_vcr)
 
 CoreSpeedMode vr_get_speed_mode()
 {
-    return g_r4300.speed_mode;
+    return g_r4300.desired_speed_mode;
 }
 
 void vr_set_speed_mode(CoreSpeedMode mode)
 {
-    g_r4300.speed_mode = mode;
+    g_r4300.desired_speed_mode = mode;
+    vr_update_effective_speed_mode();
 }
 
 bool vr_get_gs_button()

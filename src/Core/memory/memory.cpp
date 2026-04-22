@@ -1130,10 +1130,9 @@ void update_SP()
             // screen_updates and thus are stuck in incorrect state
             g_total_frames++;
             g_core->cfg->total_frames++;
-            timer_new_frame();
-            g_vr_frame_skipped = vr_is_frame_skipped();
+            g_r4300.frame_skipped = timer_new_frame();
 
-            if (!g_vr_frame_skipped)
+            if (!g_r4300.frame_skipped)
             {
                 g_core->rsp_do_rsp_cycles(100);
             }

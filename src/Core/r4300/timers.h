@@ -8,7 +8,7 @@
 
 typedef std::chrono::high_resolution_clock::time_point time_point;
 
-void timer_new_frame();
+bool timer_new_frame();
 void timer_new_vi();
 void timer_on_speed_modifier_changed();
 void timer_get_timings(float &fps, float &vis);

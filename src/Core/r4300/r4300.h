@@ -17,7 +17,11 @@
 
 struct r4300
 {
-    std::atomic<CoreSpeedMode> speed_mode;
+    std::atomic<CoreSpeedMode> desired_speed_mode;
+    CoreSpeedMode effective_speed_mode;
+    std::atomic<bool> screen_invalidated_vi{true};
+    std::atomic<bool> screen_invalidated_frame{true};
+    bool frame_skipped;
 };
 
 extern std::atomic<size_t> frame_advance_outstanding;
@@ -55,10 +59,8 @@ extern int32_t rounding_mode, trunc_mode, round_mode, ceil_mode, floor_mode;
 extern uint32_t last_addr, interp_addr;
 extern char invalid_code[0x100000];
 extern uint32_t jump_to_address;
-extern std::atomic<bool> screen_invalidated;
 extern int32_t vi_field;
 extern uint32_t next_vi;
-extern bool g_vr_frame_skipped;
 extern core_system_type g_sys_type;
 extern r4300 g_r4300;
 
@@ -78,6 +80,7 @@ void critical_stop(std::string_view message = "Unknown error");
 core_result vr_reset_rom_impl(bool reset_save_data, bool stop_vcr, bool skip_reset_recording_check = false);
 
 std::filesystem::path vr_get_rom_path();
+void vr_update_effective_speed_mode();
 bool vr_get_core_executing();
 bool vr_get_launched();
 void vr_frame_advance(size_t count);
@@ -95,7 +98,6 @@ void vr_set_speed_mode(CoreSpeedMode mode);
 bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
 void vr_invalidate_visuals();
-bool vr_is_frame_skipped();
 
 #define jump_to(a)                                                                                                     \
     {                                                                                                                  \

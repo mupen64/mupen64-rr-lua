@@ -481,15 +481,15 @@ void gen_interrupt()
         lag_count++;
 
         // NOTE: It's ok to not update screen when lagging, doesn't cause any obvious issues
-        const auto skip = g_vr_frame_skipped;
-        const auto update = g_core->cfg->render_throttling ? (screen_invalidated ? !skip : false) : true;
+        const auto skip = g_r4300.frame_skipped;
+        const auto update = g_core->cfg->render_throttling ? (g_r4300.screen_invalidated_vi ? !skip : false) : true;
 
         // NOTE: When frame advancing, screen_invalidated has a higher change of being false despite the fact it should
         // be true The update-limiting logic doesn't apply in frameadvance because there are no high-frequency updates
         if (update || frame_advance_outstanding)
         {
             g_core->update_screen();
-            screen_invalidated = false;
+            g_r4300.screen_invalidated_vi = false;
         }
 
         // Detecting when a new frame is being presented requires checking if the VI origin changed.
