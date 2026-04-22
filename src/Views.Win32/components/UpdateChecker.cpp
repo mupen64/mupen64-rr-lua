@@ -14,12 +14,20 @@
 
 namespace UpdateChecker
 {
-const std::wstring REPO_LATEST_RELEASE_URL = L"/repos/mupen64/mupen64-rr-lua/releases/latest";
+const std::wstring REPO_RELEASES_URL = L"/repos/mupen64/mupen64-rr-lua/releases";
 
 /**
- * Gets information about the latest release using the Github REST API.
+ * Returns true if the given tag name identifies a beta build (contains "-beta").
  */
-std::string get_latest_release_as_json()
+static bool is_beta_tag(const std::string &tag)
+{
+    return tag.contains("-beta");
+}
+
+/**
+ * Fetches the list of releases as a JSON array using the GitHub REST API.
+ */
+std::string get_releases_as_json()
 {
     HINTERNET h_session =
         WinHttpOpen(L"Win32 Mupen64 GitHub API Client/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, 0);
@@ -46,7 +54,7 @@ std::string get_latest_release_as_json()
         return "";
     }
 
-    HINTERNET h_request = WinHttpOpenRequest(h_connect, L"GET", REPO_LATEST_RELEASE_URL.c_str(), NULL,
+    HINTERNET h_request = WinHttpOpenRequest(h_connect, L"GET", REPO_RELEASES_URL.c_str(), NULL,
                                              WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 
     if (!h_request)
@@ -233,7 +241,7 @@ void check(bool manual)
         return;
     }
 
-    const auto json = get_latest_release_as_json();
+    const auto json = get_releases_as_json();
 
     if (json.empty())
     {
@@ -241,13 +249,44 @@ void check(bool manual)
         return;
     }
 
-    nlohmann::json data = nlohmann::json::parse(json);
+    nlohmann::json releases = nlohmann::json::parse(json);
+
+    if (!releases.is_array() || releases.empty())
+    {
+        g_view_logger->error("[UpdateChecker] releases response is not a non-empty array");
+        show_connectivity_error(manual);
+        return;
+    }
+
+    // Pick the latest release whose tag is not a beta build.
+    // GitHub returns releases sorted by publish date descending, so the first
+    // non-beta entry is the most recent stable release.
+    nlohmann::json data;
+    for (const auto &release : releases)
+    {
+        const auto &t = release["tag_name"];
+        if (t.is_string() && !is_beta_tag(t.get<std::string>()))
+        {
+            data = release;
+            break;
+        }
+    }
+
+    if (data.is_null())
+    {
+        g_view_logger->trace("[UpdateChecker] No stable (non-beta) release found in releases list.");
+        if (manual)
+        {
+            DialogService::show_dialog(L"No stable release found.", L"No Stable Release", fsvc_information);
+        }
+        return;
+    }
 
     const auto tag_name = data["tag_name"];
 
     if (!tag_name.is_string())
     {
-        g_view_logger->error("[UpdateChecker] no tag_name in json response");
+        g_view_logger->error("[UpdateChecker] no tag_name in release object");
         show_connectivity_error(manual);
         return;
     }
@@ -256,7 +295,7 @@ void check(bool manual)
 
     if (!body.is_string())
     {
-        g_view_logger->error("[UpdateChecker] no body in json response");
+        g_view_logger->error("[UpdateChecker] no body in release object");
         show_connectivity_error(manual);
         return;
     }
