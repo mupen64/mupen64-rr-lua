@@ -116,6 +116,11 @@ class Plugin
     auto version() const { return m_version; }
 
   private:
+    /**
+     * \brief Initiates the plugin for being called ephemerally (e.g. via `config()`, `test()`, `about()`)
+     */
+    void initiate_dummy();
+
     std::filesystem::path m_path;
     std::string m_name;
     core_plugin_type m_type;

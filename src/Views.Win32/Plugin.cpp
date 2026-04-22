@@ -417,30 +417,80 @@ Plugin::~Plugin()
 
 void Plugin::config(const HWND hwnd)
 {
-    const auto run_config = [&] {
-        const auto dll_config = (DLLCONFIG)GetProcAddress(m_module, "DllConfig");
+    initiate_dummy();
 
-        if (!dll_config)
-        {
-            DialogService::show_dialog(
-                std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
-                fsvc_error, hwnd);
-            goto cleanup;
-        }
+    const auto dll_config = (DLLCONFIG)GetProcAddress(m_module, "DllConfig");
 
-        dll_config(hwnd);
+    if (!dll_config)
+    {
+        DialogService::show_dialog(
+            std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
+            fsvc_error, hwnd);
+        goto cleanup;
+    }
 
-    cleanup:
+    dll_config(hwnd);
 
-        if (g_main_ctx.core_ctx->vr_get_launched())
-        {
-            return;
-        }
+cleanup:
 
-        const auto close_dll = (CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
-        if (close_dll) close_dll();
-    };
+    if (g_main_ctx.core_ctx->vr_get_launched())
+    {
+        return;
+    }
 
+    const auto close_dll = (CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
+    if (close_dll) close_dll();
+}
+
+void Plugin::test(const HWND hwnd)
+{
+    initiate_dummy();
+    dll_test = (DLLTEST)GetProcAddress(m_module, "DllTest");
+    if (dll_test) dll_test(hwnd);
+}
+
+void Plugin::about(const HWND hwnd)
+{
+    initiate_dummy();
+    dll_about = (DLLABOUT)GetProcAddress(m_module, "DllAbout");
+    if (dll_about) dll_about(hwnd);
+}
+
+void Plugin::initiate()
+{
+    switch (m_type)
+    {
+    case plugin_video:
+        load_gfx(m_module);
+        break;
+    case plugin_audio:
+        load_audio(m_module);
+        break;
+    case plugin_input:
+        load_input(m_version, m_module);
+        break;
+    case plugin_rsp:
+        load_rsp(m_module);
+        break;
+    }
+
+    bool compat_error = false;
+
+    // Old MGE video plugins with 24bpp mge_read_video aren't supported anymore.
+    if (m_type == plugin_video && !g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video"))
+        compat_error = true;
+
+    if (compat_error)
+    {
+        const auto msg =
+            std::format(L"The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
+                        IOUtils::to_wide_string(m_name));
+        DialogService::show_dialog(msg.c_str(), L"Plugin Incompatibility", fsvc_error);
+    }
+}
+
+void Plugin::initiate_dummy()
+{
     const auto receive_extended_funcs = (RECEIVEEXTENDEDFUNCS)GetProcAddress(m_module, "ReceiveExtendedFuncs");
     if (receive_extended_funcs)
     {
@@ -481,8 +531,6 @@ void Plugin::config(const HWND hwnd)
             }
         }
 
-        run_config();
-
         break;
     }
     case plugin_audio: {
@@ -494,8 +542,6 @@ void Plugin::config(const HWND hwnd)
                 DialogService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
             }
         }
-
-        run_config();
 
         break;
     }
@@ -515,8 +561,6 @@ void Plugin::config(const HWND hwnd)
             }
         }
 
-        run_config();
-
         break;
     }
     case plugin_rsp: {
@@ -527,58 +571,10 @@ void Plugin::config(const HWND hwnd)
             if (initiateRSP) initiateRSP(dummy_rsp_info, &i);
         }
 
-        run_config();
-
         break;
     }
     default:
-        assert(false);
-        break;
-    }
-}
-
-void Plugin::test(const HWND hwnd)
-{
-    dll_test = (DLLTEST)GetProcAddress(m_module, "DllTest");
-    if (dll_test) dll_test(hwnd);
-}
-
-void Plugin::about(const HWND hwnd)
-{
-    dll_about = (DLLABOUT)GetProcAddress(m_module, "DllAbout");
-    if (dll_about) dll_about(hwnd);
-}
-
-void Plugin::initiate()
-{
-    switch (m_type)
-    {
-    case plugin_video:
-        load_gfx(m_module);
-        break;
-    case plugin_audio:
-        load_audio(m_module);
-        break;
-    case plugin_input:
-        load_input(m_version, m_module);
-        break;
-    case plugin_rsp:
-        load_rsp(m_module);
-        break;
-    }
-
-    bool compat_error = false;
-
-    // Old MGE video plugins with 24bpp mge_read_video aren't supported anymore.
-    if (m_type == plugin_video && !g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video"))
-        compat_error = true;
-
-    if (compat_error)
-    {
-        const auto msg =
-            std::format(L"The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
-                        IOUtils::to_wide_string(m_name));
-        DialogService::show_dialog(msg.c_str(), L"Plugin Incompatibility", fsvc_error);
+        RT_ASSERT(false, L"Unknown plugin type");
     }
 }
 
