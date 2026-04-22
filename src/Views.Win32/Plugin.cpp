@@ -441,6 +441,30 @@ void Plugin::config(const HWND hwnd)
         if (close_dll) close_dll();
     };
 
+    const auto receive_extended_funcs = (RECEIVEEXTENDEDFUNCS)GetProcAddress(m_module, "ReceiveExtendedFuncs");
+    if (receive_extended_funcs)
+    {
+        core_plugin_extended_funcs *extended_funcs = nullptr;
+        switch (m_type)
+        {
+        case plugin_video:
+            extended_funcs = &g_plugin_funcs.video_extended_funcs;
+            break;
+        case plugin_audio:
+            extended_funcs = &g_plugin_funcs.audio_extended_funcs;
+            break;
+        case plugin_input:
+            extended_funcs = &g_plugin_funcs.input_extended_funcs;
+            break;
+        case plugin_rsp:
+            extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
+            break;
+        default:
+            RT_ASSERT(false, L"Unknown plugin type");
+        }
+        receive_extended_funcs(extended_funcs);
+    }
+
     switch (m_type)
     {
     case plugin_video: {
