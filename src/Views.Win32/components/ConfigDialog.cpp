@@ -641,17 +641,16 @@ std::vector<t_options_group> get_static_option_groups()
                                    .tooltip = L"The path to the movie backup folder.",
                                    GENPROPS(std::wstring, backups_directory)});
 
-    interface_group.items.emplace_back(
-        t_options_item{.type = t_options_item::Type::Enum,
-                       .group_id = interface_group.id,
-                       .name = L"Theme",
-                       .tooltip = L"The UI theme to use.",
-                       GENPROPS(int32_t, theme),
-                       .possible_values = {
-                           std::make_pair(L"Light", 0),
-                           std::make_pair(L"Dark", 1),
-                           std::make_pair(L"System", 2),
-                       }});
+    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
+                                                      .group_id = interface_group.id,
+                                                      .name = L"Theme",
+                                                      .tooltip = L"The UI theme to use.",
+                                                      GENPROPS(int32_t, theme),
+                                                      .possible_values = {
+                                                          std::make_pair(L"Light", 0),
+                                                          std::make_pair(L"Dark", 1),
+                                                          std::make_pair(L"System", 2),
+                                                      }});
     interface_group.items.emplace_back(
         t_options_item{.type = t_options_item::Type::Bool,
                        .group_id = interface_group.id,

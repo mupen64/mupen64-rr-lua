@@ -490,7 +490,7 @@ void on_fullscreen_changed(std::any data)
 void on_config_loaded(std::any)
 {
     RomBrowser::build();
-    
+
     WinDarkMode::Theme theme = WinDarkMode::Theme::System;
     if (g_config.theme == 0)
         theme = WinDarkMode::Theme::Light;
@@ -1134,7 +1134,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     RT_ASSERT(SUCCEEDED(hr), L"Failed to initialize COM.");
 
     WinDarkMode::init();
-  
+
     LuaManager::init();
     CrashManager::init();
     MGECompositor::init();
