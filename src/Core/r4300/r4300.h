@@ -18,7 +18,7 @@
 struct r4300
 {
     std::atomic<CoreSpeedMode> desired_speed_mode;
-    CoreSpeedMode effective_speed_mode;
+    std::atomic<CoreSpeedMode> effective_speed_mode;
     std::atomic<bool> screen_invalidated_vi{true};
     std::atomic<bool> screen_invalidated_frame{true};
     bool frame_skipped;
