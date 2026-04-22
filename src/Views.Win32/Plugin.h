@@ -120,6 +120,7 @@ class Plugin
      * \brief Initiates the plugin for being called ephemerally (e.g. via `config()`, `test()`, `about()`)
      */
     void initiate_dummy();
+    void deinitiate_dummy();
 
     std::filesystem::path m_path;
     std::string m_name;

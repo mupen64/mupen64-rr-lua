@@ -421,25 +421,16 @@ void Plugin::config(const HWND hwnd)
 
     const auto dll_config = (DLLCONFIG)GetProcAddress(m_module, "DllConfig");
 
-    if (!dll_config)
+    if (dll_config)
+        dll_config(hwnd);
+    else
     {
         DialogService::show_dialog(
             std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
             fsvc_error, hwnd);
-        goto cleanup;
     }
 
-    dll_config(hwnd);
-
-cleanup:
-
-    if (g_main_ctx.core_ctx->vr_get_launched())
-    {
-        return;
-    }
-
-    const auto close_dll = (CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
-    if (close_dll) close_dll();
+    deinitiate_dummy();
 }
 
 void Plugin::test(const HWND hwnd)
@@ -447,6 +438,7 @@ void Plugin::test(const HWND hwnd)
     initiate_dummy();
     dll_test = (DLLTEST)GetProcAddress(m_module, "DllTest");
     if (dll_test) dll_test(hwnd);
+    deinitiate_dummy();
 }
 
 void Plugin::about(const HWND hwnd)
@@ -454,6 +446,7 @@ void Plugin::about(const HWND hwnd)
     initiate_dummy();
     dll_about = (DLLABOUT)GetProcAddress(m_module, "DllAbout");
     if (dll_about) dll_about(hwnd);
+    deinitiate_dummy();
 }
 
 void Plugin::initiate()
@@ -576,6 +569,14 @@ void Plugin::initiate_dummy()
     default:
         RT_ASSERT(false, L"Unknown plugin type");
     }
+}
+
+void Plugin::deinitiate_dummy()
+{
+    if (g_main_ctx.core_ctx->vr_get_launched()) return;
+
+    const auto close_dll = (CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
+    if (close_dll) close_dll();
 }
 
 t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
