@@ -105,14 +105,12 @@ std::wstring get_mupen_name(bool simple)
 
 #define BASE_NAME L"Mupen 64 "
 
-    std::wstring version_suffix = VERSION_SUFFIX;
-
     if (simple)
     {
-        return BASE_NAME CURRENT_VERSION + version_suffix;
+        return BASE_NAME CURRENT_VERSION VERSION_SUFFIX;
     }
 
-    return BASE_NAME CURRENT_VERSION + version_suffix + ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
+    return BASE_NAME CURRENT_VERSION VERSION_SUFFIX ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
 }
 
 const wchar_t *get_input_text()

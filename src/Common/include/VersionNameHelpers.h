@@ -19,4 +19,4 @@
 #endif
 
 #define VERSION_NAME_HELPER_GEN_NAME(base_name, version)                                                               \
-    base_name L" " version VERSION_NAME_HELPER_ARCH VERSION_NAME_HELPER_TARGET
+    base_name L" " version VERSION_SUFFIX VERSION_NAME_HELPER_ARCH VERSION_NAME_HELPER_TARGET
