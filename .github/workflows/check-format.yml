@@ -2,6 +2,9 @@ name: Check Format
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   check-format:
     runs-on: ubuntu-latest
