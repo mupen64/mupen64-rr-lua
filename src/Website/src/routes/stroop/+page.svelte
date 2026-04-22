@@ -7,7 +7,7 @@
 	<Hero
 		name="STROOP Refactor"
 		description="Advanced diagnostic tool for Super Mario 64."
-		version="0.7.2"
+		version="0.7.3"
 		logo={stroop}
 		repository="https://github.com/FramePerfection/STROOP"
 		bg_color_from="#ffffff"
