@@ -2,7 +2,7 @@
 header = """
 # Summary
 
-This release does something.
+⚠️ This is a beta release. Quality may vary.
 """
 body = """{% for group, commits in commits | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
