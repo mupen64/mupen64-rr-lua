@@ -184,6 +184,8 @@ static LRESULT CALLBACK overlay_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 // If no hwnds are provided, all overlay windows from all Lua environments are updated.
 static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds)
 {
+    if (!s_detached_overlays) return;
+
     std::vector<HWND> wnds;
     if (hwnds.has_value())
         wnds = *hwnds;
@@ -196,27 +198,17 @@ static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnd
         }
     }
 
-    if (s_detached_overlays)
-    {
-        RECT rc;
-        GetClientRect(g_main_ctx.hwnd, &rc);
-        POINT pt = {rc.left, rc.top};
-        ClientToScreen(g_main_ctx.hwnd, &pt);
+    RECT rc;
+    GetClientRect(g_main_ctx.hwnd, &rc);
+    POINT pt = {rc.left, rc.top};
+    ClientToScreen(g_main_ctx.hwnd, &pt);
 
-        HWND above_main = GetWindow(g_main_ctx.hwnd, GW_HWNDPREV);
-        HWND insert_after = above_main ? above_main : HWND_TOP;
+    HWND above_main = GetWindow(g_main_ctx.hwnd, GW_HWNDPREV);
+    HWND insert_after = above_main ? above_main : HWND_TOP;
 
-        for (const auto &hwnd : wnds)
-        {
-            SetWindowPos(hwnd, insert_after, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
-        }
-    }
-    else
+    for (const auto &hwnd : wnds)
     {
-        for (const auto &hwnd : wnds)
-        {
-            SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
-        }
+        SetWindowPos(hwnd, insert_after, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
     }
 }
 
