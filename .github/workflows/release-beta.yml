@@ -23,6 +23,13 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Guard against non-main branches
+        run: |
+          if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
+            echo "❌ This workflow must be run from the main branch."
+            exit 1
+          fi
+
       - name: Get latest commit hash
         id: commit
         run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
