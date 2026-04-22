@@ -82,7 +82,7 @@ set_target_properties(Mupen64RR.Plugins.Win32.TASVideo PROPERTIES
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_include_directories(Mupen64RR.Plugins.Win32.TASVideo PRIVATE ".")
-target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE 
+target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     Mupen64RR.Plugins.Win32.Common
     vendor::hqx
     vendor::xbrz
@@ -98,7 +98,7 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     winmm
 )
 if (MUPEN64RR_LINK_STATIC)
-    target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE 
+    target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
         "GLEW_STATIC"
     )
 endif()

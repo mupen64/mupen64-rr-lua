@@ -31,6 +31,7 @@ set_target_properties(Mupen64RR.Plugins.Win32.TASRSP PROPERTIES
 )
 target_include_directories(Mupen64RR.Plugins.Win32.TASRSP PRIVATE ".")
 target_link_libraries(Mupen64RR.Plugins.Win32.TASRSP PRIVATE Mupen64RR.Plugins.Win32.Common)
+
 target_link_libraries(Mupen64RR.Plugins.Win32.TASRSP PRIVATE
     Comctl32
     uxtheme

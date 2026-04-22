@@ -106,10 +106,6 @@ std::wstring get_mupen_name(bool simple)
 #define BASE_NAME L"Mupen 64 "
 
     std::wstring version_suffix = VERSION_SUFFIX;
-    if (version_suffix.empty())
-    {
-        // version_suffix = L"-rc5";
-    }
 
     if (simple)
     {

@@ -104,7 +104,7 @@ function(mupen64rr_copy_vcpkg_deps target)
 
   add_custom_command(
     TARGET "${target}" POST_BUILD
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory 
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory
       "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin" "$<TARGET_FILE_DIR:${target}>"
     VERBATIM
   )

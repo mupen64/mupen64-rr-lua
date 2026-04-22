@@ -10,7 +10,7 @@ add_library(Mupen64RR.Plugins.Win32.TASAudio MODULE
     "Main.cpp"
     "Main_Win32.cpp"
     "SDLBackend.cpp"
-    
+
     "Config.hpp"
     "Config_Win32.hpp"
     "Main.hpp"

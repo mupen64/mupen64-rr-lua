@@ -11,4 +11,7 @@ target_link_libraries(Mupen64RR.Plugins.Win32.Common INTERFACE
     Mupen64RR.Core.Headers
     Mupen64RR.Views.Win32.Headers
 )
-target_compile_definitions(Mupen64RR.Plugins.Win32.Common INTERFACE PLUGIN_WITH_CALLBACKS)
+target_compile_definitions(Mupen64RR.Plugins.Win32.Common INTERFACE
+    PLUGIN_WITH_CALLBACKS
+    "VERSION_SUFFIX=L\"${MUPEN64RR_VERSION_SUFFIX}\""
+)
