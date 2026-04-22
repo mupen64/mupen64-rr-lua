@@ -220,7 +220,7 @@ void vr_update_effective_speed_mode()
 
     if (g_r4300.desired_speed_mode != CoreSpeedMode::Normal)
     {
-        g_r4300.effective_speed_mode = g_r4300.desired_speed_mode;
+        g_r4300.effective_speed_mode.store(g_r4300.desired_speed_mode.load());
         return;
     }
 
