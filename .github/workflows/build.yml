@@ -1,6 +1,8 @@
 name: Build
 
-on: [push]
+on:
+  push:
+  workflow_dispatch:
 
 jobs:
   build-debug:
@@ -23,6 +25,17 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
+      # Manual runs have no version suffix, auto-runs set it to `alpha-{short_commit_hash}`
+      - name: Set VERSION_SUFFIX
+        shell: powershell
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
+          } else {
+            $hash = "${{ github.sha }}".Substring(0, 7)
+            echo "VERSION_SUFFIX=-alpha-$hash" >> $env:GITHUB_ENV
+          }
+
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --preset vcpkg-win64-x86
@@ -37,6 +50,7 @@ jobs:
           name: mupen-debug
           path: build/out
           retention-days: 14
+
   build-release:
     runs-on: windows-latest
 
@@ -56,6 +70,17 @@ jobs:
         run: |
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+
+      # Manual runs have no version suffix, auto-runs set it to `alpha-{short_commit_hash}`
+      - name: Set VERSION_SUFFIX
+        shell: powershell
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
+          } else {
+            $hash = "${{ github.sha }}".Substring(0, 7)
+            echo "VERSION_SUFFIX=-alpha-$hash" >> $env:GITHUB_ENV
+          }
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
