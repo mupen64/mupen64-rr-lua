@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
 project(mupen64-rr
-  VERSION 1.3.0
+  VERSION 1.4.0
   DESCRIPTION "Powerful N64 TASing emulator with Lua scripting support"
   LANGUAGES C CXX
 )
