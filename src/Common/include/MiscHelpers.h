@@ -413,5 +413,25 @@ template <typename T> static T wrapping_clamp_decimal(T value, T min, T max)
     }
     return value;
 }
+namespace details {
+    template <auto Ptr, class F>
+    struct StaticFunctorImpl;
+
+    template <auto Ptr, class R, class... Args> requires std::is_same_v<decltype(Ptr), R(*)(Args...)>
+    struct StaticFunctorImpl<Ptr, R(*)(Args...)> {
+        R operator()(Args... args) const {
+            return Ptr(args...);
+        }
+    };
+}
+
+/**
+ * @brief Wraps an arbitrary (statically-defined) function in a function object, so it can be used as a hash function,
+ * deleter, etc.
+ *
+ * @tparam F A function pointer.
+ */
+template <auto F>
+struct StaticFunctor : public details::StaticFunctorImpl<F, decltype(F)> {};
 
 }; // namespace MiscHelpers

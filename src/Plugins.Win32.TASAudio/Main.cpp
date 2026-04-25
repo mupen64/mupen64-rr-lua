@@ -114,8 +114,6 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 {
-
-    auto config_path = g_dll_path.parent_path() / "sdl-audio.conf.json";
     g_audio_info.emplace(Audio_Info);
 
     try

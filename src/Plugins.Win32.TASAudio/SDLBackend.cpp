@@ -9,27 +9,14 @@
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_error.h>
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cassert>
 #include <chrono>
 #include <cstdint>
 #include <format>
-#include <iterator>
 #include <stdexcept>
 #include <string>
-#include <utility>
-
-static void swap_channels(void *data, size_t len)
-{
-    // This should always be true
-    assert(len % 4 == 0);
-
-    auto *end = (uint16_t *)((uint8_t *)data + len);
-    for (auto *ptr = (uint16_t *)data; ptr != end; ptr += 2)
-    {
-        std::swap(ptr[0], ptr[1]);
-    }
-}
 
 namespace SDLAudio
 {
@@ -117,8 +104,7 @@ void SDLBackend::push_samples(void *src, size_t len)
 {
     // if we are waiting for audio to catch up, just ignore these samples
     if (std::chrono::steady_clock::now() < m_block_until_time.load()) return;
-    // words are stored in DRAM in native order; big-endian pairs of samples will be swapped
-    if (m_config.swap_channels ^ (std::endian::native == std::endian::little)) swap_channels(src, len);
+    // push the samples. The input channel map takes care of reordering.
     SDL_PutAudioStreamData(m_stream, src, (int)len);
 }
 
@@ -163,6 +149,14 @@ void SDLBackend::sync_audio()
 void SDLBackend::update_cfg_live()
 {
     SDL_SetAudioStreamGain(m_stream, ((float)m_config.volume_pct) / 100.0f);
+
+    // words are stored in DRAM in native order; big-endian pairs of samples will be swapped
+    bool needs_swap = m_config.swap_channels ^ (std::endian::native == std::endian::little);
+    std::array<int, 2> channel_map = {
+        needs_swap ? 1 : 0,
+        needs_swap ? 0 : 1,
+    };
+    SDL_SetAudioStreamInputChannelMap(m_stream, channel_map.data(), channel_map.size());
 }
 
 size_t SDLBackend::estimate_dst_frames_at_next_cb()
