@@ -13,7 +13,7 @@ struct Config
 {
     uint32_t default_sample_rate = 33600;
     uint32_t src_buffer_target = 8192;
-    bool swap_channels = true;
+    bool swap_channels = false;
     bool sync_audio = false;
     uint8_t volume_pct = 100;
 
