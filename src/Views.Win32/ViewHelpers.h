@@ -510,6 +510,111 @@ static void attach_no_resize_subproc(const HWND hwnd)
 }
 
 /**
+ * \brief Converts a bitmap with a white background into a 32bpp premultiplied-alpha HBITMAP.
+ * \param hbmp_src The source bitmap.
+ * \return A new 32bpp HBITMAP with premultiplied alpha, or nullptr on failure. The caller owns the returned handle and
+ * must call DeleteObject on it.
+ */
+static HBITMAP make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
+{
+    BITMAP bm{};
+    if (!GetObject(hbmp_src, sizeof(bm), &bm)) return nullptr;
+
+    const int w = bm.bmWidth;
+    const int h = bm.bmHeight;
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = w;
+    bmi.bmiHeader.biHeight = -h;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    std::vector<uint32_t> src(w * h);
+    HDC hdc_screen = GetDC(nullptr);
+    HDC hdc_src = CreateCompatibleDC(hdc_screen);
+    HGDIOBJ old = SelectObject(hdc_src, hbmp_src);
+    GetDIBits(hdc_src, hbmp_src, 0, h, src.data(), &bmi, DIB_RGB_COLORS);
+    SelectObject(hdc_src, old);
+    DeleteDC(hdc_src);
+
+    void *dst_bits = nullptr;
+    HBITMAP hbmp_dst = CreateDIBSection(hdc_screen, &bmi, DIB_RGB_COLORS, &dst_bits, nullptr, 0);
+    ReleaseDC(nullptr, hdc_screen);
+
+    if (!hbmp_dst) return nullptr;
+
+    auto *dst = static_cast<uint32_t *>(dst_bits);
+
+    for (int i = 0; i < w * h; ++i)
+    {
+        const uint8_t b_in = (src[i] >> 0) & 0xFF;
+        const uint8_t g_in = (src[i] >> 8) & 0xFF;
+        const uint8_t r_in = (src[i] >> 16) & 0xFF;
+
+        const uint8_t alpha = 255 - std::min({r_in, g_in, b_in});
+
+        uint8_t r_out = 0;
+        uint8_t g_out = 0;
+        uint8_t b_out = 0;
+        if (alpha > 0)
+        {
+            r_out = static_cast<uint8_t>(std::clamp((r_in - (255 - alpha)) * 255 / alpha, 0, 255));
+            g_out = static_cast<uint8_t>(std::clamp((g_in - (255 - alpha)) * 255 / alpha, 0, 255));
+            b_out = static_cast<uint8_t>(std::clamp((b_in - (255 - alpha)) * 255 / alpha, 0, 255));
+        }
+
+        r_out = static_cast<uint8_t>(r_out * alpha / 255);
+        g_out = static_cast<uint8_t>(g_out * alpha / 255);
+        b_out = static_cast<uint8_t>(b_out * alpha / 255);
+
+        dst[i] = (static_cast<uint32_t>(alpha) << 24) | (static_cast<uint32_t>(r_out) << 16) |
+                 (static_cast<uint32_t>(g_out) << 8) | static_cast<uint32_t>(b_out);
+    }
+
+    return hbmp_dst;
+}
+
+/**
+ * \brief Draws a bitmap resource into a DC with smooth transparency by extracting per-pixel
+ * alpha from the white matte and compositing with AlphaBlend.
+ * The bitmap is drawn at its native pixel dimensions, positioned at the top-left of \p rc.
+ * \param hdc   The destination device context.
+ * \param rc    Destination rectangle; the bitmap is drawn at its native size from rc.left/rc.top.
+ * \param hinst The module instance containing the bitmap resource.
+ * \param id    The resource identifier of the bitmap.
+ */
+static void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id)
+{
+    HBITMAP hbmp_src = LoadBitmap(hinst, MAKEINTRESOURCE(id));
+    if (!hbmp_src) return;
+
+    HBITMAP hbmp_alpha = make_bitmap_alpha_from_white_matte(hbmp_src);
+    DeleteObject(hbmp_src);
+
+    if (!hbmp_alpha) return;
+
+    BITMAP bm{};
+    GetObject(hbmp_alpha, sizeof(bm), &bm);
+
+    HDC hdc_mem = CreateCompatibleDC(hdc);
+    HGDIOBJ old = SelectObject(hdc_mem, hbmp_alpha);
+
+    BLENDFUNCTION bf{};
+    bf.BlendOp = AC_SRC_OVER;
+    bf.BlendFlags = 0;
+    bf.SourceConstantAlpha = 255;
+    bf.AlphaFormat = AC_SRC_ALPHA; // per-pixel premultiplied alpha
+
+    AlphaBlend(hdc, rc.left, rc.top, bm.bmWidth, bm.bmHeight, hdc_mem, 0, 0, bm.bmWidth, bm.bmHeight, bf);
+
+    SelectObject(hdc_mem, old);
+    DeleteDC(hdc_mem);
+    DeleteObject(hbmp_alpha);
+}
+
+/**
  * \brief Loads a bitmap resource and adds it to an image list using a colour key for transparency, then frees the
  * bitmap handle.
  * \param himl The image list to add the bitmap to.
@@ -518,8 +623,7 @@ static void attach_no_resize_subproc(const HWND hwnd)
  * \param mask The colour to treat as transparent. Defaults to white.
  * \return The index of the newly added image, or -1 on failure.
  */
-static int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id,
-                                         COLORREF mask = RGB(255, 255, 255))
+static int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id, COLORREF mask = RGB(255, 255, 255))
 {
     HBITMAP hbmp = LoadBitmap(hinst, MAKEINTRESOURCE(id));
     const int index = ImageList_AddMasked(himl, hbmp, mask);

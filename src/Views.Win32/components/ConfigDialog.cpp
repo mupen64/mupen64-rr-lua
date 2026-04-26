@@ -394,15 +394,23 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             g_plugin_discovery_thread.join();
         }
         break;
+    case WM_DRAWITEM: {
+        const auto dis = reinterpret_cast<DRAWITEMSTRUCT *>(l_param);
+        draw_bitmap_transparent(dis->hDC, dis->rcItem, g_main_ctx.hinst, static_cast<int>(dis->CtlID));
+        return TRUE;
+    }
     case WM_INITDIALOG: {
-        SendDlgItemMessage(hwnd, IDB_DISPLAY, STM_SETIMAGE, IMAGE_BITMAP,
-                           (LPARAM)LoadImage(g_main_ctx.hinst, MAKEINTRESOURCE(IDB_DISPLAY), IMAGE_BITMAP, 0, 0, 0));
-        SendDlgItemMessage(hwnd, IDB_CONTROL, STM_SETIMAGE, IMAGE_BITMAP,
-                           (LPARAM)LoadImage(g_main_ctx.hinst, MAKEINTRESOURCE(IDB_CONTROL), IMAGE_BITMAP, 0, 0, 0));
-        SendDlgItemMessage(hwnd, IDB_SOUND, STM_SETIMAGE, IMAGE_BITMAP,
-                           (LPARAM)LoadImage(g_main_ctx.hinst, MAKEINTRESOURCE(IDB_SOUND), IMAGE_BITMAP, 0, 0, 0));
-        SendDlgItemMessage(hwnd, IDB_RSP, STM_SETIMAGE, IMAGE_BITMAP,
-                           (LPARAM)LoadImage(g_main_ctx.hinst, MAKEINTRESOURCE(IDB_RSP), IMAGE_BITMAP, 0, 0, 0));
+        for (const int id : {IDB_DISPLAY, IDB_CONTROL, IDB_SOUND, IDB_RSP})
+        {
+            HBITMAP hbmp = LoadBitmap(g_main_ctx.hinst, MAKEINTRESOURCE(id));
+            if (hbmp)
+            {
+                BITMAP bm{};
+                GetObject(hbmp, sizeof(bm), &bm);
+                DeleteObject(hbmp);
+                SetWindowPos(GetDlgItem(hwnd, id), nullptr, 0, 0, bm.bmWidth, bm.bmHeight, SWP_NOZORDER | SWP_NOMOVE);
+            }
+        }
 
         refresh_plugins_page(hwnd);
 
