@@ -136,24 +136,19 @@ void rombrowser_create()
                                 g_main_ctx.hwnd, (HMENU)IDC_ROMLIST, g_main_ctx.hinst, NULL);
     ListView_SetExtendedListViewStyle(g_ctx.hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-    const HIMAGELIST h_small = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK, 11, 0);
-    HICON h_icon;
+    const HIMAGELIST h_small = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 11, 0);
 
-#define ADD_ICON(id)                                                                                                   \
-    h_icon = LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(id));                                                          \
-    ImageList_AddIcon(h_small, h_icon)
-
-    ADD_ICON(IDI_GERMANY);
-    ADD_ICON(IDI_USA);
-    ADD_ICON(IDI_JAPAN);
-    ADD_ICON(IDI_EUROPE);
-    ADD_ICON(IDI_AUSTRALIA);
-    ADD_ICON(IDI_ITALIA);
-    ADD_ICON(IDI_FRANCE);
-    ADD_ICON(IDI_SPAIN);
-    ADD_ICON(IDI_UNKNOWN);
-    ADD_ICON(IDI_DEMO);
-    ADD_ICON(IDI_BETA);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_GERMANY);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_USA);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_JAPAN);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_EUROPE);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_AUSTRALIA);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_ITALIA);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_FRANCE);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_SPAIN);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_UNKNOWN);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_DEMO);
+    ImageList_AddMaskedFromBitmap(h_small, g_main_ctx.hinst, IDB_FLAG_BETA);
 
     ListView_SetImageList(g_ctx.hwnd, h_small, LVSIL_SMALL);
 

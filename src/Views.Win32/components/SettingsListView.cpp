@@ -71,9 +71,9 @@ HWND SettingsListView::create(const t_settings_listview_context &ctx)
 
     SetWindowSubclass(lvhwnd, list_view_proc, 0, (DWORD_PTR)ctx2);
 
-    HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK, 2, 0);
-    ImageList_AddIcon(image_list, LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_DENY)));
-    ImageList_AddIcon(image_list, LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_CHANGED)));
+    HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 2, 0);
+    ImageList_AddMaskedFromBitmap(image_list, g_main_ctx.hinst, IDB_DENY);
+    ImageList_AddMaskedFromBitmap(image_list, g_main_ctx.hinst, IDB_CHANGED);
     ListView_SetImageList(lvhwnd, image_list, LVSIL_SMALL);
 
     ListView_EnableGroupView(lvhwnd, true);

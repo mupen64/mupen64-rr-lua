@@ -32,6 +32,36 @@ IDB_RSP                 BITMAP                  "icons\\plugin_rsp.bmp"
 
 IDB_SOUND               BITMAP                  "icons\\plugin_audio.bmp"
 
+IDB_FLAG_GERMANY        BITMAP                  "icons\\BMPs\\germany.bmp"
+
+IDB_FLAG_USA            BITMAP                  "icons\\BMPs\\usa.bmp"
+
+IDB_FLAG_JAPAN          BITMAP                  "icons\\BMPs\\japan.bmp"
+
+IDB_FLAG_EUROPE         BITMAP                  "icons\\BMPs\\europe.bmp"
+
+IDB_FLAG_AUSTRALIA      BITMAP                  "icons\\BMPs\\austral.bmp"
+
+IDB_FLAG_ITALIA         BITMAP                  "icons\\BMPs\\italy.bmp"
+
+IDB_FLAG_FRANCE         BITMAP                  "icons\\BMPs\\france.bmp"
+
+IDB_FLAG_SPAIN          BITMAP                  "icons\\BMPs\\spain.bmp"
+
+IDB_FLAG_UNKNOWN        BITMAP                  "icons\\BMPs\\unknown.bmp"
+
+IDB_FLAG_DEMO           BITMAP                  "icons\\BMPs\\demo.bmp"
+
+IDB_FLAG_BETA           BITMAP                  "icons\\BMPs\\n64beta.bmp"
+
+IDB_CURRENT             BITMAP                  "icons\\BMPs\\current.bmp"
+
+IDB_MARKER              BITMAP                  "icons\\BMPs\\marker.bmp"
+
+IDB_DENY                BITMAP                  "icons\\BMPs\\deny.bmp"
+
+IDB_CHANGED             BITMAP                  "icons\\BMPs\\changed.bmp"
+
 IDR_INSPECT_LUA_FILE    TEXTFILE                "..\\..\\vendor\\lua-modules\\inspect.lua"
 
 IDR_API_LUA_FILE        TEXTFILE                "..\\Lua\\api.lua"

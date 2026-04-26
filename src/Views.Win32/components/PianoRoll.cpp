@@ -1324,9 +1324,9 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         ListView_SetExtendedListViewStyle(piano_roll.lv_hwnd,
                                           LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-        HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK, 1, 0);
-        ImageList_AddIcon(image_list, LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_CURRENT)));
-        ImageList_AddIcon(image_list, LoadIcon(g_main_ctx.hinst, MAKEINTRESOURCE(IDI_MARKER)));
+        HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 1, 0);
+        ImageList_AddMaskedFromBitmap(image_list, g_main_ctx.hinst, IDB_CURRENT);
+        ImageList_AddMaskedFromBitmap(image_list, g_main_ctx.hinst, IDB_MARKER);
         ListView_SetImageList(piano_roll.lv_hwnd, image_list, LVSIL_SMALL);
 
         LVCOLUMN lv_column{};

@@ -508,3 +508,21 @@ static void attach_no_resize_subproc(const HWND hwnd)
 {
     SetWindowSubclass(hwnd, no_resize_subclass_proc, 0, 0);
 }
+
+/**
+ * \brief Loads a bitmap resource and adds it to an image list using a colour key for transparency, then frees the
+ * bitmap handle.
+ * \param himl The image list to add the bitmap to.
+ * \param hinst The module instance containing the bitmap resource.
+ * \param id The resource identifier of the bitmap.
+ * \param mask The colour to treat as transparent. Defaults to white.
+ * \return The index of the newly added image, or -1 on failure.
+ */
+static int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id,
+                                         COLORREF mask = RGB(255, 255, 255))
+{
+    HBITMAP hbmp = LoadBitmap(hinst, MAKEINTRESOURCE(id));
+    const int index = ImageList_AddMasked(himl, hbmp, mask);
+    DeleteObject(hbmp);
+    return index;
+}
