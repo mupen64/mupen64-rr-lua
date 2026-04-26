@@ -513,9 +513,10 @@ static void attach_no_resize_subproc(const HWND hwnd)
  * \brief Converts a bitmap with a white background into a Gdiplus::Bitmap with per-pixel
  * premultiplied alpha (PixelFormat32bppPARGB) by extracting alpha from the white matte.
  * \param hbmp_src The source bitmap.
+ * \param invert Whether to invert the RGB channels before premultiplication.
  * \return A new Gdiplus::Bitmap, or nullptr on failure. The caller owns the returned object.
  */
-static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
+static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, bool invert = false)
 {
     BITMAP bm{};
     if (!GetObject(hbmp_src, sizeof(bm), &bm)) return nullptr;
@@ -571,6 +572,13 @@ static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
             b_out = static_cast<uint8_t>(std::clamp((b_in - (255 - alpha)) * 255 / alpha, 0, 255));
         }
 
+        if (invert)
+        {
+            r_out = 255 - r_out;
+            g_out = 255 - g_out;
+            b_out = 255 - b_out;
+        }
+
         r_out = static_cast<uint8_t>(r_out * alpha / 255);
         g_out = static_cast<uint8_t>(g_out * alpha / 255);
         b_out = static_cast<uint8_t>(b_out * alpha / 255);
@@ -586,17 +594,18 @@ static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
 /**
  * \brief Draws a bitmap resource into a DC with smooth transparency by extracting per-pixel
  * alpha from the white matte and scaling with high-quality bicubic interpolation via GDI+.
- * \param hdc   The destination device context.
- * \param rc    Destination rectangle; the bitmap is stretched to fill this area.
+ * \param hdc The destination device context.
+ * \param rc Destination rectangle; the bitmap is stretched to fill this area.
  * \param hinst The module instance containing the bitmap resource.
- * \param id    The resource identifier of the bitmap.
+ * \param id The resource identifier of the bitmap.
+ * \param invert Whether to invert the RGB channels before premultiplication.
  */
-static void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id)
+static void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id, bool invert = false)
 {
     HBITMAP hbmp_src = LoadBitmap(hinst, MAKEINTRESOURCE(id));
     if (!hbmp_src) return;
 
-    Gdiplus::Bitmap *bmp = make_bitmap_alpha_from_white_matte(hbmp_src);
+    Gdiplus::Bitmap *bmp = make_bitmap_alpha_from_white_matte(hbmp_src, invert);
     DeleteObject(hbmp_src);
 
     if (!bmp) return;

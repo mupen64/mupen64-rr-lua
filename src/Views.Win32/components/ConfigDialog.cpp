@@ -396,7 +396,8 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         break;
     case WM_DRAWITEM: {
         const auto dis = reinterpret_cast<DRAWITEMSTRUCT *>(l_param);
-        draw_bitmap_transparent(dis->hDC, dis->rcItem, g_main_ctx.hinst, static_cast<int>(dis->CtlID));
+        draw_bitmap_transparent(dis->hDC, dis->rcItem, g_main_ctx.hinst, static_cast<int>(dis->CtlID),
+                                WinDarkMode::theme_data.bg_color == WinDarkMode::dark_theme_data.bg_color);
         return TRUE;
     }
     case WM_INITDIALOG: {
