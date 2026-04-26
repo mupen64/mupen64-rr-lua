@@ -510,12 +510,12 @@ static void attach_no_resize_subproc(const HWND hwnd)
 }
 
 /**
- * \brief Converts a bitmap with a white background into a 32bpp premultiplied-alpha HBITMAP.
+ * \brief Converts a bitmap with a white background into a Gdiplus::Bitmap with per-pixel
+ * premultiplied alpha (PixelFormat32bppPARGB) by extracting alpha from the white matte.
  * \param hbmp_src The source bitmap.
- * \return A new 32bpp HBITMAP with premultiplied alpha, or nullptr on failure. The caller owns the returned handle and
- * must call DeleteObject on it.
+ * \return A new Gdiplus::Bitmap, or nullptr on failure. The caller owns the returned object.
  */
-static HBITMAP make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
+static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
 {
     BITMAP bm{};
     if (!GetObject(hbmp_src, sizeof(bm), &bm)) return nullptr;
@@ -538,14 +538,20 @@ static HBITMAP make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
     GetDIBits(hdc_src, hbmp_src, 0, h, src.data(), &bmi, DIB_RGB_COLORS);
     SelectObject(hdc_src, old);
     DeleteDC(hdc_src);
-
-    void *dst_bits = nullptr;
-    HBITMAP hbmp_dst = CreateDIBSection(hdc_screen, &bmi, DIB_RGB_COLORS, &dst_bits, nullptr, 0);
     ReleaseDC(nullptr, hdc_screen);
 
-    if (!hbmp_dst) return nullptr;
+    auto *result = new Gdiplus::Bitmap(w, h, PixelFormat32bppPARGB);
+    if (!result) return nullptr;
 
-    auto *dst = static_cast<uint32_t *>(dst_bits);
+    Gdiplus::BitmapData bmd{};
+    const Gdiplus::Rect full_rect(0, 0, w, h);
+    if (result->LockBits(&full_rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppPARGB, &bmd) != Gdiplus::Ok)
+    {
+        delete result;
+        return nullptr;
+    }
+
+    auto *dst = static_cast<uint32_t *>(bmd.Scan0);
 
     for (int i = 0; i < w * h; ++i)
     {
@@ -573,15 +579,15 @@ static HBITMAP make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src)
                  (static_cast<uint32_t>(g_out) << 8) | static_cast<uint32_t>(b_out);
     }
 
-    return hbmp_dst;
+    result->UnlockBits(&bmd);
+    return result;
 }
 
 /**
  * \brief Draws a bitmap resource into a DC with smooth transparency by extracting per-pixel
- * alpha from the white matte and compositing with AlphaBlend.
- * The bitmap is drawn at its native pixel dimensions, positioned at the top-left of \p rc.
+ * alpha from the white matte and scaling with high-quality bicubic interpolation via GDI+.
  * \param hdc   The destination device context.
- * \param rc    Destination rectangle; the bitmap is drawn at its native size from rc.left/rc.top.
+ * \param rc    Destination rectangle; the bitmap is stretched to fill this area.
  * \param hinst The module instance containing the bitmap resource.
  * \param id    The resource identifier of the bitmap.
  */
@@ -590,28 +596,23 @@ static void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id)
     HBITMAP hbmp_src = LoadBitmap(hinst, MAKEINTRESOURCE(id));
     if (!hbmp_src) return;
 
-    HBITMAP hbmp_alpha = make_bitmap_alpha_from_white_matte(hbmp_src);
+    Gdiplus::Bitmap *bmp = make_bitmap_alpha_from_white_matte(hbmp_src);
     DeleteObject(hbmp_src);
 
-    if (!hbmp_alpha) return;
+    if (!bmp) return;
 
-    BITMAP bm{};
-    GetObject(hbmp_alpha, sizeof(bm), &bm);
+    Gdiplus::Graphics g(hdc);
+    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+    g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+    g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
 
-    HDC hdc_mem = CreateCompatibleDC(hdc);
-    HGDIOBJ old = SelectObject(hdc_mem, hbmp_alpha);
+    const Gdiplus::RectF dest(static_cast<Gdiplus::REAL>(rc.left), static_cast<Gdiplus::REAL>(rc.top),
+                              static_cast<Gdiplus::REAL>(rc.right - rc.left),
+                              static_cast<Gdiplus::REAL>(rc.bottom - rc.top));
 
-    BLENDFUNCTION bf{};
-    bf.BlendOp = AC_SRC_OVER;
-    bf.BlendFlags = 0;
-    bf.SourceConstantAlpha = 255;
-    bf.AlphaFormat = AC_SRC_ALPHA; // per-pixel premultiplied alpha
+    g.DrawImage(bmp, dest);
 
-    AlphaBlend(hdc, rc.left, rc.top, bm.bmWidth, bm.bmHeight, hdc_mem, 0, 0, bm.bmWidth, bm.bmHeight, bf);
-
-    SelectObject(hdc_mem, old);
-    DeleteDC(hdc_mem);
-    DeleteObject(hbmp_alpha);
+    delete bmp;
 }
 
 /**

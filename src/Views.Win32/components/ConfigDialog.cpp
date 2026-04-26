@@ -400,18 +400,6 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         return TRUE;
     }
     case WM_INITDIALOG: {
-        for (const int id : {IDB_DISPLAY, IDB_CONTROL, IDB_SOUND, IDB_RSP})
-        {
-            HBITMAP hbmp = LoadBitmap(g_main_ctx.hinst, MAKEINTRESOURCE(id));
-            if (hbmp)
-            {
-                BITMAP bm{};
-                GetObject(hbmp, sizeof(bm), &bm);
-                DeleteObject(hbmp);
-                SetWindowPos(GetDlgItem(hwnd, id), nullptr, 0, 0, bm.bmWidth, bm.bmHeight, SWP_NOZORDER | SWP_NOMOVE);
-            }
-        }
-
         refresh_plugins_page(hwnd);
 
         WinDarkMode::attach(hwnd);
