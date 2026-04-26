@@ -552,39 +552,42 @@ static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, boo
         return nullptr;
     }
 
-    auto *dst = static_cast<uint32_t *>(bmd.Scan0);
-
-    for (int i = 0; i < w * h; ++i)
+    for (int y = 0; y < h; ++y)
     {
-        const uint8_t b_in = (src[i] >> 0) & 0xFF;
-        const uint8_t g_in = (src[i] >> 8) & 0xFF;
-        const uint8_t r_in = (src[i] >> 16) & 0xFF;
-
-        const uint8_t alpha = 255 - std::min({r_in, g_in, b_in});
-
-        uint8_t r_out = 0;
-        uint8_t g_out = 0;
-        uint8_t b_out = 0;
-        if (alpha > 0)
+        auto *row = reinterpret_cast<uint32_t *>(static_cast<uint8_t *>(bmd.Scan0) + y * bmd.Stride);
+        for (int x = 0; x < w; ++x)
         {
-            r_out = static_cast<uint8_t>(std::clamp((r_in - (255 - alpha)) * 255 / alpha, 0, 255));
-            g_out = static_cast<uint8_t>(std::clamp((g_in - (255 - alpha)) * 255 / alpha, 0, 255));
-            b_out = static_cast<uint8_t>(std::clamp((b_in - (255 - alpha)) * 255 / alpha, 0, 255));
+            const uint32_t px = src[y * w + x];
+            const uint8_t b_in = (px >> 0) & 0xFF;
+            const uint8_t g_in = (px >> 8) & 0xFF;
+            const uint8_t r_in = (px >> 16) & 0xFF;
+
+            const uint8_t alpha = 255 - std::min({r_in, g_in, b_in});
+
+            uint8_t r_out = 0;
+            uint8_t g_out = 0;
+            uint8_t b_out = 0;
+            if (alpha > 0)
+            {
+                r_out = static_cast<uint8_t>(std::clamp((r_in - (255 - alpha)) * 255 / alpha, 0, 255));
+                g_out = static_cast<uint8_t>(std::clamp((g_in - (255 - alpha)) * 255 / alpha, 0, 255));
+                b_out = static_cast<uint8_t>(std::clamp((b_in - (255 - alpha)) * 255 / alpha, 0, 255));
+            }
+
+            if (invert)
+            {
+                r_out = 255 - r_out;
+                g_out = 255 - g_out;
+                b_out = 255 - b_out;
+            }
+
+            r_out = static_cast<uint8_t>(r_out * alpha / 255);
+            g_out = static_cast<uint8_t>(g_out * alpha / 255);
+            b_out = static_cast<uint8_t>(b_out * alpha / 255);
+
+            row[x] = (static_cast<uint32_t>(alpha) << 24) | (static_cast<uint32_t>(r_out) << 16) |
+                     (static_cast<uint32_t>(g_out) << 8) | static_cast<uint32_t>(b_out);
         }
-
-        if (invert)
-        {
-            r_out = 255 - r_out;
-            g_out = 255 - g_out;
-            b_out = 255 - b_out;
-        }
-
-        r_out = static_cast<uint8_t>(r_out * alpha / 255);
-        g_out = static_cast<uint8_t>(g_out * alpha / 255);
-        b_out = static_cast<uint8_t>(b_out * alpha / 255);
-
-        dst[i] = (static_cast<uint32_t>(alpha) << 24) | (static_cast<uint32_t>(r_out) << 16) |
-                 (static_cast<uint32_t>(g_out) << 8) | static_cast<uint32_t>(b_out);
     }
 
     result->UnlockBits(&bmd);
@@ -636,6 +639,7 @@ static void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id, b
 static int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id, COLORREF mask = RGB(255, 255, 255))
 {
     HBITMAP hbmp = LoadBitmap(hinst, MAKEINTRESOURCE(id));
+    if (!hbmp) return -1;
     const int index = ImageList_AddMasked(himl, hbmp, mask);
     DeleteObject(hbmp);
     return index;
