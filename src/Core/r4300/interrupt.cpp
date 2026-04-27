@@ -486,9 +486,8 @@ void gen_interrupt()
         // Special case: a frame advance operation ending forces an invalidation, because we want to guarantee that the
         // graphics will be visible.
         const bool last_frame_advance = g_r4300.frame_advance_outstanding == 1;
-        const auto update = g_core->cfg->render_throttling
-                                ? ((g_r4300.screen_invalidated_vi || last_frame_advance) ? !skip : false)
-                                : true;
+        const bool needs_update = g_r4300.screen_invalidated_vi || last_frame_advance;
+        const bool update = !g_core->cfg->render_throttling || (needs_update && !skip);
 
         if (update)
         {
