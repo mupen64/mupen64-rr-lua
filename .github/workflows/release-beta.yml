@@ -64,13 +64,12 @@ jobs:
       - name: Generate changelog with git-cliff
         id: changelog
         run: |
-          if [ -n "${{ steps.stable_tag.outputs.tag }}" ]; then
-            git cliff --config cliff.toml --output CHANGELOG_DRAFT.md \
-              "${{ steps.stable_tag.outputs.tag }}..HEAD"
-          else
-            git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md \
-              || git cliff --config cliff.toml --output CHANGELOG_DRAFT.md
-          fi
+          # Remove all beta tags from the local clone so git-cliff doesn't split
+          # the commit range into per-tag version segments (which causes duplicate
+          # section headers). This only affects the local repo, not the remote.
+          git tag | grep -E '\-beta\-' | xargs -r git tag -d
+
+          git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md
           {
             echo 'body<<EOF'
             cat CHANGELOG_DRAFT.md
