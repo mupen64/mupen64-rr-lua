@@ -482,7 +482,13 @@ void gen_interrupt()
 
         // NOTE: It's ok to not update screen when lagging, doesn't cause any obvious issues
         const auto skip = g_r4300.frame_skipped;
-        const auto update = g_core->cfg->render_throttling ? (g_r4300.screen_invalidated_vi ? !skip : false) : true;
+
+        // Special case: a frame advance operation ending forces an invalidation, because we want to guarantee that the
+        // graphics will be visible.
+        const bool last_frame_advance = g_r4300.frame_advance_outstanding == 1;
+        const auto update = g_core->cfg->render_throttling
+                                ? ((g_r4300.screen_invalidated_vi || last_frame_advance) ? !skip : false)
+                                : true;
 
         if (update)
         {

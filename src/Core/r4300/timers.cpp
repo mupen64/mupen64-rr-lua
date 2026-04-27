@@ -92,6 +92,13 @@ bool timer_new_frame()
 
     if (!g_core->cfg->render_throttling) return false;
 
+    // See interrupt.cpp last_frame_advance explanation.
+    if (g_r4300.frame_advance_outstanding == 1)
+    {
+        g_r4300.screen_invalidated_frame = false;
+        return false;
+    }
+
     // If the screen isn't invalidated, we skip the frame outright.
     if (!g_r4300.screen_invalidated_frame) return true;
 
