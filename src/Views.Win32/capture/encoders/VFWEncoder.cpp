@@ -260,15 +260,19 @@ bool VFWEncoder::append_video(uint8_t *image)
     bool result = true;
     if (g_config.synchronization_mode == (int)CaptureManager::Sync::Audio)
     {
-        while (true)
+        const double drift = m_audio_frame - static_cast<double>(m_video_frame);
+        RT_ASSERT(drift >= -1.0, L"Video is significantly ahead of audio");
+
+        if (drift > 0.0) m_video_drift_accumulator += drift;
+
+        // FIXME: 2.0 because of VI pairs... this only works for SM64!
+        while (m_video_drift_accumulator >= 2.0)
         {
-            const int overshot = (int)(m_audio_frame - (double)m_video_frame + 0.2);
-            if (overshot == 0) break;
-
-            RT_ASSERT(overshot >= 0, L"Video is ahead of audio");
-
             result = append_video_impl(image);
-            m_video_frame++;
+            if (!result) break;
+
+            ++m_video_frame;
+            m_video_drift_accumulator -= 2.0;
         }
     }
     else
@@ -433,9 +437,11 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, co
     sound_buf_pos += len;
 
 #ifndef VFW_ENCODER_PARALLELIZED
-    m_audio_frame += ((len / 4) / (long double)m_params.arate) *
-                     g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-
+    const double vis =
+        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+    const double quarter_len = len / 4.0;
+    const double quarter_len_per_arate = quarter_len / (double)m_params.arate;
+    m_audio_frame += quarter_len_per_arate * vis;
 #endif
 
     return true;
