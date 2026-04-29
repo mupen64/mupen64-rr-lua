@@ -309,8 +309,6 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
 
     std::lock_guard lock(m_mutex);
 
-    g_view_logger->info("[CaptureManager]: Starting capture at {} x {}...", m_video_width, m_video_height);
-
     if (is_capturing())
     {
         if (!stop_capture_impl())
@@ -357,6 +355,8 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
         .arate = (uint32_t)m_audio_freq,
         .ask_for_capture_settings = ask_for_capture_settings,
     };
+
+    g_view_logger->info("[CaptureManager]: Starting capture at {} x {}...", m_video_width, m_video_height);
     const auto result = m_encoder->start(m_encoder_params);
 
     if (result.has_value())

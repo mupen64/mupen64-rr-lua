@@ -134,9 +134,9 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
         m_worker_failed = false;
         m_worker_running = true;
     }
-#endif
 
     std::thread(&VFWEncoder::worker_loop, this).detach();
+#endif
 
     return std::nullopt;
 }
@@ -431,6 +431,12 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, co
 
     memcpy(m_sound_buf + sound_buf_pos, (char *)buf, len);
     sound_buf_pos += len;
+
+#ifndef VFW_ENCODER_PARALLELIZED
+    m_audio_frame += ((len / 4) / (long double)m_params.arate) *
+                     g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+
+#endif
 
     return true;
 }
