@@ -197,11 +197,6 @@ void critical_stop(std::string_view message)
 
 void vr_update_effective_speed_mode()
 {
-    if (!g_core->cfg->render_throttling)
-    {
-        g_r4300.effective_speed_mode = CoreSpeedMode::Normal;
-        return;
-    }
     if (g_r4300.frame_advance_outstanding > 1)
     {
         g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
