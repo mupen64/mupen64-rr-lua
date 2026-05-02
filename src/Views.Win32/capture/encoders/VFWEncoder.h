@@ -25,7 +25,7 @@ class VFWEncoder final : public Encoder
     static constexpr size_t MAX_PENDING_WORK_ITEMS = 128;
     static constexpr size_t MAX_PENDING_WORK_BYTES = 64 * 1024 * 1024;
 
-    bool write_sound(uint8_t *buf, int len, int min_write_size, int max_write_size, BOOL force, uint8_t bitrate);
+    bool write_sound(uint8_t *buf, int len, uint8_t bitrate);
     bool append_video_impl(uint8_t *image);
     bool save_options() const;
     bool load_options();
@@ -38,6 +38,7 @@ class VFWEncoder final : public Encoder
     size_t m_splits = 0;
 
     size_t m_frame = 0;
+    size_t m_in_sample = 0;
     size_t m_sample = 0;
     size_t m_video_frame = 0;
     double_t m_audio_frame = 0;

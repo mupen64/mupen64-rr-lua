@@ -173,11 +173,15 @@ bool VFWEncoder::append_video(uint8_t *image)
     }
 
     const double drift = m_audio_frame - static_cast<double>(m_video_frame);
-    constexpr double DRIFT_THRESHOLD = 1.0;
+    constexpr double DRIFT_THRESHOLD = 3.0;
     g_view_logger->trace(L"a {:.4f} v {} drift {:.4f}", m_audio_frame, m_video_frame, drift);
 
     // Video is ahead of audio, drop frame
-    if (drift < -DRIFT_THRESHOLD) return true;
+    if (drift < -DRIFT_THRESHOLD)
+    {
+        g_view_logger->trace(L"dropping frame");
+        return true;
+    }
 
     if (!append_video_impl(image)) return false;
     m_video_frame++;
@@ -185,6 +189,7 @@ bool VFWEncoder::append_video(uint8_t *image)
     // Audio is ahead of video, duplicate frame
     if (drift > DRIFT_THRESHOLD)
     {
+        g_view_logger->trace(L"duping frame");
         if (!append_video_impl(image)) return false;
         m_video_frame++;
     }
@@ -194,67 +199,55 @@ bool VFWEncoder::append_video(uint8_t *image)
 
 bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
-    const int write_size = m_params.arate * 2;
-
-    write_sound(audio, length, m_params.arate, write_size, FALSE, bitrate);
+    write_sound(audio, length, bitrate);
     std::memcpy(&m_last_sound, audio + length - sizeof(uint32_t), sizeof(uint32_t));
 
     return true;
 }
 
-bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, const int max_write_size,
-                             const BOOL force, uint8_t bitrate)
+bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 {
-    if ((len <= 0 && !force) || len > max_write_size) return false;
-
-    if (sound_buf_pos + len > min_write_size || force)
-    {
-        int len2 = Resampler::get_resample_len(RESAMPLED_FREQ, m_params.arate, bitrate, sound_buf_pos);
-        if ((len2 % 8) == 0 || len > max_write_size)
-        {
-            len2 = Resampler::resample(&m_resampled_sound, RESAMPLED_FREQ, reinterpret_cast<short *>(m_sound_buf),
-                                       m_params.arate, bitrate, sound_buf_pos);
-
-            if (len2 > 0)
-            {
-                if ((len2 % 4) != 0)
-                {
-                    g_view_logger->info("[CaptureManager]: Warning: Possible stereo sound error detected.\n");
-                }
-
-                const BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, len2 / m_sound_format.nBlockAlign,
-                                                     m_resampled_sound, len2, 0, NULL, NULL));
-                m_sample += len2 / m_sound_format.nBlockAlign;
-                m_avi_file_size += len2;
-
-                if (!ok)
-                {
-                    DialogService::show_dialog(L"Audio output failure!\nA call to addAudioData() (AVIStreamWrite) "
-                                               L"failed.\nPerhaps you ran out of memory?",
-                                               L"AVI Encoder", fsvc_error);
-                    return false;
-                }
-            }
-            sound_buf_pos = 0;
-        }
-    }
-
     if (len <= 0) return true;
 
-    const auto audio_buf_fill_percentage = (double)(sound_buf_pos + len) * 100 / (SOUND_BUF_SIZE * sizeof(char));
-    RT_ASSERT(audio_buf_fill_percentage <= 80, L"Audio buffer overflowed");
+    const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / SOUND_BUF_SIZE;
+    RT_ASSERT(fill_percentage <= 80, L"Audio buffer overflowed");
 
-    memcpy(m_sound_buf + sound_buf_pos, (char *)buf, len);
+    memcpy(m_sound_buf + sound_buf_pos, buf, len);
     sound_buf_pos += len;
 
-    const double vis =
-        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-    m_audio_samples += len / m_sound_format.nBlockAlign;
-    m_audio_frame = (double)m_audio_samples / m_params.arate * vis;
+    m_in_sample += len / m_sound_format.nBlockAlign;
+    m_audio_frame = (double)m_in_sample * m_params.fps / m_params.arate;
+
+    int expected_len = Resampler::get_resample_len(RESAMPLED_FREQ, m_params.arate, bitrate, sound_buf_pos);
+
+    if (expected_len <= 0 || (expected_len % 8) != 0) return true;
+
+    int resampled_len = Resampler::resample(&m_resampled_sound, RESAMPLED_FREQ, reinterpret_cast<short *>(m_sound_buf),
+                                            m_params.arate, bitrate, sound_buf_pos);
+
+    if (resampled_len <= 0) return true;
+
+    RT_ASSERT((resampled_len % 4) == 0, L"Resampled audio is not stereo-aligned");
+
+    BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
+                                   m_resampled_sound, resampled_len, 0, NULL, NULL));
+
+    if (!ok)
+    {
+        DialogService::show_dialog(L"Audio output failure!\n"
+                                   L"A call to AVIStreamWrite failed.\n"
+                                   L"Perhaps you ran out of memory?",
+                                   L"AVI Encoder", fsvc_error);
+        return false;
+    }
+
+    m_sample += resampled_len / m_sound_format.nBlockAlign;
+
+    m_avi_file_size += resampled_len;
+    sound_buf_pos = 0;
 
     return true;
 }
-
 bool VFWEncoder::append_video_impl(uint8_t *image)
 {
     LONG written_len = 0;
