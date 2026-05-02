@@ -421,6 +421,9 @@ void vi()
 
 void input()
 {
+    std::lock_guard lock(m_mutex);
+    if (!m_capturing) return;
+
     if (g_config.capture_delay)
     {
         Sleep(g_config.capture_delay);
