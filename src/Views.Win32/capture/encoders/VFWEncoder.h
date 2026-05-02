@@ -31,26 +31,6 @@ class VFWEncoder final : public Encoder
     bool load_options();
     bool stop_impl(bool fail_stop = true);
 
-    enum class WorkType : std::uint8_t
-    {
-        Video,
-        Audio,
-    };
-
-    struct WorkItem
-    {
-        WorkType type{};
-        std::vector<uint8_t> data;
-        uint8_t bitrate = 16;
-        size_t frame_count = 1;
-        bool force = false;
-        double_t desync = 0.0;
-    };
-
-    void worker_loop();
-    bool enqueue_work(WorkItem item);
-    void wait_for_all_work();
-
     Params m_params{};
     AVICOMPRESSOPTIONS m_avi_options{};
 
@@ -61,11 +41,11 @@ class VFWEncoder final : public Encoder
     size_t m_sample = 0;
     size_t m_video_frame = 0;
     double_t m_audio_frame = 0;
-    double m_video_drift_accumulator = 0.0;
     uint8_t m_sound_buf[SOUND_BUF_SIZE]{};
     uint8_t m_sound_buf_empty[SOUND_BUF_SIZE]{};
+    short *m_resampled_sound{};
     int sound_buf_pos = 0;
-    long last_sound = 0;
+    uint32_t m_last_sound = 0;
 
     BITMAPINFOHEADER m_info_hdr{};
     PAVIFILE m_avi_file{};
@@ -79,14 +59,4 @@ class VFWEncoder final : public Encoder
     WAVEFORMATEX m_sound_format{};
 
     size_t m_avi_file_size = 0;
-
-    std::mutex m_work_mutex;
-    std::condition_variable m_work_cv{};
-    std::condition_variable m_work_drained_cv{};
-    std::deque<WorkItem> m_work_queue;
-    size_t m_pending_work_bytes = 0;
-    size_t m_work_in_flight = 0;
-    bool m_worker_running = false;
-    bool m_worker_stop_requested = false;
-    bool m_worker_failed = false;
 };
