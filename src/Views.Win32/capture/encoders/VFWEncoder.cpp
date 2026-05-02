@@ -249,9 +249,8 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, co
 
     const double vis =
         g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-    const double quarter_len = len / 4.0;
-    const double quarter_len_per_arate = quarter_len / (double)m_params.arate;
-    m_audio_frame += quarter_len_per_arate * vis;
+    m_audio_samples += len / m_sound_format.nBlockAlign;
+    m_audio_frame = (double)m_audio_samples / m_params.arate * vis;
 
     return true;
 }

@@ -46,6 +46,7 @@ class VFWEncoder final : public Encoder
     short *m_resampled_sound{};
     int sound_buf_pos = 0;
     uint32_t m_last_sound = 0;
+    size_t m_audio_samples = 0;
 
     BITMAPINFOHEADER m_info_hdr{};
     PAVIFILE m_avi_file{};
