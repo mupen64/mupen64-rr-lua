@@ -12,8 +12,6 @@
 #include <capture/Resampler.h>
 #include <capture/encoders/VFWEncoder.h>
 
-// #define VFW_ENCODER_PARALLELIZED
-
 std::optional<std::wstring> VFWEncoder::start(Params params)
 {
     if (!m_splitting)
@@ -124,49 +122,11 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     memset(m_sound_buf, 0, sizeof(m_sound_buf));
     last_sound = 0;
 
-#ifdef VFW_ENCODER_PARALLELIZED
-    {
-        std::scoped_lock lock(m_work_mutex);
-        m_work_queue.clear();
-        m_pending_work_bytes = 0;
-        m_work_in_flight = 0;
-        m_worker_stop_requested = false;
-        m_worker_failed = false;
-        m_worker_running = true;
-    }
-
-    std::thread(&VFWEncoder::worker_loop, this).detach();
-#endif
-
     return std::nullopt;
 }
 
 bool VFWEncoder::stop_impl(const bool fail_stop)
 {
-#ifdef VFW_ENCODER_PARALLELIZED
-    wait_for_all_work();
-
-    if (!m_worker_failed)
-    {
-        WorkItem flush{};
-        flush.type = WorkType::Audio;
-        flush.force = true;
-        flush.bitrate = 16;
-        flush.desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
-        if (!enqueue_work(std::move(flush)))
-        {
-            m_worker_failed = true;
-        }
-    }
-
-    {
-        std::unique_lock lock(m_work_mutex);
-        m_worker_stop_requested = true;
-        m_work_cv.notify_all();
-        m_work_drained_cv.wait(lock, [this]() { return !m_worker_running; });
-    }
-#endif
-
     if (m_compressed_video_stream)
     {
         AVIStreamClose(m_compressed_video_stream);
@@ -210,53 +170,6 @@ bool VFWEncoder::append_video(uint8_t *image)
         return true;
     }
 
-#ifdef VFW_ENCODER_PARALLELIZED
-    if (m_worker_failed)
-    {
-        return false;
-    }
-
-    size_t frame_count = 1;
-
-    // AUDIO SYNC
-    // This type of syncing assumes the audio is authoratative, and drops or duplicates frames to keep the video as
-    // close to it as possible. Some games stop updating the screen entirely at certain points, such as loading zones,
-    // which will cause audio to drift away by default. This method of syncing prevents this, at the cost of the video
-    // feed possibly freezing or jumping (though in practice this rarely happens - usually a loading scene just appears
-    // shorter or something).
-
-    if (g_config.synchronization_mode == (int)CaptureManager::Sync::Audio)
-    {
-        frame_count = 0;
-        while (true)
-        {
-            const int overshot = (int)(m_audio_frame - (double)m_video_frame + 0.2);
-            if (overshot == 0) break;
-
-            RT_ASSERT(overshot >= 0, L"Video is ahead of audio");
-
-            ++frame_count;
-            ++m_video_frame;
-        }
-
-        if (frame_count == 0)
-        {
-            return true;
-        }
-    }
-    else
-    {
-        ++m_video_frame;
-    }
-
-    WorkItem item{};
-    item.type = WorkType::Video;
-    item.frame_count = frame_count;
-    item.data.resize(m_info_hdr.biSizeImage);
-    memcpy(item.data.data(), image, m_info_hdr.biSizeImage);
-
-    return enqueue_work(std::move(item));
-#else
     bool result = true;
     if (g_config.synchronization_mode == (int)CaptureManager::Sync::Audio)
     {
@@ -282,50 +195,10 @@ bool VFWEncoder::append_video(uint8_t *image)
     }
 
     return result;
-
-#endif
 }
 
 bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
-#ifdef VFW_ENCODER_PARALLELIZED
-
-    if (m_worker_failed)
-    {
-        return false;
-    }
-
-    const double_t desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
-
-    if (length > 0)
-    {
-        m_audio_frame +=
-            ((length / 4) / (long double)m_params.arate) *
-            g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-    }
-
-    if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) && desync > 1.0)
-    {
-        const long double vis_per_second =
-            g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
-        int len3 = (int)(m_params.arate / vis_per_second) * (int)desync;
-        len3 <<= 2;
-        m_audio_frame += ((len3 / 4) / (long double)m_params.arate) * vis_per_second;
-    }
-
-    WorkItem item{};
-    item.type = WorkType::Audio;
-    item.bitrate = bitrate;
-    item.force = false;
-    item.desync = desync;
-    item.data.resize(length);
-    if (length > 0)
-    {
-        memcpy(item.data.data(), audio, length);
-    }
-
-    return enqueue_work(std::move(item));
-#else
     const int write_size = m_params.arate * 2;
 
     if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
@@ -375,7 +248,6 @@ bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
     last_sound = *(reinterpret_cast<long *>(audio + length) - 1);
 
     return true;
-#endif
 }
 
 bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, const int max_write_size,
@@ -436,13 +308,11 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, const int min_write_size, co
     memcpy(m_sound_buf + sound_buf_pos, (char *)buf, len);
     sound_buf_pos += len;
 
-#ifndef VFW_ENCODER_PARALLELIZED
     const double vis =
         g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
     const double quarter_len = len / 4.0;
     const double quarter_len_per_arate = quarter_len / (double)m_params.arate;
     m_audio_frame += quarter_len_per_arate * vis;
-#endif
 
     return true;
 }
