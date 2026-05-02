@@ -414,22 +414,18 @@ void stop_capture(const std::function<void(bool)> &callback)
 void vi()
 {
     std::lock_guard lock(m_mutex);
-
-    if (!m_capturing)
-    {
-        return;
-    }
-
-    if (g_config.capture_delay)
-    {
-        Sleep(g_config.capture_delay);
-    }
+    if (!m_capturing) return;
 
     g_ctx.vis_since_last_input_poll++;
 }
 
 void input()
 {
+    if (g_config.capture_delay)
+    {
+        Sleep(g_config.capture_delay);
+    }
+
     // Show the latest graphics for the amount of VIs since the last input poll.
     read_screen();
 
