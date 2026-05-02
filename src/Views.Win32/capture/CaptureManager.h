@@ -66,10 +66,8 @@ void stop_capture(const std::function<void(bool)> &callback = nullptr);
 
 /**
  * \brief Appends the current video frame to the capture.
- * \param duplicate_last Whether the appended frame should be a duplicate of the last appended frame. This is used for
- * lag frames.
  */
-void append_video(bool duplicate_last = false);
+void append_video();
 
 /**
  * \brief Notifies the capture manager of the audio changing

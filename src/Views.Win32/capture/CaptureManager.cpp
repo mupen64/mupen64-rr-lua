@@ -404,7 +404,7 @@ void stop_capture(const std::function<void(bool)> &callback)
     });
 }
 
-void append_video(bool duplicate_last)
+void append_video()
 {
     std::lock_guard lock(m_mutex);
 
@@ -418,7 +418,7 @@ void append_video(bool duplicate_last)
         Sleep(g_config.capture_delay);
     }
 
-    if (!duplicate_last) read_screen();
+    read_screen();
 
     if (m_encoder->append_video(m_video_buf))
     {

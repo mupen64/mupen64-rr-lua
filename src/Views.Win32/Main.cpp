@@ -877,7 +877,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.vi = [](const bool new_present) {
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
-        if (CaptureManager::is_capturing()) CaptureManager::append_video(!new_present);
+        if (CaptureManager::is_capturing()) CaptureManager::append_video();
     };
     g_main_ctx.core.callbacks.input = [](core_buttons *input, int index) {
         g_main_ctx.last_controller_data[index] = *input;
