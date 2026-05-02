@@ -164,24 +164,32 @@ bool VFWEncoder::stop()
 
 bool VFWEncoder::append_video(uint8_t *image)
 {
-    bool result = true;
-
     if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
         g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
     {
-        result = append_video_impl(image);
+        if (!append_video_impl(image)) return false;
         m_video_frame++;
-        return result;
+        return true;
     }
 
     const double drift = m_audio_frame - static_cast<double>(m_video_frame);
+    constexpr double DRIFT_THRESHOLD = 1.0;
     g_view_logger->trace(L"a {:.4f} v {} drift {:.4f}", m_audio_frame, m_video_frame, drift);
 
-    result = append_video_impl(image);
-    if (!result) return result;
+    // Video is ahead of audio, drop frame
+    if (drift < -DRIFT_THRESHOLD) return true;
+
+    if (!append_video_impl(image)) return false;
     m_video_frame++;
 
-    return result;
+    // Audio is ahead of video, duplicate frame
+    if (drift > DRIFT_THRESHOLD)
+    {
+        if (!append_video_impl(image)) return false;
+        m_video_frame++;
+    }
+
+    return true;
 }
 
 bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
