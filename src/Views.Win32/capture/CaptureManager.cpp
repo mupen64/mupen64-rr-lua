@@ -48,6 +48,13 @@ HDC hy_main_dc = nullptr;
 HDC hy_dc = nullptr;
 HBITMAP hy_bmp = nullptr;
 
+struct CaptureContext
+{
+    size_t vis_since_last_input_poll{};
+};
+
+static CaptureContext g_ctx{};
+
 void readscreen_plugin(int32_t *width = nullptr, int32_t *height = nullptr)
 {
     if (PluginUtil::mge_available())
@@ -404,7 +411,7 @@ void stop_capture(const std::function<void(bool)> &callback)
     });
 }
 
-void append_video()
+void vi()
 {
     std::lock_guard lock(m_mutex);
 
@@ -418,17 +425,27 @@ void append_video()
         Sleep(g_config.capture_delay);
     }
 
+    g_ctx.vis_since_last_input_poll++;
+}
+
+void input()
+{
+    // Show the latest graphics for the amount of VIs since the last input poll.
     read_screen();
 
-    if (m_encoder->append_video(m_video_buf))
+    for (size_t i = 0; i < g_ctx.vis_since_last_input_poll; i++)
     {
+        if (!m_encoder->append_video(m_video_buf))
+        {
+            DialogService::show_dialog(L"Failed to append frame to video.\nPerhaps you ran out of memory?", L"Capture",
+                                       fsvc_error);
+            stop_capture();
+            return;
+        }
         m_total_frames++;
-        return;
     }
 
-    DialogService::show_dialog(L"Failed to append frame to video.\nPerhaps you ran out of memory?", L"Capture",
-                               fsvc_error);
-    stop_capture();
+    g_ctx.vis_since_last_input_poll = 0;
 }
 
 void ai_len_changed()

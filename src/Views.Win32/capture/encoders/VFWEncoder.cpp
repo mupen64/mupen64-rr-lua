@@ -162,11 +162,22 @@ bool VFWEncoder::stop()
     return this->stop_impl(false);
 }
 
+uint32_t shortHash(const uint8_t *d, size_t n)
+{
+    uint32_t h = 2166136261u;
+    while (n--) h = (h ^ *d++) * 16777619u;
+    return h;
+}
+
 bool VFWEncoder::append_video(uint8_t *image)
 {
+    const auto hash = shortHash(image, m_params.width * m_params.height * 4);
+
     if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
         g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
     {
+        g_view_logger->trace(L"video buffer hash {:08X}", hash);
+
         if (!append_video_impl(image)) return false;
         m_video_frame++;
         return true;
@@ -174,7 +185,7 @@ bool VFWEncoder::append_video(uint8_t *image)
 
     const double drift = m_audio_frame - static_cast<double>(m_video_frame);
     constexpr double DRIFT_THRESHOLD = 3.0;
-    g_view_logger->trace(L"a {:.4f} v {} drift {:.4f}", m_audio_frame, m_video_frame, drift);
+    g_view_logger->trace(L"{} a {:.4f} v {} drift {:.4f}", hash, m_audio_frame, m_video_frame, drift);
 
     // Video is ahead of audio, drop frame
     if (drift < -DRIFT_THRESHOLD)

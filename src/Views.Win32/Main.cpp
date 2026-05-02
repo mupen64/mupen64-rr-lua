@@ -874,14 +874,15 @@ static core_result init_core()
     g_main_ctx.core.cfg = &g_config.core;
     // g_main_ctx.core.io_service = &g_main_ctx.io_service;
     g_main_ctx.core.callbacks = {};
-    g_main_ctx.core.callbacks.vi = [](const bool new_present) {
+    g_main_ctx.core.callbacks.vi = [](const auto &...) {
         LuaCallbacks::call_interval();
         LuaCallbacks::call_vi();
-        if (CaptureManager::is_capturing()) CaptureManager::append_video();
+        if (CaptureManager::is_capturing()) CaptureManager::vi();
     };
     g_main_ctx.core.callbacks.input = [](core_buttons *input, int index) {
         g_main_ctx.last_controller_data[index] = *input;
         LuaCallbacks::call_input(input, index);
+        if (CaptureManager::is_capturing()) CaptureManager::input();
     };
     g_main_ctx.core.callbacks.frame = [] { g_frame_changed = true; };
     g_main_ctx.core.callbacks.interval = LuaCallbacks::call_interval;

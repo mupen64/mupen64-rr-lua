@@ -397,6 +397,8 @@ void update_pif_read()
                     // paused here again before the next input
                     if (once && channel <= controllerRead && (&PIF_RAMb[i])[2] == 1)
                     {
+                        if (g_core->controls[channel].Present) g_core->log_trace("atinput");
+
                         once = false;
 
                         if (g_wait_counter == 0)
