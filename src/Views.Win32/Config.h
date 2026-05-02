@@ -146,10 +146,10 @@ struct t_config
     /// <summary>
     /// FFmpeg post-stream option format string which is used when capturing using the FFmpeg encoder type
     /// </summary>
-    std::wstring ffmpeg_final_options =
-        L"-y -f rawvideo -pixel_format bgra -video_size %dx%d -framerate %d -i %s "
-        L"-f s16le -sample_rate %d -ac 2 -channel_layout stereo -i %s "
-        L"-c:v libx264 -preset veryfast -tune zerolatency -crf 23 -c:a aac -b:a 128k -vf \"vflip\" -f mp4 %s";
+    std::wstring ffmpeg_final_options = L"-y -i %s "
+                                        L"-c:v libx264 -preset veryfast -crf 23 "
+                                        L"-c:a aac -b:a 128k "
+                                        L"-vf vflip %s";
 
     /// <summary>
     /// FFmpeg binary path

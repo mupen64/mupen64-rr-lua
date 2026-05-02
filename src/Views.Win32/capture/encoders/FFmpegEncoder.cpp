@@ -9,143 +9,233 @@
 #include <DialogService.h>
 #include <Config.h>
 
+#define NUT_PIPE_NAME L"\\\\.\\pipe\\mupennut"
+
+struct PipeIO
+{
+    HANDLE pipe;
+    HANDLE event;
+};
+
+static int avio_write_cb(void *opaque, const uint8_t *buf, int size)
+{
+    auto *io = static_cast<PipeIO *>(opaque);
+    OVERLAPPED ov{};
+    ov.hEvent = io->event;
+    ResetEvent(ov.hEvent);
+
+    DWORD written = 0;
+    if (!WriteFile(io->pipe, buf, size, nullptr, &ov))
+    {
+        if (GetLastError() != ERROR_IO_PENDING)
+        {
+            g_view_logger->error("[FFmpegEncoder] WriteFile failed: {}", GetLastError());
+            return AVERROR(EIO);
+        }
+    }
+    if (!GetOverlappedResult(io->pipe, &ov, &written, TRUE))
+    {
+        g_view_logger->error("[FFmpegEncoder] GetOverlappedResult failed: {}", GetLastError());
+        return AVERROR(EIO);
+    }
+    return static_cast<int>(written);
+}
+
+static int64_t avio_seek_cb(void *, int64_t, int)
+{
+    return AVERROR(ENOSYS);
+}
+
 std::optional<std::wstring> FFmpegEncoder::start(Params params)
 {
     m_params = params;
+    m_video_pts = 0;
+    m_audio_pts = 0;
+    m_dropped_frames = 0;
+    m_last_write_was_video = false;
 
-    const auto bufsize_video = 2048;
-    const auto bufsize_audio = m_params.arate * 8;
+    m_pipe = CreateNamedPipe(NUT_PIPE_NAME, PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE | PIPE_WAIT, 1,
+                             1 << 20, // 1 MB write buffer
+                             0, 0, nullptr);
 
-    g_view_logger->info("[FFmpegEncoder] arate: {}, bufsize_video: {}, bufsize_audio: {}\n", m_params.arate,
-                        bufsize_video, bufsize_audio);
-
-#define VIDEO_PIPE_NAME L"\\\\.\\pipe\\mupenvideo"
-#define AUDIO_PIPE_NAME L"\\\\.\\pipe\\mupenaudio"
-
-    m_video_pipe = CreateNamedPipe(VIDEO_PIPE_NAME, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT,
-                                   PIPE_UNLIMITED_INSTANCES, bufsize_video, bufsize_video, 0, nullptr);
-
-    if (!m_video_pipe)
+    if (m_pipe == INVALID_HANDLE_VALUE)
     {
-        return L"Failed to create video pipe.";
+        return L"Failed to create NUT pipe.";
     }
 
-    m_audio_pipe = CreateNamedPipe(AUDIO_PIPE_NAME, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT,
-                                   PIPE_UNLIMITED_INSTANCES, bufsize_audio, bufsize_audio, 0, nullptr);
-
-    if (!m_audio_pipe)
-    {
-        CloseHandle(m_video_pipe);
-        return L"Failed to create audio pipe.";
-    }
+    m_pipe_write_event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
     static wchar_t options[4096]{};
     memset(options, 0, sizeof(options));
-
-    wsprintf(options, g_config.ffmpeg_final_options.data(), m_params.width, m_params.height, m_params.fps,
-             VIDEO_PIPE_NAME, m_params.arate, AUDIO_PIPE_NAME, m_params.path.wstring().data());
+    wsprintf(options, g_config.ffmpeg_final_options.data(), NUT_PIPE_NAME, m_params.path.wstring().data());
 
     g_view_logger->info(L"[FFmpegEncoder] Starting encode with commandline:");
     g_view_logger->info(L"[FFmpegEncoder] {}", options);
 
     DeleteFile(params.path.wstring().c_str());
 
+    memset(&m_si, 0, sizeof(m_si));
+    memset(&m_pi, 0, sizeof(m_pi));
+
     if (!CreateProcess(g_config.ffmpeg_path.c_str(), options, nullptr, nullptr, FALSE, NULL, nullptr, nullptr, &m_si,
                        &m_pi))
     {
-
-        g_view_logger->info(L"CreateProcess failed ({}).", GetLastError());
-        CloseHandle(m_video_pipe);
-        CloseHandle(m_audio_pipe);
+        g_view_logger->error(L"[FFmpegEncoder] CreateProcess failed ({}).", GetLastError());
+        CloseHandle(m_pipe);
+        CloseHandle(m_pipe_write_event);
         return std::format(L"Failed to start ffmpeg process! Does ffmpeg exist on disk at '{}'?", g_config.ffmpeg_path);
     }
 
-    m_silence_buffer = static_cast<uint8_t *>(calloc(params.arate, 1));
-    m_blank_buffer = static_cast<uint8_t *>(calloc(m_params.width * m_params.height * 4, 1));
-    m_dropped_frames = 0;
+    {
+        OVERLAPPED ov_connect{};
+        ov_connect.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        ConnectNamedPipe(m_pipe, &ov_connect);
 
-    m_video_thread = std::thread(&FFmpegEncoder::write_video_thread, this);
-    m_audio_thread = std::thread(&FFmpegEncoder::write_audio_thread, this);
+        HANDLE wait_handles[] = {ov_connect.hEvent, m_pi.hProcess};
+        DWORD wait = WaitForMultipleObjects(2, wait_handles, FALSE, 10'000);
 
-    Sleep(500);
+        CloseHandle(ov_connect.hEvent);
 
+        if (wait != WAIT_OBJECT_0)
+        {
+            g_view_logger->error("[FFmpegEncoder] Timed out waiting for FFmpeg to open the pipe.");
+            TerminateProcess(m_pi.hProcess, 1);
+            CloseHandle(m_pi.hProcess);
+            CloseHandle(m_pi.hThread);
+            CloseHandle(m_pipe);
+            CloseHandle(m_pipe_write_event);
+            return L"FFmpeg did not open the input pipe in time.";
+        }
+    }
+
+    int ret = avformat_alloc_output_context2(&m_fmt_ctx, nullptr, "nut", nullptr);
+    if (ret < 0 || !m_fmt_ctx)
+    {
+        return L"Failed to allocate NUT output context.";
+    }
+
+    m_video_stream = avformat_new_stream(m_fmt_ctx, nullptr);
+    m_video_stream->id = 0;
+    m_video_stream->time_base = {1, static_cast<int>(m_params.fps)};
+    m_video_stream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+    m_video_stream->codecpar->codec_id = AV_CODEC_ID_RAWVIDEO;
+    m_video_stream->codecpar->width = static_cast<int>(m_params.width);
+    m_video_stream->codecpar->height = static_cast<int>(m_params.height);
+    m_video_stream->codecpar->format = AV_PIX_FMT_BGRA;
+    m_video_stream->codecpar->bits_per_coded_sample = 32;
+    m_video_stream->codecpar->codec_tag = avcodec_pix_fmt_to_codec_tag(AV_PIX_FMT_BGRA);
+
+    m_audio_stream = avformat_new_stream(m_fmt_ctx, nullptr);
+    m_audio_stream->id = 1;
+    m_audio_stream->time_base = {1, static_cast<int>(m_params.arate)};
+    m_audio_stream->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
+    m_audio_stream->codecpar->codec_id = AV_CODEC_ID_PCM_S16LE;
+    m_audio_stream->codecpar->sample_rate = static_cast<int>(m_params.arate);
+    m_audio_stream->codecpar->format = AV_SAMPLE_FMT_S16;
+    m_audio_stream->codecpar->bits_per_coded_sample = 16;
+    AVChannelLayout stereo_layout = AV_CHANNEL_LAYOUT_STEREO;
+    av_channel_layout_copy(&m_audio_stream->codecpar->ch_layout, &stereo_layout);
+
+    static PipeIO pipe_io{};
+    pipe_io.pipe = m_pipe;
+    pipe_io.event = m_pipe_write_event;
+
+    constexpr int avio_buf_size = 64 * 1024;
+    uint8_t *avio_buf = static_cast<uint8_t *>(av_malloc(avio_buf_size));
+    m_avio_ctx =
+        avio_alloc_context(avio_buf, avio_buf_size, 1 /*write*/, &pipe_io, nullptr, avio_write_cb, avio_seek_cb);
+    m_avio_ctx->seekable = 0;
+    m_fmt_ctx->pb = m_avio_ctx;
+    m_fmt_ctx->flags |= AVFMT_FLAG_NOBUFFER;
+
+    AVDictionary *opts = nullptr;
+    av_dict_set(&opts, "strict", "experimental", 0);
+    ret = avformat_write_header(m_fmt_ctx, &opts);
+    av_dict_free(&opts);
+
+    if (ret < 0)
+    {
+        char errbuf[128];
+        av_strerror(ret, errbuf, sizeof(errbuf));
+        g_view_logger->error("[FFmpegEncoder] avformat_write_header failed: {}", errbuf);
+        avformat_free_context(m_fmt_ctx);
+        m_fmt_ctx = nullptr;
+        CloseHandle(m_pipe);
+        CloseHandle(m_pipe_write_event);
+        return std::format(L"Failed to write NUT header: {}", std::wstring(errbuf, errbuf + strlen(errbuf)));
+    }
+
+    g_view_logger->info("[FFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
+                        m_params.height, m_params.fps, m_params.arate);
     return std::nullopt;
 }
 
 bool FFmpegEncoder::stop()
 {
-    m_stop_thread = true;
-    m_video_cv.notify_all();
-    m_audio_cv.notify_all();
+    if (m_fmt_ctx)
+    {
+        av_write_trailer(m_fmt_ctx);
+        avio_flush(m_avio_ctx);
+    }
 
-    // HACK: Give it some time to maybe accept the last writes...
-    Sleep(500);
-
-    CancelIo(m_video_pipe);
-    CancelIo(m_audio_pipe);
-    DisconnectNamedPipe(m_video_pipe);
-    DisconnectNamedPipe(m_audio_pipe);
+    DisconnectNamedPipe(m_pipe);
+    CloseHandle(m_pipe);
+    CloseHandle(m_pipe_write_event);
+    m_pipe = nullptr;
+    m_pipe_write_event = nullptr;
 
     WaitForSingleObject(m_pi.hProcess, INFINITE);
     CloseHandle(m_pi.hProcess);
     CloseHandle(m_pi.hThread);
-    m_audio_thread.join();
-    m_video_thread.join();
 
-    if (!this->m_video_queue.empty() || !this->m_audio_queue.empty())
+    if (m_avio_ctx)
     {
-        DialogService::show_dialog(std::format(L"Capture stopped with {} video, {} audio elements remaining in "
-                                               L"queue!\nThe capture might be corrupted.",
-                                               this->m_video_queue.size(), this->m_audio_queue.size())
-                                       .c_str(),
-                                   L"FFmpeg");
+        av_free(m_avio_ctx->buffer);
+        avio_context_free(&m_avio_ctx);
+        m_avio_ctx = nullptr;
+    }
+    if (m_fmt_ctx)
+    {
+        avformat_free_context(m_fmt_ctx);
+        m_fmt_ctx = nullptr;
     }
 
     if (m_dropped_frames > 0)
     {
-        DialogService::show_dialog(std::format(L"{} frames were dropped during capture to avoid out-of-memory "
-                                               L"errors.\nThe capture might contain empty frames.",
+        DialogService::show_dialog(std::format(L"{} frames were dropped during capture due to low memory.\n"
+                                               L"The capture might contain empty frames.",
                                                m_dropped_frames)
                                        .c_str(),
                                    L"FFmpeg");
     }
 
-    free(m_silence_buffer);
-    free(m_blank_buffer);
     return true;
 }
 
-static bool write_pipe_checked(const HANDLE pipe, const char *buffer, const unsigned buffer_size, const bool is_video)
+bool FFmpegEncoder::write_av_packet(int stream_index, uint8_t *data, int size, int64_t pts, int64_t duration)
 {
-    DWORD written = 0;
-    const auto result = WriteFile(pipe, buffer, buffer_size, &written, nullptr);
-    if (written != buffer_size || !result)
+    AVPacket *pkt = av_packet_alloc();
+    pkt->data = data;
+    pkt->size = size;
+    pkt->stream_index = stream_index;
+    pkt->pts = pts;
+    pkt->dts = pts;
+    pkt->duration = duration;
+
+    int ret = av_write_frame(m_fmt_ctx, pkt);
+
+    // Prevent av_packet_free from freeing externally-owned data
+    pkt->data = nullptr;
+    pkt->size = 0;
+    av_packet_free(&pkt);
+
+    if (ret < 0)
     {
-        // g_view_logger->error("[FFmpegEncoder] Error writing to {} pipe, error code {}", is_video ? "video" : "audio",
-        // GetLastError());
+        char errbuf[128];
+        av_strerror(ret, errbuf, sizeof(errbuf));
+        g_view_logger->error("[FFmpegEncoder] av_write_frame failed: {}", errbuf);
         return false;
     }
-
-    return true;
-}
-
-bool FFmpegEncoder::append_audio_impl(uint8_t *audio, size_t length)
-{
-    uint8_t *buf = m_silence_buffer;
-    if (audio != m_silence_buffer)
-    {
-        buf = static_cast<uint8_t *>(malloc(length));
-        memcpy(buf, audio, length);
-    }
-
-    m_last_write_was_video = false;
-
-    {
-        std::lock_guard lock(m_audio_queue_mutex);
-        this->m_audio_queue.emplace(buf, length);
-    }
-    m_audio_cv.notify_one();
-
     return true;
 }
 
@@ -153,103 +243,51 @@ bool FFmpegEncoder::append_video(uint8_t *image)
 {
     if (g_config.synchronization_mode == 1)
     {
-        if (m_last_write_was_video)
-        {
-            return true;
-        }
+        if (m_last_write_was_video) return true;
     }
     else if (g_config.synchronization_mode == 2)
     {
         if (g_main_ctx.core_ctx->vr_get_lag_count() > 2)
         {
-            const auto samples_per_frame = static_cast<double>(m_params.arate) / 64;
-            append_audio_impl(m_silence_buffer, static_cast<size_t>(round(samples_per_frame)));
+            // Inject a silence audio packet to cover the lag
+            const auto samples = static_cast<size_t>(round(static_cast<double>(m_params.arate) / 64));
+            const auto silence_bytes = samples * 4; // s16le stereo = 4 bytes/sample
+            auto *silence = static_cast<uint8_t *>(calloc(silence_bytes, 1));
+            append_audio(silence, silence_bytes, 0);
+            free(silence);
         }
     }
 
     m_last_write_was_video = true;
 
-    auto buf = static_cast<uint8_t *>(malloc(m_params.width * m_params.height * 4));
+    const auto frame_bytes = m_params.width * m_params.height * 4;
 
-    // HACK: If we run out of memory, we start writing empty video frames
-    // This can happen when capturing at high resolutions, as ffmpeg might not start processing the pipe writes in time
-    if (!buf)
+    if (!image)
     {
-        g_view_logger->error("[FFmpegEncoder] Out of memory, writing blank video frame");
+        g_view_logger->error("[FFmpegEncoder] Null image, writing blank video frame");
         ++m_dropped_frames;
-
-        {
-            std::lock_guard lock(m_video_queue_mutex);
-            m_video_queue.emplace(m_blank_buffer, false);
-        }
-        m_video_cv.notify_one();
+        auto *blank = static_cast<uint8_t *>(calloc(frame_bytes, 1));
+        const int64_t blank_pts =
+            av_rescale_q(m_video_pts++, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base);
+        write_av_packet(m_video_stream->index, blank, static_cast<int>(frame_bytes), blank_pts,
+                        av_rescale_q(1, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base));
+        free(blank);
         return true;
     }
 
-    memcpy(buf, image, m_params.width * m_params.height * 4);
-
-    {
-        std::lock_guard lock(m_video_queue_mutex);
-        m_video_queue.emplace(buf, true);
-    }
-    m_video_cv.notify_one();
-
+    const int64_t pts = av_rescale_q(m_video_pts++, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base);
+    write_av_packet(m_video_stream->index, image, static_cast<int>(frame_bytes), pts,
+                    av_rescale_q(1, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base));
     return true;
 }
 
 bool FFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
 {
-    auto buf = static_cast<uint8_t *>(malloc(length));
-    memcpy(buf, audio, length);
-
-    return append_audio_impl(buf, length);
-}
-
-void FFmpegEncoder::write_audio_thread()
-{
-    g_view_logger->trace("[FFmpegEncoder] Audio thread ready");
-
-    while (!this->m_stop_thread)
-    {
-        std::unique_lock lock(m_audio_queue_mutex);
-        m_audio_cv.wait(lock, [this] { return !m_audio_queue.empty() || m_stop_thread; });
-
-        if (this->m_audio_queue.empty()) continue;
-
-        auto tuple = this->m_audio_queue.front();
-        this->m_audio_queue.pop();
-        lock.unlock();
-
-        const auto buf = std::get<0>(tuple);
-        const auto len = std::get<1>(tuple);
-
-        write_pipe_checked(m_audio_pipe, (char *)buf, len, false);
-        if (buf != m_silence_buffer)
-        {
-            free(buf);
-        }
-    }
-}
-
-void FFmpegEncoder::write_video_thread()
-{
-    g_view_logger->trace("[FFmpegEncoder] Video thread ready");
-
-    while (!this->m_stop_thread)
-    {
-        std::unique_lock lock(m_video_queue_mutex);
-        m_video_cv.wait(lock, [this] { return !m_video_queue.empty() || m_stop_thread; });
-
-        if (m_video_queue.empty()) continue;
-
-        auto pair = this->m_video_queue.front();
-        this->m_video_queue.pop();
-        lock.unlock();
-
-        write_pipe_checked(m_video_pipe, (char *)pair.first, m_params.width * m_params.height * 4, true);
-        if (pair.second)
-        {
-            free(pair.first);
-        }
-    }
+    const auto nb_samples = static_cast<int64_t>(length / 4);
+    const int64_t pts = av_rescale_q(m_audio_pts, {1, static_cast<int>(m_params.arate)}, m_audio_stream->time_base);
+    const int64_t dur = av_rescale_q(nb_samples, {1, static_cast<int>(m_params.arate)}, m_audio_stream->time_base);
+    write_av_packet(m_audio_stream->index, audio, static_cast<int>(length), pts, dur);
+    m_audio_pts += nb_samples;
+    m_last_write_was_video = false;
+    return true;
 }
