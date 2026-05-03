@@ -263,19 +263,6 @@ bool FFmpegEncoder::append_video(uint8_t *image)
 
     const auto frame_bytes = m_params.width * m_params.height * 4;
 
-    if (!image)
-    {
-        g_view_logger->error("[FFmpegEncoder] Null image, writing blank video frame");
-        ++m_dropped_frames;
-        auto *blank = static_cast<uint8_t *>(calloc(frame_bytes, 1));
-        const int64_t blank_pts =
-            av_rescale_q(m_video_pts++, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base);
-        write_av_packet(m_video_stream->index, blank, static_cast<int>(frame_bytes), blank_pts,
-                        av_rescale_q(1, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base));
-        free(blank);
-        return true;
-    }
-
     const int64_t pts = av_rescale_q(m_video_pts++, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base);
     write_av_packet(m_video_stream->index, image, static_cast<int>(frame_bytes), pts,
                     av_rescale_q(1, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base));
