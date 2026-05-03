@@ -185,12 +185,10 @@ bool VFWEncoder::append_video(uint8_t *image)
 
     const double drift = m_audio_frame - static_cast<double>(m_video_frame);
     constexpr double DRIFT_THRESHOLD = 3.0;
-    g_view_logger->trace(L"{} a {:.4f} v {} drift {:.4f}", hash, m_audio_frame, m_video_frame, drift);
 
     // Video is ahead of audio, drop frame
     if (drift < -DRIFT_THRESHOLD)
     {
-        g_view_logger->trace(L"dropping frame");
         return true;
     }
 
@@ -200,7 +198,6 @@ bool VFWEncoder::append_video(uint8_t *image)
     // Audio is ahead of video, duplicate frame
     if (drift > DRIFT_THRESHOLD)
     {
-        g_view_logger->trace(L"duping frame");
         if (!append_video_impl(image)) return false;
         m_video_frame++;
     }
