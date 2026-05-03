@@ -16,6 +16,8 @@ extern "C"
 #include <libavutil/opt.h>
 }
 
+#include <capture/CaptureManager.h>
+
 class FFmpegEncoder : public Encoder
 {
   public:
@@ -43,6 +45,8 @@ class FFmpegEncoder : public Encoder
     int64_t m_video_pts = 0;
     int64_t m_audio_pts = 0;
 
+    size_t m_video_frame = 0;
+    double_t m_audio_frame = 0.0;
     size_t m_dropped_frames = 0;
     bool m_last_write_was_video = false;
 

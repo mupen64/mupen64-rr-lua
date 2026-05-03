@@ -51,6 +51,8 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     m_params = params;
     m_video_pts = 0;
     m_audio_pts = 0;
+    m_video_frame = 0;
+    m_audio_frame = 0.0;
     m_dropped_frames = 0;
     m_last_write_was_video = false;
 
@@ -247,35 +249,82 @@ bool FFmpegEncoder::write_av_packet(int stream_index, uint8_t *data, int size, i
 
 bool FFmpegEncoder::append_video(uint8_t *image)
 {
-    if (g_config.synchronization_mode == 1)
+    const auto sync = static_cast<CaptureManager::Sync>(g_config.synchronization_mode);
+    const auto frame_bytes = static_cast<int>(m_params.width * m_params.height * 4);
+    const AVRational fps_tb = {1, static_cast<int>(m_params.fps)};
+    const int64_t frame_dur = av_rescale_q(1, fps_tb, m_video_stream->time_base);
+
+    if (sync == CaptureManager::Sync::Audio)
     {
-        if (m_last_write_was_video) return true;
-    }
-    else if (g_config.synchronization_mode == 2)
-    {
-        if (g_main_ctx.core_ctx->vr_get_lag_count() > 2)
+        int write_count = 0;
+        while (true)
         {
-            append_audio(m_silence_buf.data(), m_silence_buf.size(), 0);
+            const int overshot = static_cast<int>(m_audio_frame - static_cast<double>(m_video_frame) + 0.2);
+            if (overshot == 0) break;
+            ++write_count;
+            ++m_video_frame;
         }
+        if (write_count == 0) return true;
+        for (int i = 0; i < write_count; ++i)
+        {
+            const int64_t pts = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
+            if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts, frame_dur)) return false;
+        }
+    }
+    else
+    {
+        ++m_video_frame;
+        const int64_t pts = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
+        if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts, frame_dur)) return false;
     }
 
     m_last_write_was_video = true;
-
-    const auto frame_bytes = m_params.width * m_params.height * 4;
-
-    const int64_t pts = av_rescale_q(m_video_pts++, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base);
-    write_av_packet(m_video_stream->index, image, static_cast<int>(frame_bytes), pts,
-                    av_rescale_q(1, {1, static_cast<int>(m_params.fps)}, m_video_stream->time_base));
     return true;
 }
 
 bool FFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
 {
-    const auto nb_samples = static_cast<int64_t>(length / 4);
-    const int64_t pts = av_rescale_q(m_audio_pts, {1, static_cast<int>(m_params.arate)}, m_audio_stream->time_base);
-    const int64_t dur = av_rescale_q(nb_samples, {1, static_cast<int>(m_params.arate)}, m_audio_stream->time_base);
-    write_av_packet(m_audio_stream->index, audio, static_cast<int>(length), pts, dur);
-    m_audio_pts += nb_samples;
+    const auto sync = static_cast<CaptureManager::Sync>(g_config.synchronization_mode);
+    const auto arate = static_cast<long double>(m_params.arate);
+    const long double vis_per_second =
+        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+    const AVRational arate_tb = {1, static_cast<int>(m_params.arate)};
+
+    const double_t desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
+    if (length > 0)
+    {
+        m_audio_frame += ((length / 4) / arate) * vis_per_second;
+    }
+
+    if (sync == CaptureManager::Sync::Video && desync > 1.0)
+    {
+        g_view_logger->info("[FFmpegEncoder] Correcting A/V desync of {:+.3f} frames", desync);
+        int silence_len = static_cast<int>(arate / vis_per_second) * static_cast<int>(desync);
+        silence_len <<= 2;
+        const int chunk = static_cast<int>(m_params.arate) * 4;
+
+        while (silence_len > 0)
+        {
+            const int write = std::min(silence_len, chunk);
+            m_silence_buf.assign(write, 0);
+            const auto nb = static_cast<int64_t>(write / 4);
+            const int64_t pts = av_rescale_q(m_audio_pts, arate_tb, m_audio_stream->time_base);
+            const int64_t dur = av_rescale_q(nb, arate_tb, m_audio_stream->time_base);
+            if (!write_av_packet(m_audio_stream->index, m_silence_buf.data(), write, pts, dur)) return false;
+            m_audio_pts += nb;
+            silence_len -= write;
+        }
+    }
+
+    if (length > 0)
+    {
+        const auto nb_samples = static_cast<int64_t>(length / 4);
+        const int64_t pts = av_rescale_q(m_audio_pts, arate_tb, m_audio_stream->time_base);
+        const int64_t dur = av_rescale_q(nb_samples, arate_tb, m_audio_stream->time_base);
+        if (!write_av_packet(m_audio_stream->index, audio, static_cast<int>(length), pts, dur)) return false;
+        m_audio_pts += nb_samples;
+    }
+
     m_last_write_was_video = false;
     return true;
 }
