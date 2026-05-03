@@ -45,4 +45,6 @@ class FFmpegEncoder : public Encoder
 
     size_t m_dropped_frames = 0;
     bool m_last_write_was_video = false;
+
+    std::vector<uint8_t> m_silence_buf;
 };

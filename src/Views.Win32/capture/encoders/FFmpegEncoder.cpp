@@ -167,6 +167,10 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
 
     g_view_logger->info("[FFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
                         m_params.height, m_params.fps, m_params.arate);
+
+    const auto silence_samples = static_cast<size_t>(round(static_cast<double>(m_params.arate) / 64));
+    m_silence_buf.assign(silence_samples * 4, 0);
+
     return std::nullopt;
 }
 
@@ -199,6 +203,8 @@ bool FFmpegEncoder::stop()
         avformat_free_context(m_fmt_ctx);
         m_fmt_ctx = nullptr;
     }
+
+    m_silence_buf.clear();
 
     if (m_dropped_frames > 0)
     {
@@ -249,12 +255,7 @@ bool FFmpegEncoder::append_video(uint8_t *image)
     {
         if (g_main_ctx.core_ctx->vr_get_lag_count() > 2)
         {
-            // Inject a silence audio packet to cover the lag
-            const auto samples = static_cast<size_t>(round(static_cast<double>(m_params.arate) / 64));
-            const auto silence_bytes = samples * 4; // s16le stereo = 4 bytes/sample
-            auto *silence = static_cast<uint8_t *>(calloc(silence_bytes, 1));
-            append_audio(silence, silence_bytes, 0);
-            free(silence);
+            append_audio(m_silence_buf.data(), m_silence_buf.size(), 0);
         }
     }
 
