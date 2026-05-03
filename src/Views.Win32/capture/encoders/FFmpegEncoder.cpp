@@ -9,7 +9,8 @@
 #include <DialogService.h>
 #include <Config.h>
 
-#define NUT_PIPE_NAME L"\\\\.\\pipe\\mupennut"
+const std::wstring NUT_PIPE_NAME = L"\\\\.\\pipe\\mupennut";
+const std::wstring FFMPEG_OPTIONS = L"-y -i {} {} -vf vflip {}";
 
 struct PipeIO
 {
@@ -56,7 +57,8 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     m_dropped_frames = 0;
     m_last_write_was_video = false;
 
-    m_pipe = CreateNamedPipe(NUT_PIPE_NAME, PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE | PIPE_WAIT, 1,
+    m_pipe = CreateNamedPipe(NUT_PIPE_NAME.c_str(), PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
+                             PIPE_TYPE_BYTE | PIPE_WAIT, 1,
                              1 << 20, // 1 MB write buffer
                              0, 0, nullptr);
 
@@ -67,9 +69,9 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
 
     m_pipe_write_event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
-    static wchar_t options[4096]{};
-    memset(options, 0, sizeof(options));
-    wsprintf(options, g_config.ffmpeg_final_options.data(), NUT_PIPE_NAME, m_params.path.wstring().data());
+    const auto path_str = m_params.path.wstring();
+    const auto options =
+        std::vformat(FFMPEG_OPTIONS, std::make_wformat_args(NUT_PIPE_NAME, g_config.ffmpeg_options, path_str));
 
     g_view_logger->info(L"[FFmpegEncoder] Starting encode with commandline:");
     g_view_logger->info(L"[FFmpegEncoder] {}", options);
@@ -79,8 +81,8 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     memset(&m_si, 0, sizeof(m_si));
     memset(&m_pi, 0, sizeof(m_pi));
 
-    if (!CreateProcess(g_config.ffmpeg_path.c_str(), options, nullptr, nullptr, FALSE, NULL, nullptr, nullptr, &m_si,
-                       &m_pi))
+    if (!CreateProcess(g_config.ffmpeg_path.c_str(), const_cast<wchar_t *>(options.data()), nullptr, nullptr, FALSE,
+                       NULL, nullptr, nullptr, &m_si, &m_pi))
     {
         g_view_logger->error(L"[FFmpegEncoder] CreateProcess failed ({}).", GetLastError());
         CloseHandle(m_pipe);

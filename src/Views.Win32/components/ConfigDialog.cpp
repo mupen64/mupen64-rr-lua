@@ -837,8 +837,8 @@ std::vector<t_options_group> get_static_option_groups()
         .type = t_options_item::Type::String,
         .group_id = capture_group.id,
         .name = L"FFmpeg Arguments",
-        .tooltip = L"The argument format string to be passed to FFmpeg when capturing.",
-        GENPROPS(std::wstring, ffmpeg_final_options),
+        .tooltip = L"FFmpeg arguments to be passed to FFmpeg when capturing.",
+        GENPROPS(std::wstring, ffmpeg_options),
         .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
 

@@ -144,12 +144,9 @@ struct t_config
     int32_t capture_delay;
 
     /// <summary>
-    /// FFmpeg post-stream option format string which is used when capturing using the FFmpeg encoder type
+    /// FFmpeg options.
     /// </summary>
-    std::wstring ffmpeg_final_options = L"-y -i %s "
-                                        L"-c:v libx264 -preset veryfast -crf 23 "
-                                        L"-c:a aac -b:a 128k "
-                                        L"-vf vflip %s";
+    std::wstring ffmpeg_options = L"-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k";
 
     /// <summary>
     /// FFmpeg binary path
