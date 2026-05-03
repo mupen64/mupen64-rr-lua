@@ -162,6 +162,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     spdlog::spdlog
     nlohmann_json::nlohmann_json
     PkgConfig::speexdsp
+    PkgConfig::libav
     vendor::argh
     vendor::bs-thread-pool
     vendor::windarkmode

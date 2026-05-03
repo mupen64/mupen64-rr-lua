@@ -8,6 +8,16 @@
 
 #include "Encoder.h"
 
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/channel_layout.h>
+#include <libavutil/opt.h>
+}
+
+#include <capture/CaptureManager.h>
+
 class FFmpegEncoder : public Encoder
 {
   public:
@@ -17,31 +27,28 @@ class FFmpegEncoder : public Encoder
     bool append_audio(uint8_t *audio, size_t length, uint8_t bitrate) override;
 
   private:
-    bool append_audio_impl(uint8_t *audio, size_t length);
-    void write_video_thread();
-    void write_audio_thread();
+    bool write_av_packet(int stream_index, uint8_t *data, int size, int64_t pts, int64_t duration);
 
     Params m_params{};
 
     STARTUPINFO m_si{};
     PROCESS_INFORMATION m_pi{};
-    HANDLE m_video_pipe{};
-    HANDLE m_audio_pipe{};
 
-    uint8_t *m_silence_buffer{};
-    uint8_t *m_blank_buffer{};
+    HANDLE m_pipe{};
+    HANDLE m_pipe_write_event{};
+
+    AVFormatContext *m_fmt_ctx{};
+    AVIOContext *m_avio_ctx{};
+    AVStream *m_video_stream{};
+    AVStream *m_audio_stream{};
+
+    int64_t m_video_pts = 0;
+    int64_t m_audio_pts = 0;
+
+    size_t m_video_frame = 0;
+    double_t m_audio_frame = 0.0;
     size_t m_dropped_frames = 0;
-
-    bool m_stop_thread = false;
     bool m_last_write_was_video = false;
 
-    std::thread m_audio_thread;
-    std::mutex m_audio_queue_mutex{};
-    std::condition_variable m_audio_cv{};
-    std::queue<std::tuple<uint8_t *, size_t>> m_audio_queue;
-
-    std::thread m_video_thread;
-    std::mutex m_video_queue_mutex{};
-    std::condition_variable m_video_cv{};
-    std::queue<std::pair<uint8_t *, bool>> m_video_queue;
+    std::vector<uint8_t> m_silence_buf;
 };

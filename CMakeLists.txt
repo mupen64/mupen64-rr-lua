@@ -66,6 +66,7 @@ endif()
 # pkg-config libraries
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
+pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 
 # cmake libraries
 find_package(libdeflate CONFIG REQUIRED)

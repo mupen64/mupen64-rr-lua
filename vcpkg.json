@@ -1,12 +1,21 @@
 {
   "dependencies": [
+    {
+      "name": "ffmpeg",
+      "features": [
+        "avcodec",
+        "avformat"
+      ]
+    },
     "catch2",
     "libdeflate",
     "lua",
     "nlohmann-json",
     {
       "name": "spdlog",
-      "features": ["wchar"]
+      "features": [
+        "wchar"
+      ]
     },
     "pkgconf",
     "speexdsp",
