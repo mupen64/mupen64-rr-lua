@@ -333,11 +333,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
 
     m_encoder_type = encoder_type;
     m_current_path = path;
-
-    if (encoder_type == t_config::EncoderType::FFmpeg)
-    {
-        m_current_path.replace_extension(".mp4");
-    }
+    m_current_path.replace_extension(m_encoder->get_desired_extension());
 
     m_video_frame = 0.0;
     m_audio_frame = 0.0;

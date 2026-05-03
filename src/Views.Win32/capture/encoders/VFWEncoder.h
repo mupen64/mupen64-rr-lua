@@ -17,6 +17,7 @@ class VFWEncoder final : public Encoder
     bool stop() override;
     bool append_video(uint8_t *image) override;
     bool append_audio(uint8_t *audio, size_t length, uint8_t bitrate) override;
+    std::wstring get_desired_extension() const override;
 
   private:
     static constexpr auto SOUND_BUF_SIZE = 44100 * 2 * 2;
