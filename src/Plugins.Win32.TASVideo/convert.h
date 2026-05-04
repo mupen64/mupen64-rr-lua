@@ -280,8 +280,8 @@ inline u16 IA31_RGBA4444(u8 color)
     u32 a1 = static_cast<u32>(color) & 0x1u;
     u8 i4 = static_cast<u8>((i3 * 15 + 3) / 7);
     u8 a4 = static_cast<u8>(a1 ? 15u : 0u);
-    return static_cast<u16>((static_cast<u16>(i4) << 12) | (static_cast<u16>(i4) << 8) |
-                            (static_cast<u16>(i4) << 4) | static_cast<u16>(a4));
+    return static_cast<u16>((static_cast<u16>(i4) << 12) | (static_cast<u16>(i4) << 8) | (static_cast<u16>(i4) << 4) |
+                            static_cast<u16>(a4));
 }
 
 inline u32 IA31_RGBA8888(u8 color)
