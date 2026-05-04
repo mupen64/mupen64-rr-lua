@@ -278,10 +278,10 @@ inline u16 IA31_RGBA4444(u8 color)
 {
     u32 i3 = (static_cast<u32>(color) >> 1) & 0x7u;
     u32 a1 = static_cast<u32>(color) & 0x1u;
-    u8 i8 = static_cast<u8>((i3 * 255 + 3) / 7);
-    u8 a8 = static_cast<u8>(a1 ? 255u : 0u);
-    return (static_cast<u32>(a8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
-           (static_cast<u32>(i8) << 0);
+    u8 i4 = static_cast<u8>((i3 * 15 + 3) / 7);
+    u8 a4 = static_cast<u8>(a1 ? 15u : 0u);
+    return static_cast<u16>((static_cast<u16>(i4) << 12) | (static_cast<u16>(i4) << 8) | (static_cast<u16>(i4) << 4) |
+                            static_cast<u16>(a4));
 }
 
 inline u32 IA31_RGBA8888(u8 color)
@@ -290,8 +290,8 @@ inline u32 IA31_RGBA8888(u8 color)
     u32 a1 = static_cast<u32>(color) & 0x1u;
     u8 i8 = static_cast<u8>((i3 * 255 + 3) / 7);
     u8 a8 = static_cast<u8>(a1 ? 255u : 0u);
-    return (static_cast<u32>(i8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
-           (static_cast<u32>(a8) << 0);
+    return (static_cast<u32>(a8) << 24) | (static_cast<u32>(i8) << 16) | (static_cast<u32>(i8) << 8) |
+           (static_cast<u32>(i8) << 0);
 }
 
 inline u16 I8_RGBA4444(u8 color)

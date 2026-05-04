@@ -696,7 +696,7 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
     glLoadIdentity();
     OGL_UpdateCullFace();
     OGL_UpdateViewport();
-    if (!OGL.ignoreScissor) glEnable(GL_SCISSOR_TEST);
+    glEnable(GL_SCISSOR_TEST);
 }
 
 void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls, float ult, float lrs, float lrt,
