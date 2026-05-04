@@ -768,7 +768,7 @@ static void start_capture_normal()
 {
     BetterEmulationLock lock;
 
-    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi");
+    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi;*.mp4");
     if (path.empty())
     {
         return;
@@ -785,7 +785,7 @@ static void start_capture_from_preset()
 {
     BetterEmulationLock lock;
 
-    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi");
+    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi;*.mp4");
     if (path.empty())
     {
         return;

@@ -71,4 +71,10 @@ class Encoder
      * \return Whether the operation succeeded
      */
     virtual bool append_audio(uint8_t *audio, size_t length, uint8_t bitrate) = 0;
+
+    /**
+     * \brief Returns the desired extension for the encoder's output file.
+     * \return The desired extension.
+     */
+    virtual std::wstring get_desired_extension() const = 0;
 };

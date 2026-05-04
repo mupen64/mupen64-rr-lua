@@ -337,3 +337,8 @@ error:
     fclose(f);
     return false;
 }
+
+std::wstring VFWEncoder::get_desired_extension() const
+{
+    return L".avi";
+}

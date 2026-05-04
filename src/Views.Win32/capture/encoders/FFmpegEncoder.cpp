@@ -330,3 +330,8 @@ bool FFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
     m_last_write_was_video = false;
     return true;
 }
+
+std::wstring FFmpegEncoder::get_desired_extension() const
+{
+    return L".mp4";
+}
