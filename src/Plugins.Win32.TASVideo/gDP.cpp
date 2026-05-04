@@ -572,6 +572,17 @@ void gDPLoadTLUT(u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt)
 
 void gDPSetScissor(u32 mode, f32 ulx, f32 uly, f32 lrx, f32 lry)
 {
+    const auto is_sm64_border_scissor =
+        (ulx == 0 && uly == 0 && lrx == 320 && lry == 240) || (ulx == 0 && uly == 8 && lrx == 320 && lry == 232);
+
+    if (OGL.ignoreScissor && is_sm64_border_scissor)
+    {
+        ulx = 0;
+        uly = 0;
+        lrx = 320;
+        lry = 240;
+    }
+
     gDP.scissor.mode = mode;
     gDP.scissor.ulx = ulx;
     gDP.scissor.uly = uly;
@@ -612,7 +623,7 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
     }
 
     // clear once per frame
-    if (!OGL.ignoreScissor || !gDP.colorImage.changed)
+    if (!gDP.colorImage.changed)
         OGL_DrawRect(ulx, uly, lrx, lry,
                      (gDP.otherMode.cycleType == G_CYC_FILL) ? &gDP.fillColor.r : &gDP.blendColor.r);
 
