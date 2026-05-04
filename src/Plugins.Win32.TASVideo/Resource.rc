@@ -24,18 +24,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE
 BEGIN
     "\r\n"
     "\0"
@@ -66,8 +66,6 @@ BEGIN
     CONTROL         "Enabled Dithered Alpha Testing",IDC_DITHEREDALPHATEST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,48,116,10
     CONTROL         "Enable Fog",IDC_FOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,48,51,10
     CONTROL         "Clear every frame",IDC_CLEAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,61,74,10
-    LTEXT           "Combiner:",IDC_STATIC2,16,75,36,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_COMBINER,59,75,107,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Textures",IDC_STATIC,7,123,225,46
     LTEXT           "Texture Filter:",IDC_STATIC,15,135,48,8
     COMBOBOX        IDC_TEXTUREFILTER,86,132,76,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -148,4 +146,3 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-

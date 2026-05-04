@@ -64,9 +64,6 @@ void Config_LoadConfig()
         RegQueryValueEx(hKey, L"Clear Override", 0, NULL, (BYTE *)&value, &size);
         OGL.clear_override = value ? TRUE : FALSE;
 
-        RegQueryValueEx(hKey, L"Combiner", 0, NULL, (BYTE *)&value, &size);
-        OGL.combiner = value;
-
         if (OGL.textureFilter == TextureFilter::SaI)
         {
             OGL.filterScale = 2;
@@ -128,9 +125,6 @@ void Config_SaveConfig()
     value = OGL.clear_override ? 1 : 0;
     RegSetValueEx(hKey, L"Clear Override", 0, REG_DWORD, (BYTE *)&value, 4);
 
-    value = OGL.combiner;
-    RegSetValueEx(hKey, L"Combiner", 0, REG_DWORD, (BYTE *)&value, 4);
-
     RegCloseKey(hKey);
 }
 
@@ -154,8 +148,6 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.originAdjust = (OGL.textureFilter == TextureFilter::SaI ? 0.25 : 0.50);
     OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
     OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
-
-    OGL.combiner = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_COMBINER));
 
     i = SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_GETCURSEL, 0, 0);
     if (i == SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWEDRES), CB_GETCOUNT, 0, 0) - 1)
@@ -225,12 +217,6 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
                            OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
         SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_SETCHECK,
                            OGL.clear_override ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
-
-        ComboBox_AddString(GetDlgItem(hWndDlg, IDC_COMBINER), L"Autodetect");
-        ComboBox_AddString(GetDlgItem(hWndDlg, IDC_COMBINER), L"TEXTURE_ENV");
-        ComboBox_AddString(GetDlgItem(hWndDlg, IDC_COMBINER), L"TEXTURE_ENV_COMBINE");
-        ComboBox_AddString(GetDlgItem(hWndDlg, IDC_COMBINER), L"NV_REGISTER_COMBINERS");
-        ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_COMBINER), OGL.combiner);
 
         // Enable/disable fog
         SendDlgItemMessage(hWndDlg, IDC_FOG, BM_SETCHECK, OGL.fog ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);

@@ -1,57 +1,20 @@
 #include "stdafx.h"
 #include "OpenGL.h"
 #include "Combiner.h"
-#include "NV_register_combiners.h"
-#include "texture_env_combine.h"
-#include "texture_env.h"
+#include "unified_combiner.h"
 #include "gDP.h"
 
 CombinerInfo combiner;
 
 void Combiner_Init()
 {
-    if (OGL.NV_register_combiners)
-        combiner.compiler = NV_REGISTER_COMBINERS;
-    else if (OGL.EXT_texture_env_combine || OGL.ARB_texture_env_combine)
-        combiner.compiler = TEXTURE_ENV_COMBINE;
-    else
-        combiner.compiler = TEXTURE_ENV;
-
-    if (OGL.combiner != 0)
-    {
-        combiner.compiler = OGL.combiner;
-    }
-
-    switch (combiner.compiler)
-    {
-    case TEXTURE_ENV:
-        Init_texture_env();
-        break;
-
-    case TEXTURE_ENV_COMBINE:
-        Init_texture_env_combine();
-        break;
-
-    case NV_REGISTER_COMBINERS:
-        Init_NV_register_combiners();
-        break;
-    }
+    Init_unified_combiner();
     combiner.root = NULL;
 }
 
 void Combiner_UpdateCombineColors()
 {
-    switch (combiner.compiler)
-    {
-    case TEXTURE_ENV_COMBINE:
-        Update_texture_env_combine_Colors((TexEnvCombiner *)combiner.current->compiled);
-        break;
-
-    case NV_REGISTER_COMBINERS:
-        Update_NV_register_combiners_Colors((RegisterCombiners *)combiner.current->compiled);
-        break;
-    }
-
+    Update_unified_combiner_Colors(combiner.current->compiled);
     gDP.changed &= ~CHANGED_COMBINE_COLORS;
 }
 
@@ -268,21 +231,8 @@ CachedCombiner *Combiner_Compile(u64 mux)
     cached->left = NULL;
     cached->right = NULL;
 
-    // Send the simplified combiner to the hardware-specific compiler
-    switch (combiner.compiler)
-    {
-    case TEXTURE_ENV:
-        cached->compiled = (void *)Compile_texture_env(&color, &alpha);
-        break;
-
-    case TEXTURE_ENV_COMBINE:
-        cached->compiled = (void *)Compile_texture_env_combine(&color, &alpha);
-        break;
-
-    case NV_REGISTER_COMBINERS:
-        cached->compiled = (void *)Compile_NV_register_combiners(&color, &alpha);
-        break;
-    }
+    // Send the simplified combiner to the unified hardware compiler
+    cached->compiled = Compile_unified_combiner(&color, &alpha);
 
     return cached;
 }
@@ -304,6 +254,8 @@ void Combiner_Destroy()
         combiner.root = NULL;
     }
 
+    Uninit_unified_combiner();
+
     for (int i = 0; i < OGL.maxTextureUnits; i++)
     {
         glActiveTextureARB(GL_TEXTURE0_ARB + i);
@@ -313,23 +265,12 @@ void Combiner_Destroy()
 
 void Combiner_BeginTextureUpdate()
 {
-    switch (combiner.compiler)
-    {
-    case TEXTURE_ENV_COMBINE:
-        BeginTextureUpdate_texture_env_combine();
-        break;
-    }
+    BeginTextureUpdate_unified_combiner();
 }
 
 void Combiner_EndTextureUpdate()
 {
-    switch (combiner.compiler)
-    {
-    case TEXTURE_ENV_COMBINE:
-        // EndTextureUpdate_texture_env_combine();
-        Set_texture_env_combine((TexEnvCombiner *)combiner.current->compiled);
-        break;
-    }
+    EndTextureUpdate_unified_combiner();
 }
 
 DWORD64 Combiner_EncodeCombineMode(WORD saRGB0, WORD sbRGB0, WORD mRGB0, WORD aRGB0, WORD saA0, WORD sbA0, WORD mA0,
@@ -387,20 +328,7 @@ void Combiner_SelectCombine(u64 mux)
 
 void Combiner_SetCombineStates()
 {
-    switch (combiner.compiler)
-    {
-    case TEXTURE_ENV:
-        Set_texture_env((TexEnv *)combiner.current->compiled);
-        break;
-
-    case TEXTURE_ENV_COMBINE:
-        Set_texture_env_combine((TexEnvCombiner *)combiner.current->compiled);
-        break;
-
-    case NV_REGISTER_COMBINERS:
-        Set_NV_register_combiners((RegisterCombiners *)combiner.current->compiled);
-        break;
-    }
+    Set_unified_combiner(combiner.current->compiled);
 }
 
 void Combiner_SetCombine(u64 mux)

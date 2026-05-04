@@ -3,11 +3,7 @@
 #include "glN64.h"
 #include "OpenGL.h"
 #include "gDP.h"
-
-#define TEXTURE_ENV 1
-#define TEXTURE_ENV_COMBINE 2
-#define NV_REGISTER_COMBINERS 3
-#define NV_TEXTURE_ENV_COMBINE4 4
+#include "unified_combiner.h"
 
 /*
  * G_SETCOMBINE: color combine modes
@@ -240,7 +236,7 @@ struct CachedCombiner
 {
     gDPCombine combine;
 
-    void *compiled;
+    UnifiedCompiledCombiner *compiled;
     CachedCombiner *left, *right;
 };
 
@@ -252,8 +248,6 @@ extern struct CombinerInfo
     } vertex;
 
     CachedCombiner *root, *current;
-
-    int compiler;
 
     BOOL usesT0, usesT1, usesNoise;
 } combiner;
@@ -319,7 +313,6 @@ extern struct CombinerInfo
 
 void Combiner_Init();
 void Combiner_UpdateCombineColors();
-void Combiner_UpdateCombineMode();
 void Combiner_SetCombine(u64 mux);
 void Combiner_SelectCombine(u64 mux);
 void Combiner_SetCombineStates();

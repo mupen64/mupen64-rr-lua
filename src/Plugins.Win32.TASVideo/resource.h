@@ -1477,8 +1477,7 @@
 #define scr8 0x0497
 #define ctl1 0x04A0
 #define IDC_STATIC 1234
-#define IDC_STATIC2 1235
-#define IDC_COMBINER 1236
+
 #define ctlLast 0x04ff
 #define _WIN32_WINNT_WIN2K 0x0500
 #define _WIN32_IE_IE50 0x0500
