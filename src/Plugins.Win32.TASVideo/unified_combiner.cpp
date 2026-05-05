@@ -149,12 +149,6 @@ static void Init()
     TexEnvArgs[TEXEL0_ALPHA].source = GL_TEXTURE0_ARB;
     TexEnvArgs[TEXEL1].source = GL_TEXTURE1_ARB;
     TexEnvArgs[TEXEL1_ALPHA].source = GL_TEXTURE1_ARB;
-
-    if (OGL.ATI_texture_env_combine3)
-    {
-        TexEnvArgs[ONE].source = GL_ONE;
-        TexEnvArgs[ZERO].source = GL_ZERO;
-    }
 }
 
 static void Uninit()
@@ -272,16 +266,6 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                         SetAlphaCombinerArg(curUnit, arg0, alpha->stage[i].op[j].param1);
                         envCombiner->alpha[curUnit].arg0.operand = GL_ONE_MINUS_SRC_ALPHA;
                     }
-                    else if ((OGL.ATI_texture_env_combine3) && (curUnit > 0) &&
-                             (envCombiner->alpha[curUnit - 1].combine == GL_MODULATE))
-                    {
-                        curUnit--;
-                        SetAlphaCombinerValues(curUnit, arg2, envCombiner->alpha[curUnit].arg1.source,
-                                               envCombiner->alpha[curUnit].arg1.operand);
-                        envCombiner->alpha[curUnit].combine = GL_MODULATE_SUBTRACT_ATI;
-                        SetAlphaCombinerArg(curUnit, arg1, alpha->stage[i].op[j].param1);
-                        curUnit++;
-                    }
                     else
                     {
                         envCombiner->alpha[curUnit].combine = GL_SUBTRACT_ARB;
@@ -297,20 +281,8 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                     break;
 
                 case ADD:
-                    if ((OGL.ATI_texture_env_combine3) && (curUnit > 0) &&
-                        (envCombiner->alpha[curUnit - 1].combine == GL_MODULATE))
-                    {
-                        curUnit--;
-                        SetAlphaCombinerValues(curUnit, arg2, envCombiner->alpha[curUnit].arg1.source,
-                                               envCombiner->alpha[curUnit].arg1.operand);
-                        envCombiner->alpha[curUnit].combine = GL_MODULATE_ADD_ATI;
-                        SetAlphaCombinerArg(curUnit, arg1, alpha->stage[i].op[j].param1);
-                    }
-                    else
-                    {
-                        envCombiner->alpha[curUnit].combine = GL_ADD;
-                        SetAlphaCombinerArg(curUnit, arg1, alpha->stage[i].op[j].param1);
-                    }
+                    envCombiner->alpha[curUnit].combine = GL_ADD;
+                    SetAlphaCombinerArg(curUnit, arg1, alpha->stage[i].op[j].param1);
                     curUnit++;
                     break;
 
@@ -396,16 +368,6 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                         SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param1);
                         envCombiner->color[curUnit].arg0.operand = GL_ONE_MINUS_SRC_COLOR;
                     }
-                    else if ((OGL.ATI_texture_env_combine3) && (curUnit > 0) &&
-                             (envCombiner->color[curUnit - 1].combine == GL_MODULATE))
-                    {
-                        curUnit--;
-                        SetColorCombinerValues(curUnit, arg2, envCombiner->color[curUnit].arg1.source,
-                                               envCombiner->color[curUnit].arg1.operand);
-                        envCombiner->color[curUnit].combine = GL_MODULATE_SUBTRACT_ATI;
-                        SetColorCombinerArg(curUnit, arg1, color->stage[i].op[j].param1);
-                        curUnit++;
-                    }
                     else
                     {
                         envCombiner->color[curUnit].combine = GL_SUBTRACT_ARB;
@@ -421,20 +383,8 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                     break;
 
                 case ADD:
-                    if ((OGL.ATI_texture_env_combine3) && (curUnit > 0) &&
-                        (envCombiner->color[curUnit - 1].combine == GL_MODULATE))
-                    {
-                        curUnit--;
-                        SetColorCombinerValues(curUnit, arg2, envCombiner->color[curUnit].arg1.source,
-                                               envCombiner->color[curUnit].arg1.operand);
-                        envCombiner->color[curUnit].combine = GL_MODULATE_ADD_ATI;
-                        SetColorCombinerArg(curUnit, arg1, color->stage[i].op[j].param1);
-                    }
-                    else
-                    {
-                        envCombiner->color[curUnit].combine = GL_ADD;
-                        SetColorCombinerArg(curUnit, arg1, color->stage[i].op[j].param1);
-                    }
+                    envCombiner->color[curUnit].combine = GL_ADD;
+                    SetColorCombinerArg(curUnit, arg1, color->stage[i].op[j].param1);
                     curUnit++;
                     break;
 

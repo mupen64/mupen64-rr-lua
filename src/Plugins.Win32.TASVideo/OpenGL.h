@@ -30,9 +30,6 @@ struct GLInfo
 
     float scaleX, scaleY;
 
-    BOOL ATI_texture_env_combine3; // Radeon
-    BOOL ATIX_texture_env_route;   // Radeon
-
     BOOL ARB_multitexture;         // TNT, GeForce, Rage 128, Radeon
     BOOL ARB_texture_env_combine;  // GeForce, Rage 128, Radeon
     BOOL ARB_texture_env_crossbar; // Radeon (GeForce supports it, but doesn't report it)
@@ -76,7 +73,7 @@ extern GLInfo OGL;
 
 struct GLcolor
 {
-    float r, g, b, a;
+    float r{}, g{}, b{}, a{};
 };
 
 void OGL_ReadPixels();

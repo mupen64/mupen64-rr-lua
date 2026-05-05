@@ -44,8 +44,6 @@ void OGL_InitExtensions()
     OGL.ARB_texture_env_combine = GLEW_ARB_texture_env_combine;
     OGL.ARB_texture_env_crossbar = GLEW_ARB_texture_env_crossbar;
     OGL.EXT_texture_env_combine = GLEW_EXT_texture_env_combine;
-    OGL.ATI_texture_env_combine3 = GLEW_ATI_texture_env_combine3;
-    OGL.ATIX_texture_env_route = GLEW_ATIX_texture_env_route;
 }
 
 void OGL_InitStates()
