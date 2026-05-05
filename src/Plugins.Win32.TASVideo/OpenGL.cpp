@@ -35,9 +35,6 @@ void OGL_InitExtensions()
         return;
     }
 
-    OGL.NV_register_combiners = GLEW_NV_register_combiners;
-    glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &OGL.maxGeneralCombiners);
-
     OGL.ARB_multitexture = GLEW_ARB_multitexture;
     glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &OGL.maxTextureUnits);
     OGL.maxTextureUnits = min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
@@ -49,7 +46,6 @@ void OGL_InitExtensions()
     OGL.EXT_texture_env_combine = GLEW_EXT_texture_env_combine;
     OGL.ATI_texture_env_combine3 = GLEW_ATI_texture_env_combine3;
     OGL.ATIX_texture_env_route = GLEW_ATIX_texture_env_route;
-    OGL.NV_texture_env_combine4 = GLEW_NV_texture_env_combine4;
 }
 
 void OGL_InitStates()

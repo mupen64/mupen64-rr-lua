@@ -41,15 +41,12 @@ struct GLInfo
     BOOL EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon
     BOOL EXT_secondary_color;     // GeForce, Radeon
 
-    BOOL NV_texture_env_combine4; // TNT, GeForce
-    BOOL NV_register_combiners;   // GeForce
     BOOL ARB_buffer_region;
     BOOL ARB_pbuffer;
     BOOL ARB_render_texture;
     BOOL ARB_pixel_format;
 
     int maxTextureUnits; // TNT = 2, GeForce = 2-4, Rage 128 = 2, Radeon = 3-6
-    int maxGeneralCombiners;
 
     TextureFilter textureFilter = TextureFilter::None;
     float originAdjust;

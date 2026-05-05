@@ -4,7 +4,6 @@
 #include "unified_combiner.h"
 #include "Textures.h"
 #include "gDP.h"
-#include "gSP.h"
 
 struct UCTexArg
 {
@@ -98,13 +97,6 @@ static UCTexArg TexEnvArgs[] = {
             envCombiner->color[n].a.source = GL_CONSTANT_ARB;                                                          \
             envCombiner->color[n].a.operand = GL_SRC_COLOR;                                                            \
         }                                                                                                              \
-        else if (OGL.ATIX_texture_env_route &&                                                                         \
-                 ((envCombiner->vertex.secondaryColor == COMBINED) || (envCombiner->vertex.secondaryColor == i)))      \
-        {                                                                                                              \
-            envCombiner->vertex.secondaryColor = i;                                                                    \
-            envCombiner->color[n].a.source = GL_SECONDARY_COLOR_ATIX;                                                  \
-            envCombiner->color[n].a.operand = GL_SRC_COLOR;                                                            \
-        }                                                                                                              \
         else if ((envCombiner->vertex.color == COMBINED) || (envCombiner->vertex.color == i))                          \
         {                                                                                                              \
             envCombiner->vertex.color = i;                                                                             \
@@ -152,13 +144,11 @@ static void Init()
 {
     for (int i = 0; i < OGL.maxTextureUnits; i++) TextureCache_ActivateDummy(i);
 
-    if (OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4 || OGL.ATIX_texture_env_route)
-    {
-        TexEnvArgs[TEXEL0].source = GL_TEXTURE0_ARB;
-        TexEnvArgs[TEXEL0_ALPHA].source = GL_TEXTURE0_ARB;
-        TexEnvArgs[TEXEL1].source = GL_TEXTURE1_ARB;
-        TexEnvArgs[TEXEL1_ALPHA].source = GL_TEXTURE1_ARB;
-    }
+    // TEXTURE_ENV_COMBINE is now required
+    TexEnvArgs[TEXEL0].source = GL_TEXTURE0_ARB;
+    TexEnvArgs[TEXEL0_ALPHA].source = GL_TEXTURE0_ARB;
+    TexEnvArgs[TEXEL1].source = GL_TEXTURE1_ARB;
+    TexEnvArgs[TEXEL1_ALPHA].source = GL_TEXTURE1_ARB;
 
     if (OGL.ATI_texture_env_combine3)
     {
@@ -232,8 +222,7 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                 sb = 1.0f;
 
             if (((alpha->stage[i].numOps - j) >= 3) && (alpha->stage[i].op[j].op == SUB) &&
-                (alpha->stage[i].op[j + 1].op == MUL) && (alpha->stage[i].op[j + 2].op == ADD) && (sb > 0.5f) &&
-                (OGL.ARB_texture_env_combine))
+                (alpha->stage[i].op[j + 1].op == MUL) && (alpha->stage[i].op[j + 2].op == ADD) && (sb > 0.5f))
             {
                 envCombiner->usesT0 |= alpha->stage[i].op[j].param1 == TEXEL0_ALPHA;
                 envCombiner->usesT1 |= alpha->stage[i].op[j].param1 == TEXEL1_ALPHA;
@@ -273,18 +262,11 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                 switch (alpha->stage[i].op[j].op)
                 {
                 case LOAD:
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        (alpha->stage[i].op[j].param1 == TEXEL1_ALPHA) && (curUnit == 0))
-                        curUnit++;
                     envCombiner->alpha[curUnit].combine = GL_REPLACE;
                     SetAlphaCombinerArg(curUnit, arg0, alpha->stage[i].op[j].param1);
                     break;
 
                 case SUB:
-                    if (!OGL.ARB_texture_env_combine) break;
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        (alpha->stage[i].op[j].param1 == TEXEL1_ALPHA) && (curUnit == 0))
-                        curUnit++;
                     if ((j > 0) && (alpha->stage[i].op[j - 1].op == LOAD) && (alpha->stage[i].op[j - 1].param1 == ONE))
                     {
                         SetAlphaCombinerArg(curUnit, arg0, alpha->stage[i].op[j].param1);
@@ -309,18 +291,12 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                     break;
 
                 case MUL:
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        (alpha->stage[i].op[j].param1 == TEXEL1_ALPHA) && (curUnit == 0))
-                        curUnit++;
                     envCombiner->alpha[curUnit].combine = GL_MODULATE;
                     SetAlphaCombinerArg(curUnit, arg1, alpha->stage[i].op[j].param1);
                     curUnit++;
                     break;
 
                 case ADD:
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        (alpha->stage[i].op[j].param1 == TEXEL1_ALPHA) && (curUnit == 0))
-                        curUnit++;
                     if ((OGL.ATI_texture_env_combine3) && (curUnit > 0) &&
                         (envCombiner->alpha[curUnit - 1].combine == GL_MODULATE))
                     {
@@ -369,8 +345,7 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                 sb = (gDP.envColor.r + gDP.envColor.b + gDP.envColor.g) / 3.0f;
 
             if (((color->stage[i].numOps - j) >= 3) && (color->stage[i].op[j].op == SUB) &&
-                (color->stage[i].op[j + 1].op == MUL) && (color->stage[i].op[j + 2].op == ADD) && (sb > 0.5f) &&
-                (OGL.ARB_texture_env_combine))
+                (color->stage[i].op[j + 1].op == MUL) && (color->stage[i].op[j + 2].op == ADD) && (sb > 0.5f))
             {
                 envCombiner->usesT0 |=
                     (color->stage[i].op[j].param1 == TEXEL0) || (color->stage[i].op[j].param1 == TEXEL0_ALPHA);
@@ -411,20 +386,11 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                 switch (color->stage[i].op[j].op)
                 {
                 case LOAD:
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        ((color->stage[i].op[j].param1 == TEXEL1) || (color->stage[i].op[j].param1 == TEXEL1_ALPHA)) &&
-                        (curUnit == 0))
-                        curUnit++;
                     envCombiner->color[curUnit].combine = GL_REPLACE;
                     SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param1);
                     break;
 
                 case SUB:
-                    if (!OGL.ARB_texture_env_combine) break;
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        ((color->stage[i].op[j].param1 == TEXEL1) || (color->stage[i].op[j].param1 == TEXEL1_ALPHA)) &&
-                        (curUnit == 0))
-                        curUnit++;
                     if ((j > 0) && (color->stage[i].op[j - 1].op == LOAD) && (color->stage[i].op[j - 1].param1 == ONE))
                     {
                         SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param1);
@@ -449,20 +415,12 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                     break;
 
                 case MUL:
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        ((color->stage[i].op[j].param1 == TEXEL1) || (color->stage[i].op[j].param1 == TEXEL1_ALPHA)) &&
-                        (curUnit == 0))
-                        curUnit++;
                     envCombiner->color[curUnit].combine = GL_MODULATE;
                     SetColorCombinerArg(curUnit, arg1, color->stage[i].op[j].param1);
                     curUnit++;
                     break;
 
                 case ADD:
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        ((color->stage[i].op[j].param1 == TEXEL1) || (color->stage[i].op[j].param1 == TEXEL1_ALPHA)) &&
-                        (curUnit == 0))
-                        curUnit++;
                     if ((OGL.ATI_texture_env_combine3) && (curUnit > 0) &&
                         (envCombiner->color[curUnit - 1].combine == GL_MODULATE))
                     {
@@ -487,38 +445,6 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
                     envCombiner->usesT1 |= (color->stage[i].op[j].param2 == TEXEL1) ||
                                            (color->stage[i].op[j].param3 == TEXEL1) ||
                                            (color->stage[i].op[j].param3 == TEXEL1_ALPHA);
-
-                    if (!(OGL.ARB_texture_env_crossbar || OGL.NV_texture_env_combine4) &&
-                        ((color->stage[i].op[j].param1 == TEXEL1) || (color->stage[i].op[j].param2 == TEXEL1) ||
-                         (color->stage[i].op[j].param3 == TEXEL1) || (color->stage[i].op[j].param3 == TEXEL1_ALPHA)) &&
-                        (curUnit == 0))
-                    {
-                        if (color->stage[i].op[j].param1 == TEXEL0)
-                        {
-                            envCombiner->color[curUnit].combine = GL_REPLACE;
-                            SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param1);
-                            color->stage[i].op[j].param1 = COMBINED;
-                        }
-                        if (color->stage[i].op[j].param2 == TEXEL0)
-                        {
-                            envCombiner->color[curUnit].combine = GL_REPLACE;
-                            SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param2);
-                            color->stage[i].op[j].param2 = COMBINED;
-                        }
-                        if (color->stage[i].op[j].param3 == TEXEL0)
-                        {
-                            envCombiner->color[curUnit].combine = GL_REPLACE;
-                            SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param3);
-                            color->stage[i].op[j].param3 = COMBINED;
-                        }
-                        if (color->stage[i].op[j].param3 == TEXEL0_ALPHA)
-                        {
-                            envCombiner->color[curUnit].combine = GL_REPLACE;
-                            SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param3);
-                            color->stage[i].op[j].param3 = COMBINED_ALPHA;
-                        }
-                        curUnit++;
-                    }
 
                     envCombiner->color[curUnit].combine = GL_INTERPOLATE_ARB;
                     SetColorCombinerArg(curUnit, arg0, color->stage[i].op[j].param1);
