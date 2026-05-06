@@ -124,7 +124,9 @@ jobs:
 
       - name: Delete PDB files
         shell: powershell
-        run: Remove-Item -Path build/out -Include *.pdb -Recurse
+        run: |
+          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
+            Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Upload build
         uses: actions/upload-artifact@v7
