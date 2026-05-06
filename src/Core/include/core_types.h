@@ -284,6 +284,8 @@ struct core_cfg
     /// Throttles game rendering to 60 FPS.
     /// </summary>
     int32_t render_throttling = 1;
+
+    bool operator==(const core_cfg &) const = default;
 };
 
 // #pragma region Emulator

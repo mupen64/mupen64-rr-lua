@@ -332,6 +332,8 @@ struct t_config
     /// assigned a hotkey.
     /// </summary>
     std::map<std::wstring, Hotkey::t_hotkey> inital_hotkeys;
+
+    bool operator==(const t_config &) const = default;
 };
 
 extern t_config g_config;

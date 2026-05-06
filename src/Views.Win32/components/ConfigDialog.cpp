@@ -377,11 +377,51 @@ static void update_plugin_buttons_enabled_state(HWND hwnd)
     EnableWindow(GetDlgItem(hwnd, IDRSPABOUT), has_rsp_plugin_selection);
 }
 
+// Compares two configs, ignoring the settings_tab field because it's changed while in the settings dialog.
+static bool weak_compare(const t_config &a, const t_config &b)
+{
+    t_config lhs = a;
+    t_config rhs = b;
+
+    lhs.settings_tab = 0;
+    rhs.settings_tab = 0;
+
+    return lhs == rhs;
+}
+
+INT_PTR CALLBACK base_pageproc(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
+{
+    if (message == WM_NOTIFY)
+    {
+        const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
+        if (lpnmhdr->code == PSN_QUERYCANCEL)
+        {
+            if (!weak_compare(g_config, g_prev_config))
+            {
+                const auto result = DialogService::show_ask_dialog(
+                    VIEW_DLG_CONFIRM_SETTINGS_DISCARD,
+                    L"You have unsaved changes. Are you sure you want to discard the changes?", L"Settings", true,
+                    hwnd);
+
+                if (!result)
+                {
+                    SetWindowLongPtr(hwnd, DWLP_MSGRESULT, 1);
+                    return 1;
+                }
+            }
+        }
+    }
+    return FALSE;
+}
+
 INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
 {
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
 
     [[maybe_unused]] char path_buffer[_MAX_PATH];
+
+    const auto base_result = base_pageproc(hwnd, message, w_param, l_param);
+    if (base_result) return base_result;
 
     switch (message)
     {
@@ -1051,6 +1091,9 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 {
     const auto lpnmhdr = reinterpret_cast<LPNMHDR>(l_param);
     auto ctx = (t_tab_context *)GetProp(hwnd, L"tab_context");
+
+    const auto base_result = base_pageproc(hwnd, message, w_param, l_param);
+    if (base_result) return base_result;
 
     switch (message)
     {
