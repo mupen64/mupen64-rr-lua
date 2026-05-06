@@ -122,6 +122,10 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
 
+      - name: Delete PDB files
+        shell: powershell
+        run: Remove-Item -Path build/out -Include *.pdb -Recurse
+
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
