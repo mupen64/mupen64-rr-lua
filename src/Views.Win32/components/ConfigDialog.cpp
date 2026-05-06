@@ -395,7 +395,7 @@ static bool weak_compare(const t_config &a, const t_config &b)
     return lhs == rhs;
 }
 
-INT_PTR CALLBACK base_pageproc(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
+static INT_PTR CALLBACK base_pageproc(const HWND hwnd, const UINT message, const WPARAM w_param, const LPARAM l_param)
 {
     if (message == WM_NOTIFY)
     {
