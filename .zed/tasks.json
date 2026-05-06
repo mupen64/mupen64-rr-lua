@@ -1,6 +1,6 @@
 [
   {
-    "label": "Delete cache and reconfigure",
+    "label": "delete cache and reconfigure",
     "reveal": "no_focus",
     "save": "all",
     "command": "./vsdev.cmd",
@@ -12,7 +12,7 @@
     ]
   },
   {
-    "label": "Switch to debug",
+    "label": "switch to debug",
     "reveal": "no_focus",
     "save": "all",
     "command": "./vsdev.cmd",
@@ -23,7 +23,7 @@
     ]
   },
   {
-    "label": "Switch to release",
+    "label": "switch to release",
     "reveal": "no_focus",
     "save": "all",
     "command": "./vsdev.cmd",
@@ -34,7 +34,7 @@
     ]
   },
   {
-    "label": "Build",
+    "label": "build",
     "reveal": "no_focus",
     "save": "all",
     "command": "./vsdev.cmd",
@@ -45,7 +45,7 @@
     ]
   },
   {
-    "label": "Clean rebuild",
+    "label": "clean rebuild",
     "reveal": "no_focus",
     "save": "all",
     "command": "./vsdev.cmd",
@@ -57,7 +57,7 @@
     ]
   },
   {
-    "label": "Test",
+    "label": "test",
     "reveal": "no_focus",
     "save": "all",
     "command": "./vsdev.cmd",
