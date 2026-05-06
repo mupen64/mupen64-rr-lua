@@ -1,9 +1,8 @@
 [
   {
     "label": "Delete cache and reconfigure",
-    "allow_concurrent_runs": false,
     "reveal": "no_focus",
-    "use_new_terminal": false,
+    "save": "all",
     "command": "./vsdev.cmd",
     "args": [
       "cmake",
@@ -14,9 +13,8 @@
   },
   {
     "label": "Switch to debug",
-    "allow_concurrent_runs": false,
     "reveal": "no_focus",
-    "use_new_terminal": false,
+    "save": "all",
     "command": "./vsdev.cmd",
     "args": [
       "cmake",
@@ -26,9 +24,8 @@
   },
   {
     "label": "Switch to release",
-    "allow_concurrent_runs": false,
     "reveal": "no_focus",
-    "use_new_terminal": false,
+    "save": "all",
     "command": "./vsdev.cmd",
     "args": [
       "cmake",
@@ -38,9 +35,8 @@
   },
   {
     "label": "Build",
-    "allow_concurrent_runs": false,
     "reveal": "no_focus",
-    "use_new_terminal": false,
+    "save": "all",
     "command": "./vsdev.cmd",
     "args": [
       "cmake",
@@ -50,9 +46,8 @@
   },
   {
     "label": "Clean rebuild",
-    "allow_concurrent_runs": false,
     "reveal": "no_focus",
-    "use_new_terminal": false,
+    "save": "all",
     "command": "./vsdev.cmd",
     "args": [
       "cmake",
@@ -63,9 +58,8 @@
   },
   {
     "label": "Test",
-    "allow_concurrent_runs": false,
     "reveal": "no_focus",
-    "use_new_terminal": false,
+    "save": "all",
     "command": "./vsdev.cmd",
     "args": [
       "ctest",
