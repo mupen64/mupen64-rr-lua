@@ -386,6 +386,12 @@ static bool weak_compare(const t_config &a, const t_config &b)
     lhs.settings_tab = 0;
     rhs.settings_tab = 0;
 
+    lhs.core.total_frames = 0;
+    rhs.core.total_frames = 0;
+
+    lhs.core.total_rerecords = 0;
+    rhs.core.total_rerecords = 0;
+
     return lhs == rhs;
 }
 
