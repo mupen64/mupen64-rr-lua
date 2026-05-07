@@ -490,6 +490,13 @@ void on_config_loaded(std::any)
         theme = WinDarkMode::Theme::Light;
     else if (g_config.theme == 1)
         theme = WinDarkMode::Theme::Dark;
+
+    if (g_main_ctx.wine)
+    {
+        g_view_logger->info("Falling back to light theme for Wine compatibility");
+        theme = WinDarkMode::Theme::Light;
+    }
+
     WinDarkMode::set(theme);
 }
 
