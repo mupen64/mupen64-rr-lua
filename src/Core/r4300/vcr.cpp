@@ -722,8 +722,8 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
         return;
     }
 
-    bool pausing_at_last = (g_core->cfg->pause_at_last_frame && vcr.current_sample == vcr.hdr.length_samples - 1);
-    bool pausing_at_n = (g_core->cfg->pause_at_frame != -1 && vcr.current_sample >= g_core->cfg->pause_at_frame - 1);
+    bool pausing_at_last = g_core->cfg->pause_at_last_frame && vcr.current_sample == vcr.hdr.length_samples - 1;
+    bool pausing_at_n = g_core->cfg->pause_at_frame > 0 && vcr.current_sample >= g_core->cfg->pause_at_frame - 1;
     bool wait_at_end = g_core->cfg->wait_at_movie_end && vcr.current_sample == (int32_t)vcr.hdr.length_samples - 1;
 
     if (pausing_at_last || pausing_at_n || wait_at_end)

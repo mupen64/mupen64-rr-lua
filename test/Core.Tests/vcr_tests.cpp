@@ -1191,4 +1191,54 @@ TEST_CASE("doesnt_deadlock", "vcr_begin_warp_modify")
     REQUIRE(result == Res_Ok);
 }
 
+TEST_CASE("pause_not_called_when_pause_at_frame_is_negative", "vcr_handle_playback")
+{
+    prepare_test();
+
+    bool pause_called = false;
+
+    core_create(&params, &ctx);
+
+    ctx->vr_pause_emu = [&]() { pause_called = true; };
+    cfg.pause_at_frame = -1;
+
+    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_playback;
+    vcr.current_sample = 2;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    REQUIRE(!pause_called);
+}
+
+TEST_CASE("pause_not_called_when_pause_at_frame_is_zero", "vcr_handle_playback")
+{
+    prepare_test();
+
+    bool pause_called = false;
+
+    core_create(&params, &ctx);
+
+    ctx->vr_pause_emu = [&]() { pause_called = true; };
+    cfg.pause_at_frame = 0;
+
+    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+
+    vcr.inputs = inputs;
+    vcr.hdr.length_samples = inputs.size();
+    vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
+    vcr.task = task_playback;
+    vcr.current_sample = 2;
+
+    core_buttons input{};
+    vcr_on_controller_poll(0, &input);
+
+    REQUIRE(!pause_called);
+}
+
 #pragma endregion
