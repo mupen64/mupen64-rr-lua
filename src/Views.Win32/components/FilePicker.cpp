@@ -133,7 +133,7 @@ std::filesystem::path FilePicker::show_folder_dialog(const std::wstring &id, HWN
         DWORD dwOptions;
         if (SUCCEEDED(pfd->GetOptions(&dwOptions)))
         {
-            pfd->SetOptions(dwOptions | FOS_PICKFOLDERS | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM);
+            pfd->SetOptions(dwOptions | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
         }
 
         if (SUCCEEDED(pfd->Show(hwnd)))
