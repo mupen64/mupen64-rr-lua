@@ -1135,7 +1135,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     const auto hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     RT_ASSERT(SUCCEEDED(hr), L"Failed to initialize COM.");
 
-    if (!g_main_ctx.wine) WinDarkMode::init();
+    WinDarkMode::init();
 
     LuaManager::init();
     CrashManager::init();
