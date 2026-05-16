@@ -269,7 +269,6 @@ using fnSetWindowCompositionAttribute = BOOL(WINAPI *)(HWND hWnd, WINDOWCOMPOSIT
 // 1809 17763
 using fnShouldAppsUseDarkMode = bool(WINAPI *)();                                            // ordinal 132
 using fnAllowDarkModeForWindow = bool(WINAPI *)(HWND hWnd, bool allow);                      // ordinal 133
-using fnAllowDarkModeForApp = bool(WINAPI *)(bool allow);                                    // ordinal 135, in 1809
 using fnFlushMenuThemes = void(WINAPI *)();                                                  // ordinal 136
 using fnRefreshImmersiveColorPolicyState = void(WINAPI *)();                                 // ordinal 104
 using fnIsDarkModeAllowedForWindow = bool(WINAPI *)(HWND hWnd);                              // ordinal 137
@@ -284,7 +283,6 @@ inline fnFlushMenuThemes _FlushMenuThemes{};
 inline fnSetWindowCompositionAttribute _SetWindowCompositionAttribute{};
 inline fnShouldAppsUseDarkMode _ShouldAppsUseDarkMode{};
 inline fnAllowDarkModeForWindow _AllowDarkModeForWindow{};
-inline fnAllowDarkModeForApp _AllowDarkModeForApp{};
 inline fnRefreshImmersiveColorPolicyState _RefreshImmersiveColorPolicyState{};
 inline fnIsDarkModeAllowedForWindow _IsDarkModeAllowedForWindow{};
 inline fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContrast{};
@@ -299,7 +297,6 @@ inline Theme theme = Theme::System;
 inline std::unordered_set<HWND> attached_windows;
 inline std::unordered_set<HWND> pending_separator_repaint;
 inline bool dark_mode_supported = false;
-inline DWORD build_number = 0;
 
 template <typename T, typename T1, typename T2> inline constexpr T rva_to_va(T1 base, T2 rva)
 {
@@ -427,14 +424,9 @@ inline void paint_menu_separator(HWND hwnd)
 
 inline void refresh_titlebar(HWND hwnd, bool dark)
 {
-    if (build_number < 18362)
-        SetProp(hwnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
-    if (_SetWindowCompositionAttribute)
-    {
-        BOOL dark2 = dark;
-        WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &dark2, sizeof(dark2)};
-        _SetWindowCompositionAttribute(hwnd, &data);
-    }
+    BOOL dark2 = dark;
+    WINDOWCOMPOSITIONATTRIBDATA data = {WCA_USEDARKMODECOLORS, &dark2, sizeof(dark2)};
+    _SetWindowCompositionAttribute(hwnd, &data);
 }
 
 inline bool is_theme_change_message(UINT message, LPARAM lparam)
@@ -1296,13 +1288,25 @@ struct AttachOptions
     std::optional<bool> is_dialog = std::nullopt;
 };
 
+/**
+ * @brief Options for `init`. See `init` for details.
+ */
+struct InitOptions
+{
+    /**
+     * @brief Whether to bypass the Windows 11 version check.
+     */
+    bool bypass_version_check = false;
+};
+
 inline void set(Theme theme);
 
 /**
  * @brief Initializes dark mode support. Call this once at the start of your program, preferrably in `WinMain` before
  * creating any windows.
+ * @param options Options for initialization. See `InitOptions` for details.
  */
-inline void init()
+inline void init(const InitOptions &options = {})
 {
     using namespace Internal;
 
@@ -1310,12 +1314,20 @@ inline void init()
         GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetNtVersionNumbers"));
     if (!RtlGetNtVersionNumbers) return;
 
-    DWORD major, minor;
-    RtlGetNtVersionNumbers(&major, &minor, &build_number);
-    build_number &= ~0xF0000000;
+    DWORD major{};
+    DWORD minor{};
+    DWORD build{};
+    RtlGetNtVersionNumbers(&major, &minor, &build);
+    build &= ~0xF0000000;
+
+    // Windows 11 only
+    if (major != 10 || minor != 0 || build < 22000) return;
 
     h_uxtheme = LoadLibraryEx(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (!h_uxtheme) return;
+
+    const auto user32 = GetModuleHandle(L"user32.dll");
+    if (!user32) return;
 
     _OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(49)));
     _RefreshImmersiveColorPolicyState =
@@ -1326,29 +1338,20 @@ inline void init()
         reinterpret_cast<fnShouldAppsUseDarkMode>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(132)));
     _AllowDarkModeForWindow =
         reinterpret_cast<fnAllowDarkModeForWindow>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(133)));
-
     _FlushMenuThemes = reinterpret_cast<fnFlushMenuThemes>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(136)));
-
-    auto ord135 = GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(135));
-    if (build_number < 18362)
-        _AllowDarkModeForApp = reinterpret_cast<fnAllowDarkModeForApp>(ord135);
-    else
-        _SetPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(ord135);
-
+    _SetPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(135)));
     _IsDarkModeAllowedForWindow =
         reinterpret_cast<fnIsDarkModeAllowedForWindow>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(137)));
-
-    _SetWindowCompositionAttribute = reinterpret_cast<fnSetWindowCompositionAttribute>(
-        GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowCompositionAttribute"));
+    _SetWindowCompositionAttribute =
+        reinterpret_cast<fnSetWindowCompositionAttribute>(GetProcAddress(user32, "SetWindowCompositionAttribute"));
 
     if (_OpenNcThemeData && _RefreshImmersiveColorPolicyState && _ShouldAppsUseDarkMode && _AllowDarkModeForWindow &&
-        (_AllowDarkModeForApp || _SetPreferredAppMode) && _IsDarkModeAllowedForWindow)
+        _SetPreferredAppMode && _IsDarkModeAllowedForWindow)
     {
         dark_mode_supported = true;
         update_theme_data(is_dark());
+        WinDarkMode::set(theme);
     }
-
-    WinDarkMode::set(theme);
 }
 
 /**
@@ -1397,7 +1400,6 @@ inline void set(Theme theme)
 
     const auto dark = is_dark();
     update_theme_data(dark);
-    if (_AllowDarkModeForApp) _AllowDarkModeForApp(dark);
     _RefreshImmersiveColorPolicyState();
     if (_FlushMenuThemes) _FlushMenuThemes();
     patch_scrollbar(dark);
