@@ -128,12 +128,12 @@
                     <button class="funcListItem" onclick="highlightFunc('emuGetspeed')">EMU.GETSPEED</button>
                 </a>
                 
-                <a href="#emuGet_ff">
-                    <button class="funcListItem" onclick="highlightFunc('emuGet_ff')">EMU.GET_FF</button>
+                <a href="#emuGet_speed_mode">
+                    <button class="funcListItem" onclick="highlightFunc('emuGet_speed_mode')">EMU.GET_SPEED_MODE</button>
                 </a>
                 
-                <a href="#emuSet_ff">
-                    <button class="funcListItem" onclick="highlightFunc('emuSet_ff')">EMU.SET_FF</button>
+                <a href="#emuSet_speed_mode">
+                    <button class="funcListItem" onclick="highlightFunc('emuSet_speed_mode')">EMU.SET_SPEED_MODE</button>
                 </a>
                 
                 <a href="#emuSpeed">
@@ -262,6 +262,22 @@
                 
                 <a href="#memoryRecompilenextall">
                     <button class="funcListItem" onclick="highlightFunc('memoryRecompilenextall')">MEMORY.RECOMPILENEXTALL</button>
+                </a>
+                </div>
+            <div class="collapsible">
+                <a href="#debuggerFuncs">DEBUGGER FUNCTIONS</a>
+            </div>
+            <div class="funcList">
+                <a href="#debuggerAdd_breakpoint">
+                    <button class="funcListItem" onclick="highlightFunc('debuggerAdd_breakpoint')">DEBUGGER.ADD_BREAKPOINT</button>
+                </a>
+                
+                <a href="#debuggerRemove_breakpoint">
+                    <button class="funcListItem" onclick="highlightFunc('debuggerRemove_breakpoint')">DEBUGGER.REMOVE_BREAKPOINT</button>
+                </a>
+                
+                <a href="#debuggerDisassemble">
+                    <button class="funcListItem" onclick="highlightFunc('debuggerDisassemble')">DEBUGGER.DISASSEMBLE</button>
                 </a>
                 </div>
             <div class="collapsible">
@@ -456,8 +472,8 @@
                     <button class="funcListItem" onclick="highlightFunc('d2dFree_image')">D2D.FREE_IMAGE</button>
                 </a>
                 
-                <a href="#d2dDraw_image">
-                    <button class="funcListItem" onclick="highlightFunc('d2dDraw_image')">D2D.DRAW_IMAGE</button>
+                <a href="#d2dDraw_image2">
+                    <button class="funcListItem" onclick="highlightFunc('d2dDraw_image2')">D2D.DRAW_IMAGE2</button>
                 </a>
                 
                 <a href="#d2dGet_image_info">
@@ -1006,15 +1022,16 @@ If <code>type</code> is 1, it will return only the version number (0.0.0).</p>
 <p>@<em>return</em> <code>speed_limit</code> — The current speed limit of the emulator.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">getspeed</span><span class="p">()</span>
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">speed_limit</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span>
-</code></pre></div></div><div name="emuGet_ff"><hr />
-<h1><a id="emuGet_ff">emu.get_ff</a></h1>
-<p>Gets whether fast forward is active.</p>
-<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">get_ff</span><span class="p">()</span>
-<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">boolean</span>
-</code></pre></div></div><div name="emuSet_ff"><hr />
-<h1><a id="emuSet_ff">emu.set_ff</a></h1>
-<p>Sets whether fast forward is active.</p>
-<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">set_ff</span><span class="p">(</span><span class="nv">fast_forward</span><span class="p">:</span><span class="w"> </span><span class="nc">boolean</span><span class="p">)</span>
+</code></pre></div></div><div name="emuGet_speed_mode"><hr />
+<h1><a id="emuGet_speed_mode">emu.get_speed_mode</a></h1>
+<p>Gets the speed mode.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">get_speed_mode</span><span class="p">()</span>
+<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">CoreSpeedMode</span>
+</code></pre></div></div><div name="emuSet_speed_mode"><hr />
+<h1><a id="emuSet_speed_mode">emu.set_speed_mode</a></h1>
+<p>Sets the speed mode.</p>
+<p>@<em>param</em> <code>mode</code> — The speed mode to set.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">emu</span><span class="p">.</span><span class="nf">set_speed_mode</span><span class="p">(</span><span class="nv">mode</span><span class="p">:</span><span class="w"> </span><span class="nc">CoreSpeedMode</span><span class="p">)</span>
 </code></pre></div></div><div name="emuSpeed"><hr />
 <h1><a id="emuSpeed">emu.speed</a></h1>
 <p>Sets the speed limit of the emulator.</p>
@@ -1024,7 +1041,7 @@ If <code>type</code> is 1, it will return only the version number (0.0.0).</p>
 </code></pre></div></div><div name="emuSpeedmode"><hr />
 <h1><a id="emuSpeedmode">emu.speedmode</a></h1>
 <p><span style="background-color: red; padding: 4px">This function is deprecated. Use emu.setff instead.</span></p>
-<p>Sets the speed mode of the emulator. Use <a href="#emuSet_ff">emu.setff</a> instead.</p>
+<p>Sets the speed mode of the emulator. Use <a href="lua://emu.set_ff">emu.setff</a> instead.</p>
 <div class="codehilite"><pre><span></span><code><span class="nv">mode</span><span class="p">:</span>
 <span class="w">    </span><span class="err">|</span><span class="w"> </span><span class="err">&quot;</span><span class="py">normal</span><span class="s2">&quot;</span>
 <span class="s2">    | &quot;</span><span class="nv">maximum</span><span class="s2">&quot;</span>
@@ -1223,6 +1240,28 @@ The memory is treated as signed if <code>size</code> is is negative.</p>
 <h1><a id="memoryRecompilenextall">memory.recompilenextall</a></h1>
 <p>Queues up a recompilation of all blocks.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">memory</span><span class="p">.</span><span class="nf">recompilenextall</span><span class="p">()</span>
+</code></pre></div></div><hr />
+<h1><a id="debuggerFuncs">DEBUGGER</a> FUNCTIONS</h1><div name="debuggerAdd_breakpoint"><hr />
+<h1><a id="debuggerAdd_breakpoint">debugger.add_breakpoint</a></h1>
+<p>Places a breakpoint at the specified address.
+The emulated processor won't pause when it reaches this address.
+This function can only be called outside a breakpoint callback.</p>
+<p>@<em>param</em> <code>address</code> — The address to place the breakpoint at.</p>
+<p>@<em>param</em> <code>callback</code> — The callback function to call when the breakpoint is hit.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">debugger</span><span class="p">.</span><span class="nf">add_breakpoint</span><span class="p">(</span><span class="nv">address</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">callback</span><span class="p">:</span><span class="w"> </span><span class="nc">fun</span><span class="p">(</span><span class="nv">state</span><span class="p">:</span><span class="w"> </span><span class="nc">CPUState</span><span class="p">):</span><span class="nc">nil</span><span class="p">)</span>
+<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">integer</span>
+</code></pre></div></div><div name="debuggerRemove_breakpoint"><hr />
+<h1><a id="debuggerRemove_breakpoint">debugger.remove_breakpoint</a></h1>
+<p>Removes a breakpoint.</p>
+<p>@<em>param</em> <code>id</code> — The ID of the breakpoint to remove.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">debugger</span><span class="p">.</span><span class="nf">remove_breakpoint</span><span class="p">(</span><span class="nv">id</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">)</span>
+</code></pre></div></div><div name="debuggerDisassemble"><hr />
+<h1><a id="debuggerDisassemble">debugger.disassemble</a></h1>
+<p>Disassembles an instruction based on a CPU state.</p>
+<p>@<em>param</em> <code>state</code> — The CPU state to disassemble an instruction from.</p>
+<p>@<em>return</em> <code>The</code> — disassembled instruction.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">debugger</span><span class="p">.</span><span class="nf">disassemble</span><span class="p">(</span><span class="nv">state</span><span class="p">:</span><span class="w"> </span><span class="nc">CPUState</span><span class="p">)</span>
+<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">The</span><span class="p">:</span><span class="w"> </span><span class="nc">string</span>
 </code></pre></div></div><hr />
 <h1><a id="wguiFuncs">WGUI</a> FUNCTIONS</h1><div name="wguiSetbrush"><hr />
 <h1><a id="wguiSetbrush">wgui.setbrush</a></h1>
@@ -1602,12 +1641,11 @@ It can then be popped off the stack with <code>wgui.d2d_pop_clip</code>.</p>
 <p>Frees the image at <code>identifier</code>.</p>
 <div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">d2d</span><span class="p">.</span><span class="nf">free_image</span><span class="p">(</span><span class="nv">identifier</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">)</span>
 <span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
-</code></pre></div></div><div name="d2dDraw_image"><hr />
-<h1><a id="d2dDraw_image">d2d.draw_image</a></h1>
-<p>Draws an image by taking the pixels in the source rectangle of the image, and drawing them to the destination rectangle on the screen.</p>
-<p>@<em>param</em> <code>interpolation</code> — 0: nearest neighbor, 1: linear, -1: don't use.</p>
-<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">d2d</span><span class="p">.</span><span class="nf">draw_image</span><span class="p">(</span><span class="nv">destx1</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">desty1</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">destx2</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">desty2</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">srcx1</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">srcy1</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">srcx2</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">srcy2</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">opacity</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">,</span><span class="w"> </span><span class="nv">interpolation</span><span class="p">:</span><span class="w"> </span><span class="nc">integer</span><span class="p">,</span><span class="w"> </span><span class="nv">identifier</span><span class="p">:</span><span class="w"> </span><span class="nc">number</span><span class="p">)</span>
-<span class="w">  </span><span class="o">-&gt;</span><span class="w"> </span><span class="kc">nil</span>
+</code></pre></div></div><div name="d2dDraw_image2"><hr />
+<h1><a id="d2dDraw_image2">d2d.draw_image2</a></h1>
+<p>Draws an image with the specified parameters.</p>
+<p>@<em>param</em> <code>params</code> — The draw parameters.</p>
+<div class="codehilite"><pre><span></span><code><span class="kr">function</span><span class="w"> </span><span class="nc">d2d</span><span class="p">.</span><span class="nf">draw_image2</span><span class="p">(</span><span class="nv">params</span><span class="p">:</span><span class="w"> </span><span class="nc">D2DDrawImageParams</span><span class="p">)</span>
 </code></pre></div></div><div name="d2dGet_image_info"><hr />
 <h1><a id="d2dGet_image_info">d2d.get_image_info</a></h1>
 <p>Returns the width and height of the image at <code>identifier</code>.</p>
