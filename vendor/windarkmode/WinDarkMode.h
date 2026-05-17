@@ -295,6 +295,7 @@ inline fnSetPreferredAppMode _SetPreferredAppMode{};
 inline HMODULE h_uxtheme{};
 inline ULONG_PTR original_open_nc_theme_data{};
 
+inline bool initialized = false;
 inline Theme theme = Theme::System;
 inline std::unordered_set<HWND> attached_windows;
 inline std::unordered_set<HWND> pending_separator_repaint;
@@ -1306,6 +1307,10 @@ inline void init()
 {
     using namespace Internal;
 
+    if(initialized) return;
+
+    initialized = true;
+
     auto RtlGetNtVersionNumbers = reinterpret_cast<fnRtlGetNtVersionNumbers>(
         GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetNtVersionNumbers"));
     if (!RtlGetNtVersionNumbers) return;
@@ -1383,6 +1388,8 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
  */
 inline void set(Theme theme)
 {
+    if(!Internal::dark_mode_supported) return;
+
     Internal::theme = theme;
 
     using namespace Internal;
