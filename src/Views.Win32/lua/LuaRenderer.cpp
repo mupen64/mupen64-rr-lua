@@ -26,15 +26,13 @@ static void set_overlay_visibility(bool visible)
 
     for (const auto &lua : g_lua_environments)
     {
-        if (IsWindow(lua->rctx.gdi_overlay_hwnd))
-            ShowWindow(lua->rctx.gdi_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
-        if (IsWindow(lua->rctx.d2d_overlay_hwnd))
-            ShowWindow(lua->rctx.d2d_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
+        if (IsWindow(lua->rctx.gdi_overlay_hwnd)) ShowWindow(lua->rctx.gdi_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
+        if (IsWindow(lua->rctx.d2d_overlay_hwnd)) ShowWindow(lua->rctx.d2d_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
     }
 }
 
-static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                                   UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
+                                                  DWORD_PTR data)
 {
     switch (msg)
     {
@@ -53,7 +51,7 @@ static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wp
         }
         break;
     case WM_NCDESTROY:
-        RemoveWindowSubclass(hwnd, main_window_subclass_proc, uIdSubclass);
+        RemoveWindowSubclass(hwnd, main_window_subclass_proc, id);
         break;
     }
     return DefSubclassProc(hwnd, msg, wparam, lparam);
