@@ -20,6 +20,45 @@ static std::atomic<bool> draw_thread_running{false};
 
 static void move_and_order_overlays(const std::optional<std::vector<HWND>> &hwnds = std::nullopt);
 
+static void set_overlay_visibility(bool visible)
+{
+    if (!s_detached_overlays) return;
+
+    for (const auto &lua : g_lua_environments)
+    {
+        if (IsWindow(lua->rctx.gdi_overlay_hwnd))
+            ShowWindow(lua->rctx.gdi_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
+        if (IsWindow(lua->rctx.d2d_overlay_hwnd))
+            ShowWindow(lua->rctx.d2d_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
+    }
+}
+
+static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                                   UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+    switch (msg)
+    {
+    case WM_ACTIVATE:
+        switch (LOWORD(wparam))
+        {
+        case WA_ACTIVE:
+        case WA_CLICKACTIVE:
+            set_overlay_visibility(true);
+            break;
+        case WA_INACTIVE:
+            set_overlay_visibility(false);
+            break;
+        default:
+            break;
+        }
+        break;
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, main_window_subclass_proc, uIdSubclass);
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+}
+
 static void present_gdi_content(t_lua_environment *lua)
 {
     SIZE size = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
@@ -217,6 +256,7 @@ void LuaRenderer::init()
     if (g_main_ctx.wine)
     {
         s_detached_overlays = true;
+        SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
         g_view_logger->warn(L"Detected Wine environment, using detached Lua overlays");
     }
 
