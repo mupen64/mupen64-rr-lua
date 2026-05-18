@@ -461,6 +461,9 @@ static void config_patch(t_config &cfg)
             cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
         }
     }
+
+    // Wine doesn't support DComp
+    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
 }
 
 /**
