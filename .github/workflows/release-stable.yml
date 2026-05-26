@@ -12,6 +12,10 @@ jobs:
   stable-release:
     name: Create Stable Release
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x86]
+
     permissions:
       contents: write
       actions: read
@@ -24,6 +28,7 @@ jobs:
           fetch-depth: 0
 
       - name: Guard against non-main branches
+        shell: bash
         run: |
           if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
             echo "❌ This workflow must be run from the main branch."
