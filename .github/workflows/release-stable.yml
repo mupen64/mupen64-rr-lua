@@ -1,0 +1,111 @@
+name: Stable Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g. 1.2.0)"
+        required: true
+        type: string
+
+jobs:
+  stable-release:
+    name: Create Stable Release
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x86]
+
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Guard against non-main branches
+        shell: bash
+        run: |
+          if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
+            echo "❌ This workflow must be run from the main branch."
+            exit 1
+          fi
+
+      - uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
+        shell: powershell
+        run: |
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
+          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+
+      - name: Enable vcpkg binary caching
+        shell: powershell
+        run: |
+          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
+          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
+
+      - name: Cache vcpkg binaries
+        uses: actions/cache@v5
+        with:
+          path: |
+            vcpkg_cache
+            build/vcpkg_installed
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+
+      - name: CMake Setup
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --preset vcpkg-win64-x86-release
+
+      - name: CMake Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
+
+      - name: Delete PDB files
+        shell: powershell
+        run: |
+          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
+            Remove-Item -Force -ErrorAction SilentlyContinue
+
+      - name: Get latest stable release tag
+        id: stable_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=$(gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Generate changelog with git-cliff
+        id: changelog
+        run: |
+          git tag | grep -E '\-beta\-' | xargs -r git tag -d
+
+          git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md
+          {
+            echo 'body<<EOF'
+            cat CHANGELOG_DRAFT.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create draft stable release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.version }}
+          body: ${{ steps.changelog.outputs.body }}
+          prerelease: false
+          draft: true
+          files: mupen64-rr-lua-${{ inputs.version }}.zip
