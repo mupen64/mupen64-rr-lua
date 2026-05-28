@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -162,7 +162,7 @@ static void update_enabled_states(t_action_menu_context &ctx, const std::set<std
         }
 
         const bool enabled = ActionManager::get_enabled(action);
-        EnableMenuItem(ctx.menu_bar, item->id, enabled ? MF_ENABLED : MF_GRAYED);
+        EnableMenuItem(ctx.menu_bar, item->id, enabled ? MF_ENABLED : (MF_DISABLED | MF_GRAYED));
     }
 }
 
