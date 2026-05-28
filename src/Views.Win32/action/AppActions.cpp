@@ -5,14 +5,14 @@
  */
 
 #include "stdafx.h"
-#include <ActionManager.h>
+#include <action/ActionManager.h>
 #include <DialogService.h>
 #include <Messenger.h>
 #include <ThreadPool.h>
 #include <Plugin.h>
 #include <capture/CaptureManager.h>
 #include <components/CoreUtils.h>
-#include <components/AppActions.h>
+#include <action/AppActions.h>
 #include <components/CLI.h>
 #include <components/Cheats.h>
 #include <components/CommandPalette.h>

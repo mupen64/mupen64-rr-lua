@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <ActionManager.h>
+#include <action/ActionManager.h>
 
 /**
  * \brief A module responsible for managing recent items.

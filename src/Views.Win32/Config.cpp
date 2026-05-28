@@ -8,7 +8,7 @@
 #include <Config.h>
 #include <Messenger.h>
 #include <ini.h>
-#include <components/AppActions.h>
+#include <action/AppActions.h>
 
 static t_config get_default_config();
 

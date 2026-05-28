@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <ActionManager.h>
+#include <action/ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>
@@ -14,8 +14,8 @@
 #include <strsafe.h>
 #include <capture/CaptureManager.h>
 #include <components/CoreUtils.h>
-#include <components/ActionMenu.h>
-#include <components/AppActions.h>
+#include <action/ActionMenu.h>
+#include <action/AppActions.h>
 #include <components/CLI.h>
 #include <components/CommandPalette.h>
 #include <components/ParameterPalette.h>

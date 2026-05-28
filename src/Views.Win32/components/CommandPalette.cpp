@@ -8,7 +8,7 @@
 #include "stdafx.h"
 #include <components/CommandPalette.h>
 #include <components/ConfigDialog.h>
-#include <components/AppActions.h>
+#include <action/AppActions.h>
 #include <components/ParameterPalette.h>
 #include <Messenger.h>
 #include "CommandPalette.h"
