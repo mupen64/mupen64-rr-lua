@@ -28,12 +28,13 @@ jobs:
           fetch-depth: 0
 
       - name: Guard against non-main branches
-        shell: bash
+        shell: powershell
         run: |
-          if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
-            echo "❌ This workflow must be run from the main branch."
+          $branch = git rev-parse --abbrev-ref HEAD
+          if ($branch -ne "main") {
+            Write-Host "❌ This workflow must be run from the main branch."
             exit 1
-          fi
+          }
 
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
@@ -79,9 +80,11 @@ jobs:
         id: stable_tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: powershell
         run: |
-          tag=$(gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
-          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          $tag = gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName'
+          if (-not $tag) { $tag = "" }
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Install git-cliff
         uses: taiki-e/install-action@v2
@@ -90,15 +93,17 @@ jobs:
 
       - name: Generate changelog with git-cliff
         id: changelog
+        shell: powershell
         run: |
-          git tag | grep -E '\-beta\-' | xargs -r git tag -d
+          git tag |
+            Select-String '-beta-' |
+            ForEach-Object { git tag -d $_.Line }
 
           git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md
-          {
-            echo 'body<<EOF'
-            cat CHANGELOG_DRAFT.md
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
+
+          "body<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Get-Content CHANGELOG_DRAFT.md | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Create draft stable release
         uses: softprops/action-gh-release@v3
