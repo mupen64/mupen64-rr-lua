@@ -8,7 +8,7 @@
 
 #include <ViewHelpers.h>
 #include <components/FilePicker.h>
-#include <components/LuaDialog.h>
+#include <lua/LuaDialog.h>
 
 namespace LuaCore::IOHelper
 {

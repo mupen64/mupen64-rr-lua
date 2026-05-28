@@ -23,7 +23,6 @@
 #include <components/CrashManager.h>
 #include <components/Dispatcher.h>
 #include <components/HotkeyTracker.h>
-#include <components/LuaDialog.h>
 #include <components/MGECompositor.h>
 #include <components/PianoRoll.h>
 #include <components/RecentItems.h>
@@ -33,6 +32,7 @@
 #include <lua/LuaCallbacks.h>
 #include <lua/LuaManager.h>
 #include <lua/LuaRenderer.h>
+#include <lua/LuaDialog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 // Throwaway actions which can be spammed get keys as to not clog up the async executor queue

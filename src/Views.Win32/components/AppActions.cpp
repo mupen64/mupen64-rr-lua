@@ -18,7 +18,6 @@
 #include <components/CommandPalette.h>
 #include <components/ConfigDialog.h>
 #include <components/FilePicker.h>
-#include <components/LuaDialog.h>
 #include <components/MovieDialog.h>
 #include <components/PianoRoll.h>
 #include <components/RecentItems.h>
@@ -27,6 +26,7 @@
 #include <components/Statusbar.h>
 #include <components/UpdateChecker.h>
 #include <components/Validators.h>
+#include <lua/LuaDialog.h>
 
 bool confirm_user_exit()
 {

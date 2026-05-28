@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <components/LuaDialog.h>
+#include <lua/LuaDialog.h>
 #include <lua/LuaManager.h>
 
 namespace LuaCore::Hotkey
