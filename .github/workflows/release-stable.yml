@@ -82,6 +82,6 @@ jobs:
           tag_name: ${{ inputs.version }}
           name: ${{ inputs.version }}
           body: ${{ steps.changelog.outputs.body }}
-          prerelease: true
+          prerelease: false
           draft: true
           files: mupen64-rr-lua-${{ inputs.version }}.zip
