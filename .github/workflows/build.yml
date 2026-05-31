@@ -36,12 +36,6 @@ jobs:
             echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
           }
 
-      - name: Enable vcpkg binary caching
-        shell: powershell
-        run: |
-          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
-          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
-
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
@@ -97,12 +91,6 @@ jobs:
             $hash = "${{ github.sha }}".Substring(0, 7)
             echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
           }
-
-      - name: Enable vcpkg binary caching
-        shell: powershell
-        run: |
-          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
-          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
 
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
