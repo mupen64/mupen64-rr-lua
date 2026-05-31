@@ -2,12 +2,12 @@ name: Test
 
 on: [push]
 
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
 jobs:
   test:
     runs-on: windows-latest
-
-    env:
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
     strategy:
       matrix:

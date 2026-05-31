@@ -4,12 +4,12 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
 jobs:
   build-debug-beta:
     runs-on: windows-latest
-
-    env:
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
     strategy:
       matrix:
