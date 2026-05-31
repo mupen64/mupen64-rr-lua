@@ -11,11 +11,7 @@ on:
 jobs:
   stable-release:
     name: Create Stable Release
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        arch: [x86]
-
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       actions: read
@@ -28,63 +24,37 @@ jobs:
           fetch-depth: 0
 
       - name: Guard against non-main branches
-        shell: powershell
         run: |
-          $branch = git rev-parse --abbrev-ref HEAD
-          if ($branch -ne "main") {
-            Write-Host "❌ This workflow must be run from the main branch."
+          if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
+            echo "❌ This workflow must be run from the main branch."
             exit 1
-          }
+          fi
 
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
+      - name: Get latest commit hash
+        id: commit
+        run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Download mupen-release-stable artifact from latest main run
+        uses: dawidd6/action-download-artifact@v21
         with:
-          arch: ${{ matrix.arch }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: build.yml
+          branch: main
+          name: mupen-release-stable
+          path: ./release-artifact
 
-      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
-        shell: powershell
+      - name: Zip release artifact
         run: |
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
-          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
-
-      - name: Enable vcpkg binary caching
-        shell: powershell
-        run: |
-          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
-          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
-
-      - name: Cache vcpkg binaries
-        uses: actions/cache@v5
-        with:
-          path: |
-            vcpkg_cache
-            build/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
-
-      - name: CMake Setup
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-x86-release
-
-      - name: CMake Build
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build
-
-      - name: Delete PDB files
-        shell: powershell
-        run: |
-          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
-            Remove-Item -Force -ErrorAction SilentlyContinue
+          zip -r mupen64-rr-lua-${{ inputs.version }}.zip \
+            ./release-artifact/
 
       - name: Get latest stable release tag
         id: stable_tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: powershell
         run: |
-          $tag = gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName'
-          if (-not $tag) { $tag = "" }
-          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          tag=$(gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
 
       - name: Install git-cliff
         uses: taiki-e/install-action@v2
@@ -93,19 +63,20 @@ jobs:
 
       - name: Generate changelog with git-cliff
         id: changelog
-        shell: powershell
         run: |
-          git tag |
-            Select-String '-beta-' |
-            ForEach-Object { git tag -d $_.Line }
+          # Remove all beta tags from the local clone so git-cliff doesn't split
+          # the commit range into per-tag version segments (which causes duplicate
+          # section headers). This only affects the local repo, not the remote.
+          git tag | grep -E '\-beta\-' | xargs -r git tag -d
 
           git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md
+          {
+            echo 'body<<EOF'
+            cat CHANGELOG_DRAFT.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
-          "body<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Get-Content CHANGELOG_DRAFT.md | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
-      - name: Create draft stable release
+      - name: Create draft beta release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.version }}
