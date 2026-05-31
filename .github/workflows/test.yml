@@ -25,13 +25,21 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
+      - name: Create vcpkg cache directory
+        shell: pwsh
+        run: |
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
+
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
           path: vcpkg_cache
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json') }}
+            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
