@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-debug:
+  build-debug-beta:
     runs-on: windows-latest
 
     strategy:
@@ -57,11 +57,11 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-debug
+          name: mupen-debug-beta
           path: build/out
           retention-days: 14
 
-  build-release:
+  build-release-beta:
     runs-on: windows-latest
 
     strategy:
@@ -119,6 +119,63 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-release
+          name: mupen-release-beta
+          path: build/out
+          retention-days: 14
+
+  build-release-stable:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        arch: [x86]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
+        shell: powershell
+        run: |
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
+          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+
+      - name: Enable vcpkg binary caching
+        shell: powershell
+        run: |
+          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
+          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
+
+      - name: Cache vcpkg binaries
+        uses: actions/cache@v5
+        with:
+          path: |
+            vcpkg_cache
+            build/vcpkg_installed
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+
+      - name: CMake Setup
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --preset vcpkg-win64-x86-release
+
+      - name: CMake Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
+
+      - name: Delete PDB files
+        shell: powershell
+        run: |
+          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
+            Remove-Item -Force -ErrorAction SilentlyContinue
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: mupen-release-stable
           path: build/out
           retention-days: 14

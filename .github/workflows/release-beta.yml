@@ -34,13 +34,13 @@ jobs:
         id: commit
         run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Download mupen-release artifact from latest main run
+      - name: Download mupen-release-beta artifact from latest main run
         uses: dawidd6/action-download-artifact@v21
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: build.yml
           branch: main
-          name: mupen-release
+          name: mupen-release-beta
           path: ./release-artifact
 
       - name: Zip release artifact
