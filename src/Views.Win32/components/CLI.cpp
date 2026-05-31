@@ -15,7 +15,7 @@
 #include <components/CoreUtils.h>
 #include <components/CLI.h>
 #include <components/Dispatcher.h>
-#include <components/LuaDialog.h>
+#include <lua/LuaDialog.h>
 
 struct t_cli_params
 {

@@ -5,20 +5,19 @@
  */
 
 #include "stdafx.h"
-#include <ActionManager.h>
+#include <action/ActionManager.h>
 #include <DialogService.h>
 #include <Messenger.h>
 #include <ThreadPool.h>
 #include <Plugin.h>
 #include <capture/CaptureManager.h>
 #include <components/CoreUtils.h>
-#include <components/AppActions.h>
+#include <action/AppActions.h>
 #include <components/CLI.h>
 #include <components/Cheats.h>
 #include <components/CommandPalette.h>
 #include <components/ConfigDialog.h>
 #include <components/FilePicker.h>
-#include <components/LuaDialog.h>
 #include <components/MovieDialog.h>
 #include <components/PianoRoll.h>
 #include <components/RecentItems.h>
@@ -27,6 +26,7 @@
 #include <components/Statusbar.h>
 #include <components/UpdateChecker.h>
 #include <components/Validators.h>
+#include <lua/LuaDialog.h>
 
 bool confirm_user_exit()
 {

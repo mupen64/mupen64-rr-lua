@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include <ActionManager.h>
-#include <components/AppActions.h>
+#include <action/ActionManager.h>
+#include <action/AppActions.h>
 #include <components/HotkeyTracker.h>
 #include <components/ParameterPalette.h>
 

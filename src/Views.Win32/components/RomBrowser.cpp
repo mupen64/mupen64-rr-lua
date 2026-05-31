@@ -10,7 +10,7 @@
 #include <Uxtheme.h>
 #include <components/RomBrowser.h>
 #include <components/Statusbar.h>
-#include <components/AppActions.h>
+#include <action/AppActions.h>
 #include <Messenger.h>
 
 namespace RomBrowser

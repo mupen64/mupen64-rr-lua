@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <ActionManager.h>
+#include <action/ActionManager.h>
 #include <Config.h>
 #include <DialogService.h>
 #include <Messenger.h>

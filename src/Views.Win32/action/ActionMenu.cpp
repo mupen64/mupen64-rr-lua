@@ -5,9 +5,9 @@
  */
 
 #include "stdafx.h"
-#include <ActionManager.h>
 #include <Messenger.h>
-#include <components/ActionMenu.h>
+#include <action/ActionManager.h>
+#include <action/ActionMenu.h>
 #include <components/ParameterPalette.h>
 
 const auto MANAGED_MENU_CTX = L"Mupen64_ManagedMenuContext";
