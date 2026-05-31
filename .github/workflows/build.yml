@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
 jobs:
   build-debug-beta:
     runs-on: windows-latest
@@ -36,19 +39,21 @@ jobs:
             echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
           }
 
-      - name: Enable vcpkg binary caching
-        shell: powershell
+      - name: Create vcpkg cache directory
+        shell: pwsh
         run: |
-          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
-          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
 
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: |
-            vcpkg_cache
-            build/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
+          path: vcpkg_cache
+          key: >
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
+            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
@@ -98,19 +103,21 @@ jobs:
             echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
           }
 
-      - name: Enable vcpkg binary caching
-        shell: powershell
+      - name: Create vcpkg cache directory
+        shell: pwsh
         run: |
-          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
-          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
 
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: |
-            vcpkg_cache
-            build/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
+          path: vcpkg_cache
+          key: >
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
+            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
@@ -155,19 +162,21 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      - name: Enable vcpkg binary caching
-        shell: powershell
+      - name: Create vcpkg cache directory
+        shell: pwsh
         run: |
-          echo "VCPKG_FEATURE_FLAGS=manifests,binarycaching" >> $env:GITHUB_ENV
-          echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
 
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: |
-            vcpkg_cache
-            build/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
+          path: vcpkg_cache
+          key: >
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
+            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
