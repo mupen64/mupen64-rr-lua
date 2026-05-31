@@ -8,6 +8,9 @@ jobs:
   build-debug:
     runs-on: windows-latest
 
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
     strategy:
       matrix:
         arch: [x86]
@@ -39,10 +42,10 @@ jobs:
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: |
-            vcpkg_cache
-            build/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
+          path: vcpkg_cache
+          key: >
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
+            hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
@@ -95,10 +98,10 @@ jobs:
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: |
-            vcpkg_cache
-            build/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/vcpkg.json') }}
+          path: vcpkg_cache
+          key: >
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
+            hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
