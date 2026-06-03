@@ -1,6 +1,7 @@
 <script lang="ts">
 	import stroop from '$lib/assets/stroop.svg';
 	import Hero from '$lib/components/Hero.svelte';
+	import Title from '$lib/components/Title.svelte';
 </script>
 
 <main>
@@ -17,11 +18,7 @@
 
 	<section id="about" class="mb-12 p-16 pb-0">
 		<div class="mx-auto max-w-6xl">
-			<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-				<p>About</p>
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-			</div>
+			<Title>About</Title>
 			<div class="flex flex-col items-center justify-center">
 				<p>STROOP is a powerful diagnostic tool for Super Mario 64.</p>
 				<p>

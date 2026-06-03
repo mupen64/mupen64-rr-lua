@@ -3,6 +3,7 @@
 	import lua from '$lib/assets/lua.svg';
 	import demo from '$lib/assets/demo.png';
 	import Hero from '$lib/components/Hero.svelte';
+	import Title from '$lib/components/Title.svelte';
 </script>
 
 <main>
@@ -30,11 +31,7 @@
 
 	<section id="showcase" class="p-16 pb-0">
 		<div class="mx-auto max-w-6xl">
-			<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-				<p>Showcase</p>
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-			</div>
+			<Title>Showcase</Title>
 			<div class="flex flex-col items-center justify-center">
 				<img src={demo} alt="Demo" class="object-contain" />
 			</div>
@@ -43,12 +40,7 @@
 
 	<section id="features" class="p-16">
 		<div class="mx-auto max-w-6xl">
-			<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-				<p>Features</p>
-				<hr class="w-15 border-2 border-dashed border-red-600" />
-			</div>
-
+			<Title>Features</Title>
 			<div class="flex flex-row flex-wrap justify-center gap-8">
 				<div class="card2 w-80 max-w-72">
 					<p class="text-xl font-semibold">🔋 Batteries Included</p>
