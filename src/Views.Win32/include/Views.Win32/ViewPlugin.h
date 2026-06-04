@@ -14,6 +14,7 @@
 #pragma once
 
 #include "core_plugin.h"
+#include "core_types.h"
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
@@ -54,6 +55,12 @@ extern "C"
          * \brief Logs the specified message at the error level.
          */
         void (*log_error)(const wchar_t *);
+
+        /**
+         * \brief Gets the effective speed mode.
+         * \return The current effective speed mode.
+         */
+        CoreSpeedMode (*get_effective_speed_mode)();
     };
 
     typedef void(CALL *CLOSEDLL)();
