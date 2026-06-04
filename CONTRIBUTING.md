@@ -116,21 +116,10 @@ Before merging a pull request into main or pushing out a release, verify that:
 
 ### Release
 
-1. Generate a changelog using [git-cliff](https://git-cliff.org/)
-
-    ```
-    git-cliff -o CHANGELOG.md --unreleased
-    ```
-
-2. Write a summary of the release in the `# Summary` section of the changelog.
-3. Create a GitHub release with the following parameters:
-
-    Title: [version number]
-
-    Description: [CHANGELOG.md]
-
-    Files: [latest `mupen64.exe` build artifact]
-
+1. Ensure the version numbers have been bumped in the code
+2. On the repo page, navigate to the `Actions` tab and run the pinned `Beta Release` (or `Stable Release`) workflow
+3. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
+4. Update [repack](https://github.com/mupen64/repack)
 
 # Reading and using Crashlogs
 
