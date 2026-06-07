@@ -167,3 +167,25 @@ extern "C"
 #undef CALL
 #endif
 }
+
+/**
+ * \brief A module that provides helpers surrounding ViewPlugin.
+ */
+namespace ViewPluginHelpers
+{
+/**
+ * \brief Returns an `core_plugin_extended_funcs` with default implementations.
+ */
+inline core_plugin_extended_funcs get_core_plugin_extended_funcs_shim()
+{
+    core_plugin_extended_funcs funcs = {};
+    const auto log = [](const wchar_t *str) { wprintf(str); };
+    funcs.size = sizeof(core_plugin_extended_funcs);
+    funcs.log_trace = log;
+    funcs.log_info = log;
+    funcs.log_warn = log;
+    funcs.log_error = log;
+    funcs.get_effective_speed_mode = []() { return CoreSpeedMode::Normal; };
+    return funcs;
+}
+} // namespace ViewPluginHelpers
