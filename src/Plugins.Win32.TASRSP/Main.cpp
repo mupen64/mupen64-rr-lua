@@ -205,6 +205,8 @@ void on_rom_closed()
 uint32_t do_rsp_cycles(uint32_t Cycles)
 {
     OSTask_t *task = (OSTask_t *)(rsp.dmem + 0xFC0);
+    const auto skip = g_ef->get_effective_speed_mode() == CoreSpeedMode::UltraFastForward;
+
     uint32_t i, sum = 0;
 
     g_rsp_alive = true;
@@ -277,6 +279,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
         switch (task->type)
         {
         case 2: // audio
+            if (skip) return Cycles;
             if (audio_ucode(task) == 0) return Cycles;
             break;
         case 4: // jpeg
