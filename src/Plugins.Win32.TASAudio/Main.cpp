@@ -175,8 +175,3 @@ EXPORT void CALL AiLenChanged(void)
         g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at AiLenChanged(): {}", e.what())).c_str());
     }
 }
-
-EXPORT void CALL AiUpdate(int32_t wait)
-{
-    // no-op
-}
