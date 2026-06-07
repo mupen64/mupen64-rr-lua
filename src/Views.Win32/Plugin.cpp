@@ -153,6 +153,15 @@ static void stop_audio_thread()
 
 static void start_audio_thread()
 {
+    // We can forego thread creation for plugins with no AiUpdate implementation because they do audio heartbeat
+    // themselves
+    if (g_plugin_funcs.audio_ai_update == dummy_ai_update)
+    {
+        g_view_logger->info("Skipping audio thread creation");
+        return;
+    }
+
+    g_view_logger->info("Starting audio thread...");
     if (s_audio_thread.joinable()) stop_audio_thread();
     s_audio_thread = std::jthread(audio_thread_proc);
 }
