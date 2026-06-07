@@ -50,14 +50,17 @@ jobs:
             -Force `
             -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
 
-      - name: Cache vcpkg binaries
+      - name: Cache vcpkg binaries and installed packages
         uses: actions/cache@v5
         with:
-          path: vcpkg_cache
+          path: |
+            vcpkg_cache
+            vcpkg_installed
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
+            hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
           restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json','vcpkg-configuration.json') }}-
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
       - name: CMake Setup
@@ -114,14 +117,17 @@ jobs:
             -Force `
             -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
 
-      - name: Cache vcpkg binaries
+      - name: Cache vcpkg binaries and installed packages
         uses: actions/cache@v5
         with:
-          path: vcpkg_cache
+          path: |
+            vcpkg_cache
+            vcpkg_installed
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
+            hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
           restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json','vcpkg-configuration.json') }}-
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
       - name: CMake Setup
@@ -173,14 +179,17 @@ jobs:
             -Force `
             -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
 
-      - name: Cache vcpkg binaries
+      - name: Cache vcpkg binaries and installed packages
         uses: actions/cache@v5
         with:
-          path: vcpkg_cache
+          path: |
+            vcpkg_cache
+            vcpkg_installed
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
+            hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
           restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json','vcpkg-configuration.json') }}-
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
       - name: CMake Setup
