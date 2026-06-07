@@ -13,6 +13,7 @@
 #include <components/ConfigDialog.h>
 #include <components/Statusbar.h>
 #include <ThreadPool.h>
+#include <Messenger.h>
 
 #define CALL _cdecl
 
@@ -36,6 +37,8 @@ static std::shared_ptr<Plugin> video_plugin;
 static std::shared_ptr<Plugin> audio_plugin;
 static std::shared_ptr<Plugin> input_plugin;
 static std::shared_ptr<Plugin> rsp_plugin;
+
+static std::jthread s_audio_thread;
 
 plugin_funcs g_plugin_funcs{};
 
@@ -131,6 +134,28 @@ static void CALL dummy_capture_screen(char *)
 }
 
 #pragma endregion
+
+static void audio_thread_proc(std::stop_token st)
+{
+    while (!st.stop_requested())
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        g_plugin_funcs.audio_ai_update(0);
+    }
+}
+
+static void stop_audio_thread()
+{
+    if (!s_audio_thread.joinable()) return;
+    s_audio_thread.request_stop();
+    s_audio_thread = {};
+}
+
+static void start_audio_thread()
+{
+    if (s_audio_thread.joinable()) stop_audio_thread();
+    s_audio_thread = std::jthread(audio_thread_proc);
+}
 
 #define FUNC(target, type, fallback, name)                                                                             \
     target = (type)GetProcAddress((HMODULE)handle, name);                                                              \
@@ -579,6 +604,11 @@ void Plugin::deinitiate_dummy()
     if (close_dll) close_dll();
 }
 
+void PluginUtil::init()
+{
+    Messenger::subscribe(Messenger::Message::EmuStopping, [](const auto &...) { stop_audio_thread(); });
+}
+
 t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
 {
     std::vector<std::unique_ptr<Plugin>> plugins;
@@ -731,7 +761,6 @@ void PluginUtil::start_plugins()
     g_main_ctx.core.audio_ai_len_changed = g_plugin_funcs.audio_ai_len_changed;
     g_main_ctx.core.audio_ai_read_length = g_plugin_funcs.audio_ai_read_length;
     g_main_ctx.core.audio_process_alist = g_plugin_funcs.audio_process_alist;
-    g_main_ctx.core.audio_ai_update = g_plugin_funcs.audio_ai_update;
 
     g_main_ctx.core.input_controller_command = g_plugin_funcs.input_controller_command;
     g_main_ctx.core.input_get_keys = g_plugin_funcs.input_get_keys;
@@ -743,6 +772,8 @@ void PluginUtil::start_plugins()
     g_plugin_funcs.video_rom_open();
     g_plugin_funcs.input_rom_open();
     g_plugin_funcs.audio_rom_open();
+
+    start_audio_thread();
 }
 
 void PluginUtil::stop_plugins()

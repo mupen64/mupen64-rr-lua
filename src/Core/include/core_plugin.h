@@ -247,7 +247,6 @@ extern "C"
     typedef void(CALL *AILENCHANGED)();
     typedef uint32_t(CALL *AIREADLENGTH)();
     typedef void(CALL *PROCESSALIST)();
-    typedef void(CALL *AIUPDATE)(int32_t wait);
 
     typedef void(CALL *CONTROLLERCOMMAND)(int32_t controller, unsigned char *command);
     typedef void(CALL *GETKEYS)(int32_t controller, core_buttons *keys);
