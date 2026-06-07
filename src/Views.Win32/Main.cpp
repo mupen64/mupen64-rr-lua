@@ -1106,6 +1106,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     std::filesystem::create_directories(Config::logs_directory());
 
     Loggers::init();
+    PluginUtil::init();
 
     g_view_logger->info("WinMain");
     g_view_logger->info(get_mupen_name());

@@ -26,9 +26,6 @@
 #endif
 
 std::thread emu_thread_handle;
-std::thread audio_thread_handle;
-
-std::atomic<bool> audio_thread_stop_requested;
 
 // Lock to prevent emu state change race conditions
 std::recursive_mutex g_emu_cs;
@@ -2023,22 +2020,6 @@ void clear_save_data()
     fclose(g_mpak_file);
 }
 
-void audio_thread()
-{
-    g_core->log_info("Sound thread entering...");
-    while (true)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-        if (audio_thread_stop_requested == true) break;
-
-        if (vcr.seek_to_frame.has_value()) continue;
-
-        g_core->audio_ai_update(0);
-    }
-    g_core->log_info("Sound thread exiting...");
-}
-
 void emu_thread()
 {
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -2050,8 +2031,6 @@ void emu_thread()
     g_core->callbacks.emu_starting();
 
     dynacore = g_core->cfg->core_type;
-
-    audio_thread_handle = std::thread(audio_thread);
 
     g_core->callbacks.emu_launched_changed(true);
     g_core->callbacks.emu_starting_changed(false);
@@ -2083,10 +2062,6 @@ core_result vr_close_rom_impl(bool stop_vcr)
     }
 
     vr_resume_emu_impl(true);
-
-    audio_thread_stop_requested = true;
-    audio_thread_handle.join();
-    audio_thread_stop_requested = false;
 
     if (stop_vcr)
     {

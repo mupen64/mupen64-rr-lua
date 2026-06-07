@@ -73,6 +73,7 @@ extern "C"
     typedef void(CALL *READVIDEO)(void **);
 
     typedef int32_t(CALL *INITIATEAUDIO)(core_audio_info);
+    typedef void(CALL *AIUPDATE)(int32_t wait);
 
     typedef void(CALL *OLD_INITIATECONTROLLERS)(void *hwnd, core_controller controls[4]);
     typedef void(CALL *INITIATECONTROLLERS)(core_input_info control_info);

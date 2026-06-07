@@ -253,7 +253,6 @@ extern "C"
         AILENCHANGED audio_ai_len_changed;
         AIREADLENGTH audio_ai_read_length;
         PROCESSALIST audio_process_alist;
-        AIUPDATE audio_ai_update;
 
         CONTROLLERCOMMAND input_controller_command;
         GETKEYS input_get_keys;
