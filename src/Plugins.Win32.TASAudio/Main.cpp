@@ -157,6 +157,9 @@ EXPORT void CALL AiDacrateChanged(int32_t system_type)
 
 EXPORT void CALL AiLenChanged(void)
 {
+    const auto effective_speed_mode = g_ef->get_effective_speed_mode();
+    if (effective_speed_mode == CoreSpeedMode::UltraFastForward) return;
+
     // push new samples
     if (!g_audio_info || !g_backend) return;
     uint32_t addr = *g_audio_info->ai_dram_addr_reg & 0x00FF'FFF8;
