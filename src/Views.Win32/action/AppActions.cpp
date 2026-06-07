@@ -668,7 +668,7 @@ static void show_ram_start()
 
     if (result == 0)
     {
-        auto exe_filename = IOUtils::exe_path_cached().stem();
+        auto exe_filename = IOUtils::exe_path().stem();
 
         const auto stroop_line = std::format(L"<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
                                              L"endianness=\"little\" autoDetect=\"true\"/>",

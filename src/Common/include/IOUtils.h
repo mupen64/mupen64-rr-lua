@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include <filesystem>
 #if defined(_WIN32)
 #define NOMINMAX
 #include <Windows.h>
@@ -287,26 +288,57 @@ inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mo
 #endif
 }
 
-// Gets the path of the current executable file.
-inline std::filesystem::path exe_path()
+// Computes the path of the current executable file.
+inline std::filesystem::path compute_exe_path()
 {
 #ifdef _WIN32
     wchar_t path_buffer[MAX_PATH] = {L'\0'};
-    int rc;
+    DWORD rc;
 
     rc = GetModuleFileNameW(NULL, path_buffer, sizeof(path_buffer) / sizeof(wchar_t));
     if (rc == 0)
     {
-        throw std::system_error(GetLastError(), std::system_category());
+        throw std::system_error((int)GetLastError(), std::system_category());
     }
     return std::filesystem::path(path_buffer);
+#else
+#error TODO: compute_exe_path not defined on this platform
 #endif
 }
+
 // Gets the path of the current executable file.
-inline std::filesystem::path exe_path_cached()
+// This is only computed once and cached for the rest of the program.
+inline const std::filesystem::path& exe_path()
 {
     // this ensures that the exe path is cached.
-    static std::filesystem::path cached_path = exe_path();
+    static const std::filesystem::path cached_path = compute_exe_path();
+    return cached_path;
+}
+
+// Computes the path of the config directory.
+inline std::filesystem::path compute_config_path()
+{
+#ifdef _WIN32
+    wchar_t path_buffer[MAX_PATH] = {L'\0'};
+    DWORD rc;
+    rc = GetEnvironmentVariableW(L"LOCALAPPDATA", path_buffer, sizeof(path_buffer));
+    if (rc == 0)
+    {
+        throw std::system_error((int)GetLastError(), std::system_category());
+    }
+
+    auto dir = std::filesystem::path(path_buffer) / "mupen64-rr-lua";
+    return dir;
+#else
+#error TODO: compute_config_dir not defined on this platform
+#endif
+}
+
+// Gets the path of the config directory, creating it if needed.
+inline const std::filesystem::path& config_path() {
+    static const std::filesystem::path cached_path = compute_config_path();
+    if (!std::filesystem::is_directory(cached_path))
+        std::filesystem::create_directories(cached_path);
     return cached_path;
 }
 

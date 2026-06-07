@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "IOUtils.h"
 #include "stdafx.h"
 #include <Config.h>
 #include <Messenger.h>
@@ -423,7 +424,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_VALUE(inital_hotkeys)
 }
 
-static std::filesystem::path get_config_path()
+static std::filesystem::path get_legacy_config_path()
 {
     return g_main_ctx.app_path / CONFIG_FILE_NAME;
 }
@@ -564,6 +565,11 @@ static void migrate_config(t_config &config, const mINI::INIStructure &ini)
     }
 }
 
+const std::string& Config::config_directory() {
+    static const std::string path = IOUtils::config_path().string();
+    return path;
+}
+
 void Config::init()
 {
 }
@@ -574,9 +580,9 @@ void Config::save()
 
     config_patch(g_config);
 
-    std::remove(get_config_path().string().c_str());
+    std::remove(get_legacy_config_path().string().c_str());
 
-    mINI::INIFile file(get_config_path().string());
+    mINI::INIFile file(get_legacy_config_path().string());
     mINI::INIStructure ini;
 
     handle_config_ini(false, ini);
@@ -598,14 +604,14 @@ void Config::apply_and_save()
 
 void Config::load()
 {
-    if (!std::filesystem::exists(get_config_path()))
+    if (!std::filesystem::exists(get_legacy_config_path()))
     {
         g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
         g_config = get_default_config();
         save();
     }
 
-    mINI::INIFile file(get_config_path().string());
+    mINI::INIFile file(get_legacy_config_path().string());
     mINI::INIStructure ini;
     file.read(ini);
 
@@ -619,25 +625,25 @@ void Config::load()
 
 std::filesystem::path Config::plugin_directory()
 {
-    return IOUtils::exe_path_cached().parent_path() / g_config.plugins_directory;
+    return IOUtils::exe_path().parent_path() / g_config.plugins_directory;
 }
 
 std::filesystem::path Config::save_directory()
 {
-    return IOUtils::exe_path_cached().parent_path() / g_config.saves_directory;
+    return IOUtils::exe_path().parent_path() / g_config.saves_directory;
 }
 
 std::filesystem::path Config::screenshot_directory()
 {
-    return IOUtils::exe_path_cached().parent_path() / g_config.screenshots_directory;
+    return IOUtils::exe_path().parent_path() / g_config.screenshots_directory;
 }
 
 std::filesystem::path Config::backup_directory()
 {
-    return IOUtils::exe_path_cached().parent_path() / g_config.backups_directory;
+    return IOUtils::exe_path().parent_path() / g_config.backups_directory;
 }
 
 std::filesystem::path Config::logs_directory()
 {
-    return IOUtils::exe_path_cached().parent_path() / L"logs";
+    return IOUtils::exe_path().parent_path() / L"logs";
 }
