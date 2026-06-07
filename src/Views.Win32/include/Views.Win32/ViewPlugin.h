@@ -14,6 +14,7 @@
 #pragma once
 
 #include "core_plugin.h"
+#include "core_types.h"
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
@@ -54,6 +55,12 @@ extern "C"
          * \brief Logs the specified message at the error level.
          */
         void (*log_error)(const wchar_t *);
+
+        /**
+         * \brief Gets the effective speed mode.
+         * \return The current effective speed mode.
+         */
+        CoreSpeedMode (*get_effective_speed_mode)();
     };
 
     typedef void(CALL *CLOSEDLL)();
@@ -160,3 +167,25 @@ extern "C"
 #undef CALL
 #endif
 }
+
+/**
+ * \brief A module that provides helpers surrounding ViewPlugin.
+ */
+namespace ViewPluginHelpers
+{
+/**
+ * \brief Returns an `core_plugin_extended_funcs` with default implementations.
+ */
+inline core_plugin_extended_funcs get_core_plugin_extended_funcs_shim()
+{
+    core_plugin_extended_funcs funcs = {};
+    const auto log = [](const wchar_t *str) { wprintf(str); };
+    funcs.size = sizeof(core_plugin_extended_funcs);
+    funcs.log_trace = log;
+    funcs.log_info = log;
+    funcs.log_warn = log;
+    funcs.log_error = log;
+    funcs.get_effective_speed_mode = []() { return CoreSpeedMode::Normal; };
+    return funcs;
+}
+} // namespace ViewPluginHelpers

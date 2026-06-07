@@ -614,6 +614,7 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
         .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
         .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
         .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
+        .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
     }
 
 void PluginUtil::init_dummy_and_extended_funcs()

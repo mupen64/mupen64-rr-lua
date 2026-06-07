@@ -2266,6 +2266,11 @@ CoreSpeedMode vr_get_speed_mode()
     return g_r4300.desired_speed_mode;
 }
 
+CoreSpeedMode vr_get_effective_speed_mode()
+{
+    return g_r4300.effective_speed_mode;
+}
+
 void vr_set_speed_mode(CoreSpeedMode mode)
 {
     g_r4300.desired_speed_mode = mode;
