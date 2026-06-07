@@ -384,6 +384,12 @@ extern "C"
         std::function<CoreSpeedMode()> vr_get_speed_mode;
 
         /**
+         * \brief Gets the effective speed mode. It may be different from the speed mode set by `vr_set_speed_mode`.
+         * \return The effective speed mode.
+         */
+        std::function<CoreSpeedMode()> vr_get_effective_speed_mode;
+
+        /**
          * \brief Sets the speed mode.
          * \param mode The speed mode to set.
          */
