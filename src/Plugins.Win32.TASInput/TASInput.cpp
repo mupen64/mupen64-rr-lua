@@ -1011,8 +1011,6 @@ static void show_activated_windows()
 
 static void ui_thread()
 {
-    Main::init_sdl();
-
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
@@ -1070,8 +1068,6 @@ static void ui_thread()
                     DispatchMessage(&msg);
                 }
             }
-
-            Main::pump_sdl_events();
         }
     }
 

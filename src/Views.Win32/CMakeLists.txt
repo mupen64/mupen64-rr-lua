@@ -160,6 +160,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Mupen64RR.Views.Win32.Headers
     Lua::Lua
     spdlog::spdlog
+    SDL3::SDL3
     nlohmann_json::nlohmann_json
     PkgConfig::speexdsp
     PkgConfig::libav

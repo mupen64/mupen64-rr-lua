@@ -44,18 +44,3 @@ EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
 }
-
-void Main::init_sdl()
-{
-    RT_ASSERT(SDL_Init(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), L"Failed to initialize SDL subsystems");
-}
-
-void Main::pump_sdl_events()
-{
-    SDL_Event e;
-    while (SDL_PollEvent(&e))
-    {
-        GamepadManager::on_sdl_event(e);
-        ConfigDialog::on_sdl_event(e);
-    }
-}

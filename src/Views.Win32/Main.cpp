@@ -741,7 +741,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
-
         return TRUE;
     case WM_DESTROY:
         g_main_ctx.exiting = true;
@@ -751,6 +750,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         Config::save();
         Gdiplus::GdiplusShutdown(gdi_plus_token);
         CoUninitialize();
+        SDL_Quit();
         PostQuitMessage(0);
         break;
     case WM_PREDESTROY:

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <core_types.h>
+
 /**
  * \brief Provides gamepad-related functionality.
  */

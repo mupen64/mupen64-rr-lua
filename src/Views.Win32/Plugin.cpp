@@ -818,6 +818,16 @@ bool PluginUtil::load_plugins()
         g_view_logger->trace(L"Loading input plugin: {}", g_config.selected_input_plugin);
         g_view_logger->trace(L"Loading RSP plugin: {}", g_config.selected_rsp_plugin);
 
+        static bool s_sdl_initialized = false;
+        if (!s_sdl_initialized)
+        {
+            g_main_ctx.dispatcher->invoke([] {
+                RT_ASSERT(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK),
+                          L"SDL_Init failed");
+            });
+            s_sdl_initialized = true;
+        }
+
         auto video_pl = Plugin::create(g_config.selected_video_plugin);
         auto audio_pl = Plugin::create(g_config.selected_audio_plugin);
         auto input_pl = Plugin::create(g_config.selected_input_plugin);
