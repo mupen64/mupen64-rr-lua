@@ -12,9 +12,3 @@ extern core_plugin_extended_funcs *g_ef;
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input", L"2.0.5")
 
 #define NUMBER_OF_CONTROLS 4
-
-namespace Main
-{
-void init_sdl();
-void pump_sdl_events();
-} // namespace Main

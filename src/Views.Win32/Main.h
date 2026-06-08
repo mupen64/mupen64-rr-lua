@@ -114,3 +114,12 @@ void set_cwd();
  * \return The path to the savestate file.
  */
 std::filesystem::path get_st_with_slot_path(size_t slot);
+
+namespace Main
+{
+
+/**
+ * \brief Initializes SDL on the GUI thread if necessary.
+ */
+void init_sdl();
+} // namespace Main

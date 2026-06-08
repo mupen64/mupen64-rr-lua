@@ -13,8 +13,6 @@
 #include "core_plugin.h"
 #include <CommonPCH.h>
 
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_init.h>
 #include <VersionNameHelpers.h>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
@@ -32,8 +30,6 @@ core_plugin_extended_funcs *g_ef = nullptr;
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 static bool g_sdl_is_init = false;
-
-static const SDL_InitFlags SDL_INIT_NEEDED = SDL_INIT_AUDIO;
 
 static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
 {
@@ -95,7 +91,6 @@ void write_config(const SDLAudio::Config &config)
 EXPORT void CALL CloseDLL(void)
 {
     if (g_backend.has_value()) g_backend.reset();
-    SDL_QuitSubSystem(SDL_INIT_NEEDED);
 }
 
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *g_fwd_funcs)
@@ -119,7 +114,6 @@ EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
     try
     {
         SDLAudio::Config cfg = win32_read_config();
-        if (!SDL_Init(SDL_INIT_NEEDED)) throw std::runtime_error(SDL_GetError());
         g_backend.emplace(std::move(cfg)); // TODO: add config dialog
     }
     catch (std::exception &e)

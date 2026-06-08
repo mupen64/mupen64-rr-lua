@@ -741,7 +741,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
-
         return TRUE;
     case WM_DESTROY:
         g_main_ctx.exiting = true;
@@ -751,6 +750,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         Config::save();
         Gdiplus::GdiplusShutdown(gdi_plus_token);
         CoUninitialize();
+        SDL_Quit();
         PostQuitMessage(0);
         break;
     case WM_PREDESTROY:
@@ -1089,6 +1089,19 @@ static bool is_running_under_wine()
     if (!ntdll) return false;
 
     return GetProcAddress(ntdll, "wine_get_version") != nullptr;
+}
+
+void Main::init_sdl()
+{
+    static bool s_sdl_initialized = false;
+    if (!s_sdl_initialized)
+    {
+        g_main_ctx.dispatcher->invoke([] {
+            RT_ASSERT(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK),
+                      L"SDL_Init failed");
+        });
+        s_sdl_initialized = true;
+    }
 }
 
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
