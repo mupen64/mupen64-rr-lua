@@ -6,7 +6,6 @@
 #include "Config.h"
 
 TASVideoContext g_tas_ctx{};
-HWND hWnd;
 HINSTANCE hInstance;
 
 std::filesystem::path screenDirectory;
@@ -39,19 +38,11 @@ bool init_rsp_thread()
     for (auto &i : RSP.threadMsg)
     {
         i = CreateEvent(NULL, FALSE, FALSE, NULL);
-        if (i == nullptr)
-        {
-            MessageBox(hWnd, L"Error creating video thread message events.", PLUGIN_NAME, MB_OK | MB_ICONERROR);
-            return false;
-        }
+        RT_ASSERT(i, L"Error creating video thread message events");
     }
 
     RSP.threadFinished = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (RSP.threadFinished == NULL)
-    {
-        MessageBox(hWnd, L"Error creating video thread finished event.", PLUGIN_NAME, MB_OK | MB_ICONERROR);
-        return false;
-    }
+    RT_ASSERT(RSP.threadFinished, L"Error creating video thread finished event");
 
     RSP.halt = FALSE;
 
@@ -104,11 +95,11 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
         return TRUE;
     }
 
-    hWnd = (HWND)Gfx_Info.main_hwnd;
+    g_tas_ctx.emu_hwnd = (HWND)Gfx_Info.main_hwnd;
     g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
 
     // If the mupen window has CS_OWNDC, we can recycle one DC for wgl and avoid recreating the context when resetting
-    const ULONG_PTR class_style = GetClassLongPtr(hWnd, GCL_STYLE);
+    const ULONG_PTR class_style = GetClassLongPtr(g_tas_ctx.emu_hwnd, GCL_STYLE);
     OGL.recycle_context = (class_style & CS_OWNDC) != 0;
 
     DMEM = Gfx_Info.dmem;

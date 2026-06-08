@@ -19,7 +19,6 @@ struct GLInfo
 {
     BOOL recycle_context;
     BOOL context_initialized;
-    HWND hWnd;
 
     DWORD width, height, windowedWidth, windowedHeight;
 

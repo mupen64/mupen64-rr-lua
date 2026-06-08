@@ -2,11 +2,11 @@
 
 struct TASVideoContext
 {
+    HWND emu_hwnd;
     HWND statusbar_hwnd;
 };
 
 extern TASVideoContext g_tas_ctx;
-extern HWND hWnd;
 extern HINSTANCE hInstance;
 extern void (*CheckInterrupts)(void);
 extern std::filesystem::path screenDirectory;
