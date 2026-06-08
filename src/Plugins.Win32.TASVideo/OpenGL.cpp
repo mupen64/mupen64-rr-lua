@@ -109,8 +109,6 @@ void OGL_InitStates()
                                               ((i > (rand() >> 10)) << 3) | ((i > (rand() >> 10)) << 2) |
                                               ((i > (rand() >> 10)) << 1) | ((i > (rand() >> 10)) << 0);
     }
-
-    SwapBuffers(wglGetCurrentDC());
 }
 
 void OGL_UpdateScale()
@@ -157,10 +155,9 @@ bool OGL_InitContext()
         sizeof(PIXELFORMATDESCRIPTOR), // size of this pfd
         1,                             // version number
         PFD_DRAW_TO_WINDOW |           // support window
-            PFD_SUPPORT_OPENGL |       // support OpenGL
-            PFD_DOUBLEBUFFER,          // double buffered
-        PFD_TYPE_RGBA,                 // RGBA type
-        32,                            // color depth
+            PFD_SUPPORT_OPENGL, // support OpenGL (no double buffering needed - host reads pixels via mge_read_video2)
+        PFD_TYPE_RGBA,          // RGBA type
+        32,                     // color depth
         0,
         0,
         0,
@@ -275,7 +272,6 @@ void OGL_Stop()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
-    SwapBuffers(OGL.hDC);
 
     if (!OGL.recycle_context)
     {
