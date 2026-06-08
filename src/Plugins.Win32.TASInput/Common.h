@@ -41,7 +41,6 @@
 #include <core_plugin.h>
 #include <Resource.h>
 #include <gdiplus.h>
-#include <SDL3/SDL.h>
 #pragma warning(pop)
 
 #include <Helpers.h>

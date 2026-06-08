@@ -42,6 +42,10 @@
 #include <vector>
 #include <latch>
 #include <xxh64.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_audio.h>
 #include "MiscHelpers.h"
 #include "StrUtils.h"
 #include "IOUtils.h"

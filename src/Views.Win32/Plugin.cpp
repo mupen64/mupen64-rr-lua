@@ -518,6 +518,8 @@ void Plugin::initiate()
 
 void Plugin::initiate_dummy()
 {
+    Main::init_sdl();
+
     const auto receive_extended_funcs = (RECEIVEEXTENDEDFUNCS)GetProcAddress(m_module, "ReceiveExtendedFuncs");
     if (receive_extended_funcs)
     {
@@ -817,6 +819,8 @@ bool PluginUtil::load_plugins()
         g_view_logger->trace(L"Loading audio plugin: {}", g_config.selected_audio_plugin);
         g_view_logger->trace(L"Loading input plugin: {}", g_config.selected_input_plugin);
         g_view_logger->trace(L"Loading RSP plugin: {}", g_config.selected_rsp_plugin);
+
+        Main::init_sdl();
 
         auto video_pl = Plugin::create(g_config.selected_video_plugin);
         auto audio_pl = Plugin::create(g_config.selected_audio_plugin);
