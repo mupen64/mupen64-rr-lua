@@ -1,8 +1,12 @@
 #pragma once
 
+struct TASVideoContext
+{
+    HWND statusbar_hwnd;
+};
+
+extern TASVideoContext g_tas_ctx;
 extern HWND hWnd;
-extern HWND hStatusBar;
-extern HWND hToolBar;
 extern HINSTANCE hInstance;
 extern void (*CheckInterrupts)(void);
 extern std::filesystem::path screenDirectory;

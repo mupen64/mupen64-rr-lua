@@ -23,7 +23,7 @@ void OGL_ReadPixels()
     // glReadBuffer(GL_FRONT);
 
     glReadBuffer(GL_BACK);
-    glReadPixels(0, OGL.heightOffset, OGL.width, OGL.height, GL_BGRA, GL_UNSIGNED_BYTE, gCapturedPixels);
+    glReadPixels(0, 0, OGL.width, OGL.height, GL_BGRA, GL_UNSIGNED_BYTE, gCapturedPixels);
     glReadBuffer(oldMode); // restore old read buffer
 }
 
@@ -120,32 +120,20 @@ void OGL_UpdateScale()
 
 void OGL_ResizeWindow()
 {
-    RECT windowRect, statusRect, toolRect;
-
     OGL.width = OGL.windowedWidth;
     OGL.height = OGL.windowedHeight;
 
-    GetClientRect(hWnd, &windowRect);
+    RECT statusbar_rc{};
+    if (IsWindow(g_tas_ctx.statusbar_hwnd)) GetClientRect(g_tas_ctx.statusbar_hwnd, &statusbar_rc);
 
-    if (hStatusBar)
-        GetWindowRect(hStatusBar, &statusRect);
-    else
-        statusRect.bottom = statusRect.top = 0;
+    RECT wnd_rc{};
+    GetClientRect(hWnd, &wnd_rc);
+    wnd_rc.right = OGL.windowedWidth;
+    wnd_rc.bottom = OGL.windowedHeight + statusbar_rc.bottom;
+    AdjustWindowRect(&wnd_rc, GetWindowLong(hWnd, GWL_STYLE), GetMenu(hWnd) != NULL);
 
-    if (hToolBar)
-        GetWindowRect(hToolBar, &toolRect);
-    else
-        toolRect.bottom = toolRect.top = 0;
-
-    OGL.heightOffset = (statusRect.bottom - statusRect.top);
-    windowRect.right = windowRect.left + OGL.windowedWidth - 1;
-    windowRect.bottom = windowRect.top + OGL.windowedHeight - 1 + OGL.heightOffset;
-
-    AdjustWindowRect(&windowRect, GetWindowLong(hWnd, GWL_STYLE), GetMenu(hWnd) != NULL);
-
-    SetWindowPos(hWnd, NULL, 0, 0, windowRect.right - windowRect.left + 1,
-                 windowRect.bottom - windowRect.top + 1 + toolRect.bottom - toolRect.top + 1,
-                 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+    SetWindowPos(hWnd, NULL, 0, 0, wnd_rc.right - wnd_rc.left, wnd_rc.bottom - wnd_rc.top,
+                 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_ASYNCWINDOWPOS);
 }
 
 bool OGL_InitContext()
@@ -245,8 +233,7 @@ void OGL_UpdateCullFace()
 
 void OGL_UpdateViewport()
 {
-    glViewport(gSP.viewport.x * OGL.scaleX,
-               (VI.height - (gSP.viewport.y + gSP.viewport.height)) * OGL.scaleY + OGL.heightOffset,
+    glViewport(gSP.viewport.x * OGL.scaleX, (VI.height - (gSP.viewport.y + gSP.viewport.height)) * OGL.scaleY,
                gSP.viewport.width * OGL.scaleX, gSP.viewport.height * OGL.scaleY);
     glDepthRange(0.0f, 1.0f); // gSP.viewport.nearz, gSP.viewport.farz );
 }
@@ -324,7 +311,7 @@ void OGL_UpdateStates()
 
     if (gDP.changed & CHANGED_SCISSOR)
     {
-        glScissor(gDP.scissor.ulx * OGL.scaleX, (VI.height - gDP.scissor.lry) * OGL.scaleY + OGL.heightOffset,
+        glScissor(gDP.scissor.ulx * OGL.scaleX, (VI.height - gDP.scissor.lry) * OGL.scaleY,
                   (gDP.scissor.lrx - gDP.scissor.ulx) * OGL.scaleX, (gDP.scissor.lry - gDP.scissor.uly) * OGL.scaleY);
     }
 
@@ -617,7 +604,7 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
-    glViewport(0, OGL.heightOffset, OGL.width, OGL.height);
+    glViewport(0, 0, OGL.width, OGL.height);
     glDepthRange(0.0f, 1.0f);
 
     glColor4f(color[0], color[1], color[2], color[3]);
@@ -672,7 +659,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
-    glViewport(0, OGL.heightOffset, OGL.width, OGL.height);
+    glViewport(0, 0, OGL.width, OGL.height);
 
     if (combiner.usesT0)
     {

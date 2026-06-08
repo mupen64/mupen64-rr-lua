@@ -21,7 +21,7 @@ struct GLInfo
     BOOL context_initialized;
     HWND hWnd;
 
-    DWORD width, height, windowedWidth, windowedHeight, heightOffset;
+    DWORD width, height, windowedWidth, windowedHeight;
 
     BOOL forceBilinear, fog;
 

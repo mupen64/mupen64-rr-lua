@@ -210,7 +210,7 @@ void gDPUpdateColorImage()
         u32 i = 0;
 
         glReadBuffer(GL_BACK);
-        glReadPixels(0, OGL.height - gDP.colorImage.height * OGL.scaleY + OGL.heightOffset,
+        glReadPixels(0, OGL.height - gDP.colorImage.height * OGL.scaleY,
                      gDP.colorImage.width * OGL.scaleX, gDP.colorImage.height * OGL.scaleY, GL_RGBA,
                      GL_UNSIGNED_SHORT_5_5_5_1_EXT, frameBuffer);
 
@@ -235,7 +235,7 @@ void gDPUpdateColorImage()
         u32 frameX, frameY;
         u32 i = 0;
 
-        glReadPixels(0, OGL.height - gDP.colorImage.height * OGL.scaleY + OGL.heightOffset,
+        glReadPixels(0, OGL.height - gDP.colorImage.height * OGL.scaleY,
                      gDP.colorImage.width * OGL.scaleX, gDP.colorImage.height * OGL.scaleY, GL_LUMINANCE,
                      GL_UNSIGNED_BYTE, frameBuffer);
 

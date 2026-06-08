@@ -5,9 +5,8 @@
 #include "RSP.h"
 #include "Config.h"
 
+TASVideoContext g_tas_ctx{};
 HWND hWnd;
-HWND hStatusBar;
-HWND hToolBar;
 HINSTANCE hInstance;
 
 std::filesystem::path screenDirectory;
@@ -97,16 +96,6 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     PluginInfo->unused_byteswapped = TRUE;
 }
 
-BOOL CALLBACK FindToolBarProc(HWND hWnd, LPARAM lParam)
-{
-    if (GetWindowLong(hWnd, GWL_STYLE) & RBS_VARHEIGHT)
-    {
-        hToolBar = hWnd;
-        return FALSE;
-    }
-    return TRUE;
-}
-
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 {
     // HACK: Detect when we're being called to prepare for dll config routine
@@ -116,14 +105,11 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
     }
 
     hWnd = (HWND)Gfx_Info.main_hwnd;
-    hStatusBar = (HWND)Gfx_Info.statusbar_hwnd;
-    hToolBar = NULL;
+    g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
 
     // If the mupen window has CS_OWNDC, we can recycle one DC for wgl and avoid recreating the context when resetting
     const ULONG_PTR class_style = GetClassLongPtr(hWnd, GCL_STYLE);
     OGL.recycle_context = (class_style & CS_OWNDC) != 0;
-
-    EnumChildWindows(hWnd, FindToolBarProc, 0);
 
     DMEM = Gfx_Info.dmem;
     IMEM = Gfx_Info.imem;
