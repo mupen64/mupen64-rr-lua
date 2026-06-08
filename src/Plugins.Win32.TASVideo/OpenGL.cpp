@@ -138,7 +138,7 @@ void OGL_ResizeWindow()
 
 bool OGL_InitContext()
 {
-    s_sdl_window = SDL_CreateWindow("TASVideo", OGL.width, OGL.height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+    s_sdl_window = SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
     SDL_assert_release(s_sdl_window);
 
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
