@@ -9,11 +9,12 @@
 #include "Combiner.h"
 #include "VI.h"
 
-#include <format>
-
 GLInfo OGL{};
 
 void *gCapturedPixels; // pointer to buffer to fill
+
+static SDL_Window *s_sdl_window;
+static SDL_GLContext s_sdl_context;
 
 void OGL_ReadPixels()
 {
@@ -149,70 +150,14 @@ void OGL_ResizeWindow()
 
 bool OGL_InitContext()
 {
-    int pixelFormat;
+    s_sdl_window =
+        SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+    SDL_assert_release(s_sdl_window);
 
-    PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR), // size of this pfd
-        1,                             // version number
-        PFD_DRAW_TO_WINDOW |           // support window
-            PFD_SUPPORT_OPENGL, // support OpenGL (no double buffering needed - host reads pixels via mge_read_video2)
-        PFD_TYPE_RGBA,          // RGBA type
-        32,                     // color depth
-        0,
-        0,
-        0,
-        0,
-        0,
-        0, // color bits ignored
-        0, // no alpha buffer
-        0, // shift bit ignored
-        0, // no accumulation buffer
-        0,
-        0,
-        0,
-        0,              // accum bits ignored
-        32,             // z-buffer
-        0,              // no stencil buffer
-        0,              // no auxiliary buffer
-        PFD_MAIN_PLANE, // main layer
-        0,              // reserved
-        0,
-        0,
-        0 // layer masks ignored
-    };
+    s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
+    SDL_assert_release(s_sdl_context);
 
-    if ((OGL.hDC = GetDC(hWnd)) == NULL)
-    {
-        MessageBox(hWnd, L"Error while getting a device context!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        return FALSE;
-    }
-
-    if ((pixelFormat = ChoosePixelFormat(OGL.hDC, &pfd)) == 0)
-    {
-        MessageBox(hWnd, L"Unable to find a suitable pixel format!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
-
-    if ((SetPixelFormat(OGL.hDC, pixelFormat, &pfd)) == FALSE)
-    {
-        MessageBox(hWnd, L"Error while setting pixel format!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
-    if ((OGL.hRC = wglCreateContext(OGL.hDC)) == NULL)
-    {
-        MessageBox(hWnd, L"Error while creating OpenGL context!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
-
-    if ((wglMakeCurrent(OGL.hDC, OGL.hRC)) == FALSE)
-    {
-        MessageBox(hWnd, L"Error while making OpenGL context current!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
+    SDL_assert_release(SDL_GL_MakeCurrent(s_sdl_window, s_sdl_context));
 
     OGL_InitExtensions();
     OGL_InitStates();
@@ -221,20 +166,13 @@ bool OGL_InitContext()
 
 bool OGL_DestroyContext()
 {
-    wglMakeCurrent(NULL, NULL);
+    SDL_GL_MakeCurrent(s_sdl_window, nullptr);
 
-    if (OGL.hRC)
-    {
-        wglDeleteContext(OGL.hRC);
-        OGL.hRC = NULL;
-    }
+    SDL_GL_DestroyContext(s_sdl_context);
+    s_sdl_context = nullptr;
 
-    if (OGL.hDC)
-    {
-        ReleaseDC(hWnd, OGL.hDC);
-        OGL.hDC = NULL;
-    }
-
+    SDL_DestroyWindow(s_sdl_window);
+    s_sdl_window = nullptr;
     return TRUE;
 }
 

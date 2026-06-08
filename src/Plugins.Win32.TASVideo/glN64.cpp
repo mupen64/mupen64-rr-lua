@@ -72,10 +72,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
     if (dwReason == DLL_PROCESS_ATTACH)
     {
         Config_LoadConfig();
-        RSP.thread = NULL;
-        OGL.hRC = NULL;
-        OGL.hDC = NULL;
     }
+
     return TRUE;
 }
 
