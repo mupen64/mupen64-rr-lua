@@ -177,18 +177,7 @@ bool OGL_DestroyContext()
 
 bool OGL_Start()
 {
-
-    if (OGL.recycle_context)
-    {
-        if (!OGL.context_initialized)
-        {
-            OGL_InitContext();
-        }
-    }
-    else
-    {
-        OGL_InitContext();
-    }
+    if (!OGL.context_initialized) OGL_InitContext();
 
     TextureCache_Init();
     FrameBuffer_Init();
@@ -209,11 +198,6 @@ void OGL_Stop()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
-
-    if (!OGL.recycle_context)
-    {
-        OGL_DestroyContext();
-    }
 }
 
 void OGL_UpdateCullFace()

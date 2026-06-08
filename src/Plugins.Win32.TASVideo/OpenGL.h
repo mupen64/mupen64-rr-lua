@@ -17,7 +17,6 @@ struct GLVertex
 
 struct GLInfo
 {
-    BOOL recycle_context;
     BOOL context_initialized;
 
     DWORD width, height, windowedWidth, windowedHeight;

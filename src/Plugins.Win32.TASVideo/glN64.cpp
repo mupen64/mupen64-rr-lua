@@ -89,18 +89,19 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 {
-    // HACK: Detect when we're being called to prepare for dll config routine
-    if (Gfx_Info.main_hwnd == Gfx_Info.statusbar_hwnd)
-    {
-        return TRUE;
-    }
-
     g_tas_ctx.emu_hwnd = (HWND)Gfx_Info.main_hwnd;
     g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
 
     // If the mupen window has CS_OWNDC, we can recycle one DC for wgl and avoid recreating the context when resetting
     const ULONG_PTR class_style = GetClassLongPtr(g_tas_ctx.emu_hwnd, GCL_STYLE);
-    OGL.recycle_context = (class_style & CS_OWNDC) != 0;
+    const auto has_own_dc = (class_style & CS_OWNDC) != 0;
+    RT_ASSERT(has_own_dc, L"Emulator window doesn't have CS_OWNDC. Try updating Mupen64.");
+
+    // HACK: Detect when we're being called to prepare for dll config routine
+    if (Gfx_Info.main_hwnd == Gfx_Info.statusbar_hwnd)
+    {
+        return TRUE;
+    }
 
     DMEM = Gfx_Info.dmem;
     IMEM = Gfx_Info.imem;
