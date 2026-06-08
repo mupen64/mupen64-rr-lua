@@ -291,5 +291,5 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
 
 void Config_Show(HWND parent)
 {
-    DialogBox(hInstance, MAKEINTRESOURCE(IDD_CONFIGDLG), parent, (DLGPROC)ConfigDlgProc);
+    DialogBox(g_tas_ctx.hinst, MAKEINTRESOURCE(IDD_CONFIGDLG), parent, (DLGPROC)ConfigDlgProc);
 }

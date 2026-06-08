@@ -728,7 +728,7 @@ void gDPFullSync()
 {
     *REG.MI_INTR |= MI_INTR_DP;
 
-    CheckInterrupts();
+    g_tas_ctx.check_interrupts();
 
     DebugMsg(L"gDPFullSync();\n");
 }

@@ -6,16 +6,6 @@
 #include "Config.h"
 
 TASVideoContext g_tas_ctx{};
-HINSTANCE hInstance;
-
-std::filesystem::path screenDirectory;
-
-void (*CheckInterrupts)(void);
-
-LONG windowedStyle;
-LONG windowedExStyle;
-RECT windowedRect;
-HMENU windowedMenu;
 
 static void log_shim(const wchar_t *str)
 {
@@ -57,7 +47,7 @@ bool init_rsp_thread()
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
 {
-    hInstance = hinstDLL;
+    g_tas_ctx.hinst = hinstDLL;
 
     if (dwReason == DLL_PROCESS_ATTACH)
     {
@@ -132,7 +122,7 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
     REG.VI_X_SCALE = Gfx_Info.vi_x_scale_reg;
     REG.VI_Y_SCALE = Gfx_Info.vi_y_scale_reg;
 
-    CheckInterrupts = Gfx_Info.check_interrupts;
+    g_tas_ctx.check_interrupts = Gfx_Info.check_interrupts;
 
     if (!init_rsp_thread())
     {
@@ -245,9 +235,9 @@ EXPORT void CALL CaptureScreen(const char *directory)
     bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
     bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-    CreateDirectory(screenDirectory.c_str(), NULL);
+    CreateDirectory(g_tas_ctx.screenshot_directory.c_str(), NULL);
 
-    const std::filesystem::path path = std::filesystem::path(directory) / std::format("screen{}.bmp", time(nullptr));
+    const std::filesystem::path path = g_tas_ctx.screenshot_directory / std::format("screen{}.bmp", time(nullptr));
 
     HANDLE hfile;
     hfile = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
