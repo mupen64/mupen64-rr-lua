@@ -1091,6 +1091,19 @@ static bool is_running_under_wine()
     return GetProcAddress(ntdll, "wine_get_version") != nullptr;
 }
 
+void Main::init_sdl()
+{
+    static bool s_sdl_initialized = false;
+    if (!s_sdl_initialized)
+    {
+        g_main_ctx.dispatcher->invoke([] {
+            RT_ASSERT(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK),
+                      L"SDL_Init failed");
+        });
+        s_sdl_initialized = true;
+    }
+}
+
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
 {
     enable_mitigations();
