@@ -190,8 +190,8 @@ void FrameBuffer_SaveBuffer(u32 address, u16 size, u16 width, u16 height)
     cache.cachedBytes += current->texture->textureBytes;
 
     glBindTexture(GL_TEXTURE_2D, current->texture->glName);
-    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, OGL.height - current->texture->height,
-                     current->texture->realWidth, current->texture->realHeight, 0);
+    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, OGL.height - current->texture->height, current->texture->realWidth,
+                     current->texture->realHeight, 0);
     *(u32 *)&RDRAM[current->startAddress] = current->startAddress;
 
     current->changed = TRUE;
