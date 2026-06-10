@@ -90,7 +90,7 @@ if(NOT EXISTS "${MUPEN64RR_VCPKG_TOOLCHAIN}")
 endif()
 
 # set some necessary settings to get compilation to work properly
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE INTERNAL "MSVCRT variant needed to get things to work.")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "MSVCRT variant needed to get things to work.")
 
 set(CMAKE_C_FLAGS_DEBUG_INIT)
 set(CMAKE_CXX_FLAGS_DEBUG_INIT)
