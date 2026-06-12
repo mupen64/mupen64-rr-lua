@@ -139,7 +139,7 @@ The plugin's friendly name should follow the schema:
 
 ### Initialization
 
-Keep `DllMain` as simple as possible, do not initialize SDL, DirectInput, or any other external libraries.
+Keep `DllMain` as simple as possible; do not initialize SDL, DirectInput, or any other external libraries.
 
 Initialize libraries in `RomOpen` and - if possible - do it only once.
 
