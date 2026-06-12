@@ -21,7 +21,7 @@
 			<a
 				href="https://github.com/mupen64/repack/archive/refs/heads/main.zip"
 				download
-				class="btn btn-primary"
+				class="btn"
 			>
 				<span class="material-symbols-sharp">download</span>
 				<p>Download</p>
