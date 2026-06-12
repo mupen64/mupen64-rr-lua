@@ -121,17 +121,21 @@ If you only have the stacktrace from `mupen.log`:
 3. Open the "Go to" dialog by pressing Ctrl + G
 4. Navigate to `0x00400000` + `[Your Address]`
 
-# TAS Plugins
+# TAS Plugins and Plugin Compatibility
 
 The "TAS" plugins are our first-party plugins that aim to be lightweight and fast.
 
-They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions, so don't mix-and-match them.
+They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions.
+
+While Mupen is compatible with any Zilmar spec plugin (e.g. Jabo's plugins, GLideN64), we plan to prioritize our first-party plugins by moving to a private plugin API in the future, while providing Zilmar spec support via a shim layer (cf. [#670](https://github.com/mupen64/mupen64-rr-lua/issues/670))
 
 ## Developer Guidelines
 
 ### Naming
 
-The friendly name should be formatted as follows: `[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
+The plugin's friendly name should follow the schema:
+
+`[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
 
 ### Initialization
 
