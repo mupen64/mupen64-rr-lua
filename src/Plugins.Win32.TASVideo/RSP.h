@@ -15,7 +15,7 @@
 
 using RSPInfo = struct
 {
-    HANDLE thread;
+    HANDLE thread{};
 
     u32 PC[18], PCi, busy, halt, close, DList, uc_start, uc_dstart, cmd, nextCmd, count;
 

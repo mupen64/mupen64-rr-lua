@@ -5,19 +5,7 @@
 #include "RSP.h"
 #include "Config.h"
 
-HWND hWnd;
-HWND hStatusBar;
-HWND hToolBar;
-HINSTANCE hInstance;
-
-std::filesystem::path screenDirectory;
-
-void (*CheckInterrupts)(void);
-
-LONG windowedStyle;
-LONG windowedExStyle;
-RECT windowedRect;
-HMENU windowedMenu;
+TASVideoContext g_tas_ctx{};
 
 static void log_shim(const wchar_t *str)
 {
@@ -40,19 +28,11 @@ bool init_rsp_thread()
     for (auto &i : RSP.threadMsg)
     {
         i = CreateEvent(NULL, FALSE, FALSE, NULL);
-        if (i == nullptr)
-        {
-            MessageBox(hWnd, L"Error creating video thread message events.", PLUGIN_NAME, MB_OK | MB_ICONERROR);
-            return false;
-        }
+        RT_ASSERT(i, L"Error creating video thread message events");
     }
 
     RSP.threadFinished = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (RSP.threadFinished == NULL)
-    {
-        MessageBox(hWnd, L"Error creating video thread finished event.", PLUGIN_NAME, MB_OK | MB_ICONERROR);
-        return false;
-    }
+    RT_ASSERT(RSP.threadFinished, L"Error creating video thread finished event");
 
     RSP.halt = FALSE;
 
@@ -67,15 +47,13 @@ bool init_rsp_thread()
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
 {
-    hInstance = hinstDLL;
+    g_tas_ctx.hinst = hinstDLL;
 
     if (dwReason == DLL_PROCESS_ATTACH)
     {
         Config_LoadConfig();
-        RSP.thread = NULL;
-        OGL.hRC = NULL;
-        OGL.hDC = NULL;
     }
+
     return TRUE;
 }
 
@@ -99,33 +77,16 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     PluginInfo->unused_byteswapped = TRUE;
 }
 
-BOOL CALLBACK FindToolBarProc(HWND hWnd, LPARAM lParam)
-{
-    if (GetWindowLong(hWnd, GWL_STYLE) & RBS_VARHEIGHT)
-    {
-        hToolBar = hWnd;
-        return FALSE;
-    }
-    return TRUE;
-}
-
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 {
+    g_tas_ctx.emu_hwnd = (HWND)Gfx_Info.main_hwnd;
+    g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
+
     // HACK: Detect when we're being called to prepare for dll config routine
     if (Gfx_Info.main_hwnd == Gfx_Info.statusbar_hwnd)
     {
         return TRUE;
     }
-
-    hWnd = (HWND)Gfx_Info.main_hwnd;
-    hStatusBar = (HWND)Gfx_Info.statusbar_hwnd;
-    hToolBar = NULL;
-
-    // If the mupen window has CS_OWNDC, we can recycle one DC for wgl and avoid recreating the context when resetting
-    const ULONG_PTR class_style = GetClassLongPtr(hWnd, GCL_STYLE);
-    OGL.recycle_context = (class_style & CS_OWNDC) != 0;
-
-    EnumChildWindows(hWnd, FindToolBarProc, 0);
 
     DMEM = Gfx_Info.dmem;
     IMEM = Gfx_Info.imem;
@@ -156,7 +117,7 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
     REG.VI_X_SCALE = Gfx_Info.vi_x_scale_reg;
     REG.VI_Y_SCALE = Gfx_Info.vi_y_scale_reg;
 
-    CheckInterrupts = Gfx_Info.check_interrupts;
+    g_tas_ctx.check_interrupts = Gfx_Info.check_interrupts;
 
     if (!init_rsp_thread())
     {
@@ -269,9 +230,9 @@ EXPORT void CALL CaptureScreen(const char *directory)
     bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
     bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-    CreateDirectory(screenDirectory.c_str(), NULL);
+    CreateDirectory(g_tas_ctx.screenshot_directory.c_str(), NULL);
 
-    const std::filesystem::path path = std::filesystem::path(directory) / std::format("screen{}.bmp", time(nullptr));
+    const std::filesystem::path path = g_tas_ctx.screenshot_directory / std::format("screen{}.bmp", time(nullptr));
 
     HANDLE hfile;
     hfile = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);

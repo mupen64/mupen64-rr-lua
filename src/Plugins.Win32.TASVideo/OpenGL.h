@@ -17,14 +17,9 @@ struct GLVertex
 
 struct GLInfo
 {
-    BOOL recycle_context;
     BOOL context_initialized;
-    HGLRC hRC, hPbufferRC;
-    HDC hDC, hPbufferDC;
-    HWND hWnd;
-    HPBUFFERARB hPbuffer;
 
-    DWORD width, height, windowedWidth, windowedHeight, heightOffset;
+    DWORD width, height, windowedWidth, windowedHeight;
 
     BOOL forceBilinear, fog;
 
