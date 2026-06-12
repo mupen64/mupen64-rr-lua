@@ -127,7 +127,8 @@ The "TAS" plugins are our first-party plugins that aim to be lightweight and fas
 
 They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions.
 
-While Mupen is compatible with any Zilmar spec plugin (e.g. Jabo's plugins, GLideN64), we plan to prioritize our first-party plugins by moving to a private plugin API in the future, while providing Zilmar spec support via a shim layer (cf. [#670](https://github.com/mupen64/mupen64-rr-lua/issues/670))
+While Mupen is compatible with any Zilmar spec plugin (e.g. Jabo's plugins, GLideN64), we plan to prioritize our first-party plugins by moving to a private plugin API in the future.
+Support for Zilmar spec support will eventually be provided only via a shim layer (cf. [#670](https://github.com/mupen64/mupen64-rr-lua/issues/670))
 
 ## Developer Guidelines
 
