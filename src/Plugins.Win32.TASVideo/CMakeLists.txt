@@ -83,6 +83,7 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     vendor::hqx
     vendor::xbrz
     GLEW::GLEW
+    SDL3::SDL3
 )
 target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     Comctl32

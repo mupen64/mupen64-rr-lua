@@ -9,11 +9,12 @@
 #include "Combiner.h"
 #include "VI.h"
 
-#include <format>
-
 GLInfo OGL{};
 
 void *gCapturedPixels; // pointer to buffer to fill
+
+static SDL_Window *s_sdl_window;
+static SDL_GLContext s_sdl_context;
 
 void OGL_ReadPixels()
 {
@@ -22,7 +23,7 @@ void OGL_ReadPixels()
     // glReadBuffer(GL_FRONT);
 
     glReadBuffer(GL_BACK);
-    glReadPixels(0, OGL.heightOffset, OGL.width, OGL.height, GL_BGRA, GL_UNSIGNED_BYTE, gCapturedPixels);
+    glReadPixels(0, 0, OGL.width, OGL.height, GL_BGRA, GL_UNSIGNED_BYTE, gCapturedPixels);
     glReadBuffer(oldMode); // restore old read buffer
 }
 
@@ -109,8 +110,6 @@ void OGL_InitStates()
                                               ((i > (rand() >> 10)) << 3) | ((i > (rand() >> 10)) << 2) |
                                               ((i > (rand() >> 10)) << 1) | ((i > (rand() >> 10)) << 0);
     }
-
-    SwapBuffers(wglGetCurrentDC());
 }
 
 void OGL_UpdateScale()
@@ -121,101 +120,44 @@ void OGL_UpdateScale()
 
 void OGL_ResizeWindow()
 {
-    RECT windowRect, statusRect, toolRect;
-
     OGL.width = OGL.windowedWidth;
     OGL.height = OGL.windowedHeight;
 
-    GetClientRect(hWnd, &windowRect);
+    RECT statusbar_rc{};
+    if (IsWindow(g_tas_ctx.statusbar_hwnd)) GetClientRect(g_tas_ctx.statusbar_hwnd, &statusbar_rc);
 
-    if (hStatusBar)
-        GetWindowRect(hStatusBar, &statusRect);
-    else
-        statusRect.bottom = statusRect.top = 0;
+    RECT wnd_rc{};
+    GetClientRect(g_tas_ctx.emu_hwnd, &wnd_rc);
+    wnd_rc.right = OGL.windowedWidth;
+    wnd_rc.bottom = OGL.windowedHeight + statusbar_rc.bottom;
+    AdjustWindowRect(&wnd_rc, GetWindowLong(g_tas_ctx.emu_hwnd, GWL_STYLE), GetMenu(g_tas_ctx.emu_hwnd) != NULL);
 
-    if (hToolBar)
-        GetWindowRect(hToolBar, &toolRect);
-    else
-        toolRect.bottom = toolRect.top = 0;
-
-    OGL.heightOffset = (statusRect.bottom - statusRect.top);
-    windowRect.right = windowRect.left + OGL.windowedWidth - 1;
-    windowRect.bottom = windowRect.top + OGL.windowedHeight - 1 + OGL.heightOffset;
-
-    AdjustWindowRect(&windowRect, GetWindowLong(hWnd, GWL_STYLE), GetMenu(hWnd) != NULL);
-
-    SetWindowPos(hWnd, NULL, 0, 0, windowRect.right - windowRect.left + 1,
-                 windowRect.bottom - windowRect.top + 1 + toolRect.bottom - toolRect.top + 1,
-                 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+    SetWindowPos(g_tas_ctx.emu_hwnd, NULL, 0, 0, wnd_rc.right - wnd_rc.left, wnd_rc.bottom - wnd_rc.top,
+                 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_ASYNCWINDOWPOS);
 }
 
 bool OGL_InitContext()
 {
-    int pixelFormat;
+    s_sdl_window =
+        SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+    SDL_assert_release(s_sdl_window);
 
-    PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR), // size of this pfd
-        1,                             // version number
-        PFD_DRAW_TO_WINDOW |           // support window
-            PFD_SUPPORT_OPENGL |       // support OpenGL
-            PFD_DOUBLEBUFFER,          // double buffered
-        PFD_TYPE_RGBA,                 // RGBA type
-        32,                            // color depth
-        0,
-        0,
-        0,
-        0,
-        0,
-        0, // color bits ignored
-        0, // no alpha buffer
-        0, // shift bit ignored
-        0, // no accumulation buffer
-        0,
-        0,
-        0,
-        0,              // accum bits ignored
-        32,             // z-buffer
-        0,              // no stencil buffer
-        0,              // no auxiliary buffer
-        PFD_MAIN_PLANE, // main layer
-        0,              // reserved
-        0,
-        0,
-        0 // layer masks ignored
-    };
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
-    if ((OGL.hDC = GetDC(hWnd)) == NULL)
-    {
-        MessageBox(hWnd, L"Error while getting a device context!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        return FALSE;
-    }
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-    if ((pixelFormat = ChoosePixelFormat(OGL.hDC, &pfd)) == 0)
-    {
-        MessageBox(hWnd, L"Unable to find a suitable pixel format!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
-    if ((SetPixelFormat(OGL.hDC, pixelFormat, &pfd)) == FALSE)
-    {
-        MessageBox(hWnd, L"Error while setting pixel format!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
-    if ((OGL.hRC = wglCreateContext(OGL.hDC)) == NULL)
-    {
-        MessageBox(hWnd, L"Error while creating OpenGL context!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
+    s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
+    SDL_assert_release(s_sdl_context);
 
-    if ((wglMakeCurrent(OGL.hDC, OGL.hRC)) == FALSE)
-    {
-        MessageBox(hWnd, L"Error while making OpenGL context current!", PLUGIN_NAME, MB_ICONERROR | MB_OK);
-        OGL_Stop();
-        return FALSE;
-    }
+    SDL_assert_release(SDL_GL_MakeCurrent(s_sdl_window, s_sdl_context));
 
     OGL_InitExtensions();
     OGL_InitStates();
@@ -224,37 +166,19 @@ bool OGL_InitContext()
 
 bool OGL_DestroyContext()
 {
-    wglMakeCurrent(NULL, NULL);
+    SDL_GL_MakeCurrent(s_sdl_window, nullptr);
 
-    if (OGL.hRC)
-    {
-        wglDeleteContext(OGL.hRC);
-        OGL.hRC = NULL;
-    }
+    SDL_GL_DestroyContext(s_sdl_context);
+    s_sdl_context = nullptr;
 
-    if (OGL.hDC)
-    {
-        ReleaseDC(hWnd, OGL.hDC);
-        OGL.hDC = NULL;
-    }
-
+    SDL_DestroyWindow(s_sdl_window);
+    s_sdl_window = nullptr;
     return TRUE;
 }
 
 bool OGL_Start()
 {
-
-    if (OGL.recycle_context)
-    {
-        if (!OGL.context_initialized)
-        {
-            OGL_InitContext();
-        }
-    }
-    else
-    {
-        OGL_InitContext();
-    }
+    if (!OGL.context_initialized) OGL_InitContext();
 
     TextureCache_Init();
     FrameBuffer_Init();
@@ -275,12 +199,6 @@ void OGL_Stop()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
-    SwapBuffers(OGL.hDC);
-
-    if (!OGL.recycle_context)
-    {
-        OGL_DestroyContext();
-    }
 }
 
 void OGL_UpdateCullFace()
@@ -300,8 +218,7 @@ void OGL_UpdateCullFace()
 
 void OGL_UpdateViewport()
 {
-    glViewport(gSP.viewport.x * OGL.scaleX,
-               (VI.height - (gSP.viewport.y + gSP.viewport.height)) * OGL.scaleY + OGL.heightOffset,
+    glViewport(gSP.viewport.x * OGL.scaleX, (VI.height - (gSP.viewport.y + gSP.viewport.height)) * OGL.scaleY,
                gSP.viewport.width * OGL.scaleX, gSP.viewport.height * OGL.scaleY);
     glDepthRange(0.0f, 1.0f); // gSP.viewport.nearz, gSP.viewport.farz );
 }
@@ -379,7 +296,7 @@ void OGL_UpdateStates()
 
     if (gDP.changed & CHANGED_SCISSOR)
     {
-        glScissor(gDP.scissor.ulx * OGL.scaleX, (VI.height - gDP.scissor.lry) * OGL.scaleY + OGL.heightOffset,
+        glScissor(gDP.scissor.ulx * OGL.scaleX, (VI.height - gDP.scissor.lry) * OGL.scaleY,
                   (gDP.scissor.lrx - gDP.scissor.ulx) * OGL.scaleX, (gDP.scissor.lry - gDP.scissor.uly) * OGL.scaleY);
     }
 
@@ -672,7 +589,7 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
-    glViewport(0, OGL.heightOffset, OGL.width, OGL.height);
+    glViewport(0, 0, OGL.width, OGL.height);
     glDepthRange(0.0f, 1.0f);
 
     glColor4f(color[0], color[1], color[2], color[3]);
@@ -727,7 +644,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
-    glViewport(0, OGL.heightOffset, OGL.width, OGL.height);
+    glViewport(0, 0, OGL.width, OGL.height);
 
     if (combiner.usesT0)
     {
