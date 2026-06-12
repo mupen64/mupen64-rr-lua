@@ -10,15 +10,20 @@
 #include <Messenger.h>
 #include <ini.h>
 #include <action/AppActions.h>
+#include <nlohmann/json.hpp>
+
+using nlohmann::json;
 
 static t_config get_default_config();
 
 t_config g_config;
 
 #ifdef _M_X64
-#define CONFIG_FILE_NAME L"config-x64.ini"
+#define LEGACY_CONFIG_FILE_NAME L"config-x64.ini"
+#define CONFIG_FILE_NAME L"config-x64.json"
 #else
-#define CONFIG_FILE_NAME L"config.ini"
+#define LEGACY_CONFIG_FILE_NAME L"config.ini"
+#define CONFIG_FILE_NAME L"config.json"
 #endif
 
 constexpr auto FLAT_FIELD_KEY = "config";
@@ -60,7 +65,9 @@ static t_config get_default_config()
     return config;
 }
 
-static std::string process_field_name(const std::wstring &field_name)
+#pragma region ini file shenanigans
+
+static std::string ini_cleanup_field(const std::wstring &field_name)
 {
     std::string str = IOUtils::to_utf8_string(field_name);
 
@@ -74,10 +81,10 @@ static std::string process_field_name(const std::wstring &field_name)
     return str;
 }
 
-static void handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                int32_t *value)
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    int32_t *value)
 {
-    const auto key = process_field_name(field_name);
+    const auto key = ini_cleanup_field(field_name);
 
     if (is_reading)
     {
@@ -95,10 +102,10 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
     }
 }
 
-static void handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                uint64_t *value)
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    uint64_t *value)
 {
-    const auto key = process_field_name(field_name);
+    const auto key = ini_cleanup_field(field_name);
 
     if (is_reading)
     {
@@ -116,10 +123,11 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
     }
 }
 
-static void handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::wstring &value)
+// !!!
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    std::wstring &value)
 {
-    const auto key = process_field_name(field_name);
+    const auto key = ini_cleanup_field(field_name);
 
     // BUG: Leading whitespace seems to be dropped by mINI after a roundtrip!!!
 
@@ -139,10 +147,11 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
     }
 }
 
-static void handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::vector<std::wstring> &value)
+// !!!
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    std::vector<std::wstring> &value)
 {
-    const auto key = process_field_name(field_name);
+    const auto key = ini_cleanup_field(field_name);
 
     if (is_reading)
     {
@@ -171,10 +180,11 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
     }
 }
 
-static void handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::map<std::wstring, std::wstring> &value)
+// !!!
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    std::map<std::wstring, std::wstring> &value)
 {
-    const auto key = process_field_name(field_name);
+    const auto key = ini_cleanup_field(field_name);
 
     if (is_reading)
     {
@@ -201,10 +211,11 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
     }
 }
 
-static void handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::map<std::wstring, Hotkey::t_hotkey> &value)
+// !!!
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    std::map<std::wstring, Hotkey::t_hotkey> &value)
 {
-    const auto key = process_field_name(field_name);
+    const auto key = ini_cleanup_field(field_name);
 
     // Structure:
     // [action_fullpath]
@@ -305,8 +316,8 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
     }
 }
 
-static void handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::vector<int32_t> &value)
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    std::vector<int32_t> &value)
 {
     std::vector<std::wstring> string_values;
     for (const auto int_value : value)
@@ -314,7 +325,7 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
         string_values.push_back(std::to_wstring(int_value));
     }
 
-    handle_config_value(ini, field_name, is_reading, string_values);
+    ini_handle_config_value(ini, field_name, is_reading, string_values);
 
     if (is_reading)
     {
@@ -327,8 +338,8 @@ static void handle_config_value(mINI::INIStructure &ini, const std::wstring &fie
 
 static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
 {
-#define HANDLE_P_VALUE(x) handle_config_value(ini, L#x, is_reading, &g_config.x);
-#define HANDLE_VALUE(x) handle_config_value(ini, L#x, is_reading, g_config.x);
+#define HANDLE_P_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, &g_config.x);
+#define HANDLE_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, g_config.x);
 
     if (is_reading)
     {
@@ -470,7 +481,7 @@ static void config_patch(t_config &cfg)
 /**
  * \brief Migrates old values from the specified config to new ones if possible.
  */
-static void migrate_config(t_config &config, const mINI::INIStructure &ini)
+static void migrate_config_ini(t_config &config, const mINI::INIStructure &ini)
 {
     const auto migrate_hotkey = [&](const std::string &old_section_name, std::wstring action) {
         action = ActionManager::normalize_filter(action);
@@ -565,7 +576,349 @@ static void migrate_config(t_config &config, const mINI::INIStructure &ini)
     }
 }
 
-const std::string& Config::config_directory() {
+#pragma endregion
+
+#pragma region JSON file parsing
+/*
+ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                int32_t *value)
+
+ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                uint64_t *value)
+
+ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                std::wstring &value)
+
+ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                std::vector<std::wstring> &value)
+
+ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                std::map<std::wstring, std::wstring> &value)
+
+ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                std::map<std::wstring, Hotkey::t_hotkey> &value)
+
+ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                std::vector<int32_t> &value)
+*/
+
+// READING
+// ==================
+
+/**
+ * @brief Ensures that the JSON matches the format expected by read/write functions.
+ */
+static void json_ensure_format(json &j)
+{
+    if (!j.is_object()) j = json::object();
+
+    // setup key namespaces
+    if (!j["core"].is_object()) j["core"] = json::object();
+    if (!j["frontend"].is_object()) j["frontend"] = json::object();
+}
+
+template <class T> static json convert_to_json(const T &value)
+{
+    return json(value);
+}
+
+static json convert_to_json(const std::wstring& value) {
+    return json(IOUtils::to_utf8_string(value));
+}
+
+static json convert_to_json(const std::vector<std::wstring> &value)
+{
+    return value | std::views::transform([](const std::wstring &ws) {
+               // convert elements to UTF-8, then wrap in JSON
+               return json(IOUtils::to_utf8_string(ws));
+           }) |
+           std::ranges::to<json::array_t>();
+}
+
+static json convert_to_json(const std::map<std::wstring, std::wstring> &value)
+{
+    return value | std::views::transform([](const std::pair<std::wstring, std::wstring> &ws_pair) {
+               // convert elements to UTF-8, wrap the value in JSON
+               return std::pair(IOUtils::to_utf8_string(ws_pair.first), json(IOUtils::to_utf8_string(ws_pair.second)));
+           }) |
+           std::ranges::to<json::object_t>();
+}
+
+static json convert_to_json(const std::map<std::wstring, Hotkey::t_hotkey> &value)
+{
+    return value | std::views::transform([](const std::pair<std::wstring, Hotkey::t_hotkey> &mapping) {
+               // translate name
+               auto name = IOUtils::to_utf8_string(mapping.first);
+               // translate hotkey
+               const auto &hotkey = mapping.second;
+               auto object = json::object({{"assigned", hotkey.assigned},
+                                           {"key", hotkey.key},
+                                           {"ctrl", hotkey.ctrl},
+                                           {"shift", hotkey.shift},
+                                           {"alt", hotkey.alt}});
+               return std::pair(std::move(name), std::move(object));
+           }) |
+           std::ranges::to<json::object_t>();
+}
+
+template <class T> static bool convert_from_json(const json &j, T &value)
+{
+    if (j.is_null()) return false;
+    value = j.get<T>();
+    return true;
+}
+
+static bool convert_from_json(const json& j, std::wstring& value) {
+    if (j.is_null()) return false;
+    value = IOUtils::to_wide_string(j.get<std::string>());
+    return true;
+}
+
+static bool convert_from_json(const json &j, std::vector<std::wstring> &value)
+{
+    if (!j.is_array()) return false;
+
+    value = j.get_ref<const json::array_t &>() |
+            std::views::transform([](const json &str) { return IOUtils::to_wide_string(str.get<std::string>()); }) |
+            std::ranges::to<std::vector>();
+    return true;
+}
+
+static bool convert_from_json(const json &j, std::map<std::wstring, std::wstring> &value)
+{
+    if (!j.is_object()) return false;
+
+    value = j.get_ref<const json::object_t &>() |
+            std::views::transform([](const std::pair<std::string, json> &str_pair) {
+                return std::pair(IOUtils::to_wide_string(str_pair.first),
+                                 IOUtils::to_wide_string(str_pair.second.get<std::string>()));
+            }) |
+            std::ranges::to<std::map>();
+    return true;
+}
+
+static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey::t_hotkey> &value)
+{
+    if (!j.is_object()) return false;
+
+    value = j.get_ref<const json::object_t &>() |
+            std::views::transform([](const std::pair<std::string, json> &str_pair) {
+                auto name = IOUtils::to_wide_string(str_pair.first);
+                const auto &hotkey_json = str_pair.second;
+                auto hotkey = Hotkey::t_hotkey{};
+
+                hotkey.assigned = hotkey_json["assigned"];
+                hotkey.key = hotkey_json["key"];
+                hotkey.ctrl = hotkey_json["ctrl"];
+                hotkey.shift = hotkey_json["shift"];
+                hotkey.alt = hotkey_json["alt"];
+                return std::pair(std::move(name), hotkey);
+            }) |
+            std::ranges::to<std::map>();
+    return true;
+}
+
+static void json_read_file(const json& j) {
+    g_config = get_default_config();
+
+    #define CORE_VALUE(name) convert_from_json(j["core"][#name], g_config.core.name);
+    #define FRONTEND_VALUE(name) convert_from_json(j["frontend"][#name], g_config.name);
+
+    CORE_VALUE(total_rerecords)
+    CORE_VALUE(total_frames)
+    CORE_VALUE(core_type)
+    CORE_VALUE(fps_modifier)
+    CORE_VALUE(rom_cache_size)
+    CORE_VALUE(st_screenshot)
+    CORE_VALUE(is_movie_loop_enabled)
+    CORE_VALUE(counter_factor)
+    CORE_VALUE(is_reset_recording_enabled)
+    CORE_VALUE(seek_savestate_interval)
+    CORE_VALUE(seek_savestate_max_count)
+    CORE_VALUE(st_undo_load)
+    CORE_VALUE(use_summercart)
+    CORE_VALUE(wii_vc_emulation)
+    CORE_VALUE(float_exception_emulation)
+    CORE_VALUE(c_eq_s_nan_accurate)
+    CORE_VALUE(is_audio_delay_enabled)
+    CORE_VALUE(is_compiled_jump_enabled)
+    CORE_VALUE(pause_at_frame)
+    CORE_VALUE(pause_at_last_frame)
+    CORE_VALUE(vcr_readonly)
+    CORE_VALUE(vcr_backups)
+    CORE_VALUE(vcr_write_extended_format)
+    CORE_VALUE(wait_at_movie_end)
+    CORE_VALUE(max_lag)
+
+    FRONTEND_VALUE(ignored_version)
+    FRONTEND_VALUE(theme)
+    FRONTEND_VALUE(st_slot)
+    FRONTEND_VALUE(is_unfocused_pause_enabled)
+    FRONTEND_VALUE(is_statusbar_enabled)
+    FRONTEND_VALUE(statusbar_scale_up)
+    FRONTEND_VALUE(statusbar_layout)
+    FRONTEND_VALUE(rom_directory)
+    FRONTEND_VALUE(plugins_directory)
+    FRONTEND_VALUE(saves_directory)
+    FRONTEND_VALUE(screenshots_directory)
+    FRONTEND_VALUE(backups_directory)
+    FRONTEND_VALUE(recent_rom_paths)
+    FRONTEND_VALUE(is_recent_rom_paths_frozen)
+    FRONTEND_VALUE(recent_movie_paths)
+    FRONTEND_VALUE(is_recent_movie_paths_frozen)
+    FRONTEND_VALUE(is_rombrowser_recursion_enabled)
+    FRONTEND_VALUE(capture_mode)
+    FRONTEND_VALUE(stop_capture_at_movie_end)
+    FRONTEND_VALUE(presenter_type)
+    FRONTEND_VALUE(lazy_renderer_init)
+    FRONTEND_VALUE(encoder_type)
+    FRONTEND_VALUE(capture_delay)
+    FRONTEND_VALUE(ffmpeg_options)
+    FRONTEND_VALUE(ffmpeg_path)
+    FRONTEND_VALUE(synchronization_mode)
+    FRONTEND_VALUE(keep_default_working_directory)
+    FRONTEND_VALUE(lua_script_path)
+    FRONTEND_VALUE(recent_lua_script_paths)
+    FRONTEND_VALUE(is_recent_scripts_frozen)
+    FRONTEND_VALUE(piano_roll_constrain_edit_to_column)
+    FRONTEND_VALUE(piano_roll_undo_stack_size)
+    FRONTEND_VALUE(piano_roll_keep_selection_visible)
+    FRONTEND_VALUE(piano_roll_keep_playhead_visible)
+    FRONTEND_VALUE(selected_video_plugin)
+    FRONTEND_VALUE(selected_audio_plugin)
+    FRONTEND_VALUE(selected_input_plugin)
+    FRONTEND_VALUE(selected_rsp_plugin)
+    FRONTEND_VALUE(last_movie_type)
+    FRONTEND_VALUE(last_movie_author)
+    FRONTEND_VALUE(window_x)
+    FRONTEND_VALUE(window_y)
+    FRONTEND_VALUE(window_width)
+    FRONTEND_VALUE(window_height)
+    FRONTEND_VALUE(rombrowser_column_widths)
+    FRONTEND_VALUE(rombrowser_sort_ascending)
+    FRONTEND_VALUE(rombrowser_sorted_column)
+    FRONTEND_VALUE(persistent_folder_paths)
+    FRONTEND_VALUE(settings_tab)
+    FRONTEND_VALUE(vcr_0_index)
+    FRONTEND_VALUE(increment_slot)
+    FRONTEND_VALUE(automatic_update_checking)
+    FRONTEND_VALUE(silent_mode)
+    FRONTEND_VALUE(seeker_value)
+    FRONTEND_VALUE(multi_frame_advance_count)
+    FRONTEND_VALUE(silent_mode_dialog_choices)
+    FRONTEND_VALUE(trusted_lua_paths)
+    FRONTEND_VALUE(lua_paths)
+    FRONTEND_VALUE(hotkeys)
+    FRONTEND_VALUE(inital_hotkeys)
+
+    #undef CORE_VALUE
+    #undef FRONTEND_VALUE
+}
+
+static void json_write_file(json& j) {
+    #define CORE_VALUE(name) j["core"][#name] = convert_to_json(g_config.core.name);
+    #define FRONTEND_VALUE(name) j["frontend"][#name] = convert_to_json(g_config.name);
+
+    CORE_VALUE(total_rerecords)
+    CORE_VALUE(total_frames)
+    CORE_VALUE(core_type)
+    CORE_VALUE(fps_modifier)
+    CORE_VALUE(rom_cache_size)
+    CORE_VALUE(st_screenshot)
+    CORE_VALUE(is_movie_loop_enabled)
+    CORE_VALUE(counter_factor)
+    CORE_VALUE(is_reset_recording_enabled)
+    CORE_VALUE(seek_savestate_interval)
+    CORE_VALUE(seek_savestate_max_count)
+    CORE_VALUE(st_undo_load)
+    CORE_VALUE(use_summercart)
+    CORE_VALUE(wii_vc_emulation)
+    CORE_VALUE(float_exception_emulation)
+    CORE_VALUE(c_eq_s_nan_accurate)
+    CORE_VALUE(is_audio_delay_enabled)
+    CORE_VALUE(is_compiled_jump_enabled)
+    CORE_VALUE(pause_at_frame)
+    CORE_VALUE(pause_at_last_frame)
+    CORE_VALUE(vcr_readonly)
+    CORE_VALUE(vcr_backups)
+    CORE_VALUE(vcr_write_extended_format)
+    CORE_VALUE(wait_at_movie_end)
+    CORE_VALUE(max_lag)
+
+    FRONTEND_VALUE(ignored_version)
+    FRONTEND_VALUE(theme)
+    FRONTEND_VALUE(st_slot)
+    FRONTEND_VALUE(is_unfocused_pause_enabled)
+    FRONTEND_VALUE(is_statusbar_enabled)
+    FRONTEND_VALUE(statusbar_scale_up)
+    FRONTEND_VALUE(statusbar_layout)
+    FRONTEND_VALUE(rom_directory)
+    FRONTEND_VALUE(plugins_directory)
+    FRONTEND_VALUE(saves_directory)
+    FRONTEND_VALUE(screenshots_directory)
+    FRONTEND_VALUE(backups_directory)
+    FRONTEND_VALUE(recent_rom_paths)
+    FRONTEND_VALUE(is_recent_rom_paths_frozen)
+    FRONTEND_VALUE(recent_movie_paths)
+    FRONTEND_VALUE(is_recent_movie_paths_frozen)
+    FRONTEND_VALUE(is_rombrowser_recursion_enabled)
+    FRONTEND_VALUE(capture_mode)
+    FRONTEND_VALUE(stop_capture_at_movie_end)
+    FRONTEND_VALUE(presenter_type)
+    FRONTEND_VALUE(lazy_renderer_init)
+    FRONTEND_VALUE(encoder_type)
+    FRONTEND_VALUE(capture_delay)
+    FRONTEND_VALUE(ffmpeg_options)
+    FRONTEND_VALUE(ffmpeg_path)
+    FRONTEND_VALUE(synchronization_mode)
+    FRONTEND_VALUE(keep_default_working_directory)
+    FRONTEND_VALUE(lua_script_path)
+    FRONTEND_VALUE(recent_lua_script_paths)
+    FRONTEND_VALUE(is_recent_scripts_frozen)
+    FRONTEND_VALUE(piano_roll_constrain_edit_to_column)
+    FRONTEND_VALUE(piano_roll_undo_stack_size)
+    FRONTEND_VALUE(piano_roll_keep_selection_visible)
+    FRONTEND_VALUE(piano_roll_keep_playhead_visible)
+    FRONTEND_VALUE(selected_video_plugin)
+    FRONTEND_VALUE(selected_audio_plugin)
+    FRONTEND_VALUE(selected_input_plugin)
+    FRONTEND_VALUE(selected_rsp_plugin)
+    FRONTEND_VALUE(last_movie_type)
+    FRONTEND_VALUE(last_movie_author)
+    FRONTEND_VALUE(window_x)
+    FRONTEND_VALUE(window_y)
+    FRONTEND_VALUE(window_width)
+    FRONTEND_VALUE(window_height)
+    FRONTEND_VALUE(rombrowser_column_widths)
+    FRONTEND_VALUE(rombrowser_sort_ascending)
+    FRONTEND_VALUE(rombrowser_sorted_column)
+    FRONTEND_VALUE(persistent_folder_paths)
+    FRONTEND_VALUE(settings_tab)
+    FRONTEND_VALUE(vcr_0_index)
+    FRONTEND_VALUE(increment_slot)
+    FRONTEND_VALUE(automatic_update_checking)
+    FRONTEND_VALUE(silent_mode)
+    FRONTEND_VALUE(seeker_value)
+    FRONTEND_VALUE(multi_frame_advance_count)
+    FRONTEND_VALUE(silent_mode_dialog_choices)
+    FRONTEND_VALUE(trusted_lua_paths)
+    FRONTEND_VALUE(lua_paths)
+    FRONTEND_VALUE(hotkeys)
+    FRONTEND_VALUE(inital_hotkeys)
+
+    #undef CORE_VALUE
+    #undef FRONTEND_VALUE
+}
+
+#pragma endregion
+
+static std::filesystem::path get_config_path()
+{
+    return IOUtils::config_path() / CONFIG_FILE_NAME;
+}
+
+const std::string &Config::config_directory()
+{
     static const std::string path = IOUtils::config_path().string();
     return path;
 }
@@ -580,14 +933,12 @@ void Config::save()
 
     config_patch(g_config);
 
-    std::remove(get_legacy_config_path().string().c_str());
-
-    mINI::INIFile file(get_legacy_config_path().string());
-    mINI::INIStructure ini;
-
-    handle_config_ini(false, ini);
-
-    file.write(ini, true);
+    json j{};
+    json_ensure_format(j);
+    json_write_file(j);
+    
+    std::ofstream ofs_file(get_config_path());
+    ofs_file << std::setw(2) << j;
 }
 
 void Config::apply_and_save()
@@ -604,20 +955,30 @@ void Config::apply_and_save()
 
 void Config::load()
 {
-    if (!std::filesystem::exists(get_legacy_config_path()))
+    if (std::filesystem::exists(get_config_path())) {
+        json j;
+        {
+            std::ifstream ifs_file(get_config_path());
+            ifs_file >> j;
+        }
+        json_ensure_format(j);
+        json_read_file(j);
+    }
+    else if (std::filesystem::exists(get_legacy_config_path())) {
+        mINI::INIFile file(get_legacy_config_path().string());
+        mINI::INIStructure ini;
+        file.read(ini);
+
+        handle_config_ini(true, ini);
+        migrate_config_ini(g_config, ini);
+    }
+    else
     {
         g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
         g_config = get_default_config();
         save();
     }
 
-    mINI::INIFile file(get_legacy_config_path().string());
-    mINI::INIStructure ini;
-    file.read(ini);
-
-    handle_config_ini(true, ini);
-
-    migrate_config(g_config, ini);
     config_patch(g_config);
 
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
