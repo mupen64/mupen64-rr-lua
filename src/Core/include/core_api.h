@@ -253,7 +253,6 @@ extern "C"
         AILENCHANGED audio_ai_len_changed;
         AIREADLENGTH audio_ai_read_length;
         PROCESSALIST audio_process_alist;
-        AIUPDATE audio_ai_update;
 
         CONTROLLERCOMMAND input_controller_command;
         GETKEYS input_get_keys;
@@ -383,6 +382,12 @@ extern "C"
          * \return The current speed mode.
          */
         std::function<CoreSpeedMode()> vr_get_speed_mode;
+
+        /**
+         * \brief Gets the effective speed mode. It may be different from the speed mode set by `vr_set_speed_mode`.
+         * \return The effective speed mode.
+         */
+        std::function<CoreSpeedMode()> vr_get_effective_speed_mode;
 
         /**
          * \brief Sets the speed mode.

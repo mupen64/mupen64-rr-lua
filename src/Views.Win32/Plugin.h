@@ -154,6 +154,11 @@ extern plugin_funcs g_plugin_funcs;
 namespace PluginUtil
 {
 /**
+ * \brief Initializes the plugin utility module.
+ */
+void init();
+
+/**
  * \brief Discovers plugins in the given directory.
  * \param directory The directory to search for plugins in.
  * \return The plugin discovery result.

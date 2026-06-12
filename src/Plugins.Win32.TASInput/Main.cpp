@@ -18,13 +18,7 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-static core_plugin_extended_funcs ef_shim = {
-    .size = sizeof(core_plugin_extended_funcs),
-    .log_trace = log_shim,
-    .log_info = log_shim,
-    .log_warn = log_shim,
-    .log_error = log_shim,
-};
+static core_plugin_extended_funcs ef_shim = ViewPluginHelpers::get_core_plugin_extended_funcs_shim();
 
 HINSTANCE g_inst;
 core_plugin_extended_funcs *g_ef = &ef_shim;
@@ -49,19 +43,4 @@ int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
-}
-
-void Main::init_sdl()
-{
-    RT_ASSERT(SDL_Init(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), L"Failed to initialize SDL subsystems");
-}
-
-void Main::pump_sdl_events()
-{
-    SDL_Event e;
-    while (SDL_PollEvent(&e))
-    {
-        GamepadManager::on_sdl_event(e);
-        ConfigDialog::on_sdl_event(e);
-    }
 }

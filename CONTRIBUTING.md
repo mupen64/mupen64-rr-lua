@@ -110,27 +110,15 @@ Before merging a pull request into main or pushing out a release, verify that:
 2. The core tests (`test/Core.Tests`) pass
 3. The automatic Lua tests (`test/lua/tests.lua`) pass
 4. The manual Lua tests (`test/lua/manual/*.lua`) pass
-5. The general docs have been kept up-to-date
-6. The Lua docs have been rebuilt (`.\docs\lua\build_documentation.bat`)
-7. There are no regressions in plugin compatibility (test Jabo's plugins)
+5. The docs (`src/Website/static/docs/win`) have been kept up-to-date
+6. There are no regressions in plugin compatibility (test Jabo's plugins)
 
 ### Release
 
-1. Generate a changelog using [git-cliff](https://git-cliff.org/)
-
-    ```
-    git-cliff -o CHANGELOG.md --unreleased
-    ```
-
-2. Write a summary of the release in the `# Summary` section of the changelog.
-3. Create a GitHub release with the following parameters:
-
-    Title: [version number]
-
-    Description: [CHANGELOG.md]
-
-    Files: [latest `mupen64.exe` build artifact]
-
+1. Ensure the version numbers have been bumped in the code
+2. On the repo page, navigate to the `Actions` tab and run the pinned `Beta Release` (or `Stable Release`) workflow
+3. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
+4. Update [repack](https://github.com/mupen64/repack)
 
 # Reading and using Crashlogs
 

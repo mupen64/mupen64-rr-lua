@@ -39,13 +39,7 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-static core_plugin_extended_funcs ef_shim = {
-    .size = sizeof(core_plugin_extended_funcs),
-    .log_trace = log_shim,
-    .log_info = log_shim,
-    .log_warn = log_shim,
-    .log_error = log_shim,
-};
+static core_plugin_extended_funcs ef_shim = ViewPluginHelpers::get_core_plugin_extended_funcs_shim();
 
 core_plugin_extended_funcs *g_ef = &ef_shim;
 
@@ -205,6 +199,8 @@ void on_rom_closed()
 uint32_t do_rsp_cycles(uint32_t Cycles)
 {
     OSTask_t *task = (OSTask_t *)(rsp.dmem + 0xFC0);
+    const auto skip = g_ef->get_effective_speed_mode() == CoreSpeedMode::UltraFastForward;
+
     uint32_t i, sum = 0;
 
     g_rsp_alive = true;
@@ -277,6 +273,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
         switch (task->type)
         {
         case 2: // audio
+            if (skip) return Cycles;
             if (audio_ucode(task) == 0) return Cycles;
             break;
         case 4: // jpeg

@@ -32,12 +32,6 @@
 							</a>
 						</li>
 
-						<li>
-							<a href={resolve('/docs/lua')} on:pointerdown={() => document.activeElement.blur()}>
-								<span>Lua Docs</span>
-							</a>
-						</li>
-
 						{#each data.doc_names as name, i (i)}
 							<li>
 								<a href={resolve(`/docs/win/${name}`)}>
