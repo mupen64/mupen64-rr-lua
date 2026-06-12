@@ -1,16 +1,13 @@
 <script lang="ts">
+	import Title from '$lib/components/Title.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 </script>
 
 <main>
-	<section id="wiki" class="mx-auto max-w-6xl p-16 pb-16">
-		<div class="mb-12 flex flex-row items-center justify-center gap-4 text-3xl font-bold">
-			<hr class="w-15 border-2 border-dashed border-red-600" />
-			<p>{data.title}</p>
-			<hr class="w-15 border-2 border-dashed border-red-600" />
-		</div>
+	<section id="wiki" class="mx-auto max-w-6xl p-4 py-16">
+		<Title>{data.title}</Title>
 
 		<div class="mx-auto flex max-w-4xl flex-col items-start">
 			{@html data.content}

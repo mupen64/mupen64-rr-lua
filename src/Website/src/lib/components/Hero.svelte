@@ -1,5 +1,5 @@
 <script lang="ts">
-	import github from '$lib/assets/github.svg';
+	import GithubLogo from '$lib/assets/GithubLogo.svelte';
 
 	let {
 		name,
@@ -44,8 +44,8 @@
 						{@render button()}
 					{/if}
 
-					<a href={repository} class="btn">
-						<img width="24" src={github} alt="Github Logo" class="dark:invert" />
+					<a href={repository} class="btn btn-outline">
+						<GithubLogo class="w-6 h-6"></GithubLogo>
 						<p>See on GitHub</p>
 					</a>
 				</div>
