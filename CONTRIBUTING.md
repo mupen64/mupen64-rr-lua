@@ -92,16 +92,6 @@ Failure to comply will fail the check-format workflow.
 
 Naming must abide by the [.clang-tidy](https://github.com/mupen64/mupen64-rr-lua/blob/master/.clang-tidy) file provided in the repository root.
 
-# Plugin Guidelines
-
-- Give your plugin a descriptive name.
-    1. The friendly name should be formatted as follows: `[Plugin Name] [Version] [x64] [Debug]`
-        a. e.g.: `TASInput 2.0.0`, `TASInput 2.0.0 x64 Debug`
-- Do as little initialization work in `DllMain` as possible. Do it all in `RomOpen` and cache the results.
-    1. Watch out for implicit COM initialization through DirectInput!
-- Write persistent config to the registry, not the filesystem.
-    1. Play fair, don't pollute the user's Mupen directory if possible.
-
 # Merge/Release Checklist
 
 Before merging a pull request into main or pushing out a release, verify that:
@@ -130,3 +120,29 @@ If you only have the stacktrace from `mupen.log`:
 2. Open x32dbg
 3. Open the "Go to" dialog by pressing Ctrl + G
 4. Navigate to `0x00400000` + `[Your Address]`
+
+# TAS Plugins
+
+The "TAS" plugins are our first-party plugins that aim to be lightweight and fast.
+
+They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions, so don't mix-and-match them.
+
+## Developer Guidelines
+
+### Naming
+
+The friendly name should be formatted as follows: `[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
+
+### Initialization
+
+Keep `DllMain` as simple as possible, do not initialize SDL, DirectInput, or any other external libraries.
+
+Initialize libraries in `RomOpen` and - if possible - do it only once.
+
+### Configuration
+
+Write persistent config to the registry, not the filesystem.
+
+Store the config as JSON.
+
+Don't pollute the user's Mupen directory if possible.
