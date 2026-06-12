@@ -68,3 +68,12 @@ html {
 .ol {
     @apply pl-2 list-decimal list-inside my-4;
 }
+
+.separator-below::after {
+    content: '';
+    display: block;
+    width: 200%;
+    height: 1px;
+    background-color: var(--color-base-content);
+    opacity: 15%;
+}
