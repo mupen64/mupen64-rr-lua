@@ -762,6 +762,7 @@ extern "C"
 #pragma region Helper Functions
 
 constexpr uint32_t CORE_ADDR_MASK = 0x7FFFFF;
+constexpr uint32_t CORE_RDRAM_SIZE = 0x800000;
 
 /**
  * \brief Converts an address for RDRAM operations with the specified size.

@@ -222,6 +222,48 @@ static int write_size(lua_State *L)
     return 0;
 }
 
+static int read(lua_State *L)
+{
+    uint32_t address = luaL_checkinteger(L, 1);
+    uint32_t size = luaL_checkinteger(L, 2);
+
+    address &= CORE_ADDR_MASK;
+
+    if (size > CORE_RDRAM_SIZE - address)
+    {
+        luaL_error(L, "read beyond end of RDRAM");
+        return 0;
+    }
+
+    const auto rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
+    const auto start = reinterpret_cast<const char *>(rdram + address);
+
+    lua_pushlstring(L, (const char *)start, size);
+    return 1;
+}
+
+static int write(lua_State *L)
+{
+    uint32_t address = luaL_checkinteger(L, 1);
+    size_t buffer_len{};
+    const auto buffer_str = lua_tolstring(L, 2, &buffer_len);
+    const auto buffer = std::vector<uint8_t>(buffer_str, buffer_str + buffer_len);
+
+    address &= CORE_ADDR_MASK;
+
+    if (buffer.size() > CORE_RDRAM_SIZE - address)
+    {
+        luaL_error(L, "write beyond end of RDRAM");
+        return 0;
+    }
+
+    const auto rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
+    const auto start = reinterpret_cast<const char *>(rdram + address);
+    memcpy((char *)rdram + address, buffer.data(), buffer.size());
+
+    return 0;
+}
+
 static int int_to_float(lua_State *L)
 {
     ULONG n = luaL_checknumber(L, 1);

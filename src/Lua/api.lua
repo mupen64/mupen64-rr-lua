@@ -834,6 +834,18 @@ function memory.writedouble(address, data) end
 ---@return nil
 function memory.writesize(address, size, data) end
 
+---Reads `size` bytes from memory at `address`.
+---Errors if `size` would read beyond the end of RDRAM.
+---@param address integer
+---@param size integer
+---@return ByteBuffer
+function memory.read(address, size) end
+
+---Writes `data` to memory at `address`.
+---@param address integer
+---@param data ByteBuffer
+function memory.write(address, data) end
+
 ---Queues up a recompilation of the block at the specified address.
 ---@param addr integer
 function memory.recompile(addr) end

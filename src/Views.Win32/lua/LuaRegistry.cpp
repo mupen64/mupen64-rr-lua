@@ -93,6 +93,7 @@ const luaL_Reg MEMORY_FUNCS[] = {
     {"readfloat", LuaCore::Memory::read_float},
     {"readdouble", LuaCore::Memory::read_double},
     {"readsize", LuaCore::Memory::read_size},
+    {"read", LuaCore::Memory::read},
 
     {"writebyte", LuaCore::Memory::write_byte},
     {"writeword", LuaCore::Memory::write_word},
@@ -101,6 +102,7 @@ const luaL_Reg MEMORY_FUNCS[] = {
     {"writefloat", LuaCore::Memory::write_float},
     {"writedouble", LuaCore::Memory::write_double},
     {"writesize", LuaCore::Memory::write_size},
+    {"write", LuaCore::Memory::write},
 
     {"recompile", LuaCore::Memory::recompile},
     {"recompilenextall", LuaCore::Memory::recompile_all},
