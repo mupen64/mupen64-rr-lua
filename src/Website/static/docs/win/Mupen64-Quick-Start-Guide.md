@@ -1,4 +1,4 @@
-# Mupen64 Quick Start Guide
+# Quickstart Guide
 
 Get up and running with Mupen64 in minutes.
 
@@ -6,7 +6,7 @@ Get up and running with Mupen64 in minutes.
 
 ## 1. Download
 
-Go to **https://mupen64.com** and click the **Download** button.
+Go to https://mupen64.com and click the Download button.
 
 ![Mupen64 homepage](screenshots/homepage.png)
 
@@ -18,7 +18,7 @@ Go to **https://mupen64.com** and click the **Download** button.
 
 Extract the downloaded ZIP file to a folder of your choice.
 
-Open the extracted folder and navigate to `repack-main > stable`. You will see the emulator files including `mupen64.exe`.
+Open the extracted folder and navigate to `repack-main/stable`. You will see the emulator files including `mupen64.exe`.
 
 ![Extracted folder](screenshots/extracted-folder.png)
 
@@ -32,19 +32,25 @@ Double-click **mupen64.exe** to start the emulator.
 
 ---
 
-## 4. Load a ROM
+## 4. Define a ROM folder
 
-1. Go to **File > Load ROM** (or press `Ctrl + O`).
+Mupen64 can list your games by pointing it to a folder that contains your N64 ROMs.
 
-   ![File menu](screenshots/file-menu.png)
+1. Open **Settings** (press `Ctrl + S`) and select the **Folders** tab.
 
-2. Browse to your N64 ROM file (`.n64`, `.z64`, `.v64` formats supported) and click **Open**.
+   ![Settings Folders tab](screenshots/settings-folders-default.png)
 
-   ![ROM selection](screenshots/rom-selection.png)
+2. Next to **ROMs**, click the browse button and select the folder where your `.n64`, `.z64`, or `.v64` ROMs are stored.
 
-3. Your game starts automatically. The TAS Input window appears alongside the game.
+   ![Select ROM folder](screenshots/select-rom-folder.png)
 
-   ![Game running](screenshots/game-running.png)
+3. Click **OK** to save. The **ROMs** path now points to your chosen folder.
+
+   ![Settings Folders tab configured](screenshots/settings-folders-set.png)
+
+4. The main window now lists every ROM found in that folder. Double-click a game to start it. The TAS Input window appears alongside the game.
+
+   ![ROM list](screenshots/rom-list.png)
 
 ---
 
@@ -60,9 +66,15 @@ With a ROM running, go to **Lua Script > Show Instances** (`Ctrl + N`).
 
 ### 5.2 Add the Script
 
-Click **Add Instance**, then browse to the `SM64LuaRedux > src` folder and select `SM64Lua.lua`.
+You can add the script in one of two ways:
 
-![Select Lua script](screenshots/select-lua-script.png)
+- Click **Add Instance**, then browse to the `SM64LuaRedux/src` folder and select `SM64Lua.lua`.
+
+  ![Select Lua script](screenshots/select-lua-script.png)
+
+- Or drag and drop `SM64Lua.lua` directly from the `SM64LuaRedux/src` folder onto the Mupen64 window.
+
+  ![Drag and drop Lua script](screenshots/drag-drop-lua-script.png)
 
 ### 5.3 Start the Script
 
@@ -76,7 +88,7 @@ The overlay now displays live game data on the right side of the game window.
 
 ---
 
-## Quick Reference
+## Common Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -87,5 +99,3 @@ The overlay now displays live game data on the right side of the game window.
 | `Shift + F1` - `F4` | Load state from slot 1-4 |
 
 ---
-
-*Mupen64 v1.4.0 - https://mupen64.com*
