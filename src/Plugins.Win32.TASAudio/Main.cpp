@@ -7,11 +7,11 @@
 #include "Main.hpp"
 #include "Config.hpp"
 #include "IOUtils.h"
-#include "Main_Win32.hpp"
 #include "SDLBackend.hpp"
 
 #include "core_plugin.h"
 #include <CommonPCH.h>
+#include <SDL3/SDL.h>
 
 #include <VersionNameHelpers.h>
 #include <core_api.h>
@@ -125,8 +125,8 @@ EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
     try
     {
         SDLAudio::Config cfg = read_config();
-        if (!SDL_Init(SDL_INIT_NEEDED)) throw std::runtime_error(SDL_GetError());
-        g_backend.emplace(std::move(cfg)); // TODO: add config dialog
+        if (!SDL_Init(SDL_INIT_AUDIO)) throw std::runtime_error(SDL_GetError());
+        g_backend.emplace(std::move(cfg));
     }
     catch (std::exception &e)
     {
