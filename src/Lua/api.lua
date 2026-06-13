@@ -798,7 +798,7 @@ function memory.readdouble(address) end
 ---@nodiscard
 ---@param address integer
 ---@param size 1|2|4|8|-1|-2|-4|-8
----@return nil
+---@return integer|qword
 function memory.readsize(address, size) end
 
 ---Writes an unsigned byte to memory at `address`.
