@@ -37,6 +37,7 @@ target_include_directories(Mupen64RR.Plugins.Win32.TASInput PRIVATE ".")
 target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE 
     Mupen64RR.Plugins.Win32.Common
     SDL3::SDL3
+    nlohmann_json::nlohmann_json
 )
 target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     setupapi

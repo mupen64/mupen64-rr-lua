@@ -6,9 +6,14 @@
 #include "Textures.h"
 #include "OpenGL.h"
 
+#include <nlohmann/json.hpp>
+
 HWND hConfigDlg;
 
 #define numWindowedModes 12
+#define CONFIG_FILE_NAME "TASVideo.json"
+
+using nlohmann::json;
 
 struct
 {
@@ -21,13 +26,29 @@ struct
     {1024, 768, L"1024 x 768"},   {1152, 864, L"1152 x 864"},   {1280, 960, L"1280 x 960"},
     {1280, 1024, L"1280 x 1024"}, {1440, 1080, L"1440 x 1080"}, {1600, 1200, L"1600 x 1200"}};
 
+static std::filesystem::path get_config_path()
+{
+    return g_tas_ctx.config_directory / CONFIG_FILE_NAME;
+}
+
 void EnableCustom(HWND hWndDlg, BOOL enable)
 {
     EnableWindow(GetDlgItem(hWndDlg, IDC_WINDOWED_X), enable);
     EnableWindow(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), enable);
 }
 
-void Config_LoadConfig()
+static void Config_SetDefaults()
+{
+    OGL.fog = TRUE;
+    OGL.windowedWidth = 640;
+    OGL.windowedHeight = 480;
+    OGL.forceBilinear = FALSE;
+    cache.maxBytes = 32 * 1048576;
+    OGL.textureFilter = TextureFilter::None;
+    OGL.usePolygonStipple = FALSE;
+}
+
+void Config_LoadRegistryConfig()
 {
     DWORD value, size;
 
@@ -80,17 +101,11 @@ void Config_LoadConfig()
     }
     else
     {
-        OGL.fog = TRUE;
-        OGL.windowedWidth = 640;
-        OGL.windowedHeight = 480;
-        OGL.forceBilinear = FALSE;
-        cache.maxBytes = 32 * 1048576;
-        OGL.textureFilter = TextureFilter::None;
-        OGL.usePolygonStipple = FALSE;
+        Config_SetDefaults();
     }
 }
 
-void Config_SaveConfig()
+void Config_SaveRegistryConfig()
 {
     DWORD value;
     HKEY hKey;
@@ -126,6 +141,63 @@ void Config_SaveConfig()
     RegSetValueEx(hKey, L"Clear Override", 0, REG_DWORD, (BYTE *)&value, 4);
 
     RegCloseKey(hKey);
+}
+
+void Config_LoadConfig()
+{
+    auto json_path = get_config_path();
+
+    if (std::filesystem::exists(json_path))
+    {
+        std::ifstream ifs(json_path);
+
+        nlohmann::json j;
+        ifs >> j;
+        try
+        {
+            OGL.windowedWidth = j["windowed_width"];
+            OGL.windowedHeight = j["windowed_height"];
+            OGL.forceBilinear = j["force_bilinear"];
+            OGL.textureFilter = j["texture_filter"];
+            OGL.filterScale = j["filter_scale"];
+            OGL.fog = j["enable_fog"];
+            cache.maxBytes = (int) j["texture_cache_size"] * 1048576;
+            OGL.usePolygonStipple = j["dithered_alpha_testing"];
+            OGL.ignoreScissor = j["ignore_scissor"];
+            OGL.clear_override = j["clear_override"];
+        }
+        catch (const std::exception &e)
+        {
+            g_ef->log_warn(L"Config load failed, using defaults...");
+            Config_SetDefaults();
+        }
+    }
+    else
+    {
+        g_ef->log_warn(L"No JSON config was present, attempting to load from registry");
+        Config_LoadRegistryConfig();
+
+        Config_SaveConfig();
+    }
+}
+
+void Config_SaveConfig()
+{
+    json j = json::object({
+        {"windowed_width", OGL.windowedWidth},
+        {"windowed_height", OGL.windowedHeight},
+        {"force_bilinear", (bool)OGL.forceBilinear},
+        {"texture_filter", OGL.textureFilter},
+        {"filter_scale", OGL.filterScale},
+        {"enable_fog", (bool)OGL.fog},
+        {"texture_cache_size", cache.maxBytes / 1048576},
+        {"dithered_alpha_testing", (bool)OGL.usePolygonStipple},
+        {"ignore_scissor", (bool)OGL.ignoreScissor},
+        {"clear_override", (bool)OGL.clear_override},
+    });
+
+    std::ofstream ofs(get_config_path());
+    ofs << std::setw(2) << j;
 }
 
 void Config_ApplyDlgConfig(HWND hWndDlg)
