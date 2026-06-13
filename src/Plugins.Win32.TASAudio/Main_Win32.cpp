@@ -59,11 +59,11 @@ EXPORT void CALL DllAbout(void *hParent)
 
 EXPORT void CALL DllConfig(void *hParent)
 {
-    SDLAudio::Config cfg = win32_read_config();
+    SDLAudio::Config cfg = read_config();
     if (SDLAudio::win32_show_config((HWND)hParent, cfg))
     {
         if (g_ef) g_ef->log_info(L"Saving config...");
-        win32_write_config(cfg);
+        write_config(cfg);
         if (g_backend.has_value()) g_backend->merge_cfg_live(cfg);
     }
 }

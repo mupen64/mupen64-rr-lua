@@ -46,12 +46,12 @@ static size_t ext_fn_config_path(char* data, size_t size) {
     static const std::string config_path = IOUtils::config_path().string();
 
     if (data == nullptr)
-        return config_path.size();
+        return config_path.size() + 1;
     if (size < config_path.size() + 1)
         return 0;
 
     memcpy(data, config_path.c_str(), config_path.size() + 1);
-    return size;
+    return size + 1;
 }
 
 #pragma region Dummy Functions
