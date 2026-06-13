@@ -25,6 +25,7 @@ uint32_t inst2;
 static void (*g_audio_ucode_func)() = nullptr;
 HINSTANCE g_instance;
 std::filesystem::path g_app_path;
+std::filesystem::path g_config_path;
 // PlatformService g_platform_service;
 static uint8_t fake_header[0x1000];
 static uint32_t fake_AI_DRAM_ADDR_REG;
@@ -383,4 +384,14 @@ EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
+
+    // CONFIG PATH
+    // get length
+    size_t len = g_ef->config_path(nullptr, 0);
+    // copy string
+    std::string path_temp(len, '\0');
+    g_ef->config_path(path_temp.data(), path_temp.size());
+    // drop the terminating null
+    path_temp.pop_back();
+    g_config_path = std::filesystem::absolute(path_temp);
 }

@@ -9,10 +9,16 @@
 
 #define SUBKEY L"Software\\N64 Emulation\\DLL\\TAS RSP"
 #define CONFIG_VALUE L"Config"
+#define CONFIG_FILE_NAME "TASRSP.json"
 
 t_config config = {};
 t_config default_config = {};
 t_config prev_config = {};
+
+static std::filesystem::path get_config_path()
+{
+    return g_config_path / CONFIG_FILE_NAME;
+}
 
 INT_PTR CALLBACK ConfigDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
@@ -50,7 +56,7 @@ INT_PTR CALLBACK ConfigDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lP
     return FALSE;
 }
 
-void config_save()
+static void save_registry_config()
 {
     g_ef->log_trace(L"Saving config...");
 
@@ -73,7 +79,7 @@ void config_save()
     RegCloseKey(h_key);
 }
 
-void config_load()
+static void load_registry_config()
 {
     g_ef->log_trace(L"Loading config...");
 
@@ -106,6 +112,46 @@ void config_load()
     }
 
     config = loaded_config;
+}
+
+void config_save()
+{
+    g_ef->log_trace(L"Saving config...");
+
+    nlohmann::json j = config;
+    std::ofstream ofs(get_config_path());
+    ofs << std::setw(2) << j;
+}
+
+void config_load()
+{
+    g_ef->log_trace(L"Loading config...");
+
+    auto json_path = get_config_path();
+
+    if (std::filesystem::exists(json_path))
+    {
+        std::ifstream ifs(json_path);
+
+        nlohmann::json j;
+        ifs >> j;
+        try
+        {
+            nlohmann::from_json(j, config);
+        }
+        catch (const std::exception &e)
+        {
+            g_ef->log_warn(L"Config load failed, using defaults...");
+            config = default_config;
+        }
+    }
+    else
+    {
+        g_ef->log_warn(L"No JSON config was present, attempting to load from registry");
+        load_registry_config();
+
+        config_save();
+    }
 }
 
 void config_show_dialog(HWND hwnd)
