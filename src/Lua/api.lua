@@ -775,7 +775,7 @@ function memory.readqwordsigned(address) end
 ---Errors if the operation is out-of-bounds.
 ---@nodiscard
 ---@param address integer
----@return integer
+---@return qword
 function memory.readqword(address) end
 
 ---Reads a float (4 bytes) from memory at `address` and returns it.
