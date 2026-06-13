@@ -61,6 +61,16 @@ extern "C"
          * \return The current effective speed mode.
          */
         CoreSpeedMode (*get_effective_speed_mode)();
+        /**
+         * @brief Gets the path to the configuration directory, as a UTF-8 string.
+         *
+         * Writes the path to the configuration directory to `data`, provided that there is 
+         * enough space for path and terminating null character (up to `len`). Returns the
+         * number of characters written, or 0 if the buffer wasn't big enough.
+         * 
+         * If `data` is null, returns the expected size of the buffer.
+         */
+        size_t (*config_path)(char* data, size_t len);
     };
 
     typedef void(CALL *CLOSEDLL)();

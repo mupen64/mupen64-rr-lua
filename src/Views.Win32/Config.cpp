@@ -441,44 +441,6 @@ static std::filesystem::path get_legacy_config_path()
 }
 
 /**
- * \brief Modifies the config to apply value limits and other constraints.
- */
-static void config_patch(t_config &cfg)
-{
-    if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
-    {
-        cfg.window_x = g_default_config.window_x;
-        cfg.window_y = g_default_config.window_y;
-    }
-
-    if (cfg.rombrowser_column_widths.size() < 4)
-    {
-        // something's malformed, fuck off and use default values
-        cfg.rombrowser_column_widths = g_default_config.rombrowser_column_widths;
-    }
-
-    // Causes too many issues
-    if (cfg.core.seek_savestate_interval == 1)
-    {
-        cfg.core.seek_savestate_interval = 2;
-    }
-
-    cfg.settings_tab = std::min(std::max(cfg.settings_tab, 0), 2);
-
-    for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
-    {
-        const auto key = IOUtils::to_wide_string(pair.first);
-        if (!cfg.silent_mode_dialog_choices.contains(key))
-        {
-            cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
-        }
-    }
-
-    // Wine doesn't support DComp
-    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
-}
-
-/**
  * \brief Migrates old values from the specified config to new ones if possible.
  */
 static void migrate_config_ini(t_config &config, const mINI::INIStructure &ini)
@@ -917,10 +879,39 @@ static std::filesystem::path get_config_path()
     return IOUtils::config_path() / CONFIG_FILE_NAME;
 }
 
-const std::string &Config::config_directory()
+/**
+ * \brief Modifies the config to apply value limits and other constraints.
+ */
+static void config_patch(t_config &cfg)
 {
-    static const std::string path = IOUtils::config_path().string();
-    return path;
+    if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
+    {
+        cfg.window_x = g_default_config.window_x;
+        cfg.window_y = g_default_config.window_y;
+    }
+
+    if (cfg.rombrowser_column_widths.size() < 4)
+    {
+        // something's malformed, fuck off and use default values
+        cfg.rombrowser_column_widths = g_default_config.rombrowser_column_widths;
+    }
+
+    // Causes too many issues
+    if (cfg.core.seek_savestate_interval == 1)
+    {
+        cfg.core.seek_savestate_interval = 2;
+    }
+
+    cfg.settings_tab = std::min(std::max(cfg.settings_tab, 0), 2);
+
+    for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
+    {
+        const auto key = IOUtils::to_wide_string(pair.first);
+        if (!cfg.silent_mode_dialog_choices.contains(key))
+        {
+            cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
+        }
+    }
 }
 
 void Config::init()
@@ -956,9 +947,9 @@ void Config::apply_and_save()
 void Config::load()
 {
     if (std::filesystem::exists(get_config_path())) {
+        std::ifstream ifs_file(get_config_path());
         json j;
         {
-            std::ifstream ifs_file(get_config_path());
             ifs_file >> j;
         }
         json_ensure_format(j);

@@ -343,14 +343,6 @@ namespace Config
 {
 
 /**
- * @brief Gets the path to the config directory.
- *
- * This is usually tied to `%LOCALAPPDATA%` on Windows, and `$XDG_CONFIG_HOME` or `~/.config`
- * on Linux. Note that this method returns a UTF-8 string to facilitate cross-platform work.
- */
-const std::string& config_directory();
-
-/**
  * \brief Initializes the subsystem.
  */
 void init();

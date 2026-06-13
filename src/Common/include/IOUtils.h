@@ -334,7 +334,12 @@ inline std::filesystem::path compute_config_path()
 #endif
 }
 
-// Gets the path of the config directory, creating it if needed.
+/**
+ * @brief Gets the path to the config directory.
+ *
+ * This is usually tied to `%LOCALAPPDATA%` on Windows, and `$XDG_CONFIG_HOME` or `~/.config`
+ * on Linux.
+ */
 inline const std::filesystem::path& config_path() {
     static const std::filesystem::path cached_path = compute_config_path();
     if (!std::filesystem::is_directory(cached_path))
