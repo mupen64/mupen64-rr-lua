@@ -46,7 +46,7 @@ static int read_byte(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushinteger(L, *value);
+    lua_pushinteger(L, value.value());
     return 1;
 }
 
@@ -58,7 +58,7 @@ static int read_byte_signed(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushinteger(L, *value);
+    lua_pushinteger(L, value.value());
     return 1;
 }
 
@@ -70,7 +70,7 @@ static int read_word(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushinteger(L, *value);
+    lua_pushinteger(L, value.value());
     return 1;
 }
 
@@ -82,7 +82,7 @@ static int read_word_signed(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushinteger(L, *value);
+    lua_pushinteger(L, value.value());
     return 1;
 }
 
@@ -94,7 +94,7 @@ static int read_dword(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushinteger(L, *value);
+    lua_pushinteger(L, value.value());
     return 1;
 }
 
@@ -106,7 +106,7 @@ static int read_dword_signed(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushinteger(L, *value);
+    lua_pushinteger(L, value.value());
     return 1;
 }
 
@@ -118,7 +118,7 @@ static int read_qword(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    LuaPushQword(L, *value);
+    LuaPushQword(L, value.value());
     return 1;
 }
 
@@ -130,7 +130,7 @@ static int read_qword_signed(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    LuaPushQword(L, *value);
+    LuaPushQword(L, value.value());
     return 1;
 }
 
@@ -142,7 +142,7 @@ static int read_float(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushnumber(L, *(FLOAT *)&(*value));
+    lua_pushnumber(L, std::bit_cast<float>(value.value()));
     return 1;
 }
 
@@ -154,7 +154,7 @@ static int read_double(lua_State *L)
         luaL_error(L, "read beyond end of RDRAM");
         return 0;
     }
-    lua_pushnumber(L, *(DOUBLE *)&(*value));
+    lua_pushnumber(L, std::bit_cast<double>(value.value()));
     return 1;
 }
 
