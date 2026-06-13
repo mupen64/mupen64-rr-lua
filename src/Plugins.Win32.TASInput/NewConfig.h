@@ -6,15 +6,40 @@
 
 #pragma once
 
-#define SUBKEY L"Software\\N64 Emulation\\DLL\\TASDI"
+#include <SDL3/SDL_gamepad.h>
+#include <nlohmann/json.hpp>
+
+#define CONFIG_FILE_NAME "TASInput.json"
 
 const auto AXIS_THRESHOLD = 16000;
+
+
 
 struct t_axis_mapping
 {
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
     int32_t key_negative = 0;
     int32_t key_positive = 0;
+
+    friend void to_json(nlohmann::json& j, const t_axis_mapping& self) {
+        #define TASINPUT_FIELD(field) {#field, self.field}
+        j = nlohmann::json::object({
+            TASINPUT_FIELD(axis),
+            TASINPUT_FIELD(key_negative),
+            TASINPUT_FIELD(key_positive),
+        });
+        #undef TASINPUT_FIELD
+    }
+
+    friend void from_json(const nlohmann::json& j, t_axis_mapping& self) {
+        #define TASINPUT_FIELD(field) .field = j[#field]
+        self = {
+            TASINPUT_FIELD(axis),
+            TASINPUT_FIELD(key_negative),
+            TASINPUT_FIELD(key_positive),
+        };
+        #undef TASINPUT_FIELD
+    }
 };
 
 struct t_button_mapping
@@ -22,6 +47,26 @@ struct t_button_mapping
     int32_t button = SDL_GAMEPAD_BUTTON_INVALID;
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
     int32_t key = 0;
+
+    friend void to_json(nlohmann::json& j, const t_button_mapping& self) {
+        #define TASINPUT_FIELD(field) {#field, self.field}
+        j = nlohmann::json::object({
+            TASINPUT_FIELD(button),
+            TASINPUT_FIELD(axis),
+            TASINPUT_FIELD(key),
+        });
+        #undef TASINPUT_FIELD
+    }
+
+    friend void from_json(const nlohmann::json& j, t_button_mapping& self) {
+        #define TASINPUT_FIELD(field) .field = j[#field]
+        self = {
+            TASINPUT_FIELD(button),
+            TASINPUT_FIELD(axis),
+            TASINPUT_FIELD(key),
+        };
+        #undef TASINPUT_FIELD
+    }
 };
 
 struct t_controller_config
@@ -70,9 +115,59 @@ struct t_controller_config
         config.y = {.key_negative = 'I', .key_positive = 'K'};
         return config;
     }
+
+    friend void to_json(nlohmann::json& j, const t_controller_config& self) {
+        #define TASINPUT_FIELD(field) {#field, self.field}
+        j = nlohmann::json::object({
+            TASINPUT_FIELD(dpad_right),
+            TASINPUT_FIELD(dpad_left),
+            TASINPUT_FIELD(dpad_down),
+            TASINPUT_FIELD(dpad_up),
+            TASINPUT_FIELD(c_right),
+            TASINPUT_FIELD(c_left),
+            TASINPUT_FIELD(c_down),
+            TASINPUT_FIELD(c_up),
+            TASINPUT_FIELD(a),
+            TASINPUT_FIELD(b),
+            TASINPUT_FIELD(z),
+            TASINPUT_FIELD(start),
+            TASINPUT_FIELD(l),
+            TASINPUT_FIELD(r),
+            TASINPUT_FIELD(x),
+            TASINPUT_FIELD(y),
+            TASINPUT_FIELD(x_scale),
+            TASINPUT_FIELD(y_scale),
+        });
+        #undef TASINPUT_FIELD
+    }
+
+    friend void from_json(const nlohmann::json& j, t_controller_config& self) {
+        #define TASINPUT_FIELD(field) .field = j[#field]
+        self = {
+            TASINPUT_FIELD(dpad_right),
+            TASINPUT_FIELD(dpad_left),
+            TASINPUT_FIELD(dpad_down),
+            TASINPUT_FIELD(dpad_up),
+            TASINPUT_FIELD(c_right),
+            TASINPUT_FIELD(c_left),
+            TASINPUT_FIELD(c_down),
+            TASINPUT_FIELD(c_up),
+            TASINPUT_FIELD(a),
+            TASINPUT_FIELD(b),
+            TASINPUT_FIELD(z),
+            TASINPUT_FIELD(start),
+            TASINPUT_FIELD(l),
+            TASINPUT_FIELD(r),
+            TASINPUT_FIELD(x),
+            TASINPUT_FIELD(y),
+            TASINPUT_FIELD(x_scale),
+            TASINPUT_FIELD(y_scale),
+        };
+        #undef TASINPUT_FIELD
+    }
 };
 
-typedef struct s_config
+struct t_config
 {
     int32_t version = 6;
     int32_t always_on_top = false;
@@ -88,7 +183,50 @@ typedef struct s_config
     int32_t relative_mode = false;
     int32_t approach_mode = false;
     t_controller_config controller_config[4]{};
-} t_config;
+
+    friend void to_json(nlohmann::json& j, const t_config& self) {
+        #define TASINPUT_FIELD(field) {#field, self.field}
+        #define TASINPUT_ARRAY_FIELD(field) nlohmann::to_json(j[#field], self.field)
+        j = nlohmann::json::object({
+            TASINPUT_FIELD(version),
+            TASINPUT_FIELD(always_on_top),
+            TASINPUT_FIELD(float_from_parent),
+            TASINPUT_FIELD(titlebar),
+            TASINPUT_FIELD(client_drag),
+            TASINPUT_FIELD(loop_combo),
+            TASINPUT_FIELD(relative_mode),
+            TASINPUT_FIELD(approach_mode),
+        });
+        TASINPUT_ARRAY_FIELD(dialog_expanded);
+        TASINPUT_ARRAY_FIELD(controller_active);
+        TASINPUT_ARRAY_FIELD(controller_mempak);
+        TASINPUT_ARRAY_FIELD(controller_rumblepak);
+        TASINPUT_ARRAY_FIELD(controller_config);
+        #undef TASINPUT_FIELD
+        #undef TASINPUT_ARRAY_FIELD
+    }
+
+    friend void from_json(const nlohmann::json& j, t_config& self) {
+        #define TASINPUT_FIELD(field) nlohmann::from_json(j.at(#field), self.field)
+        self = {};
+        TASINPUT_FIELD(version);
+        if (self.version >= 6) {
+            TASINPUT_FIELD(always_on_top);
+            TASINPUT_FIELD(float_from_parent);
+            TASINPUT_FIELD(titlebar);
+            TASINPUT_FIELD(client_drag);
+            TASINPUT_FIELD(loop_combo);
+            TASINPUT_FIELD(relative_mode);
+            TASINPUT_FIELD(approach_mode);
+            TASINPUT_FIELD(dialog_expanded);
+            TASINPUT_FIELD(controller_active);
+            TASINPUT_FIELD(controller_mempak);
+            TASINPUT_FIELD(controller_rumblepak);
+            TASINPUT_FIELD(controller_config);
+        }
+        #undef TASINPUT_FIELD
+    }
+};
 
 extern t_config new_config;
 

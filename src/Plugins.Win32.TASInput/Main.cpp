@@ -13,6 +13,8 @@
 #define EXPORT __declspec(dllexport)
 #define CALL _cdecl
 
+std::filesystem::path g_config_path;
+
 static void log_shim(const wchar_t *str)
 {
     wprintf(str);
@@ -43,4 +45,14 @@ int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
+
+    // CONFIG PATH
+    // get length
+    size_t len = g_ef->config_path(nullptr, 0);
+    // copy string
+    std::string path_temp(len, '\0');
+    g_ef->config_path(path_temp.data(), path_temp.size());
+    // drop the terminating null
+    path_temp.pop_back();
+    g_config_path = std::filesystem::absolute(path_temp);
 }
