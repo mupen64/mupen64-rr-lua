@@ -415,6 +415,11 @@ static int write(lua_State *L)
     uint32_t address = luaL_checkinteger(L, 1);
     size_t buffer_len{};
     const auto buffer_str = lua_tolstring(L, 2, &buffer_len);
+    if(!buffer_str)
+    {
+        luaL_error(L, "buffer is not a string");
+        return 0;
+    }
     const auto buffer = std::vector<uint8_t>(buffer_str, buffer_str + buffer_len);
 
     address &= CORE_ADDR_MASK;
