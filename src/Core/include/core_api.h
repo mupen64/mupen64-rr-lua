@@ -775,6 +775,10 @@ constexpr uint32_t to_addr(const uint32_t addr, const uint8_t size)
     constexpr auto s8 = 3;
     constexpr auto s16 = 2;
 
+    if (size == 8)
+    {
+        return addr;
+    }
     if (size == 4)
     {
         return addr;
@@ -794,11 +798,13 @@ constexpr uint32_t to_addr(const uint32_t addr, const uint8_t size)
  * \brief Gets the value at the specified address from RDRAM.
  * \tparam T The value's type.
  * \param addr The start address of the value.
- * \return The value at the address.
+ * \return The value at the address, or `std::nullopt` if the address is out of bounds.
  */
-template <typename T> constexpr T core_rdram_load(uint8_t *rdram, const uint32_t addr)
+template <typename T> constexpr std::optional<T> core_rdram_load(uint8_t *rdram, const uint32_t addr)
 {
-    return *(T *)(rdram + (to_addr(addr, sizeof(T)) & CORE_ADDR_MASK));
+    const uint32_t masked_addr = to_addr(addr, sizeof(T)) & CORE_ADDR_MASK;
+    if (masked_addr + sizeof(T) > CORE_RDRAM_SIZE) return std::nullopt;
+    return *(T *)(rdram + masked_addr);
 }
 
 /**
@@ -806,10 +812,14 @@ template <typename T> constexpr T core_rdram_load(uint8_t *rdram, const uint32_t
  * \tparam T The value's type.
  * \param addr The start address of the value.
  * \param value The value to set.
+ * \return Whether the write succeeded.
  */
-template <typename T> void core_rdram_store(uint8_t *rdram, const uint32_t addr, T value)
+template <typename T> bool core_rdram_store(uint8_t *rdram, const uint32_t addr, T value)
 {
-    *(T *)(rdram + (to_addr(addr, sizeof(T)) & CORE_ADDR_MASK)) = value;
+    const uint32_t masked_addr = to_addr(addr, sizeof(T)) & CORE_ADDR_MASK;
+    if (masked_addr + sizeof(T) > CORE_RDRAM_SIZE) return false;
+    *(T *)(rdram + masked_addr) = value;
+    return true;
 }
 
 #pragma endregion
