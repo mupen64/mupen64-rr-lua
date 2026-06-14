@@ -844,7 +844,7 @@ function memory.writefloat(address, data) end
 function memory.writedouble(address, data) end
 
 ---Writes `size` bytes to memory at `address`.
----The memory is treated as signed if `size` is is negative.
+---The memory is treated as signed if `size` is negative.
 ---Errors if the operation is out-of-bounds.
 ---@param address integer
 ---@param size 1|2|4|8|-1|-2|-4|-8
