@@ -541,28 +541,6 @@ static void migrate_config_ini(t_config &config, const mINI::INIStructure &ini)
 #pragma endregion
 
 #pragma region JSON file parsing
-/*
-ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                int32_t *value)
-
-ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                uint64_t *value)
-
-ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::wstring &value)
-
-ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::vector<std::wstring> &value)
-
-ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::map<std::wstring, std::wstring> &value)
-
-ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::map<std::wstring, Hotkey::t_hotkey> &value)
-
-ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                std::vector<int32_t> &value)
-*/
 
 // READING
 // ==================

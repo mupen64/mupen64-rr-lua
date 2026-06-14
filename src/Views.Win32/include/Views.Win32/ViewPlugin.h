@@ -61,6 +61,7 @@ extern "C"
          * \return The current effective speed mode.
          */
         CoreSpeedMode (*get_effective_speed_mode)();
+
         /**
          * @brief Gets the path to the configuration directory, as a UTF-8 string.
          *
@@ -197,6 +198,22 @@ inline core_plugin_extended_funcs get_core_plugin_extended_funcs_shim()
     funcs.log_warn = log;
     funcs.log_error = log;
     funcs.get_effective_speed_mode = []() { return CoreSpeedMode::Normal; };
+    funcs.config_path = [](char*, size_t) -> size_t { throw std::runtime_error("config_path not known yet"); };
     return funcs;
 }
+
+/**
+ * @brief Gets the config path as a `std::filesystem::path` from a `core_plugin_extended_funcs`.
+ */
+inline std::filesystem::path get_config_path(const core_plugin_extended_funcs* ef) {
+    // get length
+    size_t len = ef->config_path(nullptr, 0);
+    // copy string
+    std::string path_temp(len, '\0');
+    ef->config_path(path_temp.data(), path_temp.size());
+    // drop the terminating null
+    path_temp.pop_back();
+    return std::filesystem::absolute(path_temp);
+}
+
 } // namespace ViewPluginHelpers
