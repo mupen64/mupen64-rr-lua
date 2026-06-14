@@ -146,7 +146,7 @@ struct t_config
     /// <summary>
     /// FFmpeg options.
     /// </summary>
-    std::wstring ffmpeg_options = L"-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k";
+    std::wstring ffmpeg_options = L"-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -vf vflip";
 
     /// <summary>
     /// FFmpeg binary path
