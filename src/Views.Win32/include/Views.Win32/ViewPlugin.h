@@ -65,13 +65,13 @@ extern "C"
         /**
          * @brief Gets the path to the configuration directory, as a UTF-8 string.
          *
-         * Writes the path to the configuration directory to `data`, provided that there is 
+         * Writes the path to the configuration directory to `data`, provided that there is
          * enough space for path and terminating null character (up to `len`). Returns the
          * number of characters written, or 0 if the buffer wasn't big enough.
-         * 
+         *
          * If `data` is null, returns the expected size of the buffer.
          */
-        size_t (*config_path)(char* data, size_t len);
+        size_t (*config_path)(char *data, size_t len);
     };
 
     typedef void(CALL *CLOSEDLL)();
@@ -198,14 +198,15 @@ inline core_plugin_extended_funcs get_core_plugin_extended_funcs_shim()
     funcs.log_warn = log;
     funcs.log_error = log;
     funcs.get_effective_speed_mode = []() { return CoreSpeedMode::Normal; };
-    funcs.config_path = [](char*, size_t) -> size_t { throw std::runtime_error("config_path not known yet"); };
+    funcs.config_path = [](char *, size_t) -> size_t { throw std::runtime_error("config_path not known yet"); };
     return funcs;
 }
 
 /**
  * @brief Gets the config path as a `std::filesystem::path` from a `core_plugin_extended_funcs`.
  */
-inline std::filesystem::path get_config_path(const core_plugin_extended_funcs* ef) {
+inline std::filesystem::path get_config_path(const core_plugin_extended_funcs *ef)
+{
     // get length
     size_t len = ef->config_path(nullptr, 0);
     // copy string

@@ -161,7 +161,7 @@ void Config_LoadConfig()
             OGL.textureFilter = j["texture_filter"];
             OGL.filterScale = j["filter_scale"];
             OGL.fog = j["enable_fog"];
-            cache.maxBytes = (int) j["texture_cache_size"] * 1048576;
+            cache.maxBytes = (int)j["texture_cache_size"] * 1048576;
             OGL.usePolygonStipple = j["dithered_alpha_testing"];
             OGL.ignoreScissor = j["ignore_scissor"];
             OGL.clear_override = j["clear_override"];

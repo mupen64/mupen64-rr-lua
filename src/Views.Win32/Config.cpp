@@ -562,7 +562,8 @@ template <class T> static json convert_to_json(const T &value)
     return json(value);
 }
 
-static json convert_to_json(const std::wstring& value) {
+static json convert_to_json(const std::wstring &value)
+{
     return json(IOUtils::to_utf8_string(value));
 }
 
@@ -608,7 +609,8 @@ template <class T> static bool convert_from_json(const json &j, T &value)
     return true;
 }
 
-static bool convert_from_json(const json& j, std::wstring& value) {
+static bool convert_from_json(const json &j, std::wstring &value)
+{
     if (j.is_null()) return false;
     value = IOUtils::to_wide_string(j.get<std::string>());
     return true;
@@ -658,11 +660,12 @@ static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey::t_ho
     return true;
 }
 
-static void json_read_file(const json& j) {
+static void json_read_file(const json &j)
+{
     g_config = get_default_config();
 
-    #define CORE_VALUE(name) convert_from_json(j["core"][#name], g_config.core.name);
-    #define FRONTEND_VALUE(name) convert_from_json(j["frontend"][#name], g_config.name);
+#define CORE_VALUE(name) convert_from_json(j["core"][#name], g_config.core.name);
+#define FRONTEND_VALUE(name) convert_from_json(j["frontend"][#name], g_config.name);
 
     CORE_VALUE(total_rerecords)
     CORE_VALUE(total_frames)
@@ -751,13 +754,14 @@ static void json_read_file(const json& j) {
     FRONTEND_VALUE(hotkeys)
     FRONTEND_VALUE(inital_hotkeys)
 
-    #undef CORE_VALUE
-    #undef FRONTEND_VALUE
+#undef CORE_VALUE
+#undef FRONTEND_VALUE
 }
 
-static void json_write_file(json& j) {
-    #define CORE_VALUE(name) j["core"][#name] = convert_to_json(g_config.core.name);
-    #define FRONTEND_VALUE(name) j["frontend"][#name] = convert_to_json(g_config.name);
+static void json_write_file(json &j)
+{
+#define CORE_VALUE(name) j["core"][#name] = convert_to_json(g_config.core.name);
+#define FRONTEND_VALUE(name) j["frontend"][#name] = convert_to_json(g_config.name);
 
     CORE_VALUE(total_rerecords)
     CORE_VALUE(total_frames)
@@ -846,8 +850,8 @@ static void json_write_file(json& j) {
     FRONTEND_VALUE(hotkeys)
     FRONTEND_VALUE(inital_hotkeys)
 
-    #undef CORE_VALUE
-    #undef FRONTEND_VALUE
+#undef CORE_VALUE
+#undef FRONTEND_VALUE
 }
 
 #pragma endregion
@@ -905,7 +909,7 @@ void Config::save()
     json j{};
     json_ensure_format(j);
     json_write_file(j);
-    
+
     std::ofstream ofs_file(get_config_path());
     ofs_file << std::setw(2) << j;
 }
@@ -924,7 +928,8 @@ void Config::apply_and_save()
 
 void Config::load()
 {
-    if (std::filesystem::exists(get_config_path())) {
+    if (std::filesystem::exists(get_config_path()))
+    {
         std::ifstream ifs_file(get_config_path());
         json j;
         {
@@ -933,7 +938,8 @@ void Config::load()
         json_ensure_format(j);
         json_read_file(j);
     }
-    else if (std::filesystem::exists(get_legacy_config_path())) {
+    else if (std::filesystem::exists(get_legacy_config_path()))
+    {
         mINI::INIFile file(get_legacy_config_path().string());
         mINI::INIStructure ini;
         file.read(ini);

@@ -42,13 +42,12 @@ static std::jthread s_audio_thread;
 
 plugin_funcs g_plugin_funcs{};
 
-static size_t ext_fn_config_path(char* data, size_t size) {
+static size_t ext_fn_config_path(char *data, size_t size)
+{
     static const std::string config_path = IOUtils::config_path().string();
 
-    if (data == nullptr)
-        return config_path.size() + 1;
-    if (size < config_path.size() + 1)
-        return 0;
+    if (data == nullptr) return config_path.size() + 1;
+    if (size < config_path.size() + 1) return 0;
 
     memcpy(data, config_path.c_str(), config_path.size() + 1);
     return size + 1;
@@ -663,13 +662,12 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
 #define GEN_EXTENDED_FUNCS(logger)                                                                                     \
     core_plugin_extended_funcs                                                                                         \
     {                                                                                                                  \
-        .size = sizeof(core_plugin_extended_funcs), \
-        .log_trace = [](const wchar_t *str) { logger->trace(str); },       \
+        .size = sizeof(core_plugin_extended_funcs), .log_trace = [](const wchar_t *str) { logger->trace(str); },       \
         .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
         .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
         .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
         .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
-        .config_path = ext_fn_config_path,\
+        .config_path = ext_fn_config_path,                                                                             \
     }
 
 void PluginUtil::init_dummy_and_extended_funcs()
