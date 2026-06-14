@@ -477,7 +477,7 @@ static int float_to_int(lua_State *L)
 static int double_to_int(lua_State *L)
 {
     DOUBLE n = luaL_checknumber(L, 1);
-    lua_pushinteger(L, std::bit_cast<ULONGLONG>(n));
+    LuaPushQword(L, std::bit_cast<ULONGLONG>(n));
     return 1;
 }
 
