@@ -1,6 +1,5 @@
 <script lang="ts">
 	import ugui from '$lib/assets/ugui.png';
-	import github from '$lib/assets/github.svg';
 	import Hero from '$lib/components/Hero.svelte';
 	import Title from '$lib/components/Title.svelte';
 </script>
