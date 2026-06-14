@@ -437,7 +437,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
 
 static std::filesystem::path get_legacy_config_path()
 {
-    return g_main_ctx.app_path / CONFIG_FILE_NAME;
+    return g_main_ctx.app_path / LEGACY_CONFIG_FILE_NAME;
 }
 
 /**
@@ -660,7 +660,7 @@ static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey::t_ho
     return true;
 }
 
-static void json_read_file(const json &j)
+static void json_read_file(json &j)
 {
     g_config = get_default_config();
 
@@ -894,6 +894,9 @@ static void config_patch(t_config &cfg)
             cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
         }
     }
+
+    // HACK: Wine doesn't implement DComp well enough yet, so force GDI
+    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
 }
 
 void Config::init()
@@ -930,13 +933,20 @@ void Config::load()
 {
     if (std::filesystem::exists(get_config_path()))
     {
-        std::ifstream ifs_file(get_config_path());
         json j;
+        try
         {
+            std::ifstream ifs_file(get_config_path());
             ifs_file >> j;
+            json_ensure_format(j);
+            json_read_file(j);
         }
-        json_ensure_format(j);
-        json_read_file(j);
+        catch (const std::exception &e)
+        {
+            g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
+            g_config = get_default_config();
+            save();
+        }
     }
     else if (std::filesystem::exists(get_legacy_config_path()))
     {

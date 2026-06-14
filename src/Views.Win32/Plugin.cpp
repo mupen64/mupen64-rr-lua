@@ -44,7 +44,7 @@ plugin_funcs g_plugin_funcs{};
 
 static size_t ext_fn_config_path(char *data, size_t size)
 {
-    static const std::string config_path = IOUtils::config_path().string();
+    static const std::u8string config_path = IOUtils::config_path().u8string();
 
     if (data == nullptr) return config_path.size() + 1;
     if (size < config_path.size() + 1) return 0;

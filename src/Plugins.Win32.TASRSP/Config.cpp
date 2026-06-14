@@ -132,11 +132,11 @@ void config_load()
     if (std::filesystem::exists(json_path))
     {
         std::ifstream ifs(json_path);
-
         nlohmann::json j;
-        ifs >> j;
+
         try
         {
+            ifs >> j;
             nlohmann::from_json(j, config);
         }
         catch (const std::exception &e)

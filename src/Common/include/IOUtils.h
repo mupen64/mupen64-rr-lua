@@ -325,7 +325,7 @@ inline std::filesystem::path compute_config_path()
 #ifdef _WIN32
     wchar_t path_buffer[MAX_PATH] = {L'\0'};
     DWORD rc;
-    rc = GetEnvironmentVariableW(L"LOCALAPPDATA", path_buffer, sizeof(path_buffer));
+    rc = GetEnvironmentVariableW(L"LOCALAPPDATA", path_buffer, MAX_PATH);
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());
@@ -341,7 +341,7 @@ inline std::filesystem::path compute_config_path()
     }
 
     const char *env_home = getenv("HOME");
-    assert(env_home != nullptr);
+    if (env_home == nullptr) throw std::runtime_error("$HOME is undefined");
 
     return std::filesystem::path(env_home) / ".config/mupen64-rr-lua";
 #else

@@ -152,9 +152,9 @@ void Config_LoadConfig()
         std::ifstream ifs(json_path);
 
         nlohmann::json j;
-        ifs >> j;
         try
         {
+            ifs >> j;
             OGL.windowedWidth = j["windowed_width"];
             OGL.windowedHeight = j["windowed_height"];
             OGL.forceBilinear = j["force_bilinear"];
