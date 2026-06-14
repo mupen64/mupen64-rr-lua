@@ -10,7 +10,9 @@
 #define NOMINMAX
 #include <Windows.h>
 #elif defined(__linux__)
-#include <stdio.h>
+#include <stdexcept>
+#include <cstdio>
+#include <cstdlib>
 #endif
 
 namespace IOUtils
@@ -301,14 +303,16 @@ inline std::filesystem::path compute_exe_path()
         throw std::system_error((int)GetLastError(), std::system_category());
     }
     return std::filesystem::path(path_buffer);
+#elif defined(__linux__)
+    return std::filesystem::read_symlink("/proc/self/exe");
 #else
-#error TODO: compute_exe_path not defined on this platform
+#error TODO: compute_exe_path() not defined on this platform
 #endif
 }
 
 // Gets the path of the current executable file.
 // This is only computed once and cached for the rest of the program.
-inline const std::filesystem::path& exe_path()
+inline const std::filesystem::path &exe_path()
 {
     // this ensures that the exe path is cached.
     static const std::filesystem::path cached_path = compute_exe_path();
@@ -329,6 +333,17 @@ inline std::filesystem::path compute_config_path()
 
     auto dir = std::filesystem::path(path_buffer) / "mupen64-rr-lua";
     return dir;
+#elif defined(__linux__)
+    const char *env_config = getenv("XDG_CONFIG_HOME");
+    if (env_config != nullptr)
+    {
+        return std::filesystem::path(env_config) / "mupen64-rr-lua";
+    }
+
+    const char *env_home = getenv("HOME");
+    assert(env_home != nullptr);
+
+    return std::filesystem::path(env_home) / ".config/mupen64-rr-lua";
 #else
 #error TODO: compute_config_dir not defined on this platform
 #endif
@@ -340,10 +355,10 @@ inline std::filesystem::path compute_config_path()
  * This is usually tied to `%LOCALAPPDATA%` on Windows, and `$XDG_CONFIG_HOME` or `~/.config`
  * on Linux.
  */
-inline const std::filesystem::path& config_path() {
+inline const std::filesystem::path &config_path()
+{
     static const std::filesystem::path cached_path = compute_config_path();
-    if (!std::filesystem::is_directory(cached_path))
-        std::filesystem::create_directories(cached_path);
+    if (!std::filesystem::is_directory(cached_path)) std::filesystem::create_directories(cached_path);
     return cached_path;
 }
 
