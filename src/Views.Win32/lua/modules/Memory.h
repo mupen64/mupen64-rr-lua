@@ -40,7 +40,8 @@ static void LuaPushQword(lua_State *L, ULONGLONG x)
 
 static int read_byte(lua_State *L)
 {
-    auto value = core_rdram_load<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -52,7 +53,8 @@ static int read_byte(lua_State *L)
 
 static int read_byte_signed(lua_State *L)
 {
-    auto value = core_rdram_load<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -64,7 +66,8 @@ static int read_byte_signed(lua_State *L)
 
 static int read_word(lua_State *L)
 {
-    auto value = core_rdram_load<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -76,7 +79,8 @@ static int read_word(lua_State *L)
 
 static int read_word_signed(lua_State *L)
 {
-    auto value = core_rdram_load<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -88,7 +92,8 @@ static int read_word_signed(lua_State *L)
 
 static int read_dword(lua_State *L)
 {
-    auto value = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -100,7 +105,8 @@ static int read_dword(lua_State *L)
 
 static int read_dword_signed(lua_State *L)
 {
-    auto value = core_rdram_load<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -112,7 +118,8 @@ static int read_dword_signed(lua_State *L)
 
 static int read_qword(lua_State *L)
 {
-    auto value = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -124,7 +131,8 @@ static int read_qword(lua_State *L)
 
 static int read_qword_signed(lua_State *L)
 {
-    auto value = core_rdram_load<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -136,7 +144,8 @@ static int read_qword_signed(lua_State *L)
 
 static int read_float(lua_State *L)
 {
-    auto value = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -148,7 +157,8 @@ static int read_float(lua_State *L)
 
 static int read_double(lua_State *L)
 {
-    auto value = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
+    const auto address = luaL_checkinteger(L, 1);
+    auto value = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address);
     if (!value)
     {
         luaL_error(L, "read beyond end of RDRAM");
@@ -162,8 +172,9 @@ static int read_double(lua_State *L)
 
 static int write_byte(lua_State *L)
 {
-    if (!core_rdram_store<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1),
-                                 luaL_checkinteger(L, 2)))
+    const auto address = luaL_checkinteger(L, 1);
+    const auto value = luaL_checkinteger(L, 2);
+    if (!core_rdram_store<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, address, value))
     {
         luaL_error(L, "write beyond end of RDRAM");
         return 0;
@@ -173,8 +184,9 @@ static int write_byte(lua_State *L)
 
 static int write_word(lua_State *L)
 {
-    if (!core_rdram_store<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1),
-                                  luaL_checkinteger(L, 2)))
+    const auto address = luaL_checkinteger(L, 1);
+    const auto value = luaL_checkinteger(L, 2);
+    if (!core_rdram_store<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, address, value))
     {
         luaL_error(L, "write beyond end of RDRAM");
         return 0;
@@ -184,8 +196,9 @@ static int write_word(lua_State *L)
 
 static int write_dword(lua_State *L)
 {
-    if (!core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1),
-                                 luaL_checkinteger(L, 2)))
+    const auto address = luaL_checkinteger(L, 1);
+    const auto value = luaL_checkinteger(L, 2);
+    if (!core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address, value))
     {
         luaL_error(L, "write beyond end of RDRAM");
         return 0;
@@ -195,8 +208,9 @@ static int write_dword(lua_State *L)
 
 static int write_qword(lua_State *L)
 {
-    if (!core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1),
-                                     LuaCheckQWord(L, 2)))
+    const auto address = luaL_checkinteger(L, 1);
+    const auto value = LuaCheckQWord(L, 2);
+    if (!core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address, value))
     {
         luaL_error(L, "write beyond end of RDRAM");
         return 0;
@@ -206,8 +220,9 @@ static int write_qword(lua_State *L)
 
 static int write_float(lua_State *L)
 {
-    FLOAT f = luaL_checknumber(L, -1);
-    if (!core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), *(ULONG *)&f))
+    const auto address = luaL_checkinteger(L, 1);
+    const auto value = (float)luaL_checknumber(L, 2);
+    if (!core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address, std::bit_cast<ULONG>(value)))
     {
         luaL_error(L, "write beyond end of RDRAM");
         return 0;
@@ -217,8 +232,9 @@ static int write_float(lua_State *L)
 
 static int write_double(lua_State *L)
 {
-    DOUBLE f = luaL_checknumber(L, -1);
-    if (!core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), *(ULONGLONG *)&f))
+    const auto address = luaL_checkinteger(L, 1);
+    const auto value = (double)luaL_checknumber(L, 2);
+    if (!core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, address, std::bit_cast<ULONGLONG>(value)))
     {
         luaL_error(L, "write beyond end of RDRAM");
         return 0;
@@ -415,7 +431,7 @@ static int write(lua_State *L)
     uint32_t address = luaL_checkinteger(L, 1);
     size_t buffer_len{};
     const auto buffer_str = lua_tolstring(L, 2, &buffer_len);
-    if(!buffer_str)
+    if (!buffer_str)
     {
         luaL_error(L, "buffer is not a string");
         return 0;
@@ -440,28 +456,28 @@ static int write(lua_State *L)
 static int int_to_float(lua_State *L)
 {
     ULONG n = luaL_checknumber(L, 1);
-    lua_pushnumber(L, *(FLOAT *)&n);
+    lua_pushnumber(L, std::bit_cast<float>(n));
     return 1;
 }
 
 static int int_to_double(lua_State *L)
 {
     ULONGLONG n = LuaCheckQWord(L, 1);
-    lua_pushnumber(L, *(DOUBLE *)&n);
+    lua_pushnumber(L, std::bit_cast<double>(n));
     return 1;
 }
 
 static int float_to_int(lua_State *L)
 {
     FLOAT n = luaL_checknumber(L, 1);
-    lua_pushinteger(L, *(ULONG *)&n);
+    lua_pushinteger(L, std::bit_cast<ULONG>(n));
     return 1;
 }
 
 static int double_to_int(lua_State *L)
 {
     DOUBLE n = luaL_checknumber(L, 1);
-    LuaPushQword(L, *(ULONGLONG *)&n);
+    lua_pushinteger(L, std::bit_cast<ULONGLONG>(n));
     return 1;
 }
 
