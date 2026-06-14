@@ -432,7 +432,7 @@ static int write(lua_State *L)
 
     const auto rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
     const auto start = reinterpret_cast<const char *>(rdram + address);
-    memcpy((char *)rdram + address, buffer.data(), buffer.size());
+    memcpy((char *)start, buffer.data(), buffer.size());
 
     return 0;
 }
