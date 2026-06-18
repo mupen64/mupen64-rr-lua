@@ -90,7 +90,10 @@ void RSP_ProcessDList()
     if (OGL.clear_override)
     {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glPushAttrib(GL_ENABLE_BIT);
+        glDisable(GL_SCISSOR_TEST);
         glClear(GL_COLOR_BUFFER_BIT);
+        glPopAttrib();
     }
 
     RSP.PC[0] = *(u32 *)&DMEM[0x0FF0];
