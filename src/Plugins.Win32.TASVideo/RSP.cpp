@@ -90,10 +90,6 @@ void RSP_ProcessDList()
     if (OGL.clear_override)
     {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        // Force the clear to cover the entire framebuffer, ignoring any
-        // scissor region left over from the previous frame. Without this,
-        // letterbox bars and other out-of-scissor areas can retain garbage
-        // when the N64 does not issue a full-screen clear itself.
         glPushAttrib(GL_ENABLE_BIT);
         glDisable(GL_SCISSOR_TEST);
         glClear(GL_COLOR_BUFFER_BIT);
