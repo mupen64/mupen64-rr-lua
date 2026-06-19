@@ -161,6 +161,9 @@ bool OGL_InitContext()
 
     OGL_InitExtensions();
     OGL_InitStates();
+
+    OGL.context_initialized = TRUE;
+
     return TRUE;
 }
 
