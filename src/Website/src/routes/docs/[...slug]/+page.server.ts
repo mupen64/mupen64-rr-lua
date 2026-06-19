@@ -1,18 +1,18 @@
 import { Marked } from 'marked';
 import type { PageServerLoad } from './$types';
-import { redirect } from '@sveltejs/kit';
-import { doc_name_to_friendly_name } from '$lib/helpers/DocNameConverter';
-import { get_doc_by_name, get_doc_names } from '$lib/helpers/DocFetcher';
+import { redirect, error } from '@sveltejs/kit';
+import { get_doc_by_path, get_first_doc_path } from '$lib/helpers/DocFetcher';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = ({ params }) => {
+  const doc = get_doc_by_path(params.slug);
 
-  const doc_names = await get_doc_names();
-
-  if (params.slug == "") {
-    redirect(307, `/docs/win/${doc_names[0]}`);
+  if (!doc || doc.is_dir) {
+    const first = get_first_doc_path();
+    if (!first) {
+      error(404, 'No documentation found');
+    }
+    redirect(307, `/docs/${first}`);
   }
-
-  const content = (await get_doc_by_name(params.slug))!;
 
   const marked = new Marked({
     hooks: {
@@ -43,10 +43,11 @@ export const load: PageServerLoad = async ({ params }) => {
     }
   });
 
-  const html = await marked.parse(content);
+  const html = await marked.parse(doc.content!);
 
   return {
     content: html,
-    title: doc_name_to_friendly_name(params.slug),
+    title: doc.title,
+    path: doc.path,
   };
 };

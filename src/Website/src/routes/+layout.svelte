@@ -3,11 +3,46 @@
 	import mupen64 from '$lib/assets/mupen64.svg';
 	import sm64luaredux from '$lib/assets/sm64luaredux.png';
 	import ugui from '$lib/assets/ugui.png';
-	import { doc_name_to_friendly_name } from '$lib/helpers/DocNameConverter';
 	import { resolve } from '$app/paths';
+	import type { DocNode } from '$lib/helpers/DocFetcher';
 
 	let { children, data } = $props();
+
+	function docHref(node: DocNode): string {
+		if (node.is_dir && node.children && node.children.length > 0) {
+			// Find the first descendant document
+			let current: DocNode = node;
+			while (current.is_dir && current.children && current.children.length > 0) {
+				current = current.children[0];
+			}
+			return resolve(`/docs/${current.path}`);
+		}
+		return resolve(`/docs/${node.path}`);
+	}
 </script>
+
+{#snippet doc_menu(node: DocNode)}
+	{#if node.children && node.children.length > 0}
+		{#each node.children as child (child.path)}
+			{#if child.is_dir}
+				<li>
+					<details>
+						<summary>{child.title}</summary>
+						<ul class="z-1 bg-base-100 p-2">
+							{@render doc_menu(child)}
+						</ul>
+					</details>
+				</li>
+			{:else}
+				<li>
+					<a href={docHref(child)}>
+						<span>{child.title}</span>
+					</a>
+				</li>
+			{/if}
+		{/each}
+	{/if}
+{/snippet}
 
 <svelte:head>
 	<link rel="icon" href={mupen64} />
@@ -25,20 +60,14 @@
 			<li>
 				<details>
 					<summary>Mupen64</summary>
-					<ul class="z-1 w-40 bg-base-100 p-2">
+					<ul class="z-1 w-52 bg-base-100 p-2">
 						<li>
 							<a href={resolve('/')}>
 								<span>Home</span>
 							</a>
 						</li>
 
-						{#each data.doc_names as name, i (i)}
-							<li>
-								<a href={resolve(`/docs/win/${name}`)}>
-									<span>{doc_name_to_friendly_name(name)}</span>
-								</a>
-							</li>
-						{/each}
+						{@render doc_menu(data.doc_tree)}
 					</ul>
 				</details>
 			</li>

@@ -1,7 +1,8 @@
-import { get_doc_names } from '$lib/helpers/DocFetcher';
-import type { PageServerLoad } from './$types';
-export const load: PageServerLoad = async () => {
+import { get_doc_tree } from '$lib/helpers/DocFetcher';
+import type { LayoutServerLoad } from './$types';
+
+export const load: LayoutServerLoad = () => {
     return {
-        doc_names: await get_doc_names()
+        doc_tree: get_doc_tree()
     }
 };

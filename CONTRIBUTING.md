@@ -100,7 +100,7 @@ Before merging a pull request into main or pushing out a release, verify that:
 2. The core tests (`test/Core.Tests`) pass
 3. The automatic Lua tests (`test/lua/tests.lua`) pass
 4. The manual Lua tests (`test/lua/manual/*.lua`) pass
-5. The docs (`src/Website/static/docs/win`) have been kept up-to-date
+5. The docs (`docs/`) have been kept up-to-date. Markdown files live under `docs/<category>/` (e.g. `docs/win/`, `docs/lua/`). The Lua API reference (`docs/lua/api.md`) is generated from `src/Lua/api.lua` by running `python tools/generate_lua_docs.py` or `npm run generate-docs` from `src/Website`.
 6. There are no regressions in plugin compatibility (test Jabo's plugins)
 
 ### Release
