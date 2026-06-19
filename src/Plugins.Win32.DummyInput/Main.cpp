@@ -26,5 +26,4 @@ EXPORT void CALL InitiateControllers(core_input_info ControlInfo)
     }
 
     controllers[0].Present = 1;
-    controllers[0].Plugin = ce_mempak;
 }
