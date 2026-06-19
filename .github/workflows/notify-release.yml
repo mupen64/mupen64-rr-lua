@@ -1,11 +1,11 @@
 name: Call org release notifier
 
-permissions:
-  contents: read
-
 on:
   release:
     types: [published]
+
+permissions:
+  contents: read
 
 jobs:
   notify:
