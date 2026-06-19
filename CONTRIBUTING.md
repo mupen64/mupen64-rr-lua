@@ -54,6 +54,16 @@ if (MUPEN64RR_BUILD_WIN32)
 endif()
 ```
 
+# Branching
+
+For contributors: PRs should target `main`. That's all you need to care about.
+
+For maintainers:
+
+Release branches are named `release/<version>` and created from `main`. 
+
+All development happens on `main`. We cherry-pick from `main` into release branches as needed and are free to rewrite history in release branches if necessary.
+
 # Copyright Header
 
 Every non-library file must contain a copyright header with this content:
