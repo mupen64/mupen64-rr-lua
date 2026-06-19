@@ -417,5 +417,3 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-# Generated Lua API documentation
-docs/lua/api.md

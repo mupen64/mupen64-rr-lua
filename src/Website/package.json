@@ -5,10 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "predev": "npm run generate-docs",
     "build": "vite build",
-    "generate-docs": "python ../../tools/generate_lua_docs.py",
-    "prebuild": "npm run generate-docs",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
