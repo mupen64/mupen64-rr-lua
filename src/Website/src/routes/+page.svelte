@@ -10,7 +10,7 @@
 	<Hero
 		name="Mupen64"
 		description="Advanced N64 TASing emulator."
-		version="1.4.0"
+		version="1.4.0-2"
 		logo={mupen64}
 		repository="https://github.com/mupen64/mupen64-rr-lua"
 		bg_color_from="#ff0000"
