@@ -212,21 +212,6 @@ void FrameBuffer_RenderBuffer(u32 address)
             Combiner_BeginTextureUpdate();
             TextureCache_ActivateTexture(0, current->texture);
             Combiner_SetCombine(EncodeCombineMode(0, 0, 0, TEXEL0, 0, 0, 0, 1, 0, 0, 0, TEXEL0, 0, 0, 0, 1));
-            /*			if (OGL.ARB_multitexture)
-                        {
-                            for (int i = 0; i < OGL.maxTextureUnits; i++)
-                            {
-                                glActiveTextureARB( GL_TEXTURE0_ARB + i );
-                                glDisable( GL_TEXTURE_2D );
-                            }
-
-                            glActiveTextureARB( GL_TEXTURE0_ARB );
-                        }
-
-                        TextureCache_ActivateTexture( 0, current->texture );
-                        glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
-                        glEnable( GL_TEXTURE_2D );*/
-
             glDisable(GL_BLEND);
             glDisable(GL_ALPHA_TEST);
             glDisable(GL_DEPTH_TEST);
@@ -262,9 +247,6 @@ void FrameBuffer_RenderBuffer(u32 address)
             glEnd();
             glDrawBuffer(GL_BACK);
 
-            /*			glEnable( GL_TEXTURE_2D );
-                        glActiveTextureARB( GL_TEXTURE0_ARB );
-                        glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB );*/
             glPopAttrib();
 
             current->changed = FALSE;
@@ -288,21 +270,6 @@ void FrameBuffer_RestoreBuffer(u32 address, u16 size, u16 width)
         if ((current->startAddress == address) && (current->width == width) && (current->size == size))
         {
             glPushAttrib(GL_ENABLE_BIT | GL_VIEWPORT_BIT);
-
-            /*			if (OGL.ARB_multitexture)
-                        {
-                            for (int i = 0; i < OGL.maxTextureUnits; i++)
-                            {
-                                glActiveTextureARB( GL_TEXTURE0_ARB + i );
-                                glDisable( GL_TEXTURE_2D );
-                            }
-
-                            glActiveTextureARB( GL_TEXTURE0_ARB );
-                        }
-
-                        TextureCache_ActivateTexture( 0, current->texture );
-                        glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
-                        glEnable( GL_TEXTURE_2D );*/
             Combiner_BeginTextureUpdate();
             TextureCache_ActivateTexture(0, current->texture);
             Combiner_SetCombine(EncodeCombineMode(0, 0, 0, TEXEL0, 0, 0, 0, 1, 0, 0, 0, TEXEL0, 0, 0, 0, 1));
