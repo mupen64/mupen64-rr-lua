@@ -65,11 +65,11 @@ void OGL_InitStates()
         glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
     }
 
-    glClientActiveTextureARB(GL_TEXTURE0);
+    glClientActiveTexture(GL_TEXTURE0);
     glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s0);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    glClientActiveTextureARB(GL_TEXTURE1);
+    glClientActiveTexture(GL_TEXTURE1);
     glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s1);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
