@@ -76,7 +76,7 @@ jobs:
             echo EOF
           } >> "$GITHUB_OUTPUT"
 
-      - name: Create draft beta release
+      - name: Create draft stable release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.version }}
