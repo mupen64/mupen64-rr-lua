@@ -47,6 +47,15 @@ html {
     @apply my-2 p-2 pr-10 border-l-2 border-blue-500 text-blue-500 bg-blue-300/10;
 }
 
+.tip::before {
+    content: '💡 Tip';
+    @apply font-bold;
+}
+
+.tip {
+    @apply my-2 p-2 pr-10 border-l-2 border-green-600 text-green-600 bg-green-300/10;
+}
+
 .warn::before {
     content: '⚠️ Warning';
     @apply font-bold;
