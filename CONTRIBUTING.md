@@ -107,9 +107,9 @@ Naming must abide by the [.clang-tidy](https://github.com/mupen64/mupen64-rr-lua
 Before merging a pull request into main or pushing out a release, verify that:
 
 1. The code is formatted according to the `.clang-format` file
-2. The core tests (`test/Core.Tests`) pass
-3. The automatic Lua tests (`test/lua/tests.lua`) pass
-4. The manual Lua tests (`test/lua/manual/*.lua`) pass
+2. The core tests (`src/Core.Tests`) pass
+3. The automatic Lua tests (`src/Lua/tests.lua`) pass
+4. The manual Lua tests (`src/Lua/manual/*.lua`) pass
 5. The docs (`src/Website/static/docs/win`) have been kept up-to-date
 6. There are no regressions in plugin compatibility (test Jabo's plugins)
 

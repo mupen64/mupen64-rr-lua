@@ -18,7 +18,7 @@ local function trim_to_nth_last_component(path, n)
 end
 
 path_root = trim_to_nth_last_component(debug.getinfo(1).source:sub(2), 3)
-
+cpath = trim_to_nth_last_component(debug.getinfo(1).source:sub(2), 1)
 lib_path = path_root .. "\\vendor\\lua-modules\\"
 
 ---@module "retest"
