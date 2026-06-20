@@ -33,9 +33,12 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         case IDC_NEW_CHEAT: {
             core_cheat script;
 
-            if (!g_main_ctx.core_ctx->cht_compile(
-                    "D033AFA1 0020\n8133B1BC 4220\nD033AFA1 0020\n8133B17C 0300\nD033AFA1 0020\n8133B17E 0880", script))
+            const auto result = g_main_ctx.core_ctx->cht_compile(
+                "D033AFA1 0020\n8133B1BC 4220\nD033AFA1 0020\n8133B17C 0300\nD033AFA1 0020\n8133B17E 0880");
+
+            if (!result.cheat.has_value())
             {
+                // TODO: Show error message
                 break;
             }
 
@@ -92,19 +95,19 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             const auto code = get_window_text(GetDlgItem(hwnd, IDC_EDIT_CHEAT)).value();
             const auto name = get_window_text(GetDlgItem(hwnd, IDC_EDIT_CHEAT_NAME)).value();
 
-            core_cheat script;
-
-            if (!g_main_ctx.core_ctx->cht_compile(IOUtils::to_utf8_string(code), script))
+            const auto result = g_main_ctx.core_ctx->cht_compile(IOUtils::to_utf8_string(code));
+            if (!result.cheat.has_value())
             {
                 DialogService::show_dialog(L"Cheat code could not be compiled.\r\nVerify that the syntax is correct",
                                            L"Cheats", fsvc_error);
                 break;
             }
 
-            script.name = IOUtils::to_utf8_string(name);
-            script.active = prev_active;
+            auto cheat = result.cheat.value();
+            cheat.name = IOUtils::to_utf8_string(name);
+            cheat.active = prev_active;
 
-            cheats[selected_index] = script;
+            cheats[selected_index] = cheat;
             g_main_ctx.core_ctx->cht_set_list(cheats);
 
             goto rebuild_list;

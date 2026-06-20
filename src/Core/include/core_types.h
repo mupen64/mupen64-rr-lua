@@ -793,6 +793,18 @@ typedef struct CoreCheat
     std::vector<std::tuple<bool, std::function<bool()>>> instructions;
 } core_cheat;
 
+/**
+ * \brief Represents the result of compiling a cheat script.
+ */
+struct CoreCheatCompilationResult
+{
+    // The compiled cheat, if successful.
+    std::optional<CoreCheat> cheat;
+
+    // The messages generated during compilation.
+    std::vector<std::string> messages;
+};
+
 #pragma endregion
 
 // #pragma region Savestates

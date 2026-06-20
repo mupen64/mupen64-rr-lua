@@ -730,10 +730,9 @@ extern "C"
         /**
          * \brief Compiles a cheat code from code.
          * \param code The cheat code. Must be in the GameShark format.
-         * \param cheat The compiled cheat. If the compilation fails, the cheat won't be mutated.
-         * \return Whether the compilation was successful.
+         * \return The compilation result.
          */
-        std::function<bool(std::string_view code, core_cheat &cheat)> cht_compile;
+        std::function<CoreCheatCompilationResult(std::string_view code)> cht_compile;
 
         /**
          * \brief Gets the cheat override stack.

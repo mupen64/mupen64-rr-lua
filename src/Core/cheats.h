@@ -8,7 +8,7 @@
 
 void cht_execute();
 
-bool cht_compile(std::string_view code, core_cheat &cheat);
+CoreCheatCompilationResult cht_compile(std::string_view code);
 void cht_get_override_stack(std::stack<std::vector<core_cheat>> &stack);
 void cht_get_list(std::vector<core_cheat> &list);
 void cht_set_list(const std::vector<core_cheat> &list);

@@ -16,8 +16,9 @@ static std::recursive_mutex cheats_mutex;
 static std::vector<core_cheat> host_cheats;
 static std::stack<std::vector<core_cheat>> cheat_stack;
 
-bool cht_compile(std::string_view code, core_cheat &cheat)
+CoreCheatCompilationResult cht_compile(std::string_view code)
 {
+    CoreCheatCompilationResult compilation_result{};
     core_cheat compiled_cheat{};
 
     bool serial = false;
@@ -29,7 +30,7 @@ bool cht_compile(std::string_view code, core_cheat &cheat)
     {
         if (line[0] == '$' || line[0] == '-' || line.size() < 13)
         {
-            g_core->log_info("[GS] Line skipped");
+            compilation_result.messages.push_back(std::format("warning: malformed line: {}", line));
             continue;
         }
 
@@ -42,14 +43,22 @@ bool cht_compile(std::string_view code, core_cheat &cheat)
             std::from_chars_result result;
 
             result = std::from_chars(line.data() + 2, line.data() + 8, address, 16);
-            if (result.ec != std::errc{}) return false;
+            if (result.ec != std::errc{})
+            {
+                compilation_result.messages.push_back(std::format("error: invalid address. line: {}", line));
+                continue;
+            }
 
             if (line[8] == ' ')
                 result = std::from_chars(line.data() + 9, line.data() + 13, val, 16);
             else
                 result = std::from_chars(line.data() + 10, line.data() + 14, val, 16);
 
-            if (result.ec != std::errc{}) return false;
+            if (result.ec != std::errc{})
+            {
+                compilation_result.messages.push_back(std::format("error: invalid value. line: {}", line));
+                continue;
+            }
         }
 
         if (serial)
@@ -141,15 +150,15 @@ bool cht_compile(std::string_view code, core_cheat &cheat)
         }
         else
         {
-            g_core->log_error(std::format("[GS] Illegal instruction {}\n", opcode));
-            return false;
+            compilation_result.messages.push_back(std::format("error: unknown opcode {}", opcode));
+            return compilation_result;
         }
     }
 
     compiled_cheat.code = code;
-    cheat = compiled_cheat;
+    compilation_result.cheat = compiled_cheat;
 
-    return true;
+    return compilation_result;
 }
 
 bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_cheat> &cheats)
@@ -190,7 +199,15 @@ bool cht_read_from_file(const std::filesystem::path &path, std::vector<core_chea
     {
         // We need to patch up the names since the cheats are reconstructed when compiling
         const auto name = cheat.name;
-        cht_compile(cheat.code, cheat);
+
+        const auto result = cht_compile(cheat.code);
+        if (!result.cheat.has_value())
+        {
+            g_core->log_error(std::format("cht_compile failed to compile cheat {}", name));
+            continue;
+        }
+
+        cheat = result.cheat.value();
         cheat.name = name;
     }
 
