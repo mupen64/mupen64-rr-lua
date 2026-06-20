@@ -12,4 +12,4 @@ struct TASVideoContext
 extern TASVideoContext g_tas_ctx;
 extern core_plugin_extended_funcs *g_ef;
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Video", L"1.4.1")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Video", L"1.4.2")
