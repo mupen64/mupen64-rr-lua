@@ -258,7 +258,7 @@ void Combiner_Destroy()
 
     for (int i = 0; i < OGL.maxTextureUnits; i++)
     {
-        glActiveTextureARB(GL_TEXTURE0_ARB + i);
+        glActiveTexture(GL_TEXTURE0 + i);
         glDisable(GL_TEXTURE_2D);
     }
 }

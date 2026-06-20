@@ -25,10 +25,6 @@ struct GLInfo
 
     float scaleX, scaleY;
 
-    BOOL ARB_multitexture;         // TNT, GeForce, Rage 128, Radeon
-    BOOL ARB_texture_env_combine;  // GeForce, Rage 128, Radeon
-    BOOL ARB_texture_env_crossbar; // Radeon (GeForce supports it, but doesn't report it)
-
     BOOL EXT_fog_coord;           // TNT, GeForce, Rage 128, Radeon
     BOOL EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon
     BOOL EXT_secondary_color;     // GeForce, Radeon
