@@ -145,17 +145,17 @@ static void Init()
     for (int i = 0; i < OGL.maxTextureUnits; i++) TextureCache_ActivateDummy(i);
 
     // TEXTURE_ENV_COMBINE is now required
-    TexEnvArgs[TEXEL0].source = GL_TEXTURE0_ARB;
-    TexEnvArgs[TEXEL0_ALPHA].source = GL_TEXTURE0_ARB;
-    TexEnvArgs[TEXEL1].source = GL_TEXTURE1_ARB;
-    TexEnvArgs[TEXEL1_ALPHA].source = GL_TEXTURE1_ARB;
+    TexEnvArgs[TEXEL0].source = GL_TEXTURE0;
+    TexEnvArgs[TEXEL0_ALPHA].source = GL_TEXTURE0;
+    TexEnvArgs[TEXEL1].source = GL_TEXTURE1;
+    TexEnvArgs[TEXEL1_ALPHA].source = GL_TEXTURE1;
 }
 
 static void Uninit()
 {
     for (int i = 0; i < OGL.maxTextureUnits; i++)
     {
-        glActiveTextureARB(GL_TEXTURE0_ARB + i);
+        glActiveTexture(GL_TEXTURE0 + i);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     }
 }
@@ -167,7 +167,7 @@ static void UpdateColors(UnifiedCompiledCombiner *envCombiner)
     for (int i = 0; i < OGL.maxTextureUnits; i++)
     {
         SetConstant(color, envCombiner->color[i].constant, envCombiner->alpha[i].constant);
-        glActiveTextureARB(GL_TEXTURE0_ARB + i);
+        glActiveTexture(GL_TEXTURE0 + i);
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &color.r);
     }
 }
@@ -185,13 +185,13 @@ static void Compile(UnifiedCompiledCombiner *envCombiner, Combiner *color, Combi
         SetColorCombinerValues(i, arg1, GL_PREVIOUS_ARB, GL_SRC_COLOR);
         SetColorCombinerValues(i, arg2, GL_PREVIOUS_ARB, GL_SRC_COLOR);
         envCombiner->color[i].constant = COMBINED;
-        envCombiner->color[i].outputTexture = GL_TEXTURE0_ARB + i;
+        envCombiner->color[i].outputTexture = GL_TEXTURE0 + i;
 
         SetAlphaCombinerValues(i, arg0, GL_PREVIOUS_ARB, GL_SRC_ALPHA);
         SetAlphaCombinerValues(i, arg1, GL_PREVIOUS_ARB, GL_SRC_ALPHA);
         SetAlphaCombinerValues(i, arg2, GL_PREVIOUS_ARB, GL_SRC_ALPHA);
         envCombiner->alpha[i].constant = COMBINED;
-        envCombiner->alpha[i].outputTexture = GL_TEXTURE0_ARB + i;
+        envCombiner->alpha[i].outputTexture = GL_TEXTURE0 + i;
     }
 
     envCombiner->usesT0 = FALSE;
@@ -423,7 +423,7 @@ static void Set(UnifiedCompiledCombiner *envCombiner)
 
     for (int i = 0; i < OGL.maxTextureUnits; i++)
     {
-        glActiveTextureARB(GL_TEXTURE0_ARB + i);
+        glActiveTexture(GL_TEXTURE0 + i);
 
         if ((i < envCombiner->usedUnits) || ((i < 2) && envCombiner->usesT1))
         {
@@ -484,7 +484,7 @@ void BeginTextureUpdate_unified_combiner()
 {
     for (int i = 0; i < OGL.maxTextureUnits; i++)
     {
-        glActiveTextureARB(GL_TEXTURE0_ARB + i);
+        glActiveTexture(GL_TEXTURE0 + i);
         glDisable(GL_TEXTURE_2D);
     }
 }

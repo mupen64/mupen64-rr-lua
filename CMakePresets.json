@@ -50,6 +50,10 @@
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     }
   ],

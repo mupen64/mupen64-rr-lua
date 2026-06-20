@@ -19,6 +19,8 @@ export const load: PageServerLoad = ({ params }) => {
       postprocess(html) {
         html = html.replaceAll('[!NOTE]', '<div class="note">');
         html = html.replaceAll('[!NOTE---]', '</div>');
+        html = html.replaceAll('[!TIP]', '<div class="tip">');
+        html = html.replaceAll('[!TIP---]', '</div>');
         html = html.replaceAll('[!WARN]', '<div class="warn">');
         html = html.replaceAll('[!WARN---]', '</div>');
         html = html.replaceAll('[!CAUTION]', '<div class="caution">');

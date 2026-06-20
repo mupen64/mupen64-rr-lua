@@ -61,6 +61,18 @@ extern "C"
          * \return The current effective speed mode.
          */
         CoreSpeedMode (*get_effective_speed_mode)();
+
+        /**
+         * @brief Gets the path to the configuration directory, as a UTF-8 string.
+         *
+         * Writes the path to the configuration directory to `data`, provided that there is
+         * enough space for path and terminating null character (up to `len`). Returns the
+         * number of characters written (including the terminating null), or 0 if the buffer
+         * wasn't big enough.
+         *
+         * If `data` is null, returns the expected size of the buffer.
+         */
+        size_t (*config_path)(char *data, size_t len);
     };
 
     typedef void(CALL *CLOSEDLL)();
@@ -187,6 +199,32 @@ inline core_plugin_extended_funcs get_core_plugin_extended_funcs_shim()
     funcs.log_warn = log;
     funcs.log_error = log;
     funcs.get_effective_speed_mode = []() { return CoreSpeedMode::Normal; };
+    funcs.config_path = [](char *data, size_t len) -> size_t {
+        // return the empty null-terminated string
+        if (data == nullptr) return 1;
+        if (len < 1) return 0;
+
+        data[0] = '\0';
+        return 1;
+    };
     return funcs;
 }
+
+/**
+ * @brief Gets the config path as a `std::filesystem::path` from a `core_plugin_extended_funcs`.
+ */
+inline std::filesystem::path get_config_path(const core_plugin_extended_funcs *ef)
+{
+    // get length
+    size_t len = ef->config_path(nullptr, 0);
+    // copy string
+    std::string path_temp(len, '\0');
+    ef->config_path(path_temp.data(), path_temp.size());
+    // drop the terminating null
+    path_temp.pop_back();
+    // force UTF-8 conversion
+    std::u8string_view utf8_path_temp{(char8_t *)path_temp.data(), path_temp.size()};
+    return std::filesystem::absolute(utf8_path_temp);
+}
+
 } // namespace ViewPluginHelpers

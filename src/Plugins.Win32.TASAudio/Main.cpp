@@ -7,11 +7,11 @@
 #include "Main.hpp"
 #include "Config.hpp"
 #include "IOUtils.h"
-#include "Main_Win32.hpp"
 #include "SDLBackend.hpp"
 
 #include "core_plugin.h"
 #include <CommonPCH.h>
+#include <SDL3/SDL.h>
 
 #include <VersionNameHelpers.h>
 #include <core_api.h>
@@ -29,6 +29,7 @@ std::optional<SDLAudio::SDLBackend> g_backend{};
 core_plugin_extended_funcs *g_ef = nullptr;
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
+std::filesystem::path g_config_path{};
 static bool g_sdl_is_init = false;
 
 static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
@@ -53,7 +54,7 @@ static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
 
 static inline std::filesystem::path config_path()
 {
-    return g_dll_path.parent_path() / "TASAudio.conf.json";
+    return g_config_path / "TASAudio.json";
 }
 
 SDLAudio::Config read_config()
@@ -96,6 +97,7 @@ EXPORT void CALL CloseDLL(void)
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *g_fwd_funcs)
 {
     g_ef = g_fwd_funcs;
+    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
 }
 
 EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
@@ -113,8 +115,9 @@ EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 
     try
     {
-        SDLAudio::Config cfg = win32_read_config();
-        g_backend.emplace(std::move(cfg)); // TODO: add config dialog
+        SDLAudio::Config cfg = read_config();
+        if (!SDL_Init(SDL_INIT_AUDIO)) throw std::runtime_error(SDL_GetError());
+        g_backend.emplace(std::move(cfg));
     }
     catch (std::exception &e)
     {

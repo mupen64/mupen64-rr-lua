@@ -82,6 +82,7 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     Mupen64RR.Plugins.Win32.Common
     vendor::hqx
     vendor::xbrz
+    nlohmann_json::nlohmann_json
     GLEW::GLEW
     SDL3::SDL3
 )

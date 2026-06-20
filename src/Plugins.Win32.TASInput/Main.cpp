@@ -13,6 +13,8 @@
 #define EXPORT __declspec(dllexport)
 #define CALL _cdecl
 
+std::filesystem::path g_config_path;
+
 static void log_shim(const wchar_t *str)
 {
     wprintf(str);
@@ -43,4 +45,5 @@ int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
+    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
 }

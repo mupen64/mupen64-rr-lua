@@ -54,6 +54,7 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     m_audio_pts = 0;
     m_video_frame = 0;
     m_audio_frame = 0.0;
+    m_in_sample = 0;
     m_dropped_frames = 0;
     m_last_write_was_video = false;
 
@@ -172,9 +173,6 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     g_view_logger->info("[FFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
                         m_params.height, m_params.fps, m_params.arate);
 
-    const auto silence_samples = static_cast<size_t>(round(static_cast<double>(m_params.arate) / 64));
-    m_silence_buf.assign(silence_samples * 4, 0);
-
     return std::nullopt;
 }
 
@@ -207,8 +205,6 @@ bool FFmpegEncoder::stop()
         avformat_free_context(m_fmt_ctx);
         m_fmt_ctx = nullptr;
     }
-
-    m_silence_buf.clear();
 
     if (m_dropped_frames > 0)
     {
@@ -256,28 +252,34 @@ bool FFmpegEncoder::append_video(uint8_t *image)
     const AVRational fps_tb = {1, static_cast<int>(m_params.fps)};
     const int64_t frame_dur = av_rescale_q(1, fps_tb, m_video_stream->time_base);
 
-    if (sync == CaptureManager::Sync::Audio)
+    if (sync == CaptureManager::Sync::Video || sync == CaptureManager::Sync::None)
     {
-        int write_count = 0;
-        while (true)
-        {
-            const int overshot = static_cast<int>(m_audio_frame - static_cast<double>(m_video_frame) + 0.2);
-            if (overshot == 0) break;
-            ++write_count;
-            ++m_video_frame;
-        }
-        if (write_count == 0) return true;
-        for (int i = 0; i < write_count; ++i)
-        {
-            const int64_t pts = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
-            if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts, frame_dur)) return false;
-        }
-    }
-    else
-    {
-        ++m_video_frame;
         const int64_t pts = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
         if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts, frame_dur)) return false;
+        m_video_frame++;
+    }
+    else // Audio sync
+    {
+        const double drift = m_audio_frame - static_cast<double>(m_video_frame);
+        constexpr double DRIFT_THRESHOLD = 3.0;
+
+        // Video is ahead of audio, drop frame
+        if (drift < -DRIFT_THRESHOLD)
+        {
+            return true;
+        }
+
+        const int64_t pts = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
+        if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts, frame_dur)) return false;
+        m_video_frame++;
+
+        // Audio is ahead of video, duplicate frame
+        if (drift > DRIFT_THRESHOLD)
+        {
+            const int64_t pts2 = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
+            if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts2, frame_dur)) return false;
+            m_video_frame++;
+        }
     }
 
     m_last_write_was_video = true;
@@ -286,46 +288,18 @@ bool FFmpegEncoder::append_video(uint8_t *image)
 
 bool FFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
 {
-    const auto sync = static_cast<CaptureManager::Sync>(g_config.synchronization_mode);
-    const auto arate = static_cast<long double>(m_params.arate);
-    const long double vis_per_second =
-        g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+    if (length == 0) return true;
+
     const AVRational arate_tb = {1, static_cast<int>(m_params.arate)};
 
-    const double_t desync = static_cast<double_t>(m_video_frame) - m_audio_frame;
-    if (length > 0)
-    {
-        m_audio_frame += ((length / 4) / arate) * vis_per_second;
-    }
+    m_in_sample += length / 4;
+    m_audio_frame = static_cast<double>(m_in_sample) * m_params.fps / m_params.arate;
 
-    if (sync == CaptureManager::Sync::Video && desync > 1.0)
-    {
-        g_view_logger->info("[FFmpegEncoder] Correcting A/V desync of {:+.3f} frames", desync);
-        int silence_len = static_cast<int>(arate / vis_per_second) * static_cast<int>(desync);
-        silence_len <<= 2;
-        const int chunk = static_cast<int>(m_params.arate) * 4;
-
-        while (silence_len > 0)
-        {
-            const int write = std::min(silence_len, chunk);
-            m_silence_buf.assign(write, 0);
-            const auto nb = static_cast<int64_t>(write / 4);
-            const int64_t pts = av_rescale_q(m_audio_pts, arate_tb, m_audio_stream->time_base);
-            const int64_t dur = av_rescale_q(nb, arate_tb, m_audio_stream->time_base);
-            if (!write_av_packet(m_audio_stream->index, m_silence_buf.data(), write, pts, dur)) return false;
-            m_audio_pts += nb;
-            silence_len -= write;
-        }
-    }
-
-    if (length > 0)
-    {
-        const auto nb_samples = static_cast<int64_t>(length / 4);
-        const int64_t pts = av_rescale_q(m_audio_pts, arate_tb, m_audio_stream->time_base);
-        const int64_t dur = av_rescale_q(nb_samples, arate_tb, m_audio_stream->time_base);
-        if (!write_av_packet(m_audio_stream->index, audio, static_cast<int>(length), pts, dur)) return false;
-        m_audio_pts += nb_samples;
-    }
+    const auto nb_samples = static_cast<int64_t>(length / 4);
+    const int64_t pts = av_rescale_q(m_audio_pts, arate_tb, m_audio_stream->time_base);
+    const int64_t dur = av_rescale_q(nb_samples, arate_tb, m_audio_stream->time_base);
+    if (!write_av_packet(m_audio_stream->index, audio, static_cast<int>(length), pts, dur)) return false;
+    m_audio_pts += nb_samples;
 
     m_last_write_was_video = false;
     return true;

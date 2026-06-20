@@ -54,6 +54,16 @@ if (MUPEN64RR_BUILD_WIN32)
 endif()
 ```
 
+# Branching
+
+For contributors: PRs should target `main`. That's all you need to care about.
+
+For maintainers:
+
+Release branches are named `release/<version>` and created from `main`. 
+
+All development happens on `main`. We cherry-pick from `main` into release branches as needed and are free to rewrite history in release branches if necessary.
+
 # Copyright Header
 
 Every non-library file must contain a copyright header with this content:
@@ -97,18 +107,29 @@ Naming must abide by the [.clang-tidy](https://github.com/mupen64/mupen64-rr-lua
 Before merging a pull request into main or pushing out a release, verify that:
 
 1. The code is formatted according to the `.clang-format` file
-2. The core tests (`test/Core.Tests`) pass
-3. The automatic Lua tests (`test/lua/tests.lua`) pass
-4. The manual Lua tests (`test/lua/manual/*.lua`) pass
+2. The core tests (`src/Core.Tests`) pass
+3. The automatic Lua tests (`src/Lua/tests.lua`) pass
+4. The manual Lua tests (`src/Lua/manual/*.lua`) pass
 5. The docs (`docs/`) have been kept up-to-date. Markdown files live under `docs/<category>/` (e.g. `docs/win/`, `docs/lua/`).
 6. There are no regressions in plugin compatibility (test Jabo's plugins)
 
-### Release
+# Shipping releases
 
-1. Ensure the version numbers have been bumped in the code
-2. On the repo page, navigate to the `Actions` tab and run the pinned `Beta Release` (or `Stable Release`) workflow
-3. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
-4. Update [repack](https://github.com/mupen64/repack)
+*Nightly releases*
+
+No work is necessary to ship a nightly release.
+
+It's automated in the [repack](https://github.com/mupen64/repack) repository.
+
+*Stable releases*
+
+To create a stable release:
+
+1. Ensure there's a release branch for the version you're releasing
+2. Ensure the version numbers have been bumped in the code
+3. On the repo page, navigate to the `Actions` tab and run the pinned `Stable Release` workflow, targeting the release branch
+4. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
+5. In the [repack](https://github.com/mupen64/repack) repository, run the `Sync` workflow.
 
 # Reading and using Crashlogs
 

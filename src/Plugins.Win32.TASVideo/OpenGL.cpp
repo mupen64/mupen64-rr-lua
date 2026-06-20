@@ -36,14 +36,13 @@ void OGL_InitExtensions()
         return;
     }
 
-    OGL.ARB_multitexture = GLEW_ARB_multitexture;
+    RT_ASSERT(GLEW_ARB_multitexture, L"Multitexturing not supported. Try updating your graphics driver.");
+
     glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &OGL.maxTextureUnits);
     OGL.maxTextureUnits = min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
 
     OGL.EXT_fog_coord = GLEW_EXT_fog_coord;
     OGL.EXT_secondary_color = GLEW_EXT_secondary_color;
-    OGL.ARB_texture_env_combine = GLEW_ARB_texture_env_combine;
-    OGL.ARB_texture_env_crossbar = GLEW_ARB_texture_env_crossbar;
     OGL.EXT_texture_env_combine = GLEW_EXT_texture_env_combine;
 }
 
@@ -66,21 +65,13 @@ void OGL_InitStates()
         glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
     }
 
-    if (OGL.ARB_multitexture)
-    {
-        glClientActiveTextureARB(GL_TEXTURE0_ARB);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s0);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glClientActiveTexture(GL_TEXTURE0);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s0);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-        glClientActiveTextureARB(GL_TEXTURE1_ARB);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s1);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    }
-    else
-    {
-        glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s0);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    }
+    glClientActiveTexture(GL_TEXTURE1);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s1);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     if (OGL.EXT_fog_coord)
     {
@@ -161,6 +152,9 @@ bool OGL_InitContext()
 
     OGL_InitExtensions();
     OGL_InitStates();
+
+    OGL.context_initialized = TRUE;
+
     return TRUE;
 }
 
@@ -675,7 +669,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
             rect[1].t0 = cache.current[0]->offsetT - rect[1].t0;
         }
 
-        if (OGL.ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
 
         if ((rect[0].s0 >= 0.0f) && (rect[1].s0 <= cache.current[0]->width))
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -695,7 +689,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
         rect[1].t0 *= cache.current[0]->scaleT;
     }
 
-    if (combiner.usesT1 && OGL.ARB_multitexture)
+    if (combiner.usesT1)
     {
         rect[0].s1 = rect[0].s1 * cache.current[1]->shiftScaleS - gSP.textureTile[1]->fuls;
         rect[0].t1 = rect[0].t1 * cache.current[1]->shiftScaleT - gSP.textureTile[1]->fult;
@@ -724,7 +718,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
             rect[1].t1 = cache.current[1]->offsetT - rect[1].t1;
         }
 
-        glActiveTextureARB(GL_TEXTURE1_ARB);
+        glActiveTexture(GL_TEXTURE1);
 
         if ((rect[0].s1 == 0.0f) && (rect[1].s1 <= cache.current[1]->width))
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -740,7 +734,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
 
     if ((gDP.otherMode.cycleType == G_CYC_COPY) && !OGL.forceBilinear)
     {
-        if (OGL.ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -756,45 +750,22 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
     if (OGL.EXT_secondary_color)
         glSecondaryColor3fEXT(rect[0].secondaryColor.r, rect[0].secondaryColor.g, rect[0].secondaryColor.b);
 
-    if (OGL.ARB_multitexture)
-    {
-        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[0].s0, rect[0].t0);
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[0].s1, rect[0].t1);
-        glVertex4f(rect[0].x, rect[0].y, rect[0].z, 1.0f);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[0].s0, rect[0].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[0].s1, rect[0].t1);
+    glVertex4f(rect[0].x, rect[0].y, rect[0].z, 1.0f);
 
-        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[1].s0, rect[0].t0);
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[1].s1, rect[0].t1);
-        glVertex4f(rect[1].x, rect[0].y, rect[0].z, 1.0f);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[1].s0, rect[0].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[1].s1, rect[0].t1);
+    glVertex4f(rect[1].x, rect[0].y, rect[0].z, 1.0f);
 
-        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[1].s0, rect[1].t0);
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[1].s1, rect[1].t1);
-        glVertex4f(rect[1].x, rect[1].y, rect[0].z, 1.0f);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[1].s0, rect[1].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[1].s1, rect[1].t1);
+    glVertex4f(rect[1].x, rect[1].y, rect[0].z, 1.0f);
 
-        glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[0].s0, rect[1].t0);
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[0].s1, rect[1].t1);
-        glVertex4f(rect[0].x, rect[1].y, rect[0].z, 1.0f);
-    }
-    else
-    {
-        glTexCoord2f(rect[0].s0, rect[0].t0);
-        glVertex4f(rect[0].x, rect[0].y, rect[0].z, 1.0f);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[0].s0, rect[1].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[0].s1, rect[1].t1);
+    glVertex4f(rect[0].x, rect[1].y, rect[0].z, 1.0f);
 
-        if (flip)
-            glTexCoord2f(rect[1].s0, rect[0].t0);
-        else
-            glTexCoord2f(rect[0].s0, rect[1].t0);
-
-        glVertex4f(rect[1].x, rect[0].y, rect[0].z, 1.0f);
-
-        glTexCoord2f(rect[1].s0, rect[1].t0);
-        glVertex4f(rect[1].x, rect[1].y, rect[0].z, 1.0f);
-
-        if (flip)
-            glTexCoord2f(rect[1].s0, rect[0].t0);
-        else
-            glTexCoord2f(rect[1].s0, rect[0].t0);
-        glVertex4f(rect[0].x, rect[1].y, rect[0].z, 1.0f);
-    }
     glEnd();
 
     glLoadIdentity();
