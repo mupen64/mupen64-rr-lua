@@ -271,10 +271,7 @@ void cht_execute()
 
     for (const auto &cheat : cheats)
     {
-        if (!cheat.active)
-        {
-            return;
-        }
+        if (!cheat.active) continue;
 
         bool execute = true;
         for (auto instruction : cheat.instructions)
