@@ -9,7 +9,7 @@ env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
 jobs:
-  build-debug-beta:
+  build-debug-nightly:
     runs-on: windows-latest
 
     strategy:
@@ -29,7 +29,7 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      # Manual runs have no version suffix, auto-runs set it to `beta-{short_commit_hash}`
+      # Manual runs have no version suffix, auto-runs set it to `nightly-{short_commit_hash}`
       - name: Set VERSION_SUFFIX
         shell: powershell
         run: |
@@ -37,7 +37,7 @@ jobs:
             echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
           } else {
             $hash = "${{ github.sha }}".Substring(0, 7)
-            echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
+            echo "VERSION_SUFFIX=-nightly-$hash" >> $env:GITHUB_ENV
           }
 
       - name: Create vcpkg cache directory
@@ -72,11 +72,11 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-debug-beta
+          name: mupen-debug-nightly
           path: build/out
           retention-days: 14
 
-  build-release-beta:
+  build-release-nightly:
     runs-on: windows-latest
 
     strategy:
@@ -96,7 +96,7 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      # Manual runs have no version suffix, auto-runs set it to `beta-{short_commit_hash}`
+      # Manual runs have no version suffix, auto-runs set it to `nightly-{short_commit_hash}`
       - name: Set VERSION_SUFFIX
         shell: powershell
         run: |
@@ -104,7 +104,7 @@ jobs:
             echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
           } else {
             $hash = "${{ github.sha }}".Substring(0, 7)
-            echo "VERSION_SUFFIX=-beta-$hash" >> $env:GITHUB_ENV
+            echo "VERSION_SUFFIX=-nightly-$hash" >> $env:GITHUB_ENV
           }
 
       - name: Create vcpkg cache directory
@@ -145,7 +145,7 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-release-beta
+          name: mupen-release-nightly
           path: build/out
           retention-days: 14
 

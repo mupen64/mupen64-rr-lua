@@ -64,10 +64,10 @@ jobs:
       - name: Generate changelog with git-cliff
         id: changelog
         run: |
-          # Remove all beta tags from the local clone so git-cliff doesn't split
+          # Remove all nightly tags from the local clone so git-cliff doesn't split
           # the commit range into per-tag version segments (which causes duplicate
           # section headers). This only affects the local repo, not the remote.
-          git tag | grep -E '\-beta\-' | xargs -r git tag -d
+          git tag | grep -E '\-nightly\-' | xargs -r git tag -d
 
           git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md
           {
@@ -76,7 +76,7 @@ jobs:
             echo EOF
           } >> "$GITHUB_OUTPUT"
 
-      - name: Create draft beta release
+      - name: Create draft stable release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.version }}

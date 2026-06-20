@@ -113,12 +113,23 @@ Before merging a pull request into main or pushing out a release, verify that:
 5. The docs (`src/Website/static/docs/win`) have been kept up-to-date
 6. There are no regressions in plugin compatibility (test Jabo's plugins)
 
-### Release
+# Shipping releases
 
-1. Ensure the version numbers have been bumped in the code
-2. On the repo page, navigate to the `Actions` tab and run the pinned `Beta Release` (or `Stable Release`) workflow
-3. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
-4. Update [repack](https://github.com/mupen64/repack)
+*Nightly releases*
+
+No work is necessary to ship a nightly release.
+
+It's automated in the [repack](https://github.com/mupen64/repack) repository.
+
+*Stable releases*
+
+To create a stable release:
+
+1. Ensure there's a release branch for the version you're releasing
+2. Ensure the version numbers have been bumped in the code
+3. On the repo page, navigate to the `Actions` tab and run the pinned `Stable Release` workflow, targeting the release branch
+4. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
+5. In the [repack](https://github.com/mupen64/repack) repository, run the `Sync` workflow.
 
 # Reading and using Crashlogs
 
