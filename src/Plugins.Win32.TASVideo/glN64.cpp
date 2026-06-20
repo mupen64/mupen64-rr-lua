@@ -130,6 +130,7 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
+    g_tas_ctx.config_directory = ViewPluginHelpers::get_config_path(g_ef);
 }
 
 EXPORT void CALL ProcessDList(void)

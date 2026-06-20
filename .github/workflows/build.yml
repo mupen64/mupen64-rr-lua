@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
@@ -54,6 +58,7 @@ jobs:
           path: |
             vcpkg_cache
             vcpkg_installed
+            build/vcpkg_installed
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
             hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
@@ -121,6 +126,7 @@ jobs:
           path: |
             vcpkg_cache
             vcpkg_installed
+            build/vcpkg_installed
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
             hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
@@ -183,6 +189,7 @@ jobs:
           path: |
             vcpkg_cache
             vcpkg_installed
+            build/vcpkg_installed
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
             hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}

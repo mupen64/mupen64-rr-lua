@@ -30,7 +30,10 @@ set_target_properties(Mupen64RR.Plugins.Win32.TASRSP PROPERTIES
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_include_directories(Mupen64RR.Plugins.Win32.TASRSP PRIVATE ".")
-target_link_libraries(Mupen64RR.Plugins.Win32.TASRSP PRIVATE Mupen64RR.Plugins.Win32.Common)
+target_link_libraries(Mupen64RR.Plugins.Win32.TASRSP PRIVATE 
+    Mupen64RR.Plugins.Win32.Common
+    nlohmann_json::nlohmann_json
+)
 
 target_link_libraries(Mupen64RR.Plugins.Win32.TASRSP PRIVATE
     Comctl32

@@ -25,6 +25,7 @@ uint32_t inst2;
 static void (*g_audio_ucode_func)() = nullptr;
 HINSTANCE g_instance;
 std::filesystem::path g_app_path;
+std::filesystem::path g_config_path;
 // PlatformService g_platform_service;
 static uint8_t fake_header[0x1000];
 static uint32_t fake_AI_DRAM_ADDR_REG;
@@ -383,4 +384,5 @@ EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
 EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
 {
     g_ef = funcs;
+    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
 }
