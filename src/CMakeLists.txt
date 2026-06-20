@@ -37,3 +37,9 @@ if (MUPEN64RR_BUILD_WIN32)
     add_subdirectory(Plugins.Win32.TASAudio)
     add_subdirectory(Plugins.Win32.TASRSP)
 endif()
+
+# TESTS
+# ============================
+
+add_subdirectory(Core.Tests)
+add_subdirectory(Lua.TestLib)

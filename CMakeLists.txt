@@ -148,5 +148,4 @@ add_subdirectory(vendor)
 # subprojects
 add_subdirectory(src)
 
-# tests
-add_subdirectory(test)
+

@@ -11,7 +11,7 @@
 
 dofile(debug.getinfo(1).source:sub(2):gsub("[^\\]+$", "") .. 'test_prelude.lua')
 
-local testlib_path = path_root .. "build\\test\\Lua.Testlib\\"
+local testlib_path = path_root .. "build\\test\\out\\"
 local testlib_dll_path = testlib_path .. "luatestlib.dll"
 package.cpath = testlib_path .. "?.dll;" .. package.cpath
 
@@ -315,10 +315,9 @@ retest.describe('mupen64', function()
     end)
 
     retest.describe('wgui', function()
-        local TEST_ROOT = "../../test/lua/"
-        local VALID_IMAGE = TEST_ROOT .. "image.png"
-        local NONEXISTENT_IMAGE = TEST_ROOT .. "nonexistent.png"
-        local OUTPUT_IMAGE_PNG = TEST_ROOT .. "output.png"
+        local VALID_IMAGE = cpath .. "image.png"
+        local NONEXISTENT_IMAGE = cpath .. "nonexistent.png"
+        local OUTPUT_IMAGE_PNG = cpath .. "output.png"
 
         retest.describe('loadimage', function()
             retest.it('loads_valid_image', function()
@@ -347,7 +346,7 @@ retest.describe('mupen64', function()
             end)
             retest.it('errors_saving_unsupported_format', function()
                 local idx = wgui.loadimage(VALID_IMAGE)
-                local result = wgui.saveimage(idx, TEST_ROOT .. "output_image.abcdefxyz")
+                local result = wgui.saveimage(idx, cpath .. "output_image.abcdefxyz")
                 retest.expect(result).to.equal(false)
             end)
         end)
