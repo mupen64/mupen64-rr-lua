@@ -705,8 +705,7 @@ u32 TextureCache_CalculateCRC(u32 t, u32 width, u32 height)
 
 void TextureCache_ActivateTexture(u32 t, CachedTexture *texture)
 {
-    // If multitexturing, set the appropriate texture
-    if (OGL.ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB + t);
+    glActiveTextureARB(GL_TEXTURE0_ARB + t);
 
     // Bind the cached texture
     glBindTexture(GL_TEXTURE_2D, texture->glName);
@@ -737,8 +736,7 @@ void TextureCache_ActivateTexture(u32 t, CachedTexture *texture)
 
 void TextureCache_ActivateDummy(u32 t)
 {
-    // TextureCache_ActivateTexture( t, cache.dummy );
-    if (OGL.ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB + t);
+    glActiveTextureARB(GL_TEXTURE0_ARB + t);
 
     glBindTexture(GL_TEXTURE_2D, cache.dummy->glName);
 
@@ -779,8 +777,7 @@ void TextureCache_UpdateBackground()
 
     cache.misses++;
 
-    // If multitexturing, set the appropriate texture
-    if (OGL.ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB);
+    glActiveTextureARB(GL_TEXTURE0_ARB);
 
     cache.current[0] = TextureCache_AddTop();
 
@@ -993,8 +990,7 @@ void TextureCache_Update(u32 t)
 
     cache.misses++;
 
-    // If multitexturing, set the appropriate texture
-    if (OGL.ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB + t);
+    glActiveTextureARB(GL_TEXTURE0_ARB + t);
 
     cache.current[t] = TextureCache_AddTop();
 
@@ -1085,7 +1081,7 @@ void TextureCache_Update(u32 t)
 
 void TextureCache_ActivateNoise(u32 t)
 {
-    if (OGL.ARB_multitexture) glActiveTextureARB(GL_TEXTURE0_ARB + t);
+    glActiveTextureARB(GL_TEXTURE0_ARB + t);
 
     glBindTexture(GL_TEXTURE_2D, cache.glNoiseNames[RSP.DList & 0x1F]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
