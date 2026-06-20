@@ -23,5 +23,3 @@ lib_path = path_root .. "\\vendor\\lua-modules\\"
 
 ---@module "retest"
 retest = dofile(lib_path .. 'retest.lua')
-
-print(cpath)
