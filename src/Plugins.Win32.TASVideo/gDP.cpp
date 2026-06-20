@@ -620,7 +620,14 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
         }
     }
 
-    OGL_DrawRect(ulx, uly, lrx, lry, (gDP.otherMode.cycleType == G_CYC_FILL) ? &gDP.fillColor.r : &gDP.blendColor.r);
+    const auto is_sm64_border_rect =
+        (ulx == 0 && uly == 0 && lrx == 320 && lry == 8) || (ulx == 0 && uly == 232 && lrx == 320 && lry == 240);
+    const auto ignore = OGL.ignoreScissor && is_sm64_border_rect;
+
+    // We still need to set the correct gdp state even if we're ignoring the draw
+    if (!ignore)
+        OGL_DrawRect(ulx, uly, lrx, lry,
+                     (gDP.otherMode.cycleType == G_CYC_FILL) ? &gDP.fillColor.r : &gDP.blendColor.r);
 
     if (depthBuffer.current) depthBuffer.current->cleared = FALSE;
     gDP.colorImage.changed = TRUE;
