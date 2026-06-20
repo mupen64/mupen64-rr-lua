@@ -36,7 +36,7 @@ void OGL_InitExtensions()
         return;
     }
 
-    RT_ASSERT(GLEW_ARB_multitexture, L"ARB_multitexture not supported. Try updating your graphics driver.");
+    RT_ASSERT(GLEW_ARB_multitexture, L"Multitexturing not supported. Try updating your graphics driver.");
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &OGL.maxTextureUnits);
     OGL.maxTextureUnits = min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
@@ -65,11 +65,11 @@ void OGL_InitStates()
         glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
     }
 
-    glClientActiveTextureARB(GL_TEXTURE0_ARB);
+    glClientActiveTextureARB(GL_TEXTURE0);
     glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s0);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    glClientActiveTextureARB(GL_TEXTURE1_ARB);
+    glClientActiveTextureARB(GL_TEXTURE1);
     glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s1);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -669,7 +669,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
             rect[1].t0 = cache.current[0]->offsetT - rect[1].t0;
         }
 
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
 
         if ((rect[0].s0 >= 0.0f) && (rect[1].s0 <= cache.current[0]->width))
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -718,7 +718,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
             rect[1].t1 = cache.current[1]->offsetT - rect[1].t1;
         }
 
-        glActiveTextureARB(GL_TEXTURE1_ARB);
+        glActiveTexture(GL_TEXTURE1);
 
         if ((rect[0].s1 == 0.0f) && (rect[1].s1 <= cache.current[1]->width))
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -734,7 +734,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
 
     if ((gDP.otherMode.cycleType == G_CYC_COPY) && !OGL.forceBilinear)
     {
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        glActiveTexture(GL_TEXTURE0);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -750,20 +750,20 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
     if (OGL.EXT_secondary_color)
         glSecondaryColor3fEXT(rect[0].secondaryColor.r, rect[0].secondaryColor.g, rect[0].secondaryColor.b);
 
-    glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[0].s0, rect[0].t0);
-    glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[0].s1, rect[0].t1);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[0].s0, rect[0].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[0].s1, rect[0].t1);
     glVertex4f(rect[0].x, rect[0].y, rect[0].z, 1.0f);
 
-    glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[1].s0, rect[0].t0);
-    glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[1].s1, rect[0].t1);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[1].s0, rect[0].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[1].s1, rect[0].t1);
     glVertex4f(rect[1].x, rect[0].y, rect[0].z, 1.0f);
 
-    glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[1].s0, rect[1].t0);
-    glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[1].s1, rect[1].t1);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[1].s0, rect[1].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[1].s1, rect[1].t1);
     glVertex4f(rect[1].x, rect[1].y, rect[0].z, 1.0f);
 
-    glMultiTexCoord2fARB(GL_TEXTURE0_ARB, rect[0].s0, rect[1].t0);
-    glMultiTexCoord2fARB(GL_TEXTURE1_ARB, rect[0].s1, rect[1].t1);
+    glMultiTexCoord2f(GL_TEXTURE0, rect[0].s0, rect[1].t0);
+    glMultiTexCoord2f(GL_TEXTURE1, rect[0].s1, rect[1].t1);
     glVertex4f(rect[0].x, rect[1].y, rect[0].z, 1.0f);
 
     glEnd();

@@ -247,9 +247,6 @@ void FrameBuffer_RenderBuffer(u32 address)
             glEnd();
             glDrawBuffer(GL_BACK);
 
-            /*			glEnable( GL_TEXTURE_2D );
-                        glActiveTextureARB( GL_TEXTURE0_ARB );
-                        glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB );*/
             glPopAttrib();
 
             current->changed = FALSE;
