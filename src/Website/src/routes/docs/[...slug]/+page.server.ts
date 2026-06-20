@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { get_doc_by_path, get_first_doc_path } from '$lib/helpers/DocFetcher';
 
-export const load: PageServerLoad = ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
   const doc = get_doc_by_path(params.slug);
 
   if (!doc || doc.is_dir) {
