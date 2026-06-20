@@ -16,6 +16,7 @@
 
 extern HINSTANCE g_instance;
 extern std::filesystem::path g_app_path;
+extern std::filesystem::path g_config_path;
 extern core_plugin_extended_funcs *g_ef;
 
 extern void (*ABI1[0x20])();

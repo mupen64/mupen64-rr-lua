@@ -28,7 +28,7 @@ static t_rombrowser_context g_ctx{};
 std::vector<std::filesystem::path> discover_roms()
 {
     const auto abs_rom_directory =
-        std::filesystem::weakly_canonical(IOUtils::exe_path_cached().parent_path() / g_config.rom_directory);
+        std::filesystem::weakly_canonical(IOUtils::exe_path().parent_path() / g_config.rom_directory);
 
     if (!std::filesystem::exists(abs_rom_directory) || !std::filesystem::is_directory(abs_rom_directory))
     {

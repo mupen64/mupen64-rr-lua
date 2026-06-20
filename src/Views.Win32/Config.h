@@ -341,6 +341,7 @@ extern const t_config g_default_config;
 
 namespace Config
 {
+
 /**
  * \brief Initializes the subsystem.
  */
