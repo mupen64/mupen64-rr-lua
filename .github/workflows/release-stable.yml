@@ -45,7 +45,7 @@ jobs:
 
       - name: Zip release artifact
         run: |
-          zip -r mupen64-rr-lua-${{ inputs.version }}.zip \
+          zip -r mupen64.zip \
             ./release-artifact/
 
       - name: Get latest stable release tag
@@ -84,4 +84,4 @@ jobs:
           body: ${{ steps.changelog.outputs.body }}
           prerelease: false
           draft: true
-          files: mupen64-rr-lua-${{ inputs.version }}.zip
+          files: mupen64.zip
