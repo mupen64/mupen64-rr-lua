@@ -17,29 +17,19 @@ jobs:
       actions: read
 
     steps:
-      - name: Checkout main
+      - name: Checkout current branch
         uses: actions/checkout@v6
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Guard against non-main branches
-        run: |
-          if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
-            echo "❌ This workflow must be run from the main branch."
-            exit 1
-          fi
 
       - name: Get latest commit hash
         id: commit
         run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Download mupen-release-stable artifact from latest main run
+      - name: Download mupen-release-stable artifact from latest run on current branch
         uses: dawidd6/action-download-artifact@v21
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: build.yml
-          branch: main
+          branch: ${{ github.ref_name }}
           name: mupen-release-stable
           path: ./release-artifact
 
@@ -48,13 +38,7 @@ jobs:
           zip -r mupen64.zip \
             ./release-artifact/
 
-      - name: Get latest stable release tag
-        id: stable_tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tag=$(gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
-          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
 
       - name: Install git-cliff
         uses: taiki-e/install-action@v2
@@ -64,11 +48,6 @@ jobs:
       - name: Generate changelog with git-cliff
         id: changelog
         run: |
-          # Remove all nightly tags from the local clone so git-cliff doesn't split
-          # the commit range into per-tag version segments (which causes duplicate
-          # section headers). This only affects the local repo, not the remote.
-          git tag | grep -E '\-nightly\-' | xargs -r git tag -d
-
           git cliff --unreleased --config cliff.toml --output CHANGELOG_DRAFT.md
           {
             echo 'body<<EOF'
