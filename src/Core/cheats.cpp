@@ -41,13 +41,13 @@ bool cht_compile(std::string_view code, core_cheat &cheat)
         {
             std::from_chars_result result;
 
-            result = std::from_chars(&line[2], &line[8], address, 16);
+            result = std::from_chars(line.data() + 2, line.data() + 8, address, 16);
             if (result.ec != std::errc{}) return false;
 
             if (line[8] == ' ')
-                result = std::from_chars(&line[9], &line[13], val, 16);
+                result = std::from_chars(line.data() + 9, line.data() + 13, val, 16);
             else
-                result = std::from_chars(&line[10], &line[14], val, 16);
+                result = std::from_chars(line.data() + 10, line.data() + 14, val, 16);
 
             if (result.ec != std::errc{}) return false;
         }
