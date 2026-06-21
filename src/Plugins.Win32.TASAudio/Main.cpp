@@ -12,8 +12,14 @@
 
 #include "core_plugin.h"
 #include <CommonPCH.h>
+#include "IOUtils.hpp"
+#include "SDLBackend.hpp"
 
-#include <VersionNameHelpers.h>
+#include "core_plugin.h"
+#include <CommonPCH.hpp>
+#include <SDL3/SDL.h>
+
+#include <VersionNameHelpers.hpp>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 

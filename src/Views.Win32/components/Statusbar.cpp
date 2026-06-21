@@ -5,9 +5,9 @@
  */
 
 #include "stdafx.h"
-#include <Config.h>
-#include <Messenger.h>
-#include <components/Statusbar.h>
+#include <Config.hpp>
+#include <Messenger.hpp>
+#include <components/Statusbar.hpp>
 
 struct t_segment
 {

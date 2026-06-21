@@ -5,10 +5,10 @@
  */
 
 #include "stdafx.h"
-#include <Messenger.h>
-#include <action/ActionManager.h>
-#include <action/ActionMenu.h>
-#include <components/ParameterPalette.h>
+#include <Messenger.hpp>
+#include <action/ActionManager.hpp>
+#include <action/ActionMenu.hpp>
+#include <components/ParameterPalette.hpp>
 
 const auto MANAGED_MENU_CTX = L"Mupen64_ManagedMenuContext";
 

@@ -5,11 +5,11 @@
  */
 
 #include "stdafx.h"
-#include <Config.h>
-#include <DialogService.h>
+#include <Config.hpp>
+#include <DialogService.hpp>
 #include <winhttp.h>
-#include <components/TextEditDialog.h>
-#include <components/UpdateChecker.h>
+#include <components/TextEditDialog.hpp>
+#include <components/UpdateChecker.hpp>
 #include <nlohmann/json.hpp>
 
 namespace UpdateChecker

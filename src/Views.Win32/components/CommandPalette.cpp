@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "RomBrowser.h"
+#include "RomBrowser.hpp"
 #include "stdafx.h"
-#include <components/CommandPalette.h>
-#include <components/ConfigDialog.h>
-#include <action/AppActions.h>
-#include <components/ParameterPalette.h>
-#include <Messenger.h>
-#include "CommandPalette.h"
+#include <components/CommandPalette.hpp>
+#include <components/ConfigDialog.hpp>
+#include <action/AppActions.hpp>
+#include <components/ParameterPalette.hpp>
+#include <Messenger.hpp>
+#include "CommandPalette.hpp"
 
 struct t_listbox_item
 {

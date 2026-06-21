@@ -5,19 +5,19 @@
  */
 
 #include "stdafx.h"
-#include <Plugin.h>
-#include <ThreadPool.h>
-#include <Config.h>
-#include <DialogService.h>
-#include <Messenger.h>
-#include <capture/CaptureManager.h>
-#include <capture/encoders/VFWEncoder.h>
-#include <capture/encoders/Encoder.h>
-#include <capture/encoders/FFmpegEncoder.h>
-#include <components/Dispatcher.h>
-#include <components/MGECompositor.h>
-#include <lua/LuaRenderer.h>
-#include <lua/LuaManager.h>
+#include <Plugin.hpp>
+#include <ThreadPool.hpp>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <Messenger.hpp>
+#include <capture/CaptureManager.hpp>
+#include <capture/encoders/VFWEncoder.hpp>
+#include <capture/encoders/Encoder.hpp>
+#include <capture/encoders/FFmpegEncoder.hpp>
+#include <components/Dispatcher.hpp>
+#include <components/MGECompositor.hpp>
+#include <lua/LuaRenderer.hpp>
+#include <lua/LuaManager.hpp>
 
 namespace CaptureManager
 {

@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include "Loggers.h"
+#include "Loggers.hpp"
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/wincolor_sink.h>
 

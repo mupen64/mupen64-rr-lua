@@ -5,28 +5,28 @@
  */
 
 #include "stdafx.h"
-#include <action/ActionManager.h>
-#include <DialogService.h>
-#include <Messenger.h>
-#include <ThreadPool.h>
-#include <Plugin.h>
-#include <capture/CaptureManager.h>
-#include <components/CoreUtils.h>
-#include <action/AppActions.h>
-#include <components/CLI.h>
-#include <components/Cheats.h>
-#include <components/CommandPalette.h>
-#include <components/ConfigDialog.h>
-#include <components/FilePicker.h>
-#include <components/MovieDialog.h>
-#include <components/PianoRoll.h>
-#include <components/RecentItems.h>
-#include <components/RomBrowser.h>
-#include <components/Seeker.h>
-#include <components/Statusbar.h>
-#include <components/UpdateChecker.h>
-#include <components/Validators.h>
-#include <lua/LuaDialog.h>
+#include <action/ActionManager.hpp>
+#include <DialogService.hpp>
+#include <Messenger.hpp>
+#include <ThreadPool.hpp>
+#include <Plugin.hpp>
+#include <capture/CaptureManager.hpp>
+#include <components/CoreUtils.hpp>
+#include <action/AppActions.hpp>
+#include <components/CLI.hpp>
+#include <components/Cheats.hpp>
+#include <components/CommandPalette.hpp>
+#include <components/ConfigDialog.hpp>
+#include <components/FilePicker.hpp>
+#include <components/MovieDialog.hpp>
+#include <components/PianoRoll.hpp>
+#include <components/RecentItems.hpp>
+#include <components/RomBrowser.hpp>
+#include <components/Seeker.hpp>
+#include <components/Statusbar.hpp>
+#include <components/UpdateChecker.hpp>
+#include <components/Validators.hpp>
+#include <lua/LuaDialog.hpp>
 
 bool confirm_user_exit()
 {

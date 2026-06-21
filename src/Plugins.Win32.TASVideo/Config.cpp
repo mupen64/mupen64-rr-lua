@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "Config.h"
-#include "glN64.h"
+#include "Config.hpp"
+#include "glN64.hpp"
 #include "resource.h"
-#include "RSP.h"
+#include "RSP.hpp"
 #include "Textures.h"
-#include "OpenGL.h"
+#include "OpenGL.hpp"
 
 HWND hConfigDlg;
 

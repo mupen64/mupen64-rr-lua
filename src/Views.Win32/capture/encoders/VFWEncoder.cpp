@@ -5,12 +5,12 @@
  */
 
 #include "stdafx.h"
-#include <Config.h>
-#include <DialogService.h>
+#include <Config.hpp>
+#include <DialogService.hpp>
 
-#include <capture/CaptureManager.h>
-#include <capture/Resampler.h>
-#include <capture/encoders/VFWEncoder.h>
+#include <capture/CaptureManager.hpp>
+#include <capture/Resampler.hpp>
+#include <capture/encoders/VFWEncoder.hpp>
 
 std::optional<std::wstring> VFWEncoder::start(Params params)
 {

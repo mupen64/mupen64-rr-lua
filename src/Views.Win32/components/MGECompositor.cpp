@@ -5,9 +5,9 @@
  */
 
 #include "stdafx.h"
-#include <components/MGECompositor.h>
-#include <Plugin.h>
-#include <Messenger.h>
+#include <components/MGECompositor.hpp>
+#include <Plugin.hpp>
+#include <Messenger.hpp>
 
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;

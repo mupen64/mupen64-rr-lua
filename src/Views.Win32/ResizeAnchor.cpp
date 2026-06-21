@@ -5,9 +5,9 @@
  */
 
 #include "stdafx.h"
-#include "ResizeAnchor.h"
+#include "ResizeAnchor.hpp"
 
-#include "DialogService.h"
+#include "DialogService.hpp"
 
 #define CTX_PROP L"ResizeAnchor_ctx"
 

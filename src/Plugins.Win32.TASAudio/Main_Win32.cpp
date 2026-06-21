@@ -7,7 +7,7 @@
 #include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"
-#include "IOUtils.h"
+#include "IOUtils.hpp"
 #include "Main.hpp"
 #include <Views.Win32/ViewPlugin.h>
 #include <filesystem>

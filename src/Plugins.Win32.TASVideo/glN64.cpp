@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "glN64.h"
-#include "OpenGL.h"
-#include "N64.h"
-#include "RSP.h"
-#include "Config.h"
+#include "glN64.hpp"
+#include "OpenGL.hpp"
+#include "N64.hpp"
+#include "RSP.hpp"
+#include "Config.hpp"
 
 TASVideoContext g_tas_ctx{};
 

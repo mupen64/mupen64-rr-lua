@@ -5,10 +5,10 @@
  */
 
 #include "stdafx.h"
-#include <components/MovieDialog.h>
-#include <Config.h>
-#include <DialogService.h>
-#include <components/FilePicker.h>
+#include <components/MovieDialog.hpp>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <components/FilePicker.hpp>
 
 struct t_movie_dialog_context
 {

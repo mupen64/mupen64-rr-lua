@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.h"
-#include <NewConfig.h>
-#include <MiscHelpers.h>
-#include <Main.h>
+#include "Common.hpp"
+#include <NewConfig.hpp>
+#include <MiscHelpers.hpp>
+#include <Main.hpp>
 
 #define CONFIG_VALUE L"Config"
 

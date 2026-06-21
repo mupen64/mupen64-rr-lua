@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include <action/ActionManager.h>
-#include <Messenger.h>
+#include <action/ActionManager.hpp>
+#include <Messenger.hpp>
 
 using t_action_param = ActionManager::t_action_param;
 using t_action_add_params = ActionManager::t_action_add_params;

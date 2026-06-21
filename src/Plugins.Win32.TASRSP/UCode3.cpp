@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Main.h"
-#include "HLE.h"
+#include "Main.hpp"
+#include "HLE.hpp"
 
 static void SPNOOP()
 {

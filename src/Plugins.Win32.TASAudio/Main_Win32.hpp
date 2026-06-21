@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <CommonPCH.h>
+#include <CommonPCH.hpp>
 #include "Config.hpp"
 
 extern HINSTANCE g_dll_handle;

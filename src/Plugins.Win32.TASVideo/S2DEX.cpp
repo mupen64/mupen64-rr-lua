@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "OpenGL.h"
-#include "S2DEX.h"
-#include "F3D.h"
-#include "F3DEX.h"
-#include "GBI.h"
-#include "gSP.h"
-#include "gDP.h"
-#include "RSP.h"
-#include "Types.h"
+#include "OpenGL.hpp"
+#include "S2DEX.hpp"
+#include "F3D.hpp"
+#include "F3DEX.hpp"
+#include "GBI.hpp"
+#include "gSP.hpp"
+#include "gDP.hpp"
+#include "RSP.hpp"
+#include "Types.hpp"
 
 void S2DEX_BG_1Cyc(u32 w0, u32 w1)
 {

@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include "ReorderableListView.h"
+#include "ReorderableListView.hpp"
 
 namespace ReorderableListView
 {

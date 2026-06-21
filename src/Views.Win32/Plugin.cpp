@@ -7,13 +7,13 @@
 // ReSharper disable CppCStyleCast
 
 #include "stdafx.h"
-#include <Config.h>
-#include <DialogService.h>
-#include <Plugin.h>
-#include <components/ConfigDialog.h>
-#include <components/Statusbar.h>
-#include <ThreadPool.h>
-#include <Messenger.h>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <Plugin.hpp>
+#include <components/ConfigDialog.hpp>
+#include <components/Statusbar.hpp>
+#include <ThreadPool.hpp>
+#include <Messenger.hpp>
 
 #define CALL _cdecl
 

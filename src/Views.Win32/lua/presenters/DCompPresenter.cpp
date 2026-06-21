@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include "DCompPresenter.h"
+#include "DCompPresenter.hpp"
 
 void DCompPresenter::create_size_dependent_resources()
 {

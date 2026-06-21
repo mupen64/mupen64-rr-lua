@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Main.h"
-#include "Config.h"
+#include "Main.hpp"
+#include "Config.hpp"
 
 #define SUBKEY L"Software\\N64 Emulation\\DLL\\TAS RSP"
 #define CONFIG_VALUE L"Config"

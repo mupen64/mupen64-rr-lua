@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include <lua/LuaCallbacks.h>
-#include <lua/LuaManager.h>
+#include <lua/LuaCallbacks.hpp>
+#include <lua/LuaManager.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
