@@ -5,9 +5,9 @@
  */
 
 #include <CommonPCH.hpp>
-#include "ops.h"
-#include "r4300.h"
-#include "macros.h"
+#include "ops.hpp"
+#include "r4300.hpp"
+#include "macros.hpp"
 
 void MFC1()
 {

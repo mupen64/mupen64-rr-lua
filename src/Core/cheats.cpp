@@ -5,11 +5,11 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
+#include <Core.hpp>
 #include <charconv>
-#include <memory/memory.h>
-#include <cheats.h>
-#include <r4300/r4300.h>
+#include <memory/memory.hpp>
+#include <cheats.hpp>
+#include <r4300/r4300.hpp>
 #include <string>
 
 static std::recursive_mutex cheats_mutex;

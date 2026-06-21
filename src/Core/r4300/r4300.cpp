@@ -4,22 +4,22 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "rom.h"
+#include "rom.hpp"
 #include <CommonPCH.hpp>
-#include <Core.h>
+#include <Core.hpp>
 #include <format>
-#include <memory/memory.h>
-#include <memory/pif.h>
-#include <memory/savestates.h>
-#include <r4300/exception.h>
-#include <r4300/interrupt.h>
-#include <r4300/macros.h>
-#include <r4300/ops.h>
-#include <r4300/r4300.h>
-#include <r4300/recomp.h>
-#include <r4300/timers.h>
-#include <r4300/vcr.h>
-#include <alloc.h>
+#include <memory/memory.hpp>
+#include <memory/pif.hpp>
+#include <memory/savestates.hpp>
+#include <r4300/exception.hpp>
+#include <r4300/interrupt.hpp>
+#include <r4300/macros.hpp>
+#include <r4300/ops.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/recomp.hpp>
+#include <r4300/timers.hpp>
+#include <r4300/vcr.hpp>
+#include <alloc.hpp>
 
 #ifdef _BIG_ENDIAN
 #error "Big Endian builds aren't supported"

@@ -5,7 +5,7 @@
  */
 
 #include <CommonPCH.hpp>
-#include <alloc.h>
+#include <alloc.hpp>
 
 #ifdef _WIN32
 #include <Windows.h>

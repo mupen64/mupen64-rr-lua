@@ -5,18 +5,18 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
+#include <Core.hpp>
 // #include <PlatformService.h>
 #include <libdeflate.h>
 #include <include/core_api.h>
-#include <memory/flashram.h>
-#include <memory/memory.h>
-#include <memory/savestates.h>
-#include <memory/summercart.h>
-#include <r4300/interrupt.h>
-#include <r4300/r4300.h>
-#include <r4300/rom.h>
-#include <r4300/vcr.h>
+#include <memory/flashram.hpp>
+#include <memory/memory.hpp>
+#include <memory/savestates.hpp>
+#include <memory/summercart.hpp>
+#include <r4300/interrupt.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/rom.hpp>
+#include <r4300/vcr.hpp>
 
 constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1 << 31);
 

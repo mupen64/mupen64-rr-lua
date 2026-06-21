@@ -5,8 +5,8 @@
  */
 
 #include <CommonPCH.hpp>
-#include <r4300/ops.h>
-#include <r4300/recomph.h>
+#include <r4300/ops.hpp>
+#include <r4300/recomph.hpp>
 
 void gentlbwi()
 {

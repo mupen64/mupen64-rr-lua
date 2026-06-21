@@ -5,19 +5,19 @@
  */
 
 #include <CommonPCH.hpp>
-#include "memory.h"
-#include "dma.h"
-#include "flashram.h"
-#include "pif.h"
-#include "summercart.h"
-#include <Core.h>
-#include <r4300/interrupt.h>
-#include <r4300/macros.h>
-#include <r4300/ops.h>
-#include <r4300/r4300.h>
-#include <r4300/recomph.h>
-#include <r4300/timers.h>
-#include <r4300/vcr.h>
+#include "memory.hpp"
+#include "dma.hpp"
+#include "flashram.hpp"
+#include "pif.hpp"
+#include "summercart.hpp"
+#include <Core.hpp>
+#include <r4300/interrupt.hpp>
+#include <r4300/macros.hpp>
+#include <r4300/ops.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/recomph.hpp>
+#include <r4300/timers.hpp>
+#include <r4300/vcr.hpp>
 
 static int32_t frame;
 

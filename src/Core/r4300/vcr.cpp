@@ -7,16 +7,16 @@
 #include "core_types.h"
 #include <CommonPCH.hpp>
 // #include <PlatformService.h>
-#include <Core.h>
+#include <Core.hpp>
 #include <cassert>
-#include <cheats.h>
+#include <cheats.hpp>
 #include <filesystem>
 #include <format>
 #include <include/core_api.h>
 #include <iterator>
-#include <r4300/r4300.h>
-#include <r4300/rom.h>
-#include <r4300/vcr.h>
+#include <r4300/r4300.hpp>
+#include <r4300/rom.hpp>
+#include <r4300/vcr.hpp>
 
 using namespace std::string_view_literals;
 

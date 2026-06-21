@@ -5,10 +5,10 @@
  */
 
 #include <CommonPCH.hpp>
-#include "regcache.h"
-#include <r4300/r4300.h>
-#include <r4300/recomp.h>
-#include <r4300/recomph.h>
+#include "regcache.hpp"
+#include <r4300/r4300.hpp>
+#include <r4300/recomp.hpp>
+#include <r4300/recomph.hpp>
 
 static uint32_t *reg_content[8];
 static precomp_instr *last_access[8];

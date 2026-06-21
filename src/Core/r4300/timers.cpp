@@ -5,11 +5,11 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <r4300/timers.h>
+#include <Core.hpp>
+#include <r4300/timers.hpp>
 #include <include/core_api.h>
-#include <memory/pif.h>
-#include <r4300/r4300.h>
+#include <memory/pif.hpp>
+#include <r4300/r4300.hpp>
 
 struct timer_state
 {

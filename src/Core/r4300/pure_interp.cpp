@@ -5,18 +5,18 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
+#include <Core.hpp>
 #include <include/core_api.h>
-#include <memory/memory.h>
-#include <memory/tlb.h>
-#include <r4300/cop1_helpers.h>
-#include <r4300/Debug.h>
-#include <r4300/exception.h>
-#include <r4300/interrupt.h>
-#include <r4300/macros.h>
-#include <r4300/r4300.h>
-#include <r4300/rom.h>
-#include <r4300/tracelog.h>
+#include <memory/memory.hpp>
+#include <memory/tlb.hpp>
+#include <r4300/cop1_helpers.hpp>
+#include <r4300/Debug.hpp>
+#include <r4300/exception.hpp>
+#include <r4300/interrupt.hpp>
+#include <r4300/macros.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/rom.hpp>
+#include <r4300/tracelog.hpp>
 
 uint32_t interp_addr;
 uint32_t vr_op;

@@ -5,10 +5,10 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <r4300/r4300.h>
-#include <r4300/exception.h>
-#include <r4300/cop1_helpers.h>
+#include <Core.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/exception.hpp>
+#include <r4300/cop1_helpers.hpp>
 
 float largest_denormal_float = 1.1754942106924411e-38f;  // (1U << 23) - 1
 double largest_denormal_double = 2.225073858507201e-308; // (1ULL << 52) - 1

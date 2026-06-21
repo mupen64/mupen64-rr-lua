@@ -5,10 +5,10 @@
  */
 
 #include <CommonPCH.hpp>
-#include "r4300.h"
-#include "ops.h"
-#include "macros.h"
-#include "interrupt.h"
+#include "r4300.hpp"
+#include "ops.hpp"
+#include "macros.hpp"
+#include "interrupt.hpp"
 
 void BC1F()
 {

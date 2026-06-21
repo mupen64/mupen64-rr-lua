@@ -5,18 +5,18 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <memory/memory.h>
-#include <memory/pif.h>
-#include <memory/savestates.h>
-#include <r4300/Debug.h>
-#include <r4300/disasm.h>
-#include <r4300/r4300.h>
-#include <r4300/rom.h>
-#include <r4300/timers.h>
-#include <r4300/tracelog.h>
-#include <r4300/vcr.h>
-#include <cheats.h>
+#include <Core.hpp>
+#include <memory/memory.hpp>
+#include <memory/pif.hpp>
+#include <memory/savestates.hpp>
+#include <r4300/Debug.hpp>
+#include <r4300/disasm.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/rom.hpp>
+#include <r4300/timers.hpp>
+#include <r4300/tracelog.hpp>
+#include <r4300/vcr.hpp>
+#include <cheats.hpp>
 
 core_params *g_core{};
 core_ctx g_ctx{};

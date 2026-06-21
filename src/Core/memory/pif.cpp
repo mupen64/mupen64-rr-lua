@@ -5,14 +5,14 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <memory/memory.h>
-#include <memory/pif.h>
-#include <memory/pif_lut.h>
-#include <memory/savestates.h>
-#include <cheats.h>
-#include <r4300/r4300.h>
-#include <r4300/vcr.h>
+#include <Core.hpp>
+#include <memory/memory.hpp>
+#include <memory/pif.hpp>
+#include <memory/pif_lut.hpp>
+#include <memory/savestates.hpp>
+#include <cheats.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/vcr.hpp>
 
 // Amount of VIs since last input poll
 size_t lag_count;

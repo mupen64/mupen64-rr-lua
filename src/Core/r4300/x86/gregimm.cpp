@@ -5,13 +5,13 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <r4300/ops.h>
-#include <r4300/r4300.h>
-#include <r4300/recomp.h>
-#include <r4300/recomph.h>
-#include <r4300/x86/assemble.h>
-#include <r4300/x86/regcache.h>
+#include <Core.hpp>
+#include <r4300/ops.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/recomp.hpp>
+#include <r4300/recomph.hpp>
+#include <r4300/x86/assemble.hpp>
+#include <r4300/x86/regcache.hpp>
 
 void genbltz_test()
 {

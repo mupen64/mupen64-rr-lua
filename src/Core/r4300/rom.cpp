@@ -5,13 +5,13 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
+#include <Core.hpp>
 // #include <PlatformService.h>
 #include <format>
 #include <md5.h>
-#include <memory/memory.h>
-#include <r4300/r4300.h>
-#include <r4300/rom.h>
+#include <memory/memory.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/rom.hpp>
 
 std::unordered_map<std::filesystem::path, std::pair<uint8_t *, size_t>> rom_cache;
 

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <r4300/x86/assemble.h>
+#include <r4300/x86/assemble.hpp>
 
 typedef struct _precomp_instr
 {

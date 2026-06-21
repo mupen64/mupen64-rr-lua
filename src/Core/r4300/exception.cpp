@@ -5,12 +5,12 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <r4300/exception.h>
-#include <r4300/r4300.h>
-#include <r4300/macros.h>
-#include <memory/memory.h>
-#include <r4300/recomph.h>
+#include <Core.hpp>
+#include <r4300/exception.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/macros.hpp>
+#include <memory/memory.hpp>
+#include <r4300/recomph.hpp>
 
 extern uint32_t interp_addr;
 

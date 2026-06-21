@@ -5,8 +5,8 @@
  */
 
 #include <CommonPCH.hpp>
-#include "r4300.h"
-#include "macros.h"
+#include "r4300.hpp"
+#include "macros.hpp"
 
 void CVT_S_L()
 {

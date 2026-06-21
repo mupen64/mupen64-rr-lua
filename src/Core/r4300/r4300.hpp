@@ -10,9 +10,9 @@
 #define VR_PROFILE (1)
 #endif
 
-#include <r4300/recomp.h>
-#include <memory/tlb.h>
-#include <r4300/rom.h>
+#include <r4300/recomp.hpp>
+#include <memory/tlb.hpp>
+#include <r4300/rom.hpp>
 #include <include/core_types.h>
 
 struct r4300

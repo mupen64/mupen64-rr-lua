@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "recomp.h"
+#include "recomp.hpp"
 
 extern int32_t code_length;
 extern int32_t max_code_length;

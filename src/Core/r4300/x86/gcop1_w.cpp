@@ -5,9 +5,9 @@
  */
 
 #include <CommonPCH.hpp>
-#include <r4300/r4300.h>
-#include <r4300/recomph.h>
-#include <r4300/x86/assemble.h>
+#include <r4300/r4300.hpp>
+#include <r4300/recomph.hpp>
+#include <r4300/x86/assemble.hpp>
 
 void gencvt_s_w()
 {

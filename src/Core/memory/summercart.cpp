@@ -5,10 +5,10 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <memory/memory.h>
-#include <memory/summercart.h>
-#include <r4300/rom.h>
+#include <Core.hpp>
+#include <memory/memory.hpp>
+#include <memory/summercart.hpp>
+#include <r4300/rom.hpp>
 
 struct vhd
 {

@@ -5,9 +5,9 @@
  */
 
 #include <CommonPCH.hpp>
-#include "tracelog.h"
-#include "disasm.h"
-#include "r4300.h"
+#include "tracelog.hpp"
+#include "disasm.hpp"
+#include "r4300.hpp"
 
 bool enabled = false;
 bool use_binary = false;

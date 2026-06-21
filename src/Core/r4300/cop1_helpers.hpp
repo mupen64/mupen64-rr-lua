@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "macros.h"
+#include "macros.hpp"
 
 extern float largest_denormal_float;
 extern double largest_denormal_double;

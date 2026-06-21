@@ -5,9 +5,9 @@
  */
 
 #include <CommonPCH.hpp>
-#include "memory.h"
-#include <Core.h>
-#include <r4300/r4300.h>
+#include "memory.hpp"
+#include <Core.hpp>
+#include <r4300/r4300.hpp>
 
 int32_t use_flashram;
 

@@ -7,15 +7,15 @@
 // #include "../config.h"
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <r4300/interrupt.h>
-#include <memory/memory.h>
-#include <r4300/r4300.h>
-#include <r4300/macros.h>
-#include <r4300/exception.h>
-#include <r4300/vcr.h>
-#include <r4300/timers.h>
-#include <memory/pif.h>
+#include <Core.hpp>
+#include <r4300/interrupt.hpp>
+#include <memory/memory.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/macros.hpp>
+#include <r4300/exception.hpp>
+#include <r4300/vcr.hpp>
+#include <r4300/timers.hpp>
+#include <memory/pif.hpp>
 
 typedef struct _interrupt_queue
 {
@@ -304,7 +304,7 @@ void remove_interrupt_event()
 /// <summary>
 /// Check if event of this type already exists in queue (for some reason this is forbidden)
 /// </summary>
-/// <param name="type">type of interrupt, see interrupt.h</param>
+/// <param name="type">type of interrupt, see interrupt.hpp</param>
 /// <returns></returns>
 uint32_t get_event(int32_t type)
 {

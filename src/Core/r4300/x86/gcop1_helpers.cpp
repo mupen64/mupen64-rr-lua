@@ -5,12 +5,12 @@
  */
 
 #include <CommonPCH.hpp>
-#include <Core.h>
-#include <r4300/cop1_helpers.h>
-#include <r4300/r4300.h>
-#include <r4300/recomph.h>
-#include <r4300/x86/assemble.h>
-#include <r4300/x86/gcop1_helpers.h>
+#include <Core.hpp>
+#include <r4300/cop1_helpers.hpp>
+#include <r4300/r4300.hpp>
+#include <r4300/recomph.hpp>
+#include <r4300/x86/assemble.hpp>
+#include <r4300/x86/gcop1_helpers.hpp>
 
 static void patch_jump(uint32_t addr, uint32_t target)
 {
@@ -80,7 +80,7 @@ void gencheck_float_output_valid()
     uint32_t jump2 = code_length;
 
     // Replace the (denormal or zero) result by zero (see CHECK_OUTPUT in
-    // cop1_helpers.h for reasoning)
+    // cop1_helpers.hpp for reasoning)
 
     fldz();           // push zero
     fucomip_fpreg(1); // compare ST(0) <=> ST(1), pop
