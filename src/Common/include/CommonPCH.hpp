@@ -47,7 +47,7 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_audio.h>
-#include "MiscHelpers.h"
-#include "StrUtils.h"
-#include "IOUtils.h"
+#include "MiscHelpers.hpp"
+#include "StrUtils.hpp"
+#include "IOUtils.hpp"
 #pragma warning(pop)

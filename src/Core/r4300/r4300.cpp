@@ -5,7 +5,7 @@
  */
 
 #include "rom.h"
-#include <CommonPCH.h>
+#include <CommonPCH.hpp>
 #include <Core.h>
 #include <format>
 #include <memory/memory.h>

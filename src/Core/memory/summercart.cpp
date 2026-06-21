@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.h>
+#include <CommonPCH.hpp>
 #include <Core.h>
 #include <memory/memory.h>
 #include <memory/summercart.h>

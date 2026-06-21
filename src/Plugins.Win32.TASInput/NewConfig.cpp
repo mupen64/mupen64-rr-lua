@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <NewConfig.hpp>
-#include <MiscHelpers.h>
+#include <MiscHelpers.hpp>
 #include <Main.hpp>
 
 #define REG_SUBKEY L"Software\\N64 Emulation\\DLL\\TASDI"

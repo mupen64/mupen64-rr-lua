@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "IOUtils.h"
+#include "IOUtils.hpp"
 #include "stdafx.h"
 #include <Config.h>
 #include <Messenger.h>

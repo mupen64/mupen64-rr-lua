@@ -4,12 +4,12 @@ Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hac
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 add_library(Mupen64RR.Common INTERFACE
-    "include/CommonPCH.h"
-    "include/DummyPluginStub.h"
-    "include/IOUtils.h"
-    "include/MiscHelpers.h"
-    "include/StrUtils.h"
-    "include/VersionNameHelpers.h"
+    "include/CommonPCH.hpp"
+    "include/DummyPluginStub.hpp"
+    "include/IOUtils.hpp"
+    "include/MiscHelpers.hpp"
+    "include/StrUtils.hpp"
+    "include/VersionNameHelpers.hpp"
 )
 set_target_properties(Mupen64RR.Common PROPERTIES
     CXX_STANDARD 23
@@ -20,4 +20,4 @@ target_link_libraries(Mupen64RR.Common INTERFACE
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
     vendor::xxhash64
 )
-target_precompile_headers(Mupen64RR.Common INTERFACE "include/CommonPCH.h")
+target_precompile_headers(Mupen64RR.Common INTERFACE "include/CommonPCH.hpp")

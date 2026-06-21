@@ -5,7 +5,7 @@
  */
 
 #include "core_types.h"
-#include <CommonPCH.h>
+#include <CommonPCH.hpp>
 // #include <PlatformService.h>
 #include <Core.h>
 #include <cassert>

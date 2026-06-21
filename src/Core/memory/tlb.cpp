@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.h>
+#include <CommonPCH.hpp>
 #include "tlb.h"
 #include "memory.h"
 #include <Core.h>

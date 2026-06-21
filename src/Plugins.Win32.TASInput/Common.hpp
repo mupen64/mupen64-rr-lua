@@ -5,8 +5,8 @@
  */
 
 #pragma warning(push, 0)
-#include <CommonPCH.h>
-#include <VersionNameHelpers.h>
+#include <CommonPCH.hpp>
+#include <VersionNameHelpers.hpp>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 #include <filesystem>

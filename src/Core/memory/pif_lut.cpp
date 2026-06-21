@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.h>
+#include <CommonPCH.hpp>
 #include "pif_lut.h"
 
 const uint8_t g_pif_lut[269][2][16] = {
