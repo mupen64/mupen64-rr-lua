@@ -5,20 +5,20 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Plugins.Win32.TASRSP MODULE
-    "Main.h"
-    "HLE.h"
-    "Disasm.h"
-    "Config.h"
+    "Config.hpp"
+    "Disasm.hpp"
+    "HLE.hpp"
+    "Main.hpp"
     "Resource.h"
 
-    "JPEG.cpp"
-    "Main.cpp"
     "Config.cpp"
     "Disasm.cpp"
+    "JPEG.cpp"
+    "Main.cpp"
+    "MP3.cpp"
     "UCode1.cpp"
     "UCode2.cpp"
     "UCode3.cpp"
-    "MP3.cpp"
 
     "Resource.rc"
 )
