@@ -14,7 +14,7 @@
 #include <hqx.h>
 #include <GL/glext.h>
 #include <GL/wglext.h>
-#include "Types.h"
+#include "Types.hpp"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

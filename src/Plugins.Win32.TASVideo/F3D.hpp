@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.h"
+#include "Types.hpp"
 
 #define F3D_MTX_STACKSIZE 10
 

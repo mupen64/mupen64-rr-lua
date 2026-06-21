@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.h"
+#include "Types.hpp"
 
 #define MI_INTR_DP 0x20 // Bit 5: DP intr
 

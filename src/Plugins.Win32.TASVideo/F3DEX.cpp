@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "glN64.h"
-#include "F3D.h"
-#include "F3DEX.h"
-#include "N64.h"
-#include "RSP.h"
-#include "RDP.h"
-#include "gSP.h"
-#include "gDP.h"
-#include "GBI.h"
+#include "glN64.hpp"
+#include "F3D.hpp"
+#include "F3DEX.hpp"
+#include "N64.hpp"
+#include "RSP.hpp"
+#include "RDP.hpp"
+#include "gSP.hpp"
+#include "gDP.hpp"
+#include "GBI.hpp"
 
 void F3DEX_Vtx(u32 w0, u32 w1)
 {

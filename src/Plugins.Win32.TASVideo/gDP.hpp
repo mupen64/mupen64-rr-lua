@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FrameBuffer.h"
+#include "FrameBuffer.hpp"
 
 #define CHANGED_RENDERMODE 0x001
 #define CHANGED_CYCLETYPE 0x002

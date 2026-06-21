@@ -1,7 +1,7 @@
 #pragma once
 
-#include "GBI.h"
-#include "gDP.h"
+#include "GBI.hpp"
+#include "gDP.hpp"
 
 #define CHANGED_VIEWPORT 0x01
 #define CHANGED_MATRIX 0x02

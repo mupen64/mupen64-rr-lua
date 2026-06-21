@@ -1,9 +1,9 @@
 #pragma once
 
-#include "glN64.h"
-#include "OpenGL.h"
-#include "gDP.h"
-#include "unified_combiner.h"
+#include "glN64.hpp"
+#include "OpenGL.hpp"
+#include "gDP.hpp"
+#include "unified_combiner.hpp"
 
 /*
  * G_SETCOMBINE: color combine modes

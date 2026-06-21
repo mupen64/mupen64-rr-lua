@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Types.h"
-#include "N64.h"
-#include "GBI.h"
-#include "gSP.h"
+#include "Types.hpp"
+#include "N64.hpp"
+#include "GBI.hpp"
+#include "gSP.hpp"
 
 #define RSPMSG_CLOSE 0
 #define RSPMSG_START 1
