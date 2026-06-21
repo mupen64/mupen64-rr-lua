@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.h>
-#include <DummyPluginStub.h>
-#include <VersionNameHelpers.h>
+#include <CommonPCH.hpp>
+#include <DummyPluginStub.hpp>
+#include <VersionNameHelpers.hpp>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 

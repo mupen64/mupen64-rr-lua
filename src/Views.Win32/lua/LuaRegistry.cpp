@@ -5,22 +5,22 @@
  */
 
 #include "stdafx.h"
-#include <lua/LuaRegistry.h>
-#include <lua/modules/AVI.h>
-#include <lua/modules/Action.h>
-#include <lua/modules/Clipboard.h>
-#include <lua/modules/D2D.h>
-#include <lua/modules/Emu.h>
-#include <lua/modules/Global.h>
-#include <lua/modules/Hotkey.h>
-#include <lua/modules/IOHelper.h>
-#include <lua/modules/Input.h>
-#include <lua/modules/Joypad.h>
-#include <lua/modules/Memory.h>
+#include <lua/LuaRegistry.hpp>
+#include <lua/modules/AVI.hpp>
+#include <lua/modules/Action.hpp>
+#include <lua/modules/Clipboard.hpp>
+#include <lua/modules/D2D.hpp>
+#include <lua/modules/Emu.hpp>
+#include <lua/modules/Global.hpp>
+#include <lua/modules/Hotkey.hpp>
+#include <lua/modules/IOHelper.hpp>
+#include <lua/modules/Input.hpp>
+#include <lua/modules/Joypad.hpp>
+#include <lua/modules/Memory.hpp>
 #include <lua/modules/Debugger.h>
-#include <lua/modules/Movie.h>
-#include <lua/modules/Savestate.h>
-#include <lua/modules/WGUI.h>
+#include <lua/modules/Movie.hpp>
+#include <lua/modules/Savestate.hpp>
+#include <lua/modules/WGUI.hpp>
 
 // these begin and end comments help to generate documentation
 // please don't remove them

@@ -624,7 +624,7 @@ typedef struct CoreVCRMovieHeader
 
     /**
      * \brief What state the movie is expected to start from
-     * \remarks vcr.h:32
+     * \remarks vcr.hpp:32
      */
     uint16_t startFlags;
 

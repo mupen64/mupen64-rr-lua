@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include <DialogService.h>
-#include <components/Cheats.h>
+#include <DialogService.hpp>
+#include <components/Cheats.hpp>
 
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {

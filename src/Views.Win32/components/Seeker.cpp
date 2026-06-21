@@ -5,10 +5,10 @@
  */
 
 #include "stdafx.h"
-#include <Messenger.h>
-#include <Config.h>
-#include <components/Seeker.h>
-#include <components/CoreUtils.h>
+#include <Messenger.hpp>
+#include <Config.hpp>
+#include <components/Seeker.hpp>
+#include <components/CoreUtils.hpp>
 
 #define WM_SEEK_COMPLETED (WM_USER + 11)
 

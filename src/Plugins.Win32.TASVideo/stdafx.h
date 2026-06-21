@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include <CommonPCH.h>
-#include <VersionNameHelpers.h>
+#include <CommonPCH.hpp>
+#include <VersionNameHelpers.hpp>
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 #include <Windows.h>
@@ -14,7 +14,7 @@
 #include <hqx.h>
 #include <GL/glext.h>
 #include <GL/wglext.h>
-#include "Types.h"
+#include "Types.hpp"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

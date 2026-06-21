@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include <components/RecentItems.h>
-#include <action/ActionManager.h>
+#include <components/RecentItems.hpp>
+#include <action/ActionManager.hpp>
 
 void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<std::wstring> &vec, std::wstring val,
                      const bool frozen)

@@ -5,9 +5,9 @@
  */
 
 #include "stdafx.h"
-#include <Config.h>
-#include <DialogService.h>
-#include <components/Statusbar.h>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <components/Statusbar.hpp>
 
 StrUtils::unordered_string_map<size_t> dialog_choice_map;
 

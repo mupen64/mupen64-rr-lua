@@ -1,14 +1,14 @@
 ﻿#include "stdafx.h"
-#include <DialogService.h>
-#include <components/Statusbar.h>
-#include <lua/LuaManager.h>
-#include <lua/LuaRenderer.h>
-#include <lua/presenters/DCompPresenter.h>
-#include <lua/presenters/GDIPresenter.h>
-#include <lua/presenters/Presenter.h>
-#include <lua/LuaCallbacks.h>
-#include "LuaRenderer.h"
-#include <Messenger.h>
+#include <DialogService.hpp>
+#include <components/Statusbar.hpp>
+#include <lua/LuaManager.hpp>
+#include <lua/LuaRenderer.hpp>
+#include <lua/presenters/DCompPresenter.hpp>
+#include <lua/presenters/GDIPresenter.hpp>
+#include <lua/presenters/Presenter.hpp>
+#include <lua/LuaCallbacks.hpp>
+#include "LuaRenderer.hpp"
+#include <Messenger.hpp>
 
 const auto OVERLAY_CLASS = L"lua_overlay";
 

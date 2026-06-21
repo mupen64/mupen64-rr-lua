@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.h"
-#include <JoystickControl.h>
-#include <Main.h>
+#include "Common.hpp"
+#include <JoystickControl.hpp>
+#include <Main.hpp>
 #undef max
 
 #define WITH_VALID_CTX()                                                                                               \

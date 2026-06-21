@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include "Dispatcher.h"
+#include "Dispatcher.hpp"
 
 // #define DISPATCHER_OVERHEAD_LOGGING
 

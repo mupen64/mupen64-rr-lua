@@ -5,17 +5,17 @@
  */
 
 #include "stdafx.h"
-#include <action/ActionManager.h>
-#include <Config.h>
-#include <DialogService.h>
-#include <Messenger.h>
-#include <Plugin.h>
-#include <capture/CaptureManager.h>
-#include <components/FilePicker.h>
-#include <components/SettingsListView.h>
-#include <components/TextEditDialog.h>
-#include <components/ConfigDialog.h>
-#include <lua/LuaManager.h>
+#include <action/ActionManager.hpp>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <Messenger.hpp>
+#include <Plugin.hpp>
+#include <capture/CaptureManager.hpp>
+#include <components/FilePicker.hpp>
+#include <components/SettingsListView.hpp>
+#include <components/TextEditDialog.hpp>
+#include <components/ConfigDialog.hpp>
+#include <lua/LuaManager.hpp>
 
 #include <algorithm>
 

@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "glN64.h"
-#include "OpenGL.h"
-#include "Types.h"
-#include "N64.h"
-#include "gSP.h"
-#include "gDP.h"
+#include "glN64.hpp"
+#include "OpenGL.hpp"
+#include "Types.hpp"
+#include "N64.hpp"
+#include "gSP.hpp"
+#include "gDP.hpp"
 #include "Textures.h"
-#include "Combiner.h"
-#include "VI.h"
+#include "Combiner.hpp"
+#include "VI.hpp"
 
 GLInfo OGL{};
 

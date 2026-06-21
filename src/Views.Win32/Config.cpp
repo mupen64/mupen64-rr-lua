@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "IOUtils.h"
+#include "IOUtils.hpp"
 #include "stdafx.h"
-#include <Config.h>
-#include <Messenger.h>
+#include <Config.hpp>
+#include <Messenger.hpp>
 #include <ini.h>
-#include <action/AppActions.h>
+#include <action/AppActions.hpp>
 #include <nlohmann/json.hpp>
 
 using nlohmann::json;

@@ -5,9 +5,9 @@
  */
 
 #include "stdafx.h"
-#include "FFmpegEncoder.h"
-#include <DialogService.h>
-#include <Config.h>
+#include "FFmpegEncoder.hpp"
+#include <DialogService.hpp>
+#include <Config.hpp>
 
 const std::wstring NUT_PIPE_NAME = L"\\\\.\\pipe\\mupennut";
 const std::wstring FFMPEG_OPTIONS = L"-y -i {} {} {}";

@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.h>
-#include <Core.h>
-#include <memory/memory.h>
-#include <memory/pif.h>
-#include <memory/savestates.h>
-#include <r4300/Debug.h>
-#include <r4300/disasm.h>
-#include <r4300/r4300.h>
-#include <r4300/rom.h>
-#include <r4300/timers.h>
-#include <r4300/tracelog.h>
-#include <r4300/vcr.h>
-#include <cheats.h>
+#include <CommonPCH.hpp>
+#include <Core.hpp>
+#include <Memory/Memory.hpp>
+#include <Memory/Pif.hpp>
+#include <Memory/Savestates.hpp>
+#include <R4300/Debug.hpp>
+#include <R4300/Disasm.hpp>
+#include <R4300/R4300.hpp>
+#include <R4300/Rom.hpp>
+#include <R4300/Timers.hpp>
+#include <R4300/Tracelog.hpp>
+#include <R4300/VCR.hpp>
+#include <Cheats.hpp>
 
 core_params *g_core{};
 core_ctx g_ctx{};

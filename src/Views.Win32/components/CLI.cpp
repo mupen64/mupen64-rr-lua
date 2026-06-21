@@ -5,17 +5,17 @@
  */
 
 #include "stdafx.h"
-#include <Config.h>
-#include <DialogService.h>
-#include <Messenger.h>
-#include <ThreadPool.h>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <Messenger.hpp>
+#include <ThreadPool.hpp>
 #include <argh.h>
 #include <nlohmann/json.hpp>
-#include <capture/CaptureManager.h>
-#include <components/CoreUtils.h>
-#include <components/CLI.h>
-#include <components/Dispatcher.h>
-#include <lua/LuaDialog.h>
+#include <capture/CaptureManager.hpp>
+#include <components/CoreUtils.hpp>
+#include <components/CLI.hpp>
+#include <components/Dispatcher.hpp>
+#include <lua/LuaDialog.hpp>
 
 struct t_cli_params
 {

@@ -1,11 +1,11 @@
 #include "stdafx.h"
-#include "OpenGL.h"
-#include "FrameBuffer.h"
-#include "RSP.h"
-#include "RDP.h"
+#include "OpenGL.hpp"
+#include "FrameBuffer.hpp"
+#include "RSP.hpp"
+#include "RDP.hpp"
 #include "Textures.h"
-#include "Combiner.h"
-#include "Types.h"
+#include "Combiner.hpp"
+#include "Types.hpp"
 
 FrameBufferInfo frameBuffer;
 

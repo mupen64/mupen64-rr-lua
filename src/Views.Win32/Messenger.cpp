@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <Messenger.h>
+#include <Messenger.hpp>
 
 namespace Messenger
 {

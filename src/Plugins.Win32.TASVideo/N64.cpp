@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "N64.h"
-#include "Types.h"
+#include "N64.hpp"
+#include "Types.hpp"
 
 u8 *DMEM;
 u8 *IMEM;

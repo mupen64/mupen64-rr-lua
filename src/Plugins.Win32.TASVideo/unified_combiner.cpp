@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "OpenGL.h"
-#include "Combiner.h"
-#include "unified_combiner.h"
+#include "OpenGL.hpp"
+#include "Combiner.hpp"
+#include "unified_combiner.hpp"
 #include "Textures.h"
-#include "gDP.h"
+#include "gDP.hpp"
 
 struct UCTexArg
 {

@@ -1,12 +1,12 @@
 #include "stdafx.h"
-#include "glN64.h"
-#include "VI.h"
-#include "OpenGL.h"
-#include "N64.h"
-#include "gSP.h"
-#include "gDP.h"
-#include "RSP.h"
-#include "FrameBuffer.h"
+#include "glN64.hpp"
+#include "VI.hpp"
+#include "OpenGL.hpp"
+#include "N64.hpp"
+#include "gSP.hpp"
+#include "gDP.hpp"
+#include "RSP.hpp"
+#include "FrameBuffer.hpp"
 
 VIInfo VI;
 

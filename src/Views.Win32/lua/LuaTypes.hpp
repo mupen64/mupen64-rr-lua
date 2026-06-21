@@ -1,0 +1,121 @@
+﻿/*
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#pragma once
+
+#include <action/ActionManager.hpp>
+#include <lua/presenters/Presenter.hpp>
+
+/**
+ * \brief Represents a Lua rendering context.
+ */
+struct t_lua_rendering_context
+{
+    // The current presenter, or null
+    Presenter *presenter{};
+
+    // The Direct2D overlay control handle
+    HWND d2d_overlay_hwnd{};
+
+    // The GDI/GDI+ overlay control handle
+    HWND gdi_overlay_hwnd{};
+
+    bool has_gdi_content{};
+
+    // The DC for GDI/GDI+ drawings
+    // This DC is special, since commands can be issued to it anytime and it's never cleared
+    HDC gdi_back_dc{};
+
+    // The bitmap for GDI/GDI+ drawings
+    HBITMAP gdi_bmp{};
+
+    // Dimensions of the drawing surfaces
+    D2D1_SIZE_U dc_size{};
+
+    // The DirectWrite factory, whose lifetime is the renderer's
+    IDWriteFactory *dw_factory{};
+
+    // The cache for DirectWrite text layouts
+    MicroLRU::Cache<uint64_t, IDWriteTextLayout *> dw_text_layouts{};
+
+    // The cache for DirectWrite text size measurements
+    MicroLRU::Cache<uint64_t, DWRITE_TEXT_METRICS> dw_text_sizes{};
+
+    // The stack of render targets. The top is used for D2D calls.
+    std::stack<ID2D1RenderTarget *> d2d_render_target_stack{};
+
+    // Pool of GDI+ images
+    std::unordered_map<size_t, Gdiplus::Bitmap *> image_pool{};
+
+    // Amount of generated images, just used to generate uids for image pool
+    size_t image_pool_index{};
+
+    // Whether to ignore create_renderer() and ensure_d2d_renderer_created() calls. Used to avoid tearing down and
+    // re-creating a renderer when stopping a script.
+    bool ignore_create_renderer{};
+
+    std::optional<float> target_fps{};
+    std::chrono::steady_clock::time_point last_render_time{};
+
+    HDC loadscreen_dc{};
+    HBITMAP loadscreen_bmp{};
+
+    HBRUSH brush{};
+    HPEN pen{};
+    HFONT font{};
+    COLORREF col, bkcol{};
+    int bkmode{};
+};
+
+struct t_action_param_meta
+{
+    uintptr_t *validator{};
+    uintptr_t *get_initial_value{};
+    uintptr_t *get_hints{};
+};
+
+/**
+ * \brief Describes a Lua instance.
+ */
+struct t_lua_environment
+{
+    using destroying_func = std::function<void(const t_lua_environment *env)>;
+    using print_func = std::function<void(const t_lua_environment *env, const std::wstring &text)>;
+
+    std::filesystem::path path;
+    lua_State *L;
+    t_lua_rendering_context rctx;
+    bool started{};
+
+    // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
+    std::vector<ActionManager::action_path> registered_actions{};
+
+    std::unordered_map<std::wstring, std::vector<t_action_param_meta>> param_meta_map;
+
+    // All the breakpoints registered by the script. Stored so we can remove them when the script is destroyed.
+    std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;
+
+    std::vector<uintptr_t *> step_callbacks;
+
+    destroying_func destroying{};
+
+    print_func print{};
+};
+
+/**
+ * \brief Represents the arguments for a key event callback. See `KeyEventArgs` in `api.lua`.
+ */
+struct t_lua_key_event_args
+{
+    std::optional<uint64_t> keycode;
+    bool ctrl{};
+    bool alt{};
+    bool shift{};
+    bool meta{};
+    std::optional<bool> pressed;
+    std::optional<std::wstring> text;
+    bool repeat{};
+};
