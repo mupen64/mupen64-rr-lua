@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <lua/LuaRenderer.h>
-#include <lua/LuaManager.h>
+#include <lua/LuaRenderer.hpp>
+#include <lua/LuaManager.hpp>
 
 namespace LuaCore::D2D
 {

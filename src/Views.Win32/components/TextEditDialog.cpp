@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <components/TextEditDialog.h>
+#include <components/TextEditDialog.hpp>
 
 struct t_text_edit_dialog_context
 {

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Hotkey.h>
+#include <Hotkey.hpp>
 
 /**
  * \brief A module responsible for managing actions.

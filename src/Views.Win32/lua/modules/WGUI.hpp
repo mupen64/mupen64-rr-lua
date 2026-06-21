@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <lua/LuaManager.h>
-#include <lua/LuaRenderer.h>
+#include <lua/LuaManager.hpp>
+#include <lua/LuaRenderer.hpp>
 
 namespace LuaCore::Wgui
 {

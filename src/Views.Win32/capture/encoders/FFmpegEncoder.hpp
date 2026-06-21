@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Encoder.h"
+#include "Encoder.hpp"
 
 extern "C"
 {
@@ -16,7 +16,7 @@ extern "C"
 #include <libavutil/opt.h>
 }
 
-#include <capture/CaptureManager.h>
+#include <capture/CaptureManager.hpp>
 
 class FFmpegEncoder : public Encoder
 {

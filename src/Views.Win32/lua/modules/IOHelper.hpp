@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <ViewHelpers.h>
-#include <components/FilePicker.h>
-#include <lua/LuaDialog.h>
+#include <ViewHelpers.hpp>
+#include <components/FilePicker.hpp>
+#include <lua/LuaDialog.hpp>
 
 namespace LuaCore::IOHelper
 {

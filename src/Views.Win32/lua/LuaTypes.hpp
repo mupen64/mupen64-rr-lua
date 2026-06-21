@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <action/ActionManager.h>
-#include <lua/presenters/Presenter.h>
+#include <action/ActionManager.hpp>
+#include <lua/presenters/Presenter.hpp>
 
 /**
  * \brief Represents a Lua rendering context.

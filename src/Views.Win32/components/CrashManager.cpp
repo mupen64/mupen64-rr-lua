@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include <Config.h>
-#include <components/CrashManager.h>
+#include <Config.hpp>
+#include <components/CrashManager.hpp>
 
 typedef struct StacktraceInfo
 {

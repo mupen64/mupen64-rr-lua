@@ -6,12 +6,12 @@
  */
 
 #include "stdafx.h"
-#include <Config.h>
+#include <Config.hpp>
 #include <Uxtheme.h>
-#include <components/RomBrowser.h>
-#include <components/Statusbar.h>
-#include <action/AppActions.h>
-#include <Messenger.h>
+#include <components/RomBrowser.hpp>
+#include <components/Statusbar.hpp>
+#include <action/AppActions.hpp>
+#include <Messenger.hpp>
 
 namespace RomBrowser
 {

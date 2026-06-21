@@ -5,13 +5,13 @@
  */
 
 #include "stdafx.h"
-#include <action/ActionManager.h>
-#include <Config.h>
-#include <DialogService.h>
-#include <lua/LuaCallbacks.h>
-#include <lua/LuaManager.h>
-#include <lua/LuaRegistry.h>
-#include <lua/LuaRenderer.h>
+#include <action/ActionManager.hpp>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <lua/LuaCallbacks.hpp>
+#include <lua/LuaManager.hpp>
+#include <lua/LuaRegistry.hpp>
+#include <lua/LuaRenderer.hpp>
 
 core_buttons g_new_controller_data[4]{};
 bool g_overwrite_controller_data[4]{};

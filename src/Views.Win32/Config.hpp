@@ -7,7 +7,7 @@
 #pragma once
 
 #include <core_types.h>
-#include <Hotkey.h>
+#include <Hotkey.hpp>
 
 struct t_config
 {

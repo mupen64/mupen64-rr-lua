@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Encoder.h"
+#include "Encoder.hpp"
 
 #include <Vfw.h>
 

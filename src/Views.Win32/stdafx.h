@@ -60,11 +60,11 @@ extern "C"
 using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
-#include <Loggers.h>
-#include <ViewHelpers.h>
-#include <Main.h>
-#include <lua/LuaHelpers.h>
-#include <lua/LuaTypes.h>
-#include <Config.h>
+#include <Loggers.hpp>
+#include <ViewHelpers.hpp>
+#include <Main.hpp>
+#include <lua/LuaHelpers.hpp>
+#include <lua/LuaTypes.hpp>
+#include <Config.hpp>
 // #include <PlatformService.h>
-#include <ResizeAnchor.h>
+#include <ResizeAnchor.hpp>

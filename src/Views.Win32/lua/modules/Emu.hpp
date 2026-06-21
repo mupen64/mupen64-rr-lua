@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <Messenger.h>
-#include <Plugin.h>
-#include <components/Statusbar.h>
-#include <lua/LuaCallbacks.h>
+#include <Messenger.hpp>
+#include <Plugin.hpp>
+#include <components/Statusbar.hpp>
+#include <lua/LuaCallbacks.hpp>
 
 namespace LuaCore::Emu
 {

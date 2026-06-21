@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <Main.h>
-#include <lua/LuaManager.h>
+#include <Main.hpp>
+#include <lua/LuaManager.hpp>
 
 namespace LuaCore::Savestate
 {

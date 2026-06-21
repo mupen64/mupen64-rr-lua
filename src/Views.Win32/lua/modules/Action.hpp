@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <action/ActionManager.h>
-#include <lua/LuaManager.h>
-#include <lua/modules/Hotkey.h>
+#include <action/ActionManager.hpp>
+#include <lua/LuaManager.hpp>
+#include <lua/modules/Hotkey.hpp>
 
 namespace LuaCore::Action
 {

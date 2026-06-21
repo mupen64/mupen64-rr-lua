@@ -5,11 +5,11 @@
  */
 
 #include "stdafx.h"
-#include <Messenger.h>
-#include <components/FilePicker.h>
-#include <components/ReorderableListView.h>
-#include <lua/LuaManager.h>
-#include <lua/LuaDialog.h>
+#include <Messenger.hpp>
+#include <components/FilePicker.hpp>
+#include <components/ReorderableListView.hpp>
+#include <lua/LuaManager.hpp>
+#include <lua/LuaDialog.hpp>
 
 // wParam: either nullptr, or a pointer to a t_instance_context whose running state has changed
 #define MUPM_RUNNING_STATE_CHANGED (WM_USER + 24)

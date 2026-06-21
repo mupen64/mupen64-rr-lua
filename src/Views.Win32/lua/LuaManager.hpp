@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <lua/LuaTypes.h>
+#include <lua/LuaTypes.hpp>
 
 namespace LuaManager
 {

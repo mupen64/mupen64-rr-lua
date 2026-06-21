@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <components/Dispatcher.h>
+#include <components/Dispatcher.hpp>
 
 #define CURRENT_VERSION L"1.5.0"
 

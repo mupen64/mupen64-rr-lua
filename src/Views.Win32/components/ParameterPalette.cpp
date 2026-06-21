@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "RomBrowser.h"
+#include "RomBrowser.hpp"
 #include "stdafx.h"
-#include <components/CommandPalette.h>
-#include <components/ConfigDialog.h>
-#include <action/AppActions.h>
-#include <Messenger.h>
-#include "ParameterPalette.h"
+#include <components/CommandPalette.hpp>
+#include <components/ConfigDialog.hpp>
+#include <action/AppActions.hpp>
+#include <Messenger.hpp>
+#include "ParameterPalette.hpp"
 
 struct t_parameter_palette_context
 {

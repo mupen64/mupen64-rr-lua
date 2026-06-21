@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <components/TextEditDialog.h>
-#include <lua/LuaManager.h>
+#include <components/TextEditDialog.hpp>
+#include <lua/LuaManager.hpp>
 
 namespace LuaCore::Input
 {

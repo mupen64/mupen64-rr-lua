@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <action/ActionManager.h>
+#include <action/ActionManager.hpp>
 
 /**
  * \brief A module responsible for implementing a parameter palette, which collects parameters for actions.

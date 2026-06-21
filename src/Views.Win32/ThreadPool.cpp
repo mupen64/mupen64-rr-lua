@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <ThreadPool.h>
+#include <ThreadPool.hpp>
 #include <BS_thread_pool.hpp>
 
 static BS::thread_pool pool(4);
