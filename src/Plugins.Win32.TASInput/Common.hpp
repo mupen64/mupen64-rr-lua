@@ -43,4 +43,4 @@
 #include <gdiplus.h>
 #pragma warning(pop)
 
-#include <Helpers.h>
+#include <Helpers.hpp>

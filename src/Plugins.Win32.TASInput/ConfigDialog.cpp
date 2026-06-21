@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.h"
-#include <ConfigDialog.h>
-#include <Main.h>
-#include <NewConfig.h>
-#include <GamepadManager.h>
+#include "Common.hpp"
+#include <ConfigDialog.hpp>
+#include <Main.hpp>
+#include <NewConfig.hpp>
+#include <GamepadManager.hpp>
 
 const auto editbox_ids = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,   IDC_E_LTRIG,  IDC_E_RTRIG,
                           IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT,  IDC_E_CRIGHT,

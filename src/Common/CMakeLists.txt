@@ -5,9 +5,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 add_library(Mupen64RR.Common INTERFACE
     "include/CommonPCH.h"
+    "include/DummyPluginStub.h"
     "include/IOUtils.h"
-    "include/StrUtils.h"
     "include/MiscHelpers.h"
+    "include/StrUtils.h"
+    "include/VersionNameHelpers.h"
 )
 set_target_properties(Mupen64RR.Common PROPERTIES
     CXX_STANDARD 23

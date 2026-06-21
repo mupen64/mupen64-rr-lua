@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.h"
-#include <Main.h>
-#include <TASInput.h>
-#include <GamepadManager.h>
-#include <ConfigDialog.h>
+#include "Common.hpp"
+#include <Main.hpp>
+#include <TASInput.hpp>
+#include <GamepadManager.hpp>
+#include <ConfigDialog.hpp>
 
 #define EXPORT __declspec(dllexport)
 #define CALL _cdecl
