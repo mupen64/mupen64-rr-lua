@@ -6,17 +6,17 @@
 
 #include <CommonPCH.hpp>
 #include <Core.hpp>
-#include <memory/memory.hpp>
-#include <memory/pif.hpp>
-#include <memory/savestates.hpp>
-#include <r4300/Debug.hpp>
-#include <r4300/disasm.hpp>
-#include <r4300/r4300.hpp>
-#include <r4300/rom.hpp>
-#include <r4300/timers.hpp>
-#include <r4300/tracelog.hpp>
-#include <r4300/vcr.hpp>
-#include <cheats.hpp>
+#include <Memory/Memory.hpp>
+#include <Memory/Pif.hpp>
+#include <Memory/Savestates.hpp>
+#include <R4300/Debug.hpp>
+#include <R4300/Disasm.hpp>
+#include <R4300/R4300.hpp>
+#include <R4300/Rom.hpp>
+#include <R4300/Timers.hpp>
+#include <R4300/Tracelog.hpp>
+#include <R4300/VCR.hpp>
+#include <Cheats.hpp>
 
 core_params *g_core{};
 core_ctx g_ctx{};

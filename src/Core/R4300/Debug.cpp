@@ -6,9 +6,9 @@
 
 #include <CommonPCH.hpp>
 #include <Core.hpp>
-#include <r4300/r4300.hpp>
-#include <r4300/Debug.hpp>
-#include <r4300/disasm.hpp>
+#include <R4300/R4300.hpp>
+#include <R4300/Debug.hpp>
+#include <R4300/Disasm.hpp>
 
 struct Breakpoint
 {
