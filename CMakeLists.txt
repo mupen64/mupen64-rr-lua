@@ -46,7 +46,15 @@ else()
   set(MUPEN64RR_VERSION_SUFFIX "")
 endif()
 
+# nightly build flag
+if(DEFINED ENV{NIGHTLY})
+  set(MUPEN64RR_NIGHTLY "$ENV{NIGHTLY}")
+else()
+  set(MUPEN64RR_NIGHTLY "0")
+endif()
+
 message(STATUS "Full version name: ${PROJECT_VERSION}${MUPEN64RR_VERSION_SUFFIX}")
+message(STATUS "Nightly build: ${MUPEN64RR_NIGHTLY}")
 
 # build output
 set(MUPEN64RR_OUT_DIR "${PROJECT_BINARY_DIR}/out/")
