@@ -14,4 +14,5 @@ target_link_libraries(Mupen64RR.Plugins.Win32.Common INTERFACE
 target_compile_definitions(Mupen64RR.Plugins.Win32.Common INTERFACE
     PLUGIN_WITH_CALLBACKS
     "VERSION_SUFFIX=L\"${MUPEN64RR_VERSION_SUFFIX}\""
+    "NIGHTLY=${MUPEN64RR_NIGHTLY}"
 )

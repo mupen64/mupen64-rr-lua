@@ -34,9 +34,10 @@ jobs:
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
       # Manual runs have no version suffix, auto-runs set it to `nightly-{short_commit_hash}`
-      - name: Set VERSION_SUFFIX
+      - name: Set VERSION_SUFFIX and NIGHTLY
         shell: powershell
         run: |
+          echo "NIGHTLY=1" >> $env:GITHUB_ENV
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
           } else {
@@ -102,9 +103,10 @@ jobs:
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
       # Manual runs have no version suffix, auto-runs set it to `nightly-{short_commit_hash}`
-      - name: Set VERSION_SUFFIX
+      - name: Set VERSION_SUFFIX and NIGHTLY
         shell: powershell
         run: |
+          echo "NIGHTLY=1" >> $env:GITHUB_ENV
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
           } else {
@@ -174,6 +176,11 @@ jobs:
         run: |
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+
+      - name: Set NIGHTLY
+        shell: powershell
+        run: |
+          echo "NIGHTLY=0" >> $env:GITHUB_ENV
 
       - name: Create vcpkg cache directory
         shell: pwsh
