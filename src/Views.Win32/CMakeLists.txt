@@ -19,9 +19,10 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "ViewHelpers.hpp"
     "ThreadPool.hpp"
     "Hotkey.hpp"
-    "capture/encoders/VFWEncoder.hpp"
     "capture/encoders/Encoder.hpp"
     "capture/encoders/FFmpegEncoder.hpp"
+    "capture/encoders/LAVCEncoder.hpp"
+    "capture/encoders/VFWEncoder.hpp"
     "capture/CaptureManager.hpp"
     "capture/Resampler.hpp"
     "DialogService.hpp"
@@ -84,8 +85,9 @@ add_executable(Mupen64RR.Views.Win32 WIN32
 
     # sources
     "ThreadPool.cpp"
-    "capture/encoders/VFWEncoder.cpp"
     "capture/encoders/FFmpegEncoder.cpp"
+    "capture/encoders/LAVCEncoder.cpp"
+    "capture/encoders/VFWEncoder.cpp"
     "capture/CaptureManager.cpp"
     "capture/Resampler.cpp"
     "Config.cpp"

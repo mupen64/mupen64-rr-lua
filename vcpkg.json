@@ -4,7 +4,9 @@
       "name": "ffmpeg",
       "features": [
         "avcodec",
-        "avformat"
+        "avformat",
+        "swscale",
+        "swresample"
       ]
     },
     "catch2",
