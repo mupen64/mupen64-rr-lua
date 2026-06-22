@@ -821,13 +821,12 @@ std::vector<t_options_group> get_static_option_groups()
         .type = t_options_item::Type::Enum,
         .group_id = capture_group.id,
         .name = L"Encoder",
-        .tooltip = L"The encoder to use when generating an output file.\nVFW - Slow but stable (recommended)\nFFmpeg - "
-                   L"Fast but less stable",
+        .tooltip = L"The encoder to use for capturing.",
         GENPROPS(int32_t, encoder_type),
         .possible_values =
             {
                 std::make_pair(L"VFW", (int32_t)t_config::EncoderType::VFW),
-                std::make_pair(L"FFmpeg (experimental)", (int32_t)t_config::EncoderType::FFmpeg),
+                std::make_pair(L"FFmpeg", (int32_t)t_config::EncoderType::FFmpeg),
             },
         .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
