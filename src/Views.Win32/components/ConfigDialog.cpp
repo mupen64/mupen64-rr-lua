@@ -827,7 +827,7 @@ std::vector<t_options_group> get_static_option_groups()
         .possible_values =
             {
                 std::make_pair(L"VFW", (int32_t)t_config::EncoderType::VFW),
-                std::make_pair(L"FFmpeg (experimental)", (int32_t)t_config::EncoderType::FFmpeg),
+                std::make_pair(L"FFmpeg", (int32_t)t_config::EncoderType::FFmpeg),
             },
         .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
