@@ -273,7 +273,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-#ifndef _DEBUG
+#if !defined(_DEBUG) && !defined(NIGHTLY)
 IDI_M64ICONBIG           ICON                   "icons\\logo_48.ico"
 
 IDI_M64ICONSMALL         ICON                   "icons\\logo_16.ico"
