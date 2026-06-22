@@ -6,7 +6,8 @@
         "avcodec",
         "avformat",
         "swscale",
-        "swresample"
+        "swresample",
+        "ffmpeg"
       ]
     },
     "catch2",

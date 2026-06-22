@@ -11,9 +11,10 @@
 #include <DialogService.hpp>
 #include <Messenger.hpp>
 #include <capture/CaptureManager.hpp>
-#include <capture/encoders/VFWEncoder.hpp>
 #include <capture/encoders/Encoder.hpp>
 #include <capture/encoders/FFmpegEncoder.hpp>
+#include <capture/encoders/LAVCEncoder.hpp>
+#include <capture/encoders/VFWEncoder.hpp>
 #include <components/Dispatcher.hpp>
 #include <components/MGECompositor.hpp>
 #include <lua/LuaRenderer.hpp>
@@ -333,6 +334,9 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
         break;
     case t_config::EncoderType::FFmpeg:
         m_encoder = std::make_unique<FFmpegEncoder>();
+        break;
+    case t_config::EncoderType::LibAVCodec:
+        m_encoder = std::make_unique<LAVCEncoder>();
         break;
     default:
         assert(false);

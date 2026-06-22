@@ -8,15 +8,20 @@ extern "C"
 
 #include <capture/CaptureManager.hpp>
 
+constexpr AVPixelFormat SOURCE_PIX_FMT = AV_PIX_FMT_BGR0;
+constexpr AVSampleFormat SOURCE_SAMPLE_FMT = AV_SAMPLE_FMT_S16;
+
 std::optional<std::wstring> LAVCEncoder::start(Params params)
 {
+    av_log_set_callback(av_log_default_callback);
+
     // TODO: configurable format
-    const auto *ofmt = av_guess_format(nullptr, nullptr, "video/mp4");
-    if (ofmt != nullptr) return L"Container format not found";
+    const auto *ofmt = av_guess_format("mp4", nullptr, nullptr);
+    if (ofmt == nullptr) return L"Container format not found";
 
     m_params = std::move(params);
 
-    auto filename = params.path.u8string();
+    auto filename = m_params.path.u8string();
 
     if (m_fmt_ctx.set_via(avformat_alloc_output_context2, ofmt, nullptr, (const char *)filename.c_str()) < 0)
         return L"Failed to setup AVFormatContext";
@@ -25,32 +30,37 @@ std::optional<std::wstring> LAVCEncoder::start(Params params)
     // ==================
 
     // TODO: configurable codecs
-    m_video.codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    m_video.codec = avcodec_find_encoder_by_name("h264_mf");
     if (m_video.codec == nullptr) return L"Failed to find suitable video codec";
-    m_audio.codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
+    m_audio.codec = avcodec_find_encoder_by_name("aac_mf");
     if (m_audio.codec == nullptr) return L"Failed to find suitable audio codec";
 
     // VIDEO SETUP
     // ==================
-    if (!m_video.alloc_objects(m_fmt_ctx)) return L"Failed to allocate video codec";
+    if (m_video.alloc_objects(m_fmt_ctx) < 0) return L"Failed to allocate video codec";
     // basic settings
     m_video.codec_ctx->width = (int)params.width;
     m_video.codec_ctx->height = (int)params.height;
     m_video.codec_ctx->time_base = {1, (int)params.fps};
+    m_video.codec_ctx->pix_fmt = AV::pick_best_pixel_fmt(m_video.codec_ctx, SOURCE_PIX_FMT);
+    if (m_video.codec_ctx->pix_fmt == AV_PIX_FMT_NONE) m_video.codec_ctx->pix_fmt = SOURCE_PIX_FMT;
+    // bitrate
+    m_video.codec_ctx->bit_rate = 2'000'000;
+    m_video.codec_ctx->rc_buffer_size = 4'000'000;
+    m_video.codec_ctx->rc_max_rate = 2'500'000;
+    m_video.codec_ctx->rc_min_rate = 2'000'000;
+
     // global headers
     if ((ofmt->flags & AVFMT_GLOBALHEADER) != 0) m_video.codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     // init the video codec
-    if (!m_video.prepare_codec()) return L"Failed to prepare video codec";
+    if (m_video.prepare_codec() < 0) return L"Failed to prepare video codec";
 
     // setup source frame for conversion
     if (!m_vsrc_frame.try_set(av_frame_alloc())) return L"Failed to allocate video source frame";
     m_vsrc_frame->width = (int)params.width;
     m_vsrc_frame->height = (int)params.height;
-    m_vsrc_frame->format = AV_PIX_FMT_BGR0;
-    // set fixed linesize (all frames will use the same linesize)
-    memset((void *)m_vsrc_frame->linesize, 0, sizeof(m_vsrc_frame->linesize));
-    m_vsrc_frame->linesize[0] = m_vsrc_frame->width * 4;
+    m_vsrc_frame->format = SOURCE_PIX_FMT;
 
     // setup and allocate buffer frame for conversion
     if (!m_vbuf_frame.try_set(
@@ -72,33 +82,37 @@ std::optional<std::wstring> LAVCEncoder::start(Params params)
     // AUDIO SETUP
     // ==================
     const AVChannelLayout stereo = AV_CHANNEL_LAYOUT_STEREO;
-    if (!m_audio.alloc_objects(m_fmt_ctx)) return L"Failed to allocate audio codec";
+    if (m_audio.alloc_objects(m_fmt_ctx) < 0) return L"Failed to allocate audio codec";
     // basic settings
     m_audio.codec_ctx->ch_layout = stereo;
     m_audio.codec_ctx->sample_rate = 48000;
-    m_audio.codec_ctx->bit_rate = 196000;
     m_audio.codec_ctx->time_base = {1, 48000};
+    m_audio.codec_ctx->sample_fmt = AV::pick_best_sample_fmt(m_audio.codec_ctx, SOURCE_SAMPLE_FMT);
+    if (m_audio.codec_ctx->sample_fmt == AV_SAMPLE_FMT_NONE) m_audio.codec_ctx->sample_fmt = SOURCE_SAMPLE_FMT;
+    // bitrate
+    m_audio.codec_ctx->bit_rate = 196000;
     // global headers
     if ((ofmt->flags & AVFMT_GLOBALHEADER) != 0) m_audio.codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     // init the audio codec
-    if (!m_audio.prepare_codec()) return L"Failed to prepare audio codec";
+    if (m_audio.prepare_codec() < 0) return L"Failed to prepare audio codec";
 
     // setup source frame for conversion (actually not used in the conversion LMAO)
     if (!m_asrc_frame.try_set(av_frame_alloc())) return L"Failed to allocate audio source frame";
     m_asrc_frame->ch_layout = stereo;
     m_asrc_frame->sample_rate = (int)params.arate;
-    m_asrc_frame->format = AV_SAMPLE_FMT_S16;
+    m_asrc_frame->format = SOURCE_SAMPLE_FMT;
 
     // setup and allocate buffer frame for conversion
     m_audio_frame_size = (m_audio.codec_ctx->frame_size == 0) ? 4096 : m_audio.codec_ctx->frame_size;
     if (!m_abuf_frame.try_set(AV::alloc_audio_frame(m_audio_frame_size, stereo, m_audio.codec_ctx->sample_fmt)))
         return L"Failed to allocate audio buffer frame";
+    m_abuf_frame->sample_rate = m_audio.codec_ctx->sample_rate;
 
     // setup swresample context
     if (!m_swr_ctx.try_set(swr_alloc())) return L"Failed to alloc swr context";
     if (swr_config_frame(m_swr_ctx, m_abuf_frame, m_asrc_frame) < 0) return L"Failed to prepare swresample";
-    if (swr_init(m_swr_ctx)) return L"Failed to prepare swresample";
+    if (swr_init(m_swr_ctx) < 0) return L"Failed to prepare swresample";
 
     // reset PTS
     m_audio_pts = 0;
@@ -137,10 +151,14 @@ bool LAVCEncoder::stop()
         av_frame_unref(m_abuf_frame);
         // setup a buffer big enough to hold the last few samples
         m_abuf_frame->nb_samples = nb_samples_left;
+        m_abuf_frame->ch_layout = AV_CHANNEL_LAYOUT_STEREO;
+        m_abuf_frame->format = SOURCE_SAMPLE_FMT;
         if (av_frame_get_buffer(m_abuf_frame, 0) < 0) return false;
         // extract the samples
         if (swr_convert(m_swr_ctx, m_abuf_frame->data, m_abuf_frame->nb_samples, nullptr, 0) < 0) return false;
         // encode the frame
+        m_abuf_frame->pts = m_audio_pts;
+        m_audio_pts += m_abuf_frame->nb_samples;
         m_audio.push_frame(m_fmt_ctx, m_abuf_frame);
     }
 
@@ -151,7 +169,7 @@ bool LAVCEncoder::stop()
     // =====================
 
     // write the file trailer
-    return av_write_trailer(m_fmt_ctx) < 0;
+    return av_write_trailer(m_fmt_ctx) >= 0;
 }
 bool LAVCEncoder::append_video(uint8_t *image)
 {
@@ -207,6 +225,7 @@ bool LAVCEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
         // encode the frame
         m_audio.push_frame(m_fmt_ctx, m_abuf_frame);
     }
+    return true;
 }
 std::wstring LAVCEncoder::get_desired_extension() const
 {
@@ -222,6 +241,7 @@ int LAVCEncoder::EncodeStream::alloc_objects(AVFormatContext *fmt_ctx)
     if (stream == nullptr) return AVERROR(EINVAL);
     if (!codec_ctx.try_set(avcodec_alloc_context3(codec))) return AVERROR(EINVAL);
     if (!packet.try_set(av_packet_alloc())) return AVERROR(ENOMEM);
+    return 0;
 }
 int LAVCEncoder::EncodeStream::prepare_codec()
 {
@@ -250,9 +270,13 @@ int LAVCEncoder::EncodeStream::push_frame(AVFormatContext *fmt_ctx, AVFrame *fra
 
 bool LAVCEncoder::scale_frame(uint8_t *image)
 {
-    // write source frame data
+    // reset data/linesize
     memset((void *)m_vsrc_frame->data, 0, sizeof(m_vsrc_frame->data));
-    m_vsrc_frame->data[0] = image;
+    memset((void *)m_vsrc_frame->linesize, 0, sizeof(m_vsrc_frame->linesize));
+
+    m_vsrc_frame->linesize[0] = -4 * m_vsrc_frame->width;
+    m_vsrc_frame->data[0] = image + (4 * m_vsrc_frame->width * m_vsrc_frame->height);
+
     // scale the frame
     return sws_scale_frame(m_sws_ctx, m_vbuf_frame, m_vsrc_frame) < 0;
 }

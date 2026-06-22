@@ -4,8 +4,8 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/opt.h>
+#include <libavutil/avutil.h>
+#include <libavutil/pixdesc.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 }
@@ -78,7 +78,7 @@ template <class T> class FFPointer
      */
     bool try_set(T *pointer)
     {
-        if (m_ptr != nullptr) return false;
+        release();
         if (pointer == nullptr) return false;
 
         m_ptr = pointer;
@@ -151,6 +151,37 @@ inline AVFrame *alloc_audio_frame(int nb_samples, const AVChannelLayout& ch_layo
     }
 
     return result;
+}
+
+inline AVPixelFormat pick_best_pixel_fmt(AVCodecContext* codec_ctx, AVPixelFormat target) {
+    const AVPixelFormat* pix_fmts;
+    int size;
+    
+    if (avcodec_get_supported_config(codec_ctx, codec_ctx->codec, AV_CODEC_CONFIG_PIX_FORMAT, 0, (const void**) &pix_fmts, &size) < 0) {
+        return AV_PIX_FMT_NONE;
+    }
+
+    AVPixelFormat best = pix_fmts[0];
+    for (int i = 1; i < size; i++) {
+        if (pix_fmts[i] == target) return target;
+        best = av_find_best_pix_fmt_of_2(best, pix_fmts[i], target, 0, NULL);
+    }
+
+    return best;
+}
+
+inline AVSampleFormat pick_best_sample_fmt(AVCodecContext* codec_ctx, AVSampleFormat target) {
+    const AVSampleFormat* sample_fmts;
+    int size;
+    
+    if (avcodec_get_supported_config(codec_ctx, codec_ctx->codec, AV_CODEC_CONFIG_PIX_FORMAT, 0, (const void**) &sample_fmts, &size) < 0) {
+        return AV_SAMPLE_FMT_NONE;
+    }
+
+    for (int i = 0; i < size; i++) {
+        if (sample_fmts[i] == target) return target;
+    }
+    return sample_fmts[0];
 }
 
 } // namespace AV

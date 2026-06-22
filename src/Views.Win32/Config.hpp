@@ -21,7 +21,8 @@ struct t_config
     enum class EncoderType
     {
         VFW,
-        FFmpeg
+        FFmpeg,
+        LibAVCodec
     };
 
     enum class StatusbarLayout
