@@ -177,11 +177,6 @@ jobs:
           $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
           echo "PATH=$env:PATH" >> $env:GITHUB_ENV
 
-      - name: Set NIGHTLY
-        shell: powershell
-        run: |
-          echo "NIGHTLY=0" >> $env:GITHUB_ENV
-
       - name: Create vcpkg cache directory
         shell: pwsh
         run: |
