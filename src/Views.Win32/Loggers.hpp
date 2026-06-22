@@ -12,6 +12,7 @@ extern std::shared_ptr<spdlog::logger> g_video_logger;
 extern std::shared_ptr<spdlog::logger> g_audio_logger;
 extern std::shared_ptr<spdlog::logger> g_input_logger;
 extern std::shared_ptr<spdlog::logger> g_rsp_logger;
+extern std::shared_ptr<spdlog::logger> g_ffmpeg_logger;
 
 namespace Loggers
 {

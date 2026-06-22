@@ -13,8 +13,6 @@ constexpr AVSampleFormat SOURCE_SAMPLE_FMT = AV_SAMPLE_FMT_S16;
 
 std::optional<std::wstring> LAVCEncoder::start(Params params)
 {
-    av_log_set_callback(av_log_default_callback);
-
     // TODO: configurable format
     const auto *ofmt = av_guess_format("mp4", nullptr, nullptr);
     if (ofmt == nullptr) return L"Container format not found";
@@ -35,6 +33,12 @@ std::optional<std::wstring> LAVCEncoder::start(Params params)
     m_audio.codec = avcodec_find_encoder_by_name("aac_mf");
     if (m_audio.codec == nullptr) return L"Failed to find suitable audio codec";
 
+    // confirm video codec does not require a hardware context
+    // note: transferring the frames on the GPU side is dependent on both the plugin's rendering API
+    //
+    if (avcodec_get_hw_config(m_video.codec, 0) != nullptr)
+        return L"Hardware-accelerated codecs are not supported";
+
     // VIDEO SETUP
     // ==================
     if (m_video.alloc_objects(m_fmt_ctx) < 0) return L"Failed to allocate video codec";
@@ -42,6 +46,7 @@ std::optional<std::wstring> LAVCEncoder::start(Params params)
     m_video.codec_ctx->width = (int)params.width;
     m_video.codec_ctx->height = (int)params.height;
     m_video.codec_ctx->time_base = {1, (int)params.fps};
+    // pixel format
     m_video.codec_ctx->pix_fmt = AV::pick_best_pixel_fmt(m_video.codec_ctx, SOURCE_PIX_FMT);
     if (m_video.codec_ctx->pix_fmt == AV_PIX_FMT_NONE) m_video.codec_ctx->pix_fmt = SOURCE_PIX_FMT;
     // bitrate
@@ -97,7 +102,7 @@ std::optional<std::wstring> LAVCEncoder::start(Params params)
     // init the audio codec
     if (m_audio.prepare_codec() < 0) return L"Failed to prepare audio codec";
 
-    // setup source frame for conversion (actually not used in the conversion LMAO)
+    // setup source frame for conversion
     if (!m_asrc_frame.try_set(av_frame_alloc())) return L"Failed to allocate audio source frame";
     m_asrc_frame->ch_layout = stereo;
     m_asrc_frame->sample_rate = (int)params.arate;
@@ -212,13 +217,22 @@ bool LAVCEncoder::append_video(uint8_t *image)
 }
 bool LAVCEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
 {
-    int sample_count = (int)length / 4;
+    // reset data/linesize
+    memset((void *)m_asrc_frame->data, 0, sizeof(m_vsrc_frame->data));
+    memset((void *)m_asrc_frame->linesize, 0, sizeof(m_vsrc_frame->linesize));
+
+    // setup source pointers
+    m_asrc_frame->data[0] = audio;
+    m_asrc_frame->linesize[0] = (int) length;
+    m_asrc_frame->nb_samples = (int)length / 4;
+
     // feed resampler
-    if (swr_convert(m_swr_ctx, nullptr, 0, &audio, sample_count) < 0) return false;
+    if (swr_convert_frame(m_swr_ctx, nullptr, m_asrc_frame) < 0) return false;
+
     // pull frames from the resampler as long as we can pull out full frames
     while (swr_get_out_samples(m_swr_ctx, 0) >= m_audio_frame_size)
     {
-        if (swr_convert(m_swr_ctx, m_abuf_frame->data, m_abuf_frame->nb_samples, nullptr, 0) < 0) return false;
+        if (swr_convert_frame(m_swr_ctx, m_abuf_frame, nullptr) < 0) return false;
         // set PTS
         m_abuf_frame->pts = m_audio_pts;
         m_audio_pts += m_abuf_frame->nb_samples;
@@ -274,6 +288,7 @@ bool LAVCEncoder::scale_frame(uint8_t *image)
     memset((void *)m_vsrc_frame->data, 0, sizeof(m_vsrc_frame->data));
     memset((void *)m_vsrc_frame->linesize, 0, sizeof(m_vsrc_frame->linesize));
 
+    // setup source pointers (these are backwards to make libswscale flip the frame vertically)
     m_vsrc_frame->linesize[0] = -4 * m_vsrc_frame->width;
     m_vsrc_frame->data[0] = image + (4 * m_vsrc_frame->width * m_vsrc_frame->height);
 
