@@ -40,6 +40,7 @@ void EnableCustom(HWND hWndDlg, BOOL enable)
 static void Config_SetDefaults()
 {
     OGL.fog = TRUE;
+    OGL.msaa = 0;
     OGL.windowedWidth = 640;
     OGL.windowedHeight = 480;
     OGL.forceBilinear = FALSE;
@@ -66,6 +67,9 @@ void Config_LoadRegistryConfig()
 
         RegQueryValueEx(hKey, L"Texture Filter", 0, NULL, (BYTE *)&value, &size);
         OGL.textureFilter = (TextureFilter)value;
+
+        RegQueryValueEx(hKey, L"MSAA", 0, NULL, (BYTE *)&value, &size);
+        OGL.msaa = (value == 4) ? 4 : 0;
 
         RegQueryValueEx(hKey, L"Filter Scale", 0, NULL, (BYTE *)&value, &size);
         OGL.filterScale = value;
@@ -122,6 +126,9 @@ void Config_SaveRegistryConfig()
     value = (DWORD)OGL.textureFilter;
     RegSetValueEx(hKey, L"Texture Filter", 0, REG_DWORD, (BYTE *)&value, 4);
 
+    value = OGL.msaa;
+    RegSetValueEx(hKey, L"MSAA", 0, REG_DWORD, (BYTE *)&value, 4);
+
     value = OGL.filterScale;
     RegSetValueEx(hKey, L"Filter Scale", 0, REG_DWORD, (BYTE *)&value, 4);
 
@@ -161,6 +168,7 @@ void Config_LoadConfig()
             OGL.textureFilter = j["texture_filter"];
             OGL.filterScale = j["filter_scale"];
             OGL.fog = j["enable_fog"];
+            OGL.msaa = (j.value("msaa", 0) == 4) ? 4 : 0;
             cache.maxBytes = (int)j["texture_cache_size"] * 1048576;
             OGL.usePolygonStipple = j["dithered_alpha_testing"];
             OGL.ignoreScissor = j["ignore_scissor"];
@@ -190,6 +198,7 @@ void Config_SaveConfig()
         {"texture_filter", OGL.textureFilter},
         {"filter_scale", OGL.filterScale},
         {"enable_fog", (bool)OGL.fog},
+        {"msaa", OGL.msaa},
         {"texture_cache_size", cache.maxBytes / 1048576},
         {"dithered_alpha_testing", (bool)OGL.usePolygonStipple},
         {"ignore_scissor", (bool)OGL.ignoreScissor},
@@ -202,6 +211,10 @@ void Config_SaveConfig()
 
 void Config_ApplyDlgConfig(HWND hWndDlg)
 {
+    static GLInfo prev_OGL{};
+
+    prev_OGL = OGL;
+
     wchar_t text[256]{};
     int i;
 
@@ -209,14 +222,10 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     cache.maxBytes = _wtol(text) * 1048576;
 
     OGL.forceBilinear = (SendDlgItemMessage(hWndDlg, IDC_FORCEBILINEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
-    auto filter = OGL.textureFilter;
     OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, NULL, NULL);
-    if (filter != OGL.textureFilter) OGL.filterChanged = TRUE;
-    auto filter_scale = OGL.filterScale;
     OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, NULL, NULL);
-    if (filter_scale != OGL.filterScale) OGL.filterChanged = TRUE;
-
     OGL.fog = (SendDlgItemMessage(hWndDlg, IDC_FOG, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
+    OGL.msaa = (SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_GETCHECK, NULL, NULL) == BST_CHECKED) ? 4 : 0;
     OGL.originAdjust = (OGL.textureFilter == TextureFilter::SaI ? 0.25 : 0.50);
     OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
     OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
@@ -239,9 +248,21 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.usePolygonStipple =
         (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
 
-    OGL_ResizeWindow();
     Config_SaveConfig();
     Config_LoadConfig();
+
+    const auto needs_restart =
+        OGL.forceBilinear != prev_OGL.forceBilinear || OGL.textureFilter != prev_OGL.textureFilter ||
+        OGL.filterScale != prev_OGL.filterScale || OGL.msaa != prev_OGL.msaa ||
+        OGL.ignoreScissor != prev_OGL.ignoreScissor || OGL.clear_override != prev_OGL.clear_override ||
+        OGL.windowedWidth != prev_OGL.windowedWidth || OGL.windowedHeight != prev_OGL.windowedHeight ||
+        OGL.usePolygonStipple != prev_OGL.usePolygonStipple;
+
+    if (RSP.thread && needs_restart)
+    {
+        SetEvent(RSP.threadMsg[RSPMSG_RESTART]);
+        WaitForSingleObject(RSP.threadFinished, INFINITE);
+    }
 }
 
 BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -292,6 +313,8 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
 
         // Enable/disable fog
         SendDlgItemMessage(hWndDlg, IDC_FOG, BM_SETCHECK, OGL.fog ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+        SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_SETCHECK, OGL.msaa == 4 ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED,
+                           NULL);
 
         SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_SETCHECK,
                            OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);

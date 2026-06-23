@@ -90,6 +90,8 @@ void OGL_InitStates()
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glEnable(GL_MULTISAMPLE);
+
     srand(timeGetTime());
 
     for (int i = 0; i < 32; i++)
@@ -129,26 +131,50 @@ void OGL_ResizeWindow()
 
 bool OGL_InitContext()
 {
-    s_sdl_window =
-        SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    SDL_assert_release(s_sdl_window);
-
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+    if (OGL.msaa > 0)
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, OGL.msaa);
+    }
+    else
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+    }
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
+    s_sdl_window =
+        SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+    SDL_assert_release(s_sdl_window);
+
     s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
     SDL_assert_release(s_sdl_context);
 
     SDL_assert_release(SDL_GL_MakeCurrent(s_sdl_window, s_sdl_context));
+
+    int multisample_buffers = 0;
+    int multisample_samples = 0;
+    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &multisample_buffers);
+    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &multisample_samples);
+
+    if (OGL.msaa > 0)
+    {
+        RT_ASSERT(multisample_buffers == 1 && multisample_samples == OGL.msaa,
+                  std::format(L"MSAA {}x is required, got {} buffers {} samples. Try updating your graphics driver.",
+                              OGL.msaa, multisample_buffers, multisample_samples));
+    }
 
     OGL_InitExtensions();
     OGL_InitStates();
@@ -167,12 +193,15 @@ bool OGL_DestroyContext()
 
     SDL_DestroyWindow(s_sdl_window);
     s_sdl_window = nullptr;
+
+    OGL.context_initialized = FALSE;
+
     return TRUE;
 }
 
 bool OGL_Start()
 {
-    if (!OGL.context_initialized) OGL_InitContext();
+    if (!OGL.context_initialized && !OGL_InitContext()) return FALSE;
 
     TextureCache_Init();
     FrameBuffer_Init();

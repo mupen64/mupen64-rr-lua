@@ -37,12 +37,12 @@ struct GLInfo
     int maxTextureUnits; // TNT = 2, GeForce = 2-4, Rage 128 = 2, Radeon = 3-6
 
     TextureFilter textureFilter = TextureFilter::None;
+    int32_t msaa{};
     float originAdjust;
     // 2xSAI: 2
     // xBRZ: 2, 3, 4, 5, 6
     // Hqx: 2, 3, 4
     int filterScale = 4;
-    BOOL filterChanged = FALSE; // for cache
 
     GLVertex vertices[256];
     BYTE triangles[80][3];
@@ -80,3 +80,4 @@ void OGL_UpdateScale();
 void OGL_ClearDepthBuffer();
 void OGL_ClearColorBuffer(float *color);
 void OGL_ResizeWindow();
+bool OGL_DestroyContext();

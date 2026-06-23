@@ -1349,6 +1349,7 @@
 #define IDC_SHOWERRORS 1073
 #define grp2 0x0431
 #define IDC_SHOWUNKNOWN 1074
+#define IDC_MSAA 1075
 #define grp3 0x0432
 #define grp4 0x0433
 #define IDC_SHOWHANDLED 1076
