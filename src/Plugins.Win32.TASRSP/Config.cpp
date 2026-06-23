@@ -20,42 +20,6 @@ static std::filesystem::path get_config_path()
     return g_config_path / CONFIG_FILE_NAME;
 }
 
-INT_PTR CALLBACK ConfigDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    switch (Message)
-    {
-    case WM_INITDIALOG:
-        config_load();
-        memcpy(&prev_config, &config, sizeof(t_config));
-        CheckDlgButton(hwnd, IDC_UCODE_CACHE_VERIFY, config.ucode_cache_verify ? BST_CHECKED : BST_UNCHECKED);
-        break;
-    case WM_CLOSE:
-        config_save();
-        EndDialog(hwnd, IDOK);
-        break;
-    case WM_COMMAND:
-        switch (LOWORD(wParam))
-        {
-        case IDOK:
-            config.ucode_cache_verify = IsDlgButtonChecked(hwnd, IDC_UCODE_CACHE_VERIFY);
-            config_save();
-            EndDialog(hwnd, IDOK);
-            break;
-        case IDCANCEL:
-            memcpy(&config, &prev_config, sizeof(t_config));
-            config_save();
-            EndDialog(hwnd, IDCANCEL);
-            break;
-        default:
-            break;
-        }
-        break;
-    default:
-        break;
-    }
-    return FALSE;
-}
-
 static void save_registry_config()
 {
     g_ef->log_trace(L"Saving config...");
@@ -149,12 +113,6 @@ void config_load()
     {
         g_ef->log_warn(L"No JSON config was present, attempting to load from registry");
         load_registry_config();
-
         config_save();
     }
-}
-
-void config_show_dialog(HWND hwnd)
-{
-    DialogBox(g_instance, MAKEINTRESOURCE(IDD_RSPCONFIG), hwnd, ConfigDlgProc);
 }
