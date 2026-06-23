@@ -7,26 +7,7 @@
 #include <stdafx.h>
 #include <Config.hpp>
 #include <components/FilePicker.hpp>
-
-#define FAILSAFE(operation)                                                                                            \
-    if (FAILED(operation)) goto cleanUp
-
-static std::wstring fix_filter(const std::wstring &filter)
-{
-    const std::wstring description = L"Allowed Files (" + filter + L")";
-    std::wstring result = description + L'\0' + filter + L'\0';
-    return result;
-}
-
-static std::wstring get_default_extension(const std::wstring &filter)
-{
-    const auto wildcards = StrUtils::split_wstring(filter, L";");
-
-    if (wildcards.empty()) return L"";
-
-    const auto first_wildcard = *wildcards.begin();
-    return std::wstring(first_wildcard.substr(2));
-}
+#include <WinFilePicker.hpp>
 
 std::filesystem::path FilePicker::show_open_dialog(const std::wstring &id, HWND hwnd, const std::wstring &filter)
 {
@@ -37,27 +18,11 @@ std::filesystem::path FilePicker::show_open_dialog(const std::wstring &id, HWND 
 
     g_view_logger->info(L"file dialog {}: {}\n", id, restored_path.wstring());
 
-    const auto fixed_filter = fix_filter(filter);
+    const auto result = WinFilePicker::show_open_dialog(hwnd, IOUtils::to_utf8_string(filter), restored_path);
 
-    wchar_t out_path[MAX_PATH]{};
-    OPENFILENAMEW ofn{};
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFile = out_path;
-    ofn.nMaxFile = std::size(out_path);
-    ofn.lpstrFilter = fixed_filter.c_str();
-    ofn.nFilterIndex = 1;
-    ofn.lpstrInitialDir = restored_path.c_str();
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_ENABLESIZING;
-
-    const auto result = GetOpenFileName(&ofn);
-
-    // NOTE: Common file dialogs change the cwd...
-    set_cwd();
-
-    if (result)
+    if (!result.empty())
     {
-        g_config.persistent_folder_paths[id] = ofn.lpstrFile;
+        g_config.persistent_folder_paths[id] = result;
         return g_config.persistent_folder_paths[id];
     }
 
@@ -73,29 +38,11 @@ std::filesystem::path FilePicker::show_save_dialog(const std::wstring &id, HWND 
 
     g_view_logger->info(L"file dialog {}: {}\n", id, restored_path.wstring());
 
-    const auto fixed_filter = fix_filter(filter);
-    const auto default_extension = get_default_extension(filter);
+    const auto result = WinFilePicker::show_save_dialog(hwnd, IOUtils::to_utf8_string(filter), restored_path);
 
-    wchar_t out_path[MAX_PATH]{};
-    OPENFILENAMEW ofn{};
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFile = out_path;
-    ofn.nMaxFile = std::size(out_path);
-    ofn.lpstrFilter = fixed_filter.c_str();
-    ofn.nFilterIndex = 1;
-    ofn.lpstrInitialDir = restored_path.c_str();
-    ofn.lpstrDefExt = default_extension.c_str();
-    ofn.Flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_EXTENSIONDIFFERENT;
-
-    const auto result = GetSaveFileName(&ofn);
-
-    // NOTE: Common file dialogs change the cwd...
-    set_cwd();
-
-    if (result)
+    if (!result.empty())
     {
-        g_config.persistent_folder_paths[id] = ofn.lpstrFile;
+        g_config.persistent_folder_paths[id] = result;
         return g_config.persistent_folder_paths[id];
     }
 
@@ -114,52 +61,13 @@ std::filesystem::path FilePicker::show_folder_dialog(const std::wstring &id, HWN
 
     g_view_logger->info(L"folder dialog {}: {}\n", id, restored_path.wstring());
 
-    if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd))))
+    const auto result = WinFilePicker::show_folder_dialog(hwnd, restored_path);
+
+    if (!result.empty())
     {
-        PIDLIST_ABSOLUTE pidl;
-
-        HRESULT hresult = SHParseDisplayName(restored_path.c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr);
-        if (SUCCEEDED(hresult))
-        {
-            IShellItem *psi;
-            hresult = SHCreateShellItem(nullptr, nullptr, pidl, &psi);
-            if (SUCCEEDED(hresult))
-            {
-                pfd->SetFolder(psi);
-            }
-            ILFree(pidl);
-        }
-
-        DWORD dwOptions;
-        if (SUCCEEDED(pfd->GetOptions(&dwOptions)))
-        {
-            pfd->SetOptions(dwOptions | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
-        }
-
-        if (SUCCEEDED(pfd->Show(hwnd)))
-        {
-            IShellItem *psi;
-            if (SUCCEEDED(pfd->GetResult(&psi)))
-            {
-                WCHAR *tmp;
-                if (SUCCEEDED(psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &tmp)))
-                {
-                    final_path = tmp;
-                }
-                psi->Release();
-            }
-        }
-        pfd->Release();
+        g_config.persistent_folder_paths[id] = result;
+        return g_config.persistent_folder_paths[id];
     }
 
-    if (final_path.size() > 1)
-    {
-        // probably valid path, store it
-        g_config.persistent_folder_paths[id] = final_path;
-    }
-
-    // NOTE: Even these COM file dialogs change the cwd...
-    set_cwd();
-
-    return final_path;
+    return {};
 }
