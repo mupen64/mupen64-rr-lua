@@ -11,6 +11,7 @@ add_library(Mupen64RR.Common INTERFACE
     "include/StrUtils.hpp"
     "include/VersionNameHelpers.hpp"
     "include/WinFilePicker.hpp"
+    "include/JoystickControl.hpp"
 )
 set_target_properties(Mupen64RR.Common PROPERTIES
     CXX_STANDARD 23
