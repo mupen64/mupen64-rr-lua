@@ -452,17 +452,51 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 HMENU h_menu = CreatePopupMenu();
                 AppendMenu(h_menu, MF_STRING, 1, L"Gamepad");
                 AppendMenu(h_menu, MF_STRING, 2, L"Keyboard");
+                AppendMenu(h_menu, MF_SEPARATOR, 3, L"");
+                AppendMenu(h_menu, MF_STRING, 4, L"Save");
+                AppendMenu(h_menu, MF_STRING, 5, L"Load");
                 const int clicked = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
 
-                if (clicked == 1)
+                switch (clicked)
                 {
+                case 1:
                     new_config.controller_config[g_ctx.selected_controller] = t_controller_config{};
                     update_visuals();
-                }
-                if (clicked == 2)
-                {
+                    break;
+                case 2:
                     new_config.controller_config[g_ctx.selected_controller] = t_controller_config::keyboard_config();
                     update_visuals();
+                    break;
+                case 4: {
+                    const auto controller_config = new_config.controller_config[g_ctx.selected_controller];
+                    const auto json = nlohmann::json(controller_config);
+                    const auto json_str = json.dump();
+
+                    std::span<uint8_t> bytes(reinterpret_cast<uint8_t *>(const_cast<char *>(json_str.data())),
+                                             json_str.size());
+
+                    const auto path = WinFilePicker::show_save_dialog(hwnd, "*.json");
+                    if (path.empty()) break;
+
+                    IOUtils::write_entire_file(path, bytes);
+
+                    break;
+                }
+                case 5: {
+                    const auto path = WinFilePicker::show_open_dialog(hwnd, "*.json");
+                    if (path.empty()) break;
+
+                    const auto buf = IOUtils::read_entire_file(path);
+                    const auto json_str = std::string(reinterpret_cast<const char *>(buf.data()), buf.size());
+
+                    const auto json = nlohmann::json::parse(json_str);
+                    if (!json.is_object()) break;
+
+                    const auto controller_config = json.get<t_controller_config>();
+                    new_config.controller_config[g_ctx.selected_controller] = controller_config;
+                    update_visuals();
+                    break;
+                }
                 }
 
                 return TRUE;

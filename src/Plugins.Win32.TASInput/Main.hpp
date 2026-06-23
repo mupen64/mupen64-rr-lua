@@ -8,6 +8,7 @@
 
 #include <Windows.h>
 #include <Views.Win32/ViewPlugin.h>
+#include <WinFilePicker.hpp>
 #include <filesystem>
 
 extern HINSTANCE g_inst;
