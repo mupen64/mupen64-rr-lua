@@ -556,14 +556,9 @@ static void start_movie_playback_direct(const ActionManager::action_argument_map
     const auto path = params.at(L"path");
     const auto author = params.at(L"author");
     const auto description = params.at(L"description");
-    const auto pause_at = params.at(L"pause_at").empty() ? 0 : std::stoul(params.at(L"pause_at"));
-    const auto pause_at_last = params.at(L"pause_at_last").empty() ? 0 : std::stoul(params.at(L"pause_at_last"));
 
     g_main_ctx.core_ctx->vcr_replace_author_info(path, IOUtils::to_utf8_string(author),
                                                  IOUtils::to_utf8_string(description));
-
-    g_config.core.pause_at_frame = pause_at;
-    g_config.core.pause_at_last_frame = pause_at_last;
 
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vcr_start_playback(path);
@@ -587,8 +582,6 @@ static void start_movie_playback()
                               {L"path", result.path},
                               {L"author", result.author},
                               {L"description", result.description},
-                              {L"pause_at", std::to_wstring(result.pause_at)},
-                              {L"pause_at_last", std::to_wstring(result.pause_at_last)},
                           });
 }
 
