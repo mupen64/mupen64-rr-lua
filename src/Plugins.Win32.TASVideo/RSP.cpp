@@ -58,6 +58,7 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
             OGL_Stop();
             OGL_DestroyContext();
             OGL_Start();
+            OGL_ResizeWindow();
             break;
         case WAIT_OBJECT_0 + RSPMSG_PROCESSDLIST:
             RSP_ProcessDList();
