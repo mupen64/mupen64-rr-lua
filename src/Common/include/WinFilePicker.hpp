@@ -9,6 +9,7 @@
 #if defined(_WIN32)
 #define NOMINMAX
 #include <Windows.h>
+#include <wrl/client.h>
 #elif defined(__linux__)
 #error "Don't include this file on Linux"
 #endif
@@ -110,58 +111,59 @@ inline std::filesystem::path show_save_dialog(HWND hwnd, std::string_view filter
  */
 inline std::filesystem::path show_folder_dialog(HWND hwnd, const std::filesystem::path &initial_path = {})
 {
+    using Microsoft::WRL::ComPtr;
+
     const auto initial_dir = initial_path.wstring();
 
-    std::wstring final_path;
-    IFileDialog *pfd;
+    std::filesystem::path result_path;
 
-    wchar_t cwd[MAX_PATH]{};
-    GetCurrentDirectory(std::size(cwd), cwd);
+    ComPtr<IFileDialog> dialog;
+    HRESULT hr =
+        CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(dialog.GetAddressOf()));
 
-    if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd))))
+    if (SUCCEEDED(hr))
     {
-        PIDLIST_ABSOLUTE pidl;
+        PIDLIST_ABSOLUTE pidl = nullptr;
 
-        HRESULT hresult = SHParseDisplayName(initial_dir.c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr);
-        if (SUCCEEDED(hresult))
+        hr = SHParseDisplayName(initial_dir.c_str(), nullptr, &pidl, SFGAO_FOLDER, nullptr);
+
+        if (SUCCEEDED(hr))
         {
-            IShellItem *psi;
-            hresult = SHCreateShellItem(nullptr, nullptr, pidl, &psi);
-            if (SUCCEEDED(hresult))
+            ComPtr<IShellItem> folder;
+
+            hr = SHCreateShellItem(nullptr, nullptr, pidl, folder.GetAddressOf());
+
+            if (SUCCEEDED(hr))
             {
-                pfd->SetFolder(psi);
+                dialog->SetFolder(folder.Get());
             }
+
             ILFree(pidl);
         }
 
-        DWORD options;
-        if (SUCCEEDED(pfd->GetOptions(&options)))
+        DWORD options = 0;
+        if (SUCCEEDED(dialog->GetOptions(&options)))
         {
-            pfd->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+            dialog->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_NOCHANGEDIR);
         }
 
-        if (SUCCEEDED(pfd->Show(hwnd)))
+        if (SUCCEEDED(dialog->Show(hwnd)))
         {
-            IShellItem *psi;
-            if (SUCCEEDED(pfd->GetResult(&psi)))
+            ComPtr<IShellItem> result;
+
+            if (SUCCEEDED(dialog->GetResult(result.GetAddressOf())))
             {
-                WCHAR *tmp;
-                if (SUCCEEDED(psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &tmp)))
+                PWSTR path = nullptr;
+
+                if (SUCCEEDED(result->GetDisplayName(SIGDN_FILESYSPATH, &path)))
                 {
-                    final_path = tmp;
+                    result_path = path;
+                    CoTaskMemFree(path);
                 }
-                psi->Release();
             }
         }
-        pfd->Release();
     }
 
-    SetCurrentDirectory(cwd);
-
-    // This API just wack like that
-    if (final_path.size() > 1) return final_path;
-
-    return {};
+    return result_path;
 }
-
 } // namespace WinFilePicker
