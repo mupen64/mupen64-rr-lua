@@ -5,17 +5,17 @@
  */
 
 #include "stdafx.h"
-#include <action/ActionManager.h>
-#include <Config.h>
-#include <DialogService.h>
-#include <Messenger.h>
-#include <Plugin.h>
-#include <capture/CaptureManager.h>
-#include <components/FilePicker.h>
-#include <components/SettingsListView.h>
-#include <components/TextEditDialog.h>
-#include <components/ConfigDialog.h>
-#include <lua/LuaManager.h>
+#include <action/ActionManager.hpp>
+#include <Config.hpp>
+#include <DialogService.hpp>
+#include <Messenger.hpp>
+#include <Plugin.hpp>
+#include <capture/CaptureManager.hpp>
+#include <components/FilePicker.hpp>
+#include <components/SettingsListView.hpp>
+#include <components/TextEditDialog.hpp>
+#include <components/ConfigDialog.hpp>
+#include <lua/LuaManager.hpp>
 
 #include <algorithm>
 
@@ -821,13 +821,12 @@ std::vector<t_options_group> get_static_option_groups()
         .type = t_options_item::Type::Enum,
         .group_id = capture_group.id,
         .name = L"Encoder",
-        .tooltip = L"The encoder to use when generating an output file.\nVFW - Slow but stable (recommended)\nFFmpeg - "
-                   L"Fast but less stable",
+        .tooltip = L"The encoder to use for capturing.",
         GENPROPS(int32_t, encoder_type),
         .possible_values =
             {
                 std::make_pair(L"VFW", (int32_t)t_config::EncoderType::VFW),
-                std::make_pair(L"FFmpeg (experimental)", (int32_t)t_config::EncoderType::FFmpeg),
+                std::make_pair(L"FFmpeg", (int32_t)t_config::EncoderType::FFmpeg),
             },
         .is_readonly = [] { return CaptureManager::is_capturing(); },
     });

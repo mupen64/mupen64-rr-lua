@@ -5,11 +5,11 @@
  */
 
 #include "stdafx.h"
-#include "PianoRoll.h"
-#include "ThreadPool.h"
-#include "Config.h"
-#include "Messenger.h"
-#include <components/CoreUtils.h>
+#include "PianoRoll.hpp"
+#include "ThreadPool.hpp"
+#include "Config.hpp"
+#include "Messenger.hpp"
+#include <components/CoreUtils.hpp>
 
 const auto JOYSTICK_CLASS = L"PianoRollJoystick";
 

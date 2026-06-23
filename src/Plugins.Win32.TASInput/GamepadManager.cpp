@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.h"
-#include "GamepadManager.h"
-#include <Main.h>
-#include <NewConfig.h>
+#include "Common.hpp"
+#include "GamepadManager.hpp"
+#include <Main.hpp>
+#include <NewConfig.hpp>
 
 struct gamepad_manager_context
 {

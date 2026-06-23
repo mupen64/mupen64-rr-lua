@@ -273,7 +273,15 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_M64ICONBIG          ICON                    "icons\\logo_48.ico"
+#if !defined(_DEBUG) && !defined(NIGHTLY)
+IDI_M64ICONBIG           ICON                   "icons\\logo_48.ico"
+
+IDI_M64ICONSMALL         ICON                   "icons\\logo_16.ico"
+#else
+IDI_M64ICONBIG           ICON                   "icons\\logo_48_nightly.ico"
+
+IDI_M64ICONSMALL         ICON                   "icons\\logo_16_nightly.ico"
+#endif
 
 IDI_AUSTRALIA           ICON                    "icons\\flag_au.ico"
 
@@ -290,8 +298,6 @@ IDI_GERMANY             ICON                    "icons\\flag_de.ico"
 IDI_ITALIA              ICON                    "icons\\flag_it.ico"
 
 IDI_JAPAN               ICON                    "icons\\flag_jp.ico"
-
-IDI_M64ICONSMALL        ICON                    "icons\\logo_16.ico"
 
 IDI_SPAIN               ICON                    "icons\\flag_sp.ico"
 

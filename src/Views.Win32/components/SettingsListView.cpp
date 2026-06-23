@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include "SettingsListView.h"
+#include "SettingsListView.hpp"
 
 #define PROP_NAME L"slv_ctx"
 

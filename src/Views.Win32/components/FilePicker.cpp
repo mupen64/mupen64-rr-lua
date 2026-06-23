@@ -5,8 +5,8 @@
  */
 
 #include <stdafx.h>
-#include <Config.h>
-#include <components/FilePicker.h>
+#include <Config.hpp>
+#include <components/FilePicker.hpp>
 
 #define FAILSAFE(operation)                                                                                            \
     if (FAILED(operation)) goto cleanUp

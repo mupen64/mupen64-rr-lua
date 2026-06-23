@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Main.h"
-#include "Config.h"
-#include "HLE.h"
-#include "Disasm.h"
+#include "Main.hpp"
+#include "Config.hpp"
+#include "HLE.hpp"
+#include "Disasm.hpp"
 
 #define EXPORT __declspec(dllexport)
 #define CALL _cdecl

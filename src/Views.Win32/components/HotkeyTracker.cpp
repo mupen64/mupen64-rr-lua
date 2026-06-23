@@ -5,10 +5,10 @@
  */
 
 #include "stdafx.h"
-#include <action/ActionManager.h>
-#include <action/AppActions.h>
-#include <components/HotkeyTracker.h>
-#include <components/ParameterPalette.h>
+#include <action/ActionManager.hpp>
+#include <action/AppActions.hpp>
+#include <components/HotkeyTracker.hpp>
+#include <components/ParameterPalette.hpp>
 
 const auto HOTKEY_TRACKER_CTX = L"Mupen64_HotkeyTrackerContext";
 

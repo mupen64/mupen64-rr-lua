@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include "Resampler.h"
+#include "Resampler.hpp"
 #include <speex/speex_resampler.h>
 
 const auto RESAMP_BUFFER_SIZE = 44100 * 2 * 2;

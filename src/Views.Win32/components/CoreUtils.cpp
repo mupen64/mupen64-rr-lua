@@ -5,9 +5,9 @@
  */
 
 #include "stdafx.h"
-#include "CoreUtils.h"
-#include "Plugin.h"
-#include <action/AppActions.h>
+#include "CoreUtils.hpp"
+#include "Plugin.hpp"
+#include <action/AppActions.hpp>
 
 // Prompts the user to change their plugin selection.
 static void prompt_plugin_change(HWND hwnd)

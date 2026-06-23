@@ -1,8 +1,8 @@
 #include "stdafx.h"
-#include "OpenGL.h"
-#include "Combiner.h"
-#include "unified_combiner.h"
-#include "gDP.h"
+#include "OpenGL.hpp"
+#include "Combiner.hpp"
+#include "unified_combiner.hpp"
+#include "gDP.hpp"
 
 CombinerInfo combiner;
 

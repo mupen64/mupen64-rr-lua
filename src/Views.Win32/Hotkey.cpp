@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <Hotkey.h>
+#include <Hotkey.hpp>
 
 struct t_hotkey_dialog_params
 {

@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "N64.h"
-#include "RSP.h"
-#include "GBI.h"
-#include "gDP.h"
-#include "Types.h"
+#include "N64.hpp"
+#include "RSP.hpp"
+#include "GBI.hpp"
+#include "gDP.hpp"
+#include "Types.hpp"
 
 void RDP_Unknown(u32 w0, u32 w1)
 {

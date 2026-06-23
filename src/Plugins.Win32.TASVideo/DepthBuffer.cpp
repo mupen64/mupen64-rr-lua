@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "DepthBuffer.h"
-#include "Types.h"
+#include "DepthBuffer.hpp"
+#include "Types.hpp"
 
 DepthBufferInfo depthBuffer;
 
