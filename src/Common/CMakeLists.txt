@@ -10,6 +10,7 @@ add_library(Mupen64RR.Common INTERFACE
     "include/MiscHelpers.hpp"
     "include/StrUtils.hpp"
     "include/VersionNameHelpers.hpp"
+    "include/WinFilePicker.hpp"
 )
 set_target_properties(Mupen64RR.Common PROPERTIES
     CXX_STANDARD 23
