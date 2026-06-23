@@ -243,17 +243,6 @@ struct core_cfg
     int32_t seek_savestate_max_count = 20;
 
     /// <summary>
-    /// The movie frame to automatically pause at
-    /// -1 none
-    /// </summary>
-    int32_t pause_at_frame = -1;
-
-    /// <summary>
-    /// Whether to pause at the last movie frame
-    /// </summary>
-    int32_t pause_at_last_frame;
-
-    /// <summary>
     /// Whether VCR operates in read-only mode
     /// </summary>
     int32_t vcr_readonly;

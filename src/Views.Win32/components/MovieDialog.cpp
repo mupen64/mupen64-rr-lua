@@ -86,8 +86,8 @@ static size_t count_input_changes(const std::vector<core_buttons> &buttons)
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     // List of dialog item IDs that shouldn't be interactable when in a specific mode
-    const std::vector disabled_on_play = {IDC_RADIO_FROM_START, IDC_RADIO_FROM_ST, IDC_RADIO_FROM_EEPROM};
-    const std::vector disabled_on_record = {IDC_PAUSE_AT_END, IDC_PAUSEAT_FIELD};
+    const std::vector<int32_t> disabled_on_play = {IDC_RADIO_FROM_START, IDC_RADIO_FROM_ST, IDC_RADIO_FROM_EEPROM};
+    const std::vector<int32_t> disabled_on_record = {};
 
     switch (msg)
     {
@@ -149,18 +149,6 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         switch (LOWORD(wparam))
         {
         case IDOK: {
-            wchar_t text[MAX_PATH] = {0};
-            GetDlgItemText(hwnd, IDC_PAUSEAT_FIELD, text, std::size(text));
-            if (lstrlenW(text) == 0)
-            {
-                g_ctx.user_result.pause_at = -1;
-            }
-            else
-            {
-                g_ctx.user_result.pause_at = std::wcstoul(text, nullptr, 10);
-            }
-            g_ctx.user_result.pause_at_last = IsDlgButtonChecked(hwnd, IDC_PAUSE_AT_END);
-
             g_config.last_movie_type = g_ctx.user_result.start_flag;
 
             wchar_t author[sizeof(core_vcr_movie_header::author)] = {0};

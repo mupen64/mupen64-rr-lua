@@ -18,8 +18,6 @@ struct t_result
     unsigned short start_flag;
     std::wstring author;
     std::wstring description;
-    int32_t pause_at;
-    int32_t pause_at_last;
 };
 
 /**
