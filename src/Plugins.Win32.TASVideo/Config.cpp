@@ -253,9 +253,10 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
 
     const auto needs_restart =
         OGL.forceBilinear != prev_OGL.forceBilinear || OGL.textureFilter != prev_OGL.textureFilter ||
-        OGL.msaa != prev_OGL.msaa || OGL.ignoreScissor != prev_OGL.ignoreScissor ||
-        OGL.clear_override != prev_OGL.clear_override || OGL.windowedWidth != prev_OGL.windowedWidth ||
-        OGL.windowedHeight != prev_OGL.windowedHeight || OGL.usePolygonStipple != prev_OGL.usePolygonStipple;
+        OGL.filterScale != prev_OGL.filterScale || OGL.msaa != prev_OGL.msaa ||
+        OGL.ignoreScissor != prev_OGL.ignoreScissor || OGL.clear_override != prev_OGL.clear_override ||
+        OGL.windowedWidth != prev_OGL.windowedWidth || OGL.windowedHeight != prev_OGL.windowedHeight ||
+        OGL.usePolygonStipple != prev_OGL.usePolygonStipple;
 
     if (RSP.thread && needs_restart)
     {
