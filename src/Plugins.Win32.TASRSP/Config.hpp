@@ -27,5 +27,3 @@ void config_save();
  * \brief Loads the config
  */
 void config_load();
-
-void config_show_dialog(HWND hwnd);

@@ -14,43 +14,12 @@ t_config config = {};
 t_config default_config = {};
 t_config prev_config = {};
 
-INT_PTR CALLBACK ConfigDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+static std::filesystem::path get_config_path()
 {
-    switch (Message)
-    {
-    case WM_INITDIALOG:
-        config_load();
-        memcpy(&prev_config, &config, sizeof(t_config));
-        CheckDlgButton(hwnd, IDC_UCODE_CACHE_VERIFY, config.ucode_cache_verify ? BST_CHECKED : BST_UNCHECKED);
-        break;
-    case WM_CLOSE:
-        config_save();
-        EndDialog(hwnd, IDOK);
-        break;
-    case WM_COMMAND:
-        switch (LOWORD(wParam))
-        {
-        case IDOK:
-            config.ucode_cache_verify = IsDlgButtonChecked(hwnd, IDC_UCODE_CACHE_VERIFY);
-            config_save();
-            EndDialog(hwnd, IDOK);
-            break;
-        case IDCANCEL:
-            memcpy(&config, &prev_config, sizeof(t_config));
-            config_save();
-            EndDialog(hwnd, IDCANCEL);
-            break;
-        default:
-            break;
-        }
-        break;
-    default:
-        break;
-    }
-    return FALSE;
+    return g_config_path / CONFIG_FILE_NAME;
 }
 
-void config_save()
+static void save_registry_config()
 {
     g_ef->log_trace(L"Saving config...");
 

@@ -22,7 +22,6 @@ static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
-static void (*g_audio_ucode_func)() = nullptr;
 HINSTANCE g_instance;
 std::filesystem::path g_app_path;
 // PlatformService g_platform_service;
@@ -117,58 +116,25 @@ static int audio_ucode_detect_type(const OSTask_t *task)
     return 2;
 }
 
-static void audio_ucode_verify_cache(const OSTask_t *task)
+static int audio_ucode(OSTask_t *task)
 {
-    // In debug mode, we want to verify that the ucode type hasn't changed
     const auto ucode_type = audio_ucode_detect_type(task);
 
     switch (ucode_type)
     {
     case UCODE_MARIO:
-        assert(g_audio_ucode_func == audio_ucode_mario);
+        audio_ucode_mario();
         break;
     case UCODE_BANJO:
-        assert(g_audio_ucode_func == audio_ucode_banjo);
+        audio_ucode_banjo();
         break;
     case UCODE_ZELDA:
-        assert(g_audio_ucode_func == audio_ucode_zelda);
+        audio_ucode_zelda();
         break;
     default:
-        break;
+        std::terminate();
+        return -1;
     }
-}
-
-static int audio_ucode(OSTask_t *task)
-{
-    if (!g_audio_ucode_func)
-    {
-        const auto ucode_type = audio_ucode_detect_type(task);
-
-        printf("[RSP] Detected ucode type: %d\n", ucode_type);
-
-        switch (ucode_type)
-        {
-        case UCODE_MARIO:
-            g_audio_ucode_func = audio_ucode_mario;
-            break;
-        case UCODE_BANJO:
-            g_audio_ucode_func = audio_ucode_banjo;
-            break;
-        case UCODE_ZELDA:
-            g_audio_ucode_func = audio_ucode_zelda;
-            break;
-        default:
-            printf("[RSP] Unknown ucode type: %d\n", ucode_type);
-            return -1;
-        }
-    }
-
-    if (config.ucode_cache_verify)
-    {
-        audio_ucode_verify_cache(task);
-    }
-
-    g_audio_ucode_func();
 
     const auto p_alist = (uint32_t *)(rsp.rdram + task->data_ptr);
 
@@ -192,7 +158,6 @@ void on_rom_closed()
     memset(rsp.dmem, 0, 0x1000);
     memset(rsp.imem, 0, 0x1000);
 
-    g_audio_ucode_func = nullptr;
     g_rsp_alive = false;
 }
 
@@ -343,17 +308,6 @@ EXPORT void CALL DllAbout(void *hwnd)
                                  L"https://github.com/mupen64/mupen64-rr-lua";
 
     MessageBox((HWND)hwnd, msg, L"About", MB_ICONINFORMATION | MB_OK);
-}
-
-EXPORT void CALL DllConfig(void *hwnd)
-{
-    if (rsp_alive())
-    {
-        MessageBox((HWND)hwnd, L"Close the ROM before configuring the plugin.", L"Error", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    config_show_dialog((HWND)hwnd);
 }
 
 EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
