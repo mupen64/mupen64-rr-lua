@@ -65,6 +65,7 @@ BEGIN
     CONTROL         "Force Bilinear Filtering",IDC_FORCEBILINEAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,35,86,10
     CONTROL         "Enabled Dithered Alpha Testing",IDC_DITHEREDALPHATEST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,48,116,10
     CONTROL         "Enable Fog",IDC_FOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,48,51,10
+    CONTROL         "MSAA 4x",IDC_MSAA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,61,51,10
     CONTROL         "Clear every frame",IDC_CLEAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,61,74,10
     GROUPBOX        "Textures",IDC_STATIC,7,93,225,46
     LTEXT           "Texture Filter:",IDC_STATIC,15,105,48,8
