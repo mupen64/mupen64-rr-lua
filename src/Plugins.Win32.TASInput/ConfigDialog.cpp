@@ -475,15 +475,22 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                     std::span<uint8_t> bytes(reinterpret_cast<uint8_t *>(const_cast<char *>(json_str.data())),
                                              json_str.size());
 
-                    // TODO: File dialog... :/
-                    IOUtils::write_entire_file("test.json", bytes);
+                    const auto path = WinFilePicker::show_save_dialog(hwnd, "*.json");
+                    if (path.empty()) break;
+
+                    IOUtils::write_entire_file(path, bytes);
+
                     break;
                 }
                 case 5: {
-                    // TODO: File dialog... :/
-                    const auto buf = IOUtils::read_entire_file("test.json");
+                    const auto path = WinFilePicker::show_open_dialog(hwnd, "*.json");
+                    if (path.empty()) break;
+
+                    const auto buf = IOUtils::read_entire_file(path);
                     const auto json_str = std::string(reinterpret_cast<const char *>(buf.data()), buf.size());
+
                     const auto json = nlohmann::json::parse(json_str);
+                    if (!json.is_object()) break;
 
                     const auto controller_config = json.get<t_controller_config>();
                     new_config.controller_config[g_ctx.selected_controller] = controller_config;
