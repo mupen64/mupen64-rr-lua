@@ -43,7 +43,6 @@ struct GLInfo
     // xBRZ: 2, 3, 4, 5, 6
     // Hqx: 2, 3, 4
     int filterScale = 4;
-    BOOL filterChanged = FALSE; // for cache
 
     GLVertex vertices[256];
     BYTE triangles[80][3];
@@ -81,3 +80,4 @@ void OGL_UpdateScale();
 void OGL_ClearDepthBuffer();
 void OGL_ClearColorBuffer(float *color);
 void OGL_ResizeWindow();
+bool OGL_DestroyContext();

@@ -54,6 +54,11 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
         case WAIT_OBJECT_0 + RSPMSG_START:
             RSP_Init();
             break;
+        case WAIT_OBJECT_0 + RSPMSG_RESTART:
+            OGL_Stop();
+            OGL_DestroyContext();
+            OGL_Start();
+            break;
         case WAIT_OBJECT_0 + RSPMSG_PROCESSDLIST:
             RSP_ProcessDList();
             break;

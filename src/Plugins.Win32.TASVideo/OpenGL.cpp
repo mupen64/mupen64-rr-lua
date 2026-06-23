@@ -193,6 +193,9 @@ bool OGL_DestroyContext()
 
     SDL_DestroyWindow(s_sdl_window);
     s_sdl_window = nullptr;
+
+    OGL.context_initialized = FALSE;
+
     return TRUE;
 }
 

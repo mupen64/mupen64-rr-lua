@@ -211,6 +211,10 @@ void Config_SaveConfig()
 
 void Config_ApplyDlgConfig(HWND hWndDlg)
 {
+    static GLInfo prev_OGL{};
+
+    prev_OGL = OGL;
+
     wchar_t text[256]{};
     int i;
 
@@ -218,13 +222,8 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     cache.maxBytes = _wtol(text) * 1048576;
 
     OGL.forceBilinear = (SendDlgItemMessage(hWndDlg, IDC_FORCEBILINEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
-    auto filter = OGL.textureFilter;
     OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, NULL, NULL);
-    if (filter != OGL.textureFilter) OGL.filterChanged = TRUE;
-    auto filter_scale = OGL.filterScale;
     OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, NULL, NULL);
-    if (filter_scale != OGL.filterScale) OGL.filterChanged = TRUE;
-
     OGL.fog = (SendDlgItemMessage(hWndDlg, IDC_FOG, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
     OGL.msaa = (SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_GETCHECK, NULL, NULL) == BST_CHECKED) ? 4 : 0;
     OGL.originAdjust = (OGL.textureFilter == TextureFilter::SaI ? 0.25 : 0.50);
@@ -249,9 +248,20 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.usePolygonStipple =
         (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
 
-    OGL_ResizeWindow();
     Config_SaveConfig();
     Config_LoadConfig();
+
+    const auto needs_restart =
+        OGL.forceBilinear != prev_OGL.forceBilinear || OGL.textureFilter != prev_OGL.textureFilter ||
+        OGL.msaa != prev_OGL.msaa || OGL.ignoreScissor != prev_OGL.ignoreScissor ||
+        OGL.clear_override != prev_OGL.clear_override || OGL.windowedWidth != prev_OGL.windowedWidth ||
+        OGL.windowedHeight != prev_OGL.windowedHeight || OGL.usePolygonStipple != prev_OGL.usePolygonStipple;
+
+    if (RSP.thread && needs_restart)
+    {
+        SetEvent(RSP.threadMsg[RSPMSG_RESTART]);
+        WaitForSingleObject(RSP.threadFinished, INFINITE);
+    }
 }
 
 BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lParam)
