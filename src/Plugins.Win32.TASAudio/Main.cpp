@@ -116,7 +116,6 @@ EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
     try
     {
         SDLAudio::Config cfg = read_config();
-        if (!SDL_Init(SDL_INIT_AUDIO)) throw std::runtime_error(SDL_GetError());
         g_backend.emplace(std::move(cfg));
     }
     catch (std::exception &e)
