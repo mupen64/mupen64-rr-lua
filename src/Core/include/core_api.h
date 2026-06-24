@@ -768,26 +768,25 @@ constexpr uint32_t CORE_RDRAM_SIZE = 0x800000;
  * \brief Converts an address for RDRAM operations with the specified size.
  * \param addr An address.
  * \param size The window size.
- * \return The converted address.
+ * \return The converted address, or std::nullopt if the size is invalid.
  */
-constexpr uint32_t to_addr(const uint32_t addr, const uint8_t size)
+constexpr std::optional<uint32_t> to_addr(const uint32_t addr, const uint8_t size)
 {
     constexpr auto s8 = 3;
     constexpr auto s16 = 2;
 
-    if (size == 4)
+    switch (size)
     {
+    case 1:
+        return addr ^ 3;
+    case 2:
+        return addr ^ 2;
+    case 4:
+    case 8:
         return addr;
+    default:
+        return std::nullopt;
     }
-    if (size == 2)
-    {
-        return addr ^ s16;
-    }
-    if (size == 1)
-    {
-        return addr ^ s8;
-    }
-    return UINT32_MAX;
 }
 
 /**
@@ -798,9 +797,11 @@ constexpr uint32_t to_addr(const uint32_t addr, const uint8_t size)
  */
 template <typename T> constexpr std::optional<T> core_rdram_load(uint8_t *rdram, const uint32_t addr)
 {
-    const uint32_t addr_ = to_addr(addr, sizeof(T)) & CORE_ADDR_MASK;
-    if (addr_ + sizeof(T) > CORE_RDRAM_SIZE)
-        return std::nullopt;
+    const auto addr_opt = to_addr(addr, sizeof(T));
+    if (!addr_opt) return std::nullopt;
+
+    const uint32_t addr_ = *addr_opt & CORE_ADDR_MASK;
+    if (addr_ + sizeof(T) > CORE_RDRAM_SIZE) return std::nullopt;
     return *(T *)(rdram + addr_);
 }
 
@@ -813,9 +814,11 @@ template <typename T> constexpr std::optional<T> core_rdram_load(uint8_t *rdram,
  */
 template <typename T> bool core_rdram_store(uint8_t *rdram, const uint32_t addr, T value)
 {
-    const uint32_t addr_ = to_addr(addr, sizeof(T)) & CORE_ADDR_MASK;
-    if (addr_ + sizeof(T) > CORE_RDRAM_SIZE)
-        return false;
+    const auto addr_opt = to_addr(addr, sizeof(T));
+    if (!addr_opt) return false;
+
+    const uint32_t addr_ = *addr_opt & CORE_ADDR_MASK;
+    if (addr_ + sizeof(T) > CORE_RDRAM_SIZE) return false;
     *(T *)(rdram + addr_) = value;
     return true;
 }
