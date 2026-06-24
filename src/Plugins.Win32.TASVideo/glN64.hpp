@@ -8,7 +8,6 @@ struct TASVideoContext
     HWND emu_hwnd;
     HWND statusbar_hwnd;
     void (*check_interrupts)(void);
-    std::filesystem::path screenshot_directory;
     std::filesystem::path config_directory;
 };
 
