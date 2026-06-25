@@ -963,6 +963,11 @@ void Config::load()
     Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
 }
 
+std::filesystem::path Config::rom_directory()
+{
+    return IOUtils::exe_path().parent_path() / g_config.rom_directory;
+}
+
 std::filesystem::path Config::plugin_directory()
 {
     return IOUtils::exe_path().parent_path() / g_config.plugins_directory;

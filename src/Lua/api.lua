@@ -723,60 +723,70 @@ function memory.doubletoint(n) end
 function memory.qwordtonumber(n) end
 
 ---Reads a signed byte from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return integer
 function memory.readbytesigned(address) end
 
 ---Reads an unsigned byte from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return integer
 function memory.readbyte(address) end
 
 ---Reads a signed word (2 bytes) from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return integer
 function memory.readwordsigned(address) end
 
 ---Reads an unsigned word (2 bytes) from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return integer
 function memory.readword(address) end
 
 ---Reads a signed dword (4 bytes) from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return integer
 function memory.readdwordsigned(address) end
 
 ---Reads an unsigned dword (4 bytes) from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return integer
 function memory.readdword(address) end
 
 ---Reads a signed qword (8 bytes) from memory at `address` and returns it as a table of the upper and lower 4 bytes.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return qword
 function memory.readqwordsigned(address) end
 
 ---Reads an unsigned qword (8 bytes) from memory at `address` and returns it as a table of the upper and lower 4 bytes.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
----@return integer
+---@return [integer, integer]
 function memory.readqword(address) end
 
 ---Reads a float (4 bytes) from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return number
 function memory.readfloat(address) end
 
 ---Reads a double (8 bytes) from memory at `address` and returns it.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@return number
@@ -784,43 +794,50 @@ function memory.readdouble(address) end
 
 ---Reads `size` bytes from memory at `address` and returns them.
 ---The memory is treated as signed if `size` is is negative.
+---Errors if the address is out of bounds.
 ---@nodiscard
 ---@param address integer
 ---@param size 1|2|4|8|-1|-2|-4|-8
----@return nil
+---@return integer|qword
 function memory.readsize(address, size) end
 
 ---Writes an unsigned byte to memory at `address`.
+---Errors if the address is out of bounds.
 ---@param address integer
 ---@param data integer
 ---@return nil
 function memory.writebyte(address, data) end
 
 ---Writes an unsigned word (2 bytes) to memory at `address`.
+---Errors if the address is out of bounds.
 ---@param address integer
 ---@param data integer
 ---@return nil
 function memory.writeword(address, data) end
 
 ---Writes an unsigned dword (4 bytes) to memory at `address`.
+---Errors if the address is out of bounds.
 ---@param address integer
 ---@param data integer
 ---@return nil
 function memory.writedword(address, data) end
 
 ---Writes an unsigned qword consisting of a table with the upper and lower 4 bytes to memory at `address`.
+---Errors if the address is out of bounds.
 ---@param address integer
 ---@param data qword
 ---@return nil
 function memory.writeqword(address, data) end
 
 ---Writes a float to memory at `address`.
+---Errors if the address is out of bounds.
 ---@param address integer
 ---@param data number
 ---@return nil
 function memory.writefloat(address, data) end
 
 ---Writes a double to memory at `address`.
+---Errors if the address is out of bounds.
 ---@param address integer
 ---@param data number
 ---@return nil
@@ -828,6 +845,7 @@ function memory.writedouble(address, data) end
 
 ---Writes `size` bytes to memory at `address`.
 ---The memory is treated as signed if `size` is is negative.
+---Errors if the address is out of bounds.
 ---@param address integer
 ---@param size 1|2|4|8|-1|-2|-4|-8
 ---@param data integer|qword

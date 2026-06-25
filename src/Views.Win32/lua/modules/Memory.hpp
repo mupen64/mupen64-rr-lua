@@ -40,71 +40,93 @@ static void LuaPushQword(lua_State *L, ULONGLONG x)
 
 static int read_byte(lua_State *L)
 {
-    UCHAR value = core_rdram_load<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushinteger(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    lua_pushinteger(L, result.value());
     return 1;
 }
 
 static int read_byte_signed(lua_State *L)
 {
-    CHAR value = core_rdram_load<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushinteger(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    lua_pushinteger(L, result.value());
     return 1;
 }
 
 static int read_word(lua_State *L)
 {
-    USHORT value = core_rdram_load<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushinteger(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    lua_pushinteger(L, result.value());
     return 1;
 }
 
 static int read_word_signed(lua_State *L)
 {
-    SHORT value = core_rdram_load<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushinteger(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    lua_pushinteger(L, result.value());
     return 1;
 }
 
 static int read_dword(lua_State *L)
 {
-    ULONG value = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushinteger(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    lua_pushinteger(L, result.value());
     return 1;
 }
 
 static int read_dword_signed(lua_State *L)
 {
-    LONG value = core_rdram_load<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushinteger(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    lua_pushinteger(L, result.value());
     return 1;
 }
 
 static int read_qword(lua_State *L)
 {
-    ULONGLONG value = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    LuaPushQword(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    LuaPushQword(L, result.value());
     return 1;
 }
 
 static int read_qword_signed(lua_State *L)
 {
-    LONGLONG value = core_rdram_load<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    LuaPushQword(L, value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    LuaPushQword(L, result.value());
     return 1;
 }
 
 static int read_float(lua_State *L)
 {
-    ULONG value = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushnumber(L, *(FLOAT *)&value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    const auto value = std::bit_cast<FLOAT>(result.value());
+    lua_pushnumber(L, value);
     return 1;
 }
 
 static int read_double(lua_State *L)
 {
-    ULONGLONG value = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1));
-    lua_pushnumber(L, *(DOUBLE *)value);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto result = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+    if(!result.has_value()) luaL_error(L, "address out of bounds");
+    const auto value = std::bit_cast<DOUBLE>(result.value());
+    lua_pushnumber(L, value);
     return 1;
 }
 
@@ -112,74 +134,112 @@ static int read_double(lua_State *L)
 
 static int write_byte(lua_State *L)
 {
-    core_rdram_store<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto value = luaL_checkinteger(L, 2);
+    if(!core_rdram_store<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, value))
+        luaL_error(L, "address out of bounds");
     return 0;
 }
 
 static int write_word(lua_State *L)
 {
-    core_rdram_store<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto value = luaL_checkinteger(L, 2);
+    if(!core_rdram_store<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, value))
+        luaL_error(L, "address out of bounds");
     return 0;
 }
 
 static int write_dword(lua_State *L)
 {
-    core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), luaL_checkinteger(L, 2));
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto value = luaL_checkinteger(L, 2);
+    if(!core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, value))
+        luaL_error(L, "address out of bounds");
     return 0;
 }
 
 static int write_qword(lua_State *L)
 {
-    core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), LuaCheckQWord(L, 2));
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const auto value = LuaCheckQWord(L, 2);
+    if(!core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, value))
+        luaL_error(L, "address out of bounds");
     return 0;
 }
 
 static int write_float(lua_State *L)
 {
-    FLOAT f = luaL_checknumber(L, -1);
-    core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), *(ULONG *)&f);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const FLOAT value = luaL_checknumber(L, 2);
+    if(!core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, std::bit_cast<ULONG>(value)))
+        luaL_error(L, "address out of bounds");
     return 0;
 }
 
 static int write_double(lua_State *L)
 {
-    DOUBLE f = luaL_checknumber(L, -1);
-    core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, luaL_checkinteger(L, 1), *(ULONGLONG *)&f);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const DOUBLE value = luaL_checknumber(L, 2);
+    if(!core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, std::bit_cast<ULONGLONG>(value)))
+        luaL_error(L, "address out of bounds");
     return 0;
 }
 
 static int read_size(lua_State *L)
 {
-    ULONG addr = luaL_checkinteger(L, 1);
-    int size = luaL_checkinteger(L, 2);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const int32_t size = luaL_checkinteger(L, 2);
     switch (size)
     {
-    // unsigned
-    case 1:
-        lua_pushinteger(L, core_rdram_load<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    case 1: {
+        const auto result = core_rdram_load<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        lua_pushinteger(L, result.value());
         break;
-    case 2:
-        lua_pushinteger(L, core_rdram_load<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    }
+    case 2: {
+        const auto result = core_rdram_load<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        lua_pushinteger(L, result.value());
         break;
-    case 4:
-        lua_pushinteger(L, core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    }
+    case 4: {
+        const auto result = core_rdram_load<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        lua_pushinteger(L, result.value());
         break;
-    case 8:
-        LuaPushQword(L, core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    }
+    case 8: {
+        const auto result = core_rdram_load<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        LuaPushQword(L, result.value());
         break;
-    // signed
-    case -1:
-        lua_pushinteger(L, core_rdram_load<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    }
+    case -1: {
+        const auto result = core_rdram_load<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        lua_pushinteger(L, result.value());
         break;
-    case -2:
-        lua_pushinteger(L, core_rdram_load<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    }
+    case -2: {
+        const auto result = core_rdram_load<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        lua_pushinteger(L, result.value());
         break;
-    case -4:
-        lua_pushinteger(L, core_rdram_load<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    }
+    case -4: {
+        const auto result = core_rdram_load<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        lua_pushinteger(L, result.value());
         break;
-    case -8:
-        LuaPushQword(L, core_rdram_load<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr));
+    }
+    case -8: {
+        const auto result = core_rdram_load<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr);
+        if(!result.has_value()) luaL_error(L, "address out of bounds");
+        LuaPushQword(L, result.value());
         break;
+    }
     default:
         luaL_error(L, "size must be 1, 2, 4, 8, -1, -2, -4, -8");
     }
@@ -188,93 +248,75 @@ static int read_size(lua_State *L)
 
 static int write_size(lua_State *L)
 {
-    ULONG addr = luaL_checkinteger(L, 1);
-    int size = luaL_checkinteger(L, 2);
+    const uint32_t addr = luaL_checkinteger(L, 1);
+    const int32_t size = luaL_checkinteger(L, 2);
+    bool result{};
     switch (size)
     {
     case 1:
-        core_rdram_store<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
+        result = core_rdram_store<UCHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
         break;
     case 2:
-        core_rdram_store<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
+        result = core_rdram_store<USHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
         break;
     case 4:
-        core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
+        result = core_rdram_store<ULONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
         break;
     case 8:
-        core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, LuaCheckQWord(L, 3));
+        result = core_rdram_store<ULONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, LuaCheckQWord(L, 3));
         break;
     case -1:
-        core_rdram_store<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
+        result = core_rdram_store<CHAR>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
         break;
     case -2:
-        core_rdram_store<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
+        result = core_rdram_store<SHORT>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
         break;
     case -4:
-        core_rdram_store<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
+        result = core_rdram_store<LONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, luaL_checkinteger(L, 3));
         break;
     case -8:
-        core_rdram_store<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, LuaCheckQWord(L, 3));
+        result = core_rdram_store<LONGLONG>((uint8_t *)g_main_ctx.core_ctx->rdram, addr, LuaCheckQWord(L, 3));
         break;
     default:
         luaL_error(L, "size must be 1, 2, 4, 8, -1, -2, -4, -8");
     }
+    if(!result) luaL_error(L, "address out of bounds");
     return 0;
 }
 
 static int int_to_float(lua_State *L)
 {
-    ULONG n = luaL_checknumber(L, 1);
-    lua_pushnumber(L, *(FLOAT *)&n);
+    const ULONG n = luaL_checknumber(L, 1);
+    lua_pushnumber(L, std::bit_cast<FLOAT>(n));
     return 1;
 }
 
 static int int_to_double(lua_State *L)
 {
-    ULONGLONG n = LuaCheckQWord(L, 1);
-    lua_pushnumber(L, *(DOUBLE *)&n);
+    const ULONGLONG n = LuaCheckQWord(L, 1);
+    lua_pushnumber(L, std::bit_cast<DOUBLE>(n));
     return 1;
 }
 
 static int float_to_int(lua_State *L)
 {
-    FLOAT n = luaL_checknumber(L, 1);
-    lua_pushinteger(L, *(ULONG *)&n);
+    const FLOAT n = luaL_checknumber(L, 1);
+    lua_pushinteger(L, std::bit_cast<ULONG>(n));
     return 1;
 }
 
 static int double_to_int(lua_State *L)
 {
-    DOUBLE n = luaL_checknumber(L, 1);
-    LuaPushQword(L, *(ULONGLONG *)&n);
+    const DOUBLE n = luaL_checknumber(L, 1);
+    LuaPushQword(L, std::bit_cast<ULONGLONG>(n));
     return 1;
 }
 
 static int qword_to_number(lua_State *L)
 {
-    ULONGLONG n = LuaCheckQWord(L, 1);
+    const ULONGLONG n = LuaCheckQWord(L, 1);
     lua_pushnumber(L, n);
     return 1;
-}
-
-template <typename T> static void PushT(lua_State *L, T value)
-{
-    LuaPushIntU(L, value);
-}
-
-template <> static void PushT<ULONGLONG>(lua_State *L, ULONGLONG value)
-{
-    LuaPushQword(L, value);
-}
-
-template <typename T> static T CheckT(lua_State *L, int i)
-{
-    return LuaCheckIntegerU(L, i);
-}
-
-template <> static ULONGLONG CheckT<ULONGLONG>(lua_State *L, int i)
-{
-    return LuaCheckQWord(L, i);
 }
 
 static int recompile(lua_State *L)
