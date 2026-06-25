@@ -69,9 +69,6 @@ struct piano_roll_state
     // Whether the drag operation should unset the affected buttons regardless of the initial value
     bool lv_drag_unset{};
 
-    // HACK: Flag used to not show context menu when dragging in the button columns
-    bool lv_ignore_context_menu{};
-
     // The current piano roll state.
     piano_roll_history_state current_state{};
 
@@ -96,10 +93,6 @@ static piano_roll_state piano_roll{};
 
 bool can_joystick_be_modified();
 
-static void on_can_modify_inputs_changed()
-{
-}
-
 static void update_can_modify_inputs()
 {
     ThreadPool::submit_task([] {
@@ -114,7 +107,7 @@ static void update_can_modify_inputs()
 
         if (prev_can_modify_inputs != piano_roll.readwrite)
         {
-            g_main_ctx.dispatcher->invoke([] { on_can_modify_inputs_changed(); });
+            g_main_ctx.dispatcher->invoke([] { ActionManager::notify_enabled_changed(PianoRoll::BASE); });
         }
     });
 }
@@ -883,57 +876,6 @@ static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 {
     switch (msg)
     {
-    case WM_CONTEXTMENU: {
-        if (piano_roll.lv_ignore_context_menu)
-        {
-            piano_roll.lv_ignore_context_menu = false;
-            break;
-        }
-
-        HMENU h_menu = CreatePopupMenu();
-        const auto base_style = piano_roll.readwrite ? MF_ENABLED : MF_DISABLED;
-        AppendMenu(h_menu, MF_STRING, 1, L"Copy\tCtrl+C");
-        AppendMenu(h_menu, base_style | MF_STRING, 2, L"Paste\tCtrl+V");
-        AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
-        AppendMenu(h_menu, base_style | MF_STRING, 3, L"Undo\tCtrl+Z");
-        AppendMenu(h_menu, base_style | MF_STRING, 4, L"Redo\tCtrl+Y");
-        AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
-        AppendMenu(h_menu, base_style | MF_STRING, 5, L"Clear\tBackspace");
-        AppendMenu(h_menu, base_style | MF_STRING, 6, L"Delete\tDelete");
-        AppendMenu(h_menu, base_style | MF_STRING, 7, L"Insert frame\tInsert");
-
-        const int offset =
-            TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), hwnd, 0);
-
-        switch (offset)
-        {
-        case 1:
-            copy_inputs();
-            break;
-        case 2:
-            paste_inputs(false);
-            break;
-        case 3:
-            undo();
-            break;
-        case 4:
-            redo();
-            break;
-        case 5:
-            clear_inputs_in_selection();
-            break;
-        case 6:
-            delete_inputs_in_selection();
-            break;
-        case 7:
-            insert_frames(1);
-            break;
-        default:
-            break;
-        }
-
-        break;
-    }
     case WM_LBUTTONDOWN:
     case WM_RBUTTONDOWN: {
         LVHITTESTINFO lplvhtti{};
@@ -963,7 +905,6 @@ static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
             piano_roll.lv_drag_initial_value = !get_input_value_from_column_index(input, piano_roll.lv_drag_column);
             piano_roll.lv_drag_unset = GetKeyState(VK_RBUTTON) & 0x100;
-            piano_roll.lv_ignore_context_menu = GetKeyState(VK_RBUTTON) & 0x100;
         }
 
         goto handle_mouse_move;
@@ -1375,8 +1316,32 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     return FALSE;
 }
 
+static bool enabled_when_editable()
+{
+    return piano_roll.readwrite;
+}
+
 void PianoRoll::init()
 {
+    ActionManager::add({.path = PianoRoll::COPY,
+                        .on_press = [](const auto &...) { copy_inputs(); },
+                        .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::PASTE,
+                        .on_press = [](const auto &...) { paste_inputs(false); },
+                        .get_enabled = enabled_when_editable});
+    ActionManager::add(
+        {.path = PianoRoll::UNDO, .on_press = [](const auto &...) { undo(); }, .get_enabled = enabled_when_editable});
+    ActionManager::add(
+        {.path = PianoRoll::REDO, .on_press = [](const auto &...) { redo(); }, .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::CLEAR,
+                        .on_press = [](const auto &...) { clear_inputs_in_selection(); },
+                        .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::DELETE,
+                        .on_press = [](const auto &...) { delete_inputs_in_selection(); },
+                        .get_enabled = enabled_when_editable});
+    ActionManager::add({.path = PianoRoll::INSERT_FRAME,
+                        .on_press = [](const auto &...) { insert_frames(1); },
+                        .get_enabled = enabled_when_editable});
 }
 
 void PianoRoll::show()
