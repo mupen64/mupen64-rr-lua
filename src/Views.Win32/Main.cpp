@@ -1131,6 +1131,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Config::load();
     main_dispatcher_init();
 
+    std::filesystem::create_directories(Config::rom_directory());
     std::filesystem::create_directories(Config::save_directory());
     std::filesystem::create_directories(Config::screenshot_directory());
     std::filesystem::create_directories(Config::plugin_directory());
