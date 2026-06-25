@@ -19,6 +19,8 @@
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_VISUALS (WM_USER + 4)
 
+constexpr auto JOYSTICK_CONTROL_CLASS = L"JoystickControl";
+
 enum class ComboTask
 {
     Idle,
@@ -557,7 +559,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
-        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JoystickControl::CLASS_NAME, L"", WS_CHILD | WS_VISIBLE, 8, 4,
+        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JOYSTICK_CONTROL_CLASS, L"", WS_CHILD | WS_VISIBLE, 8, 4,
                                        131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
 
         // It can take a bit until we receive the first GetKeys, so let's just show some basic default state in the
@@ -1025,7 +1027,7 @@ static void ui_thread()
         MOUSE_RBUTTONREDEFINITION = VK_LBUTTON;
     }
 
-    JoystickControl::register_class(g_inst);
+    JoystickControl::register_class(g_inst, JOYSTICK_CONTROL_CLASS);
 
     for (size_t i = 0; i < std::size(status); ++i)
     {

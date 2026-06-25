@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Plugins.Win32.Common INTERFACE)
 target_link_libraries(Mupen64RR.Plugins.Win32.Common INTERFACE
     Mupen64RR.Common
+    Mupen64RR.Common.Win32
     Mupen64RR.Core.Headers
     Mupen64RR.Views.Win32.Headers
 )

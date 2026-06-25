@@ -27,6 +27,8 @@
 #define VIEW_DLG_ABOUT "VIEW_DLG_ABOUT"
 #define VIEW_DLG_OVERWRITE_MOVIE "VIEW_DLG_OVERWRITE_MOVIE"
 
+#define JOYSTICK_CLASS L"MupenJoystick"
+
 struct t_main_context
 {
     core_params core{};

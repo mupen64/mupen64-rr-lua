@@ -732,6 +732,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_main_ctx.hwnd = hwnd;
         break;
     case WM_CREATE:
+        JoystickControl::register_class(g_main_ctx.hinst, JOYSTICK_CLASS);
         ActionMenu::init();
 
         ActionMenu::add_managed_menu(hwnd);

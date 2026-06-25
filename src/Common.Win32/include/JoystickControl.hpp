@@ -1,26 +1,31 @@
-﻿/*
- * Copyright (c) 2026, TASInput maintainers, contributors, and original authors (nitsuja, Deflection).
+/*
+ * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+#pragma once
 
-#include "Common.hpp"
-#include <JoystickControl.hpp>
-#include <Main.hpp>
-#undef max
+#include <filesystem>
+#include <numbers>
+#if defined(_WIN32)
+#define NOMINMAX
+#include <Windows.h>
+#include <gdiplus.h>
+#elif defined(__linux__)
+#error JoystickControl is not supported on Linux
+#endif
 
-#define WITH_VALID_CTX()                                                                                               \
-    if (!IsWindow(hwnd))                                                                                               \
-    {                                                                                                                  \
-        return FALSE;                                                                                                  \
-    }                                                                                                                  \
-    const auto ctx = get_ctx(hwnd);                                                                                    \
-    if (!ctx)                                                                                                          \
-    {                                                                                                                  \
-        return FALSE;                                                                                                  \
-    }
+/**
+ * \brief A joystick control for Win32.
+ */
+namespace JoystickControl
+{
+static constexpr UINT WM_JOYSTICK_POSITION_CHANGED = WM_APP + 200;
+static constexpr UINT WM_JOYSTICK_DRAG_BEGIN = WM_APP + 201;
 
-struct t_context
+namespace Internal
+{
+struct Context
 {
     enum class Mode
     {
@@ -46,9 +51,9 @@ struct t_context
     Gdiplus::Pen *line_pen{};
 };
 
-using Mode = t_context::Mode;
+using Mode = Context::Mode;
 
-static void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
+inline void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
 {
     RECT rc{};
     GetClientRect(hwnd, &rc);
@@ -69,7 +74,7 @@ static void get_cursor_to_joystick_position(const HWND hwnd, int &x, int &y)
     y = std::clamp(y, -128, 127);
 }
 
-static void update_joystick_position(HWND hwnd, t_context *ctx)
+inline void update_joystick_position(HWND hwnd, Context *ctx)
 {
     if (ctx->mode == Mode::None)
     {
@@ -97,7 +102,7 @@ static void update_joystick_position(HWND hwnd, t_context *ctx)
     SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_POSITION_CHANGED, 0, 0);
 }
 
-static void destroy_dcs(const HWND hwnd, t_context *ctx)
+inline void destroy_dcs(const HWND hwnd, Context *ctx)
 {
     if (!ctx->front_dc)
     {
@@ -118,7 +123,7 @@ static void destroy_dcs(const HWND hwnd, t_context *ctx)
     delete ctx->line_pen;
 }
 
-static void create_dcs(const HWND hwnd, t_context *ctx)
+inline void create_dcs(const HWND hwnd, Context *ctx)
 {
     if (ctx->front_dc)
     {
@@ -157,19 +162,19 @@ static void create_dcs(const HWND hwnd, t_context *ctx)
     DeleteObject(clear_brush);
 }
 
-static auto get_ctx(const HWND hwnd)
+inline auto get_ctx(const HWND hwnd)
 {
-    return reinterpret_cast<t_context *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    return reinterpret_cast<Context *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 }
 
-static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     const auto ctx = get_ctx(hwnd);
 
     switch (msg)
     {
     case WM_NCCREATE:
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(new t_context()));
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(new Context()));
         create_dcs(hwnd, get_ctx(hwnd));
         break;
     case WM_NCDESTROY:
@@ -201,7 +206,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         else if (GetKeyState(VK_SHIFT) & 0x8000)
         {
-            const double angle = increment_sign * 5.0 * M_PI / 180.0;
+            const double angle = increment_sign * 5.0 * std::numbers::pi / 180.0;
             const double cos_angle = std::cos(angle);
             const double sin_angle = std::sin(angle);
 
@@ -245,14 +250,12 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->mode = Mode::Sticky;
         SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
         SetCapture(hwnd);
-
         update_joystick_position(hwnd, ctx);
         break;
     case WM_LBUTTONDOWN:
         ctx->mode = Mode::Absolute;
         SendMessage(GetParent(hwnd), JoystickControl::WM_JOYSTICK_DRAG_BEGIN, 0, 0);
         SetCapture(hwnd);
-
         update_joystick_position(hwnd, ctx);
         break;
     case WM_LBUTTONUP:
@@ -302,37 +305,60 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-void JoystickControl::register_class(HINSTANCE hinst)
+}; // namespace Internal
+
+/**
+ * \brief Registers the joystick control window class.
+ * \param hinstance The instance handle of the application.
+ * \param name The class name to register.
+ */
+inline void register_class(HINSTANCE hinstance, std::wstring_view name)
 {
     WNDCLASS wndclass{};
     wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-    wndclass.lpfnWndProc = (WNDPROC)wndproc;
-    wndclass.hInstance = hinst;
+    wndclass.lpfnWndProc = (WNDPROC)Internal::wndproc;
+    wndclass.hInstance = hinstance;
     wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wndclass.lpszClassName = CLASS_NAME;
+    wndclass.lpszClassName = name.data();
     RegisterClass(&wndclass);
 }
 
-BOOL JoystickControl::get_position(HWND hwnd, int *x, int *y)
+/**
+ * \brief Retrieves the position of the joystick.
+ * \param hwnd The handle of the joystick control.
+ * \param x Out pointer to the x coordinate.
+ * \param y Out pointer to the y coordinate.
+ * \return Whether the operation succeeded.
+ */
+inline bool get_position(HWND hwnd, int *x, int *y)
 {
-    WITH_VALID_CTX()
+    if (!IsWindow(hwnd)) return false;
+    const auto ctx = Internal::get_ctx(hwnd);
+    if (!ctx) return false;
 
     if (x) *x = ctx->x;
-
     if (y) *y = ctx->y;
-
-    return TRUE;
+    return true;
 }
 
-BOOL JoystickControl::set_position(HWND hwnd, int x, int y)
+/**
+ * \brief Sets the position of the joystick.
+ * \param hwnd The handle of the joystick control.
+ * \param x The x coordinate to set.
+ * \param y The y coordinate to set.
+ * \return Whether the operation succeeded.
+ */
+inline bool set_position(HWND hwnd, int x, int y)
 {
-    WITH_VALID_CTX()
+    if (!IsWindow(hwnd)) return false;
+    const auto ctx = Internal::get_ctx(hwnd);
+    if (!ctx) return false;
 
     ctx->x = x;
     ctx->y = y;
-
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE);
     SendMessage(GetParent(hwnd), WM_JOYSTICK_POSITION_CHANGED, 1, 0);
-
-    return TRUE;
+    return true;
 }
+
+} // namespace JoystickControl
