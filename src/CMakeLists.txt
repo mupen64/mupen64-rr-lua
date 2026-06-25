@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # common headers and PCH
 add_subdirectory(Common)
+add_subdirectory(Common.Win32)
 # core API and headers
 add_subdirectory(Core)
 
@@ -21,7 +22,7 @@ if (MUPEN64RR_BUILD_WIN32)
 
     # BUNDLED PLUGINS
     # ============================
-    
+
     # common settings
     include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Common.cmake")
 
