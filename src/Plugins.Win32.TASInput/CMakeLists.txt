@@ -48,6 +48,5 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     Gdiplus
 )
 target_compile_definitions(Mupen64RR.Plugins.Win32.TASInput PRIVATE
-    _USE_MATH_DEFINES
     CORE_PLUGIN_INPUT_OLD_INITIATE_CONTROLLERS
 )

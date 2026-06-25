@@ -11,8 +11,6 @@
 #include "Messenger.hpp"
 #include <components/CoreUtils.hpp>
 
-const auto JOYSTICK_CLASS = L"PianoRollJoystick";
-
 struct piano_roll_history_state
 {
     // The input buffer for the piano roll, which is a copy of the inputs from the core and is modified by the user.
@@ -74,9 +72,6 @@ struct piano_roll_state
     // HACK: Flag used to not show context menu when dragging in the button columns
     bool lv_ignore_context_menu{};
 
-    // Whether a joystick drag operation is happening
-    bool joy_drag{};
-
     // The current piano roll state.
     piano_roll_history_state current_state{};
 
@@ -98,6 +93,8 @@ struct piano_roll_state
 };
 
 static piano_roll_state piano_roll{};
+
+bool can_joystick_be_modified();
 
 static void on_can_modify_inputs_changed()
 {
@@ -128,6 +125,18 @@ static void update_can_modify_inputs()
 static bool can_seek()
 {
     return g_config.core.seek_savestate_interval > 0;
+}
+
+static void update_joystick()
+{
+    EnableWindow(piano_roll.joy_hwnd, can_joystick_be_modified());
+
+    if (!piano_roll.current_state.selected_indicies.empty() &&
+        piano_roll.current_state.selected_indicies[0] < piano_roll.current_state.inputs.size())
+    {
+        const auto input = piano_roll.current_state.inputs[piano_roll.current_state.selected_indicies[0]];
+        JoystickControl::set_position(piano_roll.joy_hwnd, input.x, input.y);
+    }
 }
 
 /**
@@ -161,7 +170,7 @@ static void update_inputs()
         SetWindowRedraw(piano_roll.lv_hwnd, true);
     }
 
-    RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+    update_joystick();
 }
 
 /**
@@ -821,7 +830,7 @@ static void on_warp_modify_status_changed(std::any)
 
     g_main_ctx.dispatcher->invoke([=] {
         update_groupbox_status_text();
-        RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        update_joystick();
     });
 }
 
@@ -829,7 +838,9 @@ static void on_seek_completed(std::any)
 {
     update_can_modify_inputs();
 
-    g_main_ctx.dispatcher->invoke([=] { RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE); });
+    g_main_ctx.dispatcher->invoke([=] {
+        update_joystick();
+    });
 }
 
 static void on_seek_savestate_changed(std::any data)
@@ -853,171 +864,8 @@ static void on_emu_paused_changed(std::any)
 
     g_main_ctx.dispatcher->invoke([=] {
         update_groupbox_status_text();
-        RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+        update_joystick();
     });
-}
-
-static void get_joystick_pens(HPEN *outline_pen, HPEN *line_pen, HPEN *tip_pen)
-{
-    if (can_joystick_be_modified())
-    {
-        *outline_pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-        *line_pen = CreatePen(PS_SOLID, 3, RGB(0, 0, 255));
-        *tip_pen = CreatePen(PS_SOLID, 7, RGB(255, 0, 0));
-    }
-    else
-    {
-        *outline_pen = CreatePen(PS_SOLID, 1, RGB(204, 204, 204));
-        *line_pen = CreatePen(PS_SOLID, 3, RGB(229, 229, 229));
-        *tip_pen = CreatePen(PS_SOLID, 7, RGB(235, 235, 235));
-    }
-}
-
-/**
- * The window procedure for the joystick control.
- */
-static LRESULT CALLBACK joystick_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg)
-    {
-    case WM_LBUTTONDOWN:
-        if (!can_joystick_be_modified())
-        {
-            break;
-        }
-        piano_roll.joy_drag = true;
-        SetCapture(hwnd);
-        goto mouse_move;
-    case WM_LBUTTONUP:
-        if (!piano_roll.joy_drag)
-        {
-            break;
-        }
-        goto lmb_up;
-    case WM_MOUSEMOVE:
-        goto mouse_move;
-    case WM_PAINT: {
-        core_buttons input = {0};
-
-        HPEN outline_pen;
-        HPEN line_pen;
-        HPEN tip_pen;
-        get_joystick_pens(&outline_pen, &line_pen, &tip_pen);
-
-        if (!piano_roll.current_state.selected_indicies.empty() &&
-            piano_roll.current_state.selected_indicies[0] < piano_roll.current_state.inputs.size())
-        {
-            input = piano_roll.current_state.inputs[piano_roll.current_state.selected_indicies[0]];
-        }
-
-        g_view_logger->info("[PianoRoll] Joystick repaint, can_joystick_be_modified: {}", can_joystick_be_modified());
-
-        PAINTSTRUCT ps;
-        RECT rect;
-        HDC hdc = BeginPaint(hwnd, &ps);
-        HDC cdc = CreateCompatibleDC(hdc);
-        GetClientRect(hwnd, &rect);
-
-        HBITMAP bmp = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
-        SelectObject(cdc, bmp);
-
-        const int mid_x = rect.right / 2;
-        const int mid_y = rect.bottom / 2;
-        const int stick_x = (input.x + 128) * rect.right / 256;
-        const int stick_y = (-input.y + 128) * rect.bottom / 256;
-
-        FillRect(cdc, &rect, GetSysColorBrush(COLOR_BTNFACE));
-
-        SelectObject(cdc, outline_pen);
-        Ellipse(cdc, 0, 0, rect.right, rect.bottom);
-
-        MoveToEx(cdc, 0, mid_y, nullptr);
-        LineTo(cdc, rect.right, mid_y);
-        MoveToEx(cdc, mid_x, 0, nullptr);
-        LineTo(cdc, mid_x, rect.bottom);
-
-        SelectObject(cdc, line_pen);
-        MoveToEx(cdc, mid_x, mid_y, nullptr);
-        LineTo(cdc, stick_x, stick_y);
-
-        SelectObject(cdc, tip_pen);
-        MoveToEx(cdc, stick_x, stick_y, nullptr);
-        LineTo(cdc, stick_x, stick_y);
-
-        SelectObject(cdc, nullptr);
-
-        BitBlt(hdc, 0, 0, rect.right, rect.bottom, cdc, 0, 0, SRCCOPY);
-
-        EndPaint(hwnd, &ps);
-
-        DeleteDC(cdc);
-        DeleteObject(bmp);
-        DeleteObject(outline_pen);
-        DeleteObject(line_pen);
-        DeleteObject(tip_pen);
-
-        return 0;
-    }
-    default:
-        break;
-    }
-
-def:
-    return DefWindowProc(hwnd, msg, wParam, lParam);
-
-lmb_up:
-    ReleaseCapture();
-    apply_input_buffer();
-    piano_roll.joy_drag = false;
-    goto def;
-
-mouse_move:
-    if (!piano_roll.readwrite)
-    {
-        piano_roll.joy_drag = false;
-    }
-
-    if (!piano_roll.joy_drag)
-    {
-        goto def;
-    }
-
-    // Apply the joystick input...
-    if (!(GetKeyState(VK_LBUTTON) & 0x100))
-    {
-        goto lmb_up;
-    }
-
-    POINT pt;
-    GetCursorPos(&pt);
-    ScreenToClient(hwnd, &pt);
-
-    RECT pic_rect;
-    GetWindowRect(hwnd, &pic_rect);
-    int x = (pt.x * UINT8_MAX / (signed)(pic_rect.right - pic_rect.left) - INT8_MAX + 1);
-    int y = -(pt.y * UINT8_MAX / (signed)(pic_rect.bottom - pic_rect.top) - INT8_MAX + 1);
-
-    if (x > INT8_MAX || y > INT8_MAX || x < INT8_MIN || y < INT8_MIN)
-    {
-        int div = std::max(abs(x), abs(y));
-        x = x * INT8_MAX / div;
-        y = y * INT8_MAX / div;
-    }
-
-    if (abs(x) <= 8) x = 0;
-    if (abs(y) <= 8) y = 0;
-
-    SetWindowRedraw(piano_roll.lv_hwnd, false);
-    for (auto selected_index : piano_roll.current_state.selected_indicies)
-    {
-        piano_roll.current_state.inputs[selected_index].y = y;
-        piano_roll.current_state.inputs[selected_index].x = x;
-        ListView_Update(piano_roll.lv_hwnd, selected_index);
-    }
-    SetWindowRedraw(piano_roll.lv_hwnd, true);
-    piano_roll.inputs_different = true;
-    RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
-    goto def;
 }
 
 /**
@@ -1027,7 +875,7 @@ static void on_piano_roll_selection_changed()
 {
     piano_roll.current_state.selected_indicies = get_listview_selection(piano_roll.lv_hwnd);
     update_groupbox_status_text();
-    RedrawWindow(piano_roll.joy_hwnd, nullptr, nullptr, RDW_INVALIDATE);
+    update_joystick();
 }
 
 /**
@@ -1405,6 +1253,24 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
         break;
+    case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
+        if(!can_joystick_be_modified()) break;
+        int32_t x{};
+        int32_t y{};
+        JoystickControl::get_position(piano_roll.joy_hwnd, &x, &y);
+
+        SetWindowRedraw(piano_roll.lv_hwnd, false);
+        for (auto selected_index : piano_roll.current_state.selected_indicies)
+        {
+            auto &input = piano_roll.current_state.inputs[selected_index];
+            input.x = x;
+            input.y = y;
+            ListView_Update(piano_roll.lv_hwnd, selected_index);
+        }
+        SetWindowRedraw(piano_roll.lv_hwnd, true);
+        piano_roll.inputs_different = true;
+        break;
+    }
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
@@ -1513,13 +1379,6 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 void PianoRoll::init()
 {
-    WNDCLASS wndclass = {0};
-    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
-    wndclass.lpfnWndProc = (WNDPROC)joystick_proc;
-    wndclass.hInstance = g_main_ctx.hinst;
-    wndclass.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wndclass.lpszClassName = JOYSTICK_CLASS;
-    RegisterClass(&wndclass);
 }
 
 void PianoRoll::show()
