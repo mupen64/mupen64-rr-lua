@@ -838,9 +838,7 @@ static void on_seek_completed(std::any)
 {
     update_can_modify_inputs();
 
-    g_main_ctx.dispatcher->invoke([=] {
-        update_joystick();
-    });
+    g_main_ctx.dispatcher->invoke([=] { update_joystick(); });
 }
 
 static void on_seek_savestate_changed(std::any data)
@@ -1254,7 +1252,7 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         EndDialog(hwnd, IDCANCEL);
         break;
     case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
-        if(!can_joystick_be_modified()) break;
+        if (!can_joystick_be_modified()) break;
         int32_t x{};
         int32_t y{};
         JoystickControl::get_position(piano_roll.joy_hwnd, &x, &y);
