@@ -362,6 +362,11 @@ void apply_and_save();
 void load();
 
 /**
+ * \brief Gets the path to the ROM directory based on the current configuration.
+ */
+std::filesystem::path rom_directory();
+
+/**
  * \brief Gets the path to the plugin directory based on the current configuration.
  */
 std::filesystem::path plugin_directory();
