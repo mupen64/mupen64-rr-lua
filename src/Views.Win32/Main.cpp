@@ -1224,11 +1224,18 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     WinDarkMode::attach(g_main_ctx.hwnd);
 
     MSG msg{};
-    while (GetMessage(&msg, nullptr, 0, 0))
+
+    while (true)
     {
-        if (is_dialog_message(&msg)) continue;
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT) return static_cast<int>(msg.wParam);
+            if (is_dialog_message(&msg)) continue;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        SDL_PumpEvents();
     }
     return (int)msg.wParam;
 }
