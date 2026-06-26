@@ -49,143 +49,34 @@ static void Config_SetDefaults()
     OGL.usePolygonStipple = FALSE;
 }
 
-void Config_LoadRegistryConfig()
-{
-    DWORD value, size;
-
-    HKEY hKey;
-
-    RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\N64 Emulation\\DLL\\glN64", 0, KEY_READ, &hKey);
-
-    if (hKey)
-    {
-        RegQueryValueEx(hKey, L"Windowed Width", 0, NULL, (BYTE *)&OGL.windowedWidth, &size);
-        RegQueryValueEx(hKey, L"Windowed Height", 0, NULL, (BYTE *)&OGL.windowedHeight, &size);
-        RegQueryValueEx(hKey, L"Windowed Width", 0, NULL, (BYTE *)&OGL.windowedWidth, &size);
-        RegQueryValueEx(hKey, L"Force Bilinear", 0, NULL, (BYTE *)&value, &size);
-        OGL.forceBilinear = value ? TRUE : FALSE;
-
-        RegQueryValueEx(hKey, L"Texture Filter", 0, NULL, (BYTE *)&value, &size);
-        OGL.textureFilter = (TextureFilter)value;
-
-        RegQueryValueEx(hKey, L"MSAA", 0, NULL, (BYTE *)&value, &size);
-        OGL.msaa = (value == 4) ? 4 : 0;
-
-        RegQueryValueEx(hKey, L"Filter Scale", 0, NULL, (BYTE *)&value, &size);
-        OGL.filterScale = value;
-
-        RegQueryValueEx(hKey, L"Enable Fog", 0, NULL, (BYTE *)&value, &size);
-        OGL.fog = value ? TRUE : FALSE;
-
-        RegQueryValueEx(hKey, L"Texture Cache Size", 0, NULL, (BYTE *)&value, &size);
-        cache.maxBytes = value * 1048576;
-
-        RegQueryValueEx(hKey, L"Dithered Alpha Testing", 0, NULL, (BYTE *)&value, &size);
-        OGL.usePolygonStipple = value ? TRUE : FALSE;
-
-        RegQueryValueEx(hKey, L"Ignore Scissor", 0, NULL, (BYTE *)&value, &size);
-        OGL.ignoreScissor = value ? TRUE : FALSE;
-
-        RegQueryValueEx(hKey, L"Clear Override", 0, NULL, (BYTE *)&value, &size);
-        OGL.clear_override = value ? TRUE : FALSE;
-
-        if (OGL.textureFilter == TextureFilter::SaI)
-        {
-            OGL.filterScale = 2;
-        }
-        else if (OGL.textureFilter == TextureFilter::Hqx)
-        {
-            OGL.filterScale = max(2, min(4, OGL.filterScale));
-        }
-        else if (OGL.textureFilter == TextureFilter::xBRZ)
-        {
-            OGL.filterScale = max(2, min(6, OGL.filterScale));
-        }
-        RegCloseKey(hKey);
-    }
-    else
-    {
-        Config_SetDefaults();
-    }
-}
-
-void Config_SaveRegistryConfig()
-{
-    DWORD value;
-    HKEY hKey;
-
-    RegCreateKeyEx(HKEY_CURRENT_USER, L"Software\\N64 Emulation\\DLL\\glN64", 0, NULL, REG_OPTION_NON_VOLATILE,
-                   KEY_WRITE, NULL, &hKey, NULL);
-
-    RegSetValueEx(hKey, L"Windowed Width", 0, REG_DWORD, (BYTE *)&OGL.windowedWidth, 4);
-    RegSetValueEx(hKey, L"Windowed Height", 0, REG_DWORD, (BYTE *)&OGL.windowedHeight, 4);
-
-    value = OGL.forceBilinear ? 1 : 0;
-    RegSetValueEx(hKey, L"Force Bilinear", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = (DWORD)OGL.textureFilter;
-    RegSetValueEx(hKey, L"Texture Filter", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = OGL.msaa;
-    RegSetValueEx(hKey, L"MSAA", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = OGL.filterScale;
-    RegSetValueEx(hKey, L"Filter Scale", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = OGL.fog ? 1 : 0;
-    RegSetValueEx(hKey, L"Enable Fog", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = cache.maxBytes / 1048576;
-    RegSetValueEx(hKey, L"Texture Cache Size", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = OGL.usePolygonStipple ? 1 : 0;
-    RegSetValueEx(hKey, L"Dithered Alpha Testing", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = OGL.ignoreScissor ? 1 : 0;
-    RegSetValueEx(hKey, L"Ignore Scissor", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    value = OGL.clear_override ? 1 : 0;
-    RegSetValueEx(hKey, L"Clear Override", 0, REG_DWORD, (BYTE *)&value, 4);
-
-    RegCloseKey(hKey);
-}
-
 void Config_LoadConfig()
 {
     auto json_path = get_config_path();
 
-    if (std::filesystem::exists(json_path))
-    {
-        std::ifstream ifs(json_path);
+    if (!std::filesystem::exists(json_path)) return;
 
-        nlohmann::json j;
-        try
-        {
-            ifs >> j;
-            OGL.windowedWidth = j["windowed_width"];
-            OGL.windowedHeight = j["windowed_height"];
-            OGL.forceBilinear = j["force_bilinear"];
-            OGL.textureFilter = j["texture_filter"];
-            OGL.filterScale = j["filter_scale"];
-            OGL.fog = j["enable_fog"];
-            OGL.msaa = (j.value("msaa", 0) == 4) ? 4 : 0;
-            cache.maxBytes = (int)j["texture_cache_size"] * 1048576;
-            OGL.usePolygonStipple = j["dithered_alpha_testing"];
-            OGL.ignoreScissor = j["ignore_scissor"];
-            OGL.clear_override = j["clear_override"];
-        }
-        catch (const std::exception &e)
-        {
-            g_ef->log_warn(L"Config load failed, using defaults...");
-            Config_SetDefaults();
-        }
+    std::ifstream ifs(json_path);
+    nlohmann::json j;
+
+    try
+    {
+        ifs >> j;
+        OGL.windowedWidth = j["windowed_width"];
+        OGL.windowedHeight = j["windowed_height"];
+        OGL.forceBilinear = j["force_bilinear"];
+        OGL.textureFilter = j["texture_filter"];
+        OGL.filterScale = j["filter_scale"];
+        OGL.fog = j["enable_fog"];
+        OGL.msaa = (j.value("msaa", 0) == 4) ? 4 : 0;
+        cache.maxBytes = (int)j["texture_cache_size"] * 1048576;
+        OGL.usePolygonStipple = j["dithered_alpha_testing"];
+        OGL.ignoreScissor = j["ignore_scissor"];
+        OGL.clear_override = j["clear_override"];
     }
-    else
+    catch (const std::exception &e)
     {
-        g_ef->log_warn(L"No JSON config was present, attempting to load from registry");
-        Config_LoadRegistryConfig();
-
-        Config_SaveConfig();
+        g_ef->log_warn(L"Config load failed, using defaults...");
+        Config_SetDefaults();
     }
 }
 
