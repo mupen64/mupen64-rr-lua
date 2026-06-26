@@ -1029,6 +1029,14 @@ static void ui_thread()
 
     JoystickControl::register_class(g_inst, JOYSTICK_CONTROL_CLASS);
 
+    SDL_SetEventFilter(
+        [](void *, SDL_Event *event) -> bool {
+            GamepadManager::on_sdl_event(*event);
+            ConfigDialog::on_sdl_event(*event);
+            return true;
+        },
+        nullptr);
+
     for (size_t i = 0; i < std::size(status); ++i)
     {
         status[i].controller_index = i;
