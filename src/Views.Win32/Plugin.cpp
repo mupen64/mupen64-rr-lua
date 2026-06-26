@@ -948,3 +948,16 @@ void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *r
     copy(input_plugin, input);
     copy(rsp_plugin, rsp);
 }
+
+void PluginUtil::screenshot(const std::filesystem::path &path)
+{
+    const auto dir = std::filesystem::is_directory(path) ? path : path.parent_path();
+    if (!std::filesystem::exists(dir)) std::filesystem::create_directories(dir);
+
+    // Ensure trailing separator because some plugins are crap
+    std::string dir_str = dir.string();
+    if (!dir_str.empty() && dir_str.back() != std::filesystem::path::preferred_separator)
+        dir_str += std::filesystem::path::preferred_separator;
+
+    g_plugin_funcs.video_capture_screen(dir_str.data());
+}
