@@ -205,4 +205,11 @@ void initiate_plugins();
  */
 void get_plugin_names(char *video, char *audio, char *input, char *rsp);
 
+/**
+ * \brief Takes a screenshot to the specified directory.
+ * \param path The directory to save the screenshot to. If a file path, the screenshot will be saved to the directory
+ * containing that file.
+ */
+void screenshot(const std::filesystem::path &path);
+
 } // namespace PluginUtil

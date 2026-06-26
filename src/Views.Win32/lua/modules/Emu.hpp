@@ -124,7 +124,8 @@ static int subscribe_atkey(lua_State *L)
 
 static int Screenshot(lua_State *L)
 {
-    g_plugin_funcs.video_capture_screen((char *)luaL_checkstring(L, 1));
+    const auto path = luaL_checkstring(L, 1);
+    PluginUtil::screenshot(path);
     return 0;
 }
 

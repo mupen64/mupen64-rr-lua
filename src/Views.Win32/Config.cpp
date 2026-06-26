@@ -944,6 +944,7 @@ void Config::load()
     }
     else if (std::filesystem::exists(get_legacy_config_path()))
     {
+        // TODO: Remove legacy config support with version 1.6.0
         mINI::INIFile file(get_legacy_config_path().string());
         mINI::INIStructure ini;
         file.read(ini);

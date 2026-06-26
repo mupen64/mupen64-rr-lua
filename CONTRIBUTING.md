@@ -167,8 +167,4 @@ Initialize libraries in `RomOpen` and - if possible - do it only once.
 
 ### Configuration
 
-Write persistent config to the registry, not the filesystem.
-
-Store the config as JSON.
-
-Don't pollute the user's Mupen directory if possible.
+Write persistent config to the filesystem as JSON, ideally next to the mupen executable.
