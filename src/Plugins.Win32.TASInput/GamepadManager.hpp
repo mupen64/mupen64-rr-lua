@@ -13,6 +13,26 @@
  */
 namespace GamepadManager
 {
+
+enum class InputDeviceType
+{
+    Keyboard,
+    Gamepad,
+};
+
+struct InputDevice
+{
+    InputDeviceType type;
+    uint64_t id;
+    std::string name;
+    bool connected = true;
+};
+
+struct DeviceRegistry
+{
+    std::vector<InputDevice> devices;
+};
+
 /**
  * \brief Notifies of an SDL event.
  * \brief e The SDL event.
@@ -24,4 +44,10 @@ void on_sdl_event(const SDL_Event &e);
  * \param i The controller index.
  */
 core_buttons get_input(size_t i);
+
+/**
+ * \brief Gets the device registry.
+ */
+DeviceRegistry &device_registry();
+
 } // namespace GamepadManager

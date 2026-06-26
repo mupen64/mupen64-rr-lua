@@ -12,9 +12,39 @@
 struct gamepad_manager_context
 {
     SDL_Gamepad *gamepad{};
+    GamepadManager::DeviceRegistry reg{};
 };
 
 static gamepad_manager_context g_ctx;
+
+static void refresh_registry()
+{
+    g_ctx.reg.devices.clear();
+
+    int32_t count{};
+    const SDL_JoystickID *joy_ids = SDL_GetGamepads(&count);
+    for (int32_t i = 0; i < count; ++i)
+    {
+        const auto joy_id = joy_ids[i];
+        const auto name = SDL_GetJoystickNameForID(joy_id);
+
+        GamepadManager::InputDevice dev;
+        dev.type = GamepadManager::InputDeviceType::Gamepad;
+        dev.id = joy_id;
+        dev.name = name;
+
+        g_ctx.reg.devices.emplace_back(dev);
+    }
+    SDL_free((void *)joy_ids);
+
+    GamepadManager::InputDevice dev;
+    dev.type = GamepadManager::InputDeviceType::Keyboard;
+    dev.id = 0;
+    dev.name = "Keyboard";
+    dev.connected = true;
+
+    g_ctx.reg.devices.emplace_back(std::move(dev));
+}
 
 static int32_t remap_axis(int16_t value)
 {
@@ -41,11 +71,17 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
             g_ctx.gamepad = nullptr;
         }
         g_ctx.gamepad = SDL_OpenGamepad(e.gdevice.which);
+        refresh_registry();
         break;
     case SDL_EVENT_GAMEPAD_REMOVED:
         if (!g_ctx.gamepad) break;
         SDL_CloseGamepad(g_ctx.gamepad);
         g_ctx.gamepad = nullptr;
+        refresh_registry();
+        break;
+    case SDL_EVENT_KEYBOARD_ADDED:
+    case SDL_EVENT_KEYBOARD_REMOVED:
+        refresh_registry();
         break;
     default:
         break;
@@ -127,4 +163,10 @@ core_buttons GamepadManager::get_input(const size_t i)
     buttons.y = static_cast<int8_t>(buttons.y * controller_config.y_scale);
 
     return buttons;
+}
+
+GamepadManager::DeviceRegistry &GamepadManager::device_registry()
+{
+    if (g_ctx.reg.devices.empty()) refresh_registry();
+    return g_ctx.reg;
 }

@@ -160,7 +160,7 @@ struct t_controller_config
 
 struct t_config
 {
-    int32_t version = 6;
+    int32_t version = 7;
     int32_t always_on_top = false;
     int32_t float_from_parent = true;
     int32_t titlebar = true;
@@ -174,6 +174,7 @@ struct t_config
     int32_t relative_mode = false;
     int32_t approach_mode = false;
     t_controller_config controller_config[4]{};
+    uint64_t preferred_device_id{};
 
     friend void to_json(nlohmann::json &j, const t_config &self)
     {
@@ -194,6 +195,7 @@ struct t_config
         TASINPUT_ARRAY_FIELD(controller_mempak);
         TASINPUT_ARRAY_FIELD(controller_rumblepak);
         TASINPUT_ARRAY_FIELD(controller_config);
+        TASINPUT_ARRAY_FIELD(preferred_device_id);
 #undef TASINPUT_FIELD
 #undef TASINPUT_ARRAY_FIELD
     }
@@ -218,6 +220,7 @@ struct t_config
             TASINPUT_FIELD(controller_mempak);
             TASINPUT_FIELD(controller_rumblepak);
             TASINPUT_FIELD(controller_config);
+            TASINPUT_FIELD(preferred_device_id);
         }
 #undef TASINPUT_FIELD
     }

@@ -21,6 +21,7 @@ const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG, 
 struct config_dialog_context
 {
     HWND hwnd{};
+    HWND devices_hwnd{};
     t_config prev_config{};
     size_t selected_controller{};
     std::variant<std::monostate, t_button_mapping *, t_axis_mapping *> target_value{};
@@ -341,6 +342,26 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
+static void refresh_device_list()
+{
+    const auto &reg = GamepadManager::device_registry();
+    ListBox_ResetContent(g_ctx.devices_hwnd);
+    for (const auto &device : reg.devices)
+    {
+        ListBox_AddString(g_ctx.devices_hwnd, IOUtils::to_wide_string(device.name).c_str());
+        ListBox_SetItemData(g_ctx.devices_hwnd, ListBox_GetCount(g_ctx.devices_hwnd) - 1, device.id);
+    }
+
+    for (size_t i = 0; i < ListBox_GetCount(g_ctx.devices_hwnd); i++)
+    {
+        const auto data = ListBox_GetItemData(g_ctx.devices_hwnd, i);
+        if (data != new_config.preferred_device_id) continue;
+
+        ListBox_SetCurSel(g_ctx.devices_hwnd, i);
+        break;
+    }
+}
+
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     auto controller_config = &new_config.controller_config[g_ctx.selected_controller];
@@ -349,6 +370,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     {
     case WM_INITDIALOG: {
         g_ctx.hwnd = hwnd;
+        g_ctx.devices_hwnd = GetDlgItem(hwnd, IDC_LDEVICES);
         update_visuals();
 
         for (const auto btn : button_ids)
@@ -363,6 +385,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         ComboBox_SetCurSel(cb_hwnd, g_ctx.selected_controller);
 
+        refresh_device_list();
         break;
     }
     case WM_CLOSE:
@@ -435,6 +458,15 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             begin_edit(IDC_EAS_DOWN, &controller_config->y);
             g_ctx.positive_target_axis = true;
             break;
+        case IDC_LDEVICES: {
+            if (HIWORD(wparam) == LBN_SELCHANGE)
+            {
+                const auto index = ListBox_GetCurSel(g_ctx.devices_hwnd);
+                const auto data = ListBox_GetItemData(g_ctx.devices_hwnd, index);
+                new_config.preferred_device_id = data;
+            }
+            break;
+        }
         default:
             break;
         }
@@ -529,6 +561,12 @@ void ConfigDialog::on_sdl_event(const SDL_Event &e)
     if (!is_editing())
     {
         return;
+    }
+
+    if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED ||
+        e.type == SDL_EVENT_KEYBOARD_ADDED || e.type == SDL_EVENT_KEYBOARD_REMOVED)
+    {
+        refresh_device_list();
     }
 
     if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN)
