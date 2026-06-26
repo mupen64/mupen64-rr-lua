@@ -740,7 +740,7 @@ static void show_piano_roll()
 
 static void screenshot()
 {
-    g_plugin_funcs.video_capture_screen(Config::screenshot_directory().string().data());
+    PluginUtil::screenshot(Config::screenshot_directory());
 }
 
 static void start_capture_direct(const ActionManager::action_argument_map &params)
