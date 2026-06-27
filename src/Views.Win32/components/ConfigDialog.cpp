@@ -1434,7 +1434,7 @@ static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
     return groups;
 }
 
-static INT_PTR CALLBACK prop_sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
+static int CALLBACK prop_sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
 {
     switch (msg)
     {
