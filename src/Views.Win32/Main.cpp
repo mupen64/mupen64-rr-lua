@@ -754,6 +754,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (!confirm_user_exit()) return 0;
 
+        Config::save();
+
         ThreadPool::submit_task([=] {
             g_main_ctx.core_ctx->vr_close_rom(true);
 
@@ -1237,7 +1239,6 @@ quit:
     LuaDialog::close_all();
 
     timeKillEvent(g_ui_timer);
-    Config::save();
     Gdiplus::GdiplusShutdown(gdi_plus_token);
     CoUninitialize();
     SDL_Quit();
