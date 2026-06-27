@@ -43,6 +43,37 @@
       }
     },
     {
+      "name": "vcpkg-win64-x64",
+      "description": "64-bit debug build on 64-bit Windows",
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake",
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vcpkg-win64-x64-release",
+      "description": "64-bit release build on 64-bit Windows",
+      "inherits": "vcpkg-win64-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "sys-linux64-x64",
       "description": "64-bit debug build on 64-bit Linux",
       "inherits": "common",
@@ -63,6 +94,14 @@
       "configurePreset": "vcpkg-win64-x86-release"
     },
     {
+      "name": "vcpkg-win64-x64",
+      "configurePreset": "vcpkg-win64-x64"
+    },
+    {
+      "name": "vcpkg-win64-x64-release",
+      "configurePreset": "vcpkg-win64-x64-release"
+    },
+    {
       "name": "sys-linux64-x64",
       "configurePreset": "sys-linux64-x64"
     }
@@ -71,6 +110,10 @@
     {
       "name": "vcpkg-win64-x86-all",
       "configurePreset": "vcpkg-win64-x86"
+    },
+    {
+      "name": "vcpkg-win64-x64-all",
+      "configurePreset": "vcpkg-win64-x64"
     },
     {
       "name": "sys-linux64-x64-all",
