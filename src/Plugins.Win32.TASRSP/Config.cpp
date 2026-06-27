@@ -14,11 +14,6 @@ t_config config = {};
 t_config default_config = {};
 t_config prev_config = {};
 
-static std::filesystem::path get_config_path()
-{
-    return g_config_path / CONFIG_FILE_NAME;
-}
-
 static void save_registry_config()
 {
     g_ef->log_trace(L"Saving config...");
@@ -75,9 +70,4 @@ void config_load()
     }
 
     config = loaded_config;
-}
-
-void config_show_dialog(HWND hwnd)
-{
-    DialogBox(g_instance, MAKEINTRESOURCE(IDD_RSPCONFIG), hwnd, ConfigDlgProc);
 }
