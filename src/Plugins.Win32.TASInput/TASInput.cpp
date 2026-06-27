@@ -179,17 +179,43 @@ static ULONG_PTR gdi_plus_token{};
 static std::atomic<int64_t> frame_counter{};
 static std::atomic<bool> new_frame{};
 static std::atomic<bool> rom_open{};
+static std::atomic<bool> s_event_watch_attached{};
 static HWND emulator_hwnd{};
 static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
 static std::thread main_thread;
-
 static int MOUSE_LBUTTONREDEFINITION = VK_LBUTTON;
 static int MOUSE_RBUTTONREDEFINITION = VK_RBUTTON;
 
+static bool event_watch(void *, SDL_Event *event)
+{
+    GamepadManager::on_sdl_event(*event);
+    ConfigDialog::on_sdl_event(*event);
+    return true;
+}
+
+static void attach_event_watch()
+{
+    if (s_event_watch_attached) return;
+    s_event_watch_attached = true;
+
+    SDL_AddEventWatch(event_watch, nullptr);
+}
+
+static void detach_event_watch()
+{
+    if (s_event_watch_attached)
+    {
+        SDL_RemoveEventWatch(event_watch, nullptr);
+        s_event_watch_attached = false;
+    }
+}
+
 EXPORT void CALL CloseDLL()
 {
+    detach_event_watch();
+
     if (gdi_plus_token)
     {
         Gdiplus::GdiplusShutdown(gdi_plus_token);
@@ -209,6 +235,7 @@ EXPORT void CALL DllAbout(void *hParent)
 
 EXPORT void CALL DllConfig(void *hParent)
 {
+    attach_event_watch();
     ConfigDialog::show((HWND)hParent);
 
     // TODO: Do we have to restart the dialogs here like in old version?
@@ -1078,6 +1105,7 @@ static void ui_thread()
 
 EXPORT void CALL RomOpen()
 {
+    attach_event_watch();
     load_config();
 
     static bool first_time = true;
@@ -1297,4 +1325,6 @@ void TASInput::on_detach()
     }
 
     if (main_thread.joinable()) main_thread.join();
+
+    detach_event_watch();
 }

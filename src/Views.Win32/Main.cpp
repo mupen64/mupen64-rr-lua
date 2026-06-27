@@ -744,16 +744,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         LuaDialog::init();
         return TRUE;
     case WM_DESTROY:
-        g_main_ctx.exiting = true;
-        LuaDialog::close_all();
-
-        timeKillEvent(g_ui_timer);
-        Config::save();
-        Gdiplus::GdiplusShutdown(gdi_plus_token);
-        CoUninitialize();
-        SDL_Quit();
         PostQuitMessage(0);
-        break;
+        return 0;
     case WM_PREDESTROY:
         // This needs the UI thread to still be responsive.
         LuaRenderer::stop();
@@ -1131,6 +1123,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Config::init();
     Config::load();
     main_dispatcher_init();
+    Main::init_sdl();
 
     std::filesystem::create_directories(Config::rom_directory());
     std::filesystem::create_directories(Config::save_directory());
@@ -1224,11 +1217,30 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     WinDarkMode::attach(g_main_ctx.hwnd);
 
     MSG msg{};
-    while (GetMessage(&msg, nullptr, 0, 0))
+    SDL_Event e{};
+
+    while (true)
     {
-        if (is_dialog_message(&msg)) continue;
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT) goto quit;
+            if (is_dialog_message(&msg)) continue;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        while (SDL_PollEvent(&e));
     }
+
+quit:
+    g_main_ctx.exiting = true;
+    LuaDialog::close_all();
+
+    timeKillEvent(g_ui_timer);
+    Config::save();
+    Gdiplus::GdiplusShutdown(gdi_plus_token);
+    CoUninitialize();
+    SDL_Quit();
+
     return (int)msg.wParam;
 }
