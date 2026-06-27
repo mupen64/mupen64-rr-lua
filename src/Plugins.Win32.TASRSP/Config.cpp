@@ -33,7 +33,8 @@ void config_load()
 
     auto json_path = get_config_path();
 
-    if (!std::filesystem::exists(json_path)) {
+    if (!std::filesystem::exists(json_path))
+    {
         config = default_config;
         config_save();
         return;

@@ -23,6 +23,26 @@
                 "showReuseMessage": false,
                 "clear": false
             }
+        },
+        {
+            "type": "shell",
+            "label": "Build Project (x64)",
+            "command": "${workspaceFolder}\\.vscode\\build-x64.bat",
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": ["/c"]
+                }
+            },
+            "group": "build",
+            "problemMatcher": ["$msCompile"],
+            "presentation": {
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
         }
     ]
 }

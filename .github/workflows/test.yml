@@ -18,7 +18,7 @@ jobs:
 
     strategy:
       matrix:
-        arch: [x86]
+        arch: [x86, x64]
 
     steps:
       - uses: actions/checkout@v6
@@ -52,7 +52,7 @@ jobs:
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-x86-release
+        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
