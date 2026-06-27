@@ -53,7 +53,8 @@ void Config_LoadConfig()
 {
     auto json_path = get_config_path();
 
-    if (!std::filesystem::exists(json_path)) {
+    if (!std::filesystem::exists(json_path))
+    {
         Config_SetDefaults();
         Config_SaveConfig();
         return;

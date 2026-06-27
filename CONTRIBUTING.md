@@ -12,9 +12,17 @@ Only Windows is supported for now, though the CMake infrastructure is intended t
 You'll need:
 - Visual Studio 2026 (for the compiler, CMake, Ninja and vcpkg)
 
-In order for the compiler to work, you'll need to be in a VS developer environment. Then, simply use the provided `vcpkg-win64-x86` preset to compile and build. If you want to change any settings, do so on the command line or via `CMakeUserPresets.json`.
+In order for the compiler to work, you'll need to be in a VS developer environment. Then, simply use one of the provided presets to compile and build. If you want to change any settings, do so on the command line or via `CMakeUserPresets.json`.
+
+For a 32-bit build:
 ```sh
 cmake --preset vcpkg-win64-x86
+cmake --build build
+```
+
+For a 64-bit build:
+```sh
+cmake --preset vcpkg-win64-x64
 cmake --build build
 ```
 
@@ -31,7 +39,7 @@ You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your work
 
 ### CLion
 
-Make sure to set the CMake profile to use the `vcpkg-win64-x86` preset, enabling it if needed.
+Make sure to set the CMake profile to use the desired preset (`vcpkg-win64-x86` or `vcpkg-win64-x64`), enabling it if needed.
 
 If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
 
