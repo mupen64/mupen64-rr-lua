@@ -1123,6 +1123,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Config::init();
     Config::load();
     main_dispatcher_init();
+    Main::init_sdl();
 
     std::filesystem::create_directories(Config::rom_directory());
     std::filesystem::create_directories(Config::save_directory());
@@ -1216,6 +1217,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     WinDarkMode::attach(g_main_ctx.hwnd);
 
     MSG msg{};
+    SDL_Event e{};
 
     while (true)
     {
@@ -1227,7 +1229,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
             DispatchMessage(&msg);
         }
 
-        SDL_PumpEvents();
+        while (SDL_PollEvent(&e));
     }
 
 quit:
