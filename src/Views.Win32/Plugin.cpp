@@ -482,7 +482,8 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
     {
         // Plugin is tied to one version of mupen
         const auto current_version = IOUtils::to_utf8_string(CURRENT_VERSION);
-        if (current_version != plugin_info.target_version)
+        const std::string target_version(plugin_info.target_version, target_version_len);
+        if (current_version != target_version)
         {
             return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
         }
