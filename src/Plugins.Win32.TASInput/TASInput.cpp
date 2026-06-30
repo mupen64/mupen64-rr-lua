@@ -14,6 +14,7 @@
 #include <TASInput.hpp>
 
 #define EXPORT __declspec(dllexport)
+#undef CALL
 #define CALL _cdecl
 
 #define WM_EDIT_END (WM_USER + 3)

@@ -11,6 +11,7 @@
 #include <ConfigDialog.hpp>
 
 #define EXPORT __declspec(dllexport)
+#undef CALL
 #define CALL _cdecl
 
 std::filesystem::path g_config_path;

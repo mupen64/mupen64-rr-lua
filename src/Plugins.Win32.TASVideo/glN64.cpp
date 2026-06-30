@@ -77,7 +77,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 {
     PluginInfo->ver = 0x100;
     PluginInfo->type = plugin_video;
-    strcpy(PluginInfo->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
+    strcpy_s(PluginInfo->name, sizeof(PluginInfo->name), IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = FALSE;
     PluginInfo->unused_byteswapped = TRUE;
     std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
