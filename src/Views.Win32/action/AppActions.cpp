@@ -617,8 +617,6 @@ static void load_recent_movie(size_t i)
                               {L"path", path},
                               {L"author", L""},
                               {L"description", L""},
-                              {L"pause_at", L"0"},
-                              {L"pause_at_last", L"0"},
                           });
 }
 
@@ -1143,10 +1141,6 @@ void AppActions::add()
             {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
             {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
             {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
-            {.key = L"pause_at", .name = L"Pause at frame (optional)", .validator = Validators::int32_t_optional},
-            {.key = L"pause_at_last",
-             .name = L"Pause at last frame? (optional)",
-             .validator = Validators::int32_t_optional},
         });
     add_action(START_MOVIE_PLAYBACK, Hotkey::t_hotkey('P', true, true), start_movie_playback);
     add_action(CONTINUE_MOVIE_RECORDING, Hotkey::t_hotkey::make_empty(), continue_movie_recording,
