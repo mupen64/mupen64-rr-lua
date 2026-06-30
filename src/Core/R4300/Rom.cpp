@@ -223,7 +223,7 @@ bool rom_load(std::filesystem::path path)
             sp = std::format_to(sp, "{:02X}", digest[i]);
         }
         *sp = '\0';
-        strncpy_s(rom_md5, sizeof(rom_md5), str_temp, _TRUNCATE);
+std::snprintf(rom_md5, sizeof(rom_md5), "%s", str_temp);
     }
 
     auto roml = (uint32_t *)rom;
