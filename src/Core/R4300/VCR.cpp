@@ -321,7 +321,7 @@ core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *
 
     core_vcr_movie_header new_header = {};
     new_header.rom_country = -1;
-    strncpy_s(new_header.rom_name, sizeof(new_header.rom_name), "(no ROM)", _TRUNCATE);
+std::snprintf(new_header.rom_name, sizeof(new_header.rom_name), "%s", "(no ROM)");
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
