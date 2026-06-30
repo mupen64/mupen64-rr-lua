@@ -1135,13 +1135,12 @@ void AppActions::add()
                enable_when_emu_launched);
     add_action(START_MOVIE_RECORDING, Hotkey::t_hotkey('R', true, true), start_movie_recording,
                enable_when_emu_launched);
-    add_action(
-        START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
-        std::vector<ActionManager::t_action_param>{
-            {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
-            {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
-            {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
-        });
+    add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
+               std::vector<ActionManager::t_action_param>{
+                   {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
+                   {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
+                   {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
+               });
     add_action(START_MOVIE_PLAYBACK, Hotkey::t_hotkey('P', true, true), start_movie_playback);
     add_action(CONTINUE_MOVIE_RECORDING, Hotkey::t_hotkey::make_empty(), continue_movie_recording,
                enable_during_playback);
