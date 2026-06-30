@@ -585,10 +585,7 @@ static t_lua_key_event_args get_base_key_event_args()
 static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
 {
     SDL_Event e{};
-    while (SDL_PollEvent(&e))
-    {
-        g_view_logger->info(e.type);
-    }
+    while (SDL_PollEvent(&e));
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
