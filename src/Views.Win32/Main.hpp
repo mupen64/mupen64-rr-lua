@@ -39,7 +39,6 @@ struct t_main_context
     std::shared_ptr<Dispatcher> dispatcher{};
     bool paused_before_menu{};
     bool in_menu_loop{};
-    bool fullscreen{};
     bool fast_forward{};
     std::filesystem::path app_path{};
     bool exiting{};
