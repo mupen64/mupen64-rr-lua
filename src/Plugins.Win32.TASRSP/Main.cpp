@@ -10,6 +10,7 @@
 #include "Disasm.hpp"
 
 #define EXPORT __declspec(dllexport)
+#undef CALL
 #define CALL _cdecl
 
 #define UCODE_MARIO (1)
@@ -49,46 +50,6 @@ core_plugin_extended_funcs *g_ef = &ef_shim;
  * \returns Handle to the audio plugin, or nullptr.
  */
 void *plugin_load(const std::filesystem::path &path);
-
-static void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
-{
-    const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum,
-                                     static_cast<void *>(rsp.sp_pc_reg));
-    MessageBox(NULL, message.c_str(), L"unknown task", MB_OK);
-
-    FILE *f;
-
-    if (task->ucode_size <= 0x1000)
-    {
-        f = fopen("imem.dat", "wb");
-        fwrite(rsp.rdram + task->ucode, task->ucode_size, 1, f);
-        fclose(f);
-
-        f = fopen("dmem.dat", "wb");
-        fwrite(rsp.rdram + task->ucode_data, task->ucode_data_size, 1, f);
-        fclose(f);
-
-        f = fopen("disasm.txt", "wb");
-        memcpy(rsp.dmem, rsp.rdram + task->ucode_data, task->ucode_data_size);
-        memcpy(rsp.imem + 0x80, rsp.rdram + task->ucode, 0xF7F);
-        disasm(f, (uint32_t *)(rsp.imem));
-        fclose(f);
-    }
-    else
-    {
-        f = fopen("imem.dat", "wb");
-        fwrite(rsp.imem, 0x1000, 1, f);
-        fclose(f);
-
-        f = fopen("dmem.dat", "wb");
-        fwrite(rsp.dmem, 0x1000, 1, f);
-        fclose(f);
-
-        f = fopen("disasm.txt", "wb");
-        disasm(f, (uint32_t *)(rsp.imem));
-        fclose(f);
-    }
-}
 
 static void audio_ucode_mario()
 {
@@ -259,7 +220,9 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
         }
     }
 
-    handle_unknown_task(task, sum);
+    const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum,
+                                     static_cast<void *>(rsp.sp_pc_reg));
+    MessageBox(NULL, message.c_str(), L"unknown task", MB_OK);
 
     return Cycles;
 }

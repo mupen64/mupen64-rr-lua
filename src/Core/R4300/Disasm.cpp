@@ -469,7 +469,7 @@ static char *sfmt(char *b, const char *f, ...)
             break;
         }
         case 'a': {
-            uint8_t n = va_arg(v, uint8_t);
+            uint8_t n = static_cast<uint8_t>(va_arg(v, int));
             q[0] = x[n >> 4];
             q[1] = x[n & 0xF];
             q += 2;

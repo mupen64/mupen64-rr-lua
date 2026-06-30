@@ -237,18 +237,21 @@ const luaL_Reg CLIPBOARD_FUNCS[] = {{"get", LuaCore::Clipboard::get},
 
 const std::pair<std::string, lua_CFunction> OVERRIDE_FUNCS[] = {{"os.exit", LuaCore::Global::Exit}};
 
-void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg regs[])
+void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg *regs)
 {
     if (name == nullptr)
     {
         const luaL_Reg *p = regs;
-        do
+        while (p->name != nullptr)
         {
             lua_register(lua_state, p->name, p->func);
-        } while ((++p)->func);
+            ++p;
+        }
         return;
     }
-    luaL_newlib(lua_state, regs);
+
+    lua_createtable(lua_state, 0, 0);
+    luaL_setfuncs(lua_state, regs, 0);
     lua_setglobal(lua_state, name);
 }
 

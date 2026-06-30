@@ -206,7 +206,8 @@ static void set_rom_info(core_vcr_movie_header *header)
         header->num_controllers++;
     }
 
-    strncpy(header->rom_name, (const char *)ROM_HEADER.nom, 32);
+    std::memset(header->rom_name, 0, sizeof(header->rom_name));
+    std::memcpy(header->rom_name, ROM_HEADER.nom, sizeof(ROM_HEADER.nom));
     header->rom_crc1 = ROM_HEADER.CRC1;
     header->rom_country = ROM_HEADER.Country_code;
 
@@ -273,17 +274,21 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
                     if (i != 56 + 64)
                         memmove(new_header.rsp_plugin_name, new_header.reserved_bytes + i, 256 - 64 - 64 - 64);
                     else
-                        strncpy(new_header.rsp_plugin_name, "(unknown)", 64);
+                        strncpy_s(new_header.rsp_plugin_name, sizeof(new_header.rsp_plugin_name), "(unknown)",
+                                  sizeof(new_header.rsp_plugin_name));
 
-                    strncpy(new_header.input_plugin_name, "(unknown)", 64);
+                    strncpy_s(new_header.input_plugin_name, sizeof(new_header.input_plugin_name), "(unknown)",
+                              sizeof(new_header.input_plugin_name));
                 }
-                strncpy(new_header.audio_plugin_name, "(unknown)", 64);
+                strncpy_s(new_header.audio_plugin_name, sizeof(new_header.audio_plugin_name), "(unknown)",
+                          sizeof(new_header.audio_plugin_name));
             }
-            strncpy(new_header.video_plugin_name, "(unknown)", 64);
+            strncpy_s(new_header.video_plugin_name, sizeof(new_header.video_plugin_name), "(unknown)",
+                      sizeof(new_header.video_plugin_name));
         }
         // attempt to convert old author and description to utf8
-        strncpy(new_header.author, new_header.old_author_info, 48);
-        strncpy(new_header.description, new_header.old_description, 80);
+        std::memcpy(new_header.author, new_header.old_author_info, sizeof(new_header.old_author_info));
+        std::memcpy(new_header.description, new_header.old_description, sizeof(new_header.old_description));
     }
     if (new_header.version == 3 && buf.size() < sizeof(core_vcr_movie_header))
     {
@@ -321,7 +326,7 @@ core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *
 
     core_vcr_movie_header new_header = {};
     new_header.rom_country = -1;
-    strncpy(new_header.rom_name, "(no ROM)", sizeof(new_header.rom_name));
+    std::snprintf(new_header.rom_name, sizeof(new_header.rom_name), "%s", "(no ROM)");
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
