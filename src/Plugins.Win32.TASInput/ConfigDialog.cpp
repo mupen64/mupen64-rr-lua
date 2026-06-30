@@ -29,8 +29,7 @@ struct config_dialog_context
 
 static config_dialog_context g_ctx;
 
-template <size_t N>
-static void copy_wide_string(wchar_t (&dst)[N], const wchar_t *src)
+template <size_t N> static void copy_wide_string(wchar_t (&dst)[N], const wchar_t *src)
 {
     wcscpy_s(dst, N, src);
 }
@@ -150,7 +149,7 @@ static std::wstring virtual_keycode_to_string(int k)
             copy_wide_string(buf2, L"=+");
             break;
         case /*VK_OEM_MINUS*/ 0xBD:
-            copy_wide_string(buf2, L"-_" );
+            copy_wide_string(buf2, L"-_");
             break;
         case /*VK_OEM_COMMA*/ 0xBC:
             copy_wide_string(buf2, L",");
@@ -168,7 +167,7 @@ static std::wstring virtual_keycode_to_string(int k)
             copy_wide_string(buf2, L"\\|");
             break;
         case VK_OEM_4:
-            copy_wide_string(buf2, L"[{" );
+            copy_wide_string(buf2, L"[{");
             break;
         case VK_OEM_3:
             copy_wide_string(buf2, L"`~");
