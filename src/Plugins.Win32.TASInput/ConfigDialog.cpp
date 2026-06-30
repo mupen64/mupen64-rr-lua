@@ -469,6 +469,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 const auto index = ListBox_GetCurSel(g_ctx.devices_hwnd);
                 const auto data = ListBox_GetItemData(g_ctx.devices_hwnd, index);
                 new_config.preferred_device_id = data;
+                GamepadManager::update_current_gamepad();
             }
             break;
         }

@@ -46,6 +46,11 @@ void on_sdl_event(const SDL_Event &e);
 core_buttons get_input(size_t i);
 
 /**
+ * \brief Updates the currently selected gamepad. Should be called after `new_config.preferred_device_id` is changed.
+ */
+void update_current_gamepad();
+
+/**
  * \brief Gets the device registry.
  */
 DeviceRegistry &device_registry();
