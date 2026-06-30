@@ -8,8 +8,6 @@
 
 #include <components/Dispatcher.hpp>
 
-#define CURRENT_VERSION L"1.4.0-5"
-
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)
 #define WM_PREDESTROY (WM_USER + 26)

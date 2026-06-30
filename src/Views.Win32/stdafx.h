@@ -68,3 +68,4 @@ using Microsoft::WRL::ComPtr;
 #include <Config.hpp>
 // #include <PlatformService.h>
 #include <ResizeAnchor.hpp>
+#include <VersionNameHelpers.hpp>
