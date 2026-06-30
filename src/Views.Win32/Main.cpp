@@ -827,6 +827,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
+    g_main_ctx.dispatcher->invoke([] {
+        SDL_Event e{};
+        while (SDL_PollEvent(&e));
+    });
+
     g_main_ctx.core_ctx->vr_invalidate_visuals();
 
     static std::chrono::high_resolution_clock::time_point last_statusbar_update =
@@ -1218,7 +1223,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     WinDarkMode::attach(g_main_ctx.hwnd);
 
     MSG msg{};
-    SDL_Event e{};
 
     while (true)
     {
@@ -1229,8 +1233,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-
-        while (SDL_PollEvent(&e));
     }
 
 quit:
