@@ -474,14 +474,6 @@ void on_movie_loop_changed(std::any data)
     Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
 }
 
-void on_fullscreen_changed(std::any data)
-{
-    g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<bool>(data);
-        ShowCursor(!value);
-    });
-}
-
 void on_config_loaded(std::any)
 {
     RomBrowser::build();
@@ -1198,7 +1190,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe(Messenger::Message::ScriptStarted, on_script_started);
     Messenger::subscribe(Messenger::Message::SpeedModifierChanged, on_speed_modifier_changed);
     Messenger::subscribe(Messenger::Message::LagLimitExceeded, on_vis_since_input_poll_exceeded);
-    Messenger::subscribe(Messenger::Message::FullscreenChanged, on_fullscreen_changed);
     Messenger::subscribe(Messenger::Message::ConfigLoaded, on_config_loaded);
     Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed);
     Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed);

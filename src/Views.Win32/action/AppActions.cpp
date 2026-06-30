@@ -426,18 +426,6 @@ static void set_save_slot(const size_t slot)
 
 #pragma region Options
 
-static void toggle_fullscreen()
-{
-    g_plugin_funcs.video_change_window();
-    g_main_ctx.fullscreen ^= true;
-    ActionManager::notify_active_changed(AppActions::FULL_SCREEN);
-}
-
-static bool fullscreen_active()
-{
-    return g_main_ctx.fullscreen;
-}
-
 static void show_plugin_settings_dialog(const std::unique_ptr<Plugin> &plugin)
 {
     BetterEmulationLock lock;
@@ -1032,8 +1020,6 @@ void AppActions::init()
     });
     Messenger::subscribe(Messenger::Message::SlotChanged,
                          [](const auto &) { ActionManager::notify_active_changed(std::format(L"{} *", SELECT_SLOT)); });
-    Messenger::subscribe(Messenger::Message::FullscreenChanged,
-                         [](const auto &) { ActionManager::notify_enabled_changed(FULL_SCREEN); });
 }
 
 void AppActions::add()
@@ -1114,9 +1100,6 @@ void AppActions::add()
                    enable_when_emu_launched, get_active);
     }
     add_action(UNDO_LOAD_STATE, Hotkey::t_hotkey('Z', true), undo_load_state, enable_when_emu_launched);
-
-    add_action(FULL_SCREEN, Hotkey::t_hotkey(VK_RETURN, false, false, true), toggle_fullscreen,
-               enable_when_emu_launched, fastforward_active);
     add_action(VIDEO_SETTINGS, Hotkey::t_hotkey::make_empty(), show_video_plugin_settings);
     add_action(AUDIO_SETTINGS, Hotkey::t_hotkey::make_empty(), show_audio_plugin_settings);
     add_action(INPUT_SETTINGS, Hotkey::t_hotkey::make_empty(), show_input_plugin_settings);

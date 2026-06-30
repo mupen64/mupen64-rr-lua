@@ -49,7 +49,6 @@ const std::wstring SELECT_SLOT = APP + L"Emulation > Current State Slot > ";
 const std::wstring SELECT_SLOT_X = SELECT_SLOT + L"Slot {}";
 const std::wstring UNDO_LOAD_STATE = APP + L"Emulation > Undo Load State";
 
-const std::wstring FULL_SCREEN = APP + L"Options > Full Screen ---";
 const std::wstring VIDEO_SETTINGS = APP + L"Options > Plugin Settings --- > Video Settings";
 const std::wstring AUDIO_SETTINGS = APP + L"Options > Plugin Settings --- > Audio Settings";
 const std::wstring INPUT_SETTINGS = APP + L"Options > Plugin Settings --- > Input Settings";
