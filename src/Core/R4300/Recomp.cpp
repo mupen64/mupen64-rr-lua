@@ -3092,14 +3092,14 @@ void vr_recompile(uint32_t addr)
         {
             if ((paddr & 0x1FFFFFFF) >= 0x10000000)
             {
-                recompile_block((int32_t *)rom +
-                                    (((paddr - (addr - blocks[addr >> 12]->start)) & 0x1FFFFFFF) - 0x10000000 >> 2),
-                                blocks[addr >> 12], addr);
+                auto ptr =
+                    (int32_t *)rom + ((((paddr - (addr - blocks[addr >> 12]->start)) & 0x1FFFFFFF) - 0x10000000) >> 2);
+                recompile_block(ptr, blocks[addr >> 12], addr);
             }
             else
             {
-                recompile_block((int32_t *)(rdram + ((paddr - (addr - blocks[addr >> 12]->start) & 0x1FFFFFFF) >> 2)),
-                                blocks[addr >> 12], addr);
+                auto ptr = (int32_t *)(rdram + (((paddr - (addr - blocks[addr >> 12]->start)) & 0x1FFFFFFF) >> 2));
+                recompile_block(ptr, blocks[addr >> 12], addr);
             }
         }
     }

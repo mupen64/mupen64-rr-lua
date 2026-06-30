@@ -159,11 +159,6 @@ enum class Message
     EmuStartingChanged,
 
     /**
-     * \brief The fullscreen mode has changed
-     */
-    FullscreenChanged,
-
-    /**
      * \brief The audio dacrate has changed
      */
     DacrateChanged,

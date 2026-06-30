@@ -5,8 +5,8 @@
  */
 
 #include "stdafx.h"
-#include <Core/R4300/vcr.hpp>
-#include <Core/R4300/r4300.hpp>
+#include <Core/R4300/VCR.hpp>
+#include <Core/R4300/R4300.hpp>
 
 static core_cfg cfg{};
 static core_params params{};

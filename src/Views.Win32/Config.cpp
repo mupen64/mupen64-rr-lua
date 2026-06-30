@@ -499,7 +499,6 @@ static void migrate_config_ini(t_config &config, const mINI::INIStructure &ini)
     migrate_hotkey("Close ROM", AppActions::CLOSE_ROM);
     migrate_hotkey("Reset ROM", AppActions::RESET_ROM);
     migrate_hotkey("Load Latest ROM", AppActions::RECENT_ROMS + L" > Load Recent Item 1");
-    migrate_hotkey("Toggle Fullscreen", AppActions::FULL_SCREEN);
     migrate_hotkey("Show Settings", AppActions::SETTINGS);
     migrate_hotkey("Toggle Statusbar", AppActions::STATUSBAR);
     migrate_hotkey("Refresh Rombrowser", AppActions::REFRESH_ROM_LIST);
