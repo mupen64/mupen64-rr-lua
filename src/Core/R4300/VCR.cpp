@@ -206,7 +206,8 @@ static void set_rom_info(core_vcr_movie_header *header)
         header->num_controllers++;
     }
 
-    strncpy_s(header->rom_name, sizeof(header->rom_name), (const char *)ROM_HEADER.nom, _TRUNCATE);
+std::memset(header->rom_name, 0, sizeof(header->rom_name));
+std::memcpy(header->rom_name, ROM_HEADER.nom, sizeof(ROM_HEADER.nom));
     header->rom_crc1 = ROM_HEADER.CRC1;
     header->rom_country = ROM_HEADER.Country_code;
 
