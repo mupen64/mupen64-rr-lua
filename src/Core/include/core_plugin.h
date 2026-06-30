@@ -87,7 +87,7 @@ extern "C"
         /*
          * \brief The mupen version this plugin targets. It must be an exact match, or the plugin will be rejected.
          */
-        char target_version[16]{};
+        char target_version[16];
     } core_plugin_info;
 
     /**
