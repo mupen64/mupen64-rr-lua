@@ -45,6 +45,7 @@ t_main_context g_main_ctx{};
 
 bool g_frame_changed = true;
 
+constexpr UINT_PTR SDL_TIMER_ID = 1;
 MMRESULT g_ui_timer;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
@@ -581,6 +582,12 @@ static t_lua_key_event_args get_base_key_event_args()
     return args;
 }
 
+static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
+{
+    SDL_Event e{};
+    while (SDL_PollEvent(&e));
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message)
@@ -742,8 +749,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
+        SetTimer(hwnd, SDL_TIMER_ID, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
+        KillTimer(hwnd, SDL_TIMER_ID);
         PostQuitMessage(0);
         return 0;
     case WM_PREDESTROY:
@@ -828,11 +837,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
-    g_main_ctx.dispatcher->invoke([] {
-        SDL_Event e{};
-        while (SDL_PollEvent(&e));
-    });
-
     g_main_ctx.core_ctx->vr_invalidate_visuals();
 
     static std::chrono::high_resolution_clock::time_point last_statusbar_update =
@@ -1072,6 +1076,9 @@ static void enable_mitigations()
     ext.DisableExtensionPoints = 1;
     RT_ASSERT(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
               L"Couldn't set process mitigation policy.");
+
+    BOOL bool_false = FALSE;
+    SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &bool_false, sizeof(BOOL));
 }
 
 /**
