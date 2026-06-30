@@ -75,6 +75,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     strcpy(PluginInfo->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = FALSE;
     PluginInfo->unused_byteswapped = TRUE;
+    std::ranges::copy("1.5.0", PluginInfo->target_version);
 }
 
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)

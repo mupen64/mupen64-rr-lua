@@ -107,6 +107,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->type = plugin_audio;
     PluginInfo->ver = 0x0101;
+    std::ranges::copy("1.5.0", PluginInfo->target_version);
 }
 
 EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
