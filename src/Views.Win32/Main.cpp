@@ -44,6 +44,7 @@
 t_main_context g_main_ctx{};
 
 bool g_frame_changed = true;
+static bool s_sdl_initialized = false;
 
 constexpr UINT_PTR SDL_TIMER_ID = 1;
 MMRESULT g_ui_timer;
@@ -576,6 +577,8 @@ static t_lua_key_event_args get_base_key_event_args()
 
 static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
 {
+    if (!s_sdl_initialized) return;
+
     SDL_Event e{};
     while (SDL_PollEvent(&e));
 }
@@ -1092,7 +1095,6 @@ static bool is_running_under_wine()
 
 void Main::init_sdl()
 {
-    static bool s_sdl_initialized = false;
     if (!s_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
@@ -1129,7 +1131,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Config::init();
     Config::load();
     main_dispatcher_init();
-    Main::init_sdl();
 
     std::filesystem::create_directories(Config::rom_directory());
     std::filesystem::create_directories(Config::save_directory());
@@ -1241,7 +1242,7 @@ quit:
     timeKillEvent(g_ui_timer);
     Gdiplus::GdiplusShutdown(gdi_plus_token);
     CoUninitialize();
-    SDL_Quit();
+    if (s_sdl_initialized) SDL_Quit();
 
     return (int)msg.wParam;
 }

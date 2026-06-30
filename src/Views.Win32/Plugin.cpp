@@ -454,6 +454,8 @@ void load_rsp(HMODULE handle)
 
 std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
 {
+    Main::init_sdl();
+
     const auto module = LoadLibrary(path.wstring().c_str());
     uint64_t last_error = GetLastError();
 
