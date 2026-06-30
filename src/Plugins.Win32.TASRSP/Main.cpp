@@ -303,11 +303,12 @@ BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 
 EXPORT void CALL DllAbout(void *hwnd)
 {
-    const auto msg = PLUGIN_NAME L"\n"
-                                 L"Part of the Mupen64 project family."
-                                 L"\n\n"
-                                 L"https://github.com/mupen64/mupen64-rr-lua";
-
+    const auto msg = L"First-party TAS plugin for Mupen64."
+                     L"\n"
+                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                     L"to one version of the emulator."
+                     L"\n\n"
+                     L"https://mupen64.com";
     MessageBox((HWND)hwnd, msg, L"About", MB_ICONINFORMATION | MB_OK);
 }
 
@@ -318,6 +319,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = 1;
     PluginInfo->unused_byteswapped = 1;
+    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
 }
 
 EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount)

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#define CURRENT_VERSION L"1.5.0"
+
 #ifdef _M_X64
 #define VERSION_NAME_HELPER_ARCH L" x64"
 #else
@@ -18,5 +20,5 @@
 #define VERSION_NAME_HELPER_TARGET L""
 #endif
 
-#define VERSION_NAME_HELPER_GEN_NAME(base_name, version)                                                               \
-    base_name L" " version VERSION_SUFFIX VERSION_NAME_HELPER_ARCH VERSION_NAME_HELPER_TARGET
+#define VERSION_NAME_HELPER_GEN_NAME(base_name)                                                                        \
+    base_name L" " CURRENT_VERSION VERSION_SUFFIX VERSION_NAME_HELPER_ARCH VERSION_NAME_HELPER_TARGET

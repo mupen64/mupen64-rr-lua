@@ -474,8 +474,20 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
         return std::make_pair(L"GetDllInfo missing", nullptr);
     }
 
-    core_plugin_info plugin_info;
+    core_plugin_info plugin_info{};
     get_dll_info(&plugin_info);
+
+    const size_t target_version_len = strnlen(plugin_info.target_version, std::size(plugin_info.target_version));
+    if (target_version_len > 0)
+    {
+        // Plugin is tied to one version of mupen
+        const auto current_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+        const std::string target_version(plugin_info.target_version, target_version_len);
+        if (current_version != target_version)
+        {
+            return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
+        }
+    }
 
     const size_t plugin_name_len = strlen(plugin_info.name);
     while (plugin_info.name[plugin_name_len - 1] == ' ')

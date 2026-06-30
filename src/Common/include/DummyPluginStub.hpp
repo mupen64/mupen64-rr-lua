@@ -18,14 +18,17 @@
         info->ver = 0x0101;                                                                                            \
         info->type = plugin_type;                                                                                      \
         strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));                    \
+        std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);                             \
     }                                                                                                                  \
                                                                                                                        \
     EXPORT void CALL DllAbout(void *hParent)                                                                           \
     {                                                                                                                  \
-        const auto msg = PLUGIN_NAME L"\n"                                                                             \
-                                     L"Part of the Mupen64 project family."                                            \
-                                     L"\n\n"                                                                           \
-                                     L"https://github.com/mupen64/mupen64-rr-lua";                                     \
+        const auto msg = L"First-party TAS plugin for Mupen64."                                                        \
+                         L"\n"                                                                                         \
+                         L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "             \
+                         L"to one version of the emulator."                                                            \
+                         L"\n\n"                                                                                       \
+                         L"https://mupen64.com";                                                                       \
                                                                                                                        \
         MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);                                          \
     }
