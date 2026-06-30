@@ -558,15 +558,15 @@ void ConfigDialog::show(HWND parent)
 
 void ConfigDialog::on_sdl_event(const SDL_Event &e)
 {
-    if (!is_editing())
-    {
-        return;
-    }
-
     if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED ||
         e.type == SDL_EVENT_KEYBOARD_ADDED || e.type == SDL_EVENT_KEYBOARD_REMOVED)
     {
         refresh_device_list();
+    }
+
+    if (!is_editing())
+    {
+        return;
     }
 
     if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN)
