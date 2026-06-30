@@ -162,13 +162,11 @@ void GamepadManager::update_current_gamepad()
 {
     if (g_ctx.gamepad && SDL_GetGamepadID(g_ctx.gamepad) == new_config.preferred_device_id) return;
 
-    if (g_ctx.gamepad)
-    {
-        SDL_CloseGamepad(g_ctx.gamepad);
-        g_ctx.gamepad = nullptr;
-    }
+    SDL_CloseGamepad(g_ctx.gamepad);
+    g_ctx.gamepad = nullptr;
 
     if (new_config.preferred_device_id == 0) return;
+
     g_ctx.gamepad = SDL_OpenGamepad(new_config.preferred_device_id - 1);
 
     g_ef->log_info(std::format(L"Opened gamepad {}", new_config.preferred_device_id).c_str());
