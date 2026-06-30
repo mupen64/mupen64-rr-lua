@@ -595,6 +595,13 @@ void gDPSetScissor(u32 mode, f32 ulx, f32 uly, f32 lrx, f32 lry)
 
 void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
 {
+    if (gDP.otherMode.cycleType == G_CYC_FILL)
+    {
+        lrx++;
+        lry++;
+    }
+    else if (lry == uly)
+        ++lry;
 
     u32 fill_color = (u32)gDP.fillColor.r | ((u32)gDP.fillColor.g << 8) | ((u32)gDP.fillColor.b << 16) |
                      ((u32)gDP.fillColor.a << 24);
@@ -606,12 +613,6 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
         DepthBuffer *buffer = DepthBuffer_FindBuffer(gDP.colorImage.address);
         if (buffer) buffer->cleared = TRUE;
         return;
-    }
-
-    if (gDP.otherMode.cycleType == G_CYC_FILL)
-    {
-        lrx++;
-        lry++;
     }
 
     const auto is_sm64_border_rect =
