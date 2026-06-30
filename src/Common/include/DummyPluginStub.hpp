@@ -18,7 +18,7 @@
         info->ver = 0x0101;                                                                                            \
         info->type = plugin_type;                                                                                      \
         strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));                    \
-        std::ranges::copy("1.5.0", info->target_version);                                                              \
+        std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);                             \
     }                                                                                                                  \
                                                                                                                        \
     EXPORT void CALL DllAbout(void *hParent)                                                                           \
