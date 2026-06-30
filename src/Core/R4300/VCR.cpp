@@ -282,8 +282,8 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
             strncpy_s(new_header.video_plugin_name, sizeof(new_header.video_plugin_name), "(unknown)", _TRUNCATE);
         }
         // attempt to convert old author and description to utf8
-        strncpy_s(new_header.author, sizeof(new_header.author), new_header.old_author_info, _TRUNCATE);
-        strncpy_s(new_header.description, sizeof(new_header.description), new_header.old_description, _TRUNCATE);
+std::memcpy(new_header.author, new_header.old_author_info, sizeof(new_header.old_author_info));
+std::memcpy(new_header.description, new_header.old_description, sizeof(new_header.old_description));
     }
     if (new_header.version == 3 && buf.size() < sizeof(core_vcr_movie_header))
     {
