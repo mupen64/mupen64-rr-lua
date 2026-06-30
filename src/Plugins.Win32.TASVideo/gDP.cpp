@@ -599,7 +599,11 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
 
     if (buffer) buffer->cleared = TRUE;
 
-    if (gDP.depthImageAddress == gDP.colorImage.address)
+    u32 fill_color = (u32)gDP.fillColor.r | ((u32)gDP.fillColor.g << 8) | ((u32)gDP.fillColor.b << 16) |
+                     ((u32)gDP.fillColor.a << 24);
+
+    if (gDP.depthImageAddress == gDP.colorImage.address ||
+        (gDP.otherMode.cycleType == G_CYC_FILL && fill_color == 0x01010100))
     {
         OGL_ClearDepthBuffer();
         return;
@@ -607,17 +611,8 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
 
     if (gDP.otherMode.cycleType == G_CYC_FILL)
     {
-        // if (gDP.fillColor.a == 0.0f)
-        //	return;
-
         lrx++;
         lry++;
-
-        if ((ulx == 0) && (uly == 0) && (lrx == VI.width) && (lry == VI.height))
-        {
-            OGL_ClearColorBuffer(&gDP.fillColor.r);
-            return;
-        }
     }
 
     const auto is_sm64_border_rect =
