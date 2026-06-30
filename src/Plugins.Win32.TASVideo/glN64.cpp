@@ -59,8 +59,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
 
 EXPORT void CALL DllAbout(void *hParent)
 {
-    const auto msg = PLUGIN_NAME "\nPart of the Mupen64 project family.\n\nhttps://github.com/mupen64/TASVideo";
-    MessageBox((HWND)hParent, msg, PLUGIN_NAME, MB_OK | MB_ICONINFORMATION);
+    const auto msg = L"First-party TAS plugin for Mupen64."
+                     L"\n"
+                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                     L"to one version of the emulator."
+                     L"\n\n"
+                     L"https://mupen64.com";
+    MessageBox((HWND)hParent, msg, L"About", MB_OK | MB_ICONINFORMATION);
 }
 
 EXPORT void CALL DllConfig(void *hParent)
