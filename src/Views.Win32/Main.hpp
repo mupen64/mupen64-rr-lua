@@ -8,8 +8,6 @@
 
 #include <components/Dispatcher.hpp>
 
-#define CURRENT_VERSION L"1.5.0"
-
 #define WM_FOCUS_MAIN_WINDOW (WM_USER + 17)
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)
 #define WM_PREDESTROY (WM_USER + 26)
@@ -41,7 +39,6 @@ struct t_main_context
     std::shared_ptr<Dispatcher> dispatcher{};
     bool paused_before_menu{};
     bool in_menu_loop{};
-    bool fullscreen{};
     bool fast_forward{};
     std::filesystem::path app_path{};
     bool exiting{};

@@ -59,8 +59,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
 
 EXPORT void CALL DllAbout(void *hParent)
 {
-    const auto msg = PLUGIN_NAME "\nPart of the Mupen64 project family.\n\nhttps://github.com/mupen64/TASVideo";
-    MessageBox((HWND)hParent, msg, PLUGIN_NAME, MB_OK | MB_ICONINFORMATION);
+    const auto msg = L"First-party TAS plugin for Mupen64."
+                     L"\n"
+                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                     L"to one version of the emulator."
+                     L"\n\n"
+                     L"https://mupen64.com";
+    MessageBox((HWND)hParent, msg, L"About", MB_OK | MB_ICONINFORMATION);
 }
 
 EXPORT void CALL DllConfig(void *hParent)
@@ -72,9 +77,10 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 {
     PluginInfo->ver = 0x100;
     PluginInfo->type = plugin_video;
-    strcpy(PluginInfo->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
+    strcpy_s(PluginInfo->name, sizeof(PluginInfo->name), IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = FALSE;
     PluginInfo->unused_byteswapped = TRUE;
+    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
 }
 
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)

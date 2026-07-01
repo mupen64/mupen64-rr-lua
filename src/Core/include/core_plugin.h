@@ -81,6 +81,13 @@ extern "C"
 
         int32_t unused_normal_memory;
         int32_t unused_byteswapped;
+
+        // --- Zilmar spec struct ends here
+
+        /*
+         * \brief The mupen version this plugin targets. It must be an exact match, or the plugin will be rejected.
+         */
+        char target_version[16];
     } core_plugin_info;
 
     /**
