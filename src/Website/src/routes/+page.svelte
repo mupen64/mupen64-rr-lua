@@ -23,8 +23,8 @@
 				download
 				class="btn"
 			>
-				<span class="material-symbols-sharp">download</span>
-				<p>Download</p>
+				<span class="material-symbols-sharp">window</span>
+				<p>Download for Windows</p>
 			</a>
 		{/snippet}
 	</Hero>
