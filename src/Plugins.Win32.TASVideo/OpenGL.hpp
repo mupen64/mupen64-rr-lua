@@ -24,6 +24,9 @@ struct GLInfo
     BOOL forceBilinear, fog;
 
     float scaleX, scaleY;
+    BOOL adjustScreen;
+    float adjustScale;
+    float adjustOffset;
 
     BOOL EXT_fog_coord;           // TNT, GeForce, Rage 128, Radeon
     BOOL EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon
