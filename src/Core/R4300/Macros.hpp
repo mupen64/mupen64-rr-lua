@@ -77,7 +77,12 @@
 #define core_TagHi reg_cop0[29]
 #define core_ErrorEPC reg_cop0[30]
 
-#define CODE_BLOCK_SIZE 5000
+// NOTE: CODE_BLOCK_SIZE must be large enough to hold the initial NOTCOMPILED stubs
+// for a full 1024-instruction block. Each stub is ~80 bytes, so 1024 * 80 = ~81920 bytes.
+// We use 81920 to avoid excessive realloc_exec churn during init_block, which can
+// lead to use-after-free issues when the old buffer is freed while still referenced
+// by the call stack.
+#define CODE_BLOCK_SIZE 81920
 #define JUMP_TABLE_SIZE 1000
 
 #if defined(_M_X64) || defined(__x86_64__)

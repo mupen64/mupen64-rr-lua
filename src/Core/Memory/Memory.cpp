@@ -63,36 +63,36 @@ uint64_t *rdword;
 static uint32_t trash;
 
 // hash tables of read functions
-void (*readmem[0xFFFF])();
-void (*readmemb[0xFFFF])();
-void (*readmemh[0xFFFF])();
-void (*readmemd[0xFFFF])();
+void (*readmem[0x10000])();
+void (*readmemb[0x10000])();
+void (*readmemh[0x10000])();
+void (*readmemd[0x10000])();
 
 // hash tables of write functions
-void (*writemem[0xFFFF])();
-void (*writememb[0xFFFF])();
-void (*writememd[0xFFFF])();
-void (*writememh[0xFFFF])();
+void (*writemem[0x10000])();
+void (*writememb[0x10000])();
+void (*writememd[0x10000])();
+void (*writememh[0x10000])();
 
 // memory sections
-static uint32_t *readrdramreg[0xFFFF];
-static uint32_t *readrspreg[0xFFFF];
-static uint32_t *readrsp[0xFFFF];
-static uint32_t *readmi[0xFFFF];
-static uint32_t *readvi[0xFFFF];
-static uint32_t *readai[0xFFFF];
-static uint32_t *readpi[0xFFFF];
-static uint32_t *readri[0xFFFF];
-static uint32_t *readsi[0xFFFF];
-static uint32_t *readdp[0xFFFF];
-static uint32_t *readdps[0xFFFF];
+static uint32_t *readrdramreg[0x10000];
+static uint32_t *readrspreg[0x10000];
+static uint32_t *readrsp[0x10000];
+static uint32_t *readmi[0x10000];
+static uint32_t *readvi[0x10000];
+static uint32_t *readai[0x10000];
+static uint32_t *readpi[0x10000];
+static uint32_t *readri[0x10000];
+static uint32_t *readsi[0x10000];
+static uint32_t *readdp[0x10000];
+static uint32_t *readdps[0x10000];
 
 // the frameBufferInfos
 static core_fb_info frameBufferInfos[6];
 static char framebufferRead[0x800];
 static int32_t firstFrameBufferSetting;
 
-static const int32_t MemoryMaxCount = 0xFFFF;
+static const int32_t MemoryMaxCount = 0x10000;
 
 int32_t init_memory()
 {
