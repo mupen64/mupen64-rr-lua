@@ -14,13 +14,7 @@ project(mupen64-rr
 # Options
 # ===========================================
 
-# The dynamic recompiler will not work correctly on x86_64, so it is completely disabled for safety's sake.
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
-
-if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
-  message(STATUS "Target processor ${CMAKE_SYSTEM_PROCESSOR} is incompatible with the dynamic recompiler, disabling...")
-  set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
-endif()
 
 # The Windows view can, of course, only be compiled on Windows.
 # This is in place to allow future frontends to be written separately.
