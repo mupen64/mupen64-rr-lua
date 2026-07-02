@@ -64,7 +64,6 @@ EXPORT void CALL DllAbout(void *hParent)
 
 EXPORT void CALL DllConfig(void *hParent)
 {
-    Config_LoadConfig();
     Config_Show((HWND)hParent);
 }
 
@@ -80,6 +79,8 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 {
+    Config_LoadConfig();
+
     g_tas_ctx.emu_hwnd = (HWND)Gfx_Info.main_hwnd;
     g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
 
