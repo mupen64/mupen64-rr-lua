@@ -17,33 +17,52 @@ struct gamepad_manager_context
 
 static gamepad_manager_context g_ctx;
 
+static SDL_GUID SDL_GetGamepadGUID(SDL_Gamepad *gamepad)
+{
+    const auto joystick = SDL_GetGamepadJoystick(gamepad);
+    return SDL_GetJoystickGUID(joystick);
+}
+
+static SDL_JoystickID SDL_GetGamepadIdFromJoystickGUID(SDL_GUID guid)
+{
+    int32_t count{};
+    const SDL_JoystickID *joy_ids = SDL_GetGamepads(&count);
+    for (int32_t i = 0; i < count; ++i)
+    {
+        if (SDL_GetJoystickGUIDForID(joy_ids[i]) == guid)
+        {
+            SDL_free((void *)joy_ids);
+            return joy_ids[i];
+        }
+    }
+    SDL_free((void *)joy_ids);
+    return 0;
+}
+
 static void refresh_registry()
 {
     g_ctx.reg.devices.clear();
+
+    g_ctx.reg.devices.emplace_back(GamepadManager::InputDevice{
+        .type = GamepadManager::InputDeviceType::Keyboard,
+        .guid = std::nullopt,
+        .name = "Keyboard",
+    });
 
     int32_t count{};
     const SDL_JoystickID *joy_ids = SDL_GetGamepads(&count);
     for (int32_t i = 0; i < count; ++i)
     {
-        const auto joy_id = joy_ids[i];
-        const auto name = SDL_GetJoystickNameForID(joy_id);
+        const auto id = joy_ids[i];
+        const auto name = SDL_GetJoystickNameForID(id);
 
-        GamepadManager::InputDevice dev;
-        dev.type = GamepadManager::InputDeviceType::Gamepad;
-        dev.id = joy_id;
-        dev.name = name;
-
-        g_ctx.reg.devices.emplace_back(dev);
+        g_ctx.reg.devices.emplace_back(GamepadManager::InputDevice{
+            .type = GamepadManager::InputDeviceType::Gamepad,
+            .guid = SDL_GetJoystickGUIDForID(id),
+            .name = name,
+        });
     }
     SDL_free((void *)joy_ids);
-
-    GamepadManager::InputDevice dev;
-    dev.type = GamepadManager::InputDeviceType::Keyboard;
-    dev.id = 0;
-    dev.name = "Keyboard";
-    dev.connected = true;
-
-    g_ctx.reg.devices.emplace_back(std::move(dev));
 }
 
 static void refresh_registry_and_update_gamepad()
@@ -160,7 +179,7 @@ core_buttons GamepadManager::get_input(const size_t i)
 
 void GamepadManager::update_current_gamepad()
 {
-    if (g_ctx.gamepad && SDL_GetGamepadID(g_ctx.gamepad) == new_config.preferred_device_id) return;
+    if (g_ctx.gamepad && SDL_GetGamepadGUID(g_ctx.gamepad) == new_config.preferred_device_guid) return;
 
     if (g_ctx.gamepad)
     {
@@ -168,10 +187,18 @@ void GamepadManager::update_current_gamepad()
         g_ctx.gamepad = nullptr;
     }
 
-    if (new_config.preferred_device_id == 0) return;
-    g_ctx.gamepad = SDL_OpenGamepad(new_config.preferred_device_id - 1);
+    if (!new_config.preferred_device_guid.has_value()) return;
 
-    g_ef->log_info(std::format(L"Opened gamepad {}", new_config.preferred_device_id).c_str());
+    const auto id = SDL_GetGamepadIdFromJoystickGUID(*new_config.preferred_device_guid);
+    if (id == 0)
+    {
+        g_ef->log_error(
+            std::format(L"Failed to find gamepad with GUID {}", new_config.preferred_device_guid->data).c_str());
+        return;
+    }
+
+    g_ctx.gamepad = SDL_OpenGamepad(id);
+    g_ef->log_info(std::format(L"Opened gamepad {}", new_config.preferred_device_guid->data).c_str());
 }
 
 GamepadManager::DeviceRegistry &GamepadManager::device_registry()

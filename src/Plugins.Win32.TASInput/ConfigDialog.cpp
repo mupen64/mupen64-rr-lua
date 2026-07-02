@@ -354,14 +354,12 @@ static void refresh_device_list()
     for (const auto &device : reg.devices)
     {
         ListBox_AddString(g_ctx.devices_hwnd, IOUtils::to_wide_string(device.name).c_str());
-        ListBox_SetItemData(g_ctx.devices_hwnd, ListBox_GetCount(g_ctx.devices_hwnd) - 1, device.id);
     }
 
     for (size_t i = 0; i < ListBox_GetCount(g_ctx.devices_hwnd); i++)
     {
-        const auto data = ListBox_GetItemData(g_ctx.devices_hwnd, i);
-        if (data != new_config.preferred_device_id) continue;
-
+        const auto &device = reg.devices[i];
+        if (device.guid != new_config.preferred_device_guid) continue;
         ListBox_SetCurSel(g_ctx.devices_hwnd, i);
         break;
     }
@@ -467,8 +465,12 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             if (HIWORD(wparam) == LBN_SELCHANGE)
             {
                 const auto index = ListBox_GetCurSel(g_ctx.devices_hwnd);
-                const auto data = ListBox_GetItemData(g_ctx.devices_hwnd, index);
-                new_config.preferred_device_id = data;
+                if (index == LB_ERR) break;
+
+                const auto &reg = GamepadManager::device_registry();
+                const auto &device = reg.devices[index];
+                new_config.preferred_device_guid = device.guid;
+
                 GamepadManager::update_current_gamepad();
             }
             break;

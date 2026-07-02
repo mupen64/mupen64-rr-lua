@@ -13,6 +13,31 @@
 
 const auto AXIS_THRESHOLD = 16000;
 
+inline void to_json(nlohmann::json &j, const SDL_GUID &guid)
+{
+    char buffer[33];
+    SDL_GUIDToString(guid, buffer, sizeof(buffer));
+    j = buffer;
+}
+
+inline void from_json(const nlohmann::json &j, SDL_GUID &guid)
+{
+    if (j.is_string())
+    {
+        std::string guid_str = j.get<std::string>();
+        guid = SDL_StringToGUID(guid_str.c_str());
+    }
+    else
+    {
+        std::memset(&guid, 0, sizeof(guid));
+    }
+}
+
+inline bool operator==(const SDL_GUID &a, const SDL_GUID &b)
+{
+    return std::memcmp(a.data, b.data, sizeof(a.data)) == 0;
+}
+
 struct t_axis_mapping
 {
     int32_t axis = SDL_GAMEPAD_AXIS_INVALID;
@@ -174,7 +199,7 @@ struct t_config
     int32_t relative_mode = false;
     int32_t approach_mode = false;
     t_controller_config controller_config[4]{};
-    uint64_t preferred_device_id{};
+    std::optional<SDL_GUID> preferred_device_guid;
 
     friend void to_json(nlohmann::json &j, const t_config &self)
     {
@@ -189,13 +214,13 @@ struct t_config
             TASINPUT_FIELD(loop_combo),
             TASINPUT_FIELD(relative_mode),
             TASINPUT_FIELD(approach_mode),
+            TASINPUT_FIELD(preferred_device_guid),
         });
         TASINPUT_ARRAY_FIELD(dialog_expanded);
         TASINPUT_ARRAY_FIELD(controller_active);
         TASINPUT_ARRAY_FIELD(controller_mempak);
         TASINPUT_ARRAY_FIELD(controller_rumblepak);
         TASINPUT_ARRAY_FIELD(controller_config);
-        TASINPUT_ARRAY_FIELD(preferred_device_id);
 #undef TASINPUT_FIELD
 #undef TASINPUT_ARRAY_FIELD
     }
@@ -220,7 +245,7 @@ struct t_config
             TASINPUT_FIELD(controller_mempak);
             TASINPUT_FIELD(controller_rumblepak);
             TASINPUT_FIELD(controller_config);
-            TASINPUT_FIELD(preferred_device_id);
+            TASINPUT_FIELD(preferred_device_guid);
         }
 #undef TASINPUT_FIELD
     }

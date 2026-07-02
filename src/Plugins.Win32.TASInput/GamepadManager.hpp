@@ -23,9 +23,8 @@ enum class InputDeviceType
 struct InputDevice
 {
     InputDeviceType type;
-    uint64_t id;
+    std::optional<SDL_GUID> guid;
     std::string name;
-    bool connected = true;
 };
 
 struct DeviceRegistry
