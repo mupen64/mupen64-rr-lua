@@ -100,13 +100,16 @@ target_compile_options(Mupen64RR.Core PRIVATE -Werror=nonportable-include-path)
 if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
 
-    # Select the dynarec backend by target pointer size:
-    #   64-bit target -> R4300/x86_64 (x86-64 recompiler)
-    #   32-bit target -> R4300/x86 (original x86-32 recompiler)
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # Select the dynarec backend by target architecture. The dynarec is
+    # x86-only, so error out on anything else:
+    #   x86-64 -> R4300/x86_64 (x86-64 recompiler)
+    #   x86    -> R4300/x86 (original x86-32 recompiler)
+    if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(AMD64|x86_64)$")
         set(DYNAREC_DIR "R4300/x86_64")
-    else()
+    elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
         set(DYNAREC_DIR "R4300/x86")
+    else()
+        message(FATAL_ERROR "Dynarec is not supported on this platform!")
     endif()
 
     target_sources(Mupen64RR.Core PRIVATE

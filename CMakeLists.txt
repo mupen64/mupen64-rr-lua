@@ -14,6 +14,8 @@ project(mupen64-rr
 # Options
 # ===========================================
 
+# The dynarec only supports x86 and x86_64; building for any other
+# architecture (e.g. ARM64) errors out (see src/Core/CMakeLists.txt).
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
 
 # The Windows view can, of course, only be compiled on Windows.
