@@ -44,7 +44,9 @@
 t_main_context g_main_ctx{};
 
 bool g_frame_changed = true;
+static bool s_sdl_initialized = false;
 
+constexpr UINT_PTR SDL_TIMER_ID = 1;
 MMRESULT g_ui_timer;
 bool g_paused_before_focus;
 bool g_vis_since_input_poll_warning_dismissed;
@@ -473,14 +475,6 @@ void on_movie_loop_changed(std::any data)
     Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
 }
 
-void on_fullscreen_changed(std::any data)
-{
-    g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<bool>(data);
-        ShowCursor(!value);
-    });
-}
-
 void on_config_loaded(std::any)
 {
     RomBrowser::build();
@@ -579,6 +573,14 @@ static t_lua_key_event_args get_base_key_event_args()
     args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
     args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
     return args;
+}
+
+static void CALLBACK sdl_timer_proc(HWND, UINT, UINT_PTR, DWORD)
+{
+    if (!s_sdl_initialized) return;
+
+    SDL_Event e{};
+    while (SDL_PollEvent(&e));
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -742,8 +744,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
+        SetTimer(hwnd, SDL_TIMER_ID, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
+        KillTimer(hwnd, SDL_TIMER_ID);
         PostQuitMessage(0);
         return 0;
     case WM_PREDESTROY:
@@ -828,11 +832,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR)
 {
-    g_main_ctx.dispatcher->invoke([] {
-        SDL_Event e{};
-        while (SDL_PollEvent(&e));
-    });
-
     g_main_ctx.core_ctx->vr_invalidate_visuals();
 
     static std::chrono::high_resolution_clock::time_point last_statusbar_update =
@@ -1072,6 +1071,9 @@ static void enable_mitigations()
     ext.DisableExtensionPoints = 1;
     RT_ASSERT(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
               L"Couldn't set process mitigation policy.");
+
+    BOOL bool_false = FALSE;
+    SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &bool_false, sizeof(BOOL));
 }
 
 /**
@@ -1093,7 +1095,6 @@ static bool is_running_under_wine()
 
 void Main::init_sdl()
 {
-    static bool s_sdl_initialized = false;
     if (!s_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
@@ -1130,7 +1131,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Config::init();
     Config::load();
     main_dispatcher_init();
-    Main::init_sdl();
 
     std::filesystem::create_directories(Config::rom_directory());
     std::filesystem::create_directories(Config::save_directory());
@@ -1191,7 +1191,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe(Messenger::Message::ScriptStarted, on_script_started);
     Messenger::subscribe(Messenger::Message::SpeedModifierChanged, on_speed_modifier_changed);
     Messenger::subscribe(Messenger::Message::LagLimitExceeded, on_vis_since_input_poll_exceeded);
-    Messenger::subscribe(Messenger::Message::FullscreenChanged, on_fullscreen_changed);
     Messenger::subscribe(Messenger::Message::ConfigLoaded, on_config_loaded);
     Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed);
     Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed);
@@ -1243,7 +1242,7 @@ quit:
     timeKillEvent(g_ui_timer);
     Gdiplus::GdiplusShutdown(gdi_plus_token);
     CoUninitialize();
-    SDL_Quit();
+    if (s_sdl_initialized) SDL_Quit();
 
     return (int)msg.wParam;
 }

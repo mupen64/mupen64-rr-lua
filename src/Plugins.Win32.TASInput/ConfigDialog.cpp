@@ -29,6 +29,11 @@ struct config_dialog_context
 
 static config_dialog_context g_ctx;
 
+template <size_t N> static void copy_wide_string(wchar_t (&dst)[N], const wchar_t *src)
+{
+    wcscpy_s(dst, N, src);
+}
+
 static std::wstring virtual_keycode_to_string(int k)
 {
     wchar_t buf2[64]{};
@@ -42,136 +47,136 @@ static std::wstring virtual_keycode_to_string(int k)
         switch (k)
         {
         case VK_LBUTTON:
-            wcscpy(buf2, L"LMB");
+            copy_wide_string(buf2, L"LMB");
             break;
         case VK_RBUTTON:
-            wcscpy(buf2, L"RMB");
+            copy_wide_string(buf2, L"RMB");
             break;
         case VK_MBUTTON:
-            wcscpy(buf2, L"MMB");
+            copy_wide_string(buf2, L"MMB");
             break;
         case VK_XBUTTON1:
-            wcscpy(buf2, L"XMB1");
+            copy_wide_string(buf2, L"XMB1");
             break;
         case VK_XBUTTON2:
-            wcscpy(buf2, L"XMB2");
+            copy_wide_string(buf2, L"XMB2");
             break;
         case VK_SPACE:
-            wcscpy(buf2, L"Space");
+            copy_wide_string(buf2, L"Space");
             break;
         case VK_BACK:
-            wcscpy(buf2, L"Backspace");
+            copy_wide_string(buf2, L"Backspace");
             break;
         case VK_TAB:
-            wcscpy(buf2, L"Tab");
+            copy_wide_string(buf2, L"Tab");
             break;
         case VK_CLEAR:
-            wcscpy(buf2, L"Clear");
+            copy_wide_string(buf2, L"Clear");
             break;
         case VK_RETURN:
-            wcscpy(buf2, L"Enter");
+            copy_wide_string(buf2, L"Enter");
             break;
         case VK_PAUSE:
-            wcscpy(buf2, L"Pause");
+            copy_wide_string(buf2, L"Pause");
             break;
         case VK_CAPITAL:
-            wcscpy(buf2, L"Caps");
+            copy_wide_string(buf2, L"Caps");
             break;
         case VK_PRIOR:
-            wcscpy(buf2, L"PageUp");
+            copy_wide_string(buf2, L"PageUp");
             break;
         case VK_NEXT:
-            wcscpy(buf2, L"PageDn");
+            copy_wide_string(buf2, L"PageDn");
             break;
         case VK_END:
-            wcscpy(buf2, L"End");
+            copy_wide_string(buf2, L"End");
             break;
         case VK_HOME:
-            wcscpy(buf2, L"Home");
+            copy_wide_string(buf2, L"Home");
             break;
         case VK_LEFT:
-            wcscpy(buf2, L"Left");
+            copy_wide_string(buf2, L"Left");
             break;
         case VK_UP:
-            wcscpy(buf2, L"Up");
+            copy_wide_string(buf2, L"Up");
             break;
         case VK_RIGHT:
-            wcscpy(buf2, L"Right");
+            copy_wide_string(buf2, L"Right");
             break;
         case VK_DOWN:
-            wcscpy(buf2, L"Down");
+            copy_wide_string(buf2, L"Down");
             break;
         case VK_SELECT:
-            wcscpy(buf2, L"Select");
+            copy_wide_string(buf2, L"Select");
             break;
         case VK_PRINT:
-            wcscpy(buf2, L"Print");
+            copy_wide_string(buf2, L"Print");
             break;
         case VK_SNAPSHOT:
-            wcscpy(buf2, L"PrintScrn");
+            copy_wide_string(buf2, L"PrintScrn");
             break;
         case VK_INSERT:
-            wcscpy(buf2, L"Insert");
+            copy_wide_string(buf2, L"Insert");
             break;
         case VK_DELETE:
-            wcscpy(buf2, L"Delete");
+            copy_wide_string(buf2, L"Delete");
             break;
         case VK_HELP:
-            wcscpy(buf2, L"Help");
+            copy_wide_string(buf2, L"Help");
             break;
         case VK_MULTIPLY:
-            wcscpy(buf2, L"Num*");
+            copy_wide_string(buf2, L"Num*");
             break;
         case VK_ADD:
-            wcscpy(buf2, L"Num+");
+            copy_wide_string(buf2, L"Num+");
             break;
         case VK_SUBTRACT:
-            wcscpy(buf2, L"Num-");
+            copy_wide_string(buf2, L"Num-");
             break;
         case VK_DECIMAL:
-            wcscpy(buf2, L"Num.");
+            copy_wide_string(buf2, L"Num.");
             break;
         case VK_DIVIDE:
-            wcscpy(buf2, L"Num/");
+            copy_wide_string(buf2, L"Num/");
             break;
         case VK_NUMLOCK:
-            wcscpy(buf2, L"NumLock");
+            copy_wide_string(buf2, L"NumLock");
             break;
         case VK_SCROLL:
-            wcscpy(buf2, L"ScrollLock");
+            copy_wide_string(buf2, L"ScrollLock");
             break;
         case /*VK_OEM_PLUS*/ 0xBB:
-            wcscpy(buf2, L"=+");
+            copy_wide_string(buf2, L"=+");
             break;
         case /*VK_OEM_MINUS*/ 0xBD:
-            wcscpy(buf2, L"-_");
+            copy_wide_string(buf2, L"-_");
             break;
         case /*VK_OEM_COMMA*/ 0xBC:
-            wcscpy(buf2, L",");
+            copy_wide_string(buf2, L",");
             break;
         case /*VK_OEM_PERIOD*/ 0xBE:
-            wcscpy(buf2, L".");
+            copy_wide_string(buf2, L".");
             break;
         case VK_OEM_7:
-            wcscpy(buf2, L"'\"");
+            copy_wide_string(buf2, L"'\"");
             break;
         case VK_OEM_6:
-            wcscpy(buf2, L"]}");
+            copy_wide_string(buf2, L"]}");
             break;
         case VK_OEM_5:
-            wcscpy(buf2, L"\\|");
+            copy_wide_string(buf2, L"\\|");
             break;
         case VK_OEM_4:
-            wcscpy(buf2, L"[{");
+            copy_wide_string(buf2, L"[{");
             break;
         case VK_OEM_3:
-            wcscpy(buf2, L"`~");
+            copy_wide_string(buf2, L"`~");
             break;
         case VK_OEM_2:
-            wcscpy(buf2, L"/?");
+            copy_wide_string(buf2, L"/?");
             break;
         case VK_OEM_1:
-            wcscpy(buf2, L";:");
+            copy_wide_string(buf2, L";:");
             break;
         default:
             wsprintf(buf2, L"(%d)", k);

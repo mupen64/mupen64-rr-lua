@@ -10,7 +10,7 @@
 #include <core_api.h>
 #include <Views.Win32/ViewPlugin.h>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Input", L"1.0.1")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Input")
 
 DUMMY_PLUGIN_STUB_IMPL(plugin_input)
 

@@ -135,6 +135,8 @@ void log_bin(uint32_t pc, uint32_t w)
         REGFPU(((uint8_t)o.r.rs));
         NONE;
         break;
+    case INSTF_COUNT:
+        break;
     }
     write_buf();
 #undef HEX8
@@ -287,6 +289,8 @@ void log(uint32_t pc, uint32_t w)
         break;
     case INSTF_MFC1:
         REGFPU(((uint8_t)o.r.rs));
+        break;
+    case INSTF_COUNT:
         break;
     }
     *(p++) = '\n';

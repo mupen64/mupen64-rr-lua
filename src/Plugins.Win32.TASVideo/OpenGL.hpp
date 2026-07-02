@@ -48,7 +48,6 @@ struct GLInfo
     BYTE triangles[80][3];
     BYTE numTriangles;
     BYTE numVertices;
-    HWND hFullscreenWnd;
 
     BOOL usePolygonStipple;
     GLubyte stipplePattern[32][8][128];

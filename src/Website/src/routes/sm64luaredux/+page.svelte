@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import sm64luaredux from '$lib/assets/sm64luaredux.png';
 	import Hero from '$lib/components/Hero.svelte';
 	import Title from '$lib/components/Title.svelte';
@@ -15,6 +16,16 @@
 		bg_color_to="#dddddd"
 		dark={false}
 	></Hero>
+
+	<div class="pt-16 flex items-center justify-center">
+    	<div class="tip">
+            <p>
+                SM64 Lua Redux shouldn't be downloaded directly.
+                <br>
+                Get it from the <a class="underline" href={resolve('/')}>repack</a> instead.
+            </p>
+	    </div>
+	</div>
 
 	<section id="about" class="mb-12 p-16 pb-0">
 		<div class="mx-auto max-w-6xl">

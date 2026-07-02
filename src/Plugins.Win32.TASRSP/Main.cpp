@@ -10,6 +10,7 @@
 #include "Disasm.hpp"
 
 #define EXPORT __declspec(dllexport)
+#undef CALL
 #define CALL _cdecl
 
 #define UCODE_MARIO (1)
@@ -49,46 +50,6 @@ core_plugin_extended_funcs *g_ef = &ef_shim;
  * \returns Handle to the audio plugin, or nullptr.
  */
 void *plugin_load(const std::filesystem::path &path);
-
-static void handle_unknown_task(const OSTask_t *task, const uint32_t sum)
-{
-    const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum,
-                                     static_cast<void *>(rsp.sp_pc_reg));
-    MessageBox(NULL, message.c_str(), L"unknown task", MB_OK);
-
-    FILE *f;
-
-    if (task->ucode_size <= 0x1000)
-    {
-        f = fopen("imem.dat", "wb");
-        fwrite(rsp.rdram + task->ucode, task->ucode_size, 1, f);
-        fclose(f);
-
-        f = fopen("dmem.dat", "wb");
-        fwrite(rsp.rdram + task->ucode_data, task->ucode_data_size, 1, f);
-        fclose(f);
-
-        f = fopen("disasm.txt", "wb");
-        memcpy(rsp.dmem, rsp.rdram + task->ucode_data, task->ucode_data_size);
-        memcpy(rsp.imem + 0x80, rsp.rdram + task->ucode, 0xF7F);
-        disasm(f, (uint32_t *)(rsp.imem));
-        fclose(f);
-    }
-    else
-    {
-        f = fopen("imem.dat", "wb");
-        fwrite(rsp.imem, 0x1000, 1, f);
-        fclose(f);
-
-        f = fopen("dmem.dat", "wb");
-        fwrite(rsp.dmem, 0x1000, 1, f);
-        fclose(f);
-
-        f = fopen("disasm.txt", "wb");
-        disasm(f, (uint32_t *)(rsp.imem));
-        fclose(f);
-    }
-}
 
 static void audio_ucode_mario()
 {
@@ -259,7 +220,9 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
         }
     }
 
-    handle_unknown_task(task, sum);
+    const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum,
+                                     static_cast<void *>(rsp.sp_pc_reg));
+    MessageBox(NULL, message.c_str(), L"unknown task", MB_OK);
 
     return Cycles;
 }
@@ -303,11 +266,12 @@ BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 
 EXPORT void CALL DllAbout(void *hwnd)
 {
-    const auto msg = PLUGIN_NAME L"\n"
-                                 L"Part of the Mupen64 project family."
-                                 L"\n\n"
-                                 L"https://github.com/mupen64/mupen64-rr-lua";
-
+    const auto msg = L"First-party TAS plugin for Mupen64."
+                     L"\n"
+                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                     L"to one version of the emulator."
+                     L"\n\n"
+                     L"https://mupen64.com";
     MessageBox((HWND)hwnd, msg, L"About", MB_ICONINFORMATION | MB_OK);
 }
 
@@ -318,6 +282,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
     strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = 1;
     PluginInfo->unused_byteswapped = 1;
+    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
 }
 
 EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount)

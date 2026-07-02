@@ -28,7 +28,7 @@ void jpg_uncompress(OSTask_t *task)
     int16_t *data = (int16_t *)(rsp.rdram + task->ucode_data);
     int16_t m[8 * 32];
 
-    if (!task->flags & 1)
+    if ((task->flags & 1) == 0)
     {
         memcpy(&jpg_data, rsp.rdram + task->data_ptr, task->data_size);
         q[0] = (int16_t *)(rsp.rdram + jpg_data.m1);
@@ -253,19 +253,19 @@ void jpg_uncompress(OSTask_t *task)
                 accum = ((int32_t)m[8 * 8 + j] * (int32_t)data[1 ^ S] * 2) + 0x8000 +
                         ((int32_t)m[15 * 8 + j] * (int32_t)data[1 ^ S] * 2);
                 temp1[i * 64 + 0 * 8 + j] = (int16_t)(accum >> 16);
-                temp1[i * 64 + 7 * 8 + j] = (accum + ((int32_t)m[15 * 8 + j] * (int32_t)data[2 ^ S] * 2)) >> 16;
+                temp1[i * 64 + 7 * 8 + j] = (accum + ((int32_t)m[15 * 8 + j] * (int32_t)data[0x2 ^ S] * 2)) >> 16;
                 accum = ((int32_t)m[9 * 8 + j] * (int32_t)data[1 ^ S] * 2) + 0x8000 +
                         ((int32_t)m[14 * 8 + j] * (int32_t)data[1 ^ S] * 2);
                 temp1[i * 64 + 1 * 8 + j] = (int16_t)(accum >> 16);
-                temp1[i * 64 + 6 * 8 + j] = (accum + ((int32_t)m[14 * 8 + j] * (int32_t)data[2 ^ S] * 2)) >> 16;
+                temp1[i * 64 + 6 * 8 + j] = (accum + ((int32_t)m[14 * 8 + j] * (int32_t)data[0x2 ^ S] * 2)) >> 16;
                 accum = ((int32_t)m[10 * 8 + j] * (int32_t)data[1 ^ S] * 2) + 0x8000 +
                         ((int32_t)m[13 * 8 + j] * (int32_t)data[1 ^ S] * 2);
                 temp1[i * 64 + 2 * 8 + j] = (int16_t)(accum >> 16);
-                temp1[i * 64 + 5 * 8 + j] = (accum + ((int32_t)m[13 * 8 + j] * (int32_t)data[2 ^ S] * 2)) >> 16;
+                temp1[i * 64 + 5 * 8 + j] = (accum + ((int32_t)m[13 * 8 + j] * (int32_t)data[0x2 ^ S] * 2)) >> 16;
                 accum = ((int32_t)m[11 * 8 + j] * (int32_t)data[1 ^ S] * 2) + 0x8000 +
                         ((int32_t)m[12 * 8 + j] * (int32_t)data[1 ^ S] * 2);
                 temp1[i * 64 + 3 * 8 + j] = (int16_t)(accum >> 16);
-                temp1[i * 64 + 4 * 8 + j] = (accum + ((int32_t)m[12 * 8 + j] * (int32_t)data[2 ^ S] * 2)) >> 16;
+                temp1[i * 64 + 4 * 8 + j] = (accum + ((int32_t)m[12 * 8 + j] * (int32_t)data[0x2 ^ S] * 2)) >> 16;
             }
         }
 

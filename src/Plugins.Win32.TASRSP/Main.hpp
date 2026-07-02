@@ -12,7 +12,7 @@
 #include <Views.Win32/ViewPlugin.h>
 #include <Resource.h>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP", L"1.2.0")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP")
 
 extern HINSTANCE g_instance;
 extern std::filesystem::path g_app_path;
