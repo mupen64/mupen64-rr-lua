@@ -48,12 +48,6 @@ bool init_rsp_thread()
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
 {
     g_tas_ctx.hinst = hinstDLL;
-
-    if (dwReason == DLL_PROCESS_ATTACH)
-    {
-        Config_LoadConfig();
-    }
-
     return TRUE;
 }
 
@@ -70,6 +64,7 @@ EXPORT void CALL DllAbout(void *hParent)
 
 EXPORT void CALL DllConfig(void *hParent)
 {
+    Config_LoadConfig();
     Config_Show((HWND)hParent);
 }
 
@@ -165,6 +160,7 @@ EXPORT void CALL RomClosed(void)
 
 EXPORT void CALL RomOpen(void)
 {
+    Config_LoadConfig();
     OGL_ResizeWindow();
 }
 
