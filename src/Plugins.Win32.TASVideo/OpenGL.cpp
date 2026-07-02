@@ -107,7 +107,24 @@ void OGL_InitStates()
 
 void OGL_UpdateScale()
 {
-    OGL.scaleX = OGL.width / (float)VI.width;
+    OGL.adjustScreen = FALSE;
+    OGL.adjustScale = 1.0f;
+    OGL.adjustOffset = 0.0f;
+
+    if ((VI.width != 0) && (VI.height != 0) && (OGL.width != 0) && (OGL.height != 0))
+    {
+        const float sourceAspect = (float)VI.width / (float)VI.height;
+        const float displayAspect = (float)OGL.width / (float)OGL.height;
+        if (displayAspect > sourceAspect)
+        {
+            const float targetWidth = (float)OGL.height * sourceAspect;
+            OGL.adjustScale = targetWidth / (float)OGL.width;
+            OGL.adjustOffset = (float)OGL.width * (1.0f - OGL.adjustScale) / 2.0f;
+            OGL.adjustScreen = TRUE;
+        }
+    }
+
+    OGL.scaleX = (OGL.width * OGL.adjustScale) / (float)VI.width;
     OGL.scaleY = OGL.height / (float)VI.height;
 }
 
@@ -241,8 +258,13 @@ void OGL_UpdateCullFace()
 
 void OGL_UpdateViewport()
 {
-    glViewport(gSP.viewport.x * OGL.scaleX, (VI.height - (gSP.viewport.y + gSP.viewport.height)) * OGL.scaleY,
-               gSP.viewport.width * OGL.scaleX, gSP.viewport.height * OGL.scaleY);
+    const float viewportX =
+        OGL.adjustScreen ? OGL.adjustOffset + (gSP.viewport.x * OGL.scaleX) : (gSP.viewport.x * OGL.scaleX);
+    const float viewportY = (VI.height - (gSP.viewport.y + gSP.viewport.height)) * OGL.scaleY;
+    const float viewportWidth = gSP.viewport.width * OGL.scaleX;
+    const float viewportHeight = gSP.viewport.height * OGL.scaleY;
+
+    glViewport((GLint)viewportX, (GLint)viewportY, (GLint)viewportWidth, (GLint)viewportHeight);
     glDepthRange(0.0f, 1.0f); // gSP.viewport.nearz, gSP.viewport.farz );
 }
 
@@ -319,8 +341,13 @@ void OGL_UpdateStates()
 
     if (gDP.changed & CHANGED_SCISSOR)
     {
-        glScissor(gDP.scissor.ulx * OGL.scaleX, (VI.height - gDP.scissor.lry) * OGL.scaleY,
-                  (gDP.scissor.lrx - gDP.scissor.ulx) * OGL.scaleX, (gDP.scissor.lry - gDP.scissor.uly) * OGL.scaleY);
+        const float scissorX =
+            OGL.adjustScreen ? OGL.adjustOffset + (gDP.scissor.ulx * OGL.scaleX) : (gDP.scissor.ulx * OGL.scaleX);
+        const float scissorY = (VI.height - gDP.scissor.lry) * OGL.scaleY;
+        const float scissorWidth = (gDP.scissor.lrx - gDP.scissor.ulx) * OGL.scaleX;
+        const float scissorHeight = (gDP.scissor.lry - gDP.scissor.uly) * OGL.scaleY;
+
+        glScissor((GLint)scissorX, (GLint)scissorY, (GLint)scissorWidth, (GLint)scissorHeight);
     }
 
     if (gSP.changed & CHANGED_VIEWPORT)
@@ -612,7 +639,10 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
-    glViewport(0, 0, OGL.width, OGL.height);
+
+    const float viewportX = OGL.adjustScreen ? OGL.adjustOffset : 0.0f;
+    const float viewportWidth = OGL.adjustScreen ? OGL.width * OGL.adjustScale : (float)OGL.width;
+    glViewport((GLint)viewportX, 0, (GLint)viewportWidth, (GLint)OGL.height);
     glDepthRange(0.0f, 1.0f);
 
     glColor4f(color[0], color[1], color[2], color[3]);
@@ -667,7 +697,10 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
-    glViewport(0, 0, OGL.width, OGL.height);
+
+    const float viewportX = OGL.adjustScreen ? OGL.adjustOffset : 0.0f;
+    const float viewportWidth = OGL.adjustScreen ? OGL.width * OGL.adjustScale : (float)OGL.width;
+    glViewport((GLint)viewportX, 0, (GLint)viewportWidth, (GLint)OGL.height);
 
     if (combiner.usesT0)
     {

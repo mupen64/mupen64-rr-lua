@@ -15,26 +15,33 @@ HWND hConfigDlg;
 
 using nlohmann::json;
 
-struct
+struct ResolutionPreset
 {
-    WORD width{};
-    WORD height{};
-    std::wstring description{};
-} windowedModes[numWindowedModes] = {
-    {320, 240, L"320 x 240"},     {400, 300, L"400 x 300"},     {480, 360, L"480 x 360"},
-    {640, 480, L"640 x 480"},     {800, 600, L"800 x 600"},     {960, 720, L"960 x 720"},
-    {1024, 768, L"1024 x 768"},   {1152, 864, L"1152 x 864"},   {1280, 960, L"1280 x 960"},
-    {1280, 1024, L"1280 x 1024"}, {1440, 1080, L"1440 x 1080"}, {1600, 1200, L"1600 x 1200"}};
+    uint32_t width{};
+    uint32_t height{};
+    std::wstring description;
+};
+
+const std::vector<ResolutionPreset> RESOLUTION_PRESETS = {
+    {320, 240, L"320 x 240 (4:3)"},     {400, 300, L"400 x 300 (4:3)"},      {480, 360, L"480 x 360 (4:3)"},
+    {640, 480, L"640 x 480 (4:3)"},     {800, 600, L"800 x 600 (4:3)"},      {960, 720, L"960 x 720 (4:3)"},
+    {1024, 768, L"1024 x 768 (4:3)"},   {1152, 864, L"1152 x 864 (4:3)"},    {1280, 720, L"1280 x 720 (16:9)"},
+    {1280, 960, L"1280 x 960 (4:3)"},   {1280, 1024, L"1280 x 1024 (5:4)"},  {1440, 1080, L"1440 x 1080 (4:3)"},
+    {1600, 1200, L"1600 x 1200 (4:3)"}, {1920, 1080, L"1920 x 1080 (16:9)"}, {2560, 1440, L"2560 x 1440 (16:9)"},
+    {3840, 2160, L"3840 x 2160 (16:9)"}};
+
+static std::optional<ResolutionPreset> get_preset_by_resolution(uint32_t width, uint32_t height)
+{
+    for (const auto &preset : RESOLUTION_PRESETS)
+    {
+        if (preset.width == width && preset.height == height) return preset;
+    }
+    return std::nullopt;
+}
 
 static std::filesystem::path get_config_path()
 {
     return g_tas_ctx.config_directory / CONFIG_FILE_NAME;
-}
-
-void EnableCustom(HWND hWndDlg, BOOL enable)
-{
-    EnableWindow(GetDlgItem(hWndDlg, IDC_WINDOWED_X), enable);
-    EnableWindow(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), enable);
 }
 
 static void Config_SetDefaults()
@@ -126,20 +133,11 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
     OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
 
-    i = SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_GETCURSEL, 0, 0);
-    if (i == SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWEDRES), CB_GETCOUNT, 0, 0) - 1)
-    {
-        wchar_t val[32]{};
-        SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_X), WM_GETTEXT, std::size(val), (LPARAM)val);
-        OGL.windowedWidth = _wtoi(val);
-        SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), WM_GETTEXT, std::size(val), (LPARAM)val);
-        OGL.windowedHeight = _wtoi(val);
-    }
-    else
-    {
-        OGL.windowedWidth = windowedModes[i].width;
-        OGL.windowedHeight = windowedModes[i].height;
-    }
+    wchar_t val[32]{};
+    SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_X), WM_GETTEXT, std::size(val), (LPARAM)val);
+    OGL.windowedWidth = _wtoi(val);
+    SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), WM_GETTEXT, std::size(val), (LPARAM)val);
+    OGL.windowedHeight = _wtoi(val);
 
     OGL.usePolygonStipple =
         (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
@@ -161,37 +159,37 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     }
 }
 
+static void select_current_resolution_in_combobox(HWND cb_hwnd)
+{
+    for (size_t i = 0; i < RESOLUTION_PRESETS.size(); i++)
+    {
+        const auto &preset = RESOLUTION_PRESETS[i];
+        if (OGL.windowedWidth == preset.width && OGL.windowedHeight == preset.height)
+        {
+            ComboBox_SetCurSel(cb_hwnd, i);
+            return;
+        }
+    }
+}
+
 BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    bool custom = true;
-
     switch (message)
     {
     case WM_INITDIALOG: {
         hConfigDlg = hWndDlg;
 
-        // Fill windowed mode resolution
-        for (int i = 0; i < numWindowedModes; i++)
+        const auto cb_hwnd = GetDlgItem(hWndDlg, IDC_WINDOWEDRES);
+
+        for (const auto &preset : RESOLUTION_PRESETS)
         {
-            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_WINDOWEDRES), windowedModes[i].description.c_str());
-            if ((OGL.windowedWidth == windowedModes[i].width) && (OGL.windowedHeight == windowedModes[i].height))
-            {
-                SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_SETCURSEL, i, 0);
-                custom = false;
-            }
+            ComboBox_AddString(cb_hwnd, preset.description.c_str());
         }
 
-        SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_ADDSTRING, 0, (LPARAM)L"Custom...");
+        select_current_resolution_in_combobox(cb_hwnd);
 
         SendDlgItemMessage(hWndDlg, IDC_WINDOWED_X, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedWidth).c_str());
         SendDlgItemMessage(hWndDlg, IDC_WINDOWED_Y, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedHeight).c_str());
-
-        if (custom)
-        {
-            int num = SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_GETCOUNT, 0, 0) - 1;
-            EnableCustom(hWndDlg, TRUE);
-            SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_SETCURSEL, num, 0);
-        }
 
         SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM)L"None");
         SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM)L"2xSaI");
@@ -238,16 +236,37 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         case IDC_WINDOWEDRES:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {
-                if (SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_GETCURSEL, 0, 0) ==
-                    SendDlgItemMessage(hWndDlg, IDC_WINDOWEDRES, CB_GETCOUNT, 0, 0) - 1)
-                {
-                    EnableCustom(hWndDlg, TRUE);
-                }
-                else
-                {
-                    EnableCustom(hWndDlg, FALSE);
-                }
+                const auto cb_hwnd = (HWND)lParam;
+                const auto index = ComboBox_GetCurSel(cb_hwnd);
+
+                const auto &preset = RESOLUTION_PRESETS[index];
+                Edit_SetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), std::to_wstring(preset.width).c_str());
+                Edit_SetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), std::to_wstring(preset.height).c_str());
             }
+            break;
+        case IDC_WINDOWED_X:
+        case IDC_WINDOWED_Y:
+            if (HIWORD(wParam) == EN_CHANGE)
+            {
+                std::wstring w_str(32, 0);
+                std::wstring h_str(32, 0);
+                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str.data(), w_str.size());
+                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), h_str.data(), h_str.size());
+
+                try
+                {
+                    OGL.windowedWidth = std::stoul(std::wstring(w_str));
+                    OGL.windowedHeight = std::stoul(std::wstring(h_str));
+                }
+                catch (...)
+                {
+                    break;
+                }
+
+                const auto cb_hwnd = GetDlgItem(hWndDlg, IDC_WINDOWEDRES);
+                select_current_resolution_in_combobox(cb_hwnd);
+            }
+            break;
         case IDC_TEXTUREFILTER:
             if (HIWORD(wParam) == CBN_SELCHANGE)
             {

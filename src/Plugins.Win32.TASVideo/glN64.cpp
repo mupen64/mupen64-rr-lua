@@ -48,12 +48,6 @@ bool init_rsp_thread()
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
 {
     g_tas_ctx.hinst = hinstDLL;
-
-    if (dwReason == DLL_PROCESS_ATTACH)
-    {
-        Config_LoadConfig();
-    }
-
     return TRUE;
 }
 
@@ -85,6 +79,8 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 {
+    Config_LoadConfig();
+
     g_tas_ctx.emu_hwnd = (HWND)Gfx_Info.main_hwnd;
     g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
 
@@ -165,6 +161,7 @@ EXPORT void CALL RomClosed(void)
 
 EXPORT void CALL RomOpen(void)
 {
+    Config_LoadConfig();
     OGL_ResizeWindow();
 }
 
