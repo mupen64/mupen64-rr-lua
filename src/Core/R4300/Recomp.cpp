@@ -14,7 +14,11 @@
 #include <R4300/Recomph.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/Tracelog.hpp>
+#if defined(_M_X64) || defined(__x86_64__)
+#include <R4300/x86_64/RegCache.hpp>
+#else
 #include <R4300/x86/RegCache.hpp>
+#endif
 #include <Alloc.hpp>
 
 // global variables :
@@ -2836,6 +2840,36 @@ void init_block(int32_t *source, precomp_block *block)
      * yet as the game should have already set up the code correctly.
      */
     invalid_code[block->start >> 12] = 0;
+
+    // Save emitter state before recursive init_block calls. init_block uses
+    // the file-scoped globals code_length, max_code_length and inst_pointer;
+    // the recursive calls will overwrite all three. We must restore them
+    // afterwards so that any subsequent emission into this block's buffer
+    // (there is none for the initial block, but jump_to_func re-enters
+    // init_block at runtime) uses the correct state.
+    //
+    // IMPORTANT: we must save AND restore inst_pointer itself (not just
+    // *inst_pointer), because the recursive call repoints inst_pointer at
+    // the child's &childblock->code. Restoring *inst_pointer would write
+    // into the child's code field and corrupt it.
+    // These globals (code_length, max_code_length, inst_pointer) are only used
+    // and initialized on the dynarec path (see the `if (dynacore)` block above).
+    // In the cached/pure interpreter, inst_pointer is never set, so dereferencing
+    // *inst_pointer here would fault. Only save/restore when the dynarec is active.
+    int32_t saved_code_length = 0;
+    int32_t saved_max_code_length = 0;
+    unsigned char **saved_inst_pointer = NULL;
+    unsigned char *saved_code_ptr = NULL;
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+    if (dynacore)
+    {
+        saved_code_length = code_length;
+        saved_max_code_length = max_code_length;
+        saved_inst_pointer = inst_pointer;
+        saved_code_ptr = *inst_pointer;
+    }
+#endif
+
     if (block->end < 0x80000000 || block->start >= 0xc0000000)
     {
         uint32_t paddr;
@@ -2895,6 +2929,19 @@ void init_block(int32_t *source, precomp_block *block)
             init_block(0, blocks[(block->start - 0x20000000) >> 12]);
         }
     }
+
+    // Restore emitter state so this block's code_length/max_code_length
+    // reflect its own code buffer, not the recursive child's. Dynarec-only
+    // (see the matching guarded save above).
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+    if (dynacore)
+    {
+        code_length = saved_code_length;
+        max_code_length = saved_max_code_length;
+        inst_pointer = saved_inst_pointer;
+        *inst_pointer = saved_code_ptr;
+    }
+#endif
 }
 
 /**********************************************************************

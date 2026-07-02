@@ -38,14 +38,14 @@ extern unsigned char g_byte;
 extern uint16_t hword;
 extern uint64_t dword, *rdword;
 
-extern void (*readmem[0xFFFF])();
-extern void (*readmemb[0xFFFF])();
-extern void (*readmemh[0xFFFF])();
-extern void (*readmemd[0xFFFF])();
-extern void (*writemem[0xFFFF])();
-extern void (*writememb[0xFFFF])();
-extern void (*writememh[0xFFFF])();
-extern void (*writememd[0xFFFF])();
+extern void (*readmem[0x10000])();
+extern void (*readmemb[0x10000])();
+extern void (*readmemh[0x10000])();
+extern void (*readmemd[0x10000])();
+extern void (*writemem[0x10000])();
+extern void (*writememb[0x10000])();
+extern void (*writememh[0x10000])();
+extern void (*writememd[0x10000])();
 
 extern core_rdram_reg rdram_register;
 extern core_pi_reg pi_register;

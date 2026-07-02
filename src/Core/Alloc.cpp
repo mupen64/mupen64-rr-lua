@@ -26,15 +26,26 @@
 
 #if defined(__linux__)
 static std::mutex page_size_map_lock;
-static std::unordered_map<void *, size_t> page_alloc_sizes;
+static std::unordered_map<void*, size_t> page_alloc_sizes;
 #endif
 
-void *malloc_exec(size_t size)
+// Buffers that have been superseded by realloc_exec but cannot be freed yet because
+// emitted code may still contain absolute pointers into them (jump targets, call
+// destinations, thunks). They are freed en masse when the emulator core shuts down.
+// This is safe because:
+//  - Each buffer is small (typically 80KB-128KB)
+//  - The number of superseded buffers is bounded by the number of block recompilations
+//  - Old code from a superseded buffer is never entered: once a block is recompiled,
+//    all execution paths redirect to the new buffer
+static std::vector<void*> deferred_free_list;
+static std::mutex deferred_free_mutex;
+
+void* malloc_exec(size_t size)
 {
 #ifdef _WIN32
     return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 #elif defined(__linux__)
-    void *block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    void* block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (block == MAP_FAILED) return NULL;
 
     // allocation succeeded
@@ -48,20 +59,29 @@ void *malloc_exec(size_t size)
 #endif
 }
 
-void *realloc_exec(void *ptr, size_t oldsize, size_t newsize)
+void* realloc_exec(void* ptr, size_t oldsize, size_t newsize)
 {
-    void *block = malloc_exec(newsize);
+    void* block = malloc_exec(newsize);
     if (block != NULL)
     {
         size_t copysize;
         copysize = (oldsize < newsize) ? oldsize : newsize;
         memcpy(block, ptr, copysize);
     }
-    free_exec(ptr);
+    // DO NOT free the old buffer here. Emitted code (thunks, wrappers, call
+    // targets) may contain absolute pointers computed against the *old* base
+    // address. Freeing the old buffer would decommit those pages, and subsequent
+    // execution through those pointers would hit non-executable memory.
+    //
+    // Instead, defer the free until core shutdown.
+    {
+        std::scoped_lock lock(deferred_free_mutex);
+        deferred_free_list.push_back(ptr);
+    }
     return block;
 }
 
-void free_exec(void *ptr)
+void free_exec(void* ptr)
 {
 #ifdef _WIN32
     VirtualFree(ptr, 0, MEM_RELEASE);
@@ -80,4 +100,16 @@ void free_exec(void *ptr)
 #else
 #error "free_exec not implemented for this platform"
 #endif
+}
+
+void free_all_deferred_exec_buffers()
+{
+    std::scoped_lock lock(deferred_free_mutex);
+
+    for (void* ptr : deferred_free_list)
+    {
+        free_exec(ptr);
+    }
+    deferred_free_list.clear();
+    deferred_free_list.shrink_to_fit();
 }

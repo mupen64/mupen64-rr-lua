@@ -6,7 +6,11 @@
 
 #pragma once
 
+#if defined(_M_X64) || defined(__x86_64__)
+#include <R4300/x86_64/Assemble.hpp>
+#else
 #include <R4300/x86/Assemble.hpp>
+#endif
 
 typedef struct _precomp_instr
 {
