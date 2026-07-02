@@ -7,8 +7,6 @@
 // ReSharper disable CppInconsistentNaming
 #pragma once
 
-#include "core_plugin.h"
-
 /**
  * An enum containing results that can be returned by the core.
  */
