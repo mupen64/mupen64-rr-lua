@@ -43,9 +43,6 @@ add_library(Mupen64RR.Core STATIC
     "R4300/Timers.hpp"
     "R4300/Tracelog.hpp"
     "R4300/VCR.hpp"
-    "R4300/x86/Assemble.hpp"
-    "R4300/x86/Gcop1Helpers.hpp"
-    "R4300/x86/RegCache.hpp"
 
     "Core.cpp"
     "Alloc.cpp"
@@ -102,22 +99,35 @@ target_compile_options(Mupen64RR.Core PRIVATE -Werror=nonportable-include-path)
 # options: disable dynarec
 if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
+
+    # Select the dynarec backend by target pointer size:
+    #   64-bit target -> R4300/x86_64 (x86-64 recompiler)
+    #   32-bit target -> R4300/x86 (original x86-32 recompiler)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(DYNAREC_DIR "R4300/x86_64")
+    else()
+        set(DYNAREC_DIR "R4300/x86")
+    endif()
+
     target_sources(Mupen64RR.Core PRIVATE
-        "R4300/x86/Assemble.cpp"
-        "R4300/x86/GBc.cpp"
-        "R4300/x86/GCop0.cpp"
-        "R4300/x86/GCop1.cpp"
-        "R4300/x86/GCop1D.cpp"
-        "R4300/x86/GCop1Helpers.cpp"
-        "R4300/x86/GCop1L.cpp"
-        "R4300/x86/GCop1S.cpp"
-        "R4300/x86/GCop1W.cpp"
-        "R4300/x86/GR4300.cpp"
-        "R4300/x86/GRegImm.cpp"
-        "R4300/x86/GSpecial.cpp"
-        "R4300/x86/GTLB.cpp"
-        "R4300/x86/RegCache.cpp"
-        "R4300/x86/RJump.cpp"
+        "${DYNAREC_DIR}/Assemble.hpp"
+        "${DYNAREC_DIR}/Gcop1Helpers.hpp"
+        "${DYNAREC_DIR}/RegCache.hpp"
+        "${DYNAREC_DIR}/Assemble.cpp"
+        "${DYNAREC_DIR}/GBc.cpp"
+        "${DYNAREC_DIR}/GCop0.cpp"
+        "${DYNAREC_DIR}/GCop1.cpp"
+        "${DYNAREC_DIR}/GCop1D.cpp"
+        "${DYNAREC_DIR}/GCop1Helpers.cpp"
+        "${DYNAREC_DIR}/GCop1L.cpp"
+        "${DYNAREC_DIR}/GCop1S.cpp"
+        "${DYNAREC_DIR}/GCop1W.cpp"
+        "${DYNAREC_DIR}/GR4300.cpp"
+        "${DYNAREC_DIR}/GRegImm.cpp"
+        "${DYNAREC_DIR}/GSpecial.cpp"
+        "${DYNAREC_DIR}/GTLB.cpp"
+        "${DYNAREC_DIR}/RegCache.cpp"
+        "${DYNAREC_DIR}/RJump.cpp"
     )
 endif()
 
