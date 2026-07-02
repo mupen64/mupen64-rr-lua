@@ -4,6 +4,24 @@
 	import demo from '$lib/assets/demo.png';
 	import Hero from '$lib/components/Hero.svelte';
 	import Title from '$lib/components/Title.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+
+	function handle_download(event: MouseEvent) {
+			event.preventDefault();
+
+			const download_url = "https://github.com/mupen64/repack/archive/refs/heads/main.zip";
+
+			const iframe = document.createElement('iframe');
+			iframe.style.display = 'none';
+			iframe.src = download_url;
+			document.body.appendChild(iframe);
+
+			setTimeout(() => {
+				goto(resolve('/docs/win/1.%20Getting-Started'));
+				setTimeout(() => iframe.remove(), 1000);
+			}, 300);
+		}
 </script>
 
 <main>
@@ -18,14 +36,13 @@
 		dark={true}
 	>
 		{#snippet button()}
-			<a
-				href="https://github.com/mupen64/repack/archive/refs/heads/main.zip"
-				download
-				class="btn"
-			>
-				<span class="material-symbols-sharp">download</span>
-				<p>Download</p>
-			</a>
+	  	<a
+			href="#"
+			class="btn"
+			onclick={handle_download}>
+			<span class="material-symbols-sharp">window</span>
+			<p>Download for Windows</p>
+			    </a>
 		{/snippet}
 	</Hero>
 
