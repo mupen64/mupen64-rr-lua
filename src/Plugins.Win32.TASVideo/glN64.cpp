@@ -12,7 +12,7 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-static core_plugin_extended_funcs ef_shim = ViewPluginHelpers::get_core_plugin_extended_funcs_shim();
+static core_plugin_extended_funcs ef_shim{};
 
 core_plugin_extended_funcs *g_ef = &ef_shim;
 
@@ -48,12 +48,6 @@ bool init_rsp_thread()
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
 {
     g_tas_ctx.hinst = hinstDLL;
-
-    if (dwReason == DLL_PROCESS_ATTACH)
-    {
-        Config_LoadConfig();
-    }
-
     return TRUE;
 }
 
@@ -85,6 +79,11 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 {
+    g_ef = Gfx_Info.extended_funcs;
+    g_tas_ctx.config_directory = ViewPluginHelpers::get_config_path(g_ef);
+
+    Config_LoadConfig();
+
     g_tas_ctx.emu_hwnd = (HWND)Gfx_Info.main_hwnd;
     g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
 
@@ -133,12 +132,6 @@ EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
     return TRUE;
 }
 
-EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
-{
-    g_ef = funcs;
-    g_tas_ctx.config_directory = ViewPluginHelpers::get_config_path(g_ef);
-}
-
 EXPORT void CALL ProcessDList(void)
 {
     if (RSP.thread)
@@ -165,6 +158,7 @@ EXPORT void CALL RomClosed(void)
 
 EXPORT void CALL RomOpen(void)
 {
+    Config_LoadConfig();
     OGL_ResizeWindow();
 }
 

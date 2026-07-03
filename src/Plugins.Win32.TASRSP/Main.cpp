@@ -40,7 +40,7 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-static core_plugin_extended_funcs ef_shim = ViewPluginHelpers::get_core_plugin_extended_funcs_shim();
+static core_plugin_extended_funcs ef_shim{};
 
 core_plugin_extended_funcs *g_ef = &ef_shim;
 
@@ -255,7 +255,6 @@ BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
     case DLL_PROCESS_ATTACH:
         g_instance = hinst;
         g_app_path = get_app_full_path();
-        config_load();
         break;
     default:
         break;
@@ -287,7 +286,10 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount)
 {
+    g_ef = Rsp_Info.extended_funcs;
+    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
     rsp = Rsp_Info;
+    config_load();
 }
 
 EXPORT void CALL RomClosed()
@@ -298,10 +300,4 @@ EXPORT void CALL RomClosed()
 EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
 {
     return do_rsp_cycles(Cycles);
-}
-
-EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
-{
-    g_ef = funcs;
-    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
 }

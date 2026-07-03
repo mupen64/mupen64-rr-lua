@@ -94,12 +94,6 @@ EXPORT void CALL CloseDLL(void)
     if (g_backend.has_value()) g_backend.reset();
 }
 
-EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *g_fwd_funcs)
-{
-    g_ef = g_fwd_funcs;
-    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
-}
-
 EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 {
     PluginInfo->unused_byteswapped = TRUE;
@@ -112,6 +106,9 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 
 EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 {
+    g_ef = Audio_Info.extended_funcs;
+    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
+
     g_audio_info.emplace(Audio_Info);
 
     try
