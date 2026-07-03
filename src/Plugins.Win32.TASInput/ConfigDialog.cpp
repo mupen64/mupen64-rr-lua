@@ -322,6 +322,7 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
         break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
+        if (new_config.preferred_device_guid.has_value()) break;
 
         if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
         {
