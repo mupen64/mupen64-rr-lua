@@ -691,6 +691,21 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
         plugins.emplace_back(std::move(plugin));
     }
 
+    // Special case: plugins are present but not in the plugin directory
+    for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
+                             g_config.selected_input_plugin, g_config.selected_rsp_plugin})
+    {
+        auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) { return pair.first == file; });
+        if(it != results.end()) continue;
+
+        auto [result, plugin] = Plugin::create(file);
+
+        results.emplace_back(file, result);
+        if (!result.empty()) continue;
+
+        plugins.emplace_back(std::move(plugin));
+    }
+
     return t_plugin_discovery_result{
         .plugins = std::move(plugins),
         .results = results,
