@@ -699,6 +699,19 @@ extern "C"
          */
         std::function<void(std::vector<uint8_t> &buffer)> st_get_undo_savestate;
 
+        /**
+         * \brief Begins a parity/desync hashing run (issue #407). While active, a clean, sync-only savestate is
+         * hashed every `interval` movie playback samples; the running and per-checkpoint hashes are logged when the
+         * movie ends. Intended for comparing two builds by diffing the logged hashes externally.
+         * \param interval Sample interval between checkpoints. Values below 1 are clamped to 1.
+         */
+        std::function<void(int32_t interval)> st_hash_start;
+
+        /**
+         * \brief Gets whether a parity/desync hashing run is currently active.
+         */
+        std::function<bool()> st_hash_active;
+
 #pragma endregion
 
 #pragma region Debugger

@@ -26,6 +26,8 @@ struct t_cli_params
     std::filesystem::path avi{};
     bool close_on_movie_end{};
     bool wait_for_debugger{};
+    bool state_hash{};
+    int32_t state_hash_interval{10};
 };
 
 struct t_cli_state
@@ -49,6 +51,8 @@ static void log_cli_params(const t_cli_params &params)
     g_view_logger->trace("  avi: {}", params.avi.string());
     g_view_logger->trace("  close_on_movie_end: {}", params.close_on_movie_end);
     g_view_logger->trace("  wait_for_debugger: {}", params.wait_for_debugger);
+    g_view_logger->trace("  state_hash: {}", params.state_hash);
+    g_view_logger->trace("  state_hash_interval: {}", params.state_hash_interval);
 }
 
 static void start_rom()
@@ -74,6 +78,11 @@ static void start_rom()
 static void play_movie()
 {
     if (cli_params.m64.empty()) return;
+
+    if (cli_params.state_hash)
+    {
+        g_main_ctx.core_ctx->st_hash_start(cli_params.state_hash_interval);
+    }
 
     g_config.core.vcr_readonly = true;
     auto result = g_main_ctx.core_ctx->vcr_start_playback(cli_params.m64);
@@ -133,6 +142,13 @@ static void on_movie_playback_stop()
             if (!result) return;
             PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
         });
+        return;
+    }
+
+    // A --state-hash run has no capture to flush: close directly now that the movie (and hashing) has ended.
+    if (cli_params.state_hash)
+    {
+        PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
     }
 }
 
@@ -212,6 +228,14 @@ void CLI::init()
     cli_params.avi = cmdl({"--avi", "-avi"}, "").str();
     cli_params.close_on_movie_end = cmdl["--close-on-movie-end"];
     cli_params.wait_for_debugger = cmdl["--wait-for-debugger"] || cmdl["--d"];
+    cli_params.state_hash = cmdl["--state-hash"];
+    cmdl({"--state-hash-interval"}, 10) >> cli_params.state_hash_interval;
+
+    // The parity hash is finalized and logged at movie end, so close afterwards to make the run self-terminating.
+    if (cli_params.state_hash)
+    {
+        cli_params.close_on_movie_end = true;
+    }
 
     if (cli_params.wait_for_debugger)
     {
