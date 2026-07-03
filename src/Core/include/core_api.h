@@ -11,6 +11,7 @@
 #pragma once
 
 #include "core_types.h"
+#include "core_plugin.h"
 
 #ifdef __cplusplus
 extern "C"

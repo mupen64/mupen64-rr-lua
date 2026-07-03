@@ -26,61 +26,11 @@
 
 extern "C"
 {
-    /**
-     * \brief Exposes an extended set of functions to plugins.
-     */
-    struct core_plugin_extended_funcs
-    {
-        /**
-         * \brief Size of the structure in bytes.
-         */
-        uint32_t size;
-
-        /**
-         * \brief Logs the specified message at the trace level.
-         */
-        void (*log_trace)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the info level.
-         */
-        void (*log_info)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the warning level.
-         */
-        void (*log_warn)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the error level.
-         */
-        void (*log_error)(const wchar_t *);
-
-        /**
-         * \brief Gets the effective speed mode.
-         * \return The current effective speed mode.
-         */
-        CoreSpeedMode (*get_effective_speed_mode)();
-
-        /**
-         * @brief Gets the path to the configuration directory, as a UTF-8 string.
-         *
-         * Writes the path to the configuration directory to `data`, provided that there is
-         * enough space for path and terminating null character (up to `len`). Returns the
-         * number of characters written (including the terminating null), or 0 if the buffer
-         * wasn't big enough.
-         *
-         * If `data` is null, returns the expected size of the buffer.
-         */
-        size_t (*config_path)(char *data, size_t len);
-    };
-
     typedef void(CALL *CLOSEDLL)();
     typedef void(CALL *DLLABOUT)(void *);
     typedef void(CALL *DLLCONFIG)(void *);
     typedef void(CALL *DLLTEST)(void *);
     typedef void(CALL *GETDLLINFO)(core_plugin_info *);
-    typedef void(CALL *RECEIVEEXTENDEDFUNCS)(core_plugin_extended_funcs *);
 
     typedef void(CALL *CHANGEWINDOW)();
     typedef int32_t(CALL *INITIATEGFX)(core_gfx_info);
@@ -113,12 +63,6 @@ extern "C"
     EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo);
     EXPORT void CALL RomClosed(void);
     EXPORT void CALL RomOpen(void);
-    /**
-     * Called by the core to provide the plugin with a set of extended functions.
-     * The plugin can store this pointer for use throughout its lifetime.
-     * This function is called before the plugin-specific InitiateXXX function.
-     */
-    EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *);
 
 #pragma endregion
 
@@ -186,30 +130,6 @@ extern "C"
  */
 namespace ViewPluginHelpers
 {
-/**
- * \brief Returns an `core_plugin_extended_funcs` with default implementations.
- */
-inline core_plugin_extended_funcs get_core_plugin_extended_funcs_shim()
-{
-    core_plugin_extended_funcs funcs = {};
-    const auto log = [](const wchar_t *str) { wprintf(str); };
-    funcs.size = sizeof(core_plugin_extended_funcs);
-    funcs.log_trace = log;
-    funcs.log_info = log;
-    funcs.log_warn = log;
-    funcs.log_error = log;
-    funcs.get_effective_speed_mode = []() { return CoreSpeedMode::Normal; };
-    funcs.config_path = [](char *data, size_t len) -> size_t {
-        // return the empty null-terminated string
-        if (data == nullptr) return 1;
-        if (len < 1) return 0;
-
-        data[0] = '\0';
-        return 1;
-    };
-    return funcs;
-}
-
 /**
  * @brief Gets the config path as a `std::filesystem::path` from a `core_plugin_extended_funcs`.
  */
