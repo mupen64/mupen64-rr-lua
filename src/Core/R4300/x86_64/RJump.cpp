@@ -81,7 +81,26 @@ static unsigned char* jump_thunk_buf()
 
 void dyna_jump()
 {
-    bool need_map = PC->reg_cache_infos.need_map;
+    // PC may be a STALE pointer into a superseded precomp_instr array: an older
+    // compilation of this page that was invalidated and recompiled into a fresh
+    // block->block array + a new (smaller) code buffer. The old array is kept alive
+    // by the deferred_free_list, so PC still dereferences — but its ->local_addr,
+    // ->need_map and ->jump_wrapper describe the OLD compilation.
+    //
+    // The buffer we actually jump into is the CURRENT block's ->code
+    // (blocks[PC->addr >> 12]->code). Pairing that with the stale PC->local_addr
+    // overruns the new buffer (old local_addr > new code_length) and lands in
+    // non-executable memory → DEP fault ("execute non-executable address").
+    //
+    // Re-derive the instruction from the CURRENT block for this PC->addr so that
+    // code, local_addr, need_map and jump_wrapper all come from the same live
+    // compilation (mirrors jump_to_func's `PC = actual->block + ((addr-start)>>2)`).
+    // For a freshly-invalidated block this yields a NOTCOMPILED stub
+    // (local_addr == 0), so we jump to block->code + 0 and recompilation kicks in.
+    precomp_block* block = blocks[PC->addr >> 12];
+    precomp_instr* cur = block->block + ((PC->addr - block->start) >> 2);
+
+    bool need_map = cur->reg_cache_infos.need_map;
 
     unsigned char* p = jump_thunk_buf();
     unsigned char* thunk_addr = p;  // Save start address for patching return_address
@@ -95,7 +114,7 @@ void dyna_jump()
         // stable (it lives inside the persistent precomp_instr struct). Baking
         // it absolutely is safe. The wrapper's own prologue does sub rsp,8, so
         // we enter it with the original RSP, which is what it expects.
-        uintptr_t target = (uintptr_t)(PC->reg_cache_infos.jump_wrapper);
+        uintptr_t target = (uintptr_t)(cur->reg_cache_infos.jump_wrapper);
 
         // mov r11, imm64(target)   (49 BB <8 bytes>)
         *p++ = 0x49; *p++ = 0xBB;
@@ -115,14 +134,12 @@ void dyna_jump()
         // superseded (deferred-freed) buffer at a stale offset — landing in
         // zeroed/abandoned memory. Instead compute the target at RUNTIME from
         // the live struct fields, whose *addresses* are stable (both the block
-        // object and PC persist). This mirrors build_wrapper.
+        // object and the current instr persist). This mirrors build_wrapper.
         //
-        // PC->local_addr is an offset into the buffer of the block that CONTAINS
-        // PC — blocks[PC->addr >> 12], not the global `actual` (which lags after
-        // direct patched cross-block jumps that bypass jump_to_func).
-        precomp_block* block = blocks[PC->addr >> 12];
+        // cur->local_addr is an offset into the CURRENT block's code buffer
+        // (blocks[PC->addr >> 12]->code), so the two are always consistent.
         uintptr_t p_code = (uintptr_t)&block->code;
-        uintptr_t p_local = (uintptr_t)&PC->local_addr;
+        uintptr_t p_local = (uintptr_t)&cur->local_addr;
 
         // mov r10, imm64(&block->code)   (49 BA <8 bytes>)
         *p++ = 0x49; *p++ = 0xBA;
