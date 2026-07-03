@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "core_types.h"
+
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
 #define CALL __cdecl
@@ -55,6 +57,50 @@ extern "C"
         plugin_input = 4,
         plugin_rsp = 1,
     } core_plugin_type;
+
+    /**
+     * \brief Exposes an extended set of functions to plugins.
+     */
+    struct core_plugin_extended_funcs
+    {
+        /**
+         * \brief Logs the specified message at the trace level.
+         */
+        void (*log_trace)(const wchar_t *);
+
+        /**
+         * \brief Logs the specified message at the info level.
+         */
+        void (*log_info)(const wchar_t *);
+
+        /**
+         * \brief Logs the specified message at the warning level.
+         */
+        void (*log_warn)(const wchar_t *);
+
+        /**
+         * \brief Logs the specified message at the error level.
+         */
+        void (*log_error)(const wchar_t *);
+
+        /**
+         * \brief Gets the effective speed mode.
+         * \return The current effective speed mode.
+         */
+        CoreSpeedMode (*get_effective_speed_mode)();
+
+        /**
+         * @brief Gets the path to the configuration directory, as a UTF-8 string.
+         *
+         * Writes the path to the configuration directory to `data`, provided that there is
+         * enough space for path and terminating null character (up to `len`). Returns the
+         * number of characters written (including the terminating null), or 0 if the buffer
+         * wasn't big enough.
+         *
+         * If `data` is null, returns the expected size of the buffer.
+         */
+        size_t (*config_path)(char *data, size_t len);
+    };
 
     /**
      * \brief Describes generic information about a plugin.
@@ -137,6 +183,14 @@ extern "C"
         uint32_t *vi_x_scale_reg;
         uint32_t *vi_y_scale_reg;
         void(CALL *check_interrupts)(void);
+
+        // --- Zilmar spec struct ends here
+
+        /**
+         * \brief Pointer to extended functions provided by Mupen.
+         * \remarks **Unstable API** might change frequently.
+         */
+        core_plugin_extended_funcs *extended_funcs;
     } core_gfx_info;
 
     /**
@@ -159,6 +213,14 @@ extern "C"
         uint32_t *ai_dacrate_reg;
         uint32_t *ai_bitrate_reg;
         void(CALL *check_interrupts)(void);
+
+        // --- Zilmar spec struct ends here
+
+        /**
+         * \brief Pointer to extended functions provided by Mupen.
+         * \remarks **Unstable API** might change frequently.
+         */
+        core_plugin_extended_funcs *extended_funcs;
     } core_audio_info;
 
     /**
@@ -171,6 +233,14 @@ extern "C"
         int32_t byteswapped;
         uint8_t *header;
         core_controller *controllers;
+
+        // --- Zilmar spec struct ends here
+
+        /**
+         * \brief Pointer to extended functions provided by Mupen.
+         * \remarks **Unstable API** might change frequently.
+         */
+        core_plugin_extended_funcs *extended_funcs;
     } core_input_info;
 
     /**
@@ -206,6 +276,14 @@ extern "C"
         void(CALL *process_alist_list)(void);
         void(CALL *process_rdp_list)(void);
         void(CALL *show_cfb)(void);
+
+        // --- Zilmar spec struct ends here
+
+        /**
+         * \brief Pointer to extended functions provided by Mupen.
+         * \remarks **Unstable API** might change frequently.
+         */
+        core_plugin_extended_funcs *extended_funcs;
     } core_rsp_info;
 
     /**

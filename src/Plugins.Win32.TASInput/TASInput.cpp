@@ -242,7 +242,7 @@ EXPORT void CALL DllConfig(void *hParent)
 
 EXPORT void CALL GetDllInfo(core_plugin_info *info)
 {
-    info->ver = 0x0100;
+    info->ver = 0x0101;
     info->type = plugin_input;
     strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));
     std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);
@@ -990,23 +990,19 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return FALSE;
 }
 
-EXPORT void CALL InitiateControllers(void *hMainWindow, core_controller Controls[4])
+EXPORT void CALL InitiateControllers(core_input_info info)
 {
-    emulator_hwnd = (HWND)hMainWindow;
+    g_ef = info.extended_funcs;
+    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
+    emulator_hwnd = (HWND)info.main_hwnd;
 
     for (int i = 0; i < 4; ++i)
     {
-        Controls[i].Present = new_config.controller_active[i];
-        Controls[i].RawData = false;
-        Controls[i].Plugin = ce_none;
-        if (new_config.controller_mempak[i])
-        {
-            Controls[i].Plugin |= ce_mempak;
-        }
-        if (new_config.controller_rumblepak[i])
-        {
-            Controls[i].Plugin |= ce_rumblepak;
-        }
+        info.controllers[i].Present = new_config.controller_active[i];
+        info.controllers[i].RawData = false;
+        info.controllers[i].Plugin = ce_none;
+        if (new_config.controller_mempak[i]) info.controllers[i].Plugin |= ce_mempak;
+        if (new_config.controller_rumblepak[i]) info.controllers[i].Plugin |= ce_rumblepak;
     }
 }
 

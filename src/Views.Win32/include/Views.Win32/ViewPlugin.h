@@ -26,49 +26,11 @@
 
 extern "C"
 {
-    /**
-     * \brief Exposes an extended set of functions to plugins.
-     */
-    struct core_plugin_extended_funcs
-    {
-        /**
-         * \brief Size of the structure in bytes.
-         */
-        uint32_t size;
-
-        /**
-         * \brief Logs the specified message at the trace level.
-         */
-        void (*log_trace)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the info level.
-         */
-        void (*log_info)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the warning level.
-         */
-        void (*log_warn)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the error level.
-         */
-        void (*log_error)(const wchar_t *);
-
-        /**
-         * \brief Gets the effective speed mode.
-         * \return The current effective speed mode.
-         */
-        CoreSpeedMode (*get_effective_speed_mode)();
-    };
-
     typedef void(CALL *CLOSEDLL)();
     typedef void(CALL *DLLABOUT)(void *);
     typedef void(CALL *DLLCONFIG)(void *);
     typedef void(CALL *DLLTEST)(void *);
     typedef void(CALL *GETDLLINFO)(core_plugin_info *);
-    typedef void(CALL *RECEIVEEXTENDEDFUNCS)(core_plugin_extended_funcs *);
 
     typedef void(CALL *CHANGEWINDOW)();
     typedef int32_t(CALL *INITIATEGFX)(core_gfx_info);
@@ -101,12 +63,6 @@ extern "C"
     EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo);
     EXPORT void CALL RomClosed(void);
     EXPORT void CALL RomOpen(void);
-    /**
-     * Called by the core to provide the plugin with a set of extended functions.
-     * The plugin can store this pointer for use throughout its lifetime.
-     * This function is called before the plugin-specific InitiateXXX function.
-     */
-    EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *);
 
 #pragma endregion
 
@@ -175,18 +131,19 @@ extern "C"
 namespace ViewPluginHelpers
 {
 /**
- * \brief Returns an `core_plugin_extended_funcs` with default implementations.
+ * @brief Gets the config path as a `std::filesystem::path` from a `core_plugin_extended_funcs`.
  */
-inline core_plugin_extended_funcs get_core_plugin_extended_funcs_shim()
+inline std::filesystem::path get_config_path(const core_plugin_extended_funcs *ef)
 {
-    core_plugin_extended_funcs funcs = {};
-    const auto log = [](const wchar_t *str) { wprintf(str); };
-    funcs.size = sizeof(core_plugin_extended_funcs);
-    funcs.log_trace = log;
-    funcs.log_info = log;
-    funcs.log_warn = log;
-    funcs.log_error = log;
-    funcs.get_effective_speed_mode = []() { return CoreSpeedMode::Normal; };
-    return funcs;
+    // get length
+    size_t len = ef->config_path(nullptr, 0);
+    // copy string
+    std::string path_temp(len, '\0');
+    ef->config_path(path_temp.data(), path_temp.size());
+    // drop the terminating null
+    path_temp.pop_back();
+    // force UTF-8 conversion
+    std::u8string_view utf8_path_temp{(char8_t *)path_temp.data(), path_temp.size()};
+    return std::filesystem::absolute(utf8_path_temp);
 }
 } // namespace ViewPluginHelpers

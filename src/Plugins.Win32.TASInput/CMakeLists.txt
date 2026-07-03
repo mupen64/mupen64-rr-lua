@@ -15,8 +15,8 @@ add_library(Mupen64RR.Plugins.Win32.TASInput MODULE
     "GamepadManager.hpp"
     "ConfigDialog.hpp"
     "Combo.hpp"
-        
-    "TASInput.cpp" 
+
+    "TASInput.cpp"
     "NewConfig.cpp"
     "Main.cpp"
     "JoystickControl.cpp"
@@ -34,7 +34,7 @@ set_target_properties(Mupen64RR.Plugins.Win32.TASInput PROPERTIES
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_include_directories(Mupen64RR.Plugins.Win32.TASInput PRIVATE ".")
-target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE 
+target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     Mupen64RR.Plugins.Win32.Common
     SDL3::SDL3
 )
@@ -47,8 +47,4 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     comctl32
     shcore
     Gdiplus
-)
-target_compile_definitions(Mupen64RR.Plugins.Win32.TASInput PRIVATE 
-    _USE_MATH_DEFINES
-    CORE_PLUGIN_INPUT_OLD_INITIATE_CONTROLLERS
 )
