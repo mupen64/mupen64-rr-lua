@@ -43,6 +43,8 @@ struct t_savestate_task
 
     /// Whether warnings, such as those about ROM compatibility, shouldn't be shown.
     bool ignore_warnings;
+
+    bool pure{};
 };
 
 // The task vector mutex. Locked when accessing the task vector.
@@ -135,7 +137,7 @@ void load_memory_from_buffer(uint8_t *p)
  * not be performed.
  * \return The generated savestate buffer.
  */
-static std::vector<uint8_t> generate_savestate(bool pure = false)
+static std::vector<uint8_t> generate_savestate(bool pure)
 {
     std::vector<uint8_t> b;
 
@@ -237,16 +239,11 @@ static std::vector<uint8_t> generate_savestate(bool pure = false)
     return b;
 }
 
-std::vector<uint8_t> generate_savestate_for_hash()
-{
-    return generate_savestate(true);
-}
-
 void savestates_save_immediate_impl(const t_savestate_task &task)
 {
     // TODO: Reimplement timing
 
-    const auto st = generate_savestate();
+    const auto st = generate_savestate(task.pure);
 
     if (task.medium == core_st_medium_path)
     {
@@ -803,4 +800,24 @@ void st_get_undo_savestate(std::vector<uint8_t> &buffer)
     std::scoped_lock lock(g_task_mutex);
     buffer.clear();
     buffer = g_undo_savestate;
+}
+
+bool st_save_pure(const core_st_callback &callback)
+{
+    std::scoped_lock lock(g_task_mutex);
+    if (!can_push_work()) return false;
+
+    auto internal_callback_wrapper = [=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
+        if (callback) callback(info, buffer);
+    };
+
+    const t_savestate_task task = {.job = core_st_job_save,
+                                   .medium = core_st_medium_memory,
+                                   .callback = internal_callback_wrapper,
+                                   .params = {},
+                                   .ignore_warnings = true,
+                                   .pure = true};
+
+    g_tasks.insert(g_tasks.begin(), task);
+    return true;
 }
