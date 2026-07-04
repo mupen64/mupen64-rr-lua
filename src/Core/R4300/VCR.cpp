@@ -813,8 +813,6 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
 
     vcr.current_sample++;
 
-    // Parity/desync hashing (issue #407): checkpoint the clean state at this sample. No-op unless a hashing run
-    // is active. Done here so the hashed state matches exactly at the same sample across compared builds.
     ParityChecker::on_sample(vcr.current_sample);
 
     vcr.post_controller_poll_callbacks.emplace([=] { g_core->callbacks.current_sample_changed(vcr.current_sample); });
