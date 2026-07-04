@@ -10,53 +10,51 @@
 #include <Memory/ParityChecker.hpp>
 #include <FNV1A.hpp>
 
-namespace
-{
-
-bool g_active{};
-int32_t g_interval{1};
-uint64_t g_running{FNV1A::FNV_OFFSET_BASIS};
-std::vector<std::pair<int32_t, uint64_t>> g_checkpoints{};
-} // namespace
-
 namespace ParityChecker
 {
+
+struct Context
+{
+    bool active;
+    int32_t interval;
+    uint64_t running;
+    std::vector<std::pair<int32_t, uint64_t>> checkpoints;
+};
+
+static Context s_ctx;
+
 void begin(int32_t interval)
 {
-    g_active = true;
-    g_interval = interval < 1 ? 1 : interval;
-    g_running = FNV1A::FNV_OFFSET_BASIS;
-    g_checkpoints.clear();
-    g_core->log_info(std::format("[ParityChecker] Started (interval={} samples)", g_interval));
+    s_ctx.active = true;
+    s_ctx.interval = interval < 1 ? 1 : interval;
+    s_ctx.running = FNV1A::FNV_OFFSET_BASIS;
+    s_ctx.checkpoints.clear();
+    g_core->log_info(std::format("[ParityChecker] Started (interval={} samples)", s_ctx.interval));
 }
 
 void on_sample(int32_t sample)
 {
-    if (!g_active || sample % g_interval != 0)
-    {
+    if (!s_ctx.active) [[likely]]
         return;
-    }
 
     const auto st = generate_savestate_for_hash();
     const uint64_t checkpoint = FNV1A::hash(st.data(), st.size());
 
     // Chain the per-checkpoint hash into the running hash so a single value summarizes the whole run.
-    g_running = FNV1A::hash(&checkpoint, sizeof(checkpoint), g_running);
-    g_checkpoints.emplace_back(sample, checkpoint);
+    s_ctx.running = FNV1A::hash(&checkpoint, sizeof(checkpoint), s_ctx.running);
+    s_ctx.checkpoints.emplace_back(sample, checkpoint);
 }
 
 void end()
 {
-    if (!g_active)
-    {
+    if (!s_ctx.active) [[likely]]
         return;
-    }
 
-    g_active = false;
+    s_ctx.active = false;
 
     g_core->log_info(
-        std::format("[ParityChecker] Final hash: {:016x} ({} checkpoints)", g_running, g_checkpoints.size()));
-    for (const auto &[sample, hash] : g_checkpoints)
+        std::format("[ParityChecker] Final hash: {:016x} ({} checkpoints)", s_ctx.running, s_ctx.checkpoints.size()));
+    for (const auto &[sample, hash] : s_ctx.checkpoints)
     {
         g_core->log_info(std::format("[ParityChecker] sample {} -> {:016x}", sample, hash));
     }
@@ -64,6 +62,6 @@ void end()
 
 bool active()
 {
-    return g_active;
+    return s_ctx.active;
 }
 } // namespace ParityChecker
