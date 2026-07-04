@@ -129,11 +129,13 @@ void load_memory_from_buffer(uint8_t *p)
     MiscHelpers::memread(&p, &vi_field, 4);
 }
 
-// NOTE: When for_hash is true, the returned buffer is meant only for parity hashing (see ParityChecker):
-// volatile, non-sync-relevant sections (the screenshot and the movie freeze buffer) are omitted, and no
-// emulation-mutating side effects (e.g. the SI DMA fix-up below) are performed, so that hashing a running
-// movie never perturbs the emulation it is measuring.
-std::vector<uint8_t> generate_savestate(bool for_hash = false)
+/**
+ * \brief Generates a savestate buffer.
+ * \param pure If true, the generated buffer will not include the VCR freeze and video buffer. The DMA fixup will also
+ * not be performed.
+ * \return The generated savestate buffer.
+ */
+static std::vector<uint8_t> generate_savestate(bool pure = false)
 {
     std::vector<uint8_t> b;
 
@@ -142,16 +144,13 @@ std::vector<uint8_t> generate_savestate(bool for_hash = false)
     memset(g_flashram_buf, 0, sizeof(g_flashram_buf));
     memset(g_event_queue_buf, 0, sizeof(g_event_queue_buf));
 
-    // NOTE: vcr_freeze locks vcr_mtx and flushes the movie to disk (write_movie). Hash generation runs from within
-    // the controller-poll path, which already holds vcr_mtx, so calling it there would re-lock a non-recursive mutex
-    // (abort) and perturb emulation. The freeze buffer is excluded from hash buffers anyway, so skip it entirely.
     vcr_freeze_info freeze{};
-    uint32_t movie_active = for_hash ? 0 : vcr_freeze(freeze);
+    uint32_t movie_active = pure ? 0 : vcr_freeze(freeze);
 
     // NOTE: Some savestates don't have an SI interrupt in the queue, which means that a dma_si_read call which should
     // have happened prior to the save didn't happen. In that case, we "finish up" the dma by performing its final part
     // manually.
-    if (!for_hash && get_event(SI_INT) == 0)
+    if (!pure && get_event(SI_INT) == 0)
     {
         g_core->log_warn("[ST] Finishing up DMA...");
         for (size_t i = 0; i < 64 / 4; i++) rdram[si_register.si_dram_addr / 4 + i] = std::byteswap(PIF_RAM[i]);
@@ -202,9 +201,8 @@ std::vector<uint8_t> generate_savestate(bool for_hash = false)
     MiscHelpers::vecwrite(b, &next_vi, 4);
     MiscHelpers::vecwrite(b, &vi_field, 4);
     MiscHelpers::vecwrite(b, g_event_queue_buf, event_queue_len);
-    // The movie freeze buffer and screenshot are excluded from hash buffers: they are either not sync-relevant
-    // (screenshot) or redundant/volatile with respect to desync detection (freeze buffer).
-    if (!for_hash)
+
+    if (!pure)
     {
         MiscHelpers::vecwrite(b, &movie_active, sizeof(movie_active));
         if (movie_active)

@@ -23,13 +23,6 @@ void st_do_work();
  */
 void st_on_core_stop();
 
-/**
- * \brief Generates a savestate buffer suitable for parity/desync hashing.
- *
- * The buffer contains only sync-relevant state: the movie freeze buffer and the screenshot are omitted, and no
- * emulation-mutating side effects are performed, so calling this repeatedly during playback does not perturb
- * emulation. See ParityChecker.
- */
 std::vector<uint8_t> generate_savestate_for_hash();
 
 bool st_do_file(const std::filesystem::path &path, core_st_job job, const core_st_callback &callback,
