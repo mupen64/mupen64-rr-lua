@@ -740,9 +740,6 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
     // but that can cause movies to end playback early on laggy plugins.
     if (vcr.current_sample >= (int32_t)vcr.hdr.length_samples)
     {
-        // Parity/desync hashing (issue #407): finalize and log the run before playback teardown. No-op unless active.
-        ParityChecker::end();
-
         {
             vcr_anti_lock bypass;
             g_ctx.vcr_stop_all();
@@ -1913,6 +1910,7 @@ core_result vcr_stop_all()
             vcr_anti_lock bypass;
             execute_post_unlock_callbacks(post_unlock_callbacks);
             g_core->callbacks.task_changed(vcr.task);
+            ParityChecker::end();
         }
 
         return Res_Ok;
@@ -1928,6 +1926,7 @@ core_result vcr_stop_all()
             execute_post_unlock_callbacks(post_unlock_callbacks);
             g_core->callbacks.task_changed(vcr.task);
             g_core->callbacks.stop_movie();
+            ParityChecker::end();
         }
 
         return Res_Ok;
