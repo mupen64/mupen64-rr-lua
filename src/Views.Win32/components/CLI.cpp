@@ -81,7 +81,7 @@ static void play_movie()
 
     if (cli_params.state_hash)
     {
-        g_main_ctx.core_ctx->st_hash_start(cli_params.state_hash_interval);
+        g_main_ctx.core_ctx->pc_start(cli_params.state_hash_interval);
     }
 
     g_config.core.vcr_readonly = true;

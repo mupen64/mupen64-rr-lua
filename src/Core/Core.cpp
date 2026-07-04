@@ -137,11 +137,11 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.tl_active = tl_active;
     g_ctx.tl_start = tl_start;
     g_ctx.tl_stop = tl_stop;
+    g_ctx.pc_start = ParityChecker::begin;
+    g_ctx.pc_active = ParityChecker::active;
     g_ctx.st_do_file = st_do_file;
     g_ctx.st_do_memory = st_do_memory;
     g_ctx.st_get_undo_savestate = st_get_undo_savestate;
-    g_ctx.st_hash_start = ParityChecker::begin;
-    g_ctx.st_hash_active = ParityChecker::active;
     g_ctx.dbg_add_breakpoint = dbg_add_breakpoint;
     g_ctx.dbg_remove_breakpoint = dbg_remove_breakpoint;
     g_ctx.dbg_disassemble = dbg_disassemble;
