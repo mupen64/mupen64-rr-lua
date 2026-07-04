@@ -28,7 +28,7 @@ void st_on_core_stop();
  *
  * The buffer contains only sync-relevant state: the movie freeze buffer and the screenshot are omitted, and no
  * emulation-mutating side effects are performed, so calling this repeatedly during playback does not perturb
- * emulation. See StateHash.
+ * emulation. See ParityChecker.
  */
 std::vector<uint8_t> generate_savestate_for_hash();
 

@@ -9,7 +9,7 @@
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>
 #include <Memory/Savestates.hpp>
-#include <Memory/StateHash.hpp>
+#include <Memory/ParityChecker.hpp>
 #include <R4300/Debug.hpp>
 #include <R4300/Disasm.hpp>
 #include <R4300/R4300.hpp>
@@ -140,8 +140,8 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.st_do_file = st_do_file;
     g_ctx.st_do_memory = st_do_memory;
     g_ctx.st_get_undo_savestate = st_get_undo_savestate;
-    g_ctx.st_hash_start = StateHash::begin;
-    g_ctx.st_hash_active = StateHash::active;
+    g_ctx.st_hash_start = ParityChecker::begin;
+    g_ctx.st_hash_active = ParityChecker::active;
     g_ctx.dbg_add_breakpoint = dbg_add_breakpoint;
     g_ctx.dbg_remove_breakpoint = dbg_remove_breakpoint;
     g_ctx.dbg_disassemble = dbg_disassemble;

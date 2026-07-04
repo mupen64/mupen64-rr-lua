@@ -129,7 +129,7 @@ void load_memory_from_buffer(uint8_t *p)
     MiscHelpers::memread(&p, &vi_field, 4);
 }
 
-// NOTE: When for_hash is true, the returned buffer is meant only for parity hashing (see StateHash):
+// NOTE: When for_hash is true, the returned buffer is meant only for parity hashing (see ParityChecker):
 // volatile, non-sync-relevant sections (the screenshot and the movie freeze buffer) are omitted, and no
 // emulation-mutating side effects (e.g. the SI DMA fix-up below) are performed, so that hashing a running
 // movie never perturbs the emulation it is measuring.

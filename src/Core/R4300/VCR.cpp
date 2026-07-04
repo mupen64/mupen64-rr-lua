@@ -14,7 +14,7 @@
 #include <format>
 #include <include/core_api.h>
 #include <iterator>
-#include <Memory/StateHash.hpp>
+#include <Memory/ParityChecker.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>
@@ -741,7 +741,7 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
     if (vcr.current_sample >= (int32_t)vcr.hdr.length_samples)
     {
         // Parity/desync hashing (issue #407): finalize and log the run before playback teardown. No-op unless active.
-        StateHash::end();
+        ParityChecker::end();
 
         {
             vcr_anti_lock bypass;
@@ -818,7 +818,7 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
 
     // Parity/desync hashing (issue #407): checkpoint the clean state at this sample. No-op unless a hashing run
     // is active. Done here so the hashed state matches exactly at the same sample across compared builds.
-    StateHash::on_sample(vcr.current_sample);
+    ParityChecker::on_sample(vcr.current_sample);
 
     vcr.post_controller_poll_callbacks.emplace([=] { g_core->callbacks.current_sample_changed(vcr.current_sample); });
 }
