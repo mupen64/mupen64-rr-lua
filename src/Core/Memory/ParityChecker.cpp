@@ -43,6 +43,8 @@ void on_sample(int32_t sample)
             std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(&checkpoint), sizeof(checkpoint));
         s_ctx.running = FNV1A::hash(running_span, s_ctx.running);
         s_ctx.checkpoints.emplace_back(sample, checkpoint);
+
+        g_core->log_info(std::format("[ParityChecker] sample {} -> {:016x}", sample, checkpoint));
     });
 
     if (!result)
@@ -61,10 +63,6 @@ void end()
 
     g_core->log_info(
         std::format("[ParityChecker] Final hash: {:016x} ({} checkpoints)", s_ctx.running, s_ctx.checkpoints.size()));
-    for (const auto &[sample, hash] : s_ctx.checkpoints)
-    {
-        g_core->log_info(std::format("[ParityChecker] sample {} -> {:016x}", sample, hash));
-    }
 }
 
 bool active()
