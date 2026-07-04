@@ -26,8 +26,8 @@ struct t_cli_params
     std::filesystem::path avi{};
     bool close_on_movie_end{};
     bool wait_for_debugger{};
-    bool state_hash{};
-    int32_t state_hash_interval{10};
+    bool parity_check{};
+    int32_t parity_check_interval{10};
 };
 
 struct t_cli_state
@@ -51,8 +51,8 @@ static void log_cli_params(const t_cli_params &params)
     g_view_logger->trace("  avi: {}", params.avi.string());
     g_view_logger->trace("  close_on_movie_end: {}", params.close_on_movie_end);
     g_view_logger->trace("  wait_for_debugger: {}", params.wait_for_debugger);
-    g_view_logger->trace("  state_hash: {}", params.state_hash);
-    g_view_logger->trace("  state_hash_interval: {}", params.state_hash_interval);
+    g_view_logger->trace("  parity_checker: {}", params.parity_check);
+    g_view_logger->trace("  parity_check_interval: {}", params.parity_check_interval);
 }
 
 static void start_rom()
@@ -79,9 +79,9 @@ static void play_movie()
 {
     if (cli_params.m64.empty()) return;
 
-    if (cli_params.state_hash)
+    if (cli_params.parity_check)
     {
-        g_main_ctx.core_ctx->pc_start(cli_params.state_hash_interval);
+        g_main_ctx.core_ctx->pc_start(cli_params.parity_check_interval);
     }
 
     g_config.core.vcr_readonly = true;
@@ -146,7 +146,7 @@ static void on_movie_playback_stop()
     }
 
     // A --state-hash run has no capture to flush: close directly now that the movie (and hashing) has ended.
-    if (cli_params.state_hash)
+    if (cli_params.parity_check)
     {
         PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
     }
@@ -228,11 +228,11 @@ void CLI::init()
     cli_params.avi = cmdl({"--avi", "-avi"}, "").str();
     cli_params.close_on_movie_end = cmdl["--close-on-movie-end"];
     cli_params.wait_for_debugger = cmdl["--wait-for-debugger"] || cmdl["--d"];
-    cli_params.state_hash = cmdl["--state-hash"];
-    cmdl({"--state-hash-interval"}, 10) >> cli_params.state_hash_interval;
+    cli_params.parity_check = cmdl["--parity-check"];
+    cmdl({"--parity-check-interval"}, 10) >> cli_params.parity_check_interval;
 
     // The parity hash is finalized and logged at movie end, so close afterwards to make the run self-terminating.
-    if (cli_params.state_hash)
+    if (cli_params.parity_check)
     {
         cli_params.close_on_movie_end = true;
     }
