@@ -37,12 +37,19 @@ void on_sample(int32_t sample)
     if (!s_ctx.active) [[likely]]
         return;
 
-    const auto st = generate_savestate_for_hash();
-    const uint64_t checkpoint = FNV1A::hash(st.data(), st.size());
+    const auto result = st_save_pure([=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
+        const uint64_t checkpoint = FNV1A::hash(buffer);
+        const auto running_span =
+            std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(&checkpoint), sizeof(checkpoint));
+        s_ctx.running = FNV1A::hash(running_span, s_ctx.running);
+        s_ctx.checkpoints.emplace_back(sample, checkpoint);
+    });
 
-    // Chain the per-checkpoint hash into the running hash so a single value summarizes the whole run.
-    s_ctx.running = FNV1A::hash(&checkpoint, sizeof(checkpoint), s_ctx.running);
-    s_ctx.checkpoints.emplace_back(sample, checkpoint);
+    if (!result)
+    {
+        g_core->log_error("[ParityChecker] Failed to save savestate");
+        return;
+    }
 }
 
 void end()
