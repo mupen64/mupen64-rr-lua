@@ -670,6 +670,8 @@ extern "C"
 
         /**
          * \brief Starts the parity checker with the specified sample interval.
+         * While active, the core will log a combined hash of sync-determining emulator state (starting from the first
+         * sample after the parity checker is started) every `interval` samples.
          * \param interval Sample interval between checkpoints in range `[1, INT32_MAX]`.
          */
         std::function<void(int32_t interval)> pc_start;
