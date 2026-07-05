@@ -23,13 +23,25 @@ struct Context
 
 static Context s_ctx;
 
-void begin(int32_t interval)
+void start(int32_t interval)
 {
+    if (s_ctx.active) return;
     s_ctx.active = true;
     s_ctx.interval = interval < 1 ? 1 : interval;
     s_ctx.running = FNV1A::FNV_OFFSET_BASIS;
     s_ctx.checkpoints.clear();
     g_core->log_info(std::format("[ParityChecker] Started (interval={} samples)", s_ctx.interval));
+}
+
+void stop()
+{
+    if (!s_ctx.active) [[likely]]
+        return;
+
+    s_ctx.active = false;
+
+    g_core->log_info(
+        std::format("[ParityChecker] Final hash: {:016x} ({} checkpoints)", s_ctx.running, s_ctx.checkpoints.size()));
 }
 
 void on_sample(int32_t sample)
@@ -52,17 +64,6 @@ void on_sample(int32_t sample)
         g_core->log_error("[ParityChecker] Failed to save savestate");
         return;
     }
-}
-
-void end()
-{
-    if (!s_ctx.active) [[likely]]
-        return;
-
-    s_ctx.active = false;
-
-    g_core->log_info(
-        std::format("[ParityChecker] Final hash: {:016x} ({} checkpoints)", s_ctx.running, s_ctx.checkpoints.size()));
 }
 
 bool active()

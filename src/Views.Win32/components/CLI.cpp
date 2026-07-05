@@ -145,7 +145,6 @@ static void on_movie_playback_stop()
         return;
     }
 
-    // A --state-hash run has no capture to flush: close directly now that the movie (and hashing) has ended.
     if (cli_params.parity_check)
     {
         PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
@@ -231,7 +230,6 @@ void CLI::init()
     cli_params.parity_check = cmdl["--parity-check"];
     cmdl({"--parity-check-interval"}, 10) >> cli_params.parity_check_interval;
 
-    // The parity hash is finalized and logged at movie end, so close afterwards to make the run self-terminating.
     if (cli_params.parity_check)
     {
         cli_params.close_on_movie_end = true;

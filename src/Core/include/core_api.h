@@ -677,6 +677,11 @@ extern "C"
         std::function<void(int32_t interval)> pc_start;
 
         /**
+         * \brief Stops the parity checker and logs the final hash.
+         */
+        std::function<void()> pc_stop;
+
+        /**
          * \brief Gets whether the parity checker is currently active.
          */
         std::function<bool()> pc_active;

@@ -14,7 +14,6 @@
 #include <format>
 #include <include/core_api.h>
 #include <iterator>
-#include <Memory/ParityChecker.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>
@@ -812,9 +811,6 @@ void vcr_handle_playback(int32_t index, core_buttons *input)
     // state-dependent work.
 
     vcr.current_sample++;
-
-    ParityChecker::on_sample(vcr.current_sample);
-
     vcr.post_controller_poll_callbacks.emplace([=] { g_core->callbacks.current_sample_changed(vcr.current_sample); });
 }
 
@@ -1908,7 +1904,6 @@ core_result vcr_stop_all()
             vcr_anti_lock bypass;
             execute_post_unlock_callbacks(post_unlock_callbacks);
             g_core->callbacks.task_changed(vcr.task);
-            ParityChecker::end();
         }
 
         return Res_Ok;
@@ -1924,7 +1919,6 @@ core_result vcr_stop_all()
             execute_post_unlock_callbacks(post_unlock_callbacks);
             g_core->callbacks.task_changed(vcr.task);
             g_core->callbacks.stop_movie();
-            ParityChecker::end();
         }
 
         return Res_Ok;

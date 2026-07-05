@@ -12,8 +12,8 @@
  */
 namespace ParityChecker
 {
-void begin(int32_t interval);
+void start(int32_t interval);
+void stop();
 void on_sample(int32_t sample);
-void end();
 bool active();
 } // namespace ParityChecker
