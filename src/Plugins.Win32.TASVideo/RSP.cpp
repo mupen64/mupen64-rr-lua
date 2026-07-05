@@ -84,9 +84,9 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
 
 void RSP_ProcessDList()
 {
-    const auto headless = g_ef->frame_skipped();
+    OGL.headless = g_ef->frame_skipped();
 
-    if (!headless)
+    if (!OGL.headless)
     {
         VI_UpdateSize();
         OGL_UpdateScale();
@@ -141,7 +141,7 @@ void RSP_ProcessDList()
     gDPSetCycleType(G_CYC_1CYCLE);
     gDPPipelineMode(G_PM_NPRIMITIVE);
 
-    const auto cmds = headless ? GBI.cmd_headless : GBI.cmd;
+    const auto cmds = OGL.headless ? GBI.cmd_headless : GBI.cmd;
     while (!RSP.halt)
     {
         if (RSP.PC[RSP.PCi] + 8 > RDRAMSize)
