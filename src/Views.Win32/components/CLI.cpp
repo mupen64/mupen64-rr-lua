@@ -79,14 +79,14 @@ static void play_movie()
 {
     if (cli_params.m64.empty()) return;
 
+    g_config.core.vcr_readonly = true;
+    auto result = g_main_ctx.core_ctx->vcr_start_playback(cli_params.m64);
+    CoreUtils::show_error_dialog_for_result(result);
+
     if (cli_params.parity_check)
     {
         g_main_ctx.core_ctx->pc_start(cli_params.parity_check_interval);
     }
-
-    g_config.core.vcr_readonly = true;
-    auto result = g_main_ctx.core_ctx->vcr_start_playback(cli_params.m64);
-    CoreUtils::show_error_dialog_for_result(result);
 }
 
 static void load_st()
