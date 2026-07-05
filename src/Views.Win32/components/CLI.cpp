@@ -290,7 +290,9 @@ void CLI::init()
     log_cli_params(cli_params);
 }
 
-bool CLI::wants_fast_forward()
+CoreSpeedMode CLI::desired_speed_mode()
 {
-    return !cli_params.avi.empty();
+    if (!cli_params.avi.empty()) return CoreSpeedMode::FastForward;
+    if (cli_params.parity_check) return CoreSpeedMode::UltraFastForward;
+    return CoreSpeedMode::Normal;
 }
