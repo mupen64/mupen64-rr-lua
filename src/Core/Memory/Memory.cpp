@@ -1132,10 +1132,7 @@ void update_SP()
             g_core->cfg->total_frames++;
             g_r4300.frame_skipped = timer_new_frame();
 
-            if (!g_r4300.frame_skipped)
-            {
-                g_core->rsp_do_rsp_cycles(100);
-            }
+            g_core->rsp_do_rsp_cycles(100);
 
             rsp_register.rsp_pc |= save_pc;
 
