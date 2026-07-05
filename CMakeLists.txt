@@ -132,16 +132,15 @@ if(WIN32)
   # - disable the generation of a manifest file (since it's pulled in internally via the resource script)
   add_link_options(/DYNAMICBASE:NO /NXCOMPAT:NO /LARGEADDRESSAWARE /MANIFEST:NO)
 
-  # Include compile options to enable AVX2 on x64 builds
-  if("${VCPKG_TARGET_TRIPLET}" MATCHES "^x64")
-    add_compile_options(/arch:AVX2)
-  endif()
-
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
 
   # Use UTF-16 versions of functions
   add_compile_definitions(UNICODE _UNICODE)
+endif()
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$")
+  add_compile_options(-mssse3)
 endif()
 
 # define _DEBUG for debug builds
