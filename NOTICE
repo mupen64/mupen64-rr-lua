@@ -1,0 +1,8 @@
+Third-Party Assets
+==================
+
+The following assets are licensed under GPL-2.0:
+
+- test/roms/m64p_test_rom.v64
+
+See https://github.com/mupen64plus/mupen64plus-rom.
