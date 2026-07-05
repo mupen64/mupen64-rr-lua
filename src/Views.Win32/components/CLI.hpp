@@ -14,7 +14,7 @@ namespace CLI
 void init();
 
 /**
- * Gets whether the CLI wants fast-forward to always be enabled.
+ * Gets the speed mode desired by the CLI.
  */
-bool wants_fast_forward();
+CoreSpeedMode desired_speed_mode();
 } // namespace CLI

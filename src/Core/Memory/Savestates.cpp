@@ -6,8 +6,8 @@
 
 #include <CommonPCH.hpp>
 #include <Core.hpp>
-// #include <PlatformService.h>
 #include <libdeflate.h>
+#include <FNV1A.hpp>
 #include <include/core_api.h>
 #include <Memory/FlashRAM.hpp>
 #include <Memory/Memory.hpp>
@@ -43,6 +43,8 @@ struct t_savestate_task
 
     /// Whether warnings, such as those about ROM compatibility, shouldn't be shown.
     bool ignore_warnings;
+
+    bool pure{};
 };
 
 // The task vector mutex. Locked when accessing the task vector.
@@ -129,7 +131,13 @@ void load_memory_from_buffer(uint8_t *p)
     MiscHelpers::memread(&p, &vi_field, 4);
 }
 
-std::vector<uint8_t> generate_savestate()
+/**
+ * \brief Generates a savestate buffer.
+ * \param pure If true, the generated buffer will not include the VCR freeze and video buffer. The DMA fixup will also
+ * not be performed.
+ * \return The generated savestate buffer.
+ */
+static std::vector<uint8_t> generate_savestate(bool pure)
 {
     std::vector<uint8_t> b;
 
@@ -139,12 +147,12 @@ std::vector<uint8_t> generate_savestate()
     memset(g_event_queue_buf, 0, sizeof(g_event_queue_buf));
 
     vcr_freeze_info freeze{};
-    uint32_t movie_active = vcr_freeze(freeze);
+    uint32_t movie_active = pure ? 0 : vcr_freeze(freeze);
 
     // NOTE: Some savestates don't have an SI interrupt in the queue, which means that a dma_si_read call which should
     // have happened prior to the save didn't happen. In that case, we "finish up" the dma by performing its final part
     // manually.
-    if (get_event(SI_INT) == 0)
+    if (!pure && get_event(SI_INT) == 0)
     {
         g_core->log_warn("[ST] Finishing up DMA...");
         for (size_t i = 0; i < 64 / 4; i++) rdram[si_register.si_dram_addr / 4 + i] = std::byteswap(PIF_RAM[i]);
@@ -195,33 +203,37 @@ std::vector<uint8_t> generate_savestate()
     MiscHelpers::vecwrite(b, &next_vi, 4);
     MiscHelpers::vecwrite(b, &vi_field, 4);
     MiscHelpers::vecwrite(b, g_event_queue_buf, event_queue_len);
-    MiscHelpers::vecwrite(b, &movie_active, sizeof(movie_active));
-    if (movie_active)
+
+    if (!pure)
     {
-        MiscHelpers::vecwrite(b, &freeze.size, sizeof(freeze.size));
-        MiscHelpers::vecwrite(b, &freeze.uid, sizeof(freeze.uid));
-        MiscHelpers::vecwrite(b, &freeze.current_sample, sizeof(freeze.current_sample));
-        MiscHelpers::vecwrite(b, &freeze.current_vi, sizeof(freeze.current_vi));
-        MiscHelpers::vecwrite(b, &freeze.length_samples, sizeof(freeze.length_samples));
-        MiscHelpers::vecwrite(b, freeze.input_buffer.data(), freeze.input_buffer.size() * sizeof(core_buttons));
-    }
+        MiscHelpers::vecwrite(b, &movie_active, sizeof(movie_active));
+        if (movie_active)
+        {
+            MiscHelpers::vecwrite(b, &freeze.size, sizeof(freeze.size));
+            MiscHelpers::vecwrite(b, &freeze.uid, sizeof(freeze.uid));
+            MiscHelpers::vecwrite(b, &freeze.current_sample, sizeof(freeze.current_sample));
+            MiscHelpers::vecwrite(b, &freeze.current_vi, sizeof(freeze.current_vi));
+            MiscHelpers::vecwrite(b, &freeze.length_samples, sizeof(freeze.length_samples));
+            MiscHelpers::vecwrite(b, freeze.input_buffer.data(), freeze.input_buffer.size() * sizeof(core_buttons));
+        }
 
-    if (g_core->mge_available() && g_core->cfg->st_screenshot)
-    {
-        int32_t width;
-        int32_t height;
-        g_core->video_get_video_size(&width, &height);
-        g_core->log_trace(std::format("Writing screen buffer to savestate, width: {}, height: {}", width, height));
+        if (g_core->mge_available() && g_core->cfg->st_screenshot)
+        {
+            int32_t width;
+            int32_t height;
+            g_core->video_get_video_size(&width, &height);
+            g_core->log_trace(std::format("Writing screen buffer to savestate, width: {}, height: {}", width, height));
 
-        void *video = malloc(width * height * 4);
-        g_core->copy_video(video);
+            void *video = malloc(width * height * 4);
+            g_core->copy_video(video);
 
-        MiscHelpers::vecwrite(b, screen_section, sizeof(screen_section));
-        MiscHelpers::vecwrite(b, &width, sizeof(width));
-        MiscHelpers::vecwrite(b, &height, sizeof(height));
-        MiscHelpers::vecwrite(b, video, width * height * 4);
+            MiscHelpers::vecwrite(b, screen_section, sizeof(screen_section));
+            MiscHelpers::vecwrite(b, &width, sizeof(width));
+            MiscHelpers::vecwrite(b, &height, sizeof(height));
+            MiscHelpers::vecwrite(b, video, width * height * 4);
 
-        free(video);
+            free(video);
+        }
     }
 
     return b;
@@ -231,7 +243,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
 {
     // TODO: Reimplement timing
 
-    const auto st = generate_savestate();
+    const auto st = generate_savestate(task.pure);
 
     if (task.medium == core_st_medium_path)
     {
@@ -788,4 +800,26 @@ void st_get_undo_savestate(std::vector<uint8_t> &buffer)
     std::scoped_lock lock(g_task_mutex);
     buffer.clear();
     buffer = g_undo_savestate;
+}
+
+bool st_sync_hash(const std::function<void(uint64_t hash)> &callback)
+{
+    std::scoped_lock lock(g_task_mutex);
+    if (!can_push_work()) return false;
+
+    auto internal_callback_wrapper = [=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
+        if (!callback) return;
+        const auto hash = FNV1A::hash(buffer);
+        callback(hash);
+    };
+
+    const t_savestate_task task = {.job = core_st_job_save,
+                                   .medium = core_st_medium_memory,
+                                   .callback = internal_callback_wrapper,
+                                   .params = {},
+                                   .ignore_warnings = true,
+                                   .pure = true};
+
+    g_tasks.insert(g_tasks.begin(), task);
+    return true;
 }

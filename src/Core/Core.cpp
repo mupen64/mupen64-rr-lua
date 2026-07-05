@@ -9,6 +9,7 @@
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>
 #include <Memory/Savestates.hpp>
+#include <Memory/ParityChecker.hpp>
 #include <R4300/Debug.hpp>
 #include <R4300/Disasm.hpp>
 #include <R4300/R4300.hpp>
@@ -136,6 +137,9 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.tl_active = tl_active;
     g_ctx.tl_start = tl_start;
     g_ctx.tl_stop = tl_stop;
+    g_ctx.pc_start = ParityChecker::start;
+    g_ctx.pc_stop = ParityChecker::stop;
+    g_ctx.pc_active = ParityChecker::active;
     g_ctx.st_do_file = st_do_file;
     g_ctx.st_do_memory = st_do_memory;
     g_ctx.st_get_undo_savestate = st_get_undo_savestate;

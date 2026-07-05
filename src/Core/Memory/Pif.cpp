@@ -13,6 +13,7 @@
 #include <Cheats.hpp>
 #include <R4300/R4300.hpp>
 #include <R4300/VCR.hpp>
+#include <Memory/ParityChecker.hpp>
 
 // Amount of VIs since last input poll
 size_t lag_count;
@@ -134,6 +135,7 @@ void internal_ReadController(int32_t Control, uint8_t *Command)
             lag_count = 0;
             core_buttons input = {0};
             vcr_on_controller_poll(Control, &input);
+            ParityChecker::on_sample(vcr.current_sample);
             *((uint32_t *)(Command + 3)) = input.value;
         }
         break;
