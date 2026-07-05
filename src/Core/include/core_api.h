@@ -397,6 +397,12 @@ extern "C"
         std::function<void(CoreSpeedMode mode)> vr_set_speed_mode;
 
         /**
+         * \brief Gets whether the current frame is visually skipped.
+         * \remarks The return value of this function is only guaranteed to be valid during a `rsp_do_rsp_cycles` call.
+         */
+        std::function<bool()> vr_get_frame_skipped;
+
+        /**
          * \brief Gets the GS button state.
          */
         std::function<bool()> vr_get_gs_button;

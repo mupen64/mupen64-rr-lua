@@ -90,6 +90,11 @@ extern "C"
         CoreSpeedMode (*get_effective_speed_mode)();
 
         /**
+         * \brief See `core_ctx::vr_get_frame_skipped`.
+         */
+        bool (*frame_skipped)();
+
+        /**
          * @brief Gets the path to the configuration directory, as a UTF-8 string.
          *
          * Writes the path to the configuration directory to `data`, provided that there is

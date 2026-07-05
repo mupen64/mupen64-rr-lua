@@ -88,6 +88,10 @@ void GBI_Unknown(u32 w0, u32 w1)
     DebugMsg(L"UNKNOWN GBI COMMAND 0x%02X", _SHIFTR(w0, 24, 8));
 }
 
+void GBI_Nop(u32 w0, u32 w1)
+{
+}
+
 INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -343,6 +347,28 @@ void GBI_MakeCurrent(MicrocodeInfo *current)
             F3DPD_Init();
             break;
         }
+
+        for (int i = 0; i <= 0xFF; i++)
+        {
+            GBI.cmd_headless[i] = GBI.cmd[i];
+        }
+
+        GBI.cmd_headless[G_TRI1] = GBI_Nop;
+        GBI.cmd_headless[G_TRI2] = GBI_Nop;
+        GBI.cmd_headless[G_TRI4] = GBI_Nop;
+        GBI.cmd_headless[G_QUAD] = GBI_Nop;
+        GBI.cmd_headless[G_LINE3D] = GBI_Nop;
+
+        GBI.cmd_headless[G_FILLRECT] = GBI_Nop;
+        GBI.cmd_headless[G_TEXRECT] = GBI_Nop;
+        GBI.cmd_headless[G_TEXRECTFLIP] = GBI_Nop;
+        GBI.cmd_headless[G_OBJ_RECTANGLE] = GBI_Nop;
+        GBI.cmd_headless[G_OBJ_RECTANGLE_R] = GBI_Nop;
+        GBI.cmd_headless[G_OBJ_SPRITE] = GBI_Nop;
+
+        GBI.cmd_headless[G_SETCOMBINE] = GBI_Nop;
+        GBI.cmd_headless[G_SETTILE] = GBI_Nop;
+        GBI.cmd_headless[G_SETTILESIZE] = GBI_Nop;
     }
 
     GBI.current = current;
