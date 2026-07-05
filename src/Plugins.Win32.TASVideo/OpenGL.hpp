@@ -60,6 +60,8 @@ struct GLInfo
 
     // Clears the game with black color every frame regardless of what N64 asks
     BOOL clear_override = TRUE;
+
+    bool headless{};
 };
 
 extern GLInfo OGL;
