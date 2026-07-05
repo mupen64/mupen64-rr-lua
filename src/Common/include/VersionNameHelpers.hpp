@@ -6,7 +6,7 @@
 
 #pragma once
 
-#define CURRENT_VERSION L"1.4.0-5"
+#define CURRENT_VERSION L"1.4.0-6"
 
 #ifdef _M_X64
 #define VERSION_NAME_HELPER_ARCH L" x64"
