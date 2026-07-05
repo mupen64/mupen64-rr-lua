@@ -6,6 +6,7 @@
 
 #include "Main.hpp"
 #include "HLE.hpp"
+#include <tmmintrin.h>
 
 /******** DMEM Memory Map for ABI 1 ***************
 Address/Range		Description
@@ -103,71 +104,49 @@ static void CLEARBUFF()
 
 static void ENVMIXER()
 {
-    // static int32_t envmixcnt = 0;
     uint8_t flags = (uint8_t)((inst1 >> 16) & 0xff);
-    uint32_t addy = (inst2 & 0xFFFFFF); // + SEGMENTS[(inst2>>24)&0xf];
-    // static
-    //  ********* Make sure these conditions are met... ***********
-    /*if ((AudioInBuffer | AudioOutBuffer | AudioAuxA | AudioAuxC | AudioAuxE | AudioCount) & 0x3) {
-        MessageBox (NULL, "Unaligned EnvMixer... please report this to Azimer with the following information: RomTitle,
-    Place in the rom it occurred, and any save state just before the error", "AudioHLE Error", MB_OK);
-    }*/
-    // ------------------------------------------------------------
+    uint32_t addy = (inst2 & 0xFFFFFF);
     int16_t *inp = (int16_t *)(BufferSpace + AudioInBuffer);
     int16_t *out = (int16_t *)(BufferSpace + AudioOutBuffer);
     int16_t *aux1 = (int16_t *)(BufferSpace + AudioAuxA);
     int16_t *aux2 = (int16_t *)(BufferSpace + AudioAuxC);
     int16_t *aux3 = (int16_t *)(BufferSpace + AudioAuxE);
-    int32_t MainR;
-    int32_t MainL;
-    int32_t AuxR;
-    int32_t AuxL;
-    int32_t i1, o1, a1, a2, a3;
+
     uint16_t AuxIncRate = 1;
     int16_t zero[8];
     memset(zero, 0, 16);
-    int32_t LVol, RVol;
-    int32_t LAcc, RAcc;
+
     int32_t LTrg, RTrg;
     int16_t Wet, Dry;
-    uint32_t ptr = 0;
-    int32_t RRamp, LRamp;
+    int32_t LRamp, RRamp;
     int32_t LAdderStart, RAdderStart, LAdderEnd, RAdderEnd;
-    int32_t oMainR, oMainL, oAuxR, oAuxL;
 
-    // envmixcnt++;
-
-    // fprintf (dfile, "\n----------------------------------------------------\n");
     if (flags & A_INIT)
     {
-        LVol = ((Vol_Left * (int32_t)VolRamp_Left));
-        RVol = ((Vol_Right * (int32_t)VolRamp_Right));
         Wet = (int16_t)Env_Wet;
-        Dry = (int16_t)Env_Dry; // Save Wet/Dry values
-        LTrg = (VolTrg_Left << 16);
-        RTrg = (VolTrg_Right << 16); // Save Current Left/Right Targets
+        Dry = (int16_t)Env_Dry;
+        LTrg = VolTrg_Left << 16;
+        RTrg = VolTrg_Right << 16;
         LAdderStart = Vol_Left << 16;
         RAdderStart = Vol_Right << 16;
-        LAdderEnd = LVol;
-        RAdderEnd = RVol;
-        RRamp = VolRamp_Right;
+        LAdderEnd = Vol_Left * (int32_t)VolRamp_Left;
+        RAdderEnd = Vol_Right * (int32_t)VolRamp_Right;
         LRamp = VolRamp_Left;
+        RRamp = VolRamp_Right;
     }
     else
     {
-        // Load LVol, RVol, LAcc, and RAcc (all 32bit)
-        // Load Wet, Dry, LTrg, RTrg
-        memcpy((uint8_t *)hleMixerWorkArea, (rsp.rdram + addy), 80);
-        Wet = *(int16_t *)(hleMixerWorkArea + 0);          // 0-1
-        Dry = *(int16_t *)(hleMixerWorkArea + 2);          // 2-3
-        LTrg = *(int32_t *)(hleMixerWorkArea + 4);         // 4-5
-        RTrg = *(int32_t *)(hleMixerWorkArea + 6);         // 6-7
-        LRamp = *(int32_t *)(hleMixerWorkArea + 8);        // 8-9 (hleMixerWorkArea is a 16bit pointer)
-        RRamp = *(int32_t *)(hleMixerWorkArea + 10);       // 10-11
-        LAdderEnd = *(int32_t *)(hleMixerWorkArea + 12);   // 12-13
-        RAdderEnd = *(int32_t *)(hleMixerWorkArea + 14);   // 14-15
-        LAdderStart = *(int32_t *)(hleMixerWorkArea + 16); // 12-13
-        RAdderStart = *(int32_t *)(hleMixerWorkArea + 18); // 14-15
+        memcpy((uint8_t *)hleMixerWorkArea, rsp.rdram + addy, 80);
+        Wet = *(int16_t *)(hleMixerWorkArea + 0);
+        Dry = *(int16_t *)(hleMixerWorkArea + 2);
+        LTrg = *(int32_t *)(hleMixerWorkArea + 4);
+        RTrg = *(int32_t *)(hleMixerWorkArea + 6);
+        LRamp = *(int32_t *)(hleMixerWorkArea + 8);
+        RRamp = *(int32_t *)(hleMixerWorkArea + 10);
+        LAdderEnd = *(int32_t *)(hleMixerWorkArea + 12);
+        RAdderEnd = *(int32_t *)(hleMixerWorkArea + 14);
+        LAdderStart = *(int32_t *)(hleMixerWorkArea + 16);
+        RAdderStart = *(int32_t *)(hleMixerWorkArea + 18);
     }
 
     if (!(flags & A_AUX))
@@ -176,167 +155,173 @@ static void ENVMIXER()
         aux2 = aux3 = zero;
     }
 
-    oMainL = (Dry * (LTrg >> 16) + 0x4000) >> 15;
-    oAuxL = (Wet * (LTrg >> 16) + 0x4000) >> 15;
-    oMainR = (Dry * (RTrg >> 16) + 0x4000) >> 15;
-    oAuxR = (Wet * (RTrg >> 16) + 0x4000) >> 15;
+    // Shuffle control: swaps adjacent int16 word pairs within each 64-bit lane,
+    // i.e. models the [ptr ^ 1] index pattern used throughout the original.
+    enum
+    {
+        SW = _MM_SHUFFLE(2, 3, 0, 1)
+    };
+
+    // Hoist invariant broadcast vectors outside the loop.
+    const __m128i vDry = _mm_set1_epi16(Dry);
+    const __m128i vWet = _mm_set1_epi16(Wet);
+
+    uint32_t ptr = 0;
 
     for (int32_t y = 0; y < AudioCount; y += 0x10)
     {
-        if (LAdderStart != LTrg)
-        {
-            LAcc = LAdderStart;
-            LVol = (LAdderEnd - LAdderStart) >> 3;
-            LAdderEnd = ((int64_t)LAdderEnd * (int64_t)LRamp) >> 16;
-            LAdderStart = ((int64_t)LAcc * (int64_t)LRamp) >> 16;
-        }
-        else
-        {
-            LAcc = LTrg;
-            LVol = 0;
-        }
+        // ------------------------------------------------------------
+        // Phase 1 – scalar: advance both envelope ramps and record the
+        // upper 16 bits (the "volume") of each of the 8 per-sample
+        // accumulators, honouring the linear step and target clamp.
+        // ------------------------------------------------------------
+        int16_t lvArr[8], rvArr[8];
 
-        if (RAdderStart != RTrg)
-        {
-            RAcc = RAdderStart;
-            RVol = (RAdderEnd - RAdderStart) >> 3;
-            RAdderEnd = ((int64_t)RAdderEnd * (int64_t)RRamp) >> 16;
-            RAdderStart = ((int64_t)RAcc * (int64_t)RRamp) >> 16;
-        }
-        else
-        {
-            RAcc = RTrg;
-            RVol = 0;
-        }
-
-        for (int32_t x = 0; x < 8; x++)
-        {
-            i1 = (int32_t)inp[ptr ^ 1];
-            o1 = (int32_t)out[ptr ^ 1];
-            a1 = (int32_t)aux1[ptr ^ 1];
-            if (AuxIncRate)
+        { // L channel
+            int32_t acc, vol;
+            if (LAdderStart != LTrg)
             {
-                a2 = (int32_t)aux2[ptr ^ 1];
-                a3 = (int32_t)aux3[ptr ^ 1];
-            }
-            // TODO: here...
-            // LAcc = LTrg;
-            // RAcc = RTrg;
-
-            LAcc += LVol;
-            RAcc += RVol;
-
-            if (LVol <= 0)
-            {
-                // Decrementing
-                if (LAcc < LTrg)
-                {
-                    LAcc = LTrg;
-                    LAdderStart = LTrg;
-                    MainL = oMainL;
-                    AuxL = oAuxL;
-                }
-                else
-                {
-                    MainL = (Dry * ((int32_t)LAcc >> 16) + 0x4000) >> 15;
-                    AuxL = (Wet * ((int32_t)LAcc >> 16) + 0x4000) >> 15;
-                }
+                acc = LAdderStart;
+                vol = (LAdderEnd - acc) >> 3;
+                LAdderEnd = (int32_t)(((int64_t)LAdderEnd * LRamp) >> 16);
+                LAdderStart = (int32_t)(((int64_t)acc * LRamp) >> 16);
             }
             else
             {
-                if (LAcc > LTrg)
-                {
-                    LAcc = LTrg;
-                    LAdderStart = LTrg;
-                    MainL = oMainL;
-                    AuxL = oAuxL;
-                }
-                else
-                {
-                    MainL = (Dry * ((int32_t)LAcc >> 16) + 0x4000) >> 15;
-                    AuxL = (Wet * ((int32_t)LAcc >> 16) + 0x4000) >> 15;
-                }
+                acc = LTrg;
+                vol = 0;
             }
-
-            if (RVol <= 0)
+            for (int x = 0; x < 8; x++)
             {
-                // Decrementing
-                if (RAcc < RTrg)
+                acc += vol;
+                if (vol <= 0)
                 {
-                    RAcc = RTrg;
-                    RAdderStart = RTrg;
-                    MainR = oMainR;
-                    AuxR = oAuxR;
+                    if (acc < LTrg)
+                    {
+                        acc = LTrg;
+                        LAdderStart = LTrg;
+                    }
                 }
                 else
                 {
-                    MainR = (Dry * ((int32_t)RAcc >> 16) + 0x4000) >> 15;
-                    AuxR = (Wet * ((int32_t)RAcc >> 16) + 0x4000) >> 15;
+                    if (acc > LTrg)
+                    {
+                        acc = LTrg;
+                        LAdderStart = LTrg;
+                    }
                 }
+                lvArr[x] = (int16_t)(acc >> 16);
+            }
+        }
+
+        { // R channel
+            int32_t acc, vol;
+            if (RAdderStart != RTrg)
+            {
+                acc = RAdderStart;
+                vol = (RAdderEnd - acc) >> 3;
+                RAdderEnd = (int32_t)(((int64_t)RAdderEnd * RRamp) >> 16);
+                RAdderStart = (int32_t)(((int64_t)acc * RRamp) >> 16);
             }
             else
             {
-                if (RAcc > RTrg)
+                acc = RTrg;
+                vol = 0;
+            }
+            for (int x = 0; x < 8; x++)
+            {
+                acc += vol;
+                if (vol <= 0)
                 {
-                    RAcc = RTrg;
-                    RAdderStart = RTrg;
-                    MainR = oMainR;
-                    AuxR = oAuxR;
+                    if (acc < RTrg)
+                    {
+                        acc = RTrg;
+                        RAdderStart = RTrg;
+                    }
                 }
                 else
                 {
-                    MainR = (Dry * ((int32_t)RAcc >> 16) + 0x4000) >> 15;
-                    AuxR = (Wet * ((int32_t)RAcc >> 16) + 0x4000) >> 15;
+                    if (acc > RTrg)
+                    {
+                        acc = RTrg;
+                        RAdderStart = RTrg;
+                    }
                 }
+                rvArr[x] = (int16_t)(acc >> 16);
             }
-
-            o1 += ((i1 * MainR) + 0x4000) >> 15;
-            a1 += ((i1 * MainL) + 0x4000) >> 15;
-
-            if (o1 > 32767)
-                o1 = 32767;
-            else if (o1 < -32768)
-                o1 = -32768;
-
-            if (a1 > 32767)
-                a1 = 32767;
-            else if (a1 < -32768)
-                a1 = -32768;
-
-            out[ptr ^ 1] = o1;
-            aux1[ptr ^ 1] = a1;
-            if (AuxIncRate)
-            {
-                a2 += ((i1 * AuxR) + 0x4000) >> 15;
-                a3 += ((i1 * AuxL) + 0x4000) >> 15;
-
-                if (a2 > 32767)
-                    a2 = 32767;
-                else if (a2 < -32768)
-                    a2 = -32768;
-
-                if (a3 > 32767)
-                    a3 = 32767;
-                else if (a3 < -32768)
-                    a3 = -32768;
-
-                aux2[ptr ^ 1] = a2;
-                aux3[ptr ^ 1] = a3;
-            }
-            ptr++;
         }
+
+        // ------------------------------------------------------------
+        // Phase 2 – SIMD: build per-sample volume coefficients and mix
+        // into each output buffer.
+        //
+        // The original accesses every buffer at [ptr ^ 1], which swaps
+        // adjacent int16 pairs.  Rather than shuffling every audio load
+        // and store, we swap the volume vectors once:
+        //
+        //   vmainR[y] = (Dry * rv[y^1] + 0x4000) >> 15
+        //
+        // so that a plain element-wise multiply with the unshuffled inp
+        // and a plain saturating add to the unshuffled out reproduce the
+        // original result exactly.
+        //
+        // _mm_mulhrs_epi16(a, b) == (a * b + 0x4000) >> 15  ← exact match
+        // _mm_adds_epi16         == saturating int16 add     ← exact match
+        // ------------------------------------------------------------
+
+        // Load and swap-adjacent the volume arrays (models [ptr ^ 1] access).
+        __m128i vlv = _mm_loadu_si128((const __m128i *)lvArr);
+        vlv = _mm_shufflehi_epi16(_mm_shufflelo_epi16(vlv, SW), SW);
+
+        __m128i vrv = _mm_loadu_si128((const __m128i *)rvArr);
+        vrv = _mm_shufflehi_epi16(_mm_shufflelo_epi16(vrv, SW), SW);
+
+        // Volume coefficients for the dry (main) path.
+        __m128i vmainL = _mm_mulhrs_epi16(vDry, vlv); // → aux1
+        __m128i vmainR = _mm_mulhrs_epi16(vDry, vrv); // → out
+
+        __m128i vinp = _mm_loadu_si128((const __m128i *)(inp + ptr));
+
+        // out[y] = saturate16(out[y] + (inp[y] * mainR[y] + 0x4000) >> 15)
+        {
+            __m128i v = _mm_loadu_si128((const __m128i *)(out + ptr));
+            _mm_storeu_si128((__m128i *)(out + ptr), _mm_adds_epi16(v, _mm_mulhrs_epi16(vinp, vmainR)));
+        }
+
+        // aux1[y] = saturate16(aux1[y] + (inp[y] * mainL[y] + 0x4000) >> 15)
+        {
+            __m128i v = _mm_loadu_si128((const __m128i *)(aux1 + ptr));
+            _mm_storeu_si128((__m128i *)(aux1 + ptr), _mm_adds_epi16(v, _mm_mulhrs_epi16(vinp, vmainL)));
+        }
+
+        if (AuxIncRate)
+        {
+            __m128i vauxL = _mm_mulhrs_epi16(vWet, vlv); // → aux3
+            __m128i vauxR = _mm_mulhrs_epi16(vWet, vrv); // → aux2
+
+            {
+                __m128i v = _mm_loadu_si128((const __m128i *)(aux2 + ptr));
+                _mm_storeu_si128((__m128i *)(aux2 + ptr), _mm_adds_epi16(v, _mm_mulhrs_epi16(vinp, vauxR)));
+            }
+            {
+                __m128i v = _mm_loadu_si128((const __m128i *)(aux3 + ptr));
+                _mm_storeu_si128((__m128i *)(aux3 + ptr), _mm_adds_epi16(v, _mm_mulhrs_epi16(vinp, vauxL)));
+            }
+        }
+
+        ptr += 8;
     }
 
-    *(int16_t *)(hleMixerWorkArea + 0) = Wet;          // 0-1
-    *(int16_t *)(hleMixerWorkArea + 2) = Dry;          // 2-3
-    *(int32_t *)(hleMixerWorkArea + 4) = LTrg;         // 4-5
-    *(int32_t *)(hleMixerWorkArea + 6) = RTrg;         // 6-7
-    *(int32_t *)(hleMixerWorkArea + 8) = LRamp;        // 8-9 (hleMixerWorkArea is a 16bit pointer)
-    *(int32_t *)(hleMixerWorkArea + 10) = RRamp;       // 10-11
-    *(int32_t *)(hleMixerWorkArea + 12) = LAdderEnd;   // 12-13
-    *(int32_t *)(hleMixerWorkArea + 14) = RAdderEnd;   // 14-15
-    *(int32_t *)(hleMixerWorkArea + 16) = LAdderStart; // 12-13
-    *(int32_t *)(hleMixerWorkArea + 18) = RAdderStart; // 14-15
+    *(int16_t *)(hleMixerWorkArea + 0) = Wet;
+    *(int16_t *)(hleMixerWorkArea + 2) = Dry;
+    *(int32_t *)(hleMixerWorkArea + 4) = LTrg;
+    *(int32_t *)(hleMixerWorkArea + 6) = RTrg;
+    *(int32_t *)(hleMixerWorkArea + 8) = LRamp;
+    *(int32_t *)(hleMixerWorkArea + 10) = RRamp;
+    *(int32_t *)(hleMixerWorkArea + 12) = LAdderEnd;
+    *(int32_t *)(hleMixerWorkArea + 14) = RAdderEnd;
+    *(int32_t *)(hleMixerWorkArea + 16) = LAdderStart;
+    *(int32_t *)(hleMixerWorkArea + 18) = RAdderStart;
     memcpy(rsp.rdram + addy, (uint8_t *)hleMixerWorkArea, 80);
 }
 
@@ -432,55 +417,59 @@ static void ENVMIXERo()
 
 static void RESAMPLE()
 {
-    uint8_t Flags = (uint8_t)((inst1 >> 16) & 0xff);
-    uint32_t Pitch = ((inst1 & 0xffff)) << 1;
-    uint32_t addy = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
+    const uint8_t Flags = (uint8_t)((inst1 >> 16) & 0xff);
+    const uint32_t Pitch = (inst1 & 0xffff) << 1;
+    const uint32_t addy = inst2 & 0xffffff;
     uint32_t Accum = 0;
-    uint32_t location;
-    int16_t *lut, *lut2;
-    int16_t *dst;
-    int16_t *src;
-    dst = (int16_t *)(BufferSpace);
-    src = (int16_t *)(BufferSpace);
-    uint32_t srcPtr = (AudioInBuffer / 2);
-    uint32_t dstPtr = (AudioOutBuffer / 2);
-    int32_t temp;
-    int32_t accum;
 
-    srcPtr -= 4;
+    int16_t *const dst = (int16_t *)BufferSpace;
+    int16_t *const src = (int16_t *)BufferSpace;
+    uint32_t srcPtr = (AudioInBuffer / 2) - 4;
+    uint32_t dstPtr = AudioOutBuffer / 2;
 
-    if ((Flags & 0x1) == 0)
+    if (!(Flags & 0x1))
     {
-        // memcpy (src+srcPtr, rsp.rdram+addy, 0x8);
-        for (int32_t x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1];
-        Accum = *(uint16_t *)(rsp.rdram + addy + 10);
+        const uint16_t *rdram16 = (const uint16_t *)rsp.rdram;
+        const uint32_t addy16 = addy / 2;
+        for (int x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = (int16_t)rdram16[(addy16 + x) ^ 1];
+        Accum = *(const uint16_t *)(rsp.rdram + addy + 10);
     }
     else
     {
-        for (int32_t x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0;
+        for (int x = 0; x < 4; x++) src[(srcPtr + x) ^ 1] = 0;
     }
 
-    const auto output_samples = ((AudioCount + 0xf) & 0xFFF0) / 2;
-    const auto lut_phases = 64;
-    const auto lut_taps = 4;
-    for (int32_t i = 0; i < output_samples; i++)
+    const int output_samples = ((AudioCount + 0xf) & 0xFFF0) / 2;
+
+    const __m128i shuf_even = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 5, 4, 7, 6, 1, 0, 3, 2);
+    const __m128i shuf_odd = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 11, 10, 5, 4, 7, 6, 1, 0);
+
+    for (int i = 0; i < output_samples; i++)
     {
-        int32_t phase = Accum >> 10;
-        int16_t *coeff = (int16_t *)((uint8_t *)ResampleLUT + (phase << 3));
+        const int16_t *coeff = (const int16_t *)((const uint8_t *)ResampleLUT + ((Accum >> 10) << 3));
 
-        int32_t sum = 0;
+        __m128i vsamples;
 
-        for (int32_t tap = 0; tap < lut_taps; tap++)
+        if (srcPtr & 1)
         {
-            int16_t sample = *(int16_t *)(src + ((srcPtr + tap) ^ 1));
-            int16_t c = coeff[tap];
-
-            sum += ((int32_t)sample * c) >> 15;
+            const int16_t *base = src + (srcPtr - 1);
+            __m128i combined = _mm_unpacklo_epi64(_mm_loadl_epi64((const __m128i *)(base)),
+                                                  _mm_loadl_epi64((const __m128i *)(base + 4)));
+            vsamples = _mm_shuffle_epi8(combined, shuf_odd);
+        }
+        else
+        {
+            // Even: all 4 needed samples are contiguous, just swap pairs
+            vsamples = _mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(src + srcPtr)), shuf_even);
         }
 
-        if (sum > 32767) sum = 32767;
-        if (sum < -32768) sum = -32768;
+        const __m128i vcoeffs = _mm_loadl_epi64((const __m128i *)coeff);
+        const __m128i vprod = _mm_madd_epi16(vsamples, vcoeffs);
 
+        int32_t sum = _mm_cvtsi128_si32(_mm_add_epi32(vprod, _mm_srli_si128(vprod, 4)));
+        sum >>= 15;
+
+        sum = sum > 32767 ? 32767 : (sum < -32768 ? -32768 : sum);
         dst[dstPtr ^ 1] = (int16_t)sum;
         dstPtr++;
 
@@ -489,10 +478,9 @@ static void RESAMPLE()
         Accum &= 0xFFFF;
     }
 
-    for (int32_t x = 0; x < 4; x++) ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
-
-    // memcpy (RSWORK, src+srcPtr, 0x8);
-    *(uint16_t *)(rsp.rdram + addy + 10) = Accum;
+    const uint32_t addy16 = addy / 2;
+    for (int x = 0; x < 4; x++) ((uint16_t *)rsp.rdram)[(addy16 + x) ^ 1] = (uint16_t)src[(srcPtr + x) ^ 1];
+    *(uint16_t *)(rsp.rdram + addy + 10) = (uint16_t)Accum;
 }
 
 static void SETVOL()
