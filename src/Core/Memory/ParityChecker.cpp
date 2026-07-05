@@ -27,7 +27,7 @@ void start(int32_t interval)
 {
     if (s_ctx.active) return;
     s_ctx.active = true;
-    s_ctx.interval = interval < 1 ? 1 : interval;
+    s_ctx.interval = std::max(interval, 1);
     s_ctx.running = FNV1A::FNV_OFFSET_BASIS;
     s_ctx.checkpoints.clear();
     g_core->log_info(std::format("[ParityChecker] Started (interval={} samples)", s_ctx.interval));
@@ -48,6 +48,8 @@ void on_sample(int32_t sample)
 {
     if (!s_ctx.active) [[likely]]
         return;
+
+    if (sample % s_ctx.interval != 0) return;
 
     const auto result = st_save_pure([=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
         const uint64_t checkpoint = FNV1A::hash(buffer);
