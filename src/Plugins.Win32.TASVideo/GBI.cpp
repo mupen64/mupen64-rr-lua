@@ -365,6 +365,10 @@ void GBI_MakeCurrent(MicrocodeInfo *current)
         GBI.cmd_headless[G_OBJ_RECTANGLE] = GBI_Nop;
         GBI.cmd_headless[G_OBJ_RECTANGLE_R] = GBI_Nop;
         GBI.cmd_headless[G_OBJ_SPRITE] = GBI_Nop;
+
+        GBI.cmd_headless[G_SETCOMBINE] = GBI_Nop;
+        GBI.cmd_headless[G_SETTILE] = GBI_Nop;
+        GBI.cmd_headless[G_SETTILESIZE] = GBI_Nop;
     }
 
     GBI.current = current;
