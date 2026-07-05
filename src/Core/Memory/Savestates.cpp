@@ -6,8 +6,8 @@
 
 #include <CommonPCH.hpp>
 #include <Core.hpp>
-// #include <PlatformService.h>
 #include <libdeflate.h>
+#include <FNV1A.hpp>
 #include <include/core_api.h>
 #include <Memory/FlashRAM.hpp>
 #include <Memory/Memory.hpp>
@@ -802,13 +802,15 @@ void st_get_undo_savestate(std::vector<uint8_t> &buffer)
     buffer = g_undo_savestate;
 }
 
-bool st_save_pure(const core_st_callback &callback)
+bool st_sync_hash(const std::function<void(uint64_t hash)> &callback)
 {
     std::scoped_lock lock(g_task_mutex);
     if (!can_push_work()) return false;
 
     auto internal_callback_wrapper = [=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
-        if (callback) callback(info, buffer);
+        if (!callback) return;
+        const auto hash = FNV1A::hash(buffer);
+        callback(hash);
     };
 
     const t_savestate_task task = {.job = core_st_job_save,

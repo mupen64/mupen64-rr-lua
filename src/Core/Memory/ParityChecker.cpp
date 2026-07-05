@@ -51,14 +51,11 @@ void on_sample(int32_t sample)
 
     if (sample % s_ctx.interval != 0) return;
 
-    const auto result = st_save_pure([=](const core_st_callback_info &info, const std::vector<uint8_t> &buffer) {
-        const uint64_t checkpoint = FNV1A::hash(buffer);
-        const auto running_span =
-            std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(&checkpoint), sizeof(checkpoint));
+    const auto result = st_sync_hash([=](const uint64_t hash) {
+        const auto running_span = std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(&hash), sizeof(hash));
         s_ctx.running = FNV1A::hash(running_span, s_ctx.running);
-        s_ctx.checkpoints.emplace_back(sample, checkpoint);
-
-        g_core->log_info(std::format("[ParityChecker] sample {} -> {:016x}", sample, checkpoint));
+        s_ctx.checkpoints.emplace_back(sample, hash);
+        g_core->log_info(std::format("[ParityChecker] sample {} -> {:016x}", sample, hash));
     });
 
     if (!result)
