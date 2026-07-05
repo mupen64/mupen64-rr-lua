@@ -233,6 +233,7 @@ static void start_audio_thread()
         .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
         .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
         .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
+        .frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); },                             \
         .config_path = ext_fn_config_path,                                                                             \
     }
 

@@ -78,7 +78,7 @@ static int audio_ucode_detect_type(const OSTask_t *task)
     return 2;
 }
 
-static int audio_ucode(OSTask_t *task)
+static void audio_ucode(OSTask_t *task)
 {
     const auto ucode_type = audio_ucode_detect_type(task);
 
@@ -95,7 +95,6 @@ static int audio_ucode(OSTask_t *task)
         break;
     default:
         std::terminate();
-        return -1;
     }
 
     const auto p_alist = (uint32_t *)(rsp.rdram + task->data_ptr);
@@ -106,8 +105,6 @@ static int audio_ucode(OSTask_t *task)
         inst2 = p_alist[i + 1];
         ABI[inst1 >> 24]();
     }
-
-    return 0;
 }
 
 bool rsp_alive()
@@ -126,7 +123,11 @@ void on_rom_closed()
 uint32_t do_rsp_cycles(uint32_t Cycles)
 {
     OSTask_t *task = (OSTask_t *)(rsp.dmem + 0xFC0);
-    const auto skip = g_ef->get_effective_speed_mode() == CoreSpeedMode::UltraFastForward;
+
+    const auto effective_speed_mode = g_ef->get_effective_speed_mode();
+
+    const auto skip_audio = effective_speed_mode == CoreSpeedMode::UltraFastForward;
+    const auto skip_video = g_ef->frame_skipped() || skip_audio;
 
     uint32_t i, sum = 0;
 
@@ -134,10 +135,8 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        if (rsp.process_dlist_list)
-        {
-            rsp.process_dlist_list();
-        }
+        if (rsp.process_dlist_list && !skip_video) rsp.process_dlist_list();
+
         *rsp.sp_status_reg |= 0x0203;
         if ((*rsp.sp_status_reg & 0x40) != 0)
         {
@@ -199,22 +198,21 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
     {
         switch (task->type)
         {
-        case 2: // audio
-            if (skip) return Cycles;
-            if (audio_ucode(task) == 0) return Cycles;
-            break;
-        case 4: // jpeg
+        case 2:
+            if (skip_audio) return Cycles;
+            audio_ucode(task);
+            return Cycles;
+        case 4:
             switch (sum)
             {
-            case 0x278: // used by zelda during boot
+            case 0x278:
                 *rsp.sp_status_reg |= 0x200;
                 return Cycles;
-            case 0x2e4fc: // uncompress
+            case 0x2e4fc:
                 jpg_uncompress(task);
                 return Cycles;
             default:
-                MessageBox(NULL, std::format(L"unknown jpeg: sum: {}", sum).c_str(), L"Error", MB_OK | MB_ICONERROR);
-                break;
+                std::terminate();
             }
             break;
         }
