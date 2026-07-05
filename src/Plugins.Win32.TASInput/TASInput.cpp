@@ -993,7 +993,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 EXPORT void CALL InitiateControllers(core_input_info info)
 {
     g_ef = info.extended_funcs;
-    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
     emulator_hwnd = (HWND)info.main_hwnd;
 
     for (int i = 0; i < 4; ++i)

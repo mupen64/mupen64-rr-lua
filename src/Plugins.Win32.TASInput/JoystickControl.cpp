@@ -201,7 +201,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         else if (GetKeyState(VK_SHIFT) & 0x8000)
         {
-            const double angle = increment_sign * 5.0 * M_PI / 180.0;
+            const double angle = increment_sign * 5.0 * std::numbers::pi / 180.0;
             const double cos_angle = std::cos(angle);
             const double sin_angle = std::sin(angle);
 

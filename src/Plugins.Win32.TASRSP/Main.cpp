@@ -323,7 +323,6 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount)
 {
     g_ef = Rsp_Info.extended_funcs;
-    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
     rsp = Rsp_Info;
     config_load();
 }

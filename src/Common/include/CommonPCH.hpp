@@ -41,6 +41,7 @@
 #include <variant>
 #include <vector>
 #include <latch>
+#include <numbers>
 #include <xxh64.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>

@@ -310,4 +310,47 @@ inline std::filesystem::path exe_path_cached()
     return cached_path;
 }
 
+// Computes the path of the config directory.
+inline std::filesystem::path compute_config_path()
+{
+#ifdef _WIN32
+    wchar_t path_buffer[MAX_PATH] = {L'\0'};
+    DWORD rc;
+    rc = GetEnvironmentVariableW(L"LOCALAPPDATA", path_buffer, MAX_PATH);
+    if (rc == 0)
+    {
+        throw std::system_error((int)GetLastError(), std::system_category());
+    }
+
+    auto dir = std::filesystem::path(path_buffer) / "mupen64-rr-lua";
+    return dir;
+#elif defined(__linux__)
+    const char *env_config = getenv("XDG_CONFIG_HOME");
+    if (env_config != nullptr)
+    {
+        return std::filesystem::path(env_config) / "mupen64-rr-lua";
+    }
+
+    const char *env_home = getenv("HOME");
+    if (env_home == nullptr) throw std::runtime_error("$HOME is undefined");
+
+    return std::filesystem::path(env_home) / ".config/mupen64-rr-lua";
+#else
+#error TODO: compute_config_dir not defined on this platform
+#endif
+}
+
+/**
+ * @brief Gets the path to the config directory.
+ *
+ * This is usually tied to `%LOCALAPPDATA%` on Windows, and `$XDG_CONFIG_HOME` or `~/.config`
+ * on Linux.
+ */
+inline const std::filesystem::path &config_path()
+{
+    static const std::filesystem::path cached_path = compute_config_path();
+    if (!std::filesystem::is_directory(cached_path)) std::filesystem::create_directories(cached_path);
+    return cached_path;
+}
+
 } // namespace IOUtils
