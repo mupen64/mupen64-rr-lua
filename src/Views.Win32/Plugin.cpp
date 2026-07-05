@@ -707,7 +707,7 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
                              g_config.selected_input_plugin, g_config.selected_rsp_plugin})
     {
         auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) { return pair.first == file; });
-        if(it != results.end()) continue;
+        if (it != results.end()) continue;
 
         auto [result, plugin] = Plugin::create(file);
 
