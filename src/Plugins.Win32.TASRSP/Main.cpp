@@ -125,9 +125,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
     OSTask_t *task = (OSTask_t *)(rsp.dmem + 0xFC0);
 
     const auto effective_speed_mode = g_ef->get_effective_speed_mode();
-
     const auto skip_audio = effective_speed_mode == CoreSpeedMode::UltraFastForward;
-    const auto skip_video = g_ef->frame_skipped() || skip_audio;
 
     uint32_t i, sum = 0;
 
@@ -135,7 +133,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        if (rsp.process_dlist_list && !skip_video) rsp.process_dlist_list();
+        if (rsp.process_dlist_list) rsp.process_dlist_list();
 
         *rsp.sp_status_reg |= 0x0203;
         if ((*rsp.sp_status_reg & 0x40) != 0)

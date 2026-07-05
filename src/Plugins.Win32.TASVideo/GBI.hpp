@@ -632,6 +632,7 @@ struct MicrocodeInfo
 struct GBIInfo
 {
     GBIFunc cmd[256];
+    GBIFunc cmd_headless[256];
 
     u32 PCStackSize, numMicrocodes;
     MicrocodeInfo *current, *top, *bottom;
