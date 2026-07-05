@@ -225,6 +225,17 @@ static void start_audio_thread()
     target = (type)GetProcAddress((HMODULE)handle, name);                                                              \
     if (!target) target = fallback
 
+#define GEN_EXTENDED_FUNCS(logger)                                                                                     \
+    core_plugin_extended_funcs                                                                                         \
+    {                                                                                                                  \
+        .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
+        .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
+        .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
+        .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
+        .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
+        .config_path = ext_fn_config_path,                                                                             \
+    }
+
 /**
  * \brief Tries to find the free function exported by the CRT in the specified module.
  */
@@ -258,9 +269,6 @@ static void (*get_free_function_in_module(HMODULE module))(void *)
 void load_gfx(HMODULE handle)
 {
     INITIATEGFX initiate_gfx{};
-
-    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
-    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_plugin_funcs.video_change_window, CHANGEWINDOW, dummy_void, "ChangeWindow");
     FUNC(g_plugin_funcs.video_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
@@ -316,7 +324,8 @@ void load_gfx(HMODULE handle)
     gfx_info.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
     gfx_info.check_interrupts = dummy_void;
 
-    receive_extended_funcs(&g_plugin_funcs.video_extended_funcs);
+    g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
+    gfx_info.extended_funcs = &g_plugin_funcs.video_extended_funcs;
     initiate_gfx(gfx_info);
 }
 
@@ -324,9 +333,6 @@ void load_input(uint16_t version, HMODULE handle)
 {
     OLD_INITIATECONTROLLERS old_initiate_controllers{};
     INITIATECONTROLLERS initiate_controllers{};
-
-    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
-    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_plugin_funcs.input_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_plugin_funcs.input_controller_command, CONTROLLERCOMMAND, dummy_controller_command, "ControllerCommand");
@@ -357,7 +363,10 @@ void load_input(uint16_t version, HMODULE handle)
         controller.RawData = 0;
         controller.Plugin = (int32_t)ce_none;
     }
-    receive_extended_funcs(&g_plugin_funcs.input_extended_funcs);
+
+    g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
+    control_info.extended_funcs = &g_plugin_funcs.input_extended_funcs;
+
     if (version == 0x0101)
     {
         initiate_controllers(control_info);
@@ -371,9 +380,6 @@ void load_input(uint16_t version, HMODULE handle)
 void load_audio(HMODULE handle)
 {
     INITIATEAUDIO initiate_audio{};
-
-    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
-    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_plugin_funcs.audio_close_dll_audio, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_plugin_funcs.audio_ai_dacrate_changed, AIDACRATECHANGED, dummy_ai_dacrate_changed, "AiDacrateChanged");
@@ -402,16 +408,14 @@ void load_audio(HMODULE handle)
 
     audio_info.check_interrupts = dummy_void;
 
-    receive_extended_funcs(&g_plugin_funcs.audio_extended_funcs);
+    g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
+    audio_info.extended_funcs = &g_plugin_funcs.audio_extended_funcs;
     initiate_audio(audio_info);
 }
 
 void load_rsp(HMODULE handle)
 {
     INITIATERSP initiate_rsp{};
-
-    RECEIVEEXTENDEDFUNCS receive_extended_funcs;
-    FUNC(receive_extended_funcs, RECEIVEEXTENDEDFUNCS, dummy_receive_extended_funcs, "ReceiveExtendedFuncs");
 
     FUNC(g_plugin_funcs.rsp_close_dll, CLOSEDLL, dummy_void, "CloseDLL");
     FUNC(g_plugin_funcs.rsp_do_rsp_cycles, DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
@@ -446,7 +450,8 @@ void load_rsp(HMODULE handle)
     rsp_info.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
     rsp_info.show_cfb = g_plugin_funcs.video_show_cfb;
 
-    receive_extended_funcs(&g_plugin_funcs.rsp_extended_funcs);
+    g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
+    rsp_info.extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
 
     int32_t i = 4;
     initiate_rsp(rsp_info, (uint32_t *)&i);
@@ -589,30 +594,6 @@ void Plugin::initiate_dummy()
 {
     Main::init_sdl();
 
-    const auto receive_extended_funcs = (RECEIVEEXTENDEDFUNCS)GetProcAddress(m_module, "ReceiveExtendedFuncs");
-    if (receive_extended_funcs)
-    {
-        core_plugin_extended_funcs *extended_funcs = nullptr;
-        switch (m_type)
-        {
-        case plugin_video:
-            extended_funcs = &g_plugin_funcs.video_extended_funcs;
-            break;
-        case plugin_audio:
-            extended_funcs = &g_plugin_funcs.audio_extended_funcs;
-            break;
-        case plugin_input:
-            extended_funcs = &g_plugin_funcs.input_extended_funcs;
-            break;
-        case plugin_rsp:
-            extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
-            break;
-        default:
-            RT_ASSERT(false, L"Unknown plugin type");
-        }
-        receive_extended_funcs(extended_funcs);
-    }
-
     switch (m_type)
     {
     case plugin_video: {
@@ -621,6 +602,9 @@ void Plugin::initiate_dummy()
             // NOTE: Since olden days, dummy render target hwnd was the statusbar.
             dummy_video_info.main_hwnd = Statusbar::hwnd();
             dummy_video_info.statusbar_hwnd = Statusbar::hwnd();
+
+            g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
+            dummy_video_info.extended_funcs = &g_plugin_funcs.video_extended_funcs;
 
             const auto initiate_gfx = (INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
             if (initiate_gfx && !initiate_gfx(dummy_video_info))
@@ -634,6 +618,9 @@ void Plugin::initiate_dummy()
     case plugin_audio: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
+            g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
+            dummy_audio_info.extended_funcs = &g_plugin_funcs.audio_extended_funcs;
+
             const auto initiate_audio = (INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
             if (initiate_audio && !initiate_audio(dummy_audio_info))
             {
@@ -646,6 +633,9 @@ void Plugin::initiate_dummy()
     case plugin_input: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
+            g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
+            dummy_control_info.extended_funcs = &g_plugin_funcs.input_extended_funcs;
+
             if (m_version == 0x0101)
             {
                 const auto initiate_controllers = (INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
@@ -664,6 +654,9 @@ void Plugin::initiate_dummy()
     case plugin_rsp: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
+            g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
+            dummy_rsp_info.extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
+
             auto initiateRSP = (INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
             uint32_t i = 0;
             if (initiateRSP) initiateRSP(dummy_rsp_info, &i);
@@ -711,22 +704,26 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
         plugins.emplace_back(std::move(plugin));
     }
 
+    // Special case: plugins are present but not in the plugin directory
+    for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
+                             g_config.selected_input_plugin, g_config.selected_rsp_plugin})
+    {
+        auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) { return pair.first == file; });
+        if(it != results.end()) continue;
+
+        auto [result, plugin] = Plugin::create(file);
+
+        results.emplace_back(file, result);
+        if (!result.empty()) continue;
+
+        plugins.emplace_back(std::move(plugin));
+    }
+
     return t_plugin_discovery_result{
         .plugins = std::move(plugins),
         .results = results,
     };
 }
-
-#define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    core_plugin_extended_funcs                                                                                         \
-    {                                                                                                                  \
-        .size = sizeof(core_plugin_extended_funcs), .log_trace = [](const wchar_t *str) { logger->trace(str); },       \
-        .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
-        .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
-        .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
-        .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
-        .config_path = ext_fn_config_path,                                                                             \
-    }
 
 void PluginUtil::init_dummy_and_extended_funcs()
 {

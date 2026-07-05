@@ -21,7 +21,7 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-static core_plugin_extended_funcs ef_shim = ViewPluginHelpers::get_core_plugin_extended_funcs_shim();
+static core_plugin_extended_funcs ef_shim{};
 
 HINSTANCE g_inst;
 core_plugin_extended_funcs *g_ef = &ef_shim;
@@ -41,10 +41,4 @@ int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
     }
 
     return TRUE;
-}
-
-EXPORT void CALL ReceiveExtendedFuncs(core_plugin_extended_funcs *funcs)
-{
-    g_ef = funcs;
-    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
 }
