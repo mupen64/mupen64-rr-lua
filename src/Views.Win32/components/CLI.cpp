@@ -147,6 +147,7 @@ static void on_movie_playback_stop()
 
     if (cli_params.parity_check)
     {
+        g_main_ctx.core_ctx->pc_stop();
         PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
     }
 }
