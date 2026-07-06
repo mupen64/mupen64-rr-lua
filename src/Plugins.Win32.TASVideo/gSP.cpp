@@ -79,49 +79,6 @@ void gSPProcessVertex(u32 v)
         gSP.vertices[v].z = -gSP.vertices[v].w;
     }
 
-    if (gSP.geometryMode & G_LIGHTING)
-    {
-        vec_transform(&gSP.vertices[v].nx, gSP.matrix.modelView[gSP.matrix.modelViewi]);
-        vec_normalize(&gSP.vertices[v].nx);
-
-        r = gSP.lights[gSP.numLights].r;
-        g = gSP.lights[gSP.numLights].g;
-        b = gSP.lights[gSP.numLights].b;
-
-        for (int i = 0; i < gSP.numLights; i++)
-        {
-            intensity = dot_product(&gSP.vertices[v].nx, &gSP.lights[i].x);
-
-            if (intensity < 0.0f) intensity = 0.0f;
-
-            r += gSP.lights[i].r * intensity;
-            g += gSP.lights[i].g * intensity;
-            b += gSP.lights[i].b * intensity;
-        }
-
-        gSP.vertices[v].r = r;
-        gSP.vertices[v].g = g;
-        gSP.vertices[v].b = b;
-
-        if (gSP.geometryMode & G_TEXTURE_GEN)
-        {
-            vec_transform(&gSP.vertices[v].nx, gSP.matrix.projection);
-
-            vec_normalize(&gSP.vertices[v].nx);
-
-            if (gSP.geometryMode & G_TEXTURE_GEN_LINEAR)
-            {
-                gSP.vertices[v].s = acosf(gSP.vertices[v].nx) * 325.94931f;
-                gSP.vertices[v].t = acosf(gSP.vertices[v].ny) * 325.94931f;
-            }
-            else // G_TEXTURE_GEN
-            {
-                gSP.vertices[v].s = (gSP.vertices[v].nx + 1.0f) * 512.0f;
-                gSP.vertices[v].t = (gSP.vertices[v].ny + 1.0f) * 512.0f;
-            }
-        }
-    }
-
     if (gSP.vertices[v].x < -gSP.vertices[v].w)
         gSP.vertices[v].xClip = -1.0f;
     else if (gSP.vertices[v].x > gSP.vertices[v].w)
@@ -144,6 +101,49 @@ void gSPProcessVertex(u32 v)
         gSP.vertices[v].zClip = 1.0f;
     else
         gSP.vertices[v].zClip = 0.0f;
+
+    if (OGL.headless) return;
+
+    if (gSP.geometryMode & G_LIGHTING)
+    {
+        vec_transform(&gSP.vertices[v].nx, gSP.matrix.modelView[gSP.matrix.modelViewi]);
+        vec_normalize(&gSP.vertices[v].nx);
+
+        r = gSP.lights[gSP.numLights].r;
+        g = gSP.lights[gSP.numLights].g;
+        b = gSP.lights[gSP.numLights].b;
+
+        for (int i = 0; i < gSP.numLights; i++)
+        {
+            intensity = dot_product(&gSP.vertices[v].nx, &gSP.lights[i].x);
+            if (intensity < 0.0f) intensity = 0.0f;
+
+            r += gSP.lights[i].r * intensity;
+            g += gSP.lights[i].g * intensity;
+            b += gSP.lights[i].b * intensity;
+        }
+
+        gSP.vertices[v].r = r;
+        gSP.vertices[v].g = g;
+        gSP.vertices[v].b = b;
+
+        if (gSP.geometryMode & G_TEXTURE_GEN)
+        {
+            vec_transform(&gSP.vertices[v].nx, gSP.matrix.projection);
+            vec_normalize(&gSP.vertices[v].nx);
+
+            if (gSP.geometryMode & G_TEXTURE_GEN_LINEAR)
+            {
+                gSP.vertices[v].s = acosf(gSP.vertices[v].nx) * 325.94931f;
+                gSP.vertices[v].t = acosf(gSP.vertices[v].ny) * 325.94931f;
+            }
+            else
+            {
+                gSP.vertices[v].s = (gSP.vertices[v].nx + 1.0f) * 512.0f;
+                gSP.vertices[v].t = (gSP.vertices[v].ny + 1.0f) * 512.0f;
+            }
+        }
+    }
 }
 
 void gSPNoOp()

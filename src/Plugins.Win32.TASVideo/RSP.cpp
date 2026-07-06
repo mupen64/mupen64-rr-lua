@@ -90,16 +90,21 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
 
 void RSP_ProcessDList()
 {
-    VI_UpdateSize();
-    OGL_UpdateScale();
+    OGL.headless = g_ef->frame_skipped();
 
-    if (OGL.clear_override)
+    if (!OGL.headless)
     {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glPushAttrib(GL_ENABLE_BIT);
-        glDisable(GL_SCISSOR_TEST);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glPopAttrib();
+        VI_UpdateSize();
+        OGL_UpdateScale();
+
+        if (OGL.clear_override)
+        {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glPushAttrib(GL_ENABLE_BIT);
+            glDisable(GL_SCISSOR_TEST);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glPopAttrib();
+        }
     }
 
     RSP.PC[0] = *(u32 *)&DMEM[0x0FF0];
@@ -142,6 +147,7 @@ void RSP_ProcessDList()
     gDPSetCycleType(G_CYC_1CYCLE);
     gDPPipelineMode(G_PM_NPRIMITIVE);
 
+    const auto cmds = OGL.headless ? GBI.cmd_headless : GBI.cmd;
     while (!RSP.halt)
     {
         if (RSP.PC[RSP.PCi] + 8 > RDRAMSize)
@@ -154,12 +160,10 @@ void RSP_ProcessDList()
         u32 w1 = *(u32 *)&RDRAM[RSP.PC[RSP.PCi] + 4];
         RSP.cmd = _SHIFTR(w0, 24, 8);
 
-        DebugMsg(L"0x%08lX: CMD=0x%02lX W0=0x%08lX W1=0x%08lX\n", RSP.PC[RSP.PCi], _SHIFTR(w0, 24, 8), w0, w1);
-
         RSP.PC[RSP.PCi] += 8;
         RSP.nextCmd = _SHIFTR(*(u32 *)&RDRAM[RSP.PC[RSP.PCi]], 24, 8);
 
-        GBI.cmd[RSP.cmd](w0, w1);
+        cmds[RSP.cmd](w0, w1);
     }
 
     RSP.busy = FALSE;

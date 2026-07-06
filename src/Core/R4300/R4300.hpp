@@ -99,6 +99,7 @@ void vr_set_speed_mode(CoreSpeedMode mode);
 bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
 void vr_invalidate_visuals();
+bool vr_get_frame_skipped();
 
 #define jump_to(a)                                                                                                     \
     {                                                                                                                  \

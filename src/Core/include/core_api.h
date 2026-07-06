@@ -397,6 +397,12 @@ extern "C"
         std::function<void(CoreSpeedMode mode)> vr_set_speed_mode;
 
         /**
+         * \brief Gets whether the current frame is visually skipped.
+         * \remarks The return value of this function is only guaranteed to be valid during a `rsp_do_rsp_cycles` call.
+         */
+        std::function<bool()> vr_get_frame_skipped;
+
+        /**
          * \brief Gets the GS button state.
          */
         std::function<bool()> vr_get_gs_button;
@@ -663,6 +669,28 @@ extern "C"
          * \brief Stops trace logging.
          */
         std::function<void()> tl_stop;
+
+#pragma endregion
+
+#pragma region Parity Checker
+
+        /**
+         * \brief Starts the parity checker with the specified sample interval.
+         * While active, the core will log a combined hash of sync-determining emulator state (starting from the first
+         * sample after the parity checker is started) every `interval` samples.
+         * \param interval Sample interval between checkpoints in range `[1, INT32_MAX]`.
+         */
+        std::function<void(int32_t interval)> pc_start;
+
+        /**
+         * \brief Stops the parity checker and logs the final hash.
+         */
+        std::function<void()> pc_stop;
+
+        /**
+         * \brief Gets whether the parity checker is currently active.
+         */
+        std::function<bool()> pc_active;
 
 #pragma endregion
 
