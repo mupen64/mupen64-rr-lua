@@ -59,10 +59,10 @@ uint16_t AudioAuxE;      // 0x000E(T8)
 uint32_t loopval;        // 0x0010(T8) // Value set by A_SETLOOP : Possible conflict with SETVOLUME???
 int16_t VolTrg_Left;     // 0x0010(T8)
 int32_t VolRamp_Left;    // m_LeftVolTarget
-int16_t VolTrg_Right;  // m_RightVol
-int32_t VolRamp_Right; // m_RightVolTarget
-int16_t Env_Dry; // 0x001C(T8)
-int16_t Env_Wet; // 0x001E(T8)
+int16_t VolTrg_Right;    // m_RightVol
+int32_t VolRamp_Right;   // m_RightVolTarget
+int16_t Env_Dry;         // 0x001C(T8)
+int16_t Env_Wet;         // 0x001E(T8)
 
 uint8_t BufferSpace[0x10000];
 
@@ -537,250 +537,50 @@ static void SETLOOP()
 
 static void ADPCM()
 {
-    // Work in progress! :)
     uint8_t Flags = (uint8_t)(inst1 >> 16) & 0xff;
-    uint16_t Gain = (uint16_t)(inst1 & 0xffff);
-    uint32_t Address = (inst2 & 0xffffff); // + SEGMENTS[(inst2>>24)&0xf];
+    uint32_t Address = (inst2 & 0xffffff);
     uint16_t inPtr = 0;
+
     int16_t *out = (int16_t *)(BufferSpace + AudioOutBuffer);
     uint8_t *in = (uint8_t *)(BufferSpace + AudioInBuffer);
     int16_t count = (int16_t)AudioCount;
-    uint8_t icode;
-    uint8_t code;
-    int32_t vscale;
-    uint16_t index;
-    uint16_t j;
-    int32_t a[8];
-    int16_t *book1;
-    int16_t *book2;
+
     memset(out, 0, 32);
 
     if (!(Flags & 0x1))
     {
         if (Flags & 0x2)
-        {
             memcpy(out, &rsp.rdram[loopval & 0x7fffff], 32);
-        }
         else
-        {
             memcpy(out, &rsp.rdram[Address], 32);
-        }
     }
 
     int32_t l1 = out[15];
     int32_t l2 = out[14];
+    out += 16;
+
     int32_t inp1[8];
     int32_t inp2[8];
-    out += 16;
+
     while (count > 0)
     {
-        // the first interation through, these values are
-        // either 0 in the case of A_INIT, from a special
-        // area of memory in the case of A_LOOP or just
-        // the values we calculated the last time
+        uint8_t code = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
+        inPtr++; // Advance past the header byte
 
-        code = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
-        index = code & 0xf;
-        index <<= 4; // index into the adpcm code table
-        book1 = (int16_t *)&adpcmtable[index];
-        book2 = book1 + 8;
-        code >>= 4;                             // upper nibble is scale
-        vscale = (0x8000 >> ((12 - code) - 1)); // very strange. 0x8000 would be .5 in 16:16 format
-        // so this appears to be a fractional scale based
-        // on the 12 based inverse of the scale value.  note
-        // that this could be negative, in which case we do
-        // not use the calculated vscale value... see the
-        // if(code>12) check below
+        uint16_t index = (code & 0xf) << 4;
+        code >>= 4;
+        int32_t vscale = (0x8000 >> ((12 - code) - 1));
 
-        inPtr++; // coded adpcm data lies next
-        j = 0;
-        while (j < 8) // loop of 8, for 8 coded nibbles from 4 bytes
-        // which yields 8 int16_t pcm values
-        {
-            icode = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
-            inPtr++;
-
-            inp1[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
-            if (code < 12)
-                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            inp1[j] = (int16_t)((icode & 0xf) << 12);
-            if (code < 12)
-                inp1[j] = ((int32_t)((int32_t)inp1[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-        }
-        j = 0;
-        while (j < 8)
-        {
-            icode = BufferSpace[(AudioInBuffer + inPtr) ^ 3];
-            inPtr++;
-
-            inp2[j] = (int16_t)((icode & 0xf0) << 8); // this will in effect be signed
-            if (code < 12)
-                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-
-            inp2[j] = (int16_t)((icode & 0xf) << 12);
-            if (code < 12)
-                inp2[j] = ((int32_t)((int32_t)inp2[j] * (int32_t)vscale) >> 16);
-            else
-                int32_t catchme = 1;
-            j++;
-        }
-
-        a[0] = (int32_t)book1[0] * (int32_t)l1;
-        a[0] += (int32_t)book2[0] * (int32_t)l2;
-        a[0] += (int32_t)inp1[0] * (int32_t)2048;
-
-        a[1] = (int32_t)book1[1] * (int32_t)l1;
-        a[1] += (int32_t)book2[1] * (int32_t)l2;
-        a[1] += (int32_t)book2[0] * inp1[0];
-        a[1] += (int32_t)inp1[1] * (int32_t)2048;
-
-        a[2] = (int32_t)book1[2] * (int32_t)l1;
-        a[2] += (int32_t)book2[2] * (int32_t)l2;
-        a[2] += (int32_t)book2[1] * inp1[0];
-        a[2] += (int32_t)book2[0] * inp1[1];
-        a[2] += (int32_t)inp1[2] * (int32_t)2048;
-
-        a[3] = (int32_t)book1[3] * (int32_t)l1;
-        a[3] += (int32_t)book2[3] * (int32_t)l2;
-        a[3] += (int32_t)book2[2] * inp1[0];
-        a[3] += (int32_t)book2[1] * inp1[1];
-        a[3] += (int32_t)book2[0] * inp1[2];
-        a[3] += (int32_t)inp1[3] * (int32_t)2048;
-
-        a[4] = (int32_t)book1[4] * (int32_t)l1;
-        a[4] += (int32_t)book2[4] * (int32_t)l2;
-        a[4] += (int32_t)book2[3] * inp1[0];
-        a[4] += (int32_t)book2[2] * inp1[1];
-        a[4] += (int32_t)book2[1] * inp1[2];
-        a[4] += (int32_t)book2[0] * inp1[3];
-        a[4] += (int32_t)inp1[4] * (int32_t)2048;
-
-        a[5] = (int32_t)book1[5] * (int32_t)l1;
-        a[5] += (int32_t)book2[5] * (int32_t)l2;
-        a[5] += (int32_t)book2[4] * inp1[0];
-        a[5] += (int32_t)book2[3] * inp1[1];
-        a[5] += (int32_t)book2[2] * inp1[2];
-        a[5] += (int32_t)book2[1] * inp1[3];
-        a[5] += (int32_t)book2[0] * inp1[4];
-        a[5] += (int32_t)inp1[5] * (int32_t)2048;
-
-        a[6] = (int32_t)book1[6] * (int32_t)l1;
-        a[6] += (int32_t)book2[6] * (int32_t)l2;
-        a[6] += (int32_t)book2[5] * inp1[0];
-        a[6] += (int32_t)book2[4] * inp1[1];
-        a[6] += (int32_t)book2[3] * inp1[2];
-        a[6] += (int32_t)book2[2] * inp1[3];
-        a[6] += (int32_t)book2[1] * inp1[4];
-        a[6] += (int32_t)book2[0] * inp1[5];
-        a[6] += (int32_t)inp1[6] * (int32_t)2048;
-
-        a[7] = (int32_t)book1[7] * (int32_t)l1;
-        a[7] += (int32_t)book2[7] * (int32_t)l2;
-        a[7] += (int32_t)book2[6] * inp1[0];
-        a[7] += (int32_t)book2[5] * inp1[1];
-        a[7] += (int32_t)book2[4] * inp1[2];
-        a[7] += (int32_t)book2[3] * inp1[3];
-        a[7] += (int32_t)book2[2] * inp1[4];
-        a[7] += (int32_t)book2[1] * inp1[5];
-        a[7] += (int32_t)book2[0] * inp1[6];
-        a[7] += (int32_t)inp1[7] * (int32_t)2048;
-
-        for (j = 0; j < 8; j++)
-        {
-            a[j ^ 1] >>= 11;
-            if (a[j ^ 1] > 32767)
-                a[j ^ 1] = 32767;
-            else if (a[j ^ 1] < -32768)
-                a[j ^ 1] = -32768;
-            *(out++) = a[j ^ 1];
-        }
-        l1 = a[6];
-        l2 = a[7];
-
-        a[0] = (int32_t)book1[0] * (int32_t)l1;
-        a[0] += (int32_t)book2[0] * (int32_t)l2;
-        a[0] += (int32_t)inp2[0] * (int32_t)2048;
-
-        a[1] = (int32_t)book1[1] * (int32_t)l1;
-        a[1] += (int32_t)book2[1] * (int32_t)l2;
-        a[1] += (int32_t)book2[0] * inp2[0];
-        a[1] += (int32_t)inp2[1] * (int32_t)2048;
-
-        a[2] = (int32_t)book1[2] * (int32_t)l1;
-        a[2] += (int32_t)book2[2] * (int32_t)l2;
-        a[2] += (int32_t)book2[1] * inp2[0];
-        a[2] += (int32_t)book2[0] * inp2[1];
-        a[2] += (int32_t)inp2[2] * (int32_t)2048;
-
-        a[3] = (int32_t)book1[3] * (int32_t)l1;
-        a[3] += (int32_t)book2[3] * (int32_t)l2;
-        a[3] += (int32_t)book2[2] * inp2[0];
-        a[3] += (int32_t)book2[1] * inp2[1];
-        a[3] += (int32_t)book2[0] * inp2[2];
-        a[3] += (int32_t)inp2[3] * (int32_t)2048;
-
-        a[4] = (int32_t)book1[4] * (int32_t)l1;
-        a[4] += (int32_t)book2[4] * (int32_t)l2;
-        a[4] += (int32_t)book2[3] * inp2[0];
-        a[4] += (int32_t)book2[2] * inp2[1];
-        a[4] += (int32_t)book2[1] * inp2[2];
-        a[4] += (int32_t)book2[0] * inp2[3];
-        a[4] += (int32_t)inp2[4] * (int32_t)2048;
-
-        a[5] = (int32_t)book1[5] * (int32_t)l1;
-        a[5] += (int32_t)book2[5] * (int32_t)l2;
-        a[5] += (int32_t)book2[4] * inp2[0];
-        a[5] += (int32_t)book2[3] * inp2[1];
-        a[5] += (int32_t)book2[2] * inp2[2];
-        a[5] += (int32_t)book2[1] * inp2[3];
-        a[5] += (int32_t)book2[0] * inp2[4];
-        a[5] += (int32_t)inp2[5] * (int32_t)2048;
-
-        a[6] = (int32_t)book1[6] * (int32_t)l1;
-        a[6] += (int32_t)book2[6] * (int32_t)l2;
-        a[6] += (int32_t)book2[5] * inp2[0];
-        a[6] += (int32_t)book2[4] * inp2[1];
-        a[6] += (int32_t)book2[3] * inp2[2];
-        a[6] += (int32_t)book2[2] * inp2[3];
-        a[6] += (int32_t)book2[1] * inp2[4];
-        a[6] += (int32_t)book2[0] * inp2[5];
-        a[6] += (int32_t)inp2[6] * (int32_t)2048;
-
-        a[7] = (int32_t)book1[7] * (int32_t)l1;
-        a[7] += (int32_t)book2[7] * (int32_t)l2;
-        a[7] += (int32_t)book2[6] * inp2[0];
-        a[7] += (int32_t)book2[5] * inp2[1];
-        a[7] += (int32_t)book2[4] * inp2[2];
-        a[7] += (int32_t)book2[3] * inp2[3];
-        a[7] += (int32_t)book2[2] * inp2[4];
-        a[7] += (int32_t)book2[1] * inp2[5];
-        a[7] += (int32_t)book2[0] * inp2[6];
-        a[7] += (int32_t)inp2[7] * (int32_t)2048;
-
-        for (j = 0; j < 8; j++)
-        {
-            a[j ^ 1] >>= 11;
-            if (a[j ^ 1] > 32767)
-                a[j ^ 1] = 32767;
-            else if (a[j ^ 1] < -32768)
-                a[j ^ 1] = -32768;
-            *(out++) = a[j ^ 1];
-        }
-        l1 = a[6];
-        l2 = a[7];
+        int16_t *book1 = (int16_t *)&adpcmtable[index];
+        int16_t *book2 = book1 + 8;
+        decode_input_block(BufferSpace, inPtr, inp1, code, vscale);
+        decode_input_block(BufferSpace, inPtr, inp2, code, vscale);
+        compute_and_pack_block(inp1, book1, book2, l1, l2, out);
+        compute_and_pack_block(inp2, book1, book2, l1, l2, out);
 
         count -= 32;
     }
+
     out -= 16;
     memcpy(&rsp.rdram[Address], out, 32);
 }

@@ -681,3 +681,50 @@ static void InnerLoop()
         tmp += 2;
     }
 }
+
+
+ void decode_input_block(uint8_t *buffer, uint16_t &inPtr, int32_t *inp, uint8_t code, int32_t vscale)
+{
+    for (int j = 0; j < 8; j += 2)
+    {
+        uint8_t icode = buffer[(AudioInBuffer + inPtr++) ^ 3];
+
+        inp[j] = (int16_t)((icode & 0xf0) << 8);
+        inp[j + 1] = (int16_t)((icode & 0x0f) << 12);
+
+        if (code < 12)
+        {
+            inp[j] = (inp[j] * vscale) >> 16;
+            inp[j + 1] = (inp[j + 1] * vscale) >> 16;
+        }
+    }
+}
+
+ void compute_and_pack_block(int32_t *inp, int16_t *book1, int16_t *book2, int32_t &l1, int32_t &l2,
+                                       int16_t *&out)
+{
+    int32_t a[8];
+
+    for (int i = 0; i < 8; i++)
+    {
+        a[i] = (book1[i] * l1) + (book2[i] * l2) + (inp[i] * 2048);
+        for (int j = 0; j < i; j++)
+        {
+            a[i] += book2[i - j - 1] * inp[j];
+        }
+    }
+
+    __m128i a_lo = _mm_set_epi32(a[2], a[3], a[0], a[1]);
+    __m128i a_hi = _mm_set_epi32(a[6], a[7], a[4], a[5]);
+
+    a_lo = _mm_srai_epi32(a_lo, 11);
+    a_hi = _mm_srai_epi32(a_hi, 11);
+
+    __m128i packed = _mm_packs_epi32(a_lo, a_hi);
+
+    _mm_storeu_si128((__m128i *)out, packed);
+    out += 8;
+
+    l2 = *(out - 2);
+    l1 = *(out - 1);
+}
