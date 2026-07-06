@@ -89,6 +89,11 @@ void vr_invalidate_visuals()
     g_r4300.screen_invalidated_frame = true;
 }
 
+bool vr_get_frame_skipped()
+{
+    return g_r4300.frame_skipped;
+}
+
 std::filesystem::path get_sram_path()
 {
     auto filename = std::format("{} {}.sra", (const char *)ROM_HEADER.nom,

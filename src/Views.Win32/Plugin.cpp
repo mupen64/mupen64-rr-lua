@@ -233,6 +233,7 @@ static void start_audio_thread()
         .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
         .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
         .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
+        .frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); },                             \
         .config_path = ext_fn_config_path,                                                                             \
     }
 
@@ -708,8 +709,11 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
     for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
                              g_config.selected_input_plugin, g_config.selected_rsp_plugin})
     {
-        auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) { return pair.first == file; });
-        if(it != results.end()) continue;
+        auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) {
+            std::error_code ec;
+            return std::filesystem::equivalent(pair.first, file, ec);
+        });
+        if (it != results.end()) continue;
 
         auto [result, plugin] = Plugin::create(file);
 

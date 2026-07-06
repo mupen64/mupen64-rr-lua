@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tmmintrin.h>
+
 const unsigned char Five2Eight[32] = {
     0,   // 00000 = 00000000
     8,   // 00001 = 00001000
@@ -94,15 +96,8 @@ const unsigned char One2Eight[2] = {
 
 inline void bswap_4_x32_sse2(__m128i &vec)
 {
-    __m128i tmp1 = _mm_srli_epi32(vec, 24);
-    __m128i tmp2 = _mm_slli_epi32(vec, 24);
-
-    __m128i t1 = _mm_and_si128(_mm_srli_epi32(vec, 8), _mm_set1_epi32(0x0000FF00));
-    __m128i t2 = _mm_and_si128(_mm_slli_epi32(vec, 8), _mm_set1_epi32(0x00FF0000));
-
-    vec = _mm_or_si128(tmp2, tmp1);
-    vec = _mm_or_si128(vec, t1);
-    vec = _mm_or_si128(vec, t2);
+    const __m128i mask = _mm_set_epi8(12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3);
+    vec = _mm_shuffle_epi8(vec, mask);
 }
 
 /**
@@ -129,22 +124,27 @@ inline void unswap_copy(uint8_t *src, uint8_t *dst, u32 num_bytes)
     }
 
     const u32 sse_block_size = (num_bytes / 16) * 16;
-    for (u32 i = 0; i < sse_block_size; i += 16)
+    if (sse_block_size > 0)
     {
-        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src));
-        bswap_4_x32_sse2(data);
-        _mm_storeu_si128(reinterpret_cast<__m128i *>(dst), data);
-        src += 16;
-        dst += 16;
-    }
+        const __m128i bswap_mask = _mm_set_epi8(12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3);
 
-    num_bytes -= sse_block_size;
+        for (u32 i = 0; i < sse_block_size; i += 16)
+        {
+            __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(src));
+            data = _mm_shuffle_epi8(data, bswap_mask);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(dst), data);
+            src += 16;
+            dst += 16;
+        }
+        num_bytes -= sse_block_size;
+    }
 
     for (u32 i = 0; i < num_bytes / 4; ++i)
     {
         uint32_t val{};
         std::memcpy(&val, src, sizeof(uint32_t));
-        val = (val >> 24 & 0x000000FF) | (val >> 8) & 0x0000FF00 | (val << 8) & 0x00FF0000 | (val << 24) & 0xFF000000;
+        val = ((val >> 24) & 0x000000FF) | ((val >> 8) & 0x0000FF00) | ((val << 8) & 0x00FF0000) |
+              ((val << 24) & 0xFF000000);
         std::memcpy(dst, &val, sizeof(uint32_t));
         src += 4;
         dst += 4;

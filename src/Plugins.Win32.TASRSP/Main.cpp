@@ -78,7 +78,7 @@ static int audio_ucode_detect_type(const OSTask_t *task)
     return 2;
 }
 
-static int audio_ucode(OSTask_t *task)
+static void ucode_load(const OSTask_t *task)
 {
     const auto ucode_type = audio_ucode_detect_type(task);
 
@@ -95,19 +95,7 @@ static int audio_ucode(OSTask_t *task)
         break;
     default:
         std::terminate();
-        return -1;
     }
-
-    const auto p_alist = (uint32_t *)(rsp.rdram + task->data_ptr);
-
-    for (uint32_t i = 0; i < task->data_size / 4; i += 2)
-    {
-        inst1 = p_alist[i];
-        inst2 = p_alist[i + 1];
-        ABI[inst1 >> 24]();
-    }
-
-    return 0;
 }
 
 bool rsp_alive()
@@ -125,106 +113,102 @@ void on_rom_closed()
 
 uint32_t do_rsp_cycles(uint32_t Cycles)
 {
-    OSTask_t *task = (OSTask_t *)(rsp.dmem + 0xFC0);
-    const auto skip = g_ef->get_effective_speed_mode() == CoreSpeedMode::UltraFastForward;
-
-    uint32_t i, sum = 0;
-
     g_rsp_alive = true;
+
+    const auto task = (OSTask_t *)(rsp.dmem + 0xFC0);
+
+    const auto effective_speed_mode = g_ef->get_effective_speed_mode();
+    const auto skip_audio = effective_speed_mode == CoreSpeedMode::UltraFastForward;
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        if (rsp.process_dlist_list)
-        {
-            rsp.process_dlist_list();
-        }
+        if (rsp.process_dlist_list) rsp.process_dlist_list();
+
         *rsp.sp_status_reg |= 0x0203;
-        if ((*rsp.sp_status_reg & 0x40) != 0)
-        {
-            *rsp.mi_intr_reg |= 0x1;
-            rsp.check_interrupts();
-        }
+        if ((*rsp.sp_status_reg & 0x40) != 0) *rsp.mi_intr_reg |= 0x1;
 
         *rsp.dpc_status_reg &= ~0x0002;
         return Cycles;
-    }
-
-    if (task->type == 7)
-    {
-        rsp.show_cfb();
     }
 
     *rsp.sp_status_reg |= 0x203;
     if ((*rsp.sp_status_reg & 0x40) != 0)
     {
         *rsp.mi_intr_reg |= 0x1;
-        rsp.check_interrupts();
     }
+
+    uint32_t sum = 0;
 
     if (task->ucode_size <= 0x1000)
     {
-        for (i = 0; i < task->ucode_size / 2; i++) sum += *(rsp.rdram + task->ucode + i);
+        for (uint32_t i = 0; i < task->ucode_size / 2; i++) sum += *(rsp.rdram + task->ucode + i);
     }
     else
-        for (i = 0; i < 0x1000 / 2; i++)
-        {
-            sum += *(rsp.imem + i);
-        }
+    {
+        for (uint32_t i = 0; i < 0x1000 / 2; i++) sum += *(rsp.imem + i);
+    }
 
     if (task->ucode_size > 0x1000)
     {
-        switch (sum)
+        if (sum == 0x9E2)
         {
-        case 0x9E2: // banjo tooie (U) boot code
-        {
-            int i, j;
+            // banjo tooie (U) boot code
             memcpy(rsp.imem + 0x120, rsp.rdram + 0x1e8, 0x1e8);
-            for (j = 0; j < 0xfc; j++)
-                for (i = 0; i < 8; i++)
-                    *(rsp.rdram + (0x2fb1f0 + j * 0xff0 + i ^ S8)) = *(rsp.imem + (0x120 + j * 8 + i ^ S8));
-        }
-            return Cycles;
-        case 0x9F2: // banjo tooie (E) + zelda oot (E) boot code
-        {
-            int i, j;
-            memcpy(rsp.imem + 0x120, rsp.rdram + 0x1e8, 0x1e8);
-            for (j = 0; j < 0xfc; j++)
-                for (i = 0; i < 8; i++)
-                    *(rsp.rdram + (0x2fb1f0 + j * 0xff0 + i ^ S8)) = *(rsp.imem + (0x120 + j * 8 + i ^ S8));
-        }
+            for (int j = 0; j < 0xfc; j++)
+                for (int i = 0; i < 8; i++)
+                    *(rsp.rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(rsp.imem + ((0x120 + (j * 8) + i) ^ S8));
             return Cycles;
         }
+
+        if (sum == 0x9F2)
+        {
+            // banjo tooie (E) + zelda oot (E) boot code
+            memcpy(rsp.imem + 0x120, rsp.rdram + 0x1e8, 0x1e8);
+            for (int j = 0; j < 0xfc; j++)
+                for (int i = 0; i < 8; i++)
+                    *(rsp.rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(rsp.imem + ((0x120 + (j * 8) + i) ^ S8));
+            return Cycles;
+        }
+
+        goto unknown_task;
     }
-    else
+
+    if (task->type == 2)
     {
-        switch (task->type)
+        if (skip_audio) return Cycles;
+
+        ucode_load(task);
+
+        const auto p_alist = (uint32_t *)(rsp.rdram + task->data_ptr);
+        for (uint32_t i = 0; i < task->data_size / 4; i += 2)
         {
-        case 2: // audio
-            if (skip) return Cycles;
-            if (audio_ucode(task) == 0) return Cycles;
-            break;
-        case 4: // jpeg
-            switch (sum)
-            {
-            case 0x278: // used by zelda during boot
-                *rsp.sp_status_reg |= 0x200;
-                return Cycles;
-            case 0x2e4fc: // uncompress
-                jpg_uncompress(task);
-                return Cycles;
-            default:
-                MessageBox(NULL, std::format(L"unknown jpeg: sum: {}", sum).c_str(), L"Error", MB_OK | MB_ICONERROR);
-                break;
-            }
-            break;
+            inst1 = p_alist[i];
+            inst2 = p_alist[i + 1];
+            const auto opcode = inst1 >> 24;
+            const auto cmd = ABI[opcode];
+            cmd();
+        }
+
+        return Cycles;
+    }
+
+    if (task->type == 4)
+    {
+        if (sum == 0x278)
+        {
+            *rsp.sp_status_reg |= 0x200;
+            return Cycles;
+        }
+        if (sum == 0x2e4fc)
+        {
+            jpg_uncompress(task);
+            return Cycles;
         }
     }
 
-    const auto message = std::format(L"unknown task:\n\ttype: {}\n\tsum: {}\n\tPC: {}", task->type, sum,
-                                     static_cast<void *>(rsp.sp_pc_reg));
-    MessageBox(NULL, message.c_str(), L"unknown task", MB_OK);
-
-    return Cycles;
+unknown_task:
+    std::terminate();
+    return 0;
 }
 
 static std::filesystem::path get_app_full_path()

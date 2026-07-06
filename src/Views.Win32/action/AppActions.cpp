@@ -77,8 +77,14 @@ bool confirm_user_exit()
 
 void AppActions::update_core_fast_forward()
 {
-    const auto ff = g_main_ctx.fast_forward || CLI::wants_fast_forward();
-    g_main_ctx.core_ctx->vr_set_speed_mode(ff ? CoreSpeedMode::FastForward : CoreSpeedMode::Normal);
+    CoreSpeedMode effective_speed_mode = CoreSpeedMode::Normal;
+
+    if (g_main_ctx.fast_forward) effective_speed_mode = CoreSpeedMode::FastForward;
+
+    const auto cli_desired_speed_mode = CLI::desired_speed_mode();
+    if (cli_desired_speed_mode != CoreSpeedMode::Normal) effective_speed_mode = cli_desired_speed_mode;
+
+    g_main_ctx.core_ctx->vr_set_speed_mode(effective_speed_mode);
 }
 
 void AppActions::load_rom_from_path(const std::wstring &path)
