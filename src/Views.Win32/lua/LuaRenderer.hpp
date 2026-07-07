@@ -5,8 +5,6 @@
  */
 namespace LuaRenderer
 {
-constexpr uint32_t LUA_GDI_COLOR_MASK = RGB(255, 0, 255);
-
 /**
  * \brief Initializes the subsystem.
  */
@@ -64,12 +62,6 @@ void loadscreen_reset(t_lua_rendering_context *);
  * \param fps The target FPS. If std::nullopt, an FPS equal to the monitor refresh rate will be used.
  */
 void set_target_fps(t_lua_rendering_context *rctx, std::optional<float> fps);
-
-/**
- * \brief Gets a brush containing a color that, when drawn to the GDI back dc, will be interpreted as an alpha mask by
- * the renderer.
- */
-HBRUSH alpha_mask_brush();
 
 /**
  * \brief Blits the graphics contents of all active Lua instances to the given HDC.

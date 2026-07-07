@@ -47,6 +47,7 @@ extern "C"
 #include <wrl/client.h>
 #include <dwmapi.h>
 #include <shlobj_core.h>
+#include <blend2d.h>
 #include <xxh64.h>
 #include <strsafe.h>
 #include <commdlg.h>

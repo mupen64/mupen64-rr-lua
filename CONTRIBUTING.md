@@ -55,10 +55,11 @@ When adding CMake dependencies, ensure that dependencies specific to the fronten
 > **Note:** the Windows GUI components are gated behind `MUPEN64RR_BUILD_WIN32`. 
 
 ```cmake
-# example: GLEW and SDL3 are specifically for the windows
+# example: GLEW, SDL3, and Blend2d are specifically for the windows
 if (MUPEN64RR_BUILD_WIN32)
   find_package(glew CONFIG REQUIRED) 
   find_package(SDL3 CONFIG REQUIRED) 
+  find_package(blend2d CONFIG REQUIRED) 
 endif()
 ```
 

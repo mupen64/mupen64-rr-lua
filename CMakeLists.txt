@@ -85,6 +85,7 @@ find_package(Catch2 CONFIG REQUIRED)
 if(MUPEN64RR_BUILD_WIN32)
   find_package(glew CONFIG REQUIRED)
   find_package(SDL3 CONFIG REQUIRED)
+  find_package(blend2d CONFIG REQUIRED)
 endif()
 
 # Lua, because Lua sucks

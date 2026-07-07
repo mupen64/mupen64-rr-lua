@@ -20,7 +20,8 @@
     "pkgconf",
     "speexdsp",
     "glew",
-    "sdl3"
+    "sdl3",
+    "blend2d"
   ],
-  "builtin-baseline": "10ceb139a610ebf3c6aa49cdc4a4b7f3db5d3f2b"
+  "builtin-baseline": "cae2989df743645fb2510971b7a45febd9a2c361"
 }

@@ -74,9 +74,6 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/modules/Action.hpp"
     "lua/modules/Hotkey.hpp"
     "lua/modules/Clipboard.hpp"
-    "lua/presenters/DCompPresenter.hpp"
-    "lua/presenters/GDIPresenter.hpp"
-    "lua/presenters/Presenter.hpp"
     "Messenger.hpp"
     "Plugin.hpp"
     "resource.h"
@@ -124,8 +121,6 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/LuaRegistry.cpp"
     "lua/LuaRenderer.cpp"
     "lua/LuaDialog.cpp"
-    "lua/presenters/DCompPresenter.cpp"
-    "lua/presenters/GDIPresenter.cpp"
     "Messenger.cpp"
     "Plugin.cpp"
     "ResizeAnchor.cpp"
@@ -163,6 +158,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     spdlog::spdlog
     SDL3::SDL3
     nlohmann_json::nlohmann_json
+    blend2d::blend2d
     PkgConfig::speexdsp
     PkgConfig::libav
     vendor::argh

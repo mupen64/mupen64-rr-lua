@@ -990,20 +990,6 @@ std::vector<t_options_group> get_static_option_groups()
     });
 
     lua_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
-        .group_id = lua_group.id,
-        .name = L"Presenter",
-        .tooltip =
-            L"The presenter type to use for displaying and capturing Lua graphics.\nRecommended: DirectComposition",
-        GENPROPS(int32_t, presenter_type),
-        .possible_values =
-            {
-                std::make_pair(L"DirectComposition", (int32_t)t_config::PresenterType::DirectComposition),
-                std::make_pair(L"GDI", (int32_t)t_config::PresenterType::GDI),
-            },
-        .is_readonly = [] { return !g_lua_environments.empty(); },
-    });
-    lua_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
         .group_id = lua_group.id,
         .name = L"Lazy Renderer Initialization",

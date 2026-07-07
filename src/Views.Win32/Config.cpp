@@ -376,7 +376,6 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(core.is_reset_recording_enabled)
     HANDLE_P_VALUE(capture_mode)
     HANDLE_P_VALUE(stop_capture_at_movie_end)
-    HANDLE_P_VALUE(presenter_type)
     HANDLE_P_VALUE(lazy_renderer_init)
     HANDLE_P_VALUE(encoder_type)
     HANDLE_P_VALUE(capture_delay)
@@ -707,7 +706,6 @@ static void json_read_file(json &j)
     FRONTEND_VALUE(is_rombrowser_recursion_enabled)
     FRONTEND_VALUE(capture_mode)
     FRONTEND_VALUE(stop_capture_at_movie_end)
-    FRONTEND_VALUE(presenter_type)
     FRONTEND_VALUE(lazy_renderer_init)
     FRONTEND_VALUE(encoder_type)
     FRONTEND_VALUE(capture_delay)
@@ -801,7 +799,6 @@ static void json_write_file(json &j)
     FRONTEND_VALUE(is_rombrowser_recursion_enabled)
     FRONTEND_VALUE(capture_mode)
     FRONTEND_VALUE(stop_capture_at_movie_end)
-    FRONTEND_VALUE(presenter_type)
     FRONTEND_VALUE(lazy_renderer_init)
     FRONTEND_VALUE(encoder_type)
     FRONTEND_VALUE(capture_delay)
@@ -887,9 +884,6 @@ static void config_patch(t_config &cfg)
             cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
         }
     }
-
-    // HACK: Wine doesn't implement DComp well enough yet, so force GDI
-    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
 }
 
 void Config::init()

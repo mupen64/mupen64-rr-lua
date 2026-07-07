@@ -11,13 +11,6 @@
 
 struct t_config
 {
-
-    enum class PresenterType
-    {
-        DirectComposition,
-        GDI
-    };
-
     enum class EncoderType
     {
         VFW,
@@ -120,11 +113,6 @@ struct t_config
     int32_t capture_mode = 3;
 
     int32_t stop_capture_at_movie_end;
-
-    /// <summary>
-    /// The presenter to use for Lua scripts
-    /// </summary>
-    int32_t presenter_type = (int32_t)PresenterType::DirectComposition;
 
     /// <summary>
     /// Enables lazy Lua renderer initialization. Greatly speeds up start and stop times for certain scripts.
