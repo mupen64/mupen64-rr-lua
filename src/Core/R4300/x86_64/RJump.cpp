@@ -165,14 +165,19 @@ void dyna_jump()
     *return_address = (uintptr_t)thunk_addr;
 }
 
-jmp_buf g_jmp_state;
+static CONTEXT g_dyna_ctx;
+static volatile bool g_dyna_stopped;
 
 void dyna_start(void (*code)())
 {
     core_executing = true;
     g_core->callbacks.core_executing_changed(core_executing);
     g_core->log_info(std::format("core_executing: {}", (bool)core_executing));
-    if (setjmp(g_jmp_state) == 0)
+
+    g_dyna_stopped = false;
+    RtlCaptureContext(&g_dyna_ctx);
+
+    if (!g_dyna_stopped)
     {
         code();
     }
@@ -180,5 +185,6 @@ void dyna_start(void (*code)())
 
 void dyna_stop()
 {
-    longjmp(g_jmp_state, 1);
+    g_dyna_stopped = true;
+    RtlRestoreContext(&g_dyna_ctx, nullptr);
 }
