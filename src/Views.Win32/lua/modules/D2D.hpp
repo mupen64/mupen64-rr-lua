@@ -51,28 +51,23 @@ typedef struct
 } t_draw_image_params;
 
 #define D2D_GET_RECT(L, idx)                                                                                           \
-    D2D1::RectF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                  \
-                luaL_checknumber(L, idx + 3))
+    BLRect(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1),                                                     \
+           luaL_checknumber(L, idx + 2) - luaL_checknumber(L, idx),                                                    \
+           luaL_checknumber(L, idx + 3) - luaL_checknumber(L, idx + 1))
 
 #define D2D_GET_COLOR(L, idx)                                                                                          \
-    D2D1::ColorF(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                 \
-                 luaL_checknumber(L, idx + 3))
+    BLRgba(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                       \
+           luaL_checknumber(L, idx + 3))
 
-#define D2D_GET_POINT(L, idx)                                                                                          \
-    D2D1_POINT_2F                                                                                                      \
-    {                                                                                                                  \
-        .x = (float)luaL_checknumber(L, idx), .y = (float)luaL_checknumber(L, idx + 1)                                 \
-    }
+#define D2D_GET_POINT(L, idx) BLPoint(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1))
 
 #define D2D_GET_ELLIPSE(L, idx)                                                                                        \
-    D2D1_ELLIPSE                                                                                                       \
-    {                                                                                                                  \
-        .point = D2D_GET_POINT(L, idx), .radiusX = (float)luaL_checknumber(L, idx + 2),                                \
-        .radiusY = (float)luaL_checknumber(L, idx + 3)                                                                 \
-    }
+    BLEllipse(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                    \
+              luaL_checknumber(L, idx + 3))
 
 #define D2D_GET_ROUNDED_RECT(L, idx)                                                                                   \
-    D2D1_ROUNDED_RECT(D2D_GET_RECT(L, idx), luaL_checknumber(L, idx + 5), luaL_checknumber(L, idx + 6))
+    BLRoundRect(luaL_checknumber(L, idx), luaL_checknumber(L, idx + 1), luaL_checknumber(L, idx + 2),                  \
+                luaL_checknumber(L, idx + 3), luaL_checknumber(L, idx + 4), luaL_checknumber(L, idx + 5))
 
 static t_draw_image_params check_draw_image_params(lua_State *L, int index)
 {
@@ -179,9 +174,12 @@ static int create_brush(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1::ColorF color = D2D_GET_COLOR(L, 1);
+    const auto color = D2D_GET_COLOR(L, 1);
 
-    lua_pushinteger(L, (uint64_t)0);
+    uint64_t brush_id = ++lua->rctx.brush_counter;
+    lua->rctx.brush_colors[brush_id] = color;
+
+    lua_pushinteger(L, brush_id);
     return 1;
 }
 
@@ -189,7 +187,7 @@ static int free_brush(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 1);
+    auto id = (uint64_t)luaL_checkinteger(L, 1);
 
     return 0;
 }
@@ -198,7 +196,14 @@ static int clear(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1::ColorF color = D2D_GET_COLOR(L, 1);
+    const auto color = D2D_GET_COLOR(L, 1);
+
+    BLRectI rect{0, 0, (int)lua->rctx.dc_size.width, (int)lua->rctx.dc_size.height};
+
+    if (color.r == 0 && color.g == 0 && color.b == 0 && color.a == 0)
+        lua->rctx.bl_ctx.clearRect(rect);
+    else
+        lua->rctx.bl_ctx.fillRect(rect, color);
 
     return 0;
 }
@@ -207,8 +212,12 @@ static int fill_rectangle(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
-    auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 5);
+    const auto rectangle = D2D_GET_RECT(L, 1);
+    auto brush_id = (uint64_t)luaL_checkinteger(L, 5);
+
+    const auto &color = lua->rctx.brush_colors.at(brush_id);
+    lua->rctx.bl_ctx.setFillStyle(color);
+    lua->rctx.bl_ctx.fillRect(rectangle);
 
     return 0;
 }
@@ -217,7 +226,7 @@ static int draw_rectangle(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
+    const auto rectangle = D2D_GET_RECT(L, 1);
     float thickness = luaL_checknumber(L, 5);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 6);
 
@@ -228,7 +237,7 @@ static int fill_ellipse(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_ELLIPSE ellipse = D2D_GET_ELLIPSE(L, 1);
+    const auto ellipse = D2D_GET_ELLIPSE(L, 1);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 5);
 
     return 0;
@@ -238,7 +247,7 @@ static int draw_ellipse(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_ELLIPSE ellipse = D2D_GET_ELLIPSE(L, 1);
+    const auto ellipse = D2D_GET_ELLIPSE(L, 1);
     float thickness = luaL_checknumber(L, 5);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 6);
 
@@ -249,8 +258,8 @@ static int draw_line(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_POINT_2F point_a = D2D_GET_POINT(L, 1);
-    D2D1_POINT_2F point_b = D2D_GET_POINT(L, 3);
+    const auto point_a = D2D_GET_POINT(L, 1);
+    const auto point_b = D2D_GET_POINT(L, 3);
     float thickness = luaL_checknumber(L, 5);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 6);
 
@@ -261,7 +270,7 @@ static int draw_text(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
+    const auto rectangle = D2D_GET_RECT(L, 1);
     auto text = std::string(luaL_checkstring(L, 5));
     auto font_name = std::string(luaL_checkstring(L, 6));
     auto font_size = static_cast<float>(luaL_checknumber(L, 7));
@@ -316,7 +325,7 @@ static int push_clip(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_RECT_F rectangle = D2D_GET_RECT(L, 1);
+    const auto rectangle = D2D_GET_RECT(L, 1);
 
     return 0;
 }
@@ -332,7 +341,7 @@ static int fill_rounded_rectangle(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_ROUNDED_RECT rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
+    const auto rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 7);
 
     return 0;
@@ -342,7 +351,7 @@ static int draw_rounded_rectangle(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    D2D1_ROUNDED_RECT rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
+    const auto rounded_rectangle = D2D_GET_ROUNDED_RECT(L, 1);
     float thickness = luaL_checknumber(L, 7);
     auto brush = (ID2D1SolidColorBrush *)luaL_checkinteger(L, 8);
 

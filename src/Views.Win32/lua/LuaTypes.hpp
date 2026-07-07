@@ -14,11 +14,15 @@
 struct t_lua_rendering_context
 {
     HWND overlay_hwnd{};
-    void* bl_raw;
+    void *bl_raw;
     BLImage bl_image;
+    BLContext bl_ctx;
     HDC gdi_back_dc{};
     HBITMAP gdi_bmp{};
     D2D1_SIZE_U dc_size{};
+
+    uint64_t brush_counter;
+    std::unordered_map<uint64_t, BLRgba> brush_colors;
 
     // Pool of GDI+ images
     std::unordered_map<size_t, Gdiplus::Bitmap *> image_pool{};

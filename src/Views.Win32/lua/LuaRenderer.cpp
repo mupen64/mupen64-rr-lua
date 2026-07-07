@@ -54,17 +54,6 @@ static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wp
 
 static void present(t_lua_environment *lua)
 {
-    {
-        BLContext ctx(lua->rctx.bl_image);
-        BLRectI rect;
-        rect.w = lua->rctx.dc_size.width;
-        rect.h = lua->rctx.dc_size.height;
-
-        ctx.clearRect(rect);
-
-        ctx.end();
-    }
-
     SIZE size = {(LONG)lua->rctx.dc_size.width, (LONG)lua->rctx.dc_size.height};
     POINT src_pt = {0, 0};
 
@@ -94,7 +83,11 @@ static void draw_lua(bool force)
         bool success = true;
 
         success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATUPDATESCREEN);
+
+        lua->rctx.bl_ctx.begin(lua->rctx.bl_image);
         success &= LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATDRAWD2D);
+        lua->rctx.bl_ctx.end();
+
         present(lua);
 
         lua->rctx.last_render_time = now;
@@ -182,6 +175,7 @@ static void resize(uint32_t width, uint32_t height)
 
         lua->rctx.bl_image.createFromData(lua->rctx.dc_size.width, lua->rctx.dc_size.height, BL_FORMAT_PRGB32,
                                           lua->rctx.bl_raw, lua->rctx.dc_size.width * 4);
+        lua->rctx.bl_ctx = BLContext(lua->rctx.bl_ctx);
 
         const UINT overlay_swp_flags = SWP_NOACTIVATE | SWP_NOMOVE | (s_detached_overlays ? SWP_NOZORDER : 0);
         SetWindowPos(lua->rctx.overlay_hwnd, HWND_TOP, 0, 0, width, height, overlay_swp_flags);
@@ -336,6 +330,7 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
 
     ctx->bl_image.createFromData(ctx->dc_size.width, ctx->dc_size.height, BL_FORMAT_PRGB32, ctx->bl_raw,
                                  ctx->dc_size.width * 4);
+    ctx->bl_ctx = BLContext(ctx->bl_image);
 
     present(env);
     create_loadscreen(ctx);
