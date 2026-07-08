@@ -794,7 +794,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
         rect[1].t1 *= cache.current[1]->scaleT;
     }
 
-    if ((gDP.otherMode.cycleType == G_CYC_COPY) && !OGL.forceBilinear)
+    if (gDP.otherMode.cycleType == G_CYC_COPY)
     {
         glActiveTexture(GL_TEXTURE0);
 
