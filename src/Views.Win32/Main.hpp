@@ -121,4 +121,9 @@ namespace Main
  * \brief Initializes SDL on the GUI thread if necessary.
  */
 void init_sdl();
+
+/**
+ * \brief Forwards mouse events to the Lua callbacks.
+ */
+void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 } // namespace Main

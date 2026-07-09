@@ -261,6 +261,13 @@ void LuaCallbacks::call_atkey(const t_lua_key_event_args &args)
     g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATKEY); });
 }
 
+void LuaCallbacks::call_atmouse(const LuaMouseEventArgs &args)
+{
+    RET_IF_NOT_REGISTERED(REG_ATMOUSE);
+    atmouse_ctx = args;
+    g_main_ctx.dispatcher->invoke([=] { invoke_callbacks_with_key_on_all_instances(REG_ATMOUSE); });
+}
+
 bool invoke_callbacks_with_key_impl(const t_lua_environment *lua, const std::function<int(lua_State *)> &function,
                                     LuaCallbacks::callback_key key)
 {

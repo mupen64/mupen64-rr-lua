@@ -1105,6 +1105,65 @@ void Main::init_sdl()
     }
 }
 
+static LuaMouseEventArgs get_base_mouse_event_args(LPARAM lparam)
+{
+    POINT point{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+
+    LuaMouseEventArgs args;
+    args.x = point.x;
+    args.y = point.y;
+    args.wheel_delta = 0;
+    args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+    args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
+    return args;
+}
+
+void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK: {
+        auto args = get_base_mouse_event_args(lparam);
+        args.pressed = msg != WM_LBUTTONUP && msg != WM_RBUTTONUP && msg != WM_MBUTTONUP;
+        args.double_click = msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK;
+
+        switch (msg)
+        {
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_LBUTTONDBLCLK:
+            args.button = 0;
+            break;
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        case WM_RBUTTONDBLCLK:
+            args.button = 1;
+            break;
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_MBUTTONDBLCLK:
+            args.button = 2;
+            break;
+        default:
+            break;
+        }
+
+        LuaCallbacks::call_atmouse(args);
+        break;
+    }
+    }
+}
+
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
 {
     enable_mitigations();
