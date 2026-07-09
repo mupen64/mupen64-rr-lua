@@ -124,8 +124,8 @@ using LuaMouseButton = uint32_t;
 
 struct LuaMouseEventArgs
 {
-    uint32_t x{};
-    uint32_t y{};
+    int32_t x{};
+    int32_t y{};
     int32_t wheel_delta{};
     std::optional<LuaMouseButton> button;
     std::optional<bool> pressed;
