@@ -48,7 +48,7 @@ void jpg_uncompress(OSTask_t *task)
     }
     else
     {
-        MessageBox(NULL, L"jpg_uncompress: !flags", L"Error", MB_OK | MB_ICONERROR);
+        g_ef->log_warn(L"jpg_uncompress: !flags");
     }
     pic = (int16_t *)(rsp.rdram + jpg_data.pic);
 
@@ -271,11 +271,7 @@ void jpg_uncompress(OSTask_t *task)
 
         if (jpg_data.h == 0)
         {
-#ifdef _WIN32
-            MessageBoxA(NULL, "h==0", "h==0", MB_OK);
-#else
-            printf("h==0\n");
-#endif
+            g_ef->log_warn(L"h==0");
         }
         else
         {

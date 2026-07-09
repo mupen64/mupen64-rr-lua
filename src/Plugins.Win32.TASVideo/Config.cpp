@@ -30,6 +30,12 @@ const std::vector<ResolutionPreset> RESOLUTION_PRESETS = {
     {1600, 1200, L"1600 x 1200 (4:3)"}, {1920, 1080, L"1920 x 1080 (16:9)"}, {2560, 1440, L"2560 x 1440 (16:9)"},
     {3840, 2160, L"3840 x 2160 (16:9)"}};
 
+const std::vector<std::pair<uint8_t, std::wstring>> FILTER_NAMES = {
+    {0, L"Default"},
+    {1, L"Always Smooth"},
+    {2, L"Always Pixelated"},
+};
+
 static std::optional<ResolutionPreset> get_preset_by_resolution(uint32_t width, uint32_t height)
 {
     for (const auto &preset : RESOLUTION_PRESETS)
@@ -46,11 +52,11 @@ static std::filesystem::path get_config_path()
 
 static void Config_SetDefaults()
 {
+    OGL.smoothing = 0;
     OGL.fog = TRUE;
     OGL.msaa = 0;
     OGL.windowedWidth = 640;
     OGL.windowedHeight = 480;
-    OGL.forceBilinear = FALSE;
     cache.maxBytes = 32 * 1048576;
     OGL.textureFilter = TextureFilter::None;
     OGL.usePolygonStipple = FALSE;
@@ -75,7 +81,7 @@ void Config_LoadConfig()
         ifs >> j;
         OGL.windowedWidth = j["windowed_width"];
         OGL.windowedHeight = j["windowed_height"];
-        OGL.forceBilinear = j["force_bilinear"];
+        OGL.smoothing = j["smoothing"];
         OGL.textureFilter = j["texture_filter"];
         OGL.filterScale = j["filter_scale"];
         OGL.fog = j["enable_fog"];
@@ -97,7 +103,7 @@ void Config_SaveConfig()
     json j = json::object({
         {"windowed_width", OGL.windowedWidth},
         {"windowed_height", OGL.windowedHeight},
-        {"force_bilinear", (bool)OGL.forceBilinear},
+        {"smoothing", OGL.smoothing},
         {"texture_filter", OGL.textureFilter},
         {"filter_scale", OGL.filterScale},
         {"enable_fog", (bool)OGL.fog},
@@ -124,7 +130,6 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     Edit_GetText(GetDlgItem(hWndDlg, IDC_CACHEMEGS), text, 4);
     cache.maxBytes = _wtol(text) * 1048576;
 
-    OGL.forceBilinear = (SendDlgItemMessage(hWndDlg, IDC_FORCEBILINEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
     OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, NULL, NULL);
     OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, NULL, NULL);
     OGL.fog = (SendDlgItemMessage(hWndDlg, IDC_FOG, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
@@ -139,6 +144,8 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), WM_GETTEXT, std::size(val), (LPARAM)val);
     OGL.windowedHeight = _wtoi(val);
 
+    OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
+
     OGL.usePolygonStipple =
         (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
 
@@ -146,7 +153,7 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     Config_LoadConfig();
 
     const auto needs_restart =
-        OGL.forceBilinear != prev_OGL.forceBilinear || OGL.textureFilter != prev_OGL.textureFilter ||
+        OGL.smoothing != prev_OGL.smoothing || OGL.textureFilter != prev_OGL.textureFilter ||
         OGL.filterScale != prev_OGL.filterScale || OGL.msaa != prev_OGL.msaa ||
         OGL.ignoreScissor != prev_OGL.ignoreScissor || OGL.clear_override != prev_OGL.clear_override ||
         OGL.windowedWidth != prev_OGL.windowedWidth || OGL.windowedHeight != prev_OGL.windowedHeight ||
@@ -186,6 +193,12 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
             ComboBox_AddString(cb_hwnd, preset.description.c_str());
         }
 
+        for (const auto &filter : FILTER_NAMES)
+        {
+            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_SMOOTHING), filter.second.c_str());
+        }
+        ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING), (int)OGL.smoothing);
+
         select_current_resolution_in_combobox(cb_hwnd);
 
         SendDlgItemMessage(hWndDlg, IDC_WINDOWED_X, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedWidth).c_str());
@@ -198,8 +211,6 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_SETCURSEL, (int)OGL.textureFilter, 0);
         SendMessage(GetDlgItem(hWndDlg, IDC_FSCALE), TBM_SETPOS, TRUE, OGL.filterScale);
 
-        SendDlgItemMessage(hWndDlg, IDC_FORCEBILINEAR, BM_SETCHECK,
-                           OGL.forceBilinear ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
         SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_SETCHECK,
                            OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
         SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_SETCHECK,

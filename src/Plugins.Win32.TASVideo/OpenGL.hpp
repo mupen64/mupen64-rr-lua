@@ -21,7 +21,7 @@ struct GLInfo
 
     DWORD width, height, windowedWidth, windowedHeight;
 
-    BOOL forceBilinear, fog;
+    BOOL fog;
 
     float scaleX, scaleY;
     BOOL adjustScreen;
@@ -39,6 +39,7 @@ struct GLInfo
 
     int maxTextureUnits; // TNT = 2, GeForce = 2-4, Rage 128 = 2, Radeon = 3-6
 
+    uint8_t smoothing;
     TextureFilter textureFilter = TextureFilter::None;
     int32_t msaa{};
     float originAdjust;

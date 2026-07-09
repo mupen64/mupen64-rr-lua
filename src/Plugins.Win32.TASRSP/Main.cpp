@@ -7,7 +7,6 @@
 #include "Main.hpp"
 #include "Config.hpp"
 #include "HLE.hpp"
-#include "Disasm.hpp"
 
 #define EXPORT __declspec(dllexport)
 #undef CALL
@@ -19,52 +18,13 @@
 
 core_rsp_info rsp;
 static bool g_rsp_alive = false;
-
 static void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
 HINSTANCE g_instance;
-std::filesystem::path g_app_path;
 std::filesystem::path g_config_path;
-// PlatformService g_platform_service;
-static uint8_t fake_header[0x1000];
-static uint32_t fake_AI_DRAM_ADDR_REG;
-static uint32_t fake_AI_LEN_REG;
-static uint32_t fake_AI_CONTROL_REG;
-static uint32_t fake_AI_STATUS_REG;
-static uint32_t fake_AI_DACRATE_REG;
-static uint32_t fake_AI_BITRATE_REG;
 
-static void log_shim(const wchar_t *str)
-{
-    wprintf(str);
-}
-
-static core_plugin_extended_funcs ef_shim{};
-
-core_plugin_extended_funcs *g_ef = &ef_shim;
-
-/**
- * \brief Loads the audio plugin's globals
- * \param path Path to an audio plugin dll
- * \returns Handle to the audio plugin, or nullptr.
- */
-void *plugin_load(const std::filesystem::path &path);
-
-static void audio_ucode_mario()
-{
-    memcpy(ABI, ABI1, sizeof(ABI[0]) * 0x20);
-}
-
-static void audio_ucode_banjo()
-{
-    memcpy(ABI, ABI2, sizeof(ABI[0]) * 0x20);
-}
-
-static void audio_ucode_zelda()
-{
-    memcpy(ABI, ABI3, sizeof(ABI[0]) * 0x20);
-}
+core_plugin_extended_funcs *g_ef{};
 
 static int audio_ucode_detect_type(const OSTask_t *task)
 {
@@ -85,13 +45,13 @@ static void ucode_load(const OSTask_t *task)
     switch (ucode_type)
     {
     case UCODE_MARIO:
-        audio_ucode_mario();
+        memcpy(ABI, ABI1, sizeof(ABI[0]) * 0x20);
         break;
     case UCODE_BANJO:
-        audio_ucode_banjo();
+        memcpy(ABI, ABI2, sizeof(ABI[0]) * 0x20);
         break;
     case UCODE_ZELDA:
-        audio_ucode_zelda();
+        memcpy(ABI, ABI3, sizeof(ABI[0]) * 0x20);
         break;
     default:
         std::terminate();
@@ -107,7 +67,6 @@ void on_rom_closed()
 {
     memset(rsp.dmem, 0, 0x1000);
     memset(rsp.imem, 0, 0x1000);
-
     g_rsp_alive = false;
 }
 
@@ -211,34 +170,12 @@ unknown_task:
     return 0;
 }
 
-static std::filesystem::path get_app_full_path()
-{
-    char path[MAX_PATH] = {0};
-
-    const DWORD len = GetModuleFileNameA(nullptr, path, MAX_PATH);
-    if (len == 0 || len == MAX_PATH)
-    {
-        return {};
-    }
-
-    return path;
-}
-
-static char *getExtension(char *str)
-{
-    if (strlen(str) > 3)
-        return str + strlen(str) - 3;
-    else
-        return NULL;
-}
-
 BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 {
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
         g_instance = hinst;
-        g_app_path = get_app_full_path();
         break;
     default:
         break;
