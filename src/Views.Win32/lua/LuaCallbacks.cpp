@@ -37,6 +37,7 @@ struct LuaCallbacksContext
 static LuaCallbacksContext m_ctx{};
 static t_atwindowmessage_context atwindowmessage_ctx{};
 static t_lua_key_event_args atkey_ctx{};
+static LuaMouseEventArgs atmouse_ctx{};
 static int current_input_n = 0;
 
 static int pcall_no_params(lua_State *L)
@@ -103,6 +104,61 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
          lua_pushstring(l, "repeat");
          lua_pushboolean(l, atkey_ctx.repeat);
          lua_settable(l, -3);
+         return lua_pcall(l, 1, 0, 0);
+     }},
+    {LuaCallbacks::REG_ATMOUSE,
+     [](auto l) -> int {
+         lua_newtable(l);
+
+         lua_pushstring(l, "x");
+         lua_pushinteger(l, atmouse_ctx.x);
+         lua_settable(l, -3);
+
+         lua_pushstring(l, "y");
+         lua_pushinteger(l, atmouse_ctx.y);
+         lua_settable(l, -3);
+
+         lua_pushstring(l, "wheel_delta");
+         lua_pushinteger(l, atmouse_ctx.wheel_delta);
+         lua_settable(l, -3);
+
+         if (atmouse_ctx.button.has_value())
+         {
+             lua_pushstring(l, "button");
+             lua_pushinteger(l, atmouse_ctx.button.value());
+             lua_settable(l, -3);
+         }
+
+         if (atmouse_ctx.pressed.has_value())
+         {
+             lua_pushstring(l, "pressed");
+             lua_pushboolean(l, atmouse_ctx.pressed.value());
+             lua_settable(l, -3);
+         }
+
+         if (atmouse_ctx.double_click.has_value())
+         {
+             lua_pushstring(l, "double_click");
+             lua_pushboolean(l, atmouse_ctx.double_click.value());
+             lua_settable(l, -3);
+         }
+
+         lua_pushstring(l, "ctrl");
+         lua_pushboolean(l, atmouse_ctx.ctrl);
+         lua_settable(l, -3);
+
+         lua_pushstring(l, "alt");
+         lua_pushboolean(l, atmouse_ctx.alt);
+         lua_settable(l, -3);
+
+         lua_pushstring(l, "shift");
+         lua_pushboolean(l, atmouse_ctx.shift);
+         lua_settable(l, -3);
+
+         lua_pushstring(l, "meta");
+         lua_pushboolean(l, atmouse_ctx.meta);
+         lua_settable(l, -3);
+
          return lua_pcall(l, 1, 0, 0);
      }},
 
