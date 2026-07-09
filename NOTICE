@@ -1,3 +1,17 @@
+Original Authors
+==================
+
+mupen64-rr-lua is a continuation of mupen64-rr-lua- by anta0 (https://github.com/anta0/mupen64-rr-lua-), which is
+based on mupen64 by original authors (C) 2001-2005 Hacktarux, ShadowPrince, and linker, licensed under GPL2
+
+TAS Video is based on gln64 by (C) 2002-2003 Orkin, licensed under GPL2
+
+TAS Audio is based on AziAudio (https://github.com/Azimer/AziAudio) by (C) Azimer, licensed under GPL2
+
+TAS Input is based on TASInput (DefDI) by (C) 2008 nitsuja and Deflection, licensed under GPL2
+
+TAS RSP is based on Mupen64 HLE RSP v0.2 by (C) 2002 Hacktarux and Azimer, licensed under GPL2
+
 Third-Party Assets
 ==================
 
