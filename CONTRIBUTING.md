@@ -118,7 +118,7 @@ Before merging a pull request into main or pushing out a release, verify that:
 2. The core tests (`src/Core.Tests`) pass
 3. The automatic Lua tests (`src/Lua/tests.lua`) pass
 4. The manual Lua tests (`src/Lua/manual/*.lua`) pass
-5. The docs (`src/Website/static/docs/win`) have been kept up-to-date
+5. The docs (`docs/win`) have been kept up-to-date
 6. There are no regressions in plugin compatibility (test Jabo's plugins)
 
 # Shipping releases
