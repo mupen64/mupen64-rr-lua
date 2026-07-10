@@ -421,14 +421,15 @@ Mupen = {
 ---@class MouseEventArgs
 ---@field x integer The x-coordinate of the mouse relative to the main window.
 ---@field y integer The y-coordinate of the mouse relative to the main window.
----@field wheel_delta integer The amount the wheel was scrolled. If `0`, the event is not related to scrolling.
----@field button MouseButton? The mouse button that was pressed or released. If `nil`, the event is not related to a mouse button.
----@field pressed boolean? Whether the mouse button was pressed or released. Only present for mouse button events.
----@field double_click boolean? Whether the event is a double-click event. Only present for mouse button events.
 ---@field ctrl boolean Whether the Ctrl key is held down.
 ---@field alt boolean Whether the Alt key is held down.
 ---@field shift boolean Whether the Shift key is held down.
 ---@field meta boolean Whether the Meta key is held down.
+---@field x_wheel integer? The horizontal scroll delta. If `nil`, the event is not related to horizontal scrolling.
+---@field y_wheel integer? The vertical scroll delta. If `nil`, the event is not related to vertical scrolling.
+---@field button MouseButton? The mouse button that was pressed or released. If `nil`, the event is not related to a mouse button.
+---@field pressed boolean? Whether the mouse button was pressed or released. Only present if `button ~= nil`.
+---@field double_click boolean? Whether the event is a double-click event. Only present if `button ~= nil`.
 
 ---@class CPUState
 ---@field opcode integer

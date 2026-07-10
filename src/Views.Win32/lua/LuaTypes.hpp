@@ -126,12 +126,13 @@ struct LuaMouseEventArgs
 {
     int32_t x{};
     int32_t y{};
-    int32_t wheel_delta{};
-    std::optional<LuaMouseButton> button;
-    std::optional<bool> pressed;
-    std::optional<bool> double_click;
     bool ctrl{};
     bool alt{};
     bool shift{};
     bool meta{};
+    std::optional<int32_t> x_wheel;
+    std::optional<int32_t> y_wheel;
+    std::optional<LuaMouseButton> button;
+    std::optional<bool> pressed;
+    std::optional<bool> double_click;
 };

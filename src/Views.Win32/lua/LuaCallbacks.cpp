@@ -118,9 +118,35 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
          lua_pushinteger(l, atmouse_ctx.y);
          lua_settable(l, -3);
 
-         lua_pushstring(l, "wheel_delta");
-         lua_pushinteger(l, atmouse_ctx.wheel_delta);
+         lua_pushstring(l, "ctrl");
+         lua_pushboolean(l, atmouse_ctx.ctrl);
          lua_settable(l, -3);
+
+         lua_pushstring(l, "alt");
+         lua_pushboolean(l, atmouse_ctx.alt);
+         lua_settable(l, -3);
+
+         lua_pushstring(l, "shift");
+         lua_pushboolean(l, atmouse_ctx.shift);
+         lua_settable(l, -3);
+
+         lua_pushstring(l, "meta");
+         lua_pushboolean(l, atmouse_ctx.meta);
+         lua_settable(l, -3);
+
+         if (atmouse_ctx.x_wheel.has_value())
+         {
+             lua_pushstring(l, "x_wheel");
+             lua_pushinteger(l, atmouse_ctx.x_wheel.value());
+             lua_settable(l, -3);
+         }
+
+         if (atmouse_ctx.y_wheel.has_value())
+         {
+             lua_pushstring(l, "y_wheel");
+             lua_pushinteger(l, atmouse_ctx.y_wheel.value());
+             lua_settable(l, -3);
+         }
 
          if (atmouse_ctx.button.has_value())
          {
@@ -142,22 +168,6 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
              lua_pushboolean(l, atmouse_ctx.double_click.value());
              lua_settable(l, -3);
          }
-
-         lua_pushstring(l, "ctrl");
-         lua_pushboolean(l, atmouse_ctx.ctrl);
-         lua_settable(l, -3);
-
-         lua_pushstring(l, "alt");
-         lua_pushboolean(l, atmouse_ctx.alt);
-         lua_settable(l, -3);
-
-         lua_pushstring(l, "shift");
-         lua_pushboolean(l, atmouse_ctx.shift);
-         lua_settable(l, -3);
-
-         lua_pushstring(l, "meta");
-         lua_pushboolean(l, atmouse_ctx.meta);
-         lua_settable(l, -3);
 
          return lua_pcall(l, 1, 0, 0);
      }},
