@@ -21,6 +21,7 @@ const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG, 
 struct config_dialog_context
 {
     HWND hwnd{};
+    HWND devices_hwnd{};
     t_config prev_config{};
     size_t selected_controller{};
     std::variant<std::monostate, t_button_mapping *, t_axis_mapping *> target_value{};
@@ -321,6 +322,7 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
         break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
+        if (new_config.preferred_device_guid.has_value()) break;
 
         if (auto *mapping = std::get_if<t_button_mapping *>(&g_ctx.target_value))
         {
@@ -346,6 +348,30 @@ static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM 
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
+static void refresh_device_list()
+{
+    const auto &reg = GamepadManager::device_registry();
+    ListBox_ResetContent(g_ctx.devices_hwnd);
+    for (const auto &device : reg.devices)
+    {
+        ListBox_AddString(g_ctx.devices_hwnd, IOUtils::to_wide_string(device.name).c_str());
+    }
+
+    if (!new_config.preferred_device_guid.has_value())
+    {
+        ListBox_SetCurSel(g_ctx.devices_hwnd, 0);
+        return;
+    }
+
+    for (size_t i = 0; i < ListBox_GetCount(g_ctx.devices_hwnd); i++)
+    {
+        const auto &device = reg.devices[i];
+        if (device.guid != new_config.preferred_device_guid) continue;
+        ListBox_SetCurSel(g_ctx.devices_hwnd, i);
+        break;
+    }
+}
+
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     auto controller_config = &new_config.controller_config[g_ctx.selected_controller];
@@ -354,6 +380,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     {
     case WM_INITDIALOG: {
         g_ctx.hwnd = hwnd;
+        g_ctx.devices_hwnd = GetDlgItem(hwnd, IDC_LDEVICES);
         update_visuals();
 
         for (const auto btn : button_ids)
@@ -368,6 +395,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         ComboBox_SetCurSel(cb_hwnd, g_ctx.selected_controller);
 
+        refresh_device_list();
         break;
     }
     case WM_CLOSE:
@@ -440,6 +468,20 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             begin_edit(IDC_EAS_DOWN, &controller_config->y);
             g_ctx.positive_target_axis = true;
             break;
+        case IDC_LDEVICES: {
+            if (HIWORD(wparam) == LBN_SELCHANGE)
+            {
+                const auto index = ListBox_GetCurSel(g_ctx.devices_hwnd);
+                if (index == LB_ERR) break;
+
+                const auto &reg = GamepadManager::device_registry();
+                const auto &device = reg.devices[index];
+                new_config.preferred_device_guid = index == 0 ? std::nullopt : device.guid;
+
+                GamepadManager::update_current_gamepad();
+            }
+            break;
+        }
         default:
             break;
         }
@@ -531,6 +573,12 @@ void ConfigDialog::show(HWND parent)
 
 void ConfigDialog::on_sdl_event(const SDL_Event &e)
 {
+    if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED ||
+        e.type == SDL_EVENT_KEYBOARD_ADDED || e.type == SDL_EVENT_KEYBOARD_REMOVED)
+    {
+        refresh_device_list();
+    }
+
     if (!is_editing())
     {
         return;

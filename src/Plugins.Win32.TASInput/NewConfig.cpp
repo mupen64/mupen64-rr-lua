@@ -8,6 +8,7 @@
 #include <NewConfig.hpp>
 #include <MiscHelpers.hpp>
 #include <Main.hpp>
+#include <GamepadManager.hpp>
 
 const t_config default_config{};
 t_config new_config{};
@@ -24,6 +25,8 @@ void save_config()
     nlohmann::json j = new_config;
     std::ofstream ofs(get_config_path());
     ofs << std::setw(2) << j;
+
+    GamepadManager::update_current_gamepad();
 }
 
 void load_config()
@@ -36,6 +39,7 @@ void load_config()
     {
         new_config = default_config;
         save_config();
+        GamepadManager::update_current_gamepad();
         return;
     }
 
@@ -52,4 +56,6 @@ void load_config()
         g_ef->log_warn(L"Config load failed, using defaults...");
         new_config = default_config;
     }
+
+    GamepadManager::update_current_gamepad();
 }
