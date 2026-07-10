@@ -425,8 +425,8 @@ Mupen = {
 ---@field alt boolean Whether the Alt key is held down.
 ---@field shift boolean Whether the Shift key is held down.
 ---@field meta boolean Whether the Meta key is held down.
----@field x_wheel integer? The horizontal scroll delta. If `nil`, the event is not related to horizontal scrolling.
----@field y_wheel integer? The vertical scroll delta. If `nil`, the event is not related to vertical scrolling.
+---@field x_wheel integer? The horizontal scroll delta. If `nil`, the event is not related to horizontal scrolling. A positive value means scroll right, negative means scroll left. The magnitude is not specified.
+---@field y_wheel integer? The vertical scroll delta. If `nil`, the event is not related to vertical scrolling. A positive value means scroll down, negative means scroll up. The magnitude is not specified.
 ---@field button MouseButton? The mouse button that was pressed or released. If `nil`, the event is not related to a mouse button.
 ---@field pressed boolean? Whether the mouse button was pressed or released. Only present if `button ~= nil`.
 ---@field double_click boolean? Whether the event is a double-click event. Only present if `button ~= nil`.
