@@ -37,6 +37,7 @@ enum callback_key : uint8_t
     REG_ATSEEKCOMPLETED,
     REG_ATWARPMODIFYSTATUSCHANGED,
     REG_ATKEY,
+    REG_ATMOUSE,
     _COUNT,
 };
 
@@ -101,6 +102,11 @@ void call_warp_modify_status_changed(int32_t status);
  * \brief Notifies all lua instances of a key event.
  */
 void call_atkey(const t_lua_key_event_args &args);
+
+/**
+ * \brief Notifies all lua instances of a mouse event.
+ */
+void call_atmouse(const LuaMouseEventArgs &args);
 
 /**
  * \brief Invokes the registered callbacks with the specified key on the specified Lua environment.
