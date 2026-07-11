@@ -507,7 +507,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 switch (clicked)
                 {
                 case 1:
-                    new_config.controller_config[g_ctx.selected_controller] = t_controller_config{};
+                    new_config.controller_config[g_ctx.selected_controller] = t_controller_config::gamepad_config();
                     update_visuals();
                     break;
                 case 2:

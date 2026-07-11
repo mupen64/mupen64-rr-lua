@@ -108,38 +108,60 @@ struct t_controller_config
     t_button_mapping c_down{};
     t_button_mapping c_up{};
 
-    t_button_mapping a = {.button = SDL_GAMEPAD_BUTTON_SOUTH};
-    t_button_mapping b = {.button = SDL_GAMEPAD_BUTTON_EAST};
-    t_button_mapping z = {.button = SDL_GAMEPAD_BUTTON_WEST};
-    t_button_mapping start = {.button = SDL_GAMEPAD_BUTTON_START};
-    t_button_mapping l = {.button = SDL_GAMEPAD_BUTTON_LEFT_SHOULDER};
-    t_button_mapping r = {.button = SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER};
+    t_button_mapping a{};
+    t_button_mapping b{};
+    t_button_mapping z{};
+    t_button_mapping start{};
+    t_button_mapping l{};
+    t_button_mapping r{};
 
-    t_axis_mapping x = {.axis = SDL_GAMEPAD_AXIS_LEFTX};
-    t_axis_mapping y = {.axis = SDL_GAMEPAD_AXIS_LEFTY};
+    t_axis_mapping x{};
+    t_axis_mapping y{};
 
     float x_scale = 1.0f;
     float y_scale = 1.0f;
 
+    static t_controller_config gamepad_config()
+    {
+        t_controller_config config{};
+        config.a = {.button = SDL_GAMEPAD_BUTTON_SOUTH};
+        config.b = {.button = SDL_GAMEPAD_BUTTON_EAST};
+        config.start = {.button = SDL_GAMEPAD_BUTTON_START};
+        config.z = {.button = SDL_GAMEPAD_BUTTON_WEST};
+        config.l = {.button = SDL_GAMEPAD_BUTTON_LEFT_SHOULDER};
+        config.r = {.button = SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER};
+        config.dpad_up = {};
+        config.dpad_down = {};
+        config.dpad_left = {};
+        config.dpad_right = {};
+        config.c_up = {};
+        config.c_down = {};
+        config.c_left = {};
+        config.c_right = {};
+        config.x = {.axis = SDL_GAMEPAD_AXIS_LEFTX};
+        config.y = {.axis = SDL_GAMEPAD_AXIS_LEFTY};
+        return config;
+    }
+
     static t_controller_config keyboard_config()
     {
         t_controller_config config{};
-        config.a = {.key = 'X'};
-        config.b = {.key = 'Z'};
+        config.a = {.key = VK_SPACE};
+        config.b = {.key = 'B'};
         config.start = {.key = VK_RETURN};
-        config.z = {.key = 'A'};
-        config.l = {.key = 'S'};
-        config.r = {.key = 'D'};
-        config.dpad_up = {.key = VK_UP};
-        config.dpad_down = {.key = VK_DOWN};
-        config.dpad_left = {.key = VK_LEFT};
-        config.dpad_right = {.key = VK_RIGHT};
-        config.c_up = {.key = 'W'};
-        config.c_down = {.key = 'Q'};
-        config.c_left = {.key = 'E'};
-        config.c_right = {.key = 'R'};
-        config.x = {.key_negative = 'J', .key_positive = 'L'};
-        config.y = {.key_negative = 'I', .key_positive = 'K'};
+        config.z = {.key = 'Z'};
+        config.l = {.key = 'L'};
+        config.r = {.key = 'R'};
+        config.dpad_up = {};
+        config.dpad_down = {};
+        config.dpad_left = {};
+        config.dpad_right = {};
+        config.c_up = {.key = VK_UP};
+        config.c_down = {.key = VK_DOWN};
+        config.c_left = {.key = VK_LEFT};
+        config.c_right = {.key = VK_RIGHT};
+        config.x = {.key_negative = 'A', .key_positive = 'D'};
+        config.y = {.key_negative = 'W', .key_positive = 'S'};
         return config;
     }
 
@@ -198,7 +220,7 @@ struct t_config
     // Increments joystick position by the value of the magnitude slider when moving via keyboard or gamepad
     int32_t relative_mode = false;
     int32_t approach_mode = false;
-    t_controller_config controller_config[4]{};
+    t_controller_config controller_config[4] = {t_controller_config::keyboard_config(), {}, {}, {}};
     std::optional<SDL_GUID> preferred_device_guid;
 
     friend void to_json(nlohmann::json &j, const t_config &self)
