@@ -12,9 +12,72 @@
 struct gamepad_manager_context
 {
     SDL_Gamepad *gamepad{};
+    GamepadManager::DeviceRegistry reg{};
 };
 
 static gamepad_manager_context g_ctx;
+
+static SDL_GUID SDL_GetGamepadGUID(SDL_Gamepad *gamepad)
+{
+    const auto joystick = SDL_GetGamepadJoystick(gamepad);
+    return SDL_GetJoystickGUID(joystick);
+}
+
+SDL_Gamepad *SDL_OpenGamepadByGUID(SDL_GUID target_guid)
+{
+    int count = 0;
+    SDL_JoystickID *gamepad_ids = SDL_GetGamepads(&count);
+
+    if (!gamepad_ids) return NULL;
+
+    SDL_Gamepad *opened_gamepad = NULL;
+
+    for (int i = 0; i < count; i++)
+    {
+        SDL_JoystickID instance_id = gamepad_ids[i];
+        SDL_GUID current_guid = SDL_GetGamepadGUIDForID(instance_id);
+        if (SDL_memcmp(&current_guid, &target_guid, sizeof(SDL_GUID)) == 0)
+        {
+            opened_gamepad = SDL_OpenGamepad(instance_id);
+            break;
+        }
+    }
+
+    SDL_free(gamepad_ids);
+    return opened_gamepad;
+}
+
+static void refresh_registry()
+{
+    g_ctx.reg.devices.clear();
+
+    g_ctx.reg.devices.emplace_back(GamepadManager::InputDevice{
+        .type = GamepadManager::InputDeviceType::Keyboard,
+        .guid = std::nullopt,
+        .name = "Keyboard",
+    });
+
+    int32_t count{};
+    const SDL_JoystickID *joy_ids = SDL_GetGamepads(&count);
+    for (int32_t i = 0; i < count; ++i)
+    {
+        const auto id = joy_ids[i];
+        const auto name = SDL_GetJoystickNameForID(id);
+
+        g_ctx.reg.devices.emplace_back(GamepadManager::InputDevice{
+            .type = GamepadManager::InputDeviceType::Gamepad,
+            .guid = SDL_GetJoystickGUIDForID(id),
+            .name = name,
+        });
+    }
+    SDL_free((void *)joy_ids);
+}
+
+static void refresh_registry_and_update_gamepad()
+{
+    refresh_registry();
+    GamepadManager::update_current_gamepad();
+}
 
 static int32_t remap_axis(int16_t value)
 {
@@ -35,17 +98,10 @@ void GamepadManager::on_sdl_event(const SDL_Event &e)
     switch (e.type)
     {
     case SDL_EVENT_GAMEPAD_ADDED:
-        if (g_ctx.gamepad)
-        {
-            SDL_CloseGamepad(g_ctx.gamepad);
-            g_ctx.gamepad = nullptr;
-        }
-        g_ctx.gamepad = SDL_OpenGamepad(e.gdevice.which);
-        break;
     case SDL_EVENT_GAMEPAD_REMOVED:
-        if (!g_ctx.gamepad) break;
-        SDL_CloseGamepad(g_ctx.gamepad);
-        g_ctx.gamepad = nullptr;
+    case SDL_EVENT_KEYBOARD_ADDED:
+    case SDL_EVENT_KEYBOARD_REMOVED:
+        refresh_registry_and_update_gamepad();
         break;
     default:
         break;
@@ -127,4 +183,31 @@ core_buttons GamepadManager::get_input(const size_t i)
     buttons.y = static_cast<int8_t>(buttons.y * controller_config.y_scale);
 
     return buttons;
+}
+
+void GamepadManager::update_current_gamepad()
+{
+    if (g_ctx.gamepad)
+    {
+        if (SDL_GetGamepadGUID(g_ctx.gamepad) == new_config.preferred_device_guid) return;
+        g_ef->log_info(std::format(L"Closing gamepad {}", SDL_GetGamepadGUID(g_ctx.gamepad).data).c_str());
+        SDL_CloseGamepad(g_ctx.gamepad);
+        g_ctx.gamepad = nullptr;
+    }
+
+    if (!new_config.preferred_device_guid.has_value()) return;
+
+    g_ctx.gamepad = SDL_OpenGamepadByGUID(*new_config.preferred_device_guid);
+    if (!g_ctx.gamepad)
+    {
+        g_ef->log_info(std::format(L"Failed to open gamepad {}", *new_config.preferred_device_guid->data).c_str());
+        return;
+    }
+    g_ef->log_info(std::format(L"Opened gamepad {}", *new_config.preferred_device_guid->data).c_str());
+}
+
+GamepadManager::DeviceRegistry &GamepadManager::device_registry()
+{
+    if (g_ctx.reg.devices.empty()) refresh_registry_and_update_gamepad();
+    return g_ctx.reg;
 }

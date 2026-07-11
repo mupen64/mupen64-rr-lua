@@ -119,3 +119,20 @@ struct t_lua_key_event_args
     std::optional<std::wstring> text;
     bool repeat{};
 };
+
+using LuaMouseButton = uint32_t;
+
+struct LuaMouseEventArgs
+{
+    int32_t x{};
+    int32_t y{};
+    bool ctrl{};
+    bool alt{};
+    bool shift{};
+    bool meta{};
+    std::optional<int32_t> x_wheel;
+    std::optional<int32_t> y_wheel;
+    std::optional<LuaMouseButton> button;
+    std::optional<bool> pressed;
+    std::optional<bool> double_click;
+};

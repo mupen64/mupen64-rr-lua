@@ -122,6 +122,12 @@ static int subscribe_atkey(lua_State *L)
     return 0;
 }
 
+static int subscribe_atmouse(lua_State *L)
+{
+    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATMOUSE);
+    return 0;
+}
+
 static int Screenshot(lua_State *L)
 {
     const auto path = luaL_checkstring(L, 1);

@@ -11,10 +11,6 @@
 #define S 1
 #define S8 3
 
-/*
- * Audio flags
- */
-
 #define A_INIT 0x01
 #define A_CONTINUE 0x00
 #define A_LOOP 0x02
@@ -63,4 +59,7 @@ void MP3();
 extern uint32_t inst1, inst2;
 extern uint16_t AudioInBuffer, AudioOutBuffer, AudioCount;
 extern uint16_t AudioAuxA, AudioAuxC, AudioAuxE;
-extern uint32_t loopval; // Value set by A_SETLOOP : Possible conflict with SETVOLUME???
+extern uint32_t loopval;
+
+void decode_input_block(uint8_t *buffer, uint16_t &inPtr, int32_t *inp, uint8_t code, int32_t vscale);
+void compute_and_pack_block(int32_t *inp, int16_t *book1, int16_t *book2, int32_t &l1, int32_t &l2, int16_t *&out);

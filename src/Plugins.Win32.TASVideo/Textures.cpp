@@ -706,24 +706,24 @@ u32 TextureCache_CalculateCRC(u32 t, u32 width, u32 height)
 void TextureCache_ActivateTexture(u32 t, CachedTexture *texture)
 {
     glActiveTexture(GL_TEXTURE0 + t);
-
-    // Bind the cached texture
     glBindTexture(GL_TEXTURE_2D, texture->glName);
 
-    // Set filter mode. Almost always bilinear, but check anyways
-    if ((gDP.otherMode.textureFilter == G_TF_BILERP) || (gDP.otherMode.textureFilter == G_TF_AVERAGE) ||
-        (OGL.forceBilinear))
+    GLint filter;
+    if (OGL.smoothing == 0)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        if (gDP.otherMode.textureFilter == G_TF_BILERP || gDP.otherMode.textureFilter == G_TF_AVERAGE)
+            filter = GL_LINEAR;
+        else
+            filter = GL_NEAREST;
     }
+    else if (OGL.smoothing == 1)
+        filter = GL_LINEAR;
     else
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    }
+        filter = GL_NEAREST;
 
-    // Set clamping modes
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texture->clampS ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texture->clampT ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 

@@ -8,29 +8,28 @@
 #include <Core/R4300/VCR.hpp>
 #include <Core/R4300/R4300.hpp>
 
-static core_cfg cfg{};
-static core_params params{};
-static core_ctx *ctx = nullptr;
-// static PlatformService io_helper_service{};
+static core_cfg s_cfg{};
+static core_params s_core_params{};
+static core_ctx *s_core_ctx = nullptr;
 
-/**
- * \brief Initializes the test environment by resetting the vcr state and core parameters, as well as filling out some
- * required functions.
- */
-static void prepare_test()
+struct VcrFixture
 {
-    vcr = {};
-    cfg = {};
-    params.cfg = &cfg;
-    // params.io_service = &io_helper_service;
-    params.input_get_keys = [](int32_t, core_buttons *) {};
-    params.input_set_keys = [](int32_t, core_buttons) {};
-    params.callbacks = {};
-}
+    VcrFixture()
+    {
+        std::filesystem::remove("test.m64");
+        std::filesystem::remove("test.st");
+        std::filesystem::remove("test.cht");
 
-/**
- * \brief Checks whether the VCR lock is held by trying to grab it from a separate thread.
- */
+        vcr = {};
+        s_cfg = {};
+        s_core_params.cfg = &s_cfg;
+        s_core_params.input_get_keys = [](int32_t, core_buttons *) {};
+        s_core_params.input_set_keys = [](int32_t, core_buttons) {};
+        s_core_params.callbacks = {};
+        core_create(&s_core_params, &s_core_ctx);
+    }
+};
+
 static bool is_vcr_lock_held()
 {
     bool unlocked;
@@ -46,13 +45,9 @@ static bool is_vcr_lock_held()
 
 #pragma region Integration
 
-TEST_CASE("reset_pending_returns_unmodified_input", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "reset_pending_returns_unmodified_input", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     const auto INPUT_VALUE = 0xDEAD;
-
-    core_create(&params, &ctx);
 
     vcr.reset_pending = true;
 
@@ -62,13 +57,9 @@ TEST_CASE("reset_pending_returns_unmodified_input", "vcr_on_controller_poll")
     REQUIRE(input.value == INPUT_VALUE);
 }
 
-TEST_CASE("seek_savestate_loading_returns_unmodified_input", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "seek_savestate_loading_returns_unmodified_input", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     const auto INPUT_VALUE = 0xDEAD;
-
-    core_create(&params, &ctx);
 
     vcr.seek_savestate_loading = true;
 
@@ -78,14 +69,11 @@ TEST_CASE("seek_savestate_loading_returns_unmodified_input", "vcr_on_controller_
     REQUIRE(input.value == INPUT_VALUE);
 }
 
-TEST_CASE("idle_task_returns_input_from_getkeys", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "idle_task_returns_input_from_getkeys", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     const auto INPUT_VALUE = 0xDEAD;
 
-    params.input_get_keys = [](int32_t index, core_buttons *input) { *input = {INPUT_VALUE}; };
-    core_create(&params, &ctx);
+    s_core_params.input_get_keys = [](int32_t index, core_buttons *input) { *input = {INPUT_VALUE}; };
 
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
@@ -93,12 +81,8 @@ TEST_CASE("idle_task_returns_input_from_getkeys", "vcr_on_controller_poll")
     REQUIRE(input.value == INPUT_VALUE);
 }
 
-TEST_CASE("playback_returns_correct_input", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input", "vcr_on_controller_poll")
 {
-    prepare_test();
-
-    core_create(&params, &ctx);
-
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
@@ -116,12 +100,8 @@ TEST_CASE("playback_returns_correct_input", "vcr_on_controller_poll")
 /*
  * Tests that vcr_on_controller_poll returns the correct input for multiple controllers during playback.
  */
-TEST_CASE("playback_returns_correct_input_2", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_2", "vcr_on_controller_poll")
 {
-    prepare_test();
-
-    core_create(&params, &ctx);
-
     const auto inputs = std::vector<core_buttons>{
         {0}, {0}, {1}, {1}, {2}, {2},
     };
@@ -156,12 +136,8 @@ TEST_CASE("playback_returns_correct_input_2", "vcr_on_controller_poll")
 /*
  * Tests that vcr_on_controller_poll returns the correct input for multiple sparse controllers during playback.
  */
-TEST_CASE("playback_returns_correct_input_3", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_3", "vcr_on_controller_poll")
 {
-    prepare_test();
-
-    core_create(&params, &ctx);
-
     const auto inputs = std::vector<core_buttons>{
         {0}, {0}, {0}, {1}, {1}, {1}, {2}, {2}, {2},
     };
@@ -202,13 +178,9 @@ TEST_CASE("playback_returns_correct_input_3", "vcr_on_controller_poll")
     REQUIRE(input.value == inputs[8].value);
 }
 
-TEST_CASE("record_appends_input", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "record_appends_input", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -222,13 +194,9 @@ TEST_CASE("record_appends_input", "vcr_on_controller_poll")
     REQUIRE(vcr.inputs.back().value == 0xDEAD);
 }
 
-TEST_CASE("seek_continues_when_end_not_reached", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "seek_continues_when_end_not_reached", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -243,13 +211,9 @@ TEST_CASE("seek_continues_when_end_not_reached", "vcr_on_controller_poll")
     REQUIRE(vcr.seek_to_frame.has_value());
 }
 
-TEST_CASE("seek_stops_when_end_reached", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "seek_stops_when_end_reached", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -264,19 +228,8 @@ TEST_CASE("seek_stops_when_end_reached", "vcr_on_controller_poll")
     REQUIRE(!vcr.seek_to_frame.has_value());
 }
 
-static void remove_test_files()
+TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_start", "vcr_get_generated_file_info")
 {
-    std::filesystem::remove("test.m64");
-    std::filesystem::remove("test.st");
-    std::filesystem::remove("test.cht");
-}
-
-TEST_CASE("produces_correct_paths_with_start_type_from_start", "vcr_get_generated_file_info")
-{
-    prepare_test();
-    core_create(&params, &ctx);
-    remove_test_files();
-
     core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_NOTHING);
 
     REQUIRE(info.movie_path == "test.m64");
@@ -284,12 +237,8 @@ TEST_CASE("produces_correct_paths_with_start_type_from_start", "vcr_get_generate
     REQUIRE(info.cht_path.empty());
 }
 
-TEST_CASE("produces_correct_paths_with_start_type_from_savestate", "vcr_get_generated_file_info")
+TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_savestate", "vcr_get_generated_file_info")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-    remove_test_files();
-
     core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_SNAPSHOT);
 
     REQUIRE(info.movie_path == "test.m64");
@@ -297,12 +246,8 @@ TEST_CASE("produces_correct_paths_with_start_type_from_savestate", "vcr_get_gene
     REQUIRE(info.cht_path.empty());
 }
 
-TEST_CASE("produces_correct_paths_with_start_type_from_eeprom", "vcr_get_generated_file_info")
+TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_start_type_from_eeprom", "vcr_get_generated_file_info")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-    remove_test_files();
-
     core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
 
     REQUIRE(info.movie_path == "test.m64");
@@ -310,14 +255,10 @@ TEST_CASE("produces_correct_paths_with_start_type_from_eeprom", "vcr_get_generat
     REQUIRE(info.cht_path.empty());
 }
 
-TEST_CASE("produces_correct_paths_with_cheats", "vcr_get_generated_file_info")
+TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_cheats", "vcr_get_generated_file_info")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-    remove_test_files();
-
     core_cheat cheat{};
-    ctx->cht_set_list({cheat});
+    s_core_ctx->cht_set_list({cheat});
 
     core_vcr_generated_file_info info = vcr_get_generated_file_info("test.m64", MOVIE_START_FROM_EEPROM);
 
@@ -331,16 +272,12 @@ TEST_CASE("produces_correct_paths_with_cheats", "vcr_get_generated_file_info")
 #pragma region Unit
 
 // ee2a0e4
-TEST_CASE("input_callback_called_when_using_input_buffer_during_recording", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "input_callback_called_when_using_input_buffer_during_recording", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     static bool called = false;
-    params.callbacks.input = [](core_buttons *input, int index) { called = true; };
+    s_core_params.callbacks.input = [](core_buttons *input, int index) { called = true; };
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -355,16 +292,12 @@ TEST_CASE("input_callback_called_when_using_input_buffer_during_recording", "vcr
 }
 
 // 94e3d9d
-TEST_CASE("sample_length_gets_clamped_to_buffer_max", "read_movie_header")
+TEST_CASE_METHOD(VcrFixture, "sample_length_gets_clamped_to_buffer_max", "read_movie_header")
 {
-    prepare_test();
-
     core_vcr_movie_header hdr{};
     hdr.magic = 0x1a34364d;
     hdr.version = 3;
     hdr.length_samples = 3;
-
-    core_create(&params, &ctx);
 
     std::vector<uint8_t> bytes(sizeof(hdr));
     std::memcpy(bytes.data(), &hdr, sizeof(hdr));
@@ -380,13 +313,9 @@ TEST_CASE("sample_length_gets_clamped_to_buffer_max", "read_movie_header")
 /*
  * Tests that overriding inputs when idle using the `input` callback causes the correct overriden sample to be inputted.
  */
-TEST_CASE("input_callback_override_works_when_idle", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_idle", "vcr_on_controller_poll")
 {
-    prepare_test();
-
-    params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
-
-    core_create(&params, &ctx);
+    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
     vcr.task = task_idle;
 
     core_buttons input{};
@@ -395,16 +324,12 @@ TEST_CASE("input_callback_override_works_when_idle", "vcr_on_controller_poll")
     REQUIRE(input.value == 0xDEAD);
 }
 
-TEST_CASE("input_callback_called_on_last_frame_of_movie", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "input_callback_called_on_last_frame_of_movie", "vcr_on_controller_poll")
 {
-    prepare_test();
-
     static bool called = false;
-    params.callbacks.input = [](core_buttons *input, int index) { called = true; };
+    s_core_params.callbacks.input = [](core_buttons *input, int index) { called = true; };
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -422,13 +347,9 @@ TEST_CASE("input_callback_called_on_last_frame_of_movie", "vcr_on_controller_pol
  * Tests that overriding inputs during recording using the `input` callback causes the correct overriden sample to be
  * inputted.
  */
-TEST_CASE("input_callback_override_works_when_recording", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_recording", "vcr_on_controller_poll")
 {
-    prepare_test();
-
-    params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
-
-    core_create(&params, &ctx);
+    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
     vcr.inputs = {};
     vcr.hdr.length_samples = 0;
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
@@ -445,13 +366,9 @@ TEST_CASE("input_callback_override_works_when_recording", "vcr_on_controller_pol
  * Tests that overriding inputs during playback using the `input` callback causes the correct overriden sample to be
  * inputted.
  */
-TEST_CASE("input_callback_override_works_when_playback", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_playback", "vcr_on_controller_poll")
 {
-    prepare_test();
-
-    params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
-
-    core_create(&params, &ctx);
+    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
     vcr.inputs = {{1}, {2}, {3}, {4}};
     vcr.hdr.length_samples = vcr.inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
@@ -468,13 +385,10 @@ TEST_CASE("input_callback_override_works_when_playback", "vcr_on_controller_poll
  * Tests that overriding inputs during recording using the `input` callback causes the correct overriden sample to be
  * appended to the inputs.
  */
-TEST_CASE("correct_sample_appended_by_input_callback_override_during_recording", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "correct_sample_appended_by_input_callback_override_during_recording",
+                 "vcr_on_controller_poll")
 {
-    prepare_test();
-
-    params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
-
-    core_create(&params, &ctx);
+    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
     vcr.inputs = {{1}, {2}, {3}, {4}};
     vcr.hdr.length_samples = vcr.inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
@@ -487,7 +401,7 @@ TEST_CASE("correct_sample_appended_by_input_callback_override_during_recording",
     REQUIRE(vcr.inputs.back().value == 0xDEAD);
 }
 
-TEST_CASE("seek_stops_at_expected_frame", "seek")
+TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
 {
     struct seek_test_params
     {
@@ -597,26 +511,24 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
             .expected_frame = 4,
         });
 
-    prepare_test();
     vcr = param.vcr;
 
     bool seek_completed = false;
-    params.callbacks.seek_completed = [&] { seek_completed = true; };
-    core_create(&params, &ctx);
+    s_core_params.callbacks.seek_completed = [&] { seek_completed = true; };
 
-    ctx->vr_start_rom = [](std::filesystem::path path) {
+    s_core_ctx->vr_start_rom = [](std::filesystem::path path) {
         emu_launched = true;
         core_executing = true;
         return Res_Ok;
     };
 
-    ctx->vcr_start_playback = [](std::filesystem::path path) {
+    s_core_ctx->vcr_start_playback = [](std::filesystem::path path) {
         vcr.task = task_playback;
         vcr.current_sample = 0;
         return Res_Ok;
     };
 
-    const auto result = ctx->vcr_begin_seek(param.str, false);
+    const auto result = s_core_ctx->vcr_begin_seek(param.str, false);
     REQUIRE(result == Res_Ok);
 
     while (!seek_completed)
@@ -631,11 +543,8 @@ TEST_CASE("seek_stops_at_expected_frame", "seek")
 /*
  * Tests that the vcr_freeze function returns false when idle.
  */
-TEST_CASE("returns_false_when_idle", "vcr_freeze")
+TEST_CASE_METHOD(VcrFixture, "returns_false_when_idle", "vcr_freeze")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
     vcr_freeze_info freeze{};
     const auto result = vcr_freeze(freeze);
 
@@ -645,7 +554,7 @@ TEST_CASE("returns_false_when_idle", "vcr_freeze")
 /*
  * Tests that the vcr_freeze function produces the correct freeze buffer for a predefined set of VCR states.
  */
-TEST_CASE("out_freeze_is_correct", "vcr_freeze")
+TEST_CASE_METHOD(VcrFixture, "out_freeze_is_correct", "vcr_freeze")
 {
     struct freeze_test_params
     {
@@ -675,9 +584,7 @@ TEST_CASE("out_freeze_is_correct", "vcr_freeze")
                             .input_buffer = {{1}, {2}, {3}, {4}, {5}, {0}}},
     });
 
-    prepare_test();
     vcr = param.vcr;
-    core_create(&params, &ctx);
 
     vcr_freeze_info freeze{};
     const auto result = vcr_freeze(freeze);
@@ -694,11 +601,8 @@ TEST_CASE("out_freeze_is_correct", "vcr_freeze")
 /*
  * Tests that vcr_unfreeze fails with VCR_NeedsPlaybackOrRecording when called while idle.
  */
-TEST_CASE("fails_when_idle", "vcr_unfreeze")
+TEST_CASE_METHOD(VcrFixture, "fails_when_idle", "vcr_unfreeze")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
     vcr_freeze_info freeze{};
     const auto result = vcr_unfreeze(freeze);
 
@@ -708,11 +612,8 @@ TEST_CASE("fails_when_idle", "vcr_unfreeze")
 /*
  * Tests that vcr_unfreeze fails with VCR_InvalidFormat when the freeze buffer's size field is categorically too small.
  */
-TEST_CASE("fails_when_size_too_small", "vcr_unfreeze")
+TEST_CASE_METHOD(VcrFixture, "fails_when_size_too_small", "vcr_unfreeze")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
     vcr.task = task_recording;
 
     vcr_freeze_info freeze{
@@ -727,11 +628,8 @@ TEST_CASE("fails_when_size_too_small", "vcr_unfreeze")
  * Tests that vcr_unfreeze fails with VCR_NotFromThisMovie when the freeze buffer's uid field doesn't match the current
  * movie's uid.
  */
-TEST_CASE("fails_when_uid_incompatible", "vcr_unfreeze")
+TEST_CASE_METHOD(VcrFixture, "fails_when_uid_incompatible", "vcr_unfreeze")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
     vcr.task = task_recording;
     vcr.hdr.uid = 0xBEEF;
 
@@ -749,12 +647,9 @@ TEST_CASE("fails_when_uid_incompatible", "vcr_unfreeze")
  * movie, but the VCR is in read-only mode (which would cause a desync due to the input buffer not being updated and
  * therefore mismatched).
  */
-TEST_CASE("fails_when_desync_risk", "vcr_unfreeze")
+TEST_CASE_METHOD(VcrFixture, "fails_when_desync_risk", "vcr_unfreeze")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
-    cfg.vcr_readonly = true;
+    s_cfg.vcr_readonly = true;
 
     vcr.task = task_recording;
     vcr.hdr.uid = 0xDEAD;
@@ -774,12 +669,9 @@ TEST_CASE("fails_when_desync_risk", "vcr_unfreeze")
  * Tests that vcr_unfreeze fails with VCR_InvalidFormat when the freeze buffer's size field is smaller than the expected
  * size for the given input buffer.
  */
-TEST_CASE("fails_when_malformed_input_size", "vcr_unfreeze")
+TEST_CASE_METHOD(VcrFixture, "fails_when_malformed_input_size", "vcr_unfreeze")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
-    cfg.vcr_readonly = false;
+    s_cfg.vcr_readonly = false;
 
     vcr.task = task_recording;
     vcr.hdr.uid = 0xDEAD;
@@ -800,12 +692,9 @@ TEST_CASE("fails_when_malformed_input_size", "vcr_unfreeze")
  * Tests that vcr_unfreeze succeeds and updates the current sample but not the input buffer when unfreezing while
  * seeking and recording.
  */
-TEST_CASE("input_buffer_doesnt_change_if_seeking_while_recording", "vcr_unfreeze")
+TEST_CASE_METHOD(VcrFixture, "input_buffer_doesnt_change_if_seeking_while_recording", "vcr_unfreeze")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
-    cfg.vcr_readonly = false;
+    s_cfg.vcr_readonly = false;
 
     vcr.task = task_recording;
     vcr.hdr.uid = 0xDEAD;
@@ -837,11 +726,9 @@ TEST_CASE("input_buffer_doesnt_change_if_seeking_while_recording", "vcr_unfreeze
  * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also
  * try to lock the VCR mutex.
  */
-TEST_CASE("mutex_unlocked_during_input_callback_called_while_idle", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_idle", "vcr_on_controller_poll")
 {
-    prepare_test();
-    params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
-    core_create(&params, &ctx);
+    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
     core_buttons input{};
     vcr_on_controller_poll(0, &input);
@@ -852,14 +739,11 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_idle", "vcr_on_cont
  * path). This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads
  * that also try to lock the VCR mutex.
  */
-TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_1", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_recording_1", "vcr_on_controller_poll")
 {
-    prepare_test();
-    params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
+    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -876,14 +760,11 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_1", "vcr_
  * path). This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads
  * that also try to lock the VCR mutex.
  */
-TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_2", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_recording_2", "vcr_on_controller_poll")
 {
-    prepare_test();
-    params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
+    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -900,14 +781,11 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_recording_2", "vcr_
  * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also
  * try to lock the VCR mutex.
  */
-TEST_CASE("mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_controller_poll")
 {
-    prepare_test();
-    params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
+    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -924,22 +802,19 @@ TEST_CASE("mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_
  * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also
  * try to lock the VCR mutex.
  */
-TEST_CASE("mutex_unlocked_during_emu_pause_changed_callback_called_while_playback_and_waiting_at_end",
-          "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture,
+                 "mutex_unlocked_during_emu_pause_changed_callback_called_while_playback_and_waiting_at_end",
+                 "vcr_on_controller_poll")
 {
-    prepare_test();
-
     bool called{};
-    params.callbacks.emu_paused_changed = [&](const bool &) {
+    s_core_params.callbacks.emu_paused_changed = [&](const bool &) {
         called = true;
         REQUIRE(!is_vcr_lock_held());
     };
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
 
-    core_create(&params, &ctx);
-
-    cfg.wait_at_movie_end = true;
+    s_cfg.wait_at_movie_end = true;
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
@@ -955,14 +830,12 @@ TEST_CASE("mutex_unlocked_during_emu_pause_changed_callback_called_while_playbac
 /*
  * Tests that stopping the VCR during an input callback while recording does not perform any recording work.
  */
-TEST_CASE("stopping_vcr_during_input_callback_while_recording_doesnt_do_recording_work", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "stopping_vcr_during_input_callback_while_recording_doesnt_do_recording_work",
+                 "vcr_on_controller_poll")
 {
-    prepare_test();
-    params.callbacks.input = [&](core_buttons *input, int index) { vcr_stop_all(); };
+    s_core_params.callbacks.input = [&](core_buttons *input, int index) { vcr_stop_all(); };
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
-
-    core_create(&params, &ctx);
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -981,23 +854,19 @@ TEST_CASE("stopping_vcr_during_input_callback_while_recording_doesnt_do_recordin
 /*
  * Tests that the VCR mutex is unlocked during callbacks invoked when calling vcr_stop_all with playback task.
  */
-TEST_CASE("mutex_unlocked_during_callbacks_with_playback_task", "vcr_stop_all")
+TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_callbacks_with_playback_task", "vcr_stop_all")
 {
-    prepare_test();
-
     bool task_changed_called = false;
-    params.callbacks.task_changed = [&](auto) {
+    s_core_params.callbacks.task_changed = [&](auto) {
         task_changed_called = true;
         REQUIRE(!is_vcr_lock_held());
     };
 
     bool stop_movie_called = false;
-    params.callbacks.stop_movie = [&] {
+    s_core_params.callbacks.stop_movie = [&] {
         stop_movie_called = true;
         REQUIRE(!is_vcr_lock_held());
     };
-
-    core_create(&params, &ctx);
 
     vcr.task = task_playback;
 
@@ -1012,17 +881,14 @@ TEST_CASE("mutex_unlocked_during_callbacks_with_playback_task", "vcr_stop_all")
  * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also
  * try to lock the VCR mutex.
  */
-TEST_CASE("mutex_unlocked_during_emu_paused_changed_callback_when_seek_ends", "vcr_on_controller_poll")
+TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_emu_paused_changed_callback_when_seek_ends",
+                 "vcr_on_controller_poll")
 {
-    prepare_test();
-
     bool called{};
-    params.callbacks.emu_paused_changed = [&](const bool &) {
+    s_core_params.callbacks.emu_paused_changed = [&](const bool &) {
         called = true;
         REQUIRE(!is_vcr_lock_held());
     };
-
-    core_create(&params, &ctx);
 
     const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}};
     vcr.inputs = inputs;
@@ -1040,27 +906,18 @@ TEST_CASE("mutex_unlocked_during_emu_paused_changed_callback_when_seek_ends", "v
     REQUIRE(called);
 }
 
-TEST_CASE("fails_when_not_playback", "vcr_continue_recording")
+TEST_CASE_METHOD(VcrFixture, "fails_when_not_playback", "vcr_continue_recording")
 {
-    prepare_test();
-    core_create(&params, &ctx);
-
     vcr.task = task_idle;
     const auto result = vcr_continue_recording();
     REQUIRE(result == VCR_NeedsPlayback);
 }
 
-TEST_CASE("changes_task_and_header_and_inputs", "vcr_continue_recording")
+TEST_CASE_METHOD(VcrFixture, "changes_task_and_header_and_inputs", "vcr_continue_recording")
 {
-    prepare_test();
+    s_core_params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {};
 
-    params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {
-
-    };
-
-    core_create(&params, &ctx);
-
-    cfg.vcr_backups = false;
+    s_cfg.vcr_backups = false;
 
     vcr.task = task_playback;
     vcr.hdr.length_samples = 5;
@@ -1078,22 +935,16 @@ TEST_CASE("changes_task_and_header_and_inputs", "vcr_continue_recording")
     REQUIRE(vcr.inputs[1].value == 2);
 }
 
-TEST_CASE("invokes_task_callback_correctly", "vcr_continue_recording")
+TEST_CASE_METHOD(VcrFixture, "invokes_task_callback_correctly", "vcr_continue_recording")
 {
-    prepare_test();
-
-    params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {
-
-    };
+    s_core_params.get_plugin_names = [](char *video, char *audio, char *input, char *rsp) {};
     bool called{};
-    params.callbacks.task_changed = [&](const auto &) {
+    s_core_params.callbacks.task_changed = [&](const auto &) {
         called = true;
         REQUIRE(!is_vcr_lock_held());
     };
 
-    core_create(&params, &ctx);
-
-    cfg.vcr_backups = false;
+    s_cfg.vcr_backups = false;
 
     vcr.task = task_playback;
     vcr.hdr.length_samples = 5;
@@ -1106,13 +957,9 @@ TEST_CASE("invokes_task_callback_correctly", "vcr_continue_recording")
     REQUIRE(called);
 }
 
-TEST_CASE("doesnt_deadlock", "vcr_begin_warp_modify")
+TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
 {
-    prepare_test();
-
-    core_create(&params, &ctx);
-
-    cfg.vcr_backups = false;
+    s_cfg.vcr_backups = false;
 
     vcr.task = task_recording;
     vcr.hdr.length_samples = 5;
