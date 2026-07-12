@@ -909,11 +909,16 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }
         }
         break;
-        case IDC_CLEARINPUT:
-        case IDC_RESET_JOYSTICK:
+        case IDC_CLEARINPUT: {
             ctx->current_input = {0};
             ctx->autofire_input_a = {0};
             ctx->autofire_input_b = {0};
+            ctx->set_visuals(ctx->current_input);
+            break;
+        }
+        case IDC_RESET_JOYSTICK:
+            ctx->current_input.x = 0;
+            ctx->current_input.y = 0;
             ctx->set_visuals(ctx->current_input);
             break;
         case IDC_X_DOWN:
