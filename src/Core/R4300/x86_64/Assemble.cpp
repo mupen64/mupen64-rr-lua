@@ -807,11 +807,11 @@ void mov_rax_preg32x4pimm32(int32_t dst_reg, int32_t idx_reg, uintptr_t base_add
     // mov rax, [r11 + idx_reg*8] with REX.WB + 8B /r + SIB
     // REX.WB = 0x49 (REX.W=1, REX.B=1 for r11)
     // 8B /r : mod=00, reg=dst_reg (rax=0), r/m=SIB=4 → 0x04 | (dst_reg << 3)
-    // SIB : scale=3 (x8), index=idx_reg, base=7 (r11) → scale=3 means 0xC0
+    // SIB : scale=3 (x8), index=idx_reg, base=3 (r11, with REX.B from 0x49)
     put8(0x49);                    // REX.WB
     put8(0x8B);
     put8(0x04 | (dst_reg << 3));   // mod=00, reg=rax, r/m=SIB(4)
-    put8(0xC0 | (idx_reg << 3) | 7); // SIB: scale=3 (x8), index=idx_reg, base=r11(7)
+    put8(0xC0 | (idx_reg << 3) | 3); // SIB: scale=3 (x8), index=idx_reg, base=r11(3)
 }
 
 void mov_rax_r11_idx4(int32_t idx_reg)
@@ -821,7 +821,7 @@ void mov_rax_r11_idx4(int32_t idx_reg)
     put8(0x49);
     put8(0x8B);
     put8(0x04);                  // mod=00, reg=0 (rax), r/m=SIB(4)
-    put8(0xC0 | (idx_reg << 3) | 7); // SIB: scale=3 (x8), index=idx_reg, base=r11
+    put8(0xC0 | (idx_reg << 3) | 3); // SIB: scale=3 (x8), index=idx_reg, base=r11(3)
 }
 
 void cmp_rax_imm64(uintptr_t imm64)

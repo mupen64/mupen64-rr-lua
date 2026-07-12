@@ -521,7 +521,7 @@ void set_64_register_state(int32_t reg1, int32_t reg2, uintptr_t addr, int32_t d
 void lock_register(int32_t reg)
 {
     free_register(reg);
-    last_access[reg] = (precomp_instr *)0xFFFFFFFF;
+    last_access[reg] = (precomp_instr *)UINTPTR_MAX;
     reg_content[reg] = 0;
 }
 
