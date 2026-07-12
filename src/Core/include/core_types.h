@@ -210,6 +210,11 @@ struct core_cfg
     int32_t wii_vc_emulation;
 
     /// <summary>
+    /// Whether RCP lag emulation is enabled.
+    /// </summary>
+    int32_t rcp_lag_emulation;
+
+    /// <summary>
     /// Determines whether floating point exceptions are emulated.
     /// </summary>
     int32_t float_exception_emulation;

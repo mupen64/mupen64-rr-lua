@@ -934,6 +934,13 @@ std::vector<t_options_group> get_static_option_groups()
     core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
         .group_id = core_group.id,
+        .name = L"Emulate RCP Lag",
+        .tooltip = L"Enables RCP lag emulation, which is a more accurate emulation of lag frames.",
+        GENPROPS(int32_t, core.rcp_lag_emulation),
+    });
+    core_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = core_group.id,
         .name = L"Emulate Float Crashes",
         .tooltip = L"Emulate float operation-related crashes which would also crash on real hardware",
         GENPROPS(int32_t, core.float_exception_emulation),
