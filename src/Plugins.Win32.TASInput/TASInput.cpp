@@ -586,6 +586,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         SetDlgItemText(ctx->hwnd, IDC_X_UP, L"4");
         SetDlgItemText(ctx->hwnd, IDC_Y_DOWN, L"6");
         SetDlgItemText(ctx->hwnd, IDC_Y_UP, L"5");
+        SetDlgItemText(ctx->hwnd, IDC_RESET_JOYSTICK, L"•");
 
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
@@ -909,6 +910,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         break;
         case IDC_CLEARINPUT:
+        case IDC_RESET_JOYSTICK:
             ctx->current_input = {0};
             ctx->autofire_input_a = {0};
             ctx->autofire_input_b = {0};
