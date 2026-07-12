@@ -508,12 +508,9 @@ void gen_interrupt()
             vi_register.vi_delay = 500000;
         else
         {
-            g_core->log_trace(std::format("rcp_counter: {}", g_r4300.rcp_counter));
-
-            size_t cf = 1500;
-            if (g_core->cfg->rcp_lag_emulation) cf += g_r4300.rcp_counter;
-            cf *= g_core->cfg->counter_factor;
-            vi_register.vi_delay = ((vi_register.vi_v_sync + 1) * cf);
+            size_t f = 1500 * g_core->cfg->counter_factor;
+            if (g_core->cfg->rcp_lag_emulation) f += std::max(1u, g_r4300.rcp_counter);
+            vi_register.vi_delay = (vi_register.vi_v_sync + 1) * f;
         }
         // this is the place
         next_vi += vi_register.vi_delay;
