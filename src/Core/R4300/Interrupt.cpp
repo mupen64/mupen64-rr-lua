@@ -509,7 +509,7 @@ void gen_interrupt()
         else
         {
             size_t f = 1500 * g_core->cfg->counter_factor;
-            if (g_core->cfg->rcp_lag_emulation) f += std::max(1u, g_r4300.rcp_counter);
+            if (g_core->cfg->rcp_lag_emulation) f += std::max(1u, g_r4300.rcp_counter) * g_core->cfg->rcp_lag_factor;
             vi_register.vi_delay = (vi_register.vi_v_sync + 1) * f;
         }
         // this is the place
