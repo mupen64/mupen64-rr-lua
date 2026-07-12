@@ -509,9 +509,14 @@ void gen_interrupt()
         else
         {
             const size_t cpu_delay = (vi_register.vi_v_sync + 1) * (1500 * g_core->cfg->counter_factor);
-            size_t rcp_delay = (size_t)((double)g_r4300.rcp_counter * g_core->cfg->rcp_lag_factor);
-            if (!g_core->cfg->rcp_lag_emulation) rcp_delay = 0;
-            vi_register.vi_delay = cpu_delay + rcp_delay;
+            if (!g_core->cfg->rcp_lag_emulation) [[likely]]
+                vi_register.vi_delay = cpu_delay;
+            else
+            {
+                const auto rcp_delay = (size_t)((double)g_r4300.rcp_counter * g_core->cfg->rcp_lag_factor);
+                const auto delay = (size_t)std::max((int64_t)0, (int64_t)cpu_delay - (int64_t)rcp_delay);
+                vi_register.vi_delay = delay;
+            }
         }
         // this is the place
         next_vi += vi_register.vi_delay;
