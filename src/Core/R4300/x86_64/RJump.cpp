@@ -37,9 +37,9 @@
 //   mov r11, target
 //   jmp r11        — enter target with restored RSP
 //
-// For need_map=true: target is a jump_wrapper that begins with `sub rsp, 8`.
-//   That sub is correct if we enter the wrapper with RSP=original_call_reg64_entry_RSP.
-//   The wrapper itself handles the rest and jumps to the real instruction code.
+// For need_map=true: target is a jump_wrapper. It does NOT touch RSP (see
+//   build_wrapper); the `add rsp, 8` above already restored the entry RSP the
+//   wrapper expects. The wrapper jumps to the real instruction code.
 //
 // Thunk operation:
 //   Entered via CPU `ret` from C function. Wait, but this is generated dyna_jump, not a thunk!
@@ -112,8 +112,8 @@ void dyna_jump()
     {
         // Target is the per-instruction jump_wrapper buffer, whose address is
         // stable (it lives inside the persistent precomp_instr struct). Baking
-        // it absolutely is safe. The wrapper's own prologue does sub rsp,8, so
-        // we enter it with the original RSP, which is what it expects.
+        // it absolutely is safe. The wrapper does NOT touch RSP; the `add rsp,8`
+        // above already restored the RSP it expects.
         uintptr_t target = (uintptr_t)(cur->reg_cache_infos.jump_wrapper);
 
         // mov r11, imm64(target)   (49 BB <8 bytes>)

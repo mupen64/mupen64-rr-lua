@@ -1522,7 +1522,7 @@ void genlbu()
     }
     else
     {
-shr_reg32_imm8(EAX, 16);
+        shr_reg32_imm8(EAX, 16);
         mov_reg32_preg32x4pimm64(EAX, EAX, (uint64_t)readmemb);
         cmp_reg32_imm32(EAX, (uintptr_t)read_rdramb);
     }
