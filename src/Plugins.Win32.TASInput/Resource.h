@@ -95,6 +95,7 @@
 #define IDC_Y_UP 2103
 #define IDC_LABEL_X 2104
 #define IDC_LABEL_Y 2105
+#define IDC_RESET_JOYSTICK 2107
 
 #define IDC_STATIC 1999
 
