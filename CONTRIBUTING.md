@@ -8,9 +8,10 @@ Only Windows is supported for now, though the CMake infrastructure is intended t
 |:-------------------------:|-----------------------------------------------------------------------|
 | `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
 
-## Windows/CMake
+## Windows
 You'll need:
 - Visual Studio 2026 (for the compiler, CMake, Ninja and vcpkg)
+  - Ensure the LLVM tools are installed (as we compile with Clang by default).
 
 In order for the compiler to work, you'll need to be in a VS developer environment. Then, simply use one of the provided presets to compile and build. If you want to change any settings, do so on the command line or via `CMakeUserPresets.json`.
 
@@ -48,6 +49,23 @@ If you aren't presented with a CMake profile selection dialog on startup, you ca
 All tasks required for development are available in the task panel.
 
 Visual Studio 2026 must be installed on the `C:` drive.
+
+## Linux
+You'll need:
+- A C/C++ compiler (`gcc` or `clang`)
+- `libdeflate`
+- `libsafec`
+
+> **NOTE:** 32-bit builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
+
+To build:
+```sh
+cmake --preset sys-linux64-x64
+cmake --build build
+```
+
+
+
 
 # Dependencies
 When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.

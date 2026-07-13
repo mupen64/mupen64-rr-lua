@@ -41,6 +41,9 @@
 #include <variant>
 #include <vector>
 #include <latch>
+#if !defined(_WIN32)
+#include <safe_str_lib.h>
+#endif
 #include <xxh64.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>
