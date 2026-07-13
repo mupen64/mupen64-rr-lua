@@ -164,6 +164,8 @@ void RSP_ProcessDList()
         RSP.nextCmd = _SHIFTR(*(u32 *)&RDRAM[RSP.PC[RSP.PCi]], 24, 8);
 
         cmds[RSP.cmd](w0, w1);
+
+        *g_ef->rcp_counter += 1;
     }
 
     RSP.busy = FALSE;

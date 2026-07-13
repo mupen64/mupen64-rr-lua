@@ -507,7 +507,17 @@ void gen_interrupt()
         if (vi_register.vi_v_sync == 0)
             vi_register.vi_delay = 500000;
         else
-            vi_register.vi_delay = ((vi_register.vi_v_sync + 1) * (1500 * g_core->cfg->counter_factor));
+        {
+            const size_t cpu_delay = (vi_register.vi_v_sync + 1) * (1500 * g_core->cfg->counter_factor);
+            if (!g_core->cfg->rcp_lag_emulation) [[likely]]
+                vi_register.vi_delay = cpu_delay;
+            else
+            {
+                const auto rcp_delay = (size_t)((double)g_r4300.rcp_counter * g_core->cfg->rcp_lag_factor);
+                const auto delay = (size_t)std::max((int64_t)0, (int64_t)cpu_delay - (int64_t)rcp_delay);
+                vi_register.vi_delay = delay;
+            }
+        }
         // this is the place
         next_vi += vi_register.vi_delay;
         if (vi_register.vi_status & 0x40)
@@ -518,6 +528,7 @@ void gen_interrupt()
         remove_interrupt_event();
         add_interrupt_event_count(VI_INT, next_vi);
         MI_register.mi_intr_reg |= 0x08;
+        g_r4300.rcp_counter = 1;
         break;
     }
     case COMPARE_INT: // game can set Compare register to some value, and make a timer like that

@@ -285,6 +285,7 @@ extern "C"
         uint32_t *SP_DMEM;
         uint32_t *SP_IMEM;
         uint32_t *PIF_RAM;
+        size_t *rcp_counter;
 
 #pragma region Emulator
 
