@@ -508,7 +508,7 @@ void gen_interrupt()
             vi_register.vi_delay = 500000;
         else
         {
-            const size_t cpu_delay = (vi_register.vi_v_sync + 1) * (1500 * g_core->cfg->counter_factor);
+            const size_t cpu_delay = (vi_register.vi_v_sync + 1) * (size_t)(1500.0 * g_core->cfg->cpu_cf);
             if (!g_core->cfg->rcp_lag_emulation) [[likely]]
                 vi_register.vi_delay = cpu_delay;
             else
