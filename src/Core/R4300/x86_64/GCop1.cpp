@@ -12,7 +12,9 @@
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 
-#define INTERPRET_CTC1
+// CTC1 ported to native JIT: writes FCR31 + sets the SSE rounding mode (MXCSR), the x64
+// analogue of x86's fldcw path. (Was interpreted only because the old #else used x87 fldcw.)
+// #define INTERPRET_CTC1
 
 void genmfc1()
 {
@@ -92,10 +94,12 @@ void genctc1()
     gencheck_cop1_unusable();
 
     if (dst->f.r.nrd != 31) return;
-    mov_eax_memoffs32((uint32_t *)dst->f.r.rt);
-    mov_memoffs32_eax((uintptr_t *)&FCR31);
-    and_eax_imm32(3);
+    // FCR31 = (int32)reg[rt]  (rrt32 = low 32 bits of the source register)
+    mov_reg64_m64(EAX, (void *)dst->f.r.rt); // RAX = reg[rt]; EAX = low 32 = rrt32
+    mov_m32_reg32((void *)&FCR31, EAX);      // FCR31 = EAX
+    and_eax_imm32(3);                        // EAX = FCR31 & 3 = N64 rounding mode
 
+    // Keep the interpreter's rounding_mode global in sync (interpreter/savestate paths).
     cmp_eax_imm32(0);
     jne_rj(0);
     int32_t jne0 = code_length - 1;
@@ -122,9 +126,19 @@ void genctc1()
 
     mov_m32_imm32((void *)&rounding_mode, (uintptr_t)MUP_ROUND_FLOOR);
 
-    rj_patch(done0); // the three "done" jumps all land at the fldcw
+    rj_patch(done0);
     rj_patch(done1);
     rj_patch(done2);
-    fldcw_m16((uint16_t *)&rounding_mode);
+
+    // Set MXCSR rounding (bits 13-14) from the N64 mode in EAX (analogue of x86's fldcw):
+    // N64 {0=near,1=zero,2=+inf,3=-inf} -> MXCSR RC {0=near,3=zero,2=+inf,1=-inf} = (4-m)&3.
+    mov_reg32_imm32(EBX, 4);
+    sub_reg32_reg32(EBX, EAX);                 // ebx = 4 - mode
+    and_reg32_imm32(EBX, 3);                   // ebx = (4 - mode) & 3 = MXCSR RC value
+    shl_reg32_imm8(EBX, 13);                   // ebx = RC bits in place (bits 13-14)
+    stmxcsr_m32(&g_scratch_mxcsr);
+    and_m32_imm32(&g_scratch_mxcsr, ~0x6000u); // clear the RC field
+    or_m32_reg32(&g_scratch_mxcsr, EBX);       // set the new RC
+    ldmxcsr_m32(&g_scratch_mxcsr);
 #endif
 }

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+// BC1FL/BC1TL are fully JITed via gentestl.
+
 #include <CommonPCH.hpp>
 #include <Core.hpp>
 #include <R4300/x86_64/Assemble.hpp>

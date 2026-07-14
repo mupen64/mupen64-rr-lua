@@ -185,7 +185,7 @@ void genj()
     naddr = ((dst - 1)->f.j.inst_index << 2) | (dst->addr & 0xF0000000);
 
     mov_m32_imm32((void *)(&last_addr), naddr);
-    gencheck_interrupt((uintptr_t)&actual->block[(naddr - actual->start) / 4]);
+    gencheck_interrupt_out(naddr);
     jmp(naddr);
 #endif
 }
@@ -267,7 +267,7 @@ void genjal()
     naddr = ((dst - 1)->f.j.inst_index << 2) | (dst->addr & 0xF0000000);
 
     mov_m32_imm32((void *)(&last_addr), naddr);
-    gencheck_interrupt((uintptr_t)&actual->block[(naddr - actual->start) / 4]);
+    gencheck_interrupt_out(naddr);
     jmp(naddr);
 #endif
 }
@@ -430,7 +430,9 @@ void gentest()
     je_near_rj(0);
     temp = code_length;
     mov_m32_imm32((void *)(&last_addr), dst->addr + (dst - 1)->f.i.immediate * 4);
-    gencheck_interrupt((uintptr_t)(dst + (dst - 1)->f.i.immediate));
+    // Explicit target addr via fake_instr, not &block[slot]: an x64 block slot can be
+    // uninitialised (addr 0) -> PC->addr=0 -> Count/EPC corruption on interrupt delivery.
+    gencheck_interrupt_out(dst->addr + (dst - 1)->f.i.immediate * 4);
     jmp(dst->addr + (dst - 1)->f.i.immediate * 4);
 
     temp2 = code_length;
@@ -438,7 +440,7 @@ void gentest()
     put32(temp2 - temp);
     code_length = temp2;
     mov_m32_imm32((void *)(&last_addr), dst->addr + 4);
-    gencheck_interrupt((uintptr_t)(dst + 1));
+    gencheck_interrupt_out(dst->addr + 4);
     jmp(dst->addr + 4);
 }
 
@@ -479,7 +481,7 @@ void gentest_out()
     put32(temp2 - temp);
     code_length = temp2;
     mov_m32_imm32((void *)(&last_addr), dst->addr + 4);
-    gencheck_interrupt((uintptr_t)(dst + 1));
+    gencheck_interrupt_out(dst->addr + 4);
     jmp(dst->addr + 4);
 }
 
@@ -1071,7 +1073,9 @@ void gentestl()
     temp = code_length;
     gendelayslot();
     mov_m32_imm32((void *)(&last_addr), dst->addr + (dst - 1)->f.i.immediate * 4);
-    gencheck_interrupt((uintptr_t)(dst + (dst - 1)->f.i.immediate));
+    // Explicit target addr via fake_instr, not &block[slot]: an x64 block slot can be
+    // uninitialised (addr 0) -> PC->addr=0 -> Count/EPC corruption on interrupt delivery.
+    gencheck_interrupt_out(dst->addr + (dst - 1)->f.i.immediate * 4);
     jmp(dst->addr + (dst - 1)->f.i.immediate * 4);
 
     temp2 = code_length;
@@ -1080,7 +1084,7 @@ void gentestl()
     code_length = temp2;
     genupdate_count(dst->addr - 4);
     mov_m32_imm32((void *)(&last_addr), dst->addr + 4);
-    gencheck_interrupt((uintptr_t)(dst + 1));
+    gencheck_interrupt_out(dst->addr + 4);
     jmp(dst->addr + 4);
 }
 
@@ -1123,7 +1127,7 @@ void gentestl_out()
     code_length = temp2;
     genupdate_count(dst->addr - 4);
     mov_m32_imm32((void *)(&last_addr), dst->addr + 4);
-    gencheck_interrupt((uintptr_t)(dst + 1));
+    gencheck_interrupt_out(dst->addr + 4);
     jmp(dst->addr + 4);
 }
 
