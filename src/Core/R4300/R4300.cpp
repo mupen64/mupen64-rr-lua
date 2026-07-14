@@ -62,6 +62,9 @@ precomp_block *blocks[0x100000], *actual;
 int32_t rounding_mode = MUP_ROUND_NEAREST;
 int32_t trunc_mode = MUP_ROUND_TRUNC, round_mode = MUP_ROUND_NEAREST, ceil_mode = MUP_ROUND_CEIL,
         floor_mode = MUP_ROUND_FLOOR;
+// Scratch used by the x64 JIT ROUND/CEIL/FLOOR to swap the SSE rounding mode (MXCSR) and
+// restore it, mirroring the interpreter's fesetround(mode)/set_rounding() around a convert.
+uint32_t g_saved_mxcsr = 0, g_scratch_mxcsr = 0;
 void (*code)();
 uint32_t next_vi;
 int32_t vi_field = 0;
