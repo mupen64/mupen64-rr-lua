@@ -23,6 +23,7 @@ struct r4300
     std::atomic<bool> screen_invalidated_frame{true};
     std::atomic<size_t> frame_advance_outstanding{0};
     bool frame_skipped{false};
+    size_t rcp_counter{0};
 };
 
 extern std::recursive_mutex g_emu_cs;

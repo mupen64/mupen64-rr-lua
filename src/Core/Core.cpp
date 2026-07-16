@@ -80,6 +80,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.SP_DMEM = SP_DMEM;
     g_ctx.SP_IMEM = SP_IMEM;
     g_ctx.PIF_RAM = PIF_RAM;
+    g_ctx.rcp_counter = &g_r4300.rcp_counter;
     CORE_RDRAM = rdram;
 
     g_ctx.vr_byteswap = rom_byteswap;
