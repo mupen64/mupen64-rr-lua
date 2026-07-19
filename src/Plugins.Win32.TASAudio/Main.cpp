@@ -130,7 +130,7 @@ EXPORT void CALL RomClosed()
     if (g_backend.has_value()) g_backend.reset();
 }
 
-    EXPORT void CALL AiDacrateChanged(int32_t system_type)
+EXPORT void CALL AiDacrateChanged(int32_t system_type)
 {
     // update sample rate
     if (!g_audio_info || !g_backend) return;
