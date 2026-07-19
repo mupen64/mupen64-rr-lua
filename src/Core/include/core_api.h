@@ -241,27 +241,27 @@ extern "C"
         std::function<void(const core_st_callback_info &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
             [](const core_st_callback_info &, const std::vector<uint8_t> &) {};
 
-        PROCESSDLIST video_process_dlist;
-        PROCESSRDPLIST video_process_rdp_list;
-        SHOWCFB video_show_cfb;
-        VISTATUSCHANGED video_vi_status_changed;
-        VIWIDTHCHANGED video_vi_width_changed;
-        GETVIDEOSIZE video_get_video_size;
-        FBREAD video_fb_read;
-        FBWRITE video_fb_write;
-        FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
+        std::function<void()> video_process_dlist;
+        std::function<void()> video_process_rdp_list;
+        std::function<void()> video_show_cfb;
+        std::function<void()> video_vi_status_changed;
+        std::function<void()> video_vi_width_changed;
+        std::function<void(int32_t *width, int32_t *height)> video_get_video_size;
+        std::function<void(uint32_t)> video_fb_read;
+        std::function<void(uint32_t addr, uint32_t size)> video_fb_write;
+        std::function<void(void *)> video_fb_get_frame_buffer_info;
 
-        AIDACRATECHANGED audio_ai_dacrate_changed;
-        AILENCHANGED audio_ai_len_changed;
-        AIREADLENGTH audio_ai_read_length;
-        PROCESSALIST audio_process_alist;
+        std::function<void(int32_t system_type)> audio_ai_dacrate_changed;
+        std::function<void()> audio_ai_len_changed;
+        std::function<uint32_t()> audio_ai_read_length;
+        std::function<void()> audio_process_alist;
 
-        CONTROLLERCOMMAND input_controller_command;
-        GETKEYS input_get_keys;
-        SETKEYS input_set_keys;
-        READCONTROLLER input_read_controller;
+        std::function<void(int32_t controller, unsigned char *command)> input_controller_command;
+        std::function<void(int32_t controller, core_buttons *keys)> input_get_keys;
+        std::function<void(int32_t controller, core_buttons keys)> input_set_keys;
+        std::function<void(int32_t controller, unsigned char *command)> input_read_controller;
 
-        DORSPCYCLES rsp_do_rsp_cycles;
+        std::function<uint32_t(uint32_t)> rsp_do_rsp_cycles;
     };
 
     /**
