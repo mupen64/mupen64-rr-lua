@@ -209,7 +209,8 @@ void vr_update_effective_speed_mode()
         std::unique_lock lock(vcr_mtx);
         if (vcr.seek_to_frame.has_value())
         {
-            g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
+            g_r4300.effective_speed_mode =
+                g_core->cfg->render_throttling ? CoreSpeedMode::UltraFastForward : CoreSpeedMode::FastForward;
             return;
         }
     }
