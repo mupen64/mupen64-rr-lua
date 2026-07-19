@@ -285,6 +285,7 @@ extern "C"
         uint32_t *SP_DMEM;
         uint32_t *SP_IMEM;
         uint32_t *PIF_RAM;
+        size_t *rcp_counter;
 
 #pragma region Emulator
 
@@ -433,6 +434,12 @@ extern "C"
          * \brief Updates internal timings after the speed modifier changes.
          */
         std::function<void()> vr_on_speed_modifier_changed;
+
+        /**
+         * \brief Updates internal state after `cfg->render_throttling` changes.
+         * Must be called from a thread that's not coupled to the emulator thread (or the emulator thread itself).
+         */
+        std::function<void()> vr_on_render_throttling_changed;
 
         /**
          * \brief Invalidates the visuals, allowing an updateScreen call to happen.

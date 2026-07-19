@@ -103,6 +103,27 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    double *value)
+{
+    const auto key = ini_cleanup_field(field_name);
+
+    if (is_reading)
+    {
+        // keep the default value if the key doesnt exist
+        // it will be created upon saving anyway
+        if (!ini[FLAT_FIELD_KEY].has(key))
+        {
+            return;
+        }
+        *value = std::stod(ini[FLAT_FIELD_KEY][key]);
+    }
+    else
+    {
+        ini[FLAT_FIELD_KEY][key] = std::to_string(*value);
+    }
+}
+
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
                                     uint64_t *value)
 {
     const auto key = ini_cleanup_field(field_name);
@@ -396,6 +417,8 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(core.st_undo_load)
     HANDLE_P_VALUE(core.use_summercart)
     HANDLE_P_VALUE(core.wii_vc_emulation)
+    HANDLE_P_VALUE(core.rcp_lag_emulation)
+    HANDLE_P_VALUE(core.rcp_lag_factor)
     HANDLE_P_VALUE(core.float_exception_emulation)
     HANDLE_P_VALUE(core.c_eq_s_nan_accurate)
     HANDLE_P_VALUE(core.is_audio_delay_enabled)
@@ -678,6 +701,8 @@ static void json_read_file(json &j)
     CORE_VALUE(st_undo_load)
     CORE_VALUE(use_summercart)
     CORE_VALUE(wii_vc_emulation)
+    CORE_VALUE(rcp_lag_emulation)
+    CORE_VALUE(rcp_lag_factor)
     CORE_VALUE(float_exception_emulation)
     CORE_VALUE(c_eq_s_nan_accurate)
     CORE_VALUE(is_audio_delay_enabled)
@@ -772,6 +797,8 @@ static void json_write_file(json &j)
     CORE_VALUE(st_undo_load)
     CORE_VALUE(use_summercart)
     CORE_VALUE(wii_vc_emulation)
+    CORE_VALUE(rcp_lag_emulation)
+    CORE_VALUE(rcp_lag_factor)
     CORE_VALUE(float_exception_emulation)
     CORE_VALUE(c_eq_s_nan_accurate)
     CORE_VALUE(is_audio_delay_enabled)

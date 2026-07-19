@@ -105,6 +105,11 @@ extern "C"
          * If `data` is null, returns the expected size of the buffer.
          */
         size_t (*config_path)(char *data, size_t len);
+
+        /**
+         * \brief Counter for RCP work in an arbitrary unit, ideally proportional to real-time lag per unit.
+         */
+        size_t *rcp_counter;
     };
 
     /**

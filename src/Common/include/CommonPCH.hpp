@@ -41,12 +41,21 @@
 #include <variant>
 #include <vector>
 #include <latch>
+
+
+#if !defined(_WIN32)
+// Implementation of C11 Annex K for Linux
+#include <safe_str_lib.h>
+#endif
+
 #include <xxh64.h>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_audio.h>
+
 #include "MiscHelpers.hpp"
 #include "StrUtils.hpp"
 #include "IOUtils.hpp"

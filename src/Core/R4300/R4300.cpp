@@ -202,9 +202,11 @@ void critical_stop(std::string_view message)
 
 void vr_update_effective_speed_mode()
 {
+    const auto max_ff = g_core->cfg->render_throttling ? CoreSpeedMode::UltraFastForward : CoreSpeedMode::FastForward;
+
     if (g_r4300.frame_advance_outstanding > 1)
     {
-        g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
+        g_r4300.effective_speed_mode = max_ff;
         return;
     }
 
@@ -212,14 +214,18 @@ void vr_update_effective_speed_mode()
         std::unique_lock lock(vcr_mtx);
         if (vcr.seek_to_frame.has_value())
         {
-            g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
+            g_r4300.effective_speed_mode = max_ff;
             return;
         }
     }
 
     if (g_r4300.desired_speed_mode != CoreSpeedMode::Normal)
     {
-        g_r4300.effective_speed_mode.store(g_r4300.desired_speed_mode.load());
+        auto desired = g_r4300.desired_speed_mode.load();
+        if (desired == CoreSpeedMode::UltraFastForward && !g_core->cfg->render_throttling)
+            desired = CoreSpeedMode::FastForward;
+
+        g_r4300.effective_speed_mode.store(desired);
         return;
     }
 

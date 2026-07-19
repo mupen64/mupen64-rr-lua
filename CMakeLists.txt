@@ -67,20 +67,25 @@ endif()
 # Libraries
 # =======================================
 
-# pkg-config libraries
+# make sure pkg-config is available
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
-pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 
-# cmake libraries
-find_package(libdeflate CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
+# Core cross-platform dependencies
 find_package(Catch2 CONFIG REQUIRED)
+find_package(libdeflate CONFIG REQUIRED)
+if (NOT WIN32)
+  pkg_check_modules(libsafec IMPORTED_TARGET GLOBAL "libsafec")
+endif()
 
+# Windows-only dependencies
 if(MUPEN64RR_BUILD_WIN32)
+  find_package(nlohmann_json CONFIG REQUIRED)
+  find_package(spdlog CONFIG REQUIRED)
   find_package(glew CONFIG REQUIRED)
   find_package(SDL3 CONFIG REQUIRED)
+
+  pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
+  pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 endif()
 
 # Lua, because Lua sucks

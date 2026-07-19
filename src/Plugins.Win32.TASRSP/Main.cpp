@@ -145,6 +145,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
             inst2 = p_alist[i + 1];
             const auto opcode = inst1 >> 24;
             const auto cmd = ABI[opcode];
+            *g_ef->rcp_counter += 1;
             cmd();
         }
 
