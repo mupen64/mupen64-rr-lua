@@ -364,11 +364,7 @@ extern "C"
     EXPORT void CALL ControllerCommand(int32_t Control, uint8_t *Command);
     EXPORT void CALL GetKeys(int32_t Control, CoreButtons *Keys);
     EXPORT void CALL SetKeys(int32_t controller, CoreButtons keys);
-#if defined(CORE_PLUGIN_INPUT_OLD_INITIATE_CONTROLLERS)
-    EXPORT void CALL InitiateControllers(void *hwnd, CoreController controls[4]);
-#else
     EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo);
-#endif
     EXPORT void CALL ReadController(int Control, uint8_t *Command);
     EXPORT void CALL WM_KeyDown(uint32_t wParam, uint32_t lParam);
     EXPORT void CALL WM_KeyUp(uint32_t wParam, uint32_t lParam);
