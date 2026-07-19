@@ -524,7 +524,10 @@ typedef union ExtendedMovieFlags {
          * Whether the movie was recorded with WiiVC mode enabled.
          */
         bool wii_vc : 1;
-        bool unused_1 : 1;
+        /**
+         * Whether the movie was recorded with an accurate implementation of the `c.eq.s` instruction where `(NaN == any) == false` instead of `(NaN == any) == true` (legacy behavior).
+         */
+        bool c_eq_s_accurate : 1;
         bool unused_2 : 1;
         bool unused_3 : 1;
         bool unused_4 : 1;
@@ -607,7 +610,7 @@ typedef struct CoreVCRMovieHeader
     /**
      * The extended format version. Old movies have it set to <c>0</c>.
      */
-    uint8_t extended_version = 1;
+    uint8_t extended_version = 2;
 
     /**
      * The extended movie flags. Only valid if <c>extended_version != 0</c>.
