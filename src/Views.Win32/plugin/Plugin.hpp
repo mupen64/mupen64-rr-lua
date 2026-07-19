@@ -7,6 +7,8 @@
 #pragma once
 
 #include <Views.Win32/ZilmarExtSpecPlugin.h>
+#include <Views.Win32/m64p_common.h>
+#include <Views.Win32/m64p_plugin.h>
 
 struct ZilmarExtSpecPluginFuncs
 {
@@ -63,6 +65,12 @@ struct ZilmarExtSpecPluginFuncs
 class Plugin
 {
   public:
+    enum class Spec
+    {
+        ZilmarExt,
+        M64p
+    };
+
     /**
      * \brief Tries to create a plugin from the given path
      * \param path The path to a plugin
@@ -72,30 +80,30 @@ class Plugin
     static std::pair<std::wstring, std::unique_ptr<Plugin>> create(std::filesystem::path path);
 
     Plugin() = default;
-    ~Plugin();
+    virtual ~Plugin();
 
     /**
      * \brief Opens the plugin configuration dialog.
      * \param hwnd The parent window handle.
      */
-    void config(HWND hwnd);
+    virtual void config(HWND hwnd);
 
     /**
      * \brief Opens the plugin test dialog
      * \param hwnd The parent window handle.
      */
-    void test(HWND hwnd);
+    virtual void test(HWND hwnd);
 
     /**
      * \brief Opens the plugin about dialog
      * \param hwnd The parent window handle.
      */
-    void about(HWND hwnd);
+    virtual void about(HWND hwnd);
 
     /**
      * \brief Loads the plugin's exported functions into the globals and calls the initiate function.
      */
-    void initiate();
+    virtual void initiate();
 
     /**
      * \brief Gets the plugin's path
@@ -117,18 +125,57 @@ class Plugin
      */
     auto version() const { return m_version; }
 
+    /**
+     * \brief Gets the plugin's spec.
+     */
+    auto spec() const { return m_spec; }
+
   private:
+    static std::pair<std::wstring, std::unique_ptr<Plugin>> create_zilmar_ext(HMODULE module,
+                                                                              std::filesystem::path path);
+    static std::pair<std::wstring, std::unique_ptr<Plugin>> create_m64p(HMODULE module, std::filesystem::path path);
+
+  protected:
     /**
      * \brief Initiates the plugin for being called ephemerally (e.g. via `config()`, `test()`, `about()`)
      */
-    void initiate_dummy();
-    void deinitiate_dummy();
+    virtual void initiate_dummy();
+    virtual void deinitiate_dummy();
 
     std::filesystem::path m_path;
     std::string m_name;
     ZilmarExtSpec::PluginType m_type;
     uint16_t m_version;
     HMODULE m_module;
+    Spec m_spec;
+};
+
+class ZilmarExtPlugin : public Plugin
+{
+  public:
+    using Plugin::Plugin;
+    ~ZilmarExtPlugin() override = default;
+
+    void config(HWND hwnd) override;
+    void test(HWND hwnd) override;
+    void about(HWND hwnd) override;
+    void initiate() override;
+    void initiate_dummy() override;
+    void deinitiate_dummy() override;
+};
+
+class M64pPlugin : public Plugin
+{
+  public:
+    using Plugin::Plugin;
+    ~M64pPlugin() override = default;
+
+    void config(HWND hwnd) override;
+    void test(HWND hwnd) override;
+    void about(HWND hwnd) override;
+    void initiate() override;
+    void initiate_dummy() override;
+    void deinitiate_dummy() override;
 };
 
 /**
