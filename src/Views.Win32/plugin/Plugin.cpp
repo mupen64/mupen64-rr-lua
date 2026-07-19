@@ -362,7 +362,7 @@ void load_input(uint16_t version, HMODULE handle)
     control_info.byteswapped = 1;
     control_info.header = g_main_ctx.core_ctx->rom;
 
-    std::array<ZilmarExtSpec::Controller, 4> tmp_controllers{0};
+    std::array<ZilmarExtSpec::Controller, 4> tmp_controllers{};
     control_info.controllers = tmp_controllers.data();
 
     g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
