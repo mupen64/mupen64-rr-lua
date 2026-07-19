@@ -248,7 +248,7 @@ extern "C"
         std::function<void(int32_t *width, int32_t *height)> video_get_video_size;
         std::function<void(uint32_t)> video_fb_read;
         std::function<void(uint32_t addr, uint32_t size)> video_fb_write;
-        std::function<void(void *)> video_fb_get_frame_buffer_info;
+        std::function<void(CoreFBInfo *)> video_fb_get_frame_buffer_info;
 
         std::function<void(int32_t system_type)> audio_ai_dacrate_changed;
         std::function<void()> audio_ai_len_changed;

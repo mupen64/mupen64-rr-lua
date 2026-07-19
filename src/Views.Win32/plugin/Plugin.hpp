@@ -10,6 +10,8 @@
 
 struct ZilmarExtSpecPluginFuncs
 {
+    ZilmarExtSpec::Controller controllers[4];
+
     ZilmarExtSpec::ExtendedFuncs video_extended_funcs;
     ZilmarExtSpec::ROMOPEN video_rom_open;
     ZilmarExtSpec::ROMCLOSED video_rom_closed;

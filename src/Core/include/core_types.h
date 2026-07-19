@@ -116,7 +116,6 @@ typedef enum
 
 /**
  * \brief Represents an extension for a controller.
- * \remarks Do not touch! Must be kept binary-compatible for now.
  */
 enum class CoreControllerExtension : int32_t
 {
@@ -129,7 +128,6 @@ enum class CoreControllerExtension : int32_t
 
 /**
  * \brief Describes a controller.
- * \remarks Do not touch! Must be kept binary-compatible for now.
  */
 struct CoreController
 {
@@ -140,7 +138,6 @@ struct CoreController
 
 /**
  * \brief Describes framebuffer information.
- * \remarks Do not touch! Must be kept binary-compatible for now.
  */
 struct CoreFBInfo
 {
@@ -152,7 +149,6 @@ struct CoreFBInfo
 
 /**
  * \brief Represents a controller state.
- * \remarks Do not touch! Must be kept binary-compatible for now.
  */
 union CoreButtons {
     uint32_t value;

@@ -22,6 +22,7 @@ static ZilmarExtSpec::VideoPluginInfo dummy_video_info{};
 static ZilmarExtSpec::AudioPluginInfo dummy_audio_info{};
 static ZilmarExtSpec::InputPluginInfo dummy_control_info{};
 static ZilmarExtSpec::RSPPluginInfo dummy_rsp_info{};
+static ZilmarExtSpec::Controller dummy_controllers[4]{};
 static uint8_t dummy_header[0x40]{};
 static uint32_t dummy_dw{};
 
@@ -100,11 +101,11 @@ static void CALL dummy_controller_command(int32_t, uint8_t *)
 {
 }
 
-static void CALL dummy_get_keys(int32_t, CoreButtons *)
+static void CALL dummy_get_keys(int32_t, ZilmarExtSpec::Buttons *)
 {
 }
 
-static void CALL dummy_set_keys(int32_t, CoreButtons)
+static void CALL dummy_set_keys(int32_t, ZilmarExtSpec::Buttons)
 {
 }
 
@@ -132,7 +133,7 @@ static void CALL dummy_fb_write(uint32_t, uint32_t)
 {
 }
 
-static void CALL dummy_fb_get_framebuffer_info(void *)
+static void CALL dummy_fb_get_framebuffer_info(ZilmarExtSpec::FBInfo *)
 {
 }
 
@@ -360,24 +361,21 @@ void load_input(uint16_t version, HMODULE handle)
     control_info.hinst = g_main_ctx.hinst;
     control_info.byteswapped = 1;
     control_info.header = g_main_ctx.core_ctx->rom;
-    control_info.controllers = g_main_ctx.core.controls;
-    for (auto &controller : g_main_ctx.core.controls)
-    {
-        controller.Present = 0;
-        controller.RawData = 0;
-        controller.Plugin = CoreControllerExtension::None;
-    }
+
+    std::array<ZilmarExtSpec::Controller, 4> tmp_controllers{0};
+    control_info.controllers = tmp_controllers.data();
 
     g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
     control_info.extended_funcs = &g_plugin_funcs.input_extended_funcs;
 
     if (version == 0x0101)
-    {
         initiate_controllers(control_info);
-    }
     else
+        old_initiate_controllers(g_main_ctx.hwnd, tmp_controllers.data());
+
+    for (size_t i = 0; i < std::size(tmp_controllers); ++i)
     {
-        old_initiate_controllers(g_main_ctx.hwnd, g_main_ctx.core.controls);
+        g_main_ctx.core.controls[i] = tmp_controllers[i].to_core_controller();
     }
 }
 
@@ -652,7 +650,9 @@ void Plugin::initiate_dummy()
             {
                 const auto old_initiate_controllers =
                     (ZilmarExtSpec::OLD_INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
-                if (old_initiate_controllers) old_initiate_controllers(g_main_ctx.hwnd, g_main_ctx.core.controls);
+
+                std::fill(std::begin(dummy_controllers), std::end(dummy_controllers), ZilmarExtSpec::Controller{});
+                if (old_initiate_controllers) old_initiate_controllers(g_main_ctx.hwnd, dummy_controllers);
             }
         }
 
@@ -787,13 +787,7 @@ void PluginUtil::init_dummy_and_extended_funcs()
     dummy_control_info.hinst = g_main_ctx.hinst;
     dummy_control_info.byteswapped = 1;
     dummy_control_info.header = (uint8_t *)dummy_header;
-    dummy_control_info.controllers = g_main_ctx.core.controls;
-    for (int32_t i = 0; i < 4; i++)
-    {
-        g_main_ctx.core.controls[i].Present = 0;
-        g_main_ctx.core.controls[i].RawData = 0;
-        g_main_ctx.core.controls[i].Plugin = CoreControllerExtension::None;
-    }
+    dummy_control_info.controllers = dummy_controllers;
 
     dummy_rsp_info.byteswapped = 1;
     dummy_rsp_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -844,7 +838,15 @@ void PluginUtil::start_plugins()
     g_main_ctx.core.video_get_video_size = g_plugin_funcs.video_get_video_size;
     g_main_ctx.core.video_fb_read = g_plugin_funcs.video_fb_read;
     g_main_ctx.core.video_fb_write = g_plugin_funcs.video_fb_write;
-    g_main_ctx.core.video_fb_get_frame_buffer_info = g_plugin_funcs.video_fb_get_frame_buffer_info;
+    g_main_ctx.core.video_fb_get_frame_buffer_info = [](CoreFBInfo *info) {
+        ZilmarExtSpec::FBInfo z_fb{};
+        g_plugin_funcs.video_fb_get_frame_buffer_info(&z_fb);
+
+        info->addr = z_fb.addr;
+        info->size = z_fb.size;
+        info->width = z_fb.width;
+        info->height = z_fb.height;
+    };
 
     g_main_ctx.core.audio_ai_dacrate_changed = g_plugin_funcs.audio_ai_dacrate_changed;
     g_main_ctx.core.audio_ai_len_changed = g_plugin_funcs.audio_ai_len_changed;
@@ -852,8 +854,15 @@ void PluginUtil::start_plugins()
     g_main_ctx.core.audio_process_alist = g_plugin_funcs.audio_process_alist;
 
     g_main_ctx.core.input_controller_command = g_plugin_funcs.input_controller_command;
-    g_main_ctx.core.input_get_keys = g_plugin_funcs.input_get_keys;
-    g_main_ctx.core.input_set_keys = g_plugin_funcs.input_set_keys;
+    g_main_ctx.core.input_get_keys = [](int32_t controller, CoreButtons *keys) {
+        ZilmarExtSpec::Buttons z_keys{};
+        g_plugin_funcs.input_get_keys(controller, &z_keys);
+        keys->value = z_keys.value;
+    };
+    g_main_ctx.core.input_set_keys = [](int32_t controller, CoreButtons keys) {
+        ZilmarExtSpec::Buttons z_keys{keys.value};
+        g_plugin_funcs.input_set_keys(controller, z_keys);
+    };
     g_main_ctx.core.input_read_controller = g_plugin_funcs.input_read_controller;
 
     g_main_ctx.core.rsp_do_rsp_cycles = g_plugin_funcs.rsp_do_rsp_cycles;

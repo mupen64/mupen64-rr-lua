@@ -1008,11 +1008,12 @@ EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo info)
 
     for (int i = 0; i < 4; ++i)
     {
-        info.controllers[i].Present = new_config.controller_active[i];
-        info.controllers[i].RawData = false;
-        info.controllers[i].Plugin = CoreControllerExtension::None;
-        if (new_config.controller_mempak[i]) info.controllers[i].Plugin = CoreControllerExtension::Mempak;
-        if (new_config.controller_rumblepak[i]) info.controllers[i].Plugin = CoreControllerExtension::Rumblepak;
+        info.controllers[i].present = new_config.controller_active[i];
+        info.controllers[i].raw = false;
+        info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::None;
+        if (new_config.controller_mempak[i]) info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::Mempak;
+        if (new_config.controller_rumblepak[i])
+            info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::Rumblepak;
     }
 }
 

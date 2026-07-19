@@ -39,6 +39,100 @@ extern "C"
     };
 
     /**
+     * \brief Represents an extension for a controller.
+     */
+    enum class ControllerExtension : int32_t
+    {
+        None = 1,
+        Mempak = 2,
+        Rumblepak = 3,
+        Transferpak = 4,
+        Raw = 5
+    };
+
+    /**
+     * \brief Describes a controller.
+     */
+    struct Controller
+    {
+        int32_t present;
+        int32_t raw;
+        ControllerExtension plugin;
+
+        CoreController to_core_controller() const
+        {
+            CoreControllerExtension extension;
+            switch (plugin)
+            {
+            case ControllerExtension::None:
+                extension = CoreControllerExtension::None;
+                break;
+            case ControllerExtension::Mempak:
+                extension = CoreControllerExtension::Mempak;
+                break;
+            case ControllerExtension::Rumblepak:
+                extension = CoreControllerExtension::Rumblepak;
+                break;
+            case ControllerExtension::Transferpak:
+                extension = CoreControllerExtension::Transferpak;
+                break;
+            case ControllerExtension::Raw:
+                extension = CoreControllerExtension::Raw;
+                break;
+            default:
+                assert(false && "Unknown controller extension");
+                break;
+            }
+
+            return CoreController{
+                .Present = present ? 1 : 0,
+                .RawData = raw ? 1 : 0,
+                .Plugin = extension,
+            };
+        }
+    };
+
+    /**
+     * \brief Describes framebuffer information.
+     */
+    struct FBInfo
+    {
+        uint32_t addr;
+        uint32_t size;
+        uint32_t width;
+        uint32_t height;
+    };
+
+    /**
+     * \brief Represents a controller state.
+     */
+    union Buttons {
+        uint32_t value;
+
+        struct
+        {
+            unsigned dr : 1;
+            unsigned dl : 1;
+            unsigned dd : 1;
+            unsigned du : 1;
+            unsigned start : 1;
+            unsigned z : 1;
+            unsigned b : 1;
+            unsigned a : 1;
+            unsigned cr : 1;
+            unsigned cl : 1;
+            unsigned cd : 1;
+            unsigned cu : 1;
+            unsigned r : 1;
+            unsigned l : 1;
+            unsigned reserved_1 : 1;
+            unsigned reserved_2 : 1;
+            signed x : 8;
+            signed y : 8;
+        };
+    };
+
+    /**
      * \brief Exposes an extended set of functions to plugins.
      */
     struct ExtendedFuncs
@@ -199,7 +293,7 @@ extern "C"
         void *hinst;
         int32_t byteswapped;
         uint8_t *header;
-        CoreController *controllers;
+        Controller *controllers;
 
         // --- Zilmar spec struct ends here
 
@@ -266,7 +360,7 @@ extern "C"
     typedef void(CALL *GETVIDEOSIZE)(int32_t *, int32_t *);
     typedef void(CALL *FBREAD)(uint32_t);
     typedef void(CALL *FBWRITE)(uint32_t addr, uint32_t size);
-    typedef void(CALL *FBGETFRAMEBUFFERINFO)(void *);
+    typedef void(CALL *FBGETFRAMEBUFFERINFO)(ZilmarExtSpec::FBInfo *);
     typedef void(CALL *CHANGEWINDOW)();
     typedef int32_t(CALL *INITIATEGFX)(VideoPluginInfo);
     typedef void(CALL *UPDATESCREEN)();
@@ -283,13 +377,13 @@ extern "C"
     typedef uint32_t(CALL *AIREADLENGTH)();
     typedef void(CALL *PROCESSALIST)();
 
-    typedef void(CALL *OLD_INITIATECONTROLLERS)(void *hwnd, CoreController controls[4]);
+    typedef void(CALL *OLD_INITIATECONTROLLERS)(void *hwnd, Controller controls[4]);
     typedef void(CALL *INITIATECONTROLLERS)(InputPluginInfo control_info);
     typedef void(CALL *KEYDOWN)(uint32_t wParam, int32_t lParam);
     typedef void(CALL *KEYUP)(uint32_t wParam, int32_t lParam);
     typedef void(CALL *CONTROLLERCOMMAND)(int32_t controller, unsigned char *command);
-    typedef void(CALL *GETKEYS)(int32_t controller, CoreButtons *keys);
-    typedef void(CALL *SETKEYS)(int32_t controller, CoreButtons keys);
+    typedef void(CALL *GETKEYS)(int32_t controller, Buttons *keys);
+    typedef void(CALL *SETKEYS)(int32_t controller, Buttons keys);
     typedef void(CALL *READCONTROLLER)(int32_t controller, unsigned char *command);
 
     typedef void(CALL *INITIATERSP)(RSPPluginInfo rsp_info, uint32_t *cycles);
@@ -362,8 +456,8 @@ extern "C"
 #pragma region Input
 
     EXPORT void CALL ControllerCommand(int32_t Control, uint8_t *Command);
-    EXPORT void CALL GetKeys(int32_t Control, CoreButtons *Keys);
-    EXPORT void CALL SetKeys(int32_t controller, CoreButtons keys);
+    EXPORT void CALL GetKeys(int32_t Control, ZilmarExtSpec::Buttons *Keys);
+    EXPORT void CALL SetKeys(int32_t controller, ZilmarExtSpec::Buttons keys);
     EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo);
     EXPORT void CALL ReadController(int Control, uint8_t *Command);
     EXPORT void CALL WM_KeyDown(uint32_t wParam, uint32_t lParam);
