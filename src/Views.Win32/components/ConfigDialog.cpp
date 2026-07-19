@@ -9,7 +9,7 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Messenger.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <capture/CaptureManager.hpp>
 #include <components/FilePicker.hpp>
 #include <components/SettingsListView.hpp>

@@ -8,7 +8,7 @@
 
 #include <Views.Win32/ZilmarExtSpecPlugin.h>
 
-struct plugin_funcs
+struct ZilmarExtSpecPluginFuncs
 {
     ZilmarExtSpec::ExtendedFuncs video_extended_funcs;
     ZilmarExtSpec::ROMOPEN video_rom_open;
@@ -146,7 +146,7 @@ typedef struct
 
 } t_plugin_discovery_result;
 
-extern plugin_funcs g_plugin_funcs;
+extern ZilmarExtSpecPluginFuncs g_plugin_funcs;
 
 /**
  * \brief A module providing utility functions related to plugins.

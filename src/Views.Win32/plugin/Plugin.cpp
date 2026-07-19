@@ -9,7 +9,7 @@
 #include "stdafx.h"
 #include <Config.hpp>
 #include <DialogService.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <components/ConfigDialog.hpp>
 #include <components/Statusbar.hpp>
 #include <components/MGECompositor.hpp>
@@ -41,7 +41,7 @@ static std::shared_ptr<Plugin> rsp_plugin;
 
 static std::jthread s_audio_thread;
 
-plugin_funcs g_plugin_funcs{};
+ZilmarExtSpecPluginFuncs g_plugin_funcs{};
 
 static size_t ext_fn_config_path(char *data, size_t size)
 {

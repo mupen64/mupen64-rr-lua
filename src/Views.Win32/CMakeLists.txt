@@ -78,7 +78,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/presenters/GDIPresenter.hpp"
     "lua/presenters/Presenter.hpp"
     "Messenger.hpp"
-    "Plugin.hpp"
+    "plugin/Plugin.hpp"
     "resource.h"
     "ResizeAnchor.hpp"
 
@@ -127,7 +127,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/presenters/DCompPresenter.cpp"
     "lua/presenters/GDIPresenter.cpp"
     "Messenger.cpp"
-    "Plugin.cpp"
+    "plugin/Plugin.cpp"
     "ResizeAnchor.cpp"
 
     # Resource script
