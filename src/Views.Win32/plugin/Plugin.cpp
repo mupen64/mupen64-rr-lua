@@ -838,14 +838,17 @@ void PluginUtil::start_plugins()
     g_main_ctx.core.video_get_video_size = g_plugin_funcs.video_get_video_size;
     g_main_ctx.core.video_fb_read = g_plugin_funcs.video_fb_read;
     g_main_ctx.core.video_fb_write = g_plugin_funcs.video_fb_write;
-    g_main_ctx.core.video_fb_get_frame_buffer_info = [](CoreFBInfo *info) {
-        ZilmarExtSpec::FBInfo z_fb{};
-        g_plugin_funcs.video_fb_get_frame_buffer_info(&z_fb);
+    g_main_ctx.core.video_fb_get_frame_buffer_info = [](CoreFBInfo info[6]) {
+        ZilmarExtSpec::FBInfo z_fb[6]{};
+        g_plugin_funcs.video_fb_get_frame_buffer_info(z_fb);
 
-        info->addr = z_fb.addr;
-        info->size = z_fb.size;
-        info->width = z_fb.width;
-        info->height = z_fb.height;
+        for (size_t i = 0; i < 6; i++)
+        {
+            info[i].addr = z_fb[i].addr;
+            info[i].size = z_fb[i].size;
+            info[i].width = z_fb[i].width;
+            info[i].height = z_fb[i].height;
+        }
     };
 
     g_main_ctx.core.audio_ai_dacrate_changed = g_plugin_funcs.audio_ai_dacrate_changed;
