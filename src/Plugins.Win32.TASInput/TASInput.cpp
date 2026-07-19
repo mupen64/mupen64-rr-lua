@@ -55,12 +55,12 @@ struct Status
     /**
      * \brief The current internal input state before any processing
      */
-    CoreButtons current_input{};
+    ZilmarExtSpec::Buttons current_input{};
 
     /**
      * \brief The internal input state at the previous GetKeys call before any processing
      */
-    CoreButtons last_controller_input{};
+    ZilmarExtSpec::Buttons last_controller_input{};
 
     /**
      * \brief Ignores the next joystick increment, used for relative mode tracking
@@ -99,7 +99,7 @@ struct Status
 
     struct t_set_visuals_request
     {
-        CoreButtons input;
+        ZilmarExtSpec::Buttons input;
         bool needs_processing;
     };
 
@@ -110,8 +110,8 @@ struct Status
 
     bool last_lmb_down{};
     bool last_rmb_down{};
-    CoreButtons autofire_input_a{};
-    CoreButtons autofire_input_b{};
+    ZilmarExtSpec::Buttons autofire_input_a{};
+    ZilmarExtSpec::Buttons autofire_input_b{};
     bool ready;
     HWND hwnd{};
     HWND combos_hwnd{};
@@ -147,7 +147,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals(CoreButtons input, bool needs_processing = true);
+    void set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing = true);
 
     /**
      * \brief Queues the UI to be updated at the next possible opportunity. Doesn't block the caller until the UI has
@@ -155,7 +155,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals_lazy(CoreButtons input, bool needs_processing = true);
+    void set_visuals_lazy(ZilmarExtSpec::Buttons input, bool needs_processing = true);
 
     void set_visuals_if_needed();
 
@@ -164,7 +164,7 @@ struct Status
      * \param input The input to process
      * \return The processed input
      */
-    CoreButtons get_processed_input(CoreButtons input);
+    ZilmarExtSpec::Buttons get_processed_input(ZilmarExtSpec::Buttons input);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -173,7 +173,7 @@ struct Status
 
     void on_config_changed();
 
-    void get_input(CoreButtons *keys);
+    void get_input(ZilmarExtSpec::Buttons *keys);
 };
 
 static ULONG_PTR gdi_plus_token{};
@@ -251,7 +251,7 @@ EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *info)
     std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);
 }
 
-EXPORT void CALL GetKeys(int Control, CoreButtons *Keys)
+EXPORT void CALL GetKeys(int Control, ZilmarExtSpec::Buttons *Keys)
 {
     if (new_frame)
     {
@@ -262,7 +262,7 @@ EXPORT void CALL GetKeys(int Control, CoreButtons *Keys)
     status[Control].get_input(Keys);
 }
 
-EXPORT void CALL SetKeys(int32_t controller, CoreButtons keys)
+EXPORT void CALL SetKeys(int32_t controller, ZilmarExtSpec::Buttons keys)
 {
     status[controller].set_visuals_lazy(keys, false);
 }
@@ -300,7 +300,7 @@ apply:
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-void Status::get_input(CoreButtons *keys)
+void Status::get_input(ZilmarExtSpec::Buttons *keys)
 {
     keys->value = get_processed_input(current_input).value;
 
@@ -340,7 +340,7 @@ end:
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
 }
 
-CoreButtons Status::get_processed_input(CoreButtons input)
+ZilmarExtSpec::Buttons Status::get_processed_input(ZilmarExtSpec::Buttons input)
 {
     input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
@@ -369,7 +369,7 @@ void Status::activate_emulator_window()
     SetForegroundWindow(emulator_hwnd);
 }
 
-void Status::set_visuals(CoreButtons input, bool needs_processing)
+void Status::set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing)
 {
     if (needs_processing)
     {
@@ -405,7 +405,7 @@ void Status::set_visuals(CoreButtons input, bool needs_processing)
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
 }
 
-void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
+void Status::set_visuals_lazy(ZilmarExtSpec::Buttons input, bool needs_processing)
 {
     std::lock_guard lock(pending_visuals_mutex);
     pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
@@ -720,7 +720,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_TIMER: {
         ctx->set_visuals_if_needed();
 
-        CoreButtons controller_input = GamepadManager::get_input(ctx->controller_index);
+        ZilmarExtSpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
 
         if (controller_input.value != ctx->last_controller_input.value)
         {
@@ -847,7 +847,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     }
     break;
     case WM_UPDATE_VISUALS:
-        ctx->set_visuals(static_cast<CoreButtons>(lparam), false);
+        ctx->set_visuals(static_cast<ZilmarExtSpec::Buttons>(lparam), false);
         break;
     case WM_SIZE:
     case WM_MOVE: {
@@ -867,7 +867,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            CoreButtons last_input = ctx->current_input;
+            ZilmarExtSpec::Buttons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -891,7 +891,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            CoreButtons last_input = ctx->current_input;
+            ZilmarExtSpec::Buttons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try

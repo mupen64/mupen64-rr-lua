@@ -224,7 +224,11 @@ static void start_audio_thread()
 
 #define FUNC(target, type, fallback, name)                                                                             \
     target = (type)GetProcAddress((HMODULE)handle, name);                                                              \
-    if (!target) target = fallback
+    if (!target)                                                                                                       \
+    {                                                                                                                  \
+        target = fallback;                                                                                             \
+        g_view_logger->info("Substituting dummy function for {}", name);                                               \
+    }
 
 #define GEN_EXTENDED_FUNCS(logger)                                                                                     \
     ZilmarExtSpec::ExtendedFuncs                                                                                       \
@@ -565,15 +569,19 @@ void Plugin::initiate()
     switch (m_type)
     {
     case ZilmarExtSpec::PluginType::Video:
+        g_view_logger->trace("Initiating video plugin...");
         load_gfx(m_module);
         break;
     case ZilmarExtSpec::PluginType::Audio:
+        g_view_logger->trace("Initiating audio plugin...");
         load_audio(m_module);
         break;
     case ZilmarExtSpec::PluginType::Input:
+        g_view_logger->trace("Initiating input plugin...");
         load_input(m_version, m_module);
         break;
     case ZilmarExtSpec::PluginType::RSP:
+        g_view_logger->trace("Initiating RSP plugin...");
         load_rsp(m_module);
         break;
     }

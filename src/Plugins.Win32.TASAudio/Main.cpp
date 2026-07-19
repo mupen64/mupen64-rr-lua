@@ -89,7 +89,7 @@ void write_config(const SDLAudio::Config &config)
     config.write_to(fs);
 }
 
-EXPORT void CALL CloseDLL(void)
+EXPORT void CALL CloseDLL()
 {
     if (g_backend.has_value()) g_backend.reset();
 }
@@ -125,16 +125,12 @@ EXPORT int32_t CALL InitiateAudio(ZilmarExtSpec::AudioPluginInfo Audio_Info)
     return 1;
 }
 
-EXPORT void CALL RomOpen()
-{
-}
-
 EXPORT void CALL RomClosed()
 {
     if (g_backend.has_value()) g_backend.reset();
 }
 
-EXPORT void CALL AiDacrateChanged(int32_t system_type)
+    EXPORT void CALL AiDacrateChanged(int32_t system_type)
 {
     // update sample rate
     if (!g_audio_info || !g_backend) return;
@@ -149,7 +145,7 @@ EXPORT void CALL AiDacrateChanged(int32_t system_type)
     }
 }
 
-EXPORT void CALL AiLenChanged(void)
+EXPORT void CALL AiLenChanged()
 {
     const auto effective_speed_mode = g_ef->get_effective_speed_mode();
     if (effective_speed_mode == CoreSpeedMode::UltraFastForward) return;
