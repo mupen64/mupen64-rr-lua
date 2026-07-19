@@ -524,7 +524,10 @@ typedef union ExtendedMovieFlags {
          * Whether the movie was recorded with WiiVC mode enabled.
          */
         bool wii_vc : 1;
-        bool unused_1 : 1;
+        /**
+         * Whether the movie was recorded with an accurate implementation of the `c.eq.s` instruction where `(NaN == any) == false` instead of `(NaN == any) == true` (legacy behavior).
+         */
+        bool c_eq_s_accurate : 1;
         bool unused_2 : 1;
         bool unused_3 : 1;
         bool unused_4 : 1;
