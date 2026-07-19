@@ -6,7 +6,7 @@
 
 #include "stdafx.h"
 #include <components/MGECompositor.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <Messenger.hpp>
 #include <lua/LuaCallbacks.hpp>
 

@@ -115,6 +115,73 @@ typedef enum
 } core_result;
 
 /**
+ * \brief Represents an extension for a controller.
+ */
+enum class CoreControllerExtension : int32_t
+{
+    None = 1,
+    Mempak = 2,
+    Rumblepak = 3,
+    Transferpak = 4,
+    Raw = 5
+};
+
+/**
+ * \brief Describes a controller.
+ */
+struct CoreController
+{
+    int32_t Present;
+    int32_t RawData;
+    CoreControllerExtension Plugin;
+};
+
+/**
+ * \brief Describes framebuffer information.
+ */
+struct CoreFBInfo
+{
+    uint32_t addr;
+    uint32_t size;
+    uint32_t width;
+    uint32_t height;
+};
+
+/**
+ * \brief Represents a controller state.
+ */
+union CoreButtons {
+    uint32_t value;
+
+    struct
+    {
+        unsigned dr : 1;
+        unsigned dl : 1;
+        unsigned dd : 1;
+        unsigned du : 1;
+        unsigned start : 1;
+        unsigned z : 1;
+        unsigned b : 1;
+        unsigned a : 1;
+        unsigned cr : 1;
+        unsigned cl : 1;
+        unsigned cd : 1;
+        unsigned cu : 1;
+        unsigned r : 1;
+        unsigned l : 1;
+        unsigned reserved_1 : 1;
+        unsigned reserved_2 : 1;
+        signed x : 8;
+        signed y : 8;
+    };
+};
+
+inline bool operator==(const CoreButtons &lhs, const CoreButtons &rhs)
+{
+    return lhs.value == rhs.value;
+}
+
+/**
  * \brief The speed mode of the core.
  */
 enum class CoreSpeedMode
@@ -517,7 +584,8 @@ typedef union ExtendedMovieFlags {
          */
         bool wii_vc : 1;
         /**
-         * Whether the movie was recorded with an accurate implementation of the `c.eq.s` instruction where `(NaN == any) == false` instead of `(NaN == any) == true` (legacy behavior).
+         * Whether the movie was recorded with an accurate implementation of the `c.eq.s` instruction where `(NaN ==
+         * any) == false` instead of `(NaN == any) == true` (legacy behavior).
          */
         bool c_eq_s_accurate : 1;
         bool unused_2 : 1;

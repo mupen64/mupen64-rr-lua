@@ -9,7 +9,7 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Messenger.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <capture/CaptureManager.hpp>
 #include <components/FilePicker.hpp>
 #include <components/SettingsListView.hpp>
@@ -523,16 +523,16 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             int32_t id = 0;
             switch (plugin->type())
             {
-            case plugin_video:
+            case ZilmarExtSpec::PluginType::Video:
                 id = IDC_COMBO_GFX;
                 break;
-            case plugin_audio:
+            case ZilmarExtSpec::PluginType::Audio:
                 id = IDC_COMBO_SOUND;
                 break;
-            case plugin_input:
+            case ZilmarExtSpec::PluginType::Input:
                 id = IDC_COMBO_INPUT;
                 break;
-            case plugin_rsp:
+            case ZilmarExtSpec::PluginType::RSP:
                 id = IDC_COMBO_RSP;
                 break;
             default:

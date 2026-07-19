@@ -11,7 +11,6 @@
 #pragma once
 
 #include "core_types.h"
-#include "core_plugin.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -24,7 +23,7 @@ extern "C"
     struct core_callbacks
     {
         std::function<void(bool new_present)> vi = [](const auto &...) {};
-        std::function<void(core_buttons *input, int index)> input = [](const auto &...) {};
+        std::function<void(CoreButtons *input, int index)> input = [](const auto &...) {};
         std::function<void()> frame = [](const auto &...) {};
         std::function<void()> interval = [](const auto &...) {};
         std::function<void()> ai_len_changed = [](const auto &...) {};
@@ -85,7 +84,7 @@ extern "C"
         /**
          * \brief The core's controller configuration. Can be written to by the host during `initiate_plugins`.
          */
-        core_controller controls[4]{};
+        CoreController controls[4]{};
 
         /**
          * \brief Optional callbacks for the core to invoke during emulation.
@@ -241,27 +240,27 @@ extern "C"
         std::function<void(const core_st_callback_info &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
             [](const core_st_callback_info &, const std::vector<uint8_t> &) {};
 
-        PROCESSDLIST video_process_dlist;
-        PROCESSRDPLIST video_process_rdp_list;
-        SHOWCFB video_show_cfb;
-        VISTATUSCHANGED video_vi_status_changed;
-        VIWIDTHCHANGED video_vi_width_changed;
-        GETVIDEOSIZE video_get_video_size;
-        FBREAD video_fb_read;
-        FBWRITE video_fb_write;
-        FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
+        std::function<void()> video_process_dlist;
+        std::function<void()> video_process_rdp_list;
+        std::function<void()> video_show_cfb;
+        std::function<void()> video_vi_status_changed;
+        std::function<void()> video_vi_width_changed;
+        std::function<void(int32_t *width, int32_t *height)> video_get_video_size;
+        std::function<void(uint32_t)> video_fb_read;
+        std::function<void(uint32_t addr, uint32_t size)> video_fb_write;
+        std::function<void(CoreFBInfo[6])> video_fb_get_frame_buffer_info;
 
-        AIDACRATECHANGED audio_ai_dacrate_changed;
-        AILENCHANGED audio_ai_len_changed;
-        AIREADLENGTH audio_ai_read_length;
-        PROCESSALIST audio_process_alist;
+        std::function<void(int32_t system_type)> audio_ai_dacrate_changed;
+        std::function<void()> audio_ai_len_changed;
+        std::function<uint32_t()> audio_ai_read_length;
+        std::function<void()> audio_process_alist;
 
-        CONTROLLERCOMMAND input_controller_command;
-        GETKEYS input_get_keys;
-        SETKEYS input_set_keys;
-        READCONTROLLER input_read_controller;
+        std::function<void(int32_t controller, unsigned char *command)> input_controller_command;
+        std::function<void(int32_t controller, CoreButtons *keys)> input_get_keys;
+        std::function<void(int32_t controller, CoreButtons keys)> input_set_keys;
+        std::function<void(int32_t controller, unsigned char *command)> input_read_controller;
 
-        DORSPCYCLES rsp_do_rsp_cycles;
+        std::function<uint32_t(uint32_t)> rsp_do_rsp_cycles;
     };
 
     /**
@@ -477,7 +476,7 @@ extern "C"
          * \param inputs The button collection to fill
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, std::vector<core_buttons> &inputs)> vcr_read_movie_inputs;
+        std::function<core_result(std::filesystem::path path, std::vector<CoreButtons> &inputs)> vcr_read_movie_inputs;
 
         /**
          * \brief Starts playing back a movie
@@ -585,7 +584,7 @@ extern "C"
         /**
          * Gets a copy of the current input buffer.
          */
-        std::function<std::vector<core_buttons>()> vcr_get_inputs;
+        std::function<std::vector<CoreButtons>()> vcr_get_inputs;
 
         /**
          * Begins a warp modification operation. A "warp modification operation" is the changing of sample data which is
@@ -615,7 +614,7 @@ extern "C"
          * \param inputs The input buffer to use.
          * \return The operation result
          */
-        std::function<core_result(const std::vector<core_buttons> &inputs)> vcr_begin_warp_modify;
+        std::function<core_result(const std::vector<CoreButtons> &inputs)> vcr_begin_warp_modify;
 
         /**
          * Gets the warp modify status

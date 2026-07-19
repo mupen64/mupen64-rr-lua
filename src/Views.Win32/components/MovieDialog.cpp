@@ -21,7 +21,7 @@ struct t_movie_dialog_context
 
 static t_movie_dialog_context g_ctx{};
 
-static size_t count_button_presses(const std::vector<core_buttons> &buttons, const int mask)
+static size_t count_button_presses(const std::vector<CoreButtons> &buttons, const int mask)
 {
     size_t accumulator = 0;
     bool pressed = false;
@@ -42,7 +42,7 @@ static size_t count_button_presses(const std::vector<core_buttons> &buttons, con
     return accumulator;
 }
 
-static size_t count_unused_inputs(const std::vector<core_buttons> &buttons)
+static size_t count_unused_inputs(const std::vector<CoreButtons> &buttons)
 {
     size_t accumulator = 0;
     for (const auto btn : buttons)
@@ -55,7 +55,7 @@ static size_t count_unused_inputs(const std::vector<core_buttons> &buttons)
     return accumulator;
 }
 
-static size_t count_joystick_frames(const std::vector<core_buttons> &buttons)
+static size_t count_joystick_frames(const std::vector<CoreButtons> &buttons)
 {
     size_t accumulator = 0;
     for (const auto btn : buttons)
@@ -68,10 +68,10 @@ static size_t count_joystick_frames(const std::vector<core_buttons> &buttons)
     return accumulator;
 }
 
-static size_t count_input_changes(const std::vector<core_buttons> &buttons)
+static size_t count_input_changes(const std::vector<CoreButtons> &buttons)
 {
     size_t accumulator = 0;
-    core_buttons last_input = {0};
+    CoreButtons last_input = {0};
     for (const auto btn : buttons)
     {
         if (btn.value != last_input.value)
@@ -244,7 +244,7 @@ refresh:
         return FALSE;
     }
 
-    std::vector<core_buttons> inputs = {};
+    std::vector<CoreButtons> inputs = {};
 
     if (g_main_ctx.core_ctx->vcr_read_movie_inputs(g_ctx.user_result.path, inputs) != Res_Ok)
     {

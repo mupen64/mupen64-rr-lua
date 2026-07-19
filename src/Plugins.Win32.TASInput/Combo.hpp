@@ -19,7 +19,7 @@ struct t_combo
     /**
      * \brief The combo's samples.
      */
-    std::vector<core_buttons> samples{};
+    std::vector<ZilmarExtSpec::Buttons> samples{};
 
     /**
      * \return Whether any sample utilizes the joystick (magnitude > 0).

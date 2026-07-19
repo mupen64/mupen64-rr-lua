@@ -9,7 +9,7 @@
 #include <DialogService.hpp>
 #include <Messenger.hpp>
 #include <ThreadPool.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <capture/CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <action/AppActions.hpp>
