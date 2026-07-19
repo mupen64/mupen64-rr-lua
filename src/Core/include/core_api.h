@@ -436,6 +436,12 @@ extern "C"
         std::function<void()> vr_on_speed_modifier_changed;
 
         /**
+         * \brief Updates internal state after `cfg->render_throttling` changes.
+         * Must be called from a thread that's not coupled to the emulator thread (or the emulator thread itself).
+         */
+        std::function<void()> vr_on_render_throttling_changed;
+
+        /**
          * \brief Invalidates the visuals, allowing an updateScreen call to happen.
          */
         std::function<void()> vr_invalidate_visuals;
