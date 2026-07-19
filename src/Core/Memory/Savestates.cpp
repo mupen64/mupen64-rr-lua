@@ -697,7 +697,6 @@ void st_do_work()
         }
 
         g_core->log_warn("[ST] INTERRUPT QUEUE AT END OF ST TASK:");
-        extern void print_queue();
         print_queue();
     }
     g_tasks.clear();

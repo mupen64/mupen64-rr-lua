@@ -37,6 +37,14 @@ constexpr auto WII_VC_MISMATCH_A_WARNING_MESSAGE =
 constexpr auto WII_VC_MISMATCH_B_WARNING_MESSAGE =
     "The movie was recorded with WiiVC mode disabled, but is being played back with it enabled.\r\nPlayback might "
     "desynchronize. Are you sure you want to continue?";
+constexpr auto CEQS_MISMATCH_A_WARNING_MESSAGE =
+    "The movie was recorded with an accurate implementation of the `c.eq.s` instruction (possibly another core type), "
+    "but is being played back with the legacy implementation.\r\nPlayback might desynchronize. Are you sure you want "
+    "to continue?";
+constexpr auto CEQS_MISMATCH_B_WARNING_MESSAGE =
+    "The movie was recorded with an inaccurate implementation of the `c.eq.s` instruction (possibly another core "
+    "type), but is being played back with the correct implementation.\r\nPlayback might desynchronize. Are you sure "
+    "you want to continue?";
 constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
@@ -1040,6 +1048,8 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
 
     vcr.hdr.extended_version = default_hdr.extended_version;
     vcr.hdr.extended_flags.wii_vc = g_core->cfg->wii_vc_emulation;
+    vcr.hdr.extended_flags.c_eq_s_accurate = vr_is_ceqs_effectively_accurate();
+
     vcr.hdr.extended_data = default_hdr.extended_data;
 
     vcr.hdr.uid = (uint32_t)time(nullptr);
@@ -1361,6 +1371,24 @@ core_result vcr_start_playback(std::filesystem::path path)
             if (!proceed)
             {
                 return Res_Cancelled;
+            }
+        }
+
+        if (header.extended_version == 2)
+        {
+            const auto c_eq_s_accurate = vr_is_ceqs_effectively_accurate();
+            if (c_eq_s_accurate != header.extended_flags.c_eq_s_accurate)
+            {
+                bool proceed =
+                    g_core->show_ask_dialog(CORE_DLG_VCR_CEQS_WARNING,
+                                            header.extended_flags.c_eq_s_accurate ? CEQS_MISMATCH_A_WARNING_MESSAGE
+                                                                                  : CEQS_MISMATCH_B_WARNING_MESSAGE,
+                                            "VCR", true);
+
+                if (!proceed)
+                {
+                    return Res_Cancelled;
+                }
             }
         }
     }
