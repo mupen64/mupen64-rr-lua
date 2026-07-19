@@ -28,16 +28,18 @@ static interrupt_queue *q = NULL;
 uint32_t last_vi_origin{};
 
 constexpr size_t POOL_SIZE = 128;
+constexpr size_t POOL_SENTINEL = SIZE_MAX - 1;
 interrupt_queue s_pool[POOL_SIZE]{};
 size_t s_pool_free_stack[POOL_SIZE];
 size_t s_pool_free_head = 0;
 
 static interrupt_queue *pool_alloc()
 {
-    assert(g_free_head != SIZE_MAX && "Interrupt pool exhausted!");
+    assert(s_pool_free_head != SIZE_MAX && "Interrupt pool exhausted!");
 
     const size_t unused_index = s_pool_free_head;
     s_pool_free_head = s_pool_free_stack[unused_index];
+    s_pool_free_stack[unused_index] = POOL_SENTINEL;
 
     return &s_pool[unused_index];
 }
@@ -46,6 +48,7 @@ static void pool_free(const interrupt_queue *ptr)
 {
     const size_t index_in_pool = ptr - s_pool;
     assert(index_in_pool < std::size(s_pool) && "Pointer outside of pool!");
+    assert(s_pool_free_stack[index_in_pool] == POOL_SENTINEL && "Double free or invalid free detected!");
 
     s_pool_free_stack[index_in_pool] = s_pool_free_head;
     s_pool_free_head = index_in_pool;
