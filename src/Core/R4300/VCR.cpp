@@ -1374,18 +1374,21 @@ core_result vcr_start_playback(std::filesystem::path path)
             }
         }
 
-        const auto c_eq_s_nan_accurate = vr_is_ceqs_effectively_accurate();
-        if (c_eq_s_nan_accurate != header.extended_flags.c_eq_s_accurate)
+        if (header.extended_version == 2)
         {
-            bool proceed =
-                g_core->show_ask_dialog(CORE_DLG_VCR_CEQS_WARNING,
-                                        header.extended_flags.c_eq_s_accurate ? CEQS_MISMATCH_A_WARNING_MESSAGE
-                                                                              : CEQS_MISMATCH_B_WARNING_MESSAGE,
-                                        "VCR", true);
-
-            if (!proceed)
+            const auto c_eq_s_nan_accurate = vr_is_ceqs_effectively_accurate();
+            if (c_eq_s_nan_accurate != header.extended_flags.c_eq_s_accurate)
             {
-                return Res_Cancelled;
+                bool proceed =
+                    g_core->show_ask_dialog(CORE_DLG_VCR_CEQS_WARNING,
+                                            header.extended_flags.c_eq_s_accurate ? CEQS_MISMATCH_A_WARNING_MESSAGE
+                                                                                  : CEQS_MISMATCH_B_WARNING_MESSAGE,
+                                            "VCR", true);
+
+                if (!proceed)
+                {
+                    return Res_Cancelled;
+                }
             }
         }
     }

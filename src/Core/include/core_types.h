@@ -610,7 +610,7 @@ typedef struct CoreVCRMovieHeader
     /**
      * The extended format version. Old movies have it set to <c>0</c>.
      */
-    uint8_t extended_version = 1;
+    uint8_t extended_version = 2;
 
     /**
      * The extended movie flags. Only valid if <c>extended_version != 0</c>.
