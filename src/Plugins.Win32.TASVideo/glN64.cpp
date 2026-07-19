@@ -80,7 +80,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
 {
     g_ef = Gfx_Info.extended_funcs;
-    g_tas_ctx.config_directory = ViewPluginHelpers::get_config_path(g_ef);
+    g_tas_ctx.config_directory = ZilmarExtSpecPluginHelpers::get_config_path(g_ef);
 
     Config_LoadConfig();
 

@@ -9,7 +9,7 @@
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <core_api.h>
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP")
 

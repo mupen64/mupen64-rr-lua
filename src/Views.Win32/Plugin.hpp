@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 
 struct plugin_funcs
 {

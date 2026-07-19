@@ -7,7 +7,7 @@
 #pragma once
 #include "Config.hpp"
 #include "SDLBackend.hpp"
-#include "Views.Win32/ViewPlugin.h"
+#include "Views.Win32/ZilmarExtSpecPlugin.h"
 #include <VersionNameHelpers.hpp>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Audio")

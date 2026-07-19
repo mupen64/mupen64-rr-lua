@@ -5,7 +5,7 @@
  */
 
 /*
- * Describes the Mupen64 view-side Plugin API.
+ * Describes the new Mupen64 ("Zilmar Ext Spec") Plugin API.
  *
  * This header can be used standalone by Mupen64 plugins, just make sure to define PLUGIN_WITH_CALLBACKS first.
  *
@@ -26,8 +26,6 @@
 
 extern "C"
 {
-
-
     /**
      * \brief Represents a plugin type.
      */
@@ -386,9 +384,9 @@ extern "C"
 }
 
 /**
- * \brief A module that provides helpers surrounding ViewPlugin.
+ * \brief A module that provides helpers surrounding ZilmarExtSpecPlugin.
  */
-namespace ViewPluginHelpers
+namespace ZilmarExtSpecPluginHelpers
 {
 /**
  * @brief Gets the config path as a `std::filesystem::path` from a `core_plugin_extended_funcs`.
@@ -407,4 +405,4 @@ inline std::filesystem::path get_config_path(const core_plugin_extended_funcs *e
     return std::filesystem::absolute(utf8_path_temp);
 }
 
-} // namespace ViewPluginHelpers
+} // namespace ZilmarExtSpecPluginHelpers

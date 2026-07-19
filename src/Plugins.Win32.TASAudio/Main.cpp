@@ -15,7 +15,7 @@
 
 #include <VersionNameHelpers.hpp>
 #include <core_api.h>
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 
 #include <exception>
 #include <format>
@@ -107,7 +107,7 @@ EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
 EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
 {
     g_ef = Audio_Info.extended_funcs;
-    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
+    g_config_path = ZilmarExtSpecPluginHelpers::get_config_path(g_ef);
 
     g_audio_info.emplace(Audio_Info);
 
