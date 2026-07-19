@@ -12,9 +12,9 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Input")
 
-DUMMY_PLUGIN_STUB_IMPL(plugin_input)
+DUMMY_PLUGIN_STUB_IMPL(ZilmarExtSpec::PluginType::Input)
 
-EXPORT void CALL InitiateControllers(core_input_info ControlInfo)
+EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo)
 {
     auto *controllers = ControlInfo.controllers;
 
@@ -22,7 +22,7 @@ EXPORT void CALL InitiateControllers(core_input_info ControlInfo)
     {
         controllers[i].Present = 0;
         controllers[i].RawData = 0;
-        controllers[i].Plugin = ce_none;
+        controllers[i].Plugin = CoreControllerExtension::None;
     }
 
     controllers[0].Present = 1;

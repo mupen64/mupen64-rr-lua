@@ -43,7 +43,7 @@ struct t_main_context
     std::filesystem::path app_path{};
     bool exiting{};
     bool wine{};
-    core_buttons last_controller_data[4]{};
+    CoreButtons last_controller_data[4]{};
 };
 
 /**

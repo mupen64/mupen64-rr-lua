@@ -12,4 +12,4 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Audio")
 
-DUMMY_PLUGIN_STUB_IMPL(plugin_audio)
+DUMMY_PLUGIN_STUB_IMPL(ZilmarExtSpec::PluginType::Audio)

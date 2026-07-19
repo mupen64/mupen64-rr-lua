@@ -42,7 +42,7 @@ void on_sdl_event(const SDL_Event &e);
  * \brief Gets the current gamepad input state.
  * \param i The controller index.
  */
-core_buttons get_input(size_t i);
+CoreButtons get_input(size_t i);
 
 /**
  * \brief Updates the currently selected gamepad. Should be called after `new_config.preferred_device_id` is changed.

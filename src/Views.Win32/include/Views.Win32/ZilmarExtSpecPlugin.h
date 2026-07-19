@@ -13,34 +13,35 @@
 
 #pragma once
 
-#include "core_plugin.h"
 #include "core_types.h"
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
 #define CALL __cdecl
 #else
-#define EXPORT
-#define CALL
+#error "Unsupported platform"
 #endif
+
+namespace ZilmarExtSpec
+{
 
 extern "C"
 {
     /**
      * \brief Represents a plugin type.
      */
-    typedef enum
+    enum class PluginType : uint16_t
     {
-        plugin_video = 2,
-        plugin_audio = 3,
-        plugin_input = 4,
-        plugin_rsp = 1,
-    } core_plugin_type;
+        Video = 2,
+        Audio = 3,
+        Input = 4,
+        RSP = 1,
+    };
 
     /**
      * \brief Exposes an extended set of functions to plugins.
      */
-    struct core_plugin_extended_funcs
+    struct ExtendedFuncs
     {
         /**
          * \brief Logs the specified message at the trace level.
@@ -94,7 +95,7 @@ extern "C"
     /**
      * \brief Describes generic information about a plugin.
      */
-    typedef struct
+    struct PluginInfo
     {
         /**
          * \brief <c>0x0100</c> (old)
@@ -104,10 +105,7 @@ extern "C"
          */
         uint16_t ver;
 
-        /**
-         * \brief The plugin type, see <c>core_plugin_type</c>.
-         */
-        uint16_t type;
+        PluginType type;
 
         /**
          * \brief The plugin name.
@@ -123,12 +121,9 @@ extern "C"
          * \brief The mupen version this plugin targets. It must be an exact match, or the plugin will be rejected.
          */
         char target_version[16];
-    } core_plugin_info;
+    };
 
-    /**
-     * \brief Describes information about a video plugin.
-     */
-    typedef struct
+    struct VideoPluginInfo
     {
         void *main_hwnd;
         void *statusbar_hwnd;
@@ -168,13 +163,10 @@ extern "C"
          * \brief Pointer to extended functions provided by Mupen.
          * \remarks **Unstable API** might change frequently.
          */
-        core_plugin_extended_funcs *extended_funcs;
-    } core_gfx_info;
+        ExtendedFuncs *extended_funcs;
+    };
 
-    /**
-     * \brief Describes information about an audio plugin.
-     */
-    typedef struct
+    struct AudioPluginInfo
     {
         void *main_hwnd;
         void *hinst;
@@ -198,19 +190,16 @@ extern "C"
          * \brief Pointer to extended functions provided by Mupen.
          * \remarks **Unstable API** might change frequently.
          */
-        core_plugin_extended_funcs *extended_funcs;
-    } core_audio_info;
+        ExtendedFuncs *extended_funcs;
+    };
 
-    /**
-     * \brief Describes information about an input plugin.
-     */
-    typedef struct
+    struct InputPluginInfo
     {
         void *main_hwnd;
         void *hinst;
         int32_t byteswapped;
         uint8_t *header;
-        core_controller *controllers;
+        CoreController *controllers;
 
         // --- Zilmar spec struct ends here
 
@@ -218,13 +207,10 @@ extern "C"
          * \brief Pointer to extended functions provided by Mupen.
          * \remarks **Unstable API** might change frequently.
          */
-        core_plugin_extended_funcs *extended_funcs;
-    } core_input_info;
+        ExtendedFuncs *extended_funcs;
+    };
 
-    /**
-     * \brief Describes information about an RSP plugin.
-     */
-    typedef struct
+    struct RSPPluginInfo
     {
         void *hinst;
         int32_t byteswapped;
@@ -261,14 +247,14 @@ extern "C"
          * \brief Pointer to extended functions provided by Mupen.
          * \remarks **Unstable API** might change frequently.
          */
-        core_plugin_extended_funcs *extended_funcs;
-    } core_rsp_info;
+        ExtendedFuncs *extended_funcs;
+    };
 
     typedef void(CALL *CLOSEDLL)();
     typedef void(CALL *DLLABOUT)(void *);
     typedef void(CALL *DLLCONFIG)(void *);
     typedef void(CALL *DLLTEST)(void *);
-    typedef void(CALL *GETDLLINFO)(core_plugin_info *);
+    typedef void(CALL *GETDLLINFO)(PluginInfo *);
     typedef void(CALL *ROMCLOSED)();
     typedef void(CALL *ROMOPEN)();
 
@@ -282,7 +268,7 @@ extern "C"
     typedef void(CALL *FBWRITE)(uint32_t addr, uint32_t size);
     typedef void(CALL *FBGETFRAMEBUFFERINFO)(void *);
     typedef void(CALL *CHANGEWINDOW)();
-    typedef int32_t(CALL *INITIATEGFX)(core_gfx_info);
+    typedef int32_t(CALL *INITIATEGFX)(VideoPluginInfo);
     typedef void(CALL *UPDATESCREEN)();
     typedef void(CALL *READSCREEN)(void **, int32_t *, int32_t *);
     typedef void(CALL *DLLCRTFREE)(void *);
@@ -290,27 +276,47 @@ extern "C"
     typedef void(CALL *CAPTURESCREEN)(char *);
     typedef void(CALL *READVIDEO)(void **);
 
-    typedef int32_t(CALL *INITIATEAUDIO)(core_audio_info);
+    typedef int32_t(CALL *INITIATEAUDIO)(AudioPluginInfo);
     typedef void(CALL *AIUPDATE)(int32_t wait);
     typedef void(CALL *AIDACRATECHANGED)(int32_t system_type);
     typedef void(CALL *AILENCHANGED)();
     typedef uint32_t(CALL *AIREADLENGTH)();
     typedef void(CALL *PROCESSALIST)();
 
-    typedef void(CALL *OLD_INITIATECONTROLLERS)(void *hwnd, core_controller controls[4]);
-    typedef void(CALL *INITIATECONTROLLERS)(core_input_info control_info);
+    typedef void(CALL *OLD_INITIATECONTROLLERS)(void *hwnd, CoreController controls[4]);
+    typedef void(CALL *INITIATECONTROLLERS)(InputPluginInfo control_info);
     typedef void(CALL *KEYDOWN)(uint32_t wParam, int32_t lParam);
     typedef void(CALL *KEYUP)(uint32_t wParam, int32_t lParam);
     typedef void(CALL *CONTROLLERCOMMAND)(int32_t controller, unsigned char *command);
-    typedef void(CALL *GETKEYS)(int32_t controller, core_buttons *keys);
-    typedef void(CALL *SETKEYS)(int32_t controller, core_buttons keys);
+    typedef void(CALL *GETKEYS)(int32_t controller, CoreButtons *keys);
+    typedef void(CALL *SETKEYS)(int32_t controller, CoreButtons keys);
     typedef void(CALL *READCONTROLLER)(int32_t controller, unsigned char *command);
 
-    typedef void(CALL *INITIATERSP)(core_rsp_info rsp_info, uint32_t *cycles);
+    typedef void(CALL *INITIATERSP)(RSPPluginInfo rsp_info, uint32_t *cycles);
     typedef uint32_t(CALL *DORSPCYCLES)(uint32_t);
+}
+
+/**
+ * \brief Gets the config path from a `core_plugin_extended_funcs`.
+ */
+inline std::filesystem::path get_config_path(const ExtendedFuncs *ef)
+{
+    size_t len = ef->config_path(nullptr, 0);
+
+    std::string path_temp(len, '\0');
+    ef->config_path(path_temp.data(), path_temp.size());
+    path_temp.pop_back();
+
+    std::u8string_view utf8_path_temp{(char8_t *)path_temp.data(), path_temp.size()};
+    return std::filesystem::absolute(utf8_path_temp);
+}
+
+}; // namespace ZilmarExtSpec
 
 #if defined(PLUGIN_WITH_CALLBACKS)
 
+extern "C"
+{
     // ReSharper disable CppInconsistentNaming
 
 #pragma region Base
@@ -318,7 +324,7 @@ extern "C"
     EXPORT void CALL CloseDLL(void);
     EXPORT void CALL DllAbout(void *hParent);
     EXPORT void CALL DllConfig(void *hParent);
-    EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo);
+    EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo);
     EXPORT void CALL RomClosed(void);
     EXPORT void CALL RomOpen(void);
 
@@ -328,7 +334,7 @@ extern "C"
 
     EXPORT void CALL CaptureScreen(const char *Directory);
     EXPORT void CALL ChangeWindow(void);
-    EXPORT int CALL InitiateGFX(core_gfx_info Gfx_Info);
+    EXPORT int CALL InitiateGFX(ZilmarExtSpec::VideoPluginInfo Gfx_Info);
     EXPORT void CALL MoveScreen(int xpos, int ypos);
     EXPORT void CALL ProcessDList(void);
     EXPORT void CALL ProcessRDPList(void);
@@ -348,7 +354,7 @@ extern "C"
     EXPORT uint32_t CALL AiReadLength(void);
     EXPORT void CALL AiUpdate(int32_t Wait);
     EXPORT void CALL DllTest(void *hParent);
-    EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info);
+    EXPORT int32_t CALL InitiateAudio(ZilmarExtSpec::AudioPluginInfo Audio_Info);
     EXPORT void CALL ProcessAList(void);
 
 #pragma endregion
@@ -356,12 +362,12 @@ extern "C"
 #pragma region Input
 
     EXPORT void CALL ControllerCommand(int32_t Control, uint8_t *Command);
-    EXPORT void CALL GetKeys(int32_t Control, core_buttons *Keys);
-    EXPORT void CALL SetKeys(int32_t controller, core_buttons keys);
+    EXPORT void CALL GetKeys(int32_t Control, CoreButtons *Keys);
+    EXPORT void CALL SetKeys(int32_t controller, CoreButtons keys);
 #if defined(CORE_PLUGIN_INPUT_OLD_INITIATE_CONTROLLERS)
-    EXPORT void CALL InitiateControllers(void *hwnd, core_controller controls[4]);
+    EXPORT void CALL InitiateControllers(void *hwnd, CoreController controls[4]);
 #else
-    EXPORT void CALL InitiateControllers(core_input_info ControlInfo);
+    EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo);
 #endif
     EXPORT void CALL ReadController(int Control, uint8_t *Command);
     EXPORT void CALL WM_KeyDown(uint32_t wParam, uint32_t lParam);
@@ -372,37 +378,14 @@ extern "C"
 #pragma region RSP
 
     EXPORT uint32_t DoRspCycles(uint32_t Cycles);
-    EXPORT void InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount);
+    EXPORT void InitiateRSP(ZilmarExtSpec::RSPPluginInfo Rsp_Info, uint32_t *CycleCount);
 
 #pragma endregion
 
     // ReSharper restore CppInconsistentNaming
-#else
-#undef EXPORT
-#undef CALL
+}
+
 #endif
-}
 
-/**
- * \brief A module that provides helpers surrounding ZilmarExtSpecPlugin.
- */
-namespace ZilmarExtSpecPluginHelpers
-{
-/**
- * @brief Gets the config path as a `std::filesystem::path` from a `core_plugin_extended_funcs`.
- */
-inline std::filesystem::path get_config_path(const core_plugin_extended_funcs *ef)
-{
-    // get length
-    size_t len = ef->config_path(nullptr, 0);
-    // copy string
-    std::string path_temp(len, '\0');
-    ef->config_path(path_temp.data(), path_temp.size());
-    // drop the terminating null
-    path_temp.pop_back();
-    // force UTF-8 conversion
-    std::u8string_view utf8_path_temp{(char8_t *)path_temp.data(), path_temp.size()};
-    return std::filesystem::absolute(utf8_path_temp);
-}
-
-} // namespace ZilmarExtSpecPluginHelpers
+// #undef EXPORT
+// #undef CALL

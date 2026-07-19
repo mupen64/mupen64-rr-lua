@@ -16,7 +16,7 @@
 #define UCODE_BANJO (2)
 #define UCODE_ZELDA (3)
 
-core_rsp_info rsp;
+ZilmarExtSpec::RSPPluginInfo rsp;
 static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
@@ -24,7 +24,7 @@ uint32_t inst2;
 HINSTANCE g_instance;
 std::filesystem::path g_config_path;
 
-core_plugin_extended_funcs *g_ef{};
+ZilmarExtSpec::ExtendedFuncs *g_ef{};
 
 static int audio_ucode_detect_type(const OSTask_t *task)
 {
@@ -196,20 +196,20 @@ EXPORT void CALL DllAbout(void *hwnd)
     MessageBox((HWND)hwnd, msg, L"About", MB_ICONINFORMATION | MB_OK);
 }
 
-EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
+EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo)
 {
     PluginInfo->ver = 0x0101;
-    PluginInfo->type = (int16_t)plugin_rsp;
+    PluginInfo->type = ZilmarExtSpec::PluginType::RSP;
     strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = 1;
     PluginInfo->unused_byteswapped = 1;
     std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
 }
 
-EXPORT void CALL InitiateRSP(core_rsp_info Rsp_Info, uint32_t *CycleCount)
+EXPORT void CALL InitiateRSP(ZilmarExtSpec::RSPPluginInfo Rsp_Info, uint32_t *CycleCount)
 {
     g_ef = Rsp_Info.extended_funcs;
-    g_config_path = ZilmarExtSpecPluginHelpers::get_config_path(g_ef);
+    g_config_path = ZilmarExtSpec::get_config_path(g_ef);
     rsp = Rsp_Info;
     config_load();
 }

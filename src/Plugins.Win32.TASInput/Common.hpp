@@ -38,7 +38,7 @@
 #include <commctrl.h>
 #include <windowsx.h>
 #include <shellscalingapi.h>
-#include <core_plugin.h>
+#include <core_types.h>
 #include <Resource.h>
 #include <gdiplus.h>
 #pragma warning(pop)

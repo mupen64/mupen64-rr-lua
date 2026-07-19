@@ -12,7 +12,7 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Audio")
 
-extern core_plugin_extended_funcs *g_ef;
+extern ZilmarExtSpec::ExtendedFuncs *g_ef;
 extern std::filesystem::path g_dll_path;
 extern std::filesystem::path g_config_path;
 extern std::optional<SDLAudio::SDLBackend> g_backend;

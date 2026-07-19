@@ -11,7 +11,6 @@
 #pragma once
 
 #include "core_types.h"
-#include "core_plugin.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -24,7 +23,7 @@ extern "C"
     struct core_callbacks
     {
         std::function<void(bool new_present)> vi = [](const auto &...) {};
-        std::function<void(core_buttons *input, int index)> input = [](const auto &...) {};
+        std::function<void(CoreButtons *input, int index)> input = [](const auto &...) {};
         std::function<void()> frame = [](const auto &...) {};
         std::function<void()> interval = [](const auto &...) {};
         std::function<void()> ai_len_changed = [](const auto &...) {};
@@ -85,7 +84,7 @@ extern "C"
         /**
          * \brief The core's controller configuration. Can be written to by the host during `initiate_plugins`.
          */
-        core_controller controls[4]{};
+        CoreController controls[4]{};
 
         /**
          * \brief Optional callbacks for the core to invoke during emulation.
@@ -257,8 +256,8 @@ extern "C"
         std::function<void()> audio_process_alist;
 
         std::function<void(int32_t controller, unsigned char *command)> input_controller_command;
-        std::function<void(int32_t controller, core_buttons *keys)> input_get_keys;
-        std::function<void(int32_t controller, core_buttons keys)> input_set_keys;
+        std::function<void(int32_t controller, CoreButtons *keys)> input_get_keys;
+        std::function<void(int32_t controller, CoreButtons keys)> input_set_keys;
         std::function<void(int32_t controller, unsigned char *command)> input_read_controller;
 
         std::function<uint32_t(uint32_t)> rsp_do_rsp_cycles;
@@ -477,7 +476,7 @@ extern "C"
          * \param inputs The button collection to fill
          * \return The operation result
          */
-        std::function<core_result(std::filesystem::path path, std::vector<core_buttons> &inputs)> vcr_read_movie_inputs;
+        std::function<core_result(std::filesystem::path path, std::vector<CoreButtons> &inputs)> vcr_read_movie_inputs;
 
         /**
          * \brief Starts playing back a movie
@@ -585,7 +584,7 @@ extern "C"
         /**
          * Gets a copy of the current input buffer.
          */
-        std::function<std::vector<core_buttons>()> vcr_get_inputs;
+        std::function<std::vector<CoreButtons>()> vcr_get_inputs;
 
         /**
          * Begins a warp modification operation. A "warp modification operation" is the changing of sample data which is
@@ -615,7 +614,7 @@ extern "C"
          * \param inputs The input buffer to use.
          * \return The operation result
          */
-        std::function<core_result(const std::vector<core_buttons> &inputs)> vcr_begin_warp_modify;
+        std::function<core_result(const std::vector<CoreButtons> &inputs)> vcr_begin_warp_modify;
 
         /**
          * Gets the warp modify status

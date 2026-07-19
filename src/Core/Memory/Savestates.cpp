@@ -214,7 +214,7 @@ static std::vector<uint8_t> generate_savestate(bool pure)
             MiscHelpers::vecwrite(b, &freeze.current_sample, sizeof(freeze.current_sample));
             MiscHelpers::vecwrite(b, &freeze.current_vi, sizeof(freeze.current_vi));
             MiscHelpers::vecwrite(b, &freeze.length_samples, sizeof(freeze.length_samples));
-            MiscHelpers::vecwrite(b, freeze.input_buffer.data(), freeze.input_buffer.size() * sizeof(core_buttons));
+            MiscHelpers::vecwrite(b, freeze.input_buffer.data(), freeze.input_buffer.size() * sizeof(CoreButtons));
         }
 
         if (g_core->mge_available() && g_core->cfg->st_screenshot)
@@ -401,7 +401,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
         MiscHelpers::memread(&ptr, &freeze.current_vi, sizeof(freeze.current_vi));
         MiscHelpers::memread(&ptr, &freeze.length_samples, sizeof(freeze.length_samples));
 
-        freeze.input_buffer.resize(sizeof(core_buttons) * (freeze.length_samples + 1));
+        freeze.input_buffer.resize(sizeof(CoreButtons) * (freeze.length_samples + 1));
         MiscHelpers::memread(&ptr, freeze.input_buffer.data(), freeze.input_buffer.size());
 
         const auto code = vcr_unfreeze(freeze);

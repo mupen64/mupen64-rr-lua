@@ -12,7 +12,7 @@
 #include <filesystem>
 
 extern HINSTANCE g_inst;
-extern core_plugin_extended_funcs *g_ef;
+extern ZilmarExtSpec::ExtendedFuncs *g_ef;
 extern std::filesystem::path g_config_path;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input")
