@@ -6,6 +6,7 @@
 
 #pragma once
 
+void print_queue();
 void compare_interrupt();
 void gen_dp();
 void init_interrupt();

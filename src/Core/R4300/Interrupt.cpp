@@ -25,81 +25,50 @@ typedef struct _interrupt_queue
 } interrupt_queue;
 
 static interrupt_queue *q = NULL;
-
-interrupt_queue g_pool[128]{};
-uint8_t g_pool_used[sizeof(g_pool)]{};
-size_t g_known_unused_index = SIZE_MAX;
 uint32_t last_vi_origin{};
 
-/**
- * Allocates an item in the interrupt pool.
- */
-interrupt_queue *pool_alloc()
+constexpr size_t POOL_SIZE = 128;
+constexpr size_t POOL_SENTINEL = SIZE_MAX - 1;
+interrupt_queue s_pool[POOL_SIZE]{};
+size_t s_pool_free_stack[POOL_SIZE];
+size_t s_pool_free_head = 0;
+
+static interrupt_queue *pool_alloc()
 {
-    size_t unused_index = SIZE_MAX;
+    assert(s_pool_free_head != SIZE_MAX && "Interrupt pool exhausted!");
 
-    // OPTIMIZATION: If we know that there is an unused index, use it
-    if (g_known_unused_index != SIZE_MAX)
-    {
-        unused_index = g_known_unused_index;
-    }
-    else
-    {
-        for (int32_t i = 0; i < sizeof(g_pool); ++i)
-        {
-            if (g_pool_used[i] == false)
-            {
-                unused_index = i;
-                break;
-            }
-        }
-        assert(unused_index != SIZE_MAX);
-    }
+    const size_t unused_index = s_pool_free_head;
+    s_pool_free_head = s_pool_free_stack[unused_index];
+    s_pool_free_stack[unused_index] = POOL_SENTINEL;
 
-    g_pool_used[unused_index] = true;
-    g_known_unused_index = SIZE_MAX;
-
-    return &g_pool[unused_index];
+    return &s_pool[unused_index];
 }
 
-/**
- * Frees an interrupt from the pool, allowing it to be reused.
- */
-void pool_free(const interrupt_queue *ptr)
+static void pool_free(const interrupt_queue *ptr)
 {
-    const auto index_in_pool = ptr - (interrupt_queue *)&g_pool;
+    const size_t index_in_pool = ptr - s_pool;
+    assert(index_in_pool < std::size(s_pool) && "Pointer outside of pool!");
+    assert(s_pool_free_stack[index_in_pool] == POOL_SENTINEL && "Double free or invalid free detected!");
 
-#ifdef _DEBUG
-    size_t index = SIZE_MAX;
-    for (int32_t i = 0; i < sizeof(g_pool); ++i)
+    s_pool_free_stack[index_in_pool] = s_pool_free_head;
+    s_pool_free_head = index_in_pool;
+}
+
+static void pool_clear()
+{
+    const size_t pool_size = std::size(s_pool);
+    for (size_t i = 0; i < pool_size - 1; ++i)
     {
-        if (&g_pool[i] == ptr)
-        {
-            index = i;
-            break;
-        }
+        s_pool_free_stack[i] = i + 1;
     }
 
-    assert(index != SIZE_MAX);
-    assert(index == index_in_pool);
-#endif
-
-    g_pool_used[index_in_pool] = false;
-    g_known_unused_index = index_in_pool;
+    s_pool_free_stack[pool_size - 1] = SIZE_MAX;
+    s_pool_free_head = 0;
 }
 
-/**
- * Clears the pool.
- */
-void pool_clear()
+static void clear_queue()
 {
-    memset(g_pool_used, 0, std::size(g_pool_used));
-    g_known_unused_index = SIZE_MAX;
-}
-
-void clear_queue()
-{
-    while (q != NULL)
+    while (q != nullptr)
     {
         interrupt_queue *aux = q->next;
         q = aux;
