@@ -102,8 +102,7 @@ TEST_CASE_METHOD(VrFixture, "desired_speed_mode_ultra_fast_forward_downgraded_wh
     REQUIRE(g_r4300.effective_speed_mode.load() == CoreSpeedMode::FastForward);
 }
 
-TEST_CASE_METHOD(VrFixture,
-                 "desired_speed_mode_ultra_fast_forward_preserved_when_render_throttling_enabled",
+TEST_CASE_METHOD(VrFixture, "desired_speed_mode_ultra_fast_forward_preserved_when_render_throttling_enabled",
                  "vr_update_effective_speed_mode")
 {
     g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
