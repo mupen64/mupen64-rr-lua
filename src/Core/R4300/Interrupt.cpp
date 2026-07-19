@@ -45,7 +45,7 @@ static interrupt_queue *pool_alloc()
 static void pool_free(const interrupt_queue *ptr)
 {
     const size_t index_in_pool = ptr - s_pool;
-    assert(index_in_pool < std::size(g_pool) && "Pointer outside of pool!");
+    assert(index_in_pool < std::size(s_pool) && "Pointer outside of pool!");
 
     s_pool_free_stack[index_in_pool] = s_pool_free_head;
     s_pool_free_head = index_in_pool;
