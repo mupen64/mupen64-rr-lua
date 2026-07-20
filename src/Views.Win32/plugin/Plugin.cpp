@@ -578,25 +578,28 @@ void PluginUtil::initiate_plugins()
 
     // Video plugin needs to go first because of process_dlist
     video_plugin->initiate();
+    audio_plugin->initiate();
+    input_plugin->initiate();
+    rsp_plugin->initiate();
 
-    std::latch done(3);
+    // std::latch done(3);
 
-    ThreadPool::submit_task([&] {
-        audio_plugin->initiate();
-        done.count_down();
-    });
+    // ThreadPool::submit_task([&] {
+    //     audio_plugin->initiate();
+    //     done.count_down();
+    // });
 
-    ThreadPool::submit_task([&] {
-        input_plugin->initiate();
-        done.count_down();
-    });
+    // ThreadPool::submit_task([&] {
+    //     input_plugin->initiate();
+    //     done.count_down();
+    // });
 
-    ThreadPool::submit_task([&] {
-        rsp_plugin->initiate();
-        done.count_down();
-    });
+    // ThreadPool::submit_task([&] {
+    //     rsp_plugin->initiate();
+    //     done.count_down();
+    // });
 
-    done.wait();
+    // done.wait();
 }
 
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)

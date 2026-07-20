@@ -43,17 +43,28 @@ static CoreController controller_to_core_controller(const M64RRSpec::Controller 
     };
 }
 
-static M64RRSpec::PtrRomOpened s_mupenrr_rom_opened_fn = nullptr;
-static M64RRSpec::PtrRomClosed s_mupenrr_rom_closed_fn = nullptr;
+static M64RRSpec::PtrRomOpened s_mupenrr_video_rom_opened_fn = nullptr;
+static M64RRSpec::PtrRomClosed s_mupenrr_video_rom_closed_fn = nullptr;
 static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
 static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_video_shutdown_fn = nullptr;
+
+static M64RRSpec::PtrRomOpened s_mupenrr_audio_rom_opened_fn = nullptr;
+static M64RRSpec::PtrRomClosed s_mupenrr_audio_rom_closed_fn = nullptr;
 static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
 static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_audio_shutdown_fn = nullptr;
+
+static M64RRSpec::PtrRomOpened s_mupenrr_input_rom_opened_fn = nullptr;
+static M64RRSpec::PtrRomClosed s_mupenrr_input_rom_closed_fn = nullptr;
 static M64RRSpec::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
 static M64RRSpec::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
 static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_input_shutdown_fn = nullptr;
+
+static M64RRSpec::PtrRomClosed s_mupenrr_rsp_rom_closed_fn = nullptr;
 static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_shutdown_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_rsp_shutdown_fn = nullptr;
 
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
@@ -225,20 +236,20 @@ void M64RRPlugin::initiate()
     case Plugin::Type::Video: {
         g_view_logger->trace("Initiating video plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_video_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
+        LOOKUP_MUPENRR_FN(s_mupenrr_video_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
         LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, M64RRSpec::PtrProcessDList, "M64RRProcessDList");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_video_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.video_rom_open = []() {
-            if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
+            if (s_mupenrr_video_rom_opened_fn) s_mupenrr_video_rom_opened_fn();
         };
         g_plugin_funcs.video_rom_closed = []() {
-            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+            if (s_mupenrr_video_rom_closed_fn) s_mupenrr_video_rom_closed_fn();
         };
         g_plugin_funcs.video_close_dll = []() {
-            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+            if (s_mupenrr_video_shutdown_fn) s_mupenrr_video_shutdown_fn();
         };
         g_plugin_funcs.video_process_dlist = []() {
             if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
@@ -269,20 +280,20 @@ void M64RRPlugin::initiate()
     case Plugin::Type::Audio: {
         g_view_logger->trace("Initiating audio plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_audio_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
+        LOOKUP_MUPENRR_FN(s_mupenrr_audio_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, M64RRSpec::PtrAIDacrateChanged, "M64RRAIDacrateChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, M64RRSpec::PtrAILenChanged, "M64RRAILenChanged");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_audio_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.audio_rom_open = []() {
-            if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
+            if (s_mupenrr_audio_rom_opened_fn) s_mupenrr_audio_rom_opened_fn();
         };
         g_plugin_funcs.audio_rom_closed = []() {
-            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+            if (s_mupenrr_audio_rom_closed_fn) s_mupenrr_audio_rom_closed_fn();
         };
         g_plugin_funcs.audio_close_dll_audio = []() {
-            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+            if (s_mupenrr_audio_shutdown_fn) s_mupenrr_audio_shutdown_fn();
         };
         g_plugin_funcs.audio_ai_dacrate_changed = [](int32_t system_type) {
             if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
@@ -299,21 +310,21 @@ void M64RRPlugin::initiate()
     case Plugin::Type::Input: {
         g_view_logger->trace("Initiating input plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_input_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
+        LOOKUP_MUPENRR_FN(s_mupenrr_input_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
         LOOKUP_MUPENRR_FN(s_mupenrr_get_keys_fn, M64RRSpec::PtrGetKeys, "M64RRGetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_set_keys_fn, M64RRSpec::PtrSetKeys, "M64RRSetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, M64RRSpec::PtrReadController, "M64RRReadController");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_input_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.input_rom_open = []() {
-            if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
+            if (s_mupenrr_input_rom_opened_fn) s_mupenrr_input_rom_opened_fn();
         };
         g_plugin_funcs.input_rom_closed = []() {
-            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+            if (s_mupenrr_input_rom_closed_fn) s_mupenrr_input_rom_closed_fn();
         };
         g_plugin_funcs.input_close_dll = []() {
-            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+            if (s_mupenrr_input_shutdown_fn) s_mupenrr_input_shutdown_fn();
         };
         g_plugin_funcs.input_controller_command = [](int32_t, uint8_t *) {};
         g_plugin_funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
@@ -337,15 +348,15 @@ void M64RRPlugin::initiate()
     case Plugin::Type::RSP: {
         g_view_logger->trace("Initiating RSP plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rsp_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
         LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, M64RRSpec::PtrDoRSPCycles, "M64RRDoRSPCycles");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rsp_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.rsp_rom_closed = []() {
-            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+            if (s_mupenrr_rsp_rom_closed_fn) s_mupenrr_rsp_rom_closed_fn();
         };
         g_plugin_funcs.rsp_close_dll = []() {
-            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+            if (s_mupenrr_rsp_shutdown_fn) s_mupenrr_rsp_shutdown_fn();
         };
         g_plugin_funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
             if (s_mupenrr_do_rsp_cycles_fn)
