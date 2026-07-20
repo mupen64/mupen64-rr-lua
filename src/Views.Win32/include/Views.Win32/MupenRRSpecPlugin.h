@@ -179,6 +179,7 @@ extern "C"
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
     typedef void(CALL *PtrInitiate)(PluginInit *init);
+    typedef void(CALL *PtrShutdown)();
     typedef void(CALL *PtrRomOpened)();
     typedef void(CALL *PtrRomClosed)();
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
@@ -208,6 +209,7 @@ extern "C"
 
     EXPORT void CALL M64RRGetMetadata(PluginMetadata *metadata);
     EXPORT void CALL M64RRInitiate(PluginInit *init);
+    EXPORT void CALL M64RRShutdown(void);
     EXPORT void CALL M64RRRomOpened(void);
     EXPORT void CALL M64RRRomClosed(void);
     EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window);

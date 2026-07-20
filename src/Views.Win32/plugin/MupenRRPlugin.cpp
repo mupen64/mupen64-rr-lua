@@ -144,6 +144,7 @@ static MupenRRSpecPlugin::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
 static MupenRRSpecPlugin::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
 static MupenRRSpecPlugin::PtrReadController s_mupenrr_read_controller_fn = nullptr;
 static MupenRRSpecPlugin::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
+static MupenRRSpecPlugin::PtrShutdown s_mupenrr_shutdown_fn = nullptr;
 
 static void CALL shim_rom_opened()
 {
@@ -203,6 +204,11 @@ static uint32_t CALL shim_do_rsp_cycles(uint32_t cycles)
         return 0;
     }
     return cycles;
+}
+
+static void CALL shim_shutdown()
+{
+    if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
 }
 
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
@@ -384,10 +390,11 @@ void MupenRRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, MupenRRSpecPlugin::PtrProcessDList, "M64RRProcessDList");
         LOOKUP_MUPENRR_FN(s_mupenrr_get_video_size_fn, MupenRRSpecPlugin::PtrGetVideoSize, "M64RRGetVideoSize");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, MupenRRSpecPlugin::PtrReadVideo, "M64RRReadVideo");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.video_rom_open = s_mupenrr_rom_opened_fn ? shim_rom_opened : dummy_rom_opened;
         g_plugin_funcs.video_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.video_close_dll = dummy_void;
+        g_plugin_funcs.video_close_dll = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
         g_plugin_funcs.video_process_dlist = s_mupenrr_process_dlist_fn ? shim_process_dlist : dummy_void;
         g_plugin_funcs.video_process_rdp_list = dummy_void;
         g_plugin_funcs.video_show_cfb = dummy_void;
@@ -415,10 +422,11 @@ void MupenRRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, MupenRRSpecPlugin::PtrAIDacrateChanged,
                           "M64RRAIDacrateChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, MupenRRSpecPlugin::PtrAILenChanged, "M64RRAILenChanged");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.audio_rom_open = s_mupenrr_rom_opened_fn ? shim_rom_opened : dummy_rom_opened;
         g_plugin_funcs.audio_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.audio_close_dll_audio = dummy_void;
+        g_plugin_funcs.audio_close_dll_audio = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
         g_plugin_funcs.audio_ai_dacrate_changed =
             s_mupenrr_ai_dacrate_changed_fn ? shim_ai_dacrate_changed : dummy_ai_dacrate_changed;
         g_plugin_funcs.audio_ai_len_changed = s_mupenrr_ai_len_changed_fn ? shim_ai_len_changed : dummy_ai_len_changed;
@@ -436,10 +444,11 @@ void MupenRRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_get_keys_fn, MupenRRSpecPlugin::PtrGetKeys, "M64RRGetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_set_keys_fn, MupenRRSpecPlugin::PtrSetKeys, "M64RRSetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, MupenRRSpecPlugin::PtrReadController, "M64RRReadController");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.input_rom_open = s_mupenrr_rom_opened_fn ? shim_rom_opened : dummy_rom_opened;
         g_plugin_funcs.input_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.input_close_dll = dummy_void;
+        g_plugin_funcs.input_close_dll = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
         g_plugin_funcs.input_controller_command = dummy_controller_command;
         g_plugin_funcs.input_get_keys = s_mupenrr_get_keys_fn ? shim_get_keys : (ZilmarExtSpec::GETKEYS)dummy_get_keys;
         g_plugin_funcs.input_set_keys = s_mupenrr_set_keys_fn ? shim_set_keys : (ZilmarExtSpec::SETKEYS)dummy_set_keys;
@@ -459,9 +468,10 @@ void MupenRRPlugin::initiate()
 
         LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, MupenRRSpecPlugin::PtrRomClosed, "M64RRRomClosed");
         LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, MupenRRSpecPlugin::PtrDoRSPCycles, "M64RRDoRSPCycles");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.rsp_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.rsp_close_dll = dummy_void;
+        g_plugin_funcs.rsp_close_dll = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
         g_plugin_funcs.rsp_do_rsp_cycles = s_mupenrr_do_rsp_cycles_fn ? shim_do_rsp_cycles : dummy_do_rsp_cycles;
 
         break;
@@ -557,7 +567,9 @@ void MupenRRPlugin::initiate_dummy()
 
 void MupenRRPlugin::deinitiate_dummy()
 {
-    // MupenRR spec has no CloseDLL equivalent
+    if (g_main_ctx.core_ctx->vr_get_launched()) return;
+    const auto close_dll = (MupenRRSpecPlugin::PtrShutdown)GetProcAddress(m_module, "M64RRShutdown");
+    if (close_dll) close_dll();
 }
 
 #undef LOOKUP_MUPENRR_FN
