@@ -132,20 +132,7 @@ void OGL_ResizeWindow()
 {
     OGL.width = OGL.windowedWidth;
     OGL.height = OGL.windowedHeight;
-
-    // TODO: FIXME
-
-    // RECT statusbar_rc{};
-    // if (IsWindow(g_tas_ctx.statusbar_hwnd)) GetClientRect(g_tas_ctx.statusbar_hwnd, &statusbar_rc);
-
-    // RECT wnd_rc{};
-    // GetClientRect(g_tas_ctx.emu_hwnd, &wnd_rc);
-    // wnd_rc.right = OGL.windowedWidth;
-    // wnd_rc.bottom = OGL.windowedHeight + statusbar_rc.bottom;
-    // AdjustWindowRect(&wnd_rc, GetWindowLong(g_tas_ctx.emu_hwnd, GWL_STYLE), GetMenu(g_tas_ctx.emu_hwnd) != NULL);
-
-    // SetWindowPos(g_tas_ctx.emu_hwnd, NULL, 0, 0, wnd_rc.right - wnd_rc.left, wnd_rc.bottom - wnd_rc.top,
-    //              SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_ASYNCWINDOWPOS);
+    g_ef->request_size(OGL.width, OGL.height);
 }
 
 bool OGL_InitContext()

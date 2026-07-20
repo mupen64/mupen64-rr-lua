@@ -97,7 +97,7 @@ inline size_t ext_fn_config_path(char *data, size_t size)
     }
 
 #define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    ZESpec::ExtendedFuncs                                                                                       \
+    ZESpec::ExtendedFuncs                                                                                              \
     {                                                                                                                  \
         .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
         .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
@@ -105,7 +105,8 @@ inline size_t ext_fn_config_path(char *data, size_t size)
         .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
         .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
         .frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); },                             \
-        .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter                             \
+        .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter,                            \
+        .request_size = Main::request_size                                                                             \
     }
 
 class Plugin

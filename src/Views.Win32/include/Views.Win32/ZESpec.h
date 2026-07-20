@@ -5,7 +5,8 @@
  */
 
 /*
- * Describes the Zilmar Extended plugin specification, which is binary-compatible with the original Zilmar specification.
+ * Describes the Zilmar Extended plugin specification, which is binary-compatible with the original Zilmar
+ * specification.
  */
 
 #pragma once
@@ -181,6 +182,13 @@ extern "C"
          * \brief Counter for RCP work in an arbitrary unit, ideally proportional to real-time lag per unit.
          */
         size_t *rcp_counter;
+
+        /**
+         * \brief Requests the main window to asynchronously resize to the specified width and height.
+         * \param width The desired width of the window.
+         * \param height The desired height of the window.
+         */
+        void (*request_size)(uint32_t width, uint32_t height);
     };
 
     /**

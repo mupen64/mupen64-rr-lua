@@ -126,4 +126,6 @@ void init_sdl();
  * \brief Forwards mouse events to the Lua callbacks.
  */
 void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+
+void request_size(uint32_t width, uint32_t height);
 } // namespace Main
