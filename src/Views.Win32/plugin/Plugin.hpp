@@ -7,8 +7,7 @@
 #pragma once
 
 #include <Views.Win32/ZilmarExtSpecPlugin.h>
-#include <Views.Win32/m64p_common.h>
-#include <Views.Win32/m64p_plugin.h>
+#include <Views.Win32/MupenRRSpecPlugin.h>
 
 struct ZilmarExtSpecPluginFuncs
 {
@@ -61,6 +60,32 @@ struct ZilmarExtSpecPluginFuncs
     ZilmarExtSpec::ROMCLOSED rsp_rom_closed;
     ZilmarExtSpec::DORSPCYCLES rsp_do_rsp_cycles;
 };
+
+class ZilmarExtPlugin;
+class MupenRRPlugin;
+
+extern ZilmarExtSpec::VideoPluginInfo dummy_video_info;
+extern ZilmarExtSpec::AudioPluginInfo dummy_audio_info;
+extern ZilmarExtSpec::InputPluginInfo dummy_control_info;
+extern ZilmarExtSpec::RSPPluginInfo dummy_rsp_info;
+extern ZilmarExtSpec::Controller dummy_controllers[4];
+extern uint8_t dummy_header[0x40];
+extern uint32_t dummy_dw;
+extern ZilmarExtSpec::VideoPluginInfo gfx_info;
+extern ZilmarExtSpec::AudioPluginInfo audio_info;
+extern ZilmarExtSpec::InputPluginInfo control_info;
+extern ZilmarExtSpec::RSPPluginInfo rsp_info;
+extern ZilmarExtSpec::DLLABOUT dll_about;
+extern ZilmarExtSpec::DLLCONFIG dll_config;
+extern ZilmarExtSpec::DLLTEST dll_test;
+
+#define FUNC(target, type, fallback, name)                                                                             \
+    target = (type)GetProcAddress((HMODULE)m_module, name);                                                            \
+    if (!target)                                                                                                       \
+    {                                                                                                                  \
+        target = fallback;                                                                                             \
+        g_view_logger->info("Substituting dummy function for {}", name);                                               \
+    }
 
 class Plugin
 {
@@ -133,7 +158,7 @@ class Plugin
   private:
     static std::pair<std::wstring, std::unique_ptr<Plugin>> create_zilmar_ext(HMODULE module,
                                                                               std::filesystem::path path);
-    static std::pair<std::wstring, std::unique_ptr<Plugin>> create_m64p(HMODULE module, std::filesystem::path path);
+    static std::pair<std::wstring, std::unique_ptr<Plugin>> create_mupen_rr(HMODULE module, std::filesystem::path path);
 
   protected:
     /**
@@ -148,34 +173,6 @@ class Plugin
     uint16_t m_version;
     HMODULE m_module;
     Spec m_spec;
-};
-
-class ZilmarExtPlugin : public Plugin
-{
-  public:
-    using Plugin::Plugin;
-    ~ZilmarExtPlugin() override = default;
-
-    void config(HWND hwnd) override;
-    void test(HWND hwnd) override;
-    void about(HWND hwnd) override;
-    void initiate() override;
-    void initiate_dummy() override;
-    void deinitiate_dummy() override;
-};
-
-class M64pPlugin : public Plugin
-{
-  public:
-    using Plugin::Plugin;
-    ~M64pPlugin() override = default;
-
-    void config(HWND hwnd) override;
-    void test(HWND hwnd) override;
-    void about(HWND hwnd) override;
-    void initiate() override;
-    void initiate_dummy() override;
-    void deinitiate_dummy() override;
 };
 
 /**

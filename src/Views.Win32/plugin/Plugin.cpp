@@ -10,30 +10,34 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <plugin/Plugin.hpp>
+#include <plugin/MupenRRPlugin.hpp>
+#include <plugin/ZilmarExtPlugin.hpp>
 #include <components/ConfigDialog.hpp>
 #include <components/Statusbar.hpp>
 #include <components/MGECompositor.hpp>
 #include <ThreadPool.hpp>
 #include <Messenger.hpp>
 
+#ifndef CALL
 #define CALL _cdecl
+#endif
 
-static ZilmarExtSpec::VideoPluginInfo dummy_video_info{};
-static ZilmarExtSpec::AudioPluginInfo dummy_audio_info{};
-static ZilmarExtSpec::InputPluginInfo dummy_control_info{};
-static ZilmarExtSpec::RSPPluginInfo dummy_rsp_info{};
-static ZilmarExtSpec::Controller dummy_controllers[4]{};
-static uint8_t dummy_header[0x40]{};
-static uint32_t dummy_dw{};
+ZilmarExtSpec::VideoPluginInfo dummy_video_info{};
+ZilmarExtSpec::AudioPluginInfo dummy_audio_info{};
+ZilmarExtSpec::InputPluginInfo dummy_control_info{};
+ZilmarExtSpec::RSPPluginInfo dummy_rsp_info{};
+ZilmarExtSpec::Controller dummy_controllers[4]{};
+uint8_t dummy_header[0x40]{};
+uint32_t dummy_dw{};
 
-static ZilmarExtSpec::VideoPluginInfo gfx_info{};
-static ZilmarExtSpec::AudioPluginInfo audio_info{};
-static ZilmarExtSpec::InputPluginInfo control_info{};
-static ZilmarExtSpec::RSPPluginInfo rsp_info{};
+ZilmarExtSpec::VideoPluginInfo gfx_info{};
+ZilmarExtSpec::AudioPluginInfo audio_info{};
+ZilmarExtSpec::InputPluginInfo control_info{};
+ZilmarExtSpec::RSPPluginInfo rsp_info{};
 
-static ZilmarExtSpec::DLLABOUT dll_about{};
-static ZilmarExtSpec::DLLCONFIG dll_config{};
-static ZilmarExtSpec::DLLTEST dll_test{};
+ZilmarExtSpec::DLLABOUT dll_about{};
+ZilmarExtSpec::DLLCONFIG dll_config{};
+ZilmarExtSpec::DLLTEST dll_test{};
 
 static std::shared_ptr<Plugin> video_plugin;
 static std::shared_ptr<Plugin> audio_plugin;
@@ -222,14 +226,6 @@ static void start_audio_thread()
     s_audio_thread = std::jthread(audio_thread_proc);
 }
 
-#define FUNC(target, type, fallback, name)                                                                             \
-    target = (type)GetProcAddress((HMODULE)m_module, name);                                                            \
-    if (!target)                                                                                                       \
-    {                                                                                                                  \
-        target = fallback;                                                                                             \
-        g_view_logger->info("Substituting dummy function for {}", name);                                               \
-    }
-
 #define GEN_EXTENDED_FUNCS(logger)                                                                                     \
     ZilmarExtSpec::ExtendedFuncs                                                                                       \
     {                                                                                                                  \
@@ -315,46 +311,8 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create_zilmar_ext(HMODU
     return std::make_pair(L"", std::move(plugin));
 }
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create_m64p(HMODULE module, std::filesystem::path path)
+std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create_mupen_rr(HMODULE module, std::filesystem::path path)
 {
-    const auto plugin_get_version = (ptr_PluginGetVersion)GetProcAddress(module, "PluginGetVersion");
-
-    if (!plugin_get_version)
-    {
-        return std::make_pair(L"PluginGetVersion missing", nullptr);
-    }
-
-    m64p_plugin_type type{};
-    const char *name{};
-    plugin_get_version(&type, nullptr, nullptr, &name, nullptr);
-
-    auto plugin = std::make_unique<M64pPlugin>();
-
-    plugin->m_path = path;
-    plugin->m_name = std::string(name);
-    plugin->m_module = module;
-    plugin->m_spec = Spec::M64p;
-    switch (type)
-    {
-    case M64PLUGIN_RSP:
-        plugin->m_type = ZilmarExtSpec::PluginType::RSP;
-        break;
-    case M64PLUGIN_GFX:
-        plugin->m_type = ZilmarExtSpec::PluginType::Video;
-        break;
-    case M64PLUGIN_AUDIO:
-        plugin->m_type = ZilmarExtSpec::PluginType::Audio;
-        break;
-    case M64PLUGIN_INPUT:
-        plugin->m_type = ZilmarExtSpec::PluginType::Input;
-        break;
-    default:
-        return std::make_pair(L"Invalid plugin type", nullptr);
-        break;
-    }
-
-    g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
-    return std::make_pair(L"", std::move(plugin));
 }
 
 std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
@@ -369,11 +327,11 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
         return std::make_pair(std::format(L"LoadLibrary (code {})", last_error), nullptr);
     }
 
-    auto zilmar_ext_result = Plugin::create_zilmar_ext(module, path);
-    auto m64p_result = Plugin::create_m64p(module, path);
+    auto result1 = Plugin::create_zilmar_ext(module, path);
+    auto result2 = Plugin::create_mupen_rr(module, path);
 
-    if (zilmar_ext_result.first.empty()) return zilmar_ext_result;
-    if (m64p_result.first.empty()) return m64p_result;
+    if (result1.first.empty()) return result1;
+    if (result2.first.empty()) return result2;
 
     FreeLibrary(module);
     return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
@@ -409,369 +367,6 @@ void Plugin::initiate_dummy()
 }
 
 void Plugin::deinitiate_dummy()
-{
-}
-
-void ZilmarExtPlugin::config(HWND hwnd)
-{
-    initiate_dummy();
-
-    const auto dll_config = (ZilmarExtSpec::DLLCONFIG)GetProcAddress(m_module, "DllConfig");
-
-    if (dll_config)
-        dll_config(hwnd);
-    else
-    {
-        DialogService::show_dialog(
-            std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
-            fsvc_error, hwnd);
-    }
-
-    deinitiate_dummy();
-}
-
-void ZilmarExtPlugin::test(HWND hwnd)
-{
-    initiate_dummy();
-    const auto dll_test = (ZilmarExtSpec::DLLTEST)GetProcAddress(m_module, "DllTest");
-    if (dll_test) dll_test(hwnd);
-    deinitiate_dummy();
-}
-
-void ZilmarExtPlugin::about(HWND hwnd)
-{
-    initiate_dummy();
-    const auto dll_about = (ZilmarExtSpec::DLLABOUT)GetProcAddress(m_module, "DllAbout");
-    if (dll_about) dll_about(hwnd);
-    deinitiate_dummy();
-}
-
-void ZilmarExtPlugin::initiate()
-{
-    switch (m_type)
-    {
-    case ZilmarExtSpec::PluginType::Video: {
-        g_view_logger->trace("Initiating video plugin...");
-        ZilmarExtSpec::INITIATEGFX initiate_gfx{};
-
-        FUNC(g_plugin_funcs.video_change_window, ZilmarExtSpec::CHANGEWINDOW, dummy_void, "ChangeWindow");
-        FUNC(g_plugin_funcs.video_close_dll, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(initiate_gfx, ZilmarExtSpec::INITIATEGFX, dummy_initiate_gfx, "InitiateGFX");
-        FUNC(g_plugin_funcs.video_process_dlist, ZilmarExtSpec::PROCESSDLIST, dummy_void, "ProcessDList");
-        FUNC(g_plugin_funcs.video_process_rdp_list, ZilmarExtSpec::PROCESSRDPLIST, dummy_void, "ProcessRDPList");
-        FUNC(g_plugin_funcs.video_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.video_rom_open, ZilmarExtSpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.video_show_cfb, ZilmarExtSpec::SHOWCFB, dummy_void, "ShowCFB");
-        FUNC(g_plugin_funcs.video_update_screen, ZilmarExtSpec::UPDATESCREEN, dummy_void, "UpdateScreen");
-        FUNC(g_plugin_funcs.video_vi_status_changed, ZilmarExtSpec::VISTATUSCHANGED, dummy_void, "ViStatusChanged");
-        FUNC(g_plugin_funcs.video_vi_width_changed, ZilmarExtSpec::VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
-        FUNC(g_plugin_funcs.video_move_screen, ZilmarExtSpec::MOVESCREEN, dummy_move_screen, "MoveScreen");
-        FUNC(g_plugin_funcs.video_capture_screen, ZilmarExtSpec::CAPTURESCREEN, dummy_capture_screen, "CaptureScreen");
-        FUNC(g_plugin_funcs.video_read_screen, ZilmarExtSpec::READSCREEN,
-             (ZilmarExtSpec::READSCREEN)GetProcAddress(m_module, "ReadScreen2"), "ReadScreen");
-        FUNC(g_plugin_funcs.video_get_video_size, ZilmarExtSpec::GETVIDEOSIZE, nullptr, "mge_get_video_size");
-        FUNC(g_plugin_funcs.video_read_video, ZilmarExtSpec::READVIDEO, nullptr, "mge_read_video2");
-        FUNC(g_plugin_funcs.video_fb_read, ZilmarExtSpec::FBREAD, dummy_fb_read, "FBRead");
-        FUNC(g_plugin_funcs.video_fb_write, ZilmarExtSpec::FBWRITE, dummy_fb_write, "FBWrite");
-        FUNC(g_plugin_funcs.video_fb_get_frame_buffer_info, ZilmarExtSpec::FBGETFRAMEBUFFERINFO,
-             dummy_fb_get_framebuffer_info, "FBGetFrameBufferInfo");
-        g_plugin_funcs.video_dll_crt_free = get_free_function_in_module(m_module);
-
-        gfx_info.main_hwnd = g_main_ctx.hwnd;
-        gfx_info.statusbar_hwnd = g_config.is_statusbar_enabled ? Statusbar::hwnd() : nullptr;
-        gfx_info.byteswapped = 1;
-        gfx_info.rom = g_main_ctx.core_ctx->rom;
-        gfx_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        gfx_info.dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-        gfx_info.imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
-        gfx_info.mi_intr_reg = &g_main_ctx.core_ctx->MI_register->mi_intr_reg;
-        gfx_info.dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
-        gfx_info.dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
-        gfx_info.dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
-        gfx_info.dpc_status_reg = &g_main_ctx.core_ctx->dpc_register->dpc_status;
-        gfx_info.dpc_clock_reg = &g_main_ctx.core_ctx->dpc_register->dpc_clock;
-        gfx_info.dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
-        gfx_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
-        gfx_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
-        gfx_info.vi_status_reg = &g_main_ctx.core_ctx->vi_register->vi_status;
-        gfx_info.vi_origin_reg = &g_main_ctx.core_ctx->vi_register->vi_origin;
-        gfx_info.vi_width_reg = &g_main_ctx.core_ctx->vi_register->vi_width;
-        gfx_info.vi_intr_reg = &g_main_ctx.core_ctx->vi_register->vi_v_intr;
-        gfx_info.vi_v_current_line_reg = &g_main_ctx.core_ctx->vi_register->vi_current;
-        gfx_info.vi_timing_reg = &g_main_ctx.core_ctx->vi_register->vi_burst;
-        gfx_info.vi_v_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_v_sync;
-        gfx_info.vi_h_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_h_sync;
-        gfx_info.vi_leap_reg = &g_main_ctx.core_ctx->vi_register->vi_leap;
-        gfx_info.vi_h_start_reg = &g_main_ctx.core_ctx->vi_register->vi_h_start;
-        gfx_info.vi_v_start_reg = &g_main_ctx.core_ctx->vi_register->vi_v_start;
-        gfx_info.vi_v_burst_reg = &g_main_ctx.core_ctx->vi_register->vi_v_burst;
-        gfx_info.vi_x_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_x_scale;
-        gfx_info.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
-        gfx_info.check_interrupts = dummy_void;
-
-        g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-        gfx_info.extended_funcs = &g_plugin_funcs.video_extended_funcs;
-        initiate_gfx(gfx_info);
-
-        bool compat_error = false;
-
-        if (!g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video")) compat_error = true;
-
-        if (compat_error)
-        {
-            const auto msg =
-                std::format(L"The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
-                            IOUtils::to_wide_string(m_name));
-            DialogService::show_dialog(msg.c_str(), L"Plugin Incompatibility", fsvc_error);
-        }
-
-        break;
-    }
-    case ZilmarExtSpec::PluginType::Audio: {
-        g_view_logger->trace("Initiating audio plugin...");
-        ZilmarExtSpec::INITIATEAUDIO initiate_audio{};
-
-        FUNC(g_plugin_funcs.audio_close_dll_audio, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.audio_ai_dacrate_changed, ZilmarExtSpec::AIDACRATECHANGED, dummy_ai_dacrate_changed,
-             "AiDacrateChanged");
-        FUNC(g_plugin_funcs.audio_ai_len_changed, ZilmarExtSpec::AILENCHANGED, dummy_void, "AiLenChanged");
-        FUNC(g_plugin_funcs.audio_ai_read_length, ZilmarExtSpec::AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
-        FUNC(initiate_audio, ZilmarExtSpec::INITIATEAUDIO, dummy_initiate_audio, "InitiateAudio");
-        FUNC(g_plugin_funcs.audio_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.audio_rom_open, ZilmarExtSpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.audio_process_alist, ZilmarExtSpec::PROCESSALIST, dummy_void, "ProcessAList");
-        FUNC(g_plugin_funcs.audio_ai_update, ZilmarExtSpec::AIUPDATE, dummy_ai_update, "AiUpdate");
-
-        audio_info.main_hwnd = g_main_ctx.hwnd;
-        audio_info.hinst = g_main_ctx.hinst;
-        audio_info.byteswapped = 1;
-        audio_info.rom = g_main_ctx.core_ctx->rom;
-        audio_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        audio_info.dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-        audio_info.imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
-        audio_info.mi_intr_reg = &dummy_dw;
-        audio_info.ai_dram_addr_reg = &g_main_ctx.core_ctx->ai_register->ai_dram_addr;
-        audio_info.ai_len_reg = &g_main_ctx.core_ctx->ai_register->ai_len;
-        audio_info.ai_control_reg = &g_main_ctx.core_ctx->ai_register->ai_control;
-        audio_info.ai_status_reg = &dummy_dw;
-        audio_info.ai_dacrate_reg = &g_main_ctx.core_ctx->ai_register->ai_dacrate;
-        audio_info.ai_bitrate_reg = &g_main_ctx.core_ctx->ai_register->ai_bitrate;
-
-        audio_info.check_interrupts = dummy_void;
-
-        g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-        audio_info.extended_funcs = &g_plugin_funcs.audio_extended_funcs;
-        initiate_audio(audio_info);
-        break;
-    }
-    case ZilmarExtSpec::PluginType::Input: {
-        g_view_logger->trace("Initiating input plugin...");
-
-        ZilmarExtSpec::OLD_INITIATECONTROLLERS old_initiate_controllers{};
-        ZilmarExtSpec::INITIATECONTROLLERS initiate_controllers{};
-
-        FUNC(g_plugin_funcs.input_close_dll, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.input_controller_command, ZilmarExtSpec::CONTROLLERCOMMAND, dummy_controller_command,
-             "ControllerCommand");
-        FUNC(g_plugin_funcs.input_get_keys, ZilmarExtSpec::GETKEYS, dummy_get_keys, "GetKeys");
-        FUNC(g_plugin_funcs.input_set_keys, ZilmarExtSpec::SETKEYS, dummy_set_keys, "SetKeys");
-        if (m_version == 0x0101)
-        {
-            FUNC(initiate_controllers, ZilmarExtSpec::INITIATECONTROLLERS, dummy_initiate_controllers,
-                 "InitiateControllers");
-        }
-        else
-        {
-            FUNC(old_initiate_controllers, ZilmarExtSpec::OLD_INITIATECONTROLLERS, nullptr, "InitiateControllers");
-        }
-        FUNC(g_plugin_funcs.input_read_controller, ZilmarExtSpec::READCONTROLLER, dummy_read_controller,
-             "ReadController");
-        FUNC(g_plugin_funcs.input_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.input_rom_open, ZilmarExtSpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.input_key_down, ZilmarExtSpec::KEYDOWN, dummy_key_down, "WM_KeyDown");
-        FUNC(g_plugin_funcs.input_key_up, ZilmarExtSpec::KEYUP, dummy_key_up, "WM_KeyUp");
-
-        control_info.main_hwnd = g_main_ctx.hwnd;
-        control_info.hinst = g_main_ctx.hinst;
-        control_info.byteswapped = 1;
-        control_info.header = g_main_ctx.core_ctx->rom;
-
-        std::array<ZilmarExtSpec::Controller, 4> tmp_controllers{};
-        control_info.controllers = tmp_controllers.data();
-
-        g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-        control_info.extended_funcs = &g_plugin_funcs.input_extended_funcs;
-
-        if (m_version == 0x0101)
-            initiate_controllers(control_info);
-        else
-            old_initiate_controllers(g_main_ctx.hwnd, tmp_controllers.data());
-
-        for (size_t i = 0; i < std::size(tmp_controllers); ++i)
-        {
-            g_main_ctx.core.controls[i] = tmp_controllers[i].to_core_controller();
-        }
-        break;
-    }
-    case ZilmarExtSpec::PluginType::RSP: {
-        g_view_logger->trace("Initiating RSP plugin...");
-        ZilmarExtSpec::INITIATERSP initiate_rsp{};
-
-        FUNC(g_plugin_funcs.rsp_close_dll, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.rsp_do_rsp_cycles, ZilmarExtSpec::DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
-        FUNC(initiate_rsp, ZilmarExtSpec::INITIATERSP, dummy_initiate_rsp, "InitiateRSP");
-        FUNC(g_plugin_funcs.rsp_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
-
-        rsp_info.byteswapped = 1;
-        rsp_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        rsp_info.dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-        rsp_info.imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
-        rsp_info.mi_intr_reg = &g_main_ctx.core_ctx->MI_register->mi_intr_reg;
-        rsp_info.sp_mem_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_mem_addr_reg;
-        rsp_info.sp_dram_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_dram_addr_reg;
-        rsp_info.sp_rd_len_reg = &g_main_ctx.core_ctx->sp_register->sp_rd_len_reg;
-        rsp_info.sp_wr_len_reg = &g_main_ctx.core_ctx->sp_register->sp_wr_len_reg;
-        rsp_info.sp_status_reg = &g_main_ctx.core_ctx->sp_register->sp_status_reg;
-        rsp_info.sp_dma_full_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_full_reg;
-        rsp_info.sp_dma_busy_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_busy_reg;
-        rsp_info.sp_pc_reg = &g_main_ctx.core_ctx->rsp_register->rsp_pc;
-        rsp_info.sp_semaphore_reg = &g_main_ctx.core_ctx->sp_register->sp_semaphore_reg;
-        rsp_info.dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
-        rsp_info.dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
-        rsp_info.dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
-        rsp_info.dpc_status_reg = &g_main_ctx.core_ctx->dpc_register->dpc_status;
-        rsp_info.dpc_clock_reg = &g_main_ctx.core_ctx->dpc_register->dpc_clock;
-        rsp_info.dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
-        rsp_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
-        rsp_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
-        rsp_info.check_interrupts = dummy_void;
-        rsp_info.process_dlist_list = g_plugin_funcs.video_process_dlist;
-        rsp_info.process_alist_list = g_plugin_funcs.audio_process_alist;
-        rsp_info.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
-        rsp_info.show_cfb = g_plugin_funcs.video_show_cfb;
-
-        g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-        rsp_info.extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
-
-        int32_t i = 4;
-        initiate_rsp(rsp_info, (uint32_t *)&i);
-        break;
-    }
-    }
-}
-
-void ZilmarExtPlugin::initiate_dummy()
-{
-    Main::init_sdl();
-
-    if (m_spec != Spec::ZilmarExt) return;
-
-    switch (m_type)
-    {
-    case ZilmarExtSpec::PluginType::Video: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
-        {
-            // NOTE: Since olden days, dummy render target hwnd was the statusbar.
-            dummy_video_info.main_hwnd = Statusbar::hwnd();
-            dummy_video_info.statusbar_hwnd = Statusbar::hwnd();
-
-            g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-            dummy_video_info.extended_funcs = &g_plugin_funcs.video_extended_funcs;
-
-            const auto initiate_gfx = (ZilmarExtSpec::INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
-            if (initiate_gfx && !initiate_gfx(dummy_video_info))
-            {
-                DialogService::show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
-            }
-        }
-
-        break;
-    }
-    case ZilmarExtSpec::PluginType::Audio: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
-        {
-            g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-            dummy_audio_info.extended_funcs = &g_plugin_funcs.audio_extended_funcs;
-
-            const auto initiate_audio = (ZilmarExtSpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
-            if (initiate_audio && !initiate_audio(dummy_audio_info))
-            {
-                DialogService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
-            }
-        }
-
-        break;
-    }
-    case ZilmarExtSpec::PluginType::Input: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
-        {
-            g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-            dummy_control_info.extended_funcs = &g_plugin_funcs.input_extended_funcs;
-
-            if (m_version == 0x0101)
-            {
-                const auto initiate_controllers =
-                    (ZilmarExtSpec::INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
-                if (initiate_controllers) initiate_controllers(dummy_control_info);
-            }
-            else
-            {
-                const auto old_initiate_controllers =
-                    (ZilmarExtSpec::OLD_INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
-
-                std::fill(std::begin(dummy_controllers), std::end(dummy_controllers), ZilmarExtSpec::Controller{});
-                if (old_initiate_controllers) old_initiate_controllers(g_main_ctx.hwnd, dummy_controllers);
-            }
-        }
-
-        break;
-    }
-    case ZilmarExtSpec::PluginType::RSP: {
-        if (!g_main_ctx.core_ctx->vr_get_launched())
-        {
-            g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-            dummy_rsp_info.extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
-
-            auto initiateRSP = (ZilmarExtSpec::INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
-            uint32_t i = 0;
-            if (initiateRSP) initiateRSP(dummy_rsp_info, &i);
-        }
-
-        break;
-    }
-    default:
-        RT_ASSERT(false, L"Unknown plugin type");
-    }
-}
-
-void ZilmarExtPlugin::deinitiate_dummy()
-{
-    if (g_main_ctx.core_ctx->vr_get_launched()) return;
-    const auto close_dll = (ZilmarExtSpec::CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
-    if (close_dll) close_dll();
-}
-
-void M64pPlugin::config(HWND hwnd)
-{
-}
-
-void M64pPlugin::test(HWND hwnd)
-{
-}
-
-void M64pPlugin::about(HWND hwnd)
-{
-}
-
-void M64pPlugin::initiate()
-{
-}
-
-void M64pPlugin::initiate_dummy()
-{
-}
-
-void M64pPlugin::deinitiate_dummy()
 {
 }
 
