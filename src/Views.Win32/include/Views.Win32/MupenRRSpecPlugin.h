@@ -222,6 +222,8 @@ extern "C"
 
 extern "C"
 {
+    using namespace MupenRRSpecPlugin;
+
     // ReSharper disable CppInconsistentNaming
 
     EXPORT void CALL M64RRGetMetadata(PluginMetadata *metadata);

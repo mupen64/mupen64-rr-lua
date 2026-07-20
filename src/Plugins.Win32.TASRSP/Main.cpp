@@ -81,7 +81,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        if (rsp.process_dlist_list) rsp.process_dlist_list();
+        rsp.process_d_list();
 
         *rsp.sp_status_reg |= 0x0203;
         if ((*rsp.sp_status_reg & 0x40) != 0) *rsp.mi_intr_reg |= 0x1;
