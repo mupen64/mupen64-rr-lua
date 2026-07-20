@@ -157,7 +157,7 @@ extern "C"
 
         uint8_t *header;
         Controller *controllers;
-        ZESpec::ExtendedFuncs *ef;
+        ExtendedFuncs *ef;
     };
 
     struct WindowHandle
@@ -183,7 +183,7 @@ extern "C"
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
 
     typedef void(CALL *PtrProcessDList)();
-    typedef void(CALL *PtrReadVideo)(void * buffer, int32_t * width, int32_t * height);
+    typedef void(CALL *PtrReadVideo)(void *buffer, int32_t *width, int32_t *height);
 
     typedef void(CALL *PtrAIDacrateChanged)(int32_t system_type);
     typedef void(CALL *PtrAILenChanged)();
