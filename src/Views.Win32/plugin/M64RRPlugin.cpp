@@ -46,7 +46,6 @@ static CoreController controller_to_core_controller(const M64RRSpec::Controller 
 static M64RRSpec::PtrRomOpened s_mupenrr_rom_opened_fn = nullptr;
 static M64RRSpec::PtrRomClosed s_mupenrr_rom_closed_fn = nullptr;
 static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
-static M64RRSpec::PtrGetVideoSize s_mupenrr_get_video_size_fn = nullptr;
 static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
 static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
 static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
@@ -229,7 +228,6 @@ void M64RRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
         LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
         LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, M64RRSpec::PtrProcessDList, "M64RRProcessDList");
-        LOOKUP_MUPENRR_FN(s_mupenrr_get_video_size_fn, M64RRSpec::PtrGetVideoSize, "M64RRGetVideoSize");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
         LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
@@ -249,8 +247,13 @@ void M64RRPlugin::initiate()
         g_plugin_funcs.video_show_cfb = [](const auto &...) {};
         g_plugin_funcs.video_vi_status_changed = [](const auto &...) {};
         g_plugin_funcs.video_vi_width_changed = [](const auto &...) {};
-        if (s_mupenrr_get_video_size_fn) g_plugin_funcs.video_get_video_size = s_mupenrr_get_video_size_fn;
-        if (s_mupenrr_read_video_fn) g_plugin_funcs.video_read_video = s_mupenrr_read_video_fn;
+        if (s_mupenrr_read_video_fn)
+        {
+            g_plugin_funcs.video_get_video_size = [](int32_t *width, int32_t *height) {
+                s_mupenrr_read_video_fn(nullptr, width, height);
+            };
+            g_plugin_funcs.video_read_video = [](void **buffer) { s_mupenrr_read_video_fn(*buffer, nullptr, nullptr); };
+        }
         g_plugin_funcs.video_change_window = [](const auto &...) {};
         g_plugin_funcs.video_update_screen = [](const auto &...) {};
         g_plugin_funcs.video_move_screen = [](int32_t, int32_t) {};
@@ -268,8 +271,7 @@ void M64RRPlugin::initiate()
 
         LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
         LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
-        LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, M64RRSpec::PtrAIDacrateChanged,
-                          "M64RRAIDacrateChanged");
+        LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, M64RRSpec::PtrAIDacrateChanged, "M64RRAIDacrateChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, M64RRSpec::PtrAILenChanged, "M64RRAILenChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 

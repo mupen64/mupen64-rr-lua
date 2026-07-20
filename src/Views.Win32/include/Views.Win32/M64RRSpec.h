@@ -183,8 +183,7 @@ extern "C"
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
 
     typedef void(CALL *PtrProcessDList)();
-    typedef void(CALL *PtrGetVideoSize)(int32_t *, int32_t *);
-    typedef void(CALL *PtrReadVideo)(void **);
+    typedef void(CALL *PtrReadVideo)(void * buffer, int32_t * width, int32_t * height);
 
     typedef void(CALL *PtrAIDacrateChanged)(int32_t system_type);
     typedef void(CALL *PtrAILenChanged)();
@@ -213,8 +212,7 @@ extern "C"
     EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window);
 
     EXPORT void CALL M64RRProcessDList(void);
-    EXPORT void CALL M64RRGetVideoSize(int32_t *width, int32_t *height);
-    EXPORT void CALL M64RRReadVideo(void **video);
+    EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height);
 
     EXPORT void CALL M64RRAIDacrateChanged(int32_t system_type);
     EXPORT void CALL M64RRAILenChanged(void);
