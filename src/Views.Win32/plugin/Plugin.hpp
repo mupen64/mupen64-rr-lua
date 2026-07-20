@@ -90,12 +90,6 @@ extern ZilmarExtSpec::DLLTEST dll_test;
 class Plugin
 {
   public:
-    enum class Spec
-    {
-        ZilmarExt,
-        M64p
-    };
-
     /**
      * \brief Tries to create a plugin from the given path
      * \param path The path to a plugin
@@ -145,16 +139,6 @@ class Plugin
      */
     auto type() const { return m_type; }
 
-    /**
-     * \brief Gets the plugin's version
-     */
-    auto version() const { return m_version; }
-
-    /**
-     * \brief Gets the plugin's spec.
-     */
-    auto spec() const { return m_spec; }
-
   protected:
     /**
      * \brief Initiates the plugin for being called ephemerally (e.g. via `config()`, `test()`, `about()`)
@@ -167,7 +151,6 @@ class Plugin
     ZilmarExtSpec::PluginType m_type;
     uint16_t m_version;
     HMODULE m_module;
-    Spec m_spec;
 };
 
 /**

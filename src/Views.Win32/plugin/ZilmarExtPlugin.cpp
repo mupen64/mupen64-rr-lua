@@ -244,7 +244,6 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZilmarExtPlugin::create(HMODULE
     plugin->m_type = static_cast<ZilmarExtSpec::PluginType>(plugin_info.type);
     plugin->m_version = plugin_info.ver;
     plugin->m_module = module;
-    plugin->m_spec = Spec::ZilmarExt;
 
     g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
     return std::make_pair(L"", std::move(plugin));
@@ -501,8 +500,6 @@ void ZilmarExtPlugin::initiate()
 void ZilmarExtPlugin::initiate_dummy()
 {
     Main::init_sdl();
-
-    if (m_spec != Spec::ZilmarExt) return;
 
     switch (m_type)
     {
