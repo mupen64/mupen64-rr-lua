@@ -226,6 +226,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE m
         break;
     }
     plugin->m_module = module;
+    plugin->m_meta = metadata;
 
     g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
     return std::make_pair(L"", std::move(plugin));
@@ -255,7 +256,7 @@ void MupenRRPlugin::test(HWND hwnd)
 
 void MupenRRPlugin::about(HWND hwnd)
 {
-    // TODO: Implement
+    MessageBox(hwnd, IOUtils::to_wide_string(m_meta.description).c_str(), L"About", MB_ICONINFORMATION | MB_OK);
 }
 
 void MupenRRPlugin::initiate()

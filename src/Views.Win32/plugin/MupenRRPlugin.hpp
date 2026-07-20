@@ -22,4 +22,7 @@ class MupenRRPlugin : public Plugin
     void initiate() override;
     void initiate_dummy() override;
     void deinitiate_dummy() override;
+
+  protected:
+    MupenRRSpecPlugin::PluginMetadata m_meta;
 };
