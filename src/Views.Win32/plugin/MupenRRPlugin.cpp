@@ -9,6 +9,7 @@
 
 std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE module, std::filesystem::path path)
 {
+    return std::make_pair(L"Unsupported", nullptr);
 }
 
 void MupenRRPlugin::config(HWND hwnd)
