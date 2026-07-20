@@ -92,7 +92,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE m
     auto plugin = std::make_unique<MupenRRPlugin>();
 
     plugin->m_path = path;
-    plugin->m_name = std::string(metadata.name);
+    plugin->m_name = std::format("{} (✅)", metadata.name);
     switch (metadata.type)
     {
     case MupenRRSpecPlugin::PluginType::Video:
