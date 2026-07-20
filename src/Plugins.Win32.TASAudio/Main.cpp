@@ -8,25 +8,14 @@
 #include "Config.hpp"
 #include "IOUtils.hpp"
 #include "SDLBackend.hpp"
-
 #include "core_types.h"
 #include <CommonPCH.hpp>
-#include <SDL3/SDL.h>
-
 #include <VersionNameHelpers.hpp>
-#include <core_api.h>
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
+#include <Views.Win32/MupenRRSpecPlugin.h>
 
-#include <exception>
-#include <format>
-#include <fstream>
-#include <ios>
-#include <optional>
-#include <stdexcept>
-
-static std::optional<ZilmarExtSpec::AudioPluginInfo> g_audio_info{};
+static std::optional<MupenRRSpecPlugin::PluginInit> g_audio_info{};
 std::optional<SDLAudio::SDLBackend> g_backend{};
-ZilmarExtSpec::ExtendedFuncs *g_ef = nullptr;
+MupenRRSpecPlugin::ExtendedFuncs *g_ef = nullptr;
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 std::filesystem::path g_config_path{};
@@ -89,27 +78,40 @@ void write_config(const SDLAudio::Config &config)
     config.write_to(fs);
 }
 
-EXPORT void CALL CloseDLL()
+EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)
+{
+    metadata->type = MupenRRSpecPlugin::PluginType::Audio;
+
+    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
+    const auto description = "First-party TAS plugin for Mupen64."
+                             "\n"
+                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                             "to one version of the emulator."
+                             "\n\n"
+                             "https://mupen64.com";
+    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+
+    auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
+    metadata->name[result.size] = '\0';
+
+    result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
+    metadata->description[result.size] = '\0';
+
+    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
+    metadata->target_version[result.size] = '\0';
+}
+
+EXPORT void CALL M64RRShutdown()
 {
     if (g_backend.has_value()) g_backend.reset();
 }
 
-EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo)
+EXPORT void CALL M64RRInitiate(MupenRRSpecPlugin::PluginInit *init)
 {
-    PluginInfo->unused_byteswapped = TRUE;
-    PluginInfo->unused_normal_memory = FALSE;
-    strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
-    PluginInfo->type = ZilmarExtSpec::PluginType::Audio;
-    PluginInfo->ver = 0x0101;
-    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
-}
-
-EXPORT int32_t CALL InitiateAudio(ZilmarExtSpec::AudioPluginInfo Audio_Info)
-{
-    g_ef = Audio_Info.extended_funcs;
+    g_ef = init->ef;
     g_config_path = ZilmarExtSpec::get_config_path(g_ef);
 
-    g_audio_info.emplace(Audio_Info);
+    g_audio_info.emplace(*init);
 
     try
     {
@@ -119,18 +121,15 @@ EXPORT int32_t CALL InitiateAudio(ZilmarExtSpec::AudioPluginInfo Audio_Info)
     catch (std::exception &e)
     {
         g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
-        return 0;
     }
-
-    return 1;
 }
 
-EXPORT void CALL RomClosed()
+EXPORT void CALL M64RRRomClosed()
 {
     if (g_backend.has_value()) g_backend.reset();
 }
 
-EXPORT void CALL AiDacrateChanged(int32_t system_type)
+EXPORT void CALL M64RRAIDacrateChanged(int32_t system_type)
 {
     // update sample rate
     if (!g_audio_info || !g_backend) return;
@@ -145,7 +144,7 @@ EXPORT void CALL AiDacrateChanged(int32_t system_type)
     }
 }
 
-EXPORT void CALL AiLenChanged()
+EXPORT void CALL M64RRAILenChanged()
 {
     const auto effective_speed_mode = g_ef->get_effective_speed_mode();
     if (effective_speed_mode == CoreSpeedMode::UltraFastForward) return;

@@ -9,11 +9,6 @@
 #include "Config_Win32.hpp"
 #include "IOUtils.hpp"
 #include "Main.hpp"
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
-#include <filesystem>
-#include <sstream>
-#include <string>
-#include <vector>
 
 #include <windows.h>
 #include <winerror.h>
@@ -48,21 +43,11 @@ BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
     }
     return TRUE;
 }
-EXPORT void CALL DllAbout(void *hParent)
-{
-    const auto msg = L"First-party TAS plugin for Mupen64."
-                     L"\n"
-                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                     L"to one version of the emulator."
-                     L"\n\n"
-                     L"https://mupen64.com";
-    MessageBox((HWND)hParent, msg, L"About", MB_ICONASTERISK);
-}
 
-EXPORT void CALL DllConfig(void *hParent)
+EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
 {
     SDLAudio::Config cfg = read_config();
-    if (SDLAudio::win32_show_config((HWND)hParent, cfg))
+    if (SDLAudio::win32_show_config(parent_window.hwnd(), cfg))
     {
         if (g_ef) g_ef->log_info(L"Saving config...");
         write_config(cfg);

@@ -173,6 +173,7 @@ extern "C"
             ptr1 = reinterpret_cast<void *>(hwnd);
             ptr2 = nullptr;
         }
+        HWND hwnd() const { return reinterpret_cast<HWND>(ptr1); }
 #endif
     };
 
