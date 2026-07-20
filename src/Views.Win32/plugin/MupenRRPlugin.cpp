@@ -101,6 +101,38 @@ static void CALL dummy_capture_screen(char *)
 
 #pragma endregion
 
+static CoreController controller_to_core_controller(const MupenRRSpecPlugin::Controller &controller)
+{
+    CoreControllerExtension extension;
+    switch (controller.plugin)
+    {
+    case MupenRRSpecPlugin::ControllerExtension::None:
+        extension = CoreControllerExtension::None;
+        break;
+    case MupenRRSpecPlugin::ControllerExtension::Mempak:
+        extension = CoreControllerExtension::Mempak;
+        break;
+    case MupenRRSpecPlugin::ControllerExtension::Rumblepak:
+        extension = CoreControllerExtension::Rumblepak;
+        break;
+    case MupenRRSpecPlugin::ControllerExtension::Transferpak:
+        extension = CoreControllerExtension::Transferpak;
+        break;
+    case MupenRRSpecPlugin::ControllerExtension::Raw:
+        extension = CoreControllerExtension::Raw;
+        break;
+    default:
+        RT_ASSERT(false, L"Unknown controller extension");
+        break;
+    }
+
+    return CoreController{
+        .Present = controller.present ? 1 : 0,
+        .RawData = controller.raw ? 1 : 0,
+        .Plugin = extension,
+    };
+}
+
 static MupenRRSpecPlugin::PtrRomOpened s_mupenrr_rom_opened_fn = nullptr;
 static MupenRRSpecPlugin::PtrRomClosed s_mupenrr_rom_closed_fn = nullptr;
 static MupenRRSpecPlugin::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
@@ -314,13 +346,7 @@ void MupenRRPlugin::initiate()
     init.sp_dma_busy_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_busy_reg;
     init.sp_pc_reg = &g_main_ctx.core_ctx->rsp_register->rsp_pc;
     init.sp_semaphore_reg = &g_main_ctx.core_ctx->sp_register->sp_semaphore_reg;
-
-    init.check_interrupts = dummy_void;
-
-    init.process_d_list = g_plugin_funcs.video_process_dlist;
-    init.process_a_list = g_plugin_funcs.audio_process_alist;
-    init.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
-
+    init.process_dlist = g_plugin_funcs.video_process_dlist;
     init.header = g_main_ctx.core_ctx->rom;
 
     std::array<MupenRRSpecPlugin::Controller, 4> tmp_controllers{};
@@ -424,7 +450,7 @@ void MupenRRPlugin::initiate()
 
         for (size_t i = 0; i < std::size(tmp_controllers); ++i)
         {
-            g_main_ctx.core.controls[i] = tmp_controllers[i].to_core_controller();
+            g_main_ctx.core.controls[i] = controller_to_core_controller(tmp_controllers[i]);
         }
         break;
     }
@@ -500,10 +526,7 @@ void MupenRRPlugin::initiate_dummy()
     init.sp_pc_reg = &dummy_dw;
     init.sp_semaphore_reg = &dummy_dw;
 
-    init.check_interrupts = dummy_void;
-    init.process_d_list = dummy_void;
-    init.process_a_list = dummy_void;
-    init.process_rdp_list = dummy_void;
+    init.process_dlist = dummy_void;
     init.header = dummy_header;
 
     std::array<MupenRRSpecPlugin::Controller, 4> tmp_controllers{};

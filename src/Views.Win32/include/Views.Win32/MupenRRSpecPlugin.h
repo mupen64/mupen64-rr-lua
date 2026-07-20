@@ -69,49 +69,6 @@ extern "C"
         bool present;
         bool raw;
         ControllerExtension plugin;
-
-        CoreController to_core_controller() const
-        {
-            CoreControllerExtension extension;
-            switch (plugin)
-            {
-            case ControllerExtension::None:
-                extension = CoreControllerExtension::None;
-                break;
-            case ControllerExtension::Mempak:
-                extension = CoreControllerExtension::Mempak;
-                break;
-            case ControllerExtension::Rumblepak:
-                extension = CoreControllerExtension::Rumblepak;
-                break;
-            case ControllerExtension::Transferpak:
-                extension = CoreControllerExtension::Transferpak;
-                break;
-            case ControllerExtension::Raw:
-                extension = CoreControllerExtension::Raw;
-                break;
-            default:
-                assert(false && "Unknown controller extension");
-                break;
-            }
-
-            return CoreController{
-                .Present = present ? 1 : 0,
-                .RawData = raw ? 1 : 0,
-                .Plugin = extension,
-            };
-        }
-    };
-
-    /**
-     * \brief Describes framebuffer information.
-     */
-    struct FBInfo
-    {
-        uint32_t addr;
-        uint32_t size;
-        uint32_t width;
-        uint32_t height;
     };
 
     /**
@@ -198,10 +155,7 @@ extern "C"
         uint32_t *sp_pc_reg;
         uint32_t *sp_semaphore_reg;
 
-        void(CALL *process_d_list)(void);
-        void(CALL *process_a_list)(void);
-        void(CALL *process_rdp_list)(void);
-        void(CALL *check_interrupts)(void);
+        void(CALL *process_dlist)(void);
 
         uint8_t *header;
         Controller *controllers;
