@@ -79,6 +79,17 @@ extern ZilmarExtSpec::DLLABOUT dll_about;
 extern ZilmarExtSpec::DLLCONFIG dll_config;
 extern ZilmarExtSpec::DLLTEST dll_test;
 
+inline size_t ext_fn_config_path(char *data, size_t size)
+{
+    static const std::u8string config_path = IOUtils::config_path().u8string();
+
+    if (data == nullptr) return config_path.size() + 1;
+    if (size < config_path.size() + 1) return 0;
+
+    memcpy(data, config_path.c_str(), config_path.size() + 1);
+    return size + 1;
+}
+
 #define FUNC(target, type, fallback, name)                                                                             \
     target = (type)GetProcAddress((HMODULE)m_module, name);                                                            \
     if (!target)                                                                                                       \
@@ -87,9 +98,29 @@ extern ZilmarExtSpec::DLLTEST dll_test;
         g_view_logger->info("Substituting dummy function for {}", name);                                               \
     }
 
+#define GEN_EXTENDED_FUNCS(logger)                                                                                     \
+    ZilmarExtSpec::ExtendedFuncs                                                                                       \
+    {                                                                                                                  \
+        .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
+        .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
+        .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
+        .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
+        .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
+        .frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); },                             \
+        .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter                             \
+    }
+
 class Plugin
 {
   public:
+    enum class Type
+    {
+        Video,
+        Audio,
+        Input,
+        RSP,
+    };
+
     /**
      * \brief Tries to create a plugin from the given path
      * \param path The path to a plugin
@@ -148,8 +179,7 @@ class Plugin
 
     std::filesystem::path m_path;
     std::string m_name;
-    ZilmarExtSpec::PluginType m_type;
-    uint16_t m_version;
+    Type m_type;
     HMODULE m_module;
 };
 
@@ -235,5 +265,12 @@ void get_plugin_names(char *video, char *audio, char *input, char *rsp);
  * containing that file.
  */
 void screenshot(const std::filesystem::path &path);
+
+/**
+ * \brief Tries to find the free function exported by the CRT in the specified module.
+ * \param module The module to search in.
+ * \return A pointer to the free function, or the CRT's free if not found via DllCrtFree.
+ */
+ZilmarExtSpec::DLLCRTFREE get_free_function_in_module(HMODULE module);
 
 } // namespace PluginUtil

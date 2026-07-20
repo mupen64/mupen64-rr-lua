@@ -18,10 +18,6 @@
 #include <ThreadPool.hpp>
 #include <Messenger.hpp>
 
-#ifndef CALL
-#define CALL _cdecl
-#endif
-
 ZilmarExtSpec::VideoPluginInfo dummy_video_info{};
 ZilmarExtSpec::AudioPluginInfo dummy_audio_info{};
 ZilmarExtSpec::InputPluginInfo dummy_control_info{};
@@ -47,17 +43,6 @@ static std::shared_ptr<Plugin> rsp_plugin;
 static std::jthread s_audio_thread;
 
 ZilmarExtSpecPluginFuncs g_plugin_funcs{};
-
-static size_t ext_fn_config_path(char *data, size_t size)
-{
-    static const std::u8string config_path = IOUtils::config_path().u8string();
-
-    if (data == nullptr) return config_path.size() + 1;
-    if (size < config_path.size() + 1) return 0;
-
-    memcpy(data, config_path.c_str(), config_path.size() + 1);
-    return size + 1;
-}
 
 #pragma region Dummy Functions
 
@@ -238,10 +223,7 @@ static void start_audio_thread()
         .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter                             \
     }
 
-/**
- * \brief Tries to find the free function exported by the CRT in the specified module.
- */
-static void (*get_free_function_in_module(HMODULE module))(void *)
+ZilmarExtSpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
 {
     auto dll_crt_free = (ZilmarExtSpec::DLLCRTFREE)GetProcAddress(module, "DllCrtFree");
     if (dll_crt_free) return dll_crt_free;

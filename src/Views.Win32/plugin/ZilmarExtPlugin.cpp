@@ -14,21 +14,6 @@
 #include <plugin/Plugin.hpp>
 #include <plugin/ZilmarExtPlugin.hpp>
 
-#ifndef CALL
-#define CALL _cdecl
-#endif
-
-static size_t ext_fn_config_path(char *data, size_t size)
-{
-    static const std::u8string config_path = IOUtils::config_path().u8string();
-
-    if (data == nullptr) return config_path.size() + 1;
-    if (size < config_path.size() + 1) return 0;
-
-    memcpy(data, config_path.c_str(), config_path.size() + 1);
-    return size + 1;
-}
-
 #pragma region Dummy Functions
 
 static uint32_t CALL dummy_do_rsp_cycles(uint32_t Cycles)
@@ -165,48 +150,6 @@ static void CALL dummy_capture_screen(char *)
 
 #pragma endregion
 
-#define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    ZilmarExtSpec::ExtendedFuncs                                                                                       \
-    {                                                                                                                  \
-        .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
-        .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
-        .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
-        .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
-        .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
-        .frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); },                             \
-        .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter                             \
-    }
-
-/**
- * \brief Tries to find the free function exported by the CRT in the specified module.
- */
-static void (*get_free_function_in_module(HMODULE module))(void *)
-{
-    auto dll_crt_free = (ZilmarExtSpec::DLLCRTFREE)GetProcAddress(module, "DllCrtFree");
-    if (dll_crt_free) return dll_crt_free;
-
-    ULONG size;
-    auto import_descriptor = (PIMAGE_IMPORT_DESCRIPTOR)ImageDirectoryEntryToDataEx(
-        module, true, IMAGE_DIRECTORY_ENTRY_IMPORT, &size, nullptr);
-    if (import_descriptor != nullptr)
-    {
-        while (import_descriptor->Characteristics && import_descriptor->Name)
-        {
-            auto importDllName = (LPCSTR)((PBYTE)module + import_descriptor->Name);
-            auto importDllHandle = GetModuleHandleA(importDllName);
-            if (importDllHandle != nullptr)
-            {
-                dll_crt_free = (ZilmarExtSpec::DLLCRTFREE)GetProcAddress(importDllHandle, "free");
-                if (dll_crt_free != nullptr) return dll_crt_free;
-            }
-
-            import_descriptor++;
-        }
-    }
-
-    return free;
-}
-
 std::pair<std::wstring, std::unique_ptr<Plugin>> ZilmarExtPlugin::create(HMODULE module, std::filesystem::path path)
 {
     const auto get_dll_info = (ZilmarExtSpec::GETDLLINFO)GetProcAddress(module, "GetDllInfo");
@@ -241,7 +184,23 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZilmarExtPlugin::create(HMODULE
 
     plugin->m_path = path;
     plugin->m_name = std::string(plugin_info.name);
-    plugin->m_type = static_cast<ZilmarExtSpec::PluginType>(plugin_info.type);
+    switch (plugin_info.type)
+    {
+    case ZilmarExtSpec::PluginType::Video:
+        plugin->m_type = Plugin::Type::Video;
+        break;
+    case ZilmarExtSpec::PluginType::Audio:
+        plugin->m_type = Plugin::Type::Audio;
+        break;
+    case ZilmarExtSpec::PluginType::Input:
+        plugin->m_type = Plugin::Type::Input;
+        break;
+    case ZilmarExtSpec::PluginType::RSP:
+        plugin->m_type = Plugin::Type::RSP;
+        break;
+    default:
+        return std::make_pair(L"Unknown plugin type", nullptr);
+    }
     plugin->m_version = plugin_info.ver;
     plugin->m_module = module;
 
@@ -287,7 +246,7 @@ void ZilmarExtPlugin::initiate()
 {
     switch (m_type)
     {
-    case ZilmarExtSpec::PluginType::Video: {
+    case Plugin::Type::Video: {
         g_view_logger->trace("Initiating video plugin...");
         ZilmarExtSpec::INITIATEGFX initiate_gfx{};
 
@@ -312,7 +271,7 @@ void ZilmarExtPlugin::initiate()
         FUNC(g_plugin_funcs.video_fb_write, ZilmarExtSpec::FBWRITE, dummy_fb_write, "FBWrite");
         FUNC(g_plugin_funcs.video_fb_get_frame_buffer_info, ZilmarExtSpec::FBGETFRAMEBUFFERINFO,
              dummy_fb_get_framebuffer_info, "FBGetFrameBufferInfo");
-        g_plugin_funcs.video_dll_crt_free = get_free_function_in_module(m_module);
+        g_plugin_funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
 
         gfx_info.main_hwnd = g_main_ctx.hwnd;
         gfx_info.statusbar_hwnd = g_config.is_statusbar_enabled ? Statusbar::hwnd() : nullptr;
@@ -364,7 +323,7 @@ void ZilmarExtPlugin::initiate()
 
         break;
     }
-    case ZilmarExtSpec::PluginType::Audio: {
+    case Plugin::Type::Audio: {
         g_view_logger->trace("Initiating audio plugin...");
         ZilmarExtSpec::INITIATEAUDIO initiate_audio{};
 
@@ -401,7 +360,7 @@ void ZilmarExtPlugin::initiate()
         initiate_audio(audio_info);
         break;
     }
-    case ZilmarExtSpec::PluginType::Input: {
+    case Plugin::Type::Input: {
         g_view_logger->trace("Initiating input plugin...");
 
         ZilmarExtSpec::OLD_INITIATECONTROLLERS old_initiate_controllers{};
@@ -450,7 +409,7 @@ void ZilmarExtPlugin::initiate()
         }
         break;
     }
-    case ZilmarExtSpec::PluginType::RSP: {
+    case Plugin::Type::RSP: {
         g_view_logger->trace("Initiating RSP plugin...");
         ZilmarExtSpec::INITIATERSP initiate_rsp{};
 
@@ -503,7 +462,7 @@ void ZilmarExtPlugin::initiate_dummy()
 
     switch (m_type)
     {
-    case ZilmarExtSpec::PluginType::Video: {
+    case Plugin::Type::Video: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
             // NOTE: Since olden days, dummy render target hwnd was the statusbar.
@@ -522,7 +481,7 @@ void ZilmarExtPlugin::initiate_dummy()
 
         break;
     }
-    case ZilmarExtSpec::PluginType::Audio: {
+    case Plugin::Type::Audio: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
             g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
@@ -537,7 +496,7 @@ void ZilmarExtPlugin::initiate_dummy()
 
         break;
     }
-    case ZilmarExtSpec::PluginType::Input: {
+    case Plugin::Type::Input: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
             g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
@@ -561,7 +520,7 @@ void ZilmarExtPlugin::initiate_dummy()
 
         break;
     }
-    case ZilmarExtSpec::PluginType::RSP: {
+    case Plugin::Type::RSP: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
             g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);

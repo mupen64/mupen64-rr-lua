@@ -22,4 +22,7 @@ class ZilmarExtPlugin : public Plugin
     void initiate() override;
     void initiate_dummy() override;
     void deinitiate_dummy() override;
+
+  protected:
+    uint16_t m_version;
 };
