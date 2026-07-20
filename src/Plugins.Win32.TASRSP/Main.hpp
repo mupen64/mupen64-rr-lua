@@ -8,12 +8,10 @@
 
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
-#include <core_api.h>
 #include <Views.Win32/MupenRRSpecPlugin.h>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP")
 
-extern HINSTANCE g_instance;
 extern std::filesystem::path g_config_path;
 extern MupenRRSpecPlugin::ExtendedFuncs *g_ef;
 

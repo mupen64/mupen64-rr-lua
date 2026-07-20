@@ -9,8 +9,7 @@
 
 static void SPNOOP()
 {
-    MessageBox(nullptr, std::format(L"Unknown/Unimplemented Audio Command {} in ABI 3", inst1 >> 24).c_str(),
-               L"Audio HLE Error", MB_OK);
+    assert(false && std::format("Unknown/Unimplemented Audio Command {} in ABI 3", inst1 >> 24).c_str());
 }
 
 extern uint16_t ResampleLUT[0x200];
@@ -246,10 +245,7 @@ static void ENVMIXER3o()
     //  ********* Make sure these conditions are met... ***********
     if ((AudioInBuffer | AudioOutBuffer | AudioAuxA | AudioAuxC | AudioAuxE | AudioCount) & 0x3)
     {
-        MessageBox(NULL,
-                   L"Unaligned EnvMixer... please report this to Azimer with the following information: RomTitle, "
-                   L"Place in the rom it occurred, and any save state just before the error",
-                   L"AudioHLE Error", MB_OK);
+        assert(false && "misaligned EnvMixer");
     }
 
     int16_t *inp = (int16_t *)(BufferSpace + 0x4F0);
@@ -969,8 +965,6 @@ achieve near-CD quality, an important specification to enable dual-channel ISDN
 */
 static void DISABLE()
 {
-    // MessageBox (NULL, "Help", "ABI 3 Command 0", MB_OK);
-    // ChangeABI (5);
 }
 
 void (*ABI3[0x20])() = {DISABLE, ADPCM3,  CLEARBUFF3, ENVMIXER3,  LOADBUFF3, RESAMPLE3,   SAVEBUFF3,  MP3,

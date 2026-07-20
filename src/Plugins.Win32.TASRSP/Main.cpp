@@ -21,7 +21,6 @@ static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
-HINSTANCE g_instance;
 std::filesystem::path g_config_path;
 
 MupenRRSpecPlugin::ExtendedFuncs *g_ef{};
@@ -169,20 +168,6 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 unknown_task:
     std::terminate();
     return 0;
-}
-
-BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
-{
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        g_instance = hinst;
-        break;
-    default:
-        break;
-    }
-
-    return TRUE;
 }
 
 EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)

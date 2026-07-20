@@ -11,8 +11,7 @@ extern uint8_t BufferSpace[0x10000];
 
 static void SPNOOP()
 {
-    MessageBox(NULL, std::format(L"Unknown/Unimplemented Audio Command {} in ABI 2", inst1 >> 24).c_str(),
-               L"Audio HLE Error", MB_OK);
+    assert(false && std::format("Unknown/Unimplemented Audio Command {} in ABI 2", inst1 >> 24).c_str());
 }
 
 extern uint16_t AudioInBuffer;  // 0x0000(T8)
