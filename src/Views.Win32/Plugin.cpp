@@ -935,12 +935,10 @@ void PluginUtil::initiate_plugins()
 {
     ScopeTimer timer("PluginUtil::initiate_plugins", g_view_logger.get());
 
-    std::latch done(4);
+    // Video plugin needs to go first because of process_dlist
+    video_plugin->initiate();
 
-    ThreadPool::submit_task([&] {
-        video_plugin->initiate();
-        done.count_down();
-    });
+    std::latch done(3);
 
     ThreadPool::submit_task([&] {
         audio_plugin->initiate();
