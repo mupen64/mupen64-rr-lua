@@ -11,96 +11,6 @@
 #include <plugin/MupenRRPlugin.hpp>
 #include <plugin/Plugin.hpp>
 
-#pragma region Dummy Functions
-
-static void CALL dummy_void()
-{
-}
-
-static uint32_t CALL dummy_do_rsp_cycles(uint32_t cycles)
-{
-    return cycles;
-}
-
-static uint32_t CALL dummy_ai_read_length()
-{
-    return 0;
-}
-
-static void CALL dummy_ai_update(int32_t)
-{
-}
-
-static void CALL dummy_controller_command(int32_t, uint8_t *)
-{
-}
-
-static void CALL dummy_key_down(uint32_t, int32_t)
-{
-}
-
-static void CALL dummy_key_up(uint32_t, int32_t)
-{
-}
-
-static void CALL dummy_rom_opened()
-{
-}
-
-static void CALL dummy_rom_closed()
-{
-}
-
-static void CALL dummy_get_keys(int32_t, MupenRRSpecPlugin::Buttons *)
-{
-}
-
-static void CALL dummy_set_keys(int32_t, MupenRRSpecPlugin::Buttons)
-{
-}
-
-static void CALL dummy_read_controller(int32_t, unsigned char *)
-{
-}
-
-static void CALL dummy_get_video_size(int32_t *, int32_t *)
-{
-}
-
-static void CALL dummy_read_video(void **)
-{
-}
-
-static void CALL dummy_ai_dacrate_changed(int32_t)
-{
-}
-
-static void CALL dummy_ai_len_changed()
-{
-}
-
-static void CALL dummy_fb_read(uint32_t)
-{
-}
-
-static void CALL dummy_fb_write(uint32_t, uint32_t)
-{
-}
-
-static void CALL dummy_fb_get_framebuffer_info(ZilmarExtSpec::FBInfo *)
-{
-}
-
-static void CALL dummy_move_screen(int32_t, int32_t)
-{
-}
-
-static void CALL dummy_capture_screen(char *)
-{
-}
-
-#pragma endregion
-
 static CoreController controller_to_core_controller(const MupenRRSpecPlugin::Controller &controller)
 {
     CoreControllerExtension extension;
@@ -145,71 +55,6 @@ static MupenRRSpecPlugin::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
 static MupenRRSpecPlugin::PtrReadController s_mupenrr_read_controller_fn = nullptr;
 static MupenRRSpecPlugin::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
 static MupenRRSpecPlugin::PtrShutdown s_mupenrr_shutdown_fn = nullptr;
-
-static void CALL shim_rom_opened()
-{
-    if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
-}
-
-static void CALL shim_rom_closed()
-{
-    if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
-}
-
-static void CALL shim_process_dlist()
-{
-    if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
-}
-
-static void CALL shim_get_video_size(int32_t *width, int32_t *height)
-{
-    if (s_mupenrr_get_video_size_fn) s_mupenrr_get_video_size_fn(width, height);
-}
-
-static void CALL shim_read_video(void **video)
-{
-    if (s_mupenrr_read_video_fn) s_mupenrr_read_video_fn(video);
-}
-
-static void CALL shim_ai_dacrate_changed(int32_t system_type)
-{
-    if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
-}
-
-static void CALL shim_ai_len_changed()
-{
-    if (s_mupenrr_ai_len_changed_fn) s_mupenrr_ai_len_changed_fn();
-}
-
-static void CALL shim_get_keys(int32_t controller, ZilmarExtSpec::Buttons *keys)
-{
-    if (s_mupenrr_get_keys_fn) s_mupenrr_get_keys_fn(controller, (MupenRRSpecPlugin::Buttons *)keys);
-}
-
-static void CALL shim_set_keys(int32_t controller, ZilmarExtSpec::Buttons keys)
-{
-    if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, *(MupenRRSpecPlugin::Buttons *)&keys);
-}
-
-static void CALL shim_read_controller(int32_t controller, unsigned char *command)
-{
-    if (s_mupenrr_read_controller_fn) s_mupenrr_read_controller_fn(controller, command);
-}
-
-static uint32_t CALL shim_do_rsp_cycles(uint32_t cycles)
-{
-    if (s_mupenrr_do_rsp_cycles_fn)
-    {
-        s_mupenrr_do_rsp_cycles_fn((uint8_t)cycles);
-        return 0;
-    }
-    return cycles;
-}
-
-static void CALL shim_shutdown()
-{
-    if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
-}
 
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
@@ -392,24 +237,36 @@ void MupenRRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, MupenRRSpecPlugin::PtrReadVideo, "M64RRReadVideo");
         LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.video_rom_open = s_mupenrr_rom_opened_fn ? shim_rom_opened : dummy_rom_opened;
-        g_plugin_funcs.video_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.video_close_dll = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
-        g_plugin_funcs.video_process_dlist = s_mupenrr_process_dlist_fn ? shim_process_dlist : dummy_void;
-        g_plugin_funcs.video_process_rdp_list = dummy_void;
-        g_plugin_funcs.video_show_cfb = dummy_void;
-        g_plugin_funcs.video_vi_status_changed = dummy_void;
-        g_plugin_funcs.video_vi_width_changed = dummy_void;
-        g_plugin_funcs.video_get_video_size = s_mupenrr_get_video_size_fn ? shim_get_video_size : dummy_get_video_size;
-        g_plugin_funcs.video_read_video = s_mupenrr_read_video_fn ? shim_read_video : dummy_read_video;
-        g_plugin_funcs.video_change_window = dummy_void;
-        g_plugin_funcs.video_update_screen = dummy_void;
-        g_plugin_funcs.video_move_screen = dummy_move_screen;
-        g_plugin_funcs.video_capture_screen = dummy_capture_screen;
+        g_plugin_funcs.video_rom_open = []() {
+            if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
+        };
+        g_plugin_funcs.video_rom_closed = []() {
+            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+        };
+        g_plugin_funcs.video_close_dll = []() {
+            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+        };
+        g_plugin_funcs.video_process_dlist = []() {
+            if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
+        };
+        g_plugin_funcs.video_process_rdp_list = [](const auto &...) {};
+        g_plugin_funcs.video_show_cfb = [](const auto &...) {};
+        g_plugin_funcs.video_vi_status_changed = [](const auto &...) {};
+        g_plugin_funcs.video_vi_width_changed = [](const auto &...) {};
+        g_plugin_funcs.video_get_video_size = [](int32_t *width, int32_t *height) {
+            if (s_mupenrr_get_video_size_fn) s_mupenrr_get_video_size_fn(width, height);
+        };
+        g_plugin_funcs.video_read_video = [](void **video) {
+            if (s_mupenrr_read_video_fn) s_mupenrr_read_video_fn(video);
+        };
+        g_plugin_funcs.video_change_window = [](const auto &...) {};
+        g_plugin_funcs.video_update_screen = [](const auto &...) {};
+        g_plugin_funcs.video_move_screen = [](int32_t, int32_t) {};
+        g_plugin_funcs.video_capture_screen = [](char *) {};
         g_plugin_funcs.video_read_screen = nullptr;
-        g_plugin_funcs.video_fb_read = dummy_fb_read;
-        g_plugin_funcs.video_fb_write = dummy_fb_write;
-        g_plugin_funcs.video_fb_get_frame_buffer_info = dummy_fb_get_framebuffer_info;
+        g_plugin_funcs.video_fb_read = [](uint32_t) {};
+        g_plugin_funcs.video_fb_write = [](uint32_t, uint32_t) {};
+        g_plugin_funcs.video_fb_get_frame_buffer_info = [](ZilmarExtSpec::FBInfo *) {};
         g_plugin_funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
 
         break;
@@ -424,15 +281,24 @@ void MupenRRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, MupenRRSpecPlugin::PtrAILenChanged, "M64RRAILenChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.audio_rom_open = s_mupenrr_rom_opened_fn ? shim_rom_opened : dummy_rom_opened;
-        g_plugin_funcs.audio_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.audio_close_dll_audio = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
-        g_plugin_funcs.audio_ai_dacrate_changed =
-            s_mupenrr_ai_dacrate_changed_fn ? shim_ai_dacrate_changed : dummy_ai_dacrate_changed;
-        g_plugin_funcs.audio_ai_len_changed = s_mupenrr_ai_len_changed_fn ? shim_ai_len_changed : dummy_ai_len_changed;
-        g_plugin_funcs.audio_ai_read_length = dummy_ai_read_length;
-        g_plugin_funcs.audio_process_alist = dummy_void;
-        g_plugin_funcs.audio_ai_update = dummy_ai_update;
+        g_plugin_funcs.audio_rom_open = []() {
+            if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
+        };
+        g_plugin_funcs.audio_rom_closed = []() {
+            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+        };
+        g_plugin_funcs.audio_close_dll_audio = []() {
+            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+        };
+        g_plugin_funcs.audio_ai_dacrate_changed = [](int32_t system_type) {
+            if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
+        };
+        g_plugin_funcs.audio_ai_len_changed = []() {
+            if (s_mupenrr_ai_len_changed_fn) s_mupenrr_ai_len_changed_fn();
+        };
+        g_plugin_funcs.audio_ai_read_length = []() { return 0u; };
+        g_plugin_funcs.audio_process_alist = [](const auto &...) {};
+        g_plugin_funcs.audio_ai_update = [](int32_t) {};
 
         break;
     }
@@ -446,16 +312,27 @@ void MupenRRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, MupenRRSpecPlugin::PtrReadController, "M64RRReadController");
         LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.input_rom_open = s_mupenrr_rom_opened_fn ? shim_rom_opened : dummy_rom_opened;
-        g_plugin_funcs.input_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.input_close_dll = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
-        g_plugin_funcs.input_controller_command = dummy_controller_command;
-        g_plugin_funcs.input_get_keys = s_mupenrr_get_keys_fn ? shim_get_keys : (ZilmarExtSpec::GETKEYS)dummy_get_keys;
-        g_plugin_funcs.input_set_keys = s_mupenrr_set_keys_fn ? shim_set_keys : (ZilmarExtSpec::SETKEYS)dummy_set_keys;
-        g_plugin_funcs.input_read_controller =
-            s_mupenrr_read_controller_fn ? shim_read_controller : dummy_read_controller;
-        g_plugin_funcs.input_key_down = dummy_key_down;
-        g_plugin_funcs.input_key_up = dummy_key_up;
+        g_plugin_funcs.input_rom_open = []() {
+            if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
+        };
+        g_plugin_funcs.input_rom_closed = []() {
+            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+        };
+        g_plugin_funcs.input_close_dll = []() {
+            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+        };
+        g_plugin_funcs.input_controller_command = [](int32_t, uint8_t *) {};
+        g_plugin_funcs.input_get_keys = [](int32_t controller, ZilmarExtSpec::Buttons *keys) {
+            if (s_mupenrr_get_keys_fn) s_mupenrr_get_keys_fn(controller, (MupenRRSpecPlugin::Buttons *)keys);
+        };
+        g_plugin_funcs.input_set_keys = [](int32_t controller, ZilmarExtSpec::Buttons keys) {
+            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, *(MupenRRSpecPlugin::Buttons *)&keys);
+        };
+        g_plugin_funcs.input_read_controller = [](int32_t controller, unsigned char *command) {
+            if (s_mupenrr_read_controller_fn) s_mupenrr_read_controller_fn(controller, command);
+        };
+        g_plugin_funcs.input_key_down = [](uint32_t, int32_t) {};
+        g_plugin_funcs.input_key_up = [](uint32_t, int32_t) {};
 
         for (size_t i = 0; i < std::size(tmp_controllers); ++i)
         {
@@ -470,9 +347,20 @@ void MupenRRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, MupenRRSpecPlugin::PtrDoRSPCycles, "M64RRDoRSPCycles");
         LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.rsp_rom_closed = s_mupenrr_rom_closed_fn ? shim_rom_closed : dummy_rom_closed;
-        g_plugin_funcs.rsp_close_dll = s_mupenrr_shutdown_fn ? shim_shutdown : dummy_void;
-        g_plugin_funcs.rsp_do_rsp_cycles = s_mupenrr_do_rsp_cycles_fn ? shim_do_rsp_cycles : dummy_do_rsp_cycles;
+        g_plugin_funcs.rsp_rom_closed = []() {
+            if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
+        };
+        g_plugin_funcs.rsp_close_dll = []() {
+            if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
+        };
+        g_plugin_funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
+            if (s_mupenrr_do_rsp_cycles_fn)
+            {
+                s_mupenrr_do_rsp_cycles_fn((uint8_t)cycles);
+                return 0u;
+            }
+            return cycles;
+        };
 
         break;
     }
@@ -536,7 +424,7 @@ void MupenRRPlugin::initiate_dummy()
     init.sp_pc_reg = &dummy_dw;
     init.sp_semaphore_reg = &dummy_dw;
 
-    init.process_dlist = dummy_void;
+    init.process_dlist = [](const auto &...) {};
     init.header = dummy_header;
 
     std::array<MupenRRSpecPlugin::Controller, 4> tmp_controllers{};
