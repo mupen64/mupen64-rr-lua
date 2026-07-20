@@ -14,6 +14,8 @@ class ZilmarExtPlugin : public Plugin
     using Plugin::Plugin;
     ~ZilmarExtPlugin() override = default;
 
+    static std::pair<std::wstring, std::unique_ptr<Plugin>> create(HMODULE module, std::filesystem::path path);
+
     void config(HWND hwnd) override;
     void test(HWND hwnd) override;
     void about(HWND hwnd) override;

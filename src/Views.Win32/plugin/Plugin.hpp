@@ -155,11 +155,6 @@ class Plugin
      */
     auto spec() const { return m_spec; }
 
-  private:
-    static std::pair<std::wstring, std::unique_ptr<Plugin>> create_zilmar_ext(HMODULE module,
-                                                                              std::filesystem::path path);
-    static std::pair<std::wstring, std::unique_ptr<Plugin>> create_mupen_rr(HMODULE module, std::filesystem::path path);
-
   protected:
     /**
      * \brief Initiates the plugin for being called ephemerally (e.g. via `config()`, `test()`, `about()`)

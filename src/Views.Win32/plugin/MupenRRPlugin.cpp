@@ -7,6 +7,10 @@
 #include "stdafx.h"
 #include <plugin/MupenRRPlugin.hpp>
 
+std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE module, std::filesystem::path path)
+{
+}
+
 void MupenRRPlugin::config(HWND hwnd)
 {
 }

@@ -268,53 +268,6 @@ static void (*get_free_function_in_module(HMODULE module))(void *)
     return free;
 }
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create_zilmar_ext(HMODULE module, std::filesystem::path path)
-{
-    const auto get_dll_info = (ZilmarExtSpec::GETDLLINFO)GetProcAddress(module, "GetDllInfo");
-
-    if (!get_dll_info)
-    {
-        return std::make_pair(L"GetDllInfo missing", nullptr);
-    }
-
-    ZilmarExtSpec::PluginInfo plugin_info{};
-    get_dll_info(&plugin_info);
-
-    const size_t target_version_len = strnlen(plugin_info.target_version, std::size(plugin_info.target_version));
-    if (target_version_len > 0)
-    {
-        // Plugin is tied to one version of mupen
-        const auto current_version = IOUtils::to_utf8_string(CURRENT_VERSION);
-        const std::string target_version(plugin_info.target_version, target_version_len);
-        if (current_version != target_version)
-        {
-            return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
-        }
-    }
-
-    const size_t plugin_name_len = strlen(plugin_info.name);
-    while (plugin_info.name[plugin_name_len - 1] == ' ')
-    {
-        plugin_info.name[plugin_name_len - 1] = '\0';
-    }
-
-    auto plugin = std::make_unique<ZilmarExtPlugin>();
-
-    plugin->m_path = path;
-    plugin->m_name = std::string(plugin_info.name);
-    plugin->m_type = static_cast<ZilmarExtSpec::PluginType>(plugin_info.type);
-    plugin->m_version = plugin_info.ver;
-    plugin->m_module = module;
-    plugin->m_spec = Spec::ZilmarExt;
-
-    g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
-    return std::make_pair(L"", std::move(plugin));
-}
-
-std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create_mupen_rr(HMODULE module, std::filesystem::path path)
-{
-}
-
 std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
 {
     Main::init_sdl();
@@ -327,8 +280,8 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
         return std::make_pair(std::format(L"LoadLibrary (code {})", last_error), nullptr);
     }
 
-    auto result1 = Plugin::create_zilmar_ext(module, path);
-    auto result2 = Plugin::create_mupen_rr(module, path);
+    auto result1 = ZilmarExtPlugin::create(module, path);
+    auto result2 = MupenRRPlugin::create(module, path);
 
     if (result1.first.empty()) return result1;
     if (result2.first.empty()) return result2;
