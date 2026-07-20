@@ -16,7 +16,7 @@
 #define UCODE_BANJO (2)
 #define UCODE_ZELDA (3)
 
-ZilmarExtSpec::RSPPluginInfo rsp;
+MupenRRSpecPlugin::PluginInit rsp;
 static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
@@ -24,7 +24,7 @@ uint32_t inst2;
 HINSTANCE g_instance;
 std::filesystem::path g_config_path;
 
-ZilmarExtSpec::ExtendedFuncs *g_ef{};
+MupenRRSpecPlugin::ExtendedFuncs *g_ef{};
 
 static int audio_ucode_detect_type(const OSTask_t *task)
 {
@@ -185,41 +185,47 @@ BOOL APIENTRY DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
     return TRUE;
 }
 
-EXPORT void CALL DllAbout(void *hwnd)
+EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)
 {
-    const auto msg = L"First-party TAS plugin for Mupen64."
-                     L"\n"
-                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                     L"to one version of the emulator."
-                     L"\n\n"
-                     L"https://mupen64.com";
-    MessageBox((HWND)hwnd, msg, L"About", MB_ICONINFORMATION | MB_OK);
+    metadata->type = MupenRRSpecPlugin::PluginType::RSP;
+
+    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME).c_str();
+    const auto description = "First-party TAS plugin for Mupen64."
+                             "\n"
+                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                             "to one version of the emulator."
+                             "\n\n"
+                             "https://mupen64.com";
+    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION).c_str();
+
+    auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
+    metadata->name[result.size] = '\0';
+
+    result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
+    metadata->description[result.size] = '\0';
+
+    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
+    metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo)
+EXPORT void CALL M64RRInitiate(MupenRRSpecPlugin::PluginInit *init)
 {
-    PluginInfo->ver = 0x0101;
-    PluginInfo->type = ZilmarExtSpec::PluginType::RSP;
-    strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
-    PluginInfo->unused_normal_memory = 1;
-    PluginInfo->unused_byteswapped = 1;
-    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
-}
-
-EXPORT void CALL InitiateRSP(ZilmarExtSpec::RSPPluginInfo Rsp_Info, uint32_t *CycleCount)
-{
-    g_ef = Rsp_Info.extended_funcs;
+    rsp = *init;
+    g_ef = rsp.ef;
     g_config_path = ZilmarExtSpec::get_config_path(g_ef);
-    rsp = Rsp_Info;
+}
+
+EXPORT void CALL M64RRRomOpened()
+{
     config_load();
 }
 
-EXPORT void CALL RomClosed()
+EXPORT void CALL M64RRRomClosed()
 {
     on_rom_closed();
 }
 
-EXPORT uint32_t CALL DoRspCycles(uint32_t Cycles)
+EXPORT void CALL M64RRDoRSPCycles(uint8_t cycles)
 {
-    return do_rsp_cycles(Cycles);
+    do_rsp_cycles(cycles);
 }

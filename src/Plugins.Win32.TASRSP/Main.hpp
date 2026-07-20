@@ -9,13 +9,13 @@
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <core_api.h>
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
+#include <Views.Win32/MupenRRSpecPlugin.h>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP")
 
 extern HINSTANCE g_instance;
 extern std::filesystem::path g_config_path;
-extern ZilmarExtSpec::ExtendedFuncs *g_ef;
+extern MupenRRSpecPlugin::ExtendedFuncs *g_ef;
 
 extern void (*ABI1[0x20])();
 extern void (*ABI2[0x20])();
