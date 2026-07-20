@@ -1,17 +1,15 @@
 #pragma once
 
 #include <Views.Win32/ZESpec.h>
+#include <Views.Win32/M64RRSpec.h>
 
 struct TASVideoContext
 {
     HINSTANCE hinst;
-    HWND emu_hwnd;
-    HWND statusbar_hwnd;
-    void (*check_interrupts)(void);
     std::filesystem::path config_directory;
 };
 
 extern TASVideoContext g_tas_ctx;
-extern ZESpec::ExtendedFuncs *g_ef;
+extern M64RRSpec::ExtendedFuncs *g_ef;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Video")

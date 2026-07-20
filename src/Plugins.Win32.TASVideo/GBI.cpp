@@ -280,7 +280,8 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
     }
 
     // Let the user choose the microcode
-    current->type = DialogBox(g_tas_ctx.hinst, MAKEINTRESOURCE(IDD_MICROCODEDLG), g_tas_ctx.emu_hwnd, MicrocodeDlgProc);
+    // TODO: Reimplement with correct parent
+    current->type = DialogBox(g_tas_ctx.hinst, MAKEINTRESOURCE(IDD_MICROCODEDLG), nullptr, MicrocodeDlgProc);
     return current;
 }
 

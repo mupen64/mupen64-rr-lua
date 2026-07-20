@@ -12,9 +12,7 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-static ZESpec::ExtendedFuncs ef_shim{};
-
-ZESpec::ExtendedFuncs *g_ef = &ef_shim;
+M64RRSpec::ExtendedFuncs *g_ef;
 
 bool init_rsp_thread()
 {
@@ -51,88 +49,74 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-EXPORT void CALL DllAbout(void *hParent)
+EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
-    const auto msg = L"First-party TAS plugin for Mupen64."
-                     L"\n"
-                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                     L"to one version of the emulator."
-                     L"\n\n"
-                     L"https://mupen64.com";
-    MessageBox((HWND)hParent, msg, L"About", MB_OK | MB_ICONINFORMATION);
+    metadata->type = M64RRSpec::PluginType::Video;
+
+    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
+    const auto description = "First-party TAS plugin for Mupen64."
+                             "\n"
+                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                             "to one version of the emulator."
+                             "\n\n"
+                             "https://mupen64.com";
+    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+
+    auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
+    metadata->name[result.size] = '\0';
+
+    result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
+    metadata->description[result.size] = '\0';
+
+    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
+    metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL DllConfig(void *hParent)
+EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
 {
-    Config_Show((HWND)hParent);
+    Config_Show(parent_window.hwnd());
 }
 
-EXPORT void CALL GetDllInfo(ZESpec::PluginInfo *PluginInfo)
+EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
-    PluginInfo->ver = 0x100;
-    PluginInfo->type = ZESpec::PluginType::Video;
-    strcpy_s(PluginInfo->name, sizeof(PluginInfo->name), IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
-    PluginInfo->unused_normal_memory = FALSE;
-    PluginInfo->unused_byteswapped = TRUE;
-    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
-}
-
-EXPORT BOOL CALL InitiateGFX(ZESpec::VideoPluginInfo Gfx_Info)
-{
-    g_ef = Gfx_Info.extended_funcs;
+    g_ef = init->ef;
     g_tas_ctx.config_directory = ZESpec::get_config_path(g_ef);
 
     Config_LoadConfig();
 
-    g_tas_ctx.emu_hwnd = (HWND)Gfx_Info.main_hwnd;
-    g_tas_ctx.statusbar_hwnd = (HWND)Gfx_Info.statusbar_hwnd;
+    DMEM = init->dmem;
+    IMEM = init->imem;
+    RDRAM = init->rdram;
 
-    // HACK: Detect when we're being called to prepare for dll config routine
-    if (Gfx_Info.main_hwnd == Gfx_Info.statusbar_hwnd)
-    {
-        return TRUE;
-    }
+    REG.MI_INTR = init->mi_intr_reg;
+    REG.DPC_START = init->dpc_start_reg;
+    REG.DPC_END = init->dpc_end_reg;
+    REG.DPC_CURRENT = init->dpc_current_reg;
+    REG.DPC_STATUS = init->dpc_status_reg;
+    REG.DPC_CLOCK = init->dpc_clock_reg;
+    REG.DPC_BUFBUSY = init->dpc_bufbusy_reg;
+    REG.DPC_PIPEBUSY = init->dpc_pipebusy_reg;
+    REG.DPC_TMEM = init->dpc_tmem_reg;
 
-    DMEM = Gfx_Info.dmem;
-    IMEM = Gfx_Info.imem;
-    RDRAM = Gfx_Info.rdram;
+    REG.VI_STATUS = init->vi_status_reg;
+    REG.VI_ORIGIN = init->vi_origin_reg;
+    REG.VI_WIDTH = init->vi_width_reg;
+    REG.VI_INTR = init->vi_intr_reg;
+    REG.VI_V_CURRENT_LINE = init->vi_v_current_line_reg;
+    REG.VI_TIMING = init->vi_timing_reg;
+    REG.VI_V_SYNC = init->vi_v_sync_reg;
+    REG.VI_H_SYNC = init->vi_h_sync_reg;
+    REG.VI_LEAP = init->vi_leap_reg;
+    REG.VI_H_START = init->vi_h_start_reg;
+    REG.VI_V_START = init->vi_v_start_reg;
+    REG.VI_V_BURST = init->vi_v_burst_reg;
+    REG.VI_X_SCALE = init->vi_x_scale_reg;
+    REG.VI_Y_SCALE = init->vi_y_scale_reg;
 
-    REG.MI_INTR = Gfx_Info.mi_intr_reg;
-    REG.DPC_START = Gfx_Info.dpc_start_reg;
-    REG.DPC_END = Gfx_Info.dpc_end_reg;
-    REG.DPC_CURRENT = Gfx_Info.dpc_current_reg;
-    REG.DPC_STATUS = Gfx_Info.dpc_status_reg;
-    REG.DPC_CLOCK = Gfx_Info.dpc_clock_reg;
-    REG.DPC_BUFBUSY = Gfx_Info.dpc_bufbusy_reg;
-    REG.DPC_PIPEBUSY = Gfx_Info.dpc_pipebusy_reg;
-    REG.DPC_TMEM = Gfx_Info.dpc_tmem_reg;
-
-    REG.VI_STATUS = Gfx_Info.vi_status_reg;
-    REG.VI_ORIGIN = Gfx_Info.vi_origin_reg;
-    REG.VI_WIDTH = Gfx_Info.vi_width_reg;
-    REG.VI_INTR = Gfx_Info.vi_intr_reg;
-    REG.VI_V_CURRENT_LINE = Gfx_Info.vi_v_current_line_reg;
-    REG.VI_TIMING = Gfx_Info.vi_timing_reg;
-    REG.VI_V_SYNC = Gfx_Info.vi_v_sync_reg;
-    REG.VI_H_SYNC = Gfx_Info.vi_h_sync_reg;
-    REG.VI_LEAP = Gfx_Info.vi_leap_reg;
-    REG.VI_H_START = Gfx_Info.vi_h_start_reg;
-    REG.VI_V_START = Gfx_Info.vi_v_start_reg;
-    REG.VI_V_BURST = Gfx_Info.vi_v_burst_reg;
-    REG.VI_X_SCALE = Gfx_Info.vi_x_scale_reg;
-    REG.VI_Y_SCALE = Gfx_Info.vi_y_scale_reg;
-
-    g_tas_ctx.check_interrupts = Gfx_Info.check_interrupts;
-
-    if (!init_rsp_thread())
-    {
-        return FALSE;
-    }
-
-    return TRUE;
+    init_rsp_thread();
 }
 
-EXPORT void CALL ProcessDList(void)
+EXPORT void CALL M64RRProcessDList(void)
 {
     if (RSP.thread)
     {
@@ -141,7 +125,7 @@ EXPORT void CALL ProcessDList(void)
     }
 }
 
-EXPORT void CALL RomClosed(void)
+EXPORT void CALL M64RRRomClosed(void)
 {
     if (RSP.thread)
     {
@@ -156,51 +140,24 @@ EXPORT void CALL RomClosed(void)
     }
 }
 
-EXPORT void CALL RomOpen(void)
+EXPORT void CALL M64RRRomOpened(void)
 {
     Config_LoadConfig();
     OGL_ResizeWindow();
 }
 
-EXPORT void CALL UpdateScreen(void)
+EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
 {
-    if (RSP.thread)
+    if (width) *width = OGL.width;
+    if (height) *height = OGL.height;
+    if (buffer)
     {
-        SetEvent(RSP.threadMsg[RSPMSG_UPDATESCREEN]);
-        WaitForSingleObject(RSP.threadFinished, INFINITE);
-    }
-}
-
-// not to confuse with readscreen2 from mupen64plus specs (I think)
-EXPORT void CALL ReadScreen2(void **dest, long *width, long *height)
-{
-    extern void *gCapturedPixels;
-    *width = OGL.width;
-    *height = OGL.height;
-
-    *dest = malloc(OGL.height * OGL.width * 4);
-    if (*dest == 0) return;
-    gCapturedPixels = *dest;
-    if (RSP.thread)
-    {
-        SetEvent(RSP.threadMsg[RSPMSG_READPIXELS]);
-        WaitForSingleObject(RSP.threadFinished, INFINITE);
-    }
-}
-
-void CALL mge_get_video_size(long *width, long *height)
-{
-    *width = OGL.width;
-    *height = OGL.height;
-}
-
-void CALL mge_read_video2(void **buffer)
-{
-    extern void *gCapturedPixels;
-    gCapturedPixels = *buffer;
-    if (RSP.thread)
-    {
-        SetEvent(RSP.threadMsg[RSPMSG_READPIXELS]);
-        WaitForSingleObject(RSP.threadFinished, INFINITE);
+        extern void *gCapturedPixels;
+        gCapturedPixels = buffer;
+        if (RSP.thread)
+        {
+            SetEvent(RSP.threadMsg[RSPMSG_READPIXELS]);
+            WaitForSingleObject(RSP.threadFinished, INFINITE);
+        }
     }
 }

@@ -63,9 +63,6 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
         case WAIT_OBJECT_0 + RSPMSG_PROCESSDLIST:
             RSP_ProcessDList();
             break;
-        case WAIT_OBJECT_0 + RSPMSG_UPDATESCREEN:
-            VI_UpdateScreen();
-            break;
         case WAIT_OBJECT_0 + RSPMSG_DESTROYTEXTURES:
             Combiner_Destroy();
             FrameBuffer_Destroy();
