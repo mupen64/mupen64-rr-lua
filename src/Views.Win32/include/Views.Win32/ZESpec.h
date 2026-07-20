@@ -5,10 +5,7 @@
  */
 
 /*
- * Describes the new Mupen64 ("Zilmar Ext Spec") Plugin API.
- *
- * This header can be used standalone by Mupen64 plugins, just make sure to define PLUGIN_WITH_CALLBACKS first.
- *
+ * Describes the Zilmar Extended plugin specification, which is binary-compatible with the original Zilmar specification.
  */
 
 #pragma once
@@ -22,7 +19,7 @@
 #error "Unsupported platform"
 #endif
 
-namespace ZilmarExtSpec
+namespace ZESpec
 {
 
 extern "C"
@@ -360,7 +357,7 @@ extern "C"
     typedef void(CALL *GETVIDEOSIZE)(int32_t *, int32_t *);
     typedef void(CALL *FBREAD)(uint32_t);
     typedef void(CALL *FBWRITE)(uint32_t addr, uint32_t size);
-    typedef void(CALL *FBGETFRAMEBUFFERINFO)(ZilmarExtSpec::FBInfo *);
+    typedef void(CALL *FBGETFRAMEBUFFERINFO)(ZESpec::FBInfo *);
     typedef void(CALL *CHANGEWINDOW)();
     typedef int32_t(CALL *INITIATEGFX)(VideoPluginInfo);
     typedef void(CALL *UPDATESCREEN)();
@@ -405,7 +402,7 @@ inline std::filesystem::path get_config_path(const ExtendedFuncs *ef)
     return std::filesystem::absolute(utf8_path_temp);
 }
 
-}; // namespace ZilmarExtSpec
+}; // namespace ZESpec
 
 #if defined(PLUGIN_WITH_CALLBACKS)
 
@@ -418,7 +415,7 @@ extern "C"
     EXPORT void CALL CloseDLL(void);
     EXPORT void CALL DllAbout(void *hParent);
     EXPORT void CALL DllConfig(void *hParent);
-    EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo);
+    EXPORT void CALL GetDllInfo(ZESpec::PluginInfo *PluginInfo);
     EXPORT void CALL RomClosed(void);
     EXPORT void CALL RomOpen(void);
 
@@ -428,7 +425,7 @@ extern "C"
 
     EXPORT void CALL CaptureScreen(const char *Directory);
     EXPORT void CALL ChangeWindow(void);
-    EXPORT int CALL InitiateGFX(ZilmarExtSpec::VideoPluginInfo Gfx_Info);
+    EXPORT int CALL InitiateGFX(ZESpec::VideoPluginInfo Gfx_Info);
     EXPORT void CALL MoveScreen(int xpos, int ypos);
     EXPORT void CALL ProcessDList(void);
     EXPORT void CALL ProcessRDPList(void);
@@ -448,7 +445,7 @@ extern "C"
     EXPORT uint32_t CALL AiReadLength(void);
     EXPORT void CALL AiUpdate(int32_t Wait);
     EXPORT void CALL DllTest(void *hParent);
-    EXPORT int32_t CALL InitiateAudio(ZilmarExtSpec::AudioPluginInfo Audio_Info);
+    EXPORT int32_t CALL InitiateAudio(ZESpec::AudioPluginInfo Audio_Info);
     EXPORT void CALL ProcessAList(void);
 
 #pragma endregion
@@ -456,9 +453,9 @@ extern "C"
 #pragma region Input
 
     EXPORT void CALL ControllerCommand(int32_t Control, uint8_t *Command);
-    EXPORT void CALL GetKeys(int32_t Control, ZilmarExtSpec::Buttons *Keys);
-    EXPORT void CALL SetKeys(int32_t controller, ZilmarExtSpec::Buttons keys);
-    EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo);
+    EXPORT void CALL GetKeys(int32_t Control, ZESpec::Buttons *Keys);
+    EXPORT void CALL SetKeys(int32_t controller, ZESpec::Buttons keys);
+    EXPORT void CALL InitiateControllers(ZESpec::InputPluginInfo ControlInfo);
     EXPORT void CALL ReadController(int Control, uint8_t *Command);
     EXPORT void CALL WM_KeyDown(uint32_t wParam, uint32_t lParam);
     EXPORT void CALL WM_KeyUp(uint32_t wParam, uint32_t lParam);
@@ -468,7 +465,7 @@ extern "C"
 #pragma region RSP
 
     EXPORT uint32_t DoRspCycles(uint32_t Cycles);
-    EXPORT void InitiateRSP(ZilmarExtSpec::RSPPluginInfo Rsp_Info, uint32_t *CycleCount);
+    EXPORT void InitiateRSP(ZESpec::RSPPluginInfo Rsp_Info, uint32_t *CycleCount);
 
 #pragma endregion
 

@@ -6,76 +6,76 @@
 
 #pragma once
 
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
-#include <Views.Win32/MupenRRSpecPlugin.h>
+#include <Views.Win32/ZESpec.h>
+#include <Views.Win32/M64RRSpec.h>
 
-struct ZilmarExtSpecPluginFuncs
+struct ZESpecFuncs
 {
-    ZilmarExtSpec::ExtendedFuncs video_extended_funcs;
-    ZilmarExtSpec::ROMOPEN video_rom_open;
-    ZilmarExtSpec::ROMCLOSED video_rom_closed;
-    ZilmarExtSpec::CLOSEDLL video_close_dll;
-    ZilmarExtSpec::PROCESSDLIST video_process_dlist;
-    ZilmarExtSpec::PROCESSRDPLIST video_process_rdp_list;
-    ZilmarExtSpec::SHOWCFB video_show_cfb;
-    ZilmarExtSpec::VISTATUSCHANGED video_vi_status_changed;
-    ZilmarExtSpec::VIWIDTHCHANGED video_vi_width_changed;
-    ZilmarExtSpec::GETVIDEOSIZE video_get_video_size;
-    ZilmarExtSpec::FBREAD video_fb_read;
-    ZilmarExtSpec::FBWRITE video_fb_write;
-    ZilmarExtSpec::FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
-    ZilmarExtSpec::CHANGEWINDOW video_change_window;
-    ZilmarExtSpec::UPDATESCREEN video_update_screen;
-    ZilmarExtSpec::READSCREEN video_read_screen;
-    ZilmarExtSpec::DLLCRTFREE video_dll_crt_free;
-    ZilmarExtSpec::MOVESCREEN video_move_screen;
-    ZilmarExtSpec::CAPTURESCREEN video_capture_screen;
-    ZilmarExtSpec::READVIDEO video_read_video;
+    ZESpec::ExtendedFuncs video_extended_funcs;
+    ZESpec::ROMOPEN video_rom_open;
+    ZESpec::ROMCLOSED video_rom_closed;
+    ZESpec::CLOSEDLL video_close_dll;
+    ZESpec::PROCESSDLIST video_process_dlist;
+    ZESpec::PROCESSRDPLIST video_process_rdp_list;
+    ZESpec::SHOWCFB video_show_cfb;
+    ZESpec::VISTATUSCHANGED video_vi_status_changed;
+    ZESpec::VIWIDTHCHANGED video_vi_width_changed;
+    ZESpec::GETVIDEOSIZE video_get_video_size;
+    ZESpec::FBREAD video_fb_read;
+    ZESpec::FBWRITE video_fb_write;
+    ZESpec::FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
+    ZESpec::CHANGEWINDOW video_change_window;
+    ZESpec::UPDATESCREEN video_update_screen;
+    ZESpec::READSCREEN video_read_screen;
+    ZESpec::DLLCRTFREE video_dll_crt_free;
+    ZESpec::MOVESCREEN video_move_screen;
+    ZESpec::CAPTURESCREEN video_capture_screen;
+    ZESpec::READVIDEO video_read_video;
 
-    ZilmarExtSpec::ExtendedFuncs audio_extended_funcs;
-    ZilmarExtSpec::ROMOPEN audio_rom_open;
-    ZilmarExtSpec::ROMCLOSED audio_rom_closed;
-    ZilmarExtSpec::CLOSEDLL audio_close_dll_audio;
-    ZilmarExtSpec::AIDACRATECHANGED audio_ai_dacrate_changed;
-    ZilmarExtSpec::AILENCHANGED audio_ai_len_changed;
-    ZilmarExtSpec::AIREADLENGTH audio_ai_read_length;
-    ZilmarExtSpec::PROCESSALIST audio_process_alist;
-    ZilmarExtSpec::AIUPDATE audio_ai_update;
-    ZilmarExtSpec::CLOSEDLL input_close_dll;
-    ZilmarExtSpec::ROMCLOSED input_rom_closed;
-    ZilmarExtSpec::ROMOPEN input_rom_open;
+    ZESpec::ExtendedFuncs audio_extended_funcs;
+    ZESpec::ROMOPEN audio_rom_open;
+    ZESpec::ROMCLOSED audio_rom_closed;
+    ZESpec::CLOSEDLL audio_close_dll_audio;
+    ZESpec::AIDACRATECHANGED audio_ai_dacrate_changed;
+    ZESpec::AILENCHANGED audio_ai_len_changed;
+    ZESpec::AIREADLENGTH audio_ai_read_length;
+    ZESpec::PROCESSALIST audio_process_alist;
+    ZESpec::AIUPDATE audio_ai_update;
+    ZESpec::CLOSEDLL input_close_dll;
+    ZESpec::ROMCLOSED input_rom_closed;
+    ZESpec::ROMOPEN input_rom_open;
 
-    ZilmarExtSpec::ExtendedFuncs input_extended_funcs;
-    ZilmarExtSpec::CONTROLLERCOMMAND input_controller_command;
-    ZilmarExtSpec::GETKEYS input_get_keys;
-    ZilmarExtSpec::SETKEYS input_set_keys;
-    ZilmarExtSpec::READCONTROLLER input_read_controller;
-    ZilmarExtSpec::KEYDOWN input_key_down;
-    ZilmarExtSpec::KEYUP input_key_up;
+    ZESpec::ExtendedFuncs input_extended_funcs;
+    ZESpec::CONTROLLERCOMMAND input_controller_command;
+    ZESpec::GETKEYS input_get_keys;
+    ZESpec::SETKEYS input_set_keys;
+    ZESpec::READCONTROLLER input_read_controller;
+    ZESpec::KEYDOWN input_key_down;
+    ZESpec::KEYUP input_key_up;
 
-    ZilmarExtSpec::ExtendedFuncs rsp_extended_funcs;
-    ZilmarExtSpec::CLOSEDLL rsp_close_dll;
-    ZilmarExtSpec::ROMCLOSED rsp_rom_closed;
-    ZilmarExtSpec::DORSPCYCLES rsp_do_rsp_cycles;
+    ZESpec::ExtendedFuncs rsp_extended_funcs;
+    ZESpec::CLOSEDLL rsp_close_dll;
+    ZESpec::ROMCLOSED rsp_rom_closed;
+    ZESpec::DORSPCYCLES rsp_do_rsp_cycles;
 };
 
-class ZilmarExtPlugin;
-class MupenRRPlugin;
+class ZEPlugin;
+class M64RRPlugin;
 
-extern ZilmarExtSpec::VideoPluginInfo dummy_video_info;
-extern ZilmarExtSpec::AudioPluginInfo dummy_audio_info;
-extern ZilmarExtSpec::InputPluginInfo dummy_control_info;
-extern ZilmarExtSpec::RSPPluginInfo dummy_rsp_info;
-extern ZilmarExtSpec::Controller dummy_controllers[4];
+extern ZESpec::VideoPluginInfo dummy_video_info;
+extern ZESpec::AudioPluginInfo dummy_audio_info;
+extern ZESpec::InputPluginInfo dummy_control_info;
+extern ZESpec::RSPPluginInfo dummy_rsp_info;
+extern ZESpec::Controller dummy_controllers[4];
 extern uint8_t dummy_header[0x40];
 extern uint32_t dummy_dw;
-extern ZilmarExtSpec::VideoPluginInfo gfx_info;
-extern ZilmarExtSpec::AudioPluginInfo audio_info;
-extern ZilmarExtSpec::InputPluginInfo control_info;
-extern ZilmarExtSpec::RSPPluginInfo rsp_info;
-extern ZilmarExtSpec::DLLABOUT dll_about;
-extern ZilmarExtSpec::DLLCONFIG dll_config;
-extern ZilmarExtSpec::DLLTEST dll_test;
+extern ZESpec::VideoPluginInfo gfx_info;
+extern ZESpec::AudioPluginInfo audio_info;
+extern ZESpec::InputPluginInfo control_info;
+extern ZESpec::RSPPluginInfo rsp_info;
+extern ZESpec::DLLABOUT dll_about;
+extern ZESpec::DLLCONFIG dll_config;
+extern ZESpec::DLLTEST dll_test;
 
 inline size_t ext_fn_config_path(char *data, size_t size)
 {
@@ -97,7 +97,7 @@ inline size_t ext_fn_config_path(char *data, size_t size)
     }
 
 #define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    ZilmarExtSpec::ExtendedFuncs                                                                                       \
+    ZESpec::ExtendedFuncs                                                                                       \
     {                                                                                                                  \
         .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
         .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
@@ -198,7 +198,7 @@ typedef struct
 
 } t_plugin_discovery_result;
 
-extern ZilmarExtSpecPluginFuncs g_plugin_funcs;
+extern ZESpecFuncs g_plugin_funcs;
 
 /**
  * \brief A module providing utility functions related to plugins.
@@ -269,6 +269,6 @@ void screenshot(const std::filesystem::path &path);
  * \param module The module to search in.
  * \return A pointer to the free function, or the CRT's free if not found via DllCrtFree.
  */
-ZilmarExtSpec::DLLCRTFREE get_free_function_in_module(HMODULE module);
+ZESpec::DLLCRTFREE get_free_function_in_module(HMODULE module);
 
 } // namespace PluginUtil

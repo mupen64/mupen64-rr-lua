@@ -9,9 +9,9 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Input")
 
-DUMMY_PLUGIN_STUB_IMPL(MupenRRSpecPlugin::PluginType::Input)
+DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Input)
 
-EXPORT void CALL M64RRInitiate(MupenRRSpecPlugin::PluginInit *init)
+EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
     auto *controllers = init->controllers;
 
@@ -19,7 +19,7 @@ EXPORT void CALL M64RRInitiate(MupenRRSpecPlugin::PluginInit *init)
     {
         controllers[i].present = 0;
         controllers[i].raw = 0;
-        controllers[i].plugin = MupenRRSpecPlugin::ControllerExtension::None;
+        controllers[i].plugin = M64RRSpec::ControllerExtension::None;
     }
 
     controllers[0].present = 1;

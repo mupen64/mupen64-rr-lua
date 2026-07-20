@@ -8,27 +8,27 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <components/Statusbar.hpp>
-#include <plugin/MupenRRPlugin.hpp>
+#include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
 
-static CoreController controller_to_core_controller(const MupenRRSpecPlugin::Controller &controller)
+static CoreController controller_to_core_controller(const M64RRSpec::Controller &controller)
 {
     CoreControllerExtension extension;
     switch (controller.plugin)
     {
-    case MupenRRSpecPlugin::ControllerExtension::None:
+    case M64RRSpec::ControllerExtension::None:
         extension = CoreControllerExtension::None;
         break;
-    case MupenRRSpecPlugin::ControllerExtension::Mempak:
+    case M64RRSpec::ControllerExtension::Mempak:
         extension = CoreControllerExtension::Mempak;
         break;
-    case MupenRRSpecPlugin::ControllerExtension::Rumblepak:
+    case M64RRSpec::ControllerExtension::Rumblepak:
         extension = CoreControllerExtension::Rumblepak;
         break;
-    case MupenRRSpecPlugin::ControllerExtension::Transferpak:
+    case M64RRSpec::ControllerExtension::Transferpak:
         extension = CoreControllerExtension::Transferpak;
         break;
-    case MupenRRSpecPlugin::ControllerExtension::Raw:
+    case M64RRSpec::ControllerExtension::Raw:
         extension = CoreControllerExtension::Raw;
         break;
     default:
@@ -43,32 +43,32 @@ static CoreController controller_to_core_controller(const MupenRRSpecPlugin::Con
     };
 }
 
-static MupenRRSpecPlugin::PtrRomOpened s_mupenrr_rom_opened_fn = nullptr;
-static MupenRRSpecPlugin::PtrRomClosed s_mupenrr_rom_closed_fn = nullptr;
-static MupenRRSpecPlugin::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
-static MupenRRSpecPlugin::PtrGetVideoSize s_mupenrr_get_video_size_fn = nullptr;
-static MupenRRSpecPlugin::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
-static MupenRRSpecPlugin::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
-static MupenRRSpecPlugin::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
-static MupenRRSpecPlugin::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
-static MupenRRSpecPlugin::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
-static MupenRRSpecPlugin::PtrReadController s_mupenrr_read_controller_fn = nullptr;
-static MupenRRSpecPlugin::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
-static MupenRRSpecPlugin::PtrShutdown s_mupenrr_shutdown_fn = nullptr;
+static M64RRSpec::PtrRomOpened s_mupenrr_rom_opened_fn = nullptr;
+static M64RRSpec::PtrRomClosed s_mupenrr_rom_closed_fn = nullptr;
+static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
+static M64RRSpec::PtrGetVideoSize s_mupenrr_get_video_size_fn = nullptr;
+static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
+static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
+static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
+static M64RRSpec::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
+static M64RRSpec::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
+static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
+static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_shutdown_fn = nullptr;
 
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE module, std::filesystem::path path)
+std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE module, std::filesystem::path path)
 {
-    const auto get_metadata = (MupenRRSpecPlugin::PtrGetMetadata)GetProcAddress(module, "M64RRGetMetadata");
+    const auto get_metadata = (M64RRSpec::PtrGetMetadata)GetProcAddress(module, "M64RRGetMetadata");
 
     if (!get_metadata)
     {
         return std::make_pair(L"M64RRGetMetadata missing", nullptr);
     }
 
-    MupenRRSpecPlugin::PluginMetadata metadata{};
+    M64RRSpec::PluginMetadata metadata{};
     get_metadata(&metadata);
 
     const size_t target_version_len = strnlen(metadata.target_version, std::size(metadata.target_version));
@@ -89,22 +89,22 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE m
         metadata.name[plugin_name_len - 1] = '\0';
     }
 
-    auto plugin = std::make_unique<MupenRRPlugin>();
+    auto plugin = std::make_unique<M64RRPlugin>();
 
     plugin->m_path = path;
     plugin->m_name = std::format("{} (✅)", metadata.name);
     switch (metadata.type)
     {
-    case MupenRRSpecPlugin::PluginType::Video:
+    case M64RRSpec::PluginType::Video:
         plugin->m_type = Plugin::Type::Video;
         break;
-    case MupenRRSpecPlugin::PluginType::Audio:
+    case M64RRSpec::PluginType::Audio:
         plugin->m_type = Plugin::Type::Audio;
         break;
-    case MupenRRSpecPlugin::PluginType::Input:
+    case M64RRSpec::PluginType::Input:
         plugin->m_type = Plugin::Type::Input;
         break;
-    case MupenRRSpecPlugin::PluginType::RSP:
+    case M64RRSpec::PluginType::RSP:
         plugin->m_type = Plugin::Type::RSP;
         break;
     }
@@ -115,11 +115,11 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE m
     return std::make_pair(L"", std::move(plugin));
 }
 
-void MupenRRPlugin::config(HWND hwnd)
+void M64RRPlugin::config(HWND hwnd)
 {
     initiate_dummy();
 
-    const auto show_config = (MupenRRSpecPlugin::PtrShowConfig)GetProcAddress(m_module, "M64RRRShowConfig");
+    const auto show_config = (M64RRSpec::PtrShowConfig)GetProcAddress(m_module, "M64RRRShowConfig");
 
     if (show_config)
         show_config(hwnd);
@@ -133,23 +133,23 @@ void MupenRRPlugin::config(HWND hwnd)
     deinitiate_dummy();
 }
 
-void MupenRRPlugin::test(HWND hwnd)
+void M64RRPlugin::test(HWND hwnd)
 {
 }
 
-void MupenRRPlugin::about(HWND hwnd)
+void M64RRPlugin::about(HWND hwnd)
 {
     MessageBox(hwnd, IOUtils::to_wide_string(m_meta.description).c_str(), L"About", MB_ICONINFORMATION | MB_OK);
 }
 
-void MupenRRPlugin::initiate()
+void M64RRPlugin::initiate()
 {
-    auto initiate_fn = (MupenRRSpecPlugin::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
-    if (!initiate_fn) initiate_fn = [](MupenRRSpecPlugin::PluginInit *init) {};
+    auto initiate_fn = (M64RRSpec::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
+    if (!initiate_fn) initiate_fn = [](M64RRSpec::PluginInit *init) {};
 
-    MupenRRSpecPlugin::PluginInit init{};
+    M64RRSpec::PluginInit init{};
 
-    init.platform = MupenRRSpecPlugin::Platform::Windows;
+    init.platform = M64RRSpec::Platform::Windows;
     init.byteswapped = 1;
     init.rom = g_main_ctx.core_ctx->rom;
     init.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -196,7 +196,7 @@ void MupenRRPlugin::initiate()
     init.process_dlist = g_plugin_funcs.video_process_dlist;
     init.header = g_main_ctx.core_ctx->rom;
 
-    std::array<MupenRRSpecPlugin::Controller, 4> tmp_controllers{};
+    std::array<M64RRSpec::Controller, 4> tmp_controllers{};
     init.controllers = tmp_controllers.data();
 
     switch (m_type)
@@ -226,12 +226,12 @@ void MupenRRPlugin::initiate()
     case Plugin::Type::Video: {
         g_view_logger->trace("Initiating video plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, MupenRRSpecPlugin::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, MupenRRSpecPlugin::PtrRomClosed, "M64RRRomClosed");
-        LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, MupenRRSpecPlugin::PtrProcessDList, "M64RRProcessDList");
-        LOOKUP_MUPENRR_FN(s_mupenrr_get_video_size_fn, MupenRRSpecPlugin::PtrGetVideoSize, "M64RRGetVideoSize");
-        LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, MupenRRSpecPlugin::PtrReadVideo, "M64RRReadVideo");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, M64RRSpec::PtrProcessDList, "M64RRProcessDList");
+        LOOKUP_MUPENRR_FN(s_mupenrr_get_video_size_fn, M64RRSpec::PtrGetVideoSize, "M64RRGetVideoSize");
+        LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.video_rom_open = []() {
             if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
@@ -258,7 +258,7 @@ void MupenRRPlugin::initiate()
         g_plugin_funcs.video_read_screen = nullptr;
         g_plugin_funcs.video_fb_read = [](uint32_t) {};
         g_plugin_funcs.video_fb_write = [](uint32_t, uint32_t) {};
-        g_plugin_funcs.video_fb_get_frame_buffer_info = [](ZilmarExtSpec::FBInfo *) {};
+        g_plugin_funcs.video_fb_get_frame_buffer_info = [](ZESpec::FBInfo *) {};
         g_plugin_funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
 
         break;
@@ -266,12 +266,12 @@ void MupenRRPlugin::initiate()
     case Plugin::Type::Audio: {
         g_view_logger->trace("Initiating audio plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, MupenRRSpecPlugin::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, MupenRRSpecPlugin::PtrRomClosed, "M64RRRomClosed");
-        LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, MupenRRSpecPlugin::PtrAIDacrateChanged,
+        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, M64RRSpec::PtrAIDacrateChanged,
                           "M64RRAIDacrateChanged");
-        LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, MupenRRSpecPlugin::PtrAILenChanged, "M64RRAILenChanged");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, M64RRSpec::PtrAILenChanged, "M64RRAILenChanged");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.audio_rom_open = []() {
             if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
@@ -297,12 +297,12 @@ void MupenRRPlugin::initiate()
     case Plugin::Type::Input: {
         g_view_logger->trace("Initiating input plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, MupenRRSpecPlugin::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, MupenRRSpecPlugin::PtrRomClosed, "M64RRRomClosed");
-        LOOKUP_MUPENRR_FN(s_mupenrr_get_keys_fn, MupenRRSpecPlugin::PtrGetKeys, "M64RRGetKeys");
-        LOOKUP_MUPENRR_FN(s_mupenrr_set_keys_fn, MupenRRSpecPlugin::PtrSetKeys, "M64RRSetKeys");
-        LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, MupenRRSpecPlugin::PtrReadController, "M64RRReadController");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_get_keys_fn, M64RRSpec::PtrGetKeys, "M64RRGetKeys");
+        LOOKUP_MUPENRR_FN(s_mupenrr_set_keys_fn, M64RRSpec::PtrSetKeys, "M64RRSetKeys");
+        LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, M64RRSpec::PtrReadController, "M64RRReadController");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.input_rom_open = []() {
             if (s_mupenrr_rom_opened_fn) s_mupenrr_rom_opened_fn();
@@ -314,11 +314,11 @@ void MupenRRPlugin::initiate()
             if (s_mupenrr_shutdown_fn) s_mupenrr_shutdown_fn();
         };
         g_plugin_funcs.input_controller_command = [](int32_t, uint8_t *) {};
-        g_plugin_funcs.input_get_keys = [](int32_t controller, ZilmarExtSpec::Buttons *keys) {
-            if (s_mupenrr_get_keys_fn) s_mupenrr_get_keys_fn(controller, (MupenRRSpecPlugin::Buttons *)keys);
+        g_plugin_funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
+            if (s_mupenrr_get_keys_fn) s_mupenrr_get_keys_fn(controller, (M64RRSpec::Buttons *)keys);
         };
-        g_plugin_funcs.input_set_keys = [](int32_t controller, ZilmarExtSpec::Buttons keys) {
-            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, *(MupenRRSpecPlugin::Buttons *)&keys);
+        g_plugin_funcs.input_set_keys = [](int32_t controller, ZESpec::Buttons keys) {
+            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, *(M64RRSpec::Buttons *)&keys);
         };
         g_plugin_funcs.input_read_controller = [](int32_t controller, unsigned char *command) {
             if (s_mupenrr_read_controller_fn) s_mupenrr_read_controller_fn(controller, command);
@@ -335,9 +335,9 @@ void MupenRRPlugin::initiate()
     case Plugin::Type::RSP: {
         g_view_logger->trace("Initiating RSP plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, MupenRRSpecPlugin::PtrRomClosed, "M64RRRomClosed");
-        LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, MupenRRSpecPlugin::PtrDoRSPCycles, "M64RRDoRSPCycles");
-        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, MupenRRSpecPlugin::PtrShutdown, "M64RRShutdown");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, M64RRSpec::PtrDoRSPCycles, "M64RRDoRSPCycles");
+        LOOKUP_MUPENRR_FN(s_mupenrr_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         g_plugin_funcs.rsp_rom_closed = []() {
             if (s_mupenrr_rom_closed_fn) s_mupenrr_rom_closed_fn();
@@ -362,16 +362,16 @@ void MupenRRPlugin::initiate()
     }
 }
 
-void MupenRRPlugin::initiate_dummy()
+void M64RRPlugin::initiate_dummy()
 {
     Main::init_sdl();
 
-    const auto initiate_fn = (MupenRRSpecPlugin::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
+    const auto initiate_fn = (M64RRSpec::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
     if (!initiate_fn) return;
 
-    MupenRRSpecPlugin::PluginInit init{};
+    M64RRSpec::PluginInit init{};
 
-    init.platform = MupenRRSpecPlugin::Platform::Windows;
+    init.platform = M64RRSpec::Platform::Windows;
     init.byteswapped = 1;
     init.rom = dummy_header;
     init.rdram = nullptr;
@@ -419,7 +419,7 @@ void MupenRRPlugin::initiate_dummy()
     init.process_dlist = [](const auto &...) {};
     init.header = dummy_header;
 
-    std::array<MupenRRSpecPlugin::Controller, 4> tmp_controllers{};
+    std::array<M64RRSpec::Controller, 4> tmp_controllers{};
     init.controllers = tmp_controllers.data();
 
     switch (m_type)
@@ -445,10 +445,10 @@ void MupenRRPlugin::initiate_dummy()
     initiate_fn(&init);
 }
 
-void MupenRRPlugin::deinitiate_dummy()
+void M64RRPlugin::deinitiate_dummy()
 {
     if (g_main_ctx.core_ctx->vr_get_launched()) return;
-    const auto close_dll = (MupenRRSpecPlugin::PtrShutdown)GetProcAddress(m_module, "M64RRShutdown");
+    const auto close_dll = (M64RRSpec::PtrShutdown)GetProcAddress(m_module, "M64RRShutdown");
     if (close_dll) close_dll();
 }
 

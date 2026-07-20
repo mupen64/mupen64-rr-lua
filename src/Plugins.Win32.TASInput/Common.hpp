@@ -8,7 +8,7 @@
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <core_api.h>
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
+#include <Views.Win32/ZESpec.h>
 #include <filesystem>
 #include <string>
 #include <format>

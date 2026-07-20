@@ -17,7 +17,7 @@
 std::filesystem::path g_config_path;
 
 HINSTANCE g_inst;
-ZilmarExtSpec::ExtendedFuncs *g_ef;
+ZESpec::ExtendedFuncs *g_ef;
 
 // ReSharper disable once CppInconsistentNaming
 int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)

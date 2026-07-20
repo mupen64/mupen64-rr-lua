@@ -5,16 +5,14 @@
  */
 
 /*
- * Describes the new Mupen64-RR Plugin API.
- *
- * This header can be used standalone by Mupen64 plugins, just make sure to define PLUGIN_WITH_CALLBACKS first.
- *
+ * Describes the M64RR plugin specification. This specification is volatile, with no compatibility guarantees across
+ * Mupen64 versions.
  */
 
 #pragma once
 
 #include "core_types.h"
-#include "ZilmarExtSpecPlugin.h"
+#include "ZESpec.h"
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
@@ -23,11 +21,11 @@
 #error "Unsupported platform"
 #endif
 
-namespace MupenRRSpecPlugin
+namespace M64RRSpec
 {
 extern "C"
 {
-    using ExtendedFuncs = ZilmarExtSpec::ExtendedFuncs;
+    using ExtendedFuncs = ZESpec::ExtendedFuncs;
 
     /**
      * \brief Represents the platform the plugin is running on.
@@ -159,7 +157,7 @@ extern "C"
 
         uint8_t *header;
         Controller *controllers;
-        ZilmarExtSpec::ExtendedFuncs *ef;
+        ZESpec::ExtendedFuncs *ef;
     };
 
     struct WindowHandle
@@ -197,13 +195,13 @@ extern "C"
 
     typedef void(CALL *PtrDoRSPCycles)(uint8_t);
 };
-} // namespace MupenRRSpecPlugin
+} // namespace M64RRSpec
 
 #if defined(PLUGIN_WITH_CALLBACKS)
 
 extern "C"
 {
-    using namespace MupenRRSpecPlugin;
+    using namespace M64RRSpec;
 
     // ReSharper disable CppInconsistentNaming
 

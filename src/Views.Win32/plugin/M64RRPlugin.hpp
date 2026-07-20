@@ -8,11 +8,11 @@
 
 #include <plugin/Plugin.hpp>
 
-class MupenRRPlugin : public Plugin
+class M64RRPlugin : public Plugin
 {
   public:
     using Plugin::Plugin;
-    ~MupenRRPlugin() override = default;
+    ~M64RRPlugin() override = default;
 
     static std::pair<std::wstring, std::unique_ptr<Plugin>> create(HMODULE module, std::filesystem::path path);
 
@@ -24,5 +24,5 @@ class MupenRRPlugin : public Plugin
     void deinitiate_dummy() override;
 
   protected:
-    MupenRRSpecPlugin::PluginMetadata m_meta;
+    M64RRSpec::PluginMetadata m_meta;
 };

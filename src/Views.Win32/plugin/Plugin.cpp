@@ -10,30 +10,30 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <plugin/Plugin.hpp>
-#include <plugin/MupenRRPlugin.hpp>
-#include <plugin/ZilmarExtPlugin.hpp>
+#include <plugin/M64RRPlugin.hpp>
+#include <plugin/ZEPlugin.hpp>
 #include <components/ConfigDialog.hpp>
 #include <components/Statusbar.hpp>
 #include <components/MGECompositor.hpp>
 #include <ThreadPool.hpp>
 #include <Messenger.hpp>
 
-ZilmarExtSpec::VideoPluginInfo dummy_video_info{};
-ZilmarExtSpec::AudioPluginInfo dummy_audio_info{};
-ZilmarExtSpec::InputPluginInfo dummy_control_info{};
-ZilmarExtSpec::RSPPluginInfo dummy_rsp_info{};
-ZilmarExtSpec::Controller dummy_controllers[4]{};
+ZESpec::VideoPluginInfo dummy_video_info{};
+ZESpec::AudioPluginInfo dummy_audio_info{};
+ZESpec::InputPluginInfo dummy_control_info{};
+ZESpec::RSPPluginInfo dummy_rsp_info{};
+ZESpec::Controller dummy_controllers[4]{};
 uint8_t dummy_header[0x40]{};
 uint32_t dummy_dw{};
 
-ZilmarExtSpec::VideoPluginInfo gfx_info{};
-ZilmarExtSpec::AudioPluginInfo audio_info{};
-ZilmarExtSpec::InputPluginInfo control_info{};
-ZilmarExtSpec::RSPPluginInfo rsp_info{};
+ZESpec::VideoPluginInfo gfx_info{};
+ZESpec::AudioPluginInfo audio_info{};
+ZESpec::InputPluginInfo control_info{};
+ZESpec::RSPPluginInfo rsp_info{};
 
-ZilmarExtSpec::DLLABOUT dll_about{};
-ZilmarExtSpec::DLLCONFIG dll_config{};
-ZilmarExtSpec::DLLTEST dll_test{};
+ZESpec::DLLABOUT dll_about{};
+ZESpec::DLLCONFIG dll_config{};
+ZESpec::DLLTEST dll_test{};
 
 static std::shared_ptr<Plugin> video_plugin;
 static std::shared_ptr<Plugin> audio_plugin;
@@ -42,7 +42,7 @@ static std::shared_ptr<Plugin> rsp_plugin;
 
 static std::jthread s_audio_thread;
 
-ZilmarExtSpecPluginFuncs g_plugin_funcs{};
+ZESpecFuncs g_plugin_funcs{};
 
 #pragma region Dummy Functions
 
@@ -55,21 +55,21 @@ static void CALL dummy_void()
 {
 }
 
-static void CALL dummy_receive_extended_funcs(ZilmarExtSpec::ExtendedFuncs *)
+static void CALL dummy_receive_extended_funcs(ZESpec::ExtendedFuncs *)
 {
 }
 
-static int32_t CALL dummy_initiate_gfx(ZilmarExtSpec::VideoPluginInfo)
-{
-    return 1;
-}
-
-static int32_t CALL dummy_initiate_audio(ZilmarExtSpec::AudioPluginInfo)
+static int32_t CALL dummy_initiate_gfx(ZESpec::VideoPluginInfo)
 {
     return 1;
 }
 
-static void CALL dummy_initiate_controllers(ZilmarExtSpec::InputPluginInfo)
+static int32_t CALL dummy_initiate_audio(ZESpec::AudioPluginInfo)
+{
+    return 1;
+}
+
+static void CALL dummy_initiate_controllers(ZESpec::InputPluginInfo)
 {
 }
 
@@ -90,11 +90,11 @@ static void CALL dummy_controller_command(int32_t, uint8_t *)
 {
 }
 
-static void CALL dummy_get_keys(int32_t, ZilmarExtSpec::Buttons *)
+static void CALL dummy_get_keys(int32_t, ZESpec::Buttons *)
 {
 }
 
-static void CALL dummy_set_keys(int32_t, ZilmarExtSpec::Buttons)
+static void CALL dummy_set_keys(int32_t, ZESpec::Buttons)
 {
 }
 
@@ -110,7 +110,7 @@ static void CALL dummy_key_up(uint32_t, int32_t)
 {
 }
 
-static void CALL dummy_initiate_rsp(ZilmarExtSpec::RSPPluginInfo, uint32_t *)
+static void CALL dummy_initiate_rsp(ZESpec::RSPPluginInfo, uint32_t *)
 {
 }
 
@@ -122,7 +122,7 @@ static void CALL dummy_fb_write(uint32_t, uint32_t)
 {
 }
 
-static void CALL dummy_fb_get_framebuffer_info(ZilmarExtSpec::FBInfo *)
+static void CALL dummy_fb_get_framebuffer_info(ZESpec::FBInfo *)
 {
 }
 
@@ -212,7 +212,7 @@ static void start_audio_thread()
 }
 
 #define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    ZilmarExtSpec::ExtendedFuncs                                                                                       \
+    ZESpec::ExtendedFuncs                                                                                       \
     {                                                                                                                  \
         .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
         .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
@@ -223,9 +223,9 @@ static void start_audio_thread()
         .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter                             \
     }
 
-ZilmarExtSpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
+ZESpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
 {
-    auto dll_crt_free = (ZilmarExtSpec::DLLCRTFREE)GetProcAddress(module, "DllCrtFree");
+    auto dll_crt_free = (ZESpec::DLLCRTFREE)GetProcAddress(module, "DllCrtFree");
     if (dll_crt_free) return dll_crt_free;
 
     ULONG size;
@@ -239,7 +239,7 @@ ZilmarExtSpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module
             auto importDllHandle = GetModuleHandleA(importDllName);
             if (importDllHandle != nullptr)
             {
-                dll_crt_free = (ZilmarExtSpec::DLLCRTFREE)GetProcAddress(importDllHandle, "free");
+                dll_crt_free = (ZESpec::DLLCRTFREE)GetProcAddress(importDllHandle, "free");
                 if (dll_crt_free != nullptr) return dll_crt_free;
             }
 
@@ -262,8 +262,8 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
         return std::make_pair(std::format(L"LoadLibrary (code {})", last_error), nullptr);
     }
 
-    auto result1 = ZilmarExtPlugin::create(module, path);
-    auto result2 = MupenRRPlugin::create(module, path);
+    auto result1 = ZEPlugin::create(module, path);
+    auto result2 = M64RRPlugin::create(module, path);
 
     if (result1.first.empty()) return result1;
     if (result2.first.empty()) return result2;
@@ -460,7 +460,7 @@ void PluginUtil::start_plugins()
     g_main_ctx.core.video_fb_read = g_plugin_funcs.video_fb_read;
     g_main_ctx.core.video_fb_write = g_plugin_funcs.video_fb_write;
     g_main_ctx.core.video_fb_get_frame_buffer_info = [](CoreFBInfo info[6]) {
-        ZilmarExtSpec::FBInfo z_fb[6]{};
+        ZESpec::FBInfo z_fb[6]{};
         g_plugin_funcs.video_fb_get_frame_buffer_info(z_fb);
 
         for (size_t i = 0; i < 6; i++)
@@ -479,12 +479,12 @@ void PluginUtil::start_plugins()
 
     g_main_ctx.core.input_controller_command = g_plugin_funcs.input_controller_command;
     g_main_ctx.core.input_get_keys = [](int32_t controller, CoreButtons *keys) {
-        ZilmarExtSpec::Buttons z_keys{};
+        ZESpec::Buttons z_keys{};
         g_plugin_funcs.input_get_keys(controller, &z_keys);
         keys->value = z_keys.value;
     };
     g_main_ctx.core.input_set_keys = [](int32_t controller, CoreButtons keys) {
-        ZilmarExtSpec::Buttons z_keys{keys.value};
+        ZESpec::Buttons z_keys{keys.value};
         g_plugin_funcs.input_set_keys(controller, z_keys);
     };
     g_main_ctx.core.input_read_controller = g_plugin_funcs.input_read_controller;

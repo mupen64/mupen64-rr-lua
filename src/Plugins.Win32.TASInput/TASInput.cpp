@@ -55,12 +55,12 @@ struct Status
     /**
      * \brief The current internal input state before any processing
      */
-    ZilmarExtSpec::Buttons current_input{};
+    ZESpec::Buttons current_input{};
 
     /**
      * \brief The internal input state at the previous GetKeys call before any processing
      */
-    ZilmarExtSpec::Buttons last_controller_input{};
+    ZESpec::Buttons last_controller_input{};
 
     /**
      * \brief Ignores the next joystick increment, used for relative mode tracking
@@ -99,7 +99,7 @@ struct Status
 
     struct t_set_visuals_request
     {
-        ZilmarExtSpec::Buttons input;
+        ZESpec::Buttons input;
         bool needs_processing;
     };
 
@@ -110,8 +110,8 @@ struct Status
 
     bool last_lmb_down{};
     bool last_rmb_down{};
-    ZilmarExtSpec::Buttons autofire_input_a{};
-    ZilmarExtSpec::Buttons autofire_input_b{};
+    ZESpec::Buttons autofire_input_a{};
+    ZESpec::Buttons autofire_input_b{};
     bool ready;
     HWND hwnd{};
     HWND combos_hwnd{};
@@ -147,7 +147,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing = true);
+    void set_visuals(ZESpec::Buttons input, bool needs_processing = true);
 
     /**
      * \brief Queues the UI to be updated at the next possible opportunity. Doesn't block the caller until the UI has
@@ -155,7 +155,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals_lazy(ZilmarExtSpec::Buttons input, bool needs_processing = true);
+    void set_visuals_lazy(ZESpec::Buttons input, bool needs_processing = true);
 
     void set_visuals_if_needed();
 
@@ -164,7 +164,7 @@ struct Status
      * \param input The input to process
      * \return The processed input
      */
-    ZilmarExtSpec::Buttons get_processed_input(ZilmarExtSpec::Buttons input);
+    ZESpec::Buttons get_processed_input(ZESpec::Buttons input);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -173,7 +173,7 @@ struct Status
 
     void on_config_changed();
 
-    void get_input(ZilmarExtSpec::Buttons *keys);
+    void get_input(ZESpec::Buttons *keys);
 };
 
 static ULONG_PTR gdi_plus_token{};
@@ -243,15 +243,15 @@ EXPORT void CALL DllConfig(void *hParent)
     // TODO: Do we have to restart the dialogs here like in old version?
 }
 
-EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *info)
+EXPORT void CALL GetDllInfo(ZESpec::PluginInfo *info)
 {
     info->ver = 0x0101;
-    info->type = ZilmarExtSpec::PluginType::Input;
+    info->type = ZESpec::PluginType::Input;
     strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));
     std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);
 }
 
-EXPORT void CALL GetKeys(int Control, ZilmarExtSpec::Buttons *Keys)
+EXPORT void CALL GetKeys(int Control, ZESpec::Buttons *Keys)
 {
     if (new_frame)
     {
@@ -262,7 +262,7 @@ EXPORT void CALL GetKeys(int Control, ZilmarExtSpec::Buttons *Keys)
     status[Control].get_input(Keys);
 }
 
-EXPORT void CALL SetKeys(int32_t controller, ZilmarExtSpec::Buttons keys)
+EXPORT void CALL SetKeys(int32_t controller, ZESpec::Buttons keys)
 {
     status[controller].set_visuals_lazy(keys, false);
 }
@@ -300,7 +300,7 @@ apply:
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-void Status::get_input(ZilmarExtSpec::Buttons *keys)
+void Status::get_input(ZESpec::Buttons *keys)
 {
     keys->value = get_processed_input(current_input).value;
 
@@ -340,7 +340,7 @@ end:
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
 }
 
-ZilmarExtSpec::Buttons Status::get_processed_input(ZilmarExtSpec::Buttons input)
+ZESpec::Buttons Status::get_processed_input(ZESpec::Buttons input)
 {
     input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
@@ -369,7 +369,7 @@ void Status::activate_emulator_window()
     SetForegroundWindow(emulator_hwnd);
 }
 
-void Status::set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing)
+void Status::set_visuals(ZESpec::Buttons input, bool needs_processing)
 {
     if (needs_processing)
     {
@@ -405,7 +405,7 @@ void Status::set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing)
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
 }
 
-void Status::set_visuals_lazy(ZilmarExtSpec::Buttons input, bool needs_processing)
+void Status::set_visuals_lazy(ZESpec::Buttons input, bool needs_processing)
 {
     std::lock_guard lock(pending_visuals_mutex);
     pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
@@ -720,7 +720,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_TIMER: {
         ctx->set_visuals_if_needed();
 
-        ZilmarExtSpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
+        ZESpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
 
         if (controller_input.value != ctx->last_controller_input.value)
         {
@@ -847,7 +847,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     }
     break;
     case WM_UPDATE_VISUALS:
-        ctx->set_visuals(static_cast<ZilmarExtSpec::Buttons>(lparam), false);
+        ctx->set_visuals(static_cast<ZESpec::Buttons>(lparam), false);
         break;
     case WM_SIZE:
     case WM_MOVE: {
@@ -867,7 +867,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            ZilmarExtSpec::Buttons last_input = ctx->current_input;
+            ZESpec::Buttons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -891,7 +891,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            ZilmarExtSpec::Buttons last_input = ctx->current_input;
+            ZESpec::Buttons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -1000,20 +1000,20 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return FALSE;
 }
 
-EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo info)
+EXPORT void CALL InitiateControllers(ZESpec::InputPluginInfo info)
 {
     g_ef = info.extended_funcs;
-    g_config_path = ZilmarExtSpec::get_config_path(g_ef);
+    g_config_path = ZESpec::get_config_path(g_ef);
     emulator_hwnd = (HWND)info.main_hwnd;
 
     for (int i = 0; i < 4; ++i)
     {
         info.controllers[i].present = new_config.controller_active[i];
         info.controllers[i].raw = false;
-        info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::None;
-        if (new_config.controller_mempak[i]) info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::Mempak;
+        info.controllers[i].plugin = ZESpec::ControllerExtension::None;
+        if (new_config.controller_mempak[i]) info.controllers[i].plugin = ZESpec::ControllerExtension::Mempak;
         if (new_config.controller_rumblepak[i])
-            info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::Rumblepak;
+            info.controllers[i].plugin = ZESpec::ControllerExtension::Rumblepak;
     }
 }
 

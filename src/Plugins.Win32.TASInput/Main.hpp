@@ -7,12 +7,12 @@
 #pragma once
 
 #include <Windows.h>
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
+#include <Views.Win32/ZESpec.h>
 #include <WinFilePicker.hpp>
 #include <filesystem>
 
 extern HINSTANCE g_inst;
-extern ZilmarExtSpec::ExtendedFuncs *g_ef;
+extern ZESpec::ExtendedFuncs *g_ef;
 extern std::filesystem::path g_config_path;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input")

@@ -9,4 +9,4 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Video")
 
-DUMMY_PLUGIN_STUB_IMPL(MupenRRSpecPlugin::PluginType::Video)
+DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Video)

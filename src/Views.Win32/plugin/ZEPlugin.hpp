@@ -8,11 +8,11 @@
 
 #include <plugin/Plugin.hpp>
 
-class ZilmarExtPlugin : public Plugin
+class ZEPlugin : public Plugin
 {
   public:
     using Plugin::Plugin;
-    ~ZilmarExtPlugin() override = default;
+    ~ZEPlugin() override = default;
 
     static std::pair<std::wstring, std::unique_ptr<Plugin>> create(HMODULE module, std::filesystem::path path);
 

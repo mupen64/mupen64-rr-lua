@@ -7,10 +7,10 @@
 #pragma once
 
 #include <VersionNameHelpers.hpp>
-#include <Views.Win32/MupenRRSpecPlugin.h>
+#include <Views.Win32/M64RRSpec.h>
 
 #define DUMMY_PLUGIN_STUB_IMPL(plugin_type)                                                                            \
-    EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)                                     \
+    EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)                                     \
     {                                                                                                                  \
         metadata->type = plugin_type;                                                                                  \
                                                                                                                        \

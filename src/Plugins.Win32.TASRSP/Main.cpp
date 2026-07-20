@@ -12,14 +12,14 @@
 #define UCODE_BANJO (2)
 #define UCODE_ZELDA (3)
 
-MupenRRSpecPlugin::PluginInit rsp;
+M64RRSpec::PluginInit rsp;
 static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
 std::filesystem::path g_config_path;
 
-MupenRRSpecPlugin::ExtendedFuncs *g_ef{};
+M64RRSpec::ExtendedFuncs *g_ef{};
 
 static int audio_ucode_detect_type(const OSTask_t *task)
 {
@@ -166,9 +166,9 @@ unknown_task:
     return 0;
 }
 
-EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)
+EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
-    metadata->type = MupenRRSpecPlugin::PluginType::RSP;
+    metadata->type = M64RRSpec::PluginType::RSP;
 
     const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
     const auto description = "First-party TAS plugin for Mupen64."
@@ -189,11 +189,11 @@ EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)
     metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRInitiate(MupenRRSpecPlugin::PluginInit *init)
+EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
     rsp = *init;
     g_ef = rsp.ef;
-    g_config_path = ZilmarExtSpec::get_config_path(g_ef);
+    g_config_path = ZESpec::get_config_path(g_ef);
 }
 
 EXPORT void CALL M64RRRomOpened()

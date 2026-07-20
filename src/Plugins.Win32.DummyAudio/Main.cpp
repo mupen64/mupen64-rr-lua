@@ -9,4 +9,4 @@
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Audio")
 
-DUMMY_PLUGIN_STUB_IMPL(MupenRRSpecPlugin::PluginType::Audio)
+DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Audio)

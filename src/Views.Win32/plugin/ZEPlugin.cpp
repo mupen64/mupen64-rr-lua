@@ -12,7 +12,7 @@
 #include <components/MGECompositor.hpp>
 #include <components/Statusbar.hpp>
 #include <plugin/Plugin.hpp>
-#include <plugin/ZilmarExtPlugin.hpp>
+#include <plugin/ZEPlugin.hpp>
 
 #pragma region Dummy Functions
 
@@ -25,21 +25,21 @@ static void CALL dummy_void()
 {
 }
 
-static void CALL dummy_receive_extended_funcs(ZilmarExtSpec::ExtendedFuncs *)
+static void CALL dummy_receive_extended_funcs(ZESpec::ExtendedFuncs *)
 {
 }
 
-static int32_t CALL dummy_initiate_gfx(ZilmarExtSpec::VideoPluginInfo)
-{
-    return 1;
-}
-
-static int32_t CALL dummy_initiate_audio(ZilmarExtSpec::AudioPluginInfo)
+static int32_t CALL dummy_initiate_gfx(ZESpec::VideoPluginInfo)
 {
     return 1;
 }
 
-static void CALL dummy_initiate_controllers(ZilmarExtSpec::InputPluginInfo)
+static int32_t CALL dummy_initiate_audio(ZESpec::AudioPluginInfo)
+{
+    return 1;
+}
+
+static void CALL dummy_initiate_controllers(ZESpec::InputPluginInfo)
 {
 }
 
@@ -60,11 +60,11 @@ static void CALL dummy_controller_command(int32_t, uint8_t *)
 {
 }
 
-static void CALL dummy_get_keys(int32_t, ZilmarExtSpec::Buttons *)
+static void CALL dummy_get_keys(int32_t, ZESpec::Buttons *)
 {
 }
 
-static void CALL dummy_set_keys(int32_t, ZilmarExtSpec::Buttons)
+static void CALL dummy_set_keys(int32_t, ZESpec::Buttons)
 {
 }
 
@@ -80,7 +80,7 @@ static void CALL dummy_key_up(uint32_t, int32_t)
 {
 }
 
-static void CALL dummy_initiate_rsp(ZilmarExtSpec::RSPPluginInfo, uint32_t *)
+static void CALL dummy_initiate_rsp(ZESpec::RSPPluginInfo, uint32_t *)
 {
 }
 
@@ -92,7 +92,7 @@ static void CALL dummy_fb_write(uint32_t, uint32_t)
 {
 }
 
-static void CALL dummy_fb_get_framebuffer_info(ZilmarExtSpec::FBInfo *)
+static void CALL dummy_fb_get_framebuffer_info(ZESpec::FBInfo *)
 {
 }
 
@@ -150,16 +150,16 @@ static void CALL dummy_capture_screen(char *)
 
 #pragma endregion
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> ZilmarExtPlugin::create(HMODULE module, std::filesystem::path path)
+std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module, std::filesystem::path path)
 {
-    const auto get_dll_info = (ZilmarExtSpec::GETDLLINFO)GetProcAddress(module, "GetDllInfo");
+    const auto get_dll_info = (ZESpec::GETDLLINFO)GetProcAddress(module, "GetDllInfo");
 
     if (!get_dll_info)
     {
         return std::make_pair(L"GetDllInfo missing", nullptr);
     }
 
-    ZilmarExtSpec::PluginInfo plugin_info{};
+    ZESpec::PluginInfo plugin_info{};
     get_dll_info(&plugin_info);
 
     const size_t target_version_len = strnlen(plugin_info.target_version, std::size(plugin_info.target_version));
@@ -180,22 +180,22 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZilmarExtPlugin::create(HMODULE
         plugin_info.name[plugin_name_len - 1] = '\0';
     }
 
-    auto plugin = std::make_unique<ZilmarExtPlugin>();
+    auto plugin = std::make_unique<ZEPlugin>();
 
     plugin->m_path = path;
     plugin->m_name = std::string(plugin_info.name);
     switch (plugin_info.type)
     {
-    case ZilmarExtSpec::PluginType::Video:
+    case ZESpec::PluginType::Video:
         plugin->m_type = Plugin::Type::Video;
         break;
-    case ZilmarExtSpec::PluginType::Audio:
+    case ZESpec::PluginType::Audio:
         plugin->m_type = Plugin::Type::Audio;
         break;
-    case ZilmarExtSpec::PluginType::Input:
+    case ZESpec::PluginType::Input:
         plugin->m_type = Plugin::Type::Input;
         break;
-    case ZilmarExtSpec::PluginType::RSP:
+    case ZESpec::PluginType::RSP:
         plugin->m_type = Plugin::Type::RSP;
         break;
     default:
@@ -208,11 +208,11 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZilmarExtPlugin::create(HMODULE
     return std::make_pair(L"", std::move(plugin));
 }
 
-void ZilmarExtPlugin::config(HWND hwnd)
+void ZEPlugin::config(HWND hwnd)
 {
     initiate_dummy();
 
-    const auto dll_config = (ZilmarExtSpec::DLLCONFIG)GetProcAddress(m_module, "DllConfig");
+    const auto dll_config = (ZESpec::DLLCONFIG)GetProcAddress(m_module, "DllConfig");
 
     if (dll_config)
         dll_config(hwnd);
@@ -226,50 +226,50 @@ void ZilmarExtPlugin::config(HWND hwnd)
     deinitiate_dummy();
 }
 
-void ZilmarExtPlugin::test(HWND hwnd)
+void ZEPlugin::test(HWND hwnd)
 {
     initiate_dummy();
-    const auto dll_test = (ZilmarExtSpec::DLLTEST)GetProcAddress(m_module, "DllTest");
+    const auto dll_test = (ZESpec::DLLTEST)GetProcAddress(m_module, "DllTest");
     if (dll_test) dll_test(hwnd);
     deinitiate_dummy();
 }
 
-void ZilmarExtPlugin::about(HWND hwnd)
+void ZEPlugin::about(HWND hwnd)
 {
     initiate_dummy();
-    const auto dll_about = (ZilmarExtSpec::DLLABOUT)GetProcAddress(m_module, "DllAbout");
+    const auto dll_about = (ZESpec::DLLABOUT)GetProcAddress(m_module, "DllAbout");
     if (dll_about) dll_about(hwnd);
     deinitiate_dummy();
 }
 
-void ZilmarExtPlugin::initiate()
+void ZEPlugin::initiate()
 {
     switch (m_type)
     {
     case Plugin::Type::Video: {
         g_view_logger->trace("Initiating video plugin...");
-        ZilmarExtSpec::INITIATEGFX initiate_gfx{};
+        ZESpec::INITIATEGFX initiate_gfx{};
 
-        FUNC(g_plugin_funcs.video_change_window, ZilmarExtSpec::CHANGEWINDOW, dummy_void, "ChangeWindow");
-        FUNC(g_plugin_funcs.video_close_dll, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(initiate_gfx, ZilmarExtSpec::INITIATEGFX, dummy_initiate_gfx, "InitiateGFX");
-        FUNC(g_plugin_funcs.video_process_dlist, ZilmarExtSpec::PROCESSDLIST, dummy_void, "ProcessDList");
-        FUNC(g_plugin_funcs.video_process_rdp_list, ZilmarExtSpec::PROCESSRDPLIST, dummy_void, "ProcessRDPList");
-        FUNC(g_plugin_funcs.video_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.video_rom_open, ZilmarExtSpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.video_show_cfb, ZilmarExtSpec::SHOWCFB, dummy_void, "ShowCFB");
-        FUNC(g_plugin_funcs.video_update_screen, ZilmarExtSpec::UPDATESCREEN, dummy_void, "UpdateScreen");
-        FUNC(g_plugin_funcs.video_vi_status_changed, ZilmarExtSpec::VISTATUSCHANGED, dummy_void, "ViStatusChanged");
-        FUNC(g_plugin_funcs.video_vi_width_changed, ZilmarExtSpec::VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
-        FUNC(g_plugin_funcs.video_move_screen, ZilmarExtSpec::MOVESCREEN, dummy_move_screen, "MoveScreen");
-        FUNC(g_plugin_funcs.video_capture_screen, ZilmarExtSpec::CAPTURESCREEN, dummy_capture_screen, "CaptureScreen");
-        FUNC(g_plugin_funcs.video_read_screen, ZilmarExtSpec::READSCREEN,
-             (ZilmarExtSpec::READSCREEN)GetProcAddress(m_module, "ReadScreen2"), "ReadScreen");
-        FUNC(g_plugin_funcs.video_get_video_size, ZilmarExtSpec::GETVIDEOSIZE, nullptr, "mge_get_video_size");
-        FUNC(g_plugin_funcs.video_read_video, ZilmarExtSpec::READVIDEO, nullptr, "mge_read_video2");
-        FUNC(g_plugin_funcs.video_fb_read, ZilmarExtSpec::FBREAD, dummy_fb_read, "FBRead");
-        FUNC(g_plugin_funcs.video_fb_write, ZilmarExtSpec::FBWRITE, dummy_fb_write, "FBWrite");
-        FUNC(g_plugin_funcs.video_fb_get_frame_buffer_info, ZilmarExtSpec::FBGETFRAMEBUFFERINFO,
+        FUNC(g_plugin_funcs.video_change_window, ZESpec::CHANGEWINDOW, dummy_void, "ChangeWindow");
+        FUNC(g_plugin_funcs.video_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(initiate_gfx, ZESpec::INITIATEGFX, dummy_initiate_gfx, "InitiateGFX");
+        FUNC(g_plugin_funcs.video_process_dlist, ZESpec::PROCESSDLIST, dummy_void, "ProcessDList");
+        FUNC(g_plugin_funcs.video_process_rdp_list, ZESpec::PROCESSRDPLIST, dummy_void, "ProcessRDPList");
+        FUNC(g_plugin_funcs.video_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(g_plugin_funcs.video_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
+        FUNC(g_plugin_funcs.video_show_cfb, ZESpec::SHOWCFB, dummy_void, "ShowCFB");
+        FUNC(g_plugin_funcs.video_update_screen, ZESpec::UPDATESCREEN, dummy_void, "UpdateScreen");
+        FUNC(g_plugin_funcs.video_vi_status_changed, ZESpec::VISTATUSCHANGED, dummy_void, "ViStatusChanged");
+        FUNC(g_plugin_funcs.video_vi_width_changed, ZESpec::VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
+        FUNC(g_plugin_funcs.video_move_screen, ZESpec::MOVESCREEN, dummy_move_screen, "MoveScreen");
+        FUNC(g_plugin_funcs.video_capture_screen, ZESpec::CAPTURESCREEN, dummy_capture_screen, "CaptureScreen");
+        FUNC(g_plugin_funcs.video_read_screen, ZESpec::READSCREEN,
+             (ZESpec::READSCREEN)GetProcAddress(m_module, "ReadScreen2"), "ReadScreen");
+        FUNC(g_plugin_funcs.video_get_video_size, ZESpec::GETVIDEOSIZE, nullptr, "mge_get_video_size");
+        FUNC(g_plugin_funcs.video_read_video, ZESpec::READVIDEO, nullptr, "mge_read_video2");
+        FUNC(g_plugin_funcs.video_fb_read, ZESpec::FBREAD, dummy_fb_read, "FBRead");
+        FUNC(g_plugin_funcs.video_fb_write, ZESpec::FBWRITE, dummy_fb_write, "FBWrite");
+        FUNC(g_plugin_funcs.video_fb_get_frame_buffer_info, ZESpec::FBGETFRAMEBUFFERINFO,
              dummy_fb_get_framebuffer_info, "FBGetFrameBufferInfo");
         g_plugin_funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
 
@@ -325,18 +325,18 @@ void ZilmarExtPlugin::initiate()
     }
     case Plugin::Type::Audio: {
         g_view_logger->trace("Initiating audio plugin...");
-        ZilmarExtSpec::INITIATEAUDIO initiate_audio{};
+        ZESpec::INITIATEAUDIO initiate_audio{};
 
-        FUNC(g_plugin_funcs.audio_close_dll_audio, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.audio_ai_dacrate_changed, ZilmarExtSpec::AIDACRATECHANGED, dummy_ai_dacrate_changed,
+        FUNC(g_plugin_funcs.audio_close_dll_audio, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(g_plugin_funcs.audio_ai_dacrate_changed, ZESpec::AIDACRATECHANGED, dummy_ai_dacrate_changed,
              "AiDacrateChanged");
-        FUNC(g_plugin_funcs.audio_ai_len_changed, ZilmarExtSpec::AILENCHANGED, dummy_void, "AiLenChanged");
-        FUNC(g_plugin_funcs.audio_ai_read_length, ZilmarExtSpec::AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
-        FUNC(initiate_audio, ZilmarExtSpec::INITIATEAUDIO, dummy_initiate_audio, "InitiateAudio");
-        FUNC(g_plugin_funcs.audio_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.audio_rom_open, ZilmarExtSpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.audio_process_alist, ZilmarExtSpec::PROCESSALIST, dummy_void, "ProcessAList");
-        FUNC(g_plugin_funcs.audio_ai_update, ZilmarExtSpec::AIUPDATE, dummy_ai_update, "AiUpdate");
+        FUNC(g_plugin_funcs.audio_ai_len_changed, ZESpec::AILENCHANGED, dummy_void, "AiLenChanged");
+        FUNC(g_plugin_funcs.audio_ai_read_length, ZESpec::AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
+        FUNC(initiate_audio, ZESpec::INITIATEAUDIO, dummy_initiate_audio, "InitiateAudio");
+        FUNC(g_plugin_funcs.audio_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(g_plugin_funcs.audio_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
+        FUNC(g_plugin_funcs.audio_process_alist, ZESpec::PROCESSALIST, dummy_void, "ProcessAList");
+        FUNC(g_plugin_funcs.audio_ai_update, ZESpec::AIUPDATE, dummy_ai_update, "AiUpdate");
 
         audio_info.main_hwnd = g_main_ctx.hwnd;
         audio_info.hinst = g_main_ctx.hinst;
@@ -363,36 +363,36 @@ void ZilmarExtPlugin::initiate()
     case Plugin::Type::Input: {
         g_view_logger->trace("Initiating input plugin...");
 
-        ZilmarExtSpec::OLD_INITIATECONTROLLERS old_initiate_controllers{};
-        ZilmarExtSpec::INITIATECONTROLLERS initiate_controllers{};
+        ZESpec::OLD_INITIATECONTROLLERS old_initiate_controllers{};
+        ZESpec::INITIATECONTROLLERS initiate_controllers{};
 
-        FUNC(g_plugin_funcs.input_close_dll, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.input_controller_command, ZilmarExtSpec::CONTROLLERCOMMAND, dummy_controller_command,
+        FUNC(g_plugin_funcs.input_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(g_plugin_funcs.input_controller_command, ZESpec::CONTROLLERCOMMAND, dummy_controller_command,
              "ControllerCommand");
-        FUNC(g_plugin_funcs.input_get_keys, ZilmarExtSpec::GETKEYS, dummy_get_keys, "GetKeys");
-        FUNC(g_plugin_funcs.input_set_keys, ZilmarExtSpec::SETKEYS, dummy_set_keys, "SetKeys");
+        FUNC(g_plugin_funcs.input_get_keys, ZESpec::GETKEYS, dummy_get_keys, "GetKeys");
+        FUNC(g_plugin_funcs.input_set_keys, ZESpec::SETKEYS, dummy_set_keys, "SetKeys");
         if (m_version == 0x0101)
         {
-            FUNC(initiate_controllers, ZilmarExtSpec::INITIATECONTROLLERS, dummy_initiate_controllers,
+            FUNC(initiate_controllers, ZESpec::INITIATECONTROLLERS, dummy_initiate_controllers,
                  "InitiateControllers");
         }
         else
         {
-            FUNC(old_initiate_controllers, ZilmarExtSpec::OLD_INITIATECONTROLLERS, nullptr, "InitiateControllers");
+            FUNC(old_initiate_controllers, ZESpec::OLD_INITIATECONTROLLERS, nullptr, "InitiateControllers");
         }
-        FUNC(g_plugin_funcs.input_read_controller, ZilmarExtSpec::READCONTROLLER, dummy_read_controller,
+        FUNC(g_plugin_funcs.input_read_controller, ZESpec::READCONTROLLER, dummy_read_controller,
              "ReadController");
-        FUNC(g_plugin_funcs.input_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.input_rom_open, ZilmarExtSpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.input_key_down, ZilmarExtSpec::KEYDOWN, dummy_key_down, "WM_KeyDown");
-        FUNC(g_plugin_funcs.input_key_up, ZilmarExtSpec::KEYUP, dummy_key_up, "WM_KeyUp");
+        FUNC(g_plugin_funcs.input_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(g_plugin_funcs.input_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
+        FUNC(g_plugin_funcs.input_key_down, ZESpec::KEYDOWN, dummy_key_down, "WM_KeyDown");
+        FUNC(g_plugin_funcs.input_key_up, ZESpec::KEYUP, dummy_key_up, "WM_KeyUp");
 
         control_info.main_hwnd = g_main_ctx.hwnd;
         control_info.hinst = g_main_ctx.hinst;
         control_info.byteswapped = 1;
         control_info.header = g_main_ctx.core_ctx->rom;
 
-        std::array<ZilmarExtSpec::Controller, 4> tmp_controllers{};
+        std::array<ZESpec::Controller, 4> tmp_controllers{};
         control_info.controllers = tmp_controllers.data();
 
         g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
@@ -411,12 +411,12 @@ void ZilmarExtPlugin::initiate()
     }
     case Plugin::Type::RSP: {
         g_view_logger->trace("Initiating RSP plugin...");
-        ZilmarExtSpec::INITIATERSP initiate_rsp{};
+        ZESpec::INITIATERSP initiate_rsp{};
 
-        FUNC(g_plugin_funcs.rsp_close_dll, ZilmarExtSpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.rsp_do_rsp_cycles, ZilmarExtSpec::DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
-        FUNC(initiate_rsp, ZilmarExtSpec::INITIATERSP, dummy_initiate_rsp, "InitiateRSP");
-        FUNC(g_plugin_funcs.rsp_rom_closed, ZilmarExtSpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(g_plugin_funcs.rsp_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(g_plugin_funcs.rsp_do_rsp_cycles, ZESpec::DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
+        FUNC(initiate_rsp, ZESpec::INITIATERSP, dummy_initiate_rsp, "InitiateRSP");
+        FUNC(g_plugin_funcs.rsp_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
 
         rsp_info.byteswapped = 1;
         rsp_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -456,7 +456,7 @@ void ZilmarExtPlugin::initiate()
     }
 }
 
-void ZilmarExtPlugin::initiate_dummy()
+void ZEPlugin::initiate_dummy()
 {
     Main::init_sdl();
 
@@ -472,7 +472,7 @@ void ZilmarExtPlugin::initiate_dummy()
             g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
             dummy_video_info.extended_funcs = &g_plugin_funcs.video_extended_funcs;
 
-            const auto initiate_gfx = (ZilmarExtSpec::INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
+            const auto initiate_gfx = (ZESpec::INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
             if (initiate_gfx && !initiate_gfx(dummy_video_info))
             {
                 DialogService::show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
@@ -487,7 +487,7 @@ void ZilmarExtPlugin::initiate_dummy()
             g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
             dummy_audio_info.extended_funcs = &g_plugin_funcs.audio_extended_funcs;
 
-            const auto initiate_audio = (ZilmarExtSpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
+            const auto initiate_audio = (ZESpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
             if (initiate_audio && !initiate_audio(dummy_audio_info))
             {
                 DialogService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
@@ -505,15 +505,15 @@ void ZilmarExtPlugin::initiate_dummy()
             if (m_version == 0x0101)
             {
                 const auto initiate_controllers =
-                    (ZilmarExtSpec::INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
+                    (ZESpec::INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
                 if (initiate_controllers) initiate_controllers(dummy_control_info);
             }
             else
             {
                 const auto old_initiate_controllers =
-                    (ZilmarExtSpec::OLD_INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
+                    (ZESpec::OLD_INITIATECONTROLLERS)GetProcAddress(m_module, "InitiateControllers");
 
-                std::fill(std::begin(dummy_controllers), std::end(dummy_controllers), ZilmarExtSpec::Controller{});
+                std::fill(std::begin(dummy_controllers), std::end(dummy_controllers), ZESpec::Controller{});
                 if (old_initiate_controllers) old_initiate_controllers(g_main_ctx.hwnd, dummy_controllers);
             }
         }
@@ -526,7 +526,7 @@ void ZilmarExtPlugin::initiate_dummy()
             g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
             dummy_rsp_info.extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
 
-            auto initiateRSP = (ZilmarExtSpec::INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
+            auto initiateRSP = (ZESpec::INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
             uint32_t i = 0;
             if (initiateRSP) initiateRSP(dummy_rsp_info, &i);
         }
@@ -538,9 +538,9 @@ void ZilmarExtPlugin::initiate_dummy()
     }
 }
 
-void ZilmarExtPlugin::deinitiate_dummy()
+void ZEPlugin::deinitiate_dummy()
 {
     if (g_main_ctx.core_ctx->vr_get_launched()) return;
-    const auto close_dll = (ZilmarExtSpec::CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
+    const auto close_dll = (ZESpec::CLOSEDLL)GetProcAddress(m_module, "CloseDLL");
     if (close_dll) close_dll();
 }

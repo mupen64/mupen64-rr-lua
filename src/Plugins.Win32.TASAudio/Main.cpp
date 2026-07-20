@@ -11,11 +11,11 @@
 #include "core_types.h"
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
-#include <Views.Win32/MupenRRSpecPlugin.h>
+#include <Views.Win32/M64RRSpec.h>
 
-static std::optional<MupenRRSpecPlugin::PluginInit> g_audio_info{};
+static std::optional<M64RRSpec::PluginInit> g_audio_info{};
 std::optional<SDLAudio::SDLBackend> g_backend{};
-MupenRRSpecPlugin::ExtendedFuncs *g_ef = nullptr;
+M64RRSpec::ExtendedFuncs *g_ef = nullptr;
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 std::filesystem::path g_config_path{};
@@ -78,9 +78,9 @@ void write_config(const SDLAudio::Config &config)
     config.write_to(fs);
 }
 
-EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)
+EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
-    metadata->type = MupenRRSpecPlugin::PluginType::Audio;
+    metadata->type = M64RRSpec::PluginType::Audio;
 
     const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
     const auto description = "First-party TAS plugin for Mupen64."
@@ -106,10 +106,10 @@ EXPORT void CALL M64RRShutdown()
     if (g_backend.has_value()) g_backend.reset();
 }
 
-EXPORT void CALL M64RRInitiate(MupenRRSpecPlugin::PluginInit *init)
+EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
     g_ef = init->ef;
-    g_config_path = ZilmarExtSpec::get_config_path(g_ef);
+    g_config_path = ZESpec::get_config_path(g_ef);
 
     g_audio_info.emplace(*init);
 
