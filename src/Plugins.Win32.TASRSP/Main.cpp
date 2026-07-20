@@ -189,14 +189,14 @@ EXPORT void CALL M64RRGetMetadata(MupenRRSpecPlugin::PluginMetadata *metadata)
 {
     metadata->type = MupenRRSpecPlugin::PluginType::RSP;
 
-    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME).c_str();
+    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
     const auto description = "First-party TAS plugin for Mupen64."
                              "\n"
                              "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
                              "to one version of the emulator."
                              "\n\n"
                              "https://mupen64.com";
-    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION).c_str();
+    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
 
     auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
     metadata->name[result.size] = '\0';
