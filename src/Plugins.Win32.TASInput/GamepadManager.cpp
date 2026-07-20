@@ -153,9 +153,9 @@ static int32_t get_axis(const t_axis_mapping &mapping)
     return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis));
 }
 
-ZESpec::Buttons GamepadManager::get_input(const size_t i)
+M64RRSpec::Buttons GamepadManager::get_input(const size_t i)
 {
-    ZESpec::Buttons buttons{};
+    M64RRSpec::Buttons buttons{};
 
     const auto controller_config = new_config.controller_config[i];
 

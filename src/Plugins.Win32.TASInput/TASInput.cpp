@@ -13,10 +13,6 @@
 #include <NewConfig.hpp>
 #include <TASInput.hpp>
 
-#define EXPORT __declspec(dllexport)
-#undef CALL
-#define CALL _cdecl
-
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_VISUALS (WM_USER + 4)
 
@@ -55,12 +51,12 @@ struct Status
     /**
      * \brief The current internal input state before any processing
      */
-    ZESpec::Buttons current_input{};
+    M64RRSpec::Buttons current_input{};
 
     /**
      * \brief The internal input state at the previous GetKeys call before any processing
      */
-    ZESpec::Buttons last_controller_input{};
+    M64RRSpec::Buttons last_controller_input{};
 
     /**
      * \brief Ignores the next joystick increment, used for relative mode tracking
@@ -99,7 +95,7 @@ struct Status
 
     struct t_set_visuals_request
     {
-        ZESpec::Buttons input;
+        M64RRSpec::Buttons input;
         bool needs_processing;
     };
 
@@ -110,8 +106,8 @@ struct Status
 
     bool last_lmb_down{};
     bool last_rmb_down{};
-    ZESpec::Buttons autofire_input_a{};
-    ZESpec::Buttons autofire_input_b{};
+    M64RRSpec::Buttons autofire_input_a{};
+    M64RRSpec::Buttons autofire_input_b{};
     bool ready;
     HWND hwnd{};
     HWND combos_hwnd{};
@@ -147,7 +143,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals(ZESpec::Buttons input, bool needs_processing = true);
+    void set_visuals(M64RRSpec::Buttons input, bool needs_processing = true);
 
     /**
      * \brief Queues the UI to be updated at the next possible opportunity. Doesn't block the caller until the UI has
@@ -155,7 +151,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals_lazy(ZESpec::Buttons input, bool needs_processing = true);
+    void set_visuals_lazy(M64RRSpec::Buttons input, bool needs_processing = true);
 
     void set_visuals_if_needed();
 
@@ -164,7 +160,7 @@ struct Status
      * \param input The input to process
      * \return The processed input
      */
-    ZESpec::Buttons get_processed_input(ZESpec::Buttons input);
+    M64RRSpec::Buttons get_processed_input(M64RRSpec::Buttons input);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -173,7 +169,7 @@ struct Status
 
     void on_config_changed();
 
-    void get_input(ZESpec::Buttons *keys);
+    void get_input(M64RRSpec::Buttons *keys);
 };
 
 static ULONG_PTR gdi_plus_token{};
@@ -213,7 +209,7 @@ static void detach_event_watch()
     }
 }
 
-EXPORT void CALL CloseDLL()
+EXPORT void CALL M64RRShutdown(void)
 {
     detach_event_watch();
 
@@ -224,34 +220,38 @@ EXPORT void CALL CloseDLL()
     }
 }
 
-EXPORT void CALL DllAbout(void *hParent)
-{
-    const auto msg = L"First-party TAS plugin for Mupen64."
-                     L"\n"
-                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                     L"to one version of the emulator."
-                     L"\n\n"
-                     L"https://mupen64.com";
-    MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);
-}
-
-EXPORT void CALL DllConfig(void *hParent)
+EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
 {
     attach_event_watch();
-    ConfigDialog::show((HWND)hParent);
+    ConfigDialog::show(parent_window.hwnd());
 
     // TODO: Do we have to restart the dialogs here like in old version?
 }
 
-EXPORT void CALL GetDllInfo(ZESpec::PluginInfo *info)
+EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
-    info->ver = 0x0101;
-    info->type = ZESpec::PluginType::Input;
-    strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));
-    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);
+    metadata->type = M64RRSpec::PluginType::Input;
+
+    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
+    const auto description = "First-party TAS plugin for Mupen64."
+                             "\n"
+                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                             "to one version of the emulator."
+                             "\n\n"
+                             "https://mupen64.com";
+    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+
+    auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
+    metadata->name[result.size] = '\0';
+
+    result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
+    metadata->description[result.size] = '\0';
+
+    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
+    metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL GetKeys(int Control, ZESpec::Buttons *Keys)
+EXPORT void CALL M64RRGetKeys(int32_t controller, Buttons *keys)
 {
     if (new_frame)
     {
@@ -259,10 +259,10 @@ EXPORT void CALL GetKeys(int Control, ZESpec::Buttons *Keys)
         new_frame = false;
     }
 
-    status[Control].get_input(Keys);
+    status[controller].get_input(keys);
 }
 
-EXPORT void CALL SetKeys(int32_t controller, ZESpec::Buttons keys)
+EXPORT void CALL M64RRSetKeys(int32_t controller, Buttons keys)
 {
     status[controller].set_visuals_lazy(keys, false);
 }
@@ -300,7 +300,7 @@ apply:
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-void Status::get_input(ZESpec::Buttons *keys)
+void Status::get_input(M64RRSpec::Buttons *keys)
 {
     keys->value = get_processed_input(current_input).value;
 
@@ -340,7 +340,7 @@ end:
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
 }
 
-ZESpec::Buttons Status::get_processed_input(ZESpec::Buttons input)
+M64RRSpec::Buttons Status::get_processed_input(M64RRSpec::Buttons input)
 {
     input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
@@ -369,7 +369,7 @@ void Status::activate_emulator_window()
     SetForegroundWindow(emulator_hwnd);
 }
 
-void Status::set_visuals(ZESpec::Buttons input, bool needs_processing)
+void Status::set_visuals(M64RRSpec::Buttons input, bool needs_processing)
 {
     if (needs_processing)
     {
@@ -405,7 +405,7 @@ void Status::set_visuals(ZESpec::Buttons input, bool needs_processing)
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
 }
 
-void Status::set_visuals_lazy(ZESpec::Buttons input, bool needs_processing)
+void Status::set_visuals_lazy(M64RRSpec::Buttons input, bool needs_processing)
 {
     std::lock_guard lock(pending_visuals_mutex);
     pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
@@ -720,7 +720,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_TIMER: {
         ctx->set_visuals_if_needed();
 
-        ZESpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
+        M64RRSpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
 
         if (controller_input.value != ctx->last_controller_input.value)
         {
@@ -847,7 +847,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     }
     break;
     case WM_UPDATE_VISUALS:
-        ctx->set_visuals(static_cast<ZESpec::Buttons>(lparam), false);
+        ctx->set_visuals(static_cast<M64RRSpec::Buttons>(lparam), false);
         break;
     case WM_SIZE:
     case WM_MOVE: {
@@ -867,7 +867,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            ZESpec::Buttons last_input = ctx->current_input;
+            M64RRSpec::Buttons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -891,7 +891,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            ZESpec::Buttons last_input = ctx->current_input;
+            M64RRSpec::Buttons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -1000,32 +1000,31 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return FALSE;
 }
 
-EXPORT void CALL InitiateControllers(ZESpec::InputPluginInfo info)
+EXPORT void CALL M64RRInitiate(PluginInit *init)
 {
-    g_ef = info.extended_funcs;
+    g_ef = init->ef;
     g_config_path = ZESpec::get_config_path(g_ef);
-    emulator_hwnd = (HWND)info.main_hwnd;
+    emulator_hwnd = init->main_window.hwnd();
 
     for (int i = 0; i < 4; ++i)
     {
-        info.controllers[i].present = new_config.controller_active[i];
-        info.controllers[i].raw = false;
-        info.controllers[i].plugin = ZESpec::ControllerExtension::None;
-        if (new_config.controller_mempak[i]) info.controllers[i].plugin = ZESpec::ControllerExtension::Mempak;
-        if (new_config.controller_rumblepak[i])
-            info.controllers[i].plugin = ZESpec::ControllerExtension::Rumblepak;
+        init->controllers[i].present = new_config.controller_active[i];
+        init->controllers[i].raw = false;
+        init->controllers[i].plugin = M64RRSpec::ControllerExtension::None;
+        if (new_config.controller_mempak[i]) init->controllers[i].plugin = M64RRSpec::ControllerExtension::Mempak;
+        if (new_config.controller_rumblepak[i]) init->controllers[i].plugin = M64RRSpec::ControllerExtension::Rumblepak;
     }
 }
 
-EXPORT void CALL ReadController(int Control, BYTE *Command)
+EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
 {
-    if (Control == -1)
+    if (controller == -1)
     {
         new_frame = true;
     }
 }
 
-EXPORT void CALL RomClosed(void)
+EXPORT void CALL M64RRRomClosed(void)
 {
     rom_open = false;
 
@@ -1110,7 +1109,7 @@ static void ui_thread()
     save_config();
 }
 
-EXPORT void CALL RomOpen()
+EXPORT void CALL M64RRRomOpened(void)
 {
     attach_event_watch();
     load_config();

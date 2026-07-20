@@ -8,11 +8,12 @@
 
 #include <Windows.h>
 #include <Views.Win32/ZESpec.h>
+#include <Views.Win32/M64RRSpec.h>
 #include <WinFilePicker.hpp>
 #include <filesystem>
 
 extern HINSTANCE g_inst;
-extern ZESpec::ExtendedFuncs *g_ef;
+extern M64RRSpec::ExtendedFuncs *g_ef;
 extern std::filesystem::path g_config_path;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input")

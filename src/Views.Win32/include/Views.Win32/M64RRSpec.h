@@ -36,6 +36,26 @@ extern "C"
         LinuxWayland,
     };
 
+    struct WindowHandle
+    {
+        void *ptr1;
+        void *ptr2;
+
+#ifdef _WIN32
+        WindowHandle()
+        {
+            ptr1 = nullptr;
+            ptr2 = nullptr;
+        }
+        WindowHandle(HWND hwnd)
+        {
+            ptr1 = reinterpret_cast<void *>(hwnd);
+            ptr2 = nullptr;
+        }
+        HWND hwnd() const { return reinterpret_cast<HWND>(ptr1); }
+#endif
+    };
+
     /**
      * \brief Represents a plugin type.
      */
@@ -109,6 +129,7 @@ extern "C"
     struct PluginInit
     {
         Platform platform;
+        WindowHandle main_window;
         int32_t byteswapped;
         uint8_t *rom;
         uint8_t *rdram;
@@ -158,21 +179,6 @@ extern "C"
         uint8_t *header;
         Controller *controllers;
         ExtendedFuncs *ef;
-    };
-
-    struct WindowHandle
-    {
-        void *ptr1;
-        void *ptr2;
-
-#ifdef _WIN32
-        WindowHandle(HWND hwnd)
-        {
-            ptr1 = reinterpret_cast<void *>(hwnd);
-            ptr2 = nullptr;
-        }
-        HWND hwnd() const { return reinterpret_cast<HWND>(ptr1); }
-#endif
     };
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);

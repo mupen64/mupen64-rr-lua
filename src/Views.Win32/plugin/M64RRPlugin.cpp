@@ -160,6 +160,7 @@ void M64RRPlugin::initiate()
     M64RRSpec::PluginInit init{};
 
     init.platform = M64RRSpec::Platform::Windows;
+    init.main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
     init.byteswapped = 1;
     init.rom = g_main_ctx.core_ctx->rom;
     init.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -385,6 +386,7 @@ void M64RRPlugin::initiate_dummy()
     M64RRSpec::PluginInit init{};
 
     init.platform = M64RRSpec::Platform::Windows;
+    init.main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
     init.byteswapped = 1;
     init.rom = dummy_header;
     init.rdram = nullptr;
