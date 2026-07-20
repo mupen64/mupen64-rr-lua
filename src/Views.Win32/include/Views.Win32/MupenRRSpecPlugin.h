@@ -30,6 +30,15 @@ extern "C"
     using ExtendedFuncs = ZilmarExtSpec::ExtendedFuncs;
 
     /**
+     * \brief Represents the platform the plugin is running on.
+     */
+    enum class Platform
+    {
+        Windows,
+        LinuxWayland,
+    };
+
+    /**
      * \brief Represents a plugin type.
      */
     enum class PluginType : uint8_t
@@ -144,6 +153,7 @@ extern "C"
 
     struct PluginInit
     {
+        Platform platform;
         int32_t byteswapped;
         uint8_t *rom;
         uint8_t *rdram;
@@ -198,10 +208,25 @@ extern "C"
         ZilmarExtSpec::ExtendedFuncs *ef;
     };
 
+    struct WindowHandle
+    {
+        void *ptr1;
+        void *ptr2;
+
+#ifdef _WIN32
+        WindowHandle(HWND hwnd)
+        {
+            ptr1 = reinterpret_cast<void *>(hwnd);
+            ptr2 = nullptr;
+        }
+#endif
+    };
+
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
     typedef void(CALL *PtrInitiate)(PluginInit *init);
     typedef void(CALL *PtrRomOpened)();
     typedef void(CALL *PtrRomClosed)();
+    typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
 
     typedef void(CALL *PtrProcessDList)();
     typedef void(CALL *PtrGetVideoSize)(int32_t *, int32_t *);
@@ -230,6 +255,7 @@ extern "C"
     EXPORT void CALL M64RRInitiate(PluginInit *init);
     EXPORT void CALL M64RRRomOpened(void);
     EXPORT void CALL M64RRRomClosed(void);
+    EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window);
 
     EXPORT void CALL M64RRProcessDList(void);
     EXPORT void CALL M64RRGetVideoSize(int32_t *width, int32_t *height);

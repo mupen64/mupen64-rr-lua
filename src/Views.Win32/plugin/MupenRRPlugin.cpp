@@ -233,7 +233,20 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> MupenRRPlugin::create(HMODULE m
 
 void MupenRRPlugin::config(HWND hwnd)
 {
-    // TODO: Implement
+    initiate_dummy();
+
+    const auto show_config = (MupenRRSpecPlugin::PtrShowConfig)GetProcAddress(m_module, "M64RRRShowConfig");
+
+    if (show_config)
+        show_config(hwnd);
+    else
+    {
+        DialogService::show_dialog(
+            std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
+            fsvc_error, hwnd);
+    }
+
+    deinitiate_dummy();
 }
 
 void MupenRRPlugin::test(HWND hwnd)
@@ -256,6 +269,7 @@ void MupenRRPlugin::initiate()
 
     MupenRRSpecPlugin::PluginInit init{};
 
+    init.platform = MupenRRSpecPlugin::Platform::Windows;
     init.byteswapped = 1;
     init.rom = g_main_ctx.core_ctx->rom;
     init.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -440,6 +454,7 @@ void MupenRRPlugin::initiate_dummy()
 
     MupenRRSpecPlugin::PluginInit init{};
 
+    init.platform = MupenRRSpecPlugin::Platform::Windows;
     init.byteswapped = 1;
     init.rom = dummy_header;
     init.rdram = nullptr;
