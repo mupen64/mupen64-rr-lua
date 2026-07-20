@@ -150,13 +150,13 @@ void MP3()
 
     writePtr = inst2 & 0xFFFFFF;
     readPtr = writePtr;
-    memcpy(mp3data + 0xCE8, rsp.rdram + readPtr, 8);
+    memcpy(mp3data + 0xCE8, rsp->rdram + readPtr, 8);
     // Just do that for efficiency... may remove and use directly later anyway
     readPtr += 8; // This must be a header byte or whatnot
 
     for (int32_t cnt = 0; cnt < 0x480; cnt += 0x180)
     {
-        memcpy(mp3data + 0xCF0, rsp.rdram + readPtr, 0x180); // DMA: 0xCF0 <- RDRAM[s5] : 0x180
+        memcpy(mp3data + 0xCF0, rsp->rdram + readPtr, 0x180); // DMA: 0xCF0 <- RDRAM[s5] : 0x180
         inPtr = 0xCF0;                                       // s7
         outPtr = 0xE70;                                      // s3
         // --------------- Inner Loop Start --------------------
@@ -175,7 +175,7 @@ void MP3()
             inPtr += 0x40;
         }
         // --------------- Inner Loop End --------------------
-        memcpy(rsp.rdram + writePtr, mp3data + 0xe70, 0x180);
+        memcpy(rsp->rdram + writePtr, mp3data + 0xe70, 0x180);
         writePtr += 0x180;
         readPtr += 0x180;
     }

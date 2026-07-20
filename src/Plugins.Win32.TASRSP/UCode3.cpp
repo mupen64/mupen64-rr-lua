@@ -105,7 +105,7 @@ static void ENVMIXER3()
     }
     else
     {
-        memcpy((uint8_t *)hleMixerWorkArea, rsp.rdram + addy, 80);
+        memcpy((uint8_t *)hleMixerWorkArea, rsp->rdram + addy, 80);
         Wet = *(int16_t *)(hleMixerWorkArea + 0);     // 0-1
         Dry = *(int16_t *)(hleMixerWorkArea + 2);     // 2-3
         LTrg = *(int16_t *)(hleMixerWorkArea + 4);    // 4-5
@@ -233,7 +233,7 @@ static void ENVMIXER3()
     *(int32_t *)(hleMixerWorkArea + 18) = RVol;   // 18-19
     *(int16_t *)(hleMixerWorkArea + 20) = LSig;   // 20-21
     *(int16_t *)(hleMixerWorkArea + 22) = RSig;   // 22-23
-    memcpy(rsp.rdram + addy, (uint8_t *)hleMixerWorkArea, 80);
+    memcpy(rsp->rdram + addy, (uint8_t *)hleMixerWorkArea, 80);
 }
 
 //*/
@@ -283,7 +283,7 @@ static void ENVMIXER3o()
     {
         // Load LVol, RVol, LAcc, and RAcc (all 32bit)
         // Load Wet, Dry, LTrg, RTrg
-        memcpy((uint8_t *)hleMixerWorkArea, (rsp.rdram + addy), 80);
+        memcpy((uint8_t *)hleMixerWorkArea, (rsp->rdram + addy), 80);
         Wet = *(int16_t *)(hleMixerWorkArea + 0);   // 0-1
         Dry = *(int16_t *)(hleMixerWorkArea + 2);   // 2-3
         LTrg = *(int32_t *)(hleMixerWorkArea + 4);  // 4-5
@@ -402,7 +402,7 @@ static void ENVMIXER3o()
     *(int32_t *)(hleMixerWorkArea + 10) = RVol; // 10-11
     *(int32_t *)(hleMixerWorkArea + 12) = LAcc; // 12-13
     *(int32_t *)(hleMixerWorkArea + 14) = RAcc; // 14-15
-    memcpy(rsp.rdram + addy, (uint8_t *)hleMixerWorkArea, 80);
+    memcpy(rsp->rdram + addy, (uint8_t *)hleMixerWorkArea, 80);
 }
 
 static void CLEARBUFF3()
@@ -440,7 +440,7 @@ static void LOADBUFF3()
     uint32_t cnt = (((inst1 >> 0xC) + 3) & 0xFFC);
     v0 = (inst2 & 0xfffffc);
     uint32_t src = (inst1 & 0xffc) + 0x4f0;
-    memcpy(BufferSpace + src, rsp.rdram + v0, cnt);
+    memcpy(BufferSpace + src, rsp->rdram + v0, cnt);
 }
 
 static void SAVEBUFF3()
@@ -449,7 +449,7 @@ static void SAVEBUFF3()
     uint32_t cnt = (((inst1 >> 0xC) + 3) & 0xFFC);
     v0 = (inst2 & 0xfffffc);
     uint32_t src = (inst1 & 0xffc) + 0x4f0;
-    memcpy(rsp.rdram + v0, BufferSpace + src, cnt);
+    memcpy(rsp->rdram + v0, BufferSpace + src, cnt);
 }
 
 static void LOADADPCM3()
@@ -457,9 +457,9 @@ static void LOADADPCM3()
     // Loads an ADPCM table - Works 100% Now 03-13-01
     uint32_t v0;
     v0 = (inst2 & 0xffffff);
-    // memcpy (dmem+0x3f0, rsp.rdram+v0, inst1&0xffff);
+    // memcpy (dmem+0x3f0, rsp->rdram+v0, inst1&0xffff);
     // assert ((inst1&0xffff) <= 0x80);
-    uint16_t *table = (uint16_t *)(rsp.rdram + v0);
+    uint16_t *table = (uint16_t *)(rsp->rdram + v0);
     for (uint32_t x = 0; x < ((inst1 & 0xffff) >> 0x4); x++)
     {
         adpcmtable[0x1 + (x << 3)] = table[0];
@@ -523,11 +523,11 @@ static void ADPCM3()
     {
         if (Flags & 0x2)
         {
-            memcpy(out, &rsp.rdram[loopval], 32);
+            memcpy(out, &rsp->rdram[loopval], 32);
         }
         else
         {
-            memcpy(out, &rsp.rdram[Address], 32);
+            memcpy(out, &rsp->rdram[Address], 32);
         }
     }
 
@@ -749,7 +749,7 @@ static void ADPCM3()
         count -= 32;
     }
     out -= 16;
-    memcpy(&rsp.rdram[Address], out, 32);
+    memcpy(&rsp->rdram[Address], out, 32);
 }
 
 static void RESAMPLE3()
@@ -785,9 +785,9 @@ static void RESAMPLE3()
 
     if ((Flags & 0x1) == 0)
     {
-        for (int32_t x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp.rdram+addy, 0x8);
-            src[(srcPtr + x) ^ 1] = ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1];
-        Accum = *(uint16_t *)(rsp.rdram + addy + 10);
+        for (int32_t x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp->rdram+addy, 0x8);
+            src[(srcPtr + x) ^ 1] = ((uint16_t *)rsp->rdram)[((addy / 2) + x) ^ 1];
+        Accum = *(uint16_t *)(rsp->rdram + addy + 10);
     }
     else
     {
@@ -822,8 +822,8 @@ static void RESAMPLE3()
         srcPtr += (Accum >> 16);
         Accum &= 0xFFFF;
     }
-    for (int32_t x = 0; x < 4; x++) ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
-    *(uint16_t *)(rsp.rdram + addy + 10) = Accum;
+    for (int32_t x = 0; x < 4; x++) ((uint16_t *)rsp->rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
+    *(uint16_t *)(rsp->rdram + addy + 10) = Accum;
 }
 
 static void INTERLEAVE3()

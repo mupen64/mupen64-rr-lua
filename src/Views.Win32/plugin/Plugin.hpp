@@ -11,6 +11,7 @@
 
 struct ZESpecFuncs
 {
+    M64RRSpec::PluginInit video_init;
     ZESpec::ExtendedFuncs video_extended_funcs;
     ZESpec::ROMOPEN video_rom_open;
     ZESpec::ROMCLOSED video_rom_closed;
@@ -32,6 +33,7 @@ struct ZESpecFuncs
     ZESpec::CAPTURESCREEN video_capture_screen;
     ZESpec::READVIDEO video_read_video;
 
+    M64RRSpec::PluginInit audio_init;
     ZESpec::ExtendedFuncs audio_extended_funcs;
     ZESpec::ROMOPEN audio_rom_open;
     ZESpec::ROMCLOSED audio_rom_closed;
@@ -45,6 +47,7 @@ struct ZESpecFuncs
     ZESpec::ROMCLOSED input_rom_closed;
     ZESpec::ROMOPEN input_rom_open;
 
+    M64RRSpec::PluginInit input_init;
     ZESpec::ExtendedFuncs input_extended_funcs;
     ZESpec::CONTROLLERCOMMAND input_controller_command;
     ZESpec::GETKEYS input_get_keys;
@@ -53,6 +56,7 @@ struct ZESpecFuncs
     ZESpec::KEYDOWN input_key_down;
     ZESpec::KEYUP input_key_up;
 
+    M64RRSpec::PluginInit rsp_init;
     ZESpec::ExtendedFuncs rsp_extended_funcs;
     ZESpec::CLOSEDLL rsp_close_dll;
     ZESpec::ROMCLOSED rsp_rom_closed;

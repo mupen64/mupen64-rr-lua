@@ -157,80 +157,95 @@ void M64RRPlugin::initiate()
     auto initiate_fn = (M64RRSpec::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
     if (!initiate_fn) initiate_fn = [](M64RRSpec::PluginInit *init) {};
 
-    M64RRSpec::PluginInit init{};
+    M64RRSpec::PluginInit *init;
+    switch (m_type)
+    {
 
-    init.platform = M64RRSpec::Platform::Windows;
-    init.main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
-    init.byteswapped = 1;
-    init.rom = g_main_ctx.core_ctx->rom;
-    init.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-    init.dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-    init.imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
-    init.mi_intr_reg = &g_main_ctx.core_ctx->MI_register->mi_intr_reg;
-    init.dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
-    init.dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
-    init.dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
-    init.dpc_status_reg = &g_main_ctx.core_ctx->dpc_register->dpc_status;
-    init.dpc_clock_reg = &g_main_ctx.core_ctx->dpc_register->dpc_clock;
-    init.dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
-    init.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
-    init.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
-    init.vi_status_reg = &g_main_ctx.core_ctx->vi_register->vi_status;
-    init.vi_origin_reg = &g_main_ctx.core_ctx->vi_register->vi_origin;
-    init.vi_width_reg = &g_main_ctx.core_ctx->vi_register->vi_width;
-    init.vi_intr_reg = &g_main_ctx.core_ctx->vi_register->vi_v_intr;
-    init.vi_v_current_line_reg = &g_main_ctx.core_ctx->vi_register->vi_current;
-    init.vi_timing_reg = &g_main_ctx.core_ctx->vi_register->vi_burst;
-    init.vi_v_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_v_sync;
-    init.vi_h_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_h_sync;
-    init.vi_leap_reg = &g_main_ctx.core_ctx->vi_register->vi_leap;
-    init.vi_h_start_reg = &g_main_ctx.core_ctx->vi_register->vi_h_start;
-    init.vi_v_start_reg = &g_main_ctx.core_ctx->vi_register->vi_v_start;
-    init.vi_v_burst_reg = &g_main_ctx.core_ctx->vi_register->vi_v_burst;
-    init.vi_x_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_x_scale;
-    init.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
-    init.ai_dram_addr_reg = &g_main_ctx.core_ctx->ai_register->ai_dram_addr;
-    init.ai_len_reg = &g_main_ctx.core_ctx->ai_register->ai_len;
-    init.ai_control_reg = &g_main_ctx.core_ctx->ai_register->ai_control;
-    init.ai_status_reg = &dummy_dw;
-    init.ai_dacrate_reg = &g_main_ctx.core_ctx->ai_register->ai_dacrate;
-    init.ai_bitrate_reg = &g_main_ctx.core_ctx->ai_register->ai_bitrate;
-    init.sp_mem_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_mem_addr_reg;
-    init.sp_dram_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_dram_addr_reg;
-    init.sp_rd_len_reg = &g_main_ctx.core_ctx->sp_register->sp_rd_len_reg;
-    init.sp_wr_len_reg = &g_main_ctx.core_ctx->sp_register->sp_wr_len_reg;
-    init.sp_status_reg = &g_main_ctx.core_ctx->sp_register->sp_status_reg;
-    init.sp_dma_full_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_full_reg;
-    init.sp_dma_busy_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_busy_reg;
-    init.sp_pc_reg = &g_main_ctx.core_ctx->rsp_register->rsp_pc;
-    init.sp_semaphore_reg = &g_main_ctx.core_ctx->sp_register->sp_semaphore_reg;
-    init.process_dlist = g_plugin_funcs.video_process_dlist;
-    init.header = g_main_ctx.core_ctx->rom;
+    case Plugin::Type::Video:
+        init = &g_plugin_funcs.video_init;
+        break;
+    case Plugin::Type::Audio:
+        init = &g_plugin_funcs.audio_init;
+        break;
+    case Plugin::Type::Input:
+        init = &g_plugin_funcs.input_init;
+        break;
+    case Plugin::Type::RSP:
+        init = &g_plugin_funcs.rsp_init;
+        break;
+    }
+    init->platform = M64RRSpec::Platform::Windows;
+    init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
+    init->byteswapped = 1;
+    init->rom = g_main_ctx.core_ctx->rom;
+    init->rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
+    init->dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
+    init->imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
+    init->mi_intr_reg = &g_main_ctx.core_ctx->MI_register->mi_intr_reg;
+    init->dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
+    init->dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
+    init->dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
+    init->dpc_status_reg = &g_main_ctx.core_ctx->dpc_register->dpc_status;
+    init->dpc_clock_reg = &g_main_ctx.core_ctx->dpc_register->dpc_clock;
+    init->dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
+    init->dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
+    init->dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
+    init->vi_status_reg = &g_main_ctx.core_ctx->vi_register->vi_status;
+    init->vi_origin_reg = &g_main_ctx.core_ctx->vi_register->vi_origin;
+    init->vi_width_reg = &g_main_ctx.core_ctx->vi_register->vi_width;
+    init->vi_intr_reg = &g_main_ctx.core_ctx->vi_register->vi_v_intr;
+    init->vi_v_current_line_reg = &g_main_ctx.core_ctx->vi_register->vi_current;
+    init->vi_timing_reg = &g_main_ctx.core_ctx->vi_register->vi_burst;
+    init->vi_v_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_v_sync;
+    init->vi_h_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_h_sync;
+    init->vi_leap_reg = &g_main_ctx.core_ctx->vi_register->vi_leap;
+    init->vi_h_start_reg = &g_main_ctx.core_ctx->vi_register->vi_h_start;
+    init->vi_v_start_reg = &g_main_ctx.core_ctx->vi_register->vi_v_start;
+    init->vi_v_burst_reg = &g_main_ctx.core_ctx->vi_register->vi_v_burst;
+    init->vi_x_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_x_scale;
+    init->vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
+    init->ai_dram_addr_reg = &g_main_ctx.core_ctx->ai_register->ai_dram_addr;
+    init->ai_len_reg = &g_main_ctx.core_ctx->ai_register->ai_len;
+    init->ai_control_reg = &g_main_ctx.core_ctx->ai_register->ai_control;
+    init->ai_status_reg = &dummy_dw;
+    init->ai_dacrate_reg = &g_main_ctx.core_ctx->ai_register->ai_dacrate;
+    init->ai_bitrate_reg = &g_main_ctx.core_ctx->ai_register->ai_bitrate;
+    init->sp_mem_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_mem_addr_reg;
+    init->sp_dram_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_dram_addr_reg;
+    init->sp_rd_len_reg = &g_main_ctx.core_ctx->sp_register->sp_rd_len_reg;
+    init->sp_wr_len_reg = &g_main_ctx.core_ctx->sp_register->sp_wr_len_reg;
+    init->sp_status_reg = &g_main_ctx.core_ctx->sp_register->sp_status_reg;
+    init->sp_dma_full_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_full_reg;
+    init->sp_dma_busy_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_busy_reg;
+    init->sp_pc_reg = &g_main_ctx.core_ctx->rsp_register->rsp_pc;
+    init->sp_semaphore_reg = &g_main_ctx.core_ctx->sp_register->sp_semaphore_reg;
+    init->process_dlist = g_plugin_funcs.video_process_dlist;
+    init->header = g_main_ctx.core_ctx->rom;
 
     std::array<M64RRSpec::Controller, 4> tmp_controllers{};
-    init.controllers = tmp_controllers.data();
+    init->controllers = tmp_controllers.data();
 
     switch (m_type)
     {
     case Plugin::Type::Video:
         g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-        init.ef = &g_plugin_funcs.video_extended_funcs;
+        init->ef = &g_plugin_funcs.video_extended_funcs;
         break;
     case Plugin::Type::Audio:
         g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-        init.ef = &g_plugin_funcs.audio_extended_funcs;
+        init->ef = &g_plugin_funcs.audio_extended_funcs;
         break;
     case Plugin::Type::Input:
         g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-        init.ef = &g_plugin_funcs.input_extended_funcs;
+        init->ef = &g_plugin_funcs.input_extended_funcs;
         break;
     case Plugin::Type::RSP:
         g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-        init.ef = &g_plugin_funcs.rsp_extended_funcs;
+        init->ef = &g_plugin_funcs.rsp_extended_funcs;
         break;
     }
 
-    initiate_fn(&init);
+    initiate_fn(init);
 
     switch (m_type)
     {

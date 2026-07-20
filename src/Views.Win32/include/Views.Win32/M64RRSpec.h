@@ -179,6 +179,10 @@ extern "C"
         uint8_t *header;
         Controller *controllers;
         ExtendedFuncs *ef;
+
+        PluginInit() = default;
+        PluginInit(const PluginInit &) = delete;
+        PluginInit &operator=(const PluginInit &) = delete;
     };
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);

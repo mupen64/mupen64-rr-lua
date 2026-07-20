@@ -24,7 +24,7 @@
 #define A_MAIN 0x00
 #define A_MIX 0x10
 
-extern M64RRSpec::PluginInit rsp;
+extern M64RRSpec::PluginInit* rsp;
 
 typedef struct
 {

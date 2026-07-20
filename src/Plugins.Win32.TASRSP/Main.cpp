@@ -12,7 +12,7 @@
 #define UCODE_BANJO (2)
 #define UCODE_ZELDA (3)
 
-M64RRSpec::PluginInit rsp;
+M64RRSpec::PluginInit* rsp;
 static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
@@ -23,13 +23,13 @@ M64RRSpec::ExtendedFuncs *g_ef{};
 
 static int audio_ucode_detect_type(const OSTask_t *task)
 {
-    if (*(uint32_t *)(rsp.rdram + task->ucode_data + 0) != 0x1)
+    if (*(uint32_t *)(rsp->rdram + task->ucode_data + 0) != 0x1)
     {
-        if (*(rsp.rdram + task->ucode_data + (0 ^ 3 - S8)) == 0xF) return 4;
+        if (*(rsp->rdram + task->ucode_data + (0 ^ 3 - S8)) == 0xF) return 4;
         return 3;
     }
 
-    if (*(uint32_t *)(rsp.rdram + task->ucode_data + 0x30) == 0xF0000F00) return 1;
+    if (*(uint32_t *)(rsp->rdram + task->ucode_data + 0x30) == 0xF0000F00) return 1;
     return 2;
 }
 
@@ -60,8 +60,8 @@ bool rsp_alive()
 
 void on_rom_closed()
 {
-    memset(rsp.dmem, 0, 0x1000);
-    memset(rsp.imem, 0, 0x1000);
+    memset(rsp->dmem, 0, 0x1000);
+    memset(rsp->imem, 0, 0x1000);
     g_rsp_alive = false;
 }
 
@@ -69,37 +69,37 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 {
     g_rsp_alive = true;
 
-    const auto task = (OSTask_t *)(rsp.dmem + 0xFC0);
+    const auto task = (OSTask_t *)(rsp->dmem + 0xFC0);
 
     const auto effective_speed_mode = g_ef->get_effective_speed_mode();
     const auto skip_audio = effective_speed_mode == CoreSpeedMode::UltraFastForward;
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        rsp.process_dlist();
+        rsp->process_dlist();
 
-        *rsp.sp_status_reg |= 0x0203;
-        if ((*rsp.sp_status_reg & 0x40) != 0) *rsp.mi_intr_reg |= 0x1;
+        *rsp->sp_status_reg |= 0x0203;
+        if ((*rsp->sp_status_reg & 0x40) != 0) *rsp->mi_intr_reg |= 0x1;
 
-        *rsp.dpc_status_reg &= ~0x0002;
+        *rsp->dpc_status_reg &= ~0x0002;
         return Cycles;
     }
 
-    *rsp.sp_status_reg |= 0x203;
-    if ((*rsp.sp_status_reg & 0x40) != 0)
+    *rsp->sp_status_reg |= 0x203;
+    if ((*rsp->sp_status_reg & 0x40) != 0)
     {
-        *rsp.mi_intr_reg |= 0x1;
+        *rsp->mi_intr_reg |= 0x1;
     }
 
     uint32_t sum = 0;
 
     if (task->ucode_size <= 0x1000)
     {
-        for (uint32_t i = 0; i < task->ucode_size / 2; i++) sum += *(rsp.rdram + task->ucode + i);
+        for (uint32_t i = 0; i < task->ucode_size / 2; i++) sum += *(rsp->rdram + task->ucode + i);
     }
     else
     {
-        for (uint32_t i = 0; i < 0x1000 / 2; i++) sum += *(rsp.imem + i);
+        for (uint32_t i = 0; i < 0x1000 / 2; i++) sum += *(rsp->imem + i);
     }
 
     if (task->ucode_size > 0x1000)
@@ -107,20 +107,20 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
         if (sum == 0x9E2)
         {
             // banjo tooie (U) boot code
-            memcpy(rsp.imem + 0x120, rsp.rdram + 0x1e8, 0x1e8);
+            memcpy(rsp->imem + 0x120, rsp->rdram + 0x1e8, 0x1e8);
             for (int j = 0; j < 0xfc; j++)
                 for (int i = 0; i < 8; i++)
-                    *(rsp.rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(rsp.imem + ((0x120 + (j * 8) + i) ^ S8));
+                    *(rsp->rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(rsp->imem + ((0x120 + (j * 8) + i) ^ S8));
             return Cycles;
         }
 
         if (sum == 0x9F2)
         {
             // banjo tooie (E) + zelda oot (E) boot code
-            memcpy(rsp.imem + 0x120, rsp.rdram + 0x1e8, 0x1e8);
+            memcpy(rsp->imem + 0x120, rsp->rdram + 0x1e8, 0x1e8);
             for (int j = 0; j < 0xfc; j++)
                 for (int i = 0; i < 8; i++)
-                    *(rsp.rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(rsp.imem + ((0x120 + (j * 8) + i) ^ S8));
+                    *(rsp->rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(rsp->imem + ((0x120 + (j * 8) + i) ^ S8));
             return Cycles;
         }
 
@@ -133,7 +133,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
         ucode_load(task);
 
-        const auto p_alist = (uint32_t *)(rsp.rdram + task->data_ptr);
+        const auto p_alist = (uint32_t *)(rsp->rdram + task->data_ptr);
         for (uint32_t i = 0; i < task->data_size / 4; i += 2)
         {
             inst1 = p_alist[i];
@@ -151,7 +151,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
     {
         if (sum == 0x278)
         {
-            *rsp.sp_status_reg |= 0x200;
+            *rsp->sp_status_reg |= 0x200;
             return Cycles;
         }
         if (sum == 0x2e4fc)
@@ -191,8 +191,8 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 
 EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
-    rsp = *init;
-    g_ef = rsp.ef;
+    rsp = init;
+    g_ef = rsp->ef;
     g_config_path = ZESpec::get_config_path(g_ef);
 }
 

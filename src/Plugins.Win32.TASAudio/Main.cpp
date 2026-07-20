@@ -13,7 +13,7 @@
 #include <VersionNameHelpers.hpp>
 #include <Views.Win32/M64RRSpec.h>
 
-static std::optional<M64RRSpec::PluginInit> g_audio_info{};
+static M64RRSpec::PluginInit *g_audio_info{};
 std::optional<SDLAudio::SDLBackend> g_backend{};
 M64RRSpec::ExtendedFuncs *g_ef = nullptr;
 
@@ -108,10 +108,9 @@ EXPORT void CALL M64RRShutdown()
 
 EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
+    g_audio_info = init;
     g_ef = init->ef;
     g_config_path = ZESpec::get_config_path(g_ef);
-
-    g_audio_info.emplace(*init);
 
     try
     {
