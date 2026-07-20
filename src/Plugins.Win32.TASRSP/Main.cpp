@@ -8,10 +8,6 @@
 #include "Config.hpp"
 #include "HLE.hpp"
 
-#define EXPORT __declspec(dllexport)
-#undef CALL
-#define CALL _cdecl
-
 #define UCODE_MARIO (1)
 #define UCODE_BANJO (2)
 #define UCODE_ZELDA (3)
