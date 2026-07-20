@@ -144,12 +144,8 @@ void MupenRRPlugin::about(HWND hwnd)
 
 void MupenRRPlugin::initiate()
 {
-    const auto initiate_fn = (MupenRRSpecPlugin::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
-    if (!initiate_fn)
-    {
-        g_view_logger->error("[MupenRRPlugin] M64RRInitiate not found");
-        return;
-    }
+    auto initiate_fn = (MupenRRSpecPlugin::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
+    if (!initiate_fn) initiate_fn = [](MupenRRSpecPlugin::PluginInit *init) {};
 
     MupenRRSpecPlugin::PluginInit init{};
 
@@ -253,12 +249,8 @@ void MupenRRPlugin::initiate()
         g_plugin_funcs.video_show_cfb = [](const auto &...) {};
         g_plugin_funcs.video_vi_status_changed = [](const auto &...) {};
         g_plugin_funcs.video_vi_width_changed = [](const auto &...) {};
-        g_plugin_funcs.video_get_video_size = [](int32_t *width, int32_t *height) {
-            if (s_mupenrr_get_video_size_fn) s_mupenrr_get_video_size_fn(width, height);
-        };
-        g_plugin_funcs.video_read_video = [](void **video) {
-            if (s_mupenrr_read_video_fn) s_mupenrr_read_video_fn(video);
-        };
+        if (s_mupenrr_get_video_size_fn) g_plugin_funcs.video_get_video_size = s_mupenrr_get_video_size_fn;
+        if (s_mupenrr_read_video_fn) g_plugin_funcs.video_read_video = s_mupenrr_read_video_fn;
         g_plugin_funcs.video_change_window = [](const auto &...) {};
         g_plugin_funcs.video_update_screen = [](const auto &...) {};
         g_plugin_funcs.video_move_screen = [](int32_t, int32_t) {};
