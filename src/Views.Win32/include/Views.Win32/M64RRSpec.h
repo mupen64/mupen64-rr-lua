@@ -251,11 +251,11 @@ extern "C"
     typedef void(CALL *PtrProcessDList)();
     typedef void(CALL *PtrReadVideo)(void *buffer, int32_t *width, int32_t *height);
 
-    typedef void(CALL *PtrAIDacrateChanged)(int32_t system_type);
+    typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
     typedef void(CALL *PtrAILenChanged)();
 
-    typedef void(CALL *PtrGetKeys)(int32_t controller, Buttons *keys);
-    typedef void(CALL *PtrSetKeys)(int32_t controller, Buttons keys);
+    typedef void(CALL *PtrGetKeys)(uint8_t index, Buttons *buttons);
+    typedef void(CALL *PtrSetKeys)(uint8_t index, const Buttons *buttons);
     typedef void(CALL *PtrReadController)(int32_t controller, unsigned char *command);
 
     typedef void(CALL *PtrDoRSPCycles)(uint8_t);
@@ -324,7 +324,7 @@ extern "C"
      * \brief Called when the audio DAC rate changes.
      * \param system_type The system type.
      */
-    EXPORT void CALL M64RRAIDacrateChanged(int32_t system_type);
+    EXPORT void CALL M64RRAIDacrateChanged(CoreSystemType system_type);
 
     /**
      * \brief Called when the audio length changes.
@@ -338,14 +338,14 @@ extern "C"
      * \param controller The controller index.
      * \param keys The buttons to be filled in.
      */
-    EXPORT void CALL M64RRGetKeys(int32_t controller, Buttons *keys);
+    EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons);
 
     /**
      * \brief Notifies the plugin that the keys for the specified controller have changed.
      * \param controller The controller index.
      * \param keys The buttons to be set.
      */
-    EXPORT void CALL M64RRSetKeys(int32_t controller, Buttons keys);
+    EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons);
 
     /**
      * \brief Notifies the plugin of a controller command.

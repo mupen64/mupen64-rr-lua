@@ -66,7 +66,7 @@ void (*code)();
 uint32_t next_vi;
 int32_t vi_field = 0;
 CoreSpeedMode g_vr_speed_mode{};
-core_system_type g_sys_type;
+CoreSystemType g_sys_type;
 std::atomic<int32_t> g_wait_counter = 0;
 r4300 g_r4300{};
 

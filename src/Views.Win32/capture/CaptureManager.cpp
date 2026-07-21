@@ -437,16 +437,16 @@ void ai_len_changed()
 
 void ai_dacrate_changed(std::any data)
 {
-    auto type = std::any_cast<core_system_type>(data);
+    auto type = std::any_cast<CoreSystemType>(data);
 
     m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
 
     switch (type)
     {
-    case sys_ntsc:
+    case CoreSystemType::NTSC:
         m_audio_freq = (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
         break;
-    case sys_pal:
+    case CoreSystemType::PAL:
         m_audio_freq = (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
         break;
     default:

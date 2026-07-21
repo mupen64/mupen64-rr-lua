@@ -251,7 +251,7 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRGetKeys(int32_t controller, Buttons *keys)
+EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons)
 {
     if (new_frame)
     {
@@ -259,12 +259,12 @@ EXPORT void CALL M64RRGetKeys(int32_t controller, Buttons *keys)
         new_frame = false;
     }
 
-    status[controller].get_input(keys);
+    status[index].get_input(buttons);
 }
 
-EXPORT void CALL M64RRSetKeys(int32_t controller, Buttons keys)
+EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons)
 {
-    status[controller].set_visuals_lazy(keys, false);
+    status[index].set_visuals_lazy(*buttons, false);
 }
 
 LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)

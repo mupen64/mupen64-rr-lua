@@ -341,7 +341,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         funcs.audio_close_dll_audio = []() {
             if (s_mupenrr_audio_shutdown_fn) s_mupenrr_audio_shutdown_fn();
         };
-        funcs.audio_ai_dacrate_changed = [](int32_t system_type) {
+        funcs.audio_ai_dacrate_changed = [](CoreSystemType system_type) {
             if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
         };
         funcs.audio_ai_len_changed = []() {
@@ -374,10 +374,13 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         };
         funcs.input_controller_command = [](int32_t, uint8_t *) {};
         funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
-            if (s_mupenrr_get_keys_fn) s_mupenrr_get_keys_fn(controller, (M64RRSpec::Buttons *)keys);
+            M64RRSpec::Buttons buttons{keys->value};
+            if (s_mupenrr_get_keys_fn) s_mupenrr_get_keys_fn(controller, &buttons);
+            keys->value = buttons.value;
         };
         funcs.input_set_keys = [](int32_t controller, ZESpec::Buttons keys) {
-            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, *(M64RRSpec::Buttons *)&keys);
+            M64RRSpec::Buttons buttons{keys.value};
+            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, &buttons);
         };
         funcs.input_read_controller = [](int32_t controller, unsigned char *command) {
             if (s_mupenrr_read_controller_fn) s_mupenrr_read_controller_fn(controller, command);

@@ -322,7 +322,24 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         ZESpec::INITIATEAUDIO initiate_audio{};
 
         FUNC(funcs.audio_close_dll_audio, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(funcs.audio_ai_dacrate_changed, ZESpec::AIDACRATECHANGED, dummy_ai_dacrate_changed, "AiDacrateChanged");
+
+        ZESpec::AIDACRATECHANGED audio_ai_dacrate_changed{};
+        FUNC(audio_ai_dacrate_changed, ZESpec::AIDACRATECHANGED, dummy_ai_dacrate_changed, "AiDacrateChanged");
+
+        funcs.audio_ai_dacrate_changed = [=](CoreSystemType system_type) {
+            int32_t ze_system_type{};
+            switch (system_type)
+            {
+            case CoreSystemType::NTSC:
+                ze_system_type = 0;
+                break;
+            case CoreSystemType::PAL:
+                ze_system_type = 1;
+                break;
+            }
+            if (audio_ai_dacrate_changed) audio_ai_dacrate_changed(ze_system_type);
+        };
+
         FUNC(funcs.audio_ai_len_changed, ZESpec::AILENCHANGED, dummy_void, "AiLenChanged");
         FUNC(funcs.audio_ai_read_length, ZESpec::AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
         FUNC(initiate_audio, ZESpec::INITIATEAUDIO, dummy_initiate_audio, "InitiateAudio");

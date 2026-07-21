@@ -21,15 +21,15 @@ static bool g_sdl_is_init = false;
 
 #define CONFIG_FILE_NAME "TASAudio.json"
 
-static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
+static uint32_t compute_sample_rate(CoreSystemType system_type, uint32_t dacrate)
 {
     uint32_t vi_clock = 0;
     switch (system_type)
     {
-    case sys_ntsc:
+    case CoreSystemType::NTSC:
         vi_clock = 48681812;
         break;
-    case sys_pal:
+    case CoreSystemType::PAL:
         vi_clock = 49656530;
         break;
     default:
@@ -129,7 +129,7 @@ EXPORT void CALL M64RRRomClosed()
     if (g_backend.has_value()) g_backend.reset();
 }
 
-EXPORT void CALL M64RRAIDacrateChanged(int32_t system_type)
+EXPORT void CALL M64RRAIDacrateChanged(CoreSystemType system_type)
 {
     // update sample rate
     if (!g_plugin || !g_backend) return;

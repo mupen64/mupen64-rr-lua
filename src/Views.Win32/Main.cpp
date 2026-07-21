@@ -931,7 +931,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.readonly_changed = [](bool value) {
         Messenger::broadcast(Messenger::Message::ReadonlyChanged, value);
     };
-    g_main_ctx.core.callbacks.dacrate_changed = [](core_system_type value) {
+    g_main_ctx.core.callbacks.dacrate_changed = [](CoreSystemType value) {
         Messenger::broadcast(Messenger::Message::DacrateChanged, value);
     };
 
