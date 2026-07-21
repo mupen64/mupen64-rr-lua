@@ -113,7 +113,7 @@ static int get_seek_completion(lua_State *L)
  */
 static int begin_warp_modify(lua_State *L)
 {
-    std::vector<core_buttons> inputs;
+    std::vector<CoreButtons> inputs;
 
     luaL_checktype(L, 1, LUA_TTABLE);
     lua_pushnil(L);
@@ -121,7 +121,7 @@ static int begin_warp_modify(lua_State *L)
     {
         luaL_checktype(L, -1, LUA_TTABLE);
         lua_pushnil(L);
-        core_buttons buttons{};
+        CoreButtons buttons{};
         while (lua_next(L, -2))
         {
             std::string key = lua_tostring(L, -2);

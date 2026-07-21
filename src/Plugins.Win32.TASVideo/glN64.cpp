@@ -12,9 +12,9 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-static core_plugin_extended_funcs ef_shim{};
+static ZilmarExtSpec::ExtendedFuncs ef_shim{};
 
-core_plugin_extended_funcs *g_ef = &ef_shim;
+ZilmarExtSpec::ExtendedFuncs *g_ef = &ef_shim;
 
 bool init_rsp_thread()
 {
@@ -67,20 +67,20 @@ EXPORT void CALL DllConfig(void *hParent)
     Config_Show((HWND)hParent);
 }
 
-EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
+EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo)
 {
     PluginInfo->ver = 0x100;
-    PluginInfo->type = plugin_video;
+    PluginInfo->type = ZilmarExtSpec::PluginType::Video;
     strcpy_s(PluginInfo->name, sizeof(PluginInfo->name), IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
     PluginInfo->unused_normal_memory = FALSE;
     PluginInfo->unused_byteswapped = TRUE;
     std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
 }
 
-EXPORT BOOL CALL InitiateGFX(core_gfx_info Gfx_Info)
+EXPORT BOOL CALL InitiateGFX(ZilmarExtSpec::VideoPluginInfo Gfx_Info)
 {
     g_ef = Gfx_Info.extended_funcs;
-    g_tas_ctx.config_directory = ViewPluginHelpers::get_config_path(g_ef);
+    g_tas_ctx.config_directory = ZilmarExtSpec::get_config_path(g_ef);
 
     Config_LoadConfig();
 

@@ -97,6 +97,12 @@ bool vr_get_frame_skipped()
     return g_r4300.frame_skipped;
 }
 
+bool vr_is_ceqs_effectively_accurate()
+{
+    if (g_core->cfg->core_type != 1) return true;
+    return g_core->cfg->c_eq_s_nan_accurate;
+}
+
 std::filesystem::path get_sram_path()
 {
     auto filename = std::format("{} {}.sra", (const char *)ROM_HEADER.nom,

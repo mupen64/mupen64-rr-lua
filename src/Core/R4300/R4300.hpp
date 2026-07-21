@@ -102,6 +102,7 @@ bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
 void vr_invalidate_visuals();
 bool vr_get_frame_skipped();
+bool vr_is_ceqs_effectively_accurate();
 
 #define jump_to(a)                                                                                                     \
     {                                                                                                                  \

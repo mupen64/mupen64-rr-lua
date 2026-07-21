@@ -8,7 +8,7 @@
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <core_api.h>
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 #include <filesystem>
 #include <string>
 #include <format>
@@ -38,7 +38,7 @@
 #include <commctrl.h>
 #include <windowsx.h>
 #include <shellscalingapi.h>
-#include <core_plugin.h>
+#include <core_types.h>
 #include <Resource.h>
 #include <gdiplus.h>
 #pragma warning(pop)

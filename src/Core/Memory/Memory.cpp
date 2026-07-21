@@ -88,7 +88,7 @@ static uint32_t *readdp[0x10000];
 static uint32_t *readdps[0x10000];
 
 // the frameBufferInfos
-static core_fb_info frameBufferInfos[6];
+static CoreFBInfo frameBufferInfos[6];
 static char framebufferRead[0x800];
 static int32_t firstFrameBufferSetting;
 

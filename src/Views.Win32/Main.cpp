@@ -9,7 +9,7 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Messenger.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <strsafe.h>
 #include <capture/CaptureManager.hpp>
@@ -120,7 +120,7 @@ const wchar_t *get_input_text()
     static wchar_t text[1024]{};
     memset(text, 0, sizeof(text));
 
-    core_buttons b = g_main_ctx.last_controller_data[0];
+    CoreButtons b = g_main_ctx.last_controller_data[0];
     wsprintf(text, L"(%d, %d) ", b.x, b.y);
     if (b.start) lstrcatW(text, L"S");
     if (b.z) lstrcatW(text, L"Z");
@@ -885,7 +885,7 @@ static core_result init_core()
         LuaCallbacks::call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::vi();
     };
-    g_main_ctx.core.callbacks.input = [](core_buttons *input, int index) {
+    g_main_ctx.core.callbacks.input = [](CoreButtons *input, int index) {
         g_main_ctx.last_controller_data[index] = *input;
         LuaCallbacks::call_input(input, index);
         if (CaptureManager::is_capturing()) CaptureManager::input();
