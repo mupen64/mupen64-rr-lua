@@ -356,7 +356,7 @@ void MGECompositor::init()
 
 void MGECompositor::update_screen()
 {
-    g_plugin_funcs.video_get_video_size(&mge_context.width, &mge_context.height);
+    PluginUtil::get_video_size(&mge_context.width, &mge_context.height);
 
     if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
     {
@@ -364,7 +364,7 @@ void MGECompositor::update_screen()
         recreate_mge_context_d3d();
     }
 
-    g_plugin_funcs.video_read_video(&mge_context.rgba_buffer);
+    PluginUtil::read_video(mge_context.rgba_buffer);
 
     upload_rgb32_buffer();
     render_and_present();

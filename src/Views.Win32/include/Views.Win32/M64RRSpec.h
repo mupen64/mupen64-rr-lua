@@ -178,6 +178,8 @@ extern "C"
 
         uint8_t *header;
         Controller *controllers;
+
+        // TODO: Embed ef, not a pointer! Also move the type out of ZESpec and into this spec.
         ExtendedFuncs *ef;
 
         PluginInit() = default;

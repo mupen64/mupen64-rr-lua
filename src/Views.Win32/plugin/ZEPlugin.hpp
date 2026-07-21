@@ -19,7 +19,7 @@ class ZEPlugin : public Plugin
     void config(HWND hwnd) override;
     void test(HWND hwnd) override;
     void about(HWND hwnd) override;
-    void initiate() override;
+    void initiate(ZESpecFuncs &funcs) override;
     void initiate_dummy() override;
     void deinitiate_dummy() override;
 

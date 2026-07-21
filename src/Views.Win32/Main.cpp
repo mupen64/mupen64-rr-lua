@@ -263,18 +263,6 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
     }
 }
 
-void update_screen()
-{
-    if (PluginUtil::mge_available())
-    {
-        MGECompositor::update_screen();
-    }
-    else
-    {
-        g_plugin_funcs.video_update_screen();
-    }
-}
-
 void ai_len_changed()
 {
     if (!CaptureManager::is_capturing())
@@ -635,9 +623,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.repeat = repeat;
 
         LuaCallbacks::call_atkey(args);
-
-        if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
-            g_plugin_funcs.input_key_down(wParam, lParam);
+        PluginUtil::key_down(wParam, lParam);
         break;
     }
     case WM_SYSKEYUP:
@@ -648,9 +634,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.repeat = false;
 
         LuaCallbacks::call_atkey(args);
-
-        if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
-            g_plugin_funcs.input_key_up(wParam, lParam);
+        PluginUtil::key_up(wParam, lParam);
         break;
     }
     case WM_CHAR: {
@@ -679,10 +663,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         return 0;
     }
     case WM_MOVE: {
-        if (g_main_ctx.core_ctx->vr_get_launched())
-        {
-            g_plugin_funcs.video_move_screen((int)wParam, lParam);
-        }
+        PluginUtil::move_screen(wParam, lParam);
 
         if (IsIconic(g_main_ctx.hwnd))
         {
@@ -994,7 +975,7 @@ static core_result init_core()
         auto str_wide = IOUtils::to_wide_string(str);
         DialogService::show_statusbar(str_wide.c_str());
     };
-    g_main_ctx.core.update_screen = update_screen;
+    g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;
     g_main_ctx.core.mge_available = PluginUtil::mge_available;

@@ -242,7 +242,7 @@ void ZEPlugin::about(HWND hwnd)
     deinitiate_dummy();
 }
 
-void ZEPlugin::initiate()
+void ZEPlugin::initiate(ZESpecFuncs &funcs)
 {
     switch (m_type)
     {
@@ -250,28 +250,28 @@ void ZEPlugin::initiate()
         g_view_logger->trace("Initiating video plugin...");
         ZESpec::INITIATEGFX initiate_gfx{};
 
-        FUNC(g_plugin_funcs.video_change_window, ZESpec::CHANGEWINDOW, dummy_void, "ChangeWindow");
-        FUNC(g_plugin_funcs.video_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(funcs.video_change_window, ZESpec::CHANGEWINDOW, dummy_void, "ChangeWindow");
+        FUNC(funcs.video_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
         FUNC(initiate_gfx, ZESpec::INITIATEGFX, dummy_initiate_gfx, "InitiateGFX");
-        FUNC(g_plugin_funcs.video_process_dlist, ZESpec::PROCESSDLIST, dummy_void, "ProcessDList");
-        FUNC(g_plugin_funcs.video_process_rdp_list, ZESpec::PROCESSRDPLIST, dummy_void, "ProcessRDPList");
-        FUNC(g_plugin_funcs.video_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.video_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.video_show_cfb, ZESpec::SHOWCFB, dummy_void, "ShowCFB");
-        FUNC(g_plugin_funcs.video_update_screen, ZESpec::UPDATESCREEN, dummy_void, "UpdateScreen");
-        FUNC(g_plugin_funcs.video_vi_status_changed, ZESpec::VISTATUSCHANGED, dummy_void, "ViStatusChanged");
-        FUNC(g_plugin_funcs.video_vi_width_changed, ZESpec::VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
-        FUNC(g_plugin_funcs.video_move_screen, ZESpec::MOVESCREEN, dummy_move_screen, "MoveScreen");
-        FUNC(g_plugin_funcs.video_capture_screen, ZESpec::CAPTURESCREEN, dummy_capture_screen, "CaptureScreen");
-        FUNC(g_plugin_funcs.video_read_screen, ZESpec::READSCREEN,
-             (ZESpec::READSCREEN)GetProcAddress(m_module, "ReadScreen2"), "ReadScreen");
-        FUNC(g_plugin_funcs.video_get_video_size, ZESpec::GETVIDEOSIZE, nullptr, "mge_get_video_size");
-        FUNC(g_plugin_funcs.video_read_video, ZESpec::READVIDEO, nullptr, "mge_read_video2");
-        FUNC(g_plugin_funcs.video_fb_read, ZESpec::FBREAD, dummy_fb_read, "FBRead");
-        FUNC(g_plugin_funcs.video_fb_write, ZESpec::FBWRITE, dummy_fb_write, "FBWrite");
-        FUNC(g_plugin_funcs.video_fb_get_frame_buffer_info, ZESpec::FBGETFRAMEBUFFERINFO,
-             dummy_fb_get_framebuffer_info, "FBGetFrameBufferInfo");
-        g_plugin_funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
+        FUNC(funcs.video_process_dlist, ZESpec::PROCESSDLIST, dummy_void, "ProcessDList");
+        FUNC(funcs.video_process_rdp_list, ZESpec::PROCESSRDPLIST, dummy_void, "ProcessRDPList");
+        FUNC(funcs.video_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(funcs.video_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
+        FUNC(funcs.video_show_cfb, ZESpec::SHOWCFB, dummy_void, "ShowCFB");
+        FUNC(funcs.video_update_screen, ZESpec::UPDATESCREEN, dummy_void, "UpdateScreen");
+        FUNC(funcs.video_vi_status_changed, ZESpec::VISTATUSCHANGED, dummy_void, "ViStatusChanged");
+        FUNC(funcs.video_vi_width_changed, ZESpec::VIWIDTHCHANGED, dummy_void, "ViWidthChanged");
+        FUNC(funcs.video_move_screen, ZESpec::MOVESCREEN, dummy_move_screen, "MoveScreen");
+        FUNC(funcs.video_capture_screen, ZESpec::CAPTURESCREEN, dummy_capture_screen, "CaptureScreen");
+        FUNC(funcs.video_read_screen, ZESpec::READSCREEN, (ZESpec::READSCREEN)GetProcAddress(m_module, "ReadScreen2"),
+             "ReadScreen");
+        FUNC(funcs.video_get_video_size, ZESpec::GETVIDEOSIZE, nullptr, "mge_get_video_size");
+        FUNC(funcs.video_read_video, ZESpec::READVIDEO, nullptr, "mge_read_video2");
+        FUNC(funcs.video_fb_read, ZESpec::FBREAD, dummy_fb_read, "FBRead");
+        FUNC(funcs.video_fb_write, ZESpec::FBWRITE, dummy_fb_write, "FBWrite");
+        FUNC(funcs.video_fb_get_frame_buffer_info, ZESpec::FBGETFRAMEBUFFERINFO, dummy_fb_get_framebuffer_info,
+             "FBGetFrameBufferInfo");
+        funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
 
         gfx_info.main_hwnd = g_main_ctx.hwnd;
         gfx_info.statusbar_hwnd = g_config.is_statusbar_enabled ? Statusbar::hwnd() : nullptr;
@@ -305,13 +305,13 @@ void ZEPlugin::initiate()
         gfx_info.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
         gfx_info.check_interrupts = dummy_void;
 
-        g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-        gfx_info.extended_funcs = &g_plugin_funcs.video_extended_funcs;
+        funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
+
         initiate_gfx(gfx_info);
 
         bool compat_error = false;
 
-        if (!g_plugin_funcs.video_read_video && GetProcAddress(m_module, "mge_read_video")) compat_error = true;
+        if (!funcs.video_read_video && GetProcAddress(m_module, "mge_read_video")) compat_error = true;
 
         if (compat_error)
         {
@@ -327,16 +327,15 @@ void ZEPlugin::initiate()
         g_view_logger->trace("Initiating audio plugin...");
         ZESpec::INITIATEAUDIO initiate_audio{};
 
-        FUNC(g_plugin_funcs.audio_close_dll_audio, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.audio_ai_dacrate_changed, ZESpec::AIDACRATECHANGED, dummy_ai_dacrate_changed,
-             "AiDacrateChanged");
-        FUNC(g_plugin_funcs.audio_ai_len_changed, ZESpec::AILENCHANGED, dummy_void, "AiLenChanged");
-        FUNC(g_plugin_funcs.audio_ai_read_length, ZESpec::AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
+        FUNC(funcs.audio_close_dll_audio, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(funcs.audio_ai_dacrate_changed, ZESpec::AIDACRATECHANGED, dummy_ai_dacrate_changed, "AiDacrateChanged");
+        FUNC(funcs.audio_ai_len_changed, ZESpec::AILENCHANGED, dummy_void, "AiLenChanged");
+        FUNC(funcs.audio_ai_read_length, ZESpec::AIREADLENGTH, dummy_ai_read_length, "AiReadLength");
         FUNC(initiate_audio, ZESpec::INITIATEAUDIO, dummy_initiate_audio, "InitiateAudio");
-        FUNC(g_plugin_funcs.audio_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.audio_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.audio_process_alist, ZESpec::PROCESSALIST, dummy_void, "ProcessAList");
-        FUNC(g_plugin_funcs.audio_ai_update, ZESpec::AIUPDATE, dummy_ai_update, "AiUpdate");
+        FUNC(funcs.audio_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(funcs.audio_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
+        FUNC(funcs.audio_process_alist, ZESpec::PROCESSALIST, dummy_void, "ProcessAList");
+        FUNC(funcs.audio_ai_update, ZESpec::AIUPDATE, nullptr, "AiUpdate");
 
         audio_info.main_hwnd = g_main_ctx.hwnd;
         audio_info.hinst = g_main_ctx.hinst;
@@ -355,8 +354,8 @@ void ZEPlugin::initiate()
 
         audio_info.check_interrupts = dummy_void;
 
-        g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-        audio_info.extended_funcs = &g_plugin_funcs.audio_extended_funcs;
+        funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
+
         initiate_audio(audio_info);
         break;
     }
@@ -366,26 +365,23 @@ void ZEPlugin::initiate()
         ZESpec::OLD_INITIATECONTROLLERS old_initiate_controllers{};
         ZESpec::INITIATECONTROLLERS initiate_controllers{};
 
-        FUNC(g_plugin_funcs.input_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.input_controller_command, ZESpec::CONTROLLERCOMMAND, dummy_controller_command,
-             "ControllerCommand");
-        FUNC(g_plugin_funcs.input_get_keys, ZESpec::GETKEYS, dummy_get_keys, "GetKeys");
-        FUNC(g_plugin_funcs.input_set_keys, ZESpec::SETKEYS, dummy_set_keys, "SetKeys");
+        FUNC(funcs.input_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(funcs.input_controller_command, ZESpec::CONTROLLERCOMMAND, dummy_controller_command, "ControllerCommand");
+        FUNC(funcs.input_get_keys, ZESpec::GETKEYS, dummy_get_keys, "GetKeys");
+        FUNC(funcs.input_set_keys, ZESpec::SETKEYS, dummy_set_keys, "SetKeys");
         if (m_version == 0x0101)
         {
-            FUNC(initiate_controllers, ZESpec::INITIATECONTROLLERS, dummy_initiate_controllers,
-                 "InitiateControllers");
+            FUNC(initiate_controllers, ZESpec::INITIATECONTROLLERS, dummy_initiate_controllers, "InitiateControllers");
         }
         else
         {
             FUNC(old_initiate_controllers, ZESpec::OLD_INITIATECONTROLLERS, nullptr, "InitiateControllers");
         }
-        FUNC(g_plugin_funcs.input_read_controller, ZESpec::READCONTROLLER, dummy_read_controller,
-             "ReadController");
-        FUNC(g_plugin_funcs.input_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
-        FUNC(g_plugin_funcs.input_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
-        FUNC(g_plugin_funcs.input_key_down, ZESpec::KEYDOWN, dummy_key_down, "WM_KeyDown");
-        FUNC(g_plugin_funcs.input_key_up, ZESpec::KEYUP, dummy_key_up, "WM_KeyUp");
+        FUNC(funcs.input_read_controller, ZESpec::READCONTROLLER, dummy_read_controller, "ReadController");
+        FUNC(funcs.input_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(funcs.input_rom_open, ZESpec::ROMOPEN, dummy_void, "RomOpen");
+        FUNC(funcs.input_key_down, ZESpec::KEYDOWN, dummy_key_down, "WM_KeyDown");
+        FUNC(funcs.input_key_up, ZESpec::KEYUP, dummy_key_up, "WM_KeyUp");
 
         control_info.main_hwnd = g_main_ctx.hwnd;
         control_info.hinst = g_main_ctx.hinst;
@@ -395,8 +391,7 @@ void ZEPlugin::initiate()
         std::array<ZESpec::Controller, 4> tmp_controllers{};
         control_info.controllers = tmp_controllers.data();
 
-        g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-        control_info.extended_funcs = &g_plugin_funcs.input_extended_funcs;
+        funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
 
         if (m_version == 0x0101)
             initiate_controllers(control_info);
@@ -413,10 +408,10 @@ void ZEPlugin::initiate()
         g_view_logger->trace("Initiating RSP plugin...");
         ZESpec::INITIATERSP initiate_rsp{};
 
-        FUNC(g_plugin_funcs.rsp_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
-        FUNC(g_plugin_funcs.rsp_do_rsp_cycles, ZESpec::DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
+        FUNC(funcs.rsp_close_dll, ZESpec::CLOSEDLL, dummy_void, "CloseDLL");
+        FUNC(funcs.rsp_do_rsp_cycles, ZESpec::DORSPCYCLES, dummy_do_rsp_cycles, "DoRspCycles");
         FUNC(initiate_rsp, ZESpec::INITIATERSP, dummy_initiate_rsp, "InitiateRSP");
-        FUNC(g_plugin_funcs.rsp_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
+        FUNC(funcs.rsp_rom_closed, ZESpec::ROMCLOSED, dummy_void, "RomClosed");
 
         rsp_info.byteswapped = 1;
         rsp_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -441,13 +436,12 @@ void ZEPlugin::initiate()
         rsp_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
         rsp_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
         rsp_info.check_interrupts = dummy_void;
-        rsp_info.process_dlist_list = g_plugin_funcs.video_process_dlist;
-        rsp_info.process_alist_list = g_plugin_funcs.audio_process_alist;
-        rsp_info.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
-        rsp_info.show_cfb = g_plugin_funcs.video_show_cfb;
+        rsp_info.process_dlist_list = funcs.video_process_dlist;
+        rsp_info.process_alist_list = funcs.audio_process_alist;
+        rsp_info.process_rdp_list = funcs.video_process_rdp_list;
+        rsp_info.show_cfb = funcs.video_show_cfb;
 
-        g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-        rsp_info.extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
+        funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
 
         int32_t i = 4;
         initiate_rsp(rsp_info, (uint32_t *)&i);
@@ -469,9 +463,6 @@ void ZEPlugin::initiate_dummy()
             dummy_video_info.main_hwnd = Statusbar::hwnd();
             dummy_video_info.statusbar_hwnd = Statusbar::hwnd();
 
-            g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-            dummy_video_info.extended_funcs = &g_plugin_funcs.video_extended_funcs;
-
             const auto initiate_gfx = (ZESpec::INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
             if (initiate_gfx && !initiate_gfx(dummy_video_info))
             {
@@ -484,9 +475,6 @@ void ZEPlugin::initiate_dummy()
     case Plugin::Type::Audio: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
-            g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-            dummy_audio_info.extended_funcs = &g_plugin_funcs.audio_extended_funcs;
-
             const auto initiate_audio = (ZESpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
             if (initiate_audio && !initiate_audio(dummy_audio_info))
             {
@@ -499,9 +487,6 @@ void ZEPlugin::initiate_dummy()
     case Plugin::Type::Input: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
-            g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-            dummy_control_info.extended_funcs = &g_plugin_funcs.input_extended_funcs;
-
             if (m_version == 0x0101)
             {
                 const auto initiate_controllers =
@@ -523,9 +508,6 @@ void ZEPlugin::initiate_dummy()
     case Plugin::Type::RSP: {
         if (!g_main_ctx.core_ctx->vr_get_launched())
         {
-            g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-            dummy_rsp_info.extended_funcs = &g_plugin_funcs.rsp_extended_funcs;
-
             auto initiateRSP = (ZESpec::INITIATERSP)GetProcAddress(m_module, "InitiateRSP");
             uint32_t i = 0;
             if (initiateRSP) initiateRSP(dummy_rsp_info, &i);

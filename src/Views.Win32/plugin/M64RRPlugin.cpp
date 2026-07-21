@@ -11,6 +11,11 @@
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
 
+static M64RRSpec::ExtendedFuncs s_video_dummy_ef;
+static M64RRSpec::ExtendedFuncs s_audio_dummy_ef;
+static M64RRSpec::ExtendedFuncs s_input_dummy_ef;
+static M64RRSpec::ExtendedFuncs s_rsp_dummy_ef;
+
 static CoreController controller_to_core_controller(const M64RRSpec::Controller &controller)
 {
     CoreControllerExtension extension;
@@ -152,7 +157,7 @@ void M64RRPlugin::about(HWND hwnd)
     MessageBox(hwnd, IOUtils::to_wide_string(m_meta.description).c_str(), L"About", MB_ICONINFORMATION | MB_OK);
 }
 
-void M64RRPlugin::initiate()
+void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 {
     auto initiate_fn = (M64RRSpec::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
     if (!initiate_fn) initiate_fn = [](M64RRSpec::PluginInit *init) {};
@@ -162,16 +167,16 @@ void M64RRPlugin::initiate()
     {
 
     case Plugin::Type::Video:
-        init = &g_plugin_funcs.video_init;
+        init = &funcs.video_init;
         break;
     case Plugin::Type::Audio:
-        init = &g_plugin_funcs.audio_init;
+        init = &funcs.audio_init;
         break;
     case Plugin::Type::Input:
-        init = &g_plugin_funcs.input_init;
+        init = &funcs.input_init;
         break;
     case Plugin::Type::RSP:
-        init = &g_plugin_funcs.rsp_init;
+        init = &funcs.rsp_init;
         break;
     }
     init->platform = M64RRSpec::Platform::Windows;
@@ -219,7 +224,7 @@ void M64RRPlugin::initiate()
     init->sp_dma_busy_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_busy_reg;
     init->sp_pc_reg = &g_main_ctx.core_ctx->rsp_register->rsp_pc;
     init->sp_semaphore_reg = &g_main_ctx.core_ctx->sp_register->sp_semaphore_reg;
-    init->process_dlist = g_plugin_funcs.video_process_dlist;
+    init->process_dlist = funcs.video_process_dlist;
     init->header = g_main_ctx.core_ctx->rom;
 
     std::array<M64RRSpec::Controller, 4> tmp_controllers{};
@@ -228,20 +233,20 @@ void M64RRPlugin::initiate()
     switch (m_type)
     {
     case Plugin::Type::Video:
-        g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-        init->ef = &g_plugin_funcs.video_extended_funcs;
+        funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
+        init->ef = &funcs.video_extended_funcs;
         break;
     case Plugin::Type::Audio:
-        g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-        init->ef = &g_plugin_funcs.audio_extended_funcs;
+        funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
+        init->ef = &funcs.audio_extended_funcs;
         break;
     case Plugin::Type::Input:
-        g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-        init->ef = &g_plugin_funcs.input_extended_funcs;
+        funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
+        init->ef = &funcs.input_extended_funcs;
         break;
     case Plugin::Type::RSP:
-        g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-        init->ef = &g_plugin_funcs.rsp_extended_funcs;
+        funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
+        init->ef = &funcs.rsp_extended_funcs;
         break;
     }
 
@@ -258,38 +263,38 @@ void M64RRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
         LOOKUP_MUPENRR_FN(s_mupenrr_video_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.video_rom_open = []() {
+        funcs.video_rom_open = []() {
             if (s_mupenrr_video_rom_opened_fn) s_mupenrr_video_rom_opened_fn();
         };
-        g_plugin_funcs.video_rom_closed = []() {
+        funcs.video_rom_closed = []() {
             if (s_mupenrr_video_rom_closed_fn) s_mupenrr_video_rom_closed_fn();
         };
-        g_plugin_funcs.video_close_dll = []() {
+        funcs.video_close_dll = []() {
             if (s_mupenrr_video_shutdown_fn) s_mupenrr_video_shutdown_fn();
         };
-        g_plugin_funcs.video_process_dlist = []() {
+        funcs.video_process_dlist = []() {
             if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
         };
-        g_plugin_funcs.video_process_rdp_list = [](const auto &...) {};
-        g_plugin_funcs.video_show_cfb = [](const auto &...) {};
-        g_plugin_funcs.video_vi_status_changed = [](const auto &...) {};
-        g_plugin_funcs.video_vi_width_changed = [](const auto &...) {};
+        funcs.video_process_rdp_list = [](const auto &...) {};
+        funcs.video_show_cfb = [](const auto &...) {};
+        funcs.video_vi_status_changed = [](const auto &...) {};
+        funcs.video_vi_width_changed = [](const auto &...) {};
         if (s_mupenrr_read_video_fn)
         {
-            g_plugin_funcs.video_get_video_size = [](int32_t *width, int32_t *height) {
+            funcs.video_get_video_size = [](int32_t *width, int32_t *height) {
                 s_mupenrr_read_video_fn(nullptr, width, height);
             };
-            g_plugin_funcs.video_read_video = [](void **buffer) { s_mupenrr_read_video_fn(*buffer, nullptr, nullptr); };
+            funcs.video_read_video = [](void **buffer) { s_mupenrr_read_video_fn(*buffer, nullptr, nullptr); };
         }
-        g_plugin_funcs.video_change_window = [](const auto &...) {};
-        g_plugin_funcs.video_update_screen = [](const auto &...) {};
-        g_plugin_funcs.video_move_screen = [](int32_t, int32_t) {};
-        g_plugin_funcs.video_capture_screen = [](char *) {};
-        g_plugin_funcs.video_read_screen = nullptr;
-        g_plugin_funcs.video_fb_read = [](uint32_t) {};
-        g_plugin_funcs.video_fb_write = [](uint32_t, uint32_t) {};
-        g_plugin_funcs.video_fb_get_frame_buffer_info = [](ZESpec::FBInfo *) {};
-        g_plugin_funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
+        funcs.video_change_window = [](const auto &...) {};
+        funcs.video_update_screen = [](const auto &...) {};
+        funcs.video_move_screen = [](int32_t, int32_t) {};
+        funcs.video_capture_screen = [](char *) {};
+        funcs.video_read_screen = nullptr;
+        funcs.video_fb_read = [](uint32_t) {};
+        funcs.video_fb_write = [](uint32_t, uint32_t) {};
+        funcs.video_fb_get_frame_buffer_info = [](ZESpec::FBInfo *) {};
+        funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
 
         break;
     }
@@ -302,24 +307,24 @@ void M64RRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, M64RRSpec::PtrAILenChanged, "M64RRAILenChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_audio_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.audio_rom_open = []() {
+        funcs.audio_rom_open = []() {
             if (s_mupenrr_audio_rom_opened_fn) s_mupenrr_audio_rom_opened_fn();
         };
-        g_plugin_funcs.audio_rom_closed = []() {
+        funcs.audio_rom_closed = []() {
             if (s_mupenrr_audio_rom_closed_fn) s_mupenrr_audio_rom_closed_fn();
         };
-        g_plugin_funcs.audio_close_dll_audio = []() {
+        funcs.audio_close_dll_audio = []() {
             if (s_mupenrr_audio_shutdown_fn) s_mupenrr_audio_shutdown_fn();
         };
-        g_plugin_funcs.audio_ai_dacrate_changed = [](int32_t system_type) {
+        funcs.audio_ai_dacrate_changed = [](int32_t system_type) {
             if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
         };
-        g_plugin_funcs.audio_ai_len_changed = []() {
+        funcs.audio_ai_len_changed = []() {
             if (s_mupenrr_ai_len_changed_fn) s_mupenrr_ai_len_changed_fn();
         };
-        g_plugin_funcs.audio_ai_read_length = []() { return 0u; };
-        g_plugin_funcs.audio_process_alist = [](const auto &...) {};
-        g_plugin_funcs.audio_ai_update = [](int32_t) {};
+        funcs.audio_ai_read_length = []() { return 0u; };
+        funcs.audio_process_alist = [](const auto &...) {};
+        funcs.audio_ai_update = nullptr;
 
         break;
     }
@@ -333,27 +338,27 @@ void M64RRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, M64RRSpec::PtrReadController, "M64RRReadController");
         LOOKUP_MUPENRR_FN(s_mupenrr_input_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.input_rom_open = []() {
+        funcs.input_rom_open = []() {
             if (s_mupenrr_input_rom_opened_fn) s_mupenrr_input_rom_opened_fn();
         };
-        g_plugin_funcs.input_rom_closed = []() {
+        funcs.input_rom_closed = []() {
             if (s_mupenrr_input_rom_closed_fn) s_mupenrr_input_rom_closed_fn();
         };
-        g_plugin_funcs.input_close_dll = []() {
+        funcs.input_close_dll = []() {
             if (s_mupenrr_input_shutdown_fn) s_mupenrr_input_shutdown_fn();
         };
-        g_plugin_funcs.input_controller_command = [](int32_t, uint8_t *) {};
-        g_plugin_funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
+        funcs.input_controller_command = [](int32_t, uint8_t *) {};
+        funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
             if (s_mupenrr_get_keys_fn) s_mupenrr_get_keys_fn(controller, (M64RRSpec::Buttons *)keys);
         };
-        g_plugin_funcs.input_set_keys = [](int32_t controller, ZESpec::Buttons keys) {
+        funcs.input_set_keys = [](int32_t controller, ZESpec::Buttons keys) {
             if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, *(M64RRSpec::Buttons *)&keys);
         };
-        g_plugin_funcs.input_read_controller = [](int32_t controller, unsigned char *command) {
+        funcs.input_read_controller = [](int32_t controller, unsigned char *command) {
             if (s_mupenrr_read_controller_fn) s_mupenrr_read_controller_fn(controller, command);
         };
-        g_plugin_funcs.input_key_down = [](uint32_t, int32_t) {};
-        g_plugin_funcs.input_key_up = [](uint32_t, int32_t) {};
+        funcs.input_key_down = [](uint32_t, int32_t) {};
+        funcs.input_key_up = [](uint32_t, int32_t) {};
 
         for (size_t i = 0; i < std::size(tmp_controllers); ++i)
         {
@@ -368,13 +373,13 @@ void M64RRPlugin::initiate()
         LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, M64RRSpec::PtrDoRSPCycles, "M64RRDoRSPCycles");
         LOOKUP_MUPENRR_FN(s_mupenrr_rsp_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
-        g_plugin_funcs.rsp_rom_closed = []() {
+        funcs.rsp_rom_closed = []() {
             if (s_mupenrr_rsp_rom_closed_fn) s_mupenrr_rsp_rom_closed_fn();
         };
-        g_plugin_funcs.rsp_close_dll = []() {
+        funcs.rsp_close_dll = []() {
             if (s_mupenrr_rsp_shutdown_fn) s_mupenrr_rsp_shutdown_fn();
         };
-        g_plugin_funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
+        funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
             if (s_mupenrr_do_rsp_cycles_fn)
             {
                 s_mupenrr_do_rsp_cycles_fn((uint8_t)cycles);
@@ -455,20 +460,20 @@ void M64RRPlugin::initiate_dummy()
     switch (m_type)
     {
     case Plugin::Type::Video:
-        g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-        init.ef = &g_plugin_funcs.video_extended_funcs;
+        s_video_dummy_ef = GEN_EXTENDED_FUNCS(g_video_logger);
+        init.ef = &s_video_dummy_ef;
         break;
     case Plugin::Type::Audio:
-        g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-        init.ef = &g_plugin_funcs.audio_extended_funcs;
+        s_audio_dummy_ef = GEN_EXTENDED_FUNCS(g_audio_logger);
+        init.ef = &s_audio_dummy_ef;
         break;
     case Plugin::Type::Input:
-        g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-        init.ef = &g_plugin_funcs.input_extended_funcs;
+        s_input_dummy_ef = GEN_EXTENDED_FUNCS(g_input_logger);
+        init.ef = &s_input_dummy_ef;
         break;
     case Plugin::Type::RSP:
-        g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-        init.ef = &g_plugin_funcs.rsp_extended_funcs;
+        s_rsp_dummy_ef = GEN_EXTENDED_FUNCS(g_rsp_logger);
+        init.ef = &s_rsp_dummy_ef;
         break;
     }
 

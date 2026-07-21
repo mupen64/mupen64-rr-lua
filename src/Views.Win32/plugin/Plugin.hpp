@@ -154,9 +154,10 @@ class Plugin
     virtual void about(HWND hwnd);
 
     /**
-     * \brief Loads the plugin's exported functions into the globals and calls the initiate function.
+     * \brief Loads the plugin's exported functions into `funcs` and calls the initiate function.
+     * \param funcs The function table to load the plugin's exported functions into.
      */
-    virtual void initiate();
+    virtual void initiate(ZESpecFuncs &funcs);
 
     /**
      * \brief Gets the plugin's path
@@ -202,8 +203,6 @@ typedef struct
     std::vector<std::pair<std::filesystem::path, std::wstring>> results;
 
 } t_plugin_discovery_result;
-
-extern ZESpecFuncs g_plugin_funcs;
 
 /**
  * \brief A module providing utility functions related to plugins.
@@ -275,5 +274,12 @@ void screenshot(const std::filesystem::path &path);
  * \return A pointer to the free function, or the CRT's free if not found via DllCrtFree.
  */
 ZESpec::DLLCRTFREE get_free_function_in_module(HMODULE module);
+
+void get_video_size(int32_t *width, int32_t *height);
+void read_video(void *buffer);
+void update_screen();
+void key_down(uint32_t wParam, int32_t lParam);
+void key_up(uint32_t wParam, int32_t lParam);
+void move_screen(uint32_t wParam, int32_t lParam);
 
 } // namespace PluginUtil

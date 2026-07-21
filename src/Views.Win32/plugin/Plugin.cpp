@@ -42,14 +42,14 @@ static std::shared_ptr<Plugin> rsp_plugin;
 
 static std::jthread s_audio_thread;
 
-ZESpecFuncs g_plugin_funcs{};
+ZESpecFuncs s_funcs{};
 
 static void audio_thread_proc(std::stop_token st)
 {
     while (!st.stop_requested())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        g_plugin_funcs.audio_ai_update(0);
+        s_funcs.audio_ai_update(0);
     }
 }
 
@@ -64,7 +64,7 @@ static void start_audio_thread()
 {
     // We can forego thread creation for plugins with no AiUpdate implementation because they do audio heartbeat
     // themselves
-    if (g_plugin_funcs.audio_ai_update == dummy_ai_update)
+    if (!s_funcs.audio_ai_update)
     {
         g_view_logger->info("Skipping audio thread creation");
         return;
@@ -114,6 +114,39 @@ ZESpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
     return free;
 }
 
+void PluginUtil::get_video_size(int32_t *width, int32_t *height)
+{
+    s_funcs.video_get_video_size(width, height);
+}
+
+void PluginUtil::read_video(void *buffer)
+{
+    s_funcs.video_read_video(&buffer);
+}
+
+void PluginUtil::update_screen()
+{
+    if (PluginUtil::mge_available())
+        MGECompositor::update_screen();
+    else
+        s_funcs.video_update_screen();
+}
+
+void PluginUtil::key_down(uint32_t wParam, int32_t lParam)
+{
+    if (s_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched()) s_funcs.input_key_down(wParam, lParam);
+}
+
+void PluginUtil::key_up(uint32_t wParam, int32_t lParam)
+{
+    if (s_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched()) s_funcs.input_key_up(wParam, lParam);
+}
+
+void PluginUtil::move_screen(uint32_t wParam, int32_t lParam)
+{
+    if (g_main_ctx.core_ctx->vr_get_launched()) s_funcs.video_move_screen((int)wParam, lParam);
+}
+
 std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
 {
     Main::init_sdl();
@@ -157,7 +190,7 @@ void Plugin::about(HWND hwnd)
 {
 }
 
-void Plugin::initiate()
+void Plugin::initiate(ZESpecFuncs &funcs)
 {
 }
 
@@ -297,35 +330,35 @@ void PluginUtil::init_dummy_and_extended_funcs()
     dummy_rsp_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
     dummy_rsp_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
     dummy_rsp_info.check_interrupts = []() {};
-    dummy_rsp_info.process_dlist_list = g_plugin_funcs.video_process_dlist;
-    dummy_rsp_info.process_alist_list = g_plugin_funcs.audio_process_alist;
-    dummy_rsp_info.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
-    dummy_rsp_info.show_cfb = g_plugin_funcs.video_show_cfb;
+    dummy_rsp_info.process_dlist_list = s_funcs.video_process_dlist;
+    dummy_rsp_info.process_alist_list = s_funcs.audio_process_alist;
+    dummy_rsp_info.process_rdp_list = s_funcs.video_process_rdp_list;
+    dummy_rsp_info.show_cfb = s_funcs.video_show_cfb;
 
-    g_plugin_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-    g_plugin_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-    g_plugin_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-    g_plugin_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
+    s_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
+    s_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
+    s_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
+    s_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
 }
 
 bool PluginUtil::mge_available()
 {
-    return g_plugin_funcs.video_read_video && g_plugin_funcs.video_get_video_size;
+    return s_funcs.video_read_video && s_funcs.video_get_video_size;
 }
 
 void PluginUtil::start_plugins()
 {
-    g_main_ctx.core.video_process_dlist = g_plugin_funcs.video_process_dlist;
-    g_main_ctx.core.video_process_rdp_list = g_plugin_funcs.video_process_rdp_list;
-    g_main_ctx.core.video_show_cfb = g_plugin_funcs.video_show_cfb;
-    g_main_ctx.core.video_vi_status_changed = g_plugin_funcs.video_vi_status_changed;
-    g_main_ctx.core.video_vi_width_changed = g_plugin_funcs.video_vi_width_changed;
-    g_main_ctx.core.video_get_video_size = g_plugin_funcs.video_get_video_size;
-    g_main_ctx.core.video_fb_read = g_plugin_funcs.video_fb_read;
-    g_main_ctx.core.video_fb_write = g_plugin_funcs.video_fb_write;
+    g_main_ctx.core.video_process_dlist = s_funcs.video_process_dlist;
+    g_main_ctx.core.video_process_rdp_list = s_funcs.video_process_rdp_list;
+    g_main_ctx.core.video_show_cfb = s_funcs.video_show_cfb;
+    g_main_ctx.core.video_vi_status_changed = s_funcs.video_vi_status_changed;
+    g_main_ctx.core.video_vi_width_changed = s_funcs.video_vi_width_changed;
+    g_main_ctx.core.video_get_video_size = s_funcs.video_get_video_size;
+    g_main_ctx.core.video_fb_read = s_funcs.video_fb_read;
+    g_main_ctx.core.video_fb_write = s_funcs.video_fb_write;
     g_main_ctx.core.video_fb_get_frame_buffer_info = [](CoreFBInfo info[6]) {
         ZESpec::FBInfo z_fb[6]{};
-        g_plugin_funcs.video_fb_get_frame_buffer_info(z_fb);
+        s_funcs.video_fb_get_frame_buffer_info(z_fb);
 
         for (size_t i = 0; i < 6; i++)
         {
@@ -336,42 +369,42 @@ void PluginUtil::start_plugins()
         }
     };
 
-    g_main_ctx.core.audio_ai_dacrate_changed = g_plugin_funcs.audio_ai_dacrate_changed;
-    g_main_ctx.core.audio_ai_len_changed = g_plugin_funcs.audio_ai_len_changed;
-    g_main_ctx.core.audio_ai_read_length = g_plugin_funcs.audio_ai_read_length;
-    g_main_ctx.core.audio_process_alist = g_plugin_funcs.audio_process_alist;
+    g_main_ctx.core.audio_ai_dacrate_changed = s_funcs.audio_ai_dacrate_changed;
+    g_main_ctx.core.audio_ai_len_changed = s_funcs.audio_ai_len_changed;
+    g_main_ctx.core.audio_ai_read_length = s_funcs.audio_ai_read_length;
+    g_main_ctx.core.audio_process_alist = s_funcs.audio_process_alist;
 
-    g_main_ctx.core.input_controller_command = g_plugin_funcs.input_controller_command;
+    g_main_ctx.core.input_controller_command = s_funcs.input_controller_command;
     g_main_ctx.core.input_get_keys = [](int32_t controller, CoreButtons *keys) {
         ZESpec::Buttons z_keys{};
-        g_plugin_funcs.input_get_keys(controller, &z_keys);
+        s_funcs.input_get_keys(controller, &z_keys);
         keys->value = z_keys.value;
     };
     g_main_ctx.core.input_set_keys = [](int32_t controller, CoreButtons keys) {
         ZESpec::Buttons z_keys{keys.value};
-        g_plugin_funcs.input_set_keys(controller, z_keys);
+        s_funcs.input_set_keys(controller, z_keys);
     };
-    g_main_ctx.core.input_read_controller = g_plugin_funcs.input_read_controller;
+    g_main_ctx.core.input_read_controller = s_funcs.input_read_controller;
 
-    g_main_ctx.core.rsp_do_rsp_cycles = g_plugin_funcs.rsp_do_rsp_cycles;
+    g_main_ctx.core.rsp_do_rsp_cycles = s_funcs.rsp_do_rsp_cycles;
 
-    g_plugin_funcs.video_rom_open();
-    g_plugin_funcs.input_rom_open();
-    g_plugin_funcs.audio_rom_open();
+    s_funcs.video_rom_open();
+    s_funcs.input_rom_open();
+    s_funcs.audio_rom_open();
 
     start_audio_thread();
 }
 
 void PluginUtil::stop_plugins()
 {
-    g_plugin_funcs.video_rom_closed();
-    g_plugin_funcs.audio_rom_closed();
-    g_plugin_funcs.input_rom_closed();
-    g_plugin_funcs.rsp_rom_closed();
-    g_plugin_funcs.video_close_dll();
-    g_plugin_funcs.audio_close_dll_audio();
-    g_plugin_funcs.input_close_dll();
-    g_plugin_funcs.rsp_close_dll();
+    s_funcs.video_rom_closed();
+    s_funcs.audio_rom_closed();
+    s_funcs.input_rom_closed();
+    s_funcs.rsp_rom_closed();
+    s_funcs.video_close_dll();
+    s_funcs.audio_close_dll_audio();
+    s_funcs.input_close_dll();
+    s_funcs.rsp_close_dll();
 }
 bool PluginUtil::load_plugins()
 {
@@ -441,10 +474,10 @@ void PluginUtil::initiate_plugins()
     ScopeTimer timer("PluginUtil::initiate_plugins", g_view_logger.get());
 
     // Video plugin needs to go first because of process_dlist
-    video_plugin->initiate();
-    audio_plugin->initiate();
-    input_plugin->initiate();
-    rsp_plugin->initiate();
+    video_plugin->initiate(s_funcs);
+    audio_plugin->initiate(s_funcs);
+    input_plugin->initiate(s_funcs);
+    rsp_plugin->initiate(s_funcs);
 
     // std::latch done(3);
 
@@ -490,5 +523,5 @@ void PluginUtil::screenshot(const std::filesystem::path &path)
     if (!dir_str.empty() && dir_str.back() != std::filesystem::path::preferred_separator)
         dir_str += std::filesystem::path::preferred_separator;
 
-    g_plugin_funcs.video_capture_screen(dir_str.data());
+    s_funcs.video_capture_screen(dir_str.data());
 }

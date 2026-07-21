@@ -57,29 +57,8 @@ static CaptureContext g_ctx{};
 
 void readscreen_plugin(int32_t *width = nullptr, int32_t *height = nullptr)
 {
-    if (PluginUtil::mge_available())
-    {
-        MGECompositor::copy_video(m_video_buf);
-        MGECompositor::get_video_size(width, height);
-    }
-    else
-    {
-        void *buf = nullptr;
-        int32_t w;
-        int32_t h;
-        g_plugin_funcs.video_read_screen(&buf, &w, &h);
-        memcpy(m_video_buf, buf, w * h * 4);
-        g_plugin_funcs.video_dll_crt_free(buf);
-
-        if (width)
-        {
-            *width = w;
-        }
-        if (height)
-        {
-            *height = h;
-        }
-    }
+    MGECompositor::copy_video(m_video_buf);
+    MGECompositor::get_video_size(width, height);
 }
 
 void readscreen_window()
@@ -226,8 +205,7 @@ void read_screen()
  */
 static bool check_readscreen_available()
 {
-    bool has_no_mge_or_readscreen = !PluginUtil::mge_available() && !g_plugin_funcs.video_read_screen;
-    if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && has_no_mge_or_readscreen)
+    if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
     {
         DialogService::show_dialog(READSCREEN_MISSING_MSG, L"Capture", fsvc_error);
         return false;
@@ -240,20 +218,7 @@ void get_video_dimensions(int32_t *width, int32_t *height)
 {
     if (g_config.capture_mode == 0)
     {
-        if (PluginUtil::mge_available())
-        {
-            MGECompositor::get_video_size(width, height);
-        }
-        else if (g_plugin_funcs.video_get_video_size)
-        {
-            g_plugin_funcs.video_get_video_size(width, height);
-        }
-        else
-        {
-            void *buf = nullptr;
-            g_plugin_funcs.video_read_screen(&buf, width, height);
-            g_plugin_funcs.video_dll_crt_free(buf);
-        }
+        MGECompositor::get_video_size(width, height);
     }
     else if (g_config.capture_mode == 1 || g_config.capture_mode == 2 || g_config.capture_mode == 3)
     {
