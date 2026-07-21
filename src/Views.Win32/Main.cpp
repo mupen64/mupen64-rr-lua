@@ -985,7 +985,7 @@ static core_result init_core()
 
     const auto result = core_create(&g_main_ctx.core, &g_main_ctx.core_ctx);
 
-    PluginUtil::init_dummy_and_extended_funcs();
+    PluginUtil::init();
 
     return result;
 }
@@ -1160,7 +1160,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     std::filesystem::create_directories(Config::logs_directory());
 
     Loggers::init();
-    PluginUtil::init();
 
     g_view_logger->info("WinMain");
     g_view_logger->info(get_mupen_name());

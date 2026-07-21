@@ -205,11 +205,6 @@ void init();
 t_plugin_discovery_result discover_plugins(const std::filesystem::path &directory);
 
 /**
- * \brief Initializes dummy and extended function sets.
- */
-void init_dummy_and_extended_funcs();
-
-/**
  * \return Whether MGE functionality is currently available.
  */
 bool mge_available();

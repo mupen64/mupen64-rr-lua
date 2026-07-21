@@ -6,10 +6,14 @@
 
 /*
  * Describes the M64RR plugin specification. This specification is volatile, with no compatibility guarantees across
- * Mupen64 versions.
+ * Mupen64 versions or C++ ABIs.
  */
 
 #pragma once
+
+#ifndef __cplusplus
+#error "The M64RR specification is only for C++"
+#endif
 
 #include "core_types.h"
 
@@ -27,7 +31,7 @@ extern "C"
     /**
      * \brief Represents the platform the plugin is running on.
      */
-    enum class Platform
+    enum class Platform : uint8_t
     {
         Windows,
         LinuxWayland,
@@ -38,12 +42,13 @@ extern "C"
         void *ptr1;
         void *ptr2;
 
-#ifdef _WIN32
         WindowHandle()
         {
             ptr1 = nullptr;
             ptr2 = nullptr;
         }
+
+#ifdef _WIN32
         WindowHandle(HWND hwnd)
         {
             ptr1 = reinterpret_cast<void *>(hwnd);

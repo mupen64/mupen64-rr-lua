@@ -193,56 +193,7 @@ void Plugin::deinitiate_dummy()
 void PluginUtil::init()
 {
     Messenger::subscribe(Messenger::Message::EmuStopping, [](const auto &...) { stop_audio_thread(); });
-}
 
-t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
-{
-    std::vector<std::unique_ptr<Plugin>> plugins;
-    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
-
-    // this will fail to match files with the extension not lowercased, but I don't think this is a big deal.
-    auto dll_files = std::filesystem::directory_iterator(directory) |
-                     std::views::filter([](const std::filesystem::directory_entry &entry) {
-                         return entry.is_regular_file() && entry.path().extension().compare(L".dll") == 0;
-                     }) |
-                     std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
-
-    for (const auto &file : dll_files)
-    {
-        auto [result, plugin] = Plugin::create(file);
-
-        results.emplace_back(file, result);
-        if (!result.empty()) continue;
-
-        plugins.emplace_back(std::move(plugin));
-    }
-
-    // Special case: plugins are present but not in the plugin directory
-    for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
-                             g_config.selected_input_plugin, g_config.selected_rsp_plugin})
-    {
-        auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) {
-            std::error_code ec;
-            return std::filesystem::equivalent(pair.first, file, ec);
-        });
-        if (it != results.end()) continue;
-
-        auto [result, plugin] = Plugin::create(file);
-
-        results.emplace_back(file, result);
-        if (!result.empty()) continue;
-
-        plugins.emplace_back(std::move(plugin));
-    }
-
-    return t_plugin_discovery_result{
-        .plugins = std::move(plugins),
-        .results = results,
-    };
-}
-
-void PluginUtil::init_dummy_and_extended_funcs()
-{
     dummy_video_info.byteswapped = 1;
     dummy_video_info.rom = (uint8_t *)dummy_header;
     dummy_video_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
@@ -322,6 +273,52 @@ void PluginUtil::init_dummy_and_extended_funcs()
     dummy_rsp_info.process_alist_list = s_funcs.audio_process_alist;
     dummy_rsp_info.process_rdp_list = s_funcs.video_process_rdp_list;
     dummy_rsp_info.show_cfb = s_funcs.video_show_cfb;
+}
+
+t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
+{
+    std::vector<std::unique_ptr<Plugin>> plugins;
+    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
+
+    // this will fail to match files with the extension not lowercased, but I don't think this is a big deal.
+    auto dll_files = std::filesystem::directory_iterator(directory) |
+                     std::views::filter([](const std::filesystem::directory_entry &entry) {
+                         return entry.is_regular_file() && entry.path().extension().compare(L".dll") == 0;
+                     }) |
+                     std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
+
+    for (const auto &file : dll_files)
+    {
+        auto [result, plugin] = Plugin::create(file);
+
+        results.emplace_back(file, result);
+        if (!result.empty()) continue;
+
+        plugins.emplace_back(std::move(plugin));
+    }
+
+    // Special case: plugins are present but not in the plugin directory
+    for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
+                             g_config.selected_input_plugin, g_config.selected_rsp_plugin})
+    {
+        auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) {
+            std::error_code ec;
+            return std::filesystem::equivalent(pair.first, file, ec);
+        });
+        if (it != results.end()) continue;
+
+        auto [result, plugin] = Plugin::create(file);
+
+        results.emplace_back(file, result);
+        if (!result.empty()) continue;
+
+        plugins.emplace_back(std::move(plugin));
+    }
+
+    return t_plugin_discovery_result{
+        .plugins = std::move(plugins),
+        .results = results,
+    };
 }
 
 bool PluginUtil::mge_available()
