@@ -286,23 +286,89 @@ extern "C"
 
     // ReSharper disable CppInconsistentNaming
 
+    /**
+     * \brief Retrieves the plugin metadata.
+     * \param metadata The plugin metadata to be filled in.
+     */
     EXPORT void CALL M64RRGetMetadata(PluginMetadata *metadata);
+
+    /**
+     * \brief Initializes the plugin.
+     * \param init The plugin initialization data. The pointer and data remain valid until `M64RRShutdown` has been
+     * called.
+     */
     EXPORT void CALL M64RRInitiate(PluginInit *init);
+
+    /**
+     * \brief Notifies the plugin that it's being shut down.
+     */
     EXPORT void CALL M64RRShutdown(void);
+
+    /**
+     * \brief Notifies the plugin that emulation has started.
+     */
     EXPORT void CALL M64RRRomOpened(void);
+
+    /**
+     * \brief Notifies the plugin that emulation has stopped.
+     */
     EXPORT void CALL M64RRRomClosed(void);
+
+    /**
+     * \brief Shows the configuration window.
+     * \param parent_window The parent window handle.
+     */
     EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window);
 
+    /**
+     * \brief Processes the display list.
+     */
     EXPORT void CALL M64RRProcessDList(void);
+
+    /**
+     * \brief Reads video data.
+     * \param buffer The buffer to store the video data. Can be `nullptr`.
+     * \param width The width of the video. Can be `nullptr`.
+     * \param height The height of the video. Can be `nullptr`.
+     */
     EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height);
 
+    /**
+     * \brief Called when the audio DAC rate changes.
+     * \param system_type The system type.
+     */
     EXPORT void CALL M64RRAIDacrateChanged(int32_t system_type);
+
+    /**
+     * \brief Called when the audio length changes.
+     */
     EXPORT void CALL M64RRAILenChanged(void);
 
+    /**
+     * \brief Gets the keys for the specified controller.
+     * \param controller The controller index.
+     * \param keys The buttons to be filled in.
+     */
     EXPORT void CALL M64RRGetKeys(int32_t controller, Buttons *keys);
+
+    /**
+     * \brief Notifies the plugin that the keys for the specified controller have changed.
+     * \param controller The controller index.
+     * \param keys The buttons to be set.
+     */
     EXPORT void CALL M64RRSetKeys(int32_t controller, Buttons keys);
+
+    /**
+     * \brief Notifies the plugin of a controller command.
+     * \param controller The controller index.
+     * \param command The controller command.
+     */
     EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command);
 
+    /**
+     * \brief Does RSP cycles.
+     * \param cycles The number of RSP cycles to do.
+     */
     EXPORT void CALL M64RRDoRSPCycles(uint8_t cycles);
 
     // ReSharper restore CppInconsistentNaming
