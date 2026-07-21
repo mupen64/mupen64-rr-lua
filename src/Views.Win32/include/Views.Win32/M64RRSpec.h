@@ -241,11 +241,27 @@ extern "C"
         PluginInit &operator=(const PluginInit &) = delete;
     };
 
+    union LifecycleEvent {
+        enum class Type : uint8_t
+        {
+            Initiate,
+            Shutdown,
+            RomOpened,
+            RomClosed,
+        };
+
+        struct InitiateEvent
+        {
+            Type type;
+            PluginInit *init;
+        };
+
+        Type type;
+        InitiateEvent initiate;
+    };
+
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
-    typedef void(CALL *PtrInitiate)(PluginInit *init);
-    typedef void(CALL *PtrShutdown)();
-    typedef void(CALL *PtrRomOpened)();
-    typedef void(CALL *PtrRomClosed)();
+    typedef void(CALL *PtrLifecycleEvent)(LifecycleEvent event);
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
 
     typedef void(CALL *PtrProcessDList)();
@@ -278,26 +294,10 @@ extern "C"
     EXPORT void CALL M64RRGetMetadata(PluginMetadata *metadata);
 
     /**
-     * \brief Initializes the plugin.
-     * \param init The plugin initialization data. The pointer and data remain valid until `M64RRShutdown` has been
-     * called.
+     * \brief Notifies the plugin of a lifecycle event.
+     * \param event The lifecycle event.
      */
-    EXPORT void CALL M64RRInitiate(PluginInit *init);
-
-    /**
-     * \brief Notifies the plugin that it's being shut down.
-     */
-    EXPORT void CALL M64RRShutdown(void);
-
-    /**
-     * \brief Notifies the plugin that emulation has started.
-     */
-    EXPORT void CALL M64RRRomOpened(void);
-
-    /**
-     * \brief Notifies the plugin that emulation has stopped.
-     */
-    EXPORT void CALL M64RRRomClosed(void);
+    EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event);
 
     /**
      * \brief Shows the configuration window.

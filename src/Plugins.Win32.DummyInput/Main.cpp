@@ -11,16 +11,24 @@
 
 DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Input)
 
-EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
+EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
 {
-    auto *controllers = init->controllers;
-
-    for (int i = 0; i < 4; ++i)
+    switch (event.type)
     {
-        controllers[i].present = 0;
-        controllers[i].raw = 0;
-        controllers[i].plugin = M64RRSpec::ControllerExtension::None;
-    }
+    case M64RRSpec::LifecycleEvent::Type::Initiate: {
+        auto *controllers = event.initiate.init->controllers;
 
-    controllers[0].present = 1;
+        for (int i = 0; i < 4; ++i)
+        {
+            controllers[i].present = 0;
+            controllers[i].raw = 0;
+            controllers[i].plugin = M64RRSpec::ControllerExtension::None;
+        }
+
+        controllers[0].present = 1;
+        break;
+    }
+    default:
+        break;
+    }
 }

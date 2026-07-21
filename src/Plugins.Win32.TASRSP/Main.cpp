@@ -107,7 +107,8 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
             memcpy(g_plugin->imem + 0x120, g_plugin->rdram + 0x1e8, 0x1e8);
             for (int j = 0; j < 0xfc; j++)
                 for (int i = 0; i < 8; i++)
-                    *(g_plugin->rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(g_plugin->imem + ((0x120 + (j * 8) + i) ^ S8));
+                    *(g_plugin->rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) =
+                        *(g_plugin->imem + ((0x120 + (j * 8) + i) ^ S8));
             return Cycles;
         }
 
@@ -117,7 +118,8 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
             memcpy(g_plugin->imem + 0x120, g_plugin->rdram + 0x1e8, 0x1e8);
             for (int j = 0; j < 0xfc; j++)
                 for (int i = 0; i < 8; i++)
-                    *(g_plugin->rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) = *(g_plugin->imem + ((0x120 + (j * 8) + i) ^ S8));
+                    *(g_plugin->rdram + ((0x2fb1f0 + (j * 0xff0) + i) ^ S8)) =
+                        *(g_plugin->imem + ((0x120 + (j * 8) + i) ^ S8));
             return Cycles;
         }
 
@@ -186,19 +188,22 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
+EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
 {
-    g_plugin = init;
-}
-
-EXPORT void CALL M64RRRomOpened()
-{
-    config_load();
-}
-
-EXPORT void CALL M64RRRomClosed()
-{
-    on_rom_closed();
+    switch (event.type)
+    {
+    case M64RRSpec::LifecycleEvent::Type::Initiate:
+        g_plugin = event.initiate.init;
+        break;
+    case M64RRSpec::LifecycleEvent::Type::RomOpened:
+        config_load();
+        break;
+    case M64RRSpec::LifecycleEvent::Type::RomClosed:
+        on_rom_closed();
+        break;
+    default:
+        break;
+    }
 }
 
 EXPORT void CALL M64RRDoRSPCycles(uint8_t cycles)

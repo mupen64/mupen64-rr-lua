@@ -11,28 +11,21 @@
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
 
-static M64RRSpec::PtrRomOpened s_mupenrr_video_rom_opened_fn = nullptr;
-static M64RRSpec::PtrRomClosed s_mupenrr_video_rom_closed_fn = nullptr;
+static M64RRSpec::PtrLifecycleEvent s_mupenrr_video_lifecycle_event_fn = nullptr;
 static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
 static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_video_shutdown_fn = nullptr;
 
-static M64RRSpec::PtrRomOpened s_mupenrr_audio_rom_opened_fn = nullptr;
-static M64RRSpec::PtrRomClosed s_mupenrr_audio_rom_closed_fn = nullptr;
+static M64RRSpec::PtrLifecycleEvent s_mupenrr_audio_lifecycle_event_fn = nullptr;
 static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
 static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_audio_shutdown_fn = nullptr;
 
-static M64RRSpec::PtrRomOpened s_mupenrr_input_rom_opened_fn = nullptr;
-static M64RRSpec::PtrRomClosed s_mupenrr_input_rom_closed_fn = nullptr;
+static M64RRSpec::PtrLifecycleEvent s_mupenrr_input_lifecycle_event_fn = nullptr;
 static M64RRSpec::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
 static M64RRSpec::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
 static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_input_shutdown_fn = nullptr;
 
-static M64RRSpec::PtrRomClosed s_mupenrr_rsp_rom_closed_fn = nullptr;
+static M64RRSpec::PtrLifecycleEvent s_mupenrr_rsp_lifecycle_event_fn = nullptr;
 static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_rsp_shutdown_fn = nullptr;
 
 M64RRSpec::PluginInit s_dummy_video_init;
 M64RRSpec::PluginInit s_dummy_audio_init;
@@ -170,8 +163,8 @@ void M64RRPlugin::about(HWND hwnd)
 
 void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 {
-    auto initiate_fn = (M64RRSpec::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
-    if (!initiate_fn) initiate_fn = [](M64RRSpec::PluginInit *init) {};
+    auto lifecycle_event_fn = (M64RRSpec::PtrLifecycleEvent)GetProcAddress(m_module, "M64RRLifecycleEvent");
+    if (!lifecycle_event_fn) lifecycle_event_fn = [](auto) {};
 
     M64RRSpec::PluginInit *init;
     switch (m_type)
@@ -275,27 +268,34 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         break;
     }
 
-    initiate_fn(init);
+    lifecycle_event_fn(M64RRSpec::LifecycleEvent{.initiate = {
+                                                     .type = M64RRSpec::LifecycleEvent::Type::Initiate,
+                                                     .init = init,
+                                                 }});
 
     switch (m_type)
     {
     case Plugin::Type::Video: {
         g_view_logger->trace("Initiating video plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_video_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_video_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_video_lifecycle_event_fn, M64RRSpec::PtrLifecycleEvent, "M64RRLifecycleEvent");
         LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, M64RRSpec::PtrProcessDList, "M64RRProcessDList");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
-        LOOKUP_MUPENRR_FN(s_mupenrr_video_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         funcs.video_rom_open = []() {
-            if (s_mupenrr_video_rom_opened_fn) s_mupenrr_video_rom_opened_fn();
+            if (s_mupenrr_video_lifecycle_event_fn)
+                s_mupenrr_video_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::RomOpened});
         };
         funcs.video_rom_closed = []() {
-            if (s_mupenrr_video_rom_closed_fn) s_mupenrr_video_rom_closed_fn();
+            if (s_mupenrr_video_lifecycle_event_fn)
+                s_mupenrr_video_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::RomClosed});
         };
         funcs.video_close_dll = []() {
-            if (s_mupenrr_video_shutdown_fn) s_mupenrr_video_shutdown_fn();
+            if (s_mupenrr_video_lifecycle_event_fn)
+                s_mupenrr_video_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::Shutdown});
         };
         funcs.video_process_dlist = []() {
             if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
@@ -326,20 +326,24 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     case Plugin::Type::Audio: {
         g_view_logger->trace("Initiating audio plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_audio_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_audio_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_audio_lifecycle_event_fn, M64RRSpec::PtrLifecycleEvent, "M64RRLifecycleEvent");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, M64RRSpec::PtrAIDacrateChanged, "M64RRAIDacrateChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, M64RRSpec::PtrAILenChanged, "M64RRAILenChanged");
-        LOOKUP_MUPENRR_FN(s_mupenrr_audio_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         funcs.audio_rom_open = []() {
-            if (s_mupenrr_audio_rom_opened_fn) s_mupenrr_audio_rom_opened_fn();
+            if (s_mupenrr_audio_lifecycle_event_fn)
+                s_mupenrr_audio_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::RomOpened});
         };
         funcs.audio_rom_closed = []() {
-            if (s_mupenrr_audio_rom_closed_fn) s_mupenrr_audio_rom_closed_fn();
+            if (s_mupenrr_audio_lifecycle_event_fn)
+                s_mupenrr_audio_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::RomClosed});
         };
         funcs.audio_close_dll_audio = []() {
-            if (s_mupenrr_audio_shutdown_fn) s_mupenrr_audio_shutdown_fn();
+            if (s_mupenrr_audio_lifecycle_event_fn)
+                s_mupenrr_audio_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::Shutdown});
         };
         funcs.audio_ai_dacrate_changed = [](CoreSystemType system_type) {
             if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
@@ -356,21 +360,25 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     case Plugin::Type::Input: {
         g_view_logger->trace("Initiating input plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_input_rom_opened_fn, M64RRSpec::PtrRomOpened, "M64RRRomOpened");
-        LOOKUP_MUPENRR_FN(s_mupenrr_input_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_input_lifecycle_event_fn, M64RRSpec::PtrLifecycleEvent, "M64RRLifecycleEvent");
         LOOKUP_MUPENRR_FN(s_mupenrr_get_keys_fn, M64RRSpec::PtrGetKeys, "M64RRGetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_set_keys_fn, M64RRSpec::PtrSetKeys, "M64RRSetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, M64RRSpec::PtrReadController, "M64RRReadController");
-        LOOKUP_MUPENRR_FN(s_mupenrr_input_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
         funcs.input_rom_open = []() {
-            if (s_mupenrr_input_rom_opened_fn) s_mupenrr_input_rom_opened_fn();
+            if (s_mupenrr_input_lifecycle_event_fn)
+                s_mupenrr_input_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::RomOpened});
         };
         funcs.input_rom_closed = []() {
-            if (s_mupenrr_input_rom_closed_fn) s_mupenrr_input_rom_closed_fn();
+            if (s_mupenrr_input_lifecycle_event_fn)
+                s_mupenrr_input_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::RomClosed});
         };
         funcs.input_close_dll = []() {
-            if (s_mupenrr_input_shutdown_fn) s_mupenrr_input_shutdown_fn();
+            if (s_mupenrr_input_lifecycle_event_fn)
+                s_mupenrr_input_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::Shutdown});
         };
         funcs.input_controller_command = [](int32_t, uint8_t *) {};
         funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
@@ -397,15 +405,19 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     case Plugin::Type::RSP: {
         g_view_logger->trace("Initiating RSP plugin (MupenRR)...");
 
-        LOOKUP_MUPENRR_FN(s_mupenrr_rsp_rom_closed_fn, M64RRSpec::PtrRomClosed, "M64RRRomClosed");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rsp_lifecycle_event_fn, M64RRSpec::PtrLifecycleEvent, "M64RRLifecycleEvent");
         LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, M64RRSpec::PtrDoRSPCycles, "M64RRDoRSPCycles");
-        LOOKUP_MUPENRR_FN(s_mupenrr_rsp_shutdown_fn, M64RRSpec::PtrShutdown, "M64RRShutdown");
 
+        // FIXME: add rsp_rom_opened
         funcs.rsp_rom_closed = []() {
-            if (s_mupenrr_rsp_rom_closed_fn) s_mupenrr_rsp_rom_closed_fn();
+            if (s_mupenrr_rsp_lifecycle_event_fn)
+                s_mupenrr_rsp_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::RomClosed});
         };
         funcs.rsp_close_dll = []() {
-            if (s_mupenrr_rsp_shutdown_fn) s_mupenrr_rsp_shutdown_fn();
+            if (s_mupenrr_rsp_lifecycle_event_fn)
+                s_mupenrr_rsp_lifecycle_event_fn(
+                    M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::Shutdown});
         };
         funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
             if (s_mupenrr_do_rsp_cycles_fn)
@@ -428,8 +440,8 @@ void M64RRPlugin::initiate_dummy()
 {
     Main::init_sdl();
 
-    const auto initiate_fn = (M64RRSpec::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
-    if (!initiate_fn) return;
+    auto lifecycle_event_fn = (M64RRSpec::PtrLifecycleEvent)GetProcAddress(m_module, "M64RRLifecycleEvent");
+    if (!lifecycle_event_fn) lifecycle_event_fn = [](auto) {};
 
     M64RRSpec::PluginInit *init;
     switch (m_type)
@@ -536,14 +548,20 @@ void M64RRPlugin::initiate_dummy()
         break;
     }
 
-    initiate_fn(init);
+    lifecycle_event_fn(M64RRSpec::LifecycleEvent{.initiate = {
+                                                     .type = M64RRSpec::LifecycleEvent::Type::Initiate,
+                                                     .init = init,
+                                                 }});
 }
 
 void M64RRPlugin::deinitiate_dummy()
 {
     if (g_main_ctx.core_ctx->vr_get_launched()) return;
-    const auto close_dll = (M64RRSpec::PtrShutdown)GetProcAddress(m_module, "M64RRShutdown");
-    if (close_dll) close_dll();
+
+    auto lifecycle_event_fn = (M64RRSpec::PtrLifecycleEvent)GetProcAddress(m_module, "M64RRLifecycleEvent");
+    if (!lifecycle_event_fn) lifecycle_event_fn = [](auto) {};
+
+    lifecycle_event_fn(M64RRSpec::LifecycleEvent{.type = M64RRSpec::LifecycleEvent::Type::Shutdown});
 }
 
 #undef LOOKUP_MUPENRR_FN

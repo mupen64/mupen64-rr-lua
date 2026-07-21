@@ -104,29 +104,32 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRShutdown()
+EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
 {
-    if (g_backend.has_value()) g_backend.reset();
-}
-
-EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
-{
-    g_plugin = init;
-
-    try
+    switch (event.type)
     {
-        SDLAudio::Config cfg = read_config();
-        g_backend.emplace(std::move(cfg));
-    }
-    catch (std::exception &e)
-    {
-        g_plugin->log_error(IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
-    }
-}
+    case M64RRSpec::LifecycleEvent::Type::Initiate: {
+        g_plugin = event.initiate.init;
 
-EXPORT void CALL M64RRRomClosed()
-{
-    if (g_backend.has_value()) g_backend.reset();
+        try
+        {
+            SDLAudio::Config cfg = read_config();
+            g_backend.emplace(std::move(cfg));
+        }
+        catch (std::exception &e)
+        {
+            g_plugin->log_error(
+                IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
+        }
+        break;
+    }
+    case M64RRSpec::LifecycleEvent::Type::Shutdown:
+    case M64RRSpec::LifecycleEvent::Type::RomClosed:
+        if (g_backend.has_value()) g_backend.reset();
+        break;
+    default:
+        break;
+    }
 }
 
 EXPORT void CALL M64RRAIDacrateChanged(CoreSystemType system_type)

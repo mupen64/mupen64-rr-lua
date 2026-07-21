@@ -209,64 +209,6 @@ static void detach_event_watch()
     }
 }
 
-EXPORT void CALL M64RRShutdown(void)
-{
-    detach_event_watch();
-
-    if (gdi_plus_token)
-    {
-        Gdiplus::GdiplusShutdown(gdi_plus_token);
-        gdi_plus_token = 0;
-    }
-}
-
-EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
-{
-    attach_event_watch();
-    ConfigDialog::show(parent_window.hwnd());
-
-    // TODO: Do we have to restart the dialogs here like in old version?
-}
-
-EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
-{
-    metadata->type = M64RRSpec::PluginType::Input;
-
-    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
-    const auto description = "First-party TAS plugin for Mupen64."
-                             "\n"
-                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                             "to one version of the emulator."
-                             "\n\n"
-                             "https://mupen64.com";
-    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
-
-    auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
-    metadata->name[result.size] = '\0';
-
-    result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
-    metadata->description[result.size] = '\0';
-
-    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
-    metadata->target_version[result.size] = '\0';
-}
-
-EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons)
-{
-    if (new_frame)
-    {
-        ++frame_counter;
-        new_frame = false;
-    }
-
-    status[index].get_input(buttons);
-}
-
-EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons)
-{
-    status[index].set_visuals_lazy(*buttons, false);
-}
-
 LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
     switch (msg)
@@ -1000,39 +942,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return FALSE;
 }
 
-EXPORT void CALL M64RRInitiate(PluginInit *init)
-{
-    g_plugin = init;
-    emulator_hwnd = init->main_window.hwnd();
-
-    for (int i = 0; i < 4; ++i)
-    {
-        init->controllers[i].present = new_config.controller_active[i];
-        init->controllers[i].raw = false;
-        init->controllers[i].plugin = M64RRSpec::ControllerExtension::None;
-        if (new_config.controller_mempak[i]) init->controllers[i].plugin = M64RRSpec::ControllerExtension::Mempak;
-        if (new_config.controller_rumblepak[i]) init->controllers[i].plugin = M64RRSpec::ControllerExtension::Rumblepak;
-    }
-}
-
-EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
-{
-    if (controller == -1)
-    {
-        new_frame = true;
-    }
-}
-
-EXPORT void CALL M64RRRomClosed(void)
-{
-    rom_open = false;
-
-    for (auto &st : status)
-    {
-        ShowWindow(st.hwnd, SW_HIDE);
-    }
-}
-
 static void show_activated_windows()
 {
     size_t i = 0;
@@ -1106,27 +1015,6 @@ static void ui_thread()
     }
 
     save_config();
-}
-
-EXPORT void CALL M64RRRomOpened(void)
-{
-    attach_event_watch();
-    load_config();
-
-    static bool first_time = true;
-
-    if (first_time)
-    {
-        main_thread = std::thread(ui_thread);
-
-        first_time = false;
-    }
-    else
-    {
-        show_activated_windows();
-    }
-
-    rom_open = true;
 }
 
 bool Status::combo_active()
@@ -1332,4 +1220,125 @@ void TASInput::on_detach()
     if (main_thread.joinable()) main_thread.join();
 
     detach_event_watch();
+}
+
+EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
+{
+    metadata->type = M64RRSpec::PluginType::Input;
+
+    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
+    const auto description = "First-party TAS plugin for Mupen64."
+                             "\n"
+                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                             "to one version of the emulator."
+                             "\n\n"
+                             "https://mupen64.com";
+    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+
+    auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
+    metadata->name[result.size] = '\0';
+
+    result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
+    metadata->description[result.size] = '\0';
+
+    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
+    metadata->target_version[result.size] = '\0';
+}
+
+EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
+{
+    switch (event.type)
+    {
+    case M64RRSpec::LifecycleEvent::Type::Initiate: {
+        g_plugin = event.initiate.init;
+        emulator_hwnd = g_plugin->main_window.hwnd();
+
+        for (int i = 0; i < 4; ++i)
+        {
+            g_plugin->controllers[i].present = new_config.controller_active[i];
+            g_plugin->controllers[i].raw = false;
+            g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::None;
+            if (new_config.controller_mempak[i])
+                g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::Mempak;
+            if (new_config.controller_rumblepak[i])
+                g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::Rumblepak;
+        }
+        break;
+    }
+    case M64RRSpec::LifecycleEvent::Type::Shutdown: {
+        detach_event_watch();
+
+        if (gdi_plus_token)
+        {
+            Gdiplus::GdiplusShutdown(gdi_plus_token);
+            gdi_plus_token = 0;
+        }
+        break;
+    }
+    case M64RRSpec::LifecycleEvent::Type::RomOpened: {
+        attach_event_watch();
+        load_config();
+
+        static bool first_time = true;
+
+        if (first_time)
+        {
+            main_thread = std::thread(ui_thread);
+
+            first_time = false;
+        }
+        else
+        {
+            show_activated_windows();
+        }
+
+        rom_open = true;
+
+        break;
+    }
+    case M64RRSpec::LifecycleEvent::Type::RomClosed: {
+        rom_open = false;
+
+        for (auto &st : status)
+        {
+            ShowWindow(st.hwnd, SW_HIDE);
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+}
+
+EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
+{
+    if (controller == -1)
+    {
+        new_frame = true;
+    }
+}
+
+EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
+{
+    attach_event_watch();
+    ConfigDialog::show(parent_window.hwnd());
+
+    // TODO: Do we have to restart the dialogs here like in old version?
+}
+
+EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons)
+{
+    if (new_frame)
+    {
+        ++frame_counter;
+        new_frame = false;
+    }
+
+    status[index].get_input(buttons);
+}
+
+EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons)
+{
+    status[index].set_visuals_lazy(*buttons, false);
 }
