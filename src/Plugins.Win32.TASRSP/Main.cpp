@@ -17,7 +17,6 @@ static bool g_rsp_alive = false;
 static void (*ABI[0x20])();
 uint32_t inst1;
 uint32_t inst2;
-std::filesystem::path g_config_path;
 
 static int audio_ucode_detect_type(const OSTask_t *task)
 {
@@ -190,7 +189,6 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
     g_plugin = init;
-    g_config_path = M64RRSpec::get_config_path(g_plugin);
 }
 
 EXPORT void CALL M64RRRomOpened()

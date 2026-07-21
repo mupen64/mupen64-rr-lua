@@ -11,6 +11,37 @@
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
 
+static M64RRSpec::PtrRomOpened s_mupenrr_video_rom_opened_fn = nullptr;
+static M64RRSpec::PtrRomClosed s_mupenrr_video_rom_closed_fn = nullptr;
+static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
+static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_video_shutdown_fn = nullptr;
+
+static M64RRSpec::PtrRomOpened s_mupenrr_audio_rom_opened_fn = nullptr;
+static M64RRSpec::PtrRomClosed s_mupenrr_audio_rom_closed_fn = nullptr;
+static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
+static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_audio_shutdown_fn = nullptr;
+
+static M64RRSpec::PtrRomOpened s_mupenrr_input_rom_opened_fn = nullptr;
+static M64RRSpec::PtrRomClosed s_mupenrr_input_rom_closed_fn = nullptr;
+static M64RRSpec::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
+static M64RRSpec::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
+static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_input_shutdown_fn = nullptr;
+
+static M64RRSpec::PtrRomClosed s_mupenrr_rsp_rom_closed_fn = nullptr;
+static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
+static M64RRSpec::PtrShutdown s_mupenrr_rsp_shutdown_fn = nullptr;
+
+M64RRSpec::PluginInit s_dummy_video_init;
+M64RRSpec::PluginInit s_dummy_audio_init;
+M64RRSpec::PluginInit s_dummy_input_init;
+M64RRSpec::PluginInit s_dummy_rsp_init;
+
+#define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
+    mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
+
 static CoreController controller_to_core_controller(const M64RRSpec::Controller &controller)
 {
     CoreControllerExtension extension;
@@ -43,31 +74,16 @@ static CoreController controller_to_core_controller(const M64RRSpec::Controller 
     };
 }
 
-static M64RRSpec::PtrRomOpened s_mupenrr_video_rom_opened_fn = nullptr;
-static M64RRSpec::PtrRomClosed s_mupenrr_video_rom_closed_fn = nullptr;
-static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
-static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_video_shutdown_fn = nullptr;
+static size_t get_config_path(char *data, size_t size)
+{
+    static const std::u8string config_path = std::filesystem::absolute(IOUtils::config_path()).u8string();
 
-static M64RRSpec::PtrRomOpened s_mupenrr_audio_rom_opened_fn = nullptr;
-static M64RRSpec::PtrRomClosed s_mupenrr_audio_rom_closed_fn = nullptr;
-static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
-static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_audio_shutdown_fn = nullptr;
+    if (data == nullptr) return config_path.size() + 1;
+    if (size < config_path.size() + 1) return 0;
 
-static M64RRSpec::PtrRomOpened s_mupenrr_input_rom_opened_fn = nullptr;
-static M64RRSpec::PtrRomClosed s_mupenrr_input_rom_closed_fn = nullptr;
-static M64RRSpec::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
-static M64RRSpec::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
-static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_input_shutdown_fn = nullptr;
-
-static M64RRSpec::PtrRomClosed s_mupenrr_rsp_rom_closed_fn = nullptr;
-static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
-static M64RRSpec::PtrShutdown s_mupenrr_rsp_shutdown_fn = nullptr;
-
-#define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
-    mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
+    memcpy(data, config_path.c_str(), config_path.size() + 1);
+    return size + 1;
+}
 
 std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE module, std::filesystem::path path)
 {
@@ -227,7 +243,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
     init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
     init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
-    init->config_path = ext_fn_config_path;
+    init->config_path = get_config_path;
     init->rcp_counter = g_main_ctx.core_ctx->rcp_counter;
     init->request_size = Main::request_size;
 
@@ -412,95 +428,112 @@ void M64RRPlugin::initiate_dummy()
     const auto initiate_fn = (M64RRSpec::PtrInitiate)GetProcAddress(m_module, "M64RRInitiate");
     if (!initiate_fn) return;
 
-    M64RRSpec::PluginInit init{};
+    M64RRSpec::PluginInit *init;
+    switch (m_type)
+    {
+    case Type::Video:
+        init = &s_dummy_video_init;
+        break;
+    case Type::Audio:
+        init = &s_dummy_audio_init;
+        break;
+    case Type::Input:
+        init = &s_dummy_input_init;
+        break;
+    case Type::RSP:
+        init = &s_dummy_rsp_init;
+        break;
+    default:
+        return;
+    }
 
-    init.platform = M64RRSpec::Platform::Windows;
-    init.main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
-    init.byteswapped = 1;
-    init.rom = dummy_header;
-    init.rdram = nullptr;
-    init.dmem = nullptr;
-    init.imem = nullptr;
-    init.mi_intr_reg = &dummy_dw;
-    init.dpc_start_reg = &dummy_dw;
-    init.dpc_end_reg = &dummy_dw;
-    init.dpc_current_reg = &dummy_dw;
-    init.dpc_status_reg = &dummy_dw;
-    init.dpc_clock_reg = &dummy_dw;
-    init.dpc_bufbusy_reg = &dummy_dw;
-    init.dpc_pipebusy_reg = &dummy_dw;
-    init.dpc_tmem_reg = &dummy_dw;
-    init.vi_status_reg = &dummy_dw;
-    init.vi_origin_reg = &dummy_dw;
-    init.vi_width_reg = &dummy_dw;
-    init.vi_intr_reg = &dummy_dw;
-    init.vi_v_current_line_reg = &dummy_dw;
-    init.vi_timing_reg = &dummy_dw;
-    init.vi_v_sync_reg = &dummy_dw;
-    init.vi_h_sync_reg = &dummy_dw;
-    init.vi_leap_reg = &dummy_dw;
-    init.vi_h_start_reg = &dummy_dw;
-    init.vi_v_start_reg = &dummy_dw;
-    init.vi_v_burst_reg = &dummy_dw;
-    init.vi_x_scale_reg = &dummy_dw;
-    init.vi_y_scale_reg = &dummy_dw;
-    init.ai_dram_addr_reg = &dummy_dw;
-    init.ai_len_reg = &dummy_dw;
-    init.ai_control_reg = &dummy_dw;
-    init.ai_status_reg = &dummy_dw;
-    init.ai_dacrate_reg = &dummy_dw;
-    init.ai_bitrate_reg = &dummy_dw;
-    init.sp_mem_addr_reg = &dummy_dw;
-    init.sp_dram_addr_reg = &dummy_dw;
-    init.sp_rd_len_reg = &dummy_dw;
-    init.sp_wr_len_reg = &dummy_dw;
-    init.sp_status_reg = &dummy_dw;
-    init.sp_dma_full_reg = &dummy_dw;
-    init.sp_dma_busy_reg = &dummy_dw;
-    init.sp_pc_reg = &dummy_dw;
-    init.sp_semaphore_reg = &dummy_dw;
+    init->platform = M64RRSpec::Platform::Windows;
+    init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
+    init->byteswapped = 1;
+    init->rom = dummy_header;
+    init->rdram = nullptr;
+    init->dmem = nullptr;
+    init->imem = nullptr;
+    init->mi_intr_reg = &dummy_dw;
+    init->dpc_start_reg = &dummy_dw;
+    init->dpc_end_reg = &dummy_dw;
+    init->dpc_current_reg = &dummy_dw;
+    init->dpc_status_reg = &dummy_dw;
+    init->dpc_clock_reg = &dummy_dw;
+    init->dpc_bufbusy_reg = &dummy_dw;
+    init->dpc_pipebusy_reg = &dummy_dw;
+    init->dpc_tmem_reg = &dummy_dw;
+    init->vi_status_reg = &dummy_dw;
+    init->vi_origin_reg = &dummy_dw;
+    init->vi_width_reg = &dummy_dw;
+    init->vi_intr_reg = &dummy_dw;
+    init->vi_v_current_line_reg = &dummy_dw;
+    init->vi_timing_reg = &dummy_dw;
+    init->vi_v_sync_reg = &dummy_dw;
+    init->vi_h_sync_reg = &dummy_dw;
+    init->vi_leap_reg = &dummy_dw;
+    init->vi_h_start_reg = &dummy_dw;
+    init->vi_v_start_reg = &dummy_dw;
+    init->vi_v_burst_reg = &dummy_dw;
+    init->vi_x_scale_reg = &dummy_dw;
+    init->vi_y_scale_reg = &dummy_dw;
+    init->ai_dram_addr_reg = &dummy_dw;
+    init->ai_len_reg = &dummy_dw;
+    init->ai_control_reg = &dummy_dw;
+    init->ai_status_reg = &dummy_dw;
+    init->ai_dacrate_reg = &dummy_dw;
+    init->ai_bitrate_reg = &dummy_dw;
+    init->sp_mem_addr_reg = &dummy_dw;
+    init->sp_dram_addr_reg = &dummy_dw;
+    init->sp_rd_len_reg = &dummy_dw;
+    init->sp_wr_len_reg = &dummy_dw;
+    init->sp_status_reg = &dummy_dw;
+    init->sp_dma_full_reg = &dummy_dw;
+    init->sp_dma_busy_reg = &dummy_dw;
+    init->sp_pc_reg = &dummy_dw;
+    init->sp_semaphore_reg = &dummy_dw;
 
-    init.process_dlist = [](const auto &...) {};
-    init.header = dummy_header;
+    init->process_dlist = [](const auto &...) {};
+    init->header = dummy_header;
 
     std::array<M64RRSpec::Controller, 4> tmp_controllers{};
-    init.controllers = tmp_controllers.data();
+    init->controllers = tmp_controllers.data();
 
-    init.get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
-    init.frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
-    init.config_path = ext_fn_config_path;
-    init.rcp_counter = g_main_ctx.core_ctx->rcp_counter;
-    init.request_size = Main::request_size;
+    init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
+    init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
+    init->config_path = get_config_path;
+    init->rcp_counter = g_main_ctx.core_ctx->rcp_counter;
+    init->request_size = Main::request_size;
 
     switch (m_type)
     {
     case Plugin::Type::Video:
-        init.log_trace = [](const wchar_t *str) { g_video_logger->trace(str); };
-        init.log_info = [](const wchar_t *str) { g_video_logger->info(str); };
-        init.log_warn = [](const wchar_t *str) { g_video_logger->warn(str); };
-        init.log_error = [](const wchar_t *str) { g_video_logger->error(str); };
+        init->log_trace = [](const wchar_t *str) { g_video_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_video_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_video_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_video_logger->error(str); };
         break;
     case Plugin::Type::Audio:
-        init.log_trace = [](const wchar_t *str) { g_audio_logger->trace(str); };
-        init.log_info = [](const wchar_t *str) { g_audio_logger->info(str); };
-        init.log_warn = [](const wchar_t *str) { g_audio_logger->warn(str); };
-        init.log_error = [](const wchar_t *str) { g_audio_logger->error(str); };
+        init->log_trace = [](const wchar_t *str) { g_audio_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_audio_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_audio_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_audio_logger->error(str); };
         break;
     case Plugin::Type::Input:
-        init.log_trace = [](const wchar_t *str) { g_input_logger->trace(str); };
-        init.log_info = [](const wchar_t *str) { g_input_logger->info(str); };
-        init.log_warn = [](const wchar_t *str) { g_input_logger->warn(str); };
-        init.log_error = [](const wchar_t *str) { g_input_logger->error(str); };
+        init->log_trace = [](const wchar_t *str) { g_input_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_input_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_input_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_input_logger->error(str); };
         break;
     case Plugin::Type::RSP:
-        init.log_trace = [](const wchar_t *str) { g_rsp_logger->trace(str); };
-        init.log_info = [](const wchar_t *str) { g_rsp_logger->info(str); };
-        init.log_warn = [](const wchar_t *str) { g_rsp_logger->warn(str); };
-        init.log_error = [](const wchar_t *str) { g_rsp_logger->error(str); };
+        init->log_trace = [](const wchar_t *str) { g_rsp_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_rsp_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_rsp_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_rsp_logger->error(str); };
         break;
     }
 
-    initiate_fn(&init);
+    initiate_fn(init);
 }
 
 void M64RRPlugin::deinitiate_dummy()

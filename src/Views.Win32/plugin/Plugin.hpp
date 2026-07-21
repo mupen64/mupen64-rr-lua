@@ -77,17 +77,6 @@ extern ZESpec::DLLABOUT dll_about;
 extern ZESpec::DLLCONFIG dll_config;
 extern ZESpec::DLLTEST dll_test;
 
-inline size_t ext_fn_config_path(char *data, size_t size)
-{
-    static const std::u8string config_path = IOUtils::config_path().u8string();
-
-    if (data == nullptr) return config_path.size() + 1;
-    if (size < config_path.size() + 1) return 0;
-
-    memcpy(data, config_path.c_str(), config_path.size() + 1);
-    return size + 1;
-}
-
 #define FUNC(target, type, fallback, name)                                                                             \
     target = (type)GetProcAddress((HMODULE)m_module, name);                                                            \
     if (!target)                                                                                                       \

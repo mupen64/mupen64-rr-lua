@@ -5,7 +5,6 @@
 struct TASVideoContext
 {
     HINSTANCE hinst;
-    std::filesystem::path config_directory;
 };
 
 extern TASVideoContext g_tas_ctx;

@@ -261,21 +261,6 @@ extern "C"
     typedef void(CALL *PtrDoRSPCycles)(uint8_t);
 };
 
-/**
- * \brief Gets the config path.
- */
-inline std::filesystem::path get_config_path(const PluginInit *init)
-{
-    size_t len = init->config_path(nullptr, 0);
-
-    std::string path_temp(len, '\0');
-    init->config_path(path_temp.data(), path_temp.size());
-    path_temp.pop_back();
-
-    std::u8string_view utf8_path_temp{(char8_t *)path_temp.data(), path_temp.size()};
-    return std::filesystem::absolute(utf8_path_temp);
-}
-
 } // namespace M64RRSpec
 
 #if defined(PLUGIN_WITH_CALLBACKS)
@@ -287,7 +272,7 @@ extern "C"
     // ReSharper disable CppInconsistentNaming
 
     /**
-     * \brief Retrieves the plugin metadata.
+     * \brief Retrieves the plugin metadata. Always called before any other plugin function.
      * \param metadata The plugin metadata to be filled in.
      */
     EXPORT void CALL M64RRGetMetadata(PluginMetadata *metadata);
@@ -320,6 +305,8 @@ extern "C"
      */
     EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window);
 
+    // ---
+
     /**
      * \brief Processes the display list.
      */
@@ -344,6 +331,8 @@ extern "C"
      */
     EXPORT void CALL M64RRAILenChanged(void);
 
+    // ---
+
     /**
      * \brief Gets the keys for the specified controller.
      * \param controller The controller index.
@@ -364,6 +353,8 @@ extern "C"
      * \param command The controller command.
      */
     EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command);
+
+    // ---
 
     /**
      * \brief Does RSP cycles.

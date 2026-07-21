@@ -10,8 +10,6 @@
 #include <GamepadManager.hpp>
 #include <ConfigDialog.hpp>
 
-std::filesystem::path g_config_path;
-
 HINSTANCE g_inst;
 M64RRSpec::PluginInit *g_plugin;
 

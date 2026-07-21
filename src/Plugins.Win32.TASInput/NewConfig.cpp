@@ -15,7 +15,10 @@ t_config new_config{};
 
 static std::filesystem::path get_config_path()
 {
-    return g_config_path / CONFIG_FILE_NAME;
+    const auto size = g_plugin->config_path(nullptr, 0);
+    std::string path(size - 1, '\0');
+    g_plugin->config_path(path.data(), size);
+    return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
 void save_config()

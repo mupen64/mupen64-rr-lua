@@ -17,8 +17,9 @@ M64RRSpec::PluginInit *g_plugin = nullptr;
 std::optional<SDLAudio::SDLBackend> g_backend{};
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
-std::filesystem::path g_config_path{};
 static bool g_sdl_is_init = false;
+
+#define CONFIG_FILE_NAME "TASAudio.json"
 
 static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
 {
@@ -42,7 +43,10 @@ static uint32_t compute_sample_rate(uint32_t system_type, uint32_t dacrate)
 
 static inline std::filesystem::path config_path()
 {
-    return g_config_path / "TASAudio.json";
+    const auto size = g_plugin->config_path(nullptr, 0);
+    std::string path(size - 1, '\0');
+    g_plugin->config_path(path.data(), size);
+    return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
 SDLAudio::Config read_config()
@@ -108,7 +112,6 @@ EXPORT void CALL M64RRShutdown()
 EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
     g_plugin = init;
-    g_config_path = M64RRSpec::get_config_path(g_plugin);
 
     try
     {

@@ -1003,7 +1003,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 EXPORT void CALL M64RRInitiate(PluginInit *init)
 {
     g_plugin = init;
-    g_config_path = M64RRSpec::get_config_path(g_plugin);
     emulator_hwnd = init->main_window.hwnd();
 
     for (int i = 0; i < 4; ++i)
