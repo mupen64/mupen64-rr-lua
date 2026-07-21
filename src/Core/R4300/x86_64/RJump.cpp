@@ -172,7 +172,6 @@ void dyna_start(void (*code)())
 {
     core_executing = true;
     g_core->callbacks.core_executing_changed(core_executing);
-    g_core->log_info(std::format("core_executing: {}", (bool)core_executing));
 
     g_dyna_stopped = false;
     RtlCaptureContext(&g_dyna_ctx);

@@ -18,3 +18,13 @@ void gen_mxcsr_restore();
 
 extern float largest_denormal_float;
 extern double largest_denormal_double;
+
+#define GEN_FALLBACK_IF_FLOAT_EXC(op)                                                                                   \
+    do                                                                                                                  \
+    {                                                                                                                   \
+        if (g_core->cfg->float_exception_emulation)                                                                     \
+        {                                                                                                               \
+            gencallinterp((uintptr_t)(op), 0);                                                                         \
+            return;                                                                                                     \
+        }                                                                                                              \
+    } while (0)

@@ -15,7 +15,11 @@
 static void patch_jump(uint32_t addr, uint32_t target)
 {
     int32_t diff = target - addr;
-    assert(-128 <= diff && diff < 128);
+    if (diff < -128 || diff > 127)
+    {
+        g_core->log_error(std::format("[Dynarec] FATAL: patch_jump rel8 out of range ({}) at addr={}", diff, addr));
+        abort();
+    }
     (*inst_pointer)[addr - 1] = (unsigned char)(diff & 0xFF);
 }
 

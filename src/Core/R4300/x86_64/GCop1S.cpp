@@ -14,8 +14,8 @@
 #include <R4300/Ops.hpp>
 
 // FP JIT port: SSE-native ops have their INTERPRET_* removed. JITed: ADD/SUB/MUL/DIV_S,
-// ABS/NEG/MOV_S (integer bit ops), all C.cond.S compares, CVT_D_S. SQRT_S and the
-// float->int conversions remain interpreted (INTERPRET_* below).
+// ABS/NEG/MOV_S (integer bit ops), all C.cond.S compares, CVT_D_S, SQRT_S, and the
+// float->int conversions (all their INTERPRET_* are commented out below).
 // All COP1 .S conversions now ported to native SSE (cvt*2si / cvtsi2* / sqrtsd,
 // with MXCSR rounding-mode swap for round/ceil/floor). Bit-exact with the interpreter.
 // #define INTERPRET_SQRT_S
@@ -251,6 +251,7 @@ void genround_l_s()
 #ifdef INTERPRET_ROUND_L_S
     gencallinterp((uintptr_t)ROUND_L_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(ROUND_L_S);
     gencheck_cop1_unusable();
     gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     gen_mxcsr_set_round(0x0000); // nearest
@@ -267,12 +268,13 @@ void gentrunc_l_s()
 #ifdef INTERPRET_TRUNC_L_S
     gencallinterp((uintptr_t)TRUNC_L_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(TRUNC_L_S);
     gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
+    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvttss2si_reg64_preg64(EBX, EAX); // rbx = (int64)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);       // fd = rbx
+    mov_preg64_reg64(EAX, EBX);       // fd = rbx
 #endif
 }
 
@@ -281,6 +283,7 @@ void genceil_l_s()
 #ifdef INTERPRET_CEIL_L_S
     gencallinterp((uintptr_t)CEIL_L_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(CEIL_L_S);
     gencheck_cop1_unusable();
     gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     gen_mxcsr_set_round(0x4000); // up (+inf)
@@ -297,6 +300,7 @@ void genfloor_l_s()
 #ifdef INTERPRET_FLOOR_L_S
     gencallinterp((uintptr_t)FLOOR_L_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(FLOOR_L_S);
     gencheck_cop1_unusable();
     gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     gen_mxcsr_set_round(0x2000); // down (-inf)
@@ -313,6 +317,7 @@ void genround_w_s()
 #ifdef INTERPRET_ROUND_W_S
     gencallinterp((uintptr_t)ROUND_W_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(ROUND_W_S);
     gencheck_cop1_unusable();
     gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     gen_mxcsr_set_round(0x0000); // nearest
@@ -329,12 +334,13 @@ void gentrunc_w_s()
 #ifdef INTERPRET_TRUNC_W_S
     gencallinterp((uintptr_t)TRUNC_W_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(TRUNC_W_S);
     gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
+    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvttss2si_reg32_preg64(EBX, EAX); // ebx = (int32)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);       // fd = ebx
+    mov_preg64_reg32(EAX, EBX);       // fd = ebx
 #endif
 }
 
@@ -343,6 +349,7 @@ void genceil_w_s()
 #ifdef INTERPRET_CEIL_W_S
     gencallinterp((uintptr_t)CEIL_W_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(CEIL_W_S);
     gencheck_cop1_unusable();
     gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     gen_mxcsr_set_round(0x4000); // up (+inf)
@@ -359,6 +366,7 @@ void genfloor_w_s()
 #ifdef INTERPRET_FLOOR_W_S
     gencallinterp((uintptr_t)FLOOR_W_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(FLOOR_W_S);
     gencheck_cop1_unusable();
     gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     gen_mxcsr_set_round(0x2000); // down (-inf)
@@ -390,12 +398,13 @@ void gencvt_w_s()
 #ifdef INTERPRET_CVT_W_S
     gencallinterp((uintptr_t)CVT_W_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(CVT_W_S);
     gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
+    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvtss2si_reg32_preg64(EBX, EAX); // ebx = (int32)round(fs) per MXCSR
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);      // fd = ebx
+    mov_preg64_reg32(EAX, EBX);      // fd = ebx
 #endif
 }
 
@@ -404,12 +413,13 @@ void gencvt_l_s()
 #ifdef INTERPRET_CVT_L_S
     gencallinterp((uintptr_t)CVT_L_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(CVT_L_S);
     gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
+    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvtss2si_reg64_preg64(EBX, EAX); // rbx = (int64)round(fs) per MXCSR
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);      // fd = rbx
+    mov_preg64_reg64(EAX, EBX);      // fd = rbx
 #endif
 }
 
@@ -491,6 +501,7 @@ void genc_sf_s()
 #ifdef INTERPRET_C_SF_S
     gencallinterp((uintptr_t)C_SF_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_SF_S);
     gen_ccond_sig_clear_s(); // C = 0 (signaling false)
 #endif
 }
@@ -500,6 +511,7 @@ void genc_ngle_s()
 #ifdef INTERPRET_C_NGLE_S
     gencallinterp((uintptr_t)C_NGLE_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGLE_S);
     gen_ccond_sig_clear_s(); // interpreter clears unconditionally (C = 0)
 #endif
 }
@@ -509,6 +521,7 @@ void genc_seq_s()
 #ifdef INTERPRET_C_SEQ_S
     gencallinterp((uintptr_t)C_SEQ_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_SEQ_S);
     gen_ccond_sig_clearjump_s(jne_rj); // ordered equal
 #endif
 }
@@ -518,6 +531,7 @@ void genc_ngl_s()
 #ifdef INTERPRET_C_NGL_S
     gencallinterp((uintptr_t)C_NGL_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGL_S);
     gen_ccond_sig_clearjump_s(jne_rj); // interpreter: ordered equal (same as SEQ)
 #endif
 }
@@ -527,6 +541,7 @@ void genc_lt_s()
 #ifdef INTERPRET_C_LT_S
     gencallinterp((uintptr_t)C_LT_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_LT_S);
     gen_ccond_sig_clearjump_s(jae_rj); // ordered less
 #endif
 }
@@ -536,6 +551,7 @@ void genc_nge_s()
 #ifdef INTERPRET_C_NGE_S
     gencallinterp((uintptr_t)C_NGE_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGE_S);
     gen_ccond_sig_clearjump_s(jae_rj); // interpreter: ordered less (same as LT)
 #endif
 }
@@ -545,6 +561,7 @@ void genc_le_s()
 #ifdef INTERPRET_C_LE_S
     gencallinterp((uintptr_t)C_LE_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_LE_S);
     gen_ccond_sig_clearjump_s(ja_rj); // ordered less-or-equal
 #endif
 }
@@ -554,6 +571,7 @@ void genc_ngt_s()
 #ifdef INTERPRET_C_NGT_S
     gencallinterp((uintptr_t)C_NGT_S, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGT_S);
     gen_ccond_sig_clearjump_s(ja_rj); // interpreter: ordered less-or-equal (same as LE)
 #endif
 }

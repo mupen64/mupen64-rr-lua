@@ -259,11 +259,11 @@ void gentrunc_l_d()
     gencallinterp((uintptr_t)TRUNC_L_D, 0);
 #else
     gencheck_cop1_unusable();
-    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
+    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvttsd2si_reg64_preg64(EBX, EAX); // rbx = (int64)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);       // fd = rbx
+    mov_preg64_reg64(EAX, EBX);       // fd = rbx
 #endif
 }
 
@@ -321,11 +321,11 @@ void gentrunc_w_d()
     gencallinterp((uintptr_t)TRUNC_W_D, 0);
 #else
     gencheck_cop1_unusable();
-    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
+    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvttsd2si_reg32_preg64(EBX, EAX); // ebx = (int32)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);       // fd = ebx
+    mov_preg64_reg32(EAX, EBX);       // fd = ebx
 #endif
 }
 
@@ -389,11 +389,11 @@ void gencvt_w_d()
     gencallinterp((uintptr_t)CVT_W_D, 0);
 #else
     gencheck_cop1_unusable();
-    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
+    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvtsd2si_reg32_preg64(EBX, EAX); // ebx = (int32)round(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);      // fd = ebx
+    mov_preg64_reg32(EAX, EBX);      // fd = ebx
 #endif
 }
 
@@ -403,11 +403,11 @@ void gencvt_l_d()
     gencallinterp((uintptr_t)CVT_L_D, 0);
 #else
     gencheck_cop1_unusable();
-    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
+    gencheck_input_d((void *)(&reg_cop1_double[dst->f.cf.fs]));
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvtsd2si_reg64_preg64(EBX, EAX); // rbx = (int64)round(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);      // fd = rbx
+    mov_preg64_reg64(EAX, EBX);      // fd = rbx
 #endif
 }
 
@@ -489,6 +489,7 @@ void genc_sf_d()
 #ifdef INTERPRET_C_SF_D
     gencallinterp((uintptr_t)C_SF_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_SF_D);
     gen_ccond_sig_clear_d(); // C = 0 (signaling false)
 #endif
 }
@@ -498,6 +499,7 @@ void genc_ngle_d()
 #ifdef INTERPRET_C_NGLE_D
     gencallinterp((uintptr_t)C_NGLE_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGLE_D);
     gen_ccond_sig_clear_d(); // interpreter clears unconditionally (C = 0)
 #endif
 }
@@ -507,6 +509,7 @@ void genc_seq_d()
 #ifdef INTERPRET_C_SEQ_D
     gencallinterp((uintptr_t)C_SEQ_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_SEQ_D);
     gen_ccond_sig_clearjump_d(jne_rj); // ordered equal
 #endif
 }
@@ -516,6 +519,7 @@ void genc_ngl_d()
 #ifdef INTERPRET_C_NGL_D
     gencallinterp((uintptr_t)C_NGL_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGL_D);
     gen_ccond_sig_clearjump_d(jne_rj); // interpreter: ordered equal (same as SEQ)
 #endif
 }
@@ -525,6 +529,7 @@ void genc_lt_d()
 #ifdef INTERPRET_C_LT_D
     gencallinterp((uintptr_t)C_LT_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_LT_D);
     gen_ccond_sig_clearjump_d(jae_rj); // ordered less
 #endif
 }
@@ -534,6 +539,7 @@ void genc_nge_d()
 #ifdef INTERPRET_C_NGE_D
     gencallinterp((uintptr_t)C_NGE_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGE_D);
     gen_ccond_sig_clearjump_d(jae_rj); // interpreter: ordered less (same as LT)
 #endif
 }
@@ -543,6 +549,7 @@ void genc_le_d()
 #ifdef INTERPRET_C_LE_D
     gencallinterp((uintptr_t)C_LE_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_LE_D);
     gen_ccond_sig_clearjump_d(ja_rj); // ordered less-or-equal
 #endif
 }
@@ -552,6 +559,7 @@ void genc_ngt_d()
 #ifdef INTERPRET_C_NGT_D
     gencallinterp((uintptr_t)C_NGT_D, 0);
 #else
+    GEN_FALLBACK_IF_FLOAT_EXC(C_NGT_D);
     gen_ccond_sig_clearjump_d(ja_rj); // interpreter: ordered less-or-equal (same as LE)
 #endif
 }
