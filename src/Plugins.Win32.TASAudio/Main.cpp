@@ -104,11 +104,11 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
+EXPORT void CALL M64RRProcessEvent(Event event)
 {
     switch (event.type)
     {
-    case M64RRSpec::LifecycleEvent::Type::Initiate: {
+    case M64RRSpec::Event::Type::Initiate: {
         g_plugin = event.initiate.init;
 
         try
@@ -123,8 +123,8 @@ EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
         }
         break;
     }
-    case M64RRSpec::LifecycleEvent::Type::Shutdown:
-    case M64RRSpec::LifecycleEvent::Type::RomClosed:
+    case M64RRSpec::Event::Type::Shutdown:
+    case M64RRSpec::Event::Type::RomClosed:
         if (g_backend.has_value()) g_backend.reset();
         break;
     default:

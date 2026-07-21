@@ -72,11 +72,11 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
+EXPORT void CALL M64RRProcessEvent(Event event)
 {
     switch (event.type)
     {
-    case M64RRSpec::LifecycleEvent::Type::Initiate:
+    case M64RRSpec::Event::Type::Initiate:
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();
@@ -112,11 +112,11 @@ EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
 
         init_rsp_thread();
         break;
-    case M64RRSpec::LifecycleEvent::Type::RomOpened:
+    case M64RRSpec::Event::Type::RomOpened:
         Config_LoadConfig();
         OGL_ResizeWindow();
         break;
-    case M64RRSpec::LifecycleEvent::Type::RomClosed:
+    case M64RRSpec::Event::Type::RomClosed:
         if (RSP.thread)
         {
             if (RSP.busy)

@@ -1245,11 +1245,11 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->target_version[result.size] = '\0';
 }
 
-EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
+EXPORT void CALL M64RRProcessEvent(Event event)
 {
     switch (event.type)
     {
-    case M64RRSpec::LifecycleEvent::Type::Initiate: {
+    case M64RRSpec::Event::Type::Initiate: {
         g_plugin = event.initiate.init;
         emulator_hwnd = g_plugin->main_window.hwnd();
 
@@ -1265,7 +1265,7 @@ EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
         }
         break;
     }
-    case M64RRSpec::LifecycleEvent::Type::Shutdown: {
+    case M64RRSpec::Event::Type::Shutdown: {
         detach_event_watch();
 
         if (gdi_plus_token)
@@ -1275,7 +1275,7 @@ EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
         }
         break;
     }
-    case M64RRSpec::LifecycleEvent::Type::RomOpened: {
+    case M64RRSpec::Event::Type::RomOpened: {
         attach_event_watch();
         load_config();
 
@@ -1296,7 +1296,7 @@ EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
 
         break;
     }
-    case M64RRSpec::LifecycleEvent::Type::RomClosed: {
+    case M64RRSpec::Event::Type::RomClosed: {
         rom_open = false;
 
         for (auto &st : status)

@@ -11,11 +11,11 @@
 
 DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Input)
 
-EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event)
+EXPORT void CALL M64RRProcessEvent(Event event)
 {
     switch (event.type)
     {
-    case M64RRSpec::LifecycleEvent::Type::Initiate: {
+    case M64RRSpec::Event::Type::Initiate: {
         auto *controllers = event.initiate.init->controllers;
 
         for (int i = 0; i < 4; ++i)

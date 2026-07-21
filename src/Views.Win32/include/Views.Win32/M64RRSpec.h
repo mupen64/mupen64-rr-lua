@@ -242,9 +242,9 @@ extern "C"
     };
 
     /**
-     * \brief Represents an event related to the plugin's lifecycle.
+     * \brief Represents an event related to the plugin.
      */
-    union LifecycleEvent {
+    union Event {
         enum class Type : uint8_t
         {
             // The plugin is being initialized. The valid field is `initiate`.
@@ -274,7 +274,7 @@ extern "C"
     };
 
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
-    typedef void(CALL *PtrLifecycleEvent)(LifecycleEvent event);
+    typedef void(CALL *PtrProcessEvent)(Event event);
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
 
     typedef void(CALL *PtrProcessDList)();
@@ -307,10 +307,10 @@ extern "C"
     EXPORT void CALL M64RRGetMetadata(PluginMetadata *metadata);
 
     /**
-     * \brief Notifies the plugin of a lifecycle event.
-     * \param event The lifecycle event.
+     * \brief Notifies the plugin of an event.
+     * \param event The event.
      */
-    EXPORT void CALL M64RRLifecycleEvent(LifecycleEvent event);
+    EXPORT void CALL M64RRProcessEvent(Event event);
 
     /**
      * \brief Shows the configuration window.
