@@ -190,7 +190,7 @@ void GamepadManager::update_current_gamepad()
     if (g_ctx.gamepad)
     {
         if (SDL_GetGamepadGUID(g_ctx.gamepad) == new_config.preferred_device_guid) return;
-        g_ef->log_info(std::format(L"Closing gamepad {}", SDL_GetGamepadGUID(g_ctx.gamepad).data).c_str());
+        g_plugin->log_info(std::format(L"Closing gamepad {}", SDL_GetGamepadGUID(g_ctx.gamepad).data).c_str());
         SDL_CloseGamepad(g_ctx.gamepad);
         g_ctx.gamepad = nullptr;
     }
@@ -200,10 +200,10 @@ void GamepadManager::update_current_gamepad()
     g_ctx.gamepad = SDL_OpenGamepadByGUID(*new_config.preferred_device_guid);
     if (!g_ctx.gamepad)
     {
-        g_ef->log_info(std::format(L"Failed to open gamepad {}", *new_config.preferred_device_guid->data).c_str());
+        g_plugin->log_info(std::format(L"Failed to open gamepad {}", *new_config.preferred_device_guid->data).c_str());
         return;
     }
-    g_ef->log_info(std::format(L"Opened gamepad {}", *new_config.preferred_device_guid->data).c_str());
+    g_plugin->log_info(std::format(L"Opened gamepad {}", *new_config.preferred_device_guid->data).c_str());
 }
 
 GamepadManager::DeviceRegistry &GamepadManager::device_registry()

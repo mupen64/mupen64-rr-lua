@@ -12,7 +12,6 @@
 struct ZESpecFuncs
 {
     M64RRSpec::PluginInit video_init;
-    ZESpec::ExtendedFuncs video_extended_funcs;
     ZESpec::ROMOPEN video_rom_open;
     ZESpec::ROMCLOSED video_rom_closed;
     ZESpec::CLOSEDLL video_close_dll;
@@ -34,7 +33,6 @@ struct ZESpecFuncs
     ZESpec::READVIDEO video_read_video;
 
     M64RRSpec::PluginInit audio_init;
-    ZESpec::ExtendedFuncs audio_extended_funcs;
     ZESpec::ROMOPEN audio_rom_open;
     ZESpec::ROMCLOSED audio_rom_closed;
     ZESpec::CLOSEDLL audio_close_dll_audio;
@@ -48,7 +46,6 @@ struct ZESpecFuncs
     ZESpec::ROMOPEN input_rom_open;
 
     M64RRSpec::PluginInit input_init;
-    ZESpec::ExtendedFuncs input_extended_funcs;
     ZESpec::CONTROLLERCOMMAND input_controller_command;
     ZESpec::GETKEYS input_get_keys;
     ZESpec::SETKEYS input_set_keys;
@@ -57,7 +54,6 @@ struct ZESpecFuncs
     ZESpec::KEYUP input_key_up;
 
     M64RRSpec::PluginInit rsp_init;
-    ZESpec::ExtendedFuncs rsp_extended_funcs;
     ZESpec::CLOSEDLL rsp_close_dll;
     ZESpec::ROMCLOSED rsp_rom_closed;
     ZESpec::DORSPCYCLES rsp_do_rsp_cycles;
@@ -98,19 +94,6 @@ inline size_t ext_fn_config_path(char *data, size_t size)
     {                                                                                                                  \
         target = fallback;                                                                                             \
         g_view_logger->info("Substituting dummy function for {}", name);                                               \
-    }
-
-#define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    ZESpec::ExtendedFuncs                                                                                              \
-    {                                                                                                                  \
-        .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
-        .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
-        .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
-        .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
-        .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
-        .frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); },                             \
-        .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter,                            \
-        .request_size = Main::request_size                                                                             \
     }
 
 class Plugin

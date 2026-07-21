@@ -131,67 +131,6 @@ extern "C"
     };
 
     /**
-     * \brief Exposes an extended set of functions to plugins.
-     */
-    struct ExtendedFuncs
-    {
-        /**
-         * \brief Logs the specified message at the trace level.
-         */
-        void (*log_trace)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the info level.
-         */
-        void (*log_info)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the warning level.
-         */
-        void (*log_warn)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the error level.
-         */
-        void (*log_error)(const wchar_t *);
-
-        /**
-         * \brief Gets the effective speed mode.
-         * \return The current effective speed mode.
-         */
-        CoreSpeedMode (*get_effective_speed_mode)();
-
-        /**
-         * \brief See `core_ctx::vr_get_frame_skipped`.
-         */
-        bool (*frame_skipped)();
-
-        /**
-         * @brief Gets the path to the configuration directory, as a UTF-8 string.
-         *
-         * Writes the path to the configuration directory to `data`, provided that there is
-         * enough space for path and terminating null character (up to `len`). Returns the
-         * number of characters written (including the terminating null), or 0 if the buffer
-         * wasn't big enough.
-         *
-         * If `data` is null, returns the expected size of the buffer.
-         */
-        size_t (*config_path)(char *data, size_t len);
-
-        /**
-         * \brief Counter for RCP work in an arbitrary unit, ideally proportional to real-time lag per unit.
-         */
-        size_t *rcp_counter;
-
-        /**
-         * \brief Requests the main window to asynchronously resize to the specified width and height.
-         * \param width The desired width of the window.
-         * \param height The desired height of the window.
-         */
-        void (*request_size)(uint32_t width, uint32_t height);
-    };
-
-    /**
      * \brief Describes generic information about a plugin.
      */
     struct PluginInfo
@@ -257,7 +196,6 @@ extern "C"
         void(CALL *check_interrupts)(void);
 
         // --- Zilmar spec struct ends here
-
     };
 
     struct AudioPluginInfo
@@ -279,7 +217,6 @@ extern "C"
         void(CALL *check_interrupts)(void);
 
         // --- Zilmar spec struct ends here
-
     };
 
     struct InputPluginInfo
@@ -291,7 +228,6 @@ extern "C"
         Controller *controllers;
 
         // --- Zilmar spec struct ends here
-
     };
 
     struct RSPPluginInfo
@@ -326,7 +262,6 @@ extern "C"
         void(CALL *show_cfb)(void);
 
         // --- Zilmar spec struct ends here
-
     };
 
     typedef void(CALL *CLOSEDLL)();
@@ -373,21 +308,6 @@ extern "C"
 
     typedef void(CALL *INITIATERSP)(RSPPluginInfo rsp_info, uint32_t *cycles);
     typedef uint32_t(CALL *DORSPCYCLES)(uint32_t);
-}
-
-/**
- * \brief Gets the config path from a `core_plugin_extended_funcs`.
- */
-inline std::filesystem::path get_config_path(const ExtendedFuncs *ef)
-{
-    size_t len = ef->config_path(nullptr, 0);
-
-    std::string path_temp(len, '\0');
-    ef->config_path(path_temp.data(), path_temp.size());
-    path_temp.pop_back();
-
-    std::u8string_view utf8_path_temp{(char8_t *)path_temp.data(), path_temp.size()};
-    return std::filesystem::absolute(utf8_path_temp);
 }
 
 }; // namespace ZESpec

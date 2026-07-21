@@ -11,11 +11,6 @@
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
 
-static M64RRSpec::ExtendedFuncs s_video_dummy_ef;
-static M64RRSpec::ExtendedFuncs s_audio_dummy_ef;
-static M64RRSpec::ExtendedFuncs s_input_dummy_ef;
-static M64RRSpec::ExtendedFuncs s_rsp_dummy_ef;
-
 static CoreController controller_to_core_controller(const M64RRSpec::Controller &controller)
 {
     CoreControllerExtension extension;
@@ -230,23 +225,37 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     std::array<M64RRSpec::Controller, 4> tmp_controllers{};
     init->controllers = tmp_controllers.data();
 
+    init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
+    init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
+    init->config_path = ext_fn_config_path;
+    init->rcp_counter = g_main_ctx.core_ctx->rcp_counter;
+    init->request_size = Main::request_size;
+
     switch (m_type)
     {
     case Plugin::Type::Video:
-        funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-        init->ef = &funcs.video_extended_funcs;
+        init->log_trace = [](const wchar_t *str) { g_video_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_video_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_video_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_video_logger->error(str); };
         break;
     case Plugin::Type::Audio:
-        funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-        init->ef = &funcs.audio_extended_funcs;
+        init->log_trace = [](const wchar_t *str) { g_audio_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_audio_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_audio_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_audio_logger->error(str); };
         break;
     case Plugin::Type::Input:
-        funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-        init->ef = &funcs.input_extended_funcs;
+        init->log_trace = [](const wchar_t *str) { g_input_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_input_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_input_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_input_logger->error(str); };
         break;
     case Plugin::Type::RSP:
-        funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
-        init->ef = &funcs.rsp_extended_funcs;
+        init->log_trace = [](const wchar_t *str) { g_rsp_logger->trace(str); };
+        init->log_info = [](const wchar_t *str) { g_rsp_logger->info(str); };
+        init->log_warn = [](const wchar_t *str) { g_rsp_logger->warn(str); };
+        init->log_error = [](const wchar_t *str) { g_rsp_logger->error(str); };
         break;
     }
 
@@ -457,23 +466,37 @@ void M64RRPlugin::initiate_dummy()
     std::array<M64RRSpec::Controller, 4> tmp_controllers{};
     init.controllers = tmp_controllers.data();
 
+    init.get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
+    init.frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
+    init.config_path = ext_fn_config_path;
+    init.rcp_counter = g_main_ctx.core_ctx->rcp_counter;
+    init.request_size = Main::request_size;
+
     switch (m_type)
     {
     case Plugin::Type::Video:
-        s_video_dummy_ef = GEN_EXTENDED_FUNCS(g_video_logger);
-        init.ef = &s_video_dummy_ef;
+        init.log_trace = [](const wchar_t *str) { g_video_logger->trace(str); };
+        init.log_info = [](const wchar_t *str) { g_video_logger->info(str); };
+        init.log_warn = [](const wchar_t *str) { g_video_logger->warn(str); };
+        init.log_error = [](const wchar_t *str) { g_video_logger->error(str); };
         break;
     case Plugin::Type::Audio:
-        s_audio_dummy_ef = GEN_EXTENDED_FUNCS(g_audio_logger);
-        init.ef = &s_audio_dummy_ef;
+        init.log_trace = [](const wchar_t *str) { g_audio_logger->trace(str); };
+        init.log_info = [](const wchar_t *str) { g_audio_logger->info(str); };
+        init.log_warn = [](const wchar_t *str) { g_audio_logger->warn(str); };
+        init.log_error = [](const wchar_t *str) { g_audio_logger->error(str); };
         break;
     case Plugin::Type::Input:
-        s_input_dummy_ef = GEN_EXTENDED_FUNCS(g_input_logger);
-        init.ef = &s_input_dummy_ef;
+        init.log_trace = [](const wchar_t *str) { g_input_logger->trace(str); };
+        init.log_info = [](const wchar_t *str) { g_input_logger->info(str); };
+        init.log_warn = [](const wchar_t *str) { g_input_logger->warn(str); };
+        init.log_error = [](const wchar_t *str) { g_input_logger->error(str); };
         break;
     case Plugin::Type::RSP:
-        s_rsp_dummy_ef = GEN_EXTENDED_FUNCS(g_rsp_logger);
-        init.ef = &s_rsp_dummy_ef;
+        init.log_trace = [](const wchar_t *str) { g_rsp_logger->trace(str); };
+        init.log_info = [](const wchar_t *str) { g_rsp_logger->info(str); };
+        init.log_warn = [](const wchar_t *str) { g_rsp_logger->warn(str); };
+        init.log_error = [](const wchar_t *str) { g_rsp_logger->error(str); };
         break;
     }
 

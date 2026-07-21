@@ -13,9 +13,8 @@
 #include <VersionNameHelpers.hpp>
 #include <Views.Win32/M64RRSpec.h>
 
-static M64RRSpec::PluginInit *g_audio_info{};
+M64RRSpec::PluginInit *g_plugin = nullptr;
 std::optional<SDLAudio::SDLBackend> g_backend{};
-M64RRSpec::ExtendedFuncs *g_ef = nullptr;
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 std::filesystem::path g_config_path{};
@@ -108,9 +107,8 @@ EXPORT void CALL M64RRShutdown()
 
 EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
-    g_audio_info = init;
-    g_ef = init->ef;
-    g_config_path = ZESpec::get_config_path(g_ef);
+    g_plugin = init;
+    g_config_path = M64RRSpec::get_config_path(g_plugin);
 
     try
     {
@@ -119,7 +117,7 @@ EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
     }
     catch (std::exception &e)
     {
-        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
+        g_plugin->log_error(IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
     }
 }
 
@@ -131,35 +129,36 @@ EXPORT void CALL M64RRRomClosed()
 EXPORT void CALL M64RRAIDacrateChanged(int32_t system_type)
 {
     // update sample rate
-    if (!g_audio_info || !g_backend) return;
+    if (!g_plugin || !g_backend) return;
     try
     {
-        uint32_t sample_rate = compute_sample_rate(system_type, *g_audio_info->ai_dacrate_reg);
+        uint32_t sample_rate = compute_sample_rate(system_type, *g_plugin->ai_dacrate_reg);
         g_backend->set_sample_rate(sample_rate);
     }
     catch (std::exception &e)
     {
-        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at AiDacrateChanged(): {}", e.what())).c_str());
+        g_plugin->log_error(
+            IOUtils::to_wide_string(std::format("Exception at AiDacrateChanged(): {}", e.what())).c_str());
     }
 }
 
 EXPORT void CALL M64RRAILenChanged()
 {
-    const auto effective_speed_mode = g_ef->get_effective_speed_mode();
+    const auto effective_speed_mode = g_plugin->get_effective_speed_mode();
     if (effective_speed_mode == CoreSpeedMode::UltraFastForward) return;
 
     // push new samples
-    if (!g_audio_info || !g_backend) return;
-    uint32_t addr = *g_audio_info->ai_dram_addr_reg & 0x00FF'FFF8;
-    uint32_t len = *g_audio_info->ai_len_reg & 0x0003'FFF8;
+    if (!g_plugin || !g_backend) return;
+    uint32_t addr = *g_plugin->ai_dram_addr_reg & 0x00FF'FFF8;
+    uint32_t len = *g_plugin->ai_len_reg & 0x0003'FFF8;
 
     try
     {
-        g_backend->push_samples(g_audio_info->rdram + addr, len);
+        g_backend->push_samples(g_plugin->rdram + addr, len);
         g_backend->sync_audio();
     }
     catch (std::exception &e)
     {
-        g_ef->log_error(IOUtils::to_wide_string(std::format("Exception at AiLenChanged(): {}", e.what())).c_str());
+        g_plugin->log_error(IOUtils::to_wide_string(std::format("Exception at AiLenChanged(): {}", e.what())).c_str());
     }
 }

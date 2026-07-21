@@ -25,10 +25,6 @@ static void CALL dummy_void()
 {
 }
 
-static void CALL dummy_receive_extended_funcs(ZESpec::ExtendedFuncs *)
-{
-}
-
 static int32_t CALL dummy_initiate_gfx(ZESpec::VideoPluginInfo)
 {
     return 1;
@@ -305,8 +301,6 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         gfx_info.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
         gfx_info.check_interrupts = dummy_void;
 
-        funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-
         initiate_gfx(gfx_info);
 
         bool compat_error = false;
@@ -354,8 +348,6 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
 
         audio_info.check_interrupts = dummy_void;
 
-        funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-
         initiate_audio(audio_info);
         break;
     }
@@ -390,8 +382,6 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
 
         std::array<ZESpec::Controller, 4> tmp_controllers{};
         control_info.controllers = tmp_controllers.data();
-
-        funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
 
         if (m_version == 0x0101)
             initiate_controllers(control_info);
@@ -440,8 +430,6 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         rsp_info.process_alist_list = funcs.audio_process_alist;
         rsp_info.process_rdp_list = funcs.video_process_rdp_list;
         rsp_info.show_cfb = funcs.video_show_cfb;
-
-        funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
 
         int32_t i = 4;
         initiate_rsp(rsp_info, (uint32_t *)&i);

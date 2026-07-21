@@ -20,7 +20,7 @@ static std::filesystem::path get_config_path()
 
 void save_config()
 {
-    g_ef->log_trace(L"Saving config...");
+    g_plugin->log_trace(L"Saving config...");
 
     nlohmann::json j = new_config;
     std::ofstream ofs(get_config_path());
@@ -31,7 +31,7 @@ void save_config()
 
 void load_config()
 {
-    g_ef->log_trace(L"Loading config...");
+    g_plugin->log_trace(L"Loading config...");
 
     auto json_path = get_config_path();
 
@@ -53,7 +53,7 @@ void load_config()
     }
     catch (const std::exception &e)
     {
-        g_ef->log_warn(L"Config load failed, using defaults...");
+        g_plugin->log_warn(L"Config load failed, using defaults...");
         new_config = default_config;
     }
 

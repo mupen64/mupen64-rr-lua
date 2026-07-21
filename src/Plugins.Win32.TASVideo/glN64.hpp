@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Views.Win32/ZESpec.h>
 #include <Views.Win32/M64RRSpec.h>
 
 struct TASVideoContext
@@ -10,6 +9,6 @@ struct TASVideoContext
 };
 
 extern TASVideoContext g_tas_ctx;
-extern M64RRSpec::ExtendedFuncs *g_ef;
+extern M64RRSpec::PluginInit *g_plugin;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Video")

@@ -75,18 +75,6 @@ static void start_audio_thread()
     s_audio_thread = std::jthread(audio_thread_proc);
 }
 
-#define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    ZESpec::ExtendedFuncs                                                                                              \
-    {                                                                                                                  \
-        .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
-        .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
-        .log_warn = [](const wchar_t *str) { logger->warn(str); },                                                     \
-        .log_error = [](const wchar_t *str) { logger->error(str); },                                                   \
-        .get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); },           \
-        .frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); },                             \
-        .config_path = ext_fn_config_path, .rcp_counter = g_main_ctx.core_ctx->rcp_counter                             \
-    }
-
 ZESpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
 {
     auto dll_crt_free = (ZESpec::DLLCRTFREE)GetProcAddress(module, "DllCrtFree");
@@ -334,11 +322,6 @@ void PluginUtil::init_dummy_and_extended_funcs()
     dummy_rsp_info.process_alist_list = s_funcs.audio_process_alist;
     dummy_rsp_info.process_rdp_list = s_funcs.video_process_rdp_list;
     dummy_rsp_info.show_cfb = s_funcs.video_show_cfb;
-
-    s_funcs.video_extended_funcs = GEN_EXTENDED_FUNCS(g_video_logger);
-    s_funcs.audio_extended_funcs = GEN_EXTENDED_FUNCS(g_audio_logger);
-    s_funcs.input_extended_funcs = GEN_EXTENDED_FUNCS(g_input_logger);
-    s_funcs.rsp_extended_funcs = GEN_EXTENDED_FUNCS(g_rsp_logger);
 }
 
 bool PluginUtil::mge_available()

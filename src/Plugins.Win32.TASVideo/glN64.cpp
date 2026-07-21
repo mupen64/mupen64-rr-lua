@@ -12,7 +12,7 @@ static void log_shim(const wchar_t *str)
     wprintf(str);
 }
 
-M64RRSpec::ExtendedFuncs *g_ef;
+M64RRSpec::PluginInit *g_plugin;
 
 bool init_rsp_thread()
 {
@@ -79,8 +79,8 @@ EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
 
 EXPORT void CALL M64RRInitiate(M64RRSpec::PluginInit *init)
 {
-    g_ef = init->ef;
-    g_tas_ctx.config_directory = ZESpec::get_config_path(g_ef);
+    g_plugin = init;
+    g_tas_ctx.config_directory = M64RRSpec::get_config_path(g_plugin);
 
     Config_LoadConfig();
 

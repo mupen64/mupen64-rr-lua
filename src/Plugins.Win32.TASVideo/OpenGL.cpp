@@ -32,7 +32,7 @@ void OGL_InitExtensions()
     GLenum glew = glewInit();
     if (glew != GLEW_OK)
     {
-        g_ef->log_error(L"Error initialising glew");
+        g_plugin->log_error(L"Error initialising glew");
         return;
     }
 
@@ -132,7 +132,7 @@ void OGL_ResizeWindow()
 {
     OGL.width = OGL.windowedWidth;
     OGL.height = OGL.windowedHeight;
-    g_ef->request_size(OGL.width, OGL.height);
+    g_plugin->request_size(OGL.width, OGL.height);
 }
 
 bool OGL_InitContext()

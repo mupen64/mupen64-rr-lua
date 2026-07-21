@@ -93,7 +93,7 @@ void Config_LoadConfig()
     }
     catch (const std::exception &e)
     {
-        g_ef->log_warn(L"Config load failed, using defaults...");
+        g_plugin->log_warn(L"Config load failed, using defaults...");
         Config_SetDefaults();
     }
 }

@@ -7,13 +7,12 @@
 #pragma once
 
 #include <Windows.h>
-#include <Views.Win32/ZESpec.h>
 #include <Views.Win32/M64RRSpec.h>
 #include <WinFilePicker.hpp>
 #include <filesystem>
 
 extern HINSTANCE g_inst;
-extern M64RRSpec::ExtendedFuncs *g_ef;
+extern M64RRSpec::PluginInit *g_plugin;
 extern std::filesystem::path g_config_path;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input")

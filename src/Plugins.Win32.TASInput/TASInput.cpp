@@ -1002,8 +1002,8 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 EXPORT void CALL M64RRInitiate(PluginInit *init)
 {
-    g_ef = init->ef;
-    g_config_path = ZESpec::get_config_path(g_ef);
+    g_plugin = init;
+    g_config_path = M64RRSpec::get_config_path(g_plugin);
     emulator_hwnd = init->main_window.hwnd();
 
     for (int i = 0; i < 4; ++i)
@@ -1187,7 +1187,7 @@ void Status::save_combos()
 {
     const auto path = _T("combos.cmb");
 
-    g_ef->log_trace(std::format(L"Saving combos to {}...", path).c_str());
+    g_plugin->log_trace(std::format(L"Saving combos to {}...", path).c_str());
 
     FILE *f{};
     if (_tfopen_s(&f, path, _T("wb")))
@@ -1204,12 +1204,12 @@ void Status::save_combos()
 
 void Status::load_combos(const std::filesystem::path &path)
 {
-    g_ef->log_trace(std::format(L"Loading combos from {}...", path.c_str()).c_str());
+    g_plugin->log_trace(std::format(L"Loading combos from {}...", path.c_str()).c_str());
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
     {
-        g_ef->log_error(L"read_file_buffer failed");
+        g_plugin->log_error(L"read_file_buffer failed");
         return;
     }
 
