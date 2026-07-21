@@ -25,7 +25,7 @@ struct t_vcr_state
     size_t warp_modify_first_difference_frame{};
 
     core_vcr_movie_header hdr{};
-    std::vector<core_buttons> inputs{};
+    std::vector<CoreButtons> inputs{};
 
     int32_t current_sample = -1;
     int32_t current_vi = -1;
@@ -45,7 +45,7 @@ struct vcr_freeze_info
     uint32_t current_sample{};
     uint32_t current_vi{};
     uint32_t length_samples{};
-    std::vector<core_buttons> input_buffer{};
+    std::vector<CoreButtons> input_buffer{};
 };
 
 extern t_vcr_state vcr;
@@ -56,7 +56,7 @@ extern std::mutex vcr_mtx;
  * \param index The polled controller's index
  * \param input The controller's input data
  */
-void vcr_on_controller_poll(int32_t index, core_buttons *input);
+void vcr_on_controller_poll(int32_t index, CoreButtons *input);
 
 /**
  * \brief Notifies VCR engine about a new VI
@@ -71,7 +71,7 @@ bool vcr_allows_core_unpause();
 void vcr_request_reset();
 core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_header *header);
 core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *header);
-core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<core_buttons> &inputs);
+core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<CoreButtons> &inputs);
 core_result vcr_start_playback(std::filesystem::path path);
 core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::string author, std::string description);
 core_result vcr_continue_recording();
@@ -90,8 +90,8 @@ core_vcr_task vcr_get_task();
 uint32_t vcr_get_length_samples();
 uint32_t vcr_get_length_vis();
 int32_t vcr_get_current_vi();
-std::vector<core_buttons> vcr_get_inputs();
-core_result vcr_begin_warp_modify(const std::vector<core_buttons> &inputs);
+std::vector<CoreButtons> vcr_get_inputs();
+core_result vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs);
 bool vcr_get_warp_modify_status();
 size_t vcr_get_warp_modify_first_difference_frame();
 void vcr_get_seek_savestate_frames(std::unordered_map<size_t, bool> &map);

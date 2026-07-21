@@ -29,10 +29,3 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASRSP PRIVATE
     Mupen64RR.Plugins.Win32.Common
     nlohmann_json::nlohmann_json
 )
-
-target_link_libraries(Mupen64RR.Plugins.Win32.TASRSP PRIVATE
-    Comctl32
-    uxtheme
-    Msimg32
-    Gdiplus
-)

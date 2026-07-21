@@ -9,13 +9,13 @@
 #include "IOUtils.hpp"
 #include "SDLBackend.hpp"
 
-#include "core_plugin.h"
+#include "core_types.h"
 #include <CommonPCH.hpp>
 #include <SDL3/SDL.h>
 
 #include <VersionNameHelpers.hpp>
 #include <core_api.h>
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 
 #include <exception>
 #include <format>
@@ -24,9 +24,9 @@
 #include <optional>
 #include <stdexcept>
 
-static std::optional<core_audio_info> g_audio_info{};
+static std::optional<ZilmarExtSpec::AudioPluginInfo> g_audio_info{};
 std::optional<SDLAudio::SDLBackend> g_backend{};
-core_plugin_extended_funcs *g_ef = nullptr;
+ZilmarExtSpec::ExtendedFuncs *g_ef = nullptr;
 
 std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 std::filesystem::path g_config_path{};
@@ -89,25 +89,25 @@ void write_config(const SDLAudio::Config &config)
     config.write_to(fs);
 }
 
-EXPORT void CALL CloseDLL(void)
+EXPORT void CALL CloseDLL()
 {
     if (g_backend.has_value()) g_backend.reset();
 }
 
-EXPORT void CALL GetDllInfo(core_plugin_info *PluginInfo)
+EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo)
 {
     PluginInfo->unused_byteswapped = TRUE;
     PluginInfo->unused_normal_memory = FALSE;
     strcpy_s(PluginInfo->name, 100, IOUtils::to_utf8_string(PLUGIN_NAME).c_str());
-    PluginInfo->type = plugin_audio;
+    PluginInfo->type = ZilmarExtSpec::PluginType::Audio;
     PluginInfo->ver = 0x0101;
     std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), PluginInfo->target_version);
 }
 
-EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
+EXPORT int32_t CALL InitiateAudio(ZilmarExtSpec::AudioPluginInfo Audio_Info)
 {
     g_ef = Audio_Info.extended_funcs;
-    g_config_path = ViewPluginHelpers::get_config_path(g_ef);
+    g_config_path = ZilmarExtSpec::get_config_path(g_ef);
 
     g_audio_info.emplace(Audio_Info);
 
@@ -123,10 +123,6 @@ EXPORT int32_t CALL InitiateAudio(core_audio_info Audio_Info)
     }
 
     return 1;
-}
-
-EXPORT void CALL RomOpen()
-{
 }
 
 EXPORT void CALL RomClosed()
@@ -149,7 +145,7 @@ EXPORT void CALL AiDacrateChanged(int32_t system_type)
     }
 }
 
-EXPORT void CALL AiLenChanged(void)
+EXPORT void CALL AiLenChanged()
 {
     const auto effective_speed_mode = g_ef->get_effective_speed_mode();
     if (effective_speed_mode == CoreSpeedMode::UltraFastForward) return;

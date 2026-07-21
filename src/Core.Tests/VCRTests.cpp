@@ -23,8 +23,8 @@ struct VcrFixture
         vcr = {};
         s_cfg = {};
         s_core_params.cfg = &s_cfg;
-        s_core_params.input_get_keys = [](int32_t, core_buttons *) {};
-        s_core_params.input_set_keys = [](int32_t, core_buttons) {};
+        s_core_params.input_get_keys = [](int32_t, CoreButtons *) {};
+        s_core_params.input_set_keys = [](int32_t, CoreButtons) {};
         s_core_params.callbacks = {};
         core_create(&s_core_params, &s_core_ctx);
     }
@@ -51,7 +51,7 @@ TEST_CASE_METHOD(VcrFixture, "reset_pending_returns_unmodified_input", "vcr_on_c
 
     vcr.reset_pending = true;
 
-    core_buttons input = {INPUT_VALUE};
+    CoreButtons input = {INPUT_VALUE};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == INPUT_VALUE);
@@ -63,7 +63,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_savestate_loading_returns_unmodified_input", 
 
     vcr.seek_savestate_loading = true;
 
-    core_buttons input = {INPUT_VALUE};
+    CoreButtons input = {INPUT_VALUE};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == INPUT_VALUE);
@@ -73,9 +73,9 @@ TEST_CASE_METHOD(VcrFixture, "idle_task_returns_input_from_getkeys", "vcr_on_con
 {
     const auto INPUT_VALUE = 0xDEAD;
 
-    s_core_params.input_get_keys = [](int32_t index, core_buttons *input) { *input = {INPUT_VALUE}; };
+    s_core_params.input_get_keys = [](int32_t index, CoreButtons *input) { *input = {INPUT_VALUE}; };
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == INPUT_VALUE);
@@ -83,7 +83,7 @@ TEST_CASE_METHOD(VcrFixture, "idle_task_returns_input_from_getkeys", "vcr_on_con
 
 TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input", "vcr_on_controller_poll")
 {
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -91,7 +91,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input", "vcr_on_controlle
     vcr.task = task_playback;
     vcr.current_sample = 2;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == inputs[2].value);
@@ -102,7 +102,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input", "vcr_on_controlle
  */
 TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_2", "vcr_on_controller_poll")
 {
-    const auto inputs = std::vector<core_buttons>{
+    const auto inputs = std::vector<CoreButtons>{
         {0}, {0}, {1}, {1}, {2}, {2},
     };
 
@@ -112,7 +112,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_2", "vcr_on_control
     vcr.task = task_playback;
     vcr.current_sample = 0;
 
-    core_buttons input{};
+    CoreButtons input{};
 
     vcr_on_controller_poll(0, &input);
     REQUIRE(input.value == inputs[0].value);
@@ -138,7 +138,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_2", "vcr_on_control
  */
 TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_3", "vcr_on_controller_poll")
 {
-    const auto inputs = std::vector<core_buttons>{
+    const auto inputs = std::vector<CoreButtons>{
         {0}, {0}, {0}, {1}, {1}, {1}, {2}, {2}, {2},
     };
 
@@ -148,7 +148,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_3", "vcr_on_control
     vcr.task = task_playback;
     vcr.current_sample = 0;
 
-    core_buttons input{};
+    CoreButtons input{};
 
     vcr_on_controller_poll(0, &input);
     REQUIRE(input.value == inputs[0].value);
@@ -180,7 +180,7 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_3", "vcr_on_control
 
 TEST_CASE_METHOD(VcrFixture, "record_appends_input", "vcr_on_controller_poll")
 {
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -188,7 +188,7 @@ TEST_CASE_METHOD(VcrFixture, "record_appends_input", "vcr_on_controller_poll")
     vcr.task = task_recording;
     vcr.current_sample = 4;
 
-    core_buttons input{0xDEAD};
+    CoreButtons input{0xDEAD};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(vcr.inputs.back().value == 0xDEAD);
@@ -196,7 +196,7 @@ TEST_CASE_METHOD(VcrFixture, "record_appends_input", "vcr_on_controller_poll")
 
 TEST_CASE_METHOD(VcrFixture, "seek_continues_when_end_not_reached", "vcr_on_controller_poll")
 {
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -205,7 +205,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_continues_when_end_not_reached", "vcr_on_cont
     vcr.current_sample = 1;
     vcr.seek_to_frame = std::make_optional(3);
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(vcr.seek_to_frame.has_value());
@@ -213,7 +213,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_continues_when_end_not_reached", "vcr_on_cont
 
 TEST_CASE_METHOD(VcrFixture, "seek_stops_when_end_reached", "vcr_on_controller_poll")
 {
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -222,7 +222,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_when_end_reached", "vcr_on_controller_p
     vcr.current_sample = 3;
     vcr.seek_to_frame = std::make_optional(3);
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(!vcr.seek_to_frame.has_value());
@@ -275,9 +275,9 @@ TEST_CASE_METHOD(VcrFixture, "produces_correct_paths_with_cheats", "vcr_get_gene
 TEST_CASE_METHOD(VcrFixture, "input_callback_called_when_using_input_buffer_during_recording", "vcr_on_controller_poll")
 {
     static bool called = false;
-    s_core_params.callbacks.input = [](core_buttons *input, int index) { called = true; };
+    s_core_params.callbacks.input = [](CoreButtons *input, int index) { called = true; };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -285,7 +285,7 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_called_when_using_input_buffer_duri
     vcr.task = task_recording;
     vcr.current_sample = 2;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(called);
@@ -315,10 +315,10 @@ TEST_CASE_METHOD(VcrFixture, "sample_length_gets_clamped_to_buffer_max", "read_m
  */
 TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_idle", "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
+    s_core_params.callbacks.input = [](CoreButtons *input, int index) { *input = {0xDEAD}; };
     vcr.task = task_idle;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == 0xDEAD);
@@ -327,9 +327,9 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_idle", "vcr_on_
 TEST_CASE_METHOD(VcrFixture, "input_callback_called_on_last_frame_of_movie", "vcr_on_controller_poll")
 {
     static bool called = false;
-    s_core_params.callbacks.input = [](core_buttons *input, int index) { called = true; };
+    s_core_params.callbacks.input = [](CoreButtons *input, int index) { called = true; };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -337,7 +337,7 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_called_on_last_frame_of_movie", "vc
     vcr.task = task_playback;
     vcr.current_sample = 4;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(called);
@@ -349,14 +349,14 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_called_on_last_frame_of_movie", "vc
  */
 TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_recording", "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
+    s_core_params.callbacks.input = [](CoreButtons *input, int index) { *input = {0xDEAD}; };
     vcr.inputs = {};
     vcr.hdr.length_samples = 0;
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
     vcr.task = task_recording;
     vcr.current_sample = 0;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == 0xDEAD);
@@ -368,14 +368,14 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_recording", "vc
  */
 TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_playback", "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
+    s_core_params.callbacks.input = [](CoreButtons *input, int index) { *input = {0xDEAD}; };
     vcr.inputs = {{1}, {2}, {3}, {4}};
     vcr.hdr.length_samples = vcr.inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
     vcr.task = task_playback;
     vcr.current_sample = 1;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(input.value == 0xDEAD);
@@ -388,14 +388,14 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_playback", "vcr
 TEST_CASE_METHOD(VcrFixture, "correct_sample_appended_by_input_callback_override_during_recording",
                  "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [](core_buttons *input, int index) { *input = {0xDEAD}; };
+    s_core_params.callbacks.input = [](CoreButtons *input, int index) { *input = {0xDEAD}; };
     vcr.inputs = {{1}, {2}, {3}, {4}};
     vcr.hdr.length_samples = vcr.inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
     vcr.task = task_recording;
     vcr.current_sample = vcr.hdr.length_samples;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(vcr.inputs.back().value == 0xDEAD);
@@ -424,11 +424,11 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
                         },
                     .inputs =
                         {
-                            core_buttons{0x01},
-                            core_buttons{0x02},
-                            core_buttons{0x03},
-                            core_buttons{0x04},
-                            core_buttons{0x05},
+                            CoreButtons{0x01},
+                            CoreButtons{0x02},
+                            CoreButtons{0x03},
+                            CoreButtons{0x04},
+                            CoreButtons{0x05},
                         },
                     .current_sample = 0,
                 },
@@ -449,11 +449,11 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
                         },
                     .inputs =
                         {
-                            core_buttons{0x01},
-                            core_buttons{0x02},
-                            core_buttons{0x03},
-                            core_buttons{0x04},
-                            core_buttons{0x05},
+                            CoreButtons{0x01},
+                            CoreButtons{0x02},
+                            CoreButtons{0x03},
+                            CoreButtons{0x04},
+                            CoreButtons{0x05},
                         },
                     .current_sample = 3,
                 },
@@ -474,11 +474,11 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
                         },
                     .inputs =
                         {
-                            core_buttons{0x01},
-                            core_buttons{0x02},
-                            core_buttons{0x03},
-                            core_buttons{0x04},
-                            core_buttons{0x05},
+                            CoreButtons{0x01},
+                            CoreButtons{0x02},
+                            CoreButtons{0x03},
+                            CoreButtons{0x04},
+                            CoreButtons{0x05},
                         },
                     .current_sample = 3,
                 },
@@ -499,11 +499,11 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
                         },
                     .inputs =
                         {
-                            core_buttons{0x01},
-                            core_buttons{0x02},
-                            core_buttons{0x03},
-                            core_buttons{0x04},
-                            core_buttons{0x05},
+                            CoreButtons{0x01},
+                            CoreButtons{0x02},
+                            CoreButtons{0x03},
+                            CoreButtons{0x04},
+                            CoreButtons{0x05},
                         },
                     .current_sample = 3,
                 },
@@ -533,7 +533,7 @@ TEST_CASE_METHOD(VcrFixture, "seek_stops_at_expected_frame", "seek")
 
     while (!seek_completed)
     {
-        core_buttons input{};
+        CoreButtons input{};
         vcr_on_controller_poll(0, &input);
     }
 
@@ -677,7 +677,7 @@ TEST_CASE_METHOD(VcrFixture, "fails_when_malformed_input_size", "vcr_unfreeze")
     vcr.hdr.uid = 0xDEAD;
 
     vcr_freeze_info freeze{
-        .size = 16 + sizeof(core_buttons) * 1,
+        .size = 16 + sizeof(CoreButtons) * 1,
         .uid = 0xDEAD,
         .current_sample = 10,
         .length_samples = 5,
@@ -703,7 +703,7 @@ TEST_CASE_METHOD(VcrFixture, "input_buffer_doesnt_change_if_seeking_while_record
     vcr.inputs = {{0xDEAD}, {0xBEEF}, {0xCAFE}};
 
     vcr_freeze_info freeze{
-        .size = 16 + sizeof(core_buttons) * 2,
+        .size = 16 + sizeof(CoreButtons) * 2,
         .uid = 0xDEAD,
         .current_sample = 0,
         .length_samples = 5,
@@ -728,9 +728,9 @@ TEST_CASE_METHOD(VcrFixture, "input_buffer_doesnt_change_if_seeking_while_record
  */
 TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_idle", "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
+    s_core_params.callbacks.input = [&](CoreButtons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 }
 
@@ -741,9 +741,9 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
  */
 TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_recording_1", "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
+    s_core_params.callbacks.input = [&](CoreButtons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -751,7 +751,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
     vcr.task = task_recording;
     vcr.current_sample = 4;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 }
 
@@ -762,9 +762,9 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
  */
 TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_recording_2", "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
+    s_core_params.callbacks.input = [&](CoreButtons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -772,7 +772,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
     vcr.task = task_recording;
     vcr.current_sample = 2;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 }
 
@@ -783,9 +783,9 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
  */
 TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_playback", "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [&](core_buttons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
+    s_core_params.callbacks.input = [&](CoreButtons *input, int index) { REQUIRE(!is_vcr_lock_held()); };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -793,7 +793,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
     vcr.task = task_playback;
     vcr.current_sample = 3;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 }
 
@@ -812,7 +812,7 @@ TEST_CASE_METHOD(VcrFixture,
         REQUIRE(!is_vcr_lock_held());
     };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     s_cfg.wait_at_movie_end = true;
     vcr.inputs = inputs;
@@ -821,7 +821,7 @@ TEST_CASE_METHOD(VcrFixture,
     vcr.task = task_playback;
     vcr.current_sample = 3;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(called);
@@ -833,9 +833,9 @@ TEST_CASE_METHOD(VcrFixture,
 TEST_CASE_METHOD(VcrFixture, "stopping_vcr_during_input_callback_while_recording_doesnt_do_recording_work",
                  "vcr_on_controller_poll")
 {
-    s_core_params.callbacks.input = [&](core_buttons *input, int index) { vcr_stop_all(); };
+    s_core_params.callbacks.input = [&](CoreButtons *input, int index) { vcr_stop_all(); };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}, {4}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}, {4}};
 
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
@@ -843,7 +843,7 @@ TEST_CASE_METHOD(VcrFixture, "stopping_vcr_during_input_callback_while_recording
     vcr.task = task_recording;
     vcr.current_sample = 4;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(vcr.task == task_idle);
@@ -890,7 +890,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_emu_paused_changed_callback_
         REQUIRE(!is_vcr_lock_held());
     };
 
-    const auto inputs = std::vector<core_buttons>{{1}, {2}, {3}};
+    const auto inputs = std::vector<CoreButtons>{{1}, {2}, {3}};
     vcr.inputs = inputs;
     vcr.hdr.length_samples = inputs.size();
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
@@ -900,7 +900,7 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_emu_paused_changed_callback_
     vcr.seek_to_frame = std::make_optional(1);
     vcr.seek_pause_at_end = true;
 
-    core_buttons input{};
+    CoreButtons input{};
     vcr_on_controller_poll(0, &input);
 
     REQUIRE(called);

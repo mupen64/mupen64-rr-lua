@@ -37,6 +37,14 @@ constexpr auto WII_VC_MISMATCH_A_WARNING_MESSAGE =
 constexpr auto WII_VC_MISMATCH_B_WARNING_MESSAGE =
     "The movie was recorded with WiiVC mode disabled, but is being played back with it enabled.\r\nPlayback might "
     "desynchronize. Are you sure you want to continue?";
+constexpr auto CEQS_MISMATCH_A_WARNING_MESSAGE =
+    "The movie was recorded with an accurate implementation of the `c.eq.s` instruction (possibly another core type), "
+    "but is being played back with the legacy implementation.\r\nPlayback might desynchronize. Are you sure you want "
+    "to continue?";
+constexpr auto CEQS_MISMATCH_B_WARNING_MESSAGE =
+    "The movie was recorded with an inaccurate implementation of the `c.eq.s` instruction (possibly another core "
+    "type), but is being played back with the correct implementation.\r\nPlayback might desynchronize. Are you sure "
+    "you want to continue?";
 constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
@@ -66,7 +74,7 @@ class vcr_anti_lock
 
 bool vcr_is_task_recording(core_vcr_task task);
 
-bool write_movie_impl(const core_vcr_movie_header *hdr, const std::vector<core_buttons> &inputs,
+bool write_movie_impl(const core_vcr_movie_header *hdr, const std::vector<CoreButtons> &inputs,
                       const std::filesystem::path &path)
 {
     g_core->log_info(std::format("[VCR] write_movie_impl to {}...", vcr.movie_path.string()));
@@ -82,10 +90,10 @@ bool write_movie_impl(const core_vcr_movie_header *hdr, const std::vector<core_b
         memset(&hdr_copy.extended_data, 0, sizeof(hdr_copy.extended_flags));
     }
 
-    std::vector<uint8_t> out_buf(sizeof(core_vcr_movie_header) + sizeof(core_buttons) * hdr_copy.length_samples);
+    std::vector<uint8_t> out_buf(sizeof(core_vcr_movie_header) + sizeof(CoreButtons) * hdr_copy.length_samples);
     std::memcpy(out_buf.data(), &hdr_copy, sizeof(core_vcr_movie_header));
     std::memcpy(out_buf.data() + sizeof(core_vcr_movie_header), inputs.data(),
-                sizeof(core_buttons) * hdr_copy.length_samples);
+                sizeof(CoreButtons) * hdr_copy.length_samples);
     const auto written = IOUtils::write_entire_file(path, out_buf);
 
     return written;
@@ -189,12 +197,12 @@ static void set_rom_info(core_vcr_movie_header *header)
 
     for (int32_t i = 0; i < 4; ++i)
     {
-        if (g_core->controls[i].Plugin == (int32_t)ce_mempak)
+        if (g_core->controls[i].Plugin == CoreControllerExtension::Mempak)
         {
             header->controller_flags |= CONTROLLER_X_MEMPAK(i);
         }
 
-        if (g_core->controls[i].Plugin == (int32_t)ce_rumblepak)
+        if (g_core->controls[i].Plugin == CoreControllerExtension::Rumblepak)
         {
             header->controller_flags |= CONTROLLER_X_RUMBLE(i);
         }
@@ -300,7 +308,7 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
 
         // Some movies have a higher length_samples than the actual input buffer size, so we patch the length_samples up
         // and emit a warning
-        const auto actual_sample_count = (buf.size() - sizeof(core_vcr_movie_header)) / sizeof(core_buttons);
+        const auto actual_sample_count = (buf.size() - sizeof(core_vcr_movie_header)) / sizeof(CoreButtons);
 
         if (new_header.length_samples > actual_sample_count)
         {
@@ -339,7 +347,7 @@ core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *
     return result;
 }
 
-core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<core_buttons> &inputs)
+core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<CoreButtons> &inputs)
 {
     core_vcr_movie_header header = {};
     const auto result = vcr_parse_header(path, &header);
@@ -350,13 +358,13 @@ core_result vcr_read_movie_inputs(std::filesystem::path path, std::vector<core_b
 
     auto buf = IOUtils::read_entire_file(path);
 
-    if (buf.size() < sizeof(core_vcr_movie_header) + sizeof(core_buttons) * header.length_samples)
+    if (buf.size() < sizeof(core_vcr_movie_header) + sizeof(CoreButtons) * header.length_samples)
     {
         return VCR_InvalidFormat;
     }
 
     inputs.resize(header.length_samples);
-    memcpy(inputs.data(), buf.data() + sizeof(core_vcr_movie_header), sizeof(core_buttons) * header.length_samples);
+    memcpy(inputs.data(), buf.data() + sizeof(core_vcr_movie_header), sizeof(CoreButtons) * header.length_samples);
 
     return Res_Ok;
 }
@@ -387,7 +395,7 @@ bool vcr_freeze(vcr_freeze_info &freeze)
     assert(vcr.hdr.length_samples <= FREEZE_MAX_SIZE); // safety check
 
     freeze = {
-        .size = static_cast<uint32_t>(sizeof(uint32_t) * 4 + sizeof(core_buttons) * (vcr.hdr.length_samples + 1)),
+        .size = static_cast<uint32_t>(sizeof(uint32_t) * 4 + sizeof(CoreButtons) * (vcr.hdr.length_samples + 1)),
         .uid = vcr.hdr.uid,
         .current_sample = (uint32_t)vcr.current_sample,
         .current_vi = (uint32_t)vcr.current_vi,
@@ -398,7 +406,7 @@ bool vcr_freeze(vcr_freeze_info &freeze)
     // last frame is garbage data
     freeze.input_buffer = {};
     freeze.input_buffer.resize(vcr.hdr.length_samples + 1);
-    memcpy(freeze.input_buffer.data(), vcr.inputs.data(), sizeof(core_buttons) * vcr.hdr.length_samples);
+    memcpy(freeze.input_buffer.data(), vcr.inputs.data(), sizeof(CoreButtons) * vcr.hdr.length_samples);
 
     // Also probably a good time to flush the movie
     write_movie();
@@ -422,7 +430,7 @@ core_result vcr_unfreeze(const vcr_freeze_info &freeze)
         return VCR_InvalidFormat;
     }
 
-    const uint32_t space_needed = sizeof(core_buttons) * (freeze.length_samples + 1);
+    const uint32_t space_needed = sizeof(CoreButtons) * (freeze.length_samples + 1);
 
     if (freeze.uid != vcr.hdr.uid) return VCR_NotFromThisMovie;
 
@@ -472,7 +480,7 @@ core_result vcr_unfreeze(const vcr_freeze_info &freeze)
             }
 
             vcr.inputs.resize(freeze.current_sample);
-            memcpy(vcr.inputs.data(), freeze.input_buffer.data(), sizeof(core_buttons) * freeze.current_sample);
+            memcpy(vcr.inputs.data(), freeze.input_buffer.data(), sizeof(CoreButtons) * freeze.current_sample);
 
             write_movie();
         }
@@ -563,7 +571,7 @@ void vcr_create_n_frame_savestate(size_t frame)
         false);
 }
 
-void vcr_handle_starting_tasks(int32_t index, core_buttons *input)
+void vcr_handle_starting_tasks(int32_t index, CoreButtons *input)
 {
     if (vcr.task == task_start_recording_from_reset)
     {
@@ -636,7 +644,7 @@ void vcr_handle_starting_tasks(int32_t index, core_buttons *input)
     }
 }
 
-void vcr_handle_recording(int32_t index, core_buttons *input)
+void vcr_handle_recording(int32_t index, CoreButtons *input)
 {
     if (vcr.task != task_recording)
     {
@@ -719,7 +727,7 @@ void vcr_handle_recording(int32_t index, core_buttons *input)
     vcr.post_controller_poll_callbacks.emplace([=] { g_core->callbacks.current_sample_changed(vcr.current_sample); });
 }
 
-void vcr_handle_playback(int32_t index, core_buttons *input)
+void vcr_handle_playback(int32_t index, CoreButtons *input)
 {
     if (vcr.task != task_playback)
     {
@@ -885,7 +893,7 @@ void vcr_create_seek_savestates()
     }
 }
 
-void vcr_on_controller_poll(int32_t index, core_buttons *input)
+void vcr_on_controller_poll(int32_t index, CoreButtons *input)
 {
     std::unique_lock lock(vcr_mtx);
 
@@ -1040,6 +1048,8 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
 
     vcr.hdr.extended_version = default_hdr.extended_version;
     vcr.hdr.extended_flags.wii_vc = g_core->cfg->wii_vc_emulation;
+    vcr.hdr.extended_flags.c_eq_s_accurate = vr_is_ceqs_effectively_accurate();
+
     vcr.hdr.extended_data = default_hdr.extended_data;
 
     vcr.hdr.uid = (uint32_t)time(nullptr);
@@ -1237,17 +1247,17 @@ bool show_controller_warning(const core_vcr_movie_header &header)
         }
         else
         {
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_mempak) &&
+            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != CoreControllerExtension::Mempak) &&
                 header.controller_flags & CONTROLLER_X_MEMPAK(i))
             {
                 g_core->show_dialog(std::format(CONTROLLER_MEMPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
             }
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_rumblepak) &&
+            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != CoreControllerExtension::Rumblepak) &&
                 header.controller_flags & CONTROLLER_X_RUMBLE(i))
             {
                 g_core->show_dialog(std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
             }
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != (int32_t)ce_none) &&
+            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != CoreControllerExtension::None) &&
                 !(header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
             {
                 g_core->show_dialog(std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR",
@@ -1324,10 +1334,10 @@ core_result vcr_start_playback(std::filesystem::path path)
         return result;
     }
 
-    std::vector<core_buttons> movie_inputs{};
+    std::vector<CoreButtons> movie_inputs{};
     movie_inputs.resize(header.length_samples);
     memcpy(movie_inputs.data(), movie_buf.data() + sizeof(core_vcr_movie_header),
-           sizeof(core_buttons) * header.length_samples);
+           sizeof(CoreButtons) * header.length_samples);
 
     for (auto &[Present, RawData, Plugin] : g_core->controls)
     {
@@ -1361,6 +1371,24 @@ core_result vcr_start_playback(std::filesystem::path path)
             if (!proceed)
             {
                 return Res_Cancelled;
+            }
+        }
+
+        if (header.extended_version == 2)
+        {
+            const auto c_eq_s_accurate = vr_is_ceqs_effectively_accurate();
+            if (c_eq_s_accurate != header.extended_flags.c_eq_s_accurate)
+            {
+                bool proceed =
+                    g_core->show_ask_dialog(CORE_DLG_VCR_CEQS_WARNING,
+                                            header.extended_flags.c_eq_s_accurate ? CEQS_MISMATCH_A_WARNING_MESSAGE
+                                                                                  : CEQS_MISMATCH_B_WARNING_MESSAGE,
+                                            "VCR", true);
+
+                if (!proceed)
+                {
+                    return Res_Cancelled;
+                }
             }
         }
     }
@@ -1955,14 +1983,14 @@ int32_t vcr_get_current_vi()
     return vcr.task == task_idle ? -1 : vcr.current_vi;
 }
 
-std::vector<core_buttons> vcr_get_inputs()
+std::vector<CoreButtons> vcr_get_inputs()
 {
     std::unique_lock lock(vcr_mtx);
     return vcr.inputs;
 }
 
 /// Finds the first input difference between two input vectors. Returns SIZE_MAX if they are identical.
-size_t vcr_find_first_input_difference(const std::vector<core_buttons> &first, const std::vector<core_buttons> &second)
+size_t vcr_find_first_input_difference(const std::vector<CoreButtons> &first, const std::vector<CoreButtons> &second)
 {
     if (first.size() != second.size())
     {
@@ -1987,7 +2015,7 @@ size_t vcr_find_first_input_difference(const std::vector<core_buttons> &first, c
     return SIZE_MAX;
 }
 
-core_result vcr_begin_warp_modify(const std::vector<core_buttons> &inputs)
+core_result vcr_begin_warp_modify(const std::vector<CoreButtons> &inputs)
 {
     std::unique_lock lock(vcr_mtx);
 

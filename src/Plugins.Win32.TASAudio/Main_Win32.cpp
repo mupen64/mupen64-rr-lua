@@ -9,7 +9,7 @@
 #include "Config_Win32.hpp"
 #include "IOUtils.hpp"
 #include "Main.hpp"
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 #include <filesystem>
 #include <sstream>
 #include <string>
