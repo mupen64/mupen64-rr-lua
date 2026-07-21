@@ -44,142 +44,6 @@ static std::jthread s_audio_thread;
 
 ZESpecFuncs g_plugin_funcs{};
 
-#pragma region Dummy Functions
-
-static uint32_t CALL dummy_do_rsp_cycles(uint32_t Cycles)
-{
-    return Cycles;
-}
-
-static void CALL dummy_void()
-{
-}
-
-static void CALL dummy_receive_extended_funcs(ZESpec::ExtendedFuncs *)
-{
-}
-
-static int32_t CALL dummy_initiate_gfx(ZESpec::VideoPluginInfo)
-{
-    return 1;
-}
-
-static int32_t CALL dummy_initiate_audio(ZESpec::AudioPluginInfo)
-{
-    return 1;
-}
-
-static void CALL dummy_initiate_controllers(ZESpec::InputPluginInfo)
-{
-}
-
-static void CALL dummy_ai_dacrate_changed(int32_t)
-{
-}
-
-static uint32_t CALL dummy_ai_read_length()
-{
-    return 0;
-}
-
-static void CALL dummy_ai_update(int32_t)
-{
-}
-
-static void CALL dummy_controller_command(int32_t, uint8_t *)
-{
-}
-
-static void CALL dummy_get_keys(int32_t, ZESpec::Buttons *)
-{
-}
-
-static void CALL dummy_set_keys(int32_t, ZESpec::Buttons)
-{
-}
-
-static void CALL dummy_read_controller(int32_t, uint8_t *)
-{
-}
-
-static void CALL dummy_key_down(uint32_t, int32_t)
-{
-}
-
-static void CALL dummy_key_up(uint32_t, int32_t)
-{
-}
-
-static void CALL dummy_initiate_rsp(ZESpec::RSPPluginInfo, uint32_t *)
-{
-}
-
-static void CALL dummy_fb_read(uint32_t)
-{
-}
-
-static void CALL dummy_fb_write(uint32_t, uint32_t)
-{
-}
-
-static void CALL dummy_fb_get_framebuffer_info(ZESpec::FBInfo *)
-{
-}
-
-static void CALL dummy_move_screen(int32_t, int32_t)
-{
-}
-
-static void CALL dummy_capture_screen(char *)
-{
-    if (!PluginUtil::mge_available())
-    {
-        DialogService::show_dialog(L"The current video plugin doesn't support screenshots.", L"Screenshot", fsvc_error);
-        return;
-    }
-
-    int32_t width{};
-    int32_t height{};
-    MGECompositor::get_video_size(&width, &height);
-
-    std::vector<std::uint8_t> video(width * height * 4);
-    MGECompositor::copy_video(video.data());
-
-    BITMAPINFOHEADER ihdr;
-    ihdr.biSize = sizeof(BITMAPINFOHEADER);
-    ihdr.biWidth = width;
-    ihdr.biHeight = height;
-    ihdr.biPlanes = 1;
-    ihdr.biBitCount = 32;
-    ihdr.biCompression = BI_RGB;
-    ihdr.biSizeImage = width * height * 4;
-    ihdr.biXPelsPerMeter = 0;
-    ihdr.biYPelsPerMeter = 0;
-    ihdr.biClrUsed = 0;
-    ihdr.biClrImportant = 0;
-
-    BITMAPFILEHEADER bhdr;
-    bhdr.bfType = 19778;
-    bhdr.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + ihdr.biSizeImage;
-    bhdr.bfReserved1 = bhdr.bfReserved2 = 0;
-    bhdr.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-
-    const auto path = Config::screenshot_directory() / std::format("screen{}.bmp", time(nullptr));
-
-    HANDLE hfile;
-    hfile = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    DWORD written;
-
-    WriteFile(hfile, &bhdr, sizeof(BITMAPFILEHEADER), &written, NULL);
-    WriteFile(hfile, &ihdr, sizeof(BITMAPINFOHEADER), &written, NULL);
-    WriteFile(hfile, video.data(), ihdr.biSizeImage, &written, NULL);
-
-    CloseHandle(hfile);
-}
-
-#pragma endregion
-
 static void audio_thread_proc(std::stop_token st)
 {
     while (!st.stop_requested())
@@ -212,7 +76,7 @@ static void start_audio_thread()
 }
 
 #define GEN_EXTENDED_FUNCS(logger)                                                                                     \
-    ZESpec::ExtendedFuncs                                                                                       \
+    ZESpec::ExtendedFuncs                                                                                              \
     {                                                                                                                  \
         .log_trace = [](const wchar_t *str) { logger->trace(str); },                                                   \
         .log_info = [](const wchar_t *str) { logger->info(str); },                                                     \
@@ -386,7 +250,7 @@ void PluginUtil::init_dummy_and_extended_funcs()
     dummy_video_info.vi_v_burst_reg = &g_main_ctx.core_ctx->vi_register->vi_v_burst;
     dummy_video_info.vi_x_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_x_scale;
     dummy_video_info.vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
-    dummy_video_info.check_interrupts = dummy_void;
+    dummy_video_info.check_interrupts = []() {};
 
     dummy_audio_info.main_hwnd = g_main_ctx.hwnd;
     dummy_audio_info.hinst = g_main_ctx.hinst;
@@ -402,7 +266,7 @@ void PluginUtil::init_dummy_and_extended_funcs()
     dummy_audio_info.ai_status_reg = &g_main_ctx.core_ctx->ai_register->ai_status;
     dummy_audio_info.ai_dacrate_reg = &g_main_ctx.core_ctx->ai_register->ai_dacrate;
     dummy_audio_info.ai_bitrate_reg = &g_main_ctx.core_ctx->ai_register->ai_bitrate;
-    dummy_audio_info.check_interrupts = dummy_void;
+    dummy_audio_info.check_interrupts = []() {};
 
     dummy_control_info.main_hwnd = g_main_ctx.hwnd;
     dummy_control_info.hinst = g_main_ctx.hinst;
@@ -432,7 +296,7 @@ void PluginUtil::init_dummy_and_extended_funcs()
     dummy_rsp_info.dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
     dummy_rsp_info.dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
     dummy_rsp_info.dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
-    dummy_rsp_info.check_interrupts = dummy_void;
+    dummy_rsp_info.check_interrupts = []() {};
     dummy_rsp_info.process_dlist_list = g_plugin_funcs.video_process_dlist;
     dummy_rsp_info.process_alist_list = g_plugin_funcs.audio_process_alist;
     dummy_rsp_info.process_rdp_list = g_plugin_funcs.video_process_rdp_list;
