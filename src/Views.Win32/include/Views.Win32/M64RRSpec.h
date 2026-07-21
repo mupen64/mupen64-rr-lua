@@ -241,12 +241,22 @@ extern "C"
         PluginInit &operator=(const PluginInit &) = delete;
     };
 
+    /**
+     * \brief Represents an event related to the plugin's lifecycle.
+     */
     union LifecycleEvent {
         enum class Type : uint8_t
         {
+            // The plugin is being initialized. The valid field is `initiate`.
             Initiate,
+
+            // The plugin is being shut down. There will be no more calls to it after this event.
             Shutdown,
+
+            // Emulation has started.
             RomOpened,
+
+            // Emulation has stopped.
             RomClosed,
         };
 
@@ -256,7 +266,10 @@ extern "C"
             PluginInit *init;
         };
 
+        // The type of the event.
         Type type;
+
+        // The initiate event details. Only valid when `type` is `Initiate`.
         InitiateEvent initiate;
     };
 
