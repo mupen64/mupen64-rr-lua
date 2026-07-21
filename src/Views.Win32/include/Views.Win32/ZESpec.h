@@ -258,11 +258,6 @@ extern "C"
 
         // --- Zilmar spec struct ends here
 
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     struct AudioPluginInfo
@@ -285,11 +280,6 @@ extern "C"
 
         // --- Zilmar spec struct ends here
 
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     struct InputPluginInfo
@@ -302,11 +292,6 @@ extern "C"
 
         // --- Zilmar spec struct ends here
 
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     struct RSPPluginInfo
@@ -342,11 +327,6 @@ extern "C"
 
         // --- Zilmar spec struct ends here
 
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     typedef void(CALL *CLOSEDLL)();
