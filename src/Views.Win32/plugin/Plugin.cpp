@@ -453,30 +453,23 @@ void PluginUtil::initiate_plugins()
 {
     ScopeTimer timer("PluginUtil::initiate_plugins", g_view_logger.get());
 
-    // Video plugin needs to go first because of process_dlist
-    video_plugin->initiate(s_funcs);
-    audio_plugin->initiate(s_funcs);
-    input_plugin->initiate(s_funcs);
+    // RSP plugin depends on some exported functions :P
+    std::latch latch(3);
+    ThreadPool::submit_task([&] {
+        video_plugin->initiate(s_funcs);
+        latch.count_down();
+    });
+    ThreadPool::submit_task([&] {
+        audio_plugin->initiate(s_funcs);
+        latch.count_down();
+    });
+    ThreadPool::submit_task([&] {
+        input_plugin->initiate(s_funcs);
+        latch.count_down();
+    });
+    latch.wait();
+
     rsp_plugin->initiate(s_funcs);
-
-    // std::latch done(3);
-
-    // ThreadPool::submit_task([&] {
-    //     audio_plugin->initiate();
-    //     done.count_down();
-    // });
-
-    // ThreadPool::submit_task([&] {
-    //     input_plugin->initiate();
-    //     done.count_down();
-    // });
-
-    // ThreadPool::submit_task([&] {
-    //     rsp_plugin->initiate();
-    //     done.count_down();
-    // });
-
-    // done.wait();
 }
 
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
