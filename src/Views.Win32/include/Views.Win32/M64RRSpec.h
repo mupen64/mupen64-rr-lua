@@ -128,57 +128,33 @@ extern "C"
         char target_version[32];
     };
 
+    /**
+     * \brief Represents the emulator context provided to the plugin.
+     */
     struct PluginInit
     {
         Platform platform;
         WindowHandle main_window;
-        int32_t byteswapped;
+
         uint8_t *rom;
         uint8_t *rdram;
         uint8_t *dmem;
         uint8_t *imem;
-        uint32_t *mi_intr_reg;
-        uint32_t *dpc_start_reg;
-        uint32_t *dpc_end_reg;
-        uint32_t *dpc_current_reg;
-        uint32_t *dpc_status_reg;
-        uint32_t *dpc_clock_reg;
-        uint32_t *dpc_bufbusy_reg;
-        uint32_t *dpc_pipebusy_reg;
-        uint32_t *dpc_tmem_reg;
-        uint32_t *vi_status_reg;
-        uint32_t *vi_origin_reg;
-        uint32_t *vi_width_reg;
-        uint32_t *vi_intr_reg;
-        uint32_t *vi_v_current_line_reg;
-        uint32_t *vi_timing_reg;
-        uint32_t *vi_v_sync_reg;
-        uint32_t *vi_h_sync_reg;
-        uint32_t *vi_leap_reg;
-        uint32_t *vi_h_start_reg;
-        uint32_t *vi_v_start_reg;
-        uint32_t *vi_v_burst_reg;
-        uint32_t *vi_x_scale_reg;
-        uint32_t *vi_y_scale_reg;
-        uint32_t *ai_dram_addr_reg;
-        uint32_t *ai_len_reg;
-        uint32_t *ai_control_reg;
-        uint32_t *ai_status_reg;
-        uint32_t *ai_dacrate_reg;
-        uint32_t *ai_bitrate_reg;
-        uint32_t *sp_mem_addr_reg;
-        uint32_t *sp_dram_addr_reg;
-        uint32_t *sp_rd_len_reg;
-        uint32_t *sp_wr_len_reg;
-        uint32_t *sp_status_reg;
-        uint32_t *sp_dma_full_reg;
-        uint32_t *sp_dma_busy_reg;
-        uint32_t *sp_pc_reg;
-        uint32_t *sp_semaphore_reg;
+
+        core_rdram_reg *rdram_register;
+        core_mips_reg *mi_register;
+        core_pi_reg *pi_register;
+        core_sp_reg *sp_register;
+        core_rsp_reg *rsp_register;
+        core_si_reg *si_register;
+        core_vi_reg *vi_register;
+        core_ri_reg *ri_register;
+        core_ai_reg *ai_register;
+        core_dpc_reg *dpc_register;
+        core_dps_reg *dps_register;
 
         void(CALL *process_dlist)(void);
 
-        uint8_t *header;
         Controller *controllers;
 
         /**

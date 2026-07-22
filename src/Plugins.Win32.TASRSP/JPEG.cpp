@@ -444,7 +444,7 @@ void jpg_uncompress(OSTask_t *task)
             }
         }
         pic += len1 / 2;
-    } while (w-- != 1 && !(*g_plugin->sp_status_reg & 0x80));
+    } while (w-- != 1 && !(g_plugin->sp_register->sp_status_reg & 0x80));
 
     pic -= len1 * jpg_data.w / 2;
     free(temp2);

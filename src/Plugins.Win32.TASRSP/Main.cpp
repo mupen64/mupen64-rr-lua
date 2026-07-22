@@ -75,17 +75,17 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
     {
         g_plugin->process_dlist();
 
-        *g_plugin->sp_status_reg |= 0x0203;
-        if ((*g_plugin->sp_status_reg & 0x40) != 0) *g_plugin->mi_intr_reg |= 0x1;
+        g_plugin->sp_register->sp_status_reg |= 0x0203;
+        if ((g_plugin->sp_register->sp_status_reg & 0x40) != 0) g_plugin->mi_register->mi_intr_reg |= 0x1;
 
-        *g_plugin->dpc_status_reg &= ~0x0002;
+        g_plugin->dpc_register->dpc_status &= ~0x0002;
         return Cycles;
     }
 
-    *g_plugin->sp_status_reg |= 0x203;
-    if ((*g_plugin->sp_status_reg & 0x40) != 0)
+    g_plugin->sp_register->sp_status_reg |= 0x203;
+    if ((g_plugin->sp_register->sp_status_reg & 0x40) != 0)
     {
-        *g_plugin->mi_intr_reg |= 0x1;
+        g_plugin->mi_register->mi_intr_reg |= 0x1;
     }
 
     uint32_t sum = 0;
@@ -150,7 +150,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
     {
         if (sum == 0x278)
         {
-            *g_plugin->sp_status_reg |= 0x200;
+            g_plugin->sp_register->sp_status_reg |= 0x200;
             return Cycles;
         }
         if (sum == 0x2e4fc)

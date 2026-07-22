@@ -138,7 +138,7 @@ EXPORT void CALL M64RRAIDacrateChanged(CoreSystemType system_type)
     if (!g_plugin || !g_backend) return;
     try
     {
-        uint32_t sample_rate = compute_sample_rate(system_type, *g_plugin->ai_dacrate_reg);
+        uint32_t sample_rate = compute_sample_rate(system_type, g_plugin->ai_register->ai_dacrate);
         g_backend->set_sample_rate(sample_rate);
     }
     catch (std::exception &e)
@@ -155,8 +155,8 @@ EXPORT void CALL M64RRAILenChanged()
 
     // push new samples
     if (!g_plugin || !g_backend) return;
-    uint32_t addr = *g_plugin->ai_dram_addr_reg & 0x00FF'FFF8;
-    uint32_t len = *g_plugin->ai_len_reg & 0x0003'FFF8;
+    uint32_t addr = g_plugin->ai_register->ai_dram_addr & 0x00FF'FFF8;
+    uint32_t len = g_plugin->ai_register->ai_len & 0x0003'FFF8;
 
     try
     {

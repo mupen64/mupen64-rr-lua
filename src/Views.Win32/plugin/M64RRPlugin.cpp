@@ -32,6 +32,8 @@ M64RRSpec::PluginInit s_dummy_audio_init;
 M64RRSpec::PluginInit s_dummy_input_init;
 M64RRSpec::PluginInit s_dummy_rsp_init;
 
+static uint8_t s_dummy[4096]{};
+
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
 
@@ -185,51 +187,24 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     }
     init->platform = M64RRSpec::Platform::Windows;
     init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
-    init->byteswapped = 1;
     init->rom = g_main_ctx.core_ctx->rom;
     init->rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
     init->dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
     init->imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
-    init->mi_intr_reg = &g_main_ctx.core_ctx->MI_register->mi_intr_reg;
-    init->dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
-    init->dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
-    init->dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
-    init->dpc_status_reg = &g_main_ctx.core_ctx->dpc_register->dpc_status;
-    init->dpc_clock_reg = &g_main_ctx.core_ctx->dpc_register->dpc_clock;
-    init->dpc_bufbusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_bufbusy;
-    init->dpc_pipebusy_reg = &g_main_ctx.core_ctx->dpc_register->dpc_pipebusy;
-    init->dpc_tmem_reg = &g_main_ctx.core_ctx->dpc_register->dpc_tmem;
-    init->vi_status_reg = &g_main_ctx.core_ctx->vi_register->vi_status;
-    init->vi_origin_reg = &g_main_ctx.core_ctx->vi_register->vi_origin;
-    init->vi_width_reg = &g_main_ctx.core_ctx->vi_register->vi_width;
-    init->vi_intr_reg = &g_main_ctx.core_ctx->vi_register->vi_v_intr;
-    init->vi_v_current_line_reg = &g_main_ctx.core_ctx->vi_register->vi_current;
-    init->vi_timing_reg = &g_main_ctx.core_ctx->vi_register->vi_burst;
-    init->vi_v_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_v_sync;
-    init->vi_h_sync_reg = &g_main_ctx.core_ctx->vi_register->vi_h_sync;
-    init->vi_leap_reg = &g_main_ctx.core_ctx->vi_register->vi_leap;
-    init->vi_h_start_reg = &g_main_ctx.core_ctx->vi_register->vi_h_start;
-    init->vi_v_start_reg = &g_main_ctx.core_ctx->vi_register->vi_v_start;
-    init->vi_v_burst_reg = &g_main_ctx.core_ctx->vi_register->vi_v_burst;
-    init->vi_x_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_x_scale;
-    init->vi_y_scale_reg = &g_main_ctx.core_ctx->vi_register->vi_y_scale;
-    init->ai_dram_addr_reg = &g_main_ctx.core_ctx->ai_register->ai_dram_addr;
-    init->ai_len_reg = &g_main_ctx.core_ctx->ai_register->ai_len;
-    init->ai_control_reg = &g_main_ctx.core_ctx->ai_register->ai_control;
-    init->ai_status_reg = &dummy_dw;
-    init->ai_dacrate_reg = &g_main_ctx.core_ctx->ai_register->ai_dacrate;
-    init->ai_bitrate_reg = &g_main_ctx.core_ctx->ai_register->ai_bitrate;
-    init->sp_mem_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_mem_addr_reg;
-    init->sp_dram_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_dram_addr_reg;
-    init->sp_rd_len_reg = &g_main_ctx.core_ctx->sp_register->sp_rd_len_reg;
-    init->sp_wr_len_reg = &g_main_ctx.core_ctx->sp_register->sp_wr_len_reg;
-    init->sp_status_reg = &g_main_ctx.core_ctx->sp_register->sp_status_reg;
-    init->sp_dma_full_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_full_reg;
-    init->sp_dma_busy_reg = &g_main_ctx.core_ctx->sp_register->sp_dma_busy_reg;
-    init->sp_pc_reg = &g_main_ctx.core_ctx->rsp_register->rsp_pc;
-    init->sp_semaphore_reg = &g_main_ctx.core_ctx->sp_register->sp_semaphore_reg;
+
+    init->rdram_register = g_main_ctx.core_ctx->rdram_register;
+    init->mi_register = g_main_ctx.core_ctx->MI_register;
+    init->pi_register = g_main_ctx.core_ctx->pi_register;
+    init->sp_register = g_main_ctx.core_ctx->sp_register;
+    init->rsp_register = g_main_ctx.core_ctx->rsp_register;
+    init->si_register = g_main_ctx.core_ctx->si_register;
+    init->vi_register = g_main_ctx.core_ctx->vi_register;
+    init->ri_register = g_main_ctx.core_ctx->ri_register;
+    init->ai_register = g_main_ctx.core_ctx->ai_register;
+    init->dpc_register = g_main_ctx.core_ctx->dpc_register;
+    init->dps_register = g_main_ctx.core_ctx->dps_register;
+
     init->process_dlist = funcs.video_process_dlist;
-    init->header = g_main_ctx.core_ctx->rom;
 
     std::array<M64RRSpec::Controller, 4> tmp_controllers{};
     init->controllers = tmp_controllers.data();
@@ -269,9 +244,9 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     }
 
     event_fn(M64RRSpec::Event{.initiate = {
-                                                     .type = M64RRSpec::Event::Type::Initiate,
-                                                     .init = init,
-                                                 }});
+                                  .type = M64RRSpec::Event::Type::Initiate,
+                                  .init = init,
+                              }});
 
     switch (m_type)
     {
@@ -284,18 +259,15 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
         funcs.video_rom_open = []() {
             if (s_mupenrr_video_event_fn)
-                s_mupenrr_video_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+                s_mupenrr_video_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.video_rom_closed = []() {
             if (s_mupenrr_video_event_fn)
-                s_mupenrr_video_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+                s_mupenrr_video_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.video_close_dll = []() {
             if (s_mupenrr_video_event_fn)
-                s_mupenrr_video_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+                s_mupenrr_video_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.video_process_dlist = []() {
             if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
@@ -332,18 +304,15 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
         funcs.audio_rom_open = []() {
             if (s_mupenrr_audio_event_fn)
-                s_mupenrr_audio_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+                s_mupenrr_audio_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.audio_rom_closed = []() {
             if (s_mupenrr_audio_event_fn)
-                s_mupenrr_audio_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+                s_mupenrr_audio_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.audio_close_dll_audio = []() {
             if (s_mupenrr_audio_event_fn)
-                s_mupenrr_audio_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+                s_mupenrr_audio_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.audio_ai_dacrate_changed = [](CoreSystemType system_type) {
             if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
@@ -367,18 +336,15 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
         funcs.input_rom_open = []() {
             if (s_mupenrr_input_event_fn)
-                s_mupenrr_input_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+                s_mupenrr_input_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.input_rom_closed = []() {
             if (s_mupenrr_input_event_fn)
-                s_mupenrr_input_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+                s_mupenrr_input_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.input_close_dll = []() {
             if (s_mupenrr_input_event_fn)
-                s_mupenrr_input_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+                s_mupenrr_input_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.input_controller_command = [](int32_t, uint8_t *) {};
         funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
@@ -411,13 +377,11 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         // FIXME: add rsp_rom_opened
         funcs.rsp_rom_closed = []() {
             if (s_mupenrr_rsp_event_fn)
-                s_mupenrr_rsp_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+                s_mupenrr_rsp_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.rsp_close_dll = []() {
             if (s_mupenrr_rsp_event_fn)
-                s_mupenrr_rsp_event_fn(
-                    M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+                s_mupenrr_rsp_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
             if (s_mupenrr_do_rsp_cycles_fn)
@@ -464,52 +428,24 @@ void M64RRPlugin::initiate_dummy()
 
     init->platform = M64RRSpec::Platform::Windows;
     init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
-    init->byteswapped = 1;
     init->rom = dummy_header;
     init->rdram = nullptr;
     init->dmem = nullptr;
     init->imem = nullptr;
-    init->mi_intr_reg = &dummy_dw;
-    init->dpc_start_reg = &dummy_dw;
-    init->dpc_end_reg = &dummy_dw;
-    init->dpc_current_reg = &dummy_dw;
-    init->dpc_status_reg = &dummy_dw;
-    init->dpc_clock_reg = &dummy_dw;
-    init->dpc_bufbusy_reg = &dummy_dw;
-    init->dpc_pipebusy_reg = &dummy_dw;
-    init->dpc_tmem_reg = &dummy_dw;
-    init->vi_status_reg = &dummy_dw;
-    init->vi_origin_reg = &dummy_dw;
-    init->vi_width_reg = &dummy_dw;
-    init->vi_intr_reg = &dummy_dw;
-    init->vi_v_current_line_reg = &dummy_dw;
-    init->vi_timing_reg = &dummy_dw;
-    init->vi_v_sync_reg = &dummy_dw;
-    init->vi_h_sync_reg = &dummy_dw;
-    init->vi_leap_reg = &dummy_dw;
-    init->vi_h_start_reg = &dummy_dw;
-    init->vi_v_start_reg = &dummy_dw;
-    init->vi_v_burst_reg = &dummy_dw;
-    init->vi_x_scale_reg = &dummy_dw;
-    init->vi_y_scale_reg = &dummy_dw;
-    init->ai_dram_addr_reg = &dummy_dw;
-    init->ai_len_reg = &dummy_dw;
-    init->ai_control_reg = &dummy_dw;
-    init->ai_status_reg = &dummy_dw;
-    init->ai_dacrate_reg = &dummy_dw;
-    init->ai_bitrate_reg = &dummy_dw;
-    init->sp_mem_addr_reg = &dummy_dw;
-    init->sp_dram_addr_reg = &dummy_dw;
-    init->sp_rd_len_reg = &dummy_dw;
-    init->sp_wr_len_reg = &dummy_dw;
-    init->sp_status_reg = &dummy_dw;
-    init->sp_dma_full_reg = &dummy_dw;
-    init->sp_dma_busy_reg = &dummy_dw;
-    init->sp_pc_reg = &dummy_dw;
-    init->sp_semaphore_reg = &dummy_dw;
+
+    init->rdram_register = reinterpret_cast<core_rdram_reg *>(s_dummy);
+    init->mi_register = reinterpret_cast<core_mips_reg *>(s_dummy);
+    init->pi_register = reinterpret_cast<core_pi_reg *>(s_dummy);
+    init->sp_register = reinterpret_cast<core_sp_reg *>(s_dummy);
+    init->rsp_register = reinterpret_cast<core_rsp_reg *>(s_dummy);
+    init->si_register = reinterpret_cast<core_si_reg *>(s_dummy);
+    init->vi_register = reinterpret_cast<core_vi_reg *>(s_dummy);
+    init->ri_register = reinterpret_cast<core_ri_reg *>(s_dummy);
+    init->ai_register = reinterpret_cast<core_ai_reg *>(s_dummy);
+    init->dpc_register = reinterpret_cast<core_dpc_reg *>(s_dummy);
+    init->dps_register = reinterpret_cast<core_dps_reg *>(s_dummy);
 
     init->process_dlist = [](const auto &...) {};
-    init->header = dummy_header;
 
     std::array<M64RRSpec::Controller, 4> tmp_controllers{};
     init->controllers = tmp_controllers.data();
@@ -549,9 +485,9 @@ void M64RRPlugin::initiate_dummy()
     }
 
     event_fn(M64RRSpec::Event{.initiate = {
-                                                     .type = M64RRSpec::Event::Type::Initiate,
-                                                     .init = init,
-                                                 }});
+                                  .type = M64RRSpec::Event::Type::Initiate,
+                                  .init = init,
+                              }});
 }
 
 void M64RRPlugin::deinitiate_dummy()
