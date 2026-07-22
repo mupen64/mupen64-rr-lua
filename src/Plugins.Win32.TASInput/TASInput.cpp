@@ -177,7 +177,6 @@ static std::atomic<int64_t> frame_counter{};
 static std::atomic<bool> new_frame{};
 static std::atomic<bool> rom_open{};
 static std::atomic<bool> s_event_watch_attached{};
-static HWND emulator_hwnd{};
 static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
@@ -308,7 +307,7 @@ void Status::activate_emulator_window()
     {
         return;
     }
-    SetForegroundWindow(emulator_hwnd);
+    SetForegroundWindow(g_plugin->main_window.hwnd());
 }
 
 void Status::set_visuals(M64RRSpec::Buttons input, bool needs_processing)
@@ -1251,7 +1250,6 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     {
     case M64RRSpec::Event::Type::Initiate: {
         g_plugin = event.initiate.init;
-        emulator_hwnd = g_plugin->main_window.hwnd();
 
         for (int i = 0; i < 4; ++i)
         {

@@ -14,6 +14,14 @@
 #include <plugin/Plugin.hpp>
 #include <plugin/ZEPlugin.hpp>
 
+ZESpec::VideoPluginInfo dummy_video_info{};
+ZESpec::AudioPluginInfo dummy_audio_info{};
+ZESpec::InputPluginInfo dummy_control_info{};
+ZESpec::RSPPluginInfo dummy_rsp_info{};
+ZESpec::Controller dummy_controllers[4]{};
+uint8_t dummy_header[0x40]{};
+uint32_t dummy_dw{};
+
 #pragma region Dummy Functions
 
 static uint32_t CALL dummy_do_rsp_cycles(uint32_t Cycles)

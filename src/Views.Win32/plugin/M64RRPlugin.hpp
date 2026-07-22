@@ -20,9 +20,8 @@ class M64RRPlugin : public Plugin
     void test(HWND hwnd) override;
     void about(HWND hwnd) override;
     void initiate(ZESpecFuncs &funcs) override;
-    void initiate_dummy() override;
-    void deinitiate_dummy() override;
 
   protected:
     M64RRSpec::PluginMetadata m_meta;
+    bool m_initialized;
 };

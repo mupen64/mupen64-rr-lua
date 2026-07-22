@@ -31,8 +31,7 @@ M64RRSpec::PluginInit s_dummy_video_init;
 M64RRSpec::PluginInit s_dummy_audio_init;
 M64RRSpec::PluginInit s_dummy_input_init;
 M64RRSpec::PluginInit s_dummy_rsp_init;
-
-static uint8_t s_dummy[4096]{};
+static uint8_t s_dummy_block[4096]{};
 
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
@@ -138,7 +137,9 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE mod
 
 void M64RRPlugin::config(HWND hwnd)
 {
-    initiate_dummy();
+    const bool prev_initiated = m_initialized;
+    initiate(g_plugin_funcs);
+    const bool newly_initiated = m_initialized && !prev_initiated;
 
     const auto show_config = (M64RRSpec::PtrShowConfig)GetProcAddress(m_module, "M64RRRShowConfig");
 
@@ -151,7 +152,13 @@ void M64RRPlugin::config(HWND hwnd)
             fsvc_error, hwnd);
     }
 
-    deinitiate_dummy();
+    if (newly_initiated)
+    {
+        auto event_fn = (M64RRSpec::PtrProcessEvent)GetProcAddress(m_module, "M64RRProcessEvent");
+        if (!event_fn) event_fn = [](auto) {};
+
+        event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+    }
 }
 
 void M64RRPlugin::test(HWND hwnd)
@@ -398,106 +405,8 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         RT_ASSERT(false, L"Unsupported plugin type");
         break;
     }
-}
 
-void M64RRPlugin::initiate_dummy()
-{
-    Main::init_sdl();
-
-    auto event_fn = (M64RRSpec::PtrProcessEvent)GetProcAddress(m_module, "M64RRProcessEvent");
-    if (!event_fn) event_fn = [](auto) {};
-
-    M64RRSpec::PluginInit *init;
-    switch (m_type)
-    {
-    case Type::Video:
-        init = &s_dummy_video_init;
-        break;
-    case Type::Audio:
-        init = &s_dummy_audio_init;
-        break;
-    case Type::Input:
-        init = &s_dummy_input_init;
-        break;
-    case Type::RSP:
-        init = &s_dummy_rsp_init;
-        break;
-    default:
-        return;
-    }
-
-    init->platform = M64RRSpec::Platform::Windows;
-    init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
-    init->rom = dummy_header;
-    init->rdram = nullptr;
-    init->dmem = nullptr;
-    init->imem = nullptr;
-
-    init->rdram_register = reinterpret_cast<core_rdram_reg *>(s_dummy);
-    init->mi_register = reinterpret_cast<core_mips_reg *>(s_dummy);
-    init->pi_register = reinterpret_cast<core_pi_reg *>(s_dummy);
-    init->sp_register = reinterpret_cast<core_sp_reg *>(s_dummy);
-    init->rsp_register = reinterpret_cast<core_rsp_reg *>(s_dummy);
-    init->si_register = reinterpret_cast<core_si_reg *>(s_dummy);
-    init->vi_register = reinterpret_cast<core_vi_reg *>(s_dummy);
-    init->ri_register = reinterpret_cast<core_ri_reg *>(s_dummy);
-    init->ai_register = reinterpret_cast<core_ai_reg *>(s_dummy);
-    init->dpc_register = reinterpret_cast<core_dpc_reg *>(s_dummy);
-    init->dps_register = reinterpret_cast<core_dps_reg *>(s_dummy);
-
-    init->process_dlist = [](const auto &...) {};
-
-    std::array<M64RRSpec::Controller, 4> tmp_controllers{};
-    init->controllers = tmp_controllers.data();
-
-    init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
-    init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
-    init->config_path = get_config_path;
-    init->rcp_counter = g_main_ctx.core_ctx->rcp_counter;
-    init->request_size = Main::request_size;
-
-    switch (m_type)
-    {
-    case Plugin::Type::Video:
-        init->log_trace = [](const wchar_t *str) { g_video_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_video_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_video_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_video_logger->error(str); };
-        break;
-    case Plugin::Type::Audio:
-        init->log_trace = [](const wchar_t *str) { g_audio_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_audio_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_audio_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_audio_logger->error(str); };
-        break;
-    case Plugin::Type::Input:
-        init->log_trace = [](const wchar_t *str) { g_input_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_input_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_input_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_input_logger->error(str); };
-        break;
-    case Plugin::Type::RSP:
-        init->log_trace = [](const wchar_t *str) { g_rsp_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_rsp_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_rsp_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_rsp_logger->error(str); };
-        break;
-    }
-
-    event_fn(M64RRSpec::Event{.initiate = {
-                                  .type = M64RRSpec::Event::Type::Initiate,
-                                  .init = init,
-                              }});
-}
-
-void M64RRPlugin::deinitiate_dummy()
-{
-    if (g_main_ctx.core_ctx->vr_get_launched()) return;
-
-    auto event_fn = (M64RRSpec::PtrProcessEvent)GetProcAddress(m_module, "M64RRProcessEvent");
-    if (!event_fn) event_fn = [](auto) {};
-
-    event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+    m_initialized = true;
 }
 
 #undef LOOKUP_MUPENRR_FN

@@ -62,13 +62,7 @@ struct ZESpecFuncs
 class ZEPlugin;
 class M64RRPlugin;
 
-extern ZESpec::VideoPluginInfo dummy_video_info;
-extern ZESpec::AudioPluginInfo dummy_audio_info;
-extern ZESpec::InputPluginInfo dummy_control_info;
-extern ZESpec::RSPPluginInfo dummy_rsp_info;
-extern ZESpec::Controller dummy_controllers[4];
-extern uint8_t dummy_header[0x40];
-extern uint32_t dummy_dw;
+extern ZESpecFuncs g_plugin_funcs;
 extern ZESpec::VideoPluginInfo gfx_info;
 extern ZESpec::AudioPluginInfo audio_info;
 extern ZESpec::InputPluginInfo control_info;

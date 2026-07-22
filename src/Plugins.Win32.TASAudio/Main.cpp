@@ -108,9 +108,10 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 {
     switch (event.type)
     {
-    case M64RRSpec::Event::Type::Initiate: {
+    case M64RRSpec::Event::Type::Initiate:
         g_plugin = event.initiate.init;
-
+        break;
+    case M64RRSpec::Event::Type::RomOpened: {
         try
         {
             SDLAudio::Config cfg = read_config();
