@@ -27,7 +27,7 @@ bool cht_compile(std::string_view code, core_cheat &cheat)
 
     for (auto line : MiscHelpers::split_string(code, "\n"))
     {
-        if (line[0] == '$' || line[0] == '-' || line.size() < 13)
+        if (line.size() < 13 || line[0] == '$' || line[0] == '-')
         {
             g_core->log_info("[GS] Line skipped");
             continue;
