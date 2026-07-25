@@ -16,8 +16,10 @@
 #include <R4300/Tracelog.hpp>
 #if defined(_M_X64) || defined(__x86_64__)
 #include <R4300/x86_64/RegCache.hpp>
-#else
+#elif defined(_M_IX86) || defined(__i386__)
 #include <R4300/x86/RegCache.hpp>
+#elif defined(MUPEN64RR_ENABLE_DYNAREC)
+#error "No dynarec backend exists for this architecture; build with MUPEN64RR_ENABLE_DYNAREC=OFF."
 #endif
 #include <Alloc.hpp>
 
@@ -2841,21 +2843,15 @@ void init_block(int32_t *source, precomp_block *block)
      */
     invalid_code[block->start >> 12] = 0;
 
-    // Save emitter state before recursive init_block calls. init_block uses
-    // the file-scoped globals code_length, max_code_length and inst_pointer;
-    // the recursive calls will overwrite all three. We must restore them
-    // afterwards so that any subsequent emission into this block's buffer
-    // (there is none for the initial block, but jump_to_func re-enters
-    // init_block at runtime) uses the correct state.
+    // The recursive init_block calls below overwrite the emitter globals code_length,
+    // max_code_length and inst_pointer, so save them for the emission that follows
+    // (none for the initial block, but jump_to_func re-enters init_block at runtime).
     //
-    // IMPORTANT: we must save AND restore inst_pointer itself (not just
-    // *inst_pointer), because the recursive call repoints inst_pointer at
-    // the child's &childblock->code. Restoring *inst_pointer would write
-    // into the child's code field and corrupt it.
-    // These globals (code_length, max_code_length, inst_pointer) are only used
-    // and initialized on the dynarec path (see the `if (dynacore)` block above).
-    // In the cached/pure interpreter, inst_pointer is never set, so dereferencing
-    // *inst_pointer here would fault. Only save/restore when the dynarec is active.
+    // inst_pointer itself must be saved and restored, not just *inst_pointer: the
+    // recursive call repoints it at the child's &childblock->code, so restoring through
+    // it would write into the child's code field and corrupt it.
+    //
+    // Dynarec-only; the interpreters never set inst_pointer, so dereferencing it faults.
     int32_t saved_code_length = 0;
     int32_t saved_max_code_length = 0;
     unsigned char **saved_inst_pointer = NULL;

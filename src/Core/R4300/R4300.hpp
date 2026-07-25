@@ -57,7 +57,6 @@ extern uint32_t dynacore;
 extern uint32_t interpcore;
 extern uint32_t next_interrupt, CIC_Chip;
 extern int32_t rounding_mode, trunc_mode, round_mode, ceil_mode, floor_mode;
-extern uint32_t g_saved_mxcsr, g_scratch_mxcsr;
 extern uint32_t last_addr, interp_addr;
 extern char invalid_code[0x100000];
 extern uint32_t jump_to_address;

@@ -293,6 +293,8 @@ void C_ULE_D()
     PC++;
 }
 
+// Signaling comparisons, as in Cop1S.cpp: a NaN operand raises Invalid Operation here,
+// while the unordered half above just folds NaN into the comparison result.
 void C_SF_D()
 {
     if (g_core->cfg->float_exception_emulation &&

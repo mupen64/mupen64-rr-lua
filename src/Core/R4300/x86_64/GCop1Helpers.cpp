@@ -12,6 +12,10 @@
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/x86_64/Gcop1Helpers.hpp>
 
+uint32_t g_saved_mxcsr = 0, g_scratch_mxcsr = 0;
+
+const int32_t g_n64_rounding_modes[4] = {MUP_ROUND_NEAREST, MUP_ROUND_TRUNC, MUP_ROUND_CEIL, MUP_ROUND_FLOOR};
+
 static void patch_jump(uint32_t addr, uint32_t target)
 {
     int32_t diff = target - addr;

@@ -128,10 +128,16 @@ include(Catch)
 if(WIN32)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
-  # - disable Windows Data Execution Prevention (DEP)
   # - enable the program to use pointers larger than 2GB
   # - disable the generation of a manifest file (since it's pulled in internally via the resource script)
-  add_link_options(/DYNAMICBASE:NO /NXCOMPAT:NO /LARGEADDRESSAWARE /MANIFEST:NO)
+  add_link_options(/DYNAMICBASE:NO /LARGEADDRESSAWARE /MANIFEST:NO)
+
+  # Data Execution Prevention (DEP) is left enabled on 64-bit, where it can't be turned
+  # off anyway and where the x86_64 dynarec allocates its code buffers as executable. Only
+  # the 32-bit build opts out, as it has historically relied on that.
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    add_link_options(/NXCOMPAT:NO)
+  endif()
 
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)

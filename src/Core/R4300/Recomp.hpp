@@ -6,10 +6,21 @@
 
 #pragma once
 
+// Must match the backend CMake selects (see src/Core/CMakeLists.txt).
 #if defined(_M_X64) || defined(__x86_64__)
 #include <R4300/x86_64/Assemble.hpp>
-#else
+#elif defined(_M_IX86) || defined(__i386__)
 #include <R4300/x86/Assemble.hpp>
+#elif defined(MUPEN64RR_ENABLE_DYNAREC)
+#error "No dynarec backend exists for this architecture; build with MUPEN64RR_ENABLE_DYNAREC=OFF."
+#else
+// Interpreter-only build on a non-x86 host: nothing reads these fields, but
+// precomp_instr must still have a member of this type. Recomp.cpp does write
+// need_map unconditionally, so the field has to exist.
+typedef struct _reg_cache_struct
+{
+    int32_t need_map;
+} reg_cache_struct;
 #endif
 
 typedef struct _precomp_instr

@@ -293,6 +293,10 @@ void C_ULE_S()
     PC++;
 }
 
+// From here down are the *signaling* comparisons (condition bit 3 set): they raise Invalid
+// Operation on any NaN operand, quiet ones included, so they need this check. The unordered
+// half above only signals on a signaling NaN and just folds NaN into the result instead.
+// Gated on float_exception_emulation like every other FP-exception check (Cop1Helpers.hpp).
 void C_SF_S()
 {
     if (check_cop1_unusable()) return;

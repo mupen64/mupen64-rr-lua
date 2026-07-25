@@ -11,6 +11,7 @@
 #include <R4300/Recomp.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
+#include <R4300/x86_64/Gcop1Helpers.hpp>
 
 // CTC1 ported to native JIT: writes FCR31 + sets the SSE rounding mode (MXCSR), the x64
 // analogue of x86's fldcw path. (Was interpreted only because the old #else used x87 fldcw.)
@@ -100,35 +101,12 @@ void genctc1()
     and_eax_imm32(3);                        // EAX = FCR31 & 3 = N64 rounding mode
 
     // Keep the interpreter's rounding_mode global in sync (interpreter/savestate paths).
-    cmp_eax_imm32(0);
-    jne_rj(0);
-    int32_t jne0 = code_length - 1;
-    mov_m32_imm32((void *)&rounding_mode, (uintptr_t)MUP_ROUND_NEAREST);
-    jmp_imm_short(0);
-    int32_t done0 = code_length - 1;
-    rj_patch(jne0);
-
-    cmp_eax_imm32(1);
-    jne_rj(0);
-    int32_t jne1 = code_length - 1;
-    mov_m32_imm32((void *)&rounding_mode, (uintptr_t)MUP_ROUND_TRUNC);
-    jmp_imm_short(0);
-    int32_t done1 = code_length - 1;
-    rj_patch(jne1);
-
-    cmp_eax_imm32(2);
-    jne_rj(0);
-    int32_t jne2 = code_length - 1;
-    mov_m32_imm32((void *)&rounding_mode, (uintptr_t)MUP_ROUND_CEIL);
-    jmp_imm_short(0);
-    int32_t done2 = code_length - 1;
-    rj_patch(jne2);
-
-    mov_m32_imm32((void *)&rounding_mode, (uintptr_t)MUP_ROUND_FLOOR);
-
-    rj_patch(done0);
-    rj_patch(done1);
-    rj_patch(done2);
+    // MUP_ROUND_* are the impl-defined FE_* values, so a table is needed rather than
+    // arithmetic. The and above clamps EAX to 0..3 (zero-extending it into RAX), so the
+    // table covers every case and no bounds check is needed.
+    mov_reg64_imm64(EBX, (uintptr_t)g_n64_rounding_modes);
+    mov_reg32_preg32x4preg32(ECX, EAX, EBX); // ecx = g_n64_rounding_modes[mode]
+    mov_m32_reg32((void *)&rounding_mode, ECX);
 
     // Set MXCSR rounding (bits 13-14) from the N64 mode in EAX (analogue of x86's fldcw):
     // N64 {0=near,1=zero,2=+inf,3=-inf} -> MXCSR RC {0=near,3=zero,2=+inf,1=-inf} = (4-m)&3.

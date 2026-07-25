@@ -10,59 +10,35 @@
 #include <R4300/Recomp.hpp>
 #include <R4300/Recomph.hpp>
 #include <Alloc.hpp>
+#include <utility>
 
 // NOTE: dynarec isn't compatible with the game debugger
 
-// The dyna_jump thunk is a small piece of generated code that repoints the
-// call's return address to the dynarec target AND restores RSP.
+// dyna_jump enters the next block by generating a small thunk and redirecting a return
+// address at it, rather than jumping there itself.
 //
-// Situation before dyna_jump:
-//   - Recompiled code called some C function via call_reg64
-//   - call_reg64's prologue: push r11 (RSP now 0 mod 16)
-//   - call_reg64's call into the C function: RSP now 8 mod 16 (ABI-correct for callee)
-//   - dyna_jump is called from within that C call chain, again via call_reg64
+// It is reached from recompiled code through a chain of call_reg64s, each of which pushes
+// r11 in its prologue, so simply jumping to the target would leave RSP 8 bytes low. Instead
+// dyna_jump writes a thunk, points the outer call_reg64's return-address slot
+// (*return_address) at it, and returns normally. When that call_reg64's `ret` pops the
+// patched slot, control lands in the thunk with the C chain already unwound:
 //
-// Stack inside dyna_jump on entry:
-//   RSP = Y, Y%16==8 (callee view)
-//   [Y] = return address (into call_reg64's caller, i.e. the C function that called dyna_jump)
-//   [Y+8] = saved r11 (from that call_reg64's push r11) — note: my fixed call_reg64 does push r11 ONLY (no sub rsp,8)
-//   [Y+16] = stuff from the C function's frame
-//
-// After dyna_jump's C `ret`:
-//   Returns to the C caller. If we ALSO patched *return_address (from the OUTER call_reg64),
-//   the outer call's retaddr now points to the thunk.
-//
-// Thunk's job:
-//   add rsp, 8     — undo the push r11 from the outer call_reg64 (RSP is now caller's entry RSP)
+//   add rsp, 8      undo the outer call_reg64's `push r11`, restoring its entry RSP
 //   mov r11, target
-//   jmp r11        — enter target with restored RSP
+//   jmp r11
 //
-// For need_map=true: target is a jump_wrapper. It does NOT touch RSP (see
-//   build_wrapper); the `add rsp, 8` above already restored the entry RSP the
-//   wrapper expects. The wrapper jumps to the real instruction code.
-//
-// Thunk operation:
-//   Entered via CPU `ret` from C function. Wait, but this is generated dyna_jump, not a thunk!
-//   dyna_jump writes the thunk into jump_thunk_buf, patches *return_address = thunk_buf_addr,
-//   then does C ret. The C ret goes to the outer C caller (NOT the thunk).
-//   The OUTER call_reg64's ret eventually pops the patched retaddr = thunk_buf_addr.
-//   Control reaches the add_rsp_8 + jmp_target thunk.
+// For need_map the target is the instruction's jump_wrapper, which expects exactly that
+// entry RSP and does not touch RSP itself (see build_wrapper).
 
-// Thunk slots are handed out from a single pre-allocated executable pool that
-// rotates. The previous implementation called malloc_exec(64) on EVERY dyna_jump,
-// which on Windows maps to VirtualAlloc(MEM_RESERVE|MEM_COMMIT): each call leaked
-// a 64KB address-space reservation + a committed page and was never freed (except
-// at shutdown). dyna_jump runs for every register-cache-mapped jump — millions of
-// times — so the process eventually exhausts commit/address space, VirtualAlloc
-// returns NULL, and the very first byte-store in dyna_jump faults on a null pointer
-// (write to address 0).
+// Thunk slots come from one pre-allocated executable pool, handed out round-robin.
+// Allocating per call instead (malloc_exec -> VirtualAlloc MEM_RESERVE|MEM_COMMIT) leaks a
+// 64KB reservation every time and is never freed before shutdown; since dyna_jump runs for
+// every register-cache-mapped jump, address space runs out, VirtualAlloc returns NULL and
+// the first byte-store below faults on a null pointer.
 //
-// A thunk is consumed almost immediately: dyna_jump writes it, patches the outer
-// call_reg64's return-address slot, and returns; the thunk executes as soon as that
-// call_reg64's `ret` pops the patched slot while the C call chain unwinds. No other
-// dyna_jump can run in that window (we are returning up the stack, not entering new
-// recompiled jumps), so slots can be safely reused. The rotating pool keeps a large
-// margin (NUM_SLOTS) purely as defense-in-depth against any unexpected reentrancy.
+// Reuse is safe because a thunk is consumed almost immediately: it runs as soon as the
+// patched `ret` pops it, while the call chain is unwinding, and no other dyna_jump can run
+// in that window. NUM_SLOTS is oversized purely as a guard against unexpected reentrancy.
 static constexpr size_t THUNK_SLOT_SIZE = 64; // max thunk is 33 bytes
 static constexpr size_t THUNK_NUM_SLOTS = 1024;
 
@@ -165,8 +141,49 @@ void dyna_jump()
     *return_address = (uintptr_t)thunk_addr;
 }
 
-static CONTEXT g_dyna_ctx;
-static volatile bool g_dyna_stopped;
+// dyna_stop() jumps out of recompiled code back into dyna_start(), over however many JIT
+// and C frames are in between. Elsewhere that's setjmp/longjmp, which just restores the
+// saved registers and abandons those frames.
+//
+// MSVC's x64 longjmp can't be used: it unwinds, handing the saved frame to RtlUnwindEx,
+// which walks the SEH unwind tables. Recompiled code and the thunks above register no
+// unwind data, so RtlVirtualUnwind faults on the first one it reaches (zeroing the
+// jmp_buf's frame field doesn't avoid it). RtlRestoreContext restores registers directly,
+// without unwinding, which is the semantics wanted here.
+//
+// Either way nothing is cleaned up, so anything the dynarec calls out to must not throw.
+namespace
+{
+#ifdef _WIN32
+CONTEXT g_dyna_ctx;
+#else
+jmp_buf g_dyna_ctx;
+#endif
+
+// RtlCaptureContext, unlike setjmp, gives no way to tell a resume apart from the
+// initial call, so the distinction is carried in memory. Written before the context is
+// restored, hence volatile.
+volatile bool g_dyna_stopped;
+} // namespace
+
+// Saves the resume point. Like setjmp, this returns twice: false on the initial call and
+// true once dyna_restore_context() jumps back to it. Must be a macro for the same reason
+// setjmp is one — the save has to happen in the caller's own frame.
+#ifdef _WIN32
+#define dyna_save_context() (RtlCaptureContext(&g_dyna_ctx), (bool)g_dyna_stopped)
+#else
+#define dyna_save_context() (setjmp(g_dyna_ctx) != 0)
+#endif
+
+[[noreturn]] static void dyna_restore_context() noexcept
+{
+#ifdef _WIN32
+    RtlRestoreContext(&g_dyna_ctx, nullptr);
+    std::unreachable(); // RtlRestoreContext isn't declared noreturn, but never comes back
+#else
+    longjmp(g_dyna_ctx, 1);
+#endif
+}
 
 void dyna_start(void (*code)())
 {
@@ -174,9 +191,8 @@ void dyna_start(void (*code)())
     g_core->callbacks.core_executing_changed(core_executing);
 
     g_dyna_stopped = false;
-    RtlCaptureContext(&g_dyna_ctx);
 
-    if (!g_dyna_stopped)
+    if (!dyna_save_context())
     {
         code();
     }
@@ -185,5 +201,5 @@ void dyna_start(void (*code)())
 void dyna_stop()
 {
     g_dyna_stopped = true;
-    RtlRestoreContext(&g_dyna_ctx, nullptr);
+    dyna_restore_context();
 }
