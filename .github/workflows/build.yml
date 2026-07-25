@@ -79,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: mupen-debug-nightly
-          path: build/out
+          path: build/${{ matrix.arch }}/out
           retention-days: 14
 
   build-release-nightly:
@@ -147,14 +147,14 @@ jobs:
       - name: Delete PDB files
         shell: powershell
         run: |
-          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
+          Get-ChildItem -Path build/${{ matrix.arch }}-release/out -Filter *.pdb -Recurse -File |
             Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
           name: mupen-release-nightly
-          path: build/out
+          path: build/${{ matrix.arch }}-release/out
           retention-days: 14
 
   build-release-stable:
@@ -210,12 +210,12 @@ jobs:
       - name: Delete PDB files
         shell: powershell
         run: |
-          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
+          Get-ChildItem -Path build/${{ matrix.arch }}-release/out -Filter *.pdb -Recurse -File |
             Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
           name: mupen-release-stable
-          path: build/out
+          path: build/${{ matrix.arch }}-release/out
           retention-days: 14
