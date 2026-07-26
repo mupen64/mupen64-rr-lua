@@ -112,7 +112,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE mod
     auto plugin = std::make_unique<M64RRPlugin>();
 
     plugin->m_path = path;
-    plugin->m_name = std::format("{} (✅)", metadata.name);
+    plugin->m_name = metadata.name;
     switch (metadata.type)
     {
     case M64RRSpec::PluginType::Video:
