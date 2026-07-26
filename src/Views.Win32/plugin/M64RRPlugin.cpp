@@ -27,12 +27,6 @@ static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
 static M64RRSpec::PtrProcessEvent s_mupenrr_rsp_event_fn = nullptr;
 static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
 
-M64RRSpec::PluginInit s_dummy_video_init;
-M64RRSpec::PluginInit s_dummy_audio_init;
-M64RRSpec::PluginInit s_dummy_input_init;
-M64RRSpec::PluginInit s_dummy_rsp_init;
-static uint8_t s_dummy_block[4096]{};
-
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
 
