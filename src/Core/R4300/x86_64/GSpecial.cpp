@@ -178,11 +178,9 @@ void genjr()
     mov_reg64_imm64(EAX, (uintptr_t)jump_to_func);
     call_reg64(EAX);
 
-    // Out-of-block target: jump_to_func has set up the deferred redirect. Skip the
-    // in-block address computation below — for an out-of-page target it would build
-    // a bogus local_addr from (target - dst_block->start) (a huge/negative index)
-    // and jump into uncompiled, zeroed code. Mirror genj_out: after the call, leave
-    // the sequence entirely.
+    // Out-of-block target: jump_to_func set up the deferred redirect. Skip the in-block address
+    // computation below (an out-of-page target would build a bogus local_addr and jump into
+    // uncompiled/zeroed code). Mirrors genj_out: leave the sequence after the call.
     jmp_imm(0);
     int32_t jr_skip = code_length - 4;
 
@@ -196,11 +194,8 @@ void genjr()
     shr_reg32_imm8(EAX, 2);
     mul_m32((uint32_t *)(&precomp_instr_size));
 
-    // x64: dst_block->block and dst_block->code are 64-bit pointers. The old
-    // x86 tail folded them into 32-bit immediates / 32-bit memory operands,
-    // truncating the high half so the computed jump target landed in a random
-    // low (non-executable) address (crash "execute non-executable address").
-    // Compute the full 64-bit targets instead.
+    // x64: block/code are 64-bit pointers; the old x86 tail truncated them to 32 bits, so the
+    // computed target landed in a low non-executable address (crash). Compute full 64-bit targets.
 
     // RDX = byte offset into block[] (32-bit mul zeroes the high half of RDX/RAX)
     mov_reg32_reg32(EDX, EAX);
@@ -221,11 +216,8 @@ void genjr()
     mov_reg64_imm64(EAX, (uintptr_t)dst_block->block + diff);      // 10
     add_reg64_reg64(EAX, EDX);                                     // 3  -> RAX = &block[index].local_addr
     mov_reg64_preg64(EAX, EAX);                                    // 3  -> RAX = local_addr
-    // Read dst_block->code from memory at RUNTIME, not as a baked imm64. The
-    // block's code buffer is reallocated (moved) when it grows, so an absolute
-    // base captured at generation time goes stale: the JR would jump to
-    // OLD_code + local_addr, landing in the abandoned pre-grow buffer (zeros).
-    // The ADDRESS of the code field is stable, so load through it live.
+    // Read dst_block->code at RUNTIME, not a baked imm64: the code buffer moves when it grows, so
+    // a captured base goes stale (jump into the abandoned pre-grow buffer). The field ADDRESS is stable.
     mov_reg64_imm64(ECX, (uintptr_t)&dst_block->code);           // 10 -> RCX = &block->code
     mov_reg64_preg64(ECX, ECX);                                  // 3  -> RCX = block->code (live)
     add_reg64_reg64(EAX, ECX);                                   // 3  -> RAX = code + local_addr
@@ -283,11 +275,9 @@ void genjalr()
     mov_reg64_imm64(EAX, (uintptr_t)jump_to_func);
     call_reg64(EAX);
 
-    // Out-of-block target: jump_to_func has set up the deferred redirect. Skip the
-    // in-block address computation below — for an out-of-page target it would build
-    // a bogus local_addr from (target - dst_block->start) (a huge/negative index)
-    // and jump into uncompiled, zeroed code. Mirror genj_out: after the call, leave
-    // the sequence entirely.
+    // Out-of-block target: jump_to_func set up the deferred redirect. Skip the in-block address
+    // computation below (an out-of-page target would build a bogus local_addr and jump into
+    // uncompiled/zeroed code). Mirrors genj_out: leave the sequence after the call.
     jmp_imm(0);
     int32_t jr_skip = code_length - 4;
 

@@ -166,6 +166,47 @@ static void mov_r11_imm64(uintptr_t imm64)
     put64(imm64);
 }
 
+// Base kept in r15 across all recompiled code (set once by the dyna_start trampoline). Anchored at
+// a Core-module static so fixed globals sit within a signed-32-bit displacement, letting memory
+// operands use [r15 + disp32] (1 instruction) instead of mov r11, imm64 + [r11] (2, +6 bytes).
+static char g_dynarec_base_anchor;
+uintptr_t g_dynarec_base = (uintptr_t)&g_dynarec_base_anchor;
+
+// Emit `<opcode> reg, [r15 + disp32]` for fixed address `addr` (p66 = 0x66 prefix, rex_w = REX.W;
+// REX.B always set for r15). Returns false WITHOUT emitting if `addr` is out of signed-32-bit range
+// -> caller falls back to mov_r11_imm64 (correct for any target).
+static bool try_r15_mem(const void *addr, int32_t reg, bool rex_w, uint8_t opcode, bool p66)
+{
+    int64_t disp = (int64_t)(uintptr_t)addr - (int64_t)g_dynarec_base;
+    if (disp < INT32_MIN || disp > INT32_MAX)
+        return false;
+    if (p66)
+        put8(0x66);
+    put8(0x41 | (rex_w ? 0x08 : 0) | (((reg >> 3) & 1) << 2)); // REX.B (r15) [+ W] [+ R]
+    put8(opcode);
+    put8(0x80 | ((reg & 7) << 3) | 0x07);                      // mod=10, reg, rm=111 (r15+disp32)
+    put32((uint32_t)(int32_t)disp);
+    return true;
+}
+
+// Like try_r15_mem but scaled-indexed: `<opcode> reg, [r15 + index*scale + disp32]` (scale = SIB
+// field: 0=x1, 3=x8). Returns false (-> fallback) if addr is out of range or index is RSP (4),
+// whose SIB encoding means "no index".
+static bool try_r15_mem_idx(const void *addr, int32_t reg, int32_t index, uint8_t scale, bool rex_w, uint8_t opcode)
+{
+    if (index == 4) // ESP/RSP in the SIB index field means "no index" — not usable here
+        return false;
+    int64_t disp = (int64_t)(uintptr_t)addr - (int64_t)g_dynarec_base;
+    if (disp < INT32_MIN || disp > INT32_MAX)
+        return false;
+    put8(0x41 | (rex_w ? 0x08 : 0) | (((index >> 3) & 1) << 1) | (((reg >> 3) & 1) << 2)); // REX.B [+W][+X][+R]
+    put8(opcode);
+    put8(0x80 | ((reg & 7) << 3) | 0x04);           // mod=10, reg, rm=100 (SIB follows)
+    put8((scale << 6) | ((index & 7) << 3) | 0x07); // scale, index, base=111 (r15)
+    put32((uint32_t)(int32_t)disp);
+    return true;
+}
+
 void push_reg32(int32_t reg32)
 {
     put8(0x50 + reg32);
@@ -178,12 +219,15 @@ void pop_reg32(int32_t reg32)
 
 void mov_eax_memoffs32(void *_memoffs32)
 {
+    if (try_r15_mem(_memoffs32, EAX, false, 0x8B, false)) return;
     mov_r11_imm64((uintptr_t)(_memoffs32));
     put8(0x41);
     put8(0x8B);
     put8(0x03);
 }
 
+// NOT converted to [r15+disp32]: its size is baked into hardcoded jump displacements
+// (gencheck_interrupt_reg's ja_rj(70)). Fixed-size until those use dynamic patching.
 void mov_memoffs32_eax(void *_memoffs32)
 {
     mov_r11_imm64((uintptr_t)(_memoffs32));
@@ -263,6 +307,7 @@ void mov_m16_reg16(uint16_t *m16, int32_t reg16)
 
 void cmp_reg32_m32(int32_t reg32, void *_m32)
 {
+    if (try_r15_mem(_m32, reg32, false, 0x3B, false)) return;
     mov_r11_imm64((uintptr_t)(_m32));
     put8(0x41);
     put8(0x3B);
@@ -321,10 +366,13 @@ void test_reg32_imm32(int32_t reg32, uint32_t imm32)
 
 void test_m32_imm32(void *_m32, uint32_t imm32)
 {
-    mov_r11_imm64((uintptr_t)(_m32));
-    put8(0x41);
-    put8(0xF7);
-    put8(0x03);
+    if (!try_r15_mem(_m32, 0, false, 0xF7, false))
+    {
+        mov_r11_imm64((uintptr_t)(_m32));
+        put8(0x41);
+        put8(0xF7);
+        put8(0x03);
+    }
     put32(imm32);
 }
 
@@ -342,6 +390,7 @@ void cmp_al_imm8(unsigned char imm8)
 
 void add_m32_reg32(void *_m32, int32_t reg32)
 {
+    if (try_r15_mem(_m32, reg32, false, 0x01, false)) return;
     mov_r11_imm64((uintptr_t)(_m32));
     put8(0x41);
     put8(0x01);
@@ -350,6 +399,7 @@ void add_m32_reg32(void *_m32, int32_t reg32)
 
 void sub_reg32_m32(int32_t reg32, void *_m32)
 {
+    if (try_r15_mem(_m32, reg32, false, 0x2B, false)) return;
     mov_r11_imm64((uintptr_t)(_m32));
     put8(0x41);
     put8(0x2B);
@@ -628,10 +678,13 @@ void inc_reg32(int32_t reg32)
 
 void or_m32_imm32(void *_m32, uint32_t imm32)
 {
-    mov_r11_imm64((uintptr_t)(_m32));
-    put8(0x41);
-    put8(0x81);
-    put8(0x0B);
+    if (!try_r15_mem(_m32, 1, false, 0x81, false)) // /1 = OR
+    {
+        mov_r11_imm64((uintptr_t)(_m32));
+        put8(0x41);
+        put8(0x81);
+        put8(0x0B);
+    }
     put32(imm32);
 }
 
@@ -665,10 +718,13 @@ void and_reg32_reg32(uint32_t reg1, uint32_t reg2)
 
 void and_m32_imm32(void *_m32, uint32_t imm32)
 {
-    mov_r11_imm64((uintptr_t)(_m32));
-    put8(0x41);
-    put8(0x81);
-    put8(0x23);
+    if (!try_r15_mem(_m32, 4, false, 0x81, false)) // /4 = AND
+    {
+        mov_r11_imm64((uintptr_t)(_m32));
+        put8(0x41);
+        put8(0x81);
+        put8(0x23);
+    }
     put32(imm32);
 }
 
@@ -830,6 +886,8 @@ void cmp_rax_imm64(uintptr_t imm64)
     cmp_rax_r11();
 }
 
+// NOT converted to [r15+disp32]: its 17-byte size is baked into hardcoded jump displacements
+// (gencheck_interrupt_out's ja_rj(74), GRegImm *_test jge/jl_rj(19)+jmp_imm_short(17)).
 void mov_m32_imm32(void *_m32, uint32_t imm32)
 {
     mov_r11_imm64((uintptr_t)(_m32));
@@ -839,6 +897,8 @@ void mov_m32_imm32(void *_m32, uint32_t imm32)
     put32(imm32);
 }
 
+// NOT converted to [r15+disp32]: its 23-byte size is baked into hardcoded jump displacements
+// (gencheck_interrupt/_out/_reg). Fixed-size until those use dynamic patching.
 void mov_m64_imm64(void *_m64, uintptr_t imm64)
 {
     mov_r11_imm64((uintptr_t)(_m64));
@@ -873,6 +933,7 @@ void cbw()
 
 void mov_m32_reg32(void *_m32, uint32_t reg32)
 {
+    if (try_r15_mem(_m32, reg32, false, 0x89, false)) return;
     mov_r11_imm64((uintptr_t)(_m32));
     put8(0x41);
     put8(0x89);
@@ -882,6 +943,7 @@ void mov_m32_reg32(void *_m32, uint32_t reg32)
 // 64-bit store: mov [mem], reg64 (full 64-bit register save)
 void mov_m64_reg64(void *_m64, uint32_t reg64)
 {
+    if (try_r15_mem(_m64, reg64, true, 0x89, false)) return;
     mov_r11_imm64((uintptr_t)(_m64));
     // REX.W=1 for 64-bit operand, REX.B=1 for r11 base
     put8(0x49);                          // REX.WB
@@ -892,6 +954,7 @@ void mov_m64_reg64(void *_m64, uint32_t reg64)
 // 64-bit load: mov reg64, [mem] (full 64-bit register load)
 void mov_reg64_m64(uint32_t reg64, void *_m64)
 {
+    if (try_r15_mem(_m64, reg64, true, 0x8B, false)) return;
     mov_r11_imm64((uintptr_t)(_m64));
     // REX.W=1 for 64-bit operand, REX.B=1 for r11 base
     put8(0x49);                          // REX.WB
@@ -925,42 +988,24 @@ static void call_reg64_impl(uint32_t reg32)
 
 void call_reg64(uint32_t reg32)
 {
-    // x64 ABI: RSP must be 16-byte aligned before a CALL instruction so the
-    // callee sees RSP%16==8 after CALL pushes the return address.
+    // x64 ABI needs RSP%16==0 before CALL (callee then sees %16==8). This code runs at RSP%16==8
+    // (from the NOTCOMPILED stub or prior dynarec code), so `push r11` both saves r11 and aligns.
+    // We publish where CALL writes its return address (RSP-8) to the global return_address so
+    // dyna_jump can repoint it; a normal return just pops r11. rcx is scratch (volatile, never the
+    // target reg); r10 is the reserved lookup-table base, untouched here.
     //
-    // This emitted code runs with RSP%16==8 on entry (both from the NOTCOMPILED
-    // stub and from previously-executed dynarec code). push r11 both saves the
-    // caller's r11 and aligns RSP from 8mod16 to 0mod16, so the subsequent CALL
-    // lands the callee at RSP%16==8 as required by the ABI.
-    //
-    // We also publish the address where CALL will write its return address
-    // (8 bytes below the push, i.e. RSP-8) to the global return_address so
-    // dyna_jump can repoint it. After a normal return we just pop r11.
-    //
-    // We use rcx as scratch for the return-address slot computation.
-    // R10 is reserved for the dynarec's lookup-table base pointer
-    // (see mov_reg32_preg32x4_r10) and must not be clobbered here.
-    // RCX is caller-saved (volatile) and never used as the call_reg64
-    // target register (callers always pass EAX or EBX), so it is safe.
-    //
-    // Stack layout (entry RSP%16==8, X := entry RSP):
-    //   push r11           ; RSP = X-8, RSP%16==0 (save r11 + align for CALL)
-    //   lea rcx, [rsp - 8] ; rcx = X-16, where CALL will store the retaddr
-    //   mov r11, imm64(&return_address)
-    //   mov [r11], rcx     ; publish the retaddr slot location
-    //   call reg32         ; RSP = X-16 inside callee (ABI-correct)
-    // normal return:
-    //   pop r11            ; RSP = X (restored)
+    // Stack layout (X := entry RSP, %16==8):
+    //   push r11           ; RSP = X-8  (save r11 + align)
+    //   lea rcx, [rsp-8]   ; rcx = X-16 (retaddr slot)
+    //   mov r11,&return_address ; mov [r11],rcx  (publish slot)
+    //   call reg32         ; RSP = X-16 in callee (ABI-correct)
+    //   (normal return) pop r11  ; RSP = X
 
-    // push r11 (REX.B 0x53)
+    // push r11 (41 53)
     put8(0x41);
     put8(0x53);
 
-    // lea rcx, [rsp - 8] -> rcx = address where CALL will write the retaddr
-    // REX.W=1 (64-bit operand) => 0x48
-    // opcode 0x8D (lea)
-    // ModR/M: mod=01, reg=001 (rcx), r/m=100 (SIB)
-    // SIB=0x24 (scale=00, index=100 none, base=100 RSP), disp8=0xF8 (-8)
+    // lea rcx, [rsp-8] (48 8D 4C 24 F8) -> retaddr slot
     put8(0x48);
     put8(0x8D);
     put8(0x4C);
@@ -970,18 +1015,15 @@ void call_reg64(uint32_t reg32)
     // mov r11, imm64(&return_address)
     mov_r11_imm64((uintptr_t)&return_address);
 
-    // mov [r11], rcx   (publish the retaddr-slot address)
-    // REX.W=1, REX.B=1 (r11 dest) => 0x49
-    // opcode 0x89, ModR/M: mod=00, reg=001 (rcx), r/m=011 (r11 with B)
+    // mov [r11], rcx (49 89 0B) -- publish the slot
     put8(0x49);
     put8(0x89);
     put8(0x0B);
 
-    // call reg64 (64-bit operand using REX.B prefix)
+    // call reg64
     call_reg64_impl(reg32);
 
-    // restore r11
-    // pop r11 (REX.B 0x5B)
+    // pop r11 (41 5B)
     put8(0x41);
     put8(0x5B);
 }
@@ -1126,6 +1168,7 @@ void adc_reg32_reg32(uint32_t reg1, uint32_t reg2)
 
 void add_reg32_m32(uint32_t reg32, void *_m32)
 {
+    if (try_r15_mem(_m32, reg32, false, 0x03, false)) return;
     mov_r11_imm64((uintptr_t)(_m32));
     put8(0x41);
     put8(0x03);
@@ -1134,6 +1177,7 @@ void add_reg32_m32(uint32_t reg32, void *_m32)
 
 void adc_reg32_m32(uint32_t reg32, void *_m32)
 {
+    if (try_r15_mem(_m32, reg32, false, 0x13, false)) return;
     mov_r11_imm64((uintptr_t)(_m32));
     put8(0x41);
     put8(0x13);
@@ -1195,9 +1239,11 @@ void mov_reg32_preg32pimm32(int32_t reg1, int32_t reg2, uint32_t imm32)
     put32(imm32);
 }
 
-// x64: mov reg1, [r11] — after mov_r11_imm64(addr64) + add r11, reg2
+// x64: mov reg1, [addr64 + reg2]. Fast path: mov reg1, [r15 + reg2 + disp32] (one instruction,
+// the base is a fixed array like rdram). Fallback: mov_r11_imm64(addr64) + add r11, reg2 + [r11].
 void mov_reg32_preg32pimm32_r11(int32_t reg1, int32_t reg2, uintptr_t addr64)
 {
+    if (try_r15_mem_idx((const void *)addr64, reg1, reg2, 0 /*x1*/, false, 0x8B)) return;
     mov_r11_imm64(addr64);
     // add r11, reg2 (64-bit): opcode 0x01 (ADD r/m64, r64) with r/m=r11, reg=reg2.
     // REX.W=1, REX.B=1 (r/m is r11), REX.R = high bit of reg2. The old encoding
@@ -1244,6 +1290,9 @@ void mov_reg32_preg32x4pimm32(int32_t reg1, int32_t reg2, uint32_t imm32)
 // the table base between mov_reg32_preg32x4_r10 and the subsequent CALL.
 void mov_reg32_preg32x4_r10(int32_t dst_reg, int32_t index_reg, uint64_t func_ptr)
 {
+    // Fast path: mov dst_reg, [r15 + index_reg*8 + disp32] (one instruction; table is a fixed array).
+    if (try_r15_mem_idx((const void *)func_ptr, dst_reg, index_reg, 3 /*x8*/, true, 0x8B)) return;
+
     // mov r10, imm64  (REX.WB=1: W=1 for 64-bit, B=1 extends reg field to R10) => 0x49, opcode 0xB8+2=0xBA)
     put8(0x49);
     put8(0xBA);
@@ -1286,6 +1335,9 @@ void cmp_reg32_prx4_r10(int32_t index_reg, uint64_t func_ptr)
 // into R10 then emit [index*4+R10] indexed dereference — same as mov_reg32_preg32x4_r10.
 void mov_reg32_preg32x4pimm64(int32_t dst_reg, int32_t index_reg, uint64_t ptr)
 {
+    // Fast path: mov dst_reg, [r15 + index_reg*8 + disp32] (one instruction; table is a fixed array).
+    if (try_r15_mem_idx((const void *)ptr, dst_reg, index_reg, 3 /*x8*/, true, 0x8B)) return;
+
     // mov r10, imm64  (REX.WB=1 => 0x49, opcode 0xB8+2=0xBA)
     put8(0x49);
     put8(0xBA);
@@ -1412,6 +1464,7 @@ void shl_reg32_imm8(uint32_t reg32, unsigned char imm8)
 
 void mov_reg32_m32(uint32_t reg32, void *_m32)
 {
+    if (try_r15_mem(_m32, reg32, false, 0x8B, false)) return;
     mov_r11_imm64((uintptr_t)(_m32));
     put8(0x41);
     put8(0x8B);

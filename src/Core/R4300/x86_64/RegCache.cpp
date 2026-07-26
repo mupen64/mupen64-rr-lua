@@ -771,18 +771,10 @@ void build_wrapper(precomp_instr *instr, unsigned char *code, precomp_block *blo
     int32_t i;
     int32_t j = 0;
 
-    // x64 wrapper: reload needed registers, then jump to block->code + local_addr.
-    // We use R10 as scratch for memory loads and R11 for the jump target.
-    //
-    // The wrapper must NOT touch RSP. It is always entered via a `jmp` with the
-    // stack pointer already at the block's canonical entry value (RSP%16==8):
-    //   - the passe2 need_map stub jumps here (mov rdx, wrapper; jmp rdx),
-    //   - genjr/genjalr need_map fast paths jump here (jmp rax),
-    //   - the dyna_jump need_map thunk already does `add rsp, 8` to undo the
-    //     outer call_reg64's push r11 before jumping here.
-    // A `sub rsp, 8` here would misalign the stack by 8 for the whole block, so
-    // that the next call_reg64 lands its C callee at RSP%16==0 — crashing any
-    // callee that uses 16-byte-aligned (AVX) stack spills, e.g. std::format.
+    // Reload needed registers, then jump to block->code + local_addr (R10 scratch, R11 target).
+    // Must NOT touch RSP: always entered via `jmp` at the block's canonical RSP%16==8 (passe2 stub,
+    // genjr/jalr fast paths, and the dyna_jump thunk which already did `add rsp,8`). A `sub rsp,8`
+    // here would misalign the whole block and crash AVX-aligned C callees (e.g. std::format).
 
     for (i = 0; i < 8; i++)
     {
@@ -801,15 +793,9 @@ void build_wrapper(precomp_instr *instr, unsigned char *code, precomp_block *blo
         }
     }
 
-    // Compute the jump target at RUNTIME from the live struct fields, rather
-    // than baking an absolute (block->code + local_addr) here. That absolute
-    // value goes stale: block->code is realloc'd (moved) whenever the code
-    // buffer grows (grow_buffer/realloc_exec), and instr->local_addr is
-    // recomputed on every re-recompilation. A baked target then points into a
-    // superseded (deferred-freed) buffer at a stale offset — landing in old or
-    // zeroed memory. The *addresses* of block->code and instr->local_addr are
-    // stable (both structs persist for the block's lifetime), so we load
-    // through them each time the wrapper runs. R10 is scratch; R11 is target.
+    // Compute the target at RUNTIME from the live fields, not a baked absolute: block->code moves
+    // on realloc and local_addr is recomputed on re-recompile, so a baked value would go stale.
+    // Their *addresses* are stable, so load through them each run. R10 scratch, R11 target.
 
     // mov r10, imm64(&block->code)
     code[j++] = 0x49;

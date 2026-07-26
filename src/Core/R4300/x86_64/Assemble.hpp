@@ -39,9 +39,16 @@ typedef struct _reg_cache_struct
     void *needed_registers[8];
     unsigned char jump_wrapper[256];
     int32_t need_cop1_check;
+    // dyna_jump thunk cache (see RJump.cpp): generated once per instruction and reused.
+    // jump_thunk_need_map records the need_map path it was built for (regenerate on flip).
+    unsigned char *jump_thunk;
+    int32_t jump_thunk_need_map;
 } reg_cache_struct;
 
 extern int32_t branch_taken;
+
+// Base kept in r15 across recompiled code (see Assemble.cpp / dyna_start trampoline). Runtime const.
+extern uintptr_t g_dynarec_base;
 
 void debug();
 

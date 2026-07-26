@@ -13,10 +13,9 @@
 #include <R4300/Cop1Helpers.hpp>
 #include <R4300/Ops.hpp>
 
-// FP JIT port: JITed: ADD/SUB/MUL/DIV/SQRT_D, ABS/NEG/MOV_D (integer bit ops), all
-// C.cond.D compares, CVT_S_D. The float->int conversions remain interpreted (INTERPRET_* below).
-// All COP1 .D conversions now ported to native SSE (cvt*2si, with MXCSR rounding-mode
-// swap for round/ceil/floor). Bit-exact with the interpreter.
+// FP JIT port (bit-exact with the interpreter): all COP1 .D ops are SSE-native — ADD/SUB/MUL/DIV,
+// SQRT, ABS/NEG/MOV (integer bit ops), all C.cond.D compares, CVT_S_D, and the float->int
+// conversions (cvt*2si, MXCSR swap for round/ceil/floor). INTERPRET_* left commented out below.
 // #define INTERPRET_ROUND_L_D
 // #define INTERPRET_TRUNC_L_D
 // #define INTERPRET_CEIL_L_D
@@ -27,11 +26,7 @@
 // #define INTERPRET_FLOOR_W_D
 // #define INTERPRET_CVT_W_D
 // #define INTERPRET_CVT_L_D
-// All C.cond.D compares (non-signaling + signaling) ported to SSE below.
-
-// (Removed the now-unused x87 conversion-validity helpers gencheck_eax_valid /
-//  gencheck_result_valid / gencheck_result_valid_s: every conversion now uses the SSE
-//  gencheck_input_d/output_d.)
+// Signaling C.cond.D compares raise fail_float_input on NaN, gated on float_exception_emulation.
 
 // --- SSE double-precision compares (C.cond.D), non-signaling family ---
 static void gen_fcr31_set_c() { or_m32_imm32((void *)&FCR31, 0x800000); }

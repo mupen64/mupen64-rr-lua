@@ -1822,10 +1822,8 @@ inline void put8gr(unsigned char octet)
     code_length++;
     if (code_length == max_code_length)
     {
-        // Must use realloc_exec, not plain realloc: the buffer was allocated via
-        // malloc_exec (VirtualAlloc, PAGE_EXECUTE_READWRITE). Plain realloc would
-        // move it to non-executable heap. Copy the full old allocation so the
-        // buffer tail is preserved (see grow_buffer in Assemble.cpp).
+        // realloc_exec (not plain realloc): the buffer is executable (malloc_exec/VirtualAlloc);
+        // plain realloc would move it to non-executable heap. See grow_buffer in Assemble.cpp.
         size_t old_size = max_code_length;
         max_code_length += JUMP_TABLE_SIZE;
         *inst_pointer = (unsigned char *)realloc_exec(*inst_pointer, old_size, max_code_length);

@@ -13,11 +13,10 @@
 #include <R4300/Cop1Helpers.hpp>
 #include <R4300/Ops.hpp>
 
-// FP JIT port: SSE-native ops have their INTERPRET_* removed. JITed: ADD/SUB/MUL/DIV_S,
-// ABS/NEG/MOV_S (integer bit ops), all C.cond.S compares, CVT_D_S, SQRT_S, and the
-// float->int conversions (all their INTERPRET_* are commented out below).
-// All COP1 .S conversions now ported to native SSE (cvt*2si / cvtsi2* / sqrtsd,
-// with MXCSR rounding-mode swap for round/ceil/floor). Bit-exact with the interpreter.
+// FP JIT port (bit-exact with the interpreter): all COP1 .S ops are SSE-native — ADD/SUB/MUL/DIV,
+// ABS/NEG/MOV (integer bit ops), all C.cond.S compares, CVT_D_S, SQRT, and the float->int
+// conversions (cvt*2si / cvtsi2* / sqrtsd, MXCSR swap for round/ceil/floor). INTERPRET_* left
+// commented out below.
 // #define INTERPRET_SQRT_S
 // #define INTERPRET_ROUND_L_S
 // #define INTERPRET_TRUNC_L_S
@@ -29,11 +28,7 @@
 // #define INTERPRET_FLOOR_W_S
 // #define INTERPRET_CVT_W_S
 // #define INTERPRET_CVT_L_S
-// All C.cond.S compares (non-signaling + signaling) ported to SSE below.
-// Signaling ones raise fail_float_input on NaN, gated on float_exception_emulation.
-
-// (Removed the now-unused x87 conversion-validity helpers gencheck_eax_valid /
-//  gencheck_result_valid: every conversion now uses the SSE gencheck_input_s/output_s.)
+// Signaling C.cond.S compares raise fail_float_input on NaN, gated on float_exception_emulation.
 
 // --- SSE single-precision compares (C.cond.S), non-signaling family ---
 // ucomiss sets: unordered => PF=1(ZF=ZF=CF=1); ordered less => CF=1; equal => ZF=1.
