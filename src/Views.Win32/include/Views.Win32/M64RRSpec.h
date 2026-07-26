@@ -136,6 +136,8 @@ extern "C"
         Platform platform;
         WindowHandle main_window;
 
+        // TODO: just a core_ctx pointer instead...
+
         uint8_t *rom;
         uint8_t *rdram;
         uint8_t *dmem;
