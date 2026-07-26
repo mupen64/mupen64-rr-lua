@@ -223,7 +223,9 @@ extern "C"
     union Event {
         enum class Type : uint8_t
         {
-            // The plugin is being initialized. The valid field is `initiate`.
+            // The plugin is being initialized.
+            // This event may be sent multiple times, and it's recommended to only store the init pointer when handling this event.
+            // The valid field is `initiate`.
             Initiate,
 
             // The plugin is being shut down. There will be no more calls to it after this event.
