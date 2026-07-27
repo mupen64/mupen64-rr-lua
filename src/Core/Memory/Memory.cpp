@@ -1139,8 +1139,12 @@ void update_SP()
             MI_register.mi_intr_reg &= ~0x21;
             sp_register.sp_status_reg &= ~0x303;
             update_count();
+            // Le RDP consomme la sortie du RSP : sa fin arrive donc toujours apres celle du RSP. Programmer
+            // les deux au meme delai casse les jeux qui enchainent plusieurs taches RSP par image, en liberant
+            // leur slot de file trop tot (cf. Denryuu Ira Ira Bou, qui restait fige sur un seul framebuffer).
+            // NOTE: la valeur du delai DP est empirique et modifie le timing, donc les movies existants.
             add_interrupt_event(SP_INT, 1000);
-            add_interrupt_event(DP_INT, 1000);
+            add_interrupt_event(DP_INT, 20000);
 
             g_core->callbacks.frame();
 
