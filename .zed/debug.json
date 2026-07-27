@@ -1,11 +1,38 @@
 [
   {
     "adapter": "CodeLLDB",
-    "label": "mupen64.exe (CodeLLDB)",
+    "label": "mupen64.exe (x86) (CodeLLDB)",
     "request": "launch",
-    "name": "mupen64.exe (CodeLLDB)",
-    "program": "./build/out/mupen64.exe",
+    "name": "mupen64.exe (x86) (CodeLLDB)",
+    "program": "./build/x86/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build",
+    "build": "build"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (x86-release) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (x86-release) (CodeLLDB)",
+    "program": "./build/x86-release/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (x64) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (x64) (CodeLLDB)",
+    "program": "./build/x64/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build (x64)"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (x64-release) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (x64-release) (CodeLLDB)",
+    "program": "./build/x64-release/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build (x64)"
   }
 ]

@@ -20,8 +20,8 @@ from tkinter import filedialog
 
 
 def main():
-    mupen_exe = Path("build/out/mupen64.exe")
-    log_dir = Path("build/out/logs")
+    mupen_exe = Path("build/x64-release/out/mupen64.exe")
+    log_dir = Path("build/x64-release/out/logs")
     log_file = log_dir / "mupen.log"
 
     log_dir.mkdir(parents=True, exist_ok=True)

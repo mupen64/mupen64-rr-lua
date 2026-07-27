@@ -14,7 +14,13 @@
 #include <R4300/Recomph.hpp>
 #include <R4300/Rom.hpp>
 #include <R4300/Tracelog.hpp>
+#if defined(_M_X64) || defined(__x86_64__)
+#include <R4300/x86_64/RegCache.hpp>
+#elif defined(_M_IX86) || defined(__i386__)
 #include <R4300/x86/RegCache.hpp>
+#elif defined(MUPEN64RR_ENABLE_DYNAREC)
+#error "No dynarec backend exists for this architecture; build with MUPEN64RR_ENABLE_DYNAREC=OFF."
+#endif
 #include <Alloc.hpp>
 
 // global variables :
@@ -2836,6 +2842,30 @@ void init_block(int32_t *source, precomp_block *block)
      * yet as the game should have already set up the code correctly.
      */
     invalid_code[block->start >> 12] = 0;
+
+    // The recursive init_block calls below overwrite the emitter globals code_length,
+    // max_code_length and inst_pointer, so save them for the emission that follows
+    // (none for the initial block, but jump_to_func re-enters init_block at runtime).
+    //
+    // inst_pointer itself must be saved and restored, not just *inst_pointer: the
+    // recursive call repoints it at the child's &childblock->code, so restoring through
+    // it would write into the child's code field and corrupt it.
+    //
+    // Dynarec-only; the interpreters never set inst_pointer, so dereferencing it faults.
+    int32_t saved_code_length = 0;
+    int32_t saved_max_code_length = 0;
+    unsigned char **saved_inst_pointer = NULL;
+    unsigned char *saved_code_ptr = NULL;
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+    if (dynacore)
+    {
+        saved_code_length = code_length;
+        saved_max_code_length = max_code_length;
+        saved_inst_pointer = inst_pointer;
+        saved_code_ptr = *inst_pointer;
+    }
+#endif
+
     if (block->end < 0x80000000 || block->start >= 0xc0000000)
     {
         uint32_t paddr;
@@ -2895,6 +2925,19 @@ void init_block(int32_t *source, precomp_block *block)
             init_block(0, blocks[(block->start - 0x20000000) >> 12]);
         }
     }
+
+    // Restore emitter state so this block's code_length/max_code_length
+    // reflect its own code buffer, not the recursive child's. Dynarec-only
+    // (see the matching guarded save above).
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+    if (dynacore)
+    {
+        code_length = saved_code_length;
+        max_code_length = saved_max_code_length;
+        inst_pointer = saved_inst_pointer;
+        *inst_pointer = saved_code_ptr;
+    }
+#endif
 }
 
 /**********************************************************************
