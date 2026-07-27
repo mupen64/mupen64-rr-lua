@@ -69,7 +69,7 @@ uint8_t g_first_block[0xA02BB4 - 32]{};
 std::vector<uint8_t> g_undo_savestate;
 void get_paths_for_task(const t_savestate_task &task, std::filesystem::path &st_path, std::filesystem::path &sd_path)
 {
-    sd_path = g_core->get_saves_directory() / (const char *)ROM_HEADER.nom;
+    sd_path = g_core->get_saves_directory() / IOUtils::rom_name_to_path_component((const char *)ROM_HEADER.nom);
     sd_path.replace_extension(".vhd");
 }
 
