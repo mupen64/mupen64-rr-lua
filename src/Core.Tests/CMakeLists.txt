@@ -11,6 +11,7 @@ endif()
 
 add_executable(Mupen64RR.Core.Tests
     "stdafx.h"
+    "IOUtilsTests.cpp"
     "VCRTests.cpp"
     "VRTests.cpp"
 )

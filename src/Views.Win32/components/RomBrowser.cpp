@@ -365,7 +365,7 @@ notify(LPARAM lparam)
             {
                 g_view_logger->error("Failed to copy rom name");
             }
-            StrNCpy(plvdi->item.pszText, IOUtils::to_wide_string(str).c_str(), plvdi->item.cchTextMax);
+            StrNCpy(plvdi->item.pszText, IOUtils::rom_name_to_wide_string(str).c_str(), plvdi->item.cchTextMax);
             break;
         }
         case 2: {
