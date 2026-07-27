@@ -1087,6 +1087,17 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.c_eq_s_nan_accurate),
         .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
     });
+    debug_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = debug_group.id,
+        .name = L"Accurate RDP Completion",
+        .tooltip = L"Whether RDP task completion is signalled after RSP task completion instead of at the same "
+                   L"instant.\nThe RDP consumes the RSP's output, so on hardware it always finishes later. The legacy "
+                   L"behaviour signals both at once, but is kept as the default for backwards-compatibility.\nEnabling "
+                   L"this desynchronizes movies recorded with the legacy timing.",
+        GENPROPS(int32_t, core.accurate_rdp_completion),
+        .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
+    });
 
     return {folders_group, interface_group, statusbar_group, piano_roll_group, seek_group,
             capture_group, core_group,      vcr_group,       lua_group,        debug_group};
