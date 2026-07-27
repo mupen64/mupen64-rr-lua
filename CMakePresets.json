@@ -15,6 +15,7 @@
       "name": "vcpkg-win64-x86",
       "description": "32-bit debug build on 64-bit Windows",
       "inherits": "common",
+      "binaryDir": "${sourceDir}/build/x86",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake",
         "CMAKE_C_COMPILER": "clang-cl",
@@ -38,6 +39,7 @@
       "name": "vcpkg-win64-x86-release",
       "description": "32-bit release build on 64-bit Windows",
       "inherits": "vcpkg-win64-x86",
+      "binaryDir": "${sourceDir}/build/x86-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
@@ -46,6 +48,7 @@
       "name": "vcpkg-win64-x64",
       "description": "64-bit debug build on 64-bit Windows",
       "inherits": "common",
+      "binaryDir": "${sourceDir}/build/x64",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/vcpkg-win64.cmake",
         "CMAKE_C_COMPILER": "clang-cl",
@@ -69,6 +72,7 @@
       "name": "vcpkg-win64-x64-release",
       "description": "64-bit release build on 64-bit Windows",
       "inherits": "vcpkg-win64-x64",
+      "binaryDir": "${sourceDir}/build/x64-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }

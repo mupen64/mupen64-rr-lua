@@ -20,7 +20,10 @@ void passe2(precomp_instr *dest, int32_t start, int32_t end, precomp_block *bloc
 void init_assembler(void *block_jumps_table, int32_t block_jumps_number);
 void free_assembler(void **block_jumps_table, int32_t *block_jumps_number);
 
-void gencallinterp(uint32_t addr, int32_t jump);
+void gencallinterp(uintptr_t addr, int32_t jump);
+
+// Runtime helper: self-modifying-code invalidation check called from store codegen.
+void dyna_mem_invalidate();
 
 void genupdate_system(int32_t type);
 void genbnel();
