@@ -56,8 +56,8 @@ jobs:
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build/${{ matrix.arch }}-release
+        run: cmake --build build
 
       - name: CMake Test
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: ctest --test-dir build/${{ matrix.arch }}-release
+        run: ctest --test-dir build
