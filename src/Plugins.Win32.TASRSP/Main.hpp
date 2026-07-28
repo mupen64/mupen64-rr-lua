@@ -8,7 +8,7 @@
 
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
-#include <Views.Win32/M64RRSpec.h>
+#include <m64rr/Plugin.hpp>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP")
 
