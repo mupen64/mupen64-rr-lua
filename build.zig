@@ -1202,10 +1202,12 @@ fn linkGlew(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.Optimi
 }
 
 fn linkCatch2(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode) void {
-    const b = mod.owner;
-    const d = debugSuffix(optimize);
-    linkVcpkgLibrary(mod, vp, b.fmt("Catch2{s}", .{d}));
-    linkVcpkgLibrary(mod, vp, b.fmt("Catch2Main{s}", .{d}));
+    _ = optimize;
+    // Zig's Debug mode injects UBSan into vcpkg's Catch2d archive, but this
+    // project links its test executable without the sanitizer runtime. Use
+    // the non-instrumented release Catch2 archive for both configurations.
+    linkVcpkgLibrary(mod, vp, "Catch2");
+    linkVcpkgLibrary(mod, vp, "Catch2Main");
 }
 
 // ─── source lists ───────────────────────────────────────────────────────
