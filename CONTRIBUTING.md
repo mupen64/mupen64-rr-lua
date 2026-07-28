@@ -1,45 +1,37 @@
 
 # Compiling
 
-Only Windows supports compiling the full emulator. However, the core and VCR tests can be (experimentally) compiled on other platforms.
+The emulator can be compiled in full both on Windows and Linux. Compiling on Linux requires MinGW.
 
-## Windows dependencies
+Make sure you're using Visual Studio Code or Zed (or any IDE compatible with their task files), as we'll be using the pre-configured build tasks.
+
+## Windows Setup
 
 You'll need:
+
 - Visual Studio 2026 (for the MSVC toolchain, Windows SDK, and bundled vcpkg)
-- [Zig](https://ziglang.org/download/)
-
-## Linux dependencies
-
-You'll need:
 - Zig
-- A system C/C++ toolchain for headers (`clang`/`gcc` + libstdc++/libc++)
-- `libsafec` (native Linux builds only)
-- MinGW-w64 (`mingw-w64-gcc`, for `windres`) and `nasm` (Win64 cross-builds)
-- vcpkg ports tree + matching tool binary (Win64 cross-builds; see [Arch Linux: vcpkg](#arch-linux-vcpkg))
 
-`libsafec` is required outside of Windows as no other C/C++ library implements C11 Annex K, which specifies `strncpy_s` and similar functions.
+## Linux Setup
 
-## Building with Zig
+This guide is written for Arch Linux, but should be equivalent for other distributions.
 
-From a VS developer environment on Windows (or via the wrappers):
-
+1. Install the dependencies
 ```sh
-# Install third-party deps into build/vcpkg_installed/<triplet>
-./tools/vsdev-x64.cmd zig build vcpkg -p build
+sudo pacman -S --needed base-devel zig mingw-w64-gcc nasm vcpkg
+yay -S libsafec
 
-# Debug build (default). Artifacts land in build/out and build/test/out.
-./tools/vsdev-x64.cmd zig build -p build -Dvcpkg_installed=build/vcpkg_installed/x64-windows
-
-# Release build
-./tools/vsdev-x64.cmd zig build -p build -Doptimize=ReleaseSafe -Dvcpkg_installed=build/vcpkg_installed/x64-windows
-
-# 32-bit
-./tools/vsdev-x86.cmd zig build vcpkg -p build -Dtarget=x86-windows-msvc
-./tools/vsdev-x86.cmd zig build -p build -Dtarget=x86-windows-msvc -Dvcpkg_installed=build/vcpkg_installed/x86-windows
+git clone https://github.com/microsoft/vcpkg ~/.local/share/vcpkg
+~/.local/share/vcpkg/bootstrap-vcpkg.sh -disableMetrics
 ```
 
-Useful options:
+## Building
+
+1. Run the `vcpkg install (Win64)` task
+2. Run the `generate compile_commands.json (Win64)` task
+3. Run the `build (Win64)` task
+
+Useful flags:
 
 | Option | Default | Description |
 |:--|:--|:--|
@@ -52,62 +44,6 @@ Useful options:
 | `-Dvcpkg_installed=` | auto-detect | Path to a vcpkg installed triplet dir |
 | `-Dversion_suffix=` | `$VERSION_SUFFIX` | Embedded version suffix |
 | `-Dnightly=` | from `$NIGHTLY` | Nightly branding |
-
-### Output layout
-
-```
-build/out/mupen64.exe
-build/out/plugin/*.dll
-build/out/*.dll          # runtime deps from vcpkg (shared builds)
-build/test/out/Core.Tests.exe
-build/test/out/luatestlib.dll
-```
-
-### Visual Studio Code / CLion / Zed
-
-#### Zed
-All tasks required for development are available in the task panel. Run **generate compile_commands.json (Win64)** after installing the matching vcpkg triplet (and whenever build options change). It writes the ignored `compile_commands.json` at the repository root, which clangd/Zed consumes for C/C++ IntelliSense, including the forced `CommonPCH.hpp` and `stdafx.h` headers.
-
-#### Windows-only
-Visual Studio 2026 must be installed on the `C:` drive for the `tools/vsdev-*.cmd` helpers.
-
-## Linux
-
-> **NOTE:** 32-bit builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
-
-### Native build
-
-```sh
-zig build -Dbuild_win32=false -Doptimize=Debug
-zig build test -Dbuild_win32=false
-```
-
-### Win64 cross-build
-
-The target is required: without it, `zig build vcpkg` selects the Linux host target and has no vcpkg dependencies to install. On Linux, the project uses its `zig-windows` overlay triplet: vcpkg builds C++ dependencies with `zig c++` and its bundled libc++, matching the application build. Do not use the stock `x64-mingw-*` install tree, which is built with GCC/libstdc++ and is C++ ABI-incompatible with Zig's libc++.
-
-#### Arch Linux: vcpkg
-
-Arch's `vcpkg` package does not include the ports tree, and `/usr/bin/vcpkg` is too old for this repo's baseline. Clone and bootstrap into `$HOME/.local/share/vcpkg` (Arch's default `VCPKG_ROOT`):
-
-```sh
-sudo pacman -S --needed vcpkg mingw-w64-gcc nasm
-
-git clone https://github.com/microsoft/vcpkg ~/.local/share/vcpkg
-~/.local/share/vcpkg/bootstrap-vcpkg.sh -disableMetrics
-```
-
-Then:
-
-```sh
-zig build vcpkg -p build -Dtarget=x86_64-windows
-zig build -p build -Dtarget=x86_64-windows -Doptimize=ReleaseSafe
-```
-
-The build prefers `~/.local/share/vcpkg/vcpkg` over the system binary. The Zed `vcpkg install (Win64)` task already passes `-Dtarget=x86_64-windows`.
-
-# Dependencies
-Third-party packages on Windows come from `vcpkg.json` via the `zig build vcpkg` step. Frontend/plugin-only deps should stay gated behind `-Dbuild_win32` in `build.zig`.
 
 # Branching
 
