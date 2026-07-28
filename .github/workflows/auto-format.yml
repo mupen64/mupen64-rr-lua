@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   auto-format:
@@ -20,11 +21,10 @@ jobs:
           find ./src -type f \( -name "*.h" -o -name "*.hpp" -o -name "*.cpp" \) \
             -exec clang-format-18 -i -style=file {} +
 
-      - name: Commit and push reformatted code
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet || {
-            git commit -am "style: reformat code"
-            git push
-          }
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "style: reformat code"
+          title: "style: reformat code"
+          body: Automated clang-format run.
+          branch: auto-format
+          delete-branch: true
