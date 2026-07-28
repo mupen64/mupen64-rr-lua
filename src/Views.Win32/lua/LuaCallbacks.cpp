@@ -53,7 +53,7 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
      }},
     {LuaCallbacks::REG_WINDOWMESSAGE,
      [](auto l) -> int {
-         lua_pushinteger(l, (unsigned)atwindowmessage_ctx.wnd);
+         lua_pushinteger(l, (lua_Integer)atwindowmessage_ctx.wnd);
          lua_pushinteger(l, atwindowmessage_ctx.msg);
          lua_pushinteger(l, atwindowmessage_ctx.w_param);
          lua_pushinteger(l, atwindowmessage_ctx.l_param);
