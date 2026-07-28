@@ -16,8 +16,12 @@
 #include "core_types.h"
 
 #ifdef _WIN32
+
+#undef CALL
 #define EXPORT __declspec(dllexport)
+#undef CALL
 #define CALL __cdecl
+
 #else
 #error "Unsupported platform"
 #endif

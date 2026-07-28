@@ -16,8 +16,6 @@
 #include <ThreadPool.hpp>
 #include <Messenger.hpp>
 
-#define CALL _cdecl
-
 static ZilmarExtSpec::VideoPluginInfo dummy_video_info{};
 static ZilmarExtSpec::AudioPluginInfo dummy_audio_info{};
 static ZilmarExtSpec::InputPluginInfo dummy_control_info{};
