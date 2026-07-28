@@ -9,9 +9,9 @@
 #define CURRENT_VERSION L"1.5.0"
 
 #ifdef _M_X64
-#define VERSION_NAME_HELPER_ARCH L" x64"
+#define VERSION_NAME_HELPER_ARCH L" "
 #else
-#define VERSION_NAME_HELPER_ARCH L""
+#define VERSION_NAME_HELPER_ARCH L" x86"
 #endif
 
 #ifdef _DEBUG

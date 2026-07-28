@@ -100,9 +100,9 @@ std::wstring get_mupen_name(bool simple)
 #endif
 
 #ifdef _M_X64
-#define ARCH_INFO L"-x64"
-#else
 #define ARCH_INFO L""
+#else
+#define ARCH_INFO L"-x86"
 #endif
 
 #define BASE_NAME L"Mupen 64 "
