@@ -13,6 +13,7 @@
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
+static M64RRSpec::PtrProcessRDPList s_mupenrr_process_rdplist_fn = nullptr;
 static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_audio_event_fn = nullptr;
@@ -273,7 +274,9 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         funcs.video_process_dlist = []() {
             if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
         };
-        funcs.video_process_rdp_list = [](const auto &...) {};
+        funcs.video_process_rdp_list = []() {
+            if (s_mupenrr_process_rdplist_fn) s_mupenrr_process_rdplist_fn();
+        };
         funcs.video_show_cfb = [](const auto &...) {};
         funcs.video_vi_status_changed = [](const auto &...) {};
         funcs.video_vi_width_changed = [](const auto &...) {};

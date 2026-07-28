@@ -31,7 +31,7 @@ static void LOADADPCM2()
 {
     // Loads an ADPCM table - Works 100% Now 03-13-01
     uint32_t v0;
-    v0 = (inst2 & 0xffffff);                        // + SEGMENTS[(inst2>>24)&0xf];
+    v0 = (inst2 & 0xffffff);                              // + SEGMENTS[(inst2>>24)&0xf];
     uint16_t *table = (uint16_t *)(g_plugin->rdram + v0); // Zelda2 Specific...
 
     for (uint32_t x = 0; x < ((inst1 & 0xffff) >> 0x4); x++)

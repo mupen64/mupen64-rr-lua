@@ -157,8 +157,8 @@ void MP3()
     for (int32_t cnt = 0; cnt < 0x480; cnt += 0x180)
     {
         memcpy(mp3data + 0xCF0, g_plugin->rdram + readPtr, 0x180); // DMA: 0xCF0 <- RDRAM[s5] : 0x180
-        inPtr = 0xCF0;                                       // s7
-        outPtr = 0xE70;                                      // s3
+        inPtr = 0xCF0;                                             // s7
+        outPtr = 0xE70;                                            // s3
         // --------------- Inner Loop Start --------------------
         for (int32_t cnt2 = 0; cnt2 < 0x180; cnt2 += 0x40)
         {
