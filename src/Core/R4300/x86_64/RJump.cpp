@@ -169,16 +169,20 @@ volatile bool g_dyna_stopped;
 #endif
 }
 
-// Entry trampoline: sets r15 = dynarec base (see g_dynarec_base in Assemble.cpp), then tail-jumps
-// into the recompiled entry. r15 is callee-saved, so this one set survives every C call; dyna_start
-// is the only cold C->JIT entry (all others come from already-running code). RSP-transparent: the
-// jmp enters `code` at the same RSP as a direct CALL would.
+// Entry trampoline: save the caller's r15 (callee-saved, keeps the ABI contract), set r15 = dynarec
+// base (g_dynarec_base in Assemble.cpp), call the recompiled entry, restore r15. dyna_start is the
+// only cold C->JIT entry; the rest come from already-running code. RSP stays aligned (push ->
+// %16==0, call -> entry at %16==8). Normal exit is via dyna_stop, so pop/ret only run on a return.
 static void (*dynarec_enter)(void (*code)()) = nullptr;
 
 static void build_dynarec_enter()
 {
-    unsigned char *p = (unsigned char *)malloc_exec(16);
+    unsigned char *p = (unsigned char *)malloc_exec(32);
     dynarec_enter = (void (*)(void (*)()))p;
+
+    // push r15   (41 57)  — save the caller's r15 (callee-saved)
+    *p++ = 0x41;
+    *p++ = 0x57;
 
     // mov r15, imm64(g_dynarec_base)   (49 BF <8 bytes>)
     *p++ = 0x49;
@@ -186,14 +190,21 @@ static void build_dynarec_enter()
     uintptr_t base = g_dynarec_base;
     for (int i = 0; i < 8; ++i) *p++ = (unsigned char)((base >> (i * 8)) & 0xFF);
 
-    // jmp <arg register>  — the code pointer arrives in the first integer-arg register.
+    // call <arg register>  — the code pointer arrives in the first integer-arg register.
 #ifdef _WIN32
     *p++ = 0xFF;
-    *p++ = 0xE1; // jmp rcx (Win64 first arg)
+    *p++ = 0xD1; // call rcx (Win64 first arg)
 #else
     *p++ = 0xFF;
-    *p++ = 0xE7; // jmp rdi (System V first arg)
+    *p++ = 0xD7; // call rdi (System V first arg)
 #endif
+
+    // pop r15   (41 5F)  — restore the caller's r15
+    *p++ = 0x41;
+    *p++ = 0x5F;
+
+    // ret   (C3)
+    *p++ = 0xC3;
 }
 
 void dyna_start(void (*code)())
