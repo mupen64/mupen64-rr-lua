@@ -22,17 +22,17 @@ void genbltz_test()
         int32_t rs = allocate_register((uintptr_t)dst->f.i.rs);
 
         cmp_reg32_imm32(rs, 0);
-        jge_rj(19); // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
+        jge_rj(19);                                    // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
         mov_m32_imm32((uint32_t *)(&branch_taken), 1); // 10
-        jmp_imm_short(17); // x64: skip the 17-byte mov_m32_imm32
+        jmp_imm_short(17);                             // x64: skip the 17-byte mov_m32_imm32
         mov_m32_imm32((uint32_t *)(&branch_taken), 0); // 10
     }
     else if (rs_64bit == -1)
     {
         cmp_m32_imm32(((uint32_t *)dst->f.i.rs) + 1, 0);
-        jge_rj(19); // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
+        jge_rj(19);                                    // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
         mov_m32_imm32((uint32_t *)(&branch_taken), 1); // 10
-        jmp_imm_short(17); // x64: skip the 17-byte mov_m32_imm32
+        jmp_imm_short(17);                             // x64: skip the 17-byte mov_m32_imm32
         mov_m32_imm32((uint32_t *)(&branch_taken), 0); // 10
     }
     else
@@ -40,9 +40,9 @@ void genbltz_test()
         int32_t rs2 = allocate_64_register2((uintptr_t)dst->f.i.rs);
 
         cmp_reg32_imm32(rs2, 0);
-        jge_rj(19); // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
+        jge_rj(19);                                    // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
         mov_m32_imm32((uint32_t *)(&branch_taken), 1); // 10
-        jmp_imm_short(17); // x64: skip the 17-byte mov_m32_imm32
+        jmp_imm_short(17);                             // x64: skip the 17-byte mov_m32_imm32
         mov_m32_imm32((uint32_t *)(&branch_taken), 0); // 10
     }
 }
@@ -110,17 +110,17 @@ void genbgez_test()
         int32_t rs = allocate_register((uintptr_t)dst->f.i.rs);
 
         cmp_reg32_imm32(rs, 0);
-        jl_rj(19); // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
+        jl_rj(19);                                     // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
         mov_m32_imm32((uint32_t *)(&branch_taken), 1); // 10
-        jmp_imm_short(17); // x64: skip the 17-byte mov_m32_imm32
+        jmp_imm_short(17);                             // x64: skip the 17-byte mov_m32_imm32
         mov_m32_imm32((uint32_t *)(&branch_taken), 0); // 10
     }
     else if (rs_64bit == -1)
     {
         cmp_m32_imm32(((uint32_t *)dst->f.i.rs) + 1, 0);
-        jl_rj(19); // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
+        jl_rj(19);                                     // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
         mov_m32_imm32((uint32_t *)(&branch_taken), 1); // 10
-        jmp_imm_short(17); // x64: skip the 17-byte mov_m32_imm32
+        jmp_imm_short(17);                             // x64: skip the 17-byte mov_m32_imm32
         mov_m32_imm32((uint32_t *)(&branch_taken), 0); // 10
     }
     else
@@ -128,9 +128,9 @@ void genbgez_test()
         int32_t rs2 = allocate_64_register2((uintptr_t)dst->f.i.rs);
 
         cmp_reg32_imm32(rs2, 0);
-        jl_rj(19); // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
+        jl_rj(19);                                     // x64: mov_m32_imm32 is 17 bytes (not 10), so skip 17+2=19
         mov_m32_imm32((uint32_t *)(&branch_taken), 1); // 10
-        jmp_imm_short(17); // x64: skip the 17-byte mov_m32_imm32
+        jmp_imm_short(17);                             // x64: skip the 17-byte mov_m32_imm32
         mov_m32_imm32((uint32_t *)(&branch_taken), 0); // 10
     }
 }

@@ -83,8 +83,8 @@ void passe2(precomp_instr *dest, int32_t start, int32_t end, precomp_block *bloc
         }
         else
         {
-            uintptr_t target = (uintptr_t)block->code
-                + (uintptr_t)dest[(jumps_table[i].mi_addr - dest[0].addr) / 4].local_addr;
+            uintptr_t target =
+                (uintptr_t)block->code + (uintptr_t)dest[(jumps_table[i].mi_addr - dest[0].addr) / 4].local_addr;
             int32_t disp = (int32_t)(target - jmp_next);
             put32((uint32_t)disp);
         }
@@ -110,9 +110,8 @@ inline void grow_buffer()
     unsigned char *new_buffer = (unsigned char *)realloc_exec(*inst_pointer, old_size, max_code_length);
     if (!new_buffer)
     {
-        g_core->log_error(std::format(
-            "[Dynarec] FATAL: code buffer growth failed (code_length={}, max_code_length={})",
-            code_length, max_code_length));
+        g_core->log_error(std::format("[Dynarec] FATAL: code buffer growth failed (code_length={}, max_code_length={})",
+                                      code_length, max_code_length));
         abort();
     }
     *inst_pointer = new_buffer;
@@ -161,8 +160,8 @@ inline void put16(uint16_t word)
 // x64 helper: load a 64-bit immediate into R11 (scratch register)
 static void mov_r11_imm64(uintptr_t imm64)
 {
-    put8(0x49);       // REX.W=1, REX.B=1
-    put8(0xB8 + 3);   // mov r11, imm64
+    put8(0x49);     // REX.W=1, REX.B=1
+    put8(0xB8 + 3); // mov r11, imm64
     put64(imm64);
 }
 
@@ -178,13 +177,11 @@ uintptr_t g_dynarec_base = (uintptr_t)&g_dynarec_base_anchor;
 static bool try_r15_mem(const void *addr, int32_t reg, bool rex_w, uint8_t opcode, bool p66)
 {
     int64_t disp = (int64_t)(uintptr_t)addr - (int64_t)g_dynarec_base;
-    if (disp < INT32_MIN || disp > INT32_MAX)
-        return false;
-    if (p66)
-        put8(0x66);
+    if (disp < INT32_MIN || disp > INT32_MAX) return false;
+    if (p66) put8(0x66);
     put8(0x41 | (rex_w ? 0x08 : 0) | (((reg >> 3) & 1) << 2)); // REX.B (r15) [+ W] [+ R]
     put8(opcode);
-    put8(0x80 | ((reg & 7) << 3) | 0x07);                      // mod=10, reg, rm=111 (r15+disp32)
+    put8(0x80 | ((reg & 7) << 3) | 0x07); // mod=10, reg, rm=111 (r15+disp32)
     put32((uint32_t)(int32_t)disp);
     return true;
 }
@@ -197,8 +194,7 @@ static bool try_r15_mem_idx(const void *addr, int32_t reg, int32_t index, uint8_
     if (index == 4) // ESP/RSP in the SIB index field means "no index" — not usable here
         return false;
     int64_t disp = (int64_t)(uintptr_t)addr - (int64_t)g_dynarec_base;
-    if (disp < INT32_MIN || disp > INT32_MAX)
-        return false;
+    if (disp < INT32_MIN || disp > INT32_MAX) return false;
     put8(0x41 | (rex_w ? 0x08 : 0) | (((index >> 3) & 1) << 1) | (((reg >> 3) & 1) << 2)); // REX.B [+W][+X][+R]
     put8(opcode);
     put8(0x80 | ((reg & 7) << 3) | 0x04);           // mod=10, reg, rm=100 (SIB follows)
@@ -443,8 +439,8 @@ void rj_patch(int32_t disp_pos)
     // rel8 range check: forward short jumps must fit in a signed byte.
     if (rel < -128 || rel > 127)
     {
-        g_core->log_error(std::format(
-            "[Dynarec] FATAL: rj_patch rel8 out of range ({}) at disp_pos={}", rel, disp_pos));
+        g_core->log_error(
+            std::format("[Dynarec] FATAL: rj_patch rel8 out of range ({}) at disp_pos={}", rel, disp_pos));
         abort();
     }
     (*inst_pointer)[disp_pos] = (unsigned char)(int8_t)rel;
@@ -864,9 +860,9 @@ void mov_rax_preg32x4pimm32(int32_t dst_reg, int32_t idx_reg, uintptr_t base_add
     // REX.WB = 0x49 (REX.W=1, REX.B=1 for r11)
     // 8B /r : mod=00, reg=dst_reg (rax=0), r/m=SIB=4 → 0x04 | (dst_reg << 3)
     // SIB : scale=3 (x8), index=idx_reg, base=3 (r11, with REX.B from 0x49)
-    put8(0x49);                    // REX.WB
+    put8(0x49); // REX.WB
     put8(0x8B);
-    put8(0x04 | (dst_reg << 3));   // mod=00, reg=rax, r/m=SIB(4)
+    put8(0x04 | (dst_reg << 3));     // mod=00, reg=rax, r/m=SIB(4)
     put8(0xC0 | (idx_reg << 3) | 3); // SIB: scale=3 (x8), index=idx_reg, base=r11(3)
 }
 
@@ -876,7 +872,7 @@ void mov_rax_r11_idx4(int32_t idx_reg)
     // REX.WB = 0x49 (W=1 for rax, B=1 for r11)
     put8(0x49);
     put8(0x8B);
-    put8(0x04);                  // mod=00, reg=0 (rax), r/m=SIB(4)
+    put8(0x04);                      // mod=00, reg=0 (rax), r/m=SIB(4)
     put8(0xC0 | (idx_reg << 3) | 3); // SIB: scale=3 (x8), index=idx_reg, base=r11(3)
 }
 
@@ -946,9 +942,9 @@ void mov_m64_reg64(void *_m64, uint32_t reg64)
     if (try_r15_mem(_m64, reg64, true, 0x89, false)) return;
     mov_r11_imm64((uintptr_t)(_m64));
     // REX.W=1 for 64-bit operand, REX.B=1 for r11 base
-    put8(0x49);                          // REX.WB
-    put8(0x89);                          // mov r/m64, r64
-    put8((reg64 << 3) | 0x03);           // mod=00, reg=reg64, r/m=011 (r11)
+    put8(0x49);                // REX.WB
+    put8(0x89);                // mov r/m64, r64
+    put8((reg64 << 3) | 0x03); // mod=00, reg=reg64, r/m=011 (r11)
 }
 
 // 64-bit load: mov reg64, [mem] (full 64-bit register load)
@@ -957,9 +953,9 @@ void mov_reg64_m64(uint32_t reg64, void *_m64)
     if (try_r15_mem(_m64, reg64, true, 0x8B, false)) return;
     mov_r11_imm64((uintptr_t)(_m64));
     // REX.W=1 for 64-bit operand, REX.B=1 for r11 base
-    put8(0x49);                          // REX.WB
-    put8(0x8B);                          // mov r64, r/m64
-    put8((reg64 << 3) | 0x03);           // mod=00, reg=reg64, r/m=011 (r11)
+    put8(0x49);                // REX.WB
+    put8(0x8B);                // mov r64, r/m64
+    put8((reg64 << 3) | 0x03); // mod=00, reg=reg64, r/m=011 (r11)
 }
 
 void ret()
@@ -980,8 +976,7 @@ void call_reg32(uint32_t reg32)
 static void call_reg64_impl(uint32_t reg32)
 {
     uint8_t rm = reg32 & 7;
-    if (reg32 & 8)
-        put8(0x41);                             // REX.B for r8-r15
+    if (reg32 & 8) put8(0x41); // REX.B for r8-r15
     put8(0xFF);
     put8(0xD0 + rm);
 }
@@ -1690,65 +1685,200 @@ void fld_preg32_dword(int32_t reg32)
 // --- SSE single-precision emitters (FP JIT port) ---
 // Memory forms address through [reg64] with mod=00; reg64 must be a GPR whose low
 // 3 bits are not 4 (RSP) or 5 (RBP) — always pass EAX (rax). xmm/reg operands 0-7.
-static inline unsigned char sse_modrm_mem(int32_t xmm, int32_t reg64) { return (unsigned char)((xmm << 3) | reg64); }
-static inline unsigned char sse_modrm_reg(int32_t dst, int32_t src) { return (unsigned char)(0xC0 | (dst << 3) | src); }
+static inline unsigned char sse_modrm_mem(int32_t xmm, int32_t reg64)
+{
+    return (unsigned char)((xmm << 3) | reg64);
+}
+static inline unsigned char sse_modrm_reg(int32_t dst, int32_t src)
+{
+    return (unsigned char)(0xC0 | (dst << 3) | src);
+}
 
 void movss_xmm_preg64(int32_t xmm, int32_t reg64) // movss xmm, [reg64]
-{ put8(0xF3); put8(0x0F); put8(0x10); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x10);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void movss_preg64_xmm(int32_t reg64, int32_t xmm) // movss [reg64], xmm
-{ put8(0xF3); put8(0x0F); put8(0x11); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x11);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void addss_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF3); put8(0x0F); put8(0x58); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x58);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void subss_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF3); put8(0x0F); put8(0x5C); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x5C);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void mulss_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF3); put8(0x0F); put8(0x59); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x59);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void divss_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF3); put8(0x0F); put8(0x5E); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x5E);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void sqrtss_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF3); put8(0x0F); put8(0x51); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x51);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void andps_xmm_xmm(int32_t dst, int32_t src) // andps dst, src (register form, no prefix)
-{ put8(0x0F); put8(0x54); put8(sse_modrm_reg(dst, src)); }
+{
+    put8(0x0F);
+    put8(0x54);
+    put8(sse_modrm_reg(dst, src));
+}
 void xorps_xmm_xmm(int32_t dst, int32_t src)
-{ put8(0x0F); put8(0x57); put8(sse_modrm_reg(dst, src)); }
+{
+    put8(0x0F);
+    put8(0x57);
+    put8(sse_modrm_reg(dst, src));
+}
 void ucomiss_xmm_xmm(int32_t a, int32_t b) // ucomiss a, b (sets ZF/PF/CF)
-{ put8(0x0F); put8(0x2E); put8(sse_modrm_reg(a, b)); }
+{
+    put8(0x0F);
+    put8(0x2E);
+    put8(sse_modrm_reg(a, b));
+}
 
 // --- SSE double-precision emitters (FP JIT port) ---
 void movsd_xmm_preg64(int32_t xmm, int32_t reg64) // movsd xmm, [reg64]
-{ put8(0xF2); put8(0x0F); put8(0x10); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x10);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void movsd_preg64_xmm(int32_t reg64, int32_t xmm) // movsd [reg64], xmm
-{ put8(0xF2); put8(0x0F); put8(0x11); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x11);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void addsd_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF2); put8(0x0F); put8(0x58); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x58);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void subsd_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF2); put8(0x0F); put8(0x5C); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x5C);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void mulsd_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF2); put8(0x0F); put8(0x59); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x59);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void divsd_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF2); put8(0x0F); put8(0x5E); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x5E);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void sqrtsd_xmm_preg64(int32_t xmm, int32_t reg64)
-{ put8(0xF2); put8(0x0F); put8(0x51); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x51);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void andpd_xmm_xmm(int32_t dst, int32_t src)
-{ put8(0x66); put8(0x0F); put8(0x54); put8(sse_modrm_reg(dst, src)); }
+{
+    put8(0x66);
+    put8(0x0F);
+    put8(0x54);
+    put8(sse_modrm_reg(dst, src));
+}
 void xorpd_xmm_xmm(int32_t dst, int32_t src)
-{ put8(0x66); put8(0x0F); put8(0x57); put8(sse_modrm_reg(dst, src)); }
+{
+    put8(0x66);
+    put8(0x0F);
+    put8(0x57);
+    put8(sse_modrm_reg(dst, src));
+}
 void ucomisd_xmm_xmm(int32_t a, int32_t b)
-{ put8(0x66); put8(0x0F); put8(0x2E); put8(sse_modrm_reg(a, b)); }
+{
+    put8(0x66);
+    put8(0x0F);
+    put8(0x2E);
+    put8(sse_modrm_reg(a, b));
+}
 void sqrtsd_xmm_xmm(int32_t dst, int32_t src) // sqrtsd dst, src (double sqrt, reg form)
-{ put8(0xF2); put8(0x0F); put8(0x51); put8(sse_modrm_reg(dst, src)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x51);
+    put8(sse_modrm_reg(dst, src));
+}
 void cvtsd2ss_xmm_xmm(int32_t dst, int32_t src) // cvtsd2ss dst, src (double->float, reg form)
-{ put8(0xF2); put8(0x0F); put8(0x5A); put8(sse_modrm_reg(dst, src)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x5A);
+    put8(sse_modrm_reg(dst, src));
+}
 // MXCSR save/load (the SSE analogue of x87 fnstcw/fldcw), used to swap the SSE rounding
 // mode for ROUND/CEIL/FLOOR the way the interpreter does with fesetround.
 void stmxcsr_m32(void *m32) // stmxcsr [m32]
-{ mov_r11_imm64((uintptr_t)m32); put8(0x41); put8(0x0F); put8(0xAE); put8(0x1B); }
+{
+    mov_r11_imm64((uintptr_t)m32);
+    put8(0x41);
+    put8(0x0F);
+    put8(0xAE);
+    put8(0x1B);
+}
 void ldmxcsr_m32(void *m32) // ldmxcsr [m32]
-{ mov_r11_imm64((uintptr_t)m32); put8(0x41); put8(0x0F); put8(0xAE); put8(0x13); }
+{
+    mov_r11_imm64((uintptr_t)m32);
+    put8(0x41);
+    put8(0x0F);
+    put8(0xAE);
+    put8(0x13);
+}
 void cvtss2sd_xmm_preg64(int32_t xmm, int32_t reg64) // xmm(double) = (double)[reg64](float)
-{ put8(0xF3); put8(0x0F); put8(0x5A); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF3);
+    put8(0x0F);
+    put8(0x5A);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 void cvtsd2ss_xmm_preg64(int32_t xmm, int32_t reg64) // xmm(float) = (float)[reg64](double)
-{ put8(0xF2); put8(0x0F); put8(0x5A); put8(sse_modrm_mem(xmm, reg64)); }
+{
+    put8(0xF2);
+    put8(0x0F);
+    put8(0x5A);
+    put8(sse_modrm_mem(xmm, reg64));
+}
 
 // FP -> int conversions (result in a GP reg32). Match the interpreter, which does the
 // same _mm_cvtss_si32 / _mm_cvttss_si32. base must not be RSP/RBP.
@@ -1757,38 +1887,48 @@ void cvttss2si_reg32_preg64(int32_t dst, int32_t base) // cvttss2si r32, dword [
     put8(0xF3);
     unsigned char rex = 0x40 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1);
     if (rex != 0x40) put8(rex);
-    put8(0x0F); put8(0x2C); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2C);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 void cvtss2si_reg32_preg64(int32_t dst, int32_t base) // cvtss2si r32, dword [base] (round per MXCSR)
 {
     put8(0xF3);
     unsigned char rex = 0x40 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1);
     if (rex != 0x40) put8(rex);
-    put8(0x0F); put8(0x2D); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2D);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 void mov_preg64_reg32(int32_t base, int32_t src) // mov dword [base], r32 (store). base != RSP/RBP.
 {
     unsigned char rex = 0x40 | (((src >> 3) & 1) << 2) | ((base >> 3) & 1);
     if (rex != 0x40) put8(rex);
-    put8(0x89); put8((unsigned char)(((src & 7) << 3) | (base & 7)));
+    put8(0x89);
+    put8((unsigned char)(((src & 7) << 3) | (base & 7)));
 }
 // 64-bit-result variants (.L conversions): source is still a 32-bit float (dword), dest is r64.
 void cvttss2si_reg64_preg64(int32_t dst, int32_t base) // cvttss2si r64, dword [base]
 {
     put8(0xF3);
     put8((unsigned char)(0x48 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1)));
-    put8(0x0F); put8(0x2C); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2C);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 void cvtss2si_reg64_preg64(int32_t dst, int32_t base) // cvtss2si r64, dword [base]
 {
     put8(0xF3);
     put8((unsigned char)(0x48 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1)));
-    put8(0x0F); put8(0x2D); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2D);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 void mov_preg64_reg64(int32_t base, int32_t src) // mov qword [base], r64 (store). base != RSP/RBP.
 {
     put8((unsigned char)(0x48 | (((src >> 3) & 1) << 2) | ((base >> 3) & 1)));
-    put8(0x89); put8((unsigned char)(((src & 7) << 3) | (base & 7)));
+    put8(0x89);
+    put8((unsigned char)(((src & 7) << 3) | (base & 7)));
 }
 // double -> int (source is a qword double in [base]). F2 prefix.
 void cvttsd2si_reg32_preg64(int32_t dst, int32_t base) // cvttsd2si r32, qword [base]
@@ -1796,26 +1936,34 @@ void cvttsd2si_reg32_preg64(int32_t dst, int32_t base) // cvttsd2si r32, qword [
     put8(0xF2);
     unsigned char rex = 0x40 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1);
     if (rex != 0x40) put8(rex);
-    put8(0x0F); put8(0x2C); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2C);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 void cvtsd2si_reg32_preg64(int32_t dst, int32_t base) // cvtsd2si r32, qword [base]
 {
     put8(0xF2);
     unsigned char rex = 0x40 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1);
     if (rex != 0x40) put8(rex);
-    put8(0x0F); put8(0x2D); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2D);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 void cvttsd2si_reg64_preg64(int32_t dst, int32_t base) // cvttsd2si r64, qword [base]
 {
     put8(0xF2);
     put8((unsigned char)(0x48 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1)));
-    put8(0x0F); put8(0x2C); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2C);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 void cvtsd2si_reg64_preg64(int32_t dst, int32_t base) // cvtsd2si r64, qword [base]
 {
     put8(0xF2);
     put8((unsigned char)(0x48 | (((dst >> 3) & 1) << 2) | ((base >> 3) & 1)));
-    put8(0x0F); put8(0x2D); put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2D);
+    put8((unsigned char)(((dst & 7) << 3) | (base & 7)));
 }
 // int -> FP (source is an int in [base]; result in xmm). Rounds per MXCSR = FCR31.
 void cvtsi2ss_xmm_preg64(int32_t xmm, int32_t base) // cvtsi2ss xmm, dword [base] (int32->float)
@@ -1823,26 +1971,34 @@ void cvtsi2ss_xmm_preg64(int32_t xmm, int32_t base) // cvtsi2ss xmm, dword [base
     put8(0xF3);
     unsigned char rex = 0x40 | (((xmm >> 3) & 1) << 2) | ((base >> 3) & 1);
     if (rex != 0x40) put8(rex);
-    put8(0x0F); put8(0x2A); put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2A);
+    put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
 }
 void cvtsi2ssq_xmm_preg64(int32_t xmm, int32_t base) // cvtsi2ss xmm, qword [base] (int64->float)
 {
     put8(0xF3);
     put8((unsigned char)(0x48 | (((xmm >> 3) & 1) << 2) | ((base >> 3) & 1)));
-    put8(0x0F); put8(0x2A); put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2A);
+    put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
 }
 void cvtsi2sd_xmm_preg64(int32_t xmm, int32_t base) // cvtsi2sd xmm, dword [base] (int32->double)
 {
     put8(0xF2);
     unsigned char rex = 0x40 | (((xmm >> 3) & 1) << 2) | ((base >> 3) & 1);
     if (rex != 0x40) put8(rex);
-    put8(0x0F); put8(0x2A); put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2A);
+    put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
 }
 void cvtsi2sdq_xmm_preg64(int32_t xmm, int32_t base) // cvtsi2sd xmm, qword [base] (int64->double)
 {
     put8(0xF2);
     put8((unsigned char)(0x48 | (((xmm >> 3) & 1) << 2) | ((base >> 3) & 1)));
-    put8(0x0F); put8(0x2A); put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
+    put8(0x0F);
+    put8(0x2A);
+    put8((unsigned char)(((xmm & 7) << 3) | (base & 7)));
 }
 
 void fdiv_preg32_dword(int32_t reg32)
@@ -2030,4 +2186,3 @@ void ud2()
     put8(0x0F);
     put8(0x0B);
 }
-

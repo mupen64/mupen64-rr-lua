@@ -291,9 +291,9 @@ refresh:
                                                        : (header.extended_flags.wii_vc ? L"Enabled" : L"Disabled")));
 
     metadata.emplace_back(std::make_pair(
-        L"Accurate RDP completion",
-        header.extended_version < 3 ? L"Unknown"
-                                    : (header.extended_flags.accurate_rdp_completion ? L"Enabled" : L"Disabled")));
+        L"Accurate RDP completion", header.extended_version < 3
+                                        ? L"Unknown"
+                                        : (header.extended_flags.accurate_rdp_completion ? L"Enabled" : L"Disabled")));
 
     char authorship[5] = {0};
     memcpy(authorship, header.extended_data.authorship_tag, sizeof(header.extended_data.authorship_tag));

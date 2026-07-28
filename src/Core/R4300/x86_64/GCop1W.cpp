@@ -21,9 +21,9 @@ void gencvt_s_w()
 #else
     gencheck_cop1_unusable();
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    cvtsi2ss_xmm_preg64(0, EAX);     // xmm0 = (float)(int32)fs
+    cvtsi2ss_xmm_preg64(0, EAX); // xmm0 = (float)(int32)fs
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0);        // fd = xmm0
+    movss_preg64_xmm(EAX, 0); // fd = xmm0
 #endif
 }
 
@@ -34,8 +34,8 @@ void gencvt_d_w()
 #else
     gencheck_cop1_unusable();
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    cvtsi2sd_xmm_preg64(0, EAX);     // xmm0 = (double)(int32)fs
+    cvtsi2sd_xmm_preg64(0, EAX); // xmm0 = (double)(int32)fs
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    movsd_preg64_xmm(EAX, 0);        // fd = xmm0
+    movsd_preg64_xmm(EAX, 0); // fd = xmm0
 #endif
 }

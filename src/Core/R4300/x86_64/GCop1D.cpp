@@ -29,8 +29,14 @@
 // Signaling C.cond.D compares raise fail_float_input on NaN, gated on float_exception_emulation.
 
 // --- SSE double-precision compares (C.cond.D), non-signaling family ---
-static void gen_fcr31_set_c() { or_m32_imm32((void *)&FCR31, 0x800000); }
-static void gen_fcr31_clear_c() { and_m32_imm32((void *)&FCR31, ~0x800000); }
+static void gen_fcr31_set_c()
+{
+    or_m32_imm32((void *)&FCR31, 0x800000);
+}
+static void gen_fcr31_clear_c()
+{
+    and_m32_imm32((void *)&FCR31, ~0x800000);
+}
 static void gen_cmp_load_d()
 {
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
@@ -77,8 +83,16 @@ static void ccond_signaling_nan_d()
     gencallinterp((uintptr_t)fail_float_input, 0);
     rj_patch(jsk);
 }
-static void gen_ccond_setjump_d(void (*jset)(unsigned char)) { gencheck_cop1_unusable(); ccond_setjump_body_d(jset); }
-static void gen_ccond_clearjump_d(void (*jclear2)(unsigned char)) { gencheck_cop1_unusable(); ccond_clearjump_body_d(jclear2); }
+static void gen_ccond_setjump_d(void (*jset)(unsigned char))
+{
+    gencheck_cop1_unusable();
+    ccond_setjump_body_d(jset);
+}
+static void gen_ccond_clearjump_d(void (*jclear2)(unsigned char))
+{
+    gencheck_cop1_unusable();
+    ccond_clearjump_body_d(jclear2);
+}
 static void gen_ccond_sig_clearjump_d(void (*jclear2)(unsigned char))
 {
     gencheck_cop1_unusable();
@@ -258,7 +272,7 @@ void gentrunc_l_d()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvttsd2si_reg64_preg64(EBX, EAX); // rbx = (int64)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);       // fd = rbx
+    mov_preg64_reg64(EAX, EBX); // fd = rbx
 #endif
 }
 
@@ -320,7 +334,7 @@ void gentrunc_w_d()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvttsd2si_reg32_preg64(EBX, EAX); // ebx = (int32)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);       // fd = ebx
+    mov_preg64_reg32(EAX, EBX); // fd = ebx
 #endif
 }
 
@@ -388,7 +402,7 @@ void gencvt_w_d()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvtsd2si_reg32_preg64(EBX, EAX); // ebx = (int32)round(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);      // fd = ebx
+    mov_preg64_reg32(EAX, EBX); // fd = ebx
 #endif
 }
 
@@ -402,7 +416,7 @@ void gencvt_l_d()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
     cvtsd2si_reg64_preg64(EBX, EAX); // rbx = (int64)round(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);      // fd = rbx
+    mov_preg64_reg64(EAX, EBX); // fd = rbx
 #endif
 }
 

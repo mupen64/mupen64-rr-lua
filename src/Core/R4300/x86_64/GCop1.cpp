@@ -111,9 +111,9 @@ void genctc1()
     // Set MXCSR rounding (bits 13-14) from the N64 mode in EAX (analogue of x86's fldcw):
     // N64 {0=near,1=zero,2=+inf,3=-inf} -> MXCSR RC {0=near,3=zero,2=+inf,1=-inf} = (4-m)&3.
     mov_reg32_imm32(EBX, 4);
-    sub_reg32_reg32(EBX, EAX);                 // ebx = 4 - mode
-    and_reg32_imm32(EBX, 3);                   // ebx = (4 - mode) & 3 = MXCSR RC value
-    shl_reg32_imm8(EBX, 13);                   // ebx = RC bits in place (bits 13-14)
+    sub_reg32_reg32(EBX, EAX); // ebx = 4 - mode
+    and_reg32_imm32(EBX, 3);   // ebx = (4 - mode) & 3 = MXCSR RC value
+    shl_reg32_imm8(EBX, 13);   // ebx = RC bits in place (bits 13-14)
     stmxcsr_m32(&g_scratch_mxcsr);
     and_m32_imm32(&g_scratch_mxcsr, ~0x6000u); // clear the RC field
     or_m32_reg32(&g_scratch_mxcsr, EBX);       // set the new RC

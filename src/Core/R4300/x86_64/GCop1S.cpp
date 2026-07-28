@@ -32,8 +32,14 @@
 
 // --- SSE single-precision compares (C.cond.S), non-signaling family ---
 // ucomiss sets: unordered => PF=1(ZF=ZF=CF=1); ordered less => CF=1; equal => ZF=1.
-static void gen_fcr31_set_c() { or_m32_imm32((void *)&FCR31, 0x800000); }
-static void gen_fcr31_clear_c() { and_m32_imm32((void *)&FCR31, ~0x800000); }
+static void gen_fcr31_set_c()
+{
+    or_m32_imm32((void *)&FCR31, 0x800000);
+}
+static void gen_fcr31_clear_c()
+{
+    and_m32_imm32((void *)&FCR31, ~0x800000);
+}
 static void gen_cmp_load_s()
 {
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
@@ -84,8 +90,16 @@ static void ccond_signaling_nan_s()
     gencallinterp((uintptr_t)fail_float_input, 0); // returning call
     rj_patch(jsk);
 }
-static void gen_ccond_setjump_s(void (*jset)(unsigned char)) { gencheck_cop1_unusable(); ccond_setjump_body_s(jset); }
-static void gen_ccond_clearjump_s(void (*jclear2)(unsigned char)) { gencheck_cop1_unusable(); ccond_clearjump_body_s(jclear2); }
+static void gen_ccond_setjump_s(void (*jset)(unsigned char))
+{
+    gencheck_cop1_unusable();
+    ccond_setjump_body_s(jset);
+}
+static void gen_ccond_clearjump_s(void (*jclear2)(unsigned char))
+{
+    gencheck_cop1_unusable();
+    ccond_clearjump_body_s(jclear2);
+}
 // Signaling ordered compares (LT/NGE=jae, LE/NGT=ja, SEQ/NGL=jne): NaN fail (toggle-gated) + ordered predicate.
 static void gen_ccond_sig_clearjump_s(void (*jclear2)(unsigned char))
 {
@@ -189,7 +203,7 @@ void gensqrt_s()
     sqrtsd_xmm_xmm(0, 0);        // xmm0 = sqrt(xmm0)
     cvtsd2ss_xmm_xmm(0, 0);      // xmm0 = (float)xmm0
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0);    // fd = xmm0
+    movss_preg64_xmm(EAX, 0); // fd = xmm0
     gencheck_output_s((void *)(&reg_cop1_simple[dst->f.cf.fd]));
 #endif
 }
@@ -269,7 +283,7 @@ void gentrunc_l_s()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvttss2si_reg64_preg64(EBX, EAX); // rbx = (int64)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);       // fd = rbx
+    mov_preg64_reg64(EAX, EBX); // fd = rbx
 #endif
 }
 
@@ -335,7 +349,7 @@ void gentrunc_w_s()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvttss2si_reg32_preg64(EBX, EAX); // ebx = (int32)trunc(fs)
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);       // fd = ebx
+    mov_preg64_reg32(EAX, EBX); // fd = ebx
 #endif
 }
 
@@ -399,7 +413,7 @@ void gencvt_w_s()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvtss2si_reg32_preg64(EBX, EAX); // ebx = (int32)round(fs) per MXCSR
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg64_reg32(EAX, EBX);      // fd = ebx
+    mov_preg64_reg32(EAX, EBX); // fd = ebx
 #endif
 }
 
@@ -414,7 +428,7 @@ void gencvt_l_s()
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
     cvtss2si_reg64_preg64(EBX, EAX); // rbx = (int64)round(fs) per MXCSR
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    mov_preg64_reg64(EAX, EBX);      // fd = rbx
+    mov_preg64_reg64(EAX, EBX); // fd = rbx
 #endif
 }
 
