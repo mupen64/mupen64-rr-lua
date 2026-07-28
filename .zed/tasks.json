@@ -8,7 +8,8 @@
       "build",
       "vcpkg",
       "-p",
-      "build"
+      "build",
+      "-Dtarget=x86_64-windows"
     ]
   },
   {
@@ -21,7 +22,7 @@
       "vcpkg",
       "-p",
       "build",
-      "-Dtarget=x86-windows-msvc"
+      "-Dtarget=x86-windows"
     ]
   },
   {
@@ -33,7 +34,7 @@
       "build",
       "-p",
       "build",
-      "-Dvcpkg_installed=build/vcpkg_installed/x64-windows"
+      "-Dtarget=x86_64-windows"
     ]
   },
   {
@@ -45,8 +46,7 @@
       "build",
       "-p",
       "build",
-      "-Dtarget=x86-windows-msvc",
-      "-Dvcpkg_installed=build/vcpkg_installed/x86-windows"
+      "-Dtarget=x86-windows"
     ]
   },
   {
@@ -58,8 +58,8 @@
       "build",
       "-p",
       "build",
-      "-Doptimize=ReleaseSafe",
-      "-Dvcpkg_installed=build/vcpkg_installed/x64-windows"
+      "-Dtarget=x86_64-windows",
+      "-Doptimize=ReleaseSafe"
     ]
   },
   {
@@ -71,9 +71,8 @@
       "build",
       "-p",
       "build",
-      "-Dtarget=x86-windows-msvc",
-      "-Doptimize=ReleaseSafe",
-      "-Dvcpkg_installed=build/vcpkg_installed/x86-windows"
+      "-Dtarget=x86-windows",
+      "-Doptimize=ReleaseSafe"
     ]
   },
   {
@@ -85,7 +84,7 @@
       "build",
       "--prefix",
       "build",
-      "-Dvcpkg_installed=build/vcpkg_installed/x64-windows",
+      "-Dtarget=x86_64-windows",
       "--cache-dir",
       ".zig-cache",
       "--summary",
@@ -102,7 +101,7 @@
       "test",
       "-p",
       "build",
-      "-Dvcpkg_installed=build/vcpkg_installed/x64-windows"
+      "-Dtarget=x86_64-windows"
     ]
   },
   {
@@ -115,8 +114,7 @@
       "test",
       "-p",
       "build",
-      "-Dtarget=x86-windows-msvc",
-      "-Dvcpkg_installed=build/vcpkg_installed/x86-windows"
+      "-Dtarget=x86-windows"
     ]
   }
 ]

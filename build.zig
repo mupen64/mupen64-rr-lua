@@ -48,8 +48,9 @@ pub fn build(b: *std.Build) void {
         @panic("Dynarec is not supported on this architecture");
     }
 
-    const cxx_flags = collectCxxFlags(b, optimize, is_x86_family, target_is_windows);
-    const c_flags = collectCFlags(b, optimize, is_x86_family, target_is_windows);
+    const target_uses_msvc = target_is_windows and target.result.abi == .msvc;
+    const cxx_flags = collectCxxFlags(b, optimize, is_x86_family, target_uses_msvc);
+    const c_flags = collectCFlags(b, optimize, is_x86_family, target_uses_msvc);
 
     const vcpkg: ?VcpkgPaths = if (target_is_windows)
         resolveVcpkg(b, target, link_static, optimize, vcpkg_installed_opt)
@@ -426,8 +427,13 @@ pub fn build(b: *std.Build) void {
     // ── Test step ───────────────────────────────────────────────────────
     if (core_tests_exe) |tests| {
         const test_step = b.step("test", "Run Core.Tests (one process per case)");
-        const isolated = addIsolatedCatchTests(b, tests, if (vcpkg) |vp| vp.bin_dir else null);
-        test_step.dependOn(&isolated.step);
+        if (target.result.os.tag == builtin.os.tag) {
+            const isolated = addIsolatedCatchTests(b, tests, if (vcpkg) |vp| vp.bin_dir else null);
+            test_step.dependOn(&isolated.step);
+        } else {
+            // A cross-compiled test executable cannot run on the build host.
+            test_step.dependOn(&tests.step);
+        }
     }
 
     // ── Convenience: vcpkg install helper ───────────────────────────────
@@ -716,10 +722,12 @@ fn newestSubdirBefore(b: *std.Build, root: []const u8, upper_bound: ?[]const u8)
 fn resolveTarget(b: *std.Build, requested: std.Build.ResolvedTarget) std.Build.ResolvedTarget {
     var query = requested.query;
 
-    // Prefer the MSVC ABI on Windows so we can consume vcpkg packages built for it.
-    if (requested.result.os.tag == .windows and requested.result.abi != .msvc) {
+    // An ABI explicitly supplied through -Dtarget always wins. For target-neutral
+    // Windows triples, use the native ABI on Windows and MinGW when cross-compiling.
+    // This keeps the Zed tasks portable between Windows and Linux.
+    if (requested.result.os.tag == .windows and query.abi == null) {
         query.os_tag = .windows;
-        query.abi = .msvc;
+        query.abi = if (builtin.os.tag == .windows) .msvc else .gnu;
         query.cpu_arch = requested.result.cpu.arch;
     }
 
@@ -733,11 +741,11 @@ fn resolveTarget(b: *std.Build, requested: std.Build.ResolvedTarget) std.Build.R
     return b.resolveTargetQuery(query);
 }
 
-fn collectCxxFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_family: bool, target_is_windows: bool) []const []const u8 {
+fn collectCxxFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_family: bool, target_uses_msvc: bool) []const []const u8 {
     var flags: std.ArrayListUnmanaged([]const u8) = .empty;
     flags.append(b.allocator, "-std=c++23") catch @panic("OOM");
 
-    if (target_is_windows) {
+    if (target_uses_msvc) {
         // Match vcpkg's MultiThreadedDLL CRT (MD / MDd).
         const crt = if (optimize == .Debug) "-fms-runtime-lib=dll_dbg" else "-fms-runtime-lib=dll";
         flags.appendSlice(b.allocator, &.{
@@ -762,10 +770,10 @@ fn collectCxxFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_fam
     return flags.toOwnedSlice(b.allocator) catch @panic("OOM");
 }
 
-fn collectCFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_family: bool, target_is_windows: bool) []const []const u8 {
+fn collectCFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_family: bool, target_uses_msvc: bool) []const []const u8 {
     var flags: std.ArrayListUnmanaged([]const u8) = .empty;
     flags.append(b.allocator, "-std=c11") catch @panic("OOM");
-    if (target_is_windows) {
+    if (target_uses_msvc) {
         const crt = if (optimize == .Debug) "-fms-runtime-lib=dll_dbg" else "-fms-runtime-lib=dll";
         flags.appendSlice(b.allocator, &.{ "-fms-extensions", crt, "-finput-charset=UTF-8", "-Wno-unused-command-line-argument" }) catch @panic("OOM");
     }
@@ -953,10 +961,16 @@ fn vcpkgTriplet(target: std.Build.ResolvedTarget, link_static: bool) []const u8 
         .aarch64 => "arm64",
         else => "x64",
     };
-    if (link_static) {
-        return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows-static", .{arch}) catch @panic("OOM");
+    if (target.result.abi == .msvc) {
+        if (link_static) {
+            return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows-static", .{arch}) catch @panic("OOM");
+        }
+        return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows", .{arch}) catch @panic("OOM");
     }
-    return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows", .{arch}) catch @panic("OOM");
+    if (link_static) {
+        return std.fmt.allocPrint(std.heap.page_allocator, "{s}-mingw-static", .{arch}) catch @panic("OOM");
+    }
+    return std.fmt.allocPrint(std.heap.page_allocator, "{s}-mingw-dynamic", .{arch}) catch @panic("OOM");
 }
 
 fn resolveVcpkg(
