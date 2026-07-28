@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <include/core_types.h>
+#include <m64rr/core_types.hpp>
 
 #define S8 3
 #define S16 2

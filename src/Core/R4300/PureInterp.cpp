@@ -6,7 +6,7 @@
 
 #include <CommonPCH.hpp>
 #include <Core.hpp>
-#include <include/core_api.h>
+#include <m64rr/core_api.hpp>
 #include <Memory/Memory.hpp>
 #include <Memory/TLB.hpp>
 #include <R4300/Cop1Helpers.hpp>

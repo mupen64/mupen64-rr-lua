@@ -6,7 +6,7 @@
 
 #include <CommonPCH.hpp>
 #include "Disasm.hpp"
-#include <include/core_api.h>
+#include <m64rr/core_api.hpp>
 
 typedef enum INSTSETOP_t
 {

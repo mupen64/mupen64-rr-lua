@@ -7,7 +7,7 @@
 #pragma warning(push, 0)
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
-#include <core_api.h>
+#include <m64rr/core_api.hpp>
 #include <filesystem>
 #include <string>
 #include <format>
@@ -37,7 +37,7 @@
 #include <commctrl.h>
 #include <windowsx.h>
 #include <shellscalingapi.h>
-#include <core_types.h>
+#include <m64rr/core_types.hpp>
 #include <Resource.h>
 #include <gdiplus.h>
 #pragma warning(pop)

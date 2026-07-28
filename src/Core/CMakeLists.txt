@@ -5,8 +5,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Core.Headers INTERFACE
-    "include/core_types.h"
-    "include/core_api.h"
+    "include/m64rr/core_types.hpp"
+    "include/m64rr/core_api.hpp"
 )
 set_target_properties(Mupen64RR.Core.Headers PROPERTIES
     CXX_STANDARD 23

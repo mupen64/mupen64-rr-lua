@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <core_types.h>
+#include <m64rr/core_types.hpp>
 #include <Hotkey.hpp>
 
 struct t_config

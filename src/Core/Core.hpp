@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <include/core_api.h>
+#include <m64rr/core_api.hpp>
 
 extern core_params *g_core;
 extern core_ctx g_ctx;

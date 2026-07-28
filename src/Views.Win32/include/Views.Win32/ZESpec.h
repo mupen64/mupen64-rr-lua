@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "core_types.h"
+#include "m64rr/core_types.hpp"
 
 #ifdef _WIN32
 

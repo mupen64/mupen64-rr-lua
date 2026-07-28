@@ -8,7 +8,7 @@
 #include "Config.hpp"
 #include "IOUtils.hpp"
 #include "SDLBackend.hpp"
-#include "core_types.h"
+#include "m64rr/core_types.hpp"
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <Views.Win32/M64RRSpec.h>
