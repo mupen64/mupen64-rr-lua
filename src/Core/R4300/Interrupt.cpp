@@ -481,7 +481,8 @@ void gen_interrupt()
         else
         {
             constexpr double max_vi_delay = (std::numeric_limits<uint32_t>::max)();
-            const double cpu_delay_value = (static_cast<double>(vi_register.vi_v_sync) + 1.0) * 1500.0 * g_core->cfg->cpu_cf;
+            const double cpu_delay_value =
+                (static_cast<double>(vi_register.vi_v_sync) + 1.0) * 1500.0 * g_core->cfg->cpu_cf;
             const uint32_t cpu_delay = std::isfinite(cpu_delay_value)
                                            ? static_cast<uint32_t>(std::clamp(cpu_delay_value, 0.0, max_vi_delay))
                                            : 0;

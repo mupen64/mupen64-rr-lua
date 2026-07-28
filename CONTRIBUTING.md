@@ -7,17 +7,15 @@ Only Windows supports compiling the full emulator. However, the core and VCR tes
 
 You'll need:
 - Visual Studio 2026 (for the MSVC toolchain, Windows SDK, and bundled vcpkg)
-  - Ensure a VS developer environment is available (the provided `tools/vsdev-*.cmd` wrappers set this up).
-- [Zig 0.16.0+](https://ziglang.org/download/)
+- [Zig](https://ziglang.org/download/)
 
 ## Linux dependencies
 
 You'll need:
-- Zig 0.16.0+
+- Zig
 - A system C/C++ toolchain for headers (`clang`/`gcc` + libstdc++/libc++)
-- `libdeflate`
 - `libsafec`
-- Catch2 (for tests)
+- MinGW
 
 `libsafec` is required outside of Windows as no other C/C++ library implements C11 Annex K, which specifies `strncpy_s` and similar functions.
 
@@ -67,7 +65,7 @@ build/test/out/luatestlib.dll
 ### Visual Studio Code / CLion / Zed
 
 #### Zed
-All tasks required for development are available in the task panel.
+All tasks required for development are available in the task panel. Run **generate compile_commands.json (Win64)** after installing the matching vcpkg triplet (and whenever build options change). It writes the ignored `compile_commands.json` at the repository root, which clangd/Zed consumes for C/C++ IntelliSense, including the forced `CommonPCH.hpp` and `stdafx.h` headers.
 
 #### Windows-only
 Visual Studio 2026 must be installed on the `C:` drive for the `tools/vsdev-*.cmd` helpers.

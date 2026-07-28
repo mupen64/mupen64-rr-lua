@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -15,11 +15,14 @@
 #error "The M64RR specification is only for C++"
 #endif
 
-#include "core_types.h"
+#include "m64rr/Types.hpp"
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
 #define CALL __cdecl
+#elif defined(__linux__)
+#define EXPORT
+#define CALL
 #else
 #error "Unsupported platform"
 #endif
@@ -34,7 +37,8 @@ extern "C"
     enum class Platform : uint8_t
     {
         Windows,
-        LinuxWayland,
+        X11,
+        Wayland
     };
 
     struct WindowHandle
@@ -226,8 +230,8 @@ extern "C"
         enum class Type : uint8_t
         {
             // The plugin is being initialized.
-            // This event may be sent multiple times, and it's recommended to only store the init pointer when handling this event.
-            // The valid field is `initiate`.
+            // This event may be sent multiple times, and it's recommended to only store the init pointer when handling
+            // this event. The valid field is `initiate`.
             Initiate,
 
             // The plugin is being shut down. There will be no more calls to it after this event.
@@ -258,6 +262,7 @@ extern "C"
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
 
     typedef void(CALL *PtrProcessDList)();
+    typedef void(CALL *PtrProcessRDPList)();
     typedef void(CALL *PtrReadVideo)(void *buffer, int32_t *width, int32_t *height);
 
     typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
@@ -301,9 +306,16 @@ extern "C"
     // ---
 
     /**
-     * \brief Processes the display list.
+     * \brief Processes high-level display lists.
+     * \note This should only be implemented for HLE graphics plugins.
      */
     EXPORT void CALL M64RRProcessDList(void);
+
+    /**
+     * \brief Processes low-level display lists.
+     * \note This should only be implemented for LLE graphics plugins.
+     */
+    EXPORT void CALL M64RRProcessRDPList(void);
 
     /**
      * \brief Reads video data.

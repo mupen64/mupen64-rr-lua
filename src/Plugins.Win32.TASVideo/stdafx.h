@@ -2,7 +2,7 @@
 
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
-#include <core_api.h>
+#include <m64rr/API.hpp>
 #include <windows.h>
 #include <GL/glew.h>
 #include <commctrl.h>

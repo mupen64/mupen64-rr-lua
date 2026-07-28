@@ -11,7 +11,7 @@
 #define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
 
 #include <CommonPCH.hpp>
-#include <core_api.h>
+#include <m64rr/API.hpp>
 
 #pragma warning(push, 0)
 extern "C"
