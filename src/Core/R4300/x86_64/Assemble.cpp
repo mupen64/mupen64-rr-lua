@@ -127,7 +127,7 @@ inline void put8(unsigned char octet)
     code_length++;
 }
 
-inline void put32(uint32_t dword)
+void put32(uint32_t dword)
 {
     if ((code_length + 4) >= max_code_length)
     {

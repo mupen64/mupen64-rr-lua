@@ -1585,7 +1585,7 @@ static inline uint32_t update_invalid_addr(uint32_t addr)
 #define addr jump_to_address
 uint32_t jump_to_address;
 
-inline void jump_to_func()
+void jump_to_func()
 {
     // #ifdef _DEBUG
     //	g_core->log_info("dyna jump: {:#08x}", addr);
