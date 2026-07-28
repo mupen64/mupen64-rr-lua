@@ -33,16 +33,15 @@ inline std::vector<uint8_t> auto_decompress(const std::vector<uint8_t> &vec, con
     // The gzip header does not include the uncompressed size, so grow the output buffer until it fits.
     size_t buf_size = std::max(initial_size, size_t{1});
     auto decompressor = libdeflate_alloc_decompressor();
-    if (!decompressor)
-        return {};
+    if (!decompressor) return {};
 
     std::vector<uint8_t> out_vec;
     while (true)
     {
         out_vec.resize(buf_size);
         size_t actual_size = 0;
-        const auto result =
-            libdeflate_gzip_decompress(decompressor, vec.data(), vec.size(), out_vec.data(), out_vec.size(), &actual_size);
+        const auto result = libdeflate_gzip_decompress(decompressor, vec.data(), vec.size(), out_vec.data(),
+                                                       out_vec.size(), &actual_size);
         if (result == LIBDEFLATE_SHORT_OUTPUT || result == LIBDEFLATE_INSUFFICIENT_SPACE)
         {
             if (buf_size > std::numeric_limits<size_t>::max() / 2)
@@ -55,8 +54,7 @@ inline std::vector<uint8_t> auto_decompress(const std::vector<uint8_t> &vec, con
         }
 
         libdeflate_free_decompressor(decompressor);
-        if (result != LIBDEFLATE_SUCCESS)
-            return {};
+        if (result != LIBDEFLATE_SUCCESS) return {};
 
         out_vec.resize(actual_size);
         return out_vec;

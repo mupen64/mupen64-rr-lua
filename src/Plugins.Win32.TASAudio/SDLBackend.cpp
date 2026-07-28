@@ -40,8 +40,8 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     if (!SDL_BindAudioStream(m_device_id, m_stream)) throw std::runtime_error(SDL_GetError());
 
     g_plugin->log_info(std::format(L"Opened default audio device, buffer size = {}, target = {}", m_buffer_size,
-                               config.src_buffer_target)
-                       .c_str());
+                                   config.src_buffer_target)
+                           .c_str());
 
     // Pause the stream initially.
     set_paused(true);

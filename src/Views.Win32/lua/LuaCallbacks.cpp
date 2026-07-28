@@ -187,8 +187,10 @@ void LuaCallbacks::call_window_message(void *wnd, unsigned int msg, std::uintptr
 {
     RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);
 
-    atwindowmessage_ctx = {
-        .wnd = static_cast<HWND>(wnd), .msg = msg, .w_param = static_cast<WPARAM>(w), .l_param = static_cast<LPARAM>(l)};
+    atwindowmessage_ctx = {.wnd = static_cast<HWND>(wnd),
+                           .msg = msg,
+                           .w_param = static_cast<WPARAM>(w),
+                           .l_param = static_cast<LPARAM>(l)};
 
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_WINDOWMESSAGE); });
 }

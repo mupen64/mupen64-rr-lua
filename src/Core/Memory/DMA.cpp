@@ -111,7 +111,8 @@ void dma_pi_write()
                 fread(sram, 1, 0x8000, g_sram_file);
 
                 const uint32_t sram_offset = (pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF;
-                uint32_t length = clamp_dma_length(sram_offset, sizeof(sram), (pi_register.pi_wr_len_reg & 0xFFFFFF) + 1);
+                uint32_t length =
+                    clamp_dma_length(sram_offset, sizeof(sram), (pi_register.pi_wr_len_reg & 0xFFFFFF) + 1);
                 length = clamp_dma_length(pi_register.pi_dram_addr_reg, sizeof(rdram), length);
                 for (uint32_t i = 0; i < length; i++)
                     ((unsigned char *)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] = sram[(sram_offset + i) ^ S8];
@@ -231,8 +232,7 @@ void dma_sp_write()
     const uint32_t dram_offset = sp_register.sp_dram_addr_reg & 0xFFFFFF;
     const uint32_t requested_length = (sp_register.sp_rd_len_reg & 0xFFF) + 1;
     assert(requested_length <= 0x1000 - sp_offset && "SP DMA crosses a DMEM/IMEM boundary");
-    assert(dram_offset < sizeof(rdram) && requested_length <= sizeof(rdram) - dram_offset &&
-           "SP DMA exceeds RDRAM");
+    assert(dram_offset < sizeof(rdram) && requested_length <= sizeof(rdram) - dram_offset && "SP DMA exceeds RDRAM");
     uint32_t length = clamp_dma_length(sp_offset, 0x1000, requested_length);
     length = clamp_dma_length(dram_offset, sizeof(rdram), length);
     auto *sp_memory = (sp_register.sp_mem_addr_reg & 0x1000) ? (unsigned char *)SP_IMEM : (unsigned char *)SP_DMEM;
@@ -247,8 +247,7 @@ void dma_sp_read()
     const uint32_t dram_offset = sp_register.sp_dram_addr_reg & 0xFFFFFF;
     const uint32_t requested_length = (sp_register.sp_wr_len_reg & 0xFFF) + 1;
     assert(requested_length <= 0x1000 - sp_offset && "SP DMA crosses a DMEM/IMEM boundary");
-    assert(dram_offset < sizeof(rdram) && requested_length <= sizeof(rdram) - dram_offset &&
-           "SP DMA exceeds RDRAM");
+    assert(dram_offset < sizeof(rdram) && requested_length <= sizeof(rdram) - dram_offset && "SP DMA exceeds RDRAM");
     uint32_t length = clamp_dma_length(sp_offset, 0x1000, requested_length);
     length = clamp_dma_length(dram_offset, sizeof(rdram), length);
     auto *sp_memory = (sp_register.sp_mem_addr_reg & 0x1000) ? (unsigned char *)SP_IMEM : (unsigned char *)SP_DMEM;

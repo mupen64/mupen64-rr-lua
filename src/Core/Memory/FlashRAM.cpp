@@ -86,8 +86,7 @@ void flashram_command(uint32_t command)
         case NOPES_MODE:
             break;
         case ERASE_MODE: {
-            if (erase_offset > sizeof(flashram) - 128)
-                break;
+            if (erase_offset > sizeof(flashram) - 128) break;
 
             fseek(g_sram_file, 0, SEEK_SET);
             fread(flashram, 1, 0x20000, g_sram_file);
@@ -99,8 +98,7 @@ void flashram_command(uint32_t command)
         }
         break;
         case WRITE_MODE: {
-            if (erase_offset > sizeof(flashram) - 128 || write_pointer > sizeof(rdram) - 128)
-                break;
+            if (erase_offset > sizeof(flashram) - 128 || write_pointer > sizeof(rdram) - 128) break;
 
             fseek(g_sram_file, 0, SEEK_SET);
             fread(flashram, 1, 0x20000, g_sram_file);

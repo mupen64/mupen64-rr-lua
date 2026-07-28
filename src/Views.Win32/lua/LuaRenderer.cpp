@@ -130,7 +130,7 @@ static void draw_clock_proc()
     {
         g_main_ctx.dispatcher->invoke([]() { draw_lua(false); });
 
-        if(g_main_ctx.wine)
+        if (g_main_ctx.wine)
             Sleep(16);
         else
             DwmFlush();

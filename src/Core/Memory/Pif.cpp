@@ -35,8 +35,7 @@ void print_pif()
 
 static bool pif_packet_fits(const int32_t offset, const size_t minimum_length)
 {
-    if (offset < 0 || offset + 2 > 0x40)
-        return false;
+    if (offset < 0 || offset + 2 > 0x40) return false;
 
     const size_t length = (size_t)PIF_RAMb[offset] + (PIF_RAMb[offset + 1] & 0x3F) + 2;
     return length >= minimum_length && length <= 0x40 - (size_t)offset;
@@ -344,7 +343,9 @@ void update_pif_write()
                 if (channel < 4)
                 {
                     const uint8_t command = PIF_RAMb[i + 2];
-                    const size_t minimum_length = command == 2 || command == 3 ? 0x26 : (command == 1 ? 7 : (command == 0 || command == 0xFF ? 6 : 3));
+                    const size_t minimum_length = command == 2 || command == 3
+                                                      ? 0x26
+                                                      : (command == 1 ? 7 : (command == 0 || command == 0xFF ? 6 : 3));
                     if (!pif_packet_fits(i, minimum_length))
                     {
                         assert(false && "PIF controller write packet is shorter than its command requires");
@@ -434,8 +435,9 @@ void update_pif_read()
                 if (channel < 4)
                 {
                     const uint8_t command = PIF_RAMb[i + 2];
-                    const size_t minimum_length =
-                        command == 2 || command == 3 ? 0x26 : (command == 1 ? 7 : (command == 0 || command == 0xFF ? 6 : 3));
+                    const size_t minimum_length = command == 2 || command == 3
+                                                      ? 0x26
+                                                      : (command == 1 ? 7 : (command == 0 || command == 0xFF ? 6 : 3));
                     if (!pif_packet_fits(i, minimum_length))
                     {
                         assert(false && "PIF controller read packet is shorter than its command requires");
