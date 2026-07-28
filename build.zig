@@ -279,7 +279,6 @@ pub fn build(b: *std.Build) void {
                 .common_inc = common_inc,
                 .common_win32_inc = common_win32_inc,
                 .core_inc = core_inc,
-                .views_headers_inc = views_headers_inc,
                 .vendor_xxhash64 = vendor_xxhash64,
                 .vcpkg = vp,
                 .cxx_flags = cxx_flags,
@@ -1098,7 +1097,6 @@ const PluginCommon = struct {
     common_inc: std.Build.LazyPath,
     common_win32_inc: std.Build.LazyPath,
     core_inc: std.Build.LazyPath,
-    views_headers_inc: std.Build.LazyPath,
     vendor_xxhash64: std.Build.LazyPath,
     vcpkg: VcpkgPaths,
     cxx_flags: []const []const u8,
@@ -1140,7 +1138,6 @@ fn addPlugin(
     lib.root_module.addIncludePath(common.common_inc);
     lib.root_module.addIncludePath(common.common_win32_inc);
     lib.root_module.addIncludePath(common.core_inc);
-    lib.root_module.addIncludePath(common.views_headers_inc);
     lib.root_module.addIncludePath(common.vendor_xxhash64);
     for (extra_includes) |inc| lib.root_module.addIncludePath(inc);
     applyVcpkgIncludes(lib.root_module, common.vcpkg);
