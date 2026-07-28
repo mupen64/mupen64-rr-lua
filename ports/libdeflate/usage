@@ -1,0 +1,1 @@
+libdeflate provides the `libdeflate::libdeflate_shared` and `libdeflate::libdeflate_static` CMake targets.

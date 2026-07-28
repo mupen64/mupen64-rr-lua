@@ -85,7 +85,7 @@ zig build test -Dbuild_win32=false
 
 ### Win64 cross-build
 
-Install `vcpkg` and a MinGW-w64 cross compiler so that `vcpkg` is available on `PATH`. The target is required: without it, `zig build vcpkg` selects the Linux host target and has no vcpkg dependencies to install.
+Install `vcpkg` and MinGW-w64's resource compiler. The target is required: without it, `zig build vcpkg` selects the Linux host target and has no vcpkg dependencies to install. On Linux, the project uses its `zig-windows` overlay triplet: vcpkg builds C++ dependencies with `zig c++` and its bundled libc++, matching the application build. Do not use the stock `x64-mingw-*` install tree, which is built with GCC/libstdc++ and is C++ ABI-incompatible with Zig's libc++.
 
 On Arch, the packaged `vcpkg` does not include the ports checkout. Clone and bootstrap a matching executable first; the build automatically prefers `$VCPKG_ROOT/vcpkg` over the system wrapper when it exists.
 
@@ -95,12 +95,12 @@ export VCPKG_ROOT="$HOME/.local/share/vcpkg"
 git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
 "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
 
-# Installs the x64-mingw-dynamic triplet under build/vcpkg_installed.
+# Installs the x64-zig-windows-dynamic triplet under build/vcpkg_installed.
 zig build vcpkg -p build -Dtarget=x86_64-windows
 
 # The build auto-detects that directory; passing it explicitly is also supported.
 zig build -p build -Dtarget=x86_64-windows -Doptimize=ReleaseSafe \
-  -Dvcpkg_installed=build/vcpkg_installed/x64-mingw-dynamic
+  -Dvcpkg_installed=build/vcpkg_installed/x64-zig-windows-dynamic
 ```
 
 The Zed `vcpkg install (Win64)` task already includes `-Dtarget=x86_64-windows`; run it before either Win64 build task.

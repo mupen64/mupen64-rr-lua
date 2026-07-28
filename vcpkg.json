@@ -10,7 +10,6 @@
         "wchar"
       ]
     },
-    "pkgconf",
     "speexdsp",
     "glew",
     "sdl3"

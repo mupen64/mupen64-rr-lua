@@ -732,7 +732,7 @@ static void update_groupbox_status_text()
 /**
  * Gets whether the joystick control can be interacted with by the user.
  */
-static bool can_joystick_be_modified()
+bool can_joystick_be_modified()
 {
     return !piano_roll.current_state.selected_indicies.empty() && piano_roll.readwrite;
 }

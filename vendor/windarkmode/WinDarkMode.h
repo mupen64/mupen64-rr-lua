@@ -42,9 +42,9 @@
 #pragma once
 
 #include <windows.h>
-#include <Uxtheme.h>
+#include <uxtheme.h>
 #include <commdlg.h>
-#include <Vssym32.h>
+#include <vssym32.h>
 #include <dwmapi.h>
 #include <winerror.h>
 #include <cstdint>

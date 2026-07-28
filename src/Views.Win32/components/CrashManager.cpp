@@ -10,13 +10,17 @@
 
 typedef struct StacktraceInfo
 {
+#if MUPEN64RR_HAS_STD_STACKTRACE
     std::stacktrace stl_stacktrace{};
+#endif
     void *rtl_stacktrace[32]{};
 } t_stacktrace_info;
 
 static t_stacktrace_info stacktrace_info;
 
-#define E(x) {x, L#x}
+#define WIDEN_IMPL(x) L##x
+#define WIDEN(x) WIDEN_IMPL(#x)
+#define E(x) {x, WIDEN(x)}
 const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
     E(EXCEPTION_ACCESS_VIOLATION),
     E(EXCEPTION_ACCESS_VIOLATION),
@@ -43,6 +47,8 @@ const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
     E(EXCEPTION_INVALID_HANDLE),
 };
 #undef E
+#undef WIDEN
+#undef WIDEN_IMPL
 
 static std::filesystem::path get_minidump_path()
 {
@@ -117,7 +123,9 @@ static std::wstring get_exception_code_friendly_name(const _EXCEPTION_POINTERS *
 static __forceinline void fill_stacktrace_info()
 {
     stacktrace_info = {};
+#if MUPEN64RR_HAS_STD_STACKTRACE
     stacktrace_info.stl_stacktrace = std::stacktrace::current();
+#endif
     stacktrace_info.rtl_stacktrace[0] = nullptr;
     CaptureStackBackTrace(0, std::size(stacktrace_info.rtl_stacktrace), stacktrace_info.rtl_stacktrace, NULL);
 }
@@ -139,11 +147,13 @@ static void log_crash(const std::wstring &additional_exception_info)
     g_view_logger->critical(L"Core Executing: {}", g_main_ctx.core_ctx->vr_get_launched());
     g_view_logger->critical(additional_exception_info);
 
+#if MUPEN64RR_HAS_STD_STACKTRACE
     g_view_logger->critical("STL Stacktrace:");
     for (const auto &stacktrace_entry : stacktrace_info.stl_stacktrace)
     {
         g_view_logger->critical(std::format("{}", std::to_string(stacktrace_entry)));
     }
+#endif
 
     g_view_logger->critical("RTL Stacktrace:");
     for (auto i = 0; i < std::size(stacktrace_info.rtl_stacktrace); ++i)

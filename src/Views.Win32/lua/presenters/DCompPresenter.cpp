@@ -40,7 +40,7 @@ bool DCompPresenter::init(HWND hwnd)
     GetClientRect(hwnd, &rect);
     m_size = {(UINT32)rect.right - rect.left, (UINT32)rect.bottom - rect.top};
 
-    CreateDXGIFactory2(0, IID_PPV_ARGS(m_dxgi_factory.GetAddressOf()));
+    CreateDXGIFactory1(IID_PPV_ARGS(m_dxgi_factory.GetAddressOf()));
     m_dxgi_factory->EnumAdapters1(0, m_dxgi_adapter.GetAddressOf());
 
     D3D11CreateDevice(m_dxgi_adapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr,
@@ -91,7 +91,7 @@ D2D1_SIZE_U DCompPresenter::size()
 
 void DCompPresenter::resize(D2D1_SIZE_U size)
 {
-    if (size == m_size) return;
+    if (size.width == m_size.width && size.height == m_size.height) return;
 
     m_size = size;
 

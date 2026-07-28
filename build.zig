@@ -28,7 +28,7 @@ pub fn build(b: *std.Build) void {
     if (target_is_windows and builtin.os.tag == .linux) {
         const triplet = vcpkgTriplet(target, link_static);
         std.log.warn(
-            "Linux host detected: cross-compiling for Windows with MinGW (vcpkg triplet '{s}').\n" ++
+            "Linux host detected: cross-compiling for Windows with Zig/libc++ (vcpkg triplet '{s}').\n" ++
                 "Run the matching Zed vcpkg install task before building if dependencies are missing.",
             .{triplet},
         );
@@ -455,6 +455,8 @@ pub fn build(b: *std.Build) void {
         run.addArgs(&.{
             "install",
             b.fmt("--triplet={s}", .{triplet}),
+            "--overlay-triplets=triplets",
+            "--overlay-ports=ports",
             "--x-manifest-root=.",
             b.fmt("--x-install-root={s}", .{install_root}),
         });
@@ -1033,6 +1035,12 @@ fn vcpkgTriplet(target: std.Build.ResolvedTarget, link_static: bool) []const u8 
             return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows-static", .{arch}) catch @panic("OOM");
         }
         return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows", .{arch}) catch @panic("OOM");
+    }
+    // Zig compiles C++ with its bundled libc++. The stock MinGW triplets use
+    // GCC/libstdc++, which makes C++ vcpkg libraries ABI-incompatible.
+    if (builtin.os.tag == .linux and target.result.os.tag == .windows and target.result.abi == .gnu) {
+        const linkage = if (link_static) "static" else "dynamic";
+        return std.fmt.allocPrint(std.heap.page_allocator, "{s}-zig-windows-{s}", .{ arch, linkage }) catch @panic("OOM");
     }
     if (link_static) {
         return std.fmt.allocPrint(std.heap.page_allocator, "{s}-mingw-static", .{arch}) catch @panic("OOM");

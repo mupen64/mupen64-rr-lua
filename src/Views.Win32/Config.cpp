@@ -359,8 +359,10 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 
 static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
 {
-#define HANDLE_P_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, &g_config.x);
-#define HANDLE_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, g_config.x);
+#define WIDEN_IMPL(x) L##x
+#define WIDEN(x) WIDEN_IMPL(#x)
+#define HANDLE_P_VALUE(x) ini_handle_config_value(ini, WIDEN(x), is_reading, &g_config.x);
+#define HANDLE_VALUE(x) ini_handle_config_value(ini, WIDEN(x), is_reading, g_config.x);
 
     if (is_reading)
     {
@@ -455,6 +457,11 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_VALUE(lua_paths)
     HANDLE_VALUE(hotkeys)
     HANDLE_VALUE(inital_hotkeys)
+
+#undef HANDLE_VALUE
+#undef HANDLE_P_VALUE
+#undef WIDEN
+#undef WIDEN_IMPL
 }
 
 static std::filesystem::path get_legacy_config_path()

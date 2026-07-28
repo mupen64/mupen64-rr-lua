@@ -53,7 +53,12 @@ extern "C"
 #include <strsafe.h>
 #include <commdlg.h>
 #include <unordered_set>
+#if __has_include(<stacktrace>)
 #include <stacktrace>
+#define MUPEN64RR_HAS_STD_STACKTRACE 1
+#else
+#define MUPEN64RR_HAS_STD_STACKTRACE 0
+#endif
 #include <expected>
 #include <ranges>
 #include <set>
