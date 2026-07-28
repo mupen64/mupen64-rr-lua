@@ -9,7 +9,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include <Windows.h>
+#include <windows.h>
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -24,51 +24,51 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Bitmap
 //
 
-IDB_CONTROL             BITMAP                  "icons\\plugin_input.bmp"
+IDB_CONTROL             BITMAP                  "icons/plugin_input.bmp"
 
-IDB_DISPLAY             BITMAP                  "icons\\plugin_video.bmp"
+IDB_DISPLAY             BITMAP                  "icons/plugin_video.bmp"
 
-IDB_RSP                 BITMAP                  "icons\\plugin_rsp.bmp"
+IDB_RSP                 BITMAP                  "icons/plugin_rsp.bmp"
 
-IDB_SOUND               BITMAP                  "icons\\plugin_audio.bmp"
+IDB_SOUND               BITMAP                  "icons/plugin_audio.bmp"
 
-IDB_FLAG_GERMANY        BITMAP                  "icons\\BMPs\\germany.bmp"
+IDB_FLAG_GERMANY        BITMAP                  "icons/BMPs/germany.bmp"
 
-IDB_FLAG_USA            BITMAP                  "icons\\BMPs\\usa.bmp"
+IDB_FLAG_USA            BITMAP                  "icons/BMPs/usa.bmp"
 
-IDB_FLAG_JAPAN          BITMAP                  "icons\\BMPs\\japan.bmp"
+IDB_FLAG_JAPAN          BITMAP                  "icons/BMPs/japan.bmp"
 
-IDB_FLAG_EUROPE         BITMAP                  "icons\\BMPs\\europe.bmp"
+IDB_FLAG_EUROPE         BITMAP                  "icons/BMPs/europe.bmp"
 
-IDB_FLAG_AUSTRALIA      BITMAP                  "icons\\BMPs\\austral.bmp"
+IDB_FLAG_AUSTRALIA      BITMAP                  "icons/BMPs/austral.bmp"
 
-IDB_FLAG_ITALIA         BITMAP                  "icons\\BMPs\\italy.bmp"
+IDB_FLAG_ITALIA         BITMAP                  "icons/BMPs/italy.bmp"
 
-IDB_FLAG_FRANCE         BITMAP                  "icons\\BMPs\\france.bmp"
+IDB_FLAG_FRANCE         BITMAP                  "icons/BMPs/france.bmp"
 
-IDB_FLAG_SPAIN          BITMAP                  "icons\\BMPs\\spain.bmp"
+IDB_FLAG_SPAIN          BITMAP                  "icons/BMPs/spain.bmp"
 
-IDB_FLAG_UNKNOWN        BITMAP                  "icons\\BMPs\\unknown.bmp"
+IDB_FLAG_UNKNOWN        BITMAP                  "icons/BMPs/unknown.bmp"
 
-IDB_FLAG_DEMO           BITMAP                  "icons\\BMPs\\demo.bmp"
+IDB_FLAG_DEMO           BITMAP                  "icons/BMPs/demo.bmp"
 
-IDB_FLAG_BETA           BITMAP                  "icons\\BMPs\\n64beta.bmp"
+IDB_FLAG_BETA           BITMAP                  "icons/BMPs/n64beta.bmp"
 
-IDB_CURRENT             BITMAP                  "icons\\BMPs\\current.bmp"
+IDB_CURRENT             BITMAP                  "icons/BMPs/current.bmp"
 
-IDB_MARKER              BITMAP                  "icons\\BMPs\\marker.bmp"
+IDB_MARKER              BITMAP                  "icons/BMPs/marker.bmp"
 
-IDB_DENY                BITMAP                  "icons\\BMPs\\deny.bmp"
+IDB_DENY                BITMAP                  "icons/BMPs/deny.bmp"
 
-IDB_CHANGED             BITMAP                  "icons\\BMPs\\changed.bmp"
+IDB_CHANGED             BITMAP                  "icons/BMPs/changed.bmp"
 
-IDR_INSPECT_LUA_FILE    TEXTFILE                "..\\..\\vendor\\lua-modules\\inspect.lua"
+IDR_INSPECT_LUA_FILE    TEXTFILE                "../../vendor/lua-modules/inspect.lua"
 
-IDR_API_LUA_FILE        TEXTFILE                "..\\Lua\\api.lua"
+IDR_API_LUA_FILE        TEXTFILE                "../Lua/api.lua"
 
-IDR_SHIMS_LUA_FILE      TEXTFILE                "..\\Lua\\shims.lua"
+IDR_SHIMS_LUA_FILE      TEXTFILE                "../Lua/shims.lua"
 
-IDR_SANDBOX_LUA_FILE    TEXTFILE                "..\\Lua\\sandbox.lua"
+IDR_SANDBOX_LUA_FILE    TEXTFILE                "../Lua/sandbox.lua"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -270,44 +270,44 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 #if !defined(_DEBUG) && !defined(NIGHTLY)
-IDI_M64ICONBIG           ICON                   "icons\\logo_48.ico"
+IDI_M64ICONBIG           ICON                   "icons/logo_48.ico"
 
-IDI_M64ICONSMALL         ICON                   "icons\\logo_16.ico"
+IDI_M64ICONSMALL         ICON                   "icons/logo_16.ico"
 #else
-IDI_M64ICONBIG           ICON                   "icons\\logo_48_nightly.ico"
+IDI_M64ICONBIG           ICON                   "icons/logo_48_nightly.ico"
 
-IDI_M64ICONSMALL         ICON                   "icons\\logo_16_nightly.ico"
+IDI_M64ICONSMALL         ICON                   "icons/logo_16_nightly.ico"
 #endif
 
-IDI_AUSTRALIA           ICON                    "icons\\flag_au.ico"
+IDI_AUSTRALIA           ICON                    "icons/flag_au.ico"
 
-IDI_BETA                ICON                    "icons\\flag_beta.ico"
+IDI_BETA                ICON                    "icons/flag_beta.ico"
 
-IDI_DEMO                ICON                    "icons\\flag_demo.ico"
+IDI_DEMO                ICON                    "icons/flag_demo.ico"
 
-IDI_EUROPE              ICON                    "icons\\flag_eu.ico"
+IDI_EUROPE              ICON                    "icons/flag_eu.ico"
 
-IDI_FRANCE              ICON                    "icons\\flag_fr.ico"
+IDI_FRANCE              ICON                    "icons/flag_fr.ico"
 
-IDI_GERMANY             ICON                    "icons\\flag_de.ico"
+IDI_GERMANY             ICON                    "icons/flag_de.ico"
 
-IDI_ITALIA              ICON                    "icons\\flag_it.ico"
+IDI_ITALIA              ICON                    "icons/flag_it.ico"
 
-IDI_JAPAN               ICON                    "icons\\flag_jp.ico"
+IDI_JAPAN               ICON                    "icons/flag_jp.ico"
 
-IDI_SPAIN               ICON                    "icons\\flag_sp.ico"
+IDI_SPAIN               ICON                    "icons/flag_sp.ico"
 
-IDI_UNKNOWN             ICON                    "icons\\flag_unknown.ico"
+IDI_UNKNOWN             ICON                    "icons/flag_unknown.ico"
 
-IDI_USA                 ICON                    "icons\\flag_us.ico"
+IDI_USA                 ICON                    "icons/flag_us.ico"
 
-IDI_DENY                ICON                    "icons\\deny.ico"
+IDI_DENY                ICON                    "icons/deny.ico"
 
-IDI_CHANGED             ICON                    "icons\\changed.ico"
+IDI_CHANGED             ICON                    "icons/changed.ico"
 
-IDI_CURRENT             ICON                    "icons\\current.ico"
+IDI_CURRENT             ICON                    "icons/current.ico"
 
-IDI_MARKER              ICON                    "icons\\marker.ico"
+IDI_MARKER              ICON                    "icons/marker.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -406,7 +406,7 @@ END
 
 2 TEXTINCLUDE
 BEGIN
-    "#include <Windows.h>\0"
+    "#include <windows.h>\0"
 END
 
 3 TEXTINCLUDE

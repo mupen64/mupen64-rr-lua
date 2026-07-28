@@ -8,7 +8,9 @@
 #include <filesystem>
 #if defined(_WIN32)
 #define NOMINMAX
-#include <Windows.h>
+#include <windows.h>
+// MSVC exposes _SH_DENYNO through <stdio.h>; MinGW exposes it via <share.h>.
+#include <share.h>
 #elif defined(__linux__)
 #include <stdexcept>
 #include <cstdio>

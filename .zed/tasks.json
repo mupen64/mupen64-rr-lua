@@ -1,6 +1,6 @@
 [
   {
-    "label": "vcpkg install (x64)",
+    "label": "vcpkg install (Win64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -13,7 +13,7 @@
     ]
   },
   {
-    "label": "vcpkg install (x86)",
+    "label": "vcpkg install (Win32)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -26,7 +26,7 @@
     ]
   },
   {
-    "label": "build",
+    "label": "build (Win64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -38,7 +38,7 @@
     ]
   },
   {
-    "label": "build (x86)",
+    "label": "build (Win32)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -50,7 +50,7 @@
     ]
   },
   {
-    "label": "build release",
+    "label": "build release (Win64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -63,7 +63,7 @@
     ]
   },
   {
-    "label": "build release (x86)",
+    "label": "build release (Win32)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -76,7 +76,7 @@
     ]
   },
   {
-    "label": "clean rebuild",
+    "label": "clean rebuild (Win64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -92,7 +92,7 @@
     ]
   },
   {
-    "label": "test",
+    "label": "test (Win64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",
@@ -105,7 +105,7 @@
     ]
   },
   {
-    "label": "test (x86)",
+    "label": "test (Win32)",
     "reveal": "no_focus",
     "save": "all",
     "command": "zig",

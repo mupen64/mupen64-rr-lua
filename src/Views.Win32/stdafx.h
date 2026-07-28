@@ -22,19 +22,19 @@ extern "C"
 }
 #include <spdlog/logger.h>
 #include <microlru.h>
-#include <Windows.h>
+#include <windows.h>
 #include <commctrl.h>
 #include <resource.h>
-#include <ShlObj.h>
-#include <DbgHelp.h>
-#include <Shlwapi.h>
+#include <shlobj.h>
+#include <dbghelp.h>
+#include <shlwapi.h>
 #include <shellapi.h>
 #include <windowsx.h>
-#include <Psapi.h>
+#include <psapi.h>
 #include <mmsystem.h>
 #include <wincodec.h>
 #include <gdiplus.h>
-#include <Uxtheme.h>
+#include <uxtheme.h>
 #include <vssym32.h>
 #include <d2d1.h>
 #include <d2d1_3.h>

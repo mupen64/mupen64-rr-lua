@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "resource.h"
-#include <Windows.h>
+#include "Resource.h"
+#include <windows.h>
 
 #define IDC_STATIC -1
 

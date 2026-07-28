@@ -76,10 +76,34 @@ Visual Studio 2026 must be installed on the `C:` drive for the `tools/vsdev-*.cm
 
 > **NOTE:** 32-bit builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
 
+### Native build
+
 ```sh
 zig build -Dbuild_win32=false -Doptimize=Debug
 zig build test -Dbuild_win32=false
 ```
+
+### Win64 cross-build
+
+Install `vcpkg` and a MinGW-w64 cross compiler so that `vcpkg` is available on `PATH`. The target is required: without it, `zig build vcpkg` selects the Linux host target and has no vcpkg dependencies to install.
+
+On Arch, the packaged `vcpkg` does not include the ports checkout. Clone and bootstrap a matching executable first; the build automatically prefers `$VCPKG_ROOT/vcpkg` over the system wrapper when it exists.
+
+```sh
+sudo pacman -Syu --needed vcpkg mingw-w64-gcc nasm
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+"$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+
+# Installs the x64-mingw-dynamic triplet under build/vcpkg_installed.
+zig build vcpkg -p build -Dtarget=x86_64-windows
+
+# The build auto-detects that directory; passing it explicitly is also supported.
+zig build -p build -Dtarget=x86_64-windows -Doptimize=ReleaseSafe \
+  -Dvcpkg_installed=build/vcpkg_installed/x64-mingw-dynamic
+```
+
+The Zed `vcpkg install (Win64)` task already includes `-Dtarget=x86_64-windows`; run it before either Win64 build task.
 
 # Dependencies
 Third-party packages on Windows come from `vcpkg.json` via the `zig build vcpkg` step. Frontend/plugin-only deps should stay gated behind `-Dbuild_win32` in `build.zig`.

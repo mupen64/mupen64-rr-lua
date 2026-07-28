@@ -25,6 +25,15 @@ pub fn build(b: *std.Build) void {
     const target_is_windows = target.result.os.tag == .windows;
     const build_win32 = build_win32_opt orelse target_is_windows;
 
+    if (target_is_windows and builtin.os.tag == .linux) {
+        const triplet = vcpkgTriplet(target, link_static);
+        std.log.warn(
+            "Linux host detected: cross-compiling for Windows with MinGW (vcpkg triplet '{s}').\n" ++
+                "Run the matching Zed vcpkg install task before building if dependencies are missing.",
+            .{triplet},
+        );
+    }
+
     if (build_win32 and !target_is_windows) {
         @panic("-Dbuild_win32 requires a Windows target");
     }
@@ -132,7 +141,7 @@ pub fn build(b: *std.Build) void {
     applyCommonDefines(core.root_module, optimize, target_is_windows, version_suffix, nightly);
 
     core.root_module.linkLibrary(aladdin_md5);
-    linkLibdeflate(core.root_module);
+    linkLibdeflate(core.root_module, vcpkg);
     if (!target_is_windows) {
         core.root_module.linkSystemLibrary("safec", .{});
     }
@@ -165,10 +174,10 @@ pub fn build(b: *std.Build) void {
             applyVcpkgIncludes(tests.root_module, vp);
             applyVcpkgLibPaths(tests.root_module, vp);
             linkCatch2(tests.root_module, vp, optimize);
-            linkLibdeflate(tests.root_module);
+            linkLibdeflate(tests.root_module, vp);
         } else {
             tests.root_module.linkSystemLibrary("catch2-with-main", .{});
-            linkLibdeflate(tests.root_module);
+            linkLibdeflate(tests.root_module, null);
         }
         if (enable_dynarec) tests.root_module.addCMacro("MUPEN64RR_ENABLE_DYNAREC", "1");
         applyCommonDefines(tests.root_module, optimize, target_is_windows, version_suffix, nightly);
@@ -223,7 +232,7 @@ pub fn build(b: *std.Build) void {
             });
             views.root_module.addWin32ResourceFile(.{
                 .file = b.path("src/Views.Win32/Resource.rc"),
-                .include_paths = &.{b.path("src/Views.Win32")},
+                .include_paths = resourceIncludePaths(b, target, &.{b.path("src/Views.Win32")}),
             });
             views.root_module.addIncludePath(b.path("src/Views.Win32"));
             views.root_module.addIncludePath(views_headers_inc);
@@ -245,7 +254,7 @@ pub fn build(b: *std.Build) void {
 
             views.root_module.linkLibrary(core);
             views.root_module.linkLibrary(aladdin_md5);
-            linkLibdeflate(views.root_module);
+            linkLibdeflate(views.root_module, vp);
             linkLua(views.root_module, vp);
             linkSpdlog(views.root_module, vp, optimize);
             linkSdl3(views.root_module, vp);
@@ -455,6 +464,26 @@ pub fn build(b: *std.Build) void {
 }
 
 fn findVcpkg(b: *std.Build) []const u8 {
+    // Arch packages vcpkg separately from its ports checkout. When that
+    // checkout has been bootstrapped, prefer its matching executable over a
+    // potentially older system wrapper on PATH.
+    const exe_name = if (builtin.os.tag == .windows) "vcpkg.exe" else "vcpkg";
+    if (b.graph.environ_map.get("VCPKG_ROOT")) |root| {
+        const candidate = b.fmt("{s}/{s}", .{ root, exe_name });
+        if (std.Io.Dir.cwd().access(b.graph.io, candidate, .{})) |_| {
+            return candidate;
+        } else |_| {}
+    }
+    // Fish does not source Arch's /etc/profile.d/vcpkg.sh, so Zed tasks might
+    // not inherit VCPKG_ROOT. Support Arch's documented default directly.
+    if (builtin.os.tag != .windows) {
+        if (b.graph.environ_map.get("HOME")) |home| {
+            const candidate = b.fmt("{s}/.local/share/vcpkg/{s}", .{ home, exe_name });
+            if (std.Io.Dir.cwd().access(b.graph.io, candidate, .{})) |_| {
+                return candidate;
+            } else |_| {}
+        }
+    }
     if (b.findProgram(&.{"vcpkg"}, &.{})) |p| return p else |_| {}
     if (b.graph.environ_map.get("VCINSTALLDIR")) |vc| {
         const candidate = b.fmt("{s}/vcpkg/vcpkg.exe", .{vc});
@@ -585,13 +614,14 @@ const IsolatedCatchTests = struct {
 /// Create a module configured for C++ compilation.
 /// On Windows/MSVC we use the MSVC C++ runtime (not libc++).
 fn createCppModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
+    const use_mingw_sdk = minGWRoot(target) != null;
     const use_libcxx = target.result.os.tag != .windows or target.result.abi != .msvc;
     // For MSVC we deliberately avoid Zig's bundled/auto libc (-lc pulls
     // libucrt) and link the matching MSVC CRT import libs ourselves.
     const mod = b.createModule(.{
         .target = target,
         .optimize = optimize,
-        .link_libc = if (use_libcxx) true else false,
+        .link_libc = if (use_libcxx or use_mingw_sdk) true else false,
         .link_libcpp = if (use_libcxx) true else null,
         .sanitize_c = .off,
     });
@@ -614,8 +644,41 @@ fn createCppModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
         mod.linkSystemLibrary("kernel32", .{});
         // Zig's ubsan/debug runtime needs ntdll when -lc is not used.
         mod.linkSystemLibrary("ntdll", .{});
+    } else if (use_mingw_sdk) {
+        addMinGWPaths(mod, target);
     }
     return mod;
+}
+
+fn minGWRoot(target: std.Build.ResolvedTarget) ?[]const u8 {
+    if (builtin.os.tag != .linux or target.result.os.tag != .windows or target.result.abi != .gnu) return null;
+    return switch (target.result.cpu.arch) {
+        .x86_64 => "/usr/x86_64-w64-mingw32",
+        .x86 => "/usr/i686-w64-mingw32",
+        else => null,
+    };
+}
+
+/// Zig's bundled Windows libc does not include Arch's MinGW-w64 SDK headers.
+/// Add the external SDK when a GNU Windows target is built from Linux.
+fn addMinGWPaths(mod: *std.Build.Module, target: std.Build.ResolvedTarget) void {
+    const root = minGWRoot(target) orelse return;
+    const b = mod.owner;
+    const include_dir = b.fmt("{s}/include", .{root});
+    const lib_dir = b.fmt("{s}/lib", .{root});
+    if (dirExists(b, include_dir)) mod.addSystemIncludePath(.{ .cwd_relative = include_dir });
+    if (dirExists(b, lib_dir)) mod.addLibraryPath(.{ .cwd_relative = lib_dir });
+}
+
+fn resourceIncludePaths(b: *std.Build, target: std.Build.ResolvedTarget, paths: []const std.Build.LazyPath) []const std.Build.LazyPath {
+    const root = minGWRoot(target) orelse return paths;
+    const include_dir = b.fmt("{s}/include", .{root});
+    if (!dirExists(b, include_dir)) return paths;
+
+    var result: std.ArrayListUnmanaged(std.Build.LazyPath) = .empty;
+    result.appendSlice(b.allocator, paths) catch @panic("OOM");
+    result.append(b.allocator, .{ .cwd_relative = include_dir }) catch @panic("OOM");
+    return result.toOwnedSlice(b.allocator) catch @panic("OOM");
 }
 
 /// Add MSVC/WinSDK include + library paths from the VS developer environment
@@ -743,7 +806,12 @@ fn resolveTarget(b: *std.Build, requested: std.Build.ResolvedTarget) std.Build.R
 
 fn collectCxxFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_family: bool, target_uses_msvc: bool) []const []const u8 {
     var flags: std.ArrayListUnmanaged([]const u8) = .empty;
-    flags.append(b.allocator, "-std=c++23") catch @panic("OOM");
+    flags.appendSlice(b.allocator, &.{
+        "-std=c++23",
+        // nlohmann-json's UTF-8 lookup table has 400 entries; Zig's Clang
+        // misdiagnoses the uint8_t index range as a hard error.
+        "-Wno-tautological-constant-out-of-range-compare",
+    }) catch @panic("OOM");
 
     if (target_uses_msvc) {
         // Match vcpkg's MultiThreadedDLL CRT (MD / MDd).
@@ -909,7 +977,7 @@ fn addPlugin(
     if (rc_file) |rc| {
         lib.root_module.addWin32ResourceFile(.{
             .file = b.path(rc),
-            .include_paths = extra_includes,
+            .include_paths = resourceIncludePaths(b, target, extra_includes),
         });
     }
     lib.root_module.addIncludePath(common.common_inc);
@@ -923,7 +991,7 @@ fn addPlugin(
     applyCommonDefines(lib.root_module, common.optimize, true, common.version_suffix, common.nightly);
     lib.root_module.addCMacro("PLUGIN_WITH_CALLBACKS", "1");
     if (common.enable_dynarec) lib.root_module.addCMacro("MUPEN64RR_ENABLE_DYNAREC", "1");
-    linkLibdeflate(lib.root_module);
+    linkLibdeflate(lib.root_module, common.vcpkg);
     // Baseline Win32 libs used across plugins (dialogs, windows, shell).
     for ([_][]const u8{ "user32", "gdi32", "comdlg32", "shell32", "advapi32", "ole32", "uuid", "comctl32" }) |wlib| {
         lib.root_module.linkSystemLibrary(wlib, .{});
@@ -1057,21 +1125,35 @@ fn debugSuffix(optimize: std.builtin.OptimizeMode) []const u8 {
     return if (optimize == .Debug) "d" else "";
 }
 
-fn linkLibdeflate(mod: *std.Build.Module) void {
-    mod.linkSystemLibrary("deflate", .{});
+/// Link a vcpkg dependency, including MinGW's `lib<name>.dll.a` import-library
+/// convention that Zig's system-library search does not currently probe.
+fn linkVcpkgLibrary(mod: *std.Build.Module, vp: VcpkgPaths, name: []const u8) void {
+    const b = mod.owner;
+    const import_lib = b.fmt("{s}/lib{s}.dll.a", .{ vp.lib_dir, name });
+    if (std.Io.Dir.cwd().access(b.graph.io, import_lib, .{})) |_| {
+        mod.addObjectFile(.{ .cwd_relative = import_lib });
+        return;
+    } else |_| {}
+    mod.linkSystemLibrary(name, .{});
+}
+
+fn linkLibdeflate(mod: *std.Build.Module, vp: ?VcpkgPaths) void {
+    if (vp) |paths| {
+        linkVcpkgLibrary(mod, paths, "deflate");
+    } else {
+        mod.linkSystemLibrary("deflate", .{});
+    }
 }
 
 fn linkLua(mod: *std.Build.Module, vp: VcpkgPaths) void {
-    _ = vp;
-    mod.linkSystemLibrary("lua", .{});
+    linkVcpkgLibrary(mod, vp, "lua");
 }
 
 fn linkSpdlog(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode) void {
-    _ = vp;
     const d = debugSuffix(optimize);
     const b = mod.owner;
-    mod.linkSystemLibrary(b.fmt("spdlog{s}", .{d}), .{});
-    mod.linkSystemLibrary(b.fmt("fmt{s}", .{d}), .{});
+    linkVcpkgLibrary(mod, vp, b.fmt("spdlog{s}", .{d}));
+    linkVcpkgLibrary(mod, vp, b.fmt("fmt{s}", .{d}));
 }
 
 fn applySpdlogDefines(mod: *std.Build.Module, link_static: bool) void {
@@ -1084,8 +1166,7 @@ fn applySpdlogDefines(mod: *std.Build.Module, link_static: bool) void {
 }
 
 fn linkSdl3(mod: *std.Build.Module, vp: VcpkgPaths) void {
-    _ = vp;
-    mod.linkSystemLibrary("SDL3", .{});
+    linkVcpkgLibrary(mod, vp, "SDL3");
 }
 
 fn linkNlohmannJson(mod: *std.Build.Module, vp: VcpkgPaths) void {
@@ -1095,33 +1176,29 @@ fn linkNlohmannJson(mod: *std.Build.Module, vp: VcpkgPaths) void {
 }
 
 fn linkSpeexdsp(mod: *std.Build.Module, vp: VcpkgPaths) void {
-    _ = vp;
-    mod.linkSystemLibrary("speexdsp", .{});
+    linkVcpkgLibrary(mod, vp, "speexdsp");
 }
 
 fn linkFfmpeg(mod: *std.Build.Module, vp: VcpkgPaths) void {
-    _ = vp;
     for ([_][]const u8{ "avformat", "avcodec", "avutil", "swresample", "swscale" }) |lib| {
-        mod.linkSystemLibrary(lib, .{});
+        linkVcpkgLibrary(mod, vp, lib);
     }
 }
 
 fn linkGlew(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode, link_static: bool) void {
-    _ = vp;
     const b = mod.owner;
     if (link_static) {
         mod.addCMacro("GLEW_STATIC", "1");
     }
     const d = debugSuffix(optimize);
-    mod.linkSystemLibrary(b.fmt("glew32{s}", .{d}), .{});
+    linkVcpkgLibrary(mod, vp, b.fmt("glew32{s}", .{d}));
 }
 
 fn linkCatch2(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode) void {
-    _ = vp;
     const b = mod.owner;
     const d = debugSuffix(optimize);
-    mod.linkSystemLibrary(b.fmt("Catch2{s}", .{d}), .{});
-    mod.linkSystemLibrary(b.fmt("Catch2Main{s}", .{d}), .{});
+    linkVcpkgLibrary(mod, vp, b.fmt("Catch2{s}", .{d}));
+    linkVcpkgLibrary(mod, vp, b.fmt("Catch2Main{s}", .{d}));
 }
 
 // ─── source lists ───────────────────────────────────────────────────────

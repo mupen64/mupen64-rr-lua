@@ -8,7 +8,7 @@
 #include <filesystem>
 #if defined(_WIN32)
 #define NOMINMAX
-#include <Windows.h>
+#include <windows.h>
 #include <wrl/client.h>
 #elif defined(__linux__)
 #error "Don't include this file on Linux"
