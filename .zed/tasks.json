@@ -1,9 +1,9 @@
 [
   {
-    "label": "delete cache and reconfigure",
+    "label": "delete cache and reconfigure (x86)",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev.cmd",
+    "command": "./tools/vsdev-x86.cmd",
     "args": [
       "cmake",
       "--fresh",
@@ -12,33 +12,33 @@
     ]
   },
   {
-    "label": "delete cache and reconfigure (x64)",
+    "label": "delete cache and reconfigure",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev-x64.cmd",
+    "command": "./tools/vsdev-x64.cmd",
     "args": [
       "cmake",
       "--fresh",
       "--preset",
       "vcpkg-win64-x64"
+    ]
+  },
+  {
+    "label": "switch to debug (x86)",
+    "reveal": "no_focus",
+    "save": "all",
+    "command": "./tools/vsdev-x86.cmd",
+    "args": [
+      "cmake",
+      "--preset",
+      "vcpkg-win64-x86"
     ]
   },
   {
     "label": "switch to debug",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev.cmd",
-    "args": [
-      "cmake",
-      "--preset",
-      "vcpkg-win64-x86"
-    ]
-  },
-  {
-    "label": "switch to debug (x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./vsdev-x64.cmd",
+    "command": "./tools/vsdev-x64.cmd",
     "args": [
       "cmake",
       "--preset",
@@ -46,10 +46,10 @@
     ]
   },
   {
-    "label": "switch to release",
+    "label": "switch to release (x86)",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev.cmd",
+    "command": "./tools/vsdev-x86.cmd",
     "args": [
       "cmake",
       "--preset",
@@ -57,10 +57,10 @@
     ]
   },
   {
-    "label": "switch to release (x64)",
+    "label": "switch to release",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev-x64.cmd",
+    "command": "./tools/vsdev-x64.cmd",
     "args": [
       "cmake",
       "--preset",
@@ -68,10 +68,10 @@
     ]
   },
   {
-    "label": "build",
+    "label": "build (x86)",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev.cmd",
+    "command": "./tools/vsdev-x86.cmd",
     "args": [
       "cmake",
       "--build",
@@ -79,21 +79,33 @@
     ]
   },
   {
-    "label": "build (x64)",
+    "label": "build",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev-x64.cmd",
+    "command": "./tools/vsdev-x64.cmd",
     "args": [
       "cmake",
       "--build",
       "build"
+    ]
+  },
+  {
+    "label": "clean rebuild (x86)",
+    "reveal": "no_focus",
+    "save": "all",
+    "command": "./tools/vsdev-x86.cmd",
+    "args": [
+      "cmake",
+      "--build",
+      "build",
+      "--clean-first"
     ]
   },
   {
     "label": "clean rebuild",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev.cmd",
+    "command": "./tools/vsdev-x64.cmd",
     "args": [
       "cmake",
       "--build",
@@ -102,22 +114,10 @@
     ]
   },
   {
-    "label": "clean rebuild (x64)",
+    "label": "test (x86)",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev-x64.cmd",
-    "args": [
-      "cmake",
-      "--build",
-      "build",
-      "--clean-first"
-    ]
-  },
-  {
-    "label": "test",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./vsdev.cmd",
+    "command": "./tools/vsdev-x86.cmd",
     "args": [
       "ctest",
       "--test-dir",
@@ -125,10 +125,10 @@
     ]
   },
   {
-    "label": "test (x64)",
+    "label": "test",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./vsdev-x64.cmd",
+    "command": "./tools/vsdev-x64.cmd",
     "args": [
       "ctest",
       "--test-dir",
