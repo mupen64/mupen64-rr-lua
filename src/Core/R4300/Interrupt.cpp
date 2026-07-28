@@ -449,6 +449,9 @@ void gen_interrupt()
     case VI_INT: {
         lag_count++;
 
+        // The next graphics task starts a new frame. See the frame_counted comment in dma_sp_write's caller.
+        g_r4300.frame_counted = false;
+
         // NOTE: It's ok to not update screen when lagging, doesn't cause any obvious issues
         const auto skip = g_r4300.frame_skipped;
 

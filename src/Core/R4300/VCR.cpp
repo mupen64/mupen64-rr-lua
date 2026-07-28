@@ -45,6 +45,13 @@ constexpr auto CEQS_MISMATCH_B_WARNING_MESSAGE =
     "The movie was recorded with an inaccurate implementation of the `c.eq.s` instruction (possibly another core "
     "type), but is being played back with the correct implementation.\r\nPlayback might desynchronize. Are you sure "
     "you want to continue?";
+constexpr auto RDP_COMPLETION_MISMATCH_A_WARNING_MESSAGE =
+    "The movie was recorded with RDP completion signalled after RSP completion, but is being played back with both "
+    "signalled at the same instant (legacy timing).\r\nPlayback might desynchronize. Are you sure you want to "
+    "continue?";
+constexpr auto RDP_COMPLETION_MISMATCH_B_WARNING_MESSAGE =
+    "The movie was recorded with RDP and RSP completion signalled at the same instant (legacy timing), but is being "
+    "played back with RDP completion delayed.\r\nPlayback might desynchronize. Are you sure you want to continue?";
 constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
@@ -1049,6 +1056,7 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     vcr.hdr.extended_version = default_hdr.extended_version;
     vcr.hdr.extended_flags.wii_vc = g_core->cfg->wii_vc_emulation;
     vcr.hdr.extended_flags.c_eq_s_accurate = vr_is_ceqs_effectively_accurate();
+    vcr.hdr.extended_flags.accurate_rdp_completion = g_core->cfg->accurate_rdp_completion;
 
     vcr.hdr.extended_data = default_hdr.extended_data;
 
@@ -1374,7 +1382,7 @@ core_result vcr_start_playback(std::filesystem::path path)
             }
         }
 
-        if (header.extended_version == 2)
+        if (header.extended_version >= 2)
         {
             const auto c_eq_s_accurate = vr_is_ceqs_effectively_accurate();
             if (c_eq_s_accurate != header.extended_flags.c_eq_s_accurate)
@@ -1384,6 +1392,23 @@ core_result vcr_start_playback(std::filesystem::path path)
                                             header.extended_flags.c_eq_s_accurate ? CEQS_MISMATCH_A_WARNING_MESSAGE
                                                                                   : CEQS_MISMATCH_B_WARNING_MESSAGE,
                                             "VCR", true);
+
+                if (!proceed)
+                {
+                    return Res_Cancelled;
+                }
+            }
+        }
+
+        if (header.extended_version >= 3)
+        {
+            if ((bool)g_core->cfg->accurate_rdp_completion != header.extended_flags.accurate_rdp_completion)
+            {
+                bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RDP_COMPLETION_WARNING,
+                                                       header.extended_flags.accurate_rdp_completion
+                                                           ? RDP_COMPLETION_MISMATCH_A_WARNING_MESSAGE
+                                                           : RDP_COMPLETION_MISMATCH_B_WARNING_MESSAGE,
+                                                       "VCR", true);
 
                 if (!proceed)
                 {
