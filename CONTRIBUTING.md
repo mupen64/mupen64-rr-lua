@@ -6,73 +6,83 @@ Only Windows supports compiling the full emulator. However, the core and VCR tes
 ## Windows dependencies
 
 You'll need:
-- Visual Studio 2026 (for the compiler, CMake, Ninja and vcpkg)
-  - Ensure the LLVM tools are installed (as we compile with Clang by default).
-
-In order for the compiler to work, you'll need to be in a VS developer environment.
+- Visual Studio 2026 (for the MSVC toolchain, Windows SDK, and bundled vcpkg)
+  - Ensure a VS developer environment is available (the provided `tools/vsdev-*.cmd` wrappers set this up).
+- [Zig 0.15.2+](https://ziglang.org/download/)
 
 ## Linux dependencies
 
 You'll need:
-- A C/C++ compiler (`gcc` or `clang`)
+- Zig 0.15.2+
+- A system C/C++ toolchain for headers (`clang`/`gcc` + libstdc++/libc++)
 - `libdeflate`
 - `libsafec`
+- Catch2 (for tests)
 
 `libsafec` is required outside of Windows as no other C/C++ library implements C11 Annex K, which specifies `strncpy_s` and similar functions.
 
-## CMake Presets
-Compiling is as easy as using one of the provided configure presets. All platforms generally use `clang` as the compiler and `Ninja` as the generator.
+## Building with Zig
 
-|Preset|Platform|
-|:--|:--|
-|`vcpkg-win64-x86(-release)`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
-|`vcpkg-win64-x64(-release)`|**64-bit target** on **64-bit Windows** host, dependencies via `vcpkg`|
-|`sys-linux64-x64`|**64-bit** target, **64-bit Linux** host, dependencies from system|
+From a VS developer environment on Windows (or via the wrappers):
 
-### Visual Studio Code + CMake Tools
-Configure presets should be made available via CMake Tools, see above.
+```sh
+# Install third-party deps into build/vcpkg_installed/<triplet>
+./tools/vsdev-x64.cmd zig build vcpkg -p build
 
-#### Windows-only
-You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
+# Debug build (default). Artifacts land in build/out and build/test/out.
+./tools/vsdev-x64.cmd zig build -p build -Dvcpkg_installed=build/vcpkg_installed/x64-windows
 
-### CLion
-Make sure to set the CMake profile to use the desired preset (`vcpkg-win64-x86` or `vcpkg-win64-x64`), enabling it if needed.
+# Release build
+./tools/vsdev-x64.cmd zig build -p build -Doptimize=ReleaseSafe -Dvcpkg_installed=build/vcpkg_installed/x64-windows
 
-If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
+# 32-bit
+./tools/vsdev-x86.cmd zig build vcpkg -p build -Dtarget=x86-windows-msvc
+./tools/vsdev-x86.cmd zig build -p build -Dtarget=x86-windows-msvc -Dvcpkg_installed=build/vcpkg_installed/x86-windows
+```
 
-### Zed
+Useful options:
+
+| Option | Default | Description |
+|:--|:--|:--|
+| `-Doptimize=` | `Debug` | `Debug`, `ReleaseSafe`, `ReleaseFast`, `ReleaseSmall` |
+| `-Dtarget=` | host (MSVC ABI on Windows) | e.g. `x86_64-windows-msvc`, `x86-windows-msvc` |
+| `-Denable_dynarec=` | `true` | Dynamic recompiler (x86/x86_64 only) |
+| `-Dbuild_win32=` | on when targeting Windows | Win32 frontend + plugins |
+| `-Dtests=` | `true` | Build Core.Tests and luatestlib |
+| `-Dlink_static=` | `false` | Prefer static vcpkg triplet |
+| `-Dvcpkg_installed=` | auto-detect | Path to a vcpkg installed triplet dir |
+| `-Dversion_suffix=` | `$VERSION_SUFFIX` | Embedded version suffix |
+| `-Dnightly=` | from `$NIGHTLY` | Nightly branding |
+
+### Output layout
+
+```
+build/out/mupen64.exe
+build/out/plugin/*.dll
+build/out/*.dll          # runtime deps from vcpkg (shared builds)
+build/test/out/Core.Tests.exe
+build/test/out/luatestlib.dll
+```
+
+### Visual Studio Code / CLion / Zed
+
+#### Zed
 All tasks required for development are available in the task panel.
 
 #### Windows-only
-Visual Studio 2026 must be installed on the `C:` drive.
+Visual Studio 2026 must be installed on the `C:` drive for the `tools/vsdev-*.cmd` helpers.
 
 ## Linux
 
 > **NOTE:** 32-bit builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
 
-To build:
 ```sh
-cmake --preset sys-linux64-x64
-cmake --build build
-```
-
-The core VCR tests are integrated with CMake, so running the tests is easy:
-```sh
-ctest --test-dir build
+zig build -Dbuild_win32=false -Doptimize=Debug
+zig build test -Dbuild_win32=false
 ```
 
 # Dependencies
-When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
-
-> **Note:** the Windows GUI components are gated behind `MUPEN64RR_BUILD_WIN32`. 
-
-```cmake
-# example: GLEW and SDL3 are specifically for the windows
-if (MUPEN64RR_BUILD_WIN32)
-  find_package(glew CONFIG REQUIRED) 
-  find_package(SDL3 CONFIG REQUIRED) 
-endif()
-```
+Third-party packages on Windows come from `vcpkg.json` via the `zig build vcpkg` step. Frontend/plugin-only deps should stay gated behind `-Dbuild_win32` in `build.zig`.
 
 # Branching
 
@@ -148,43 +158,3 @@ To create a stable release:
 1. Ensure there's a release branch for the version you're releasing
 2. Ensure the version numbers have been bumped in the code
 3. On the repo page, navigate to the `Actions` tab and run the pinned `Stable Release` workflow, targeting the release branch
-4. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
-5. In the [repack](https://github.com/mupen64/repack) repository, run the `Sync` workflow.
-
-# Reading and using Crashlogs
-
-If you have a `mupen.dmp`, open it in WinDbg and run `!analyze-v`.
-
-If you only have the stacktrace from `mupen.log`:
-
-1. Identify the faulting address
-2. Open x32dbg
-3. Open the "Go to" dialog by pressing Ctrl + G
-4. Navigate to `0x00400000` + `[Your Address]`
-
-# TAS Plugins and Plugin Compatibility
-
-The "TAS" plugins are our first-party plugins that aim to be lightweight and fast.
-
-They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions.
-
-While Mupen is compatible with any Zilmar spec plugin (e.g. Jabo's plugins, GLideN64), we plan to prioritize our first-party plugins by moving to a private plugin API in the future.
-Support for Zilmar spec support will eventually be provided only via a shim layer (cf. [#670](https://github.com/mupen64/mupen64-rr-lua/issues/670))
-
-## Developer Guidelines
-
-### Naming
-
-The plugin's friendly name should follow the schema:
-
-`[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
-
-### Initialization
-
-Keep `DllMain` as simple as possible; do not initialize SDL, DirectInput, or any other external libraries.
-
-Initialize libraries in `RomOpen` and - if possible - do it only once.
-
-### Configuration
-
-Write persistent config to the filesystem as JSON, ideally next to the mupen executable.

@@ -1,0 +1,1072 @@
+//! Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+//!
+//! SPDX-License-Identifier: GPL-2.0-or-later
+
+const std = @import("std");
+
+const project_version = "1.5.0";
+
+pub fn build(b: *std.Build) void {
+    const requested_target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    // Prefer the MSVC ABI on Windows so we can consume vcpkg packages built for it.
+    const target = resolveTarget(b, requested_target);
+
+    const enable_dynarec = b.option(bool, "enable_dynarec", "Enable the dynamic recompiler (x86/x86_64 only)") orelse true;
+    const build_win32_opt = b.option(bool, "build_win32", "Build the Win32 frontend and plugins") orelse null;
+    const link_static = b.option(bool, "link_static", "Link vcpkg dependencies statically") orelse false;
+    const build_tests = b.option(bool, "tests", "Build unit tests and the Lua test library") orelse true;
+    const vcpkg_installed_opt = b.option([]const u8, "vcpkg_installed", "Path to a vcpkg installed triplet directory");
+    const version_suffix_opt = b.option([]const u8, "version_suffix", "Version suffix embedded in the binary");
+    const nightly_opt = b.option(bool, "nightly", "Build as a nightly (affects icons/branding)") orelse null;
+
+    const target_is_windows = target.result.os.tag == .windows;
+    const build_win32 = build_win32_opt orelse target_is_windows;
+
+    if (build_win32 and !target_is_windows) {
+        @panic("-Dbuild_win32 requires a Windows target");
+    }
+    if (!target_is_windows) {
+        std.log.warn("Building on platforms other than Windows is experimental.", .{});
+    }
+
+    const version_suffix = version_suffix_opt orelse std.process.getEnvVarOwned(b.allocator, "VERSION_SUFFIX") catch "";
+    const nightly: bool = blk: {
+        if (nightly_opt) |n| break :blk n;
+        const env = std.process.getEnvVarOwned(b.allocator, "NIGHTLY") catch break :blk false;
+        break :blk !(std.mem.eql(u8, env, "") or std.mem.eql(u8, env, "0"));
+    };
+
+    std.log.info("Full version name: {s}{s}", .{ project_version, version_suffix });
+    std.log.info("Nightly build: {}", .{nightly});
+
+    const arch = target.result.cpu.arch;
+    const is_x86_family = arch == .x86 or arch == .x86_64;
+    if (enable_dynarec and !is_x86_family) {
+        @panic("Dynarec is not supported on this architecture");
+    }
+
+    const cxx_flags = collectCxxFlags(b, optimize, is_x86_family, target_is_windows);
+    const c_flags = collectCFlags(b, optimize, is_x86_family, target_is_windows);
+
+    const vcpkg: ?VcpkgPaths = if (target_is_windows)
+        resolveVcpkg(b, target, link_static, optimize, vcpkg_installed_opt)
+    else
+        null;
+
+    // ── Vendored libraries ──────────────────────────────────────────────
+    const aladdin_md5 = addStaticLib(b, target, optimize, "aladdin-md5", &.{
+        "vendor/aladdin-md5/md5.c",
+    }, c_flags, &.{b.path("vendor/aladdin-md5")});
+
+    const hqx_flags = blk: {
+        var flags: std.ArrayListUnmanaged([]const u8) = .{};
+        flags.appendSlice(b.allocator, c_flags) catch @panic("OOM");
+        flags.append(b.allocator, "-w") catch @panic("OOM");
+        break :blk flags.toOwnedSlice(b.allocator) catch @panic("OOM");
+    };
+    const hqx = addStaticLib(b, target, optimize, "hqx", &.{
+        "vendor/hqx/init.c",
+        "vendor/hqx/hq2x.c",
+        "vendor/hqx/hq3x.c",
+        "vendor/hqx/hq4x.c",
+    }, hqx_flags, &.{b.path("vendor/hqx")});
+
+    const xbrz = addStaticLib(b, target, optimize, "xbrz", &.{
+        "vendor/xbrz/xbrz.cpp",
+    }, cxx_flags, &.{b.path("vendor/xbrz")});
+
+    // Header-only vendor include roots
+    const vendor_argh = b.path("vendor/argh");
+    const vendor_bs_thread_pool = b.path("vendor/bs-thread-pool");
+    const vendor_microlru = b.path("vendor/microlru");
+    const vendor_mini = b.path("vendor/mini");
+    const vendor_xxhash64 = b.path("vendor/xxhash64");
+    const vendor_windarkmode = b.path("vendor/windarkmode");
+
+    // ── Common (interface / headers) ────────────────────────────────────
+    // Common is header-only; consumers get its include path and deps.
+    const common_inc = b.path("src/Common/include");
+    const common_win32_inc = b.path("src/Common.Win32/include");
+    const core_inc = b.path("src/Core/include");
+    const views_headers_inc = b.path("src/Views.Win32/include");
+
+    // ── Core ────────────────────────────────────────────────────────────
+    var core_sources: std.ArrayListUnmanaged([]const u8) = .{};
+    core_sources.appendSlice(b.allocator, &core_sources_common) catch @panic("OOM");
+    if (enable_dynarec) {
+        const dynarec_dir: []const u8 = switch (arch) {
+            .x86_64 => "src/Core/R4300/x86_64",
+            .x86 => "src/Core/R4300/x86",
+            else => unreachable,
+        };
+        for (dynarec_sources) |name| {
+            core_sources.append(b.allocator, b.fmt("{s}/{s}", .{ dynarec_dir, name })) catch @panic("OOM");
+        }
+    }
+
+    const core = b.addLibrary(.{
+        .name = "Core",
+        .linkage = .static,
+        .root_module = createCppModule(b, target, optimize),
+    });
+    core.root_module.addCSourceFiles(.{
+        .files = core_sources.items,
+        .flags = withIncludePrefix(b, cxx_flags, "src/Common/include/CommonPCH.hpp"),
+        .language = .cpp,
+    });
+    core.root_module.addIncludePath(core_inc);
+    core.root_module.addIncludePath(b.path("src/Core"));
+    core.root_module.addIncludePath(common_inc);
+    core.root_module.addIncludePath(vendor_xxhash64);
+    core.root_module.addIncludePath(b.path("vendor/aladdin-md5"));
+    // CommonPCH.hpp pulls in SDL3 headers unconditionally.
+    if (vcpkg) |vp| {
+        applyVcpkgIncludes(core.root_module, vp);
+        applyVcpkgLibPaths(core.root_module, vp);
+    }
+    if (enable_dynarec) core.root_module.addCMacro("MUPEN64RR_ENABLE_DYNAREC", "1");
+    applyCommonDefines(core.root_module, optimize, target_is_windows, version_suffix, nightly);
+
+    core.root_module.linkLibrary(aladdin_md5);
+    linkLibdeflate(core.root_module);
+    if (!target_is_windows) {
+        core.root_module.linkSystemLibrary("safec", .{});
+    }
+
+    // ── Tests ───────────────────────────────────────────────────────────
+    var core_tests_exe: ?*std.Build.Step.Compile = null;
+    var lua_testlib: ?*std.Build.Step.Compile = null;
+
+    if (build_tests) {
+        const tests = b.addExecutable(.{
+            .name = "Core.Tests",
+            .root_module = createCppModule(b, target, optimize),
+        });
+        tests.root_module.addCSourceFiles(.{
+            .files = &.{
+                "src/Core.Tests/IOUtilsTests.cpp",
+                "src/Core.Tests/VCRTests.cpp",
+                "src/Core.Tests/VRTests.cpp",
+            },
+            .flags = withIncludePrefix(b, cxx_flags, "src/Core.Tests/stdafx.h"),
+            .language = .cpp,
+        });
+        tests.root_module.addIncludePath(b.path("src/Core.Tests"));
+        tests.root_module.addIncludePath(b.path("src"));
+        tests.root_module.addIncludePath(b.path("src/Core"));
+        tests.root_module.addIncludePath(core_inc);
+        tests.root_module.addIncludePath(common_inc);
+        tests.root_module.addIncludePath(vendor_xxhash64);
+        if (vcpkg) |vp| {
+            applyVcpkgIncludes(tests.root_module, vp);
+            applyVcpkgLibPaths(tests.root_module, vp);
+            linkCatch2(tests.root_module, vp, optimize);
+            linkLibdeflate(tests.root_module);
+        } else {
+            tests.root_module.linkSystemLibrary("catch2-with-main", .{});
+            linkLibdeflate(tests.root_module);
+        }
+        if (enable_dynarec) tests.root_module.addCMacro("MUPEN64RR_ENABLE_DYNAREC", "1");
+        applyCommonDefines(tests.root_module, optimize, target_is_windows, version_suffix, nightly);
+        tests.root_module.linkLibrary(core);
+        tests.root_module.linkLibrary(aladdin_md5);
+        // Console entry (Catch2 provides main, not WinMain).
+        tests.entry = .{ .symbol_name = "mainCRTStartup" };
+        applyWindowsLinkFlags(tests, target);
+        core_tests_exe = tests;
+
+        const luatest = b.addLibrary(.{
+            .name = "luatestlib",
+            .linkage = .dynamic,
+            .root_module = createCppModule(b, target, optimize),
+        });
+        luatest.root_module.pic = true;
+        luatest.root_module.addCSourceFiles(.{
+            .files = &.{"src/Lua.TestLib/main.cpp"},
+            .flags = cxx_flags,
+            .language = .cpp,
+        });
+        if (vcpkg) |vp| {
+            applyVcpkgIncludes(luatest.root_module, vp);
+            applyVcpkgLibPaths(luatest.root_module, vp);
+            linkLua(luatest.root_module, vp);
+        } else {
+            luatest.root_module.linkSystemLibrary("lua", .{});
+        }
+        applyCommonDefines(luatest.root_module, optimize, target_is_windows, version_suffix, nightly);
+        applyWindowsLinkFlags(luatest, target);
+        lua_testlib = luatest;
+    }
+
+    // ── Win32 frontend + plugins ────────────────────────────────────────
+    var mupen_exe: ?*std.Build.Step.Compile = null;
+    var plugins: std.ArrayListUnmanaged(*std.Build.Step.Compile) = .{};
+
+    if (build_win32) {
+        const vp = vcpkg orelse @panic("Win32 build requires vcpkg dependencies. Pass -Dvcpkg_installed=<triplet-dir> or run vcpkg install.");
+
+        const views = b.addExecutable(.{
+            .name = "mupen64",
+            .root_module = createCppModule(b, target, optimize),
+        });
+        views.subsystem = .Windows;
+        // App provides WinMain (ANSI LPSTR), not wWinMain, despite UNICODE APIs.
+        views.entry = .{ .symbol_name = "WinMainCRTStartup" };
+        views.linker_dynamicbase = false;
+        views.root_module.addCSourceFiles(.{
+            .files = &views_sources,
+            .flags = withIncludePrefix(b, cxx_flags, "src/Views.Win32/stdafx.h"),
+            .language = .cpp,
+        });
+        views.root_module.addWin32ResourceFile(.{
+            .file = b.path("src/Views.Win32/Resource.rc"),
+            .include_paths = &.{b.path("src/Views.Win32")},
+        });
+        views.root_module.addIncludePath(b.path("src/Views.Win32"));
+        views.root_module.addIncludePath(views_headers_inc);
+        views.root_module.addIncludePath(common_inc);
+        views.root_module.addIncludePath(common_win32_inc);
+        views.root_module.addIncludePath(core_inc);
+        views.root_module.addIncludePath(vendor_argh);
+        views.root_module.addIncludePath(vendor_bs_thread_pool);
+        views.root_module.addIncludePath(vendor_microlru);
+        views.root_module.addIncludePath(vendor_mini);
+        views.root_module.addIncludePath(vendor_xxhash64);
+        views.root_module.addIncludePath(vendor_windarkmode);
+        applyVcpkgIncludes(views.root_module, vp);
+        applyVcpkgLibPaths(views.root_module, vp);
+        applyCommonDefines(views.root_module, optimize, true, version_suffix, nightly);
+        views.root_module.addCMacro("MINI_CASE_SENSITIVE", "1");
+        if (enable_dynarec) views.root_module.addCMacro("MUPEN64RR_ENABLE_DYNAREC", "1");
+        applySpdlogDefines(views.root_module, link_static);
+
+        views.root_module.linkLibrary(core);
+        views.root_module.linkLibrary(aladdin_md5);
+        linkLibdeflate(views.root_module);
+        linkLua(views.root_module, vp);
+        linkSpdlog(views.root_module, vp, optimize);
+        linkSdl3(views.root_module, vp);
+        linkNlohmannJson(views.root_module, vp);
+        linkSpeexdsp(views.root_module, vp);
+        linkFfmpeg(views.root_module, vp);
+        linkViewsWinLibs(views.root_module);
+        views.root_module.linkSystemLibrary("comdlg32", .{});
+        applyWindowsLinkFlags(views, target);
+        mupen_exe = views;
+
+        // Plugin common include/macro helper applied per plugin
+        const plugin_common = PluginCommon{
+            .common_inc = common_inc,
+            .common_win32_inc = common_win32_inc,
+            .core_inc = core_inc,
+            .views_headers_inc = views_headers_inc,
+            .vendor_xxhash64 = vendor_xxhash64,
+            .vcpkg = vp,
+            .cxx_flags = cxx_flags,
+            .version_suffix = version_suffix,
+            .nightly = nightly,
+            .optimize = optimize,
+            .link_static = link_static,
+            .enable_dynarec = enable_dynarec,
+        };
+
+        plugins.append(b.allocator, addPlugin(b, target, plugin_common, "NoAudio", &.{
+            "src/Plugins.Win32.DummyAudio/Main.cpp",
+        }, null, &.{})) catch @panic("OOM");
+
+        plugins.append(b.allocator, addPlugin(b, target, plugin_common, "NoInput", &.{
+            "src/Plugins.Win32.DummyInput/Main.cpp",
+        }, null, &.{})) catch @panic("OOM");
+
+        plugins.append(b.allocator, addPlugin(b, target, plugin_common, "NoVideo", &.{
+            "src/Plugins.Win32.DummyVideo/Main.cpp",
+        }, null, &.{})) catch @panic("OOM");
+
+        const tas_audio = addPlugin(b, target, plugin_common, "TASAudio", &.{
+            "src/Plugins.Win32.TASAudio/Config.cpp",
+            "src/Plugins.Win32.TASAudio/Config_Win32.cpp",
+            "src/Plugins.Win32.TASAudio/Main.cpp",
+            "src/Plugins.Win32.TASAudio/Main_Win32.cpp",
+            "src/Plugins.Win32.TASAudio/SDLBackend.cpp",
+        }, "src/Plugins.Win32.TASAudio/Resource.rc", &.{
+            b.path("src/Plugins.Win32.TASAudio"),
+        });
+        linkSdl3(tas_audio.root_module, vp);
+        linkNlohmannJson(tas_audio.root_module, vp);
+        plugins.append(b.allocator, tas_audio) catch @panic("OOM");
+
+        const tas_input = addPlugin(b, target, plugin_common, "TASInput", &.{
+            "src/Plugins.Win32.TASInput/TASInput.cpp",
+            "src/Plugins.Win32.TASInput/NewConfig.cpp",
+            "src/Plugins.Win32.TASInput/Main.cpp",
+            "src/Plugins.Win32.TASInput/GamepadManager.cpp",
+            "src/Plugins.Win32.TASInput/ConfigDialog.cpp",
+            "src/Plugins.Win32.TASInput/Combo.cpp",
+        }, "src/Plugins.Win32.TASInput/Resource.rc", &.{
+            b.path("src/Plugins.Win32.TASInput"),
+        });
+        linkSdl3(tas_input.root_module, vp);
+        linkNlohmannJson(tas_input.root_module, vp);
+        for ([_][]const u8{ "setupapi", "hid", "imm32", "version", "winmm", "comctl32", "shcore", "gdiplus" }) |lib| {
+            tas_input.root_module.linkSystemLibrary(lib, .{});
+        }
+        plugins.append(b.allocator, tas_input) catch @panic("OOM");
+
+        const tas_rsp = addPlugin(b, target, plugin_common, "TASRSP", &.{
+            "src/Plugins.Win32.TASRSP/Config.cpp",
+            "src/Plugins.Win32.TASRSP/JPEG.cpp",
+            "src/Plugins.Win32.TASRSP/Main.cpp",
+            "src/Plugins.Win32.TASRSP/MP3.cpp",
+            "src/Plugins.Win32.TASRSP/UCode1.cpp",
+            "src/Plugins.Win32.TASRSP/UCode2.cpp",
+            "src/Plugins.Win32.TASRSP/UCode3.cpp",
+        }, null, &.{
+            b.path("src/Plugins.Win32.TASRSP"),
+        });
+        linkNlohmannJson(tas_rsp.root_module, vp);
+        plugins.append(b.allocator, tas_rsp) catch @panic("OOM");
+
+        const tas_video = addPlugin(b, target, plugin_common, "TASVideo", &.{
+            "src/Plugins.Win32.TASVideo/VI.cpp",
+            "src/Plugins.Win32.TASVideo/Textures.cpp",
+            "src/Plugins.Win32.TASVideo/unified_combiner.cpp",
+            "src/Plugins.Win32.TASVideo/stdafx.cpp",
+            "src/Plugins.Win32.TASVideo/S2DEX2.cpp",
+            "src/Plugins.Win32.TASVideo/S2DEX.cpp",
+            "src/Plugins.Win32.TASVideo/RSP.cpp",
+            "src/Plugins.Win32.TASVideo/RDP.cpp",
+            "src/Plugins.Win32.TASVideo/OpenGL.cpp",
+            "src/Plugins.Win32.TASVideo/N64.cpp",
+            "src/Plugins.Win32.TASVideo/L3DEX2.cpp",
+            "src/Plugins.Win32.TASVideo/L3DEX.cpp",
+            "src/Plugins.Win32.TASVideo/L3D.cpp",
+            "src/Plugins.Win32.TASVideo/gSP.cpp",
+            "src/Plugins.Win32.TASVideo/glN64.cpp",
+            "src/Plugins.Win32.TASVideo/gDP.cpp",
+            "src/Plugins.Win32.TASVideo/GBI.cpp",
+            "src/Plugins.Win32.TASVideo/FrameBuffer.cpp",
+            "src/Plugins.Win32.TASVideo/F3DWRUS.cpp",
+            "src/Plugins.Win32.TASVideo/F3DPD.cpp",
+            "src/Plugins.Win32.TASVideo/F3DEX2.cpp",
+            "src/Plugins.Win32.TASVideo/F3DEX.cpp",
+            "src/Plugins.Win32.TASVideo/F3DDKR.cpp",
+            "src/Plugins.Win32.TASVideo/F3D.cpp",
+            "src/Plugins.Win32.TASVideo/DepthBuffer.cpp",
+            "src/Plugins.Win32.TASVideo/CRC.cpp",
+            "src/Plugins.Win32.TASVideo/Config.cpp",
+            "src/Plugins.Win32.TASVideo/Combiner.cpp",
+            "src/Plugins.Win32.TASVideo/2xSAI.cpp",
+        }, "src/Plugins.Win32.TASVideo/Resource.rc", &.{
+            b.path("src/Plugins.Win32.TASVideo"),
+            b.path("vendor/hqx"),
+            b.path("vendor/xbrz"),
+        });
+        tas_video.root_module.linkLibrary(hqx);
+        tas_video.root_module.linkLibrary(xbrz);
+        linkNlohmannJson(tas_video.root_module, vp);
+        linkGlew(tas_video.root_module, vp, optimize, link_static);
+        linkSdl3(tas_video.root_module, vp);
+        for ([_][]const u8{ "comctl32", "uxtheme", "msimg32", "gdiplus", "opengl32", "glu32", "winmm" }) |lib| {
+            tas_video.root_module.linkSystemLibrary(lib, .{});
+        }
+        plugins.append(b.allocator, tas_video) catch @panic("OOM");
+    }
+
+    // ── Install layout (mirrors former CMake output dirs) ───────────────
+    //   <prefix>/out/mupen64.exe
+    //   <prefix>/out/plugin/*.dll
+    //   <prefix>/test/out/Core.Tests.exe
+    //   <prefix>/test/out/luatestlib.dll
+    if (mupen_exe) |exe| {
+        b.getInstallStep().dependOn(&b.addInstallArtifact(exe, .{
+            .dest_dir = .{ .override = .{ .custom = "out" } },
+        }).step);
+        if (vcpkg) |vp| {
+            if (!link_static) {
+                b.getInstallStep().dependOn(&b.addInstallDirectory(.{
+                    .source_dir = .{ .cwd_relative = vp.bin_dir },
+                    .install_dir = .{ .custom = "out" },
+                    .install_subdir = "",
+                    .include_extensions = &.{".dll"},
+                }).step);
+            }
+        }
+    }
+    for (plugins.items) |plugin| {
+        b.getInstallStep().dependOn(&b.addInstallArtifact(plugin, .{
+            .dest_dir = .{ .override = .{ .custom = "out/plugin" } },
+        }).step);
+    }
+    if (core_tests_exe) |tests| {
+        b.getInstallStep().dependOn(&b.addInstallArtifact(tests, .{
+            .dest_dir = .{ .override = .{ .custom = "test/out" } },
+        }).step);
+        if (vcpkg) |vp| {
+            if (!link_static) {
+                b.getInstallStep().dependOn(&b.addInstallDirectory(.{
+                    .source_dir = .{ .cwd_relative = vp.bin_dir },
+                    .install_dir = .{ .custom = "test/out" },
+                    .install_subdir = "",
+                    .include_extensions = &.{".dll"},
+                }).step);
+            }
+        }
+    }
+    if (lua_testlib) |lib| {
+        b.getInstallStep().dependOn(&b.addInstallArtifact(lib, .{
+            .dest_dir = .{ .override = .{ .custom = "test/out" } },
+        }).step);
+    }
+
+    // ── Test step ───────────────────────────────────────────────────────
+    if (core_tests_exe) |tests| {
+        const run_tests = b.addRunArtifact(tests);
+        run_tests.has_side_effects = true;
+        // Catch2 discovers tests itself; just run the binary.
+        const test_step = b.step("test", "Run Core.Tests");
+        test_step.dependOn(&run_tests.step);
+        // Ensure runtime DLLs are present next to the test binary when needed.
+        if (vcpkg) |vp| {
+            if (!link_static and target_is_windows) {
+                // Run from the installed location after install, or set cwd to bin.
+                run_tests.setEnvironmentVariable("PATH", b.fmt("{s};{s}", .{
+                    vp.bin_dir,
+                    std.process.getEnvVarOwned(b.allocator, "PATH") catch "",
+                }));
+            }
+        }
+    }
+
+    // ── Convenience: vcpkg install helper ───────────────────────────────
+    const vcpkg_step = b.step("vcpkg", "Install vcpkg dependencies for the active target triplet");
+    if (target_is_windows) {
+        const triplet = vcpkgTriplet(target, link_static);
+        // Keep the historical layout under build/ so CI caches and local trees match.
+        const install_root = "build/vcpkg_installed";
+        const vcpkg_exe = findVcpkg(b);
+        const run = b.addSystemCommand(&.{vcpkg_exe});
+        run.addArgs(&.{
+            "install",
+            b.fmt("--triplet={s}", .{triplet}),
+            "--x-manifest-root=.",
+            b.fmt("--x-install-root={s}", .{install_root}),
+        });
+        vcpkg_step.dependOn(&run.step);
+    }
+}
+
+fn findVcpkg(b: *std.Build) []const u8 {
+    if (b.findProgram(&.{"vcpkg"}, &.{})) |p| return p else |_| {}
+    if (std.process.getEnvVarOwned(b.allocator, "VCINSTALLDIR")) |vc| {
+        const candidate = b.fmt("{s}/vcpkg/vcpkg.exe", .{vc});
+        std.fs.cwd().access(candidate, .{}) catch {
+            return "vcpkg";
+        };
+        return candidate;
+    } else |_| {}
+    return "vcpkg";
+}
+
+// ─── helpers ────────────────────────────────────────────────────────────
+
+/// Create a module configured for C++ compilation.
+/// On Windows/MSVC we use the MSVC C++ runtime (not libc++).
+fn createCppModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
+    const use_libcxx = target.result.os.tag != .windows or target.result.abi != .msvc;
+    // For MSVC we deliberately avoid Zig's bundled/auto libc (-lc pulls
+    // libucrt) and link the matching MSVC CRT import libs ourselves.
+    const mod = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .link_libc = if (use_libcxx) true else false,
+        .link_libcpp = if (use_libcxx) true else null,
+    });
+    if (!use_libcxx) {
+        addWindowsSdkPaths(mod, optimize);
+        // Link the MSVC CRT directly (no Zig -lc). Debug uses MDd; release uses MD.
+        // msvcrt(d) provides process/DLL startup (e.g. _DllMainCRTStartup).
+        if (optimize == .Debug) {
+            mod.linkSystemLibrary("msvcprtd", .{});
+            mod.linkSystemLibrary("msvcrtd", .{});
+            mod.linkSystemLibrary("ucrtd", .{});
+            mod.linkSystemLibrary("vcruntimed", .{});
+        } else {
+            mod.linkSystemLibrary("msvcprt", .{});
+            mod.linkSystemLibrary("msvcrt", .{});
+            mod.linkSystemLibrary("ucrt", .{});
+            mod.linkSystemLibrary("vcruntime", .{});
+        }
+        mod.linkSystemLibrary("oldnames", .{});
+        mod.linkSystemLibrary("kernel32", .{});
+        // Zig's ubsan/debug runtime needs ntdll when -lc is not used.
+        mod.linkSystemLibrary("ntdll", .{});
+    }
+    return mod;
+}
+
+/// Add MSVC/WinSDK include + library paths from the VS developer environment
+/// (INCLUDE/LIB) when available, with a filesystem fallback for the kit roots.
+fn addWindowsSdkPaths(mod: *std.Build.Module, optimize: std.builtin.OptimizeMode) void {
+    _ = optimize;
+    const b = mod.owner;
+
+    if (std.process.getEnvVarOwned(b.allocator, "INCLUDE")) |inc| {
+        var it = std.mem.splitScalar(u8, inc, ';');
+        while (it.next()) |part| {
+            if (part.len == 0) continue;
+            mod.addSystemIncludePath(.{ .cwd_relative = b.dupePath(part) });
+        }
+    } else |_| {
+        addDefaultWinKitIncludes(mod);
+    }
+
+    if (std.process.getEnvVarOwned(b.allocator, "LIB")) |lib| {
+        var it = std.mem.splitScalar(u8, lib, ';');
+        while (it.next()) |part| {
+            if (part.len == 0) continue;
+            mod.addLibraryPath(.{ .cwd_relative = b.dupePath(part) });
+        }
+    } else |_| {
+        addDefaultWinKitLibs(mod);
+    }
+}
+
+fn addDefaultWinKitIncludes(mod: *std.Build.Module) void {
+    const b = mod.owner;
+    const kits_root = "C:/Program Files (x86)/Windows Kits/10/Include";
+    const ver = newestSubdir(b, kits_root) orelse return;
+    for ([_][]const u8{ "ucrt", "um", "shared", "winrt", "cppwinrt" }) |leaf| {
+        const p = b.fmt("{s}/{s}/{s}", .{ kits_root, ver, leaf });
+        if (dirExists(p)) mod.addSystemIncludePath(.{ .cwd_relative = p });
+    }
+}
+
+fn addDefaultWinKitLibs(mod: *std.Build.Module) void {
+    const b = mod.owner;
+    const kits_root = "C:/Program Files (x86)/Windows Kits/10/Lib";
+    const ver = newestSubdir(b, kits_root) orelse return;
+    // Assume x64 host builds by default; cross x86 can still pass LIB via vsdev.
+    for ([_][]const u8{ "ucrt/x64", "um/x64" }) |leaf| {
+        const p = b.fmt("{s}/{s}/{s}", .{ kits_root, ver, leaf });
+        if (dirExists(p)) mod.addLibraryPath(.{ .cwd_relative = p });
+    }
+}
+
+fn newestSubdir(b: *std.Build, root: []const u8) ?[]const u8 {
+    var dir = std.fs.cwd().openDir(root, .{ .iterate = true }) catch return null;
+    defer dir.close();
+    var best: ?[]const u8 = null;
+    var iter = dir.iterate();
+    while (iter.next() catch null) |entry| {
+        if (entry.kind != .directory) continue;
+        if (best == null or std.mem.order(u8, entry.name, best.?) == .gt) {
+            best = b.dupe(entry.name);
+        }
+    }
+    return best;
+}
+
+fn resolveTarget(b: *std.Build, requested: std.Build.ResolvedTarget) std.Build.ResolvedTarget {
+    var query = requested.query;
+
+    // Prefer the MSVC ABI on Windows so we can consume vcpkg packages built for it.
+    if (requested.result.os.tag == .windows and requested.result.abi != .msvc) {
+        query.os_tag = .windows;
+        query.abi = .msvc;
+        query.cpu_arch = requested.result.cpu.arch;
+    }
+
+    // Dynarec and several plugins require SSSE3. Zig defaults to `-mcpu baseline`,
+    // which omits it, so enable the feature explicitly on x86 family targets.
+    const arch = query.cpu_arch orelse requested.result.cpu.arch;
+    if (arch == .x86 or arch == .x86_64) {
+        query.cpu_features_add.addFeature(@intFromEnum(std.Target.x86.Feature.ssse3));
+    }
+
+    return b.resolveTargetQuery(query);
+}
+
+fn collectCxxFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_family: bool, target_is_windows: bool) []const []const u8 {
+    var flags: std.ArrayListUnmanaged([]const u8) = .{};
+    flags.append(b.allocator, "-std=c++23") catch @panic("OOM");
+
+    if (target_is_windows) {
+        // Match vcpkg's MultiThreadedDLL CRT (MD / MDd).
+        const crt = if (optimize == .Debug) "-fms-runtime-lib=dll_dbg" else "-fms-runtime-lib=dll";
+        flags.appendSlice(b.allocator, &.{
+            "-fms-extensions",
+            "-fms-compatibility",
+            "-fms-compatibility-version=19.40",
+            crt,
+            "-finput-charset=UTF-8",
+            "-fexec-charset=UTF-8",
+            // Treat unused-argument noise from Zig's C++ driver as non-fatal.
+            "-Wno-unused-command-line-argument",
+        }) catch @panic("OOM");
+    }
+    if (is_x86_family) {
+        flags.append(b.allocator, "-mssse3") catch @panic("OOM");
+    }
+    switch (optimize) {
+        .Debug => flags.append(b.allocator, "-g") catch @panic("OOM"),
+        .ReleaseSafe, .ReleaseFast => flags.appendSlice(b.allocator, &.{ "-O2", "-g" }) catch @panic("OOM"),
+        .ReleaseSmall => flags.append(b.allocator, "-Os") catch @panic("OOM"),
+    }
+    return flags.toOwnedSlice(b.allocator) catch @panic("OOM");
+}
+
+fn collectCFlags(b: *std.Build, optimize: std.builtin.OptimizeMode, is_x86_family: bool, target_is_windows: bool) []const []const u8 {
+    var flags: std.ArrayListUnmanaged([]const u8) = .{};
+    flags.append(b.allocator, "-std=c11") catch @panic("OOM");
+    if (target_is_windows) {
+        const crt = if (optimize == .Debug) "-fms-runtime-lib=dll_dbg" else "-fms-runtime-lib=dll";
+        flags.appendSlice(b.allocator, &.{ "-fms-extensions", crt, "-finput-charset=UTF-8", "-Wno-unused-command-line-argument" }) catch @panic("OOM");
+    }
+    if (is_x86_family) {
+        flags.append(b.allocator, "-mssse3") catch @panic("OOM");
+    }
+    switch (optimize) {
+        .Debug => flags.append(b.allocator, "-g") catch @panic("OOM"),
+        .ReleaseSafe, .ReleaseFast => flags.appendSlice(b.allocator, &.{ "-O2", "-g" }) catch @panic("OOM"),
+        .ReleaseSmall => flags.append(b.allocator, "-Os") catch @panic("OOM"),
+    }
+    return flags.toOwnedSlice(b.allocator) catch @panic("OOM");
+}
+
+fn withIncludePrefix(b: *std.Build, base: []const []const u8, header: []const u8) []const []const u8 {
+    var flags: std.ArrayListUnmanaged([]const u8) = .{};
+    flags.appendSlice(b.allocator, base) catch @panic("OOM");
+    // Force-include the former PCH header so translation units keep compiling.
+    flags.append(b.allocator, b.fmt("-include{s}", .{header})) catch @panic("OOM");
+    return flags.toOwnedSlice(b.allocator) catch @panic("OOM");
+}
+
+fn applyCommonDefines(
+    mod: *std.Build.Module,
+    optimize: std.builtin.OptimizeMode,
+    target_is_windows: bool,
+    version_suffix: []const u8,
+    nightly: bool,
+) void {
+    const b = mod.owner;
+    if (target_is_windows) {
+        mod.addCMacro("UNICODE", "1");
+        mod.addCMacro("_UNICODE", "1");
+        // NOMINMAX is defined by project headers; don't redefine it here.
+        // Avoid WIN32_LEAN_AND_MEAN so commdlg/shell APIs stay available.
+    }
+    if (optimize == .Debug) {
+        mod.addCMacro("_DEBUG", "1");
+    }
+    // VERSION_SUFFIX is expanded as a wide string literal in sources.
+    mod.addCMacro("VERSION_SUFFIX", b.fmt("L\"{s}\"", .{version_suffix}));
+    if (nightly) {
+        mod.addCMacro("NIGHTLY", "1");
+    }
+}
+
+fn applyWindowsLinkFlags(compile: *std.Build.Step.Compile, target: std.Build.ResolvedTarget) void {
+    if (target.result.os.tag != .windows) return;
+    compile.linker_dynamicbase = false;
+    // LARGEADDRESSAWARE is the historical default we want; lld enables it for
+    // PE images when linking with zig on MSVC targets in practice for x64.
+    // 32-bit historically also disabled NXCOMPAT; zig/lld has no first-class
+    // toggle, so x86 builds may differ slightly from the old CMake flags.
+}
+
+fn addStaticLib(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    name: []const u8,
+    sources: []const []const u8,
+    flags: []const []const u8,
+    includes: []const std.Build.LazyPath,
+) *std.Build.Step.Compile {
+    const is_cpp = for (sources) |s| {
+        if (std.mem.endsWith(u8, s, ".cpp") or std.mem.endsWith(u8, s, ".cxx") or std.mem.endsWith(u8, s, ".cc"))
+            break true;
+    } else false;
+
+    const lib = b.addLibrary(.{
+        .name = name,
+        .linkage = .static,
+        .root_module = if (is_cpp)
+            createCppModule(b, target, optimize)
+        else blk: {
+            // Pure C vendor libs: on MSVC, libc is provided by the final link unit.
+            const use_libcxx_abi = target.result.os.tag != .windows or target.result.abi != .msvc;
+            const mod = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .link_libc = use_libcxx_abi,
+            });
+            if (!use_libcxx_abi) addWindowsSdkPaths(mod, optimize);
+            break :blk mod;
+        },
+    });
+    lib.root_module.addCSourceFiles(.{
+        .files = sources,
+        .flags = flags,
+        .language = if (is_cpp) .cpp else .c,
+    });
+    for (includes) |inc| lib.root_module.addIncludePath(inc);
+    return lib;
+}
+
+const PluginCommon = struct {
+    common_inc: std.Build.LazyPath,
+    common_win32_inc: std.Build.LazyPath,
+    core_inc: std.Build.LazyPath,
+    views_headers_inc: std.Build.LazyPath,
+    vendor_xxhash64: std.Build.LazyPath,
+    vcpkg: VcpkgPaths,
+    cxx_flags: []const []const u8,
+    version_suffix: []const u8,
+    nightly: bool,
+    optimize: std.builtin.OptimizeMode,
+    link_static: bool,
+    enable_dynarec: bool,
+};
+
+fn addPlugin(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    common: PluginCommon,
+    name: []const u8,
+    sources: []const []const u8,
+    rc_file: ?[]const u8,
+    extra_includes: []const std.Build.LazyPath,
+) *std.Build.Step.Compile {
+    const lib = b.addLibrary(.{
+        .name = name,
+        .linkage = .dynamic,
+        .root_module = createCppModule(b, target, common.optimize),
+    });
+    lib.root_module.pic = true;
+    lib.linker_dynamicbase = false;
+    lib.root_module.addCSourceFiles(.{
+        .files = sources,
+        .flags = withIncludePrefix(b, common.cxx_flags, "src/Common/include/CommonPCH.hpp"),
+        .language = .cpp,
+    });
+    if (rc_file) |rc| {
+        lib.root_module.addWin32ResourceFile(.{
+            .file = b.path(rc),
+            .include_paths = extra_includes,
+        });
+    }
+    lib.root_module.addIncludePath(common.common_inc);
+    lib.root_module.addIncludePath(common.common_win32_inc);
+    lib.root_module.addIncludePath(common.core_inc);
+    lib.root_module.addIncludePath(common.views_headers_inc);
+    lib.root_module.addIncludePath(common.vendor_xxhash64);
+    for (extra_includes) |inc| lib.root_module.addIncludePath(inc);
+    applyVcpkgIncludes(lib.root_module, common.vcpkg);
+    applyVcpkgLibPaths(lib.root_module, common.vcpkg);
+    applyCommonDefines(lib.root_module, common.optimize, true, common.version_suffix, common.nightly);
+    lib.root_module.addCMacro("PLUGIN_WITH_CALLBACKS", "1");
+    if (common.enable_dynarec) lib.root_module.addCMacro("MUPEN64RR_ENABLE_DYNAREC", "1");
+    linkLibdeflate(lib.root_module);
+    // Baseline Win32 libs used across plugins (dialogs, windows, shell).
+    for ([_][]const u8{ "user32", "gdi32", "comdlg32", "shell32", "advapi32", "ole32", "uuid", "comctl32" }) |wlib| {
+        lib.root_module.linkSystemLibrary(wlib, .{});
+    }
+    applyWindowsLinkFlags(lib, target);
+    return lib;
+}
+
+fn linkViewsWinLibs(mod: *std.Build.Module) void {
+    for ([_][]const u8{
+        "shlwapi",  "vfw32",   "winmm",     "propsys", "comctl32", "uxtheme",
+        "msimg32",  "gdiplus", "d2d1",      "dwrite",  "dbghelp",  "dcomp",
+        "d3d11",    "dxgi",    "dxguid",    "dwmapi",  "d3dcompiler", "winhttp",
+        "ole32",    "uuid",    "gdi32",     "user32",  "shell32",  "advapi32",
+        "kernel32",
+    }) |lib| {
+        mod.linkSystemLibrary(lib, .{});
+    }
+}
+
+// ─── vcpkg ──────────────────────────────────────────────────────────────
+
+const VcpkgPaths = struct {
+    root: []const u8,
+    include_dir: []const u8,
+    lib_dir: []const u8,
+    lib_dir_manual: []const u8,
+    bin_dir: []const u8,
+};
+
+fn vcpkgTriplet(target: std.Build.ResolvedTarget, link_static: bool) []const u8 {
+    const arch = switch (target.result.cpu.arch) {
+        .x86_64 => "x64",
+        .x86 => "x86",
+        .aarch64 => "arm64",
+        else => "x64",
+    };
+    if (link_static) {
+        return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows-static", .{arch}) catch @panic("OOM");
+    }
+    return std.fmt.allocPrint(std.heap.page_allocator, "{s}-windows", .{arch}) catch @panic("OOM");
+}
+
+fn resolveVcpkg(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    link_static: bool,
+    optimize: std.builtin.OptimizeMode,
+    explicit: ?[]const u8,
+) ?VcpkgPaths {
+    const triplet = vcpkgTriplet(target, link_static);
+    const candidates = [_][]const u8{
+        if (explicit) |e| e else "",
+        b.fmt("vcpkg_installed/{s}", .{triplet}),
+        b.fmt("build/vcpkg_installed/{s}", .{triplet}),
+    };
+
+    const root = blk: {
+        for (candidates) |c| {
+            if (c.len == 0) continue;
+            var dir = std.fs.cwd().openDir(c, .{}) catch continue;
+            dir.close();
+            break :blk b.dupePath(c);
+        }
+        if (explicit != null) {
+            std.log.err("vcpkg installed directory not found (looked for explicit -Dvcpkg_installed)", .{});
+            return null;
+        }
+        std.log.warn("vcpkg dependencies not found for triplet '{s}'. Run `zig build vcpkg` or pass -Dvcpkg_installed=", .{triplet});
+        return null;
+    };
+
+    const debug = optimize == .Debug;
+    const lib_dir = if (debug)
+        b.fmt("{s}/debug/lib", .{root})
+    else
+        b.fmt("{s}/lib", .{root});
+    const lib_dir_manual = b.fmt("{s}/manual-link", .{lib_dir});
+    const bin_dir = if (debug)
+        b.fmt("{s}/debug/bin", .{root})
+    else
+        b.fmt("{s}/bin", .{root});
+
+    // Fall back to release lib/bin if debug tree is incomplete.
+    const final_lib = if (dirExists(lib_dir)) lib_dir else b.fmt("{s}/lib", .{root});
+    const final_bin = if (dirExists(bin_dir)) bin_dir else b.fmt("{s}/bin", .{root});
+    const final_manual = if (dirExists(lib_dir_manual)) lib_dir_manual else b.fmt("{s}/lib/manual-link", .{root});
+
+    return .{
+        .root = root,
+        .include_dir = b.fmt("{s}/include", .{root}),
+        .lib_dir = final_lib,
+        .lib_dir_manual = final_manual,
+        .bin_dir = final_bin,
+    };
+}
+
+fn dirExists(path: []const u8) bool {
+    var dir = std.fs.cwd().openDir(path, .{}) catch return false;
+    dir.close();
+    return true;
+}
+
+fn applyVcpkgIncludes(mod: *std.Build.Module, vp: VcpkgPaths) void {
+    mod.addIncludePath(.{ .cwd_relative = vp.include_dir });
+}
+
+fn applyVcpkgLibPaths(mod: *std.Build.Module, vp: VcpkgPaths) void {
+    mod.addLibraryPath(.{ .cwd_relative = vp.lib_dir });
+    if (dirExists(vp.lib_dir_manual)) {
+        mod.addLibraryPath(.{ .cwd_relative = vp.lib_dir_manual });
+    }
+    // Always also search the release lib dir for packages without debug builds.
+    const release_lib = std.fmt.allocPrint(mod.owner.allocator, "{s}/lib", .{vp.root}) catch return;
+    if (!std.mem.eql(u8, release_lib, vp.lib_dir)) {
+        mod.addLibraryPath(.{ .cwd_relative = release_lib });
+        const release_manual = std.fmt.allocPrint(mod.owner.allocator, "{s}/manual-link", .{release_lib}) catch return;
+        if (dirExists(release_manual)) {
+            mod.addLibraryPath(.{ .cwd_relative = release_manual });
+        }
+    }
+}
+
+fn debugSuffix(optimize: std.builtin.OptimizeMode) []const u8 {
+    return if (optimize == .Debug) "d" else "";
+}
+
+fn linkLibdeflate(mod: *std.Build.Module) void {
+    mod.linkSystemLibrary("deflate", .{});
+}
+
+fn linkLua(mod: *std.Build.Module, vp: VcpkgPaths) void {
+    _ = vp;
+    mod.linkSystemLibrary("lua", .{});
+}
+
+fn linkSpdlog(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode) void {
+    _ = vp;
+    const d = debugSuffix(optimize);
+    const b = mod.owner;
+    mod.linkSystemLibrary(b.fmt("spdlog{s}", .{d}), .{});
+    mod.linkSystemLibrary(b.fmt("fmt{s}", .{d}), .{});
+}
+
+fn applySpdlogDefines(mod: *std.Build.Module, link_static: bool) void {
+    if (!link_static) {
+        mod.addCMacro("SPDLOG_SHARED_LIB", "1");
+    }
+    mod.addCMacro("SPDLOG_COMPILED_LIB", "1");
+    mod.addCMacro("SPDLOG_FMT_EXTERNAL", "1");
+    mod.addCMacro("SPDLOG_WCHAR_TO_UTF8_SUPPORT", "1");
+}
+
+fn linkSdl3(mod: *std.Build.Module, vp: VcpkgPaths) void {
+    _ = vp;
+    mod.linkSystemLibrary("SDL3", .{});
+}
+
+fn linkNlohmannJson(mod: *std.Build.Module, vp: VcpkgPaths) void {
+    // Header-only; include path from vcpkg is enough.
+    _ = mod;
+    _ = vp;
+}
+
+fn linkSpeexdsp(mod: *std.Build.Module, vp: VcpkgPaths) void {
+    _ = vp;
+    mod.linkSystemLibrary("speexdsp", .{});
+}
+
+fn linkFfmpeg(mod: *std.Build.Module, vp: VcpkgPaths) void {
+    _ = vp;
+    for ([_][]const u8{ "avformat", "avcodec", "avutil", "swresample", "swscale" }) |lib| {
+        mod.linkSystemLibrary(lib, .{});
+    }
+}
+
+fn linkGlew(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode, link_static: bool) void {
+    _ = vp;
+    const b = mod.owner;
+    if (link_static) {
+        mod.addCMacro("GLEW_STATIC", "1");
+    }
+    const d = debugSuffix(optimize);
+    mod.linkSystemLibrary(b.fmt("glew32{s}", .{d}), .{});
+}
+
+fn linkCatch2(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode) void {
+    _ = vp;
+    const b = mod.owner;
+    const d = debugSuffix(optimize);
+    mod.linkSystemLibrary(b.fmt("Catch2{s}", .{d}), .{});
+    mod.linkSystemLibrary(b.fmt("Catch2Main{s}", .{d}), .{});
+}
+
+// ─── source lists ───────────────────────────────────────────────────────
+
+const core_sources_common = [_][]const u8{
+    "src/Core/Core.cpp",
+    "src/Core/Alloc.cpp",
+    "src/Core/Cheats.cpp",
+    "src/Core/Memory/PifLut.cpp",
+    "src/Core/Memory/DMA.cpp",
+    "src/Core/Memory/FlashRAM.cpp",
+    "src/Core/Memory/Memory.cpp",
+    "src/Core/Memory/Pif.cpp",
+    "src/Core/Memory/Savestates.cpp",
+    "src/Core/Memory/ParityChecker.cpp",
+    "src/Core/Memory/Summercart.cpp",
+    "src/Core/Memory/TLB.cpp",
+    "src/Core/R4300/Debug.cpp",
+    "src/Core/R4300/PureInterp.cpp",
+    "src/Core/R4300/Cop0.cpp",
+    "src/Core/R4300/Cop1.cpp",
+    "src/Core/R4300/Cop1D.cpp",
+    "src/Core/R4300/Cop1Helpers.cpp",
+    "src/Core/R4300/Cop1L.cpp",
+    "src/Core/R4300/Cop1S.cpp",
+    "src/Core/R4300/Cop1W.cpp",
+    "src/Core/R4300/Disasm.cpp",
+    "src/Core/R4300/Exception.cpp",
+    "src/Core/R4300/Interrupt.cpp",
+    "src/Core/R4300/R4300.cpp",
+    "src/Core/R4300/Recomp.cpp",
+    "src/Core/R4300/RegImm.cpp",
+    "src/Core/R4300/Rom.cpp",
+    "src/Core/R4300/Special.cpp",
+    "src/Core/R4300/Timers.cpp",
+    "src/Core/R4300/Tracelog.cpp",
+    "src/Core/R4300/BC.cpp",
+    "src/Core/R4300/VCR.cpp",
+};
+
+const dynarec_sources = [_][]const u8{
+    "Assemble.cpp",
+    "GBc.cpp",
+    "GCop0.cpp",
+    "GCop1.cpp",
+    "GCop1D.cpp",
+    "GCop1Helpers.cpp",
+    "GCop1L.cpp",
+    "GCop1S.cpp",
+    "GCop1W.cpp",
+    "GR4300.cpp",
+    "GRegImm.cpp",
+    "GSpecial.cpp",
+    "GTLB.cpp",
+    "RegCache.cpp",
+    "RJump.cpp",
+};
+
+const views_sources = [_][]const u8{
+    "src/Views.Win32/ThreadPool.cpp",
+    "src/Views.Win32/capture/encoders/VFWEncoder.cpp",
+    "src/Views.Win32/capture/encoders/FFmpegEncoder.cpp",
+    "src/Views.Win32/capture/CaptureManager.cpp",
+    "src/Views.Win32/capture/Resampler.cpp",
+    "src/Views.Win32/Config.cpp",
+    "src/Views.Win32/Hotkey.cpp",
+    "src/Views.Win32/DialogService.cpp",
+    "src/Views.Win32/components/CoreUtils.cpp",
+    "src/Views.Win32/components/Validators.cpp",
+    "src/Views.Win32/components/Cheats.cpp",
+    "src/Views.Win32/components/ConfigDialog.cpp",
+    "src/Views.Win32/components/CrashManager.cpp",
+    "src/Views.Win32/components/Dispatcher.cpp",
+    "src/Views.Win32/components/MGECompositor.cpp",
+    "src/Views.Win32/components/MovieDialog.cpp",
+    "src/Views.Win32/components/PianoRoll.cpp",
+    "src/Views.Win32/components/RecentItems.cpp",
+    "src/Views.Win32/components/RomBrowser.cpp",
+    "src/Views.Win32/components/Seeker.cpp",
+    "src/Views.Win32/components/Statusbar.cpp",
+    "src/Views.Win32/components/UpdateChecker.cpp",
+    "src/Views.Win32/components/FilePicker.cpp",
+    "src/Views.Win32/components/CLI.cpp",
+    "src/Views.Win32/components/SettingsListView.cpp",
+    "src/Views.Win32/components/HotkeyTracker.cpp",
+    "src/Views.Win32/components/CommandPalette.cpp",
+    "src/Views.Win32/components/ParameterPalette.cpp",
+    "src/Views.Win32/components/TextEditDialog.cpp",
+    "src/Views.Win32/components/ReorderableListView.cpp",
+    "src/Views.Win32/Loggers.cpp",
+    "src/Views.Win32/action/ActionManager.cpp",
+    "src/Views.Win32/action/ActionMenu.cpp",
+    "src/Views.Win32/action/AppActions.cpp",
+    "src/Views.Win32/Main.cpp",
+    "src/Views.Win32/lua/LuaHelpers.cpp",
+    "src/Views.Win32/lua/LuaManager.cpp",
+    "src/Views.Win32/lua/LuaCallbacks.cpp",
+    "src/Views.Win32/lua/LuaRegistry.cpp",
+    "src/Views.Win32/lua/LuaRenderer.cpp",
+    "src/Views.Win32/lua/LuaDialog.cpp",
+    "src/Views.Win32/lua/presenters/DCompPresenter.cpp",
+    "src/Views.Win32/lua/presenters/GDIPresenter.cpp",
+    "src/Views.Win32/Messenger.cpp",
+    "src/Views.Win32/plugin/Plugin.cpp",
+    "src/Views.Win32/plugin/ZEPlugin.cpp",
+    "src/Views.Win32/plugin/M64RRPlugin.cpp",
+    "src/Views.Win32/ResizeAnchor.cpp",
+};

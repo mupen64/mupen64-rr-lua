@@ -18,7 +18,13 @@ jobs:
 
     strategy:
       matrix:
-        arch: [x86, x64]
+        include:
+          - arch: x86
+            zig_target: x86-windows-msvc
+            vcpkg_triplet: x86-windows
+          - arch: x64
+            zig_target: x86_64-windows-msvc
+            vcpkg_triplet: x64-windows
 
     steps:
       - uses: actions/checkout@v6
@@ -26,11 +32,10 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
 
-      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
-        shell: powershell
-        run: |
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
-          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.2
 
       - name: Create vcpkg cache directory
         shell: pwsh
@@ -43,21 +48,17 @@ jobs:
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: vcpkg_cache
+          path: |
+            vcpkg_cache
+            build/vcpkg_installed
           key: >
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
+            hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
-      - name: CMake Setup
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
+      - name: Install dependencies
+        run: zig build vcpkg -p build -Dtarget=${{ matrix.zig_target }}
 
-      - name: CMake Build
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build
-
-      - name: CMake Test
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: ctest --test-dir build
+      - name: Build and test
+        run: zig build test -p build -Doptimize=ReleaseSafe -Dtarget=${{ matrix.zig_target }} -Dvcpkg_installed=build/vcpkg_installed/${{ matrix.vcpkg_triplet }}

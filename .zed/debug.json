@@ -6,7 +6,7 @@
     "name": "mupen64.exe (x86) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build"
+    "build": "build (x86)"
   },
   {
     "adapter": "CodeLLDB",
@@ -15,7 +15,7 @@
     "name": "mupen64.exe (x86-release) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build"
+    "build": "build release (x86)"
   },
   {
     "adapter": "CodeLLDB",
@@ -24,7 +24,7 @@
     "name": "mupen64.exe (x64) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build (x64)"
+    "build": "build"
   },
   {
     "adapter": "CodeLLDB",
@@ -33,6 +33,6 @@
     "name": "mupen64.exe (x64-release) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build (x64)"
+    "build": "build release"
   }
 ]
