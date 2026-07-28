@@ -682,8 +682,7 @@ static void InnerLoop()
     }
 }
 
-
- void decode_input_block(uint8_t *buffer, uint16_t &inPtr, int32_t *inp, uint8_t code, int32_t vscale)
+void decode_input_block(uint8_t *buffer, uint16_t &inPtr, int32_t *inp, uint8_t code, int32_t vscale)
 {
     for (int j = 0; j < 8; j += 2)
     {
@@ -700,8 +699,7 @@ static void InnerLoop()
     }
 }
 
- void compute_and_pack_block(int32_t *inp, int16_t *book1, int16_t *book2, int32_t &l1, int32_t &l2,
-                                       int16_t *&out)
+void compute_and_pack_block(int32_t *inp, int16_t *book1, int16_t *book2, int32_t &l1, int32_t &l2, int16_t *&out)
 {
     int32_t a[8];
 

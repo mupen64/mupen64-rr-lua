@@ -9,7 +9,7 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Messenger.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <capture/CaptureManager.hpp>
 #include <components/FilePicker.hpp>
 #include <components/SettingsListView.hpp>
@@ -50,6 +50,42 @@ struct t_tab_context
     std::unordered_map<size_t, size_t> item_index_map;
 };
 
+static std::wstring to_str_default(const double value)
+{
+    return std::format(L"{:.15g}", value);
+}
+
+static double get_number_value(const t_options_item::data_variant &value)
+{
+    if (std::holds_alternative<int32_t>(value))
+    {
+        return static_cast<double>(std::get<int32_t>(value));
+    }
+    if (std::holds_alternative<double>(value))
+    {
+        return std::get<double>(value);
+    }
+
+    RT_ASSERT(false, L"Number option does not hold an int32_t or double value");
+    return 0.0;
+}
+
+static t_options_item::data_variant parse_number_value(const std::wstring &text,
+                                                       const t_options_item::data_variant &current)
+{
+    if (std::holds_alternative<int32_t>(current))
+    {
+        return std::stoi(text);
+    }
+    if (std::holds_alternative<double>(current))
+    {
+        return std::stod(text);
+    }
+
+    RT_ASSERT(false, L"Number option does not hold an int32_t or double value");
+    return current;
+}
+
 std::wstring t_options_item::get_name() const
 {
     if (type == Type::Hotkey)
@@ -68,7 +104,7 @@ std::wstring t_options_item::get_value_name() const
     case Type::Bool:
         return std::get<int32_t>(value) != 0 ? L"On" : L"Off";
     case Type::Number:
-        return std::to_wstring(std::get<int32_t>(value));
+        return to_str_default(get_number_value(value));
     case Type::Enum: {
         const auto enum_value = std::get<int32_t>(value);
 
@@ -134,9 +170,10 @@ bool t_options_item::edit(const HWND hwnd)
         return true;
     }
     case Type::Number: {
-        const auto value = std::get<int32_t>(current_value.get());
-        const auto result = TextEditDialog::show(
-            {.parent_hwnd = hwnd, .text = std::to_wstring(value), .caption = std::format(L"Edit value for {}", name)});
+        const auto value = current_value.get();
+        const auto result = TextEditDialog::show({.parent_hwnd = hwnd,
+                                                  .text = to_str_default(get_number_value(value)),
+                                                  .caption = std::format(L"Edit value for {}", name)});
         if (!result.has_value())
         {
             break;
@@ -144,8 +181,7 @@ bool t_options_item::edit(const HWND hwnd)
 
         try
         {
-            const auto new_value = std::stoi(result.value());
-            current_value.set(new_value);
+            current_value.set(parse_number_value(result.value(), value));
             return true;
         }
         catch (...)
@@ -487,16 +523,16 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             int32_t id = 0;
             switch (plugin->type())
             {
-            case plugin_video:
+            case ZilmarExtSpec::PluginType::Video:
                 id = IDC_COMBO_GFX;
                 break;
-            case plugin_audio:
+            case ZilmarExtSpec::PluginType::Audio:
                 id = IDC_COMBO_SOUND;
                 break;
-            case plugin_input:
+            case ZilmarExtSpec::PluginType::Input:
                 id = IDC_COMBO_INPUT;
                 break;
-            case plugin_rsp:
+            case ZilmarExtSpec::PluginType::RSP:
                 id = IDC_COMBO_RSP;
                 break;
             default:
@@ -914,13 +950,6 @@ std::vector<t_options_group> get_static_option_groups()
     core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
         .group_id = core_group.id,
-        .name = L"Counter Factor",
-        .tooltip = L"The CPU's counter factor.\nValues above 1 are effectively 'lagless'.",
-        GENPROPS(int32_t, core.counter_factor),
-    });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
-        .group_id = core_group.id,
         .name = L"Max Lag Frames",
         .tooltip = L"The maximum amount of lag frames before the core emits a warning\n0 - Disabled",
         GENPROPS(int32_t, core.max_lag),
@@ -931,6 +960,27 @@ std::vector<t_options_group> get_static_option_groups()
         .name = L"WiiVC Mode",
         .tooltip = L"Enables WiiVC emulation.",
         GENPROPS(int32_t, core.wii_vc_emulation),
+    });
+    core_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = core_group.id,
+        .name = L"Emulate RCP Lag",
+        .tooltip = L"Enables RCP lag emulation, which is a more accurate emulation of lag frames.",
+        GENPROPS(int32_t, core.rcp_lag_emulation),
+    });
+    core_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Number,
+        .group_id = core_group.id,
+        .name = L"CPU Counter Factor",
+        .tooltip = L"The CPU counter factor. Higher values reduce effective lag.",
+        GENPROPS(double, core.cpu_cf),
+    });
+    core_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Number,
+        .group_id = core_group.id,
+        .name = L"RCP Lag Factor",
+        .tooltip = L"The RCP lag factor. Lower values reduce effective lag, higher values increase it.",
+        GENPROPS(double, core.rcp_lag_factor),
     });
     core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
@@ -1038,6 +1088,17 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.c_eq_s_nan_accurate),
         .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
     });
+    debug_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = debug_group.id,
+        .name = L"Accurate RDP Completion",
+        .tooltip = L"Whether RDP task completion is signalled after RSP task completion instead of at the same "
+                   L"instant.\nThe RDP consumes the RSP's output, so on hardware it always finishes later. The legacy "
+                   L"behaviour signals both at once, but is kept as the default for backwards-compatibility.\nEnabling "
+                   L"this desynchronizes movies recorded with the legacy timing.",
+        GENPROPS(int32_t, core.accurate_rdp_completion),
+        .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
+    });
 
     return {folders_group, interface_group, statusbar_group, piano_roll_group, seek_group,
             capture_group, core_group,      vcr_group,       lua_group,        debug_group};
@@ -1120,8 +1181,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         {
             try
             {
-                int32_t result = std::stoi(str);
-                option_item.current_value.set(result);
+                option_item.current_value.set(parse_number_value(str, option_item.current_value.get()));
             }
             catch (...)
             {
@@ -1325,8 +1385,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 SetWindowSubclass(ctx->edit_hwnd, inline_edit_subclass_proc, 0, 0);
                 WinDarkMode::attach(ctx->edit_hwnd);
 
-                const auto value = std::get<int32_t>(global_item.current_value.get());
-                Edit_SetText(ctx->edit_hwnd, std::to_wstring(value).c_str());
+                const auto value = global_item.current_value.get();
+                Edit_SetText(ctx->edit_hwnd, to_str_default(get_number_value(value)).c_str());
 
                 PostMessage(ctx->hwnd, WM_NEXTDLGCTL, (WPARAM)ctx->edit_hwnd, TRUE);
 

@@ -11,7 +11,9 @@ endif()
 
 add_executable(Mupen64RR.Core.Tests
     "stdafx.h"
-    "vcr_tests.cpp"
+    "IOUtilsTests.cpp"
+    "VCRTests.cpp"
+    "VRTests.cpp"
 )
 mupen64rr_copy_vcpkg_deps(Mupen64RR.Core.Tests)
 set_target_properties(Mupen64RR.Core.Tests PROPERTIES

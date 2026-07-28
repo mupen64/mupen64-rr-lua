@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "core_plugin.h"
+#include "Main.hpp"
 
 #define S 1
 #define S8 3
@@ -24,7 +24,7 @@
 #define A_MAIN 0x00
 #define A_MIX 0x10
 
-extern core_rsp_info rsp;
+extern ZilmarExtSpec::RSPPluginInfo rsp;
 
 typedef struct
 {

@@ -94,32 +94,38 @@ bool vr_get_frame_skipped()
     return g_r4300.frame_skipped;
 }
 
+bool vr_is_ceqs_effectively_accurate()
+{
+    if (g_core->cfg->core_type != 1) return true;
+    return g_core->cfg->c_eq_s_nan_accurate;
+}
+
+static std::filesystem::path get_save_path(const std::string_view extension)
+{
+    auto filename = IOUtils::rom_name_to_path_component((const char *)ROM_HEADER.nom);
+    filename += std::format(" {}{}", g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code), extension);
+
+    return g_core->get_saves_directory() / filename;
+}
+
 std::filesystem::path get_sram_path()
 {
-    auto filename = std::format("{} {}.sra", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".sra");
 }
 
 std::filesystem::path get_eeprom_path()
 {
-    auto filename = std::format("{} {}.eep", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".eep");
 }
 
 std::filesystem::path get_flashram_path()
 {
-    auto filename = std::format("{} {}.fla", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".fla");
 }
 
 std::filesystem::path get_mempak_path()
 {
-    auto filename = std::format("{} {}.mpk", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".mpk");
 }
 
 void vr_resume_emu_impl(bool force)
@@ -199,9 +205,11 @@ void critical_stop(std::string_view message)
 
 void vr_update_effective_speed_mode()
 {
+    const auto max_ff = g_core->cfg->render_throttling ? CoreSpeedMode::UltraFastForward : CoreSpeedMode::FastForward;
+
     if (g_r4300.frame_advance_outstanding > 1)
     {
-        g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
+        g_r4300.effective_speed_mode = max_ff;
         return;
     }
 
@@ -209,14 +217,18 @@ void vr_update_effective_speed_mode()
         std::unique_lock lock(vcr_mtx);
         if (vcr.seek_to_frame.has_value())
         {
-            g_r4300.effective_speed_mode = CoreSpeedMode::UltraFastForward;
+            g_r4300.effective_speed_mode = max_ff;
             return;
         }
     }
 
     if (g_r4300.desired_speed_mode != CoreSpeedMode::Normal)
     {
-        g_r4300.effective_speed_mode.store(g_r4300.desired_speed_mode.load());
+        auto desired = g_r4300.desired_speed_mode.load();
+        if (desired == CoreSpeedMode::UltraFastForward && !g_core->cfg->render_throttling)
+            desired = CoreSpeedMode::FastForward;
+
+        g_r4300.effective_speed_mode.store(desired);
         return;
     }
 
@@ -1527,6 +1539,19 @@ void NOTCOMPILED2()
     NOTCOMPILED();
 }
 
+// x64 self-modifying-code invalidation check, called from generated store code.
+// Replaces the old inline sequence that read 64-bit pointers (blocks[page],
+// ->block, [i].ops) as 32-bit and indexed blocks[] with the wrong (x4) scale,
+// truncating pointers to garbage/0 and crashing. `address` (Memory global) holds
+// the store target, published by the emitter (gen_check_invalidate) before the call.
+void dyna_mem_invalidate()
+{
+    uint32_t page = address >> 12;
+    if (!invalid_code[page] && blocks[page] && blocks[page]->block &&
+        blocks[page]->block[(address & 0xFFF) / 4].ops != NOTCOMPILED)
+        invalid_code[page] = 1;
+}
+
 static inline uint32_t update_invalid_addr(uint32_t addr)
 {
     if (addr >= 0x80000000 && addr < 0xa0000000)
@@ -1970,6 +1995,12 @@ void core_start()
         }
     }
     if (!dynacore && interpcore) free(PC);
+
+    // Free any buffers that were superseded by realloc_exec but kept alive
+    // because emitted code might still reference them. Safe now that no
+    // dynarec code is executing.
+    free_all_deferred_exec_buffers();
+
     core_executing = false;
     g_core->callbacks.core_executing_changed(core_executing);
 }

@@ -7,23 +7,22 @@
 #include <CommonPCH.hpp>
 #include <DummyPluginStub.hpp>
 #include <VersionNameHelpers.hpp>
-#include <core_api.h>
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Input")
 
-DUMMY_PLUGIN_STUB_IMPL(plugin_input)
+DUMMY_PLUGIN_STUB_IMPL(ZilmarExtSpec::PluginType::Input)
 
-EXPORT void CALL InitiateControllers(core_input_info ControlInfo)
+EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo)
 {
     auto *controllers = ControlInfo.controllers;
 
     for (int i = 0; i < 4; ++i)
     {
-        controllers[i].Present = 0;
-        controllers[i].RawData = 0;
-        controllers[i].Plugin = ce_none;
+        controllers[i].present = 0;
+        controllers[i].raw = 0;
+        controllers[i].plugin = ZilmarExtSpec::ControllerExtension::None;
     }
 
-    controllers[0].Present = 1;
+    controllers[0].present = 1;
 }

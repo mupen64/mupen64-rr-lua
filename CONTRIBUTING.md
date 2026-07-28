@@ -1,28 +1,58 @@
 
 # Compiling
 
-Only Windows is supported for now, though the CMake infrastructure is intended to ease the development of cross-platform code (for whoever decides to work on that).
+Only Windows supports compiling the full emulator. However, the core and VCR tests can be (experimentally) compiled on other platforms.
 
-## CMake Options
-| OPTION                    | DESCRIPTION                                                           |
-|:-------------------------:|-----------------------------------------------------------------------|
-| `MUPEN64RR_USE_SANITIZER` | Specifies a sanitizer to compile with. [`{OFF, ASAN}`, default `OFF`] |
+## Windows dependencies
 
-## Windows/CMake
 You'll need:
 - Visual Studio 2026 (for the compiler, CMake, Ninja and vcpkg)
+  - Ensure the LLVM tools are installed (as we compile with Clang by default).
 
-In order for the compiler to work, you'll need to be in a VS developer environment. Then, simply use one of the provided presets to compile and build. If you want to change any settings, do so on the command line or via `CMakeUserPresets.json`.
+In order for the compiler to work, you'll need to be in a VS developer environment.
 
-For a 32-bit build:
+## Linux dependencies
+
+You'll need:
+- A C/C++ compiler (`gcc` or `clang`)
+- `libdeflate`
+- `libsafec`
+
+`libsafec` is required outside of Windows as no other C/C++ library implements C11 Annex K, which specifies `strncpy_s` and similar functions.
+
+## CMake Presets
+Compiling is as easy as using one of the provided configure presets. All platforms generally use `clang` as the compiler and `Ninja` as the generator.
+
+|Preset|Platform|
+|:--|:--|
+|`vcpkg-win64-x86(-release)`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
+|`vcpkg-win64-x64(-release)`|**64-bit target** on **64-bit Windows** host, dependencies via `vcpkg`|
+|`sys-linux64-x64`|**64-bit** target, **64-bit Linux** host, dependencies from system|
+
+### Visual Studio Code + CMake Tools
+Configure presets should be made available via CMake Tools, see above.
+
+#### Windows-only
+You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
+
+### CLion
+Make sure to set the CMake profile to use the desired preset (`vcpkg-win64-x86` or `vcpkg-win64-x64`), enabling it if needed.
+
+If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
+
+### Zed
+All tasks required for development are available in the task panel.
+
+#### Windows-only
+Visual Studio 2026 must be installed on the `C:` drive.
+
+## Linux
+
+> **NOTE:** 32-bit builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
+
+To build:
 ```sh
-cmake --preset vcpkg-win64-x86
-cmake --build build
-```
-
-For a 64-bit build:
-```sh
-cmake --preset vcpkg-win64-x64
+cmake --preset sys-linux64-x64
 cmake --build build
 ```
 
@@ -30,24 +60,6 @@ The core VCR tests are integrated with CMake, so running the tests is easy:
 ```sh
 ctest --test-dir build
 ```
-
-Presets have been provided for building and testing. These are intended for IDEs, so that they can properly autodetect things. Feel free to contribute IDE launch settings as appropriate.
-
-
-### Visual Studio Code + CMake Tools
-You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
-
-### CLion
-
-Make sure to set the CMake profile to use the desired preset (`vcpkg-win64-x86` or `vcpkg-win64-x64`), enabling it if needed.
-
-If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
-
-### Zed
-
-All tasks required for development are available in the task panel.
-
-Visual Studio 2026 must be installed on the `C:` drive.
 
 # Dependencies
 When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
@@ -118,7 +130,7 @@ Before merging a pull request into main or pushing out a release, verify that:
 2. The core tests (`src/Core.Tests`) pass
 3. The automatic Lua tests (`src/Lua/tests.lua`) pass
 4. The manual Lua tests (`src/Lua/manual/*.lua`) pass
-5. The docs (`src/Website/static/docs/win`) have been kept up-to-date
+5. The docs (`docs/win`) have been kept up-to-date
 6. There are no regressions in plugin compatibility (test Jabo's plugins)
 
 # Shipping releases

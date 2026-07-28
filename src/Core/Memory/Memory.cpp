@@ -21,6 +21,17 @@
 
 static int32_t frame;
 
+/**
+ * The delay, in cycles, before the RSP signals task completion.
+ */
+constexpr size_t SP_INT_DELAY = 1000;
+
+/**
+ * The delay, in cycles, before the RDP signals task completion when accurate_rdp_completion is enabled.
+ * Only the ordering relative to SP_INT_DELAY is meaningful; the exact value is empirical.
+ */
+constexpr size_t DP_INT_ACCURATE_DELAY = 20000;
+
 /* definitions of the rcp's structures and memory area */
 core_rdram_reg rdram_register;
 core_mips_reg MI_register;
@@ -63,36 +74,36 @@ uint64_t *rdword;
 static uint32_t trash;
 
 // hash tables of read functions
-void (*readmem[0xFFFF])();
-void (*readmemb[0xFFFF])();
-void (*readmemh[0xFFFF])();
-void (*readmemd[0xFFFF])();
+void (*readmem[0x10000])();
+void (*readmemb[0x10000])();
+void (*readmemh[0x10000])();
+void (*readmemd[0x10000])();
 
 // hash tables of write functions
-void (*writemem[0xFFFF])();
-void (*writememb[0xFFFF])();
-void (*writememd[0xFFFF])();
-void (*writememh[0xFFFF])();
+void (*writemem[0x10000])();
+void (*writememb[0x10000])();
+void (*writememd[0x10000])();
+void (*writememh[0x10000])();
 
 // memory sections
-static uint32_t *readrdramreg[0xFFFF];
-static uint32_t *readrspreg[0xFFFF];
-static uint32_t *readrsp[0xFFFF];
-static uint32_t *readmi[0xFFFF];
-static uint32_t *readvi[0xFFFF];
-static uint32_t *readai[0xFFFF];
-static uint32_t *readpi[0xFFFF];
-static uint32_t *readri[0xFFFF];
-static uint32_t *readsi[0xFFFF];
-static uint32_t *readdp[0xFFFF];
-static uint32_t *readdps[0xFFFF];
+static uint32_t *readrdramreg[0x10000];
+static uint32_t *readrspreg[0x10000];
+static uint32_t *readrsp[0x10000];
+static uint32_t *readmi[0x10000];
+static uint32_t *readvi[0x10000];
+static uint32_t *readai[0x10000];
+static uint32_t *readpi[0x10000];
+static uint32_t *readri[0x10000];
+static uint32_t *readsi[0x10000];
+static uint32_t *readdp[0x10000];
+static uint32_t *readdps[0x10000];
 
 // the frameBufferInfos
-static core_fb_info frameBufferInfos[6];
+static CoreFBInfo frameBufferInfos[6];
 static char framebufferRead[0x800];
 static int32_t firstFrameBufferSetting;
 
-static const int32_t MemoryMaxCount = 0xFFFF;
+static const int32_t MemoryMaxCount = 0x10000;
 
 int32_t init_memory()
 {
@@ -1128,9 +1139,17 @@ void update_SP()
             // NOTE: we increment this here, and not in vcr_updatescreen, since invocation of vcr_updatescreen depends
             // on vi interrupts, which dont get generated if we skip rsp if that happens, then we never increment
             // screen_updates and thus are stuck in incorrect state
-            g_total_frames++;
-            g_core->cfg->total_frames++;
-            g_r4300.frame_skipped = timer_new_frame();
+            // A game may submit several graphics tasks per frame, but only the first one starts a new frame.
+            // Counting every task would inflate the frame counter and the FPS reading, and would leave
+            // frame_skipped set from the last task, which suppresses both the rendering of the remaining tasks
+            // and the screen update at VI_INT.
+            if (!g_r4300.frame_counted)
+            {
+                g_r4300.frame_counted = true;
+                g_total_frames++;
+                g_core->cfg->total_frames++;
+                g_r4300.frame_skipped = timer_new_frame();
+            }
 
             g_core->rsp_do_rsp_cycles(100);
 
@@ -1139,8 +1158,12 @@ void update_SP()
             MI_register.mi_intr_reg &= ~0x21;
             sp_register.sp_status_reg &= ~0x303;
             update_count();
-            add_interrupt_event(SP_INT, 1000);
-            add_interrupt_event(DP_INT, 1000);
+            // The RDP consumes the RSP's output, so on hardware its completion always comes after the RSP's.
+            // Signalling both at the same instant breaks games that chain several RSP tasks per frame: they
+            // release their queue slot before the chain reaches the task that arms the display.
+            // The legacy timing stays the default because changing it desynchronizes existing movies.
+            add_interrupt_event(SP_INT, SP_INT_DELAY);
+            add_interrupt_event(DP_INT, g_core->cfg->accurate_rdp_completion ? DP_INT_ACCURATE_DELAY : SP_INT_DELAY);
 
             g_core->callbacks.frame();
 

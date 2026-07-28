@@ -115,6 +115,73 @@ typedef enum
 } core_result;
 
 /**
+ * \brief Represents an extension for a controller.
+ */
+enum class CoreControllerExtension : int32_t
+{
+    None = 1,
+    Mempak = 2,
+    Rumblepak = 3,
+    Transferpak = 4,
+    Raw = 5
+};
+
+/**
+ * \brief Describes a controller.
+ */
+struct CoreController
+{
+    int32_t Present;
+    int32_t RawData;
+    CoreControllerExtension Plugin;
+};
+
+/**
+ * \brief Describes framebuffer information.
+ */
+struct CoreFBInfo
+{
+    uint32_t addr;
+    uint32_t size;
+    uint32_t width;
+    uint32_t height;
+};
+
+/**
+ * \brief Represents a controller state.
+ */
+union CoreButtons {
+    uint32_t value;
+
+    struct
+    {
+        unsigned dr : 1;
+        unsigned dl : 1;
+        unsigned dd : 1;
+        unsigned du : 1;
+        unsigned start : 1;
+        unsigned z : 1;
+        unsigned b : 1;
+        unsigned a : 1;
+        unsigned cr : 1;
+        unsigned cl : 1;
+        unsigned cd : 1;
+        unsigned cu : 1;
+        unsigned r : 1;
+        unsigned l : 1;
+        unsigned reserved_1 : 1;
+        unsigned reserved_2 : 1;
+        signed x : 8;
+        signed y : 8;
+    };
+};
+
+inline bool operator==(const CoreButtons &lhs, const CoreButtons &rhs)
+{
+    return lhs.value == rhs.value;
+}
+
+/**
  * \brief The speed mode of the core.
  */
 enum class CoreSpeedMode
@@ -184,12 +251,6 @@ struct core_cfg
     int32_t is_movie_loop_enabled;
 
     /// <summary>
-    /// The CPU's counter factor. Higher values will generate less lag frames in-game at the cost of higher native CPU
-    /// usage.
-    /// </summary>
-    int32_t counter_factor = 1;
-
-    /// <summary>
     /// Whether rom resets are not recorded in movies
     /// </summary>
     int32_t is_reset_recording_enabled;
@@ -209,6 +270,14 @@ struct core_cfg
     /// </summary>
     int32_t wii_vc_emulation;
 
+    int32_t rcp_lag_emulation;
+    double cpu_cf = 1.0;
+
+    /// <summary>
+    /// The factor by which RCP lag is multiplied.
+    /// </summary>
+    double rcp_lag_factor = 1.0;
+
     /// <summary>
     /// Determines whether floating point exceptions are emulated.
     /// </summary>
@@ -219,6 +288,14 @@ struct core_cfg
     /// The legacy behaviour is `(NaN == any) == true`, but this option is kept for backwards-compatibility.
     /// </summary>
     int32_t c_eq_s_nan_accurate = 0;
+
+    /// <summary>
+    /// Whether RDP task completion is signalled after RSP task completion instead of at the same instant.
+    /// The RDP consumes the RSP's output, so on hardware it always finishes later. The legacy behaviour signals
+    /// both at once, which breaks games chaining several RSP tasks per frame, but it is kept as the default for
+    /// backwards-compatibility.
+    /// </summary>
+    int32_t accurate_rdp_completion = 0;
 
     /// <summary>
     /// Whether audio interrupts will be delayed
@@ -514,8 +591,16 @@ typedef union ExtendedMovieFlags {
          * Whether the movie was recorded with WiiVC mode enabled.
          */
         bool wii_vc : 1;
-        bool unused_1 : 1;
-        bool unused_2 : 1;
+        /**
+         * Whether the movie was recorded with an accurate implementation of the `c.eq.s` instruction where `(NaN ==
+         * any) == false` instead of `(NaN == any) == true` (legacy behavior).
+         */
+        bool c_eq_s_accurate : 1;
+        /**
+         * Whether the movie was recorded with RDP task completion signalled after RSP task completion, instead of
+         * both being signalled at the same instant (legacy behavior).
+         */
+        bool accurate_rdp_completion : 1;
         bool unused_3 : 1;
         bool unused_4 : 1;
         bool unused_5 : 1;
@@ -597,7 +682,7 @@ typedef struct CoreVCRMovieHeader
     /**
      * The extended format version. Old movies have it set to <c>0</c>.
      */
-    uint8_t extended_version = 1;
+    uint8_t extended_version = 3;
 
     /**
      * The extended movie flags. Only valid if <c>extended_version != 0</c>.

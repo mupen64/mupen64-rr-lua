@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Messenger.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaCallbacks.hpp>
 
@@ -119,6 +119,12 @@ static int subscribe_atwarpmodifystatuschanged(lua_State *L)
 static int subscribe_atkey(lua_State *L)
 {
     LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATKEY);
+    return 0;
+}
+
+static int subscribe_atmouse(lua_State *L)
+{
+    LuaCallbacks::register_or_unregister_function(L, LuaCallbacks::REG_ATMOUSE);
     return 0;
 }
 

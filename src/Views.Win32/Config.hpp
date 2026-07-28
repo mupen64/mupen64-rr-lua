@@ -135,7 +135,7 @@ struct t_config
     /// <summary>
     /// The encoder to use for capturing.
     /// </summary>
-    int32_t encoder_type = (int32_t)EncoderType::VFW;
+    int32_t encoder_type = (int32_t)EncoderType::FFmpeg;
 
     /// <summary>
     /// The delay (in milliseconds) before capturing the window

@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
@@ -300,6 +300,7 @@ bool stop_capture_impl()
 
     m_capturing = false;
     g_config.core.render_throttling = true;
+    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
 
     Messenger::broadcast(Messenger::Message::CapturingChanged, false);
 
@@ -378,6 +379,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
 
     m_capturing = true;
     g_config.core.render_throttling = false;
+    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
 
     Messenger::broadcast(Messenger::Message::CapturingChanged, true);
 

@@ -22,3 +22,8 @@ target_link_libraries(Mupen64RR.Common INTERFACE
     vendor::xxhash64
 )
 target_precompile_headers(Mupen64RR.Common INTERFACE "include/CommonPCH.hpp")
+
+# only MSVCRT implements C11 Annex K, libsafec is needed on other platforms
+if (NOT WIN32)
+    target_link_libraries(Mupen64RR.Common INTERFACE PkgConfig::libsafec)
+endif()

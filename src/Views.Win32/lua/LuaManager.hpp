@@ -53,7 +53,7 @@ extern std::vector<t_lua_environment *> g_lua_environments;
 /**
  * \brief The modified control data to be pushed the next frame
  */
-extern core_buttons g_new_controller_data[4];
+extern CoreButtons g_new_controller_data[4];
 
 /**
  * \brief Whether the <c>new_controller_data</c> of a controller should be pushed the next frame

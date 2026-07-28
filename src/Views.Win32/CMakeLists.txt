@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Views.Win32.Headers INTERFACE
-    "include/Views.Win32/ViewPlugin.h"
+    "include/Views.Win32/ZilmarExtSpecPlugin.h"
 )
 set_target_properties(Mupen64RR.Views.Win32.Headers PROPERTIES
     CXX_STANDARD 23
@@ -79,7 +79,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/presenters/GDIPresenter.hpp"
     "lua/presenters/Presenter.hpp"
     "Messenger.hpp"
-    "Plugin.hpp"
+    "plugin/Plugin.hpp"
     "resource.h"
     "ResizeAnchor.hpp"
 
@@ -129,7 +129,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/presenters/DCompPresenter.cpp"
     "lua/presenters/GDIPresenter.cpp"
     "Messenger.cpp"
-    "Plugin.cpp"
+    "plugin/Plugin.cpp"
     "ResizeAnchor.cpp"
 
     # Resource script

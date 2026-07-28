@@ -9,7 +9,7 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Messenger.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <strsafe.h>
 #include <capture/CaptureManager.hpp>
@@ -120,7 +120,7 @@ const wchar_t *get_input_text()
     static wchar_t text[1024]{};
     memset(text, 0, sizeof(text));
 
-    core_buttons b = g_main_ctx.last_controller_data[0];
+    CoreButtons b = g_main_ctx.last_controller_data[0];
     wsprintf(text, L"(%d, %d) ", b.x, b.y);
     if (b.start) lstrcatW(text, L"S");
     if (b.z) lstrcatW(text, L"Z");
@@ -203,7 +203,7 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
     const auto fname =
-        std::format(L"{} {}.st{}", IOUtils::to_wide_string((const char *)hdr->nom),
+        std::format(L"{} {}.st{}", IOUtils::rom_name_to_wide_string((const char *)hdr->nom),
                     IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)),
                     std::to_wstring(slot));
     return Config::save_directory() / fname;
@@ -292,8 +292,8 @@ static std::wstring get_titlebar_text()
     if (g_emu_starting) text += L" - Starting...";
 
     if (g_main_ctx.core_ctx->vr_get_launched())
-        text += std::format(
-            L" - {}", IOUtils::to_wide_string(reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        text += std::format(L" - {}", IOUtils::rom_name_to_wide_string(
+                                          reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {
@@ -885,7 +885,7 @@ static core_result init_core()
         LuaCallbacks::call_vi();
         if (CaptureManager::is_capturing()) CaptureManager::vi();
     };
-    g_main_ctx.core.callbacks.input = [](core_buttons *input, int index) {
+    g_main_ctx.core.callbacks.input = [](CoreButtons *input, int index) {
         g_main_ctx.last_controller_data[index] = *input;
         LuaCallbacks::call_input(input, index);
         if (CaptureManager::is_capturing()) CaptureManager::input();
@@ -1102,6 +1102,49 @@ void Main::init_sdl()
                       L"SDL_Init failed");
         });
         s_sdl_initialized = true;
+    }
+}
+
+void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+    case WM_MOUSEWHEEL:
+    case WM_MOUSEHWHEEL: {
+        POINT cursor_pos{};
+        GetCursorPos(&cursor_pos);
+        ScreenToClient(hwnd, &cursor_pos);
+
+        LuaMouseEventArgs args{};
+        args.x = cursor_pos.x;
+        args.y = cursor_pos.y;
+        if (msg == WM_MOUSEHWHEEL)
+            args.x_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
+        if (msg == WM_MOUSEWHEEL)
+            args.y_wheel = std::make_optional(static_cast<int32_t>(GET_WHEEL_DELTA_WPARAM(wparam)));
+        if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP || msg == WM_LBUTTONDBLCLK) args.button = 0;
+        if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_RBUTTONDBLCLK) args.button = 1;
+        if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP || msg == WM_MBUTTONDBLCLK) args.button = 2;
+        if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN || msg == WM_MBUTTONDOWN) args.pressed = true;
+        if (msg == WM_LBUTTONUP || msg == WM_RBUTTONUP || msg == WM_MBUTTONUP) args.pressed = false;
+        if (msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDBLCLK) args.double_click = true;
+        args.ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+        args.alt = (GetKeyState(VK_MENU) & 0x8000) != 0;
+        args.shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+        args.meta = (GetKeyState(VK_LWIN) & 0x8000) != 0 || (GetKeyState(VK_RWIN) & 0x8000) != 0;
+
+        LuaCallbacks::call_atmouse(args);
+        break;
+    }
     }
 }
 

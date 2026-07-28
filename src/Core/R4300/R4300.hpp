@@ -23,6 +23,12 @@ struct r4300
     std::atomic<bool> screen_invalidated_frame{true};
     std::atomic<size_t> frame_advance_outstanding{0};
     bool frame_skipped{false};
+    /**
+     * Whether a graphics task has already been counted as a frame since the last VI interrupt.
+     * Games may submit several RSP graphics tasks per frame, but only the first one starts a new frame.
+     */
+    bool frame_counted{false};
+    size_t rcp_counter{0};
 };
 
 extern std::recursive_mutex g_emu_cs;
@@ -100,6 +106,7 @@ bool vr_get_gs_button();
 void vr_set_gs_button(bool value);
 void vr_invalidate_visuals();
 bool vr_get_frame_skipped();
+bool vr_is_ceqs_effectively_accurate();
 
 #define jump_to(a)                                                                                                     \
     {                                                                                                                  \

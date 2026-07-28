@@ -13,6 +13,25 @@
  */
 namespace GamepadManager
 {
+
+enum class InputDeviceType
+{
+    Keyboard,
+    Gamepad,
+};
+
+struct InputDevice
+{
+    InputDeviceType type;
+    std::optional<SDL_GUID> guid;
+    std::string name;
+};
+
+struct DeviceRegistry
+{
+    std::vector<InputDevice> devices;
+};
+
 /**
  * \brief Notifies of an SDL event.
  * \brief e The SDL event.
@@ -23,5 +42,16 @@ void on_sdl_event(const SDL_Event &e);
  * \brief Gets the current gamepad input state.
  * \param i The controller index.
  */
-core_buttons get_input(size_t i);
+ZilmarExtSpec::Buttons get_input(size_t i);
+
+/**
+ * \brief Updates the currently selected gamepad. Should be called after `new_config.preferred_device_id` is changed.
+ */
+void update_current_gamepad();
+
+/**
+ * \brief Gets the device registry.
+ */
+DeviceRegistry &device_registry();
+
 } // namespace GamepadManager

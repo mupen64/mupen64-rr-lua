@@ -43,7 +43,7 @@ struct t_main_context
     std::filesystem::path app_path{};
     bool exiting{};
     bool wine{};
-    core_buttons last_controller_data[4]{};
+    CoreButtons last_controller_data[4]{};
 };
 
 /**
@@ -121,4 +121,9 @@ namespace Main
  * \brief Initializes SDL on the GUI thread if necessary.
  */
 void init_sdl();
+
+/**
+ * \brief Forwards mouse events to the Lua callbacks.
+ */
+void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 } // namespace Main

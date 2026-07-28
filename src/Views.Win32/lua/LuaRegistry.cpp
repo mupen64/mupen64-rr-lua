@@ -49,6 +49,7 @@ const luaL_Reg EMU_FUNCS[] = {{"console", LuaCore::Emu::ConsoleWriteLua},
                               {"atseekcompleted", LuaCore::Emu::subscribe_atseekcompleted},
                               {"atwarpmodifystatuschanged", LuaCore::Emu::subscribe_atwarpmodifystatuschanged},
                               {"atkey", LuaCore::Emu::subscribe_atkey},
+                              {"atmouse", LuaCore::Emu::subscribe_atmouse},
 
                               {"framecount", LuaCore::Emu::GetVICount},
                               {"samplecount", LuaCore::Emu::GetSampleCount},

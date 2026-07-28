@@ -103,6 +103,27 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 }
 
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
+                                    double *value)
+{
+    const auto key = ini_cleanup_field(field_name);
+
+    if (is_reading)
+    {
+        // keep the default value if the key doesnt exist
+        // it will be created upon saving anyway
+        if (!ini[FLAT_FIELD_KEY].has(key))
+        {
+            return;
+        }
+        *value = std::stod(ini[FLAT_FIELD_KEY][key]);
+    }
+    else
+    {
+        ini[FLAT_FIELD_KEY][key] = std::to_string(*value);
+    }
+}
+
+static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
                                     uint64_t *value)
 {
     const auto key = ini_cleanup_field(field_name);
@@ -358,7 +379,6 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(core.rom_cache_size)
     HANDLE_P_VALUE(core.st_screenshot)
     HANDLE_P_VALUE(core.is_movie_loop_enabled)
-    HANDLE_P_VALUE(core.counter_factor)
     HANDLE_P_VALUE(is_unfocused_pause_enabled)
     HANDLE_P_VALUE(is_statusbar_enabled)
     HANDLE_P_VALUE(statusbar_scale_up)
@@ -396,8 +416,12 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(core.st_undo_load)
     HANDLE_P_VALUE(core.use_summercart)
     HANDLE_P_VALUE(core.wii_vc_emulation)
+    HANDLE_P_VALUE(core.rcp_lag_emulation)
+    HANDLE_P_VALUE(core.cpu_cf)
+    HANDLE_P_VALUE(core.rcp_lag_factor)
     HANDLE_P_VALUE(core.float_exception_emulation)
     HANDLE_P_VALUE(core.c_eq_s_nan_accurate)
+    HANDLE_P_VALUE(core.accurate_rdp_completion)
     HANDLE_P_VALUE(core.is_audio_delay_enabled)
     HANDLE_P_VALUE(core.is_compiled_jump_enabled)
     HANDLE_VALUE(selected_video_plugin)
@@ -671,15 +695,18 @@ static void json_read_file(json &j)
     CORE_VALUE(rom_cache_size)
     CORE_VALUE(st_screenshot)
     CORE_VALUE(is_movie_loop_enabled)
-    CORE_VALUE(counter_factor)
     CORE_VALUE(is_reset_recording_enabled)
     CORE_VALUE(seek_savestate_interval)
     CORE_VALUE(seek_savestate_max_count)
     CORE_VALUE(st_undo_load)
     CORE_VALUE(use_summercart)
     CORE_VALUE(wii_vc_emulation)
+    CORE_VALUE(rcp_lag_emulation)
+    CORE_VALUE(cpu_cf)
+    CORE_VALUE(rcp_lag_factor)
     CORE_VALUE(float_exception_emulation)
     CORE_VALUE(c_eq_s_nan_accurate)
+    CORE_VALUE(accurate_rdp_completion)
     CORE_VALUE(is_audio_delay_enabled)
     CORE_VALUE(is_compiled_jump_enabled)
     CORE_VALUE(vcr_readonly)
@@ -765,15 +792,18 @@ static void json_write_file(json &j)
     CORE_VALUE(rom_cache_size)
     CORE_VALUE(st_screenshot)
     CORE_VALUE(is_movie_loop_enabled)
-    CORE_VALUE(counter_factor)
     CORE_VALUE(is_reset_recording_enabled)
     CORE_VALUE(seek_savestate_interval)
     CORE_VALUE(seek_savestate_max_count)
     CORE_VALUE(st_undo_load)
     CORE_VALUE(use_summercart)
     CORE_VALUE(wii_vc_emulation)
+    CORE_VALUE(rcp_lag_emulation)
+    CORE_VALUE(cpu_cf)
+    CORE_VALUE(rcp_lag_factor)
     CORE_VALUE(float_exception_emulation)
     CORE_VALUE(c_eq_s_nan_accurate)
+    CORE_VALUE(accurate_rdp_completion)
     CORE_VALUE(is_audio_delay_enabled)
     CORE_VALUE(is_compiled_jump_enabled)
     CORE_VALUE(vcr_readonly)
@@ -890,6 +920,8 @@ static void config_patch(t_config &cfg)
 
     // HACK: Wine doesn't implement DComp well enough yet, so force GDI
     if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
+
+    cfg.core.cpu_cf = std::max(cfg.core.cpu_cf, 0.0);
 }
 
 void Config::init()

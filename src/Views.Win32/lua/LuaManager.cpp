@@ -13,7 +13,7 @@
 #include <lua/LuaRegistry.hpp>
 #include <lua/LuaRenderer.hpp>
 
-core_buttons g_new_controller_data[4]{};
+CoreButtons g_new_controller_data[4]{};
 bool g_overwrite_controller_data[4]{};
 size_t g_input_count{};
 

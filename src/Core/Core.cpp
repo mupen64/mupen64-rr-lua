@@ -80,6 +80,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.SP_DMEM = SP_DMEM;
     g_ctx.SP_IMEM = SP_IMEM;
     g_ctx.PIF_RAM = PIF_RAM;
+    g_ctx.rcp_counter = &g_r4300.rcp_counter;
     CORE_RDRAM = rdram;
 
     g_ctx.vr_byteswap = rom_byteswap;
@@ -107,6 +108,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.vr_get_rom_header = rom_get_rom_header;
     g_ctx.vr_country_code_to_country_name = rom_country_code_to_country_name;
     g_ctx.vr_on_speed_modifier_changed = timer_on_speed_modifier_changed;
+    g_ctx.vr_on_render_throttling_changed = vr_update_effective_speed_mode;
     g_ctx.vr_invalidate_visuals = vr_invalidate_visuals;
     g_ctx.vr_recompile = vr_recompile;
     g_ctx.vr_get_timings = timer_get_timings;
