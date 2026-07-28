@@ -587,6 +587,7 @@ fn createCppModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
         .optimize = optimize,
         .link_libc = if (use_libcxx) true else false,
         .link_libcpp = if (use_libcxx) true else null,
+        .sanitize_c = .off,
     });
     if (!use_libcxx) {
         addWindowsSdkPaths(mod, optimize, target);
@@ -846,6 +847,7 @@ fn addStaticLib(
                 .target = target,
                 .optimize = optimize,
                 .link_libc = use_libcxx_abi,
+                .sanitize_c = .off,
             });
             if (!use_libcxx_abi) addWindowsSdkPaths(mod, optimize, target);
             break :blk mod;
