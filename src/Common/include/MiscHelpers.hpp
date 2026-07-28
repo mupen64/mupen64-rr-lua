@@ -30,31 +30,37 @@ inline std::vector<uint8_t> auto_decompress(const std::vector<uint8_t> &vec, con
         return out_vec;
     }
 
-    // we dont know what the decompressed size is, so we reallocate a buffer until we find the right size lol
-    size_t buf_size = initial_size;
-    auto out_buf = static_cast<uint8_t *>(malloc(buf_size));
+    // The gzip header does not include the uncompressed size, so grow the output buffer until it fits.
+    size_t buf_size = std::max(initial_size, size_t{1});
     auto decompressor = libdeflate_alloc_decompressor();
+    if (!decompressor)
+        return {};
+
+    std::vector<uint8_t> out_vec;
     while (true)
     {
-        out_buf = static_cast<uint8_t *>(realloc(out_buf, buf_size));
+        out_vec.resize(buf_size);
         size_t actual_size = 0;
-        auto result = libdeflate_gzip_decompress(decompressor, vec.data(), vec.size(), out_buf, buf_size, &actual_size);
+        const auto result =
+            libdeflate_gzip_decompress(decompressor, vec.data(), vec.size(), out_vec.data(), out_vec.size(), &actual_size);
         if (result == LIBDEFLATE_SHORT_OUTPUT || result == LIBDEFLATE_INSUFFICIENT_SPACE)
         {
+            if (buf_size > std::numeric_limits<size_t>::max() / 2)
+            {
+                libdeflate_free_decompressor(decompressor);
+                return {};
+            }
             buf_size *= 2;
             continue;
         }
-        buf_size = actual_size;
-        break;
-    }
-    libdeflate_free_decompressor(decompressor);
 
-    out_buf = static_cast<uint8_t *>(realloc(out_buf, buf_size));
-    std::vector<uint8_t> out_vec;
-    out_vec.resize(buf_size);
-    memcpy(out_vec.data(), out_buf, buf_size);
-    free(out_buf);
-    return out_vec;
+        libdeflate_free_decompressor(decompressor);
+        if (result != LIBDEFLATE_SUCCESS)
+            return {};
+
+        out_vec.resize(actual_size);
+        return out_vec;
+    }
 }
 
 inline void memread(uint8_t **src, void *dest, const unsigned int len)

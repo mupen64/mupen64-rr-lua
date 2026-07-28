@@ -27,8 +27,10 @@ void RSP_LoadMatrix(f32 mtx[4][4], u32 address)
     {
         for (uint8_t col = 0; col < 4; ++col)
         {
-            const int16_t lo = *reinterpret_cast<int16_t *>(base + offset_lo[col]);
-            const uint16_t hi = *reinterpret_cast<uint16_t *>(base + offset_hi[col]);
+            int16_t lo;
+            uint16_t hi;
+            std::memcpy(&lo, base + offset_lo[col], sizeof(lo));
+            std::memcpy(&hi, base + offset_hi[col], sizeof(hi));
             const float result = static_cast<float>(lo) + static_cast<float>(hi) * recip;
 
             mtx[row][col] = result;

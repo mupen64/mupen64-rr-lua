@@ -480,14 +480,20 @@ void gen_interrupt()
             vi_register.vi_delay = 500000;
         else
         {
-            const size_t cpu_delay = (vi_register.vi_v_sync + 1) * (size_t)(1500.0 * g_core->cfg->cpu_cf);
+            constexpr double max_vi_delay = (std::numeric_limits<uint32_t>::max)();
+            const double cpu_delay_value = (static_cast<double>(vi_register.vi_v_sync) + 1.0) * 1500.0 * g_core->cfg->cpu_cf;
+            const uint32_t cpu_delay = std::isfinite(cpu_delay_value)
+                                           ? static_cast<uint32_t>(std::clamp(cpu_delay_value, 0.0, max_vi_delay))
+                                           : 0;
             if (!g_core->cfg->rcp_lag_emulation) [[likely]]
                 vi_register.vi_delay = cpu_delay;
             else
             {
-                const auto rcp_delay = (size_t)((double)g_r4300.rcp_counter * g_core->cfg->rcp_lag_factor);
-                const auto delay = (size_t)std::max((int64_t)0, (int64_t)cpu_delay - (int64_t)rcp_delay);
-                vi_register.vi_delay = delay;
+                const double rcp_delay_value = static_cast<double>(g_r4300.rcp_counter) * g_core->cfg->rcp_lag_factor;
+                const uint32_t rcp_delay = std::isfinite(rcp_delay_value)
+                                               ? static_cast<uint32_t>(std::clamp(rcp_delay_value, 0.0, max_vi_delay))
+                                               : 0;
+                vi_register.vi_delay = cpu_delay > rcp_delay ? cpu_delay - rcp_delay : 0;
             }
         }
         // this is the place

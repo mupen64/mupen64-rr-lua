@@ -1276,13 +1276,9 @@ void update_DPC()
          (dpc_register.end_valid << 9) | (dpc_register.start_valid << 10));
 }
 
-bool check_register_validity(core_si_reg *si_reg)
+bool check_register_validity(const core_si_reg *si_reg)
 {
-    if (si_reg->si_dram_addr / 4 + 16 > sizeof(rdram))
-    {
-        return false;
-    }
-    return true;
+    return si_reg->si_dram_addr <= sizeof(rdram) - 64;
 }
 
 void read_nothing()

@@ -133,7 +133,7 @@ inline void put32(uint32_t dword)
     {
         grow_buffer();
     }
-    *((uint32_t *)(&(*inst_pointer)[code_length])) = dword;
+    std::memcpy(&(*inst_pointer)[code_length], &dword, sizeof(dword));
     code_length += 4;
 }
 
@@ -143,7 +143,7 @@ inline void put64(uint64_t qword)
     {
         grow_buffer();
     }
-    *((uint64_t *)(&(*inst_pointer)[code_length])) = qword;
+    std::memcpy(&(*inst_pointer)[code_length], &qword, sizeof(qword));
     code_length += 8;
 }
 
@@ -153,7 +153,7 @@ inline void put16(uint16_t word)
     {
         grow_buffer();
     }
-    *((uint16_t *)(&(*inst_pointer)[code_length])) = word;
+    std::memcpy(&(*inst_pointer)[code_length], &word, sizeof(word));
     code_length += 2;
 }
 
