@@ -44,7 +44,7 @@ enum callback_key : uint8_t
 /**
  * \brief Notifies all lua instances of a window message
  */
-void call_window_message(void *, unsigned int, unsigned int, long);
+void call_window_message(void *, unsigned int, std::uintptr_t, std::intptr_t);
 
 /**
  * \brief Notifies all lua instances of a visual interrupt
