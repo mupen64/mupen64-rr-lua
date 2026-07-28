@@ -626,7 +626,8 @@ fn appendZigSystemIncludes(
     const paths = [_][]const u8{
         b.fmt("{s}/libcxx/include", .{zig_lib}),
         b.fmt("{s}/libcxxabi/include", .{zig_lib}),
-        b.fmt("{s}/include", .{zig_lib}),
+        // Do not add Zig's Clang resource headers here: clangd uses its own
+        // Clang version, and its matching builtin headers avoid ABI conflicts.
         b.fmt("{s}/libc/include/{s}-windows-gnu", .{ zig_lib, arch }),
         b.fmt("{s}/libc/include/generic-mingw", .{zig_lib}),
         b.fmt("{s}/libc/include/{s}-windows-any", .{ zig_lib, arch }),
