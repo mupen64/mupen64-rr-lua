@@ -16,5 +16,4 @@ class FFmpegEncoder : public Encoder
     bool append_video(uint8_t *image) override;
     bool append_audio(uint8_t *audio, size_t length, uint8_t bitrate) override;
     std::wstring get_desired_extension() const override;
-
 };

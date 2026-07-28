@@ -186,7 +186,7 @@ static void build_dynarec_enter()
     uintptr_t base = g_dynarec_base;
     for (int i = 0; i < 8; ++i) *p++ = (unsigned char)((base >> (i * 8)) & 0xFF);
 
-        // jmp <arg register>  — the code pointer arrives in the first integer-arg register.
+    // jmp <arg register>  — the code pointer arrives in the first integer-arg register.
 #ifdef _WIN32
     *p++ = 0xFF;
     *p++ = 0xE1; // jmp rcx (Win64 first arg)
