@@ -52,6 +52,7 @@
  */
 
 #include "md5.h"
+#include <stdint.h>
 #include <string.h>
 
 #undef BYTE_ORDER	/* 1 = big-endian, -1 = little-endian, 0 = unknown */
@@ -161,7 +162,7 @@ md5_process(md5_state_t* pms, const md5_byte_t* data /*[64]*/)
              * On little-endian machines, we can process properly aligned
              * data without copying it.
              */
-            if (!((data - (const md5_byte_t*)0) & 3))
+            if (!((uintptr_t)data & 3))
             {
                 /* data are properly aligned */
                 X = (const md5_word_t*)data;
@@ -192,7 +193,8 @@ md5_process(md5_state_t* pms, const md5_byte_t* data /*[64]*/)
 		#    define xbuf X		/* (static only) */
 #  endif
             for (i = 0; i < 16; ++i, xp += 4)
-                xbuf[i] = xp[0] + (xp[1] << 8) + (xp[2] << 16) + (xp[3] << 24);
+                xbuf[i] = (md5_word_t)xp[0] | ((md5_word_t)xp[1] << 8) | ((md5_word_t)xp[2] << 16) |
+                          ((md5_word_t)xp[3] << 24);
         }
 #endif
     }
@@ -328,10 +330,11 @@ md5_append(md5_state_t* pms, const md5_byte_t* data, int nbytes)
     const md5_byte_t* p = data;
     int left = nbytes;
     int offset = (pms->count[0] >> 3) & 63;
-    md5_word_t nbits = (md5_word_t)(nbytes << 3);
 
     if (nbytes <= 0)
         return;
+
+    md5_word_t nbits = (md5_word_t)nbytes << 3;
 
     /* Update the message length. */
     pms->count[1] += nbytes >> 29;

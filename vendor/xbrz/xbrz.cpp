@@ -1173,6 +1173,16 @@ double distRGB(uint32_t pix1, uint32_t pix2)
 void xbrz::scale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight, ColorFormat colFmt, const xbrz::ScalerCfg& cfg, int yFirst, int yLast)
 {
     static_assert(SCALE_FACTOR_MAX == 6, "");
+    if (!src || !trg || factor < 2 || factor > SCALE_FACTOR_MAX || srcWidth <= 0 || srcHeight <= 0)
+        return;
+
+    const size_t target_width = (size_t)srcWidth * factor;
+    const size_t target_height = (size_t)srcHeight * factor;
+    if (target_width > (size_t)(std::numeric_limits<int>::max)() ||
+        target_width > (size_t)(std::numeric_limits<int>::max)() / factor ||
+        target_height > (size_t)(std::numeric_limits<int>::max)() / target_width)
+        return;
+
     switch (colFmt)
     {
     case ColorFormat::RGB:
@@ -1246,8 +1256,13 @@ bool xbrz::equalColorTest(uint32_t col1, uint32_t col2, ColorFormat colFmt, doub
 void xbrz::bilinearScale(const uint32_t* src, int srcWidth, int srcHeight,
                          /**/ uint32_t* trg, int trgWidth, int trgHeight)
 {
-    bilinearScale(src, srcWidth, srcHeight, srcWidth * sizeof(uint32_t),
-                  trg, trgWidth, trgHeight, trgWidth * sizeof(uint32_t),
+    if (!src || !trg || srcWidth <= 0 || srcHeight <= 0 || trgWidth <= 0 || trgHeight <= 0 ||
+        srcWidth > (std::numeric_limits<int>::max)() / (int)sizeof(uint32_t) / srcHeight ||
+        trgWidth > (std::numeric_limits<int>::max)() / (int)sizeof(uint32_t) / trgHeight)
+        return;
+
+    bilinearScale(src, srcWidth, srcHeight, srcWidth * (int)sizeof(uint32_t),
+                  trg, trgWidth, trgHeight, trgWidth * (int)sizeof(uint32_t),
                   0, trgHeight, [](uint32_t pix) { return pix; });
 }
 
@@ -1255,8 +1270,13 @@ void xbrz::bilinearScale(const uint32_t* src, int srcWidth, int srcHeight,
 void xbrz::nearestNeighborScale(const uint32_t* src, int srcWidth, int srcHeight,
                                 /**/ uint32_t* trg, int trgWidth, int trgHeight)
 {
-    nearestNeighborScale(src, srcWidth, srcHeight, srcWidth * sizeof(uint32_t),
-                         trg, trgWidth, trgHeight, trgWidth * sizeof(uint32_t),
+    if (!src || !trg || srcWidth <= 0 || srcHeight <= 0 || trgWidth <= 0 || trgHeight <= 0 ||
+        srcWidth > (std::numeric_limits<int>::max)() / (int)sizeof(uint32_t) / srcHeight ||
+        trgWidth > (std::numeric_limits<int>::max)() / (int)sizeof(uint32_t) / trgHeight)
+        return;
+
+    nearestNeighborScale(src, srcWidth, srcHeight, srcWidth * (int)sizeof(uint32_t),
+                         trg, trgWidth, trgHeight, trgWidth * (int)sizeof(uint32_t),
                          0, trgHeight, [](uint32_t pix) { return pix; });
 }
 
