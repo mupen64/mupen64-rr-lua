@@ -270,8 +270,6 @@ inline std::string to_utf8_string(std::wstring_view wstr)
  */
 inline std::wstring rom_name_to_wide_string(std::string_view str)
 {
-    assert(str.size() < INT_MAX / 2); // sanity check
-
     if (str.empty())
     {
         return {};
@@ -315,10 +313,6 @@ inline std::wstring rom_name_to_wide_string(std::string_view str)
 /**
  * \brief Converts a raw ROM header name into a path component.
  * \param str The raw header bytes.
- *
- * Handing header bytes to std::filesystem::path directly throws std::system_error (ERROR_NO_UNICODE_TRANSLATION) for
- * every ROM whose name isn't valid UTF-8, because the app manifest sets the process code page to UTF-8 and the STL
- * validates strictly when converting a narrow string to a path.
  */
 inline std::filesystem::path rom_name_to_path_component(const std::string_view str)
 {

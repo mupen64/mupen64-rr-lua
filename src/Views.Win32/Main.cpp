@@ -292,9 +292,8 @@ static std::wstring get_titlebar_text()
     if (g_emu_starting) text += L" - Starting...";
 
     if (g_main_ctx.core_ctx->vr_get_launched())
-        text += std::format(
-            L" - {}",
-            IOUtils::rom_name_to_wide_string(reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        text += std::format(L" - {}", IOUtils::rom_name_to_wide_string(
+                                          reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {

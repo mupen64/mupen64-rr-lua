@@ -100,9 +100,6 @@ bool vr_is_ceqs_effectively_accurate()
     return g_core->cfg->c_eq_s_nan_accurate;
 }
 
-// Builds "<saves directory>/<rom name> <country><extension>".
-// The ROM name goes through rom_name_to_path_component because it's raw header data: appending it to a path as a
-// narrow string throws for every ROM whose name isn't valid UTF-8, which is the case for Japanese ROMs.
 static std::filesystem::path get_save_path(const std::string_view extension)
 {
     auto filename = IOUtils::rom_name_to_path_component((const char *)ROM_HEADER.nom);
