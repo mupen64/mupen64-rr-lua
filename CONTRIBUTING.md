@@ -158,3 +158,43 @@ To create a stable release:
 1. Ensure there's a release branch for the version you're releasing
 2. Ensure the version numbers have been bumped in the code
 3. On the repo page, navigate to the `Actions` tab and run the pinned `Stable Release` workflow, targeting the release branch
+4. Navigate to the release page, find the draft release, double-check that the changelog looks good, and publish it
+5. In the [repack](https://github.com/mupen64/repack) repository, run the `Sync` workflow.
+
+# Reading and using Crashlogs
+
+If you have a `mupen.dmp`, open it in WinDbg and run `!analyze-v`.
+
+If you only have the stacktrace from `mupen.log`:
+
+1. Identify the faulting address
+2. Open x32dbg
+3. Open the "Go to" dialog by pressing Ctrl + G
+4. Navigate to `0x00400000` + `[Your Address]`
+
+# TAS Plugins and Plugin Compatibility
+
+The "TAS" plugins are our first-party plugins that aim to be lightweight and fast.
+
+They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions.
+
+While Mupen is compatible with any Zilmar spec plugin (e.g. Jabo's plugins, GLideN64), we plan to prioritize our first-party plugins by moving to a private plugin API in the future.
+Support for Zilmar spec support will eventually be provided only via a shim layer (cf. [#670](https://github.com/mupen64/mupen64-rr-lua/issues/670))
+
+## Developer Guidelines
+
+### Naming
+
+The plugin's friendly name should follow the schema:
+
+`[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
+
+### Initialization
+
+Keep `DllMain` as simple as possible; do not initialize SDL, DirectInput, or any other external libraries.
+
+Initialize libraries in `RomOpen` and - if possible - do it only once.
+
+### Configuration
+
+Write persistent config to the filesystem as JSON, ideally next to the mupen executable.
