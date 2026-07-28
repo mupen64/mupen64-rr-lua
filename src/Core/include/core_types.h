@@ -290,6 +290,14 @@ struct core_cfg
     int32_t c_eq_s_nan_accurate = 0;
 
     /// <summary>
+    /// Whether RDP task completion is signalled after RSP task completion instead of at the same instant.
+    /// The RDP consumes the RSP's output, so on hardware it always finishes later. The legacy behaviour signals
+    /// both at once, which breaks games chaining several RSP tasks per frame, but it is kept as the default for
+    /// backwards-compatibility.
+    /// </summary>
+    int32_t accurate_rdp_completion = 0;
+
+    /// <summary>
     /// Whether audio interrupts will be delayed
     /// </summary>
     int32_t is_audio_delay_enabled = 1;
@@ -588,7 +596,11 @@ typedef union ExtendedMovieFlags {
          * any) == false` instead of `(NaN == any) == true` (legacy behavior).
          */
         bool c_eq_s_accurate : 1;
-        bool unused_2 : 1;
+        /**
+         * Whether the movie was recorded with RDP task completion signalled after RSP task completion, instead of
+         * both being signalled at the same instant (legacy behavior).
+         */
+        bool accurate_rdp_completion : 1;
         bool unused_3 : 1;
         bool unused_4 : 1;
         bool unused_5 : 1;
@@ -670,7 +682,7 @@ typedef struct CoreVCRMovieHeader
     /**
      * The extended format version. Old movies have it set to <c>0</c>.
      */
-    uint8_t extended_version = 2;
+    uint8_t extended_version = 3;
 
     /**
      * The extended movie flags. Only valid if <c>extended_version != 0</c>.

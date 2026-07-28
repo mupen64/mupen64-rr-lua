@@ -258,7 +258,70 @@ inline std::string to_utf8_string(std::wstring_view wstr)
     return output;
 }
 
+/**
+ * \brief Decodes a raw ROM header name into a wide string.
+ * \param str The raw header bytes.
+ *
+ * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. ASCII is a subset of it, so western ROM
+ * names decode byte-identically, while Japanese ROM names decode to the characters they actually contain.
+ *
+ * Unlike to_wide_string, this never fails: header bytes are unvalidated binary data and are frequently not valid
+ * UTF-8, so a strict conversion would either throw or silently yield an empty name.
+ */
+inline std::wstring rom_name_to_wide_string(std::string_view str)
+{
+    if (str.empty())
+    {
+        return {};
+    }
+
+    std::wstring output;
+
+    // Note the absence of MB_ERR_INVALID_CHARS: unmappable sequences have to degrade to the code page's default
+    // character instead of failing the call, since nothing guarantees the header is well-formed.
+    int rc = MultiByteToWideChar(932, 0, str.data(), str.size(), nullptr, 0);
+    if (rc > 0)
+    {
+        output.resize(static_cast<size_t>(rc), L'\0');
+
+        rc = MultiByteToWideChar(932, 0, str.data(), str.size(), output.data(), output.size());
+        if (rc <= 0)
+        {
+            output.clear();
+        }
+    }
+
+    if (output.empty())
+    {
+        // Code page 932 isn't available on this system. Map each byte to the codepoint of the same value, so that
+        // distinct ROMs still end up with distinct names.
+        output.reserve(str.size());
+        for (const char c : str)
+        {
+            output.push_back(static_cast<wchar_t>(static_cast<uint8_t>(c)));
+        }
+    }
+
+    return output;
+}
+
 #endif
+
+// ROM HEADER NAME CONVERSION
+// ==============================
+
+/**
+ * \brief Converts a raw ROM header name into a path component.
+ * \param str The raw header bytes.
+ */
+inline std::filesystem::path rom_name_to_path_component(const std::string_view str)
+{
+#ifdef _WIN32
+    return {rom_name_to_wide_string(str)};
+#else
+    return {str};
+#endif
+}
 
 // PORTABLE EQUIVALENTS
 // ==============================

@@ -8,7 +8,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "name": "mupen64.exe (x86, VS)",
-            "program": "${workspaceFolder}/build/x86/out/mupen64.exe",
+            "program": "${workspaceFolder}/build/out/mupen64.exe",
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build Project"
         },
@@ -16,7 +16,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "name": "mupen64.exe (x64, VS)",
-            "program": "${workspaceFolder}/build/x64/out/mupen64.exe",
+            "program": "${workspaceFolder}/build/out/mupen64.exe",
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build Project (x64)"
         }
