@@ -50,7 +50,7 @@ extern "C"
         std::function<void()> unfreeze_completed = [](const auto &...) {};
         std::function<void(size_t)> seek_savestate_changed = [](const auto &...) {};
         std::function<void(bool)> readonly_changed = [](const auto &...) {};
-        std::function<void(core_system_type)> dacrate_changed = [](const auto &...) {};
+        std::function<void(CoreSystemType)> dacrate_changed = [](const auto &...) {};
         std::function<void()> lag_limit_exceeded = [](const auto &...) {};
         std::function<void()> seek_status_changed = [](const auto &...) {};
     };
@@ -251,7 +251,7 @@ extern "C"
         std::function<void(uint32_t addr, uint32_t size)> video_fb_write;
         std::function<void(CoreFBInfo[6])> video_fb_get_frame_buffer_info;
 
-        std::function<void(int32_t system_type)> audio_ai_dacrate_changed;
+        std::function<void(CoreSystemType system_type)> audio_ai_dacrate_changed;
         std::function<void()> audio_ai_len_changed;
         std::function<uint32_t()> audio_ai_read_length;
         std::function<void()> audio_process_alist;

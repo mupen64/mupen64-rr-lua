@@ -15,12 +15,15 @@ t_config prev_config = {};
 
 static std::filesystem::path get_config_path()
 {
-    return g_config_path / CONFIG_FILE_NAME;
+    const auto size = g_plugin->config_path(nullptr, 0);
+    std::string path(size - 1, '\0');
+    g_plugin->config_path(path.data(), size);
+    return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
 void config_save()
 {
-    g_ef->log_trace(L"Saving config...");
+    g_plugin->log_trace(L"Saving config...");
 
     nlohmann::json j = config;
     std::ofstream ofs(get_config_path());
@@ -29,7 +32,7 @@ void config_save()
 
 void config_load()
 {
-    g_ef->log_trace(L"Loading config...");
+    g_plugin->log_trace(L"Loading config...");
 
     auto json_path = get_config_path();
 
@@ -50,7 +53,7 @@ void config_load()
     }
     catch (const std::exception &e)
     {
-        g_ef->log_warn(L"Config load failed, using defaults...");
+        g_plugin->log_warn(L"Config load failed, using defaults...");
         config = default_config;
     }
 }

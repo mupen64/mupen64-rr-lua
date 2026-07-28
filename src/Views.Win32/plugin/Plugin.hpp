@@ -6,63 +6,90 @@
 
 #pragma once
 
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
+#include <Views.Win32/ZESpec.h>
+#include <Views.Win32/M64RRSpec.h>
 
-struct ZilmarExtSpecPluginFuncs
+struct ZESpecFuncs
 {
-    ZilmarExtSpec::Controller controllers[4];
+    M64RRSpec::PluginInit video_init;
+    ZESpec::ROMOPEN video_rom_open;
+    ZESpec::ROMCLOSED video_rom_closed;
+    ZESpec::CLOSEDLL video_close_dll;
+    ZESpec::PROCESSDLIST video_process_dlist;
+    ZESpec::PROCESSRDPLIST video_process_rdp_list;
+    ZESpec::SHOWCFB video_show_cfb;
+    ZESpec::VISTATUSCHANGED video_vi_status_changed;
+    ZESpec::VIWIDTHCHANGED video_vi_width_changed;
+    ZESpec::GETVIDEOSIZE video_get_video_size;
+    ZESpec::FBREAD video_fb_read;
+    ZESpec::FBWRITE video_fb_write;
+    ZESpec::FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
+    ZESpec::CHANGEWINDOW video_change_window;
+    ZESpec::UPDATESCREEN video_update_screen;
+    ZESpec::READSCREEN video_read_screen;
+    ZESpec::DLLCRTFREE video_dll_crt_free;
+    ZESpec::MOVESCREEN video_move_screen;
+    ZESpec::CAPTURESCREEN video_capture_screen;
+    ZESpec::READVIDEO video_read_video;
 
-    ZilmarExtSpec::ExtendedFuncs video_extended_funcs;
-    ZilmarExtSpec::ROMOPEN video_rom_open;
-    ZilmarExtSpec::ROMCLOSED video_rom_closed;
-    ZilmarExtSpec::CLOSEDLL video_close_dll;
-    ZilmarExtSpec::PROCESSDLIST video_process_dlist;
-    ZilmarExtSpec::PROCESSRDPLIST video_process_rdp_list;
-    ZilmarExtSpec::SHOWCFB video_show_cfb;
-    ZilmarExtSpec::VISTATUSCHANGED video_vi_status_changed;
-    ZilmarExtSpec::VIWIDTHCHANGED video_vi_width_changed;
-    ZilmarExtSpec::GETVIDEOSIZE video_get_video_size;
-    ZilmarExtSpec::FBREAD video_fb_read;
-    ZilmarExtSpec::FBWRITE video_fb_write;
-    ZilmarExtSpec::FBGETFRAMEBUFFERINFO video_fb_get_frame_buffer_info;
-    ZilmarExtSpec::CHANGEWINDOW video_change_window;
-    ZilmarExtSpec::UPDATESCREEN video_update_screen;
-    ZilmarExtSpec::READSCREEN video_read_screen;
-    ZilmarExtSpec::DLLCRTFREE video_dll_crt_free;
-    ZilmarExtSpec::MOVESCREEN video_move_screen;
-    ZilmarExtSpec::CAPTURESCREEN video_capture_screen;
-    ZilmarExtSpec::READVIDEO video_read_video;
+    M64RRSpec::PluginInit audio_init;
+    ZESpec::ROMOPEN audio_rom_open;
+    ZESpec::ROMCLOSED audio_rom_closed;
+    ZESpec::CLOSEDLL audio_close_dll_audio;
+    std::function<void(CoreSystemType system_type)> audio_ai_dacrate_changed;
+    ZESpec::AILENCHANGED audio_ai_len_changed;
+    ZESpec::AIREADLENGTH audio_ai_read_length;
+    ZESpec::PROCESSALIST audio_process_alist;
+    ZESpec::AIUPDATE audio_ai_update;
+    ZESpec::CLOSEDLL input_close_dll;
+    ZESpec::ROMCLOSED input_rom_closed;
+    ZESpec::ROMOPEN input_rom_open;
 
-    ZilmarExtSpec::ExtendedFuncs audio_extended_funcs;
-    ZilmarExtSpec::ROMOPEN audio_rom_open;
-    ZilmarExtSpec::ROMCLOSED audio_rom_closed;
-    ZilmarExtSpec::CLOSEDLL audio_close_dll_audio;
-    ZilmarExtSpec::AIDACRATECHANGED audio_ai_dacrate_changed;
-    ZilmarExtSpec::AILENCHANGED audio_ai_len_changed;
-    ZilmarExtSpec::AIREADLENGTH audio_ai_read_length;
-    ZilmarExtSpec::PROCESSALIST audio_process_alist;
-    ZilmarExtSpec::AIUPDATE audio_ai_update;
-    ZilmarExtSpec::CLOSEDLL input_close_dll;
-    ZilmarExtSpec::ROMCLOSED input_rom_closed;
-    ZilmarExtSpec::ROMOPEN input_rom_open;
+    M64RRSpec::PluginInit input_init;
+    ZESpec::CONTROLLERCOMMAND input_controller_command;
+    ZESpec::GETKEYS input_get_keys;
+    ZESpec::SETKEYS input_set_keys;
+    ZESpec::READCONTROLLER input_read_controller;
+    ZESpec::KEYDOWN input_key_down;
+    ZESpec::KEYUP input_key_up;
 
-    ZilmarExtSpec::ExtendedFuncs input_extended_funcs;
-    ZilmarExtSpec::CONTROLLERCOMMAND input_controller_command;
-    ZilmarExtSpec::GETKEYS input_get_keys;
-    ZilmarExtSpec::SETKEYS input_set_keys;
-    ZilmarExtSpec::READCONTROLLER input_read_controller;
-    ZilmarExtSpec::KEYDOWN input_key_down;
-    ZilmarExtSpec::KEYUP input_key_up;
-
-    ZilmarExtSpec::ExtendedFuncs rsp_extended_funcs;
-    ZilmarExtSpec::CLOSEDLL rsp_close_dll;
-    ZilmarExtSpec::ROMCLOSED rsp_rom_closed;
-    ZilmarExtSpec::DORSPCYCLES rsp_do_rsp_cycles;
+    M64RRSpec::PluginInit rsp_init;
+    ZESpec::CLOSEDLL rsp_close_dll;
+    ZESpec::ROMCLOSED rsp_rom_closed;
+    ZESpec::DORSPCYCLES rsp_do_rsp_cycles;
 };
+
+class ZEPlugin;
+class M64RRPlugin;
+
+extern ZESpecFuncs g_plugin_funcs;
+extern ZESpec::VideoPluginInfo gfx_info;
+extern ZESpec::AudioPluginInfo audio_info;
+extern ZESpec::InputPluginInfo control_info;
+extern ZESpec::RSPPluginInfo rsp_info;
+extern ZESpec::DLLABOUT dll_about;
+extern ZESpec::DLLCONFIG dll_config;
+extern ZESpec::DLLTEST dll_test;
+
+#define FUNC(target, type, fallback, name)                                                                             \
+    target = (type)GetProcAddress((HMODULE)m_module, name);                                                            \
+    if (!target)                                                                                                       \
+    {                                                                                                                  \
+        target = fallback;                                                                                             \
+        g_view_logger->info("Substituting dummy function for {}", name);                                               \
+    }
 
 class Plugin
 {
   public:
+    enum class Type
+    {
+        Video,
+        Audio,
+        Input,
+        RSP,
+    };
+
     /**
      * \brief Tries to create a plugin from the given path
      * \param path The path to a plugin
@@ -72,30 +99,31 @@ class Plugin
     static std::pair<std::wstring, std::unique_ptr<Plugin>> create(std::filesystem::path path);
 
     Plugin() = default;
-    ~Plugin();
+    virtual ~Plugin();
 
     /**
      * \brief Opens the plugin configuration dialog.
      * \param hwnd The parent window handle.
      */
-    void config(HWND hwnd);
+    virtual void config(HWND hwnd);
 
     /**
      * \brief Opens the plugin test dialog
      * \param hwnd The parent window handle.
      */
-    void test(HWND hwnd);
+    virtual void test(HWND hwnd);
 
     /**
      * \brief Opens the plugin about dialog
      * \param hwnd The parent window handle.
      */
-    void about(HWND hwnd);
+    virtual void about(HWND hwnd);
 
     /**
-     * \brief Loads the plugin's exported functions into the globals and calls the initiate function.
+     * \brief Loads the plugin's exported functions into `funcs` and calls the initiate function.
+     * \param funcs The function table to load the plugin's exported functions into.
      */
-    void initiate();
+    virtual void initiate(ZESpecFuncs &funcs);
 
     /**
      * \brief Gets the plugin's path
@@ -112,22 +140,16 @@ class Plugin
      */
     auto type() const { return m_type; }
 
-    /**
-     * \brief Gets the plugin's version
-     */
-    auto version() const { return m_version; }
-
-  private:
+  protected:
     /**
      * \brief Initiates the plugin for being called ephemerally (e.g. via `config()`, `test()`, `about()`)
      */
-    void initiate_dummy();
-    void deinitiate_dummy();
+    virtual void initiate_dummy();
+    virtual void deinitiate_dummy();
 
     std::filesystem::path m_path;
     std::string m_name;
-    ZilmarExtSpec::PluginType m_type;
-    uint16_t m_version;
+    Type m_type;
     HMODULE m_module;
 };
 
@@ -148,8 +170,6 @@ typedef struct
 
 } t_plugin_discovery_result;
 
-extern ZilmarExtSpecPluginFuncs g_plugin_funcs;
-
 /**
  * \brief A module providing utility functions related to plugins.
  */
@@ -166,11 +186,6 @@ void init();
  * \return The plugin discovery result.
  */
 t_plugin_discovery_result discover_plugins(const std::filesystem::path &directory);
-
-/**
- * \brief Initializes dummy and extended function sets.
- */
-void init_dummy_and_extended_funcs();
 
 /**
  * \return Whether MGE functionality is currently available.
@@ -213,5 +228,19 @@ void get_plugin_names(char *video, char *audio, char *input, char *rsp);
  * containing that file.
  */
 void screenshot(const std::filesystem::path &path);
+
+/**
+ * \brief Tries to find the free function exported by the CRT in the specified module.
+ * \param module The module to search in.
+ * \return A pointer to the free function, or the CRT's free if not found via DllCrtFree.
+ */
+ZESpec::DLLCRTFREE get_free_function_in_module(HMODULE module);
+
+void get_video_size(int32_t *width, int32_t *height);
+void read_video(void *buffer);
+void update_screen();
+void key_down(uint32_t wParam, int32_t lParam);
+void key_up(uint32_t wParam, int32_t lParam);
+void move_screen(uint32_t wParam, int32_t lParam);
 
 } // namespace PluginUtil

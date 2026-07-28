@@ -24,7 +24,7 @@
 #define A_MAIN 0x00
 #define A_MIX 0x10
 
-extern ZilmarExtSpec::RSPPluginInfo rsp;
+extern M64RRSpec::PluginInit* g_plugin;
 
 typedef struct
 {

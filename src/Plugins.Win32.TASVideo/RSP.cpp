@@ -63,9 +63,6 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
         case WAIT_OBJECT_0 + RSPMSG_PROCESSDLIST:
             RSP_ProcessDList();
             break;
-        case WAIT_OBJECT_0 + RSPMSG_UPDATESCREEN:
-            VI_UpdateScreen();
-            break;
         case WAIT_OBJECT_0 + RSPMSG_DESTROYTEXTURES:
             Combiner_Destroy();
             FrameBuffer_Destroy();
@@ -90,7 +87,7 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
 
 void RSP_ProcessDList()
 {
-    OGL.headless = g_ef->frame_skipped();
+    OGL.headless = g_plugin->frame_skipped();
 
     if (!OGL.headless)
     {
@@ -165,7 +162,7 @@ void RSP_ProcessDList()
 
         cmds[RSP.cmd](w0, w1);
 
-        *g_ef->rcp_counter += 1;
+        *g_plugin->rcp_counter += 1;
     }
 
     RSP.busy = FALSE;

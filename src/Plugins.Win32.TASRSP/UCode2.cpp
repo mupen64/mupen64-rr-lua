@@ -11,8 +11,7 @@ extern uint8_t BufferSpace[0x10000];
 
 static void SPNOOP()
 {
-    MessageBox(NULL, std::format(L"Unknown/Unimplemented Audio Command {} in ABI 2", inst1 >> 24).c_str(),
-               L"Audio HLE Error", MB_OK);
+    assert(false && std::format("Unknown/Unimplemented Audio Command {} in ABI 2", inst1 >> 24).c_str());
 }
 
 extern uint16_t AudioInBuffer;  // 0x0000(T8)
@@ -33,7 +32,7 @@ static void LOADADPCM2()
     // Loads an ADPCM table - Works 100% Now 03-13-01
     uint32_t v0;
     v0 = (inst2 & 0xffffff);                        // + SEGMENTS[(inst2>>24)&0xf];
-    uint16_t *table = (uint16_t *)(rsp.rdram + v0); // Zelda2 Specific...
+    uint16_t *table = (uint16_t *)(g_plugin->rdram + v0); // Zelda2 Specific...
 
     for (uint32_t x = 0; x < ((inst1 & 0xffff) >> 0x4); x++)
     {
@@ -116,18 +115,18 @@ static void ADPCM2()
             /*
                         for(int32_t i=0;i<16;i++)
                         {
-                            out[i]=*(int16_t *)&rsp.rdram[(loopval+i*2)^2];
+                            out[i]=*(int16_t *)&rsp->rdram[(loopval+i*2)^2];
                         }*/
-            memcpy(out, &rsp.rdram[loopval], 32);
+            memcpy(out, &g_plugin->rdram[loopval], 32);
         }
         else
         {
             /*
                         for(int32_t i=0;i<16;i++)
                         {
-                            out[i]=*(int16_t *)&rsp.rdram[(Address+i*2)^2];
+                            out[i]=*(int16_t *)&rsp->rdram[(Address+i*2)^2];
                         }*/
-            memcpy(out, &rsp.rdram[Address], 32);
+            memcpy(out, &g_plugin->rdram[Address], 32);
         }
     }
 
@@ -371,7 +370,7 @@ static void ADPCM2()
         count -= 32;
     }
     out -= 16;
-    memcpy(&rsp.rdram[Address], out, 32);
+    memcpy(&g_plugin->rdram[Address], out, 32);
 }
 
 static void CLEARBUFF2()
@@ -387,7 +386,7 @@ static void LOADBUFF2()
     uint32_t v0;
     uint32_t cnt = (((inst1 >> 0xC) + 3) & 0xFFC);
     v0 = (inst2 & 0xfffffc); // + SEGMENTS[(inst2>>24)&0xf];
-    memcpy(BufferSpace + (inst1 & 0xfffc), rsp.rdram + v0, (cnt + 3) & 0xFFFC);
+    memcpy(BufferSpace + (inst1 & 0xfffc), g_plugin->rdram + v0, (cnt + 3) & 0xFFFC);
 }
 
 static void SAVEBUFF2()
@@ -396,7 +395,7 @@ static void SAVEBUFF2()
     uint32_t v0;
     uint32_t cnt = (((inst1 >> 0xC) + 3) & 0xFFC);
     v0 = (inst2 & 0xfffffc); // + SEGMENTS[(inst2>>24)&0xf];
-    memcpy(rsp.rdram + v0, BufferSpace + (inst1 & 0xfffc), (cnt + 3) & 0xFFFC);
+    memcpy(g_plugin->rdram + v0, BufferSpace + (inst1 & 0xfffc), (cnt + 3) & 0xFFFC);
 }
 
 static void MIXER2()
@@ -445,9 +444,9 @@ static void RESAMPLE2()
 
     if ((Flags & 0x1) == 0)
     {
-        for (int32_t x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp.rdram+addy, 0x8);
-            src[(srcPtr + x) ^ 1] = ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1];
-        Accum = *(uint16_t *)(rsp.rdram + addy + 10);
+        for (int32_t x = 0; x < 4; x++) // memcpy (src+srcPtr, rsp->rdram+addy, 0x8);
+            src[(srcPtr + x) ^ 1] = ((uint16_t *)g_plugin->rdram)[((addy / 2) + x) ^ 1];
+        Accum = *(uint16_t *)(g_plugin->rdram + addy + 10);
     }
     else
     {
@@ -483,8 +482,8 @@ static void RESAMPLE2()
         Accum &= 0xFFFF;
     }
 
-    for (int32_t x = 0; x < 4; x++) ((uint16_t *)rsp.rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
-    *(uint16_t *)(rsp.rdram + addy + 10) = (uint16_t)Accum;
+    for (int32_t x = 0; x < 4; x++) ((uint16_t *)g_plugin->rdram)[((addy / 2) + x) ^ 1] = src[(srcPtr + x) ^ 1];
+    *(uint16_t *)(g_plugin->rdram + addy + 10) = (uint16_t)Accum;
     // memcpy (RSWORK, src+srcPtr, 0x8);
 }
 
@@ -836,7 +835,7 @@ static void FILTER2()
     static int32_t cnt = 0;
     static int16_t *lutt6;
     static int16_t *lutt5;
-    uint8_t *save = (rsp.rdram + (inst2 & 0xFFFFFF));
+    uint8_t *save = (g_plugin->rdram + (inst2 & 0xFFFFFF));
     uint8_t t4 = (uint8_t)((inst1 >> 0x10) & 0xFF);
     int32_t x;
 

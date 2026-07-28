@@ -523,16 +523,16 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             int32_t id = 0;
             switch (plugin->type())
             {
-            case ZilmarExtSpec::PluginType::Video:
+            case Plugin::Type::Video:
                 id = IDC_COMBO_GFX;
                 break;
-            case ZilmarExtSpec::PluginType::Audio:
+            case Plugin::Type::Audio:
                 id = IDC_COMBO_SOUND;
                 break;
-            case ZilmarExtSpec::PluginType::Input:
+            case Plugin::Type::Input:
                 id = IDC_COMBO_INPUT;
                 break;
-            case ZilmarExtSpec::PluginType::RSP:
+            case Plugin::Type::RSP:
                 id = IDC_COMBO_RSP;
                 break;
             default:

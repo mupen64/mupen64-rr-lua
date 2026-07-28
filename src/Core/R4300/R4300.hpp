@@ -67,7 +67,7 @@ extern char invalid_code[0x100000];
 extern uint32_t jump_to_address;
 extern int32_t vi_field;
 extern uint32_t next_vi;
-extern core_system_type g_sys_type;
+extern CoreSystemType g_sys_type;
 extern r4300 g_r4300;
 
 extern FILE *g_eeprom_file;

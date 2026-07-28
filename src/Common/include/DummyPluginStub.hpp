@@ -6,29 +6,31 @@
 
 #pragma once
 
+#include <VersionNameHelpers.hpp>
+#include <Views.Win32/M64RRSpec.h>
+
 #define DUMMY_PLUGIN_STUB_IMPL(plugin_type)                                                                            \
-                                                                                                                       \
-    BOOL APIENTRY DllMain(HMODULE hmod, const DWORD reason, LPVOID)                                                    \
+    EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)                                     \
     {                                                                                                                  \
-        return TRUE;                                                                                                   \
-    }                                                                                                                  \
+        metadata->type = plugin_type;                                                                                  \
                                                                                                                        \
-    EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *info)                                                       \
-    {                                                                                                                  \
-        info->ver = 0x0101;                                                                                            \
-        info->type = plugin_type;                                                                                      \
-        strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));                    \
-        std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);                             \
-    }                                                                                                                  \
+        const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);                                                        \
+        const auto description = "First-party TAS plugin for Mupen64."                                                 \
+                                 "\n"                                                                                  \
+                                 "TAS plugins are not to be distributed separately from Mupen64 and remain tied "      \
+                                 "to one version of the emulator."                                                     \
+                                 "\n\n"                                                                                \
+                                 "https://mupen64.com";                                                                \
+        const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);                                          \
                                                                                                                        \
-    EXPORT void CALL DllAbout(void *hParent)                                                                           \
-    {                                                                                                                  \
-        const auto msg = L"First-party TAS plugin for Mupen64."                                                        \
-                         L"\n"                                                                                         \
-                         L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "             \
-                         L"to one version of the emulator."                                                            \
-                         L"\n\n"                                                                                       \
-                         L"https://mupen64.com";                                                                       \
+        auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);                        \
+        metadata->name[result.size] = '\0';                                                                            \
                                                                                                                        \
-        MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);                                          \
-    }
+        result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);        \
+        metadata->description[result.size] = '\0';                                                                     \
+                                                                                                                       \
+        result =                                                                                                       \
+            std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);    \
+        metadata->target_version[result.size] = '\0';                                                                  \
+    }\
+\

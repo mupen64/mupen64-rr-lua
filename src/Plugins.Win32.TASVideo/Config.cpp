@@ -47,7 +47,10 @@ static std::optional<ResolutionPreset> get_preset_by_resolution(uint32_t width, 
 
 static std::filesystem::path get_config_path()
 {
-    return g_tas_ctx.config_directory / CONFIG_FILE_NAME;
+    const auto size = g_plugin->config_path(nullptr, 0);
+    std::string path(size - 1, '\0');
+    g_plugin->config_path(path.data(), size);
+    return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
 static void Config_SetDefaults()
@@ -93,7 +96,7 @@ void Config_LoadConfig()
     }
     catch (const std::exception &e)
     {
-        g_ef->log_warn(L"Config load failed, using defaults...");
+        g_plugin->log_warn(L"Config load failed, using defaults...");
         Config_SetDefaults();
     }
 }

@@ -536,11 +536,11 @@ typedef struct
 /**
  * \brief Represents a system type.
  */
-typedef enum
+enum class CoreSystemType
 {
-    sys_ntsc,
-    sys_pal,
-} core_system_type;
+    NTSC,
+    PAL,
+};
 
 typedef struct
 {

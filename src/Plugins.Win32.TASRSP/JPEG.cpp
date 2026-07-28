@@ -25,15 +25,15 @@ void jpg_uncompress(OSTask_t *task)
 {
     int32_t i, w;
     int16_t *temp1, *temp2;
-    int16_t *data = (int16_t *)(rsp.rdram + task->ucode_data);
+    int16_t *data = (int16_t *)(g_plugin->rdram + task->ucode_data);
     int16_t m[8 * 32];
 
     if ((task->flags & 1) == 0)
     {
-        memcpy(&jpg_data, rsp.rdram + task->data_ptr, task->data_size);
-        q[0] = (int16_t *)(rsp.rdram + jpg_data.m1);
-        q[1] = (int16_t *)(rsp.rdram + jpg_data.m2);
-        q[2] = (int16_t *)(rsp.rdram + jpg_data.m3);
+        memcpy(&jpg_data, g_plugin->rdram + task->data_ptr, task->data_size);
+        q[0] = (int16_t *)(g_plugin->rdram + jpg_data.m1);
+        q[1] = (int16_t *)(g_plugin->rdram + jpg_data.m2);
+        q[2] = (int16_t *)(g_plugin->rdram + jpg_data.m3);
 
         if (jpg_data.h == 0)
         {
@@ -48,9 +48,9 @@ void jpg_uncompress(OSTask_t *task)
     }
     else
     {
-        g_ef->log_warn(L"jpg_uncompress: !flags");
+        g_plugin->log_warn(L"jpg_uncompress: !flags");
     }
-    pic = (int16_t *)(rsp.rdram + jpg_data.pic);
+    pic = (int16_t *)(g_plugin->rdram + jpg_data.pic);
 
     temp1 = (int16_t *)malloc((jpg_data.h + 4) * 64 * 2);
     temp2 = (int16_t *)malloc((jpg_data.h + 4) * 64 * 2);
@@ -271,7 +271,7 @@ void jpg_uncompress(OSTask_t *task)
 
         if (jpg_data.h == 0)
         {
-            g_ef->log_warn(L"h==0");
+            g_plugin->log_warn(L"h==0");
         }
         else
         {
@@ -444,7 +444,7 @@ void jpg_uncompress(OSTask_t *task)
             }
         }
         pic += len1 / 2;
-    } while (w-- != 1 && !(*rsp.sp_status_reg & 0x80));
+    } while (w-- != 1 && !(g_plugin->sp_register->sp_status_reg & 0x80));
 
     pic -= len1 * jpg_data.w / 2;
     free(temp2);

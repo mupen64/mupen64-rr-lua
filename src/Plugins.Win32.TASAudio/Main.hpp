@@ -7,14 +7,13 @@
 #pragma once
 #include "Config.hpp"
 #include "SDLBackend.hpp"
-#include "Views.Win32/ZilmarExtSpecPlugin.h"
+#include <Views.Win32/M64RRSpec.h>
 #include <VersionNameHelpers.hpp>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Audio")
 
-extern ZilmarExtSpec::ExtendedFuncs *g_ef;
+extern M64RRSpec::PluginInit *g_plugin;
 extern std::filesystem::path g_dll_path;
-extern std::filesystem::path g_config_path;
 extern std::optional<SDLAudio::SDLBackend> g_backend;
 
 SDLAudio::Config read_config();

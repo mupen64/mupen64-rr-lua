@@ -20,21 +20,17 @@ static void prompt_plugin_change(HWND hwnd)
     {
         auto plugin_discovery_result = PluginUtil::discover_plugins(Config::plugin_directory());
 
-        auto first_video_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::Video;
-        });
+        auto first_video_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Video; });
 
-        auto first_audio_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::Audio;
-        });
+        auto first_audio_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Audio; });
 
-        auto first_input_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::Input;
-        });
+        auto first_input_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Input; });
 
-        auto first_rsp_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::RSP;
-        });
+        auto first_rsp_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::RSP; });
 
         if (first_video_plugin != plugin_discovery_result.plugins.end())
         {

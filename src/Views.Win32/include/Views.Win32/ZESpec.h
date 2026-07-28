@@ -5,10 +5,8 @@
  */
 
 /*
- * Describes the new Mupen64 ("Zilmar Ext Spec") Plugin API.
- *
- * This header can be used standalone by Mupen64 plugins, just make sure to define PLUGIN_WITH_CALLBACKS first.
- *
+ * Describes the Zilmar Extended plugin specification, which is binary-compatible with the original Zilmar
+ * specification.
  */
 
 #pragma once
@@ -26,7 +24,7 @@
 #error "Unsupported platform"
 #endif
 
-namespace ZilmarExtSpec
+namespace ZESpec
 {
 
 extern "C"
@@ -137,60 +135,6 @@ extern "C"
     };
 
     /**
-     * \brief Exposes an extended set of functions to plugins.
-     */
-    struct ExtendedFuncs
-    {
-        /**
-         * \brief Logs the specified message at the trace level.
-         */
-        void (*log_trace)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the info level.
-         */
-        void (*log_info)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the warning level.
-         */
-        void (*log_warn)(const wchar_t *);
-
-        /**
-         * \brief Logs the specified message at the error level.
-         */
-        void (*log_error)(const wchar_t *);
-
-        /**
-         * \brief Gets the effective speed mode.
-         * \return The current effective speed mode.
-         */
-        CoreSpeedMode (*get_effective_speed_mode)();
-
-        /**
-         * \brief See `core_ctx::vr_get_frame_skipped`.
-         */
-        bool (*frame_skipped)();
-
-        /**
-         * @brief Gets the path to the configuration directory, as a UTF-8 string.
-         *
-         * Writes the path to the configuration directory to `data`, provided that there is
-         * enough space for path and terminating null character (up to `len`). Returns the
-         * number of characters written (including the terminating null), or 0 if the buffer
-         * wasn't big enough.
-         *
-         * If `data` is null, returns the expected size of the buffer.
-         */
-        size_t (*config_path)(char *data, size_t len);
-
-        /**
-         * \brief Counter for RCP work in an arbitrary unit, ideally proportional to real-time lag per unit.
-         */
-        size_t *rcp_counter;
-    };
-
-    /**
      * \brief Describes generic information about a plugin.
      */
     struct PluginInfo
@@ -256,12 +200,6 @@ extern "C"
         void(CALL *check_interrupts)(void);
 
         // --- Zilmar spec struct ends here
-
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     struct AudioPluginInfo
@@ -283,12 +221,6 @@ extern "C"
         void(CALL *check_interrupts)(void);
 
         // --- Zilmar spec struct ends here
-
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     struct InputPluginInfo
@@ -300,12 +232,6 @@ extern "C"
         Controller *controllers;
 
         // --- Zilmar spec struct ends here
-
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     struct RSPPluginInfo
@@ -340,12 +266,6 @@ extern "C"
         void(CALL *show_cfb)(void);
 
         // --- Zilmar spec struct ends here
-
-        /**
-         * \brief Pointer to extended functions provided by Mupen.
-         * \remarks **Unstable API** might change frequently.
-         */
-        ExtendedFuncs *extended_funcs;
     };
 
     typedef void(CALL *CLOSEDLL)();
@@ -364,7 +284,7 @@ extern "C"
     typedef void(CALL *GETVIDEOSIZE)(int32_t *, int32_t *);
     typedef void(CALL *FBREAD)(uint32_t);
     typedef void(CALL *FBWRITE)(uint32_t addr, uint32_t size);
-    typedef void(CALL *FBGETFRAMEBUFFERINFO)(ZilmarExtSpec::FBInfo *);
+    typedef void(CALL *FBGETFRAMEBUFFERINFO)(ZESpec::FBInfo *);
     typedef void(CALL *CHANGEWINDOW)();
     typedef int32_t(CALL *INITIATEGFX)(VideoPluginInfo);
     typedef void(CALL *UPDATESCREEN)();
@@ -394,22 +314,7 @@ extern "C"
     typedef uint32_t(CALL *DORSPCYCLES)(uint32_t);
 }
 
-/**
- * \brief Gets the config path from a `core_plugin_extended_funcs`.
- */
-inline std::filesystem::path get_config_path(const ExtendedFuncs *ef)
-{
-    size_t len = ef->config_path(nullptr, 0);
-
-    std::string path_temp(len, '\0');
-    ef->config_path(path_temp.data(), path_temp.size());
-    path_temp.pop_back();
-
-    std::u8string_view utf8_path_temp{(char8_t *)path_temp.data(), path_temp.size()};
-    return std::filesystem::absolute(utf8_path_temp);
-}
-
-}; // namespace ZilmarExtSpec
+}; // namespace ZESpec
 
 #if defined(PLUGIN_WITH_CALLBACKS)
 
@@ -422,7 +327,7 @@ extern "C"
     EXPORT void CALL CloseDLL(void);
     EXPORT void CALL DllAbout(void *hParent);
     EXPORT void CALL DllConfig(void *hParent);
-    EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *PluginInfo);
+    EXPORT void CALL GetDllInfo(ZESpec::PluginInfo *PluginInfo);
     EXPORT void CALL RomClosed(void);
     EXPORT void CALL RomOpen(void);
 
@@ -432,7 +337,7 @@ extern "C"
 
     EXPORT void CALL CaptureScreen(const char *Directory);
     EXPORT void CALL ChangeWindow(void);
-    EXPORT int CALL InitiateGFX(ZilmarExtSpec::VideoPluginInfo Gfx_Info);
+    EXPORT int CALL InitiateGFX(ZESpec::VideoPluginInfo Gfx_Info);
     EXPORT void CALL MoveScreen(int xpos, int ypos);
     EXPORT void CALL ProcessDList(void);
     EXPORT void CALL ProcessRDPList(void);
@@ -452,7 +357,7 @@ extern "C"
     EXPORT uint32_t CALL AiReadLength(void);
     EXPORT void CALL AiUpdate(int32_t Wait);
     EXPORT void CALL DllTest(void *hParent);
-    EXPORT int32_t CALL InitiateAudio(ZilmarExtSpec::AudioPluginInfo Audio_Info);
+    EXPORT int32_t CALL InitiateAudio(ZESpec::AudioPluginInfo Audio_Info);
     EXPORT void CALL ProcessAList(void);
 
 #pragma endregion
@@ -460,9 +365,9 @@ extern "C"
 #pragma region Input
 
     EXPORT void CALL ControllerCommand(int32_t Control, uint8_t *Command);
-    EXPORT void CALL GetKeys(int32_t Control, ZilmarExtSpec::Buttons *Keys);
-    EXPORT void CALL SetKeys(int32_t controller, ZilmarExtSpec::Buttons keys);
-    EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo);
+    EXPORT void CALL GetKeys(int32_t Control, ZESpec::Buttons *Keys);
+    EXPORT void CALL SetKeys(int32_t controller, ZESpec::Buttons keys);
+    EXPORT void CALL InitiateControllers(ZESpec::InputPluginInfo ControlInfo);
     EXPORT void CALL ReadController(int Control, uint8_t *Command);
     EXPORT void CALL WM_KeyDown(uint32_t wParam, uint32_t lParam);
     EXPORT void CALL WM_KeyUp(uint32_t wParam, uint32_t lParam);
@@ -472,7 +377,7 @@ extern "C"
 #pragma region RSP
 
     EXPORT uint32_t DoRspCycles(uint32_t Cycles);
-    EXPORT void InitiateRSP(ZilmarExtSpec::RSPPluginInfo Rsp_Info, uint32_t *CycleCount);
+    EXPORT void InitiateRSP(ZESpec::RSPPluginInfo Rsp_Info, uint32_t *CycleCount);
 
 #pragma endregion
 

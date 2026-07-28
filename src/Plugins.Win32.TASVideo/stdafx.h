@@ -3,7 +3,6 @@
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <core_api.h>
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
 #include <Windows.h>
 #include <GL/glew.h>
 #include <commctrl.h>

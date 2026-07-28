@@ -6,23 +6,29 @@
 
 #include <CommonPCH.hpp>
 #include <DummyPluginStub.hpp>
-#include <VersionNameHelpers.hpp>
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Input")
 
-DUMMY_PLUGIN_STUB_IMPL(ZilmarExtSpec::PluginType::Input)
+DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Input)
 
-EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo ControlInfo)
+EXPORT void CALL M64RRProcessEvent(Event event)
 {
-    auto *controllers = ControlInfo.controllers;
-
-    for (int i = 0; i < 4; ++i)
+    switch (event.type)
     {
-        controllers[i].present = 0;
-        controllers[i].raw = 0;
-        controllers[i].plugin = ZilmarExtSpec::ControllerExtension::None;
-    }
+    case M64RRSpec::Event::Type::Initiate: {
+        auto *controllers = event.initiate.init->controllers;
 
-    controllers[0].present = 1;
+        for (int i = 0; i < 4; ++i)
+        {
+            controllers[i].present = 0;
+            controllers[i].raw = 0;
+            controllers[i].plugin = M64RRSpec::ControllerExtension::None;
+        }
+
+        controllers[0].present = 1;
+        break;
+    }
+    default:
+        break;
+    }
 }

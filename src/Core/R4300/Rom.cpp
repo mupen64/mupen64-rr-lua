@@ -239,17 +239,17 @@ bool rom_load(std::filesystem::path path)
     case 0x55:
     case 0x58:
     case 0x59:
-        g_sys_type = sys_pal;
+        g_sys_type = CoreSystemType::PAL;
         break;
     case 0x37:
     case 0x41:
     case 0x45:
     case 0x4a:
-        g_sys_type = sys_ntsc;
+        g_sys_type = CoreSystemType::NTSC;
         break;
     default:
         g_core->log_warn(std::format("Unknown ccode: {:#06x}. Assuming PAL.", ROM_HEADER.Country_code));
-        g_sys_type = sys_pal;
+        g_sys_type = CoreSystemType::PAL;
         break;
     }
 

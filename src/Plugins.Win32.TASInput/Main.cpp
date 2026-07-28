@@ -10,14 +10,8 @@
 #include <GamepadManager.hpp>
 #include <ConfigDialog.hpp>
 
-#define EXPORT __declspec(dllexport)
-#undef CALL
-#define CALL _cdecl
-
-std::filesystem::path g_config_path;
-
 HINSTANCE g_inst;
-ZilmarExtSpec::ExtendedFuncs *g_ef;
+M64RRSpec::PluginInit *g_plugin;
 
 // ReSharper disable once CppInconsistentNaming
 int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
