@@ -10,7 +10,7 @@ add_library(Mupen64RR.Plugins.Win32.DummyVideo MODULE
 set_target_properties(Mupen64RR.Plugins.Win32.DummyVideo PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
-    OUTPUT_NAME "no-video"
+    OUTPUT_NAME "NoVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
