@@ -14,23 +14,28 @@ env:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
         include:
           - arch: x86
-            zig_target: x86-windows-msvc
-            vcpkg_triplet: x86-windows
+            zig_target: x86-windows
+            vcpkg_triplet: x86-zig-windows-dynamic
           - arch: x64
-            zig_target: x86_64-windows-msvc
-            vcpkg_triplet: x64-windows
+            zig_target: x86_64-windows
+            vcpkg_triplet: x64-zig-windows-dynamic
 
     steps:
       - uses: actions/checkout@v6
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
-        with:
-          arch: ${{ matrix.arch }}
+
+      - name: Install MinGW-w64
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes mingw-w64
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
 
       - name: Setup Zig
         uses: mlugg/setup-zig@v2
@@ -38,14 +43,9 @@ jobs:
           version: 0.16.0
 
       - name: Create vcpkg cache directory
-        shell: pwsh
-        run: |
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
+        run: mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
 
-      - name: Cache vcpkg binaries
+      - name: Cache vcpkg binaries and installed packages
         uses: actions/cache@v5
         with:
           path: |
@@ -60,5 +60,5 @@ jobs:
       - name: Install dependencies
         run: zig build vcpkg -p build -Dtarget=${{ matrix.zig_target }}
 
-      - name: Build and test
+      - name: Build tests
         run: zig build test -p build -Doptimize=ReleaseSafe -Dtarget=${{ matrix.zig_target }} -Dvcpkg_installed=build/vcpkg_installed/${{ matrix.vcpkg_triplet }}
