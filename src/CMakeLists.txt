@@ -29,7 +29,6 @@ if (MUPEN64RR_BUILD_WIN32)
     # dummy plugins
     add_subdirectory(Plugins.Win32.DummyAudio)
     add_subdirectory(Plugins.Win32.DummyInput)
-    add_subdirectory(Plugins.Win32.DummyRSP)
     add_subdirectory(Plugins.Win32.DummyVideo)
 
     # TAS plugins
