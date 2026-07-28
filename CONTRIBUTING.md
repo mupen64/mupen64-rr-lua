@@ -14,8 +14,9 @@ You'll need:
 You'll need:
 - Zig
 - A system C/C++ toolchain for headers (`clang`/`gcc` + libstdc++/libc++)
-- `libsafec`
-- MinGW
+- `libsafec` (native Linux builds only)
+- MinGW-w64 (`mingw-w64-gcc`, for `windres`) and `nasm` (Win64 cross-builds)
+- vcpkg ports tree + matching tool binary (Win64 cross-builds; see [Arch Linux: vcpkg](#arch-linux-vcpkg))
 
 `libsafec` is required outside of Windows as no other C/C++ library implements C11 Annex K, which specifies `strncpy_s` and similar functions.
 
@@ -83,25 +84,27 @@ zig build test -Dbuild_win32=false
 
 ### Win64 cross-build
 
-Install `vcpkg` and MinGW-w64's resource compiler. The target is required: without it, `zig build vcpkg` selects the Linux host target and has no vcpkg dependencies to install. On Linux, the project uses its `zig-windows` overlay triplet: vcpkg builds C++ dependencies with `zig c++` and its bundled libc++, matching the application build. Do not use the stock `x64-mingw-*` install tree, which is built with GCC/libstdc++ and is C++ ABI-incompatible with Zig's libc++.
+The target is required: without it, `zig build vcpkg` selects the Linux host target and has no vcpkg dependencies to install. On Linux, the project uses its `zig-windows` overlay triplet: vcpkg builds C++ dependencies with `zig c++` and its bundled libc++, matching the application build. Do not use the stock `x64-mingw-*` install tree, which is built with GCC/libstdc++ and is C++ ABI-incompatible with Zig's libc++.
 
-On Arch, the packaged `vcpkg` does not include the ports checkout. Clone and bootstrap a matching executable first; the build automatically prefers `$VCPKG_ROOT/vcpkg` over the system wrapper when it exists.
+#### Arch Linux: vcpkg
+
+Arch's `vcpkg` package does not include the ports tree, and `/usr/bin/vcpkg` is too old for this repo's baseline. Clone and bootstrap into `$HOME/.local/share/vcpkg` (Arch's default `VCPKG_ROOT`):
 
 ```sh
-sudo pacman -Syu --needed vcpkg mingw-w64-gcc nasm
-export VCPKG_ROOT="$HOME/.local/share/vcpkg"
-git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
-"$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+sudo pacman -S --needed vcpkg mingw-w64-gcc nasm
 
-# Installs the x64-zig-windows-dynamic triplet under build/vcpkg_installed.
-zig build vcpkg -p build -Dtarget=x86_64-windows
-
-# The build auto-detects that directory; passing it explicitly is also supported.
-zig build -p build -Dtarget=x86_64-windows -Doptimize=ReleaseSafe \
-  -Dvcpkg_installed=build/vcpkg_installed/x64-zig-windows-dynamic
+git clone https://github.com/microsoft/vcpkg ~/.local/share/vcpkg
+~/.local/share/vcpkg/bootstrap-vcpkg.sh -disableMetrics
 ```
 
-The Zed `vcpkg install (Win64)` task already includes `-Dtarget=x86_64-windows`; run it before either Win64 build task.
+Then:
+
+```sh
+zig build vcpkg -p build -Dtarget=x86_64-windows
+zig build -p build -Dtarget=x86_64-windows -Doptimize=ReleaseSafe
+```
+
+The build prefers `~/.local/share/vcpkg/vcpkg` over the system binary. The Zed `vcpkg install (Win64)` task already passes `-Dtarget=x86_64-windows`.
 
 # Dependencies
 Third-party packages on Windows come from `vcpkg.json` via the `zig build vcpkg` step. Frontend/plugin-only deps should stay gated behind `-Dbuild_win32` in `build.zig`.
