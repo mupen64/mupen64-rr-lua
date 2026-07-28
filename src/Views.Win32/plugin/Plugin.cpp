@@ -482,7 +482,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
     {
         if (!FreeLibrary(module))
         {
-            DialogService::show_dialog(std::format(L"Failed to free library {:#06x}.", (unsigned long)module).c_str(),
+            DialogService::show_dialog(std::format(L"Failed to free library {}.", (void*)module).c_str(),
                                        L"Core", fsvc_error);
         }
         return std::make_pair(L"GetDllInfo missing", nullptr);
@@ -525,7 +525,7 @@ Plugin::~Plugin()
 {
     if (!FreeLibrary(m_module))
     {
-        DialogService::show_dialog(std::format(L"Failed to free library {:#06x}.", (unsigned long)m_module).c_str(),
+        DialogService::show_dialog(std::format(L"Failed to free library {}.", (void*)m_module).c_str(),
                                    L"Core", fsvc_error);
     }
 }

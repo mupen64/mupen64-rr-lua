@@ -244,7 +244,7 @@ static int GetAddress(lua_State *L)
     {
         if (lstrcmpiA(p->name, s) == 0)
         {
-            lua_pushinteger(L, (unsigned)p->pointer);
+            lua_pushinteger(L, (lua_Integer)p->pointer);
             return 1;
         }
     }
