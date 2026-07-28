@@ -203,7 +203,7 @@ std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
     const auto fname =
-        std::format(L"{} {}.st{}", IOUtils::to_wide_string((const char *)hdr->nom),
+        std::format(L"{} {}.st{}", IOUtils::rom_name_to_wide_string((const char *)hdr->nom),
                     IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)),
                     std::to_wstring(slot));
     return Config::save_directory() / fname;
@@ -292,8 +292,8 @@ static std::wstring get_titlebar_text()
     if (g_emu_starting) text += L" - Starting...";
 
     if (g_main_ctx.core_ctx->vr_get_launched())
-        text += std::format(
-            L" - {}", IOUtils::to_wide_string(reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        text += std::format(L" - {}", IOUtils::rom_name_to_wide_string(
+                                          reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {

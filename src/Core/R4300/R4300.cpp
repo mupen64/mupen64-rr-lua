@@ -100,32 +100,32 @@ bool vr_is_ceqs_effectively_accurate()
     return g_core->cfg->c_eq_s_nan_accurate;
 }
 
+static std::filesystem::path get_save_path(const std::string_view extension)
+{
+    auto filename = IOUtils::rom_name_to_path_component((const char *)ROM_HEADER.nom);
+    filename += std::format(" {}{}", g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code), extension);
+
+    return g_core->get_saves_directory() / filename;
+}
+
 std::filesystem::path get_sram_path()
 {
-    auto filename = std::format("{} {}.sra", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".sra");
 }
 
 std::filesystem::path get_eeprom_path()
 {
-    auto filename = std::format("{} {}.eep", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".eep");
 }
 
 std::filesystem::path get_flashram_path()
 {
-    auto filename = std::format("{} {}.fla", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".fla");
 }
 
 std::filesystem::path get_mempak_path()
 {
-    auto filename = std::format("{} {}.mpk", (const char *)ROM_HEADER.nom,
-                                g_ctx.vr_country_code_to_country_name(ROM_HEADER.Country_code));
-    return g_core->get_saves_directory() / filename;
+    return get_save_path(".mpk");
 }
 
 void vr_resume_emu_impl(bool force)
