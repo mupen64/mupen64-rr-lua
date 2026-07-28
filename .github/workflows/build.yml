@@ -73,13 +73,13 @@ jobs:
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build/${{ matrix.arch }}
+        run: cmake --build build
 
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
           name: mupen-debug-nightly
-          path: build/${{ matrix.arch }}/out
+          path: build/out
           retention-days: 14
 
   build-release-nightly:
@@ -142,19 +142,19 @@ jobs:
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build/${{ matrix.arch }}-release
+        run: cmake --build build
 
       - name: Delete PDB files
         shell: powershell
         run: |
-          Get-ChildItem -Path build/${{ matrix.arch }}-release/out -Filter *.pdb -Recurse -File |
+          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
             Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
           name: mupen-release-nightly
-          path: build/${{ matrix.arch }}-release/out
+          path: build/out
           retention-days: 14
 
   build-release-stable:
@@ -205,17 +205,17 @@ jobs:
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build/${{ matrix.arch }}-release
+        run: cmake --build build
 
       - name: Delete PDB files
         shell: powershell
         run: |
-          Get-ChildItem -Path build/${{ matrix.arch }}-release/out -Filter *.pdb -Recurse -File |
+          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
             Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
           name: mupen-release-stable
-          path: build/${{ matrix.arch }}-release/out
+          path: build/out
           retention-days: 14
