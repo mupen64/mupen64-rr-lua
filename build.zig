@@ -543,8 +543,34 @@ const CompileCommands = struct {
         try args.append(allocator, if (language == .c) "clang" else "clang++");
         try args.append(allocator, "-target");
         try args.append(allocator, try module.resolved_target.?.query.zigTriple(allocator));
-        try args.append(allocator, "-mcpu");
-        try args.append(allocator, try module.resolved_target.?.query.serializeCpuAlloc(allocator));
+        // `-mcpu` is a Zig driver option, not a Clang driver option. Required
+        // CPU features (SSSE3) are already present in the source flags.
+        if (language != .c) {
+            try args.append(allocator, "-nostdinc++");
+            // Match the libc++ configuration macros injected by `zig c++`.
+            // Without these, clangd parses the bundled libc++ as a generic
+            // non-Windows configuration and omits `std::wstring`.
+            const libcxx_defines = [_][]const u8{
+                "-D_LIBCPP_ABI_VERSION=1",
+                "-D_LIBCPP_ABI_NAMESPACE=__1",
+                "-D_LIBCPP_HAS_THREADS=1",
+                "-D_LIBCPP_HAS_MONOTONIC_CLOCK",
+                "-D_LIBCPP_HAS_TERMINAL",
+                "-D_LIBCPP_HAS_MUSL_LIBC=0",
+                "-D_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS",
+                "-D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
+                "-D_LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS=0",
+                "-D_LIBCPP_HAS_FILESYSTEM=1",
+                "-D_LIBCPP_HAS_RANDOM_DEVICE",
+                "-D_LIBCPP_HAS_LOCALIZATION",
+                "-D_LIBCPP_HAS_UNICODE",
+                "-D_LIBCPP_HAS_WIDE_CHARACTERS",
+                "-D_LIBCPP_HAS_NO_STD_MODULES",
+                "-D_LIBCPP_PSTL_BACKEND_SERIAL",
+                "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_NONE",
+            };
+            try args.appendSlice(allocator, &libcxx_defines);
+        }
         try appendZigSystemIncludes(b, &args, module.resolved_target.?);
         for (module.include_dirs.items) |include_dir| switch (include_dir) {
             .path => |path| try appendPathArg(b, step, &args, "-I", path),
