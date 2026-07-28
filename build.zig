@@ -260,7 +260,6 @@ pub fn build(b: *std.Build) void {
             linkSdl3(views.root_module, vp);
             linkNlohmannJson(views.root_module, vp);
             linkSpeexdsp(views.root_module, vp);
-            linkFfmpeg(views.root_module, vp);
             linkViewsWinLibs(views.root_module);
             views.root_module.linkSystemLibrary("comdlg32", .{});
             applyWindowsLinkFlags(views, target);
@@ -1177,12 +1176,6 @@ fn linkNlohmannJson(mod: *std.Build.Module, vp: VcpkgPaths) void {
 
 fn linkSpeexdsp(mod: *std.Build.Module, vp: VcpkgPaths) void {
     linkVcpkgLibrary(mod, vp, "speexdsp");
-}
-
-fn linkFfmpeg(mod: *std.Build.Module, vp: VcpkgPaths) void {
-    for ([_][]const u8{ "avformat", "avcodec", "avutil", "swresample", "swscale" }) |lib| {
-        linkVcpkgLibrary(mod, vp, lib);
-    }
 }
 
 fn linkGlew(mod: *std.Build.Module, vp: VcpkgPaths, optimize: std.builtin.OptimizeMode, link_static: bool) void {

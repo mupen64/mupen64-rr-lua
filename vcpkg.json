@@ -1,12 +1,5 @@
 {
   "dependencies": [
-    {
-      "name": "ffmpeg",
-      "features": [
-        "avcodec",
-        "avformat"
-      ]
-    },
     "catch2",
     "libdeflate",
     "lua",
