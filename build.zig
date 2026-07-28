@@ -3,6 +3,7 @@
 //! SPDX-License-Identifier: GPL-2.0-or-later
 
 const std = @import("std");
+const builtin = @import("builtin");
 
 const project_version = "1.5.0";
 
@@ -422,21 +423,9 @@ pub fn build(b: *std.Build) void {
 
     // ── Test step ───────────────────────────────────────────────────────
     if (core_tests_exe) |tests| {
-        const run_tests = b.addRunArtifact(tests);
-        run_tests.has_side_effects = true;
-        // Catch2 discovers tests itself; just run the binary.
-        const test_step = b.step("test", "Run Core.Tests");
-        test_step.dependOn(&run_tests.step);
-        // Ensure runtime DLLs are present next to the test binary when needed.
-        if (vcpkg) |vp| {
-            if (!link_static and target_is_windows) {
-                // Run from the installed location after install, or set cwd to bin.
-                run_tests.setEnvironmentVariable("PATH", b.fmt("{s};{s}", .{
-                    vp.bin_dir,
-                    std.process.getEnvVarOwned(b.allocator, "PATH") catch "",
-                }));
-            }
-        }
+        const test_step = b.step("test", "Run Core.Tests (one process per case)");
+        const isolated = addIsolatedCatchTests(b, tests, if (vcpkg) |vp| vp.bin_dir else null);
+        test_step.dependOn(&isolated.step);
     }
 
     // ── Convenience: vcpkg install helper ───────────────────────────────
@@ -468,6 +457,119 @@ fn findVcpkg(b: *std.Build) []const u8 {
     } else |_| {}
     return "vcpkg";
 }
+
+fn addIsolatedCatchTests(b: *std.Build, tests: *std.Build.Step.Compile, vcpkg_bin: ?[]const u8) *IsolatedCatchTests {
+    const isolated = b.allocator.create(IsolatedCatchTests) catch @panic("OOM");
+    isolated.* = .{
+        .step = std.Build.Step.init(.{
+            .id = .custom,
+            .name = "run Core.Tests (isolated)",
+            .owner = b,
+            .makeFn = IsolatedCatchTests.make,
+        }),
+        .exe = tests,
+        .vcpkg_bin = if (vcpkg_bin) |p| b.dupePath(p) else null,
+    };
+    isolated.step.dependOn(&tests.step);
+    return isolated;
+}
+
+const IsolatedCatchTests = struct {
+    step: std.Build.Step,
+    exe: *std.Build.Step.Compile,
+    vcpkg_bin: ?[]const u8,
+
+    fn make(step: *std.Build.Step, options: std.Build.Step.MakeOptions) !void {
+        _ = options;
+        const self: *IsolatedCatchTests = @fieldParentPtr("step", step);
+        const b = step.owner;
+        const allocator = b.allocator;
+
+        const exe_path = self.exe.getEmittedBin().getPath2(b, step);
+
+        var env_map = try std.process.getEnvMap(allocator);
+        defer env_map.deinit();
+        if (self.vcpkg_bin) |bin_dir| {
+            const old_path = env_map.get("PATH") orelse "";
+            const sep = if (builtin.os.tag == .windows) ";" else ":";
+            const new_path = try std.fmt.allocPrint(allocator, "{s}{s}{s}", .{ bin_dir, sep, old_path });
+            try env_map.put("PATH", new_path);
+        }
+
+        // 1) Enumerate cases.
+        // Catch2 v3: one name per line when quiet.
+        const list_result = try std.process.Child.run(.{
+            .allocator = allocator,
+            .argv = &.{ exe_path, "--list-tests", "--verbosity", "quiet" },
+            .env_map = &env_map,
+        });
+        defer allocator.free(list_result.stdout);
+        defer allocator.free(list_result.stderr);
+
+        switch (list_result.term) {
+            .Exited => |code| if (code != 0) {
+                return step.fail("failed to list Catch2 tests (exit {d}):\n{s}{s}", .{
+                    code,
+                    list_result.stdout,
+                    list_result.stderr,
+                });
+            },
+            else => return step.fail("failed to list Catch2 tests ({any}):\n{s}{s}", .{
+                list_result.term,
+                list_result.stdout,
+                list_result.stderr,
+            }),
+        }
+
+        var names: std.ArrayListUnmanaged([]const u8) = .{};
+        defer {
+            for (names.items) |n| allocator.free(n);
+            names.deinit(allocator);
+        }
+
+        var line_it = std.mem.splitScalar(u8, list_result.stdout, '\n');
+        while (line_it.next()) |raw| {
+            const line = std.mem.trim(u8, raw, " \t\r");
+            if (line.len == 0) continue;
+            try names.append(allocator, try allocator.dupe(u8, line));
+        }
+
+        if (names.items.len == 0) {
+            return step.fail("Catch2 reported zero tests", .{});
+        }
+
+        std.log.info("Running {d} Catch2 cases in isolated processes...", .{names.items.len});
+
+        // 2) One fresh process per case.
+        var failures: usize = 0;
+        for (names.items) |name| {
+            const case_result = try std.process.Child.run(.{
+                .allocator = allocator,
+                .argv = &.{ exe_path, name, "--order", "decl", "--rng-seed", "0" },
+                .env_map = &env_map,
+            });
+            defer allocator.free(case_result.stdout);
+            defer allocator.free(case_result.stderr);
+
+            const ok = switch (case_result.term) {
+                .Exited => |code| code == 0,
+                else => false,
+            };
+            if (!ok) {
+                failures += 1;
+                std.log.err("FAILED: {s}\n{s}{s}", .{ name, case_result.stdout, case_result.stderr });
+            } else {
+                std.log.info("passed: {s}", .{name});
+            }
+        }
+
+        if (failures != 0) {
+            return step.fail("{d}/{d} Catch2 cases failed", .{ failures, names.items.len });
+        }
+
+        std.log.info("All {d} Catch2 cases passed (isolated processes)", .{names.items.len});
+    }
+};
 
 // ─── helpers ────────────────────────────────────────────────────────────
 

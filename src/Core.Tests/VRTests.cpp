@@ -24,6 +24,7 @@ struct VrFixture
         s_core_params.input_set_keys = [](int32_t, CoreButtons) {};
         s_core_params.callbacks = {};
         core_create(&s_core_params, &s_core_ctx);
+        s_core_ctx->cht_set_list({});
 
         g_r4300.desired_speed_mode.store(CoreSpeedMode::Normal);
         g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);

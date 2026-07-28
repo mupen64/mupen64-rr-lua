@@ -22,11 +22,17 @@ struct VcrFixture
 
         vcr = {};
         s_cfg = {};
+        s_core_params = {};
         s_core_params.cfg = &s_cfg;
         s_core_params.input_get_keys = [](int32_t, CoreButtons *) {};
         s_core_params.input_set_keys = [](int32_t, CoreButtons) {};
         s_core_params.callbacks = {};
         core_create(&s_core_params, &s_core_ctx);
+        s_core_ctx->cht_set_list({});
+
+        g_r4300.desired_speed_mode.store(CoreSpeedMode::Normal);
+        g_r4300.effective_speed_mode.store(CoreSpeedMode::Normal);
+        g_r4300.frame_advance_outstanding.store(0);
     }
 };
 
@@ -965,9 +971,9 @@ TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
     vcr.hdr.length_samples = 5;
     vcr.hdr.controller_flags = CONTROLLER_X_PRESENT(0);
     vcr.inputs = {{1}, {2}, {3}, {4}, {5}};
-    vcr.current_sample = 4;
+    vcr.current_sample = 2;
 
-    const auto result = vcr_begin_warp_modify({{0}, {0}, {0}, {0}});
+    const auto result = vcr_begin_warp_modify({{1}, {2}, {3}, {0}, {0}});
 
     REQUIRE(result == Res_Ok);
 }
