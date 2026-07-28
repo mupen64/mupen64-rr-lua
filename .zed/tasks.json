@@ -53,7 +53,7 @@
     "reveal": "no_focus",
     "save": "all",
     "command": "zig build -p build -Dtarget=x86_64-windows; wine build/out/mupen64.exe",
-  },  
+  },
   {
     "label": "build (Win32)",
     "reveal": "no_focus",
@@ -138,6 +138,15 @@
       "-p",
       "build",
       "-Dtarget=x86-windows"
+    ]
+  },
+  {
+    "label": "format (clang-format)",
+    "reveal": "no_focus",
+    "save": "all",
+    "command": "python3",
+    "args": [
+      "tools/clang_format.py"
     ]
   }
 ]

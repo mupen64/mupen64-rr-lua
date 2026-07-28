@@ -200,5 +200,18 @@
         "panel": "shared"
       }
     }
+    {
+      "label": "format (clang-format)",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "tools/clang_format.py"
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    }
   ]
 }
