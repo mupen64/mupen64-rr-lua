@@ -589,7 +589,7 @@ fn createCppModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
         .link_libcpp = if (use_libcxx) true else null,
     });
     if (!use_libcxx) {
-        addWindowsSdkPaths(mod, optimize);
+        addWindowsSdkPaths(mod, optimize, target);
         // Link the MSVC CRT directly (no Zig -lc). Debug uses MDd; release uses MD.
         // msvcrt(d) provides process/DLL startup (e.g. _DllMainCRTStartup).
         if (optimize == .Debug) {
@@ -613,7 +613,7 @@ fn createCppModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
 
 /// Add MSVC/WinSDK include + library paths from the VS developer environment
 /// (INCLUDE/LIB) when available, with a filesystem fallback for the kit roots.
-fn addWindowsSdkPaths(mod: *std.Build.Module, optimize: std.builtin.OptimizeMode) void {
+fn addWindowsSdkPaths(mod: *std.Build.Module, optimize: std.builtin.OptimizeMode, target: std.Build.ResolvedTarget) void {
     _ = optimize;
     const b = mod.owner;
 
@@ -635,8 +635,8 @@ fn addWindowsSdkPaths(mod: *std.Build.Module, optimize: std.builtin.OptimizeMode
             mod.addLibraryPath(.{ .cwd_relative = b.dupePath(part) });
         }
     } else {
-        addDefaultMsvcLibs(mod);
-        addDefaultWinKitLibs(mod);
+        addDefaultMsvcLibs(mod, target);
+        addDefaultWinKitLibs(mod, target);
     }
 }
 
@@ -648,11 +648,17 @@ fn addDefaultMsvcIncludes(mod: *std.Build.Module) void {
     if (dirExists(b, include_dir)) mod.addSystemIncludePath(.{ .cwd_relative = include_dir });
 }
 
-fn addDefaultMsvcLibs(mod: *std.Build.Module) void {
+fn addDefaultMsvcLibs(mod: *std.Build.Module, target: std.Build.ResolvedTarget) void {
     const b = mod.owner;
     const root = "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC";
     const ver = newestSubdirBefore(b, root, "14.52") orelse return;
-    const lib_dir = b.fmt("{s}/{s}/lib/x64", .{ root, ver });
+    const arch = switch (target.result.cpu.arch) {
+        .x86 => "x86",
+        .x86_64 => "x64",
+        .aarch64 => "arm64",
+        else => return,
+    };
+    const lib_dir = b.fmt("{s}/{s}/lib/{s}", .{ root, ver, arch });
     if (dirExists(b, lib_dir)) mod.addLibraryPath(.{ .cwd_relative = lib_dir });
 }
 
@@ -666,13 +672,18 @@ fn addDefaultWinKitIncludes(mod: *std.Build.Module) void {
     }
 }
 
-fn addDefaultWinKitLibs(mod: *std.Build.Module) void {
+fn addDefaultWinKitLibs(mod: *std.Build.Module, target: std.Build.ResolvedTarget) void {
     const b = mod.owner;
     const kits_root = "C:/Program Files (x86)/Windows Kits/10/Lib";
     const ver = newestSubdir(b, kits_root) orelse return;
-    // Assume x64 host builds by default; cross x86 can still pass LIB via vsdev.
-    for ([_][]const u8{ "ucrt/x64", "um/x64" }) |leaf| {
-        const p = b.fmt("{s}/{s}/{s}", .{ kits_root, ver, leaf });
+    const arch = switch (target.result.cpu.arch) {
+        .x86 => "x86",
+        .x86_64 => "x64",
+        .aarch64 => "arm64",
+        else => return,
+    };
+    for ([_][]const u8{ "ucrt", "um" }) |kind| {
+        const p = b.fmt("{s}/{s}/{s}/{s}", .{ kits_root, ver, kind, arch });
         if (dirExists(b, p)) mod.addLibraryPath(.{ .cwd_relative = p });
     }
 }
@@ -836,7 +847,7 @@ fn addStaticLib(
                 .optimize = optimize,
                 .link_libc = use_libcxx_abi,
             });
-            if (!use_libcxx_abi) addWindowsSdkPaths(mod, optimize);
+            if (!use_libcxx_abi) addWindowsSdkPaths(mod, optimize, target);
             break :blk mod;
         },
     });
