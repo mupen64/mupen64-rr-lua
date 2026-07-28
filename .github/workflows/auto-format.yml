@@ -17,7 +17,7 @@ jobs:
 
       - name: Run clang-format
         run: |
-          find ./src -type f \( -name "*.h" -o -name "*.cpp" \) \
+          find ./src -type f \( -name "*.h" -o -name "*.hpp" -o -name "*.cpp" \) \
             -exec clang-format-18 -i -style=file {} +
 
       - name: Commit and push reformatted code
