@@ -18,6 +18,11 @@
 #include <R4300/R4300.hpp>
 #include <R4300/Rom.hpp>
 
+static uint32_t clamp_dma_length(const uint32_t offset, const uint32_t capacity, const uint32_t requested)
+{
+    return offset < capacity ? std::min(requested, capacity - offset) : 0;
+}
+
 static bool validate_dma()
 {
     if (si_register.si_pif_addr_wr64b != 0x1FC007C0)
@@ -41,9 +46,11 @@ void dma_pi_read()
             fseek(g_sram_file, 0, SEEK_SET);
             fread(sram, 1, 0x8000, g_sram_file);
 
-            for (i = 0; i < (pi_register.pi_rd_len_reg & 0xFFFFFF) + 1; i++)
-                sram[((pi_register.pi_cart_addr_reg - 0x08000000) + i) ^ S8] =
-                    ((unsigned char *)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8];
+            const uint32_t sram_offset = pi_register.pi_cart_addr_reg - 0x08000000;
+            uint32_t length = clamp_dma_length(sram_offset, sizeof(sram), (pi_register.pi_rd_len_reg & 0xFFFFFF) + 1);
+            length = clamp_dma_length(pi_register.pi_dram_addr_reg, sizeof(rdram), length);
+            for (uint32_t i = 0; i < length; i++)
+                sram[(sram_offset + i) ^ S8] = ((unsigned char *)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8];
 
             fseek(g_sram_file, 0, SEEK_SET);
             fwrite(sram, 1, 0x8000, g_sram_file);
@@ -103,9 +110,11 @@ void dma_pi_write()
                 fseek(g_sram_file, 0, SEEK_SET);
                 fread(sram, 1, 0x8000, g_sram_file);
 
-                for (i = 0; i < (pi_register.pi_wr_len_reg & 0xFFFFFF) + 1; i++)
-                    ((unsigned char *)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-                        sram[(((pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF) + i) ^ S8];
+                const uint32_t sram_offset = (pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF;
+                uint32_t length = clamp_dma_length(sram_offset, sizeof(sram), (pi_register.pi_wr_len_reg & 0xFFFFFF) + 1);
+                length = clamp_dma_length(pi_register.pi_dram_addr_reg, sizeof(rdram), length);
+                for (uint32_t i = 0; i < length; i++)
+                    ((unsigned char *)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] = sram[(sram_offset + i) ^ S8];
                 use_flashram = -1;
             }
             else
@@ -218,36 +227,34 @@ void dma_pi_write()
 
 void dma_sp_write()
 {
-    int32_t i;
-    if ((sp_register.sp_mem_addr_reg & 0x1000) > 0)
-    {
-        for (i = 0; i < ((sp_register.sp_rd_len_reg & 0xFFF) + 1); i++)
-            ((unsigned char *)(SP_IMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8] =
-                ((unsigned char *)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8];
-    }
-    else
-    {
-        for (i = 0; i < ((sp_register.sp_rd_len_reg & 0xFFF) + 1); i++)
-            ((unsigned char *)(SP_DMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8] =
-                ((unsigned char *)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8];
-    }
+    const uint32_t sp_offset = sp_register.sp_mem_addr_reg & 0xFFF;
+    const uint32_t dram_offset = sp_register.sp_dram_addr_reg & 0xFFFFFF;
+    const uint32_t requested_length = (sp_register.sp_rd_len_reg & 0xFFF) + 1;
+    assert(requested_length <= 0x1000 - sp_offset && "SP DMA crosses a DMEM/IMEM boundary");
+    assert(dram_offset < sizeof(rdram) && requested_length <= sizeof(rdram) - dram_offset &&
+           "SP DMA exceeds RDRAM");
+    uint32_t length = clamp_dma_length(sp_offset, 0x1000, requested_length);
+    length = clamp_dma_length(dram_offset, sizeof(rdram), length);
+    auto *sp_memory = (sp_register.sp_mem_addr_reg & 0x1000) ? (unsigned char *)SP_IMEM : (unsigned char *)SP_DMEM;
+
+    for (uint32_t i = 0; i < length; i++)
+        sp_memory[(sp_offset + i) ^ S8] = ((unsigned char *)rdram)[(dram_offset + i) ^ S8];
 }
 
 void dma_sp_read()
 {
-    int32_t i;
-    if ((sp_register.sp_mem_addr_reg & 0x1000) > 0)
-    {
-        for (i = 0; i < ((sp_register.sp_wr_len_reg & 0xFFF) + 1); i++)
-            ((unsigned char *)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8] =
-                ((unsigned char *)(SP_IMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8];
-    }
-    else
-    {
-        for (i = 0; i < ((sp_register.sp_wr_len_reg & 0xFFF) + 1); i++)
-            ((unsigned char *)(rdram))[((sp_register.sp_dram_addr_reg & 0xFFFFFF) + i) ^ S8] =
-                ((unsigned char *)(SP_DMEM))[((sp_register.sp_mem_addr_reg & 0xFFF) + i) ^ S8];
-    }
+    const uint32_t sp_offset = sp_register.sp_mem_addr_reg & 0xFFF;
+    const uint32_t dram_offset = sp_register.sp_dram_addr_reg & 0xFFFFFF;
+    const uint32_t requested_length = (sp_register.sp_wr_len_reg & 0xFFF) + 1;
+    assert(requested_length <= 0x1000 - sp_offset && "SP DMA crosses a DMEM/IMEM boundary");
+    assert(dram_offset < sizeof(rdram) && requested_length <= sizeof(rdram) - dram_offset &&
+           "SP DMA exceeds RDRAM");
+    uint32_t length = clamp_dma_length(sp_offset, 0x1000, requested_length);
+    length = clamp_dma_length(dram_offset, sizeof(rdram), length);
+    auto *sp_memory = (sp_register.sp_mem_addr_reg & 0x1000) ? (unsigned char *)SP_IMEM : (unsigned char *)SP_DMEM;
+
+    for (uint32_t i = 0; i < length; i++)
+        ((unsigned char *)rdram)[(dram_offset + i) ^ S8] = sp_memory[(sp_offset + i) ^ S8];
 }
 
 void dma_si_write()
@@ -256,7 +263,9 @@ void dma_si_write()
     {
         return;
     }
-    if (!check_register_validity(&si_register))
+    const bool si_register_valid = check_register_validity(&si_register);
+    assert(si_register_valid && "SI DMA exceeds RDRAM");
+    if (!si_register_valid)
     {
         critical_stop("Invalid SI register contents in dma_si_write");
         return;
@@ -276,7 +285,9 @@ void dma_si_read()
 
     update_pif_read();
 
-    if (!check_register_validity(&si_register))
+    const bool si_register_valid = check_register_validity(&si_register);
+    assert(si_register_valid && "SI DMA exceeds RDRAM");
+    if (!si_register_valid)
     {
         critical_stop("Invalid SI register contents in dma_si_read");
         return;

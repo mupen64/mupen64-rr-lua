@@ -18,7 +18,7 @@
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>
 
-constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1 << 31);
+constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1U << 31);
 
 // st that comes from no delay fix mupen, it has some differences compared to new st:
 // - one frame of input is "embedded", that is the pif ram holds already fetched controller info.
@@ -358,8 +358,12 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     // new version does one bigass gzread for first part of .st (static size)
     MiscHelpers::memread(&ptr, g_first_block, sizeof(g_first_block));
 
-    const auto si_reg = (core_si_reg *)&g_first_block[0xDC - 0x20];
-    if (!check_register_validity(si_reg) || !check_flashram_infos(&g_first_block[0x8021F0 - 0x20]))
+    core_si_reg si_reg;
+    std::memcpy(&si_reg, &g_first_block[0xDC - 0x20], sizeof(si_reg));
+    const bool si_register_valid = check_register_validity(&si_reg);
+    const bool flashram_infos_valid = check_flashram_infos(&g_first_block[0x8021F0 - 0x20]);
+    assert(si_register_valid && flashram_infos_valid && "Savestate contains invalid DMA register contents");
+    if (!si_register_valid || !flashram_infos_valid)
     {
         task.callback(
             core_st_callback_info{
@@ -372,8 +376,10 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     int32_t len;
     for (len = 0; len < sizeof(g_event_queue_buf); len += 8)
     {
-        MiscHelpers::memread(&ptr, g_event_queue_buf + len, 4);
-        if (*reinterpret_cast<uint32_t *>(&g_event_queue_buf[len]) == 0xFFFFFFFF) break;
+        uint32_t event_type;
+        MiscHelpers::memread(&ptr, &event_type, sizeof(event_type));
+        std::memcpy(g_event_queue_buf + len, &event_type, sizeof(event_type));
+        if (event_type == 0xFFFFFFFF) break;
         MiscHelpers::memread(&ptr, g_event_queue_buf + len + 4, 4);
     }
     if (len == sizeof(g_event_queue_buf))

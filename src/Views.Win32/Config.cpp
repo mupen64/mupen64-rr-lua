@@ -921,7 +921,9 @@ static void config_patch(t_config &cfg)
     // HACK: Wine doesn't implement DComp well enough yet, so force GDI
     if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
 
-    cfg.core.cpu_cf = std::max(cfg.core.cpu_cf, 0.0);
+    cfg.core.cpu_cf = std::isfinite(cfg.core.cpu_cf) ? std::max(cfg.core.cpu_cf, 0.0) : 0.0;
+    cfg.core.rcp_lag_factor =
+        std::isfinite(cfg.core.rcp_lag_factor) ? std::max(cfg.core.rcp_lag_factor, 0.0) : 0.0;
 }
 
 void Config::init()
