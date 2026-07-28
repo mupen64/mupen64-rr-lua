@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <m64rr/core_api.hpp>
+#include <m64rr/API.hpp>
 
 extern bool g_st_skip_dma;
 extern bool g_st_old;

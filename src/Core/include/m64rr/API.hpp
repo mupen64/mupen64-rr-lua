@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "m64rr/core_types.hpp"
+#include "m64rr/Types.hpp"
 
 #ifdef __cplusplus
 extern "C"

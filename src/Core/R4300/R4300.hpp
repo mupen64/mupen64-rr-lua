@@ -13,7 +13,7 @@
 #include <R4300/Recomp.hpp>
 #include <Memory/TLB.hpp>
 #include <R4300/Rom.hpp>
-#include <m64rr/core_types.hpp>
+#include <m64rr/Types.hpp>
 
 struct r4300
 {

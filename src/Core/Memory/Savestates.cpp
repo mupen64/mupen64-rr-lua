@@ -8,7 +8,7 @@
 #include <Core.hpp>
 #include <libdeflate.h>
 #include <FNV1A.hpp>
-#include <m64rr/core_api.hpp>
+#include <m64rr/API.hpp>
 #include <Memory/FlashRAM.hpp>
 #include <Memory/Memory.hpp>
 #include <Memory/Savestates.hpp>

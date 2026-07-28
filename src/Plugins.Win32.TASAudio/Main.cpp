@@ -8,10 +8,10 @@
 #include "Config.hpp"
 #include "IOUtils.hpp"
 #include "SDLBackend.hpp"
-#include "m64rr/core_types.hpp"
+#include "m64rr/Types.hpp"
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
-#include <Views.Win32/M64RRSpec.h>
+#include <m64rr/Plugin.hpp>
 
 M64RRSpec::PluginInit *g_plugin = nullptr;
 std::optional<SDLAudio::SDLBackend> g_backend{};

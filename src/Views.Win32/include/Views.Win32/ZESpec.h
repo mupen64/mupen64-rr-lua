@@ -11,11 +11,11 @@
 
 #pragma once
 
-#include "m64rr/core_types.hpp"
+#include "m64rr/Types.hpp"
 
 #ifdef _WIN32
 
-#undef CALL
+#undef EXPORT
 #define EXPORT __declspec(dllexport)
 #undef CALL
 #define CALL __cdecl

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <m64rr/core_api.hpp>
+#include <m64rr/API.hpp>
 
 extern uint8_t *rom;
 extern size_t rom_size;

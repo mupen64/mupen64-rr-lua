@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <m64rr/core_types.hpp>
+#include <m64rr/Types.hpp>
 
 void dbg_call_breakpoints_and_wait(const core_dbg_cpu_state &state);
 CoreBreakpointId dbg_add_breakpoint(uintptr_t address, const CoreBreakpointCallback &callback);
