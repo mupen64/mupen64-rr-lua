@@ -36,7 +36,7 @@ jobs:
       - name: Setup Zig
         uses: mlugg/setup-zig@v2
         with:
-          version: 0.15.2
+          version: 0.16.0
 
       - name: Set VERSION_SUFFIX and NIGHTLY
         shell: powershell
@@ -105,7 +105,7 @@ jobs:
       - name: Setup Zig
         uses: mlugg/setup-zig@v2
         with:
-          version: 0.15.2
+          version: 0.16.0
 
       - name: Set VERSION_SUFFIX and NIGHTLY
         shell: powershell
@@ -180,7 +180,7 @@ jobs:
       - name: Setup Zig
         uses: mlugg/setup-zig@v2
         with:
-          version: 0.15.2
+          version: 0.16.0
 
       - name: Create vcpkg cache directory
         shell: pwsh

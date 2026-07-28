@@ -1,7 +1,7 @@
 .{
     .name = .mupen64_rr,
     .version = "1.5.0",
-    .minimum_zig_version = "0.15.2",
+    .minimum_zig_version = "0.16.0",
     .fingerprint = 0xaf4dbded2f04b761,
     .paths = .{
         "build.zig",

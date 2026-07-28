@@ -8,12 +8,12 @@ Only Windows supports compiling the full emulator. However, the core and VCR tes
 You'll need:
 - Visual Studio 2026 (for the MSVC toolchain, Windows SDK, and bundled vcpkg)
   - Ensure a VS developer environment is available (the provided `tools/vsdev-*.cmd` wrappers set this up).
-- [Zig 0.15.2+](https://ziglang.org/download/)
+- [Zig 0.16.0+](https://ziglang.org/download/)
 
 ## Linux dependencies
 
 You'll need:
-- Zig 0.15.2+
+- Zig 0.16.0+
 - A system C/C++ toolchain for headers (`clang`/`gcc` + libstdc++/libc++)
 - `libdeflate`
 - `libsafec`
