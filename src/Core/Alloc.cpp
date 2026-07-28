@@ -26,7 +26,7 @@
 
 #if defined(__linux__)
 static std::mutex page_size_map_lock;
-static std::unordered_map<void*, size_t> page_alloc_sizes;
+static std::unordered_map<void *, size_t> page_alloc_sizes;
 #endif
 
 // Buffers that have been superseded by realloc_exec but cannot be freed yet because
@@ -37,15 +37,15 @@ static std::unordered_map<void*, size_t> page_alloc_sizes;
 //  - The number of superseded buffers is bounded by the number of block recompilations
 //  - Old code from a superseded buffer is never entered: once a block is recompiled,
 //    all execution paths redirect to the new buffer
-static std::vector<void*> deferred_free_list;
+static std::vector<void *> deferred_free_list;
 static std::mutex deferred_free_mutex;
 
-void* malloc_exec(size_t size)
+void *malloc_exec(size_t size)
 {
 #ifdef _WIN32
     return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 #elif defined(__linux__)
-    void* block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    void *block = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (block == MAP_FAILED) return NULL;
 
     // allocation succeeded
@@ -59,9 +59,9 @@ void* malloc_exec(size_t size)
 #endif
 }
 
-void* realloc_exec(void* ptr, size_t oldsize, size_t newsize)
+void *realloc_exec(void *ptr, size_t oldsize, size_t newsize)
 {
-    void* block = malloc_exec(newsize);
+    void *block = malloc_exec(newsize);
     if (block != NULL)
     {
         size_t copysize;
@@ -81,7 +81,7 @@ void* realloc_exec(void* ptr, size_t oldsize, size_t newsize)
     return block;
 }
 
-void free_exec(void* ptr)
+void free_exec(void *ptr)
 {
 #ifdef _WIN32
     VirtualFree(ptr, 0, MEM_RELEASE);
@@ -106,7 +106,7 @@ void free_all_deferred_exec_buffers()
 {
     std::scoped_lock lock(deferred_free_mutex);
 
-    for (void* ptr : deferred_free_list)
+    for (void *ptr : deferred_free_list)
     {
         free_exec(ptr);
     }

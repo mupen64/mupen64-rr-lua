@@ -153,7 +153,7 @@ Plugin::~Plugin()
 {
     if (!FreeLibrary(m_module))
     {
-        DialogService::show_dialog(std::format(L"Failed to free library {:#06x}.", (unsigned long)m_module).c_str(),
+        DialogService::show_dialog(std::format(L"Failed to free library {}.", (void*)m_module).c_str(),
                                    L"Core", fsvc_error);
     }
 }

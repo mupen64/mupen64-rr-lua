@@ -16,7 +16,6 @@
 #include <R4300/x86_64/RegCache.hpp>
 #include <Alloc.hpp>
 
-
 extern uint32_t src; // recomp.c
 
 precomp_instr fake_instr;
@@ -134,9 +133,9 @@ void gencheck_interrupt(uintptr_t instr_structure)
     cmp_reg32_m32(EAX, (void *)&core_Count);
     // Adjusted displacement: 23 (mov_m64) + 10 (mov_reg64) + 24 (call_reg64) = 57 bytes
     ja_rj(57);
-    mov_m64_imm64((void *)(&PC), instr_structure); // 23
-    mov_reg64_imm64(EAX, (uintptr_t)gen_interrupt);     // 10
-    call_reg64(EAX);                                   // 24
+    mov_m64_imm64((void *)(&PC), instr_structure);  // 23
+    mov_reg64_imm64(EAX, (uintptr_t)gen_interrupt); // 10
+    call_reg64(EAX);                                // 24
 }
 
 void gencheck_interrupt_out(uint32_t addr)
@@ -157,10 +156,10 @@ void gencheck_interrupt_reg() // addr is in EAX
     cmp_reg32_m32(EBX, (void *)&core_Count);
     // Adjusted displacement: 23 (mov_m64) + 13 (mov_memoffs32) + 10 (mov_reg64) + 24 (call_reg64) = 70 bytes
     ja_rj(70);
-    mov_memoffs32_eax((void *)(&fake_instr.addr));         // 13
+    mov_memoffs32_eax((void *)(&fake_instr.addr));          // 13
     mov_m64_imm64((void *)(&PC), (uintptr_t)(&fake_instr)); // 23
-    mov_reg64_imm64(EAX, (uintptr_t)gen_interrupt);             // 10
-    call_reg64(EAX);                                           // 24
+    mov_reg64_imm64(EAX, (uintptr_t)gen_interrupt);         // 10
+    call_reg64(EAX);                                        // 24
 }
 
 void gennop()

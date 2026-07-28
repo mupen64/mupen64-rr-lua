@@ -1,0 +1,30 @@
+name: Auto Format
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-format:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run clang-format
+        run: |
+          find ./src -type f \( -name "*.h" -o -name "*.hpp" -o -name "*.cpp" \) \
+            -exec clang-format-18 -i -style=file {} +
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "style: reformat code"
+          title: "style: reformat code"
+          body: Automated clang-format run.
+          branch: auto-format
+          delete-branch: true

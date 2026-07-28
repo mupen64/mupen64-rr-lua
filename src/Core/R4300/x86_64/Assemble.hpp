@@ -92,9 +92,9 @@ void je_rj(unsigned char saut);
 void jmp(uint32_t mi_addr);
 void cdq();
 void mov_m32_reg32(void *_m32, uint32_t reg32);
-void mov_m64_reg64(void *_m64, uint32_t reg64); // x64: save full 64-bit register
+void mov_m64_reg64(void *_m64, uint32_t reg64);      // x64: save full 64-bit register
 void movsxd_reg64_reg32(uint32_t dst, uint32_t src); // sign-extend 32-bit reg into 64-bit reg
-void mov_reg64_m64(uint32_t reg64, void *_m64); // x64: load full 64-bit register
+void mov_reg64_m64(uint32_t reg64, void *_m64);      // x64: load full 64-bit register
 void je_near(uint32_t mi_addr);
 void jne_near(uint32_t mi_addr);
 void jge_near(uint32_t mi_addr);
@@ -150,7 +150,7 @@ void cmp_eax_imm32(uint32_t imm32);
 void cmp_eax_r11(); // x64: cmp eax, r11 (compare against 64-bit value in r11)
 void cmp_rax_r11(); // x64: cmp rax, r11 (full 64-bit comparison)
 void mov_rax_preg32x4pimm32(int32_t reg1, int32_t reg2, uint32_t imm32); // x64: mov rax, [reg1*4 + reg2 + imm32]
-void cmp_rax_imm64(uintptr_t imm64); // x64: mov r11, imm64 ; cmp rax, r11
+void cmp_rax_imm64(uintptr_t imm64);                                     // x64: mov r11, imm64 ; cmp rax, r11
 void jg_near(uint32_t mi_addr);
 void add_m32_reg32(void *_m32, int32_t reg32);
 void je_near_rj(uint32_t saut);
@@ -171,10 +171,13 @@ void cmp_m32_imm8(void *_m32, unsigned char imm8);
 void mov_reg32_preg32x4preg32(int32_t reg1, int32_t reg2, int32_t reg3);
 void mov_reg32_preg32x4preg32pimm32(int32_t reg1, int32_t reg2, int32_t reg3, uint32_t imm32);
 void mov_reg32_preg32x4pimm32(int32_t reg1, int32_t reg2, uint32_t imm32);
-void mov_reg32_preg32x4pimm64(int32_t reg1, int32_t reg2, uint64_t ptr); // x64: load 64-bit ptr into R10 then mov [idx*4+R10]
-void mov_reg32_preg32x4_r10(int32_t dst_reg, int32_t index_reg, uint64_t func_ptr); // x64: load 64-bit func_ptr into R10 then mov [idx*4+R10]
-void cmp_reg32_prx4_r10(int32_t index_reg, uint64_t func_ptr); // x64: load 64-bit func_ptr into R10, mov to r11, for compare ops
-void mov_rax_r11_idx4(int32_t idx_reg); // x64: mov rax, [r11 + idx*4] - base already in r11
+void mov_reg32_preg32x4pimm64(int32_t reg1, int32_t reg2,
+                              uint64_t ptr); // x64: load 64-bit ptr into R10 then mov [idx*4+R10]
+void mov_reg32_preg32x4_r10(int32_t dst_reg, int32_t index_reg,
+                            uint64_t func_ptr); // x64: load 64-bit func_ptr into R10 then mov [idx*4+R10]
+void cmp_reg32_prx4_r10(int32_t index_reg,
+                        uint64_t func_ptr); // x64: load 64-bit func_ptr into R10, mov to r11, for compare ops
+void mov_rax_r11_idx4(int32_t idx_reg);     // x64: mov rax, [r11 + idx*4] - base already in r11
 void and_reg32_imm32(int32_t reg32, uint32_t imm32);
 void and_reg32_imm32(int32_t reg32, uint32_t imm32);
 void movsx_reg32_m8(int32_t reg32, unsigned char *m8);
