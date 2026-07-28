@@ -133,7 +133,7 @@ void internal_ReadController(int32_t Control, uint8_t *Command)
             cht_execute();
 
             lag_count = 0;
-            core_buttons input = {0};
+            CoreButtons input = {0};
             vcr_on_controller_poll(Control, &input);
             ParityChecker::on_sample(vcr.current_sample);
             *((uint32_t *)(Command + 3)) = input.value;
@@ -143,7 +143,7 @@ void internal_ReadController(int32_t Control, uint8_t *Command)
     case 3: // write controller pack
         if (g_core->controls[Control].Present)
         {
-            if (g_core->controls[Control].Plugin == (int32_t)ce_raw && g_core->input_controller_command)
+            if (g_core->controls[Control].Plugin == CoreControllerExtension::Raw && g_core->input_controller_command)
                 g_core->input_read_controller(Control, Command);
         }
         break;
@@ -163,10 +163,10 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
             Command[4] = 0x00;
             switch (g_core->controls[Control].Plugin)
             {
-            case (int32_t)ce_mempak:
+            case CoreControllerExtension::Mempak:
                 Command[5] = 1;
                 break;
-            case (int32_t)ce_raw:
+            case CoreControllerExtension::Raw:
                 Command[5] = 1;
                 break;
             default:
@@ -185,7 +185,7 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
         {
             switch (g_core->controls[Control].Plugin)
             {
-            case (int32_t)ce_mempak: {
+            case CoreControllerExtension::Mempak: {
                 int32_t address = (Command[3] << 8) | Command[4];
                 if (address == 0x8001)
                 {
@@ -213,7 +213,7 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
                 }
             }
             break;
-            case (int32_t)ce_raw:
+            case CoreControllerExtension::Raw:
                 if (g_core->input_controller_command) g_core->input_controller_command(Control, Command);
                 break;
             default:
@@ -229,7 +229,7 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
         {
             switch (g_core->controls[Control].Plugin)
             {
-            case (int32_t)ce_mempak: {
+            case CoreControllerExtension::Mempak: {
                 int32_t address = (Command[3] << 8) | Command[4];
                 if (address == 0x8001)
                     Command[0x25] = mempack_crc(&Command[5]);
@@ -256,7 +256,7 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
                 }
             }
             break;
-            case (int32_t)ce_raw:
+            case CoreControllerExtension::Raw:
                 if (g_core->input_controller_command) g_core->input_controller_command(Control, Command);
                 break;
             default:
@@ -458,7 +458,7 @@ void update_pif_read()
                         g_ctx.vcr_get_task() == task_idle)
                     {
                         g_core->input_read_controller(channel, &PIF_RAMb[i]);
-                        auto ptr = (core_buttons *)&PIF_RAMb[i + 3];
+                        auto ptr = (CoreButtons *)&PIF_RAMb[i + 3];
                         g_core->callbacks.input(ptr, channel);
                     }
                     else

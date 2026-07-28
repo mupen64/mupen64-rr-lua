@@ -13,7 +13,7 @@
         return TRUE;                                                                                                   \
     }                                                                                                                  \
                                                                                                                        \
-    EXPORT void CALL GetDllInfo(core_plugin_info *info)                                                                \
+    EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *info)                                                       \
     {                                                                                                                  \
         info->ver = 0x0101;                                                                                            \
         info->type = plugin_type;                                                                                      \

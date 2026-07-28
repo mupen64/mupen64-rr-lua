@@ -5,7 +5,7 @@
  */
 
 #include "stdafx.h"
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>

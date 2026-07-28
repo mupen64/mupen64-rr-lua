@@ -7,7 +7,7 @@
 #pragma once
 
 #include <Messenger.hpp>
-#include <Plugin.hpp>
+#include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaCallbacks.hpp>
 

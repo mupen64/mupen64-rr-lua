@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Views.Win32/ViewPlugin.h>
+#include <Views.Win32/ZilmarExtSpecPlugin.h>
 
 struct TASVideoContext
 {
@@ -12,6 +12,6 @@ struct TASVideoContext
 };
 
 extern TASVideoContext g_tas_ctx;
-extern core_plugin_extended_funcs *g_ef;
+extern ZilmarExtSpec::ExtendedFuncs *g_ef;
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Video")

@@ -56,7 +56,7 @@ void call_vi();
  * \param input Pointer to the input data, can be modified by Lua scripts during this function
  * \param index The index of the controller being polled
  */
-void call_input(core_buttons *input, int index);
+void call_input(CoreButtons *input, int index);
 
 /**
  * \brief Notifies all lua instances of the heartbeat while paused

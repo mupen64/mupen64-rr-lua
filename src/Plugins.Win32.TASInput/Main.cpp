@@ -16,15 +16,8 @@
 
 std::filesystem::path g_config_path;
 
-static void log_shim(const wchar_t *str)
-{
-    wprintf(str);
-}
-
-static core_plugin_extended_funcs ef_shim{};
-
 HINSTANCE g_inst;
-core_plugin_extended_funcs *g_ef = &ef_shim;
+ZilmarExtSpec::ExtendedFuncs *g_ef;
 
 // ReSharper disable once CppInconsistentNaming
 int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)

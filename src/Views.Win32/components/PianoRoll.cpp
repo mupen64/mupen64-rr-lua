@@ -16,7 +16,7 @@ struct piano_roll_history_state
     // The input buffer for the piano roll, which is a copy of the inputs from the core and is modified by the user.
     // When editing operations end, this buffer is provided to begin_warp_modify and thereby applied to the core,
     // changing the resulting emulator state.
-    std::vector<core_buttons> inputs;
+    std::vector<CoreButtons> inputs;
 
     // Selected indicies in the piano roll listview.
     std::vector<size_t> selected_indicies;
@@ -52,7 +52,7 @@ struct piano_roll_state
     //
     // This also applies for the inverse (gapless clipboard buffer and g_piano_roll_state.selected_indicies with gaps).
     //
-    std::vector<std::optional<core_buttons>> clipboard{};
+    std::vector<std::optional<CoreButtons>> clipboard{};
 
     // Whether the current copy of the VCR inputs is desynced from the remote one.
     bool inputs_different{};
@@ -172,7 +172,7 @@ static void update_inputs()
  * \param i The column index. Must be in the range [3, 15] inclusive.
  * \return The button value at the given column index
  */
-static unsigned get_input_value_from_column_index(core_buttons btn, size_t i)
+static unsigned get_input_value_from_column_index(CoreButtons btn, size_t i)
 {
     switch (i)
     {
@@ -214,7 +214,7 @@ static unsigned get_input_value_from_column_index(core_buttons btn, size_t i)
  * \param i The column index. Must be in the range [3, 15] inclusive.
  * \param value The button value to set
  */
-static void set_input_value_from_column_index(core_buttons *btn, size_t i, bool value)
+static void set_input_value_from_column_index(CoreButtons *btn, size_t i, bool value)
 {
     switch (i)
     {
@@ -372,7 +372,7 @@ static void copy_inputs()
         const bool gap = std::ranges::find(piano_roll.current_state.selected_indicies, i) ==
                          piano_roll.current_state.selected_indicies.end();
         // HACK: nullopt acquired via explicit constructor call...
-        std::optional<core_buttons> opt;
+        std::optional<CoreButtons> opt;
         piano_roll.clipboard.push_back(gap ? opt : piano_roll.current_state.inputs[i]);
     }
 
@@ -570,7 +570,7 @@ static void paste_inputs(bool merge)
             if (item.has_value() && i < piano_roll.current_state.inputs.size())
             {
                 piano_roll.current_state.inputs[i] =
-                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
+                    merge ? CoreButtons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
                 ListView_Update(piano_roll.lv_hwnd, i);
             }
 
@@ -590,7 +590,7 @@ static void paste_inputs(bool merge)
             if (item.has_value() && i < piano_roll.current_state.inputs.size() && included)
             {
                 piano_roll.current_state.inputs[i] =
-                    merge ? core_buttons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
+                    merge ? CoreButtons{piano_roll.current_state.inputs[i].value | item.value().value} : item.value();
                 ListView_Update(piano_roll.lv_hwnd, i);
             }
 

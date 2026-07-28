@@ -20,8 +20,8 @@ struct VrFixture
         s_cfg = {};
         s_core_params = {};
         s_core_params.cfg = &s_cfg;
-        s_core_params.input_get_keys = [](int32_t, core_buttons *) {};
-        s_core_params.input_set_keys = [](int32_t, core_buttons) {};
+        s_core_params.input_get_keys = [](int32_t, CoreButtons *) {};
+        s_core_params.input_set_keys = [](int32_t, CoreButtons) {};
         s_core_params.callbacks = {};
         core_create(&s_core_params, &s_core_ctx);
 

@@ -14,13 +14,9 @@ project(mupen64-rr
 # Options
 # ===========================================
 
-# The dynamic recompiler will not work correctly on x86_64, so it is completely disabled for safety's sake.
+# The dynarec only supports x86 and x86_64; building for any other
+# architecture (e.g. ARM64) errors out (see src/Core/CMakeLists.txt).
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
-
-if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")
-  message(STATUS "Target processor ${CMAKE_SYSTEM_PROCESSOR} is incompatible with the dynamic recompiler, disabling...")
-  set(MUPEN64RR_ENABLE_DYNAREC OFF CACHE BOOL "If on, enables the dynamic recompiler. (FORCE-DISABLED)" FORCE)
-endif()
 
 # The Windows view can, of course, only be compiled on Windows.
 # This is in place to allow future frontends to be written separately.
@@ -132,10 +128,16 @@ include(Catch)
 if(WIN32)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
-  # - disable Windows Data Execution Prevention (DEP)
   # - enable the program to use pointers larger than 2GB
   # - disable the generation of a manifest file (since it's pulled in internally via the resource script)
-  add_link_options(/DYNAMICBASE:NO /NXCOMPAT:NO /LARGEADDRESSAWARE /MANIFEST:NO)
+  add_link_options(/DYNAMICBASE:NO /LARGEADDRESSAWARE /MANIFEST:NO)
+
+  # Data Execution Prevention (DEP) is left enabled on 64-bit, where it can't be turned
+  # off anyway and where the x86_64 dynarec allocates its code buffers as executable. Only
+  # the 32-bit build opts out, as it has historically relied on that.
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    add_link_options(/NXCOMPAT:NO)
+  endif()
 
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)

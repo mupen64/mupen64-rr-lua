@@ -198,7 +198,7 @@ void LuaCallbacks::call_vi()
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_ATVI); });
 }
 
-void LuaCallbacks::call_input(core_buttons *input, int index)
+void LuaCallbacks::call_input(CoreButtons *input, int index)
 {
     RET_IF_NOT_REGISTERED(REG_ATINPUT);
 
