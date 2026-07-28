@@ -46,7 +46,9 @@ extern "C"
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 #include <dwmapi.h>
+#if __has_include(<shlobj_core.h>)
 #include <shlobj_core.h>
+#endif
 #include <xxh64.h>
 #include <strsafe.h>
 #include <commdlg.h>
