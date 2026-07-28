@@ -403,6 +403,12 @@ pub fn build(b: *std.Build) void {
                     .install_subdir = "",
                     .include_extensions = &.{".dll"},
                 }).step);
+                // The Zig/MinGW speexdsp build emits liblibspeexdsp.dll, while
+                // its import library records the runtime name libspeexdsp.dll.
+                const speex_dll = b.fmt("{s}/liblibspeexdsp.dll", .{vp.bin_dir});
+                if (std.Io.Dir.cwd().access(b.graph.io, speex_dll, .{})) |_| {
+                    b.getInstallStep().dependOn(&b.addInstallFile(.{ .cwd_relative = speex_dll }, "out/libspeexdsp.dll").step);
+                } else |_| {}
             }
         }
     }
