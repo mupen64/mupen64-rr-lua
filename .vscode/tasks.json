@@ -1,48 +1,204 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "type": "shell",
-            "label": "Build Project",
-            "command": "${workspaceFolder}\\.vscode\\build.bat",
-            "options": {
-                "shell": {
-                    "executable": "cmd.exe",
-                    "args": ["/c"]
-                }
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": ["$msCompile"],
-            "presentation": {
-                "reveal": "silent",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "type": "shell",
-            "label": "Build Project (x64)",
-            "command": "${workspaceFolder}\\.vscode\\build-x64.bat",
-            "options": {
-                "shell": {
-                    "executable": "cmd.exe",
-                    "args": ["/c"]
-                }
-            },
-            "group": "build",
-            "problemMatcher": ["$msCompile"],
-            "presentation": {
-                "reveal": "silent",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": false
-            }
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "generate compile_commands.json (Win64)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "compile-commands",
+        "-Dtarget=x86_64-windows"
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "vcpkg install (Win64)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "vcpkg",
+        "-p",
+        "build",
+        "-Dtarget=x86_64-windows"
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "vcpkg install (Win32)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "vcpkg",
+        "-p",
+        "build",
+        "-Dtarget=x86-windows"
+      ],
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "build (Win64)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "-p",
+        "build",
+        "-Dtarget=x86_64-windows"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "build and run with wine (Win64)",
+      "type": "shell",
+      "command": "zig build -p build -Dtarget=x86_64-windows; wine build/out/mupen64.exe",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "build (Win32)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "-p",
+        "build",
+        "-Dtarget=x86-windows"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "build and run with wine (Win32)",
+      "type": "shell",
+      "command": "zig build -p build -Dtarget=x86-windows; wine build/out/mupen64.exe",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "build release (Win64)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "-p",
+        "build",
+        "-Dtarget=x86_64-windows",
+        "-Doptimize=ReleaseSafe"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "build release (Win32)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "-p",
+        "build",
+        "-Dtarget=x86-windows",
+        "-Doptimize=ReleaseSafe"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "clean rebuild (Win64)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "--prefix",
+        "build",
+        "-Dtarget=x86_64-windows",
+        "--cache-dir",
+        ".zig-cache",
+        "--summary",
+        "all"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "test (Win64)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "test",
+        "-p",
+        "build",
+        "-Dtarget=x86_64-windows"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "test (Win32)",
+      "type": "shell",
+      "command": "zig",
+      "args": [
+        "build",
+        "test",
+        "-p",
+        "build",
+        "-Dtarget=x86-windows"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    }
+  ]
 }
