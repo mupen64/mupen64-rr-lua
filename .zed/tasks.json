@@ -1,5 +1,16 @@
 [
   {
+    "label": "generate compile_commands.json (Win64)",
+    "reveal": "no_focus",
+    "save": "all",
+    "command": "zig",
+    "args": [
+      "build",
+      "compile-commands",
+      "-Dtarget=x86_64-windows"
+    ]
+  },
+  {
     "label": "vcpkg install (Win64)",
     "reveal": "no_focus",
     "save": "all",

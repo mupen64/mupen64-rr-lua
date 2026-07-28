@@ -1,5 +1,4 @@
-CompileFlags:
-  Add: ["/std:c++latest"]
+
 # Diagnostics:
 #   UnusedIncludes: Strict
 #   MissingIncludes: Strict

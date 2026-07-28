@@ -60,6 +60,8 @@ pub fn build(b: *std.Build) void {
     const target_uses_msvc = target_is_windows and target.result.abi == .msvc;
     const cxx_flags = collectCxxFlags(b, optimize, is_x86_family, target_uses_msvc);
     const c_flags = collectCFlags(b, optimize, is_x86_family, target_uses_msvc);
+    // Keep the compilation database in lockstep with the modules configured below.
+    var compilation_modules: std.ArrayListUnmanaged(*std.Build.Module) = .empty;
 
     const vcpkg: ?VcpkgPaths = if (target_is_windows)
         resolveVcpkg(b, target, link_static, optimize, vcpkg_installed_opt)
@@ -70,6 +72,7 @@ pub fn build(b: *std.Build) void {
     const aladdin_md5 = addStaticLib(b, target, optimize, "aladdin-md5", &.{
         "vendor/aladdin-md5/md5.c",
     }, c_flags, &.{b.path("vendor/aladdin-md5")});
+    compilation_modules.append(b.allocator, aladdin_md5.root_module) catch @panic("OOM");
 
     const hqx_flags = blk: {
         var flags: std.ArrayListUnmanaged([]const u8) = .empty;
@@ -83,10 +86,12 @@ pub fn build(b: *std.Build) void {
         "vendor/hqx/hq3x.c",
         "vendor/hqx/hq4x.c",
     }, hqx_flags, &.{b.path("vendor/hqx")});
+    compilation_modules.append(b.allocator, hqx.root_module) catch @panic("OOM");
 
     const xbrz = addStaticLib(b, target, optimize, "xbrz", &.{
         "vendor/xbrz/xbrz.cpp",
     }, cxx_flags, &.{b.path("vendor/xbrz")});
+    compilation_modules.append(b.allocator, xbrz.root_module) catch @panic("OOM");
 
     // Header-only vendor include roots
     const vendor_argh = b.path("vendor/argh");
@@ -122,6 +127,7 @@ pub fn build(b: *std.Build) void {
         .linkage = .static,
         .root_module = createCppModule(b, target, optimize),
     });
+    compilation_modules.append(b.allocator, core.root_module) catch @panic("OOM");
     core.root_module.addCSourceFiles(.{
         .files = core_sources.items,
         .flags = withIncludePrefix(b, cxx_flags, "src/Common/include/CommonPCH.hpp"),
@@ -155,6 +161,7 @@ pub fn build(b: *std.Build) void {
             .name = "Core.Tests",
             .root_module = createCppModule(b, target, optimize),
         });
+        compilation_modules.append(b.allocator, tests.root_module) catch @panic("OOM");
         tests.root_module.addCSourceFiles(.{
             .files = &.{
                 "src/Core.Tests/IOUtilsTests.cpp",
@@ -193,6 +200,7 @@ pub fn build(b: *std.Build) void {
             .linkage = .dynamic,
             .root_module = createCppModule(b, target, optimize),
         });
+        compilation_modules.append(b.allocator, luatest.root_module) catch @panic("OOM");
         luatest.root_module.pic = true;
         luatest.root_module.addCSourceFiles(.{
             .files = &.{"src/Lua.TestLib/main.cpp"},
@@ -221,6 +229,7 @@ pub fn build(b: *std.Build) void {
                 .name = "mupen64",
                 .root_module = createCppModule(b, target, optimize),
             });
+            compilation_modules.append(b.allocator, views.root_module) catch @panic("OOM");
             views.subsystem = .Windows;
             // App provides WinMain (ANSI LPSTR), not wWinMain, despite UNICODE APIs.
             views.entry = .{ .symbol_name = "WinMainCRTStartup" };
@@ -279,6 +288,7 @@ pub fn build(b: *std.Build) void {
                 .optimize = optimize,
                 .link_static = link_static,
                 .enable_dynarec = enable_dynarec,
+                .compilation_modules = &compilation_modules,
             };
 
             plugins.append(b.allocator, addPlugin(b, target, plugin_common, "NoAudio", &.{
@@ -438,6 +448,9 @@ pub fn build(b: *std.Build) void {
         }).step);
     }
 
+    // ── IDE support ─────────────────────────────────────────────────────
+    addCompileCommandsStep(b, compilation_modules.items);
+
     // ── Test step ───────────────────────────────────────────────────────
     if (core_tests_exe) |tests| {
         const test_step = b.step("test", "Run Core.Tests (one process per case)");
@@ -467,6 +480,141 @@ pub fn build(b: *std.Build) void {
             b.fmt("--x-install-root={s}", .{install_root}),
         });
         vcpkg_step.dependOn(&run.step);
+    }
+}
+
+const CompileCommand = struct {
+    directory: []const u8,
+    file: []const u8,
+    arguments: []const []const u8,
+};
+
+const CompileCommands = struct {
+    step: std.Build.Step,
+    modules: []const *std.Build.Module,
+
+    fn make(step: *std.Build.Step, options: std.Build.Step.MakeOptions) !void {
+        _ = options;
+        const self: *CompileCommands = @fieldParentPtr("step", step);
+        const b = step.owner;
+        const allocator = b.allocator;
+        const directory = b.pathFromRoot(".");
+        var entries: std.ArrayList(CompileCommand) = .empty;
+
+        for (self.modules) |module| {
+            for (module.link_objects.items) |link_object| switch (link_object) {
+                .c_source_files => |sources| {
+                    const root = sources.root.getPath2(b, step);
+                    for (sources.files) |source| {
+                        const file = std.fs.path.join(allocator, &.{ root, source }) catch return error.OutOfMemory;
+                        try self.appendEntry(b, step, &entries, directory, file, module, sources.flags, sources.language);
+                    }
+                },
+                .c_source_file => |source| {
+                    const file = source.file.getPath2(b, step);
+                    try self.appendEntry(b, step, &entries, directory, file, module, source.flags, source.language);
+                },
+                else => {},
+            };
+        }
+
+        const json = try std.json.Stringify.valueAlloc(allocator, entries.items, .{});
+        try std.Io.Dir.cwd().writeFile(b.graph.io, .{
+            .sub_path = "compile_commands.json",
+            .data = json,
+        });
+    }
+
+    fn appendEntry(
+        self: *CompileCommands,
+        b: *std.Build,
+        step: *std.Build.Step,
+        entries: *std.ArrayList(CompileCommand),
+        directory: []const u8,
+        file: []const u8,
+        module: *std.Build.Module,
+        source_flags: []const []const u8,
+        language: ?std.Build.Module.CSourceLanguage,
+    ) !void {
+        _ = self;
+        const allocator = b.allocator;
+        var args: std.ArrayList([]const u8) = .empty;
+        // clangd cannot interpret Zig's two-word `zig c++` driver invocation.
+        // Use Clang's driver spelling and provide Zig's target headers below.
+        try args.append(allocator, if (language == .c) "clang" else "clang++");
+        try args.append(allocator, "-target");
+        try args.append(allocator, try module.resolved_target.?.query.zigTriple(allocator));
+        try args.append(allocator, "-mcpu");
+        try args.append(allocator, try module.resolved_target.?.query.serializeCpuAlloc(allocator));
+        try appendZigSystemIncludes(b, &args, module.resolved_target.?);
+        for (module.include_dirs.items) |include_dir| switch (include_dir) {
+            .path => |path| try appendPathArg(b, step, &args, "-I", path),
+            .path_system => |path| try appendPathArg(b, step, &args, "-isystem", path),
+            .path_after => |path| try appendPathArg(b, step, &args, "-idirafter", path),
+            else => {},
+        };
+        try args.appendSlice(allocator, module.c_macros.items);
+        try args.appendSlice(allocator, source_flags);
+        try args.append(allocator, "-c");
+        try args.append(allocator, file);
+        try entries.append(allocator, .{
+            .directory = directory,
+            .file = file,
+            .arguments = try args.toOwnedSlice(allocator),
+        });
+    }
+};
+
+fn addCompileCommandsStep(b: *std.Build, modules: []const *std.Build.Module) void {
+    const generator = b.allocator.create(CompileCommands) catch @panic("OOM");
+    generator.* = .{
+        .step = std.Build.Step.init(.{
+            .id = .custom,
+            .name = "generate compile_commands.json",
+            .owner = b,
+            .makeFn = CompileCommands.make,
+        }),
+        .modules = b.allocator.dupe(*std.Build.Module, modules) catch @panic("OOM"),
+    };
+    const compile_commands_step = b.step("compile-commands", "Generate compile_commands.json for clangd");
+    compile_commands_step.dependOn(&generator.step);
+}
+
+fn appendPathArg(
+    b: *std.Build,
+    step: *std.Build.Step,
+    args: *std.ArrayList([]const u8),
+    flag: []const u8,
+    path: std.Build.LazyPath,
+) !void {
+    try args.append(b.allocator, flag);
+    try args.append(b.allocator, path.getPath2(b, step));
+}
+
+fn appendZigSystemIncludes(
+    b: *std.Build,
+    args: *std.ArrayList([]const u8),
+    target: std.Build.ResolvedTarget,
+) !void {
+    const zig_lib = b.graph.zig_lib_directory.path orelse return;
+    const arch = @tagName(target.result.cpu.arch);
+    const paths = [_][]const u8{
+        b.fmt("{s}/libcxx/include", .{zig_lib}),
+        b.fmt("{s}/libcxxabi/include", .{zig_lib}),
+        b.fmt("{s}/include", .{zig_lib}),
+        b.fmt("{s}/libc/include/{s}-windows-gnu", .{ zig_lib, arch }),
+        b.fmt("{s}/libc/include/generic-mingw", .{zig_lib}),
+        b.fmt("{s}/libc/include/{s}-windows-any", .{ zig_lib, arch }),
+        b.fmt("{s}/libc/include/any-windows-any", .{zig_lib}),
+        b.fmt("{s}/libunwind/include", .{zig_lib}),
+    };
+    for (paths) |path| {
+        try args.append(b.allocator, "-isystem");
+        try args.append(b.allocator, path);
+    }
+    if (minGWRoot(target)) |root| {
+        try args.append(b.allocator, "-isystem");
+        try args.append(b.allocator, b.fmt("{s}/include", .{root}));
     }
 }
 
@@ -946,6 +1094,7 @@ fn addStaticLib(
 }
 
 const PluginCommon = struct {
+    compilation_modules: *std.ArrayListUnmanaged(*std.Build.Module),
     common_inc: std.Build.LazyPath,
     common_win32_inc: std.Build.LazyPath,
     core_inc: std.Build.LazyPath,
@@ -974,6 +1123,7 @@ fn addPlugin(
         .linkage = .dynamic,
         .root_module = createCppModule(b, target, common.optimize),
     });
+    common.compilation_modules.append(b.allocator, lib.root_module) catch @panic("OOM");
     lib.root_module.pic = true;
     lib.linker_dynamicbase = false;
     lib.root_module.addCSourceFiles(.{
