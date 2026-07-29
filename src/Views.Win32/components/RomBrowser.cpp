@@ -37,6 +37,12 @@ std::vector<std::filesystem::path> discover_roms()
 
     std::vector<std::filesystem::path> rom_paths;
     std::vector<std::filesystem::path> filtered_rom_paths;
+    std::unordered_set<std::filesystem::path> seen_rom_paths;
+
+    // Add recent ROMs first
+    rom_paths.reserve(g_config.recent_rom_paths.size());
+    for (const auto &recent_rom : g_config.recent_rom_paths)
+        rom_paths.push_back(recent_rom);
 
     // we aggregate all file paths and only filter them after we're done
     if (std::filesystem::is_directory(abs_rom_directory))
@@ -63,14 +69,15 @@ std::vector<std::filesystem::path> discover_roms()
     }
 
     // logically this should be bundled into the filter pipeline but I'm too lazy
-    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](const auto val) {
+    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [&](const auto &val) {
         wchar_t c_extension[_MAX_EXT] = {0};
         if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
         {
             return false;
         }
-        return MiscHelpers::iequals(c_extension, L".z64") || MiscHelpers::iequals(c_extension, L".n64") ||
-               MiscHelpers::iequals(c_extension, L".v64") || MiscHelpers::iequals(c_extension, L".rom");
+        const bool is_rom = MiscHelpers::iequals(c_extension, L".z64") || MiscHelpers::iequals(c_extension, L".n64") ||
+                            MiscHelpers::iequals(c_extension, L".v64") || MiscHelpers::iequals(c_extension, L".rom");
+        return is_rom && seen_rom_paths.insert(val).second;
     });
     return filtered_rom_paths;
 }

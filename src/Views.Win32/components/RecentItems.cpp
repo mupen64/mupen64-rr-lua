@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include <components/RecentItems.hpp>
 #include <action/ActionManager.hpp>
+#include <components/RomBrowser.hpp>
 
 void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<std::wstring> &vec, std::wstring val,
                      const bool frozen)
@@ -27,4 +28,5 @@ void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<
     vec.insert(vec.begin(), val);
 
     ActionManager::notify_display_name_changed(std::format(L"{} > *", menu_path));
+    RomBrowser::build();
 }
