@@ -185,9 +185,9 @@ inline auto iter_lines(IStreamT &stream)
 
 /**
  * @brief Converts UTF-8 to UTF-16.
- * 
- * @param str 
- * @return std::wstring 
+ *
+ * @param str
+ * @return std::wstring
  */
 inline std::wstring to_wide_string(std::string_view str)
 {
@@ -266,7 +266,7 @@ inline std::string to_utf8_string(std::wstring_view wstr)
 
 /**
  * \brief Decodes a raw ROM header name into a wide string.
- * \param str The raw header bytes.
+ * \param str Pointer to the start of the 20-byte ROM header.
  *
  * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. ASCII is a subset of it, so western ROM
  * names decode byte-identically, while Japanese ROM names decode to the characters they actually contain.
@@ -274,22 +274,18 @@ inline std::string to_utf8_string(std::wstring_view wstr)
  * Unlike to_wide_string, this never fails: header bytes are unvalidated binary data and are frequently not valid
  * UTF-8, so a strict conversion would either throw or silently yield an empty name.
  */
-inline std::wstring rom_name_to_wide_string(std::string_view str)
+inline std::wstring rom_name_to_wide_string(const char str[20])
 {
     using namespace std::string_literals;
 
-    assert(str.size() < INT_MAX / 2); // sanity check
-
-    if (str.empty())
-    {
-        return L""s;
-    }
+    // Windows-932 isn't *exactly* Shift-JIS, but it's close enough that it shouldn't matter.
+    constexpr UINT CP_SHIFT_JIS = 932;
 
     // return code
     int rc;
 
     // figure out how much space we need
-    rc = MultiByteToWideChar(932, MB_ERR_INVALID_CHARS, str.data(), str.size(), nullptr, 0);
+    rc = MultiByteToWideChar(CP_SHIFT_JIS, 0, str, 20, nullptr, 0);
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "invalid UTF-8");
@@ -301,14 +297,14 @@ inline std::wstring rom_name_to_wide_string(std::string_view str)
     std::wstring output;
     output.resize(static_cast<size_t>(rc), L'\0');
 
-    rc = MultiByteToWideChar(932, MB_ERR_INVALID_CHARS, str.data(), str.size(), output.data(), output.size());
+    rc = MultiByteToWideChar(CP_SHIFT_JIS, 0, str, 20, output.data(), output.size());
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
         return L""s;
     }
-
-    return output;
+    // Trim to remove spaces at the end; ROM headers are typically padded to 20 characters with spaces.
+    return std::wstring{StrUtils::ctrim_wstring(output)};
 }
 
 #endif
@@ -318,9 +314,9 @@ inline std::wstring rom_name_to_wide_string(std::string_view str)
 
 /**
  * \brief Converts a raw ROM header name into a path component.
- * \param str The raw header bytes.
+ * \param str Pointer to the start of the 20-byte ROM header.
  */
-inline std::filesystem::path rom_name_to_path_component(const std::string_view str)
+inline std::filesystem::path rom_name_to_path_component(const char str[20])
 {
 #ifdef _WIN32
     return {rom_name_to_wide_string(str)};

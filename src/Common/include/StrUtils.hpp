@@ -17,7 +17,6 @@ class StringSplitSentinel
 {
 };
 
-#pragma region String split
 // Iterator over the parts of a string, split by a delimiter.
 template <class CharT, class Traits = std::char_traits<CharT>> class StringSplitIterator
 {
@@ -77,9 +76,6 @@ template <class CharT, class Traits = std::char_traits<CharT>> class StringSplit
 };
 
 static_assert(std::input_iterator<StringSplitIterator<char>>);
-
-template <class R, class T>
-concept is_range_of = std::ranges::input_range<R> && std::is_same_v<std::ranges::range_const_reference_t<R>, const T&>;
 } // namespace details
 
 // Returns an iterator to split `str` by `delim`.
@@ -101,7 +97,8 @@ inline auto split_wstring(std::wstring_view str, std::wstring_view delim)
     return split_basic_string<wchar_t>(str, delim);
 }
 
-#pragma endregion
+// CASE-INSENSITIVE COMPARISON
+// ==============================
 
 // Case-insensitive comparison of C strings.
 inline int c_icmp(const char *a, const char *b)
@@ -126,6 +123,9 @@ inline int c_nicmp(const char *a, const char *b, size_t n)
 #error unknown operating system!
 #endif
 }
+
+// Trim
+// ==============================
 
 // Trims whitespace from the start and end of a string_view (as determined by isspace()).
 inline std::string_view ctrim_string(std::string_view str)
@@ -179,6 +179,10 @@ inline std::wstring join_wstring(const std::vector<std::wstring> &vec, std::wstr
     }
     return s.str();
 }
+
+// STRING-KEYED MAPS
+// ==============================
+
 // Heterogeneous hash function for strings and string-like types.
 template <class CharT, class Traits = std::char_traits<CharT>> struct StringHash
 {

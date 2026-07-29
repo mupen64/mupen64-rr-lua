@@ -364,15 +364,8 @@ notify(LPARAM lparam)
         switch (plvdi->item.iSubItem)
         {
         case 1: {
-            // NOTE: The name may not be null-terminated, so we NEED to limit the
-            // size
-            char str[sizeof(core_rom_header::nom) + 1] = {0};
-            if (strncpy_s(str, sizeof(str), (const char *)rombrowser_entry.header.nom, sizeof(core_rom_header::nom)) !=
-                0)
-            {
-                g_view_logger->error("Failed to copy rom name");
-            }
-            StrNCpy(plvdi->item.pszText, IOUtils::rom_name_to_wide_string(str).c_str(), plvdi->item.cchTextMax);
+            
+            StrNCpy(plvdi->item.pszText, IOUtils::rom_name_to_wide_string((const char*) rombrowser_entry.header.nom).c_str(), plvdi->item.cchTextMax);
             break;
         }
         case 2: {
