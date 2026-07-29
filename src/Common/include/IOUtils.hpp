@@ -13,6 +13,9 @@
 #include <stdexcept>
 #include <cstdio>
 #include <cstdlib>
+#include <iconv.h>
+#else
+#error Unsupported platform!
 #endif
 
 namespace IOUtils
@@ -303,10 +306,88 @@ inline std::wstring rom_name_to_wide_string(const char str[20])
         // throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
         return L""s;
     }
+
+    // Trim off trailing nulls
+    if (size_t first_null = output.find_first_of(L'\0'); first_null != std::string::npos)
+    {
+        output.resize(first_null);
+    }
     // Trim to remove spaces at the end; ROM headers are typically padded to 20 characters with spaces.
     return std::wstring{StrUtils::ctrim_wstring(output)};
 }
 
+#endif
+
+// SHIFT-JIS DECODING via iconv.h
+// ====================================
+
+#ifdef __linux__
+
+/**
+ * \brief Decodes a raw ROM header name into a wide string.
+ * \param str Pointer to the start of the 20-byte ROM header.
+ *
+ * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. ASCII is a subset of it, so western ROM
+ * names decode byte-identically, while Japanese ROM names decode to the characters they actually contain.
+ *
+ * Unlike to_wide_string, this never fails: header bytes are unvalidated binary data and are frequently not valid
+ * UTF-8, so a strict conversion would either throw or silently yield an empty name.
+ */
+inline std::string rom_name_to_utf8(const char str[20])
+{
+    using namespace std::literals;
+
+    class IConvHandle
+    {
+      public:
+        IConvHandle(iconv_t conv) : m_inner(conv) {}
+
+        ~IConvHandle() { iconv_close(m_inner); }
+
+        operator iconv_t() { return m_inner; }
+
+      private:
+        iconv_t m_inner;
+    };
+
+    IConvHandle converter = iconv_open("UTF-8", "SHIFT-JIS");
+
+    // iconv is not guaranteed to preserve the input buffer, so copy it out first
+    char src_buf[20] = {0};
+    memcpy(src_buf, str, 20);
+
+    // setup source pointers for conversion
+    char *src_ptr = src_buf;
+    size_t src_len = 20;
+
+    // The Shift-JIS string contains at most 20 characters. If all are katakana, they take up at most 3 bytes per
+    // character as they are in the BMP. It can be shown that inserting a 2-byte character can only reduce the length of
+    // the encoding from 60.
+    std::string dst_buffer(60, '\0');
+    char *dst_ptr = dst_buffer.data();
+    size_t dst_len = dst_buffer.size();
+
+    // Perform the conversion. This should complete in one step.
+    size_t result = iconv(converter, &src_ptr, &src_len, &dst_ptr, &dst_len);
+    if (result == -1)
+    {
+        throw std::system_error(errno, std::generic_category(), "iconv() failed");
+        // return ""s;
+    }
+
+    // reduce buffer from 60 chars to the correct size
+    size_t true_length = dst_ptr - dst_buffer.data();
+    dst_buffer.resize(true_length);
+
+    // trim off trailing nulls
+    if (size_t first_null = dst_buffer.find_first_of('\0'); first_null != std::string::npos)
+    {
+        dst_buffer.resize(first_null);
+    }
+
+    // Trim whitespace that was added in the ROM.
+    return std::string{StrUtils::ctrim_string(dst_buffer)};
+}
 #endif
 
 // ROM HEADER NAME CONVERSION
@@ -321,7 +402,7 @@ inline std::filesystem::path rom_name_to_path_component(const char str[20])
 #ifdef _WIN32
     return {rom_name_to_wide_string(str)};
 #else
-    return {str};
+    return {rom_name_to_utf8(str)};
 #endif
 }
 
