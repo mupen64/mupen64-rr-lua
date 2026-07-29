@@ -183,6 +183,12 @@ inline auto iter_lines(IStreamT &stream)
 
 #ifdef _WIN32
 
+/**
+ * @brief Converts UTF-8 to UTF-16.
+ * 
+ * @param str 
+ * @return std::wstring 
+ */
 inline std::wstring to_wide_string(std::string_view str)
 {
     using namespace std::string_literals;
@@ -270,36 +276,36 @@ inline std::string to_utf8_string(std::wstring_view wstr)
  */
 inline std::wstring rom_name_to_wide_string(std::string_view str)
 {
+    using namespace std::string_literals;
+
+    assert(str.size() < INT_MAX / 2); // sanity check
+
     if (str.empty())
     {
-        return {};
+        return L""s;
     }
 
+    // return code
+    int rc;
+
+    // figure out how much space we need
+    rc = MultiByteToWideChar(932, MB_ERR_INVALID_CHARS, str.data(), str.size(), nullptr, 0);
+    if (rc == 0)
+    {
+        // throw std::system_error(rc, std::system_category(), "invalid UTF-8");
+        return L""s;
+    }
+
+    // This is the only safe way to do it, it's a bit of a shame there's no way to turn an arbitrary allocation
+    // into a vector/string/whatever
     std::wstring output;
+    output.resize(static_cast<size_t>(rc), L'\0');
 
-    // Note the absence of MB_ERR_INVALID_CHARS: unmappable sequences have to degrade to the code page's default
-    // character instead of failing the call, since nothing guarantees the header is well-formed.
-    int rc = MultiByteToWideChar(932, 0, str.data(), str.size(), nullptr, 0);
-    if (rc > 0)
+    rc = MultiByteToWideChar(932, MB_ERR_INVALID_CHARS, str.data(), str.size(), output.data(), output.size());
+    if (rc == 0)
     {
-        output.resize(static_cast<size_t>(rc), L'\0');
-
-        rc = MultiByteToWideChar(932, 0, str.data(), str.size(), output.data(), output.size());
-        if (rc <= 0)
-        {
-            output.clear();
-        }
-    }
-
-    if (output.empty())
-    {
-        // Code page 932 isn't available on this system. Map each byte to the codepoint of the same value, so that
-        // distinct ROMs still end up with distinct names.
-        output.reserve(str.size());
-        for (const char c : str)
-        {
-            output.push_back(static_cast<wchar_t>(static_cast<uint8_t>(c)));
-        }
+        // throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
+        return L""s;
     }
 
     return output;
