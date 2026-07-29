@@ -271,11 +271,8 @@ inline std::string to_utf8_string(std::wstring_view wstr)
  * \brief Decodes a raw ROM header name into a wide string.
  * \param str Pointer to the start of the 20-byte ROM header.
  *
- * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. ASCII is a subset of it, so western ROM
- * names decode byte-identically, while Japanese ROM names decode to the characters they actually contain.
- *
- * Unlike to_wide_string, this never fails: header bytes are unvalidated binary data and are frequently not valid
- * UTF-8, so a strict conversion would either throw or silently yield an empty name.
+ * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. This function *will* error if the ROM header
+ * is not valid Shift-JIS and may cause undefined behaviour if less than 20 bytes are available through `str`.
  */
 inline std::wstring rom_name_to_wide_string(const char str[20])
 {
@@ -327,11 +324,8 @@ inline std::wstring rom_name_to_wide_string(const char str[20])
  * \brief Decodes a raw ROM header name into a wide string.
  * \param str Pointer to the start of the 20-byte ROM header.
  *
- * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. ASCII is a subset of it, so western ROM
- * names decode byte-identically, while Japanese ROM names decode to the characters they actually contain.
- *
- * Unlike to_wide_string, this never fails: header bytes are unvalidated binary data and are frequently not valid
- * UTF-8, so a strict conversion would either throw or silently yield an empty name.
+ * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. This function *will* error if the ROM header
+ * is not valid Shift-JIS and may cause undefined behaviour if less than 20 bytes are available through `str`.
  */
 inline std::string rom_name_to_utf8(const char str[20])
 {
@@ -396,6 +390,9 @@ inline std::string rom_name_to_utf8(const char str[20])
 /**
  * \brief Converts a raw ROM header name into a path component.
  * \param str Pointer to the start of the 20-byte ROM header.
+ *
+ * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. This function *will* error if the ROM header
+ * is not valid Shift-JIS and may cause undefined behaviour if less than 20 bytes are available through `str`.
  */
 inline std::filesystem::path rom_name_to_path_component(const char str[20])
 {
