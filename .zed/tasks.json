@@ -49,10 +49,10 @@
     ]
   },
   {
-    "label": "build and run with wine (Win64)",
+    "label": "build debug and run (Win64)",
     "reveal": "no_focus",
     "save": "all",
-    "command": "zig build -p build -Dtarget=x86_64-windows; wine build/out/mupen64.exe",
+    "command": "zig build -p build -Dtarget=x86_64-windows; ./build/out/mupen64.exe",
   },
   {
     "label": "build (Win32)",
@@ -67,10 +67,10 @@
     ]
   },
   {
-    "label": "build and run with wine (Win32)",
+    "label": "build debug and run (Win32)",
     "reveal": "no_focus",
     "save": "all",
-    "command": "zig build -p build -Dtarget=x86-windows; wine build/out/mupen64.exe",
+    "command": "zig build -p build -Dtarget=x86-windows; ./build/out/mupen64.exe",
   },
   {
     "label": "build release (Win64)",
