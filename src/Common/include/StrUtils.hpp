@@ -148,14 +148,14 @@ inline std::wstring_view ctrim_wstring(std::wstring_view str)
 {
     using namespace std::literals;
 
-    const auto not_isspace = [](wchar_t c) { return !isspace(c); };
+    const auto not_iswspace = [](wchar_t c) { return !iswspace(c); };
 
     // search from the start for non-whitespace
-    auto start_iter = std::ranges::find_if(str, not_isspace);
+    auto start_iter = std::ranges::find_if(str, not_iswspace);
     if (start_iter == str.end()) return L""sv;
     auto str2 = str.substr(start_iter - str.begin());
 
-    auto end_iter = std::ranges::find_if(std::views::reverse(str2), not_isspace);
+    auto end_iter = std::ranges::find_if(std::views::reverse(str2), not_iswspace);
     if (end_iter == str.rend()) return L""sv;
     return str2.substr(0, end_iter.base() - str2.begin());
 }
