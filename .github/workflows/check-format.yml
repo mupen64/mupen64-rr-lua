@@ -23,5 +23,5 @@ jobs:
           source: "./src"
           exclude: "./lib ./tools"
           extensions: "h,cpp"
-          clangFormatVersion: 18.1.8
+          clangFormatVersion: 22.1.3
           style: file
