@@ -22,6 +22,6 @@ jobs:
         with:
           source: "./src"
           exclude: "./lib ./tools"
-          extensions: "h,cpp"
+          extensions: "c,cpp,h,hpp"
           clangFormatVersion: 20
           style: file
