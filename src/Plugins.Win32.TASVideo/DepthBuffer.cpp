@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 #include "DepthBuffer.hpp"
 #include "Types.hpp"
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Messenger.hpp>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include "SettingsListView.hpp"
 
 #define PROP_NAME L"slv_ctx"

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 #include "N64.hpp"
 #include "RSP.hpp"
 #include "GBI.hpp"

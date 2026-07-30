@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 
 #define CRC32_POLYNOMIAL 0x04C11DB7
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include "PianoRoll.hpp"
 #include "ThreadPool.hpp"
 #include "Config.hpp"

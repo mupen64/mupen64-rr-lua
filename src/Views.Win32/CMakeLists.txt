@@ -15,7 +15,7 @@ target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "include")
 
 add_executable(Mupen64RR.Views.Win32 WIN32
     # headers
-    "stdafx.h"
+    "Common.hpp"
     "ViewHelpers.hpp"
     "ThreadPool.hpp"
     "Hotkey.hpp"
@@ -165,7 +165,6 @@ set_source_files_properties(
     "${CMAKE_CURRENT_SOURCE_DIR}/Lua/sandbox.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
 )
-#target_precompile_headers(Mupen64RR.Views.Win32 PRIVATE "stdafx.h")
 target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Mupen64RR.Common

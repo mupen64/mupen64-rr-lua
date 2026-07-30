@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 #include "Types.hpp"
 #include "GBI.hpp"
 

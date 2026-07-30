@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+﻿#include "Common.hpp"
 #include <DialogService.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaManager.hpp>

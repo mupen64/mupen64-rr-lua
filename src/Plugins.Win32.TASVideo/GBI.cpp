@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 #include "glN64.hpp"
 #include "GBI.hpp"
 #include "RDP.hpp"

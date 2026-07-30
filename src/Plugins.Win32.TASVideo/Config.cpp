@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 #include "Config.hpp"
 #include "glN64.hpp"
 #include "resource.h"

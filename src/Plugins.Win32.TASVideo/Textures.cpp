@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 #include "OpenGL.hpp"
 #include "Textures.h"
 #include "GBI.hpp"

@@ -953,6 +953,9 @@ static void show_activated_windows()
 
 static void ui_thread()
 {
+    BOOL bool_false = FALSE;
+    SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &bool_false, sizeof(BOOL));
+
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
