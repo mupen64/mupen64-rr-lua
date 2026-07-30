@@ -7,6 +7,6 @@
 #include <CommonPCH.hpp>
 #include <DummyPluginStub.hpp>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Audio")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("No Video")
 
-DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Audio)
+DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Video)
