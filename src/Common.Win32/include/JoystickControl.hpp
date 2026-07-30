@@ -8,7 +8,9 @@
 #include <filesystem>
 #include <numbers>
 #if defined(_WIN32)
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #include <gdiplus.h>
 #elif defined(__linux__)
