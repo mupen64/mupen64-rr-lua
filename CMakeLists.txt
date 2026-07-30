@@ -126,6 +126,11 @@ include(CTest)
 include(Catch)
 
 if(WIN32)
+  # Use UTF-16 versions of functions
+  add_compile_definitions(UNICODE _UNICODE)
+endif()
+
+if(MSVC)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
   # - enable the program to use pointers larger than 2GB
@@ -141,9 +146,6 @@ if(WIN32)
 
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
-
-  # Use UTF-16 versions of functions
-  add_compile_definitions(UNICODE _UNICODE)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$")

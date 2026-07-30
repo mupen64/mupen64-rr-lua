@@ -204,4 +204,6 @@ target_compile_definitions(Mupen64RR.Views.Win32 PRIVATE
     "$<$<BOOL:${MUPEN64RR_NIGHTLY}>:NIGHTLY>"
 )
 
-target_link_options(Mupen64RR.Views.Win32 PRIVATE "/MANIFEST:NO")
+if(MSVC)
+    target_link_options(Mupen64RR.Views.Win32 PRIVATE "/MANIFEST:NO")
+endif()
