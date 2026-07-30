@@ -6,7 +6,11 @@
 #include "Textures.h"
 #include "OpenGL.hpp"
 
+#undef min
+#undef max
 #include <nlohmann/json.hpp>
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 HWND hConfigDlg;
 

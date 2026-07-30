@@ -28,5 +28,9 @@ target_link_libraries(Mupen64RR.Core.Tests PRIVATE
     Catch2::Catch2WithMain
     Mupen64RR.Core._TestIncludes
 )
-catch_discover_tests(Mupen64RR.Core.Tests)
+if(NOT CMAKE_CROSSCOMPILING)
+    catch_discover_tests(Mupen64RR.Core.Tests)
+else()
+    message(STATUS "Cross-compiling: skipping test discovery for Mupen64RR.Core.Tests (run manually on target)")
+endif()
 endblock()

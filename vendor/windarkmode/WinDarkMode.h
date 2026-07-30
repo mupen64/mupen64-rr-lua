@@ -41,10 +41,10 @@
 
 #pragma once
 
-#include <Windows.h>
-#include <Uxtheme.h>
+#include <windows.h>
+#include <uxtheme.h>
 #include <commdlg.h>
-#include <Vssym32.h>
+#include <vssym32.h>
 #include <dwmapi.h>
 #include <winerror.h>
 #include <cstdint>

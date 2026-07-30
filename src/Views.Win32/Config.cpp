@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "IOUtils.hpp"
 #include "stdafx.h"
+#include "IOUtils.hpp"
 #include <Config.hpp>
 #include <Messenger.hpp>
 #include <ini.h>
@@ -359,8 +359,9 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 
 static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
 {
-#define HANDLE_P_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, &g_config.x);
-#define HANDLE_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, g_config.x);
+#define _WIDE2(s) L ## s
+#define HANDLE_P_VALUE(x) ini_handle_config_value(ini, _WIDE2(#x), is_reading, &g_config.x);
+#define HANDLE_VALUE(x) ini_handle_config_value(ini, _WIDE2(#x), is_reading, g_config.x);
 
     if (is_reading)
     {

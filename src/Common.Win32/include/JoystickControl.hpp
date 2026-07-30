@@ -9,7 +9,7 @@
 #include <numbers>
 #if defined(_WIN32)
 #define NOMINMAX
-#include <Windows.h>
+#include <windows.h>
 #include <gdiplus.h>
 #elif defined(__linux__)
 #error JoystickControl is not supported on Linux

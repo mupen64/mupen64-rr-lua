@@ -13,7 +13,7 @@
 #define RSPMSG_READPIXELS 7
 #define RSPMSG_RESTART 8
 
-using RSPInfo = struct
+struct RSPInfo
 {
     HANDLE thread;
 

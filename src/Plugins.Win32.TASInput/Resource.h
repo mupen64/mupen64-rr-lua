@@ -2,7 +2,7 @@
 // Von Microsoft Visual C++ generierte Includedatei.
 // Verwendet durch Resource.rc
 //
-#include <Windows.h>
+#include <windows.h>
 
 #define IDT_TIMER_STATUS_0 100
 

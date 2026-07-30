@@ -32,7 +32,7 @@
 #include <stack>
 #include <numeric>
 #include <variant>
-#include <Windows.h>
+#include <windows.h>
 #include <shlobj.h>
 #include <commctrl.h>
 #include <windowsx.h>

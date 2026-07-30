@@ -60,14 +60,14 @@
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--build", "build-mingw-x86_64"]
+    "args": ["--build", "build"]
   },
   {
     "label": "clean rebuild (mingw x64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--build", "build-mingw-x86_64", "--clean-first"]
+    "args": ["--build", "build", "--clean-first"]
   },
   {
     "label": "configure (mingw x86)",
@@ -95,14 +95,14 @@
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--build", "build-mingw-i686"]
+    "args": ["--build", "build"]
   },
   {
     "label": "clean rebuild (mingw x86)",
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--build", "build-mingw-i686", "--clean-first"]
+    "args": ["--build", "build", "--clean-first"]
   },
   {
     "label": "configure (win x64)",

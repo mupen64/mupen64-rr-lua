@@ -73,13 +73,46 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 # ---- optional vcpkg integration ----------------------------------------------
+# Auto-detect vcpkg if not explicitly provided.
+if(NOT DEFINED CACHE{MUPEN64RR_VCPKG_TOOLCHAIN})
+    set(_vcpkg_root "")
+
+    # 1. Explicit VCPKG_ROOT env var takes priority
+    if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+        set(_vcpkg_root "$ENV{VCPKG_ROOT}")
+    endif()
+
+    # 2. Try to derive from the vcpkg executable
+    if(NOT _vcpkg_root)
+        find_program(_vcpkg_exe NAMES vcpkg NO_CACHE)
+        if(_vcpkg_exe)
+            get_filename_component(_vcpkg_candidate "${_vcpkg_exe}" DIRECTORY)
+            if(EXISTS "${_vcpkg_candidate}/scripts/buildsystems/vcpkg.cmake")
+                set(_vcpkg_root "${_vcpkg_candidate}")
+            endif()
+        endif()
+    endif()
+
+    # 3. Common install locations
+    if(NOT _vcpkg_root AND EXISTS "$ENV{HOME}/.local/share/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(_vcpkg_root "$ENV{HOME}/.local/share/vcpkg")
+    endif()
+
+    if(_vcpkg_root AND EXISTS "${_vcpkg_root}/scripts/buildsystems/vcpkg.cmake")
+        set(MUPEN64RR_VCPKG_TOOLCHAIN "${_vcpkg_root}/scripts/buildsystems/vcpkg.cmake" CACHE INTERNAL "Location of vcpkg's toolchain file.")
+        message(STATUS "MinGW cross toolchain: auto-detected vcpkg at ${_vcpkg_root}")
+    else()
+        message(WARNING "MinGW cross toolchain: vcpkg not found. Set VCPKG_ROOT or MUPEN64RR_VCPKG_TOOLCHAIN.")
+    endif()
+endif()
+
 if(DEFINED CACHE{MUPEN64RR_VCPKG_TOOLCHAIN})
     if(EXISTS "${MUPEN64RR_VCPKG_TOOLCHAIN}")
         # Map our MINGW_TARGET to vcpkg's triplet naming convention.
         if(MINGW_TARGET STREQUAL "x86_64")
-            set(VCPKG_TARGET_TRIPLET "x64-mingw-static" CACHE STRING "vcpkg MinGW triplet")
+            set(VCPKG_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING "vcpkg MinGW triplet")
         else()
-            set(VCPKG_TARGET_TRIPLET "x86-mingw-static" CACHE STRING "vcpkg MinGW triplet")
+            set(VCPKG_TARGET_TRIPLET "x86-mingw-dynamic" CACHE STRING "vcpkg MinGW triplet")
         endif()
         include("${MUPEN64RR_VCPKG_TOOLCHAIN}")
         message(STATUS "MinGW cross toolchain: vcpkg enabled (triplet ${VCPKG_TARGET_TRIPLET})")

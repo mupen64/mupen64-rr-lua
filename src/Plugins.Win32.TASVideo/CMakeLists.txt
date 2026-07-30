@@ -87,10 +87,10 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     SDL3::SDL3
 )
 target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
-    Comctl32
+    comctl32
     uxtheme
-    Msimg32
-    Gdiplus
+    msimg32
+    gdiplus
     opengl32
     glu32
     winmm

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <CommonPCH.hpp>
 #include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"

@@ -156,7 +156,7 @@ set_source_files_properties(
     "${CMAKE_CURRENT_SOURCE_DIR}/Lua/sandbox.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
 )
-target_precompile_headers(Mupen64RR.Views.Win32 PRIVATE "stdafx.h")
+#target_precompile_headers(Mupen64RR.Views.Win32 PRIVATE "stdafx.h")
 target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Mupen64RR.Common
@@ -177,24 +177,24 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
 )
 # Windows library linkages
 target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
-    Shlwapi
+    shlwapi
     vfw32
     winmm
     propsys
-    Comctl32
+    comctl32
     uxtheme
-    Msimg32
-    Gdiplus
+    msimg32
+    gdiplus
     d2d1
     dwrite
-    Dbghelp
-    Dcomp
-    D3D11
-    DXGI
+    dbghelp
+    dcomp
+    d3d11
+    dxgi
     dxguid
-    Dwmapi
+    dwmapi
     d3dcompiler
-    Winhttp
+    winhttp
 )
 
 target_compile_definitions(Mupen64RR.Views.Win32 PRIVATE

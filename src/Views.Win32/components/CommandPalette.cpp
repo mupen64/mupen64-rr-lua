@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "RomBrowser.hpp"
 #include "stdafx.h"
+#include "RomBrowser.hpp"
 #include <components/CommandPalette.hpp>
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>

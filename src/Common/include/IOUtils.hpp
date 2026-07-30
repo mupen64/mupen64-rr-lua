@@ -8,7 +8,7 @@
 #include <filesystem>
 #if defined(_WIN32)
 #define NOMINMAX
-#include <Windows.h>
+#include <windows.h>
 #elif defined(__linux__)
 #include <stdexcept>
 #include <cstdio>
@@ -346,7 +346,12 @@ inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mo
 {
 #ifdef _WIN32
     auto mode_wc = to_wide_string(mode);
+#ifdef __MINGW32__
+    // MinGW doesn't have _wfsopen, use _wfopen instead
+    return _wfopen(path.c_str(), mode_wc.c_str());
+#else
     return _wfsopen(path.c_str(), mode_wc.c_str(), _SH_DENYNO);
+#endif
 #else
     // Linux file locks are opt-in.
     return fopen(path.c_str(), mode);
