@@ -13,6 +13,9 @@ add_library(vendor::argh ALIAS argh)
 add_subdirectory(bs-thread-pool)
 add_library(vendor::bs-thread-pool ALIAS bs-thread-pool)
 
+add_subdirectory(decan)
+add_library(vendor::decan ALIAS decan-hpp)
+
 add_subdirectory(microlru)
 add_library(vendor::microlru ALIAS microlru)
 
