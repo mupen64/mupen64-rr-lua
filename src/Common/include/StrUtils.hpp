@@ -169,7 +169,8 @@ inline std::wstring_view ctrim_wstring(std::wstring_view str)
 inline std::wstring join_wstring(const std::vector<std::wstring> &vec, std::wstring_view delimiter)
 {
     std::wostringstream s;
-    for (auto it = vec.begin(); it != vec.end(); ++it) {
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
         if (it != vec.begin()) s << delimiter;
         s << *it;
     }

@@ -41,8 +41,7 @@ std::vector<std::filesystem::path> discover_roms()
 
     // Add recent ROMs first
     rom_paths.reserve(g_config.recent_rom_paths.size());
-    for (const auto &recent_rom : g_config.recent_rom_paths)
-        rom_paths.push_back(recent_rom);
+    for (const auto &recent_rom : g_config.recent_rom_paths) rom_paths.push_back(recent_rom);
 
     // we aggregate all file paths and only filter them after we're done
     if (std::filesystem::is_directory(abs_rom_directory))
@@ -364,8 +363,10 @@ notify(LPARAM lparam)
         switch (plvdi->item.iSubItem)
         {
         case 1: {
-            
-            StrNCpy(plvdi->item.pszText, IOUtils::rom_name_to_wide_string((const char*) rombrowser_entry.header.nom).c_str(), plvdi->item.cchTextMax);
+
+            StrNCpy(plvdi->item.pszText,
+                    IOUtils::rom_name_to_wide_string((const char *)rombrowser_entry.header.nom).c_str(),
+                    plvdi->item.cchTextMax);
             break;
         }
         case 2: {

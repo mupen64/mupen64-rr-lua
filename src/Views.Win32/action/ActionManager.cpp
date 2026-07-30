@@ -193,7 +193,8 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
         const bool has_menu_hidden_prefix = name.starts_with(ActionManager::MENU_HIDDEN_PREFIX);
 
         if (has_separator)
-            display_name = StrUtils::ctrim_wstring(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
+            display_name =
+                StrUtils::ctrim_wstring(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
         if (has_menu_hidden_prefix)
             display_name = StrUtils::ctrim_wstring(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
 

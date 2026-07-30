@@ -9,8 +9,11 @@
 // Selection of 20-byte ROM headers.
 static constexpr char MARIO64[20] = "SUPER MARIO 64";
 static constexpr char EMPTY[20] = "";
-static constexpr char NORMAL_JAPANESE[20] = "\x8e\x84\x82\xcd\x83\x65\x83\x58\x83\x67\x82\xbe\x82\xe6\x0a"; // 私はテストだよ  (I am a test)
-static constexpr char HALF_WIDTH_CHARS[20] = "\xca\xdd\xb6\xb8\xb6\xc0\xb6\xc5\xc3\xbd\xc4\xc0\xde\xd6\x0a"; // ﾊﾝｶｸｶﾀｶﾅﾃｽﾄﾀﾞﾖ (This is a half-width katakana test)
+static constexpr char NORMAL_JAPANESE[20] =
+    "\x8e\x84\x82\xcd\x83\x65\x83\x58\x83\x67\x82\xbe\x82\xe6\x0a"; // 私はテストだよ  (I am a test)
+static constexpr char HALF_WIDTH_CHARS[20] =
+    "\xca\xdd\xb6\xb8\xb6\xc0\xb6\xc5\xc3\xbd\xc4\xc0\xde\xd6\x0a"; // ﾊﾝｶｸｶﾀｶﾅﾃｽﾄﾀﾞﾖ (This is a half-width katakana
+                                                                    // test)
 
 TEST_CASE("ascii_rom_name_is_unchanged", "rom_name_to_path_component")
 {
