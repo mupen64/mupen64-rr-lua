@@ -190,7 +190,7 @@ void FrameBuffer_SaveBuffer(u32 address, u16 size, u16 width, u16 height)
     cache.cachedBytes += current->texture->textureBytes;
 
     glBindTexture(GL_TEXTURE_2D, current->texture->glName);
-    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, OGL.height - current->texture->height, current->texture->realWidth,
+    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, OGL.height - current->texture->height, current->texture->realWidth,
                      current->texture->realHeight, 0);
     *(u32 *)&RDRAM[current->startAddress] = current->startAddress;
 
@@ -207,48 +207,6 @@ void FrameBuffer_RenderBuffer(u32 address)
     {
         if ((current->startAddress <= address) && (current->endAddress >= address))
         {
-            glPushAttrib(GL_ENABLE_BIT | GL_VIEWPORT_BIT);
-
-            Combiner_BeginTextureUpdate();
-            TextureCache_ActivateTexture(0, current->texture);
-            Combiner_SetCombine(EncodeCombineMode(0, 0, 0, TEXEL0, 0, 0, 0, 1, 0, 0, 0, TEXEL0, 0, 0, 0, 1));
-            glDisable(GL_BLEND);
-            glDisable(GL_ALPHA_TEST);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
-            glDisable(GL_POLYGON_OFFSET_FILL);
-            //			glDisable( GL_REGISTER_COMBINERS_NV );
-            glDisable(GL_FOG);
-
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-            glOrtho(0, OGL.width, 0, OGL.height, -1.0f, 1.0f);
-            glViewport(0, 0, OGL.width, OGL.height);
-            glDisable(GL_SCISSOR_TEST);
-
-            float u1, v1;
-
-            u1 = (float)current->texture->width / (float)current->texture->realWidth;
-            v1 = (float)current->texture->height / (float)current->texture->realHeight;
-
-            glDrawBuffer(GL_FRONT);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f);
-            glVertex2f(0.0f, OGL.height - current->texture->height);
-
-            glTexCoord2f(0.0f, v1);
-            glVertex2f(0.0f, OGL.height);
-
-            glTexCoord2f(u1, v1);
-            glVertex2f(current->texture->width, OGL.height);
-
-            glTexCoord2f(u1, 0.0f);
-            glVertex2f(current->texture->width, OGL.height - current->texture->height);
-            glEnd();
-            glDrawBuffer(GL_BACK);
-
-            glPopAttrib();
-
             current->changed = FALSE;
 
             FrameBuffer_MoveToTop(current);
@@ -269,49 +227,6 @@ void FrameBuffer_RestoreBuffer(u32 address, u16 size, u16 width)
     {
         if ((current->startAddress == address) && (current->width == width) && (current->size == size))
         {
-            glPushAttrib(GL_ENABLE_BIT | GL_VIEWPORT_BIT);
-            Combiner_BeginTextureUpdate();
-            TextureCache_ActivateTexture(0, current->texture);
-            Combiner_SetCombine(EncodeCombineMode(0, 0, 0, TEXEL0, 0, 0, 0, 1, 0, 0, 0, TEXEL0, 0, 0, 0, 1));
-
-            glDisable(GL_BLEND);
-            glDisable(GL_ALPHA_TEST);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_SCISSOR_TEST);
-            glDisable(GL_CULL_FACE);
-            glDisable(GL_POLYGON_OFFSET_FILL);
-            // glDisable( GL_REGISTER_COMBINERS_NV );
-            glDisable(GL_FOG);
-            //			glDepthMask( FALSE );
-
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-            glOrtho(0, OGL.width, 0, OGL.height, -1.0f, 1.0f);
-            //			glOrtho( 0, RDP.width, RDP.height, 0, -1.0f, 1.0f );
-            glViewport(0, 0, OGL.width, OGL.height);
-
-            float u1, v1;
-
-            u1 = (float)current->texture->width / (float)current->texture->realWidth;
-            v1 = (float)current->texture->height / (float)current->texture->realHeight;
-
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f);
-            glVertex2f(0.0f, OGL.height - current->texture->height);
-
-            glTexCoord2f(0.0f, v1);
-            glVertex2f(0.0f, OGL.height);
-
-            glTexCoord2f(u1, v1);
-            glVertex2f(current->texture->width, OGL.height);
-
-            glTexCoord2f(u1, 0.0f);
-            glVertex2f(current->texture->width, OGL.height - current->texture->height);
-            glEnd();
-
-            glLoadIdentity();
-            glPopAttrib();
-
             FrameBuffer_MoveToTop(current);
 
             gSP.changed |= CHANGED_TEXTURE | CHANGED_VIEWPORT;

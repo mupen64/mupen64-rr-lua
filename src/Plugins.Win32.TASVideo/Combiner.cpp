@@ -1,20 +1,22 @@
 #include "stdafx.h"
 #include "OpenGL.hpp"
 #include "Combiner.hpp"
-#include "unified_combiner.hpp"
+#include "glsl_combiner.hpp"
 #include "gDP.hpp"
+
+#include <cstdlib>
 
 CombinerInfo combiner;
 
 void Combiner_Init()
 {
-    Init_unified_combiner();
+    GLSLCombiner_Init();
     combiner.root = NULL;
 }
 
 void Combiner_UpdateCombineColors()
 {
-    Update_unified_combiner_Colors(combiner.current->compiled);
+    GLSLCombiner_UpdateColors((GLSLProgram *)combiner.current->compiled);
     gDP.changed &= ~CHANGED_COMBINE_COLORS;
 }
 
@@ -231,8 +233,7 @@ CachedCombiner *Combiner_Compile(u64 mux)
     cached->left = NULL;
     cached->right = NULL;
 
-    // Send the simplified combiner to the unified hardware compiler
-    cached->compiled = Compile_unified_combiner(&color, &alpha);
+    cached->compiled = GLSLCombiner_Compile(&color, &alpha);
 
     return cached;
 }
@@ -242,7 +243,6 @@ void Combiner_DeleteCombiner(CachedCombiner *combiner)
     if (combiner->left) Combiner_DeleteCombiner(combiner->left);
     if (combiner->right) Combiner_DeleteCombiner(combiner->right);
 
-    free(combiner->compiled);
     free(combiner);
 }
 
@@ -254,23 +254,17 @@ void Combiner_Destroy()
         combiner.root = NULL;
     }
 
-    Uninit_unified_combiner();
-
-    for (int i = 0; i < OGL.maxTextureUnits; i++)
-    {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glDisable(GL_TEXTURE_2D);
-    }
+    GLSLCombiner_Uninit();
 }
 
 void Combiner_BeginTextureUpdate()
 {
-    BeginTextureUpdate_unified_combiner();
+    GLSLCombiner_BeginTextureUpdate();
 }
 
 void Combiner_EndTextureUpdate()
 {
-    EndTextureUpdate_unified_combiner();
+    GLSLCombiner_EndTextureUpdate();
 }
 
 void Combiner_SelectCombine(u64 mux)
@@ -316,7 +310,22 @@ void Combiner_SelectCombine(u64 mux)
 
 void Combiner_SetCombineStates()
 {
-    Set_unified_combiner(combiner.current->compiled);
+    GLSLCombiner_Set((GLSLProgram *)combiner.current->compiled);
+}
+
+void Combiner_SetAlphaTest(int mode, float ref)
+{
+    GLSLCombiner_SetAlphaTest(mode, ref);
+}
+
+void Combiner_SetFogEnabled(bool enabled)
+{
+    GLSLCombiner_SetFogEnabled(enabled);
+}
+
+void Combiner_SetProjection(const float *matrix)
+{
+    GLSLCombiner_SetProjection(matrix);
 }
 
 void Combiner_SetCombine(u64 mux)

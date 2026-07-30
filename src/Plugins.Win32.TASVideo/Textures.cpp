@@ -269,7 +269,7 @@ void TextureCache_Init()
                 noise[y * 64 * 4 + x * 4 + 3] = random;
             }
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, noise);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, noise);
     }
 
     cache.dummy = TextureCache_AddTop();
@@ -297,7 +297,7 @@ void TextureCache_Init()
     cache.dummy->tMem = 0;
 
     glBindTexture(GL_TEXTURE_2D, cache.dummy->glName);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, dummyTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, dummyTexture);
 
     cache.cachedBytes = cache.dummy->textureBytes;
 
@@ -312,8 +312,7 @@ static void TextureCache_Scale(CachedTexture *tex_info, uint32_t *src, const GLu
 {
     if (cache.textureFilter == TextureFilter::None)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, gl_internal_format, tex_info->realWidth, tex_info->realHeight, 0, GL_RGBA,
-                     gl_type, src);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_info->realWidth, tex_info->realHeight, 0, GL_RGBA, gl_type, src);
         free(src);
         return;
     }
@@ -373,7 +372,7 @@ static void TextureCache_Scale(CachedTexture *tex_info, uint32_t *src, const GLu
         }
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, gl_internal_format, tex_info->realWidth * OGL.filterScale,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_info->realWidth * OGL.filterScale,
                  tex_info->realHeight * OGL.filterScale, 0, GL_RGBA, gl_type, dst);
 
     free(src);

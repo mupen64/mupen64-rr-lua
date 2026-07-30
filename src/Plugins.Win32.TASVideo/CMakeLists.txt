@@ -7,7 +7,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "VI.hpp"
     "Types.hpp"
-    "unified_combiner.hpp"
     "stdafx.h"
     "S2DEX2.hpp"
     "S2DEX.hpp"
@@ -20,6 +19,7 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "L3DEX.hpp"
     "L3D.hpp"
     "gSP.hpp"
+    "glsl_combiner.hpp"
     "glN64.hpp"
     "gDP.hpp"
     "GBI.hpp"
@@ -40,7 +40,6 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
 
     "VI.cpp"
     "Textures.cpp"
-    "unified_combiner.cpp"
     "stdafx.cpp"
     "S2DEX2.cpp"
     "S2DEX.cpp"
@@ -52,6 +51,7 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "L3DEX.cpp"
     "L3D.cpp"
     "gSP.cpp"
+    "glsl_combiner.cpp"
     "glN64.cpp"
     "gDP.cpp"
     "GBI.cpp"

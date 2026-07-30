@@ -63,6 +63,8 @@ struct GLInfo
     BOOL clear_override = TRUE;
 
     bool headless{};
+
+    bool isGLES{};
 };
 
 extern GLInfo OGL;
@@ -82,6 +84,8 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color);
 void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls, float ult, float lrs, float lrt,
                           bool flip);
 void OGL_UpdateScale();
+void OGL_SetIdentityProjection();
+void OGL_SetOrthoProjection(float left, float right, float bottom, float top, float znear, float zfar);
 void OGL_ClearDepthBuffer();
 void OGL_ClearColorBuffer(float *color);
 void OGL_ResizeWindow();
