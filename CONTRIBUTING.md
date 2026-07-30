@@ -28,6 +28,8 @@ Compiling is as easy as using one of the provided configure presets. All platfor
 |`vcpkg-win64-x86(-release)`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
 |`vcpkg-win64-x64(-release)`|**64-bit target** on **64-bit Windows** host, dependencies via `vcpkg`|
 |`sys-linux64-x64`|**64-bit** target, **64-bit Linux** host, dependencies from system|
+|`mingw-linux-x64(-release)`|**64-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
+|`mingw-linux-x86(-release)`|**32-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
 
 ### Visual Studio Code + CMake Tools
 Configure presets should be made available via CMake Tools, see above.
@@ -48,9 +50,9 @@ Visual Studio 2026 must be installed on the `C:` drive.
 
 ## Linux
 
-> **NOTE:** 32-bit builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
+> **NOTE:** 32-bit native builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
 
-To build:
+To build natively:
 ```sh
 cmake --preset sys-linux64-x64
 cmake --build build
@@ -60,6 +62,46 @@ The core VCR tests are integrated with CMake, so running the tests is easy:
 ```sh
 ctest --test-dir build
 ```
+
+## MinGW cross-compilation (Linux → Windows)
+
+MinGW presets let you cross-compile Windows binaries from a Linux host. Both 64-bit (`x86_64`) and 32-bit (`i686`) targets are supported.
+
+### Dependencies
+
+Install the MinGW cross-compiler toolchain. On Debian/Ubuntu:
+
+```sh
+# 64-bit
+sudo apt install g++-mingw-w64-x86-64
+
+# 32-bit (multiarch)
+sudo apt install g++-mingw-w64-i686
+```
+
+[vcpkg](https://github.com/microsoft/vcpkg) is optional but recommended for managing Windows dependencies. If `VCPKG_ROOT` is set or `vcpkg` is on your `PATH`, the toolchain will auto-detect it and use the `x64-mingw-dynamic` / `x86-mingw-dynamic` triplets.
+
+### Building
+
+```sh
+# 64-bit debug
+cmake --preset mingw-linux-x64
+cmake --build build
+
+# 64-bit release
+cmake --preset mingw-linux-x64-release
+cmake --build build
+
+# 32-bit debug
+cmake --preset mingw-linux-x86
+cmake --build build
+
+# 32-bit release
+cmake --preset mingw-linux-x86-release
+cmake --build build
+```
+
+MinGW runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) are automatically copied to the output directory at build time.
 
 # Dependencies
 When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
