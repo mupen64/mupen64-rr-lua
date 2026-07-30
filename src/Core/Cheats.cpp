@@ -25,7 +25,7 @@ bool cht_compile(std::string_view code, core_cheat &cheat)
     size_t serial_offset = 0;
     size_t serial_diff = 0;
 
-    for (auto line : MiscHelpers::split_string(code, "\n"))
+    for (auto line : StrUtils::split_string(code, "\n"))
     {
         if (line.size() < 13 || line[0] == '$' || line[0] == '-')
         {
