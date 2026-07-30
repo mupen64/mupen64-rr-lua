@@ -97,6 +97,9 @@ inline auto split_wstring(std::wstring_view str, std::wstring_view delim)
     return split_basic_string<wchar_t>(str, delim);
 }
 
+// CASE-INSENSITIVE COMPARISON
+// ==============================
+
 // Case-insensitive comparison of C strings.
 inline int c_icmp(const char *a, const char *b)
 {
@@ -121,29 +124,63 @@ inline int c_nicmp(const char *a, const char *b, size_t n)
 #endif
 }
 
+// Trim
+// ==============================
+
 // Trims whitespace from the start and end of a string_view (as determined by isspace()).
 inline std::string_view ctrim_string(std::string_view str)
 {
-    auto start_iter = std::find_if(str.begin(), str.end(), [](char c) { return !isspace(c); });
-    auto end_iter = std::find_if(str.rbegin(), str.rend(), [](char c) { return !isspace(c); }).base();
+    using namespace std::literals;
 
-    size_t start_idx = start_iter - str.begin();
-    size_t len = end_iter - start_iter;
+    const auto not_isspace = [](wchar_t c) { return !isspace(c); };
 
-    return str.substr(start_idx, len);
+    // search from the start for non-whitespace
+    auto start_iter = std::ranges::find_if(str, not_isspace);
+    if (start_iter == str.end()) return ""sv;
+    auto str2 = str.substr(start_iter - str.begin());
+
+    auto end_iter = std::ranges::find_if(std::views::reverse(str2), not_isspace);
+    if (end_iter == str.rend()) return ""sv;
+    return str2.substr(0, end_iter.base() - str2.begin());
 }
 // Trims whitespace from the start and end of a wstring_view (as determined by iswspace()).
 inline std::wstring_view ctrim_wstring(std::wstring_view str)
 {
-    auto start_iter = std::find_if(str.begin(), str.end(), [](wchar_t c) { return !iswspace(c); });
-    auto end_iter = std::find_if(str.rbegin(), str.rend(), [](wchar_t c) { return !iswspace(c); }).base();
+    using namespace std::literals;
 
-    size_t start_idx = start_iter - str.begin();
-    size_t len = end_iter - start_iter;
+    const auto not_iswspace = [](wchar_t c) { return !iswspace(c); };
 
-    return str.substr(start_idx, len);
+    // search from the start for non-whitespace
+    auto start_iter = std::ranges::find_if(str, not_iswspace);
+    if (start_iter == str.end()) return L""sv;
+    auto str2 = str.substr(start_iter - str.begin());
+
+    auto end_iter = std::ranges::find_if(std::views::reverse(str2), not_iswspace);
+    if (end_iter == str.rend()) return L""sv;
+    return str2.substr(0, end_iter.base() - str2.begin());
 }
 
+/**
+ * \brief Joins a vector of strings into a single string with a specified delimiter.
+ * \param vec The vector of strings to join.
+ * \param delimiter The delimiter to use between the strings.
+ * \return A single string containing all elements of the vector separated by the delimiter.
+ */
+inline std::wstring join_wstring(const std::vector<std::wstring> &vec, std::wstring_view delimiter)
+{
+    std::wostringstream s;
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        if (it != vec.begin()) s << delimiter;
+        s << *it;
+    }
+    return s.str();
+}
+
+// STRING-KEYED MAPS
+// ==============================
+
+// Heterogeneous hash function for strings and string-like types.
 template <class CharT, class Traits = std::char_traits<CharT>> struct StringHash
 {
     using is_transparent = void;
