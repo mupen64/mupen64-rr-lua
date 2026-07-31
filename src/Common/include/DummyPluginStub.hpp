@@ -32,5 +32,4 @@
         result =                                                                                                       \
             std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);    \
         metadata->target_version[result.size] = '\0';                                                                  \
-    }\
-\
+    }
