@@ -137,13 +137,13 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     Edit_GetText(GetDlgItem(hWndDlg, IDC_CACHEMEGS), text, 4);
     cache.maxBytes = _wtol(text) * 1048576;
 
-    OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, NULL, NULL);
-    OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, NULL, NULL);
-    OGL.fog = (SendDlgItemMessage(hWndDlg, IDC_FOG, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
-    OGL.msaa = (SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_GETCHECK, NULL, NULL) == BST_CHECKED) ? 4 : 0;
+    OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, 0, 0);
+    OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, 0, 0);
+    OGL.fog = (SendDlgItemMessage(hWndDlg, IDC_FOG, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    OGL.msaa = (SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_GETCHECK, 0, 0) == BST_CHECKED) ? 4 : 0;
     OGL.originAdjust = (OGL.textureFilter == TextureFilter::SaI ? 0.25 : 0.50);
-    OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
-    OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
+    OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     wchar_t val[32]{};
     SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_X), WM_GETTEXT, std::size(val), (LPARAM)val);
@@ -154,7 +154,7 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
 
     OGL.usePolygonStipple =
-        (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
+        (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     Config_SaveConfig();
     Config_LoadConfig();
@@ -219,20 +219,20 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         SendMessage(GetDlgItem(hWndDlg, IDC_FSCALE), TBM_SETPOS, TRUE, OGL.filterScale);
 
         SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_SETCHECK,
-                           OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+                           OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
         SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_SETCHECK,
-                           OGL.clear_override ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+                           OGL.clear_override ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
         // Enable/disable fog
-        SendDlgItemMessage(hWndDlg, IDC_FOG, BM_SETCHECK, OGL.fog ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+        SendDlgItemMessage(hWndDlg, IDC_FOG, BM_SETCHECK, OGL.fog ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
         SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_SETCHECK, OGL.msaa == 4 ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED,
-                           NULL);
+                           0);
 
         SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_SETCHECK,
-                           OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+                           OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
         const auto cache_size = std::to_wstring(cache.maxBytes / 1048576);
-        SendDlgItemMessage(hWndDlg, IDC_CACHEMEGS, WM_SETTEXT, NULL, (LPARAM)cache_size.c_str());
+        SendDlgItemMessage(hWndDlg, IDC_CACHEMEGS, WM_SETTEXT, 0, (LPARAM)cache_size.c_str());
 
         SendMessage(hWndDlg, WM_COMMAND, MAKEWPARAM(IDC_TEXTUREFILTER, CBN_SELCHANGE),
                     (LPARAM)GetDlgItem(hWndDlg, IDC_TEXTUREFILTER));

@@ -35,7 +35,7 @@ bool init_rsp_thread()
     RSP.halt = FALSE;
 
     DWORD thread_id;
-    RSP.thread = CreateThread(NULL, 4096, RSP_ThreadProc, NULL, NULL, &thread_id);
+    RSP.thread = CreateThread(NULL, 4096, RSP_ThreadProc, NULL, 0, &thread_id);
     WaitForSingleObject(RSP.threadFinished, INFINITE);
 
     SetEvent(RSP.threadMsg[RSPMSG_START]);
