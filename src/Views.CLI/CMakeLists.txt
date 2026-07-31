@@ -1,6 +1,9 @@
 add_executable(Mupen64RR.Views.CLI
     "Main.hpp"
+    "Plugin.hpp"
+
     "Main.cpp"
+    "Plugin.cpp"
 )
 target_compile_features(Mupen64RR.Views.CLI PRIVATE cxx_std_23)
 set_target_properties(Mupen64RR.Views.CLI PROPERTIES
@@ -12,4 +15,5 @@ set_target_properties(Mupen64RR.Views.CLI PROPERTIES
 target_link_libraries(Mupen64RR.Views.CLI PRIVATE
     Mupen64RR.Common
     Mupen64RR.Core
+    vendor::decan
 )

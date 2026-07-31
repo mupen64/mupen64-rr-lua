@@ -36,12 +36,6 @@ using handle_t = HMODULE;
 using handle_t = void *;
 #endif
 
-struct section_info
-{
-    void *address;
-    size_t length;
-};
-
 class library
 {
     std::string m_filename;
