@@ -17,6 +17,12 @@ add_subdirectory(Common)
 # core API and headers
 add_subdirectory(Core)
 
+
+# CLI VIEW
+# ============================
+
+add_subdirectory(Views.CLI)
+
 # BUNDLED PLUGINS
 # ============================
 

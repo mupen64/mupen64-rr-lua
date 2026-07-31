@@ -12,10 +12,7 @@ add_library(Mupen64RR.Common INTERFACE
     "include/VersionNameHelpers.hpp"
     "include/FNV1A.hpp"
 )
-set_target_properties(Mupen64RR.Common PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-)
+target_compile_features(Mupen64RR.Common INTERFACE cxx_std_23)
 target_include_directories(Mupen64RR.Common INTERFACE include)
 target_link_libraries(Mupen64RR.Common INTERFACE
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
