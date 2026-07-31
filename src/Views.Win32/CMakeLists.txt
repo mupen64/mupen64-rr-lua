@@ -147,11 +147,10 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
 )
 mupen64rr_copy_vcpkg_deps(Mupen64RR.Views.Win32)
 mupen64rr_copy_mingw_runtime(Mupen64RR.Views.Win32)
-# vcpkg's speexdsp port is busted
 add_custom_command(TARGET Mupen64RR.Views.Win32 POST_BUILD
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${MUPEN64RR_OUT_DIR}/liblibspeexdsp.dll"
-        "${MUPEN64RR_OUT_DIR}/libspeexdsp.dll"
+    COMMAND "${CMAKE_COMMAND}"
+        -D "MUPEN64RR_OUT_DIR=${MUPEN64RR_OUT_DIR}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/RenameSpeexDsp.cmake"
     VERBATIM
 )
 # Dependencies of the resource file. These are specified manually,
