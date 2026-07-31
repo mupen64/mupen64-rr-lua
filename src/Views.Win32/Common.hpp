@@ -52,7 +52,6 @@ extern "C"
 #include <strsafe.h>
 #include <commdlg.h>
 #include <unordered_set>
-// #include <stacktrace>
 #include <expected>
 #include <ranges>
 #include <set>
