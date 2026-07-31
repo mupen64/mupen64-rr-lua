@@ -170,7 +170,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module
     if (target_version_len > 0)
     {
         // Plugin is tied to one version of mupen
-        const auto current_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+        const std::string_view current_version = CURRENT_VERSION;
         const std::string target_version(plugin_info.target_version, target_version_len);
         if (current_version != target_version)
         {
