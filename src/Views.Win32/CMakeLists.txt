@@ -147,8 +147,7 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
 )
 mupen64rr_copy_vcpkg_deps(Mupen64RR.Views.Win32)
 mupen64rr_copy_mingw_runtime(Mupen64RR.Views.Win32)
-# vcpkg's speexdsp port produces liblibspeexdsp.dll (double lib prefix).
-# The linker embeds the SONAME libspeexdsp.dll, so rename it at build time.
+# vcpkg's speexdsp port is busted
 add_custom_command(TARGET Mupen64RR.Views.Win32 POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${MUPEN64RR_OUT_DIR}/liblibspeexdsp.dll"

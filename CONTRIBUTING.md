@@ -13,12 +13,11 @@ In order for the compiler to work, you'll need to be in a VS developer environme
 
 ## Linux dependencies
 
-You'll need:
-- A C/C++ compiler (`gcc` or `clang`)
-- `libdeflate`
-- `libsafec`
-
-`libsafec` is required outside of Windows as no other C/C++ library implements C11 Annex K, which specifies `strncpy_s` and similar functions.
+```fish
+sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lua mingw-w64-gcc vcpkg
+yay -S --needed libsafec
+source /etc/profile.d/vcpkg.sh
+```
 
 ## CMake Presets
 Compiling is as easy as using one of the provided configure presets. All platforms generally use `clang` as the compiler and `Ninja` as the generator.
@@ -64,24 +63,6 @@ ctest --test-dir build
 ```
 
 ## MinGW cross-compilation (Linux → Windows)
-
-MinGW presets let you cross-compile Windows binaries from a Linux host. Both 64-bit (`x86_64`) and 32-bit (`i686`) targets are supported.
-
-### Dependencies
-
-Install the MinGW cross-compiler toolchain. On Debian/Ubuntu:
-
-```sh
-# 64-bit
-sudo apt install g++-mingw-w64-x86-64
-
-# 32-bit (multiarch)
-sudo apt install g++-mingw-w64-i686
-```
-
-[vcpkg](https://github.com/microsoft/vcpkg) is optional but recommended for managing Windows dependencies. If `VCPKG_ROOT` is set or `vcpkg` is on your `PATH`, the toolchain will auto-detect it and use the `x64-mingw-dynamic` / `x86-mingw-dynamic` triplets.
-
-### Building
 
 ```sh
 # 64-bit debug
