@@ -359,7 +359,7 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 
 static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
 {
-#define _WIDE2(s) L ## s
+#define _WIDE2(s) L##s
 #define HANDLE_P_VALUE(x) ini_handle_config_value(ini, _WIDE2(#x), is_reading, &g_config.x);
 #define HANDLE_VALUE(x) ini_handle_config_value(ini, _WIDE2(#x), is_reading, g_config.x);
 

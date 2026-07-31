@@ -153,8 +153,7 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
 
     OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
 
-    OGL.usePolygonStipple =
-        (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    OGL.usePolygonStipple = (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     Config_SaveConfig();
     Config_LoadConfig();
