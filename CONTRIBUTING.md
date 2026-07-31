@@ -112,10 +112,13 @@ All development happens on `main`. We cherry-pick from `main` into release branc
 Every non-library file must contain a copyright header with this content:
 
 ```
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ```
+
+The header is the same everywhere; only the comment syntax changes per file type. Project-specific credits to
+original authors belong in the `NOTICE` file, not in per-file headers.
 
 # Commit Style
 
