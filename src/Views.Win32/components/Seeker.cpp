@@ -94,7 +94,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            seeker.refresh_timer = SetTimer(hwnd, NULL, 1000 / 10, nullptr);
+            seeker.refresh_timer = SetTimer(hwnd, 0, 1000 / 10, nullptr);
 
             break;
         }

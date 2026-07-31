@@ -83,7 +83,7 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     memset(&m_pi, 0, sizeof(m_pi));
 
     if (!CreateProcess(g_config.ffmpeg_path.c_str(), const_cast<wchar_t *>(options.data()), nullptr, nullptr, FALSE,
-                       NULL, nullptr, nullptr, &m_si, &m_pi))
+                       0, nullptr, nullptr, &m_si, &m_pi))
     {
         g_view_logger->error(L"[FFmpegEncoder] CreateProcess failed ({}).", GetLastError());
         CloseHandle(m_pipe);
