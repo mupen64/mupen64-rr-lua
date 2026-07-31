@@ -3240,23 +3240,23 @@ void read_rom()
         lastwrite = 0;
     }
     else
-        *rdword = *((uint32_t *)(rom + (address & 0x03FFFFFF)));
+        *rdword = *((uint32_t *)(rom + (address & 0x07FFFFFF)));
 }
 
 void read_romb()
 {
-    *rdword = *(rom + ((address ^ S8) & 0x03FFFFFF));
+    *rdword = *(rom + ((address ^ S8) & 0x07FFFFFF));
 }
 
 void read_romh()
 {
-    *rdword = *((uint16_t *)(rom + ((address ^ S16) & 0x03FFFFFF)));
+    *rdword = *((uint16_t *)(rom + ((address ^ S16) & 0x07FFFFFF)));
 }
 
 void read_romd()
 {
-    *rdword = ((uint64_t)(*((uint32_t *)(rom + (address & 0x03FFFFFF)))) << 32) |
-              *((uint32_t *)(rom + ((address + 4) & 0x03FFFFFF)));
+    *rdword = ((uint64_t)(*((uint32_t *)(rom + (address & 0x07FFFFFF)))) << 32) |
+              *((uint32_t *)(rom + ((address + 4) & 0x07FFFFFF)));
 }
 
 void write_rom()
