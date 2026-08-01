@@ -1,13 +1,12 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors
- * (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Config.hpp>
-#include <Uxtheme.h>
+#include <uxtheme.h>
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>
@@ -41,8 +40,7 @@ std::vector<std::filesystem::path> discover_roms()
 
     // Add recent ROMs first
     rom_paths.reserve(g_config.recent_rom_paths.size());
-    for (const auto &recent_rom : g_config.recent_rom_paths)
-        rom_paths.push_back(recent_rom);
+    for (const auto &recent_rom : g_config.recent_rom_paths) rom_paths.push_back(recent_rom);
 
     // we aggregate all file paths and only filter them after we're done
     if (std::filesystem::is_directory(abs_rom_directory))
@@ -364,15 +362,10 @@ notify(LPARAM lparam)
         switch (plvdi->item.iSubItem)
         {
         case 1: {
-            // NOTE: The name may not be null-terminated, so we NEED to limit the
-            // size
-            char str[sizeof(core_rom_header::nom) + 1] = {0};
-            if (strncpy_s(str, sizeof(str), (const char *)rombrowser_entry.header.nom, sizeof(core_rom_header::nom)) !=
-                0)
-            {
-                g_view_logger->error("Failed to copy rom name");
-            }
-            StrNCpy(plvdi->item.pszText, IOUtils::rom_name_to_wide_string(str).c_str(), plvdi->item.cchTextMax);
+
+            StrNCpy(plvdi->item.pszText,
+                    IOUtils::rom_name_to_wide_string((const char *)rombrowser_entry.header.nom).c_str(),
+                    plvdi->item.cchTextMax);
             break;
         }
         case 2: {

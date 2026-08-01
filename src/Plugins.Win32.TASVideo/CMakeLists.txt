@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -7,7 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "VI.hpp"
     "Types.hpp"
-    "stdafx.h"
+    "unified_combiner.hpp"
+    "Common.hpp"
     "S2DEX2.hpp"
     "S2DEX.hpp"
     "RSP.hpp"
@@ -40,7 +41,7 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
 
     "VI.cpp"
     "Textures.cpp"
-    "stdafx.cpp"
+    "unified_combiner.cpp"
     "S2DEX2.cpp"
     "S2DEX.cpp"
     "RSP.cpp"
@@ -87,10 +88,10 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     SDL3::SDL3
 )
 target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
-    Comctl32
+    comctl32
     uxtheme
-    Msimg32
-    Gdiplus
+    msimg32
+    gdiplus
     opengl32
     glu32
     winmm

@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <action/ActionManager.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
@@ -1652,7 +1652,7 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
         {
             segment = ActionManager::get_display_name(segment, true);
         }
-        const auto name = MiscHelpers::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+        const auto name = StrUtils::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
         option_group.name = name;
     }
 

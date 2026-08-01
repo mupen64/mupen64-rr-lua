@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <CommonPCH.hpp>
 #include "Main.hpp"
 #include "Config.hpp"
 #include "IOUtils.hpp"
 #include "SDLBackend.hpp"
 #include "m64rr/Types.hpp"
-#include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <m64rr/Plugin.hpp>
 

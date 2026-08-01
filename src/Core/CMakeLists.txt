@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -94,7 +94,9 @@ target_link_libraries(Mupen64RR.Core PUBLIC
     Mupen64RR.Common
     Mupen64RR.Core.Headers
 )
-target_compile_options(Mupen64RR.Core PRIVATE -Werror=nonportable-include-path)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(Mupen64RR.Core PRIVATE -Werror=nonportable-include-path)
+endif()
 
 # options: disable dynarec
 if (${MUPEN64RR_ENABLE_DYNAREC})
