@@ -9,7 +9,6 @@
 #include "glN64.hpp"
 #include "OpenGL.hpp"
 #include "gDP.hpp"
-#include "unified_combiner.hpp"
 
 /*
  * G_SETCOMBINE: color combine modes
@@ -242,7 +241,7 @@ struct CachedCombiner
 {
     gDPCombine combine;
 
-    UnifiedCompiledCombiner *compiled;
+    void *compiled;
     CachedCombiner *left, *right;
 };
 
@@ -321,6 +320,10 @@ void Combiner_Init();
 void Combiner_UpdateCombineColors();
 void Combiner_SetCombine(u64 mux);
 void Combiner_SelectCombine(u64 mux);
+void Combiner_SetAlphaTest(int mode, float ref);
+void Combiner_UpdateDither(float alpha);
+void Combiner_SetFogEnabled(bool enabled);
+void Combiner_SetProjection(const float *matrix);
 void Combiner_SetCombineStates();
 void Combiner_Destroy();
 void Combiner_BeginTextureUpdate();
