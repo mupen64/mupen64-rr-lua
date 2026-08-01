@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.hpp"
 #include "glsl_combiner.hpp"
 #include "Combiner.hpp"
 #include "OpenGL.hpp"
@@ -7,9 +7,6 @@
 #include "GBI.hpp"
 #include "glN64.hpp"
 #include "Textures.h"
-
-#include <string>
-#include <vector>
 
 struct GLSLProgram
 {
