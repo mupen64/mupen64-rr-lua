@@ -314,6 +314,9 @@ void OGL_UpdateStates()
     {
         if ((gDP.otherMode.alphaCompare == G_AC_THRESHOLD) && !(gDP.otherMode.alphaCvgSel))
             Combiner_SetAlphaTest((gDP.blendColor.a > 0.0f) ? 1 : 2, gDP.blendColor.a);
+        else if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) &&
+                 !(gDP.otherMode.alphaCvgSel))
+            Combiner_SetAlphaTest(3, 0.0f);
         // Used in TEX_EDGE and similar render modes
         else if (gDP.otherMode.cvgXAlpha)
             Combiner_SetAlphaTest(1, 0.5f); // arbitrary threshold that gives nice results
@@ -563,6 +566,9 @@ void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
 
 void OGL_DrawTriangles()
 {
+    if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) && !(gDP.otherMode.alphaCvgSel))
+        Combiner_UpdateDither(gDP.envColor.a);
+
     glDrawArrays(GL_TRIANGLES, 0, OGL.numVertices);
     OGL.numTriangles = OGL.numVertices = 0;
 }

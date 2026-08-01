@@ -318,6 +318,11 @@ void Combiner_SetAlphaTest(int mode, float ref)
     GLSLCombiner_SetAlphaTest(mode, ref);
 }
 
+void Combiner_UpdateDither(float alpha)
+{
+    GLSLCombiner_UpdateDither(alpha);
+}
+
 void Combiner_SetFogEnabled(bool enabled)
 {
     GLSLCombiner_SetFogEnabled(enabled);

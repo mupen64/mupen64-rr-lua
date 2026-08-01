@@ -315,6 +315,7 @@ void Combiner_UpdateCombineColors();
 void Combiner_SetCombine(u64 mux);
 void Combiner_SelectCombine(u64 mux);
 void Combiner_SetAlphaTest(int mode, float ref);
+void Combiner_UpdateDither(float alpha);
 void Combiner_SetFogEnabled(bool enabled);
 void Combiner_SetProjection(const float *matrix);
 void Combiner_SetCombineStates();

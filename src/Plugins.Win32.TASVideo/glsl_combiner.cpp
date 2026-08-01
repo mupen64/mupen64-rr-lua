@@ -22,6 +22,7 @@ struct GLSLProgram
     GLint locLodFrac, locPrimLodFrac, locK4, locK5, locNoise;
     GLint locFogEnabled;
     GLint locAlphaTest, locAlphaRef;
+    GLint locDitherAlpha, locDitherSeed;
     GLint locProjection;
 };
 
@@ -36,6 +37,9 @@ static GLSLProgram *s_currentProgram = nullptr;
 
 static int s_alphaTestMode = 0;
 static float s_alphaRef = 0.0f;
+
+static float s_ditherAlpha = 0.0f;
+static float s_ditherSeed = 0.0f;
 
 static int s_fogEnabled = 0;
 
@@ -325,6 +329,10 @@ static std::string BuildFragmentSource(Combiner *color, Combiner *alpha)
     body += "    }\n";
     body += "    if (uAlphaTest == 1) { if (result.a < uAlphaRef) discard; }\n";
     body += "    else if (uAlphaTest == 2) { if (result.a <= uAlphaRef) discard; }\n";
+    // G_AC_DITHER: screen-door transparency. Replaces the fixed-function polygon stipple, which had
+    // one of 32 random 32x32 patterns picked by the env alpha and rotated every draw; here a
+    // per-pixel hash is compared against the same alpha, and the seed rotates per draw the same way.
+    body += "    else if (uAlphaTest == 3) { if (ditherNoise() >= uDitherAlpha) discard; }\n";
     body += "    gl_FragColor = result;\n";
 
     std::string source;
@@ -365,6 +373,13 @@ static std::string BuildFragmentSource(Combiner *color, Combiner *alpha)
     source += "uniform int uFogEnabled;\n";
     source += "uniform int uAlphaTest;\n";
     source += "uniform float uAlphaRef;\n";
+    source += "uniform float uDitherAlpha;\n";
+    source += "uniform float uDitherSeed;\n";
+    source += "lowp float ditherNoise() {\n";
+    source += "    highp vec3 p3 = fract(vec3(floor(gl_FragCoord.xy), uDitherSeed) * 0.1031);\n";
+    source += "    p3 += dot(p3, p3.zyx + 31.32);\n";
+    source += "    return fract((p3.x + p3.y) * p3.z);\n";
+    source += "}\n";
     source += "void main() {\n";
     source += body;
     source += "}\n";
@@ -389,6 +404,8 @@ static void CacheUniformLocations(GLSLProgram *program)
     program->locFogEnabled = glGetUniformLocation(program->program, "uFogEnabled");
     program->locAlphaTest = glGetUniformLocation(program->program, "uAlphaTest");
     program->locAlphaRef = glGetUniformLocation(program->program, "uAlphaRef");
+    program->locDitherAlpha = glGetUniformLocation(program->program, "uDitherAlpha");
+    program->locDitherSeed = glGetUniformLocation(program->program, "uDitherSeed");
     program->locProjection = glGetUniformLocation(program->program, "uProjection");
 }
 
@@ -512,6 +529,8 @@ void GLSLCombiner_Set(GLSLProgram *program)
 
     glUniform1i(program->locAlphaTest, s_alphaTestMode);
     glUniform1f(program->locAlphaRef, s_alphaRef);
+    glUniform1f(program->locDitherAlpha, s_ditherAlpha);
+    glUniform1f(program->locDitherSeed, s_ditherSeed);
     glUniform1i(program->locFogEnabled, s_fogEnabled);
     glUniformMatrix4fv(program->locProjection, 1, GL_FALSE, s_projection);
 
@@ -564,6 +583,20 @@ void GLSLCombiner_SetAlphaTest(int mode, float ref)
         glUseProgram(s_currentProgram->program);
         glUniform1i(s_currentProgram->locAlphaTest, s_alphaTestMode);
         glUniform1f(s_currentProgram->locAlphaRef, s_alphaRef);
+    }
+}
+
+void GLSLCombiner_UpdateDither(float alpha)
+{
+    s_ditherAlpha = alpha;
+    // Rotate through 8 patterns like the fixed-function path did, so the grain animates.
+    s_ditherSeed = (float)(((int)s_ditherSeed + 1) & 0x7);
+
+    if (s_currentProgram != nullptr && s_currentProgram->program != 0)
+    {
+        glUseProgram(s_currentProgram->program);
+        glUniform1f(s_currentProgram->locDitherAlpha, s_ditherAlpha);
+        glUniform1f(s_currentProgram->locDitherSeed, s_ditherSeed);
     }
 }
 
