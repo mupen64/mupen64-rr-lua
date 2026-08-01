@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -114,7 +114,19 @@ void dyna_jump()
     // from the live compilation (mirrors jump_to_func). A freshly-invalidated block yields a
     // NOTCOMPILED stub (local_addr == 0), so we jump to block->code + 0 and recompilation kicks in.
     precomp_block *block = blocks[PC->addr >> 12];
-    precomp_instr *cur = block->block + ((PC->addr - block->start) >> 2);
+    precomp_instr *cur;
+    if (!block || !block->block)
+    {
+        // Page has no live block: nothing to re-derive from, and no newer compilation means PC
+        // can't be stale here. Fall back to the pair x86 uses (see x86/RJump.cpp). Keep going
+        // through the thunk below -- its `add rsp,8` is what balances call_reg64's `push r11`.
+        block = actual;
+        cur = PC;
+    }
+    else
+    {
+        cur = block->block + ((PC->addr - block->start) >> 2);
+    }
 
     int32_t need_map = cur->reg_cache_infos.need_map;
 

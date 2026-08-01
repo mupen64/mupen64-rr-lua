@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -120,12 +120,43 @@ function(mupen64rr_copy_vcpkg_deps target)
   )
 endfunction()
 
+#[=======================[
+Copies MinGW runtime DLLs (libgcc, libstdc++, libwinpthread) to the target's
+output directory. Only active when cross-compiling with MinGW.
+]=======================]
+function(mupen64rr_copy_mingw_runtime target)
+  if(NOT MINGW)
+    return()
+  endif()
+
+  # Derive the MinGW prefix from the compiler name.
+  # e.g. /bin/x86_64-w64-mingw32-g++ -> x86_64-w64-mingw32
+  get_filename_component(_compiler_name "${CMAKE_CXX_COMPILER}" NAME)
+  string(REGEX REPLACE "-g\\+\\+.*$" "" _mingw_prefix "${_compiler_name}")
+  set(_mingw_bindir "/usr/${_mingw_prefix}/bin")
+
+  add_custom_command(
+    TARGET "${target}" POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${_mingw_bindir}/libgcc_s_seh-1.dll"
+      "${_mingw_bindir}/libstdc++-6.dll"
+      "${_mingw_bindir}/libwinpthread-1.dll"
+      "$<TARGET_FILE_DIR:${target}>"
+    VERBATIM
+  )
+endfunction()
+
 # CMake modules
 # =======================================
 include(CTest)
 include(Catch)
 
 if(WIN32)
+  # Use UTF-16 versions of functions
+  add_compile_definitions(UNICODE _UNICODE)
+endif()
+
+if(MSVC)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
   # - enable the program to use pointers larger than 2GB
@@ -141,9 +172,6 @@ if(WIN32)
 
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
-
-  # Use UTF-16 versions of functions
-  add_compile_definitions(UNICODE _UNICODE)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$")

@@ -1,9 +1,15 @@
-﻿#pragma once
+﻿/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#pragma once
 
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <m64rr/API.hpp>
-#include <Windows.h>
+#include <windows.h>
 #include <GL/glew.h>
 #include <commctrl.h>
 #include <windowsx.h>

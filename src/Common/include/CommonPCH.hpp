@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #pragma once
 
 #pragma warning(push, 0)
@@ -41,7 +47,7 @@
 #include <variant>
 #include <vector>
 #include <latch>
-
+#include <share.h>
 #if !defined(_WIN32)
 // Implementation of C11 Annex K for Linux
 #include <safe_str_lib.h>

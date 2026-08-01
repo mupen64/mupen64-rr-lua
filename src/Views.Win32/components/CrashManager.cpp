@@ -1,22 +1,22 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Config.hpp>
 #include <components/CrashManager.hpp>
 
 typedef struct StacktraceInfo
 {
-    std::stacktrace stl_stacktrace{};
     void *rtl_stacktrace[32]{};
 } t_stacktrace_info;
 
 static t_stacktrace_info stacktrace_info;
 
-#define E(x) {x, L#x}
+#define _WIDE(s) L##s
+#define E(x) {x, _WIDE(#x)}
 const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
     E(EXCEPTION_ACCESS_VIOLATION),
     E(EXCEPTION_ACCESS_VIOLATION),
@@ -117,7 +117,6 @@ static std::wstring get_exception_code_friendly_name(const _EXCEPTION_POINTERS *
 static __forceinline void fill_stacktrace_info()
 {
     stacktrace_info = {};
-    stacktrace_info.stl_stacktrace = std::stacktrace::current();
     stacktrace_info.rtl_stacktrace[0] = nullptr;
     CaptureStackBackTrace(0, std::size(stacktrace_info.rtl_stacktrace), stacktrace_info.rtl_stacktrace, NULL);
 }
@@ -138,12 +137,6 @@ static void log_crash(const std::wstring &additional_exception_info)
     g_view_logger->critical(L"VCR Task: {}", static_cast<int>(g_main_ctx.core_ctx->vcr_get_task()));
     g_view_logger->critical(L"Core Executing: {}", g_main_ctx.core_ctx->vr_get_launched());
     g_view_logger->critical(additional_exception_info);
-
-    g_view_logger->critical("STL Stacktrace:");
-    for (const auto &stacktrace_entry : stacktrace_info.stl_stacktrace)
-    {
-        g_view_logger->critical(std::format("{}", std::to_string(stacktrace_entry)));
-    }
 
     g_view_logger->critical("RTL Stacktrace:");
     for (auto i = 0; i < std::size(stacktrace_info.rtl_stacktrace); ++i)
@@ -236,8 +229,6 @@ static void enable_crashing_on_crashes()
             p_set_policy(dwFlags & ~EXCEPTION_SWALLOWING);
         }
     }
-    BOOL insanity = FALSE;
-    SetUserObjectInformationA(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &insanity, sizeof(insanity));
 }
 
 void CrashManager::init()
