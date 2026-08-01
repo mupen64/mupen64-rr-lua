@@ -24,17 +24,23 @@ static SDL_GLContext s_sdl_context;
 
 void OGL_ReadPixels()
 {
-    GLint oldMode;
-    glGetIntegerv(GL_READ_BUFFER, &oldMode);
-    // glReadBuffer(GL_FRONT);
+    if (!gCapturedPixels) return;
 
-    glReadBuffer(GL_BACK);
-    glReadPixels(0, 0, OGL.width, OGL.height, GL_BGRA, GL_UNSIGNED_BYTE, gCapturedPixels);
-    glReadBuffer(oldMode); // restore old read buffer
+    glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);
+
+    auto pixels = (uint8_t *)gCapturedPixels;
+    const size_t count = (size_t)OGL.width * OGL.height;
+    for (size_t i = 0; i < count; i++)
+    {
+        const uint8_t r = pixels[i * 4 + 0];
+        pixels[i * 4 + 0] = pixels[i * 4 + 2];
+        pixels[i * 4 + 2] = r;
+    }
 }
 
 void OGL_InitExtensions()
 {
+    glewExperimental = GL_TRUE;
     GLenum glew = glewInit();
     if (glew != GLEW_OK)
     {
@@ -42,9 +48,7 @@ void OGL_InitExtensions()
         return;
     }
 
-    RT_ASSERT(GLEW_ARB_multitexture, L"Multitexturing not supported. Try updating your graphics driver.");
-
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &OGL.maxTextureUnits);
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &OGL.maxTextureUnits);
     OGL.maxTextureUnits = min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
 
     OGL.EXT_fog_coord = GLEW_EXT_fog_coord;
@@ -52,63 +56,58 @@ void OGL_InitExtensions()
     OGL.EXT_texture_env_combine = GLEW_EXT_texture_env_combine;
 }
 
+void OGL_SetIdentityProjection()
+{
+    static const float identity[16] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                                        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+    Combiner_SetProjection(identity);
+}
+
+void OGL_SetOrthoProjection(float left, float right, float bottom, float top, float znear, float zfar)
+{
+    float m[16] = {};
+    m[0] = 2.0f / (right - left);
+    m[5] = 2.0f / (top - bottom);
+    m[10] = -2.0f / (zfar - znear);
+    m[12] = -(right + left) / (right - left);
+    m[13] = -(top + bottom) / (top - bottom);
+    m[14] = -(zfar + znear) / (zfar - znear);
+    m[15] = 1.0f;
+    Combiner_SetProjection(m);
+}
+
+void OGL_DepthRange(float znear, float zfar)
+{
+    if (OGL.isGLES)
+        glDepthRangef(znear, zfar);
+    else
+        glDepthRange(znear, zfar);
+}
+
 void OGL_InitStates()
 {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].x);
+    glEnableVertexAttribArray(0);
 
-    glVertexPointer(4, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].x);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].color.r);
+    glEnableVertexAttribArray(1);
 
-    glColorPointer(4, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].color.r);
-    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].secondaryColor.r);
+    glEnableVertexAttribArray(2);
 
-    if (OGL.EXT_secondary_color)
-    {
-        glSecondaryColorPointerEXT(3, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].secondaryColor.r);
-        glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-    }
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].s0);
+    glEnableVertexAttribArray(3);
 
-    glClientActiveTexture(GL_TEXTURE0);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s0);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].s1);
+    glEnableVertexAttribArray(4);
 
-    glClientActiveTexture(GL_TEXTURE1);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].s1);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    if (OGL.EXT_fog_coord)
-    {
-        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
-
-        glFogi(GL_FOG_MODE, GL_LINEAR);
-        glFogf(GL_FOG_START, 0.0f);
-        glFogf(GL_FOG_END, 255.0f);
-
-        glFogCoordPointerEXT(GL_FLOAT, sizeof(GLVertex), &OGL.vertices[0].fog);
-        glEnableClientState(GL_FOG_COORDINATE_ARRAY_EXT);
-    }
+    glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(GLVertex), &OGL.vertices[0].fog);
+    glEnableVertexAttribArray(5);
 
     glPolygonOffset(-3.0f, -3.0f);
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    glEnable(GL_MULTISAMPLE);
-
-    srand(timeGetTime());
-
-    for (int i = 0; i < 32; i++)
-    {
-        for (int j = 0; j < 8; j++)
-            for (int k = 0; k < 128; k++)
-                OGL.stipplePattern[i][j][k] = ((i > (rand() >> 10)) << 7) | ((i > (rand() >> 10)) << 6) |
-                                              ((i > (rand() >> 10)) << 5) | ((i > (rand() >> 10)) << 4) |
-                                              ((i > (rand() >> 10)) << 3) | ((i > (rand() >> 10)) << 2) |
-                                              ((i > (rand() >> 10)) << 1) | ((i > (rand() >> 10)) << 0);
-    }
 }
 
 void OGL_UpdateScale()
@@ -163,15 +162,24 @@ bool OGL_InitContext()
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-
     s_sdl_window =
         SDL_CreateWindow("TASVideo", OGL.windowedWidth, OGL.windowedHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
     SDL_assert_release(s_sdl_window);
 
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
+    OGL.isGLES = (s_sdl_context != nullptr);
+
+    if (!s_sdl_context)
+    {
+        g_plugin->log_info(L"OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+        s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
+    }
     SDL_assert_release(s_sdl_context);
 
     SDL_assert_release(SDL_GL_MakeCurrent(s_sdl_window, s_sdl_context));
@@ -190,6 +198,9 @@ bool OGL_InitContext()
 
     OGL_InitExtensions();
     OGL_InitStates();
+
+    g_plugin->log_info(OGL.isGLES ? L"TASVideo: running on an OpenGL ES 2.0 context."
+                              : L"TASVideo: running on a desktop OpenGL compatibility context.");
 
     OGL.context_initialized = TRUE;
 
@@ -260,7 +271,7 @@ void OGL_UpdateViewport()
     const float viewportHeight = gSP.viewport.height * OGL.scaleY;
 
     glViewport((GLint)viewportX, (GLint)viewportY, (GLint)viewportWidth, (GLint)viewportHeight);
-    glDepthRange(0.0f, 1.0f); // gSP.viewport.nearz, gSP.viewport.farz );
+    OGL_DepthRange(0.0f, 1.0f); // gSP.viewport.nearz, gSP.viewport.farz );
 }
 
 void OGL_UpdateDepthUpdate()
@@ -277,10 +288,7 @@ void OGL_UpdateStates()
     {
         OGL_UpdateCullFace();
 
-        if ((gSP.geometryMode & G_FOG) && OGL.EXT_fog_coord && OGL.fog)
-            glEnable(GL_FOG);
-        else
-            glDisable(GL_FOG);
+        Combiner_SetFogEnabled((gSP.geometryMode & G_FOG) && OGL.fog);
 
         gSP.changed &= ~CHANGED_GEOMETRYMODE;
     }
@@ -310,28 +318,16 @@ void OGL_UpdateStates()
 
     if ((gDP.changed & CHANGED_ALPHACOMPARE) || (gDP.changed & CHANGED_RENDERMODE))
     {
-        // Enable alpha test for threshold mode
         if ((gDP.otherMode.alphaCompare == G_AC_THRESHOLD) && !(gDP.otherMode.alphaCvgSel))
-        {
-            glEnable(GL_ALPHA_TEST);
-
-            glAlphaFunc((gDP.blendColor.a > 0.0f) ? GL_GEQUAL : GL_GREATER, gDP.blendColor.a);
-        }
+            Combiner_SetAlphaTest((gDP.blendColor.a > 0.0f) ? 1 : 2, gDP.blendColor.a);
+        else if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) &&
+                 !(gDP.otherMode.alphaCvgSel))
+            Combiner_SetAlphaTest(3, 0.0f);
         // Used in TEX_EDGE and similar render modes
         else if (gDP.otherMode.cvgXAlpha)
-        {
-            glEnable(GL_ALPHA_TEST);
-
-            // Arbitrary number -- gives nice results though
-            glAlphaFunc(GL_GEQUAL, 0.5f);
-        }
+            Combiner_SetAlphaTest(1, 0.5f); // arbitrary threshold that gives nice results
         else
-            glDisable(GL_ALPHA_TEST);
-
-        if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) && !(gDP.otherMode.alphaCvgSel))
-            glEnable(GL_POLYGON_STIPPLE);
-        else
-            glDisable(GL_POLYGON_STIPPLE);
+            Combiner_SetAlphaTest(0, 0.0f);
     }
 
     if (gDP.changed & CHANGED_SCISSOR)
@@ -360,9 +356,10 @@ void OGL_UpdateStates()
             Combiner_SetCombine(gDP.combine.mux);
     }
 
-    if (gDP.changed & CHANGED_COMBINE_COLORS)
+    if ((gDP.changed & CHANGED_COMBINE_COLORS) || (gDP.changed & CHANGED_FOGCOLOR))
     {
         Combiner_UpdateCombineColors();
+        gDP.changed &= ~CHANGED_FOGCOLOR;
     }
 
     if ((gSP.changed & CHANGED_TEXTURE) || (gDP.changed & CHANGED_TILE) || (gDP.changed & CHANGED_TMEM))
@@ -397,8 +394,6 @@ void OGL_UpdateStates()
 
         Combiner_EndTextureUpdate();
     }
-
-    if ((gDP.changed & CHANGED_FOGCOLOR) && OGL.fog) glFogfv(GL_FOG_COLOR, &gDP.fogColor.r);
 
     if ((gDP.changed & CHANGED_RENDERMODE) || (gDP.changed & CHANGED_CYCLETYPE))
     {
@@ -470,23 +465,20 @@ void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
             gDP.otherMode.depthSource == G_ZS_PRIM ? gDP.primDepth.z * vertices[v[i]].w : vertices[v[i]].z;
         OGL.vertices[OGL.numVertices].w = vertices[v[i]].w;
 
+        // The vertex color carries SHADE and nothing else: the shader reads PRIM/ENV straight from
+        // their uniforms, so the old fixed-function trick of smuggling a constant color in through
+        // the vertex color must not overwrite it here.
         OGL.vertices[OGL.numVertices].color.r = vertices[v[i]].r;
         OGL.vertices[OGL.numVertices].color.g = vertices[v[i]].g;
         OGL.vertices[OGL.numVertices].color.b = vertices[v[i]].b;
         OGL.vertices[OGL.numVertices].color.a = vertices[v[i]].a;
-        SetConstant(OGL.vertices[OGL.numVertices].color, combiner.vertex.color, combiner.vertex.alpha);
-        // SetConstant( OGL.vertices[OGL.numVertices].secondaryColor, combiner.vertex.secondaryColor, ONE );
 
-        if (OGL.EXT_secondary_color)
-        {
-            OGL.vertices[OGL.numVertices].secondaryColor.r = 0.0f; // lod_fraction; //vertices[v[i]].r;
-            OGL.vertices[OGL.numVertices].secondaryColor.g = 0.0f; // lod_fraction; //vertices[v[i]].g;
-            OGL.vertices[OGL.numVertices].secondaryColor.b = 0.0f; // lod_fraction; //vertices[v[i]].b;
-            OGL.vertices[OGL.numVertices].secondaryColor.a = 1.0f;
-            SetConstant(OGL.vertices[OGL.numVertices].secondaryColor, combiner.vertex.secondaryColor, ONE);
-        }
+        OGL.vertices[OGL.numVertices].secondaryColor.r = 0.0f;
+        OGL.vertices[OGL.numVertices].secondaryColor.g = 0.0f;
+        OGL.vertices[OGL.numVertices].secondaryColor.b = 0.0f;
+        OGL.vertices[OGL.numVertices].secondaryColor.a = 1.0f;
 
-        if ((gSP.geometryMode & G_FOG) && OGL.EXT_fog_coord && OGL.fog)
+        if ((gSP.geometryMode & G_FOG) && OGL.fog)
         {
             if (vertices[v[i]].z < -vertices[v[i]].w)
                 OGL.vertices[OGL.numVertices].fog = max(0.0f, -(float)gSP.fog.multiplier + (float)gSP.fog.offset);
@@ -581,10 +573,7 @@ void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
 void OGL_DrawTriangles()
 {
     if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) && !(gDP.otherMode.alphaCvgSel))
-    {
-        OGL.lastStipple = (OGL.lastStipple + 1) & 0x7;
-        glPolygonStipple(OGL.stipplePattern[(BYTE)(gDP.envColor.a * 255.0f) >> 3][OGL.lastStipple]);
-    }
+        Combiner_UpdateDither(gDP.envColor.a);
 
     glDrawArrays(GL_TRIANGLES, 0, OGL.numVertices);
     OGL.numTriangles = OGL.numVertices = 0;
@@ -594,35 +583,29 @@ void OGL_DrawLine(SPVertex *vertices, int v0, int v1, float width)
 {
     int v[] = {v0, v1};
 
-    GLcolor color;
-
     if (gSP.changed || gDP.changed) OGL_UpdateStates();
 
     glLineWidth(width * OGL.scaleX);
 
-    glBegin(GL_LINES);
     for (int i = 0; i < 2; i++)
     {
-        color.r = vertices[v[i]].r;
-        color.g = vertices[v[i]].g;
-        color.b = vertices[v[i]].b;
-        color.a = vertices[v[i]].a;
-        SetConstant(color, combiner.vertex.color, combiner.vertex.alpha);
-        glColor4fv(&color.r);
+        OGL.vertices[i].color.r = vertices[v[i]].r;
+        OGL.vertices[i].color.g = vertices[v[i]].g;
+        OGL.vertices[i].color.b = vertices[v[i]].b;
+        OGL.vertices[i].color.a = vertices[v[i]].a;
 
-        if (OGL.EXT_secondary_color)
-        {
-            color.r = vertices[v[i]].r;
-            color.g = vertices[v[i]].g;
-            color.b = vertices[v[i]].b;
-            color.a = vertices[v[i]].a;
-            SetConstant(color, combiner.vertex.secondaryColor, combiner.vertex.alpha);
-            glSecondaryColor3fvEXT(&color.r);
-        }
+        OGL.vertices[i].secondaryColor.r = 0.0f;
+        OGL.vertices[i].secondaryColor.g = 0.0f;
+        OGL.vertices[i].secondaryColor.b = 0.0f;
+        OGL.vertices[i].secondaryColor.a = 1.0f;
 
-        glVertex4f(vertices[v[i]].x, vertices[v[i]].y, vertices[v[i]].z, vertices[v[i]].w);
+        OGL.vertices[i].x = vertices[v[i]].x;
+        OGL.vertices[i].y = vertices[v[i]].y;
+        OGL.vertices[i].z = vertices[v[i]].z;
+        OGL.vertices[i].w = vertices[v[i]].w;
+        OGL.vertices[i].fog = 0.0f;
     }
-    glEnd();
+    glDrawArrays(GL_LINES, 0, 2);
 }
 
 void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
@@ -631,28 +614,43 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
 
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_CULL_FACE);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
+    OGL_SetOrthoProjection(0.0f, VI.width, VI.height, 0.0f, 1.0f, -1.0f);
 
     const float viewportX = OGL.adjustScreen ? OGL.adjustOffset : 0.0f;
     const float viewportWidth = OGL.adjustScreen ? OGL.width * OGL.adjustScale : (float)OGL.width;
     glViewport((GLint)viewportX, 0, (GLint)viewportWidth, (GLint)OGL.height);
-    glDepthRange(0.0f, 1.0f);
+    OGL_DepthRange(0.0f, 1.0f);
 
-    glColor4f(color[0], color[1], color[2], color[3]);
+    const float rectZ = (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f;
 
-    glBegin(GL_TRIANGLES);
-    glVertex4f(ulx, uly, (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f, 1.0f);
-    glVertex4f(lrx, uly, (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f, 1.0f);
-    glVertex4f(ulx, lry, (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f, 1.0f);
+    OGL.vertices[0].x = ulx;
+    OGL.vertices[0].y = uly;
+    OGL.vertices[1].x = lrx;
+    OGL.vertices[1].y = uly;
+    OGL.vertices[2].x = ulx;
+    OGL.vertices[2].y = lry;
 
-    glVertex4f(lrx, uly, (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f, 1.0f);
-    glVertex4f(lrx, lry, (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f, 1.0f);
-    glVertex4f(ulx, lry, (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f, 1.0f);
-    glEnd();
+    OGL.vertices[3].x = lrx;
+    OGL.vertices[3].y = uly;
+    OGL.vertices[4].x = lrx;
+    OGL.vertices[4].y = lry;
+    OGL.vertices[5].x = ulx;
+    OGL.vertices[5].y = lry;
 
-    glLoadIdentity();
+    for (int i = 0; i < 6; i++)
+    {
+        OGL.vertices[i].z = rectZ;
+        OGL.vertices[i].w = 1.0f;
+        OGL.vertices[i].color.r = color[0];
+        OGL.vertices[i].color.g = color[1];
+        OGL.vertices[i].color.b = color[2];
+        OGL.vertices[i].color.a = color[3];
+        OGL.vertices[i].fog = 0.0f;
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    OGL_SetIdentityProjection();
     OGL_UpdateCullFace();
     OGL_UpdateViewport();
     glEnable(GL_SCISSOR_TEST);
@@ -689,9 +687,7 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
     OGL_UpdateStates();
 
     glDisable(GL_CULL_FACE);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, VI.width, VI.height, 0, 1.0f, -1.0f);
+    OGL_SetOrthoProjection(0.0f, VI.width, VI.height, 0.0f, 1.0f, -1.0f);
 
     const float viewportX = OGL.adjustScreen ? OGL.adjustOffset : 0.0f;
     const float viewportWidth = OGL.adjustScreen ? OGL.width * OGL.adjustScale : (float)OGL.width;
@@ -797,35 +793,46 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
-    SetConstant(rect[0].color, combiner.vertex.color, combiner.vertex.alpha);
+    OGL.vertices[0].s0 = rect[0].s0;
+    OGL.vertices[0].t0 = rect[0].t0;
+    OGL.vertices[0].s1 = rect[0].s1;
+    OGL.vertices[0].t1 = rect[0].t1;
+    OGL.vertices[0].x = rect[0].x;
+    OGL.vertices[0].y = rect[0].y;
 
-    if (OGL.EXT_secondary_color)
-        SetConstant(rect[0].secondaryColor, combiner.vertex.secondaryColor, combiner.vertex.alpha);
+    OGL.vertices[1].s0 = rect[1].s0;
+    OGL.vertices[1].t0 = rect[0].t0;
+    OGL.vertices[1].s1 = rect[1].s1;
+    OGL.vertices[1].t1 = rect[0].t1;
+    OGL.vertices[1].x = rect[1].x;
+    OGL.vertices[1].y = rect[0].y;
 
-    glBegin(GL_QUADS);
-    glColor4f(rect[0].color.r, rect[0].color.g, rect[0].color.b, rect[0].color.a);
-    if (OGL.EXT_secondary_color)
-        glSecondaryColor3fEXT(rect[0].secondaryColor.r, rect[0].secondaryColor.g, rect[0].secondaryColor.b);
+    OGL.vertices[2].s0 = rect[0].s0;
+    OGL.vertices[2].t0 = rect[1].t0;
+    OGL.vertices[2].s1 = rect[0].s1;
+    OGL.vertices[2].t1 = rect[1].t1;
+    OGL.vertices[2].x = rect[0].x;
+    OGL.vertices[2].y = rect[1].y;
 
-    glMultiTexCoord2f(GL_TEXTURE0, rect[0].s0, rect[0].t0);
-    glMultiTexCoord2f(GL_TEXTURE1, rect[0].s1, rect[0].t1);
-    glVertex4f(rect[0].x, rect[0].y, rect[0].z, 1.0f);
+    OGL.vertices[3].s0 = rect[1].s0;
+    OGL.vertices[3].t0 = rect[1].t0;
+    OGL.vertices[3].s1 = rect[1].s1;
+    OGL.vertices[3].t1 = rect[1].t1;
+    OGL.vertices[3].x = rect[1].x;
+    OGL.vertices[3].y = rect[1].y;
 
-    glMultiTexCoord2f(GL_TEXTURE0, rect[1].s0, rect[0].t0);
-    glMultiTexCoord2f(GL_TEXTURE1, rect[1].s1, rect[0].t1);
-    glVertex4f(rect[1].x, rect[0].y, rect[0].z, 1.0f);
+    for (int i = 0; i < 4; i++)
+    {
+        OGL.vertices[i].z = rect[0].z;
+        OGL.vertices[i].w = 1.0f;
+        OGL.vertices[i].fog = 0.0f;
+        OGL.vertices[i].color = rect[0].color;
+        OGL.vertices[i].secondaryColor = rect[0].secondaryColor;
+    }
 
-    glMultiTexCoord2f(GL_TEXTURE0, rect[1].s0, rect[1].t0);
-    glMultiTexCoord2f(GL_TEXTURE1, rect[1].s1, rect[1].t1);
-    glVertex4f(rect[1].x, rect[1].y, rect[0].z, 1.0f);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    glMultiTexCoord2f(GL_TEXTURE0, rect[0].s0, rect[1].t0);
-    glMultiTexCoord2f(GL_TEXTURE1, rect[0].s1, rect[1].t1);
-    glVertex4f(rect[0].x, rect[1].y, rect[0].z, 1.0f);
-
-    glEnd();
-
-    glLoadIdentity();
+    OGL_SetIdentityProjection();
     OGL_UpdateCullFace();
     OGL_UpdateViewport();
 }
