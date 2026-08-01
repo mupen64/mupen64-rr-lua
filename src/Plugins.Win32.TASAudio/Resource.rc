@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "resource.h"
-#include <Windows.h>
+#include "Resource.h"
+#include <windows.h>
 
 #define IDC_STATIC -1
 
@@ -30,13 +30,13 @@ CAPTION "TAS Audio Settings"
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 FONT 8, "MS Shell Dlg"
 BEGIN
-    // EDIT "Default"
-    CONTROL "Playback options", IDC_STATIC, BUTTON, BS_GROUPBOX, 10, DDX_PLAYBACK_Y, 180, DDX_PLAYBACK_H
+    /* EDIT "Default" */
+    GROUPBOX "Playback options",IDC_STATIC,10,DDX_PLAYBACK_Y,180,DDX_PLAYBACK_H
 
-    CONTROL "Swap channels", IDC_SWAP_CHANNELS, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, (DDX_PLAYBACK_IY + 0), 116, 9
-    CONTROL "Throttle core to audio output", IDC_SYNC_AUDIO, BUTTON, BS_AUTOCHECKBOX | WS_TABSTOP, 16, (DDX_PLAYBACK_IY + 14), 116, 9
+    CHECKBOX "Swap channels", IDC_SWAP_CHANNELS, 16, (DDX_PLAYBACK_IY + 0), 116, 9, BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX "Throttle core to audio output", IDC_SYNC_AUDIO, 16, (DDX_PLAYBACK_IY + 14), 116, 9, BS_AUTOCHECKBOX | WS_TABSTOP
 
-    CONTROL "Volume", IDC_STATIC, STATIC, SS_LEFT, 16, (DDX_PLAYBACK_IY + 28), 42, 8
+    CONTROL "Volume", IDC_STATIC, "Static", SS_LEFT, 16, (DDX_PLAYBACK_IY + 28), 42, 8
     CONTROL "", IDC_VOLUME, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, (DDX_PLAYBACK_IY + 26), 92, 13
     LTEXT "0 dB", IDC_VOLUME_TXT, 158, (DDX_PLAYBACK_IY + 28), 27, 8
 

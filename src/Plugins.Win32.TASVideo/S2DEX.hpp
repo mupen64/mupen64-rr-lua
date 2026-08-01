@@ -170,7 +170,7 @@ struct uObjTxtrTLUT
     u32 mask;  /* Status mask */
 }; /* 24 bytes */
 
-using uObjTxtr = union {
+union uObjTxtr {
     uObjTxtrBlock block;
     uObjTxtrTile tile;
     uObjTxtrTLUT tlut;

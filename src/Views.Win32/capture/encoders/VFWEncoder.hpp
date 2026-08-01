@@ -8,7 +8,7 @@
 
 #include "Encoder.hpp"
 
-#include <Vfw.h>
+#include <vfw.h>
 
 class VFWEncoder final : public Encoder
 {

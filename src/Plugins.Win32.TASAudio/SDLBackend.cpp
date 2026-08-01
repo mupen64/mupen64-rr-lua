@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <CommonPCH.hpp>
 #include "SDLBackend.hpp"
 #include "Main.hpp"
 #include <algorithm>

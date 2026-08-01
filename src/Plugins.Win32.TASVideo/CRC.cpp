@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 
 #define CRC32_POLYNOMIAL 0x04C11DB7
 

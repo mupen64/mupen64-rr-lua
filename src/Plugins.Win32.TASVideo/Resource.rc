@@ -7,7 +7,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-#include <Windows.h>
+#include <windows.h>
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -67,11 +67,11 @@ BEGIN
     EDITTEXT        IDC_WINDOWED_X,153,20,27,12,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Y:",IDC_STATIC,183,20,10,12,SS_CENTERIMAGE
     EDITTEXT        IDC_WINDOWED_Y,192,20,27,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "No border (Experimental)",IDC_SCISSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,35,96,10
-    CONTROL         "Enabled Dithered Alpha Testing",IDC_DITHEREDALPHATEST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,48,116,10
-    CONTROL         "Enable Fog",IDC_FOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,48,51,10
-    CONTROL         "MSAA 4x",IDC_MSAA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,61,51,10
-    CONTROL         "Clear every frame",IDC_CLEAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,61,74,10
+    CHECKBOX        "No border (Experimental)",IDC_SCISSOR,16,35,96,10,BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX        "Enabled Dithered Alpha Testing",IDC_DITHEREDALPHATEST,16,48,116,10,BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX        "Enable Fog",IDC_FOG,138,48,51,10,BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX        "MSAA 4x",IDC_MSAA,138,61,51,10,BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX        "Clear every frame",IDC_CLEAR,16,61,74,10,BS_AUTOCHECKBOX | WS_TABSTOP
     GROUPBOX        "Textures",IDC_STATIC,7,93,225,60
     LTEXT           "Texture Filter:",IDC_STATIC,15,105,48,8
     COMBOBOX        IDC_TEXTUREFILTER,86,102,76,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP

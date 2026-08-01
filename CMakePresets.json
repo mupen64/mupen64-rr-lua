@@ -90,6 +90,61 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       }
+    },
+    {
+      "name": "mingw-common-linux",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/mingw-cross.cmake"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "mingw-linux-x64",
+      "description": "MinGW 64-bit (x86_64) cross-compile debug from Linux",
+      "inherits": "mingw-common-linux",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "MINGW_TARGET": "x86_64",
+        "CMAKE_C_COMPILER": "x86_64-w64-mingw32-gcc",
+        "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++"
+      }
+    },
+    {
+      "name": "mingw-linux-x64-release",
+      "description": "MinGW 64-bit (x86_64) cross-compile release from Linux",
+      "inherits": "mingw-linux-x64",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "mingw-linux-x86",
+      "description": "MinGW 32-bit (i686) cross-compile debug from Linux",
+      "inherits": "mingw-common-linux",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "MINGW_TARGET": "i686",
+        "CMAKE_C_COMPILER": "i686-w64-mingw32-gcc",
+        "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++"
+      }
+    },
+    {
+      "name": "mingw-linux-x86-release",
+      "description": "MinGW 32-bit (i686) cross-compile release from Linux",
+      "inherits": "mingw-linux-x86",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
     }
   ],
   "buildPresets": [
@@ -112,6 +167,22 @@
     {
       "name": "sys-linux64-x64",
       "configurePreset": "sys-linux64-x64"
+    },
+    {
+      "name": "mingw-linux-x64",
+      "configurePreset": "mingw-linux-x64"
+    },
+    {
+      "name": "mingw-linux-x64-release",
+      "configurePreset": "mingw-linux-x64-release"
+    },
+    {
+      "name": "mingw-linux-x86",
+      "configurePreset": "mingw-linux-x86"
+    },
+    {
+      "name": "mingw-linux-x86-release",
+      "configurePreset": "mingw-linux-x86-release"
     }
   ],
   "testPresets": [

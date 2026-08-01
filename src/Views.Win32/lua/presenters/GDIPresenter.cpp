@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <lua/presenters/GDIPresenter.hpp>
 
 GDIPresenter::~GDIPresenter()
@@ -54,7 +54,7 @@ D2D1_SIZE_U GDIPresenter::size()
 
 void GDIPresenter::resize(D2D1_SIZE_U size)
 {
-    if (size == m_size) return;
+    if (size.width == m_size.width && size.height == m_size.height) return;
 
     m_size = size;
 

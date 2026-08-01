@@ -40,7 +40,7 @@ class ScopeTimer
     {
         m_name = name;
         m_logger = logger;
-        m_start_time = std::chrono::high_resolution_clock::now();
+        m_start_time = std::chrono::steady_clock::now();
     }
 
     ~ScopeTimer() { print_duration(); }
@@ -49,7 +49,7 @@ class ScopeTimer
 
     [[nodiscard]] int momentary_ms() const
     {
-        return static_cast<int>((std::chrono::high_resolution_clock::now() - m_start_time).count() / 1'000'000);
+        return static_cast<int>((std::chrono::steady_clock::now() - m_start_time).count() / 1'000'000);
     }
 
   private:

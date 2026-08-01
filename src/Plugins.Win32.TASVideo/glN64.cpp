@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include "glN64.hpp"
 #include "OpenGL.hpp"
 #include "N64.hpp"
@@ -41,7 +41,7 @@ bool init_rsp_thread()
     RSP.halt = FALSE;
 
     DWORD thread_id;
-    RSP.thread = CreateThread(NULL, 4096, RSP_ThreadProc, NULL, NULL, &thread_id);
+    RSP.thread = CreateThread(NULL, 4096, RSP_ThreadProc, NULL, 0, &thread_id);
     WaitForSingleObject(RSP.threadFinished, INFINITE);
 
     SetEvent(RSP.threadMsg[RSPMSG_START]);

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <ThreadPool.hpp>
 
 namespace LuaCore::Movie
