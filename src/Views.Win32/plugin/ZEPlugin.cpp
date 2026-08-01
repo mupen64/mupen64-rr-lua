@@ -6,7 +6,7 @@
 
 // ReSharper disable CppCStyleCast
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <components/MGECompositor.hpp>

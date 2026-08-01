@@ -7,8 +7,10 @@
 
 #include <filesystem>
 #if defined(_WIN32)
+#ifndef NOMINMAX
 #define NOMINMAX
-#include <Windows.h>
+#endif
+#include <windows.h>
 #elif defined(__linux__)
 #include <stdexcept>
 #include <cstdio>

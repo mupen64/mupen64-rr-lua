@@ -45,5 +45,5 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     winmm
     comctl32
     shcore
-    Gdiplus
+    gdiplus
 )

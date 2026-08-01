@@ -9,7 +9,7 @@
 #include <CommonPCH.hpp>
 #include <VersionNameHelpers.hpp>
 #include <m64rr/API.hpp>
-#include <Windows.h>
+#include <windows.h>
 #include <GL/glew.h>
 #include <commctrl.h>
 #include <windowsx.h>

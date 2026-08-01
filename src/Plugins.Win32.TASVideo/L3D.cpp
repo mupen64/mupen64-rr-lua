@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include "glN64.hpp"
 #include "F3D.hpp"
 #include "L3D.hpp"

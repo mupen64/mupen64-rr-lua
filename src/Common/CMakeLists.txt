@@ -21,7 +21,6 @@ target_link_libraries(Mupen64RR.Common INTERFACE
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
     vendor::xxhash64
 )
-target_precompile_headers(Mupen64RR.Common INTERFACE "include/CommonPCH.hpp")
 
 # only MSVCRT implements C11 Annex K, libsafec is needed on other platforms
 if (NOT WIN32)

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include "PianoRoll.hpp"
 #include "ThreadPool.hpp"
 #include "Config.hpp"
@@ -94,7 +94,7 @@ struct piano_roll_state
 
 static piano_roll_state piano_roll{};
 
-bool can_joystick_be_modified();
+static bool can_joystick_be_modified();
 
 static void on_can_modify_inputs_changed()
 {

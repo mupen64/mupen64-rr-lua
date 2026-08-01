@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <components/MGECompositor.hpp>
 #include <plugin/Plugin.hpp>
 #include <Messenger.hpp>
