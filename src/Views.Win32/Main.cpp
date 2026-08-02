@@ -725,6 +725,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
+        LuaRenderer::init();
         SetTimer(hwnd, SDL_TIMER_ID, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
@@ -1195,7 +1196,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     LuaManager::init();
     CrashManager::init();
     MGECompositor::init();
-    LuaRenderer::init();
     CaptureManager::init();
     CLI::init();
     Seeker::init();
