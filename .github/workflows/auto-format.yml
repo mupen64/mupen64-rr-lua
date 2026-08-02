@@ -16,10 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Run clang-format
-        run: |
-          find ./src -type f \( -name "*.h" -o -name "*.hpp" -o -name "*.cpp" \) \
-            -exec clang-format-18 -i -style=file {} +
+      - name: Run tools/format.py
+        run: python3 ./tools/format.py --clang-format clang-format-18
 
       - uses: peter-evans/create-pull-request@v7
         with:
