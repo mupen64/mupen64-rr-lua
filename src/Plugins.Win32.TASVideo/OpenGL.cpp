@@ -26,6 +26,8 @@ void OGL_ReadPixels()
 {
     if (!gCapturedPixels) return;
 
+    glFinish();
+
     glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);
 
     auto pixels = (uint8_t *)gCapturedPixels;
