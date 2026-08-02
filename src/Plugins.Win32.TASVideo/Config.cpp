@@ -178,17 +178,20 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     }
 }
 
-static void select_current_resolution_in_combobox(HWND cb_hwnd)
+static void select_resolution_in_combobox(HWND cb_hwnd, uint32_t width, uint32_t height)
 {
     for (size_t i = 0; i < RESOLUTION_PRESETS.size(); i++)
     {
         const auto &preset = RESOLUTION_PRESETS[i];
-        if (OGL.windowedWidth == preset.width && OGL.windowedHeight == preset.height)
+        if (width == preset.width && height == preset.height)
         {
             ComboBox_SetCurSel(cb_hwnd, i);
             return;
         }
     }
+
+    // A size that matches no preset is a custom one, so leaving a stale entry highlighted would lie.
+    ComboBox_SetCurSel(cb_hwnd, -1);
 }
 
 BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -211,7 +214,7 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         }
         ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING), (int)OGL.smoothing);
 
-        select_current_resolution_in_combobox(cb_hwnd);
+        select_resolution_in_combobox(cb_hwnd, OGL.windowedWidth, OGL.windowedHeight);
 
         SendDlgItemMessage(hWndDlg, IDC_WINDOWED_X, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedWidth).c_str());
         SendDlgItemMessage(hWndDlg, IDC_WINDOWED_Y, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedHeight).c_str());
@@ -271,23 +274,16 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         case IDC_WINDOWED_Y:
             if (HIWORD(wParam) == EN_CHANGE)
             {
-                std::wstring w_str(32, 0);
-                std::wstring h_str(32, 0);
-                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str.data(), w_str.size());
-                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), h_str.data(), h_str.size());
+                // Only mirror the typed size into the preset combo. Writing it into OGL here would mean
+                // Config_ApplyDlgConfig's prev_OGL snapshot already holds the new resolution, so its
+                // needs_restart check would never see the change and the context would never be
+                // recreated at the new size.
+                wchar_t w_str[32]{};
+                wchar_t h_str[32]{};
+                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str, std::size(w_str));
+                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), h_str, std::size(h_str));
 
-                try
-                {
-                    OGL.windowedWidth = std::stoul(std::wstring(w_str));
-                    OGL.windowedHeight = std::stoul(std::wstring(h_str));
-                }
-                catch (...)
-                {
-                    break;
-                }
-
-                const auto cb_hwnd = GetDlgItem(hWndDlg, IDC_WINDOWEDRES);
-                select_current_resolution_in_combobox(cb_hwnd);
+                select_resolution_in_combobox(GetDlgItem(hWndDlg, IDC_WINDOWEDRES), _wtoi(w_str), _wtoi(h_str));
             }
             break;
         case IDC_TEXTUREFILTER:
