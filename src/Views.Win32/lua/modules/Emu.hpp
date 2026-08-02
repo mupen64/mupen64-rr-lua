@@ -217,7 +217,10 @@ static int GetAddress(lua_State *L)
         const char *name;
         void *pointer;
     };
-#define A(x, n) {x, &n}
+#define A(x, n)                                                                                                        \
+    {                                                                                                                  \
+        x, &n                                                                                                          \
+    }
 #define B(x, n)                                                                                                        \
     {                                                                                                                  \
         x, n                                                                                                           \

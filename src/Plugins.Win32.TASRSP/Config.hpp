@@ -14,7 +14,10 @@ struct t_config
 
     friend void to_json(nlohmann::json &j, const t_config &self)
     {
-#define TASRSP_FIELD(field) {#field, self.field}
+#define TASRSP_FIELD(field)                                                                                            \
+    {                                                                                                                  \
+        #field, self.field                                                                                             \
+    }
         j = nlohmann::json::object({
             TASRSP_FIELD(version),
         });
