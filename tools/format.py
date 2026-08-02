@@ -101,8 +101,8 @@ def collect_sources(root: Path, ignore_patterns: set[str]) -> list[Path]:
     return sources
 
 
-def format_file(path: Path, clang_format: str) -> tuple[Path, int, str]:
-    cmd = [clang_format, "-i", str(path)]
+def format_file(path: Path, clang_format: str, style: str) -> tuple[Path, int, str]:
+    cmd = [clang_format, "-i", f"--style={style}", str(path)]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     return path, proc.returncode, proc.stderr
 
@@ -127,6 +127,9 @@ def main() -> int:
     ignore_patterns = load_clang_format_ignore(root)
     sources = collect_sources(root, ignore_patterns)
 
+    config = root / ".clang-format"
+    style = f"file:{config}" if config.is_file() else "file"
+
     if not sources:
         print("No .cpp/.hpp files to format.")
         return 0
@@ -137,7 +140,7 @@ def main() -> int:
     failed: list[Path] = []
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
         futures = {
-            executor.submit(format_file, p, args.clang_format): p
+            executor.submit(format_file, p, args.clang_format, style): p
             for p in sources
         }
         for future in as_completed(futures):
