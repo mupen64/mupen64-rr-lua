@@ -27,21 +27,30 @@ jobs:
         id: commit
         run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Download mupen-release-stable artifact from latest run on current branch
+      - name: Download mupen-release-stable-x86 artifact from latest run on current branch
         uses: dawidd6/action-download-artifact@v21
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: build.yml
           branch: ${{ github.ref_name }}
-          name: mupen-release-stable
-          path: ./release-artifact
+          name: mupen-release-stable-x86
+          path: ./release-artifact-x86
 
-      - name: Zip release artifact
+      - name: Download mupen-release-stable-x64 artifact from latest run on current branch
+        uses: dawidd6/action-download-artifact@v21
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: build.yml
+          branch: ${{ github.ref_name }}
+          name: mupen-release-stable-x64
+          path: ./release-artifact-x64
+
+      - name: Zip release artifacts
         run: |
-          zip -r mupen64.zip \
-            ./release-artifact/
-
-
+          zip -r mupen64-w32.zip ./release-artifact-x86/
+          zip -r mupen64-w64.zip ./release-artifact-x64/
+          mv mupen64-w32.zip mupen64-w32
+          mv mupen64-w64.zip mupen64-w64
 
       - name: Install git-cliff
         uses: taiki-e/install-action@v2
@@ -66,4 +75,6 @@ jobs:
           body: ${{ steps.changelog.outputs.body }}
           prerelease: false
           draft: true
-          files: mupen64.zip
+          files: |
+            mupen64-w32
+            mupen64-w64
