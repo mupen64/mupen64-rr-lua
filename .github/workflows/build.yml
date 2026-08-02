@@ -19,6 +19,11 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
+        include:
+          - arch: x86
+            win_arch: w32
+          - arch: x64
+            win_arch: w64
 
     steps:
       - uses: actions/checkout@v6
@@ -78,7 +83,7 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-debug-nightly-${{ matrix.arch }}
+          name: mupen-debug-nightly-${{ matrix.win_arch }}
           path: build/out
           retention-days: 14
 
@@ -88,6 +93,11 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
+        include:
+          - arch: x86
+            win_arch: w32
+          - arch: x64
+            win_arch: w64
 
     steps:
       - uses: actions/checkout@v6
@@ -153,7 +163,7 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-release-nightly-${{ matrix.arch }}
+          name: mupen-release-nightly-${{ matrix.win_arch }}
           path: build/out
           retention-days: 14
 
@@ -163,6 +173,11 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
+        include:
+          - arch: x86
+            win_arch: w32
+          - arch: x64
+            win_arch: w64
 
     steps:
       - uses: actions/checkout@v6
@@ -216,6 +231,6 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-release-stable-${{ matrix.arch }}
+          name: mupen-release-stable-${{ matrix.win_arch }}
           path: build/out
           retention-days: 14
