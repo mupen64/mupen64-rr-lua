@@ -16,7 +16,10 @@ typedef struct StacktraceInfo
 static t_stacktrace_info stacktrace_info;
 
 #define _WIDE(s) L##s
-#define E(x) {x, _WIDE(#x)}
+#define E(x)                                                                                                           \
+    {                                                                                                                  \
+        x, _WIDE(#x)                                                                                                   \
+    }
 const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
     E(EXCEPTION_ACCESS_VIOLATION),
     E(EXCEPTION_ACCESS_VIOLATION),
