@@ -32,8 +32,12 @@ static void set_overlay_visibility(bool visible)
 
     for (const auto &lua : g_lua_environments)
     {
-        if (IsWindow(lua->rctx.gdi_overlay_hwnd)) ShowWindow(lua->rctx.gdi_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
-        if (IsWindow(lua->rctx.d2d_overlay_hwnd)) ShowWindow(lua->rctx.d2d_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
+        const auto set_window_visibility = [&](HWND hwnd) {
+            if (!IsWindow(hwnd)) return;
+            ShowWindow(hwnd, visible ? SW_SHOWNOACTIVATE : SW_HIDE);
+        };
+        set_window_visibility(lua->rctx.gdi_overlay_hwnd);
+        set_window_visibility(lua->rctx.d2d_overlay_hwnd);
     }
 }
 
