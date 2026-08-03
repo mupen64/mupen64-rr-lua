@@ -152,13 +152,12 @@ void MGECompositor::update_screen()
     auto result = SDL_LockTexture(s_ctx.texture, nullptr, &pixels, &pitch);
     RT_ASSERT(result, L"SDL_LockTexture failed.");
 
-
     memcpy(pixels, s_ctx.rgba_buffer, s_ctx.width * s_ctx.height * 4);
 
     SDL_UnlockTexture(s_ctx.texture);
 
-    result = SDL_RenderTexture(s_ctx.renderer, s_ctx.texture, NULL, NULL);
-    RT_ASSERT(result, L"SDL_RenderTexture failed.");
+    result = SDL_RenderTextureRotated(s_ctx.renderer, s_ctx.texture, NULL, NULL, 0.0, NULL, SDL_FLIP_VERTICAL);
+    RT_ASSERT(result, L"SDL_RenderTextureRotated failed.");
 
     result = SDL_RenderPresent(s_ctx.renderer);
     RT_ASSERT(result, L"SDL_RenderPresent failed.");
