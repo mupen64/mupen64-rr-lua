@@ -307,6 +307,7 @@ void Status::activate_emulator_window()
     {
         return;
     }
+    SetActiveWindow(g_plugin->main_window.hwnd());
     SetForegroundWindow(g_plugin->main_window.hwnd());
 }
 
