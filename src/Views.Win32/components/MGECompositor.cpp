@@ -33,7 +33,7 @@ static void create_texture()
 
     g_view_logger->info(L"[MGECompositor] Creating texture: {}x{}...", s_ctx.width, s_ctx.height);
 
-    s_ctx.texture = SDL_CreateTexture(s_ctx.renderer, SDL_PIXELFORMAT_BGRA8888, SDL_TEXTUREACCESS_STREAMING,
+    s_ctx.texture = SDL_CreateTexture(s_ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
                                       s_ctx.width, s_ctx.height);
     RT_ASSERT(s_ctx.texture, L"Error in SDL_CreateTexture. Check that your video driver is up-to-date.");
 }
