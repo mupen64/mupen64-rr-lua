@@ -1146,6 +1146,22 @@ void Main::request_size(uint32_t width, uint32_t height)
                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_ASYNCWINDOWPOS);
 }
 
+RECT Main::get_overlay_rect()
+{
+    RECT window_rect;
+    GetClientRect(g_main_ctx.hwnd, &window_rect);
+    if (Statusbar::hwnd())
+    {
+        // We don't want to paint over statusbar
+        RECT rc{};
+        GetWindowRect(Statusbar::hwnd(), &rc);
+        window_rect.bottom -= (WORD)(rc.bottom - rc.top);
+    }
+    window_rect.right = std::max(1, (int32_t)window_rect.right);
+    window_rect.bottom = std::max(1, (int32_t)window_rect.bottom);
+    return window_rect;
+}
+
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
 {
     enable_mitigations();

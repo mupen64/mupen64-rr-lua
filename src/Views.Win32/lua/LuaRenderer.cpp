@@ -323,18 +323,9 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
 
     g_view_logger->info("Creating multi-target renderer for Lua...");
 
-    RECT window_rect;
-    GetClientRect(g_main_ctx.hwnd, &window_rect);
-    if (Statusbar::hwnd())
-    {
-        // We don't want to paint over statusbar
-        RECT rc{};
-        GetWindowRect(Statusbar::hwnd(), &rc);
-        window_rect.bottom -= (WORD)(rc.bottom - rc.top);
-    }
+    RECT window_rect = Main::get_overlay_rect();
 
-    // NOTE: We don't want negative or zero size on any axis, as that messes up comp surface creation
-    ctx->dc_size = {(UINT32)std::max(1, (int32_t)window_rect.right), (UINT32)std::max(1, (int32_t)window_rect.bottom)};
+    ctx->dc_size = {(UINT32)window_rect.right, (UINT32)window_rect.bottom};
     g_view_logger->info("Lua dc size: {} {}", ctx->dc_size.width, ctx->dc_size.height);
 
     // Key 0 is reserved for clearing the image pool, too late to change it now...

@@ -107,7 +107,7 @@ void PluginUtil::read_video(void *buffer)
 void PluginUtil::update_screen()
 {
     if (PluginUtil::mge_available())
-        MGECompositor::update_screen();
+        g_main_ctx.dispatcher->invoke([] { MGECompositor::update_screen(); });
     else
         g_plugin_funcs.video_update_screen();
 }

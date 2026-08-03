@@ -10,309 +10,32 @@
 #include <Messenger.hpp>
 #include <lua/LuaCallbacks.hpp>
 
-constexpr auto CONTROL_CLASS_NAME = L"game_control";
-constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
-constexpr float CLEAR_COLOR[4] = {0, 0, 0, 1};
+// bgra8 unorm
 
-const std::string VERTEX_SHADER = R"(
-    cbuffer CB : register(b0) {}
-    struct VSOut { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; };
-    VSOut main(uint vid : SV_VertexID)
-    {
-        // 6 vertices to form two triangles covering the screen
-        float2 pos[6] = {
-            float2(-1.0,  1.0),
-            float2( 1.0,  1.0),
-            float2(-1.0, -1.0),
-
-            float2(-1.0, -1.0),
-            float2( 1.0,  1.0),
-            float2( 1.0, -1.0)
-        };
-        float2 uv[6] = {
-            float2(0.0, 1.0),
-            float2(1.0, 1.0),
-            float2(0.0, 0.0),
-
-            float2(0.0, 0.0),
-            float2(1.0, 1.0),
-            float2(1.0, 0.0)
-        };
-        VSOut o;
-        o.pos = float4(pos[vid], 0.0, 1.0);
-        o.uv = uv[vid];
-        return o;
-    }
-    )";
-
-const std::string FRAGMENT_SHADER = R"(
-    Texture2D tex : register(t0);
-    SamplerState samp : register(s0);
-    struct PSIn { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; };
-    float4 main(PSIn input) : SV_TARGET
-    {
-        float4 c = tex.Sample(samp, input.uv);
-        return c;
-    }
-    )";
+constexpr auto CONTROL_CLASS_NAME = L"MGECompositor";
 
 struct t_mge_context
 {
-    int32_t last_width{};
-    int32_t last_height{};
     int32_t width{};
     int32_t height{};
     void *rgba_buffer{};
 
-    HWND hwnd{};
-
-    ComPtr<ID3D11Device> device;
-    ComPtr<ID3D11DeviceContext> context;
-    ComPtr<IDXGISwapChain1> swapchain;
-    ComPtr<ID3D11RenderTargetView> rtv;
-    ComPtr<ID3D11Texture2D> texture;
-    ComPtr<ID3D11ShaderResourceView> srv;
-    ComPtr<ID3D11SamplerState> sampler;
-    ComPtr<ID3D11VertexShader> vs;
-    ComPtr<ID3D11PixelShader> ps;
+    SDL_Renderer *renderer{};
+    SDL_Window *window{};
+    SDL_Texture *texture{};
 };
 
-static t_mge_context mge_context{};
+static t_mge_context s_ctx{};
 
-static void create_d3d(const HWND hwnd)
+static void create_texture()
 {
-    UINT flags = 0;
-#if defined(_DEBUG)
-    flags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
+    if (s_ctx.texture) SDL_DestroyTexture(s_ctx.texture);
 
-    D3D_FEATURE_LEVEL feature_levels[] = {D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0};
+    g_view_logger->info(L"[MGECompositor] Creating texture: {}x{}...", s_ctx.width, s_ctx.height);
 
-    ID3D11Device *device_raw{};
-    ID3D11DeviceContext *context_raw{};
-
-    HRESULT hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels,
-                                   ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &device_raw, nullptr, &context_raw);
-    RT_ASSERT_HR(hr, L"D3D11CreateDevice");
-
-    mge_context.device.Attach(device_raw);
-    mge_context.context.Attach(context_raw);
-
-    ComPtr<IDXGIDevice> dxgi_device;
-    hr = mge_context.device.As(&dxgi_device);
-    RT_ASSERT_HR(hr, L"Get IDXGIDevice");
-
-    ComPtr<IDXGIAdapter> adapter;
-    hr = dxgi_device->GetAdapter(&adapter);
-    RT_ASSERT_HR(hr, L"GetAdapter");
-
-    ComPtr<IDXGIFactory2> factory;
-    hr = adapter->GetParent(IID_PPV_ARGS(&factory));
-    RT_ASSERT_HR(hr, L"GetParent IDXGIFactory2");
-
-    DXGI_SWAP_CHAIN_DESC1 scdesc = {};
-    scdesc.Width = 0;
-    scdesc.Height = 0;
-    scdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    scdesc.SampleDesc.Count = 1;
-    scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    scdesc.BufferCount = 2;
-    scdesc.Scaling = DXGI_SCALING_STRETCH;
-    scdesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    scdesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-    scdesc.Flags = 0;
-
-    IDXGISwapChain1 *swap_raw{};
-    hr = factory->CreateSwapChainForHwnd(mge_context.device.Get(), hwnd, &scdesc, nullptr, nullptr, &swap_raw);
-    RT_ASSERT_HR(hr, L"CreateSwapChainForHwnd");
-
-    mge_context.swapchain.Attach(swap_raw);
-
-    factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-
-    // create RTV for swapchain back buffer
-    ComPtr<ID3D11Texture2D> back_buffer;
-    hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&back_buffer));
-    RT_ASSERT_HR(hr, L"GetBuffer");
-
-    hr = mge_context.device->CreateRenderTargetView(back_buffer.Get(), nullptr, &mge_context.rtv);
-    RT_ASSERT_HR(hr, L"CreateRenderTargetView");
-
-    // Point sampler for nearest-neighbour scaling
-    D3D11_SAMPLER_DESC sampdesc = {};
-    sampdesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-    sampdesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampdesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampdesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    sampdesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    sampdesc.MinLOD = 0;
-    sampdesc.MaxLOD = D3D11_FLOAT32_MAX;
-    hr = mge_context.device->CreateSamplerState(&sampdesc, &mge_context.sampler);
-    RT_ASSERT_HR(hr, L"CreateSamplerState");
-
-    ComPtr<ID3DBlob> vs_blob, ps_blob, err_blob;
-    hr = D3DCompile(VERTEX_SHADER.data(), VERTEX_SHADER.size(), nullptr, nullptr, nullptr, "main", "vs_4_0", 0, 0,
-                    &vs_blob, &err_blob);
-    RT_ASSERT_HR(hr, L"D3DCompile");
-
-    hr = D3DCompile(FRAGMENT_SHADER.data(), FRAGMENT_SHADER.size(), nullptr, nullptr, nullptr, "main", "ps_4_0", 0, 0,
-                    &ps_blob, &err_blob);
-    RT_ASSERT_HR(hr, L"D3DCompile");
-
-    hr = mge_context.device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr,
-                                                &mge_context.vs);
-    RT_ASSERT_HR(hr, L"CreateVertexShader");
-
-    hr = mge_context.device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr,
-                                               &mge_context.ps);
-    RT_ASSERT_HR(hr, L"CreatePixelShader");
-
-    // Set up the pipeline
-    mge_context.context->VSSetShader(mge_context.vs.Get(), nullptr, 0);
-    mge_context.context->PSSetShader(mge_context.ps.Get(), nullptr, 0);
-    ID3D11SamplerState *samps[] = {mge_context.sampler.Get()};
-    mge_context.context->PSSetSamplers(0, 1, samps);
-    mge_context.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
-
-static void destroy_d3d()
-{
-    mge_context.srv.Reset();
-    mge_context.texture.Reset();
-    mge_context.rtv.Reset();
-    mge_context.swapchain.Reset();
-    mge_context.context.Reset();
-    mge_context.device.Reset();
-    mge_context.vs.Reset();
-    mge_context.ps.Reset();
-    mge_context.sampler.Reset();
-}
-
-static void ensure_texture_exists_with_size(const int w, const int h)
-{
-    if (mge_context.texture && mge_context.last_width == w && mge_context.last_height == h) return;
-
-    mge_context.srv.Reset();
-    mge_context.texture.Reset();
-
-    D3D11_TEXTURE2D_DESC desc = {};
-    desc.Width = (UINT)w;
-    desc.Height = (UINT)h;
-    desc.MipLevels = 1;
-    desc.ArraySize = 1;
-    desc.Format = TEXTURE_FORMAT;
-    desc.SampleDesc.Count = 1;
-    desc.Usage = D3D11_USAGE_DEFAULT;
-    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    desc.CPUAccessFlags = 0;
-    desc.MiscFlags = 0;
-
-    HRESULT hr = mge_context.device->CreateTexture2D(&desc, nullptr, &mge_context.texture);
-    RT_ASSERT_HR(hr, L"CreateTexture2D");
-
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
-    srvd.Format = desc.Format;
-    srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvd.Texture2D.MipLevels = 1;
-    hr = mge_context.device->CreateShaderResourceView(mge_context.texture.Get(), &srvd, &mge_context.srv);
-    RT_ASSERT_HR(hr, L"CreateShaderResourceView");
-
-    mge_context.last_width = w;
-    mge_context.last_height = h;
-}
-
-static void upload_rgb32_buffer()
-{
-    if (!mge_context.texture) return;
-
-    D3D11_BOX db = {};
-    db.left = 0;
-    db.top = 0;
-    db.front = 0;
-    db.right = mge_context.width;
-    db.bottom = mge_context.height;
-    db.back = 1;
-
-    mge_context.context->UpdateSubresource(mge_context.texture.Get(), 0, &db, mge_context.rgba_buffer,
-                                           mge_context.width * 4, 0);
-}
-
-static void render_and_present()
-{
-    RT_ASSERT(mge_context.context && mge_context.rtv && mge_context.srv, L"D3D context not initialized");
-
-    ID3D11RenderTargetView *rtv = mge_context.rtv.Get();
-    mge_context.context->OMSetRenderTargets(1, &rtv, nullptr);
-
-    ComPtr<ID3D11Texture2D> bb;
-    HRESULT hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&bb));
-    RT_ASSERT_HR(hr, L"GetBuffer");
-
-    D3D11_TEXTURE2D_DESC bbdesc;
-    bb->GetDesc(&bbdesc);
-    D3D11_VIEWPORT vp;
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = (float)bbdesc.Width;
-    vp.Height = (float)bbdesc.Height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    mge_context.context->RSSetViewports(1, &vp);
-
-    mge_context.context->ClearRenderTargetView(mge_context.rtv.Get(), CLEAR_COLOR);
-
-    // Bind SRV
-    ID3D11ShaderResourceView *srvs[] = {mge_context.srv.Get()};
-    mge_context.context->PSSetShaderResources(0, 1, srvs);
-
-    // Draw fullscreen quad
-    mge_context.context->Draw(6, 0);
-
-    // Unbind SRV to allow UpdateSubresource
-    ID3D11ShaderResourceView *null_srv[1] = {nullptr};
-    mge_context.context->PSSetShaderResources(0, 1, null_srv);
-
-    hr = mge_context.swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
-}
-
-static void recreate_mge_context_d3d()
-{
-    g_view_logger->info("Creating MGE (D3D11) context with size {}x{}...", mge_context.width, mge_context.height);
-
-    if (!mge_context.device)
-    {
-        create_d3d(mge_context.hwnd);
-    }
-
-    _aligned_free(mge_context.rgba_buffer);
-
-    const auto buffer_size = mge_context.width * mge_context.height * 4;
-
-    mge_context.rgba_buffer = _aligned_malloc(buffer_size, 16);
-    RT_ASSERT(mge_context.rgba_buffer, L"Failed to allocate MGE buffers");
-
-    ZeroMemory(mge_context.rgba_buffer, buffer_size);
-
-    RECT rc;
-    RT_ASSERT(GetClientRect(mge_context.hwnd, &rc), L"GetClientRect failed");
-    const UINT w = static_cast<UINT>(rc.right - rc.left);
-    const UINT h = static_cast<UINT>(rc.bottom - rc.top);
-
-    if (mge_context.swapchain)
-    {
-        mge_context.rtv.Reset();
-        HRESULT hr = mge_context.swapchain->ResizeBuffers(2, w, h, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        RT_ASSERT_HR(hr, L"ResizeBuffers");
-
-        ComPtr<ID3D11Texture2D> backBuffer;
-        hr = mge_context.swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-        RT_ASSERT_HR(hr, L"GetBuffer");
-
-        hr = mge_context.device->CreateRenderTargetView(backBuffer.Get(), nullptr, &mge_context.rtv);
-        RT_ASSERT_HR(hr, L"CreateRenderTargetView");
-    }
-
-    ensure_texture_exists_with_size(mge_context.width, mge_context.height);
+    s_ctx.texture = SDL_CreateTexture(s_ctx.renderer, SDL_PIXELFORMAT_BGRA8888, SDL_TEXTUREACCESS_STREAMING,
+                                      s_ctx.width, s_ctx.height);
+    RT_ASSERT(s_ctx.texture, L"Error in SDL_CreateTexture. Check that your video driver is up-to-date.");
 }
 
 static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -324,7 +47,9 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_SIZE:
         return 0;
     case WM_NCDESTROY:
-        destroy_d3d();
+        SDL_DestroyTexture(s_ctx.texture);
+        SDL_DestroyRenderer(s_ctx.renderer);
+        SDL_DestroyWindow(s_ctx.window);
         break;
     default:
         break;
@@ -332,10 +57,55 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+static void set_overlay_visibility(bool visible)
+{
+    //     if (visible)
+    //         SDL_ShowWindow(s_ctx.window);
+    //     else
+    //         SDL_HideWindow(s_ctx.window);
+}
+
+static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
+                                                  DWORD_PTR data)
+{
+    switch (msg)
+    {
+    case WM_ACTIVATE:
+        switch (LOWORD(wparam))
+        {
+        case WA_ACTIVE:
+        case WA_CLICKACTIVE:
+            set_overlay_visibility(true);
+            break;
+        case WA_INACTIVE:
+            set_overlay_visibility(false);
+            break;
+        default:
+            break;
+        }
+        break;
+    case WM_MOVE:
+    case WM_SIZE: {
+        RECT rc = Main::get_overlay_rect();
+        SDL_SetWindowSize(s_ctx.window, rc.right - rc.left, rc.bottom - rc.top);
+        break;
+    }
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, main_window_subclass_proc, id);
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+}
+
 void MGECompositor::create(HWND hwnd)
 {
-    mge_context.hwnd = CreateWindow(CONTROL_CLASS_NAME, L"", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr,
-                                    g_main_ctx.hinst, nullptr);
+    RECT rc = Main::get_overlay_rect();
+
+    auto result = SDL_CreateWindowAndRenderer("TASVideo", rc.right - rc.left, rc.bottom - rc.top, SDL_WINDOW_OPENGL,
+                                              &s_ctx.window, &s_ctx.renderer);
+    RT_ASSERT(result, L"Error in SDL_CreateWindowAndRenderer. Check that your video driver is up-to-date.");
+
+    SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
 }
 
 void MGECompositor::init()
@@ -350,56 +120,72 @@ void MGECompositor::init()
 
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const std::any &data) {
         const auto value = std::any_cast<bool>(data);
-        ShowWindow(mge_context.hwnd, value && PluginUtil::mge_available() ? SW_SHOW : SW_HIDE);
+        const auto visible = value && PluginUtil::mge_available();
+
+        // if (visible)
+        //     SDL_ShowWindow(s_ctx.window);
+        // else
+        //     SDL_HideWindow(s_ctx.window);
     });
 }
 
 void MGECompositor::update_screen()
 {
-    PluginUtil::get_video_size(&mge_context.width, &mge_context.height);
+    int32_t width{};
+    int32_t height{};
+    PluginUtil::get_video_size(&width, &height);
 
-    if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
+    if (s_ctx.width != width || s_ctx.height != height)
     {
-        MoveWindow(mge_context.hwnd, 0, 0, mge_context.width, mge_context.height, TRUE);
-        recreate_mge_context_d3d();
+        if (s_ctx.rgba_buffer) free(s_ctx.rgba_buffer);
+
+        s_ctx.width = width;
+        s_ctx.height = height;
+        s_ctx.rgba_buffer = calloc(s_ctx.width * s_ctx.height, 4);
+        create_texture();
     }
 
-    PluginUtil::read_video(mge_context.rgba_buffer);
+    PluginUtil::read_video(s_ctx.rgba_buffer);
 
-    upload_rgb32_buffer();
-    render_and_present();
+    void *pixels;
+    int pitch;
+    auto result = SDL_LockTexture(s_ctx.texture, nullptr, &pixels, &pitch);
+    RT_ASSERT(result, L"SDL_LockTexture failed.");
 
-    mge_context.last_width = mge_context.width;
-    mge_context.last_height = mge_context.height;
-}
 
-HWND MGECompositor::hwnd()
-{
-    return mge_context.hwnd;
+    memcpy(pixels, s_ctx.rgba_buffer, s_ctx.width * s_ctx.height * 4);
+
+    SDL_UnlockTexture(s_ctx.texture);
+
+    result = SDL_RenderTexture(s_ctx.renderer, s_ctx.texture, NULL, NULL);
+    RT_ASSERT(result, L"SDL_RenderTexture failed.");
+
+    result = SDL_RenderPresent(s_ctx.renderer);
+    RT_ASSERT(result, L"SDL_RenderPresent failed.");
 }
 
 void MGECompositor::get_video_size(int32_t *width, int32_t *height)
 {
     if (width)
     {
-        *width = mge_context.width;
+        *width = s_ctx.width;
     }
     if (height)
     {
-        *height = mge_context.height;
+        *height = s_ctx.height;
     }
 }
 
 void MGECompositor::copy_video(void *buffer)
 {
-    memcpy(buffer, mge_context.rgba_buffer, mge_context.width * mge_context.height * 4);
+    memcpy(buffer, s_ctx.rgba_buffer, s_ctx.width * s_ctx.height * 4);
 }
 
 void MGECompositor::load_screen(void *data)
 {
-    memcpy(mge_context.rgba_buffer, data, mge_context.width * mge_context.height * 4);
+    memcpy(s_ctx.rgba_buffer, data, s_ctx.width * s_ctx.height * 4);
 
-    ensure_texture_exists_with_size(mge_context.width, mge_context.height);
-    upload_rgb32_buffer();
-    render_and_present();
+    // ensure_texture_exists_with_size(mge_context.width, mge_context.height);
+    // upload_rgb32_buffer();
+    // render_and_present();
 }

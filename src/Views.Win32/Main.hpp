@@ -128,4 +128,6 @@ void init_sdl();
 void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 void request_size(uint32_t width, uint32_t height);
+
+RECT get_overlay_rect();
 } // namespace Main
