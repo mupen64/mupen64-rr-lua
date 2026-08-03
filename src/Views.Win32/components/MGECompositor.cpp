@@ -10,10 +10,6 @@
 #include <Messenger.hpp>
 #include <lua/LuaCallbacks.hpp>
 
-// bgra8 unorm
-
-constexpr auto CONTROL_CLASS_NAME = L"MGECompositor";
-
 struct t_mge_context
 {
     int32_t width{};
@@ -22,6 +18,7 @@ struct t_mge_context
 
     SDL_Renderer *renderer{};
     SDL_Window *window{};
+    HWND hwnd{};
     SDL_Texture *texture{};
 };
 
@@ -38,31 +35,30 @@ static void create_texture()
     RT_ASSERT(s_ctx.texture, L"Error in SDL_CreateTexture. Check that your video driver is up-to-date.");
 }
 
-static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static void render()
 {
-    Main::handle_mouse_events(hwnd, msg, wparam, lparam);
+    void *pixels;
+    int pitch;
+    auto result = SDL_LockTexture(s_ctx.texture, nullptr, &pixels, &pitch);
+    RT_ASSERT(result, L"SDL_LockTexture failed.");
 
-    switch (msg)
-    {
-    case WM_SIZE:
-        return 0;
-    case WM_NCDESTROY:
-        SDL_DestroyTexture(s_ctx.texture);
-        SDL_DestroyRenderer(s_ctx.renderer);
-        SDL_DestroyWindow(s_ctx.window);
-        break;
-    default:
-        break;
-    }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
+    memcpy(pixels, s_ctx.rgba_buffer, s_ctx.width * s_ctx.height * 4);
+
+    SDL_UnlockTexture(s_ctx.texture);
+
+    result = SDL_RenderTextureRotated(s_ctx.renderer, s_ctx.texture, NULL, NULL, 0.0, NULL, SDL_FLIP_VERTICAL);
+    RT_ASSERT(result, L"SDL_RenderTextureRotated failed.");
+
+    result = SDL_RenderPresent(s_ctx.renderer);
+    RT_ASSERT(result, L"SDL_RenderPresent failed.");
 }
 
 static void set_overlay_visibility(bool visible)
 {
-    //     if (visible)
-    //         SDL_ShowWindow(s_ctx.window);
-    //     else
-    //         SDL_HideWindow(s_ctx.window);
+    // if (visible)
+    //     SDL_ShowWindow(s_ctx.window);
+    // else
+    //     SDL_HideWindow(s_ctx.window);
 }
 
 static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
@@ -88,9 +84,17 @@ static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wp
     case WM_SIZE: {
         RECT rc = Main::get_overlay_rect();
         SDL_SetWindowSize(s_ctx.window, rc.right - rc.left, rc.bottom - rc.top);
+
+        GetClientRect(hwnd, &rc);
+        MapWindowPoints(hwnd, NULL, (POINT *)&rc, 2);
+        SDL_SetWindowPosition(s_ctx.window, rc.left, rc.top);
         break;
     }
     case WM_NCDESTROY:
+        SDL_DestroyTexture(s_ctx.texture);
+        SDL_DestroyRenderer(s_ctx.renderer);
+        SDL_DestroyWindow(s_ctx.window);
+
         RemoveWindowSubclass(hwnd, main_window_subclass_proc, id);
         break;
     }
@@ -101,31 +105,28 @@ void MGECompositor::create(HWND hwnd)
 {
     RECT rc = Main::get_overlay_rect();
 
-    auto result = SDL_CreateWindowAndRenderer("TASVideo", rc.right - rc.left, rc.bottom - rc.top, SDL_WINDOW_OPENGL,
+    auto result = SDL_CreateWindowAndRenderer("MGE Compositor", rc.right - rc.left, rc.bottom - rc.top,
+                                              SDL_WINDOW_NOT_FOCUSABLE | SDL_WINDOW_UTILITY | SDL_WINDOW_BORDERLESS |
+                                                  SDL_WINDOW_ALWAYS_ON_TOP,
                                               &s_ctx.window, &s_ctx.renderer);
     RT_ASSERT(result, L"Error in SDL_CreateWindowAndRenderer. Check that your video driver is up-to-date.");
+
+    // Make it clickthrough... SDL doesn't support this natively yet
+    SDL_PropertiesID props = SDL_GetWindowProperties(s_ctx.window);
+    s_ctx.hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+    RT_ASSERT(IsWindow(s_ctx.hwnd), L"Failed to get window handle from SDL properties.");
+    SetWindowLongPtr(s_ctx.hwnd, GWL_EXSTYLE,
+                     GetWindowLongPtr(s_ctx.hwnd, GWL_EXSTYLE) | WS_EX_TRANSPARENT | WS_EX_LAYERED);
 
     SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
 }
 
 void MGECompositor::init()
 {
-    WNDCLASS wndclass = {0};
-    wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-    wndclass.lpfnWndProc = (WNDPROC)wndproc;
-    wndclass.hInstance = g_main_ctx.hinst;
-    wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wndclass.lpszClassName = CONTROL_CLASS_NAME;
-    RegisterClass(&wndclass);
-
     Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const std::any &data) {
         const auto value = std::any_cast<bool>(data);
         const auto visible = value && PluginUtil::mge_available();
-
-        // if (visible)
-        //     SDL_ShowWindow(s_ctx.window);
-        // else
-        //     SDL_HideWindow(s_ctx.window);
+        set_overlay_visibility(visible);
     });
 }
 
@@ -146,21 +147,7 @@ void MGECompositor::update_screen()
     }
 
     PluginUtil::read_video(s_ctx.rgba_buffer);
-
-    void *pixels;
-    int pitch;
-    auto result = SDL_LockTexture(s_ctx.texture, nullptr, &pixels, &pitch);
-    RT_ASSERT(result, L"SDL_LockTexture failed.");
-
-    memcpy(pixels, s_ctx.rgba_buffer, s_ctx.width * s_ctx.height * 4);
-
-    SDL_UnlockTexture(s_ctx.texture);
-
-    result = SDL_RenderTextureRotated(s_ctx.renderer, s_ctx.texture, NULL, NULL, 0.0, NULL, SDL_FLIP_VERTICAL);
-    RT_ASSERT(result, L"SDL_RenderTextureRotated failed.");
-
-    result = SDL_RenderPresent(s_ctx.renderer);
-    RT_ASSERT(result, L"SDL_RenderPresent failed.");
+    render();
 }
 
 void MGECompositor::get_video_size(int32_t *width, int32_t *height)
@@ -183,8 +170,5 @@ void MGECompositor::copy_video(void *buffer)
 void MGECompositor::load_screen(void *data)
 {
     memcpy(s_ctx.rgba_buffer, data, s_ctx.width * s_ctx.height * 4);
-
-    // ensure_texture_exists_with_size(mge_context.width, mge_context.height);
-    // upload_rgb32_buffer();
-    // render_and_present();
+    render();
 }
