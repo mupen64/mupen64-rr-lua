@@ -1,6 +1,8 @@
 #include "Main.hpp"
+#include "Dialog.hpp"
 #include "Plugin.hpp"
 #include <future>
+#include <print>
 
 core_cfg g_config;
 core_params g_core_params{};
@@ -46,21 +48,12 @@ static void init_core()
         // Defer to the stdlib's thread pool.
         (void)std::async(cb);
     };
-    g_core_params.get_saves_directory = []() { return IOUtils::exe_path() / "saves"; };
-    g_core_params.get_backups_directory = []() { return IOUtils::exe_path() / "backups"; };
-    g_core_params.get_summercart_path = []() { return IOUtils::exe_path() / "saves/cart.vhd"; };
-    g_core_params.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
-                                                   const char *str, const char *title, core_dialog_type type) {
-        // TODO
-        return 0;
-    };
-    g_core_params.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
-        // TODO
-        return false;
-    };
-    g_core_params.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
-        // TODO
-    };
+    g_core_params.get_saves_directory = []() { return IOUtils::exe_path().parent_path() / "saves"; };
+    g_core_params.get_backups_directory = []() { return IOUtils::exe_path().parent_path() / "backups"; };
+    g_core_params.get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
+    g_core_params.show_multiple_choice_dialog = DialogService::show_multiple_choice_dialog;
+    g_core_params.show_ask_dialog = DialogService::show_ask_dialog;
+    g_core_params.show_dialog = DialogService::show_dialog;
     g_core_params.get_plugin_names = PluginUtil::get_plugin_names;
 
     core_create(&g_core_params, &g_core);
@@ -68,5 +61,14 @@ static void init_core()
 
 int main(int argc, char *argv[])
 {
+    using namespace std::literals;
+    if (argc != 2) {
+        std::println("usage: {} [path to ROM]", argv[0]);
+        return 1;
+    }
+
     init_core();
+    g_core->vr_start_rom(argv[1]);
+    std::this_thread::sleep_for(10s);
+    g_core->vr_close_rom(true);
 }

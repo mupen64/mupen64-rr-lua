@@ -33,12 +33,21 @@ Plugin::Plugin(const std::filesystem::path &path) : m_lib(path), m_path(path)
     m_name = name;
 
     m_type = metadata.type;
-    
+
     m_process_event = try_load<M64RRSpec::PtrProcessEvent>(m_lib, "M64RRProcessEvent");
 }
 
 void Plugin::initiate(core_params &core)
 {
+    M64RRSpec::Event init_event {
+        .initiate = {
+            .type = M64RRSpec::Event::Type::Initiate,
+            .init = {}
+        }
+    };
+
+    m_process_event(init_event);
+
     switch (m_type)
     {
     case M64RRSpec::PluginType::Video: {
@@ -96,7 +105,8 @@ void Plugin::initiate(core_params &core)
     }
 }
 
-struct PluginSet {
+struct PluginSet
+{
     Plugin video;
     Plugin audio;
     Plugin input;
@@ -104,15 +114,34 @@ struct PluginSet {
 };
 
 static std::optional<PluginSet> g_plugins = std::nullopt;
+static std::mutex g_plugin_lock;
 
 bool PluginUtil::load_plugins()
 {
+    std::scoped_lock lock(g_plugin_lock);
+    g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "NoVideo.dll"),
+                      Plugin(IOUtils::exe_path().parent_path() / "NoAudio.dll"),
+                      Plugin(IOUtils::exe_path().parent_path() / "NoInput.dll"),
+                      Plugin(IOUtils::exe_path().parent_path() / "TASRSP.dll"));
     return false;
 }
 void PluginUtil::initiate_plugins()
 {
+    std::scoped_lock lock(g_plugin_lock);
     clear_plugin_funcs();
+
+    if (!g_plugins.has_value()) abort();
+
+    g_plugins->video.initiate(g_core_params);
+    g_plugins->audio.initiate(g_core_params);
+    g_plugins->input.initiate(g_core_params);
+    g_plugins->rsp.initiate(g_core_params);
 }
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
 {
+    std::scoped_lock lock(g_plugin_lock);
+    if (video) strncpy_s(video, 64, g_plugins->video.name().c_str(), 64);
+    if (audio) strncpy_s(audio, 64, g_plugins->audio.name().c_str(), 64);
+    if (input) strncpy_s(input, 64, g_plugins->input.name().c_str(), 64);
+    if (rsp) strncpy_s(rsp, 64, g_plugins->rsp.name().c_str(), 64);
 }

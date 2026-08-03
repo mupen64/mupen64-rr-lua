@@ -1,0 +1,81 @@
+#include "Dialog.hpp"
+#include <charconv>
+#include <iostream>
+#include <print>
+
+static void print_header(std::string_view title, core_dialog_type type)
+{
+    using namespace std::literals;
+    std::string_view type_str;
+    switch (type)
+    {
+    case fsvc_error:
+        type_str = "ERROR"sv;
+    case fsvc_warning:
+        type_str = "WARN"sv;
+    case fsvc_information:
+        type_str = "INFO"sv;
+        break;
+    }
+
+    std::println("===============================");
+    std::println("{} [{}]", title, type_str);
+    std::println("-------------------------------");
+}
+
+int DialogService::show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices,
+                                               const char *str, const char *title, core_dialog_type type)
+{
+    print_header(title, type);
+
+    std::string input_line;
+    while (true)
+    {
+        std::println("{}", str);
+        for (size_t i = 0; i < choices.size(); i++)
+        {
+            std::println("{}) {}", (i + 1), choices[i]);
+        }
+        std::println("(enter an index, or press [Return] to cancel)");
+        std::print("> ");
+        std::getline(std::cin, input_line);
+        if (input_line.empty()) return -1;
+
+        int index = 0;
+        auto [ptr, ec] = std::from_chars(input_line.data(), input_line.data() + input_line.size(), index);
+        if (ec == std::errc{} && 0 < index && index <= choices.size())
+        {
+            return index - 1;
+        }
+        std::println("Invalid input...");
+    }
+}
+
+bool DialogService::show_ask_dialog(std::string_view id, const char *str, const char *title, bool warning)
+{
+    print_header(title, warning ? fsvc_warning : fsvc_information);
+    
+    std::string input_line;
+    while (true) {
+        std::println("{}", str);
+        std::println("(enter Y for yes, N for no)");
+        std::print("> ");
+
+        std::getline(std::cin, input_line);
+        if (input_line.size() == 1)
+        {
+            if (input_line[0] == 'Y' || input_line[0] == 'y') return true;
+            if (input_line[0] == 'N' || input_line[0] == 'n') return true;
+        }
+        std::println("Invalid input...");
+    }
+}
+
+void DialogService::show_dialog(const char *str, const char *title, core_dialog_type type)
+{
+    print_header(title, type);
+
+    std::println("{}", str);
+    std::print("(press [Enter] to continue)");
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), std::cin.widen('\n'));
+}

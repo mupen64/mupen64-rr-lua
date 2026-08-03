@@ -1,7 +1,9 @@
 add_executable(Mupen64RR.Views.CLI
+    "Dialog.hpp"
     "Main.hpp"
     "Plugin.hpp"
 
+    "Dialog.cpp"
     "Main.cpp"
     "Plugin.cpp"
 )
