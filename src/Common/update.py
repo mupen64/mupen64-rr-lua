@@ -29,14 +29,19 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-# Channel names map 1:1 to repack artifacts hosted on GitHub. Each channel is a
-# full Mupen64 distribution and "fits" a specific build variant (release type +
-# bitness): stable/nightly and w32/w64.
 CHANNEL_URLS = {
-    "stable-w32": "https://github.com/mupen64/repack-stable-w32/archive/refs/heads/main.zip",
     "stable-w64": "https://github.com/mupen64/repack-stable-w64/archive/refs/heads/main.zip",
-    "nightly-w32": "https://github.com/mupen64/repack-nightly-w32/archive/refs/heads/main.zip",
+    "stable-w32": "https://github.com/mupen64/repack-stable-w32/archive/refs/heads/main.zip",
     "nightly-w64": "https://github.com/mupen64/repack-nightly-w64/archive/refs/heads/main.zip",
+    "nightly-w32": "https://github.com/mupen64/repack-nightly-w32/archive/refs/heads/main.zip",
+}
+
+# Very short descriptions shown next to each channel in the selection prompt.
+CHANNEL_DESCRIPTIONS = {
+    "stable-w64": "Stable 64-bit. Recommended for most users.",
+    "stable-w32": "Stable 32-bit. Only for compatibility with legacy plugins (i.e. Jabo's).",
+    "nightly-w64": "Nightly 64-bit.",
+    "nightly-w32": "Nightly 32-bit.",
 }
 
 # The mupen executable that gets terminated before an update is applied.
@@ -57,6 +62,7 @@ class _Palette:
     GREEN = "\033[32m"
     YELLOW = "\033[33m"
     CYAN = "\033[36m"
+    GRAY = "\033[90m"
     BOLD = "\033[1m"
     RESET = "\033[0m"
 
@@ -128,10 +134,13 @@ def ask_yes_no(prompt: str) -> bool:
 def prompt_channel() -> str:
     """Prompts the user to pick an update channel from the list."""
     names = list(CHANNEL_URLS)
+    width = max(len(name) for name in names)
     print(paint("Available channels:", _Palette.BOLD))
     for index, name in enumerate(names, 1):
         print(
-            f"  {paint(f'{index})', _Palette.CYAN, _Palette.BOLD)} {paint(name, channel_color(name))}"
+            f"  {paint(f'{index})', _Palette.CYAN, _Palette.BOLD)} "
+            f"{paint(name.ljust(width), channel_color(name))} "
+            f"{paint(f'- {CHANNEL_DESCRIPTIONS[name]}', _Palette.GRAY)}"
         )
     while True:
         raw = read_line(
@@ -346,14 +355,14 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    mupen_dir = Path(__file__).resolve().parent
+    print(f"{paint('Target:', _Palette.BOLD)} {mupen_dir}")
+
+    if args.channel is None:
+        print()
     channel = args.channel if args.channel is not None else prompt_channel()
     url = CHANNEL_URLS[channel]
 
-    mupen_dir = Path(__file__).resolve().parent
-    print(
-        f"{paint('Channel:', _Palette.BOLD)} {paint(channel, channel_color(channel))}"
-    )
-    print(f"{paint('Target:', _Palette.BOLD)} {mupen_dir}")
     print()
     print(
         paint(
