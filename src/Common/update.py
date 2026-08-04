@@ -4,7 +4,6 @@
 #
 #  SPDX-License-Identifier: GPL-2.0-or-later
 #
-
 """
 TUI auto-updater for Mupen64.
 
@@ -20,6 +19,7 @@ the channel prompt is skipped.
 """
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -29,6 +29,9 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+# Channel names map 1:1 to repack artifacts hosted on GitHub. Each channel is a
+# full Mupen64 distribution and "fits" a specific build variant (release type +
+# bitness): stable/nightly and w32/w64.
 CHANNEL_URLS = {
     "stable-w32": "https://github.com/mupen64/repack-stable-w32/archive/refs/heads/main.zip",
     "stable-w64": "https://github.com/mupen64/repack-stable-w64/archive/refs/heads/main.zip",
@@ -36,11 +39,74 @@ CHANNEL_URLS = {
     "nightly-w64": "https://github.com/mupen64/repack-nightly-w64/archive/refs/heads/main.zip",
 }
 
+# The mupen executable that gets terminated before an update is applied.
 MUPEN_PROCESS_NAME = "mupen64.exe"
+
 DOWNLOAD_CHUNK_SIZE = 256 * 1024
 
 
+# ---------------------------------------------------------------------------
+# TUI colors
+# ---------------------------------------------------------------------------
+
+
+class _Palette:
+    """ANSI escape codes used for the splash screen and printouts."""
+
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    CYAN = "\033[36m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
+
+
+def _enable_windows_vt() -> None:
+    """Enables ANSI escape processing in the Windows console, if possible."""
+    if os.name != "nt":
+        return
+    # Python 3.13+
+    enable_vt = getattr(os, "enable_virtual_terminal_processing", None)
+    if enable_vt is not None:
+        try:
+            enable_vt()
+            return
+        except OSError:
+            pass
+    # Fallback: set ENABLE_VIRTUAL_TERMINAL_PROCESSING on the console mode.
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
+        mode = ctypes.c_uint32()
+        if kernel32.GetConsoleMode(handle, ctypes.byref(mode)) and mode.value:
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+    except (AttributeError, OSError):
+        pass
+
+
+def _color_enabled() -> bool:
+    return sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+
+
+_COLOR = _color_enabled()
+
+
+def paint(text: str, *codes: str) -> str:
+    """Wraps `text` in ANSI escape codes, unless color output is disabled."""
+    if not _COLOR or not codes:
+        return text
+    return "".join(codes) + text + _Palette.RESET
+
+
+def channel_color(channel: str) -> str:
+    """Returns the color used to display a channel name."""
+    return _Palette.GREEN if channel.startswith("stable") else _Palette.YELLOW
+
+
 def read_line(prompt: str = "") -> str:
+    """Reads a line from stdin, tolerating a closed/non-interactive stdin."""
     try:
         return input(prompt)
     except EOFError:
@@ -49,32 +115,40 @@ def read_line(prompt: str = "") -> str:
 
 
 def ask_yes_no(prompt: str) -> bool:
+    """Asks the user a yes/no question, retrying until a valid answer is given."""
     while True:
         answer = read_line(f"{prompt} [y/N] ").strip().lower()
         if answer in ("y", "yes"):
             return True
         if answer in ("n", "no", ""):
             return False
-        print("Please answer 'y' or 'n'.")
+        print(paint("Please answer 'y' or 'n'.", _Palette.YELLOW))
 
 
 def prompt_channel() -> str:
+    """Prompts the user to pick an update channel from the list."""
     names = list(CHANNEL_URLS)
-    print("Available channels:")
+    print(paint("Available channels:", _Palette.BOLD))
     for index, name in enumerate(names, 1):
-        print(f"  {index}) {name}")
+        print(
+            f"  {paint(f'{index})', _Palette.CYAN, _Palette.BOLD)} {paint(name, channel_color(name))}"
+        )
     while True:
-        raw = read_line(f"Select a channel [1-{len(names)}]: ").strip()
+        raw = read_line(
+            paint(f"Select a channel [1-{len(names)}]: ", _Palette.CYAN)
+        ).strip()
         if not raw:
-            print("Update aborted.")
+            print(paint("Update aborted.", _Palette.YELLOW))
             raise SystemExit(1)
         if not raw.isdigit():
-            print("Please enter a number.")
+            print(paint("Please enter a number.", _Palette.YELLOW))
             continue
         index = int(raw)
         if 1 <= index <= len(names):
             return names[index - 1]
-        print(f"Please enter a number between 1 and {len(names)}.")
+        print(
+            paint(f"Please enter a number between 1 and {len(names)}.", _Palette.YELLOW)
+        )
 
 
 def format_size(num_bytes: int) -> str:
@@ -82,7 +156,8 @@ def format_size(num_bytes: int) -> str:
 
 
 def download(url: str, dest: Path) -> None:
-    print(f"Downloading {url}")
+    """Downloads `url` to `dest`, printing a progress readout."""
+    print(paint(f"Downloading {url}", _Palette.CYAN))
     with urllib.request.urlopen(url) as response, open(dest, "wb") as out:
         total = int(response.headers.get("Content-Length") or 0)
         downloaded = 0
@@ -97,7 +172,10 @@ def download(url: str, dest: Path) -> None:
                 percent = downloaded * 100 // total
                 if percent != last_percent:
                     print(
-                        f"\r  {format_size(downloaded)} / {format_size(total)} ({percent}%)",
+                        paint(
+                            f"\r  {format_size(downloaded)} / {format_size(total)} ({percent}%)",
+                            _Palette.CYAN,
+                        ),
                         end="",
                         flush=True,
                     )
@@ -105,10 +183,16 @@ def download(url: str, dest: Path) -> None:
     if total > 0:
         print()
     else:
-        print(f"  Downloaded {format_size(downloaded)}.")
+        print(paint(f"  Downloaded {format_size(downloaded)}.", _Palette.CYAN))
 
 
 def _linux_mupen_pids() -> list[str]:
+    """Returns the PIDs of running mupen64.exe processes (Linux/Wine).
+
+    Wine names the Linux process after the PE image, so the process shows up
+    with the exact name mupen64.exe. Match on the process name (comm) rather
+    than the command line to avoid false positives from unrelated processes.
+    """
     try:
         result = subprocess.run(
             ["pgrep", "-x", MUPEN_PROCESS_NAME],
@@ -124,6 +208,11 @@ def _linux_mupen_pids() -> list[str]:
 
 
 def mupen_is_running() -> bool:
+    """Returns True if a mupen64.exe process is currently running.
+
+    On Windows this is detected with tasklist. On Linux, mupen runs under Wine
+    and shows up as a native mupen64.exe process, matched with pgrep.
+    """
     if sys.platform == "win32":
         try:
             result = subprocess.run(
@@ -139,6 +228,8 @@ def mupen_is_running() -> bool:
 
 
 def kill_mupen() -> None:
+    """Forcefully terminates all running mupen64.exe processes."""
+    print(paint(f"Terminating {MUPEN_PROCESS_NAME}...", _Palette.YELLOW))
     if sys.platform == "win32":
         subprocess.run(["taskkill", "/IM", MUPEN_PROCESS_NAME, "/F"], check=False)
         return
@@ -150,6 +241,12 @@ def kill_mupen() -> None:
 
 
 def _wait_for_mupen_exit(timeout: float = 10.0) -> None:
+    """Blocks until no mupen64.exe process remains.
+
+    On Windows this is a no-op because taskkill /F already waits for the
+    process to terminate. On Linux, kill only sends the signal, so poll until
+    the process is actually gone before touching its files.
+    """
     if sys.platform == "win32":
         return
     import time
@@ -159,10 +256,16 @@ def _wait_for_mupen_exit(timeout: float = 10.0) -> None:
         if not mupen_is_running():
             return
         time.sleep(0.2)
-    print("Warning: mupen64.exe did not exit in time; continuing anyway.")
+    print(
+        paint(
+            "Warning: mupen64.exe did not exit in time; continuing anyway.",
+            _Palette.YELLOW,
+        )
+    )
 
 
 def _remove_path(path: Path) -> None:
+    """Removes a file or directory tree at `path`."""
     if path.is_dir() and not path.is_symlink():
         shutil.rmtree(path)
     else:
@@ -170,6 +273,7 @@ def _remove_path(path: Path) -> None:
 
 
 def _ensure_directory(path: Path) -> None:
+    """Creates `path` as a directory, replacing any file that blocks the way."""
     if path.exists():
         if path.is_dir():
             return
@@ -181,6 +285,13 @@ def _ensure_directory(path: Path) -> None:
 
 
 def extract_merge(zip_path: Path, dest: Path) -> None:
+    """Extracts a channel archive into `dest`, overwriting existing files.
+
+    GitHub wraps archives in a single top-level folder; that folder is stripped
+    so the repack contents land directly in the mupen directory. Existing files
+    are overwritten, directories are created as needed, and conflicts between
+    files and directories are resolved in favor of the archive.
+    """
     with zipfile.ZipFile(zip_path) as archive:
         entries = [entry for entry in archive.infolist() if entry.filename]
         if not entries:
@@ -192,7 +303,7 @@ def extract_merge(zip_path: Path, dest: Path) -> None:
             strip_parts = 1
 
         files = [entry for entry in entries if not entry.is_dir()]
-        print(f"Extracting {len(files)} file(s) into {dest} ...")
+        print(paint(f"Extracting {len(files)} file(s) into {dest} ...", _Palette.CYAN))
 
         for index, entry in enumerate(files, 1):
             parts = Path(entry.filename).parts[strip_parts:]
@@ -205,7 +316,11 @@ def extract_merge(zip_path: Path, dest: Path) -> None:
             with archive.open(entry) as src, open(target, "wb") as out:
                 shutil.copyfileobj(src, out)
             if index % 50 == 0 or index == len(files):
-                print(f"\r  {index}/{len(files)}", end="", flush=True)
+                print(
+                    paint(f"\r  {index}/{len(files)}", _Palette.CYAN),
+                    end="",
+                    flush=True,
+                )
         print()
 
         # Preserve any empty directories that may exist in the archive.
@@ -235,29 +350,41 @@ def main() -> int:
     url = CHANNEL_URLS[channel]
 
     mupen_dir = Path(__file__).resolve().parent
-    print(f"Channel: {channel}")
-    print(f"Target:  {mupen_dir}")
+    print(
+        f"{paint('Channel:', _Palette.BOLD)} {paint(channel, channel_color(channel))}"
+    )
+    print(f"{paint('Target:', _Palette.BOLD)} {mupen_dir}")
     print()
-    print("This will OVERWRITE files in the current directory.")
+    print(
+        paint(
+            "This will OVERWRITE files in the current directory.",
+            _Palette.YELLOW,
+            _Palette.BOLD,
+        )
+    )
     if not ask_yes_no("Continue?"):
-        print("Update aborted.")
+        print(paint("Update aborted.", _Palette.YELLOW))
         return 1
 
-    print(f"Downloading '{channel}' artifact...")
+    print(paint(f"Downloading '{channel}' artifact...", _Palette.CYAN))
     with tempfile.TemporaryDirectory(prefix="mupen64-update-") as tmp:
         archive_path = Path(tmp) / "artifact.zip"
         try:
             download(url, archive_path)
         except (urllib.error.URLError, OSError) as exc:
-            print(f"Download failed: {exc}")
+            print(paint(f"Download failed: {exc}", _Palette.RED))
             return 1
 
         if mupen_is_running():
             print()
             print(
-                f"{MUPEN_PROCESS_NAME} is running and will be terminated when you press Enter."
+                paint(
+                    f"{MUPEN_PROCESS_NAME} is running and will be terminated when you press Enter.",
+                    _Palette.YELLOW,
+                    _Palette.BOLD,
+                )
             )
-            read_line("Press Enter to continue...")
+            read_line(paint("Press Enter to continue...", _Palette.YELLOW))
             kill_mupen()
             _wait_for_mupen_exit()
 
@@ -265,17 +392,22 @@ def main() -> int:
         try:
             extract_merge(archive_path, mupen_dir)
         except PermissionError as exc:
-            print(f"Failed to write files: {exc}")
+            print(paint(f"Failed to write files: {exc}", _Palette.RED))
             print(
-                "Make sure mupen and any other applications are closed, then try again."
+                paint(
+                    "Make sure mupen and any other applications are closed, then try again.",
+                    _Palette.YELLOW,
+                )
             )
             return 1
 
-    print("Update complete.")
+    print(paint("Update complete.", _Palette.GREEN, _Palette.BOLD))
     return 0
 
 
 if __name__ == "__main__":
+    _enable_windows_vt()
+    _COLOR = _color_enabled()
     # Avoid crashing on non-ASCII output when stdout uses a legacy codepage.
     for stream in (sys.stdout, sys.stderr):
         reconfigure = getattr(stream, "reconfigure", None)
