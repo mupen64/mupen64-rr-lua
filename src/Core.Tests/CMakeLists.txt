@@ -11,6 +11,8 @@ endif()
 
 add_executable(Mupen64RR.Core.Tests
     "Common.hpp"
+
+    "PluginAPITests.cpp"
     "IOUtilsTests.cpp"
     "VCRTests.cpp"
     "VRTests.cpp"

@@ -236,11 +236,11 @@ extern "C"
     typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
     typedef void(CALL *PtrAILenChanged)();
 
-    typedef void(CALL *PtrGetKeys)(uint8_t index, Buttons *buttons);
-    typedef void(CALL *PtrSetKeys)(uint8_t index, const Buttons *buttons);
+    typedef void(CALL *PtrGetKeys)(int32_t index, Buttons *buttons);
+    typedef void(CALL *PtrSetKeys)(int32_t index, Buttons buttons);
     typedef void(CALL *PtrReadController)(int32_t controller, unsigned char *command);
 
-    typedef void(CALL *PtrDoRSPCycles)(uint8_t);
+    typedef uint32_t(CALL *PtrDoRSPCycles)(uint32_t);
 };
 
 } // namespace M64RRSpec
@@ -269,7 +269,7 @@ extern "C"
      * \brief Shows the configuration window.
      * \param parent_window The parent window handle.
      */
-    EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window);
+    EXPORT void CALL M64RRShowConfig(WindowHandle parent_window);
 
     // ---
 
@@ -307,18 +307,18 @@ extern "C"
     // ---
 
     /**
-     * \brief Gets the keys for the specified controller.
+     * \brief Reads inputs for the specified controller.
      * \param controller The controller index.
      * \param keys The buttons to be filled in.
      */
-    EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons);
+    EXPORT void CALL M64RRGetKeys(int32_t index, Buttons *buttons);
 
     /**
      * \brief Notifies the plugin that the keys for the specified controller have changed.
      * \param controller The controller index.
      * \param keys The buttons to be set.
      */
-    EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons);
+    EXPORT void CALL M64RRSetKeys(int32_t index, Buttons buttons);
 
     /**
      * \brief Notifies the plugin of a controller command.
@@ -330,10 +330,10 @@ extern "C"
     // ---
 
     /**
-     * \brief Does RSP cycles.
+     * \brief Advances the RSP.
      * \param cycles The number of RSP cycles to do.
      */
-    EXPORT void CALL M64RRDoRSPCycles(uint8_t cycles);
+    EXPORT uint32_t CALL M64RRDoRSPCycles(uint32_t cycles);
 
     // ReSharper restore CppInconsistentNaming
 }

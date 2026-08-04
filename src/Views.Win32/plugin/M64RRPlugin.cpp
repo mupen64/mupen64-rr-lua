@@ -31,37 +31,37 @@ static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
 
-static CoreController controller_to_core_controller(const M64RRSpec::Controller &controller)
-{
-    CoreControllerExtension extension;
-    switch (controller.plugin)
-    {
-    case M64RRSpec::ControllerExtension::None:
-        extension = CoreControllerExtension::None;
-        break;
-    case M64RRSpec::ControllerExtension::Mempak:
-        extension = CoreControllerExtension::Mempak;
-        break;
-    case M64RRSpec::ControllerExtension::Rumblepak:
-        extension = CoreControllerExtension::Rumblepak;
-        break;
-    case M64RRSpec::ControllerExtension::Transferpak:
-        extension = CoreControllerExtension::Transferpak;
-        break;
-    case M64RRSpec::ControllerExtension::Raw:
-        extension = CoreControllerExtension::Raw;
-        break;
-    default:
-        RT_ASSERT(false, L"Unknown controller extension");
-        break;
-    }
+// static CoreController controller_to_core_controller(const M64RRSpec::Controller &controller)
+// {
+//     CoreControllerExtension extension;
+//     switch (controller.plugin)
+//     {
+//     case M64RRSpec::ControllerExtension::None:
+//         extension = CoreControllerExtension::None;
+//         break;
+//     case M64RRSpec::ControllerExtension::Mempak:
+//         extension = CoreControllerExtension::Mempak;
+//         break;
+//     case M64RRSpec::ControllerExtension::Rumblepak:
+//         extension = CoreControllerExtension::Rumblepak;
+//         break;
+//     case M64RRSpec::ControllerExtension::Transferpak:
+//         extension = CoreControllerExtension::Transferpak;
+//         break;
+//     case M64RRSpec::ControllerExtension::Raw:
+//         extension = CoreControllerExtension::Raw;
+//         break;
+//     default:
+//         RT_ASSERT(false, L"Unknown controller extension");
+//         break;
+//     }
 
-    return CoreController{
-        .present = controller.present ? 1 : 0,
-        .raw = controller.raw ? 1 : 0,
-        .plugin = extension,
-    };
-}
+//     return CoreController{
+//         .present = controller.present ? 1 : 0,
+//         .raw = controller.raw ? 1 : 0,
+//         .plugin = controller.plugin,
+//     };
+// }
 
 static size_t get_config_path(char *data, size_t size)
 {
@@ -136,7 +136,7 @@ void M64RRPlugin::config(HWND hwnd)
     initiate(g_plugin_funcs);
     const bool newly_initiated = m_initialized && !prev_initiated;
 
-    const auto show_config = (M64RRSpec::PtrShowConfig)GetProcAddress(m_module, "M64RRRShowConfig");
+    const auto show_config = (M64RRSpec::PtrShowConfig)GetProcAddress(m_module, "M64RRShowConfig");
 
     if (show_config)
         show_config(hwnd);
@@ -208,8 +208,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
     init->process_dlist = funcs.video_process_dlist;
 
-    std::array<M64RRSpec::Controller, 4> tmp_controllers{};
-    init->controllers = tmp_controllers.data();
+    init->controllers = g_main_ctx.core.controls;
 
     init->get_effective_speed_mode = [](void) { return g_main_ctx.core_ctx->vr_get_effective_speed_mode(); };
     init->frame_skipped = [](void) { return g_main_ctx.core_ctx->vr_get_frame_skipped(); };
@@ -358,18 +357,14 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         };
         funcs.input_set_keys = [](int32_t controller, ZESpec::Buttons keys) {
             M64RRSpec::Buttons buttons{keys.value};
-            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, &buttons);
+            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, buttons);
         };
         funcs.input_read_controller = [](int32_t controller, unsigned char *command) {
             if (s_mupenrr_read_controller_fn) s_mupenrr_read_controller_fn(controller, command);
         };
         funcs.input_key_down = [](uint32_t, int32_t) {};
         funcs.input_key_up = [](uint32_t, int32_t) {};
-
-        for (size_t i = 0; i < std::size(tmp_controllers); ++i)
-        {
-            g_main_ctx.core.controls[i] = controller_to_core_controller(tmp_controllers[i]);
-        }
+        
         break;
     }
     case Plugin::Type::RSP: {
@@ -390,8 +385,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
             if (s_mupenrr_do_rsp_cycles_fn)
             {
-                s_mupenrr_do_rsp_cycles_fn((uint8_t)cycles);
-                return 0u;
+                return s_mupenrr_do_rsp_cycles_fn(cycles);
             }
             return cycles;
         };

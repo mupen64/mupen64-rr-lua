@@ -45,7 +45,7 @@ BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
     return TRUE;
 }
 
-EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
+EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
     SDLAudio::Config cfg = read_config();
     if (SDLAudio::win32_show_config(parent_window.hwnd(), cfg))

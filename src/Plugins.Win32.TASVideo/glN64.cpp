@@ -140,7 +140,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     }
 }
 
-EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
+EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
     Config_Show(parent_window.hwnd());
 }
