@@ -61,7 +61,7 @@ void OGL_InitExtensions()
 void OGL_SetIdentityProjection()
 {
     static const float identity[16] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                                        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+                                       0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
     Combiner_SetProjection(identity);
 }
 
@@ -202,7 +202,7 @@ bool OGL_InitContext()
     OGL_InitStates();
 
     g_plugin->log_info(OGL.isGLES ? L"TASVideo: running on an OpenGL ES 2.0 context."
-                              : L"TASVideo: running on a desktop OpenGL compatibility context.");
+                                  : L"TASVideo: running on a desktop OpenGL compatibility context.");
 
     OGL.context_initialized = TRUE;
 
@@ -322,8 +322,7 @@ void OGL_UpdateStates()
     {
         if ((gDP.otherMode.alphaCompare == G_AC_THRESHOLD) && !(gDP.otherMode.alphaCvgSel))
             Combiner_SetAlphaTest((gDP.blendColor.a > 0.0f) ? 1 : 2, gDP.blendColor.a);
-        else if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) &&
-                 !(gDP.otherMode.alphaCvgSel))
+        else if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) && !(gDP.otherMode.alphaCvgSel))
             Combiner_SetAlphaTest(3, 0.0f);
         // Used in TEX_EDGE and similar render modes
         else if (gDP.otherMode.cvgXAlpha)
