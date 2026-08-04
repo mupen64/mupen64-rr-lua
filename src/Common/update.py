@@ -422,4 +422,9 @@ if __name__ == "__main__":
         reconfigure = getattr(stream, "reconfigure", None)
         if reconfigure is not None:
             reconfigure(errors="replace")
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except KeyboardInterrupt:
+        print()
+        print(paint("Update aborted.", _Palette.YELLOW))
+        raise SystemExit(130)
