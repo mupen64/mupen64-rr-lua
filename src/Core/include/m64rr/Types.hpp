@@ -7,6 +7,12 @@
 // ReSharper disable CppInconsistentNaming
 #pragma once
 
+#include <chrono>
+#include <cstdint>
+#include <filesystem>
+#include <functional>
+#include <type_traits>
+
 /**
  * An enum containing results that can be returned by the core.
  */

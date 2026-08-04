@@ -16,10 +16,12 @@
 #endif
 
 #include "m64rr/Types.hpp"
+#include <cstdint>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
 #define CALL __cdecl
+#include <Windows.h>
 #elif defined(__linux__)
 #define EXPORT
 #define CALL
@@ -272,7 +274,7 @@ extern "C"
     typedef void(CALL *PtrSetKeys)(uint8_t index, const Buttons *buttons);
     typedef void(CALL *PtrReadController)(int32_t controller, unsigned char *command);
 
-    typedef void(CALL *PtrDoRSPCycles)(uint8_t);
+    typedef void(CALL *PtrDoRSPCycles)(uint32_t);
 };
 
 } // namespace M64RRSpec
@@ -362,10 +364,10 @@ extern "C"
     // ---
 
     /**
-     * \brief Does RSP cycles.
+     * \brief Advances the RSP by a number of cycles.
      * \param cycles The number of RSP cycles to do.
      */
-    EXPORT void CALL M64RRDoRSPCycles(uint8_t cycles);
+    EXPORT void CALL M64RRDoRSPCycles(uint32_t cycles);
 
     // ReSharper restore CppInconsistentNaming
 }
