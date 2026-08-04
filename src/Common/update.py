@@ -49,6 +49,8 @@ MUPEN_PROCESS_NAME = "mupen64.exe"
 
 DOWNLOAD_CHUNK_SIZE = 256 * 1024
 
+PROGRESS_BAR_WIDTH = 40
+
 
 # ---------------------------------------------------------------------------
 # TUI colors
@@ -164,8 +166,16 @@ def format_size(num_bytes: int) -> str:
     return f"{num_bytes / (1024 * 1024):.1f} MiB"
 
 
+def _progress_bar(downloaded: int, total: int) -> str:
+    """Renders a progress bar line, e.g. `[####------] 40%  10.0 MiB / 25.0 MiB`."""
+    filled = min(PROGRESS_BAR_WIDTH, PROGRESS_BAR_WIDTH * downloaded // total)
+    bar = "[" + "#" * filled + " " * (PROGRESS_BAR_WIDTH - filled) + "]"
+    percent = min(100, downloaded * 100 // total)
+    return f"{bar} {percent}%  {format_size(downloaded)} / {format_size(total)}"
+
+
 def download(url: str, dest: Path) -> None:
-    """Downloads `url` to `dest`, printing a progress readout."""
+    """Downloads `url` to `dest`, printing a progress bar readout."""
     print(paint(f"Downloading {url}", _Palette.CYAN))
     with urllib.request.urlopen(url) as response, open(dest, "wb") as out:
         total = int(response.headers.get("Content-Length") or 0)
@@ -182,17 +192,17 @@ def download(url: str, dest: Path) -> None:
                 if percent != last_percent:
                     print(
                         paint(
-                            f"\r  {format_size(downloaded)} / {format_size(total)} ({percent}%)",
+                            f"\r  {_progress_bar(downloaded, total)}",
                             _Palette.CYAN,
                         ),
                         end="",
                         flush=True,
                     )
                     last_percent = percent
-    if total > 0:
-        print()
-    else:
-        print(paint(f"  Downloaded {format_size(downloaded)}.", _Palette.CYAN))
+        if total > 0:
+            print(paint(f"\r  {_progress_bar(total, total)}", _Palette.CYAN))
+        else:
+            print(paint(f"  Downloaded {format_size(downloaded)}.", _Palette.CYAN))
 
 
 def _linux_mupen_pids() -> list[str]:
