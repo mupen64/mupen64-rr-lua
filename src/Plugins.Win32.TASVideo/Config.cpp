@@ -46,6 +46,19 @@ const std::vector<std::pair<uint8_t, std::wstring>> FILTER_NAMES = {
     {2, L"Always Pixelated"},
 };
 
+// Indexed by AspectMode, so the order has to match the enum.
+const std::vector<std::wstring> ASPECT_MODE_NAMES = {
+    L"Pillarbox",
+    L"Stretch",
+    L"Widescreen",
+};
+
+static AspectMode to_aspect_mode(int value)
+{
+    if (value < 0 || value >= (int)ASPECT_MODE_NAMES.size()) return AspectMode::Pillarbox;
+    return (AspectMode)value;
+}
+
 static std::optional<ResolutionPreset> get_preset_by_resolution(uint32_t width, uint32_t height)
 {
     for (const auto &preset : RESOLUTION_PRESETS)
@@ -73,6 +86,7 @@ static void Config_SetDefaults()
     cache.maxBytes = 32 * 1048576;
     OGL.textureFilter = TextureFilter::None;
     OGL.usePolygonStipple = FALSE;
+    OGL.aspectMode = AspectMode::Pillarbox;
 }
 
 void Config_LoadConfig()
@@ -103,6 +117,8 @@ void Config_LoadConfig()
         OGL.usePolygonStipple = j["dithered_alpha_testing"];
         OGL.ignoreScissor = j["ignore_scissor"];
         OGL.clear_override = j["clear_override"];
+        // Read leniently: configs written before this option existed must keep working.
+        OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)AspectMode::Pillarbox));
     }
     catch (const std::exception &e)
     {
@@ -125,6 +141,7 @@ void Config_SaveConfig()
         {"dithered_alpha_testing", (bool)OGL.usePolygonStipple},
         {"ignore_scissor", (bool)OGL.ignoreScissor},
         {"clear_override", (bool)OGL.clear_override},
+        {"aspect_mode", (int)OGL.aspectMode},
     });
 
     std::ofstream ofs(get_config_path());
@@ -158,12 +175,15 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.windowedHeight = _wtoi(val);
 
     OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
+    OGL.aspectMode = to_aspect_mode(ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT)));
 
     OGL.usePolygonStipple = (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     Config_SaveConfig();
     Config_LoadConfig();
 
+    // aspectMode is absent on purpose: OGL_UpdateScale() reruns on every display list, so a new mode is
+    // picked up on the next frame without tearing down the RSP thread.
     const auto needs_restart =
         OGL.smoothing != prev_OGL.smoothing || OGL.textureFilter != prev_OGL.textureFilter ||
         OGL.filterScale != prev_OGL.filterScale || OGL.msaa != prev_OGL.msaa ||
@@ -212,6 +232,12 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
             ComboBox_AddString(GetDlgItem(hWndDlg, IDC_SMOOTHING), filter.second.c_str());
         }
         ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING), (int)OGL.smoothing);
+
+        for (const auto &aspect_mode : ASPECT_MODE_NAMES)
+        {
+            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_ASPECT), aspect_mode.c_str());
+        }
+        ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT), (int)OGL.aspectMode);
 
         select_resolution_in_combobox(cb_hwnd, OGL.windowedWidth, OGL.windowedHeight);
 

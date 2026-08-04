@@ -21,6 +21,16 @@ struct GLVertex
     float fog;
 };
 
+enum class AspectMode : uint8_t
+{
+    // Keep the source aspect ratio, centering the image and leaving black bars on the sides.
+    Pillarbox = 0,
+    // Let the image fill the whole window, distorting it when the window isn't 4:3.
+    Stretch = 1,
+    // Widen the horizontal field of view so that the extra width shows more of the scene.
+    Widescreen = 2,
+};
+
 struct GLInfo
 {
     BOOL context_initialized;
@@ -30,9 +40,12 @@ struct GLInfo
     BOOL fog;
 
     float scaleX, scaleY;
+    AspectMode aspectMode = AspectMode::Pillarbox;
     BOOL adjustScreen;
     float adjustScale;
     float adjustOffset;
+    // Factor applied to clip-space X to widen the field of view. 1.0f outside of AspectMode::Widescreen.
+    float widescreenScale = 1.0f;
 
     BOOL EXT_fog_coord;           // TNT, GeForce, Rage 128, Radeon
     BOOL EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon

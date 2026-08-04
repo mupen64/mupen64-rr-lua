@@ -117,17 +117,34 @@ void OGL_UpdateScale()
     OGL.adjustScreen = FALSE;
     OGL.adjustScale = 1.0f;
     OGL.adjustOffset = 0.0f;
+    OGL.widescreenScale = 1.0f;
 
     if ((VI.width != 0) && (VI.height != 0) && (OGL.width != 0) && (OGL.height != 0))
     {
         const float sourceAspect = (float)VI.width / (float)VI.height;
         const float displayAspect = (float)OGL.width / (float)OGL.height;
+
+        // Only a window wider than the source needs correcting.
         if (displayAspect > sourceAspect)
         {
-            const float targetWidth = (float)OGL.height * sourceAspect;
-            OGL.adjustScale = targetWidth / (float)OGL.width;
-            OGL.adjustOffset = (float)OGL.width * (1.0f - OGL.adjustScale) / 2.0f;
-            OGL.adjustScreen = TRUE;
+            switch (OGL.aspectMode)
+            {
+            case AspectMode::Pillarbox:
+                // Centre the viewport on the widest area that still has the source aspect.
+                OGL.adjustScale = ((float)OGL.height * sourceAspect) / (float)OGL.width;
+                OGL.adjustOffset = (float)OGL.width * (1.0f - OGL.adjustScale) / 2.0f;
+                OGL.adjustScreen = TRUE;
+                break;
+            case AspectMode::Widescreen:
+                // The game builds its projection for the source aspect, so squeezing clip-space X by the
+                // ratio between the two keeps that much scene at its correct proportions while the
+                // full-width viewport fills the rest with what lies beyond the original frustum.
+                OGL.widescreenScale = sourceAspect / displayAspect;
+                break;
+            case AspectMode::Stretch:
+                // Nothing to do: the viewport covers the window and the image stretches with it.
+                break;
+            }
         }
     }
 
