@@ -137,9 +137,9 @@ enum class CoreControllerExtension : int32_t
  */
 struct CoreController
 {
-    int32_t Present;
-    int32_t RawData;
-    CoreControllerExtension Plugin;
+    int32_t present;
+    int32_t raw;
+    CoreControllerExtension plugin;
 };
 
 /**

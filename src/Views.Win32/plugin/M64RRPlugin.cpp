@@ -31,38 +31,6 @@ static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
 
-static CoreController controller_to_core_controller(const M64RRSpec::Controller &controller)
-{
-    CoreControllerExtension extension;
-    switch (controller.plugin)
-    {
-    case M64RRSpec::ControllerExtension::None:
-        extension = CoreControllerExtension::None;
-        break;
-    case M64RRSpec::ControllerExtension::Mempak:
-        extension = CoreControllerExtension::Mempak;
-        break;
-    case M64RRSpec::ControllerExtension::Rumblepak:
-        extension = CoreControllerExtension::Rumblepak;
-        break;
-    case M64RRSpec::ControllerExtension::Transferpak:
-        extension = CoreControllerExtension::Transferpak;
-        break;
-    case M64RRSpec::ControllerExtension::Raw:
-        extension = CoreControllerExtension::Raw;
-        break;
-    default:
-        RT_ASSERT(false, L"Unknown controller extension");
-        break;
-    }
-
-    return CoreController{
-        .Present = controller.present ? 1 : 0,
-        .RawData = controller.raw ? 1 : 0,
-        .Plugin = extension,
-    };
-}
-
 static size_t get_config_path(char *data, size_t size)
 {
     static const std::u8string config_path = std::filesystem::absolute(IOUtils::config_path()).u8string();
@@ -368,7 +336,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 
         for (size_t i = 0; i < std::size(tmp_controllers); ++i)
         {
-            g_main_ctx.core.controls[i] = controller_to_core_controller(tmp_controllers[i]);
+            g_main_ctx.core.controls[i] = tmp_controllers[i];
         }
         break;
     }
