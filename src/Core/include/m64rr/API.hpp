@@ -11,6 +11,7 @@
 #pragma once
 
 #include "m64rr/Types.hpp"
+#include <stack>
 
 #ifdef __cplusplus
 extern "C"
@@ -241,27 +242,27 @@ extern "C"
         std::function<void(const core_st_callback_info &info, const std::vector<uint8_t> &buffer)> st_pre_callback =
             [](const core_st_callback_info &, const std::vector<uint8_t> &) {};
 
-        std::function<void()> video_process_dlist;
-        std::function<void()> video_process_rdp_list;
-        std::function<void()> video_show_cfb;
-        std::function<void()> video_vi_status_changed;
-        std::function<void()> video_vi_width_changed;
-        std::function<void(int32_t *width, int32_t *height)> video_get_video_size;
-        std::function<void(uint32_t)> video_fb_read;
-        std::function<void(uint32_t addr, uint32_t size)> video_fb_write;
-        std::function<void(CoreFBInfo[6])> video_fb_get_frame_buffer_info;
+        void (*video_process_dlist)();
+        void (*video_process_rdp_list)();
+        void (*video_show_cfb)();
+        void (*video_vi_status_changed)();
+        void (*video_vi_width_changed)();
+        void (*video_get_video_size)(int32_t *width, int32_t *height);
+        void (*video_fb_read)(uint32_t);
+        void (*video_fb_write)(uint32_t addr, uint32_t size);
+        void (*video_fb_get_frame_buffer_info)(CoreFBInfo[6]);
 
-        std::function<void(CoreSystemType system_type)> audio_ai_dacrate_changed;
-        std::function<void()> audio_ai_len_changed;
-        std::function<uint32_t()> audio_ai_read_length;
-        std::function<void()> audio_process_alist;
+        void (*audio_ai_dacrate_changed)(CoreSystemType system_type);
+        void (*audio_ai_len_changed)();
+        uint32_t (*audio_ai_read_length)();
+        void (*audio_process_alist)();
 
-        std::function<void(int32_t controller, unsigned char *command)> input_controller_command;
-        std::function<void(int32_t controller, CoreButtons *keys)> input_get_keys;
-        std::function<void(int32_t controller, CoreButtons keys)> input_set_keys;
-        std::function<void(int32_t controller, unsigned char *command)> input_read_controller;
+        void (*input_controller_command)(int32_t controller, unsigned char *command);
+        void (*input_get_keys)(int32_t controller, CoreButtons *keys);
+        void (*input_set_keys)(int32_t controller, CoreButtons keys);
+        void (*input_read_controller)(int32_t controller, unsigned char *command);
 
-        std::function<uint32_t(uint32_t)> rsp_do_rsp_cycles;
+        uint32_t (*rsp_do_rsp_cycles)(uint32_t);
     };
 
     /**

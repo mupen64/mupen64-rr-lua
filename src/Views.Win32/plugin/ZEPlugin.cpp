@@ -22,6 +22,8 @@ ZESpec::Controller dummy_controllers[4]{};
 uint8_t dummy_header[0x40]{};
 uint32_t dummy_dw{};
 
+static ZESpec::AIDACRATECHANGED s_zespec_ai_dacrate_changed_fn = nullptr;
+
 #pragma region Dummy Functions
 
 static uint32_t CALL dummy_do_rsp_cycles(uint32_t Cycles)
@@ -333,8 +335,11 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
 
         ZESpec::AIDACRATECHANGED audio_ai_dacrate_changed{};
         FUNC(audio_ai_dacrate_changed, ZESpec::AIDACRATECHANGED, dummy_ai_dacrate_changed, "AiDacrateChanged");
+        s_zespec_ai_dacrate_changed_fn = audio_ai_dacrate_changed;
 
-        funcs.audio_ai_dacrate_changed = [=](CoreSystemType system_type) {
+        funcs.audio_ai_dacrate_changed = [](CoreSystemType system_type) {
+            if (!s_zespec_ai_dacrate_changed_fn) return;
+
             int32_t ze_system_type{};
             switch (system_type)
             {
@@ -345,7 +350,8 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
                 ze_system_type = 1;
                 break;
             }
-            if (audio_ai_dacrate_changed) audio_ai_dacrate_changed(ze_system_type);
+            
+            s_zespec_ai_dacrate_changed_fn(ze_system_type);
         };
 
         FUNC(funcs.audio_ai_len_changed, ZESpec::AILENCHANGED, dummy_void, "AiLenChanged");

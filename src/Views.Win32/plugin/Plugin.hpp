@@ -36,7 +36,7 @@ struct ZESpecFuncs
     ZESpec::ROMOPEN audio_rom_open;
     ZESpec::ROMCLOSED audio_rom_closed;
     ZESpec::CLOSEDLL audio_close_dll_audio;
-    std::function<void(CoreSystemType system_type)> audio_ai_dacrate_changed;
+    M64RRSpec::PtrAIDacrateChanged audio_ai_dacrate_changed;
     ZESpec::AILENCHANGED audio_ai_len_changed;
     ZESpec::AIREADLENGTH audio_ai_read_length;
     ZESpec::PROCESSALIST audio_process_alist;
