@@ -26,3 +26,14 @@ target_link_libraries(Mupen64RR.Common INTERFACE
 if (NOT WIN32)
     target_link_libraries(Mupen64RR.Common INTERFACE PkgConfig::libsafec)
 endif()
+
+if (MUPEN64RR_BUILD_WIN32)
+    add_custom_target(Mupen64RR.Common.AutoUpdater ALL
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${MUPEN64RR_OUT_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/update.py"
+            "${MUPEN64RR_OUT_DIR}/update.py"
+        COMMENT "Copying update.py to ${MUPEN64RR_OUT_DIR}"
+        VERBATIM
+    )
+endif()

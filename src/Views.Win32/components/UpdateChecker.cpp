@@ -12,6 +12,72 @@
 #include <components/UpdateChecker.hpp>
 #include <nlohmann/json.hpp>
 
+namespace
+{
+constexpr std::wstring get_channel()
+{
+    const std::string release_type =
+#ifdef NIGHTLY
+        "nightly";
+#else
+        "stable";
+#endif
+    const std::string arch = sizeof(void *) == 8 ? "w64" : "w32";
+    return IOUtils::to_wide_string(release_type + "-" + arch);
+}
+
+bool launch_updater(const std::wstring &channel)
+{
+    const auto script_path = IOUtils::exe_path().parent_path() / L"update.py";
+
+    if (!std::filesystem::exists(script_path))
+    {
+        g_view_logger->error(L"[UpdateChecker] update.py not found next to the executable.");
+        return false;
+    }
+
+    struct PythonLauncher
+    {
+        const wchar_t *exe;
+        const wchar_t *args;
+    };
+
+    // `py` is the standard Windows Python launcher; fall back to the plain
+    // interpreter names for installations that don't register it.
+    constexpr PythonLauncher launchers[] = {
+        {L"py", L"-3"},
+        {L"python", L""},
+        {L"python3", L""},
+    };
+
+    for (const auto &launcher : launchers)
+    {
+        std::wstring command_line =
+            std::format(L"{} {} \"{}\" --channel {}", launcher.exe, launcher.args, script_path.wstring(), channel);
+
+        STARTUPINFO si{};
+        si.cb = sizeof(si);
+        PROCESS_INFORMATION pi{};
+
+        // CREATE_NEW_CONSOLE gives the TUI its own window and keeps it alive
+        // independently of mupen.
+        if (CreateProcess(nullptr, command_line.data(), nullptr, nullptr, FALSE, CREATE_NEW_CONSOLE, nullptr,
+                          IOUtils::exe_path().parent_path().c_str(), &si, &pi))
+        {
+            CloseHandle(pi.hThread);
+            CloseHandle(pi.hProcess);
+            g_view_logger->info(L"[UpdateChecker] Launched auto-updater with channel {}.", channel);
+            return true;
+        }
+
+        g_view_logger->trace(L"[UpdateChecker] Failed to launch '{}' ({}).", launcher.exe, GetLastError());
+    }
+
+    g_view_logger->error(L"[UpdateChecker] No Python interpreter found; update cancelled.");
+    return false;
+}
+} // namespace
+
 namespace UpdateChecker
 {
 const std::wstring REPO_LATEST_RELEASE_URL = L"/repos/mupen64/mupen64-rr-lua/releases/latest";
@@ -239,10 +305,16 @@ show_prompt:
 
     switch (result)
     {
-    case 0:
-        ShellExecute(0, 0, L"https://mupen64.com", 0, 0, SW_SHOW);
-        PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
+    case 0: {
+        if (!launch_updater(get_channel()))
+        {
+            DialogService::show_dialog(L"Failed to launch the auto-updater.\n\n"
+                                       L"Make sure Python 3 is installed and available, then run update.py "
+                                       L"from the mupen directory.",
+                                       L"Update Error", fsvc_error);
+        }
         break;
+    }
     case 1: {
         const auto changelog = IOUtils::to_wide_string(body.get<std::string>());
         TextEditDialog::show(
