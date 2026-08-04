@@ -6,8 +6,11 @@
 
 #pragma once
 
+#include <ranges>
+#include <sstream>
 #include <string_view>
 #include <string>
+#include <unordered_map>
 
 namespace StrUtils
 {
