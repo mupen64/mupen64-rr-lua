@@ -55,70 +55,32 @@ static void render()
 
 static void set_overlay_visibility(bool visible)
 {
-    // if (visible)
-    //     SDL_ShowWindow(s_ctx.window);
-    // else
-    //     SDL_HideWindow(s_ctx.window);
-}
-
-static LRESULT CALLBACK main_window_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                                  DWORD_PTR data)
-{
-    switch (msg)
-    {
-    case WM_ACTIVATE:
-        switch (LOWORD(wparam))
-        {
-        case WA_ACTIVE:
-        case WA_CLICKACTIVE:
-            set_overlay_visibility(true);
-            break;
-        case WA_INACTIVE:
-            set_overlay_visibility(false);
-            break;
-        default:
-            break;
-        }
-        break;
-    case WM_MOVE:
-    case WM_SIZE: {
-        RECT rc = Main::get_overlay_rect();
-        SDL_SetWindowSize(s_ctx.window, rc.right - rc.left, rc.bottom - rc.top);
-
-        GetClientRect(hwnd, &rc);
-        MapWindowPoints(hwnd, NULL, (POINT *)&rc, 2);
-        SDL_SetWindowPosition(s_ctx.window, rc.left, rc.top);
-        break;
-    }
-    case WM_NCDESTROY:
-        SDL_DestroyTexture(s_ctx.texture);
-        SDL_DestroyRenderer(s_ctx.renderer);
-        SDL_DestroyWindow(s_ctx.window);
-
-        RemoveWindowSubclass(hwnd, main_window_subclass_proc, id);
-        break;
-    }
-    return DefSubclassProc(hwnd, msg, wparam, lparam);
+    if (visible)
+        SDL_ShowWindow(s_ctx.window);
+    else
+        SDL_HideWindow(s_ctx.window);
 }
 
 void MGECompositor::create(HWND hwnd)
 {
-    RECT rc = Main::get_overlay_rect();
-
-    auto result = SDL_CreateWindowAndRenderer("MGE Compositor", rc.right - rc.left, rc.bottom - rc.top,
-                                              SDL_WINDOW_NOT_FOCUSABLE | SDL_WINDOW_UTILITY | SDL_WINDOW_BORDERLESS |
-                                                  SDL_WINDOW_ALWAYS_ON_TOP,
-                                              &s_ctx.window, &s_ctx.renderer);
-    RT_ASSERT(result, L"Error in SDL_CreateWindowAndRenderer. Check that your video driver is up-to-date.");
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, 0);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, 0);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, 1);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, 1);
+    s_ctx.window = SDL_CreateWindowWithProperties(props);
+    RT_ASSERT(s_ctx.window, L"Failed to create window.");
+    s_ctx.renderer = SDL_CreateRenderer(s_ctx.window, NULL);
+    RT_ASSERT(s_ctx.renderer, L"Failed to create renderer. Check that your video driver is up-to-date.");
 
     // Make it clickthrough... SDL doesn't support this natively yet
-    SDL_PropertiesID props = SDL_GetWindowProperties(s_ctx.window);
+    props = SDL_GetWindowProperties(s_ctx.window);
     s_ctx.hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
     RT_ASSERT(IsWindow(s_ctx.hwnd), L"Failed to get window handle from SDL properties.");
     SetWindowLongPtr(s_ctx.hwnd, GWL_EXSTYLE,
                      GetWindowLongPtr(s_ctx.hwnd, GWL_EXSTYLE) | WS_EX_TRANSPARENT | WS_EX_LAYERED);
 
-    SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
+    SetParent(s_ctx.hwnd, g_main_ctx.hwnd);
 }
 
 void MGECompositor::init()
@@ -143,6 +105,8 @@ void MGECompositor::update_screen()
         s_ctx.width = width;
         s_ctx.height = height;
         s_ctx.rgba_buffer = calloc(s_ctx.width * s_ctx.height, 4);
+
+        SDL_SetWindowSize(s_ctx.window, s_ctx.width, s_ctx.height);
         create_texture();
     }
 
