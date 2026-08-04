@@ -191,11 +191,11 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
     init->rom = g_main_ctx.core_ctx->rom;
     init->rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-    init->dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-    init->imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
+    init->dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
+    init->imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
 
     init->rdram_register = g_main_ctx.core_ctx->rdram_register;
-    init->mi_register = g_main_ctx.core_ctx->MI_register;
+    init->mi_register = g_main_ctx.core_ctx->mi_register;
     init->pi_register = g_main_ctx.core_ctx->pi_register;
     init->sp_register = g_main_ctx.core_ctx->sp_register;
     init->rsp_register = g_main_ctx.core_ctx->rsp_register;
@@ -220,28 +220,28 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     switch (m_type)
     {
     case Plugin::Type::Video:
-        init->log_trace = [](const wchar_t *str) { g_video_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_video_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_video_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_video_logger->error(str); };
+        init->log_trace = [](const char *str) { g_video_logger->trace(str); };
+        init->log_info = [](const char *str) { g_video_logger->info(str); };
+        init->log_warn = [](const char *str) { g_video_logger->warn(str); };
+        init->log_error = [](const char *str) { g_video_logger->error(str); };
         break;
     case Plugin::Type::Audio:
-        init->log_trace = [](const wchar_t *str) { g_audio_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_audio_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_audio_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_audio_logger->error(str); };
+        init->log_trace = [](const char *str) { g_audio_logger->trace(str); };
+        init->log_info = [](const char *str) { g_audio_logger->info(str); };
+        init->log_warn = [](const char *str) { g_audio_logger->warn(str); };
+        init->log_error = [](const char *str) { g_audio_logger->error(str); };
         break;
     case Plugin::Type::Input:
-        init->log_trace = [](const wchar_t *str) { g_input_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_input_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_input_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_input_logger->error(str); };
+        init->log_trace = [](const char *str) { g_input_logger->trace(str); };
+        init->log_info = [](const char *str) { g_input_logger->info(str); };
+        init->log_warn = [](const char *str) { g_input_logger->warn(str); };
+        init->log_error = [](const char *str) { g_input_logger->error(str); };
         break;
     case Plugin::Type::RSP:
-        init->log_trace = [](const wchar_t *str) { g_rsp_logger->trace(str); };
-        init->log_info = [](const wchar_t *str) { g_rsp_logger->info(str); };
-        init->log_warn = [](const wchar_t *str) { g_rsp_logger->warn(str); };
-        init->log_error = [](const wchar_t *str) { g_rsp_logger->error(str); };
+        init->log_trace = [](const char *str) { g_rsp_logger->trace(str); };
+        init->log_info = [](const char *str) { g_rsp_logger->info(str); };
+        init->log_warn = [](const char *str) { g_rsp_logger->warn(str); };
+        init->log_error = [](const char *str) { g_rsp_logger->error(str); };
         break;
     }
 

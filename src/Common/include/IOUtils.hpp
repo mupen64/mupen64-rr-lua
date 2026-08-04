@@ -6,6 +6,7 @@
 #pragma once
 
 #include <filesystem>
+#include <fstream>
 #if defined(_WIN32)
 #ifndef NOMINMAX
 #define NOMINMAX

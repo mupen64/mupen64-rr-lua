@@ -1071,12 +1071,12 @@ void Status::end_edit(int id, wchar_t *name)
 
 void Status::save_combos()
 {
-    const auto path = _T("combos.cmb");
+    const auto path = std::filesystem::path("combos.cmb");
 
-    g_plugin->log_trace(std::format(L"Saving combos to {}...", path).c_str());
+    g_plugin->log_trace(std::format("Saving combos to {}...", path.string()).c_str());
 
     FILE *f{};
-    if (_tfopen_s(&f, path, _T("wb")))
+    if (_tfopen_s(&f, path.c_str(), _T("wb")))
     {
         return;
     }
@@ -1090,12 +1090,12 @@ void Status::save_combos()
 
 void Status::load_combos(const std::filesystem::path &path)
 {
-    g_plugin->log_trace(std::format(L"Loading combos from {}...", path.c_str()).c_str());
+    g_plugin->log_trace(std::format("Loading combos from {}...", path.string()).c_str());
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
     {
-        g_plugin->log_error(L"read_file_buffer failed");
+        g_plugin->log_error("read_file_buffer failed");
         return;
     }
 

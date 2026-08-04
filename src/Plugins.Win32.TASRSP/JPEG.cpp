@@ -48,7 +48,7 @@ void jpg_uncompress(OSTask_t *task)
     }
     else
     {
-        g_plugin->log_warn(L"jpg_uncompress: !flags");
+        g_plugin->log_warn("jpg_uncompress: !flags");
     }
     pic = (int16_t *)(g_plugin->rdram + jpg_data.pic);
 
@@ -271,7 +271,7 @@ void jpg_uncompress(OSTask_t *task)
 
         if (jpg_data.h == 0)
         {
-            g_plugin->log_warn(L"h==0");
+            g_plugin->log_warn("h==0");
         }
         else
         {
