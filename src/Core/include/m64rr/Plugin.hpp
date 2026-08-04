@@ -80,53 +80,17 @@ extern "C"
     /**
      * \brief Represents an extension for a controller.
      */
-    enum class ControllerExtension : uint8_t
-    {
-        None,
-        Mempak,
-        Rumblepak,
-        Transferpak,
-        Raw,
-    };
+    using ControllerExtension = CoreControllerExtension;
 
     /**
      * \brief Describes a controller.
      */
-    struct Controller
-    {
-        bool present;
-        bool raw;
-        ControllerExtension plugin;
-    };
+    using Controller = CoreController;
 
     /**
      * \brief Represents a controller state.
      */
-    union Buttons {
-        uint32_t value;
-
-        struct
-        {
-            unsigned dr : 1;
-            unsigned dl : 1;
-            unsigned dd : 1;
-            unsigned du : 1;
-            unsigned start : 1;
-            unsigned z : 1;
-            unsigned b : 1;
-            unsigned a : 1;
-            unsigned cr : 1;
-            unsigned cl : 1;
-            unsigned cd : 1;
-            unsigned cu : 1;
-            unsigned r : 1;
-            unsigned l : 1;
-            unsigned reserved_1 : 1;
-            unsigned reserved_2 : 1;
-            signed x : 8;
-            signed y : 8;
-        };
-    };
+    using Buttons = CoreButtons;
 
     struct PluginMetadata
     {

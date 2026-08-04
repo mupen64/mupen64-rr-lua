@@ -57,9 +57,9 @@ static CoreController controller_to_core_controller(const M64RRSpec::Controller 
     }
 
     return CoreController{
-        .Present = controller.present ? 1 : 0,
-        .RawData = controller.raw ? 1 : 0,
-        .Plugin = extension,
+        .present = controller.present ? 1 : 0,
+        .raw = controller.raw ? 1 : 0,
+        .plugin = extension,
     };
 }
 
