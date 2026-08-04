@@ -50,7 +50,7 @@ EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
     SDLAudio::Config cfg = read_config();
     if (SDLAudio::win32_show_config(parent_window.hwnd(), cfg))
     {
-        if (g_plugin) g_plugin->log_info(L"Saving config...");
+        if (g_plugin) g_plugin->log_info("Saving config...");
         write_config(cfg);
         if (g_backend.has_value()) g_backend->merge_cfg_live(cfg);
     }

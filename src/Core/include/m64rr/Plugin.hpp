@@ -134,22 +134,22 @@ extern "C"
         /**
          * \brief Logs the specified message at the trace level.
          */
-        void (*log_trace)(const wchar_t *);
+        void (*log_trace)(const char *);
 
         /**
          * \brief Logs the specified message at the info level.
          */
-        void (*log_info)(const wchar_t *);
+        void (*log_info)(const char *);
 
         /**
          * \brief Logs the specified message at the warning level.
          */
-        void (*log_warn)(const wchar_t *);
+        void (*log_warn)(const char *);
 
         /**
          * \brief Logs the specified message at the error level.
          */
-        void (*log_error)(const wchar_t *);
+        void (*log_error)(const char *);
 
         /**
          * \brief Gets the effective speed mode.

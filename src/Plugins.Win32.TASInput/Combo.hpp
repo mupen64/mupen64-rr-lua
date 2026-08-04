@@ -8,6 +8,11 @@
 
 #include "Main.hpp"
 
+#include <span>
+#include <variant>
+#include <vector>
+
+
 /**
  * \brief Represents a combo.
  */

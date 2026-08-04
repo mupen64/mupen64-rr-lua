@@ -63,7 +63,7 @@ static const char *s_vertexShaderBody = "attribute vec4 aPosition;\n"
                                           "    vFog = aFog;\n"
                                           "}\n";
 
-static void LogInfoLog(const wchar_t *what, GLuint object, bool isProgram)
+static void LogInfoLog(const char *what, GLuint object, bool isProgram)
 {
     GLint length = 0;
     if (isProgram)
@@ -80,14 +80,8 @@ static void LogInfoLog(const wchar_t *what, GLuint object, bool isProgram)
         else
             glGetShaderInfoLog(object, length, nullptr, infoLog.data());
     }
-
-    std::wstring message(what);
-    message += L": ";
-    for (const char c : infoLog)
-    {
-        if (c != '\0') message += (wchar_t)(unsigned char)c;
-    }
-    g_plugin->log_error(message.c_str());
+    
+    g_plugin->log_error(std::format("{}: {}", what, infoLog).c_str());
 }
 
 static GLuint CompileShader(GLenum type, const char *source)
@@ -95,7 +89,7 @@ static GLuint CompileShader(GLenum type, const char *source)
     const GLuint shader = glCreateShader(type);
     if (shader == 0)
     {
-        g_plugin->log_error(L"GLSL combiner: glCreateShader failed");
+        g_plugin->log_error("GLSL combiner: glCreateShader failed");
         return 0;
     }
 
@@ -106,8 +100,8 @@ static GLuint CompileShader(GLenum type, const char *source)
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE)
     {
-        LogInfoLog(type == GL_VERTEX_SHADER ? L"GLSL combiner: vertex shader compile failed"
-                                            : L"GLSL combiner: fragment shader compile failed",
+        LogInfoLog(type == GL_VERTEX_SHADER ? "GLSL combiner: vertex shader compile failed"
+                                            : "GLSL combiner: fragment shader compile failed",
                    shader, false);
         glDeleteShader(shader);
         return 0;
@@ -433,7 +427,7 @@ void GLSLCombiner_Init()
 
     if (!GLEW_VERSION_2_0)
     {
-        g_plugin->log_error(L"GLSL combiner: OpenGL 2.0 not available, shaders will fail to compile");
+        g_plugin->log_error("GLSL combiner: OpenGL 2.0 not available, shaders will fail to compile");
         return;
     }
 
@@ -505,7 +499,7 @@ GLSLProgram *GLSLCombiner_Compile(Combiner *color, Combiner *alpha)
     glGetProgramiv(glProgram, GL_LINK_STATUS, &status);
     if (status != GL_TRUE)
     {
-        LogInfoLog(L"GLSL combiner: program link failed", glProgram, true);
+        LogInfoLog("GLSL combiner: program link failed", glProgram, true);
         glDeleteProgram(glProgram);
         CacheUniformLocations(program);
         return program;

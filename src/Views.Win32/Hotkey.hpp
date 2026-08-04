@@ -6,6 +6,11 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+
+#include <Windows.h>
+
 /**
  * \brief A module responsible for providing the hotkey structure and related functionality.
  */
