@@ -278,7 +278,19 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
                 Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str, std::size(w_str));
                 Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), h_str, std::size(h_str));
 
-                select_resolution_in_combobox(GetDlgItem(hWndDlg, IDC_WINDOWEDRES), _wtoi(w_str), _wtoi(h_str));
+                uint32_t width{};
+                uint32_t height{};
+                try
+                {
+                    width = std::stoul(w_str);
+                    height = std::stoul(h_str);
+                }
+                catch (...)
+                {
+                    break;
+                }
+
+                select_resolution_in_combobox(GetDlgItem(hWndDlg, IDC_WINDOWEDRES), width, height);
             }
             break;
         case IDC_TEXTUREFILTER:
