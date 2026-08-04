@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Run tools/format.py
-        run: python3 ./tools/format.py --clang-format clang-format-18
+        run: python3 ./tools/format.py
 
       - uses: peter-evans/create-pull-request@v7
         with:
