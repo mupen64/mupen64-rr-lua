@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <Main.hpp>
 #include <Messenger.hpp>
 #include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>

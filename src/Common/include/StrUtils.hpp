@@ -149,7 +149,7 @@ inline std::string_view ctrim_string(std::string_view str)
     auto str2 = str.substr(start_iter - str.begin());
 
     auto end_iter = std::ranges::find_if(std::views::reverse(str2), not_isspace);
-    if (end_iter == str.rend()) return ""sv;
+    if (end_iter.base() == str2.begin()) return ""sv;
     return str2.substr(0, end_iter.base() - str2.begin());
 }
 // Trims whitespace from the start and end of a wstring_view (as determined by iswspace()).
@@ -165,7 +165,7 @@ inline std::wstring_view ctrim_wstring(std::wstring_view str)
     auto str2 = str.substr(start_iter - str.begin());
 
     auto end_iter = std::ranges::find_if(std::views::reverse(str2), not_iswspace);
-    if (end_iter == str.rend()) return L""sv;
+    if (end_iter.base() == str2.begin()) return L""sv;
     return str2.substr(0, end_iter.base() - str2.begin());
 }
 

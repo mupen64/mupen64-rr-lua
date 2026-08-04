@@ -267,11 +267,12 @@ extern "C"
     typedef void(CALL *PtrProcessRDPList)();
     typedef void(CALL *PtrReadVideo)(void *buffer, int32_t *width, int32_t *height);
 
+
     typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
     typedef void(CALL *PtrAILenChanged)();
 
-    typedef void(CALL *PtrGetKeys)(uint8_t index, Buttons *buttons);
-    typedef void(CALL *PtrSetKeys)(uint8_t index, const Buttons *buttons);
+    typedef void(CALL *PtrGetKeys)(int32_t index, Buttons *buttons);
+    typedef void(CALL *PtrSetKeys)(int32_t index, Buttons buttons);
     typedef void(CALL *PtrReadController)(int32_t controller, unsigned char *command);
 
     typedef void(CALL *PtrDoRSPCycles)(uint32_t);
@@ -352,7 +353,7 @@ extern "C"
      * \param controller The controller index.
      * \param keys The buttons to be set.
      */
-    EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons);
+    EXPORT void CALL M64RRSetKeys(uint8_t index, Buttons buttons);
 
     /**
      * \brief Notifies the plugin of a controller command.

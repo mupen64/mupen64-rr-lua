@@ -358,7 +358,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         };
         funcs.input_set_keys = [](int32_t controller, ZESpec::Buttons keys) {
             M64RRSpec::Buttons buttons{keys.value};
-            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, &buttons);
+            if (s_mupenrr_set_keys_fn) s_mupenrr_set_keys_fn(controller, buttons);
         };
         funcs.input_read_controller = [](int32_t controller, unsigned char *command) {
             if (s_mupenrr_read_controller_fn) s_mupenrr_read_controller_fn(controller, command);

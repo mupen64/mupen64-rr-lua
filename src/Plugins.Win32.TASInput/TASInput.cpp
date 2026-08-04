@@ -1336,7 +1336,7 @@ EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons)
     status[index].get_input(buttons);
 }
 
-EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons)
+EXPORT void CALL M64RRSetKeys(uint8_t index, Buttons buttons)
 {
-    status[index].set_visuals_lazy(*buttons, false);
+    status[index].set_visuals_lazy(buttons, false);
 }
