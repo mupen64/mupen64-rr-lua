@@ -190,7 +190,6 @@ static void select_resolution_in_combobox(HWND cb_hwnd, uint32_t width, uint32_t
         }
     }
 
-    // A size that matches no preset is a custom one, so leaving a stale entry highlighted would lie.
     ComboBox_SetCurSel(cb_hwnd, -1);
 }
 
@@ -274,10 +273,6 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         case IDC_WINDOWED_Y:
             if (HIWORD(wParam) == EN_CHANGE)
             {
-                // Only mirror the typed size into the preset combo. Writing it into OGL here would mean
-                // Config_ApplyDlgConfig's prev_OGL snapshot already holds the new resolution, so its
-                // needs_restart check would never see the change and the context would never be
-                // recreated at the new size.
                 wchar_t w_str[32]{};
                 wchar_t h_str[32]{};
                 Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str, std::size(w_str));
