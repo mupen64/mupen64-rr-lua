@@ -14,7 +14,7 @@ class Plugin
   public:
     Plugin(const std::filesystem::path &path);
 
-    void initiate(core_params &core);
+    void initiate();
 
     /**
      * \brief Gets the plugin's path
@@ -39,6 +39,8 @@ class Plugin
     M64RRSpec::PluginType m_type;
 
     M64RRSpec::PtrProcessEvent m_process_event;
+
+    std::unique_ptr<M64RRSpec::PluginInit> m_init_data;
 };
 
 namespace PluginUtil

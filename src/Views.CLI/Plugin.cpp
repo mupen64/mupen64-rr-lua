@@ -37,14 +37,37 @@ Plugin::Plugin(const std::filesystem::path &path) : m_lib(path), m_path(path)
     m_process_event = try_load<M64RRSpec::PtrProcessEvent>(m_lib, "M64RRProcessEvent");
 }
 
-void Plugin::initiate(core_params &core)
+void Plugin::initiate()
 {
-    M64RRSpec::Event init_event {
-        .initiate = {
-            .type = M64RRSpec::Event::Type::Initiate,
-            .init = {}
-        }
-    };
+    if (!m_init_data)
+    {
+        m_init_data.reset(new M64RRSpec::PluginInit);
+        m_init_data->rom = g_core->rom;
+        m_init_data->rom = g_core->rom;
+
+        m_init_data->rom = g_core->rom;
+        m_init_data->rdram = (uint8_t *)g_core->rdram;
+        m_init_data->dmem = (uint8_t *)g_core->SP_DMEM;
+        m_init_data->imem = (uint8_t *)g_core->SP_IMEM;
+
+        m_init_data->rdram_register = g_core->rdram_register;
+        m_init_data->mi_register = g_core->MI_register;
+        m_init_data->pi_register = g_core->pi_register;
+        m_init_data->sp_register = g_core->sp_register;
+        m_init_data->rsp_register = g_core->rsp_register;
+        m_init_data->si_register = g_core->si_register;
+        m_init_data->vi_register = g_core->vi_register;
+        m_init_data->ri_register = g_core->ri_register;
+        m_init_data->ai_register = g_core->ai_register;
+        m_init_data->dpc_register = g_core->dpc_register;
+        m_init_data->dps_register = g_core->dps_register;
+
+        // void(CALL *process_dlist)(void);
+
+        // Controller *controllers;
+    }
+
+    M64RRSpec::Event init_event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}};
 
     m_process_event(init_event);
 
@@ -53,15 +76,15 @@ void Plugin::initiate(core_params &core)
     case M64RRSpec::PluginType::Video: {
         auto process_d_list = try_load<M64RRSpec::PtrProcessDList>(m_lib, "M64RRProcessDList");
 
-        if (process_d_list != nullptr) core.video_process_dlist = process_d_list;
+        if (process_d_list != nullptr) g_core_params.video_process_dlist = process_d_list;
     }
     break;
     case M64RRSpec::PluginType::Audio: {
         auto ai_dacrate_changed = try_load<M64RRSpec::PtrAIDacrateChanged>(m_lib, "M64RRAIDacrateChanged");
         auto ai_len_changed = try_load<M64RRSpec::PtrAILenChanged>(m_lib, "M64RRAILenChanged");
 
-        if (ai_dacrate_changed != nullptr) core.audio_ai_dacrate_changed = ai_dacrate_changed;
-        if (ai_len_changed != nullptr) core.audio_ai_len_changed = ai_len_changed;
+        if (ai_dacrate_changed != nullptr) g_core_params.audio_ai_dacrate_changed = ai_dacrate_changed;
+        if (ai_len_changed != nullptr) g_core_params.audio_ai_len_changed = ai_len_changed;
     }
     break;
     case M64RRSpec::PluginType::Input: {
@@ -72,7 +95,7 @@ void Plugin::initiate(core_params &core)
         // TODO: update spec for GetKeys and SetKeys to avoid trampoline
         if (get_keys != nullptr)
         {
-            core.input_get_keys = [=](uint32_t port, CoreButtons *buttons) {
+            g_core_params.input_get_keys = [=](uint32_t port, CoreButtons *buttons) {
                 if (buttons == nullptr) return;
                 M64RRSpec::Buttons plugin_buttons{.value = 0};
                 get_keys(port, &plugin_buttons);
@@ -81,12 +104,12 @@ void Plugin::initiate(core_params &core)
         }
         if (set_keys != nullptr)
         {
-            core.input_set_keys = [=](uint32_t port, CoreButtons buttons) {
+            g_core_params.input_set_keys = [=](uint32_t port, CoreButtons buttons) {
                 M64RRSpec::Buttons plugin_buttons{.value = buttons.value};
                 set_keys(port, &plugin_buttons);
             };
         }
-        if (read_controller != nullptr) core.input_read_controller = read_controller;
+        if (read_controller != nullptr) g_core_params.input_read_controller = read_controller;
     }
     break;
     case M64RRSpec::PluginType::RSP: {
@@ -95,7 +118,7 @@ void Plugin::initiate(core_params &core)
         // TODO: update spec for DoRSPCycles to avoid trampoline
         if (do_rsp_cycles != nullptr)
         {
-            core.rsp_do_rsp_cycles = [=](uint32_t cycles) -> uint32_t {
+            g_core_params.rsp_do_rsp_cycles = [=](uint32_t cycles) -> uint32_t {
                 do_rsp_cycles(cycles);
                 return 0;
             };
@@ -132,10 +155,10 @@ void PluginUtil::initiate_plugins()
 
     if (!g_plugins.has_value()) abort();
 
-    g_plugins->video.initiate(g_core_params);
-    g_plugins->audio.initiate(g_core_params);
-    g_plugins->input.initiate(g_core_params);
-    g_plugins->rsp.initiate(g_core_params);
+    g_plugins->video.initiate();
+    g_plugins->audio.initiate();
+    g_plugins->input.initiate();
+    g_plugins->rsp.initiate();
 }
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
 {
