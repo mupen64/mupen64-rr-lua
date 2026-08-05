@@ -12,6 +12,7 @@
 #pragma once
 
 #include "m64rr/Types.hpp"
+#include <cassert>
 
 #ifdef _WIN32
 

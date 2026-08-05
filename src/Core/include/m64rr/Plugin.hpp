@@ -77,21 +77,6 @@ extern "C"
         RSP,
     };
 
-    /**
-     * \brief Represents an extension for a controller.
-     */
-    using ControllerExtension = CoreControllerExtension;
-
-    /**
-     * \brief Describes a controller.
-     */
-    using Controller = CoreController;
-
-    /**
-     * \brief Represents a controller state.
-     */
-    using Buttons = CoreButtons;
-
     struct PluginMetadata
     {
         PluginType type;
@@ -129,7 +114,7 @@ extern "C"
 
         void(CALL *process_dlist)(void);
 
-        Controller *controllers;
+        CoreController* controllers;
 
         /**
          * \brief Logs the specified message at the trace level.
@@ -236,8 +221,8 @@ extern "C"
     typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
     typedef void(CALL *PtrAILenChanged)();
 
-    typedef void(CALL *PtrGetKeys)(int32_t index, Buttons *buttons);
-    typedef void(CALL *PtrSetKeys)(int32_t index, Buttons buttons);
+    typedef void(CALL *PtrGetKeys)(int32_t index, CoreButtons *buttons);
+    typedef void(CALL *PtrSetKeys)(int32_t index, CoreButtons buttons);
     typedef void(CALL *PtrReadController)(int32_t controller, unsigned char *command);
 
     typedef uint32_t(CALL *PtrDoRSPCycles)(uint32_t);
@@ -311,14 +296,14 @@ extern "C"
      * \param controller The controller index.
      * \param keys The buttons to be filled in.
      */
-    EXPORT void CALL M64RRGetKeys(int32_t index, Buttons *buttons);
+    EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons);
 
     /**
      * \brief Notifies the plugin that the keys for the specified controller have changed.
      * \param controller The controller index.
      * \param keys The buttons to be set.
      */
-    EXPORT void CALL M64RRSetKeys(int32_t index, Buttons buttons);
+    EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons);
 
     /**
      * \brief Notifies the plugin of a controller command.

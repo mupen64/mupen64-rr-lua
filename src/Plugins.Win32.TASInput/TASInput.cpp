@@ -51,12 +51,12 @@ struct Status
     /**
      * \brief The current internal input state before any processing
      */
-    M64RRSpec::Buttons current_input{};
+    CoreButtons current_input{};
 
     /**
      * \brief The internal input state at the previous GetKeys call before any processing
      */
-    M64RRSpec::Buttons last_controller_input{};
+    CoreButtons last_controller_input{};
 
     /**
      * \brief Ignores the next joystick increment, used for relative mode tracking
@@ -95,7 +95,7 @@ struct Status
 
     struct t_set_visuals_request
     {
-        M64RRSpec::Buttons input;
+        CoreButtons input;
         bool needs_processing;
     };
 
@@ -106,8 +106,8 @@ struct Status
 
     bool last_lmb_down{};
     bool last_rmb_down{};
-    M64RRSpec::Buttons autofire_input_a{};
-    M64RRSpec::Buttons autofire_input_b{};
+    CoreButtons autofire_input_a{};
+    CoreButtons autofire_input_b{};
     bool ready;
     HWND hwnd{};
     HWND combos_hwnd{};
@@ -143,7 +143,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals(M64RRSpec::Buttons input, bool needs_processing = true);
+    void set_visuals(CoreButtons input, bool needs_processing = true);
 
     /**
      * \brief Queues the UI to be updated at the next possible opportunity. Doesn't block the caller until the UI has
@@ -151,7 +151,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals_lazy(M64RRSpec::Buttons input, bool needs_processing = true);
+    void set_visuals_lazy(CoreButtons input, bool needs_processing = true);
 
     void set_visuals_if_needed();
 
@@ -160,7 +160,7 @@ struct Status
      * \param input The input to process
      * \return The processed input
      */
-    M64RRSpec::Buttons get_processed_input(M64RRSpec::Buttons input);
+    CoreButtons get_processed_input(CoreButtons input);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -169,7 +169,7 @@ struct Status
 
     void on_config_changed();
 
-    void get_input(M64RRSpec::Buttons *keys);
+    void get_input(CoreButtons *keys);
 };
 
 static ULONG_PTR gdi_plus_token{};
@@ -241,7 +241,7 @@ apply:
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-void Status::get_input(M64RRSpec::Buttons *keys)
+void Status::get_input(CoreButtons *keys)
 {
     keys->value = get_processed_input(current_input).value;
 
@@ -281,7 +281,7 @@ end:
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
 }
 
-M64RRSpec::Buttons Status::get_processed_input(M64RRSpec::Buttons input)
+CoreButtons Status::get_processed_input(CoreButtons input)
 {
     input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
@@ -310,7 +310,7 @@ void Status::activate_emulator_window()
     SetForegroundWindow(g_plugin->main_window.hwnd());
 }
 
-void Status::set_visuals(M64RRSpec::Buttons input, bool needs_processing)
+void Status::set_visuals(CoreButtons input, bool needs_processing)
 {
     if (needs_processing)
     {
@@ -346,7 +346,7 @@ void Status::set_visuals(M64RRSpec::Buttons input, bool needs_processing)
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
 }
 
-void Status::set_visuals_lazy(M64RRSpec::Buttons input, bool needs_processing)
+void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 {
     std::lock_guard lock(pending_visuals_mutex);
     pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
@@ -661,7 +661,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_TIMER: {
         ctx->set_visuals_if_needed();
 
-        M64RRSpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
+        CoreButtons controller_input = GamepadManager::get_input(ctx->controller_index);
 
         if (controller_input.value != ctx->last_controller_input.value)
         {
@@ -788,7 +788,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     }
     break;
     case WM_UPDATE_VISUALS:
-        ctx->set_visuals(static_cast<M64RRSpec::Buttons>(lparam), false);
+        ctx->set_visuals(static_cast<CoreButtons>(lparam), false);
         break;
     case WM_SIZE:
     case WM_MOVE: {
@@ -808,7 +808,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            M64RRSpec::Buttons last_input = ctx->current_input;
+            CoreButtons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -832,7 +832,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            M64RRSpec::Buttons last_input = ctx->current_input;
+            CoreButtons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -1255,11 +1255,11 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         {
             g_plugin->controllers[i].present = new_config.controller_active[i];
             g_plugin->controllers[i].raw = false;
-            g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::None;
+            g_plugin->controllers[i].plugin = CoreControllerExtension::None;
             if (new_config.controller_mempak[i])
-                g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::Mempak;
+                g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
             if (new_config.controller_rumblepak[i])
-                g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::Rumblepak;
+                g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
         }
         break;
     }

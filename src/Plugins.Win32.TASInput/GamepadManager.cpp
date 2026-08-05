@@ -153,9 +153,9 @@ static int32_t get_axis(const t_axis_mapping &mapping)
     return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis));
 }
 
-M64RRSpec::Buttons GamepadManager::get_input(const size_t i)
+CoreButtons GamepadManager::get_input(const size_t i)
 {
-    M64RRSpec::Buttons buttons{};
+    CoreButtons buttons{};
 
     const auto controller_config = new_config.controller_config[i];
 
