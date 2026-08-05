@@ -114,7 +114,7 @@ extern "C"
 
         void(CALL *process_dlist)(void);
 
-        CoreController* controllers;
+        CoreController *controllers;
 
         /**
          * \brief Logs the specified message at the trace level.

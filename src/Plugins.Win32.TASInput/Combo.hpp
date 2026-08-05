@@ -12,7 +12,6 @@
 #include <variant>
 #include <vector>
 
-
 /**
  * \brief Represents a combo.
  */

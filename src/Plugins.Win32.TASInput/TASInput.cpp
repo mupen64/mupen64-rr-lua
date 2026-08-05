@@ -1256,8 +1256,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             g_plugin->controllers[i].present = new_config.controller_active[i];
             g_plugin->controllers[i].raw = false;
             g_plugin->controllers[i].plugin = CoreControllerExtension::None;
-            if (new_config.controller_mempak[i])
-                g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
+            if (new_config.controller_mempak[i]) g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
             if (new_config.controller_rumblepak[i])
                 g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
         }

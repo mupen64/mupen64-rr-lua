@@ -332,7 +332,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         };
         funcs.input_key_down = [](uint32_t, int32_t) {};
         funcs.input_key_up = [](uint32_t, int32_t) {};
-        
+
         break;
     }
     case Plugin::Type::RSP: {

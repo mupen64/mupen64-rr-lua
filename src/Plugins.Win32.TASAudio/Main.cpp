@@ -119,8 +119,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         }
         catch (std::exception &e)
         {
-            g_plugin->log_error(
-                std::format("Exception at InitiateAudio(): {}", e.what()).c_str());
+            g_plugin->log_error(std::format("Exception at InitiateAudio(): {}", e.what()).c_str());
         }
         break;
     }
@@ -144,8 +143,7 @@ EXPORT void CALL M64RRAIDacrateChanged(CoreSystemType system_type)
     }
     catch (std::exception &e)
     {
-        g_plugin->log_error(
-            std::format("Exception at AiDacrateChanged(): {}", e.what()).c_str());
+        g_plugin->log_error(std::format("Exception at AiDacrateChanged(): {}", e.what()).c_str());
     }
 }
 
