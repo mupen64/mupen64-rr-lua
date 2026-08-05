@@ -1324,7 +1324,7 @@ EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
     // TODO: Do we have to restart the dialogs here like in old version?
 }
 
-EXPORT void CALL M64RRGetKeys(int32_t index, Buttons *buttons)
+EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons)
 {
     if (new_frame)
     {
@@ -1335,7 +1335,7 @@ EXPORT void CALL M64RRGetKeys(int32_t index, Buttons *buttons)
     status[index].get_input(buttons);
 }
 
-EXPORT void CALL M64RRSetKeys(int32_t index, Buttons buttons)
+EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons)
 {
     status[index].set_visuals_lazy(buttons, false);
 }
