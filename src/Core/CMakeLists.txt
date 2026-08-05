@@ -101,9 +101,7 @@ endif()
 # options: disable dynarec
 if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
-
-    # Select the dynarec backend by target architecture. The dynarec is
-    # x86-only, so error out on anything else:
+    # Select the dynarec backend by target architecture.
     #   x86-64 -> R4300/x86_64 (x86-64 recompiler)
     #   x86    -> R4300/x86 (original x86-32 recompiler)
     if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(AMD64|x86_64)$")

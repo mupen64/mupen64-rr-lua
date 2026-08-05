@@ -71,7 +71,7 @@ endif()
 list(GET _sys_proc_values "${_index}" _sys_proc)
 list(GET _comp_arch_values "${_index}" _comp_arch)
 
-# set(CMAKE_SYSTEM_NAME "Windows" PARENT_SCOPE)
+set(CMAKE_SYSTEM_NAME "Windows" PARENT_SCOPE)
 set(CMAKE_SYSTEM_PROCESSOR "${_sys_proc}" PARENT_SCOPE)
 set(CMAKE_C_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)
 set(CMAKE_CXX_COMPILER_TARGET "${_comp_arch}" PARENT_SCOPE)

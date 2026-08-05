@@ -29,7 +29,9 @@ target_link_libraries(Mupen64RR.Core.Tests PRIVATE
     Catch2::Catch2WithMain
     Mupen64RR.Core._TestIncludes
 )
-if(NOT CMAKE_CROSSCOMPILING)
+
+# Skip running tests when cross-compiling between OSes.
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "${CMAKE_HOST_SYSTEM_NAME}")
     catch_discover_tests(Mupen64RR.Core.Tests)
 else()
     message(STATUS "Cross-compiling: skipping test discovery for Mupen64RR.Core.Tests (run manually on target)")
