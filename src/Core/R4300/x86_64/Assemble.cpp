@@ -532,6 +532,23 @@ void je_near_rj(uint32_t saut)
     put8(0x84);
     put32(saut);
 }
+void ja_near_rj(uint32_t saut)
+{
+    put8(0x0F);
+    put8(0x87);
+    put32(saut);
+}
+void jp_near_rj(uint32_t saut)
+{
+    put8(0x0F);
+    put8(0x8A);
+    put32(saut);
+}
+void jmp_near_rj(uint32_t saut)
+{
+    put8(0xE9);
+    put32(saut);
+}
 
 void jl_near(uint32_t mi_addr)
 {
@@ -1846,6 +1863,100 @@ void cvtsd2ss_xmm_xmm(int32_t dst, int32_t src) // cvtsd2ss dst, src (double->fl
     put8(0x0F);
     put8(0x5A);
     put8(sse_modrm_reg(dst, src));
+}
+
+void movaps_xmm_xmm(int32_t dst, int32_t src)
+{
+    put8(0x0F);
+    put8(0x28);
+    put8(sse_modrm_reg(dst, src));
+}
+static void sse_arith_reg(unsigned char prefix, unsigned char opcode, int32_t dst, int32_t src)
+{
+    put8(prefix);
+    put8(0x0F);
+    put8(opcode);
+    put8(sse_modrm_reg(dst, src));
+}
+void addss_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF3, 0x58, dst, src);
+}
+void subss_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF3, 0x5C, dst, src);
+}
+void mulss_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF3, 0x59, dst, src);
+}
+void divss_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF3, 0x5E, dst, src);
+}
+void cvtss2sd_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF3, 0x5A, dst, src);
+}
+void addsd_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF2, 0x58, dst, src);
+}
+void subsd_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF2, 0x5C, dst, src);
+}
+void mulsd_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF2, 0x59, dst, src);
+}
+void divsd_xmm_xmm(int32_t dst, int32_t src)
+{
+    sse_arith_reg(0xF2, 0x5E, dst, src);
+}
+
+void mov_r11_pm64(void *m64)
+{
+    mov_r11_imm64((uintptr_t)m64);
+    put8(0x4D);
+    put8(0x8B);
+    put8(0x1B);
+}
+static inline unsigned char sse_modrm_r11(int32_t xmm)
+{
+    return (unsigned char)((xmm << 3) | 3);
+}
+void movss_xmm_pr11(int32_t xmm)
+{
+    put8(0xF3);
+    put8(0x41);
+    put8(0x0F);
+    put8(0x10);
+    put8(sse_modrm_r11(xmm));
+}
+void movss_pr11_xmm(int32_t xmm)
+{
+    put8(0xF3);
+    put8(0x41);
+    put8(0x0F);
+    put8(0x11);
+    put8(sse_modrm_r11(xmm));
+}
+void movsd_xmm_pr11(int32_t xmm)
+{
+    put8(0xF2);
+    put8(0x41);
+    put8(0x0F);
+    put8(0x10);
+    put8(sse_modrm_r11(xmm));
+}
+void movsd_pr11_xmm(int32_t xmm)
+{
+    put8(0xF2);
+    put8(0x41);
+    put8(0x0F);
+    put8(0x11);
+    put8(sse_modrm_r11(xmm));
 }
 // MXCSR save/load (the SSE analogue of x87 fnstcw/fldcw), used to swap the SSE rounding
 // mode for ROUND/CEIL/FLOOR the way the interpreter does with fesetround.

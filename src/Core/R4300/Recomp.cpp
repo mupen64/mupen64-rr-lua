@@ -16,8 +16,18 @@
 #include <R4300/Tracelog.hpp>
 #if defined(_M_X64) || defined(__x86_64__)
 #include <R4300/x86_64/RegCache.hpp>
+#include <R4300/x86_64/FprCache.hpp>
 #elif defined(_M_IX86) || defined(__i386__)
 #include <R4300/x86/RegCache.hpp>
+static inline void fpr_cache_reset()
+{
+}
+static inline void fpr_cache_flush()
+{
+}
+static inline void fpr_cache_gate(uint32_t)
+{
+}
 #elif defined(MUPEN64RR_ENABLE_DYNAREC)
 #error "No dynarec backend exists for this architecture; build with MUPEN64RR_ENABLE_DYNAREC=OFF."
 #endif
@@ -2959,6 +2969,7 @@ void recompile_block(int32_t *source, precomp_block *block, uint32_t func)
         inst_pointer = &block->code;
         init_assembler(block->jumps_table, block->jumps_number);
         init_cache(block->block + (func & 0xFFF) / 4);
+        fpr_cache_reset();
     }
 #endif
 
@@ -2980,6 +2991,9 @@ void recompile_block(int32_t *source, precomp_block *block, uint32_t func)
         dst = block->block + i;
         dst->addr = block->start + i * 4;
         dst->reg_cache_infos.need_map = 0;
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+        if (dynacore) fpr_cache_gate(src);
+#endif
         dst->local_addr = code_length;
         recomp_ops[((src >> 26) & 0x3F)]();
         if (g_ctx.tl_active())
@@ -3019,6 +3033,9 @@ if (dynacore) genlink_subblock();
         dst = block->block + i;
         dst->addr = block->start + i * 4;
         dst->reg_cache_infos.need_map = 0;
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+        if (dynacore) fpr_cache_gate(0);
+#endif
         dst->local_addr = code_length;
         RFIN_BLOCK();
         i++;
@@ -3027,6 +3044,9 @@ if (dynacore) genlink_subblock();
             dst = block->block + i;
             dst->addr = block->start + i * 4;
             dst->reg_cache_infos.need_map = 0;
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+            if (dynacore) fpr_cache_gate(0);
+#endif
             dst->local_addr = code_length;
             RFIN_BLOCK();
             i++;
@@ -3037,6 +3057,7 @@ if (dynacore) genlink_subblock();
         genlink_subblock();
     if (dynacore)
     {
+        fpr_cache_flush();
         free_all_registers();
         passe2(block->block, (func & 0xFFF) / 4, i, block);
         block->code_length = code_length;
@@ -3086,6 +3107,9 @@ void recompile_opcode()
     dst++;
     dst->addr = (dst - 1)->addr + 4;
     dst->reg_cache_infos.need_map = 0;
+#ifdef MUPEN64RR_ENABLE_DYNAREC
+    if (dynacore) fpr_cache_gate(src);
+#endif
     if (!is_jump())
         recomp_ops[((src >> 26) & 0x3F)]();
     else

@@ -134,6 +134,13 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
         "${DYNAREC_DIR}/RegCache.cpp"
         "${DYNAREC_DIR}/RJump.cpp"
     )
+
+    if (DYNAREC_DIR STREQUAL "R4300/x86_64")
+        target_sources(Mupen64RR.Core PRIVATE
+            "${DYNAREC_DIR}/FprCache.hpp"
+            "${DYNAREC_DIR}/FprCache.cpp"
+        )
+    endif()
 endif()
 
 # FOR TESTING ONLY. DO NOT USE OTHERWISE.

@@ -33,10 +33,15 @@
 #define DH 6
 #define BH 7
 
+#define FPR_CACHE_XMM_BASE 3
+#define FPR_CACHE_SLOTS 3
+
 typedef struct _reg_cache_struct
 {
     int32_t need_map;
     void *needed_registers[8];
+    void *needed_xmm[FPR_CACHE_SLOTS];
+    unsigned char needed_xmm_double[FPR_CACHE_SLOTS];
     unsigned char jump_wrapper[256];
     int32_t need_cop1_check;
     // dyna_jump thunk cache (see RJump.cpp): generated once per instruction and reused.
@@ -154,6 +159,9 @@ void cmp_rax_imm64(uintptr_t imm64);                                     // x64:
 void jg_near(uint32_t mi_addr);
 void add_m32_reg32(void *_m32, int32_t reg32);
 void je_near_rj(uint32_t saut);
+void ja_near_rj(uint32_t saut);
+void jp_near_rj(uint32_t saut);
+void jmp_near_rj(uint32_t saut);
 void jge_near_rj(uint32_t saut);
 void jl_near_rj(uint32_t saut);
 void jle_near_rj(uint32_t saut);
@@ -238,6 +246,21 @@ void cvtsi2sd_xmm_preg64(int32_t xmm, int32_t base);
 void cvtsi2sdq_xmm_preg64(int32_t xmm, int32_t base);
 void sqrtsd_xmm_xmm(int32_t dst, int32_t src);
 void cvtsd2ss_xmm_xmm(int32_t dst, int32_t src);
+void movaps_xmm_xmm(int32_t dst, int32_t src);
+void addss_xmm_xmm(int32_t dst, int32_t src);
+void subss_xmm_xmm(int32_t dst, int32_t src);
+void mulss_xmm_xmm(int32_t dst, int32_t src);
+void divss_xmm_xmm(int32_t dst, int32_t src);
+void cvtss2sd_xmm_xmm(int32_t dst, int32_t src);
+void addsd_xmm_xmm(int32_t dst, int32_t src);
+void subsd_xmm_xmm(int32_t dst, int32_t src);
+void mulsd_xmm_xmm(int32_t dst, int32_t src);
+void divsd_xmm_xmm(int32_t dst, int32_t src);
+void mov_r11_pm64(void *m64);
+void movss_xmm_pr11(int32_t xmm);
+void movss_pr11_xmm(int32_t xmm);
+void movsd_xmm_pr11(int32_t xmm);
+void movsd_pr11_xmm(int32_t xmm);
 void stmxcsr_m32(void *m32);
 void ldmxcsr_m32(void *m32);
 void fstp_fpreg(int32_t fpreg);

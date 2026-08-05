@@ -12,6 +12,11 @@ void gencheck_output_s(void *fpr_slot);
 void gencheck_input_d(void *fpr_slot);
 void gencheck_output_d(void *fpr_slot);
 
+void gencheck_input_s_xmm(int32_t xmm);
+void gencheck_output_s_xmm(int32_t xmm);
+void gencheck_input_d_xmm(int32_t xmm);
+void gencheck_output_d_xmm(int32_t xmm);
+
 // ROUND/CEIL/FLOOR SSE rounding-mode swap (MXCSR). rc_bits: nearest=0, floor=0x2000, ceil=0x4000.
 void gen_mxcsr_set_round(uint32_t rc_bits);
 void gen_mxcsr_restore();

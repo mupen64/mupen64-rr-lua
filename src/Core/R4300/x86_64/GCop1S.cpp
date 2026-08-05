@@ -9,6 +9,7 @@
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
+#include <R4300/x86_64/FprCache.hpp>
 #include <R4300/x86_64/Gcop1Helpers.hpp>
 #include <R4300/Cop1Helpers.hpp>
 #include <R4300/Ops.hpp>
@@ -42,11 +43,11 @@ static void gen_fcr31_clear_c()
 }
 static void gen_cmp_load_s()
 {
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    movss_xmm_preg64(0, EAX); // xmm0 = fs
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    movss_xmm_preg64(1, EAX); // xmm1 = ft
-    ucomiss_xmm_xmm(0, 1);
+    const int32_t s = fpr_cache_read(dst->f.cf.fs);
+    fpr_cache_lock(s);
+    const int32_t t = fpr_cache_read(dst->f.cf.ft);
+    fpr_cache_unlock_all();
+    ucomiss_xmm_xmm(s, t);
 }
 // C = 1 when `jset` is taken (UN=jp, UEQ=je, ULT=jb, ULE=jbe). Assumes cop1 check already emitted.
 static void ccond_setjump_body_s(void (*jset)(unsigned char))
@@ -82,6 +83,7 @@ static void ccond_clearjump_body_s(void (*jclear2)(unsigned char))
 static void ccond_signaling_nan_s()
 {
     gen_cmp_load_s();
+    fpr_cache_flush();
     jp_rj(0);
     int32_t jf = code_length - 1;
     jmp_imm_short(0);
@@ -92,27 +94,101 @@ static void ccond_signaling_nan_s()
 }
 static void gen_ccond_setjump_s(void (*jset)(unsigned char))
 {
+    fpr_cache_begin(false);
     gencheck_cop1_unusable();
     ccond_setjump_body_s(jset);
+    fpr_cache_end();
 }
 static void gen_ccond_clearjump_s(void (*jclear2)(unsigned char))
 {
+    fpr_cache_begin(false);
     gencheck_cop1_unusable();
     ccond_clearjump_body_s(jclear2);
+    fpr_cache_end();
 }
 // Signaling ordered compares (LT/NGE=jae, LE/NGT=ja, SEQ/NGL=jne): NaN fail (toggle-gated) + ordered predicate.
 static void gen_ccond_sig_clearjump_s(void (*jclear2)(unsigned char))
 {
+    fpr_cache_begin(false);
     gencheck_cop1_unusable();
     if (g_core->cfg->float_exception_emulation) ccond_signaling_nan_s();
     ccond_clearjump_body_s(jclear2);
+    fpr_cache_end();
 }
 // Signaling SF/NGLE: NaN fail (toggle-gated) + always clear.
 static void gen_ccond_sig_clear_s()
 {
+    fpr_cache_begin(false);
     gencheck_cop1_unusable();
     if (g_core->cfg->float_exception_emulation) ccond_signaling_nan_s();
     gen_fcr31_clear_c();
+    fpr_cache_end();
+}
+
+#define ARITH_TMP 0
+
+static void emit_binop_s(void (*op)(int32_t, int32_t), int32_t d, int32_t s, int32_t t)
+{
+    if (d == s)
+    {
+        op(d, t);
+    }
+    else if (d == t)
+    {
+        movaps_xmm_xmm(ARITH_TMP, t);
+        movaps_xmm_xmm(d, s);
+        op(d, ARITH_TMP);
+    }
+    else
+    {
+        movaps_xmm_xmm(d, s);
+        op(d, t);
+    }
+}
+
+static uint32_t neg_abs_mask_s = 0x7FFFFFFF;
+static uint32_t neg_sign_mask_s = 0x80000000;
+
+static void apply_mask_s(int32_t d, void *mask, void (*op)(int32_t, int32_t))
+{
+    mov_reg64_imm64(EBX, (uintptr_t)mask);
+    movss_xmm_preg64(ARITH_TMP, EBX);
+    op(d, ARITH_TMP);
+}
+
+static void gen_unop_s(int32_t *s_out, int32_t *d_out, bool check_input)
+{
+    fpr_cache_begin(false);
+    gencheck_cop1_unusable();
+
+    const int32_t s = fpr_cache_read(dst->f.cf.fs);
+    fpr_cache_lock(s);
+    if (check_input) gencheck_input_s_xmm(s);
+    const int32_t d = fpr_cache_write(dst->f.cf.fd);
+    fpr_cache_unlock_all();
+
+    *s_out = s;
+    *d_out = d;
+}
+
+static void gen_arith_s(void (*op)(int32_t, int32_t))
+{
+    fpr_cache_begin(false);
+    gencheck_cop1_unusable();
+
+    const int32_t s = fpr_cache_read(dst->f.cf.fs);
+    fpr_cache_lock(s);
+    const int32_t t = fpr_cache_read(dst->f.cf.ft);
+    fpr_cache_lock(t);
+    gencheck_input_s_xmm(s);
+    gencheck_input_s_xmm(t);
+
+    const int32_t d = fpr_cache_write(dst->f.cf.fd);
+    fpr_cache_unlock_all();
+    emit_binop_s(op, d, s, t);
+    gencheck_output_s_xmm(d);
+
+    fpr_cache_end();
 }
 
 void genadd_s()
@@ -123,16 +199,7 @@ void genadd_s()
     // SSE port: bit-exact with the interpreter (same SSE add + same MXCSR rounding,
     // maintained by the interpreted CTC1 -> fesetround). Denormal/NaN handled by the
     // SSE gencheck_input_s/gencheck_output_s (mirror CHECK_INPUT/CHECK_OUTPUT).
-    gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    movss_xmm_preg64(0, EAX); // xmm0 = fs
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    addss_xmm_preg64(0, EAX); // xmm0 += ft
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0); // fd = xmm0
-    gencheck_output_s((void *)(&reg_cop1_simple[dst->f.cf.fd]));
+    gen_arith_s(addss_xmm_xmm);
 #endif
 }
 
@@ -141,16 +208,7 @@ void gensub_s()
 #ifdef INTERPRET_SUB_S
     gencallinterp((uintptr_t)SUB_S, 0);
 #else
-    gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    movss_xmm_preg64(0, EAX);
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    subss_xmm_preg64(0, EAX);
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0);
-    gencheck_output_s((void *)(&reg_cop1_simple[dst->f.cf.fd]));
+    gen_arith_s(subss_xmm_xmm);
 #endif
 }
 
@@ -159,16 +217,7 @@ void genmul_s()
 #ifdef INTERPRET_MUL_S
     gencallinterp((uintptr_t)MUL_S, 0);
 #else
-    gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    movss_xmm_preg64(0, EAX);
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    mulss_xmm_preg64(0, EAX);
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0);
-    gencheck_output_s((void *)(&reg_cop1_simple[dst->f.cf.fd]));
+    gen_arith_s(mulss_xmm_xmm);
 #endif
 }
 
@@ -177,16 +226,7 @@ void gendiv_s()
 #ifdef INTERPRET_DIV_S
     gencallinterp((uintptr_t)DIV_S, 0);
 #else
-    gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    movss_xmm_preg64(0, EAX); // xmm0 = fs
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.ft]));
-    divss_xmm_preg64(0, EAX); // xmm0 /= ft
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0); // fd = xmm0
-    gencheck_output_s((void *)(&reg_cop1_simple[dst->f.cf.fd]));
+    gen_arith_s(divss_xmm_xmm);
 #endif
 }
 
@@ -196,15 +236,13 @@ void gensqrt_s()
     gencallinterp((uintptr_t)SQRT_S, 0);
 #else
     // sqrt in DOUBLE then narrow: interpreter does (float)sqrt((double)fs), not sqrtf.
-    gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    cvtss2sd_xmm_preg64(0, EAX); // xmm0 = (double)fs
-    sqrtsd_xmm_xmm(0, 0);        // xmm0 = sqrt(xmm0)
-    cvtsd2ss_xmm_xmm(0, 0);      // xmm0 = (float)xmm0
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0); // fd = xmm0
-    gencheck_output_s((void *)(&reg_cop1_simple[dst->f.cf.fd]));
+    int32_t s, d;
+    gen_unop_s(&s, &d, true);
+    cvtss2sd_xmm_xmm(d, s);
+    sqrtsd_xmm_xmm(d, d);
+    cvtsd2ss_xmm_xmm(d, d);
+    gencheck_output_s_xmm(d);
+    fpr_cache_end();
 #endif
 }
 
@@ -214,13 +252,11 @@ void genabs_s()
     gencallinterp((uintptr_t)ABS_S, 0);
 #else
     // fabs = clear the sign bit (bit-exact; ABS cannot fail, no output check).
-    gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    mov_reg32_preg32(EBX, EAX);
-    and_reg32_imm32(EBX, 0x7FFFFFFF);
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg32_reg32(EAX, EBX);
+    int32_t s, d;
+    gen_unop_s(&s, &d, true);
+    if (d != s) movaps_xmm_xmm(d, s);
+    apply_mask_s(d, &neg_abs_mask_s, andps_xmm_xmm);
+    fpr_cache_end();
 #endif
 }
 
@@ -229,13 +265,10 @@ void genmov_s()
 #ifdef INTERPRET_MOV_S
     gencallinterp((uintptr_t)MOV_S, 0);
 #else
-    // Raw 32-bit copy (no check). 64-bit pointer loads (the old mov_eax_memoffs32
-    // truncated the FPR pointer on x64).
-    gencheck_cop1_unusable();
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    mov_reg32_preg32(EBX, EAX);
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg32_reg32(EAX, EBX);
+    int32_t s, d;
+    gen_unop_s(&s, &d, false);
+    if (d != s) movaps_xmm_xmm(d, s);
+    fpr_cache_end();
 #endif
 }
 
@@ -245,13 +278,11 @@ void genneg_s()
     gencallinterp((uintptr_t)NEG_S, 0);
 #else
     // Negate = flip the sign bit (bit-exact; NEG cannot fail, no output check).
-    gencheck_cop1_unusable();
-    gencheck_input_s((void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fs]));
-    mov_reg32_preg32(EBX, EAX);
-    xor_reg32_imm32(EBX, 0x80000000);
-    mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    mov_preg32_reg32(EAX, EBX);
+    int32_t s, d;
+    gen_unop_s(&s, &d, true);
+    if (d != s) movaps_xmm_xmm(d, s);
+    apply_mask_s(d, &neg_sign_mask_s, xorps_xmm_xmm);
+    fpr_cache_end();
 #endif
 }
 

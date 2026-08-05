@@ -10,6 +10,7 @@
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
+#include <R4300/x86_64/FprCache.hpp>
 #include <R4300/x86_64/Gcop1Helpers.hpp>
 
 uint32_t g_saved_mxcsr = 0, g_scratch_mxcsr = 0;
@@ -29,10 +30,21 @@ static void patch_jump(uint32_t addr, uint32_t target)
 
 static void gencall_noret(void (*fn)())
 {
+    fpr_cache_spill_live();
     mov_m64_imm64((void *)(&PC), (uintptr_t)(dst));
     mov_reg64_imm64(EAX, (uintptr_t)fn);
     call_reg64(EAX);
     ud2();
+}
+
+static void require_empty_cache_for_rel8()
+{
+    if (!fpr_cache_empty())
+    {
+        g_core->log_error("[Dynarec] FATAL: pointer-form COP1 check reached with a live FPR cache; "
+                          "use the _xmm form (its jumps are near) or drop the op from is_cache_aware()");
+        abort();
+    }
 }
 
 // --- SSE single-precision denormal/NaN checks (FP JIT port) ---
@@ -46,6 +58,8 @@ static uint32_t sse_sign_mask_s = 0x80000000;
 void gencheck_input_s(void *fpr_slot)
 {
     if (!g_core->cfg->float_exception_emulation) return;
+
+    require_empty_cache_for_rel8();
 
     mov_reg64_m64(EAX, fpr_slot); // EAX = float* (the FPR pointer)
     movss_xmm_preg64(1, EAX);     // xmm1 = x
@@ -63,7 +77,6 @@ void gencheck_input_s(void *fpr_slot)
     uint32_t jfail = code_length;
     je_rj(0); // |x| == 0 -> pass (zero)
     uint32_t jpass2 = code_length;
-    // denormal-nonzero falls through here -> fail (NaN jumps here too)
     patch_jump(jfail, code_length);
     gencall_noret(fail_float_input);
     patch_jump(jpass1, code_length);
@@ -75,6 +88,8 @@ void gencheck_input_s(void *fpr_slot)
 void gencheck_output_s(void *fpr_slot)
 {
     if (!g_core->cfg->float_exception_emulation) return;
+
+    require_empty_cache_for_rel8();
 
     mov_reg64_m64(EAX, fpr_slot); // EAX = float* (fd pointer)
     movss_xmm_preg64(1, EAX);     // xmm1 = x
@@ -96,12 +111,65 @@ void gencheck_output_s(void *fpr_slot)
     movss_preg64_xmm(EAX, 2); // store +-0.0 -> *fd
     jmp_imm_short(0);         // -> done
     uint32_t jdone2 = code_length;
-    // fail:
     patch_jump(jfail, code_length);
     gencall_noret(fail_float_output);
-    // done:
     patch_jump(jdone1, code_length);
     patch_jump(jdone2, code_length);
+}
+
+#define CHKX_VAL 0
+#define CHKX_TMP 1
+
+static void loadx_const_s(void *addr)
+{
+    mov_reg64_imm64(EBX, (uintptr_t)addr);
+    movss_xmm_preg64(CHKX_TMP, EBX);
+}
+
+void gencheck_input_s_xmm(int32_t xmm)
+{
+    if (!g_core->cfg->float_exception_emulation) return;
+
+    movaps_xmm_xmm(CHKX_VAL, xmm);
+    loadx_const_s(&sse_abs_mask_s);
+    andps_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    loadx_const_s(&largest_denormal_float);
+    ucomiss_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    ja_near_rj(0);
+    int32_t jpass1 = code_length - 4;
+    xorps_xmm_xmm(CHKX_TMP, CHKX_TMP);
+    ucomiss_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    jp_near_rj(0);
+    int32_t jfail = code_length - 4;
+    je_near_rj(0);
+    int32_t jpass2 = code_length - 4;
+    rj_patch_near(jfail);
+    gencall_noret(fail_float_input);
+    rj_patch_near(jpass1);
+    rj_patch_near(jpass2);
+}
+
+void gencheck_output_s_xmm(int32_t xmm)
+{
+    if (!g_core->cfg->float_exception_emulation) return;
+
+    movaps_xmm_xmm(CHKX_VAL, xmm);
+    loadx_const_s(&sse_abs_mask_s);
+    andps_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    loadx_const_s(&largest_denormal_float);
+    ucomiss_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    ja_near_rj(0);
+    int32_t jdone1 = code_length - 4;
+    jp_near_rj(0);
+    int32_t jfail = code_length - 4;
+    loadx_const_s(&sse_sign_mask_s);
+    andps_xmm_xmm(xmm, CHKX_TMP);
+    jmp_near_rj(0);
+    int32_t jdone2 = code_length - 4;
+    rj_patch_near(jfail);
+    gencall_noret(fail_float_output);
+    rj_patch_near(jdone1);
+    rj_patch_near(jdone2);
 }
 
 // --- SSE double-precision denormal/NaN checks (FP JIT port) ---
@@ -111,6 +179,8 @@ static uint64_t sse_sign_mask_d = 0x8000000000000000ULL;
 void gencheck_input_d(void *fpr_slot)
 {
     if (!g_core->cfg->float_exception_emulation) return;
+
+    require_empty_cache_for_rel8();
 
     mov_reg64_m64(EAX, fpr_slot); // EAX = double* (the FPR pointer)
     movsd_xmm_preg64(1, EAX);     // xmm1 = x
@@ -138,6 +208,8 @@ void gencheck_output_d(void *fpr_slot)
 {
     if (!g_core->cfg->float_exception_emulation) return;
 
+    require_empty_cache_for_rel8();
+
     mov_reg64_m64(EAX, fpr_slot); // EAX = double* (fd pointer)
     movsd_xmm_preg64(1, EAX);     // xmm1 = x
     mov_reg64_imm64(EBX, (uintptr_t)&sse_abs_mask_d);
@@ -158,12 +230,62 @@ void gencheck_output_d(void *fpr_slot)
     movsd_preg64_xmm(EAX, 2); // store +-0.0 -> *fd
     jmp_imm_short(0);         // -> done
     uint32_t jdone2 = code_length;
-    // fail:
     patch_jump(jfail, code_length);
     gencall_noret(fail_float_output);
-    // done:
     patch_jump(jdone1, code_length);
     patch_jump(jdone2, code_length);
+}
+
+static void loadx_const_d(void *addr)
+{
+    mov_reg64_imm64(EBX, (uintptr_t)addr);
+    movsd_xmm_preg64(CHKX_TMP, EBX);
+}
+
+void gencheck_input_d_xmm(int32_t xmm)
+{
+    if (!g_core->cfg->float_exception_emulation) return;
+
+    movaps_xmm_xmm(CHKX_VAL, xmm);
+    loadx_const_d(&sse_abs_mask_d);
+    andpd_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    loadx_const_d(&largest_denormal_double);
+    ucomisd_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    ja_near_rj(0);
+    int32_t jpass1 = code_length - 4;
+    xorps_xmm_xmm(CHKX_TMP, CHKX_TMP);
+    ucomisd_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    jp_near_rj(0);
+    int32_t jfail = code_length - 4;
+    je_near_rj(0);
+    int32_t jpass2 = code_length - 4;
+    rj_patch_near(jfail);
+    gencall_noret(fail_float_input);
+    rj_patch_near(jpass1);
+    rj_patch_near(jpass2);
+}
+
+void gencheck_output_d_xmm(int32_t xmm)
+{
+    if (!g_core->cfg->float_exception_emulation) return;
+
+    movaps_xmm_xmm(CHKX_VAL, xmm);
+    loadx_const_d(&sse_abs_mask_d);
+    andpd_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    loadx_const_d(&largest_denormal_double);
+    ucomisd_xmm_xmm(CHKX_VAL, CHKX_TMP);
+    ja_near_rj(0);
+    int32_t jdone1 = code_length - 4;
+    jp_near_rj(0);
+    int32_t jfail = code_length - 4;
+    loadx_const_d(&sse_sign_mask_d);
+    andpd_xmm_xmm(xmm, CHKX_TMP);
+    jmp_near_rj(0);
+    int32_t jdone2 = code_length - 4;
+    rj_patch_near(jfail);
+    gencall_noret(fail_float_output);
+    rj_patch_near(jdone1);
+    rj_patch_near(jdone2);
 }
 
 // ROUND/CEIL/FLOOR: temporarily force the SSE rounding mode (MXCSR RC bits 13-14), then a

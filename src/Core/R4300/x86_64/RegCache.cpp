@@ -772,6 +772,9 @@ void build_wrapper(precomp_instr *instr, unsigned char *code, precomp_block *blo
     int32_t i;
     int32_t j = 0;
 
+    static_assert(8 * 13 + FPR_CACHE_SLOTS * 18 + 27 <= sizeof(reg_cache_struct::jump_wrapper),
+                  "jump_wrapper is too small for the reloads build_wrapper emits");
+
     // Reload needed registers, then jump to block->code + local_addr (R10 scratch, R11 target).
     // Must NOT touch RSP: always entered via `jmp` at the block's canonical RSP%16==8 (passe2 stub,
     // genjr/jalr fast paths, and the dyna_jump thunk which already did `add rsp,8`). A `sub rsp,8`
@@ -792,6 +795,26 @@ void build_wrapper(precomp_instr *instr, unsigned char *code, precomp_block *blo
             code[j++] = 0x8B;
             code[j++] = (i << 3) | 0x02;
         }
+    }
+
+    for (i = 0; i < FPR_CACHE_SLOTS; i++)
+    {
+        if (instr->reg_cache_infos.needed_xmm[i] == NULL) continue;
+
+        code[j++] = 0x49;
+        code[j++] = 0xBA;
+        *((uintptr_t *)&code[j]) = (uintptr_t)instr->reg_cache_infos.needed_xmm[i];
+        j += 8;
+
+        code[j++] = 0x4D;
+        code[j++] = 0x8B;
+        code[j++] = 0x12;
+
+        code[j++] = instr->reg_cache_infos.needed_xmm_double[i] ? 0xF2 : 0xF3;
+        code[j++] = 0x41;
+        code[j++] = 0x0F;
+        code[j++] = 0x10;
+        code[j++] = (unsigned char)(((FPR_CACHE_XMM_BASE + i) << 3) | 0x02);
     }
 
     // Compute the target at RUNTIME from the live fields, not a baked absolute: block->code moves
@@ -838,10 +861,18 @@ void build_wrappers(precomp_instr *instr, int32_t start, int32_t end, precomp_bl
             if (instr[i].reg_cache_infos.needed_registers[reg] != NULL)
             {
                 instr[i].reg_cache_infos.need_map = 1;
-                build_wrapper(&instr[i], instr[i].reg_cache_infos.jump_wrapper, block);
                 break;
             }
         }
+        for (reg = 0; reg < FPR_CACHE_SLOTS; reg++)
+        {
+            if (instr[i].reg_cache_infos.needed_xmm[reg] != NULL)
+            {
+                instr[i].reg_cache_infos.need_map = 1;
+                break;
+            }
+        }
+        if (instr[i].reg_cache_infos.need_map) build_wrapper(&instr[i], instr[i].reg_cache_infos.jump_wrapper, block);
     }
 }
 

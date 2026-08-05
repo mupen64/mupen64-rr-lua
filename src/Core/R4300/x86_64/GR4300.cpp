@@ -13,6 +13,7 @@
 #include <R4300/R4300.hpp>
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
+#include <R4300/x86_64/FprCache.hpp>
 #include <R4300/x86_64/RegCache.hpp>
 #include <Alloc.hpp>
 
@@ -108,6 +109,7 @@ void gendelayslot()
     mov_m32_imm32((void *)(&delay_slot), 1);
     recompile_opcode();
 
+    fpr_cache_flush();
     free_all_registers();
     genupdate_count(dst->addr + 4);
 
@@ -1831,19 +1833,18 @@ inline void put8gr(unsigned char octet)
 
 void gencheck_cop1_unusable()
 {
-    uint32_t temp, temp2;
     free_all_registers();
     simplify_access();
+    fpr_cache_mark_live();
     test_m32_imm32((uint32_t *)&core_Status, 0x20000000);
-    jne_rj(0);
-    temp = code_length;
+    jne_near_rj(0);
+    const int32_t jfast = code_length - 4;
 
+    fpr_cache_spill_live();
     gencallinterp((uintptr_t)check_cop1_unusable, 0);
+    fpr_cache_reload_live();
 
-    temp2 = code_length;
-    code_length = temp - 1;
-    put8gr(temp2 - temp);
-    code_length = temp2;
+    rj_patch_near(jfast);
 }
 
 void genlwc1()
