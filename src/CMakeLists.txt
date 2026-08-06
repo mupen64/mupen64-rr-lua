@@ -7,6 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # USEFUL SETTINGS
 # ============================
+
+# we don't want our plugins to have the "lib" prefix
 set(CMAKE_SHARED_MODULE_PREFIX "")
 
 # COMMON LIBRARIES
@@ -31,6 +33,9 @@ add_subdirectory(Plugins.DummyAudio)
 add_subdirectory(Plugins.DummyInput)
 add_subdirectory(Plugins.DummyVideo)
 
+# HLE RSP plugin (core cannot live without a functioning RSP)
+add_subdirectory(Plugins.TASRSP)
+
 # WIN32
 # ============================
 
@@ -47,11 +52,12 @@ if (MUPEN64RR_BUILD_WIN32)
     # common settings
     include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Win32.Common.cmake")
 
-    # TAS plugins
+    # Windows-based TAS plugins.
+    # TASVideo and TASInput rely heavily on Windows APIs to work.
+    # Note that we can't port config dialogs until we settle on a GUI frontend framework.
     add_subdirectory(Plugins.Win32.TASVideo)
     add_subdirectory(Plugins.Win32.TASInput)
     add_subdirectory(Plugins.Win32.TASAudio)
-    add_subdirectory(Plugins.Win32.TASRSP)
 endif()
 
 # CLI VIEW
