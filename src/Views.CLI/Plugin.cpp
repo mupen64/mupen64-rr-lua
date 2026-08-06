@@ -7,7 +7,9 @@
 #include "Plugin.hpp"
 #include "Main.hpp"
 #include "VersionNameHelpers.hpp"
+
 #include <print>
+#include <decan.hpp>
 
 // Tries to load a function from a library, returning nullptr if the load failed.
 template <class T> static inline T try_load(decan::library &lib, const char *symbol)
@@ -153,10 +155,10 @@ bool PluginUtil::load_plugins()
     try
     {
         std::scoped_lock lock(g_plugin_lock);
-        g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo.dll"),
-                          Plugin(IOUtils::exe_path().parent_path() / "plugin/TASAudio.dll"),
-                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput.dll"),
-                          Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP.dll"));
+        g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo" DECAN_LIB_EXT),
+                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoAudio" DECAN_LIB_EXT),
+                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput" DECAN_LIB_EXT),
+                          Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP" DECAN_LIB_EXT));
         return true;
     }
     catch (...)

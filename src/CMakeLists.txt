@@ -18,10 +18,7 @@ add_subdirectory(Common)
 add_subdirectory(Core)
 
 
-# CLI VIEW
-# ============================
 
-add_subdirectory(Views.CLI)
 
 # BUNDLED PLUGINS
 # ============================
@@ -34,6 +31,8 @@ add_subdirectory(Plugins.DummyAudio)
 add_subdirectory(Plugins.DummyInput)
 add_subdirectory(Plugins.DummyVideo)
 
+# WIN32
+# ============================
 
 if (MUPEN64RR_BUILD_WIN32)
     # VIEW
@@ -53,6 +52,13 @@ if (MUPEN64RR_BUILD_WIN32)
     add_subdirectory(Plugins.Win32.TASInput)
     add_subdirectory(Plugins.Win32.TASAudio)
     add_subdirectory(Plugins.Win32.TASRSP)
+endif()
+
+# CLI VIEW
+# ============================
+
+if (MUPEN64RR_BUILD_CLI)
+    add_subdirectory(Views.CLI)
 endif()
 
 # TESTS

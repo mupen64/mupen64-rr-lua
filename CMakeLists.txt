@@ -27,6 +27,9 @@ if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
 
+# This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.
+set(MUPEN64RR_BUILD_CLI OFF CACHE BOOL "If on, enables the CLI view (primarily for testing)")
+
 # Basic checks and setup
 # ===========================================
 
