@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #include "Plugin.hpp"
 #include "Main.hpp"
 #include "VersionNameHelpers.hpp"
@@ -148,7 +154,7 @@ bool PluginUtil::load_plugins()
     {
         std::scoped_lock lock(g_plugin_lock);
         g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo.dll"),
-                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoAudio.dll"),
+                          Plugin(IOUtils::exe_path().parent_path() / "plugin/TASAudio.dll"),
                           Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput.dll"),
                           Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP.dll"));
         return true;
