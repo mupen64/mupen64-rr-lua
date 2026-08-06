@@ -1,6 +1,7 @@
 #include "Plugin.hpp"
 #include "Main.hpp"
 #include "VersionNameHelpers.hpp"
+#include <print>
 
 // Tries to load a function from a library, returning nullptr if the load failed.
 template <class T> static inline T try_load(decan::library &lib, const char *symbol)
@@ -21,6 +22,17 @@ static inline void try_load_function(decan::library &lib, const char *symbol,
 {
     auto pointer = try_load<T>(lib, symbol);
     if (pointer != nullptr) func = pointer;
+}
+
+static size_t get_config_path(char *data, size_t size)
+{
+    static const std::u8string config_path = std::filesystem::absolute(IOUtils::config_path()).u8string();
+
+    if (data == nullptr) return config_path.size() + 1;
+    if (size < config_path.size() + 1) return 0;
+
+    memcpy(data, config_path.c_str(), config_path.size() + 1);
+    return size + 1;
 }
 
 struct PluginSet
@@ -61,38 +73,46 @@ void Plugin::initiate()
     if (!m_init_data)
     {
         m_init_data.reset(new M64RRSpec::PluginInit);
-        m_init_data->rom = g_core->rom;
-        m_init_data->rom = g_core->rom;
+        m_init_data->rom = g_core_ctx->rom;
+        m_init_data->rom = g_core_ctx->rom;
 
-        m_init_data->rom = g_core->rom;
-        m_init_data->rdram = (uint8_t *)g_core->rdram;
-        m_init_data->dmem = (uint8_t *)g_core->SP_DMEM;
-        m_init_data->imem = (uint8_t *)g_core->SP_IMEM;
+        m_init_data->rom = g_core_ctx->rom;
+        m_init_data->rdram = (uint8_t *)g_core_ctx->rdram;
+        m_init_data->dmem = (uint8_t *)g_core_ctx->SP_DMEM;
+        m_init_data->imem = (uint8_t *)g_core_ctx->SP_IMEM;
 
-        m_init_data->rdram_register = g_core->rdram_register;
-        m_init_data->mi_register = g_core->MI_register;
-        m_init_data->pi_register = g_core->pi_register;
-        m_init_data->sp_register = g_core->sp_register;
-        m_init_data->rsp_register = g_core->rsp_register;
-        m_init_data->si_register = g_core->si_register;
-        m_init_data->vi_register = g_core->vi_register;
-        m_init_data->ri_register = g_core->ri_register;
-        m_init_data->ai_register = g_core->ai_register;
-        m_init_data->dpc_register = g_core->dpc_register;
-        m_init_data->dps_register = g_core->dps_register;
+        m_init_data->rdram_register = g_core_ctx->rdram_register;
+        m_init_data->mi_register = g_core_ctx->MI_register;
+        m_init_data->pi_register = g_core_ctx->pi_register;
+        m_init_data->sp_register = g_core_ctx->sp_register;
+        m_init_data->rsp_register = g_core_ctx->rsp_register;
+        m_init_data->si_register = g_core_ctx->si_register;
+        m_init_data->vi_register = g_core_ctx->vi_register;
+        m_init_data->ri_register = g_core_ctx->ri_register;
+        m_init_data->ai_register = g_core_ctx->ai_register;
+        m_init_data->dpc_register = g_core_ctx->dpc_register;
+        m_init_data->dps_register = g_core_ctx->dps_register;
 
-        if (g_core_params.video_process_dlist)
-        {
-            // We know that the std::function should contain a function pointer, so this shouldn't fail
-            m_init_data->process_dlist = *g_core_params.video_process_dlist.target<M64RRSpec::PtrProcessDList>();
-        }
+        m_init_data->rcp_counter = g_core_ctx->rcp_counter;
+
+        auto *video_process_dlist_ptr = try_load<M64RRSpec::PtrProcessDList>(g_plugins->video.m_lib, "M64RRProcessDList");
+        m_init_data->process_dlist = video_process_dlist_ptr;
+
+        m_init_data->log_error = [](const char *msg) { std::println(stderr, "[ERROR] {}", msg); };
+        m_init_data->log_warn = [](const char *msg) { std::println(stderr, "[WARN]  {}", msg); };
+        m_init_data->log_info = [](const char *msg) { std::println(stderr, "[INFO]  {}", msg); };
+        m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[TRACE] {}", msg); };
+
+        m_init_data->get_effective_speed_mode = []() { return g_core_ctx->vr_get_effective_speed_mode(); };
+        m_init_data->frame_skipped = []() { return g_core_ctx->vr_get_frame_skipped(); };
+        m_init_data->config_path = get_config_path;
 
         m_init_data->controllers = g_core_params.controls;
     }
 
     M64RRSpec::Event init_event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}};
 
-    m_process_event(init_event);
+    if (m_process_event) m_process_event(init_event);
 }
 
 void Plugin::bind_functions()
@@ -121,17 +141,25 @@ void Plugin::bind_functions()
 
 void Plugin::send_event(M64RRSpec::Event event)
 {
-    m_process_event(event);
+    if (m_process_event) m_process_event(event);
 }
 
 bool PluginUtil::load_plugins()
 {
-    std::scoped_lock lock(g_plugin_lock);
-    g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo.dll"),
-                      Plugin(IOUtils::exe_path().parent_path() / "plugin/TASAudio.dll"),
-                      Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput.dll"),
-                      Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP.dll"));
-    return false;
+    try
+    {
+        std::scoped_lock lock(g_plugin_lock);
+        g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo.dll"),
+                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoAudio.dll"),
+                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput.dll"),
+                          Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP.dll"));
+        return true;
+    }
+    catch (...)
+    {
+        // log error
+        return false;
+    }
 }
 void PluginUtil::initiate_plugins()
 {

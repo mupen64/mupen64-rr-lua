@@ -7,7 +7,7 @@
 
 core_cfg g_config;
 core_params g_core_params{};
-core_ctx *g_core = nullptr;
+core_ctx *g_core_ctx = nullptr;
 
 void clear_plugin_funcs()
 {
@@ -45,21 +45,34 @@ static void init_core()
     // MAIN CORE CALLBACKS
     // =====================================================
 
+    g_core_params.log_error = [](std::string_view msg) { std::println(stderr, "[ERROR] {}", msg); };
+    g_core_params.log_warn = [](std::string_view msg) { std::println(stderr, "[WARN]  {}", msg); };
+    g_core_params.log_info = [](std::string_view msg) { std::println(stderr, "[INFO]  {}", msg); };
+    g_core_params.log_trace = [](std::string_view msg) { std::println(stderr, "[TRACE] {}", msg); };
+
     g_core_params.load_plugins = PluginUtil::load_plugins;
     g_core_params.initiate_plugins = PluginUtil::initiate_plugins;
     g_core_params.submit_task = [](const auto &cb) {
         // Defer to the stdlib's thread pool.
         (void)std::async(cb);
     };
-    g_core_params.get_saves_directory = []() { return IOUtils::exe_path().parent_path() / "saves"; };
-    g_core_params.get_backups_directory = []() { return IOUtils::exe_path().parent_path() / "backups"; };
+    g_core_params.get_saves_directory = []() {
+        static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
+        if (!std::filesystem::is_directory(s_save_path)) std::filesystem::create_directories(s_save_path);
+        return s_save_path;
+    };
+    g_core_params.get_backups_directory = []() {
+        static auto s_backups_path = IOUtils::exe_path().parent_path() / "backups";
+        if (!std::filesystem::is_directory(s_backups_path)) std::filesystem::create_directories(s_backups_path);
+        return s_backups_path;
+    };
     g_core_params.get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
     g_core_params.show_multiple_choice_dialog = DialogService::show_multiple_choice_dialog;
     g_core_params.show_ask_dialog = DialogService::show_ask_dialog;
     g_core_params.show_dialog = DialogService::show_dialog;
     g_core_params.get_plugin_names = PluginUtil::get_plugin_names;
 
-    core_create(&g_core_params, &g_core);
+    core_create(&g_core_params, &g_core_ctx);
 }
 
 int main(int argc, char *argv[])
@@ -70,9 +83,10 @@ int main(int argc, char *argv[])
         std::println("usage: {} [path to ROM]", argv[0]);
         return 1;
     }
-    
+
     init_core();
-    g_core->vr_start_rom(argv[1]);
+    core_result res1 = g_core_ctx->vr_start_rom(argv[1]);
+    std::println("result: {}", (int)res1);
     std::this_thread::sleep_for(10s);
-    g_core->vr_close_rom(true);
+    g_core_ctx->vr_close_rom(true);
 }
