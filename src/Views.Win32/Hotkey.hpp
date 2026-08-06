@@ -8,17 +8,11 @@
 
 #include <cstdint>
 #include <string>
-#include <windows.h>
 
-/**
- * \brief A module responsible for providing the hotkey structure and related functionality.
- */
-namespace Hotkey
-{
 /**
  * \brief Represents a combination of a key and modifiers.
  */
-struct t_hotkey
+struct Hotkey
 {
     int32_t key{};
     bool ctrl{};
@@ -26,12 +20,12 @@ struct t_hotkey
     bool alt{};
     bool assigned{};
 
-    explicit t_hotkey(const int32_t key, const bool ctrl = false, const bool shift = false, const bool alt = false)
+    explicit Hotkey(const int32_t key, const bool ctrl = false, const bool shift = false, const bool alt = false)
         : key(key), ctrl(ctrl), shift(shift), alt(alt), assigned(true)
     {
     }
 
-    t_hotkey() = default;
+    Hotkey() = default;
 
     /**
      * \brief Gets whether the hotkey is empty. This is different to having no assignment, as it means an intentional
@@ -52,37 +46,16 @@ struct t_hotkey
     /**
      * \returns An empty hotkey.
      */
-    [[nodiscard]] static t_hotkey make_empty();
+    [[nodiscard]] static Hotkey make_empty();
 
     /**
      * \returns An unassigned hotkey.
      */
-    [[nodiscard]] static t_hotkey make_unassigned();
+    [[nodiscard]] static Hotkey make_unassigned();
 
-    bool operator==(const t_hotkey &other) const
+    bool operator==(const Hotkey &other) const
     {
         return key == other.key && ctrl == other.ctrl && shift == other.shift && alt == other.alt &&
                assigned == other.assigned;
     }
 };
-
-/**
- * \brief Shows a dialog prompting the user to enter a hotkey.
- * \param hwnd The parent window handle for the dialog.
- * \param caption The headline to display in the dialog.
- * \param hotkey The hotkey to set.
- * \return Whether the user confirmed the dialog. If the user cancelled the dialog, the hotkey won't have changed.
- */
-bool show_prompt(HWND hwnd, const std::wstring &caption, t_hotkey &hotkey);
-
-/**
- * \brief Tries associating the specified action with the specified hotkey. Checks for a hotkey conflict and, if
- * necessary, prompts the user to fix the conflict. \param hwnd The parent window handle for the conflict dialog. \param
- * action The action to associate the hotkey with. \param new_hotkey The new hotkey to associate with the action. \param
- * through_action_manager Whether the ActionManager should be called to associate the hotkey. If false, the hotkey will
- * only be set in the config.
- */
-void try_associate_hotkey(HWND hwnd, const std::wstring &action, const t_hotkey &new_hotkey,
-                          bool through_action_manager = true);
-
-} // namespace Hotkey

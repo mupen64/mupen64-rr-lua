@@ -16,8 +16,8 @@
 #include <components/TextEditDialog.hpp>
 #include <components/ConfigDialog.hpp>
 #include <lua/LuaManager.hpp>
-
-#include <algorithm>
+#include <Hotkey.hpp>
+#include <HotkeyUtils.hpp>
 
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
@@ -121,7 +121,7 @@ std::wstring t_options_item::get_value_name() const
     case Type::String:
         return std::get<std::wstring>(value);
     case Type::Hotkey:
-        return std::get<Hotkey::t_hotkey>(value).to_wstring();
+        return std::get<Hotkey>(value).to_wstring();
     case Type::Folder:
         return std::get<std::wstring>(value);
     default:
@@ -234,9 +234,9 @@ bool t_options_item::edit(const HWND hwnd)
         break;
     }
     case Type::Hotkey: {
-        auto hotkey = std::get<Hotkey::t_hotkey>(current_value.get());
-        Hotkey::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", name), hotkey);
-        Hotkey::try_associate_hotkey(hwnd, name, hotkey, false);
+        auto hotkey = std::get<Hotkey>(current_value.get());
+        HotkeyUtils::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", name), hotkey);
+        HotkeyUtils::try_associate_hotkey(hwnd, name, hotkey, false);
         return true;
     }
     case Type::Folder: {
@@ -1247,7 +1247,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                                        fsvc_information, hwnd);
             break;
         case 4:
-            option_item.current_value.set(Hotkey::t_hotkey::make_empty());
+            option_item.current_value.set(Hotkey::make_empty());
             ListView_Update(ctx->lv_hwnd, i);
             break;
         case 5: {
@@ -1634,7 +1634,7 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
                 .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(action); },
                                                                       [=](const t_options_item::data_variant &value) {
                                                                           g_config.hotkeys[action] =
-                                                                              std::get<Hotkey::t_hotkey>(value);
+                                                                              std::get<Hotkey>(value);
                                                                       }),
                 .default_value =
                     t_options_item::t_readonly_property([=] { return g_config.inital_hotkeys.at(action); }),

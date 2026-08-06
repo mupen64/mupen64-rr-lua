@@ -158,7 +158,7 @@ std::vector<action_path> remove(const action_filter &filter);
  * the any existing hotkey association will be overwritten. If false, the hotkey will only be associated if the action
  * has no hotkey associated with it already. \return Whether the operation succeeded.
  */
-bool associate_hotkey(const action_path &path, const Hotkey::t_hotkey &hotkey, bool overwrite_existing = true);
+bool associate_hotkey(const action_path &path, const Hotkey &hotkey, bool overwrite_existing = true);
 
 /**
  * \brief Begins a batch operation. Batches all updates caused by `add`, `remove`, and `associate_hotkey` into one at

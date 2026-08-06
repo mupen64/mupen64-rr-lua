@@ -26,7 +26,7 @@ struct t_options_item
         Folder,
     };
 
-    typedef std::variant<int32_t, double, std::wstring, Hotkey::t_hotkey> data_variant;
+    typedef std::variant<int32_t, double, std::wstring, Hotkey> data_variant;
 
     struct t_readonly_property
     {

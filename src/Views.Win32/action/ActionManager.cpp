@@ -304,8 +304,8 @@ bool ActionManager::add(const t_action_add_params &params)
 
     if (!g_config.hotkeys.contains(normalized_path) || !g_config.inital_hotkeys.contains(normalized_path))
     {
-        g_config.hotkeys[normalized_path] = Hotkey::t_hotkey::make_unassigned();
-        g_config.inital_hotkeys[normalized_path] = Hotkey::t_hotkey::make_unassigned();
+        g_config.hotkeys[normalized_path] = Hotkey::make_unassigned();
+        g_config.inital_hotkeys[normalized_path] = Hotkey::make_unassigned();
     }
 
     g_mgr.work_happened = true;
@@ -361,7 +361,7 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     return removed_paths;
 }
 
-bool ActionManager::associate_hotkey(const action_path &path, const Hotkey::t_hotkey &hotkey, bool overwrite_existing)
+bool ActionManager::associate_hotkey(const action_path &path, const Hotkey &hotkey, bool overwrite_existing)
 {
     t_action *action = get_single_action_ptr_matching_path(path);
 

@@ -11,6 +11,7 @@
 #include <action/AppActions.hpp>
 #include <components/ParameterPalette.hpp>
 #include <Messenger.hpp>
+#include <HotkeyUtils.hpp>
 #include "CommandPalette.hpp"
 
 struct t_listbox_item
@@ -370,9 +371,9 @@ static bool try_change_hotkey(int32_t i)
     {
         const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
 
-        Hotkey::t_hotkey hotkey = g_config.hotkeys.at(action.path);
-        Hotkey::show_prompt(g_main_ctx.hwnd, std::format(L"Choose a hotkey for {}", action.text), hotkey);
-        Hotkey::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
+        Hotkey hotkey = g_config.hotkeys.at(action.path);
+        HotkeyUtils::show_prompt(g_main_ctx.hwnd, std::format(L"Choose a hotkey for {}", action.text), hotkey);
+        HotkeyUtils::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
         return true;
     }
 

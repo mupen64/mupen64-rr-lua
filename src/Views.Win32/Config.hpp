@@ -325,13 +325,13 @@ struct t_config
     /// <summary>
     /// A map of fully-qualified action paths to a hotkey assigned to them.
     /// </summary>
-    std::map<std::wstring, Hotkey::t_hotkey> hotkeys;
+    std::map<std::wstring, Hotkey> hotkeys;
 
     /// <summary>
     /// A map of fully-qualified action paths to the hotkey which was assigned to them the first time the action was
     /// assigned a hotkey.
     /// </summary>
-    std::map<std::wstring, Hotkey::t_hotkey> inital_hotkeys;
+    std::map<std::wstring, Hotkey> inital_hotkeys;
 
     bool operator==(const t_config &) const = default;
 };

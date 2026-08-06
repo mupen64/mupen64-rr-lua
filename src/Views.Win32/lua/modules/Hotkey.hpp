@@ -8,10 +8,12 @@
 
 #include <lua/LuaDialog.hpp>
 #include <lua/LuaManager.hpp>
+#include <Hotkey.hpp>
+#include <HotkeyUtils.hpp>
 
 namespace LuaCore::Hotkey
 {
-static void push_hotkey(lua_State *L, const ::Hotkey::t_hotkey &hotkey)
+static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 {
     lua_newtable(L);
 
@@ -36,9 +38,9 @@ static void push_hotkey(lua_State *L, const ::Hotkey::t_hotkey &hotkey)
     lua_settable(L, -3);
 }
 
-static ::Hotkey::t_hotkey check_hotkey(lua_State *L, int i)
+static ::Hotkey check_hotkey(lua_State *L, int i)
 {
-    auto hotkey = ::Hotkey::t_hotkey::make_empty();
+    auto hotkey = ::Hotkey::make_empty();
 
     if (!lua_istable(L, i))
     {
@@ -71,9 +73,9 @@ static int prompt(lua_State *L)
 
     const auto caption = luaL_checkwstring(L, 1);
 
-    ::Hotkey::t_hotkey hotkey = ::Hotkey::t_hotkey::make_empty();
+    ::Hotkey hotkey = ::Hotkey::make_empty();
 
-    const bool confirmed = ::Hotkey::show_prompt(g_main_ctx.hwnd, caption, hotkey);
+    const bool confirmed = HotkeyUtils::show_prompt(g_main_ctx.hwnd, caption, hotkey);
 
     if (!confirmed)
     {

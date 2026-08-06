@@ -5,25 +5,19 @@
  */
 
 #include "Common.hpp"
-#include <Hotkey.hpp>
+#include "Hotkey.hpp"
 
-struct t_hotkey_dialog_params
-{
-    std::wstring headline{};
-    Hotkey::t_hotkey hotkey = Hotkey::t_hotkey::make_unassigned();
-};
-
-bool Hotkey::t_hotkey::is_empty() const
+bool Hotkey::is_empty() const
 {
     return !this->ctrl && !this->shift && !this->alt && this->key == 0;
 }
 
-bool Hotkey::t_hotkey::is_assigned() const
+bool Hotkey::is_assigned() const
 {
     return this->assigned;
 }
 
-std::wstring Hotkey::t_hotkey::to_wstring() const
+std::wstring Hotkey::to_wstring() const
 {
     wchar_t buf[260]{};
     const int k = this->key;
@@ -189,216 +183,14 @@ std::wstring Hotkey::t_hotkey::to_wstring() const
     return buf;
 }
 
-Hotkey::t_hotkey Hotkey::t_hotkey::make_empty()
+Hotkey Hotkey::make_empty()
 {
-    t_hotkey hotkey;
+    Hotkey hotkey;
     hotkey.assigned = true;
     return hotkey;
 }
 
-Hotkey::t_hotkey Hotkey::t_hotkey::make_unassigned()
+Hotkey Hotkey::make_unassigned()
 {
     return {};
-}
-
-static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                                    DWORD_PTR ref_data)
-{
-    const auto params = reinterpret_cast<t_hotkey_dialog_params *>(ref_data);
-
-    switch (msg)
-    {
-    case WM_NCDESTROY:
-        RemoveWindowSubclass(hwnd, hotkey_button_subclass_proc, id);
-        break;
-    case WM_GETDLGCODE:
-        return DLGC_WANTALLKEYS;
-    case WM_CHAR:
-        return TRUE;
-    case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
-        if (wparam == VK_CONTROL)
-        {
-            params->hotkey.ctrl = true;
-        }
-        else if (wparam == VK_SHIFT)
-        {
-            params->hotkey.shift = true;
-        }
-        else if (wparam == VK_MENU)
-        {
-            params->hotkey.alt = true;
-        }
-        else
-        {
-            params->hotkey.key = wparam;
-            EndDialog(GetParent(hwnd), IDOK);
-        }
-
-        SetDlgItemText(GetParent(hwnd), IDC_CURRENT_HOTKEY, params->hotkey.to_wstring().c_str());
-
-        return TRUE;
-    default:
-        break;
-    }
-    return DefSubclassProc(hwnd, msg, wparam, lparam);
-}
-static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    const auto prop_key = L"IDD_HOTKEY_Params";
-    auto params = static_cast<t_hotkey_dialog_params *>(GetProp(hwnd, prop_key));
-
-    switch (msg)
-    {
-    case WM_INITDIALOG: {
-        SetProp(hwnd, prop_key, reinterpret_cast<t_hotkey_dialog_params *>(lparam));
-        params = reinterpret_cast<t_hotkey_dialog_params *>(lparam);
-
-        Static_SetText(GetDlgItem(hwnd, IDC_STATIC), params->headline.c_str());
-        SetFocus(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY));
-
-        SetWindowSubclass(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY), hotkey_button_subclass_proc, 0,
-                          reinterpret_cast<DWORD_PTR>(params));
-        return TRUE;
-    }
-    case WM_CLOSE:
-        EndDialog(hwnd, IDCANCEL);
-        return TRUE;
-    case WM_COMMAND:
-        switch (LOWORD(wparam))
-        {
-        case IDOK:
-            EndDialog(hwnd, IDOK);
-            return TRUE;
-        case IDCANCEL:
-            EndDialog(hwnd, IDCANCEL);
-            return TRUE;
-        case IDC_CLEAR:
-            params->hotkey = Hotkey::t_hotkey::make_empty();
-            EndDialog(hwnd, IDOK);
-            break;
-        default:
-            break;
-        }
-        break;
-    case WM_MBUTTONDOWN:
-        params->hotkey.key = VK_MBUTTON;
-        EndDialog(hwnd, IDOK);
-        break;
-    case WM_XBUTTONDOWN:
-        if (HIWORD(wparam) == XBUTTON1)
-        {
-            params->hotkey.key = VK_XBUTTON1;
-            EndDialog(hwnd, IDOK);
-        }
-        if (HIWORD(wparam) == XBUTTON2)
-        {
-            params->hotkey.key = VK_XBUTTON2;
-            EndDialog(hwnd, IDOK);
-        }
-        break;
-    default:
-        break;
-    }
-    return FALSE;
-}
-
-bool Hotkey::show_prompt(const HWND hwnd, const std::wstring &caption, t_hotkey &hotkey)
-{
-    const auto prev_hotkey = hotkey;
-
-    hotkey = t_hotkey::make_unassigned();
-    auto params = new t_hotkey_dialog_params{.headline = caption, .hotkey = hotkey};
-
-    const INT_PTR result =
-        DialogBoxParam(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_HOTKEY), hwnd, dlgproc, reinterpret_cast<LPARAM>(params));
-    const bool confirmed = result == IDOK;
-
-    if (confirmed)
-    {
-        hotkey = params->hotkey;
-    }
-    else
-    {
-        hotkey = prev_hotkey;
-    }
-    hotkey.assigned = true;
-
-    delete params;
-
-    return confirmed;
-}
-
-void Hotkey::try_associate_hotkey(const HWND hwnd, const std::wstring &action, const t_hotkey &new_hotkey,
-                                  const bool through_action_manager)
-{
-    const auto set_hotkey = [=](const std::wstring &action, const t_hotkey &hotkey) {
-        if (through_action_manager)
-        {
-            ActionManager::associate_hotkey(action, hotkey);
-        }
-        else
-        {
-            g_config.hotkeys[action] = hotkey;
-        }
-    };
-
-    if (new_hotkey.is_empty())
-    {
-        set_hotkey(action, t_hotkey::make_empty());
-        return;
-    }
-
-    if (g_config.hotkeys.at(action) == new_hotkey)
-    {
-        return;
-    }
-
-    std::vector<std::pair<std::wstring, t_hotkey>> conflicting_hotkeys;
-
-    for (const auto &pair : g_config.hotkeys)
-    {
-        if (pair.first != action && pair.second == new_hotkey)
-        {
-            conflicting_hotkeys.emplace_back(pair);
-        }
-    }
-
-    if (conflicting_hotkeys.empty())
-    {
-        set_hotkey(action, new_hotkey);
-        return;
-    }
-
-    std::wstring conflicting_hotkey_identifiers;
-    for (const auto &action : conflicting_hotkeys | std::views::keys)
-    {
-        conflicting_hotkey_identifiers += std::format(L"- {}\n", action);
-    }
-
-    const auto str = std::format(L"The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
-                                 new_hotkey.to_wstring(), conflicting_hotkey_identifiers);
-
-    const size_t choice = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict",
-        fsvc_warning, hwnd);
-
-    switch (choice)
-    {
-    case 0:
-        for (const auto &action : conflicting_hotkeys | std::views::keys)
-        {
-            set_hotkey(action, t_hotkey::make_empty());
-        }
-        set_hotkey(action, new_hotkey);
-        break;
-    case 1:
-        set_hotkey(action, t_hotkey::make_empty());
-        break;
-    case 2:
-        set_hotkey(action, new_hotkey);
-        break;
-    default:
-        break;
-    }
 }

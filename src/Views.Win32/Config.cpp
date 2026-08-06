@@ -234,7 +234,7 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 
 // !!!
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring &field_name, const int32_t is_reading,
-                                    std::map<std::wstring, Hotkey::t_hotkey> &value)
+                                    std::map<std::wstring, Hotkey> &value)
 {
     const auto key = ini_cleanup_field(field_name);
 
@@ -258,7 +258,7 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 
             const auto action_path = pair.first.substr(prefix.size());
 
-            Hotkey::t_hotkey hotkey = Hotkey::t_hotkey::make_empty();
+            Hotkey hotkey = Hotkey::make_empty();
 
             const auto key = pair.second.get("key");
             if (!key.empty())
@@ -476,7 +476,7 @@ static void migrate_config_ini(t_config &config, const mINI::INIStructure &ini)
             return;
         }
 
-        auto hotkey = Hotkey::t_hotkey::make_empty();
+        auto hotkey = Hotkey::make_empty();
         const auto &section = ini.get(old_section_name);
 
         try
@@ -607,9 +607,9 @@ static json convert_to_json(const std::map<std::wstring, std::wstring> &value)
            std::ranges::to<json::object_t>();
 }
 
-static json convert_to_json(const std::map<std::wstring, Hotkey::t_hotkey> &value)
+static json convert_to_json(const std::map<std::wstring, Hotkey> &value)
 {
-    return value | std::views::transform([](const std::pair<std::wstring, Hotkey::t_hotkey> &mapping) {
+    return value | std::views::transform([](const std::pair<std::wstring, Hotkey> &mapping) {
                // translate name
                auto name = IOUtils::to_utf8_string(mapping.first);
                // translate hotkey
@@ -661,7 +661,7 @@ static bool convert_from_json(const json &j, std::map<std::wstring, std::wstring
     return true;
 }
 
-static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey::t_hotkey> &value)
+static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey> &value)
 {
     if (!j.is_object()) return false;
 
@@ -669,7 +669,7 @@ static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey::t_ho
             std::views::transform([](const std::pair<std::string, json> &str_pair) {
                 auto name = IOUtils::to_wide_string(str_pair.first);
                 const auto &hotkey_json = str_pair.second;
-                auto hotkey = Hotkey::t_hotkey{};
+                auto hotkey = Hotkey{};
 
                 hotkey.assigned = hotkey_json["assigned"];
                 hotkey.key = hotkey_json["key"];
