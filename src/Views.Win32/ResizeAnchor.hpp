@@ -9,8 +9,7 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
-
-#include <Windows.h>
+#include <windows.h>
 
 namespace ResizeAnchor
 {

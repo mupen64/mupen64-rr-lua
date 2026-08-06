@@ -8,7 +8,7 @@
 
 #include "Config.hpp"
 
-#include <Windows.h>
+#include <windows.h>
 
 namespace SDLAudio
 {

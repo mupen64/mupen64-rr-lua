@@ -22,7 +22,7 @@
 #define EXPORT __declspec(dllexport)
 #define CALL __cdecl
 
-#include <Windows.h>
+#include <windows.h>
 
 #elif defined(__linux__)
 #define EXPORT
