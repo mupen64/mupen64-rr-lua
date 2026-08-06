@@ -5,6 +5,7 @@
  */
 
 #pragma once
+#include <cstdint>
 
 #define EAX 0
 #define ECX 1
@@ -33,7 +34,7 @@
 #define DH 6
 #define BH 7
 
-typedef struct _reg_cache_struct
+typedef struct
 {
     int32_t need_map;
     void *needed_registers[8];

@@ -16,10 +16,14 @@
 #endif
 
 #include "m64rr/Types.hpp"
+#include <cstdint>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
 #define CALL __cdecl
+
+#include <windows.h>
+
 #elif defined(__linux__)
 #define EXPORT
 #define CALL
@@ -73,57 +77,6 @@ extern "C"
         RSP,
     };
 
-    /**
-     * \brief Represents an extension for a controller.
-     */
-    enum class ControllerExtension : uint8_t
-    {
-        None,
-        Mempak,
-        Rumblepak,
-        Transferpak,
-        Raw,
-    };
-
-    /**
-     * \brief Describes a controller.
-     */
-    struct Controller
-    {
-        bool present;
-        bool raw;
-        ControllerExtension plugin;
-    };
-
-    /**
-     * \brief Represents a controller state.
-     */
-    union Buttons {
-        uint32_t value;
-
-        struct
-        {
-            unsigned dr : 1;
-            unsigned dl : 1;
-            unsigned dd : 1;
-            unsigned du : 1;
-            unsigned start : 1;
-            unsigned z : 1;
-            unsigned b : 1;
-            unsigned a : 1;
-            unsigned cr : 1;
-            unsigned cl : 1;
-            unsigned cd : 1;
-            unsigned cu : 1;
-            unsigned r : 1;
-            unsigned l : 1;
-            unsigned reserved_1 : 1;
-            unsigned reserved_2 : 1;
-            signed x : 8;
-            signed y : 8;
-        };
-    };
-
     struct PluginMetadata
     {
         PluginType type;
@@ -161,27 +114,27 @@ extern "C"
 
         void(CALL *process_dlist)(void);
 
-        Controller *controllers;
+        CoreController *controllers;
 
         /**
          * \brief Logs the specified message at the trace level.
          */
-        void (*log_trace)(const wchar_t *);
+        void (*log_trace)(const char *);
 
         /**
          * \brief Logs the specified message at the info level.
          */
-        void (*log_info)(const wchar_t *);
+        void (*log_info)(const char *);
 
         /**
          * \brief Logs the specified message at the warning level.
          */
-        void (*log_warn)(const wchar_t *);
+        void (*log_warn)(const char *);
 
         /**
          * \brief Logs the specified message at the error level.
          */
-        void (*log_error)(const wchar_t *);
+        void (*log_error)(const char *);
 
         /**
          * \brief Gets the effective speed mode.
@@ -268,11 +221,11 @@ extern "C"
     typedef void(CALL *PtrAIDacrateChanged)(CoreSystemType system_type);
     typedef void(CALL *PtrAILenChanged)();
 
-    typedef void(CALL *PtrGetKeys)(uint8_t index, Buttons *buttons);
-    typedef void(CALL *PtrSetKeys)(uint8_t index, const Buttons *buttons);
+    typedef void(CALL *PtrGetKeys)(int32_t index, CoreButtons *buttons);
+    typedef void(CALL *PtrSetKeys)(int32_t index, CoreButtons buttons);
     typedef void(CALL *PtrReadController)(int32_t controller, unsigned char *command);
 
-    typedef void(CALL *PtrDoRSPCycles)(uint8_t);
+    typedef uint32_t(CALL *PtrDoRSPCycles)(uint32_t);
 };
 
 } // namespace M64RRSpec
@@ -301,7 +254,7 @@ extern "C"
      * \brief Shows the configuration window.
      * \param parent_window The parent window handle.
      */
-    EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window);
+    EXPORT void CALL M64RRShowConfig(WindowHandle parent_window);
 
     // ---
 
@@ -339,18 +292,18 @@ extern "C"
     // ---
 
     /**
-     * \brief Gets the keys for the specified controller.
+     * \brief Reads inputs for the specified controller.
      * \param controller The controller index.
      * \param keys The buttons to be filled in.
      */
-    EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons);
+    EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons);
 
     /**
      * \brief Notifies the plugin that the keys for the specified controller have changed.
      * \param controller The controller index.
      * \param keys The buttons to be set.
      */
-    EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons);
+    EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons);
 
     /**
      * \brief Notifies the plugin of a controller command.
@@ -362,10 +315,10 @@ extern "C"
     // ---
 
     /**
-     * \brief Does RSP cycles.
+     * \brief Advances the RSP.
      * \param cycles The number of RSP cycles to do.
      */
-    EXPORT void CALL M64RRDoRSPCycles(uint8_t cycles);
+    EXPORT uint32_t CALL M64RRDoRSPCycles(uint32_t cycles);
 
     // ReSharper restore CppInconsistentNaming
 }

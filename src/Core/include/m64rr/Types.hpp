@@ -6,6 +6,10 @@
 
 // ReSharper disable CppInconsistentNaming
 #pragma once
+#include <cstdint>
+#include <filesystem>
+#include <functional>
+#include <string>
 
 /**
  * An enum containing results that can be returned by the core.
@@ -131,9 +135,9 @@ enum class CoreControllerExtension : int32_t
  */
 struct CoreController
 {
-    int32_t Present;
-    int32_t RawData;
-    CoreControllerExtension Plugin;
+    int32_t present;
+    int32_t raw;
+    CoreControllerExtension plugin;
 };
 
 /**

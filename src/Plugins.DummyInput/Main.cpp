@@ -22,7 +22,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         {
             controllers[i].present = 0;
             controllers[i].raw = 0;
-            controllers[i].plugin = M64RRSpec::ControllerExtension::None;
+            controllers[i].plugin = CoreControllerExtension::None;
         }
 
         controllers[0].present = 1;

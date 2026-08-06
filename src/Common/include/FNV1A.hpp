@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <span>
+
 /**
  * \brief A module providing a FNV-1a hash function implementation.
  */

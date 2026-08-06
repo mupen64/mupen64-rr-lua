@@ -10,7 +10,7 @@
 bool t_combo::uses_joystick() const
 {
     return std::any_of(samples.begin(), samples.end(),
-                       [](const M64RRSpec::Buttons sample) { return sample.x != 0 || sample.y != 0; });
+                       [](const CoreButtons sample) { return sample.x != 0 || sample.y != 0; });
 }
 
 std::vector<uint8_t> t_combo::serialize() const
@@ -68,7 +68,7 @@ std::variant<t_combo, std::wstring> t_combo::deserialize(const std::span<uint8_t
     offset += sizeof(uint32_t);
 
     // 3. Read the samples data
-    size_t samples_byte_size = samples_size * sizeof(M64RRSpec::Buttons);
+    size_t samples_byte_size = samples_size * sizeof(CoreButtons);
     if (offset + samples_byte_size > data.size())
     {
         return L"Malformed samples.";

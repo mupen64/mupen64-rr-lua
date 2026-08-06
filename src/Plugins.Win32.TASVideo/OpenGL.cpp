@@ -46,7 +46,7 @@ void OGL_InitExtensions()
     GLenum glew = glewInit();
     if (glew != GLEW_OK)
     {
-        g_plugin->log_error(L"Error initialising glew");
+        g_plugin->log_error("Error initialising glew");
         return;
     }
 
@@ -61,7 +61,7 @@ void OGL_InitExtensions()
 void OGL_SetIdentityProjection()
 {
     static const float identity[16] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                                        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+                                       0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
     Combiner_SetProjection(identity);
 }
 
@@ -176,7 +176,7 @@ bool OGL_InitContext()
 
     if (!s_sdl_context)
     {
-        g_plugin->log_info(L"OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
+        g_plugin->log_info("OpenGL ES 2.0 context unavailable; falling back to desktop OpenGL.");
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
@@ -201,8 +201,8 @@ bool OGL_InitContext()
     OGL_InitExtensions();
     OGL_InitStates();
 
-    g_plugin->log_info(OGL.isGLES ? L"TASVideo: running on an OpenGL ES 2.0 context."
-                              : L"TASVideo: running on a desktop OpenGL compatibility context.");
+    g_plugin->log_info(OGL.isGLES ? "TASVideo: running on an OpenGL ES 2.0 context."
+                                  : "TASVideo: running on a desktop OpenGL compatibility context.");
 
     OGL.context_initialized = TRUE;
 
@@ -322,8 +322,7 @@ void OGL_UpdateStates()
     {
         if ((gDP.otherMode.alphaCompare == G_AC_THRESHOLD) && !(gDP.otherMode.alphaCvgSel))
             Combiner_SetAlphaTest((gDP.blendColor.a > 0.0f) ? 1 : 2, gDP.blendColor.a);
-        else if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) &&
-                 !(gDP.otherMode.alphaCvgSel))
+        else if (OGL.usePolygonStipple && (gDP.otherMode.alphaCompare == G_AC_DITHER) && !(gDP.otherMode.alphaCvgSel))
             Combiner_SetAlphaTest(3, 0.0f);
         // Used in TEX_EDGE and similar render modes
         else if (gDP.otherMode.cvgXAlpha)
