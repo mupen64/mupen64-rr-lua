@@ -73,7 +73,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        g_plugin->process_dlist();
+        if (g_plugin->process_dlist) g_plugin->process_dlist();
 
         g_plugin->sp_register->sp_status_reg |= 0x0203;
         if ((g_plugin->sp_register->sp_status_reg & 0x40) != 0) g_plugin->mi_register->mi_intr_reg |= 0x1;

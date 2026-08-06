@@ -36,6 +36,10 @@ static void init_core()
     g_core_params.cfg = &g_config;
     clear_plugin_funcs();
 
+    // SETTINGS
+    // =====================================================
+    g_config.core_type = 2;
+
     // EXTRA CALLBACKS
     // =====================================================
 

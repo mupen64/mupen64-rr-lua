@@ -73,8 +73,6 @@ void Plugin::initiate()
     if (!m_init_data)
     {
         m_init_data.reset(new M64RRSpec::PluginInit);
-        m_init_data->rom = g_core_ctx->rom;
-        m_init_data->rom = g_core_ctx->rom;
 
         m_init_data->rom = g_core_ctx->rom;
         m_init_data->rdram = (uint8_t *)g_core_ctx->rdram;
