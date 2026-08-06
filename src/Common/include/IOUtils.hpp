@@ -16,6 +16,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <share.h>
 #elif defined(__linux__)
 #include <stdexcept>
 #include <cstdio>
