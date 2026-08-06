@@ -26,15 +26,7 @@ namespace decan {
     }()) {}
 
   library::~library() {
-    bool good = FreeLibrary(m_handle);
-    if (!good) {
-      DWORD last_error = GetLastError();
-      std::cerr << "FreeLibrary error: "
-                << std::system_error(last_error, std::system_category()).what()
-                << '\n';
-      std::cerr << "terminating...\n";
-      std::terminate();
-    }
+    FreeLibrary(m_handle);
   }
 
   void* library::get(const char* symbol) const {

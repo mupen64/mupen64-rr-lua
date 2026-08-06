@@ -127,10 +127,10 @@ void Plugin::send_event(M64RRSpec::Event event)
 bool PluginUtil::load_plugins()
 {
     std::scoped_lock lock(g_plugin_lock);
-    g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugins/NoVideo.dll"),
-                      Plugin(IOUtils::exe_path().parent_path() / "plugins/NoAudio.dll"),
-                      Plugin(IOUtils::exe_path().parent_path() / "plugins/NoInput.dll"),
-                      Plugin(IOUtils::exe_path().parent_path() / "plugins/TASRSP.dll"));
+    g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo.dll"),
+                      Plugin(IOUtils::exe_path().parent_path() / "plugin/TASAudio.dll"),
+                      Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput.dll"),
+                      Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP.dll"));
     return false;
 }
 void PluginUtil::initiate_plugins()

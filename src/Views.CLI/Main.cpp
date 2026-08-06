@@ -2,6 +2,7 @@
 #include "Dialog.hpp"
 #include "Plugin.hpp"
 #include <future>
+#include <iostream>
 #include <print>
 
 core_cfg g_config;
@@ -69,7 +70,7 @@ int main(int argc, char *argv[])
         std::println("usage: {} [path to ROM]", argv[0]);
         return 1;
     }
-
+    
     init_core();
     g_core->vr_start_rom(argv[1]);
     std::this_thread::sleep_for(10s);

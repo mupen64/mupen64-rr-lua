@@ -24,12 +24,7 @@ namespace decan {
       return res;
     }()) {}
   library::~library() {
-    int res = dlclose(m_handle);
-    if (res != 0) {
-      std::cerr << "dlclose error: " << dlerror() << '\n';
-      std::cerr << "terminating...\n";
-      std::terminate();
-    }
+    dlclose(m_handle);
   }
   void* library::get(const char* symbol) const {
     dlerror();
