@@ -14,6 +14,13 @@ project(mupen64-rr
 # Options
 # ===========================================
 
+if(MINGW)
+  # Avoid weird "lib" prefixes when cross-compiling (e.g. libTASVideo.dll instead of TASVideo.dll).
+  set(CMAKE_SHARED_LIBRARY_PREFIX "")
+  set(CMAKE_STATIC_LIBRARY_PREFIX "")
+  set(CMAKE_SHARED_MODULE_PREFIX "")
+endif()
+
 # The dynarec only supports x86 and x86_64; building for any other
 # architecture (e.g. ARM64) errors out (see src/Core/CMakeLists.txt).
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
