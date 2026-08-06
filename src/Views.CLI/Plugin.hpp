@@ -14,7 +14,22 @@ class Plugin
   public:
     Plugin(const std::filesystem::path &path);
 
+    /**
+     * @brief Triggers the `Initiate` event and sets up necessary initialization data.
+     */
     void initiate();
+
+    /**
+     * @brief Binds the needed functions from this plugin to the core.
+     */
+    void bind_functions();
+
+    /**
+     * @brief Triggers an arbitrary lifecycle event.
+     * 
+     * @param event The event
+     */
+    void send_event(M64RRSpec::Event event);
 
     /**
      * \brief Gets the plugin's path
@@ -47,5 +62,8 @@ namespace PluginUtil
 {
 bool load_plugins();
 void initiate_plugins();
+void start_plugins();
+void stop_plugins();
 void get_plugin_names(char *video, char *audio, char *input, char *rsp);
+void send_event(M64RRSpec::Event event);
 } // namespace PluginUtil

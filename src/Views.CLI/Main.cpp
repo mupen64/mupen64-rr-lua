@@ -38,6 +38,8 @@ static void init_core()
     // EXTRA CALLBACKS
     // =====================================================
 
+    g_core_params.callbacks.emu_starting = PluginUtil::start_plugins;
+    g_core_params.callbacks.emu_stopped = PluginUtil::stop_plugins;
 
     // MAIN CORE CALLBACKS
     // =====================================================
@@ -62,7 +64,8 @@ static void init_core()
 int main(int argc, char *argv[])
 {
     using namespace std::literals;
-    if (argc != 2) {
+    if (argc != 2)
+    {
         std::println("usage: {} [path to ROM]", argv[0]);
         return 1;
     }

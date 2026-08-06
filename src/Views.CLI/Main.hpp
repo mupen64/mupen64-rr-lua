@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CommonPCH.hpp>
 #include <m64rr/API.hpp>
 
 extern core_cfg g_config;
