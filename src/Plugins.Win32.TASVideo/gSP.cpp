@@ -72,16 +72,7 @@ void gSPProcessVertex(u32 v)
 
     vert_transform(&gSP.vertices[v].x, gSP.matrix.combined);
 
-    // Widening the field of view is a scale on clip-space X. Applying it here instead of on the combined
-    // matrix leaves gSPForceMatrix and gSPInsertMatrix operating on what the game wrote, and it has to
-    // precede the clip codes below so the newly uncovered geometry isn't rejected. Perspective only
-    // ([3][3] is 0 there, 1 for an orthographic one): screen-space geometry comes through this same path
-    // under an orthographic projection, and scaling that shrinks it into the middle of the window
-    // instead of covering it, as SM64's skybox shows.
-    if ((OGL.widescreenScale != 1.0f) && (gSP.matrix.projection[3][3] == 0.0f))
-    {
-        gSP.vertices[v].x *= OGL.widescreenScale;
-    }
+    gSP.vertices[v].x *= OGL.widescreenScale;
 
     if (gSP.matrix.billboard)
     {

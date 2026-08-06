@@ -46,16 +46,17 @@ const std::vector<std::pair<uint8_t, std::wstring>> FILTER_NAMES = {
     {2, L"Always Pixelated"},
 };
 
-// Indexed by AspectMode, so the order has to match the enum.
 const std::vector<std::wstring> ASPECT_MODE_NAMES = {
     L"Pillarbox",
     L"Stretch",
     L"Widescreen",
 };
 
+constexpr AspectMode DEFAULT_ASPECT_MODE = AspectMode::Widescreen;
+
 static AspectMode to_aspect_mode(int value)
 {
-    if (value < 0 || value >= (int)ASPECT_MODE_NAMES.size()) return AspectMode::Pillarbox;
+    if (value < 0 || value >= (int)ASPECT_MODE_NAMES.size()) return DEFAULT_ASPECT_MODE;
     return (AspectMode)value;
 }
 
@@ -86,7 +87,7 @@ static void Config_SetDefaults()
     cache.maxBytes = 32 * 1048576;
     OGL.textureFilter = TextureFilter::None;
     OGL.usePolygonStipple = FALSE;
-    OGL.aspectMode = AspectMode::Pillarbox;
+    OGL.aspectMode = DEFAULT_ASPECT_MODE;
 }
 
 void Config_LoadConfig()
@@ -117,8 +118,7 @@ void Config_LoadConfig()
         OGL.usePolygonStipple = j["dithered_alpha_testing"];
         OGL.ignoreScissor = j["ignore_scissor"];
         OGL.clear_override = j["clear_override"];
-        // Read leniently: configs written before this option existed must keep working.
-        OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)AspectMode::Pillarbox));
+        OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)DEFAULT_ASPECT_MODE));
     }
     catch (const std::exception &e)
     {
@@ -182,8 +182,6 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     Config_SaveConfig();
     Config_LoadConfig();
 
-    // aspectMode is absent on purpose: OGL_UpdateScale() reruns on every display list, so a new mode is
-    // picked up on the next frame without tearing down the RSP thread.
     const auto needs_restart =
         OGL.smoothing != prev_OGL.smoothing || OGL.textureFilter != prev_OGL.textureFilter ||
         OGL.filterScale != prev_OGL.filterScale || OGL.msaa != prev_OGL.msaa ||
