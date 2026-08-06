@@ -8,6 +8,10 @@
 
 #include "Main.hpp"
 
+#include <span>
+#include <variant>
+#include <vector>
+
 /**
  * \brief Represents a combo.
  */
@@ -21,7 +25,7 @@ struct t_combo
     /**
      * \brief The combo's samples.
      */
-    std::vector<M64RRSpec::Buttons> samples{};
+    std::vector<CoreButtons> samples{};
 
     /**
      * \return Whether any sample utilizes the joystick (magnitude > 0).

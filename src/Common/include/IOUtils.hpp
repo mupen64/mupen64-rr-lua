@@ -5,7 +5,12 @@
  */
 #pragma once
 
+#include <cassert>
 #include <filesystem>
+#include <fstream>
+
+#include "StrUtils.hpp"
+
 #if defined(_WIN32)
 #ifndef NOMINMAX
 #define NOMINMAX

@@ -12,6 +12,7 @@
 #pragma once
 
 #include "m64rr/Types.hpp"
+#include <cassert>
 
 #ifdef _WIN32
 
@@ -87,9 +88,9 @@ extern "C"
             }
 
             return CoreController{
-                .Present = present ? 1 : 0,
-                .RawData = raw ? 1 : 0,
-                .Plugin = extension,
+                .present = present ? 1 : 0,
+                .raw = raw ? 1 : 0,
+                .plugin = extension,
             };
         }
     };

@@ -206,7 +206,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     }
 }
 
-EXPORT void CALL M64RRDoRSPCycles(uint8_t cycles)
+EXPORT uint32_t CALL M64RRDoRSPCycles(uint32_t cycles)
 {
-    do_rsp_cycles(cycles);
+    return do_rsp_cycles(cycles);
 }

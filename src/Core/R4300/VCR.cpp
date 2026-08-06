@@ -204,17 +204,17 @@ static void set_rom_info(core_vcr_movie_header *header)
 
     for (int32_t i = 0; i < 4; ++i)
     {
-        if (g_core->controls[i].Plugin == CoreControllerExtension::Mempak)
+        if (g_core->controls[i].plugin == CoreControllerExtension::Mempak)
         {
             header->controller_flags |= CONTROLLER_X_MEMPAK(i);
         }
 
-        if (g_core->controls[i].Plugin == CoreControllerExtension::Rumblepak)
+        if (g_core->controls[i].plugin == CoreControllerExtension::Rumblepak)
         {
             header->controller_flags |= CONTROLLER_X_RUMBLE(i);
         }
 
-        if (!g_core->controls[i].Present) continue;
+        if (!g_core->controls[i].present) continue;
 
         header->controller_flags |= CONTROLLER_X_PRESENT(i);
         header->num_controllers++;
@@ -1244,28 +1244,28 @@ bool show_controller_warning(const core_vcr_movie_header &header)
 {
     for (int32_t i = 0; i < 4; ++i)
     {
-        if (!g_core->controls[i].Present && header.controller_flags & CONTROLLER_X_PRESENT(i))
+        if (!g_core->controls[i].present && header.controller_flags & CONTROLLER_X_PRESENT(i))
         {
             g_core->show_dialog(std::format(CONTROLLER_OFF_ON_MISMATCH, i + 1).c_str(), "VCR", fsvc_error);
             return false;
         }
-        if (g_core->controls[i].Present && !(header.controller_flags & CONTROLLER_X_PRESENT(i)))
+        if (g_core->controls[i].present && !(header.controller_flags & CONTROLLER_X_PRESENT(i)))
         {
             g_core->show_dialog(std::format(CONTROLLER_ON_OFF_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
         }
         else
         {
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != CoreControllerExtension::Mempak) &&
+            if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Mempak) &&
                 header.controller_flags & CONTROLLER_X_MEMPAK(i))
             {
                 g_core->show_dialog(std::format(CONTROLLER_MEMPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
             }
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != CoreControllerExtension::Rumblepak) &&
+            if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Rumblepak) &&
                 header.controller_flags & CONTROLLER_X_RUMBLE(i))
             {
                 g_core->show_dialog(std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
             }
-            if (g_core->controls[i].Present && (g_core->controls[i].Plugin != CoreControllerExtension::None) &&
+            if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::None) &&
                 !(header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
             {
                 g_core->show_dialog(std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR",

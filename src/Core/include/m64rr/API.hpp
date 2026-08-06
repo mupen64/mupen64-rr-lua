@@ -11,6 +11,7 @@
 #pragma once
 
 #include "m64rr/Types.hpp"
+#include <stack>
 
 #ifdef __cplusplus
 extern "C"

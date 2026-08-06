@@ -6,6 +6,11 @@
 
 #pragma once
 
+#include <cstdint>
+#include <utility>
+#include <vector>
+#include <windows.h>
+
 namespace ResizeAnchor
 {
 /**
