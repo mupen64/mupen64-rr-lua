@@ -7,11 +7,11 @@
 #include <App.hpp>
 #include <Config.hpp>
 #include <Resampler.hpp>
-#include <VFWEncoder.hpp>
+#include <WinVFWEncoder.hpp>
 #include <windows.h>
 #include <vfw.h>
 
-std::optional<std::wstring> VFWEncoder::start(Params params)
+std::optional<std::wstring> WinVFWEncoder::start(Params params)
 {
     if (!m_splitting)
     {
@@ -125,7 +125,7 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     return std::nullopt;
 }
 
-bool VFWEncoder::stop_impl(const bool fail_stop)
+bool WinVFWEncoder::stop_impl(const bool fail_stop)
 {
     if (m_compressed_video_stream)
     {
@@ -157,7 +157,7 @@ bool VFWEncoder::stop_impl(const bool fail_stop)
     return true;
 }
 
-bool VFWEncoder::stop()
+bool WinVFWEncoder::stop()
 {
     return this->stop_impl(false);
 }
@@ -169,7 +169,7 @@ uint32_t shortHash(const uint8_t *d, size_t n)
     return h;
 }
 
-bool VFWEncoder::append_video(uint8_t *image)
+bool WinVFWEncoder::append_video(uint8_t *image)
 {
     const auto hash = shortHash(image, m_params.width * m_params.height * 4);
 
@@ -205,7 +205,7 @@ bool VFWEncoder::append_video(uint8_t *image)
     return true;
 }
 
-bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
+bool WinVFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
     write_sound(audio, length, bitrate);
     std::memcpy(&m_last_sound, audio + length - sizeof(uint32_t), sizeof(uint32_t));
@@ -213,7 +213,7 @@ bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
     return true;
 }
 
-bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
+bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 {
     if (len <= 0) return true;
 
@@ -259,7 +259,7 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     return true;
 }
-bool VFWEncoder::append_video_impl(uint8_t *image)
+bool WinVFWEncoder::append_video_impl(uint8_t *image)
 {
     LONG written_len = 0;
     BOOL ret = AVIStreamWrite(m_compressed_video_stream, m_frame++, 1, image, m_info_hdr.biSizeImage, AVIIF_KEYFRAME,
@@ -277,7 +277,7 @@ bool VFWEncoder::append_video_impl(uint8_t *image)
     return ret == 0;
 }
 
-bool VFWEncoder::save_options() const
+bool WinVFWEncoder::save_options() const
 {
     FILE *f = nullptr;
     if (fopen_s(&f, "avi.cfg", "wb"))
@@ -308,7 +308,7 @@ bool VFWEncoder::save_options() const
     return true;
 }
 
-bool VFWEncoder::load_options()
+bool WinVFWEncoder::load_options()
 {
     FILE *f = nullptr;
     if (fopen_s(&f, "avi.cfg", "rb"))
@@ -342,7 +342,7 @@ error:
     return false;
 }
 
-std::wstring VFWEncoder::get_desired_extension() const
+std::wstring WinVFWEncoder::get_desired_extension() const
 {
     return L".avi";
 }

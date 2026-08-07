@@ -18,8 +18,8 @@ extern "C"
 
 #include <windows.h>
 
-// FIXME: Rename to WinFFmpegEncoder
-class FFmpegEncoder : public Encoder
+// FIXME: Rename to WinWinFFmpegEncoder
+class WinFFmpegEncoder : public Encoder
 {
   public:
     std::optional<std::wstring> start(Params params) override;

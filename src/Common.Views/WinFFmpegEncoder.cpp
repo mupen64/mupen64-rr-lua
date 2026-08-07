@@ -5,7 +5,7 @@
  */
 
 #include <App.hpp>
-#include <FFmpegEncoder.hpp>
+#include <WinFFmpegEncoder.hpp>
 #include <Config.hpp>
 #include <string>
 #include <filesystem>
@@ -33,13 +33,13 @@ static int avio_write_cb(void *opaque, const uint8_t *buf, int size)
     {
         if (GetLastError() != ERROR_IO_PENDING)
         {
-            g_view_logger->error("[FFmpegEncoder] WriteFile failed: {}", GetLastError());
+            g_view_logger->error("[WinFFmpegEncoder] WriteFile failed: {}", GetLastError());
             return AVERROR(EIO);
         }
     }
     if (!GetOverlappedResult(io->pipe, &ov, &written, TRUE))
     {
-        g_view_logger->error("[FFmpegEncoder] GetOverlappedResult failed: {}", GetLastError());
+        g_view_logger->error("[WinFFmpegEncoder] GetOverlappedResult failed: {}", GetLastError());
         return AVERROR(EIO);
     }
     return static_cast<int>(written);
@@ -50,7 +50,7 @@ static int64_t avio_seek_cb(void *, int64_t, int)
     return AVERROR(ENOSYS);
 }
 
-std::optional<std::wstring> FFmpegEncoder::start(Params params)
+std::optional<std::wstring> WinFFmpegEncoder::start(Params params)
 {
     m_params = params;
     m_video_pts = 0;
@@ -77,8 +77,8 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     const auto options =
         std::vformat(FFMPEG_OPTIONS, std::make_wformat_args(NUT_PIPE_NAME, g_config.ffmpeg_options, path_str));
 
-    g_view_logger->info(L"[FFmpegEncoder] Starting encode with commandline:");
-    g_view_logger->info(L"[FFmpegEncoder] {}", options);
+    g_view_logger->info(L"[WinFFmpegEncoder] Starting encode with commandline:");
+    g_view_logger->info(L"[WinFFmpegEncoder] {}", options);
 
     DeleteFile(params.path.wstring().c_str());
 
@@ -88,7 +88,7 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     if (!CreateProcess(g_config.ffmpeg_path.c_str(), const_cast<wchar_t *>(options.data()), nullptr, nullptr, FALSE, 0,
                        nullptr, nullptr, &m_si, &m_pi))
     {
-        g_view_logger->error(L"[FFmpegEncoder] CreateProcess failed ({}).", GetLastError());
+        g_view_logger->error(L"[WinFFmpegEncoder] CreateProcess failed ({}).", GetLastError());
         CloseHandle(m_pipe);
         CloseHandle(m_pipe_write_event);
         return std::format(L"Failed to start ffmpeg process! Does ffmpeg exist on disk at '{}'?", g_config.ffmpeg_path);
@@ -106,7 +106,7 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
 
         if (wait != WAIT_OBJECT_0)
         {
-            g_view_logger->error("[FFmpegEncoder] Timed out waiting for FFmpeg to open the pipe.");
+            g_view_logger->error("[WinFFmpegEncoder] Timed out waiting for FFmpeg to open the pipe.");
             TerminateProcess(m_pi.hProcess, 1);
             CloseHandle(m_pi.hProcess);
             CloseHandle(m_pi.hThread);
@@ -165,7 +165,7 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
     {
         char errbuf[128];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        g_view_logger->error("[FFmpegEncoder] avformat_write_header failed: {}", errbuf);
+        g_view_logger->error("[WinFFmpegEncoder] avformat_write_header failed: {}", errbuf);
         avformat_free_context(m_fmt_ctx);
         m_fmt_ctx = nullptr;
         CloseHandle(m_pipe);
@@ -173,13 +173,13 @@ std::optional<std::wstring> FFmpegEncoder::start(Params params)
         return std::format(L"Failed to write NUT header: {}", std::wstring(errbuf, errbuf + strlen(errbuf)));
     }
 
-    g_view_logger->info("[FFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
+    g_view_logger->info("[WinFFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
                         m_params.height, m_params.fps, m_params.arate);
 
     return std::nullopt;
 }
 
-bool FFmpegEncoder::stop()
+bool WinFFmpegEncoder::stop()
 {
     if (m_fmt_ctx)
     {
@@ -222,7 +222,7 @@ bool FFmpegEncoder::stop()
     return true;
 }
 
-bool FFmpegEncoder::write_av_packet(int stream_index, uint8_t *data, int size, int64_t pts, int64_t duration)
+bool WinFFmpegEncoder::write_av_packet(int stream_index, uint8_t *data, int size, int64_t pts, int64_t duration)
 {
     AVPacket *pkt = av_packet_alloc();
     pkt->data = data;
@@ -243,13 +243,13 @@ bool FFmpegEncoder::write_av_packet(int stream_index, uint8_t *data, int size, i
     {
         char errbuf[128];
         av_strerror(ret, errbuf, sizeof(errbuf));
-        g_view_logger->error("[FFmpegEncoder] av_write_frame failed: {}", errbuf);
+        g_view_logger->error("[WinFFmpegEncoder] av_write_frame failed: {}", errbuf);
         return false;
     }
     return true;
 }
 
-bool FFmpegEncoder::append_video(uint8_t *image)
+bool WinFFmpegEncoder::append_video(uint8_t *image)
 {
     const auto sync = static_cast<t_config::Sync>(g_config.synchronization_mode);
     const auto frame_bytes = static_cast<int>(m_params.width * m_params.height * 4);
@@ -290,7 +290,7 @@ bool FFmpegEncoder::append_video(uint8_t *image)
     return true;
 }
 
-bool FFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
+bool WinFFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
 {
     if (length == 0) return true;
 
@@ -309,7 +309,7 @@ bool FFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
     return true;
 }
 
-std::wstring FFmpegEncoder::get_desired_extension() const
+std::wstring WinFFmpegEncoder::get_desired_extension() const
 {
     return L".mp4";
 }

@@ -10,8 +10,7 @@
 #include <windows.h>
 #include <vfw.h>
 
-// FIXME: Rename to WinVFWEncoder
-class VFWEncoder final : public Encoder
+class WinVFWEncoder final : public Encoder
 {
   public:
     std::optional<std::wstring> start(Params params) override;

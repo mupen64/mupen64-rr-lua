@@ -13,16 +13,21 @@ add_library(Mupen64RR.Common.Views STATIC
     "include/ActionManager.hpp"
     "include/Resampler.hpp"
     "include/Encoder.hpp"
-    "include/FFmpegEncoder.hpp"
-    "include/VFWEncoder.hpp"
     "Config.cpp"
     "Hotkey.cpp"
     "Messenger.cpp"
     "ActionManager.cpp"
     "Resampler.cpp"
-    "FFmpegEncoder.cpp"
-    "VFWEncoder.cpp"
 )
+
+if (WIN32)
+    target_sources(Mupen64RR.Common.Views PRIVATE
+        "include/WinFFmpegEncoder.hpp"
+        "include/WinVFWEncoder.hpp"
+        "WinFFmpegEncoder.cpp"
+        "WinVFWEncoder.cpp"
+    )
+endif()
 
 target_compile_features(Mupen64RR.Common.Views PUBLIC cxx_std_23)
 target_include_directories(Mupen64RR.Common.Views PUBLIC include)

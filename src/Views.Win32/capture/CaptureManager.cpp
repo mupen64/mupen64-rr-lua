@@ -11,9 +11,9 @@
 #include <DialogService.hpp>
 #include <Messages.hpp>
 #include <capture/CaptureManager.hpp>
-#include <VFWEncoder.hpp>
+#include <WinVFWEncoder.hpp>
 #include <Encoder.hpp>
-#include <FFmpegEncoder.hpp>
+#include <WinFFmpegEncoder.hpp>
 #include <components/Dispatcher.hpp>
 #include <components/MGECompositor.hpp>
 #include <lua/LuaRenderer.hpp>
@@ -295,10 +295,10 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
     switch (encoder_type)
     {
     case t_config::EncoderType::VFW:
-        m_encoder = std::make_unique<VFWEncoder>();
+        m_encoder = std::make_unique<WinVFWEncoder>();
         break;
     case t_config::EncoderType::FFmpeg:
-        m_encoder = std::make_unique<FFmpegEncoder>();
+        m_encoder = std::make_unique<WinFFmpegEncoder>();
         break;
     default:
         assert(false);
