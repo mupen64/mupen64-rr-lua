@@ -13,6 +13,7 @@ add_library(Mupen64RR.Common.Views STATIC
     "include/ActionManager.hpp"
     "include/Resampler.hpp"
     "include/Encoder.hpp"
+    "include/DialogService.hpp"
     "Config.cpp"
     "Hotkey.cpp"
     "Messenger.cpp"

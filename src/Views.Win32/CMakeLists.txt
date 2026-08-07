@@ -17,7 +17,6 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "ThreadPool.hpp"
     "HotkeyUtils.hpp"
     "capture/CaptureManager.hpp"
-    "DialogService.hpp"
     "components/CoreUtils.hpp"
     "components/Validators.hpp"
     "components/PianoRoll.hpp"

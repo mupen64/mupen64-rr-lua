@@ -7,6 +7,7 @@
 #include <App.hpp>
 #include <WinFFmpegEncoder.hpp>
 #include <Config.hpp>
+#include <DialogService.hpp>
 #include <string>
 #include <filesystem>
 #include <cstdint>
@@ -211,12 +212,11 @@ bool WinFFmpegEncoder::stop()
 
     if (m_dropped_frames > 0)
     {
-        // FIXME
-        // DialogService::show_dialog(std::format(L"{} frames were dropped during capture due to low memory.\n"
-        //                                        L"The capture might contain empty frames.",
-        //                                        m_dropped_frames)
-        //                                .c_str(),
-        //                            L"FFmpeg");
+         DialogService::show_dialog(std::format(L"{} frames were dropped during capture due to low memory.\n"
+                                                L"The capture might contain empty frames.",
+                                                m_dropped_frames)
+                                        .c_str(),
+                                    L"FFmpeg");
     }
 
     return true;
