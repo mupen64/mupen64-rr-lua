@@ -7,6 +7,7 @@
 #include <IOUtils.hpp>
 #include <Config.hpp>
 #include <Messages.hpp>
+#include <m64rr/API.hpp>
 #include <ini.h>
 #include <nlohmann/json.hpp>
 
