@@ -13,7 +13,9 @@ add_library(Mupen64RR.Common STATIC
     "include/VersionNameHelpers.hpp"
     "include/FNV1A.hpp"
     "include/Hotkey.hpp"
+    "include/Messenger.hpp"
     "Hotkey.cpp"
+    "Messenger.cpp"
 )
 
 target_compile_features(Mupen64RR.Common PUBLIC cxx_std_23)
