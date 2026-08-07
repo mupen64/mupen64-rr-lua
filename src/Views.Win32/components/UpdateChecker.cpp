@@ -108,44 +108,32 @@ std::string get_latest_release_as_json()
  * 0 if LHS = RHS
  * -1 if LHS < RHS
  */
-int version_compare(const std::wstring &version1, const std::wstring &version2)
+int version_compare(std::string_view version1, std::string_view version2)
 {
-    auto split_version = [](const std::wstring &version) {
-        std::vector parts(4, 0);
+    // Splits a version in the form "X.Y.Z-W" into its component parts.
+    const auto split_version = [](std::string_view version) {
+        std::array<int, 4> parts{0};
         const std::size_t dash_pos = version.find(L'-');
-        std::wstring main_part = dash_pos != std::wstring::npos ? version.substr(0, dash_pos) : version;
-        const std::wstring sub_part = dash_pos != std::wstring::npos ? version.substr(dash_pos + 1) : L"";
+        std::string_view main_part = dash_pos != std::string_view::npos ? version.substr(0, dash_pos) : version;
+        std::string_view sub_part = dash_pos != std::string_view::npos ? version.substr(dash_pos + 1) : "";
 
-        std::wstringstream ss(main_part);
-        for (int i = 0; i < 3 && std::getline(ss, main_part, L'.'); ++i)
+        for (auto [i, part] : StrUtils::split_string(main_part, ".") | std::views::take(3) | std::views::enumerate)
         {
-            try
-            {
-                parts[i] = std::stoi(main_part);
-            }
-            catch (...)
-            {
-                parts[i] = 0;
-            }
+            auto [end_ptr, ec] = std::from_chars(part.data(), part.data() + part.size(), parts[i]);
+            if (ec != std::errc{}) parts[i] = 0;
         }
 
         if (!sub_part.empty())
         {
-            try
-            {
-                parts[3] = std::stoi(sub_part);
-            }
-            catch (...)
-            {
-                parts[3] = 0;
-            }
+            auto [end_ptr, ec] = std::from_chars(sub_part.data(), sub_part.data() + sub_part.size(), parts[3]);
+            if (ec != std::errc{}) parts[3] = 0;
         }
 
         return parts;
     };
 
-    const std::vector<int> parts1 = split_version(version1);
-    const std::vector<int> parts2 = split_version(version2);
+    const auto parts1 = split_version(version1);
+    const auto parts2 = split_version(version2);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -206,17 +194,19 @@ void check(bool manual)
         return;
     }
 
-    auto version = IOUtils::to_wide_string(tag_name.get<std::string>());
+    auto version = tag_name.get<std::string>();
+    auto version_wide = IOUtils::to_wide_string(version);
 
-    if (!manual && g_config.ignored_version == version)
+    if (!manual && g_config.ignored_version == version_wide)
     {
-        g_view_logger->trace(L"[UpdateChecker] Version {} ignored by user. Skipping showing update dialog.", version);
+        g_view_logger->trace(L"[UpdateChecker] Version {} ignored by user. Skipping showing update dialog.",
+                             version_wide);
         return;
     }
 
     const auto version_difference = version_compare(CURRENT_VERSION, version);
 
-    if (version_difference != -1)
+    if (version_difference >= 0)
     {
         if (manual)
         {
@@ -235,7 +225,8 @@ show_prompt:
             L"Show Changelog",
             L"Skip Version",
         },
-        std::format(L"Mupen64 {} is available for download.", version).c_str(), L"Update Available", fsvc_information);
+        std::format(L"Mupen64 {} is available for download.", version_wide).c_str(), L"Update Available",
+        fsvc_information);
 
     switch (result)
     {
@@ -250,7 +241,7 @@ show_prompt:
         goto show_prompt;
     }
     case 2:
-        g_config.ignored_version = version;
+        g_config.ignored_version = version_wide;
         break;
     default:
         break;

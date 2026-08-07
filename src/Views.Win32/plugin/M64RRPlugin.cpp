@@ -58,7 +58,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE mod
     if (target_version_len > 0)
     {
         // Plugin is tied to one version of mupen
-        const auto current_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+        const auto current_version = CURRENT_VERSION;
         const std::string target_version(metadata.target_version, target_version_len);
         if (current_version != target_version)
         {
