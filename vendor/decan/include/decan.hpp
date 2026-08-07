@@ -36,6 +36,11 @@ using handle_t = HMODULE;
 using handle_t = void *;
 #endif
 
+class dll_error : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
 class library
 {
     std::string m_filename;

@@ -18,7 +18,7 @@ template <class T> static inline T try_load(decan::library &lib, const char *sym
     {
         return (T)lib.get(symbol);
     }
-    catch (const std::system_error &)
+    catch (const decan::dll_error &)
     {
         return nullptr;
     }
@@ -101,7 +101,8 @@ void Plugin::initiate()
 
         m_init_data->rcp_counter = g_core_ctx->rcp_counter;
 
-        auto *video_process_dlist_ptr = try_load<M64RRSpec::PtrProcessDList>(g_plugins->video.m_lib, "M64RRProcessDList");
+        auto *video_process_dlist_ptr =
+            try_load<M64RRSpec::PtrProcessDList>(g_plugins->video.m_lib, "M64RRProcessDList");
         m_init_data->process_dlist = video_process_dlist_ptr;
 
         m_init_data->log_error = [](const char *msg) { std::println(stderr, "[ERROR] {}", msg); };
@@ -155,15 +156,17 @@ bool PluginUtil::load_plugins()
     try
     {
         std::scoped_lock lock(g_plugin_lock);
-        g_plugins.emplace(Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo" DECAN_LIB_EXT),
-                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoAudio" DECAN_LIB_EXT),
-                          Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput" DECAN_LIB_EXT),
-                          Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP" DECAN_LIB_EXT));
+        auto video_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo" DECAN_LIB_EXT);
+        auto audio_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoAudio" DECAN_LIB_EXT);
+        auto input_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput" DECAN_LIB_EXT);
+        auto rsp_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP" DECAN_LIB_EXT);
+        g_plugins.emplace(std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin),
+                          std::move(rsp_plugin));
         return true;
     }
-    catch (...)
+    catch (const std::exception& err)
     {
-        // log error
+        std::println(stderr, "[ERROR] Plugin load failed: {}", err.what());
         return false;
     }
 }
