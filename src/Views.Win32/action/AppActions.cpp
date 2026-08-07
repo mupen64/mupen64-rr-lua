@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <action/ActionManager.hpp>
 #include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <ThreadPool.hpp>
 #include <plugin/Plugin.hpp>
 #include <capture/CaptureManager.hpp>
@@ -933,9 +933,8 @@ static void add_action_with_up(const std::wstring &path, const Hotkey &default_h
     RT_ASSERT(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
 }
 
-static void add_action(const std::wstring &path, const Hotkey &default_hotkey,
-                       const std::function<void()> &callback, const std::function<bool()> &get_enabled = {},
-                       const std::function<bool()> &get_active = {},
+static void add_action(const std::wstring &path, const Hotkey &default_hotkey, const std::function<void()> &callback,
+                       const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
                        const std::function<std::wstring()> &get_display_name = {})
 {
     add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_display_name);
@@ -1008,9 +1007,8 @@ void AppActions::init()
         [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
         [] { ActionManager::notify_active_changed(FAST_FORWARD); });
-    Messenger::subscribe<Messenger::Message::CapturingChanged>([](const auto &) {
-        ActionManager::notify_enabled_changed(std::format(L"{} *", VIDEO_CAPTURE));
-    });
+    Messenger::subscribe<Messenger::Message::CapturingChanged>(
+        [](const auto &) { ActionManager::notify_enabled_changed(std::format(L"{} *", VIDEO_CAPTURE)); });
     Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
         [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
     Messenger::subscribe<Messenger::Message::MovieLoopChanged>(
@@ -1048,8 +1046,8 @@ void AppActions::add()
     add_action(SPEED_DOWN, Hotkey(VK_OEM_MINUS), speed_down, enable_when_emu_launched);
     add_action(SPEED_UP, Hotkey(VK_OEM_PLUS), speed_up, enable_when_emu_launched);
     add_action(SPEED_RESET, Hotkey(VK_OEM_PLUS, true), speed_reset, enable_when_emu_launched);
-    add_action_with_up(FAST_FORWARD, Hotkey(VK_TAB), fastforward_enable, fastforward_disable,
-                       enable_when_emu_launched, fastforward_active);
+    add_action_with_up(FAST_FORWARD, Hotkey(VK_TAB), fastforward_enable, fastforward_disable, enable_when_emu_launched,
+                       fastforward_active);
     add_action_with_up(GS_BUTTON, Hotkey('G'), gs_button_enable, gs_button_disable, enable_when_emu_launched,
                        gs_button_active);
     add_action(FRAME_ADVANCE, Hotkey(VK_OEM_5), frame_advance, enable_when_emu_launched);
@@ -1060,8 +1058,7 @@ void AppActions::add()
                enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_INCREMENT, Hotkey('E', true), multi_frame_advance_increment,
                enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey('E', true, true), multi_frame_advance_reset,
-               enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey('E', true, true), multi_frame_advance_reset, enable_when_emu_launched);
     add_action(SAVE_CURRENT_SLOT, Hotkey('I'), save_slot, enable_when_emu_launched);
     add_action(SAVE_STATE_FILE, Hotkey::make_empty(), save_state_as, enable_when_emu_launched);
     add_action(LOAD_CURRENT_SLOT, Hotkey('P'), load_slot, enable_when_emu_launched);
@@ -1088,8 +1085,8 @@ void AppActions::add()
         const auto load = [=] { do_work(core_st_job_load); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SAVE_SLOT_X, std::make_wformat_args(visual_slot)),
-                   Hotkey(save_key, false, true), save, enable_when_emu_launched);
+        add_action(std::vformat(SAVE_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(save_key, false, true), save,
+                   enable_when_emu_launched);
         add_action(std::vformat(LOAD_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(load_key), load,
                    enable_when_emu_launched);
     }
@@ -1122,8 +1119,7 @@ void AppActions::add()
                    {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
                },
                enable_when_emu_launched);
-    add_action(START_MOVIE_RECORDING, Hotkey('R', true, true), start_movie_recording,
-               enable_when_emu_launched);
+    add_action(START_MOVIE_RECORDING, Hotkey('R', true, true), start_movie_recording, enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
                std::vector<ActionManager::t_action_param>{
                    {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
@@ -1131,8 +1127,7 @@ void AppActions::add()
                    {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
                });
     add_action(START_MOVIE_PLAYBACK, Hotkey('P', true, true), start_movie_playback);
-    add_action(CONTINUE_MOVIE_RECORDING, Hotkey::make_empty(), continue_movie_recording,
-               enable_during_playback);
+    add_action(CONTINUE_MOVIE_RECORDING, Hotkey::make_empty(), continue_movie_recording, enable_during_playback);
     add_action(STOP_MOVIE, Hotkey('C', true, true), stop_movie, enable_when_emu_launched_and_vcr_active);
     add_action(CREATE_MOVIE_BACKUP, Hotkey('B', true, true), create_movie_backup,
                enable_when_emu_launched_and_vcr_active);
@@ -1166,10 +1161,8 @@ void AppActions::add()
                },
                enable_when_emu_launched);
     add_action(VIDEO_CAPTURE_START, Hotkey::make_empty(), start_capture_normal, enable_when_emu_launched);
-    add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::make_empty(), start_capture_from_preset,
-               enable_when_emu_launched);
-    add_action(VIDEO_CAPTURE_STOP, Hotkey::make_empty(), stop_capture,
-               enable_when_emu_launched_and_capturing);
+    add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::make_empty(), start_capture_from_preset, enable_when_emu_launched);
+    add_action(VIDEO_CAPTURE_STOP, Hotkey::make_empty(), stop_capture, enable_when_emu_launched_and_capturing);
     add_action(SCREENSHOT, Hotkey(VK_F12), screenshot, enable_when_emu_launched);
 
     add_action(CHECK_FOR_UPDATES, Hotkey::make_empty(), check_for_updates_manual);

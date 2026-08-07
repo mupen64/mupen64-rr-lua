@@ -10,7 +10,7 @@
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 
 namespace RomBrowser
 {

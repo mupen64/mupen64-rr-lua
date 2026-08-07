@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <Config.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <components/Statusbar.hpp>
 
 struct t_segment

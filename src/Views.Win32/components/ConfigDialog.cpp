@@ -8,7 +8,7 @@
 #include <action/ActionManager.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <capture/CaptureManager.hpp>
 #include <components/FilePicker.hpp>

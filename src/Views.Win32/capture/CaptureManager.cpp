@@ -9,7 +9,7 @@
 #include <ThreadPool.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <capture/CaptureManager.hpp>
 #include <capture/encoders/VFWEncoder.hpp>
 #include <capture/encoders/Encoder.hpp>

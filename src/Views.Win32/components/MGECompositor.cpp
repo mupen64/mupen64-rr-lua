@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <components/MGECompositor.hpp>
 #include <plugin/Plugin.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <lua/LuaCallbacks.hpp>
 
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
@@ -348,9 +348,8 @@ void MGECompositor::init()
     wndclass.lpszClassName = CONTROL_CLASS_NAME;
     RegisterClass(&wndclass);
 
-    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>([](bool value) {
-        ShowWindow(mge_context.hwnd, value && PluginUtil::mge_available() ? SW_SHOW : SW_HIDE);
-    });
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
+        [](bool value) { ShowWindow(mge_context.hwnd, value && PluginUtil::mge_available() ? SW_SHOW : SW_HIDE); });
 }
 
 void MGECompositor::update_screen()

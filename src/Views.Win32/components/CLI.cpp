@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <Config.hpp>
 #include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <ThreadPool.hpp>
 #include <argh.h>
 #include <nlohmann/json.hpp>

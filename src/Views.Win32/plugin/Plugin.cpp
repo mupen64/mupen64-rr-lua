@@ -16,7 +16,7 @@
 #include <components/Statusbar.hpp>
 #include <components/MGECompositor.hpp>
 #include <ThreadPool.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 
 ZESpec::VideoPluginInfo gfx_info{};
 ZESpec::AudioPluginInfo audio_info{};

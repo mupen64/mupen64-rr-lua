@@ -14,6 +14,7 @@ add_library(Mupen64RR.Common STATIC
     "include/FNV1A.hpp"
     "include/Hotkey.hpp"
     "include/Messenger.hpp"
+    "include/Messages.hpp"
     "Hotkey.cpp"
     "Messenger.cpp"
 )

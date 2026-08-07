@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <action/ActionManager.hpp>
 #include <action/ActionMenu.hpp>
 #include <components/ParameterPalette.hpp>

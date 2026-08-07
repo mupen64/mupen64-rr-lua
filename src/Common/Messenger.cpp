@@ -5,39 +5,46 @@
  */
 
 #include <Messenger.hpp>
+#include <atomic>
 #include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace Messenger
 {
 using AnyCallback = std::function<void(std::any)>;
 
-// Represents a subscriber to a message.
 struct Subscriber
 {
-    // A unique identifier.
     size_t uid;
-
-    // The callback function.
     AnyCallback cb;
 };
 
 struct Context
 {
-    std::vector<std::pair<Message, Subscriber>> subscribers;
+    std::vector<std::pair<detail::MessageKey, Subscriber>> subscribers;
 
-    std::unordered_map<Message, std::vector<AnyCallback>> subscriber_cache;
+    std::unordered_map<detail::MessageKey, std::vector<AnyCallback>, detail::MessageKeyHash> subscriber_cache;
 
     // UID accumulator for generating unique subscriber IDs. Only write operation is increment.
     size_t uid_accumulator{};
 
     // Whether a message is currently being broadcasted. Used to wait when subscribing.
-    std::atomic<int32_t> broadcasting{};
+    std::atomic<int32_t> broadcasting;
 
     // Whether a subscription is currently happening. Used to wait when broadcasting.
-    std::atomic<int32_t> subscribing{};
+    std::atomic<int32_t> subscribing;
 };
 
 static Context s_ctx;
+
+size_t detail::MessageKeyHash::operator()(const MessageKey &key) const
+{
+    size_t seed = std::hash<std::type_index>{}(key.type);
+    seed ^= std::hash<uint64_t>{}(key.value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed;
+}
 
 void wait_for_broadcast_end()
 {
@@ -56,21 +63,21 @@ void rebuild_subscriber_cache()
 {
     s_ctx.subscriber_cache.clear();
 
-    for (const auto &[key, func] : s_ctx.subscribers)
+    for (const auto &[key, subscriber] : s_ctx.subscribers)
     {
-        s_ctx.subscriber_cache[key].push_back(func.cb);
+        s_ctx.subscriber_cache[key].push_back(subscriber.cb);
     }
 }
 
 namespace detail
 {
-void broadcast_impl(const Message message, std::any data)
+void broadcast_impl(const MessageKey key, std::any data)
 {
     wait_for_subscribe_end();
 
     ++s_ctx.broadcasting;
 
-    for (const auto &subscriber : s_ctx.subscriber_cache[message])
+    for (const auto &subscriber : s_ctx.subscriber_cache[key])
     {
         subscriber(data);
     }
@@ -78,7 +85,7 @@ void broadcast_impl(const Message message, std::any data)
     --s_ctx.broadcasting;
 }
 
-std::function<void()> subscribe_impl(Message message, AnyCallback callback)
+std::function<void()> subscribe_impl(MessageKey key, AnyCallback callback)
 {
     wait_for_broadcast_end();
     wait_for_subscribe_end();
@@ -87,7 +94,7 @@ std::function<void()> subscribe_impl(Message message, AnyCallback callback)
 
     Subscriber subscriber = {s_ctx.uid_accumulator++, std::move(callback)};
 
-    s_ctx.subscribers.emplace_back(message, subscriber);
+    s_ctx.subscribers.emplace_back(key, subscriber);
     rebuild_subscriber_cache();
 
     --s_ctx.subscribing;

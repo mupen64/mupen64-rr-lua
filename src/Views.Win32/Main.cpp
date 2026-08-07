@@ -8,7 +8,7 @@
 #include <action/ActionManager.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <strsafe.h>
@@ -675,7 +675,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
         RECT rect{};
         GetClientRect(g_main_ctx.hwnd, &rect);
-        Messenger::broadcast<Messenger::Message::SizeChanged>(std::make_pair(rect.right - rect.left, rect.bottom - rect.top));
+        Messenger::broadcast<Messenger::Message::SizeChanged>(
+            std::make_pair(rect.right - rect.left, rect.bottom - rect.top));
 
         if (g_main_ctx.core_ctx->vr_get_launched())
         {
@@ -896,9 +897,7 @@ static core_result init_core()
     g_main_ctx.core.callbacks.emu_starting = [] { PluginUtil::start_plugins(); };
     g_main_ctx.core.callbacks.emu_stopped = [] { PluginUtil::stop_plugins(); };
     g_main_ctx.core.callbacks.emu_stopping = []() { Messenger::broadcast<Messenger::Message::EmuStopping>(); };
-    g_main_ctx.core.callbacks.reset_completed = []() {
-        Messenger::broadcast<Messenger::Message::ResetCompleted>();
-    };
+    g_main_ctx.core.callbacks.reset_completed = []() { Messenger::broadcast<Messenger::Message::ResetCompleted>(); };
     g_main_ctx.core.callbacks.speed_modifier_changed = [](int32_t value) {
         Messenger::broadcast<Messenger::Message::SpeedModifierChanged>(value);
     };
