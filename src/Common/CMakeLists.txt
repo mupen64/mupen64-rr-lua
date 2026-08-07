@@ -15,8 +15,10 @@ add_library(Mupen64RR.Common STATIC
     "include/Hotkey.hpp"
     "include/Messenger.hpp"
     "include/Messages.hpp"
+    "include/Config.hpp"
     "Hotkey.cpp"
     "Messenger.cpp"
+    "Config.cpp"
 )
 
 target_compile_features(Mupen64RR.Common PUBLIC cxx_std_23)
@@ -25,6 +27,7 @@ target_include_directories(Mupen64RR.Common PUBLIC include)
 target_link_libraries(Mupen64RR.Common PUBLIC
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
     vendor::xxhash64
+    vendor::mini
     SDL3::SDL3
 )
 
