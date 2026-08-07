@@ -14,6 +14,7 @@ add_library(Mupen64RR.Common.Views STATIC
     "include/Resampler.hpp"
     "include/Encoder.hpp"
     "include/DialogService.hpp"
+    "include/Assert.hpp"
     "Config.cpp"
     "Hotkey.cpp"
     "Messenger.cpp"

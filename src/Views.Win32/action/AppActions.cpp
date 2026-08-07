@@ -927,10 +927,10 @@ static void add_action_with_up(const std::wstring &path, const Hotkey &default_h
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    RT_ASSERT(success, std::format(L"Failed to add action for path '{}'.", path));
+    RT_ASSERT(success, std::format("Failed to add action for path '{}'.", IOUtils::to_utf8_string(path)));
 
     success = ActionManager::associate_hotkey(path, default_hotkey, false);
-    RT_ASSERT(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
+    RT_ASSERT(success, std::format("Failed to associate hotkey for path '{}'.", IOUtils::to_utf8_string(path)));
 }
 
 static void add_action(const std::wstring &path, const Hotkey &default_hotkey, const std::function<void()> &callback,
@@ -954,10 +954,10 @@ static void add_action(const std::wstring &path,
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    RT_ASSERT(success, std::format(L"Failed to add action for path '{}'.", path));
+    RT_ASSERT(success, std::format("Failed to add action for path '{}'.", IOUtils::to_utf8_string(path)));
 
     success = ActionManager::associate_hotkey(path, Hotkey::make_empty(), false);
-    RT_ASSERT(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
+    RT_ASSERT(success, std::format("Failed to associate hotkey for path '{}'.", IOUtils::to_utf8_string(path)));
 }
 
 static void generate_path_recent_menu(const std::wstring &base_path, const Hotkey &load_first_hotkey,

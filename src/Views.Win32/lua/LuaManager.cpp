@@ -12,6 +12,7 @@
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRegistry.hpp>
 #include <lua/LuaRenderer.hpp>
+#include <Assert.hpp>
 
 CoreButtons g_new_controller_data[4]{};
 bool g_overwrite_controller_data[4]{};
@@ -65,7 +66,7 @@ std::expected<t_lua_environment *, std::wstring> LuaManager::create_environment(
     const std::filesystem::path &path, const t_lua_environment::destroying_func &destroying_callback,
     const t_lua_environment::print_func &print_callback)
 {
-    RT_ASSERT(is_on_gui_thread(), L"not on GUI thread");
+    RT_ASSERT(is_on_gui_thread(), "not on GUI thread");
 
     auto lua = new t_lua_environment();
 
@@ -151,7 +152,7 @@ fail:
 
 void LuaManager::destroy_environment(t_lua_environment *lua)
 {
-    RT_ASSERT(lua && lua->L, L"LuaManager::destroy_environment: Lua environment is already destroyed");
+    RT_ASSERT(lua && lua->L, "LuaManager::destroy_environment: Lua environment is already destroyed");
 
     LuaCallbacks::invoke_callbacks_with_key(lua, LuaCallbacks::REG_ATSTOP);
 

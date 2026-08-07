@@ -7,6 +7,7 @@
 #include "Common.hpp"
 #include <lua/LuaCallbacks.hpp>
 #include <lua/LuaManager.hpp>
+#include <Assert.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \
@@ -284,7 +285,7 @@ void LuaCallbacks::call_atmouse(const LuaMouseEventArgs &args)
 bool invoke_callbacks_with_key_impl(const t_lua_environment *lua, const std::function<int(lua_State *)> &function,
                                     LuaCallbacks::callback_key key)
 {
-    RT_ASSERT(is_on_gui_thread(), L"not on GUI thread");
+    RT_ASSERT(is_on_gui_thread(), "not on GUI thread");
 
     lua_State *L = lua->L;
 

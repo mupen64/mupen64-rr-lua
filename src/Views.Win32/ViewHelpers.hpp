@@ -91,32 +91,6 @@ class WindowDisabler
         while (ComboBox_GetCount(hwnd) > 0) ComboBox_DeleteString(hwnd, 0);                                            \
     } while (0)
 
-static void runtime_assert_fail(const std::wstring &message)
-{
-#if defined(_DEBUG)
-    __debugbreak();
-#endif
-    DialogService::show_dialog(message.c_str(), L"Failed Runtime Assertion", fsvc_error);
-    std::terminate();
-}
-
-/**
- * \brief Asserts a condition at runtime.
- */
-#define RT_ASSERT(condition, message)                                                                                  \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        if (!(condition))                                                                                              \
-        {                                                                                                              \
-            runtime_assert_fail(message);                                                                              \
-        }                                                                                                              \
-    } while (0)
-
-/**
- * \brief Asserts that an HRESULT is SUCCESS at runtime.
- */
-#define RT_ASSERT_HR(hr, message) RT_ASSERT(!FAILED(hr), message)
-
 static RECT get_window_rect_client_space(HWND parent, HWND child)
 {
     RECT offset_client = {0};

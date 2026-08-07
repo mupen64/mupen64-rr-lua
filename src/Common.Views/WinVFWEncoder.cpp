@@ -5,6 +5,7 @@
  */
 
 #include <App.hpp>
+#include <Assert.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Resampler.hpp>
@@ -219,8 +220,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     if (len <= 0) return true;
 
     const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / SOUND_BUF_SIZE;
-    // FIXME
-    // RT_ASSERT(fill_percentage <= 80, L"Audio buffer overflowed");
+     RT_ASSERT(fill_percentage <= 80, "Audio buffer overflowed");
 
     memcpy(m_sound_buf + sound_buf_pos, buf, len);
     sound_buf_pos += len;
@@ -237,8 +237,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     if (resampled_len <= 0) return true;
 
-    // FIXME
-    // RT_ASSERT((resampled_len % 4) == 0, L"Resampled audio is not stereo-aligned");
+     RT_ASSERT((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
 
     BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
                                    m_resampled_sound, resampled_len, 0, NULL, NULL));

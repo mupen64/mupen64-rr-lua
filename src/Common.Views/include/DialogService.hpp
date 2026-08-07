@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+#include <m64rr/Types.hpp>
+
 /**
  * A module responsible for implementing dialog and notification-related functions.
  */

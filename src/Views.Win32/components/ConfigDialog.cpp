@@ -66,7 +66,7 @@ static double get_number_value(const t_options_item::data_variant &value)
         return std::get<double>(value);
     }
 
-    RT_ASSERT(false, L"Number option does not hold an int32_t or double value");
+    RT_ASSERT(false, "Number option does not hold an int32_t or double value");
     return 0.0;
 }
 
@@ -82,7 +82,7 @@ static t_options_item::data_variant parse_number_value(const std::wstring &text,
         return std::stod(text);
     }
 
-    RT_ASSERT(false, L"Number option does not hold an int32_t or double value");
+    RT_ASSERT(false, "Number option does not hold an int32_t or double value");
     return current;
 }
 
@@ -125,7 +125,7 @@ std::wstring t_options_item::get_value_name() const
     case Type::Folder:
         return std::get<std::wstring>(value);
     default:
-        RT_ASSERT(false, L"Unhandled option type in t_options_item::get_value_name");
+        RT_ASSERT(false, "Unhandled option type in t_options_item::get_value_name");
     }
     return L"";
 }

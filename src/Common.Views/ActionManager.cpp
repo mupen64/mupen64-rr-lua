@@ -6,6 +6,7 @@
 
 #include <ActionManager.hpp>
 #include <App.hpp>
+#include <Assert.hpp>
 #include <Messages.hpp>
 #include <microlru.h>
 #include <StrUtils.hpp>
@@ -128,7 +129,7 @@ static t_action *get_single_action_ptr_matching_path(const action_path &path)
 {
     if (path.contains(L"*"))
     {
-       g_view_logger->error(L"ActionManager::get_single_action_ptr_matching_filter: Expected path without wildcard.");
+        g_view_logger->error(L"ActionManager::get_single_action_ptr_matching_filter: Expected path without wildcard.");
         return nullptr;
     }
 
@@ -155,13 +156,13 @@ static bool validate_action_path(const std::wstring &path)
     if (path.empty())
     {
 
-         g_view_logger->error(L"Action path cannot be empty.");
+        g_view_logger->error(L"Action path cannot be empty.");
         return false;
     }
 
     if (path.find(L'>') == std::wstring::npos)
     {
-         g_view_logger->error(L"Action path must contain at least one '>'.");
+        g_view_logger->error(L"Action path must contain at least one '>'.");
         return false;
     }
 
@@ -260,14 +261,14 @@ bool ActionManager::add(const t_action_add_params &params)
 
     if (!validate_action_path(normalized_path))
     {
-         g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", normalized_path);
+        g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", normalized_path);
         return false;
     }
 
     // > If an action with the same path already exists, the operation will fail.
     if (get_single_action_ptr_matching_path(normalized_path) != nullptr)
     {
-         g_view_logger->error(L"ActionManager::add: Action with path '{}' already exists.", normalized_path);
+        g_view_logger->error(L"ActionManager::add: Action with path '{}' already exists.", normalized_path);
         return false;
     }
 
@@ -292,9 +293,9 @@ bool ActionManager::add(const t_action_add_params &params)
         // b. Check if this potential parent exists
         if (get_single_action_ptr_matching_path(segment_slice) != nullptr)
         {
-             g_view_logger->error(
-                 L"ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.",
-                 normalized_path, segment_slice);
+            g_view_logger->error(
+                L"ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.",
+                normalized_path, segment_slice);
             return false;
         }
     }
@@ -378,8 +379,8 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey &hotk
 
     const auto normalized_path = action->add_params.path;
 
-    // RT_ASSERT(g_config.hotkeys.contains(normalized_path) && g_config.inital_hotkeys.contains(normalized_path),
-    //     L"Action didn't have a hotkey entry.");
+    RT_ASSERT(g_config.hotkeys.contains(normalized_path) && g_config.inital_hotkeys.contains(normalized_path),
+              "Action didn't have a hotkey entry.");
 
     const bool has_assignment = g_config.hotkeys.at(normalized_path).is_assigned();
 
@@ -483,7 +484,8 @@ bool ActionManager::get_activatability(const action_path &path)
     t_action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
-    { g_view_logger->error(L"ActionManager::get_action_activatability: '{}' didn't resolve to an action", path);
+    {
+        g_view_logger->error(L"ActionManager::get_action_activatability: '{}' didn't resolve to an action", path);
         return false;
     }
 
@@ -495,7 +497,8 @@ std::vector<t_action_param> ActionManager::get_params(const action_path &path)
     t_action *action = get_single_action_ptr_matching_path(path);
 
     if (!action)
-    { g_view_logger->error(L"ActionManager::get_params: '{}' didn't resolve to an action", path);
+    {
+        g_view_logger->error(L"ActionManager::get_params: '{}' didn't resolve to an action", path);
         return {};
     }
 
@@ -611,8 +614,8 @@ static bool validate_params(const t_action &action, const action_argument_map &p
 
         if (!params.contains(param.key))
         {
-             g_view_logger->error(L"ActionManager::validate_params: Action '{}' missing parameter '{}'.",
-                                  action.add_params.path, param.key);
+            g_view_logger->error(L"ActionManager::validate_params: Action '{}' missing parameter '{}'.",
+                                 action.add_params.path, param.key);
             return false;
         }
 
@@ -639,7 +642,7 @@ void ActionManager::invoke(const action_path &path, const bool up, const bool re
     if (!action)
     {
 
-         g_view_logger->error(L"ActionManager::invoke: '{}' didn't resolve to an action", path);
+        g_view_logger->error(L"ActionManager::invoke: '{}' didn't resolve to an action", path);
         return;
     }
 

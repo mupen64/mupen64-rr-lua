@@ -5,6 +5,7 @@
  */
 
 #include <App.hpp>
+#include <Assert.hpp>
 #include <WinFFmpegEncoder.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>

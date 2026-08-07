@@ -13,6 +13,7 @@
 #include <components/Statusbar.hpp>
 #include <plugin/Plugin.hpp>
 #include <plugin/ZEPlugin.hpp>
+#include <Assert.hpp>
 
 ZESpec::VideoPluginInfo dummy_video_info{};
 ZESpec::AudioPluginInfo dummy_audio_info{};
@@ -529,7 +530,7 @@ void ZEPlugin::initiate_dummy()
         break;
     }
     default:
-        RT_ASSERT(false, L"Unknown plugin type");
+        RT_ASSERT(false, "Unknown plugin type");
     }
 }
 

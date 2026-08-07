@@ -389,9 +389,9 @@ void PluginUtil::initiate_plugins()
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
 {
     const auto copy = [&](const std::shared_ptr<Plugin> &plugin, char *type) {
-        RT_ASSERT(plugin.get(), L"Plugin not loaded");
+        RT_ASSERT(plugin.get(), "Plugin not loaded");
         const auto result = strncpy_s(type, 64 - 1, plugin->name().c_str(), plugin->name().size());
-        RT_ASSERT(!result, L"Plugin name copy failed");
+        RT_ASSERT(!result, "Plugin name copy failed");
     };
 
     copy(video_plugin, video);

@@ -277,7 +277,7 @@ void ParameterPalette::show(const ActionManager::action_path &action_path)
     if (!g_ctx.dlg_template)
     {
         const auto result = load_resource_as_dialog_template(IDD_PARAMETER_PALETTE, &g_ctx.dlg_template);
-        RT_ASSERT(result, L"Failed to load parameter palette dialog template");
+        RT_ASSERT(result, "Failed to load parameter palette dialog template");
     }
 
     const HWND hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PARAMETER_PALETTE), g_main_ctx.hwnd, dlgproc);
