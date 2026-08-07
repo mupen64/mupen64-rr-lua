@@ -85,8 +85,7 @@ void MGECompositor::create(HWND hwnd)
 
 void MGECompositor::init()
 {
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const std::any &data) {
-        const auto value = std::any_cast<bool>(data);
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>([](bool value) {
         const auto visible = value && PluginUtil::mge_available();
         set_overlay_visibility(visible);
     });

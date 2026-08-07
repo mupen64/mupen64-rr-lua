@@ -46,6 +46,20 @@ const std::vector<std::pair<uint8_t, std::wstring>> FILTER_NAMES = {
     {2, L"Always Pixelated"},
 };
 
+const std::vector<std::wstring> ASPECT_MODE_NAMES = {
+    L"Pillarbox",
+    L"Stretch",
+    L"Widescreen",
+};
+
+constexpr AspectMode DEFAULT_ASPECT_MODE = AspectMode::Widescreen;
+
+static AspectMode to_aspect_mode(int value)
+{
+    if (value < 0 || value >= (int)ASPECT_MODE_NAMES.size()) return DEFAULT_ASPECT_MODE;
+    return (AspectMode)value;
+}
+
 static std::optional<ResolutionPreset> get_preset_by_resolution(uint32_t width, uint32_t height)
 {
     for (const auto &preset : RESOLUTION_PRESETS)
@@ -73,6 +87,7 @@ static void Config_SetDefaults()
     cache.maxBytes = 32 * 1048576;
     OGL.textureFilter = TextureFilter::None;
     OGL.usePolygonStipple = FALSE;
+    OGL.aspectMode = DEFAULT_ASPECT_MODE;
 }
 
 void Config_LoadConfig()
@@ -103,10 +118,11 @@ void Config_LoadConfig()
         OGL.usePolygonStipple = j["dithered_alpha_testing"];
         OGL.ignoreScissor = j["ignore_scissor"];
         OGL.clear_override = j["clear_override"];
+        OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)DEFAULT_ASPECT_MODE));
     }
     catch (const std::exception &e)
     {
-        g_plugin->log_warn(L"Config load failed, using defaults...");
+        g_plugin->log_warn("Config load failed, using defaults...");
         Config_SetDefaults();
     }
 }
@@ -125,6 +141,7 @@ void Config_SaveConfig()
         {"dithered_alpha_testing", (bool)OGL.usePolygonStipple},
         {"ignore_scissor", (bool)OGL.ignoreScissor},
         {"clear_override", (bool)OGL.clear_override},
+        {"aspect_mode", (int)OGL.aspectMode},
     });
 
     std::ofstream ofs(get_config_path());
@@ -158,6 +175,7 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.windowedHeight = _wtoi(val);
 
     OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
+    OGL.aspectMode = to_aspect_mode(ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT)));
 
     OGL.usePolygonStipple = (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
@@ -212,6 +230,12 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
             ComboBox_AddString(GetDlgItem(hWndDlg, IDC_SMOOTHING), filter.second.c_str());
         }
         ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING), (int)OGL.smoothing);
+
+        for (const auto &aspect_mode : ASPECT_MODE_NAMES)
+        {
+            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_ASPECT), aspect_mode.c_str());
+        }
+        ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT), (int)OGL.aspectMode);
 
         select_resolution_in_combobox(cb_hwnd, OGL.windowedWidth, OGL.windowedHeight);
 

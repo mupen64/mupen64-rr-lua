@@ -85,14 +85,14 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Audio;
 
-    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
+    const auto name = PLUGIN_NAME;
     const auto description = "First-party TAS plugin for Mupen64."
                              "\n"
                              "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
                              "to one version of the emulator."
                              "\n\n"
                              "https://mupen64.com";
-    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+    const auto target_version = CURRENT_VERSION;
 
     auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
     metadata->name[result.size] = '\0';
@@ -119,8 +119,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         }
         catch (std::exception &e)
         {
-            g_plugin->log_error(
-                IOUtils::to_wide_string(std::format("Exception at InitiateAudio(): {}", e.what())).c_str());
+            g_plugin->log_error(std::format("Exception at InitiateAudio(): {}", e.what()).c_str());
         }
         break;
     }
@@ -144,8 +143,7 @@ EXPORT void CALL M64RRAIDacrateChanged(CoreSystemType system_type)
     }
     catch (std::exception &e)
     {
-        g_plugin->log_error(
-            IOUtils::to_wide_string(std::format("Exception at AiDacrateChanged(): {}", e.what())).c_str());
+        g_plugin->log_error(std::format("Exception at AiDacrateChanged(): {}", e.what()).c_str());
     }
 }
 
@@ -166,6 +164,6 @@ EXPORT void CALL M64RRAILenChanged()
     }
     catch (std::exception &e)
     {
-        g_plugin->log_error(IOUtils::to_wide_string(std::format("Exception at AiLenChanged(): {}", e.what())).c_str());
+        g_plugin->log_error(std::format("Exception at AiLenChanged(): {}", e.what()).c_str());
     }
 }

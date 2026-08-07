@@ -51,12 +51,12 @@ struct Status
     /**
      * \brief The current internal input state before any processing
      */
-    M64RRSpec::Buttons current_input{};
+    CoreButtons current_input{};
 
     /**
      * \brief The internal input state at the previous GetKeys call before any processing
      */
-    M64RRSpec::Buttons last_controller_input{};
+    CoreButtons last_controller_input{};
 
     /**
      * \brief Ignores the next joystick increment, used for relative mode tracking
@@ -95,7 +95,7 @@ struct Status
 
     struct t_set_visuals_request
     {
-        M64RRSpec::Buttons input;
+        CoreButtons input;
         bool needs_processing;
     };
 
@@ -106,8 +106,8 @@ struct Status
 
     bool last_lmb_down{};
     bool last_rmb_down{};
-    M64RRSpec::Buttons autofire_input_a{};
-    M64RRSpec::Buttons autofire_input_b{};
+    CoreButtons autofire_input_a{};
+    CoreButtons autofire_input_b{};
     bool ready;
     HWND hwnd{};
     HWND combos_hwnd{};
@@ -143,7 +143,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals(M64RRSpec::Buttons input, bool needs_processing = true);
+    void set_visuals(CoreButtons input, bool needs_processing = true);
 
     /**
      * \brief Queues the UI to be updated at the next possible opportunity. Doesn't block the caller until the UI has
@@ -151,7 +151,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals_lazy(M64RRSpec::Buttons input, bool needs_processing = true);
+    void set_visuals_lazy(CoreButtons input, bool needs_processing = true);
 
     void set_visuals_if_needed();
 
@@ -160,7 +160,7 @@ struct Status
      * \param input The input to process
      * \return The processed input
      */
-    M64RRSpec::Buttons get_processed_input(M64RRSpec::Buttons input);
+    CoreButtons get_processed_input(CoreButtons input);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -169,7 +169,7 @@ struct Status
 
     void on_config_changed();
 
-    void get_input(M64RRSpec::Buttons *keys);
+    void get_input(CoreButtons *keys);
 };
 
 static ULONG_PTR gdi_plus_token{};
@@ -241,7 +241,7 @@ apply:
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-void Status::get_input(M64RRSpec::Buttons *keys)
+void Status::get_input(CoreButtons *keys)
 {
     keys->value = get_processed_input(current_input).value;
 
@@ -281,7 +281,7 @@ end:
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
 }
 
-M64RRSpec::Buttons Status::get_processed_input(M64RRSpec::Buttons input)
+CoreButtons Status::get_processed_input(CoreButtons input)
 {
     input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
@@ -310,7 +310,7 @@ void Status::activate_emulator_window()
     SetForegroundWindow(g_plugin->main_window.hwnd());
 }
 
-void Status::set_visuals(M64RRSpec::Buttons input, bool needs_processing)
+void Status::set_visuals(CoreButtons input, bool needs_processing)
 {
     if (needs_processing)
     {
@@ -346,7 +346,7 @@ void Status::set_visuals(M64RRSpec::Buttons input, bool needs_processing)
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
 }
 
-void Status::set_visuals_lazy(M64RRSpec::Buttons input, bool needs_processing)
+void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 {
     std::lock_guard lock(pending_visuals_mutex);
     pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
@@ -661,7 +661,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_TIMER: {
         ctx->set_visuals_if_needed();
 
-        M64RRSpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
+        CoreButtons controller_input = GamepadManager::get_input(ctx->controller_index);
 
         if (controller_input.value != ctx->last_controller_input.value)
         {
@@ -788,7 +788,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     }
     break;
     case WM_UPDATE_VISUALS:
-        ctx->set_visuals(static_cast<M64RRSpec::Buttons>(lparam), false);
+        ctx->set_visuals(static_cast<CoreButtons>(lparam), false);
         break;
     case WM_SIZE:
     case WM_MOVE: {
@@ -808,7 +808,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            M64RRSpec::Buttons last_input = ctx->current_input;
+            CoreButtons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -832,7 +832,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            M64RRSpec::Buttons last_input = ctx->current_input;
+            CoreButtons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -1071,12 +1071,12 @@ void Status::end_edit(int id, wchar_t *name)
 
 void Status::save_combos()
 {
-    const auto path = _T("combos.cmb");
+    const auto path = std::filesystem::path("combos.cmb");
 
-    g_plugin->log_trace(std::format(L"Saving combos to {}...", path).c_str());
+    g_plugin->log_trace(std::format("Saving combos to {}...", path.string()).c_str());
 
     FILE *f{};
-    if (_tfopen_s(&f, path, _T("wb")))
+    if (IOUtils::path_fopen_s(f, path, "wb"))
     {
         return;
     }
@@ -1090,12 +1090,12 @@ void Status::save_combos()
 
 void Status::load_combos(const std::filesystem::path &path)
 {
-    g_plugin->log_trace(std::format(L"Loading combos from {}...", path.c_str()).c_str());
+    g_plugin->log_trace(std::format("Loading combos from {}...", path.string()).c_str());
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
     {
-        g_plugin->log_error(L"read_file_buffer failed");
+        g_plugin->log_error("read_file_buffer failed");
         return;
     }
 
@@ -1225,14 +1225,14 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Input;
 
-    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
+    const auto name = PLUGIN_NAME;
     const auto description = "First-party TAS plugin for Mupen64."
                              "\n"
                              "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
                              "to one version of the emulator."
                              "\n\n"
                              "https://mupen64.com";
-    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+    const auto target_version = CURRENT_VERSION;
 
     auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
     metadata->name[result.size] = '\0';
@@ -1255,11 +1255,10 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         {
             g_plugin->controllers[i].present = new_config.controller_active[i];
             g_plugin->controllers[i].raw = false;
-            g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::None;
-            if (new_config.controller_mempak[i])
-                g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::Mempak;
+            g_plugin->controllers[i].plugin = CoreControllerExtension::None;
+            if (new_config.controller_mempak[i]) g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
             if (new_config.controller_rumblepak[i])
-                g_plugin->controllers[i].plugin = M64RRSpec::ControllerExtension::Rumblepak;
+                g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
         }
         break;
     }
@@ -1317,7 +1316,7 @@ EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
     }
 }
 
-EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
+EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
     attach_event_watch();
     ConfigDialog::show(parent_window.hwnd());
@@ -1325,7 +1324,7 @@ EXPORT void CALL M64RRRShowConfig(WindowHandle parent_window)
     // TODO: Do we have to restart the dialogs here like in old version?
 }
 
-EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons)
+EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons)
 {
     if (new_frame)
     {
@@ -1336,7 +1335,7 @@ EXPORT void CALL M64RRGetKeys(uint8_t index, Buttons *buttons)
     status[index].get_input(buttons);
 }
 
-EXPORT void CALL M64RRSetKeys(uint8_t index, const Buttons *buttons)
+EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons)
 {
-    status[index].set_visuals_lazy(*buttons, false);
+    status[index].set_visuals_lazy(buttons, false);
 }

@@ -10,7 +10,7 @@
 #include <m64rr/Plugin.hpp>
 #include <VersionNameHelpers.hpp>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Audio")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Audio")
 
 extern M64RRSpec::PluginInit *g_plugin;
 extern std::filesystem::path g_dll_path;

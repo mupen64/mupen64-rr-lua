@@ -21,6 +21,13 @@ struct GLVertex
     float fog;
 };
 
+enum class AspectMode : uint8_t
+{
+    Pillarbox = 0,
+    Stretch = 1,
+    Widescreen = 2,
+};
+
 struct GLInfo
 {
     BOOL context_initialized;
@@ -30,9 +37,11 @@ struct GLInfo
     BOOL fog;
 
     float scaleX, scaleY;
+    AspectMode aspectMode;
     BOOL adjustScreen;
     float adjustScale;
     float adjustOffset;
+    float widescreenScale = 1.0f;
 
     BOOL EXT_fog_coord;           // TNT, GeForce, Rage 128, Radeon
     BOOL EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon

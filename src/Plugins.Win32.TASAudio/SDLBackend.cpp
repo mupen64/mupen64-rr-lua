@@ -21,6 +21,8 @@ namespace SDLAudio
 {
 SDLBackend::SDLBackend(Config &&config) : m_config(config)
 {
+    // SDL ref-counts inits/quits, so this has no performance impact whatsoever
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) throw std::runtime_error(SDL_GetError());
 
     // request default audio settings
     m_device_id = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
@@ -40,7 +42,7 @@ SDLBackend::SDLBackend(Config &&config) : m_config(config)
     if (!m_stream) throw std::runtime_error(SDL_GetError());
     if (!SDL_BindAudioStream(m_device_id, m_stream)) throw std::runtime_error(SDL_GetError());
 
-    g_plugin->log_info(std::format(L"Opened default audio device, buffer size = {}, target = {}", m_buffer_size,
+    g_plugin->log_info(std::format("Opened default audio device, buffer size = {}, target = {}", m_buffer_size,
                                    config.src_buffer_target)
                            .c_str());
 
@@ -85,6 +87,9 @@ SDLBackend::~SDLBackend()
 {
     SDL_DestroyAudioStream(m_stream);
     SDL_CloseAudioDevice(m_device_id);
+
+    // SDL ref-counts inits/quits, so this has no performance impact whatsoever
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 void SDLBackend::merge_cfg_live(const Config &config2)

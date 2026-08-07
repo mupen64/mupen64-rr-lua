@@ -8,6 +8,8 @@
 
 #include "Config.hpp"
 
+#include <windows.h>
+
 namespace SDLAudio
 {
 // Displays a Win32 dialog box for the provided config object.

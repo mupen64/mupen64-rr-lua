@@ -27,6 +27,9 @@ if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
 
+# This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.
+set(MUPEN64RR_BUILD_CLI OFF CACHE BOOL "If on, enables the CLI view (primarily for testing)")
+
 # Basic checks and setup
 # ===========================================
 
@@ -73,13 +76,14 @@ find_package(PkgConfig REQUIRED)
 # Core cross-platform dependencies
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
-if (NOT WIN32)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+if(NOT WIN32)
   pkg_check_modules(libsafec IMPORTED_TARGET GLOBAL "libsafec")
 endif()
 
 # Windows-only dependencies
 if(MUPEN64RR_BUILD_WIN32)
-  find_package(nlohmann_json CONFIG REQUIRED)
   find_package(spdlog CONFIG REQUIRED)
   find_package(glew CONFIG REQUIRED)
   find_package(SDL3 CONFIG REQUIRED)
@@ -105,17 +109,18 @@ endif()
 Copies all vcpkg dependencies into the target's folder.
 ]=======================]
 function(mupen64rr_copy_vcpkg_deps target)
-  if (MUPEN64RR_LINK_STATIC)
+  if(MUPEN64RR_LINK_STATIC)
     return()
   endif()
-  if (NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND DEFINED VCPKG_INSTALLED_DIR))
+
+  if(NOT(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND DEFINED VCPKG_INSTALLED_DIR))
     return()
   endif()
 
   add_custom_command(
     TARGET "${target}" POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_directory
-      "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin" "$<TARGET_FILE_DIR:${target}>"
+    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin" "$<TARGET_FILE_DIR:${target}>"
     VERBATIM
   )
 endfunction()
@@ -138,10 +143,10 @@ function(mupen64rr_copy_mingw_runtime target)
   add_custom_command(
     TARGET "${target}" POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-      "${_mingw_bindir}/libgcc_s_seh-1.dll"
-      "${_mingw_bindir}/libstdc++-6.dll"
-      "${_mingw_bindir}/libwinpthread-1.dll"
-      "$<TARGET_FILE_DIR:${target}>"
+    "${_mingw_bindir}/libgcc_s_seh-1.dll"
+    "${_mingw_bindir}/libstdc++-6.dll"
+    "${_mingw_bindir}/libwinpthread-1.dll"
+    "$<TARGET_FILE_DIR:${target}>"
     VERBATIM
   )
 endfunction()

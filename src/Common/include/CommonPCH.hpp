@@ -47,7 +47,6 @@
 #include <variant>
 #include <vector>
 #include <latch>
-#include <share.h>
 #if !defined(_WIN32)
 // Implementation of C11 Annex K for Linux
 #include <safe_str_lib.h>

@@ -266,7 +266,7 @@ bool stop_capture_impl()
     g_config.core.render_throttling = true;
     g_main_ctx.core_ctx->vr_on_render_throttling_changed();
 
-    Messenger::broadcast(Messenger::Message::CapturingChanged, false);
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(false);
 
     g_view_logger->info("[CaptureManager]: Capture finished.");
     return true;
@@ -342,7 +342,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
     g_config.core.render_throttling = false;
     g_main_ctx.core_ctx->vr_on_render_throttling_changed();
 
-    Messenger::broadcast(Messenger::Message::CapturingChanged, true);
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(true);
 
     return true;
 }
@@ -435,10 +435,8 @@ void ai_len_changed()
     }
 }
 
-void ai_dacrate_changed(std::any data)
+void ai_dacrate_changed(CoreSystemType type)
 {
-    auto type = std::any_cast<CoreSystemType>(data);
-
     m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
 
     switch (type)
@@ -471,11 +469,9 @@ bool is_capturing()
     return m_capturing;
 }
 
-void core_executing_changed(const std::any &data)
+void core_executing_changed(bool value)
 {
     std::lock_guard lock(m_mutex);
-
-    auto value = std::any_cast<bool>(data);
 
     if (!value || !m_capturing) return;
 
@@ -492,7 +488,7 @@ void core_executing_changed(const std::any &data)
 
 void init()
 {
-    Messenger::subscribe(Messenger::Message::DacrateChanged, ai_dacrate_changed);
-    Messenger::subscribe(Messenger::Message::CoreExecutingChanged, core_executing_changed);
+    Messenger::subscribe<Messenger::Message::DacrateChanged>(ai_dacrate_changed);
+    Messenger::subscribe<Messenger::Message::CoreExecutingChanged>(core_executing_changed);
 }
 } // namespace CaptureManager

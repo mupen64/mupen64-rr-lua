@@ -7,7 +7,7 @@
 #include <CommonPCH.hpp>
 #include <DummyPluginStub.hpp>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Input")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("No Input")
 
 DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Input)
 
@@ -22,7 +22,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         {
             controllers[i].present = 0;
             controllers[i].raw = 0;
-            controllers[i].plugin = M64RRSpec::ControllerExtension::None;
+            controllers[i].plugin = CoreControllerExtension::None;
         }
 
         controllers[0].present = 1;

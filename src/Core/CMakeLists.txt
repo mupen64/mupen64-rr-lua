@@ -9,10 +9,7 @@ add_library(Mupen64RR.Core.Headers INTERFACE
     "include/m64rr/Plugin.hpp"
     "include/m64rr/Types.hpp"
 )
-set_target_properties(Mupen64RR.Core.Headers PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-)
+target_compile_features(Mupen64RR.Core.Headers INTERFACE cxx_std_23)
 target_include_directories(Mupen64RR.Core.Headers INTERFACE "include")
 target_link_libraries(Mupen64RR.Core.Headers INTERFACE Mupen64RR.Common)
 
@@ -79,9 +76,8 @@ add_library(Mupen64RR.Core STATIC
 
     "R4300/VCR.cpp"
 )
+target_compile_features(Mupen64RR.Core PUBLIC cxx_std_23)
 set_target_properties(Mupen64RR.Core PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
     OUTPUT_NAME Core
 )
 target_include_directories(Mupen64RR.Core PUBLIC "include")
@@ -101,9 +97,7 @@ endif()
 # options: disable dynarec
 if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
-
-    # Select the dynarec backend by target architecture. The dynarec is
-    # x86-only, so error out on anything else:
+    # Select the dynarec backend by target architecture.
     #   x86-64 -> R4300/x86_64 (x86-64 recompiler)
     #   x86    -> R4300/x86 (original x86-32 recompiler)
     if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(AMD64|x86_64)$")

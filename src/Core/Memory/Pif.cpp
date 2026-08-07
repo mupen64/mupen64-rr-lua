@@ -136,7 +136,7 @@ void internal_ReadController(int32_t Control, uint8_t *Command)
     switch (Command[2])
     {
     case 1:
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
             cht_execute();
 
@@ -149,9 +149,9 @@ void internal_ReadController(int32_t Control, uint8_t *Command)
         break;
     case 2: // read controller pack
     case 3: // write controller pack
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
-            if (g_core->controls[Control].Plugin == CoreControllerExtension::Raw && g_core->input_controller_command)
+            if (g_core->controls[Control].plugin == CoreControllerExtension::Raw && g_core->input_controller_command)
                 g_core->input_read_controller(Control, Command);
         }
         break;
@@ -165,11 +165,11 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
     case 0x00: // check
     case 0xFF:
         if ((Command[1] & 0x80)) break;
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
             Command[3] = 0x05;
             Command[4] = 0x00;
-            switch (g_core->controls[Control].Plugin)
+            switch (g_core->controls[Control].plugin)
             {
             case CoreControllerExtension::Mempak:
                 Command[5] = 1;
@@ -186,12 +186,12 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
             Command[1] |= 0x80;
         break;
     case 0x01:
-        if (!g_core->controls[Control].Present) Command[1] |= 0x80;
+        if (!g_core->controls[Control].present) Command[1] |= 0x80;
         break;
     case 0x02: // read controller pack
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
-            switch (g_core->controls[Control].Plugin)
+            switch (g_core->controls[Control].plugin)
             {
             case CoreControllerExtension::Mempak: {
                 int32_t address = (Command[3] << 8) | Command[4];
@@ -233,9 +233,9 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
             Command[1] |= 0x80;
         break;
     case 0x03: // write controller pack
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
-            switch (g_core->controls[Control].Plugin)
+            switch (g_core->controls[Control].plugin)
             {
             case CoreControllerExtension::Mempak: {
                 int32_t address = (Command[3] << 8) | Command[4];
@@ -353,7 +353,7 @@ void update_pif_write()
                         break;
                     }
 
-                    if (g_core->controls[channel].Present && g_core->controls[channel].RawData)
+                    if (g_core->controls[channel].present && g_core->controls[channel].raw)
                         g_core->input_controller_command(channel, &PIF_RAMb[i]);
                     else
                         internal_ControllerCommand(channel, &PIF_RAMb[i]);
@@ -507,7 +507,7 @@ void update_pif_read()
 
                     // we handle raw data-mode controllers here:
                     // this is incompatible with VCR!
-                    if (g_core->controls[channel].Present && g_core->controls[channel].RawData &&
+                    if (g_core->controls[channel].present && g_core->controls[channel].raw &&
                         g_ctx.vcr_get_task() == task_idle)
                     {
                         g_core->input_read_controller(channel, &PIF_RAMb[i]);

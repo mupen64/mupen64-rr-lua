@@ -305,19 +305,17 @@ static void update_titlebar()
 
 #pragma region Change notifications
 
-void on_script_started(std::any data)
+void on_script_started(std::filesystem::path value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<std::filesystem::path>(data);
         RecentMenu::add(AppActions::RECENT_SCRIPTS, g_config.recent_lua_script_paths, value.wstring(),
                         g_config.is_recent_scripts_frozen);
     });
 }
 
-void on_task_changed(std::any data)
+void on_task_changed(core_vcr_task value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<core_vcr_task>(data);
         static auto previous_value = value;
         if (!vcr_is_task_recording(value) && vcr_is_task_recording(previous_value))
         {
@@ -341,7 +339,7 @@ void on_task_changed(std::any data)
     });
 }
 
-void on_emu_stopping(std::any)
+void on_emu_stopping()
 {
     g_main_ctx.dispatcher->invoke([] {
         LuaDialog::store_running_scripts();
@@ -349,10 +347,9 @@ void on_emu_stopping(std::any)
     });
 }
 
-void on_emu_launched_changed(std::any data)
+void on_emu_launched_changed(bool value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<bool>(data);
         static auto previous_value = value;
 
         const auto window_style = GetWindowLong(g_main_ctx.hwnd, GWL_STYLE);
@@ -397,11 +394,9 @@ void on_emu_launched_changed(std::any data)
     });
 }
 
-void on_capturing_changed(std::any data)
+void on_capturing_changed(bool value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<bool>(data);
-
         if (value)
         {
             SetWindowLong(g_main_ctx.hwnd, GWL_STYLE, GetWindowLong(g_main_ctx.hwnd, GWL_STYLE) & ~WS_MINIMIZEBOX);
@@ -420,10 +415,8 @@ void on_capturing_changed(std::any data)
     });
 }
 
-void on_speed_modifier_changed(std::any data)
+void on_speed_modifier_changed(int32_t value)
 {
-    auto value = std::any_cast<int32_t>(data);
-
     const auto vis_per_second =
         g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
     const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
@@ -431,12 +424,12 @@ void on_speed_modifier_changed(std::any data)
     Statusbar::post(std::format(L"Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
 }
 
-void on_emu_paused_changed(std::any data)
+void on_emu_paused_changed(bool)
 {
     g_frame_changed = true;
 }
 
-void on_vis_since_input_poll_exceeded(std::any)
+void on_vis_since_input_poll_exceeded()
 {
     if (g_vis_since_input_poll_warning_dismissed)
     {
@@ -457,13 +450,12 @@ void on_vis_since_input_poll_exceeded(std::any)
     g_vis_since_input_poll_warning_dismissed = true;
 }
 
-void on_movie_loop_changed(std::any data)
+void on_movie_loop_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
 }
 
-void on_config_loaded(std::any)
+void on_config_loaded()
 {
     RomBrowser::build();
 
@@ -482,20 +474,19 @@ void on_config_loaded(std::any)
     WinDarkMode::set(theme);
 }
 
-void on_seek_completed(std::any)
+void on_seek_completed()
 {
     LuaCallbacks::call_seek_completed();
 }
 
-void on_warp_modify_status_changed(std::any data)
+void on_warp_modify_status_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     LuaCallbacks::call_warp_modify_status_changed(value);
 }
 
-void on_emu_starting_changed(std::any data)
+void on_emu_starting_changed(bool value)
 {
-    g_emu_starting = std::any_cast<bool>(data);
+    g_emu_starting = value;
     update_titlebar();
 }
 
@@ -590,7 +581,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         else if (extension == ".m64")
         {
             g_config.core.vcr_readonly = true;
-            Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
+            Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
             ThreadPool::submit_task([fname] {
                 auto result = g_main_ctx.core_ctx->vcr_start_playback(fname);
                 CoreUtils::show_error_dialog_for_result(result);
@@ -676,7 +667,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_config.window_x = rect.left;
         g_config.window_y = rect.top;
 
-        Messenger::broadcast(Messenger::Message::MainWindowMoved, nullptr);
+        Messenger::broadcast<Messenger::Message::MainWindowMoved>();
 
         break;
     }
@@ -684,7 +675,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
         RECT rect{};
         GetClientRect(g_main_ctx.hwnd, &rect);
-        Messenger::broadcast(Messenger::Message::SizeChanged, rect);
+        Messenger::broadcast<Messenger::Message::SizeChanged>(std::make_pair(rect.right - rect.left, rect.bottom - rect.top));
 
         if (g_main_ctx.core_ctx->vr_get_launched())
         {
@@ -887,60 +878,60 @@ static core_result init_core()
     g_main_ctx.core.callbacks.load_state = LuaCallbacks::call_load_state;
     g_main_ctx.core.callbacks.reset = LuaCallbacks::call_reset;
     g_main_ctx.core.callbacks.seek_completed = [] {
-        Messenger::broadcast(Messenger::Message::SeekCompleted, nullptr);
+        Messenger::broadcast<Messenger::Message::SeekCompleted>();
         LuaCallbacks::call_seek_completed();
     };
     g_main_ctx.core.callbacks.core_executing_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::CoreExecutingChanged, value);
+        Messenger::broadcast<Messenger::Message::CoreExecutingChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_paused_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::EmuPausedChanged, value);
+        Messenger::broadcast<Messenger::Message::EmuPausedChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_launched_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::EmuLaunchedChanged, value);
+        Messenger::broadcast<Messenger::Message::EmuLaunchedChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_starting_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::EmuStartingChanged, value);
+        Messenger::broadcast<Messenger::Message::EmuStartingChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_starting = [] { PluginUtil::start_plugins(); };
     g_main_ctx.core.callbacks.emu_stopped = [] { PluginUtil::stop_plugins(); };
-    g_main_ctx.core.callbacks.emu_stopping = []() { Messenger::broadcast(Messenger::Message::EmuStopping, nullptr); };
+    g_main_ctx.core.callbacks.emu_stopping = []() { Messenger::broadcast<Messenger::Message::EmuStopping>(); };
     g_main_ctx.core.callbacks.reset_completed = []() {
-        Messenger::broadcast(Messenger::Message::ResetCompleted, nullptr);
+        Messenger::broadcast<Messenger::Message::ResetCompleted>();
     };
     g_main_ctx.core.callbacks.speed_modifier_changed = [](int32_t value) {
-        Messenger::broadcast(Messenger::Message::SpeedModifierChanged, value);
+        Messenger::broadcast<Messenger::Message::SpeedModifierChanged>(value);
     };
     g_main_ctx.core.callbacks.warp_modify_status_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::WarpModifyStatusChanged, value);
+        Messenger::broadcast<Messenger::Message::WarpModifyStatusChanged>(value);
     };
     g_main_ctx.core.callbacks.current_sample_changed = [](int32_t value) {
-        Messenger::broadcast(Messenger::Message::CurrentSampleChanged, value);
+        Messenger::broadcast<Messenger::Message::CurrentSampleChanged>(value);
     };
     g_main_ctx.core.callbacks.task_changed = [](core_vcr_task value) {
-        Messenger::broadcast(Messenger::Message::TaskChanged, value);
+        Messenger::broadcast<Messenger::Message::TaskChanged>(value);
     };
     g_main_ctx.core.callbacks.rerecords_changed = [](uint64_t value) {
-        Messenger::broadcast(Messenger::Message::RerecordsChanged, value);
+        Messenger::broadcast<Messenger::Message::RerecordsChanged>(value);
     };
     g_main_ctx.core.callbacks.unfreeze_completed = []() {
-        Messenger::broadcast(Messenger::Message::UnfreezeCompleted, nullptr);
+        Messenger::broadcast<Messenger::Message::UnfreezeCompleted>();
     };
     g_main_ctx.core.callbacks.seek_savestate_changed = [](size_t value) {
-        Messenger::broadcast(Messenger::Message::SeekSavestateChanged, value);
+        Messenger::broadcast<Messenger::Message::SeekSavestateChanged>(value);
     };
     g_main_ctx.core.callbacks.readonly_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::ReadonlyChanged, value);
+        Messenger::broadcast<Messenger::Message::ReadonlyChanged>(value);
     };
     g_main_ctx.core.callbacks.dacrate_changed = [](CoreSystemType value) {
-        Messenger::broadcast(Messenger::Message::DacrateChanged, value);
+        Messenger::broadcast<Messenger::Message::DacrateChanged>(value);
     };
 
     g_main_ctx.core.callbacks.lag_limit_exceeded = []() {
-        Messenger::broadcast(Messenger::Message::LagLimitExceeded, nullptr);
+        Messenger::broadcast<Messenger::Message::LagLimitExceeded>();
     };
     g_main_ctx.core.callbacks.seek_status_changed = []() {
-        Messenger::broadcast(Messenger::Message::SeekStatusChanged, nullptr);
+        Messenger::broadcast<Messenger::Message::SeekStatusChanged>();
     };
     g_main_ctx.core.log_trace = [](std::string_view str) { g_core_logger->trace(str); };
     g_main_ctx.core.log_info = [](std::string_view str) { g_core_logger->info(str); };
@@ -1237,35 +1228,34 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
                    NULL);
     ShowWindow(g_main_ctx.hwnd, nShowCmd);
 
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, on_emu_launched_changed);
-    Messenger::subscribe(Messenger::Message::EmuStopping, on_emu_stopping);
-    Messenger::subscribe(Messenger::Message::EmuPausedChanged, on_emu_paused_changed);
-    Messenger::subscribe(Messenger::Message::CapturingChanged, on_capturing_changed);
-    Messenger::subscribe(Messenger::Message::MovieLoopChanged, on_movie_loop_changed);
-    Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed);
-    Messenger::subscribe(Messenger::Message::ScriptStarted, on_script_started);
-    Messenger::subscribe(Messenger::Message::SpeedModifierChanged, on_speed_modifier_changed);
-    Messenger::subscribe(Messenger::Message::LagLimitExceeded, on_vis_since_input_poll_exceeded);
-    Messenger::subscribe(Messenger::Message::ConfigLoaded, on_config_loaded);
-    Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed);
-    Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed);
-    Messenger::subscribe(Messenger::Message::FastForwardNeedsUpdate,
-                         [](auto) { AppActions::update_core_fast_forward(); });
-    Messenger::subscribe(Messenger::Message::SeekStatusChanged, [](auto) { AppActions::update_core_fast_forward(); });
-    Messenger::subscribe(Messenger::Message::EmuStartingChanged, on_emu_starting_changed);
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(on_emu_launched_changed);
+    Messenger::subscribe<Messenger::Message::EmuStopping>(on_emu_stopping);
+    Messenger::subscribe<Messenger::Message::EmuPausedChanged>(on_emu_paused_changed);
+    Messenger::subscribe<Messenger::Message::CapturingChanged>(on_capturing_changed);
+    Messenger::subscribe<Messenger::Message::MovieLoopChanged>(on_movie_loop_changed);
+    Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
+    Messenger::subscribe<Messenger::Message::ScriptStarted>(on_script_started);
+    Messenger::subscribe<Messenger::Message::SpeedModifierChanged>(on_speed_modifier_changed);
+    Messenger::subscribe<Messenger::Message::LagLimitExceeded>(on_vis_since_input_poll_exceeded);
+    Messenger::subscribe<Messenger::Message::ConfigLoaded>(on_config_loaded);
+    Messenger::subscribe<Messenger::Message::SeekCompleted>(on_seek_completed);
+    Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed);
+    Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>([] { AppActions::update_core_fast_forward(); });
+    Messenger::subscribe<Messenger::Message::SeekStatusChanged>([] { AppActions::update_core_fast_forward(); });
+    Messenger::subscribe<Messenger::Message::EmuStartingChanged>(on_emu_starting_changed);
 
     Statusbar::create();
     RomBrowser::create();
     AppActions::update_core_fast_forward();
 
-    Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
-    Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
-    Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-    Messenger::broadcast(Messenger::Message::EmuLaunchedChanged, false);
-    Messenger::broadcast(Messenger::Message::CoreExecutingChanged, false);
-    Messenger::broadcast(Messenger::Message::CapturingChanged, false);
-    Messenger::broadcast(Messenger::Message::AppReady, nullptr);
-    Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+    Messenger::broadcast<Messenger::Message::StatusbarVisibilityChanged>((bool)g_config.is_statusbar_enabled);
+    Messenger::broadcast<Messenger::Message::MovieLoopChanged>((bool)g_config.core.is_movie_loop_enabled);
+    Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
+    Messenger::broadcast<Messenger::Message::EmuLaunchedChanged>(false);
+    Messenger::broadcast<Messenger::Message::CoreExecutingChanged>(false);
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(false);
+    Messenger::broadcast<Messenger::Message::AppReady>();
+    Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)

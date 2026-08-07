@@ -4,16 +4,16 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-# Common plugin dependencies.
-add_library(Mupen64RR.Plugins.Win32.Common INTERFACE)
-target_link_libraries(Mupen64RR.Plugins.Win32.Common INTERFACE
+#
+
+# Common Win32 plugin dependencies.
+add_library(Mupen64RR.Plugins.Common INTERFACE)
+target_link_libraries(Mupen64RR.Plugins.Common INTERFACE
     Mupen64RR.Common
-    Mupen64RR.Common.Win32
     Mupen64RR.Core.Headers
-    Mupen64RR.Views.Win32.Headers
 )
-target_compile_definitions(Mupen64RR.Plugins.Win32.Common INTERFACE
+target_compile_definitions(Mupen64RR.Plugins.Common INTERFACE
     PLUGIN_WITH_CALLBACKS
-    "VERSION_SUFFIX=L\"${MUPEN64RR_VERSION_SUFFIX}\""
+    "VERSION_SUFFIX=\"${MUPEN64RR_VERSION_SUFFIX}\""
     "$<$<BOOL:${MUPEN64RR_NIGHTLY}>:NIGHTLY>"
 )
