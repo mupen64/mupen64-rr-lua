@@ -11,9 +11,6 @@
 #include <Config.hpp>
 #include <ranges>
 
-// FIXME: probably a better pattern for this, maybe not as heavy as a repository but definitely not this
-extern t_config g_config;
-
 using t_action_param = ActionManager::t_action_param;
 using t_action_add_params = ActionManager::t_action_add_params;
 using action_path = ActionManager::action_path;
