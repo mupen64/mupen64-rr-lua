@@ -10,7 +10,7 @@
 #include <VersionNameHelpers.hpp>
 #include <m64rr/Plugin.hpp>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS RSP")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS RSP")
 
 extern M64RRSpec::PluginInit *g_plugin;
 

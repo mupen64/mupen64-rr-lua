@@ -69,9 +69,8 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
 
     "Resource.rc"
 )
+target_compile_features(Mupen64RR.Plugins.Win32.TASVideo PRIVATE cxx_std_23)
 set_target_properties(Mupen64RR.Plugins.Win32.TASVideo PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"

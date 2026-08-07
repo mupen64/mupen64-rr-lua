@@ -12,6 +12,11 @@
 #include <string>
 #include <cstring>
 #include <unordered_map>
+#include <vector>
+
+#if defined(__linux__)
+#include <strings.h>
+#endif
 
 namespace StrUtils
 {

@@ -73,7 +73,7 @@ uint32_t do_rsp_cycles(uint32_t Cycles)
 
     if (task->type == 1 && task->data_ptr != 0)
     {
-        g_plugin->process_dlist();
+        if (g_plugin->process_dlist) g_plugin->process_dlist();
 
         g_plugin->sp_register->sp_status_reg |= 0x0203;
         if ((g_plugin->sp_register->sp_status_reg & 0x40) != 0) g_plugin->mi_register->mi_intr_reg |= 0x1;
@@ -169,14 +169,14 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::RSP;
 
-    const auto name = IOUtils::to_utf8_string(PLUGIN_NAME);
+    const auto name = PLUGIN_NAME;
     const auto description = "First-party TAS plugin for Mupen64."
                              "\n"
                              "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
                              "to one version of the emulator."
                              "\n\n"
                              "https://mupen64.com";
-    const auto target_version = IOUtils::to_utf8_string(CURRENT_VERSION);
+    const auto target_version = CURRENT_VERSION;
 
     auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
     metadata->name[result.size] = '\0';

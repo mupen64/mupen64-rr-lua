@@ -4,14 +4,13 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.Win32.DummyAudio MODULE
+add_library(Mupen64RR.Plugins.DummyAudio MODULE
     "Main.cpp"
 )
-set_target_properties(Mupen64RR.Plugins.Win32.DummyAudio PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
+target_compile_features(Mupen64RR.Plugins.DummyAudio PRIVATE cxx_std_23)
+set_target_properties(Mupen64RR.Plugins.DummyAudio PROPERTIES
     OUTPUT_NAME "NoAudio"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_link_libraries(Mupen64RR.Plugins.Win32.DummyAudio PRIVATE Mupen64RR.Plugins.Win32.Common)
+target_link_libraries(Mupen64RR.Plugins.DummyAudio PRIVATE Mupen64RR.Plugins.Common)

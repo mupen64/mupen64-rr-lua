@@ -14,6 +14,6 @@
 extern HINSTANCE g_inst;
 extern M64RRSpec::PluginInit *g_plugin;
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Input")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Input")
 
 #define NUMBER_OF_CONTROLS 4

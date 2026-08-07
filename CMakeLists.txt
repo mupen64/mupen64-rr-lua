@@ -27,6 +27,9 @@ if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
 
+# This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.
+set(MUPEN64RR_BUILD_CLI OFF CACHE BOOL "If on, enables the CLI view (primarily for testing)")
+
 # Basic checks and setup
 # ===========================================
 
@@ -73,6 +76,7 @@ find_package(PkgConfig REQUIRED)
 # Core cross-platform dependencies
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 if(NOT WIN32)
   pkg_check_modules(libsafec IMPORTED_TARGET GLOBAL "libsafec")
@@ -80,7 +84,6 @@ endif()
 
 # Windows-only dependencies
 if(MUPEN64RR_BUILD_WIN32)
-  find_package(nlohmann_json CONFIG REQUIRED)
   find_package(spdlog CONFIG REQUIRED)
   find_package(glew CONFIG REQUIRED)
   find_package(SDL3 CONFIG REQUIRED)

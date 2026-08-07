@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#pragma once
+
 #include <CommonPCH.hpp>
-#include <DummyPluginStub.hpp>
+#include <m64rr/API.hpp>
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"No Audio")
+extern core_cfg g_config;
+extern core_params g_core_params;
+extern core_ctx *g_core_ctx;
 
-DUMMY_PLUGIN_STUB_IMPL(M64RRSpec::PluginType::Audio)
+void clear_plugin_funcs();
