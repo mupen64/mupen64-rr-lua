@@ -14,14 +14,14 @@
     {                                                                                                                  \
         metadata->type = plugin_type;                                                                                  \
                                                                                                                        \
-        const char* name = PLUGIN_NAME;                                                                                 \
-        const char* description = "First-party TAS plugin for Mupen64."                                                 \
-                                 "\n"                                                                                  \
-                                 "TAS plugins are not to be distributed separately from Mupen64 and remain tied "      \
-                                 "to one version of the emulator."                                                     \
-                                 "\n\n"                                                                                \
-                                 "https://mupen64.com";                                                                \
-        const char* target_version = CURRENT_VERSION;                                                                   \
+        const char *name = PLUGIN_NAME;                                                                                \
+        const char *description = "First-party TAS plugin for Mupen64."                                                \
+                                  "\n"                                                                                 \
+                                  "TAS plugins are not to be distributed separately from Mupen64 and remain tied "     \
+                                  "to one version of the emulator."                                                    \
+                                  "\n\n"                                                                               \
+                                  "https://mupen64.com";                                                               \
+        const char *target_version = CURRENT_VERSION;                                                                  \
                                                                                                                        \
         auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);                        \
         metadata->name[result.size] = '\0';                                                                            \

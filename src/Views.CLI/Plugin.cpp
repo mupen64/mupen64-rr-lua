@@ -164,7 +164,7 @@ bool PluginUtil::load_plugins()
                           std::move(rsp_plugin));
         return true;
     }
-    catch (const std::exception& err)
+    catch (const std::exception &err)
     {
         std::println(stderr, "[ERROR] Plugin load failed: {}", err.what());
         return false;

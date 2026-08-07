@@ -112,19 +112,21 @@ int version_compare(std::string_view version1, std::string_view version2)
 {
     // Splits a version in the form "X.Y.Z-W" into its component parts.
     const auto split_version = [](std::string_view version) {
-        std::array<int, 4> parts {0};
+        std::array<int, 4> parts{0};
         const std::size_t dash_pos = version.find(L'-');
         std::string_view main_part = dash_pos != std::string_view::npos ? version.substr(0, dash_pos) : version;
         std::string_view sub_part = dash_pos != std::string_view::npos ? version.substr(dash_pos + 1) : "";
 
-        for (auto [i, part] : StrUtils::split_string(main_part, ".") | std::views::take(3) | std::views::enumerate) {
+        for (auto [i, part] : StrUtils::split_string(main_part, ".") | std::views::take(3) | std::views::enumerate)
+        {
             auto [end_ptr, ec] = std::from_chars(part.data(), part.data() + part.size(), parts[i]);
-            if (ec != std::errc {}) parts[i] = 0;
+            if (ec != std::errc{}) parts[i] = 0;
         }
 
-        if (!sub_part.empty()) {
+        if (!sub_part.empty())
+        {
             auto [end_ptr, ec] = std::from_chars(sub_part.data(), sub_part.data() + sub_part.size(), parts[3]);
-            if (ec != std::errc {}) parts[3] = 0;
+            if (ec != std::errc{}) parts[3] = 0;
         }
 
         return parts;
@@ -197,7 +199,8 @@ void check(bool manual)
 
     if (!manual && g_config.ignored_version == version_wide)
     {
-        g_view_logger->trace(L"[UpdateChecker] Version {} ignored by user. Skipping showing update dialog.", version_wide);
+        g_view_logger->trace(L"[UpdateChecker] Version {} ignored by user. Skipping showing update dialog.",
+                             version_wide);
         return;
     }
 
@@ -222,7 +225,8 @@ show_prompt:
             L"Show Changelog",
             L"Skip Version",
         },
-        std::format(L"Mupen64 {} is available for download.", version_wide).c_str(), L"Update Available", fsvc_information);
+        std::format(L"Mupen64 {} is available for download.", version_wide).c_str(), L"Update Available",
+        fsvc_information);
 
     switch (result)
     {

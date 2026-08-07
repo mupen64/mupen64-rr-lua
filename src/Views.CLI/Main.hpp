@@ -11,6 +11,6 @@
 
 extern core_cfg g_config;
 extern core_params g_core_params;
-extern core_ctx* g_core_ctx;
+extern core_ctx *g_core_ctx;
 
 void clear_plugin_funcs();

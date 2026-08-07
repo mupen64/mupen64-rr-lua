@@ -22,8 +22,7 @@ namespace SDLAudio
 SDLBackend::SDLBackend(Config &&config) : m_config(config)
 {
     // SDL ref-counts inits/quits, so this has no performance impact whatsoever
-    if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
-        throw std::runtime_error(SDL_GetError());
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) throw std::runtime_error(SDL_GetError());
 
     // request default audio settings
     m_device_id = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);

@@ -60,9 +60,10 @@ int DialogService::show_multiple_choice_dialog(std::string_view id, const std::v
 bool DialogService::show_ask_dialog(std::string_view id, const char *str, const char *title, bool warning)
 {
     print_header(title, warning ? fsvc_warning : fsvc_information);
-    
+
     std::string input_line;
-    while (true) {
+    while (true)
+    {
         std::println("{}", str);
         std::println("(enter Y for yes, N for no)");
         std::print("> ");

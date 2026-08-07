@@ -32,7 +32,7 @@ class Plugin
 
     /**
      * @brief Triggers an arbitrary lifecycle event.
-     * 
+     *
      * @param event The event
      */
     void send_event(M64RRSpec::Event event);
