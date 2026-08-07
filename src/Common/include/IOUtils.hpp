@@ -20,6 +20,7 @@
 #elif defined(__linux__)
 #include <stdexcept>
 #include <cstdio>
+#include <cstring>
 #include <cstdlib>
 #include <iconv.h>
 #else
