@@ -880,7 +880,8 @@ void Config::load()
         }
         catch (const std::exception &e)
         {
-            g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
+            // FIXME
+            // g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
             g_config = get_default_config();
             save();
         }
@@ -897,7 +898,8 @@ void Config::load()
     }
     else
     {
-        g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
+        // FIXME
+        // g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
         g_config = get_default_config();
         save();
     }
