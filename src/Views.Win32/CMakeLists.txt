@@ -158,6 +158,7 @@ set_source_files_properties(
 target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Mupen64RR.Common
+    Mupen64RR.Common.Views
     Mupen64RR.Common.Win32
     Mupen64RR.Core
     Mupen64RR.Views.Win32.Headers

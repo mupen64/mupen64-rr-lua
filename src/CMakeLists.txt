@@ -44,6 +44,7 @@ if (MUPEN64RR_BUILD_WIN32)
     # ============================
 
     add_subdirectory(Common.Win32)
+    add_subdirectory(Common.Views)
     add_subdirectory(Views.Win32)
 
     # BUNDLED PLUGINS
