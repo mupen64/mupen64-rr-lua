@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <any>
+#include <m64rr/API.hpp>
+
 namespace Messenger
 {
 /**
@@ -177,62 +180,148 @@ enum class Message
     ActionActiveChanged,
 };
 
-/**
- * \brief Maps each message to the type of data it carries.
- * \tparam M The message type
- * \remark The primary template is intentionally left undefined so that every message must have an explicit
- *         specialization. Messages which carry no payload use `void` as their type.
- */
-template<Message M>
-struct MessageData;
+template <Message M> struct MessageData;
 
-template<> struct MessageData<Message::EmuLaunchedChanged>   { using type = bool; };
-template<> struct MessageData<Message::CoreExecutingChanged> { using type = bool; };
-template<> struct MessageData<Message::EmuStopping>          { using type = void; };
-template<> struct MessageData<Message::EmuPausedChanged>     { using type = bool; };
-template<> struct MessageData<Message::CapturingChanged>     { using type = bool; };
-template<> struct MessageData<Message::StatusbarVisibilityChanged> { using type = bool; };
-template<> struct MessageData<Message::SizeChanged>          { using type = RECT; };
-template<> struct MessageData<Message::MainWindowMoved>      { using type = void; };
-template<> struct MessageData<Message::MovieLoopChanged>     { using type = bool; };
-template<> struct MessageData<Message::ReadonlyChanged>      { using type = bool; };
-template<> struct MessageData<Message::TaskChanged>          { using type = core_vcr_task; };
-template<> struct MessageData<Message::CurrentSampleChanged> { using type = int32_t; };
-template<> struct MessageData<Message::UnfreezeCompleted>    { using type = void; };
-template<> struct MessageData<Message::WarpModifyStatusChanged> { using type = bool; };
-template<> struct MessageData<Message::SeekSavestateChanged> { using type = size_t; };
-template<> struct MessageData<Message::ScriptStarted>        { using type = std::filesystem::path; };
-template<> struct MessageData<Message::AppReady>             { using type = void; };
-template<> struct MessageData<Message::ResetCompleted>       { using type = void; };
-template<> struct MessageData<Message::ConfigSaving>         { using type = void; };
-template<> struct MessageData<Message::ConfigLoaded>         { using type = void; };
-template<> struct MessageData<Message::RerecordsChanged>     { using type = uint64_t; };
-template<> struct MessageData<Message::SlotChanged>          { using type = size_t; };
-template<> struct MessageData<Message::MultiFrameAdvanceCountChanged> { using type = void; };
-template<> struct MessageData<Message::SeekCompleted>        { using type = void; };
-template<> struct MessageData<Message::SeekStatusChanged>    { using type = void; };
-template<> struct MessageData<Message::SpeedModifierChanged> { using type = int32_t; };
-template<> struct MessageData<Message::LagLimitExceeded>     { using type = void; };
-template<> struct MessageData<Message::EmuStartingChanged>   { using type = bool; };
-template<> struct MessageData<Message::DacrateChanged>       { using type = CoreSystemType; };
-template<> struct MessageData<Message::FastForwardNeedsUpdate> { using type = void; };
-template<> struct MessageData<Message::ActionRegistryChanged> { using type = void; };
-template<> struct MessageData<Message::ActionDisplayNameChanged> { using type = std::vector<std::wstring>; };
-template<> struct MessageData<Message::ActionEnabledChanged> { using type = std::vector<std::wstring>; };
-template<> struct MessageData<Message::ActionActiveChanged>  { using type = std::vector<std::wstring>; };
+template <> struct MessageData<Message::EmuLaunchedChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::CoreExecutingChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::EmuStopping>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::EmuPausedChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::CapturingChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::StatusbarVisibilityChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::SizeChanged>
+{
+    using type = std::pair<int32_t, int32_t>;
+};
+template <> struct MessageData<Message::MainWindowMoved>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::MovieLoopChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::ReadonlyChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::TaskChanged>
+{
+    using type = core_vcr_task;
+};
+template <> struct MessageData<Message::CurrentSampleChanged>
+{
+    using type = int32_t;
+};
+template <> struct MessageData<Message::UnfreezeCompleted>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::WarpModifyStatusChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::SeekSavestateChanged>
+{
+    using type = size_t;
+};
+template <> struct MessageData<Message::ScriptStarted>
+{
+    using type = std::filesystem::path;
+};
+template <> struct MessageData<Message::AppReady>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::ResetCompleted>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::ConfigSaving>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::ConfigLoaded>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::RerecordsChanged>
+{
+    using type = uint64_t;
+};
+template <> struct MessageData<Message::SlotChanged>
+{
+    using type = size_t;
+};
+template <> struct MessageData<Message::MultiFrameAdvanceCountChanged>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::SeekCompleted>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::SeekStatusChanged>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::SpeedModifierChanged>
+{
+    using type = int32_t;
+};
+template <> struct MessageData<Message::LagLimitExceeded>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::EmuStartingChanged>
+{
+    using type = bool;
+};
+template <> struct MessageData<Message::DacrateChanged>
+{
+    using type = CoreSystemType;
+};
+template <> struct MessageData<Message::FastForwardNeedsUpdate>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::ActionRegistryChanged>
+{
+    using type = void;
+};
+template <> struct MessageData<Message::ActionDisplayNameChanged>
+{
+    using type = std::vector<std::wstring>;
+};
+template <> struct MessageData<Message::ActionEnabledChanged>
+{
+    using type = std::vector<std::wstring>;
+};
+template <> struct MessageData<Message::ActionActiveChanged>
+{
+    using type = std::vector<std::wstring>;
+};
 
 namespace detail
 {
-/**
- * \brief Broadcasts a message to all listeners
- * \remark This method is thread-safe.
- */
 void broadcast_impl(Message message, std::any data);
-
-/**
- * \brief Subscribes to a message
- * \remark This method is thread-safe.
- */
 std::function<void()> subscribe_impl(Message message, std::function<void(std::any)> callback);
 } // namespace detail
 
@@ -242,8 +331,7 @@ std::function<void()> subscribe_impl(Message message, std::function<void(std::an
  * \param data The message data
  * \remark This method is thread-safe.
  */
-template<Message M>
-void broadcast(typename MessageData<M>::type data)
+template <Message M> void broadcast(typename MessageData<M>::type data)
 {
     static_assert(!std::is_void_v<typename MessageData<M>::type>,
                   "This message does not carry data; call broadcast<M>() instead of broadcast<M>(data).");
@@ -255,8 +343,7 @@ void broadcast(typename MessageData<M>::type data)
  * \tparam M The message type
  * \remark This method is thread-safe.
  */
-template<Message M>
-void broadcast()
+template <Message M> void broadcast()
 {
     static_assert(std::is_void_v<typename MessageData<M>::type>,
                   "This message carries data; call broadcast<M>(data) instead of broadcast<M>().");
@@ -270,8 +357,7 @@ void broadcast()
  * \return A function which, when called, unsubscribes from the message
  * \remark This method is thread-safe.
  */
-template<Message M, typename F>
-std::function<void()> subscribe(F callback)
+template <Message M, typename F> std::function<void()> subscribe(F callback)
 {
     if constexpr (std::is_void_v<typename MessageData<M>::type>)
     {
@@ -281,10 +367,10 @@ std::function<void()> subscribe(F callback)
     else
     {
         using type = typename MessageData<M>::type;
-        static_assert(std::is_invocable_v<F, type>, "The callback for this message must be callable with its data type.");
-        return detail::subscribe_impl(M, [cb = std::move(callback)](std::any data) {
-            std::invoke(cb, std::any_cast<type>(std::move(data)));
-        });
+        static_assert(std::is_invocable_v<F, type>,
+                      "The callback for this message must be callable with its data type.");
+        return detail::subscribe_impl(
+            M, [cb = std::move(callback)](std::any data) { std::invoke(cb, std::any_cast<type>(std::move(data))); });
     }
 }
 } // namespace Messenger

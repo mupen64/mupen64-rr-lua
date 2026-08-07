@@ -4,18 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
 #include <Messenger.hpp>
+#include <thread>
 
 namespace Messenger
 {
-#ifdef _DEBUG
-#define ASSERT_NOT_CHANGING assert(!g_changing)
-#else
-#define ASSERT_NOT_CHANGING
-#endif
-
-using t_user_callback = std::function<void(std::any)>;
+using AnyCallback = std::function<void(std::any)>;
 
 // Represents a subscriber to a message.
 struct Subscriber
@@ -24,38 +18,35 @@ struct Subscriber
     size_t uid;
 
     // The callback function.
-    t_user_callback cb;
+    AnyCallback cb;
 };
 
-std::vector<std::pair<Message, Subscriber>> g_subscribers;
+struct Context
+{
+    std::vector<std::pair<Message, Subscriber>> subscribers;
 
-std::unordered_map<Message, std::vector<t_user_callback>> g_subscriber_cache;
+    std::unordered_map<Message, std::vector<AnyCallback>> subscriber_cache;
 
-// UID accumulator for generating unique subscriber IDs. Only write operation is increment.
-size_t g_uid_accumulator;
+    // UID accumulator for generating unique subscriber IDs. Only write operation is increment.
+    size_t uid_accumulator{};
 
-// Whether a message is currently being broadcasted. Used to wait when subscribing.
-std::atomic g_broadcasting = 0;
+    // Whether a message is currently being broadcasted. Used to wait when subscribing.
+    std::atomic<int32_t> broadcasting{};
 
-// Whether a subscription is currently happening. Used to wait when broadcasting.
-std::atomic g_subscribing = 0;
+    // Whether a subscription is currently happening. Used to wait when broadcasting.
+    std::atomic<int32_t> subscribing{};
+};
+
+static Context s_ctx;
 
 void wait_for_broadcast_end()
 {
-    while (g_broadcasting != 0)
-    {
-        g_view_logger->info("[Messenger] Waiting for broadcast end...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    while (s_ctx.broadcasting > 0) std::this_thread::yield();
 }
 
 void wait_for_subscribe_end()
 {
-    while (g_subscribing != 0)
-    {
-        g_view_logger->info("[Messenger] Waiting for subscribe end...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    while (s_ctx.subscribing > 0) std::this_thread::yield();
 }
 
 /**
@@ -63,11 +54,11 @@ void wait_for_subscribe_end()
  */
 void rebuild_subscriber_cache()
 {
-    g_subscriber_cache.clear();
+    s_ctx.subscriber_cache.clear();
 
-    for (const auto &[key, func] : g_subscribers)
+    for (const auto &[key, func] : s_ctx.subscribers)
     {
-        g_subscriber_cache[key].push_back(func.cb);
+        s_ctx.subscriber_cache[key].push_back(func.cb);
     }
 }
 
@@ -77,40 +68,40 @@ void broadcast_impl(const Message message, std::any data)
 {
     wait_for_subscribe_end();
 
-    ++g_broadcasting;
+    ++s_ctx.broadcasting;
 
-    for (const auto &subscriber : g_subscriber_cache[message])
+    for (const auto &subscriber : s_ctx.subscriber_cache[message])
     {
         subscriber(data);
     }
 
-    --g_broadcasting;
+    --s_ctx.broadcasting;
 }
 
-std::function<void()> subscribe_impl(Message message, t_user_callback callback)
+std::function<void()> subscribe_impl(Message message, AnyCallback callback)
 {
     wait_for_broadcast_end();
     wait_for_subscribe_end();
 
-    ++g_subscribing;
+    ++s_ctx.subscribing;
 
-    Subscriber subscriber = {g_uid_accumulator++, std::move(callback)};
+    Subscriber subscriber = {s_ctx.uid_accumulator++, std::move(callback)};
 
-    g_subscribers.emplace_back(message, subscriber);
+    s_ctx.subscribers.emplace_back(message, subscriber);
     rebuild_subscriber_cache();
 
-    --g_subscribing;
+    --s_ctx.subscribing;
 
     return [=] {
         wait_for_broadcast_end();
         wait_for_subscribe_end();
 
-        ++g_subscribing;
+        ++s_ctx.subscribing;
 
-        std::erase_if(g_subscribers, [=](const auto &pair) { return pair.second.uid == subscriber.uid; });
+        std::erase_if(s_ctx.subscribers, [=](const auto &pair) { return pair.second.uid == subscriber.uid; });
         rebuild_subscriber_cache();
 
-        --g_subscribing;
+        --s_ctx.subscribing;
     };
 }
 } // namespace detail

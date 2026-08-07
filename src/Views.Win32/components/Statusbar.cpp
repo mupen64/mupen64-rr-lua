@@ -269,7 +269,7 @@ static void on_slot_changed(size_t value)
     post(std::format(L"Slot {}", value + 1), Statusbar::Section::Slot);
 }
 
-static void on_size_changed(RECT)
+static void on_size_changed(const std::pair<int32_t, int32_t> &)
 {
     refresh_segments();
 }
