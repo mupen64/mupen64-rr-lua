@@ -42,6 +42,9 @@ std::optional<std::wstring> WinVFWEncoder::start(Params params)
         return L"Failed to open output file.";
     }
 
+    wchar_t cwd[MAX_PATH]{};
+    GetCurrentDirectory(std::size(cwd), cwd);
+
     ZeroMemory(&m_video_stream_hdr, sizeof(AVISTREAMINFO));
     m_video_stream_hdr.fccType = streamtypeVIDEO;
     m_video_stream_hdr.dwScale = 1;
@@ -54,8 +57,7 @@ std::optional<std::wstring> WinVFWEncoder::start(Params params)
     }
 
     // NOTE: AVIFileCreateStream seems to change the cwd for some reason...
-    // FIXME
-    // set_cwd();
+    SetCurrentDirectory(cwd);
 
     if (params.ask_for_capture_settings && !m_splitting)
     {
