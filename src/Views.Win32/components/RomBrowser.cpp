@@ -490,9 +490,8 @@ std::vector<t_simple_rom_info> get_discovered_roms()
     return g_ctx.discovered_roms;
 }
 
-void emu_launched_changed(std::any data)
+void emu_launched_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     ShowWindow(g_ctx.hwnd, !value ? SW_SHOW : SW_HIDE);
     EnableWindow(g_ctx.hwnd, !value);
     rombrowser_update_size();
@@ -501,10 +500,10 @@ void emu_launched_changed(std::any data)
 void create()
 {
     rombrowser_create();
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, emu_launched_changed);
-    Messenger::subscribe(Messenger::Message::StatusbarVisibilityChanged, [](auto _) { rombrowser_update_size(); });
-    Messenger::subscribe(Messenger::Message::SizeChanged, [](auto _) { rombrowser_update_size(); });
-    Messenger::subscribe(Messenger::Message::ConfigSaving, [](auto _) {
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(emu_launched_changed);
+    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>([](auto _) { rombrowser_update_size(); });
+    Messenger::subscribe<Messenger::Message::SizeChanged>([](auto _) { rombrowser_update_size(); });
+    Messenger::subscribe<Messenger::Message::ConfigSaving>([] {
         for (int i = 0; i < g_config.rombrowser_column_widths.size(); ++i)
         {
             g_config.rombrowser_column_widths[i] = ListView_GetColumnWidth(g_ctx.hwnd, i);

@@ -211,7 +211,7 @@ static void increment_speed(const int value)
 {
     g_config.core.fps_modifier = std::clamp(g_config.core.fps_modifier + value, 5, 1000);
     g_main_ctx.core_ctx->vr_on_speed_modifier_changed();
-    Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
+    Messenger::broadcast<Messenger::Message::SpeedModifierChanged>(g_config.core.fps_modifier);
 }
 
 static void speed_down()
@@ -228,7 +228,7 @@ static void speed_reset()
 {
     g_config.core.fps_modifier = 100;
     g_main_ctx.core_ctx->vr_on_speed_modifier_changed();
-    Messenger::broadcast(Messenger::Message::SpeedModifierChanged, g_config.core.fps_modifier);
+    Messenger::broadcast<Messenger::Message::SpeedModifierChanged>(g_config.core.fps_modifier);
 }
 
 static void frame_advance()
@@ -267,13 +267,13 @@ static void multi_frame_advance()
 static void fastforward_enable()
 {
     g_main_ctx.fast_forward = true;
-    Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
+    Messenger::broadcast<Messenger::Message::FastForwardNeedsUpdate>();
 }
 
 static void fastforward_disable()
 {
     g_main_ctx.fast_forward = false;
-    Messenger::broadcast(Messenger::Message::FastForwardNeedsUpdate, nullptr);
+    Messenger::broadcast<Messenger::Message::FastForwardNeedsUpdate>();
 }
 
 static bool fastforward_active()
@@ -308,7 +308,7 @@ static void save_slot()
     if (g_config.increment_slot)
     {
         g_config.st_slot >= 9 ? g_config.st_slot = 0 : g_config.st_slot++;
-        Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
+        Messenger::broadcast<Messenger::Message::SlotChanged>((size_t)g_config.st_slot);
     }
     ThreadPool::submit_task([=] {
         g_main_ctx.core_ctx->vr_wait_decrement();
@@ -403,7 +403,7 @@ static void multi_frame_advance_increment()
     {
         g_config.multi_frame_advance_count++;
     }
-    Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
+    Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 
 static void multi_frame_advance_decrement()
@@ -413,19 +413,19 @@ static void multi_frame_advance_decrement()
     {
         g_config.multi_frame_advance_count--;
     }
-    Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
+    Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 
 static void multi_frame_advance_reset()
 {
     g_config.multi_frame_advance_count = g_default_config.multi_frame_advance_count;
-    Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, std::nullopt);
+    Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 
 static void set_save_slot(const size_t slot)
 {
     g_config.st_slot = slot;
-    Messenger::broadcast(Messenger::Message::SlotChanged, static_cast<size_t>(g_config.st_slot));
+    Messenger::broadcast<Messenger::Message::SlotChanged>(static_cast<size_t>(g_config.st_slot));
 }
 
 #pragma endregion
@@ -465,7 +465,7 @@ static void show_rsp_plugin_settings()
 static void toggle_statusbar()
 {
     g_config.is_statusbar_enabled ^= true;
-    Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
+    Messenger::broadcast<Messenger::Message::StatusbarVisibilityChanged>((bool)g_config.is_statusbar_enabled);
 }
 
 static void show_settings_dialog()
@@ -604,7 +604,7 @@ static void load_recent_movie(size_t i)
     const auto path = g_config.recent_movie_paths[i];
 
     g_config.core.vcr_readonly = true;
-    Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
+    Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
 
     ActionManager::invoke(AppActions::START_MOVIE_PLAYBACK_DIRECT, false, true,
                           {
@@ -617,13 +617,13 @@ static void load_recent_movie(size_t i)
 static void toggle_movie_loop()
 {
     g_config.core.is_movie_loop_enabled ^= true;
-    Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
+    Messenger::broadcast<Messenger::Message::MovieLoopChanged>((bool)g_config.core.is_movie_loop_enabled);
 }
 
 static void toggle_readonly()
 {
     g_config.core.vcr_readonly ^= true;
-    Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
+    Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
 }
 
 static void toggle_wait_at_movie_end()
@@ -1002,30 +1002,30 @@ static void generate_path_recent_menu(const std::wstring &base_path, const Hotke
 
 void AppActions::init()
 {
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged,
-                         [](const auto &) { ActionManager::notify_enabled_changed(std::format(L"{} *", APP)); });
-    Messenger::subscribe(Messenger::Message::EmuPausedChanged,
-                         [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
-    Messenger::subscribe(Messenger::Message::FastForwardNeedsUpdate,
-                         [](const auto &) { ActionManager::notify_active_changed(FAST_FORWARD); });
-    Messenger::subscribe(Messenger::Message::CapturingChanged, [](const auto &) {
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
+        [](const auto &) { ActionManager::notify_enabled_changed(std::format(L"{} *", APP)); });
+    Messenger::subscribe<Messenger::Message::EmuPausedChanged>(
+        [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
+    Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
+        [] { ActionManager::notify_active_changed(FAST_FORWARD); });
+    Messenger::subscribe<Messenger::Message::CapturingChanged>([](const auto &) {
         ActionManager::notify_enabled_changed(std::format(L"{} *", VIDEO_CAPTURE));
     });
-    Messenger::subscribe(Messenger::Message::StatusbarVisibilityChanged,
-                         [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
-    Messenger::subscribe(Messenger::Message::MovieLoopChanged,
-                         [](const auto &) { ActionManager::notify_active_changed(LOOP_MOVIE_PLAYBACK); });
-    Messenger::subscribe(Messenger::Message::ReadonlyChanged,
-                         [](const auto &) { ActionManager::notify_active_changed(READONLY); });
-    Messenger::subscribe(Messenger::Message::TaskChanged, [](const auto &) {
+    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
+        [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
+    Messenger::subscribe<Messenger::Message::MovieLoopChanged>(
+        [](const auto &) { ActionManager::notify_active_changed(LOOP_MOVIE_PLAYBACK); });
+    Messenger::subscribe<Messenger::Message::ReadonlyChanged>(
+        [](const auto &) { ActionManager::notify_active_changed(READONLY); });
+    Messenger::subscribe<Messenger::Message::TaskChanged>([](const auto &) {
         ActionManager::notify_enabled_changed(STOP_MOVIE);
         ActionManager::notify_enabled_changed(CONTINUE_MOVIE_RECORDING);
         ActionManager::notify_enabled_changed(CREATE_MOVIE_BACKUP);
         ActionManager::notify_enabled_changed(SEEK_TO_DIRECT);
         ActionManager::notify_enabled_changed(SEEK_TO);
     });
-    Messenger::subscribe(Messenger::Message::SlotChanged,
-                         [](const auto &) { ActionManager::notify_active_changed(std::format(L"{} *", SELECT_SLOT)); });
+    Messenger::subscribe<Messenger::Message::SlotChanged>(
+        [](const auto &) { ActionManager::notify_active_changed(std::format(L"{} *", SELECT_SLOT)); });
 }
 
 void AppActions::add()
@@ -1075,7 +1075,7 @@ void AppActions::add()
             g_main_ctx.core_ctx->vr_wait_increment();
 
             g_config.st_slot = i;
-            Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
+            Messenger::broadcast<Messenger::Message::SlotChanged>((size_t)g_config.st_slot);
 
             ThreadPool::submit_task([=] {
                 g_main_ctx.core_ctx->vr_wait_decrement();

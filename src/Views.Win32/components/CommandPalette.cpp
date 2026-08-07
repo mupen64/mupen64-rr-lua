@@ -332,7 +332,7 @@ static bool try_invoke(int32_t i)
         if (confirmed)
         {
             Config::apply_and_save();
-            Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+            Messenger::broadcast<Messenger::Message::ConfigLoaded>();
             SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
             return true;
         }

@@ -932,7 +932,7 @@ void Config::init()
 
 void Config::save()
 {
-    Messenger::broadcast(Messenger::Message::ConfigSaving, nullptr);
+    Messenger::broadcast<Messenger::Message::ConfigSaving>();
 
     config_patch(g_config);
 
@@ -994,7 +994,7 @@ void Config::load()
 
     config_patch(g_config);
 
-    Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+    Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 }
 
 std::filesystem::path Config::rom_directory()

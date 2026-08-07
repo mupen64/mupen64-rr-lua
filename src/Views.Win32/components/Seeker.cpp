@@ -113,7 +113,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void Seeker::init()
 {
-    Messenger::subscribe(Messenger::Message::SeekCompleted, [](std::any) {
+    Messenger::subscribe<Messenger::Message::SeekCompleted>([] {
         if (!seeker.hwnd) return;
         SendMessage(seeker.hwnd, WM_SEEK_COMPLETED, 0, 0);
     });

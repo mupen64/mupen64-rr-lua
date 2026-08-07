@@ -186,7 +186,7 @@ void Plugin::deinitiate_dummy()
 
 void PluginUtil::init()
 {
-    Messenger::subscribe(Messenger::Message::EmuStopping, [](const auto &...) { stop_audio_thread(); });
+    Messenger::subscribe<Messenger::Message::EmuStopping>([] { stop_audio_thread(); });
 }
 
 t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)

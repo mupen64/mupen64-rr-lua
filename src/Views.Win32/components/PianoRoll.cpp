@@ -737,12 +737,11 @@ static bool can_joystick_be_modified()
     return !piano_roll.current_state.selected_indicies.empty() && piano_roll.readwrite;
 }
 
-static void on_task_changed(std::any data)
+static void on_task_changed(core_vcr_task value)
 {
     update_can_modify_inputs();
 
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<core_vcr_task>(data);
         static auto previous_value = value;
 
         if (value != previous_value)
@@ -765,7 +764,7 @@ static void on_task_changed(std::any data)
     });
 }
 
-static void on_current_sample_changed(std::any data)
+static void on_current_sample_changed(int32_t)
 {
     piano_roll.previous_sample = piano_roll.current_sample;
     piano_roll.current_sample = g_main_ctx.core_ctx->vcr_get_seek_info().current_sample;
@@ -794,7 +793,7 @@ static void on_current_sample_changed(std::any data)
     });
 }
 
-static void on_unfreeze_completed(std::any)
+static void on_unfreeze_completed()
 {
     g_main_ctx.dispatcher->invoke([=] {
         if (g_main_ctx.core_ctx->vcr_get_warp_modify_status() || g_main_ctx.core_ctx->vcr_is_seeking())
@@ -824,7 +823,7 @@ static void on_unfreeze_completed(std::any)
     });
 }
 
-static void on_warp_modify_status_changed(std::any)
+static void on_warp_modify_status_changed(bool)
 {
     update_can_modify_inputs();
 
@@ -834,23 +833,22 @@ static void on_warp_modify_status_changed(std::any)
     });
 }
 
-static void on_seek_completed(std::any)
+static void on_seek_completed()
 {
     update_can_modify_inputs();
 
     g_main_ctx.dispatcher->invoke([=] { update_joystick(); });
 }
 
-static void on_seek_savestate_changed(std::any data)
+static void on_seek_savestate_changed(size_t value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<size_t>(data);
         g_main_ctx.core_ctx->vcr_get_seek_savestate_frames(piano_roll.seek_savestate_frames);
         ListView_Update(piano_roll.lv_hwnd, value);
     });
 }
 
-static void on_emu_paused_changed(std::any)
+static void on_emu_paused_changed(bool)
 {
     // Redrawing during frame advance (paused on, then off next frame) causes ugly flicker, so we'll just not do that
     if (g_main_ctx.core_ctx->vr_get_frame_advance() && !g_main_ctx.core_ctx->vr_get_paused())
@@ -1387,18 +1385,19 @@ void PianoRoll::show()
         return;
     }
 
-    piano_roll.unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed));
+    piano_roll.unsubscribe_funcs.push_back(Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed));
     piano_roll.unsubscribe_funcs.push_back(
-        Messenger::subscribe(Messenger::Message::CurrentSampleChanged, on_current_sample_changed));
+        Messenger::subscribe<Messenger::Message::CurrentSampleChanged>(on_current_sample_changed));
     piano_roll.unsubscribe_funcs.push_back(
-        Messenger::subscribe(Messenger::Message::UnfreezeCompleted, on_unfreeze_completed));
+        Messenger::subscribe<Messenger::Message::UnfreezeCompleted>(on_unfreeze_completed));
     piano_roll.unsubscribe_funcs.push_back(
-        Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed));
-    piano_roll.unsubscribe_funcs.push_back(Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed));
+        Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed));
     piano_roll.unsubscribe_funcs.push_back(
-        Messenger::subscribe(Messenger::Message::SeekSavestateChanged, on_seek_savestate_changed));
+        Messenger::subscribe<Messenger::Message::SeekCompleted>(on_seek_completed));
     piano_roll.unsubscribe_funcs.push_back(
-        Messenger::subscribe(Messenger::Message::EmuPausedChanged, on_emu_paused_changed));
+        Messenger::subscribe<Messenger::Message::SeekSavestateChanged>(on_seek_savestate_changed));
+    piano_roll.unsubscribe_funcs.push_back(
+        Messenger::subscribe<Messenger::Message::EmuPausedChanged>(on_emu_paused_changed));
 
     piano_roll.hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PIANO_ROLL), g_main_ctx.hwnd, dialog_proc);
     ShowWindow(piano_roll.hwnd, SW_SHOW);

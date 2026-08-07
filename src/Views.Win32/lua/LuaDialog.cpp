@@ -176,7 +176,7 @@ static void start(t_instance_context &ctx, const std::filesystem::path &path)
         return;
     }
 
-    Messenger::broadcast(Messenger::Message::ScriptStarted, path);
+    Messenger::broadcast<Messenger::Message::ScriptStarted>(path);
     PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
     PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 }
