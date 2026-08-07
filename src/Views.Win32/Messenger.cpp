@@ -41,12 +41,12 @@ static Context s_ctx;
 
 void wait_for_broadcast_end()
 {
-    s_ctx.broadcasting.wait(0);
+    while (s_ctx.broadcasting > 0) std::this_thread::yield();
 }
 
 void wait_for_subscribe_end()
 {
-    s_ctx.subscribing.wait(0);
+    while (s_ctx.subscribing > 0) std::this_thread::yield();
 }
 
 /**
@@ -76,7 +76,6 @@ void broadcast_impl(const Message message, std::any data)
     }
 
     --s_ctx.broadcasting;
-    s_ctx.broadcasting.notify_all();
 }
 
 std::function<void()> subscribe_impl(Message message, AnyCallback callback)
@@ -92,7 +91,6 @@ std::function<void()> subscribe_impl(Message message, AnyCallback callback)
     rebuild_subscriber_cache();
 
     --s_ctx.subscribing;
-    s_ctx.subscribing.notify_all();
 
     return [=] {
         wait_for_broadcast_end();
@@ -104,7 +102,6 @@ std::function<void()> subscribe_impl(Message message, AnyCallback callback)
         rebuild_subscriber_cache();
 
         --s_ctx.subscribing;
-        s_ctx.subscribing.notify_all();
     };
 }
 } // namespace detail
