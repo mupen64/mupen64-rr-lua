@@ -855,12 +855,13 @@ void Config::save()
 
 void Config::apply_and_save()
 {
-    ActionManager::begin_batch_work();
-    for (const auto &[action, hotkey] : g_config.hotkeys)
-    {
-        ActionManager::associate_hotkey(action, hotkey, true);
-    }
-    ActionManager::end_batch_work();
+    // FIXME: needs ActionManager!
+    // ActionManager::begin_batch_work();
+    // for (const auto &[action, hotkey] : g_config.hotkeys)
+    // {
+    //     ActionManager::associate_hotkey(action, hotkey, true);
+    // }
+    // ActionManager::end_batch_work();
 
     save();
 }
