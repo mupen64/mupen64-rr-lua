@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <action/ActionManager.hpp>
+#include <ActionManager.hpp>
 #include <lua/presenters/Presenter.hpp>
 
 /**

@@ -13,6 +13,7 @@
 #include <cstring>
 #include <unordered_map>
 #include <vector>
+#include <cassert>
 
 #if defined(__linux__)
 #include <strings.h>

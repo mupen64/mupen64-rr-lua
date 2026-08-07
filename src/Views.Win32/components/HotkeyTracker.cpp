@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <action/ActionManager.hpp>
+#include <ActionManager.hpp>
 #include <action/AppActions.hpp>
 #include <components/HotkeyTracker.hpp>
 #include <components/ParameterPalette.hpp>

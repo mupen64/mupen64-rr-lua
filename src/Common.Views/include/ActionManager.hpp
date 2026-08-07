@@ -7,6 +7,10 @@
 #pragma once
 
 #include <Hotkey.hpp>
+#include <unordered_map>
+#include <string>
+#include <functional>
+#include <optional>
 
 /**
  * \brief A module responsible for managing actions.

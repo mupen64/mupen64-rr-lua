@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <action/ActionManager.hpp>
+#include <ActionManager.hpp>
 #include <DialogService.hpp>
 #include <Messages.hpp>
 #include <ThreadPool.hpp>

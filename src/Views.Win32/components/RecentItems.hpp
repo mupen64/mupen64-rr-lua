@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <action/ActionManager.hpp>
+#include <ActionManager.hpp>
 
 /**
  * \brief A module responsible for managing recent items.
