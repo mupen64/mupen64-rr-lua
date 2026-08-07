@@ -18,7 +18,6 @@ extern "C"
 
 #include <windows.h>
 
-// FIXME: Rename to WinWinFFmpegEncoder
 class WinFFmpegEncoder : public Encoder
 {
   public:
