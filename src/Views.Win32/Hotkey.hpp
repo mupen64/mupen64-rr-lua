@@ -6,21 +6,21 @@
 
 #pragma once
 
-#include <cstdint>
 #include <string>
+#include <SDL3/SDL_keycode.h>
 
 /**
  * \brief Represents a combination of a key and modifiers.
  */
 struct Hotkey
 {
-    int32_t key{};
+    SDL_Keycode key{};
     bool ctrl{};
     bool shift{};
     bool alt{};
     bool assigned{};
 
-    explicit Hotkey(const int32_t key, const bool ctrl = false, const bool shift = false, const bool alt = false)
+    explicit Hotkey(const SDL_Keycode key, const bool ctrl = false, const bool shift = false, const bool alt = false)
         : key(key), ctrl(ctrl), shift(shift), alt(alt), assigned(true)
     {
     }
@@ -37,6 +37,11 @@ struct Hotkey
      * \brief Gets whether the hotkey has no assignment.
      */
     [[nodiscard]] bool is_assigned() const;
+
+    /**
+     * \brief Gets the string representation of the hotkey.
+     */
+    [[nodiscard]] std::string to_string() const;
 
     /**
      * \brief Gets the string representation of the hotkey.

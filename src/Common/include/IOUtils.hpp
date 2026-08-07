@@ -8,6 +8,7 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
 #include "StrUtils.hpp"
 
@@ -15,6 +16,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#include <share.h>
 #include <windows.h>
 #elif defined(__linux__)
 #include <stdexcept>

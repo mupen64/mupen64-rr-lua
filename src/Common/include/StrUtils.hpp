@@ -10,6 +10,7 @@
 #include <sstream>
 #include <string_view>
 #include <string>
+#include <cstring>
 #include <unordered_map>
 
 namespace StrUtils

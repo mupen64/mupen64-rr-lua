@@ -15,7 +15,6 @@
  */
 namespace HotkeyUtils
 {
-
 /**
  * \brief Shows a dialog prompting the user to enter a hotkey.
  * \param hwnd The parent window handle for the dialog.

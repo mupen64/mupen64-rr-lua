@@ -7,11 +7,164 @@
 #include "Common.hpp"
 #include "HotkeyUtils.hpp"
 
+const std::unordered_map<uint32_t, SDL_Keycode> WIN_TO_SDL_KEYCODE = {
+    {'A', SDLK_A},
+    {'B', SDLK_B},
+    {'C', SDLK_C},
+    {'D', SDLK_D},
+    {'E', SDLK_E},
+    {'F', SDLK_F},
+    {'G', SDLK_G},
+    {'H', SDLK_H},
+    {'I', SDLK_I},
+    {'J', SDLK_J},
+    {'K', SDLK_K},
+    {'L', SDLK_L},
+    {'M', SDLK_M},
+    {'N', SDLK_N},
+    {'O', SDLK_O},
+    {'P', SDLK_P},
+    {'Q', SDLK_Q},
+    {'R', SDLK_R},
+    {'S', SDLK_S},
+    {'T', SDLK_T},
+    {'U', SDLK_U},
+    {'V', SDLK_V},
+    {'W', SDLK_W},
+    {'X', SDLK_X},
+    {'Y', SDLK_Y},
+    {'Z', SDLK_Z},
+
+    {'0', SDLK_0},
+    {'1', SDLK_1},
+    {'2', SDLK_2},
+    {'3', SDLK_3},
+    {'4', SDLK_4},
+    {'5', SDLK_5},
+    {'6', SDLK_6},
+    {'7', SDLK_7},
+    {'8', SDLK_8},
+    {'9', SDLK_9},
+
+    {VK_F1, SDLK_F1},
+    {VK_F2, SDLK_F2},
+    {VK_F3, SDLK_F3},
+    {VK_F4, SDLK_F4},
+    {VK_F5, SDLK_F5},
+    {VK_F6, SDLK_F6},
+    {VK_F7, SDLK_F7},
+    {VK_F8, SDLK_F8},
+    {VK_F9, SDLK_F9},
+    {VK_F10, SDLK_F10},
+    {VK_F11, SDLK_F11},
+    {VK_F12, SDLK_F12},
+    {VK_F13, SDLK_F13},
+    {VK_F14, SDLK_F14},
+    {VK_F15, SDLK_F15},
+    {VK_F16, SDLK_F16},
+    {VK_F17, SDLK_F17},
+    {VK_F18, SDLK_F18},
+    {VK_F19, SDLK_F19},
+    {VK_F20, SDLK_F20},
+    {VK_F21, SDLK_F21},
+    {VK_F22, SDLK_F22},
+    {VK_F23, SDLK_F23},
+    {VK_F24, SDLK_F24},
+
+    {VK_NUMPAD0, SDLK_KP_0},
+    {VK_NUMPAD1, SDLK_KP_1},
+    {VK_NUMPAD2, SDLK_KP_2},
+    {VK_NUMPAD3, SDLK_KP_3},
+    {VK_NUMPAD4, SDLK_KP_4},
+    {VK_NUMPAD5, SDLK_KP_5},
+    {VK_NUMPAD6, SDLK_KP_6},
+    {VK_NUMPAD7, SDLK_KP_7},
+    {VK_NUMPAD8, SDLK_KP_8},
+    {VK_NUMPAD9, SDLK_KP_9},
+
+    {VK_MULTIPLY, SDLK_KP_MULTIPLY},
+    {VK_ADD, SDLK_KP_PLUS},
+    {VK_SEPARATOR, SDLK_SEPARATOR},
+    {VK_SUBTRACT, SDLK_KP_MINUS},
+    {VK_DECIMAL, SDLK_KP_PERIOD},
+    {VK_DIVIDE, SDLK_KP_DIVIDE},
+
+    {VK_PRIOR, SDLK_PAGEUP},
+    {VK_NEXT, SDLK_PAGEDOWN},
+    {VK_END, SDLK_END},
+    {VK_HOME, SDLK_HOME},
+    {VK_LEFT, SDLK_LEFT},
+    {VK_UP, SDLK_UP},
+    {VK_RIGHT, SDLK_RIGHT},
+    {VK_DOWN, SDLK_DOWN},
+
+    {VK_INSERT, SDLK_INSERT},
+    {VK_DELETE, SDLK_DELETE},
+
+    {VK_OEM_1, SDLK_SEMICOLON},
+    {VK_OEM_PLUS, SDLK_EQUALS},
+    {VK_OEM_COMMA, SDLK_COMMA},
+    {VK_OEM_MINUS, SDLK_MINUS},
+    {VK_OEM_PERIOD, SDLK_PERIOD},
+    {VK_OEM_2, SDLK_SLASH},
+    {VK_OEM_3, SDLK_GRAVE},
+    {VK_OEM_4, SDLK_LEFTBRACKET},
+    {VK_OEM_5, SDLK_BACKSLASH},
+    {VK_OEM_6, SDLK_RIGHTBRACKET},
+    {VK_OEM_7, SDLK_APOSTROPHE},
+
+    {VK_BACK, SDLK_BACKSPACE},
+    {VK_TAB, SDLK_TAB},
+    {VK_CLEAR, SDLK_CLEAR},
+    {VK_RETURN, SDLK_RETURN},
+    {VK_SHIFT, SDLK_LSHIFT},
+    {VK_CONTROL, SDLK_LCTRL},
+    {VK_MENU, SDLK_LALT},
+    {VK_PAUSE, SDLK_PAUSE},
+    {VK_CAPITAL, SDLK_CAPSLOCK},
+    {VK_ESCAPE, SDLK_ESCAPE},
+    {VK_SPACE, SDLK_SPACE},
+
+    {VK_LSHIFT, SDLK_LSHIFT},
+    {VK_RSHIFT, SDLK_RSHIFT},
+    {VK_LCONTROL, SDLK_LCTRL},
+    {VK_RCONTROL, SDLK_RCTRL},
+    {VK_LMENU, SDLK_LALT},
+    {VK_RMENU, SDLK_RALT},
+
+    {VK_LWIN, SDLK_LGUI},
+    {VK_RWIN, SDLK_RGUI},
+    {VK_APPS, SDLK_APPLICATION},
+
+    {VK_PRINT, SDLK_PRINTSCREEN},
+    {VK_SNAPSHOT, SDLK_PRINTSCREEN},
+    {VK_HELP, SDLK_HELP},
+    {VK_NUMLOCK, SDLK_NUMLOCKCLEAR},
+    {VK_SCROLL, SDLK_SCROLLLOCK},
+    {VK_SLEEP, SDLK_SLEEP},
+
+    {VK_VOLUME_MUTE, SDLK_MUTE},
+    {VK_VOLUME_DOWN, SDLK_VOLUMEDOWN},
+    {VK_VOLUME_UP, SDLK_VOLUMEUP},
+
+    {VK_SELECT, SDLK_SELECT},
+    {VK_EXECUTE, SDLK_EXECUTE},
+
+    {VK_OEM_102, SDLK_BACKSLASH},
+
+};
+
 struct DialogParams
 {
     std::wstring headline{};
     Hotkey hotkey = Hotkey::make_unassigned();
 };
+
+static constexpr std::optional<SDL_Keycode> win_to_sdl_keycode(uint32_t vk)
+{
+    if (WIN_TO_SDL_KEYCODE.contains(vk)) return WIN_TO_SDL_KEYCODE.at(vk);
+    return std::nullopt;
+}
 
 static LRESULT CALLBACK HotkeyButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
                                                  DWORD_PTR ref_data)
@@ -43,7 +196,9 @@ static LRESULT CALLBACK HotkeyButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wpa
         }
         else
         {
-            params->hotkey.key = wparam;
+            const auto keycode = win_to_sdl_keycode(wparam);
+            if (!keycode) break;
+            params->hotkey.key = *keycode;
             EndDialog(GetParent(hwnd), IDOK);
         }
 
@@ -94,19 +249,26 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         }
         break;
-    case WM_MBUTTONDOWN:
-        params->hotkey.key = VK_MBUTTON;
+    case WM_MBUTTONDOWN: {
+        const auto keycode = win_to_sdl_keycode(VK_MBUTTON);
+        if (!keycode) break;
+        params->hotkey.key = *keycode;
         EndDialog(hwnd, IDOK);
         break;
+    }
     case WM_XBUTTONDOWN:
         if (HIWORD(wparam) == XBUTTON1)
         {
-            params->hotkey.key = VK_XBUTTON1;
+            const auto keycode = win_to_sdl_keycode(VK_XBUTTON1);
+            if (!keycode) break;
+            params->hotkey.key = *keycode;
             EndDialog(hwnd, IDOK);
         }
         if (HIWORD(wparam) == XBUTTON2)
         {
-            params->hotkey.key = VK_XBUTTON2;
+            const auto keycode = win_to_sdl_keycode(VK_XBUTTON2);
+            if (!keycode) break;
+            params->hotkey.key = *keycode;
             EndDialog(hwnd, IDOK);
         }
         break;
@@ -143,7 +305,7 @@ bool HotkeyUtils::show_prompt(const HWND hwnd, const std::wstring &caption, Hotk
 }
 
 void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::wstring &action, const Hotkey &new_hotkey,
-                                  const bool through_action_manager)
+                                       const bool through_action_manager)
 {
     const auto set_hotkey = [=](const std::wstring &action, const Hotkey &hotkey) {
         if (through_action_manager)
