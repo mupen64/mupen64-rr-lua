@@ -11,10 +11,17 @@ add_library(Mupen64RR.Common.Views STATIC
     "include/Messages.hpp"
     "include/Messenger.hpp"
     "include/ActionManager.hpp"
+    "include/Resampler.hpp"
+    "include/Encoder.hpp"
+    "include/FFmpegEncoder.hpp"
+    "include/VFWEncoder.hpp"
     "Config.cpp"
     "Hotkey.cpp"
     "Messenger.cpp"
     "ActionManager.cpp"
+    "Resampler.cpp"
+    "FFmpegEncoder.cpp"
+    "VFWEncoder.cpp"
 )
 
 target_compile_features(Mupen64RR.Common.Views PUBLIC cxx_std_23)
@@ -30,9 +37,14 @@ target_link_libraries(Mupen64RR.Common.Views PUBLIC
     SDL3::SDL3
     nlohmann_json::nlohmann_json
     spdlog::spdlog
+    PkgConfig::speexdsp
+    PkgConfig::libav
 )
 
-# only MSVCRT implements C11 Annex K, libsafec is needed on other platforms
+if (WIN32)
+    target_link_libraries(Mupen64RR.Common.Views PUBLIC vfw32)
+endif()
+
 if (NOT WIN32)
     target_link_libraries(Mupen64RR.Common.Views PUBLIC PkgConfig::libsafec)
 endif()

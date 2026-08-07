@@ -16,8 +16,9 @@ extern "C"
 #include <libavutil/opt.h>
 }
 
-#include <capture/CaptureManager.hpp>
+#include <windows.h>
 
+// FIXME: Rename to WinFFmpegEncoder
 class FFmpegEncoder : public Encoder
 {
   public:

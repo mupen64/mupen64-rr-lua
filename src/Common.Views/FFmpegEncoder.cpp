@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "FFmpegEncoder.hpp"
-#include <DialogService.hpp>
+#include <App.hpp>
+#include <FFmpegEncoder.hpp>
 #include <Config.hpp>
+#include <string>
+#include <filesystem>
+#include <cstdint>
+#include <windows.h>
 
 const std::wstring NUT_PIPE_NAME = L"\\\\.\\pipe\\mupennut";
 const std::wstring FFMPEG_OPTIONS = L"-y -i {} {} {}";
@@ -208,11 +211,12 @@ bool FFmpegEncoder::stop()
 
     if (m_dropped_frames > 0)
     {
-        DialogService::show_dialog(std::format(L"{} frames were dropped during capture due to low memory.\n"
-                                               L"The capture might contain empty frames.",
-                                               m_dropped_frames)
-                                       .c_str(),
-                                   L"FFmpeg");
+        // FIXME
+        // DialogService::show_dialog(std::format(L"{} frames were dropped during capture due to low memory.\n"
+        //                                        L"The capture might contain empty frames.",
+        //                                        m_dropped_frames)
+        //                                .c_str(),
+        //                            L"FFmpeg");
     }
 
     return true;
@@ -247,12 +251,12 @@ bool FFmpegEncoder::write_av_packet(int stream_index, uint8_t *data, int size, i
 
 bool FFmpegEncoder::append_video(uint8_t *image)
 {
-    const auto sync = static_cast<CaptureManager::Sync>(g_config.synchronization_mode);
+    const auto sync = static_cast<t_config::Sync>(g_config.synchronization_mode);
     const auto frame_bytes = static_cast<int>(m_params.width * m_params.height * 4);
     const AVRational fps_tb = {1, static_cast<int>(m_params.fps)};
     const int64_t frame_dur = av_rescale_q(1, fps_tb, m_video_stream->time_base);
 
-    if (sync == CaptureManager::Sync::Video || sync == CaptureManager::Sync::None)
+    if (sync == t_config::Sync::Video || sync == t_config::Sync::None)
     {
         const int64_t pts = av_rescale_q(m_video_pts++, fps_tb, m_video_stream->time_base);
         if (!write_av_packet(m_video_stream->index, image, frame_bytes, pts, frame_dur)) return false;

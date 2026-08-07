@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
+#include <App.hpp>
 #include <Config.hpp>
-#include <DialogService.hpp>
-
-#include <capture/CaptureManager.hpp>
-#include <capture/Resampler.hpp>
-#include <capture/encoders/VFWEncoder.hpp>
+#include <Resampler.hpp>
+#include <VFWEncoder.hpp>
+#include <windows.h>
+#include <vfw.h>
 
 std::optional<std::wstring> VFWEncoder::start(Params params)
 {
@@ -53,12 +52,13 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     }
 
     // NOTE: AVIFileCreateStream seems to change the cwd for some reason...
-    set_cwd();
+    // FIXME
+    // set_cwd();
 
     if (params.ask_for_capture_settings && !m_splitting)
     {
         LPAVICOMPRESSOPTIONS avi_options[1] = {&m_avi_options};
-        if (!AVISaveOptions(g_main_ctx.hwnd, 0, 1, &m_video_stream, avi_options))
+        if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, avi_options))
         {
             stop_impl();
             return L"";
@@ -173,8 +173,8 @@ bool VFWEncoder::append_video(uint8_t *image)
 {
     const auto hash = shortHash(image, m_params.width * m_params.height * 4);
 
-    if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
-        g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
+    if (g_config.synchronization_mode == static_cast<int>(t_config::Sync::Video) ||
+        g_config.synchronization_mode == static_cast<int>(t_config::Sync::None))
     {
         g_view_logger->trace(L"video buffer hash {:08X}", hash);
 
@@ -218,7 +218,8 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     if (len <= 0) return true;
 
     const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / SOUND_BUF_SIZE;
-    RT_ASSERT(fill_percentage <= 80, L"Audio buffer overflowed");
+    // FIXME
+    // RT_ASSERT(fill_percentage <= 80, L"Audio buffer overflowed");
 
     memcpy(m_sound_buf + sound_buf_pos, buf, len);
     sound_buf_pos += len;
@@ -235,17 +236,19 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     if (resampled_len <= 0) return true;
 
-    RT_ASSERT((resampled_len % 4) == 0, L"Resampled audio is not stereo-aligned");
+    // FIXME
+    // RT_ASSERT((resampled_len % 4) == 0, L"Resampled audio is not stereo-aligned");
 
     BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
                                    m_resampled_sound, resampled_len, 0, NULL, NULL));
 
     if (!ok)
     {
-        DialogService::show_dialog(L"Audio output failure!\n"
-                                   L"A call to AVIStreamWrite failed.\n"
-                                   L"Perhaps you ran out of memory?",
-                                   L"AVI Encoder", fsvc_error);
+        // FIXME
+        // DialogService::show_dialog(L"Audio output failure!\n"
+        //                            L"A call to AVIStreamWrite failed.\n"
+        //                            L"Perhaps you ran out of memory?",
+        //                            L"AVI Encoder", fsvc_error);
         return false;
     }
 
@@ -265,9 +268,10 @@ bool VFWEncoder::append_video_impl(uint8_t *image)
 
     if (ret != 0)
     {
-        DialogService::show_dialog(
-            L"Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", L"AVI Encoder",
-            fsvc_error);
+        // FIXME
+        // DialogService::show_dialog(
+        //     L"Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", L"AVI Encoder",
+        //     fsvc_error);
     }
 
     return ret == 0;

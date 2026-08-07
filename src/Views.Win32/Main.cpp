@@ -55,6 +55,9 @@ DWORD g_ui_thread_id{};
 
 ULONG_PTR gdi_plus_token;
 
+// See App.hpp
+HWND g_main_hwnd;
+
 constexpr auto WND_CLASS = L"myWindowClass";
 
 BetterEmulationLock::BetterEmulationLock()
@@ -705,6 +708,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_NCCREATE:
         g_main_ctx.hwnd = hwnd;
+        g_main_hwnd = hwnd;
         break;
     case WM_CREATE:
         JoystickControl::register_class(g_main_ctx.hinst, JOYSTICK_CLASS);

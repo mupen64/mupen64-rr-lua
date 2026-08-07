@@ -11,9 +11,9 @@
 #include <DialogService.hpp>
 #include <Messages.hpp>
 #include <capture/CaptureManager.hpp>
-#include <capture/encoders/VFWEncoder.hpp>
-#include <capture/encoders/Encoder.hpp>
-#include <capture/encoders/FFmpegEncoder.hpp>
+#include <VFWEncoder.hpp>
+#include <Encoder.hpp>
+#include <FFmpegEncoder.hpp>
 #include <components/Dispatcher.hpp>
 #include <components/MGECompositor.hpp>
 #include <lua/LuaRenderer.hpp>

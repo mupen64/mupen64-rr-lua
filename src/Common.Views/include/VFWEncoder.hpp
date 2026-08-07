@@ -6,10 +6,11 @@
 
 #pragma once
 
-#include "Encoder.hpp"
-
+#include <Encoder.hpp>
+#include <windows.h>
 #include <vfw.h>
 
+// FIXME: Rename to WinVFWEncoder
 class VFWEncoder final : public Encoder
 {
   public:
