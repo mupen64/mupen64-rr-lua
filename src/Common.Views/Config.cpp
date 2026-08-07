@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include <App.hpp>
+#include <nlohmann/json.hpp>
 #include <IOUtils.hpp>
 #include <Config.hpp>
 #include <Messages.hpp>
 #include <m64rr/API.hpp>
-#include <nlohmann/json.hpp>
+#include <ActionManager.hpp>
 
 using nlohmann::json;
 
@@ -448,13 +450,12 @@ void Config::save()
 
 void Config::apply_and_save()
 {
-    // FIXME: needs ActionManager!
-    // ActionManager::begin_batch_work();
-    // for (const auto &[action, hotkey] : g_config.hotkeys)
-    // {
-    //     ActionManager::associate_hotkey(action, hotkey, true);
-    // }
-    // ActionManager::end_batch_work();
+    ActionManager::begin_batch_work();
+    for (const auto &[action, hotkey] : g_config.hotkeys)
+    {
+        ActionManager::associate_hotkey(action, hotkey, true);
+    }
+    ActionManager::end_batch_work();
 
     save();
 }
@@ -472,17 +473,14 @@ void Config::load()
             json_read_file(j);
         }
         catch (const std::exception &e)
-        {
-            // FIXME
-            // g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
+        { g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
             g_config = get_default_config();
             save();
         }
     }
     else
     {
-        // FIXME
-        // g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
+        g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
         g_config = get_default_config();
         save();
     }

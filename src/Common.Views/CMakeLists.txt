@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Common.Views STATIC
+    "include/App.hpp"
     "include/Config.hpp"
     "include/Hotkey.hpp"
     "include/Messages.hpp"
@@ -28,6 +29,7 @@ target_link_libraries(Mupen64RR.Common.Views PUBLIC
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
     SDL3::SDL3
     nlohmann_json::nlohmann_json
+    spdlog::spdlog
 )
 
 # only MSVCRT implements C11 Annex K, libsafec is needed on other platforms
