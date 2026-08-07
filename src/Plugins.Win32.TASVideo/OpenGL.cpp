@@ -117,17 +117,28 @@ void OGL_UpdateScale()
     OGL.adjustScreen = FALSE;
     OGL.adjustScale = 1.0f;
     OGL.adjustOffset = 0.0f;
+    OGL.widescreenScale = 1.0f;
 
     if ((VI.width != 0) && (VI.height != 0) && (OGL.width != 0) && (OGL.height != 0))
     {
         const float sourceAspect = (float)VI.width / (float)VI.height;
         const float displayAspect = (float)OGL.width / (float)OGL.height;
+
         if (displayAspect > sourceAspect)
         {
-            const float targetWidth = (float)OGL.height * sourceAspect;
-            OGL.adjustScale = targetWidth / (float)OGL.width;
-            OGL.adjustOffset = (float)OGL.width * (1.0f - OGL.adjustScale) / 2.0f;
-            OGL.adjustScreen = TRUE;
+            switch (OGL.aspectMode)
+            {
+            case AspectMode::Pillarbox:
+                OGL.adjustScale = ((float)OGL.height * sourceAspect) / (float)OGL.width;
+                OGL.adjustOffset = (float)OGL.width * (1.0f - OGL.adjustScale) / 2.0f;
+                OGL.adjustScreen = TRUE;
+                break;
+            case AspectMode::Widescreen:
+                OGL.widescreenScale = sourceAspect / displayAspect;
+                break;
+            case AspectMode::Stretch:
+                break;
+            }
         }
     }
 
@@ -247,6 +258,22 @@ void OGL_Stop()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glFinish();
+}
+
+static void OGL_SetRectViewport()
+{
+    if (OGL.adjustScreen)
+        glViewport((GLint)OGL.adjustOffset, 0, (GLint)((float)OGL.width * OGL.adjustScale), (GLint)OGL.height);
+    else
+        glViewport(0, 0, (GLint)OGL.width, (GLint)OGL.height);
+}
+
+static float OGL_AdjustRectX(float x, float rectWidth)
+{
+    if ((OGL.widescreenScale != 1.0f) && (fabs(rectWidth) < (float)VI.width * 9.0f / 10.0f))
+        return x * OGL.widescreenScale + (float)VI.width * (1.0f - OGL.widescreenScale) / 2.0f;
+
+    return x;
 }
 
 void OGL_UpdateCullFace()
@@ -617,25 +644,26 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color)
     glDisable(GL_CULL_FACE);
     OGL_SetOrthoProjection(0.0f, VI.width, VI.height, 0.0f, 1.0f, -1.0f);
 
-    const float viewportX = OGL.adjustScreen ? OGL.adjustOffset : 0.0f;
-    const float viewportWidth = OGL.adjustScreen ? OGL.width * OGL.adjustScale : (float)OGL.width;
-    glViewport((GLint)viewportX, 0, (GLint)viewportWidth, (GLint)OGL.height);
+    OGL_SetRectViewport();
     OGL_DepthRange(0.0f, 1.0f);
 
     const float rectZ = (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f;
 
-    OGL.vertices[0].x = ulx;
+    const float ulxa = OGL_AdjustRectX((float)ulx, (float)(lrx - ulx));
+    const float lrxa = OGL_AdjustRectX((float)lrx, (float)(lrx - ulx));
+
+    OGL.vertices[0].x = ulxa;
     OGL.vertices[0].y = uly;
-    OGL.vertices[1].x = lrx;
+    OGL.vertices[1].x = lrxa;
     OGL.vertices[1].y = uly;
-    OGL.vertices[2].x = ulx;
+    OGL.vertices[2].x = ulxa;
     OGL.vertices[2].y = lry;
 
-    OGL.vertices[3].x = lrx;
+    OGL.vertices[3].x = lrxa;
     OGL.vertices[3].y = uly;
-    OGL.vertices[4].x = lrx;
+    OGL.vertices[4].x = lrxa;
     OGL.vertices[4].y = lry;
-    OGL.vertices[5].x = ulx;
+    OGL.vertices[5].x = ulxa;
     OGL.vertices[5].y = lry;
 
     for (int i = 0; i < 6; i++)
@@ -690,9 +718,11 @@ void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls,
     glDisable(GL_CULL_FACE);
     OGL_SetOrthoProjection(0.0f, VI.width, VI.height, 0.0f, 1.0f, -1.0f);
 
-    const float viewportX = OGL.adjustScreen ? OGL.adjustOffset : 0.0f;
-    const float viewportWidth = OGL.adjustScreen ? OGL.width * OGL.adjustScale : (float)OGL.width;
-    glViewport((GLint)viewportX, 0, (GLint)viewportWidth, (GLint)OGL.height);
+    OGL_SetRectViewport();
+
+    const float rectWidth = rect[1].x - rect[0].x;
+    rect[0].x = OGL_AdjustRectX(rect[0].x, rectWidth);
+    rect[1].x = OGL_AdjustRectX(rect[1].x, rectWidth);
 
     if (combiner.usesT0)
     {
