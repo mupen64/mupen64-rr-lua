@@ -10,7 +10,7 @@
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Messages.hpp>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <WinVFWEncoder.hpp>
 #include <Encoder.hpp>
 #include <WinFFmpegEncoder.hpp>

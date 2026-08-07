@@ -10,7 +10,7 @@
 #include <Messages.hpp>
 #include <ThreadPool.hpp>
 #include <plugin/Plugin.hpp>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <action/AppActions.hpp>
 #include <components/CLI.hpp>

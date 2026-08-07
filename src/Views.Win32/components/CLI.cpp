@@ -11,7 +11,7 @@
 #include <ThreadPool.hpp>
 #include <argh.h>
 #include <nlohmann/json.hpp>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <components/CLI.hpp>
 #include <components/Dispatcher.hpp>

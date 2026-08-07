@@ -10,7 +10,7 @@
 #include <DialogService.hpp>
 #include <Messages.hpp>
 #include <plugin/Plugin.hpp>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <components/FilePicker.hpp>
 #include <components/SettingsListView.hpp>
 #include <components/TextEditDialog.hpp>

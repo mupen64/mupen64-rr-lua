@@ -16,7 +16,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "ViewHelpers.hpp"
     "ThreadPool.hpp"
     "HotkeyUtils.hpp"
-    "capture/CaptureManager.hpp"
+    "CaptureManager.hpp"
     "components/CoreUtils.hpp"
     "components/Validators.hpp"
     "components/PianoRoll.hpp"
@@ -75,7 +75,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
 
     # sources
     "ThreadPool.cpp"
-    "capture/CaptureManager.cpp"
+    "CaptureManager.cpp"
     "HotkeyUtils.cpp"
     "DialogService.cpp"
     "components/CoreUtils.cpp"

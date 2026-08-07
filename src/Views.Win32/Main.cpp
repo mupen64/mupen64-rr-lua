@@ -12,7 +12,7 @@
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <strsafe.h>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <action/ActionMenu.hpp>
 #include <action/AppActions.hpp>
