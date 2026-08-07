@@ -675,7 +675,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
         RECT rect{};
         GetClientRect(g_main_ctx.hwnd, &rect);
-        Messenger::broadcast<Messenger::Message::SizeChanged>(rect);
+        Messenger::broadcast<Messenger::Message::SizeChanged>(std::make_pair(rect.right - rect.left, rect.bottom - rect.top));
 
         if (g_main_ctx.core_ctx->vr_get_launched())
         {
