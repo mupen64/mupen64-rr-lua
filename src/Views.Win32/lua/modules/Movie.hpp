@@ -21,7 +21,7 @@ static int play(lua_State *L)
     }
 
     g_config.core.vcr_readonly = true;
-    Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
+    Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
     ThreadPool::submit_task([=] { g_main_ctx.core_ctx->vcr_start_playback(path); });
 
     lua_pushinteger(L, Res_Ok);
@@ -58,7 +58,7 @@ static int GetVCRReadOnly(lua_State *L)
 static int SetVCRReadOnly(lua_State *L)
 {
     g_config.core.vcr_readonly = lua_toboolean(L, 1);
-    Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
+    Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
     return 0;
 }
 

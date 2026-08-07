@@ -15,6 +15,8 @@ namespace Messenger
 #define ASSERT_NOT_CHANGING
 #endif
 
+using t_user_callback = std::function<void(std::any)>;
+
 // Represents a subscriber to a message.
 struct Subscriber
 {
@@ -69,7 +71,9 @@ void rebuild_subscriber_cache()
     }
 }
 
-void broadcast(const Message message, std::any data)
+namespace detail
+{
+void broadcast_impl(const Message message, std::any data)
 {
     wait_for_subscribe_end();
 
@@ -83,14 +87,14 @@ void broadcast(const Message message, std::any data)
     --g_broadcasting;
 }
 
-std::function<void()> subscribe(Message message, t_user_callback callback)
+std::function<void()> subscribe_impl(Message message, t_user_callback callback)
 {
     wait_for_broadcast_end();
     wait_for_subscribe_end();
 
     ++g_subscribing;
 
-    Subscriber subscriber = {g_uid_accumulator++, callback};
+    Subscriber subscriber = {g_uid_accumulator++, std::move(callback)};
 
     g_subscribers.emplace_back(message, subscriber);
     rebuild_subscriber_cache();
@@ -109,4 +113,5 @@ std::function<void()> subscribe(Message message, t_user_callback callback)
         --g_subscribing;
     };
 }
+} // namespace detail
 } // namespace Messenger

@@ -195,9 +195,8 @@ static void refresh_segments()
     set_statusbar_parts(statusbar_hwnd, sizes);
 }
 
-static void emu_launched_changed(std::any data)
+static void emu_launched_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     static auto previous_value = value;
 
     if (!statusbar_hwnd)
@@ -216,8 +215,8 @@ static void emu_launched_changed(std::any data)
     if (value)
     {
         // Update this at first start, otherwise it doesnt initially appear
-        Messenger::broadcast(Messenger::Message::SlotChanged, (size_t)g_config.st_slot);
-        Messenger::broadcast(Messenger::Message::MultiFrameAdvanceCountChanged, 0);
+        Messenger::broadcast<Messenger::Message::SlotChanged>((size_t)g_config.st_slot);
+        Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
     }
 
     refresh_segments();
@@ -232,10 +231,8 @@ static void create()
                                     g_main_ctx.hwnd, (HMENU)IDC_MAIN_STATUS, g_main_ctx.hinst, nullptr);
 }
 
-static void statusbar_visibility_changed(std::any data)
+static void statusbar_visibility_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
-
     if (statusbar_hwnd)
     {
         DestroyWindow(statusbar_hwnd);
@@ -248,46 +245,41 @@ static void statusbar_visibility_changed(std::any data)
     }
 }
 
-static void on_readonly_changed(std::any data)
+static void on_readonly_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     post(value ? L"Read-only" : L"Read/write", Statusbar::Section::Readonly);
 }
 
-static void on_rerecords_changed(std::any data)
+static void on_rerecords_changed(uint64_t value)
 {
-    const auto value = std::any_cast<uint64_t>(data);
     const auto str = std::format(L"{} rr", format_short(value));
     post(str, Statusbar::Section::Rerecords);
 }
 
-static void on_task_changed(std::any data)
+static void on_task_changed(core_vcr_task value)
 {
-    auto value = std::any_cast<core_vcr_task>(data);
-
     if (value == task_idle)
     {
         post(L"", Statusbar::Section::Rerecords);
     }
 }
 
-static void on_slot_changed(std::any data)
+static void on_slot_changed(size_t value)
 {
-    auto value = std::any_cast<size_t>(data);
     post(std::format(L"Slot {}", value + 1), Statusbar::Section::Slot);
 }
 
-static void on_size_changed(std::any)
+static void on_size_changed(RECT)
 {
     refresh_segments();
 }
 
-static void on_multi_frame_advance_count_changed(std::any)
+static void on_multi_frame_advance_count_changed()
 {
     post(std::format(L"MFA {}x", g_config.multi_frame_advance_count), Statusbar::Section::MultiFrameAdvanceCount);
 }
 
-static void fix_segments(std::any)
+static void fix_segments()
 {
     std::unordered_map<Statusbar::Section, std::wstring> section_text;
 
@@ -329,15 +321,15 @@ static void fix_segments(std::any)
 void Statusbar::create()
 {
     ::create();
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, emu_launched_changed);
-    Messenger::subscribe(Messenger::Message::StatusbarVisibilityChanged, statusbar_visibility_changed);
-    Messenger::subscribe(Messenger::Message::ReadonlyChanged, on_readonly_changed);
-    Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed);
-    Messenger::subscribe(Messenger::Message::RerecordsChanged, on_rerecords_changed);
-    Messenger::subscribe(Messenger::Message::SlotChanged, on_slot_changed);
-    Messenger::subscribe(Messenger::Message::MultiFrameAdvanceCountChanged, on_multi_frame_advance_count_changed);
-    Messenger::subscribe(Messenger::Message::SizeChanged, on_size_changed);
-    Messenger::subscribe(Messenger::Message::ConfigLoaded, fix_segments);
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(emu_launched_changed);
+    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(statusbar_visibility_changed);
+    Messenger::subscribe<Messenger::Message::ReadonlyChanged>(on_readonly_changed);
+    Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
+    Messenger::subscribe<Messenger::Message::RerecordsChanged>(on_rerecords_changed);
+    Messenger::subscribe<Messenger::Message::SlotChanged>(on_slot_changed);
+    Messenger::subscribe<Messenger::Message::MultiFrameAdvanceCountChanged>(on_multi_frame_advance_count_changed);
+    Messenger::subscribe<Messenger::Message::SizeChanged>(on_size_changed);
+    Messenger::subscribe<Messenger::Message::ConfigLoaded>(fix_segments);
 }
 
 HWND Statusbar::hwnd()

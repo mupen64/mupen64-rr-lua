@@ -281,12 +281,11 @@ void LuaRenderer::init()
 
     g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 
-    Messenger::subscribe(Messenger::Message::SizeChanged, [](const std::any &data) {
-        auto rect = std::any_cast<RECT>(data);
+    Messenger::subscribe<Messenger::Message::SizeChanged>([](const RECT &rect) {
         resize(rect.right - rect.left, rect.bottom - rect.top);
     });
 
-    Messenger::subscribe(Messenger::Message::MainWindowMoved, [](const auto &...) { move_and_order_overlays(); });
+    Messenger::subscribe<Messenger::Message::MainWindowMoved>([] { move_and_order_overlays(); });
 
     start_draw_clock();
 }

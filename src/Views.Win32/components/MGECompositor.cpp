@@ -348,8 +348,7 @@ void MGECompositor::init()
     wndclass.lpszClassName = CONTROL_CLASS_NAME;
     RegisterClass(&wndclass);
 
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const std::any &data) {
-        const auto value = std::any_cast<bool>(data);
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>([](bool value) {
         ShowWindow(mge_context.hwnd, value && PluginUtil::mge_available() ? SW_SHOW : SW_HIDE);
     });
 }

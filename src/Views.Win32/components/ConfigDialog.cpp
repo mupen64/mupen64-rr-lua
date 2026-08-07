@@ -1601,7 +1601,7 @@ void ConfigDialog::show_app_settings()
     }
 
     Config::apply_and_save();
-    Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+    Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 }
 
 std::vector<t_options_group> ConfigDialog::get_option_groups()
