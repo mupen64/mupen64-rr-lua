@@ -441,9 +441,9 @@ void on_vis_since_input_poll_exceeded()
 
     if (g_config.silent_mode ||
         g_dialog_service->show_ask_dialog(VIEW_DLG_LAG_EXCEEDED,
-                                       L"An unusual execution pattern was detected. Continuing might leave the "
-                                       L"emulator in an unusable state.\r\nWould you like to terminate emulation?",
-                                       L"Warning", true))
+                                          L"An unusual execution pattern was detected. Continuing might leave the "
+                                          L"emulator in an unusable state.\r\nWould you like to terminate emulation?",
+                                          L"Warning", true))
     {
         ThreadPool::submit_task([] {
             const auto result = g_main_ctx.core_ctx->vr_close_rom(true);
@@ -477,7 +477,7 @@ void on_config_loaded()
     WinDarkMode::set(theme);
 }
 
-void on_config_needs_patching(t_config& cfg)
+void on_config_needs_patching(t_config &cfg)
 {
     // HACK: Wine doesn't implement DComp well enough yet, so force GDI
     if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
@@ -960,7 +960,8 @@ static core_result init_core()
         auto str_wide = IOUtils::to_wide_string(str);
         auto title_wide = IOUtils::to_wide_string(title);
 
-        return g_dialog_service->show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(), type);
+        return g_dialog_service->show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(),
+                                                             type);
     };
     g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
         auto str_wide = IOUtils::to_wide_string(str);
@@ -1264,7 +1265,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     if (!g_ui_timer)
     {
         g_dialog_service->show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.",
-                                   L"Error", fsvc_error);
+                                      L"Error", fsvc_error);
         return -1;
     }
 

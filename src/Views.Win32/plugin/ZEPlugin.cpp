@@ -109,7 +109,8 @@ static void CALL dummy_capture_screen(char *)
 {
     if (!PluginUtil::mge_available())
     {
-        g_dialog_service->show_dialog(L"The current video plugin doesn't support screenshots.", L"Screenshot", fsvc_error);
+        g_dialog_service->show_dialog(L"The current video plugin doesn't support screenshots.", L"Screenshot",
+                                      fsvc_error);
         return;
     }
 

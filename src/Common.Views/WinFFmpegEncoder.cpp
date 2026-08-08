@@ -213,11 +213,11 @@ bool WinFFmpegEncoder::stop()
 
     if (m_dropped_frames > 0)
     {
-         g_dialog_service->show_dialog(std::format(L"{} frames were dropped during capture due to low memory.\n"
-                                                L"The capture might contain empty frames.",
-                                                m_dropped_frames)
-                                        .c_str(),
-                                    L"FFmpeg");
+        g_dialog_service->show_dialog(std::format(L"{} frames were dropped during capture due to low memory.\n"
+                                                  L"The capture might contain empty frames.",
+                                                  m_dropped_frames)
+                                          .c_str(),
+                                      L"FFmpeg");
     }
 
     return true;

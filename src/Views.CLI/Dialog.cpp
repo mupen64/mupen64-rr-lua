@@ -30,7 +30,7 @@ static void print_header(std::string_view title, core_dialog_type type)
 }
 
 int g_dialog_service->show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices,
-                                               const char *str, const char *title, core_dialog_type type)
+                                                  const char *str, const char *title, core_dialog_type type)
 {
     print_header(title, type);
 

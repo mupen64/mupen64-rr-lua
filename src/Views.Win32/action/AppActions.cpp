@@ -816,8 +816,8 @@ static void show_about_dialog()
                      L"Copyright ©️ 2026"
                      L"\r\n"
                      L"Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg, L"About",
-                                                                   fsvc_information);
+    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg,
+                                                                      L"About", fsvc_information);
 
     if (result == 0)
     {

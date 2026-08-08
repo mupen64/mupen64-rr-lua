@@ -471,7 +471,8 @@ void Config::load()
             json_read_file(j);
         }
         catch (const std::exception &e)
-        { g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
+        {
+            g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
             g_config = get_default_config();
             save();
         }

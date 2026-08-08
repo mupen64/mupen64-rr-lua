@@ -97,7 +97,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
             if (!g_main_ctx.core_ctx->cht_compile(IOUtils::to_utf8_string(code), script))
             {
                 g_dialog_service->show_dialog(L"Cheat code could not be compiled.\r\nVerify that the syntax is correct",
-                                           L"Cheats", fsvc_error);
+                                              L"Cheats", fsvc_error);
                 break;
             }
 

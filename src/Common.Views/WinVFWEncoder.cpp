@@ -222,7 +222,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
     if (len <= 0) return true;
 
     const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / SOUND_BUF_SIZE;
-     RT_ASSERT(fill_percentage <= 80, "Audio buffer overflowed");
+    RT_ASSERT(fill_percentage <= 80, "Audio buffer overflowed");
 
     memcpy(m_sound_buf + sound_buf_pos, buf, len);
     sound_buf_pos += len;
@@ -239,17 +239,17 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     if (resampled_len <= 0) return true;
 
-     RT_ASSERT((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
+    RT_ASSERT((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
 
     BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
                                    m_resampled_sound, resampled_len, 0, NULL, NULL));
 
     if (!ok)
     {
-         g_dialog_service->show_dialog(L"Audio output failure!\n"
-                                    L"A call to AVIStreamWrite failed.\n"
-                                    L"Perhaps you ran out of memory?",
-                                    L"AVI Encoder", fsvc_error);
+        g_dialog_service->show_dialog(L"Audio output failure!\n"
+                                      L"A call to AVIStreamWrite failed.\n"
+                                      L"Perhaps you ran out of memory?",
+                                      L"AVI Encoder", fsvc_error);
         return false;
     }
 
@@ -269,9 +269,9 @@ bool WinVFWEncoder::append_video_impl(uint8_t *image)
 
     if (ret != 0)
     {
-         g_dialog_service->show_dialog(
-             L"Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", L"AVI Encoder",
-             fsvc_error);
+        g_dialog_service->show_dialog(
+            L"Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", L"AVI Encoder",
+            fsvc_error);
     }
 
     return ret == 0;

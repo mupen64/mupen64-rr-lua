@@ -154,7 +154,7 @@ void show_connectivity_error(bool manual)
     if (manual)
     {
         g_dialog_service->show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error",
-                                   fsvc_error);
+                                      fsvc_error);
     }
 }
 
