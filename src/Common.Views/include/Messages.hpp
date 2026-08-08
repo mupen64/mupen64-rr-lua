@@ -344,7 +344,15 @@ template <Message M> void broadcast(typename MessageData<M>::type data)
 {
     static_assert(!std::is_void_v<typename MessageData<M>::type>,
                   "This message does not carry data; call broadcast<M>() instead of broadcast<M>(data).");
-    detail::broadcast_impl(detail::make_key(M), std::any(std::move(data)));
+    if constexpr (std::is_reference_v<typename MessageData<M>::type>)
+    {
+        // std::any cannot hold references, so deliver the address of the original object rather than moving from it.
+        detail::broadcast_impl(detail::make_key(M), std::any(&data));
+    }
+    else
+    {
+        detail::broadcast_impl(detail::make_key(M), std::any(std::move(data)));
+    }
 }
 
 /**
@@ -381,7 +389,9 @@ template <Message M, typename F> std::function<void()> subscribe(F callback)
         return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](std::any data) {
             if constexpr (std::is_reference_v<type>)
             {
-                std::invoke(cb, std::any_cast<type>(data));
+                using value_type = std::remove_reference_t<type>;
+                // Reference payloads are broadcast as a pointer to the original object; dereference to hand the callback its reference.
+                std::invoke(cb, *std::any_cast<value_type*>(data));
             }
             else
             {
