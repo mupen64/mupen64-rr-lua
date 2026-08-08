@@ -255,6 +255,15 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         const auto compressor = g_core->cfg->st_lz4 ? MiscHelpers::Compressor::Lz4 : MiscHelpers::Compressor::Gzip;
         const auto compressed = MiscHelpers::compress(compressor, st);
 
+        if (compressed.empty())
+        {
+            task.callback(
+                core_st_callback_info{
+                    .result = ST_FileWriteError, .job = task.job, .medium = task.medium, .params = task.params},
+                st);
+            return;
+        }
+
         // write compressed st to disk
         if (!IOUtils::write_entire_file(new_st_path, compressed))
         {
