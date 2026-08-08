@@ -12,7 +12,7 @@
 #include <plugin/Plugin.hpp>
 #include <CaptureManager.hpp>
 #include <components/FilePicker.hpp>
-#include <components/SettingsListView.hpp>
+#include <SettingsListView.hpp>
 #include <components/TextEditDialog.hpp>
 #include <components/ConfigDialog.hpp>
 #include <lua/LuaManager.hpp>
