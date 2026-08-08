@@ -14,7 +14,7 @@ In order for the compiler to work, you'll need to be in a VS developer environme
 ## Linux dependencies
 
 ```fish
-sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lua mingw-w64-gcc vcpkg
+sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua mingw-w64-gcc vcpkg
 yay -S --needed libsafec
 source /etc/profile.d/vcpkg.sh
 ```

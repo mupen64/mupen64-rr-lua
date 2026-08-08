@@ -1005,6 +1005,14 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.st_screenshot),
     });
     core_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = core_group.id,
+        .name = L"Fast Savestates",
+        .tooltip = L"Compress savestates using LZ4, faster than GZip.\nDisable to create savestates that are "
+                   L"compatible with older Mupen versions.",
+        GENPROPS(int32_t, core.st_lz4),
+    });
+    core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
         .group_id = core_group.id,
         .name = L"ROM Cache Size",
