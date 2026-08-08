@@ -283,7 +283,7 @@ void CLI::init()
         cli_state.is_movie_from_start = hdr.startFlags & MOVIE_START_FROM_NOTHING;
     }
 
-    cli_state.rom_is_movie = cli_params.rom.extension().compare(L".m64");
+    cli_state.rom_is_movie = cli_params.rom.extension().compare(L".m64") == 0;
 
     log_cli_params(cli_params);
 }

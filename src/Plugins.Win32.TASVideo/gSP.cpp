@@ -72,6 +72,8 @@ void gSPProcessVertex(u32 v)
 
     vert_transform(&gSP.vertices[v].x, gSP.matrix.combined);
 
+    gSP.vertices[v].x *= OGL.widescreenScale;
+
     if (gSP.matrix.billboard)
     {
         gSP.vertices[v].x += gSP.vertices[0].x;
