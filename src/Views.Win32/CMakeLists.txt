@@ -70,7 +70,6 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "plugin/ZEPlugin.hpp"
     "plugin/M64RRPlugin.hpp"
     "resource.h"
-    "ResizeAnchor.hpp"
 
     # sources
     "ThreadPool.cpp"
@@ -113,7 +112,6 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "plugin/Plugin.cpp"
     "plugin/ZEPlugin.cpp"
     "plugin/M64RRPlugin.cpp"
-    "ResizeAnchor.cpp"
 
     # Resource script
     "Resource.rc"
