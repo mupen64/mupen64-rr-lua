@@ -252,7 +252,11 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         get_paths_for_task(task, new_st_path, new_sd_path);
         if (g_core->cfg->use_summercart) save_summercart(new_sd_path);
 
+        const auto t1 = std::chrono::high_resolution_clock::now();
         const auto compressed = MiscHelpers::auto_compress(st);
+        const auto t2 = std::chrono::high_resolution_clock::now();
+        const auto compress_time = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        g_core->log_trace(std::format("Compressed savestate in {} ms", compress_time));
 
         // write compressed st to disk
         if (!IOUtils::write_entire_file(new_st_path, compressed))
@@ -308,7 +312,12 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
         return;
     }
 
+    const auto t1 = std::chrono::high_resolution_clock::now();
     std::vector<uint8_t> decompressed_buf = MiscHelpers::auto_decompress(st_buf, 0xB624F0);
+    const auto t2 = std::chrono::high_resolution_clock::now();
+    const auto decompress_time = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    g_core->log_trace(std::format("Decompressed savestate in {} ms", decompress_time));
+
     if (decompressed_buf.empty())
     {
         task.callback(
