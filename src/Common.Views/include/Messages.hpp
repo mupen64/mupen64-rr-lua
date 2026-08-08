@@ -10,9 +10,11 @@
 #include <cstdint>
 #include <filesystem>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
+#include <Config.hpp>
 #include <m64rr/Types.hpp>
 #include <Messenger.hpp>
 
@@ -127,6 +129,8 @@ enum class Message
      * \brief The config has been loaded and values have changed
      */
     ConfigLoaded,
+
+    ConfigNeedsPatching,
 
     /**
      * \brief The rerecord count of the currently recorded movie changed
@@ -269,6 +273,10 @@ template <> struct MessageData<Message::ConfigLoaded>
 {
     using type = void;
 };
+template <> struct MessageData<Message::ConfigNeedsPatching>
+{
+    using type = t_config&;
+};
 template <> struct MessageData<Message::RerecordsChanged>
 {
     using type = uint64_t;
@@ -371,7 +379,14 @@ template <Message M, typename F> std::function<void()> subscribe(F callback)
         static_assert(std::is_invocable_v<F, type>,
                       "The callback for this message must be callable with its data type.");
         return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](std::any data) {
-            std::invoke(cb, std::any_cast<type>(std::move(data)));
+            if constexpr (std::is_reference_v<type>)
+            {
+                std::invoke(cb, std::any_cast<type>(data));
+            }
+            else
+            {
+                std::invoke(cb, std::any_cast<type>(std::move(data)));
+            }
         });
     }
 }

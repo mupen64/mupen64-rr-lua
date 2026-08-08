@@ -477,6 +477,12 @@ void on_config_loaded()
     WinDarkMode::set(theme);
 }
 
+void on_config_needs_patching(t_config& cfg)
+{
+    // HACK: Wine doesn't implement DComp well enough yet, so force GDI
+    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
+}
+
 void on_seek_completed()
 {
     LuaCallbacks::call_seek_completed();
@@ -1234,6 +1240,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe<Messenger::Message::SpeedModifierChanged>(on_speed_modifier_changed);
     Messenger::subscribe<Messenger::Message::LagLimitExceeded>(on_vis_since_input_poll_exceeded);
     Messenger::subscribe<Messenger::Message::ConfigLoaded>(on_config_loaded);
+    Messenger::subscribe<Messenger::Message::ConfigNeedsPatching>(on_config_needs_patching);
     Messenger::subscribe<Messenger::Message::SeekCompleted>(on_seek_completed);
     Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed);
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>([] { AppActions::update_core_fast_forward(); });
