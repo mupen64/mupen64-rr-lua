@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <ActionManager.hpp>
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <lua/LuaCallbacks.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRegistry.hpp>
@@ -31,7 +31,7 @@ static int at_panic(lua_State *L)
     const auto message = IOUtils::to_wide_string(lua_tostring(L, -1));
 
     g_view_logger->info(L"Lua panic: {}", message);
-    DialogService::show_dialog(message.c_str(), L"Lua", fsvc_error);
+    g_dialog_service->show_dialog(message.c_str(), L"Lua", fsvc_error);
 
     return 0;
 }

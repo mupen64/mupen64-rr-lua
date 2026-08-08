@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <ActionManager.hpp>
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
@@ -259,7 +259,7 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
                 std::format(L"Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
                             info.job == core_st_job_save ? L"save" : L"load", info.params.path.filename().wstring(),
                             (int32_t)info.result);
-            DialogService::show_dialog(message.c_str(), L"Savestate", fsvc_error);
+            g_dialog_service->show_dialog(message.c_str(), L"Savestate", fsvc_error);
             break;
         }
         }
@@ -440,7 +440,7 @@ void on_vis_since_input_poll_exceeded()
     }
 
     if (g_config.silent_mode ||
-        DialogService::show_ask_dialog(VIEW_DLG_LAG_EXCEEDED,
+        g_dialog_service->show_ask_dialog(VIEW_DLG_LAG_EXCEEDED,
                                        L"An unusual execution pattern was detected. Continuing might leave the "
                                        L"emulator in an unusable state.\r\nWould you like to terminate emulation?",
                                        L"Warning", true))
@@ -960,21 +960,21 @@ static core_result init_core()
         auto str_wide = IOUtils::to_wide_string(str);
         auto title_wide = IOUtils::to_wide_string(title);
 
-        return DialogService::show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(), type);
+        return g_dialog_service->show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(), type);
     };
     g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
         auto str_wide = IOUtils::to_wide_string(str);
         auto title_wide = IOUtils::to_wide_string(title);
-        return DialogService::show_ask_dialog(id, str_wide.c_str(), title_wide.c_str(), warning);
+        return g_dialog_service->show_ask_dialog(id, str_wide.c_str(), title_wide.c_str(), warning);
     };
     g_main_ctx.core.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
         auto str_wide = IOUtils::to_wide_string(str);
         auto title_wide = IOUtils::to_wide_string(title);
-        DialogService::show_dialog(str_wide.c_str(), title_wide.c_str(), type);
+        g_dialog_service->show_dialog(str_wide.c_str(), title_wide.c_str(), type);
     };
     g_main_ctx.core.show_statusbar = [](const char *str) {
         auto str_wide = IOUtils::to_wide_string(str);
-        DialogService::show_statusbar(str_wide.c_str());
+        g_dialog_service->show_statusbar(str_wide.c_str());
     };
     g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
@@ -1080,7 +1080,7 @@ void app_runtime_assert_fail(std::string_view message)
 #if defined(_DEBUG)
     __debugbreak();
 #endif
-    DialogService::show_dialog(IOUtils::to_wide_string(message).c_str(), L"Failed Runtime Assertion", fsvc_error);
+    g_dialog_service->show_dialog(IOUtils::to_wide_string(message).c_str(), L"Failed Runtime Assertion", fsvc_error);
     std::terminate();
 }
 
@@ -1263,7 +1263,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)
     {
-        DialogService::show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.",
+        g_dialog_service->show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.",
                                    L"Error", fsvc_error);
         return -1;
     }

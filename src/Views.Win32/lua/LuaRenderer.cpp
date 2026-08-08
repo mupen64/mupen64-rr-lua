@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRenderer.hpp>
@@ -444,7 +444,7 @@ void LuaRenderer::ensure_d2d_renderer_created(t_lua_rendering_context *ctx)
 
     if (!ctx->presenter->init(ctx->d2d_overlay_hwnd))
     {
-        DialogService::show_dialog(
+        g_dialog_service->show_dialog(
             L"Failed to initialize presenter.\r\nVerify that your system supports the selected presenter.", L"Lua",
             fsvc_error);
         return;

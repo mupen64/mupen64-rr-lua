@@ -7,6 +7,7 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include "IDialogService.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -16,6 +17,7 @@
  */
 
 extern std::shared_ptr<spdlog::logger> g_view_logger;
+extern IDialogService *g_dialog_service;
 
 #ifdef _WIN32
 extern HWND g_main_hwnd;

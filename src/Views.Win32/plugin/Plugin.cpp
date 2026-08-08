@@ -8,7 +8,7 @@
 
 #include "Common.hpp"
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <plugin/Plugin.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/ZEPlugin.hpp>
@@ -155,7 +155,7 @@ Plugin::~Plugin()
 {
     if (!FreeLibrary(m_module))
     {
-        DialogService::show_dialog(std::format(L"Failed to free library {}.", (void *)m_module).c_str(), L"Core",
+        g_dialog_service->show_dialog(std::format(L"Failed to free library {}.", (void *)m_module).c_str(), L"Core",
                                    fsvc_error);
     }
 }

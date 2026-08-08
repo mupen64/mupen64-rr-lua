@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <ActionManager.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <Messages.hpp>
 #include <ThreadPool.hpp>
 #include <plugin/Plugin.hpp>
@@ -70,7 +70,7 @@ bool confirm_user_exit()
     final_message += L" is running. Are you sure you want to close the ROM?";
 
     const bool result =
-        DialogService::show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message.c_str(), L"Close ROM", true);
+        g_dialog_service->show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message.c_str(), L"Close ROM", true);
 
     return result;
 }
@@ -99,7 +99,7 @@ void AppActions::load_rom_from_path(const std::wstring &path)
 
 static void stub()
 {
-    DialogService::show_dialog(L"ActionManager::stub", L"Stub", fsvc_error);
+    g_dialog_service->show_dialog(L"ActionManager::stub", L"Stub", fsvc_error);
 }
 
 #pragma region File
@@ -496,7 +496,7 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
                                  (!file_info.cht_path.empty() && std::filesystem::exists(file_info.cht_path));
     if (any_file_exists)
     {
-        const auto overwrite = DialogService::show_ask_dialog(
+        const auto overwrite = g_dialog_service->show_ask_dialog(
             VIEW_DLG_OVERWRITE_MOVIE,
             L"The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
             L"Overwrite Movie", true, g_main_ctx.hwnd);
@@ -648,7 +648,7 @@ static void show_ram_start()
 
     const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
 
-    const auto result = DialogService::show_multiple_choice_dialog(
+    const auto result = g_dialog_service->show_multiple_choice_dialog(
         VIEW_DLG_RAMSTART, {L"Copy STROOP config line", L"Close"}, str.c_str(), L"Core Information", fsvc_information);
 
     if (result == 0)
@@ -816,7 +816,7 @@ static void show_about_dialog()
                      L"Copyright ©️ 2026"
                      L"\r\n"
                      L"Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg, L"About",
+    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg, L"About",
                                                                    fsvc_information);
 
     if (result == 0)

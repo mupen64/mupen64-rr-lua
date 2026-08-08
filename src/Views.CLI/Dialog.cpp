@@ -29,7 +29,7 @@ static void print_header(std::string_view title, core_dialog_type type)
     std::println("-------------------------------");
 }
 
-int DialogService::show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices,
+int g_dialog_service->show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices,
                                                const char *str, const char *title, core_dialog_type type)
 {
     print_header(title, type);
@@ -57,7 +57,7 @@ int DialogService::show_multiple_choice_dialog(std::string_view id, const std::v
     }
 }
 
-bool DialogService::show_ask_dialog(std::string_view id, const char *str, const char *title, bool warning)
+bool g_dialog_service->show_ask_dialog(std::string_view id, const char *str, const char *title, bool warning)
 {
     print_header(title, warning ? fsvc_warning : fsvc_information);
 
@@ -78,7 +78,7 @@ bool DialogService::show_ask_dialog(std::string_view id, const char *str, const 
     }
 }
 
-void DialogService::show_dialog(const char *str, const char *title, core_dialog_type type)
+void g_dialog_service->show_dialog(const char *str, const char *title, core_dialog_type type)
 {
     print_header(title, type);
 

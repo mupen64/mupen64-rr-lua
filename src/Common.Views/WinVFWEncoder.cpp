@@ -7,7 +7,7 @@
 #include <App.hpp>
 #include <Assert.hpp>
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <Resampler.hpp>
 #include <WinVFWEncoder.hpp>
 #include <windows.h>
@@ -246,7 +246,7 @@ bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     if (!ok)
     {
-         DialogService::show_dialog(L"Audio output failure!\n"
+         g_dialog_service->show_dialog(L"Audio output failure!\n"
                                     L"A call to AVIStreamWrite failed.\n"
                                     L"Perhaps you ran out of memory?",
                                     L"AVI Encoder", fsvc_error);
@@ -269,7 +269,7 @@ bool WinVFWEncoder::append_video_impl(uint8_t *image)
 
     if (ret != 0)
     {
-         DialogService::show_dialog(
+         g_dialog_service->show_dialog(
              L"Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", L"AVI Encoder",
              fsvc_error);
     }

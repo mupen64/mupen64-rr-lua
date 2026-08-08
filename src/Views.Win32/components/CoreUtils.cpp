@@ -12,7 +12,7 @@
 // Prompts the user to change their plugin selection.
 static void prompt_plugin_change(HWND hwnd)
 {
-    auto result = DialogService::show_multiple_choice_dialog(
+    auto result = g_dialog_service->show_multiple_choice_dialog(
         VIEW_DLG_PLUGIN_LOAD_ERROR, {L"Choose Default Plugins", L"Change Plugins", L"Cancel"},
         L"One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", L"Core", fsvc_error, hwnd);
 
@@ -201,7 +201,7 @@ bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
     const auto title = std::format("{} Error {}", module, static_cast<int32_t>(result));
     const auto werror = IOUtils::to_wide_string(error);
     const auto wtitle = IOUtils::to_wide_string(title);
-    DialogService::show_dialog(werror.c_str(), wtitle.c_str(), fsvc_error, hwnd);
+    g_dialog_service->show_dialog(werror.c_str(), wtitle.c_str(), fsvc_error, hwnd);
 
     return true;
 }

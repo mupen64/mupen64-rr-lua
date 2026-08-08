@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <ActionManager.hpp>
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <CaptureManager.hpp>
@@ -440,7 +440,7 @@ static INT_PTR CALLBACK base_pageproc(const HWND hwnd, const UINT message, const
         {
             if (!weak_compare(g_config, g_prev_config))
             {
-                const auto result = DialogService::show_ask_dialog(
+                const auto result = g_dialog_service->show_ask_dialog(
                     VIEW_DLG_CONFIRM_SETTINGS_DISCARD,
                     L"You have unsaved changes. Are you sure you want to discard the changes?", L"Settings", true,
                     hwnd);
@@ -1243,8 +1243,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             ListView_Update(ctx->lv_hwnd, i);
             break;
         case 2:
-            DialogService::show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(),
-                                       fsvc_information, hwnd);
+            g_dialog_service->show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(),
+                                          fsvc_information, hwnd);
             break;
         case 4:
             option_item.current_value.set(Hotkey::make_empty());
@@ -1269,13 +1269,14 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 
             if (!can_all_be_changed)
             {
-                DialogService::show_dialog(L"Some settings can't be reset, as they are currently read-only. Try again "
-                                           L"with emulation stopped.\nNo changes have been made to the settings.",
-                                           L"Reset all to default", fsvc_warning, hwnd);
+                g_dialog_service->show_dialog(
+                    L"Some settings can't be reset, as they are currently read-only. Try again "
+                    L"with emulation stopped.\nNo changes have been made to the settings.",
+                    L"Reset all to default", fsvc_warning, hwnd);
                 break;
             }
 
-            const auto result = DialogService::show_ask_dialog(
+            const auto result = g_dialog_service->show_ask_dialog(
                 VIEW_DLG_RESET_SETTINGS,
                 L"Reset all settings to their default values?\nThis will reset settings on all pages.",
                 L"Reset all to default", false, hwnd);

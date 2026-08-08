@@ -77,9 +77,9 @@ static void init_core()
         return s_backups_path;
     };
     g_core_params.get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
-    g_core_params.show_multiple_choice_dialog = DialogService::show_multiple_choice_dialog;
-    g_core_params.show_ask_dialog = DialogService::show_ask_dialog;
-    g_core_params.show_dialog = DialogService::show_dialog;
+    g_core_params.show_multiple_choice_dialog = g_dialog_service->show_multiple_choice_dialog;
+    g_core_params.show_ask_dialog = g_dialog_service->show_ask_dialog;
+    g_core_params.show_dialog = g_dialog_service->show_dialog;
     g_core_params.get_plugin_names = PluginUtil::get_plugin_names;
 
     core_create(&g_core_params, &g_core_ctx);

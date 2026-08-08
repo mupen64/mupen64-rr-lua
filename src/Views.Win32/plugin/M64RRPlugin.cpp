@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
@@ -111,7 +111,7 @@ void M64RRPlugin::config(HWND hwnd)
         show_config(hwnd);
     else
     {
-        DialogService::show_dialog(
+        g_dialog_service->show_dialog(
             std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
             fsvc_error, hwnd);
     }

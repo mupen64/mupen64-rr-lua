@@ -69,3 +69,5 @@ using Microsoft::WRL::ComPtr;
 #include <ResizeAnchor.hpp>
 #include <JoystickControl.hpp>
 #include <VersionNameHelpers.hpp>
+#include <IDialogService.hpp>
+#include <App.hpp>

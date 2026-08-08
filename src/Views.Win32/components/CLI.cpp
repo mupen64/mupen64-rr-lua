@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <Messages.hpp>
 #include <ThreadPool.hpp>
 #include <argh.h>
@@ -257,7 +257,7 @@ void CLI::init()
     // If an st is specified, a movie mustn't be specified
     if (!cli_params.st.empty() && !cli_params.m64.empty())
     {
-        DialogService::show_dialog(
+        g_dialog_service->show_dialog(
             L"Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", L"CLI",
             fsvc_error);
         cli_params.st.clear();
@@ -265,7 +265,7 @@ void CLI::init()
 
     if (cli_params.close_on_movie_end && g_config.core.is_movie_loop_enabled)
     {
-        DialogService::show_dialog(
+        g_dialog_service->show_dialog(
             L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.",
             L"CLI", fsvc_warning);
         g_config.core.is_movie_loop_enabled = false;

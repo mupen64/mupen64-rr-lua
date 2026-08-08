@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include "ResizeAnchor.hpp"
 
-#include "DialogService.hpp"
+#include "IDialogService.hpp"
 
 #define CTX_PROP L"ResizeAnchor_ctx"
 

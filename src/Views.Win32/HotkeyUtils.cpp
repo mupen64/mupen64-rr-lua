@@ -354,7 +354,7 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::wstring &acti
     const auto str = std::format(L"The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
                                  new_hotkey.to_wstring(), conflicting_hotkey_identifiers);
 
-    const size_t choice = DialogService::show_multiple_choice_dialog(
+    const size_t choice = g_dialog_service->show_multiple_choice_dialog(
         VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict",
         fsvc_warning, hwnd);
 

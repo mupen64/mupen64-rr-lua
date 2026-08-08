@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 
 typedef struct
 {

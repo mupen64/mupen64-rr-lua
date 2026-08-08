@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <Config.hpp>
-#include <DialogService.hpp>
+#include <IDialogService.hpp>
 #include <winhttp.h>
 #include <components/TextEditDialog.hpp>
 #include <components/UpdateChecker.hpp>
@@ -153,7 +153,7 @@ void show_connectivity_error(bool manual)
 {
     if (manual)
     {
-        DialogService::show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error",
+        g_dialog_service->show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error",
                                    fsvc_error);
     }
 }
@@ -210,7 +210,7 @@ void check(bool manual)
     {
         if (manual)
         {
-            DialogService::show_dialog(L"You are already up-to-date.", L"Already up-to-date", fsvc_information);
+            g_dialog_service->show_dialog(L"You are already up-to-date.", L"Already up-to-date", fsvc_information);
         }
 
         return;
@@ -218,7 +218,7 @@ void check(bool manual)
 
 show_prompt:
 
-    const auto result = DialogService::show_multiple_choice_dialog(
+    const auto result = g_dialog_service->show_multiple_choice_dialog(
         VIEW_DLG_UPDATE_DIALOG,
         {
             L"Update Now",
