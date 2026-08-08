@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <span>
 
 #include <libdeflate.h>
 
@@ -65,6 +66,20 @@ inline std::vector<uint8_t> auto_decompress(const std::vector<uint8_t> &vec, con
         out_vec.resize(actual_size);
         return out_vec;
     }
+}
+
+inline std::vector<uint8_t> auto_compress(std::span<const uint8_t> in)
+{
+    std::vector<uint8_t> compressed;
+    compressed.resize(in.size());
+
+    const auto compressor = libdeflate_alloc_compressor(6);
+    const size_t final_size =
+        libdeflate_gzip_compress(compressor, in.data(), in.size(), compressed.data(), compressed.size());
+    libdeflate_free_compressor(compressor);
+    compressed.resize(final_size);
+
+    return compressed;
 }
 
 inline void memread(uint8_t **src, void *dest, const unsigned int len)
