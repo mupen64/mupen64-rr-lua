@@ -28,28 +28,20 @@ t_config g_config;
 
 constexpr auto FLAT_FIELD_KEY = "config";
 
-const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
-    {CORE_DLG_FLOAT_EXCEPTION, 0},
-    {CORE_DLG_ST_HASH_MISMATCH, 0},
-    {CORE_DLG_ST_UNFREEZE_WARNING, 0},
-    {CORE_DLG_ST_NOT_FROM_MOVIE, 0},
-    {CORE_DLG_VCR_RAWDATA_WARNING, 0},
-    {CORE_DLG_VCR_WIIVC_WARNING, 0},
-    {CORE_DLG_VCR_ROM_NAME_WARNING, 0},
-    {CORE_DLG_VCR_ROM_CCODE_WARNING, 0},
-    {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
-    {CORE_DLG_VCR_CHEAT_LOAD_ERROR, 0},
+static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_choices()
+{
+    const std::unordered_map<std::string, size_t> BASE_CHOICES = {
+        {CORE_DLG_FLOAT_EXCEPTION, 0},      {CORE_DLG_ST_HASH_MISMATCH, 0},      {CORE_DLG_ST_UNFREEZE_WARNING, 0},
+        {CORE_DLG_ST_NOT_FROM_MOVIE, 0},    {CORE_DLG_VCR_RAWDATA_WARNING, 0},   {CORE_DLG_VCR_WIIVC_WARNING, 0},
+        {CORE_DLG_VCR_ROM_NAME_WARNING, 0}, {CORE_DLG_VCR_ROM_CCODE_WARNING, 0}, {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
+        {CORE_DLG_VCR_CHEAT_LOAD_ERROR, 0},
+    };
 
-    {VIEW_DLG_MOVIE_OVERWRITE_WARNING, 0},
-    {VIEW_DLG_RESET_SETTINGS, 0},
-    {VIEW_DLG_RESET_PLUGIN_SETTINGS, 0},
-    {VIEW_DLG_LAG_EXCEEDED, 0},
-    {VIEW_DLG_CLOSE_ROM_WARNING, 0},
-    {VIEW_DLG_HOTKEY_CONFLICT, 0},
-    {VIEW_DLG_UPDATE_DIALOG, 2},
-    {VIEW_DLG_PLUGIN_LOAD_ERROR, 0},
-    {VIEW_DLG_RAMSTART, 0},
-};
+    std::unordered_map<std::string, size_t> choices;
+    for (const auto &pair : BASE_CHOICES) choices.insert(pair);
+    for (const auto &pair : get_silent_mode_dialog_choices()) choices.insert(pair);
+    return choices;
+}
 
 const t_config g_default_config = get_default_config();
 
@@ -57,7 +49,7 @@ static t_config get_default_config()
 {
     t_config config = {};
 
-    for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
+    for (const auto &pair : get_merged_silent_mode_dialog_choices())
     {
         config.silent_mode_dialog_choices[IOUtils::to_wide_string(pair.first)] = std::to_wstring(pair.second);
     }
@@ -413,7 +405,7 @@ static void config_patch(t_config &cfg)
 
     cfg.settings_tab = std::min(std::max(cfg.settings_tab, 0), 2);
 
-    for (const auto &pair : DIALOG_SILENT_MODE_CHOICES)
+    for (const auto &pair : get_merged_silent_mode_dialog_choices())
     {
         const auto key = IOUtils::to_wide_string(pair.first);
         if (!cfg.silent_mode_dialog_choices.contains(key))

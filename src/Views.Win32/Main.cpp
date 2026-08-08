@@ -1085,6 +1085,21 @@ void app_runtime_assert_fail(std::string_view message)
     std::terminate();
 }
 
+std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
+{
+    return {
+        {VIEW_DLG_MOVIE_OVERWRITE_WARNING, 0},
+        {VIEW_DLG_RESET_SETTINGS, 0},
+        {VIEW_DLG_RESET_PLUGIN_SETTINGS, 0},
+        {VIEW_DLG_LAG_EXCEEDED, 0},
+        {VIEW_DLG_CLOSE_ROM_WARNING, 0},
+        {VIEW_DLG_HOTKEY_CONFLICT, 0},
+        {VIEW_DLG_UPDATE_DIALOG, 2},
+        {VIEW_DLG_PLUGIN_LOAD_ERROR, 0},
+        {VIEW_DLG_RAMSTART, 0},
+    };
+}
+
 void Main::init_sdl()
 {
     if (!s_sdl_initialized)
