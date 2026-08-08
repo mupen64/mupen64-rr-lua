@@ -3,32 +3,76 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-
 #pragma once
 
+#include <filesystem>
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <windows.h>
+#include <windowsx.h>
+#include <commdlg.h>
+#include <commctrl.h>
+#include <shlobj.h>
+#include <gdiplus.h>
+#include <wrl/client.h>
+#include <spdlog/spdlog.h>
 #include <Common.Views/IDialogService.hpp>
 
-typedef struct
+#define ComboBox_ResetContentKeepEdit(hwnd)                                                                            \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        while (ComboBox_GetCount(hwnd) > 0) ComboBox_DeleteString(hwnd, 0);                                            \
+    } while (0)
+
+/**
+ * \brief Loads a bitmap resource and adds it to an image list using a colour key for transparency, then frees the
+ * bitmap handle.
+ * \param himl The image list to add the bitmap to.
+ * \param hinst The module instance containing the bitmap resource.
+ * \param id The resource identifier of the bitmap.
+ * \param mask The colour to treat as transparent. Defaults to white.
+ * \return The index of the newly added image, or -1 on failure.
+ */
+inline int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id, COLORREF mask = RGB(255, 255, 255))
 {
-    WORD dlgVer;
-    WORD signature;
-    DWORD helpID;
-    DWORD exStyle;
-    DWORD style;
-    WORD cDlgItems;
-    short x;
-    short y;
-    short cx;
-    short cy;
-    uint16_t *menu;
-    uint16_t *windowClass;
-    WCHAR *title;
-    WORD pointsize;
-    WORD weight;
-    BYTE italic;
-    BYTE charset;
-    WCHAR *typeface;
-} DLGTEMPLATEEX;
+    HBITMAP hbmp = LoadBitmap(hinst, MAKEINTRESOURCE(id));
+    if (!hbmp) return -1;
+    const int index = ImageList_AddMasked(himl, hbmp, mask);
+    DeleteObject(hbmp);
+    return index;
+}
+
+extern "C"
+{
+    /**
+     * \brief The DLGTEMPLATEEX struct not included in the Windows SDK, as per Microsoft (cf.
+     * https://learn.microsoft.com/en-us/windows/win32/dlgbox/dlgtemplateex).
+     */
+    struct DLGTEMPLATEEX
+    {
+        WORD dlgVer;
+        WORD signature;
+        DWORD helpID;
+        DWORD exStyle;
+        DWORD style;
+        WORD cDlgItems;
+        short x;
+        short y;
+        short cx;
+        short cy;
+        uint16_t *menu;
+        uint16_t *windowClass;
+        WCHAR *title;
+        WORD pointsize;
+        WORD weight;
+        BYTE italic;
+        BYTE charset;
+        WCHAR *typeface;
+    };
+}
 
 /**
  * \brief Records the execution time of a scope
@@ -58,6 +102,9 @@ class ScopeTimer
     std::chrono::time_point<std::chrono::steady_clock> m_start_time;
 };
 
+/**
+ * \brief Disables a window for the lifetime of this object.
+ */
 class WindowDisabler
 {
   public:
@@ -85,13 +132,7 @@ class WindowDisabler
     bool m_prev_enabled{};
 };
 
-#define ComboBox_ResetContentKeepEdit(hwnd)                                                                            \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        while (ComboBox_GetCount(hwnd) > 0) ComboBox_DeleteString(hwnd, 0);                                            \
-    } while (0)
-
-static RECT get_window_rect_client_space(HWND parent, HWND child)
+inline RECT get_window_rect_client_space(HWND parent, HWND child)
 {
     RECT offset_client = {0};
     MapWindowRect(child, parent, &offset_client);
@@ -103,7 +144,12 @@ static RECT get_window_rect_client_space(HWND parent, HWND child)
             offset_client.top + (client.bottom - client.top)};
 }
 
-static void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
+/**
+ * \brief Sets a statusbar's parts.
+ * \param hwnd The statusbar window handle.
+ * \param parts The parts to set, as a vector of widths in pixels.
+ */
+inline void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
 {
     auto new_parts = parts;
     auto accumulator = 0;
@@ -120,7 +166,7 @@ static void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
  * \param owner The clipboard content's owner window
  * \param str The string to be copied
  */
-static void copy_to_clipboard(void *owner, const std::wstring &str)
+inline void copy_to_clipboard(void *owner, const std::wstring &str)
 {
     OpenClipboard((HWND)owner);
     EmptyClipboard();
@@ -147,7 +193,7 @@ static void copy_to_clipboard(void *owner, const std::wstring &str)
  * \remark
  * https://github.com/dotnet/winforms/blob/c9a58e92a1d0140bb4f91691db8055bcd91524f8/src/System.Windows.Forms/src/System/Windows/Forms/Controls/ListView/ListView.SelectedListViewItemCollection.cs#L33
  */
-static std::vector<size_t> get_listview_selection(const HWND hwnd)
+inline std::vector<size_t> get_listview_selection(const HWND hwnd)
 {
     const size_t count = ListView_GetSelectedCount(hwnd);
 
@@ -174,7 +220,7 @@ static std::vector<size_t> get_listview_selection(const HWND hwnd)
  * bounds of the item range after shifting are dropped. \param hwnd Handle to a listview. \param offset The shift
  * amount.
  */
-static void shift_listview_selection(const HWND hwnd, const int32_t offset)
+inline void shift_listview_selection(const HWND hwnd, const int32_t offset)
 {
     auto raw_selection = get_listview_selection(hwnd);
     std::vector<int64_t> selection(raw_selection.begin(), raw_selection.end());
@@ -200,7 +246,7 @@ static void shift_listview_selection(const HWND hwnd, const int32_t offset)
  * \param hwnd Handle to a listview.
  * \param indicies A vector containing the selected indicies.
  */
-static void set_listview_selection(const HWND hwnd, const std::vector<size_t> indicies)
+inline void set_listview_selection(const HWND hwnd, const std::vector<size_t> indicies)
 {
     if (!IsWindow(hwnd))
     {
@@ -224,7 +270,7 @@ static void set_listview_selection(const HWND hwnd, const std::vector<size_t> in
  * \brief Gets all files under all subdirectory of a specific directory, including the directory's shallow files
  * \param directory The path joiner-terminated directory
  */
-static std::vector<std::wstring> get_files_in_subdirectories(std::wstring directory)
+inline std::vector<std::wstring> get_files_in_subdirectories(std::wstring directory)
 {
     if (directory.back() != L'\\')
     {
@@ -280,7 +326,7 @@ static std::vector<std::wstring> get_files_in_subdirectories(std::wstring direct
 /**
  * \brief Gets the path to the current user's desktop
  */
-static std::wstring get_desktop_path()
+inline std::wstring get_desktop_path()
 {
     wchar_t path[MAX_PATH + 1] = {0};
     SHGetSpecialFolderPathW(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE);
@@ -292,7 +338,7 @@ static std::wstring get_desktop_path()
  * \param seconds The duration in seconds
  * \return The formatted duration
  */
-static std::wstring format_duration(size_t seconds)
+inline std::wstring format_duration(size_t seconds)
 {
     wchar_t str[480] = {};
     wsprintfW(str, L"%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
@@ -305,7 +351,7 @@ static std::wstring format_duration(size_t seconds)
  * \param n The maximum length.
  * \return The limited wstring.
  */
-[[nodiscard]] static std::wstring limit_wstring(const std::wstring &input, const size_t n)
+[[nodiscard]] inline std::wstring limit_wstring(const std::wstring &input, const size_t n)
 {
     if (input.size() <= n)
     {
@@ -324,7 +370,7 @@ static std::wstring format_duration(size_t seconds)
  * \param type The resource type.
  * \return The resource as a string, or an empty string if the resource could not be loaded.
  */
-static std::string load_resource_as_string(const int id, const LPCWSTR type)
+inline std::string load_resource_as_string(const int id, const LPCWSTR type)
 {
     const HINSTANCE hinst = GetModuleHandle(nullptr);
     const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), type);
@@ -344,7 +390,7 @@ static std::string load_resource_as_string(const int id, const LPCWSTR type)
  * \param dlg_template A pointer to a pointer that will receive the dialog template.
  * \return Whether the resource was successfully loaded.
  */
-static bool load_resource_as_dialog_template(const int id, DLGTEMPLATEEX **dlg_template)
+inline bool load_resource_as_dialog_template(const int id, DLGTEMPLATEEX **dlg_template)
 {
     *dlg_template = nullptr;
 
@@ -378,7 +424,7 @@ static bool load_resource_as_dialog_template(const int id, DLGTEMPLATEEX **dlg_t
  * \param value The value to format.
  * \return A formatted string representing the value in a short format (e.g., 1.23k for 1230).
  */
-static std::wstring format_short(const uint64_t value)
+inline std::wstring format_short(const uint64_t value)
 {
     if (value < 1'000) return std::to_wstring(value);
 
@@ -394,7 +440,7 @@ static std::wstring format_short(const uint64_t value)
  * \param hwnd The handle to the window.
  * \return The text of the window, or an empty optional if the operation failed.
  */
-static std::optional<std::wstring> get_window_text(const HWND hwnd)
+inline std::optional<std::wstring> get_window_text(const HWND hwnd)
 {
     if (!IsWindow(hwnd))
     {
@@ -426,7 +472,7 @@ static std::optional<std::wstring> get_window_text(const HWND hwnd)
  * \param hwnd The handle to the listbox.
  * \param index The index to ensure is visible.
  */
-static void listbox_ensure_visible(const HWND hwnd, const int32_t index)
+inline void listbox_ensure_visible(const HWND hwnd, const int32_t index)
 {
     const int sel = ListBox_GetCurSel(hwnd);
 
@@ -446,7 +492,7 @@ static void listbox_ensure_visible(const HWND hwnd, const int32_t index)
     }
 }
 
-static LRESULT CALLBACK no_resize_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
+inline LRESULT CALLBACK no_resize_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
                                                 DWORD_PTR ref_data)
 {
     switch (msg)
@@ -478,7 +524,7 @@ static LRESULT CALLBACK no_resize_subclass_proc(HWND hwnd, UINT msg, WPARAM wpar
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
-static void attach_no_resize_subproc(const HWND hwnd)
+inline void attach_no_resize_subproc(const HWND hwnd)
 {
     SetWindowSubclass(hwnd, no_resize_subclass_proc, 0, 0);
 }
@@ -490,7 +536,7 @@ static void attach_no_resize_subproc(const HWND hwnd)
  * \param invert Whether to invert the RGB channels before premultiplication.
  * \return A new Gdiplus::Bitmap, or nullptr on failure. The caller owns the returned object.
  */
-static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, bool invert = false)
+inline Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, bool invert = false)
 {
     BITMAP bm{};
     if (!GetObject(hbmp_src, sizeof(bm), &bm)) return nullptr;
@@ -577,7 +623,7 @@ static Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, boo
  * \param id The resource identifier of the bitmap.
  * \param invert Whether to invert the RGB channels before premultiplication.
  */
-static void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id, bool invert = false)
+inline void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id, bool invert = false)
 {
     HBITMAP hbmp_src = LoadBitmap(hinst, MAKEINTRESOURCE(id));
     if (!hbmp_src) return;
@@ -599,22 +645,4 @@ static void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id, b
     g.DrawImage(bmp, dest);
 
     delete bmp;
-}
-
-/**
- * \brief Loads a bitmap resource and adds it to an image list using a colour key for transparency, then frees the
- * bitmap handle.
- * \param himl The image list to add the bitmap to.
- * \param hinst The module instance containing the bitmap resource.
- * \param id The resource identifier of the bitmap.
- * \param mask The colour to treat as transparent. Defaults to white.
- * \return The index of the newly added image, or -1 on failure.
- */
-static int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id, COLORREF mask = RGB(255, 255, 255))
-{
-    HBITMAP hbmp = LoadBitmap(hinst, MAKEINTRESOURCE(id));
-    if (!hbmp) return -1;
-    const int index = ImageList_AddMasked(himl, hbmp, mask);
-    DeleteObject(hbmp);
-    return index;
 }

@@ -13,7 +13,6 @@ target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "include")
 add_executable(Mupen64RR.Views.Win32 WIN32
     # headers
     "Common.hpp"
-    "ViewHelpers.hpp"
     "ThreadPool.hpp"
     "HotkeyUtils.hpp"
     "CaptureManager.hpp"

@@ -61,7 +61,7 @@ using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
 #include <Loggers.hpp>
-#include <ViewHelpers.hpp>
+#include <WinUtils.hpp>
 #include <Main.hpp>
 #include <lua/LuaHelpers.hpp>
 #include <lua/LuaTypes.hpp>
