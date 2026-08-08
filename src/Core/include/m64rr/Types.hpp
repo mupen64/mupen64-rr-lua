@@ -249,6 +249,9 @@ struct core_cfg
     /// </summary>
     int32_t st_screenshot;
 
+    // Compress savestates using LZ4, faster than GZip.
+    int32_t st_lz4 = 1;
+
     /// <summary>
     /// Whether a playing movie will loop upon ending
     /// </summary>

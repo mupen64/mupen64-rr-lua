@@ -6,7 +6,6 @@
 
 #include <CommonPCH.hpp>
 #include <Core.hpp>
-#include <libdeflate.h>
 #include <FNV1A.hpp>
 #include <m64rr/API.hpp>
 #include <Memory/FlashRAM.hpp>
@@ -253,18 +252,20 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         get_paths_for_task(task, new_st_path, new_sd_path);
         if (g_core->cfg->use_summercart) save_summercart(new_sd_path);
 
-        // Generate compressed buffer
-        std::vector<uint8_t> compressed_buffer;
-        compressed_buffer.resize(st.size());
+        const auto compressor = g_core->cfg->st_lz4 ? MiscHelpers::Compressor::Lz4 : MiscHelpers::Compressor::Gzip;
+        const auto compressed = MiscHelpers::compress(compressor, st);
 
-        const auto compressor = libdeflate_alloc_compressor(6);
-        const size_t final_size = libdeflate_gzip_compress(compressor, st.data(), st.size(), compressed_buffer.data(),
-                                                           compressed_buffer.size());
-        libdeflate_free_compressor(compressor);
-        compressed_buffer.resize(final_size);
+        if (compressed.empty())
+        {
+            task.callback(
+                core_st_callback_info{
+                    .result = ST_FileWriteError, .job = task.job, .medium = task.medium, .params = task.params},
+                st);
+            return;
+        }
 
         // write compressed st to disk
-        if (!IOUtils::write_entire_file(new_st_path, compressed_buffer))
+        if (!IOUtils::write_entire_file(new_st_path, compressed))
         {
             task.callback(
                 core_st_callback_info{
@@ -318,6 +319,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     }
 
     std::vector<uint8_t> decompressed_buf = MiscHelpers::auto_decompress(st_buf, 0xB624F0);
+
     if (decompressed_buf.empty())
     {
         task.callback(
