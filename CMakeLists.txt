@@ -76,6 +76,7 @@ find_package(PkgConfig REQUIRED)
 # Core cross-platform dependencies
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
+find_package(lz4 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 if(NOT WIN32)

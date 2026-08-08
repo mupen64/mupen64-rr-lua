@@ -253,7 +253,7 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         if (g_core->cfg->use_summercart) save_summercart(new_sd_path);
 
         const auto t1 = std::chrono::high_resolution_clock::now();
-        const auto compressed = MiscHelpers::auto_compress(st);
+        const auto compressed = MiscHelpers::auto_compress(MiscHelpers::Compressor::Lz4, st);
         const auto t2 = std::chrono::high_resolution_clock::now();
         const auto compress_time = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         g_core->log_trace(std::format("Compressed savestate in {} ms", compress_time));
