@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Assert.hpp>
+#include <Common.Views/Assert.hpp>
 
 /**
  * \brief A module responsible for implementing configuration dialogs.

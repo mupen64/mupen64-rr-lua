@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <IDialogService.hpp>
+#include <Common.Views/IDialogService.hpp>
 
 typedef struct
 {

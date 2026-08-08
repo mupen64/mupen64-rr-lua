@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Hotkey.hpp>
+#include <Common.Views/Hotkey.hpp>
 #include <unordered_map>
 #include <string>
 #include <functional>

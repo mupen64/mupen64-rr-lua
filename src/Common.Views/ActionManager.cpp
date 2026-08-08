@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <ActionManager.hpp>
-#include <App.hpp>
-#include <Assert.hpp>
-#include <Messages.hpp>
+#include <Common.Views/ActionManager.hpp>
+#include <Common.Views/App.hpp>
+#include <Common.Views/Assert.hpp>
+#include <Common.Views/Messages.hpp>
 #include <microlru.h>
 #include <StrUtils.hpp>
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <ranges>
 
 using t_action_param = ActionManager::t_action_param;

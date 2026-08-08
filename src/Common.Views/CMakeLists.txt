@@ -5,16 +5,16 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Common.Views STATIC
-    "include/App.hpp"
-    "include/Config.hpp"
-    "include/Hotkey.hpp"
-    "include/Messages.hpp"
-    "include/Messenger.hpp"
-    "include/ActionManager.hpp"
-    "include/Resampler.hpp"
-    "include/Encoder.hpp"
-    "include/IDialogService.hpp"
-    "include/Assert.hpp"
+    "include/Common.Views/App.hpp"
+    "include/Common.Views/Config.hpp"
+    "include/Common.Views/Hotkey.hpp"
+    "include/Common.Views/Messages.hpp"
+    "include/Common.Views/Messenger.hpp"
+    "include/Common.Views/ActionManager.hpp"
+    "include/Common.Views/Resampler.hpp"
+    "include/Common.Views/Encoder.hpp"
+    "include/Common.Views/IDialogService.hpp"
+    "include/Common.Views/Assert.hpp"
     "Config.cpp"
     "Hotkey.cpp"
     "Messenger.cpp"
@@ -24,8 +24,8 @@ add_library(Mupen64RR.Common.Views STATIC
 
 if (WIN32)
     target_sources(Mupen64RR.Common.Views PRIVATE
-        "include/WinFFmpegEncoder.hpp"
-        "include/WinVFWEncoder.hpp"
+        "include/Common.Views/WinFFmpegEncoder.hpp"
+        "include/Common.Views/WinVFWEncoder.hpp"
         "WinFFmpegEncoder.cpp"
         "WinVFWEncoder.cpp"
     )

@@ -10,7 +10,7 @@
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>
 #include <components/ParameterPalette.hpp>
-#include <Messages.hpp>
+#include <Common.Views/Messages.hpp>
 #include <HotkeyUtils.hpp>
 #include "CommandPalette.hpp"
 

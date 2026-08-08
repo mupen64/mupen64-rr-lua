@@ -5,8 +5,8 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <IDialogService.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <winhttp.h>
 #include <components/TextEditDialog.hpp>
 #include <components/UpdateChecker.hpp>

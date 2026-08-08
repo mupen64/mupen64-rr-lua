@@ -8,7 +8,7 @@
 
 #include <lua/LuaDialog.hpp>
 #include <lua/LuaManager.hpp>
-#include <Hotkey.hpp>
+#include <Common.Views/Hotkey.hpp>
 #include <HotkeyUtils.hpp>
 
 namespace LuaCore::Hotkey

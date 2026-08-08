@@ -7,9 +7,9 @@
 #include "Common.hpp"
 #include <components/MGECompositor.hpp>
 #include <plugin/Plugin.hpp>
-#include <Messages.hpp>
+#include <Common.Views/Messages.hpp>
 #include <lua/LuaCallbacks.hpp>
-#include <Assert.hpp>
+#include <Common.Views/Assert.hpp>
 
 constexpr auto CONTROL_CLASS_NAME = L"game_control";
 constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;

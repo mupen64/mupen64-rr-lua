@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <App.hpp>
+#include <Common.Views/App.hpp>
 
 /**
  * \brief Asserts a condition at runtime.

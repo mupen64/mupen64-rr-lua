@@ -5,8 +5,8 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <IDialogService.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/Statusbar.hpp>
 
 class WinDialogService : public IDialogService

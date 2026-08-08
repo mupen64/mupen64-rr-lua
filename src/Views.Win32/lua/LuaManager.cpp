@@ -5,14 +5,14 @@
  */
 
 #include "Common.hpp"
-#include <ActionManager.hpp>
-#include <Config.hpp>
-#include <IDialogService.hpp>
+#include <Common.Views/ActionManager.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <lua/LuaCallbacks.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRegistry.hpp>
 #include <lua/LuaRenderer.hpp>
-#include <Assert.hpp>
+#include <Common.Views/Assert.hpp>
 
 CoreButtons g_new_controller_data[4]{};
 bool g_overwrite_controller_data[4]{};

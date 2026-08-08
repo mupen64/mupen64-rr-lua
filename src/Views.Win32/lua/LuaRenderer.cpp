@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <IDialogService.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRenderer.hpp>
@@ -14,7 +14,7 @@
 #include <lua/presenters/Presenter.hpp>
 #include <lua/LuaCallbacks.hpp>
 #include "LuaRenderer.hpp"
-#include <Messages.hpp>
+#include <Common.Views/Messages.hpp>
 
 const auto OVERLAY_CLASS = L"lua_overlay";
 

@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include "Dispatcher.hpp"
-#include <Assert.hpp>
+#include <Common.Views/Assert.hpp>
 
 // #define DISPATCHER_OVERHEAD_LOGGING
 

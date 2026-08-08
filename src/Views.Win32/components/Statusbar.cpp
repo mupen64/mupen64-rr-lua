@@ -5,8 +5,8 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <Messages.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/Messages.hpp>
 #include <components/Statusbar.hpp>
 
 struct t_segment

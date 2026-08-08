@@ -7,7 +7,7 @@
 #pragma once
 
 #include <m64rr/Types.hpp>
-#include <Hotkey.hpp>
+#include <Common.Views/Hotkey.hpp>
 #include <map>
 
 // FIXME: These should be in the views

@@ -7,8 +7,8 @@
 #include "Common.hpp"
 #include "PianoRoll.hpp"
 #include "ThreadPool.hpp"
-#include "Config.hpp"
-#include "Messages.hpp"
+#include <Common.Views/Config.hpp>
+#include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
 
 struct piano_roll_history_state

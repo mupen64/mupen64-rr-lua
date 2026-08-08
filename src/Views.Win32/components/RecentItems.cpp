@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <components/RecentItems.hpp>
-#include <ActionManager.hpp>
+#include <Common.Views/ActionManager.hpp>
 #include <components/RomBrowser.hpp>
 
 void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<std::wstring> &vec, std::wstring val,

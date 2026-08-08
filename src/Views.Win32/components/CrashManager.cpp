@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <components/CrashManager.hpp>
 
 typedef struct StacktraceInfo

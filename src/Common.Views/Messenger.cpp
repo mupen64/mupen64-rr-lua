@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Messenger.hpp>
+#include <Common.Views/Messenger.hpp>
 #include <atomic>
 #include <thread>
 #include <unordered_map>

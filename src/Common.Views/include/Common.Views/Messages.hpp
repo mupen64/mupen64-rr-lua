@@ -13,10 +13,9 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <m64rr/Types.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/Messenger.hpp>
 
 namespace Messenger
 {
@@ -275,7 +274,7 @@ template <> struct MessageData<Message::ConfigLoaded>
 };
 template <> struct MessageData<Message::ConfigNeedsPatching>
 {
-    using type = t_config&;
+    using type = t_config &;
 };
 template <> struct MessageData<Message::RerecordsChanged>
 {
@@ -390,8 +389,9 @@ template <Message M, typename F> std::function<void()> subscribe(F callback)
             if constexpr (std::is_reference_v<type>)
             {
                 using value_type = std::remove_reference_t<type>;
-                // Reference payloads are broadcast as a pointer to the original object; dereference to hand the callback its reference.
-                std::invoke(cb, *std::any_cast<value_type*>(data));
+                // Reference payloads are broadcast as a pointer to the original object; dereference to hand the
+                // callback its reference.
+                std::invoke(cb, *std::any_cast<value_type *>(data));
             }
             else
             {

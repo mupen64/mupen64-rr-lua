@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Messages.hpp>
+#include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaCallbacks.hpp>

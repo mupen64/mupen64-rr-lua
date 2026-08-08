@@ -5,12 +5,12 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <uxtheme.h>
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>
-#include <Messages.hpp>
+#include <Common.Views/Messages.hpp>
 
 namespace RomBrowser
 {

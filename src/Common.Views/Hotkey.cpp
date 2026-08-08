@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Hotkey.hpp>
+#include <Common.Views/Hotkey.hpp>
 #include <IOUtils.hpp>
 #include <SDL3/SDL_keyboard.h>
 

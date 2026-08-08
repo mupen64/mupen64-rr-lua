@@ -9,7 +9,7 @@
 #include <components/CommandPalette.hpp>
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>
-#include <Messages.hpp>
+#include <Common.Views/Messages.hpp>
 #include "ParameterPalette.hpp"
 
 struct t_parameter_palette_context

@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <IDialogService.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/Cheats.hpp>
 
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)

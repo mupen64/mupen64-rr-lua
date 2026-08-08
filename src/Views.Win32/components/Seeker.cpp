@@ -5,8 +5,8 @@
  */
 
 #include "Common.hpp"
-#include <Messages.hpp>
-#include <Config.hpp>
+#include <Common.Views/Messages.hpp>
+#include <Common.Views/Config.hpp>
 #include <components/Seeker.hpp>
 #include <components/CoreUtils.hpp>
 

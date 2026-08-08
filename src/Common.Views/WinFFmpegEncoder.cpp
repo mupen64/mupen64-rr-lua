@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <App.hpp>
-#include <Assert.hpp>
-#include <WinFFmpegEncoder.hpp>
-#include <Config.hpp>
-#include <IDialogService.hpp>
+#include <Common.Views/App.hpp>
+#include <Common.Views/Assert.hpp>
+#include <Common.Views/WinFFmpegEncoder.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <string>
 #include <filesystem>
 #include <cstdint>

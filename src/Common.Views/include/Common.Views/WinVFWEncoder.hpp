@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Encoder.hpp>
+#include <Common.Views/Encoder.hpp>
 #include <windows.h>
 #include <vfw.h>
 

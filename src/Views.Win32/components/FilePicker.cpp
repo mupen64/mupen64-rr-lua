@@ -5,10 +5,10 @@
  */
 
 #include <Common.hpp>
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <components/FilePicker.hpp>
 #include <WinFilePicker.hpp>
-#include <Assert.hpp>
+#include <Common.Views/Assert.hpp>
 
 std::filesystem::path FilePicker::show_open_dialog(const std::wstring &id, HWND hwnd, const std::wstring &filter)
 {

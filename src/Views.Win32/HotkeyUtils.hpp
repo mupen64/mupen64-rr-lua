@@ -8,7 +8,7 @@
 
 #include <string>
 #include <windows.h>
-#include "Hotkey.hpp"
+#include <Common.Views/Hotkey.hpp>
 
 /**
  * \brief A module responsible for providing auxiliary functionality related to hotkeys.

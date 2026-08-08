@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <App.hpp>
-#include <Assert.hpp>
-#include <Config.hpp>
-#include <IDialogService.hpp>
-#include <Resampler.hpp>
-#include <WinVFWEncoder.hpp>
+#include <Common.Views/App.hpp>
+#include <Common.Views/Assert.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Resampler.hpp>
+#include <Common.Views/WinVFWEncoder.hpp>
 #include <windows.h>
 #include <vfw.h>
 

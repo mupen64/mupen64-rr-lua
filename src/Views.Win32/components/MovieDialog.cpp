@@ -6,8 +6,8 @@
 
 #include "Common.hpp"
 #include <components/MovieDialog.hpp>
-#include <Config.hpp>
-#include <IDialogService.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/FilePicker.hpp>
 
 struct t_movie_dialog_context

@@ -65,9 +65,9 @@ using Microsoft::WRL::ComPtr;
 #include <Main.hpp>
 #include <lua/LuaHelpers.hpp>
 #include <lua/LuaTypes.hpp>
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <ResizeAnchor.hpp>
 #include <JoystickControl.hpp>
 #include <VersionNameHelpers.hpp>
-#include <IDialogService.hpp>
-#include <App.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/App.hpp>

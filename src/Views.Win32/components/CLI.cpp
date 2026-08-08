@@ -5,9 +5,9 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <IDialogService.hpp>
-#include <Messages.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
 #include <ThreadPool.hpp>
 #include <argh.h>
 #include <nlohmann/json.hpp>

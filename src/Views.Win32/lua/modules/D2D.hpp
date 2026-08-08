@@ -8,7 +8,7 @@
 
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaManager.hpp>
-#include <Assert.hpp>
+#include <Common.Views/Assert.hpp>
 
 namespace LuaCore::D2D
 {

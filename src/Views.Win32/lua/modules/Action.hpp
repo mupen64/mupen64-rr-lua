@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <ActionManager.hpp>
+#include <Common.Views/ActionManager.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/modules/Hotkey.hpp>
 

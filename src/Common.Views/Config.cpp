@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <App.hpp>
+#include <Common.Views/App.hpp>
 #include <nlohmann/json.hpp>
 #include <IOUtils.hpp>
-#include <Config.hpp>
-#include <Messages.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/Messages.hpp>
 #include <m64rr/API.hpp>
-#include <ActionManager.hpp>
+#include <Common.Views/ActionManager.hpp>
 
 using nlohmann::json;
 

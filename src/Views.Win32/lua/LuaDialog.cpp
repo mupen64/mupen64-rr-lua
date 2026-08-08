@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <Messages.hpp>
+#include <Common.Views/Messages.hpp>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>
 #include <lua/LuaManager.hpp>

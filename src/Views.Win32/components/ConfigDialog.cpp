@@ -5,10 +5,10 @@
  */
 
 #include "Common.hpp"
-#include <ActionManager.hpp>
-#include <Config.hpp>
-#include <IDialogService.hpp>
-#include <Messages.hpp>
+#include <Common.Views/ActionManager.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <CaptureManager.hpp>
 #include <components/FilePicker.hpp>
@@ -16,7 +16,7 @@
 #include <components/TextEditDialog.hpp>
 #include <components/ConfigDialog.hpp>
 #include <lua/LuaManager.hpp>
-#include <Hotkey.hpp>
+#include <Common.Views/Hotkey.hpp>
 #include <HotkeyUtils.hpp>
 
 #define WM_EDIT_END (WM_USER + 19)
