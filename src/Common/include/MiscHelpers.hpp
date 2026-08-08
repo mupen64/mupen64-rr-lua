@@ -152,7 +152,7 @@ enum class Compressor
  * \param in The buffer to compress.
  * \return The compressed buffer, or an empty vector on failure.
  */
-inline std::vector<uint8_t> auto_compress(Compressor compressor, std::span<const uint8_t> in)
+inline std::vector<uint8_t> compress(Compressor compressor, std::span<const uint8_t> in)
 {
     switch (compressor)
     {
