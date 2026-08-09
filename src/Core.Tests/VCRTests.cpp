@@ -1168,7 +1168,8 @@ TEST_CASE_METHOD(VcrFixture, "returns_warnings_when_double_values_mismatch_confi
     REQUIRE(warnings[1] == "RCP lag factor 0.5 in movie, but 1.5 in emulator.");
 }
 
-TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_rcp_lag_factor_mismatch_without_lag_emulation_enabled", "vcr_get_sync_warnings")
+TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_rcp_lag_factor_mismatch_without_lag_emulation_enabled",
+                 "vcr_get_sync_warnings")
 {
     s_cfg.wii_vc_emulation = false;
     s_cfg.core_type = 1;

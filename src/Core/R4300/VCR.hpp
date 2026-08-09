@@ -48,7 +48,8 @@ struct vcr_freeze_info
     std::vector<CoreButtons> input_buffer{};
 };
 
-struct SyncData {
+struct SyncData
+{
     std::optional<bool> wii_vc;
     std::optional<bool> c_eq_s_accurate;
     std::optional<bool> accurate_rdp_completion;
