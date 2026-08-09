@@ -9,7 +9,7 @@ add_library(Mupen64RR.Core.Headers INTERFACE
     "include/m64rr/Plugin.hpp"
     "include/m64rr/Types.hpp"
 )
-target_compile_features(Mupen64RR.Core.Headers INTERFACE cxx_std_23)
+target_compile_features(Mupen64RR.Core.Headers INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR.Core.Headers INTERFACE "include")
 target_link_libraries(Mupen64RR.Core.Headers INTERFACE Mupen64RR.Common)
 
@@ -76,7 +76,7 @@ add_library(Mupen64RR.Core STATIC
 
     "R4300/VCR.cpp"
 )
-target_compile_features(Mupen64RR.Core PUBLIC cxx_std_23)
+target_compile_features(Mupen64RR.Core PUBLIC cxx_std_26)
 set_target_properties(Mupen64RR.Core PROPERTIES
     OUTPUT_NAME Core
 )
