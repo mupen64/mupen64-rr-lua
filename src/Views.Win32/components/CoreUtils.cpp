@@ -109,7 +109,7 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
         break;
     case VCR_InvalidExtendedVersion:
         module = "VCR";
-        error = "The movie's extended version is invalid.";
+        error = "The movie's extended version is invalid. It might be too new for this version of the emulator.";
         break;
     case VCR_NeedsPlaybackOrRecording:
         module = "VCR";

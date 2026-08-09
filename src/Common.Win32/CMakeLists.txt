@@ -9,7 +9,7 @@ add_library(Mupen64RR.Common.Win32 INTERFACE
     "include/SettingsListView.hpp"
     "include/ResizeAnchor.hpp"
 )
-target_compile_features(Mupen64RR.Common.Win32 INTERFACE cxx_std_23)
+target_compile_features(Mupen64RR.Common.Win32 INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR.Common.Win32 INTERFACE include)
 
 add_compile_definitions(NOMINMAX)

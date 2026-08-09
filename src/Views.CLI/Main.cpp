@@ -44,7 +44,7 @@ static void init_core()
 
     // SETTINGS
     // =====================================================
-    g_config.core_type = 2;
+    g_config.core_type = 1;
 
     // EXTRA CALLBACKS
     // =====================================================

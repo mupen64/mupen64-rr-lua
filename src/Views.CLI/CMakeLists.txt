@@ -13,7 +13,7 @@ add_executable(Mupen64RR.Views.CLI
     "Main.cpp"
     "Plugin.cpp"
 )
-target_compile_features(Mupen64RR.Views.CLI PRIVATE cxx_std_23)
+target_compile_features(Mupen64RR.Views.CLI PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Views.CLI PROPERTIES
     # output location
     OUTPUT_NAME "mupen64-cli"

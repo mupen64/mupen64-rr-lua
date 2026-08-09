@@ -160,11 +160,11 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     init->main_window = M64RRSpec::WindowHandle(g_main_ctx.hwnd);
     init->rom = g_main_ctx.core_ctx->rom;
     init->rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-    init->dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-    init->imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
+    init->dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
+    init->imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
 
     init->rdram_register = g_main_ctx.core_ctx->rdram_register;
-    init->mi_register = g_main_ctx.core_ctx->MI_register;
+    init->mi_register = g_main_ctx.core_ctx->mi_register;
     init->pi_register = g_main_ctx.core_ctx->pi_register;
     init->sp_register = g_main_ctx.core_ctx->sp_register;
     init->rsp_register = g_main_ctx.core_ctx->rsp_register;

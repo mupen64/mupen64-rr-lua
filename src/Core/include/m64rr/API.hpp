@@ -63,9 +63,7 @@ extern "C"
 #define CORE_DLG_ST_UNFREEZE_WARNING "CORE_DLG_ST_UNFREEZE_WARNING"
 #define CORE_DLG_ST_NOT_FROM_MOVIE "CORE_DLG_ST_NOT_FROM_MOVIE"
 #define CORE_DLG_VCR_RAWDATA_WARNING "CORE_DLG_VCR_RAWDATA_WARNING"
-#define CORE_DLG_VCR_WIIVC_WARNING "CORE_DLG_VCR_WIIVC_WARNING"
-#define CORE_DLG_VCR_CEQS_WARNING "CORE_DLG_VCR_CEQS_WARNING"
-#define CORE_DLG_VCR_RDP_COMPLETION_WARNING "CORE_DLG_VCR_RDP_COMPLETION_WARNING"
+#define CORE_DLG_VCR_GENERAL_SYNC_WARNING "CORE_DLG_VCR_GENERAL_SYNC_WARNING"
 #define CORE_DLG_VCR_ROM_NAME_WARNING "CORE_DLG_VCR_ROM_NAME_WARNING"
 #define CORE_DLG_VCR_ROM_CCODE_WARNING "CORE_DLG_VCR_ROM_CCODE_WARNING"
 #define CORE_DLG_VCR_ROM_CRC_WARNING "CORE_DLG_VCR_ROM_CRC_WARNING"
@@ -275,7 +273,7 @@ extern "C"
         uint32_t *rdram;
         core_rdram_reg *rdram_register;
         core_pi_reg *pi_register;
-        core_mips_reg *MI_register;
+        core_mips_reg *mi_register;
         core_sp_reg *sp_register;
         core_si_reg *si_register;
         core_vi_reg *vi_register;
@@ -284,8 +282,8 @@ extern "C"
         core_ai_reg *ai_register;
         core_dpc_reg *dpc_register;
         core_dps_reg *dps_register;
-        uint32_t *SP_DMEM;
-        uint32_t *SP_IMEM;
+        uint32_t *sp_dmem;
+        uint32_t *sp_imem;
         uint32_t *PIF_RAM;
         size_t *rcp_counter;
 

@@ -284,9 +284,9 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         gfx_info.byteswapped = 1;
         gfx_info.rom = g_main_ctx.core_ctx->rom;
         gfx_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        gfx_info.dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-        gfx_info.imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
-        gfx_info.mi_intr_reg = &g_main_ctx.core_ctx->MI_register->mi_intr_reg;
+        gfx_info.dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
+        gfx_info.imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
+        gfx_info.mi_intr_reg = &g_main_ctx.core_ctx->mi_register->mi_intr_reg;
         gfx_info.dpc_start_reg = &g_main_ctx.core_ctx->dpc_register->dpc_start;
         gfx_info.dpc_end_reg = &g_main_ctx.core_ctx->dpc_register->dpc_end;
         gfx_info.dpc_current_reg = &g_main_ctx.core_ctx->dpc_register->dpc_current;
@@ -363,8 +363,8 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         audio_info.byteswapped = 1;
         audio_info.rom = g_main_ctx.core_ctx->rom;
         audio_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        audio_info.dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-        audio_info.imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
+        audio_info.dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
+        audio_info.imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
         audio_info.mi_intr_reg = &dummy_dw;
         audio_info.ai_dram_addr_reg = &g_main_ctx.core_ctx->ai_register->ai_dram_addr;
         audio_info.ai_len_reg = &g_main_ctx.core_ctx->ai_register->ai_len;
@@ -432,9 +432,9 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
 
         rsp_info.byteswapped = 1;
         rsp_info.rdram = (uint8_t *)g_main_ctx.core_ctx->rdram;
-        rsp_info.dmem = (uint8_t *)g_main_ctx.core_ctx->SP_DMEM;
-        rsp_info.imem = (uint8_t *)g_main_ctx.core_ctx->SP_IMEM;
-        rsp_info.mi_intr_reg = &g_main_ctx.core_ctx->MI_register->mi_intr_reg;
+        rsp_info.dmem = (uint8_t *)g_main_ctx.core_ctx->sp_dmem;
+        rsp_info.imem = (uint8_t *)g_main_ctx.core_ctx->sp_imem;
+        rsp_info.mi_intr_reg = &g_main_ctx.core_ctx->mi_register->mi_intr_reg;
         rsp_info.sp_mem_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_mem_addr_reg;
         rsp_info.sp_dram_addr_reg = &g_main_ctx.core_ctx->sp_register->sp_dram_addr_reg;
         rsp_info.sp_rd_len_reg = &g_main_ctx.core_ctx->sp_register->sp_rd_len_reg;

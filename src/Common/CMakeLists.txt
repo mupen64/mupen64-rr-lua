@@ -13,13 +13,12 @@ add_library(Mupen64RR.Common INTERFACE
     "include/VersionNameHelpers.hpp"
     "include/FNV1A.hpp"
 )
-
-target_compile_features(Mupen64RR.Common INTERFACE cxx_std_23)
+target_compile_features(Mupen64RR.Common INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR.Common INTERFACE include)
 
 target_link_libraries(Mupen64RR.Common INTERFACE
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
-    lz4::lz4
+    PkgConfig::lz4
     vendor::xxhash64
     SDL3::SDL3
 )
