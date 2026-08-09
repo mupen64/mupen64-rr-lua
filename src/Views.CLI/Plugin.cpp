@@ -84,11 +84,11 @@ void Plugin::initiate()
 
         m_init_data->rom = g_core_ctx->rom;
         m_init_data->rdram = (uint8_t *)g_core_ctx->rdram;
-        m_init_data->dmem = (uint8_t *)g_core_ctx->SP_DMEM;
-        m_init_data->imem = (uint8_t *)g_core_ctx->SP_IMEM;
+        m_init_data->dmem = (uint8_t *)g_core_ctx->sp_dmem;
+        m_init_data->imem = (uint8_t *)g_core_ctx->sp_imem;
 
         m_init_data->rdram_register = g_core_ctx->rdram_register;
-        m_init_data->mi_register = g_core_ctx->MI_register;
+        m_init_data->mi_register = g_core_ctx->mi_register;
         m_init_data->pi_register = g_core_ctx->pi_register;
         m_init_data->sp_register = g_core_ctx->sp_register;
         m_init_data->rsp_register = g_core_ctx->rsp_register;
@@ -157,7 +157,7 @@ bool PluginUtil::load_plugins()
     {
         std::scoped_lock lock(g_plugin_lock);
         auto video_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo" DECAN_LIB_EXT);
-        auto audio_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoAudio" DECAN_LIB_EXT);
+        auto audio_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASAudio" DECAN_LIB_EXT);
         auto input_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput" DECAN_LIB_EXT);
         auto rsp_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP" DECAN_LIB_EXT);
         g_plugins.emplace(std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin),
