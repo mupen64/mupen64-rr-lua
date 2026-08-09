@@ -1298,32 +1298,32 @@ std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_heade
             .wii_vc = false,
             .c_eq_s_accurate = std::nullopt,
             .accurate_rdp_completion = false,
-            .cpu_cf = std::nullopt,
-            .rcp_lag_factor = std::nullopt,
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
         };
     case 1:
         return SyncData{
             .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
             .c_eq_s_accurate = std::nullopt,
             .accurate_rdp_completion = false,
-            .cpu_cf = std::nullopt,
-            .rcp_lag_factor = std::nullopt,
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
         };
     case 2:
         return SyncData{
             .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
             .c_eq_s_accurate = static_cast<bool>(header.extended_flags.c_eq_s_accurate),
             .accurate_rdp_completion = false,
-            .cpu_cf = std::nullopt,
-            .rcp_lag_factor = std::nullopt,
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
         };
     case 3:
         return SyncData{
             .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
             .c_eq_s_accurate = static_cast<bool>(header.extended_flags.c_eq_s_accurate),
             .accurate_rdp_completion = static_cast<bool>(header.extended_flags.accurate_rdp_completion),
-            .cpu_cf = std::nullopt,
-            .rcp_lag_factor = std::nullopt,
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
         };
     case 4:
         return SyncData{
@@ -1373,7 +1373,8 @@ std::vector<std::string> vcr_get_sync_warnings(const SyncData &sync_data)
     append_warning_bool("RDP completion accuracy", sync_data.accurate_rdp_completion,
                         g_core->cfg->accurate_rdp_completion);
     append_warning_double("CPU counter factor", sync_data.cpu_cf, g_core->cfg->cpu_cf);
-    append_warning_double("RCP lag factor", sync_data.rcp_lag_factor, g_core->cfg->rcp_lag_factor);
+    append_warning_double("RCP lag factor", sync_data.rcp_lag_factor,
+                          g_core->cfg->rcp_lag_emulation ? g_core->cfg->rcp_lag_factor : 0.0);
 
     return warnings;
 }

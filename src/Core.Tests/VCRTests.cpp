@@ -988,8 +988,8 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_0",
     REQUIRE(sync_data->wii_vc == false);
     REQUIRE(!sync_data->c_eq_s_accurate.has_value());
     REQUIRE(sync_data->accurate_rdp_completion == false);
-    REQUIRE(!sync_data->cpu_cf.has_value());
-    REQUIRE(!sync_data->rcp_lag_factor.has_value());
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
 }
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_1", "vcr_get_sync_data_from_header")
@@ -1004,8 +1004,8 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_1",
     REQUIRE(sync_data->wii_vc == true);
     REQUIRE(!sync_data->c_eq_s_accurate.has_value());
     REQUIRE(sync_data->accurate_rdp_completion == false);
-    REQUIRE(!sync_data->cpu_cf.has_value());
-    REQUIRE(!sync_data->rcp_lag_factor.has_value());
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
 }
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_2", "vcr_get_sync_data_from_header")
@@ -1021,8 +1021,8 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_2",
     REQUIRE(sync_data->wii_vc == true);
     REQUIRE(sync_data->c_eq_s_accurate == true);
     REQUIRE(sync_data->accurate_rdp_completion == false);
-    REQUIRE(!sync_data->cpu_cf.has_value());
-    REQUIRE(!sync_data->rcp_lag_factor.has_value());
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
 }
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_3", "vcr_get_sync_data_from_header")
@@ -1039,8 +1039,8 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_3",
     REQUIRE(sync_data->wii_vc == false);
     REQUIRE(sync_data->c_eq_s_accurate == true);
     REQUIRE(sync_data->accurate_rdp_completion == true);
-    REQUIRE(!sync_data->cpu_cf.has_value());
-    REQUIRE(!sync_data->rcp_lag_factor.has_value());
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
 }
 
 TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_4", "vcr_get_sync_data_from_header")
@@ -1081,6 +1081,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_sync_data_matches_config"
     s_cfg.accurate_rdp_completion = true;
     s_cfg.cpu_cf = 2.0;
     s_cfg.rcp_lag_factor = 1.5;
+    s_cfg.rcp_lag_emulation = true;
 
     SyncData sync_data{
         .wii_vc = true,
@@ -1124,6 +1125,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_warnings_when_bool_flags_mismatch_config",
     s_cfg.accurate_rdp_completion = false;
     s_cfg.cpu_cf = 1.0;
     s_cfg.rcp_lag_factor = 1.0;
+    s_cfg.rcp_lag_emulation = true;
 
     SyncData sync_data{
         .wii_vc = true,
@@ -1149,6 +1151,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_warnings_when_double_values_mismatch_confi
     s_cfg.accurate_rdp_completion = false;
     s_cfg.cpu_cf = 2.5;
     s_cfg.rcp_lag_factor = 1.5;
+    s_cfg.rcp_lag_emulation = true;
 
     SyncData sync_data{
         .wii_vc = false,
@@ -1163,6 +1166,29 @@ TEST_CASE_METHOD(VcrFixture, "returns_warnings_when_double_values_mismatch_confi
     REQUIRE(warnings.size() == 2);
     REQUIRE(warnings[0] == "CPU counter factor 1.5 in movie, but 2.5 in emulator.");
     REQUIRE(warnings[1] == "RCP lag factor 0.5 in movie, but 1.5 in emulator.");
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_rcp_lag_factor_mismatch_without_lag_emulation_enabled", "vcr_get_sync_warnings")
+{
+    s_cfg.wii_vc_emulation = false;
+    s_cfg.core_type = 1;
+    s_cfg.c_eq_s_nan_accurate = false;
+    s_cfg.accurate_rdp_completion = false;
+    s_cfg.cpu_cf = 1.0;
+    s_cfg.rcp_lag_factor = 2.0;
+    s_cfg.rcp_lag_emulation = 0;
+
+    SyncData sync_data{
+        .wii_vc = false,
+        .c_eq_s_accurate = false,
+        .accurate_rdp_completion = false,
+        .cpu_cf = 1.0,
+        .rcp_lag_factor = 0.0,
+    };
+
+    const auto warnings = vcr_get_sync_warnings(sync_data);
+
+    REQUIRE(warnings.size() == 0);
 }
 
 #pragma endregion
