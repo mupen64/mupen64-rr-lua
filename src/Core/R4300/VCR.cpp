@@ -99,7 +99,8 @@ bool write_movie_impl(const core_vcr_movie_header *hdr, const std::vector<CoreBu
         g_core->log_info("[VCR] vcr_write_extended_format disabled, replacing new sections with 0...");
         hdr_copy.extended_version = 0;
         memset(&hdr_copy.extended_flags, 0, sizeof(hdr_copy.extended_flags));
-        memset(&hdr_copy.extended_data, 0, sizeof(hdr_copy.extended_data));
+        memset(hdr_copy.extended_data.authorship_tag, 0, sizeof(hdr_copy.extended_data.authorship_tag));
+        memset(&hdr_copy.extended_data, 0, sizeof(hdr_copy.extended_flags));
     }
 
     std::vector<uint8_t> out_buf(sizeof(core_vcr_movie_header) + sizeof(CoreButtons) * hdr_copy.length_samples);
