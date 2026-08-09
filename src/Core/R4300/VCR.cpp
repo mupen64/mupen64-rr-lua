@@ -1415,8 +1415,8 @@ core_result vcr_start_playback(std::filesystem::path path)
                     WII_VC_MISMATCH_A_WARNING_MESSAGE, WII_VC_MISMATCH_B_WARNING_MESSAGE))
         return Res_Cancelled;
 
-    if (!check_flag(movie_c_eq_s, vr_is_ceqs_effectively_accurate(), CORE_DLG_VCR_CEQS_WARNING,
-                    "c.eq.s implementation", CEQS_MISMATCH_A_WARNING_MESSAGE, CEQS_MISMATCH_B_WARNING_MESSAGE))
+    if (!check_flag(movie_c_eq_s, vr_is_ceqs_effectively_accurate(), CORE_DLG_VCR_CEQS_WARNING, "c.eq.s implementation",
+                    CEQS_MISMATCH_A_WARNING_MESSAGE, CEQS_MISMATCH_B_WARNING_MESSAGE))
         return Res_Cancelled;
 
     if (!check_flag(movie_rdp, g_core->cfg->accurate_rdp_completion, CORE_DLG_VCR_RDP_COMPLETION_WARNING,
