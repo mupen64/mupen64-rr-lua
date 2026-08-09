@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <variant>
 #include <SDL3/SDL_keycode.h>
 #include <SDL3/SDL_mouse.h>
 #include <nlohmann/json.hpp>
