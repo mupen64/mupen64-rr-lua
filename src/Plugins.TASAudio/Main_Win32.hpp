@@ -6,7 +6,9 @@
 
 #pragma once
 
+#ifdef _WIN32
 #include <CommonPCH.hpp>
 #include "Config.hpp"
 
 extern HINSTANCE g_dll_handle;
+#endif

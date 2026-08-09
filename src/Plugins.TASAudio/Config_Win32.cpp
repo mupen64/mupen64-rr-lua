@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifdef _WIN32
+
 #include <CommonPCH.hpp>
 #include "Config_Win32.hpp"
 #include "Main_Win32.hpp"
@@ -91,3 +93,5 @@ bool win32_show_config(HWND parent, Config &config)
     return res == IDOK;
 }
 } // namespace SDLAudio
+
+#endif
