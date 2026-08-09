@@ -986,7 +986,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_0",
 
     REQUIRE(sync_data.has_value());
     REQUIRE(sync_data->wii_vc == false);
-    REQUIRE(!sync_data->c_eq_s_accurate.has_value());
+    REQUIRE(sync_data->c_eq_s_accurate == false);
     REQUIRE(sync_data->accurate_rdp_completion == false);
     REQUIRE(sync_data->cpu_cf == 1.0);
     REQUIRE(sync_data->rcp_lag_factor == 0.0);
@@ -1002,7 +1002,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_1",
 
     REQUIRE(sync_data.has_value());
     REQUIRE(sync_data->wii_vc == true);
-    REQUIRE(!sync_data->c_eq_s_accurate.has_value());
+    REQUIRE(sync_data->c_eq_s_accurate == false);
     REQUIRE(sync_data->accurate_rdp_completion == false);
     REQUIRE(sync_data->cpu_cf == 1.0);
     REQUIRE(sync_data->rcp_lag_factor == 0.0);

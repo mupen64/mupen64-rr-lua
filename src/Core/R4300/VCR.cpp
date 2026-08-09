@@ -1296,7 +1296,10 @@ std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_heade
     case 0:
         return SyncData{
             .wii_vc = false,
-            .c_eq_s_accurate = std::nullopt,
+            // NOTE: We technically don't know c_eq_s_accurate, but we assume it's false because most movies were
+            // recorded with dynarec (where this is false), and keeping std::nullopt would annoy users when playing old
+            // movies.
+            .c_eq_s_accurate = false,
             .accurate_rdp_completion = false,
             .cpu_cf = 1.0,
             .rcp_lag_factor = 0.0,
@@ -1304,7 +1307,7 @@ std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_heade
     case 1:
         return SyncData{
             .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
-            .c_eq_s_accurate = std::nullopt,
+            .c_eq_s_accurate = false,
             .accurate_rdp_completion = false,
             .cpu_cf = 1.0,
             .rcp_lag_factor = 0.0,
