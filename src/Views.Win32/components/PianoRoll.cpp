@@ -1392,8 +1392,7 @@ void PianoRoll::show()
         Messenger::subscribe<Messenger::Message::UnfreezeCompleted>(on_unfreeze_completed));
     piano_roll.unsubscribe_funcs.push_back(
         Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed));
-    piano_roll.unsubscribe_funcs.push_back(
-        Messenger::subscribe<Messenger::Message::SeekCompleted>(on_seek_completed));
+    piano_roll.unsubscribe_funcs.push_back(Messenger::subscribe<Messenger::Message::SeekCompleted>(on_seek_completed));
     piano_roll.unsubscribe_funcs.push_back(
         Messenger::subscribe<Messenger::Message::SeekSavestateChanged>(on_seek_savestate_changed));
     piano_roll.unsubscribe_funcs.push_back(

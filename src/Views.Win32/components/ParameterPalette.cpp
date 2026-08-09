@@ -224,8 +224,8 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         update_dialog_position_and_size();
         try_apply_parameter();
 
-        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe<Messenger::Message::MainWindowMoved>(
-            [] { update_dialog_position_and_size(); }));
+        g_ctx.unsubscribe_funcs.push_back(
+            Messenger::subscribe<Messenger::Message::MainWindowMoved>([] { update_dialog_position_and_size(); }));
 
         g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe<Messenger::Message::SizeChanged>(
             [](const auto &) { update_dialog_position_and_size(); }));

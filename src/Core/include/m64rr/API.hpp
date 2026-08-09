@@ -275,7 +275,7 @@ extern "C"
         uint32_t *rdram;
         core_rdram_reg *rdram_register;
         core_pi_reg *pi_register;
-        core_mips_reg *MI_register;
+        core_mips_reg *mi_register;
         core_sp_reg *sp_register;
         core_si_reg *si_register;
         core_vi_reg *vi_register;
@@ -284,8 +284,8 @@ extern "C"
         core_ai_reg *ai_register;
         core_dpc_reg *dpc_register;
         core_dps_reg *dps_register;
-        uint32_t *SP_DMEM;
-        uint32_t *SP_IMEM;
+        uint32_t *sp_dmem;
+        uint32_t *sp_imem;
         uint32_t *PIF_RAM;
         size_t *rcp_counter;
 

@@ -1008,9 +1008,8 @@ void AppActions::init()
         [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
         [] { ActionManager::notify_active_changed(FAST_FORWARD); });
-    Messenger::subscribe<Messenger::Message::CapturingChanged>([](const auto &) {
-        ActionManager::notify_enabled_changed(std::format(L"{} *", VIDEO_CAPTURE));
-    });
+    Messenger::subscribe<Messenger::Message::CapturingChanged>(
+        [](const auto &) { ActionManager::notify_enabled_changed(std::format(L"{} *", VIDEO_CAPTURE)); });
     Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
         [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
     Messenger::subscribe<Messenger::Message::MovieLoopChanged>(

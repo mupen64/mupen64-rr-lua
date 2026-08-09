@@ -33,6 +33,8 @@ add_subdirectory(Plugins.DummyAudio)
 add_subdirectory(Plugins.DummyInput)
 add_subdirectory(Plugins.DummyVideo)
 
+# SDL audio plugin
+add_subdirectory(Plugins.TASAudio)
 # HLE RSP plugin (core cannot live without a functioning RSP)
 add_subdirectory(Plugins.TASRSP)
 
@@ -57,7 +59,6 @@ if (MUPEN64RR_BUILD_WIN32)
     # Note that we can't port config dialogs until we settle on a GUI frontend framework.
     add_subdirectory(Plugins.Win32.TASVideo)
     add_subdirectory(Plugins.Win32.TASInput)
-    add_subdirectory(Plugins.Win32.TASAudio)
 endif()
 
 # CLI VIEW
