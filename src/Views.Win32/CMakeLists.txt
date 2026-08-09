@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Views.Win32.Headers INTERFACE
     "include/Views.Win32/ZESpec.h"
 )
-target_compile_features(Mupen64RR.Views.Win32.Headers INTERFACE cxx_std_23)
+target_compile_features(Mupen64RR.Views.Win32.Headers INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "include")
 
 add_executable(Mupen64RR.Views.Win32 WIN32
@@ -134,7 +134,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     # Resource script
     "Resource.rc"
 )
-target_compile_features(Mupen64RR.Views.Win32 PRIVATE cxx_std_23)
+target_compile_features(Mupen64RR.Views.Win32 PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
     # output location
     OUTPUT_NAME "mupen64"

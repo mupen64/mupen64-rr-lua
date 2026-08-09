@@ -8,11 +8,15 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <span>
 
 #include <libdeflate.h>
+#include <lz4.h>
+#include <lz4frame.h>
 
 /**
  * \brief A module providing various miscellaneous helper functions.
@@ -25,17 +29,37 @@ inline void vecwrite(std::vector<uint8_t> &vec, const void *data, const size_t l
     memcpy(vec.data() + (vec.size() - len), data, len);
 }
 
-inline std::vector<uint8_t> auto_decompress(const std::vector<uint8_t> &vec, const size_t initial_size)
+namespace details
 {
-    if (vec.size() < 2 || vec[0] != 0x1F && vec[1] != 0x8B)
-    {
-        // vec is decompressed already
+inline std::vector<uint8_t> compress_gzip(std::span<const uint8_t> in)
+{
+    std::vector<uint8_t> compressed;
+    compressed.resize(in.size());
 
-        // we need a copy, not ref
-        std::vector<uint8_t> out_vec = vec;
-        return out_vec;
-    }
+    const auto compressor = libdeflate_alloc_compressor(6);
+    const size_t final_size =
+        libdeflate_gzip_compress(compressor, in.data(), in.size(), compressed.data(), compressed.size());
+    libdeflate_free_compressor(compressor);
+    compressed.resize(final_size);
 
+    return compressed;
+}
+
+inline std::vector<uint8_t> compress_lz4(std::span<const uint8_t> in)
+{
+    const size_t bound = LZ4F_compressFrameBound(in.size(), nullptr);
+    if (LZ4F_isError(bound)) return {};
+
+    std::vector<uint8_t> compressed(bound);
+    const size_t final_size = LZ4F_compressFrame(compressed.data(), compressed.size(), in.data(), in.size(), nullptr);
+    if (LZ4F_isError(final_size)) return {};
+
+    compressed.resize(final_size);
+    return compressed;
+}
+
+inline std::vector<uint8_t> decompress_gzip(const std::vector<uint8_t> &vec, const size_t initial_size)
+{
     // The gzip header does not include the uncompressed size, so grow the output buffer until it fits.
     size_t buf_size = std::max(initial_size, size_t{1});
     auto decompressor = libdeflate_alloc_decompressor();
@@ -65,6 +89,101 @@ inline std::vector<uint8_t> auto_decompress(const std::vector<uint8_t> &vec, con
         out_vec.resize(actual_size);
         return out_vec;
     }
+}
+
+inline std::vector<uint8_t> decompress_lz4(const std::vector<uint8_t> &vec, const size_t initial_size)
+{
+    size_t buf_size = std::max(initial_size, size_t{1});
+
+    LZ4F_dctx *dctx = nullptr;
+    if (LZ4F_isError(LZ4F_createDecompressionContext(&dctx, LZ4F_VERSION))) return {};
+
+    std::vector<uint8_t> out_vec;
+    size_t src_pos = 0;
+    size_t dst_pos = 0;
+    while (true)
+    {
+        out_vec.resize(buf_size);
+
+        size_t dst_size = out_vec.size() - dst_pos;
+        size_t src_size = vec.size() - src_pos;
+
+        const size_t result =
+            LZ4F_decompress(dctx, out_vec.data() + dst_pos, &dst_size, vec.data() + src_pos, &src_size, nullptr);
+        src_pos += src_size;
+        dst_pos += dst_size;
+
+        if (LZ4F_isError(result)) break;
+
+        if (result == 0)
+        {
+            out_vec.resize(dst_pos);
+            LZ4F_freeDecompressionContext(dctx);
+            return out_vec;
+        }
+
+        if (src_pos == vec.size()) break;
+
+        if (dst_pos == out_vec.size())
+        {
+            if (buf_size > std::numeric_limits<size_t>::max() / 2)
+            {
+                break;
+            }
+            buf_size *= 2;
+        }
+    }
+
+    LZ4F_freeDecompressionContext(dctx);
+    return {};
+}
+
+} // namespace details
+
+enum class Compressor
+{
+    Best,
+    Gzip,
+    Lz4,
+};
+
+/**
+ * \brief Compresses the given buffer using the specified compressor.
+ * \param compressor The compressor to use.
+ * \param in The buffer to compress.
+ * \return The compressed buffer, or an empty vector on failure.
+ */
+inline std::vector<uint8_t> compress(Compressor compressor, std::span<const uint8_t> in)
+{
+    switch (compressor)
+    {
+    case Compressor::Gzip:
+        return details::compress_gzip(in);
+    case Compressor::Best:
+    case Compressor::Lz4:
+        return details::compress_lz4(in);
+    }
+    return {};
+}
+
+/**
+ * \brief Automatically decompresses the given buffer using the appropriate decompression algorithm.
+ * \param vec The buffer to decompress.
+ * \param initial_size The initial size of the output buffer. Set it to a reasonable value to avoid unnecessary
+ * reallocations.
+ * \return The decompressed buffer, or an empty vector on failure.
+ */
+inline std::vector<uint8_t> auto_decompress(const std::vector<uint8_t> &vec, const size_t initial_size)
+{
+    // Unsure...
+    if (vec.size() < 8) return vec;
+
+    if (vec[0] == 0x1F && vec[1] == 0x8B) return details::decompress_gzip(vec, initial_size);
+    if (vec[0] == 0x04 && vec[1] == 0x22 && vec[2] == 0x4D && vec[3] == 0x18)
+        return details::decompress_lz4(vec, initial_size);
+
+    // Uncompressed probably
+    return vec;
 }
 
 inline void memread(uint8_t **src, void *dest, const unsigned int len)

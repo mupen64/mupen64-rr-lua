@@ -55,7 +55,7 @@ inline std::vector<uint8_t> read_entire_file(const std::filesystem::path &path)
 }
 
 // overwrites the contents of a file with the provided buffer.
-inline bool write_entire_file(const std::filesystem::path &path, std::span<uint8_t> data)
+inline bool write_entire_file(const std::filesystem::path &path, std::span<const uint8_t> data)
 {
     std::ofstream out(path, std::ios::binary);
     if (!out.is_open())

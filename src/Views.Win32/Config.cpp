@@ -34,7 +34,7 @@ const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
     {CORE_DLG_ST_UNFREEZE_WARNING, 0},
     {CORE_DLG_ST_NOT_FROM_MOVIE, 0},
     {CORE_DLG_VCR_RAWDATA_WARNING, 0},
-    {CORE_DLG_VCR_WIIVC_WARNING, 0},
+    {CORE_DLG_VCR_GENERAL_SYNC_WARNING, 0},
     {CORE_DLG_VCR_ROM_NAME_WARNING, 0},
     {CORE_DLG_VCR_ROM_CCODE_WARNING, 0},
     {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
@@ -379,6 +379,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(st_slot)
     HANDLE_P_VALUE(core.rom_cache_size)
     HANDLE_P_VALUE(core.st_screenshot)
+    HANDLE_P_VALUE(core.st_lz4)
     HANDLE_P_VALUE(core.is_movie_loop_enabled)
     HANDLE_P_VALUE(is_unfocused_pause_enabled)
     HANDLE_P_VALUE(is_statusbar_enabled)
@@ -695,6 +696,7 @@ static void json_read_file(json &j)
     CORE_VALUE(fps_modifier)
     CORE_VALUE(rom_cache_size)
     CORE_VALUE(st_screenshot)
+    CORE_VALUE(st_lz4)
     CORE_VALUE(is_movie_loop_enabled)
     CORE_VALUE(is_reset_recording_enabled)
     CORE_VALUE(seek_savestate_interval)
@@ -792,6 +794,7 @@ static void json_write_file(json &j)
     CORE_VALUE(fps_modifier)
     CORE_VALUE(rom_cache_size)
     CORE_VALUE(st_screenshot)
+    CORE_VALUE(st_lz4)
     CORE_VALUE(is_movie_loop_enabled)
     CORE_VALUE(is_reset_recording_enabled)
     CORE_VALUE(seek_savestate_interval)

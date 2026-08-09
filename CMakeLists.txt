@@ -14,6 +14,13 @@ project(mupen64-rr
 # Options
 # ===========================================
 
+if(MINGW)
+  # Avoid weird "lib" prefixes when cross-compiling (e.g. libTASVideo.dll instead of TASVideo.dll).
+  set(CMAKE_SHARED_LIBRARY_PREFIX "")
+  set(CMAKE_STATIC_LIBRARY_PREFIX "")
+  set(CMAKE_SHARED_MODULE_PREFIX "")
+endif()
+
 # The dynarec only supports x86 and x86_64; building for any other
 # architecture (e.g. ARM64) errors out (see src/Core/CMakeLists.txt).
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
@@ -77,7 +84,10 @@ find_package(PkgConfig REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
+pkg_check_modules(lz4 IMPORTED_TARGET GLOBAL "liblz4")
 
+# libsafec (required on most runtimes to support C11 Annex K)
 if(NOT WIN32)
   pkg_check_modules(libsafec IMPORTED_TARGET GLOBAL "libsafec")
 endif()
@@ -86,7 +96,6 @@ endif()
 if(MUPEN64RR_BUILD_WIN32)
   find_package(spdlog CONFIG REQUIRED)
   find_package(glew CONFIG REQUIRED)
-  find_package(SDL3 CONFIG REQUIRED)
 
   pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
   pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")

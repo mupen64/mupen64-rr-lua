@@ -18,7 +18,7 @@ add_executable(Mupen64RR.Core.Tests
     "VRTests.cpp"
 )
 mupen64rr_copy_vcpkg_deps(Mupen64RR.Core.Tests)
-target_compile_features(Mupen64RR.Core.Tests PRIVATE cxx_std_23)
+target_compile_features(Mupen64RR.Core.Tests PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Core.Tests PROPERTIES
     OUTPUT_NAME "Core.Tests"
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_TEST_OUT_DIR}"

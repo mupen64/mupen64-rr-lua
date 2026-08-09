@@ -281,9 +281,8 @@ void LuaRenderer::init()
 
     g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 
-    Messenger::subscribe<Messenger::Message::SizeChanged>([](const std::pair<int32_t, int32_t> &size) {
-        resize(size.first, size.second);
-    });
+    Messenger::subscribe<Messenger::Message::SizeChanged>(
+        [](const std::pair<int32_t, int32_t> &size) { resize(size.first, size.second); });
 
     Messenger::subscribe<Messenger::Message::MainWindowMoved>([] { move_and_order_overlays(); });
 
