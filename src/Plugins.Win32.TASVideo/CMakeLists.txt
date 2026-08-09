@@ -69,7 +69,7 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
 
     "Resource.rc"
 )
-target_compile_features(Mupen64RR.Plugins.Win32.TASVideo PRIVATE cxx_std_23)
+target_compile_features(Mupen64RR.Plugins.Win32.TASVideo PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Plugins.Win32.TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
