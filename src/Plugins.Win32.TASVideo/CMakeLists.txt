@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -7,8 +7,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "VI.hpp"
     "Types.hpp"
-    "unified_combiner.hpp"
-    "stdafx.h"
+    "Common.hpp"
     "S2DEX2.hpp"
     "S2DEX.hpp"
     "RSP.hpp"
@@ -20,6 +19,7 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "L3DEX.hpp"
     "L3D.hpp"
     "gSP.hpp"
+    "glsl_combiner.hpp"
     "glN64.hpp"
     "gDP.hpp"
     "GBI.hpp"
@@ -40,8 +40,6 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
 
     "VI.cpp"
     "Textures.cpp"
-    "unified_combiner.cpp"
-    "stdafx.cpp"
     "S2DEX2.cpp"
     "S2DEX.cpp"
     "RSP.cpp"
@@ -52,6 +50,7 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
     "L3DEX.cpp"
     "L3D.cpp"
     "gSP.cpp"
+    "glsl_combiner.cpp"
     "glN64.cpp"
     "gDP.cpp"
     "GBI.cpp"
@@ -70,9 +69,8 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
 
     "Resource.rc"
 )
+target_compile_features(Mupen64RR.Plugins.Win32.TASVideo PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Plugins.Win32.TASVideo PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
@@ -87,10 +85,10 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     SDL3::SDL3
 )
 target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
-    Comctl32
+    comctl32
     uxtheme
-    Msimg32
-    Gdiplus
+    msimg32
+    gdiplus
     opengl32
     glu32
     winmm

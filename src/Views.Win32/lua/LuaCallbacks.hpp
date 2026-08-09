@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -44,7 +44,7 @@ enum callback_key : uint8_t
 /**
  * \brief Notifies all lua instances of a window message
  */
-void call_window_message(void *, unsigned int, unsigned int, long);
+void call_window_message(void *, unsigned int, std::uintptr_t, std::intptr_t);
 
 /**
  * \brief Notifies all lua instances of a visual interrupt

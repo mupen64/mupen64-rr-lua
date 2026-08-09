@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Config.hpp>
 #include <DialogService.hpp>
 #include <Messenger.hpp>
@@ -152,9 +152,8 @@ static void on_movie_playback_stop()
     }
 }
 
-static void on_task_changed(std::any data)
+static void on_task_changed(core_vcr_task value)
 {
-    auto value = std::any_cast<core_vcr_task>(data);
     static auto previous_value = value;
 
     if (task_is_playback(previous_value) && !task_is_playback(value))
@@ -165,10 +164,8 @@ static void on_task_changed(std::any data)
     previous_value = value;
 }
 
-static void on_core_executing_changed(std::any data)
+static void on_core_executing_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
-
     if (!value) return;
 
     if (!cli_state.first_emu_launched)
@@ -190,12 +187,12 @@ static void on_core_executing_changed(std::any data)
     });
 }
 
-static void on_app_ready(std::any)
+static void on_app_ready()
 {
     start_rom();
 }
 
-static void on_dacrate_changed(std::any)
+static void on_dacrate_changed(CoreSystemType)
 {
     ++cli_state.dacrate_change_count;
 
@@ -214,10 +211,10 @@ static void on_dacrate_changed(std::any)
 
 void CLI::init()
 {
-    Messenger::subscribe(Messenger::Message::CoreExecutingChanged, on_core_executing_changed);
-    Messenger::subscribe(Messenger::Message::AppReady, on_app_ready);
-    Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed);
-    Messenger::subscribe(Messenger::Message::DacrateChanged, on_dacrate_changed);
+    Messenger::subscribe<Messenger::Message::CoreExecutingChanged>(on_core_executing_changed);
+    Messenger::subscribe<Messenger::Message::AppReady>(on_app_ready);
+    Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
+    Messenger::subscribe<Messenger::Message::DacrateChanged>(on_dacrate_changed);
 
     argh::parser cmdl(__argc, __argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
@@ -286,7 +283,7 @@ void CLI::init()
         cli_state.is_movie_from_start = hdr.startFlags & MOVIE_START_FROM_NOTHING;
     }
 
-    cli_state.rom_is_movie = cli_params.rom.extension().compare(L".m64");
+    cli_state.rom_is_movie = cli_params.rom.extension().compare(L".m64") == 0;
 
     log_cli_params(cli_params);
 }

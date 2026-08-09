@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <action/ActionManager.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
@@ -523,16 +523,16 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             int32_t id = 0;
             switch (plugin->type())
             {
-            case ZilmarExtSpec::PluginType::Video:
+            case Plugin::Type::Video:
                 id = IDC_COMBO_GFX;
                 break;
-            case ZilmarExtSpec::PluginType::Audio:
+            case Plugin::Type::Audio:
                 id = IDC_COMBO_SOUND;
                 break;
-            case ZilmarExtSpec::PluginType::Input:
+            case Plugin::Type::Input:
                 id = IDC_COMBO_INPUT;
                 break;
-            case ZilmarExtSpec::PluginType::RSP:
+            case Plugin::Type::RSP:
                 id = IDC_COMBO_RSP;
                 break;
             default:
@@ -1004,6 +1004,14 @@ std::vector<t_options_group> get_static_option_groups()
         .tooltip = L"Saves and loads game graphics to savestates to allow instant graphics updates when loading "
                    L"savestates.\nGreatly increases savestate saving and loading time.",
         GENPROPS(int32_t, core.st_screenshot),
+    });
+    core_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Bool,
+        .group_id = core_group.id,
+        .name = L"Fast Savestates",
+        .tooltip = L"Compress savestates using LZ4, faster than GZip.\nDisable to create savestates that are "
+                   L"compatible with older Mupen versions.",
+        GENPROPS(int32_t, core.st_lz4),
     });
     core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
@@ -1602,7 +1610,7 @@ void ConfigDialog::show_app_settings()
     }
 
     Config::apply_and_save();
-    Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+    Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 }
 
 std::vector<t_options_group> ConfigDialog::get_option_groups()
@@ -1653,7 +1661,7 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
         {
             segment = ActionManager::get_display_name(segment, true);
         }
-        const auto name = MiscHelpers::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+        const auto name = StrUtils::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
         option_group.name = name;
     }
 

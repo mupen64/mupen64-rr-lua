@@ -1,4 +1,10 @@
-#include "stdafx.h"
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Common.hpp"
 #include "glN64.hpp"
 #include "OpenGL.hpp"
 #include "RSP.hpp"
@@ -27,8 +33,10 @@ void RSP_LoadMatrix(f32 mtx[4][4], u32 address)
     {
         for (uint8_t col = 0; col < 4; ++col)
         {
-            const int16_t lo = *reinterpret_cast<int16_t *>(base + offset_lo[col]);
-            const uint16_t hi = *reinterpret_cast<uint16_t *>(base + offset_hi[col]);
+            int16_t lo;
+            uint16_t hi;
+            std::memcpy(&lo, base + offset_lo[col], sizeof(lo));
+            std::memcpy(&hi, base + offset_hi[col], sizeof(hi));
             const float result = static_cast<float>(lo) + static_cast<float>(hi) * recip;
 
             mtx[row][col] = result;
@@ -63,9 +71,6 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
         case WAIT_OBJECT_0 + RSPMSG_PROCESSDLIST:
             RSP_ProcessDList();
             break;
-        case WAIT_OBJECT_0 + RSPMSG_UPDATESCREEN:
-            VI_UpdateScreen();
-            break;
         case WAIT_OBJECT_0 + RSPMSG_DESTROYTEXTURES:
             Combiner_Destroy();
             FrameBuffer_Destroy();
@@ -90,7 +95,7 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
 
 void RSP_ProcessDList()
 {
-    OGL.headless = g_ef->frame_skipped();
+    OGL.headless = g_plugin->frame_skipped();
 
     if (!OGL.headless)
     {
@@ -100,10 +105,10 @@ void RSP_ProcessDList()
         if (OGL.clear_override)
         {
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glPushAttrib(GL_ENABLE_BIT);
+            const GLboolean scissor = glIsEnabled(GL_SCISSOR_TEST);
             glDisable(GL_SCISSOR_TEST);
             glClear(GL_COLOR_BUFFER_BIT);
-            glPopAttrib();
+            if (scissor) glEnable(GL_SCISSOR_TEST);
         }
     }
 
@@ -165,7 +170,7 @@ void RSP_ProcessDList()
 
         cmds[RSP.cmd](w0, w1);
 
-        *g_ef->rcp_counter += 1;
+        *g_plugin->rcp_counter += 1;
     }
 
     RSP.busy = FALSE;

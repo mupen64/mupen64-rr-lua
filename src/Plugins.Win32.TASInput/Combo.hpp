@@ -1,10 +1,16 @@
 ﻿/*
- * Copyright (c) 2026, TASInput maintainers, contributors, and original authors (nitsuja, Deflection).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #pragma once
+
+#include "Main.hpp"
+
+#include <span>
+#include <variant>
+#include <vector>
 
 /**
  * \brief Represents a combo.
@@ -19,7 +25,7 @@ struct t_combo
     /**
      * \brief The combo's samples.
      */
-    std::vector<ZilmarExtSpec::Buttons> samples{};
+    std::vector<CoreButtons> samples{};
 
     /**
      * \return Whether any sample utilizes the joystick (magnitude > 0).

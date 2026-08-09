@@ -1,14 +1,13 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #include <CommonPCH.hpp>
 #include <Core.hpp>
-#include <libdeflate.h>
 #include <FNV1A.hpp>
-#include <include/core_api.h>
+#include <m64rr/API.hpp>
 #include <Memory/FlashRAM.hpp>
 #include <Memory/Memory.hpp>
 #include <Memory/Savestates.hpp>
@@ -18,7 +17,7 @@
 #include <R4300/Rom.hpp>
 #include <R4300/VCR.hpp>
 
-constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1 << 31);
+constexpr auto RDRAM_DEVICE_MANUF_NEW_FIX_BIT = (1U << 31);
 
 // st that comes from no delay fix mupen, it has some differences compared to new st:
 // - one frame of input is "embedded", that is the pif ram holds already fetched controller info.
@@ -253,18 +252,20 @@ void savestates_save_immediate_impl(const t_savestate_task &task)
         get_paths_for_task(task, new_st_path, new_sd_path);
         if (g_core->cfg->use_summercart) save_summercart(new_sd_path);
 
-        // Generate compressed buffer
-        std::vector<uint8_t> compressed_buffer;
-        compressed_buffer.resize(st.size());
+        const auto compressor = g_core->cfg->st_lz4 ? MiscHelpers::Compressor::Lz4 : MiscHelpers::Compressor::Gzip;
+        const auto compressed = MiscHelpers::compress(compressor, st);
 
-        const auto compressor = libdeflate_alloc_compressor(6);
-        const size_t final_size = libdeflate_gzip_compress(compressor, st.data(), st.size(), compressed_buffer.data(),
-                                                           compressed_buffer.size());
-        libdeflate_free_compressor(compressor);
-        compressed_buffer.resize(final_size);
+        if (compressed.empty())
+        {
+            task.callback(
+                core_st_callback_info{
+                    .result = ST_FileWriteError, .job = task.job, .medium = task.medium, .params = task.params},
+                st);
+            return;
+        }
 
         // write compressed st to disk
-        if (!IOUtils::write_entire_file(new_st_path, compressed_buffer))
+        if (!IOUtils::write_entire_file(new_st_path, compressed))
         {
             task.callback(
                 core_st_callback_info{
@@ -318,6 +319,7 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     }
 
     std::vector<uint8_t> decompressed_buf = MiscHelpers::auto_decompress(st_buf, 0xB624F0);
+
     if (decompressed_buf.empty())
     {
         task.callback(
@@ -358,8 +360,12 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     // new version does one bigass gzread for first part of .st (static size)
     MiscHelpers::memread(&ptr, g_first_block, sizeof(g_first_block));
 
-    const auto si_reg = (core_si_reg *)&g_first_block[0xDC - 0x20];
-    if (!check_register_validity(si_reg) || !check_flashram_infos(&g_first_block[0x8021F0 - 0x20]))
+    core_si_reg si_reg;
+    std::memcpy(&si_reg, &g_first_block[0xDC - 0x20], sizeof(si_reg));
+    const bool si_register_valid = check_register_validity(&si_reg);
+    const bool flashram_infos_valid = check_flashram_infos(&g_first_block[0x8021F0 - 0x20]);
+    assert(si_register_valid && flashram_infos_valid && "Savestate contains invalid DMA register contents");
+    if (!si_register_valid || !flashram_infos_valid)
     {
         task.callback(
             core_st_callback_info{
@@ -372,8 +378,10 @@ void savestates_load_immediate_impl(const t_savestate_task &task)
     int32_t len;
     for (len = 0; len < sizeof(g_event_queue_buf); len += 8)
     {
-        MiscHelpers::memread(&ptr, g_event_queue_buf + len, 4);
-        if (*reinterpret_cast<uint32_t *>(&g_event_queue_buf[len]) == 0xFFFFFFFF) break;
+        uint32_t event_type;
+        MiscHelpers::memread(&ptr, &event_type, sizeof(event_type));
+        std::memcpy(g_event_queue_buf + len, &event_type, sizeof(event_type));
+        if (event_type == 0xFFFFFFFF) break;
         MiscHelpers::memread(&ptr, g_event_queue_buf + len + 4, 4);
     }
     if (len == sizeof(g_event_queue_buf))

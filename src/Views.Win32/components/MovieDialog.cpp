@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <components/MovieDialog.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
@@ -291,9 +291,19 @@ refresh:
                                                        : (header.extended_flags.wii_vc ? L"Enabled" : L"Disabled")));
 
     metadata.emplace_back(std::make_pair(
-        L"Accurate RDP completion",
-        header.extended_version < 3 ? L"Unknown"
-                                    : (header.extended_flags.accurate_rdp_completion ? L"Enabled" : L"Disabled")));
+        L"Accurate RDP completion", header.extended_version < 3
+                                        ? L"Unknown"
+                                        : (header.extended_flags.accurate_rdp_completion ? L"Enabled" : L"Disabled")));
+
+    metadata.emplace_back(std::make_pair(L"CPU counter factor",
+                                         header.extended_version < 4
+                                             ? std::wstring(L"Unknown")
+                                             : std::format(L"{}", header.extended_data.cpu_cf)));
+
+    metadata.emplace_back(std::make_pair(L"RCP lag factor",
+                                         header.extended_version < 4
+                                             ? std::wstring(L"Unknown")
+                                             : std::format(L"{}", header.extended_data.rcp_lag_factor)));
 
     char authorship[5] = {0};
     memcpy(authorship, header.extended_data.authorship_tag, sizeof(header.extended_data.authorship_tag));

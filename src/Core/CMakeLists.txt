@@ -1,17 +1,15 @@
 #[===[
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Core.Headers INTERFACE
-    "include/core_types.h"
-    "include/core_api.h"
+    "include/m64rr/API.hpp"
+    "include/m64rr/Plugin.hpp"
+    "include/m64rr/Types.hpp"
 )
-set_target_properties(Mupen64RR.Core.Headers PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-)
+target_compile_features(Mupen64RR.Core.Headers INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR.Core.Headers INTERFACE "include")
 target_link_libraries(Mupen64RR.Core.Headers INTERFACE Mupen64RR.Common)
 
@@ -78,29 +76,29 @@ add_library(Mupen64RR.Core STATIC
 
     "R4300/VCR.cpp"
 )
+target_compile_features(Mupen64RR.Core PUBLIC cxx_std_26)
 set_target_properties(Mupen64RR.Core PROPERTIES
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
     OUTPUT_NAME Core
 )
 target_include_directories(Mupen64RR.Core PUBLIC "include")
 target_include_directories(Mupen64RR.Core PRIVATE ".")
 target_link_libraries(Mupen64RR.Core PRIVATE
     libdeflate::libdeflate_$<IF:$<TARGET_EXISTS:libdeflate::libdeflate_static>,static,shared>
+    PkgConfig::lz4
     vendor::aladdin-md5
 )
 target_link_libraries(Mupen64RR.Core PUBLIC
     Mupen64RR.Common
     Mupen64RR.Core.Headers
 )
-target_compile_options(Mupen64RR.Core PRIVATE -Werror=nonportable-include-path)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(Mupen64RR.Core PRIVATE -Werror=nonportable-include-path)
+endif()
 
 # options: disable dynarec
 if (${MUPEN64RR_ENABLE_DYNAREC})
     target_compile_definitions(Mupen64RR.Core PRIVATE "MUPEN64RR_ENABLE_DYNAREC")
-
-    # Select the dynarec backend by target architecture. The dynarec is
-    # x86-only, so error out on anything else:
+    # Select the dynarec backend by target architecture.
     #   x86-64 -> R4300/x86_64 (x86-64 recompiler)
     #   x86    -> R4300/x86 (original x86-32 recompiler)
     if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(AMD64|x86_64)$")

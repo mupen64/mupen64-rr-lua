@@ -1,0 +1,16 @@
+#[===[
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+
+SPDX-License-Identifier: GPL-2.0-or-later
+]===]
+
+add_library(Mupen64RR.Plugins.DummyAudio MODULE
+    "Main.cpp"
+)
+target_compile_features(Mupen64RR.Plugins.DummyAudio PRIVATE cxx_std_26)
+set_target_properties(Mupen64RR.Plugins.DummyAudio PROPERTIES
+    OUTPUT_NAME "NoAudio"
+    LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
+    PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
+target_link_libraries(Mupen64RR.Plugins.DummyAudio PRIVATE Mupen64RR.Plugins.Common)

@@ -1,10 +1,14 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #pragma once
+
+#include <memory>
+
+#include <spdlog/spdlog.h>
 
 extern std::shared_ptr<spdlog::logger> g_view_logger;
 extern std::shared_ptr<spdlog::logger> g_core_logger;

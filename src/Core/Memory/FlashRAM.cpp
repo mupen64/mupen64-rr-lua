@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -48,19 +48,7 @@ bool check_flashram_infos(uint8_t *buf)
     memcpy(&erase_offset, buf + 16, 4);
     memcpy(&write_pointer, buf + 20, 4);
 
-    for (int32_t i = erase_offset; i < erase_offset + 128; i++)
-    {
-        const auto mapped_index = i ^ S8;
-        if (mapped_index < 0 || mapped_index >= sizeof(flashram)) return false;
-    }
-
-    for (int32_t i = write_pointer; i < write_pointer + 128; i++)
-    {
-        const auto mapped_index = i ^ S8;
-        if (mapped_index < 0 || mapped_index >= sizeof(rdram)) return false;
-    }
-
-    return true;
+    return erase_offset <= sizeof(flashram) - 128 && write_pointer <= sizeof(rdram) - 128;
 }
 
 void init_flashram()
@@ -98,6 +86,8 @@ void flashram_command(uint32_t command)
         case NOPES_MODE:
             break;
         case ERASE_MODE: {
+            if (erase_offset > sizeof(flashram) - 128) break;
+
             fseek(g_sram_file, 0, SEEK_SET);
             fread(flashram, 1, 0x20000, g_sram_file);
 
@@ -108,6 +98,8 @@ void flashram_command(uint32_t command)
         }
         break;
         case WRITE_MODE: {
+            if (erase_offset > sizeof(flashram) - 128 || write_pointer > sizeof(rdram) - 128) break;
+
             fseek(g_sram_file, 0, SEEK_SET);
             fread(flashram, 1, 0x20000, g_sram_file);
 
@@ -146,16 +138,25 @@ void dma_read_flashram()
     switch (mode)
     {
     case STATUS_MODE:
-        rdram[pi_register.pi_dram_addr_reg / 4] = (uint32_t)(status >> 32);
-        rdram[pi_register.pi_dram_addr_reg / 4 + 1] = (uint32_t)(status);
+        if (pi_register.pi_dram_addr_reg <= sizeof(rdram) - 8)
+        {
+            rdram[pi_register.pi_dram_addr_reg / 4] = (uint32_t)(status >> 32);
+            rdram[pi_register.pi_dram_addr_reg / 4 + 1] = (uint32_t)(status);
+        }
         break;
     case READ_MODE: {
+        const uint32_t flash_offset = ((pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF) * 2;
+        uint32_t length = (pi_register.pi_wr_len_reg & 0x0FFFFFF) + 1;
+        length = flash_offset < sizeof(flashram) ? std::min(length, (uint32_t)sizeof(flashram) - flash_offset) : 0;
+        length = pi_register.pi_dram_addr_reg < sizeof(rdram)
+                     ? std::min(length, (uint32_t)sizeof(rdram) - pi_register.pi_dram_addr_reg)
+                     : 0;
+
         fseek(g_fram_file, 0, SEEK_SET);
         fread(flashram, 1, 0x20000, g_fram_file);
 
-        for (i = 0; i < (pi_register.pi_wr_len_reg & 0x0FFFFFF) + 1; i++)
-            ((unsigned char *)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] =
-                flashram[(((pi_register.pi_cart_addr_reg - 0x08000000) & 0xFFFF) * 2 + i) ^ S8];
+        for (uint32_t i = 0; i < length; i++)
+            ((unsigned char *)rdram)[(pi_register.pi_dram_addr_reg + i) ^ S8] = flashram[(flash_offset + i) ^ S8];
         break;
     }
     default:

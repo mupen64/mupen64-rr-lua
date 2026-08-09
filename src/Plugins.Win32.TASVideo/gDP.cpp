@@ -1,4 +1,10 @@
-#include "stdafx.h"
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Common.hpp"
 #include "glN64.hpp"
 #include "N64.hpp"
 #include "GBI.hpp"
@@ -724,8 +730,6 @@ void gDPTextureRectangleFlip(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s
 void gDPFullSync()
 {
     *REG.MI_INTR |= MI_INTR_DP;
-
-    g_tas_ctx.check_interrupts();
 
     DebugMsg(L"gDPFullSync();\n");
 }

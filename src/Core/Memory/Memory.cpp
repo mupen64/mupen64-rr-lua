@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -1276,13 +1276,9 @@ void update_DPC()
          (dpc_register.end_valid << 9) | (dpc_register.start_valid << 10));
 }
 
-bool check_register_validity(core_si_reg *si_reg)
+bool check_register_validity(const core_si_reg *si_reg)
 {
-    if (si_reg->si_dram_addr / 4 + 16 > sizeof(rdram))
-    {
-        return false;
-    }
-    return true;
+    return si_reg->si_dram_addr <= sizeof(rdram) - 64;
 }
 
 void read_nothing()
@@ -3244,23 +3240,23 @@ void read_rom()
         lastwrite = 0;
     }
     else
-        *rdword = *((uint32_t *)(rom + (address & 0x03FFFFFF)));
+        *rdword = *((uint32_t *)(rom + (address & 0x07FFFFFF)));
 }
 
 void read_romb()
 {
-    *rdword = *(rom + ((address ^ S8) & 0x03FFFFFF));
+    *rdword = *(rom + ((address ^ S8) & 0x07FFFFFF));
 }
 
 void read_romh()
 {
-    *rdword = *((uint16_t *)(rom + ((address ^ S16) & 0x03FFFFFF)));
+    *rdword = *((uint16_t *)(rom + ((address ^ S16) & 0x07FFFFFF)));
 }
 
 void read_romd()
 {
-    *rdword = ((uint64_t)(*((uint32_t *)(rom + (address & 0x03FFFFFF)))) << 32) |
-              *((uint32_t *)(rom + ((address + 4) & 0x03FFFFFF)));
+    *rdword = ((uint64_t)(*((uint32_t *)(rom + (address & 0x07FFFFFF)))) << 32) |
+              *((uint32_t *)(rom + ((address + 4) & 0x07FFFFFF)));
 }
 
 void write_rom()

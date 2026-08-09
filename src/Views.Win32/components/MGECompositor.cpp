@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <components/MGECompositor.hpp>
 #include <plugin/Plugin.hpp>
 #include <Messenger.hpp>
@@ -348,15 +348,13 @@ void MGECompositor::init()
     wndclass.lpszClassName = CONTROL_CLASS_NAME;
     RegisterClass(&wndclass);
 
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, [](const std::any &data) {
-        const auto value = std::any_cast<bool>(data);
-        ShowWindow(mge_context.hwnd, value && PluginUtil::mge_available() ? SW_SHOW : SW_HIDE);
-    });
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
+        [](bool value) { ShowWindow(mge_context.hwnd, value && PluginUtil::mge_available() ? SW_SHOW : SW_HIDE); });
 }
 
 void MGECompositor::update_screen()
 {
-    g_plugin_funcs.video_get_video_size(&mge_context.width, &mge_context.height);
+    PluginUtil::get_video_size(&mge_context.width, &mge_context.height);
 
     if (mge_context.width != mge_context.last_width || mge_context.height != mge_context.last_height)
     {
@@ -364,7 +362,7 @@ void MGECompositor::update_screen()
         recreate_mge_context_d3d();
     }
 
-    g_plugin_funcs.video_read_video(&mge_context.rgba_buffer);
+    PluginUtil::read_video(mge_context.rgba_buffer);
 
     upload_rgb32_buffer();
     render_and_present();

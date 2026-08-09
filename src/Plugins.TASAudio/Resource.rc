@@ -1,0 +1,46 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Resource.h"
+#include <windows.h>
+
+#define IDC_STATIC -1
+
+// VERTICAL LAYOUT DEFINITIONS
+// =====================================================
+
+#define DDX_PLAYBACK_Y 5
+#define DDX_PLAYBACK_IY (DDX_PLAYBACK_Y + 15)
+#define DDX_PLAYBACK_H 69
+
+#define DDX_DBTNS_Y (DDX_PLAYBACK_Y + DDX_PLAYBACK_H + 6)
+#define DDX_DBTNS_H 14
+
+#define DDX_DIALOG_H (DDX_DBTNS_Y + DDX_DBTNS_H + 6)
+
+// DIALOG_DEFINITION
+// =====================================================
+
+IDD_CONFIG DIALOGEX 0, 0, 200, DDX_DIALOG_H
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "TAS Audio Settings"
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+FONT 8, "MS Shell Dlg"
+BEGIN
+    /* EDIT "Default" */
+    GROUPBOX "Playback options",IDC_STATIC,10,DDX_PLAYBACK_Y,180,DDX_PLAYBACK_H
+
+    CHECKBOX "Swap channels", IDC_SWAP_CHANNELS, 16, (DDX_PLAYBACK_IY + 0), 116, 9, BS_AUTOCHECKBOX | WS_TABSTOP
+    CHECKBOX "Throttle core to audio output", IDC_SYNC_AUDIO, 16, (DDX_PLAYBACK_IY + 14), 116, 9, BS_AUTOCHECKBOX | WS_TABSTOP
+
+    CONTROL "Volume", IDC_STATIC, "Static", SS_LEFT, 16, (DDX_PLAYBACK_IY + 28), 42, 8
+    CONTROL "", IDC_VOLUME, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 62, (DDX_PLAYBACK_IY + 26), 92, 13
+    LTEXT "0 dB", IDC_VOLUME_TXT, 158, (DDX_PLAYBACK_IY + 28), 27, 8
+
+
+    DEFPUSHBUTTON "&OK", IDOK, 86, DDX_DBTNS_Y, 50, DDX_DBTNS_H
+    PUSHBUTTON "Cancel", IDCANCEL, 143, DDX_DBTNS_Y, 50, DDX_DBTNS_H
+END

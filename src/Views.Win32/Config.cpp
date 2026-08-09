@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.hpp"
 #include "IOUtils.hpp"
-#include "stdafx.h"
 #include <Config.hpp>
 #include <Messenger.hpp>
 #include <ini.h>
@@ -34,7 +34,7 @@ const std::unordered_map<std::string, size_t> DIALOG_SILENT_MODE_CHOICES = {
     {CORE_DLG_ST_UNFREEZE_WARNING, 0},
     {CORE_DLG_ST_NOT_FROM_MOVIE, 0},
     {CORE_DLG_VCR_RAWDATA_WARNING, 0},
-    {CORE_DLG_VCR_WIIVC_WARNING, 0},
+    {CORE_DLG_VCR_GENERAL_SYNC_WARNING, 0},
     {CORE_DLG_VCR_ROM_NAME_WARNING, 0},
     {CORE_DLG_VCR_ROM_CCODE_WARNING, 0},
     {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
@@ -359,8 +359,9 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::wstring 
 
 static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
 {
-#define HANDLE_P_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, &g_config.x);
-#define HANDLE_VALUE(x) ini_handle_config_value(ini, L#x, is_reading, g_config.x);
+#define _WIDE2(s) L##s
+#define HANDLE_P_VALUE(x) ini_handle_config_value(ini, _WIDE2(#x), is_reading, &g_config.x);
+#define HANDLE_VALUE(x) ini_handle_config_value(ini, _WIDE2(#x), is_reading, g_config.x);
 
     if (is_reading)
     {
@@ -378,6 +379,7 @@ static void handle_config_ini(const bool is_reading, mINI::INIStructure &ini)
     HANDLE_P_VALUE(st_slot)
     HANDLE_P_VALUE(core.rom_cache_size)
     HANDLE_P_VALUE(core.st_screenshot)
+    HANDLE_P_VALUE(core.st_lz4)
     HANDLE_P_VALUE(core.is_movie_loop_enabled)
     HANDLE_P_VALUE(is_unfocused_pause_enabled)
     HANDLE_P_VALUE(is_statusbar_enabled)
@@ -694,6 +696,7 @@ static void json_read_file(json &j)
     CORE_VALUE(fps_modifier)
     CORE_VALUE(rom_cache_size)
     CORE_VALUE(st_screenshot)
+    CORE_VALUE(st_lz4)
     CORE_VALUE(is_movie_loop_enabled)
     CORE_VALUE(is_reset_recording_enabled)
     CORE_VALUE(seek_savestate_interval)
@@ -791,6 +794,7 @@ static void json_write_file(json &j)
     CORE_VALUE(fps_modifier)
     CORE_VALUE(rom_cache_size)
     CORE_VALUE(st_screenshot)
+    CORE_VALUE(st_lz4)
     CORE_VALUE(is_movie_loop_enabled)
     CORE_VALUE(is_reset_recording_enabled)
     CORE_VALUE(seek_savestate_interval)
@@ -921,7 +925,8 @@ static void config_patch(t_config &cfg)
     // HACK: Wine doesn't implement DComp well enough yet, so force GDI
     if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
 
-    cfg.core.cpu_cf = std::max(cfg.core.cpu_cf, 0.0);
+    cfg.core.cpu_cf = std::isfinite(cfg.core.cpu_cf) ? std::max(cfg.core.cpu_cf, 0.0) : 0.0;
+    cfg.core.rcp_lag_factor = std::isfinite(cfg.core.rcp_lag_factor) ? std::max(cfg.core.rcp_lag_factor, 0.0) : 0.0;
 }
 
 void Config::init()
@@ -930,7 +935,7 @@ void Config::init()
 
 void Config::save()
 {
-    Messenger::broadcast(Messenger::Message::ConfigSaving, nullptr);
+    Messenger::broadcast<Messenger::Message::ConfigSaving>();
 
     config_patch(g_config);
 
@@ -992,7 +997,7 @@ void Config::load()
 
     config_patch(g_config);
 
-    Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+    Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 }
 
 std::filesystem::path Config::rom_directory()

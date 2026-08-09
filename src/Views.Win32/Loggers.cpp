@@ -1,19 +1,18 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
+#include "Loggers.hpp"
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/wincolor_sink.h>
 
 extern "C"
 {
 #include <libavutil/log.h>
 }
-
-#include "Loggers.hpp"
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/wincolor_sink.h>
 
 std::shared_ptr<spdlog::logger> g_core_logger;
 std::shared_ptr<spdlog::logger> g_view_logger;

@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
+#include <dxgi1_3.h>
 #include "DCompPresenter.hpp"
 
 void DCompPresenter::create_size_dependent_resources()
@@ -91,7 +92,7 @@ D2D1_SIZE_U DCompPresenter::size()
 
 void DCompPresenter::resize(D2D1_SIZE_U size)
 {
-    if (size == m_size) return;
+    if (size.width == m_size.width && size.height == m_size.height) return;
 
     m_size = size;
 

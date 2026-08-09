@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2026, TASInput maintainers, contributors, and original authors (nitsuja, Deflection).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -153,9 +153,9 @@ static int32_t get_axis(const t_axis_mapping &mapping)
     return remap_axis(SDL_GetGamepadAxis(g_ctx.gamepad, (SDL_GamepadAxis)mapping.axis));
 }
 
-ZilmarExtSpec::Buttons GamepadManager::get_input(const size_t i)
+CoreButtons GamepadManager::get_input(const size_t i)
 {
-    ZilmarExtSpec::Buttons buttons{};
+    CoreButtons buttons{};
 
     const auto controller_config = new_config.controller_config[i];
 
@@ -190,7 +190,7 @@ void GamepadManager::update_current_gamepad()
     if (g_ctx.gamepad)
     {
         if (SDL_GetGamepadGUID(g_ctx.gamepad) == new_config.preferred_device_guid) return;
-        g_ef->log_info(std::format(L"Closing gamepad {}", SDL_GetGamepadGUID(g_ctx.gamepad).data).c_str());
+        g_plugin->log_info(std::format("Closing gamepad {}", SDL_GetGamepadGUID(g_ctx.gamepad).data).c_str());
         SDL_CloseGamepad(g_ctx.gamepad);
         g_ctx.gamepad = nullptr;
     }
@@ -200,10 +200,10 @@ void GamepadManager::update_current_gamepad()
     g_ctx.gamepad = SDL_OpenGamepadByGUID(*new_config.preferred_device_guid);
     if (!g_ctx.gamepad)
     {
-        g_ef->log_info(std::format(L"Failed to open gamepad {}", *new_config.preferred_device_guid->data).c_str());
+        g_plugin->log_info(std::format("Failed to open gamepad {}", *new_config.preferred_device_guid->data).c_str());
         return;
     }
-    g_ef->log_info(std::format(L"Opened gamepad {}", *new_config.preferred_device_guid->data).c_str());
+    g_plugin->log_info(std::format("Opened gamepad {}", *new_config.preferred_device_guid->data).c_str());
 }
 
 GamepadManager::DeviceRegistry &GamepadManager::device_registry()

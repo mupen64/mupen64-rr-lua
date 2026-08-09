@@ -1,3 +1,9 @@
+--
+-- Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+--
+-- SPDX-License-Identifier: GPL-2.0-or-later
+--
+
 local brush = d2d.create_brush(1, 0, 0, 1)
 
 emu.atdrawd2d(function()

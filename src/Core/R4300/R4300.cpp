@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Rom.hpp"
 #include <CommonPCH.hpp>
+#include "Rom.hpp"
 #include <Core.hpp>
 #include <format>
 #include <Memory/Memory.hpp>
@@ -66,7 +66,7 @@ void (*code)();
 uint32_t next_vi;
 int32_t vi_field = 0;
 CoreSpeedMode g_vr_speed_mode{};
-core_system_type g_sys_type;
+CoreSystemType g_sys_type;
 std::atomic<int32_t> g_wait_counter = 0;
 r4300 g_r4300{};
 
@@ -1552,7 +1552,7 @@ void dyna_mem_invalidate()
         invalid_code[page] = 1;
 }
 
-static inline uint32_t update_invalid_addr(uint32_t addr)
+static uint32_t update_invalid_addr(uint32_t addr)
 {
     if (addr >= 0x80000000 && addr < 0xa0000000)
     {
@@ -1585,7 +1585,7 @@ static inline uint32_t update_invalid_addr(uint32_t addr)
 #define addr jump_to_address
 uint32_t jump_to_address;
 
-inline void jump_to_func()
+void jump_to_func()
 {
     // #ifdef _DEBUG
     //	g_core->log_info("dyna jump: {:#08x}", addr);

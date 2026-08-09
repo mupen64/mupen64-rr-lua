@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -51,7 +51,8 @@ void free_register(int32_t reg)
 {
     precomp_instr *last;
 
-    if (last_access[reg] != NULL && r64[reg] != -1 && (uintptr_t)reg_content[reg] != (uintptr_t)reg_content[r64[reg]] - 4)
+    if (last_access[reg] != NULL && r64[reg] != -1 &&
+        (uintptr_t)reg_content[reg] != (uintptr_t)reg_content[r64[reg]] - 4)
     {
         free_register(r64[reg]);
         return;
@@ -65,14 +66,14 @@ void free_register(int32_t reg)
     while (last <= dst)
     {
         if (last_access[reg] != NULL && dirty[reg])
-            last->reg_cache_infos.needed_registers[reg] = (void*)reg_content[reg];
+            last->reg_cache_infos.needed_registers[reg] = (void *)reg_content[reg];
         else
             last->reg_cache_infos.needed_registers[reg] = NULL;
 
         if (last_access[reg] != NULL && r64[reg] != -1)
         {
             if (dirty[r64[reg]])
-                last->reg_cache_infos.needed_registers[r64[reg]] = (void*)reg_content[r64[reg]];
+                last->reg_cache_infos.needed_registers[r64[reg]] = (void *)reg_content[r64[reg]];
             else
                 last->reg_cache_infos.needed_registers[r64[reg]] = NULL;
         }
@@ -94,7 +95,7 @@ void free_register(int32_t reg)
             // ops zero-extend into the upper 32 bits, so storing the raw 64-bit
             // register would zero-extend (wrong). Sign-extend first.
             movsxd_reg64_reg32(reg, reg);
-            mov_m64_reg64((void*)reg_content[reg], reg);
+            mov_m64_reg64((void *)reg_content[reg], reg);
         }
         else
         {
@@ -102,8 +103,8 @@ void free_register(int32_t reg)
             // registers. Write each as an independent 32-bit store so the high
             // 32 bits survive (a single 64-bit store of the low register would
             // zero reg[]'s high dword and drop the high half entirely).
-            mov_m32_reg32((void*)reg_content[reg], reg);
-            mov_m32_reg32((void*)reg_content[r64[reg]], r64[reg]);
+            mov_m32_reg32((void *)reg_content[reg], reg);
+            mov_m32_reg32((void *)reg_content[r64[reg]], r64[reg]);
             dirty[r64[reg]] = 0;
         }
         dirty[reg] = 0;
@@ -167,7 +168,7 @@ int32_t allocate_register(uintptr_t addr)
 
                 while (last <= dst)
                 {
-                    last->reg_cache_infos.needed_registers[i] = (void*)reg_content[i];
+                    last->reg_cache_infos.needed_registers[i] = (void *)reg_content[i];
                     last++;
                 }
                 last_access[i] = dst;
@@ -177,7 +178,7 @@ int32_t allocate_register(uintptr_t addr)
 
                     while (last <= dst)
                     {
-                        last->reg_cache_infos.needed_registers[r64[i]] = (void*)reg_content[r64[i]];
+                        last->reg_cache_infos.needed_registers[r64[i]] = (void *)reg_content[r64[i]];
                         last++;
                     }
                     last_access[r64[i]] = dst;
@@ -219,7 +220,7 @@ int32_t allocate_register(uintptr_t addr)
         if (addr == r0 || addr == r0 + 1)
             xor_reg32_reg32(reg, reg);
         else
-            mov_reg64_m64(reg, (void*)addr);
+            mov_reg64_m64(reg, (void *)addr);
     }
 
     return reg;
@@ -539,12 +540,12 @@ void force_32(int32_t reg)
         while (last <= dst)
         {
             if (dirty[reg])
-                last->reg_cache_infos.needed_registers[reg] = (void*)reg_content[reg];
+                last->reg_cache_infos.needed_registers[reg] = (void *)reg_content[reg];
             else
                 last->reg_cache_infos.needed_registers[reg] = NULL;
 
             if (dirty[r64[reg]])
-                last->reg_cache_infos.needed_registers[r64[reg]] = (void*)reg_content[r64[reg]];
+                last->reg_cache_infos.needed_registers[r64[reg]] = (void *)reg_content[r64[reg]];
             else
                 last->reg_cache_infos.needed_registers[r64[reg]] = NULL;
 
@@ -558,7 +559,7 @@ void force_32(int32_t reg)
             // movsxd keeps the low 32 bits intact and sets the upper 32 to the
             // sign, so reg stays a valid live register afterwards.
             movsxd_reg64_reg32(reg, reg);
-            mov_m64_reg64((void*)reg_content[reg], reg);
+            mov_m64_reg64((void *)reg_content[reg], reg);
             dirty[reg] = 0;
         }
         last_access[r64[reg]] = NULL;
@@ -577,7 +578,7 @@ void allocate_register_manually(int32_t reg, uintptr_t addr)
 
         while (last <= dst)
         {
-            last->reg_cache_infos.needed_registers[reg] = (void*)reg_content[reg];
+            last->reg_cache_infos.needed_registers[reg] = (void *)reg_content[reg];
             last++;
         }
         last_access[reg] = dst;
@@ -587,7 +588,7 @@ void allocate_register_manually(int32_t reg, uintptr_t addr)
 
             while (last <= dst)
             {
-                last->reg_cache_infos.needed_registers[r64[reg]] = (void*)reg_content[r64[reg]];
+                last->reg_cache_infos.needed_registers[r64[reg]] = (void *)reg_content[r64[reg]];
                 last++;
             }
             last_access[r64[reg]] = dst;
@@ -615,7 +616,7 @@ void allocate_register_manually(int32_t reg, uintptr_t addr)
 
             while (last <= dst)
             {
-                last->reg_cache_infos.needed_registers[i] = (void*)reg_content[i];
+                last->reg_cache_infos.needed_registers[i] = (void *)reg_content[i];
                 last++;
             }
             last_access[i] = dst;
@@ -625,7 +626,7 @@ void allocate_register_manually(int32_t reg, uintptr_t addr)
 
                 while (last <= dst)
                 {
-                    last->reg_cache_infos.needed_registers[r64[i]] = (void*)reg_content[r64[i]];
+                    last->reg_cache_infos.needed_registers[r64[i]] = (void *)reg_content[r64[i]];
                     last++;
                 }
                 last_access[r64[i]] = dst;
@@ -654,7 +655,7 @@ void allocate_register_manually(int32_t reg, uintptr_t addr)
         if (addr == r0 || addr == r0 + 1)
             xor_reg32_reg32(reg, reg);
         else
-            mov_reg64_m64(reg, (void*)addr);
+            mov_reg64_m64(reg, (void *)addr);
     }
 }
 
@@ -668,7 +669,7 @@ void allocate_register_manually_w(int32_t reg, uintptr_t addr, int32_t load)
 
         while (last <= dst)
         {
-            last->reg_cache_infos.needed_registers[reg] = (void*)reg_content[reg];
+            last->reg_cache_infos.needed_registers[reg] = (void *)reg_content[reg];
             last++;
         }
         last_access[reg] = dst;
@@ -679,7 +680,7 @@ void allocate_register_manually_w(int32_t reg, uintptr_t addr, int32_t load)
 
             while (last <= dst)
             {
-                last->reg_cache_infos.needed_registers[r64[reg]] = (void*)reg_content[r64[reg]];
+                last->reg_cache_infos.needed_registers[r64[reg]] = (void *)reg_content[r64[reg]];
                 last++;
             }
             last_access[r64[reg]] = NULL;
@@ -710,7 +711,7 @@ void allocate_register_manually_w(int32_t reg, uintptr_t addr, int32_t load)
 
             while (last <= dst)
             {
-                last->reg_cache_infos.needed_registers[i] = (void*)reg_content[i];
+                last->reg_cache_infos.needed_registers[i] = (void *)reg_content[i];
                 last++;
             }
             last_access[i] = dst;
@@ -749,7 +750,7 @@ void allocate_register_manually_w(int32_t reg, uintptr_t addr, int32_t load)
         if (addr == r0 || addr == r0 + 1)
             xor_reg32_reg32(reg, reg);
         else
-            mov_reg64_m64(reg, (void*)addr);
+            mov_reg64_m64(reg, (void *)addr);
     }
 }
 

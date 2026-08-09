@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #pragma once
 
 #include "Types.hpp"
@@ -7,14 +13,13 @@
 
 #define RSPMSG_CLOSE 0
 #define RSPMSG_START 1
-#define RSPMSG_UPDATESCREEN 2
 #define RSPMSG_PROCESSDLIST 3
 #define RSPMSG_DESTROYTEXTURES 5
 #define RSPMSG_INITTEXTURES 6
 #define RSPMSG_READPIXELS 7
 #define RSPMSG_RESTART 8
 
-using RSPInfo = struct
+struct RSPInfo
 {
     HANDLE thread;
 

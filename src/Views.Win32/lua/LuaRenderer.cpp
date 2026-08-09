@@ -1,4 +1,10 @@
-﻿#include "stdafx.h"
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Common.hpp"
 #include <DialogService.hpp>
 #include <components/Statusbar.hpp>
 #include <lua/LuaManager.hpp>
@@ -26,8 +32,12 @@ static void set_overlay_visibility(bool visible)
 
     for (const auto &lua : g_lua_environments)
     {
-        if (IsWindow(lua->rctx.gdi_overlay_hwnd)) ShowWindow(lua->rctx.gdi_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
-        if (IsWindow(lua->rctx.d2d_overlay_hwnd)) ShowWindow(lua->rctx.d2d_overlay_hwnd, visible ? SW_SHOW : SW_HIDE);
+        const auto set_window_visibility = [&](HWND hwnd) {
+            if (!IsWindow(hwnd)) return;
+            ShowWindow(hwnd, visible ? SW_SHOWNOACTIVATE : SW_HIDE);
+        };
+        set_window_visibility(lua->rctx.gdi_overlay_hwnd);
+        set_window_visibility(lua->rctx.d2d_overlay_hwnd);
     }
 }
 
@@ -130,7 +140,10 @@ static void draw_clock_proc()
     {
         g_main_ctx.dispatcher->invoke([]() { draw_lua(false); });
 
-        DwmFlush();
+        if (g_main_ctx.wine)
+            Sleep(16);
+        else
+            DwmFlush();
     }
 }
 
@@ -268,12 +281,10 @@ void LuaRenderer::init()
 
     g_alpha_mask_brush = CreateSolidBrush(LUA_GDI_COLOR_MASK);
 
-    Messenger::subscribe(Messenger::Message::SizeChanged, [](const std::any &data) {
-        auto rect = std::any_cast<RECT>(data);
-        resize(rect.right - rect.left, rect.bottom - rect.top);
-    });
+    Messenger::subscribe<Messenger::Message::SizeChanged>(
+        [](const std::pair<int32_t, int32_t> &size) { resize(size.first, size.second); });
 
-    Messenger::subscribe(Messenger::Message::MainWindowMoved, [](const auto &...) { move_and_order_overlays(); });
+    Messenger::subscribe<Messenger::Message::MainWindowMoved>([] { move_and_order_overlays(); });
 
     start_draw_clock();
 }

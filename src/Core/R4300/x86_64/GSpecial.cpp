@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -14,7 +14,6 @@
 #include <R4300/Recomph.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/x86_64/RegCache.hpp>
-
 
 void gensll()
 {
@@ -213,15 +212,15 @@ void genjr()
     jmp_reg64(EAX);                                                // 3
 
     // need_map == 0: jump to block->code + block[index].local_addr
-    mov_reg64_imm64(EAX, (uintptr_t)dst_block->block + diff);      // 10
-    add_reg64_reg64(EAX, EDX);                                     // 3  -> RAX = &block[index].local_addr
-    mov_reg64_preg64(EAX, EAX);                                    // 3  -> RAX = local_addr
+    mov_reg64_imm64(EAX, (uintptr_t)dst_block->block + diff); // 10
+    add_reg64_reg64(EAX, EDX);                                // 3  -> RAX = &block[index].local_addr
+    mov_reg64_preg64(EAX, EAX);                               // 3  -> RAX = local_addr
     // Read dst_block->code at RUNTIME, not a baked imm64: the code buffer moves when it grows, so
     // a captured base goes stale (jump into the abandoned pre-grow buffer). The field ADDRESS is stable.
-    mov_reg64_imm64(ECX, (uintptr_t)&dst_block->code);           // 10 -> RCX = &block->code
-    mov_reg64_preg64(ECX, ECX);                                  // 3  -> RCX = block->code (live)
-    add_reg64_reg64(EAX, ECX);                                   // 3  -> RAX = code + local_addr
-    jmp_reg64(EAX);                                              // 3
+    mov_reg64_imm64(ECX, (uintptr_t)&dst_block->code); // 10 -> RCX = &block->code
+    mov_reg64_preg64(ECX, ECX);                        // 3  -> RCX = block->code (live)
+    add_reg64_reg64(EAX, ECX);                         // 3  -> RAX = code + local_addr
+    jmp_reg64(EAX);                                    // 3
 
     rj_patch_near(jr_skip); // out-of-block path lands here (past the in-block jump)
 #endif
@@ -308,13 +307,13 @@ void genjalr()
     jmp_reg64(EAX);                                                // 3
 
     // need_map == 0: jump to block->code + block[index].local_addr
-    mov_reg64_imm64(EAX, (uintptr_t)dst_block->block + diff);      // 10
-    add_reg64_reg64(EAX, EDX);                                     // 3
-    mov_reg64_preg64(EAX, EAX);                                    // 3
-    mov_reg64_imm64(ECX, (uintptr_t)&dst_block->code);            // 10
-    mov_reg64_preg64(ECX, ECX);                                  // 3
-    add_reg64_reg64(EAX, ECX);                                   // 3
-    jmp_reg64(EAX);                                              // 3
+    mov_reg64_imm64(EAX, (uintptr_t)dst_block->block + diff); // 10
+    add_reg64_reg64(EAX, EDX);                                // 3
+    mov_reg64_preg64(EAX, EAX);                               // 3
+    mov_reg64_imm64(ECX, (uintptr_t)&dst_block->code);        // 10
+    mov_reg64_preg64(ECX, ECX);                               // 3
+    add_reg64_reg64(EAX, ECX);                                // 3
+    jmp_reg64(EAX);                                           // 3
 
     rj_patch_near(jr_skip); // out-of-block path lands here (past the in-block jump)
 #endif

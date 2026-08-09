@@ -1,10 +1,10 @@
 ﻿/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <action/ActionManager.hpp>
 #include <Messenger.hpp>
 
@@ -193,9 +193,10 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
         const bool has_menu_hidden_prefix = name.starts_with(ActionManager::MENU_HIDDEN_PREFIX);
 
         if (has_separator)
-            display_name = MiscHelpers::trim(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
+            display_name =
+                StrUtils::ctrim_wstring(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
         if (has_menu_hidden_prefix)
-            display_name = MiscHelpers::trim(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
+            display_name = StrUtils::ctrim_wstring(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
 
         const bool has_parameters = !action->add_params.params.empty();
         if (has_parameters) display_name = L"> " + display_name;
@@ -245,7 +246,7 @@ static std::vector<std::wstring> update_active_states(const std::vector<t_action
  */
 static void notify_action_registry_changed()
 {
-    Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
+    Messenger::broadcast<Messenger::Message::ActionRegistryChanged>();
 }
 
 bool ActionManager::add(const t_action_add_params &params)
@@ -354,7 +355,7 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     g_mgr.work_happened = true;
     if (!g_mgr.batched_work)
     {
-        Messenger::broadcast(Messenger::Message::ActionRegistryChanged, nullptr);
+        Messenger::broadcast<Messenger::Message::ActionRegistryChanged>();
     }
 
     return removed_paths;
@@ -415,7 +416,7 @@ std::wstring ActionManager::get_display_name(const action_filter &filter, bool i
         auto name = get_segments(filter).back();
         if (name.ends_with(SEPARATOR_SUFFIX))
         {
-            name = MiscHelpers::trim(name.substr(0, name.size() - SEPARATOR_SUFFIX.size()));
+            name = StrUtils::ctrim_wstring(name.substr(0, name.size() - SEPARATOR_SUFFIX.size()));
         }
         return name;
     }
@@ -514,19 +515,19 @@ void ActionManager::end_batch_work()
 void ActionManager::notify_display_name_changed(const action_filter &filter)
 {
     const auto updated_actions = update_display_names(get_action_ptrs_matching_filter(filter));
-    Messenger::broadcast(Messenger::Message::ActionDisplayNameChanged, updated_actions);
+    Messenger::broadcast<Messenger::Message::ActionDisplayNameChanged>(updated_actions);
 }
 
 void ActionManager::notify_enabled_changed(const action_filter &filter)
 {
     const auto updated_actions = update_enabled_states(get_action_ptrs_matching_filter(filter));
-    Messenger::broadcast(Messenger::Message::ActionEnabledChanged, updated_actions);
+    Messenger::broadcast<Messenger::Message::ActionEnabledChanged>(updated_actions);
 }
 
 void ActionManager::notify_active_changed(const action_filter &filter)
 {
     const auto updated_actions = update_active_states(get_action_ptrs_matching_filter(filter));
-    Messenger::broadcast(Messenger::Message::ActionActiveChanged, updated_actions);
+    Messenger::broadcast<Messenger::Message::ActionActiveChanged>(updated_actions);
 }
 
 std::vector<action_path> ActionManager::get_actions_matching_filter(const action_filter &filter)
@@ -573,7 +574,7 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
 ActionManager::action_filter ActionManager::normalize_filter(const action_filter &filter)
 {
     const auto parts = get_segments(filter);
-    return MiscHelpers::join_wstring(parts, SEGMENT_SEPARATOR);
+    return StrUtils::join_wstring(parts, SEGMENT_SEPARATOR);
 }
 
 /**

@@ -1,4 +1,10 @@
-#include "stdafx.h"
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Common.hpp"
 #include "Config.hpp"
 #include "glN64.hpp"
 #include "resource.h"
@@ -6,7 +12,11 @@
 #include "Textures.h"
 #include "OpenGL.hpp"
 
+#undef min
+#undef max
 #include <nlohmann/json.hpp>
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 HWND hConfigDlg;
 
@@ -36,6 +46,20 @@ const std::vector<std::pair<uint8_t, std::wstring>> FILTER_NAMES = {
     {2, L"Always Pixelated"},
 };
 
+const std::vector<std::wstring> ASPECT_MODE_NAMES = {
+    L"Pillarbox",
+    L"Stretch",
+    L"Widescreen",
+};
+
+constexpr AspectMode DEFAULT_ASPECT_MODE = AspectMode::Widescreen;
+
+static AspectMode to_aspect_mode(int value)
+{
+    if (value < 0 || value >= (int)ASPECT_MODE_NAMES.size()) return DEFAULT_ASPECT_MODE;
+    return (AspectMode)value;
+}
+
 static std::optional<ResolutionPreset> get_preset_by_resolution(uint32_t width, uint32_t height)
 {
     for (const auto &preset : RESOLUTION_PRESETS)
@@ -47,7 +71,10 @@ static std::optional<ResolutionPreset> get_preset_by_resolution(uint32_t width, 
 
 static std::filesystem::path get_config_path()
 {
-    return g_tas_ctx.config_directory / CONFIG_FILE_NAME;
+    const auto size = g_plugin->config_path(nullptr, 0);
+    std::string path(size - 1, '\0');
+    g_plugin->config_path(path.data(), size);
+    return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
 static void Config_SetDefaults()
@@ -60,6 +87,7 @@ static void Config_SetDefaults()
     cache.maxBytes = 32 * 1048576;
     OGL.textureFilter = TextureFilter::None;
     OGL.usePolygonStipple = FALSE;
+    OGL.aspectMode = DEFAULT_ASPECT_MODE;
 }
 
 void Config_LoadConfig()
@@ -90,10 +118,11 @@ void Config_LoadConfig()
         OGL.usePolygonStipple = j["dithered_alpha_testing"];
         OGL.ignoreScissor = j["ignore_scissor"];
         OGL.clear_override = j["clear_override"];
+        OGL.aspectMode = to_aspect_mode(j.value("aspect_mode", (int)DEFAULT_ASPECT_MODE));
     }
     catch (const std::exception &e)
     {
-        g_ef->log_warn(L"Config load failed, using defaults...");
+        g_plugin->log_warn("Config load failed, using defaults...");
         Config_SetDefaults();
     }
 }
@@ -112,6 +141,7 @@ void Config_SaveConfig()
         {"dithered_alpha_testing", (bool)OGL.usePolygonStipple},
         {"ignore_scissor", (bool)OGL.ignoreScissor},
         {"clear_override", (bool)OGL.clear_override},
+        {"aspect_mode", (int)OGL.aspectMode},
     });
 
     std::ofstream ofs(get_config_path());
@@ -130,13 +160,13 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     Edit_GetText(GetDlgItem(hWndDlg, IDC_CACHEMEGS), text, 4);
     cache.maxBytes = _wtol(text) * 1048576;
 
-    OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, NULL, NULL);
-    OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, NULL, NULL);
-    OGL.fog = (SendDlgItemMessage(hWndDlg, IDC_FOG, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
-    OGL.msaa = (SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_GETCHECK, NULL, NULL) == BST_CHECKED) ? 4 : 0;
+    OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, 0, 0);
+    OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, 0, 0);
+    OGL.fog = (SendDlgItemMessage(hWndDlg, IDC_FOG, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    OGL.msaa = (SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_GETCHECK, 0, 0) == BST_CHECKED) ? 4 : 0;
     OGL.originAdjust = (OGL.textureFilter == TextureFilter::SaI ? 0.25 : 0.50);
-    OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
-    OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
+    OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     wchar_t val[32]{};
     SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_X), WM_GETTEXT, std::size(val), (LPARAM)val);
@@ -145,9 +175,9 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.windowedHeight = _wtoi(val);
 
     OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
+    OGL.aspectMode = to_aspect_mode(ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT)));
 
-    OGL.usePolygonStipple =
-        (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, NULL, NULL) == BST_CHECKED);
+    OGL.usePolygonStipple = (SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     Config_SaveConfig();
     Config_LoadConfig();
@@ -166,17 +196,19 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     }
 }
 
-static void select_current_resolution_in_combobox(HWND cb_hwnd)
+static void select_resolution_in_combobox(HWND cb_hwnd, uint32_t width, uint32_t height)
 {
     for (size_t i = 0; i < RESOLUTION_PRESETS.size(); i++)
     {
         const auto &preset = RESOLUTION_PRESETS[i];
-        if (OGL.windowedWidth == preset.width && OGL.windowedHeight == preset.height)
+        if (width == preset.width && height == preset.height)
         {
             ComboBox_SetCurSel(cb_hwnd, i);
             return;
         }
     }
+
+    ComboBox_SetCurSel(cb_hwnd, -1);
 }
 
 BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -199,7 +231,13 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         }
         ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING), (int)OGL.smoothing);
 
-        select_current_resolution_in_combobox(cb_hwnd);
+        for (const auto &aspect_mode : ASPECT_MODE_NAMES)
+        {
+            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_ASPECT), aspect_mode.c_str());
+        }
+        ComboBox_SetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT), (int)OGL.aspectMode);
+
+        select_resolution_in_combobox(cb_hwnd, OGL.windowedWidth, OGL.windowedHeight);
 
         SendDlgItemMessage(hWndDlg, IDC_WINDOWED_X, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedWidth).c_str());
         SendDlgItemMessage(hWndDlg, IDC_WINDOWED_Y, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedHeight).c_str());
@@ -212,20 +250,20 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         SendMessage(GetDlgItem(hWndDlg, IDC_FSCALE), TBM_SETPOS, TRUE, OGL.filterScale);
 
         SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_SETCHECK,
-                           OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+                           OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
         SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_SETCHECK,
-                           OGL.clear_override ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+                           OGL.clear_override ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
         // Enable/disable fog
-        SendDlgItemMessage(hWndDlg, IDC_FOG, BM_SETCHECK, OGL.fog ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+        SendDlgItemMessage(hWndDlg, IDC_FOG, BM_SETCHECK, OGL.fog ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
         SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_SETCHECK, OGL.msaa == 4 ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED,
-                           NULL);
+                           0);
 
         SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_SETCHECK,
-                           OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, NULL);
+                           OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
         const auto cache_size = std::to_wstring(cache.maxBytes / 1048576);
-        SendDlgItemMessage(hWndDlg, IDC_CACHEMEGS, WM_SETTEXT, NULL, (LPARAM)cache_size.c_str());
+        SendDlgItemMessage(hWndDlg, IDC_CACHEMEGS, WM_SETTEXT, 0, (LPARAM)cache_size.c_str());
 
         SendMessage(hWndDlg, WM_COMMAND, MAKEWPARAM(IDC_TEXTUREFILTER, CBN_SELCHANGE),
                     (LPARAM)GetDlgItem(hWndDlg, IDC_TEXTUREFILTER));
@@ -259,23 +297,24 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         case IDC_WINDOWED_Y:
             if (HIWORD(wParam) == EN_CHANGE)
             {
-                std::wstring w_str(32, 0);
-                std::wstring h_str(32, 0);
-                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str.data(), w_str.size());
-                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), h_str.data(), h_str.size());
+                wchar_t w_str[32]{};
+                wchar_t h_str[32]{};
+                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str, std::size(w_str));
+                Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), h_str, std::size(h_str));
 
+                uint32_t width{};
+                uint32_t height{};
                 try
                 {
-                    OGL.windowedWidth = std::stoul(std::wstring(w_str));
-                    OGL.windowedHeight = std::stoul(std::wstring(h_str));
+                    width = std::stoul(w_str);
+                    height = std::stoul(h_str);
                 }
                 catch (...)
                 {
                     break;
                 }
 
-                const auto cb_hwnd = GetDlgItem(hWndDlg, IDC_WINDOWEDRES);
-                select_current_resolution_in_combobox(cb_hwnd);
+                select_resolution_in_combobox(GetDlgItem(hWndDlg, IDC_WINDOWEDRES), width, height);
             }
             break;
         case IDC_TEXTUREFILTER:

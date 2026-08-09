@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <Config.hpp>
@@ -58,29 +58,8 @@ static CaptureContext g_ctx{};
 
 void readscreen_plugin(int32_t *width = nullptr, int32_t *height = nullptr)
 {
-    if (PluginUtil::mge_available())
-    {
-        MGECompositor::copy_video(m_video_buf);
-        MGECompositor::get_video_size(width, height);
-    }
-    else
-    {
-        void *buf = nullptr;
-        int32_t w;
-        int32_t h;
-        g_plugin_funcs.video_read_screen(&buf, &w, &h);
-        memcpy(m_video_buf, buf, w * h * 4);
-        g_plugin_funcs.video_dll_crt_free(buf);
-
-        if (width)
-        {
-            *width = w;
-        }
-        if (height)
-        {
-            *height = h;
-        }
-    }
+    MGECompositor::copy_video(m_video_buf);
+    MGECompositor::get_video_size(width, height);
 }
 
 void readscreen_window()
@@ -227,8 +206,7 @@ void read_screen()
  */
 static bool check_readscreen_available()
 {
-    bool has_no_mge_or_readscreen = !PluginUtil::mge_available() && !g_plugin_funcs.video_read_screen;
-    if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && has_no_mge_or_readscreen)
+    if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
     {
         DialogService::show_dialog(READSCREEN_MISSING_MSG, L"Capture", fsvc_error);
         return false;
@@ -241,20 +219,7 @@ void get_video_dimensions(int32_t *width, int32_t *height)
 {
     if (g_config.capture_mode == 0)
     {
-        if (PluginUtil::mge_available())
-        {
-            MGECompositor::get_video_size(width, height);
-        }
-        else if (g_plugin_funcs.video_get_video_size)
-        {
-            g_plugin_funcs.video_get_video_size(width, height);
-        }
-        else
-        {
-            void *buf = nullptr;
-            g_plugin_funcs.video_read_screen(&buf, width, height);
-            g_plugin_funcs.video_dll_crt_free(buf);
-        }
+        MGECompositor::get_video_size(width, height);
     }
     else if (g_config.capture_mode == 1 || g_config.capture_mode == 2 || g_config.capture_mode == 3)
     {
@@ -302,7 +267,7 @@ bool stop_capture_impl()
     g_config.core.render_throttling = true;
     g_main_ctx.core_ctx->vr_on_render_throttling_changed();
 
-    Messenger::broadcast(Messenger::Message::CapturingChanged, false);
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(false);
 
     g_view_logger->info("[CaptureManager]: Capture finished.");
     return true;
@@ -381,7 +346,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
     g_config.core.render_throttling = false;
     g_main_ctx.core_ctx->vr_on_render_throttling_changed();
 
-    Messenger::broadcast(Messenger::Message::CapturingChanged, true);
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(true);
 
     return true;
 }
@@ -474,18 +439,16 @@ void ai_len_changed()
     }
 }
 
-void ai_dacrate_changed(std::any data)
+void ai_dacrate_changed(CoreSystemType type)
 {
-    auto type = std::any_cast<core_system_type>(data);
-
     m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
 
     switch (type)
     {
-    case sys_ntsc:
+    case CoreSystemType::NTSC:
         m_audio_freq = (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
         break;
-    case sys_pal:
+    case CoreSystemType::PAL:
         m_audio_freq = (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
         break;
     default:
@@ -510,11 +473,9 @@ bool is_capturing()
     return m_capturing;
 }
 
-void core_executing_changed(const std::any &data)
+void core_executing_changed(bool value)
 {
     std::lock_guard lock(m_mutex);
-
-    auto value = std::any_cast<bool>(data);
 
     if (!value || !m_capturing) return;
 
@@ -531,7 +492,7 @@ void core_executing_changed(const std::any &data)
 
 void init()
 {
-    Messenger::subscribe(Messenger::Message::DacrateChanged, ai_dacrate_changed);
-    Messenger::subscribe(Messenger::Message::CoreExecutingChanged, core_executing_changed);
+    Messenger::subscribe<Messenger::Message::DacrateChanged>(ai_dacrate_changed);
+    Messenger::subscribe<Messenger::Message::CoreExecutingChanged>(core_executing_changed);
 }
 } // namespace CaptureManager

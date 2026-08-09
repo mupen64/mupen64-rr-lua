@@ -1,0 +1,28 @@
+name: Auto Format
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-format:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run tools/format.py
+        run: python3 ./tools/format.py
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "style: reformat code"
+          title: "style: reformat code"
+          body: Automated clang-format run.
+          branch: auto-format
+          delete-branch: true

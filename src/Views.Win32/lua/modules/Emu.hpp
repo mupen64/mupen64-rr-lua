@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -224,7 +224,7 @@ static int GetAddress(lua_State *L)
     }
     const NameAndVariable list[] = {A("rdram", g_main_ctx.core_ctx->rdram),
                                     A("rdram_register", g_main_ctx.core_ctx->rdram_register),
-                                    A("MI_register", g_main_ctx.core_ctx->MI_register),
+                                    A("MI_register", g_main_ctx.core_ctx->mi_register),
                                     A("pi_register", g_main_ctx.core_ctx->pi_register),
                                     A("sp_register", g_main_ctx.core_ctx->sp_register),
                                     A("rsp_register", g_main_ctx.core_ctx->rsp_register),
@@ -234,7 +234,7 @@ static int GetAddress(lua_State *L)
                                     A("ai_register", g_main_ctx.core_ctx->ai_register),
                                     A("dpc_register", g_main_ctx.core_ctx->dpc_register),
                                     A("dps_register", g_main_ctx.core_ctx->dps_register),
-                                    B("SP_DMEM", g_main_ctx.core_ctx->SP_DMEM),
+                                    B("SP_DMEM", g_main_ctx.core_ctx->sp_dmem),
                                     B("PIF_RAM", g_main_ctx.core_ctx->PIF_RAM),
                                     {NULL, NULL}};
 #undef A
@@ -244,7 +244,7 @@ static int GetAddress(lua_State *L)
     {
         if (lstrcmpiA(p->name, s) == 0)
         {
-            lua_pushinteger(L, (unsigned)p->pointer);
+            lua_pushinteger(L, (lua_Integer)p->pointer);
             return 1;
         }
     }

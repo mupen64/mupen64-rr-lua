@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, TASInput maintainers, contributors, and original authors (nitsuja, Deflection).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -12,10 +12,6 @@
 #include <Main.hpp>
 #include <NewConfig.hpp>
 #include <TASInput.hpp>
-
-#define EXPORT __declspec(dllexport)
-#undef CALL
-#define CALL _cdecl
 
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_VISUALS (WM_USER + 4)
@@ -55,12 +51,12 @@ struct Status
     /**
      * \brief The current internal input state before any processing
      */
-    ZilmarExtSpec::Buttons current_input{};
+    CoreButtons current_input{};
 
     /**
      * \brief The internal input state at the previous GetKeys call before any processing
      */
-    ZilmarExtSpec::Buttons last_controller_input{};
+    CoreButtons last_controller_input{};
 
     /**
      * \brief Ignores the next joystick increment, used for relative mode tracking
@@ -99,7 +95,7 @@ struct Status
 
     struct t_set_visuals_request
     {
-        ZilmarExtSpec::Buttons input;
+        CoreButtons input;
         bool needs_processing;
     };
 
@@ -110,8 +106,8 @@ struct Status
 
     bool last_lmb_down{};
     bool last_rmb_down{};
-    ZilmarExtSpec::Buttons autofire_input_a{};
-    ZilmarExtSpec::Buttons autofire_input_b{};
+    CoreButtons autofire_input_a{};
+    CoreButtons autofire_input_b{};
     bool ready;
     HWND hwnd{};
     HWND combos_hwnd{};
@@ -147,7 +143,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing = true);
+    void set_visuals(CoreButtons input, bool needs_processing = true);
 
     /**
      * \brief Queues the UI to be updated at the next possible opportunity. Doesn't block the caller until the UI has
@@ -155,7 +151,7 @@ struct Status
      * \param input The values to be shown in the UI
      * \param needs_processing Whether the UI values need per-frame processing.
      */
-    void set_visuals_lazy(ZilmarExtSpec::Buttons input, bool needs_processing = true);
+    void set_visuals_lazy(CoreButtons input, bool needs_processing = true);
 
     void set_visuals_if_needed();
 
@@ -164,7 +160,7 @@ struct Status
      * \param input The input to process
      * \return The processed input
      */
-    ZilmarExtSpec::Buttons get_processed_input(ZilmarExtSpec::Buttons input);
+    CoreButtons get_processed_input(CoreButtons input);
 
     /**
      * \brief Activates the mupen window, releasing focus capture from the current window
@@ -173,7 +169,7 @@ struct Status
 
     void on_config_changed();
 
-    void get_input(ZilmarExtSpec::Buttons *keys);
+    void get_input(CoreButtons *keys);
 };
 
 static ULONG_PTR gdi_plus_token{};
@@ -181,7 +177,6 @@ static std::atomic<int64_t> frame_counter{};
 static std::atomic<bool> new_frame{};
 static std::atomic<bool> rom_open{};
 static std::atomic<bool> s_event_watch_attached{};
-static HWND emulator_hwnd{};
 static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
@@ -211,60 +206,6 @@ static void detach_event_watch()
         SDL_RemoveEventWatch(event_watch, nullptr);
         s_event_watch_attached = false;
     }
-}
-
-EXPORT void CALL CloseDLL()
-{
-    detach_event_watch();
-
-    if (gdi_plus_token)
-    {
-        Gdiplus::GdiplusShutdown(gdi_plus_token);
-        gdi_plus_token = 0;
-    }
-}
-
-EXPORT void CALL DllAbout(void *hParent)
-{
-    const auto msg = L"First-party TAS plugin for Mupen64."
-                     L"\n"
-                     L"TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                     L"to one version of the emulator."
-                     L"\n\n"
-                     L"https://mupen64.com";
-    MessageBox((HWND)hParent, msg, L"About", MB_ICONINFORMATION | MB_OK);
-}
-
-EXPORT void CALL DllConfig(void *hParent)
-{
-    attach_event_watch();
-    ConfigDialog::show((HWND)hParent);
-
-    // TODO: Do we have to restart the dialogs here like in old version?
-}
-
-EXPORT void CALL GetDllInfo(ZilmarExtSpec::PluginInfo *info)
-{
-    info->ver = 0x0101;
-    info->type = ZilmarExtSpec::PluginType::Input;
-    strncpy_s(info->name, IOUtils::to_utf8_string(PLUGIN_NAME).c_str(), std::size(info->name));
-    std::ranges::copy(IOUtils::to_utf8_string(CURRENT_VERSION), info->target_version);
-}
-
-EXPORT void CALL GetKeys(int Control, ZilmarExtSpec::Buttons *Keys)
-{
-    if (new_frame)
-    {
-        ++frame_counter;
-        new_frame = false;
-    }
-
-    status[Control].get_input(Keys);
-}
-
-EXPORT void CALL SetKeys(int32_t controller, ZilmarExtSpec::Buttons keys)
-{
-    status[controller].set_visuals_lazy(keys, false);
 }
 
 LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
@@ -300,7 +241,7 @@ apply:
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-void Status::get_input(ZilmarExtSpec::Buttons *keys)
+void Status::get_input(CoreButtons *keys)
 {
     keys->value = get_processed_input(current_input).value;
 
@@ -340,7 +281,7 @@ end:
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
 }
 
-ZilmarExtSpec::Buttons Status::get_processed_input(ZilmarExtSpec::Buttons input)
+CoreButtons Status::get_processed_input(CoreButtons input)
 {
     input.value |= frame_counter % 2 == 0 ? autofire_input_a.value : autofire_input_b.value;
 
@@ -366,10 +307,10 @@ void Status::activate_emulator_window()
     {
         return;
     }
-    SetForegroundWindow(emulator_hwnd);
+    SetForegroundWindow(g_plugin->main_window.hwnd());
 }
 
-void Status::set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing)
+void Status::set_visuals(CoreButtons input, bool needs_processing)
 {
     if (needs_processing)
     {
@@ -405,7 +346,7 @@ void Status::set_visuals(ZilmarExtSpec::Buttons input, bool needs_processing)
     JoystickControl::set_position(joy_hwnd, input.x, input.y);
 }
 
-void Status::set_visuals_lazy(ZilmarExtSpec::Buttons input, bool needs_processing)
+void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 {
     std::lock_guard lock(pending_visuals_mutex);
     pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
@@ -720,7 +661,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_TIMER: {
         ctx->set_visuals_if_needed();
 
-        ZilmarExtSpec::Buttons controller_input = GamepadManager::get_input(ctx->controller_index);
+        CoreButtons controller_input = GamepadManager::get_input(ctx->controller_index);
 
         if (controller_input.value != ctx->last_controller_input.value)
         {
@@ -847,7 +788,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     }
     break;
     case WM_UPDATE_VISUALS:
-        ctx->set_visuals(static_cast<ZilmarExtSpec::Buttons>(lparam), false);
+        ctx->set_visuals(static_cast<CoreButtons>(lparam), false);
         break;
     case WM_SIZE:
     case WM_MOVE: {
@@ -867,7 +808,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            ZilmarExtSpec::Buttons last_input = ctx->current_input;
+            CoreButtons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -891,7 +832,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             {
                 break;
             }
-            ZilmarExtSpec::Buttons last_input = ctx->current_input;
+            CoreButtons last_input = ctx->current_input;
             wchar_t str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
@@ -1000,41 +941,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return FALSE;
 }
 
-EXPORT void CALL InitiateControllers(ZilmarExtSpec::InputPluginInfo info)
-{
-    g_ef = info.extended_funcs;
-    g_config_path = ZilmarExtSpec::get_config_path(g_ef);
-    emulator_hwnd = (HWND)info.main_hwnd;
-
-    for (int i = 0; i < 4; ++i)
-    {
-        info.controllers[i].present = new_config.controller_active[i];
-        info.controllers[i].raw = false;
-        info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::None;
-        if (new_config.controller_mempak[i]) info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::Mempak;
-        if (new_config.controller_rumblepak[i])
-            info.controllers[i].plugin = ZilmarExtSpec::ControllerExtension::Rumblepak;
-    }
-}
-
-EXPORT void CALL ReadController(int Control, BYTE *Command)
-{
-    if (Control == -1)
-    {
-        new_frame = true;
-    }
-}
-
-EXPORT void CALL RomClosed(void)
-{
-    rom_open = false;
-
-    for (auto &st : status)
-    {
-        ShowWindow(st.hwnd, SW_HIDE);
-    }
-}
-
 static void show_activated_windows()
 {
     size_t i = 0;
@@ -1110,27 +1016,6 @@ static void ui_thread()
     save_config();
 }
 
-EXPORT void CALL RomOpen()
-{
-    attach_event_watch();
-    load_config();
-
-    static bool first_time = true;
-
-    if (first_time)
-    {
-        main_thread = std::thread(ui_thread);
-
-        first_time = false;
-    }
-    else
-    {
-        show_activated_windows();
-    }
-
-    rom_open = true;
-}
-
 bool Status::combo_active()
 {
     return active_combo_index != -1;
@@ -1186,12 +1071,12 @@ void Status::end_edit(int id, wchar_t *name)
 
 void Status::save_combos()
 {
-    const auto path = _T("combos.cmb");
+    const auto path = std::filesystem::path("combos.cmb");
 
-    g_ef->log_trace(std::format(L"Saving combos to {}...", path).c_str());
+    g_plugin->log_trace(std::format("Saving combos to {}...", path.string()).c_str());
 
     FILE *f{};
-    if (_tfopen_s(&f, path, _T("wb")))
+    if (IOUtils::path_fopen_s(f, path, "wb"))
     {
         return;
     }
@@ -1205,12 +1090,12 @@ void Status::save_combos()
 
 void Status::load_combos(const std::filesystem::path &path)
 {
-    g_ef->log_trace(std::format(L"Loading combos from {}...", path.c_str()).c_str());
+    g_plugin->log_trace(std::format("Loading combos from {}...", path.string()).c_str());
 
     auto buf = IOUtils::read_entire_file(path);
     if (buf.empty())
     {
-        g_ef->log_error(L"read_file_buffer failed");
+        g_plugin->log_error("read_file_buffer failed");
         return;
     }
 
@@ -1334,4 +1219,123 @@ void TASInput::on_detach()
     if (main_thread.joinable()) main_thread.join();
 
     detach_event_watch();
+}
+
+EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
+{
+    metadata->type = M64RRSpec::PluginType::Input;
+
+    const auto name = PLUGIN_NAME;
+    const auto description = "First-party TAS plugin for Mupen64."
+                             "\n"
+                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
+                             "to one version of the emulator."
+                             "\n\n"
+                             "https://mupen64.com";
+    const auto target_version = CURRENT_VERSION;
+
+    auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
+    metadata->name[result.size] = '\0';
+
+    result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
+    metadata->description[result.size] = '\0';
+
+    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
+    metadata->target_version[result.size] = '\0';
+}
+
+EXPORT void CALL M64RRProcessEvent(Event event)
+{
+    switch (event.type)
+    {
+    case M64RRSpec::Event::Type::Initiate: {
+        g_plugin = event.initiate.init;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            g_plugin->controllers[i].present = new_config.controller_active[i];
+            g_plugin->controllers[i].raw = false;
+            g_plugin->controllers[i].plugin = CoreControllerExtension::None;
+            if (new_config.controller_mempak[i]) g_plugin->controllers[i].plugin = CoreControllerExtension::Mempak;
+            if (new_config.controller_rumblepak[i])
+                g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
+        }
+        break;
+    }
+    case M64RRSpec::Event::Type::Shutdown: {
+        detach_event_watch();
+
+        if (gdi_plus_token)
+        {
+            Gdiplus::GdiplusShutdown(gdi_plus_token);
+            gdi_plus_token = 0;
+        }
+        break;
+    }
+    case M64RRSpec::Event::Type::RomOpened: {
+        attach_event_watch();
+        load_config();
+
+        static bool first_time = true;
+
+        if (first_time)
+        {
+            main_thread = std::thread(ui_thread);
+
+            first_time = false;
+        }
+        else
+        {
+            show_activated_windows();
+        }
+
+        rom_open = true;
+
+        break;
+    }
+    case M64RRSpec::Event::Type::RomClosed: {
+        rom_open = false;
+
+        for (auto &st : status)
+        {
+            ShowWindow(st.hwnd, SW_HIDE);
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+}
+
+EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
+{
+    if (controller == -1)
+    {
+        new_frame = true;
+    }
+}
+
+EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
+{
+    attach_event_watch();
+    ConfigDialog::show(parent_window.hwnd());
+
+    // TODO: Do we have to restart the dialogs here like in old version?
+}
+
+EXPORT void CALL M64RRGetKeys(int32_t index, CoreButtons *buttons)
+{
+    if (new_frame)
+    {
+        ++frame_counter;
+        new_frame = false;
+    }
+
+    status[index].get_input(buttons);
+}
+
+EXPORT void CALL M64RRSetKeys(int32_t index, CoreButtons buttons)
+{
+    status[index].set_visuals_lazy(buttons, false);
 }

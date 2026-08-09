@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #pragma once
+#include <cstdint>
 
 #define EAX 0
 #define ECX 1
@@ -33,7 +34,7 @@
 #define DH 6
 #define BH 7
 
-typedef struct _reg_cache_struct
+typedef struct
 {
     int32_t need_map;
     void *needed_registers[8];

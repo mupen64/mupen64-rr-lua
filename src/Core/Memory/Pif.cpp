@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -32,6 +32,14 @@ void print_pif()
 
 // 16kb eeprom flag
 #define EXTENDED_EEPROM (0)
+
+static bool pif_packet_fits(const int32_t offset, const size_t minimum_length)
+{
+    if (offset < 0 || offset + 2 > 0x40) return false;
+
+    const size_t length = (size_t)PIF_RAMb[offset] + (PIF_RAMb[offset + 1] & 0x3F) + 2;
+    return length >= minimum_length && length <= 0x40 - (size_t)offset;
+}
 
 void EepromCommand(uint8_t *Command)
 {
@@ -128,7 +136,7 @@ void internal_ReadController(int32_t Control, uint8_t *Command)
     switch (Command[2])
     {
     case 1:
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
             cht_execute();
 
@@ -136,14 +144,14 @@ void internal_ReadController(int32_t Control, uint8_t *Command)
             CoreButtons input = {0};
             vcr_on_controller_poll(Control, &input);
             ParityChecker::on_sample(vcr.current_sample);
-            *((uint32_t *)(Command + 3)) = input.value;
+            memcpy(Command + 3, &input.value, sizeof(input.value));
         }
         break;
     case 2: // read controller pack
     case 3: // write controller pack
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
-            if (g_core->controls[Control].Plugin == CoreControllerExtension::Raw && g_core->input_controller_command)
+            if (g_core->controls[Control].plugin == CoreControllerExtension::Raw && g_core->input_controller_command)
                 g_core->input_read_controller(Control, Command);
         }
         break;
@@ -157,11 +165,11 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
     case 0x00: // check
     case 0xFF:
         if ((Command[1] & 0x80)) break;
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
             Command[3] = 0x05;
             Command[4] = 0x00;
-            switch (g_core->controls[Control].Plugin)
+            switch (g_core->controls[Control].plugin)
             {
             case CoreControllerExtension::Mempak:
                 Command[5] = 1;
@@ -178,12 +186,12 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
             Command[1] |= 0x80;
         break;
     case 0x01:
-        if (!g_core->controls[Control].Present) Command[1] |= 0x80;
+        if (!g_core->controls[Control].present) Command[1] |= 0x80;
         break;
     case 0x02: // read controller pack
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
-            switch (g_core->controls[Control].Plugin)
+            switch (g_core->controls[Control].plugin)
             {
             case CoreControllerExtension::Mempak: {
                 int32_t address = (Command[3] << 8) | Command[4];
@@ -225,9 +233,9 @@ void internal_ControllerCommand(int32_t Control, uint8_t *Command)
             Command[1] |= 0x80;
         break;
     case 0x03: // write controller pack
-        if (g_core->controls[Control].Present)
+        if (g_core->controls[Control].present)
         {
-            switch (g_core->controls[Control].Plugin)
+            switch (g_core->controls[Control].plugin)
             {
             case CoreControllerExtension::Mempak: {
                 int32_t address = (Command[3] << 8) | Command[4];
@@ -325,15 +333,42 @@ void update_pif_write()
         default:
             if (!(PIF_RAMb[i] & 0xC0))
             {
+                if (!pif_packet_fits(i, 3))
+                {
+                    assert(false && "PIF write packet exceeds PIF RAM");
+                    i = 0x40;
+                    break;
+                }
+
                 if (channel < 4)
                 {
-                    if (g_core->controls[channel].Present && g_core->controls[channel].RawData)
+                    const uint8_t command = PIF_RAMb[i + 2];
+                    const size_t minimum_length = command == 2 || command == 3
+                                                      ? 0x26
+                                                      : (command == 1 ? 7 : (command == 0 || command == 0xFF ? 6 : 3));
+                    if (!pif_packet_fits(i, minimum_length))
+                    {
+                        assert(false && "PIF controller write packet is shorter than its command requires");
+                        i = 0x40;
+                        break;
+                    }
+
+                    if (g_core->controls[channel].present && g_core->controls[channel].raw)
                         g_core->input_controller_command(channel, &PIF_RAMb[i]);
                     else
                         internal_ControllerCommand(channel, &PIF_RAMb[i]);
                 }
                 else if (channel == 4)
+                {
+                    const uint8_t command = PIF_RAMb[i + 2];
+                    if (!pif_packet_fits(i, command == 4 || command == 5 ? 12 : (command == 0 ? 6 : 3)))
+                    {
+                        assert(false && "PIF EEPROM write packet is shorter than its command requires");
+                        i = 0x40;
+                        break;
+                    }
                     EepromCommand(&PIF_RAMb[i]);
+                }
                 else
                     g_core->log_info("channel >= 4 in update_pif_write");
                 i += PIF_RAMb[i] + (PIF_RAMb[(i + 1)] & 0x3F) + 1;
@@ -390,8 +425,26 @@ void update_pif_read()
             // 01 04 01 is read controller 4 bytes
             if (!(PIF_RAMb[i] & 0xC0)) // mask error bits (isn't this wrong? error bits are on i+1???)
             {
+                if (!pif_packet_fits(i, 3))
+                {
+                    assert(false && "PIF read packet exceeds PIF RAM");
+                    i = 0x40;
+                    break;
+                }
+
                 if (channel < 4)
                 {
+                    const uint8_t command = PIF_RAMb[i + 2];
+                    const size_t minimum_length = command == 2 || command == 3
+                                                      ? 0x26
+                                                      : (command == 1 ? 7 : (command == 0 || command == 0xFF ? 6 : 3));
+                    if (!pif_packet_fits(i, minimum_length))
+                    {
+                        assert(false && "PIF controller read packet is shorter than its command requires");
+                        i = 0x40;
+                        break;
+                    }
+
                     static int32_t controllerRead = 999;
 
                     // frame advance - pause before every 'frame of input',
@@ -454,12 +507,14 @@ void update_pif_read()
 
                     // we handle raw data-mode controllers here:
                     // this is incompatible with VCR!
-                    if (g_core->controls[channel].Present && g_core->controls[channel].RawData &&
+                    if (g_core->controls[channel].present && g_core->controls[channel].raw &&
                         g_ctx.vcr_get_task() == task_idle)
                     {
                         g_core->input_read_controller(channel, &PIF_RAMb[i]);
-                        auto ptr = (CoreButtons *)&PIF_RAMb[i + 3];
-                        g_core->callbacks.input(ptr, channel);
+                        CoreButtons input;
+                        memcpy(&input, &PIF_RAMb[i + 3], sizeof(input));
+                        g_core->callbacks.input(&input, channel);
+                        memcpy(&PIF_RAMb[i + 3], &input, sizeof(input));
                     }
                     else
                         internal_ReadController(channel, &PIF_RAMb[i]);

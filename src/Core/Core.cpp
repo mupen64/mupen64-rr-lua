@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -68,7 +68,7 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.rdram = rdram;
     g_ctx.rdram_register = &rdram_register;
     g_ctx.pi_register = &pi_register;
-    g_ctx.MI_register = &MI_register;
+    g_ctx.mi_register = &MI_register;
     g_ctx.sp_register = &sp_register;
     g_ctx.si_register = &si_register;
     g_ctx.vi_register = &vi_register;
@@ -77,8 +77,8 @@ core_result core_create(core_params *params, core_ctx **ctx)
     g_ctx.ai_register = &ai_register;
     g_ctx.dpc_register = &dpc_register;
     g_ctx.dps_register = &dps_register;
-    g_ctx.SP_DMEM = SP_DMEM;
-    g_ctx.SP_IMEM = SP_IMEM;
+    g_ctx.sp_dmem = SP_DMEM;
+    g_ctx.sp_imem = SP_IMEM;
     g_ctx.PIF_RAM = PIF_RAM;
     g_ctx.rcp_counter = &g_r4300.rcp_counter;
     CORE_RDRAM = rdram;

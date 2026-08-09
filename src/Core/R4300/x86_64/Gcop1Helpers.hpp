@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -28,12 +28,12 @@ extern const int32_t g_n64_rounding_modes[4];
 extern float largest_denormal_float;
 extern double largest_denormal_double;
 
-#define GEN_FALLBACK_IF_FLOAT_EXC(op)                                                                                   \
-    do                                                                                                                  \
-    {                                                                                                                   \
-        if (g_core->cfg->float_exception_emulation)                                                                     \
-        {                                                                                                               \
+#define GEN_FALLBACK_IF_FLOAT_EXC(op)                                                                                  \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (g_core->cfg->float_exception_emulation)                                                                    \
+        {                                                                                                              \
             gencallinterp((uintptr_t)(op), 0);                                                                         \
-            return;                                                                                                     \
+            return;                                                                                                    \
         }                                                                                                              \
     } while (0)

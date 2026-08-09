@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #pragma once
 
 #include "gSP.hpp"
@@ -15,6 +21,13 @@ struct GLVertex
     float fog;
 };
 
+enum class AspectMode : uint8_t
+{
+    Pillarbox = 0,
+    Stretch = 1,
+    Widescreen = 2,
+};
+
 struct GLInfo
 {
     BOOL context_initialized;
@@ -24,9 +37,11 @@ struct GLInfo
     BOOL fog;
 
     float scaleX, scaleY;
+    AspectMode aspectMode;
     BOOL adjustScreen;
     float adjustScale;
     float adjustOffset;
+    float widescreenScale = 1.0f;
 
     BOOL EXT_fog_coord;           // TNT, GeForce, Rage 128, Radeon
     BOOL EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon
@@ -63,6 +78,8 @@ struct GLInfo
     BOOL clear_override = TRUE;
 
     bool headless{};
+
+    bool isGLES{};
 };
 
 extern GLInfo OGL;
@@ -82,6 +99,8 @@ void OGL_DrawRect(int ulx, int uly, int lrx, int lry, float *color);
 void OGL_DrawTexturedRect(float ulx, float uly, float lrx, float lry, float uls, float ult, float lrs, float lrt,
                           bool flip);
 void OGL_UpdateScale();
+void OGL_SetIdentityProjection();
+void OGL_SetOrthoProjection(float left, float right, float bottom, float top, float znear, float zfar);
 void OGL_ClearDepthBuffer();
 void OGL_ClearColorBuffer(float *color);
 void OGL_ResizeWindow();
