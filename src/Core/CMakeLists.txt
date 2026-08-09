@@ -131,6 +131,8 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
     )
 endif()
 
+add_compile_definitions(NOMINMAX)
+
 # FOR TESTING ONLY. DO NOT USE OTHERWISE.
 add_library(Mupen64RR.Core._TestIncludes INTERFACE)
 target_link_libraries(Mupen64RR.Core._TestIncludes INTERFACE
