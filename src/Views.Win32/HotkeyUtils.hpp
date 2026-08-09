@@ -16,6 +16,12 @@
 namespace HotkeyUtils
 {
 /**
+ * \brief Tries to convert a Windows virtual key code to a `Hotkey::KeyCode`.
+ * \return The converted keycode, or `std::nullopt` if there is no equivalent.
+ */
+std::optional<Hotkey::KeyCode> win_to_hotkey_keycode(uint32_t vk);
+
+/**
  * \brief Shows a dialog prompting the user to enter a hotkey.
  * \param hwnd The parent window handle for the dialog.
  * \param caption The headline to display in the dialog.

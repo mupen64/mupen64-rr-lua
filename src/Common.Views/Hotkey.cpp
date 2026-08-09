@@ -10,7 +10,7 @@
 
 bool Hotkey::is_empty() const
 {
-    return !this->ctrl && !this->shift && !this->alt && this->key == 0;
+    return !this->ctrl && !this->shift && !this->alt && this->key.get() == SDLK_UNKNOWN;
 }
 
 bool Hotkey::is_assigned() const
@@ -26,7 +26,7 @@ std::string Hotkey::to_string() const
     if (this->ctrl) str += "Ctrl ";
     if (this->shift) str += "Shift ";
     if (this->alt) str += "Alt ";
-    if (this->key) str += SDL_GetKeyName(this->key);
+    if (this->key.get() != SDLK_UNKNOWN) str += SDL_GetKeyName(this->key.get());
 
     return str;
 }

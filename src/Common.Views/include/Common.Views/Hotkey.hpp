@@ -8,19 +8,40 @@
 
 #include <string>
 #include <SDL3/SDL_keycode.h>
+#include <nlohmann/json.hpp>
 
 /**
  * \brief Represents a combination of a key and modifiers.
  */
 struct Hotkey
 {
-    SDL_Keycode key{};
+    template <typename T, typename Tag> struct StrongType
+    {
+        explicit StrongType(T v) : value(v) {}
+        explicit operator T() const { return value; }
+        T get() const { return value; }
+
+        bool operator==(StrongType other) const { return value == other.value; }
+        bool operator!=(StrongType other) const { return value != other.value; }
+
+        bool operator==(T) const = delete;
+        bool operator!=(T) const = delete;
+        friend bool operator==(T, StrongType) = delete;
+        friend bool operator!=(T, StrongType) = delete;
+
+      private:
+        T value;
+    };
+
+    using KeyCode = StrongType<SDL_Keycode, struct KeyCodeTag>;
+
+    KeyCode key = KeyCode(SDLK_UNKNOWN);
     bool ctrl{};
     bool shift{};
     bool alt{};
     bool assigned{};
 
-    explicit Hotkey(const SDL_Keycode key, const bool ctrl = false, const bool shift = false, const bool alt = false)
+    explicit Hotkey(const KeyCode key, const bool ctrl = false, const bool shift = false, const bool alt = false)
         : key(key), ctrl(ctrl), shift(shift), alt(alt), assigned(true)
     {
     }
@@ -64,3 +85,15 @@ struct Hotkey
                assigned == other.assigned;
     }
 };
+
+template <typename T, typename Tag> inline void to_json(nlohmann::json &j, const Hotkey::StrongType<T, Tag> &key)
+{
+    j = key.get();
+}
+
+template <typename T, typename Tag> inline void from_json(const nlohmann::json &j, Hotkey::StrongType<T, Tag> &key)
+{
+    T raw_value;
+    j.get_to(raw_value);
+    key = Hotkey::StrongType<T, Tag>{raw_value};
+}

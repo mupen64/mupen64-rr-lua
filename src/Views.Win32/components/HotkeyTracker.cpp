@@ -9,6 +9,7 @@
 #include <action/AppActions.hpp>
 #include <components/HotkeyTracker.hpp>
 #include <components/ParameterPalette.hpp>
+#include <HotkeyUtils.hpp>
 
 const auto HOTKEY_TRACKER_CTX = L"Mupen64_HotkeyTrackerContext";
 
@@ -33,10 +34,12 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
     const bool alt = GetKeyState(VK_MENU) & 0x8000;
     bool hit = false;
 
+    const auto keycode = *HotkeyUtils::win_to_hotkey_keycode(key);
     const auto hotkeys = g_config.hotkeys;
+
     for (const auto &[path, hotkey] : hotkeys)
     {
-        if ((int)key == hotkey.key && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
+        if (keycode == hotkey.key && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
         {
             if (ActionManager::get_enabled(path) == false) continue;
 
@@ -78,48 +81,50 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
             break;
         }
 
-        const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
-        const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
-        const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
-        bool hit = false;
+        // FIXME: Reimplement!
+        // const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
+        // const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
+        // const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
+        // bool hit = false;
 
-        const auto hotkeys = g_config.hotkeys;
-        for (const auto &[path, hotkey] : hotkeys)
-        {
-            const auto down = (mmb && !ctx->last_mmb && hotkey.key == VK_MBUTTON) ||
-                              (xmb1 && !ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) ||
-                              (xmb2 && !ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
-            const auto up = (!mmb && ctx->last_mmb && hotkey.key == VK_MBUTTON) ||
-                            (!xmb1 && ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) ||
-                            (!xmb2 && ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
+        // const auto hotkeys = g_config.hotkeys;
+        // for (const auto &[path, hotkey] : hotkeys)
+        // {
 
-            hit = down || up;
+        //     const auto down = (mmb && !ctx->last_mmb && hotkey.key == VK_MBUTTON) ||
+        //                       (xmb1 && !ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) ||
+        //                       (xmb2 && !ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
+        //     const auto up = (!mmb && ctx->last_mmb && hotkey.key == VK_MBUTTON) ||
+        //                     (!xmb1 && ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) ||
+        //                     (!xmb2 && ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
 
-            if (down)
-            {
-                const auto params = ActionManager::get_params(path);
+        //     hit = down || up;
 
-                // Has params: hand off to ParameterPalette.
-                if (!params.empty())
-                    ParameterPalette::show(path);
-                else
-                    ActionManager::invoke(path);
-            }
+        //     if (down)
+        //     {
+        //         const auto params = ActionManager::get_params(path);
 
-            if (up)
-            {
-                ActionManager::invoke(path, true, true);
-            }
-        }
+        //         // Has params: hand off to ParameterPalette.
+        //         if (!params.empty())
+        //             ParameterPalette::show(path);
+        //         else
+        //             ActionManager::invoke(path);
+        //     }
 
-        ctx->last_mmb = mmb;
-        ctx->last_xmb1 = xmb1;
-        ctx->last_xmb2 = xmb2;
+        //     if (up)
+        //     {
+        //         ActionManager::invoke(path, true, true);
+        //     }
+        // }
 
-        if (hit)
-        {
-            return 0;
-        }
+        // ctx->last_mmb = mmb;
+        // ctx->last_xmb1 = xmb1;
+        // ctx->last_xmb2 = xmb2;
+
+        // if (hit)
+        // {
+        //     return 0;
+        // }
 
         break;
     }

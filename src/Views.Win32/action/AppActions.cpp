@@ -27,6 +27,7 @@
 #include <components/UpdateChecker.hpp>
 #include <components/Validators.hpp>
 #include <lua/LuaDialog.hpp>
+#include <HotkeyUtils.hpp>
 
 bool confirm_user_exit()
 {
@@ -1034,34 +1035,41 @@ void AppActions::add()
                std::vector<ActionManager::t_action_param>{
                    {.key = L"path", .name = L"Path", .validator = Validators::rom_path},
                });
-    add_action(LOAD_ROM, Hotkey('O', true), load_rom);
-    add_action(CLOSE_ROM, Hotkey('W', true), close_rom, enable_when_emu_launched);
-    add_action(RESET_ROM, Hotkey('R', true), reset_rom, enable_when_emu_launched);
-    add_action(REFRESH_ROM_LIST, Hotkey(VK_F5, true), refresh_rombrowser);
-    generate_path_recent_menu(RECENT_ROMS, Hotkey('O', true, true), &g_config.recent_rom_paths,
-                              &g_config.is_recent_rom_paths_frozen, load_recent_rom);
-    add_action(EXIT, Hotkey(VK_F4, false, false, true), exit_app);
+    add_action(LOAD_ROM, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('O'), true), load_rom);
+    add_action(CLOSE_ROM, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('W'), true), close_rom, enable_when_emu_launched);
+    add_action(RESET_ROM, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('R'), true), reset_rom, enable_when_emu_launched);
+    add_action(REFRESH_ROM_LIST, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_F5), true), refresh_rombrowser);
+    generate_path_recent_menu(RECENT_ROMS, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('O'), true, true),
+                              &g_config.recent_rom_paths, &g_config.is_recent_rom_paths_frozen, load_recent_rom);
+    add_action(EXIT, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_F4), false, false, true), exit_app);
 
-    add_action(PAUSE, Hotkey(VK_PAUSE), pause_emu, enable_when_emu_launched);
-    add_action(SPEED_DOWN, Hotkey(VK_OEM_MINUS), speed_down, enable_when_emu_launched);
-    add_action(SPEED_UP, Hotkey(VK_OEM_PLUS), speed_up, enable_when_emu_launched);
-    add_action(SPEED_RESET, Hotkey(VK_OEM_PLUS, true), speed_reset, enable_when_emu_launched);
-    add_action_with_up(FAST_FORWARD, Hotkey(VK_TAB), fastforward_enable, fastforward_disable, enable_when_emu_launched,
-                       fastforward_active);
-    add_action_with_up(GS_BUTTON, Hotkey('G'), gs_button_enable, gs_button_disable, enable_when_emu_launched,
-                       gs_button_active);
-    add_action(FRAME_ADVANCE, Hotkey(VK_OEM_5), frame_advance, enable_when_emu_launched);
+    add_action(PAUSE, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_PAUSE)), pause_emu, enable_when_emu_launched);
+    add_action(SPEED_DOWN, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_OEM_MINUS)), speed_down,
+               enable_when_emu_launched);
+    add_action(SPEED_UP, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_OEM_PLUS)), speed_up, enable_when_emu_launched);
+    add_action(SPEED_RESET, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_OEM_PLUS), true), speed_reset,
+               enable_when_emu_launched);
+    add_action_with_up(FAST_FORWARD, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_TAB)), fastforward_enable,
+                       fastforward_disable, enable_when_emu_launched, fastforward_active);
+    add_action_with_up(GS_BUTTON, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('G')), gs_button_enable, gs_button_disable,
+                       enable_when_emu_launched, gs_button_active);
+    add_action(FRAME_ADVANCE, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_OEM_5)), frame_advance,
+               enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DIRECT, multi_frame_advance_direct,
                {{.key = L"count", .name = L"Frame Count", .validator = Validators::int32_t}}, enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE, Hotkey(VK_OEM_5, true), multi_frame_advance, enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey('Q', true), multi_frame_advance_decrement,
+    add_action(MULTI_FRAME_ADVANCE, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_OEM_5), true), multi_frame_advance,
                enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE_INCREMENT, Hotkey('E', true), multi_frame_advance_increment,
+    add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('Q'), true),
+               multi_frame_advance_decrement, enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE_INCREMENT, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('E'), true),
+               multi_frame_advance_increment, enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('E'), true, true),
+               multi_frame_advance_reset, enable_when_emu_launched);
+    add_action(SAVE_CURRENT_SLOT, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('I')), save_slot,
                enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey('E', true, true), multi_frame_advance_reset, enable_when_emu_launched);
-    add_action(SAVE_CURRENT_SLOT, Hotkey('I'), save_slot, enable_when_emu_launched);
     add_action(SAVE_STATE_FILE, Hotkey::make_empty(), save_state_as, enable_when_emu_launched);
-    add_action(LOAD_CURRENT_SLOT, Hotkey('P'), load_slot, enable_when_emu_launched);
+    add_action(LOAD_CURRENT_SLOT, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('P')), load_slot,
+               enable_when_emu_launched);
     add_action(LOAD_STATE_FILE, Hotkey::make_empty(), load_state_as, enable_when_emu_launched);
     for (size_t i = 0; i < 10; ++i)
     {
@@ -1085,9 +1093,9 @@ void AppActions::add()
         const auto load = [=] { do_work(core_st_job_load); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SAVE_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(save_key, false, true), save,
+        add_action(std::vformat(SAVE_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(*HotkeyUtils::win_to_hotkey_keycode(save_key), false, true), save,
                    enable_when_emu_launched);
-        add_action(std::vformat(LOAD_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(load_key), load,
+        add_action(std::vformat(LOAD_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(*HotkeyUtils::win_to_hotkey_keycode(load_key)), load,
                    enable_when_emu_launched);
     }
     for (size_t i = 0; i < 10; ++i)
@@ -1099,17 +1107,18 @@ void AppActions::add()
         const auto set_slot = [=] { set_save_slot(i); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SELECT_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(key), set_slot,
+        add_action(std::vformat(SELECT_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(*HotkeyUtils::win_to_hotkey_keycode(key)), set_slot,
                    enable_when_emu_launched, get_active);
     }
-    add_action(UNDO_LOAD_STATE, Hotkey('Z', true), undo_load_state, enable_when_emu_launched);
+    add_action(UNDO_LOAD_STATE, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('Z'), true), undo_load_state,
+               enable_when_emu_launched);
     add_action(VIDEO_SETTINGS, Hotkey::make_empty(), show_video_plugin_settings);
     add_action(AUDIO_SETTINGS, Hotkey::make_empty(), show_audio_plugin_settings);
     add_action(INPUT_SETTINGS, Hotkey::make_empty(), show_input_plugin_settings);
     add_action(RSP_SETTINGS, Hotkey::make_empty(), show_rsp_plugin_settings);
-    add_action(STATUSBAR, Hotkey('S', false, false, true), toggle_statusbar, disable_when_emu_launched,
-               [] { return g_config.is_statusbar_enabled; });
-    add_action(SETTINGS, Hotkey('S', true), show_settings_dialog);
+    add_action(STATUSBAR, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('S'), false, false, true), toggle_statusbar,
+               disable_when_emu_launched, [] { return g_config.is_statusbar_enabled; });
+    add_action(SETTINGS, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('S'), true), show_settings_dialog);
 
     add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
                std::vector<ActionManager::t_action_param>{
@@ -1119,28 +1128,30 @@ void AppActions::add()
                    {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
                },
                enable_when_emu_launched);
-    add_action(START_MOVIE_RECORDING, Hotkey('R', true, true), start_movie_recording, enable_when_emu_launched);
+    add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('R'), true, true), start_movie_recording, enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
                std::vector<ActionManager::t_action_param>{
                    {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
                    {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
                    {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
                });
-    add_action(START_MOVIE_PLAYBACK, Hotkey('P', true, true), start_movie_playback);
+    add_action(START_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('P'), true, true),
+               start_movie_playback);
     add_action(CONTINUE_MOVIE_RECORDING, Hotkey::make_empty(), continue_movie_recording, enable_during_playback);
-    add_action(STOP_MOVIE, Hotkey('C', true, true), stop_movie, enable_when_emu_launched_and_vcr_active);
-    add_action(CREATE_MOVIE_BACKUP, Hotkey('B', true, true), create_movie_backup,
+    add_action(STOP_MOVIE, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('C'), true, true), stop_movie,
                enable_when_emu_launched_and_vcr_active);
-    generate_path_recent_menu(RECENT_MOVIES, Hotkey('T', true, true), &g_config.recent_movie_paths,
-                              &g_config.is_recent_movie_paths_frozen, load_recent_movie);
-    add_action(LOOP_MOVIE_PLAYBACK, Hotkey('L', false, true), toggle_movie_loop, always_enabled,
-               [] { return g_config.core.is_movie_loop_enabled; });
-    add_action(READONLY, Hotkey('R', false, true), toggle_readonly, always_enabled,
+    add_action(CREATE_MOVIE_BACKUP, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('B'), true, true), create_movie_backup,
+               enable_when_emu_launched_and_vcr_active);
+    generate_path_recent_menu(RECENT_MOVIES, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('T'), true, true),
+                              &g_config.recent_movie_paths, &g_config.is_recent_movie_paths_frozen, load_recent_movie);
+    add_action(LOOP_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('L'), false, true), toggle_movie_loop,
+               always_enabled, [] { return g_config.core.is_movie_loop_enabled; });
+    add_action(READONLY, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('R'), false, true), toggle_readonly, always_enabled,
                [] { return g_config.core.vcr_readonly; });
     add_action(WAIT_AT_MOVIE_END, Hotkey::make_empty(), toggle_wait_at_movie_end, always_enabled,
                [] { return g_config.core.wait_at_movie_end; });
 
-    add_action(COMMAND_PALETTE, Hotkey('P', true), show_command_palette);
+    add_action(COMMAND_PALETTE, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('P'), true), show_command_palette);
     add_action(PIANO_ROLL, Hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
     add_action(CHEATS, Hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
     add_action(SEEK_TO_DIRECT, seek_direct,
@@ -1148,7 +1159,8 @@ void AppActions::add()
                    {.key = L"frame", .name = L"Frame", .validator = Validators::seek_str},
                },
                enable_when_emu_launched_and_vcr_active);
-    add_action(SEEK_TO, Hotkey('G', true), show_seek_dialog, enable_when_emu_launched_and_vcr_active);
+    add_action(SEEK_TO, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('G'), true), show_seek_dialog,
+               enable_when_emu_launched_and_vcr_active);
     add_action(USAGE_STATISTICS, Hotkey::make_empty(), show_statistics);
     add_action(CORE_INFORMATION, Hotkey::make_empty(), show_ram_start);
     add_action(START_TRACE_LOGGER, Hotkey::make_empty(), start_tracelog,
@@ -1163,7 +1175,7 @@ void AppActions::add()
     add_action(VIDEO_CAPTURE_START, Hotkey::make_empty(), start_capture_normal, enable_when_emu_launched);
     add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::make_empty(), start_capture_from_preset, enable_when_emu_launched);
     add_action(VIDEO_CAPTURE_STOP, Hotkey::make_empty(), stop_capture, enable_when_emu_launched_and_capturing);
-    add_action(SCREENSHOT, Hotkey(VK_F12), screenshot, enable_when_emu_launched);
+    add_action(SCREENSHOT, Hotkey(*HotkeyUtils::win_to_hotkey_keycode(VK_F12)), screenshot, enable_when_emu_launched);
 
     add_action(CHECK_FOR_UPDATES, Hotkey::make_empty(), check_for_updates_manual);
     add_action(ABOUT, Hotkey::make_empty(), show_about_dialog);
@@ -1172,11 +1184,12 @@ void AppActions::add()
                std::vector<ActionManager::t_action_param>{
                    {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
                });
-    add_action(SHOW_INSTANCES, Hotkey('N', true), show_lua_dialog);
-    generate_path_recent_menu(RECENT_SCRIPTS, Hotkey('K', true, true), &g_config.recent_lua_script_paths,
-                              &g_config.is_recent_scripts_frozen, load_recent_script);
+    add_action(SHOW_INSTANCES, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('N'), true), show_lua_dialog);
+    generate_path_recent_menu(RECENT_SCRIPTS, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('K'), true, true),
+                              &g_config.recent_lua_script_paths, &g_config.is_recent_scripts_frozen,
+                              load_recent_script);
     add_action(STOP_ALL, Hotkey::make_empty(), stop_all_lua_scripts);
-    add_action(CLOSE_ALL, Hotkey('W', true, true), close_all_lua_scripts);
+    add_action(CLOSE_ALL, Hotkey(*HotkeyUtils::win_to_hotkey_keycode('W'), true, true), close_all_lua_scripts);
 
     ActionManager::end_batch_work();
 

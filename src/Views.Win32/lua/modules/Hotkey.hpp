@@ -18,7 +18,7 @@ static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
     lua_newtable(L);
 
     lua_pushstring(L, "key");
-    lua_pushinteger(L, hotkey.key);
+    lua_pushinteger(L, hotkey.key.get());
     lua_settable(L, -3);
 
     lua_pushstring(L, "ctrl");
@@ -49,7 +49,7 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
     }
 
     lua_getfield(L, i, "key");
-    hotkey.key = luaL_opt(L, lua_tointeger, -1, 0);
+    hotkey.key = ::Hotkey::KeyCode(luaL_opt(L, lua_tointeger, -1, 0));
     lua_pop(L, 1);
 
     lua_getfield(L, i, "ctrl");

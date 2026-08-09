@@ -160,9 +160,9 @@ struct DialogParams
     Hotkey hotkey = Hotkey::make_unassigned();
 };
 
-static constexpr std::optional<SDL_Keycode> win_to_sdl_keycode(uint32_t vk)
+std::optional<Hotkey::KeyCode> HotkeyUtils::win_to_hotkey_keycode(uint32_t vk)
 {
-    if (WIN_TO_SDL_KEYCODE.contains(vk)) return WIN_TO_SDL_KEYCODE.at(vk);
+    if (WIN_TO_SDL_KEYCODE.contains(vk)) return Hotkey::KeyCode(WIN_TO_SDL_KEYCODE.at(vk));
     return std::nullopt;
 }
 
@@ -196,9 +196,9 @@ static LRESULT CALLBACK HotkeyButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wpa
         }
         else
         {
-            const auto keycode = win_to_sdl_keycode(wparam);
+            const auto keycode = HotkeyUtils::win_to_hotkey_keycode(wparam);
             if (!keycode) break;
-            params->hotkey.key = *keycode;
+            params->hotkey.key = Hotkey::KeyCode(*keycode);
             EndDialog(GetParent(hwnd), IDOK);
         }
 
@@ -250,23 +250,23 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         break;
     case WM_MBUTTONDOWN: {
-        const auto keycode = win_to_sdl_keycode(VK_MBUTTON);
+        const auto keycode = HotkeyUtils::win_to_hotkey_keycode(VK_MBUTTON);
         if (!keycode) break;
-        params->hotkey.key = *keycode;
+        params->hotkey.key = Hotkey::KeyCode(*keycode);
         EndDialog(hwnd, IDOK);
         break;
     }
     case WM_XBUTTONDOWN:
         if (HIWORD(wparam) == XBUTTON1)
         {
-            const auto keycode = win_to_sdl_keycode(VK_XBUTTON1);
+            const auto keycode = HotkeyUtils::win_to_hotkey_keycode(VK_XBUTTON1);
             if (!keycode) break;
             params->hotkey.key = *keycode;
             EndDialog(hwnd, IDOK);
         }
         if (HIWORD(wparam) == XBUTTON2)
         {
-            const auto keycode = win_to_sdl_keycode(VK_XBUTTON2);
+            const auto keycode = HotkeyUtils::win_to_hotkey_keycode(VK_XBUTTON2);
             if (!keycode) break;
             params->hotkey.key = *keycode;
             EndDialog(hwnd, IDOK);
