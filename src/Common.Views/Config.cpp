@@ -109,11 +109,8 @@ static json convert_to_json(const std::map<std::wstring, Hotkey> &value)
                auto name = IOUtils::to_utf8_string(mapping.first);
                // translate hotkey
                const auto &hotkey = mapping.second;
-               auto object = json::object({
-                                           {"trigger", hotkey.trigger},
-                                           {"ctrl", hotkey.ctrl},
-                                           {"shift", hotkey.shift},
-                                           {"alt", hotkey.alt}});
+               auto object = json::object(
+                   {{"trigger", hotkey.trigger}, {"ctrl", hotkey.ctrl}, {"shift", hotkey.shift}, {"alt", hotkey.alt}});
                return std::pair(std::move(name), std::move(object));
            }) |
            std::ranges::to<json::object_t>();

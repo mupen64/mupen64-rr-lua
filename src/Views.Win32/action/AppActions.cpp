@@ -1044,8 +1044,7 @@ void AppActions::add()
     add_action(EXIT, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F4), false, false, true), exit_app);
 
     add_action(PAUSE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_PAUSE)), pause_emu, enable_when_emu_launched);
-    add_action(SPEED_DOWN, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_MINUS)), speed_down,
-               enable_when_emu_launched);
+    add_action(SPEED_DOWN, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_MINUS)), speed_down, enable_when_emu_launched);
     add_action(SPEED_UP, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_PLUS)), speed_up, enable_when_emu_launched);
     add_action(SPEED_RESET, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_PLUS), true), speed_reset,
                enable_when_emu_launched);
@@ -1053,8 +1052,7 @@ void AppActions::add()
                        fastforward_disable, enable_when_emu_launched, fastforward_active);
     add_action_with_up(GS_BUTTON, Hotkey(*HotkeyUtils::vk_to_trigger('G')), gs_button_enable, gs_button_disable,
                        enable_when_emu_launched, gs_button_active);
-    add_action(FRAME_ADVANCE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_5)), frame_advance,
-               enable_when_emu_launched);
+    add_action(FRAME_ADVANCE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_5)), frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DIRECT, multi_frame_advance_direct,
                {{.key = L"count", .name = L"Frame Count", .validator = Validators::int32_t}}, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_5), true), multi_frame_advance,
@@ -1065,11 +1063,9 @@ void AppActions::add()
                multi_frame_advance_increment, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey(*HotkeyUtils::vk_to_trigger('E'), true, true),
                multi_frame_advance_reset, enable_when_emu_launched);
-    add_action(SAVE_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('I')), save_slot,
-               enable_when_emu_launched);
+    add_action(SAVE_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('I')), save_slot, enable_when_emu_launched);
     add_action(SAVE_STATE_FILE, Hotkey::make_empty(), save_state_as, enable_when_emu_launched);
-    add_action(LOAD_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('P')), load_slot,
-               enable_when_emu_launched);
+    add_action(LOAD_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('P')), load_slot, enable_when_emu_launched);
     add_action(LOAD_STATE_FILE, Hotkey::make_empty(), load_state_as, enable_when_emu_launched);
     for (size_t i = 0; i < 10; ++i)
     {
@@ -1093,10 +1089,10 @@ void AppActions::add()
         const auto load = [=] { do_work(core_st_job_load); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SAVE_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(*HotkeyUtils::vk_to_trigger(save_key), false, true), save,
-                   enable_when_emu_launched);
-        add_action(std::vformat(LOAD_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(*HotkeyUtils::vk_to_trigger(load_key)), load,
-                   enable_when_emu_launched);
+        add_action(std::vformat(SAVE_SLOT_X, std::make_wformat_args(visual_slot)),
+                   Hotkey(*HotkeyUtils::vk_to_trigger(save_key), false, true), save, enable_when_emu_launched);
+        add_action(std::vformat(LOAD_SLOT_X, std::make_wformat_args(visual_slot)),
+                   Hotkey(*HotkeyUtils::vk_to_trigger(load_key)), load, enable_when_emu_launched);
     }
     for (size_t i = 0; i < 10; ++i)
     {
@@ -1107,8 +1103,8 @@ void AppActions::add()
         const auto set_slot = [=] { set_save_slot(i); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SELECT_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey(*HotkeyUtils::vk_to_trigger(key)), set_slot,
-                   enable_when_emu_launched, get_active);
+        add_action(std::vformat(SELECT_SLOT_X, std::make_wformat_args(visual_slot)),
+                   Hotkey(*HotkeyUtils::vk_to_trigger(key)), set_slot, enable_when_emu_launched, get_active);
     }
     add_action(UNDO_LOAD_STATE, Hotkey(*HotkeyUtils::vk_to_trigger('Z'), true), undo_load_state,
                enable_when_emu_launched);
@@ -1128,15 +1124,15 @@ void AppActions::add()
                    {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
                },
                enable_when_emu_launched);
-    add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true, true), start_movie_recording, enable_when_emu_launched);
+    add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true, true), start_movie_recording,
+               enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
                std::vector<ActionManager::t_action_param>{
                    {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
                    {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
                    {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
                });
-    add_action(START_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::vk_to_trigger('P'), true, true),
-               start_movie_playback);
+    add_action(START_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::vk_to_trigger('P'), true, true), start_movie_playback);
     add_action(CONTINUE_MOVIE_RECORDING, Hotkey::make_empty(), continue_movie_recording, enable_during_playback);
     add_action(STOP_MOVIE, Hotkey(*HotkeyUtils::vk_to_trigger('C'), true, true), stop_movie,
                enable_when_emu_launched_and_vcr_active);
