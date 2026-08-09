@@ -106,3 +106,6 @@ void vcr_get_seek_savestate_frames(std::unordered_map<size_t, bool> &map);
 bool vcr_has_seek_savestate_at_frame(size_t frame);
 std::optional<size_t> vcr_try_resolve_seek_str(const std::string &str);
 core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags);
+
+std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_header &header);
+std::vector<std::string> vcr_get_sync_warnings(const SyncData &sync_data);

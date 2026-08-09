@@ -1289,7 +1289,7 @@ static std::optional<core_result> ask_user_rom_conflict(std::string_view id, con
     return std::nullopt;
 }
 
-static std::optional<SyncData> get_sync_data_from_header(const core_vcr_movie_header &header)
+std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_header &header)
 {
     switch (header.extended_version)
     {
@@ -1338,7 +1338,7 @@ static std::optional<SyncData> get_sync_data_from_header(const core_vcr_movie_he
     }
 }
 
-static std::vector<std::string> get_sync_warnings(const SyncData &sync_data)
+std::vector<std::string> vcr_get_sync_warnings(const SyncData &sync_data)
 {
     std::vector<std::string> warnings;
 
@@ -1437,10 +1437,10 @@ core_result vcr_start_playback(std::filesystem::path path)
 
     g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
 
-    const auto sync_data = get_sync_data_from_header(header);
+    const auto sync_data = vcr_get_sync_data_from_header(header);
     if (!sync_data) return VCR_InvalidExtendedVersion;
 
-    const auto warnings = get_sync_warnings(*sync_data);
+    const auto warnings = vcr_get_sync_warnings(*sync_data);
 
     // Suspicious! Someone shoved data where it didn't belong...
     if (header.extended_version == 0 && header.extended_flags.data != 0)
