@@ -972,4 +972,224 @@ TEST_CASE_METHOD(VcrFixture, "doesnt_deadlock", "vcr_begin_warp_modify")
     REQUIRE(result == Res_Ok);
 }
 
+TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_0", "vcr_get_sync_data_from_header")
+{
+    core_vcr_movie_header header{};
+    header.extended_version = 0;
+    header.extended_flags.wii_vc = true;
+    header.extended_flags.c_eq_s_accurate = true;
+    header.extended_flags.accurate_rdp_completion = true;
+    header.extended_data.cpu_cf = 2.0;
+    header.extended_data.rcp_lag_factor = 1.5;
+
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+
+    REQUIRE(sync_data.has_value());
+    REQUIRE(sync_data->wii_vc == false);
+    REQUIRE(sync_data->c_eq_s_accurate == false);
+    REQUIRE(sync_data->accurate_rdp_completion == false);
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_1", "vcr_get_sync_data_from_header")
+{
+    core_vcr_movie_header header{};
+    header.extended_version = 1;
+    header.extended_flags.wii_vc = true;
+
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+
+    REQUIRE(sync_data.has_value());
+    REQUIRE(sync_data->wii_vc == true);
+    REQUIRE(sync_data->c_eq_s_accurate == false);
+    REQUIRE(sync_data->accurate_rdp_completion == false);
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_2", "vcr_get_sync_data_from_header")
+{
+    core_vcr_movie_header header{};
+    header.extended_version = 2;
+    header.extended_flags.wii_vc = true;
+    header.extended_flags.c_eq_s_accurate = true;
+
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+
+    REQUIRE(sync_data.has_value());
+    REQUIRE(sync_data->wii_vc == true);
+    REQUIRE(sync_data->c_eq_s_accurate == true);
+    REQUIRE(sync_data->accurate_rdp_completion == false);
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_3", "vcr_get_sync_data_from_header")
+{
+    core_vcr_movie_header header{};
+    header.extended_version = 3;
+    header.extended_flags.wii_vc = false;
+    header.extended_flags.c_eq_s_accurate = true;
+    header.extended_flags.accurate_rdp_completion = true;
+
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+
+    REQUIRE(sync_data.has_value());
+    REQUIRE(sync_data->wii_vc == false);
+    REQUIRE(sync_data->c_eq_s_accurate == true);
+    REQUIRE(sync_data->accurate_rdp_completion == true);
+    REQUIRE(sync_data->cpu_cf == 1.0);
+    REQUIRE(sync_data->rcp_lag_factor == 0.0);
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_correct_sync_data_for_extended_version_4", "vcr_get_sync_data_from_header")
+{
+    core_vcr_movie_header header{};
+    header.extended_version = 4;
+    header.extended_flags.wii_vc = true;
+    header.extended_flags.c_eq_s_accurate = false;
+    header.extended_flags.accurate_rdp_completion = true;
+    header.extended_data.cpu_cf = 2.0;
+    header.extended_data.rcp_lag_factor = 1.5;
+
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+
+    REQUIRE(sync_data.has_value());
+    REQUIRE(sync_data->wii_vc == true);
+    REQUIRE(sync_data->c_eq_s_accurate == false);
+    REQUIRE(sync_data->accurate_rdp_completion == true);
+    REQUIRE(sync_data->cpu_cf == 2.0);
+    REQUIRE(sync_data->rcp_lag_factor == 1.5);
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_nullopt_for_invalid_extended_version", "vcr_get_sync_data_from_header")
+{
+    core_vcr_movie_header header{};
+    header.extended_version = 5;
+
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+
+    REQUIRE(!sync_data.has_value());
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_sync_data_matches_config", "vcr_get_sync_warnings")
+{
+    s_cfg.wii_vc_emulation = true;
+    s_cfg.core_type = 1;
+    s_cfg.c_eq_s_nan_accurate = true;
+    s_cfg.accurate_rdp_completion = true;
+    s_cfg.cpu_cf = 2.0;
+    s_cfg.rcp_lag_factor = 1.5;
+    s_cfg.rcp_lag_emulation = true;
+
+    SyncData sync_data{
+        .wii_vc = true,
+        .c_eq_s_accurate = true,
+        .accurate_rdp_completion = true,
+        .cpu_cf = 2.0,
+        .rcp_lag_factor = 1.5,
+    };
+
+    const auto warnings = vcr_get_sync_warnings(sync_data);
+
+    REQUIRE(warnings.empty());
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_warnings_for_unspecified_optional_fields", "vcr_get_sync_warnings")
+{
+    s_cfg.wii_vc_emulation = false;
+    s_cfg.accurate_rdp_completion = false;
+
+    SyncData sync_data{
+        .wii_vc = false,
+        .c_eq_s_accurate = std::nullopt,
+        .accurate_rdp_completion = false,
+        .cpu_cf = std::nullopt,
+        .rcp_lag_factor = std::nullopt,
+    };
+
+    const auto warnings = vcr_get_sync_warnings(sync_data);
+
+    REQUIRE(warnings.size() == 3);
+    REQUIRE(warnings[0] == "C.EQ.S correctness not specified in movie.");
+    REQUIRE(warnings[1] == "CPU counter factor not specified in movie.");
+    REQUIRE(warnings[2] == "RCP lag factor not specified in movie.");
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_warnings_when_bool_flags_mismatch_config", "vcr_get_sync_warnings")
+{
+    s_cfg.wii_vc_emulation = false;
+    s_cfg.core_type = 1;
+    s_cfg.c_eq_s_nan_accurate = true;
+    s_cfg.accurate_rdp_completion = false;
+    s_cfg.cpu_cf = 1.0;
+    s_cfg.rcp_lag_factor = 1.0;
+    s_cfg.rcp_lag_emulation = true;
+
+    SyncData sync_data{
+        .wii_vc = true,
+        .c_eq_s_accurate = false,
+        .accurate_rdp_completion = true,
+        .cpu_cf = 1.0,
+        .rcp_lag_factor = 1.0,
+    };
+
+    const auto warnings = vcr_get_sync_warnings(sync_data);
+
+    REQUIRE(warnings.size() == 3);
+    REQUIRE(warnings[0] == "WiiVC mode enabled in movie, but disabled in emulator.");
+    REQUIRE(warnings[1] == "C.EQ.S correctness disabled in movie, but enabled in emulator.");
+    REQUIRE(warnings[2] == "RDP completion accuracy enabled in movie, but disabled in emulator.");
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_warnings_when_double_values_mismatch_config", "vcr_get_sync_warnings")
+{
+    s_cfg.wii_vc_emulation = false;
+    s_cfg.core_type = 1;
+    s_cfg.c_eq_s_nan_accurate = false;
+    s_cfg.accurate_rdp_completion = false;
+    s_cfg.cpu_cf = 2.5;
+    s_cfg.rcp_lag_factor = 1.5;
+    s_cfg.rcp_lag_emulation = true;
+
+    SyncData sync_data{
+        .wii_vc = false,
+        .c_eq_s_accurate = false,
+        .accurate_rdp_completion = false,
+        .cpu_cf = 1.5,
+        .rcp_lag_factor = 0.5,
+    };
+
+    const auto warnings = vcr_get_sync_warnings(sync_data);
+
+    REQUIRE(warnings.size() == 2);
+    REQUIRE(warnings[0] == "CPU counter factor 1.5 in movie, but 2.5 in emulator.");
+    REQUIRE(warnings[1] == "RCP lag factor 0.5 in movie, but 1.5 in emulator.");
+}
+
+TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_rcp_lag_factor_mismatch_without_lag_emulation_enabled",
+                 "vcr_get_sync_warnings")
+{
+    s_cfg.wii_vc_emulation = false;
+    s_cfg.core_type = 1;
+    s_cfg.c_eq_s_nan_accurate = false;
+    s_cfg.accurate_rdp_completion = false;
+    s_cfg.cpu_cf = 1.0;
+    s_cfg.rcp_lag_factor = 2.0;
+    s_cfg.rcp_lag_emulation = 0;
+
+    SyncData sync_data{
+        .wii_vc = false,
+        .c_eq_s_accurate = false,
+        .accurate_rdp_completion = false,
+        .cpu_cf = 1.0,
+        .rcp_lag_factor = 0.0,
+    };
+
+    const auto warnings = vcr_get_sync_warnings(sync_data);
+
+    REQUIRE(warnings.size() == 0);
+}
+
 #pragma endregion

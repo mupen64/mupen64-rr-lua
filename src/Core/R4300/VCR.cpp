@@ -31,33 +31,6 @@ constexpr auto ROM_COUNTRY_WARNING_MESSAGE = "The movie was recorded on a {} ROM
 constexpr auto ROM_CRC_WARNING_MESSAGE = "The movie was recorded with a ROM that has CRC \"0x{:08X}\",\nbut you are "
                                          "using a ROM with CRC \"0x{:08X}\".\r\nPlayback "
                                          "might desynchronize. How do you want to continue?";
-constexpr auto WII_VC_MISMATCH_A_WARNING_MESSAGE =
-    "The movie was recorded with WiiVC mode enabled, but is being played back with it disabled.\r\nPlayback might "
-    "desynchronize. Are you sure you want to continue?";
-constexpr auto WII_VC_MISMATCH_B_WARNING_MESSAGE =
-    "The movie was recorded with WiiVC mode disabled, but is being played back with it enabled.\r\nPlayback might "
-    "desynchronize. Are you sure you want to continue?";
-constexpr auto CEQS_MISMATCH_A_WARNING_MESSAGE =
-    "The movie was recorded with an accurate implementation of the `c.eq.s` instruction (possibly another core type), "
-    "but is being played back with the legacy implementation.\r\nPlayback might desynchronize. Are you sure you want "
-    "to continue?";
-constexpr auto CEQS_MISMATCH_B_WARNING_MESSAGE =
-    "The movie was recorded with an inaccurate implementation of the `c.eq.s` instruction (possibly another core "
-    "type), but is being played back with the correct implementation.\r\nPlayback might desynchronize. Are you sure "
-    "you want to continue?";
-constexpr auto RDP_COMPLETION_MISMATCH_A_WARNING_MESSAGE =
-    "The movie was recorded with RDP completion signalled after RSP completion, but is being played back with both "
-    "signalled at the same instant (legacy timing).\r\nPlayback might desynchronize. Are you sure you want to "
-    "continue?";
-constexpr auto RDP_COMPLETION_MISMATCH_B_WARNING_MESSAGE =
-    "The movie was recorded with RDP and RSP completion signalled at the same instant (legacy timing), but is being "
-    "played back with RDP completion delayed.\r\nPlayback might desynchronize. Are you sure you want to continue?";
-constexpr auto CPU_CF_MISMATCH_WARNING_MESSAGE =
-    "The movie was recorded with a CPU counter factor of {}, but is being played back with {}.\r\nPlayback might "
-    "desynchronize. Are you sure you want to continue?";
-constexpr auto RCP_LAG_FACTOR_MISMATCH_WARNING_MESSAGE =
-    "The movie was recorded with an RCP lag factor of {}, but is being played back with {}.\r\nPlayback might "
-    "desynchronize. Are you sure you want to continue?";
 constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
@@ -1316,6 +1289,99 @@ static std::optional<core_result> ask_user_rom_conflict(std::string_view id, con
     return std::nullopt;
 }
 
+std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_header &header)
+{
+    switch (header.extended_version)
+    {
+    case 0:
+        return SyncData{
+            .wii_vc = false,
+            // NOTE: We technically don't know c_eq_s_accurate, but we assume it's false because most movies were
+            // recorded with dynarec (where this is false), and keeping std::nullopt would annoy users when playing old
+            // movies.
+            .c_eq_s_accurate = false,
+            .accurate_rdp_completion = false,
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
+        };
+    case 1:
+        return SyncData{
+            .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
+            .c_eq_s_accurate = false,
+            .accurate_rdp_completion = false,
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
+        };
+    case 2:
+        return SyncData{
+            .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
+            .c_eq_s_accurate = static_cast<bool>(header.extended_flags.c_eq_s_accurate),
+            .accurate_rdp_completion = false,
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
+        };
+    case 3:
+        return SyncData{
+            .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
+            .c_eq_s_accurate = static_cast<bool>(header.extended_flags.c_eq_s_accurate),
+            .accurate_rdp_completion = static_cast<bool>(header.extended_flags.accurate_rdp_completion),
+            .cpu_cf = 1.0,
+            .rcp_lag_factor = 0.0,
+        };
+    case 4:
+        return SyncData{
+            .wii_vc = static_cast<bool>(header.extended_flags.wii_vc),
+            .c_eq_s_accurate = static_cast<bool>(header.extended_flags.c_eq_s_accurate),
+            .accurate_rdp_completion = static_cast<bool>(header.extended_flags.accurate_rdp_completion),
+            .cpu_cf = header.extended_data.cpu_cf,
+            .rcp_lag_factor = header.extended_data.rcp_lag_factor,
+        };
+    default:
+        return std::nullopt;
+    }
+}
+
+std::vector<std::string> vcr_get_sync_warnings(const SyncData &sync_data)
+{
+    std::vector<std::string> warnings;
+
+    const auto append_warning_bool = [&](std::string_view name, std::optional<bool> value, bool expected) {
+        if (!value.has_value())
+        {
+            warnings.push_back(std::format("{} not specified in movie.", name));
+            return;
+        }
+
+        if (*value == expected) return;
+
+        const auto bool_to_string = [](bool b) { return b ? "enabled" : "disabled"; };
+        warnings.push_back(
+            std::format("{} {} in movie, but {} in emulator.", name, bool_to_string(*value), bool_to_string(expected)));
+    };
+
+    const auto append_warning_double = [&](std::string_view name, std::optional<double> value, double expected) {
+        if (!value.has_value())
+        {
+            warnings.push_back(std::format("{} not specified in movie.", name));
+            return;
+        }
+
+        if (*value == expected) return;
+
+        warnings.push_back(std::format("{} {} in movie, but {} in emulator.", name, *value, expected));
+    };
+
+    append_warning_bool("WiiVC mode", sync_data.wii_vc, g_core->cfg->wii_vc_emulation);
+    append_warning_bool("C.EQ.S correctness", sync_data.c_eq_s_accurate, vr_is_ceqs_effectively_accurate());
+    append_warning_bool("RDP completion accuracy", sync_data.accurate_rdp_completion,
+                        g_core->cfg->accurate_rdp_completion);
+    append_warning_double("CPU counter factor", sync_data.cpu_cf, g_core->cfg->cpu_cf);
+    append_warning_double("RCP lag factor", sync_data.rcp_lag_factor,
+                          g_core->cfg->rcp_lag_emulation ? g_core->cfg->rcp_lag_factor : 0.0);
+
+    return warnings;
+}
+
 core_result vcr_start_playback(std::filesystem::path path)
 {
     std::unique_lock lock(vcr_mtx);
@@ -1373,94 +1439,30 @@ core_result vcr_start_playback(std::filesystem::path path)
         return VCR_InvalidControllers;
     }
 
-    if (header.extended_version != 0)
+    g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
+
+    const auto sync_data = vcr_get_sync_data_from_header(header);
+    if (!sync_data) return VCR_InvalidExtendedVersion;
+
+    const auto warnings = vcr_get_sync_warnings(*sync_data);
+
+    // Suspicious! Someone shoved data where it didn't belong...
+    if (header.extended_version == 0 && header.extended_flags.data != 0)
+        g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, "VCR", fsvc_warning);
+
+    if (!warnings.empty())
     {
-        g_core->log_info(std::format("[VCR] Movie has extended version {}", header.extended_version));
-
-        if ((bool)g_core->cfg->wii_vc_emulation != header.extended_flags.wii_vc)
+        std::string warning = "The movie has different synchronization characteristics than expected:\n";
+        for (const auto &w : warnings)
         {
-            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_WIIVC_WARNING,
-                                                   header.extended_flags.wii_vc ? WII_VC_MISMATCH_A_WARNING_MESSAGE
-                                                                                : WII_VC_MISMATCH_B_WARNING_MESSAGE,
-                                                   "VCR", true);
-
-            if (!proceed)
-            {
-                return Res_Cancelled;
-            }
+            warning += w + "\n";
         }
-
-        if (header.extended_version >= 2)
-        {
-            const auto c_eq_s_accurate = vr_is_ceqs_effectively_accurate();
-            if (c_eq_s_accurate != header.extended_flags.c_eq_s_accurate)
-            {
-                bool proceed =
-                    g_core->show_ask_dialog(CORE_DLG_VCR_CEQS_WARNING,
-                                            header.extended_flags.c_eq_s_accurate ? CEQS_MISMATCH_A_WARNING_MESSAGE
-                                                                                  : CEQS_MISMATCH_B_WARNING_MESSAGE,
-                                            "VCR", true);
-
-                if (!proceed)
-                {
-                    return Res_Cancelled;
-                }
-            }
-        }
-
-        if (header.extended_version >= 3)
-        {
-            if ((bool)g_core->cfg->accurate_rdp_completion != header.extended_flags.accurate_rdp_completion)
-            {
-                bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RDP_COMPLETION_WARNING,
-                                                       header.extended_flags.accurate_rdp_completion
-                                                           ? RDP_COMPLETION_MISMATCH_A_WARNING_MESSAGE
-                                                           : RDP_COMPLETION_MISMATCH_B_WARNING_MESSAGE,
-                                                       "VCR", true);
-
-                if (!proceed)
-                {
-                    return Res_Cancelled;
-                }
-            }
-        }
-
-        const auto movie_cpu_cf = header.extended_version >= 4 ? header.extended_data.cpu_cf : 1.0;
-        if (g_core->cfg->cpu_cf != movie_cpu_cf)
-        {
-            bool proceed = g_core->show_ask_dialog(
-                CORE_DLG_VCR_CPU_CF_WARNING,
-                std::format(CPU_CF_MISMATCH_WARNING_MESSAGE, movie_cpu_cf, g_core->cfg->cpu_cf).c_str(), "VCR", true);
-
-            if (!proceed)
-            {
-                return Res_Cancelled;
-            }
-        }
-
-        const auto movie_rcp_lag_factor = header.extended_version >= 4 ? header.extended_data.rcp_lag_factor : 1.0;
-        if (g_core->cfg->rcp_lag_factor != movie_rcp_lag_factor)
-        {
-            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RCP_LAG_FACTOR_WARNING,
-                                                   std::format(RCP_LAG_FACTOR_MISMATCH_WARNING_MESSAGE,
-                                                               movie_rcp_lag_factor, g_core->cfg->rcp_lag_factor)
-                                                       .c_str(),
-                                                   "VCR", true);
-
-            if (!proceed)
-            {
-                return Res_Cancelled;
-            }
-        }
+        warning += "Playback might desynchronize. Do you want to continue?";
+        const auto result =
+            g_core->show_ask_dialog(CORE_DLG_VCR_GENERAL_SYNC_WARNING, warning.c_str(), "VCR", fsvc_warning);
+        if (!result) return Res_Cancelled;
     }
-    else
-    {
-        // Old movies filled with non-zero data in this section are suspicious, we'll warn the user.
-        if (header.extended_flags.data != 0)
-        {
-            g_core->show_dialog(OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE, "VCR", fsvc_warning);
-        }
-    }
+
     if (StrUtils::c_icmp(header.rom_name, (const char *)ROM_HEADER.nom) != 0)
     {
         const auto ask_message = std::format(ROM_NAME_WARNING_MESSAGE, header.rom_name, (char *)ROM_HEADER.nom);
