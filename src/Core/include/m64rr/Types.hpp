@@ -636,8 +636,17 @@ typedef struct ExtendedMovieData
      */
     uint32_t rerecord_count;
 
-    uint64_t unused_1;
-    uint64_t unused_2;
+    /**
+     * The CPU counter factor the movie was recorded with. Only valid if the extended version is at least 4.
+     */
+    double cpu_cf;
+
+    /**
+     * The factor by which RCP lag was multiplied when the movie was recorded. Only valid if the extended version is
+     * at least 4.
+     */
+    double rcp_lag_factor;
+
     uint32_t unused_3;
 } t_extended_movie_data;
 
@@ -689,7 +698,7 @@ typedef struct CoreVCRMovieHeader
     /**
      * The extended format version. Old movies have it set to <c>0</c>.
      */
-    uint8_t extended_version = 3;
+    uint8_t extended_version = 4;
 
     /**
      * The extended movie flags. Only valid if <c>extended_version != 0</c>.
@@ -780,6 +789,10 @@ typedef struct CoreVCRMovieHeader
     char description[256];
 } core_vcr_movie_header;
 #pragma pack(pop)
+
+static_assert(sizeof(core_vcr_extended_movie_flags) == 1);
+static_assert(sizeof(t_extended_movie_data) == 32);
+static_assert(sizeof(core_vcr_movie_header) == 1024);
 
 typedef enum
 {

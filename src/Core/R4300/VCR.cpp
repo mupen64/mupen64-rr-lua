@@ -52,6 +52,12 @@ constexpr auto RDP_COMPLETION_MISMATCH_A_WARNING_MESSAGE =
 constexpr auto RDP_COMPLETION_MISMATCH_B_WARNING_MESSAGE =
     "The movie was recorded with RDP and RSP completion signalled at the same instant (legacy timing), but is being "
     "played back with RDP completion delayed.\r\nPlayback might desynchronize. Are you sure you want to continue?";
+constexpr auto CPU_CF_MISMATCH_WARNING_MESSAGE =
+    "The movie was recorded with a CPU counter factor of {}, but is being played back with {}.\r\nPlayback might "
+    "desynchronize. Are you sure you want to continue?";
+constexpr auto RCP_LAG_FACTOR_MISMATCH_WARNING_MESSAGE =
+    "The movie was recorded with an RCP lag factor of {}, but is being played back with {}.\r\nPlayback might "
+    "desynchronize. Are you sure you want to continue?";
 constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
@@ -1059,6 +1065,8 @@ core_result vcr_start_record(std::filesystem::path path, uint16_t flags, std::st
     vcr.hdr.extended_flags.accurate_rdp_completion = g_core->cfg->accurate_rdp_completion;
 
     vcr.hdr.extended_data = default_hdr.extended_data;
+    vcr.hdr.extended_data.cpu_cf = g_core->cfg->cpu_cf;
+    vcr.hdr.extended_data.rcp_lag_factor = g_core->cfg->rcp_lag_factor;
 
     vcr.hdr.uid = (uint32_t)time(nullptr);
     vcr.hdr.length_vis = 0;
@@ -1414,6 +1422,34 @@ core_result vcr_start_playback(std::filesystem::path path)
                 {
                     return Res_Cancelled;
                 }
+            }
+        }
+
+        const auto movie_cpu_cf = header.extended_version >= 4 ? header.extended_data.cpu_cf : 1.0;
+        if (g_core->cfg->cpu_cf != movie_cpu_cf)
+        {
+            bool proceed = g_core->show_ask_dialog(
+                CORE_DLG_VCR_CPU_CF_WARNING,
+                std::format(CPU_CF_MISMATCH_WARNING_MESSAGE, movie_cpu_cf, g_core->cfg->cpu_cf).c_str(), "VCR", true);
+
+            if (!proceed)
+            {
+                return Res_Cancelled;
+            }
+        }
+
+        const auto movie_rcp_lag_factor = header.extended_version >= 4 ? header.extended_data.rcp_lag_factor : 1.0;
+        if (g_core->cfg->rcp_lag_factor != movie_rcp_lag_factor)
+        {
+            bool proceed = g_core->show_ask_dialog(CORE_DLG_VCR_RCP_LAG_FACTOR_WARNING,
+                                                   std::format(RCP_LAG_FACTOR_MISMATCH_WARNING_MESSAGE,
+                                                               movie_rcp_lag_factor, g_core->cfg->rcp_lag_factor)
+                                                       .c_str(),
+                                                   "VCR", true);
+
+            if (!proceed)
+            {
+                return Res_Cancelled;
             }
         }
     }
