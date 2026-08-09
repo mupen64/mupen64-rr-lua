@@ -16,10 +16,16 @@
 namespace HotkeyUtils
 {
 /**
- * \brief Tries to convert a Windows virtual key code to a `Hotkey::KeyCode`.
- * \return The converted keycode, or `std::nullopt` if there is no equivalent.
+ * \brief Tries to convert a Windows virtual key code to a `Hotkey::Trigger`.
+ * \return The converted trigger, or `std::nullopt` if there is no equivalent.
  */
-std::optional<Hotkey::KeyCode> win_to_hotkey_keycode(uint32_t vk);
+std::optional<::Hotkey::Trigger> vk_to_trigger(uint32_t vk);
+
+/**
+ * \brief Tries to convert a `Hotkey::Trigger` to a Windows virtual key code.
+ * \return The converted virtual key code, or `std::nullopt` if there is no equivalent.
+ */
+std::optional<uint32_t> trigger_to_vk(const ::Hotkey::Trigger &trigger);
 
 /**
  * \brief Shows a dialog prompting the user to enter a hotkey.
@@ -28,7 +34,7 @@ std::optional<Hotkey::KeyCode> win_to_hotkey_keycode(uint32_t vk);
  * \param hotkey The hotkey to set.
  * \return Whether the user confirmed the dialog. If the user cancelled the dialog, the hotkey won't have changed.
  */
-bool show_prompt(HWND hwnd, const std::wstring &caption, Hotkey &hotkey);
+bool show_prompt(HWND hwnd, const std::wstring &caption, ::Hotkey &hotkey);
 
 /**
  * \brief Tries associating the specified action with the specified hotkey. Checks for a hotkey conflict and, if
@@ -37,7 +43,7 @@ bool show_prompt(HWND hwnd, const std::wstring &caption, Hotkey &hotkey);
  * through_action_manager Whether the ActionManager should be called to associate the hotkey. If false, the hotkey will
  * only be set in the config.
  */
-void try_associate_hotkey(HWND hwnd, const std::wstring &action, const Hotkey &new_hotkey,
+void try_associate_hotkey(HWND hwnd, const std::wstring &action, const ::Hotkey &new_hotkey,
                           bool through_action_manager = true);
 
 } // namespace HotkeyUtils

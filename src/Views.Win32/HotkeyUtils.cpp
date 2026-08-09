@@ -160,9 +160,53 @@ struct DialogParams
     Hotkey hotkey = Hotkey::make_unassigned();
 };
 
-std::optional<Hotkey::KeyCode> HotkeyUtils::win_to_hotkey_keycode(uint32_t vk)
+std::optional<Hotkey::Trigger> HotkeyUtils::vk_to_trigger(uint32_t vk)
 {
+    if (vk == 0) return Hotkey::Trigger{std::monostate{}};
+
     if (WIN_TO_SDL_KEYCODE.contains(vk)) return Hotkey::KeyCode(WIN_TO_SDL_KEYCODE.at(vk));
+    if (vk == VK_LBUTTON) return Hotkey::MouseButton(SDL_BUTTON_LEFT);
+    if (vk == VK_MBUTTON) return Hotkey::MouseButton(SDL_BUTTON_MIDDLE);
+    if (vk == VK_RBUTTON) return Hotkey::MouseButton(SDL_BUTTON_RIGHT);
+    if (vk == VK_XBUTTON1) return Hotkey::MouseButton(SDL_BUTTON_X1);
+    if (vk == VK_XBUTTON2) return Hotkey::MouseButton(SDL_BUTTON_X2);
+    return std::nullopt;
+}
+
+std::optional<uint32_t> HotkeyUtils::trigger_to_vk(const Hotkey::Trigger &trigger)
+{
+    if (std::holds_alternative<std::monostate>(trigger)) return 0;
+
+    if (std::holds_alternative<Hotkey::MouseButton>(trigger))
+    {
+        const auto mouse_button = std::get<Hotkey::MouseButton>(trigger);
+        switch (mouse_button.get())
+        {
+        case SDL_BUTTON_LEFT:
+            return VK_LBUTTON;
+        case SDL_BUTTON_MIDDLE:
+            return VK_MBUTTON;
+        case SDL_BUTTON_RIGHT:
+            return VK_RBUTTON;
+        case SDL_BUTTON_X1:
+            return VK_XBUTTON1;
+        case SDL_BUTTON_X2:
+            return VK_XBUTTON2;
+        default:
+            return 0;
+        }
+    }
+
+    if (std::holds_alternative<Hotkey::KeyCode>(trigger))
+    {
+        const SDL_Keycode keycode = std::get<Hotkey::KeyCode>(trigger).get();
+        for (const auto &[win, sdl] : WIN_TO_SDL_KEYCODE)
+        {
+            if (sdl == keycode) return win;
+        }
+        return std::nullopt;
+    }
+
     return std::nullopt;
 }
 
@@ -196,9 +240,9 @@ static LRESULT CALLBACK HotkeyButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wpa
         }
         else
         {
-            const auto keycode = HotkeyUtils::win_to_hotkey_keycode(wparam);
-            if (!keycode) break;
-            params->hotkey.key = Hotkey::KeyCode(*keycode);
+            const auto trigger = HotkeyUtils::vk_to_trigger(wparam);
+            if (!trigger) break;
+            params->hotkey.trigger = *trigger;
             EndDialog(GetParent(hwnd), IDOK);
         }
 
@@ -250,25 +294,18 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         break;
     case WM_MBUTTONDOWN: {
-        const auto keycode = HotkeyUtils::win_to_hotkey_keycode(VK_MBUTTON);
-        if (!keycode) break;
-        params->hotkey.key = Hotkey::KeyCode(*keycode);
+        const auto trigger = HotkeyUtils::vk_to_trigger(VK_MBUTTON);
+        if (!trigger) break;
+        params->hotkey.trigger = *trigger;
         EndDialog(hwnd, IDOK);
         break;
     }
     case WM_XBUTTONDOWN:
-        if (HIWORD(wparam) == XBUTTON1)
+        if (HIWORD(wparam) == XBUTTON1 || HIWORD(wparam) == XBUTTON2)
         {
-            const auto keycode = HotkeyUtils::win_to_hotkey_keycode(VK_XBUTTON1);
-            if (!keycode) break;
-            params->hotkey.key = *keycode;
-            EndDialog(hwnd, IDOK);
-        }
-        if (HIWORD(wparam) == XBUTTON2)
-        {
-            const auto keycode = HotkeyUtils::win_to_hotkey_keycode(VK_XBUTTON2);
-            if (!keycode) break;
-            params->hotkey.key = *keycode;
+            const auto trigger = HotkeyUtils::vk_to_trigger(HIWORD(wparam));
+            if (!trigger) break;
+            params->hotkey.trigger = *trigger;
             EndDialog(hwnd, IDOK);
         }
         break;
@@ -290,14 +327,9 @@ bool HotkeyUtils::show_prompt(const HWND hwnd, const std::wstring &caption, Hotk
     const bool confirmed = result == IDOK;
 
     if (confirmed)
-    {
         hotkey = params->hotkey;
-    }
     else
-    {
         hotkey = prev_hotkey;
-    }
-    hotkey.assigned = true;
 
     delete params;
 

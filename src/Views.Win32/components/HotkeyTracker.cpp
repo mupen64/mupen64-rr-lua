@@ -34,12 +34,12 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
     const bool alt = GetKeyState(VK_MENU) & 0x8000;
     bool hit = false;
 
-    const auto keycode = *HotkeyUtils::win_to_hotkey_keycode(key);
-    const auto hotkeys = g_config.hotkeys;
+    const auto trigger = *HotkeyUtils::vk_to_trigger(key);
 
+    const auto hotkeys = g_config.hotkeys;
     for (const auto &[path, hotkey] : hotkeys)
     {
-        if (keycode == hotkey.key && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
+        if (trigger == hotkey.trigger && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
         {
             if (ActionManager::get_enabled(path) == false) continue;
 
@@ -81,50 +81,51 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
             break;
         }
 
-        // FIXME: Reimplement!
-        // const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
-        // const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
-        // const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
-        // bool hit = false;
+        const bool mmb = GetAsyncKeyState(VK_MBUTTON) & 0x8000;
+        const bool xmb1 = GetAsyncKeyState(VK_XBUTTON1) & 0x8000;
+        const bool xmb2 = GetAsyncKeyState(VK_XBUTTON2) & 0x8000;
+        bool hit = false;
 
-        // const auto hotkeys = g_config.hotkeys;
-        // for (const auto &[path, hotkey] : hotkeys)
-        // {
+        const auto hotkeys = g_config.hotkeys;
+        for (const auto &[path, hotkey] : hotkeys)
+        {
+            const auto vk = HotkeyUtils::trigger_to_vk(hotkey.trigger);
+            if (!vk) continue;
 
-        //     const auto down = (mmb && !ctx->last_mmb && hotkey.key == VK_MBUTTON) ||
-        //                       (xmb1 && !ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) ||
-        //                       (xmb2 && !ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
-        //     const auto up = (!mmb && ctx->last_mmb && hotkey.key == VK_MBUTTON) ||
-        //                     (!xmb1 && ctx->last_xmb1 && hotkey.key == VK_XBUTTON1) ||
-        //                     (!xmb2 && ctx->last_xmb2 && hotkey.key == VK_XBUTTON2);
+            const auto down = (mmb && !ctx->last_mmb && *vk == VK_MBUTTON) ||
+                              (xmb1 && !ctx->last_xmb1 && *vk == VK_XBUTTON1) ||
+                              (xmb2 && !ctx->last_xmb2 && *vk == VK_XBUTTON2);
+            const auto up = (!mmb && ctx->last_mmb && *vk == VK_MBUTTON) ||
+                            (!xmb1 && ctx->last_xmb1 && *vk == VK_XBUTTON1) ||
+                            (!xmb2 && ctx->last_xmb2 && *vk == VK_XBUTTON2);
 
-        //     hit = down || up;
+            hit = down || up;
 
-        //     if (down)
-        //     {
-        //         const auto params = ActionManager::get_params(path);
+            if (down)
+            {
+                const auto params = ActionManager::get_params(path);
 
-        //         // Has params: hand off to ParameterPalette.
-        //         if (!params.empty())
-        //             ParameterPalette::show(path);
-        //         else
-        //             ActionManager::invoke(path);
-        //     }
+                // Has params: hand off to ParameterPalette.
+                if (!params.empty())
+                    ParameterPalette::show(path);
+                else
+                    ActionManager::invoke(path);
+            }
 
-        //     if (up)
-        //     {
-        //         ActionManager::invoke(path, true, true);
-        //     }
-        // }
+            if (up)
+            {
+                ActionManager::invoke(path, true, true);
+            }
+        }
 
-        // ctx->last_mmb = mmb;
-        // ctx->last_xmb1 = xmb1;
-        // ctx->last_xmb2 = xmb2;
+        ctx->last_mmb = mmb;
+        ctx->last_xmb1 = xmb1;
+        ctx->last_xmb2 = xmb2;
 
-        // if (hit)
-        // {
-        //     return 0;
-        // }
+        if (hit)
+        {
+            return 0;
+        }
 
         break;
     }

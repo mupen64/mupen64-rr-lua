@@ -17,8 +17,9 @@ static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 {
     lua_newtable(L);
 
+    // COMPAT
     lua_pushstring(L, "key");
-    lua_pushinteger(L, hotkey.key.get());
+    lua_pushinteger(L, *HotkeyUtils::trigger_to_vk(hotkey.trigger));
     lua_settable(L, -3);
 
     lua_pushstring(L, "ctrl");
@@ -33,8 +34,9 @@ static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
     lua_pushboolean(L, hotkey.alt);
     lua_settable(L, -3);
 
+    // COMPAT
     lua_pushstring(L, "assigned");
-    lua_pushboolean(L, hotkey.assigned);
+    lua_pushboolean(L, hotkey.is_assigned());
     lua_settable(L, -3);
 }
 
@@ -48,8 +50,10 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
         return hotkey;
     }
 
+    // COMPAT
     lua_getfield(L, i, "key");
-    hotkey.key = ::Hotkey::KeyCode(luaL_opt(L, lua_tointeger, -1, 0));
+    const auto vk = luaL_opt(L, lua_tointeger, -1, 0);
+    hotkey.trigger = *HotkeyUtils::vk_to_trigger(vk);
     lua_pop(L, 1);
 
     lua_getfield(L, i, "ctrl");
@@ -60,8 +64,10 @@ static ::Hotkey check_hotkey(lua_State *L, int i)
     hotkey.shift = luaL_opt(L, lua_toboolean, -1, false);
     lua_pop(L, 1);
 
+    // COMPAT
     lua_getfield(L, i, "assigned");
-    hotkey.assigned = luaL_opt(L, lua_toboolean, -1, true);
+    const auto assigned = luaL_opt(L, lua_toboolean, -1, true);
+    if (!assigned) hotkey = ::Hotkey::make_unassigned();
     lua_pop(L, 1);
 
     return hotkey;
