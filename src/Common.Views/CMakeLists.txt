@@ -55,3 +55,5 @@ endif()
 if (NOT WIN32)
     target_link_libraries(Mupen64RR.Common.Views PUBLIC PkgConfig::libsafec)
 endif()
+
+add_compile_definitions(NOMINMAX)

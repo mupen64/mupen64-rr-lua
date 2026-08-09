@@ -13,9 +13,6 @@
 #include "StrUtils.hpp"
 
 #if defined(_WIN32)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 #include <share.h>
 #include <windows.h>
 #include <share.h>

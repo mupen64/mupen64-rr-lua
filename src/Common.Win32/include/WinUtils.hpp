@@ -7,10 +7,6 @@
 
 #include <filesystem>
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
 #include <windows.h>
 #include <windowsx.h>
 #include <commdlg.h>
