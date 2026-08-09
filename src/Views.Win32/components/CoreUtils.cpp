@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include "CoreUtils.hpp"
 #include <plugin/Plugin.hpp>
 #include <action/AppActions.hpp>
@@ -20,21 +20,17 @@ static void prompt_plugin_change(HWND hwnd)
     {
         auto plugin_discovery_result = PluginUtil::discover_plugins(Config::plugin_directory());
 
-        auto first_video_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::Video;
-        });
+        auto first_video_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Video; });
 
-        auto first_audio_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::Audio;
-        });
+        auto first_audio_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Audio; });
 
-        auto first_input_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::Input;
-        });
+        auto first_input_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::Input; });
 
-        auto first_rsp_plugin = std::ranges::find_if(plugin_discovery_result.plugins, [](const auto &plugin) {
-            return plugin->type() == ZilmarExtSpec::PluginType::RSP;
-        });
+        auto first_rsp_plugin = std::ranges::find_if(
+            plugin_discovery_result.plugins, [](const auto &plugin) { return plugin->type() == Plugin::Type::RSP; });
 
         if (first_video_plugin != plugin_discovery_result.plugins.end())
         {
@@ -113,7 +109,7 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
         break;
     case VCR_InvalidExtendedVersion:
         module = "VCR";
-        error = "The movie's extended version is invalid.";
+        error = "The movie's extended version is invalid. It might be too new for this version of the emulator.";
         break;
     case VCR_NeedsPlaybackOrRecording:
         module = "VCR";

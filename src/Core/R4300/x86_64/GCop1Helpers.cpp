@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -172,14 +172,13 @@ void gencheck_output_d(void *fpr_slot)
 // stmxcsr/ldmxcsr/and/or all clobber only r11 + memory, so EAX/EBX survive across a convert.
 void gen_mxcsr_set_round(uint32_t rc_bits)
 {
-    stmxcsr_m32(&g_saved_mxcsr);                // save the current (FCR31) mode
-    stmxcsr_m32(&g_scratch_mxcsr);              // working copy
-    and_m32_imm32(&g_scratch_mxcsr, ~0x6000u);  // clear the RC field
-    if (rc_bits)
-        or_m32_imm32(&g_scratch_mxcsr, rc_bits);
-    ldmxcsr_m32(&g_scratch_mxcsr);              // apply the fixed rounding mode
+    stmxcsr_m32(&g_saved_mxcsr);               // save the current (FCR31) mode
+    stmxcsr_m32(&g_scratch_mxcsr);             // working copy
+    and_m32_imm32(&g_scratch_mxcsr, ~0x6000u); // clear the RC field
+    if (rc_bits) or_m32_imm32(&g_scratch_mxcsr, rc_bits);
+    ldmxcsr_m32(&g_scratch_mxcsr); // apply the fixed rounding mode
 }
 void gen_mxcsr_restore()
 {
-    ldmxcsr_m32(&g_saved_mxcsr);                // restore the FCR31 mode
+    ldmxcsr_m32(&g_saved_mxcsr); // restore the FCR31 mode
 }

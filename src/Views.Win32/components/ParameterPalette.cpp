@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2025, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.hpp"
 #include "RomBrowser.hpp"
-#include "stdafx.h"
 #include <components/CommandPalette.hpp>
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>
@@ -224,11 +224,11 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
         update_dialog_position_and_size();
         try_apply_parameter();
 
-        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe(
-            Messenger::Message::MainWindowMoved, [](const auto &) { update_dialog_position_and_size(); }));
+        g_ctx.unsubscribe_funcs.push_back(
+            Messenger::subscribe<Messenger::Message::MainWindowMoved>([] { update_dialog_position_and_size(); }));
 
-        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe(
-            Messenger::Message::SizeChanged, [](const auto &) { update_dialog_position_and_size(); }));
+        g_ctx.unsubscribe_funcs.push_back(Messenger::subscribe<Messenger::Message::SizeChanged>(
+            [](const auto &) { update_dialog_position_and_size(); }));
 
         WinDarkMode::attach(hwnd);
         break;

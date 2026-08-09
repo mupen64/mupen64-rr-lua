@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -21,9 +21,9 @@ void gencvt_s_l()
 #else
     gencheck_cop1_unusable();
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
-    cvtsi2ssq_xmm_preg64(0, EAX);    // xmm0 = (float)(int64)fs
+    cvtsi2ssq_xmm_preg64(0, EAX); // xmm0 = (float)(int64)fs
     mov_reg64_m64(EAX, (void *)(&reg_cop1_simple[dst->f.cf.fd]));
-    movss_preg64_xmm(EAX, 0);        // fd = xmm0
+    movss_preg64_xmm(EAX, 0); // fd = xmm0
 #endif
 }
 
@@ -34,8 +34,8 @@ void gencvt_d_l()
 #else
     gencheck_cop1_unusable();
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fs]));
-    cvtsi2sdq_xmm_preg64(0, EAX);    // xmm0 = (double)(int64)fs
+    cvtsi2sdq_xmm_preg64(0, EAX); // xmm0 = (double)(int64)fs
     mov_reg64_m64(EAX, (void *)(&reg_cop1_double[dst->f.cf.fd]));
-    movsd_preg64_xmm(EAX, 0);        // fd = xmm0
+    movsd_preg64_xmm(EAX, 0); // fd = xmm0
 #endif
 }

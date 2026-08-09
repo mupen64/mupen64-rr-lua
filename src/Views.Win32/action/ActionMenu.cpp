@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Messenger.hpp>
 #include <action/ActionManager.hpp>
 #include <action/ActionMenu.hpp>
@@ -406,7 +406,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
 
 void ActionMenu::init()
 {
-    Messenger::subscribe(Messenger::Message::ActionRegistryChanged, [](const auto &any) {
+    Messenger::subscribe<Messenger::Message::ActionRegistryChanged>([] {
         g_am_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
         for (const auto &ctx : g_am_ctx.active_contexts)
         {
@@ -417,8 +417,7 @@ void ActionMenu::init()
     // OPTIMIZATION: Instead of updating **all** menu item states on WM_INITMENU,
     // we subscribe to the change notifications and store a set of "invalidated" menu items and only update the changed
     // items in WM_INITMENU.
-    Messenger::subscribe(Messenger::Message::ActionDisplayNameChanged, [](const auto &any) {
-        const auto actions = std::any_cast<std::vector<std::wstring>>(any);
+    Messenger::subscribe<Messenger::Message::ActionDisplayNameChanged>([](const auto &actions) {
         for (const auto &action : actions)
         {
             for (const auto &ctx : g_am_ctx.active_contexts)
@@ -428,8 +427,7 @@ void ActionMenu::init()
         }
     });
 
-    Messenger::subscribe(Messenger::Message::ActionEnabledChanged, [](const auto &any) {
-        const auto actions = std::any_cast<std::vector<std::wstring>>(any);
+    Messenger::subscribe<Messenger::Message::ActionEnabledChanged>([](const auto &actions) {
         for (const auto &action : actions)
         {
             for (const auto &ctx : g_am_ctx.active_contexts)
@@ -439,8 +437,7 @@ void ActionMenu::init()
         }
     });
 
-    Messenger::subscribe(Messenger::Message::ActionActiveChanged, [](const auto &any) {
-        const auto actions = std::any_cast<std::vector<std::wstring>>(any);
+    Messenger::subscribe<Messenger::Message::ActionActiveChanged>([](const auto &actions) {
         for (const auto &action : actions)
         {
             for (const auto &ctx : g_am_ctx.active_contexts)

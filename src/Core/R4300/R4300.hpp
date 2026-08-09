@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@
 #include <R4300/Recomp.hpp>
 #include <Memory/TLB.hpp>
 #include <R4300/Rom.hpp>
-#include <include/core_types.h>
+#include <m64rr/Types.hpp>
 
 struct r4300
 {
@@ -67,7 +67,7 @@ extern char invalid_code[0x100000];
 extern uint32_t jump_to_address;
 extern int32_t vi_field;
 extern uint32_t next_vi;
-extern core_system_type g_sys_type;
+extern CoreSystemType g_sys_type;
 extern r4300 g_r4300;
 
 extern FILE *g_eeprom_file;

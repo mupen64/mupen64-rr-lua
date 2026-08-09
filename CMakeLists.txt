@@ -1,5 +1,5 @@
 #[===[
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
@@ -14,6 +14,13 @@ project(mupen64-rr
 # Options
 # ===========================================
 
+if(MINGW)
+  # Avoid weird "lib" prefixes when cross-compiling (e.g. libTASVideo.dll instead of TASVideo.dll).
+  set(CMAKE_SHARED_LIBRARY_PREFIX "")
+  set(CMAKE_STATIC_LIBRARY_PREFIX "")
+  set(CMAKE_SHARED_MODULE_PREFIX "")
+endif()
+
 # The dynarec only supports x86 and x86_64; building for any other
 # architecture (e.g. ARM64) errors out (see src/Core/CMakeLists.txt).
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
@@ -26,6 +33,9 @@ if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   message(STATUS "Target system ${CMAKE_SYSTEM_NAME} is incompatible with the Win32 frontend, disabling...")
   set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
 endif()
+
+# This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.
+set(MUPEN64RR_BUILD_CLI OFF CACHE BOOL "If on, enables the CLI view (primarily for testing)")
 
 # Basic checks and setup
 # ===========================================
@@ -73,16 +83,19 @@ find_package(PkgConfig REQUIRED)
 # Core cross-platform dependencies
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
-if (NOT WIN32)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
+pkg_check_modules(lz4 IMPORTED_TARGET GLOBAL "liblz4")
+
+# libsafec (required on most runtimes to support C11 Annex K)
+if(NOT WIN32)
   pkg_check_modules(libsafec IMPORTED_TARGET GLOBAL "libsafec")
 endif()
 
 # Windows-only dependencies
 if(MUPEN64RR_BUILD_WIN32)
-  find_package(nlohmann_json CONFIG REQUIRED)
   find_package(spdlog CONFIG REQUIRED)
   find_package(glew CONFIG REQUIRED)
-  find_package(SDL3 CONFIG REQUIRED)
 
   pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
   pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
@@ -105,17 +118,44 @@ endif()
 Copies all vcpkg dependencies into the target's folder.
 ]=======================]
 function(mupen64rr_copy_vcpkg_deps target)
-  if (MUPEN64RR_LINK_STATIC)
+  if(MUPEN64RR_LINK_STATIC)
     return()
   endif()
-  if (NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND DEFINED VCPKG_INSTALLED_DIR))
+
+  if(NOT(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND DEFINED VCPKG_INSTALLED_DIR))
     return()
   endif()
 
   add_custom_command(
     TARGET "${target}" POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_directory
-      "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin" "$<TARGET_FILE_DIR:${target}>"
+    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin" "$<TARGET_FILE_DIR:${target}>"
+    VERBATIM
+  )
+endfunction()
+
+#[=======================[
+Copies MinGW runtime DLLs (libgcc, libstdc++, libwinpthread) to the target's
+output directory. Only active when cross-compiling with MinGW.
+]=======================]
+function(mupen64rr_copy_mingw_runtime target)
+  if(NOT MINGW)
+    return()
+  endif()
+
+  # Derive the MinGW prefix from the compiler name.
+  # e.g. /bin/x86_64-w64-mingw32-g++ -> x86_64-w64-mingw32
+  get_filename_component(_compiler_name "${CMAKE_CXX_COMPILER}" NAME)
+  string(REGEX REPLACE "-g\\+\\+.*$" "" _mingw_prefix "${_compiler_name}")
+  set(_mingw_bindir "/usr/${_mingw_prefix}/bin")
+
+  add_custom_command(
+    TARGET "${target}" POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${_mingw_bindir}/libgcc_s_seh-1.dll"
+    "${_mingw_bindir}/libstdc++-6.dll"
+    "${_mingw_bindir}/libwinpthread-1.dll"
+    "$<TARGET_FILE_DIR:${target}>"
     VERBATIM
   )
 endfunction()
@@ -126,6 +166,11 @@ include(CTest)
 include(Catch)
 
 if(WIN32)
+  # Use UTF-16 versions of functions
+  add_compile_definitions(UNICODE _UNICODE)
+endif()
+
+if(MSVC)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)
   # - enable the program to use pointers larger than 2GB
@@ -141,9 +186,6 @@ if(WIN32)
 
   # Enable UTF-8 in Windows-adjacent APIs where possible
   add_compile_options(/utf-8)
-
-  # Use UTF-16 versions of functions
-  add_compile_definitions(UNICODE _UNICODE)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$")

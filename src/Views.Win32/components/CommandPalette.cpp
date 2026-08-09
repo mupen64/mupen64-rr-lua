@@ -1,11 +1,11 @@
 ﻿/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#include "Common.hpp"
 #include "RomBrowser.hpp"
-#include "stdafx.h"
 #include <components/CommandPalette.hpp>
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>
@@ -109,7 +109,7 @@ static t_command_palette_context g_ctx{};
 static std::wstring normalize(std::wstring str)
 {
     std::ranges::transform(str, str.begin(), toupper);
-    str = MiscHelpers::trim(str);
+    str = StrUtils::ctrim_wstring(str);
     return str;
 }
 
@@ -331,7 +331,7 @@ static bool try_invoke(int32_t i)
         if (confirmed)
         {
             Config::apply_and_save();
-            Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+            Messenger::broadcast<Messenger::Message::ConfigLoaded>();
             SendMessage(g_ctx.hwnd, WM_CLOSE, 0, 0);
             return true;
         }
@@ -441,18 +441,13 @@ static void add_actions(const std::wstring_view query)
         {
             segment = ActionManager::get_display_name(segment, true);
         }
-        const auto name = MiscHelpers::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+        const auto name = StrUtils::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
 
         std::erase_if(actions, [&](const auto &action) {
             const auto action_segments = ActionManager::get_segments(action);
             const auto group_segments = ActionManager::get_segments(group);
 
-            if (action_segments.at(action_segments.size() - 2) != group_segments.back())
-            {
-                return true;
-            }
-
-            return false;
+            return action_segments.at(action_segments.size() - 2) != group_segments.back();
         });
 
         if (actions.empty())

@@ -20,7 +20,8 @@
     "pkgconf",
     "speexdsp",
     "glew",
-    "sdl3"
+    "sdl3",
+    "lz4"
   ],
   "builtin-baseline": "10ceb139a610ebf3c6aa49cdc4a4b7f3db5d3f2b"
 }

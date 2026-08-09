@@ -1,17 +1,19 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 #pragma once
 
-#include <Views.Win32/ZilmarExtSpecPlugin.h>
+#include <m64rr/Plugin.hpp>
 
 struct TASVideoContext
 {
     HINSTANCE hinst;
-    HWND emu_hwnd;
-    HWND statusbar_hwnd;
-    void (*check_interrupts)(void);
-    std::filesystem::path config_directory;
 };
 
 extern TASVideoContext g_tas_ctx;
-extern ZilmarExtSpec::ExtendedFuncs *g_ef;
+extern M64RRSpec::PluginInit *g_plugin;
 
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME(L"TAS Video")
+#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Video")

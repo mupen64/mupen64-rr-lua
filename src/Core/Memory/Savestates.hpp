@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #pragma once
 
-#include <include/core_api.h>
+#include <m64rr/API.hpp>
 
 extern bool g_st_skip_dma;
 extern bool g_st_old;

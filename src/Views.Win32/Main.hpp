@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -126,4 +126,6 @@ void init_sdl();
  * \brief Forwards mouse events to the Lua callbacks.
  */
 void handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+
+void request_size(uint32_t width, uint32_t height);
 } // namespace Main

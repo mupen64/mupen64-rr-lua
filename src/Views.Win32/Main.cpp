@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <action/ActionManager.hpp>
 #include <Config.hpp>
 #include <DialogService.hpp>
@@ -100,9 +100,9 @@ std::wstring get_mupen_name(bool simple)
 #endif
 
 #ifdef _M_X64
-#define ARCH_INFO L"-x64"
-#else
 #define ARCH_INFO L""
+#else
+#define ARCH_INFO L"-x86"
 #endif
 
 #define BASE_NAME L"Mupen 64 "
@@ -263,18 +263,6 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
     }
 }
 
-void update_screen()
-{
-    if (PluginUtil::mge_available())
-    {
-        MGECompositor::update_screen();
-    }
-    else
-    {
-        g_plugin_funcs.video_update_screen();
-    }
-}
-
 void ai_len_changed()
 {
     if (!CaptureManager::is_capturing())
@@ -317,19 +305,17 @@ static void update_titlebar()
 
 #pragma region Change notifications
 
-void on_script_started(std::any data)
+void on_script_started(std::filesystem::path value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<std::filesystem::path>(data);
         RecentMenu::add(AppActions::RECENT_SCRIPTS, g_config.recent_lua_script_paths, value.wstring(),
                         g_config.is_recent_scripts_frozen);
     });
 }
 
-void on_task_changed(std::any data)
+void on_task_changed(core_vcr_task value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<core_vcr_task>(data);
         static auto previous_value = value;
         if (!vcr_is_task_recording(value) && vcr_is_task_recording(previous_value))
         {
@@ -353,7 +339,7 @@ void on_task_changed(std::any data)
     });
 }
 
-void on_emu_stopping(std::any)
+void on_emu_stopping()
 {
     g_main_ctx.dispatcher->invoke([] {
         LuaDialog::store_running_scripts();
@@ -361,10 +347,9 @@ void on_emu_stopping(std::any)
     });
 }
 
-void on_emu_launched_changed(std::any data)
+void on_emu_launched_changed(bool value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<bool>(data);
         static auto previous_value = value;
 
         const auto window_style = GetWindowLong(g_main_ctx.hwnd, GWL_STYLE);
@@ -409,11 +394,9 @@ void on_emu_launched_changed(std::any data)
     });
 }
 
-void on_capturing_changed(std::any data)
+void on_capturing_changed(bool value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        auto value = std::any_cast<bool>(data);
-
         if (value)
         {
             SetWindowLong(g_main_ctx.hwnd, GWL_STYLE, GetWindowLong(g_main_ctx.hwnd, GWL_STYLE) & ~WS_MINIMIZEBOX);
@@ -432,10 +415,8 @@ void on_capturing_changed(std::any data)
     });
 }
 
-void on_speed_modifier_changed(std::any data)
+void on_speed_modifier_changed(int32_t value)
 {
-    auto value = std::any_cast<int32_t>(data);
-
     const auto vis_per_second =
         g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
     const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
@@ -443,12 +424,12 @@ void on_speed_modifier_changed(std::any data)
     Statusbar::post(std::format(L"Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
 }
 
-void on_emu_paused_changed(std::any data)
+void on_emu_paused_changed(bool)
 {
     g_frame_changed = true;
 }
 
-void on_vis_since_input_poll_exceeded(std::any)
+void on_vis_since_input_poll_exceeded()
 {
     if (g_vis_since_input_poll_warning_dismissed)
     {
@@ -469,13 +450,12 @@ void on_vis_since_input_poll_exceeded(std::any)
     g_vis_since_input_poll_warning_dismissed = true;
 }
 
-void on_movie_loop_changed(std::any data)
+void on_movie_loop_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
 }
 
-void on_config_loaded(std::any)
+void on_config_loaded()
 {
     RomBrowser::build();
 
@@ -494,20 +474,19 @@ void on_config_loaded(std::any)
     WinDarkMode::set(theme);
 }
 
-void on_seek_completed(std::any)
+void on_seek_completed()
 {
     LuaCallbacks::call_seek_completed();
 }
 
-void on_warp_modify_status_changed(std::any data)
+void on_warp_modify_status_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     LuaCallbacks::call_warp_modify_status_changed(value);
 }
 
-void on_emu_starting_changed(std::any data)
+void on_emu_starting_changed(bool value)
 {
-    g_emu_starting = std::any_cast<bool>(data);
+    g_emu_starting = value;
     update_titlebar();
 }
 
@@ -602,7 +581,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         else if (extension == ".m64")
         {
             g_config.core.vcr_readonly = true;
-            Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
+            Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
             ThreadPool::submit_task([fname] {
                 auto result = g_main_ctx.core_ctx->vcr_start_playback(fname);
                 CoreUtils::show_error_dialog_for_result(result);
@@ -635,9 +614,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.repeat = repeat;
 
         LuaCallbacks::call_atkey(args);
-
-        if (g_plugin_funcs.input_key_down && g_main_ctx.core_ctx->vr_get_launched())
-            g_plugin_funcs.input_key_down(wParam, lParam);
+        PluginUtil::key_down(wParam, lParam);
         break;
     }
     case WM_SYSKEYUP:
@@ -648,9 +625,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         args.repeat = false;
 
         LuaCallbacks::call_atkey(args);
-
-        if (g_plugin_funcs.input_key_up && g_main_ctx.core_ctx->vr_get_launched())
-            g_plugin_funcs.input_key_up(wParam, lParam);
+        PluginUtil::key_up(wParam, lParam);
         break;
     }
     case WM_CHAR: {
@@ -679,10 +654,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         return 0;
     }
     case WM_MOVE: {
-        if (g_main_ctx.core_ctx->vr_get_launched())
-        {
-            g_plugin_funcs.video_move_screen((int)wParam, lParam);
-        }
+        PluginUtil::move_screen(wParam, lParam);
 
         if (IsIconic(g_main_ctx.hwnd))
         {
@@ -695,7 +667,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_config.window_x = rect.left;
         g_config.window_y = rect.top;
 
-        Messenger::broadcast(Messenger::Message::MainWindowMoved, nullptr);
+        Messenger::broadcast<Messenger::Message::MainWindowMoved>();
 
         break;
     }
@@ -703,7 +675,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
         RECT rect{};
         GetClientRect(g_main_ctx.hwnd, &rect);
-        Messenger::broadcast(Messenger::Message::SizeChanged, rect);
+        Messenger::broadcast<Messenger::Message::SizeChanged>(
+            std::make_pair(rect.right - rect.left, rect.bottom - rect.top));
 
         if (g_main_ctx.core_ctx->vr_get_launched())
         {
@@ -744,6 +717,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         MGECompositor::create(hwnd);
         PianoRoll::init();
         LuaDialog::init();
+        LuaRenderer::init();
         SetTimer(hwnd, SDL_TIMER_ID, 1000 / 60, sdl_timer_proc);
         return TRUE;
     case WM_DESTROY:
@@ -905,60 +879,58 @@ static core_result init_core()
     g_main_ctx.core.callbacks.load_state = LuaCallbacks::call_load_state;
     g_main_ctx.core.callbacks.reset = LuaCallbacks::call_reset;
     g_main_ctx.core.callbacks.seek_completed = [] {
-        Messenger::broadcast(Messenger::Message::SeekCompleted, nullptr);
+        Messenger::broadcast<Messenger::Message::SeekCompleted>();
         LuaCallbacks::call_seek_completed();
     };
     g_main_ctx.core.callbacks.core_executing_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::CoreExecutingChanged, value);
+        Messenger::broadcast<Messenger::Message::CoreExecutingChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_paused_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::EmuPausedChanged, value);
+        Messenger::broadcast<Messenger::Message::EmuPausedChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_launched_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::EmuLaunchedChanged, value);
+        Messenger::broadcast<Messenger::Message::EmuLaunchedChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_starting_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::EmuStartingChanged, value);
+        Messenger::broadcast<Messenger::Message::EmuStartingChanged>(value);
     };
     g_main_ctx.core.callbacks.emu_starting = [] { PluginUtil::start_plugins(); };
     g_main_ctx.core.callbacks.emu_stopped = [] { PluginUtil::stop_plugins(); };
-    g_main_ctx.core.callbacks.emu_stopping = []() { Messenger::broadcast(Messenger::Message::EmuStopping, nullptr); };
-    g_main_ctx.core.callbacks.reset_completed = []() {
-        Messenger::broadcast(Messenger::Message::ResetCompleted, nullptr);
-    };
+    g_main_ctx.core.callbacks.emu_stopping = []() { Messenger::broadcast<Messenger::Message::EmuStopping>(); };
+    g_main_ctx.core.callbacks.reset_completed = []() { Messenger::broadcast<Messenger::Message::ResetCompleted>(); };
     g_main_ctx.core.callbacks.speed_modifier_changed = [](int32_t value) {
-        Messenger::broadcast(Messenger::Message::SpeedModifierChanged, value);
+        Messenger::broadcast<Messenger::Message::SpeedModifierChanged>(value);
     };
     g_main_ctx.core.callbacks.warp_modify_status_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::WarpModifyStatusChanged, value);
+        Messenger::broadcast<Messenger::Message::WarpModifyStatusChanged>(value);
     };
     g_main_ctx.core.callbacks.current_sample_changed = [](int32_t value) {
-        Messenger::broadcast(Messenger::Message::CurrentSampleChanged, value);
+        Messenger::broadcast<Messenger::Message::CurrentSampleChanged>(value);
     };
     g_main_ctx.core.callbacks.task_changed = [](core_vcr_task value) {
-        Messenger::broadcast(Messenger::Message::TaskChanged, value);
+        Messenger::broadcast<Messenger::Message::TaskChanged>(value);
     };
     g_main_ctx.core.callbacks.rerecords_changed = [](uint64_t value) {
-        Messenger::broadcast(Messenger::Message::RerecordsChanged, value);
+        Messenger::broadcast<Messenger::Message::RerecordsChanged>(value);
     };
     g_main_ctx.core.callbacks.unfreeze_completed = []() {
-        Messenger::broadcast(Messenger::Message::UnfreezeCompleted, nullptr);
+        Messenger::broadcast<Messenger::Message::UnfreezeCompleted>();
     };
     g_main_ctx.core.callbacks.seek_savestate_changed = [](size_t value) {
-        Messenger::broadcast(Messenger::Message::SeekSavestateChanged, value);
+        Messenger::broadcast<Messenger::Message::SeekSavestateChanged>(value);
     };
     g_main_ctx.core.callbacks.readonly_changed = [](bool value) {
-        Messenger::broadcast(Messenger::Message::ReadonlyChanged, value);
+        Messenger::broadcast<Messenger::Message::ReadonlyChanged>(value);
     };
-    g_main_ctx.core.callbacks.dacrate_changed = [](core_system_type value) {
-        Messenger::broadcast(Messenger::Message::DacrateChanged, value);
+    g_main_ctx.core.callbacks.dacrate_changed = [](CoreSystemType value) {
+        Messenger::broadcast<Messenger::Message::DacrateChanged>(value);
     };
 
     g_main_ctx.core.callbacks.lag_limit_exceeded = []() {
-        Messenger::broadcast(Messenger::Message::LagLimitExceeded, nullptr);
+        Messenger::broadcast<Messenger::Message::LagLimitExceeded>();
     };
     g_main_ctx.core.callbacks.seek_status_changed = []() {
-        Messenger::broadcast(Messenger::Message::SeekStatusChanged, nullptr);
+        Messenger::broadcast<Messenger::Message::SeekStatusChanged>();
     };
     g_main_ctx.core.log_trace = [](std::string_view str) { g_core_logger->trace(str); };
     g_main_ctx.core.log_info = [](std::string_view str) { g_core_logger->info(str); };
@@ -994,7 +966,7 @@ static core_result init_core()
         auto str_wide = IOUtils::to_wide_string(str);
         DialogService::show_statusbar(str_wide.c_str());
     };
-    g_main_ctx.core.update_screen = update_screen;
+    g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;
     g_main_ctx.core.mge_available = PluginUtil::mge_available;
@@ -1004,7 +976,7 @@ static core_result init_core()
 
     const auto result = core_create(&g_main_ctx.core, &g_main_ctx.core_ctx);
 
-    PluginUtil::init_dummy_and_extended_funcs();
+    PluginUtil::init();
 
     return result;
 }
@@ -1148,6 +1120,22 @@ void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
     }
 }
 
+void Main::request_size(uint32_t width, uint32_t height)
+{
+    const auto statusbar_hwnd = Statusbar::hwnd();
+
+    RECT statusbar_rc{};
+    if (IsWindow(statusbar_hwnd)) GetClientRect(statusbar_hwnd, &statusbar_rc);
+
+    RECT wnd_rc{};
+    GetClientRect(g_main_ctx.hwnd, &wnd_rc);
+    wnd_rc.right = width;
+    wnd_rc.bottom = height + statusbar_rc.bottom;
+    AdjustWindowRect(&wnd_rc, GetWindowLong(g_main_ctx.hwnd, GWL_STYLE), GetMenu(g_main_ctx.hwnd) != NULL);
+    SetWindowPos(g_main_ctx.hwnd, NULL, 0, 0, wnd_rc.right - wnd_rc.left, wnd_rc.bottom - wnd_rc.top,
+                 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_ASYNCWINDOWPOS);
+}
+
 int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nShowCmd)
 {
     enable_mitigations();
@@ -1163,7 +1151,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     std::filesystem::create_directories(Config::logs_directory());
 
     Loggers::init();
-    PluginUtil::init();
 
     g_view_logger->info("WinMain");
     g_view_logger->info(get_mupen_name());
@@ -1199,7 +1186,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     LuaManager::init();
     CrashManager::init();
     MGECompositor::init();
-    LuaRenderer::init();
     CaptureManager::init();
     CLI::init();
     Seeker::init();
@@ -1225,35 +1211,34 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
                    NULL);
     ShowWindow(g_main_ctx.hwnd, nShowCmd);
 
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, on_emu_launched_changed);
-    Messenger::subscribe(Messenger::Message::EmuStopping, on_emu_stopping);
-    Messenger::subscribe(Messenger::Message::EmuPausedChanged, on_emu_paused_changed);
-    Messenger::subscribe(Messenger::Message::CapturingChanged, on_capturing_changed);
-    Messenger::subscribe(Messenger::Message::MovieLoopChanged, on_movie_loop_changed);
-    Messenger::subscribe(Messenger::Message::TaskChanged, on_task_changed);
-    Messenger::subscribe(Messenger::Message::ScriptStarted, on_script_started);
-    Messenger::subscribe(Messenger::Message::SpeedModifierChanged, on_speed_modifier_changed);
-    Messenger::subscribe(Messenger::Message::LagLimitExceeded, on_vis_since_input_poll_exceeded);
-    Messenger::subscribe(Messenger::Message::ConfigLoaded, on_config_loaded);
-    Messenger::subscribe(Messenger::Message::SeekCompleted, on_seek_completed);
-    Messenger::subscribe(Messenger::Message::WarpModifyStatusChanged, on_warp_modify_status_changed);
-    Messenger::subscribe(Messenger::Message::FastForwardNeedsUpdate,
-                         [](auto) { AppActions::update_core_fast_forward(); });
-    Messenger::subscribe(Messenger::Message::SeekStatusChanged, [](auto) { AppActions::update_core_fast_forward(); });
-    Messenger::subscribe(Messenger::Message::EmuStartingChanged, on_emu_starting_changed);
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(on_emu_launched_changed);
+    Messenger::subscribe<Messenger::Message::EmuStopping>(on_emu_stopping);
+    Messenger::subscribe<Messenger::Message::EmuPausedChanged>(on_emu_paused_changed);
+    Messenger::subscribe<Messenger::Message::CapturingChanged>(on_capturing_changed);
+    Messenger::subscribe<Messenger::Message::MovieLoopChanged>(on_movie_loop_changed);
+    Messenger::subscribe<Messenger::Message::TaskChanged>(on_task_changed);
+    Messenger::subscribe<Messenger::Message::ScriptStarted>(on_script_started);
+    Messenger::subscribe<Messenger::Message::SpeedModifierChanged>(on_speed_modifier_changed);
+    Messenger::subscribe<Messenger::Message::LagLimitExceeded>(on_vis_since_input_poll_exceeded);
+    Messenger::subscribe<Messenger::Message::ConfigLoaded>(on_config_loaded);
+    Messenger::subscribe<Messenger::Message::SeekCompleted>(on_seek_completed);
+    Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed);
+    Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>([] { AppActions::update_core_fast_forward(); });
+    Messenger::subscribe<Messenger::Message::SeekStatusChanged>([] { AppActions::update_core_fast_forward(); });
+    Messenger::subscribe<Messenger::Message::EmuStartingChanged>(on_emu_starting_changed);
 
     Statusbar::create();
     RomBrowser::create();
     AppActions::update_core_fast_forward();
 
-    Messenger::broadcast(Messenger::Message::StatusbarVisibilityChanged, (bool)g_config.is_statusbar_enabled);
-    Messenger::broadcast(Messenger::Message::MovieLoopChanged, (bool)g_config.core.is_movie_loop_enabled);
-    Messenger::broadcast(Messenger::Message::ReadonlyChanged, (bool)g_config.core.vcr_readonly);
-    Messenger::broadcast(Messenger::Message::EmuLaunchedChanged, false);
-    Messenger::broadcast(Messenger::Message::CoreExecutingChanged, false);
-    Messenger::broadcast(Messenger::Message::CapturingChanged, false);
-    Messenger::broadcast(Messenger::Message::AppReady, nullptr);
-    Messenger::broadcast(Messenger::Message::ConfigLoaded, nullptr);
+    Messenger::broadcast<Messenger::Message::StatusbarVisibilityChanged>((bool)g_config.is_statusbar_enabled);
+    Messenger::broadcast<Messenger::Message::MovieLoopChanged>((bool)g_config.core.is_movie_loop_enabled);
+    Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
+    Messenger::broadcast<Messenger::Message::EmuLaunchedChanged>(false);
+    Messenger::broadcast<Messenger::Message::CoreExecutingChanged>(false);
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(false);
+    Messenger::broadcast<Messenger::Message::AppReady>();
+    Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)

@@ -1,4 +1,10 @@
-#include "stdafx.h"
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Common.hpp"
 #include "glN64.hpp"
 #include "Types.hpp"
 #include "RSP.hpp"
@@ -65,6 +71,8 @@ void gSPProcessVertex(u32 v)
     if (gSP.changed & CHANGED_MATRIX) gSPCombineMatrices();
 
     vert_transform(&gSP.vertices[v].x, gSP.matrix.combined);
+
+    gSP.vertices[v].x *= OGL.widescreenScale;
 
     if (gSP.matrix.billboard)
     {
@@ -1357,13 +1365,11 @@ void gSPObjSprite(u32 sp)
     gDPSetTileSize(0, 0, 0, (imageW - 1) << 2, (imageH - 1) << 2);
     gSPTexture(1.0f, 1.0f, 0, 0, TRUE);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, VI.width, VI.height, 0, 0.0f, 32767.0f);
+    OGL_SetOrthoProjection(0.0f, VI.width, VI.height, 0.0f, 0.0f, 32767.0f);
     OGL_AddTriangle(gSP.vertices, 0, 1, 2);
     OGL_AddTriangle(gSP.vertices, 0, 2, 3);
     OGL_DrawTriangles();
-    glLoadIdentity();
+    OGL_SetIdentityProjection();
 
     if (depthBuffer.current) depthBuffer.current->cleared = FALSE;
     gDP.colorImage.changed = TRUE;

@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Messenger.hpp>
 #include <Config.hpp>
 #include <components/Seeker.hpp>
@@ -94,7 +94,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            seeker.refresh_timer = SetTimer(hwnd, NULL, 1000 / 10, nullptr);
+            seeker.refresh_timer = SetTimer(hwnd, 0, 1000 / 10, nullptr);
 
             break;
         }
@@ -113,7 +113,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void Seeker::init()
 {
-    Messenger::subscribe(Messenger::Message::SeekCompleted, [](std::any) {
+    Messenger::subscribe<Messenger::Message::SeekCompleted>([] {
         if (!seeker.hwnd) return;
         SendMessage(seeker.hwnd, WM_SEEK_COMPLETED, 0, 0);
     });

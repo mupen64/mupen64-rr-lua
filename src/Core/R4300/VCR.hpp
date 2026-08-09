@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #pragma once
 
-#include <core_api.h>
+#include <m64rr/API.hpp>
 
 struct t_vcr_state
 {
@@ -46,6 +46,15 @@ struct vcr_freeze_info
     uint32_t current_vi{};
     uint32_t length_samples{};
     std::vector<CoreButtons> input_buffer{};
+};
+
+struct SyncData
+{
+    std::optional<bool> wii_vc;
+    std::optional<bool> c_eq_s_accurate;
+    std::optional<bool> accurate_rdp_completion;
+    std::optional<double> cpu_cf;
+    std::optional<double> rcp_lag_factor;
 };
 
 extern t_vcr_state vcr;
@@ -98,3 +107,6 @@ void vcr_get_seek_savestate_frames(std::unordered_map<size_t, bool> &map);
 bool vcr_has_seek_savestate_at_frame(size_t frame);
 std::optional<size_t> vcr_try_resolve_seek_str(const std::string &str);
 core_vcr_generated_file_info vcr_get_generated_file_info(const std::filesystem::path &movie_path, uint16_t flags);
+
+std::optional<SyncData> vcr_get_sync_data_from_header(const core_vcr_movie_header &header);
+std::vector<std::string> vcr_get_sync_warnings(const SyncData &sync_data);

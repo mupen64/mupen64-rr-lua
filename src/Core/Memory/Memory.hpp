@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #pragma once
 
-#include <include/core_types.h>
+#include <m64rr/Types.hpp>
 
 #define S8 3
 #define S16 2
@@ -228,4 +228,4 @@ void update_DPC();
 /**
  * \brief Checks whether the provided register contents are valid.
  */
-bool check_register_validity(core_si_reg *si_reg);
+bool check_register_validity(const core_si_reg *si_reg);

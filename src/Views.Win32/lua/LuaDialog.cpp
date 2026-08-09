@@ -1,10 +1,10 @@
 ﻿/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Messenger.hpp>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>
@@ -176,7 +176,7 @@ static void start(t_instance_context &ctx, const std::filesystem::path &path)
         return;
     }
 
-    Messenger::broadcast(Messenger::Message::ScriptStarted, path);
+    Messenger::broadcast<Messenger::Message::ScriptStarted>(path);
     PostMessage(ctx.hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
     PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 }

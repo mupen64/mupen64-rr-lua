@@ -1,10 +1,10 @@
 ﻿/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <lua/LuaCallbacks.hpp>
 #include <lua/LuaManager.hpp>
 
@@ -53,7 +53,7 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
      }},
     {LuaCallbacks::REG_WINDOWMESSAGE,
      [](auto l) -> int {
-         lua_pushinteger(l, (unsigned)atwindowmessage_ctx.wnd);
+         lua_pushinteger(l, (lua_Integer)atwindowmessage_ctx.wnd);
          lua_pushinteger(l, atwindowmessage_ctx.msg);
          lua_pushinteger(l, atwindowmessage_ctx.w_param);
          lua_pushinteger(l, atwindowmessage_ctx.l_param);
@@ -183,11 +183,14 @@ static std::function<int(lua_State *)> get_function_for_callback(const LuaCallba
     return pcall_no_params;
 }
 
-void LuaCallbacks::call_window_message(void *wnd, unsigned int msg, unsigned int w, long l)
+void LuaCallbacks::call_window_message(void *wnd, unsigned int msg, std::uintptr_t w, std::intptr_t l)
 {
     RET_IF_NOT_REGISTERED(REG_WINDOWMESSAGE);
 
-    atwindowmessage_ctx = {.wnd = (HWND)wnd, .msg = msg, .w_param = w, .l_param = l};
+    atwindowmessage_ctx = {.wnd = static_cast<HWND>(wnd),
+                           .msg = msg,
+                           .w_param = static_cast<WPARAM>(w),
+                           .l_param = static_cast<LPARAM>(l)};
 
     g_main_ctx.dispatcher->invoke([] { invoke_callbacks_with_key_on_all_instances(REG_WINDOWMESSAGE); });
 }

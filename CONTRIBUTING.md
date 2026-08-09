@@ -13,12 +13,11 @@ In order for the compiler to work, you'll need to be in a VS developer environme
 
 ## Linux dependencies
 
-You'll need:
-- A C/C++ compiler (`gcc` or `clang`)
-- `libdeflate`
-- `libsafec`
-
-`libsafec` is required outside of Windows as no other C/C++ library implements C11 Annex K, which specifies `strncpy_s` and similar functions.
+```fish
+sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua mingw-w64-gcc vcpkg
+yay -S --needed libsafec
+source /etc/profile.d/vcpkg.sh
+```
 
 ## CMake Presets
 Compiling is as easy as using one of the provided configure presets. All platforms generally use `clang` as the compiler and `Ninja` as the generator.
@@ -28,6 +27,8 @@ Compiling is as easy as using one of the provided configure presets. All platfor
 |`vcpkg-win64-x86(-release)`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
 |`vcpkg-win64-x64(-release)`|**64-bit target** on **64-bit Windows** host, dependencies via `vcpkg`|
 |`sys-linux64-x64`|**64-bit** target, **64-bit Linux** host, dependencies from system|
+|`mingw-linux-x64(-release)`|**64-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
+|`mingw-linux-x86(-release)`|**32-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
 
 ### Visual Studio Code + CMake Tools
 Configure presets should be made available via CMake Tools, see above.
@@ -48,9 +49,9 @@ Visual Studio 2026 must be installed on the `C:` drive.
 
 ## Linux
 
-> **NOTE:** 32-bit builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
+> **NOTE:** 32-bit native builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
 
-To build:
+To build natively:
 ```sh
 cmake --preset sys-linux64-x64
 cmake --build build
@@ -60,6 +61,28 @@ The core VCR tests are integrated with CMake, so running the tests is easy:
 ```sh
 ctest --test-dir build
 ```
+
+## MinGW cross-compilation (Linux → Windows)
+
+```sh
+# 64-bit debug
+cmake --preset mingw-linux-x64
+cmake --build build
+
+# 64-bit release
+cmake --preset mingw-linux-x64-release
+cmake --build build
+
+# 32-bit debug
+cmake --preset mingw-linux-x86
+cmake --build build
+
+# 32-bit release
+cmake --preset mingw-linux-x86-release
+cmake --build build
+```
+
+MinGW runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) are automatically copied to the output directory at build time.
 
 # Dependencies
 When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
@@ -89,10 +112,13 @@ All development happens on `main`. We cherry-pick from `main` into release branc
 Every non-library file must contain a copyright header with this content:
 
 ```
-Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 
 SPDX-License-Identifier: GPL-2.0-or-later
 ```
+
+The header is the same everywhere; only the comment syntax changes per file type. Project-specific credits to
+original authors belong in the `NOTICE` file, not in per-file headers.
 
 # Commit Style
 

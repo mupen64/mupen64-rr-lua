@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -8,8 +8,10 @@
 #include <filesystem>
 #include <numbers>
 #if defined(_WIN32)
+#ifndef NOMINMAX
 #define NOMINMAX
-#include <Windows.h>
+#endif
+#include <windows.h>
 #include <gdiplus.h>
 #elif defined(__linux__)
 #error JoystickControl is not supported on Linux
@@ -37,6 +39,8 @@ struct Context
 
     int x{};
     int y{};
+    int painted_x{};
+    int painted_y{};
     int cursor_diff_x{};
     int cursor_diff_y{};
     Mode mode = Mode::None;
@@ -297,6 +301,9 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         BitBlt(ctx->front_dc, 0, 0, rc.right, rc.bottom, ctx->back_dc, 0, 0, SRCCOPY);
 
         ValidateRect(hwnd, nullptr);
+
+        ctx->painted_x = ctx->x;
+        ctx->painted_y = ctx->y;
         return 0;
     }
     default:
@@ -353,6 +360,9 @@ inline bool set_position(HWND hwnd, int x, int y)
     if (!IsWindow(hwnd)) return false;
     const auto ctx = Internal::get_ctx(hwnd);
     if (!ctx) return false;
+
+    // Fast path: joystick already painted at this position
+    if (ctx->painted_x == x && ctx->painted_y == y) return true;
 
     ctx->x = x;
     ctx->y = y;

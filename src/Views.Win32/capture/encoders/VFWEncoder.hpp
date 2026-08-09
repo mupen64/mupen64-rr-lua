@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -8,7 +8,7 @@
 
 #include "Encoder.hpp"
 
-#include <Vfw.h>
+#include <vfw.h>
 
 class VFWEncoder final : public Encoder
 {

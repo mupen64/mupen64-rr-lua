@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -17,7 +17,7 @@
 // Interpreter-only build on a non-x86 host: nothing reads these fields, but
 // precomp_instr must still have a member of this type. Recomp.cpp does write
 // need_map unconditionally, so the field has to exist.
-typedef struct _reg_cache_struct
+typedef struct
 {
     int32_t need_map;
 } reg_cache_struct;

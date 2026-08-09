@@ -1,12 +1,13 @@
 ﻿/*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <components/RecentItems.hpp>
 #include <action/ActionManager.hpp>
+#include <components/RomBrowser.hpp>
 
 void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<std::wstring> &vec, std::wstring val,
                      const bool frozen)
@@ -27,4 +28,5 @@ void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<
     vec.insert(vec.begin(), val);
 
     ActionManager::notify_display_name_changed(std::format(L"{} > *", menu_path));
+    RomBrowser::build();
 }

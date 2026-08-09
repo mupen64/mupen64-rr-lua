@@ -1,13 +1,12 @@
 /*
- * Copyright (c) 2026, Mupen64 maintainers, contributors, and original authors
- * (Hacktarux, ShadowPrince, linker).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "stdafx.h"
+#include "Common.hpp"
 #include <Config.hpp>
-#include <Uxtheme.h>
+#include <uxtheme.h>
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>
@@ -37,6 +36,11 @@ std::vector<std::filesystem::path> discover_roms()
 
     std::vector<std::filesystem::path> rom_paths;
     std::vector<std::filesystem::path> filtered_rom_paths;
+    std::unordered_set<std::filesystem::path> seen_rom_paths;
+
+    // Add recent ROMs first
+    rom_paths.reserve(g_config.recent_rom_paths.size());
+    for (const auto &recent_rom : g_config.recent_rom_paths) rom_paths.push_back(recent_rom);
 
     // we aggregate all file paths and only filter them after we're done
     if (std::filesystem::is_directory(abs_rom_directory))
@@ -63,14 +67,15 @@ std::vector<std::filesystem::path> discover_roms()
     }
 
     // logically this should be bundled into the filter pipeline but I'm too lazy
-    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [](const auto val) {
+    std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [&](const auto &val) {
         wchar_t c_extension[_MAX_EXT] = {0};
         if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
         {
             return false;
         }
-        return MiscHelpers::iequals(c_extension, L".z64") || MiscHelpers::iequals(c_extension, L".n64") ||
-               MiscHelpers::iequals(c_extension, L".v64") || MiscHelpers::iequals(c_extension, L".rom");
+        const bool is_rom = MiscHelpers::iequals(c_extension, L".z64") || MiscHelpers::iequals(c_extension, L".n64") ||
+                            MiscHelpers::iequals(c_extension, L".v64") || MiscHelpers::iequals(c_extension, L".rom");
+        return is_rom && seen_rom_paths.insert(val).second;
     });
     return filtered_rom_paths;
 }
@@ -357,15 +362,10 @@ notify(LPARAM lparam)
         switch (plvdi->item.iSubItem)
         {
         case 1: {
-            // NOTE: The name may not be null-terminated, so we NEED to limit the
-            // size
-            char str[sizeof(core_rom_header::nom) + 1] = {0};
-            if (strncpy_s(str, sizeof(str), (const char *)rombrowser_entry.header.nom, sizeof(core_rom_header::nom)) !=
-                0)
-            {
-                g_view_logger->error("Failed to copy rom name");
-            }
-            StrNCpy(plvdi->item.pszText, IOUtils::rom_name_to_wide_string(str).c_str(), plvdi->item.cchTextMax);
+
+            StrNCpy(plvdi->item.pszText,
+                    IOUtils::rom_name_to_wide_string((const char *)rombrowser_entry.header.nom).c_str(),
+                    plvdi->item.cchTextMax);
             break;
         }
         case 2: {
@@ -490,9 +490,8 @@ std::vector<t_simple_rom_info> get_discovered_roms()
     return g_ctx.discovered_roms;
 }
 
-void emu_launched_changed(std::any data)
+void emu_launched_changed(bool value)
 {
-    auto value = std::any_cast<bool>(data);
     ShowWindow(g_ctx.hwnd, !value ? SW_SHOW : SW_HIDE);
     EnableWindow(g_ctx.hwnd, !value);
     rombrowser_update_size();
@@ -501,10 +500,10 @@ void emu_launched_changed(std::any data)
 void create()
 {
     rombrowser_create();
-    Messenger::subscribe(Messenger::Message::EmuLaunchedChanged, emu_launched_changed);
-    Messenger::subscribe(Messenger::Message::StatusbarVisibilityChanged, [](auto _) { rombrowser_update_size(); });
-    Messenger::subscribe(Messenger::Message::SizeChanged, [](auto _) { rombrowser_update_size(); });
-    Messenger::subscribe(Messenger::Message::ConfigSaving, [](auto _) {
+    Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(emu_launched_changed);
+    Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>([](auto _) { rombrowser_update_size(); });
+    Messenger::subscribe<Messenger::Message::SizeChanged>([](auto _) { rombrowser_update_size(); });
+    Messenger::subscribe<Messenger::Message::ConfigSaving>([] {
         for (int i = 0; i < g_config.rombrowser_column_widths.size(); ++i)
         {
             g_config.rombrowser_column_widths[i] = ListView_GetColumnWidth(g_ctx.hwnd, i);

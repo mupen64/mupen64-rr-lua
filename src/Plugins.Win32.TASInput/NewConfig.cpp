@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2026, TASInput maintainers, contributors, and original authors (nitsuja, Deflection).
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -15,12 +15,15 @@ t_config new_config{};
 
 static std::filesystem::path get_config_path()
 {
-    return g_config_path / CONFIG_FILE_NAME;
+    const auto size = g_plugin->config_path(nullptr, 0);
+    std::string path(size - 1, '\0');
+    g_plugin->config_path(path.data(), size);
+    return std::filesystem::path(path) / CONFIG_FILE_NAME;
 }
 
 void save_config()
 {
-    g_ef->log_trace(L"Saving config...");
+    g_plugin->log_trace("Saving config...");
 
     nlohmann::json j = new_config;
     std::ofstream ofs(get_config_path());
@@ -31,7 +34,7 @@ void save_config()
 
 void load_config()
 {
-    g_ef->log_trace(L"Loading config...");
+    g_plugin->log_trace("Loading config...");
 
     auto json_path = get_config_path();
 
@@ -53,7 +56,7 @@ void load_config()
     }
     catch (const std::exception &e)
     {
-        g_ef->log_warn(L"Config load failed, using defaults...");
+        g_plugin->log_warn("Config load failed, using defaults...");
         new_config = default_config;
     }
 

@@ -31,8 +31,8 @@ HQX_API void HQX_CALLCONV hqxInit(void)
         g = (c & 0x00FF00) >> 8;
         b = c & 0x0000FF;
         y = (uint32_t)(0.299*r + 0.587*g + 0.114*b);
-        u = (uint32_t)(-0.169*r - 0.331*g + 0.5*b) + 128;
-        v = (uint32_t)(0.5*r - 0.419*g - 0.081*b) + 128;
+        u = (uint32_t)(-0.169*r - 0.331*g + 0.5*b + 128.0);
+        v = (uint32_t)(0.5*r - 0.419*g - 0.081*b + 128.0);
         RGBtoYUV[c] = (y << 16) + (u << 8) + v;
     }
 }
