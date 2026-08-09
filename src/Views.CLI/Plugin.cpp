@@ -84,11 +84,11 @@ void Plugin::initiate()
 
         m_init_data->rom = g_core_ctx->rom;
         m_init_data->rdram = (uint8_t *)g_core_ctx->rdram;
-        m_init_data->dmem = (uint8_t *)g_core_ctx->SP_DMEM;
-        m_init_data->imem = (uint8_t *)g_core_ctx->SP_IMEM;
+        m_init_data->dmem = (uint8_t *)g_core_ctx->sp_dmem;
+        m_init_data->imem = (uint8_t *)g_core_ctx->sp_imem;
 
         m_init_data->rdram_register = g_core_ctx->rdram_register;
-        m_init_data->mi_register = g_core_ctx->MI_register;
+        m_init_data->mi_register = g_core_ctx->mi_register;
         m_init_data->pi_register = g_core_ctx->pi_register;
         m_init_data->sp_register = g_core_ctx->sp_register;
         m_init_data->rsp_register = g_core_ctx->rsp_register;
