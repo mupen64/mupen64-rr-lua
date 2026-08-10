@@ -42,15 +42,6 @@
       }
     },
     {
-      "name": "vcpkg-win64-x64-release",
-      "description": "Windows (x64): build for x64 (release)",
-
-      "inherits": "vcpkg-win64-x64",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
-      }
-    },
-    {
       "name": "vcpkg-win64-x86",
       "description": "Windows (x64): build for x86",
 
@@ -62,6 +53,15 @@
       "architecture": {
         "value": "x86",
         "strategy": "external"
+      }
+    },
+    {
+      "name": "vcpkg-win64-x64-release",
+      "description": "Windows (x64): build for x64 (release)",
+
+      "inherits": "vcpkg-win64-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
