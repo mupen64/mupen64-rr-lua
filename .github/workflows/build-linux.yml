@@ -1,0 +1,49 @@
+name: Build (Linux/Qt6)
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-debug-nightly-linux:
+    # TODO: switch this to ubuntu-latest once this leaves preview.
+    runs-on: [ubuntu-26.04] 
+
+    steps:
+    - name: Install compiler tooling
+      run: |
+        sudo apt-get install build-essential cmake clang ninja-build
+    - name: Install dependencies
+      run: |
+        sudo apt-get install \
+        nlohmann-json3-dev \
+        libavcodec-dev \
+        libavformat-dev \
+        libavutil-dev \
+        libcatch2-dev \
+        libdeflate-dev \
+        liblz4-dev \
+        libsafec-dev \
+        libsdl3-dev \
+        libspdlog-dev \
+        libspeexdsp-dev \
+        libswresample-dev \
+        libswscale-dev
+    - name: CMake configure
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake --preset sys-linux
+    - name: CMake build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake --build build
+    - name: Upload artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: mupen-debug-nightly-linux-x64
+        path: build/out
+        retention-days: 14
+
+
