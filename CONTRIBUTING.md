@@ -24,9 +24,9 @@ Compiling is as easy as using one of the provided configure presets. All platfor
 
 |Preset|Platform|
 |:--|:--|
-|`vcpkg-win64-x86(-release)`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
 |`vcpkg-win64-x64(-release)`|**64-bit target** on **64-bit Windows** host, dependencies via `vcpkg`|
-|`sys-linux64-x64`|**64-bit** target, **64-bit Linux** host, dependencies from system|
+|`vcpkg-win64-x86(-release)`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
+|`sys-linux`|compile for **Linux** host, dependencies via system|
 |`mingw-linux-x64(-release)`|**64-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
 |`mingw-linux-x86(-release)`|**32-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
 
