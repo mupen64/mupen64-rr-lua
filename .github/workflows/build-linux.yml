@@ -27,6 +27,7 @@ jobs:
         libavutil-dev \
         libcatch2-dev \
         libdeflate-dev \
+        liblua5.4-dev \
         liblz4-dev \
         libsafec-dev \
         libsdl3-dev \
