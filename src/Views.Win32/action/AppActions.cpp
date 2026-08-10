@@ -499,7 +499,7 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
     if (any_file_exists)
     {
         const auto overwrite = g_dialog_service->show_ask_dialog(
-            VIEW_DLG_OVERWRITE_MOVIE,
+            VIEW_DLG_MOVIE_OVERWRITE_WARNING,
             "The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
             "Overwrite Movie", true, g_main_ctx.hwnd);
         if (!overwrite) return;

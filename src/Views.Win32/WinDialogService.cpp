@@ -7,6 +7,7 @@
 #include "Common.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Assert.hpp>
 #include <components/Statusbar.hpp>
 
 class WinDialogService : public IDialogService
@@ -25,7 +26,10 @@ class WinDialogService : public IDialogService
 
         if (silenced)
         {
-            const auto default_index = g_config.silent_mode_dialog_choices[IOUtils::to_wide_string(id)];
+            const auto wid = IOUtils::to_wide_string(id);
+            RT_ASSERT(g_config.silent_mode_dialog_choices.contains(wid),
+                      std::format("Expected silent mode dialog choice for '{}'", id));
+            const auto default_index = g_config.silent_mode_dialog_choices[wid];
             g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", wstr,
                                  default_index);
             return std::stoi(default_index);
@@ -99,15 +103,16 @@ class WinDialogService : public IDialogService
         return pressed_button;
     }
 
-    bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<std::string_view> title = std::nullopt,
-                         bool warning = false, void *hwnd = nullptr) override
+    bool show_ask_dialog(std::string_view id, std::string_view str,
+                         std::optional<std::string_view> title = std::nullopt, bool warning = false,
+                         void *hwnd = nullptr) override
     {
         return show_multiple_choice_dialog(id, {L"Yes", L"No"}, str, title, warning ? fsvc_warning : fsvc_information,
                                            hwnd) == 0;
     }
 
-    void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt, core_dialog_type type = fsvc_warning,
-                     void *hwnd = nullptr) override
+    void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt,
+                     core_dialog_type type = fsvc_warning, void *hwnd = nullptr) override
     {
         const auto wstr = IOUtils::to_wide_string(str);
         const auto wtitle = title ? std::make_optional(IOUtils::to_wide_string(*title)) : std::nullopt;
@@ -134,7 +139,8 @@ class WinDialogService : public IDialogService
 
         if (!g_config.silent_mode)
         {
-            MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), wstr.c_str(), wtitle ? wtitle->c_str() : nullptr, icon);
+            MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), wstr.c_str(),
+                       wtitle ? wtitle->c_str() : nullptr, icon);
         }
     }
 
