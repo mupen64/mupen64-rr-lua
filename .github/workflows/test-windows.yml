@@ -1,8 +1,7 @@
-name: Test
+name: Test (Windows)
 
 on:
   push:
-  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +12,7 @@ env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
 jobs:
-  test:
+  test-windows:
     runs-on: windows-latest
 
     strategy:
