@@ -44,3 +44,5 @@ set_target_properties(Mupen64RR.Plugins.TASAudio PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
+
+add_compile_definitions(NOMINMAX)
