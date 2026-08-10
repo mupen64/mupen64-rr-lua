@@ -33,6 +33,7 @@
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaDialog.hpp>
+#include <HotkeyUtils.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 
 // Throwaway actions which can be spammed get keys as to not clog up the async executor queue
@@ -1098,6 +1099,19 @@ std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
         {VIEW_DLG_PLUGIN_LOAD_ERROR, 0},
         {VIEW_DLG_RAMSTART, 0},
     };
+}
+
+std::optional<Hotkey> app_json_to_hotkey(const nlohmann::basic_json<> &hotkey_json)
+{
+    if (!hotkey_json.contains("key")) return std::nullopt;
+
+    const auto key = hotkey_json["key"];
+    const auto trigger = HotkeyUtils::vk_to_trigger(key);
+    if (!trigger) return std::nullopt;
+
+    Hotkey hotkey;
+    hotkey.trigger = *trigger;
+    return hotkey;
 }
 
 void Main::init_sdl()

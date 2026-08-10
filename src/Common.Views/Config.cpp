@@ -163,10 +163,17 @@ static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey> &val
                 const auto &hotkey_json = str_pair.second;
                 auto hotkey = Hotkey{};
 
-                hotkey.trigger = hotkey_json["trigger"];
+                // TODO: Remove in 1.6.0, this is just temporary
+                const auto view_converted = app_json_to_hotkey(hotkey_json);
+                if (view_converted)
+                    hotkey = *view_converted;
+                else
+                    hotkey.trigger = hotkey_json["trigger"];
+
                 hotkey.ctrl = hotkey_json["ctrl"];
                 hotkey.shift = hotkey_json["shift"];
                 hotkey.alt = hotkey_json["alt"];
+
                 return std::pair(std::move(name), hotkey);
             }) |
             std::ranges::to<std::map>();
