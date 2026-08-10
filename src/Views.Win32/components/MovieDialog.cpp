@@ -295,15 +295,13 @@ refresh:
                                         ? L"Unknown"
                                         : (header.extended_flags.accurate_rdp_completion ? L"Enabled" : L"Disabled")));
 
-    metadata.emplace_back(std::make_pair(L"CPU counter factor",
-                                         header.extended_version < 4
-                                             ? std::wstring(L"Unknown")
-                                             : std::format(L"{}", header.extended_data.cpu_cf)));
+    metadata.emplace_back(std::make_pair(L"CPU counter factor", header.extended_version < 4
+                                                                    ? std::wstring(L"Unknown")
+                                                                    : std::format(L"{}", header.extended_data.cpu_cf)));
 
-    metadata.emplace_back(std::make_pair(L"RCP lag factor",
-                                         header.extended_version < 4
-                                             ? std::wstring(L"Unknown")
-                                             : std::format(L"{}", header.extended_data.rcp_lag_factor)));
+    metadata.emplace_back(std::make_pair(
+        L"RCP lag factor", header.extended_version < 4 ? std::wstring(L"Unknown")
+                                                       : std::format(L"{}", header.extended_data.rcp_lag_factor)));
 
     char authorship[5] = {0};
     memcpy(authorship, header.extended_data.authorship_tag, sizeof(header.extended_data.authorship_tag));

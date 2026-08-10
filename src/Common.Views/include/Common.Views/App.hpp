@@ -37,4 +37,4 @@ void app_runtime_assert_fail(std::string_view message);
 std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices();
 
 // Temporary shim for 1.4.0-x -> 1.5.0 hotkey conversion
-std::optional<Hotkey> app_json_to_hotkey(const nlohmann::basic_json<>& hotkey_json);
+std::optional<Hotkey> app_json_to_hotkey(const nlohmann::basic_json<> &hotkey_json);
