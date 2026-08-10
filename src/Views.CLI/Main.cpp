@@ -5,8 +5,8 @@
  */
 
 #include "Main.hpp"
-#include "Dialog.hpp"
 #include "Plugin.hpp"
+#include <Common.Views/App.hpp>
 #include <future>
 #include <iostream>
 #include <print>
@@ -77,9 +77,21 @@ static void init_core()
         return s_backups_path;
     };
     g_core_params.get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
-    g_core_params.show_multiple_choice_dialog = g_dialog_service->show_multiple_choice_dialog;
-    g_core_params.show_ask_dialog = g_dialog_service->show_ask_dialog;
-    g_core_params.show_dialog = g_dialog_service->show_dialog;
+    g_core_params.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
+                                                   const char *str, const char *title, const core_dialog_type type) {
+        std::vector<std::wstring> wchoices;
+        for (const auto &choice : choices) wchoices.push_back(IOUtils::to_wide_string(choice));
+        return g_dialog_service->show_multiple_choice_dialog(id, wchoices, IOUtils::to_wide_string(str).c_str(),
+                                                             IOUtils::to_wide_string(title).c_str(), type);
+    };
+    g_core_params.show_ask_dialog = [](std::string_view id, const char *str, const char *title, const bool warning) {
+        return g_dialog_service->show_ask_dialog(id, IOUtils::to_wide_string(str).c_str(),
+                                                 IOUtils::to_wide_string(title).c_str(), warning);
+    };
+    g_core_params.show_dialog = [](const char *str, const char *title, const core_dialog_type type) {
+        g_dialog_service->show_dialog(IOUtils::to_wide_string(str).c_str(), IOUtils::to_wide_string(title).c_str(),
+                                      type);
+    };
     g_core_params.get_plugin_names = PluginUtil::get_plugin_names;
 
     core_create(&g_core_params, &g_core_ctx);

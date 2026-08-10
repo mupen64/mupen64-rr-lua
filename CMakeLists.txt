@@ -36,6 +36,7 @@ endif()
 
 # This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.
 set(MUPEN64RR_BUILD_CLI OFF CACHE BOOL "If on, enables the CLI view (primarily for testing)")
+set(MUPEN64RR_BUILD_CLI ON)
 
 # Basic checks and setup
 # ===========================================
