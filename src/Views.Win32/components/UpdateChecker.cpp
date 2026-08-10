@@ -225,8 +225,7 @@ show_prompt:
             L"Show Changelog",
             L"Skip Version",
         },
-        std::format("Mupen64 {} is available for download.", version), "Update Available",
-        fsvc_information);
+        std::format("Mupen64 {} is available for download.", version), "Update Available", fsvc_information);
 
     switch (result)
     {

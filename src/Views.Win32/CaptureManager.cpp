@@ -399,8 +399,8 @@ void input()
     {
         if (!m_encoder->append_video(m_video_buf))
         {
-            g_dialog_service->show_dialog("Failed to append frame to video.\nPerhaps you ran out of memory?",
-                                          "Capture", fsvc_error);
+            g_dialog_service->show_dialog("Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture",
+                                          fsvc_error);
             stop_capture();
             return;
         }
@@ -430,8 +430,7 @@ void ai_len_changed()
 
     if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
     {
-        g_dialog_service->show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture",
-                                      fsvc_error);
+        g_dialog_service->show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", fsvc_error);
         stop_capture();
     }
 }

@@ -224,9 +224,8 @@ void ZEPlugin::config(HWND hwnd)
         dll_config(hwnd);
     else
     {
-        g_dialog_service->show_dialog(
-            std::format("'{}' has no configuration.", this->name()), "Plugin",
-            fsvc_error, hwnd);
+        g_dialog_service->show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error,
+                                      hwnd);
     }
 
     deinitiate_dummy();
@@ -319,9 +318,8 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
 
         if (compat_error)
         {
-            const auto msg =
-                std::format("The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
-                            m_name);
+            const auto msg = std::format(
+                "The plugin {} is incompatible with this version of Mupen64 and may not work properly.", m_name);
             g_dialog_service->show_dialog(msg, "Plugin Incompatibility", fsvc_error);
         }
 

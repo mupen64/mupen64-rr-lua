@@ -46,8 +46,9 @@ class DialogService : public IDialogService
         }
     }
 
-    bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<std::string_view> title = std::nullopt,
-                         bool warning = false, void *hwnd = nullptr) override
+    bool show_ask_dialog(std::string_view id, std::string_view str,
+                         std::optional<std::string_view> title = std::nullopt, bool warning = false,
+                         void *hwnd = nullptr) override
     {
         print_header(title.value_or(""), warning ? fsvc_warning : fsvc_information);
 
@@ -68,8 +69,8 @@ class DialogService : public IDialogService
         }
     }
 
-    void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt, core_dialog_type type = fsvc_warning,
-                     void *hwnd = nullptr) override
+    void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt,
+                     core_dialog_type type = fsvc_warning, void *hwnd = nullptr) override
     {
         print_header(title.value_or(""), type);
 
@@ -78,10 +79,7 @@ class DialogService : public IDialogService
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), std::cin.widen('\n'));
     }
 
-    void show_statusbar(std::string_view str) override
-    {
-        std::println("{}", str);
-    }
+    void show_statusbar(std::string_view str) override { std::println("{}", str); }
 
   private:
     void print_header(std::string_view title, core_dialog_type type)

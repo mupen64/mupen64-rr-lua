@@ -442,8 +442,7 @@ static INT_PTR CALLBACK base_pageproc(const HWND hwnd, const UINT message, const
             {
                 const auto result = g_dialog_service->show_ask_dialog(
                     VIEW_DLG_CONFIRM_SETTINGS_DISCARD,
-                    "You have unsaved changes. Are you sure you want to discard the changes?", "Settings", true,
-                    hwnd);
+                    "You have unsaved changes. Are you sure you want to discard the changes?", "Settings", true, hwnd);
 
                 if (!result)
                 {
@@ -1251,8 +1250,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             ListView_Update(ctx->lv_hwnd, i);
             break;
         case 2:
-            g_dialog_service->show_dialog(IOUtils::to_utf8_string(option_item.get_friendly_info()), IOUtils::to_utf8_string(option_item.name),
-                                          fsvc_information, hwnd);
+            g_dialog_service->show_dialog(IOUtils::to_utf8_string(option_item.get_friendly_info()),
+                                          IOUtils::to_utf8_string(option_item.name), fsvc_information, hwnd);
             break;
         case 4:
             option_item.current_value.set(Hotkey::make_empty());

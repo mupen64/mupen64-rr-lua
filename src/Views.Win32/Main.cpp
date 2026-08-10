@@ -968,9 +968,7 @@ static core_result init_core()
     g_main_ctx.core.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
         g_dialog_service->show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
-    g_main_ctx.core.show_statusbar = [](const char *str) {
-        g_dialog_service->show_statusbar(str);
-    };
+    g_main_ctx.core.show_statusbar = [](const char *str) { g_dialog_service->show_statusbar(str); };
     g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;

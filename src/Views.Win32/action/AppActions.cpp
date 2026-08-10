@@ -71,8 +71,7 @@ bool confirm_user_exit()
     }
     final_message += " is running. Are you sure you want to close the ROM?";
 
-    const bool result =
-        g_dialog_service->show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message, "Close ROM", true);
+    const bool result = g_dialog_service->show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message, "Close ROM", true);
 
     return result;
 }
@@ -817,8 +816,8 @@ static void show_about_dialog()
                      "Copyright ©️ 2026"
                      "\r\n"
                      "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg,
-                                                                      "About", fsvc_information);
+    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg, "About",
+                                                                      fsvc_information);
 
     if (result == 0)
     {
