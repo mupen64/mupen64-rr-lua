@@ -4,6 +4,8 @@
   "configurePresets": [
     {
       "name": "common",
+      "$comment": "Platform-agnostic common settings.",
+
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",

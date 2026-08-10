@@ -7,16 +7,26 @@
   "configurePresets": [
     {
       "name": "sys-linux",
-      "description": "Linux: host platform",
+      "description": "Linux: build for host architecture",
+
       "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
-      },
+      }
+    },
+    {
+      "name": "sys-linux-release",
+      "description": "Linux: build for host architecture (release)",
+
+      "inherits": "sys-linux",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     }
   ]

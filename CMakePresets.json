@@ -2,6 +2,7 @@
   "version": 10,
   "include": [
     "cmake/presets/vcpkg-win64.json",
-    "cmake/presets/sys-linux.json"
+    "cmake/presets/sys-linux.json",
+    "cmake/presets/mingw-linux.json"
   ]
 }

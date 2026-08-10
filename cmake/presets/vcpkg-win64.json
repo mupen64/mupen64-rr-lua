@@ -7,7 +7,8 @@
   "configurePresets": [
     {
       "name": "common-vcpkg-win64",
-      
+      "$comment": "Common settings for Windows (x64) + vcpkg",
+
       "inherits": "common",
       "hidden": true,
       "cacheVariables": {
@@ -28,7 +29,7 @@
     },
     {
       "name": "vcpkg-win64-x64",
-      "description": "Windows: x64 host -> x64 build target",
+      "description": "Windows (x64): build for x64",
 
       "inherits": "common-vcpkg-win64",
       "cacheVariables": {
@@ -42,7 +43,7 @@
     },
     {
       "name": "vcpkg-win64-x64-release",
-      "description": "Windows: x64 host -> x64 build target (release)",
+      "description": "Windows (x64): build for x64 (release)",
 
       "inherits": "vcpkg-win64-x64",
       "cacheVariables": {
@@ -51,12 +52,12 @@
     },
     {
       "name": "vcpkg-win64-x86",
-      "description": "Windows: x64 host -> x86 build target",
+      "description": "Windows (x64): build for x86",
 
       "inherits": "common-vcpkg-win64",
       "cacheVariables": {
-        "CMAKE_C_COMPILER_TARGET": "i386-pc-windows-msvc",
-        "CMAKE_CXX_COMPILER_TARGET": "i386-pc-windows-msvc"
+        "CMAKE_C_COMPILER_TARGET": "i686-pc-windows-msvc",
+        "CMAKE_CXX_COMPILER_TARGET": "i686-pc-windows-msvc"
       },
       "architecture": {
         "value": "x86",
@@ -65,7 +66,7 @@
     },
     {
       "name": "vcpkg-win64-x86-release",
-      "description": "Windows: x64 host -> x86 build target (release)",
+      "description": "Windows (x64): build for x86 (release)",
       "inherits": "vcpkg-win64-x86",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
