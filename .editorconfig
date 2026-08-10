@@ -3,5 +3,8 @@ root = true
 [*.c,*.cpp,*.h,*.hpp]
 indent_size = 4
 
+[*.cmake,CMakeLists.txt]
+indent_size = 4
+
 [*.json]
 indent_size = 2

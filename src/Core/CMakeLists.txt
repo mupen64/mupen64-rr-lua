@@ -107,13 +107,17 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
     
     Note that we detect using the compile triplet when Clang is used; otherwise we use CMAKE_SYSTEM_PROCESSOR.
     ]=]
+    set(dynarec_dir)
+    
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         if ("${CMAKE_C_COMPILER_TARGET}" MATCHES "^amd64")
             set(dynarec_dir "R4300/x86_64")
         elseif("${CMAKE_C_COMPILER_TARGET}" MATCHES "^i[346]86")
             set(dynarec_dir "R4300/x86")
         endif()
-    else()
+    endif()
+
+    if(NOT dynarec_dir)
         if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(AMD64|x86_64)$")
             set(dynarec_dir "R4300/x86_64")
         elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|i[346]86)$")

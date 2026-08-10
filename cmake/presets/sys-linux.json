@@ -12,7 +12,8 @@
       "inherits": "common",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_CXX_COMPILER": "clang++",
+        "MUPEN64RR_BUILD_QT6": true
       },
       "condition": {
         "type": "equals",
