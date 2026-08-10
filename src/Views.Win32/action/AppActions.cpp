@@ -38,13 +38,13 @@ bool confirm_user_exit()
         return true;
     }
 
-    std::wstring final_message;
-    std::vector<std::pair<bool, std::wstring>> messages = {
-        {g_main_ctx.core_ctx->vcr_get_task() == task_recording, L"Movie recording"},
-        {CaptureManager::is_capturing(), L"Capture"},
-        {g_main_ctx.core_ctx->tl_active(), L"Trace logging"}};
+    const std::tuple<bool, std::string_view> messages[] = {
+        {g_main_ctx.core_ctx->vcr_get_task() == task_recording, "Recording"},
+        {g_main_ctx.core_ctx->vcr_get_task() == task_playback, "Playback"},
+        {CaptureManager::is_capturing(), "Capture"},
+        {g_main_ctx.core_ctx->tl_active(), "Trace logging"}};
 
-    std::vector<std::wstring> active_messages;
+    std::vector<std::string_view> active_messages;
     for (const auto &[is_active, msg] : messages)
     {
         if (!is_active)
@@ -60,18 +60,19 @@ bool confirm_user_exit()
         return true;
     }
 
+    std::string final_message;
     for (size_t i = 0; i < active_messages.size(); ++i)
     {
         final_message += active_messages[i];
         if (i < active_messages.size() - 1)
         {
-            final_message += L", ";
+            final_message += ", ";
         }
     }
-    final_message += L" is running. Are you sure you want to close the ROM?";
+    final_message += " is running. Are you sure you want to close the ROM?";
 
     const bool result =
-        g_dialog_service->show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message.c_str(), L"Close ROM", true);
+        g_dialog_service->show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message, "Close ROM", true);
 
     return result;
 }
@@ -100,7 +101,7 @@ void AppActions::load_rom_from_path(const std::wstring &path)
 
 static void stub()
 {
-    g_dialog_service->show_dialog(L"ActionManager::stub", L"Stub", fsvc_error);
+    g_dialog_service->show_dialog("ActionManager::stub", "Stub", fsvc_error);
 }
 
 #pragma region File
@@ -499,8 +500,8 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
     {
         const auto overwrite = g_dialog_service->show_ask_dialog(
             VIEW_DLG_OVERWRITE_MOVIE,
-            L"The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
-            L"Overwrite Movie", true, g_main_ctx.hwnd);
+            "The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
+            "Overwrite Movie", true, g_main_ctx.hwnd);
         if (!overwrite) return;
     }
 
@@ -641,16 +642,15 @@ static void show_ram_start()
 {
     BetterEmulationLock lock;
 
-    wchar_t ram_start[20] = {0};
-    wsprintfW(ram_start, L"0x%p", static_cast<void *>(g_main_ctx.core_ctx->rdram));
+    const auto ram_start_str = std::format("0x{:p}", static_cast<void *>(g_main_ctx.core_ctx->rdram));
 
     wchar_t proc_name[MAX_PATH] = {0};
     GetModuleFileName(NULL, proc_name, MAX_PATH);
 
-    const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
+    const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
 
     const auto result = g_dialog_service->show_multiple_choice_dialog(
-        VIEW_DLG_RAMSTART, {L"Copy STROOP config line", L"Close"}, str.c_str(), L"Core Information", fsvc_information);
+        VIEW_DLG_RAMSTART, {L"Copy STROOP config line", L"Close"}, str, "Core Information", fsvc_information);
 
     if (result == 0)
     {
@@ -658,7 +658,7 @@ static void show_ram_start()
 
         const auto stroop_line = std::format(L"<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
                                              L"endianness=\"little\" autoDetect=\"true\"/>",
-                                             exe_filename.c_str(), ram_start);
+                                             exe_filename.c_str(), IOUtils::to_wide_string(ram_start_str));
         copy_to_clipboard(g_main_ctx.hwnd, stroop_line);
     }
 }
@@ -811,14 +811,14 @@ static void check_for_updates_manual()
 static void show_about_dialog()
 {
     BetterEmulationLock lock;
-    const auto msg = L"Mupen64 - Advanced N64 TASing emulator."
-                     L"\r\n"
-                     L"\r\n"
-                     L"Copyright ©️ 2026"
-                     L"\r\n"
-                     L"Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
+    const auto msg = "Mupen64 - Advanced N64 TASing emulator."
+                     "\r\n"
+                     "\r\n"
+                     "Copyright ©️ 2026"
+                     "\r\n"
+                     "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
     const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg,
-                                                                      L"About", fsvc_information);
+                                                                      "About", fsvc_information);
 
     if (result == 0)
     {

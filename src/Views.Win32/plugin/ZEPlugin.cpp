@@ -109,7 +109,7 @@ static void CALL dummy_capture_screen(char *)
 {
     if (!PluginUtil::mge_available())
     {
-        g_dialog_service->show_dialog(L"The current video plugin doesn't support screenshots.", L"Screenshot",
+        g_dialog_service->show_dialog("The current video plugin doesn't support screenshots.", "Screenshot",
                                       fsvc_error);
         return;
     }
@@ -225,7 +225,7 @@ void ZEPlugin::config(HWND hwnd)
     else
     {
         g_dialog_service->show_dialog(
-            std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
+            std::format("'{}' has no configuration.", this->name()), "Plugin",
             fsvc_error, hwnd);
     }
 
@@ -320,9 +320,9 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         if (compat_error)
         {
             const auto msg =
-                std::format(L"The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
-                            IOUtils::to_wide_string(m_name));
-            g_dialog_service->show_dialog(msg.c_str(), L"Plugin Incompatibility", fsvc_error);
+                std::format("The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
+                            m_name);
+            g_dialog_service->show_dialog(msg, "Plugin Incompatibility", fsvc_error);
         }
 
         break;
@@ -481,7 +481,7 @@ void ZEPlugin::initiate_dummy()
             const auto initiate_gfx = (ZESpec::INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
             if (initiate_gfx && !initiate_gfx(dummy_video_info))
             {
-                g_dialog_service->show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
+                g_dialog_service->show_dialog("Couldn't initialize video plugin.", "Core", fsvc_information);
             }
         }
 
@@ -493,7 +493,7 @@ void ZEPlugin::initiate_dummy()
             const auto initiate_audio = (ZESpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
             if (initiate_audio && !initiate_audio(dummy_audio_info))
             {
-                g_dialog_service->show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
+                g_dialog_service->show_dialog("Couldn't initialize audio plugin.", "Core", fsvc_information);
             }
         }
 

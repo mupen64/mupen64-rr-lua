@@ -442,7 +442,7 @@ static INT_PTR CALLBACK base_pageproc(const HWND hwnd, const UINT message, const
             {
                 const auto result = g_dialog_service->show_ask_dialog(
                     VIEW_DLG_CONFIRM_SETTINGS_DISCARD,
-                    L"You have unsaved changes. Are you sure you want to discard the changes?", L"Settings", true,
+                    "You have unsaved changes. Are you sure you want to discard the changes?", "Settings", true,
                     hwnd);
 
                 if (!result)
@@ -1251,7 +1251,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             ListView_Update(ctx->lv_hwnd, i);
             break;
         case 2:
-            g_dialog_service->show_dialog(option_item.get_friendly_info().c_str(), option_item.name.c_str(),
+            g_dialog_service->show_dialog(IOUtils::to_utf8_string(option_item.get_friendly_info()), IOUtils::to_utf8_string(option_item.name),
                                           fsvc_information, hwnd);
             break;
         case 4:
@@ -1278,16 +1278,16 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             if (!can_all_be_changed)
             {
                 g_dialog_service->show_dialog(
-                    L"Some settings can't be reset, as they are currently read-only. Try again "
-                    L"with emulation stopped.\nNo changes have been made to the settings.",
-                    L"Reset all to default", fsvc_warning, hwnd);
+                    "Some settings can't be reset, as they are currently read-only. Try again "
+                    "with emulation stopped.\nNo changes have been made to the settings.",
+                    "Reset all to default", fsvc_warning, hwnd);
                 break;
             }
 
             const auto result = g_dialog_service->show_ask_dialog(
                 VIEW_DLG_RESET_SETTINGS,
-                L"Reset all settings to their default values?\nThis will reset settings on all pages.",
-                L"Reset all to default", false, hwnd);
+                "Reset all settings to their default values?\nThis will reset settings on all pages.",
+                "Reset all to default", false, hwnd);
 
             if (!result)
             {

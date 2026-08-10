@@ -81,16 +81,14 @@ static void init_core()
                                                    const char *str, const char *title, const core_dialog_type type) {
         std::vector<std::wstring> wchoices;
         for (const auto &choice : choices) wchoices.push_back(IOUtils::to_wide_string(choice));
-        return g_dialog_service->show_multiple_choice_dialog(id, wchoices, IOUtils::to_wide_string(str).c_str(),
-                                                             IOUtils::to_wide_string(title).c_str(), type);
+        return g_dialog_service->show_multiple_choice_dialog(id, wchoices, str,
+                                                             title ? std::make_optional(title) : std::nullopt, type);
     };
     g_core_params.show_ask_dialog = [](std::string_view id, const char *str, const char *title, const bool warning) {
-        return g_dialog_service->show_ask_dialog(id, IOUtils::to_wide_string(str).c_str(),
-                                                 IOUtils::to_wide_string(title).c_str(), warning);
+        return g_dialog_service->show_ask_dialog(id, str, title ? std::make_optional(title) : std::nullopt, warning);
     };
     g_core_params.show_dialog = [](const char *str, const char *title, const core_dialog_type type) {
-        g_dialog_service->show_dialog(IOUtils::to_wide_string(str).c_str(), IOUtils::to_wide_string(title).c_str(),
-                                      type);
+        g_dialog_service->show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
     g_core_params.get_plugin_names = PluginUtil::get_plugin_names;
 

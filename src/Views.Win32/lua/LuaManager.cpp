@@ -28,10 +28,11 @@ std::unordered_map<lua_State *, t_lua_environment *> g_lua_env_map{};
 
 static int at_panic(lua_State *L)
 {
-    const auto message = IOUtils::to_wide_string(lua_tostring(L, -1));
+    const char *raw_msg = lua_tostring(L, -1);
+    const std::string_view message = raw_msg ? raw_msg : "";
 
-    g_view_logger->info(L"Lua panic: {}", message);
-    g_dialog_service->show_dialog(message.c_str(), L"Lua", fsvc_error);
+    g_view_logger->info(L"Lua panic: {}", IOUtils::to_wide_string(message));
+    g_dialog_service->show_dialog(message, "Lua", fsvc_error);
 
     return 0;
 }

@@ -377,17 +377,17 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::wstring &acti
         return;
     }
 
-    std::wstring conflicting_hotkey_identifiers;
+    std::string conflicting_hotkey_identifiers;
     for (const auto &action : conflicting_hotkeys | std::views::keys)
     {
-        conflicting_hotkey_identifiers += std::format(L"- {}\n", action);
+        conflicting_hotkey_identifiers += std::format("- {}\n", IOUtils::to_utf8_string(action));
     }
 
-    const auto str = std::format(L"The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
-                                 new_hotkey.to_wstring(), conflicting_hotkey_identifiers);
+    const auto str = std::format("The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
+                                 new_hotkey.to_string(), conflicting_hotkey_identifiers);
 
     const size_t choice = g_dialog_service->show_multiple_choice_dialog(
-        VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str.c_str(), L"Hotkey Conflict",
+        VIEW_DLG_HOTKEY_CONFLICT, {L"Keep New", L"Keep Old", L"Proceed Anyway"}, str, "Hotkey Conflict",
         fsvc_warning, hwnd);
 
     switch (choice)

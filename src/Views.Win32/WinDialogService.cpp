@@ -13,16 +13,20 @@ class WinDialogService : public IDialogService
 {
   public:
     size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
-                                       const wchar_t *str, const wchar_t *title = nullptr,
+                                       std::string_view str, std::optional<std::string_view> title = std::nullopt,
                                        core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
-                                       const wchar_t *details = nullptr) override
+                                       std::optional<std::string_view> details = std::nullopt) override
     {
+        const auto wstr = IOUtils::to_wide_string(str);
+        const auto wtitle = title ? std::make_optional(IOUtils::to_wide_string(*title)) : std::nullopt;
+        const auto wdetails = details ? std::make_optional(IOUtils::to_wide_string(*details)) : std::nullopt;
+
         const auto silenced = std::ranges::find(ALWAYS_LOUD_IDS, id) == ALWAYS_LOUD_IDS.end() && g_config.silent_mode;
 
         if (silenced)
         {
             const auto default_index = g_config.silent_mode_dialog_choices[IOUtils::to_wide_string(id)];
-            g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str,
+            g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", wstr,
                                  default_index);
             return std::stoi(default_index);
         }
@@ -32,7 +36,7 @@ class WinDialogService : public IDialogService
         {
             const auto answer = result->second;
             g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', dont show again answer: {}",
-                                 str, answer);
+                                 wstr, answer);
             return answer;
         }
 
@@ -61,18 +65,18 @@ class WinDialogService : public IDialogService
         TASKDIALOGCONFIG task_dialog_config = {
             .cbSize = sizeof(TASKDIALOGCONFIG),
             .hwndParent = static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd),
-            .pszWindowTitle = title,
+            .pszWindowTitle = wtitle ? wtitle->c_str() : L"Information",
             .pszMainIcon = icon,
-            .pszContent = str,
+            .pszContent = wstr.c_str(),
             .cButtons = (UINT)buttons.size(),
             .pButtons = buttons.data(),
             .pszVerificationText = L"Don't show again",
         };
 
-        if (details)
+        if (wdetails)
         {
             task_dialog_config.dwFlags |= TDF_EXPAND_FOOTER_AREA;
-            task_dialog_config.pszExpandedInformation = details;
+            task_dialog_config.pszExpandedInformation = wdetails->c_str();
             task_dialog_config.pszExpandedControlText = L"Show details";
             task_dialog_config.pszCollapsedControlText = L"Hide details";
         }
@@ -89,36 +93,39 @@ class WinDialogService : public IDialogService
         }
 
         g_view_logger->trace(
-            L"[FrontendService] show_multiple_choice_dialog: '{}', manual answer: {}, dont show again: {}", str,
+            L"[FrontendService] show_multiple_choice_dialog: '{}', manual answer: {}, dont show again: {}", wstr,
             pressed_button > 0 ? choices[pressed_button] : L"?", dont_show_again);
 
         return pressed_button;
     }
 
-    bool show_ask_dialog(std::string_view id, const wchar_t *str, const wchar_t *title = nullptr, bool warning = false,
-                         void *hwnd = nullptr) override
+    bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<std::string_view> title = std::nullopt,
+                         bool warning = false, void *hwnd = nullptr) override
     {
         return show_multiple_choice_dialog(id, {L"Yes", L"No"}, str, title, warning ? fsvc_warning : fsvc_information,
                                            hwnd) == 0;
     }
 
-    void show_dialog(const wchar_t *str, const wchar_t *title = nullptr, core_dialog_type type = fsvc_warning,
+    void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt, core_dialog_type type = fsvc_warning,
                      void *hwnd = nullptr) override
     {
+        const auto wstr = IOUtils::to_wide_string(str);
+        const auto wtitle = title ? std::make_optional(IOUtils::to_wide_string(*title)) : std::nullopt;
+
         int icon = 0;
 
         switch (type)
         {
         case fsvc_error:
-            g_view_logger->error(L"[FrontendService] {}", str);
+            g_view_logger->error(L"[FrontendService] {}", wstr);
             icon = MB_ICONERROR;
             break;
         case fsvc_warning:
-            g_view_logger->warn(L"[FrontendService] {}", str);
+            g_view_logger->warn(L"[FrontendService] {}", wstr);
             icon = MB_ICONWARNING;
             break;
         case fsvc_information:
-            g_view_logger->info(L"[FrontendService] {}", str);
+            g_view_logger->info(L"[FrontendService] {}", wstr);
             icon = MB_ICONINFORMATION;
             break;
         default:
@@ -127,11 +134,11 @@ class WinDialogService : public IDialogService
 
         if (!g_config.silent_mode)
         {
-            MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), str, title, icon);
+            MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), wstr.c_str(), wtitle ? wtitle->c_str() : nullptr, icon);
         }
     }
 
-    void show_statusbar(const wchar_t *str) override { Statusbar::post(str); }
+    void show_statusbar(std::string_view str) override { Statusbar::post(IOUtils::to_wide_string(str)); }
 
   private:
     const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_CONFIRM_SETTINGS_DISCARD};

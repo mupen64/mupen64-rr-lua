@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 #include <m64rr/Types.hpp>
 
 /**
@@ -25,15 +26,15 @@ class IDialogService
      * \param str The dialog content.
      * \param title The dialog title.
      * \param hwnd The parent window. If nullptr, the main window will be used.
-     * \param details The details section. If nullptr, no details section will be shown.
+     * \param details The details section. If std::nullopt, no details section will be shown.
      * \return The index of the chosen choice. If the user has chosen to not use modals, this function will return the
      * index specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this
      * function will return the last choice.
      */
     virtual size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
-                                               const wchar_t *str, const wchar_t *title = nullptr,
+                                               std::string_view str, std::optional<std::string_view> title = std::nullopt,
                                                core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
-                                               const wchar_t *details = nullptr) = 0;
+                                               std::optional<std::string_view> details = std::nullopt) = 0;
 
     /**
      * \brief Asks the user a Yes/No question.
@@ -46,7 +47,7 @@ class IDialogService
      * value specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this
      * function will return the last choice.
      */
-    virtual bool show_ask_dialog(std::string_view id, const wchar_t *str, const wchar_t *title = nullptr,
+    virtual bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<std::string_view> title = std::nullopt,
                                  bool warning = false, void *hwnd = nullptr) = 0;
 
     /**
@@ -56,12 +57,12 @@ class IDialogService
      * \param type The dialog tone.
      * \param hwnd The parent window. If nullptr, the main window will be used.
      */
-    virtual void show_dialog(const wchar_t *str, const wchar_t *title = nullptr, core_dialog_type type = fsvc_warning,
+    virtual void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt, core_dialog_type type = fsvc_warning,
                              void *hwnd = nullptr) = 0;
 
     /**
      * \brief Shows text in the statusbar.
      * \param str The text.
      */
-    virtual void show_statusbar(const wchar_t *str) = 0;
+    virtual void show_statusbar(std::string_view str) = 0;
 };

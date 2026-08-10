@@ -112,7 +112,7 @@ void M64RRPlugin::config(HWND hwnd)
     else
     {
         g_dialog_service->show_dialog(
-            std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
+            std::format("'{}' has no configuration.", this->name()), "Plugin",
             fsvc_error, hwnd);
     }
 

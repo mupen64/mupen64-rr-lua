@@ -153,7 +153,7 @@ void show_connectivity_error(bool manual)
 {
     if (manual)
     {
-        g_dialog_service->show_dialog(L"Failed to fetch update information. Please try again later.", L"Update Error",
+        g_dialog_service->show_dialog("Failed to fetch update information. Please try again later.", "Update Error",
                                       fsvc_error);
     }
 }
@@ -210,7 +210,7 @@ void check(bool manual)
     {
         if (manual)
         {
-            g_dialog_service->show_dialog(L"You are already up-to-date.", L"Already up-to-date", fsvc_information);
+            g_dialog_service->show_dialog("You are already up-to-date.", "Already up-to-date", fsvc_information);
         }
 
         return;
@@ -225,7 +225,7 @@ show_prompt:
             L"Show Changelog",
             L"Skip Version",
         },
-        std::format(L"Mupen64 {} is available for download.", version_wide).c_str(), L"Update Available",
+        std::format("Mupen64 {} is available for download.", version), "Update Available",
         fsvc_information);
 
     switch (result)

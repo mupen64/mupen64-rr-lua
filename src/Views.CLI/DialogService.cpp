@@ -14,21 +14,19 @@ class DialogService : public IDialogService
 {
   public:
     size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
-                                       const wchar_t *str, const wchar_t *title = nullptr,
+                                       std::string_view str, std::optional<std::string_view> title = std::nullopt,
                                        core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
-                                       const wchar_t *details = nullptr) override
+                                       std::optional<std::string_view> details = std::nullopt) override
     {
-        const auto ustr = IOUtils::to_utf8_string(str);
-        const auto utitle = IOUtils::to_utf8_string(title);
         std::vector<std::string> uchoices;
         for (const auto &choice : choices) uchoices.push_back(IOUtils::to_utf8_string(choice));
 
-        print_header(utitle, type);
+        print_header(title.value_or(""), type);
 
         std::string input_line;
         while (true)
         {
-            std::println("{}", ustr);
+            std::println("{}", str);
             for (size_t i = 0; i < choices.size(); i++)
             {
                 std::println("{}) {}", (i + 1), uchoices[i]);
@@ -48,18 +46,15 @@ class DialogService : public IDialogService
         }
     }
 
-    bool show_ask_dialog(std::string_view id, const wchar_t *str, const wchar_t *title = nullptr, bool warning = false,
-                         void *hwnd = nullptr) override
+    bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<std::string_view> title = std::nullopt,
+                         bool warning = false, void *hwnd = nullptr) override
     {
-        const auto ustr = IOUtils::to_utf8_string(str);
-        const auto utitle = IOUtils::to_utf8_string(title);
-
-        print_header(utitle, warning ? fsvc_warning : fsvc_information);
+        print_header(title.value_or(""), warning ? fsvc_warning : fsvc_information);
 
         std::string input_line;
         while (true)
         {
-            std::println("{}", ustr);
+            std::println("{}", str);
             std::println("(enter Y for yes, N for no)");
             std::print("> ");
 
@@ -67,30 +62,25 @@ class DialogService : public IDialogService
             if (input_line.size() == 1)
             {
                 if (input_line[0] == 'Y' || input_line[0] == 'y') return true;
-                if (input_line[0] == 'N' || input_line[0] == 'n') return true;
+                if (input_line[0] == 'N' || input_line[0] == 'n') return false;
             }
             std::println("Invalid input...");
         }
     }
 
-    void show_dialog(const wchar_t *str, const wchar_t *title = nullptr, core_dialog_type type = fsvc_warning,
+    void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt, core_dialog_type type = fsvc_warning,
                      void *hwnd = nullptr) override
     {
-        const auto ustr = IOUtils::to_utf8_string(str);
-        const auto utitle = IOUtils::to_utf8_string(title);
+        print_header(title.value_or(""), type);
 
-        print_header(utitle, type);
-
-        std::println("{}", ustr);
+        std::println("{}", str);
         std::print("(press [Enter] to continue)");
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), std::cin.widen('\n'));
     }
 
-    void show_statusbar(const wchar_t *str) override
+    void show_statusbar(std::string_view str) override
     {
-        const auto ustr = IOUtils::to_utf8_string(str);
-
-        std::println("{}", ustr);
+        std::println("{}", str);
     }
 
   private:
@@ -102,8 +92,10 @@ class DialogService : public IDialogService
         {
         case fsvc_error:
             type_str = "ERROR"sv;
+            break;
         case fsvc_warning:
             type_str = "WARN"sv;
+            break;
         case fsvc_information:
             type_str = "INFO"sv;
             break;
