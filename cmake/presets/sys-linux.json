@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
+  "version": 10,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "sys-linux",
+      "description": "Linux: host platform",
+      "inherits": "common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    }
+  ]
+}

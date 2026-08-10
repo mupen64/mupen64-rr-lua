@@ -27,11 +27,9 @@ set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompile
 
 # The Windows view can, of course, only be compiled on Windows.
 # This is in place to allow future frontends to be written separately.
-set(MUPEN64RR_BUILD_WIN32 ON CACHE BOOL "If on, enables the Win32 view and plugins.")
-
-if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-  message(STATUS "Target system ${CMAKE_SYSTEM_NAME} is incompatible with the Win32 frontend, disabling...")
-  set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins. (FORCE-DISABLED)" FORCE)
+set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins.")
+if(MUPEN64RR_BUILD_WIN32 AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+  message(FATAL_ERROR "Unsupported platform for the Win32 frontend!")
 endif()
 
 # This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
+  "version": 10,
+  "configurePresets": [
+    {
+      "name": "common",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ]
+}
