@@ -28,14 +28,12 @@ endif()
 
 # This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.
 set(MUPEN64RR_BUILD_QT6 OFF CACHE BOOL "If on, enables the Qt6 view (experimental)")
+if (MUPEN64RR_BUILD_QT6)
+    message(WARNING "The Qt6 frontend is experimental. Not all features may be implemented or work as expected.")
+endif()
 
 # Basic checks and setup
 # ===========================================
-
-# initial checks
-if(NOT WIN32)
-    message(WARNING "Building on platforms other than Windows is experimental. You're on your own, good luck.")
-endif()
 
 # Check generator type
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
