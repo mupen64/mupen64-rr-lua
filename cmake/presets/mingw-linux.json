@@ -14,7 +14,8 @@
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/mingw-cross.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/mingw-cross.cmake",
+        "MUPEN64RR_BUILD_WIN32": true
       },
       "condition": {
         "type": "equals",

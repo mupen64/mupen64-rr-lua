@@ -134,6 +134,7 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
         "${dynarec_dir}/Assemble.hpp"
         "${dynarec_dir}/Gcop1Helpers.hpp"
         "${dynarec_dir}/RegCache.hpp"
+        
         "${dynarec_dir}/Assemble.cpp"
         "${dynarec_dir}/GBc.cpp"
         "${dynarec_dir}/GCop0.cpp"

@@ -54,8 +54,8 @@ extern uintptr_t g_dynarec_base;
 void debug();
 
 void put8(unsigned char octet);
-extern void put32(uint32_t dword);
-extern void put64(uint64_t qword);
+void put32(uint32_t dword);
+void put64(uint64_t qword);
 void put16(uint16_t word);
 
 void push_reg32(int32_t reg32);

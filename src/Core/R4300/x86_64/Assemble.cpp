@@ -117,7 +117,7 @@ inline void grow_buffer()
     *inst_pointer = new_buffer;
 }
 
-inline void put8(unsigned char octet)
+void put8(unsigned char octet)
 {
     if (code_length == max_code_length)
     {
@@ -127,7 +127,7 @@ inline void put8(unsigned char octet)
     code_length++;
 }
 
-inline void put32(uint32_t dword)
+void put32(uint32_t dword)
 {
     if ((code_length + 4) >= max_code_length)
     {
@@ -137,7 +137,7 @@ inline void put32(uint32_t dword)
     code_length += 4;
 }
 
-inline void put64(uint64_t qword)
+void put64(uint64_t qword)
 {
     if ((code_length + 8) >= max_code_length)
     {
@@ -147,7 +147,7 @@ inline void put64(uint64_t qword)
     code_length += 8;
 }
 
-inline void put16(uint16_t word)
+void put16(uint16_t word)
 {
     if ((code_length + 2) >= max_code_length)
     {
