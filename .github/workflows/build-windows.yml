@@ -12,17 +12,13 @@ env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
 jobs:
-  build-debug-nightly-windows:
+  build-nightly-windows:
     runs-on: windows-latest
 
     strategy:
       matrix:
         arch: [x86, x64]
-        include:
-          - arch: x86
-            win_arch: w32
-          - arch: x64
-            win_arch: w64
+        build_type: [debug, release]
 
     steps:
       - uses: actions/checkout@v6
@@ -73,7 +69,10 @@ jobs:
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}
+        run: |
+          $cmake_debug="Debug"
+          $cmake_release="RelWithDebInfo"
+          cmake --preset vcpkg-win64-${{matrix.arch}} "-DCMAKE_BUILD_TYPE=$cmake_${{matrix.build_type}}"
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -82,91 +81,12 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-debug-nightly-${{ matrix.win_arch }}
-          path: build/out
-          retention-days: 14
-
-  build-release-nightly-windows:
-    runs-on: windows-latest
-
-    strategy:
-      matrix:
-        arch: [x86, x64]
-        include:
-          - arch: x86
-            win_arch: w32
-          - arch: x64
-            win_arch: w64
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
-        with:
-          arch: ${{ matrix.arch }}
-
-      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
-        shell: powershell
-        run: |
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
-          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
-
-      # Manual runs have no version suffix, auto-runs set it to `nightly-{short_commit_hash}`
-      - name: Set VERSION_SUFFIX and NIGHTLY
-        shell: powershell
-        run: |
-          echo "NIGHTLY=1" >> $env:GITHUB_ENV
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
-          } else {
-            $hash = "${{ github.sha }}".Substring(0, 7)
-            echo "VERSION_SUFFIX=-nightly-$hash" >> $env:GITHUB_ENV
-          }
-
-      - name: Create vcpkg cache directory
-        shell: pwsh
-        run: |
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
-
-      - name: Cache vcpkg binaries and installed packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            vcpkg_cache
-            vcpkg_installed
-            build/vcpkg_installed
-          key: >
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json','vcpkg-configuration.json') }}-
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
-
-      - name: CMake Setup
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
-
-      - name: CMake Build
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --build build
-
-      - name: Delete PDB files
-        shell: powershell
-        run: |
-          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
-            Remove-Item -Force -ErrorAction SilentlyContinue
-
-      - name: Upload build
-        uses: actions/upload-artifact@v7
-        with:
-          name: mupen-release-nightly-${{ matrix.win_arch }}
+          name: mupen-${{ matrix.build_type }}-nightly-windows-${{ matrix.arch }}
           path: build/out
           retention-days: 14
 
   build-release-stable-windows:
+    name: Release
     runs-on: windows-latest
 
     strategy:

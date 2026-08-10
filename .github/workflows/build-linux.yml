@@ -9,13 +9,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-debug-nightly-linux:
+  build-linux:
+    strategy:
+      matrix:
+        build_type: [debug, release]
+    
     # TODO: switch this to ubuntu-latest once this leaves preview.
-    runs-on: [ubuntu-26.04] 
+    runs-on: [ubuntu-26.04]
 
     steps:
     - uses: actions/checkout@v6
-    - name: Install other dependencies
+
+    - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -35,16 +40,22 @@ jobs:
         libspeexdsp-dev \
         libswresample-dev \
         libswscale-dev
+
     - name: CMake configure
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: cmake --preset sys-linux
+      run: |
+        cmake_debug="Debug"
+        cmake_release="RelWithDebInfo"
+        cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+
     - name: CMake build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: cmake --build build
+
     - name: Upload artifact
       uses: actions/upload-artifact@v7
       with:
-        name: mupen-debug-nightly-linux-x64
+        name: mupen-${{ matrix.build_type }}-nightly-linux-x64
         path: build/out
         retention-days: 14
 
