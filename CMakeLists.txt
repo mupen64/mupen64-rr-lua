@@ -14,13 +14,6 @@ project(mupen64-rr
 # Options
 # ===========================================
 
-if(MINGW)
-  # Avoid weird "lib" prefixes when cross-compiling (e.g. libTASVideo.dll instead of TASVideo.dll).
-  set(CMAKE_SHARED_LIBRARY_PREFIX "")
-  set(CMAKE_STATIC_LIBRARY_PREFIX "")
-  set(CMAKE_SHARED_MODULE_PREFIX "")
-endif()
-
 # The dynarec only supports x86 and x86_64; building for any other
 # architecture (e.g. ARM64) errors out (see src/Core/CMakeLists.txt).
 set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompiler.")
@@ -28,6 +21,7 @@ set(MUPEN64RR_ENABLE_DYNAREC ON CACHE BOOL "If on, enables the dynamic recompile
 # The Windows view can, of course, only be compiled on Windows.
 # This is in place to allow future frontends to be written separately.
 set(MUPEN64RR_BUILD_WIN32 OFF CACHE BOOL "If on, enables the Win32 view and plugins.")
+
 if(MUPEN64RR_BUILD_WIN32 AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   message(FATAL_ERROR "Unsupported platform for the Win32 frontend!")
 endif()
@@ -41,6 +35,18 @@ set(MUPEN64RR_BUILD_CLI OFF CACHE BOOL "If on, enables the CLI view (primarily f
 # initial checks
 if(NOT WIN32)
   message(WARNING "Building on platforms other than Windows is experimental. You're on your own, good luck.")
+endif()
+
+# Check generator type
+get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
+if(is_multi_config)
+  message(WARNING "These build files are not designed to handle multi-config generators. You're on your own, good luck.")
+endif()
+
+# set default build type
+if(NOT CMAKE_BUILD_TYPE AND NOT is_multi_config)
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "The build type to use with CMake. [Debug;Release;MinSizeRel;RelWithDebInfo]")
 endif()
 
 # version suffix
@@ -64,13 +70,6 @@ message(STATUS "Nightly build: ${MUPEN64RR_NIGHTLY}")
 set(MUPEN64RR_OUT_DIR "${PROJECT_BINARY_DIR}/out/")
 set(MUPEN64RR_PLUGIN_OUT_DIR "${PROJECT_BINARY_DIR}/out/plugin/")
 set(MUPEN64RR_TEST_OUT_DIR "${PROJECT_BINARY_DIR}/test/out/")
-
-# default build type
-get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-
-if(NOT CMAKE_BUILD_TYPE AND NOT is_multi_config)
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "The build type to use with CMake. [Debug;Release;MinSizeRel;RelWithDebInfo]")
-endif()
 
 # Libraries
 # =======================================
@@ -112,14 +111,13 @@ if(LUA_FOUND AND NOT TARGET Lua::Lua)
   )
 endif()
 
+# Utility functions
+# =======================================
+
 #[=======================[
 Copies all vcpkg dependencies into the target's folder.
 ]=======================]
 function(mupen64rr_copy_vcpkg_deps target)
-  if(MUPEN64RR_LINK_STATIC)
-    return()
-  endif()
-
   if(NOT(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND DEFINED VCPKG_INSTALLED_DIR))
     return()
   endif()
@@ -163,6 +161,13 @@ endfunction()
 include(CTest)
 include(Catch)
 
+# Global build settings
+# =======================================
+
+# Avoid "lib" prefixes for plugins (e.g. libTASVideo.dll instead of TASVideo.dll).
+set(CMAKE_SHARED_MODULE_PREFIX "")
+
+
 if(WIN32)
   # Use UTF-16 versions of functions
   add_compile_definitions(UNICODE _UNICODE)
@@ -186,7 +191,8 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$" AND CMAKE_C_COMPILER_ID MATCHES "^GCC$|Clang$")
+  # Enable SSSE3 instructions where applicable
   add_compile_options(-mssse3)
 endif()
 
