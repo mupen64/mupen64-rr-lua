@@ -25,3 +25,8 @@ target_link_libraries(Mupen64RR.Views.CLI PRIVATE
     Mupen64RR.Core
     vendor::decan
 )
+
+# MinGW needs this for std::print(ln) some reason...
+if(MINGW)
+    target_link_libraries(Mupen64RR.Views.CLI PRIVATE stdc++exp)
+endif()
