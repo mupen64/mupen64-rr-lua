@@ -1,8 +1,7 @@
-name: Build
+name: Build (Windows)
 
 on:
   push:
-  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +12,7 @@ env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
 jobs:
-  build-debug-nightly:
+  build-debug-nightly-windows:
     runs-on: windows-latest
 
     strategy:
@@ -87,7 +86,7 @@ jobs:
           path: build/out
           retention-days: 14
 
-  build-release-nightly:
+  build-release-nightly-windows:
     runs-on: windows-latest
 
     strategy:
@@ -167,7 +166,7 @@ jobs:
           path: build/out
           retention-days: 14
 
-  build-release-stable:
+  build-release-stable-windows:
     runs-on: windows-latest
 
     strategy:
