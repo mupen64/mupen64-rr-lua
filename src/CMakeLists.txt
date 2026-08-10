@@ -18,9 +18,8 @@ set(CMAKE_SHARED_MODULE_PREFIX "")
 add_subdirectory(Common)
 # core API and headers
 add_subdirectory(Core)
-
-
-
+# shared view functions
+add_subdirectory(Common.Views)
 
 # BUNDLED PLUGINS
 # ============================
@@ -46,7 +45,6 @@ if (MUPEN64RR_BUILD_WIN32)
     # ============================
 
     add_subdirectory(Common.Win32)
-    add_subdirectory(Common.Views)
     add_subdirectory(Views.Win32)
 
     # BUNDLED PLUGINS
