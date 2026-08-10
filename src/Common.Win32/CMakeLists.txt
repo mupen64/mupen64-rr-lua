@@ -12,4 +12,4 @@ add_library(Mupen64RR.Common.Win32 INTERFACE
 target_compile_features(Mupen64RR.Common.Win32 INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR.Common.Win32 INTERFACE include)
 
-add_compile_definitions(NOMINMAX)
+target_compile_definitions(Mupen64RR.Common.Win32 INTERFACE NOMINMAX)

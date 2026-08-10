@@ -28,4 +28,4 @@ if (NOT WIN32)
     target_link_libraries(Mupen64RR.Common INTERFACE PkgConfig::libsafec)
 endif()
 
-add_compile_definitions(NOMINMAX)
+target_compile_definitions(Mupen64RR.Common INTERFACE NOMINMAX)
