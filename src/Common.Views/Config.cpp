@@ -32,7 +32,7 @@ static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_cho
 {
     const std::unordered_map<std::string, size_t> BASE_CHOICES = {
         {CORE_DLG_FLOAT_EXCEPTION, 0},      {CORE_DLG_ST_HASH_MISMATCH, 0},      {CORE_DLG_ST_UNFREEZE_WARNING, 0},
-        {CORE_DLG_ST_NOT_FROM_MOVIE, 0},    {CORE_DLG_VCR_RAWDATA_WARNING, 0},   {CORE_DLG_VCR_WIIVC_WARNING, 0},
+        {CORE_DLG_ST_NOT_FROM_MOVIE, 0},    {CORE_DLG_VCR_RAWDATA_WARNING, 0},   {CORE_DLG_VCR_GENERAL_SYNC_WARNING, 0},
         {CORE_DLG_VCR_ROM_NAME_WARNING, 0}, {CORE_DLG_VCR_ROM_CCODE_WARNING, 0}, {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
         {CORE_DLG_VCR_CHEAT_LOAD_ERROR, 0},
     };
