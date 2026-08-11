@@ -160,6 +160,30 @@ function(mupen64rr_copy_mingw_runtime target)
   )
 endfunction()
 
+#[=======================[
+Copies MSVC runtime DLLs (msvcp140, msvcp140_atomic_wait, vcruntime140) to the
+target's output directory. Needed on Windows 10 where these aren't pre-installed.
+]=======================]
+function(mupen64rr_copy_msvc_runtime target)
+  if(NOT MSVC)
+    return()
+  endif()
+
+  # cl.exe sits in the VC tools bin directory alongside the CRT DLLs
+  # (e.g. .../VC/Tools/MSVC/<ver>/bin/Hostx64/x64).
+  get_filename_component(_msvc_bindir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+
+  add_custom_command(
+    TARGET "${target}" POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${_msvc_bindir}/msvcp140.dll"
+    "${_msvc_bindir}/msvcp140_atomic_wait.dll"
+    "${_msvc_bindir}/vcruntime140.dll"
+    "$<TARGET_FILE_DIR:${target}>"
+    VERBATIM
+  )
+endfunction()
+
 # CMake modules
 # =======================================
 include(CTest)
