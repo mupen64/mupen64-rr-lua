@@ -1,38 +1,83 @@
 [
   {
     "adapter": "CodeLLDB",
-    "label": "mupen64.exe (x86) (CodeLLDB)",
+    "label": "mupen64.exe (linux native) (CodeLLDB)",
     "request": "launch",
-    "name": "mupen64.exe (x86) (CodeLLDB)",
+    "name": "mupen64.exe (linux native) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build"
+    "build": "build (linux native)"
   },
   {
     "adapter": "CodeLLDB",
-    "label": "mupen64.exe (x86-release) (CodeLLDB)",
+    "label": "mupen64.exe (mingw x64) (CodeLLDB)",
     "request": "launch",
-    "name": "mupen64.exe (x86-release) (CodeLLDB)",
+    "name": "mupen64.exe (mingw x64) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build"
+    "build": "build (mingw x64)"
   },
   {
     "adapter": "CodeLLDB",
-    "label": "mupen64.exe (x64) (CodeLLDB) ",
+    "label": "mupen64.exe (mingw x64-release) (CodeLLDB)",
     "request": "launch",
-    "name": "mupen64.exe (x64) (CodeLLDB)",
+    "name": "mupen64.exe (mingw x64-release) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build (x64)"
+    "build": "build (mingw x64)"
   },
   {
     "adapter": "CodeLLDB",
-    "label": "mupen64.exe (x64-release) (CodeLLDB)",
+    "label": "mupen64.exe (mingw x86) (CodeLLDB)",
     "request": "launch",
-    "name": "mupen64.exe (x64-release) (CodeLLDB)",
+    "name": "mupen64.exe (mingw x86) (CodeLLDB)",
     "program": "./build/out/mupen64.exe",
     "stopOnEntry": false,
-    "build": "build (x64)"
+    "build": "build (mingw x86)"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (mingw x86-release) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (mingw x86-release) (CodeLLDB)",
+    "program": "./build/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build (mingw x86)"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (win x64) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (win x64) (CodeLLDB)",
+    "program": "./build/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build (win x64)"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (win x64-release) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (win x64-release) (CodeLLDB)",
+    "program": "./build/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build (win x64)"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (win x86) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (win x86) (CodeLLDB)",
+    "program": "./build/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build (win x86)"
+  },
+  {
+    "adapter": "CodeLLDB",
+    "label": "mupen64.exe (win x86-release) (CodeLLDB)",
+    "request": "launch",
+    "name": "mupen64.exe (win x86-release) (CodeLLDB)",
+    "program": "./build/out/mupen64.exe",
+    "stopOnEntry": false,
+    "build": "build (win x86)"
   }
 ]
