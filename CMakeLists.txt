@@ -165,7 +165,7 @@ Copies MSVC runtime DLLs (msvcp140, msvcp140_atomic_wait, vcruntime140) to the
 target's output directory. Needed on Windows 10 where these aren't pre-installed.
 ]=======================]
 function(mupen64rr_copy_msvc_runtime target)
-  if(NOT MSVC)
+  if(NOT (WIN32 AND NOT MINGW))
     return()
   endif()
 
