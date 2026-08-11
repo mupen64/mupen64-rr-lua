@@ -79,6 +79,6 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-stable-release-windows-${{ matrix.arch }}
+          name: mupen-release-stable-windows-${{ matrix.arch }}
           path: build/out
           retention-days: 14
