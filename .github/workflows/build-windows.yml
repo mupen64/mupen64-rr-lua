@@ -48,8 +48,9 @@ jobs:
           retention-days: 14
 
   build-release-stable-windows:
-    name: Release
     runs-on: windows-latest
+    
+    if: ${{ startsWith(github.ref_name, 'release') }}
 
     strategy:
       matrix:
