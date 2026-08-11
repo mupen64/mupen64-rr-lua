@@ -10,9 +10,11 @@ inputs:
     required: false
     default: false
   commit_hash:
-    description: "Truncated commit hash to append to the nightly version suffix."
+    description: |
+      Full commit hash to append to the nightly version suffix.
+      If unspecified or empty, omits the suffix entirely.
     required: false
-    default: null
+    default: ""
 
 runs:
   using: composite
@@ -53,5 +55,7 @@ runs:
       if: ${{ inputs.is_nightly }}
       shell: powershell
       run: |
+        $suffix = "${{ inputs.commit_hash }}"
+        if ($suffix -ne "") { $suffix="-nightly-" + $suffix.Substring(0, 7) }
         echo "NIGHTLY=1" >> $env:GITHUB_ENV
-        echo "VERSION_SUFFIX=${{ inputs.commit_hash && format('-nightly-{0}', inputs.commit_hash) || '' }}" >> $env:GITHUB_ENV
+        echo "VERSION_SUFFIX=$suffix" >> $env:GITHUB_ENV
