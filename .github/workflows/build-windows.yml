@@ -50,7 +50,7 @@ jobs:
   build-release-stable-windows:
     runs-on: windows-latest
     
-    if: ${{ startsWith(github.ref_name, 'release') }}
+    if: ${{ github.ref_name && startsWith(github.ref_name, 'release') }}
 
     strategy:
       matrix:
