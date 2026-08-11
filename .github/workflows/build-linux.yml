@@ -9,54 +9,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-linux:
+  build-nightly-linux:
     strategy:
       matrix:
         build_type: [debug, release]
-    
+
     # TODO: switch this to ubuntu-latest once this leaves preview.
     runs-on: [ubuntu-26.04]
 
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-        qt6-base-dev \
-        qt6-declarative-dev \
-        nlohmann-json3-dev \
-        libavcodec-dev \
-        libavformat-dev \
-        libavutil-dev \
-        libcatch2-dev \
-        libdeflate-dev \
-        liblua5.4-dev \
-        liblz4-dev \
-        libsafec-dev \
-        libsdl3-dev \
-        libspdlog-dev \
-        libspeexdsp-dev \
-        libswresample-dev \
-        libswscale-dev
+      - uses: ./.github/actions/setup-ubuntu
+        with:
+          is_nightly: true
+          commit_hash: ${{ (github.event_name != 'workflow_dispatch') && github.sha || null }}
 
-    - name: CMake configure
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: |
-        cmake_debug="Debug"
-        cmake_release="RelWithDebInfo"
-        cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+      - name: CMake configure
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: |
+          cmake_debug="Debug"
+          cmake_release="RelWithDebInfo"
+          cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
 
-    - name: CMake build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: cmake --build build
+      - name: CMake build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: mupen-${{ matrix.build_type }}-nightly-linux-x64
-        path: build/out
-        retention-days: 14
-
-
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mupen-${{ matrix.build_type }}-nightly-linux-x64
+          path: build/out
+          retention-days: 14

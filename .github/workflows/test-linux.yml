@@ -15,32 +15,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    - name: Install other dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-        qt6-base-dev \
-        qt6-declarative-dev \
-        nlohmann-json3-dev \
-        libavcodec-dev \
-        libavformat-dev \
-        libavutil-dev \
-        libcatch2-dev \
-        libdeflate-dev \
-        liblua5.4-dev \
-        liblz4-dev \
-        libsafec-dev \
-        libsdl3-dev \
-        libspdlog-dev \
-        libspeexdsp-dev \
-        libswresample-dev \
-        libswscale-dev
+
+    - uses: ./.github/actions/setup-ubuntu
+
     - name: CMake configure
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: cmake --preset sys-linux
+
     - name: CMake build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: cmake --build build
+      
     - name: CMake test
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: ctest --test-dir build
