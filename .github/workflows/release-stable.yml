@@ -27,22 +27,22 @@ jobs:
         id: commit
         run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Download mupen-release-stable-w32 artifact from latest run on current branch
+      - name: Download mupen-release-stable-windows-x86 artifact from latest run on current branch
         uses: dawidd6/action-download-artifact@v21
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: build.yml
           branch: ${{ github.ref_name }}
-          name: mupen-release-stable-w32
+          name: mupen-release-stable-windows-x86
           path: ./release-artifact-x86
 
-      - name: Download mupen-release-stable-w64 artifact from latest run on current branch
+      - name: Download mupen-release-stable-windows-x64 artifact from latest run on current branch
         uses: dawidd6/action-download-artifact@v21
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: build.yml
           branch: ${{ github.ref_name }}
-          name: mupen-release-stable-w64
+          name: mupen-release-stable-windows-x64
           path: ./release-artifact-x64
 
       - name: Zip release artifacts

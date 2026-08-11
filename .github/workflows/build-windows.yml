@@ -23,49 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
+      - uses: ./.github/actions/setup-windows.yml
         with:
           arch: ${{ matrix.arch }}
-
-      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
-        shell: powershell
-        run: |
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
-          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
-
-      # Manual runs have no version suffix, auto-runs set it to `nightly-{short_commit_hash}`
-      - name: Set VERSION_SUFFIX and NIGHTLY
-        shell: powershell
-        run: |
-          echo "NIGHTLY=1" >> $env:GITHUB_ENV
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            echo "VERSION_SUFFIX=" >> $env:GITHUB_ENV
-          } else {
-            $hash = "${{ github.sha }}".Substring(0, 7)
-            echo "VERSION_SUFFIX=-nightly-$hash" >> $env:GITHUB_ENV
-          }
-
-      - name: Create vcpkg cache directory
-        shell: pwsh
-        run: |
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
-
-      - name: Cache vcpkg binaries and installed packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            vcpkg_cache
-            vcpkg_installed
-            build/vcpkg_installed
-          key: >
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json','vcpkg-configuration.json') }}-
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+          is_nightly: true
+          commit_hash: ${{ (github.event_name != 'workflow_dispatch') && github.sha || null }}
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -92,50 +54,17 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
-        include:
-          - arch: x86
-            win_arch: w32
-          - arch: x64
-            win_arch: w64
 
     steps:
       - uses: actions/checkout@v6
 
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
+      - uses: ./.github/actions/setup-windows.yml
         with:
           arch: ${{ matrix.arch }}
 
-      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
-        shell: powershell
-        run: |
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
-          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
-
-      - name: Create vcpkg cache directory
-        shell: pwsh
-        run: |
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
-
-      - name: Cache vcpkg binaries and installed packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            vcpkg_cache
-            vcpkg_installed
-            build/vcpkg_installed
-          key: >
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json','vcpkg-configuration.json') }}-
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
-
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
+        run: cmake --preset vcpkg-win64-${{ matrix.arch }} -DCMAKE_BUILD_TYPE=Release
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -150,6 +79,6 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-release-stable-${{ matrix.win_arch }}
+          name: mupen-stable-release-windows-${{ matrix.arch }}
           path: build/out
           retention-days: 14
