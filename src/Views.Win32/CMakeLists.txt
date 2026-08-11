@@ -142,6 +142,7 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
 mupen64rr_copy_vcpkg_deps(Mupen64RR.Views.Win32)
+mupen64rr_copy_msvc_runtime(Mupen64RR.Views.Win32)
 # Dependencies of the resource file. These are specified manually,
 # but it wouldn't be impossible to write a scanner to gather this info automagically.
 set_source_files_properties(

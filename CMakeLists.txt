@@ -119,6 +119,58 @@ function(mupen64rr_copy_vcpkg_deps target)
   )
 endfunction()
 
+#[=======================[
+Copies MSVC runtime DLLs (msvcp140, msvcp140_atomic_wait, vcruntime140) to the
+target's output directory. Needed on Windows 10 where these aren't pre-installed.
+]=======================]
+function(mupen64rr_copy_msvc_runtime target)
+  if(NOT (WIN32 AND NOT MINGW))
+    return()
+  endif()
+
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(_msvc_arch "x64")
+  else()
+    set(_msvc_arch "x86")
+  endif()
+
+  get_filename_component(_compiler_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+  set(_candidates "${_compiler_dir}")
+
+  if(DEFINED ENV{VCToolsInstallDir} AND NOT "$ENV{VCToolsInstallDir}" STREQUAL "")
+    list(APPEND _candidates "$ENV{VCToolsInstallDir}/bin/Hostx64/${_msvc_arch}")
+  endif()
+
+  get_filename_component(_tools_dir "${_compiler_dir}/../../.." ABSOLUTE)
+  file(GLOB _msvc_versions "${_tools_dir}/MSVC/*")
+  foreach(_ver IN LISTS _msvc_versions)
+    list(APPEND _candidates "${_ver}/bin/Hostx64/${_msvc_arch}")
+  endforeach()
+
+  set(_msvc_bindir "")
+  foreach(_dir IN LISTS _candidates)
+    if(EXISTS "${_dir}/msvcp140.dll")
+      set(_msvc_bindir "${_dir}")
+      break()
+    endif()
+  endforeach()
+
+  if(NOT _msvc_bindir)
+    message(WARNING "mupen64rr_copy_msvc_runtime: could not locate the MSVC runtime DLLs (msvcp140.dll, msvcp140_atomic_wait.dll, vcruntime140.dll). Skipping the copy.")
+    return()
+  endif()
+
+  add_custom_command(
+    TARGET "${target}" POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${_msvc_bindir}/msvcp140.dll"
+    "${_msvc_bindir}/msvcp140_atomic_wait.dll"
+    "${_msvc_bindir}/vcruntime140.dll"
+    "$<TARGET_FILE_DIR:${target}>"
+    VERBATIM
+  )
+endfunction()
+
 # CMake modules
 # =======================================
 include(CTest)
