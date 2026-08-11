@@ -15,7 +15,7 @@
 #include <windows.h>
 
 const std::wstring NUT_PIPE_NAME = L"\\\\.\\pipe\\mupennut";
-const std::wstring FFMPEG_OPTIONS = L"-y -i {} {} {}";
+const std::wstring FFMPEG_OPTIONS = L"-y -i {} {} \"{}\"";
 
 struct PipeIO
 {
