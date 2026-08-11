@@ -51,6 +51,7 @@ runs:
 
     - name: Setup nightly build environment variables
       if: ${{ inputs.is_nightly }}
+      shell: powershell
       run: |
         echo "NIGHTLY=1" >> $env:GITHUB_ENV
-        echo "VERSION_SUFFIX=${{ inputs.commit_hash && format("-nightly-{0}", inputs.commit_hash) | "" }}"
+        echo "VERSION_SUFFIX=${{ inputs.commit_hash && format('-nightly-{0}', inputs.commit_hash) || '' }}"

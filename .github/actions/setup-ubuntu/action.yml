@@ -1,0 +1,32 @@
+name: "Ubuntu environment setup"
+description: "Sets up the mupen64-rr dev environment on Ubuntu"
+
+runs:
+  using: composite
+  steps:
+    - name: Update apt-get index
+      shell: sh
+      run: sudo apt-get update
+    - name: Install development tools
+      shell: sh
+      run: sudo apt-get install ninja-build
+    - name: Install dependencies
+      shell: sh
+      run: |
+        sudo apt-get install -y \
+        qt6-base-dev \
+        qt6-declarative-dev \
+        nlohmann-json3-dev \
+        libavcodec-dev \
+        libavformat-dev \
+        libavutil-dev \
+        libcatch2-dev \
+        libdeflate-dev \
+        liblua5.4-dev \
+        liblz4-dev \
+        libsafec-dev \
+        libsdl3-dev \
+        libspdlog-dev \
+        libspeexdsp-dev \
+        libswresample-dev \
+        libswscale-dev
