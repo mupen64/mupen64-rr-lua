@@ -111,8 +111,7 @@ void M64RRPlugin::config(HWND hwnd)
         show_config(hwnd);
     else
     {
-        g_dialog_service->show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error,
-                                      hwnd);
+        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error, hwnd);
     }
 
     if (newly_initiated)

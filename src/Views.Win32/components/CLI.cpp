@@ -257,7 +257,7 @@ void CLI::init()
     // If an st is specified, a movie mustn't be specified
     if (!cli_params.st.empty() && !cli_params.m64.empty())
     {
-        g_dialog_service->show_dialog(
+        DialogService::show_dialog(
             "Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", "CLI",
             fsvc_error);
         cli_params.st.clear();
@@ -265,7 +265,7 @@ void CLI::init()
 
     if (cli_params.close_on_movie_end && g_config.core.is_movie_loop_enabled)
     {
-        g_dialog_service->show_dialog(
+        DialogService::show_dialog(
             "Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.",
             "CLI", fsvc_warning);
         g_config.core.is_movie_loop_enabled = false;

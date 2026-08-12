@@ -251,7 +251,7 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
                 std::format("Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
                             info.job == core_st_job_save ? "save" : "load", info.params.path.filename().string(),
                             (int32_t)info.result);
-            g_dialog_service->show_dialog(message, "Savestate", fsvc_error);
+            DialogService::show_dialog(message, "Savestate", fsvc_error);
             break;
         }
         }
@@ -283,7 +283,8 @@ static std::string get_titlebar_text()
         text += std::format(" - {}", vcr_filename.string());
     }
 
-    if (CaptureManager::is_capturing()) text += std::format(" - {}", CaptureManager::get_current_path().filename().string());
+    if (CaptureManager::is_capturing())
+        text += std::format(" - {}", CaptureManager::get_current_path().filename().string());
 
     return text;
 }
@@ -430,10 +431,10 @@ void on_vis_since_input_poll_exceeded()
     }
 
     if (g_config.silent_mode ||
-        g_dialog_service->show_ask_dialog(VIEW_DLG_LAG_EXCEEDED,
-                                          "An unusual execution pattern was detected. Continuing might leave the "
-                                          "emulator in an unusable state.\r\nWould you like to terminate emulation?",
-                                          "Warning", true))
+        DialogService::show_ask_dialog(VIEW_DLG_LAG_EXCEEDED,
+                                       "An unusual execution pattern was detected. Continuing might leave the "
+                                       "emulator in an unusable state.\r\nWould you like to terminate emulation?",
+                                       "Warning", true))
     {
         ThreadPool::submit_task([] {
             const auto result = g_main_ctx.core_ctx->vr_close_rom(true);
@@ -944,16 +945,16 @@ static core_result init_core()
     g_main_ctx.core.get_summercart_path = get_summercart_path;
     g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title, core_dialog_type type) {
-        return g_dialog_service->show_multiple_choice_dialog(id, choices, str,
-                                                             title ? std::make_optional(title) : std::nullopt, type);
+        return DialogService::show_multiple_choice_dialog(id, choices, str,
+                                                          title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
-        return g_dialog_service->show_ask_dialog(id, str, title ? std::make_optional(title) : std::nullopt, warning);
+        return DialogService::show_ask_dialog(id, str, title ? std::make_optional(title) : std::nullopt, warning);
     };
     g_main_ctx.core.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
-        g_dialog_service->show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
+        DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
-    g_main_ctx.core.show_statusbar = [](const char *str) { g_dialog_service->show_statusbar(str); };
+    g_main_ctx.core.show_statusbar = [](const char *str) { DialogService::show_statusbar(str); };
     g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;
@@ -1052,7 +1053,7 @@ void app_runtime_assert_fail(std::string_view message)
 #if defined(_DEBUG)
     __debugbreak();
 #endif
-    g_dialog_service->show_dialog(message, "Failed Runtime Assertion", fsvc_error);
+    DialogService::show_dialog(message, "Failed Runtime Assertion", fsvc_error);
     std::terminate();
 }
 
@@ -1264,8 +1265,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)
     {
-        g_dialog_service->show_dialog("timeSetEvent call failed. Verify that your system supports multimedia timers.",
-                                      "Error", fsvc_error);
+        DialogService::show_dialog("timeSetEvent call failed. Verify that your system supports multimedia timers.",
+                                   "Error", fsvc_error);
         return -1;
     }
 

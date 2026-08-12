@@ -71,7 +71,7 @@ bool confirm_user_exit()
     }
     final_message += " is running. Are you sure you want to close the ROM?";
 
-    const bool result = g_dialog_service->show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message, "Close ROM", true);
+    const bool result = DialogService::show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message, "Close ROM", true);
 
     return result;
 }
@@ -100,7 +100,7 @@ void AppActions::load_rom_from_path(const std::filesystem::path &path)
 
 static void stub()
 {
-    g_dialog_service->show_dialog("ActionManager::stub", "Stub", fsvc_error);
+    DialogService::show_dialog("ActionManager::stub", "Stub", fsvc_error);
 }
 
 #pragma region File
@@ -497,7 +497,7 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
                                  (!file_info.cht_path.empty() && std::filesystem::exists(file_info.cht_path));
     if (any_file_exists)
     {
-        const auto overwrite = g_dialog_service->show_ask_dialog(
+        const auto overwrite = DialogService::show_ask_dialog(
             VIEW_DLG_MOVIE_OVERWRITE_WARNING,
             "The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
             "Overwrite Movie", true, g_main_ctx.hwnd);
@@ -646,7 +646,7 @@ static void show_ram_start()
 
     const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
 
-    const auto result = g_dialog_service->show_multiple_choice_dialog(
+    const auto result = DialogService::show_multiple_choice_dialog(
         VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", fsvc_information);
 
     if (result == 0)
@@ -814,8 +814,8 @@ static void show_about_dialog()
                      "Copyright ©️ 2026"
                      "\r\n"
                      "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About",
-                                                                      fsvc_information);
+    const auto result =
+        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", fsvc_information);
 
     if (result == 0)
     {

@@ -31,7 +31,7 @@ static int at_panic(lua_State *L)
     const char *raw_msg = lua_tostring(L, -1);
     const std::string_view message = raw_msg ? raw_msg : "";
 
-    g_dialog_service->show_dialog(message, "Lua", fsvc_error);
+    DialogService::show_dialog(message, "Lua", fsvc_error);
 
     return 0;
 }

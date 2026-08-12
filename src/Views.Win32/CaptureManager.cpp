@@ -207,7 +207,7 @@ static bool check_readscreen_available()
 {
     if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
     {
-        g_dialog_service->show_dialog(READSCREEN_MISSING_MSG, "Capture", fsvc_error);
+        DialogService::show_dialog(READSCREEN_MISSING_MSG, "Capture", fsvc_error);
         return false;
     }
 
@@ -243,7 +243,7 @@ bool stop_capture_impl()
 
     if (!m_encoder->stop())
     {
-        g_dialog_service->show_dialog("Failed to stop capturing.", "Capture", fsvc_error);
+        DialogService::show_dialog("Failed to stop capturing.", "Capture", fsvc_error);
         return false;
     }
 
@@ -333,7 +333,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
         const auto &str = result.value();
         if (!str.empty())
         {
-            g_dialog_service->show_dialog(str, "Capture", fsvc_error);
+            DialogService::show_dialog(str, "Capture", fsvc_error);
         }
         return false;
     }
@@ -399,8 +399,8 @@ void input()
     {
         if (!m_encoder->append_video(m_video_buf))
         {
-            g_dialog_service->show_dialog("Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture",
-                                          fsvc_error);
+            DialogService::show_dialog("Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture",
+                                       fsvc_error);
             stop_capture();
             return;
         }
@@ -430,7 +430,7 @@ void ai_len_changed()
 
     if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
     {
-        g_dialog_service->show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", fsvc_error);
+        DialogService::show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", fsvc_error);
         stop_capture();
     }
 }
@@ -479,7 +479,7 @@ void core_executing_changed(bool value)
 
     if (vis != m_encoder_params.fps)
     {
-        g_dialog_service->show_dialog(
+        DialogService::show_dialog(
             "Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", "Capture",
             fsvc_error);
         stop_capture();

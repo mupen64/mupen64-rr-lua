@@ -154,8 +154,8 @@ void show_connectivity_error(bool manual)
 {
     if (manual)
     {
-        g_dialog_service->show_dialog("Failed to fetch update information. Please try again later.", "Update Error",
-                                      fsvc_error);
+        DialogService::show_dialog("Failed to fetch update information. Please try again later.", "Update Error",
+                                   fsvc_error);
     }
 }
 
@@ -209,7 +209,7 @@ void check(bool manual)
     {
         if (manual)
         {
-            g_dialog_service->show_dialog("You are already up-to-date.", "Already up-to-date", fsvc_information);
+            DialogService::show_dialog("You are already up-to-date.", "Already up-to-date", fsvc_information);
         }
 
         return;
@@ -217,7 +217,7 @@ void check(bool manual)
 
 show_prompt:
 
-    const auto result = g_dialog_service->show_multiple_choice_dialog(
+    const auto result = DialogService::show_multiple_choice_dialog(
         VIEW_DLG_UPDATE_DIALOG,
         {
             "Update Now",
