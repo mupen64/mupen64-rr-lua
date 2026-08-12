@@ -14,7 +14,7 @@
 
 namespace UpdateChecker
 {
-const std::wstring REPO_LATEST_RELEASE_URL = L"/repos/mupen64/mupen64-rr-lua/releases/latest";
+const std::string REPO_LATEST_RELEASE_URL = "/repos/mupen64/mupen64-rr-lua/releases/latest";
 
 /**
  * Gets information about the latest release using the Github REST API.
@@ -46,8 +46,9 @@ std::string get_latest_release_as_json()
         return "";
     }
 
-    HINTERNET h_request = WinHttpOpenRequest(h_connect, L"GET", REPO_LATEST_RELEASE_URL.c_str(), NULL,
-                                             WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    HINTERNET h_request =
+        WinHttpOpenRequest(h_connect, L"GET", IOUtils::to_wide_string(REPO_LATEST_RELEASE_URL).c_str(), NULL,
+                           WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 
     if (!h_request)
     {
@@ -195,12 +196,10 @@ void check(bool manual)
     }
 
     auto version = tag_name.get<std::string>();
-    auto version_wide = IOUtils::to_wide_string(version);
 
-    if (!manual && g_config.ignored_version == version_wide)
+    if (!manual && g_config.ignored_version == version)
     {
-        g_view_logger->trace(L"[UpdateChecker] Version {} ignored by user. Skipping showing update dialog.",
-                             version_wide);
+        g_view_logger->trace("[UpdateChecker] Version {} ignored by user. Skipping showing update dialog.", version);
         return;
     }
 
@@ -230,17 +229,17 @@ show_prompt:
     switch (result)
     {
     case 0:
-        ShellExecute(0, 0, L"https://mupen64.com", 0, 0, SW_SHOW);
+        ShellExecute(0, 0, "https://mupen64.com", 0, 0, SW_SHOW);
         PostMessage(g_main_ctx.hwnd, WM_CLOSE, 0, 0);
         break;
     case 1: {
-        const auto changelog = IOUtils::to_wide_string(body.get<std::string>());
+        const auto changelog = body.get<std::string>();
         TextEditDialog::show(
-            {.parent_hwnd = g_main_ctx.hwnd, .text = changelog, .caption = L"Changelog", .readonly = true});
+            {.parent_hwnd = g_main_ctx.hwnd, .text = changelog, .caption = "Changelog", .readonly = true});
         goto show_prompt;
     }
     case 2:
-        g_config.ignored_version = version_wide;
+        g_config.ignored_version = version;
         break;
     default:
         break;

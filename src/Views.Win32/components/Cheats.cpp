@@ -17,7 +17,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         g_main_ctx.core_ctx->cht_get_override_stack(override_stack);
         if (!override_stack.empty())
         {
-            SetDlgItemText(hwnd, IDC_CHEAT_STATUS, L"Read-only: Cheats are overriden by the core.");
+            SetDlgItemText(hwnd, IDC_CHEAT_STATUS, "Read-only: Cheats are overriden by the core.");
         }
         WinDarkMode::attach(hwnd);
         goto rebuild_list;

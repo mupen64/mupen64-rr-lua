@@ -11,7 +11,7 @@
 #include <components/ParameterPalette.hpp>
 #include <Common.Views/Assert.hpp>
 
-const auto MANAGED_MENU_CTX = L"Mupen64_ManagedMenuContext";
+const auto MANAGED_MENU_CTX = "Mupen64_ManagedMenuContext";
 
 struct t_menu_item
 {
@@ -104,10 +104,9 @@ static std::string get_display_name(const t_menu_item &item)
     auto display_name = ActionManager::get_display_name(item.raw_path());
 
     // Add the accelerator text if there is any :P
-    const auto waction_path = IOUtils::to_wide_string(item.action_path);
-    if (!waction_path.empty() && g_config.hotkeys.contains(waction_path))
+    if (!item.action_path.empty() && g_config.hotkeys.contains(item.action_path))
     {
-        const auto hotkey = g_config.hotkeys.at(waction_path);
+        const auto hotkey = g_config.hotkeys.at(item.action_path);
         if (!hotkey.is_empty())
         {
             display_name += std::format("\t{}", hotkey.to_string());
@@ -139,8 +138,8 @@ static void update_display_names(t_action_menu_context &ctx, const std::set<std:
         }
 
         const auto display_name = get_display_name(*item);
-        mii.dwTypeData = const_cast<LPWSTR>(
-            display_name.c_str()); // This is fine cause its internally copied on SetMenuItemInfo call
+        // This is fine cause its internally copied on SetMenuItemInfo call
+        mii.dwTypeData = const_cast<char *>(display_name.c_str());
         mii.cch = display_name.length();
 
         if (!SetMenuItemInfo(item->parent_menu, item->position_under_parent, TRUE, &mii))
@@ -287,7 +286,6 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
     const bool has_action = !item.action_path.empty();
 
     const auto display_name = get_display_name(item);
-    const auto wdisplay_name = IOUtils::to_wide_string(display_name);
     const auto enabled = has_action ? ActionManager::get_enabled(item.raw_path()) : true;
     const auto active = has_action ? ActionManager::get_active(item.raw_path()) : true;
 
@@ -305,7 +303,7 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
 
     if (item.children.empty())
     {
-        AppendMenu(parent_menu, MF_STRING, item.id, wdisplay_name.c_str());
+        AppendMenu(parent_menu, MF_STRING, item.id, display_name.c_str());
         initialize_menu_item_state();
 
         if (item.has_separator())
@@ -317,7 +315,7 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
     }
 
     item.popup_handle = CreatePopupMenu();
-    AppendMenu(parent_menu, MF_STRING | MF_POPUP, (UINT_PTR)item.popup_handle, wdisplay_name.c_str());
+    AppendMenu(parent_menu, MF_STRING | MF_POPUP, (UINT_PTR)item.popup_handle, display_name.c_str());
     initialize_menu_item_state();
 
     if (item.has_separator())

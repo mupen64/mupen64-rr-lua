@@ -116,8 +116,8 @@ static void load_rom()
 {
     BetterEmulationLock lock;
 
-    const auto path = FilePicker::show_open_dialog(L"o_rom", g_main_ctx.hwnd,
-                                                   L"*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
+    const auto path =
+        FilePicker::show_open_dialog("o_rom", g_main_ctx.hwnd, "*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
 
     if (path.empty())
     {
@@ -134,7 +134,7 @@ static void load_recent_rom(size_t i)
         return;
     }
 
-    const auto path = IOUtils::to_utf8_string(g_config.recent_rom_paths[i]);
+    const auto path = g_config.recent_rom_paths[i];
 
     ActionManager::invoke(AppActions::LOAD_ROM_DIRECT, false, true, {{"path", path}});
 }
@@ -330,7 +330,7 @@ static void save_state_as()
 {
     BetterEmulationLock lock;
 
-    const auto path = FilePicker::show_save_dialog(L"s_savestate", g_main_ctx.hwnd, L"*.st;*.savestate");
+    const auto path = FilePicker::show_save_dialog("s_savestate", g_main_ctx.hwnd, "*.st;*.savestate");
     if (path.empty())
     {
         return;
@@ -348,8 +348,8 @@ static void load_state_as()
     BetterEmulationLock lock;
 
     const auto path = FilePicker::show_open_dialog(
-        L"o_state", g_main_ctx.hwnd,
-        L"*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
+        "o_state", g_main_ctx.hwnd,
+        "*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
     if (path.empty())
     {
         return;
@@ -373,7 +373,7 @@ static void undo_load_state()
 
         if (buf.empty())
         {
-            Statusbar::post(L"No load to undo");
+            Statusbar::post("No load to undo");
             return;
         }
 
@@ -382,7 +382,7 @@ static void undo_load_state()
             [](const core_st_callback_info &info, auto) {
                 if (info.result == Res_Ok)
                 {
-                    Statusbar::post(L"Undid load");
+                    Statusbar::post("Undid load");
                     return;
                 }
 
@@ -391,7 +391,7 @@ static void undo_load_state()
                     return;
                 }
 
-                Statusbar::post(L"Failed to undo load");
+                Statusbar::post("Failed to undo load");
             },
             false);
     });
@@ -510,8 +510,8 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
         g_main_ctx.core_ctx->vr_wait_decrement();
         if (!CoreUtils::show_error_dialog_for_result(vcr_result))
         {
-            g_config.last_movie_author = IOUtils::to_wide_string(author);
-            Statusbar::post(L"Recording replay");
+            g_config.last_movie_author = author;
+            Statusbar::post("Recording replay");
         }
     });
 }
@@ -530,8 +530,8 @@ static void start_movie_recording()
                           {
                               {"path", movie_dialog_result.path.string()},
                               {"start_flag", std::to_string(movie_dialog_result.start_flag)},
-                              {"author", IOUtils::to_utf8_string(movie_dialog_result.author)},
-                              {"description", IOUtils::to_utf8_string(movie_dialog_result.description)},
+                              {"author", movie_dialog_result.author},
+                              {"description", movie_dialog_result.description},
                           });
 }
 
@@ -573,8 +573,8 @@ static void start_movie_playback()
     ActionManager::invoke(AppActions::START_MOVIE_PLAYBACK_DIRECT, false, true,
                           {
                               {"path", result.path.string()},
-                              {"author", IOUtils::to_utf8_string(result.author)},
-                              {"description", IOUtils::to_utf8_string(result.description)},
+                              {"author", result.author},
+                              {"description", result.description},
                           });
 }
 
@@ -600,7 +600,7 @@ static void load_recent_movie(size_t i)
         return;
     }
 
-    const auto path = IOUtils::to_utf8_string(g_config.recent_movie_paths[i]);
+    const auto path = g_config.recent_movie_paths[i];
 
     g_config.core.vcr_readonly = true;
     Messenger::broadcast<Messenger::Message::ReadonlyChanged>((bool)g_config.core.vcr_readonly);
@@ -641,7 +641,7 @@ static void show_ram_start()
 
     const auto ram_start_str = std::format("0x{:p}", static_cast<void *>(g_main_ctx.core_ctx->rdram));
 
-    wchar_t proc_name[MAX_PATH] = {0};
+    char proc_name[MAX_PATH] = {0};
     GetModuleFileName(NULL, proc_name, MAX_PATH);
 
     const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
@@ -653,9 +653,9 @@ static void show_ram_start()
     {
         auto exe_filename = IOUtils::exe_path().stem();
 
-        const auto stroop_line = std::format(L"<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
-                                             L"endianness=\"little\" autoDetect=\"true\"/>",
-                                             exe_filename.c_str(), IOUtils::to_wide_string(ram_start_str));
+        const auto stroop_line = std::format("<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
+                                             "endianness=\"little\" autoDetect=\"true\"/>",
+                                             exe_filename.string(), ram_start_str);
         copy_to_clipboard(g_main_ctx.hwnd, stroop_line);
     }
 }
@@ -664,10 +664,10 @@ static void show_statistics()
 {
     BetterEmulationLock lock;
 
-    auto str = std::format(L"Total playtime: {}\r\nTotal rerecords: {}",
+    auto str = std::format("Total playtime: {}\r\nTotal rerecords: {}",
                            format_duration(g_config.core.total_frames / 30), g_config.core.total_rerecords);
 
-    MessageBox(g_main_ctx.hwnd, str.c_str(), L"Statistics", MB_ICONINFORMATION);
+    MessageBox(g_main_ctx.hwnd, str.c_str(), "Statistics", MB_ICONINFORMATION);
 }
 
 static void stop_tracelog()
@@ -682,14 +682,14 @@ static void start_tracelog()
 {
     stop_tracelog();
 
-    auto path = FilePicker::show_save_dialog(L"s_tracelog", g_main_ctx.hwnd, L"*.log");
+    auto path = FilePicker::show_save_dialog("s_tracelog", g_main_ctx.hwnd, "*.log");
 
     if (path.empty())
     {
         return;
     }
 
-    auto result = MessageBox(g_main_ctx.hwnd, L"Should the trace log be generated in a binary format?", L"Trace Logger",
+    auto result = MessageBox(g_main_ctx.hwnd, "Should the trace log be generated in a binary format?", "Trace Logger",
                              MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
 
     g_main_ctx.core_ctx->tl_start(path, result == IDYES, false);
@@ -742,7 +742,7 @@ static void start_capture_direct(const ActionManager::action_argument_map &param
                                   [](const auto result) {
                                       if (result)
                                       {
-                                          Statusbar::post(L"Capture started...");
+                                          Statusbar::post("Capture started...");
                                       }
                                   });
 }
@@ -751,7 +751,7 @@ static void start_capture_normal()
 {
     BetterEmulationLock lock;
 
-    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi;*.mp4");
+    auto path = FilePicker::show_save_dialog("s_capture", g_main_ctx.hwnd, "*.avi;*.mp4");
     if (path.empty())
     {
         return;
@@ -768,7 +768,7 @@ static void start_capture_from_preset()
 {
     BetterEmulationLock lock;
 
-    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi;*.mp4");
+    auto path = FilePicker::show_save_dialog("s_capture", g_main_ctx.hwnd, "*.avi;*.mp4");
     if (path.empty())
     {
         return;
@@ -786,7 +786,7 @@ static void stop_capture()
     CaptureManager::stop_capture([](const auto result) {
         if (result)
         {
-            Statusbar::post(L"Capture stopped");
+            Statusbar::post("Capture stopped");
         }
     });
 }
@@ -819,7 +819,7 @@ static void show_about_dialog()
 
     if (result == 0)
     {
-        ShellExecute(0, 0, L"https://mupen64.com", 0, 0, SW_SHOW);
+        ShellExecute(0, 0, "https://mupen64.com", 0, 0, SW_SHOW);
     }
 }
 
@@ -846,7 +846,7 @@ static void load_recent_script(size_t i)
         return;
     }
 
-    const auto path = IOUtils::to_utf8_string(g_config.recent_lua_script_paths[i]);
+    const auto path = g_config.recent_lua_script_paths[i];
 
     ActionManager::invoke(AppActions::LOAD_SCRIPT_DIRECT, false, true, {{"path", path}});
 }
@@ -959,7 +959,7 @@ static void add_action(const std::string &path,
 }
 
 static void generate_path_recent_menu(const std::string &base_path, const Hotkey &load_first_hotkey,
-                                      std::vector<std::wstring> *paths, int32_t *frozen,
+                                      std::vector<std::string> *paths, int32_t *frozen,
                                       const std::function<void(size_t)> &callback)
 {
     const auto freeze_action = std::format("{} > Freeze ---", base_path);

@@ -208,7 +208,7 @@ static void emu_launched_changed(bool value)
     // We don't want to keep the weird crap from previous state, so let's clear everything
     for (int i = 0; i < 255; ++i)
     {
-        SendMessage(statusbar_hwnd, SB_SETTEXT, i, (LPARAM)L"");
+        SendMessage(statusbar_hwnd, SB_SETTEXT, i, (LPARAM) "");
     }
 
     // When starting the emu, we want to scale the statusbar segments to the window size
@@ -247,12 +247,12 @@ static void statusbar_visibility_changed(bool value)
 
 static void on_readonly_changed(bool value)
 {
-    post(value ? L"Read-only" : L"Read/write", Statusbar::Section::Readonly);
+    post(value ? "Read-only" : "Read/write", Statusbar::Section::Readonly);
 }
 
 static void on_rerecords_changed(uint64_t value)
 {
-    const auto str = std::format(L"{} rr", format_short(value));
+    const auto str = std::format("{} rr", format_short(value));
     post(str, Statusbar::Section::Rerecords);
 }
 
@@ -260,13 +260,13 @@ static void on_task_changed(core_vcr_task value)
 {
     if (value == task_idle)
     {
-        post(L"", Statusbar::Section::Rerecords);
+        post("", Statusbar::Section::Rerecords);
     }
 }
 
 static void on_slot_changed(size_t value)
 {
-    post(std::format(L"Slot {}", value + 1), Statusbar::Section::Slot);
+    post(std::format("Slot {}", value + 1), Statusbar::Section::Slot);
 }
 
 static void on_size_changed(const std::pair<int32_t, int32_t> &)
@@ -276,7 +276,7 @@ static void on_size_changed(const std::pair<int32_t, int32_t> &)
 
 static void on_multi_frame_advance_count_changed()
 {
-    post(std::format(L"MFA {}x", g_config.multi_frame_advance_count), Statusbar::Section::MultiFrameAdvanceCount);
+    post(std::format("MFA {}x", g_config.multi_frame_advance_count), Statusbar::Section::MultiFrameAdvanceCount);
 }
 
 static void fix_segments()
@@ -309,7 +309,7 @@ static void fix_segments()
 
     for (int i = 0; i < 255; ++i)
     {
-        SendMessage(statusbar_hwnd, SB_SETTEXT, i, (LPARAM)L"");
+        SendMessage(statusbar_hwnd, SB_SETTEXT, i, (LPARAM) "");
     }
 
     for (const auto pair : section_text)
@@ -337,7 +337,7 @@ HWND Statusbar::hwnd()
     return statusbar_hwnd;
 }
 
-void Statusbar::post(const std::wstring &text, const Section section)
+void Statusbar::post(const std::string &text, const Section section)
 {
     const auto segment_index = section_to_segment_index(section);
 

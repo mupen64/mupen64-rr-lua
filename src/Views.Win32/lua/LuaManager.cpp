@@ -31,7 +31,6 @@ static int at_panic(lua_State *L)
     const char *raw_msg = lua_tostring(L, -1);
     const std::string_view message = raw_msg ? raw_msg : "";
 
-    g_view_logger->info(L"Lua panic: {}", IOUtils::to_wide_string(message));
     g_dialog_service->show_dialog(message, "Lua", fsvc_error);
 
     return 0;
@@ -63,7 +62,7 @@ t_lua_environment *LuaManager::get_environment_for_state(lua_State *lua_state)
     return g_lua_env_map[lua_state];
 }
 
-std::expected<t_lua_environment *, std::wstring> LuaManager::create_environment(
+std::expected<t_lua_environment *, std::string> LuaManager::create_environment(
     const std::filesystem::path &path, const t_lua_environment::destroying_func &destroying_callback,
     const t_lua_environment::print_func &print_callback)
 {
@@ -84,11 +83,11 @@ std::expected<t_lua_environment *, std::wstring> LuaManager::create_environment(
     return lua;
 }
 
-std::expected<void, std::wstring> LuaManager::start_environment(t_lua_environment *env, const bool trusted)
+std::expected<void, std::string> LuaManager::start_environment(t_lua_environment *env, const bool trusted)
 {
     if (env->started)
     {
-        return std::unexpected(L"Lua environment already started");
+        return std::unexpected("Lua environment already started");
     }
 
     // We need to put it in the environment list before executing any user code so calls into the Mupen API...
@@ -137,7 +136,7 @@ fail:
     if (has_error)
     {
 
-        const auto error = IOUtils::to_wide_string(lua_tostring(env->L, -1));
+        const auto error = lua_tostring(env->L, -1);
         destroy_environment(env);
 
         delete env;

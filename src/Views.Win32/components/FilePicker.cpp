@@ -23,7 +23,7 @@ std::filesystem::path FilePicker::show_open_dialog(const std::string &id, HWND h
 
     if (!result.empty())
     {
-        g_config.persistent_folder_paths[id] = result;
+        g_config.persistent_folder_paths[id] = result.string();
         return g_config.persistent_folder_paths[id];
     }
 
@@ -43,7 +43,7 @@ std::filesystem::path FilePicker::show_save_dialog(const std::string &id, HWND h
 
     if (!result.empty())
     {
-        g_config.persistent_folder_paths[id] = result;
+        g_config.persistent_folder_paths[id] = result.string();
         return g_config.persistent_folder_paths[id];
     }
 

@@ -257,14 +257,14 @@ void register_as_package(lua_State *lua_state, const char *name, const luaL_Reg 
     lua_setglobal(lua_state, name);
 }
 
-static void register_function(lua_State *L, const std::wstring &name, const lua_CFunction &func)
+static void register_function(lua_State *L, const std::string &name, const lua_CFunction &func)
 {
-    const auto parts = StrUtils::split_wstring(name, L".") | std::ranges::to<std::vector>();
+    const auto parts = StrUtils::split_string(name, ".") | std::ranges::to<std::vector>();
 
     RT_ASSERT(parts.size() == 2, "Accessor invalid");
 
-    const auto namespace_name = IOUtils::to_utf8_string(parts.at(0));
-    const auto function_name = IOUtils::to_utf8_string(parts.at(1));
+    const auto namespace_name = std::string(parts.at(0));
+    const auto function_name = std::string(parts.at(1));
 
     lua_getglobal(L, namespace_name.c_str());
     lua_pushcfunction(L, func);
@@ -293,6 +293,6 @@ void LuaRegistry::register_functions(lua_State *L)
     register_as_package(L, "clipboard", CLIPBOARD_FUNCS);
     for (const auto &[name, func] : OVERRIDE_FUNCS)
     {
-        register_function(L, IOUtils::to_wide_string(name), func);
+        register_function(L, name, func);
     }
 }
