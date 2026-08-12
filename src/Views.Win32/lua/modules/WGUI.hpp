@@ -127,8 +127,6 @@ static COLORREF StrToColor(const std::string &s, bool alpha = false, COLORREF de
     return (alpha ? 0xFF000000 : 0x00000000) | def;
 }
 
-
-
 static int set_brush(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
