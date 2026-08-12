@@ -139,9 +139,8 @@ static void update_display_names(t_action_menu_context &ctx, const std::set<std:
         }
 
         const auto display_name = get_display_name(*item);
-        const auto wdisplay_name = IOUtils::to_wide_string(display_name);
         mii.dwTypeData = const_cast<LPWSTR>(
-            wdisplay_name.c_str()); // This is fine cause its internally copied on SetMenuItemInfo call
+            display_name.c_str()); // This is fine cause its internally copied on SetMenuItemInfo call
         mii.cch = display_name.length();
 
         if (!SetMenuItemInfo(item->parent_menu, item->position_under_parent, TRUE, &mii))

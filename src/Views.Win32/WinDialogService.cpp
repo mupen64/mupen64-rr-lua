@@ -28,11 +28,10 @@ class WinDialogService : public IDialogService
 
         if (silenced)
         {
-            const auto wid = IOUtils::to_wide_string(id);
-            RT_ASSERT(g_config.silent_mode_dialog_choices.contains(wid),
+            RT_ASSERT(g_config.silent_mode_dialog_choices.contains(std::string(id)),
                       std::format("Expected silent mode dialog choice for '{}'", id));
-            const auto default_index = g_config.silent_mode_dialog_choices[wid];
-            g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", wstr,
+            const auto default_index = g_config.silent_mode_dialog_choices[std::string(id)];
+            g_view_logger->trace("[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str,
                                  default_index);
             return std::stoi(default_index);
         }

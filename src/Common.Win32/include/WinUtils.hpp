@@ -162,16 +162,16 @@ inline void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
  * \param owner The clipboard content's owner window
  * \param str The string to be copied
  */
-inline void copy_to_clipboard(void *owner, const std::wstring &str)
+inline void copy_to_clipboard(void *owner, const std::string &str)
 {
     OpenClipboard((HWND)owner);
     EmptyClipboard();
-    HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, (str.size() + 1) * sizeof(wchar_t));
+    HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, (str.size() + 1) * sizeof(char));
     if (hg)
     {
-        memcpy(GlobalLock(hg), str.c_str(), (str.size() + 1) * sizeof(wchar_t));
+        memcpy(GlobalLock(hg), str.c_str(), (str.size() + 1) * sizeof(char));
         GlobalUnlock(hg);
-        SetClipboardData(CF_UNICODETEXT, hg);
+        SetClipboardData(CF_TEXT, hg);
         CloseClipboard();
         GlobalFree(hg);
     }
@@ -263,69 +263,12 @@ inline void set_listview_selection(const HWND hwnd, const std::vector<size_t> in
 }
 
 /**
- * \brief Gets all files under all subdirectory of a specific directory, including the directory's shallow files
- * \param directory The path joiner-terminated directory
- */
-inline std::vector<std::wstring> get_files_in_subdirectories(std::wstring directory)
-{
-    if (directory.back() != L'\\')
-    {
-        directory += L"\\";
-    }
-    WIN32_FIND_DATA find_file_data;
-    const HANDLE h_find = FindFirstFile((directory + L"*").c_str(), &find_file_data);
-    if (h_find == INVALID_HANDLE_VALUE)
-    {
-        return {};
-    }
-
-    std::vector<std::wstring> paths;
-    std::wstring fixed_path = directory;
-    do
-    {
-        if (!lstrcmpW(find_file_data.cFileName, L".") || !lstrcmpW(find_file_data.cFileName, L"..")) continue;
-
-        auto full_path = directory + find_file_data.cFileName;
-
-        if (!(find_file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-        {
-            paths.push_back(full_path);
-            continue;
-        }
-
-        if (directory[directory.size() - 2] == '\0')
-        {
-            if (directory.back() == '\\')
-            {
-                fixed_path.pop_back();
-                fixed_path.pop_back();
-            }
-        }
-
-        if (directory.back() != '\\')
-        {
-            fixed_path.push_back('\\');
-        }
-
-        full_path = fixed_path + find_file_data.cFileName;
-        for (const auto &path : get_files_in_subdirectories(full_path + L"\\"))
-        {
-            paths.push_back(path);
-        }
-    } while (FindNextFile(h_find, &find_file_data) != 0);
-
-    FindClose(h_find);
-
-    return paths;
-}
-
-/**
  * \brief Gets the path to the current user's desktop
  */
-inline std::wstring get_desktop_path()
+inline std::filesystem::path get_desktop_path()
 {
-    wchar_t path[MAX_PATH + 1] = {0};
-    SHGetSpecialFolderPathW(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE);
+    char path[MAX_PATH + 1] = {0};
+    SHGetSpecialFolderPath(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE);
     return path;
 }
 
@@ -334,30 +277,11 @@ inline std::wstring get_desktop_path()
  * \param seconds The duration in seconds
  * \return The formatted duration
  */
-inline std::wstring format_duration(size_t seconds)
+inline std::string format_duration(size_t seconds)
 {
-    wchar_t str[480] = {};
-    wsprintfW(str, L"%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+    char str[480] = {};
+    sprintf(str, "%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
     return str;
-}
-
-/**
- * \brief Limits a string to a specific length, appending "..." if it exceeds the limit.
- * \param input The input string.
- * \param n The maximum length.
- * \return The limited string.
- */
-[[nodiscard]] inline std::wstring limit_wstring(const std::wstring &input, const size_t n)
-{
-    if (input.size() <= n)
-    {
-        return input;
-    }
-    if (n <= 3)
-    {
-        return std::wstring(n, L'.');
-    }
-    return input.substr(0, n - 3) + L"...";
 }
 
 /**
@@ -385,10 +309,10 @@ inline std::wstring format_duration(size_t seconds)
  * \param type The resource type.
  * \return The resource as a string, or an empty string if the resource could not be loaded.
  */
-inline std::string load_resource_as_string(const int id, const LPCWSTR type)
+inline std::string load_resource_as_string(const int id, const std::string &type)
 {
     const HINSTANCE hinst = GetModuleHandle(nullptr);
-    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), type);
+    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), type.c_str());
     if (!rc)
     {
         return "";
@@ -439,11 +363,11 @@ inline bool load_resource_as_dialog_template(const int id, DLGTEMPLATEEX **dlg_t
  * \param value The value to format.
  * \return A formatted string representing the value in a short format (e.g., 1.23k for 1230).
  */
-inline std::wstring format_short(const uint64_t value)
+inline std::string format_short(const uint64_t value)
 {
-    if (value < 1'000) return std::to_wstring(value);
+    if (value < 1'000) return std::to_string(value);
 
-    auto str = std::format(L"{:.2f}k", (double)value / 1000.0);
+    auto str = std::format("{:.2f}k", (double)value / 1000.0);
 
     while (!str.empty() && str.find('.') < str.find('k') && (str.back() == '0' || str.back() == '.')) str.pop_back();
 
@@ -455,7 +379,7 @@ inline std::wstring format_short(const uint64_t value)
  * \param hwnd The handle to the window.
  * \return The text of the window, or an empty optional if the operation failed.
  */
-inline std::optional<std::wstring> get_window_text(const HWND hwnd)
+inline std::optional<std::string> get_window_text(const HWND hwnd)
 {
     if (!IsWindow(hwnd))
     {
@@ -472,10 +396,10 @@ inline std::optional<std::wstring> get_window_text(const HWND hwnd)
         {
             return std::nullopt;
         }
-        return L"";
+        return "";
     }
 
-    std::wstring str(len + 1, L'\0');
+    std::string str(len + 1, '\0');
     const int actual_length = GetWindowText(hwnd, str.data(), len + 1);
     str.resize(actual_length);
 

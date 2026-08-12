@@ -34,7 +34,7 @@ std::optional<uint32_t> trigger_to_vk(const ::Hotkey::Trigger &trigger);
  * \param hotkey The hotkey to set.
  * \return Whether the user confirmed the dialog. If the user cancelled the dialog, the hotkey won't have changed.
  */
-bool show_prompt(HWND hwnd, const std::wstring &caption, ::Hotkey &hotkey);
+bool show_prompt(HWND hwnd, const std::string &caption, ::Hotkey &hotkey);
 
 /**
  * \brief Tries associating the specified action with the specified hotkey. Checks for a hotkey conflict and, if

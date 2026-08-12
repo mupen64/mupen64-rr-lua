@@ -68,7 +68,7 @@ constexpr AnchorFlags INVALIDATE_ERASE = AnchorFlags::Invalidate | AnchorFlags::
 
 namespace detail
 {
-#define CTX_PROP L"ResizeAnchor_ctx"
+#define CTX_PROP "ResizeAnchor_ctx"
 
 struct t_anchor_context
 {

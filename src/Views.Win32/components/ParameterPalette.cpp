@@ -48,17 +48,16 @@ static void on_page_changed()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
 
-    SetWindowText(g_ctx.subheader_hwnd, IOUtils::to_wide_string(std::format("{}:", current_param.name)).c_str());
+    SetWindowText(g_ctx.subheader_hwnd, std::format("{}:", current_param.name).c_str());
 
     const auto param_number = g_ctx.param_index + 1;
     const auto total_params = g_ctx.ref_params.size();
-    SetWindowText(g_ctx.secondary_hwnd,
-                  IOUtils::to_wide_string(std::format("Step {}/{}", param_number, total_params)).c_str());
+    SetWindowText(g_ctx.secondary_hwnd, std::format("Step {}/{}", param_number, total_params).c_str());
 
     const std::string initial_value = current_param.get_initial_value ? current_param.get_initial_value() : "";
-    SetWindowText(g_ctx.edit_hwnd, IOUtils::to_wide_string(initial_value).c_str());
+    SetWindowText(g_ctx.edit_hwnd, initial_value.c_str());
 
-    SetWindowText(g_ctx.status_hwnd, L"");
+    SetWindowText(g_ctx.status_hwnd, "");
 }
 
 /**
@@ -68,7 +67,7 @@ static bool try_apply_parameter()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
 
-    const auto input = IOUtils::to_utf8_string(get_window_text(g_ctx.edit_hwnd).value());
+    const auto input = get_window_text(g_ctx.edit_hwnd).value();
 
     // 1. Update hints
     ComboBox_ResetContentKeepEdit(g_ctx.combo_hwnd);
@@ -87,13 +86,13 @@ static bool try_apply_parameter()
     if (validation_result.has_value())
     {
         const auto validation_message = validation_result.value();
-        SetWindowText(g_ctx.status_hwnd, IOUtils::to_wide_string(std::format("⚠️ {}", validation_message)).c_str());
+        SetWindowText(g_ctx.status_hwnd, std::format("⚠️ {}", validation_message).c_str());
         return false;
     }
 
     g_ctx.filled_params[current_param.key] = input;
 
-    SetWindowText(g_ctx.status_hwnd, IOUtils::to_wide_string("✔️ Press Enter to confirm.").c_str());
+    SetWindowText(g_ctx.status_hwnd, "✔️ Press Enter to confirm.");
 
     return true;
 }
@@ -219,7 +218,7 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         // 5. Initialize header
         const auto display_name = ActionManager::get_display_name(g_ctx.action_path);
-        SetWindowText(g_ctx.header_hwnd, IOUtils::to_wide_string(std::format("{}", display_name)).c_str());
+        SetWindowText(g_ctx.header_hwnd, std::format("{}", display_name).c_str());
 
         on_page_changed();
         update_dialog_position_and_size();

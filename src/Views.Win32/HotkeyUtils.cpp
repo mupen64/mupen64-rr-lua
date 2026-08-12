@@ -156,7 +156,7 @@ const std::unordered_map<uint32_t, SDL_Keycode> WIN_TO_SDL_KEYCODE = {
 
 struct DialogParams
 {
-    std::wstring headline{};
+    std::string headline;
     Hotkey hotkey = Hotkey::make_unassigned();
 };
 
@@ -266,7 +266,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         SetProp(hwnd, prop_key, reinterpret_cast<DialogParams *>(lparam));
         params = reinterpret_cast<DialogParams *>(lparam);
 
-        Static_SetText(GetDlgItem(hwnd, IDC_STATIC), params->headline.c_str());
+        Static_SetText(GetDlgItem(hwnd, IDC_STATIC), IOUtils::to_wide_string(params->headline).c_str());
         SetFocus(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY));
 
         SetWindowSubclass(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY), HotkeyButtonSubclassProc, 0,
@@ -315,7 +315,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return FALSE;
 }
 
-bool HotkeyUtils::show_prompt(const HWND hwnd, const std::wstring &caption, Hotkey &hotkey)
+bool HotkeyUtils::show_prompt(const HWND hwnd, const std::string &caption, Hotkey &hotkey)
 {
     const auto prev_hotkey = hotkey;
 
@@ -339,8 +339,6 @@ bool HotkeyUtils::show_prompt(const HWND hwnd, const std::wstring &caption, Hotk
 void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::string &action, const Hotkey &new_hotkey,
                                        const bool through_action_manager)
 {
-    const auto waction = IOUtils::to_wide_string(action);
-
     const auto set_hotkey = [=](const std::string &action, const Hotkey &hotkey) {
         if (through_action_manager)
         {
@@ -348,7 +346,7 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::string &actio
         }
         else
         {
-            g_config.hotkeys[IOUtils::to_wide_string(action)] = hotkey;
+            g_config.hotkeys[action] = hotkey;
         }
     };
 
@@ -358,7 +356,7 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::string &actio
         return;
     }
 
-    if (g_config.hotkeys.at(waction) == new_hotkey)
+    if (g_config.hotkeys.at(action) == new_hotkey)
     {
         return;
     }
@@ -367,9 +365,9 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::string &actio
 
     for (const auto &pair : g_config.hotkeys)
     {
-        if (pair.first != waction && pair.second == new_hotkey)
+        if (pair.first != action && pair.second == new_hotkey)
         {
-            conflicting_hotkeys.emplace_back(IOUtils::to_utf8_string(pair.first), pair.second);
+            conflicting_hotkeys.emplace_back(pair.first, pair.second);
         }
     }
 

@@ -41,7 +41,7 @@ struct t_tab_context
     size_t tab_index;
 
     // The groups to show in this tab.
-    std::vector<std::wstring> groups;
+    std::vector<std::string> groups;
 
     HWND hwnd;
     HWND lv_hwnd;
@@ -50,9 +50,9 @@ struct t_tab_context
     std::unordered_map<size_t, size_t> item_index_map;
 };
 
-static std::wstring to_str_default(const double value)
+static std::string to_str_default(const double value)
 {
-    return std::format(L"{:.15g}", value);
+    return std::format("{:.15g}", value);
 }
 
 static double get_number_value(const t_options_item::data_variant &value)
@@ -70,7 +70,7 @@ static double get_number_value(const t_options_item::data_variant &value)
     return 0.0;
 }
 
-static t_options_item::data_variant parse_number_value(const std::wstring &text,
+static t_options_item::data_variant parse_number_value(const std::string &text,
                                                        const t_options_item::data_variant &current)
 {
     if (std::holds_alternative<int32_t>(current))
@@ -86,21 +86,20 @@ static t_options_item::data_variant parse_number_value(const std::wstring &text,
     return current;
 }
 
-std::wstring t_options_item::get_name() const
+std::string t_options_item::get_name() const
 {
-    const auto uname = IOUtils::to_utf8_string(name);
-    if (type == Type::Hotkey) return IOUtils::to_wide_string(ActionManager::get_display_name(uname, true));
+    if (type == Type::Hotkey) return ActionManager::get_display_name(name, true);
     return name;
 }
 
-std::wstring t_options_item::get_value_name() const
+std::string t_options_item::get_value_name() const
 {
     const auto value = current_value.get();
 
     switch (type)
     {
     case Type::Bool:
-        return std::get<int32_t>(value) != 0 ? L"On" : L"Off";
+        return std::get<int32_t>(value) != 0 ? "On" : "Off";
     case Type::Number:
         return to_str_default(get_number_value(value));
     case Type::Enum: {
@@ -114,18 +113,18 @@ std::wstring t_options_item::get_value_name() const
             }
         }
 
-        return std::format(L"Unknown ({})", enum_value);
+        return std::format("Unknown ({})", enum_value);
     }
     case Type::String:
-        return std::get<std::wstring>(value);
+        return std::get<std::string>(value);
     case Type::Hotkey:
-        return std::get<Hotkey>(value).to_wstring();
+        return std::get<Hotkey>(value).to_string();
     case Type::Folder:
-        return std::get<std::wstring>(value);
+        return std::get<std::string>(value);
     default:
         RT_ASSERT(false, "Unhandled option type in t_options_item::get_value_name");
     }
-    return L"";
+    return "";
 }
 
 void t_options_item::reset_to_default() const
@@ -133,26 +132,26 @@ void t_options_item::reset_to_default() const
     current_value.set(default_value.get());
 }
 
-std::wstring t_options_item::get_friendly_info() const
+std::string t_options_item::get_friendly_info() const
 {
-    std::wstring str = tooltip.empty() ? L"(no further information available)" : tooltip;
+    std::string str = tooltip.empty() ? "(no further information available)" : tooltip;
 
     if (possible_values.empty())
     {
         return str;
     }
 
-    str += L"\r\n\r\n";
+    str += "\r\n\r\n";
     for (const auto &pair : possible_values)
     {
-        str += std::format(L"{} - {}", pair.second, pair.first);
+        str += std::format("{} - {}", pair.second, pair.first);
 
         if (pair.second == std::get<int32_t>(current_value.get()))
         {
-            str += L" (default)";
+            str += " (default)";
         }
 
-        str += L"\r\n";
+        str += "\r\n";
     }
 
     return str;
@@ -171,7 +170,7 @@ bool t_options_item::edit(const HWND hwnd)
         const auto value = current_value.get();
         const auto result = TextEditDialog::show({.parent_hwnd = hwnd,
                                                   .text = to_str_default(get_number_value(value)),
-                                                  .caption = std::format(L"Edit value for {}", name)});
+                                                  .caption = std::format("Edit value for {}", name)});
         if (!result.has_value())
         {
             break;
@@ -221,9 +220,9 @@ bool t_options_item::edit(const HWND hwnd)
         return true;
     }
     case Type::String: {
-        const auto value = std::get<std::wstring>(current_value.get());
+        const auto value = std::get<std::string>(current_value.get());
         const auto result = TextEditDialog::show(
-            {.parent_hwnd = hwnd, .text = value, .caption = std::format(L"Edit value for {}", name)});
+            {.parent_hwnd = hwnd, .text = value, .caption = std::format("Edit value for {}", name)});
         if (result.has_value())
         {
             current_value.set(result.value());
@@ -233,8 +232,8 @@ bool t_options_item::edit(const HWND hwnd)
     }
     case Type::Hotkey: {
         auto hotkey = std::get<Hotkey>(current_value.get());
-        HotkeyUtils::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", name), hotkey);
-        HotkeyUtils::try_associate_hotkey(hwnd, IOUtils::to_utf8_string(name), hotkey, false);
+        HotkeyUtils::show_prompt(hwnd, std::format("Choose a hotkey for {}", name), hotkey);
+        HotkeyUtils::try_associate_hotkey(hwnd, name, hotkey, false);
         return true;
     }
     case Type::Folder: {
@@ -635,19 +634,19 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         {
             if (const auto plugin = get_selected_plugin(hwnd, IDC_COMBO_GFX); plugin != nullptr)
             {
-                g_config.selected_video_plugin = plugin->path().wstring();
+                g_config.selected_video_plugin = plugin->path().string();
             }
             if (const auto plugin = get_selected_plugin(hwnd, IDC_COMBO_SOUND); plugin != nullptr)
             {
-                g_config.selected_audio_plugin = plugin->path().wstring();
+                g_config.selected_audio_plugin = plugin->path().string();
             }
             if (const auto plugin = get_selected_plugin(hwnd, IDC_COMBO_INPUT); plugin != nullptr)
             {
-                g_config.selected_input_plugin = plugin->path().wstring();
+                g_config.selected_input_plugin = plugin->path().string();
             }
             if (const auto plugin = get_selected_plugin(hwnd, IDC_COMBO_RSP); plugin != nullptr)
             {
-                g_config.selected_rsp_plugin = plugin->path().wstring();
+                g_config.selected_rsp_plugin = plugin->path().string();
             }
         }
         break;
@@ -699,28 +698,28 @@ std::vector<t_options_group> get_static_option_groups()
                                    .group_id = folders_group.id,
                                    .name = L"ROMs",
                                    .tooltip = L"The path to the ROM folder.",
-                                   GENPROPS(std::wstring, rom_directory)});
+                                   GENPROPS(std::string, rom_directory)});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
                                    .name = L"Plugins",
                                    .tooltip = L"The path to the plugin folder.",
-                                   GENPROPS(std::wstring, plugins_directory, { g_plugin_discovery_rescan = true; })});
+                                   GENPROPS(std::string, plugins_directory, { g_plugin_discovery_rescan = true; })});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
                                    .name = L"Save Data",
                                    .tooltip = L"The path to the save data folder.",
-                                   GENPROPS(std::wstring, saves_directory),
+                                   GENPROPS(std::string, saves_directory),
                                    .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_core_executing(); }});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
                                    .name = L"Screenshots",
                                    .tooltip = L"The path to the screenshot folder.",
-                                   GENPROPS(std::wstring, screenshots_directory)});
+                                   GENPROPS(std::string, screenshots_directory)});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
                                    .name = L"Backup Folder",
                                    .tooltip = L"The path to the movie backup folder.",
-                                   GENPROPS(std::wstring, backups_directory)});
+                                   GENPROPS(std::string, backups_directory)});
 
     interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
                                                       .group_id = interface_group.id,
@@ -908,7 +907,7 @@ std::vector<t_options_group> get_static_option_groups()
         .group_id = capture_group.id,
         .name = L"FFmpeg Path",
         .tooltip = L"The path to the FFmpeg executable to use for capturing.",
-        GENPROPS(std::wstring, ffmpeg_path),
+        GENPROPS(std::string, ffmpeg_path),
         .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
     capture_group.items.emplace_back(t_options_item{
@@ -916,7 +915,7 @@ std::vector<t_options_group> get_static_option_groups()
         .group_id = capture_group.id,
         .name = L"FFmpeg Arguments",
         .tooltip = L"FFmpeg arguments to be passed to FFmpeg when capturing.",
-        GENPROPS(std::wstring, ffmpeg_options),
+        GENPROPS(std::string, ffmpeg_options),
         .is_readonly = [] { return CaptureManager::is_capturing(); },
     });
 
@@ -1639,13 +1638,13 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
                 .type = t_options_item::Type::Hotkey,
                 .group_id = group.id,
                 .name = waction,
-                .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(waction); },
+                .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(action); },
                                                                       [=](const t_options_item::data_variant &value) {
-                                                                          g_config.hotkeys[waction] =
+                                                                          g_config.hotkeys[action] =
                                                                               std::get<Hotkey>(value);
                                                                       }),
                 .default_value =
-                    t_options_item::t_readonly_property([=] { return g_config.inital_hotkeys.at(waction); }),
+                    t_options_item::t_readonly_property([=] { return g_config.inital_hotkeys.at(action); }),
             };
 
             group.items.emplace_back(item);

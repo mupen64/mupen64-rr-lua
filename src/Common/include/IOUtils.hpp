@@ -276,13 +276,13 @@ inline std::string to_utf8_string(std::wstring_view wstr)
 }
 
 /**
- * \brief Decodes a raw ROM header name into a wide string.
+ * \brief Decodes a raw ROM header name into a string.
  * \param str Pointer to the start of the 20-byte ROM header.
  *
  * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. This function *will* error if the ROM header
  * is not valid Shift-JIS and may cause undefined behaviour if less than 20 bytes are available through `str`.
  */
-inline std::wstring rom_name_to_wide_string(const char str[20])
+inline std::string rom_name_to_string(const char str[20])
 {
     using namespace std::string_literals;
 
@@ -297,7 +297,7 @@ inline std::wstring rom_name_to_wide_string(const char str[20])
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "invalid UTF-8");
-        return L""s;
+        return ""s;
     }
 
     // This is the only safe way to do it, it's a bit of a shame there's no way to turn an arbitrary allocation
@@ -309,16 +309,17 @@ inline std::wstring rom_name_to_wide_string(const char str[20])
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
-        return L""s;
+        return ""s;
     }
 
     // Trim off trailing nulls
-    if (size_t first_null = output.find_first_of(L'\0'); first_null != std::string::npos)
+    if (size_t first_null = output.find_first_of('\0'); first_null != std::string::npos)
     {
         output.resize(first_null);
     }
+
     // Trim to remove spaces at the end; ROM headers are typically padded to 20 characters with spaces.
-    return std::wstring{StrUtils::ctrim_wstring(output)};
+    return std::string(StrUtils::ctrim_string(IOUtils::to_utf8_string(output)));
 }
 
 #endif
@@ -405,7 +406,7 @@ inline std::string rom_name_to_utf8(const char str[20])
 inline std::filesystem::path rom_name_to_path_component(const char str[20])
 {
 #ifdef _WIN32
-    return {rom_name_to_wide_string(str)};
+    return {rom_name_to_string(str)};
 #else
     return {rom_name_to_utf8(str)};
 #endif

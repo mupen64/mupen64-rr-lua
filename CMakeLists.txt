@@ -219,11 +219,6 @@ endfunction()
 include(CTest)
 include(Catch)
 
-if(WIN32)
-  # Use UTF-16 versions of functions
-  add_compile_definitions(UNICODE _UNICODE)
-endif()
-
 if(MSVC)
   # Include linker options to:
   # - disable Address-Space Layout Randomization (ASLR)

@@ -198,6 +198,11 @@ inline bool iequals(std::wstring_view lhs, std::wstring_view rhs)
                               [](const wchar_t a, const wchar_t b) { return std::tolower(a) == std::tolower(b); });
 }
 
+inline bool iequals(std::string_view lhs, std::string_view rhs)
+{
+    return std::ranges::equal(lhs, rhs, [](const char a, const char b) { return std::tolower(a) == std::tolower(b); });
+}
+
 inline std::string to_lower(std::string a)
 {
     std::ranges::transform(a, a.begin(), [](const unsigned char c) { return std::tolower(c); });

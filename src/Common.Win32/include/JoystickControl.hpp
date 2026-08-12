@@ -7,6 +7,7 @@
 
 #include <filesystem>
 #include <numbers>
+#include <MiscHelpers.hpp>
 #if defined(_WIN32)
 #include <windows.h>
 #include <gdiplus.h>
@@ -316,7 +317,7 @@ inline LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
  * \param hinstance The instance handle of the application.
  * \param name The class name to register.
  */
-inline void register_class(HINSTANCE hinstance, std::wstring_view name)
+inline void register_class(HINSTANCE hinstance, std::string_view name)
 {
     WNDCLASS wndclass{};
     wndclass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC;

@@ -9,13 +9,14 @@
 #include <Common.Views/WinFFmpegEncoder.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
+#include <IOUtils.hpp>
 #include <string>
 #include <filesystem>
 #include <cstdint>
 #include <windows.h>
 
-const std::wstring NUT_PIPE_NAME = L"\\\\.\\pipe\\mupennut";
-const std::wstring FFMPEG_OPTIONS = L"-y -i {} {} \"{}\"";
+const std::string NUT_PIPE_NAME = "\\\\.\\pipe\\mupennut";
+const std::string FFMPEG_OPTIONS = "-y -i {} {} \"{}\"";
 
 struct PipeIO
 {
@@ -52,7 +53,7 @@ static int64_t avio_seek_cb(void *, int64_t, int)
     return AVERROR(ENOSYS);
 }
 
-std::optional<std::wstring> WinFFmpegEncoder::start(Params params)
+std::optional<std::string> WinFFmpegEncoder::start(Params params)
 {
     m_params = params;
     m_video_pts = 0;
@@ -63,37 +64,37 @@ std::optional<std::wstring> WinFFmpegEncoder::start(Params params)
     m_dropped_frames = 0;
     m_last_write_was_video = false;
 
-    m_pipe = CreateNamedPipe(NUT_PIPE_NAME.c_str(), PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
-                             PIPE_TYPE_BYTE | PIPE_WAIT, 1,
-                             1 << 20, // 1 MB write buffer
-                             0, 0, nullptr);
+    m_pipe = CreateNamedPipeA(NUT_PIPE_NAME.c_str(), PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
+                              PIPE_TYPE_BYTE | PIPE_WAIT, 1,
+                              1 << 20, // 1 MB write buffer
+                              0, 0, nullptr);
 
     if (m_pipe == INVALID_HANDLE_VALUE)
     {
-        return L"Failed to create NUT pipe.";
+        return "Failed to create NUT pipe.";
     }
 
     m_pipe_write_event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
-    const auto path_str = m_params.path.wstring();
+    const auto path_str = m_params.path.string();
     const auto options =
-        std::vformat(FFMPEG_OPTIONS, std::make_wformat_args(NUT_PIPE_NAME, g_config.ffmpeg_options, path_str));
+        std::vformat(FFMPEG_OPTIONS, std::make_format_args(NUT_PIPE_NAME, g_config.ffmpeg_options, path_str));
 
-    g_view_logger->info(L"[WinFFmpegEncoder] Starting encode with commandline:");
-    g_view_logger->info(L"[WinFFmpegEncoder] {}", options);
+    g_view_logger->info("[WinFFmpegEncoder] Starting encode with commandline:");
+    g_view_logger->info("[WinFFmpegEncoder] {}", options);
 
-    DeleteFile(params.path.wstring().c_str());
+    DeleteFile(params.path.string().c_str());
 
     memset(&m_si, 0, sizeof(m_si));
     memset(&m_pi, 0, sizeof(m_pi));
 
-    if (!CreateProcess(g_config.ffmpeg_path.c_str(), const_cast<wchar_t *>(options.data()), nullptr, nullptr, FALSE, 0,
-                       nullptr, nullptr, &m_si, &m_pi))
+    if (!CreateProcessA(g_config.ffmpeg_path.c_str(), const_cast<char *>(options.data()), nullptr, nullptr, FALSE, 0,
+                        nullptr, nullptr, &m_si, &m_pi))
     {
-        g_view_logger->error(L"[WinFFmpegEncoder] CreateProcess failed ({}).", GetLastError());
+        g_view_logger->error("[WinFFmpegEncoder] CreateProcess failed ({}).", GetLastError());
         CloseHandle(m_pipe);
         CloseHandle(m_pipe_write_event);
-        return std::format(L"Failed to start ffmpeg process! Does ffmpeg exist on disk at '{}'?", g_config.ffmpeg_path);
+        return std::format("Failed to start ffmpeg process! Does ffmpeg exist on disk at '{}'?", g_config.ffmpeg_path);
     }
 
     {
@@ -114,14 +115,14 @@ std::optional<std::wstring> WinFFmpegEncoder::start(Params params)
             CloseHandle(m_pi.hThread);
             CloseHandle(m_pipe);
             CloseHandle(m_pipe_write_event);
-            return L"FFmpeg did not open the input pipe in time.";
+            return "FFmpeg did not open the input pipe in time.";
         }
     }
 
     int ret = avformat_alloc_output_context2(&m_fmt_ctx, nullptr, "nut", nullptr);
     if (ret < 0 || !m_fmt_ctx)
     {
-        return L"Failed to allocate NUT output context.";
+        return "Failed to allocate NUT output context.";
     }
 
     m_video_stream = avformat_new_stream(m_fmt_ctx, nullptr);
@@ -172,7 +173,7 @@ std::optional<std::wstring> WinFFmpegEncoder::start(Params params)
         m_fmt_ctx = nullptr;
         CloseHandle(m_pipe);
         CloseHandle(m_pipe_write_event);
-        return std::format(L"Failed to write NUT header: {}", std::wstring(errbuf, errbuf + strlen(errbuf)));
+        return std::format("Failed to write NUT header: {}", std::string(errbuf, errbuf + strlen(errbuf)));
     }
 
     g_view_logger->info("[WinFFmpegEncoder] NUT stream started ({}x{} @ {} fps, {} Hz audio)", m_params.width,
@@ -309,7 +310,7 @@ bool WinFFmpegEncoder::append_audio(uint8_t *audio, size_t length, uint8_t)
     return true;
 }
 
-std::wstring WinFFmpegEncoder::get_desired_extension() const
+std::string WinFFmpegEncoder::get_desired_extension() const
 {
-    return L".mp4";
+    return ".mp4";
 }

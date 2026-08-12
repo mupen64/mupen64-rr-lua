@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <vfw.h>
 
-std::optional<std::wstring> WinVFWEncoder::start(Params params)
+std::optional<std::string> WinVFWEncoder::start(Params params)
 {
     if (!m_splitting)
     {
@@ -33,16 +33,16 @@ std::optional<std::wstring> WinVFWEncoder::start(Params params)
     m_info_hdr.biClrUsed = 0;
     m_info_hdr.biClrImportant = 0;
 
-    DeleteFile(params.path.wstring().c_str());
+    DeleteFile(params.path.string().c_str());
 
     AVIFileInit();
-    if (AVIFileOpen(&m_avi_file, params.path.wstring().c_str(), OF_WRITE | OF_CREATE, NULL))
+    if (AVIFileOpen(&m_avi_file, params.path.string().c_str(), OF_WRITE | OF_CREATE, NULL))
     {
         stop_impl();
-        return L"Failed to open output file.";
+        return "Failed to open output file.";
     }
 
-    wchar_t cwd[MAX_PATH]{};
+    char cwd[MAX_PATH]{};
     GetCurrentDirectory(std::size(cwd), cwd);
 
     ZeroMemory(&m_video_stream_hdr, sizeof(AVISTREAMINFO));
@@ -53,7 +53,7 @@ std::optional<std::wstring> WinVFWEncoder::start(Params params)
     if (AVIFileCreateStream(m_avi_file, &m_video_stream, &m_video_stream_hdr))
     {
         stop_impl();
-        return L"Failed to create video file stream.";
+        return "Failed to create video file stream.";
     }
 
     // NOTE: AVIFileCreateStream seems to change the cwd for some reason...
@@ -65,34 +65,34 @@ std::optional<std::wstring> WinVFWEncoder::start(Params params)
         if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, avi_options))
         {
             stop_impl();
-            return L"";
+            return "";
         }
 
         if (!save_options())
         {
             stop_impl();
-            return L"Failed to save options.";
+            return "Failed to save options.";
         }
     }
     else
     {
         if (!load_options())
         {
-            return L"Failed to load options. Verify that the capture preset file is present.";
+            return "Failed to load options. Verify that the capture preset file is present.";
         }
     }
 
     if (AVIMakeCompressedStream(&m_compressed_video_stream, m_video_stream, &m_avi_options, NULL) != AVIERR_OK)
     {
         stop_impl();
-        return L"Failed to make video compressed stream.";
+        return "Failed to make video compressed stream.";
     }
 
     if (AVIStreamSetFormat(m_compressed_video_stream, 0, &m_info_hdr,
                            m_info_hdr.biSize + m_info_hdr.biClrUsed * sizeof(RGBQUAD)) != AVIERR_OK)
     {
         stop_impl();
-        return L"Failed to set video stream format.";
+        return "Failed to set video stream format.";
     }
 
     m_sample = 0;
@@ -114,12 +114,12 @@ std::optional<std::wstring> WinVFWEncoder::start(Params params)
     if (AVIFileCreateStream(m_avi_file, &m_sound_stream, &m_sound_stream_hdr))
     {
         stop_impl();
-        return L"Failed to create audio stream.";
+        return "Failed to create audio stream.";
     }
     if (AVIStreamSetFormat(m_sound_stream, 0, &m_sound_format, sizeof(WAVEFORMATEX)) != AVIERR_OK)
     {
         stop_impl();
-        return L"Failed to set audio stream format.";
+        return "Failed to set audio stream format.";
     }
 
     memset(m_sound_buf_empty, 0, sizeof(m_sound_buf_empty));
@@ -155,7 +155,7 @@ bool WinVFWEncoder::stop_impl(const bool fail_stop)
 
     if (fail_stop)
     {
-        DeleteFile(m_params.path.wstring().c_str());
+        DeleteFile(m_params.path.string().c_str());
     }
 
     return true;
@@ -342,7 +342,7 @@ error:
     return false;
 }
 
-std::wstring WinVFWEncoder::get_desired_extension() const
+std::string WinVFWEncoder::get_desired_extension() const
 {
-    return L".avi";
+    return ".avi";
 }

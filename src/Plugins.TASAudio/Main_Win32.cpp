@@ -31,7 +31,7 @@ BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
     {
         g_dll_handle = hmod;
 
-        std::vector<wchar_t> dll_path_buf(MAX_PATH, L'\0');
+        std::vector<char> dll_path_buf(MAX_PATH, L'\0');
         DWORD gmfn_rc = GetModuleFileName(hmod, dll_path_buf.data(), dll_path_buf.size());
 
         // If the buffer isn't long enough, double the buffer size until it fits

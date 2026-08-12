@@ -89,27 +89,27 @@ BetterEmulationLock::~BetterEmulationLock()
     }
 }
 
-std::wstring get_mupen_name(bool simple)
+std::string get_mupen_name(bool simple)
 {
 #ifdef _DEBUG
-#define BUILD_TARGET_INFO L"-debug"
+#define BUILD_TARGET_INFO "-debug"
 #else
-#define BUILD_TARGET_INFO L""
+#define BUILD_TARGET_INFO ""
 #endif
 
 #ifdef UNICODE
-#define CHARSET_INFO L""
+#define CHARSET_INFO ""
 #else
-#define CHARSET_INFO L"-a"
+#define CHARSET_INFO "-a"
 #endif
 
 #ifdef _M_X64
-#define ARCH_INFO L""
+#define ARCH_INFO ""
 #else
-#define ARCH_INFO L"-x86"
+#define ARCH_INFO "-x86"
 #endif
 
-#define BASE_NAME L"Mupen 64 "
+#define BASE_NAME "Mupen 64 "
 
     if (simple)
     {
@@ -119,41 +119,41 @@ std::wstring get_mupen_name(bool simple)
     return BASE_NAME CURRENT_VERSION VERSION_SUFFIX ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
 }
 
-const wchar_t *get_input_text()
+const char *get_input_text()
 {
-    static wchar_t text[1024]{};
+    static char text[1024]{};
     memset(text, 0, sizeof(text));
 
     CoreButtons b = g_main_ctx.last_controller_data[0];
-    wsprintf(text, L"(%d, %d) ", b.x, b.y);
-    if (b.start) lstrcatW(text, L"S");
-    if (b.z) lstrcatW(text, L"Z");
-    if (b.a) lstrcatW(text, L"A");
-    if (b.b) lstrcatW(text, L"B");
-    if (b.l) lstrcatW(text, L"L");
-    if (b.r) lstrcatW(text, L"R");
+    sprintf(text, "(%d, %d) ", b.x, b.y);
+    if (b.start) strcat(text, "S");
+    if (b.z) strcat(text, "Z");
+    if (b.a) strcat(text, "A");
+    if (b.b) strcat(text, "B");
+    if (b.l) strcat(text, "L");
+    if (b.r) strcat(text, "R");
     if (b.cu || b.cd || b.cl || b.cr)
     {
-        lstrcatW(text, L" C");
-        if (b.cu) lstrcatW(text, L"^");
-        if (b.cd) lstrcatW(text, L"v");
-        if (b.cl) lstrcatW(text, L"<");
-        if (b.cr) lstrcatW(text, L">");
+        strcat(text, " C");
+        if (b.cu) strcat(text, "^");
+        if (b.cd) strcat(text, "v");
+        if (b.cl) strcat(text, "<");
+        if (b.cr) strcat(text, ">");
     }
     if (b.du || b.dd || b.dl || b.dr)
     {
-        lstrcatW(text, L"D");
-        if (b.du) lstrcatW(text, L"^");
-        if (b.dd) lstrcatW(text, L"v");
-        if (b.dl) lstrcatW(text, L"<");
-        if (b.dr) lstrcatW(text, L">");
+        strcat(text, "D");
+        if (b.du) strcat(text, "^");
+        if (b.dd) strcat(text, "v");
+        if (b.dl) strcat(text, "<");
+        if (b.dr) strcat(text, ">");
     }
     return text;
 }
 
-const wchar_t *get_status_text()
+const char *get_status_text()
 {
-    static wchar_t text[1024]{};
+    static char text[1024]{};
     memset(text, 0, sizeof(text));
 
     const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
@@ -165,8 +165,8 @@ const wchar_t *get_status_text()
 
     if (g_main_ctx.core_ctx->vcr_get_warp_modify_status())
     {
-        StringCbPrintfW(text, sizeof(text), L"Warping (%.2f%%)",
-                        (double)current_sample / (double)g_main_ctx.core_ctx->vcr_get_length_samples() * 100.0);
+        sprintf(text, "Warping (%.2f%%)",
+                (double)current_sample / (double)g_main_ctx.core_ctx->vcr_get_length_samples() * 100.0);
         return text;
     }
 
@@ -178,7 +178,7 @@ const wchar_t *get_status_text()
         }
         else
         {
-            wsprintfW(text, L"%d (%d) ", current_vi, current_sample - index_adjustment);
+            sprintf(text, "%d (%d) ", current_vi, current_sample - index_adjustment);
         }
     }
 
@@ -190,8 +190,8 @@ const wchar_t *get_status_text()
         }
         else
         {
-            wsprintfW(text, L"%d / %d (%d / %d) ", current_vi, g_main_ctx.core_ctx->vcr_get_length_vis(),
-                      current_sample - index_adjustment, g_main_ctx.core_ctx->vcr_get_length_samples());
+            sprintf(text, "%d / %d (%d / %d) ", current_vi, g_main_ctx.core_ctx->vcr_get_length_vis(),
+                    current_sample - index_adjustment, g_main_ctx.core_ctx->vcr_get_length_samples());
         }
     }
 
@@ -206,10 +206,8 @@ std::filesystem::path get_summercart_path()
 std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
-    const auto fname =
-        std::format(L"{} {}.st{}", IOUtils::rom_name_to_wide_string((const char *)hdr->nom),
-                    IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)),
-                    std::to_wstring(slot));
+    const auto fname = std::format("{} {}.st{}", IOUtils::rom_name_to_string((const char *)hdr->nom),
+                                   g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code), slot);
     return Config::save_directory() / fname;
 }
 
@@ -277,24 +275,24 @@ void ai_len_changed()
     CaptureManager::ai_len_changed();
 }
 
-static std::wstring get_titlebar_text()
+static std::string get_titlebar_text()
 {
     auto text = get_mupen_name();
 
-    if (g_emu_starting) text += L" - Starting...";
+    if (g_emu_starting) text += " - Starting...";
 
     if (g_main_ctx.core_ctx->vr_get_launched())
-        text += std::format(L" - {}", IOUtils::rom_name_to_wide_string(
-                                          reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        text += std::format(" - {}", IOUtils::rom_name_to_string(
+                                         reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {
         auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
-        text += std::format(L" - {}", vcr_filename.c_str());
+        text += std::format(" - {}", vcr_filename.c_str());
     }
 
     if (CaptureManager::is_capturing())
-        text += std::format(L" - {}", CaptureManager::get_current_path().filename().wstring());
+        text += std::format(" - {}", CaptureManager::get_current_path().filename().string());
 
     return text;
 }
@@ -312,7 +310,7 @@ static void update_titlebar()
 void on_script_started(std::filesystem::path value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        RecentMenu::add(AppActions::RECENT_SCRIPTS, g_config.recent_lua_script_paths, value.wstring(),
+        RecentMenu::add(AppActions::RECENT_SCRIPTS, g_config.recent_lua_script_paths, value.string(),
                         g_config.is_recent_scripts_frozen);
     });
 }
@@ -335,7 +333,7 @@ void on_task_changed(core_vcr_task value)
                 !g_main_ctx.core_ctx->vcr_get_path().empty())
         {
             RecentMenu::add(AppActions::RECENT_MOVIES, g_config.recent_movie_paths,
-                            g_main_ctx.core_ctx->vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen);
+                            g_main_ctx.core_ctx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
         }
 
         update_titlebar();
@@ -378,7 +376,7 @@ void on_emu_launched_changed(bool value)
             const auto rom_path = g_main_ctx.core_ctx->vr_get_rom_path();
             if (!rom_path.empty())
             {
-                RecentMenu::add(AppActions::RECENT_ROMS, g_config.recent_rom_paths, rom_path.wstring(),
+                RecentMenu::add(AppActions::RECENT_ROMS, g_config.recent_rom_paths, rom_path.string(),
                                 g_config.is_recent_rom_paths_frozen);
             }
 

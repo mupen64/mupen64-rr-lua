@@ -123,7 +123,7 @@ t_listbox_item t_listbox_item::make_group(const std::string &group_name)
 
 t_listbox_item t_listbox_item::make_action(const std::string &action, const std::string &group)
 {
-    const auto hotkey = g_config.hotkeys.at(IOUtils::to_wide_string(action));
+    const auto hotkey = g_config.hotkeys.at(action);
     const auto hotkey_str = hotkey.is_empty() ? "" : hotkey.to_string();
 
     t_listbox_item item{};
@@ -148,7 +148,7 @@ t_listbox_item t_listbox_item::make_option(ConfigDialog::t_options_item *options
 t_listbox_item t_listbox_item::make_option_group(const ConfigDialog::t_options_group &options_group)
 {
     t_listbox_item item{};
-    item.data = t_group_data{.text = IOUtils::to_utf8_string(options_group.name)};
+    item.data = t_group_data{.text = options_group.name};
     return item;
 }
 
@@ -217,7 +217,7 @@ bool t_listbox_item::matches_query(const std::string_view query) const
     if (std::holds_alternative<t_option_data>(data))
     {
         const auto &item = std::get<t_option_data>(data).item;
-        const auto display_name = IOUtils::to_utf8_string(item->get_name());
+        const auto display_name = item->get_name();
         const auto normalized_display_name = normalize(display_name);
         return normalized_display_name.contains(query);
     }
@@ -249,7 +249,7 @@ std::optional<std::string> t_listbox_item::get_primary_text() const
     if (std::holds_alternative<t_option_data>(data))
     {
         const auto &item = std::get<t_option_data>(data).item;
-        return IOUtils::to_utf8_string(item->get_name());
+        return item->get_name();
     }
 
     return std::nullopt;
@@ -266,7 +266,7 @@ std::optional<std::string> t_listbox_item::get_secondary_text() const
     if (std::holds_alternative<t_option_data>(data))
     {
         const auto &item = std::get<t_option_data>(data).item;
-        return IOUtils::to_utf8_string(item->get_value_name());
+        return item->get_value_name();
     }
 
     return std::nullopt;
@@ -371,9 +371,8 @@ static bool try_change_hotkey(int32_t i)
     {
         const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
 
-        Hotkey hotkey = g_config.hotkeys.at(IOUtils::to_wide_string(action.path));
-        HotkeyUtils::show_prompt(g_main_ctx.hwnd,
-                                 IOUtils::to_wide_string(std::format("Choose a hotkey for {}", action.text)), hotkey);
+        Hotkey hotkey = g_config.hotkeys.at(action.path);
+        HotkeyUtils::show_prompt(g_main_ctx.hwnd, std::format("Choose a hotkey for {}", action.text), hotkey);
         HotkeyUtils::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
         return true;
     }
@@ -718,7 +717,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             switch (HIWORD(wparam))
             {
             case EN_CHANGE: {
-                const auto query = IOUtils::to_utf8_string(get_window_text(g_ctx.edit_hwnd).value());
+                const auto query = get_window_text(g_ctx.edit_hwnd).value();
                 if (g_ctx.search_query != query)
                 {
                     g_ctx.search_query = query;
@@ -846,8 +845,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             const auto primary_text = item->get_primary_text();
             if (primary_text.has_value())
             {
-                const auto wprimary_text = IOUtils::to_wide_string(*primary_text);
-                DrawText(pdis->hDC, wprimary_text.c_str(), (int)wprimary_text.size(), &base_rc,
+                DrawText(pdis->hDC, primary_text->c_str(), (int)primary_text->size(), &base_rc,
                          DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             }
 
@@ -856,13 +854,12 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             if (secondary_text.has_value())
             {
                 const auto text = limit_string(*secondary_text, 30);
-                const auto wtext = IOUtils::to_wide_string(text);
 
                 SIZE sz;
-                GetTextExtentPoint32(pdis->hDC, wtext.c_str(), (int)wtext.size(), &sz);
+                GetTextExtentPoint32(pdis->hDC, text.c_str(), (int)text.size(), &sz);
                 const int x = base_rc.right - sz.cx;
 
-                DrawText(pdis->hDC, wtext.c_str(), (int)wtext.size(), &base_rc,
+                DrawText(pdis->hDC, text.c_str(), (int)text.size(), &base_rc,
                          DT_RIGHT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             }
 
@@ -872,10 +869,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                 HPEN pen = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
                 HGDIOBJ prev_obj = SelectObject(pdis->hDC, pen);
 
-                const auto wgroup_text = IOUtils::to_wide_string(group.text);
-
                 SIZE sz;
-                GetTextExtentPoint32(pdis->hDC, wgroup_text.c_str(), (int)wgroup_text.size(), &sz);
+                GetTextExtentPoint32(pdis->hDC, group.text.c_str(), (int)group.text.size(), &sz);
 
                 MoveToEx(pdis->hDC, base_rc.left + sz.cx + 4,
                          pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2, nullptr);

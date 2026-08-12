@@ -51,7 +51,7 @@ static t_config get_default_config()
 
     for (const auto &pair : get_merged_silent_mode_dialog_choices())
     {
-        config.silent_mode_dialog_choices[IOUtils::to_wide_string(pair.first)] = std::to_wstring(pair.second);
+        config.silent_mode_dialog_choices[pair.first] = pair.second;
     }
 
     return config;
@@ -412,10 +412,10 @@ static void config_patch(t_config &cfg)
 
     for (const auto &pair : get_merged_silent_mode_dialog_choices())
     {
-        const auto key = IOUtils::to_wide_string(pair.first);
+        const auto key = pair.first;
         if (!cfg.silent_mode_dialog_choices.contains(key))
         {
-            cfg.silent_mode_dialog_choices[key] = std::to_wstring(pair.second);
+            cfg.silent_mode_dialog_choices[key] = pair.second;
         }
     }
 
@@ -448,8 +448,7 @@ void Config::apply_and_save()
     ActionManager::begin_batch_work();
     for (const auto &[action, hotkey] : g_config.hotkeys)
     {
-        const auto uaction = IOUtils::to_utf8_string(action);
-        ActionManager::associate_hotkey(uaction, hotkey, true);
+        ActionManager::associate_hotkey(action, hotkey, true);
     }
     ActionManager::end_batch_work();
 

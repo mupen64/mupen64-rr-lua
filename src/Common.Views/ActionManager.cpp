@@ -308,11 +308,10 @@ bool ActionManager::add(const t_action_add_params &params)
     g_mgr.actions.emplace_back(action);
     g_mgr.filter_result_cache.clear();
 
-    const auto wnormalized_path = IOUtils::to_wide_string(normalized_path); // TODO: Change the entry to std::string
-    if (!g_config.hotkeys.contains(wnormalized_path) || !g_config.inital_hotkeys.contains(wnormalized_path))
+    if (!g_config.hotkeys.contains(normalized_path) || !g_config.inital_hotkeys.contains(normalized_path))
     {
-        g_config.hotkeys[wnormalized_path] = Hotkey::make_unassigned();
-        g_config.inital_hotkeys[wnormalized_path] = Hotkey::make_unassigned();
+        g_config.hotkeys[normalized_path] = Hotkey::make_unassigned();
+        g_config.inital_hotkeys[normalized_path] = Hotkey::make_unassigned();
     }
 
     g_mgr.work_happened = true;
@@ -380,27 +379,26 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey &hotk
 
     const auto normalized_path = action->add_params.path;
 
-    const auto wnormalized_path = IOUtils::to_wide_string(normalized_path); // TODO: Change the entry to std::string
-    RT_ASSERT(g_config.hotkeys.contains(wnormalized_path) && g_config.inital_hotkeys.contains(wnormalized_path),
+    RT_ASSERT(g_config.hotkeys.contains(normalized_path) && g_config.inital_hotkeys.contains(normalized_path),
               "Action didn't have a hotkey entry.");
 
-    const bool has_assignment = g_config.hotkeys.at(wnormalized_path).is_assigned();
+    const bool has_assignment = g_config.hotkeys.at(normalized_path).is_assigned();
 
     if (overwrite_existing)
     {
         if (!has_assignment)
         {
-            g_config.inital_hotkeys[wnormalized_path] = hotkey;
+            g_config.inital_hotkeys[normalized_path] = hotkey;
         }
 
-        g_config.hotkeys[wnormalized_path] = hotkey;
+        g_config.hotkeys[normalized_path] = hotkey;
     }
     else
     {
         if (!has_assignment)
         {
-            g_config.hotkeys[wnormalized_path] = hotkey;
-            g_config.inital_hotkeys[wnormalized_path] = hotkey;
+            g_config.hotkeys[normalized_path] = hotkey;
+            g_config.inital_hotkeys[normalized_path] = hotkey;
         }
     }
 

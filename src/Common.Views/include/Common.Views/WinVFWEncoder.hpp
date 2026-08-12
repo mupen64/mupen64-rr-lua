@@ -13,11 +13,11 @@
 class WinVFWEncoder final : public Encoder
 {
   public:
-    std::optional<std::wstring> start(Params params) override;
+    std::optional<std::string> start(Params params) override;
     bool stop() override;
     bool append_video(uint8_t *image) override;
     bool append_audio(uint8_t *audio, size_t length, uint8_t bitrate) override;
-    std::wstring get_desired_extension() const override;
+    std::string get_desired_extension() const override;
 
   private:
     static constexpr auto SOUND_BUF_SIZE = 44100 * 2 * 2;
@@ -42,7 +42,7 @@ class WinVFWEncoder final : public Encoder
     size_t m_in_sample = 0;
     size_t m_sample = 0;
     size_t m_video_frame = 0;
-    double_t m_audio_frame = 0;
+    double m_audio_frame = 0;
     uint8_t m_sound_buf[SOUND_BUF_SIZE]{};
     uint8_t m_sound_buf_empty[SOUND_BUF_SIZE]{};
     short *m_resampled_sound{};

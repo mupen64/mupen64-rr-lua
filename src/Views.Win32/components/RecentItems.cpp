@@ -9,7 +9,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <components/RomBrowser.hpp>
 
-void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<std::wstring> &vec, std::wstring val,
+void RecentMenu::add(const ActionManager::action_filter &menu_path, std::vector<std::string> &vec, std::string val,
                      const bool frozen)
 {
     assert(is_on_gui_thread());

@@ -19,13 +19,13 @@ static INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, cons
     switch (message)
     {
     case WM_INITDIALOG:
-        SetWindowText(hwnd, g_ctx.params.caption.c_str());
-        SetWindowText(GetDlgItem(hwnd, IDC_EDIT), g_ctx.params.text.c_str());
+        SetWindowText(hwnd, IOUtils::to_wide_string(g_ctx.params.caption).c_str());
+        SetWindowText(GetDlgItem(hwnd, IDC_EDIT), IOUtils::to_wide_string(g_ctx.params.text).c_str());
         Edit_SetReadOnly(GetDlgItem(hwnd, IDC_EDIT), g_ctx.params.readonly ? TRUE : FALSE);
         SetFocus(GetDlgItem(hwnd, IDC_EDIT));
         return FALSE;
     case WM_DESTROY:
-        g_ctx.params.text = get_window_text(GetDlgItem(hwnd, IDC_EDIT)).value_or(L"");
+        g_ctx.params.text = IOUtils::to_utf8_string(get_window_text(GetDlgItem(hwnd, IDC_EDIT)).value_or(L""));
         break;
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
@@ -49,7 +49,7 @@ static INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, cons
     return TRUE;
 }
 
-std::optional<std::wstring> TextEditDialog::show(const t_params &params)
+std::optional<std::string> TextEditDialog::show(const t_params &params)
 {
     g_ctx = {};
     g_ctx.params = params;
