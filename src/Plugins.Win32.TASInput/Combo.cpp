@@ -53,14 +53,14 @@ std::variant<t_combo, std::wstring> t_combo::deserialize(const std::span<uint8_t
     // Check for null-terminator
     if (offset >= data.size() || data[offset] != 0)
     {
-        return L"Malformed name.";
+        return "Malformed name.";
     }
     ++offset;
 
     // 2. Read the size of the samples vector (uint32_t)
     if (offset + sizeof(uint32_t) > data.size())
     {
-        return L"Malformed sample size.";
+        return "Malformed sample size.";
     }
 
     uint32_t samples_size = 0;
@@ -71,7 +71,7 @@ std::variant<t_combo, std::wstring> t_combo::deserialize(const std::span<uint8_t
     size_t samples_byte_size = samples_size * sizeof(CoreButtons);
     if (offset + samples_byte_size > data.size())
     {
-        return L"Malformed samples.";
+        return "Malformed samples.";
     }
 
     result.samples.resize(samples_size);

@@ -60,7 +60,7 @@ struct t_config
     /// <summary>
     /// The new version of Mupen64 currently ignored by the update checker.
     /// <para></para>
-    /// L"" means no ignored version.
+    /// "" means no ignored version.
     /// </summary>
     std::string ignored_version;
 

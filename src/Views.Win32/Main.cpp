@@ -59,7 +59,7 @@ ULONG_PTR gdi_plus_token;
 // See App.hpp
 HWND g_main_hwnd;
 
-constexpr auto WND_CLASS = L"myWindowClass";
+constexpr auto WND_CLASS = "myWindowClass";
 
 BetterEmulationLock::BetterEmulationLock()
 {
@@ -130,7 +130,7 @@ const char *get_input_text()
     if (b.z) strcat(text, "Z");
     if (b.a) strcat(text, "A");
     if (b.b) strcat(text, "B");
-    if (b.l) strcat(text, "L");
+    if (b.l) strcat(text, "");
     if (b.r) strcat(text, "R");
     if (b.cu || b.cd || b.cl || b.cr)
     {
@@ -221,7 +221,7 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
     if (info.medium == core_st_medium_path)
     {
         const auto &fname = info.params.path.filename().wstring();
-        const bool is_slot = fname.find(L".st") != std::wstring::npos && std::isdigit(fname.back());
+        const bool is_slot = fname.find(".st") != std::string::npos && std::isdigit(fname.back());
 
         if (is_slot)
         {
@@ -230,15 +230,14 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
             switch (info.result)
             {
             case Res_Ok:
-                Statusbar::post(
-                    std::format(L"{} slot {}", info.job == core_st_job_save ? L"Saved" : L"Loaded", slot + 1));
+                Statusbar::post(std::format("{} slot {}", info.job == core_st_job_save ? "Saved" : "Loaded", slot + 1));
                 break;
             case Res_Cancelled:
-                Statusbar::post(std::format(L"Cancelled {}", info.job == core_st_job_save ? L"save" : L"load"));
+                Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
                 break;
             default:
                 Statusbar::post(
-                    std::format(L"Failed to {} slot {}", info.job == core_st_job_save ? L"save" : L"load", slot + 1));
+                    std::format("Failed to {} slot {}", info.job == core_st_job_save ? "save" : "load", slot + 1));
                 break;
             }
             return;
@@ -247,11 +246,11 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
         switch (info.result)
         {
         case Res_Ok:
-            Statusbar::post(std::format(L"{} {}", info.job == core_st_job_save ? L"Saved" : L"Loaded",
+            Statusbar::post(std::format("{} {}", info.job == core_st_job_save ? "Saved" : "Loaded",
                                         info.params.path.filename().wstring()));
             break;
         case Res_Cancelled:
-            Statusbar::post(std::format(L"Cancelled {}", info.job == core_st_job_save ? L"save" : L"load"));
+            Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
             break;
         default: {
             const auto message =
@@ -282,17 +281,15 @@ static std::string get_titlebar_text()
     if (g_emu_starting) text += " - Starting...";
 
     if (g_main_ctx.core_ctx->vr_get_launched())
-        text += std::format(" - {}", IOUtils::rom_name_to_string(
-                                         reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.core_ctx->vr_get_rom_header()->nom));
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {
         auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
-        text += std::format(" - {}", vcr_filename.c_str());
+        text += std::format(" - {}", vcr_filename);
     }
 
-    if (CaptureManager::is_capturing())
-        text += std::format(" - {}", CaptureManager::get_current_path().filename().string());
+    if (CaptureManager::is_capturing()) text += std::format(" - {}", CaptureManager::get_current_path().filename());
 
     return text;
 }
@@ -321,11 +318,11 @@ void on_task_changed(core_vcr_task value)
         static auto previous_value = value;
         if (!vcr_is_task_recording(value) && vcr_is_task_recording(previous_value))
         {
-            Statusbar::post(L"Recording stopped");
+            Statusbar::post("Recording stopped");
         }
         if (!task_is_playback(value) && task_is_playback(previous_value))
         {
-            Statusbar::post(L"Playback stopped");
+            Statusbar::post("Playback stopped");
         }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
@@ -423,7 +420,7 @@ void on_speed_modifier_changed(int32_t value)
         g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
     const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
 
-    Statusbar::post(std::format(L"Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
+    Statusbar::post(std::format("Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
 }
 
 void on_emu_paused_changed(bool)
@@ -454,7 +451,7 @@ void on_vis_since_input_poll_exceeded()
 
 void on_movie_loop_changed(bool value)
 {
-    Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
+    Statusbar::post(value ? "Movies restart after ending" : "Movies stop after ending");
 }
 
 void on_config_loaded()
@@ -528,12 +525,12 @@ bool is_on_gui_thread()
 
 std::filesystem::path get_app_full_path()
 {
-    std::wstring app_path(MAX_PATH, 0);
+    std::string app_path(MAX_PATH, 0);
     const DWORD app_path_len = GetModuleFileName(nullptr, app_path.data(), app_path.size());
 
     if (app_path_len == 0)
     {
-        return L"";
+        return "";
     }
 
     app_path.resize(app_path_len);
@@ -576,7 +573,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     {
     case WM_DROPFILES: {
         auto drop = (HDROP)wParam;
-        wchar_t fname[MAX_PATH] = {0};
+        char fname[MAX_PATH] = {0};
         DragQueryFile(drop, 0, fname, std::size(fname));
 
         std::filesystem::path path = fname;
@@ -639,11 +636,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CHAR: {
         t_lua_key_event_args args = get_base_key_event_args();
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
-        const auto chr = static_cast<wchar_t>(wParam);
+        const auto chr = static_cast<char>(wParam);
 
         if (std::iswcntrl(chr)) break;
 
-        args.text = std::wstring(1, chr);
+        args.text = std::string(1, chr);
         args.repeat = repeat;
         LuaCallbacks::call_atkey(args);
         break;
@@ -829,11 +826,11 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
         {
             if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
             {
-                Statusbar::post(std::format(L"{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
+                Statusbar::post(std::format("{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
             }
             else
             {
-                Statusbar::post(std::format(L"{}({})", get_status_text(), CaptureManager::get_video_frame()),
+                Statusbar::post(std::format("{}({})", get_status_text(), CaptureManager::get_video_frame()),
                                 Statusbar::Section::VCR);
             }
         }
@@ -851,8 +848,8 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
         float fps, vis;
         g_main_ctx.core_ctx->vr_get_timings(fps, vis);
 
-        Statusbar::post(std::format(L"FPS: {:.1f}", fps), Statusbar::Section::FPS);
-        Statusbar::post(std::format(L"VI/s: {:.1f}", vis), Statusbar::Section::VIs);
+        Statusbar::post(std::format("FPS: {:.1f}", fps), Statusbar::Section::FPS);
+        Statusbar::post(std::format("VI/s: {:.1f}", vis), Statusbar::Section::VIs);
 
         last_statusbar_update = time;
     }
@@ -992,9 +989,9 @@ void set_cwd()
         SetCurrentDirectory(g_main_ctx.app_path.c_str());
     }
 
-    wchar_t cwd[MAX_PATH] = {0};
+    char cwd[MAX_PATH] = {0};
     GetCurrentDirectory(sizeof(cwd), cwd);
-    g_view_logger->info(L"cwd: {}", cwd);
+    g_view_logger->info("cwd: {}", cwd);
 }
 
 /**
@@ -1056,7 +1053,7 @@ static void set_error_mode()
 
 static bool is_running_under_wine()
 {
-    HMODULE ntdll = GetModuleHandle(L"ntdll.dll");
+    HMODULE ntdll = GetModuleHandle("ntdll.dll");
     if (!ntdll) return false;
 
     return GetProcAddress(ntdll, "wine_get_version") != nullptr;

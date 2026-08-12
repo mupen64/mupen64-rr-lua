@@ -19,11 +19,11 @@ static t_config get_default_config();
 t_config g_config;
 
 #ifdef _M_X64
-#define LEGACY_CONFIG_FILE_NAME L"config-x64.ini"
-#define CONFIG_FILE_NAME L"config-x64.json"
+#define LEGACY_CONFIG_FILE_NAME "config-x64.ini"
+#define CONFIG_FILE_NAME "config-x64.json"
 #else
-#define LEGACY_CONFIG_FILE_NAME L"config.ini"
-#define CONFIG_FILE_NAME L"config.json"
+#define LEGACY_CONFIG_FILE_NAME "config.ini"
+#define CONFIG_FILE_NAME "config.json"
 #endif
 
 constexpr auto FLAT_FIELD_KEY = "config";
@@ -513,5 +513,5 @@ std::filesystem::path Config::backup_directory()
 
 std::filesystem::path Config::logs_directory()
 {
-    return IOUtils::exe_path().parent_path() / L"logs";
+    return IOUtils::exe_path().parent_path() / "logs";
 }

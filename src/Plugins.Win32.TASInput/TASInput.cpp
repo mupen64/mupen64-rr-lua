@@ -16,7 +16,7 @@
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_VISUALS (WM_USER + 4)
 
-constexpr auto JOYSTICK_CONTROL_CLASS = L"JoystickControl";
+constexpr auto JOYSTICK_CONTROL_CLASS = "JoystickControl";
 
 enum class ComboTask
 {
@@ -255,7 +255,7 @@ void Status::get_input(CoreButtons *keys)
             }
             else
             {
-                set_status(L"Finished combo");
+                set_status("Finished combo");
                 combo_task = ComboTask::Idle;
                 // Reset input on last frame, or it sticks which feels weird
                 // We also need to reprocess the inputs since source data change
@@ -266,7 +266,7 @@ void Status::get_input(CoreButtons *keys)
         }
 
         set_status(
-            std::format(L"Playing... ({} / {})", combo_frame + 1, combos[active_combo_index].samples.size() - 1));
+            std::format("Playing... ({} / {})", combo_frame + 1, combos[active_combo_index].samples.size() - 1));
         combo_frame++;
     }
 
@@ -275,7 +275,7 @@ end:
     {
         // We process this last, because we need the processed inputs
         combos[active_combo_index].samples.push_back(*keys);
-        set_status(std::format(L"Recording... ({})", combos[active_combo_index].samples.size()));
+        set_status(std::format("Recording... ({})", combos[active_combo_index].samples.size()));
     }
 
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
@@ -402,15 +402,15 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             ctx->active_combo_index = ListBox_GetCurSel(ctx->combo_listbox);
             if (ctx->active_combo_index == -1)
             {
-                ctx->set_status(L"No combo selected");
+                ctx->set_status("No combo selected");
                 break;
             }
-            ctx->set_status(L"Playing combo");
+            ctx->set_status("Playing combo");
             ctx->combo_frame = 0;
             ctx->combo_task = ComboTask::Play;
             break;
         case IDC_STOP:
-            ctx->set_status(L"Idle");
+            ctx->set_status("Idle");
             ctx->combo_task = ComboTask::Idle;
             break;
         case IDC_PAUSE:
@@ -423,12 +423,12 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDC_RECORD:
             if (ctx->combo_task == ComboTask::Record)
             {
-                ctx->set_status(L"Recording stopped");
+                ctx->set_status("Recording stopped");
                 ctx->combo_task = ComboTask::Idle;
                 break;
             }
 
-            ctx->set_status(L"Recording new combo...");
+            ctx->set_status("Recording new combo...");
             ctx->combos.push_back({.name = "Unnamed Combo"});
             ctx->active_combo_index =
                 ListBox_InsertString(ctx->combo_listbox, -1, IOUtils::to_wide_string(ctx->combos.back().name).c_str());
@@ -439,7 +439,7 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             ctx->renaming_combo_index = ListBox_GetCurSel(ctx->combo_listbox);
             if (ctx->renaming_combo_index == -1)
             {
-                ctx->set_status(L"No combo selected");
+                ctx->set_status("No combo selected");
                 break;
             }
             ctx->start_edit(ctx->renaming_combo_index);
@@ -453,10 +453,10 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDC_IMPORT: {
             wchar_t file[MAX_PATH]{};
 
-            ctx->set_status(L"Importing...");
+            ctx->set_status("Importing...");
             OPENFILENAME data{};
             data.lStructSize = sizeof(data);
-            data.lpstrFilter = L"Combo file (*.cmb)\0*.cmb\0\0";
+            data.lpstrFilter = "Combo file (*.cmb)\0*.cmb\0\0";
             data.nFilterIndex = 1;
             data.nMaxFile = MAX_PATH;
             data.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;

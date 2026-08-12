@@ -16,8 +16,8 @@
  */
 namespace SettingsListView
 {
-using t_group = std::pair<size_t, std::wstring>;
-using t_item = std::pair<size_t, std::wstring>;
+using t_group = std::pair<size_t, std::string>;
+using t_item = std::pair<size_t, std::string>;
 
 /**
  * \brief The context of a SettingsListView.
@@ -57,12 +57,12 @@ struct t_settings_listview_context
     /**
      * \brief A callback that retrieves an item's tooltip from the second column.
      */
-    std::function<std::wstring(size_t index)> get_item_tooltip;
+    std::function<std::string(size_t index)> get_item_tooltip;
 
     /**
      * \brief A callback that retrieves an item's text from an arbitrary column.
      */
-    std::function<std::wstring(size_t index, size_t column)> get_item_text;
+    std::function<std::string(size_t index, size_t column)> get_item_text;
 
     /**
      * \brief A callback that retrieves an item's image index.
@@ -72,7 +72,7 @@ struct t_settings_listview_context
 
 namespace detail
 {
-#define PROP_NAME L"slv_ctx"
+#define PROP_NAME "slv_ctx"
 
 inline bool begin_listview_edit(SettingsListView::t_settings_listview_context *ctx, HWND lvhwnd)
 {
@@ -153,7 +153,7 @@ inline HWND create_impl(const t_settings_listview_context &ctx)
 
     for (const auto &pair : ctx.groups)
     {
-        lvgroup.pszHeader = const_cast<wchar_t *>(pair.second.c_str());
+        lvgroup.pszHeader = const_cast<char *>(pair.second.c_str());
         lvgroup.iGroupId = pair.first;
         ListView_InsertGroup(lvhwnd, -1, &lvgroup);
     }
@@ -161,9 +161,9 @@ inline HWND create_impl(const t_settings_listview_context &ctx)
     LVCOLUMN lv_column = {0};
     lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
-    lv_column.pszText = const_cast<LPWSTR>(L"Name");
+    lv_column.pszText = const_cast<LPWSTR>("Name");
     ListView_InsertColumn(lvhwnd, 0, &lv_column);
-    lv_column.pszText = const_cast<LPWSTR>(L"Value");
+    lv_column.pszText = const_cast<LPWSTR>("Value");
     ListView_InsertColumn(lvhwnd, 1, &lv_column);
 
     LVITEM lv_item = {0};

@@ -11,7 +11,7 @@
 #include <components/ParameterPalette.hpp>
 #include <HotkeyUtils.hpp>
 
-const auto HOTKEY_TRACKER_CTX = L"Mupen64_HotkeyTrackerContext";
+const auto HOTKEY_TRACKER_CTX = "Mupen64_HotkeyTrackerContext";
 
 struct t_hotkey_tracker_context
 {
@@ -39,22 +39,21 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
     const auto hotkeys = g_config.hotkeys;
     for (const auto &[path, hotkey] : hotkeys)
     {
-        const auto upath = IOUtils::to_utf8_string(path);
         if (trigger == hotkey.trigger && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
         {
-            if (!ActionManager::get_enabled(upath)) continue;
+            if (!ActionManager::get_enabled(path)) continue;
 
             // HACK: Fast Forward is a special case: we don't want it to be constantly toggled on and off because it
             // messes up flow
-            const bool release_on_repress = upath != ActionManager::normalize_filter(AppActions::FAST_FORWARD);
+            const bool release_on_repress = path != ActionManager::normalize_filter(AppActions::FAST_FORWARD);
 
-            const auto params = ActionManager::get_params(upath);
+            const auto params = ActionManager::get_params(path);
 
             // Has params: hand off to ParameterPalette.
             if (!params.empty())
-                ParameterPalette::show(upath);
+                ParameterPalette::show(path);
             else
-                ActionManager::invoke(upath, is_up, release_on_repress);
+                ActionManager::invoke(path, is_up, release_on_repress);
 
             hit = true;
         }
@@ -90,7 +89,6 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
         const auto hotkeys = g_config.hotkeys;
         for (const auto &[path, hotkey] : hotkeys)
         {
-            const auto upath = IOUtils::to_utf8_string(path);
             const auto vk = HotkeyUtils::trigger_to_vk(hotkey.trigger);
             if (!vk) continue;
 
@@ -105,18 +103,18 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
 
             if (down)
             {
-                const auto params = ActionManager::get_params(upath);
+                const auto params = ActionManager::get_params(path);
 
                 // Has params: hand off to ParameterPalette.
                 if (!params.empty())
-                    ParameterPalette::show(upath);
+                    ParameterPalette::show(path);
                 else
-                    ActionManager::invoke(upath);
+                    ActionManager::invoke(path);
             }
 
             if (up)
             {
-                ActionManager::invoke(upath, true, true);
+                ActionManager::invoke(path, true, true);
             }
         }
 
@@ -144,10 +142,10 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
         if (nmhdr && nmhdr->hwndFrom && IsWindow(nmhdr->hwndFrom) &&
             SendMessage(nmhdr->hwndFrom, WM_GETDLGCODE, 0, 0) != 0)
         {
-            wchar_t class_name[32];
+            char class_name[32]{};
             GetClassName(nmhdr->hwndFrom, class_name, std::size(class_name));
 
-            if (lstrcmpiW(class_name, WC_LISTVIEWW) == 0 && nmhdr->code == LVN_KEYDOWN)
+            if (strcmp(class_name, WC_LISTVIEW) == 0 && nmhdr->code == LVN_KEYDOWN)
             {
                 auto key = reinterpret_cast<LPNMLVKEYDOWN>(lParam)->wVKey;
 
@@ -172,13 +170,13 @@ bool HotkeyTracker::attach(const HWND hwnd)
 
     if (!SetProp(hwnd, HOTKEY_TRACKER_CTX, context.get()))
     {
-        g_view_logger->error(L"HotkeyTracker::attach: Couldn't set context property");
+        g_view_logger->error("HotkeyTracker::attach: Couldn't set context property");
         return false;
     }
 
     if (!SetWindowSubclass(hwnd, action_menu_wnd_subclass_proc, 0, (DWORD_PTR)context.get()))
     {
-        g_view_logger->error(L"HotkeyTracker::attach: Couldn't set window subclass");
+        g_view_logger->error("HotkeyTracker::attach: Couldn't set window subclass");
         RemoveProp(hwnd, HOTKEY_TRACKER_CTX);
         return false;
     }

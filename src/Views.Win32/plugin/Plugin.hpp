@@ -166,7 +166,7 @@ typedef struct
     /**
      * Vector of discovered plugins and their results.
      */
-    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
+    std::vector<std::pair<std::filesystem::path, std::string>> results;
 
 } t_plugin_discovery_result;
 

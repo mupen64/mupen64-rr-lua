@@ -39,148 +39,148 @@ static std::wstring virtual_keycode_to_string(int k)
 {
     wchar_t buf2[64]{};
     if ((k >= 0x30 && k <= 0x39) || (k >= 0x41 && k <= 0x5A))
-        wsprintf(buf2, L"%c", static_cast<char>(k));
+        sprintf(buf2, "%c", static_cast<char>(k));
     else if (k >= VK_F1 && k <= VK_F24)
-        wsprintf(buf2, L"F%d", k - (VK_F1 - 1));
+        sprintf(buf2, "F%d", k - (VK_F1 - 1));
     else if (k >= VK_NUMPAD0 && k <= VK_NUMPAD9)
-        wsprintf(buf2, L"Num%d", k - VK_NUMPAD0);
+        sprintf(buf2, "Num%d", k - VK_NUMPAD0);
     else
         switch (k)
         {
         case VK_LBUTTON:
-            copy_wide_string(buf2, L"LMB");
+            copy_wide_string(buf2, "LMB");
             break;
         case VK_RBUTTON:
-            copy_wide_string(buf2, L"RMB");
+            copy_wide_string(buf2, "RMB");
             break;
         case VK_MBUTTON:
-            copy_wide_string(buf2, L"MMB");
+            copy_wide_string(buf2, "MMB");
             break;
         case VK_XBUTTON1:
-            copy_wide_string(buf2, L"XMB1");
+            copy_wide_string(buf2, "XMB1");
             break;
         case VK_XBUTTON2:
-            copy_wide_string(buf2, L"XMB2");
+            copy_wide_string(buf2, "XMB2");
             break;
         case VK_SPACE:
-            copy_wide_string(buf2, L"Space");
+            copy_wide_string(buf2, "Space");
             break;
         case VK_BACK:
-            copy_wide_string(buf2, L"Backspace");
+            copy_wide_string(buf2, "Backspace");
             break;
         case VK_TAB:
-            copy_wide_string(buf2, L"Tab");
+            copy_wide_string(buf2, "Tab");
             break;
         case VK_CLEAR:
-            copy_wide_string(buf2, L"Clear");
+            copy_wide_string(buf2, "Clear");
             break;
         case VK_RETURN:
-            copy_wide_string(buf2, L"Enter");
+            copy_wide_string(buf2, "Enter");
             break;
         case VK_PAUSE:
-            copy_wide_string(buf2, L"Pause");
+            copy_wide_string(buf2, "Pause");
             break;
         case VK_CAPITAL:
-            copy_wide_string(buf2, L"Caps");
+            copy_wide_string(buf2, "Caps");
             break;
         case VK_PRIOR:
-            copy_wide_string(buf2, L"PageUp");
+            copy_wide_string(buf2, "PageUp");
             break;
         case VK_NEXT:
-            copy_wide_string(buf2, L"PageDn");
+            copy_wide_string(buf2, "PageDn");
             break;
         case VK_END:
-            copy_wide_string(buf2, L"End");
+            copy_wide_string(buf2, "End");
             break;
         case VK_HOME:
-            copy_wide_string(buf2, L"Home");
+            copy_wide_string(buf2, "Home");
             break;
         case VK_LEFT:
-            copy_wide_string(buf2, L"Left");
+            copy_wide_string(buf2, "Left");
             break;
         case VK_UP:
-            copy_wide_string(buf2, L"Up");
+            copy_wide_string(buf2, "Up");
             break;
         case VK_RIGHT:
-            copy_wide_string(buf2, L"Right");
+            copy_wide_string(buf2, "Right");
             break;
         case VK_DOWN:
-            copy_wide_string(buf2, L"Down");
+            copy_wide_string(buf2, "Down");
             break;
         case VK_SELECT:
-            copy_wide_string(buf2, L"Select");
+            copy_wide_string(buf2, "Select");
             break;
         case VK_PRINT:
-            copy_wide_string(buf2, L"Print");
+            copy_wide_string(buf2, "Print");
             break;
         case VK_SNAPSHOT:
-            copy_wide_string(buf2, L"PrintScrn");
+            copy_wide_string(buf2, "PrintScrn");
             break;
         case VK_INSERT:
-            copy_wide_string(buf2, L"Insert");
+            copy_wide_string(buf2, "Insert");
             break;
         case VK_DELETE:
-            copy_wide_string(buf2, L"Delete");
+            copy_wide_string(buf2, "Delete");
             break;
         case VK_HELP:
-            copy_wide_string(buf2, L"Help");
+            copy_wide_string(buf2, "Help");
             break;
         case VK_MULTIPLY:
-            copy_wide_string(buf2, L"Num*");
+            copy_wide_string(buf2, "Num*");
             break;
         case VK_ADD:
-            copy_wide_string(buf2, L"Num+");
+            copy_wide_string(buf2, "Num+");
             break;
         case VK_SUBTRACT:
-            copy_wide_string(buf2, L"Num-");
+            copy_wide_string(buf2, "Num-");
             break;
         case VK_DECIMAL:
-            copy_wide_string(buf2, L"Num.");
+            copy_wide_string(buf2, "Num.");
             break;
         case VK_DIVIDE:
-            copy_wide_string(buf2, L"Num/");
+            copy_wide_string(buf2, "Num/");
             break;
         case VK_NUMLOCK:
-            copy_wide_string(buf2, L"NumLock");
+            copy_wide_string(buf2, "NumLock");
             break;
         case VK_SCROLL:
-            copy_wide_string(buf2, L"ScrollLock");
+            copy_wide_string(buf2, "ScrollLock");
             break;
         case /*VK_OEM_PLUS*/ 0xBB:
-            copy_wide_string(buf2, L"=+");
+            copy_wide_string(buf2, "=+");
             break;
         case /*VK_OEM_MINUS*/ 0xBD:
-            copy_wide_string(buf2, L"-_");
+            copy_wide_string(buf2, "-_");
             break;
         case /*VK_OEM_COMMA*/ 0xBC:
-            copy_wide_string(buf2, L",");
+            copy_wide_string(buf2, ",");
             break;
         case /*VK_OEM_PERIOD*/ 0xBE:
-            copy_wide_string(buf2, L".");
+            copy_wide_string(buf2, ".");
             break;
         case VK_OEM_7:
-            copy_wide_string(buf2, L"'\"");
+            copy_wide_string(buf2, "'\"");
             break;
         case VK_OEM_6:
-            copy_wide_string(buf2, L"]}");
+            copy_wide_string(buf2, "]}");
             break;
         case VK_OEM_5:
-            copy_wide_string(buf2, L"\\|");
+            copy_wide_string(buf2, "\\|");
             break;
         case VK_OEM_4:
-            copy_wide_string(buf2, L"[{");
+            copy_wide_string(buf2, "[{");
             break;
         case VK_OEM_3:
-            copy_wide_string(buf2, L"`~");
+            copy_wide_string(buf2, "`~");
             break;
         case VK_OEM_2:
-            copy_wide_string(buf2, L"/?");
+            copy_wide_string(buf2, "/?");
             break;
         case VK_OEM_1:
-            copy_wide_string(buf2, L";:");
+            copy_wide_string(buf2, ";:");
             break;
         default:
-            wsprintf(buf2, L"(%d)", k);
+            sprintf(buf2, "(%d)", k);
             break;
         }
     return buf2;
@@ -234,7 +234,7 @@ static void update_visuals()
 {
     for (const auto btn : editbox_ids)
     {
-        SetDlgItemText(g_ctx.hwnd, btn, L"");
+        SetDlgItemText(g_ctx.hwnd, btn, "");
     }
 
     const auto controller_config = new_config.controller_config[g_ctx.selected_controller];
@@ -282,7 +282,7 @@ static void pre_begin_edit(int edit_id)
         end_edit();
     }
 
-    SetDlgItemText(g_ctx.hwnd, edit_id, L"...");
+    SetDlgItemText(g_ctx.hwnd, edit_id, "...");
 }
 
 static void begin_edit(int edit_id, t_button_mapping *ptr)
@@ -391,7 +391,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const auto cb_hwnd = GetDlgItem(hwnd, IDC_COMBOCONT);
         for (size_t i = 0; i < 4; i++)
         {
-            ComboBox_AddString(cb_hwnd, std::format(L"Controller {}", i + 1).c_str());
+            ComboBox_AddString(cb_hwnd, std::format("Controller {}", i + 1).c_str());
         }
         ComboBox_SetCurSel(cb_hwnd, g_ctx.selected_controller);
 
@@ -497,11 +497,11 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 GetCursorPos(&pt);
 
                 HMENU h_menu = CreatePopupMenu();
-                AppendMenu(h_menu, MF_STRING, 1, L"Gamepad");
-                AppendMenu(h_menu, MF_STRING, 2, L"Keyboard");
-                AppendMenu(h_menu, MF_SEPARATOR, 3, L"");
-                AppendMenu(h_menu, MF_STRING, 4, L"Save");
-                AppendMenu(h_menu, MF_STRING, 5, L"Load");
+                AppendMenu(h_menu, MF_STRING, 1, "Gamepad");
+                AppendMenu(h_menu, MF_STRING, 2, "Keyboard");
+                AppendMenu(h_menu, MF_SEPARATOR, 3, "");
+                AppendMenu(h_menu, MF_STRING, 4, "Save");
+                AppendMenu(h_menu, MF_STRING, 5, "Load");
                 const int clicked = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
 
                 switch (clicked)

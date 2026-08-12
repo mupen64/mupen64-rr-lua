@@ -88,7 +88,7 @@ void AppActions::update_core_fast_forward()
     g_main_ctx.core_ctx->vr_set_speed_mode(effective_speed_mode);
 }
 
-void AppActions::load_rom_from_path(const std::wstring &path)
+void AppActions::load_rom_from_path(const std::filesystem::path &path)
 {
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vr_start_rom(path);

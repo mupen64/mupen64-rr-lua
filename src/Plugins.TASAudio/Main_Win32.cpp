@@ -20,9 +20,9 @@
 
 HINSTANCE g_dll_handle = nullptr;
 
-static constexpr wchar_t CFG_SUBKEY[] = L"Software\\N64 Emulation\\DLL\\TAS Audio";
-static constexpr wchar_t VALUE_CONFIG[] = L"Config";
-static constexpr wchar_t VALUE_VERSION[] = L"Version";
+static constexpr char CFG_SUBKEY[] = "Software\\N64 Emulation\\DLL\\TAS Audio";
+static constexpr char VALUE_CONFIG[] = "Config";
+static constexpr char VALUE_VERSION[] = "Version";
 static constexpr DWORD CUR_CONFIG_VERSION = 1;
 
 BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)

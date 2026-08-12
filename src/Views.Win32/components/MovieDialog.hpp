@@ -16,8 +16,8 @@ struct t_result
     HWND hwnd;
     std::filesystem::path path;
     unsigned short start_flag;
-    std::wstring author;
-    std::wstring description;
+    std::string author;
+    std::string description;
 };
 
 /**

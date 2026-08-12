@@ -11,7 +11,7 @@
 #include <lua/LuaCallbacks.hpp>
 #include <Common.Views/Assert.hpp>
 
-constexpr auto CONTROL_CLASS_NAME = L"game_control";
+constexpr auto CONTROL_CLASS_NAME = "game_control";
 constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
 constexpr float CLEAR_COLOR[4] = {0, 0, 0, 1};
 

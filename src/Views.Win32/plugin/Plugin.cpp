@@ -129,16 +129,16 @@ void PluginUtil::move_screen(uint32_t wParam, int32_t lParam)
     if (g_main_ctx.core_ctx->vr_get_launched()) g_plugin_funcs.video_move_screen((int)wParam, lParam);
 }
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
+std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
 {
     Main::init_sdl();
 
-    const auto module = LoadLibrary(path.wstring().c_str());
+    const auto module = LoadLibrary(path.string().c_str());
     uint64_t last_error = GetLastError();
 
     if (module == nullptr)
     {
-        return std::make_pair(std::format(L"LoadLibrary (code {})", last_error), nullptr);
+        return std::make_pair(std::format("LoadLibrary (code {})", last_error), nullptr);
     }
 
     auto result1 = ZEPlugin::create(module, path);
@@ -148,7 +148,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
     if (result2.first.empty()) return result2;
 
     FreeLibrary(module);
-    return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
+    return std::make_pair("Incompatible with this version of Mupen64", nullptr);
 }
 
 Plugin::~Plugin()
@@ -196,7 +196,7 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
     // this will fail to match files with the extension not lowercased, but I don't think this is a big deal.
     auto dll_files = std::filesystem::directory_iterator(directory) |
                      std::views::filter([](const std::filesystem::directory_entry &entry) {
-                         return entry.is_regular_file() && entry.path().extension().compare(L".dll") == 0;
+                         return entry.is_regular_file() && entry.path().extension().compare(".dll") == 0;
                      }) |
                      std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
 
@@ -315,10 +315,10 @@ bool PluginUtil::load_plugins()
         input_plugin.reset();
         rsp_plugin.reset();
 
-        g_view_logger->trace(L"Loading video plugin: {}", g_config.selected_video_plugin);
-        g_view_logger->trace(L"Loading audio plugin: {}", g_config.selected_audio_plugin);
-        g_view_logger->trace(L"Loading input plugin: {}", g_config.selected_input_plugin);
-        g_view_logger->trace(L"Loading RSP plugin: {}", g_config.selected_rsp_plugin);
+        g_view_logger->trace("Loading video plugin: {}", g_config.selected_video_plugin);
+        g_view_logger->trace("Loading audio plugin: {}", g_config.selected_audio_plugin);
+        g_view_logger->trace("Loading input plugin: {}", g_config.selected_input_plugin);
+        g_view_logger->trace("Loading RSP plugin: {}", g_config.selected_rsp_plugin);
 
         Main::init_sdl();
 
@@ -329,19 +329,19 @@ bool PluginUtil::load_plugins()
 
         if (!video_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load video plugin: {}", video_pl.first);
+            g_view_logger->error("Failed to load video plugin: {}", video_pl.first);
         }
         if (!audio_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load audio plugin: {}", audio_pl.first);
+            g_view_logger->error("Failed to load audio plugin: {}", audio_pl.first);
         }
         if (!input_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load input plugin: {}", input_pl.first);
+            g_view_logger->error("Failed to load input plugin: {}", input_pl.first);
         }
         if (!rsp_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load rsp plugin: {}", rsp_pl.first);
+            g_view_logger->error("Failed to load rsp plugin: {}", rsp_pl.first);
         }
 
         if (video_pl.second == nullptr || audio_pl.second == nullptr || input_pl.second == nullptr ||

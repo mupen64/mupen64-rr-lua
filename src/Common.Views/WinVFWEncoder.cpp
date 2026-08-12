@@ -180,7 +180,7 @@ bool WinVFWEncoder::append_video(uint8_t *image)
     if (g_config.synchronization_mode == static_cast<int>(t_config::Sync::Video) ||
         g_config.synchronization_mode == static_cast<int>(t_config::Sync::None))
     {
-        g_view_logger->trace(L"video buffer hash {:08X}", hash);
+        g_view_logger->trace("video buffer hash {:08X}", hash);
 
         if (!append_video_impl(image)) return false;
         m_video_frame++;

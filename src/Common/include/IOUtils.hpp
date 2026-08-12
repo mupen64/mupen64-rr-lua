@@ -322,6 +322,11 @@ inline std::string rom_name_to_string(const char str[20])
     return std::string(StrUtils::ctrim_string(IOUtils::to_utf8_string(output)));
 }
 
+inline std::string rom_name_to_string(const uint8_t str[20])
+{
+    return std::string(reinterpret_cast<const char *>(str), 20);
+}
+
 #endif
 
 // SHIFT-JIS DECODING via iconv.h
