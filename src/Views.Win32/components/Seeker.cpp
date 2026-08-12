@@ -27,12 +27,12 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_INITDIALOG:
         seeker.hwnd = hwnd;
 
-        SetDlgItemText(hwnd, IDC_SEEKER_STATUS, L"Idle");
-        SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
+        SetDlgItemText(hwnd, IDC_SEEKER_STATUS, "Idle");
+        SetDlgItemText(hwnd, IDC_SEEKER_START, "Start");
         SetDlgItemText(hwnd, IDC_SEEKER_FRAME, g_config.seeker_value.c_str());
 
         if (g_config.core.seek_savestate_interval == 0)
-            SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, L"Seek savestates disabled. Seeking backwards will be slower.");
+            SetDlgItemText(hwnd, IDC_SEEKER_SUBTEXT, "Seek savestates disabled. Seeking backwards will be slower.");
 
         SetFocus(GetDlgItem(hwnd, IDC_SEEKER_FRAME));
         WinDarkMode::attach(hwnd);
@@ -48,8 +48,8 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         DestroyWindow(hwnd);
         break;
     case WM_SEEK_COMPLETED:
-        SetDlgItemText(hwnd, IDC_SEEKER_STATUS, L"Seek completed");
-        SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
+        SetDlgItemText(hwnd, IDC_SEEKER_STATUS, "Seek completed");
+        SetDlgItemText(hwnd, IDC_SEEKER_START, "Start");
         KillTimer(hwnd, seeker.refresh_timer);
         break;
     case WM_TIMER: {
@@ -62,7 +62,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         const float effective_progress =
             MiscHelpers::remap(static_cast<float>(info.current_sample), static_cast<float>(info.seek_start_sample),
                                static_cast<float>(info.seek_target_sample), 0.0f, 1.0f);
-        const auto str = std::format(L"Seeked {:.2f}%", effective_progress * 100.0);
+        const auto str = std::format("Seeked {:.2f}%", effective_progress * 100.0);
         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, str.c_str());
         break;
     }
@@ -70,7 +70,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         switch (LOWORD(wparam))
         {
         case IDC_SEEKER_FRAME: {
-            wchar_t str[260] = {0};
+            char str[260] = {0};
             GetDlgItemText(hwnd, IDC_SEEKER_FRAME, str, std::size(str));
             g_config.seeker_value = str;
         }
@@ -82,15 +82,14 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            SetDlgItemText(hwnd, IDC_SEEKER_START, L"Stop");
+            SetDlgItemText(hwnd, IDC_SEEKER_START, "Stop");
 
-            const auto result =
-                g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(g_config.seeker_value), true);
+            const auto result = g_main_ctx.core_ctx->vcr_begin_seek(g_config.seeker_value, true);
             if (result != Res_Ok)
             {
                 const auto [_, error] = CoreUtils::get_error_message_for_result(result);
-                SetDlgItemText(hwnd, IDC_SEEKER_START, L"Start");
-                SetDlgItemText(hwnd, IDC_SEEKER_STATUS, IOUtils::to_wide_string(error).c_str());
+                SetDlgItemText(hwnd, IDC_SEEKER_START, "Start");
+                SetDlgItemText(hwnd, IDC_SEEKER_STATUS, error.c_str());
                 break;
             }
 

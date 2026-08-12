@@ -97,12 +97,6 @@ std::string get_mupen_name(bool simple)
 #define BUILD_TARGET_INFO ""
 #endif
 
-#ifdef UNICODE
-#define CHARSET_INFO ""
-#else
-#define CHARSET_INFO "-a"
-#endif
-
 #ifdef _M_X64
 #define ARCH_INFO ""
 #else
@@ -116,7 +110,7 @@ std::string get_mupen_name(bool simple)
         return BASE_NAME CURRENT_VERSION VERSION_SUFFIX;
     }
 
-    return BASE_NAME CURRENT_VERSION VERSION_SUFFIX ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
+    return BASE_NAME CURRENT_VERSION VERSION_SUFFIX ARCH_INFO BUILD_TARGET_INFO;
 }
 
 const char *get_input_text()
@@ -220,7 +214,7 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
 
     if (info.medium == core_st_medium_path)
     {
-        const auto &fname = info.params.path.filename().wstring();
+        const auto &fname = info.params.path.filename().string();
         const bool is_slot = fname.find(".st") != std::string::npos && std::isdigit(fname.back());
 
         if (is_slot)
@@ -247,7 +241,7 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
         {
         case Res_Ok:
             Statusbar::post(std::format("{} {}", info.job == core_st_job_save ? "Saved" : "Loaded",
-                                        info.params.path.filename().wstring()));
+                                        info.params.path.filename().string()));
             break;
         case Res_Cancelled:
             Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
@@ -986,7 +980,7 @@ void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
     {
-        SetCurrentDirectory(g_main_ctx.app_path.c_str());
+        SetCurrentDirectory(g_main_ctx.app_path.string().c_str());
     }
 
     char cwd[MAX_PATH] = {0};

@@ -144,7 +144,7 @@ static int IsMainWindowInForeground(lua_State *L)
 
 static int LuaPlaySound(lua_State *L)
 {
-    PlaySound(IOUtils::to_wide_string(luaL_checkstring(L, 1)).c_str(), NULL, SND_FILENAME | SND_ASYNC);
+    PlaySound(luaL_checkstring(L, 1), NULL, SND_FILENAME | SND_ASYNC);
     return 1;
 }
 
@@ -259,14 +259,14 @@ static int GetMupenVersion(lua_State *L)
     // 0 = name + version number
     // 1 = version number
 
-    std::wstring version = get_mupen_name(true);
+    std::string version = get_mupen_name(true);
 
     if (type > 0)
     {
         version = version.substr(std::string("Mupen 64 ").size());
     }
 
-    lua_pushstring(L, IOUtils::to_utf8_string(version).c_str());
+    lua_pushstring(L, version.c_str());
     return 1;
 }
 
@@ -274,15 +274,15 @@ static int GetMupenVersion(lua_State *L)
 static int ConsoleWriteLua(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
-    const auto str = IOUtils::to_wide_string(luaL_checkstring(L, 1));
+    const auto str = luaL_checkstring(L, 1);
 
-    lua->print(lua, str + L"\r\n");
+    lua->print(lua, std::string(str) + "\r\n");
     return 0;
 }
 
 static int StatusbarWrite(lua_State *L)
 {
-    Statusbar::post(IOUtils::to_wide_string(lua_tostring(L, 1)));
+    Statusbar::post(lua_tostring(L, 1));
     return 0;
 }
 } // namespace LuaCore::Emu

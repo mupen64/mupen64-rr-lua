@@ -43,8 +43,3 @@ std::string Hotkey::to_string() const
 
     return str;
 }
-
-std::wstring Hotkey::to_wstring() const
-{
-    return IOUtils::to_wide_string(this->to_string());
-}

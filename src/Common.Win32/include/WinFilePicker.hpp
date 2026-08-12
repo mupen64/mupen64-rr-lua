@@ -40,11 +40,11 @@ inline std::string get_default_extension(std::string_view filter)
 inline std::filesystem::path show_open_dialog(HWND hwnd, std::string_view filter,
                                               const std::filesystem::path &initial_path = {})
 {
-    const auto built_filter = IOUtils::to_wide_string(build_filter(filter));
-    const auto initial_dir = initial_path.wstring();
+    const auto built_filter = build_filter(filter);
+    const auto initial_dir = initial_path.string();
 
-    wchar_t out_path[MAX_PATH]{};
-    OPENFILENAMEW ofn{};
+    char out_path[MAX_PATH]{};
+    OPENFILENAME ofn{};
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = hwnd;
     ofn.lpstrFile = out_path;
@@ -54,7 +54,7 @@ inline std::filesystem::path show_open_dialog(HWND hwnd, std::string_view filter
     ofn.nFilterIndex = 1;
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_ENABLESIZING;
 
-    wchar_t cwd[MAX_PATH]{};
+    char cwd[MAX_PATH]{};
     GetCurrentDirectory(std::size(cwd), cwd);
 
     const auto result = GetOpenFileName(&ofn);
@@ -75,12 +75,12 @@ inline std::filesystem::path show_open_dialog(HWND hwnd, std::string_view filter
 inline std::filesystem::path show_save_dialog(HWND hwnd, std::string_view filter,
                                               const std::filesystem::path &initial_path = {})
 {
-    const auto built_filter = IOUtils::to_wide_string(build_filter(filter));
-    const auto default_extension = IOUtils::to_wide_string(get_default_extension(filter));
-    const auto initial_dir = initial_path.wstring();
+    const auto built_filter = build_filter(filter);
+    const auto default_extension = get_default_extension(filter);
+    const auto initial_dir = initial_path.string();
 
-    wchar_t out_path[MAX_PATH]{};
-    OPENFILENAMEW ofn{};
+    char out_path[MAX_PATH]{};
+    OPENFILENAME ofn{};
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = hwnd;
     ofn.lpstrFile = out_path;
@@ -91,7 +91,7 @@ inline std::filesystem::path show_save_dialog(HWND hwnd, std::string_view filter
     ofn.lpstrDefExt = default_extension.c_str();
     ofn.Flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_EXTENSIONDIFFERENT;
 
-    wchar_t cwd[MAX_PATH]{};
+    char cwd[MAX_PATH]{};
     GetCurrentDirectory(std::size(cwd), cwd);
 
     const auto result = GetSaveFileName(&ofn);
@@ -156,7 +156,7 @@ inline std::filesystem::path show_folder_dialog(HWND hwnd, const std::filesystem
 
                 if (SUCCEEDED(result->GetDisplayName(SIGDN_FILESYSPATH, &path)))
                 {
-                    result_path = path;
+                    result_path = IOUtils::to_utf8_string(path);
                     CoTaskMemFree(path);
                 }
             }

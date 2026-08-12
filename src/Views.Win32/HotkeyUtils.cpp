@@ -246,7 +246,7 @@ static LRESULT CALLBACK HotkeyButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wpa
             EndDialog(GetParent(hwnd), IDOK);
         }
 
-        SetDlgItemText(GetParent(hwnd), IDC_CURRENT_HOTKEY, params->hotkey.to_wstring().c_str());
+        SetDlgItemText(GetParent(hwnd), IDC_CURRENT_HOTKEY, params->hotkey.to_string().c_str());
 
         return TRUE;
     default:
@@ -257,7 +257,7 @@ static LRESULT CALLBACK HotkeyButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wpa
 
 static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    const auto prop_key = L"IDD_HOTKEY_Params";
+    const auto prop_key = "IDD_HOTKEY_Params";
     auto params = static_cast<DialogParams *>(GetProp(hwnd, prop_key));
 
     switch (msg)
@@ -266,7 +266,7 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         SetProp(hwnd, prop_key, reinterpret_cast<DialogParams *>(lparam));
         params = reinterpret_cast<DialogParams *>(lparam);
 
-        Static_SetText(GetDlgItem(hwnd, IDC_STATIC), IOUtils::to_wide_string(params->headline).c_str());
+        Static_SetText(GetDlgItem(hwnd, IDC_STATIC), params->headline.c_str());
         SetFocus(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY));
 
         SetWindowSubclass(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY), HotkeyButtonSubclassProc, 0,

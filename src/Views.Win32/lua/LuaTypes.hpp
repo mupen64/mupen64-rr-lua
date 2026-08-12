@@ -83,7 +83,7 @@ struct t_action_param_meta
 struct t_lua_environment
 {
     using destroying_func = std::function<void(const t_lua_environment *env)>;
-    using print_func = std::function<void(const t_lua_environment *env, const std::wstring &text)>;
+    using print_func = std::function<void(const t_lua_environment *env, const std::string &text)>;
 
     std::filesystem::path path;
     lua_State *L;
@@ -116,7 +116,7 @@ struct t_lua_key_event_args
     bool shift{};
     bool meta{};
     std::optional<bool> pressed;
-    std::optional<std::wstring> text;
+    std::optional<std::string> text;
     bool repeat{};
 };
 

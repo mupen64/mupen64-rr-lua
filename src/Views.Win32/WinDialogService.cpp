@@ -115,23 +115,20 @@ class WinDialogService : public IDialogService
     void show_dialog(std::string_view str, std::optional<std::string_view> title = std::nullopt,
                      core_dialog_type type = fsvc_warning, void *hwnd = nullptr) override
     {
-        const auto wstr = IOUtils::to_wide_string(str);
-        const auto wtitle = title ? std::make_optional(IOUtils::to_wide_string(*title)) : std::nullopt;
-
         int icon = 0;
 
         switch (type)
         {
         case fsvc_error:
-            g_view_logger->error(L"[FrontendService] {}", wstr);
+            g_view_logger->error("[FrontendService] {}", str);
             icon = MB_ICONERROR;
             break;
         case fsvc_warning:
-            g_view_logger->warn(L"[FrontendService] {}", wstr);
+            g_view_logger->warn("[FrontendService] {}", str);
             icon = MB_ICONWARNING;
             break;
         case fsvc_information:
-            g_view_logger->info(L"[FrontendService] {}", wstr);
+            g_view_logger->info("[FrontendService] {}", str);
             icon = MB_ICONINFORMATION;
             break;
         default:
@@ -140,12 +137,12 @@ class WinDialogService : public IDialogService
 
         if (!g_config.silent_mode)
         {
-            MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), wstr.c_str(),
-                       wtitle ? wtitle->c_str() : nullptr, icon);
+            MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), std::string(str).c_str(),
+                       title ? std::string(*title).c_str() : nullptr, icon);
         }
     }
 
-    void show_statusbar(std::string_view str) override { Statusbar::post(IOUtils::to_wide_string(str)); }
+    void show_statusbar(std::string_view str) override { Statusbar::post(std::string(str)); }
 
   private:
     const std::vector<std::string> ALWAYS_LOUD_IDS = {VIEW_DLG_RAMSTART, VIEW_DLG_CONFIRM_SETTINGS_DISCARD};

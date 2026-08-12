@@ -184,8 +184,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
 
 target_compile_definitions(Mupen64RR.Views.Win32 PRIVATE
     "MINI_CASE_SENSITIVE"
-    # "SPDLOG_WCHAR_TO_UTF8_SUPPORT"
-    "VERSION_SUFFIX=L\"${MUPEN64RR_VERSION_SUFFIX}\""
+    "VERSION_SUFFIX=\"${MUPEN64RR_VERSION_SUFFIX}\""
     "$<$<BOOL:${MUPEN64RR_NIGHTLY}>:NIGHTLY>"
 )
 

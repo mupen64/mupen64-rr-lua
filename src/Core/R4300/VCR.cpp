@@ -1973,10 +1973,10 @@ core_result vcr_stop_all()
 
             auto current_path = std::filesystem::path(vcr.movie_path);
 
-            current_path.replace_extension(MUPEN64_PATH_T(".m64"));
+            current_path.replace_extension(".m64");
             std::filesystem::remove(current_path);
 
-            current_path.replace_extension(MUPEN64_PATH_T(".st"));
+            current_path.replace_extension(".st");
             std::filesystem::remove(current_path);
         }
 

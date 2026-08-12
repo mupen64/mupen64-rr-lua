@@ -15,7 +15,6 @@
 #if defined(_WIN32)
 #include <share.h>
 #include <windows.h>
-#include <share.h>
 #elif defined(__linux__)
 #include <stdexcept>
 #include <cstdio>
@@ -103,16 +102,6 @@ inline int file_contents_equal(const std::filesystem::path &path1, const std::fi
     }
     return 1;
 }
-
-#ifdef _WIN32
-// Selects the platform-native path type for strings and characters.
-// This is a minor optimization for Windows which avoids the char -> wchar_t conversion at runtime.
-#define MUPEN64_PATH_T(s) L##s
-#else
-// Selects the platform-native path type for strings and characters.
-// This is a minor optimization for Windows which avoids the char -> wchar_t conversion at runtime.
-#define MUPEN64_PATH_T(s) s
-#endif
 
 // IOSTREAM UTILITIES
 // ==============================
@@ -424,8 +413,7 @@ inline std::filesystem::path rom_name_to_path_component(const char str[20])
 inline int path_fopen_s(FILE *&stream, const std::filesystem::path &path, const char *mode)
 {
 #ifdef _WIN32
-    auto mode_wc = to_wide_string(mode);
-    return _wfopen_s(&stream, path.c_str(), mode_wc.c_str());
+    return fopen_s(&stream, path.string().c_str(), mode);
 #else
     FILE *ptr = fopen(path.c_str(), mode);
     if (ptr == nullptr) return errno;
@@ -439,8 +427,7 @@ inline int path_fopen_s(FILE *&stream, const std::filesystem::path &path, const 
 inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mode)
 {
 #ifdef _WIN32
-    auto mode_wc = to_wide_string(mode);
-    return _wfsopen(path.c_str(), mode_wc.c_str(), _SH_DENYNO);
+    return _fsopen(path.string().c_str(), mode, _SH_DENYNO);
 #else
     // Linux file locks are opt-in.
     return fopen(path.c_str(), mode);
@@ -451,10 +438,10 @@ inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mo
 inline std::filesystem::path compute_exe_path()
 {
 #ifdef _WIN32
-    wchar_t path_buffer[MAX_PATH] = {L'\0'};
+    char path_buffer[MAX_PATH] = {0};
     DWORD rc;
 
-    rc = GetModuleFileNameW(NULL, path_buffer, sizeof(path_buffer) / sizeof(wchar_t));
+    rc = GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());
@@ -480,9 +467,9 @@ inline const std::filesystem::path &exe_path()
 inline std::filesystem::path compute_config_path()
 {
 #ifdef _WIN32
-    wchar_t path_buffer[MAX_PATH] = {L'\0'};
+    char path_buffer[MAX_PATH] = {0};
     DWORD rc;
-    rc = GetEnvironmentVariableW(L"LOCALAPPDATA", path_buffer, MAX_PATH);
+    rc = GetEnvironmentVariable("LOCALAPPDATA", path_buffer, MAX_PATH);
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());

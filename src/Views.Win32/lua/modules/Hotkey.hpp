@@ -77,7 +77,7 @@ static int prompt(lua_State *L)
 {
     WindowDisabler disabler(LuaDialog::hwnd());
 
-    const auto caption = luaL_checkwstring(L, 1);
+    const auto caption = luaL_checkstlstring(L, 1);
 
     ::Hotkey hotkey = ::Hotkey::make_empty();
 

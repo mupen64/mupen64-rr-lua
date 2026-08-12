@@ -333,7 +333,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
         const auto &str = result.value();
         if (!str.empty())
         {
-            g_dialog_service->show_dialog(IOUtils::to_utf8_string(str), "Capture", fsvc_error);
+            g_dialog_service->show_dialog(str, "Capture", fsvc_error);
         }
         return false;
     }

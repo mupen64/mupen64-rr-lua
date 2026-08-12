@@ -15,9 +15,8 @@ typedef struct StacktraceInfo
 
 static t_stacktrace_info stacktrace_info;
 
-#define _WIDE(s) L##s
-#define E(x) {x, _WIDE(#x)}
-const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
+#define E(x) {x, #x}
+const std::unordered_map<int, std::string> EXCEPTION_NAMES = {
     E(EXCEPTION_ACCESS_VIOLATION),
     E(EXCEPTION_ACCESS_VIOLATION),
     E(EXCEPTION_DATATYPE_MISALIGNMENT),
@@ -46,7 +45,7 @@ const std::unordered_map<int, std::wstring> EXCEPTION_NAMES = {
 
 static std::filesystem::path get_minidump_path()
 {
-    return g_main_ctx.app_path / L"logs" / L"mupen.dmp";
+    return g_main_ctx.app_path / "logs" / "mupen.dmp";
 }
 
 void create_minidump(EXCEPTION_POINTERS *e)
@@ -54,7 +53,7 @@ void create_minidump(EXCEPTION_POINTERS *e)
     MINIDUMP_EXCEPTION_INFORMATION info{};
 
     const auto minidump_path = get_minidump_path();
-    const HANDLE h_dump_file = CreateFile(minidump_path.wstring().c_str(), GENERIC_WRITE,
+    const HANDLE h_dump_file = CreateFile(minidump_path.string().c_str(), GENERIC_WRITE,
                                           FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
 
     info.ThreadId = GetCurrentThreadId();
@@ -64,7 +63,7 @@ void create_minidump(EXCEPTION_POINTERS *e)
     if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), h_dump_file, MiniDumpWithDataSegs, &info, NULL,
                            NULL))
     {
-        g_view_logger->error(L"Couldn't create minidump (error code: {})", GetLastError());
+        g_view_logger->error("Couldn't create minidump (error code: {})", GetLastError());
     }
 
     CloseHandle(h_dump_file);
@@ -75,7 +74,7 @@ void create_minidump(EXCEPTION_POINTERS *e)
  * \param addr The address where the exception occurred
  * \return A string containing further information about the exception address
  */
-static std::wstring get_metadata_for_exception_address(void *addr)
+static std::string get_metadata_for_exception_address(void *addr)
 {
     const HANDLE h_process = GetCurrentProcess();
     DWORD cb_needed;
@@ -89,29 +88,29 @@ static std::wstring get_metadata_for_exception_address(void *addr)
             if (h_mods[i] > maxbase && h_mods[i] < addr)
             {
                 maxbase = h_mods[i];
-                wchar_t modname[MAX_PATH]{};
+                char modname[MAX_PATH]{};
                 GetModuleBaseName(h_process, maxbase, modname, std::size(modname));
             }
         }
 
-        wchar_t modname[MAX_PATH]{};
+        char modname[MAX_PATH]{};
         if (GetModuleBaseName(h_process, maxbase, modname, std::size(modname)))
         {
-            return std::format(L"Address: {:#08x} (closest: {} {:#08x})", (uintptr_t)addr, modname, (uintptr_t)maxbase);
+            return std::format("Address: {:#08x} (closest: {} {:#08x})", (uintptr_t)addr, modname, (uintptr_t)maxbase);
         }
     }
 
     // Whatever, module search failed so just return the absolute minimum
-    return std::format(L"Address: {:#08x}", (uintptr_t)addr);
+    return std::format("Address: {:#08x}", (uintptr_t)addr);
 }
 
-static std::wstring get_exception_code_friendly_name(const _EXCEPTION_POINTERS *e)
+static std::string get_exception_code_friendly_name(const _EXCEPTION_POINTERS *e)
 {
-    std::wstring exception_name = EXCEPTION_NAMES.contains(e->ExceptionRecord->ExceptionCode)
-                                      ? EXCEPTION_NAMES.at(e->ExceptionRecord->ExceptionCode)
-                                      : L"Unknown exception";
+    std::string exception_name = EXCEPTION_NAMES.contains(e->ExceptionRecord->ExceptionCode)
+                                     ? EXCEPTION_NAMES.at(e->ExceptionRecord->ExceptionCode)
+                                     : "Unknown exception";
 
-    return std::format(L"{} ({:#08x})", exception_name, e->ExceptionRecord->ExceptionCode);
+    return std::format("{} ({:#08x})", exception_name, e->ExceptionRecord->ExceptionCode);
 }
 
 static __forceinline void fill_stacktrace_info()
@@ -121,21 +120,21 @@ static __forceinline void fill_stacktrace_info()
     CaptureStackBackTrace(0, std::size(stacktrace_info.rtl_stacktrace), stacktrace_info.rtl_stacktrace, NULL);
 }
 
-static void log_crash(const std::wstring &additional_exception_info)
+static void log_crash(const std::string &additional_exception_info)
 {
     SYSTEMTIME time;
     GetSystemTime(&time);
 
-    g_view_logger->critical(L"Crash!");
+    g_view_logger->critical("Crash!");
     g_view_logger->critical(get_mupen_name());
-    g_view_logger->critical(std::format(L"{:02}/{:02}/{} {:02}:{:02}:{:02}", time.wDay, time.wMonth, time.wYear,
+    g_view_logger->critical(std::format("{:02}/{:02}/{} {:02}:{:02}:{:02}", time.wDay, time.wMonth, time.wYear,
                                         time.wHour, time.wMinute, time.wSecond));
-    g_view_logger->critical(L"Video: {}", g_config.selected_video_plugin);
-    g_view_logger->critical(L"Audio: {}", g_config.selected_audio_plugin);
-    g_view_logger->critical(L"Input: {}", g_config.selected_input_plugin);
-    g_view_logger->critical(L"RSP: {}", g_config.selected_rsp_plugin);
-    g_view_logger->critical(L"VCR Task: {}", static_cast<int>(g_main_ctx.core_ctx->vcr_get_task()));
-    g_view_logger->critical(L"Core Executing: {}", g_main_ctx.core_ctx->vr_get_launched());
+    g_view_logger->critical("Video: {}", g_config.selected_video_plugin);
+    g_view_logger->critical("Audio: {}", g_config.selected_audio_plugin);
+    g_view_logger->critical("Input: {}", g_config.selected_input_plugin);
+    g_view_logger->critical("RSP: {}", g_config.selected_rsp_plugin);
+    g_view_logger->critical("VCR Task: {}", static_cast<int>(g_main_ctx.core_ctx->vcr_get_task()));
+    g_view_logger->critical("Core Executing: {}", g_main_ctx.core_ctx->vr_get_launched());
     g_view_logger->critical(additional_exception_info);
 
     g_view_logger->critical("RTL Stacktrace:");
@@ -180,10 +179,10 @@ LONG WINAPI exception_handler(_EXCEPTION_POINTERS *e)
 {
     fill_stacktrace_info();
 
-    std::wstring exception_info;
-    exception_info += get_metadata_for_exception_address(e->ExceptionRecord->ExceptionAddress) + L" " +
-                      get_exception_code_friendly_name(e) + L" ";
-    exception_info += L"(from SetUnhandledExceptionFilter) ";
+    std::string exception_info;
+    exception_info += get_metadata_for_exception_address(e->ExceptionRecord->ExceptionAddress) + " " +
+                      get_exception_code_friendly_name(e) + " ";
+    exception_info += "(from SetUnhandledExceptionFilter) ";
     log_crash(exception_info);
 
     create_minidump(e);
@@ -200,12 +199,12 @@ void invalid_parameter_handler(const wchar_t *expression, const wchar_t *functio
 {
     fill_stacktrace_info();
 
-    std::wstring exception_info;
-    exception_info += std::format(L"File: {} ", file ? file : L"(unknown)");
-    exception_info += std::format(L"Function: {} ", function ? function : L"(unknown)");
-    exception_info += std::format(L"Expression: {} ", expression ? expression : L"(unknown)");
-    exception_info += std::format(L"Line: {} ", line);
-    exception_info += L"(from _set_invalid_parameter_handler) ";
+    std::string exception_info;
+    exception_info += std::format("File: {} ", file ? IOUtils::to_utf8_string(file) : "(unknown)");
+    exception_info += std::format("Function: {} ", function ? IOUtils::to_utf8_string(function) : "(unknown)");
+    exception_info += std::format("Expression: {} ", expression ? IOUtils::to_utf8_string(expression) : "(unknown)");
+    exception_info += std::format("Line: {} ", line);
+    exception_info += "(from _set_invalid_parameter_handler) ";
 
     log_crash(exception_info);
     show_crash_dialog(false);
@@ -218,7 +217,7 @@ static void enable_crashing_on_crashes()
     typedef BOOL(WINAPI * tGetPolicy)(LPDWORD lpFlags);
     typedef BOOL(WINAPI * tSetPolicy)(DWORD dwFlags);
 
-    const HMODULE k32 = GetModuleHandle(L"kernel32.dll");
+    const HMODULE k32 = GetModuleHandle("kernel32.dll");
     const auto p_get_policy = (tGetPolicy)GetProcAddress(k32, "GetProcessUserModeExceptionPolicy");
     const auto p_set_policy = (tSetPolicy)GetProcAddress(k32, "SetProcessUserModeExceptionPolicy");
     if (p_get_policy && p_set_policy)

@@ -153,7 +153,13 @@ inline HWND create_impl(const t_settings_listview_context &ctx)
 
     for (const auto &pair : ctx.groups)
     {
-        lvgroup.pszHeader = const_cast<char *>(pair.second.c_str());
+#ifdef __MINGW32__
+        // MinGW's commctrl.h only defines the Unicode LVGROUP variant.
+        const auto header = IOUtils::to_wide_string(pair.second);
+        lvgroup.pszHeader = const_cast<LPWSTR>(header.c_str());
+#else
+        lvgroup.pszHeader = const_cast<LPSTR>(pair.second.c_str());
+#endif
         lvgroup.iGroupId = pair.first;
         ListView_InsertGroup(lvhwnd, -1, &lvgroup);
     }
@@ -161,9 +167,9 @@ inline HWND create_impl(const t_settings_listview_context &ctx)
     LVCOLUMN lv_column = {0};
     lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
-    lv_column.pszText = const_cast<LPWSTR>("Name");
+    lv_column.pszText = const_cast<LPSTR>("Name");
     ListView_InsertColumn(lvhwnd, 0, &lv_column);
-    lv_column.pszText = const_cast<LPWSTR>("Value");
+    lv_column.pszText = const_cast<LPSTR>("Value");
     ListView_InsertColumn(lvhwnd, 1, &lv_column);
 
     LVITEM lv_item = {0};
@@ -208,7 +214,7 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             return TRUE;
         }
         break;
-    case LVN_GETDISPINFO: {
+    case LVN_GETDISPINFOW: { // NOTE: The ANSI message isn't sent under Wine...
         const auto plvdi = reinterpret_cast<NMLVDISPINFOW *>(lparam);
         const auto i = plvdi->item.lParam;
 
@@ -217,13 +223,13 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             plvdi->item.iImage = ctx->get_item_image(i);
         }
 
-        const auto text = ctx->get_item_text(i, plvdi->item.iSubItem);
-        StrNCpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
+        const auto text = IOUtils::to_wide_string(ctx->get_item_text(i, plvdi->item.iSubItem));
+        wcsncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
 
         break;
     }
-    case LVN_GETINFOTIP: {
-        auto getinfotip = (LPNMLVGETINFOTIP)lparam;
+    case LVN_GETINFOTIPW: {
+        auto getinfotip = (LPNMLVGETINFOTIPW)lparam;
 
         LVITEM item = {0};
         item.mask = LVIF_PARAM;
@@ -237,7 +243,8 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             break;
         }
 
-        StrCpyNW(getinfotip->pszText, tooltip.c_str(), getinfotip->cchTextMax);
+        const auto wtooltip = IOUtils::to_wide_string(tooltip);
+        wcsncpy(getinfotip->pszText, wtooltip.c_str(), getinfotip->cchTextMax);
 
         break;
     }

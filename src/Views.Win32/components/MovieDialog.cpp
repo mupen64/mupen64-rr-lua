@@ -191,7 +191,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             goto refresh;
         }
         case IDC_MOVIE_BROWSE: {
-            std::string path;
+            std::filesystem::path path;
             if (g_ctx.is_readonly)
             {
                 path = FilePicker::show_open_dialog("o_movie", hwnd, "*.m64;*.rec");
@@ -206,7 +206,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, path.c_str());
+            SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, path.string().c_str());
         }
         break;
         case IDC_RADIO_FROM_EEPROM:

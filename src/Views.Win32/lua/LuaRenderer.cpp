@@ -16,7 +16,7 @@
 #include "LuaRenderer.hpp"
 #include <Common.Views/Messages.hpp>
 
-const auto OVERLAY_CLASS = L"lua_overlay";
+const auto OVERLAY_CLASS = "lua_overlay";
 
 static bool s_detached_overlays{};
 static HBRUSH g_alpha_mask_brush;
@@ -268,7 +268,7 @@ void LuaRenderer::init()
     {
         s_detached_overlays = true;
         SetWindowSubclass(g_main_ctx.hwnd, main_window_subclass_proc, 0, 0);
-        g_view_logger->warn(L"Detected Wine environment, using detached Lua overlays");
+        g_view_logger->warn("Detected Wine environment, using detached Lua overlays");
     }
 
     WNDCLASS wndclass = {0};
@@ -351,10 +351,10 @@ void LuaRenderer::create_renderer(t_lua_rendering_context *ctx, t_lua_environmen
         s_detached_overlays ? WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW : WS_EX_LAYERED | WS_EX_TRANSPARENT;
     const auto style = s_detached_overlays ? WS_POPUP | WS_VISIBLE : WS_CHILD | WS_VISIBLE;
 
-    ctx->gdi_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, L"", style, 0, 0, ctx->dc_size.width,
+    ctx->gdi_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
                                            ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
-    ctx->d2d_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, L"", style, 0, 0, ctx->dc_size.width,
+    ctx->d2d_overlay_hwnd = CreateWindowEx(ex_style, OVERLAY_CLASS, "", style, 0, 0, ctx->dc_size.width,
                                            ctx->dc_size.height, g_main_ctx.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
     // This env isn't in g_lua_environments yet, so we provide these hwnds manually.

@@ -12,8 +12,7 @@
 namespace Validators
 {
 
-const std::vector<std::string> VALID_ROM_EXTENSIONS = {"n64", "z64", "v64", "rom", "bin",
-                                                        "zip", "usa", "eur", "jap"};
+const std::vector<std::string> VALID_ROM_EXTENSIONS = {"n64", "z64", "v64", "rom", "bin", "zip", "usa", "eur", "jap"};
 const std::vector<std::string> VALID_LUA_EXTENSIONS = {"lua"};
 
 /**

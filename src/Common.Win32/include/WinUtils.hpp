@@ -309,10 +309,10 @@ inline std::string format_duration(size_t seconds)
  * \param type The resource type.
  * \return The resource as a string, or an empty string if the resource could not be loaded.
  */
-inline std::string load_resource_as_string(const int id, const std::string &type)
+inline std::string load_resource_as_string(const int id, LPCSTR type)
 {
     const HINSTANCE hinst = GetModuleHandle(nullptr);
-    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), type.c_str());
+    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), type);
     if (!rc)
     {
         return "";

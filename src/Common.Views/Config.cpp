@@ -79,39 +79,14 @@ template <class T> static json convert_to_json(const T &value)
     return json(value);
 }
 
-static json convert_to_json(const std::wstring &value)
+static json convert_to_json(const std::map<std::string, Hotkey> &value)
 {
-    return json(IOUtils::to_utf8_string(value));
-}
-
-static json convert_to_json(const std::vector<std::wstring> &value)
-{
-    return value | std::views::transform([](const std::wstring &ws) {
-               // convert elements to UTF-8, then wrap in JSON
-               return json(IOUtils::to_utf8_string(ws));
-           }) |
-           std::ranges::to<json::array_t>();
-}
-
-static json convert_to_json(const std::map<std::wstring, std::wstring> &value)
-{
-    return value | std::views::transform([](const std::pair<std::wstring, std::wstring> &ws_pair) {
-               // convert elements to UTF-8, wrap the value in JSON
-               return std::pair(IOUtils::to_utf8_string(ws_pair.first), json(IOUtils::to_utf8_string(ws_pair.second)));
-           }) |
-           std::ranges::to<json::object_t>();
-}
-
-static json convert_to_json(const std::map<std::wstring, Hotkey> &value)
-{
-    return value | std::views::transform([](const std::pair<std::wstring, Hotkey> &mapping) {
-               // translate name
-               auto name = IOUtils::to_utf8_string(mapping.first);
-               // translate hotkey
+    return value | std::views::transform([](const std::pair<const std::string, Hotkey> &mapping) {
                const auto &hotkey = mapping.second;
-               auto object = json::object(
-                   {{"trigger", hotkey.trigger}, {"ctrl", hotkey.ctrl}, {"shift", hotkey.shift}, {"alt", hotkey.alt}});
-               return std::pair(std::move(name), std::move(object));
+               return std::pair(mapping.first, json::object({{"trigger", hotkey.trigger},
+                                                             {"ctrl", hotkey.ctrl},
+                                                             {"shift", hotkey.shift},
+                                                             {"alt", hotkey.alt}}));
            }) |
            std::ranges::to<json::object_t>();
 }
@@ -123,43 +98,13 @@ template <class T> static bool convert_from_json(const json &j, T &value)
     return true;
 }
 
-static bool convert_from_json(const json &j, std::wstring &value)
-{
-    if (j.is_null()) return false;
-    value = IOUtils::to_wide_string(j.get<std::string>());
-    return true;
-}
-
-static bool convert_from_json(const json &j, std::vector<std::wstring> &value)
-{
-    if (!j.is_array()) return false;
-
-    value = j.get_ref<const json::array_t &>() |
-            std::views::transform([](const json &str) { return IOUtils::to_wide_string(str.get<std::string>()); }) |
-            std::ranges::to<std::vector>();
-    return true;
-}
-
-static bool convert_from_json(const json &j, std::map<std::wstring, std::wstring> &value)
+static bool convert_from_json(const json &j, std::map<std::string, Hotkey> &value)
 {
     if (!j.is_object()) return false;
 
     value = j.get_ref<const json::object_t &>() |
-            std::views::transform([](const std::pair<std::string, json> &str_pair) {
-                return std::pair(IOUtils::to_wide_string(str_pair.first),
-                                 IOUtils::to_wide_string(str_pair.second.get<std::string>()));
-            }) |
-            std::ranges::to<std::map>();
-    return true;
-}
-
-static bool convert_from_json(const json &j, std::map<std::wstring, Hotkey> &value)
-{
-    if (!j.is_object()) return false;
-
-    value = j.get_ref<const json::object_t &>() |
-            std::views::transform([](const std::pair<std::string, json> &str_pair) {
-                auto name = IOUtils::to_wide_string(str_pair.first);
+            std::views::transform([](const std::pair<const std::string, json> &str_pair) {
+                auto name = str_pair.first;
                 const auto &hotkey_json = str_pair.second;
                 auto hotkey = Hotkey{};
 

@@ -308,11 +308,12 @@ INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, L
             const auto pair = plugin_discovery_result.results[plvdi->item.lParam];
             switch (plvdi->item.iSubItem)
             {
-            case 0:
-                StrNCpy(plvdi->item.pszText, pair.first.filename().c_str(), plvdi->item.cchTextMax);
+            case 0: {
+                strncpy(plvdi->item.pszText, pair.first.filename().string().c_str(), plvdi->item.cchTextMax);
                 break;
+            }
             case 1: {
-                StrNCpy(plvdi->item.pszText, pair.second.c_str(), plvdi->item.cchTextMax);
+                strncpy(plvdi->item.pszText, pair.second.c_str(), plvdi->item.cchTextMax);
                 break;
             }
             default:
@@ -537,8 +538,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
             }
             // we add the string and associate a pointer to the plugin with the item
             const int i = SendDlgItemMessage(hwnd, id, CB_GETCOUNT, 0, 0);
-            SendDlgItemMessage(hwnd, id, CB_ADDSTRING, 0,
-                               reinterpret_cast<LPARAM>(IOUtils::to_wide_string(plugin->name()).c_str()));
+            SendDlgItemMessage(hwnd, id, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(plugin->name().c_str()));
             SendDlgItemMessage(hwnd, id, CB_SETITEMDATA, i, (LPARAM)plugin.get());
         }
 
@@ -1246,8 +1246,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             ListView_Update(ctx->lv_hwnd, i);
             break;
         case 2:
-            g_dialog_service->show_dialog(IOUtils::to_utf8_string(option_item.get_friendly_info()),
-                                          IOUtils::to_utf8_string(option_item.name), fsvc_information, hwnd);
+            g_dialog_service->show_dialog(option_item.get_friendly_info(), option_item.name, fsvc_information, hwnd);
             break;
         case 4:
             option_item.current_value.set(Hotkey::make_empty());
@@ -1492,7 +1491,7 @@ static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
 
     for (const auto &name : unique_group_names)
     {
-        groups.emplace_back(t_options_group{.id = base_id++, .name = IOUtils::to_wide_string(name)});
+        groups.emplace_back(t_options_group{.id = base_id++, .name = name});
     }
 
     return groups;
@@ -1618,7 +1617,7 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
     auto dynamic_option_groups = generate_hotkey_groups(g_static_option_groups.back().id + 1);
     for (auto &group : dynamic_option_groups)
     {
-        const auto uname = IOUtils::to_utf8_string(group.name);
+        const auto uname = group.name;
         const auto actions = ActionManager::get_actions_matching_filter(std::format("{} > *", uname));
         group.items.reserve(group.items.size() + actions.size());
 
@@ -1632,11 +1631,10 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
                 continue;
             }
 
-            const auto waction = IOUtils::to_wide_string(action);
             const t_options_item item = {
                 .type = t_options_item::Type::Hotkey,
                 .group_id = group.id,
-                .name = waction,
+                .name = action,
                 .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(action); },
                                                                       [=](const t_options_item::data_variant &value) {
                                                                           g_config.hotkeys[action] =
@@ -1653,13 +1651,13 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
     // We beautify the names here, a bit annoying because we have to reconstruct them
     for (auto &option_group : dynamic_option_groups)
     {
-        auto segments = ActionManager::get_segments(IOUtils::to_utf8_string(option_group.name));
+        auto segments = ActionManager::get_segments(option_group.name);
         for (auto &segment : segments)
         {
             segment = ActionManager::get_display_name(segment, true);
         }
         const auto name = StrUtils::join_string(segments, std::format(" {} ", ActionManager::SEGMENT_SEPARATOR));
-        option_group.name = IOUtils::to_wide_string(name);
+        option_group.name = name;
     }
 
     std::vector<t_options_group> option_groups;

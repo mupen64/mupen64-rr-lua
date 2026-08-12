@@ -77,11 +77,6 @@ struct Hotkey
     [[nodiscard]] std::string to_string() const;
 
     /**
-     * \brief Gets the string representation of the hotkey.
-     */
-    [[nodiscard]] std::wstring to_wstring() const;
-
-    /**
      * \returns An unassigned hotkey.
      */
     [[nodiscard]] static Hotkey make_unassigned() { return {}; }

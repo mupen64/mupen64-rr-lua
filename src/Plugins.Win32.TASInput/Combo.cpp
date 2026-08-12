@@ -37,7 +37,7 @@ std::vector<uint8_t> t_combo::serialize() const
     return buffer;
 }
 
-std::variant<t_combo, std::wstring> t_combo::deserialize(const std::span<uint8_t> &data)
+std::variant<t_combo, std::string> t_combo::deserialize(const std::span<uint8_t> &data)
 {
     t_combo result{};
 
@@ -99,7 +99,7 @@ std::vector<t_combo> t_combo::deserialize_combos(const std::span<uint8_t> &data)
     while (offset < data.size())
     {
         auto result = deserialize(data.subspan(offset));
-        if (std::holds_alternative<std::wstring>(result))
+        if (std::holds_alternative<std::string>(result))
         {
             return {};
         }

@@ -335,7 +335,7 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
 void MGECompositor::create(HWND hwnd)
 {
-    mge_context.hwnd = CreateWindow(CONTROL_CLASS_NAME, L"", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr,
+    mge_context.hwnd = CreateWindow(CONTROL_CLASS_NAME, "", WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd, nullptr,
                                     g_main_ctx.hinst, nullptr);
 }
 

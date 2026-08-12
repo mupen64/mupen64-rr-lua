@@ -143,7 +143,7 @@ static void CALL dummy_capture_screen(char *)
     const auto path = Config::screenshot_directory() / std::format("screen{}.bmp", time(nullptr));
 
     HANDLE hfile;
-    hfile = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    hfile = CreateFile(path.string().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 
     DWORD written;
 
@@ -156,13 +156,13 @@ static void CALL dummy_capture_screen(char *)
 
 #pragma endregion
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module, std::filesystem::path path)
+std::pair<std::string, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module, std::filesystem::path path)
 {
     const auto get_dll_info = (ZESpec::GETDLLINFO)GetProcAddress(module, "GetDllInfo");
 
     if (!get_dll_info)
     {
-        return std::make_pair(L"GetDllInfo missing", nullptr);
+        return std::make_pair("GetDllInfo missing", nullptr);
     }
 
     ZESpec::PluginInfo plugin_info{};
@@ -176,7 +176,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module
         const std::string target_version(plugin_info.target_version, target_version_len);
         if (current_version != target_version)
         {
-            return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
+            return std::make_pair("Incompatible with this version of Mupen64", nullptr);
         }
     }
 
@@ -205,13 +205,13 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module
         plugin->m_type = Plugin::Type::RSP;
         break;
     default:
-        return std::make_pair(L"Unknown plugin type", nullptr);
+        return std::make_pair("Unknown plugin type", nullptr);
     }
     plugin->m_version = plugin_info.ver;
     plugin->m_module = module;
 
     g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
-    return std::make_pair(L"", std::move(plugin));
+    return std::make_pair("", std::move(plugin));
 }
 
 void ZEPlugin::config(HWND hwnd)

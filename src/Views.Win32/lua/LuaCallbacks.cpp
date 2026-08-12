@@ -83,7 +83,7 @@ const std::unordered_map<LuaCallbacks::callback_key, std::function<int(lua_State
          if (atkey_ctx.text.has_value())
          {
              lua_pushstring(l, "text");
-             lua_pushstring(l, IOUtils::to_utf8_string(atkey_ctx.text.value()).c_str());
+             lua_pushstring(l, atkey_ctx.text.value().c_str());
              lua_settable(l, -3);
          }
          lua_pushstring(l, "ctrl");
@@ -305,7 +305,7 @@ bool invoke_callbacks_with_key_impl(const t_lua_environment *lua, const std::fun
         if (function(L))
         {
             const char *str = lua_tostring(L, -1);
-            lua->print(lua, IOUtils::to_wide_string(str) + L"\r\n");
+            lua->print(lua, std::string(str) + "\r\n");
             g_view_logger->info("Lua error: {}", str);
             return false;
         }

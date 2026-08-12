@@ -191,7 +191,7 @@ void PluginUtil::init()
 t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
 {
     std::vector<std::unique_ptr<Plugin>> plugins;
-    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
+    std::vector<std::pair<std::filesystem::path, std::string>> results;
 
     // this will fail to match files with the extension not lowercased, but I don't think this is a big deal.
     auto dll_files = std::filesystem::directory_iterator(directory) |

@@ -18,14 +18,14 @@ const int hexTable[256] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-const std::unordered_map<std::wstring, COLORREF> color_map = {
-    {L"white", 0xFFFFFFFF},  {L"black", 0xFF000000},  {L"clear", 0x00000000},  {L"gray", 0xFF808080},
-    {L"red", 0xFF0000FF},    {L"orange", 0xFF0080FF}, {L"yellow", 0xFF00FFFF}, {L"chartreuse", 0xFF00FF80},
-    {L"green", 0xFF00FF00},  {L"teal", 0xFF80FF00},   {L"cyan", 0xFFFFFF00},   {L"blue", 0xFFFF0000},
-    {L"purple", 0xFFFF0080},
+const std::unordered_map<std::string, COLORREF> color_map = {
+    {"white", 0xFFFFFFFF},  {"black", 0xFF000000},  {"clear", 0x00000000},  {"gray", 0xFF808080},
+    {"red", 0xFF0000FF},    {"orange", 0xFF0080FF}, {"yellow", 0xFF00FFFF}, {"chartreuse", 0xFF00FF80},
+    {"green", 0xFF00FF00},  {"teal", 0xFF80FF00},   {"cyan", 0xFFFFFF00},   {"blue", 0xFFFF0000},
+    {"purple", 0xFFFF0080},
 };
 
-static std::optional<CLSID> get_encoder_clsid_for_extension(const std::wstring_view extension)
+static std::optional<CLSID> get_encoder_clsid_for_extension(const std::string_view extension)
 {
     UINT num = 0, size = 0;
     Gdiplus::GetImageEncodersSize(&num, &size);
@@ -39,8 +39,8 @@ static std::optional<CLSID> get_encoder_clsid_for_extension(const std::wstring_v
 
     for (UINT i = 0; i < num; ++i)
     {
-        const auto extension_pattern = std::wstring(image_codec_info[i].FilenameExtension);
-        const auto allowed_extensions = StrUtils::split_wstring(extension_pattern, L";");
+        const auto extension_pattern = IOUtils::to_utf8_string(image_codec_info[i].FilenameExtension);
+        const auto allowed_extensions = StrUtils::split_string(extension_pattern, ";");
 
         for (auto ext : allowed_extensions)
         {
@@ -91,7 +91,7 @@ static int ResizeWindow(lua_State *L)
     return 0;
 }
 
-static COLORREF StrToColorA(const std::wstring &s, bool alpha = false, COLORREF def = 0)
+static COLORREF StrToColorA(const std::string &s, bool alpha = false, COLORREF def = 0)
 {
     if (s[0] == '#')
     {
@@ -127,7 +127,7 @@ static COLORREF StrToColorA(const std::wstring &s, bool alpha = false, COLORREF 
     return (alpha ? 0xFF000000 : 0x00000000) | def;
 }
 
-static COLORREF StrToColor(const std::wstring &s, bool alpha = false, COLORREF def = 0)
+static COLORREF StrToColor(const std::string &s, bool alpha = false, COLORREF def = 0)
 {
     return StrToColorA(s, alpha, def);
 }
@@ -141,8 +141,8 @@ static int set_brush(lua_State *L)
         DeleteObject(lua->rctx.brush);
     }
 
-    auto s = IOUtils::to_wide_string(lua_tostring(L, 1));
-    if (MiscHelpers::iequals(s, L"null"))
+    auto s = std::string(lua_tostring(L, 1));
+    if (MiscHelpers::iequals(s, "null"))
         lua->rctx.brush = (HBRUSH)GetStockObject(NULL_BRUSH);
     else
         lua->rctx.brush = CreateSolidBrush(StrToColor(s));
@@ -159,10 +159,10 @@ static int set_pen(lua_State *L)
         DeleteObject(lua->rctx.pen);
     }
 
-    auto s = IOUtils::to_wide_string(lua_tostring(L, 1));
+    auto s = std::string(lua_tostring(L, 1));
     int width = luaL_optnumber(L, 2, 1);
 
-    if (MiscHelpers::iequals(s, L"null"))
+    if (MiscHelpers::iequals(s, "null"))
         lua->rctx.pen = (HPEN)GetStockObject(NULL_PEN);
     else
         lua->rctx.pen = CreatePen(PS_SOLID, width, StrToColor(s));
@@ -173,7 +173,7 @@ static int set_pen(lua_State *L)
 static int set_text_color(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
-    lua->rctx.col = StrToColor(IOUtils::to_wide_string(lua_tostring(L, 1)));
+    lua->rctx.col = StrToColor(lua_tostring(L, 1));
     return 0;
 }
 
@@ -181,9 +181,9 @@ static int SetBackgroundColor(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    auto s = IOUtils::to_wide_string(lua_tostring(L, 1));
+    auto s = std::string(lua_tostring(L, 1));
 
-    if (MiscHelpers::iequals(s, L"null"))
+    if (MiscHelpers::iequals(s, "null"))
     {
         lua->rctx.bkmode = TRANSPARENT;
     }
@@ -207,8 +207,8 @@ static int SetFont(lua_State *L)
     }
 
     auto font_size = luaL_checknumber(L, 1);
-    auto font_name = IOUtils::to_wide_string(luaL_optstring(L, 2, "MS Gothic"));
-    auto style = IOUtils::to_wide_string(luaL_optstring(L, 3, ""));
+    auto font_name = std::string(luaL_optstring(L, 2, "MS Gothic"));
+    auto style = std::string(luaL_optstring(L, 3, ""));
 
     // set the size of the font
     font.lfHeight = -MulDiv(font_size, GetDeviceCaps(lua->rctx.gdi_back_dc, LOGPIXELSY), 72);
@@ -255,7 +255,7 @@ static int LuaTextOut(lua_State *L)
 
     int x = luaL_checknumber(L, 1);
     int y = luaL_checknumber(L, 2);
-    auto text = IOUtils::to_wide_string(lua_tostring(L, 3));
+    auto text = std::string(lua_tostring(L, 3));
 
     ::TextOut(lua->rctx.gdi_back_dc, x, y, text.c_str(), text.size());
     return 0;
@@ -304,7 +304,7 @@ static bool GetRectLua(lua_State *L, int idx, RECT *rect)
 static int GetTextExtent(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
-    auto string = IOUtils::to_wide_string(luaL_checkstring(L, 1));
+    auto string = std::string(luaL_checkstring(L, 1));
 
     SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
 
@@ -372,7 +372,7 @@ static int LuaDrawText(lua_State *L)
             }
         }
     }
-    auto str = IOUtils::to_wide_string(lua_tostring(L, 1));
+    auto str = std::string(lua_tostring(L, 1));
 
     ::DrawText(lua->rctx.gdi_back_dc, str.c_str(), -1, &rect, format);
     return 0;
@@ -389,7 +389,7 @@ static int LuaDrawTextAlt(lua_State *L)
     SelectObject(lua->rctx.gdi_back_dc, lua->rctx.font);
 
     RECT rect = {0};
-    auto string = IOUtils::to_wide_string(lua_tostring(L, 1));
+    auto string = std::string(lua_tostring(L, 1));
     UINT format = luaL_checkinteger(L, 2);
     rect.left = luaL_checkinteger(L, 3);
     rect.top = luaL_checkinteger(L, 4);
@@ -421,9 +421,10 @@ static int DrawRect(lua_State *L)
 static int LuaLoadImage(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
-    std::wstring path = IOUtils::to_wide_string(luaL_checkstring(L, 1));
+    const std::string path = luaL_checkstring(L, 1);
+    const auto wpath = IOUtils::to_wide_string(path);
 
-    auto img = new Gdiplus::Bitmap(path.c_str());
+    auto img = new Gdiplus::Bitmap(wpath.c_str());
     if (!img || img->GetLastStatus())
     {
         luaL_error(L, "Couldn't find image '%s'", path.c_str());
@@ -470,14 +471,14 @@ static int save_image(lua_State *L)
 {
     const auto lua = LuaManager::get_environment_for_state(L);
     const auto key = luaL_checkinteger(L, 1);
-    const std::filesystem::path path = luaL_checkwstring(L, 2);
+    const std::filesystem::path path = luaL_checkstlstring(L, 2);
 
     if (!lua->rctx.image_pool.contains(key))
     {
         luaL_error(L, "Argument #1: Image index doesn't exist");
     }
 
-    const auto clsid = get_encoder_clsid_for_extension(path.extension().wstring());
+    const auto clsid = get_encoder_clsid_for_extension(path.extension().string());
     if (!clsid.has_value())
     {
         lua_pushboolean(L, false);
@@ -705,7 +706,7 @@ static int FillEllipseAlpha(lua_State *L)
     int y = luaL_checknumber(L, 2);
     int w = luaL_checknumber(L, 3);
     int h = luaL_checknumber(L, 4);
-    auto col = IOUtils::to_wide_string(luaL_checkstring(L, 5));
+    auto col = std::string(luaL_checkstring(L, 5));
 
     Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
     Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
@@ -724,7 +725,7 @@ static int FillRectAlpha(lua_State *L)
     int y = luaL_checknumber(L, 2);
     int w = luaL_checknumber(L, 3);
     int h = luaL_checknumber(L, 4);
-    auto col = IOUtils::to_wide_string(luaL_checkstring(L, 5));
+    auto col = std::string(luaL_checkstring(L, 5));
 
     Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
     Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
@@ -746,7 +747,7 @@ static int FillRect(lua_State *L)
     rect.top = luaL_checknumber(L, 2);
     rect.right = luaL_checknumber(L, 3);
     rect.bottom = luaL_checknumber(L, 4);
-    ExtTextOut(lua->rctx.gdi_back_dc, 0, 0, ETO_OPAQUE, &rect, L"", 0, 0);
+    ExtTextOut(lua->rctx.gdi_back_dc, 0, 0, ETO_OPAQUE, &rect, "", 0, 0);
     SetBkColor(lua->rctx.gdi_back_dc, colorold);
     return 0;
 }

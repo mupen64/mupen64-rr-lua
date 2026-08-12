@@ -34,22 +34,22 @@ static void prompt_plugin_change(HWND hwnd)
 
         if (first_video_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_video_plugin = first_video_plugin->get()->path();
+            g_config.selected_video_plugin = first_video_plugin->get()->path().string();
         }
 
         if (first_audio_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_audio_plugin = first_audio_plugin->get()->path();
+            g_config.selected_audio_plugin = first_audio_plugin->get()->path().string();
         }
 
         if (first_input_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_input_plugin = first_input_plugin->get()->path();
+            g_config.selected_input_plugin = first_input_plugin->get()->path().string();
         }
 
         if (first_rsp_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_rsp_plugin = first_rsp_plugin->get()->path();
+            g_config.selected_rsp_plugin = first_rsp_plugin->get()->path().string();
         }
 
         return;

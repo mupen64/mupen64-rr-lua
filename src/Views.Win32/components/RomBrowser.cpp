@@ -69,7 +69,7 @@ std::vector<std::filesystem::path> discover_roms()
     // logically this should be bundled into the filter pipeline but I'm too lazy
     std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [&](const auto &val) {
         char c_extension[_MAX_EXT] = {0};
-        if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
+        if (_splitpath_s(val.string().c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
         {
             return false;
         }
@@ -240,14 +240,14 @@ static void build_impl()
             const auto &path = rom_paths[j];
 
             FILE *f = nullptr;
-            if (_wfopen_s(&f, path.c_str(), "rb")) continue;
+            if (fopen_s(&f, path.string().c_str(), "rb")) continue;
 
             fseek(f, 0, SEEK_END);
             size_t len = ftell(f);
             fseek(f, 0, SEEK_SET);
 
             t_simple_rom_info entry{};
-            entry.path = path;
+            entry.path = path.string();
             entry.size = len;
 
             if (len > sizeof(core_rom_header))
@@ -356,28 +356,27 @@ notify(LPARAM lparam)
         rombrowser_update_sort();
         break;
     }
-    case LVN_GETDISPINFO: {
-        NMLVDISPINFO *plvdi = (NMLVDISPINFO *)lparam;
+    case LVN_GETDISPINFOW: { // NOTE: The ANSI message isn't sent under Wine...
+        NMLVDISPINFOW *plvdi = (NMLVDISPINFOW *)lparam;
         const t_simple_rom_info &rombrowser_entry = g_ctx.discovered_roms[plvdi->item.lParam];
         switch (plvdi->item.iSubItem)
         {
         case 1: {
-
-            StrNCpy(plvdi->item.pszText,
-                    IOUtils::rom_name_to_string((const char *)rombrowser_entry.header.nom).c_str(),
-                    plvdi->item.cchTextMax);
+            const auto rom_name =
+                IOUtils::to_wide_string(IOUtils::rom_name_to_string((const char *)rombrowser_entry.header.nom));
+            wcsncpy(plvdi->item.pszText, rom_name.c_str(), plvdi->item.cchTextMax);
             break;
         }
         case 2: {
-            char filename[MAX_PATH] = {0};
-            _splitpath(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr,
-                          0);
-            StrNCpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
+            wchar_t filename[MAX_PATH] = {0};
+            const auto path = IOUtils::to_wide_string(rombrowser_entry.path);
+            _wsplitpath_s(path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr, 0);
+            wcsncpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
             break;
         }
         case 3: {
-            const auto size = std::to_string(rombrowser_entry.size / (1024 * 1024)) + " MB";
-            StrNCpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
+            const auto size = std::format(L"{} MB", rombrowser_entry.size / (1024 * 1024));
+            wcsncpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
             break;
         }
         default:
@@ -414,9 +413,9 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
     for (auto rom_path : rom_paths)
     {
         FILE *f = nullptr;
-        if (fopen_s(&f, rom_path.c_str(), "rb"))
+        if (fopen_s(&f, rom_path.string().c_str(), "rb"))
         {
-            g_view_logger->info("[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+            g_view_logger->info("[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.string());
             continue;
         }
 
@@ -454,9 +453,9 @@ std::vector<std::filesystem::path> find_available_roms(const std::function<bool(
     for (auto rom_path : rom_paths)
     {
         FILE *f = nullptr;
-        if (fopen_s(&f, rom_path.c_str(), "rb"))
+        if (fopen_s(&f, rom_path.string().c_str(), "rb"))
         {
-            g_view_logger->info("[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+            g_view_logger->info("[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.string());
             continue;
         }
 

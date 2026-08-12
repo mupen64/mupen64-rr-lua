@@ -434,7 +434,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         LVCOLUMN lv_column = {0};
         lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
-        lv_column.pszText = const_cast<char*>("Scripts");
+        lv_column.pszText = const_cast<char *>("Scripts");
         ListView_InsertColumn(g_dlg.lv_hwnd, 0, &lv_column);
 
         RECT lv_rc{};
@@ -599,7 +599,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
                     display_name += " (trusted)";
                 }
 
-                StrNCpy(plvdi->item.pszText, display_name.c_str(), plvdi->item.cchTextMax);
+                strncpy(plvdi->item.pszText, display_name.c_str(), plvdi->item.cchTextMax);
                 break;
             }
             default:

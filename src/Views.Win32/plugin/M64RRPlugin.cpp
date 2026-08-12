@@ -43,13 +43,13 @@ static size_t get_config_path(char *data, size_t size)
     return size + 1;
 }
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE module, std::filesystem::path path)
+std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE module, std::filesystem::path path)
 {
     const auto get_metadata = (M64RRSpec::PtrGetMetadata)GetProcAddress(module, "M64RRGetMetadata");
 
     if (!get_metadata)
     {
-        return std::make_pair(L"M64RRGetMetadata missing", nullptr);
+        return std::make_pair("M64RRGetMetadata missing", nullptr);
     }
 
     M64RRSpec::PluginMetadata metadata{};
@@ -63,7 +63,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE mod
         const std::string target_version(metadata.target_version, target_version_len);
         if (current_version != target_version)
         {
-            return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
+            return std::make_pair("Incompatible with this version of Mupen64", nullptr);
         }
     }
 
@@ -96,7 +96,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE mod
     plugin->m_meta = metadata;
 
     g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
-    return std::make_pair(L"", std::move(plugin));
+    return std::make_pair("", std::move(plugin));
 }
 
 void M64RRPlugin::config(HWND hwnd)
@@ -130,7 +130,7 @@ void M64RRPlugin::test(HWND hwnd)
 
 void M64RRPlugin::about(HWND hwnd)
 {
-    MessageBox(hwnd, IOUtils::to_wide_string(m_meta.description).c_str(), L"About", MB_ICONINFORMATION | MB_OK);
+    MessageBox(hwnd, m_meta.description, "About", MB_ICONINFORMATION | MB_OK);
 }
 
 void M64RRPlugin::initiate(ZESpecFuncs &funcs)

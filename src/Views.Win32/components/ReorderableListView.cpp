@@ -10,7 +10,7 @@
 
 namespace ReorderableListView
 {
-const auto CTX_KEY = L"Mupen64_ReorderableListViewContext";
+const auto CTX_KEY = "Mupen64_ReorderableListViewContext";
 
 struct Context
 {

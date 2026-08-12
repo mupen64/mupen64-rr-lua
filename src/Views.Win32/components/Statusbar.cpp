@@ -281,7 +281,7 @@ static void on_multi_frame_advance_count_changed()
 
 static void fix_segments()
 {
-    std::unordered_map<Statusbar::Section, std::wstring> section_text;
+    std::unordered_map<Statusbar::Section, std::string> section_text;
 
     for (int i = 0; i <= static_cast<int32_t>(Statusbar::Section::Last); ++i)
     {
@@ -296,7 +296,7 @@ static void fix_segments()
 
         const auto len = SendMessage(statusbar_hwnd, SB_GETTEXTLENGTH, segment_index, 0);
 
-        auto str = (wchar_t *)calloc(len + 1, sizeof(wchar_t));
+        auto str = (char *)calloc(len + 1, sizeof(char));
 
         SendMessage(statusbar_hwnd, SB_GETTEXT, segment_index, (LPARAM)str);
 
