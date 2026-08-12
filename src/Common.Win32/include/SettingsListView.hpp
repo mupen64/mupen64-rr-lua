@@ -228,8 +228,8 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
 
         break;
     }
-    case LVN_GETINFOTIPW: {
-        auto getinfotip = (LPNMLVGETINFOTIPW)lparam;
+    case LVN_GETINFOTIP: {
+        auto getinfotip = (LPNMLVGETINFOTIP)lparam;
 
         LVITEM item = {0};
         item.mask = LVIF_PARAM;
@@ -243,8 +243,7 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             break;
         }
 
-        const auto wtooltip = IOUtils::to_wide_string(tooltip);
-        wcsncpy(getinfotip->pszText, wtooltip.c_str(), getinfotip->cchTextMax);
+        strncpy(getinfotip->pszText, tooltip.c_str(), getinfotip->cchTextMax);
 
         break;
     }
