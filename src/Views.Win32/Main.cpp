@@ -1033,12 +1033,6 @@ static bool is_dialog_message(MSG *msg)
  */
 static void enable_mitigations()
 {
-    PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY handles = {0};
-    handles.RaiseExceptionOnInvalidHandleReference = 1;
-    handles.HandleExceptionsPermanentlyEnabled = 1;
-    RT_ASSERT(SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &handles, sizeof(handles)),
-              L"Couldn't set process mitigation policy.");
-
     PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ext = {0};
     ext.DisableExtensionPoints = 1;
     RT_ASSERT(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
