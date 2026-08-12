@@ -25,7 +25,7 @@ struct Context
 {
     std::vector<std::pair<detail::MessageKey, Subscriber>> subscribers;
 
-    std::unordered_map<detail::MessageKey, std::vector<AnyCallback>, detail::MessageKeyHash> subscriber_cache;
+    std::unordered_map<detail::MessageKey, std::vector<AnyCallback>> subscriber_cache;
 
     // UID accumulator for generating unique subscriber IDs. Only write operation is increment.
     size_t uid_accumulator{};
@@ -39,13 +39,20 @@ struct Context
 
 static Context s_ctx;
 
-size_t detail::MessageKeyHash::operator()(const MessageKey &key) const
+} // namespace Messenger
+
+namespace std
+{
+size_t hash<Messenger::detail::MessageKey>::operator()(const Messenger::detail::MessageKey &key) const noexcept
 {
     size_t seed = std::hash<std::type_index>{}(key.type);
     seed ^= std::hash<uint64_t>{}(key.value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     return seed;
 }
+} // namespace std
 
+namespace Messenger
+{
 void wait_for_broadcast_end()
 {
     while (s_ctx.broadcasting > 0) std::this_thread::yield();

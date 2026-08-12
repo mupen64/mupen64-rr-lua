@@ -29,11 +29,6 @@ struct MessageKey
     bool operator==(const MessageKey &) const = default;
 };
 
-struct MessageKeyHash
-{
-    size_t operator()(const MessageKey &key) const;
-};
-
 void broadcast_impl(MessageKey key, std::any data);
 std::function<void()> subscribe_impl(MessageKey key, std::function<void(std::any)> callback);
 template <typename MessageT> MessageKey make_key(MessageT message)
@@ -43,3 +38,11 @@ template <typename MessageT> MessageKey make_key(MessageT message)
 }
 } // namespace detail
 } // namespace Messenger
+
+namespace std
+{
+template <> struct hash<Messenger::detail::MessageKey>
+{
+    size_t operator()(const Messenger::detail::MessageKey &key) const noexcept;
+};
+} // namespace std
