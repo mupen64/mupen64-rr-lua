@@ -214,8 +214,8 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             return TRUE;
         }
         break;
-    case LVN_GETDISPINFOW: { // NOTE: The ANSI message isn't sent under Wine...
-        const auto plvdi = reinterpret_cast<NMLVDISPINFOW *>(lparam);
+    case LVN_GETDISPINFO: {
+        const auto plvdi = reinterpret_cast<NMLVDISPINFO *>(lparam);
         const auto i = plvdi->item.lParam;
 
         if (plvdi->item.mask & LVIF_IMAGE)
@@ -223,8 +223,8 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             plvdi->item.iImage = ctx->get_item_image(i);
         }
 
-        const auto text = IOUtils::to_wide_string(ctx->get_item_text(i, plvdi->item.iSubItem));
-        wcsncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
+        const auto text = ctx->get_item_text(i, plvdi->item.iSubItem);
+        strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
 
         break;
     }

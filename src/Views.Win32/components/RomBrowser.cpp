@@ -356,27 +356,26 @@ notify(LPARAM lparam)
         rombrowser_update_sort();
         break;
     }
-    case LVN_GETDISPINFOW: { // NOTE: The ANSI message isn't sent under Wine...
-        NMLVDISPINFOW *plvdi = (NMLVDISPINFOW *)lparam;
+    case LVN_GETDISPINFO: {
+        NMLVDISPINFO *plvdi = (NMLVDISPINFO *)lparam;
         const t_simple_rom_info &rombrowser_entry = g_ctx.discovered_roms[plvdi->item.lParam];
         switch (plvdi->item.iSubItem)
         {
         case 1: {
-            const auto rom_name =
-                IOUtils::to_wide_string(IOUtils::rom_name_to_string((const char *)rombrowser_entry.header.nom));
-            wcsncpy(plvdi->item.pszText, rom_name.c_str(), plvdi->item.cchTextMax);
+            const auto rom_name = IOUtils::rom_name_to_string((const char *)rombrowser_entry.header.nom);
+            strncpy(plvdi->item.pszText, rom_name.c_str(), plvdi->item.cchTextMax);
             break;
         }
         case 2: {
-            wchar_t filename[MAX_PATH] = {0};
-            const auto path = IOUtils::to_wide_string(rombrowser_entry.path);
-            _wsplitpath_s(path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr, 0);
-            wcsncpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
+            char filename[MAX_PATH] = {0};
+            _splitpath_s(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr,
+                         0);
+            strncpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
             break;
         }
         case 3: {
-            const auto size = std::format(L"{} MB", rombrowser_entry.size / (1024 * 1024));
-            wcsncpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
+            const auto size = std::format("{} MB", rombrowser_entry.size / (1024 * 1024));
+            strncpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
             break;
         }
         default:
