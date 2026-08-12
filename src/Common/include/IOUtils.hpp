@@ -302,7 +302,7 @@ inline std::string rom_name_to_string(const char str[20])
     }
 
     // Trim off trailing nulls
-    if (size_t first_null = output.find_first_of('\0'); first_null != std::string::npos)
+    if (size_t first_null = output.find_first_of(L'\0'); first_null != std::string::npos)
     {
         output.resize(first_null);
     }

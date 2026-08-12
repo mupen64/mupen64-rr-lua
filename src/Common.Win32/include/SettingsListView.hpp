@@ -153,13 +153,8 @@ inline HWND create_impl(const t_settings_listview_context &ctx)
 
     for (const auto &pair : ctx.groups)
     {
-#ifdef __MINGW32__
-        // MinGW's commctrl.h only defines the Unicode LVGROUP variant.
         const auto header = IOUtils::to_wide_string(pair.second);
         lvgroup.pszHeader = const_cast<LPWSTR>(header.c_str());
-#else
-        lvgroup.pszHeader = const_cast<LPSTR>(pair.second.c_str());
-#endif
         lvgroup.iGroupId = pair.first;
         ListView_InsertGroup(lvhwnd, -1, &lvgroup);
     }

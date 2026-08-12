@@ -280,10 +280,10 @@ static std::string get_titlebar_text()
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {
         auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
-        text += std::format(" - {}", vcr_filename);
+        text += std::format(" - {}", vcr_filename.string());
     }
 
-    if (CaptureManager::is_capturing()) text += std::format(" - {}", CaptureManager::get_current_path().filename());
+    if (CaptureManager::is_capturing()) text += std::format(" - {}", CaptureManager::get_current_path().filename().string());
 
     return text;
 }
