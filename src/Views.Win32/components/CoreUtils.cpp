@@ -13,7 +13,7 @@
 static void prompt_plugin_change(HWND hwnd)
 {
     auto result = g_dialog_service->show_multiple_choice_dialog(
-        VIEW_DLG_PLUGIN_LOAD_ERROR, {L"Choose Default Plugins", L"Change Plugins", L"Cancel"},
+        VIEW_DLG_PLUGIN_LOAD_ERROR, {"Choose Default Plugins", "Change Plugins", "Cancel"},
         "One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", "Core", fsvc_error, hwnd);
 
     if (result == 0)

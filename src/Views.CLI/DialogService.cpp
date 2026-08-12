@@ -13,14 +13,11 @@
 class DialogService : public IDialogService
 {
   public:
-    size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
+    size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices,
                                        std::string_view str, std::optional<std::string_view> title = std::nullopt,
                                        core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
                                        std::optional<std::string_view> details = std::nullopt) override
     {
-        std::vector<std::string> uchoices;
-        for (const auto &choice : choices) uchoices.push_back(IOUtils::to_utf8_string(choice));
-
         print_header(title.value_or(""), type);
 
         std::string input_line;
@@ -29,7 +26,7 @@ class DialogService : public IDialogService
             std::println("{}", str);
             for (size_t i = 0; i < choices.size(); i++)
             {
-                std::println("{}) {}", (i + 1), uchoices[i]);
+                std::println("{}) {}", (i + 1), choices[i]);
             }
             std::println("(enter an index, or press [Return] to cancel)");
             std::print("> ");

@@ -31,7 +31,7 @@ class IDialogService
      * index specified by the user's preferences in the view. If the user has chosen to not show the dialog again, this
      * function will return the last choice.
      */
-    virtual size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
+    virtual size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices,
                                                std::string_view str,
                                                std::optional<std::string_view> title = std::nullopt,
                                                core_dialog_type type = fsvc_warning, void *hwnd = nullptr,

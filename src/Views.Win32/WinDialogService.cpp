@@ -13,7 +13,7 @@
 class WinDialogService : public IDialogService
 {
   public:
-    size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::wstring> &choices,
+    size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices,
                                        std::string_view str, std::optional<std::string_view> title = std::nullopt,
                                        core_dialog_type type = fsvc_warning, void *hwnd = nullptr,
                                        std::optional<std::string_view> details = std::nullopt) override
@@ -21,6 +21,8 @@ class WinDialogService : public IDialogService
         const auto wstr = IOUtils::to_wide_string(str);
         const auto wtitle = title ? std::make_optional(IOUtils::to_wide_string(*title)) : std::nullopt;
         const auto wdetails = details ? std::make_optional(IOUtils::to_wide_string(*details)) : std::nullopt;
+        std::vector<std::wstring> wchoices;
+        for (const auto &choice : choices) wchoices.push_back(IOUtils::to_wide_string(choice));
 
         const auto silenced = std::ranges::find(ALWAYS_LOUD_IDS, id) == ALWAYS_LOUD_IDS.end() && g_config.silent_mode;
 
@@ -46,10 +48,10 @@ class WinDialogService : public IDialogService
 
         std::vector<TASKDIALOG_BUTTON> buttons;
 
-        buttons.reserve(choices.size());
-        for (int i = 0; i < choices.size(); ++i)
+        buttons.reserve(wchoices.size());
+        for (int i = 0; i < wchoices.size(); ++i)
         {
-            buttons.push_back({i, choices[i].c_str()});
+            buttons.push_back({i, wchoices[i].c_str()});
         }
 
         auto icon = TD_ERROR_ICON;
@@ -98,7 +100,7 @@ class WinDialogService : public IDialogService
 
         g_view_logger->trace(
             L"[FrontendService] show_multiple_choice_dialog: '{}', manual answer: {}, dont show again: {}", wstr,
-            pressed_button > 0 ? choices[pressed_button] : L"?", dont_show_again);
+            pressed_button > 0 ? wchoices[pressed_button] : L"?", dont_show_again);
 
         return pressed_button;
     }
@@ -107,7 +109,7 @@ class WinDialogService : public IDialogService
                          std::optional<std::string_view> title = std::nullopt, bool warning = false,
                          void *hwnd = nullptr) override
     {
-        return show_multiple_choice_dialog(id, {L"Yes", L"No"}, str, title, warning ? fsvc_warning : fsvc_information,
+        return show_multiple_choice_dialog(id, {"Yes", "No"}, str, title, warning ? fsvc_warning : fsvc_information,
                                            hwnd) == 0;
     }
 

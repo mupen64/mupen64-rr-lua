@@ -79,9 +79,7 @@ static void init_core()
     g_core_params.get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
     g_core_params.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
                                                    const char *str, const char *title, const core_dialog_type type) {
-        std::vector<std::wstring> wchoices;
-        for (const auto &choice : choices) wchoices.push_back(IOUtils::to_wide_string(choice));
-        return g_dialog_service->show_multiple_choice_dialog(id, wchoices, str,
+        return g_dialog_service->show_multiple_choice_dialog(id, choices, str,
                                                              title ? std::make_optional(title) : std::nullopt, type);
     };
     g_core_params.show_ask_dialog = [](std::string_view id, const char *str, const char *title, const bool warning) {

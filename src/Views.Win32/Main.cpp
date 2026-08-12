@@ -955,11 +955,7 @@ static core_result init_core()
     g_main_ctx.core.get_summercart_path = get_summercart_path;
     g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title, core_dialog_type type) {
-        auto choices_wide = choices |
-                            std::views::transform([](std::string value) { return IOUtils::to_wide_string(value); }) |
-                            std::ranges::to<std::vector>();
-
-        return g_dialog_service->show_multiple_choice_dialog(id, choices_wide, str,
+        return g_dialog_service->show_multiple_choice_dialog(id, choices, str,
                                                              title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {

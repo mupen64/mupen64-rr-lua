@@ -649,7 +649,7 @@ static void show_ram_start()
     const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
 
     const auto result = g_dialog_service->show_multiple_choice_dialog(
-        VIEW_DLG_RAMSTART, {L"Copy STROOP config line", L"Close"}, str, "Core Information", fsvc_information);
+        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", fsvc_information);
 
     if (result == 0)
     {
@@ -816,7 +816,7 @@ static void show_about_dialog()
                      "Copyright ©️ 2026"
                      "\r\n"
                      "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg, "About",
+    const auto result = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About",
                                                                       fsvc_information);
 
     if (result == 0)

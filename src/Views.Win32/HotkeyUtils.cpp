@@ -387,7 +387,7 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::wstring &acti
                                  new_hotkey.to_string(), conflicting_hotkey_identifiers);
 
     const size_t choice = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT,
-                                                                        {L"Keep New", L"Keep Old", L"Proceed Anyway"},
+                                                                        {"Keep New", "Keep Old", "Proceed Anyway"},
                                                                         str, "Hotkey Conflict", fsvc_warning, hwnd);
 
     switch (choice)

@@ -221,9 +221,9 @@ show_prompt:
     const auto result = g_dialog_service->show_multiple_choice_dialog(
         VIEW_DLG_UPDATE_DIALOG,
         {
-            L"Update Now",
-            L"Show Changelog",
-            L"Skip Version",
+            "Update Now",
+            "Show Changelog",
+            "Skip Version",
         },
         std::format("Mupen64 {} is available for download.", version), "Update Available", fsvc_information);
 
