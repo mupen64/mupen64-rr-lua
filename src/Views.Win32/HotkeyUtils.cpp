@@ -336,17 +336,19 @@ bool HotkeyUtils::show_prompt(const HWND hwnd, const std::wstring &caption, Hotk
     return confirmed;
 }
 
-void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::wstring &action, const Hotkey &new_hotkey,
+void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::string &action, const Hotkey &new_hotkey,
                                        const bool through_action_manager)
 {
-    const auto set_hotkey = [=](const std::wstring &action, const Hotkey &hotkey) {
+    const auto waction = IOUtils::to_wide_string(action);
+
+    const auto set_hotkey = [=](const std::string &action, const Hotkey &hotkey) {
         if (through_action_manager)
         {
             ActionManager::associate_hotkey(action, hotkey);
         }
         else
         {
-            g_config.hotkeys[action] = hotkey;
+            g_config.hotkeys[IOUtils::to_wide_string(action)] = hotkey;
         }
     };
 
@@ -356,18 +358,18 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::wstring &acti
         return;
     }
 
-    if (g_config.hotkeys.at(action) == new_hotkey)
+    if (g_config.hotkeys.at(waction) == new_hotkey)
     {
         return;
     }
 
-    std::vector<std::pair<std::wstring, Hotkey>> conflicting_hotkeys;
+    std::vector<std::pair<std::string, Hotkey>> conflicting_hotkeys;
 
     for (const auto &pair : g_config.hotkeys)
     {
-        if (pair.first != action && pair.second == new_hotkey)
+        if (pair.first != waction && pair.second == new_hotkey)
         {
-            conflicting_hotkeys.emplace_back(pair);
+            conflicting_hotkeys.emplace_back(IOUtils::to_utf8_string(pair.first), pair.second);
         }
     }
 
@@ -380,15 +382,15 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::wstring &acti
     std::string conflicting_hotkey_identifiers;
     for (const auto &action : conflicting_hotkeys | std::views::keys)
     {
-        conflicting_hotkey_identifiers += std::format("- {}\n", IOUtils::to_utf8_string(action));
+        conflicting_hotkey_identifiers += std::format("- {}\n", action);
     }
 
     const auto str = std::format("The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
                                  new_hotkey.to_string(), conflicting_hotkey_identifiers);
 
     const size_t choice = g_dialog_service->show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT,
-                                                                        {"Keep New", "Keep Old", "Proceed Anyway"},
-                                                                        str, "Hotkey Conflict", fsvc_warning, hwnd);
+                                                                        {"Keep New", "Keep Old", "Proceed Anyway"}, str,
+                                                                        "Hotkey Conflict", fsvc_warning, hwnd);
 
     switch (choice)
     {

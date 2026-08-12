@@ -20,17 +20,17 @@ namespace ActionManager
 /**
  * \brief The character used to separate segments in action paths and filters.
  */
-const std::wstring SEGMENT_SEPARATOR = L">";
+const std::string SEGMENT_SEPARATOR = ">";
 
 /**
  * \brief The suffix for action path and filters segments that are used to indicate a separator.
  */
-const std::wstring SEPARATOR_SUFFIX = L"---";
+const std::string SEPARATOR_SUFFIX = "---";
 
 /**
  * \brief The prefix for action paths that are hidden from the menu.
  */
-const std::wstring MENU_HIDDEN_PREFIX = L"#";
+const std::string MENU_HIDDEN_PREFIX = "#";
 
 /**
  * \brief An action filter that can be used to match actions in the action registry.
@@ -44,19 +44,19 @@ const std::wstring MENU_HIDDEN_PREFIX = L"#";
  * `Mupen64 > File > *` - matches "Mupen64 > File > Load ROM...", "Mupen64 > File > Recent ROMs > Load Recent Item #5",
  * etc... `Mupen64 > File` - matches nothing, because `File` has no action associated with it.
  */
-using action_filter = std::wstring;
+using action_filter = std::string;
 
 /**
  * \brief A fully-qualified action path in the format `"Category[] > Name"`.
  * An action path is a subset of the action filter that contains no wildcards and is used to uniquely identify an
  * action.
  */
-using action_path = std::wstring;
+using action_path = std::string;
 
 /**
  * \brief Represents a collection of action arguments' keys to their values.
  */
-using action_argument_map = std::unordered_map<std::wstring, std::wstring>;
+using action_argument_map = std::unordered_map<std::string, std::string>;
 
 /**
  * \brief Represents an action parameter.
@@ -66,28 +66,28 @@ struct t_action_param
     /**
      * \brief The key of the parameter.
      */
-    std::wstring key{};
+    std::string key{};
 
     /**
      * \brief The display name of the parameter.
      */
-    std::wstring name{};
+    std::string name{};
 
     /**
      * \brief A validator function that takes in a parameter value and optionally returns an error message if the
      * validation failed.
      */
-    std::function<std::optional<std::wstring>(std::wstring_view)> validator = [](const auto &) { return std::nullopt; };
+    std::function<std::optional<std::string>(std::string_view)> validator = [](const auto &) { return std::nullopt; };
 
     /**
      * \brief A function that returns the initial value of the parameter. Can be null.
      */
-    std::function<std::wstring()> get_initial_value{};
+    std::function<std::string()> get_initial_value{};
 
     /**
      * \brief A function that returns hints for the parameter based on the current input. Can be null.
      */
-    std::function<std::vector<std::wstring>(std::wstring_view)> get_hints{};
+    std::function<std::vector<std::string>(std::string_view)> get_hints{};
 };
 
 /**
@@ -125,7 +125,7 @@ struct t_action_add_params
      * \brief The function used to determine the function's display name. If null, the display name will be derived from
      * the path.
      */
-    std::function<std::wstring()> get_display_name;
+    std::function<std::string()> get_display_name;
 
     /**
      * \brief The function used to determine whether the action is enabled. If null, the action will be considered
@@ -199,7 +199,7 @@ void notify_active_changed(const action_filter &filter);
  * \param ignore_override Whether to ignore the display name override.
  * \return The action's display name or an empty string if the display name couldn't be resolved.
  */
-std::wstring get_display_name(const action_filter &filter, bool ignore_override = false);
+std::string get_display_name(const action_filter &filter, bool ignore_override = false);
 
 /**
  * \brief Gets whether an action is enabled.

@@ -322,15 +322,15 @@ template <> struct MessageData<Message::ActionRegistryChanged>
 };
 template <> struct MessageData<Message::ActionDisplayNameChanged>
 {
-    using type = std::vector<std::wstring>;
+    using type = std::vector<std::string>;
 };
 template <> struct MessageData<Message::ActionEnabledChanged>
 {
-    using type = std::vector<std::wstring>;
+    using type = std::vector<std::string>;
 };
 template <> struct MessageData<Message::ActionActiveChanged>
 {
-    using type = std::vector<std::wstring>;
+    using type = std::vector<std::string>;
 };
 
 /**

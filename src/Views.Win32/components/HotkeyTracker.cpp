@@ -39,21 +39,22 @@ static std::optional<bool> on_key(bool is_up, int32_t key)
     const auto hotkeys = g_config.hotkeys;
     for (const auto &[path, hotkey] : hotkeys)
     {
+        const auto upath = IOUtils::to_utf8_string(path);
         if (trigger == hotkey.trigger && shift == hotkey.shift && ctrl == hotkey.ctrl && alt == hotkey.alt)
         {
-            if (ActionManager::get_enabled(path) == false) continue;
+            if (!ActionManager::get_enabled(upath)) continue;
 
             // HACK: Fast Forward is a special case: we don't want it to be constantly toggled on and off because it
             // messes up flow
-            const bool release_on_repress = path != ActionManager::normalize_filter(AppActions::FAST_FORWARD);
+            const bool release_on_repress = upath != ActionManager::normalize_filter(AppActions::FAST_FORWARD);
 
-            const auto params = ActionManager::get_params(path);
+            const auto params = ActionManager::get_params(upath);
 
             // Has params: hand off to ParameterPalette.
             if (!params.empty())
-                ParameterPalette::show(path);
+                ParameterPalette::show(upath);
             else
-                ActionManager::invoke(path, is_up, release_on_repress);
+                ActionManager::invoke(upath, is_up, release_on_repress);
 
             hit = true;
         }
@@ -89,6 +90,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
         const auto hotkeys = g_config.hotkeys;
         for (const auto &[path, hotkey] : hotkeys)
         {
+            const auto upath = IOUtils::to_utf8_string(path);
             const auto vk = HotkeyUtils::trigger_to_vk(hotkey.trigger);
             if (!vk) continue;
 
@@ -103,18 +105,18 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
 
             if (down)
             {
-                const auto params = ActionManager::get_params(path);
+                const auto params = ActionManager::get_params(upath);
 
                 // Has params: hand off to ParameterPalette.
                 if (!params.empty())
-                    ParameterPalette::show(path);
+                    ParameterPalette::show(upath);
                 else
-                    ActionManager::invoke(path);
+                    ActionManager::invoke(upath);
             }
 
             if (up)
             {
-                ActionManager::invoke(path, true, true);
+                ActionManager::invoke(upath, true, true);
             }
         }
 

@@ -448,7 +448,8 @@ void Config::apply_and_save()
     ActionManager::begin_batch_work();
     for (const auto &[action, hotkey] : g_config.hotkeys)
     {
-        ActionManager::associate_hotkey(action, hotkey, true);
+        const auto uaction = IOUtils::to_utf8_string(action);
+        ActionManager::associate_hotkey(uaction, hotkey, true);
     }
     ActionManager::end_batch_work();
 

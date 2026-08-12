@@ -193,6 +193,23 @@ inline std::wstring join_wstring(const std::vector<std::wstring> &vec, std::wstr
     return s.str();
 }
 
+/**
+ * \brief Joins a vector of strings into a single string with a specified delimiter.
+ * \param vec The vector of strings to join.
+ * \param delimiter The delimiter to use between the strings.
+ * \return A single string containing all elements of the vector separated by the delimiter.
+ */
+inline std::string join_string(const std::vector<std::string> &vec, std::string_view delimiter)
+{
+    std::ostringstream s;
+    for (auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        if (it != vec.begin()) s << delimiter;
+        s << *it;
+    }
+    return s.str();
+}
+
 // STRING-KEYED MAPS
 // ==============================
 

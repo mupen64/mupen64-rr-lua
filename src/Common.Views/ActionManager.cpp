@@ -10,6 +10,7 @@
 #include <Common.Views/Messages.hpp>
 #include <microlru.h>
 #include <StrUtils.hpp>
+#include <IOUtils.hpp>
 #include <Common.Views/Config.hpp>
 #include <ranges>
 
@@ -23,10 +24,10 @@ struct t_action
 {
     t_action_add_params add_params{};
 
-    std::wstring raw_name{};
-    std::vector<std::wstring> segments{};
+    std::string raw_name{};
+    std::vector<std::string> segments{};
 
-    std::optional<std::wstring> display_name{};
+    std::optional<std::string> display_name{};
     std::optional<bool> enabled{};
     std::optional<bool> active{};
 
@@ -39,8 +40,8 @@ struct t_action_manager
     bool batched_work{};
     bool work_happened{};
     bool lock_hotkeys{};
-    MicroLRU::Cache<action_filter, std::vector<std::wstring>> segment_cache{256,
-                                                                            [](const std::vector<std::wstring> &) {}};
+    MicroLRU::Cache<action_filter, std::vector<std::string>> segment_cache{256,
+                                                                           [](const std::vector<std::string> &) {}};
     MicroLRU::Cache<action_filter, std::vector<t_action *>> filter_result_cache{256,
                                                                                 [](const std::vector<t_action *> &) {}};
 };
@@ -61,7 +62,7 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
     std::vector<t_action *> result;
 
     // Special case: pure wildcard filter, matches everything.
-    if (normalized_filter == L"*")
+    if (normalized_filter == "*")
     {
         result.reserve(g_mgr.actions.size());
         for (auto &action : g_mgr.actions)
@@ -80,7 +81,7 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
         return result;
     }
 
-    const bool has_wildcard = filter_segments.back() == L"*";
+    const bool has_wildcard = filter_segments.back() == "*";
     const size_t filter_segments_to_compare = has_wildcard ? filter_segments.size() - 1 : filter_segments.size();
 
     for (auto &action : g_mgr.actions)
@@ -127,9 +128,9 @@ static std::vector<t_action *> get_action_ptrs_matching_filter(const action_filt
  */
 static t_action *get_single_action_ptr_matching_path(const action_path &path)
 {
-    if (path.contains(L"*"))
+    if (path.contains("*"))
     {
-        g_view_logger->error(L"ActionManager::get_single_action_ptr_matching_filter: Expected path without wildcard.");
+        g_view_logger->error("ActionManager::get_single_action_ptr_matching_filter: Expected path without wildcard.");
         return nullptr;
     }
 
@@ -151,18 +152,18 @@ static t_action *get_single_action_ptr_matching_path(const action_path &path)
 /**
  * \brief Checks whether the given fully-qualified action path is valid.
  */
-static bool validate_action_path(const std::wstring &path)
+static bool validate_action_path(const std::string &path)
 {
     if (path.empty())
     {
 
-        g_view_logger->error(L"Action path cannot be empty.");
+        g_view_logger->error("Action path cannot be empty.");
         return false;
     }
 
-    if (path.find(L'>') == std::wstring::npos)
+    if (path.find(L'>') == std::string::npos)
     {
-        g_view_logger->error(L"Action path must contain at least one '>'.");
+        g_view_logger->error("Action path must contain at least one '>'.");
         return false;
     }
 
@@ -172,9 +173,9 @@ static bool validate_action_path(const std::wstring &path)
 /**
  * \brief Creates of action paths from one of action pointers.
  */
-static std::vector<std::wstring> map_action_ptrs_to_paths(const std::vector<t_action *> &actions)
+static std::vector<std::string> map_action_ptrs_to_paths(const std::vector<t_action *> &actions)
 {
-    std::vector<std::wstring> paths;
+    std::vector<std::string> paths;
     paths.reserve(actions.size());
 
     for (const auto &action : actions)
@@ -188,24 +189,23 @@ static std::vector<std::wstring> map_action_ptrs_to_paths(const std::vector<t_ac
 /**
  * \brief Updates the display names of the specified actions and returns the actions mapped to action paths.
  */
-static std::vector<std::wstring> update_display_names(const std::vector<t_action *> &actions)
+static std::vector<std::string> update_display_names(const std::vector<t_action *> &actions)
 {
     for (auto &action : actions)
     {
         const auto &name = action->segments.back();
-        std::wstring display_name = name;
+        std::string display_name = name;
 
         const bool has_separator = name.ends_with(ActionManager::SEPARATOR_SUFFIX);
         const bool has_menu_hidden_prefix = name.starts_with(ActionManager::MENU_HIDDEN_PREFIX);
 
         if (has_separator)
-            display_name =
-                StrUtils::ctrim_wstring(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
+            display_name = StrUtils::ctrim_string(name.substr(0, name.size() - ActionManager::SEPARATOR_SUFFIX.size()));
         if (has_menu_hidden_prefix)
-            display_name = StrUtils::ctrim_wstring(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
+            display_name = StrUtils::ctrim_string(display_name.substr(ActionManager::MENU_HIDDEN_PREFIX.size()));
 
         const bool has_parameters = !action->add_params.params.empty();
-        if (has_parameters) display_name = L"> " + display_name;
+        if (has_parameters) display_name = "> " + display_name;
 
         action->raw_name = display_name;
 
@@ -226,7 +226,7 @@ static std::vector<std::wstring> update_display_names(const std::vector<t_action
 /**
  * \brief Updates the enabled states of the specified actions and returns the actions mapped to action paths.
  */
-static std::vector<std::wstring> update_enabled_states(const std::vector<t_action *> &actions)
+static std::vector<std::string> update_enabled_states(const std::vector<t_action *> &actions)
 {
     for (auto &action : actions)
     {
@@ -238,7 +238,7 @@ static std::vector<std::wstring> update_enabled_states(const std::vector<t_actio
 /**
  * \brief Notifies about the active state of actions changing.
  */
-static std::vector<std::wstring> update_active_states(const std::vector<t_action *> &actions)
+static std::vector<std::string> update_active_states(const std::vector<t_action *> &actions)
 {
     for (auto &action : actions)
     {
@@ -261,14 +261,14 @@ bool ActionManager::add(const t_action_add_params &params)
 
     if (!validate_action_path(normalized_path))
     {
-        g_view_logger->error(L"ActionManager::add: Malformed action path '{}'.", normalized_path);
+        g_view_logger->error("ActionManager::add: Malformed action path '{}'.", normalized_path);
         return false;
     }
 
     // > If an action with the same path already exists, the operation will fail.
     if (get_single_action_ptr_matching_path(normalized_path) != nullptr)
     {
-        g_view_logger->error(L"ActionManager::add: Action with path '{}' already exists.", normalized_path);
+        g_view_logger->error("ActionManager::add: Action with path '{}' already exists.", normalized_path);
         return false;
     }
 
@@ -280,7 +280,7 @@ bool ActionManager::add(const t_action_add_params &params)
     for (size_t i = 0; i < segments.size(); ++i)
     {
         // a. Build the path for each segment
-        std::wstring segment_slice;
+        std::string segment_slice;
         for (size_t j = 0; j <= i; ++j)
         {
             if (j > 0)
@@ -294,7 +294,7 @@ bool ActionManager::add(const t_action_add_params &params)
         if (get_single_action_ptr_matching_path(segment_slice) != nullptr)
         {
             g_view_logger->error(
-                L"ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.",
+                "ActionManager::add: Adding '{}' would make '{}' gain a direct child, which is not allowed.",
                 normalized_path, segment_slice);
             return false;
         }
@@ -308,10 +308,11 @@ bool ActionManager::add(const t_action_add_params &params)
     g_mgr.actions.emplace_back(action);
     g_mgr.filter_result_cache.clear();
 
-    if (!g_config.hotkeys.contains(normalized_path) || !g_config.inital_hotkeys.contains(normalized_path))
+    const auto wnormalized_path = IOUtils::to_wide_string(normalized_path); // TODO: Change the entry to std::string
+    if (!g_config.hotkeys.contains(wnormalized_path) || !g_config.inital_hotkeys.contains(wnormalized_path))
     {
-        g_config.hotkeys[normalized_path] = Hotkey::make_unassigned();
-        g_config.inital_hotkeys[normalized_path] = Hotkey::make_unassigned();
+        g_config.hotkeys[wnormalized_path] = Hotkey::make_unassigned();
+        g_config.inital_hotkeys[wnormalized_path] = Hotkey::make_unassigned();
     }
 
     g_mgr.work_happened = true;
@@ -373,32 +374,33 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey &hotk
 
     if (!action)
     {
-        g_view_logger->error(L"ActionManager::associate_hotkey: '{}' didn't resolve to an action", path);
+        g_view_logger->error("ActionManager::associate_hotkey: '{}' didn't resolve to an action", path);
         return false;
     }
 
     const auto normalized_path = action->add_params.path;
 
-    RT_ASSERT(g_config.hotkeys.contains(normalized_path) && g_config.inital_hotkeys.contains(normalized_path),
+    const auto wnormalized_path = IOUtils::to_wide_string(normalized_path); // TODO: Change the entry to std::string
+    RT_ASSERT(g_config.hotkeys.contains(wnormalized_path) && g_config.inital_hotkeys.contains(wnormalized_path),
               "Action didn't have a hotkey entry.");
 
-    const bool has_assignment = g_config.hotkeys.at(normalized_path).is_assigned();
+    const bool has_assignment = g_config.hotkeys.at(wnormalized_path).is_assigned();
 
     if (overwrite_existing)
     {
         if (!has_assignment)
         {
-            g_config.inital_hotkeys[normalized_path] = hotkey;
+            g_config.inital_hotkeys[wnormalized_path] = hotkey;
         }
 
-        g_config.hotkeys[normalized_path] = hotkey;
+        g_config.hotkeys[wnormalized_path] = hotkey;
     }
     else
     {
         if (!has_assignment)
         {
-            g_config.hotkeys[normalized_path] = hotkey;
-            g_config.inital_hotkeys[normalized_path] = hotkey;
+            g_config.hotkeys[wnormalized_path] = hotkey;
+            g_config.inital_hotkeys[wnormalized_path] = hotkey;
         }
     }
 
@@ -411,7 +413,7 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey &hotk
     return true;
 }
 
-std::wstring ActionManager::get_display_name(const action_filter &filter, bool ignore_override)
+std::string ActionManager::get_display_name(const action_filter &filter, bool ignore_override)
 {
     const auto actions = get_action_ptrs_matching_filter(filter);
 
@@ -422,7 +424,7 @@ std::wstring ActionManager::get_display_name(const action_filter &filter, bool i
         auto name = get_segments(filter).back();
         if (name.ends_with(SEPARATOR_SUFFIX))
         {
-            name = StrUtils::ctrim_wstring(name.substr(0, name.size() - SEPARATOR_SUFFIX.size()));
+            name = StrUtils::ctrim_string(name.substr(0, name.size() - SEPARATOR_SUFFIX.size()));
         }
         return name;
     }
@@ -449,7 +451,7 @@ bool ActionManager::get_enabled(const action_path &path)
 
     if (!action)
     {
-        g_view_logger->error(L"ActionManager::get_action_enabled: '{}' didn't resolve to an action", path);
+        g_view_logger->error("ActionManager::get_action_enabled: '{}' didn't resolve to an action", path);
         return false;
     }
 
@@ -467,7 +469,7 @@ bool ActionManager::get_active(const action_path &path)
 
     if (!action)
     {
-        g_view_logger->error(L"ActionManager::get_action_active: '{}' didn't resolve to an action", path);
+        g_view_logger->error("ActionManager::get_action_active: '{}' didn't resolve to an action", path);
         return false;
     }
 
@@ -485,7 +487,7 @@ bool ActionManager::get_activatability(const action_path &path)
 
     if (!action)
     {
-        g_view_logger->error(L"ActionManager::get_action_activatability: '{}' didn't resolve to an action", path);
+        g_view_logger->error("ActionManager::get_action_activatability: '{}' didn't resolve to an action", path);
         return false;
     }
 
@@ -498,7 +500,7 @@ std::vector<t_action_param> ActionManager::get_params(const action_path &path)
 
     if (!action)
     {
-        g_view_logger->error(L"ActionManager::get_params: '{}' didn't resolve to an action", path);
+        g_view_logger->error("ActionManager::get_params: '{}' didn't resolve to an action", path);
         return {};
     }
 
@@ -558,18 +560,10 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
         return g_mgr.segment_cache.get(filter).value();
     }
 
-    // std::vector<action_filter> parts = StrUtils::split_wstring(filter, SEGMENT_SEPARATOR);
-    // for (auto &part : parts)
-    // {
-    //     part = MiscHelpers::trim(part);
-    // }
-
-    // std::erase_if(parts, [](const std::wstring &part) { return part.empty(); });
-
-    auto parts = StrUtils::split_wstring(filter, SEGMENT_SEPARATOR) |
-                 std::views::transform([](std::wstring_view part) { return StrUtils::ctrim_wstring(part); }) |
-                 std::views::filter([](std::wstring_view part) { return !part.empty(); }) |
-                 std::views::transform([](std::wstring_view part) { return std::wstring(part); }) |
+    auto parts = StrUtils::split_string(filter, SEGMENT_SEPARATOR) |
+                 std::views::transform([](std::string_view part) { return StrUtils::ctrim_string(part); }) |
+                 std::views::filter([](std::string_view part) { return !part.empty(); }) |
+                 std::views::transform([](std::string_view part) { return std::string(part); }) |
                  std::ranges::to<std::vector<action_filter>>();
 
     g_mgr.segment_cache.add(filter, parts);
@@ -580,7 +574,7 @@ std::vector<action_filter> ActionManager::get_segments(const action_filter &filt
 ActionManager::action_filter ActionManager::normalize_filter(const action_filter &filter)
 {
     const auto parts = get_segments(filter);
-    return StrUtils::join_wstring(parts, SEGMENT_SEPARATOR);
+    return StrUtils::join_string(parts, SEGMENT_SEPARATOR);
 }
 
 /**
@@ -602,7 +596,7 @@ static bool validate_params(const t_action &action, const action_argument_map &p
     // Mismatch in parameter count means immediate failure.
     if (params.size() != expected_param_count)
     {
-        // g_view_logger->error(L"ActionManager::validate_params: Action '{}' expected {} parameters, but got {}.",
+        // g_view_logger->error("ActionManager::validate_params: Action '{}' expected {} parameters, but got {}.",
         // action.add_params.path, expected_param_count, params.size());
         return false;
     }
@@ -614,7 +608,7 @@ static bool validate_params(const t_action &action, const action_argument_map &p
 
         if (!params.contains(param.key))
         {
-            g_view_logger->error(L"ActionManager::validate_params: Action '{}' missing parameter '{}'.",
+            g_view_logger->error("ActionManager::validate_params: Action '{}' missing parameter '{}'.",
                                  action.add_params.path, param.key);
             return false;
         }
@@ -625,7 +619,7 @@ static bool validate_params(const t_action &action, const action_argument_map &p
         const auto validation_result = param.validator(supplied_param);
         if (validation_result.has_value())
         {
-            g_view_logger->error(L"ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
+            g_view_logger->error("ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
                                  action.add_params.path, param.key, validation_result.value());
             return false;
         }
@@ -642,7 +636,7 @@ void ActionManager::invoke(const action_path &path, const bool up, const bool re
     if (!action)
     {
 
-        g_view_logger->error(L"ActionManager::invoke: '{}' didn't resolve to an action", path);
+        g_view_logger->error("ActionManager::invoke: '{}' didn't resolve to an action", path);
         return;
     }
 

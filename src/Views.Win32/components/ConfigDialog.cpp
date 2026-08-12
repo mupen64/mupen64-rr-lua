@@ -88,10 +88,8 @@ static t_options_item::data_variant parse_number_value(const std::wstring &text,
 
 std::wstring t_options_item::get_name() const
 {
-    if (type == Type::Hotkey)
-    {
-        return ActionManager::get_display_name(name, true);
-    }
+    const auto uname = IOUtils::to_utf8_string(name);
+    if (type == Type::Hotkey) return IOUtils::to_wide_string(ActionManager::get_display_name(uname, true));
     return name;
 }
 
@@ -236,7 +234,7 @@ bool t_options_item::edit(const HWND hwnd)
     case Type::Hotkey: {
         auto hotkey = std::get<Hotkey>(current_value.get());
         HotkeyUtils::show_prompt(hwnd, std::format(L"Choose a hotkey for {}", name), hotkey);
-        HotkeyUtils::try_associate_hotkey(hwnd, name, hotkey, false);
+        HotkeyUtils::try_associate_hotkey(hwnd, IOUtils::to_utf8_string(name), hotkey, false);
         return true;
     }
     case Type::Folder: {
@@ -1461,12 +1459,12 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
  */
 static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
 {
-    std::vector<std::wstring> unique_group_names;
-    const auto all_actions = ActionManager::get_actions_matching_filter(L"*");
+    std::vector<std::string> unique_group_names;
+    const auto all_actions = ActionManager::get_actions_matching_filter("*");
 
     for (const auto &path : all_actions)
     {
-        std::vector<std::wstring> segments = ActionManager::get_segments(path);
+        std::vector<std::string> segments = ActionManager::get_segments(path);
 
         if (segments.size() <= 1)
         {
@@ -1475,7 +1473,7 @@ static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
 
         segments.pop_back();
 
-        std::wstring group_name;
+        std::string group_name;
         for (size_t i = 0; i < segments.size(); ++i)
         {
             if (i > 0)
@@ -1496,7 +1494,7 @@ static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
 
     for (const auto &name : unique_group_names)
     {
-        groups.emplace_back(t_options_group{.id = base_id++, .name = name});
+        groups.emplace_back(t_options_group{.id = base_id++, .name = IOUtils::to_wide_string(name)});
     }
 
     return groups;
@@ -1622,30 +1620,32 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
     auto dynamic_option_groups = generate_hotkey_groups(g_static_option_groups.back().id + 1);
     for (auto &group : dynamic_option_groups)
     {
-        const auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group.name));
+        const auto uname = IOUtils::to_utf8_string(group.name);
+        const auto actions = ActionManager::get_actions_matching_filter(std::format("{} > *", uname));
         group.items.reserve(group.items.size() + actions.size());
 
         for (const auto &action : actions)
         {
             const auto action_segments = ActionManager::get_segments(action);
-            const auto group_segments = ActionManager::get_segments(group.name);
+            const auto group_segments = ActionManager::get_segments(uname);
 
             if (action_segments.at(action_segments.size() - 2) != group_segments.back())
             {
                 continue;
             }
 
+            const auto waction = IOUtils::to_wide_string(action);
             const t_options_item item = {
                 .type = t_options_item::Type::Hotkey,
                 .group_id = group.id,
-                .name = action,
-                .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(action); },
+                .name = waction,
+                .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(waction); },
                                                                       [=](const t_options_item::data_variant &value) {
-                                                                          g_config.hotkeys[action] =
+                                                                          g_config.hotkeys[waction] =
                                                                               std::get<Hotkey>(value);
                                                                       }),
                 .default_value =
-                    t_options_item::t_readonly_property([=] { return g_config.inital_hotkeys.at(action); }),
+                    t_options_item::t_readonly_property([=] { return g_config.inital_hotkeys.at(waction); }),
             };
 
             group.items.emplace_back(item);
@@ -1655,13 +1655,13 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
     // We beautify the names here, a bit annoying because we have to reconstruct them
     for (auto &option_group : dynamic_option_groups)
     {
-        auto segments = ActionManager::get_segments(option_group.name);
+        auto segments = ActionManager::get_segments(IOUtils::to_utf8_string(option_group.name));
         for (auto &segment : segments)
         {
             segment = ActionManager::get_display_name(segment, true);
         }
-        const auto name = StrUtils::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
-        option_group.name = name;
+        const auto name = StrUtils::join_string(segments, std::format(" {} ", ActionManager::SEGMENT_SEPARATOR));
+        option_group.name = IOUtils::to_wide_string(name);
     }
 
     std::vector<t_options_group> option_groups;

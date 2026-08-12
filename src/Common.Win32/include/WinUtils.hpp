@@ -342,10 +342,10 @@ inline std::wstring format_duration(size_t seconds)
 }
 
 /**
- * \brief Limits a wstring to a specific length, appending "..." if it exceeds the limit.
- * \param input The input wstring.
+ * \brief Limits a string to a specific length, appending "..." if it exceeds the limit.
+ * \param input The input string.
  * \param n The maximum length.
- * \return The limited wstring.
+ * \return The limited string.
  */
 [[nodiscard]] inline std::wstring limit_wstring(const std::wstring &input, const size_t n)
 {
@@ -358,6 +358,25 @@ inline std::wstring format_duration(size_t seconds)
         return std::wstring(n, L'.');
     }
     return input.substr(0, n - 3) + L"...";
+}
+
+/**
+ * \brief Limits a string to a specific length, appending "..." if it exceeds the limit.
+ * \param input The input string.
+ * \param n The maximum length.
+ * \return The limited string.
+ */
+[[nodiscard]] inline std::string limit_string(const std::string &input, const size_t n)
+{
+    if (input.size() <= n)
+    {
+        return input;
+    }
+    if (n <= 3)
+    {
+        return std::string(n, '.');
+    }
+    return input.substr(0, n - 3) + "...";
 }
 
 /**
