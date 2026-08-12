@@ -51,7 +51,7 @@ static t_config get_default_config()
 
     for (const auto &pair : get_merged_silent_mode_dialog_choices())
     {
-        config.silent_mode_dialog_choices[pair.first] = pair.second;
+        config.silent_mode_dialog_choices[pair.first] = std::to_string(pair.second);
     }
 
     return config;
@@ -360,7 +360,7 @@ static void config_patch(t_config &cfg)
         const auto key = pair.first;
         if (!cfg.silent_mode_dialog_choices.contains(key))
         {
-            cfg.silent_mode_dialog_choices[key] = pair.second;
+            cfg.silent_mode_dialog_choices[key] = std::to_string(pair.second);
         }
     }
 
