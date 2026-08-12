@@ -64,7 +64,7 @@ std::optional<std::string> WinFFmpegEncoder::start(Params params)
     m_dropped_frames = 0;
     m_last_write_was_video = false;
 
-    m_pipe = CreateNamedPipeA(NUT_PIPE_NAME.c_str(), PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
+    m_pipe = CreateNamedPipe(NUT_PIPE_NAME.c_str(), PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
                               PIPE_TYPE_BYTE | PIPE_WAIT, 1,
                               1 << 20, // 1 MB write buffer
                               0, 0, nullptr);
@@ -88,7 +88,7 @@ std::optional<std::string> WinFFmpegEncoder::start(Params params)
     memset(&m_si, 0, sizeof(m_si));
     memset(&m_pi, 0, sizeof(m_pi));
 
-    if (!CreateProcessA(g_config.ffmpeg_path.c_str(), const_cast<char *>(options.data()), nullptr, nullptr, FALSE, 0,
+    if (!CreateProcess(g_config.ffmpeg_path.c_str(), const_cast<char *>(options.data()), nullptr, nullptr, FALSE, 0,
                         nullptr, nullptr, &m_si, &m_pi))
     {
         g_view_logger->error("[WinFFmpegEncoder] CreateProcess failed ({}).", GetLastError());

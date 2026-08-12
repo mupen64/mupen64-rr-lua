@@ -80,7 +80,7 @@ ZESpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
         while (import_descriptor->Characteristics && import_descriptor->Name)
         {
             auto importDllName = (LPCSTR)((PBYTE)module + import_descriptor->Name);
-            auto importDllHandle = GetModuleHandleA(importDllName);
+            auto importDllHandle = GetModuleHandle(importDllName);
             if (importDllHandle != nullptr)
             {
                 dll_crt_free = (ZESpec::DLLCRTFREE)GetProcAddress(importDllHandle, "free");

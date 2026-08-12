@@ -91,7 +91,7 @@ static int ResizeWindow(lua_State *L)
     return 0;
 }
 
-static COLORREF StrToColorA(const std::string &s, bool alpha = false, COLORREF def = 0)
+static COLORREF StrToColor(const std::string &s, bool alpha = false, COLORREF def = 0)
 {
     if (s[0] == '#')
     {
@@ -127,10 +127,7 @@ static COLORREF StrToColorA(const std::string &s, bool alpha = false, COLORREF d
     return (alpha ? 0xFF000000 : 0x00000000) | def;
 }
 
-static COLORREF StrToColor(const std::string &s, bool alpha = false, COLORREF def = 0)
-{
-    return StrToColorA(s, alpha, def);
-}
+
 
 static int set_brush(lua_State *L)
 {
@@ -709,7 +706,7 @@ static int FillEllipseAlpha(lua_State *L)
     auto col = std::string(luaL_checkstring(L, 5));
 
     Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
-    Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
+    Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColor(col, true)));
 
     gfx.FillEllipse(&brush, x, y, w, h);
 
@@ -728,7 +725,7 @@ static int FillRectAlpha(lua_State *L)
     auto col = std::string(luaL_checkstring(L, 5));
 
     Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
-    Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColorA(col, true)));
+    Gdiplus::SolidBrush brush(Gdiplus::Color(StrToColor(col, true)));
 
     gfx.FillRectangle(&brush, x, y, w, h);
 

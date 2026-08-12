@@ -542,6 +542,7 @@ void open_console()
     freopen_s(&f, "CONOUT$", "w", stdout);
     freopen_s(&f, "CONOUT$", "w", stderr);
     SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 }
 
 static t_lua_key_event_args get_base_key_event_args()
@@ -1161,6 +1162,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 {
     enable_mitigations();
     set_error_mode();
+    setlocale(LC_ALL, ".UTF-8");
+
     g_main_ctx.wine = is_running_under_wine();
 
 #ifdef _DEBUG
