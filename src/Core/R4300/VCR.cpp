@@ -1205,7 +1205,7 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, std::opti
         file.seekg(0x222, std::ios::beg);
         file.write(author_out.data(), author_out.size());
 
-        file.seekg(0x256, std::ios::beg);
+        file.seekg(0x300, std::ios::beg);
         file.write(description_out.data(), description_out.size());
     }
 
