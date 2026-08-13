@@ -34,20 +34,6 @@ static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_cho
     return choices;
 }
 
-const t_config g_default_config = get_default_config();
-
-t_config get_default_config()
-{
-    t_config config = {};
-
-    for (const auto &pair : get_merged_silent_mode_dialog_choices())
-    {
-        config.silent_mode_dialog_choices[pair.first] = std::to_string(pair.second);
-    }
-
-    return config;
-}
-
 #pragma region JSON file parsing
 
 // READING
@@ -118,7 +104,7 @@ static bool convert_from_json(const json &j, std::map<std::string, Hotkey> &valu
 
 static void json_read_file(json &j)
 {
-    g_config = get_default_config();
+    g_config = Config::default_config();
 
 #define CORE_VALUE(name) convert_from_json(j["core"][#name], g_config.core.name);
 #define FRONTEND_VALUE(name) convert_from_json(j["frontend"][#name], g_config.name);
@@ -328,14 +314,14 @@ static void config_patch(t_config &cfg)
 {
     if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
     {
-        cfg.window_x = g_default_config.window_x;
-        cfg.window_y = g_default_config.window_y;
+        cfg.window_x = Config::default_config().window_x;
+        cfg.window_y = Config::default_config().window_y;
     }
 
     if (cfg.rombrowser_column_widths.size() < 4)
     {
         // something's malformed, fuck off and use default values
-        cfg.rombrowser_column_widths = g_default_config.rombrowser_column_widths;
+        cfg.rombrowser_column_widths = Config::default_config().rombrowser_column_widths;
     }
 
     // Causes too many issues
@@ -409,7 +395,7 @@ void Config::load()
         catch (const std::exception &e)
         {
             g_view_logger->info("[CONFIG] Failed to load config, using defaults...");
-            g_config = get_default_config();
+            g_config = Config::default_config();
             save();
         }
     }
@@ -432,13 +418,27 @@ void Config::load()
     else
     {
         g_view_logger->info("[CONFIG] Default config file does not exist. Generating...");
-        g_config = get_default_config();
+        g_config = Config::default_config();
         save();
     }
 
     config_patch(g_config);
 
     Messenger::broadcast<Messenger::Message::ConfigLoaded>();
+}
+
+const t_config &Config::default_config()
+{
+    static const t_config s_default_config = [] {
+        t_config cfg;
+        for (const auto &pair : get_merged_silent_mode_dialog_choices())
+        {
+            cfg.silent_mode_dialog_choices[pair.first] = std::to_string(pair.second);
+        }
+        return cfg;
+    }();
+
+    return s_default_config;
 }
 
 std::filesystem::path Config::rom_directory()

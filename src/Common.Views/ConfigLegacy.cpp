@@ -7,7 +7,7 @@
 #include <Common.Views/ConfigLegacy.hpp>
 #include <Common.Views/Hotkey.hpp>
 
-#pragma region ini file shenanigans
+constexpr auto FLAT_FIELD_KEY = "config";
 
 static std::string ini_cleanup_field(std::string field_name)
 {
@@ -224,7 +224,7 @@ void Config::Legacy::handle_config_ini(mINI::INIStructure &ini)
 
     // We need to fill the config with latest default values first, because some "new" fields might not exist in the
     // ini
-    g_config = get_default_config();
+    g_config = Config::default_config();
 
     HANDLE_VALUE(ignored_version)
     HANDLE_P_VALUE(theme)
@@ -321,5 +321,3 @@ void Config::Legacy::migrate_config_ini(t_config &config, const mINI::INIStructu
 {
     // no migrations currently
 }
-
-#pragma endregion

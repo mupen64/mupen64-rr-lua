@@ -680,7 +680,7 @@ std::vector<t_options_group> get_static_option_groups()
 
     t_options_group debug_group = {.id = id++, .name = "Debug"};
 
-#define RPROP(T, x) t_options_item::t_readonly_property([] { return g_default_config.x; })
+#define RPROP(T, x) t_options_item::t_readonly_property([] { return Config::default_config().x; })
 
 #define RWPROP(T, x, c)                                                                                                \
     t_options_item::t_readwrite_property([] { return g_config.x; },                                                    \

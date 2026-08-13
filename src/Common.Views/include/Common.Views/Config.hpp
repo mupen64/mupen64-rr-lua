@@ -358,7 +358,6 @@ struct t_config
 };
 
 extern t_config g_config;
-extern const t_config g_default_config;
 
 namespace Config
 {
@@ -382,6 +381,11 @@ void apply_and_save();
  * \brief Restores the config state from the config file.
  */
 void load();
+
+/**
+ * \brief Gets the default config.
+ */
+const t_config &default_config();
 
 /**
  * \brief Gets the path to the ROM directory based on the current configuration.

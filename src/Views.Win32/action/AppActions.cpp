@@ -419,7 +419,7 @@ static void multi_frame_advance_decrement()
 
 static void multi_frame_advance_reset()
 {
-    g_config.multi_frame_advance_count = g_default_config.multi_frame_advance_count;
+    g_config.multi_frame_advance_count = Config::default_config().multi_frame_advance_count;
     Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 

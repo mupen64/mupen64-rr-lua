@@ -9,13 +9,6 @@
 #include <ini.h>
 #include <Common.Views/Config.hpp>
 
-constexpr auto FLAT_FIELD_KEY = "config";
-
-/**
- * \brief Returns a config populated with default values.
- */
-t_config get_default_config();
-
 namespace Config::Legacy
 {
 
