@@ -380,7 +380,7 @@ void Config::apply_and_save()
 void Config::load()
 {
     const auto new_config_path = get_config_path();
-    const auto legacy_config_path = app_get_legacy_ini_config_path();
+    const auto legacy_config_path = IOUtils::exe_path() / "config.ini";
 
     if (std::filesystem::exists(new_config_path))
     {

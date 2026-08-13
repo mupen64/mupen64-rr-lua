@@ -37,10 +37,3 @@ std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices();
 
 // Temporary shim for 1.4.0-x -> 1.5.0 hotkey conversion
 std::optional<Hotkey> app_json_to_hotkey(const nlohmann::basic_json<> &hotkey_json);
-
-#ifdef _WIN32
-/**
- * \return The path to the legacy INI config file.
- */
-std::filesystem::path app_get_legacy_ini_config_path();
-#endif

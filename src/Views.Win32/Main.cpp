@@ -1058,11 +1058,6 @@ void app_runtime_assert_fail(std::string_view message)
     std::terminate();
 }
 
-std::filesystem::path app_get_legacy_ini_config_path()
-{
-    return g_main_ctx.app_path / "config.ini";
-}
-
 std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
 {
     return {
