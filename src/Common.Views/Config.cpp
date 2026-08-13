@@ -8,25 +8,20 @@
 #include <nlohmann/json.hpp>
 #include <IOUtils.hpp>
 #include <Common.Views/Config.hpp>
+#include <Common.Views/ConfigLegacy.hpp>
 #include <Common.Views/Messages.hpp>
 #include <m64rr/API.hpp>
 #include <Common.Views/ActionManager.hpp>
 
 using nlohmann::json;
 
-static t_config get_default_config();
-
 t_config g_config;
 
 #ifdef _M_X64
-#define LEGACY_CONFIG_FILE_NAME "config-x64.ini"
 #define CONFIG_FILE_NAME "config-x64.json"
 #else
-#define LEGACY_CONFIG_FILE_NAME "config.ini"
 #define CONFIG_FILE_NAME "config.json"
 #endif
-
-constexpr auto FLAT_FIELD_KEY = "config";
 
 static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_choices()
 {
@@ -45,7 +40,7 @@ static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_cho
 
 const t_config g_default_config = get_default_config();
 
-static t_config get_default_config()
+t_config get_default_config()
 {
     t_config config = {};
 
@@ -402,12 +397,15 @@ void Config::apply_and_save()
 
 void Config::load()
 {
-    if (std::filesystem::exists(get_config_path()))
+    const auto new_config_path = get_config_path();
+    const auto legacy_config_path = app_get_legacy_ini_config_path();
+
+    if (std::filesystem::exists(new_config_path))
     {
         json j;
         try
         {
-            std::ifstream ifs_file(get_config_path());
+            std::ifstream ifs_file(new_config_path);
             ifs_file >> j;
             json_ensure_format(j);
             json_read_file(j);
@@ -418,6 +416,22 @@ void Config::load()
             g_config = get_default_config();
             save();
         }
+    }
+    else if (std::filesystem::exists(legacy_config_path))
+    {
+        // Updating from 1.4.0-x ini config...
+        // TODO: Remove legacy config support with version 1.6.0
+        mINI::INIFile file(legacy_config_path.string());
+        mINI::INIStructure ini;
+        file.read(ini);
+
+        Config::Legacy::handle_config_ini(ini);
+        Config::Legacy::migrate_config_ini(g_config, ini);
+
+        // Change extension from `.ini` to `.ini.bak` to avoid it being read back
+        std::filesystem::path legacy_config_backup_path = legacy_config_path;
+        legacy_config_backup_path.replace_extension(legacy_config_path.extension().string() + ".bak");
+        std::filesystem::rename(legacy_config_path, legacy_config_backup_path);
     }
     else
     {

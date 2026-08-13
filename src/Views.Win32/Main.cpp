@@ -1058,6 +1058,16 @@ void app_runtime_assert_fail(std::string_view message)
     std::terminate();
 }
 
+std::filesystem::path app_get_legacy_ini_config_path()
+{
+#ifdef _M_X64
+#define LEGACY_CONFIG_FILE_NAME "config-x64.ini"
+#else
+#define LEGACY_CONFIG_FILE_NAME "config.ini"
+#endif
+    return g_main_ctx.app_path / LEGACY_CONFIG_FILE_NAME;
+}
+
 std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
 {
     return {
