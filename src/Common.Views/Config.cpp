@@ -312,11 +312,13 @@ static std::filesystem::path get_config_path()
  */
 static void config_patch(t_config &cfg)
 {
+    #ifdef _WIN32
     if (!MonitorFromPoint({cfg.window_x, cfg.window_y}, MONITOR_DEFAULTTONULL))
     {
         cfg.window_x = Config::default_config().window_x;
         cfg.window_y = Config::default_config().window_y;
     }
+    #endif
 
     if (cfg.rombrowser_column_widths.size() < 4)
     {
