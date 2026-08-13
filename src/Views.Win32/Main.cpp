@@ -1060,12 +1060,13 @@ void app_runtime_assert_fail(std::string_view message)
 
 std::filesystem::path app_get_legacy_ini_config_path()
 {
-#ifdef _M_X64
-#define LEGACY_CONFIG_FILE_NAME "config-x64.ini"
-#else
-#define LEGACY_CONFIG_FILE_NAME "config.ini"
-#endif
-    return g_main_ctx.app_path / LEGACY_CONFIG_FILE_NAME;
+    std::vector<std::filesystem::path> candidates = {
+        IOUtils::config_path() / "config.ini", // since 1.4.0-3 (newer)
+        g_main_ctx.app_path / "config.ini",    // up to 1.4.0-2 (older)
+    };
+    for (const auto &candidate : candidates)
+        if (std::filesystem::exists(candidate)) return candidate;
+    return candidates[0];
 }
 
 std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
