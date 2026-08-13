@@ -17,11 +17,7 @@ using nlohmann::json;
 
 t_config g_config;
 
-#ifdef _M_X64
-#define CONFIG_FILE_NAME "config-x64.json"
-#else
 #define CONFIG_FILE_NAME "config.json"
-#endif
 
 static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_choices()
 {
