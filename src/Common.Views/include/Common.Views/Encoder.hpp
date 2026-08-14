@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <filesystem>
+
 class Encoder
 {
   public:
@@ -48,7 +50,7 @@ class Encoder
      * \return The error message if the operation failed, or an empty optional if it succeeded. An empty error message
      * means the user cancelled the starting.
      */
-    virtual std::optional<std::wstring> start(Params params) = 0;
+    virtual std::optional<std::string> start(Params params) = 0;
 
     /**
      * \brief Stops capturing
@@ -76,5 +78,5 @@ class Encoder
      * \brief Returns the desired extension for the encoder's output file.
      * \return The desired extension.
      */
-    virtual std::wstring get_desired_extension() const = 0;
+    virtual std::string get_desired_extension() const = 0;
 };

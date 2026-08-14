@@ -6,9 +6,10 @@
 
 #pragma once
 
-#include <action/ActionManager.hpp>
+#include <Common.Views/ActionManager.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/modules/Hotkey.hpp>
+#include <IOUtils.hpp>
 
 namespace LuaCore::Action
 {
@@ -24,11 +25,11 @@ static std::pair<ActionManager::t_action_param, t_action_param_meta> check_actio
     t_action_param_meta meta{};
 
     lua_getfield(L, index, "key");
-    param.key = luaL_checkwstring(L, -1);
+    param.key = luaL_checkstring(L, -1);
     lua_pop(L, 1);
 
     lua_getfield(L, index, "name");
-    param.name = luaL_checkwstring(L, -1);
+    param.name = luaL_checkstring(L, -1);
     lua_pop(L, 1);
 
     lua_getfield(L, index, "validator");
@@ -37,19 +38,19 @@ static std::pair<ActionManager::t_action_param, t_action_param_meta> check_actio
 
     if (meta.validator)
     {
-        param.validator = [=](std::wstring_view value) -> std::optional<std::wstring> {
+        param.validator = [=](std::string_view value) -> std::optional<std::string> {
             if (!LuaManager::get_environment_for_state(L))
             {
                 return std::nullopt;
             }
 
             lua_pushcallback(L, meta.validator, false);
-            lua_pushwstring(L, std::wstring(value));
+            lua_pushstring(L, std::string(value).c_str());
             lua_pcall(L, 1, 1, 0);
 
             if (lua_isstring(L, -1))
             {
-                const auto error_msg = luaL_checkwstring(L, -1);
+                const auto error_msg = luaL_checkstring(L, -1);
                 lua_pop(L, 1);
                 return error_msg;
             }
@@ -67,16 +68,16 @@ static std::pair<ActionManager::t_action_param, t_action_param_meta> check_actio
 
     if (meta.get_initial_value)
     {
-        param.get_initial_value = [=]() -> std::wstring {
+        param.get_initial_value = [=]() -> std::string {
             if (!LuaManager::get_environment_for_state(L))
             {
-                return L"";
+                return "";
             }
 
             lua_pushcallback(L, meta.get_initial_value, false);
             lua_pcall(L, 0, 1, 0);
 
-            const auto initial_value = luaL_checkwstring(L, -1);
+            const auto initial_value = luaL_checkstring(L, -1);
             lua_pop(L, 1);
             return initial_value;
         };
@@ -88,17 +89,17 @@ static std::pair<ActionManager::t_action_param, t_action_param_meta> check_actio
 
     if (meta.get_hints)
     {
-        param.get_hints = [=](const std::wstring_view input) -> std::vector<std::wstring> {
+        param.get_hints = [=](const std::string_view input) -> std::vector<std::string> {
             if (!LuaManager::get_environment_for_state(L))
             {
                 return {};
             }
 
             lua_pushcallback(L, meta.get_hints, false);
-            lua_pushwstring(L, std::wstring(input));
+            lua_pushstring(L, std::string(input).c_str());
             lua_pcall(L, 1, 1, 0);
 
-            std::vector<std::wstring> hints;
+            std::vector<std::string> hints;
             if (lua_istable(L, -1))
             {
                 const int hints_table_index = lua_gettop(L);
@@ -106,7 +107,7 @@ static std::pair<ActionManager::t_action_param, t_action_param_meta> check_actio
                 for (int i = 1; i <= hints_count; ++i)
                 {
                     lua_geti(L, hints_table_index, i);
-                    const auto hint = luaL_checkwstring(L, -1);
+                    const auto hint = luaL_checkstring(L, -1);
                     hints.push_back(hint);
                     lua_pop(L, 1);
                 }
@@ -124,8 +125,8 @@ static void push_action_params(lua_State *L, const ActionManager::action_argumen
     lua_newtable(L);
     for (const auto &[key, value] : params)
     {
-        lua_pushwstring(L, key);
-        lua_pushwstring(L, value);
+        lua_pushstring(L, key.c_str());
+        lua_pushstring(L, value.c_str());
         lua_settable(L, -3);
     }
 }
@@ -150,8 +151,8 @@ static ActionManager::action_argument_map check_action_param_list(lua_State *L, 
             luaL_error(L, "Action parameter table must contain string-to-string entries");
         }
 
-        const auto key = IOUtils::to_wide_string(lua_tostring(L, -2));
-        const auto value = IOUtils::to_wide_string(lua_tostring(L, -1));
+        const auto key = lua_tostring(L, -2);
+        const auto value = lua_tostring(L, -1);
 
         params.emplace(key, value);
 
@@ -173,7 +174,7 @@ static std::pair<ActionManager::t_action_add_params, std::vector<t_action_param_
     ActionManager::t_action_add_params params{};
 
     lua_getfield(L, 1, "path");
-    params.path = luaL_checkwstring(L, -1);
+    params.path = luaL_checkstring(L, -1);
     lua_pop(L, 1);
 
     lua_getfield(L, 1, "params");
@@ -245,16 +246,16 @@ static std::pair<ActionManager::t_action_add_params, std::vector<t_action_param_
     auto get_display_name = lua_optcallback(L, -1);
     if (get_display_name)
     {
-        params.get_display_name = [=] -> std::wstring {
+        params.get_display_name = [=] -> std::string {
             if (!LuaManager::get_environment_for_state(L))
             {
-                return L"";
+                return "";
             }
 
             lua_pushcallback(L, get_display_name, false);
             lua_pcall(L, 0, 1, 0);
 
-            const auto display_name = luaL_checkwstring(L, -1);
+            const auto display_name = luaL_checkstring(L, -1);
 
             return display_name;
         };
@@ -357,7 +358,7 @@ static int remove(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    const auto filter = luaL_checkwstring(L, 1);
+    const auto filter = luaL_checkstring(L, 1);
 
     const auto removed_actions = ActionManager::remove(filter);
 
@@ -368,7 +369,7 @@ static int remove(lua_State *L)
         std::erase_if(lua->registered_actions,
                       [&](const auto &registered_action) { return registered_action == action; });
         lua->param_meta_map.erase(action);
-        lua_pushstring(L, IOUtils::to_utf8_string(action).c_str());
+        lua_pushstring(L, action.c_str());
         lua_seti(L, -2, i++);
     }
 
@@ -377,7 +378,7 @@ static int remove(lua_State *L)
 
 static int associate_hotkey(lua_State *L)
 {
-    const auto path = luaL_checkwstring(L, 1);
+    const auto path = luaL_checkstring(L, 1);
     const auto hotkey = Hotkey::check_hotkey(L, 2);
     const auto overwrite_existing = (bool)luaL_opt(L, lua_toboolean, 3, false);
 
@@ -401,39 +402,39 @@ static int end_batch_work(lua_State *L)
 
 static int notify_display_name_changed(lua_State *L)
 {
-    const auto filter = luaL_checkwstring(L, 1);
+    const auto filter = luaL_checkstring(L, 1);
     ActionManager::notify_display_name_changed(filter);
     return 0;
 }
 
 static int notify_enabled_changed(lua_State *L)
 {
-    const auto filter = luaL_checkwstring(L, 1);
+    const auto filter = luaL_checkstring(L, 1);
     ActionManager::notify_enabled_changed(filter);
     return 0;
 }
 
 static int notify_active_changed(lua_State *L)
 {
-    const auto filter = luaL_checkwstring(L, 1);
+    const auto filter = luaL_checkstring(L, 1);
     ActionManager::notify_active_changed(filter);
     return 0;
 }
 
 static int get_display_name(lua_State *L)
 {
-    const auto filter = luaL_checkwstring(L, 1);
+    const auto filter = luaL_checkstring(L, 1);
     const auto ignore_override = (bool)luaL_opt(L, lua_toboolean, 2, false);
 
     const auto result = ActionManager::get_display_name(filter, ignore_override);
 
-    lua_pushstring(L, IOUtils::to_utf8_string(result).c_str());
+    lua_pushstring(L, result.c_str());
     return 1;
 }
 
 static int get_enabled(lua_State *L)
 {
-    const auto path = luaL_checkwstring(L, 1);
+    const auto path = luaL_checkstring(L, 1);
 
     const auto result = ActionManager::get_enabled(path);
 
@@ -443,7 +444,7 @@ static int get_enabled(lua_State *L)
 
 static int get_active(lua_State *L)
 {
-    const auto path = luaL_checkwstring(L, 1);
+    const auto path = luaL_checkstring(L, 1);
 
     const auto result = ActionManager::get_active(path);
 
@@ -453,7 +454,7 @@ static int get_active(lua_State *L)
 
 static int get_activatability(lua_State *L)
 {
-    const auto path = luaL_checkwstring(L, 1);
+    const auto path = luaL_checkstring(L, 1);
 
     const auto result = ActionManager::get_activatability(path);
 
@@ -465,7 +466,7 @@ static int get_params(lua_State *L)
 {
     auto lua = LuaManager::get_environment_for_state(L);
 
-    const auto path = luaL_checkwstring(L, 1);
+    const auto path = luaL_checkstring(L, 1);
 
     const auto params = ActionManager::get_params(path);
     const auto normalized_path = ActionManager::normalize_filter(path);
@@ -480,10 +481,10 @@ static int get_params(lua_State *L)
 
         lua_newtable(L);
 
-        lua_pushwstring(L, param.key);
+        lua_pushstring(L, param.key.c_str());
         lua_setfield(L, -2, "key");
 
-        lua_pushwstring(L, param.name);
+        lua_pushstring(L, param.name.c_str());
         lua_setfield(L, -2, "name");
 
         lua_pushcallback(L, meta.validator, false);
@@ -503,14 +504,14 @@ static int get_params(lua_State *L)
 
 static int get_actions_matching_filter(lua_State *L)
 {
-    const auto filter = luaL_checkwstring(L, 1);
+    const auto filter = luaL_checkstring(L, 1);
     const auto actions = ActionManager::get_actions_matching_filter(filter);
 
     lua_newtable(L);
     size_t i = 1;
     for (const auto &action : actions)
     {
-        lua_pushstring(L, IOUtils::to_utf8_string(action).c_str());
+        lua_pushstring(L, action.c_str());
         lua_seti(L, -2, i++);
     }
 
@@ -519,7 +520,7 @@ static int get_actions_matching_filter(lua_State *L)
 
 static int invoke(lua_State *L)
 {
-    const auto path = luaL_checkwstring(L, 1);
+    const auto path = luaL_checkstring(L, 1);
     const auto up = (bool)luaL_opt(L, lua_toboolean, 2, false);
     const auto release_on_repress = (bool)luaL_opt(L, lua_toboolean, 3, true);
     const auto params = lua_isnoneornil(L, 4) ? ActionManager::action_argument_map{} : check_action_param_list(L, 4);

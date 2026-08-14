@@ -6,8 +6,16 @@
 
 #pragma once
 
-#include <any>
-#include <m64rr/API.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
+#include <Common.Views/Config.hpp>
+#include <m64rr/Types.hpp>
+#include <Common.Views/Messenger.hpp>
 
 namespace Messenger
 {
@@ -120,6 +128,8 @@ enum class Message
      * \brief The config has been loaded and values have changed
      */
     ConfigLoaded,
+
+    ConfigNeedsPatching,
 
     /**
      * \brief The rerecord count of the currently recorded movie changed
@@ -262,6 +272,10 @@ template <> struct MessageData<Message::ConfigLoaded>
 {
     using type = void;
 };
+template <> struct MessageData<Message::ConfigNeedsPatching>
+{
+    using type = t_config &;
+};
 template <> struct MessageData<Message::RerecordsChanged>
 {
     using type = uint64_t;
@@ -308,22 +322,16 @@ template <> struct MessageData<Message::ActionRegistryChanged>
 };
 template <> struct MessageData<Message::ActionDisplayNameChanged>
 {
-    using type = std::vector<std::wstring>;
+    using type = std::vector<std::string>;
 };
 template <> struct MessageData<Message::ActionEnabledChanged>
 {
-    using type = std::vector<std::wstring>;
+    using type = std::vector<std::string>;
 };
 template <> struct MessageData<Message::ActionActiveChanged>
 {
-    using type = std::vector<std::wstring>;
+    using type = std::vector<std::string>;
 };
-
-namespace detail
-{
-void broadcast_impl(Message message, std::any data);
-std::function<void()> subscribe_impl(Message message, std::function<void(std::any)> callback);
-} // namespace detail
 
 /**
  * \brief Broadcasts a message to all listeners
@@ -335,7 +343,15 @@ template <Message M> void broadcast(typename MessageData<M>::type data)
 {
     static_assert(!std::is_void_v<typename MessageData<M>::type>,
                   "This message does not carry data; call broadcast<M>() instead of broadcast<M>(data).");
-    detail::broadcast_impl(M, std::any(std::move(data)));
+    if constexpr (std::is_reference_v<typename MessageData<M>::type>)
+    {
+        // std::any cannot hold references, so deliver the address of the original object rather than moving from it.
+        detail::broadcast_impl(detail::make_key(M), std::any(&data));
+    }
+    else
+    {
+        detail::broadcast_impl(detail::make_key(M), std::any(std::move(data)));
+    }
 }
 
 /**
@@ -347,7 +363,7 @@ template <Message M> void broadcast()
 {
     static_assert(std::is_void_v<typename MessageData<M>::type>,
                   "This message carries data; call broadcast<M>(data) instead of broadcast<M>().");
-    detail::broadcast_impl(M, std::any{});
+    detail::broadcast_impl(detail::make_key(M), std::any{});
 }
 
 /**
@@ -362,15 +378,26 @@ template <Message M, typename F> std::function<void()> subscribe(F callback)
     if constexpr (std::is_void_v<typename MessageData<M>::type>)
     {
         static_assert(std::is_invocable_v<F>, "The callback for this message must be callable with no arguments.");
-        return detail::subscribe_impl(M, [cb = std::move(callback)](std::any) { std::invoke(cb); });
+        return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](std::any) { std::invoke(cb); });
     }
     else
     {
         using type = typename MessageData<M>::type;
         static_assert(std::is_invocable_v<F, type>,
                       "The callback for this message must be callable with its data type.");
-        return detail::subscribe_impl(
-            M, [cb = std::move(callback)](std::any data) { std::invoke(cb, std::any_cast<type>(std::move(data))); });
+        return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](std::any data) {
+            if constexpr (std::is_reference_v<type>)
+            {
+                using value_type = std::remove_reference_t<type>;
+                // Reference payloads are broadcast as a pointer to the original object; dereference to hand the
+                // callback its reference.
+                std::invoke(cb, *std::any_cast<value_type *>(data));
+            }
+            else
+            {
+                std::invoke(cb, std::any_cast<type>(std::move(data)));
+            }
+        });
     }
 }
 } // namespace Messenger

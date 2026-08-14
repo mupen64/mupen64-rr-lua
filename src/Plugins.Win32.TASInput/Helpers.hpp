@@ -36,12 +36,12 @@ static bool is_mouse_over_control(const HWND hwnd, const int id)
     return is_mouse_over_control(GetDlgItem(hwnd, id));
 }
 
-static void runtime_assert_fail(const std::wstring &message)
+static void runtime_assert_fail(const std::string &message)
 {
 #if defined(_DEBUG)
     __debugbreak();
 #endif
-    MessageBox(nullptr, message.c_str(), L"Failed Runtime Assertion", MB_ICONERROR | MB_OK);
+    MessageBox(nullptr, message.c_str(), "Failed Runtime Assertion", MB_ICONERROR | MB_OK);
     std::terminate();
 }
 

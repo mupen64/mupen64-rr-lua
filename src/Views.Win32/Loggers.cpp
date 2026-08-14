@@ -18,14 +18,14 @@ std::shared_ptr<spdlog::logger> g_rsp_logger;
 
 static std::filesystem::path get_log_path()
 {
-    return g_main_ctx.app_path / L"logs" / L"mupen.log";
+    return g_main_ctx.app_path / "logs" / "mupen.log";
 }
 
 void Loggers::init()
 {
     const auto log_path = get_log_path();
-    HANDLE h_file = CreateFile(log_path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    HANDLE h_file = CreateFile(log_path.string().c_str(), GENERIC_READ | GENERIC_WRITE,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 
     if (h_file != INVALID_HANDLE_VALUE)
     {

@@ -15,7 +15,7 @@ namespace RomBrowser
 {
 struct t_simple_rom_info
 {
-    std::wstring path;
+    std::string path;
     size_t size;
     core_rom_header header;
 };

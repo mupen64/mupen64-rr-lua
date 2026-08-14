@@ -36,6 +36,7 @@ endif()
 
 # This is the cross-platform command-line frontend, intended primarily as an integration test between plugins and frontend code.
 set(MUPEN64RR_BUILD_CLI OFF CACHE BOOL "If on, enables the CLI view (primarily for testing)")
+set(MUPEN64RR_BUILD_CLI ON)
 
 # Basic checks and setup
 # ===========================================
@@ -80,11 +81,16 @@ endif()
 # make sure pkg-config is available
 find_package(PkgConfig REQUIRED)
 
-# Core cross-platform dependencies
+# Common dependencies
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+
+# Common dependencies (pkg-config)
+pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
+pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 pkg_check_modules(lz4 IMPORTED_TARGET GLOBAL "liblz4")
 
 # libsafec (required on most runtimes to support C11 Annex K)
@@ -94,11 +100,7 @@ endif()
 
 # Windows-only dependencies
 if(MUPEN64RR_BUILD_WIN32)
-  find_package(spdlog CONFIG REQUIRED)
   find_package(glew CONFIG REQUIRED)
-
-  pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
-  pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 endif()
 
 # Lua, because Lua sucks
@@ -216,11 +218,6 @@ endfunction()
 # =======================================
 include(CTest)
 include(Catch)
-
-if(WIN32)
-  # Use UTF-16 versions of functions
-  add_compile_definitions(UNICODE _UNICODE)
-endif()
 
 if(MSVC)
   # Include linker options to:

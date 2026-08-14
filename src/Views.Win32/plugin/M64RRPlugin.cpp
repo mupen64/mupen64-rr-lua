@@ -5,11 +5,12 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <DialogService.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
+#include <Common.Views/Assert.hpp>
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
@@ -42,13 +43,13 @@ static size_t get_config_path(char *data, size_t size)
     return size + 1;
 }
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE module, std::filesystem::path path)
+std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE module, std::filesystem::path path)
 {
     const auto get_metadata = (M64RRSpec::PtrGetMetadata)GetProcAddress(module, "M64RRGetMetadata");
 
     if (!get_metadata)
     {
-        return std::make_pair(L"M64RRGetMetadata missing", nullptr);
+        return std::make_pair("M64RRGetMetadata missing", nullptr);
     }
 
     M64RRSpec::PluginMetadata metadata{};
@@ -62,7 +63,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE mod
         const std::string target_version(metadata.target_version, target_version_len);
         if (current_version != target_version)
         {
-            return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
+            return std::make_pair("Incompatible with this version of Mupen64", nullptr);
         }
     }
 
@@ -95,7 +96,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE mod
     plugin->m_meta = metadata;
 
     g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
-    return std::make_pair(L"", std::move(plugin));
+    return std::make_pair("", std::move(plugin));
 }
 
 void M64RRPlugin::config(HWND hwnd)
@@ -110,9 +111,7 @@ void M64RRPlugin::config(HWND hwnd)
         show_config(hwnd);
     else
     {
-        DialogService::show_dialog(
-            std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
-            fsvc_error, hwnd);
+        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error, hwnd);
     }
 
     if (newly_initiated)
@@ -130,7 +129,7 @@ void M64RRPlugin::test(HWND hwnd)
 
 void M64RRPlugin::about(HWND hwnd)
 {
-    MessageBox(hwnd, IOUtils::to_wide_string(m_meta.description).c_str(), L"About", MB_ICONINFORMATION | MB_OK);
+    MessageBox(hwnd, m_meta.description, "About", MB_ICONINFORMATION | MB_OK);
 }
 
 void M64RRPlugin::initiate(ZESpecFuncs &funcs)
@@ -361,7 +360,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         break;
     }
     default:
-        RT_ASSERT(false, L"Unsupported plugin type");
+        RT_ASSERT(false, "Unsupported plugin type");
         break;
     }
 

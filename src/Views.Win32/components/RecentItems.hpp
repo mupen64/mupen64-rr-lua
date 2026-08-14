@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <action/ActionManager.hpp>
+#include <Common.Views/ActionManager.hpp>
 
 /**
  * \brief A module responsible for managing recent items.
@@ -25,5 +25,5 @@ const size_t MAX_RECENT_ITEMS = 5;
  * \param val The value to add.
  * \param frozen Whether the new item shouldn't be added to the list.
  */
-void add(const ActionManager::action_filter &menu_path, std::vector<std::wstring> &vec, std::wstring val, bool frozen);
+void add(const ActionManager::action_filter &menu_path, std::vector<std::string> &vec, std::string val, bool frozen);
 } // namespace RecentMenu

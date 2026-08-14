@@ -61,11 +61,13 @@ using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
 #include <Loggers.hpp>
-#include <ViewHelpers.hpp>
+#include <WinUtils.hpp>
 #include <Main.hpp>
 #include <lua/LuaHelpers.hpp>
 #include <lua/LuaTypes.hpp>
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <ResizeAnchor.hpp>
 #include <JoystickControl.hpp>
 #include <VersionNameHelpers.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/App.hpp>

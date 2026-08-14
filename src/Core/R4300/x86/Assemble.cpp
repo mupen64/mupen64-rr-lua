@@ -81,7 +81,7 @@ void debug()
 {
 }
 
-inline void put8(unsigned char octet)
+void put8(unsigned char octet)
 {
     (*inst_pointer)[code_length] = octet;
     code_length++;
@@ -92,7 +92,7 @@ inline void put8(unsigned char octet)
     }
 }
 
-inline void put32(uint32_t dword)
+void put32(uint32_t dword)
 {
     if ((code_length + 4) >= max_code_length)
     {
@@ -103,7 +103,7 @@ inline void put32(uint32_t dword)
     code_length += 4;
 }
 
-inline void put16(uint16_t word)
+void put16(uint16_t word)
 {
     if ((code_length + 2) >= max_code_length)
     {

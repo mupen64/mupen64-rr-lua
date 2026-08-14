@@ -32,11 +32,11 @@ bool init_rsp_thread()
     for (auto &i : RSP.threadMsg)
     {
         i = CreateEvent(NULL, FALSE, FALSE, NULL);
-        RT_ASSERT(i, L"Error creating video thread message events");
+        RT_ASSERT(i, "Error creating video thread message events");
     }
 
     RSP.threadFinished = CreateEvent(NULL, FALSE, FALSE, NULL);
-    RT_ASSERT(RSP.threadFinished, L"Error creating video thread finished event");
+    RT_ASSERT(RSP.threadFinished, "Error creating video thread finished event");
 
     RSP.halt = FALSE;
 

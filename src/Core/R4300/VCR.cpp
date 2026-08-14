@@ -312,7 +312,7 @@ core_result vcr_read_movie_header(std::vector<uint8_t> buf, core_vcr_movie_heade
 
 core_result vcr_parse_header(std::filesystem::path path, core_vcr_movie_header *header)
 {
-    if (path.extension().compare(L".m64") != 0)
+    if (path.extension().compare(".m64") != 0)
     {
         return VCR_InvalidFormat;
     }
@@ -1977,10 +1977,10 @@ core_result vcr_stop_all()
 
             auto current_path = std::filesystem::path(vcr.movie_path);
 
-            current_path.replace_extension(MUPEN64_PATH_T(".m64"));
+            current_path.replace_extension(".m64");
             std::filesystem::remove(current_path);
 
-            current_path.replace_extension(MUPEN64_PATH_T(".st"));
+            current_path.replace_extension(".st");
             std::filesystem::remove(current_path);
         }
 
