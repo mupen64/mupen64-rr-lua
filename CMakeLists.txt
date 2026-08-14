@@ -229,10 +229,10 @@ include(Catch)
 # Avoid "lib" prefixes for plugins (e.g. libTASVideo.dll instead of TASVideo.dll).
 set(CMAKE_SHARED_MODULE_PREFIX "")
 
-if(WIN32)
-    # Use UTF-16 versions of functions
-    add_compile_definitions(UNICODE _UNICODE)
-endif()
+# if(WIN32)
+#     # Use UTF-16 versions of functions
+#     add_compile_definitions(UNICODE _UNICODE)
+# endif()
 
 if(MSVC)
     # Include linker options to:

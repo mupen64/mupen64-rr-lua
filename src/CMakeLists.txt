@@ -8,9 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 # USEFUL SETTINGS
 # ============================
 
-# we don't want our plugins to have the "lib" prefix
-set(CMAKE_SHARED_MODULE_PREFIX "")
-
 # COMMON LIBRARIES
 # ============================
 
