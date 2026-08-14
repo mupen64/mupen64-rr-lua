@@ -192,10 +192,9 @@ inline void memread(uint8_t **src, void *dest, const unsigned int len)
     *src += len;
 }
 
-inline bool iequals(std::wstring_view lhs, std::wstring_view rhs)
+inline bool iequals(std::string_view lhs, std::string_view rhs)
 {
-    return std::ranges::equal(lhs, rhs,
-                              [](const wchar_t a, const wchar_t b) { return std::tolower(a) == std::tolower(b); });
+    return std::ranges::equal(lhs, rhs, [](const char a, const char b) { return std::tolower(a) == std::tolower(b); });
 }
 
 inline std::string to_lower(std::string a)

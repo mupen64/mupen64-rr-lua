@@ -14,7 +14,7 @@ class M64RRPlugin : public Plugin
     using Plugin::Plugin;
     ~M64RRPlugin() override = default;
 
-    static std::pair<std::wstring, std::unique_ptr<Plugin>> create(HMODULE module, std::filesystem::path path);
+    static std::pair<std::string, std::unique_ptr<Plugin>> create(HMODULE module, std::filesystem::path path);
 
     void config(HWND hwnd) override;
     void test(HWND hwnd) override;

@@ -5,11 +5,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_executable(Mupen64RR.Views.Qt6
-    "Dialog.hpp"
     "Main.hpp"
     "Plugin.hpp"
 
-    "Dialog.cpp"
+    "DialogService.cpp"
     "Main.cpp"
     "Plugin.cpp"
 )
@@ -22,6 +21,12 @@ set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
 )
 target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.Common
+    Mupen64RR.Common.Views
     Mupen64RR.Core
     vendor::decan
 )
+
+# MinGW needs this for std::print(ln) some reason...
+if(MINGW)
+    target_link_libraries(Mupen64RR.Views.CLI PRIVATE stdc++exp)
+endif()

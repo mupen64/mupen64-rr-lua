@@ -196,14 +196,14 @@ static int LuaGetKeyNameText(lua_State *L)
         return 1;
     }
 
-    lua_pushstring(L, IOUtils::to_utf8_string(name).c_str());
+    lua_pushstring(L, name);
     return 1;
 }
 
 static int prompt(lua_State *L)
 {
-    const auto caption = luaL_optwstring(L, 1, L"input:");
-    const auto text = luaL_optwstring(L, 2, L"");
+    const auto caption = luaL_optstlstring(L, 1, "input:");
+    const auto text = luaL_optstlstring(L, 2, "");
 
     const auto result = TextEditDialog::show({.parent_hwnd = g_main_ctx.hwnd, .text = text, .caption = caption});
 
@@ -213,13 +213,13 @@ static int prompt(lua_State *L)
 
         // COMPAT: \r\n is replaced with \n. Not sure why, but we're keeping this old implementation detail.
         std::string::size_type p = 0;
-        while ((p = str.find(L"\r\n", p)) != std::string::npos)
+        while ((p = str.find("\r\n", p)) != std::string::npos)
         {
-            str.replace(p, 2, L"\n");
+            str.replace(p, 2, "\n");
             p += 1;
         }
 
-        lua_pushwstring(L, str);
+        lua_pushstlstring(L, str);
     }
     else
     {

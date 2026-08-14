@@ -4,12 +4,77 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "SettingsListView.hpp"
+#pragma once
 
-#define PROP_NAME L"slv_ctx"
+#include <windows.h>
+#include <string>
+#include <cstdint>
+#include <utility>
 
-static bool begin_listview_edit(SettingsListView::t_settings_listview_context *ctx, HWND lvhwnd)
+/**
+ * A module responsible for abstracting a settings-oriented ListView control.
+ */
+namespace SettingsListView
+{
+using t_group = std::pair<size_t, std::string>;
+using t_item = std::pair<size_t, std::string>;
+
+/**
+ * \brief The context of a SettingsListView.
+ */
+struct t_settings_listview_context
+{
+    /**
+     * \brief The instance handle of the application.
+     */
+    HINSTANCE hinstance;
+
+    /**
+     * \brief The ListView's parent dialog.
+     */
+    HWND dlg_hwnd;
+
+    /**
+     * \brief The ListView's client bounds.
+     */
+    RECT rect;
+
+    /**
+     * \brief A callback that is invoked when an item is about to be edited.
+     */
+    std::function<void(size_t index)> on_edit_start;
+
+    /**
+     * \brief The ListView's groups as a pair of group ID and group name.
+     */
+    std::vector<t_group> groups;
+
+    /**
+     * \brief The ListView's items as a pair of group ID and item name.
+     */
+    std::vector<t_item> items;
+
+    /**
+     * \brief A callback that retrieves an item's tooltip from the second column.
+     */
+    std::function<std::string(size_t index)> get_item_tooltip;
+
+    /**
+     * \brief A callback that retrieves an item's text from an arbitrary column.
+     */
+    std::function<std::string(size_t index, size_t column)> get_item_text;
+
+    /**
+     * \brief A callback that retrieves an item's image index.
+     */
+    std::function<int32_t(size_t index)> get_item_image;
+};
+
+namespace detail
+{
+#define PROP_NAME "slv_ctx"
+
+inline bool begin_listview_edit(SettingsListView::t_settings_listview_context *ctx, HWND lvhwnd)
 {
     int32_t i = ListView_GetNextItem(lvhwnd, -1, LVNI_SELECTED);
 
@@ -26,7 +91,7 @@ static bool begin_listview_edit(SettingsListView::t_settings_listview_context *c
     return true;
 }
 
-static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param, UINT_PTR,
+inline LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param, UINT_PTR,
                                        DWORD_PTR ref_data)
 {
     auto ctx = (SettingsListView::t_settings_listview_context *)ref_data;
@@ -56,7 +121,7 @@ static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM w_param, LPAR
     return DefSubclassProc(hwnd, msg, w_param, l_param);
 }
 
-HWND SettingsListView::create(const t_settings_listview_context &ctx)
+inline HWND create_impl(const t_settings_listview_context &ctx)
 {
     auto ctx2 = new t_settings_listview_context();
     *ctx2 = ctx;
@@ -65,15 +130,15 @@ HWND SettingsListView::create(const t_settings_listview_context &ctx)
         WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNTOP,
         ctx.rect.left, ctx.rect.top, ctx.rect.right - ctx.rect.left, ctx.rect.bottom - ctx.rect.top, ctx.dlg_hwnd,
-        (HMENU)IDC_SETTINGS_LV, g_main_ctx.hinst, NULL);
+        (HMENU)IDC_SETTINGS_LV, ctx.hinstance, NULL);
 
     SetProp(ctx.dlg_hwnd, PROP_NAME, ctx2);
 
     SetWindowSubclass(lvhwnd, list_view_proc, 0, (DWORD_PTR)ctx2);
 
     HIMAGELIST image_list = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 2, 0);
-    ImageList_AddMaskedFromBitmap(image_list, g_main_ctx.hinst, IDB_DENY);
-    ImageList_AddMaskedFromBitmap(image_list, g_main_ctx.hinst, IDB_CHANGED);
+    ImageList_AddMaskedFromBitmap(image_list, ctx.hinstance, IDB_DENY);
+    ImageList_AddMaskedFromBitmap(image_list, ctx.hinstance, IDB_CHANGED);
     ListView_SetImageList(lvhwnd, image_list, LVSIL_SMALL);
 
     ListView_EnableGroupView(lvhwnd, true);
@@ -88,7 +153,8 @@ HWND SettingsListView::create(const t_settings_listview_context &ctx)
 
     for (const auto &pair : ctx.groups)
     {
-        lvgroup.pszHeader = const_cast<wchar_t *>(pair.second.c_str());
+        const auto header = IOUtils::to_wide_string(pair.second);
+        lvgroup.pszHeader = const_cast<LPWSTR>(header.c_str());
         lvgroup.iGroupId = pair.first;
         ListView_InsertGroup(lvhwnd, -1, &lvgroup);
     }
@@ -96,9 +162,9 @@ HWND SettingsListView::create(const t_settings_listview_context &ctx)
     LVCOLUMN lv_column = {0};
     lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
-    lv_column.pszText = const_cast<LPWSTR>(L"Name");
+    lv_column.pszText = const_cast<LPSTR>("Name");
     ListView_InsertColumn(lvhwnd, 0, &lv_column);
-    lv_column.pszText = const_cast<LPWSTR>(L"Value");
+    lv_column.pszText = const_cast<LPSTR>("Value");
     ListView_InsertColumn(lvhwnd, 1, &lv_column);
 
     LVITEM lv_item = {0};
@@ -125,7 +191,7 @@ HWND SettingsListView::create(const t_settings_listview_context &ctx)
     return lvhwnd;
 }
 
-bool SettingsListView::notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam)
+inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam)
 {
     if (wparam != IDC_SETTINGS_LV)
     {
@@ -144,7 +210,7 @@ bool SettingsListView::notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM 
         }
         break;
     case LVN_GETDISPINFO: {
-        const auto plvdi = reinterpret_cast<NMLVDISPINFOW *>(lparam);
+        const auto plvdi = reinterpret_cast<NMLVDISPINFO *>(lparam);
         const auto i = plvdi->item.lParam;
 
         if (plvdi->item.mask & LVIF_IMAGE)
@@ -153,12 +219,11 @@ bool SettingsListView::notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM 
         }
 
         const auto text = ctx->get_item_text(i, plvdi->item.iSubItem);
-        StrNCpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
+        strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
 
         break;
     }
     case LVN_GETINFOTIP: {
-
         auto getinfotip = (LPNMLVGETINFOTIP)lparam;
 
         LVITEM item = {0};
@@ -173,7 +238,7 @@ bool SettingsListView::notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM 
             break;
         }
 
-        StrCpyNW(getinfotip->pszText, tooltip.c_str(), getinfotip->cchTextMax);
+        strncpy(getinfotip->pszText, tooltip.c_str(), getinfotip->cchTextMax);
 
         break;
     }
@@ -183,3 +248,30 @@ bool SettingsListView::notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM 
 
     return true;
 }
+
+} // namespace detail
+
+/**
+ * \brief Creates a SettingsListView.
+ * \param ctx The context of the SettingsListView.
+ * \return The handle of the created ListView.
+ */
+HWND create(const t_settings_listview_context &ctx)
+{
+    return detail::create_impl(ctx);
+}
+
+/**
+ * \brief Notifies the SettingsListView of a WM_NOTIFY message.
+ * \param dlg_hwnd The ListView's parent dialog.
+ * \param lvhwnd The ListView handle.
+ * \param lparam The window procedure's LPARAM.
+ * \param wparam The window procedure's WPARAM.
+ * \return Whether the message was handled.
+ */
+bool notify(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam)
+{
+    return detail::notify_impl(dlg_hwnd, lvhwnd, lparam, wparam);
+}
+
+} // namespace SettingsListView

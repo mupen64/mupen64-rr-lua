@@ -75,11 +75,16 @@ set(MUPEN64RR_TEST_OUT_DIR "${PROJECT_BINARY_DIR}/test/out/")
 # make sure pkg-config is available
 find_package(PkgConfig REQUIRED)
 
-# Core cross-platform dependencies
+# Common dependencies
 find_package(Catch2 CONFIG REQUIRED)
 find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+
+# Common dependencies (pkg-config)
+pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
+pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 pkg_check_modules(lz4 IMPORTED_TARGET GLOBAL "liblz4")
 
 # libsafec (required on most runtimes to support C11 Annex K)

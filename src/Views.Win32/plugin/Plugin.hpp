@@ -96,7 +96,7 @@ class Plugin
      * \return The operation status along with a pointer to the plugin. The pointer will be invalid if the first pair
      * element isn't an empty string.
      */
-    static std::pair<std::wstring, std::unique_ptr<Plugin>> create(std::filesystem::path path);
+    static std::pair<std::string, std::unique_ptr<Plugin>> create(std::filesystem::path path);
 
     Plugin() = default;
     virtual ~Plugin();
@@ -166,7 +166,7 @@ typedef struct
     /**
      * Vector of discovered plugins and their results.
      */
-    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
+    std::vector<std::pair<std::filesystem::path, std::string>> results;
 
 } t_plugin_discovery_result;
 

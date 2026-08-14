@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include "Resampler.hpp"
+#include <Common.Views/App.hpp>
+#include <Common.Views/Resampler.hpp>
 #include <speex/speex_resampler.h>
 
 const auto RESAMP_BUFFER_SIZE = 44100 * 2 * 2;

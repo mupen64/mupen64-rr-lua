@@ -18,9 +18,8 @@ set(CMAKE_SHARED_MODULE_PREFIX "")
 add_subdirectory(Common)
 # core API and headers
 add_subdirectory(Core)
-
-
-
+# shared view functions
+add_subdirectory(Common.Views)
 
 # BUNDLED PLUGINS
 # ============================

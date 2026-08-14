@@ -8,15 +8,13 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
 #include "StrUtils.hpp"
 
 #if defined(_WIN32)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
 #include <share.h>
+#include <windows.h>
 #elif defined(__linux__)
 #include <stdexcept>
 #include <cstdio>
@@ -104,16 +102,6 @@ inline int file_contents_equal(const std::filesystem::path &path1, const std::fi
     }
     return 1;
 }
-
-#ifdef _WIN32
-// Selects the platform-native path type for strings and characters.
-// This is a minor optimization for Windows which avoids the char -> wchar_t conversion at runtime.
-#define MUPEN64_PATH_T(s) L##s
-#else
-// Selects the platform-native path type for strings and characters.
-// This is a minor optimization for Windows which avoids the char -> wchar_t conversion at runtime.
-#define MUPEN64_PATH_T(s) s
-#endif
 
 // IOSTREAM UTILITIES
 // ==============================
@@ -277,13 +265,13 @@ inline std::string to_utf8_string(std::wstring_view wstr)
 }
 
 /**
- * \brief Decodes a raw ROM header name into a wide string.
+ * \brief Decodes a raw ROM header name into a string.
  * \param str Pointer to the start of the 20-byte ROM header.
  *
  * The N64 SDK specifies the header name field as JIS X 0201 / Shift-JIS. This function *will* error if the ROM header
  * is not valid Shift-JIS and may cause undefined behaviour if less than 20 bytes are available through `str`.
  */
-inline std::wstring rom_name_to_wide_string(const char str[20])
+inline std::string rom_name_to_string(const char str[20])
 {
     using namespace std::string_literals;
 
@@ -298,7 +286,7 @@ inline std::wstring rom_name_to_wide_string(const char str[20])
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "invalid UTF-8");
-        return L""s;
+        return ""s;
     }
 
     // This is the only safe way to do it, it's a bit of a shame there's no way to turn an arbitrary allocation
@@ -310,7 +298,7 @@ inline std::wstring rom_name_to_wide_string(const char str[20])
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "failed UTF-8 -> UTF-16 conversion");
-        return L""s;
+        return ""s;
     }
 
     // Trim off trailing nulls
@@ -318,8 +306,14 @@ inline std::wstring rom_name_to_wide_string(const char str[20])
     {
         output.resize(first_null);
     }
+
     // Trim to remove spaces at the end; ROM headers are typically padded to 20 characters with spaces.
-    return std::wstring{StrUtils::ctrim_wstring(output)};
+    return std::string(StrUtils::ctrim_string(IOUtils::to_utf8_string(output)));
+}
+
+inline std::string rom_name_to_string(const uint8_t str[20])
+{
+    return std::string(reinterpret_cast<const char *>(str), 20);
 }
 
 #endif
@@ -406,7 +400,7 @@ inline std::string rom_name_to_utf8(const char str[20])
 inline std::filesystem::path rom_name_to_path_component(const char str[20])
 {
 #ifdef _WIN32
-    return {rom_name_to_wide_string(str)};
+    return {rom_name_to_string(str)};
 #else
     return {rom_name_to_utf8(str)};
 #endif
@@ -419,8 +413,7 @@ inline std::filesystem::path rom_name_to_path_component(const char str[20])
 inline int path_fopen_s(FILE *&stream, const std::filesystem::path &path, const char *mode)
 {
 #ifdef _WIN32
-    auto mode_wc = to_wide_string(mode);
-    return _wfopen_s(&stream, path.c_str(), mode_wc.c_str());
+    return fopen_s(&stream, path.string().c_str(), mode);
 #else
     FILE *ptr = fopen(path.c_str(), mode);
     if (ptr == nullptr) return errno;
@@ -434,8 +427,7 @@ inline int path_fopen_s(FILE *&stream, const std::filesystem::path &path, const 
 inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mode)
 {
 #ifdef _WIN32
-    auto mode_wc = to_wide_string(mode);
-    return _wfsopen(path.c_str(), mode_wc.c_str(), _SH_DENYNO);
+    return _fsopen(path.string().c_str(), mode, _SH_DENYNO);
 #else
     // Linux file locks are opt-in.
     return fopen(path.c_str(), mode);
@@ -446,10 +438,10 @@ inline FILE *path_fopen_shared(const std::filesystem::path &path, const char *mo
 inline std::filesystem::path compute_exe_path()
 {
 #ifdef _WIN32
-    wchar_t path_buffer[MAX_PATH] = {L'\0'};
+    char path_buffer[MAX_PATH] = {0};
     DWORD rc;
 
-    rc = GetModuleFileNameW(NULL, path_buffer, sizeof(path_buffer) / sizeof(wchar_t));
+    rc = GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());
@@ -475,9 +467,9 @@ inline const std::filesystem::path &exe_path()
 inline std::filesystem::path compute_config_path()
 {
 #ifdef _WIN32
-    wchar_t path_buffer[MAX_PATH] = {L'\0'};
+    char path_buffer[MAX_PATH] = {0};
     DWORD rc;
-    rc = GetEnvironmentVariableW(L"LOCALAPPDATA", path_buffer, MAX_PATH);
+    rc = GetEnvironmentVariable("LOCALAPPDATA", path_buffer, MAX_PATH);
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());

@@ -45,5 +45,5 @@ HWND hwnd();
  * \param section The statusbar section to display the text in.
  * \remark This function is thread-safe.
  */
-void post(const std::wstring &text, Section section = Section::Notification);
+void post(const std::string &text, Section section = Section::Notification);
 } // namespace Statusbar

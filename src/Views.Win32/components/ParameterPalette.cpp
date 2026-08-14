@@ -9,7 +9,7 @@
 #include <components/CommandPalette.hpp>
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/Messages.hpp>
 #include "ParameterPalette.hpp"
 
 struct t_parameter_palette_context
@@ -48,16 +48,16 @@ static void on_page_changed()
 {
     const auto &current_param = g_ctx.ref_params[g_ctx.param_index];
 
-    SetWindowText(g_ctx.subheader_hwnd, std::format(L"{}:", current_param.name).c_str());
+    SetWindowText(g_ctx.subheader_hwnd, std::format("{}:", current_param.name).c_str());
 
     const auto param_number = g_ctx.param_index + 1;
     const auto total_params = g_ctx.ref_params.size();
-    SetWindowText(g_ctx.secondary_hwnd, std::format(L"Step {}/{}", param_number, total_params).c_str());
+    SetWindowText(g_ctx.secondary_hwnd, std::format("Step {}/{}", param_number, total_params).c_str());
 
-    const std::wstring initial_value = current_param.get_initial_value ? current_param.get_initial_value() : L"";
+    const std::string initial_value = current_param.get_initial_value ? current_param.get_initial_value() : "";
     SetWindowText(g_ctx.edit_hwnd, initial_value.c_str());
 
-    SetWindowText(g_ctx.status_hwnd, L"");
+    SetWindowText(g_ctx.status_hwnd, "");
 }
 
 /**
@@ -86,13 +86,13 @@ static bool try_apply_parameter()
     if (validation_result.has_value())
     {
         const auto validation_message = validation_result.value();
-        SetWindowText(g_ctx.status_hwnd, std::format(L"⚠️ {}", validation_message).c_str());
+        SetWindowText(g_ctx.status_hwnd, std::format("⚠️ {}", validation_message).c_str());
         return false;
     }
 
     g_ctx.filled_params[current_param.key] = input;
 
-    SetWindowText(g_ctx.status_hwnd, L"✔️ Press Enter to confirm.");
+    SetWindowText(g_ctx.status_hwnd, "✔️ Press Enter to confirm.");
 
     return true;
 }
@@ -218,7 +218,7 @@ static INT_PTR CALLBACK dlgproc(const HWND hwnd, const UINT msg, const WPARAM wp
 
         // 5. Initialize header
         const auto display_name = ActionManager::get_display_name(g_ctx.action_path);
-        SetWindowText(g_ctx.header_hwnd, std::format(L"{}", display_name).c_str());
+        SetWindowText(g_ctx.header_hwnd, std::format("{}", display_name).c_str());
 
         on_page_changed();
         update_dialog_position_and_size();
@@ -277,7 +277,7 @@ void ParameterPalette::show(const ActionManager::action_path &action_path)
     if (!g_ctx.dlg_template)
     {
         const auto result = load_resource_as_dialog_template(IDD_PARAMETER_PALETTE, &g_ctx.dlg_template);
-        RT_ASSERT(result, L"Failed to load parameter palette dialog template");
+        RT_ASSERT(result, "Failed to load parameter palette dialog template");
     }
 
     const HWND hwnd = CreateDialog(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_PARAMETER_PALETTE), g_main_ctx.hwnd, dlgproc);
