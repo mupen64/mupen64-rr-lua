@@ -10,8 +10,10 @@
 #include <sstream>
 #include <string_view>
 #include <string>
+#include <cstring>
 #include <unordered_map>
 #include <vector>
+#include <cassert>
 
 #if defined(__linux__)
 #include <strings.h>
@@ -105,12 +107,6 @@ inline auto split_string(std::string_view str, std::string_view delim)
     return split_basic_string<char>(str, delim);
 }
 
-// Returns an iterator to split `str` by `delim`.
-inline auto split_wstring(std::wstring_view str, std::wstring_view delim)
-{
-    return split_basic_string<wchar_t>(str, delim);
-}
-
 // CASE-INSENSITIVE COMPARISON
 // ==============================
 
@@ -146,7 +142,7 @@ inline std::string_view ctrim_string(std::string_view str)
 {
     using namespace std::literals;
 
-    const auto not_isspace = [](wchar_t c) { return !isspace(c); };
+    const auto not_isspace = [](char c) { return !isspace(c); };
 
     // search from the start for non-whitespace
     auto start_iter = std::ranges::find_if(str, not_isspace);
@@ -157,22 +153,6 @@ inline std::string_view ctrim_string(std::string_view str)
     if (end_iter == str2.rend()) return ""sv;
     return str2.substr(0, end_iter.base() - str2.begin());
 }
-// Trims whitespace from the start and end of a wstring_view (as determined by iswspace()).
-inline std::wstring_view ctrim_wstring(std::wstring_view str)
-{
-    using namespace std::literals;
-
-    const auto not_iswspace = [](wchar_t c) { return !iswspace(c); };
-
-    // search from the start for non-whitespace
-    auto start_iter = std::ranges::find_if(str, not_iswspace);
-    if (start_iter == str.end()) return L""sv;
-    auto str2 = str.substr(start_iter - str.begin());
-
-    auto end_iter = std::ranges::find_if(std::views::reverse(str2), not_iswspace);
-    if (end_iter == str2.rend()) return L""sv;
-    return str2.substr(0, end_iter.base() - str2.begin());
-}
 
 /**
  * \brief Joins a vector of strings into a single string with a specified delimiter.
@@ -180,9 +160,9 @@ inline std::wstring_view ctrim_wstring(std::wstring_view str)
  * \param delimiter The delimiter to use between the strings.
  * \return A single string containing all elements of the vector separated by the delimiter.
  */
-inline std::wstring join_wstring(const std::vector<std::wstring> &vec, std::wstring_view delimiter)
+inline std::string join_string(const std::vector<std::string> &vec, std::string_view delimiter)
 {
-    std::wostringstream s;
+    std::ostringstream s;
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
         if (it != vec.begin()) s << delimiter;
@@ -214,9 +194,5 @@ template <class CharT, class Traits = std::char_traits<CharT>> struct StringHash
 
 // map using std::string as the key that can perform efficient lookup with other string types.
 template <class V> using unordered_string_map = std::unordered_map<std::string, V, StringHash<char>, std::equal_to<>>;
-
-// map using std::wstring as the key that can perform efficient lookup with other string types.
-template <class V>
-using unordered_wstring_map = std::unordered_map<std::wstring, V, StringHash<wchar_t>, std::equal_to<>>;
 
 } // namespace StrUtils

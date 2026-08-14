@@ -7,8 +7,8 @@
 #include "Common.hpp"
 #include "PianoRoll.hpp"
 #include "ThreadPool.hpp"
-#include "Config.hpp"
-#include "Messenger.hpp"
+#include <Common.Views/Config.hpp>
+#include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
 
 struct piano_roll_history_state
@@ -275,36 +275,36 @@ static void set_input_value_from_column_index(CoreButtons *btn, size_t i, bool v
  * \param i The column index. Must be in the range [3, 15] inclusive.
  * \return The name of the button at the specified column index.
  */
-static const wchar_t *get_button_name_from_column_index(size_t i)
+static const char *get_button_name_from_column_index(size_t i)
 {
     switch (i)
     {
     case 4:
-        return L"A";
+        return "A";
     case 5:
-        return L"B";
+        return "B";
     case 6:
-        return L"Z";
+        return "Z";
     case 7:
-        return L"R";
+        return "R";
     case 8:
-        return L"S";
+        return "S";
     case 9:
-        return L"C^";
+        return "C^";
     case 10:
-        return L"C<";
+        return "C<";
     case 11:
-        return L"C>";
+        return "C>";
     case 12:
-        return L"Cv";
+        return "Cv";
     case 13:
-        return L"D^";
+        return "D^";
     case 14:
-        return L"D<";
+        return "D<";
     case 15:
-        return L"D>";
+        return "D>";
     case 16:
-        return L"Dv";
+        return "Dv";
     default:
         assert(false);
         return nullptr;
@@ -699,29 +699,29 @@ static void update_groupbox_status_text()
         g_main_ctx.dispatcher->invoke([=] {
             if (warp_modify_active)
             {
-                SetWindowText(piano_roll.hwnd, L"Piano Roll - Warping...");
+                SetWindowText(piano_roll.hwnd, "Piano Roll - Warping...");
                 return;
             }
 
             if (!paused)
             {
-                SetWindowText(piano_roll.hwnd, L"Piano Roll - Resumed (readonly)");
+                SetWindowText(piano_roll.hwnd, "Piano Roll - Resumed (readonly)");
                 return;
             }
 
             if (piano_roll.current_state.selected_indicies.empty())
             {
-                SetWindowText(piano_roll.hwnd, L"Piano Roll");
+                SetWindowText(piano_roll.hwnd, "Piano Roll");
             }
             else if (piano_roll.current_state.selected_indicies.size() == 1)
             {
                 SetWindowText(
                     piano_roll.hwnd,
-                    std::format(L"Piano Roll - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
+                    std::format("Piano Roll - Frame {}", piano_roll.current_state.selected_indicies[0]).c_str());
             }
             else
             {
-                SetWindowText(piano_roll.hwnd, std::format(L"Piano Roll - {} frames selected",
+                SetWindowText(piano_roll.hwnd, std::format("Piano Roll - {} frames selected",
                                                            piano_roll.current_state.selected_indicies.size())
                                                    .c_str());
             }
@@ -753,11 +753,11 @@ static void on_task_changed(core_vcr_task value)
 
         if (g_config.core.seek_savestate_interval == 0)
         {
-            SetWindowText(piano_roll.status_hwnd, L"Piano Roll read-only.\nSeek savestates must be enabled.");
+            SetWindowText(piano_roll.status_hwnd, "Piano Roll read-only.\nSeek savestates must be enabled.");
         }
         else
         {
-            SetWindowText(piano_roll.status_hwnd, L"");
+            SetWindowText(piano_roll.status_hwnd, "");
         }
 
         previous_value = value;
@@ -890,15 +890,15 @@ static LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
         HMENU h_menu = CreatePopupMenu();
         const auto base_style = piano_roll.readwrite ? MF_ENABLED : MF_DISABLED;
-        AppendMenu(h_menu, MF_STRING, 1, L"Copy\tCtrl+C");
-        AppendMenu(h_menu, base_style | MF_STRING, 2, L"Paste\tCtrl+V");
+        AppendMenu(h_menu, MF_STRING, 1, "Copy\tCtrl+C");
+        AppendMenu(h_menu, base_style | MF_STRING, 2, "Paste\tCtrl+V");
         AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
-        AppendMenu(h_menu, base_style | MF_STRING, 3, L"Undo\tCtrl+Z");
-        AppendMenu(h_menu, base_style | MF_STRING, 4, L"Redo\tCtrl+Y");
+        AppendMenu(h_menu, base_style | MF_STRING, 3, "Undo\tCtrl+Z");
+        AppendMenu(h_menu, base_style | MF_STRING, 4, "Redo\tCtrl+Y");
         AppendMenu(h_menu, MF_SEPARATOR, 0, nullptr);
-        AppendMenu(h_menu, base_style | MF_STRING, 5, L"Clear\tBackspace");
-        AppendMenu(h_menu, base_style | MF_STRING, 6, L"Delete\tDelete");
-        AppendMenu(h_menu, base_style | MF_STRING, 7, L"Insert frame\tInsert");
+        AppendMenu(h_menu, base_style | MF_STRING, 5, "Clear\tBackspace");
+        AppendMenu(h_menu, base_style | MF_STRING, 6, "Delete\tDelete");
+        AppendMenu(h_menu, base_style | MF_STRING, 7, "Insert frame\tInsert");
 
         const int offset =
             TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), hwnd, 0);
@@ -1135,14 +1135,14 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // We create all the child controls here because windows dialog scaling would mess our stuff up when mixing
         // dialog manager and manual creation
         piano_roll.hwnd = hwnd;
-        piano_roll.joy_hwnd = CreateWindowEx(WS_EX_STATICEDGE, JOYSTICK_CLASS, L"", WS_CHILD | WS_VISIBLE, 17, 30, 131,
+        piano_roll.joy_hwnd = CreateWindowEx(WS_EX_STATICEDGE, JOYSTICK_CLASS, "", WS_CHILD | WS_VISIBLE, 17, 30, 131,
                                              131, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
-        CreateWindowEx(0, WC_STATIC, L"History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,
+        CreateWindowEx(0, WC_STATIC, "History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,
                        131, 15, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
-        piano_roll.hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, L"",
+        piano_roll.hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, "",
                                               WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY,
                                               17, 186, 131, 181, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
-        piano_roll.status_hwnd = CreateWindowEx(0, WC_STATIC, L"", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT, 17, 370,
+        piano_roll.status_hwnd = CreateWindowEx(0, WC_STATIC, "", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT, 17, 370,
                                                 131, 60, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
 
         // Some controls don't get the font set by default, so we do it manually
@@ -1178,29 +1178,28 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         lv_column.fmt = LVCFMT_CENTER;
 
         // HACK: Insert and then delete dummy column to have all columns center-aligned
-        // https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-lvcolumnw#remarks
         lv_column.cx = 1;
-        lv_column.pszText = const_cast<LPWSTR>(L"");
+        lv_column.pszText = const_cast<LPSTR>("");
         ListView_InsertColumn(piano_roll.lv_hwnd, 0, &lv_column);
 
         lv_column.cx = 26;
-        lv_column.pszText = const_cast<LPWSTR>(L"");
+        lv_column.pszText = const_cast<LPSTR>("");
         ListView_InsertColumn(piano_roll.lv_hwnd, 1, &lv_column);
 
         lv_column.cx = 65;
-        lv_column.pszText = const_cast<LPWSTR>(L"Frame");
+        lv_column.pszText = const_cast<LPSTR>("Frame");
         ListView_InsertColumn(piano_roll.lv_hwnd, 2, &lv_column);
 
         lv_column.cx = 40;
-        lv_column.pszText = const_cast<LPWSTR>(L"X");
+        lv_column.pszText = const_cast<LPSTR>("X");
         ListView_InsertColumn(piano_roll.lv_hwnd, 3, &lv_column);
-        lv_column.pszText = const_cast<LPWSTR>(L"Y");
+        lv_column.pszText = const_cast<LPSTR>("Y");
         ListView_InsertColumn(piano_roll.lv_hwnd, 4, &lv_column);
 
         lv_column.cx = 30;
         for (int i = 4; i <= 15; ++i)
         {
-            lv_column.pszText = const_cast<LPWSTR>(get_button_name_from_column_index(i));
+            lv_column.pszText = const_cast<LPSTR>(get_button_name_from_column_index(i));
             ListView_InsertColumn(piano_roll.lv_hwnd, i + 1, &lv_column);
         }
 
@@ -1345,19 +1344,26 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
                 break;
             }
-            case 1:
-                StrNCpy(plvdi->item.pszText, std::to_wstring(plvdi->item.iItem).c_str(), plvdi->item.cchTextMax);
+            case 1: {
+                const auto text = std::to_string(plvdi->item.iItem);
+                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
                 break;
-            case 2:
-                StrNCpy(plvdi->item.pszText, std::to_wstring(input.x).c_str(), plvdi->item.cchTextMax);
+            }
+            case 2: {
+                const auto text = std::to_string(input.x);
+                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
                 break;
-            case 3:
-                StrNCpy(plvdi->item.pszText, std::to_wstring(input.y).c_str(), plvdi->item.cchTextMax);
+            }
+            case 3: {
+                const auto text = std::to_string(input.y);
+                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
                 break;
+            }
             default: {
                 auto value = get_input_value_from_column_index(input, plvdi->item.iSubItem);
                 auto name = get_button_name_from_column_index(plvdi->item.iSubItem);
-                StrNCpy(plvdi->item.pszText, value ? name : L"", plvdi->item.cchTextMax);
+                const auto text = std::string(value ? name : "");
+                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
                 break;
             }
             }

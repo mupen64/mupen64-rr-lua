@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <Messenger.hpp>
+#include <Common.Views/Messages.hpp>
 #include <components/FilePicker.hpp>
 #include <components/ReorderableListView.hpp>
 #include <lua/LuaManager.hpp>
@@ -20,10 +20,10 @@ struct t_instance_context
 {
     HWND hwnd{};
     std::filesystem::path typed_path{};
-    std::wstring logs{};
+    std::string logs{};
     t_lua_environment *env{};
 
-    [[nodiscard]] bool trusted() const { return g_config.trusted_lua_paths.contains(typed_path); }
+    [[nodiscard]] bool trusted() const { return g_config.trusted_lua_paths.contains(typed_path.string()); }
 };
 
 struct t_dialog_state
@@ -64,7 +64,7 @@ static void update_config_paths()
 
     for (const auto &ctx : g_lua_instance_wnd_ctxs)
     {
-        g_config.lua_paths.insert(g_config.lua_paths.begin(), ctx->typed_path);
+        g_config.lua_paths.insert(g_config.lua_paths.begin(), ctx->typed_path.string());
     }
 }
 
@@ -85,7 +85,7 @@ static void select_instance(const t_instance_context &ctx)
 /**
  * \brief Prints text to an instance.
  */
-static void print(t_instance_context &ctx, const std::wstring &text)
+static void print(t_instance_context &ctx, const std::string &text)
 {
     constexpr auto max_buffer = 0x7000;
 
@@ -149,7 +149,7 @@ static void start(t_instance_context &ctx, const std::filesystem::path &path)
 
             PostMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
         },
-        [](const t_lua_environment *env, const std::wstring &text) {
+        [](const t_lua_environment *env, const std::string &text) {
             const auto ctx = get_instance_context(env);
             if (!ctx)
             {
@@ -321,7 +321,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
 
         ctx->hwnd = hwnd;
 
-        Edit_SetText(GetDlgItem(hwnd, IDC_PATH), ctx->typed_path.c_str());
+        Edit_SetText(GetDlgItem(hwnd, IDC_PATH), ctx->typed_path.string().c_str());
         Edit_SetText(GetDlgItem(hwnd, IDC_LOG), ctx->logs.c_str());
 
         PostMessage(hwnd, MUPM_RUNNING_STATE_CHANGED, 0, 0);
@@ -341,7 +341,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
         const auto start_hwnd = GetDlgItem(hwnd, IDC_START);
         const auto stop_hwnd = GetDlgItem(hwnd, IDC_STOP);
 
-        Button_SetText(start_hwnd, running ? L"Restart" : L"Start");
+        Button_SetText(start_hwnd, running ? "Restart" : "Start");
         Button_Enable(stop_hwnd, running);
 
         break;
@@ -350,7 +350,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
         switch (LOWORD(wparam))
         {
         case IDC_BROWSE: {
-            const auto path = FilePicker::show_open_dialog(L"o_lua", hwnd, L"*.lua");
+            const auto path = FilePicker::show_open_dialog("o_lua", hwnd, "*.lua");
             if (path.empty())
             {
                 break;
@@ -358,7 +358,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
 
             ctx->typed_path = path;
 
-            Edit_SetText(GetDlgItem(hwnd, IDC_PATH), path.c_str());
+            Edit_SetText(GetDlgItem(hwnd, IDC_PATH), path.string().c_str());
             SendMessage(g_dlg.mgr_hwnd, MUPM_REBUILD_INSTANCE_LIST, 0, 0);
 
             break;
@@ -372,7 +372,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
             stop(*ctx);
             break;
         case IDC_CLEAR:
-            ctx->logs = L"";
+            ctx->logs = "";
             Edit_SetText(GetDlgItem(hwnd, IDC_LOG), ctx->logs.c_str());
             break;
         default:
@@ -390,18 +390,18 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
                 GetCursorPos(&pt);
 
                 HMENU h_menu = CreatePopupMenu();
-                AppendMenu(h_menu, MF_STRING | (ctx->trusted() ? MF_CHECKED : 0), 1, L"Trusted Mode");
+                AppendMenu(h_menu, MF_STRING | (ctx->trusted() ? MF_CHECKED : 0), 1, "Trusted Mode");
                 const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, pt.x, pt.y, hwnd, nullptr);
 
                 if (offset == 1)
                 {
                     if (ctx->trusted())
                     {
-                        g_config.trusted_lua_paths.erase(ctx->typed_path);
+                        g_config.trusted_lua_paths.erase(ctx->typed_path.string());
                     }
                     else
                     {
-                        g_config.trusted_lua_paths[ctx->typed_path] = L"";
+                        g_config.trusted_lua_paths[ctx->typed_path.string()] = "";
                     }
                 }
 
@@ -434,7 +434,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         LVCOLUMN lv_column = {0};
         lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
-        lv_column.pszText = const_cast<LPWSTR>(L"Scripts");
+        lv_column.pszText = const_cast<char *>("Scripts");
         ListView_InsertColumn(g_dlg.lv_hwnd, 0, &lv_column);
 
         RECT lv_rc{};
@@ -521,12 +521,12 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
 
         HMENU h_menu = CreatePopupMenu();
         const int disable_if_stopped = selected_ctx->env ? MF_ENABLED : MF_DISABLED;
-        AppendMenu(h_menu, MF_STRING, 1, selected_ctx->env ? L"Restart" : L"Start");
-        AppendMenu(h_menu, disable_if_stopped | MF_STRING, 2, L"Stop");
-        AppendMenu(h_menu, MF_STRING, 3, L"Remove");
-        AppendMenu(h_menu, MF_SEPARATOR, 4, L"");
-        AppendMenu(h_menu, MF_STRING, 5, L"Stop All");
-        AppendMenu(h_menu, MF_STRING, 6, L"Add Recent Scripts");
+        AppendMenu(h_menu, MF_STRING, 1, selected_ctx->env ? "Restart" : "Start");
+        AppendMenu(h_menu, disable_if_stopped | MF_STRING, 2, "Stop");
+        AppendMenu(h_menu, MF_STRING, 3, "Remove");
+        AppendMenu(h_menu, MF_SEPARATOR, 4, "");
+        AppendMenu(h_menu, MF_STRING, 5, "Stop All");
+        AppendMenu(h_menu, MF_STRING, 6, "Add Recent Scripts");
 
         const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(lparam),
                                             GET_Y_LPARAM(lparam), hwnd, nullptr);
@@ -564,7 +564,7 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
         switch (LOWORD(wparam))
         {
         case IDC_ADD_INSTANCE: {
-            const auto path = FilePicker::show_open_dialog(L"o_lua_instance", hwnd, L"*.lua");
+            const auto path = FilePicker::show_open_dialog("o_lua_instance", hwnd, "*.lua");
             if (path.empty())
             {
                 break;
@@ -587,19 +587,19 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
             switch (plvdi->item.iSubItem)
             {
             case 0: {
-                std::wstring display_name;
+                std::string display_name;
                 if (ctx->env)
                 {
-                    display_name += L"* ";
+                    display_name += "* ";
                 }
                 const auto &effective_path = ctx->env ? ctx->env->path : ctx->typed_path;
-                display_name += effective_path.filename().wstring();
+                display_name += effective_path.filename().string();
                 if (ctx->trusted())
                 {
-                    display_name += L" (trusted)";
+                    display_name += " (trusted)";
                 }
 
-                StrNCpy(plvdi->item.pszText, display_name.c_str(), plvdi->item.cchTextMax);
+                strncpy(plvdi->item.pszText, display_name.c_str(), plvdi->item.cchTextMax);
                 break;
             }
             default:
@@ -738,7 +738,7 @@ void LuaDialog::load_running_scripts()
     g_dlg.stored_contexts.clear();
 }
 
-void LuaDialog::print(const t_lua_environment &ctx, const std::wstring &text)
+void LuaDialog::print(const t_lua_environment &ctx, const std::string &text)
 {
     // Find the context for the given Lua environment
     for (const auto &wnd_ctx : g_lua_instance_wnd_ctxs)

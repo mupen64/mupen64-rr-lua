@@ -5,8 +5,8 @@
  */
 
 #include "Main.hpp"
-#include "Dialog.hpp"
 #include "Plugin.hpp"
+#include <Common.Views/App.hpp>
 #include <future>
 #include <iostream>
 #include <print>
@@ -77,9 +77,17 @@ static void init_core()
         return s_backups_path;
     };
     g_core_params.get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
-    g_core_params.show_multiple_choice_dialog = DialogService::show_multiple_choice_dialog;
-    g_core_params.show_ask_dialog = DialogService::show_ask_dialog;
-    g_core_params.show_dialog = DialogService::show_dialog;
+    g_core_params.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
+                                                   const char *str, const char *title, const core_dialog_type type) {
+        return DialogService::show_multiple_choice_dialog(id, choices, str,
+                                                          title ? std::make_optional(title) : std::nullopt, type);
+    };
+    g_core_params.show_ask_dialog = [](std::string_view id, const char *str, const char *title, const bool warning) {
+        return DialogService::show_ask_dialog(id, str, title ? std::make_optional(title) : std::nullopt, warning);
+    };
+    g_core_params.show_dialog = [](const char *str, const char *title, const core_dialog_type type) {
+        DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
+    };
     g_core_params.get_plugin_names = PluginUtil::get_plugin_names;
 
     core_create(&g_core_params, &g_core_ctx);

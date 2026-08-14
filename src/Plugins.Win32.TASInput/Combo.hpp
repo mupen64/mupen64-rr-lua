@@ -42,7 +42,7 @@ struct t_combo
      * \param data The byte array to deserialize.
      * \return The deserialized combo, or an error message if the data is malformed.
      */
-    [[nodiscard]] static std::variant<t_combo, std::wstring> deserialize(const std::span<uint8_t> &data);
+    [[nodiscard]] static std::variant<t_combo, std::string> deserialize(const std::span<uint8_t> &data);
 
     /**
      * \brief Serializes a vector of combos to a byte array.

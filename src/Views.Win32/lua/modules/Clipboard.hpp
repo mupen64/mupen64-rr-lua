@@ -10,21 +10,21 @@
 
 namespace LuaCore::Clipboard
 {
-const std::vector<std::pair<std::wstring, int32_t>> KNOWN_TYPES = {{L"text", CF_UNICODETEXT}};
+const std::vector<std::pair<std::string, int32_t>> KNOWN_TYPES = {{"text", CF_TEXT}};
 
-static int32_t validate_type(lua_State *L, const std::wstring &type)
+static int32_t validate_type(lua_State *L, const std::string &type)
 {
     const auto it = std::ranges::find_if(KNOWN_TYPES, [&](const auto &pair) { return pair.first == type; });
     if (it == KNOWN_TYPES.end())
     {
-        luaL_error(L, "Unknown clipboard type: %s", IOUtils::to_utf8_string(type).c_str());
+        luaL_error(L, "Unknown clipboard type: %s", type.c_str());
     }
     return it->second;
 }
 
 static int get(lua_State *L)
 {
-    const auto type = luaL_checkwstring(L, 1);
+    const auto type = luaL_checkstlstring(L, 1);
 
     const int32_t clipboard_type = validate_type(L, type);
 
@@ -56,10 +56,9 @@ static int get(lua_State *L)
         return 1;
     }
 
-    if (type == L"text")
+    if (type == "text")
     {
-        const std::wstring text = (LPCWSTR)cb_data;
-        lua_pushstring(L, IOUtils::to_utf8_string(text).c_str());
+        lua_pushstring(L, static_cast<const char *>(cb_data));
     }
     else
     {
@@ -81,7 +80,7 @@ static int get_content_type(lua_State *L)
             continue;
         }
 
-        lua_pushstring(L, IOUtils::to_utf8_string(name).c_str());
+        lua_pushstring(L, name.c_str());
         return 1;
     }
 
@@ -91,7 +90,7 @@ static int get_content_type(lua_State *L)
 
 static int set(lua_State *L)
 {
-    const auto type = luaL_checkwstring(L, 1);
+    const auto type = luaL_checkstlstring(L, 1);
 
     const int32_t clipboard_type = validate_type(L, type);
 
@@ -111,13 +110,13 @@ static int set(lua_State *L)
     void *src_data;
     size_t src_data_size;
 
-    if (type == L"text")
+    if (type == "text")
     {
-        const auto str = luaL_checkwstring(L, 2);
+        const auto str = luaL_checkstlstring(L, 2);
 
-        src_data_size = (str.size() + 1) * sizeof(wchar_t);
-        src_data = calloc(str.size() + 1, sizeof(wchar_t));
-        memcpy(src_data, str.c_str(), str.size() * sizeof(wchar_t));
+        src_data_size = str.size() + 1;
+        src_data = calloc(str.size() + 1, sizeof(char));
+        memcpy(src_data, str.c_str(), str.size());
     }
     else
     {

@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <Common.Views/Assert.hpp>
+
 /**
  * \brief A module responsible for implementing configuration dialogs.
  */
@@ -26,7 +28,7 @@ struct t_options_item
         Folder,
     };
 
-    typedef std::variant<int32_t, double, std::wstring, Hotkey::t_hotkey> data_variant;
+    typedef std::variant<int32_t, double, std::string, Hotkey> data_variant;
 
     struct t_readonly_property
     {
@@ -60,23 +62,23 @@ struct t_options_item
     /**
      * The option's display name.
      */
-    std::wstring name{};
+    std::string name{};
 
     /**
      * The option's tooltip, or an empty string if no tooltip is set.
      */
-    std::wstring tooltip{};
+    std::string tooltip{};
 
     t_readwrite_property current_value;
 
     t_readonly_property initial_value = t_readonly_property([] -> data_variant {
-        RT_ASSERT(false, L"Initial value not set for option");
+        RT_ASSERT(false, "Initial value not set for option");
         return data_variant{};
     });
 
     t_readonly_property default_value;
 
-    std::vector<std::pair<std::wstring, int32_t>> possible_values = {};
+    std::vector<std::pair<std::string, int32_t>> possible_values;
 
     /**
      * Function which returns whether the option can be changed. Useful for values which shouldn't be changed during
@@ -87,12 +89,12 @@ struct t_options_item
     /**
      * Gets the name of the option item.
      */
-    [[nodiscard]] std::wstring get_name() const;
+    [[nodiscard]] std::string get_name() const;
 
     /**
      * Gets the value name for the current backing data, or a fallback name if no match is found.
      */
-    [[nodiscard]] std::wstring get_value_name() const;
+    [[nodiscard]] std::string get_value_name() const;
 
     /**
      * Resets the value of the option to the default value.
@@ -102,7 +104,7 @@ struct t_options_item
     /**
      * \brief Gets neatly formatted information about the option.
      */
-    std::wstring get_friendly_info() const;
+    std::string get_friendly_info() const;
 
     /**
      * \brief Prompts the user to edit the option value.
@@ -125,7 +127,7 @@ struct t_options_group
     /**
      * The group's name.
      */
-    std::wstring name;
+    std::string name;
 
     /**
      * \brief The options that belong to this group.

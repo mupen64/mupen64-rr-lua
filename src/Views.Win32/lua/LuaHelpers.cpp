@@ -37,16 +37,16 @@ void lua_print_stack(lua_State *L)
     const int top = lua_gettop(L);
     for (int i = 1; i <= top; ++i)
     {
-        std::wstring str = std::format(L"{}: ", IOUtils::to_wide_string(luaL_typename(L, i)));
+        std::string str = std::format("{}: ", luaL_typename(L, i));
 
         lua_getglobal(L, "tostringex");
         lua_pushvalue(L, i);
         lua_pcall(L, 1, 1, 0);
         const char *s = lua_tostring(L, -1);
-        str += IOUtils::to_wide_string(s ? s : "(nil)");
+        str += s ? s : "(nil)";
         lua_pop(L, 1);
 
-        g_view_logger->debug(L"stack[{}]: {}", i, str);
+        g_view_logger->debug("stack[{}]: {}", i, str);
     }
 }
 
@@ -86,7 +86,7 @@ void lua_freecallback(lua_State *L, uintptr_t *token)
     delete token;
 }
 
-std::wstring luaL_checkwstring(lua_State *L, int i)
+std::string luaL_checkstlstring(lua_State *L, int i)
 {
     if (!lua_isstring(L, i))
     {
@@ -99,23 +99,22 @@ std::wstring luaL_checkwstring(lua_State *L, int i)
         luaL_error(L, "Expected a string at argument %d", i);
     }
 
-    return IOUtils::to_wide_string(str);
+    return str;
 }
 
-std::wstring luaL_optwstring(lua_State *L, int i, const std::wstring &def)
+std::string luaL_optstlstring(lua_State *L, int i, const std::string &def)
 {
     if (lua_isnoneornil(L, i))
     {
         return def;
     }
 
-    return luaL_checkwstring(L, i);
+    return luaL_checkstlstring(L, i);
 }
 
-std::wstring lua_pushwstring(lua_State *L, const std::wstring &str)
+std::string lua_pushstlstring(lua_State *L, const std::string &str)
 {
-    const auto s = IOUtils::to_utf8_string(str);
-    lua_pushstring(L, s.c_str());
+    lua_pushstring(L, str.c_str());
     return str;
 }
 

@@ -5,12 +5,12 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <uxtheme.h>
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/Messages.hpp>
 
 namespace RomBrowser
 {
@@ -68,13 +68,13 @@ std::vector<std::filesystem::path> discover_roms()
 
     // logically this should be bundled into the filter pipeline but I'm too lazy
     std::ranges::copy_if(rom_paths, std::back_inserter(filtered_rom_paths), [&](const auto &val) {
-        wchar_t c_extension[_MAX_EXT] = {0};
-        if (_wsplitpath_s(val.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
+        char c_extension[_MAX_EXT] = {0};
+        if (_splitpath_s(val.string().c_str(), nullptr, 0, nullptr, 0, nullptr, 0, c_extension, _countof(c_extension)))
         {
             return false;
         }
-        const bool is_rom = MiscHelpers::iequals(c_extension, L".z64") || MiscHelpers::iequals(c_extension, L".n64") ||
-                            MiscHelpers::iequals(c_extension, L".v64") || MiscHelpers::iequals(c_extension, L".rom");
+        const bool is_rom = MiscHelpers::iequals(c_extension, ".z64") || MiscHelpers::iequals(c_extension, ".n64") ||
+                            MiscHelpers::iequals(c_extension, ".v64") || MiscHelpers::iequals(c_extension, ".rom");
         return is_rom && seen_rom_paths.insert(val).second;
     });
     return filtered_rom_paths;
@@ -164,15 +164,15 @@ void rombrowser_create()
     lv_column.cx = g_config.rombrowser_column_widths[0];
     ListView_InsertColumn(g_ctx.hwnd, 0, &lv_column);
 
-    lv_column.pszText = const_cast<LPWSTR>(L"Name");
+    lv_column.pszText = const_cast<LPSTR>("Name");
     lv_column.cx = g_config.rombrowser_column_widths[1];
     ListView_InsertColumn(g_ctx.hwnd, 1, &lv_column);
 
-    lv_column.pszText = const_cast<LPWSTR>(L"Filename");
+    lv_column.pszText = const_cast<LPSTR>("Filename");
     lv_column.cx = g_config.rombrowser_column_widths[2];
     ListView_InsertColumn(g_ctx.hwnd, 2, &lv_column);
 
-    lv_column.pszText = const_cast<LPWSTR>(L"Size");
+    lv_column.pszText = const_cast<LPSTR>("Size");
     lv_column.cx = g_config.rombrowser_column_widths[3];
     ListView_InsertColumn(g_ctx.hwnd, 3, &lv_column);
 
@@ -240,14 +240,14 @@ static void build_impl()
             const auto &path = rom_paths[j];
 
             FILE *f = nullptr;
-            if (_wfopen_s(&f, path.c_str(), L"rb")) continue;
+            if (fopen_s(&f, path.string().c_str(), "rb")) continue;
 
             fseek(f, 0, SEEK_END);
             size_t len = ftell(f);
             fseek(f, 0, SEEK_SET);
 
             t_simple_rom_info entry{};
-            entry.path = path;
+            entry.path = path.string();
             entry.size = len;
 
             if (len > sizeof(core_rom_header))
@@ -362,22 +362,20 @@ notify(LPARAM lparam)
         switch (plvdi->item.iSubItem)
         {
         case 1: {
-
-            StrNCpy(plvdi->item.pszText,
-                    IOUtils::rom_name_to_wide_string((const char *)rombrowser_entry.header.nom).c_str(),
-                    plvdi->item.cchTextMax);
+            const auto rom_name = IOUtils::rom_name_to_string((const char *)rombrowser_entry.header.nom);
+            strncpy(plvdi->item.pszText, rom_name.c_str(), plvdi->item.cchTextMax);
             break;
         }
         case 2: {
-            wchar_t filename[MAX_PATH] = {0};
-            _wsplitpath_s(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr,
-                          0);
-            StrNCpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
+            char filename[MAX_PATH] = {0};
+            _splitpath_s(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr,
+                         0);
+            strncpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
             break;
         }
         case 3: {
-            const auto size = std::to_wstring(rombrowser_entry.size / (1024 * 1024)) + L" MB";
-            StrNCpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
+            const auto size = std::format("{} MB", rombrowser_entry.size / (1024 * 1024));
+            strncpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
             break;
         }
         default:
@@ -414,9 +412,9 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
     for (auto rom_path : rom_paths)
     {
         FILE *f = nullptr;
-        if (_wfopen_s(&f, rom_path.c_str(), L"rb"))
+        if (fopen_s(&f, rom_path.string().c_str(), "rb"))
         {
-            g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+            g_view_logger->info("[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.string());
             continue;
         }
 
@@ -444,7 +442,7 @@ std::filesystem::path find_available_rom(const std::function<bool(const core_rom
         fclose(f);
     }
 
-    return L"";
+    return "";
 }
 
 std::vector<std::filesystem::path> find_available_roms(const std::function<bool(const core_rom_header &)> &predicate)
@@ -454,9 +452,9 @@ std::vector<std::filesystem::path> find_available_roms(const std::function<bool(
     for (auto rom_path : rom_paths)
     {
         FILE *f = nullptr;
-        if (_wfopen_s(&f, rom_path.c_str(), L"rb"))
+        if (fopen_s(&f, rom_path.string().c_str(), "rb"))
         {
-            g_view_logger->info(L"[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.c_str());
+            g_view_logger->info("[Rombrowser] Failed to read file '{}'. Skipping!\n", rom_path.string());
             continue;
         }
 

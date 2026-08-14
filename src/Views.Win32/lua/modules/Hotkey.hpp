@@ -8,15 +8,18 @@
 
 #include <lua/LuaDialog.hpp>
 #include <lua/LuaManager.hpp>
+#include <Common.Views/Hotkey.hpp>
+#include <HotkeyUtils.hpp>
 
 namespace LuaCore::Hotkey
 {
-static void push_hotkey(lua_State *L, const ::Hotkey::t_hotkey &hotkey)
+static void push_hotkey(lua_State *L, const ::Hotkey &hotkey)
 {
     lua_newtable(L);
 
+    // COMPAT
     lua_pushstring(L, "key");
-    lua_pushinteger(L, hotkey.key);
+    lua_pushinteger(L, *HotkeyUtils::trigger_to_vk(hotkey.trigger));
     lua_settable(L, -3);
 
     lua_pushstring(L, "ctrl");
@@ -31,14 +34,15 @@ static void push_hotkey(lua_State *L, const ::Hotkey::t_hotkey &hotkey)
     lua_pushboolean(L, hotkey.alt);
     lua_settable(L, -3);
 
+    // COMPAT
     lua_pushstring(L, "assigned");
-    lua_pushboolean(L, hotkey.assigned);
+    lua_pushboolean(L, hotkey.is_assigned());
     lua_settable(L, -3);
 }
 
-static ::Hotkey::t_hotkey check_hotkey(lua_State *L, int i)
+static ::Hotkey check_hotkey(lua_State *L, int i)
 {
-    auto hotkey = ::Hotkey::t_hotkey::make_empty();
+    auto hotkey = ::Hotkey::make_empty();
 
     if (!lua_istable(L, i))
     {
@@ -46,8 +50,10 @@ static ::Hotkey::t_hotkey check_hotkey(lua_State *L, int i)
         return hotkey;
     }
 
+    // COMPAT
     lua_getfield(L, i, "key");
-    hotkey.key = luaL_opt(L, lua_tointeger, -1, 0);
+    const auto vk = luaL_opt(L, lua_tointeger, -1, 0);
+    hotkey.trigger = *HotkeyUtils::vk_to_trigger(vk);
     lua_pop(L, 1);
 
     lua_getfield(L, i, "ctrl");
@@ -58,8 +64,10 @@ static ::Hotkey::t_hotkey check_hotkey(lua_State *L, int i)
     hotkey.shift = luaL_opt(L, lua_toboolean, -1, false);
     lua_pop(L, 1);
 
+    // COMPAT
     lua_getfield(L, i, "assigned");
-    hotkey.assigned = luaL_opt(L, lua_toboolean, -1, true);
+    const auto assigned = luaL_opt(L, lua_toboolean, -1, true);
+    if (!assigned) hotkey = ::Hotkey::make_unassigned();
     lua_pop(L, 1);
 
     return hotkey;
@@ -69,11 +77,11 @@ static int prompt(lua_State *L)
 {
     WindowDisabler disabler(LuaDialog::hwnd());
 
-    const auto caption = luaL_checkwstring(L, 1);
+    const auto caption = luaL_checkstlstring(L, 1);
 
-    ::Hotkey::t_hotkey hotkey = ::Hotkey::t_hotkey::make_empty();
+    ::Hotkey hotkey = ::Hotkey::make_empty();
 
-    const bool confirmed = ::Hotkey::show_prompt(g_main_ctx.hwnd, caption, hotkey);
+    const bool confirmed = HotkeyUtils::show_prompt(g_main_ctx.hwnd, caption, hotkey);
 
     if (!confirmed)
     {

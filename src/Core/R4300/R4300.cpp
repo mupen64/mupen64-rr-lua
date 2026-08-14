@@ -2129,7 +2129,7 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
-    if (path.extension().compare(MUPEN64_PATH_T(".m64")) == 0)
+    if (path.extension().compare(".m64") == 0)
     {
         core_vcr_movie_header movie_header{};
         const auto result = g_ctx.vcr_parse_header(path, &movie_header);
