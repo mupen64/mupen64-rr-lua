@@ -966,7 +966,7 @@ void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
     {
-        SetCurrentDirectory(IOUtils::exe_path().string().c_str());
+        SetCurrentDirectory(IOUtils::exe_path().parent_path().string().c_str());
     }
 
     char cwd[MAX_PATH] = {0};
