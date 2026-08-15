@@ -218,12 +218,7 @@ void check(bool manual)
 show_prompt:
 
     const auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_UPDATE_DIALOG,
-        {
-            "Update Now",
-            "Show Changelog",
-            "Skip Version",
-        },
+        VIEW_DLG_UPDATE_DIALOG, {"Update Now", "Show Changelog", "Skip Version", "Remind Me Later"},
         std::format("Mupen64 {} is available for download.", version), "Update Available", fsvc_information);
 
     switch (result)
