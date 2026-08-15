@@ -518,22 +518,6 @@ bool is_on_gui_thread()
     return GetCurrentThreadId() == g_ui_thread_id;
 }
 
-std::filesystem::path get_app_full_path()
-{
-    std::string app_path(MAX_PATH, 0);
-    const DWORD app_path_len = GetModuleFileName(nullptr, app_path.data(), app_path.size());
-
-    if (app_path_len == 0)
-    {
-        return "";
-    }
-
-    app_path.resize(app_path_len);
-
-    // equals drive + dir
-    return std::filesystem::path(app_path).parent_path();
-}
-
 void open_console()
 {
     AllocConsole();
@@ -982,7 +966,7 @@ void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
     {
-        SetCurrentDirectory(g_main_ctx.app_path.string().c_str());
+        SetCurrentDirectory(IOUtils::exe_path().string().c_str());
     }
 
     char cwd[MAX_PATH] = {0};
@@ -1169,8 +1153,6 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 #ifdef _DEBUG
     open_console();
 #endif
-
-    g_main_ctx.app_path = get_app_full_path();
 
     std::filesystem::create_directories(Config::logs_directory());
 

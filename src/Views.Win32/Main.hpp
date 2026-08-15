@@ -39,7 +39,6 @@ struct t_main_context
     bool paused_before_menu{};
     bool in_menu_loop{};
     bool fast_forward{};
-    std::filesystem::path app_path{};
     bool exiting{};
     bool wine{};
     CoreButtons last_controller_data[4]{};
