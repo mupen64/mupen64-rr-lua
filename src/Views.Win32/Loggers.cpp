@@ -43,7 +43,8 @@ void Loggers::init()
     }
 
 #ifdef _DEBUG
-    spdlog::sinks_init_list sink_list = {};
+    spdlog::sinks_init_list sink_list = {std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
+                                         std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>()};
 #else
     spdlog::sinks_init_list sink_list = {
         std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
