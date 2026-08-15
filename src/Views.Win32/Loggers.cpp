@@ -9,13 +9,6 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/wincolor_sink.h>
 
-#include <algorithm>
-#include <chrono>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
-#include <vector>
-
 std::shared_ptr<spdlog::logger> g_core_logger;
 std::shared_ptr<spdlog::logger> g_view_logger;
 std::shared_ptr<spdlog::logger> g_video_logger;
