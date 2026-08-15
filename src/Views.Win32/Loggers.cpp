@@ -29,8 +29,8 @@ static std::filesystem::path get_log_path()
     localtime_s(&local_time, &time);
 
     std::ostringstream filename;
-    filename << "mupen-" << std::put_time(&local_time, "%Y%m%d-%H%M%S") << "-" << std::setfill('0')
-             << std::setw(3) << milliseconds << ".log";
+    filename << "mupen-" << std::put_time(&local_time, "%Y%m%d-%H%M%S") << "-" << std::setfill('0') << std::setw(3)
+             << milliseconds << ".log";
 
     return IOUtils::exe_path().parent_path() / "logs" / filename.str();
 }
@@ -42,20 +42,17 @@ static void remove_old_logs(const std::filesystem::path &log_directory)
 
     for (const auto &entry : std::filesystem::directory_iterator(log_directory, error))
     {
-        if (error)
-            break;
+        if (error) break;
 
         const auto filename = entry.path().filename().string();
         if (!entry.is_regular_file() || entry.path().extension() != ".log" || filename.rfind("mupen-", 0) != 0)
             continue;
 
         const auto last_write_time = entry.last_write_time(error);
-        if (!error)
-            logs.emplace_back(last_write_time, entry.path());
+        if (!error) logs.emplace_back(last_write_time, entry.path());
     }
 
-    std::sort(logs.begin(), logs.end(),
-              [](const auto &left, const auto &right) { return left.first > right.first; });
+    std::sort(logs.begin(), logs.end(), [](const auto &left, const auto &right) { return left.first > right.first; });
 
     const auto logs_to_keep = MAX_LOG_FILES > 0 ? MAX_LOG_FILES - 1 : 0;
     for (std::size_t index = logs_to_keep; index < logs.size(); ++index)
