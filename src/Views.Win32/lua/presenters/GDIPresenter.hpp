@@ -16,7 +16,7 @@ class GDIPresenter : public Presenter
      *
      * \param mask_color The color to use as the alpha mask.
      */
-    GDIPresenter(COLORREF mask_color) : m_mask_color(mask_color) {};
+    GDIPresenter(COLORREF mask_color) : m_mask_color(mask_color){};
     ~GDIPresenter() override;
     bool init(HWND hwnd) override;
     ID2D1RenderTarget *dc() const override;

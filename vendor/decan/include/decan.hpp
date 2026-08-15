@@ -1,7 +1,7 @@
 
 /**
  * Copyright (C) 2026, Jacky Guo
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #ifndef DECAN_HPP
@@ -36,8 +36,9 @@ using handle_t = HMODULE;
 using handle_t = void *;
 #endif
 
-class dll_error : public std::runtime_error {
-public:
+class dll_error : public std::runtime_error
+{
+  public:
     using std::runtime_error::runtime_error;
 };
 
