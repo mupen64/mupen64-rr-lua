@@ -45,7 +45,7 @@ const std::unordered_map<int, std::string> EXCEPTION_NAMES = {
 
 static std::filesystem::path get_minidump_path()
 {
-    return g_main_ctx.app_path / "logs" / "mupen.dmp";
+    return IOUtils::exe_path() / "logs" / "mupen.dmp";
 }
 
 void create_minidump(EXCEPTION_POINTERS *e)

@@ -18,7 +18,7 @@ std::shared_ptr<spdlog::logger> g_rsp_logger;
 
 static std::filesystem::path get_log_path()
 {
-    return g_main_ctx.app_path / "logs" / "mupen.log";
+    return IOUtils::exe_path() / "logs" / "mupen.log";
 }
 
 void Loggers::init()
@@ -43,8 +43,7 @@ void Loggers::init()
     }
 
 #ifdef _DEBUG
-    spdlog::sinks_init_list sink_list = {std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
-                                         std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>()};
+    spdlog::sinks_init_list sink_list = {};
 #else
     spdlog::sinks_init_list sink_list = {
         std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
