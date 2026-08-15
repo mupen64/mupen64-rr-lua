@@ -18,7 +18,7 @@ std::shared_ptr<spdlog::logger> g_rsp_logger;
 
 static std::filesystem::path get_log_path()
 {
-    return g_main_ctx.app_path / "logs" / "mupen.log";
+    return IOUtils::exe_path() / "logs" / "mupen.log";
 }
 
 void Loggers::init()
