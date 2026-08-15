@@ -155,14 +155,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
 
             g_ctx.user_result.author = author;
-            if (g_ctx.user_result.author.empty()) g_ctx.user_result.author = L"(unspecified)";
+            if (g_ctx.user_result.author.empty()) g_ctx.user_result.author = "(unspecified)";
             g_config.last_movie_author = g_ctx.user_result.author;
 
             char description[sizeof(core_vcr_movie_header::description)] = {0};
             GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
 
             g_ctx.user_result.description = description;
-            if (g_ctx.user_result.description.empty()) g_ctx.user_result.description = L"(unspecified)";
+            if (g_ctx.user_result.description.empty()) g_ctx.user_result.description = "(unspecified)";
 
             const bool should_close = g_ctx.on_confirm(g_ctx.user_result);
             if (!should_close)
