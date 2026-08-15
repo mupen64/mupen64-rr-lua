@@ -223,6 +223,7 @@ show_prompt:
             "Update Now",
             "Show Changelog",
             "Skip Version",
+            "Remind Me Later"
         },
         std::format("Mupen64 {} is available for download.", version), "Update Available", fsvc_information);
 
