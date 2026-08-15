@@ -308,9 +308,13 @@ bool ActionManager::add(const t_action_add_params &params)
     g_mgr.actions.emplace_back(action);
     g_mgr.filter_result_cache.clear();
 
-    if (!g_config.hotkeys.contains(normalized_path) || !g_config.inital_hotkeys.contains(normalized_path))
+    // Legacy configs can contain one map without the other
+    if (!g_config.hotkeys.contains(normalized_path))
     {
         g_config.hotkeys[normalized_path] = Hotkey::make_unassigned();
+    }
+    if (!g_config.inital_hotkeys.contains(normalized_path))
+    {
         g_config.inital_hotkeys[normalized_path] = Hotkey::make_unassigned();
     }
 
