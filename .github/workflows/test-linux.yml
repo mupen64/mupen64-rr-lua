@@ -20,7 +20,7 @@ jobs:
 
     - name: CMake configure
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: cmake --preset sys-linux
+      run: cmake --preset sys-linux-release
 
     - name: CMake build
       working-directory: ${{env.GITHUB_WORKSPACE}}

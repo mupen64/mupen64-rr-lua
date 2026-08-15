@@ -28,7 +28,7 @@ jobs:
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}
+        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
