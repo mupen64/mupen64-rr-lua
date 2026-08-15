@@ -5,7 +5,10 @@
  */
 
 #include <Common.Views/ConfigLegacy.hpp>
+#include <Common.Views/App.hpp>
+#include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Hotkey.hpp>
+#include <nlohmann/json.hpp>
 
 constexpr auto FLAT_FIELD_KEY = "config";
 
@@ -113,8 +116,6 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
 static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &field_name,
                                     std::map<std::string, Hotkey> &value)
 {
-    const auto key = ini_cleanup_field(field_name);
-
     // Structure:
     // [action_fullpath]
     // key
@@ -131,17 +132,23 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
             continue;
         }
 
-        const auto action_path = pair.first.substr(prefix.size());
+        const auto action_path = ActionManager::normalize_filter(pair.first.substr(prefix.size()));
 
-        Hotkey hotkey = Hotkey::make_empty();
+        const auto assigned = pair.second.get("assigned");
+        Hotkey hotkey = assigned == "0" ? Hotkey::make_unassigned() : Hotkey::make_empty();
 
-        const auto key = pair.second.get("key");
-        if (!key.empty())
+        const auto key_value = pair.second.get("key");
+        if (!key_value.empty() && hotkey.is_assigned())
         {
             try
             {
-                // FIXME: Trigger
-                // hotkey.key = std::stoi(key);
+                // 1.4.x stored Windows virtual-key codes. Use the platform-specific conversion shim, just like the
+                // 1.4.x JSON migration does.
+                const auto converted = app_json_to_hotkey(nlohmann::json{{"key", std::stoi(key_value)}});
+                if (converted)
+                {
+                    hotkey.trigger = converted->trigger;
+                }
             }
             catch (...)
             {
@@ -178,19 +185,6 @@ static void ini_handle_config_value(mINI::INIStructure &ini, const std::string &
             try
             {
                 hotkey.alt = std::stoi(alt);
-            }
-            catch (...)
-            {
-            }
-        }
-
-        const auto assigned = pair.second.get("assigned");
-        if (!alt.empty())
-        {
-            try
-            {
-                // FIXME
-                // hotkey.assigned = std::stoi(assigned);
             }
             catch (...)
             {

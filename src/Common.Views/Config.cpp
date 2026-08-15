@@ -384,7 +384,30 @@ void Config::load()
     const auto new_config_path = get_config_path();
     const auto legacy_config_path = IOUtils::exe_path().parent_path() / "config.ini";
 
-    if (std::filesystem::exists(new_config_path))
+    if (std::filesystem::exists(legacy_config_path))
+    {
+        // Updating from 1.4.0-x ini config...
+        // TODO: Remove legacy config support with version 1.6.0
+        if (std::filesystem::exists(new_config_path))
+        {
+            g_view_logger->info("[CONFIG] Both config.json and legacy config.ini exist; using legacy config.ini.");
+        }
+
+        mINI::INIFile file(legacy_config_path.string());
+        mINI::INIStructure ini;
+        file.read(ini);
+
+        Config::Legacy::handle_config_ini(ini);
+        Config::Legacy::migrate_config_ini(g_config, ini);
+
+        save();
+
+        // Change extension from `.ini` to `.ini.bak` to avoid it being read back
+        std::filesystem::path legacy_config_backup_path = legacy_config_path;
+        legacy_config_backup_path.replace_extension(legacy_config_path.extension().string() + ".bak");
+        std::filesystem::rename(legacy_config_path, legacy_config_backup_path);
+    }
+    else if (std::filesystem::exists(new_config_path))
     {
         json j;
         try
@@ -400,22 +423,6 @@ void Config::load()
             g_config = Config::default_config();
             save();
         }
-    }
-    else if (std::filesystem::exists(legacy_config_path))
-    {
-        // Updating from 1.4.0-x ini config...
-        // TODO: Remove legacy config support with version 1.6.0
-        mINI::INIFile file(legacy_config_path.string());
-        mINI::INIStructure ini;
-        file.read(ini);
-
-        Config::Legacy::handle_config_ini(ini);
-        Config::Legacy::migrate_config_ini(g_config, ini);
-
-        // Change extension from `.ini` to `.ini.bak` to avoid it being read back
-        std::filesystem::path legacy_config_backup_path = legacy_config_path;
-        legacy_config_backup_path.replace_extension(legacy_config_path.extension().string() + ".bak");
-        std::filesystem::rename(legacy_config_path, legacy_config_backup_path);
     }
     else
     {
