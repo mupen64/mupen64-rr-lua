@@ -75,16 +75,10 @@ void Loggers::init()
     std::filesystem::create_directories(log_path.parent_path());
     remove_old_logs(log_path.parent_path());
 
-#ifdef _DEBUG
     spdlog::sinks_init_list sink_list = {
         std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
         std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>(),
     };
-#else
-    spdlog::sinks_init_list sink_list = {
-        std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
-    };
-#endif
 
     g_core_logger = std::make_shared<spdlog::logger>("COR", sink_list);
     g_view_logger = std::make_shared<spdlog::logger>("VIW", sink_list);
