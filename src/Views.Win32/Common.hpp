@@ -10,7 +10,10 @@
 #define _MSVC_STL_HARDENING 1
 #endif
 
-#define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
+#define SPDLOG_LEVEL_NAMES                                                                                             \
+    {                                                                                                                  \
+        "🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""                                                                           \
+    }
 
 #include <CommonPCH.hpp>
 #include <m64rr/API.hpp>

@@ -551,9 +551,8 @@ static void start_movie_playback_direct(const ActionManager::action_argument_map
     const auto author = params.at("author");
     const auto description = params.at("description");
 
-    g_main_ctx.core_ctx->vcr_replace_author_info(
-        path, author.empty() ? std::nullopt : std::optional(author),
-        description.empty() ? std::nullopt : std::optional(description));
+    g_main_ctx.core_ctx->vcr_replace_author_info(path, author.empty() ? std::nullopt : std::optional(author),
+                                                 description.empty() ? std::nullopt : std::optional(description));
 
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vcr_start_playback(path);
