@@ -1051,7 +1051,7 @@ std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
         {VIEW_DLG_LAG_EXCEEDED, 0},
         {VIEW_DLG_CLOSE_ROM_WARNING, 0},
         {VIEW_DLG_HOTKEY_CONFLICT, 0},
-        {VIEW_DLG_UPDATE_DIALOG, 2},
+        {VIEW_DLG_UPDATE_DIALOG, 3},
         {VIEW_DLG_PLUGIN_LOAD_ERROR, 0},
         {VIEW_DLG_RAMSTART, 0},
         {VIEW_DLG_ABOUT, 1},
