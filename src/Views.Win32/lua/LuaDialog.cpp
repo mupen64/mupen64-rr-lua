@@ -580,31 +580,25 @@ static INT_PTR CALLBACK lua_manager_dialog_proc(HWND hwnd, UINT msg, WPARAM wpar
     case WM_NOTIFY: {
         switch (((LPNMHDR)lparam)->code)
         {
-        case LVN_GETDISPINFO: {
-            auto plvdi = reinterpret_cast<NMLVDISPINFO *>(lparam);
+        case LVN_GETDISPINFOA:
+        case LVN_GETDISPINFOW: {
+            auto fill = [&](auto *plvdi) {
+                const auto &ctx = g_lua_instance_wnd_ctxs[plvdi->item.lParam];
+                if (plvdi->item.iSubItem != 0) return;
 
-            const auto &ctx = g_lua_instance_wnd_ctxs[plvdi->item.lParam];
-            switch (plvdi->item.iSubItem)
-            {
-            case 0: {
                 std::string display_name;
-                if (ctx->env)
-                {
-                    display_name += "* ";
-                }
+                if (ctx->env) display_name += "* ";
                 const auto &effective_path = ctx->env ? ctx->env->path : ctx->typed_path;
                 display_name += effective_path.filename().string();
-                if (ctx->trusted())
-                {
-                    display_name += " (trusted)";
-                }
+                if (ctx->trusted()) display_name += " (trusted)";
 
-                strncpy(plvdi->item.pszText, display_name.c_str(), plvdi->item.cchTextMax);
-                break;
-            }
-            default:
-                break;
-            }
+                copy_listview_text(plvdi->item.pszText, plvdi->item.cchTextMax, display_name);
+            };
+
+            if (((LPNMHDR)lparam)->code == LVN_GETDISPINFOA)
+                fill(reinterpret_cast<NMLVDISPINFOA *>(lparam));
+            else
+                fill(reinterpret_cast<NMLVDISPINFOW *>(lparam));
             break;
         }
         case LVN_ITEMCHANGED: {

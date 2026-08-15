@@ -303,24 +303,31 @@ INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, L
     case WM_NOTIFY: {
         switch (((LPNMHDR)l_param)->code)
         {
-        case LVN_GETDISPINFO: {
-            auto plvdi = reinterpret_cast<NMLVDISPINFO *>(l_param);
-            const auto pair = plugin_discovery_result.results[plvdi->item.lParam];
-            switch (plvdi->item.iSubItem)
-            {
-            case 0: {
-                strncpy(plvdi->item.pszText, pair.first.filename().string().c_str(), plvdi->item.cchTextMax);
-                break;
-            }
-            case 1: {
-                strncpy(plvdi->item.pszText, pair.second.c_str(), plvdi->item.cchTextMax);
-                break;
-            }
-            default:
-                break;
-            }
+        case LVN_GETDISPINFOA:
+        case LVN_GETDISPINFOW: {
+            auto fill = [&](auto *plvdi) {
+                const auto pair = plugin_discovery_result.results[plvdi->item.lParam];
+                std::string text;
+                switch (plvdi->item.iSubItem)
+                {
+                case 0:
+                    text = pair.first.filename().string();
+                    break;
+                case 1:
+                    text = pair.second;
+                    break;
+                default:
+                    return;
+                }
+                copy_listview_text(plvdi->item.pszText, plvdi->item.cchTextMax, text);
+            };
+
+            if (((LPNMHDR)l_param)->code == LVN_GETDISPINFOA)
+                fill(reinterpret_cast<NMLVDISPINFOA *>(l_param));
+            else
+                fill(reinterpret_cast<NMLVDISPINFOW *>(l_param));
+            break;
         }
-        break;
         default:
             break;
         }

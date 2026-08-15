@@ -356,32 +356,36 @@ notify(LPARAM lparam)
         rombrowser_update_sort();
         break;
     }
-    case LVN_GETDISPINFO: {
-        NMLVDISPINFO *plvdi = (NMLVDISPINFO *)lparam;
-        const t_simple_rom_info &rombrowser_entry = g_ctx.discovered_roms[plvdi->item.lParam];
-        switch (plvdi->item.iSubItem)
-        {
-        case 1: {
-            const auto rom_name = IOUtils::rom_name_to_string((const char *)rombrowser_entry.header.nom);
-            strncpy(plvdi->item.pszText, rom_name.c_str(), plvdi->item.cchTextMax);
-            break;
-        }
-        case 2: {
-            char filename[MAX_PATH] = {0};
-            _splitpath_s(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename), nullptr,
-                         0);
-            strncpy(plvdi->item.pszText, filename, plvdi->item.cchTextMax);
-            break;
-        }
-        case 3: {
-            const auto size = std::format("{} MB", rombrowser_entry.size / (1024 * 1024));
-            strncpy(plvdi->item.pszText, size.c_str(), plvdi->item.cchTextMax);
-            break;
-        }
-        default:
-            break;
-        }
+    case LVN_GETDISPINFOA:
+    case LVN_GETDISPINFOW: {
+        auto fill = [&](auto *plvdi) {
+            const t_simple_rom_info &rombrowser_entry = g_ctx.discovered_roms[plvdi->item.lParam];
+            std::string text;
+            switch (plvdi->item.iSubItem)
+            {
+            case 1:
+                text = IOUtils::rom_name_to_string((const char *)rombrowser_entry.header.nom);
+                break;
+            case 2: {
+                char filename[MAX_PATH] = {0};
+                _splitpath_s(rombrowser_entry.path.c_str(), nullptr, 0, nullptr, 0, filename, _countof(filename),
+                             nullptr, 0);
+                text = filename;
+                break;
+            }
+            case 3:
+                text = std::format("{} MB", rombrowser_entry.size / (1024 * 1024));
+                break;
+            default:
+                return;
+            }
+            copy_listview_text(plvdi->item.pszText, plvdi->item.cchTextMax, text);
+        };
 
+        if (((LPNMHDR)lparam)->code == LVN_GETDISPINFOA)
+            fill(reinterpret_cast<NMLVDISPINFOA *>(lparam));
+        else
+            fill(reinterpret_cast<NMLVDISPINFOW *>(lparam));
         break;
     }
     case LVN_KEYDOWN: {

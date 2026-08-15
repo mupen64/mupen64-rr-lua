@@ -209,37 +209,38 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             return TRUE;
         }
         break;
-    case LVN_GETDISPINFO: {
-        const auto plvdi = reinterpret_cast<NMLVDISPINFO *>(lparam);
-        const auto i = plvdi->item.lParam;
+    case LVN_GETDISPINFOA:
+    case LVN_GETDISPINFOW: {
+        auto fill = [&](auto *plvdi) {
+            const auto i = plvdi->item.lParam;
+            if (plvdi->item.mask & LVIF_IMAGE)
+            {
+                plvdi->item.iImage = ctx->get_item_image(i);
+            }
+            copy_listview_text(plvdi->item.pszText, plvdi->item.cchTextMax,
+                               ctx->get_item_text(i, plvdi->item.iSubItem));
+        };
 
-        if (plvdi->item.mask & LVIF_IMAGE)
-        {
-            plvdi->item.iImage = ctx->get_item_image(i);
-        }
-
-        const auto text = ctx->get_item_text(i, plvdi->item.iSubItem);
-        strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
-
+        if (lpnmhdr->code == LVN_GETDISPINFOA)
+            fill(reinterpret_cast<NMLVDISPINFOA *>(lparam));
+        else
+            fill(reinterpret_cast<NMLVDISPINFOW *>(lparam));
         break;
     }
-    case LVN_GETINFOTIP: {
-        auto getinfotip = (LPNMLVGETINFOTIP)lparam;
+    case LVN_GETINFOTIPA:
+    case LVN_GETINFOTIPW: {
+        auto fill = [&](auto *getinfotip) {
+            LVITEM item = {0};
+            item.mask = LVIF_PARAM;
+            item.iItem = getinfotip->iItem;
+            ListView_GetItem(lvhwnd, &item);
+            copy_listview_text(getinfotip->pszText, getinfotip->cchTextMax, ctx->get_item_tooltip(item.iItem));
+        };
 
-        LVITEM item = {0};
-        item.mask = LVIF_PARAM;
-        item.iItem = getinfotip->iItem;
-        ListView_GetItem(lvhwnd, &item);
-
-        const auto tooltip = ctx->get_item_tooltip(item.iItem);
-
-        if (tooltip.empty())
-        {
-            break;
-        }
-
-        strncpy(getinfotip->pszText, tooltip.c_str(), getinfotip->cchTextMax);
-
+        if (lpnmhdr->code == LVN_GETINFOTIPA)
+            fill(reinterpret_cast<LPNMLVGETINFOTIPA>(lparam));
+        else
+            fill(reinterpret_cast<LPNMLVGETINFOTIPW>(lparam));
         break;
     }
     default:

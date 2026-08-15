@@ -1310,68 +1310,58 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         case LVN_ODSTATECHANGED:
             on_piano_roll_selection_changed();
             break;
-        case LVN_GETDISPINFO: {
-            const auto plvdi = (NMLVDISPINFO *)lParam;
-
-            if (plvdi->item.iItem < 0 || plvdi->item.iItem >= piano_roll.current_state.inputs.size())
-            {
-                g_view_logger->info("[PianoRoll] iItem out of range");
-                break;
-            }
-
-            if (!(plvdi->item.mask & LVIF_TEXT))
-            {
-                break;
-            }
-
-            auto input = piano_roll.current_state.inputs[plvdi->item.iItem];
-
-            switch (plvdi->item.iSubItem)
-            {
-            case 0: {
-                if (piano_roll.current_sample == plvdi->item.iItem)
+        case LVN_GETDISPINFOA:
+        case LVN_GETDISPINFOW: {
+            auto fill = [&](auto *plvdi) {
+                if (plvdi->item.iItem < 0 || plvdi->item.iItem >= piano_roll.current_state.inputs.size())
                 {
-                    plvdi->item.iImage = 0;
+                    g_view_logger->info("[PianoRoll] iItem out of range");
+                    return;
                 }
-                else if (piano_roll.seek_savestate_frames.contains(plvdi->item.iItem))
+                if (!(plvdi->item.mask & LVIF_TEXT)) return;
+
+                auto input = piano_roll.current_state.inputs[plvdi->item.iItem];
+                if (plvdi->item.iSubItem == 0)
                 {
-                    plvdi->item.iImage = 1;
-                }
-                else
-                {
-                    plvdi->item.iImage = 999;
+                    if (piano_roll.current_sample == plvdi->item.iItem)
+                        plvdi->item.iImage = 0;
+                    else if (piano_roll.seek_savestate_frames.contains(plvdi->item.iItem))
+                        plvdi->item.iImage = 1;
+                    else
+                        plvdi->item.iImage = 999;
+                    return;
                 }
 
-                break;
-            }
-            case 1: {
-                const auto text = std::to_string(plvdi->item.iItem);
-                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
-                break;
-            }
-            case 2: {
-                const auto text = std::to_string(input.x);
-                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
-                break;
-            }
-            case 3: {
-                const auto text = std::to_string(input.y);
-                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
-                break;
-            }
-            default: {
-                auto value = get_input_value_from_column_index(input, plvdi->item.iSubItem);
-                auto name = get_button_name_from_column_index(plvdi->item.iSubItem);
-                const auto text = std::string(value ? name : "");
-                strncpy(plvdi->item.pszText, text.c_str(), plvdi->item.cchTextMax);
-                break;
-            }
-            }
-        }
-        break;
+                std::string text;
+                switch (plvdi->item.iSubItem)
+                {
+                case 1:
+                    text = std::to_string(plvdi->item.iItem);
+                    break;
+                case 2:
+                    text = std::to_string(input.x);
+                    break;
+                case 3:
+                    text = std::to_string(input.y);
+                    break;
+                default: {
+                    const auto value = get_input_value_from_column_index(input, plvdi->item.iSubItem);
+                    text = value ? get_button_name_from_column_index(plvdi->item.iSubItem) : "";
+                    break;
+                }
+                }
+                copy_listview_text(plvdi->item.pszText, plvdi->item.cchTextMax, text);
+            };
+
+            if (((LPNMHDR)lParam)->code == LVN_GETDISPINFOA)
+                fill(reinterpret_cast<NMLVDISPINFOA *>(lParam));
+            else
+                fill(reinterpret_cast<NMLVDISPINFOW *>(lParam));
+            break;
         }
 
         break;
+        }
     }
     default:
         break;
