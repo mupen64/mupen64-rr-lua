@@ -1146,11 +1146,13 @@ core_result vcr_continue_recording()
     return Res_Ok;
 }
 
-core_result vcr_replace_author_info(const std::filesystem::path &path, std::string_view author,
-                                    std::string_view description)
+core_result vcr_replace_author_info(const std::filesystem::path &path, std::optional<std::string> author,
+                                    std::optional<std::string> description)
 {
+    if (!author && !description) return Res_Ok;
+
     // 0. validate lengths
-    if (author.size() > 222 || description.size() > 256)
+    if ((author && author->size() > 222) || (description && description->size() > 256))
     {
         return VCR_InvalidFormat;
     }
@@ -1172,8 +1174,10 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, std::stri
     }
 
     // 2. Compare author and description fields, and don't do any work if they remained identical
+    const bool author_changed = author && *author != std::string_view(hdr.author);
+    const bool description_changed = description && *description != std::string_view(hdr.description);
 
-    if (author == std::string_view(hdr.author) && description == std::string_view(hdr.description))
+    if (!author_changed && !description_changed)
     {
         g_core->log_info("[VCR] Movie author or description didn't change, returning early...");
         return Res_Ok;
@@ -1182,12 +1186,12 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, std::stri
     // 3. prepare padded buffers for output
     std::string author_out;
     author_out.reserve(222);
-    author_out.assign(author);
+    author_out.assign(author.value_or(std::string(hdr.author)));
     author_out.resize(222, '\0');
 
     std::string description_out;
     description_out.reserve(256);
-    description_out.assign(description);
+    description_out.assign(description.value_or(std::string(hdr.description)));
     description_out.resize(256, '\0');
 
     // 4. actually write the file
@@ -1201,7 +1205,7 @@ core_result vcr_replace_author_info(const std::filesystem::path &path, std::stri
         file.seekg(0x222, std::ios::beg);
         file.write(author_out.data(), author_out.size());
 
-        file.seekg(0x256, std::ios::beg);
+        file.seekg(0x300, std::ios::beg);
         file.write(description_out.data(), description_out.size());
     }
 
