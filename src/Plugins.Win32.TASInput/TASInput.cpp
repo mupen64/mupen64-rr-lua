@@ -173,6 +173,8 @@ struct Status
 
     void on_config_changed();
 
+    void on_timer();
+
     void get_input(CoreButtons *keys);
 };
 
@@ -200,6 +202,8 @@ static void attach_event_watch()
 
     SDL_AddEventWatch(event_watch, nullptr);
 }
+
+static void CALLBACK timer_callback(HWND, UINT, UINT_PTR, DWORD);
 
 LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
@@ -373,6 +377,109 @@ static int get_joystick_increment(const bool up)
     return increment;
 }
 
+void Status::on_timer()
+{
+    set_visuals_if_needed();
+
+    CoreButtons controller_input = GamepadManager::get_input(controller_index);
+
+    if (controller_input.value != last_controller_input.value)
+    {
+        // Input changed, override everything with current
+#define BTN(field)                                                                                                     \
+    if (controller_input.field && !last_controller_input.field)                                                       \
+    {                                                                                                                  \
+        current_input.field = 1;                                                                                       \
+    }                                                                                                                  \
+    if (!controller_input.field && last_controller_input.field)                                                       \
+    {                                                                                                                  \
+        current_input.field = 0;                                                                                       \
+    }
+#define JOY(field, i)                                                                                                  \
+    if (controller_input.field != last_controller_input.field)                                                        \
+    {                                                                                                                  \
+        if (controller_input.field > last_controller_input.field)                                                     \
+        {                                                                                                              \
+            if (ignore_next_down[i])                                                                                   \
+                ignore_next_down[i] = false;                                                                           \
+            else                                                                                                       \
+            {                                                                                                          \
+                current_input.field = current_input.field + 5;                                                        \
+                ignore_next_up[i] = true;                                                                              \
+            }                                                                                                          \
+        }                                                                                                              \
+        else if (controller_input.field < last_controller_input.field)                                                \
+        {                                                                                                              \
+            if (ignore_next_up[i])                                                                                     \
+                ignore_next_up[i] = false;                                                                             \
+            else                                                                                                       \
+            {                                                                                                          \
+                current_input.field = current_input.field - 5;                                                        \
+                ignore_next_down[i] = true;                                                                            \
+            }                                                                                                          \
+        }                                                                                                              \
+    }
+        BTN(dr)
+        BTN(dl)
+        BTN(dd)
+        BTN(du)
+        BTN(start)
+        BTN(z)
+        BTN(b)
+        BTN(a)
+        BTN(cr)
+        BTN(cl)
+        BTN(cd)
+        BTN(cu)
+        BTN(r)
+        BTN(l)
+
+        if (new_config.relative_mode)
+        {
+            JOY(x, 0)
+            JOY(y, 1)
+        }
+        if (!new_config.relative_mode && !new_config.approach_mode &&
+            (controller_input.x != last_controller_input.x || controller_input.y != last_controller_input.y))
+        {
+            current_input.x = controller_input.x;
+            current_input.y = controller_input.y;
+        }
+#undef JOY
+#undef BTN
+        set_visuals(current_input);
+    }
+
+    if (new_config.approach_mode)
+    {
+        int x = current_input.x;
+        int y = current_input.y;
+
+        if (controller_input.x > 0)
+            x += 2;
+        else if (controller_input.x < 0)
+            x -= 2;
+
+        if (controller_input.y > 0)
+            y += 2;
+        else if (controller_input.y < 0)
+            y -= 2;
+
+        current_input.x = std::clamp(x, -128, 127);
+        current_input.y = std::clamp(y, -128, 127);
+        set_visuals(current_input);
+    }
+    last_controller_input = controller_input;
+}
+
+static void CALLBACK timer_callback(HWND, UINT, UINT_PTR, DWORD)
+{
+    for (auto &st : status)
+    {
+        st.on_timer();
+    }
+}
+
 INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     auto ctx = reinterpret_cast<Status *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
@@ -531,7 +638,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         // meanwhile
         ctx->set_visuals(ctx->current_input);
 
-        SetTimer(ctx->hwnd, IDT_TIMER_STATUS_0 + ctx->controller_index, 16, nullptr);
         ctx->on_config_changed();
 
         ctx->ready = true;
@@ -549,7 +655,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_DESTROY: {
         ctx->ready = false;
         DestroyWindow(ctx->joy_hwnd);
-        KillTimer(ctx->hwnd, IDT_TIMER_STATUS_0 + ctx->controller_index);
         ctx->hwnd = nullptr;
     }
     break;
@@ -651,110 +756,6 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->last_rmb_down = GetAsyncKeyState(MOUSE_RBUTTONREDEFINITION) & 0x8000;
     }
     break;
-    case WM_TIMER: {
-        ctx->set_visuals_if_needed();
-
-        CoreButtons controller_input = GamepadManager::get_input(ctx->controller_index);
-
-        if (controller_input.value != ctx->last_controller_input.value)
-        {
-            // Input changed, override everything with current
-
-#define BTN(field)                                                                                                     \
-    if (controller_input.field && !ctx->last_controller_input.field)                                                   \
-    {                                                                                                                  \
-        ctx->current_input.field = 1;                                                                                  \
-    }                                                                                                                  \
-    if (!controller_input.field && ctx->last_controller_input.field)                                                   \
-    {                                                                                                                  \
-        ctx->current_input.field = 0;                                                                                  \
-    }
-#define JOY(field, i)                                                                                                  \
-    if (controller_input.field != ctx->last_controller_input.field)                                                    \
-    {                                                                                                                  \
-        if (controller_input.field > ctx->last_controller_input.field)                                                 \
-        {                                                                                                              \
-            if (ctx->ignore_next_down[i])                                                                              \
-            {                                                                                                          \
-                ctx->ignore_next_down[i] = false;                                                                      \
-            }                                                                                                          \
-            else                                                                                                       \
-            {                                                                                                          \
-                ctx->current_input.field = ctx->current_input.field + 5;                                               \
-                ctx->ignore_next_up[i] = true;                                                                         \
-            }                                                                                                          \
-        }                                                                                                              \
-        else if (controller_input.field < ctx->last_controller_input.field)                                            \
-        {                                                                                                              \
-            if (ctx->ignore_next_up[i])                                                                                \
-            {                                                                                                          \
-                ctx->ignore_next_up[i] = false;                                                                        \
-            }                                                                                                          \
-            else                                                                                                       \
-            {                                                                                                          \
-                ctx->current_input.field = ctx->current_input.field - 5;                                               \
-                ctx->ignore_next_down[i] = true;                                                                       \
-            }                                                                                                          \
-        }                                                                                                              \
-    }
-            BTN(dr)
-            BTN(dl)
-            BTN(dd)
-            BTN(du)
-            BTN(start)
-            BTN(z)
-            BTN(b)
-            BTN(a)
-            BTN(cr)
-            BTN(cl)
-            BTN(cd)
-            BTN(cu)
-            BTN(r)
-            BTN(l)
-
-            if (new_config.relative_mode)
-            {
-                JOY(x, 0)
-                JOY(y, 1)
-            }
-            if (!new_config.relative_mode && !new_config.approach_mode)
-            {
-                // If either axis changed, just override both
-                if (controller_input.x != ctx->last_controller_input.x ||
-                    controller_input.y != ctx->last_controller_input.y)
-                {
-                    ctx->current_input.x = controller_input.x;
-                    ctx->current_input.y = controller_input.y;
-                }
-            }
-
-            ctx->set_visuals(ctx->current_input);
-        }
-
-        if (new_config.approach_mode)
-        {
-            int x = ctx->current_input.x;
-            int y = ctx->current_input.y;
-
-            if (controller_input.x > 0)
-                x += 2;
-            else if (controller_input.x < 0)
-                x -= 2;
-
-            if (controller_input.y > 0)
-                y += 2;
-            else if (controller_input.y < 0)
-                y -= 2;
-
-            ctx->current_input.x = std::clamp(x, -128, 127);
-            ctx->current_input.y = std::clamp(y, -128, 127);
-
-            ctx->set_visuals(ctx->current_input);
-        }
-        ctx->last_controller_input = controller_input;
-
-        break;
-    }
     case WM_NOTIFY: {
         switch (LOWORD(wparam))
         {
@@ -1239,10 +1240,12 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         attach_event_watch();
         load_config();
         show_activated_windows();
+        SetTimer(nullptr, IDT_TIMER, 16, timer_callback);
         rom_open = true;
         break;
     }
     case M64RRSpec::Event::Type::RomClosed: {
+        KillTimer(nullptr, IDT_TIMER);
         rom_open = false;
 
         for (auto &st : status)
