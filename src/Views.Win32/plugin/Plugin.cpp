@@ -129,6 +129,17 @@ void PluginUtil::move_screen(uint32_t wParam, int32_t lParam)
     if (g_main_ctx.core_ctx->vr_get_launched()) g_plugin_funcs.video_move_screen((int)wParam, lParam);
 }
 
+std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path, Type type)
+{
+    if (path.empty()) return M64RRPlugin::create_builtin(type);
+
+    if (path == "<builtin>/NoVideo") return M64RRPlugin::create_builtin(Type::Video, true);
+    if (path == "<builtin>/NoAudio") return M64RRPlugin::create_builtin(Type::Audio, true);
+    if (path == "<builtin>/NoInput") return M64RRPlugin::create_builtin(Type::Input, true);
+
+    return create(std::move(path));
+}
+
 std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
 {
     Main::init_sdl();
@@ -153,7 +164,7 @@ std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::
 
 Plugin::~Plugin()
 {
-    if (!FreeLibrary(m_module))
+    if (m_module && !FreeLibrary(m_module))
     {
         DialogService::show_dialog(std::format("Failed to free library {}.", (void *)m_module), "Core", fsvc_error);
     }
@@ -210,10 +221,34 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
         plugins.emplace_back(std::move(plugin));
     }
 
+    for (const auto type : {Plugin::Type::Video, Plugin::Type::Audio, Plugin::Type::Input})
+    {
+        auto [result, plugin] = M64RRPlugin::create_builtin(type, true);
+        if (!result.empty())
+        {
+            results.emplace_back(std::filesystem::path{}, result);
+            continue;
+        }
+        plugins.emplace_back(std::move(plugin));
+    }
+
+    for (const auto type : {Plugin::Type::Video, Plugin::Type::Audio, Plugin::Type::Input, Plugin::Type::RSP})
+    {
+        auto [result, plugin] = M64RRPlugin::create_builtin(type);
+        if (!result.empty())
+        {
+            results.emplace_back(std::filesystem::path{}, result);
+            continue;
+        }
+        plugins.emplace_back(std::move(plugin));
+    }
+
     // Special case: plugins are present but not in the plugin directory
     for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
                              g_config.selected_input_plugin, g_config.selected_rsp_plugin})
     {
+        if (file.empty() || file.starts_with("<builtin>/")) continue;
+
         auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) {
             std::error_code ec;
             return std::filesystem::equivalent(pair.first, file, ec);
@@ -322,10 +357,10 @@ bool PluginUtil::load_plugins()
 
         Main::init_sdl();
 
-        auto video_pl = Plugin::create(g_config.selected_video_plugin);
-        auto audio_pl = Plugin::create(g_config.selected_audio_plugin);
-        auto input_pl = Plugin::create(g_config.selected_input_plugin);
-        auto rsp_pl = Plugin::create(g_config.selected_rsp_plugin);
+        auto video_pl = Plugin::create(g_config.selected_video_plugin, Plugin::Type::Video);
+        auto audio_pl = Plugin::create(g_config.selected_audio_plugin, Plugin::Type::Audio);
+        auto input_pl = Plugin::create(g_config.selected_input_plugin, Plugin::Type::Input);
+        auto rsp_pl = Plugin::create(g_config.selected_rsp_plugin, Plugin::Type::RSP);
 
         if (!video_pl.first.empty())
         {

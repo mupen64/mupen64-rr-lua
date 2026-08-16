@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include "BuiltinTAS.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <components/Statusbar.hpp>
@@ -29,8 +30,7 @@ static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
 static M64RRSpec::PtrProcessEvent s_mupenrr_rsp_event_fn = nullptr;
 static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
 
-#define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
-    mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
+#define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name) mupenrr_ptr = (mupenrr_type)get_proc(export_name);
 
 static size_t get_config_path(char *data, size_t size)
 {
@@ -99,16 +99,117 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE modu
     return std::make_pair("", std::move(plugin));
 }
 
+FARPROC M64RRPlugin::get_proc(const char *name) const
+{
+    if (m_builtin)
+    {
+        const auto it = m_builtin_procs.find(name);
+        return it == m_builtin_procs.end() ? nullptr : it->second;
+    }
+
+    return GetProcAddress(m_module, name);
+}
+
+std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type type, bool dummy)
+{
+    auto plugin = std::make_unique<M64RRPlugin>();
+    plugin->m_builtin = true;
+    plugin->m_module = nullptr;
+    plugin->m_type = type;
+    if (!dummy)
+        plugin->m_path.clear();
+    else
+    {
+        switch (type)
+        {
+        case Plugin::Type::Video:
+            plugin->m_path = "<builtin>/NoVideo";
+            break;
+        case Plugin::Type::Audio:
+            plugin->m_path = "<builtin>/NoAudio";
+            break;
+        case Plugin::Type::Input:
+            plugin->m_path = "<builtin>/NoInput";
+            break;
+        case Plugin::Type::RSP:
+            break;
+        }
+    }
+
+    BuiltinTAS::initialize_module_state();
+
+    auto add = [&](const char *name, FARPROC function) { plugin->m_builtin_procs.emplace(name, function); };
+
+    switch (type)
+    {
+    case Plugin::Type::Video:
+        if (dummy)
+        {
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoVideoGetMetadata));
+            break;
+        }
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoProcessEvent));
+        add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoReadVideo));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoShowConfig));
+        break;
+    case Plugin::Type::Audio:
+        if (dummy)
+        {
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoAudioGetMetadata));
+            break;
+        }
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioProcessEvent));
+        add("M64RRAIDacrateChanged", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioAIDacrateChanged));
+        add("M64RRAILenChanged", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioAILenChanged));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASAudioShowConfig));
+        break;
+    case Plugin::Type::Input:
+        if (dummy)
+        {
+            add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoInputGetMetadata));
+            add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoInputProcessEvent));
+            break;
+        }
+        BuiltinTAS::initialize_input();
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputProcessEvent));
+        add("M64RRReadController", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputReadController));
+        add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputShowConfig));
+        add("M64RRGetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputGetKeys));
+        add("M64RRSetKeys", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputSetKeys));
+        break;
+    case Plugin::Type::RSP:
+        add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPGetMetadata));
+        add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPProcessEvent));
+        add("M64RRDoRSPCycles", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASRSPDoRSPCycles));
+        break;
+    }
+
+    const auto get_metadata = reinterpret_cast<M64RRSpec::PtrGetMetadata>(plugin->get_proc("M64RRGetMetadata"));
+    if (!get_metadata) return std::make_pair("Built-in plugin metadata missing", nullptr);
+
+    get_metadata(&plugin->m_meta);
+    plugin->m_name = plugin->m_meta.name;
+    g_view_logger->info("[Plugin] Created built-in plugin {}", plugin->m_name);
+    return std::make_pair("", std::move(plugin));
+}
+
 void M64RRPlugin::config(HWND hwnd)
 {
     const bool prev_initiated = m_initialized;
     initiate(g_plugin_funcs);
     const bool newly_initiated = m_initialized && !prev_initiated;
 
-    const auto show_config = (M64RRSpec::PtrShowConfig)GetProcAddress(m_module, "M64RRShowConfig");
+    const auto show_config = (M64RRSpec::PtrShowConfig)get_proc("M64RRShowConfig");
 
     if (show_config)
+    {
+        g_view_logger->trace("Calling M64RRShowConfig for {}...", m_name);
         show_config(hwnd);
+        g_view_logger->trace("M64RRShowConfig returned for {}.", m_name);
+    }
     else
     {
         DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error, hwnd);
@@ -116,7 +217,7 @@ void M64RRPlugin::config(HWND hwnd)
 
     if (newly_initiated)
     {
-        auto event_fn = (M64RRSpec::PtrProcessEvent)GetProcAddress(m_module, "M64RRProcessEvent");
+        auto event_fn = (M64RRSpec::PtrProcessEvent)get_proc("M64RRProcessEvent");
         if (!event_fn) event_fn = [](auto) {};
 
         event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
@@ -134,7 +235,7 @@ void M64RRPlugin::about(HWND hwnd)
 
 void M64RRPlugin::initiate(ZESpecFuncs &funcs)
 {
-    auto event_fn = (M64RRSpec::PtrProcessEvent)GetProcAddress(m_module, "M64RRProcessEvent");
+    auto event_fn = (M64RRSpec::PtrProcessEvent)get_proc("M64RRProcessEvent");
     if (!event_fn) event_fn = [](auto) {};
 
     M64RRSpec::PluginInit *init;
@@ -211,10 +312,12 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         break;
     }
 
+    g_view_logger->trace("Calling M64RRProcessEvent(Initiate) for {}...", m_name);
     event_fn(M64RRSpec::Event{.initiate = {
                                   .type = M64RRSpec::Event::Type::Initiate,
                                   .init = init,
                               }});
+    g_view_logger->trace("M64RRProcessEvent(Initiate) returned for {}.", m_name);
 
     switch (m_type)
     {
