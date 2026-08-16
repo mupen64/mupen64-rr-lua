@@ -66,6 +66,9 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "plugin/ZEPlugin.hpp"
     "plugin/M64RRPlugin.hpp"
     "resource.h"
+    "../Plugins.TASAudio/Resource.rc"
+    "../Plugins.Win32.TASVideo/Resource.rc"
+    "../Plugins.Win32.TASInput/Resource.rc"
 
     # sources
     "ThreadPool.cpp"
