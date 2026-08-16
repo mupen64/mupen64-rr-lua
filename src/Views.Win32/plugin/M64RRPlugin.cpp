@@ -202,7 +202,7 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
     if (!get_metadata) return std::make_pair("Built-in plugin metadata missing", nullptr);
 
     get_metadata(&plugin->m_meta);
-    plugin->m_name = plugin->m_meta.name;
+    plugin->m_name = std::format("{} (built-in)", plugin->m_meta.name);
     g_view_logger->info("[Plugin] Created built-in plugin {}", plugin->m_name);
     return std::make_pair("", std::move(plugin));
 }
