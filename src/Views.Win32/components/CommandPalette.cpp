@@ -175,7 +175,7 @@ bool t_listbox_item::selectable() const
 
     if (std::holds_alternative<t_option_data>(data))
     {
-        return std::get<t_option_data>(data).item->is_readonly() == false;
+        return !std::get<t_option_data>(data).item->get_readonly_reason().has_value();
     }
 
     return true;
@@ -281,7 +281,7 @@ bool t_listbox_item::enabled() const
 
     if (std::holds_alternative<t_option_data>(data))
     {
-        return std::get<t_option_data>(data).item->is_readonly() == false;
+        return !std::get<t_option_data>(data).item->get_readonly_reason().has_value();
     }
 
     return true;

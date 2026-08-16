@@ -81,10 +81,9 @@ struct t_options_item
     std::vector<std::pair<std::string, int32_t>> possible_values;
 
     /**
-     * Function which returns whether the option can be changed. Useful for values which shouldn't be changed during
-     * emulation.
+     * Function which returns why an option is read-only, or std::nullopt if it is not read-only.
      */
-    std::function<bool()> is_readonly = [] { return false; };
+    std::function<std::optional<std::string>()> get_readonly_reason = [] { return std::nullopt; };
 
     /**
      * Gets the name of the option item.
