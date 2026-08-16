@@ -21,10 +21,6 @@ int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
     case DLL_PROCESS_ATTACH:
         g_inst = h_instance;
         break;
-
-    case DLL_PROCESS_DETACH:
-        TASInput::on_detach();
-        break;
     }
 
     return TRUE;
