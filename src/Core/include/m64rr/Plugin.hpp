@@ -213,6 +213,7 @@ extern "C"
     typedef void(CALL *PtrGetMetadata)(PluginMetadata *metadata);
     typedef void(CALL *PtrProcessEvent)(Event event);
     typedef void(CALL *PtrShowConfig)(WindowHandle parent_window);
+    typedef void(CALL *PtrGetWindows)(WindowHandle *windows, size_t *count);
 
     typedef void(CALL *PtrProcessDList)();
     typedef void(CALL *PtrProcessRDPList)();
@@ -255,6 +256,15 @@ extern "C"
      * \param parent_window The parent window handle.
      */
     EXPORT void CALL M64RRShowConfig(WindowHandle parent_window);
+
+    /**
+     * \brief Retrieves all active windows that belong to the plugin.
+     * Implementation isn't required on non-Windows platforms.
+     * \param windows The array of window handles to be filled in. Must be of element count `count`. If `nullptr`, the
+     * window handles will not be filled in.
+     * \param count The number of active windows. If `nullptr`, the number of active windows will not be returned.
+     */
+    EXPORT void CALL M64RRGetWindows(WindowHandle *windows, size_t *count);
 
     // ---
 

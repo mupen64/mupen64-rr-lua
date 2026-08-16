@@ -13,20 +13,24 @@
 #include <Common.Views/Assert.hpp>
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_video_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_video_get_windows_fn = nullptr;
 static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
 static M64RRSpec::PtrProcessRDPList s_mupenrr_process_rdplist_fn = nullptr;
 static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_audio_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_audio_get_windows_fn = nullptr;
 static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
 static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_input_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_input_get_windows_fn = nullptr;
 static M64RRSpec::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
 static M64RRSpec::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
 static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_rsp_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_rsp_get_windows_fn = nullptr;
 static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
 
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
@@ -222,6 +226,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         g_view_logger->trace("Initiating video plugin (MupenRR)...");
 
         LOOKUP_MUPENRR_FN(s_mupenrr_video_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
+        LOOKUP_MUPENRR_FN(s_mupenrr_video_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, M64RRSpec::PtrProcessDList, "M64RRProcessDList");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
 
@@ -300,6 +305,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         g_view_logger->trace("Initiating input plugin (MupenRR)...");
 
         LOOKUP_MUPENRR_FN(s_mupenrr_input_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
+        LOOKUP_MUPENRR_FN(s_mupenrr_input_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(s_mupenrr_get_keys_fn, M64RRSpec::PtrGetKeys, "M64RRGetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_set_keys_fn, M64RRSpec::PtrSetKeys, "M64RRSetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, M64RRSpec::PtrReadController, "M64RRReadController");
@@ -338,6 +344,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         g_view_logger->trace("Initiating RSP plugin (MupenRR)...");
 
         LOOKUP_MUPENRR_FN(s_mupenrr_rsp_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rsp_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, M64RRSpec::PtrDoRSPCycles, "M64RRDoRSPCycles");
 
         // FIXME: add rsp_rom_opened
@@ -365,6 +372,38 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     }
 
     m_initialized = true;
+}
+
+std::vector<HWND> PluginUtil::get_all_plugin_windows()
+{
+    std::vector<HWND> windows;
+
+    const std::array<M64RRSpec::PtrGetWindows, 4> get_windows_functions = {
+        s_mupenrr_video_get_windows_fn,
+        s_mupenrr_audio_get_windows_fn,
+        s_mupenrr_input_get_windows_fn,
+        s_mupenrr_rsp_get_windows_fn,
+    };
+
+    for (const auto get_windows : get_windows_functions)
+    {
+        if (!get_windows) continue;
+
+        size_t count = 0;
+        get_windows(nullptr, &count);
+        if (count == 0) continue;
+
+        std::vector<M64RRSpec::WindowHandle> plugin_windows(count);
+        get_windows(plugin_windows.data(), &count);
+
+        windows.reserve(windows.size() + count);
+        for (const auto &window : plugin_windows)
+        {
+            if (const auto hwnd = window.hwnd()) windows.push_back(hwnd);
+        }
+    }
+
+    return windows;
 }
 
 #undef LOOKUP_MUPENRR_FN
