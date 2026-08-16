@@ -34,6 +34,7 @@ extern "C"
 #include <windowsx.h>
 #include <psapi.h>
 #include <mmsystem.h>
+
 #include <wincodec.h>
 #include <gdiplus.h>
 #include <uxtheme.h>
@@ -61,11 +62,32 @@ using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
 #include <Loggers.hpp>
-#include <ViewHelpers.hpp>
+#include <WinUtils.hpp>
 #include <Main.hpp>
 #include <lua/LuaHelpers.hpp>
 #include <lua/LuaTypes.hpp>
-#include <Config.hpp>
+#include <Common.Views/Config.hpp>
 #include <ResizeAnchor.hpp>
 #include <JoystickControl.hpp>
 #include <VersionNameHelpers.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/App.hpp>
+
+// Workaround for broken LVN_GETDISPINFO under MinGW
+// TODO: Remove when fixed
+inline void copy_listview_text(LPSTR destination, int capacity, const std::string &text)
+{
+    if (capacity <= 0) return;
+    strncpy(destination, text.c_str(), capacity);
+    destination[capacity - 1] = '\0';
+}
+
+// Workaround for broken LVN_GETDISPINFO under MinGW
+// TODO: Remove when fixed
+inline void copy_listview_text(LPWSTR destination, int capacity, const std::string &text)
+{
+    if (capacity <= 0) return;
+    const auto wide_text = IOUtils::to_wide_string(text);
+    wcsncpy(destination, wide_text.c_str(), capacity);
+    destination[capacity - 1] = L'\0';
+}

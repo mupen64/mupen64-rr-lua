@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Common.hpp"
-#include <Config.hpp>
-#include <DialogService.hpp>
+#include <Common.Views/App.hpp>
+#include <Common.Views/Assert.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Resampler.hpp>
+#include <Common.Views/WinVFWEncoder.hpp>
+#include <windows.h>
+#include <vfw.h>
 
-#include <capture/CaptureManager.hpp>
-#include <capture/Resampler.hpp>
-#include <capture/encoders/VFWEncoder.hpp>
-
-std::optional<std::wstring> VFWEncoder::start(Params params)
+std::optional<std::string> WinVFWEncoder::start(Params params)
 {
     if (!m_splitting)
     {
@@ -32,14 +33,17 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     m_info_hdr.biClrUsed = 0;
     m_info_hdr.biClrImportant = 0;
 
-    DeleteFile(params.path.wstring().c_str());
+    DeleteFile(params.path.string().c_str());
 
     AVIFileInit();
-    if (AVIFileOpen(&m_avi_file, params.path.wstring().c_str(), OF_WRITE | OF_CREATE, NULL))
+    if (AVIFileOpen(&m_avi_file, params.path.string().c_str(), OF_WRITE | OF_CREATE, NULL))
     {
         stop_impl();
-        return L"Failed to open output file.";
+        return "Failed to open output file.";
     }
+
+    char cwd[MAX_PATH]{};
+    GetCurrentDirectory(std::size(cwd), cwd);
 
     ZeroMemory(&m_video_stream_hdr, sizeof(AVISTREAMINFO));
     m_video_stream_hdr.fccType = streamtypeVIDEO;
@@ -49,46 +53,46 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     if (AVIFileCreateStream(m_avi_file, &m_video_stream, &m_video_stream_hdr))
     {
         stop_impl();
-        return L"Failed to create video file stream.";
+        return "Failed to create video file stream.";
     }
 
     // NOTE: AVIFileCreateStream seems to change the cwd for some reason...
-    set_cwd();
+    SetCurrentDirectory(cwd);
 
     if (params.ask_for_capture_settings && !m_splitting)
     {
         LPAVICOMPRESSOPTIONS avi_options[1] = {&m_avi_options};
-        if (!AVISaveOptions(g_main_ctx.hwnd, 0, 1, &m_video_stream, avi_options))
+        if (!AVISaveOptions(g_main_hwnd, 0, 1, &m_video_stream, avi_options))
         {
             stop_impl();
-            return L"";
+            return "";
         }
 
         if (!save_options())
         {
             stop_impl();
-            return L"Failed to save options.";
+            return "Failed to save options.";
         }
     }
     else
     {
         if (!load_options())
         {
-            return L"Failed to load options. Verify that the capture preset file is present.";
+            return "Failed to load options. Verify that the capture preset file is present.";
         }
     }
 
     if (AVIMakeCompressedStream(&m_compressed_video_stream, m_video_stream, &m_avi_options, NULL) != AVIERR_OK)
     {
         stop_impl();
-        return L"Failed to make video compressed stream.";
+        return "Failed to make video compressed stream.";
     }
 
     if (AVIStreamSetFormat(m_compressed_video_stream, 0, &m_info_hdr,
                            m_info_hdr.biSize + m_info_hdr.biClrUsed * sizeof(RGBQUAD)) != AVIERR_OK)
     {
         stop_impl();
-        return L"Failed to set video stream format.";
+        return "Failed to set video stream format.";
     }
 
     m_sample = 0;
@@ -110,12 +114,12 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     if (AVIFileCreateStream(m_avi_file, &m_sound_stream, &m_sound_stream_hdr))
     {
         stop_impl();
-        return L"Failed to create audio stream.";
+        return "Failed to create audio stream.";
     }
     if (AVIStreamSetFormat(m_sound_stream, 0, &m_sound_format, sizeof(WAVEFORMATEX)) != AVIERR_OK)
     {
         stop_impl();
-        return L"Failed to set audio stream format.";
+        return "Failed to set audio stream format.";
     }
 
     memset(m_sound_buf_empty, 0, sizeof(m_sound_buf_empty));
@@ -125,7 +129,7 @@ std::optional<std::wstring> VFWEncoder::start(Params params)
     return std::nullopt;
 }
 
-bool VFWEncoder::stop_impl(const bool fail_stop)
+bool WinVFWEncoder::stop_impl(const bool fail_stop)
 {
     if (m_compressed_video_stream)
     {
@@ -151,13 +155,13 @@ bool VFWEncoder::stop_impl(const bool fail_stop)
 
     if (fail_stop)
     {
-        DeleteFile(m_params.path.wstring().c_str());
+        DeleteFile(m_params.path.string().c_str());
     }
 
     return true;
 }
 
-bool VFWEncoder::stop()
+bool WinVFWEncoder::stop()
 {
     return this->stop_impl(false);
 }
@@ -169,14 +173,14 @@ uint32_t shortHash(const uint8_t *d, size_t n)
     return h;
 }
 
-bool VFWEncoder::append_video(uint8_t *image)
+bool WinVFWEncoder::append_video(uint8_t *image)
 {
     const auto hash = shortHash(image, m_params.width * m_params.height * 4);
 
-    if (g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::Video) ||
-        g_config.synchronization_mode == static_cast<int>(CaptureManager::Sync::None))
+    if (g_config.synchronization_mode == static_cast<int>(t_config::Sync::Video) ||
+        g_config.synchronization_mode == static_cast<int>(t_config::Sync::None))
     {
-        g_view_logger->trace(L"video buffer hash {:08X}", hash);
+        g_view_logger->trace("video buffer hash {:08X}", hash);
 
         if (!append_video_impl(image)) return false;
         m_video_frame++;
@@ -205,7 +209,7 @@ bool VFWEncoder::append_video(uint8_t *image)
     return true;
 }
 
-bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
+bool WinVFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
 {
     write_sound(audio, length, bitrate);
     std::memcpy(&m_last_sound, audio + length - sizeof(uint32_t), sizeof(uint32_t));
@@ -213,12 +217,12 @@ bool VFWEncoder::append_audio(uint8_t *audio, size_t length, uint8_t bitrate)
     return true;
 }
 
-bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
+bool WinVFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 {
     if (len <= 0) return true;
 
     const auto fill_percentage = (double)(sound_buf_pos + len) * 100.0 / SOUND_BUF_SIZE;
-    RT_ASSERT(fill_percentage <= 80, L"Audio buffer overflowed");
+    RT_ASSERT(fill_percentage <= 80, "Audio buffer overflowed");
 
     memcpy(m_sound_buf + sound_buf_pos, buf, len);
     sound_buf_pos += len;
@@ -235,17 +239,17 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     if (resampled_len <= 0) return true;
 
-    RT_ASSERT((resampled_len % 4) == 0, L"Resampled audio is not stereo-aligned");
+    RT_ASSERT((resampled_len % 4) == 0, "Resampled audio is not stereo-aligned");
 
     BOOL ok = (0 == AVIStreamWrite(m_sound_stream, m_sample, resampled_len / m_sound_format.nBlockAlign,
                                    m_resampled_sound, resampled_len, 0, NULL, NULL));
 
     if (!ok)
     {
-        DialogService::show_dialog(L"Audio output failure!\n"
-                                   L"A call to AVIStreamWrite failed.\n"
-                                   L"Perhaps you ran out of memory?",
-                                   L"AVI Encoder", fsvc_error);
+        DialogService::show_dialog("Audio output failure!\n"
+                                   "A call to AVIStreamWrite failed.\n"
+                                   "Perhaps you ran out of memory?",
+                                   "AVI Encoder", fsvc_error);
         return false;
     }
 
@@ -256,7 +260,7 @@ bool VFWEncoder::write_sound(uint8_t *buf, int len, uint8_t bitrate)
 
     return true;
 }
-bool VFWEncoder::append_video_impl(uint8_t *image)
+bool WinVFWEncoder::append_video_impl(uint8_t *image)
 {
     LONG written_len = 0;
     BOOL ret = AVIStreamWrite(m_compressed_video_stream, m_frame++, 1, image, m_info_hdr.biSizeImage, AVIIF_KEYFRAME,
@@ -266,14 +270,14 @@ bool VFWEncoder::append_video_impl(uint8_t *image)
     if (ret != 0)
     {
         DialogService::show_dialog(
-            L"Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", L"AVI Encoder",
+            "Video output failure!\nA call to AVIStreamWrite failed.\nPerhaps you ran out of memory?", "AVI Encoder",
             fsvc_error);
     }
 
     return ret == 0;
 }
 
-bool VFWEncoder::save_options() const
+bool WinVFWEncoder::save_options() const
 {
     FILE *f = nullptr;
     if (fopen_s(&f, "avi.cfg", "wb"))
@@ -304,7 +308,7 @@ bool VFWEncoder::save_options() const
     return true;
 }
 
-bool VFWEncoder::load_options()
+bool WinVFWEncoder::load_options()
 {
     FILE *f = nullptr;
     if (fopen_s(&f, "avi.cfg", "rb"))
@@ -338,7 +342,7 @@ error:
     return false;
 }
 
-std::wstring VFWEncoder::get_desired_extension() const
+std::string WinVFWEncoder::get_desired_extension() const
 {
-    return L".avi";
+    return ".avi";
 }

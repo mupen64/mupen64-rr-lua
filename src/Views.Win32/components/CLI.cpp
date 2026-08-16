@@ -5,13 +5,13 @@
  */
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
 #include <ThreadPool.hpp>
 #include <argh.h>
 #include <nlohmann/json.hpp>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <components/CLI.hpp>
 #include <components/Dispatcher.hpp>
@@ -108,10 +108,10 @@ static void start_lua()
 
     g_main_ctx.dispatcher->invoke([] {
         // To run multiple lua scripts, a semicolon-separated list is provided
-        std::wstringstream stream;
-        std::wstring script;
-        stream << cli_params.lua.wstring();
-        while (std::getline(stream, script, L';'))
+        std::stringstream stream;
+        std::string script;
+        stream << cli_params.lua.string();
+        while (std::getline(stream, script, ';'))
         {
             LuaDialog::start_and_add_if_needed(script);
         }
@@ -258,7 +258,7 @@ void CLI::init()
     if (!cli_params.st.empty() && !cli_params.m64.empty())
     {
         DialogService::show_dialog(
-            L"Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", L"CLI",
+            "Both -st and -m64 options specified in CLI parameters.\nThe -st option will be dropped.", "CLI",
             fsvc_error);
         cli_params.st.clear();
     }
@@ -266,8 +266,8 @@ void CLI::init()
     if (cli_params.close_on_movie_end && g_config.core.is_movie_loop_enabled)
     {
         DialogService::show_dialog(
-            L"Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.",
-            L"CLI", fsvc_warning);
+            "Movie loop is not allowed when closing on movie end is enabled.\nThe movie loop option will be disabled.",
+            "CLI", fsvc_warning);
         g_config.core.is_movie_loop_enabled = false;
     }
 
@@ -275,7 +275,7 @@ void CLI::init()
     // EmuLaunchedChanged. The work is started, but then the rom is reset. At that point, the dacrate changes and breaks
     // the capture in some cases. To avoid this, we store the movie's start flag prior to doing anything, and ignore the
     // first EmuLaunchedChanged if it's set.
-    const auto movie_path = (cli_params.rom.extension().compare(L".m64") == 0) ? cli_params.rom : cli_params.m64;
+    const auto movie_path = (cli_params.rom.extension().compare(".m64") == 0) ? cli_params.rom : cli_params.m64;
     if (!movie_path.empty())
     {
         core_vcr_movie_header hdr{};
@@ -283,7 +283,7 @@ void CLI::init()
         cli_state.is_movie_from_start = hdr.startFlags & MOVIE_START_FROM_NOTHING;
     }
 
-    cli_state.rom_is_movie = cli_params.rom.extension().compare(L".m64") == 0;
+    cli_state.rom_is_movie = cli_params.rom.extension().compare(".m64") == 0;
 
     log_cli_params(cli_params);
 }

@@ -5,12 +5,13 @@
  */
 
 #include "Common.hpp"
-#include <Messenger.hpp>
-#include <action/ActionManager.hpp>
+#include <Common.Views/Messages.hpp>
+#include <Common.Views/ActionManager.hpp>
 #include <action/ActionMenu.hpp>
 #include <components/ParameterPalette.hpp>
+#include <Common.Views/Assert.hpp>
 
-const auto MANAGED_MENU_CTX = L"Mupen64_ManagedMenuContext";
+const auto MANAGED_MENU_CTX = "Mupen64_ManagedMenuContext";
 
 struct t_menu_item
 {
@@ -20,15 +21,15 @@ struct t_menu_item
     HMENU parent_menu{};
     bool has_menu{};
 
-    std::wstring action_path{};
+    std::string action_path{};
     std::vector<t_menu_item> children{};
 
   private:
-    std::wstring m_path{};
+    std::string m_path{};
     bool m_has_separator{};
 
   public:
-    explicit t_menu_item(const std::wstring &path);
+    explicit t_menu_item(const std::string &path);
 
     /**
      * \brief Performs a depth-first iteration over the menu item tree, applying the given action to each item. The
@@ -45,22 +46,22 @@ struct t_action_menu_context
 {
     HWND hwnd{};
     HMENU menu_bar{};
-    t_menu_item menu{L"Root"};
+    t_menu_item menu{"Root"};
     size_t menu_id_counter{};
-    std::set<std::wstring> enabled_state_invalidated_actions{};
-    std::set<std::wstring> active_state_invalidated_actions{};
-    std::set<std::wstring> display_name_invalidated_actions{};
+    std::set<std::string> enabled_state_invalidated_actions{};
+    std::set<std::string> active_state_invalidated_actions{};
+    std::set<std::string> display_name_invalidated_actions{};
 };
 
 struct t_action_menu_global_context
 {
     std::vector<t_action_menu_context *> active_contexts{};
-    std::vector<std::wstring> actions{};
+    std::vector<std::string> actions{};
 };
 
 static t_action_menu_global_context g_am_ctx{};
 
-t_menu_item::t_menu_item(const std::wstring &path)
+t_menu_item::t_menu_item(const std::string &path)
 {
     this->m_path = path;
 
@@ -81,7 +82,7 @@ void t_menu_item::iterate_children_and_self(const std::function<void(t_menu_item
  * \brief Walks the command tree to find the command item corresponding to the "Name" segment of the fully-qualified
  * action path.
  */
-static t_menu_item *find_item_by_path(t_action_menu_context &ctx, const std::wstring &path)
+static t_menu_item *find_item_by_path(t_action_menu_context &ctx, const std::string &path)
 {
     t_menu_item *found_item = nullptr;
 
@@ -98,7 +99,7 @@ static t_menu_item *find_item_by_path(t_action_menu_context &ctx, const std::wst
 /**
  * \brief Gets the effective display name for the given menu item, including any accelerator text if applicable.
  */
-static std::wstring get_display_name(const t_menu_item &item)
+static std::string get_display_name(const t_menu_item &item)
 {
     auto display_name = ActionManager::get_display_name(item.raw_path());
 
@@ -108,7 +109,7 @@ static std::wstring get_display_name(const t_menu_item &item)
         const auto hotkey = g_config.hotkeys.at(item.action_path);
         if (!hotkey.is_empty())
         {
-            display_name += std::format(L"\t{}", hotkey.to_wstring());
+            display_name += std::format("\t{}", hotkey.to_string());
         }
     }
 
@@ -118,7 +119,7 @@ static std::wstring get_display_name(const t_menu_item &item)
 /**
  * \brief Updates the display names of the specified menu items.
  */
-static void update_display_names(t_action_menu_context &ctx, const std::set<std::wstring> &actions)
+static void update_display_names(t_action_menu_context &ctx, const std::set<std::string> &actions)
 {
     MENUITEMINFO mii{};
     mii.cbSize = sizeof(MENUITEMINFO);
@@ -137,13 +138,13 @@ static void update_display_names(t_action_menu_context &ctx, const std::set<std:
         }
 
         const auto display_name = get_display_name(*item);
-
-        mii.dwTypeData = const_cast<LPWSTR>(display_name.c_str());
+        // This is fine cause its internally copied on SetMenuItemInfo call
+        mii.dwTypeData = const_cast<char *>(display_name.c_str());
         mii.cch = display_name.length();
 
         if (!SetMenuItemInfo(item->parent_menu, item->position_under_parent, TRUE, &mii))
         {
-            g_view_logger->error(L"ActionManager::update_menu_names: Couldn't update name of '{}'.", display_name);
+            g_view_logger->error("ActionManager::update_menu_names: Couldn't update name of '{}'.", display_name);
         }
     }
 }
@@ -151,7 +152,7 @@ static void update_display_names(t_action_menu_context &ctx, const std::set<std:
 /**
  * \brief Updates the enabled states of the specified menu items.
  */
-static void update_enabled_states(t_action_menu_context &ctx, const std::set<std::wstring> &actions)
+static void update_enabled_states(t_action_menu_context &ctx, const std::set<std::string> &actions)
 {
     for (const auto &action : actions)
     {
@@ -169,7 +170,7 @@ static void update_enabled_states(t_action_menu_context &ctx, const std::set<std
 /**
  * \brief Updates the active states of the specified menu items.
  */
-static void update_active_states(t_action_menu_context &ctx, const std::set<std::wstring> &actions)
+static void update_active_states(t_action_menu_context &ctx, const std::set<std::string> &actions)
 {
     for (const auto &action : actions)
     {
@@ -186,7 +187,7 @@ static void update_active_states(t_action_menu_context &ctx, const std::set<std:
 
 static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
 {
-    std::wstring found_action_path;
+    std::string found_action_path;
     ctx.menu.iterate_children_and_self([&](const t_menu_item &item) {
         if (item.id == id)
         {
@@ -216,7 +217,7 @@ static bool handle_menu_interaction(t_action_menu_context &ctx, const size_t id)
 /**
  * \brief Determines whether the action represented by the given path segments should be visible in the menu.
  */
-static bool is_visible_in_menu(const std::vector<std::wstring> &action_path_segments)
+static bool is_visible_in_menu(const std::vector<std::string> &action_path_segments)
 {
     return !action_path_segments.back().starts_with(ActionManager::MENU_HIDDEN_PREFIX);
 }
@@ -226,12 +227,12 @@ static bool is_visible_in_menu(const std::vector<std::wstring> &action_path_segm
  */
 static void build_initial_menu_tree(t_action_menu_context &ctx)
 {
-    ctx.menu = t_menu_item(L"Root");
+    ctx.menu = t_menu_item("Root");
 
     for (const auto &path : g_am_ctx.actions)
     {
-        std::vector<std::wstring> parts = ActionManager::get_segments(path);
-        std::wstring path_up_to_here;
+        std::vector<std::string> parts = ActionManager::get_segments(path);
+        std::string path_up_to_here;
         path_up_to_here.reserve(parts.size() * 20);
 
         if (!is_visible_in_menu(parts))
@@ -275,7 +276,7 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
 {
     ctx.menu_id_counter++;
     RT_ASSERT(ctx.menu_id_counter <= IDM_RESERVED_END,
-              std::format(L"Menu ID counter overflow: {} (max {})", ctx.menu_id_counter, IDM_RESERVED_END));
+              std::format("Menu ID counter overflow: {} (max {})", ctx.menu_id_counter, IDM_RESERVED_END).c_str());
 
     item.id = (uint16_t)ctx.menu_id_counter;
     item.parent_menu = parent_menu;
@@ -291,7 +292,7 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
     auto initialize_menu_item_state = [&] {
         if (!enabled)
         {
-            EnableMenuItem(parent_menu, item.id, MF_DISABLED);
+            EnableMenuItem(parent_menu, item.id, MF_DISABLED | MF_GRAYED);
         }
 
         if (active)
@@ -407,7 +408,7 @@ static LRESULT CALLBACK action_menu_wnd_subclass_proc(HWND hwnd, UINT msg, WPARA
 void ActionMenu::init()
 {
     Messenger::subscribe<Messenger::Message::ActionRegistryChanged>([] {
-        g_am_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
+        g_am_ctx.actions = ActionManager::get_actions_matching_filter("*");
         for (const auto &ctx : g_am_ctx.active_contexts)
         {
             build_menu(*ctx);
@@ -417,7 +418,7 @@ void ActionMenu::init()
     // OPTIMIZATION: Instead of updating **all** menu item states on WM_INITMENU,
     // we subscribe to the change notifications and store a set of "invalidated" menu items and only update the changed
     // items in WM_INITMENU.
-    Messenger::subscribe<Messenger::Message::ActionDisplayNameChanged>([](const auto &actions) {
+    Messenger::subscribe<Messenger::Message::ActionDisplayNameChanged>([](const std::vector<std::string> &actions) {
         for (const auto &action : actions)
         {
             for (const auto &ctx : g_am_ctx.active_contexts)
@@ -427,7 +428,7 @@ void ActionMenu::init()
         }
     });
 
-    Messenger::subscribe<Messenger::Message::ActionEnabledChanged>([](const auto &actions) {
+    Messenger::subscribe<Messenger::Message::ActionEnabledChanged>([](const std::vector<std::string> &actions) {
         for (const auto &action : actions)
         {
             for (const auto &ctx : g_am_ctx.active_contexts)
@@ -437,7 +438,7 @@ void ActionMenu::init()
         }
     });
 
-    Messenger::subscribe<Messenger::Message::ActionActiveChanged>([](const auto &actions) {
+    Messenger::subscribe<Messenger::Message::ActionActiveChanged>([](const std::vector<std::string> &actions) {
         for (const auto &action : actions)
         {
             for (const auto &ctx : g_am_ctx.active_contexts)

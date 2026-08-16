@@ -7,10 +7,31 @@
 #pragma once
 
 #include <m64rr/Types.hpp>
-#include <Hotkey.hpp>
+#include <Common.Views/Hotkey.hpp>
+#include <map>
 
 struct t_config
 {
+    /**
+     * \brief Synchronization modes the capture manager can abide by
+     */
+    enum class Sync : int
+    {
+        /**
+         * \brief Video and Audio streams are not kept in sync
+         */
+        None,
+
+        /**
+         * \brief The audio stream dictates the video stream's rate
+         */
+        Audio,
+
+        /**
+         * \brief The video stream dictates the audio stream's rate
+         */
+        Video,
+    };
 
     enum class PresenterType
     {
@@ -39,9 +60,9 @@ struct t_config
     /// <summary>
     /// The new version of Mupen64 currently ignored by the update checker.
     /// <para></para>
-    /// L"" means no ignored version.
+    /// "" means no ignored version.
     /// </summary>
-    std::wstring ignored_version;
+    std::string ignored_version;
 
     /// <summary>
     /// The UI theme to use. 0 = Light, 1 = Dark, 2 = System Default.
@@ -78,16 +99,16 @@ struct t_config
     /// </summary>
     int32_t statusbar_layout = (int32_t)StatusbarLayout::Modern;
 
-    std::wstring rom_directory = L".\\roms\\";
-    std::wstring plugins_directory = L".\\plugin\\";
-    std::wstring saves_directory = L".\\save\\";
-    std::wstring screenshots_directory = L".\\screenshots\\";
-    std::wstring backups_directory = L".\\backups\\";
+    std::string rom_directory = ".\\roms\\";
+    std::string plugins_directory = ".\\plugin\\";
+    std::string saves_directory = ".\\save\\";
+    std::string screenshots_directory = ".\\screenshots\\";
+    std::string backups_directory = ".\\backups\\";
 
     /// <summary>
     /// The recently opened roms' paths
     /// </summary>
-    std::vector<std::wstring> recent_rom_paths;
+    std::vector<std::string> recent_rom_paths;
 
     /// <summary>
     /// Whether recently opened rom path collection is paused
@@ -97,7 +118,7 @@ struct t_config
     /// <summary>
     /// The recently opened movies' paths
     /// </summary>
-    std::vector<std::wstring> recent_movie_paths;
+    std::vector<std::string> recent_movie_paths;
 
     /// <summary>
     /// Whether recently opened movie path collection is paused
@@ -146,12 +167,12 @@ struct t_config
     /// <summary>
     /// FFmpeg options.
     /// </summary>
-    std::wstring ffmpeg_options = L"-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -vf vflip";
+    std::string ffmpeg_options = "-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -vf vflip";
 
     /// <summary>
     /// FFmpeg binary path
     /// </summary>
-    std::wstring ffmpeg_path = L"C:\\ffmpeg\\bin\\ffmpeg.exe";
+    std::string ffmpeg_path = "C:\\ffmpeg\\bin\\ffmpeg.exe";
 
     /// <summary>
     /// The audio-video synchronization mode
@@ -170,12 +191,12 @@ struct t_config
     /// <summary>
     /// The lua script path
     /// </summary>
-    std::wstring lua_script_path;
+    std::string lua_script_path;
 
     /// <summary>
     /// The recently opened lua scripts' paths
     /// </summary>
-    std::vector<std::wstring> recent_lua_script_paths;
+    std::vector<std::string> recent_lua_script_paths;
 
     /// <summary>
     /// Whether recently opened lua script path collection is paused
@@ -205,22 +226,22 @@ struct t_config
     /// <summary>
     /// The path of the currently selected video plugin
     /// </summary>
-    std::wstring selected_video_plugin = L"plugin\\TASVideo.dll";
+    std::string selected_video_plugin = "plugin\\TASVideo.dll";
 
     /// <summary>
     /// The path of the currently selected audio plugin
     /// </summary>
-    std::wstring selected_audio_plugin = L"plugin\\TASAudio.dll";
+    std::string selected_audio_plugin = "plugin\\TASAudio.dll";
 
     /// <summary>
     /// The path of the currently selected input plugin
     /// </summary>
-    std::wstring selected_input_plugin = L"plugin\\TASInput.dll";
+    std::string selected_input_plugin = "plugin\\TASInput.dll";
 
     /// <summary>
     /// The path of the currently selected RSP plugin
     /// </summary>
-    std::wstring selected_rsp_plugin = L"plugin\\TASRSP.dll";
+    std::string selected_rsp_plugin = "plugin\\TASRSP.dll";
 
     /// <summary>
     /// The last known value of the record movie dialog's "start type" field
@@ -230,7 +251,7 @@ struct t_config
     /// <summary>
     /// The last known value of the record movie dialog's "author" field
     /// </summary>
-    std::wstring last_movie_author;
+    std::string last_movie_author;
 
     /// <summary>
     /// The main window's X position
@@ -270,7 +291,7 @@ struct t_config
     /// <summary>
     /// A map of persistent path dialog IDs and the respective value
     /// </summary>
-    std::map<std::wstring, std::wstring> persistent_folder_paths;
+    std::map<std::string, std::string> persistent_folder_paths;
 
     /// <summary>
     /// The last selected settings tab's index.
@@ -300,7 +321,7 @@ struct t_config
     /// <summary>
     /// The current seeker input value
     /// </summary>
-    std::wstring seeker_value;
+    std::string seeker_value;
 
     /// <summary>
     /// The multi-frame advance index.
@@ -310,34 +331,33 @@ struct t_config
     /// <summary>
     /// A map of dialog IDs to their default choices for silent mode.
     /// </summary>
-    std::map<std::wstring, std::wstring> silent_mode_dialog_choices;
+    std::map<std::string, std::string> silent_mode_dialog_choices;
 
     /// <summary>
     /// A map of trusted Lua script paths. If a Lua script path is present in this map, it will be trusted.
     /// </summary>
-    std::map<std::wstring, std::wstring> trusted_lua_paths;
+    std::map<std::string, std::string> trusted_lua_paths;
 
     /// <summary>
     /// The Lua Dialog's saved paths.
     /// </summary>
-    std::vector<std::wstring> lua_paths;
+    std::vector<std::string> lua_paths;
 
     /// <summary>
     /// A map of fully-qualified action paths to a hotkey assigned to them.
     /// </summary>
-    std::map<std::wstring, Hotkey::t_hotkey> hotkeys;
+    std::map<std::string, Hotkey> hotkeys;
 
     /// <summary>
     /// A map of fully-qualified action paths to the hotkey which was assigned to them the first time the action was
     /// assigned a hotkey.
     /// </summary>
-    std::map<std::wstring, Hotkey::t_hotkey> inital_hotkeys;
+    std::map<std::string, Hotkey> inital_hotkeys;
 
     bool operator==(const t_config &) const = default;
 };
 
 extern t_config g_config;
-extern const t_config g_default_config;
 
 namespace Config
 {
@@ -361,6 +381,11 @@ void apply_and_save();
  * \brief Restores the config state from the config file.
  */
 void load();
+
+/**
+ * \brief Gets the default config.
+ */
+const t_config &default_config();
 
 /**
  * \brief Gets the path to the ROM directory based on the current configuration.

@@ -16,7 +16,7 @@
 #define WM_EDIT_END (WM_USER + 3)
 #define WM_UPDATE_VISUALS (WM_USER + 4)
 
-constexpr auto JOYSTICK_CONTROL_CLASS = L"JoystickControl";
+constexpr auto JOYSTICK_CONTROL_CLASS = "JoystickControl";
 
 enum class ComboTask
 {
@@ -116,7 +116,7 @@ struct Status
     int controller_index;
     ComboTask combo_task = ComboTask::Idle;
 
-    void set_status(const std::wstring &str);
+    void set_status(const std::string &str);
 
     bool show_context_menu(int x, int y);
 
@@ -136,7 +136,7 @@ struct Status
 
     void start_edit(int);
 
-    void end_edit(int, wchar_t *);
+    void end_edit(int, char *);
 
     /**
      * \brief Updates the UI
@@ -181,6 +181,7 @@ static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
 static std::thread main_thread;
+static DWORD main_thread_id{};
 static int MOUSE_LBUTTONREDEFINITION = VK_LBUTTON;
 static int MOUSE_RBUTTONREDEFINITION = VK_RBUTTON;
 
@@ -233,7 +234,7 @@ LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, 
 
 apply:
 
-    wchar_t txt[MAX_PATH]{};
+    char txt[MAX_PATH]{};
     GetWindowText(hwnd, txt, std::size(txt));
     SendMessage(GetParent(GetParent(hwnd)), WM_EDIT_END, 0, (LPARAM)txt);
     DestroyWindow(hwnd);
@@ -255,7 +256,7 @@ void Status::get_input(CoreButtons *keys)
             }
             else
             {
-                set_status(L"Finished combo");
+                set_status("Finished combo");
                 combo_task = ComboTask::Idle;
                 // Reset input on last frame, or it sticks which feels weird
                 // We also need to reprocess the inputs since source data change
@@ -265,8 +266,7 @@ void Status::get_input(CoreButtons *keys)
             }
         }
 
-        set_status(
-            std::format(L"Playing... ({} / {})", combo_frame + 1, combos[active_combo_index].samples.size() - 1));
+        set_status(std::format("Playing... ({} / {})", combo_frame + 1, combos[active_combo_index].samples.size() - 1));
         combo_frame++;
     }
 
@@ -275,7 +275,7 @@ end:
     {
         // We process this last, because we need the processed inputs
         combos[active_combo_index].samples.push_back(*keys);
-        set_status(std::format(L"Recording... ({})", combos[active_combo_index].samples.size()));
+        set_status(std::format("Recording... ({})", combos[active_combo_index].samples.size()));
     }
 
     PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
@@ -320,12 +320,12 @@ void Status::set_visuals(CoreButtons input, bool needs_processing)
     // We don't want to mess with the user's selection
     if (GetFocus() != GetDlgItem(hwnd, IDC_EDITX))
     {
-        SetDlgItemText(hwnd, IDC_EDITX, std::to_wstring(input.x).c_str());
+        SetDlgItemText(hwnd, IDC_EDITX, std::to_string(input.x).c_str());
     }
 
     if (GetFocus() != GetDlgItem(hwnd, IDC_EDITY))
     {
-        SetDlgItemText(hwnd, IDC_EDITY, std::to_wstring(input.y).c_str());
+        SetDlgItemText(hwnd, IDC_EDITY, std::to_string(input.y).c_str());
     }
 
     CheckDlgButton(hwnd, IDC_CHECK_A, input.a);
@@ -392,7 +392,7 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ctx->load_combos("combos.cmb");
         break;
     case WM_EDIT_END:
-        ctx->end_edit(ctx->renaming_combo_index, (wchar_t *)lparam);
+        ctx->end_edit(ctx->renaming_combo_index, (char *)lparam);
         ctx->combo_edit_box = nullptr;
         break;
     case WM_COMMAND:
@@ -402,15 +402,15 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             ctx->active_combo_index = ListBox_GetCurSel(ctx->combo_listbox);
             if (ctx->active_combo_index == -1)
             {
-                ctx->set_status(L"No combo selected");
+                ctx->set_status("No combo selected");
                 break;
             }
-            ctx->set_status(L"Playing combo");
+            ctx->set_status("Playing combo");
             ctx->combo_frame = 0;
             ctx->combo_task = ComboTask::Play;
             break;
         case IDC_STOP:
-            ctx->set_status(L"Idle");
+            ctx->set_status("Idle");
             ctx->combo_task = ComboTask::Idle;
             break;
         case IDC_PAUSE:
@@ -423,15 +423,14 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDC_RECORD:
             if (ctx->combo_task == ComboTask::Record)
             {
-                ctx->set_status(L"Recording stopped");
+                ctx->set_status("Recording stopped");
                 ctx->combo_task = ComboTask::Idle;
                 break;
             }
 
-            ctx->set_status(L"Recording new combo...");
+            ctx->set_status("Recording new combo...");
             ctx->combos.push_back({.name = "Unnamed Combo"});
-            ctx->active_combo_index =
-                ListBox_InsertString(ctx->combo_listbox, -1, IOUtils::to_wide_string(ctx->combos.back().name).c_str());
+            ctx->active_combo_index = ListBox_InsertString(ctx->combo_listbox, -1, ctx->combos.back().name.c_str());
             ListBox_SetCurSel(ctx->combo_listbox, ctx->active_combo_index);
             ctx->combo_task = ComboTask::Record;
             break;
@@ -439,7 +438,7 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             ctx->renaming_combo_index = ListBox_GetCurSel(ctx->combo_listbox);
             if (ctx->renaming_combo_index == -1)
             {
-                ctx->set_status(L"No combo selected");
+                ctx->set_status("No combo selected");
                 break;
             }
             ctx->start_edit(ctx->renaming_combo_index);
@@ -451,12 +450,12 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             ListBox_ResetContent(ctx->combo_listbox);
             break;
         case IDC_IMPORT: {
-            wchar_t file[MAX_PATH]{};
+            char file[MAX_PATH]{};
 
-            ctx->set_status(L"Importing...");
+            ctx->set_status("Importing...");
             OPENFILENAME data{};
             data.lStructSize = sizeof(data);
-            data.lpstrFilter = L"Combo file (*.cmb)\0*.cmb\0\0";
+            data.lpstrFilter = "Combo file (*.cmb)\0*.cmb\0\0";
             data.nFilterIndex = 1;
             data.nMaxFile = MAX_PATH;
             data.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
@@ -465,12 +464,12 @@ INT_PTR CALLBACK combos_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             {
                 ctx->load_combos(file);
             }
-            ctx->set_status(L"Imported combo data");
+            ctx->set_status("Imported combo data");
             break;
         }
         case IDC_SAVE:
             ctx->save_combos();
-            ctx->set_status(L"Saved to combos.cmb");
+            ctx->set_status("Saved to combos.cmb");
             break;
         default:
             break;
@@ -507,7 +506,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         SetWindowPos(ctx->hwnd, nullptr, ctx->window_position.x, ctx->window_position.y, 0, 0,
                      SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
-        SetWindowText(ctx->hwnd, std::format(L"TASInput - Controller {}", ctx->controller_index + 1).c_str());
+        SetWindowText(ctx->hwnd, std::format("TASInput - Controller {}", ctx->controller_index + 1).c_str());
 
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETPOS, TRUE,
@@ -523,15 +522,15 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         SendMessage(GetDlgItem(ctx->hwnd, IDC_Y_DOWN), WM_SETFONT, (WPARAM)icon_font, TRUE);
         SendMessage(GetDlgItem(ctx->hwnd, IDC_Y_UP), WM_SETFONT, (WPARAM)icon_font, TRUE);
 
-        SetDlgItemText(ctx->hwnd, IDC_X_DOWN, L"3");
-        SetDlgItemText(ctx->hwnd, IDC_X_UP, L"4");
-        SetDlgItemText(ctx->hwnd, IDC_Y_DOWN, L"6");
-        SetDlgItemText(ctx->hwnd, IDC_Y_UP, L"5");
-        SetDlgItemText(ctx->hwnd, IDC_RESET_JOYSTICK, L"•");
+        SetDlgItemText(ctx->hwnd, IDC_X_DOWN, "3");
+        SetDlgItemText(ctx->hwnd, IDC_X_UP, "4");
+        SetDlgItemText(ctx->hwnd, IDC_Y_DOWN, "6");
+        SetDlgItemText(ctx->hwnd, IDC_Y_UP, "5");
+        SetDlgItemText(ctx->hwnd, IDC_RESET_JOYSTICK, "\u2022");
 
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
-        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JOYSTICK_CONTROL_CLASS, L"", WS_CHILD | WS_VISIBLE, 8, 4,
+        ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JOYSTICK_CONTROL_CLASS, "", WS_CHILD | WS_VISIBLE, 8, 4,
                                        131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
 
         // It can take a bit until we receive the first GetKeys, so let's just show some basic default state in the
@@ -809,7 +808,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 break;
             }
             CoreButtons last_input = ctx->current_input;
-            wchar_t str[8]{};
+            char str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
             {
@@ -833,7 +832,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 break;
             }
             CoreButtons last_input = ctx->current_input;
-            wchar_t str[8]{};
+            char str[8]{};
             GetDlgItemText(ctx->hwnd, LOWORD(wparam), str, std::size(str));
             try
             {
@@ -953,6 +952,10 @@ static void show_activated_windows()
 
 static void ui_thread()
 {
+    main_thread_id = GetCurrentThreadId();
+    MSG queue_init{};
+    PeekMessage(&queue_init, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
+
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
@@ -1021,7 +1024,7 @@ bool Status::combo_active()
     return active_combo_index != -1;
 }
 
-void Status::set_status(const std::wstring &str)
+void Status::set_status(const std::string &str)
 {
     if (combos_hwnd)
     {
@@ -1033,7 +1036,7 @@ void Status::start_edit(int id)
 {
     RECT item_rect;
     ListBox_GetItemRect(combo_listbox, id, &item_rect);
-    combo_edit_box = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
+    combo_edit_box = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
                                     item_rect.top, item_rect.right - item_rect.left,
                                     item_rect.bottom - item_rect.top + 4, combo_listbox, 0, g_inst, 0);
     // Clear selection to prevent it from repainting randomly and fighting with our textbox
@@ -1043,30 +1046,30 @@ void Status::start_edit(int id)
 
     const auto len = ListBox_GetTextLen(combo_listbox, id);
     if (len == LB_ERR) return;
-    std::wstring text(len, L'\0');
+    std::string text(len, '\0');
     ListBox_GetText(combo_listbox, id, text.data());
 
     SendMessage(combo_edit_box, WM_SETTEXT, 0, (LPARAM)text.c_str());
     PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM)combo_edit_box, TRUE);
 }
 
-void Status::end_edit(int id, wchar_t *name)
+void Status::end_edit(int id, char *name)
 {
     if (name != NULL)
     {
         ListBox_DeleteString(combo_listbox, id);
 
-        if (name[0] == L'\0')
+        if (name[0] == '\0')
         {
             combos.erase(combos.begin() + id);
         }
         else
         {
-            combos[id].name = IOUtils::to_utf8_string(name);
+            combos[id].name = name;
             ListBox_InsertString(combo_listbox, id, name);
         }
     }
-    set_status(L"Idle");
+    set_status("Idle");
 }
 
 void Status::save_combos()
@@ -1104,7 +1107,7 @@ void Status::load_combos(const std::filesystem::path &path)
     ListBox_ResetContent(combo_listbox);
     for (const auto &combo : combos)
     {
-        ListBox_InsertString(combo_listbox, -1, IOUtils::to_wide_string(combo.name).c_str());
+        ListBox_InsertString(combo_listbox, -1, combo.name.c_str());
     }
 }
 
@@ -1117,13 +1120,13 @@ bool Status::show_context_menu(int x, int y)
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
 #define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_config, x), y)
-    ADD_ITEM(hmenu, relative_mode, L"Relative");
-    ADD_ITEM(hmenu, approach_mode, L"Approach");
+    ADD_ITEM(hmenu, relative_mode, "Relative");
+    ADD_ITEM(hmenu, approach_mode, "Approach");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
-    ADD_ITEM(hmenu, always_on_top, L"Always on top");
-    ADD_ITEM(hmenu, float_from_parent, L"Float from parent");
-    ADD_ITEM(hmenu, titlebar, L"Titlebar");
-    ADD_ITEM(hmenu, client_drag, L"Client drag");
+    ADD_ITEM(hmenu, always_on_top, "Always on top");
+    ADD_ITEM(hmenu, float_from_parent, "Float from parent");
+    ADD_ITEM(hmenu, titlebar, "Titlebar");
+    ADD_ITEM(hmenu, client_drag, "Client drag");
 
     int offset = TrackPopupMenuEx(hmenu, TPM_RETURNCMD | TPM_NONOTIFY, x, y, hwnd, 0);
 
@@ -1203,20 +1206,24 @@ void Status::on_config_changed()
         SetWindowPos(combos_hwnd, nullptr, 0, initial_client_rect.bottom, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
     }
 
-    SetDlgItemText(hwnd, IDC_EXPAND, expanded ? L"Less" : L"More");
+    SetDlgItemText(hwnd, IDC_EXPAND, expanded ? "Less" : "More");
 
     save_config();
 }
 
 void TASInput::on_detach()
 {
+    if (main_thread.joinable())
+    {
+        PostThreadMessage(main_thread_id, WM_QUIT, 0, 0);
+        main_thread.join();
+    }
+
     if (icon_font)
     {
         DeleteFont(icon_font);
         icon_font = {};
     }
-
-    if (main_thread.joinable()) main_thread.join();
 
     detach_event_watch();
 }
@@ -1263,7 +1270,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         break;
     }
     case M64RRSpec::Event::Type::Shutdown: {
-        detach_event_watch();
+        TASInput::on_detach();
 
         if (gdi_plus_token)
         {

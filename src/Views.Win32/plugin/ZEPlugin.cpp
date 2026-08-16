@@ -7,12 +7,13 @@
 // ReSharper disable CppCStyleCast
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <DialogService.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/MGECompositor.hpp>
 #include <components/Statusbar.hpp>
 #include <plugin/Plugin.hpp>
 #include <plugin/ZEPlugin.hpp>
+#include <Common.Views/Assert.hpp>
 
 ZESpec::VideoPluginInfo dummy_video_info{};
 ZESpec::AudioPluginInfo dummy_audio_info{};
@@ -108,7 +109,7 @@ static void CALL dummy_capture_screen(char *)
 {
     if (!PluginUtil::mge_available())
     {
-        DialogService::show_dialog(L"The current video plugin doesn't support screenshots.", L"Screenshot", fsvc_error);
+        DialogService::show_dialog("The current video plugin doesn't support screenshots.", "Screenshot", fsvc_error);
         return;
     }
 
@@ -141,7 +142,7 @@ static void CALL dummy_capture_screen(char *)
     const auto path = Config::screenshot_directory() / std::format("screen{}.bmp", time(nullptr));
 
     HANDLE hfile;
-    hfile = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    hfile = CreateFile(path.string().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 
     DWORD written;
 
@@ -154,13 +155,13 @@ static void CALL dummy_capture_screen(char *)
 
 #pragma endregion
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module, std::filesystem::path path)
+std::pair<std::string, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module, std::filesystem::path path)
 {
     const auto get_dll_info = (ZESpec::GETDLLINFO)GetProcAddress(module, "GetDllInfo");
 
     if (!get_dll_info)
     {
-        return std::make_pair(L"GetDllInfo missing", nullptr);
+        return std::make_pair("GetDllInfo missing", nullptr);
     }
 
     ZESpec::PluginInfo plugin_info{};
@@ -174,7 +175,7 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module
         const std::string target_version(plugin_info.target_version, target_version_len);
         if (current_version != target_version)
         {
-            return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
+            return std::make_pair("Incompatible with this version of Mupen64", nullptr);
         }
     }
 
@@ -203,13 +204,13 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> ZEPlugin::create(HMODULE module
         plugin->m_type = Plugin::Type::RSP;
         break;
     default:
-        return std::make_pair(L"Unknown plugin type", nullptr);
+        return std::make_pair("Unknown plugin type", nullptr);
     }
     plugin->m_version = plugin_info.ver;
     plugin->m_module = module;
 
     g_view_logger->info("[Plugin] Created plugin {}", plugin->m_name);
-    return std::make_pair(L"", std::move(plugin));
+    return std::make_pair("", std::move(plugin));
 }
 
 void ZEPlugin::config(HWND hwnd)
@@ -222,9 +223,7 @@ void ZEPlugin::config(HWND hwnd)
         dll_config(hwnd);
     else
     {
-        DialogService::show_dialog(
-            std::format(L"'{}' has no configuration.", IOUtils::to_wide_string(this->name())).c_str(), L"Plugin",
-            fsvc_error, hwnd);
+        DialogService::show_dialog(std::format("'{}' has no configuration.", this->name()), "Plugin", fsvc_error, hwnd);
     }
 
     deinitiate_dummy();
@@ -317,10 +316,9 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
 
         if (compat_error)
         {
-            const auto msg =
-                std::format(L"The plugin {} is incompatible with this version of Mupen64 and may not work properly.",
-                            IOUtils::to_wide_string(m_name));
-            DialogService::show_dialog(msg.c_str(), L"Plugin Incompatibility", fsvc_error);
+            const auto msg = std::format(
+                "The plugin {} is incompatible with this version of Mupen64 and may not work properly.", m_name);
+            DialogService::show_dialog(msg, "Plugin Incompatibility", fsvc_error);
         }
 
         break;
@@ -479,7 +477,7 @@ void ZEPlugin::initiate_dummy()
             const auto initiate_gfx = (ZESpec::INITIATEGFX)GetProcAddress(m_module, "InitiateGFX");
             if (initiate_gfx && !initiate_gfx(dummy_video_info))
             {
-                DialogService::show_dialog(L"Couldn't initialize video plugin.", L"Core", fsvc_information);
+                DialogService::show_dialog("Couldn't initialize video plugin.", "Core", fsvc_information);
             }
         }
 
@@ -491,7 +489,7 @@ void ZEPlugin::initiate_dummy()
             const auto initiate_audio = (ZESpec::INITIATEAUDIO)GetProcAddress(m_module, "InitiateAudio");
             if (initiate_audio && !initiate_audio(dummy_audio_info))
             {
-                DialogService::show_dialog(L"Couldn't initialize audio plugin.", L"Core", fsvc_information);
+                DialogService::show_dialog("Couldn't initialize audio plugin.", "Core", fsvc_information);
             }
         }
 
@@ -529,7 +527,7 @@ void ZEPlugin::initiate_dummy()
         break;
     }
     default:
-        RT_ASSERT(false, L"Unknown plugin type");
+        RT_ASSERT(false, "Unknown plugin type");
     }
 }
 

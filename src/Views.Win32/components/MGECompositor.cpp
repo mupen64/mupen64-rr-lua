@@ -7,8 +7,9 @@
 #include "Common.hpp"
 #include <components/MGECompositor.hpp>
 #include <plugin/Plugin.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/Messages.hpp>
 #include <lua/LuaCallbacks.hpp>
+#include <Common.Views/Assert.hpp>
 
 struct t_mge_context
 {

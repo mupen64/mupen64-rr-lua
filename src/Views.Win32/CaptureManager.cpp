@@ -7,13 +7,13 @@
 #include "Common.hpp"
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
-#include <Config.hpp>
-#include <DialogService.hpp>
-#include <Messenger.hpp>
-#include <capture/CaptureManager.hpp>
-#include <capture/encoders/VFWEncoder.hpp>
-#include <capture/encoders/Encoder.hpp>
-#include <capture/encoders/FFmpegEncoder.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
+#include <CaptureManager.hpp>
+#include <Common.Views/WinVFWEncoder.hpp>
+#include <Common.Views/Encoder.hpp>
+#include <Common.Views/WinFFmpegEncoder.hpp>
 #include <components/Dispatcher.hpp>
 #include <components/MGECompositor.hpp>
 #include <lua/LuaRenderer.hpp>
@@ -21,8 +21,8 @@
 
 namespace CaptureManager
 {
-constexpr auto READSCREEN_MISSING_MSG = L"The current video plugin doesn't support the current capture method.\nTry "
-                                        L"using another video plugin or switching the capture mode.";
+constexpr auto READSCREEN_MISSING_MSG = "The current video plugin doesn't support the current capture method.\nTry "
+                                        "using another video plugin or switching the capture mode.";
 
 std::filesystem::path m_current_path;
 
@@ -207,7 +207,7 @@ static bool check_readscreen_available()
 {
     if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
     {
-        DialogService::show_dialog(READSCREEN_MISSING_MSG, L"Capture", fsvc_error);
+        DialogService::show_dialog(READSCREEN_MISSING_MSG, "Capture", fsvc_error);
         return false;
     }
 
@@ -243,7 +243,7 @@ bool stop_capture_impl()
 
     if (!m_encoder->stop())
     {
-        DialogService::show_dialog(L"Failed to stop capturing.", L"Capture", fsvc_error);
+        DialogService::show_dialog("Failed to stop capturing.", "Capture", fsvc_error);
         return false;
     }
 
@@ -295,10 +295,10 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
     switch (encoder_type)
     {
     case t_config::EncoderType::VFW:
-        m_encoder = std::make_unique<VFWEncoder>();
+        m_encoder = std::make_unique<WinVFWEncoder>();
         break;
     case t_config::EncoderType::FFmpeg:
-        m_encoder = std::make_unique<FFmpegEncoder>();
+        m_encoder = std::make_unique<WinFFmpegEncoder>();
         break;
     default:
         assert(false);
@@ -333,7 +333,7 @@ bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encode
         const auto &str = result.value();
         if (!str.empty())
         {
-            DialogService::show_dialog(str.c_str(), L"Capture", fsvc_error);
+            DialogService::show_dialog(str, "Capture", fsvc_error);
         }
         return false;
     }
@@ -399,7 +399,7 @@ void input()
     {
         if (!m_encoder->append_video(m_video_buf))
         {
-            DialogService::show_dialog(L"Failed to append frame to video.\nPerhaps you ran out of memory?", L"Capture",
+            DialogService::show_dialog("Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture",
                                        fsvc_error);
             stop_capture();
             return;
@@ -430,7 +430,7 @@ void ai_len_changed()
 
     if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
     {
-        DialogService::show_dialog(L"Failed to append audio data.\nCapture will be stopped.", L"Capture", fsvc_error);
+        DialogService::show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", fsvc_error);
         stop_capture();
     }
 }
@@ -480,7 +480,7 @@ void core_executing_changed(bool value)
     if (vis != m_encoder_params.fps)
     {
         DialogService::show_dialog(
-            L"Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", L"Capture",
+            "Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", "Capture",
             fsvc_error);
         stop_capture();
     }

@@ -13,8 +13,8 @@
 static void prompt_plugin_change(HWND hwnd)
 {
     auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_PLUGIN_LOAD_ERROR, {L"Choose Default Plugins", L"Change Plugins", L"Cancel"},
-        L"One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", L"Core", fsvc_error, hwnd);
+        VIEW_DLG_PLUGIN_LOAD_ERROR, {"Choose Default Plugins", "Change Plugins", "Cancel"},
+        "One or more plugins couldn't be loaded.\r\nHow would you like to proceed?", "Core", fsvc_error, hwnd);
 
     if (result == 0)
     {
@@ -34,22 +34,22 @@ static void prompt_plugin_change(HWND hwnd)
 
         if (first_video_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_video_plugin = first_video_plugin->get()->path();
+            g_config.selected_video_plugin = first_video_plugin->get()->path().string();
         }
 
         if (first_audio_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_audio_plugin = first_audio_plugin->get()->path();
+            g_config.selected_audio_plugin = first_audio_plugin->get()->path().string();
         }
 
         if (first_input_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_input_plugin = first_input_plugin->get()->path();
+            g_config.selected_input_plugin = first_input_plugin->get()->path().string();
         }
 
         if (first_rsp_plugin != plugin_discovery_result.plugins.end())
         {
-            g_config.selected_rsp_plugin = first_rsp_plugin->get()->path();
+            g_config.selected_rsp_plugin = first_rsp_plugin->get()->path().string();
         }
 
         return;
@@ -199,9 +199,7 @@ bool CoreUtils::show_error_dialog_for_result(core_result result, HWND hwnd)
     }
 
     const auto title = std::format("{} Error {}", module, static_cast<int32_t>(result));
-    const auto werror = IOUtils::to_wide_string(error);
-    const auto wtitle = IOUtils::to_wide_string(title);
-    DialogService::show_dialog(werror.c_str(), wtitle.c_str(), fsvc_error, hwnd);
+    DialogService::show_dialog(error, title, fsvc_error, hwnd);
 
     return true;
 }

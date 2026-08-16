@@ -13,15 +13,9 @@ target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "include")
 add_executable(Mupen64RR.Views.Win32 WIN32
     # headers
     "Common.hpp"
-    "ViewHelpers.hpp"
     "ThreadPool.hpp"
-    "Hotkey.hpp"
-    "capture/encoders/VFWEncoder.hpp"
-    "capture/encoders/Encoder.hpp"
-    "capture/encoders/FFmpegEncoder.hpp"
-    "capture/CaptureManager.hpp"
-    "capture/Resampler.hpp"
-    "DialogService.hpp"
+    "HotkeyUtils.hpp"
+    "CaptureManager.hpp"
     "components/CoreUtils.hpp"
     "components/Validators.hpp"
     "components/PianoRoll.hpp"
@@ -39,17 +33,14 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "components/Statusbar.hpp"
     "components/FilePicker.hpp"
     "components/CLI.hpp"
-    "components/SettingsListView.hpp"
     "components/HotkeyTracker.hpp"
     "components/CommandPalette.hpp"
     "components/ParameterPalette.hpp"
     "components/TextEditDialog.hpp"
     "components/ReorderableListView.hpp"
-    "action/ActionManager.hpp"
     "action/ActionMenu.hpp"
     "action/AppActions.hpp"
     "Main.hpp"
-    "Config.hpp"
     "lua/LuaHelpers.hpp"
     "lua/LuaTypes.hpp"
     "lua/LuaManager.hpp"
@@ -74,22 +65,16 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/presenters/DCompPresenter.hpp"
     "lua/presenters/GDIPresenter.hpp"
     "lua/presenters/Presenter.hpp"
-    "Messenger.hpp"
     "plugin/Plugin.hpp"
     "plugin/ZEPlugin.hpp"
     "plugin/M64RRPlugin.hpp"
     "resource.h"
-    "ResizeAnchor.hpp"
 
     # sources
     "ThreadPool.cpp"
-    "capture/encoders/VFWEncoder.cpp"
-    "capture/encoders/FFmpegEncoder.cpp"
-    "capture/CaptureManager.cpp"
-    "capture/Resampler.cpp"
-    "Config.cpp"
-    "Hotkey.cpp"
-    "DialogService.cpp"
+    "CaptureManager.cpp"
+    "HotkeyUtils.cpp"
+    "WinDialogService.cpp"
     "components/CoreUtils.cpp"
     "components/Validators.cpp"
     "components/Cheats.cpp"
@@ -106,14 +91,12 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "components/UpdateChecker.cpp"
     "components/FilePicker.cpp"
     "components/CLI.cpp"
-    "components/SettingsListView.cpp"
     "components/HotkeyTracker.cpp"
     "components/CommandPalette.cpp"
     "components/ParameterPalette.cpp"
     "components/TextEditDialog.cpp"
     "components/ReorderableListView.cpp"
     "Loggers.cpp"
-    "action/ActionManager.cpp"
     "action/ActionMenu.cpp"
     "action/AppActions.cpp"
     "Main.cpp"
@@ -125,11 +108,9 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/LuaDialog.cpp"
     "lua/presenters/DCompPresenter.cpp"
     "lua/presenters/GDIPresenter.cpp"
-    "Messenger.cpp"
     "plugin/Plugin.cpp"
     "plugin/ZEPlugin.cpp"
     "plugin/M64RRPlugin.cpp"
-    "ResizeAnchor.cpp"
 
     # Resource script
     "Resource.rc"
@@ -143,6 +124,7 @@ set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
 )
 mupen64rr_copy_vcpkg_deps(Mupen64RR.Views.Win32)
 mupen64rr_copy_mingw_runtime(Mupen64RR.Views.Win32)
+mupen64rr_copy_msvc_runtime(Mupen64RR.Views.Win32)
 add_custom_command(TARGET Mupen64RR.Views.Win32 POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         -D "MUPEN64RR_OUT_DIR=${MUPEN64RR_OUT_DIR}"
@@ -162,6 +144,7 @@ set_source_files_properties(
 target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Mupen64RR.Common
+    Mupen64RR.Common.Views
     Mupen64RR.Common.Win32
     Mupen64RR.Core
     Mupen64RR.Views.Win32.Headers
@@ -201,8 +184,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
 
 target_compile_definitions(Mupen64RR.Views.Win32 PRIVATE
     "MINI_CASE_SENSITIVE"
-    # "SPDLOG_WCHAR_TO_UTF8_SUPPORT"
-    "VERSION_SUFFIX=L\"${MUPEN64RR_VERSION_SUFFIX}\""
+    "VERSION_SUFFIX=\"${MUPEN64RR_VERSION_SUFFIX}\""
     "$<$<BOOL:${MUPEN64RR_NIGHTLY}>:NIGHTLY>"
 )
 

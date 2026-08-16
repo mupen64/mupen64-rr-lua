@@ -6,8 +6,8 @@
 
 #include "Common.hpp"
 #include <components/MovieDialog.hpp>
-#include <Config.hpp>
-#include <DialogService.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/FilePicker.hpp>
 
 struct t_movie_dialog_context
@@ -108,15 +108,15 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         LVCOLUMN lv_column = {0};
         lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
-        lv_column.pszText = const_cast<LPWSTR>(L"Name");
+        lv_column.pszText = const_cast<LPSTR>("Name");
         ListView_InsertColumn(g_ctx.grid_hwnd, 0, &lv_column);
-        lv_column.pszText = const_cast<LPWSTR>(L"Value");
+        lv_column.pszText = const_cast<LPSTR>("Value");
         ListView_InsertColumn(g_ctx.grid_hwnd, 1, &lv_column);
 
         ListView_SetColumnWidth(g_ctx.grid_hwnd, 0, LVSCW_AUTOSIZE_USEHEADER);
         ListView_SetColumnWidth(g_ctx.grid_hwnd, 1, LVSCW_AUTOSIZE_USEHEADER);
 
-        SetWindowText(hwnd, g_ctx.is_readonly ? L"Play Movie" : L"Record Movie");
+        SetWindowText(hwnd, g_ctx.is_readonly ? "Play Movie" : "Record Movie");
         for (auto id : g_ctx.is_readonly ? disabled_on_play : disabled_on_record)
         {
             EnableWindow(GetDlgItem(hwnd, id), false);
@@ -126,9 +126,9 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::author), 0);
 
         SetDlgItemText(hwnd, IDC_INI_AUTHOR, g_config.last_movie_author.c_str());
-        SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, L"");
+        SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, "");
 
-        SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, g_ctx.user_result.path.wstring().c_str());
+        SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, g_ctx.user_result.path.string().c_str());
 
         // workaround because initial selected button is "Start"
         SetFocus(GetDlgItem(hwnd, IDC_INI_AUTHOR));
@@ -151,14 +151,18 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDOK: {
             g_config.last_movie_type = g_ctx.user_result.start_flag;
 
-            wchar_t author[sizeof(core_vcr_movie_header::author)] = {0};
+            char author[sizeof(core_vcr_movie_header::author)] = {0};
             GetDlgItemText(hwnd, IDC_INI_AUTHOR, author, std::size(author));
+
             g_ctx.user_result.author = author;
+            if (g_ctx.user_result.author.empty()) g_ctx.user_result.author = "(unspecified)";
             g_config.last_movie_author = g_ctx.user_result.author;
 
-            wchar_t description[sizeof(core_vcr_movie_header::description)] = {0};
+            char description[sizeof(core_vcr_movie_header::description)] = {0};
             GetDlgItemText(hwnd, IDC_INI_DESCRIPTION, description, std::size(description));
+
             g_ctx.user_result.description = description;
+            if (g_ctx.user_result.description.empty()) g_ctx.user_result.description = "(unspecified)";
 
             const bool should_close = g_ctx.on_confirm(g_ctx.user_result);
             if (!should_close)
@@ -181,7 +185,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            wchar_t path[MAX_PATH] = {0};
+            char path[MAX_PATH] = {0};
             GetDlgItemText(hwnd, IDC_INI_MOVIEFILE, path, std::size(path));
             g_ctx.user_result.path = path;
 
@@ -191,14 +195,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             goto refresh;
         }
         case IDC_MOVIE_BROWSE: {
-            std::wstring path;
+            std::filesystem::path path;
             if (g_ctx.is_readonly)
             {
-                path = FilePicker::show_open_dialog(L"o_movie", hwnd, L"*.m64;*.rec");
+                path = FilePicker::show_open_dialog("o_movie", hwnd, "*.m64;*.rec");
             }
             else
             {
-                path = FilePicker::show_save_dialog(L"s_movie", hwnd, L"*.m64;*.rec");
+                path = FilePicker::show_save_dialog("s_movie", hwnd, "*.m64;*.rec");
             }
 
             if (path.empty())
@@ -206,7 +210,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
 
-            SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, path.c_str());
+            SetDlgItemText(hwnd, IDC_INI_MOVIEFILE, path.string().c_str());
         }
         break;
         case IDC_RADIO_FROM_EEPROM:
@@ -251,85 +255,80 @@ refresh:
         return FALSE;
     }
 
-    std::vector<std::pair<std::wstring, std::wstring>> metadata;
+    std::vector<std::pair<std::string, std::string>> metadata;
 
     ListView_DeleteAllItems(g_ctx.grid_hwnd);
 
-    metadata.emplace_back(std::make_pair(
-        L"ROM",
-        std::format(L"{} ({}, {})", IOUtils::to_wide_string((char *)header.rom_name),
-                    IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country)),
-                    std::format(L"{:#08x}", header.rom_crc1))));
+    metadata.emplace_back(
+        std::make_pair("ROM", std::format("{} ({}, {})", (char *)header.rom_name,
+                                          g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country),
+                                          std::format("{:#08x}", header.rom_crc1))));
 
     metadata.emplace_back(
-        std::make_pair(L"Length", std::format(L"{} ({} input)", header.length_vis, header.length_samples)));
+        std::make_pair("Length", std::format("{} ({} input)", header.length_vis, header.length_samples)));
     metadata.emplace_back(
-        std::make_pair(L"Duration", format_duration((double)header.length_vis / (double)header.vis_per_second)));
+        std::make_pair("Duration", format_duration((double)header.length_vis / (double)header.vis_per_second)));
     metadata.emplace_back(std::make_pair(
-        L"Rerecords",
-        std::to_wstring(static_cast<uint64_t>(header.extended_data.rerecord_count) << 32 | header.rerecord_count)));
+        "Rerecords",
+        std::to_string(static_cast<uint64_t>(header.extended_data.rerecord_count) << 32 | header.rerecord_count)));
 
-    metadata.emplace_back(std::make_pair(L"Video Plugin", IOUtils::to_wide_string(header.video_plugin_name)));
-    metadata.emplace_back(std::make_pair(L"Input Plugin", IOUtils::to_wide_string(header.input_plugin_name)));
-    metadata.emplace_back(std::make_pair(L"Sound Plugin", IOUtils::to_wide_string(header.audio_plugin_name)));
-    metadata.emplace_back(std::make_pair(L"RSP Plugin", IOUtils::to_wide_string(header.rsp_plugin_name)));
+    metadata.emplace_back(std::make_pair("Video Plugin", header.video_plugin_name));
+    metadata.emplace_back(std::make_pair("Input Plugin", header.input_plugin_name));
+    metadata.emplace_back(std::make_pair("Sound Plugin", header.audio_plugin_name));
+    metadata.emplace_back(std::make_pair("RSP Plugin", header.rsp_plugin_name));
 
     for (int i = 0; i < 4; ++i)
     {
-        std::wstring desc;
+        std::string desc;
 
-        desc += header.controller_flags & CONTROLLER_X_PRESENT(i) ? L"Present" : L"Disconnected";
+        desc += header.controller_flags & CONTROLLER_X_PRESENT(i) ? "Present" : "Disconnected";
 
-        if (header.controller_flags & CONTROLLER_X_MEMPAK(i)) desc += L" with mempak";
-        if (header.controller_flags & CONTROLLER_X_RUMBLE(i)) desc += L" with rumble";
+        if (header.controller_flags & CONTROLLER_X_MEMPAK(i)) desc += " with mempak";
+        if (header.controller_flags & CONTROLLER_X_RUMBLE(i)) desc += " with rumble";
 
-        metadata.emplace_back(std::make_pair(std::format(L"Controller {}", i + 1), desc));
+        metadata.emplace_back(std::make_pair(std::format("Controller {}", i + 1), desc));
     }
 
-    metadata.emplace_back(std::make_pair(L"WiiVC", header.extended_version == 0
-                                                       ? L"Unknown"
-                                                       : (header.extended_flags.wii_vc ? L"Enabled" : L"Disabled")));
+    metadata.emplace_back(std::make_pair(
+        "WiiVC", header.extended_version == 0 ? "Unknown" : (header.extended_flags.wii_vc ? "Enabled" : "Disabled")));
 
     metadata.emplace_back(std::make_pair(
-        L"Accurate RDP completion", header.extended_version < 3
-                                        ? L"Unknown"
-                                        : (header.extended_flags.accurate_rdp_completion ? L"Enabled" : L"Disabled")));
+        "Accurate RDP completion", header.extended_version < 3
+                                       ? "Unknown"
+                                       : (header.extended_flags.accurate_rdp_completion ? "Enabled" : "Disabled")));
 
-    metadata.emplace_back(std::make_pair(L"CPU counter factor",
-                                         header.extended_version < 4
-                                             ? std::wstring(L"Unknown")
-                                             : std::format(L"{}", header.extended_data.cpu_cf)));
+    metadata.emplace_back(std::make_pair("CPU counter factor", header.extended_version < 4
+                                                                   ? std::string("Unknown")
+                                                                   : std::format("{}", header.extended_data.cpu_cf)));
 
-    metadata.emplace_back(std::make_pair(L"RCP lag factor",
-                                         header.extended_version < 4
-                                             ? std::wstring(L"Unknown")
-                                             : std::format(L"{}", header.extended_data.rcp_lag_factor)));
+    metadata.emplace_back(std::make_pair(
+        "RCP lag factor",
+        header.extended_version < 4 ? std::string("Unknown") : std::format("{}", header.extended_data.rcp_lag_factor)));
 
     char authorship[5] = {0};
     memcpy(authorship, header.extended_data.authorship_tag, sizeof(header.extended_data.authorship_tag));
 
-    metadata.emplace_back(
-        std::make_pair(L"Authorship", header.extended_version == 0 ? L"Unknown" : IOUtils::to_wide_string(authorship)));
+    metadata.emplace_back(std::make_pair("Authorship", header.extended_version == 0 ? "Unknown" : authorship));
 
-    metadata.emplace_back(std::make_pair(L"A Presses", std::to_wstring(count_button_presses(inputs, 7))));
-    metadata.emplace_back(std::make_pair(L"B Presses", std::to_wstring(count_button_presses(inputs, 6))));
-    metadata.emplace_back(std::make_pair(L"Z Presses", std::to_wstring(count_button_presses(inputs, 5))));
-    metadata.emplace_back(std::make_pair(L"S Presses", std::to_wstring(count_button_presses(inputs, 4))));
-    metadata.emplace_back(std::make_pair(L"R Presses", std::to_wstring(count_button_presses(inputs, 12))));
+    metadata.emplace_back(std::make_pair("A Presses", std::to_string(count_button_presses(inputs, 7))));
+    metadata.emplace_back(std::make_pair("B Presses", std::to_string(count_button_presses(inputs, 6))));
+    metadata.emplace_back(std::make_pair("Z Presses", std::to_string(count_button_presses(inputs, 5))));
+    metadata.emplace_back(std::make_pair("S Presses", std::to_string(count_button_presses(inputs, 4))));
+    metadata.emplace_back(std::make_pair("R Presses", std::to_string(count_button_presses(inputs, 12))));
 
-    metadata.emplace_back(std::make_pair(L"C^ Presses", std::to_wstring(count_button_presses(inputs, 11))));
-    metadata.emplace_back(std::make_pair(L"Cv Presses", std::to_wstring(count_button_presses(inputs, 10))));
-    metadata.emplace_back(std::make_pair(L"C< Presses", std::to_wstring(count_button_presses(inputs, 9))));
-    metadata.emplace_back(std::make_pair(L"C> Presses", std::to_wstring(count_button_presses(inputs, 8))));
+    metadata.emplace_back(std::make_pair("C^ Presses", std::to_string(count_button_presses(inputs, 11))));
+    metadata.emplace_back(std::make_pair("Cv Presses", std::to_string(count_button_presses(inputs, 10))));
+    metadata.emplace_back(std::make_pair("C< Presses", std::to_string(count_button_presses(inputs, 9))));
+    metadata.emplace_back(std::make_pair("C> Presses", std::to_string(count_button_presses(inputs, 8))));
 
     const auto lag_frames = std::max((int64_t)0, (int64_t)header.length_vis - 2 * (int64_t)header.length_samples);
-    metadata.emplace_back(std::make_pair(L"Lag Frames (approximation)", std::to_wstring(lag_frames)));
-    metadata.emplace_back(std::make_pair(L"Unused Inputs", std::to_wstring(count_unused_inputs(inputs))));
-    metadata.emplace_back(std::make_pair(L"Joystick Frames", std::to_wstring(count_joystick_frames(inputs))));
-    metadata.emplace_back(std::make_pair(L"Input Changes", std::to_wstring(count_input_changes(inputs))));
+    metadata.emplace_back(std::make_pair("Lag Frames (approximation)", std::to_string(lag_frames)));
+    metadata.emplace_back(std::make_pair("Unused Inputs", std::to_string(count_unused_inputs(inputs))));
+    metadata.emplace_back(std::make_pair("Joystick Frames", std::to_string(count_joystick_frames(inputs))));
+    metadata.emplace_back(std::make_pair("Input Changes", std::to_string(count_input_changes(inputs))));
 
-    SetDlgItemText(hwnd, IDC_INI_AUTHOR, IOUtils::to_wide_string(header.author).c_str());
-    SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, IOUtils::to_wide_string(header.description).c_str());
+    SetDlgItemText(hwnd, IDC_INI_AUTHOR, header.author);
+    SetDlgItemText(hwnd, IDC_INI_DESCRIPTION, header.description);
 
     CheckDlgButton(hwnd, IDC_RADIO_FROM_ST, header.startFlags == MOVIE_START_FROM_SNAPSHOT);
     CheckDlgButton(hwnd, IDC_RADIO_FROM_START, header.startFlags == MOVIE_START_FROM_NOTHING);
@@ -365,7 +364,7 @@ static std::filesystem::path get_default_movie_path(bool readonly)
         char rom_name[sizeof(rom_hdr->nom) + 1]{};
         std::memcpy(rom_name, rom_hdr->nom, sizeof(rom_hdr->nom));
         const auto rom_country = g_main_ctx.core_ctx->vr_country_code_to_country_name(rom_hdr->Country_code);
-        return std::format(L"{} ({}).m64", IOUtils::to_wide_string(rom_name), IOUtils::to_wide_string(rom_country));
+        return std::format("{} ({}).m64", rom_name, rom_country);
     }
 
     return g_config.recent_movie_paths[0];
@@ -378,7 +377,7 @@ MovieDialog::t_result MovieDialog::show(bool readonly, const std::function<bool(
     g_ctx.user_result.path = get_default_movie_path(readonly);
     g_ctx.user_result.start_flag = g_config.last_movie_type;
     g_ctx.user_result.author = g_config.last_movie_author;
-    g_ctx.user_result.description = L"";
+    g_ctx.user_result.description = "";
     g_ctx.is_closing = false;
 
     DialogBox(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_MOVIE_DIALOG), g_main_ctx.hwnd, (DLGPROC)dlgproc);

@@ -32,11 +32,11 @@ bool init_rsp_thread()
     for (auto &i : RSP.threadMsg)
     {
         i = CreateEvent(NULL, FALSE, FALSE, NULL);
-        RT_ASSERT(i, L"Error creating video thread message events");
+        RT_ASSERT(i, "Error creating video thread message events");
     }
 
     RSP.threadFinished = CreateEvent(NULL, FALSE, FALSE, NULL);
-    RT_ASSERT(RSP.threadFinished, L"Error creating video thread finished event");
+    RT_ASSERT(RSP.threadFinished, "Error creating video thread finished event");
 
     RSP.halt = FALSE;
 
@@ -132,7 +132,18 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             }
 
             SetEvent(RSP.threadMsg[RSPMSG_CLOSE]);
-            WaitForSingleObject(RSP.threadFinished, INFINITE);
+            WaitForSingleObject(RSP.thread, INFINITE);
+            CloseHandle(RSP.thread);
+            RSP.thread = nullptr;
+
+            for (auto &event : RSP.threadMsg)
+            {
+                CloseHandle(event);
+                event = nullptr;
+            }
+
+            CloseHandle(RSP.threadFinished);
+            RSP.threadFinished = nullptr;
         }
         break;
     default:

@@ -12,26 +12,6 @@
  */
 namespace CaptureManager
 {
-/**
- * \brief Synchronization modes the capture manager can abide by
- */
-enum class Sync : int
-{
-    /**
-     * \brief Video and Audio streams are not kept in sync
-     */
-    None,
-
-    /**
-     * \brief The audio stream dictates the video stream's rate
-     */
-    Audio,
-
-    /**
-     * \brief The video stream dictates the audio stream's rate
-     */
-    Video,
-};
 
 /**
  * \brief Initializes the capture manager

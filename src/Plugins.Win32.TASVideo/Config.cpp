@@ -29,27 +29,27 @@ struct ResolutionPreset
 {
     uint32_t width{};
     uint32_t height{};
-    std::wstring description;
+    std::string description;
 };
 
 const std::vector<ResolutionPreset> RESOLUTION_PRESETS = {
-    {320, 240, L"320 x 240 (4:3)"},     {400, 300, L"400 x 300 (4:3)"},      {480, 360, L"480 x 360 (4:3)"},
-    {640, 480, L"640 x 480 (4:3)"},     {800, 600, L"800 x 600 (4:3)"},      {960, 720, L"960 x 720 (4:3)"},
-    {1024, 768, L"1024 x 768 (4:3)"},   {1152, 864, L"1152 x 864 (4:3)"},    {1280, 720, L"1280 x 720 (16:9)"},
-    {1280, 960, L"1280 x 960 (4:3)"},   {1280, 1024, L"1280 x 1024 (5:4)"},  {1440, 1080, L"1440 x 1080 (4:3)"},
-    {1600, 1200, L"1600 x 1200 (4:3)"}, {1920, 1080, L"1920 x 1080 (16:9)"}, {2560, 1440, L"2560 x 1440 (16:9)"},
-    {3840, 2160, L"3840 x 2160 (16:9)"}};
+    {320, 240, "320 x 240 (4:3)"},     {400, 300, "400 x 300 (4:3)"},      {480, 360, "480 x 360 (4:3)"},
+    {640, 480, "640 x 480 (4:3)"},     {800, 600, "800 x 600 (4:3)"},      {960, 720, "960 x 720 (4:3)"},
+    {1024, 768, "1024 x 768 (4:3)"},   {1152, 864, "1152 x 864 (4:3)"},    {1280, 720, "1280 x 720 (16:9)"},
+    {1280, 960, "1280 x 960 (4:3)"},   {1280, 1024, "1280 x 1024 (5:4)"},  {1440, 1080, "1440 x 1080 (4:3)"},
+    {1600, 1200, "1600 x 1200 (4:3)"}, {1920, 1080, "1920 x 1080 (16:9)"}, {2560, 1440, "2560 x 1440 (16:9)"},
+    {3840, 2160, "3840 x 2160 (16:9)"}};
 
-const std::vector<std::pair<uint8_t, std::wstring>> FILTER_NAMES = {
-    {0, L"Default"},
-    {1, L"Always Smooth"},
-    {2, L"Always Pixelated"},
+const std::vector<std::pair<uint8_t, std::string>> FILTER_NAMES = {
+    {0, "Default"},
+    {1, "Always Smooth"},
+    {2, "Always Pixelated"},
 };
 
-const std::vector<std::wstring> ASPECT_MODE_NAMES = {
-    L"Pillarbox",
-    L"Stretch",
-    L"Widescreen",
+const std::vector<std::string> ASPECT_MODE_NAMES = {
+    "Pillarbox",
+    "Stretch",
+    "Widescreen",
 };
 
 constexpr AspectMode DEFAULT_ASPECT_MODE = AspectMode::Widescreen;
@@ -154,11 +154,11 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
 
     prev_OGL = OGL;
 
-    wchar_t text[256]{};
+    char text[256]{};
     int i;
 
     Edit_GetText(GetDlgItem(hWndDlg, IDC_CACHEMEGS), text, 4);
-    cache.maxBytes = _wtol(text) * 1048576;
+    cache.maxBytes = atol(text) * 1048576;
 
     OGL.textureFilter = (TextureFilter)SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_GETCURSEL, 0, 0);
     OGL.filterScale = SendDlgItemMessage(hWndDlg, IDC_FSCALE, TBM_GETPOS, 0, 0);
@@ -168,11 +168,11 @@ void Config_ApplyDlgConfig(HWND hWndDlg)
     OGL.ignoreScissor = (SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_GETCHECK, 0, 0) == BST_CHECKED);
     OGL.clear_override = (SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
-    wchar_t val[32]{};
+    char val[32]{};
     SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_X), WM_GETTEXT, std::size(val), (LPARAM)val);
-    OGL.windowedWidth = _wtoi(val);
+    OGL.windowedWidth = atoi(val);
     SendMessage(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), WM_GETTEXT, std::size(val), (LPARAM)val);
-    OGL.windowedHeight = _wtoi(val);
+    OGL.windowedHeight = atoi(val);
 
     OGL.smoothing = ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_SMOOTHING));
     OGL.aspectMode = to_aspect_mode(ComboBox_GetCurSel(GetDlgItem(hWndDlg, IDC_ASPECT)));
@@ -239,13 +239,13 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
 
         select_resolution_in_combobox(cb_hwnd, OGL.windowedWidth, OGL.windowedHeight);
 
-        SendDlgItemMessage(hWndDlg, IDC_WINDOWED_X, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedWidth).c_str());
-        SendDlgItemMessage(hWndDlg, IDC_WINDOWED_Y, WM_SETTEXT, 0, (LPARAM)std::to_wstring(OGL.windowedHeight).c_str());
+        SendDlgItemMessage(hWndDlg, IDC_WINDOWED_X, WM_SETTEXT, 0, (LPARAM)std::to_string(OGL.windowedWidth).c_str());
+        SendDlgItemMessage(hWndDlg, IDC_WINDOWED_Y, WM_SETTEXT, 0, (LPARAM)std::to_string(OGL.windowedHeight).c_str());
 
-        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM)L"None");
-        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM)L"2xSaI");
-        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM)L"xBRZ");
-        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM)L"Hqx");
+        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM) "None");
+        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM) "2xSaI");
+        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM) "xBRZ");
+        SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_ADDSTRING, 0, (LPARAM) "Hqx");
         SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_SETCURSEL, (int)OGL.textureFilter, 0);
         SendMessage(GetDlgItem(hWndDlg, IDC_FSCALE), TBM_SETPOS, TRUE, OGL.filterScale);
 
@@ -262,7 +262,7 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_SETCHECK,
                            OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
-        const auto cache_size = std::to_wstring(cache.maxBytes / 1048576);
+        const auto cache_size = std::to_string(cache.maxBytes / 1048576);
         SendDlgItemMessage(hWndDlg, IDC_CACHEMEGS, WM_SETTEXT, 0, (LPARAM)cache_size.c_str());
 
         SendMessage(hWndDlg, WM_COMMAND, MAKEWPARAM(IDC_TEXTUREFILTER, CBN_SELCHANGE),
@@ -289,16 +289,16 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
                 const auto index = ComboBox_GetCurSel(cb_hwnd);
 
                 const auto &preset = RESOLUTION_PRESETS[index];
-                Edit_SetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), std::to_wstring(preset.width).c_str());
-                Edit_SetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), std::to_wstring(preset.height).c_str());
+                Edit_SetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), std::to_string(preset.width).c_str());
+                Edit_SetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), std::to_string(preset.height).c_str());
             }
             break;
         case IDC_WINDOWED_X:
         case IDC_WINDOWED_Y:
             if (HIWORD(wParam) == EN_CHANGE)
             {
-                wchar_t w_str[32]{};
-                wchar_t h_str[32]{};
+                char w_str[32]{};
+                char h_str[32]{};
                 Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_X), w_str, std::size(w_str));
                 Edit_GetText(GetDlgItem(hWndDlg, IDC_WINDOWED_Y), h_str, std::size(h_str));
 
