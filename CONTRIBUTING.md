@@ -84,7 +84,18 @@ ctest --test-dir build
 Compile and build using the provided `mingw-linux-*` presets. MinGW runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) will be automatically copied to the output directory at build time.
 
 # Dependencies
-When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
+
+## Major dependencies
+
+If you need to include a large cross-platform library, it should be found via `find_package`. By platform:
+  - **Windows**: add the dependency to `vcpkg.json`
+  - **Linux**: rely on the system package.
+
+> **Note:** Qt is an exception on Windows, as it should be provided by a Qt installation.
+
+Dependencies should be provided in this fashion if a package is available for it on both **the latest Ubuntu LTS** (currently 26.04 "resolute") and **the latest Fedora release**.
+
+Ensure that dependencies specific to a frontend and/or plugins are wrapped inside an `if()` block.
 
 > **Note:** the Windows GUI components are gated behind `MUPEN64RR_BUILD_WIN32`. 
 
@@ -95,6 +106,16 @@ if (MUPEN64RR_BUILD_WIN32)
   find_package(SDL3 CONFIG REQUIRED) 
 endif()
 ```
+
+## Vendored dependencies
+
+Smaller libraries may be directly vendored in the `vendor/` subdirectory. Make sure to setup an alias target for each library.
+
+```cmake
+add_subdirectory(argh)
+add_library(vendor::argh ALIAS argh)
+```
+
 
 # Branching
 
