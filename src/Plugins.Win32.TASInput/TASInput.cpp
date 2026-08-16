@@ -1247,12 +1247,12 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         attach_event_watch();
         load_config();
         show_activated_windows();
-        SetTimer(nullptr, IDT_TIMER, 16, timer_callback);
+        SetTimer(status[0].hwnd, IDT_TIMER, 16, timer_callback);
         rom_open = true;
         break;
     }
     case M64RRSpec::Event::Type::RomClosed: {
-        KillTimer(nullptr, IDT_TIMER);
+        KillTimer(status[0].hwnd, IDT_TIMER);
         rom_open = false;
 
         for (auto &st : status)
