@@ -13,24 +13,35 @@
 #include <Common.Views/Assert.hpp>
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_video_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_video_get_windows_fn = nullptr;
 static M64RRSpec::PtrProcessDList s_mupenrr_process_dlist_fn = nullptr;
 static M64RRSpec::PtrProcessRDPList s_mupenrr_process_rdplist_fn = nullptr;
 static M64RRSpec::PtrReadVideo s_mupenrr_read_video_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_audio_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_audio_get_windows_fn = nullptr;
 static M64RRSpec::PtrAIDacrateChanged s_mupenrr_ai_dacrate_changed_fn = nullptr;
 static M64RRSpec::PtrAILenChanged s_mupenrr_ai_len_changed_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_input_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_input_get_windows_fn = nullptr;
 static M64RRSpec::PtrGetKeys s_mupenrr_get_keys_fn = nullptr;
 static M64RRSpec::PtrSetKeys s_mupenrr_set_keys_fn = nullptr;
 static M64RRSpec::PtrReadController s_mupenrr_read_controller_fn = nullptr;
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_rsp_event_fn = nullptr;
+static M64RRSpec::PtrGetWindows s_mupenrr_rsp_get_windows_fn = nullptr;
 static M64RRSpec::PtrDoRSPCycles s_mupenrr_do_rsp_cycles_fn = nullptr;
 
 #define LOOKUP_MUPENRR_FN(mupenrr_ptr, mupenrr_type, export_name)                                                      \
     mupenrr_ptr = (mupenrr_type)GetProcAddress(m_module, export_name);
+
+static void process_event_on_gui_thread(M64RRSpec::PtrProcessEvent event_fn, M64RRSpec::Event event)
+{
+    if (!event_fn) return;
+
+    g_main_ctx.dispatcher->invoke([event_fn, event] { event_fn(event); });
+}
 
 static size_t get_config_path(char *data, size_t size)
 {
@@ -119,7 +130,7 @@ void M64RRPlugin::config(HWND hwnd)
         auto event_fn = (M64RRSpec::PtrProcessEvent)GetProcAddress(m_module, "M64RRProcessEvent");
         if (!event_fn) event_fn = [](auto) {};
 
-        event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+        process_event_on_gui_thread(event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
     }
 }
 
@@ -211,10 +222,10 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         break;
     }
 
-    event_fn(M64RRSpec::Event{.initiate = {
-                                  .type = M64RRSpec::Event::Type::Initiate,
-                                  .init = init,
-                              }});
+    process_event_on_gui_thread(event_fn, M64RRSpec::Event{.initiate = {
+                                                               .type = M64RRSpec::Event::Type::Initiate,
+                                                               .init = init,
+                                                           }});
 
     switch (m_type)
     {
@@ -222,20 +233,21 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         g_view_logger->trace("Initiating video plugin (MupenRR)...");
 
         LOOKUP_MUPENRR_FN(s_mupenrr_video_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
+        LOOKUP_MUPENRR_FN(s_mupenrr_video_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(s_mupenrr_process_dlist_fn, M64RRSpec::PtrProcessDList, "M64RRProcessDList");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_video_fn, M64RRSpec::PtrReadVideo, "M64RRReadVideo");
 
         funcs.video_rom_open = []() {
-            if (s_mupenrr_video_event_fn)
-                s_mupenrr_video_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+            process_event_on_gui_thread(s_mupenrr_video_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.video_rom_closed = []() {
-            if (s_mupenrr_video_event_fn)
-                s_mupenrr_video_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(s_mupenrr_video_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.video_close_dll = []() {
-            if (s_mupenrr_video_event_fn)
-                s_mupenrr_video_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(s_mupenrr_video_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.video_process_dlist = []() {
             if (s_mupenrr_process_dlist_fn) s_mupenrr_process_dlist_fn();
@@ -269,20 +281,21 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         g_view_logger->trace("Initiating audio plugin (MupenRR)...");
 
         LOOKUP_MUPENRR_FN(s_mupenrr_audio_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
+        LOOKUP_MUPENRR_FN(s_mupenrr_audio_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_dacrate_changed_fn, M64RRSpec::PtrAIDacrateChanged, "M64RRAIDacrateChanged");
         LOOKUP_MUPENRR_FN(s_mupenrr_ai_len_changed_fn, M64RRSpec::PtrAILenChanged, "M64RRAILenChanged");
 
         funcs.audio_rom_open = []() {
-            if (s_mupenrr_audio_event_fn)
-                s_mupenrr_audio_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+            process_event_on_gui_thread(s_mupenrr_audio_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.audio_rom_closed = []() {
-            if (s_mupenrr_audio_event_fn)
-                s_mupenrr_audio_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(s_mupenrr_audio_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.audio_close_dll_audio = []() {
-            if (s_mupenrr_audio_event_fn)
-                s_mupenrr_audio_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(s_mupenrr_audio_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.audio_ai_dacrate_changed = [](CoreSystemType system_type) {
             if (s_mupenrr_ai_dacrate_changed_fn) s_mupenrr_ai_dacrate_changed_fn(system_type);
@@ -300,21 +313,22 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         g_view_logger->trace("Initiating input plugin (MupenRR)...");
 
         LOOKUP_MUPENRR_FN(s_mupenrr_input_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
+        LOOKUP_MUPENRR_FN(s_mupenrr_input_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(s_mupenrr_get_keys_fn, M64RRSpec::PtrGetKeys, "M64RRGetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_set_keys_fn, M64RRSpec::PtrSetKeys, "M64RRSetKeys");
         LOOKUP_MUPENRR_FN(s_mupenrr_read_controller_fn, M64RRSpec::PtrReadController, "M64RRReadController");
 
         funcs.input_rom_open = []() {
-            if (s_mupenrr_input_event_fn)
-                s_mupenrr_input_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
+            process_event_on_gui_thread(s_mupenrr_input_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
         };
         funcs.input_rom_closed = []() {
-            if (s_mupenrr_input_event_fn)
-                s_mupenrr_input_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(s_mupenrr_input_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.input_close_dll = []() {
-            if (s_mupenrr_input_event_fn)
-                s_mupenrr_input_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(s_mupenrr_input_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.input_controller_command = [](int32_t, uint8_t *) {};
         funcs.input_get_keys = [](int32_t controller, ZESpec::Buttons *keys) {
@@ -338,16 +352,17 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         g_view_logger->trace("Initiating RSP plugin (MupenRR)...");
 
         LOOKUP_MUPENRR_FN(s_mupenrr_rsp_event_fn, M64RRSpec::PtrProcessEvent, "M64RRProcessEvent");
+        LOOKUP_MUPENRR_FN(s_mupenrr_rsp_get_windows_fn, M64RRSpec::PtrGetWindows, "M64RRGetWindows");
         LOOKUP_MUPENRR_FN(s_mupenrr_do_rsp_cycles_fn, M64RRSpec::PtrDoRSPCycles, "M64RRDoRSPCycles");
 
         // FIXME: add rsp_rom_opened
         funcs.rsp_rom_closed = []() {
-            if (s_mupenrr_rsp_event_fn)
-                s_mupenrr_rsp_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
+            process_event_on_gui_thread(s_mupenrr_rsp_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
         };
         funcs.rsp_close_dll = []() {
-            if (s_mupenrr_rsp_event_fn)
-                s_mupenrr_rsp_event_fn(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+            process_event_on_gui_thread(s_mupenrr_rsp_event_fn,
+                                        M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
         };
         funcs.rsp_do_rsp_cycles = [](uint32_t cycles) {
             if (s_mupenrr_do_rsp_cycles_fn)
@@ -365,6 +380,38 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     }
 
     m_initialized = true;
+}
+
+std::vector<HWND> PluginUtil::get_all_plugin_windows()
+{
+    std::vector<HWND> windows;
+
+    const std::array<M64RRSpec::PtrGetWindows, 4> get_windows_functions = {
+        s_mupenrr_video_get_windows_fn,
+        s_mupenrr_audio_get_windows_fn,
+        s_mupenrr_input_get_windows_fn,
+        s_mupenrr_rsp_get_windows_fn,
+    };
+
+    for (const auto get_windows : get_windows_functions)
+    {
+        if (!get_windows) continue;
+
+        size_t count = 0;
+        get_windows(nullptr, &count);
+        if (count == 0) continue;
+
+        std::vector<M64RRSpec::WindowHandle> plugin_windows(count);
+        get_windows(plugin_windows.data(), &count);
+
+        windows.reserve(windows.size() + count);
+        for (const auto &window : plugin_windows)
+        {
+            if (const auto hwnd = window.hwnd()) windows.push_back(hwnd);
+        }
+    }
+
+    return windows;
 }
 
 #undef LOOKUP_MUPENRR_FN
