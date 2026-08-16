@@ -58,6 +58,7 @@ DWORD WINAPI RSP_ThreadProc(LPVOID)
         {
         case WAIT_OBJECT_0 + RSPMSG_CLOSE:
             OGL_Stop();
+            OGL_DestroyContext();
             SetEvent(RSP.threadFinished);
             return 0;
         case WAIT_OBJECT_0 + RSPMSG_START:
