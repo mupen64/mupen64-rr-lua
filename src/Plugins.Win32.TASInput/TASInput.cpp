@@ -204,7 +204,6 @@ static void attach_event_watch()
 }
 
 static void CALLBACK timer_callback(HWND, UINT, UINT_PTR, DWORD);
-
 LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
 {
     switch (msg)
@@ -623,16 +622,19 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                            (int)MiscHelpers::remap(new_config.controller_config[ctx->controller_index].y_scale, 0.0f,
                                                    1.0f, 10.0f, 2010.0f));
 
-        SendMessage(GetDlgItem(ctx->hwnd, IDC_X_DOWN), WM_SETFONT, (WPARAM)icon_font, TRUE);
-        SendMessage(GetDlgItem(ctx->hwnd, IDC_X_UP), WM_SETFONT, (WPARAM)icon_font, TRUE);
-        SendMessage(GetDlgItem(ctx->hwnd, IDC_Y_DOWN), WM_SETFONT, (WPARAM)icon_font, TRUE);
-        SendMessage(GetDlgItem(ctx->hwnd, IDC_Y_UP), WM_SETFONT, (WPARAM)icon_font, TRUE);
-
         SetDlgItemText(ctx->hwnd, IDC_X_DOWN, "3");
         SetDlgItemText(ctx->hwnd, IDC_X_UP, "4");
         SetDlgItemText(ctx->hwnd, IDC_Y_DOWN, "6");
         SetDlgItemText(ctx->hwnd, IDC_Y_UP, "5");
         SetDlgItemText(ctx->hwnd, IDC_RESET_JOYSTICK, "\u2022");
+
+        constexpr int controls[] = {IDC_X_DOWN, IDC_X_UP, IDC_Y_DOWN, IDC_Y_UP};
+        for (const auto id : controls)
+        {
+            const auto control = GetDlgItem(hwnd, id);
+            SendMessage(control, WM_SETFONT, reinterpret_cast<WPARAM>(icon_font), TRUE);
+            RedrawWindow(control, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE);
+        }
 
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
