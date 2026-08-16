@@ -49,12 +49,6 @@ bool init_rsp_thread()
     return true;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
-{
-    g_tas_ctx.hinst = hinstDLL;
-    return TRUE;
-}
-
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Video;
@@ -83,6 +77,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate:
+        g_tas_ctx.hinst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();

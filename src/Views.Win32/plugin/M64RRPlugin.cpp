@@ -40,7 +40,7 @@ static void process_event_on_gui_thread(M64RRSpec::PtrProcessEvent event_fn, M64
 {
     if (!event_fn) return;
 
-    g_main_ctx.dispatcher->invoke([event_fn, event] { event_fn(event); });
+    g_main_ctx.dispatcher->invoke([&] { event_fn(event); });
 }
 
 static size_t get_config_path(char *data, size_t size)
@@ -147,8 +147,6 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
         }
     }
 
-    BuiltinTAS::initialize_module_state();
-
     auto add = [&](const char *name, FARPROC function) { plugin->m_builtin_procs.emplace(name, function); };
 
     switch (type)
@@ -183,7 +181,6 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
             add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinNoInputProcessEvent));
             break;
         }
-        BuiltinTAS::initialize_input();
         add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputGetMetadata));
         add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputProcessEvent));
         add("M64RRReadController", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASInputReadController));

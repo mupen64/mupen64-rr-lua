@@ -6,6 +6,7 @@
 
 #include <CommonPCH.hpp>
 #include "Main.hpp"
+#include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "IOUtils.hpp"
 #include "SDLBackend.hpp"
@@ -16,7 +17,6 @@
 M64RRSpec::PluginInit *g_plugin = nullptr;
 std::optional<SDLAudio::SDLBackend> g_backend{};
 
-std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 static bool g_sdl_is_init = false;
 
 #define CONFIG_FILE_NAME "TASAudio.json"

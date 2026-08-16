@@ -8,9 +8,6 @@
 
 namespace BuiltinTAS
 {
-// These are the plugin ABI entry points, but they are ordinary linked symbols
-// rather than names looked up with GetProcAddress. The names are made unique by
-// target-local preprocessor definitions in Views.Win32/CMakeLists.txt.
 extern "C"
 {
     void M64RRBuiltinTASAudioGetMetadata(M64RRSpec::PluginMetadata *);
@@ -40,7 +37,4 @@ extern "C"
     void M64RRBuiltinNoInputProcessEvent(M64RRSpec::Event);
     void M64RRBuiltinNoVideoGetMetadata(M64RRSpec::PluginMetadata *);
 }
-
-void initialize_module_state();
-void initialize_input();
 } // namespace BuiltinTAS

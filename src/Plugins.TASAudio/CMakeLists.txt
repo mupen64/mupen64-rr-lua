@@ -54,5 +54,4 @@ target_compile_definitions(Mupen64RR.Plugins.TASAudio PRIVATE
     M64RRAILenChanged=M64RRBuiltinTASAudioAILenChanged
     M64RRShowConfig=M64RRBuiltinTASAudioShowConfig
     g_plugin=M64RRBuiltinTASAudioPlugin
-    DllMain=M64RRBuiltinTASAudioDllMain
 )

@@ -1188,6 +1188,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate: {
+        g_inst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
         for (int i = 0; i < 4; ++i)

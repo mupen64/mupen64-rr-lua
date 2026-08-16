@@ -109,7 +109,6 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/presenters/DCompPresenter.cpp"
     "lua/presenters/GDIPresenter.cpp"
     "plugin/Plugin.cpp"
-    "plugin/BuiltinTAS.cpp"
     "plugin/ZEPlugin.cpp"
     "plugin/M64RRPlugin.cpp"
 

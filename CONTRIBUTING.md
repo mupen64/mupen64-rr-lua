@@ -1,4 +1,3 @@
-
 # Compiling
 
 Only Windows supports compiling the full emulator. However, the core and VCR tests can be (experimentally) compiled on other platforms.
@@ -198,18 +197,6 @@ While Mupen is compatible with any Zilmar spec plugin (e.g. Jabo's plugins, GLid
 Support for Zilmar spec support will eventually be provided only via a shim layer (cf. [#670](https://github.com/mupen64/mupen64-rr-lua/issues/670))
 
 ## Developer Guidelines
-
-### Naming
-
-The plugin's friendly name should follow the schema:
-
-`[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
-
-### Initialization
-
-Keep `DllMain` as simple as possible; do not initialize SDL, DirectInput, or any other external libraries.
-
-Initialize libraries in `RomOpen` and - if possible - do it only once.
 
 ### Configuration
 

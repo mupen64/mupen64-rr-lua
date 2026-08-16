@@ -57,5 +57,4 @@ target_compile_definitions(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     M64RRGetKeys=M64RRBuiltinTASInputGetKeys
     M64RRSetKeys=M64RRBuiltinTASInputSetKeys
     g_plugin=M64RRBuiltinTASInputPlugin
-    DllMain=M64RRBuiltinTASInputDllMain
 )

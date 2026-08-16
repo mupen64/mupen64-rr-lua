@@ -105,5 +105,4 @@ target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     M64RRReadVideo=M64RRBuiltinTASVideoReadVideo
     M64RRShowConfig=M64RRBuiltinTASVideoShowConfig
     g_plugin=M64RRBuiltinTASVideoPlugin
-    DllMain=M64RRBuiltinTASVideoDllMain
 )
