@@ -10,7 +10,7 @@
 //
 #include <windows.h>
 
-#define IDT_TIMER_STATUS_0 100
+#define IDT_TIMER 100
 
 #define IDC_COMBOCONT 13000
 #define IDC_CHECKACTIVE 13002

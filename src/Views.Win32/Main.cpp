@@ -979,26 +979,20 @@ void set_cwd()
  */
 static bool is_dialog_message(MSG *msg)
 {
-    if (IsWindow(LuaDialog::hwnd()) && IsDialogMessage(LuaDialog::hwnd(), msg))
+    std::vector<HWND> hwnds = {
+        LuaDialog::hwnd(), CommandPalette::hwnd(), ParameterPalette::hwnd(), Seeker::hwnd(), PianoRoll::hwnd(),
+    };
+    const auto plugin_hwnds = PluginUtil::get_all_plugin_windows();
+    hwnds.insert(hwnds.end(), plugin_hwnds.begin(), plugin_hwnds.end());
+
+    for (const auto &hwnd : hwnds)
     {
-        return true;
+        if (IsWindow(hwnd) && IsDialogMessage(hwnd, msg))
+        {
+            return true;
+        }
     }
-    if (IsWindow(CommandPalette::hwnd()) && IsDialogMessage(CommandPalette::hwnd(), msg))
-    {
-        return true;
-    }
-    if (IsWindow(ParameterPalette::hwnd()) && IsDialogMessage(ParameterPalette::hwnd(), msg))
-    {
-        return true;
-    }
-    if (IsWindow(Seeker::hwnd()) && IsDialogMessage(Seeker::hwnd(), msg))
-    {
-        return true;
-    }
-    if (IsWindow(PianoRoll::hwnd()) && IsDialogMessage(PianoRoll::hwnd(), msg))
-    {
-        return true;
-    }
+
     return false;
 }
 

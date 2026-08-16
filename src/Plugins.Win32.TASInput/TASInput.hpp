@@ -11,5 +11,4 @@
  */
 namespace TASInput
 {
-void on_detach();
 }

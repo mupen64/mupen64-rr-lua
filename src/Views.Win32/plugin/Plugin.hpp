@@ -244,4 +244,9 @@ void key_down(uint32_t wParam, int32_t lParam);
 void key_up(uint32_t wParam, int32_t lParam);
 void move_screen(uint32_t wParam, int32_t lParam);
 
+/**
+ * \brief Gets all active windows exposed by the currently loaded M64RR plugins.
+ */
+std::vector<HWND> get_all_plugin_windows();
+
 } // namespace PluginUtil
