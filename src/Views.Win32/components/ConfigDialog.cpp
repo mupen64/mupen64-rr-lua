@@ -134,7 +134,14 @@ void t_options_item::reset_to_default() const
 
 std::string t_options_item::get_friendly_info() const
 {
-    std::string str = tooltip.empty() ? "(no further information available)" : tooltip;
+    std::string str;
+
+    if (get_readonly_reason().has_value())
+    {
+        str += std::format("⚠️ - {}\n\n", get_readonly_reason().value());
+    }
+
+    str += tooltip.empty() ? "(no further information available)" : tooltip;
 
     if (possible_values.empty())
     {
@@ -250,6 +257,31 @@ bool t_options_item::edit(const HWND hwnd)
     }
 
     return false;
+}
+
+static std::optional<std::string> readonly_when_emu_running()
+{
+    if (g_main_ctx.core_ctx->vr_get_core_executing()) return "The ROM needs to be closed before changing this option";
+    return std::nullopt;
+}
+
+static std::optional<std::string> readonly_when_vcr_active()
+{
+    if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
+        return "The movie needs to be stopped before changing this option";
+    return std::nullopt;
+}
+
+static std::optional<std::string> readonly_when_capturing()
+{
+    if (CaptureManager::is_capturing()) return "The capture needs to be stopped before changing this option";
+    return std::nullopt;
+}
+
+static std::optional<std::string> readonly_when_lua_active()
+{
+    if (!g_lua_environments.empty()) return "All Lua scripts need to be stopped before changing this option";
+    return std::nullopt;
 }
 
 INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
@@ -716,7 +748,7 @@ std::vector<t_options_group> get_static_option_groups()
                                    .name = "Save Data",
                                    .tooltip = "The path to the save data folder.",
                                    GENPROPS(std::string, saves_directory),
-                                   .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_core_executing(); }});
+                                   .get_readonly_reason = readonly_when_emu_running});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
                                    .group_id = folders_group.id,
                                    .name = "Screenshots",
@@ -837,7 +869,7 @@ std::vector<t_options_group> get_static_option_groups()
                    "this value is 0.\nHigher numbers will reduce the seek duration at cost of emulator performance, a "
                    "value of 1 is not allowed.\n0 - Seek savestate generation disabled\nRecommended: 100",
         GENPROPS(int32_t, core.seek_savestate_interval),
-        .is_readonly = [] { return g_main_ctx.core_ctx->vcr_get_task() != task_idle; },
+        .get_readonly_reason = readonly_when_vcr_active,
     });
     seek_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Number,
@@ -866,7 +898,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair("VFW", (int32_t)t_config::EncoderType::VFW),
                 std::make_pair("FFmpeg", (int32_t)t_config::EncoderType::FFmpeg),
             },
-        .is_readonly = [] { return CaptureManager::is_capturing(); },
+        .get_readonly_reason = readonly_when_capturing,
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Enum,
@@ -884,7 +916,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair("Screen", 2),
                 std::make_pair("Hybrid", 3),
             },
-        .is_readonly = [] { return CaptureManager::is_capturing(); },
+        .get_readonly_reason = readonly_when_capturing,
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
@@ -906,7 +938,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair("Audio", 1),
                 std::make_pair("Video", 2),
             },
-        .is_readonly = [] { return CaptureManager::is_capturing(); },
+        .get_readonly_reason = readonly_when_capturing,
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::String,
@@ -914,7 +946,7 @@ std::vector<t_options_group> get_static_option_groups()
         .name = "FFmpeg Path",
         .tooltip = "The path to the FFmpeg executable to use for capturing.",
         GENPROPS(std::string, ffmpeg_path),
-        .is_readonly = [] { return CaptureManager::is_capturing(); },
+        .get_readonly_reason = readonly_when_capturing,
     });
     capture_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::String,
@@ -922,7 +954,7 @@ std::vector<t_options_group> get_static_option_groups()
         .name = "FFmpeg Arguments",
         .tooltip = "FFmpeg arguments to be passed to FFmpeg when capturing.",
         GENPROPS(std::string, ffmpeg_options),
-        .is_readonly = [] { return CaptureManager::is_capturing(); },
+        .get_readonly_reason = readonly_when_capturing,
     });
 
     core_group.items.emplace_back(t_options_item{
@@ -939,7 +971,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair("Dynamic Recompiler", 1),
                 std::make_pair("Pure Interpreter", 2),
             },
-        .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
+        .get_readonly_reason = readonly_when_emu_running,
     });
     core_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
@@ -1061,7 +1093,7 @@ std::vector<t_options_group> get_static_option_groups()
                 std::make_pair("DirectComposition", (int32_t)t_config::PresenterType::DirectComposition),
                 std::make_pair("GDI", (int32_t)t_config::PresenterType::GDI),
             },
-        .is_readonly = [] { return !g_lua_environments.empty(); },
+        .get_readonly_reason = readonly_when_lua_active,
     });
     lua_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
@@ -1070,7 +1102,7 @@ std::vector<t_options_group> get_static_option_groups()
         .tooltip =
             "Enables lazy Lua renderer initialization. Greatly speeds up start and stop times for certain scripts.",
         GENPROPS(int32_t, lazy_renderer_init),
-        .is_readonly = [] { return !g_lua_environments.empty(); },
+        .get_readonly_reason = readonly_when_lua_active,
     });
 
     debug_group.items.emplace_back(t_options_item{
@@ -1095,7 +1127,7 @@ std::vector<t_options_group> get_static_option_groups()
                    "core.\nThe legacy behaviour is `(NaN == any) == true`, but this option is kept for "
                    "backwards-compatibility.",
         GENPROPS(int32_t, core.c_eq_s_nan_accurate),
-        .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
+        .get_readonly_reason = readonly_when_emu_running,
     });
     debug_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
@@ -1106,7 +1138,7 @@ std::vector<t_options_group> get_static_option_groups()
                    "behaviour signals both at once, but is kept as the default for backwards-compatibility.\nEnabling "
                    "this desynchronizes movies recorded with the legacy timing.",
         GENPROPS(int32_t, core.accurate_rdp_completion),
-        .is_readonly = [] { return g_main_ctx.core_ctx->vr_get_launched(); },
+        .get_readonly_reason = readonly_when_emu_running,
     });
 
     return {folders_group, interface_group, statusbar_group, piano_roll_group, seek_group,
@@ -1217,7 +1249,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 
         auto &option_item = g_option_items[ctx->item_index_map.at(item.lParam)];
 
-        auto readonly = option_item.is_readonly();
+        auto readonly = option_item.get_readonly_reason().has_value();
 
         HMENU h_menu = CreatePopupMenu();
         AppendMenu(h_menu, MF_STRING | (readonly ? MF_DISABLED : MF_ENABLED), 1, "Reset to default");
@@ -1270,7 +1302,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 
             for (const auto &item : g_option_items)
             {
-                if (!item.is_readonly()) continue;
+                if (!item.get_readonly_reason().has_value()) continue;
 
                 can_all_be_changed = false;
                 break;
@@ -1350,14 +1382,18 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 
             auto get_item_tooltip = [=](size_t i) -> std::string {
                 const auto &global_item = g_option_items[ctx->item_index_map.at(i)];
-                return global_item.tooltip;
+                std::string tooltip;
+                if (global_item.get_readonly_reason().has_value())
+                    tooltip += std::format("⚠️ - {}\n\n", global_item.get_readonly_reason().value());
+                tooltip += global_item.tooltip;
+                return tooltip;
             };
 
             auto edit_start = [=](size_t i) {
                 auto &global_item = g_option_items[ctx->item_index_map.at(i)];
 
                 // TODO: Perhaps gray out readonly values too?
-                if (global_item.is_readonly())
+                if (global_item.get_readonly_reason().has_value())
                 {
                     return false;
                 }
@@ -1407,7 +1443,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
 
                 int32_t image = global_item.initial_value.get() == global_item.current_value.get() ? 50 : 1;
 
-                if (global_item.is_readonly())
+                if (global_item.get_readonly_reason().has_value())
                 {
                     image = 0;
                 }
