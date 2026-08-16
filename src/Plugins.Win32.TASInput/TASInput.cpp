@@ -308,6 +308,8 @@ void Status::activate_emulator_window()
 
 void Status::set_visuals(CoreButtons input, bool needs_processing)
 {
+    if (!ready) return;
+
     if (needs_processing)
     {
         input = get_processed_input(input);
@@ -344,12 +346,15 @@ void Status::set_visuals(CoreButtons input, bool needs_processing)
 
 void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 {
+    if (!ready) return;
+
     std::lock_guard lock(pending_visuals_mutex);
     pending_set_visuals_request = t_set_visuals_request{input, needs_processing};
 }
 
 void Status::set_visuals_if_needed()
 {
+    if (!ready) return;
     std::optional<t_set_visuals_request> request;
     {
         std::lock_guard lock(pending_visuals_mutex);
@@ -387,34 +392,34 @@ void Status::on_timer()
     {
         // Input changed, override everything with current
 #define BTN(field)                                                                                                     \
-    if (controller_input.field && !last_controller_input.field)                                                       \
+    if (controller_input.field && !last_controller_input.field)                                                        \
     {                                                                                                                  \
         current_input.field = 1;                                                                                       \
     }                                                                                                                  \
-    if (!controller_input.field && last_controller_input.field)                                                       \
+    if (!controller_input.field && last_controller_input.field)                                                        \
     {                                                                                                                  \
         current_input.field = 0;                                                                                       \
     }
 #define JOY(field, i)                                                                                                  \
-    if (controller_input.field != last_controller_input.field)                                                        \
+    if (controller_input.field != last_controller_input.field)                                                         \
     {                                                                                                                  \
-        if (controller_input.field > last_controller_input.field)                                                     \
+        if (controller_input.field > last_controller_input.field)                                                      \
         {                                                                                                              \
             if (ignore_next_down[i])                                                                                   \
                 ignore_next_down[i] = false;                                                                           \
             else                                                                                                       \
             {                                                                                                          \
-                current_input.field = current_input.field + 5;                                                        \
+                current_input.field = current_input.field + 5;                                                         \
                 ignore_next_up[i] = true;                                                                              \
             }                                                                                                          \
         }                                                                                                              \
-        else if (controller_input.field < last_controller_input.field)                                                \
+        else if (controller_input.field < last_controller_input.field)                                                 \
         {                                                                                                              \
             if (ignore_next_up[i])                                                                                     \
                 ignore_next_up[i] = false;                                                                             \
             else                                                                                                       \
             {                                                                                                          \
-                current_input.field = current_input.field - 5;                                                        \
+                current_input.field = current_input.field - 5;                                                         \
                 ignore_next_down[i] = true;                                                                            \
             }                                                                                                          \
         }                                                                                                              \
@@ -476,7 +481,7 @@ static void CALLBACK timer_callback(HWND, UINT, UINT_PTR, DWORD)
 {
     for (auto &st : status)
     {
-        st.on_timer();
+        if (st.ready) st.on_timer();
     }
 }
 
