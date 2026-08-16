@@ -130,8 +130,7 @@ void M64RRPlugin::config(HWND hwnd)
         auto event_fn = (M64RRSpec::PtrProcessEvent)GetProcAddress(m_module, "M64RRProcessEvent");
         if (!event_fn) event_fn = [](auto) {};
 
-        process_event_on_gui_thread(event_fn,
-                                     M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
+        process_event_on_gui_thread(event_fn, M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
     }
 }
 
@@ -224,9 +223,9 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
     }
 
     process_event_on_gui_thread(event_fn, M64RRSpec::Event{.initiate = {
-                                                            .type = M64RRSpec::Event::Type::Initiate,
-                                                            .init = init,
-                                                        }});
+                                                               .type = M64RRSpec::Event::Type::Initiate,
+                                                               .init = init,
+                                                           }});
 
     switch (m_type)
     {
