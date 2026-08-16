@@ -1211,6 +1211,19 @@ void create_test_movie(const std::string &author, const std::string &description
     REQUIRE(IOUtils::write_entire_file(REPLACE_MOVIE_PATH, bytes));
 }
 
+void create_length_mismatch_movie()
+{
+    core_vcr_movie_header hdr{};
+    hdr.magic = 0x1a34364d;
+    hdr.version = 2;
+    hdr.length_samples = 10;
+
+    std::vector<uint8_t> bytes(sizeof(hdr));
+    std::memcpy(bytes.data(), &hdr, sizeof(hdr));
+
+    REQUIRE(IOUtils::write_entire_file("test.m64", bytes));
+}
+
 std::string read_movie_field(size_t offset, size_t size)
 {
     const auto buf = IOUtils::read_entire_file(REPLACE_MOVIE_PATH);
@@ -1231,6 +1244,42 @@ std::string read_movie_description()
     return read_movie_field(0x300, 256);
 }
 } // namespace
+
+TEST_CASE_METHOD(VcrFixture, "length_mismatch_shows_dialog", "vcr_start_playback")
+{
+    create_length_mismatch_movie();
+    core_executing = true;
+
+    std::vector<std::string> dialog_ids;
+    s_core_params.show_ask_dialog = [&](std::string_view id, const char *, const char *, bool) {
+        dialog_ids.emplace_back(id);
+        return true;
+    };
+
+    const auto result = vcr_start_playback("test.m64");
+
+    REQUIRE(!dialog_ids.empty());
+    REQUIRE(dialog_ids.front() == CORE_DLG_VCR_LENGTH_MISMATCH);
+    REQUIRE(result != Res_Cancelled);
+}
+
+TEST_CASE_METHOD(VcrFixture, "length_mismatch_dialog_cancelled", "vcr_start_playback")
+{
+    create_length_mismatch_movie();
+    core_executing = true;
+
+    std::vector<std::string> dialog_ids;
+    s_core_params.show_ask_dialog = [&](std::string_view id, const char *, const char *, bool) {
+        dialog_ids.emplace_back(id);
+        return false;
+    };
+
+    const auto result = vcr_start_playback("test.m64");
+
+    REQUIRE(dialog_ids.size() == 1);
+    REQUIRE(dialog_ids.front() == CORE_DLG_VCR_LENGTH_MISMATCH);
+    REQUIRE(result == Res_Cancelled);
+}
 
 TEST_CASE_METHOD(VcrFixture, "replaces_author_only_keeps_description", "vcr_replace_author_info")
 {

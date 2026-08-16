@@ -34,6 +34,9 @@ constexpr auto ROM_CRC_WARNING_MESSAGE = "The movie was recorded with a ROM that
 constexpr auto OLD_MOVIE_EXTENDED_SECTION_NONZERO_MESSAGE =
     "The movie was recorded prior to the extended format being available, but contains data in an extended format "
     "section.\r\nThe movie may be corrupted. Are you sure you want to continue?";
+constexpr auto INPUT_LENGTH_MISMATCH_MESSAGE =
+    "The movie indicates more frames are present than the file actually contains.\r\nThe movie may be "
+    "corrupted.\r\nPlayback might stop earlier than expected. Are you sure you want to continue?";
 constexpr auto CHEAT_ERROR_ASK_MESSAGE = "This movie has a cheat file associated with it, but it could not be "
                                          "loaded.\r\nPlayback might desynchronize. Are you sure you want to continue?";
 constexpr auto CONTROLLER_ON_OFF_MISMATCH =
@@ -1422,8 +1425,20 @@ core_result vcr_start_playback(std::filesystem::path path)
 
     std::vector<CoreButtons> movie_inputs{};
     movie_inputs.resize(header.length_samples);
-    memcpy(movie_inputs.data(), movie_buf.data() + sizeof(core_vcr_movie_header),
-           sizeof(CoreButtons) * header.length_samples);
+
+    const size_t header_size = sizeof(core_vcr_movie_header);
+    const size_t available_input_bytes = movie_buf.size() > header_size ? movie_buf.size() - header_size : 0;
+    const size_t actual_max_samples = available_input_bytes / sizeof(CoreButtons);
+    if (header.length_samples > actual_max_samples)
+    {
+        const bool proceed =
+            g_core->show_ask_dialog(CORE_DLG_VCR_LENGTH_MISMATCH, INPUT_LENGTH_MISMATCH_MESSAGE, "VCR", true);
+        if (!proceed) return Res_Cancelled;
+        header.length_samples = actual_max_samples;
+        movie_inputs.resize(actual_max_samples);
+    }
+
+    memcpy(movie_inputs.data(), movie_buf.data() + header_size, sizeof(CoreButtons) * header.length_samples);
 
     for (auto &[Present, RawData, Plugin] : g_core->controls)
     {
