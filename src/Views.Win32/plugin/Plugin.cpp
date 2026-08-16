@@ -34,6 +34,20 @@ static std::shared_ptr<Plugin> rsp_plugin;
 
 static std::jthread s_audio_thread;
 
+// These are embedded now, old ones are probably just stale and we want to ignore them.
+static const std::vector<std::string> excluded_plugin_names = {
+    "no-video", "no-audio", "no-input", "no-rsp",   "novideo",  "noaudio",
+    "noinput",  "norsp",    "tasvideo", "tasaudio", "tasinput", "tasrsp",
+};
+
+static bool is_excluded_plugin(const std::filesystem::path &path)
+{
+    std::string stem = path.stem().string();
+    std::transform(stem.begin(), stem.end(), stem.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return std::ranges::find(excluded_plugin_names, stem) != excluded_plugin_names.end();
+}
+
 ZESpecFuncs g_plugin_funcs{};
 
 static void audio_thread_proc(std::stop_token st)
@@ -142,6 +156,12 @@ std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::
 
 std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
 {
+    if (is_excluded_plugin(path))
+    {
+        return std::make_pair(std::format("Outdated first-party plugin", path.string()),
+                              nullptr);
+    }
+
     Main::init_sdl();
 
     const auto module = LoadLibrary(path.string().c_str());
@@ -213,6 +233,9 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
 
     for (const auto &file : dll_files)
     {
+        g_view_logger->info("{}", file.stem().string());
+        if (is_excluded_plugin(file)) continue;
+
         auto [result, plugin] = Plugin::create(file);
 
         results.emplace_back(file, result);
