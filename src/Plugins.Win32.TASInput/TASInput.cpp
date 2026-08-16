@@ -14,7 +14,7 @@
 #include <TASInput.hpp>
 
 #define WM_EDIT_END (WM_USER + 3)
-#define WM_UPDATE_VISUALS (WM_USER + 4)
+#define WM_UPDATE_STATUS (WM_USER + 4)
 
 constexpr auto JOYSTICK_CONTROL_CLASS = "JoystickControl";
 
@@ -102,6 +102,10 @@ struct Status
     std::optional<t_set_visuals_request> pending_set_visuals_request{};
     std::mutex pending_visuals_mutex{};
 
+    std::optional<std::string> pending_status{};
+    bool status_message_pending{};
+    std::mutex pending_status_mutex{};
+
     std::vector<t_combo> combos{};
 
     bool last_lmb_down{};
@@ -172,7 +176,6 @@ struct Status
     void get_input(CoreButtons *keys);
 };
 
-static ULONG_PTR gdi_plus_token{};
 static std::atomic<int64_t> frame_counter{};
 static std::atomic<bool> new_frame{};
 static std::atomic<bool> rom_open{};
@@ -180,8 +183,6 @@ static std::atomic<bool> s_event_watch_attached{};
 static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
-static std::thread main_thread;
-static DWORD main_thread_id{};
 static int MOUSE_LBUTTONREDEFINITION = VK_LBUTTON;
 static int MOUSE_RBUTTONREDEFINITION = VK_RBUTTON;
 
@@ -198,15 +199,6 @@ static void attach_event_watch()
     s_event_watch_attached = true;
 
     SDL_AddEventWatch(event_watch, nullptr);
-}
-
-static void detach_event_watch()
-{
-    if (s_event_watch_attached)
-    {
-        SDL_RemoveEventWatch(event_watch, nullptr);
-        s_event_watch_attached = false;
-    }
 }
 
 LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId, DWORD_PTR dwRefData)
@@ -278,7 +270,7 @@ end:
         set_status(std::format("Recording... ({})", combos[active_combo_index].samples.size()));
     }
 
-    PostMessage(hwnd, WM_UPDATE_VISUALS, 0, keys->value);
+    set_visuals_lazy(*keys, false);
 }
 
 CoreButtons Status::get_processed_input(CoreButtons input)
@@ -354,12 +346,14 @@ void Status::set_visuals_lazy(CoreButtons input, bool needs_processing)
 
 void Status::set_visuals_if_needed()
 {
-    std::lock_guard lock(pending_visuals_mutex);
-    if (pending_set_visuals_request.has_value())
+    std::optional<t_set_visuals_request> request;
     {
-        set_visuals(pending_set_visuals_request->input, pending_set_visuals_request->needs_processing);
+        std::lock_guard lock(pending_visuals_mutex);
+        request = pending_set_visuals_request;
         pending_set_visuals_request.reset();
     }
+
+    if (request.has_value()) set_visuals(request->input, request->needs_processing);
 }
 
 static int get_joystick_increment(const bool up)
@@ -537,7 +531,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         // meanwhile
         ctx->set_visuals(ctx->current_input);
 
-        SetTimer(ctx->hwnd, IDT_TIMER_STATUS_0 + ctx->controller_index, 1, nullptr);
+        SetTimer(ctx->hwnd, IDT_TIMER_STATUS_0 + ctx->controller_index, 16, nullptr);
         ctx->on_config_changed();
 
         ctx->ready = true;
@@ -786,9 +780,21 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
     }
     break;
-    case WM_UPDATE_VISUALS:
-        ctx->set_visuals(static_cast<CoreButtons>(lparam), false);
+    case WM_UPDATE_STATUS: {
+        std::optional<std::string> status;
+        {
+            std::lock_guard lock(ctx->pending_status_mutex);
+            status = std::move(ctx->pending_status);
+            ctx->pending_status.reset();
+            ctx->status_message_pending = false;
+        }
+
+        if (status.has_value() && ctx->combos_hwnd)
+        {
+            Static_SetText(GetDlgItem(ctx->combos_hwnd, IDC_STATUS), status->c_str());
+        }
         break;
+    }
     case WM_SIZE:
     case WM_MOVE: {
         RECT window_rect{};
@@ -950,75 +956,6 @@ static void show_activated_windows()
     }
 }
 
-static void ui_thread()
-{
-    main_thread_id = GetCurrentThreadId();
-    MSG queue_init{};
-    PeekMessage(&queue_init, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
-
-    Gdiplus::GdiplusStartupInput startup_input;
-    GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
-
-    icon_font = CreateFont(-20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS,
-                           CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
-
-    // HACK: perform windows left handed mode check
-    // and adjust accordingly
-    if (GetSystemMetrics(SM_SWAPBUTTON))
-    {
-        MOUSE_LBUTTONREDEFINITION = VK_RBUTTON;
-        MOUSE_RBUTTONREDEFINITION = VK_LBUTTON;
-    }
-
-    JoystickControl::register_class(g_inst, JOYSTICK_CONTROL_CLASS);
-
-    for (size_t i = 0; i < std::size(status); ++i)
-    {
-        status[i].controller_index = i;
-        status[i].hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_MAIN), nullptr, wndproc,
-                                           reinterpret_cast<LPARAM>(&status[i]));
-    }
-
-    show_activated_windows();
-
-    MSG msg{};
-    bool running = true;
-    while (running)
-    {
-        DWORD result = MsgWaitForMultipleObjects(0, NULL, FALSE, INFINITE, QS_ALLINPUT);
-
-        if (result == WAIT_OBJECT_0)
-        {
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-            {
-                if (msg.message == WM_QUIT)
-                {
-                    running = false;
-                    break;
-                }
-
-                bool handled = false;
-                for (auto &st : status)
-                {
-                    if (IsDialogMessage(st.hwnd, &msg))
-                    {
-                        handled = true;
-                        break;
-                    }
-                }
-
-                if (!handled)
-                {
-                    TranslateMessage(&msg);
-                    DispatchMessage(&msg);
-                }
-            }
-        }
-    }
-
-    save_config();
-}
-
 bool Status::combo_active()
 {
     return active_combo_index != -1;
@@ -1026,9 +963,13 @@ bool Status::combo_active()
 
 void Status::set_status(const std::string &str)
 {
-    if (combos_hwnd)
+    std::lock_guard lock(pending_status_mutex);
+    pending_status = str;
+
+    if (!status_message_pending && hwnd)
     {
-        Static_SetText(GetDlgItem(combos_hwnd, IDC_STATUS), str.c_str());
+        status_message_pending = true;
+        PostMessage(hwnd, WM_UPDATE_STATUS, 0, 0);
     }
 }
 
@@ -1211,23 +1152,6 @@ void Status::on_config_changed()
     save_config();
 }
 
-void TASInput::on_detach()
-{
-    if (main_thread.joinable())
-    {
-        PostThreadMessage(main_thread_id, WM_QUIT, 0, 0);
-        main_thread.join();
-    }
-
-    if (icon_font)
-    {
-        DeleteFont(icon_font);
-        icon_font = {};
-    }
-
-    detach_event_watch();
-}
-
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Input;
@@ -1267,37 +1191,55 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             if (new_config.controller_rumblepak[i])
                 g_plugin->controllers[i].plugin = CoreControllerExtension::Rumblepak;
         }
+
+        icon_font = CreateFont(-20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS,
+                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
+
+        // HACK: perform windows left handed mode check
+        // and adjust accordingly
+        if (GetSystemMetrics(SM_SWAPBUTTON))
+        {
+            MOUSE_LBUTTONREDEFINITION = VK_RBUTTON;
+            MOUSE_RBUTTONREDEFINITION = VK_LBUTTON;
+        }
+
+        JoystickControl::register_class(g_inst, JOYSTICK_CONTROL_CLASS);
+
+        save_config();
+
         break;
     }
     case M64RRSpec::Event::Type::Shutdown: {
-        TASInput::on_detach();
 
-        if (gdi_plus_token)
+        if (icon_font)
         {
-            Gdiplus::GdiplusShutdown(gdi_plus_token);
-            gdi_plus_token = 0;
+            DeleteFont(icon_font);
+            icon_font = {};
         }
+
+        if (s_event_watch_attached)
+        {
+            SDL_RemoveEventWatch(event_watch, nullptr);
+            s_event_watch_attached = false;
+        }
+
         break;
     }
     case M64RRSpec::Event::Type::RomOpened: {
+        if (!IsWindow(status[0].hwnd))
+        {
+            for (size_t i = 0; i < 4; ++i)
+            {
+                status[i].controller_index = i;
+                status[i].hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_MAIN), g_plugin->main_window.hwnd(),
+                                                   wndproc, reinterpret_cast<LPARAM>(&status[i]));
+            }
+        }
+
         attach_event_watch();
         load_config();
-
-        static bool first_time = true;
-
-        if (first_time)
-        {
-            main_thread = std::thread(ui_thread);
-
-            first_time = false;
-        }
-        else
-        {
-            show_activated_windows();
-        }
-
+        show_activated_windows();
         rom_open = true;
-
         break;
     }
     case M64RRSpec::Event::Type::RomClosed: {
@@ -1313,6 +1255,13 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     default:
         break;
     }
+}
+
+EXPORT void CALL M64RRGetWindows(WindowHandle *windows, size_t *count)
+{
+    std::vector<WindowHandle> wnds = {status[0].hwnd, status[1].hwnd, status[2].hwnd, status[3].hwnd};
+    if (windows) std::memcpy(windows, wnds.data(), sizeof(WindowHandle) * wnds.size());
+    if (count) *count = wnds.size();
 }
 
 EXPORT void CALL M64RRReadController(int32_t controller, unsigned char *command)
