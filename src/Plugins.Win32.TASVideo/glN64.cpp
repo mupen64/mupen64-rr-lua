@@ -132,7 +132,18 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             }
 
             SetEvent(RSP.threadMsg[RSPMSG_CLOSE]);
-            WaitForSingleObject(RSP.threadFinished, INFINITE);
+            WaitForSingleObject(RSP.thread, INFINITE);
+            CloseHandle(RSP.thread);
+            RSP.thread = nullptr;
+
+            for (auto &event : RSP.threadMsg)
+            {
+                CloseHandle(event);
+                event = nullptr;
+            }
+
+            CloseHandle(RSP.threadFinished);
+            RSP.threadFinished = nullptr;
         }
         break;
     default:

@@ -181,6 +181,7 @@ static HMENU hmenu{};
 static HFONT icon_font{};
 static Status status[NUMBER_OF_CONTROLS]{};
 static std::thread main_thread;
+static DWORD main_thread_id{};
 static int MOUSE_LBUTTONREDEFINITION = VK_LBUTTON;
 static int MOUSE_RBUTTONREDEFINITION = VK_RBUTTON;
 
@@ -951,6 +952,10 @@ static void show_activated_windows()
 
 static void ui_thread()
 {
+    main_thread_id = GetCurrentThreadId();
+    MSG queue_init{};
+    PeekMessage(&queue_init, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
+
     Gdiplus::GdiplusStartupInput startup_input;
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
@@ -1208,13 +1213,17 @@ void Status::on_config_changed()
 
 void TASInput::on_detach()
 {
+    if (main_thread.joinable())
+    {
+        PostThreadMessage(main_thread_id, WM_QUIT, 0, 0);
+        main_thread.join();
+    }
+
     if (icon_font)
     {
         DeleteFont(icon_font);
         icon_font = {};
     }
-
-    if (main_thread.joinable()) main_thread.join();
 
     detach_event_watch();
 }
@@ -1261,7 +1270,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         break;
     }
     case M64RRSpec::Event::Type::Shutdown: {
-        detach_event_watch();
+        TASInput::on_detach();
 
         if (gdi_plus_token)
         {
