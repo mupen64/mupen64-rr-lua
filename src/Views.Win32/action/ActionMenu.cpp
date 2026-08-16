@@ -292,7 +292,7 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
     auto initialize_menu_item_state = [&] {
         if (!enabled)
         {
-            EnableMenuItem(parent_menu, item.id, MF_DISABLED);
+            EnableMenuItem(parent_menu, item.id, MF_DISABLED | MF_GRAYED);
         }
 
         if (active)
