@@ -207,8 +207,8 @@ If you only have the stacktrace from `mupen.log`:
 3. Open the "Go to" dialog by pressing Ctrl + G
 4. Navigate to `0x00400000` + `[Your Address]`
 
-# TAS Plugins and Plugin Compatibility
+# First-party Plugins and Plugin Compatibility
 
-The "TAS" plugins are our first-party plugins that aim to be lightweight and fast. They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions.
+The "TAS [Video|Audio|Input|RSP]" and "No [Video|Audio|Input|RSP]" plugins are our statically-linked first-party plugins that aim to be lightweight and fast.
 
 Mupen64 remains compatible with Zilmar-spec plugin (e.g. Jabo's plugins, GLideN64), however, these are only supported via a shim on the Win32 frontend. The upcoming Qt frontend will likely not support Zilmar-spec plugins, as the additional development effort to support it seems too great to be helpful.
