@@ -158,8 +158,7 @@ std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::
 {
     if (is_excluded_plugin(path))
     {
-        return std::make_pair(std::format("Outdated first-party plugin", path.string()),
-                              nullptr);
+        return std::make_pair(std::format("Outdated first-party plugin", path.string()), nullptr);
     }
 
     Main::init_sdl();
@@ -285,6 +284,15 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
 
         plugins.emplace_back(std::move(plugin));
     }
+
+    // Prioritize first-party plugins in the list
+    const auto plugin_priority = [](const auto &plugin) {
+        if (plugin->path().empty() && plugin->name().starts_with("TAS ")) return 0;
+        if (plugin->path().string().starts_with("<builtin>/No")) return 1;
+        return 2;
+    };
+    std::stable_sort(plugins.begin(), plugins.end(),
+                     [&](const auto &lhs, const auto &rhs) { return plugin_priority(lhs) < plugin_priority(rhs); });
 
     return t_plugin_discovery_result{
         .plugins = std::move(plugins),
