@@ -29,7 +29,7 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: |
           cmake_debug="Debug"
-          cmake_release="RelWithDebInfo"
+          cmake_release="Release"
           cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
 
       - name: CMake build

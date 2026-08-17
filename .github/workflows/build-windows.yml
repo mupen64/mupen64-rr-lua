@@ -33,7 +33,7 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: |
           $cmake_debug="Debug"
-          $cmake_release="RelWithDebInfo"
+          $cmake_release="Release"
           cmake --preset vcpkg-win64-${{matrix.arch}} "-DCMAKE_BUILD_TYPE=$cmake_${{matrix.build_type}}"
 
       - name: CMake Build
@@ -70,12 +70,6 @@ jobs:
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
-
-      - name: Delete PDB files
-        shell: powershell
-        run: |
-          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
-            Remove-Item -Force -ErrorAction SilentlyContinue
 
       - name: Upload build
         uses: actions/upload-artifact@v7
