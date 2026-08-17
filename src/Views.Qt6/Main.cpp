@@ -5,11 +5,17 @@
  */
 
 #include "Main.hpp"
-#include "Plugin.hpp"
+
 #include <Common.Views/App.hpp>
+
 #include <future>
 #include <iostream>
 #include <print>
+
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+
+#include "Plugin.hpp"
 
 core_cfg g_config;
 core_params g_core_params{};
@@ -93,8 +99,7 @@ static void init_core()
     core_create(&g_core_params, &g_core_ctx);
 }
 
-int main(int argc, char *argv[])
-{
+static int cli_main(int argc, char* argv[]) {
     using namespace std::literals;
     if (argc != 2)
     {
@@ -107,4 +112,18 @@ int main(int argc, char *argv[])
     std::println("result: {}", (int)res1);
     std::this_thread::sleep_for(10s);
     g_core_ctx->vr_close_rom(true);
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    QGuiApplication app(argc, argv);
+    
+    QQmlApplicationEngine engine;
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, []() {
+        QCoreApplication::exit(-1);
+    });
+    engine.loadFromModule("Mupen64RR.UI", "MainWindow");
+    
+    return QGuiApplication::exec();
 }

@@ -119,6 +119,9 @@ if(MUPEN64RR_BUILD_QT6)
         Core Gui Widgets
         Qml Quick QuickControls2
     )
+    qt_policy(SET QTP0001 NEW)
+    qt_policy(SET QTP0004 NEW)
+    qt_standard_project_setup()
 endif()
 
 # Utility functions

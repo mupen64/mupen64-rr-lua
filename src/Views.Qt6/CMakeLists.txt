@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_executable(Mupen64RR.Views.Qt6
+qt_add_executable(Mupen64RR.Views.Qt6
     "Main.hpp"
     "Plugin.hpp"
 
@@ -19,11 +19,25 @@ set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
+target_include_directories(Mupen64RR.Views.Qt6 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.Common
     Mupen64RR.Common.Views
     Mupen64RR.Core
+
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Quick
+
     vendor::decan
+)
+
+# Include QML sources
+qt_add_qml_module(Mupen64RR.Views.Qt6
+    URI "Mupen64RR.UI"
+    VERSION 1.0
+    QML_FILES
+    "views/MainWindow.qml"
 )
 
 # MinGW needs this for std::print(ln) some reason...
