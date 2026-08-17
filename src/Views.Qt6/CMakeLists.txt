@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_executable(Mupen64RR.Views.CLI
+add_executable(Mupen64RR.Views.Qt6
     "Main.hpp"
     "Plugin.hpp"
 
@@ -12,14 +12,14 @@ add_executable(Mupen64RR.Views.CLI
     "Main.cpp"
     "Plugin.cpp"
 )
-target_compile_features(Mupen64RR.Views.CLI PRIVATE cxx_std_26)
-set_target_properties(Mupen64RR.Views.CLI PROPERTIES
+target_compile_features(Mupen64RR.Views.Qt6 PRIVATE cxx_std_26)
+set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
     # output location
-    OUTPUT_NAME "mupen64-cli"
+    OUTPUT_NAME "mupen64-qt6"
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
-target_link_libraries(Mupen64RR.Views.CLI PRIVATE
+target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.Common
     Mupen64RR.Common.Views
     Mupen64RR.Core

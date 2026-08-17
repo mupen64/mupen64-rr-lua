@@ -1,0 +1,71 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
+  "version": 10,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "common-mingw-linux",
+      "$comment": "Common settings for Linux cross-compiling to MinGW Windows",
+
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/mingw-cross.cmake",
+        "MUPEN64RR_BUILD_WIN32": true
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "mingw-linux-x64",
+      "description": "Linux: cross-build for MinGW 64-bit (x86_64)",
+
+      "inherits": "common-mingw-linux",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "MINGW_TARGET": "x86_64",
+        "CMAKE_C_COMPILER": "x86_64-w64-mingw32-gcc",
+        "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++"
+      }
+    },
+    {
+      "name": "mingw-linux-x64-release",
+      "description": "Linux: cross-build for MinGW 64-bit (x86_64, release)",
+
+      "inherits": "mingw-linux-x64",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "mingw-linux-x86",
+      "description": "Linux: cross-build for MinGW 32-bit (i686)",
+
+      "inherits": "common-mingw-linux",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "MINGW_TARGET": "i686",
+        "CMAKE_C_COMPILER": "i686-w64-mingw32-gcc",
+        "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++"
+      }
+    },
+    {
+      "name": "mingw-linux-x86-release",
+      "description": "Linux: cross-build for MinGW 32-bit (i686, release)",
+
+      "inherits": "mingw-linux-x86",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    }
+  ]
+}

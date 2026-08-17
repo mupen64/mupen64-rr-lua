@@ -308,17 +308,28 @@ static void add_and_start(const std::filesystem::path &path)
     start(*ctx, path);
 }
 
+static bool instance_context_alive(const t_instance_context *ctx)
+{
+    return ctx && std::ranges::any_of(g_lua_instance_wnd_ctxs, [&](const auto &c) { return c.get() == ctx; });
+}
+
 static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    if (msg == WM_INITDIALOG)
+    {
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
+    }
+
     auto ctx = (t_instance_context *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+
+    if (!instance_context_alive(ctx))
+    {
+        return FALSE;
+    }
 
     switch (msg)
     {
     case WM_INITDIALOG:
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
-
-        ctx = (t_instance_context *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-
         ctx->hwnd = hwnd;
 
         Edit_SetText(GetDlgItem(hwnd, IDC_PATH), ctx->typed_path.string().c_str());
@@ -364,7 +375,7 @@ static INT_PTR CALLBACK lua_instance_dialog_proc(HWND hwnd, UINT msg, WPARAM wpa
             break;
         }
         case IDC_START: {
-            const auto path = get_window_text(GetDlgItem(ctx->hwnd, IDC_PATH)).value();
+            const auto path = get_window_text(GetDlgItem(hwnd, IDC_PATH)).value_or(ctx->typed_path.string());
             start(*ctx, path);
             break;
         }

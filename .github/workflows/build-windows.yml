@@ -1,0 +1,85 @@
+name: Build (Windows)
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
+jobs:
+  build-nightly-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        arch: [x86, x64]
+        build_type: [debug, release]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-windows
+        with:
+          arch: ${{ matrix.arch }}
+          is_nightly: true
+          commit_hash: ${{ (github.event_name != 'workflow_dispatch') && github.sha || null }}
+
+      - name: CMake Setup
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: |
+          $cmake_debug="Debug"
+          $cmake_release="RelWithDebInfo"
+          cmake --preset vcpkg-win64-${{matrix.arch}} "-DCMAKE_BUILD_TYPE=$cmake_${{matrix.build_type}}"
+
+      - name: CMake Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: mupen-${{ matrix.build_type }}-nightly-windows-${{ matrix.arch }}
+          path: build/out
+          retention-days: 14
+
+  build-release-stable-windows:
+    runs-on: windows-latest
+    
+    if: ${{ github.ref_name && startsWith(github.ref_name, 'release') }}
+
+    strategy:
+      matrix:
+        arch: [x86, x64]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-windows
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: CMake Setup
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --preset vcpkg-win64-${{ matrix.arch }} -DCMAKE_BUILD_TYPE=Release
+
+      - name: CMake Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
+
+      - name: Delete PDB files
+        shell: powershell
+        run: |
+          Get-ChildItem -Path build/out -Filter *.pdb -Recurse -File |
+            Remove-Item -Force -ErrorAction SilentlyContinue
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: mupen-release-stable-windows-${{ matrix.arch }}
+          path: build/out
+          retention-days: 14
