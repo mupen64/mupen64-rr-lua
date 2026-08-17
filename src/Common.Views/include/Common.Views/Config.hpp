@@ -326,7 +326,7 @@ struct t_config
     /// <summary>
     /// The multi-frame advance index.
     /// </summary>
-    int32_t multi_frame_advance_count = 2;
+    int32_t multi_frame_advance_count = -1;
 
     /// <summary>
     /// A map of dialog IDs to their default choices for silent mode.
