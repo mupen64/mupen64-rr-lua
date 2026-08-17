@@ -159,6 +159,7 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create_builtin(Type
         }
         add("M64RRGetMetadata", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoGetMetadata));
         add("M64RRProcessEvent", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoProcessEvent));
+        add("M64RRProcessDList", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoProcessDList));
         add("M64RRReadVideo", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoReadVideo));
         add("M64RRShowConfig", reinterpret_cast<FARPROC>(BuiltinTAS::M64RRBuiltinTASVideoShowConfig));
         break;

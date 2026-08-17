@@ -22,6 +22,7 @@ extern "C"
 
     void M64RRBuiltinTASVideoGetMetadata(M64RRSpec::PluginMetadata *);
     void M64RRBuiltinTASVideoProcessEvent(M64RRSpec::Event);
+    void M64RRBuiltinTASVideoProcessDList();
     void M64RRBuiltinTASVideoReadVideo(void *, int32_t *, int32_t *);
     void M64RRBuiltinTASVideoShowConfig(M64RRSpec::WindowHandle);
 

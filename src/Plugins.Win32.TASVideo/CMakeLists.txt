@@ -102,6 +102,7 @@ endif()
 target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
     M64RRProcessEvent=M64RRBuiltinTASVideoProcessEvent
+    M64RRProcessDList=M64RRBuiltinTASVideoProcessDList
     M64RRReadVideo=M64RRBuiltinTASVideoReadVideo
     M64RRShowConfig=M64RRBuiltinTASVideoShowConfig
     g_plugin=M64RRBuiltinTASVideoPlugin
