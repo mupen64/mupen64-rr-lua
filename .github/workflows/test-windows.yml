@@ -1,0 +1,39 @@
+name: Test (Windows)
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        arch: [x86, x64]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-windows
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: CMake Setup
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
+
+      - name: CMake Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
+
+      - name: CMake Test
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: ctest --test-dir build

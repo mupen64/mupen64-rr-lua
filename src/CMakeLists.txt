@@ -8,9 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
 # USEFUL SETTINGS
 # ============================
 
-# we don't want our plugins to have the "lib" prefix
-set(CMAKE_SHARED_MODULE_PREFIX "")
-
 # COMMON LIBRARIES
 # ============================
 
@@ -60,11 +57,11 @@ if (MUPEN64RR_BUILD_WIN32)
     add_subdirectory(Plugins.Win32.TASInput)
 endif()
 
-# CLI VIEW
+# QT6 VIEW
 # ============================
 
-if (MUPEN64RR_BUILD_CLI)
-    add_subdirectory(Views.CLI)
+if (MUPEN64RR_BUILD_QT6)
+    add_subdirectory(Views.Qt6)
 endif()
 
 # TESTS
