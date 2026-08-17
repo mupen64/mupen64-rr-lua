@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
+add_library(Mupen64RR.Plugins.TASVideo MODULE
     "VI.hpp"
     "Types.hpp"
     "Common.hpp"
@@ -69,14 +69,14 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo MODULE
 
     "Resource.rc"
 )
-target_compile_features(Mupen64RR.Plugins.Win32.TASVideo PRIVATE cxx_std_26)
-set_target_properties(Mupen64RR.Plugins.Win32.TASVideo PROPERTIES
+target_compile_features(Mupen64RR.Plugins.TASVideo PRIVATE cxx_std_26)
+set_target_properties(Mupen64RR.Plugins.TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_include_directories(Mupen64RR.Plugins.Win32.TASVideo PRIVATE ".")
-target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
+target_include_directories(Mupen64RR.Plugins.TASVideo PRIVATE ".")
+target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
     Mupen64RR.Plugins.Win32.Common
     vendor::hqx
     vendor::xbrz
@@ -84,7 +84,7 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     GLEW::GLEW
     SDL3::SDL3
 )
-target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
+target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
     comctl32
     uxtheme
     msimg32
@@ -94,7 +94,7 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
     winmm
 )
 if (MUPEN64RR_LINK_STATIC)
-    target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
+    target_compile_definitions(Mupen64RR.Plugins.TASVideo PRIVATE
         "GLEW_STATIC"
     )
 endif()

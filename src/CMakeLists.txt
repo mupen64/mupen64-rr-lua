@@ -29,6 +29,8 @@ add_subdirectory(Plugins.DummyAudio)
 add_subdirectory(Plugins.DummyInput)
 add_subdirectory(Plugins.DummyVideo)
 
+# SDL video plugin
+add_subdirectory(Plugins.TASVideo)
 # SDL audio plugin
 add_subdirectory(Plugins.TASAudio)
 # HLE RSP plugin (core cannot live without a functioning RSP)
@@ -51,9 +53,8 @@ if (MUPEN64RR_BUILD_WIN32)
     include("${CMAKE_CURRENT_LIST_DIR}/Plugins.Win32.Common.cmake")
 
     # Windows-based TAS plugins.
-    # TASVideo and TASInput rely heavily on Windows APIs to work.
+    # TASInput relies heavily on Windows APIs to work.
     # Note that we can't port config dialogs until we settle on a GUI frontend framework.
-    add_subdirectory(Plugins.Win32.TASVideo)
     add_subdirectory(Plugins.Win32.TASInput)
 endif()
 
