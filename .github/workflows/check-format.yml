@@ -1,4 +1,4 @@
-name: Check Format
+name: Check format
 
 on:
   push:
@@ -12,7 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  check-format:
+  clang-format:
+    name: clang-format (C/C++)
     runs-on: ubuntu-latest
 
     steps:
