@@ -3,9 +3,6 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-
-#include "Main.hpp"
-
 #include <Common.Views/App.hpp>
 
 #include <future>

@@ -4,18 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-qt_add_executable(Mupen64RR.Views.Qt6
-    "plugins/BuiltinTAS.hpp"
-    "plugins/Plugin.hpp"
-    "Core.hpp"
-    "Main.hpp"
-
-    "plugins/BuiltinTAS.cpp"
-    "plugins/Plugin.cpp"
-    "DialogService.cpp"
-    "Core.cpp"
-    "Main.cpp"
-)
+qt_add_executable(Mupen64RR.Views.Qt6 "Main.cpp")
 target_compile_features(Mupen64RR.Views.Qt6 PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
     # output location
@@ -25,29 +14,11 @@ set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
 )
 target_include_directories(Mupen64RR.Views.Qt6 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
-    Mupen64RR.Common
-    Mupen64RR.Common.Views
-    Mupen64RR.Core
-
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Quick
-
-    vendor::decan
-)
-
-target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
-    Mupen64RR.Plugins.DummyVideo
-    Mupen64RR.Plugins.DummyAudio
-    Mupen64RR.Plugins.DummyInput
-
-    Mupen64RR.Plugins.TASAudio
-    Mupen64RR.Plugins.TASRSP
+    Mupen64RR.ViewModels.Qt6
 )
 
 # QML MODULES
 # =====================================
-
 qt_add_qml_module(Mupen64RR.Views.Qt6
     URI "Mupen64RR.UI"
     VERSION 1.0
