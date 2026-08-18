@@ -11,8 +11,11 @@
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QtQml/QQmlExtensionPlugin>
 
 #include "Core.hpp"
+
+Q_IMPORT_QML_PLUGIN(CorePlugin)
 
 static int cli_main(int argc, char* argv[]) {
     using namespace std::literals;
@@ -44,11 +47,11 @@ static int qt_main(int argc, char *argv[])
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, []() {
         QCoreApplication::exit(-1);
     });
-    engine.loadFromModule("Mupen64RR.UI", "MainWindow");
+    engine.loadFromModule("Views", "MainWindow");
     
     return QGuiApplication::exec();
 }
 
 int main(int argc, char* argv[]) {
-    return cli_main(argc, argv);
+    return qt_main(argc, argv);
 }

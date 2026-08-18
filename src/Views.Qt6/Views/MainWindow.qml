@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs 
 
+import Core
+
 ApplicationWindow {
     width: 640
     height: 480
@@ -18,6 +20,7 @@ ApplicationWindow {
             }
             Action {
                 text: qsTr("&Close ROM...")
+                onTriggered: MupenCore.vrCloseROM()
                 
             }
             MenuSeparator { }
@@ -28,10 +31,17 @@ ApplicationWindow {
         }
     }
 
+    onClosing: function(close) {
+        MupenCore.vrCloseROM();
+    }
+
     FileDialog {
         id: fdOpenRom
         title: qsTr("Open ROM...")
         fileMode: FileDialog.OpenFile
         nameFilters: [`${qsTr("N64 ROMs")} (*.n64 *.z64 *.v64)`]
+        onAccepted: {
+            MupenCore.vrStartROM(selectedFile);
+        }
     }
 }

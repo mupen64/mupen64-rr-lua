@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QUrl>
 #include <qqmlintegration.h>
 
 class MupenCore : public QObject {
@@ -10,9 +11,8 @@ class MupenCore : public QObject {
   public:
     MupenCore(QObject* parent = nullptr);
     virtual ~MupenCore();
-    
-  private:
-    void vrStartROM(const QUrl& url);
 
-    void vrCloseROM(bool resetVCR = true);
+    Q_INVOKABLE void vrStartROM(const QUrl& url);
+
+    Q_INVOKABLE void vrCloseROM(bool resetVCR = true);
 };
