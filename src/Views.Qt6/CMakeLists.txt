@@ -5,12 +5,16 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 qt_add_executable(Mupen64RR.Views.Qt6
+    "plugins/BuiltinTAS.hpp"
+    "plugins/Plugin.hpp"
+    "Core.hpp"
     "Main.hpp"
-    "Plugin.hpp"
 
+    "plugins/BuiltinTAS.cpp"
+    "plugins/Plugin.cpp"
     "DialogService.cpp"
+    "Core.cpp"
     "Main.cpp"
-    "Plugin.cpp"
 )
 target_compile_features(Mupen64RR.Views.Qt6 PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
@@ -30,6 +34,15 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Qt6::Quick
 
     vendor::decan
+)
+
+target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
+    Mupen64RR.Plugins.DummyVideo
+    Mupen64RR.Plugins.DummyAudio
+    Mupen64RR.Plugins.DummyInput
+
+    Mupen64RR.Plugins.TASAudio
+    Mupen64RR.Plugins.TASRSP
 )
 
 # QML MODULES

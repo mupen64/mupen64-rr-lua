@@ -332,4 +332,9 @@ template <auto F> struct StaticFunctor : public details::StaticFunctorImpl<F, de
 {
 };
 
+/**
+ * @brief Combines any number of functor types into a single overloaded functor.
+ */
+template <class... Fs> struct Overload : Fs... { using Fs::operator()...; };
+
 }; // namespace MiscHelpers

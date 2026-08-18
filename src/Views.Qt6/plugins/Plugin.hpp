@@ -9,6 +9,8 @@
 #include <m64rr/API.hpp>
 #include <m64rr/Plugin.hpp>
 
+#include "BuiltinTAS.hpp"
+
 class PluginLoadFailed : std::runtime_error
 {
   public:
@@ -19,16 +21,17 @@ class Plugin
 {
   public:
     Plugin(const std::filesystem::path &path);
+    Plugin(BuiltinTAS::PluginID id);
 
     /**
      * @brief Triggers the `Initiate` event and sets up necessary initialization data.
      */
-    void initiate();
+    void initiate(core_ctx *core_ctx, core_params &core_params);
 
     /**
      * @brief Binds the needed functions from this plugin to the core.
      */
-    void bind_functions();
+    void bind_functions(core_params &core_params);
 
     /**
      * @brief Triggers an arbitrary lifecycle event.
@@ -52,8 +55,17 @@ class Plugin
      */
     auto type() const { return m_type; }
 
+    /**
+     * @brief Tries to load a symbol from the DLL.
+     *
+     * @return the symbol's address, or nullptr if it doesn't exist
+     */
+    void *load_symbol(const char *symbol);
+
   private:
-    decan::library m_lib;
+    void init_common();
+
+    std::variant<decan::library, BuiltinTAS::PluginID> m_lib;
 
     std::filesystem::path m_path;
     std::string m_name;
@@ -67,8 +79,8 @@ class Plugin
 namespace PluginUtil
 {
 bool load_plugins();
-void initiate_plugins();
-void start_plugins();
+void initiate_plugins(core_ctx *core_ctx, core_params &core_params);
+void start_plugins(core_params &core_params);
 void stop_plugins();
 void get_plugin_names(char *video, char *audio, char *input, char *rsp);
 void send_event(M64RRSpec::Event event);

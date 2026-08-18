@@ -9,10 +9,10 @@ class MupenCore : public QObject {
     QML_ELEMENT
   public:
     MupenCore(QObject* parent = nullptr);
-    virtual ~MupenCore() {}
+    virtual ~MupenCore();
     
   private:
-    void start_rom(const QUrl& url);
+    void vrStartROM(const QUrl& url);
 
-    void stop_rom();
+    void vrCloseROM(bool resetVCR = true);
 };
