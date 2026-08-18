@@ -69,6 +69,11 @@ set(MUPEN64RR_OUT_DIR "${PROJECT_BINARY_DIR}/out/")
 set(MUPEN64RR_PLUGIN_OUT_DIR "${PROJECT_BINARY_DIR}/out/plugin/")
 set(MUPEN64RR_TEST_OUT_DIR "${PROJECT_BINARY_DIR}/test/out/")
 
+# Workarounds
+# ===========================================
+
+include("cmake/workarounds.cmake")
+
 # Libraries
 # =======================================
 
