@@ -97,6 +97,7 @@ class Plugin
      * element isn't an empty string.
      */
     static std::pair<std::string, std::unique_ptr<Plugin>> create(std::filesystem::path path);
+    static std::pair<std::string, std::unique_ptr<Plugin>> create(std::filesystem::path path, Type type);
 
     Plugin() = default;
     virtual ~Plugin();

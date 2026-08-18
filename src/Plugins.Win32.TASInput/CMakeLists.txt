@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.Win32.TASInput MODULE
+add_library(Mupen64RR.Plugins.Win32.TASInput STATIC
     "TASInput.hpp"
     "Common.hpp"
     "Resource.h"
@@ -47,4 +47,14 @@ target_link_libraries(Mupen64RR.Plugins.Win32.TASInput PRIVATE
     comctl32
     shcore
     gdiplus
+)
+
+target_compile_definitions(Mupen64RR.Plugins.Win32.TASInput PRIVATE
+    M64RRGetMetadata=M64RRBuiltinTASInputGetMetadata
+    M64RRProcessEvent=M64RRBuiltinTASInputProcessEvent
+    M64RRReadController=M64RRBuiltinTASInputReadController
+    M64RRShowConfig=M64RRBuiltinTASInputShowConfig
+    M64RRGetKeys=M64RRBuiltinTASInputGetKeys
+    M64RRSetKeys=M64RRBuiltinTASInputSetKeys
+    g_plugin=M64RRBuiltinTASInputPlugin
 )

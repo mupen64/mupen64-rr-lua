@@ -12,16 +12,3 @@
 
 HINSTANCE g_inst;
 M64RRSpec::PluginInit *g_plugin;
-
-// ReSharper disable once CppInconsistentNaming
-int WINAPI DllMain(const HINSTANCE h_instance, const DWORD fdw_reason, PVOID)
-{
-    switch (fdw_reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        g_inst = h_instance;
-        break;
-    }
-
-    return TRUE;
-}

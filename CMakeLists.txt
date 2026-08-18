@@ -257,7 +257,7 @@ if(MSVC)
     add_compile_options(/utf-8)
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$" AND CMAKE_C_COMPILER_ID MATCHES "^GCC$|Clang$")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86|i[346]86|x86_64|AMD64|amd64|x64)$" AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$|Clang$")
     # Enable SSSE3 instructions where applicable
     add_compile_options(-mssse3)
 endif()

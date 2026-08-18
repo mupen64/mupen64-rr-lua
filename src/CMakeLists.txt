@@ -42,7 +42,12 @@ if (MUPEN64RR_BUILD_WIN32)
     # ============================
 
     add_subdirectory(Common.Win32)
-    add_subdirectory(Views.Win32)
+
+    add_library(Mupen64RR.Views.Win32.Headers INTERFACE
+        "Views.Win32/include/Views.Win32/ZESpec.h"
+    )
+    target_compile_features(Mupen64RR.Views.Win32.Headers INTERFACE cxx_std_26)
+    target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "Views.Win32/include")
 
     # BUNDLED PLUGINS
     # ============================
@@ -55,6 +60,10 @@ if (MUPEN64RR_BUILD_WIN32)
     # Note that we can't port config dialogs until we settle on a GUI frontend framework.
     add_subdirectory(Plugins.Win32.TASVideo)
     add_subdirectory(Plugins.Win32.TASInput)
+
+    # VIEW
+    # ============================
+    add_subdirectory(Views.Win32)
 endif()
 
 # QT6 VIEW
