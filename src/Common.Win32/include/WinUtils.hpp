@@ -280,7 +280,7 @@ inline std::filesystem::path get_desktop_path()
 inline std::string format_duration(size_t seconds)
 {
     char str[480] = {};
-    sprintf(str, "%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+    sprintf(str, "%02zu:%02zu:%02zu", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
     return str;
 }
 

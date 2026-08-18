@@ -9,6 +9,7 @@
 #include <CommonPCH.hpp>
 
 #include <print>
+#include <variant>
 #include <decan.hpp>
 
 #include "Core.hpp"
@@ -151,7 +152,7 @@ void Plugin::send_event(M64RRSpec::Event event)
 
 void *Plugin::load_symbol(const char *symbol)
 {
-    return m_lib.visit(MiscHelpers::Overload{
+    const auto visitor = MiscHelpers::Overload{
         [=](const decan::library &lib) -> void * {
             try
             {
@@ -162,7 +163,9 @@ void *Plugin::load_symbol(const char *symbol)
                 return nullptr;
             }
         },
-        [=](BuiltinTAS::PluginID id) -> void * { return BuiltinTAS::builtin_dlsym(id, symbol); }});
+        [=](BuiltinTAS::PluginID id) -> void * { return BuiltinTAS::builtin_dlsym(id, symbol); },
+    };
+    return std::visit(visitor, m_lib);
 }
 
 bool PluginUtil::load_plugins()

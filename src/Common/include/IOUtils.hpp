@@ -441,7 +441,7 @@ inline std::filesystem::path compute_exe_path()
     char path_buffer[MAX_PATH] = {0};
     DWORD rc;
 
-    rc = GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
+    rc = GetModuleFileNameA(NULL, path_buffer, std::size(path_buffer));
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());
@@ -469,7 +469,7 @@ inline std::filesystem::path compute_config_path()
 #ifdef _WIN32
     char path_buffer[MAX_PATH] = {0};
     DWORD rc;
-    rc = GetEnvironmentVariable("LOCALAPPDATA", path_buffer, MAX_PATH);
+    rc = GetEnvironmentVariableA("LOCALAPPDATA", path_buffer, MAX_PATH);
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());

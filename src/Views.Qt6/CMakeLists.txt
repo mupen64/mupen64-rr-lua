@@ -18,6 +18,9 @@ target_include_directories(Mupen64RR.Views.Qt6 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.ViewModels.Qt6
     Mupen64RR.Views.Qt6.Coreplugin
+
+    Qt::Quick
+    Qt::QuickControls2
 )
 
 qt_add_qml_module(Mupen64RR.Views.Qt6 URI "Views" QML_FILES
@@ -26,5 +29,11 @@ qt_add_qml_module(Mupen64RR.Views.Qt6 URI "Views" QML_FILES
 
 # MinGW needs this for std::print(ln) some reason...
 if(MINGW)
-    target_link_libraries(Mupen64RR.Views.CLI PRIVATE stdc++exp)
+    target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE stdc++exp)
 endif()
+
+windeployqt6(
+    TARGET Mupen64RR.Views.Qt6
+    DEPLOY_TO_BUILD_DIR
+    ARGS --qmldir .
+)
