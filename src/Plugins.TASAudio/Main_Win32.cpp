@@ -10,42 +10,11 @@
 #include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"
-#include "IOUtils.hpp"
 #include "Main.hpp"
-
 #include <windows.h>
 #include <winerror.h>
 #include <winnt.h>
 #include <winreg.h>
-
-HINSTANCE g_dll_handle = nullptr;
-
-static constexpr char CFG_SUBKEY[] = "Software\\N64 Emulation\\DLL\\TAS Audio";
-static constexpr char VALUE_CONFIG[] = "Config";
-static constexpr char VALUE_VERSION[] = "Version";
-static constexpr DWORD CUR_CONFIG_VERSION = 1;
-
-BOOL __stdcall DllMain(HINSTANCE hmod, DWORD reason, LPVOID)
-{
-    if (reason == DLL_PROCESS_ATTACH)
-    {
-        g_dll_handle = hmod;
-
-        std::vector<char> dll_path_buf(MAX_PATH, L'\0');
-        DWORD gmfn_rc = GetModuleFileName(hmod, dll_path_buf.data(), dll_path_buf.size());
-
-        // If the buffer isn't long enough, double the buffer size until it fits
-        while (gmfn_rc == dll_path_buf.size())
-        {
-            dll_path_buf.resize(dll_path_buf.size() * 2);
-            gmfn_rc = GetModuleFileName(hmod, dll_path_buf.data(), dll_path_buf.size());
-        }
-
-        // set the DLL path
-        g_dll_path = std::filesystem::path(dll_path_buf.data());
-    }
-    return TRUE;
-}
 
 EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {

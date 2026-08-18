@@ -15,10 +15,7 @@
         metadata->type = plugin_type;                                                                                  \
                                                                                                                        \
         const char *name = PLUGIN_NAME;                                                                                \
-        const char *description = "First-party TAS plugin for Mupen64."                                                \
-                                  "\n"                                                                                 \
-                                  "TAS plugins are not to be distributed separately from Mupen64 and remain tied "     \
-                                  "to one version of the emulator."                                                    \
+        const char *description = "Built-in plugin for Mupen64."                                                       \
                                   "\n\n"                                                                               \
                                   "https://mupen64.com";                                                               \
         const char *target_version = CURRENT_VERSION;                                                                  \

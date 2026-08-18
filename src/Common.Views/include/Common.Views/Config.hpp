@@ -226,22 +226,22 @@ struct t_config
     /// <summary>
     /// The path of the currently selected video plugin
     /// </summary>
-    std::string selected_video_plugin = "plugin\\TASVideo.dll";
+    std::string selected_video_plugin;
 
     /// <summary>
     /// The path of the currently selected audio plugin
     /// </summary>
-    std::string selected_audio_plugin = "plugin\\TASAudio.dll";
+    std::string selected_audio_plugin;
 
     /// <summary>
     /// The path of the currently selected input plugin
     /// </summary>
-    std::string selected_input_plugin = "plugin\\TASInput.dll";
+    std::string selected_input_plugin;
 
     /// <summary>
     /// The path of the currently selected RSP plugin
     /// </summary>
-    std::string selected_rsp_plugin = "plugin\\TASRSP.dll";
+    std::string selected_rsp_plugin;
 
     /// <summary>
     /// The last known value of the record movie dialog's "start type" field
