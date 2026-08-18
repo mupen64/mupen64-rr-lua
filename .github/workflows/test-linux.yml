@@ -10,6 +10,10 @@ concurrency:
 
 jobs:
   test-linux:
+    strategy:
+      matrix:
+        build_type: [debug, release]
+
     # TODO: switch this to ubuntu-latest once this leaves preview.
     runs-on: [ubuntu-26.04] 
 
@@ -20,7 +24,10 @@ jobs:
 
     - name: CMake configure
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: cmake --preset sys-linux-release
+      run: |
+        cmake_debug="Debug"
+        cmake_release="RelWithDebInfo"
+        cmake --preset sys-linux-release "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
 
     - name: CMake build
       working-directory: ${{env.GITHUB_WORKSPACE}}

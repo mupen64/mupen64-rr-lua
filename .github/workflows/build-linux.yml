@@ -10,9 +10,8 @@ concurrency:
 
 jobs:
   build-nightly-linux:
-    strategy:
-      matrix:
-        build_type: [debug, release]
+    # strategy:
+    #   matrix:
 
     # TODO: switch this to ubuntu-latest once this leaves preview.
     runs-on: [ubuntu-26.04]
@@ -28,9 +27,8 @@ jobs:
       - name: CMake configure
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: |
-          cmake_debug="Debug"
           cmake_release="Release"
-          cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+          cmake --preset sys-linux "-DCMAKE_BUILD_TYPE=Release"
 
       - name: CMake build
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -39,6 +37,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mupen-${{ matrix.build_type }}-nightly-linux-x64
+          name: mupen-release-nightly-linux-x64
           path: build/out
           retention-days: 14

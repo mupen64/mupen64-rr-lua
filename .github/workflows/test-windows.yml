@@ -18,6 +18,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
+        build_type: [debug, release]
 
     steps:
       - uses: actions/checkout@v6
@@ -28,7 +29,11 @@ jobs:
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
+        shell: powershell
+        run: |
+          $cmake_debug="Debug"
+          $cmake_release="RelWithDebInfo"
+          cmake --preset vcpkg-win64-${{ matrix.arch }} "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
