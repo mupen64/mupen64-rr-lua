@@ -4,11 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Views.Win32.Headers INTERFACE
-    "include/Views.Win32/ZESpec.h"
-)
-target_compile_features(Mupen64RR.Views.Win32.Headers INTERFACE cxx_std_26)
-target_include_directories(Mupen64RR.Views.Win32.Headers INTERFACE "include")
+
 
 add_executable(Mupen64RR.Views.Win32 WIN32
     # headers
@@ -66,9 +62,13 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "lua/presenters/GDIPresenter.hpp"
     "lua/presenters/Presenter.hpp"
     "plugin/Plugin.hpp"
+    "plugin/BuiltinTAS.hpp"
     "plugin/ZEPlugin.hpp"
     "plugin/M64RRPlugin.hpp"
     "resource.h"
+    "../Plugins.TASAudio/Resource.rc"
+    "../Plugins.Win32.TASVideo/Resource.rc"
+    "../Plugins.Win32.TASInput/Resource.rc"
 
     # sources
     "ThreadPool.cpp"
@@ -159,6 +159,13 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     vendor::windarkmode
     vendor::microlru
     vendor::mini
+    Mupen64RR.Plugins.DummyAudio
+    Mupen64RR.Plugins.DummyInput
+    Mupen64RR.Plugins.DummyVideo
+    Mupen64RR.Plugins.TASAudio
+    Mupen64RR.Plugins.TASRSP
+    Mupen64RR.Plugins.Win32.TASVideo
+    Mupen64RR.Plugins.Win32.TASInput
 )
 # Windows library linkages
 target_link_libraries(Mupen64RR.Views.Win32 PRIVATE

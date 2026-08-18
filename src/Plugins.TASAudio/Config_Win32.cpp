@@ -87,7 +87,7 @@ namespace SDLAudio
 bool win32_show_config(HWND parent, Config &config)
 {
     g_config_ptr = &config;
-    LRESULT res = DialogBox(g_dll_handle, MAKEINTRESOURCE(IDD_CONFIG), parent, &config_dlgproc);
+    LRESULT res = DialogBox(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_CONFIG), parent, &config_dlgproc);
     g_config_ptr = nullptr;
 
     return res == IDOK;

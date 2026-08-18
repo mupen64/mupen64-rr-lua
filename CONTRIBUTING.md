@@ -1,4 +1,3 @@
-
 # Compiling
 
 Only Windows supports compiling the full emulator. However, the core and VCR tests can be (experimentally) compiled on other platforms.
@@ -208,32 +207,8 @@ If you only have the stacktrace from `mupen.log`:
 3. Open the "Go to" dialog by pressing Ctrl + G
 4. Navigate to `0x00400000` + `[Your Address]`
 
-# TAS Plugins and Plugin Compatibility
+# First-party Plugins and Plugin Compatibility
 
-The "TAS" plugins are our first-party plugins that aim to be lightweight and fast. They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions.
+The "TAS [Video|Audio|Input|RSP]" and "No [Video|Audio|Input|RSP]" plugins are our statically-linked first-party plugins that aim to be lightweight and fast.
 
 Mupen64 remains compatible with Zilmar-spec plugin (e.g. Jabo's plugins, GLideN64), however, these are only supported via a shim on the Win32 frontend. The upcoming Qt frontend will likely not support Zilmar-spec plugins, as the additional development effort to support it seems too great to be helpful.
-
-## Developer Guidelines
-
-### Naming
-
-The plugin's friendly name should follow the schema:
-
-`[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
-
-The header `VersionNameHelpers.hpp` in `Common` should help you to do this:
-```c++
-#define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Audio")
-```
-
-### Initialization
-
-- Any preliminary initialization should be done through global variables or during `Event::Initiate`. 
-  - Do *NOT* initialize libraries through either of these mechanisms. 
-  - Do *NOT* use `DllMain` or other platform-specific initializers.
-- Initialize libraries in `RomOpen` and - if possible - do it only once.
-
-### Configuration
-
-Write persistent config to the filesystem as JSON in `IOUtils::config_dir()`.

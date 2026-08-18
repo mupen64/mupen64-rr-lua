@@ -49,21 +49,12 @@ bool init_rsp_thread()
     return true;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved)
-{
-    g_tas_ctx.hinst = hinstDLL;
-    return TRUE;
-}
-
 EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 {
     metadata->type = M64RRSpec::PluginType::Video;
 
     const auto name = PLUGIN_NAME;
-    const auto description = "First-party TAS plugin for Mupen64."
-                             "\n"
-                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                             "to one version of the emulator."
+    const auto description = "Built-in plugin for Mupen64."
                              "\n\n"
                              "https://mupen64.com";
     const auto target_version = CURRENT_VERSION;
@@ -83,6 +74,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate:
+        g_tas_ctx.hinst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();

@@ -445,22 +445,22 @@ static void show_plugin_settings_dialog(const std::unique_ptr<Plugin> &plugin)
 
 static void show_video_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_video_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_video_plugin, Plugin::Type::Video).second);
 }
 
 static void show_audio_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_audio_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_audio_plugin, Plugin::Type::Audio).second);
 }
 
 static void show_input_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_input_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_input_plugin, Plugin::Type::Input).second);
 }
 
 static void show_rsp_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_rsp_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_rsp_plugin, Plugin::Type::RSP).second);
 }
 
 static void toggle_statusbar()

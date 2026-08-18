@@ -6,6 +6,7 @@
 
 #include <CommonPCH.hpp>
 #include "Main.hpp"
+#include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "IOUtils.hpp"
 #include "SDLBackend.hpp"
@@ -16,7 +17,6 @@
 M64RRSpec::PluginInit *g_plugin = nullptr;
 std::optional<SDLAudio::SDLBackend> g_backend{};
 
-std::filesystem::path g_dll_path{}; // currently set in Main_Win32.cpp
 static bool g_sdl_is_init = false;
 
 #define CONFIG_FILE_NAME "TASAudio.json"
@@ -86,10 +86,7 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     metadata->type = M64RRSpec::PluginType::Audio;
 
     const auto name = PLUGIN_NAME;
-    const auto description = "First-party TAS plugin for Mupen64."
-                             "\n"
-                             "TAS plugins are not to be distributed separately from Mupen64 and remain tied "
-                             "to one version of the emulator."
+    const auto description = "Built-in plugin for Mupen64."
                              "\n\n"
                              "https://mupen64.com";
     const auto target_version = CURRENT_VERSION;
