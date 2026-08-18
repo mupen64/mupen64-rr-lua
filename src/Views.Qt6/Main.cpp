@@ -117,6 +117,13 @@ static int cli_main(int argc, char* argv[]) {
 
 int main(int argc, char *argv[])
 {
+#ifdef __linux__
+    // use xdg-desktop-portal for platform dialogs where possible
+    if (qgetenv("QT_QPA_PLATFORMTHEME").isEmpty()) {
+        qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
+    }
+#endif
+
     QGuiApplication app(argc, argv);
     
     QQmlApplicationEngine engine;

@@ -1,28 +1,24 @@
-//import related modules
-import QtQuick 2.0
+import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs 
 
-//window containing the application
 ApplicationWindow {
     width: 640
     height: 480
     visible: true
-    //title of the application
+
     title: qsTr("Mupen64RR")
 
-    minimumWidth: width
-    maximumWidth: width
-
-    minimumHeight: height
-    maximumHeight: height
-
-    //menu containing two menu items
     header: MenuBar {
         Menu {
             title: qsTr("&File")
             Action {
-                text: qsTr("&Open...")
-                onTriggered: console.log("Open action triggered")
+                text: qsTr("&Open ROM...")
+                onTriggered: fdOpenRom.open()
+            }
+            Action {
+                text: qsTr("&Close ROM...")
+                
             }
             MenuSeparator { }
             Action {
@@ -32,12 +28,10 @@ ApplicationWindow {
         }
     }
 
-    //Content Area
-
-    //a button in the middle of the content area
-    Button {
-        text: qsTr("Hello World")
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
+    FileDialog {
+        id: fdOpenRom
+        title: qsTr("Open ROM...")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [`${qsTr("N64 ROMs")} (*.n64 *.z64 *.v64)`]
     }
 }

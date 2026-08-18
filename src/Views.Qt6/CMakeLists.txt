@@ -32,7 +32,9 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     vendor::decan
 )
 
-# Include QML sources
+# QML MODULES
+# =====================================
+
 qt_add_qml_module(Mupen64RR.Views.Qt6
     URI "Mupen64RR.UI"
     VERSION 1.0
