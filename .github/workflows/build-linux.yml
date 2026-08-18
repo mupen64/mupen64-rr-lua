@@ -1,7 +1,6 @@
 name: Build (Linux/Qt6)
 
 on:
-  push:
   workflow_dispatch:
 
 concurrency:
