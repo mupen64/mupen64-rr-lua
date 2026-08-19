@@ -1,191 +1,51 @@
 [
   {
-    "label": "configure (linux native)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--preset", "sys-linux64-x64"]
-  },
-  {
-    "label": "configure fresh (linux native)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--fresh", "--preset", "sys-linux64-x64"]
-  },
-  {
-    "label": "build (linux native)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--build", "build"]
-  },
-  {
-    "label": "clean rebuild (linux native)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--build", "build", "--clean-first"]
-  },
-  {
-    "label": "test (linux native)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "ctest",
-    "args": ["--test-dir", "build"]
-  },
-  {
-    "label": "configure (mingw x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--preset", "mingw-linux-x64"]
-  },
-  {
-    "label": "configure fresh (mingw x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--fresh", "--preset", "mingw-linux-x64"]
-  },
-  {
-    "label": "configure release (mingw x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--preset", "mingw-linux-x64-release"]
-  },
-  {
-    "label": "build (mingw x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--build", "build"]
-  },
-  {
-    "label": "clean rebuild (mingw x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--build", "build", "--clean-first"]
-  },
-  {
     "label": "configure (mingw x86)",
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--preset", "mingw-linux-x86"]
-  },
-  {
-    "label": "configure fresh (mingw x86)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "cmake",
-    "args": ["--fresh", "--preset", "mingw-linux-x86"]
+    "args": ["--preset", "mingw-linux-x86"],
   },
   {
     "label": "configure release (mingw x86)",
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--preset", "mingw-linux-x86-release"]
+    "args": ["--preset", "mingw-linux-x86-release"],
   },
   {
-    "label": "build (mingw x86)",
+    "label": "configure (mingw x64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--build", "build"]
+    "args": ["--preset", "mingw-linux-x64"],
   },
   {
-    "label": "clean rebuild (mingw x86)",
+    "label": "configure release (mingw x64)",
     "reveal": "no_focus",
     "save": "all",
     "command": "cmake",
-    "args": ["--build", "build", "--clean-first"]
+    "args": ["--preset", "mingw-linux-x64-release"],
   },
   {
-    "label": "configure (win x64)",
+    "label": "configure (linux native)",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./tools/vsdev-x64.cmd",
-    "args": ["cmake", "--preset", "vcpkg-win64-x64"]
+    "command": "cmake",
+    "args": ["--preset", "sys-linux"],
   },
   {
-    "label": "configure fresh (win x64)",
+    "label": "build",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./tools/vsdev-x64.cmd",
-    "args": ["cmake", "--fresh", "--preset", "vcpkg-win64-x64"]
+    "command": "cmake",
+    "args": ["--build", "build"],
   },
   {
-    "label": "configure release (win x64)",
+    "label": "test",
     "reveal": "no_focus",
     "save": "all",
-    "command": "./tools/vsdev-x64.cmd",
-    "args": ["cmake", "--preset", "vcpkg-win64-x64-release"]
+    "command": "ctest",
+    "args": ["--test-dir", "build"],
   },
-  {
-    "label": "build (win x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x64.cmd",
-    "args": ["cmake", "--build", "build"]
-  },
-  {
-    "label": "clean rebuild (win x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x64.cmd",
-    "args": ["cmake", "--build", "build", "--clean-first"]
-  },
-  {
-    "label": "test (win x64)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x64.cmd",
-    "args": ["ctest", "--test-dir", "build"]
-  },
-  {
-    "label": "configure (win x86)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x86.cmd",
-    "args": ["cmake", "--preset", "vcpkg-win64-x86"]
-  },
-  {
-    "label": "configure fresh (win x86)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x86.cmd",
-    "args": ["cmake", "--fresh", "--preset", "vcpkg-win64-x86"]
-  },
-  {
-    "label": "configure release (win x86)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x86.cmd",
-    "args": ["cmake", "--preset", "vcpkg-win64-x86-release"]
-  },
-  {
-    "label": "build (win x86)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x86.cmd",
-    "args": ["cmake", "--build", "build"]
-  },
-  {
-    "label": "clean rebuild (win x86)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x86.cmd",
-    "args": ["cmake", "--build", "build", "--clean-first"]
-  },
-  {
-    "label": "test (win x86)",
-    "reveal": "no_focus",
-    "save": "all",
-    "command": "./tools/vsdev-x86.cmd",
-    "args": ["ctest", "--test-dir", "build"]
-  }
 ]
