@@ -262,7 +262,7 @@ void TextureCache_Init()
     {
         glBindTexture(GL_TEXTURE_2D, cache.glNoiseNames[i]);
 
-        srand(timeGetTime());
+        srand(std::time(nullptr));
 
         for (s16 y = 0; y < 64; y++)
         {
