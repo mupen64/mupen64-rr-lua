@@ -105,7 +105,7 @@ target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
     vendor::hqx
     vendor::xbrz
     nlohmann_json::nlohmann_json
-    GLEW::GLEW
+    PkgConfig::glew
     SDL3::SDL3
 )
 
