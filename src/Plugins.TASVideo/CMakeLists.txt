@@ -112,7 +112,7 @@ else()
     # FIXME
 endif()
 
-target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
+target_compile_definitions(Mupen64RR.Plugins.TASVideo PRIVATE
     M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
     M64RRProcessEvent=M64RRBuiltinTASVideoProcessEvent
     M64RRProcessDList=M64RRBuiltinTASVideoProcessDList

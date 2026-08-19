@@ -67,7 +67,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "plugin/M64RRPlugin.hpp"
     "resource.h"
     "../Plugins.TASAudio/Resource.rc"
-    "../Plugins.Win32.TASVideo/Resource.rc"
+    "../Plugins.TASVideo/Resource.rc"
     "../Plugins.Win32.TASInput/Resource.rc"
 
     # sources
@@ -164,7 +164,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Mupen64RR.Plugins.DummyVideo
     Mupen64RR.Plugins.TASAudio
     Mupen64RR.Plugins.TASRSP
-    Mupen64RR.Plugins.Win32.TASVideo
+    Mupen64RR.Plugins.TASVideo
     Mupen64RR.Plugins.Win32.TASInput
 )
 # Windows library linkages
