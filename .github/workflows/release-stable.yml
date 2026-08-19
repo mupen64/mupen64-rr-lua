@@ -38,14 +38,18 @@ jobs:
           uses: actions/download-artifact@v8
           with:
             name: mupen-release-stable-windows-x86
-            path: mupen-windows-x86.zip
             skip-decompress: true
         - name: Download windows-x64 release
           uses: actions/download-artifact@v8
           with:
             name: mupen-release-stable-windows-x64
-            path: mupen-windows-x64.zip
             skip-decompress: true
+      
+      - name: Rename downloaded artifacts
+        shell: bash
+        run: |
+          mv mupen-release-stable-windows-x86.zip mupen-windows-x86.zip
+          mv mupen-release-stable-windows-x64.zip mupen-windows-x64.zip
 
       - name: Generate changelog with git-cliff
         id: changelog
