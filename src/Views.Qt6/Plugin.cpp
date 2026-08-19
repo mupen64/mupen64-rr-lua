@@ -156,7 +156,7 @@ bool PluginUtil::load_plugins()
     try
     {
         std::scoped_lock lock(g_plugin_lock);
-        auto video_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoVideo" DECAN_LIB_EXT);
+        auto video_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASVideo" DECAN_LIB_EXT);
         auto audio_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASAudio" DECAN_LIB_EXT);
         auto input_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput" DECAN_LIB_EXT);
         auto rsp_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP" DECAN_LIB_EXT);
