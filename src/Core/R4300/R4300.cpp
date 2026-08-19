@@ -26,16 +26,21 @@
 #error "Big Endian builds aren't supported"
 #endif
 
-std::jthread emu_thread_handle;
+struct R4300Internal
+{
+    std::jthread emu_thread_handle;
+
+    std::mutex emu_thread_mutex;
+    std::condition_variable_any emu_thread_cv;
+    std::condition_variable emu_thread_stopped_cv;
+    bool emu_thread_start_requested;
+    bool emu_session_stopped = true;
+};
+
+R4300Internal s_r4300;
 
 // Lock to prevent emu state change race conditions
 std::recursive_mutex g_emu_cs;
-
-std::mutex emu_thread_mutex;
-std::condition_variable_any emu_thread_cv;
-std::condition_variable emu_thread_stopped_cv;
-bool emu_thread_start_requested = false;
-bool emu_session_stopped = true;
 
 std::filesystem::path rom_path;
 
@@ -2068,13 +2073,13 @@ void emu_thread(std::stop_token stop_token)
     while (true)
     {
         {
-            std::unique_lock lock(emu_thread_mutex);
-            emu_thread_cv.wait(lock, stop_token, [] { return emu_thread_start_requested; });
+            std::unique_lock lock(s_r4300.emu_thread_mutex);
+            s_r4300.emu_thread_cv.wait(lock, stop_token, [] { return s_r4300.emu_thread_start_requested; });
             if (stop_token.stop_requested())
             {
                 return;
             }
-            emu_thread_start_requested = false;
+            s_r4300.emu_thread_start_requested = false;
         }
 
         const auto start_time = std::chrono::high_resolution_clock::now();
@@ -2105,10 +2110,10 @@ void emu_thread(std::stop_token stop_token)
             g_core->callbacks.emu_launched_changed(false);
         }
         {
-            std::lock_guard lock(emu_thread_mutex);
-            emu_session_stopped = true;
+            std::lock_guard lock(s_r4300.emu_thread_mutex);
+            s_r4300.emu_session_stopped = true;
         }
-        emu_thread_stopped_cv.notify_all();
+        s_r4300.emu_thread_stopped_cv.notify_all();
     }
 }
 
@@ -2133,8 +2138,8 @@ core_result vr_close_rom_impl(bool stop_vcr)
     stop = 1;
 
     {
-        std::unique_lock lock(emu_thread_mutex);
-        emu_thread_stopped_cv.wait(lock, [] { return emu_session_stopped; });
+        std::unique_lock lock(s_r4300.emu_thread_mutex);
+        s_r4300.emu_thread_stopped_cv.wait(lock, [] { return s_r4300.emu_session_stopped; });
     }
 
     fflush(g_eeprom_file);
@@ -2222,18 +2227,18 @@ core_result vr_start_rom_impl(std::filesystem::path path)
     emu_paused = false;
     emu_launched = true;
     {
-        std::lock_guard lock(emu_thread_mutex);
-        emu_session_stopped = false;
+        std::lock_guard lock(s_r4300.emu_thread_mutex);
+        s_r4300.emu_session_stopped = false;
     }
-    if (!emu_thread_handle.joinable())
+    if (!s_r4300.emu_thread_handle.joinable())
     {
-        emu_thread_handle = std::jthread(emu_thread);
+        s_r4300.emu_thread_handle = std::jthread(emu_thread);
     }
     {
-        std::lock_guard lock(emu_thread_mutex);
-        emu_thread_start_requested = true;
+        std::lock_guard lock(s_r4300.emu_thread_mutex);
+        s_r4300.emu_thread_start_requested = true;
     }
-    emu_thread_cv.notify_one();
+    s_r4300.emu_thread_cv.notify_one();
 
     // We need to wait until the core is actually done and running before we can continue, because we release the lock
     // If we return too early (before core is ready to also be killed), then another start or close might come in during
