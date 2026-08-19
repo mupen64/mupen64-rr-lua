@@ -5,62 +5,26 @@
  */
 
 #pragma once
-#include <decan.hpp>
 #include <m64rr/API.hpp>
 #include <m64rr/Plugin.hpp>
-
-class PluginLoadFailed : std::runtime_error
-{
-  public:
-    using std::runtime_error::runtime_error;
-};
 
 class Plugin
 {
   public:
-    Plugin(const std::filesystem::path &path);
+    Plugin(M64RRSpec::PtrGetMetadata get_metadata, M64RRSpec::PtrProcessEvent process_event,
+           M64RRSpec::PtrProcessDList process_dlist = nullptr);
 
-    /**
-     * @brief Triggers the `Initiate` event and sets up necessary initialization data.
-     */
     void initiate();
-
-    /**
-     * @brief Binds the needed functions from this plugin to the core.
-     */
     void bind_functions();
-
-    /**
-     * @brief Triggers an arbitrary lifecycle event.
-     *
-     * @param event The event
-     */
     void send_event(M64RRSpec::Event event);
 
-    /**
-     * \brief Gets the plugin's path
-     */
-    auto path() const { return m_path; }
-
-    /**
-     * \brief Gets the plugin's name
-     */
-    auto name() const { return m_name; }
-
-    /**
-     * \brief Gets the plugin's type
-     */
-    auto type() const { return m_type; }
+    const std::string &name() const { return m_name; }
 
   private:
-    decan::library m_lib;
-
-    std::filesystem::path m_path;
     std::string m_name;
     M64RRSpec::PluginType m_type;
-
     M64RRSpec::PtrProcessEvent m_process_event;
-
+    M64RRSpec::PtrProcessDList m_process_dlist;
     std::unique_ptr<M64RRSpec::PluginInit> m_init_data;
 };
 
