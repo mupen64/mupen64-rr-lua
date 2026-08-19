@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <exception>
+
 using u8 = uint8_t;   /* unsigned  8-bit */
 using u16 = uint16_t; /* unsigned 16-bit */
 using u32 = uint32_t; /* unsigned 32-bit */

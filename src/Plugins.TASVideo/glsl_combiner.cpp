@@ -12,7 +12,7 @@ struct GLSLProgram
 {
     GLuint program;
 
-    BOOL usesT0, usesT1, usesNoise;
+    int32_t usesT0, usesT1, usesNoise;
 
     GLint locTex0, locTex1;
     GLint locPrimColor, locEnvColor, locCenterColor, locScaleColor, locFogColor;
