@@ -34,7 +34,8 @@ jobs:
             shopt -s globstar nullglob
             python3 tools/check_headers.py \
               src/**/*{.c,.h,.cpp,.hpp} \
-              src/**/CMakeLists.txt src/**/*.cmake \
+              src/**/*.rc \
               src/**/*.qml \
+              src/**/CMakeLists.txt src/**/*.cmake \
               src/**/*.lua \
               tools/**/*.py

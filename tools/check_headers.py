@@ -44,6 +44,8 @@ def header_for(path: Path) -> str | None:
     match path.suffixes:
         case [".c" | ".cpp" | ".h" | ".hpp"]:
             return HEADER_C
+        case [".rc"]:
+            return HEADER_C
         case [".qml"]:
             return HEADER_C
         case [".cmake"]:
