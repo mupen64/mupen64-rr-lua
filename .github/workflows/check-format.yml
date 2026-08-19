@@ -12,16 +12,29 @@ permissions:
   contents: read
 
 jobs:
-  clang-format:
-    name: clang-format (C/C++)
+  check-format:
+    name: check all formatting
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v6
-      - uses: DoozyX/clang-format-lint-action@v0.20
-        with:
-          source: "./src"
-          exclude: "./lib ./tools"
-          extensions: "c,cpp,h,hpp"
-          clangFormatVersion: 20
-          style: file
+      - parallel:
+        - name: check against clang-format
+          uses: DoozyX/clang-format-lint-action@v0.20
+          with:
+            source: "./src"
+            exclude: "./lib ./tools"
+            extensions: "c,cpp,h,hpp"
+            clangFormatVersion: 20
+            style: file
+        - name: check copyright headers
+          shell: bash
+          working-directory: ${{ env.GITHUB_WORKSPACE }}
+          run: |
+            shopt -s globstar nullglob
+            python3 tools/check_headers.py \
+              src/**/*{.c,.h,.cpp,.hpp} \
+              src/**/CMakeLists.txt src/**/*.cmake \
+              src/**/*.qml \
+              src/**/*.lua \
+              tools/**/*.py
