@@ -5,15 +5,13 @@
  */
 #include <Common.Views/App.hpp>
 
-#include <future>
-#include <iostream>
 #include <print>
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QtQml/QQmlExtensionPlugin>
 
-#include "Core.hpp"
+#include <ViewModels.Qt6/Core.hpp>
 
 Q_IMPORT_QML_PLUGIN(CorePlugin)
 

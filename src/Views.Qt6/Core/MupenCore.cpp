@@ -5,7 +5,7 @@
  */
 
 #include "MupenCore.hpp"
-#include "Core.hpp"
+#include <ViewModels.Qt6/Core.hpp>
 
 #include <QUrl>
 
@@ -18,12 +18,12 @@ MupenCore::~MupenCore()
 {
 }
 
-void MupenCore::vrStartROM(const QUrl &url)
+CoreResult::Value MupenCore::vrStartROM(const QUrl &url)
 {
-    Core::context()->vr_start_rom(url.toLocalFile().toStdU16String());
+    return (CoreResult::Value)(int) Core::context()->vr_start_rom(url.toLocalFile().toStdU16String());
 }
 
-void MupenCore::vrCloseROM(bool resetVCR)
+CoreResult::Value MupenCore::vrCloseROM(bool resetVCR)
 {
-    Core::context()->vr_close_rom(resetVCR);
+    return (CoreResult::Value)(int) Core::context()->vr_close_rom(resetVCR);
 }

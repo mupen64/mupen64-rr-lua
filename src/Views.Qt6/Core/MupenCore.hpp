@@ -9,6 +9,8 @@
 #include <QUrl>
 #include <qqmlintegration.h>
 
+#include "CoreEnums.hpp"
+
 class MupenCore : public QObject {
     Q_OBJECT
     QML_SINGLETON
@@ -17,7 +19,12 @@ class MupenCore : public QObject {
     MupenCore(QObject* parent = nullptr);
     virtual ~MupenCore();
 
-    Q_INVOKABLE void vrStartROM(const QUrl& url);
 
-    Q_INVOKABLE void vrCloseROM(bool resetVCR = true);
+    // vr_* functions
+    // ==========================
+
+    Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl& url);
+
+    Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true);
+
 };

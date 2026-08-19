@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-#include "Core.hpp"
-#include "plugins/Plugin.hpp"
+#include "ViewModels.Qt6/Core.hpp"
+#include "ViewModels.Qt6/plugins/Plugin.hpp"
 #include <CommonPCH.hpp>
 #include <Common.Views/IDialogService.hpp>
 

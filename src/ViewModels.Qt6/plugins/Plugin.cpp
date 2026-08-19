@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "Plugin.hpp"
+#include "ViewModels.Qt6/plugins/Plugin.hpp"
 #include "VersionNameHelpers.hpp"
 #include <CommonPCH.hpp>
 
@@ -12,7 +12,7 @@
 #include <variant>
 #include <decan.hpp>
 
-#include "Core.hpp"
+#include <ViewModels.Qt6/Core.hpp>
 
 template <class T>
 static inline void load_core_function(Plugin &plugin, const char *symbol, std::function<std::remove_pointer_t<T>> &func)

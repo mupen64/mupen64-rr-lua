@@ -5,9 +5,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 qt_add_library(Mupen64RR.ViewModels.Qt6 STATIC
-    "plugins/BuiltinTAS.hpp"
-    "plugins/Plugin.hpp"
-    "Core.hpp"
+    "include/ViewModels.Qt6/plugins/BuiltinTAS.hpp"
+    "include/ViewModels.Qt6/plugins/Plugin.hpp"
+    "include/ViewModels.Qt6/Core.hpp"
 
     "plugins/BuiltinTAS.cpp"
     "plugins/Plugin.cpp"
@@ -15,7 +15,7 @@ qt_add_library(Mupen64RR.ViewModels.Qt6 STATIC
     "Core.cpp"
 )
 target_compile_features(Mupen64RR.ViewModels.Qt6 PUBLIC cxx_std_26)
-target_include_directories(Mupen64RR.ViewModels.Qt6 PUBLIC ".")
+target_include_directories(Mupen64RR.ViewModels.Qt6 PUBLIC "include")
 target_link_libraries(Mupen64RR.ViewModels.Qt6 PUBLIC
     Mupen64RR.Common
     Mupen64RR.Common.Views
