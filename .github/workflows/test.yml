@@ -1,0 +1,75 @@
+name: Test
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-windows:
+    name: Windows
+    strategy:
+      matrix:
+        arch: [x86, x64]
+        build_type: [debug, release]
+    
+    runs-on: windows-latest
+    
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-windows
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: CMake Setup
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        shell: powershell
+        run: |
+          $cmake_debug="Debug"
+          $cmake_release="RelWithDebInfo"
+          cmake --preset vcpkg-win64-${{ matrix.arch }} "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+
+      - name: CMake Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: cmake --build build
+
+      - name: CMake Test
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: ctest --test-dir build
+
+  
+  test-linux:
+    name: Linux
+    strategy:
+      matrix:
+        build_type: [debug, release]
+
+    # TODO: switch this to ubuntu-latest once this leaves preview.
+    runs-on: [ubuntu-26.04] 
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: ./.github/actions/setup-ubuntu
+
+    - name: CMake configure
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        cmake_debug="Debug"
+        cmake_release="RelWithDebInfo"
+        cmake --preset sys-linux-release "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+
+    - name: CMake build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake --build build
+      
+    - name: CMake test
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: ctest --test-dir build
