@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.TASRSP MODULE
+add_library(Mupen64RR.Plugins.TASRSP STATIC
     "Config.hpp"
     "HLE.hpp"
     "Main.hpp"
@@ -28,4 +28,11 @@ target_include_directories(Mupen64RR.Plugins.TASRSP PRIVATE ".")
 target_link_libraries(Mupen64RR.Plugins.TASRSP PRIVATE
     Mupen64RR.Plugins.Common
     nlohmann_json::nlohmann_json
+)
+
+target_compile_definitions(Mupen64RR.Plugins.TASRSP PRIVATE
+    M64RRGetMetadata=M64RRBuiltinTASRSPGetMetadata
+    M64RRProcessEvent=M64RRBuiltinTASRSPProcessEvent
+    M64RRDoRSPCycles=M64RRBuiltinTASRSPDoRSPCycles
+    g_plugin=M64RRBuiltinTASRSPPlugin
 )

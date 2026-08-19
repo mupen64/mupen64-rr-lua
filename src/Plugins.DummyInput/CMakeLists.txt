@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.DummyInput MODULE
+add_library(Mupen64RR.Plugins.DummyInput STATIC
     "Main.cpp"
 )
 target_compile_features(Mupen64RR.Plugins.DummyInput PRIVATE cxx_std_26)
@@ -14,3 +14,7 @@ set_target_properties(Mupen64RR.Plugins.DummyInput PROPERTIES
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_link_libraries(Mupen64RR.Plugins.DummyInput PRIVATE Mupen64RR.Plugins.Common)
+target_compile_definitions(Mupen64RR.Plugins.DummyInput PRIVATE
+    M64RRGetMetadata=M64RRBuiltinNoInputGetMetadata
+    M64RRProcessEvent=M64RRBuiltinNoInputProcessEvent
+)

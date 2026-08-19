@@ -4,7 +4,7 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.TASVideo MODULE
+add_library(Mupen64RR.Plugins.TASVideo STATIC
     "VI.hpp"
     "Types.hpp"
     "Common.hpp"
@@ -111,3 +111,12 @@ if (MUPEN64RR_BUILD_WIN32)
 else()
     # FIXME
 endif()
+
+target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
+    M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
+    M64RRProcessEvent=M64RRBuiltinTASVideoProcessEvent
+    M64RRProcessDList=M64RRBuiltinTASVideoProcessDList
+    M64RRReadVideo=M64RRBuiltinTASVideoReadVideo
+    M64RRShowConfig=M64RRBuiltinTASVideoShowConfig
+    g_plugin=M64RRBuiltinTASVideoPlugin
+)
