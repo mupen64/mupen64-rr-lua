@@ -6,30 +6,32 @@
 
 #include "Plugin.hpp"
 #include "Main.hpp"
-#include "VersionNameHelpers.hpp"
 
 #include <print>
-#include <decan.hpp>
 
-// Tries to load a function from a library, returning nullptr if the load failed.
-template <class T> static inline T try_load(decan::library &lib, const char *symbol)
+extern "C"
 {
-    try
-    {
-        return (T)lib.get(symbol);
-    }
-    catch (const decan::dll_error &)
-    {
-        return nullptr;
-    }
+    void CALL M64RRBuiltinNoVideoGetMetadata(M64RRSpec::PluginMetadata *metadata);
+
+    void CALL M64RRBuiltinTASAudioGetMetadata(M64RRSpec::PluginMetadata *metadata);
+    void CALL M64RRBuiltinTASAudioProcessEvent(M64RRSpec::Event event);
+    void CALL M64RRBuiltinTASAudioAIDacrateChanged(CoreSystemType system_type);
+    void CALL M64RRBuiltinTASAudioAILenChanged();
+
+    void CALL M64RRBuiltinNoInputGetMetadata(M64RRSpec::PluginMetadata *metadata);
+    void CALL M64RRBuiltinNoInputProcessEvent(M64RRSpec::Event event);
+
+    void CALL M64RRBuiltinTASRSPGetMetadata(M64RRSpec::PluginMetadata *metadata);
+    void CALL M64RRBuiltinTASRSPProcessEvent(M64RRSpec::Event event);
+    uint32_t CALL M64RRBuiltinTASRSPDoRSPCycles(uint32_t cycles);
 }
 
-template <class T>
-static inline void try_load_function(decan::library &lib, const char *symbol,
-                                     std::function<std::remove_pointer_t<T>> &func)
+static void dummy_process_event(M64RRSpec::Event)
 {
-    auto pointer = try_load<T>(lib, symbol);
-    if (pointer != nullptr) func = pointer;
+}
+
+static void dummy_process_dlist()
+{
 }
 
 static size_t get_config_path(char *data, size_t size)
@@ -49,31 +51,28 @@ struct PluginSet
     Plugin audio;
     Plugin input;
     Plugin rsp;
+
+    PluginSet()
+        : video(M64RRBuiltinNoVideoGetMetadata, dummy_process_event, dummy_process_dlist),
+          audio(M64RRBuiltinTASAudioGetMetadata, M64RRBuiltinTASAudioProcessEvent),
+          input(M64RRBuiltinNoInputGetMetadata, M64RRBuiltinNoInputProcessEvent),
+          rsp(M64RRBuiltinTASRSPGetMetadata, M64RRBuiltinTASRSPProcessEvent)
+    {
+    }
 };
 
-static std::optional<PluginSet> g_plugins = std::nullopt;
+static std::optional<PluginSet> g_plugins;
 static std::mutex g_plugin_lock;
 
-Plugin::Plugin(const std::filesystem::path &path) : m_lib(path), m_path(path)
+Plugin::Plugin(M64RRSpec::PtrGetMetadata get_metadata, M64RRSpec::PtrProcessEvent process_event,
+               M64RRSpec::PtrProcessDList process_dlist)
+    : m_process_event(process_event), m_process_dlist(process_dlist)
 {
-    // metadata (required)
-    auto get_metadata = (M64RRSpec::PtrGetMetadata)m_lib.get("M64RRGetMetadata");
-
-    M64RRSpec::PluginMetadata metadata;
+    M64RRSpec::PluginMetadata metadata{};
     get_metadata(&metadata);
 
-    // Plugins are tied to one version of Mupen
-    std::string_view target_version{metadata.target_version,
-                                    strnlen(metadata.target_version, sizeof(metadata.target_version))};
-    if (!target_version.empty() && target_version != CURRENT_VERSION)
-        throw PluginLoadFailed("Expected target version " CURRENT_VERSION);
-
-    std::string_view name = {metadata.name, strnlen(metadata.name, sizeof(metadata.name))};
-    m_name = name;
-
+    m_name = {metadata.name, strnlen(metadata.name, sizeof(metadata.name))};
     m_type = metadata.type;
-
-    m_process_event = try_load<M64RRSpec::PtrProcessEvent>(m_lib, "M64RRProcessEvent");
 }
 
 void Plugin::initiate()
@@ -100,10 +99,7 @@ void Plugin::initiate()
         m_init_data->dps_register = g_core_ctx->dps_register;
 
         m_init_data->rcp_counter = g_core_ctx->rcp_counter;
-
-        auto *video_process_dlist_ptr =
-            try_load<M64RRSpec::PtrProcessDList>(g_plugins->video.m_lib, "M64RRProcessDList");
-        m_init_data->process_dlist = video_process_dlist_ptr;
+        m_init_data->process_dlist = m_process_dlist;
 
         m_init_data->log_error = [](const char *msg) { std::println(stderr, "[ERROR] {}", msg); };
         m_init_data->log_warn = [](const char *msg) { std::println(stderr, "[WARN]  {}", msg); };
@@ -113,13 +109,11 @@ void Plugin::initiate()
         m_init_data->get_effective_speed_mode = []() { return g_core_ctx->vr_get_effective_speed_mode(); };
         m_init_data->frame_skipped = []() { return g_core_ctx->vr_get_frame_skipped(); };
         m_init_data->config_path = get_config_path;
-
         m_init_data->controllers = g_core_params.controls;
     }
 
-    M64RRSpec::Event init_event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}};
-
-    if (m_process_event) m_process_event(init_event);
+    if (m_process_event)
+        m_process_event(M64RRSpec::Event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}});
 }
 
 void Plugin::bind_functions()
@@ -127,21 +121,16 @@ void Plugin::bind_functions()
     switch (m_type)
     {
     case M64RRSpec::PluginType::Video:
-        try_load_function<M64RRSpec::PtrProcessDList>(m_lib, "M64RRProcessDList", g_core_params.video_process_dlist);
+        g_core_params.video_process_dlist = m_process_dlist ? m_process_dlist : dummy_process_dlist;
         break;
     case M64RRSpec::PluginType::Audio:
-        try_load_function<M64RRSpec::PtrAIDacrateChanged>(m_lib, "M64RRAIDacrateChanged",
-                                                          g_core_params.audio_ai_dacrate_changed);
-        try_load_function<M64RRSpec::PtrAILenChanged>(m_lib, "M64RRAILenChanged", g_core_params.audio_ai_len_changed);
+        g_core_params.audio_ai_dacrate_changed = M64RRBuiltinTASAudioAIDacrateChanged;
+        g_core_params.audio_ai_len_changed = M64RRBuiltinTASAudioAILenChanged;
         break;
     case M64RRSpec::PluginType::Input:
-        try_load_function<M64RRSpec::PtrGetKeys>(m_lib, "M64RRGetKeys", g_core_params.input_get_keys);
-        try_load_function<M64RRSpec::PtrSetKeys>(m_lib, "M64RRSetKeys", g_core_params.input_set_keys);
-        try_load_function<M64RRSpec::PtrReadController>(m_lib, "M64RRReadController",
-                                                        g_core_params.input_read_controller);
         break;
     case M64RRSpec::PluginType::RSP:
-        try_load_function<M64RRSpec::PtrDoRSPCycles>(m_lib, "M64RRDoRSPCycles", g_core_params.rsp_do_rsp_cycles);
+        g_core_params.rsp_do_rsp_cycles = M64RRBuiltinTASRSPDoRSPCycles;
         break;
     }
 }
@@ -153,23 +142,11 @@ void Plugin::send_event(M64RRSpec::Event event)
 
 bool PluginUtil::load_plugins()
 {
-    try
-    {
-        std::scoped_lock lock(g_plugin_lock);
-        auto video_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASVideo" DECAN_LIB_EXT);
-        auto audio_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASAudio" DECAN_LIB_EXT);
-        auto input_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/NoInput" DECAN_LIB_EXT);
-        auto rsp_plugin = Plugin(IOUtils::exe_path().parent_path() / "plugin/TASRSP" DECAN_LIB_EXT);
-        g_plugins.emplace(std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin),
-                          std::move(rsp_plugin));
-        return true;
-    }
-    catch (const std::exception &err)
-    {
-        std::println(stderr, "[ERROR] Plugin load failed: {}", err.what());
-        return false;
-    }
+    std::scoped_lock lock(g_plugin_lock);
+    g_plugins.emplace();
+    return true;
 }
+
 void PluginUtil::initiate_plugins()
 {
     std::scoped_lock lock(g_plugin_lock);
@@ -182,8 +159,11 @@ void PluginUtil::initiate_plugins()
     g_plugins->input.initiate();
     g_plugins->rsp.initiate();
 }
+
 void PluginUtil::start_plugins()
 {
+    std::scoped_lock lock(g_plugin_lock);
+    if (!g_plugins.has_value()) abort();
 
     g_plugins->video.bind_functions();
     g_plugins->audio.bind_functions();
@@ -191,23 +171,29 @@ void PluginUtil::start_plugins()
     g_plugins->rsp.bind_functions();
     send_event(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
 }
+
 void PluginUtil::stop_plugins()
 {
+    std::scoped_lock lock(g_plugin_lock);
+    if (!g_plugins.has_value()) return;
+
     send_event(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
     send_event(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
 }
+
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
 {
     std::scoped_lock lock(g_plugin_lock);
+    if (!g_plugins.has_value()) return;
+
     if (video) strncpy_s(video, 64, g_plugins->video.name().c_str(), 64);
     if (audio) strncpy_s(audio, 64, g_plugins->audio.name().c_str(), 64);
     if (input) strncpy_s(input, 64, g_plugins->input.name().c_str(), 64);
     if (rsp) strncpy_s(rsp, 64, g_plugins->rsp.name().c_str(), 64);
 }
+
 void PluginUtil::send_event(M64RRSpec::Event event)
 {
-    std::scoped_lock lock(g_plugin_lock);
-
     if (!g_plugins.has_value()) abort();
 
     g_plugins->video.send_event(event);
