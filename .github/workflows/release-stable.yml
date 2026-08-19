@@ -66,5 +66,5 @@ jobs:
           prerelease: false
           draft: true
           files: |
-            mupen64-w32
-            mupen64-w64
+            mupen-windows-x86.zip
+            mupen-windows-x64.zip
