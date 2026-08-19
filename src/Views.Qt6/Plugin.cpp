@@ -116,6 +116,8 @@ void Plugin::initiate()
         m_init_data->frame_skipped = []() { return g_core_ctx->vr_get_frame_skipped(); };
         m_init_data->config_path = get_config_path;
         m_init_data->controllers = g_core_params.controls;
+
+        m_init_data->request_size = [](uint32_t, uint32_t) {};
     }
 
     if (m_process_event)
