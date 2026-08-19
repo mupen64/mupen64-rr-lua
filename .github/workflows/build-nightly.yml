@@ -1,6 +1,8 @@
 name: Build (nightly)
 
 on:
+  schedule:
+    - cron: 0 23 * * *
   workflow_dispatch:
 
 concurrency:
@@ -20,7 +22,8 @@ jobs:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout `main` branch
+        uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-windows
         with:
@@ -49,7 +52,8 @@ jobs:
     runs-on: [ubuntu-26.04]
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout `main` branch
+        uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-ubuntu
         with:

@@ -32,23 +32,20 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: git-cliff
-
-      - name: Get latest commit hash
-        run: echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
         
       - parallel:
-        - name: Download and zip x86 release
-          uses: ./.github/actions/zip-release
+        - name: Download windows-x86 release
+          uses: actions/download-artifact@v8
           with:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
-            artifact_name: mupen-release-stable-windows-x86
-            release_name: mupen-windows-x86
-        - name: Download and zip x64 release
-          uses: ./.github/actions/zip-release
+            name: mupen-release-stable-windows-x86
+            path: mupen-windows-x86.zip
+            skip_decompress: true
+        - name: Download windows-x64 release
+          uses: actions/download-artifact@v8
           with:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
-            artifact_name: mupen-release-stable-windows-x86
-            release_name: mupen-windows-x64
+            name: mupen-release-stable-windows-x64
+            path: mupen-windows-x64.zip
+            skip_decompress: true
 
       - name: Generate changelog with git-cliff
         id: changelog
