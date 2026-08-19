@@ -142,7 +142,7 @@ inline std::string_view ctrim_string(std::string_view str)
 {
     using namespace std::literals;
 
-    const auto not_isspace = [](char c) { return !isspace((int)(unsigned char)c); };
+    const auto not_isspace = [](char c) { return !isspace((unsigned char)c); };
 
     // search from the start for non-whitespace
     auto start_iter = std::ranges::find_if(str, not_isspace);

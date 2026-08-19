@@ -13,12 +13,6 @@
 #include <m64rr/Plugin.hpp>
 #include "BuiltinTAS.hpp"
 
-class PluginLoadFailed : std::runtime_error
-{
-  public:
-    using std::runtime_error::runtime_error;
-};
-
 class Plugin
 {
   public:
@@ -42,20 +36,7 @@ class Plugin
      */
     void send_event(M64RRSpec::Event event);
 
-    /**
-     * \brief Gets the plugin's path
-     */
-    auto path() const { return m_path; }
-
-    /**
-     * \brief Gets the plugin's name
-     */
-    auto name() const { return m_name; }
-
-    /**
-     * \brief Gets the plugin's type
-     */
-    auto type() const { return m_type; }
+    const std::string &name() const { return m_name; }
 
     /**
      * @brief Tries to load a symbol from the DLL.
@@ -72,16 +53,12 @@ class Plugin
     std::filesystem::path m_path;
     std::string m_name;
     M64RRSpec::PluginType m_type;
-
     M64RRSpec::PtrProcessEvent m_process_event;
-
     std::unique_ptr<M64RRSpec::PluginInit> m_init_data;
 };
 
 namespace PluginUtil
 {
-bool load_plugins();
-void initiate_plugins(core_ctx *core_ctx, core_params &core_params);
 void start_plugins(core_params &core_params);
 void stop_plugins();
 void get_plugin_names(char *video, char *audio, char *input, char *rsp);

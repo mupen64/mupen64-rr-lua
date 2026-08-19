@@ -1,23 +1,24 @@
-name: Test (Windows)
+name: Build (stable)
 
 on:
-  push:
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-env:
-  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
-
 jobs:
-  test-windows:
-    runs-on: windows-latest
-
+  windows:
+    name: Windows
     strategy:
       matrix:
         arch: [x86, x64]
+    
+    runs-on: windows-latest
+
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
     steps:
       - uses: actions/checkout@v6
@@ -28,12 +29,15 @@ jobs:
 
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
+        run: cmake --preset vcpkg-win64-${{ matrix.arch }} -DCMAKE_BUILD_TYPE=Release
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake --build build
 
-      - name: CMake Test
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: ctest --test-dir build
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: mupen-release-stable-windows-${{ matrix.arch }}
+          path: build/out
+          retention-days: 14
