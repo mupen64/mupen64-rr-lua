@@ -2158,6 +2158,15 @@ core_result vr_start_rom_impl(std::filesystem::path path)
 {
     auto start_time = std::chrono::high_resolution_clock::now();
 
+    g_core->show_notification("Warning with a title.", "Warning", fsvc_warning);
+    g_core->show_notification("Warning without a title.", nullptr, fsvc_warning);
+
+    g_core->show_notification("Error with a title.", "Error", fsvc_error);
+    g_core->show_notification("Error without a title.", nullptr, fsvc_error);
+
+    g_core->show_notification("Information with a title.", "Information", fsvc_information);
+    g_core->show_notification("Information without a title.", nullptr, fsvc_information);
+
     // If we get a movie instead of a rom, we try to search the available rom lists to find one matching the movie
     if (path.extension().compare(".m64") == 0)
     {
