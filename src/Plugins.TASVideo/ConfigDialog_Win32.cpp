@@ -62,8 +62,7 @@ static void apply(HWND hWndDlg)
 
     if (RSP.thread && needs_restart)
     {
-        SetEvent(RSP.threadMsg[RSPMSG_RESTART]);
-        WaitForSingleObject(RSP.threadFinished, INFINITE);
+        RSP_SendMessage(RSPMSG_RESTART);
     }
 }
 

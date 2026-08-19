@@ -49,7 +49,7 @@ void gSPLoadUcodeEx(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
     if (ucode->type != NONE)
         GBI_MakeCurrent(ucode);
     else
-        SetEvent(RSP.threadMsg[RSPMSG_CLOSE]);
+        RSP_PostMessage(RSPMSG_CLOSE);
 
     DebugMsg(L"gSPLoadUcodeEx( 0x%08X, 0x%08X, %i );\n", uc_start, uc_dstart, uc_dsize);
 }
