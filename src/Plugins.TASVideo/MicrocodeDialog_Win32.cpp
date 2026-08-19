@@ -49,6 +49,6 @@ INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
 uint32_t MicrocodeDialog::show()
 {
-    return DialogBox(g_tas_ctx.hinst, MAKEINTRESOURCE(IDD_MICROCODEDLG), g_plugin->main_window.hwnd(),
+    return DialogBox(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_MICROCODEDLG), g_plugin->main_window.hwnd(),
                      MicrocodeDlgProc);
 }

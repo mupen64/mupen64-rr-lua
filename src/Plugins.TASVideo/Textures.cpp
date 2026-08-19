@@ -385,32 +385,6 @@ static void TextureCache_Scale(CachedTexture *tex_info, uint32_t *src, const GLu
     free(dst);
 }
 
-BOOL TextureCache_Verify()
-{
-    s16 i = 0;
-    CachedTexture *current;
-
-    current = cache.top;
-
-    while (current)
-    {
-        i++;
-        current = current->lower;
-    }
-    if (i != cache.numCached) return FALSE;
-
-    i = 0;
-    current = cache.bottom;
-    while (current)
-    {
-        i++;
-        current = current->higher;
-    }
-    if (i != cache.numCached) return FALSE;
-
-    return TRUE;
-}
-
 void TextureCache_RemoveBottom()
 {
     CachedTexture *newBottom = cache.bottom->higher;

@@ -11,11 +11,9 @@
 #include <m64rr/API.hpp>
 #include <GL/glew.h>
 #include <emmintrin.h>
-#include <intrin.h>
 #include <xbrz.h>
 #include <hqx.h>
 #include <GL/glext.h>
-#include <GL/wglext.h>
 #include "Types.hpp"
 
 #define DEBUG_ERROR 0

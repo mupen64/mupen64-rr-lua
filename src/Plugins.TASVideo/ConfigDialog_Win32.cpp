@@ -218,5 +218,5 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
 
 void TASVideo::ConfigDialog::show(HWND parent)
 {
-    DialogBox(g_tas_ctx.hinst, MAKEINTRESOURCE(IDD_CONFIGDLG), parent, (DLGPROC)ConfigDlgProc);
+    DialogBox(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_CONFIGDLG), parent, (DLGPROC)ConfigDlgProc);
 }
