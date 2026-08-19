@@ -81,6 +81,7 @@ find_package(libdeflate CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(glew CONFIG REQUIRED)
 
 # Common dependencies (pkg-config)
 pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
@@ -107,9 +108,6 @@ endif()
 
 # Windows-only dependencies
 if(MUPEN64RR_BUILD_WIN32)
-    find_package(spdlog CONFIG REQUIRED)
-    find_package(glew CONFIG REQUIRED)
-
     pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
     pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 endif()
