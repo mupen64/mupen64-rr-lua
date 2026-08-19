@@ -1,4 +1,4 @@
-name: Draft release
+name: Generate release
 
 on:
   workflow_dispatch:
@@ -9,9 +9,14 @@ on:
         type: string
 
 jobs:
-  stable-release:
-    name: Create Stable Release
+  build-stable:
+    name: Build stable release artifacts
+    uses: $/.github/workflows/build-stable.yml
+  
+  draft-release:
+    name: Setup draft release
     runs-on: ubuntu-latest
+    needs: build-stable
     permissions:
       contents: write
       actions: read
