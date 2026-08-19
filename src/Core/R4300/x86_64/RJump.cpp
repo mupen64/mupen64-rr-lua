@@ -202,7 +202,7 @@ static void build_dynarec_enter()
     uintptr_t base = g_dynarec_base;
     for (int i = 0; i < 8; ++i) *p++ = (unsigned char)((base >> (i * 8)) & 0xFF);
 
-    // call <arg register>  — the code pointer arrives in the first integer-arg register.
+        // call <arg register>  — the code pointer arrives in the first integer-arg register.
 #ifdef _WIN32
     *p++ = 0xFF;
     *p++ = 0xD1; // call rcx (Win64 first arg)

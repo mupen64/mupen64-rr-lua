@@ -113,7 +113,8 @@ void Plugin::initiate()
     }
 
     if (m_process_event)
-        m_process_event(M64RRSpec::Event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}});
+        m_process_event(
+            M64RRSpec::Event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}});
 }
 
 void Plugin::bind_functions()

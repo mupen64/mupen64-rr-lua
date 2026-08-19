@@ -46,7 +46,10 @@ struct t_axis_mapping
 
     friend void to_json(nlohmann::json &j, const t_axis_mapping &self)
     {
-#define TASINPUT_FIELD(field) {#field, self.field}
+#define TASINPUT_FIELD(field)                                                                                          \
+    {                                                                                                                  \
+        #field, self.field                                                                                             \
+    }
         j = nlohmann::json::object({
             TASINPUT_FIELD(axis),
             TASINPUT_FIELD(key_negative),
@@ -75,7 +78,10 @@ struct t_button_mapping
 
     friend void to_json(nlohmann::json &j, const t_button_mapping &self)
     {
-#define TASINPUT_FIELD(field) {#field, self.field}
+#define TASINPUT_FIELD(field)                                                                                          \
+    {                                                                                                                  \
+        #field, self.field                                                                                             \
+    }
         j = nlohmann::json::object({
             TASINPUT_FIELD(button),
             TASINPUT_FIELD(axis),
@@ -167,7 +173,10 @@ struct t_controller_config
 
     friend void to_json(nlohmann::json &j, const t_controller_config &self)
     {
-#define TASINPUT_FIELD(field) {#field, self.field}
+#define TASINPUT_FIELD(field)                                                                                          \
+    {                                                                                                                  \
+        #field, self.field                                                                                             \
+    }
         j = nlohmann::json::object({
             TASINPUT_FIELD(dpad_right),
             TASINPUT_FIELD(dpad_left),
@@ -225,7 +234,10 @@ struct t_config
 
     friend void to_json(nlohmann::json &j, const t_config &self)
     {
-#define TASINPUT_FIELD(field) {#field, self.field}
+#define TASINPUT_FIELD(field)                                                                                          \
+    {                                                                                                                  \
+        #field, self.field                                                                                             \
+    }
 #define TASINPUT_ARRAY_FIELD(field) nlohmann::to_json(j[#field], self.field)
         j = nlohmann::json::object({
             TASINPUT_FIELD(version),
