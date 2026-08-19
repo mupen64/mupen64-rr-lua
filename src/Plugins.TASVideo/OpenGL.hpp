@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "Config.hpp"
 #include "gSP.hpp"
 
 struct GLVertex
@@ -19,13 +20,6 @@ struct GLVertex
 
     float s0, t0, s1, t1;
     float fog;
-};
-
-enum class AspectMode : uint8_t
-{
-    Pillarbox = 0,
-    Stretch = 1,
-    Widescreen = 2,
 };
 
 struct GLInfo

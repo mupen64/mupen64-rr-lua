@@ -45,7 +45,7 @@ void gDPSetOtherMode(u32 mode0, u32 mode1)
 
 void gDPSetPrimDepth(u16 z, u16 dz)
 {
-    gDP.primDepth.z = min(1.0f, max(0.0f, (_FIXED2FLOAT(z, 15) - gSP.viewport.vtrans[2]) / gSP.viewport.vscale[2]));
+    gDP.primDepth.z = std::min(1.0f, std::max(0.0f, (_FIXED2FLOAT(z, 15) - gSP.viewport.vtrans[2]) / gSP.viewport.vscale[2]));
     gDP.primDepth.deltaZ = dz;
 
     DebugMsg(L"gDPSetPrimDepth( %f, %f );\n", gDP.primDepth.z, gDP.primDepth.deltaZ);
@@ -632,7 +632,7 @@ void gDPFillRectangle(s32 ulx, s32 uly, s32 lrx, s32 lry)
 
     if (depthBuffer.current) depthBuffer.current->cleared = FALSE;
     gDP.colorImage.changed = TRUE;
-    gDP.colorImage.height = max(gDP.colorImage.height, lry);
+    gDP.colorImage.height = std::max((s32)gDP.colorImage.height, lry);
 
     DebugMsg(L"gDPFillRectangle( %i, %i, %i, %i );\n", ulx, uly, lrx, lry);
 }
@@ -690,8 +690,8 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
 
     if (gDP.textureMode == TEXTUREMODE_NORMAL) gDP.textureMode = TEXTUREMODE_TEXRECT;
 
-    gDP.texRect.width = max(lrs, s) + dsdx;
-    gDP.texRect.height = max(lrt, t) + dtdy;
+    gDP.texRect.width = std::max(lrs, s) + dsdx;
+    gDP.texRect.height = std::max(lrt, t) + dtdy;
 
     if (lrs > s)
     {
@@ -713,7 +713,7 @@ void gDPTextureRectangle(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s, f3
 
     if (depthBuffer.current) depthBuffer.current->cleared = FALSE;
     gDP.colorImage.changed = TRUE;
-    gDP.colorImage.height = max(gDP.colorImage.height, gDP.scissor.lry);
+    gDP.colorImage.height = std::max(gDP.colorImage.height, (u32)gDP.scissor.lry);
 
     DebugMsg(L"gDPTextureRectangle( %f, %f, %f, %f, %i, %i, %f, %f, %f, %f );\n", ulx, uly, lrx, lry, tile, s, t, dsdx,
              dtdy);

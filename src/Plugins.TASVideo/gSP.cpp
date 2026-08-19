@@ -19,7 +19,6 @@
 #include "S2DEX.hpp"
 #include "VI.hpp"
 #include "DepthBuffer.hpp"
-#include "resource.h"
 
 #define gSPFlushTriangles()                                                                                            \
     if ((OGL.numTriangles > 0) && (RSP.nextCmd != G_TRI1) && (RSP.nextCmd != G_TRI2) && (RSP.nextCmd != G_TRI4) &&     \
@@ -722,7 +721,7 @@ void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag)
 
     if (depthBuffer.current) depthBuffer.current->cleared = FALSE;
     gDP.colorImage.changed = TRUE;
-    gDP.colorImage.height = max(gDP.colorImage.height, gDP.scissor.lry);
+    gDP.colorImage.height = std::max(gDP.colorImage.height, (u32)gDP.scissor.lry);
 }
 
 void gSP1Triangle(s32 v0, s32 v1, s32 v2, s32 flag)
@@ -1188,10 +1187,10 @@ void gSPBgRect1Cyc(u32 bg)
     f32 frameS0 = imageX;
     f32 frameT0 = imageY;
 
-    f32 frameX1 = frameX + min((imageW - imageX) / scaleW, frameW);
-    f32 frameY1 = frameY + min((imageH - imageY) / scaleH, frameH);
-    f32 frameS1 = imageX + min((imageW - imageX) * scaleW, frameW * scaleW);
-    f32 frameT1 = imageY + min((imageH - imageY) * scaleH, frameH * scaleH);
+    f32 frameX1 = frameX + std::min((imageW - imageX) / scaleW, frameW);
+    f32 frameY1 = frameY + std::min((imageH - imageY) / scaleH, frameH);
+    f32 frameS1 = imageX + std::min((imageW - imageX) * scaleW, frameW * scaleW);
+    f32 frameT1 = imageY + std::min((imageH - imageY) * scaleH, frameH * scaleH);
 
     gDP.otherMode.cycleType = G_CYC_1CYCLE;
     gDP.changed |= CHANGED_CYCLETYPE;
@@ -1373,7 +1372,7 @@ void gSPObjSprite(u32 sp)
 
     if (depthBuffer.current) depthBuffer.current->cleared = FALSE;
     gDP.colorImage.changed = TRUE;
-    gDP.colorImage.height = max(gDP.colorImage.height, gDP.scissor.lry);
+    gDP.colorImage.height = std::max(gDP.colorImage.height, (u32)gDP.scissor.lry);
 }
 
 void gSPObjLoadTxSprite(u32 txsp)

@@ -10,6 +10,9 @@
 #include "N64.hpp"
 #include "RSP.hpp"
 #include "Config.hpp"
+#ifdef _WIN32
+#include "ConfigDialog_Win32.hpp"
+#endif
 
 TASVideoContext g_tas_ctx{};
 
@@ -153,7 +156,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
 EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
-    Config_Show(parent_window.hwnd());
+    ConfigDialog::show(parent_window.hwnd());
 }
 
 EXPORT void CALL M64RRProcessDList(void)

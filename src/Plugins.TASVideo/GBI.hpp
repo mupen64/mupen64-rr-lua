@@ -524,6 +524,10 @@ static const char *aAText[] = {
     "COMBINED", "TEXEL0", "TEXEL1", "PRIMITIVE", "SHADE", "ENVIRONMENT", "1", "0",
 };
 
+extern u32 uc_crc;
+extern u32 uc_dcrc;
+extern char uc_str[256];
+
 extern u32 G_RDPHALF_1, G_RDPHALF_2, G_RDPHALF_CONT;
 extern u32 G_SPNOOP;
 extern u32 G_SETOTHERMODE_H, G_SETOTHERMODE_L;

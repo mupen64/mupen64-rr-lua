@@ -11,7 +11,6 @@ add_library(Mupen64RR.Plugins.TASVideo MODULE
     "S2DEX2.hpp"
     "S2DEX.hpp"
     "RSP.hpp"
-    "resource.h"
     "RDP.hpp"
     "OpenGL.hpp"
     "N64.hpp"
@@ -66,9 +65,23 @@ add_library(Mupen64RR.Plugins.TASVideo MODULE
     "Config.cpp"
     "Combiner.cpp"
     "2xSAI.cpp"
-
-    "Resource.rc"
 )
+
+if (MUPEN64RR_BUILD_WIN32)
+    target_sources(Mupen64RR.Plugins.TASVideo PRIVATE
+        "MicrocodeDialog_Win32.hpp"
+        "ConfigDialog_Win32.hpp"
+        "Resource.h"
+
+        "MicrocodeDialog_Win32.cpp"
+        "ConfigDialog_Win32.cpp"
+        "Resource.rc"
+    )
+    target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Win32.Common)
+else()
+    target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Common)
+endif()
+
 target_compile_features(Mupen64RR.Plugins.TASVideo PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Plugins.TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
@@ -84,17 +97,17 @@ target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
     GLEW::GLEW
     SDL3::SDL3
 )
-target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
-    comctl32
-    uxtheme
-    msimg32
-    gdiplus
-    opengl32
-    glu32
-    winmm
-)
-if (MUPEN64RR_LINK_STATIC)
-    target_compile_definitions(Mupen64RR.Plugins.TASVideo PRIVATE
-        "GLEW_STATIC"
+
+if (MUPEN64RR_BUILD_WIN32)
+    target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
+        comctl32
+        uxtheme
+        msimg32
+        gdiplus
+        opengl32
+        glu32
+        winmm
     )
+else()
+    # FIXME
 endif()

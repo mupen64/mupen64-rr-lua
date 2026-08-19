@@ -121,7 +121,7 @@ void RSP_ProcessDList()
     RSP.halt = FALSE;
     RSP.busy = TRUE;
 
-    gSP.matrix.stackSize = min(32, *(u32 *)&DMEM[0x0FE4] >> 6);
+    gSP.matrix.stackSize = std::min(32u, *(u32 *)&DMEM[0x0FE4] >> 6);
     gSP.matrix.modelViewi = 0;
     gSP.changed |= CHANGED_MATRIX;
 

@@ -21,8 +21,10 @@
 #include "F3DWRUS.hpp"
 #include "F3DPD.hpp"
 #include "Types.hpp"
-#include "resource.h"
 #include "CRC.hpp"
+#ifdef _WIN32
+#include "MicrocodeDialog_Win32.hpp"
+#endif
 
 u32 uc_crc, uc_dcrc;
 char uc_str[256];
@@ -96,40 +98,6 @@ void GBI_Unknown(u32 w0, u32 w1)
 
 void GBI_Nop(u32 w0, u32 w1)
 {
-}
-
-INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-    case WM_INITDIALOG: {
-        EnableMenuItem(GetSystemMenu(hWndDlg, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
-
-        for (int i = 0; i < numMicrocodeTypes; i++)
-        {
-            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_MICROCODE), MicrocodeTypes[i]);
-        }
-        SendDlgItemMessage(hWndDlg, IDC_MICROCODE, CB_SETCURSEL, 0, 0);
-
-        char text[1024]{};
-        sprintf(text, "Microcode CRC:\t\t0x%08x\r\nMicrocode Data CRC:\t0x%08x\r\nMicrocode Text:\t\t%s", uc_crc,
-                uc_dcrc, uc_str);
-        Edit_SetText(GetDlgItem(hWndDlg, IDC_TEXTBOX), text);
-        return TRUE;
-    }
-    case WM_CLOSE:
-        return TRUE;
-    case WM_COMMAND:
-        switch (LOWORD(wParam))
-        {
-        case IDOK:
-            EndDialog(hWndDlg, SendDlgItemMessage(hWndDlg, IDC_MICROCODE, CB_GETCURSEL, 0, 0));
-            return TRUE;
-        }
-        break;
-    }
-
-    return FALSE;
 }
 
 MicrocodeInfo *GBI_AddMicrocode()
@@ -285,8 +253,7 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
         }
     }
 
-    current->type =
-        DialogBox(g_tas_ctx.hinst, MAKEINTRESOURCE(IDD_MICROCODEDLG), g_plugin->main_window.hwnd(), MicrocodeDlgProc);
+    current->type = MicrocodeDialog::show();
     return current;
 }
 

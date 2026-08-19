@@ -290,7 +290,7 @@ static void ScanCombiner(GLSLProgram *program, Combiner *c)
 static std::string BuildFragmentSource(Combiner *color, Combiner *alpha)
 {
     UniformUsage usage = {};
-    const int numCycles = max(color->numStages, alpha->numStages);
+    const int numCycles = std::max(color->numStages, alpha->numStages);
 
     std::string body;
     body += "    vec3 rgb = vec3(0.0);\n";
