@@ -1,3 +1,9 @@
+#[===[
+Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+
+SPDX-License-Identifier: GPL-2.0-or-later
+]===]
+
 qt_add_library(Mupen64RR.ViewModels.Qt6 STATIC
     "plugins/BuiltinTAS.hpp"
     "plugins/Plugin.hpp"

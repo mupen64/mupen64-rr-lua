@@ -44,9 +44,11 @@ static int qt_main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     
     QQmlApplicationEngine engine;
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, []() {
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [](const QUrl& url) {
+        std::println("objectCreationFailed: {}", url.toString().toStdString());
         QCoreApplication::exit(-1);
-    });
+    }, Qt::QueuedConnection);
+
     engine.loadFromModule("Views", "MainWindow");
     
     return QGuiApplication::exec();
