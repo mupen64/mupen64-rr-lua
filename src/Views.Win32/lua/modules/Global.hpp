@@ -32,7 +32,7 @@ static int print(lua_State *L)
         const char *inspected_value = lua_tostring(L, -1);
         if (inspected_value)
         {
-            auto str = IOUtils::to_wide_string(inspected_value);
+            auto str = std::string(inspected_value);
 
             // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
             if (str.size() > 1 &&
@@ -45,14 +45,14 @@ static int print(lua_State *L)
         }
         else
         {
-            lua->print(lua, L"???");
+            lua->print(lua, "???");
         }
         lua_pop(L, 2);
 
-        if (i < nargs) lua->print(lua, L"\t");
+        if (i < nargs) lua->print(lua, "\t");
     }
 
-    lua->print(lua, L"\r\n");
+    lua->print(lua, "\r\n");
     return 0;
 }
 
@@ -62,7 +62,7 @@ static int tostringexs(lua_State *L)
 
     const int nargs = lua_gettop(L);
 
-    std::wstring final_str;
+    std::string final_str;
 
     for (int i = 1; i <= nargs; i++)
     {
@@ -87,7 +87,7 @@ static int tostringexs(lua_State *L)
         const char *inspected_value = lua_tostring(L, -1);
         if (inspected_value)
         {
-            auto str = IOUtils::to_wide_string(inspected_value);
+            auto str = std::string(inspected_value);
 
             // inspect puts quotes around strings, even when they're not nested in a table. We want to remove those...
             if (str.size() > 1 && str[0] == '"' && str[str.size() - 1] == '"')
@@ -99,14 +99,14 @@ static int tostringexs(lua_State *L)
         }
         else
         {
-            final_str += L"???";
+            final_str += "???";
         }
         lua_pop(L, 2);
 
-        if (i < nargs) final_str += L"\t";
+        if (i < nargs) final_str += "\t";
     }
 
-    lua_pushstring(L, IOUtils::to_utf8_string(final_str).c_str());
+    lua_pushstring(L, final_str.c_str());
     return 1;
 }
 

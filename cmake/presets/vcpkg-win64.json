@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Kitware/CMake/refs/heads/master/Help/manual/presets/schema.json",
+  "version": 10,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "common-vcpkg-win64",
+      "$comment": "Common settings for Windows (x64) + vcpkg",
+
+      "inherits": "common",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCINSTALLDIR}vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "MUPEN64RR_BUILD_WIN32": true
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vcpkg-win64-x64",
+      "description": "Windows (x64): build for x64",
+
+      "inherits": "common-vcpkg-win64",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER_TARGET": "amd64-pc-windows-msvc",
+        "CMAKE_CXX_COMPILER_TARGET": "amd64-pc-windows-msvc"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "vcpkg-win64-x86",
+      "description": "Windows (x64): build for x86",
+
+      "inherits": "common-vcpkg-win64",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER_TARGET": "i686-pc-windows-msvc",
+        "CMAKE_CXX_COMPILER_TARGET": "i686-pc-windows-msvc"
+      },
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "vcpkg-win64-x64-release",
+      "description": "Windows (x64): build for x64 (release)",
+
+      "inherits": "vcpkg-win64-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "vcpkg-win64-x86-release",
+      "description": "Windows (x64): build for x86 (release)",
+      "inherits": "vcpkg-win64-x86",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    }
+  ]
+}

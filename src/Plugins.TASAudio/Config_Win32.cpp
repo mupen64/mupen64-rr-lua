@@ -41,7 +41,7 @@ static CALLBACK INT_PTR config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPA
             Trackbar_SetTickFreq(idc_volume, 10);
             Trackbar_SetPos(idc_volume, (DWORD)g_config_ptr->volume_pct);
         }
-        SetDlgItemText(dialog, IDC_VOLUME_TXT, std::format(L"{}%", (DWORD)g_config_ptr->volume_pct).c_str());
+        SetDlgItemText(dialog, IDC_VOLUME_TXT, std::format("{}%", (DWORD)g_config_ptr->volume_pct).c_str());
 
         break;
     case WM_CLOSE: // "close" button clicked
@@ -70,7 +70,7 @@ static CALLBACK INT_PTR config_dlgproc(HWND dialog, UINT msg, WPARAM wparam, LPA
         {
         case IDC_VOLUME: {
             DWORD pos = Trackbar_GetPos(GetDlgItem(dialog, IDC_VOLUME));
-            SetDlgItemText(dialog, IDC_VOLUME_TXT, std::format(L"{}%", pos).c_str());
+            SetDlgItemText(dialog, IDC_VOLUME_TXT, std::format("{}%", pos).c_str());
             break;
         }
         default:
@@ -87,7 +87,7 @@ namespace SDLAudio
 bool win32_show_config(HWND parent, Config &config)
 {
     g_config_ptr = &config;
-    LRESULT res = DialogBox(g_dll_handle, MAKEINTRESOURCE(IDD_CONFIG), parent, &config_dlgproc);
+    LRESULT res = DialogBox(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDD_CONFIG), parent, &config_dlgproc);
     g_config_ptr = nullptr;
 
     return res == IDOK;

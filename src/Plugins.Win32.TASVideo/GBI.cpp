@@ -107,13 +107,13 @@ INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
         for (int i = 0; i < numMicrocodeTypes; i++)
         {
-            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_MICROCODE), IOUtils::to_wide_string(MicrocodeTypes[i]).c_str());
+            ComboBox_AddString(GetDlgItem(hWndDlg, IDC_MICROCODE), MicrocodeTypes[i]);
         }
         SendDlgItemMessage(hWndDlg, IDC_MICROCODE, CB_SETCURSEL, 0, 0);
 
-        wchar_t text[1024]{};
-        wsprintf(text, L"Microcode CRC:\t\t0x%08x\r\nMicrocode Data CRC:\t0x%08x\r\nMicrocode Text:\t\t%hs", uc_crc,
-                 uc_dcrc, uc_str);
+        char text[1024]{};
+        sprintf(text, "Microcode CRC:\t\t0x%08x\r\nMicrocode Data CRC:\t0x%08x\r\nMicrocode Text:\t\t%s", uc_crc,
+                uc_dcrc, uc_str);
         Edit_SetText(GetDlgItem(hWndDlg, IDC_TEXTBOX), text);
         return TRUE;
     }

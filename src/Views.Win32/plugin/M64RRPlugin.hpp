@@ -14,7 +14,8 @@ class M64RRPlugin : public Plugin
     using Plugin::Plugin;
     ~M64RRPlugin() override = default;
 
-    static std::pair<std::wstring, std::unique_ptr<Plugin>> create(HMODULE module, std::filesystem::path path);
+    static std::pair<std::string, std::unique_ptr<Plugin>> create(HMODULE module, std::filesystem::path path);
+    static std::pair<std::string, std::unique_ptr<Plugin>> create_builtin(Type type, bool dummy = false);
 
     void config(HWND hwnd) override;
     void test(HWND hwnd) override;
@@ -22,6 +23,10 @@ class M64RRPlugin : public Plugin
     void initiate(ZESpecFuncs &funcs) override;
 
   protected:
+    FARPROC get_proc(const char *name) const;
+
     M64RRSpec::PluginMetadata m_meta;
-    bool m_initialized;
+    bool m_initialized{};
+    bool m_builtin{};
+    std::unordered_map<std::string, FARPROC> m_builtin_procs;
 };

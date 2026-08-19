@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <action/ActionManager.hpp>
+#include <Common.Views/ActionManager.hpp>
 #include <lua/presenters/Presenter.hpp>
 
 /**
@@ -83,7 +83,7 @@ struct t_action_param_meta
 struct t_lua_environment
 {
     using destroying_func = std::function<void(const t_lua_environment *env)>;
-    using print_func = std::function<void(const t_lua_environment *env, const std::wstring &text)>;
+    using print_func = std::function<void(const t_lua_environment *env, const std::string &text)>;
 
     std::filesystem::path path;
     lua_State *L;
@@ -93,7 +93,7 @@ struct t_lua_environment
     // All the actions registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<ActionManager::action_path> registered_actions{};
 
-    std::unordered_map<std::wstring, std::vector<t_action_param_meta>> param_meta_map;
+    std::unordered_map<std::string, std::vector<t_action_param_meta>> param_meta_map;
 
     // All the breakpoints registered by the script. Stored so we can remove them when the script is destroyed.
     std::vector<std::pair<CoreBreakpointId, uintptr_t *>> active_breakpoints;
@@ -116,7 +116,7 @@ struct t_lua_key_event_args
     bool shift{};
     bool meta{};
     std::optional<bool> pressed;
-    std::optional<std::wstring> text;
+    std::optional<std::string> text;
     bool repeat{};
 };
 

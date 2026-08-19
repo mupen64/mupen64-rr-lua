@@ -1,7 +1,6 @@
 name: Test
 
 on:
-  push:
   pull_request:
   workflow_dispatch:
 
@@ -9,50 +8,33 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-env:
-  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
-
 jobs:
-  test:
-    runs-on: windows-latest
-
+  test-windows:
+    name: Windows
     strategy:
       matrix:
         arch: [x86, x64]
+        build_type: [debug, release]
+    
+    runs-on: windows-latest
+    
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
 
     steps:
       - uses: actions/checkout@v6
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
+
+      - uses: ./.github/actions/setup-windows
         with:
           arch: ${{ matrix.arch }}
 
-      - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
-        shell: powershell
-        run: |
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
-          echo "PATH=$env:PATH" >> $env:GITHUB_ENV
-
-      - name: Create vcpkg cache directory
-        shell: pwsh
-        run: |
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
-
-      - name: Cache vcpkg binaries
-        uses: actions/cache@v5
-        with:
-          path: vcpkg_cache
-          key: >
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{
-            hashFiles('vcpkg.json','vcpkg-configuration.json') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
-
       - name: CMake Setup
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: cmake --preset vcpkg-win64-${{ matrix.arch }}-release
+        shell: powershell
+        run: |
+          $cmake_debug="Debug"
+          $cmake_release="RelWithDebInfo"
+          cmake --preset vcpkg-win64-${{ matrix.arch }} "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
 
       - name: CMake Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -61,3 +43,33 @@ jobs:
       - name: CMake Test
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: ctest --test-dir build
+
+  
+  test-linux:
+    name: Linux
+    strategy:
+      matrix:
+        build_type: [debug, release]
+
+    # TODO: switch this to ubuntu-latest once this leaves preview.
+    runs-on: [ubuntu-26.04] 
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: ./.github/actions/setup-ubuntu
+
+    - name: CMake configure
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        cmake_debug="Debug"
+        cmake_release="RelWithDebInfo"
+        cmake --preset sys-linux-release "-DCMAKE_BUILD_TYPE=$cmake_${{ matrix.build_type }}"
+
+    - name: CMake build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake --build build
+      
+    - name: CMake test
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: ctest --test-dir build

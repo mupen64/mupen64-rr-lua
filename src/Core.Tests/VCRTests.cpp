@@ -1192,4 +1192,130 @@ TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_rcp_lag_factor_mismatch_w
     REQUIRE(warnings.size() == 0);
 }
 
+namespace
+{
+constexpr auto REPLACE_MOVIE_PATH = "test_replace_author.m64";
+
+void create_test_movie(const std::string &author, const std::string &description)
+{
+    core_vcr_movie_header hdr{};
+    hdr.magic = 0x1a34364d;
+    hdr.version = 3;
+    hdr.length_samples = 0;
+
+    std::vector<uint8_t> bytes(sizeof(hdr));
+    std::memcpy(bytes.data(), &hdr, sizeof(hdr));
+    std::memcpy(bytes.data() + 0x222, author.data(), author.size());
+    std::memcpy(bytes.data() + 0x300, description.data(), description.size());
+
+    REQUIRE(IOUtils::write_entire_file(REPLACE_MOVIE_PATH, bytes));
+}
+
+std::string read_movie_field(size_t offset, size_t size)
+{
+    const auto buf = IOUtils::read_entire_file(REPLACE_MOVIE_PATH);
+    REQUIRE(buf.size() >= offset + size);
+
+    std::string out(reinterpret_cast<const char *>(buf.data() + offset), size);
+    out.resize(std::strlen(out.c_str()));
+    return out;
+}
+
+std::string read_movie_author()
+{
+    return read_movie_field(0x222, 222);
+}
+
+std::string read_movie_description()
+{
+    return read_movie_field(0x300, 256);
+}
+} // namespace
+
+TEST_CASE_METHOD(VcrFixture, "replaces_author_only_keeps_description", "vcr_replace_author_info")
+{
+    create_test_movie("old author", "old description");
+
+    const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("new author"), std::nullopt);
+
+    REQUIRE(result == Res_Ok);
+    REQUIRE(read_movie_author() == "new author");
+    REQUIRE(read_movie_description() == "old description");
+}
+
+TEST_CASE_METHOD(VcrFixture, "replaces_description_only_keeps_author", "vcr_replace_author_info")
+{
+    create_test_movie("old author", "old description");
+
+    const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::nullopt, std::string("new description"));
+
+    REQUIRE(result == Res_Ok);
+    REQUIRE(read_movie_author() == "old author");
+    REQUIRE(read_movie_description() == "new description");
+}
+
+TEST_CASE_METHOD(VcrFixture, "replaces_author_and_description", "vcr_replace_author_info")
+{
+    create_test_movie("old author", "old description");
+
+    const auto result =
+        vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("new author"), std::string("new description"));
+
+    REQUIRE(result == Res_Ok);
+    REQUIRE(read_movie_author() == "new author");
+    REQUIRE(read_movie_description() == "new description");
+}
+
+TEST_CASE_METHOD(VcrFixture, "nullopt_fields_leave_movie_unchanged", "vcr_replace_author_info")
+{
+    create_test_movie("old author", "old description");
+
+    const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::nullopt, std::nullopt);
+
+    REQUIRE(result == Res_Ok);
+    REQUIRE(read_movie_author() == "old author");
+    REQUIRE(read_movie_description() == "old description");
+}
+
+TEST_CASE_METHOD(VcrFixture, "identical_values_leave_movie_unchanged", "vcr_replace_author_info")
+{
+    create_test_movie("same author", "same description");
+
+    const auto result =
+        vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("same author"), std::string("same description"));
+
+    REQUIRE(result == Res_Ok);
+    REQUIRE(read_movie_author() == "same author");
+    REQUIRE(read_movie_description() == "same description");
+}
+
+TEST_CASE_METHOD(VcrFixture, "author_longer_than_222_returns_invalid_format", "vcr_replace_author_info")
+{
+    create_test_movie("old author", "old description");
+
+    const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string(223, 'a'), std::nullopt);
+
+    REQUIRE(result == VCR_InvalidFormat);
+    REQUIRE(read_movie_author() == "old author");
+}
+
+TEST_CASE_METHOD(VcrFixture, "description_longer_than_256_returns_invalid_format", "vcr_replace_author_info")
+{
+    create_test_movie("old author", "old description");
+
+    const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::nullopt, std::string(257, 'b'));
+
+    REQUIRE(result == VCR_InvalidFormat);
+    REQUIRE(read_movie_description() == "old description");
+}
+
+TEST_CASE_METHOD(VcrFixture, "missing_file_returns_bad_file", "vcr_replace_author_info")
+{
+    std::filesystem::remove(REPLACE_MOVIE_PATH);
+
+    const auto result = vcr_replace_author_info(REPLACE_MOVIE_PATH, std::string("new author"), std::nullopt);
+
+    REQUIRE(result == VCR_BadFile);
+}
+
 #pragma endregion

@@ -5,14 +5,14 @@
  */
 
 #include "Common.hpp"
-#include <action/ActionManager.hpp>
-#include <Config.hpp>
-#include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/ActionManager.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
 #include <strsafe.h>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <action/ActionMenu.hpp>
 #include <action/AppActions.hpp>
@@ -33,6 +33,7 @@
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaDialog.hpp>
+#include <HotkeyUtils.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 
 // Throwaway actions which can be spammed get keys as to not clog up the async executor queue
@@ -55,7 +56,10 @@ DWORD g_ui_thread_id{};
 
 ULONG_PTR gdi_plus_token;
 
-constexpr auto WND_CLASS = L"myWindowClass";
+// See App.hpp
+HWND g_main_hwnd;
+
+constexpr auto WND_CLASS = "myWindowClass";
 
 BetterEmulationLock::BetterEmulationLock()
 {
@@ -85,71 +89,65 @@ BetterEmulationLock::~BetterEmulationLock()
     }
 }
 
-std::wstring get_mupen_name(bool simple)
+std::string get_mupen_name(bool simple)
 {
 #ifdef _DEBUG
-#define BUILD_TARGET_INFO L"-debug"
+#define BUILD_TARGET_INFO "-debug"
 #else
-#define BUILD_TARGET_INFO L""
-#endif
-
-#ifdef UNICODE
-#define CHARSET_INFO L""
-#else
-#define CHARSET_INFO L"-a"
+#define BUILD_TARGET_INFO ""
 #endif
 
 #ifdef _M_X64
-#define ARCH_INFO L""
+#define ARCH_INFO ""
 #else
-#define ARCH_INFO L"-x86"
+#define ARCH_INFO "-x86"
 #endif
 
-#define BASE_NAME L"Mupen 64 "
+#define BASE_NAME "Mupen 64 "
 
     if (simple)
     {
         return BASE_NAME CURRENT_VERSION VERSION_SUFFIX;
     }
 
-    return BASE_NAME CURRENT_VERSION VERSION_SUFFIX ARCH_INFO CHARSET_INFO BUILD_TARGET_INFO;
+    return BASE_NAME CURRENT_VERSION VERSION_SUFFIX ARCH_INFO BUILD_TARGET_INFO;
 }
 
-const wchar_t *get_input_text()
+const char *get_input_text()
 {
-    static wchar_t text[1024]{};
+    static char text[1024]{};
     memset(text, 0, sizeof(text));
 
     CoreButtons b = g_main_ctx.last_controller_data[0];
-    wsprintf(text, L"(%d, %d) ", b.x, b.y);
-    if (b.start) lstrcatW(text, L"S");
-    if (b.z) lstrcatW(text, L"Z");
-    if (b.a) lstrcatW(text, L"A");
-    if (b.b) lstrcatW(text, L"B");
-    if (b.l) lstrcatW(text, L"L");
-    if (b.r) lstrcatW(text, L"R");
+    sprintf(text, "(%d, %d) ", b.x, b.y);
+    if (b.start) strcat(text, "S");
+    if (b.z) strcat(text, "Z");
+    if (b.a) strcat(text, "A");
+    if (b.b) strcat(text, "B");
+    if (b.l) strcat(text, "");
+    if (b.r) strcat(text, "R");
     if (b.cu || b.cd || b.cl || b.cr)
     {
-        lstrcatW(text, L" C");
-        if (b.cu) lstrcatW(text, L"^");
-        if (b.cd) lstrcatW(text, L"v");
-        if (b.cl) lstrcatW(text, L"<");
-        if (b.cr) lstrcatW(text, L">");
+        strcat(text, " C");
+        if (b.cu) strcat(text, "^");
+        if (b.cd) strcat(text, "v");
+        if (b.cl) strcat(text, "<");
+        if (b.cr) strcat(text, ">");
     }
     if (b.du || b.dd || b.dl || b.dr)
     {
-        lstrcatW(text, L"D");
-        if (b.du) lstrcatW(text, L"^");
-        if (b.dd) lstrcatW(text, L"v");
-        if (b.dl) lstrcatW(text, L"<");
-        if (b.dr) lstrcatW(text, L">");
+        strcat(text, "D");
+        if (b.du) strcat(text, "^");
+        if (b.dd) strcat(text, "v");
+        if (b.dl) strcat(text, "<");
+        if (b.dr) strcat(text, ">");
     }
     return text;
 }
 
-const wchar_t *get_status_text()
+const char *get_status_text()
 {
-    static wchar_t text[1024]{};
+    static char text[1024]{};
     memset(text, 0, sizeof(text));
 
     const core_vcr_seek_info info = g_main_ctx.core_ctx->vcr_get_seek_info();
@@ -161,8 +159,8 @@ const wchar_t *get_status_text()
 
     if (g_main_ctx.core_ctx->vcr_get_warp_modify_status())
     {
-        StringCbPrintfW(text, sizeof(text), L"Warping (%.2f%%)",
-                        (double)current_sample / (double)g_main_ctx.core_ctx->vcr_get_length_samples() * 100.0);
+        sprintf(text, "Warping (%.2f%%)",
+                (double)current_sample / (double)g_main_ctx.core_ctx->vcr_get_length_samples() * 100.0);
         return text;
     }
 
@@ -174,7 +172,7 @@ const wchar_t *get_status_text()
         }
         else
         {
-            wsprintfW(text, L"%d (%d) ", current_vi, current_sample - index_adjustment);
+            sprintf(text, "%d (%d) ", current_vi, current_sample - index_adjustment);
         }
     }
 
@@ -186,8 +184,8 @@ const wchar_t *get_status_text()
         }
         else
         {
-            wsprintfW(text, L"%d / %d (%d / %d) ", current_vi, g_main_ctx.core_ctx->vcr_get_length_vis(),
-                      current_sample - index_adjustment, g_main_ctx.core_ctx->vcr_get_length_samples());
+            sprintf(text, "%d / %d (%d / %d) ", current_vi, g_main_ctx.core_ctx->vcr_get_length_vis(),
+                    current_sample - index_adjustment, g_main_ctx.core_ctx->vcr_get_length_samples());
         }
     }
 
@@ -202,10 +200,8 @@ std::filesystem::path get_summercart_path()
 std::filesystem::path get_st_with_slot_path(const size_t slot)
 {
     const auto hdr = g_main_ctx.core_ctx->vr_get_rom_header();
-    const auto fname =
-        std::format(L"{} {}.st{}", IOUtils::rom_name_to_wide_string((const char *)hdr->nom),
-                    IOUtils::to_wide_string(g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code)),
-                    std::to_wstring(slot));
+    const auto fname = std::format("{} {}.st{}", IOUtils::rom_name_to_string((const char *)hdr->nom),
+                                   g_main_ctx.core_ctx->vr_country_code_to_country_name(hdr->Country_code), slot);
     return Config::save_directory() / fname;
 }
 
@@ -218,8 +214,8 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
 
     if (info.medium == core_st_medium_path)
     {
-        const auto &fname = info.params.path.filename().wstring();
-        const bool is_slot = fname.find(L".st") != std::wstring::npos && std::isdigit(fname.back());
+        const auto &fname = info.params.path.filename().string();
+        const bool is_slot = fname.find(".st") != std::string::npos && std::isdigit(fname.back());
 
         if (is_slot)
         {
@@ -228,15 +224,14 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
             switch (info.result)
             {
             case Res_Ok:
-                Statusbar::post(
-                    std::format(L"{} slot {}", info.job == core_st_job_save ? L"Saved" : L"Loaded", slot + 1));
+                Statusbar::post(std::format("{} slot {}", info.job == core_st_job_save ? "Saved" : "Loaded", slot + 1));
                 break;
             case Res_Cancelled:
-                Statusbar::post(std::format(L"Cancelled {}", info.job == core_st_job_save ? L"save" : L"load"));
+                Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
                 break;
             default:
                 Statusbar::post(
-                    std::format(L"Failed to {} slot {}", info.job == core_st_job_save ? L"save" : L"load", slot + 1));
+                    std::format("Failed to {} slot {}", info.job == core_st_job_save ? "save" : "load", slot + 1));
                 break;
             }
             return;
@@ -245,18 +240,18 @@ void st_callback_wrapper(const core_st_callback_info &info, const std::vector<ui
         switch (info.result)
         {
         case Res_Ok:
-            Statusbar::post(std::format(L"{} {}", info.job == core_st_job_save ? L"Saved" : L"Loaded",
-                                        info.params.path.filename().wstring()));
+            Statusbar::post(std::format("{} {}", info.job == core_st_job_save ? "Saved" : "Loaded",
+                                        info.params.path.filename().string()));
             break;
         case Res_Cancelled:
-            Statusbar::post(std::format(L"Cancelled {}", info.job == core_st_job_save ? L"save" : L"load"));
+            Statusbar::post(std::format("Cancelled {}", info.job == core_st_job_save ? "save" : "load"));
             break;
         default: {
             const auto message =
-                std::format(L"Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
-                            info.job == core_st_job_save ? L"save" : L"load", info.params.path.filename().wstring(),
+                std::format("Failed to {} {} (error code {}).\nVerify that the savestate is valid and accessible.",
+                            info.job == core_st_job_save ? "save" : "load", info.params.path.filename().string(),
                             (int32_t)info.result);
-            DialogService::show_dialog(message.c_str(), L"Savestate", fsvc_error);
+            DialogService::show_dialog(message, "Savestate", fsvc_error);
             break;
         }
         }
@@ -273,24 +268,23 @@ void ai_len_changed()
     CaptureManager::ai_len_changed();
 }
 
-static std::wstring get_titlebar_text()
+static std::string get_titlebar_text()
 {
     auto text = get_mupen_name();
 
-    if (g_emu_starting) text += L" - Starting...";
+    if (g_emu_starting) text += " - Starting...";
 
     if (g_main_ctx.core_ctx->vr_get_launched())
-        text += std::format(L" - {}", IOUtils::rom_name_to_wide_string(
-                                          reinterpret_cast<char *>(g_main_ctx.core_ctx->vr_get_rom_header()->nom)));
+        text += std::format(" - {}", IOUtils::rom_name_to_string(g_main_ctx.core_ctx->vr_get_rom_header()->nom));
 
     if (g_main_ctx.core_ctx->vcr_get_task() != task_idle)
     {
         auto vcr_filename = g_main_ctx.core_ctx->vcr_get_path().filename();
-        text += std::format(L" - {}", vcr_filename.c_str());
+        text += std::format(" - {}", vcr_filename.string());
     }
 
     if (CaptureManager::is_capturing())
-        text += std::format(L" - {}", CaptureManager::get_current_path().filename().wstring());
+        text += std::format(" - {}", CaptureManager::get_current_path().filename().string());
 
     return text;
 }
@@ -308,7 +302,7 @@ static void update_titlebar()
 void on_script_started(std::filesystem::path value)
 {
     g_main_ctx.dispatcher->invoke([=] {
-        RecentMenu::add(AppActions::RECENT_SCRIPTS, g_config.recent_lua_script_paths, value.wstring(),
+        RecentMenu::add(AppActions::RECENT_SCRIPTS, g_config.recent_lua_script_paths, value.string(),
                         g_config.is_recent_scripts_frozen);
     });
 }
@@ -319,11 +313,11 @@ void on_task_changed(core_vcr_task value)
         static auto previous_value = value;
         if (!vcr_is_task_recording(value) && vcr_is_task_recording(previous_value))
         {
-            Statusbar::post(L"Recording stopped");
+            Statusbar::post("Recording stopped");
         }
         if (!task_is_playback(value) && task_is_playback(previous_value))
         {
-            Statusbar::post(L"Playback stopped");
+            Statusbar::post("Playback stopped");
         }
 
         if ((vcr_is_task_recording(value) && !vcr_is_task_recording(previous_value)) ||
@@ -331,7 +325,7 @@ void on_task_changed(core_vcr_task value)
                 !g_main_ctx.core_ctx->vcr_get_path().empty())
         {
             RecentMenu::add(AppActions::RECENT_MOVIES, g_config.recent_movie_paths,
-                            g_main_ctx.core_ctx->vcr_get_path().wstring(), g_config.is_recent_movie_paths_frozen);
+                            g_main_ctx.core_ctx->vcr_get_path().string(), g_config.is_recent_movie_paths_frozen);
         }
 
         update_titlebar();
@@ -374,7 +368,7 @@ void on_emu_launched_changed(bool value)
             const auto rom_path = g_main_ctx.core_ctx->vr_get_rom_path();
             if (!rom_path.empty())
             {
-                RecentMenu::add(AppActions::RECENT_ROMS, g_config.recent_rom_paths, rom_path.wstring(),
+                RecentMenu::add(AppActions::RECENT_ROMS, g_config.recent_rom_paths, rom_path.string(),
                                 g_config.is_recent_rom_paths_frozen);
             }
 
@@ -421,7 +415,7 @@ void on_speed_modifier_changed(int32_t value)
         g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
     const auto effective_vis_per_second = (double)vis_per_second * ((double)value / 100.0);
 
-    Statusbar::post(std::format(L"Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
+    Statusbar::post(std::format("Speed limit: {}% ({:.0f} VI/s)", value, effective_vis_per_second));
 }
 
 void on_emu_paused_changed(bool)
@@ -438,9 +432,9 @@ void on_vis_since_input_poll_exceeded()
 
     if (g_config.silent_mode ||
         DialogService::show_ask_dialog(VIEW_DLG_LAG_EXCEEDED,
-                                       L"An unusual execution pattern was detected. Continuing might leave the "
-                                       L"emulator in an unusable state.\r\nWould you like to terminate emulation?",
-                                       L"Warning", true))
+                                       "An unusual execution pattern was detected. Continuing might leave the "
+                                       "emulator in an unusable state.\r\nWould you like to terminate emulation?",
+                                       "Warning", true))
     {
         ThreadPool::submit_task([] {
             const auto result = g_main_ctx.core_ctx->vr_close_rom(true);
@@ -452,7 +446,7 @@ void on_vis_since_input_poll_exceeded()
 
 void on_movie_loop_changed(bool value)
 {
-    Statusbar::post(value ? L"Movies restart after ending" : L"Movies stop after ending");
+    Statusbar::post(value ? "Movies restart after ending" : "Movies stop after ending");
 }
 
 void on_config_loaded()
@@ -472,6 +466,12 @@ void on_config_loaded()
     }
 
     WinDarkMode::set(theme);
+}
+
+void on_config_needs_patching(t_config &cfg)
+{
+    // HACK: Wine doesn't implement DComp well enough yet, so force GDI
+    if (g_main_ctx.wine) cfg.presenter_type = (int32_t)t_config::PresenterType::GDI;
 }
 
 void on_seek_completed()
@@ -518,22 +518,6 @@ bool is_on_gui_thread()
     return GetCurrentThreadId() == g_ui_thread_id;
 }
 
-std::filesystem::path get_app_full_path()
-{
-    std::wstring app_path(MAX_PATH, 0);
-    const DWORD app_path_len = GetModuleFileName(nullptr, app_path.data(), app_path.size());
-
-    if (app_path_len == 0)
-    {
-        return L"";
-    }
-
-    app_path.resize(app_path_len);
-
-    // equals drive + dir
-    return std::filesystem::path(app_path).parent_path();
-}
-
 void open_console()
 {
     AllocConsole();
@@ -542,6 +526,7 @@ void open_console()
     freopen_s(&f, "CONOUT$", "w", stdout);
     freopen_s(&f, "CONOUT$", "w", stderr);
     SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 }
 
 static t_lua_key_event_args get_base_key_event_args()
@@ -568,7 +553,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     {
     case WM_DROPFILES: {
         auto drop = (HDROP)wParam;
-        wchar_t fname[MAX_PATH] = {0};
+        char fname[MAX_PATH] = {0};
         DragQueryFile(drop, 0, fname, std::size(fname));
 
         std::filesystem::path path = fname;
@@ -631,11 +616,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
     case WM_CHAR: {
         t_lua_key_event_args args = get_base_key_event_args();
         const bool repeat = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT;
-        const auto chr = static_cast<wchar_t>(wParam);
+        const auto chr = static_cast<char>(wParam);
 
         if (std::iswcntrl(chr)) break;
 
-        args.text = std::wstring(1, chr);
+        args.text = std::string(1, chr);
         args.repeat = repeat;
         LuaCallbacks::call_atkey(args);
         break;
@@ -705,6 +690,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_NCCREATE:
         g_main_ctx.hwnd = hwnd;
+        g_main_hwnd = hwnd;
         break;
     case WM_CREATE:
         JoystickControl::register_class(g_main_ctx.hinst, JOYSTICK_CLASS);
@@ -820,11 +806,11 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
         {
             if (g_main_ctx.core_ctx->vcr_get_task() == task_idle)
             {
-                Statusbar::post(std::format(L"{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
+                Statusbar::post(std::format("{}", CaptureManager::get_video_frame()), Statusbar::Section::VCR);
             }
             else
             {
-                Statusbar::post(std::format(L"{}({})", get_status_text(), CaptureManager::get_video_frame()),
+                Statusbar::post(std::format("{}({})", get_status_text(), CaptureManager::get_video_frame()),
                                 Statusbar::Section::VCR);
             }
         }
@@ -842,8 +828,8 @@ static void CALLBACK invalidate_callback(UINT, UINT, DWORD_PTR, DWORD_PTR, DWORD
         float fps, vis;
         g_main_ctx.core_ctx->vr_get_timings(fps, vis);
 
-        Statusbar::post(std::format(L"FPS: {:.1f}", fps), Statusbar::Section::FPS);
-        Statusbar::post(std::format(L"VI/s: {:.1f}", vis), Statusbar::Section::VIs);
+        Statusbar::post(std::format("FPS: {:.1f}", fps), Statusbar::Section::FPS);
+        Statusbar::post(std::format("VI/s: {:.1f}", vis), Statusbar::Section::VIs);
 
         last_statusbar_update = time;
     }
@@ -944,28 +930,16 @@ static core_result init_core()
     g_main_ctx.core.get_summercart_path = get_summercart_path;
     g_main_ctx.core.show_multiple_choice_dialog = [](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title, core_dialog_type type) {
-        auto choices_wide = choices |
-                            std::views::transform([](std::string value) { return IOUtils::to_wide_string(value); }) |
-                            std::ranges::to<std::vector>();
-        auto str_wide = IOUtils::to_wide_string(str);
-        auto title_wide = IOUtils::to_wide_string(title);
-
-        return DialogService::show_multiple_choice_dialog(id, choices_wide, str_wide.c_str(), title_wide.c_str(), type);
+        return DialogService::show_multiple_choice_dialog(id, choices, str,
+                                                          title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_ask_dialog = [](std::string_view id, const char *str, const char *title, bool warning) {
-        auto str_wide = IOUtils::to_wide_string(str);
-        auto title_wide = IOUtils::to_wide_string(title);
-        return DialogService::show_ask_dialog(id, str_wide.c_str(), title_wide.c_str(), warning);
+        return DialogService::show_ask_dialog(id, str, title ? std::make_optional(title) : std::nullopt, warning);
     };
     g_main_ctx.core.show_dialog = [](const char *str, const char *title, core_dialog_type type) {
-        auto str_wide = IOUtils::to_wide_string(str);
-        auto title_wide = IOUtils::to_wide_string(title);
-        DialogService::show_dialog(str_wide.c_str(), title_wide.c_str(), type);
+        DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
-    g_main_ctx.core.show_statusbar = [](const char *str) {
-        auto str_wide = IOUtils::to_wide_string(str);
-        DialogService::show_statusbar(str_wide.c_str());
-    };
+    g_main_ctx.core.show_statusbar = [](const char *str) { DialogService::show_statusbar(str); };
     g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;
@@ -992,12 +966,12 @@ void set_cwd()
 {
     if (!g_config.keep_default_working_directory)
     {
-        SetCurrentDirectory(g_main_ctx.app_path.c_str());
+        SetCurrentDirectory(IOUtils::exe_path().parent_path().string().c_str());
     }
 
-    wchar_t cwd[MAX_PATH] = {0};
+    char cwd[MAX_PATH] = {0};
     GetCurrentDirectory(sizeof(cwd), cwd);
-    g_view_logger->info(L"cwd: {}", cwd);
+    g_view_logger->info("cwd: {}", cwd);
 }
 
 /**
@@ -1005,26 +979,20 @@ void set_cwd()
  */
 static bool is_dialog_message(MSG *msg)
 {
-    if (IsWindow(LuaDialog::hwnd()) && IsDialogMessage(LuaDialog::hwnd(), msg))
+    std::vector<HWND> hwnds = {
+        LuaDialog::hwnd(), CommandPalette::hwnd(), ParameterPalette::hwnd(), Seeker::hwnd(), PianoRoll::hwnd(),
+    };
+    const auto plugin_hwnds = PluginUtil::get_all_plugin_windows();
+    hwnds.insert(hwnds.end(), plugin_hwnds.begin(), plugin_hwnds.end());
+
+    for (const auto &hwnd : hwnds)
     {
-        return true;
+        if (IsWindow(hwnd) && IsDialogMessage(hwnd, msg))
+        {
+            return true;
+        }
     }
-    if (IsWindow(CommandPalette::hwnd()) && IsDialogMessage(CommandPalette::hwnd(), msg))
-    {
-        return true;
-    }
-    if (IsWindow(ParameterPalette::hwnd()) && IsDialogMessage(ParameterPalette::hwnd(), msg))
-    {
-        return true;
-    }
-    if (IsWindow(Seeker::hwnd()) && IsDialogMessage(Seeker::hwnd(), msg))
-    {
-        return true;
-    }
-    if (IsWindow(PianoRoll::hwnd()) && IsDialogMessage(PianoRoll::hwnd(), msg))
-    {
-        return true;
-    }
+
     return false;
 }
 
@@ -1033,16 +1001,10 @@ static bool is_dialog_message(MSG *msg)
  */
 static void enable_mitigations()
 {
-    PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY handles = {0};
-    handles.RaiseExceptionOnInvalidHandleReference = 1;
-    handles.HandleExceptionsPermanentlyEnabled = 1;
-    RT_ASSERT(SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &handles, sizeof(handles)),
-              L"Couldn't set process mitigation policy.");
-
     PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ext = {0};
     ext.DisableExtensionPoints = 1;
     RT_ASSERT(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
-              L"Couldn't set process mitigation policy.");
+              "Couldn't set process mitigation policy.");
 
     BOOL bool_false = FALSE;
     SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &bool_false, sizeof(BOOL));
@@ -1059,10 +1021,48 @@ static void set_error_mode()
 
 static bool is_running_under_wine()
 {
-    HMODULE ntdll = GetModuleHandle(L"ntdll.dll");
+    HMODULE ntdll = GetModuleHandle("ntdll.dll");
     if (!ntdll) return false;
 
     return GetProcAddress(ntdll, "wine_get_version") != nullptr;
+}
+
+void app_runtime_assert_fail(std::string_view message)
+{
+#if defined(_DEBUG)
+    __debugbreak();
+#endif
+    DialogService::show_dialog(message, "Failed Runtime Assertion", fsvc_error);
+    std::terminate();
+}
+
+std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
+{
+    return {
+        {VIEW_DLG_MOVIE_OVERWRITE_WARNING, 0},
+        {VIEW_DLG_RESET_SETTINGS, 0},
+        {VIEW_DLG_RESET_PLUGIN_SETTINGS, 0},
+        {VIEW_DLG_LAG_EXCEEDED, 0},
+        {VIEW_DLG_CLOSE_ROM_WARNING, 0},
+        {VIEW_DLG_HOTKEY_CONFLICT, 0},
+        {VIEW_DLG_UPDATE_DIALOG, 3},
+        {VIEW_DLG_PLUGIN_LOAD_ERROR, 0},
+        {VIEW_DLG_RAMSTART, 0},
+        {VIEW_DLG_ABOUT, 1},
+    };
+}
+
+std::optional<Hotkey> app_json_to_hotkey(const nlohmann::basic_json<> &hotkey_json)
+{
+    if (!hotkey_json.contains("key")) return std::nullopt;
+
+    const auto key = hotkey_json["key"];
+    const auto trigger = HotkeyUtils::vk_to_trigger(key);
+    if (!trigger) return std::nullopt;
+
+    Hotkey hotkey;
+    hotkey.trigger = *trigger;
+    return hotkey;
 }
 
 void Main::init_sdl()
@@ -1071,7 +1071,7 @@ void Main::init_sdl()
     {
         g_main_ctx.dispatcher->invoke([] {
             RT_ASSERT(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK),
-                      L"SDL_Init failed");
+                      "SDL_Init failed");
         });
         s_sdl_initialized = true;
     }
@@ -1140,13 +1140,13 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
 {
     enable_mitigations();
     set_error_mode();
+    setlocale(LC_ALL, ".UTF-8");
+
     g_main_ctx.wine = is_running_under_wine();
 
 #ifdef _DEBUG
     open_console();
 #endif
-
-    g_main_ctx.app_path = get_app_full_path();
 
     std::filesystem::create_directories(Config::logs_directory());
 
@@ -1179,7 +1179,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
     const auto hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    RT_ASSERT(SUCCEEDED(hr), L"Failed to initialize COM.");
+    RT_ASSERT(SUCCEEDED(hr), "Failed to initialize COM.");
 
     WinDarkMode::init();
 
@@ -1221,6 +1221,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     Messenger::subscribe<Messenger::Message::SpeedModifierChanged>(on_speed_modifier_changed);
     Messenger::subscribe<Messenger::Message::LagLimitExceeded>(on_vis_since_input_poll_exceeded);
     Messenger::subscribe<Messenger::Message::ConfigLoaded>(on_config_loaded);
+    Messenger::subscribe<Messenger::Message::ConfigNeedsPatching>(on_config_needs_patching);
     Messenger::subscribe<Messenger::Message::SeekCompleted>(on_seek_completed);
     Messenger::subscribe<Messenger::Message::WarpModifyStatusChanged>(on_warp_modify_status_changed);
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>([] { AppActions::update_core_fast_forward(); });
@@ -1243,8 +1244,8 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     g_ui_timer = timeSetEvent(16, 1, invalidate_callback, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
     if (!g_ui_timer)
     {
-        DialogService::show_dialog(L"timeSetEvent call failed. Verify that your system supports multimedia timers.",
-                                   L"Error", fsvc_error);
+        DialogService::show_dialog("timeSetEvent call failed. Verify that your system supports multimedia timers.",
+                                   "Error", fsvc_error);
         return -1;
     }
 

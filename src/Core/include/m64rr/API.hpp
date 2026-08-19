@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -11,6 +11,7 @@
 #pragma once
 
 #include "m64rr/Types.hpp"
+#include <optional>
 #include <stack>
 
 #ifdef __cplusplus
@@ -510,8 +511,8 @@ extern "C"
          * \param description The movie's description
          * \return The operation result
          */
-        std::function<core_result(const std::filesystem::path &path, std::string_view author,
-                                  std::string_view description)>
+        std::function<core_result(const std::filesystem::path &path, std::optional<std::string> author,
+                                  std::optional<std::string> description)>
             vcr_replace_author_info;
 
         /**

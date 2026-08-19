@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -25,7 +25,7 @@ static INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, cons
         SetFocus(GetDlgItem(hwnd, IDC_EDIT));
         return FALSE;
     case WM_DESTROY:
-        g_ctx.params.text = get_window_text(GetDlgItem(hwnd, IDC_EDIT)).value_or(L"");
+        g_ctx.params.text = get_window_text(GetDlgItem(hwnd, IDC_EDIT)).value_or("");
         break;
     case WM_CLOSE:
         EndDialog(hwnd, IDCANCEL);
@@ -49,7 +49,7 @@ static INT_PTR CALLBACK about_dlg_proc(const HWND hwnd, const UINT message, cons
     return TRUE;
 }
 
-std::optional<std::wstring> TextEditDialog::show(const t_params &params)
+std::optional<std::string> TextEditDialog::show(const t_params &params)
 {
     g_ctx = {};
     g_ctx.params = params;

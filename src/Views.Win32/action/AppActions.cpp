@@ -1,16 +1,16 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 #include "Common.hpp"
-#include <action/ActionManager.hpp>
-#include <DialogService.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/ActionManager.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
 #include <ThreadPool.hpp>
 #include <plugin/Plugin.hpp>
-#include <capture/CaptureManager.hpp>
+#include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <action/AppActions.hpp>
 #include <components/CLI.hpp>
@@ -27,6 +27,7 @@
 #include <components/UpdateChecker.hpp>
 #include <components/Validators.hpp>
 #include <lua/LuaDialog.hpp>
+#include <HotkeyUtils.hpp>
 
 bool confirm_user_exit()
 {
@@ -37,13 +38,13 @@ bool confirm_user_exit()
         return true;
     }
 
-    std::wstring final_message;
-    std::vector<std::pair<bool, std::wstring>> messages = {
-        {g_main_ctx.core_ctx->vcr_get_task() == task_recording, L"Movie recording"},
-        {CaptureManager::is_capturing(), L"Capture"},
-        {g_main_ctx.core_ctx->tl_active(), L"Trace logging"}};
+    const std::tuple<bool, std::string_view> messages[] = {
+        {g_main_ctx.core_ctx->vcr_get_task() == task_recording, "Recording"},
+        {g_main_ctx.core_ctx->vcr_get_task() == task_playback, "Playback"},
+        {CaptureManager::is_capturing(), "Capture"},
+        {g_main_ctx.core_ctx->tl_active(), "Trace logging"}};
 
-    std::vector<std::wstring> active_messages;
+    std::vector<std::string_view> active_messages;
     for (const auto &[is_active, msg] : messages)
     {
         if (!is_active)
@@ -59,18 +60,18 @@ bool confirm_user_exit()
         return true;
     }
 
+    std::string final_message;
     for (size_t i = 0; i < active_messages.size(); ++i)
     {
         final_message += active_messages[i];
         if (i < active_messages.size() - 1)
         {
-            final_message += L", ";
+            final_message += ", ";
         }
     }
-    final_message += L" is running. Are you sure you want to close the ROM?";
+    final_message += " is running. Are you sure you want to close the ROM?";
 
-    const bool result =
-        DialogService::show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message.c_str(), L"Close ROM", true);
+    const bool result = DialogService::show_ask_dialog(VIEW_DLG_CLOSE_ROM_WARNING, final_message, "Close ROM", true);
 
     return result;
 }
@@ -87,7 +88,7 @@ void AppActions::update_core_fast_forward()
     g_main_ctx.core_ctx->vr_set_speed_mode(effective_speed_mode);
 }
 
-void AppActions::load_rom_from_path(const std::wstring &path)
+void AppActions::load_rom_from_path(const std::filesystem::path &path)
 {
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vr_start_rom(path);
@@ -99,14 +100,14 @@ void AppActions::load_rom_from_path(const std::wstring &path)
 
 static void stub()
 {
-    DialogService::show_dialog(L"ActionManager::stub", L"Stub", fsvc_error);
+    DialogService::show_dialog("ActionManager::stub", "Stub", fsvc_error);
 }
 
 #pragma region File
 
 static void load_rom_direct(const ActionManager::action_argument_map &params)
 {
-    const std::filesystem::path path = params.at(L"path");
+    const std::filesystem::path path = params.at("path");
 
     AppActions::load_rom_from_path(path);
 }
@@ -115,15 +116,15 @@ static void load_rom()
 {
     BetterEmulationLock lock;
 
-    const auto path = FilePicker::show_open_dialog(L"o_rom", g_main_ctx.hwnd,
-                                                   L"*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
+    const auto path =
+        FilePicker::show_open_dialog("o_rom", g_main_ctx.hwnd, "*.n64;*.z64;*.v64;*.rom;*.bin;*.zip;*.usa;*.eur;*.jap");
 
     if (path.empty())
     {
         return;
     }
 
-    ActionManager::invoke(AppActions::LOAD_ROM_DIRECT, false, true, {{L"path", path}});
+    ActionManager::invoke(AppActions::LOAD_ROM_DIRECT, false, true, {{"path", path.string()}});
 }
 
 static void load_recent_rom(size_t i)
@@ -135,7 +136,7 @@ static void load_recent_rom(size_t i)
 
     const auto path = g_config.recent_rom_paths[i];
 
-    ActionManager::invoke(AppActions::LOAD_ROM_DIRECT, false, true, {{L"path", path}});
+    ActionManager::invoke(AppActions::LOAD_ROM_DIRECT, false, true, {{"path", path}});
 }
 
 static void close_rom()
@@ -242,7 +243,7 @@ static void frame_advance()
 
 static void multi_frame_advance_direct(const ActionManager::action_argument_map &params)
 {
-    const int32_t count = std::stoi(params.at(L"count"));
+    const int32_t count = std::stoi(params.at("count"));
 
     if (count > 0)
     {
@@ -261,7 +262,7 @@ static void multi_frame_advance_direct(const ActionManager::action_argument_map 
 static void multi_frame_advance()
 {
     ActionManager::invoke(AppActions::MULTI_FRAME_ADVANCE_DIRECT, false, true,
-                          {{L"count", std::to_wstring(g_config.multi_frame_advance_count)}});
+                          {{"count", std::to_string(g_config.multi_frame_advance_count)}});
 }
 
 static void fastforward_enable()
@@ -329,7 +330,7 @@ static void save_state_as()
 {
     BetterEmulationLock lock;
 
-    const auto path = FilePicker::show_save_dialog(L"s_savestate", g_main_ctx.hwnd, L"*.st;*.savestate");
+    const auto path = FilePicker::show_save_dialog("s_savestate", g_main_ctx.hwnd, "*.st;*.savestate");
     if (path.empty())
     {
         return;
@@ -347,8 +348,8 @@ static void load_state_as()
     BetterEmulationLock lock;
 
     const auto path = FilePicker::show_open_dialog(
-        L"o_state", g_main_ctx.hwnd,
-        L"*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
+        "o_state", g_main_ctx.hwnd,
+        "*.st;*.savestate;*.st0;*.st1;*.st2;*.st3;*.st4;*.st5;*.st6;*.st7;*.st8;*.st9,*.st10");
     if (path.empty())
     {
         return;
@@ -372,7 +373,7 @@ static void undo_load_state()
 
         if (buf.empty())
         {
-            Statusbar::post(L"No load to undo");
+            Statusbar::post("No load to undo");
             return;
         }
 
@@ -381,7 +382,7 @@ static void undo_load_state()
             [](const core_st_callback_info &info, auto) {
                 if (info.result == Res_Ok)
                 {
-                    Statusbar::post(L"Undid load");
+                    Statusbar::post("Undid load");
                     return;
                 }
 
@@ -390,7 +391,7 @@ static void undo_load_state()
                     return;
                 }
 
-                Statusbar::post(L"Failed to undo load");
+                Statusbar::post("Failed to undo load");
             },
             false);
     });
@@ -418,7 +419,7 @@ static void multi_frame_advance_decrement()
 
 static void multi_frame_advance_reset()
 {
-    g_config.multi_frame_advance_count = g_default_config.multi_frame_advance_count;
+    g_config.multi_frame_advance_count = Config::default_config().multi_frame_advance_count;
     Messenger::broadcast<Messenger::Message::MultiFrameAdvanceCountChanged>();
 }
 
@@ -444,22 +445,22 @@ static void show_plugin_settings_dialog(const std::unique_ptr<Plugin> &plugin)
 
 static void show_video_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_video_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_video_plugin, Plugin::Type::Video).second);
 }
 
 static void show_audio_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_audio_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_audio_plugin, Plugin::Type::Audio).second);
 }
 
 static void show_input_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_input_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_input_plugin, Plugin::Type::Input).second);
 }
 
 static void show_rsp_plugin_settings()
 {
-    show_plugin_settings_dialog(Plugin::create(g_config.selected_rsp_plugin).second);
+    show_plugin_settings_dialog(Plugin::create(g_config.selected_rsp_plugin, Plugin::Type::RSP).second);
 }
 
 static void toggle_statusbar()
@@ -480,10 +481,10 @@ static void show_settings_dialog()
 
 static void start_movie_recording_direct(const ActionManager::action_argument_map &params)
 {
-    const std::filesystem::path path = params.at(L"path");
-    const uint16_t start_flag = static_cast<uint16_t>(std::stoul(params.at(L"start_flag")));
-    const std::wstring author = params.at(L"author");
-    const std::wstring description = params.at(L"description");
+    const std::filesystem::path path = params.at("path");
+    const uint16_t start_flag = static_cast<uint16_t>(std::stoul(params.at("start_flag")));
+    const std::string author = params.at("author");
+    const std::string description = params.at("description");
 
     if (path.empty())
     {
@@ -497,21 +498,20 @@ static void start_movie_recording_direct(const ActionManager::action_argument_ma
     if (any_file_exists)
     {
         const auto overwrite = DialogService::show_ask_dialog(
-            VIEW_DLG_OVERWRITE_MOVIE,
-            L"The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
-            L"Overwrite Movie", true, g_main_ctx.hwnd);
+            VIEW_DLG_MOVIE_OVERWRITE_WARNING,
+            "The specified movie file (or one of its accompanying files) already exists. Do you want to overwrite it?",
+            "Overwrite Movie", true, g_main_ctx.hwnd);
         if (!overwrite) return;
     }
 
     g_main_ctx.core_ctx->vr_wait_increment();
     g_main_ctx.core.submit_task([=] {
-        auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(path, start_flag, IOUtils::to_utf8_string(author),
-                                                                IOUtils::to_utf8_string(description));
+        auto vcr_result = g_main_ctx.core_ctx->vcr_start_record(path, start_flag, author, description);
         g_main_ctx.core_ctx->vr_wait_decrement();
         if (!CoreUtils::show_error_dialog_for_result(vcr_result))
         {
             g_config.last_movie_author = author;
-            Statusbar::post(L"Recording replay");
+            Statusbar::post("Recording replay");
         }
     });
 }
@@ -528,10 +528,10 @@ static void start_movie_recording()
 
     ActionManager::invoke(AppActions::START_MOVIE_RECORDING_DIRECT, false, true,
                           {
-                              {L"path", movie_dialog_result.path},
-                              {L"start_flag", std::to_wstring(movie_dialog_result.start_flag)},
-                              {L"author", movie_dialog_result.author},
-                              {L"description", movie_dialog_result.description},
+                              {"path", movie_dialog_result.path.string()},
+                              {"start_flag", std::to_string(movie_dialog_result.start_flag)},
+                              {"author", movie_dialog_result.author},
+                              {"description", movie_dialog_result.description},
                           });
 }
 
@@ -547,12 +547,12 @@ static void continue_movie_recording()
 
 static void start_movie_playback_direct(const ActionManager::action_argument_map &params)
 {
-    const auto path = params.at(L"path");
-    const auto author = params.at(L"author");
-    const auto description = params.at(L"description");
+    const auto path = params.at("path");
+    const auto author = params.at("author");
+    const auto description = params.at("description");
 
-    g_main_ctx.core_ctx->vcr_replace_author_info(path, IOUtils::to_utf8_string(author),
-                                                 IOUtils::to_utf8_string(description));
+    g_main_ctx.core_ctx->vcr_replace_author_info(path, author.empty() ? std::nullopt : std::optional(author),
+                                                 description.empty() ? std::nullopt : std::optional(description));
 
     ThreadPool::submit_task([=] {
         const auto result = g_main_ctx.core_ctx->vcr_start_playback(path);
@@ -573,9 +573,9 @@ static void start_movie_playback()
 
     ActionManager::invoke(AppActions::START_MOVIE_PLAYBACK_DIRECT, false, true,
                           {
-                              {L"path", result.path},
-                              {L"author", result.author},
-                              {L"description", result.description},
+                              {"path", result.path.string()},
+                              {"author", result.author},
+                              {"description", result.description},
                           });
 }
 
@@ -608,9 +608,9 @@ static void load_recent_movie(size_t i)
 
     ActionManager::invoke(AppActions::START_MOVIE_PLAYBACK_DIRECT, false, true,
                           {
-                              {L"path", path},
-                              {L"author", L""},
-                              {L"description", L""},
+                              {"path", path},
+                              {"author", ""},
+                              {"description", ""},
                           });
 }
 
@@ -640,24 +640,23 @@ static void show_ram_start()
 {
     BetterEmulationLock lock;
 
-    wchar_t ram_start[20] = {0};
-    wsprintfW(ram_start, L"0x%p", static_cast<void *>(g_main_ctx.core_ctx->rdram));
+    const auto ram_start_str = std::format("0x{:p}", static_cast<void *>(g_main_ctx.core_ctx->rdram));
 
-    wchar_t proc_name[MAX_PATH] = {0};
+    char proc_name[MAX_PATH] = {0};
     GetModuleFileName(NULL, proc_name, MAX_PATH);
 
-    const auto str = std::format(L"The RAM start is {}.\r\nHow would you like to proceed?", ram_start);
+    const auto str = std::format("The RAM start is {}.\r\nHow would you like to proceed?", ram_start_str);
 
     const auto result = DialogService::show_multiple_choice_dialog(
-        VIEW_DLG_RAMSTART, {L"Copy STROOP config line", L"Close"}, str.c_str(), L"Core Information", fsvc_information);
+        VIEW_DLG_RAMSTART, {"Copy STROOP config line", "Close"}, str, "Core Information", fsvc_information);
 
     if (result == 0)
     {
         auto exe_filename = IOUtils::exe_path().stem();
 
-        const auto stroop_line = std::format(L"<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
-                                             L"endianness=\"little\" autoDetect=\"true\"/>",
-                                             exe_filename.c_str(), ram_start);
+        const auto stroop_line = std::format("<Emulator name=\"Mupen 5.0 RR\" processName=\"{}\" ramStart=\"{}\" "
+                                             "endianness=\"little\" autoDetect=\"true\"/>",
+                                             exe_filename.string(), ram_start_str);
         copy_to_clipboard(g_main_ctx.hwnd, stroop_line);
     }
 }
@@ -666,10 +665,10 @@ static void show_statistics()
 {
     BetterEmulationLock lock;
 
-    auto str = std::format(L"Total playtime: {}\r\nTotal rerecords: {}",
+    auto str = std::format("Total playtime: {}\r\nTotal rerecords: {}",
                            format_duration(g_config.core.total_frames / 30), g_config.core.total_rerecords);
 
-    MessageBox(g_main_ctx.hwnd, str.c_str(), L"Statistics", MB_ICONINFORMATION);
+    MessageBox(g_main_ctx.hwnd, str.c_str(), "Statistics", MB_ICONINFORMATION);
 }
 
 static void stop_tracelog()
@@ -684,14 +683,14 @@ static void start_tracelog()
 {
     stop_tracelog();
 
-    auto path = FilePicker::show_save_dialog(L"s_tracelog", g_main_ctx.hwnd, L"*.log");
+    auto path = FilePicker::show_save_dialog("s_tracelog", g_main_ctx.hwnd, "*.log");
 
     if (path.empty())
     {
         return;
     }
 
-    auto result = MessageBox(g_main_ctx.hwnd, L"Should the trace log be generated in a binary format?", L"Trace Logger",
+    auto result = MessageBox(g_main_ctx.hwnd, "Should the trace log be generated in a binary format?", "Trace Logger",
                              MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
 
     g_main_ctx.core_ctx->tl_start(path, result == IDYES, false);
@@ -711,10 +710,10 @@ static void show_cheat_dialog()
 
 static void seek_direct(const ActionManager::action_argument_map &params)
 {
-    const auto frame_str = params.at(L"frame");
+    const auto frame_str = params.at("frame");
 
     ThreadPool::submit_task([=] {
-        const auto result = g_main_ctx.core_ctx->vcr_begin_seek(IOUtils::to_utf8_string(frame_str), true);
+        const auto result = g_main_ctx.core_ctx->vcr_begin_seek(frame_str, true);
         CoreUtils::show_error_dialog_for_result(result);
     });
 }
@@ -737,14 +736,14 @@ static void screenshot()
 
 static void start_capture_direct(const ActionManager::action_argument_map &params)
 {
-    const auto path = params.at(L"path");
-    const auto ask_preset = params.at(L"ask_preset") == L"1";
+    const auto path = params.at("path");
+    const auto ask_preset = params.at("ask_preset") == "1";
 
     CaptureManager::start_capture(path, (t_config::EncoderType)g_config.encoder_type, ask_preset,
                                   [](const auto result) {
                                       if (result)
                                       {
-                                          Statusbar::post(L"Capture started...");
+                                          Statusbar::post("Capture started...");
                                       }
                                   });
 }
@@ -753,7 +752,7 @@ static void start_capture_normal()
 {
     BetterEmulationLock lock;
 
-    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi;*.mp4");
+    auto path = FilePicker::show_save_dialog("s_capture", g_main_ctx.hwnd, "*.avi;*.mp4");
     if (path.empty())
     {
         return;
@@ -761,8 +760,8 @@ static void start_capture_normal()
 
     ActionManager::invoke(AppActions::VIDEO_CAPTURE_START_DIRECT, false, true,
                           {
-                              {L"path", path},
-                              {L"ask_preset", L"1"},
+                              {"path", path.string()},
+                              {"ask_preset", "1"},
                           });
 }
 
@@ -770,7 +769,7 @@ static void start_capture_from_preset()
 {
     BetterEmulationLock lock;
 
-    auto path = FilePicker::show_save_dialog(L"s_capture", g_main_ctx.hwnd, L"*.avi;*.mp4");
+    auto path = FilePicker::show_save_dialog("s_capture", g_main_ctx.hwnd, "*.avi;*.mp4");
     if (path.empty())
     {
         return;
@@ -778,8 +777,8 @@ static void start_capture_from_preset()
 
     ActionManager::invoke(AppActions::VIDEO_CAPTURE_START_DIRECT, false, true,
                           {
-                              {L"path", path},
-                              {L"ask_preset", L"0"},
+                              {"path", path.string()},
+                              {"ask_preset", "0"},
                           });
 }
 
@@ -788,7 +787,7 @@ static void stop_capture()
     CaptureManager::stop_capture([](const auto result) {
         if (result)
         {
-            Statusbar::post(L"Capture stopped");
+            Statusbar::post("Capture stopped");
         }
     });
 }
@@ -810,18 +809,18 @@ static void check_for_updates_manual()
 static void show_about_dialog()
 {
     BetterEmulationLock lock;
-    const auto msg = L"Mupen64 - Advanced N64 TASing emulator."
-                     L"\r\n"
-                     L"\r\n"
-                     L"Copyright ©️ 2026"
-                     L"\r\n"
-                     L"Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
-    const auto result = DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {L"Website", L"OK"}, msg, L"About",
-                                                                   fsvc_information);
+    const auto msg = "Mupen64 - Advanced N64 TASing emulator."
+                     "\r\n"
+                     "\r\n"
+                     "Copyright ©️ 2026"
+                     "\r\n"
+                     "Mupen64 maintainers, contributors, and original authors (Hacktarux, ShadowPrince, linker).";
+    const auto result =
+        DialogService::show_multiple_choice_dialog(VIEW_DLG_ABOUT, {"Website", "OK"}, msg, "About", fsvc_information);
 
     if (result == 0)
     {
-        ShellExecute(0, 0, L"https://mupen64.com", 0, 0, SW_SHOW);
+        ShellExecute(0, 0, "https://mupen64.com", 0, 0, SW_SHOW);
     }
 }
 
@@ -831,7 +830,7 @@ static void show_about_dialog()
 
 static void load_script_direct(const ActionManager::action_argument_map &params)
 {
-    const std::filesystem::path path = params.at(L"path");
+    const std::filesystem::path path = params.at("path");
 
     LuaDialog::start_and_add_if_needed(path);
 }
@@ -850,7 +849,7 @@ static void load_recent_script(size_t i)
 
     const auto path = g_config.recent_lua_script_paths[i];
 
-    ActionManager::invoke(AppActions::LOAD_SCRIPT_DIRECT, false, true, {{L"path", path}});
+    ActionManager::invoke(AppActions::LOAD_SCRIPT_DIRECT, false, true, {{"path", path}});
 }
 
 static void stop_all_lua_scripts()
@@ -913,11 +912,11 @@ static bool always_enabled()
 
 #pragma endregion
 
-static void add_action_with_up(const std::wstring &path, const Hotkey::t_hotkey &default_hotkey,
+static void add_action_with_up(const std::string &path, const Hotkey &default_hotkey,
                                const std::function<void()> &on_press, const std::function<void()> &on_release,
                                const std::function<bool()> &get_enabled = {},
                                const std::function<bool()> &get_active = {},
-                               const std::function<std::wstring()> &get_display_name = {})
+                               const std::function<std::string()> &get_display_name = {})
 {
     bool success = ActionManager::add({
         .path = path,
@@ -927,25 +926,24 @@ static void add_action_with_up(const std::wstring &path, const Hotkey::t_hotkey 
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    RT_ASSERT(success, std::format(L"Failed to add action for path '{}'.", path));
+    RT_ASSERT(success, std::format("Failed to add action for path '{}'.", path));
 
     success = ActionManager::associate_hotkey(path, default_hotkey, false);
-    RT_ASSERT(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
+    RT_ASSERT(success, std::format("Failed to associate hotkey for path '{}'.", path));
 }
 
-static void add_action(const std::wstring &path, const Hotkey::t_hotkey &default_hotkey,
-                       const std::function<void()> &callback, const std::function<bool()> &get_enabled = {},
-                       const std::function<bool()> &get_active = {},
-                       const std::function<std::wstring()> &get_display_name = {})
+static void add_action(const std::string &path, const Hotkey &default_hotkey, const std::function<void()> &callback,
+                       const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
+                       const std::function<std::string()> &get_display_name = {})
 {
     add_action_with_up(path, default_hotkey, callback, nullptr, get_enabled, get_active, get_display_name);
 }
 
-static void add_action(const std::wstring &path,
+static void add_action(const std::string &path,
                        const std::function<void(const ActionManager::action_argument_map &)> &callback,
                        const std::vector<ActionManager::t_action_param> &params,
                        const std::function<bool()> &get_enabled = {}, const std::function<bool()> &get_active = {},
-                       const std::function<std::wstring()> &get_display_name = {})
+                       const std::function<std::string()> &get_display_name = {})
 {
     bool success = ActionManager::add({
         .path = path,
@@ -955,21 +953,21 @@ static void add_action(const std::wstring &path,
         .get_enabled = get_enabled,
         .get_active = get_active,
     });
-    RT_ASSERT(success, std::format(L"Failed to add action for path '{}'.", path));
+    RT_ASSERT(success, std::format("Failed to add action for path '{}'.", path));
 
-    success = ActionManager::associate_hotkey(path, Hotkey::t_hotkey::make_empty(), false);
-    RT_ASSERT(success, std::format(L"Failed to associate hotkey for path '{}'.", path));
+    success = ActionManager::associate_hotkey(path, Hotkey::make_empty(), false);
+    RT_ASSERT(success, std::format("Failed to associate hotkey for path '{}'.", path));
 }
 
-static void generate_path_recent_menu(const std::wstring &base_path, const Hotkey::t_hotkey &load_first_hotkey,
-                                      std::vector<std::wstring> *paths, int32_t *frozen,
+static void generate_path_recent_menu(const std::string &base_path, const Hotkey &load_first_hotkey,
+                                      std::vector<std::string> *paths, int32_t *frozen,
                                       const std::function<void(size_t)> &callback)
 {
-    const auto freeze_action = std::format(L"{} > Freeze ---", base_path);
+    const auto freeze_action = std::format("{} > Freeze ---", base_path);
 
     const auto reset_list = [=] {
         paths->clear();
-        ActionManager::notify_display_name_changed(std::format(L"{} > *", base_path));
+        ActionManager::notify_display_name_changed(std::format("{} > *", base_path));
     };
 
     const auto toggle_frozen = [=] {
@@ -979,22 +977,22 @@ static void generate_path_recent_menu(const std::wstring &base_path, const Hotke
 
     const auto get_frozen = [=] { return *frozen; };
 
-    add_action(std::format(L"{} > Reset", base_path), Hotkey::t_hotkey::make_empty(), reset_list);
-    add_action(freeze_action, Hotkey::t_hotkey::make_empty(), toggle_frozen, always_enabled, get_frozen);
+    add_action(std::format("{} > Reset", base_path), Hotkey::make_empty(), reset_list);
+    add_action(freeze_action, Hotkey::make_empty(), toggle_frozen, always_enabled, get_frozen);
 
     for (size_t i = 0; i < RecentMenu::MAX_RECENT_ITEMS; ++i)
     {
-        const auto get_display_name = [=] -> std::wstring {
+        const auto get_display_name = [=] -> std::string {
             if (paths->size() > i)
             {
-                return std::filesystem::path(paths->at(i)).filename();
+                return std::filesystem::path(paths->at(i)).filename().string();
             }
-            return L"(nothing)";
+            return "(nothing)";
         };
 
-        const auto path = std::format(L"{} > Load Recent Item {}", base_path, i + 1);
+        const auto path = std::format("{} > Load Recent Item {}", base_path, i + 1);
 
-        Hotkey::t_hotkey hotkey = i == 0 ? load_first_hotkey : Hotkey::t_hotkey::make_empty();
+        Hotkey hotkey = i == 0 ? load_first_hotkey : Hotkey::make_empty();
 
         add_action(path, hotkey, [=] { callback(i); }, {}, {}, get_display_name);
     }
@@ -1003,13 +1001,13 @@ static void generate_path_recent_menu(const std::wstring &base_path, const Hotke
 void AppActions::init()
 {
     Messenger::subscribe<Messenger::Message::EmuLaunchedChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format(L"{} *", APP)); });
+        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", APP)); });
     Messenger::subscribe<Messenger::Message::EmuPausedChanged>(
         [](const auto &) { ActionManager::notify_active_changed(PAUSE); });
     Messenger::subscribe<Messenger::Message::FastForwardNeedsUpdate>(
         [] { ActionManager::notify_active_changed(FAST_FORWARD); });
     Messenger::subscribe<Messenger::Message::CapturingChanged>(
-        [](const auto &) { ActionManager::notify_enabled_changed(std::format(L"{} *", VIDEO_CAPTURE)); });
+        [](const auto &) { ActionManager::notify_enabled_changed(std::format("{} *", VIDEO_CAPTURE)); });
     Messenger::subscribe<Messenger::Message::StatusbarVisibilityChanged>(
         [](const auto &) { ActionManager::notify_active_changed(STATUSBAR); });
     Messenger::subscribe<Messenger::Message::MovieLoopChanged>(
@@ -1024,7 +1022,7 @@ void AppActions::init()
         ActionManager::notify_enabled_changed(SEEK_TO);
     });
     Messenger::subscribe<Messenger::Message::SlotChanged>(
-        [](const auto &) { ActionManager::notify_active_changed(std::format(L"{} *", SELECT_SLOT)); });
+        [](const auto &) { ActionManager::notify_active_changed(std::format("{} *", SELECT_SLOT)); });
 }
 
 void AppActions::add()
@@ -1033,38 +1031,40 @@ void AppActions::add()
 
     add_action(LOAD_ROM_DIRECT, load_rom_direct,
                std::vector<ActionManager::t_action_param>{
-                   {.key = L"path", .name = L"Path", .validator = Validators::rom_path},
+                   {.key = "path", .name = "Path", .validator = Validators::rom_path},
                });
-    add_action(LOAD_ROM, Hotkey::t_hotkey('O', true), load_rom);
-    add_action(CLOSE_ROM, Hotkey::t_hotkey('W', true), close_rom, enable_when_emu_launched);
-    add_action(RESET_ROM, Hotkey::t_hotkey('R', true), reset_rom, enable_when_emu_launched);
-    add_action(REFRESH_ROM_LIST, Hotkey::t_hotkey(VK_F5, true), refresh_rombrowser);
-    generate_path_recent_menu(RECENT_ROMS, Hotkey::t_hotkey('O', true, true), &g_config.recent_rom_paths,
-                              &g_config.is_recent_rom_paths_frozen, load_recent_rom);
-    add_action(EXIT, Hotkey::t_hotkey(VK_F4, false, false, true), exit_app);
+    add_action(LOAD_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('O'), true), load_rom);
+    add_action(CLOSE_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('W'), true), close_rom, enable_when_emu_launched);
+    add_action(RESET_ROM, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true), reset_rom, enable_when_emu_launched);
+    add_action(REFRESH_ROM_LIST, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F5), true), refresh_rombrowser);
+    generate_path_recent_menu(RECENT_ROMS, Hotkey(*HotkeyUtils::vk_to_trigger('O'), true, true),
+                              &g_config.recent_rom_paths, &g_config.is_recent_rom_paths_frozen, load_recent_rom);
+    add_action(EXIT, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F4), false, false, true), exit_app);
 
-    add_action(PAUSE, Hotkey::t_hotkey(VK_PAUSE), pause_emu, enable_when_emu_launched);
-    add_action(SPEED_DOWN, Hotkey::t_hotkey(VK_OEM_MINUS), speed_down, enable_when_emu_launched);
-    add_action(SPEED_UP, Hotkey::t_hotkey(VK_OEM_PLUS), speed_up, enable_when_emu_launched);
-    add_action(SPEED_RESET, Hotkey::t_hotkey(VK_OEM_PLUS, true), speed_reset, enable_when_emu_launched);
-    add_action_with_up(FAST_FORWARD, Hotkey::t_hotkey(VK_TAB), fastforward_enable, fastforward_disable,
-                       enable_when_emu_launched, fastforward_active);
-    add_action_with_up(GS_BUTTON, Hotkey::t_hotkey('G'), gs_button_enable, gs_button_disable, enable_when_emu_launched,
-                       gs_button_active);
-    add_action(FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5), frame_advance, enable_when_emu_launched);
+    add_action(PAUSE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_PAUSE)), pause_emu, enable_when_emu_launched);
+    add_action(SPEED_DOWN, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_MINUS)), speed_down, enable_when_emu_launched);
+    add_action(SPEED_UP, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_PLUS)), speed_up, enable_when_emu_launched);
+    add_action(SPEED_RESET, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_PLUS), true), speed_reset,
+               enable_when_emu_launched);
+    add_action_with_up(FAST_FORWARD, Hotkey(*HotkeyUtils::vk_to_trigger(VK_TAB)), fastforward_enable,
+                       fastforward_disable, enable_when_emu_launched, fastforward_active);
+    add_action_with_up(GS_BUTTON, Hotkey(*HotkeyUtils::vk_to_trigger('G')), gs_button_enable, gs_button_disable,
+                       enable_when_emu_launched, gs_button_active);
+    add_action(FRAME_ADVANCE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_5)), frame_advance, enable_when_emu_launched);
     add_action(MULTI_FRAME_ADVANCE_DIRECT, multi_frame_advance_direct,
-               {{.key = L"count", .name = L"Frame Count", .validator = Validators::int32_t}}, enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE, Hotkey::t_hotkey(VK_OEM_5, true), multi_frame_advance, enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey::t_hotkey('Q', true), multi_frame_advance_decrement,
+               {{.key = "count", .name = "Frame Count", .validator = Validators::int32_t}}, enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE, Hotkey(*HotkeyUtils::vk_to_trigger(VK_OEM_5), true), multi_frame_advance,
                enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE_INCREMENT, Hotkey::t_hotkey('E', true), multi_frame_advance_increment,
-               enable_when_emu_launched);
-    add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey::t_hotkey('E', true, true), multi_frame_advance_reset,
-               enable_when_emu_launched);
-    add_action(SAVE_CURRENT_SLOT, Hotkey::t_hotkey('I'), save_slot, enable_when_emu_launched);
-    add_action(SAVE_STATE_FILE, Hotkey::t_hotkey::make_empty(), save_state_as, enable_when_emu_launched);
-    add_action(LOAD_CURRENT_SLOT, Hotkey::t_hotkey('P'), load_slot, enable_when_emu_launched);
-    add_action(LOAD_STATE_FILE, Hotkey::t_hotkey::make_empty(), load_state_as, enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE_DECREMENT, Hotkey(*HotkeyUtils::vk_to_trigger('Q'), true),
+               multi_frame_advance_decrement, enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE_INCREMENT, Hotkey(*HotkeyUtils::vk_to_trigger('E'), true),
+               multi_frame_advance_increment, enable_when_emu_launched);
+    add_action(MULTI_FRAME_ADVANCE_RESET, Hotkey(*HotkeyUtils::vk_to_trigger('E'), true, true),
+               multi_frame_advance_reset, enable_when_emu_launched);
+    add_action(SAVE_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('I')), save_slot, enable_when_emu_launched);
+    add_action(SAVE_STATE_FILE, Hotkey::make_empty(), save_state_as, enable_when_emu_launched);
+    add_action(LOAD_CURRENT_SLOT, Hotkey(*HotkeyUtils::vk_to_trigger('P')), load_slot, enable_when_emu_launched);
+    add_action(LOAD_STATE_FILE, Hotkey::make_empty(), load_state_as, enable_when_emu_launched);
     for (size_t i = 0; i < 10; ++i)
     {
         const int32_t save_key = i < 9 ? '1' + i : '0';
@@ -1087,10 +1087,10 @@ void AppActions::add()
         const auto load = [=] { do_work(core_st_job_load); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SAVE_SLOT_X, std::make_wformat_args(visual_slot)),
-                   Hotkey::t_hotkey(save_key, false, true), save, enable_when_emu_launched);
-        add_action(std::vformat(LOAD_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey::t_hotkey(load_key), load,
-                   enable_when_emu_launched);
+        add_action(std::vformat(SAVE_SLOT_X, std::make_format_args(visual_slot)),
+                   Hotkey(*HotkeyUtils::vk_to_trigger(save_key), false, true), save, enable_when_emu_launched);
+        add_action(std::vformat(LOAD_SLOT_X, std::make_format_args(visual_slot)),
+                   Hotkey(*HotkeyUtils::vk_to_trigger(load_key)), load, enable_when_emu_launched);
     }
     for (size_t i = 0; i < 10; ++i)
     {
@@ -1101,88 +1101,89 @@ void AppActions::add()
         const auto set_slot = [=] { set_save_slot(i); };
 
         size_t visual_slot = i + 1;
-        add_action(std::vformat(SELECT_SLOT_X, std::make_wformat_args(visual_slot)), Hotkey::t_hotkey(key), set_slot,
-                   enable_when_emu_launched, get_active);
+        add_action(std::vformat(SELECT_SLOT_X, std::make_format_args(visual_slot)),
+                   Hotkey(*HotkeyUtils::vk_to_trigger(key)), set_slot, enable_when_emu_launched, get_active);
     }
-    add_action(UNDO_LOAD_STATE, Hotkey::t_hotkey('Z', true), undo_load_state, enable_when_emu_launched);
-    add_action(VIDEO_SETTINGS, Hotkey::t_hotkey::make_empty(), show_video_plugin_settings);
-    add_action(AUDIO_SETTINGS, Hotkey::t_hotkey::make_empty(), show_audio_plugin_settings);
-    add_action(INPUT_SETTINGS, Hotkey::t_hotkey::make_empty(), show_input_plugin_settings);
-    add_action(RSP_SETTINGS, Hotkey::t_hotkey::make_empty(), show_rsp_plugin_settings);
-    add_action(STATUSBAR, Hotkey::t_hotkey('S', false, false, true), toggle_statusbar, disable_when_emu_launched,
-               [] { return g_config.is_statusbar_enabled; });
-    add_action(SETTINGS, Hotkey::t_hotkey('S', true), show_settings_dialog);
+    add_action(UNDO_LOAD_STATE, Hotkey(*HotkeyUtils::vk_to_trigger('Z'), true), undo_load_state,
+               enable_when_emu_launched);
+    add_action(VIDEO_SETTINGS, Hotkey::make_empty(), show_video_plugin_settings);
+    add_action(AUDIO_SETTINGS, Hotkey::make_empty(), show_audio_plugin_settings);
+    add_action(INPUT_SETTINGS, Hotkey::make_empty(), show_input_plugin_settings);
+    add_action(RSP_SETTINGS, Hotkey::make_empty(), show_rsp_plugin_settings);
+    add_action(STATUSBAR, Hotkey(*HotkeyUtils::vk_to_trigger('S'), false, false, true), toggle_statusbar,
+               disable_when_emu_launched, [] { return g_config.is_statusbar_enabled; });
+    add_action(SETTINGS, Hotkey(*HotkeyUtils::vk_to_trigger('S'), true), show_settings_dialog);
 
     add_action(START_MOVIE_RECORDING_DIRECT, start_movie_recording_direct,
                std::vector<ActionManager::t_action_param>{
-                   {.key = L"path", .name = L"Path", .validator = Validators::nonempty},
-                   {.key = L"start_flag", .name = L"Start Flag", .validator = Validators::int32_t},
-                   {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
-                   {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
+                   {.key = "path", .name = "Path", .validator = Validators::nonempty},
+                   {.key = "start_flag", .name = "Start Flag", .validator = Validators::int32_t},
+                   {.key = "author", .name = "Author (optional)", .validator = Validators::none},
+                   {.key = "description", .name = "Description (optional)", .validator = Validators::none},
                },
                enable_when_emu_launched);
-    add_action(START_MOVIE_RECORDING, Hotkey::t_hotkey('R', true, true), start_movie_recording,
+    add_action(START_MOVIE_RECORDING, Hotkey(*HotkeyUtils::vk_to_trigger('R'), true, true), start_movie_recording,
                enable_when_emu_launched);
     add_action(START_MOVIE_PLAYBACK_DIRECT, start_movie_playback_direct,
                std::vector<ActionManager::t_action_param>{
-                   {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
-                   {.key = L"author", .name = L"Author (optional)", .validator = Validators::none},
-                   {.key = L"description", .name = L"Description (optional)", .validator = Validators::none},
+                   {.key = "path", .name = "Path", .validator = Validators::existing_path},
+                   {.key = "author", .name = "Author (optional)", .validator = Validators::none},
+                   {.key = "description", .name = "Description (optional)", .validator = Validators::none},
                });
-    add_action(START_MOVIE_PLAYBACK, Hotkey::t_hotkey('P', true, true), start_movie_playback);
-    add_action(CONTINUE_MOVIE_RECORDING, Hotkey::t_hotkey::make_empty(), continue_movie_recording,
-               enable_during_playback);
-    add_action(STOP_MOVIE, Hotkey::t_hotkey('C', true, true), stop_movie, enable_when_emu_launched_and_vcr_active);
-    add_action(CREATE_MOVIE_BACKUP, Hotkey::t_hotkey('B', true, true), create_movie_backup,
+    add_action(START_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::vk_to_trigger('P'), true, true), start_movie_playback);
+    add_action(CONTINUE_MOVIE_RECORDING, Hotkey::make_empty(), continue_movie_recording, enable_during_playback);
+    add_action(STOP_MOVIE, Hotkey(*HotkeyUtils::vk_to_trigger('C'), true, true), stop_movie,
                enable_when_emu_launched_and_vcr_active);
-    generate_path_recent_menu(RECENT_MOVIES, Hotkey::t_hotkey('T', true, true), &g_config.recent_movie_paths,
-                              &g_config.is_recent_movie_paths_frozen, load_recent_movie);
-    add_action(LOOP_MOVIE_PLAYBACK, Hotkey::t_hotkey('L', false, true), toggle_movie_loop, always_enabled,
-               [] { return g_config.core.is_movie_loop_enabled; });
-    add_action(READONLY, Hotkey::t_hotkey('R', false, true), toggle_readonly, always_enabled,
+    add_action(CREATE_MOVIE_BACKUP, Hotkey(*HotkeyUtils::vk_to_trigger('B'), true, true), create_movie_backup,
+               enable_when_emu_launched_and_vcr_active);
+    generate_path_recent_menu(RECENT_MOVIES, Hotkey(*HotkeyUtils::vk_to_trigger('T'), true, true),
+                              &g_config.recent_movie_paths, &g_config.is_recent_movie_paths_frozen, load_recent_movie);
+    add_action(LOOP_MOVIE_PLAYBACK, Hotkey(*HotkeyUtils::vk_to_trigger('L'), false, true), toggle_movie_loop,
+               always_enabled, [] { return g_config.core.is_movie_loop_enabled; });
+    add_action(READONLY, Hotkey(*HotkeyUtils::vk_to_trigger('R'), false, true), toggle_readonly, always_enabled,
                [] { return g_config.core.vcr_readonly; });
-    add_action(WAIT_AT_MOVIE_END, Hotkey::t_hotkey::make_empty(), toggle_wait_at_movie_end, always_enabled,
+    add_action(WAIT_AT_MOVIE_END, Hotkey::make_empty(), toggle_wait_at_movie_end, always_enabled,
                [] { return g_config.core.wait_at_movie_end; });
 
-    add_action(COMMAND_PALETTE, Hotkey::t_hotkey('P', true), show_command_palette);
-    add_action(PIANO_ROLL, Hotkey::t_hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
-    add_action(CHEATS, Hotkey::t_hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
+    add_action(COMMAND_PALETTE, Hotkey(*HotkeyUtils::vk_to_trigger('P'), true), show_command_palette);
+    add_action(PIANO_ROLL, Hotkey::make_empty(), show_piano_roll, enable_when_emu_launched);
+    add_action(CHEATS, Hotkey::make_empty(), show_cheat_dialog, enable_when_emu_launched);
     add_action(SEEK_TO_DIRECT, seek_direct,
                std::vector<ActionManager::t_action_param>{
-                   {.key = L"frame", .name = L"Frame", .validator = Validators::seek_str},
+                   {.key = "frame", .name = "Frame", .validator = Validators::seek_str},
                },
                enable_when_emu_launched_and_vcr_active);
-    add_action(SEEK_TO, Hotkey::t_hotkey('G', true), show_seek_dialog, enable_when_emu_launched_and_vcr_active);
-    add_action(USAGE_STATISTICS, Hotkey::t_hotkey::make_empty(), show_statistics);
-    add_action(CORE_INFORMATION, Hotkey::t_hotkey::make_empty(), show_ram_start);
-    add_action(START_TRACE_LOGGER, Hotkey::t_hotkey::make_empty(), start_tracelog,
+    add_action(SEEK_TO, Hotkey(*HotkeyUtils::vk_to_trigger('G'), true), show_seek_dialog,
+               enable_when_emu_launched_and_vcr_active);
+    add_action(USAGE_STATISTICS, Hotkey::make_empty(), show_statistics);
+    add_action(CORE_INFORMATION, Hotkey::make_empty(), show_ram_start);
+    add_action(START_TRACE_LOGGER, Hotkey::make_empty(), start_tracelog,
                enable_when_emu_launched_and_core_is_pure_interpreter);
-    add_action(STOP_TRACE_LOGGER, Hotkey::t_hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
+    add_action(STOP_TRACE_LOGGER, Hotkey::make_empty(), stop_tracelog, enable_when_tracelog_active);
     add_action(VIDEO_CAPTURE_START_DIRECT, start_capture_direct,
                std::vector<ActionManager::t_action_param>{
-                   {.key = L"path", .name = L"Path", .validator = Validators::nonempty},
-                   {.key = L"ask_preset", .name = L"Ask for preset?", .validator = Validators::boolean},
+                   {.key = "path", .name = "Path", .validator = Validators::nonempty},
+                   {.key = "ask_preset", .name = "Ask for preset?", .validator = Validators::boolean},
                },
                enable_when_emu_launched);
-    add_action(VIDEO_CAPTURE_START, Hotkey::t_hotkey::make_empty(), start_capture_normal, enable_when_emu_launched);
-    add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::t_hotkey::make_empty(), start_capture_from_preset,
-               enable_when_emu_launched);
-    add_action(VIDEO_CAPTURE_STOP, Hotkey::t_hotkey::make_empty(), stop_capture,
-               enable_when_emu_launched_and_capturing);
-    add_action(SCREENSHOT, Hotkey::t_hotkey(VK_F12), screenshot, enable_when_emu_launched);
+    add_action(VIDEO_CAPTURE_START, Hotkey::make_empty(), start_capture_normal, enable_when_emu_launched);
+    add_action(VIDEO_CAPTURE_START_PRESET, Hotkey::make_empty(), start_capture_from_preset, enable_when_emu_launched);
+    add_action(VIDEO_CAPTURE_STOP, Hotkey::make_empty(), stop_capture, enable_when_emu_launched_and_capturing);
+    add_action(SCREENSHOT, Hotkey(*HotkeyUtils::vk_to_trigger(VK_F12)), screenshot, enable_when_emu_launched);
 
-    add_action(CHECK_FOR_UPDATES, Hotkey::t_hotkey::make_empty(), check_for_updates_manual);
-    add_action(ABOUT, Hotkey::t_hotkey::make_empty(), show_about_dialog);
+    add_action(CHECK_FOR_UPDATES, Hotkey::make_empty(), check_for_updates_manual);
+    add_action(ABOUT, Hotkey::make_empty(), show_about_dialog);
 
     add_action(LOAD_SCRIPT_DIRECT, load_script_direct,
                std::vector<ActionManager::t_action_param>{
-                   {.key = L"path", .name = L"Path", .validator = Validators::existing_path},
+                   {.key = "path", .name = "Path", .validator = Validators::existing_path},
                });
-    add_action(SHOW_INSTANCES, Hotkey::t_hotkey('N', true), show_lua_dialog);
-    generate_path_recent_menu(RECENT_SCRIPTS, Hotkey::t_hotkey('K', true, true), &g_config.recent_lua_script_paths,
-                              &g_config.is_recent_scripts_frozen, load_recent_script);
-    add_action(STOP_ALL, Hotkey::t_hotkey::make_empty(), stop_all_lua_scripts);
-    add_action(CLOSE_ALL, Hotkey::t_hotkey('W', true, true), close_all_lua_scripts);
+    add_action(SHOW_INSTANCES, Hotkey(*HotkeyUtils::vk_to_trigger('N'), true), show_lua_dialog);
+    generate_path_recent_menu(RECENT_SCRIPTS, Hotkey(*HotkeyUtils::vk_to_trigger('K'), true, true),
+                              &g_config.recent_lua_script_paths, &g_config.is_recent_scripts_frozen,
+                              load_recent_script);
+    add_action(STOP_ALL, Hotkey::make_empty(), stop_all_lua_scripts);
+    add_action(CLOSE_ALL, Hotkey(*HotkeyUtils::vk_to_trigger('W'), true, true), close_all_lua_scripts);
 
     ActionManager::end_batch_work();
 

@@ -13,7 +13,6 @@
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Audio")
 
 extern M64RRSpec::PluginInit *g_plugin;
-extern std::filesystem::path g_dll_path;
 extern std::optional<SDLAudio::SDLBackend> g_backend;
 
 SDLAudio::Config read_config();

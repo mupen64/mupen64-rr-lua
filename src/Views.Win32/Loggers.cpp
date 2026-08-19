@@ -16,40 +16,59 @@ std::shared_ptr<spdlog::logger> g_audio_logger;
 std::shared_ptr<spdlog::logger> g_input_logger;
 std::shared_ptr<spdlog::logger> g_rsp_logger;
 
+static constexpr std::size_t MAX_LOG_FILES = 20;
+
 static std::filesystem::path get_log_path()
 {
-    return g_main_ctx.app_path / L"logs" / L"mupen.log";
+    const auto now = std::chrono::system_clock::now();
+    const auto time = std::chrono::system_clock::to_time_t(now);
+    const auto milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
+
+    std::tm local_time{};
+    localtime_s(&local_time, &time);
+
+    std::ostringstream filename;
+    filename << "mupen-" << std::put_time(&local_time, "%Y%m%d-%H%M%S") << "-" << std::setfill('0') << std::setw(3)
+             << milliseconds << ".log";
+
+    return IOUtils::exe_path().parent_path() / "logs" / filename.str();
+}
+
+static void remove_old_logs(const std::filesystem::path &log_directory)
+{
+    std::vector<std::pair<std::filesystem::file_time_type, std::filesystem::path>> logs;
+    std::error_code error;
+
+    for (const auto &entry : std::filesystem::directory_iterator(log_directory, error))
+    {
+        if (error) break;
+
+        const auto filename = entry.path().filename().string();
+        if (!entry.is_regular_file() || entry.path().extension() != ".log" || filename.rfind("mupen-", 0) != 0)
+            continue;
+
+        const auto last_write_time = entry.last_write_time(error);
+        if (!error) logs.emplace_back(last_write_time, entry.path());
+    }
+
+    std::sort(logs.begin(), logs.end(), [](const auto &left, const auto &right) { return left.first > right.first; });
+
+    const auto logs_to_keep = MAX_LOG_FILES > 0 ? MAX_LOG_FILES - 1 : 0;
+    for (std::size_t index = logs_to_keep; index < logs.size(); ++index)
+        std::filesystem::remove(logs[index].second, error);
 }
 
 void Loggers::init()
 {
     const auto log_path = get_log_path();
-    HANDLE h_file = CreateFile(log_path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    std::filesystem::create_directories(log_path.parent_path());
+    remove_old_logs(log_path.parent_path());
 
-    if (h_file != INVALID_HANDLE_VALUE)
-    {
-        LARGE_INTEGER size{};
-        GetFileSizeEx(h_file, &size);
-
-        // Clear log file if bigger than 50MB
-        if (size.QuadPart > 50ull * 1024ull * 1024ull)
-        {
-            SetFilePointerEx(h_file, {.QuadPart = 0}, nullptr, FILE_BEGIN);
-            SetEndOfFile(h_file);
-        }
-
-        CloseHandle(h_file);
-    }
-
-#ifdef _DEBUG
-    spdlog::sinks_init_list sink_list = {std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
-                                         std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>()};
-#else
     spdlog::sinks_init_list sink_list = {
         std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path.string()),
+        std::make_shared<spdlog::sinks::wincolor_stdout_sink_mt>(),
     };
-#endif
 
     g_core_logger = std::make_shared<spdlog::logger>("COR", sink_list);
     g_view_logger = std::make_shared<spdlog::logger>("VIW", sink_list);

@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 
 
-add_library(Mupen64RR.Plugins.TASAudio MODULE
+add_library(Mupen64RR.Plugins.TASAudio STATIC
     "Config.cpp"
     "Main.cpp"
     "SDLBackend.cpp"
@@ -43,4 +43,15 @@ set_target_properties(Mupen64RR.Plugins.TASAudio PROPERTIES
     OUTPUT_NAME "TASAudio"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+add_compile_definitions(NOMINMAX)
+
+target_compile_definitions(Mupen64RR.Plugins.TASAudio PRIVATE
+    M64RRGetMetadata=M64RRBuiltinTASAudioGetMetadata
+    M64RRProcessEvent=M64RRBuiltinTASAudioProcessEvent
+    M64RRAIDacrateChanged=M64RRBuiltinTASAudioAIDacrateChanged
+    M64RRAILenChanged=M64RRBuiltinTASAudioAILenChanged
+    M64RRShowConfig=M64RRBuiltinTASAudioShowConfig
+    g_plugin=M64RRBuiltinTASAudioPlugin
 )

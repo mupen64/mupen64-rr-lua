@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <DialogService.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <components/Cheats.hpp>
 
 static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -17,7 +17,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         g_main_ctx.core_ctx->cht_get_override_stack(override_stack);
         if (!override_stack.empty())
         {
-            SetDlgItemText(hwnd, IDC_CHEAT_STATUS, L"Read-only: Cheats are overriden by the core.");
+            SetDlgItemText(hwnd, IDC_CHEAT_STATUS, "Read-only: Cheats are overriden by the core.");
         }
         WinDarkMode::attach(hwnd);
         goto rebuild_list;
@@ -94,14 +94,14 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 
             core_cheat script;
 
-            if (!g_main_ctx.core_ctx->cht_compile(IOUtils::to_utf8_string(code), script))
+            if (!g_main_ctx.core_ctx->cht_compile(code, script))
             {
-                DialogService::show_dialog(L"Cheat code could not be compiled.\r\nVerify that the syntax is correct",
-                                           L"Cheats", fsvc_error);
+                DialogService::show_dialog("Cheat code could not be compiled.\r\nVerify that the syntax is correct",
+                                           "Cheats", fsvc_error);
                 break;
             }
 
-            script.name = IOUtils::to_utf8_string(name);
+            script.name = name;
             script.active = prev_active;
 
             cheats[selected_index] = script;
@@ -130,8 +130,8 @@ update_selection: {
     g_main_ctx.core_ctx->cht_get_list(cheats);
 
     CheckDlgButton(hwnd, IDC_CHECK_CHEAT_ENABLED, cheats[selected_index].active ? BST_CHECKED : BST_UNCHECKED);
-    SetDlgItemText(hwnd, IDC_EDIT_CHEAT, IOUtils::to_wide_string(cheats[selected_index].code).c_str());
-    Edit_SetText(GetDlgItem(hwnd, IDC_EDIT_CHEAT_NAME), IOUtils::to_wide_string(cheats[selected_index].name).c_str());
+    SetDlgItemText(hwnd, IDC_EDIT_CHEAT, cheats[selected_index].code.c_str());
+    Edit_SetText(GetDlgItem(hwnd, IDC_EDIT_CHEAT_NAME), cheats[selected_index].name.c_str());
 }
     return FALSE;
 
@@ -144,7 +144,7 @@ rebuild_list: {
     for (const auto &script : cheats)
     {
         auto name = !script.active ? script.name + " (Disabled)" : script.name;
-        ListBox_AddString(lb_hwnd, IOUtils::to_wide_string(name).c_str());
+        ListBox_AddString(lb_hwnd, name.c_str());
     }
     ListBox_SetCurSel(lb_hwnd, prev_index);
     goto update_selection;

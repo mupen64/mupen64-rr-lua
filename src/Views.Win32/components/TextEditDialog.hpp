@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -24,12 +24,12 @@ struct t_params
     /**
      * \brief The initial text to display in the editbox.
      */
-    std::wstring text{};
+    std::string text{};
 
     /**
      * \brief The caption of the dialog.
      */
-    std::wstring caption = L"Edit Text";
+    std::string caption = "Edit Text";
 
     /**
      * \brief If true, the editbox will be read-only.
@@ -42,5 +42,5 @@ struct t_params
  * \param params The parameters for the text edit dialog.
  * \return The text if the user clicked OK, or std::nullopt if the user clicked Cancel.
  */
-std::optional<std::wstring> show(const t_params &params);
+std::optional<std::string> show(const t_params &params);
 } // namespace TextEditDialog

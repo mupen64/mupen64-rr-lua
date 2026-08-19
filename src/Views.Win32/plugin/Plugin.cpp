@@ -7,8 +7,8 @@
 // ReSharper disable CppCStyleCast
 
 #include "Common.hpp"
-#include <Config.hpp>
-#include <DialogService.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
 #include <plugin/Plugin.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/ZEPlugin.hpp>
@@ -16,7 +16,7 @@
 #include <components/Statusbar.hpp>
 #include <components/MGECompositor.hpp>
 #include <ThreadPool.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/Messages.hpp>
 
 ZESpec::VideoPluginInfo gfx_info{};
 ZESpec::AudioPluginInfo audio_info{};
@@ -33,6 +33,20 @@ static std::shared_ptr<Plugin> input_plugin;
 static std::shared_ptr<Plugin> rsp_plugin;
 
 static std::jthread s_audio_thread;
+
+// These are embedded now, old ones are probably just stale and we want to ignore them.
+static const std::vector<std::string> excluded_plugin_names = {
+    "no-video", "no-audio", "no-input", "no-rsp",   "novideo",  "noaudio",
+    "noinput",  "norsp",    "tasvideo", "tasaudio", "tasinput", "tasrsp",
+};
+
+static bool is_excluded_plugin(const std::filesystem::path &path)
+{
+    std::string stem = path.stem().string();
+    std::transform(stem.begin(), stem.end(), stem.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return std::ranges::find(excluded_plugin_names, stem) != excluded_plugin_names.end();
+}
 
 ZESpecFuncs g_plugin_funcs{};
 
@@ -80,7 +94,7 @@ ZESpec::DLLCRTFREE PluginUtil::get_free_function_in_module(HMODULE module)
         while (import_descriptor->Characteristics && import_descriptor->Name)
         {
             auto importDllName = (LPCSTR)((PBYTE)module + import_descriptor->Name);
-            auto importDllHandle = GetModuleHandleA(importDllName);
+            auto importDllHandle = GetModuleHandle(importDllName);
             if (importDllHandle != nullptr)
             {
                 dll_crt_free = (ZESpec::DLLCRTFREE)GetProcAddress(importDllHandle, "free");
@@ -129,16 +143,32 @@ void PluginUtil::move_screen(uint32_t wParam, int32_t lParam)
     if (g_main_ctx.core_ctx->vr_get_launched()) g_plugin_funcs.video_move_screen((int)wParam, lParam);
 }
 
-std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
+std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path, Type type)
 {
+    if (path.empty()) return M64RRPlugin::create_builtin(type);
+
+    if (path == "<builtin>/NoVideo") return M64RRPlugin::create_builtin(Type::Video, true);
+    if (path == "<builtin>/NoAudio") return M64RRPlugin::create_builtin(Type::Audio, true);
+    if (path == "<builtin>/NoInput") return M64RRPlugin::create_builtin(Type::Input, true);
+
+    return create(std::move(path));
+}
+
+std::pair<std::string, std::unique_ptr<Plugin>> Plugin::create(std::filesystem::path path)
+{
+    if (is_excluded_plugin(path))
+    {
+        return std::make_pair(std::format("Outdated first-party plugin", path.string()), nullptr);
+    }
+
     Main::init_sdl();
 
-    const auto module = LoadLibrary(path.wstring().c_str());
+    const auto module = LoadLibrary(path.string().c_str());
     uint64_t last_error = GetLastError();
 
     if (module == nullptr)
     {
-        return std::make_pair(std::format(L"LoadLibrary (code {})", last_error), nullptr);
+        return std::make_pair(std::format("LoadLibrary (code {})", last_error), nullptr);
     }
 
     auto result1 = ZEPlugin::create(module, path);
@@ -148,15 +178,14 @@ std::pair<std::wstring, std::unique_ptr<Plugin>> Plugin::create(std::filesystem:
     if (result2.first.empty()) return result2;
 
     FreeLibrary(module);
-    return std::make_pair(L"Incompatible with this version of Mupen64", nullptr);
+    return std::make_pair("Incompatible with this version of Mupen64", nullptr);
 }
 
 Plugin::~Plugin()
 {
-    if (!FreeLibrary(m_module))
+    if (m_module && !FreeLibrary(m_module))
     {
-        DialogService::show_dialog(std::format(L"Failed to free library {}.", (void *)m_module).c_str(), L"Core",
-                                   fsvc_error);
+        DialogService::show_dialog(std::format("Failed to free library {}.", (void *)m_module), "Core", fsvc_error);
     }
 }
 
@@ -192,17 +221,20 @@ void PluginUtil::init()
 t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::path &directory)
 {
     std::vector<std::unique_ptr<Plugin>> plugins;
-    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
+    std::vector<std::pair<std::filesystem::path, std::string>> results;
 
     // this will fail to match files with the extension not lowercased, but I don't think this is a big deal.
     auto dll_files = std::filesystem::directory_iterator(directory) |
                      std::views::filter([](const std::filesystem::directory_entry &entry) {
-                         return entry.is_regular_file() && entry.path().extension().compare(L".dll") == 0;
+                         return entry.is_regular_file() && entry.path().extension().compare(".dll") == 0;
                      }) |
                      std::views::transform([](const std::filesystem::directory_entry &entry) { return entry.path(); });
 
     for (const auto &file : dll_files)
     {
+        g_view_logger->info("{}", file.stem().string());
+        if (is_excluded_plugin(file)) continue;
+
         auto [result, plugin] = Plugin::create(file);
 
         results.emplace_back(file, result);
@@ -211,10 +243,34 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
         plugins.emplace_back(std::move(plugin));
     }
 
+    for (const auto type : {Plugin::Type::Video, Plugin::Type::Audio, Plugin::Type::Input})
+    {
+        auto [result, plugin] = M64RRPlugin::create_builtin(type, true);
+        if (!result.empty())
+        {
+            results.emplace_back(std::filesystem::path{}, result);
+            continue;
+        }
+        plugins.emplace_back(std::move(plugin));
+    }
+
+    for (const auto type : {Plugin::Type::Video, Plugin::Type::Audio, Plugin::Type::Input, Plugin::Type::RSP})
+    {
+        auto [result, plugin] = M64RRPlugin::create_builtin(type);
+        if (!result.empty())
+        {
+            results.emplace_back(std::filesystem::path{}, result);
+            continue;
+        }
+        plugins.emplace_back(std::move(plugin));
+    }
+
     // Special case: plugins are present but not in the plugin directory
     for (const auto &file : {g_config.selected_video_plugin, g_config.selected_audio_plugin,
                              g_config.selected_input_plugin, g_config.selected_rsp_plugin})
     {
+        if (file.empty() || file.starts_with("<builtin>/")) continue;
+
         auto it = std::find_if(results.begin(), results.end(), [&](const auto &pair) {
             std::error_code ec;
             return std::filesystem::equivalent(pair.first, file, ec);
@@ -228,6 +284,15 @@ t_plugin_discovery_result PluginUtil::discover_plugins(const std::filesystem::pa
 
         plugins.emplace_back(std::move(plugin));
     }
+
+    // Prioritize first-party plugins in the list
+    const auto plugin_priority = [](const auto &plugin) {
+        if (plugin->path().empty() && plugin->name().starts_with("TAS ")) return 0;
+        if (plugin->path().string().starts_with("<builtin>/No")) return 1;
+        return 2;
+    };
+    std::stable_sort(plugins.begin(), plugins.end(),
+                     [&](const auto &lhs, const auto &rhs) { return plugin_priority(lhs) < plugin_priority(rhs); });
 
     return t_plugin_discovery_result{
         .plugins = std::move(plugins),
@@ -316,33 +381,33 @@ bool PluginUtil::load_plugins()
         input_plugin.reset();
         rsp_plugin.reset();
 
-        g_view_logger->trace(L"Loading video plugin: {}", g_config.selected_video_plugin);
-        g_view_logger->trace(L"Loading audio plugin: {}", g_config.selected_audio_plugin);
-        g_view_logger->trace(L"Loading input plugin: {}", g_config.selected_input_plugin);
-        g_view_logger->trace(L"Loading RSP plugin: {}", g_config.selected_rsp_plugin);
+        g_view_logger->trace("Loading video plugin: {}", g_config.selected_video_plugin);
+        g_view_logger->trace("Loading audio plugin: {}", g_config.selected_audio_plugin);
+        g_view_logger->trace("Loading input plugin: {}", g_config.selected_input_plugin);
+        g_view_logger->trace("Loading RSP plugin: {}", g_config.selected_rsp_plugin);
 
         Main::init_sdl();
 
-        auto video_pl = Plugin::create(g_config.selected_video_plugin);
-        auto audio_pl = Plugin::create(g_config.selected_audio_plugin);
-        auto input_pl = Plugin::create(g_config.selected_input_plugin);
-        auto rsp_pl = Plugin::create(g_config.selected_rsp_plugin);
+        auto video_pl = Plugin::create(g_config.selected_video_plugin, Plugin::Type::Video);
+        auto audio_pl = Plugin::create(g_config.selected_audio_plugin, Plugin::Type::Audio);
+        auto input_pl = Plugin::create(g_config.selected_input_plugin, Plugin::Type::Input);
+        auto rsp_pl = Plugin::create(g_config.selected_rsp_plugin, Plugin::Type::RSP);
 
         if (!video_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load video plugin: {}", video_pl.first);
+            g_view_logger->error("Failed to load video plugin: {}", video_pl.first);
         }
         if (!audio_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load audio plugin: {}", audio_pl.first);
+            g_view_logger->error("Failed to load audio plugin: {}", audio_pl.first);
         }
         if (!input_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load input plugin: {}", input_pl.first);
+            g_view_logger->error("Failed to load input plugin: {}", input_pl.first);
         }
         if (!rsp_pl.first.empty())
         {
-            g_view_logger->error(L"Failed to load rsp plugin: {}", rsp_pl.first);
+            g_view_logger->error("Failed to load rsp plugin: {}", rsp_pl.first);
         }
 
         if (video_pl.second == nullptr || audio_pl.second == nullptr || input_pl.second == nullptr ||
@@ -389,9 +454,9 @@ void PluginUtil::initiate_plugins()
 void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
 {
     const auto copy = [&](const std::shared_ptr<Plugin> &plugin, char *type) {
-        RT_ASSERT(plugin.get(), L"Plugin not loaded");
+        RT_ASSERT(plugin.get(), "Plugin not loaded");
         const auto result = strncpy_s(type, 64 - 1, plugin->name().c_str(), plugin->name().size());
-        RT_ASSERT(!result, L"Plugin name copy failed");
+        RT_ASSERT(!result, "Plugin name copy failed");
     };
 
     copy(video_plugin, video);

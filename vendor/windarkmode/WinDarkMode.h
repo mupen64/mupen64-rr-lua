@@ -54,10 +54,6 @@
 #include <unordered_set>
 #include <vector>
 
-#ifndef _UNICODE
-#error WinDarkMode requires a Unicode build.
-#endif
-
 /**
  * @brief Namespace containing functions for enabling and using dark mode on Win32.
  */
@@ -297,7 +293,7 @@ inline ULONG_PTR original_open_nc_theme_data{};
 
 inline bool initialized = false;
 inline Theme theme = Theme::System;
-inline std::unordered_set<HWND> attached_windows;
+inline std::unordered_map<HWND, bool> attached_windows;
 inline std::unordered_set<HWND> pending_separator_repaint;
 inline bool dark_mode_supported = false;
 inline DWORD build_number = 0;
@@ -385,9 +381,9 @@ inline PIMAGE_THUNK_DATA find_delay_load_thunk_in_module(void *moduleBase, const
 
 inline bool is_high_contrast()
 {
-    HIGHCONTRAST high_contrast{};
+    HIGHCONTRASTA high_contrast{};
     high_contrast.cbSize = sizeof(high_contrast);
-    if (!SystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, FALSE)) return false;
+    if (!SystemParametersInfoA(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, FALSE)) return false;
     return high_contrast.dwFlags & HCF_HIGHCONTRASTON;
 }
 
@@ -429,7 +425,7 @@ inline void paint_menu_separator(HWND hwnd)
 inline void refresh_titlebar(HWND hwnd, bool dark)
 {
     if (build_number < 18362)
-        SetProp(hwnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
+        SetPropA(hwnd, "UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
     if (_SetWindowCompositionAttribute)
     {
         BOOL dark2 = dark;
@@ -443,8 +439,8 @@ inline bool is_theme_change_message(UINT message, LPARAM lparam)
     if (message != WM_SETTINGCHANGE) return false;
 
     bool is = false;
-    const auto lparam_str = reinterpret_cast<LPCWCH>(lparam);
-    if (lparam && CompareStringOrdinal(lparam_str, -1, L"ImmersiveColorSet", -1, TRUE) == CSTR_EQUAL)
+    const auto lparam_str = reinterpret_cast<LPCSTR>(lparam);
+    if (lparam && _stricmp(lparam_str, "ImmersiveColorSet") == 0)
     {
         _RefreshImmersiveColorPolicyState();
         is = true;
@@ -455,7 +451,7 @@ inline bool is_theme_change_message(UINT message, LPARAM lparam)
 
 inline void patch_scrollbar(bool dark)
 {
-    HMODULE comctl_mod = LoadLibraryExW(L"comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    HMODULE comctl_mod = LoadLibraryExA("comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (!comctl_mod) return;
 
     const auto addr = find_delay_load_thunk_in_module(comctl_mod, "uxtheme.dll", 49); // OpenNcThemeData
@@ -509,7 +505,7 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
         break;
     }
     case WM_ERASEBKGND: {
-        if (!(GetWindowLongPtr(hwnd, GWL_STYLE) & TCS_OWNERDRAWFIXED)) break;
+        if (!(GetWindowLongPtrA(hwnd, GWL_STYLE) & TCS_OWNERDRAWFIXED)) break;
 
         RECT rc{};
         GetClientRect(hwnd, &rc);
@@ -518,7 +514,7 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
     }
 
     case WM_PAINT: {
-        if (!(GetWindowLongPtr(hwnd, GWL_STYLE) & TCS_OWNERDRAWFIXED)) break;
+        if (!(GetWindowLongPtrA(hwnd, GWL_STYLE) & TCS_OWNERDRAWFIXED)) break;
 
         PAINTSTRUCT ps{};
         HDC hdc = BeginPaint(hwnd, &ps);
@@ -547,8 +543,8 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
             const bool selected = (i == nSelTab);
             FillRect(hdc, &dis.rcItem, selected ? theme_data.tab_normal_brush : theme_data.bg_brush);
 
-            wchar_t label[256]{};
-            TCITEMW tci{};
+            char label[256]{};
+            TCITEMA tci{};
             tci.mask = TCIF_TEXT;
             tci.pszText = label;
             tci.cchTextMax = static_cast<int>(std::size(label)) - 1;
@@ -558,7 +554,7 @@ inline LRESULT CALLBACK tabcontrol_subclass_proc(HWND hwnd, UINT msg, WPARAM wPa
             SetTextColor(hdc, theme_data.text_1_color);
             HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
             HFONT hOldFont = static_cast<HFONT>(SelectObject(hdc, hFont));
-            DrawTextW(hdc, label, -1, &dis.rcItem, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+            DrawTextA(hdc, label, -1, &dis.rcItem, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
             SelectObject(hdc, hOldFont);
         }
 
@@ -624,16 +620,16 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
         HFONT hFont = reinterpret_cast<HFONT>(SendMessage(hwnd, WM_GETFONT, 0, 0));
         HFONT hOldFont = static_cast<HFONT>(SelectObject(hdc, hFont));
 
-        TEXTMETRIC tm{};
-        GetTextMetrics(hdc, &tm);
+        TEXTMETRICA tm{};
+        GetTextMetricsA(hdc, &tm);
         const int text_y_offset = tm.tmHeight / 2;
 
-        wchar_t label[256]{};
-        GetWindowTextW(hwnd, label, static_cast<int>(std::size(label)));
+        char label[256]{};
+        GetWindowTextA(hwnd, label, static_cast<int>(std::size(label)));
 
         const int text_padding = 4;
         SIZE text_size{};
-        GetTextExtentPoint32W(hdc, label, static_cast<int>(wcslen(label)), &text_size);
+        GetTextExtentPoint32A(hdc, label, static_cast<int>(strlen(label)), &text_size);
 
         FillRect(hdc, &rc, theme_data.bg_brush);
 
@@ -657,7 +653,7 @@ inline LRESULT CALLBACK groupbox_subclass_proc(HWND hwnd, UINT msg, WPARAM wPara
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, theme_data.text_1_color);
             RECT text_rc = {text_x, rc.top, text_x + text_size.cx, rc.top + tm.tmHeight};
-            DrawTextW(hdc, label, -1, &text_rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+            DrawTextA(hdc, label, -1, &text_rc, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
         }
 
         SelectObject(hdc, hOldFont);
@@ -705,7 +701,7 @@ inline LRESULT CALLBACK button_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam,
 
         FillRect(hdc, &rc, theme_data.bg_brush);
 
-        const auto btn_style = GetWindowLongPtr(hwnd, GWL_STYLE) & 0xFL;
+        const auto btn_style = GetWindowLongPtrA(hwnd, GWL_STYLE) & 0xFL;
         const bool is_radio = (btn_style == BS_RADIOBUTTON || btn_style == BS_AUTORADIOBUTTON);
         const int part = is_radio ? BP_RADIOBUTTON : BP_CHECKBOX;
 
@@ -752,8 +748,8 @@ inline LRESULT CALLBACK button_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam,
             CloseThemeData(hTheme);
         }
 
-        wchar_t label[256] = {};
-        GetWindowText(hwnd, label, _countof(label));
+        char label[256] = {};
+        GetWindowTextA(hwnd, label, _countof(label));
         if (label[0])
         {
             const RECT text_rc = {rc.left + glyph_size.cx + 4, rc.top, rc.right, rc.bottom};
@@ -761,7 +757,7 @@ inline LRESULT CALLBACK button_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam,
             const HFONT hOldFont = hFont ? reinterpret_cast<HFONT>(SelectObject(hdc, hFont)) : nullptr;
             SetTextColor(hdc, enabled ? theme_data.text_1_color : theme_data.disabled_text_color);
             SetBkMode(hdc, TRANSPARENT);
-            DrawText(hdc, label, -1, const_cast<LPRECT>(&text_rc), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            DrawTextA(hdc, label, -1, const_cast<LPRECT>(&text_rc), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
             if (hOldFont) SelectObject(hdc, hOldFont);
         }
 
@@ -856,17 +852,17 @@ inline LRESULT CALLBACK statusbar_subclass_proc(HWND hwnd, UINT msg, WPARAM wPar
 
             if (text_len > 0)
             {
-                std::wstring text(static_cast<size_t>(text_len) + 1, L'\0');
+                std::string text(static_cast<size_t>(text_len) + 1, '\0');
                 SendMessage(hwnd, SB_GETTEXT, static_cast<WPARAM>(i), reinterpret_cast<LPARAM>(text.data()));
                 text.resize(static_cast<size_t>(text_len));
 
                 rc_text.right -= borders[0];
-                DrawTextW(hdc, text.c_str(), static_cast<int>(text.size()), &rc_text,
+                DrawTextA(hdc, text.c_str(), static_cast<int>(text.size()), &rc_text,
                           DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
             }
         }
 
-        const auto bar_style = GetWindowLongPtr(hwnd, GWL_STYLE);
+        const auto bar_style = GetWindowLongPtrA(hwnd, GWL_STYLE);
         if (bar_style & SBARS_SIZEGRIP)
         {
             constexpr int DOT = 2;
@@ -960,34 +956,56 @@ inline void update_listview(HWND lv_hwnd, bool dark)
     }
 }
 
-inline void update_control(HWND hwnd, bool dark)
+inline bool is_owner_drawn_control(HWND hwnd)
 {
-    wchar_t cls[32]{};
-    GetClassName(hwnd, cls, std::size(cls));
-    std::wstring class_name(cls);
+    char cls[32]{};
+    GetClassNameA(hwnd, cls, std::size(cls));
+    std::string class_name(cls);
+    const auto style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+
+    if (class_name == WC_BUTTONA) return (style & BS_OWNERDRAW) != 0;
+    if (class_name == WC_STATICA) return (style & SS_OWNERDRAW) != 0;
+    if (class_name == WC_LISTBOXA) return (style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) != 0;
+    if (class_name == WC_COMBOBOXA) return (style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) != 0;
+    if (class_name == WC_TABCONTROLA)
+    {
+        DWORD_PTR tab_data = 0;
+        return (style & TCS_OWNERDRAWFIXED) != 0 && !GetWindowSubclass(hwnd, tabcontrol_subclass_proc, 0, &tab_data);
+    }
+
+    return false;
+}
+
+inline void update_control(HWND hwnd, bool dark, bool exclude_owner_drawn)
+{
+    char cls[32]{};
+    GetClassNameA(hwnd, cls, std::size(cls));
+    std::string class_name(cls);
+
+    if (exclude_owner_drawn && is_owner_drawn_control(hwnd)) return;
 
     _AllowDarkModeForWindow(hwnd, dark);
 
     // Don't touch the header, it's handled in InitListView.
     // FIXME: Can standalone header controls exist? If so, this will break them.
-    if (class_name == WC_HEADER) return;
+    if (class_name == WC_HEADERA) return;
 
-    if (class_name == WC_LISTVIEW)
+    if (class_name == WC_LISTVIEWA)
     {
         update_listview(hwnd, dark);
         return;
     }
 
-    if (class_name == WC_TABCONTROL)
+    if (class_name == WC_TABCONTROLA)
     {
         SetWindowTheme(hwnd, dark ? L"DarkMode_DarkTheme" : nullptr, nullptr);
 
         // We have to owner-draw it :(
-        const auto style = GetWindowLongPtr(hwnd, GWL_STYLE);
+        const auto style = GetWindowLongPtrA(hwnd, GWL_STYLE);
         if (dark)
-            SetWindowLongPtr(hwnd, GWL_STYLE, style | TCS_OWNERDRAWFIXED);
+            SetWindowLongPtrA(hwnd, GWL_STYLE, style | TCS_OWNERDRAWFIXED);
         else
-            SetWindowLongPtr(hwnd, GWL_STYLE, style & ~TCS_OWNERDRAWFIXED);
+            SetWindowLongPtrA(hwnd, GWL_STYLE, style & ~TCS_OWNERDRAWFIXED);
 
         if (dark)
             SetWindowSubclass(hwnd, tabcontrol_subclass_proc, 0, 0);
@@ -998,9 +1016,9 @@ inline void update_control(HWND hwnd, bool dark)
         return;
     }
 
-    if (class_name == WC_BUTTON)
+    if (class_name == WC_BUTTONA)
     {
-        const auto style = GetWindowLongPtr(hwnd, GWL_STYLE) & 0xFL;
+        const auto style = GetWindowLongPtrA(hwnd, GWL_STYLE) & 0xFL;
         if (style == BS_GROUPBOX)
         {
             if (dark)
@@ -1025,7 +1043,7 @@ inline void update_control(HWND hwnd, bool dark)
         }
     }
 
-    if (class_name == STATUSCLASSNAME)
+    if (class_name == STATUSCLASSNAMEA)
     {
         DWORD_PTR old_data = 0;
         if (GetWindowSubclass(hwnd, statusbar_subclass_proc, 0, &old_data))
@@ -1044,10 +1062,10 @@ inline void update_control(HWND hwnd, bool dark)
         return;
     }
 
-    static const std::unordered_map<std::wstring, std::wstring> theme_map = {
-        {WC_EDIT, L"DarkMode_DarkTheme"},
-        {WC_COMBOBOX, L"DarkMode_DarkTheme"},
-        {WC_BUTTON, L"DarkMode_Explorer"},
+    static const std::unordered_map<std::string, std::wstring> theme_map = {
+        {WC_EDITA, L"DarkMode_DarkTheme"},
+        {WC_COMBOBOXA, L"DarkMode_DarkTheme"},
+        {WC_BUTTONA, L"DarkMode_Explorer"},
     };
 
     if (dark)
@@ -1063,20 +1081,27 @@ inline void update_control(HWND hwnd, bool dark)
     }
 }
 
-inline void update_children(HWND hwnd, bool dark)
+struct UpdateChildrenContext
 {
+    bool dark;
+    bool exclude_owner_drawn;
+};
+
+inline void update_children(HWND hwnd, bool dark, bool exclude_owner_drawn)
+{
+    UpdateChildrenContext ctx{dark, exclude_owner_drawn};
     EnumChildWindows(
         hwnd,
         [](HWND hwnd, LPARAM lparam) -> BOOL {
-            const auto dark = static_cast<bool>(lparam);
-            update_control(hwnd, dark);
+            const auto *ctx = reinterpret_cast<const UpdateChildrenContext *>(lparam);
+            update_control(hwnd, ctx->dark, ctx->exclude_owner_drawn);
             return TRUE;
         },
-        static_cast<LPARAM>(dark));
+        reinterpret_cast<LPARAM>(&ctx));
 }
 
 inline void update_theme_data(bool dark);
-inline void update_window_theme(HWND hwnd, bool dark);
+inline void update_window_theme(HWND hwnd, bool dark, bool exclude_owner_drawn);
 
 inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR sId,
                                           DWORD_PTR dwRefData)
@@ -1085,6 +1110,7 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
     {
     case WM_NCDESTROY:
         RemoveWindowSubclass(hwnd, wnd_subclass_proc, sId);
+        attached_windows.erase(hwnd);
         pending_separator_repaint.erase(hwnd);
         break;
     case WM_SETTINGCHANGE:
@@ -1094,7 +1120,9 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
             update_theme_data(dark);
             if (_FlushMenuThemes) _FlushMenuThemes();
             patch_scrollbar(dark);
-            update_window_theme(hwnd, dark);
+            const auto it = attached_windows.find(hwnd);
+            const bool exclude_owner_drawn = it != attached_windows.end() ? it->second : true;
+            update_window_theme(hwnd, dark, exclude_owner_drawn);
         }
         break;
     case WM_NCPAINT: {
@@ -1121,7 +1149,9 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         case WM_CREATE: {
             const auto child_hwnd = reinterpret_cast<HWND>(lParam);
             const auto dark = is_dark();
-            update_control(child_hwnd, dark);
+            const auto it = attached_windows.find(hwnd);
+            const bool exclude_owner_drawn = it != attached_windows.end() ? it->second : true;
+            update_control(child_hwnd, dark, exclude_owner_drawn);
             break;
         }
         default:
@@ -1160,23 +1190,23 @@ inline LRESULT CALLBACK wnd_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
             FillRect(udmi->um.hdc, &udmi->dis.rcItem,
                      (hot || selected) ? theme_data.tab_normal_brush : theme_data.bg_brush);
 
-            wchar_t text[256]{};
-            MENUITEMINFOW mii{sizeof(mii)};
+            char text[256]{};
+            MENUITEMINFOA mii{sizeof(mii)};
             mii.fMask = MIIM_STRING;
             mii.dwTypeData = text;
             mii.cch = static_cast<UINT>(std::size(text));
-            GetMenuItemInfoW(udmi->um.hmenu, static_cast<UINT>(udmi->umi.iPosition), TRUE, &mii);
+            GetMenuItemInfoA(udmi->um.hmenu, static_cast<UINT>(udmi->umi.iPosition), TRUE, &mii);
 
-            NONCLIENTMETRICSW ncm{sizeof(ncm)};
-            SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-            HFONT hFont = CreateFontIndirectW(&ncm.lfMenuFont);
+            NONCLIENTMETRICSA ncm{sizeof(ncm)};
+            SystemParametersInfoA(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+            HFONT hFont = CreateFontIndirectA(&ncm.lfMenuFont);
             HFONT hOldFont = static_cast<HFONT>(SelectObject(udmi->um.hdc, hFont));
 
             SetBkMode(udmi->um.hdc, TRANSPARENT);
             SetTextColor(udmi->um.hdc, theme_data.text_1_color);
             const UINT dt_flags =
                 DT_CENTER | DT_VCENTER | DT_SINGLELINE | ((udmi->dis.itemState & ODS_NOACCEL) ? DT_HIDEPREFIX : 0U);
-            DrawTextW(udmi->um.hdc, text, -1, &udmi->dis.rcItem, dt_flags);
+            DrawTextA(udmi->um.hdc, text, -1, &udmi->dis.rcItem, dt_flags);
 
             SelectObject(udmi->um.hdc, hOldFont);
             DeleteObject(hFont);
@@ -1201,6 +1231,14 @@ inline LRESULT CALLBACK dlg_subclass_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
     case WM_CTLCOLORBTN: {
         const auto dark = is_dark();
         if (!dark) break;
+
+        const auto it = attached_windows.find(hwnd);
+        const bool exclude_owner_drawn = it != attached_windows.end() ? it->second : true;
+        if (exclude_owner_drawn && msg != WM_CTLCOLORDLG)
+        {
+            const auto child_hwnd = reinterpret_cast<HWND>(lParam);
+            if (child_hwnd && is_owner_drawn_control(child_hwnd)) break;
+        }
 
         const auto hdc = reinterpret_cast<HDC>(wParam);
 
@@ -1231,7 +1269,7 @@ inline bool is_top_level_window(HWND hwnd)
 {
     if (!IsWindow(hwnd)) return false;
 
-    const auto style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    const auto style = GetWindowLongPtrA(hwnd, GWL_STYLE);
 
     if ((style & WS_OVERLAPPEDWINDOW) || (style & WS_POPUP))
     {
@@ -1241,16 +1279,16 @@ inline bool is_top_level_window(HWND hwnd)
     return false;
 }
 
-inline void update_window_theme(HWND hwnd, bool dark)
+inline void update_window_theme(HWND hwnd, bool dark, bool exclude_owner_drawn)
 {
     _AllowDarkModeForWindow(hwnd, dark);
     BOOL dark2 = dark;
     DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark2, sizeof(dark2));
     refresh_titlebar(hwnd, dark);
-    update_children(hwnd, dark);
+    update_children(hwnd, dark, exclude_owner_drawn);
     DrawMenuBar(hwnd);
 
-    SetClassLongPtr(hwnd, GCLP_HBRBACKGROUND, (LONG_PTR)theme_data.bg_brush);
+    SetClassLongPtrA(hwnd, GCLP_HBRBACKGROUND, (LONG_PTR)theme_data.bg_brush);
 
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 }
@@ -1295,6 +1333,12 @@ struct AttachOptions
      * unspecified, the function will attempt to determine it automatically.
      */
     std::optional<bool> is_dialog = std::nullopt;
+
+    /**
+     * @brief If true, owner-drawn controls will be excluded from dark mode.
+     * The host application becomes responsible for properly coloring the controls, for which it can use `theme_data`.
+     */
+    bool exclude_owner_drawn = true;
 };
 
 inline void set(Theme theme);
@@ -1312,14 +1356,14 @@ inline void init()
     initialized = true;
 
     auto RtlGetNtVersionNumbers = reinterpret_cast<fnRtlGetNtVersionNumbers>(
-        GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetNtVersionNumbers"));
+        GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlGetNtVersionNumbers"));
     if (!RtlGetNtVersionNumbers) return;
 
     DWORD major, minor;
     RtlGetNtVersionNumbers(&major, &minor, &build_number);
     build_number &= ~0xF0000000;
 
-    h_uxtheme = LoadLibraryEx(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    h_uxtheme = LoadLibraryExA("uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (!h_uxtheme) return;
 
     _OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(49)));
@@ -1344,7 +1388,7 @@ inline void init()
         reinterpret_cast<fnIsDarkModeAllowedForWindow>(GetProcAddress(h_uxtheme, MAKEINTRESOURCEA(137)));
 
     _SetWindowCompositionAttribute = reinterpret_cast<fnSetWindowCompositionAttribute>(
-        GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowCompositionAttribute"));
+        GetProcAddress(GetModuleHandleA("user32.dll"), "SetWindowCompositionAttribute"));
 
     if (_OpenNcThemeData && _RefreshImmersiveColorPolicyState && _ShouldAppsUseDarkMode && _AllowDarkModeForWindow &&
         (_AllowDarkModeForApp || _SetPreferredAppMode) && _IsDarkModeAllowedForWindow)
@@ -1368,7 +1412,7 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
 
     if (!dark_mode_supported || attached_windows.contains(hwnd)) return;
 
-    attached_windows.insert(hwnd);
+    attached_windows.emplace(hwnd, options.exclude_owner_drawn);
 
     const auto dark = is_dark();
     update_theme_data(dark);
@@ -1379,7 +1423,7 @@ inline void attach(HWND hwnd, const AttachOptions &options = {})
     const bool is_dialog = options.is_dialog.value_or(!is_top_level_window(hwnd));
     if (is_dialog) SetWindowSubclass(hwnd, dlg_subclass_proc, 0, 0);
 
-    update_window_theme(hwnd, dark);
+    update_window_theme(hwnd, dark, options.exclude_owner_drawn);
 }
 
 /**
@@ -1409,9 +1453,9 @@ inline void set(Theme theme)
     if (_FlushMenuThemes) _FlushMenuThemes();
     patch_scrollbar(dark);
 
-    for (const auto &hwnd : attached_windows)
+    for (const auto &[hwnd, exclude_owner_drawn] : attached_windows)
     {
-        update_window_theme(hwnd, dark);
+        update_window_theme(hwnd, dark, exclude_owner_drawn);
     }
 }
 

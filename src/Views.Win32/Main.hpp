@@ -12,6 +12,8 @@
 #define WM_EXECUTE_DISPATCHER (WM_USER + 18)
 #define WM_PREDESTROY (WM_USER + 26)
 
+#define JOYSTICK_CLASS "MupenJoystick"
+
 #define VIEW_DLG_MOVIE_OVERWRITE_WARNING "VIEW_DLG_MOVIE_OVERWRITE_WARNING"
 #define VIEW_DLG_RESET_SETTINGS "VIEW_DLG_RESET_SETTINGS"
 #define VIEW_DLG_CONFIRM_SETTINGS_DISCARD "VIEW_DLG_CONFIRM_SETTINGS_DISCARD"
@@ -23,9 +25,6 @@
 #define VIEW_DLG_PLUGIN_LOAD_ERROR "VIEW_DLG_PLUGIN_LOAD_ERROR"
 #define VIEW_DLG_RAMSTART "VIEW_DLG_RAMSTART"
 #define VIEW_DLG_ABOUT "VIEW_DLG_ABOUT"
-#define VIEW_DLG_OVERWRITE_MOVIE "VIEW_DLG_OVERWRITE_MOVIE"
-
-#define JOYSTICK_CLASS L"MupenJoystick"
 
 struct t_main_context
 {
@@ -40,7 +39,6 @@ struct t_main_context
     bool paused_before_menu{};
     bool in_menu_loop{};
     bool fast_forward{};
-    std::filesystem::path app_path{};
     bool exiting{};
     bool wine{};
     CoreButtons last_controller_data[4]{};
@@ -83,7 +81,7 @@ static bool vcr_is_task_recording(const core_vcr_task task)
  * \return The friendly name of the emulator.
  * \param simple If true, returns a simplified name with only the app name and version number.
  */
-std::wstring get_mupen_name(bool simple = false);
+std::string get_mupen_name(bool simple = false);
 
 /**
  * \return Information about the current window size.

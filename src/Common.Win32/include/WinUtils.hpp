@@ -1,0 +1,587 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+#pragma once
+
+#include <filesystem>
+
+#include <windows.h>
+#include <windowsx.h>
+#include <commdlg.h>
+#include <commctrl.h>
+#include <shlobj.h>
+#include <gdiplus.h>
+#include <wrl/client.h>
+#include <spdlog/spdlog.h>
+#include <Common.Views/IDialogService.hpp>
+
+#define ComboBox_ResetContentKeepEdit(hwnd)                                                                            \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        while (ComboBox_GetCount(hwnd) > 0) ComboBox_DeleteString(hwnd, 0);                                            \
+    } while (0)
+
+/**
+ * \brief Loads a bitmap resource and adds it to an image list using a colour key for transparency, then frees the
+ * bitmap handle.
+ * \param himl The image list to add the bitmap to.
+ * \param hinst The module instance containing the bitmap resource.
+ * \param id The resource identifier of the bitmap.
+ * \param mask The colour to treat as transparent. Defaults to white.
+ * \return The index of the newly added image, or -1 on failure.
+ */
+inline int ImageList_AddMaskedFromBitmap(HIMAGELIST himl, HINSTANCE hinst, int id, COLORREF mask = RGB(255, 255, 255))
+{
+    HBITMAP hbmp = LoadBitmap(hinst, MAKEINTRESOURCE(id));
+    if (!hbmp) return -1;
+    const int index = ImageList_AddMasked(himl, hbmp, mask);
+    DeleteObject(hbmp);
+    return index;
+}
+
+extern "C"
+{
+    /**
+     * \brief The DLGTEMPLATEEX struct not included in the Windows SDK, as per Microsoft (cf.
+     * https://learn.microsoft.com/en-us/windows/win32/dlgbox/dlgtemplateex).
+     */
+    struct DLGTEMPLATEEX
+    {
+        WORD dlgVer;
+        WORD signature;
+        DWORD helpID;
+        DWORD exStyle;
+        DWORD style;
+        WORD cDlgItems;
+        short x;
+        short y;
+        short cx;
+        short cy;
+        uint16_t *menu;
+        uint16_t *windowClass;
+        WCHAR *title;
+        WORD pointsize;
+        WORD weight;
+        BYTE italic;
+        BYTE charset;
+        WCHAR *typeface;
+    };
+}
+
+/**
+ * \brief Records the execution time of a scope
+ */
+class ScopeTimer
+{
+  public:
+    ScopeTimer(const std::string &name, spdlog::logger *logger)
+    {
+        m_name = name;
+        m_logger = logger;
+        m_start_time = std::chrono::steady_clock::now();
+    }
+
+    ~ScopeTimer() { print_duration(); }
+
+    void print_duration() const { m_logger->info("[ScopeTimer] {}: {}ms", m_name.c_str(), momentary_ms()); }
+
+    [[nodiscard]] int momentary_ms() const
+    {
+        return static_cast<int>((std::chrono::steady_clock::now() - m_start_time).count() / 1'000'000);
+    }
+
+  private:
+    std::string m_name;
+    spdlog::logger *m_logger;
+    std::chrono::time_point<std::chrono::steady_clock> m_start_time;
+};
+
+/**
+ * \brief Disables a window for the lifetime of this object.
+ */
+class WindowDisabler
+{
+  public:
+    explicit WindowDisabler(const HWND hwnd) : m_hwnd(hwnd)
+    {
+        if (!IsWindow(hwnd))
+        {
+            m_hwnd = nullptr;
+            return;
+        }
+        m_prev_enabled = IsWindowEnabled(m_hwnd);
+        EnableWindow(hwnd, FALSE);
+    }
+
+    ~WindowDisabler()
+    {
+        if (IsWindow(m_hwnd))
+        {
+            EnableWindow(m_hwnd, m_prev_enabled);
+        }
+    }
+
+  private:
+    HWND m_hwnd{};
+    bool m_prev_enabled{};
+};
+
+inline RECT get_window_rect_client_space(HWND parent, HWND child)
+{
+    RECT offset_client = {0};
+    MapWindowRect(child, parent, &offset_client);
+
+    RECT client = {0};
+    GetWindowRect(child, &client);
+
+    return {offset_client.left, offset_client.top, offset_client.left + (client.right - client.left),
+            offset_client.top + (client.bottom - client.top)};
+}
+
+/**
+ * \brief Sets a statusbar's parts.
+ * \param hwnd The statusbar window handle.
+ * \param parts The parts to set, as a vector of widths in pixels.
+ */
+inline void set_statusbar_parts(HWND hwnd, std::vector<int32_t> parts)
+{
+    auto new_parts = parts;
+    auto accumulator = 0;
+    for (int i = 0; i < parts.size(); ++i)
+    {
+        accumulator += parts[i];
+        new_parts[i] = accumulator;
+    }
+    SendMessage(hwnd, SB_SETPARTS, new_parts.size(), (LPARAM)new_parts.data());
+}
+
+/**
+ * \brief Copies a string to the clipboard
+ * \param owner The clipboard content's owner window
+ * \param str The string to be copied
+ */
+inline void copy_to_clipboard(void *owner, const std::string &str)
+{
+    OpenClipboard((HWND)owner);
+    EmptyClipboard();
+    HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, (str.size() + 1) * sizeof(char));
+    if (hg)
+    {
+        memcpy(GlobalLock(hg), str.c_str(), (str.size() + 1) * sizeof(char));
+        GlobalUnlock(hg);
+        SetClipboardData(CF_TEXT, hg);
+        CloseClipboard();
+        GlobalFree(hg);
+    }
+    else
+    {
+        g_view_logger->info("Failed to copy");
+        CloseClipboard();
+    }
+}
+
+/**
+ * Gets the selected indicies of a listview.
+ * \param hwnd Handle to a listview.
+ * \return A vector containing the selected indicies.
+ * \remark
+ * https://github.com/dotnet/winforms/blob/c9a58e92a1d0140bb4f91691db8055bcd91524f8/src/System.Windows.Forms/src/System/Windows/Forms/Controls/ListView/ListView.SelectedListViewItemCollection.cs#L33
+ */
+inline std::vector<size_t> get_listview_selection(const HWND hwnd)
+{
+    const size_t count = ListView_GetSelectedCount(hwnd);
+
+    std::vector<size_t> indicies(count);
+
+    int display_index = -1;
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        const int fidx = ListView_GetNextItem(hwnd, display_index, LVNI_SELECTED);
+
+        if (fidx > 0)
+        {
+            indicies[i] = fidx;
+            display_index = fidx;
+        }
+    }
+
+    return indicies;
+}
+
+/**
+ * Shifts the listview selection by the specified amount. Retains sparse selections. Selections which fall outside the
+ * bounds of the item range after shifting are dropped. \param hwnd Handle to a listview. \param offset The shift
+ * amount.
+ */
+inline void shift_listview_selection(const HWND hwnd, const int32_t offset)
+{
+    auto raw_selection = get_listview_selection(hwnd);
+    std::vector<int64_t> selection(raw_selection.begin(), raw_selection.end());
+
+    for (const auto selected_index : selection)
+    {
+        ListView_SetItemState(hwnd, selected_index, 0, LVIS_SELECTED);
+    }
+
+    for (auto &selected_index : selection)
+    {
+        selected_index = std::max(selected_index + offset, static_cast<int64_t>(0));
+    }
+
+    for (const auto selected_index : selection)
+    {
+        ListView_SetItemState(hwnd, selected_index, LVIS_SELECTED, LVIS_SELECTED);
+    }
+}
+
+/**
+ * Sets the listview selection based on a vector of indicies.
+ * \param hwnd Handle to a listview.
+ * \param indicies A vector containing the selected indicies.
+ */
+inline void set_listview_selection(const HWND hwnd, const std::vector<size_t> indicies)
+{
+    if (!IsWindow(hwnd))
+    {
+        return;
+    }
+
+    auto selection = get_listview_selection(hwnd);
+
+    for (const auto &idx : selection)
+    {
+        ListView_SetItemState(hwnd, idx, 0, LVIS_SELECTED);
+    }
+
+    for (const auto &idx : indicies)
+    {
+        ListView_SetItemState(hwnd, idx, LVIS_SELECTED, LVIS_SELECTED);
+    }
+}
+
+/**
+ * \brief Gets the path to the current user's desktop
+ */
+inline std::filesystem::path get_desktop_path()
+{
+    char path[MAX_PATH + 1] = {0};
+    SHGetSpecialFolderPath(HWND_DESKTOP, path, CSIDL_DESKTOP, FALSE);
+    return path;
+}
+
+/**
+ * \brief Formats a duration into a string of format HH:MM:SS
+ * \param seconds The duration in seconds
+ * \return The formatted duration
+ */
+inline std::string format_duration(size_t seconds)
+{
+    char str[480] = {};
+    sprintf(str, "%02u:%02u:%02u", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+    return str;
+}
+
+/**
+ * \brief Limits a string to a specific length, appending "..." if it exceeds the limit.
+ * \param input The input string.
+ * \param n The maximum length.
+ * \return The limited string.
+ */
+[[nodiscard]] inline std::string limit_string(const std::string &input, const size_t n)
+{
+    if (input.size() <= n)
+    {
+        return input;
+    }
+    if (n <= 3)
+    {
+        return std::string(n, '.');
+    }
+    return input.substr(0, n - 3) + "...";
+}
+
+/**
+ * \brief Loads a resource as a string.
+ * \param id The resource id.
+ * \param type The resource type.
+ * \return The resource as a string, or an empty string if the resource could not be loaded.
+ */
+inline std::string load_resource_as_string(const int id, LPCSTR type)
+{
+    const HINSTANCE hinst = GetModuleHandle(nullptr);
+    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), type);
+    if (!rc)
+    {
+        return "";
+    }
+    const HGLOBAL rc_data = LoadResource(hinst, rc);
+    const auto size = SizeofResource(hinst, rc);
+    const auto data = static_cast<const char *>(LockResource(rc_data));
+    return std::string(data, size);
+}
+
+/**
+ * \brief Loads a resource as an extended dialog template.
+ * \param id The resource id.
+ * \param dlg_template A pointer to a pointer that will receive the dialog template.
+ * \return Whether the resource was successfully loaded.
+ */
+inline bool load_resource_as_dialog_template(const int id, DLGTEMPLATEEX **dlg_template)
+{
+    *dlg_template = nullptr;
+
+    const HINSTANCE hinst = GetModuleHandle(nullptr);
+
+    const HRSRC rc = FindResource(hinst, MAKEINTRESOURCE(id), RT_DIALOG);
+    if (!rc)
+    {
+        return false;
+    }
+
+    const HGLOBAL rc_data = LoadResource(hinst, rc);
+    if (!rc_data)
+    {
+        return false;
+    }
+
+    const auto data = static_cast<DLGTEMPLATEEX *>(LockResource(rc_data));
+    if (!data)
+    {
+        return false;
+    }
+
+    *dlg_template = data;
+
+    return true;
+}
+
+/**
+ * \brief Formats a value according to short formatting rules.
+ * \param value The value to format.
+ * \return A formatted string representing the value in a short format (e.g., 1.23k for 1230).
+ */
+inline std::string format_short(const uint64_t value)
+{
+    if (value < 1'000) return std::to_string(value);
+
+    auto str = std::format("{:.2f}k", (double)value / 1000.0);
+
+    while (!str.empty() && str.find('.') < str.find('k') && (str.back() == '0' || str.back() == '.')) str.pop_back();
+
+    return str;
+}
+
+/**
+ * \brief Gets the text of a window.
+ * \param hwnd The handle to the window.
+ * \return The text of the window, or an empty optional if the operation failed.
+ */
+inline std::optional<std::string> get_window_text(const HWND hwnd)
+{
+    if (!IsWindow(hwnd))
+    {
+        return std::nullopt;
+    }
+
+    SetLastError(ERROR_SUCCESS);
+
+    auto len = GetWindowTextLength(hwnd) + 1;
+
+    if (len == 0)
+    {
+        if (GetLastError() != ERROR_SUCCESS)
+        {
+            return std::nullopt;
+        }
+        return "";
+    }
+
+    std::string str(len + 1, '\0');
+    const int actual_length = GetWindowText(hwnd, str.data(), len + 1);
+    str.resize(actual_length);
+
+    return str;
+}
+
+/**
+ * \brief Ensures that the specified index in the listbox is visible.
+ * \param hwnd The handle to the listbox.
+ * \param index The index to ensure is visible.
+ */
+inline void listbox_ensure_visible(const HWND hwnd, const int32_t index)
+{
+    const int sel = ListBox_GetCurSel(hwnd);
+
+    if (sel == LB_ERR) return;
+
+    const int top = ListBox_GetTopIndex(hwnd);
+
+    RECT rc;
+    GetClientRect(hwnd, &rc);
+
+    const int item_height = ListBox_GetItemHeight(hwnd, 0);
+    const int visible_count = (rc.bottom - rc.top) / item_height;
+
+    if (sel < top || sel >= top + visible_count)
+    {
+        ListBox_SetTopIndex(hwnd, sel);
+    }
+}
+
+inline LRESULT CALLBACK no_resize_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
+                                                DWORD_PTR ref_data)
+{
+    switch (msg)
+    {
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, no_resize_subclass_proc, id);
+        break;
+    case WM_NCHITTEST: {
+        LRESULT hit = DefWindowProc(hwnd, msg, wparam, lparam);
+
+        switch (hit)
+        {
+        case HTLEFT:
+        case HTRIGHT:
+        case HTTOP:
+        case HTTOPLEFT:
+        case HTTOPRIGHT:
+        case HTBOTTOM:
+        case HTBOTTOMLEFT:
+        case HTBOTTOMRIGHT:
+            return HTCLIENT;
+        }
+
+        return hit;
+    }
+    default:
+        break;
+    }
+    return DefSubclassProc(hwnd, msg, wparam, lparam);
+}
+
+inline void attach_no_resize_subproc(const HWND hwnd)
+{
+    SetWindowSubclass(hwnd, no_resize_subclass_proc, 0, 0);
+}
+
+/**
+ * \brief Converts a bitmap with a white background into a Gdiplus::Bitmap with per-pixel
+ * premultiplied alpha (PixelFormat32bppPARGB) by extracting alpha from the white matte.
+ * \param hbmp_src The source bitmap.
+ * \param invert Whether to invert the RGB channels before premultiplication.
+ * \return A new Gdiplus::Bitmap, or nullptr on failure. The caller owns the returned object.
+ */
+inline Gdiplus::Bitmap *make_bitmap_alpha_from_white_matte(HBITMAP hbmp_src, bool invert = false)
+{
+    BITMAP bm{};
+    if (!GetObject(hbmp_src, sizeof(bm), &bm)) return nullptr;
+
+    const int w = bm.bmWidth;
+    const int h = bm.bmHeight;
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = w;
+    bmi.bmiHeader.biHeight = -h;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    std::vector<uint32_t> src(w * h);
+    HDC hdc_screen = GetDC(nullptr);
+    HDC hdc_src = CreateCompatibleDC(hdc_screen);
+    HGDIOBJ old = SelectObject(hdc_src, hbmp_src);
+    GetDIBits(hdc_src, hbmp_src, 0, h, src.data(), &bmi, DIB_RGB_COLORS);
+    SelectObject(hdc_src, old);
+    DeleteDC(hdc_src);
+    ReleaseDC(nullptr, hdc_screen);
+
+    auto *result = new Gdiplus::Bitmap(w, h, PixelFormat32bppPARGB);
+    if (!result) return nullptr;
+
+    Gdiplus::BitmapData bmd{};
+    const Gdiplus::Rect full_rect(0, 0, w, h);
+    if (result->LockBits(&full_rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppPARGB, &bmd) != Gdiplus::Ok)
+    {
+        delete result;
+        return nullptr;
+    }
+
+    for (int y = 0; y < h; ++y)
+    {
+        auto *row = reinterpret_cast<uint32_t *>(static_cast<uint8_t *>(bmd.Scan0) + y * bmd.Stride);
+        for (int x = 0; x < w; ++x)
+        {
+            const uint32_t px = src[y * w + x];
+            const uint8_t b_in = (px >> 0) & 0xFF;
+            const uint8_t g_in = (px >> 8) & 0xFF;
+            const uint8_t r_in = (px >> 16) & 0xFF;
+
+            const uint8_t alpha = 255 - std::min({r_in, g_in, b_in});
+
+            uint8_t r_out = 0;
+            uint8_t g_out = 0;
+            uint8_t b_out = 0;
+            if (alpha > 0)
+            {
+                r_out = static_cast<uint8_t>(std::clamp((r_in - (255 - alpha)) * 255 / alpha, 0, 255));
+                g_out = static_cast<uint8_t>(std::clamp((g_in - (255 - alpha)) * 255 / alpha, 0, 255));
+                b_out = static_cast<uint8_t>(std::clamp((b_in - (255 - alpha)) * 255 / alpha, 0, 255));
+            }
+
+            if (invert)
+            {
+                r_out = 255 - r_out;
+                g_out = 255 - g_out;
+                b_out = 255 - b_out;
+            }
+
+            r_out = static_cast<uint8_t>(r_out * alpha / 255);
+            g_out = static_cast<uint8_t>(g_out * alpha / 255);
+            b_out = static_cast<uint8_t>(b_out * alpha / 255);
+
+            row[x] = (static_cast<uint32_t>(alpha) << 24) | (static_cast<uint32_t>(r_out) << 16) |
+                     (static_cast<uint32_t>(g_out) << 8) | static_cast<uint32_t>(b_out);
+        }
+    }
+
+    result->UnlockBits(&bmd);
+    return result;
+}
+
+/**
+ * \brief Draws a bitmap resource into a DC with smooth transparency by extracting per-pixel
+ * alpha from the white matte and scaling with high-quality bicubic interpolation via GDI+.
+ * \param hdc The destination device context.
+ * \param rc Destination rectangle; the bitmap is stretched to fill this area.
+ * \param hinst The module instance containing the bitmap resource.
+ * \param id The resource identifier of the bitmap.
+ * \param invert Whether to invert the RGB channels before premultiplication.
+ */
+inline void draw_bitmap_transparent(HDC hdc, RECT rc, HINSTANCE hinst, int id, bool invert = false)
+{
+    HBITMAP hbmp_src = LoadBitmap(hinst, MAKEINTRESOURCE(id));
+    if (!hbmp_src) return;
+
+    Gdiplus::Bitmap *bmp = make_bitmap_alpha_from_white_matte(hbmp_src, invert);
+    DeleteObject(hbmp_src);
+
+    if (!bmp) return;
+
+    Gdiplus::Graphics g(hdc);
+    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+    g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+    g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+
+    const Gdiplus::RectF dest(static_cast<Gdiplus::REAL>(rc.left), static_cast<Gdiplus::REAL>(rc.top),
+                              static_cast<Gdiplus::REAL>(rc.right - rc.left),
+                              static_cast<Gdiplus::REAL>(rc.bottom - rc.top));
+
+    g.DrawImage(bmp, dest);
+
+    delete bmp;
+}

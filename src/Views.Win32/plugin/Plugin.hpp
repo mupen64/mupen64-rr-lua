@@ -96,7 +96,8 @@ class Plugin
      * \return The operation status along with a pointer to the plugin. The pointer will be invalid if the first pair
      * element isn't an empty string.
      */
-    static std::pair<std::wstring, std::unique_ptr<Plugin>> create(std::filesystem::path path);
+    static std::pair<std::string, std::unique_ptr<Plugin>> create(std::filesystem::path path);
+    static std::pair<std::string, std::unique_ptr<Plugin>> create(std::filesystem::path path, Type type);
 
     Plugin() = default;
     virtual ~Plugin();
@@ -166,7 +167,7 @@ typedef struct
     /**
      * Vector of discovered plugins and their results.
      */
-    std::vector<std::pair<std::filesystem::path, std::wstring>> results;
+    std::vector<std::pair<std::filesystem::path, std::string>> results;
 
 } t_plugin_discovery_result;
 
@@ -242,5 +243,10 @@ void update_screen();
 void key_down(uint32_t wParam, int32_t lParam);
 void key_up(uint32_t wParam, int32_t lParam);
 void move_screen(uint32_t wParam, int32_t lParam);
+
+/**
+ * \brief Gets all active windows exposed by the currently loaded M64RR plugins.
+ */
+std::vector<HWND> get_all_plugin_windows();
 
 } // namespace PluginUtil

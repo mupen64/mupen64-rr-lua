@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 #include "Common.hpp"
 
 #define PLUGIN_WITH_CALLBACKS
@@ -10,6 +15,7 @@
 MATCH_PLUGIN_FN(GetMetadata)
 MATCH_PLUGIN_FN(ProcessEvent)
 MATCH_PLUGIN_FN(ShowConfig)
+MATCH_PLUGIN_FN(GetWindows)
 MATCH_PLUGIN_FN(ProcessDList)
 MATCH_PLUGIN_FN(ProcessRDPList)
 MATCH_PLUGIN_FN(ReadVideo)
@@ -18,3 +24,4 @@ MATCH_PLUGIN_FN(AILenChanged)
 MATCH_PLUGIN_FN(GetKeys)
 MATCH_PLUGIN_FN(SetKeys)
 MATCH_PLUGIN_FN(ReadController)
+MATCH_PLUGIN_FN(DoRSPCycles)

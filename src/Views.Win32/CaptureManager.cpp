@@ -1,0 +1,494 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+#include "Common.hpp"
+#include <plugin/Plugin.hpp>
+#include <ThreadPool.hpp>
+#include <Common.Views/Config.hpp>
+#include <Common.Views/IDialogService.hpp>
+#include <Common.Views/Messages.hpp>
+#include <CaptureManager.hpp>
+#include <Common.Views/WinVFWEncoder.hpp>
+#include <Common.Views/Encoder.hpp>
+#include <Common.Views/WinFFmpegEncoder.hpp>
+#include <components/Dispatcher.hpp>
+#include <components/MGECompositor.hpp>
+#include <lua/LuaRenderer.hpp>
+#include <lua/LuaManager.hpp>
+
+namespace CaptureManager
+{
+constexpr auto READSCREEN_MISSING_MSG = "The current video plugin doesn't support the current capture method.\nTry "
+                                        "using another video plugin or switching the capture mode.";
+
+std::filesystem::path m_current_path;
+
+// 0x30018
+int m_audio_freq = 33000;
+int m_audio_bitrate = 16;
+long double m_video_frame = 0;
+long double m_audio_frame = 0;
+size_t m_total_frames = 0;
+
+// Video buffer, allocated once when recording starts and freed when it ends.
+uint8_t *m_video_buf = nullptr;
+int32_t m_video_width;
+int32_t m_video_height;
+static Encoder::Params m_encoder_params;
+
+std::atomic m_capturing = false;
+t_config::EncoderType m_encoder_type;
+std::unique_ptr<Encoder> m_encoder;
+std::recursive_mutex m_mutex;
+
+HDC hy_main_dc = nullptr;
+HDC hy_dc = nullptr;
+HBITMAP hy_bmp = nullptr;
+
+struct CaptureContext
+{
+    size_t vis_since_last_input_poll{};
+};
+
+static CaptureContext g_ctx{};
+
+void readscreen_plugin(int32_t *width = nullptr, int32_t *height = nullptr)
+{
+    MGECompositor::copy_video(m_video_buf);
+    MGECompositor::get_video_size(width, height);
+}
+
+void readscreen_window()
+{
+    g_main_ctx.dispatcher->invoke([] {
+        HDC dc = GetDC(g_main_ctx.hwnd);
+        HDC compat_dc = CreateCompatibleDC(dc);
+        HBITMAP bitmap = CreateCompatibleBitmap(dc, m_video_width, m_video_height);
+
+        SelectObject(compat_dc, bitmap);
+
+        BitBlt(compat_dc, 0, 0, m_video_width, m_video_height, dc, 0, 0, SRCCOPY);
+
+        BITMAPINFO bmp_info{};
+        bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmp_info.bmiHeader.biWidth = m_video_width;
+        bmp_info.bmiHeader.biHeight = m_video_height;
+        bmp_info.bmiHeader.biPlanes = 1;
+        bmp_info.bmiHeader.biBitCount = 32;
+        bmp_info.bmiHeader.biCompression = BI_RGB;
+
+        GetDIBits(compat_dc, bitmap, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4) m_video_buf[i] = 0xFF;
+
+        SelectObject(compat_dc, nullptr);
+        DeleteObject(bitmap);
+        DeleteDC(compat_dc);
+        ReleaseDC(g_main_ctx.hwnd, dc);
+    });
+}
+
+void readscreen_desktop()
+{
+    g_main_ctx.dispatcher->invoke([] {
+        POINT pt{};
+        ClientToScreen(g_main_ctx.hwnd, &pt);
+
+        HDC dc = GetDC(nullptr);
+        HDC compat_dc = CreateCompatibleDC(dc);
+        HBITMAP bitmap = CreateCompatibleBitmap(dc, m_video_width, m_video_height);
+
+        SelectObject(compat_dc, bitmap);
+
+        BitBlt(compat_dc, 0, 0, m_video_width, m_video_height, dc, pt.x, pt.y, SRCCOPY);
+
+        BITMAPINFO bmp_info{};
+        bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmp_info.bmiHeader.biWidth = m_video_width;
+        bmp_info.bmiHeader.biHeight = m_video_height;
+        bmp_info.bmiHeader.biPlanes = 1;
+        bmp_info.bmiHeader.biBitCount = 32;
+        bmp_info.bmiHeader.biCompression = BI_RGB;
+
+        GetDIBits(compat_dc, bitmap, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4) m_video_buf[i] = 0xFF;
+
+        SelectObject(compat_dc, nullptr);
+        DeleteObject(bitmap);
+        DeleteDC(compat_dc);
+        ReleaseDC(nullptr, dc);
+    });
+}
+
+void readscreen_hybrid()
+{
+    int32_t raw_video_width, raw_video_height;
+    readscreen_plugin(&raw_video_width, &raw_video_height);
+
+    // UI resources, must be accessed from UI thread
+    // To avoid GDI weirdness with cross-thread resources, we do all GDI work on UI thread.
+    g_main_ctx.dispatcher->invoke([&] {
+        // Since atupdatescreen might not have occured for a long time, we force it now.
+        // This avoids "outdated" visuals, which are otherwise acceptable during normal gameplay, being blitted to the
+        // video stream.
+        LuaRenderer::repaint_visuals();
+
+        GdiFlush();
+
+        if (!hy_dc)
+        {
+            g_view_logger->trace("Creating hybrid capture resources...");
+            hy_main_dc = GetDC(g_main_ctx.hwnd);
+            hy_dc = CreateCompatibleDC(hy_main_dc);
+            hy_bmp = CreateCompatibleBitmap(hy_main_dc, m_video_width, m_video_height);
+            SelectObject(hy_dc, hy_bmp);
+        }
+
+        {
+            BITMAPINFO bmp_info{};
+            bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bmp_info.bmiHeader.biPlanes = 1;
+            bmp_info.bmiHeader.biBitCount = 32;
+            bmp_info.bmiHeader.biWidth = raw_video_width;
+            bmp_info.bmiHeader.biHeight = raw_video_height;
+            bmp_info.bmiHeader.biCompression = BI_RGB;
+
+            // Copy the raw readscreen output
+            StretchDIBits(hy_dc, 0, 0, raw_video_width, raw_video_height, 0, 0, raw_video_width, raw_video_height,
+                          m_video_buf, &bmp_info, DIB_RGB_COLORS, SRCCOPY);
+        }
+
+        LuaRenderer::blit_all(hy_dc);
+
+        BITMAPINFO bmp_info{};
+        bmp_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmp_info.bmiHeader.biWidth = m_video_width;
+        bmp_info.bmiHeader.biHeight = m_video_height;
+        bmp_info.bmiHeader.biPlanes = 1;
+        bmp_info.bmiHeader.biBitCount = 32;
+        bmp_info.bmiHeader.biCompression = BI_RGB;
+
+        GetDIBits(hy_dc, hy_bmp, 0, m_video_height, m_video_buf, &bmp_info, DIB_RGB_COLORS);
+        for (int i = 3; i < m_video_width * m_video_height * 4; i += 4) m_video_buf[i] = 0xFF;
+    });
+}
+
+void read_screen()
+{
+    if (g_config.capture_mode == 0)
+    {
+        readscreen_plugin();
+    }
+    else if (g_config.capture_mode == 1)
+    {
+        readscreen_window();
+    }
+    else if (g_config.capture_mode == 2)
+    {
+        readscreen_desktop();
+    }
+    else if (g_config.capture_mode == 3)
+    {
+        readscreen_hybrid();
+    }
+    else
+    {
+        assert(false);
+    }
+}
+
+/**
+ * \brief Returns true if the readscreen functionality is available in the current capture mode. Shows an error dialog
+ * if it is not available.
+ */
+static bool check_readscreen_available()
+{
+    if ((g_config.capture_mode == 0 || g_config.capture_mode == 3) && !PluginUtil::mge_available())
+    {
+        DialogService::show_dialog(READSCREEN_MISSING_MSG, "Capture", fsvc_error);
+        return false;
+    }
+
+    return true;
+}
+
+void get_video_dimensions(int32_t *width, int32_t *height)
+{
+    if (g_config.capture_mode == 0)
+    {
+        MGECompositor::get_video_size(width, height);
+    }
+    else if (g_config.capture_mode == 1 || g_config.capture_mode == 2 || g_config.capture_mode == 3)
+    {
+        const auto info = get_window_info();
+        *width = info.width & ~3;
+        *height = info.height & ~3;
+    }
+    else
+    {
+        assert(false);
+    }
+}
+
+bool stop_capture_impl()
+{
+    std::lock_guard lock(m_mutex);
+
+    if (!is_capturing())
+    {
+        return true;
+    }
+
+    if (!m_encoder->stop())
+    {
+        DialogService::show_dialog("Failed to stop capturing.", "Capture", fsvc_error);
+        return false;
+    }
+
+    m_encoder.release();
+
+    g_main_ctx.dispatcher->invoke([] {
+        SelectObject(hy_dc, nullptr);
+
+        DeleteObject(hy_bmp);
+        hy_bmp = nullptr;
+
+        DeleteDC(hy_dc);
+        hy_dc = nullptr;
+
+        ReleaseDC(g_main_ctx.hwnd, hy_main_dc);
+        hy_main_dc = nullptr;
+    });
+
+    m_capturing = false;
+    g_config.core.render_throttling = true;
+    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
+
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(false);
+
+    g_view_logger->info("[CaptureManager]: Capture finished.");
+    return true;
+}
+
+bool start_capture_impl(std::filesystem::path path, t_config::EncoderType encoder_type,
+                        const bool ask_for_capture_settings)
+{
+    if (!check_readscreen_available())
+    {
+        return false;
+    }
+
+    std::lock_guard lock(m_mutex);
+
+    if (is_capturing())
+    {
+        if (!stop_capture_impl())
+        {
+            g_view_logger->info(
+                "[CaptureManager]: Couldn't start capture because the previous capture couldn't be stopped.");
+            return false;
+        }
+    }
+
+    switch (encoder_type)
+    {
+    case t_config::EncoderType::VFW:
+        m_encoder = std::make_unique<WinVFWEncoder>();
+        break;
+    case t_config::EncoderType::FFmpeg:
+        m_encoder = std::make_unique<WinFFmpegEncoder>();
+        break;
+    default:
+        assert(false);
+    }
+
+    m_encoder_type = encoder_type;
+    m_current_path = path;
+    m_current_path.replace_extension(m_encoder->get_desired_extension());
+
+    m_video_frame = 0.0;
+    m_audio_frame = 0.0;
+    m_total_frames = 0;
+
+    free(m_video_buf);
+    get_video_dimensions(&m_video_width, &m_video_height);
+    m_video_buf = (uint8_t *)malloc(m_video_width * m_video_height * 4);
+
+    m_encoder_params = Encoder::Params{
+        .path = m_current_path,
+        .width = (uint32_t)m_video_width,
+        .height = (uint32_t)m_video_height,
+        .fps = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code),
+        .arate = (uint32_t)m_audio_freq,
+        .ask_for_capture_settings = ask_for_capture_settings,
+    };
+
+    g_view_logger->info("[CaptureManager]: Starting capture at {} x {}...", m_video_width, m_video_height);
+    const auto result = m_encoder->start(m_encoder_params);
+
+    if (result.has_value())
+    {
+        const auto &str = result.value();
+        if (!str.empty())
+        {
+            DialogService::show_dialog(str, "Capture", fsvc_error);
+        }
+        return false;
+    }
+
+    m_capturing = true;
+    g_config.core.render_throttling = false;
+    g_main_ctx.core_ctx->vr_on_render_throttling_changed();
+
+    Messenger::broadcast<Messenger::Message::CapturingChanged>(true);
+
+    return true;
+}
+
+void start_capture(std::filesystem::path path, t_config::EncoderType encoder_type, const bool ask_for_capture_settings,
+                   const std::function<void(bool)> &callback)
+{
+    g_main_ctx.core_ctx->vr_wait_increment();
+    ThreadPool::submit_task([=] {
+        const auto result = start_capture_impl(path, encoder_type, ask_for_capture_settings);
+        if (callback)
+        {
+            callback(result);
+        }
+        g_main_ctx.core_ctx->vr_wait_decrement();
+    });
+}
+
+void stop_capture(const std::function<void(bool)> &callback)
+{
+    g_main_ctx.core_ctx->vr_wait_increment();
+    ThreadPool::submit_task([=] {
+        const auto result = stop_capture_impl();
+        if (callback)
+        {
+            callback(result);
+        }
+        g_main_ctx.core_ctx->vr_wait_decrement();
+    });
+}
+
+void vi()
+{
+    std::lock_guard lock(m_mutex);
+    if (!m_capturing) return;
+
+    g_ctx.vis_since_last_input_poll++;
+}
+
+void input()
+{
+    std::lock_guard lock(m_mutex);
+    if (!m_capturing) return;
+
+    if (g_config.capture_delay)
+    {
+        Sleep(g_config.capture_delay);
+    }
+
+    // Show the latest graphics for the amount of VIs since the last input poll.
+    read_screen();
+
+    for (size_t i = 0; i < g_ctx.vis_since_last_input_poll; i++)
+    {
+        if (!m_encoder->append_video(m_video_buf))
+        {
+            DialogService::show_dialog("Failed to append frame to video.\nPerhaps you ran out of memory?", "Capture",
+                                       fsvc_error);
+            stop_capture();
+            return;
+        }
+        m_total_frames++;
+    }
+
+    g_ctx.vis_since_last_input_poll = 0;
+}
+
+void ai_len_changed()
+{
+    std::lock_guard lock(m_mutex);
+
+    const auto p = reinterpret_cast<short *>((char *)g_main_ctx.core_ctx->rdram +
+                                             (g_main_ctx.core_ctx->ai_register->ai_dram_addr & 0xFFFFFF));
+    const auto buf = (char *)p;
+    const int ai_len = (int)g_main_ctx.core_ctx->ai_register->ai_len;
+
+    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
+
+    if (!m_capturing)
+    {
+        return;
+    }
+
+    if (ai_len <= 0) return;
+
+    if (!m_encoder->append_audio(reinterpret_cast<uint8_t *>(buf), ai_len, m_audio_bitrate))
+    {
+        DialogService::show_dialog("Failed to append audio data.\nCapture will be stopped.", "Capture", fsvc_error);
+        stop_capture();
+    }
+}
+
+void ai_dacrate_changed(CoreSystemType type)
+{
+    m_audio_bitrate = (int)g_main_ctx.core_ctx->ai_register->ai_bitrate + 1;
+
+    switch (type)
+    {
+    case CoreSystemType::NTSC:
+        m_audio_freq = (int)(48681812 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+        break;
+    case CoreSystemType::PAL:
+        m_audio_freq = (int)(49656530 / (g_main_ctx.core_ctx->ai_register->ai_dacrate + 1));
+        break;
+    default:
+        assert(false);
+        break;
+    }
+    g_view_logger->info("[CaptureManager] m_audio_freq: {}", m_audio_freq);
+}
+
+size_t get_video_frame()
+{
+    return m_total_frames;
+}
+
+std::filesystem::path get_current_path()
+{
+    return m_current_path;
+}
+
+bool is_capturing()
+{
+    return m_capturing;
+}
+
+void core_executing_changed(bool value)
+{
+    std::lock_guard lock(m_mutex);
+
+    if (!value || !m_capturing) return;
+
+    const auto vis = g_main_ctx.core_ctx->vr_get_vis_per_second(g_main_ctx.core_ctx->vr_get_rom_header()->Country_code);
+
+    if (vis != m_encoder_params.fps)
+    {
+        DialogService::show_dialog(
+            "Changed to a ROM from a different region during capture.\r\nThe capture will be stopped.", "Capture",
+            fsvc_error);
+        stop_capture();
+    }
+}
+
+void init()
+{
+    Messenger::subscribe<Messenger::Message::DacrateChanged>(ai_dacrate_changed);
+    Messenger::subscribe<Messenger::Message::CoreExecutingChanged>(core_executing_changed);
+}
+} // namespace CaptureManager

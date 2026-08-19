@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -10,22 +10,23 @@
 #include <components/ConfigDialog.hpp>
 #include <action/AppActions.hpp>
 #include <components/ParameterPalette.hpp>
-#include <Messenger.hpp>
+#include <Common.Views/Messages.hpp>
+#include <HotkeyUtils.hpp>
 #include "CommandPalette.hpp"
 
 struct t_listbox_item
 {
     struct t_group_data
     {
-        std::wstring text;
+        std::string text;
     };
 
     struct t_action_data
     {
-        std::wstring text;
-        std::wstring path{};
-        std::wstring raw_display_name{};
-        std::wstring hotkey{};
+        std::string text;
+        std::string path{};
+        std::string raw_display_name{};
+        std::string hotkey{};
 
         bool enabled{};
         bool active{};
@@ -44,8 +45,8 @@ struct t_listbox_item
 
     std::variant<t_group_data, t_action_data, t_option_data, t_rom_data> data{};
 
-    static t_listbox_item make_group(const std::wstring &group_name);
-    static t_listbox_item make_action(const std::wstring &action, const std::wstring &group);
+    static t_listbox_item make_group(const std::string &group_name);
+    static t_listbox_item make_action(const std::string &action, const std::string &group);
     static t_listbox_item make_option(ConfigDialog::t_options_item *item, const ConfigDialog::t_options_group &group);
     static t_listbox_item make_option_group(const ConfigDialog::t_options_group &options_group);
     static t_listbox_item make_rom(const RomBrowser::t_simple_rom_info &rom);
@@ -63,17 +64,17 @@ struct t_listbox_item
     /**
      * \return Whether the item matches the specified search query.
      */
-    [[nodiscard]] bool matches_query(const std::wstring_view query) const;
+    [[nodiscard]] bool matches_query(const std::string_view query) const;
 
     /**
      * \return The primary text to display for this item, if any.
      */
-    [[nodiscard]] std::optional<std::wstring> get_primary_text() const;
+    [[nodiscard]] std::optional<std::string> get_primary_text() const;
 
     /**
      * \return The secondary text to display for this item, if any.
      */
-    [[nodiscard]] std::optional<std::wstring> get_secondary_text() const;
+    [[nodiscard]] std::optional<std::string> get_secondary_text() const;
 
   private:
     t_listbox_item() = default;
@@ -96,8 +97,8 @@ struct t_command_palette_context
     // Currently displayed items, filtered by search query.
     std::vector<t_listbox_item> items{};
 
-    std::wstring search_query{};
-    std::vector<std::wstring> actions{};
+    std::string search_query{};
+    std::vector<std::string> actions{};
     std::vector<ConfigDialog::t_options_group> option_groups{};
 };
 
@@ -106,24 +107,24 @@ static t_command_palette_context g_ctx{};
 /**
  * \brief Normalizes a string for comparison.
  */
-static std::wstring normalize(std::wstring str)
+static std::string normalize(std::string str)
 {
     std::ranges::transform(str, str.begin(), toupper);
-    str = StrUtils::ctrim_wstring(str);
+    str = StrUtils::ctrim_string(str);
     return str;
 }
 
-t_listbox_item t_listbox_item::make_group(const std::wstring &group_name)
+t_listbox_item t_listbox_item::make_group(const std::string &group_name)
 {
     t_listbox_item item{};
     item.data = t_group_data{group_name};
     return item;
 }
 
-t_listbox_item t_listbox_item::make_action(const std::wstring &action, const std::wstring &group)
+t_listbox_item t_listbox_item::make_action(const std::string &action, const std::string &group)
 {
     const auto hotkey = g_config.hotkeys.at(action);
-    const auto hotkey_str = hotkey.is_empty() ? L"" : hotkey.to_wstring();
+    const auto hotkey_str = hotkey.is_empty() ? "" : hotkey.to_string();
 
     t_listbox_item item{};
     item.data = t_action_data{.text = ActionManager::get_display_name(action),
@@ -174,13 +175,13 @@ bool t_listbox_item::selectable() const
 
     if (std::holds_alternative<t_option_data>(data))
     {
-        return std::get<t_option_data>(data).item->is_readonly() == false;
+        return !std::get<t_option_data>(data).item->get_readonly_reason().has_value();
     }
 
     return true;
 }
 
-bool t_listbox_item::matches_query(const std::wstring_view query) const
+bool t_listbox_item::matches_query(const std::string_view query) const
 {
     if (query.empty())
     {
@@ -197,7 +198,7 @@ bool t_listbox_item::matches_query(const std::wstring_view query) const
     if (std::holds_alternative<t_rom_data>(data))
     {
         const auto &rom = std::get<t_rom_data>(data).rom;
-        const auto filename = std::filesystem::path(rom.path).filename().wstring();
+        const auto filename = std::filesystem::path(rom.path).filename().string();
         const auto normalized_filename = normalize(filename);
         return normalized_filename.contains(query);
     }
@@ -221,12 +222,12 @@ bool t_listbox_item::matches_query(const std::wstring_view query) const
         return normalized_display_name.contains(query);
     }
 
-    RT_ASSERT(false, L"Unknown listbox item type in matches_query");
+    RT_ASSERT(false, "Unknown listbox item type in matches_query");
 
     return false;
 }
 
-std::optional<std::wstring> t_listbox_item::get_primary_text() const
+std::optional<std::string> t_listbox_item::get_primary_text() const
 {
     if (std::holds_alternative<t_group_data>(data))
     {
@@ -236,7 +237,7 @@ std::optional<std::wstring> t_listbox_item::get_primary_text() const
     if (std::holds_alternative<t_rom_data>(data))
     {
         const auto &rom = std::get<t_rom_data>(data).rom;
-        return std::filesystem::path(rom.path).filename().wstring();
+        return std::filesystem::path(rom.path).filename().string();
     }
 
     if (std::holds_alternative<t_action_data>(data))
@@ -254,7 +255,7 @@ std::optional<std::wstring> t_listbox_item::get_primary_text() const
     return std::nullopt;
 }
 
-std::optional<std::wstring> t_listbox_item::get_secondary_text() const
+std::optional<std::string> t_listbox_item::get_secondary_text() const
 {
     if (std::holds_alternative<t_action_data>(data))
     {
@@ -280,7 +281,7 @@ bool t_listbox_item::enabled() const
 
     if (std::holds_alternative<t_option_data>(data))
     {
-        return std::get<t_option_data>(data).item->is_readonly() == false;
+        return !std::get<t_option_data>(data).item->get_readonly_reason().has_value();
     }
 
     return true;
@@ -370,9 +371,9 @@ static bool try_change_hotkey(int32_t i)
     {
         const auto &action = std::get<t_listbox_item::t_action_data>(item->data);
 
-        Hotkey::t_hotkey hotkey = g_config.hotkeys.at(action.path);
-        Hotkey::show_prompt(g_main_ctx.hwnd, std::format(L"Choose a hotkey for {}", action.text), hotkey);
-        Hotkey::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
+        Hotkey hotkey = g_config.hotkeys.at(action.path);
+        HotkeyUtils::show_prompt(g_main_ctx.hwnd, std::format("Choose a hotkey for {}", action.text), hotkey);
+        HotkeyUtils::try_associate_hotkey(g_main_ctx.hwnd, action.path, hotkey);
         return true;
     }
 
@@ -399,14 +400,14 @@ static int32_t find_index_of_first_selectable_item()
 /**
  * \brief Adds actions to the listbox item collection.
  */
-static void add_actions(const std::wstring_view query)
+static void add_actions(const std::string_view query)
 {
     // 1. Collect groups
-    std::vector<std::wstring> unique_group_names;
+    std::vector<std::string> unique_group_names;
 
     for (const auto &path : g_ctx.actions)
     {
-        std::vector<std::wstring> segments = ActionManager::get_segments(path);
+        std::vector<std::string> segments = ActionManager::get_segments(path);
 
         if (segments.size() <= 1)
         {
@@ -415,7 +416,7 @@ static void add_actions(const std::wstring_view query)
 
         segments.pop_back();
 
-        std::wstring group_name;
+        std::string group_name;
         for (size_t i = 0; i < segments.size(); ++i)
         {
             if (i > 0)
@@ -434,14 +435,14 @@ static void add_actions(const std::wstring_view query)
     // 2. For each group, add matching actions
     for (const auto &group : unique_group_names)
     {
-        auto actions = ActionManager::get_actions_matching_filter(std::format(L"{} > *", group));
+        auto actions = ActionManager::get_actions_matching_filter(std::format("{} > *", group));
 
         auto segments = ActionManager::get_segments(group);
         for (auto &segment : segments)
         {
             segment = ActionManager::get_display_name(segment, true);
         }
-        const auto name = StrUtils::join_wstring(segments, std::format(L" {} ", ActionManager::SEGMENT_SEPARATOR));
+        const auto name = StrUtils::join_string(segments, std::format(" {} ", ActionManager::SEGMENT_SEPARATOR));
 
         std::erase_if(actions, [&](const auto &action) {
             const auto action_segments = ActionManager::get_segments(action);
@@ -467,7 +468,7 @@ static void add_actions(const std::wstring_view query)
 /**
  * \brief Adds configuration options to the listbox item collection.
  */
-static void add_options(const std::wstring_view query)
+static void add_options()
 {
     g_ctx.option_groups = ConfigDialog::get_option_groups();
 
@@ -494,9 +495,9 @@ static void add_options(const std::wstring_view query)
 /**
  * \brief Adds known ROMs to the listbox item collection.
  */
-static void add_roms(const std::wstring_view query)
+static void add_roms()
 {
-    g_ctx.all_items.emplace_back(t_listbox_item::make_group(L"ROMs"));
+    g_ctx.all_items.emplace_back(t_listbox_item::make_group("ROMs"));
 
     for (const auto &rom : RomBrowser::get_discovered_roms())
     {
@@ -513,8 +514,8 @@ static void collect_items()
     const auto normalized_query = normalize(g_ctx.search_query);
 
     add_actions(normalized_query);
-    add_options(normalized_query);
-    add_roms(normalized_query);
+    add_options();
+    add_roms();
 }
 
 /**
@@ -667,7 +668,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
         g_ctx.text_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_TEXT);
         g_ctx.edit_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_EDIT);
         g_ctx.listbox_hwnd = GetDlgItem(hwnd, IDC_COMMAND_PALETTE_LIST);
-        g_ctx.actions = ActionManager::get_actions_matching_filter(L"*");
+        g_ctx.actions = ActionManager::get_actions_matching_filter("*");
 
         // 1. Remove the titlebar and prevent resizing.
         const LONG style = GetWindowLong(hwnd, GWL_STYLE);
@@ -852,7 +853,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             const auto secondary_text = item->get_secondary_text();
             if (secondary_text.has_value())
             {
-                const auto text = limit_wstring(*secondary_text, 30);
+                const auto text = limit_string(*secondary_text, 30);
 
                 SIZE sz;
                 GetTextExtentPoint32(pdis->hDC, text.c_str(), (int)text.size(), &sz);
@@ -869,7 +870,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                 HGDIOBJ prev_obj = SelectObject(pdis->hDC, pen);
 
                 SIZE sz;
-                GetTextExtentPoint32(pdis->hDC, group.text.c_str(), (int)group.text.length(), &sz);
+                GetTextExtentPoint32(pdis->hDC, group.text.c_str(), (int)group.text.size(), &sz);
 
                 MoveToEx(pdis->hDC, base_rc.left + sz.cx + 4,
                          pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2, nullptr);

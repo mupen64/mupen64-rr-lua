@@ -1,0 +1,61 @@
+name: "Windows environment setup"
+description: "Sets up the mupen64-rr dev environment on Windows"
+
+inputs:
+  arch:
+    description: "Target processor architecture [x86, x64]"
+    required: true
+  is_nightly:
+    description: "Whether to setup the nightly build variables."
+    required: false
+    default: false
+  commit_hash:
+    description: |
+      Full commit hash to append to the nightly version suffix.
+      If unspecified or empty, omits the suffix entirely.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: TheMrMilchmann/setup-msvc-dev@v4
+      with:
+        arch: ${{ inputs.arch }}
+
+    - name: Remove standalone LLVM from PATH (fix CMake picking up wrong clang-cl)
+      shell: powershell
+      run: |
+        $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*Program Files\LLVM*' }) -join ';'
+        echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item `
+          -ItemType Directory `
+          -Force `
+          -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" | Out-Null
+
+    - name: Cache vcpkg binaries and installed packages
+      uses: actions/cache@v5
+      with:
+        path: |
+          vcpkg_cache
+          vcpkg_installed
+          build/vcpkg_installed
+        key: >
+          vcpkg-${{ runner.os }}-${{ inputs.arch }}-${{
+          hashFiles('vcpkg.json','vcpkg-configuration.json','toolchains/vcpkg-win64.cmake') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-${{ inputs.arch }}-${{ hashFiles('vcpkg.json','vcpkg-configuration.json') }}-
+          vcpkg-${{ runner.os }}-${{ inputs.arch }}-
+
+    - name: Setup nightly build environment variables
+      if: ${{ inputs.is_nightly }}
+      shell: powershell
+      run: |
+        $suffix = "${{ inputs.commit_hash }}"
+        if ($suffix -ne "") { $suffix="-nightly-" + $suffix.Substring(0, 7) }
+        echo "NIGHTLY=1" >> $env:GITHUB_ENV
+        echo "VERSION_SUFFIX=$suffix" >> $env:GITHUB_ENV

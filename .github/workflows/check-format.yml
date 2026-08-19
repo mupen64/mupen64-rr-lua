@@ -1,7 +1,6 @@
-name: Check Format
+name: Check format
 
 on:
-  push:
   pull_request:
   workflow_dispatch:
 
@@ -14,14 +13,29 @@ permissions:
 
 jobs:
   check-format:
+    name: check all formatting
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v6
-      - uses: DoozyX/clang-format-lint-action@v0.20
-        with:
-          source: "./src"
-          exclude: "./lib ./tools"
-          extensions: "c,cpp,h,hpp"
-          clangFormatVersion: 20
-          style: file
+      - parallel:
+        - name: check against clang-format
+          uses: DoozyX/clang-format-lint-action@v0.20
+          with:
+            source: "./src"
+            exclude: "./lib ./tools"
+            extensions: "c,cpp,h,hpp"
+            clangFormatVersion: 20
+            style: file
+        - name: check copyright headers
+          shell: bash
+          working-directory: ${{ env.GITHUB_WORKSPACE }}
+          run: |
+            shopt -s globstar nullglob
+            python3 tools/check_headers.py \
+              src/**/*{.c,.h,.cpp,.hpp} \
+              src/**/*.rc \
+              src/**/*.qml \
+              src/**/CMakeLists.txt src/**/*.cmake \
+              src/**/*.lua \
+              tools/**/*.py

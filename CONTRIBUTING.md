@@ -1,91 +1,100 @@
-
 # Compiling
 
 Only Windows supports compiling the full emulator. However, the core and VCR tests can be (experimentally) compiled on other platforms.
 
 ## Windows dependencies
 
-You'll need:
-- Visual Studio 2026 (for the compiler, CMake, Ninja and vcpkg)
-  - Ensure the LLVM tools are installed (as we compile with Clang by default).
+Install Visual Studio 2026 with:
+- MSVC
+- Windows SDK
+- LLVM tools
+- CMake
+- Ninja
+- vcpkg
 
-In order for the compiler to work, you'll need to be in a VS developer environment.
+Most of these are included by default on the **Desktop Development with C++** workload.
+
+### Qt frontend 
+You'll also need a Qt installation to build the Qt frontend; install with:
+- MSVC *(note: these are the Qt libraries as built for MSVC)*
+
+Set the environment variable `CMAKE_PREFIX_PATH` to `C:\Qt\6.11.1\msvc2022_64`. If you installed Qt to a directory other than `C:\Qt`, change that path accordingly.
+
+If you want to save space, you can skip installing Qt Creator, CMake, Ninja; the only thing needed from the Qt install is the prebuilt libraries.
 
 ## Linux dependencies
 
-```fish
-sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua mingw-w64-gcc vcpkg
+Arch (and relatives):
+```sh
+# core dependencies
+sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua
 yay -S --needed libsafec
+
+# Qt frontend
+sudo pacman -S --needed qt6-base qt6-declarative
+
+# MinGW cross-compilation
+sudo pacman -S mingw-w64-gcc vcpkg
 source /etc/profile.d/vcpkg.sh
 ```
 
-## CMake Presets
-Compiling is as easy as using one of the provided configure presets. All platforms generally use `clang` as the compiler and `Ninja` as the generator.
+Find equivalent packages for your distro if it isn't listed here.
+
+## CMake Presets and Options
+Compiling is as easy as using one of the provided configure presets. All platforms generally use `clang` as the compiler and `Ninja` as the generator. All presets have release-build counterparts bearing a `-release` suffix (`vcpkg-win64-x64-release`, `sys-linux-release`, etc.).
 
 |Preset|Platform|
 |:--|:--|
-|`vcpkg-win64-x86(-release)`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
-|`vcpkg-win64-x64(-release)`|**64-bit target** on **64-bit Windows** host, dependencies via `vcpkg`|
-|`sys-linux64-x64`|**64-bit** target, **64-bit Linux** host, dependencies from system|
-|`mingw-linux-x64(-release)`|**64-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
-|`mingw-linux-x86(-release)`|**32-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
+|`vcpkg-win64-x64`|**64-bit target** on **64-bit Windows** host, dependencies via `vcpkg`|
+|`vcpkg-win64-x86`|**32-bit** target on **64-bit Windows** host, dependencies via `vcpkg`|
+|`sys-linux`|compile for **Linux** host, dependencies via system|
+|`mingw-linux-x64`|**64-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
+|`mingw-linux-x86`|**32-bit** MinGW cross-compile from **Linux** to **Windows**, dependencies via system or optional `vcpkg`|
 
-### Visual Studio Code + CMake Tools
-Configure presets should be made available via CMake Tools, see above.
+The two available GUI frontends are:
+- Win32 (option `MUPEN64RR_BUILD_WIN32`): enabled by default on Windows, disabled elsewhere
+- Qt (***experimental***, option `MUPEN64RR_BUILD_QT6`): enabled by default on Linux, disabled elsewhere
 
-#### Windows-only
-You'll need to enable `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to convince CMake Tools to set up a VS developer environment.
+Additional options are described at the top of the root `CMakeLists.txt` file; see there or use `ccmake` for more information.
 
-### CLion
-Make sure to set the CMake profile to use the desired preset (`vcpkg-win64-x86` or `vcpkg-win64-x64`), enabling it if needed.
-
-If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
-
-### Zed
-All tasks required for development are available in the task panel.
-
-#### Windows-only
-Visual Studio 2026 must be installed on the `C:` drive.
-
-## Linux
-
-> **NOTE:** 32-bit native builds are not supported on Linux, as this would require far too many extra dependencies to be worth it.
-
-To build natively:
+### Command line
+This should be familiar to CMake users. *(Windows)* Ensure this is run in a Visual Studio developer console.
 ```sh
-cmake --preset sys-linux64-x64
+# building
+cmake --preset "<preset-name>"
 cmake --build build
-```
-
-The core VCR tests are integrated with CMake, so running the tests is easy:
-```sh
+# testing
 ctest --test-dir build
 ```
 
-## MinGW cross-compilation (Linux → Windows)
+### Visual Studio Code + CMake Tools
+- Configure presets should be made available via CMake Tools, see above.
+- *(Windows)* Add `"cmake.useVsDeveloperEnvironment": "always"` in your workspace settings to ensure CMake Tools sets up a Visual Studio environment.
 
-```sh
-# 64-bit debug
-cmake --preset mingw-linux-x64
-cmake --build build
+### CLion
+- Make sure to set the CMake profile to use the desired preset (`vcpkg-win64-x86` or `vcpkg-win64-x64`), enabling it if needed.
+- If you aren't presented with a CMake profile selection dialog on startup, you can change the active profile by going to `File -> Settings -> Build, Execution, Deployment -> CMake`.
 
-# 64-bit release
-cmake --preset mingw-linux-x64-release
-cmake --build build
+### Zed
+- All tasks required for development are available in the task panel.
+- Visual Studio 2026 must be installed on the `C:` drive.
 
-# 32-bit debug
-cmake --preset mingw-linux-x86
-cmake --build build
-
-# 32-bit release
-cmake --preset mingw-linux-x86-release
-cmake --build build
-```
-
-MinGW runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) are automatically copied to the output directory at build time.
+## MinGW cross-compilation
+Compile and build using the provided `mingw-linux-*` presets. MinGW runtime DLLs (`libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll`) will be automatically copied to the output directory at build time.
 
 # Dependencies
-When adding CMake dependencies, ensure that dependencies specific to the frontend and/or plugins are wrapped inside an `if()` block. this will ensure cross-platform compatibility when the time comes for that.
+
+## Major dependencies
+
+If you need to include a large cross-platform library, it should be found via `find_package`. By platform:
+  - **Windows**: add the dependency to `vcpkg.json`
+  - **Linux**: rely on the system package.
+
+> **Note:** Qt is an exception on Windows, as it should be provided by a Qt installation.
+
+Dependencies should be provided in this fashion if a package is available for it on both **the latest Ubuntu LTS** (currently 26.04 "resolute") and **the latest Fedora release**.
+
+Ensure that dependencies specific to a frontend and/or plugins are wrapped inside an `if()` block.
 
 > **Note:** the Windows GUI components are gated behind `MUPEN64RR_BUILD_WIN32`. 
 
@@ -96,6 +105,16 @@ if (MUPEN64RR_BUILD_WIN32)
   find_package(SDL3 CONFIG REQUIRED) 
 endif()
 ```
+
+## Vendored dependencies
+
+Smaller libraries may be directly vendored in the `vendor/` subdirectory. Make sure to setup an alias target for each library.
+
+```cmake
+add_subdirectory(argh)
+add_library(vendor::argh ALIAS argh)
+```
+
 
 # Branching
 
@@ -188,29 +207,8 @@ If you only have the stacktrace from `mupen.log`:
 3. Open the "Go to" dialog by pressing Ctrl + G
 4. Navigate to `0x00400000` + `[Your Address]`
 
-# TAS Plugins and Plugin Compatibility
+# First-party Plugins and Plugin Compatibility
 
-The "TAS" plugins are our first-party plugins that aim to be lightweight and fast.
+The "TAS [Video|Audio|Input|RSP]" and "No [Video|Audio|Input|RSP]" plugins are our statically-linked first-party plugins that aim to be lightweight and fast.
 
-They're tied to their contemporary version of Mupen and are not guaranteed to be compatible with older or newer versions.
-
-While Mupen is compatible with any Zilmar spec plugin (e.g. Jabo's plugins, GLideN64), we plan to prioritize our first-party plugins by moving to a private plugin API in the future.
-Support for Zilmar spec support will eventually be provided only via a shim layer (cf. [#670](https://github.com/mupen64/mupen64-rr-lua/issues/670))
-
-## Developer Guidelines
-
-### Naming
-
-The plugin's friendly name should follow the schema:
-
-`[Plugin Name] [Version] [x64] [Debug]` (e.g.: `TAS Input 2.0.0`, `TAS Input 2.0.0 x64 Debug`)
-
-### Initialization
-
-Keep `DllMain` as simple as possible; do not initialize SDL, DirectInput, or any other external libraries.
-
-Initialize libraries in `RomOpen` and - if possible - do it only once.
-
-### Configuration
-
-Write persistent config to the filesystem as JSON, ideally next to the mupen executable.
+Mupen64 remains compatible with Zilmar-spec plugin (e.g. Jabo's plugins, GLideN64), however, these are only supported via a shim on the Win32 frontend. The upcoming Qt frontend will likely not support Zilmar-spec plugins, as the additional development effort to support it seems too great to be helpful.
