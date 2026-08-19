@@ -148,7 +148,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
 EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
-    ConfigDialog::show(parent_window.hwnd());
+    TASVideo::ConfigDialog::show(parent_window.hwnd());
 }
 
 EXPORT void CALL M64RRProcessDList(void)

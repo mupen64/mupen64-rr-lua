@@ -8,6 +8,8 @@
 
 #include <windows.h>
 
+namespace TASVideo
+{
 /*
  * \brief Provides a config dialog.
  */
@@ -18,4 +20,5 @@ namespace ConfigDialog
  * \param parent The parent window.
  */
 void show(HWND parent);
-} // namespace MicrocodeDialog
+} // namespace ConfigDialog
+} // namespace TASVideo
