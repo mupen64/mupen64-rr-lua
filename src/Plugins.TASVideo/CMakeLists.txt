@@ -89,28 +89,25 @@ set_target_properties(Mupen64RR.Plugins.TASVideo PROPERTIES
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_include_directories(Mupen64RR.Plugins.TASVideo PRIVATE ".")
-target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
-    Mupen64RR.Plugins.Win32.Common
-    vendor::hqx
-    vendor::xbrz
-    nlohmann_json::nlohmann_json
-    GLEW::GLEW
-    SDL3::SDL3
-)
 
 if (MUPEN64RR_BUILD_WIN32)
     target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
         comctl32
         uxtheme
         msimg32
-        gdiplus
         opengl32
-        glu32
-        winmm
     )
 else()
     # FIXME
 endif()
+
+target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
+    vendor::hqx
+    vendor::xbrz
+    nlohmann_json::nlohmann_json
+    GLEW::GLEW
+    SDL3::SDL3
+)
 
 target_compile_definitions(Mupen64RR.Plugins.TASVideo PRIVATE
     M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
