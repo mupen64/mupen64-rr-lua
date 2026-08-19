@@ -80,9 +80,23 @@ if (MUPEN64RR_BUILD_WIN32)
     target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Win32.Common)
 else()
     target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Common)
+    if (MUPEN64RR_BUILD_QT6)
+        target_sources(Mupen64RR.Plugins.TASVideo PRIVATE
+            "MicrocodeDialog_Qt.hpp"
+            "ConfigDialog_Qt.hpp"
+
+            "MicrocodeDialog_Qt.cpp"
+            "ConfigDialog_Qt.cpp"
+        )
+        target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Qt6::Widgets)
+    endif()
 endif()
 
 target_compile_features(Mupen64RR.Plugins.TASVideo PRIVATE cxx_std_26)
+target_compile_definitions(Mupen64RR.Plugins.TASVideo PRIVATE
+    MUPEN64RR_BUILD_WIN32=$<BOOL:${MUPEN64RR_BUILD_WIN32}>
+    MUPEN64RR_BUILD_QT6=$<BOOL:${MUPEN64RR_BUILD_QT6}>
+)
 set_target_properties(Mupen64RR.Plugins.TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"

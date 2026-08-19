@@ -10,8 +10,10 @@
 #include "N64.hpp"
 #include "RSP.hpp"
 #include "Config.hpp"
-#ifdef _WIN32
+#if MUPEN64RR_BUILD_WIN32
 #include "ConfigDialog_Win32.hpp"
+#elif MUPEN64RR_BUILD_QT6
+#include "ConfigDialog_Qt.hpp"
 #endif
 
 TASVideoContext g_tas_ctx{};
@@ -119,7 +121,11 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
 EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
+#if MUPEN64RR_BUILD_WIN32
     TASVideo::ConfigDialog::show(parent_window.hwnd());
+#elif MUPEN64RR_BUILD_QT6
+    TASVideo::ConfigDialog::show();
+#endif
 }
 
 EXPORT void CALL M64RRProcessDList(void)
