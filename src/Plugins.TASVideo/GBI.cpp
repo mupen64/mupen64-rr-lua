@@ -22,10 +22,8 @@
 #include "F3DPD.hpp"
 #include "Types.hpp"
 #include "CRC.hpp"
-#if MUPEN64RR_BUILD_WIN32
+#ifdef _WIN32
 #include "MicrocodeDialog_Win32.hpp"
-#elif MUPEN64RR_BUILD_QT6
-#include "MicrocodeDialog_Qt.hpp"
 #endif
 
 u32 uc_crc, uc_dcrc;
@@ -255,7 +253,7 @@ MicrocodeInfo *GBI_DetectMicrocode(u32 uc_start, u32 uc_dstart, u16 uc_dsize)
         }
     }
 
-#if MUPEN64RR_BUILD_WIN32 || MUPEN64RR_BUILD_QT6
+#ifdef _WIN32
     current->type = MicrocodeDialog::show();
 #else
     current->type = NONE;

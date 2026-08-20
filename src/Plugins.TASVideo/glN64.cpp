@@ -121,10 +121,8 @@ EXPORT void CALL M64RRProcessEvent(Event event)
 
 EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
-#if MUPEN64RR_BUILD_WIN32
+#ifdef _WIN32
     TASVideo::ConfigDialog::show(parent_window.hwnd());
-#elif MUPEN64RR_BUILD_QT6
-    TASVideo::ConfigDialog::show();
 #endif
 }
 

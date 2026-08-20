@@ -80,16 +80,6 @@ if (MUPEN64RR_BUILD_WIN32)
     target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Win32.Common)
 else()
     target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Common)
-    if (MUPEN64RR_BUILD_QT6)
-        target_sources(Mupen64RR.Plugins.TASVideo PRIVATE
-            "MicrocodeDialog_Qt.hpp"
-            "ConfigDialog_Qt.hpp"
-
-            "MicrocodeDialog_Qt.cpp"
-            "ConfigDialog_Qt.cpp"
-        )
-        target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Qt6::Widgets)
-    endif()
 endif()
 
 target_compile_features(Mupen64RR.Plugins.TASVideo PRIVATE cxx_std_26)
@@ -111,8 +101,6 @@ if (MUPEN64RR_BUILD_WIN32)
         msimg32
         opengl32
     )
-else()
-    # FIXME
 endif()
 
 target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
