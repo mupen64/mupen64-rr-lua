@@ -119,13 +119,6 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     }
 }
 
-EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
-{
-#ifdef _WIN32
-    TASVideo::ConfigDialog::show(parent_window.hwnd());
-#endif
-}
-
 EXPORT void CALL M64RRProcessDList(void)
 {
     if (RSP.thread)

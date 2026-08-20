@@ -75,6 +75,7 @@ if (MUPEN64RR_BUILD_WIN32)
 
         "MicrocodeDialog_Win32.cpp"
         "ConfigDialog_Win32.cpp"
+        "glN64_Win32.cpp"
         "Resource.rc"
     )
     target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Win32.Common)
