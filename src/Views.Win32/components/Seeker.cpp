@@ -29,6 +29,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, "Idle");
         SetDlgItemText(hwnd, IDC_SEEKER_START, "Start");
+        EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), FALSE);
         SetDlgItemText(hwnd, IDC_SEEKER_FRAME, g_config.seeker_value.c_str());
 
         if (g_config.core.seek_savestate_interval == 0)
@@ -49,7 +50,7 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         break;
     case WM_SEEK_COMPLETED:
         SetDlgItemText(hwnd, IDC_SEEKER_STATUS, "Seek completed");
-        SetDlgItemText(hwnd, IDC_SEEKER_START, "Start");
+        EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), FALSE);
         KillTimer(hwnd, seeker.refresh_timer);
         break;
     case WM_TIMER: {
@@ -76,27 +77,28 @@ static INT_PTR CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         break;
         case IDC_SEEKER_START: {
-            if (g_main_ctx.core_ctx->vcr_is_seeking())
-            {
-                g_main_ctx.core_ctx->vcr_stop_seek();
-                break;
-            }
-
-            SetDlgItemText(hwnd, IDC_SEEKER_START, "Stop");
-
             const auto result = g_main_ctx.core_ctx->vcr_begin_seek(g_config.seeker_value, true);
             if (result != Res_Ok)
             {
                 const auto [_, error] = CoreUtils::get_error_message_for_result(result);
-                SetDlgItemText(hwnd, IDC_SEEKER_START, "Start");
+                EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), FALSE);
                 SetDlgItemText(hwnd, IDC_SEEKER_STATUS, error.c_str());
                 break;
             }
 
-            seeker.refresh_timer = SetTimer(hwnd, 0, 1000 / 10, nullptr);
+            const bool is_seeking = g_main_ctx.core_ctx->vcr_is_seeking();
+            EnableWindow(GetDlgItem(hwnd, IDC_SEEKER_STOP), is_seeking);
+            if (is_seeking)
+            {
+                SetFocus(GetDlgItem(hwnd, IDC_SEEKER_STOP));
+                seeker.refresh_timer = SetTimer(hwnd, 0, 1000 / 10, nullptr);
+            }
 
             break;
         }
+        case IDC_SEEKER_STOP:
+            g_main_ctx.core_ctx->vcr_stop_seek();
+            break;
         case IDCANCEL:
             DestroyWindow(hwnd);
             break;
