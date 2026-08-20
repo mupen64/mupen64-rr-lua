@@ -205,7 +205,7 @@ struct t_controller_config
     }
 };
 
-struct t_config
+struct t_input_config
 {
     int32_t version = 7;
     int32_t always_on_top = false;
@@ -223,7 +223,7 @@ struct t_config
     t_controller_config controller_config[4] = {t_controller_config::keyboard_config(), {}, {}, {}};
     std::optional<SDL_GUID> preferred_device_guid;
 
-    friend void to_json(nlohmann::json &j, const t_config &self)
+    friend void to_json(nlohmann::json &j, const t_input_config &self)
     {
 #define TASINPUT_FIELD(field) {#field, self.field}
 #define TASINPUT_ARRAY_FIELD(field) nlohmann::to_json(j[#field], self.field)
@@ -247,9 +247,9 @@ struct t_config
 #undef TASINPUT_ARRAY_FIELD
     }
 
-    friend void from_json(const nlohmann::json &j, t_config &self)
+    friend void from_json(const nlohmann::json &j, t_input_config &self)
     {
-        if (!j.is_object()) throw std::domain_error("t_config expected JSON object");
+        if (!j.is_object()) throw std::domain_error("t_input_config expected JSON object");
 #define TASINPUT_FIELD(field) nlohmann::from_json(j.at(#field), self.field)
         self = {};
         TASINPUT_FIELD(version);
@@ -273,7 +273,7 @@ struct t_config
     }
 };
 
-extern t_config new_config;
+extern t_input_config new_config;
 
 /**
  * \brief Saves the current config to a file
