@@ -249,7 +249,7 @@ extern struct CombinerInfo
 {
     struct
     {
-        int16_t color, secondaryColor, alpha;
+        uint16_t color, secondaryColor, alpha;
     } vertex;
 
     CachedCombiner *root, *current;
