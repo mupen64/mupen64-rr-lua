@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
@@ -50,7 +51,7 @@ ApplicationWindow {
         anchors.centerIn: parent
 
         text: "foo the bar"
-        onClicked: mainWindow.showDialog("dialog!", "yay, a dialog!", CoreDialogType.Information)
+        onClicked: mainWindow.showMultipleChoiceDialog("dialog!", "yay, a dialog!", ["really?", "no way", "be fr rn"], CoreDialogType.Error)
     }
 
     // AUXILIARY OBJECTS
@@ -58,6 +59,10 @@ ApplicationWindow {
 
     CoreContext {
         id: core
+
+        onShowDialog: showDialog
+        onShowAskDialog: showAskDialog
+        onShowMultipleChoiceDialog: showMultipleChoiceDialog
     }
 
     Dialogs.FileDialog {
@@ -74,17 +79,61 @@ ApplicationWindow {
     // =====================================
 
     MessageBox {
-        id: diaMessage
-        standardButtons: Dialog.Ok | Dialog.Cancel
+        id: diaService
+        standardButtons: Dialog.Ok
+
+        onAccepted: core.showDialogFinished()
+    }
+    function showDialog(title, content, type) {
+        diaService.title = title;
+        diaService.content = content;
+        diaService.coreType = type;
+
+        diaService.open();
     }
 
-    function showDialog(title, content, type) {
-        console.log(`core.showDialog: ${core.showDialog}`)
+    MessageBox {
+        id: diaServiceAsk
+        standardButtons: Dialog.Yes | Dialog.No
 
-        diaMessage.title = title;
-        diaMessage.content = content;
-        diaMessage.coreType = type;
+        onAccepted: core.showAskDialogFinished(true)
+        onRejected: core.showAskDialogFinished(false)
+    }
+    function showAskDialog(title, content, type) {
+        diaServiceAsk.title = title;
+        diaServiceAsk.content = content;
+        diaServiceAsk.coreType = type;
 
-        diaMessage.open()
+        diaServiceAsk.open();
+    }
+
+    MessageBox {
+        id: diaServiceMulti
+        property list<string> choices
+        property int lastSelected
+
+        footer: DialogButtonBox {
+            Repeater {
+                model: diaServiceMulti.choices
+                Button {
+                    required property int index
+                    required property string modelData
+
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                    text: modelData
+                    onClicked: diaServiceMulti.lastSelected = index
+                }
+            }
+        }
+
+        onAccepted: core.showMultipleChoiceDialogFinished(lastSelected)
+    }
+    function showMultipleChoiceDialog(title, content, choices, type) {
+        diaServiceMulti.title = title;
+        diaServiceMulti.content = content;
+        diaServiceMulti.choices = choices;
+        diaServiceMulti.coreType = type;
+
+        diaServiceMulti.open();
     }
 }

@@ -31,6 +31,7 @@ CoreContext::CoreContext(QObject *parent) : QObject(parent)
         auto q_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
         // Future waiting for GUI result
+        // FIXME: if the frontend has a dialog active this may fire early before we show our dialog
         auto dialog_finished = QtUtils::on_signal(this, &CoreContext::showMultipleChoiceDialogFinished);
 
         // clang-format off
