@@ -52,6 +52,19 @@ struct t_config
         ModernWithReadOnly
     };
 
+    /**
+     * \brief Describes how toasts are shown.
+     */
+    enum class ToastMode : uint8_t
+    {
+        // Toasts are shown in non-modal windows.
+        Window,
+        // Toasts are shown in the statusbar.
+        Statusbar,
+        // Toasts are shown in modal dialogs.
+        Dialog
+    };
+
     /// <summary>
     /// The core config.
     /// </summary>
@@ -272,6 +285,9 @@ struct t_config
     /// The main window's height
     /// </summary>
     int32_t window_height = 480;
+
+    // The mode in which toasts are displayed.
+    int32_t toast_mode = (int32_t)ToastMode::Window;
 
     /// <summary>
     /// The width of rombrowser columns by index

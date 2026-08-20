@@ -154,7 +154,7 @@ void show_connectivity_error(bool manual)
 {
     if (manual)
     {
-        DialogService::show_dialog("Failed to fetch update information. Please try again later.", "Update Error",
+        DialogService::show_notification("Failed to fetch update information. Please try again later.", "Update Error",
                                    fsvc_error);
     }
 }
@@ -209,7 +209,7 @@ void check(bool manual)
     {
         if (manual)
         {
-            DialogService::show_dialog("You are already up-to-date.", "Already up-to-date", fsvc_information);
+            DialogService::show_notification("You are already up-to-date.", "Already up-to-date", fsvc_information);
         }
 
         return;
