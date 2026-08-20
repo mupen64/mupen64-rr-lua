@@ -127,7 +127,8 @@ inline Value from_core(::core_result result)
 {
     return (Value)(int)result;
 }
-inline ::core_result to_core(Value value) {
+inline ::core_result to_core(Value value)
+{
     return (::core_result)(int)value;
 }
 } // namespace CoreResult
@@ -149,7 +150,8 @@ inline Value from_core(::core_dialog_type result)
 {
     return (Value)(int)result;
 }
-inline ::core_dialog_type to_core(Value value) {
+inline ::core_dialog_type to_core(Value value)
+{
     return (::core_dialog_type)(int)value;
 }
 } // namespace CoreDialogType

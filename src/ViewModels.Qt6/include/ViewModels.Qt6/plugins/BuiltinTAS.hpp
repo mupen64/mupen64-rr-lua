@@ -40,7 +40,8 @@ extern "C"
     void M64RRBuiltinNoVideoGetMetadata(M64RRSpec::PluginMetadata *);
 }
 
-enum class PluginID : uint8_t {
+enum class PluginID : uint8_t
+{
     DummyVideo = 0,
     DummyAudio,
     DummyInput,
@@ -51,6 +52,6 @@ enum class PluginID : uint8_t {
     NumPlugins,
 };
 
-void* builtin_dlsym(PluginID id, const char* symbol);
+void *builtin_dlsym(PluginID id, const char *symbol);
 
 } // namespace BuiltinTAS

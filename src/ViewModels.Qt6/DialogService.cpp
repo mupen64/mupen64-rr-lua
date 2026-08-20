@@ -12,7 +12,7 @@
 
 /**
  * @brief Command-line implementation of the dialog service.
- * 
+ *
  * Serves as a reasonable default until the GUI overrides it.
  */
 namespace DialogService

@@ -33,7 +33,7 @@ template <class C, class Arg0> struct SignalFnTraits<void (C::*)(Arg0)>
     using Return = Arg0;
 };
 
-template <class C, class Arg0> struct SignalFnTraits<void (C::*)(const Arg0&)>
+template <class C, class Arg0> struct SignalFnTraits<void (C::*)(const Arg0 &)>
 {
     static constexpr bool IS_VALID = true;
     using Class = C;

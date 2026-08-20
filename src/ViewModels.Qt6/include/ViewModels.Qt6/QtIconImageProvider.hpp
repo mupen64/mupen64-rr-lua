@@ -7,7 +7,8 @@
 
 #include <QQuickImageProvider>
 
-class QtIconImageProvider : public QQuickImageProvider {
+class QtIconImageProvider : public QQuickImageProvider
+{
     Q_OBJECT
   public:
     QtIconImageProvider() : QQuickImageProvider(ImageType::Pixmap) {}

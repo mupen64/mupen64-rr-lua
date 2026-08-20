@@ -14,9 +14,7 @@
 
 core_cfg &Core::config()
 {
-    static core_cfg s_instance{
-        .core_type = 1
-    };
+    static core_cfg s_instance{.core_type = 1};
     return s_instance;
 }
 core_params &Core::params()
@@ -87,7 +85,8 @@ core_ctx *Core::context()
     return s_pointer;
 }
 
-void Core::clear_plugin_funcs(core_params& params) {
+void Core::clear_plugin_funcs(core_params &params)
+{
     params.video_process_dlist = [](auto...) {};
     params.video_process_rdp_list = [](auto...) {};
     params.video_show_cfb = [](auto...) {};
