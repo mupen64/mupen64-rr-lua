@@ -182,6 +182,7 @@ bool OGL_InitContext()
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
     s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
     OGL.isGLES = (s_sdl_context != nullptr);
 
@@ -211,6 +212,7 @@ bool OGL_InitContext()
 
     OGL_InitExtensions();
     OGL_InitStates();
+    glDisable(GL_FRAMEBUFFER_SRGB);
 
     g_plugin->log_info(OGL.isGLES ? "TASVideo: running on an OpenGL ES 2.0 context."
                                   : "TASVideo: running on a desktop OpenGL compatibility context.");
