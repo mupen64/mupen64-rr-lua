@@ -129,7 +129,7 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         const int height = HIWORD(lparam);
         const int text_x = padding + icon_size + gap;
         const int text_width = std::max(1, width - text_x - close_size - padding - gap);
-        const int title_height = !toast->title.empty() ? 18 : 0;
+        const int title_height = !toast->title.empty() ? 16 : 0;
         SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_size, icon_size, SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowPos(toast->close_hwnd, nullptr, width - close_size - padding, padding + close_top_offset, close_size,
                      close_size, SWP_NOZORDER | SWP_NOACTIVATE);
@@ -207,7 +207,7 @@ void show_impl(const ToastData &data)
     DrawText(dc, created->content.c_str(), -1, &text_rect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
     ReleaseDC(hwnd, dc);
 
-    const int title_height = created->title.empty() ? 0 : 18;
+    const int title_height = created->title.empty() ? 0 : 16;
     const int height =
         std::max(icon_size + 2 * padding, title_height + static_cast<int>(text_rect.bottom) + 2 * padding);
     SetWindowPos(hwnd, nullptr, 0, 0, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
