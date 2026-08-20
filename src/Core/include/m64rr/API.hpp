@@ -533,7 +533,7 @@ extern "C"
          * \param str A seek format string
          * \param pause_at_end Whether the emu should be paused when the seek operation ends
          * \return The operation result
-         * \remarks When the seek operation completes, the SeekCompleted message will be sent
+         * \remarks When the seek operation completes, the SeekCompleted message will be sent. The seek operation might end before the target frame is reached.
          *
          * Seek string format possibilities:
          *	"n" - Frame
