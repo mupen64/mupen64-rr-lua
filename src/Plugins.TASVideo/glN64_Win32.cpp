@@ -5,6 +5,7 @@
  */
 
 #include "Common.hpp"
+#include "ConfigDialog_Win32.hpp"
 
 EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {

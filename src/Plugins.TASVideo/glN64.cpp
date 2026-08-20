@@ -10,11 +10,6 @@
 #include "N64.hpp"
 #include "RSP.hpp"
 #include "Config.hpp"
-#if MUPEN64RR_BUILD_WIN32
-#include "ConfigDialog_Win32.hpp"
-#elif MUPEN64RR_BUILD_QT6
-#include "ConfigDialog_Qt.hpp"
-#endif
 
 TASVideoContext g_tas_ctx{};
 
