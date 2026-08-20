@@ -254,7 +254,7 @@ extern struct CombinerInfo
 
     CachedCombiner *root, *current;
 
-    int32_t usesT0, usesT1, usesNoise;
+    bool usesT0, usesT1, usesNoise;
 } combiner;
 
 #define SetConstant(constant, color, alpha)                                                                            \
