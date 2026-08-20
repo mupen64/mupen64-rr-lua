@@ -101,8 +101,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     case M64RRSpec::Event::Type::RomClosed:
         if (RSP.thread)
         {
-            if (RSP.busy)
-                RSP.halt = TRUE;
+            if (RSP.busy) RSP.halt = TRUE;
 
             RSP_SendMessage(RSPMSG_CLOSE);
             RSP.thread->join();
@@ -136,3 +135,9 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
         }
     }
 }
+
+#ifndef _WIN32
+EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle)
+{
+}
+#endif
