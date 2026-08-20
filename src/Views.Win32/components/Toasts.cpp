@@ -14,7 +14,7 @@ using namespace Toasts;
 constexpr int margin = 12;
 constexpr int padding = 14;
 
-constexpr int close_width = 24;
+constexpr int close_size = 24;
 constexpr int gap = 8;
 constexpr UINT close_button_id = IDC_TOAST_CLOSE;
 constexpr UINT_PTR timer_id = 1;
@@ -129,11 +129,11 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         const int icon_width = GetSystemMetrics(SM_CXICON);
         const int icon_height = GetSystemMetrics(SM_CYICON);
         const int text_x = padding + icon_width + gap;
-        const int text_width = std::max(1, width - text_x - close_width - padding - gap);
+        const int text_width = std::max(1, width - text_x - close_size - padding - gap);
         const int title_height = !toast->title.empty() ? 18 : 0;
         SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_width, icon_height,
                      SWP_NOZORDER | SWP_NOACTIVATE);
-        SetWindowPos(toast->close_hwnd, nullptr, width - close_width - padding, padding, close_width, 22,
+        SetWindowPos(toast->close_hwnd, nullptr, width - close_size - padding, padding, close_size, close_size,
                      SWP_NOZORDER | SWP_NOACTIVATE);
         if (toast->title_hwnd)
             SetWindowPos(toast->title_hwnd, nullptr, text_x, padding, text_width, title_height,
@@ -193,7 +193,7 @@ void show_impl(const ToastData &data)
     const int icon_width = GetSystemMetrics(SM_CXICON);
     const int icon_height = GetSystemMetrics(SM_CYICON);
     const int text_left_padding = padding + icon_width + gap;
-    constexpr int text_right_padding = close_width + padding + gap;
+    constexpr int text_right_padding = close_size + padding + gap;
     const int desired_text_width = std::max(static_cast<int>(content_measure.right), static_cast<int>(title_size.cx));
     const int desired_width = desired_text_width + text_left_padding + text_right_padding;
     const int minimum_width = text_left_padding + text_right_padding;
