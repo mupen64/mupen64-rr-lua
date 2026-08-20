@@ -10,13 +10,14 @@
 
 #include <m64rr/Types.hpp>
 
-namespace CoreResult {
+namespace CoreResult
+{
 Q_NAMESPACE
 QML_ELEMENT
 
 /**
  * @brief Result returned by the core.
- * 
+ *
  * Copied directly from `m64rr/Types.hpp`; allowing it to be used directly from Qt.
  */
 enum Value
@@ -120,6 +121,35 @@ enum Value
     // The core params are missing a critical component.
     IN_MissingComponent,
 };
-Q_ENUM_NS(Value);
+Q_ENUM_NS(Value)
 
+inline Value from_core(::core_result result)
+{
+    return (Value)(int)result;
 }
+inline ::core_result to_core(Value value) {
+    return (::core_result)(int)value;
+}
+} // namespace CoreResult
+
+namespace CoreDialogType
+{
+Q_NAMESPACE
+QML_ELEMENT
+
+enum Value
+{
+    Error = fsvc_error,
+    Warning = fsvc_warning,
+    Information = fsvc_information,
+};
+Q_ENUM_NS(Value)
+
+inline Value from_core(::core_dialog_type result)
+{
+    return (Value)(int)result;
+}
+inline ::core_dialog_type to_core(Value value) {
+    return (::core_dialog_type)(int)value;
+}
+} // namespace CoreDialogType

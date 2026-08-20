@@ -11,14 +11,12 @@
 
 #include "CoreEnums.hpp"
 
-class MupenCore : public QObject {
+class CoreContext : public QObject {
     Q_OBJECT
-    QML_SINGLETON
     QML_ELEMENT
   public:
-    MupenCore(QObject* parent = nullptr);
-    virtual ~MupenCore();
-
+    CoreContext(QObject* parent = nullptr);
+    virtual ~CoreContext();
 
     // vr_* functions
     // ==========================
@@ -26,5 +24,15 @@ class MupenCore : public QObject {
     Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl& url);
 
     Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true);
+
+  signals:
+    // Dialog service
+    // ==========================
+
+    size_t showMultipleChoiceDialog(QAnyStringView title, QAnyStringView content, const QList<QString>& choices, CoreDialogType::Value type);
+
+    bool showAskDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
+
+    void showDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
 
 };

@@ -26,7 +26,7 @@ ApplicationWindow {
             }
             Action {
                 text: qsTr("&Close ROM...")
-                onTriggered: MupenCore.vrCloseROM()
+                onTriggered: core.vrCloseROM()
                 
             }
             MenuSeparator { }
@@ -38,7 +38,11 @@ ApplicationWindow {
     }
 
     onClosing: function(close) {
-        MupenCore.vrCloseROM();
+        core.vrCloseROM();
+    }
+
+    CoreContext {
+        id: core
     }
 
     FileDialog {
@@ -47,7 +51,7 @@ ApplicationWindow {
         fileMode: FileDialog.OpenFile
         nameFilters: [`${qsTr("N64 ROMs")} (*.n64 *.z64 *.v64)`]
         onAccepted: {
-            MupenCore.vrStartROM(selectedFile);
+            core.vrStartROM(selectedFile);
         }
     }
 }

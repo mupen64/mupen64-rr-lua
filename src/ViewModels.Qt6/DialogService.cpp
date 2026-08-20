@@ -10,6 +10,11 @@
 #include <iostream>
 #include <print>
 
+/**
+ * @brief Command-line implementation of the dialog service.
+ * 
+ * Serves as a reasonable default until the GUI overrides it.
+ */
 namespace DialogService
 {
 void print_header(std::string_view title, core_dialog_type type)
