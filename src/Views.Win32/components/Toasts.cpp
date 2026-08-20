@@ -15,6 +15,8 @@ constexpr int margin = 12;
 constexpr int padding = 14;
 
 constexpr int close_size = 24;
+constexpr int close_top_offset = -4;
+constexpr int icon_size = 16;
 constexpr int gap = 8;
 constexpr UINT close_button_id = IDC_TOAST_CLOSE;
 constexpr UINT_PTR timer_id = 1;
@@ -114,7 +116,6 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         toast->title_hwnd = GetDlgItem(hwnd, IDC_TOAST_TITLE);
         toast->content_hwnd = GetDlgItem(hwnd, IDC_TOAST_CONTENT);
         toast->close_hwnd = GetDlgItem(hwnd, IDC_TOAST_CLOSE);
-        SendMessage(toast->icon_hwnd, STM_SETICON, reinterpret_cast<WPARAM>(toast->icon), 0);
         SetDlgItemText(hwnd, IDC_TOAST_TITLE, toast->title.c_str());
         SetDlgItemText(hwnd, IDC_TOAST_CONTENT, toast->content.c_str());
         ShowWindow(toast->title_hwnd, toast->title.empty() ? SW_HIDE : SW_SHOW);
@@ -126,14 +127,12 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         if (!toast) break;
         const int width = LOWORD(lparam);
         const int height = HIWORD(lparam);
-        const int icon_width = GetSystemMetrics(SM_CXICON);
-        const int icon_height = GetSystemMetrics(SM_CYICON);
-        const int text_x = padding + icon_width + gap;
+        const int text_x = padding + icon_size + gap;
         const int text_width = std::max(1, width - text_x - close_size - padding - gap);
         const int title_height = !toast->title.empty() ? 18 : 0;
-        SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_width, icon_height,
+        SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_size, icon_size,
                      SWP_NOZORDER | SWP_NOACTIVATE);
-        SetWindowPos(toast->close_hwnd, nullptr, width - close_size - padding, padding, close_size, close_size,
+        SetWindowPos(toast->close_hwnd, nullptr, width - close_size - padding, padding + close_top_offset, close_size, close_size,
                      SWP_NOZORDER | SWP_NOACTIVATE);
         if (toast->title_hwnd)
             SetWindowPos(toast->title_hwnd, nullptr, text_x, padding, text_width, title_height,
@@ -141,6 +140,15 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         SetWindowPos(toast->content_hwnd, nullptr, text_x, padding + title_height, text_width,
                      std::max(1, height - 2 * padding - title_height), SWP_NOZORDER | SWP_NOACTIVATE);
         return 0;
+    }
+
+    case WM_DRAWITEM: {
+        const auto dis = reinterpret_cast<DRAWITEMSTRUCT *>(lparam);
+        if (!toast || dis->CtlType != ODT_STATIC || dis->CtlID != IDC_TOAST_ICON) return FALSE;
+
+        DrawIconEx(dis->hDC, dis->rcItem.left, dis->rcItem.top, toast->icon, icon_size, icon_size, 0, nullptr,
+                   DI_NORMAL);
+        return TRUE;
     }
 
     case WM_COMMAND:
@@ -190,9 +198,7 @@ void show_impl(const ToastData &data)
     SIZE title_size{};
     GetTextExtentPoint32(dc, created->title.c_str(), static_cast<int>(created->title.size()), &title_size);
 
-    const int icon_width = GetSystemMetrics(SM_CXICON);
-    const int icon_height = GetSystemMetrics(SM_CYICON);
-    const int text_left_padding = padding + icon_width + gap;
+    const int text_left_padding = padding + icon_size + gap;
     constexpr int text_right_padding = close_size + padding + gap;
     const int desired_text_width = std::max(static_cast<int>(content_measure.right), static_cast<int>(title_size.cx));
     const int desired_width = desired_text_width + text_left_padding + text_right_padding;
@@ -204,7 +210,7 @@ void show_impl(const ToastData &data)
     ReleaseDC(hwnd, dc);
 
     const int title_height = created->title.empty() ? 0 : 18;
-    const int height = std::max(icon_height + 2 * padding,
+    const int height = std::max(icon_size + 2 * padding,
                                  title_height + static_cast<int>(text_rect.bottom) + 2 * padding);
     SetWindowPos(hwnd, nullptr, 0, 0, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
 
