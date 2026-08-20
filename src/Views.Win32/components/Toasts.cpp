@@ -13,10 +13,10 @@ using namespace Toasts;
 
 constexpr int margin = 12;
 constexpr int padding = 14;
-constexpr int icon_size = 32;
+
 constexpr int close_width = 24;
 constexpr int gap = 8;
-constexpr UINT close_button_id = 1;
+constexpr UINT close_button_id = IDC_TOAST_CLOSE;
 constexpr UINT_PTR timer_id = 1;
 
 struct ToastWindow
@@ -31,7 +31,7 @@ struct ToastWindow
 };
 
 std::vector<HWND> toast_windows;
-ATOM toast_class;
+
 
 // TODO: Move this into some util file. There's really no appropriate place in our codebase for this as it stands
 HICON icon_for_tone(const core_dialog_type tone)
@@ -101,47 +101,37 @@ void close_oldest_until_it_fits()
     relayout_impl();
 }
 
-LRESULT CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
     auto *toast = reinterpret_cast<ToastWindow *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
     switch (message)
     {
-    case WM_NCCREATE:
-        toast = reinterpret_cast<ToastWindow *>(reinterpret_cast<CREATESTRUCT *>(lparam)->lpCreateParams);
+    case WM_INITDIALOG:
+        toast = reinterpret_cast<ToastWindow *>(lparam);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(toast));
-        return TRUE;
-
-    case WM_CREATE: {
-        const auto hinst = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(g_main_ctx.hwnd, GWLP_HINSTANCE));
-        toast->icon_hwnd = CreateWindowEx(0, "STATIC", "", WS_CHILD | WS_VISIBLE | SS_ICON, 0, 0, 0, 0, hwnd,
-                                           nullptr, hinst, nullptr);
+        toast->icon_hwnd = GetDlgItem(hwnd, IDC_TOAST_ICON);
+        toast->title_hwnd = GetDlgItem(hwnd, IDC_TOAST_TITLE);
+        toast->content_hwnd = GetDlgItem(hwnd, IDC_TOAST_CONTENT);
+        toast->close_hwnd = GetDlgItem(hwnd, IDC_TOAST_CLOSE);
         SendMessage(toast->icon_hwnd, STM_SETICON, reinterpret_cast<WPARAM>(toast->icon), 0);
-
-        toast->close_hwnd = CreateWindowEx(0, "BUTTON", "X", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0,
-                                            hwnd, reinterpret_cast<HMENU>(close_button_id), hinst, nullptr);
-        toast->content_hwnd = CreateWindowEx(0, "STATIC", toast->content.c_str(),
-                                              WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, 0, 0, 0, 0, hwnd,
-                                              nullptr, hinst, nullptr);
-        if (!toast->title.empty())
-        {
-            toast->title_hwnd = CreateWindowEx(0, "STATIC", toast->title.c_str(),
-                                                WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, 0, 0, 0, 0, hwnd,
-                                                nullptr, hinst, nullptr);
-            SendMessage(toast->title_hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
-        }
+        SetDlgItemText(hwnd, IDC_TOAST_TITLE, toast->title.c_str());
+        SetDlgItemText(hwnd, IDC_TOAST_CONTENT, toast->content.c_str());
+        ShowWindow(toast->title_hwnd, toast->title.empty() ? SW_HIDE : SW_SHOW);
+        SendMessage(toast->title_hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
         SendMessage(toast->content_hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
-        return 0;
-    }
+        return TRUE;
 
     case WM_SIZE: {
         if (!toast) break;
         const int width = LOWORD(lparam);
         const int height = HIWORD(lparam);
-        const int text_x = padding + icon_size + gap;
+        const int icon_width = GetSystemMetrics(SM_CXICON);
+        const int icon_height = GetSystemMetrics(SM_CYICON);
+        const int text_x = padding + icon_width + gap;
         const int text_width = std::max(1, width - text_x - close_width - padding - gap);
-        const int title_height = toast->title_hwnd ? 18 : 0;
-        SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_size, icon_size,
+        const int title_height = !toast->title.empty() ? 18 : 0;
+        SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_width, icon_height,
                      SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowPos(toast->close_hwnd, nullptr, width - close_width - padding, padding, close_width, 22,
                      SWP_NOZORDER | SWP_NOACTIVATE);
@@ -169,36 +159,19 @@ LRESULT CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         return 0;
     }
 
-    return DefWindowProc(hwnd, message, wparam, lparam);
-}
-
-void register_toast_class()
-{
-    if (toast_class) return;
-
-    WNDCLASS klass{
-        .style = CS_HREDRAW | CS_VREDRAW,
-        .lpfnWndProc = toast_proc,
-        .hInstance = g_main_ctx.hinst,
-        .hCursor = LoadCursor(nullptr, IDC_ARROW),
-        .hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1),
-        .lpszClassName = "Mupen64RRToast",
-    };
-    toast_class = RegisterClass(&klass);
+    return FALSE;
 }
 
 void show_impl(const ToastData &data)
 {
-    register_toast_class();
 
     auto toast = std::make_unique<ToastWindow>();
     toast->title = data.title.value_or("");
     toast->content = data.content;
     toast->icon = icon_for_tone(data.tone);
 
-    const HWND hwnd = CreateWindowEx(WS_EX_CONTROLPARENT | WS_EX_TOOLWINDOW, "Mupen64RRToast", "",
-                                      WS_POPUP | WS_VISIBLE, 0, 0, 320, 80, g_main_ctx.hwnd, nullptr,
-                                      g_main_ctx.hinst, toast.get());
+    const HWND hwnd = CreateDialogParam(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_TOAST), g_main_ctx.hwnd, toast_proc,
+                                         reinterpret_cast<LPARAM>(toast.get()));
     if (!hwnd) return;
     toast_windows.push_back(hwnd);
     toast.release();
@@ -217,7 +190,9 @@ void show_impl(const ToastData &data)
     SIZE title_size{};
     GetTextExtentPoint32(dc, created->title.c_str(), static_cast<int>(created->title.size()), &title_size);
 
-    constexpr int text_left_padding = padding + icon_size + gap;
+    const int icon_width = GetSystemMetrics(SM_CXICON);
+    const int icon_height = GetSystemMetrics(SM_CYICON);
+    const int text_left_padding = padding + icon_width + gap;
     constexpr int text_right_padding = close_width + padding + gap;
     const int desired_text_width = std::max(static_cast<int>(content_measure.right), static_cast<int>(title_size.cx));
     const int desired_width = desired_text_width + text_left_padding + text_right_padding;
@@ -229,7 +204,7 @@ void show_impl(const ToastData &data)
     ReleaseDC(hwnd, dc);
 
     const int title_height = created->title.empty() ? 0 : 18;
-    const int height = std::max(icon_size + 2 * padding,
+    const int height = std::max(icon_height + 2 * padding,
                                  title_height + static_cast<int>(text_rect.bottom) + 2 * padding);
     SetWindowPos(hwnd, nullptr, 0, 0, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
 

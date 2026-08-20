@@ -156,6 +156,11 @@
 #define IDB_MARKER 10182
 #define IDB_DENY 10183
 #define IDB_CHANGED 10184
+#define IDD_TOAST 10185
+#define IDC_TOAST_ICON 10186
+#define IDC_TOAST_TITLE 10187
+#define IDC_TOAST_CONTENT 10188
+#define IDC_TOAST_CLOSE 10189
 
 // Next default values for new objects
 //
