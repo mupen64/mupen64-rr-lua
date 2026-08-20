@@ -788,6 +788,18 @@ std::vector<t_options_group> get_static_option_groups()
         .tooltip = "Suppresses all dialogs and chooses reasonable defaults for multiple-choice dialogs.\nCan cause "
                    "data loss during normal usage; only enable in automation scenarios!",
         GENPROPS(int32_t, silent_mode)});
+    statusbar_group.items.emplace_back(t_options_item{
+        .type = t_options_item::Type::Enum,
+        .group_id = interface_group.id,
+        .name = "Toast Mode",
+        .tooltip = "The way toasts are displayed.\nWindow - Toasts are shown in non-modal windows.\nStatusbar - Toasts "
+                   "are shown in the statusbar.\nDialog - Toasts are shown in modal dialogs.",
+        GENPROPS(int32_t, toast_mode),
+        .possible_values = {
+            std::make_pair("Window", (int32_t)t_config::ToastMode::Window),
+            std::make_pair("Statusbar", (int32_t)t_config::ToastMode::Statusbar),
+            std::make_pair("Dialog", (int32_t)t_config::ToastMode::Dialog),
+        }});
     interface_group.items.emplace_back(
         t_options_item{.type = t_options_item::Type::Bool,
                        .group_id = interface_group.id,
