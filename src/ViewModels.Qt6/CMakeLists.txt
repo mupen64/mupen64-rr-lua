@@ -9,6 +9,7 @@ qt_add_library(Mupen64RR.ViewModels.Qt6 STATIC
     "include/ViewModels.Qt6/plugins/Plugin.hpp"
     "include/ViewModels.Qt6/Core.hpp"
     "include/ViewModels.Qt6/QtIconImageProvider.hpp"
+    "include/ViewModels.Qt6/QtUtils.hpp"
 
     "plugins/BuiltinTAS.cpp"
     "plugins/Plugin.cpp"

@@ -310,6 +310,10 @@ template <typename T> static T wrapping_clamp_decimal(T value, T min, T max)
     }
     return value;
 }
+
+// TYPE TRAITS
+// ===========================================
+
 namespace details
 {
 template <auto Ptr, class F> struct StaticFunctorImpl;
@@ -336,5 +340,13 @@ template <auto F> struct StaticFunctor : public details::StaticFunctorImpl<F, de
  * @brief Combines any number of functor types into a single overloaded functor.
  */
 template <class... Fs> struct Overload : Fs... { using Fs::operator()...; };
+
+template <class T> struct MemberFunctionPointerTraits {};
+
+template <class R, class C, class... Args>
+struct MemberFunctionPointerTraits<R (C::*)(Args...)> {
+    using Class = C;
+    using Return = R;
+};
 
 }; // namespace MiscHelpers

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <QObject>
+#include <QFuture>
 #include <QUrl>
 #include <qqmlintegration.h>
 
@@ -28,11 +29,15 @@ class CoreContext : public QObject {
   signals:
     // Dialog service
     // ==========================
+    // Dialog closure is notified via a separate signal.
 
-    size_t showMultipleChoiceDialog(QAnyStringView title, QAnyStringView content, const QList<QString>& choices, CoreDialogType::Value type);
+    void showMultipleChoiceDialog(QAnyStringView title, QAnyStringView content, const QList<QString>& choices, CoreDialogType::Value type);
+    void showMultipleChoiceDialogFinished(size_t result);
 
-    bool showAskDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
+    void showAskDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
+    void showAskDialogFinished(bool result);
 
     void showDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
+    void showDialogFinished();
 
 };

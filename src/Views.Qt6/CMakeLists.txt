@@ -25,6 +25,7 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
 
 qt_add_qml_module(Mupen64RR.Views.Qt6 URI "Views" QML_FILES
     "Views/MainWindow.qml"
+    "Views/MessageBox.qml"
 )
 
 # MinGW needs this for std::print(ln) some reason...
