@@ -63,8 +63,6 @@ typedef enum
     VCR_WarpModifyNeedsRecordingTask,
     // The provided input buffer is empty
     VCR_WarpModifyEmptyInputBuffer,
-    // Another seek operation is already running
-    VCR_SeekAlreadyRunning,
     // The seek operation could not be initiated due to a savestate not being loaded successfully
     VCR_SeekSavestateLoadFailed,
     // The seek operation can't be initiated because the seek savestate interval is 0

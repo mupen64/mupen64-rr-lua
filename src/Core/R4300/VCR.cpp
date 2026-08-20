@@ -541,8 +541,8 @@ void vcr_create_n_frame_savestate(size_t frame)
 
             if (info.result != Res_Ok)
             {
-                g_core->show_notification(std::format("Failed to save seek savestate at frame {}.", frame).c_str(), "VCR",
-                                    fsvc_error);
+                g_core->show_notification(std::format("Failed to save seek savestate at frame {}.", frame).c_str(),
+                                          "VCR", fsvc_error);
                 return;
             }
 
@@ -1248,13 +1248,14 @@ bool show_controller_warning(const core_vcr_movie_header &header)
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::Rumblepak) &&
                 header.controller_flags & CONTROLLER_X_RUMBLE(i))
             {
-                g_core->show_notification(std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR", fsvc_warning);
+                g_core->show_notification(std::format(CONTROLLER_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR",
+                                          fsvc_warning);
             }
             if (g_core->controls[i].present && (g_core->controls[i].plugin != CoreControllerExtension::None) &&
                 !(header.controller_flags & (CONTROLLER_X_MEMPAK(i) | CONTROLLER_X_RUMBLE(i))))
             {
                 g_core->show_notification(std::format(CONTROLLER_MEMPAK_RUMBLEPAK_MISMATCH, i + 1).c_str(), "VCR",
-                                    fsvc_warning);
+                                          fsvc_warning);
             }
         }
     }
@@ -1603,7 +1604,8 @@ static std::optional<size_t> vcr_try_resolve_seek_str_impl(const std::string &st
     {
         if (str[0] == '-' || str[0] == '+')
         {
-            return vcr.current_sample + std::stoi(str);
+            int32_t current_sample = vcr.seek_to_frame.value_or(vcr.current_sample);
+            return current_sample + std::stoi(str);
         }
 
         if (str[0] == '^')
@@ -1668,11 +1670,6 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
     // Queue of functions to call at the end of the function after the lock is released
     std::queue<std::function<void()>> post_unlock_callbacks{};
 
-    if (vcr.seek_savestate_loading || vcr.seek_to_frame.has_value())
-    {
-        return VCR_SeekAlreadyRunning;
-    }
-
     if (vcr.task == task_idle)
     {
         return VCR_Idle;
@@ -1694,6 +1691,13 @@ static core_result vcr_begin_seek_impl(std::string str, bool pause_at_end, bool 
         {
             return VCR_InvalidFrame;
         }
+    }
+
+    // If we're already seeking, end the ongoing operation
+    if (vcr.seek_to_frame.has_value())
+    {
+        vcr_anti_lock bypass;
+        g_ctx.vcr_stop_seek();
     }
 
     vcr.seek_to_frame = std::make_optional(frame);
