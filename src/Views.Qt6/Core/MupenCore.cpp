@@ -10,14 +10,16 @@
 #include <atomic>
 #include <ranges>
 
-
 #include <QThread>
+#include <QIcon>
 #include <QUrl>
 
 static std::atomic_bool g_core_context_created;
 
 CoreContext::CoreContext(QObject *parent) : QObject(parent)
 {
+
+    QIcon ic;
     if (g_core_context_created.exchange(true))
         throw std::logic_error("CoreContext should only be created once");
     auto &params = Core::params();

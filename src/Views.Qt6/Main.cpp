@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+#include "ViewModels.Qt6/QtIconImageProvider.hpp"
 #include <Common.Views/App.hpp>
 
 #include <print>
@@ -32,6 +33,8 @@ static int cli_main(int argc, char* argv[]) {
 
 static int qt_main(int argc, char *argv[])
 {
+    using namespace Qt::Literals;
+
 #ifdef __linux__
     // use xdg-desktop-portal for platform dialogs where possible
     if (qgetenv("QT_QPA_PLATFORMTHEME").isEmpty()) {
@@ -40,13 +43,18 @@ static int qt_main(int argc, char *argv[])
 #endif
 
     QGuiApplication app(argc, argv);
-    
     QQmlApplicationEngine engine;
+
+    // Close if object creation fails
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [](const QUrl& url) {
         std::println("objectCreationFailed: {}", url.toString().toStdString());
         QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
 
+    // provider for system icons
+    engine.addImageProvider(u"icons"_s, new QtIconImageProvider);
+
+    // load and run Views/MainWindow.qml
     engine.loadFromModule("Views", "MainWindow");
     
     return QGuiApplication::exec();
