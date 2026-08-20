@@ -6,6 +6,7 @@
 
 #include "Common.hpp"
 #include "Toasts.hpp"
+#include "Statusbar.hpp"
 
 namespace
 {
@@ -33,7 +34,6 @@ struct ToastWindow
 };
 
 std::vector<HWND> toast_windows;
-
 
 // TODO: Move this into some util file. There's really no appropriate place in our codebase for this as it stands
 HICON icon_for_tone(const core_dialog_type tone)
@@ -130,10 +130,9 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         const int text_x = padding + icon_size + gap;
         const int text_width = std::max(1, width - text_x - close_size - padding - gap);
         const int title_height = !toast->title.empty() ? 18 : 0;
-        SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_size, icon_size,
-                     SWP_NOZORDER | SWP_NOACTIVATE);
-        SetWindowPos(toast->close_hwnd, nullptr, width - close_size - padding, padding + close_top_offset, close_size, close_size,
-                     SWP_NOZORDER | SWP_NOACTIVATE);
+        SetWindowPos(toast->icon_hwnd, nullptr, padding, padding, icon_size, icon_size, SWP_NOZORDER | SWP_NOACTIVATE);
+        SetWindowPos(toast->close_hwnd, nullptr, width - close_size - padding, padding + close_top_offset, close_size,
+                     close_size, SWP_NOZORDER | SWP_NOACTIVATE);
         if (toast->title_hwnd)
             SetWindowPos(toast->title_hwnd, nullptr, text_x, padding, text_width, title_height,
                          SWP_NOZORDER | SWP_NOACTIVATE);
@@ -179,7 +178,7 @@ void show_impl(const ToastData &data)
     toast->icon = icon_for_tone(data.tone);
 
     const HWND hwnd = CreateDialogParam(g_main_ctx.hinst, MAKEINTRESOURCE(IDD_TOAST), g_main_ctx.hwnd, toast_proc,
-                                         reinterpret_cast<LPARAM>(toast.get()));
+                                        reinterpret_cast<LPARAM>(toast.get()));
     if (!hwnd) return;
     toast_windows.push_back(hwnd);
     toast.release();
@@ -193,8 +192,7 @@ void show_impl(const ToastData &data)
     SelectObject(dc, font);
 
     RECT content_measure{0, 0, 32767, 0};
-    DrawText(dc, created->content.c_str(), -1, &content_measure,
-              DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+    DrawText(dc, created->content.c_str(), -1, &content_measure, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
     SIZE title_size{};
     GetTextExtentPoint32(dc, created->title.c_str(), static_cast<int>(created->title.size()), &title_size);
 
@@ -210,8 +208,8 @@ void show_impl(const ToastData &data)
     ReleaseDC(hwnd, dc);
 
     const int title_height = created->title.empty() ? 0 : 18;
-    const int height = std::max(icon_size + 2 * padding,
-                                 title_height + static_cast<int>(text_rect.bottom) + 2 * padding);
+    const int height =
+        std::max(icon_size + 2 * padding, title_height + static_cast<int>(text_rect.bottom) + 2 * padding);
     SetWindowPos(hwnd, nullptr, 0, 0, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
 
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(data.ttl).count();
@@ -225,9 +223,21 @@ namespace Toasts
 {
 void show(const ToastData &data)
 {
-    g_main_ctx.dispatcher->invoke([&] {
-        show_impl(data);
-    });
+    g_view_logger->info("Toast: title={}; content={}; tone={}; ttl={}", data.title.value_or(""), data.content,
+                        static_cast<uint8_t>(data.tone), data.ttl.count());
+
+    switch ((t_config::ToastMode)g_config.toast_mode)
+    {
+    case t_config::ToastMode::Window:
+        g_main_ctx.dispatcher->invoke([&] { show_impl(data); });
+        return;
+    case t_config::ToastMode::Statusbar:
+        Statusbar::post(data.content, Statusbar::Section::Notification);
+        return;
+    case t_config::ToastMode::Dialog:
+        DialogService::show_dialog(data.content, data.title, data.tone);
+        return;
+    }
 }
 
 void relayout()

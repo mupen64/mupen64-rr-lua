@@ -22,7 +22,7 @@ namespace Toasts
     };
 
     /**
-     * \brief Shows a toast notification.
+     * \brief Shows a toast notification via the appropriate method.
      * \param data The toast data.
      */
     void show(const ToastData& data);
