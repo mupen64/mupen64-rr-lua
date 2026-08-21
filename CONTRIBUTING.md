@@ -27,7 +27,7 @@ If you want to save space, you can skip installing Qt Creator, CMake, Ninja; the
 Arch (and relatives):
 ```sh
 # core dependencies
-sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua
+sudo pacman -S --needed base-devel cmake ninja clang pkgconf catch2 libdeflate lz4 lua glew
 yay -S --needed libsafec
 
 # Qt frontend
