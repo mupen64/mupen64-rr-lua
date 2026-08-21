@@ -22,7 +22,7 @@ struct config_dialog_context
 {
     HWND hwnd{};
     HWND devices_hwnd{};
-    t_config prev_config{};
+    t_input_config prev_config{};
     size_t selected_controller{};
     std::variant<std::monostate, t_button_mapping *, t_axis_mapping *> target_value{};
     bool positive_target_axis{};
@@ -412,7 +412,7 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             EndDialog(hwnd, IDCANCEL);
             break;
         case IDC_B_CLEAR:
-            new_config = t_config{};
+            new_config = t_input_config{};
             update_visuals();
             break;
         case IDC_COMBOCONT: {

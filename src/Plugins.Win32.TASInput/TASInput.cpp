@@ -1068,7 +1068,7 @@ bool Status::show_context_menu(int x, int y)
 
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
-#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_config, x), y)
+#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_input_config, x), y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
