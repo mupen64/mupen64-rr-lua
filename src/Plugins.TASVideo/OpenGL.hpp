@@ -37,15 +37,6 @@ struct GLInfo
     float adjustOffset;
     float widescreenScale = 1.0f;
 
-    int32_t EXT_fog_coord;           // TNT, GeForce, Rage 128, Radeon
-    int32_t EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon
-    int32_t EXT_secondary_color;     // GeForce, Radeon
-
-    int32_t ARB_buffer_region;
-    int32_t ARB_pbuffer;
-    int32_t ARB_render_texture;
-    int32_t ARB_pixel_format;
-
     int maxTextureUnits; // TNT = 2, GeForce = 2-4, Rage 128 = 2, Radeon = 3-6
 
     uint8_t smoothing;

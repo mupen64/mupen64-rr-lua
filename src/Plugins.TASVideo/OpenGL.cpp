@@ -44,7 +44,7 @@ void OGL_InitExtensions()
 {
     glewExperimental = GL_TRUE;
     GLenum glew = glewInit();
-    if (glew != GLEW_OK)
+    if (glew != GLEW_OK && (!OGL.isGLES || glew != GLEW_ERROR_NO_GLX_DISPLAY))
     {
         g_plugin->log_error("Error initialising glew");
         return;
@@ -52,10 +52,6 @@ void OGL_InitExtensions()
 
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &OGL.maxTextureUnits);
     OGL.maxTextureUnits = std::min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
-
-    OGL.EXT_fog_coord = GLEW_EXT_fog_coord;
-    OGL.EXT_secondary_color = GLEW_EXT_secondary_color;
-    OGL.EXT_texture_env_combine = GLEW_EXT_texture_env_combine;
 }
 
 void OGL_SetIdentityProjection()
