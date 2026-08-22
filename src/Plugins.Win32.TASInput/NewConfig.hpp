@@ -220,6 +220,7 @@ struct t_input_config
     // Increments joystick position by the value of the magnitude slider when moving via keyboard or gamepad
     int32_t relative_mode = false;
     int32_t approach_mode = false;
+    int32_t wrap_joystick = false;
     t_controller_config controller_config[4] = {t_controller_config::keyboard_config(), {}, {}, {}};
     std::optional<SDL_GUID> preferred_device_guid;
 
@@ -236,6 +237,7 @@ struct t_input_config
             TASINPUT_FIELD(loop_combo),
             TASINPUT_FIELD(relative_mode),
             TASINPUT_FIELD(approach_mode),
+            TASINPUT_FIELD(wrap_joystick),
             TASINPUT_FIELD(preferred_device_guid),
         });
         TASINPUT_ARRAY_FIELD(dialog_expanded);
@@ -262,6 +264,7 @@ struct t_input_config
             TASINPUT_FIELD(loop_combo);
             TASINPUT_FIELD(relative_mode);
             TASINPUT_FIELD(approach_mode);
+            TASINPUT_FIELD(wrap_joystick);
             TASINPUT_FIELD(dialog_expanded);
             TASINPUT_FIELD(controller_active);
             TASINPUT_FIELD(controller_mempak);
