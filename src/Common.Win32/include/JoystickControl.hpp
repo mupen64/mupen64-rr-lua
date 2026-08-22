@@ -94,8 +94,8 @@ inline void update_joystick_position(HWND hwnd, Context *ctx)
     RECT rc{};
     GetClientRect(hwnd, &rc);
 
-    if (std::abs(ctx->x) <= 8) ctx->x = 0;
-    if (std::abs(ctx->y) <= 8) ctx->y = 0;
+    if (std::abs(ctx->x) < 8) ctx->x = 0;
+    if (std::abs(ctx->y) < 8) ctx->y = 0;
 
     ctx->x = std::clamp(ctx->x, -128, 127);
     ctx->y = std::clamp(ctx->y, -128, 127);
