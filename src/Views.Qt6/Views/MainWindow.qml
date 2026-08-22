@@ -8,7 +8,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
-import QtQuick.Layouts
 
 import Core
 
@@ -19,6 +18,13 @@ ApplicationWindow {
     visible: true
 
     title: qsTr("Mupen64RR")
+
+    // onClosing: (close) => {
+    //     core.vrCloseROM();
+    // }
+
+    // CONTENT
+    // =====================================
 
     header: MenuBar {
         Menu {
@@ -39,13 +45,6 @@ ApplicationWindow {
             }
         }
     }
-
-    onClosing: (close) => {
-        core.vrCloseROM();
-    }
-
-    // CONTENT
-    // =====================================
 
     Button {
         anchors.centerIn: parent

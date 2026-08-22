@@ -80,6 +80,7 @@ CoreContext::CoreContext(QObject *parent) : QObject(parent)
 
 CoreContext::~CoreContext()
 {
+    Core::context()->vr_close_rom(true);
 }
 
 CoreResult::Value CoreContext::vrStartROM(const QUrl &url)
