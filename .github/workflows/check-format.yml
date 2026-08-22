@@ -14,7 +14,7 @@ permissions:
 jobs:
   check-format:
     name: check all formatting
-    runs-on: ubuntu-latest-slim
+    runs-on: ubuntu-slim
 
     steps:
       - uses: actions/checkout@v6

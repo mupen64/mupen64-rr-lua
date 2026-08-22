@@ -15,7 +15,7 @@ jobs:
 
   draft-release:
     name: Setup draft release
-    runs-on: ubuntu-latest-slim
+    runs-on: ubuntu-slim
     needs: build-stable
     permissions:
       contents: write
