@@ -155,7 +155,7 @@ void show_connectivity_error(bool manual)
     if (manual)
     {
         DialogService::show_notification("Failed to fetch update information. Please try again later.", "Update Error",
-                                   fsvc_error);
+                                         fsvc_error);
     }
 }
 

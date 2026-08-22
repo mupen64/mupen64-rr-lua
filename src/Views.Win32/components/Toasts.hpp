@@ -11,24 +11,25 @@
  */
 namespace Toasts
 {
-    /**
-     * \brief Represents the data for a toast notification.
-     */
-    struct ToastData {
-        std::string content;
-        std::optional<std::string> title = std::nullopt;
-        core_dialog_type tone = fsvc_warning;
-        std::chrono::milliseconds ttl = std::chrono::seconds(5);
-    };
+/**
+ * \brief Represents the data for a toast notification.
+ */
+struct ToastData
+{
+    std::string content;
+    std::optional<std::string> title = std::nullopt;
+    core_dialog_type tone = fsvc_warning;
+    std::chrono::milliseconds ttl = std::chrono::seconds(5);
+};
 
-    /**
-     * \brief Shows a toast notification via the appropriate method.
-     * \param data The toast data.
-     */
-    void show(const ToastData& data);
+/**
+ * \brief Shows a toast notification via the appropriate method.
+ * \param data The toast data.
+ */
+void show(const ToastData &data);
 
-    /**
-     * \brief Updates the layout of visible toasts.
-     */
-    void relayout();
+/**
+ * \brief Updates the layout of visible toasts.
+ */
+void relayout();
 } // namespace Toasts

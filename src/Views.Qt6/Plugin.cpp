@@ -72,7 +72,8 @@ static std::mutex g_plugin_lock;
 Plugin::Plugin(M64RRSpec::PtrGetMetadata get_metadata, M64RRSpec::PtrProcessEvent process_event,
                M64RRSpec::PtrProcessDList process_dlist, M64RRSpec::PtrShowConfig show_config,
                M64RRSpec::PtrReadVideo read_video)
-    : m_process_event(process_event), m_process_dlist(process_dlist), m_show_config(show_config), m_read_video(read_video)
+    : m_process_event(process_event), m_process_dlist(process_dlist), m_show_config(show_config),
+      m_read_video(read_video)
 {
     M64RRSpec::PluginMetadata metadata{};
     get_metadata(&metadata);
@@ -121,7 +122,8 @@ void Plugin::initiate()
     }
 
     if (m_process_event)
-        m_process_event(M64RRSpec::Event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}});
+        m_process_event(
+            M64RRSpec::Event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}});
 }
 
 void Plugin::bind_functions()
@@ -130,7 +132,9 @@ void Plugin::bind_functions()
     {
     case M64RRSpec::PluginType::Video:
         g_core_params.video_process_dlist = m_process_dlist ? m_process_dlist : dummy_process_dlist;
-        g_core_params.video_get_video_size = [this](int32_t *width, int32_t *height) { read_video(nullptr, width, height); };
+        g_core_params.video_get_video_size = [this](int32_t *width, int32_t *height) {
+            read_video(nullptr, width, height);
+        };
         break;
     case M64RRSpec::PluginType::Audio:
         g_core_params.audio_ai_dacrate_changed = M64RRBuiltinTASAudioAIDacrateChanged;

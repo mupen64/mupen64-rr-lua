@@ -45,7 +45,8 @@ void gDPSetOtherMode(u32 mode0, u32 mode1)
 
 void gDPSetPrimDepth(u16 z, u16 dz)
 {
-    gDP.primDepth.z = std::min(1.0f, std::max(0.0f, (_FIXED2FLOAT(z, 15) - gSP.viewport.vtrans[2]) / gSP.viewport.vscale[2]));
+    gDP.primDepth.z =
+        std::min(1.0f, std::max(0.0f, (_FIXED2FLOAT(z, 15) - gSP.viewport.vtrans[2]) / gSP.viewport.vscale[2]));
     gDP.primDepth.deltaZ = dz;
 
     DebugMsg(L"gDPSetPrimDepth( %f, %f );\n", gDP.primDepth.z, gDP.primDepth.deltaZ);

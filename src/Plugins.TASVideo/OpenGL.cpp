@@ -509,8 +509,8 @@ void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
             if (vertices[v[i]].z < -vertices[v[i]].w)
                 OGL.vertices[OGL.numVertices].fog = std::max(0.0f, -(float)gSP.fog.multiplier + (float)gSP.fog.offset);
             else
-                OGL.vertices[OGL.numVertices].fog =
-                    std::max(0.0f, vertices[v[i]].z / vertices[v[i]].w * (float)gSP.fog.multiplier + (float)gSP.fog.offset);
+                OGL.vertices[OGL.numVertices].fog = std::max(
+                    0.0f, vertices[v[i]].z / vertices[v[i]].w * (float)gSP.fog.multiplier + (float)gSP.fog.offset);
         }
 
         if (combiner.usesT0)

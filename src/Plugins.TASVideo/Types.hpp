@@ -47,9 +47,9 @@ using f64 = double; /* double prec floating point */
 
 static void runtime_assert_fail(const std::string &message)
 {
-    #ifdef _WIN32
+#ifdef _WIN32
     MessageBox(nullptr, message.c_str(), "Failed Runtime Assertion", MB_ICONERROR | MB_OK);
-    #endif
+#endif
     std::terminate();
 }
 
