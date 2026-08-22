@@ -46,53 +46,83 @@ void RSP_LoadMatrix(f32 mtx[4][4], u32 address)
     }
 }
 
-DWORD WINAPI RSP_ThreadProc(LPVOID)
+void RSP_PostMessage(u32 command)
+{
+    {
+        std::lock_guard lock(RSP.mutex);
+        RSP.messages.emplace_back(command);
+    }
+    RSP.msg_available.notify_one();
+}
+
+void RSP_SendMessage(u32 command)
+{
+    std::future<void> completed;
+    {
+        std::lock_guard lock(RSP.mutex);
+        auto &message = RSP.messages.emplace_back(command);
+        completed = message.completed.get_future();
+    }
+    RSP.msg_available.notify_one();
+    completed.wait();
+}
+
+void RSP_ThreadProc()
 {
     hqxInit();
 
-    SetEvent(RSP.threadFinished);
-
-    while (TRUE)
+    while (true)
     {
-        switch (WaitForMultipleObjects(std::size(RSP.threadMsg), RSP.threadMsg, FALSE, INFINITE))
+        RSPMessage message;
         {
-        case WAIT_OBJECT_0 + RSPMSG_CLOSE:
+            std::unique_lock lock(RSP.mutex);
+            RSP.msg_available.wait(lock, [] { return !RSP.messages.empty(); });
+            message = std::move(RSP.messages.front());
+            RSP.messages.pop_front();
+        }
+
+        const auto command = message.command;
+        if (command == RSPMSG_CLOSE)
+        {
             OGL_Stop();
             OGL_DestroyContext();
-            SetEvent(RSP.threadFinished);
-            return 0;
-        case WAIT_OBJECT_0 + RSPMSG_START:
+            message.completed.set_value();
+            return;
+        }
+
+        switch (command)
+        {
+        case RSPMSG_START:
             RSP_Init();
             break;
-        case WAIT_OBJECT_0 + RSPMSG_RESTART:
+        case RSPMSG_RESTART:
             OGL_Stop();
             OGL_DestroyContext();
             OGL_Start();
             OGL_ResizeWindow();
             break;
-        case WAIT_OBJECT_0 + RSPMSG_PROCESSDLIST:
+        case RSPMSG_PROCESSDLIST:
             RSP_ProcessDList();
             break;
-        case WAIT_OBJECT_0 + RSPMSG_DESTROYTEXTURES:
+        case RSPMSG_DESTROYTEXTURES:
             Combiner_Destroy();
             FrameBuffer_Destroy();
             TextureCache_Destroy();
             break;
-        case WAIT_OBJECT_0 + RSPMSG_INITTEXTURES:
+        case RSPMSG_INITTEXTURES:
             FrameBuffer_Init();
             TextureCache_Init();
             Combiner_Init();
             gSP.changed = gDP.changed = 0xFFFFFFFF;
             break;
-        case WAIT_OBJECT_0 + RSPMSG_READPIXELS:
+        case RSPMSG_READPIXELS:
             OGL_ReadPixels();
             break;
+        default:
+            break;
         }
-        SetEvent(RSP.threadFinished);
+        message.completed.set_value();
     }
-
-    RSP.thread = NULL;
-    return 0;
 }
 
 void RSP_ProcessDList()
@@ -121,7 +151,7 @@ void RSP_ProcessDList()
     RSP.halt = FALSE;
     RSP.busy = TRUE;
 
-    gSP.matrix.stackSize = min(32, *(u32 *)&DMEM[0x0FE4] >> 6);
+    gSP.matrix.stackSize = std::min(32u, *(u32 *)&DMEM[0x0FE4] >> 6);
     gSP.matrix.modelViewi = 0;
     gSP.changed |= CHANGED_MATRIX;
 

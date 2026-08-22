@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <exception>
+
 using u8 = uint8_t;   /* unsigned  8-bit */
 using u16 = uint16_t; /* unsigned 16-bit */
 using u32 = uint32_t; /* unsigned 32-bit */
@@ -43,10 +47,9 @@ using f64 = double; /* double prec floating point */
 
 static void runtime_assert_fail(const std::string &message)
 {
-#if defined(_DEBUG)
-    __debugbreak();
-#endif
+#ifdef _WIN32
     MessageBox(nullptr, message.c_str(), "Failed Runtime Assertion", MB_ICONERROR | MB_OK);
+#endif
     std::terminate();
 }
 

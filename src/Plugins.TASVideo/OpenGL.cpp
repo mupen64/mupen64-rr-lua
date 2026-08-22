@@ -44,18 +44,14 @@ void OGL_InitExtensions()
 {
     glewExperimental = GL_TRUE;
     GLenum glew = glewInit();
-    if (glew != GLEW_OK)
+    if (glew != GLEW_OK && (!OGL.isGLES || glew != GLEW_ERROR_NO_GLX_DISPLAY))
     {
         g_plugin->log_error("Error initialising glew");
         return;
     }
 
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &OGL.maxTextureUnits);
-    OGL.maxTextureUnits = min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
-
-    OGL.EXT_fog_coord = GLEW_EXT_fog_coord;
-    OGL.EXT_secondary_color = GLEW_EXT_secondary_color;
-    OGL.EXT_texture_env_combine = GLEW_EXT_texture_env_combine;
+    OGL.maxTextureUnits = std::min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
 }
 
 void OGL_SetIdentityProjection()
@@ -182,6 +178,7 @@ bool OGL_InitContext()
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
     s_sdl_context = SDL_GL_CreateContext(s_sdl_window);
     OGL.isGLES = (s_sdl_context != nullptr);
 
@@ -211,6 +208,7 @@ bool OGL_InitContext()
 
     OGL_InitExtensions();
     OGL_InitStates();
+    glDisable(GL_FRAMEBUFFER_SRGB);
 
     g_plugin->log_info(OGL.isGLES ? "TASVideo: running on an OpenGL ES 2.0 context."
                                   : "TASVideo: running on a desktop OpenGL compatibility context.");
@@ -509,10 +507,10 @@ void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
         if ((gSP.geometryMode & G_FOG) && OGL.fog)
         {
             if (vertices[v[i]].z < -vertices[v[i]].w)
-                OGL.vertices[OGL.numVertices].fog = max(0.0f, -(float)gSP.fog.multiplier + (float)gSP.fog.offset);
+                OGL.vertices[OGL.numVertices].fog = std::max(0.0f, -(float)gSP.fog.multiplier + (float)gSP.fog.offset);
             else
-                OGL.vertices[OGL.numVertices].fog =
-                    max(0.0f, vertices[v[i]].z / vertices[v[i]].w * (float)gSP.fog.multiplier + (float)gSP.fog.offset);
+                OGL.vertices[OGL.numVertices].fog = std::max(
+                    0.0f, vertices[v[i]].z / vertices[v[i]].w * (float)gSP.fog.multiplier + (float)gSP.fog.offset);
         }
 
         if (combiner.usesT0)

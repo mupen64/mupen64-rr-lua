@@ -9,6 +9,7 @@
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Assert.hpp>
 #include <components/Statusbar.hpp>
+#include <components/Toasts.hpp>
 
 namespace
 {
@@ -146,5 +147,10 @@ void show_dialog(std::string_view str, std::optional<std::string_view> title, co
 void show_statusbar(std::string_view str)
 {
     Statusbar::post(std::string(str));
+}
+
+void show_notification(std::string str, std::optional<std::string> title, core_dialog_type type)
+{
+    Toasts::show({str, title, type});
 }
 } // namespace DialogService

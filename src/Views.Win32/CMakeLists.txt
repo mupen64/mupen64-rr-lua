@@ -33,6 +33,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "components/CommandPalette.hpp"
     "components/ParameterPalette.hpp"
     "components/TextEditDialog.hpp"
+    "components/Toasts.hpp"
     "components/ReorderableListView.hpp"
     "action/ActionMenu.hpp"
     "action/AppActions.hpp"
@@ -67,7 +68,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "plugin/M64RRPlugin.hpp"
     "resource.h"
     "../Plugins.TASAudio/Resource.rc"
-    "../Plugins.Win32.TASVideo/Resource.rc"
+    "../Plugins.TASVideo/Resource.rc"
     "../Plugins.Win32.TASInput/Resource.rc"
 
     # sources
@@ -95,6 +96,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "components/CommandPalette.cpp"
     "components/ParameterPalette.cpp"
     "components/TextEditDialog.cpp"
+    "components/Toasts.cpp"
     "components/ReorderableListView.cpp"
     "Loggers.cpp"
     "action/ActionMenu.cpp"
@@ -164,7 +166,7 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     Mupen64RR.Plugins.DummyVideo
     Mupen64RR.Plugins.TASAudio
     Mupen64RR.Plugins.TASRSP
-    Mupen64RR.Plugins.Win32.TASVideo
+    Mupen64RR.Plugins.TASVideo
     Mupen64RR.Plugins.Win32.TASInput
 )
 # Windows library linkages

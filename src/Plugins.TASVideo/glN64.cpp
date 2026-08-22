@@ -24,28 +24,13 @@ bool init_rsp_thread()
 {
     if (RSP.thread)
     {
-        SetEvent(RSP.threadMsg[RSPMSG_START]);
-        WaitForSingleObject(RSP.threadFinished, INFINITE);
+        RSP_SendMessage(RSPMSG_START);
         return true;
     }
 
-    for (auto &i : RSP.threadMsg)
-    {
-        i = CreateEvent(NULL, FALSE, FALSE, NULL);
-        RT_ASSERT(i, "Error creating video thread message events");
-    }
-
-    RSP.threadFinished = CreateEvent(NULL, FALSE, FALSE, NULL);
-    RT_ASSERT(RSP.threadFinished, "Error creating video thread finished event");
-
     RSP.halt = FALSE;
-
-    DWORD thread_id;
-    RSP.thread = CreateThread(NULL, 4096, RSP_ThreadProc, NULL, 0, &thread_id);
-    WaitForSingleObject(RSP.threadFinished, INFINITE);
-
-    SetEvent(RSP.threadMsg[RSPMSG_START]);
-    WaitForSingleObject(RSP.threadFinished, INFINITE);
+    RSP.thread = std::make_unique<std::jthread>(RSP_ThreadProc);
+    RSP_SendMessage(RSPMSG_START);
     return true;
 }
 
@@ -74,7 +59,6 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate:
-        g_tas_ctx.hinst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();
@@ -117,25 +101,11 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     case M64RRSpec::Event::Type::RomClosed:
         if (RSP.thread)
         {
-            if (RSP.busy)
-            {
-                RSP.halt = TRUE;
-                WaitForSingleObject(RSP.threadFinished, INFINITE);
-            }
+            if (RSP.busy) RSP.halt = TRUE;
 
-            SetEvent(RSP.threadMsg[RSPMSG_CLOSE]);
-            WaitForSingleObject(RSP.thread, INFINITE);
-            CloseHandle(RSP.thread);
-            RSP.thread = nullptr;
-
-            for (auto &event : RSP.threadMsg)
-            {
-                CloseHandle(event);
-                event = nullptr;
-            }
-
-            CloseHandle(RSP.threadFinished);
-            RSP.threadFinished = nullptr;
+            RSP_SendMessage(RSPMSG_CLOSE);
+            RSP.thread->join();
+            RSP.thread.reset();
         }
         break;
     default:
@@ -143,17 +113,11 @@ EXPORT void CALL M64RRProcessEvent(Event event)
     }
 }
 
-EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
-{
-    Config_Show(parent_window.hwnd());
-}
-
 EXPORT void CALL M64RRProcessDList(void)
 {
     if (RSP.thread)
     {
-        SetEvent(RSP.threadMsg[RSPMSG_PROCESSDLIST]);
-        WaitForSingleObject(RSP.threadFinished, INFINITE);
+        RSP_SendMessage(RSPMSG_PROCESSDLIST);
     }
 }
 
@@ -167,8 +131,13 @@ EXPORT void CALL M64RRReadVideo(void *buffer, int32_t *width, int32_t *height)
         gCapturedPixels = buffer;
         if (RSP.thread)
         {
-            SetEvent(RSP.threadMsg[RSPMSG_READPIXELS]);
-            WaitForSingleObject(RSP.threadFinished, INFINITE);
+            RSP_SendMessage(RSPMSG_READPIXELS);
         }
     }
 }
+
+#ifndef _WIN32
+EXPORT void CALL M64RRShowConfig(M64RRSpec::WindowHandle)
+{
+}
+#endif

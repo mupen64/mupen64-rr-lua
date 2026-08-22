@@ -878,14 +878,28 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         case IDC_X_DOWN:
         case IDC_X_UP: {
             int increment = get_joystick_increment(LOWORD(wparam) == IDC_X_UP);
-            ctx->current_input.x = MiscHelpers::wrapping_clamp(ctx->current_input.x + increment, -128, 127);
+            if (new_config.wrap_joystick)
+            {
+                ctx->current_input.x = MiscHelpers::wrapping_clamp(ctx->current_input.x + increment, -128, 127);
+            }
+            else
+            {
+                ctx->current_input.x = std::clamp(ctx->current_input.x + increment, -128, 127);
+            }
             ctx->set_visuals(ctx->current_input);
         }
         break;
         case IDC_Y_DOWN:
         case IDC_Y_UP: {
             int increment = get_joystick_increment(LOWORD(wparam) == IDC_Y_UP);
-            ctx->current_input.y = MiscHelpers::wrapping_clamp(ctx->current_input.y + increment, -128, 127);
+            if (new_config.wrap_joystick)
+            {
+                ctx->current_input.y = MiscHelpers::wrapping_clamp(ctx->current_input.y + increment, -128, 127);
+            }
+            else
+            {
+                ctx->current_input.y = std::clamp(ctx->current_input.y + increment, -128, 127);
+            }
             ctx->set_visuals(ctx->current_input);
         }
         break;
@@ -1068,9 +1082,10 @@ bool Status::show_context_menu(int x, int y)
 
     // HACK: disable topmost so menu doesnt appear under tasinput
     hmenu = CreatePopupMenu();
-#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_config, x), y)
+#define ADD_ITEM(hmenu, x, y) AppendMenu(hmenu, new_config.x ? MF_CHECKED : 0, offsetof(t_input_config, x), y)
     ADD_ITEM(hmenu, relative_mode, "Relative");
     ADD_ITEM(hmenu, approach_mode, "Approach");
+    ADD_ITEM(hmenu, wrap_joystick, "Wrap joystick");
     AppendMenu(hmenu, MF_SEPARATOR, 0, NULL);
     ADD_ITEM(hmenu, always_on_top, "Always on top");
     ADD_ITEM(hmenu, float_from_parent, "Float from parent");

@@ -10,6 +10,12 @@
 #include "N64.hpp"
 #include "GBI.hpp"
 #include "gSP.hpp"
+#include <condition_variable>
+#include <deque>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 #define RSPMSG_CLOSE 0
 #define RSPMSG_START 1
@@ -19,16 +25,20 @@
 #define RSPMSG_READPIXELS 7
 #define RSPMSG_RESTART 8
 
+struct RSPMessage
+{
+    u32 command;
+    std::promise<void> completed;
+};
+
 struct RSPInfo
 {
-    HANDLE thread;
+    std::unique_ptr<std::jthread> thread;
+    std::mutex mutex;
+    std::condition_variable msg_available;
+    std::deque<RSPMessage> messages;
 
     u32 PC[18], PCi, busy, halt, close, DList, uc_start, uc_dstart, cmd, nextCmd, count;
-
-    // Events for thread messages, see defines at the top, or RSP_Thread
-    HANDLE threadMsg[9];
-    // Event to notify main process that the RSP is finished with what it was doing
-    HANDLE threadFinished;
 };
 
 extern RSPInfo RSP;
@@ -37,5 +47,7 @@ extern RSPInfo RSP;
 
 void RSP_Init();
 void RSP_ProcessDList();
-DWORD WINAPI RSP_ThreadProc(LPVOID lpParameter);
+void RSP_ThreadProc();
+void RSP_PostMessage(u32 message);
+void RSP_SendMessage(u32 message);
 void RSP_LoadMatrix(f32 mtx[4][4], u32 address);

@@ -19,6 +19,7 @@
 #include <components/CLI.hpp>
 #include <components/CommandPalette.hpp>
 #include <components/ParameterPalette.hpp>
+#include <components/Toasts.hpp>
 #include <components/ConfigDialog.hpp>
 #include <components/CrashManager.hpp>
 #include <components/Dispatcher.hpp>
@@ -653,11 +654,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         g_config.window_y = rect.top;
 
         Messenger::broadcast<Messenger::Message::MainWindowMoved>();
+        Toasts::relayout();
 
         break;
     }
     case WM_SIZE: {
         SendMessage(Statusbar::hwnd(), WM_SIZE, 0, 0);
+        Toasts::relayout();
         RECT rect{};
         GetClientRect(g_main_ctx.hwnd, &rect);
         Messenger::broadcast<Messenger::Message::SizeChanged>(
@@ -940,6 +943,9 @@ static core_result init_core()
         DialogService::show_dialog(str, title ? std::make_optional(title) : std::nullopt, type);
     };
     g_main_ctx.core.show_statusbar = [](const char *str) { DialogService::show_statusbar(str); };
+    g_main_ctx.core.show_notification = [](const char *str, const char *title, core_dialog_type tone) {
+        DialogService::show_notification(str, title ? std::make_optional(title) : std::nullopt, tone);
+    };
     g_main_ctx.core.update_screen = PluginUtil::update_screen;
     g_main_ctx.core.copy_video = MGECompositor::copy_video;
     g_main_ctx.core.find_available_rom = RomBrowser::find_available_rom;

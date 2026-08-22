@@ -8,6 +8,7 @@
 #include "Rom.hpp"
 #include <Core.hpp>
 #include <format>
+#include <condition_variable>
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>
 #include <Memory/Savestates.hpp>
@@ -25,7 +26,18 @@
 #error "Big Endian builds aren't supported"
 #endif
 
-std::thread emu_thread_handle;
+struct R4300Internal
+{
+    std::jthread emu_thread_handle;
+
+    std::mutex emu_thread_mutex;
+    std::condition_variable_any emu_thread_cv;
+    std::condition_variable emu_thread_stopped_cv;
+    bool emu_thread_start_requested;
+    bool emu_session_stopped = true;
+};
+
+R4300Internal s_r4300;
 
 // Lock to prevent emu state change race conditions
 std::recursive_mutex g_emu_cs;
@@ -2056,37 +2068,52 @@ void clear_save_data()
     fclose(g_mpak_file);
 }
 
-void emu_thread()
+void emu_thread(std::stop_token stop_token)
 {
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    g_core->initiate_plugins();
-
-    init_memory();
-
-    g_core->callbacks.emu_starting();
-
-    dynacore = g_core->cfg->core_type;
-
-    g_core->callbacks.emu_launched_changed(true);
-    g_core->callbacks.emu_starting_changed(false);
-    g_core->callbacks.reset();
-
-    g_core->log_info(std::format(
-        "[Core] Emu thread entry took {}ms",
-        static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000)));
-    core_start();
-
-    st_on_core_stop();
-
-    g_core->callbacks.emu_stopped();
-
-    emu_paused = true;
-    emu_launched = false;
-
-    if (!emu_resetting)
+    while (true)
     {
-        g_core->callbacks.emu_launched_changed(false);
+        {
+            std::unique_lock lock(s_r4300.emu_thread_mutex);
+            s_r4300.emu_thread_cv.wait(lock, stop_token, [] { return s_r4300.emu_thread_start_requested; });
+            if (stop_token.stop_requested())
+            {
+                return;
+            }
+            s_r4300.emu_thread_start_requested = false;
+        }
+
+        const auto start_time = std::chrono::high_resolution_clock::now();
+
+        g_core->initiate_plugins();
+        init_memory();
+        g_core->callbacks.emu_starting();
+
+        dynacore = g_core->cfg->core_type;
+
+        g_core->callbacks.emu_launched_changed(true);
+        g_core->callbacks.emu_starting_changed(false);
+        g_core->callbacks.reset();
+
+        g_core->log_info(std::format(
+            "[Core] Emu thread entry took {}ms",
+            static_cast<int32_t>((std::chrono::high_resolution_clock::now() - start_time).count() / 1'000'000)));
+        core_start();
+
+        st_on_core_stop();
+        g_core->callbacks.emu_stopped();
+
+        emu_paused = true;
+        emu_launched = false;
+
+        if (!emu_resetting)
+        {
+            g_core->callbacks.emu_launched_changed(false);
+        }
+        {
+            std::lock_guard lock(s_r4300.emu_thread_mutex);
+            s_r4300.emu_session_stopped = true;
+        }
+        s_r4300.emu_thread_stopped_cv.notify_all();
     }
 }
 
@@ -2110,7 +2137,10 @@ core_result vr_close_rom_impl(bool stop_vcr)
 
     stop = 1;
 
-    emu_thread_handle.join();
+    {
+        std::unique_lock lock(s_r4300.emu_thread_mutex);
+        s_r4300.emu_thread_stopped_cv.wait(lock, [] { return s_r4300.emu_session_stopped; });
+    }
 
     fflush(g_eeprom_file);
     fflush(g_sram_file);
@@ -2196,7 +2226,19 @@ core_result vr_start_rom_impl(std::filesystem::path path)
 
     emu_paused = false;
     emu_launched = true;
-    emu_thread_handle = std::thread(emu_thread);
+    {
+        std::lock_guard lock(s_r4300.emu_thread_mutex);
+        s_r4300.emu_session_stopped = false;
+    }
+    if (!s_r4300.emu_thread_handle.joinable())
+    {
+        s_r4300.emu_thread_handle = std::jthread(emu_thread);
+    }
+    {
+        std::lock_guard lock(s_r4300.emu_thread_mutex);
+        s_r4300.emu_thread_start_requested = true;
+    }
+    s_r4300.emu_thread_cv.notify_one();
 
     // We need to wait until the core is actually done and running before we can continue, because we release the lock
     // If we return too early (before core is ready to also be killed), then another start or close might come in during

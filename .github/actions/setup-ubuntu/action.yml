@@ -43,7 +43,8 @@ runs:
         libspdlog-dev \
         libspeexdsp-dev \
         libswresample-dev \
-        libswscale-dev
+        libswscale-dev \
+        libglew-dev
 
     - name: Setup nightly build environment variables
       if: ${{ inputs.is_nightly }}

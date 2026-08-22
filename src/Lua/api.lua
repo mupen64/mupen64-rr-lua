@@ -1575,6 +1575,7 @@ function movie.get_readonly() end
 function movie.set_readonly(readonly) end
 
 ---Begins seeking.
+---The seek operation might end before the target frame is reached, so make sure to check the current frame via `movie.get_seek_completion()`.
 ---@param str string
 ---@param pause_at_end boolean
 ---@return integer

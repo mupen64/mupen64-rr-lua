@@ -135,10 +135,6 @@ std::pair<std::string, std::string> CoreUtils::get_error_message_for_result(core
         module = "VCR";
         error = "The provided input buffer is empty.";
         break;
-    case VCR_SeekAlreadyRunning:
-        module = "VCR";
-        error = "Another seek operation is already running.";
-        break;
     case VCR_SeekSavestateLoadFailed:
         module = "VCR";
         error = "The seek operation could not be initiated due to a savestate not being loaded successfully.";

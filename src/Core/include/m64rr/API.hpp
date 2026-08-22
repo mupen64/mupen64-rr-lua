@@ -192,6 +192,15 @@ extern "C"
         std::function<void(const char *str)> show_statusbar = [](const auto &...) {};
 
         /**
+         * \brief Shows a notification.
+         * \param str The notification content.
+         * \param title The notification title.
+         * \param tone The notification's tone.
+         */
+        std::function<void(const char *str, const char *title, core_dialog_type tone)> show_notification =
+            [](const auto &...) {};
+
+        /**
          * \brief Notifies the host that new video data is available and the screen should be updated.
          */
         std::function<void()> update_screen = [](const auto &...) {};
@@ -525,7 +534,8 @@ extern "C"
          * \param str A seek format string
          * \param pause_at_end Whether the emu should be paused when the seek operation ends
          * \return The operation result
-         * \remarks When the seek operation completes, the SeekCompleted message will be sent
+         * \remarks When the seek operation completes, the SeekCompleted message will be sent. The seek operation might
+         * end before the target frame is reached.
          *
          * Seek string format possibilities:
          *	"n" - Frame

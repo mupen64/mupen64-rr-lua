@@ -62,4 +62,13 @@ void show_dialog(std::string_view str, std::optional<std::string_view> title = s
  * \param str The text.
  */
 void show_statusbar(std::string_view str);
+
+/**
+ * \brief Shows a non-modal notification to the user.
+ * \param str The notification text.
+ * \param title The notification title. If `std::nullopt`, no title will be shown.
+ * \param type The notification tone.
+ */
+void show_notification(std::string str, std::optional<std::string> title = std::nullopt,
+                       core_dialog_type type = fsvc_warning);
 } // namespace DialogService
