@@ -173,7 +173,7 @@ bool PluginUtil::load_plugins()
     try
     {
         std::scoped_lock lock(g_plugin_lock);
-        auto video_plugin = Plugin(BuiltinTAS::PluginID::DummyVideo);
+        auto video_plugin = Plugin(BuiltinTAS::PluginID::TASVideo);
         auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
         auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
         auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);

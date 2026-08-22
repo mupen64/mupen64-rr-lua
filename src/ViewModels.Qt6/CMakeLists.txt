@@ -35,6 +35,7 @@ target_link_libraries(Mupen64RR.ViewModels.Qt6 PUBLIC
     Mupen64RR.Plugins.DummyAudio
     Mupen64RR.Plugins.DummyInput
 
+    Mupen64RR.Plugins.TASVideo
     Mupen64RR.Plugins.TASAudio
     Mupen64RR.Plugins.TASRSP
 )
