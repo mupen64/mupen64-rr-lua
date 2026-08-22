@@ -17,7 +17,7 @@ struct GLSLProgram
 {
     GLuint program;
 
-    BOOL usesT0, usesT1, usesNoise;
+    int32_t usesT0, usesT1, usesNoise;
 
     GLint locTex0, locTex1;
     GLint locPrimColor, locEnvColor, locCenterColor, locScaleColor, locFogColor;
@@ -295,7 +295,7 @@ static void ScanCombiner(GLSLProgram *program, Combiner *c)
 static std::string BuildFragmentSource(Combiner *color, Combiner *alpha)
 {
     UniformUsage usage = {};
-    const int numCycles = max(color->numStages, alpha->numStages);
+    const int numCycles = std::max(color->numStages, alpha->numStages);
 
     std::string body;
     body += "    vec3 rgb = vec3(0.0);\n";

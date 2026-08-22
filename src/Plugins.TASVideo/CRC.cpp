@@ -10,9 +10,9 @@
 
 unsigned long CRCTable[256];
 
-DWORD Reflect(DWORD ref, char ch)
+uint32_t Reflect(uint32_t ref, char ch)
 {
-    DWORD value = 0;
+    uint32_t value = 0;
 
     // Swap bit 0 for bit 7
     // bit 1 for bit 6, etc.
@@ -26,7 +26,7 @@ DWORD Reflect(DWORD ref, char ch)
 
 void CRC_BuildTable()
 {
-    DWORD crc;
+    uint32_t crc;
 
     for (int i = 0; i <= 255; i++)
     {
@@ -37,23 +37,23 @@ void CRC_BuildTable()
     }
 }
 
-DWORD CRC_Calculate(DWORD crc, void *buffer, DWORD count)
+uint32_t CRC_Calculate(uint32_t crc, void *buffer, uint32_t count)
 {
-    BYTE *p;
-    DWORD orig = crc;
+    uint8_t *p;
+    uint32_t orig = crc;
 
-    p = (BYTE *)buffer;
+    p = (uint8_t *)buffer;
     while (count--) crc = (crc >> 8) ^ CRCTable[(crc & 0xFF) ^ *p++];
 
     return crc ^ orig;
 }
 
-DWORD CRC_CalculatePalette(DWORD crc, void *buffer, DWORD count)
+uint32_t CRC_CalculatePalette(uint32_t crc, void *buffer, uint32_t count)
 {
-    BYTE *p;
-    DWORD orig = crc;
+    uint8_t *p;
+    uint32_t orig = crc;
 
-    p = (BYTE *)buffer;
+    p = (uint8_t *)buffer;
     while (count--)
     {
         crc = (crc >> 8) ^ CRCTable[(crc & 0xFF) ^ *p++];

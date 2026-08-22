@@ -229,13 +229,13 @@ static int CCEncodeC[] = {0, 1, 2, 3, 4, 5, 31, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
 
 static int CCEncodeD[] = {0, 1, 2, 3, 4, 5, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 6, 15};
 
-static DWORD64 ACEncodeA[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 7, 7, 7, 7, 6, 7};
+static uint64_t ACEncodeA[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 7, 7, 7, 7, 6, 7};
 
-static DWORD64 ACEncodeB[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 7, 7, 7, 7, 6, 7};
+static uint64_t ACEncodeB[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 7, 7, 7, 7, 6, 7};
 
-static DWORD64 ACEncodeC[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 6, 7, 7, 7, 7, 7};
+static uint64_t ACEncodeC[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 6, 7, 7, 7, 7, 7};
 
-static DWORD64 ACEncodeD[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 7, 7, 7, 7, 6, 7};
+static uint64_t ACEncodeD[] = {7, 7, 7, 7, 7, 7, 7, 7, 0, 1, 2, 3, 4, 5, 7, 7, 7, 7, 7, 6, 7};
 
 struct CachedCombiner
 {
@@ -249,12 +249,12 @@ extern struct CombinerInfo
 {
     struct
     {
-        WORD color, secondaryColor, alpha;
+        uint16_t color, secondaryColor, alpha;
     } vertex;
 
     CachedCombiner *root, *current;
 
-    BOOL usesT0, usesT1, usesNoise;
+    bool usesT0, usesT1, usesNoise;
 } combiner;
 
 #define SetConstant(constant, color, alpha)                                                                            \

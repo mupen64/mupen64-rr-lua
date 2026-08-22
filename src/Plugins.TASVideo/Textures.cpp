@@ -262,7 +262,7 @@ void TextureCache_Init()
     {
         glBindTexture(GL_TEXTURE_2D, cache.glNoiseNames[i]);
 
-        srand(timeGetTime());
+        srand(std::time(nullptr));
 
         for (s16 y = 0; y < 64; y++)
         {
@@ -383,32 +383,6 @@ static void TextureCache_Scale(CachedTexture *tex_info, uint32_t *src, const GLu
 
     free(src);
     free(dst);
-}
-
-BOOL TextureCache_Verify()
-{
-    s16 i = 0;
-    CachedTexture *current;
-
-    current = cache.top;
-
-    while (current)
-    {
-        i++;
-        current = current->lower;
-    }
-    if (i != cache.numCached) return FALSE;
-
-    i = 0;
-    current = cache.bottom;
-    while (current)
-    {
-        i++;
-        current = current->higher;
-    }
-    if (i != cache.numCached) return FALSE;
-
-    return TRUE;
 }
 
 void TextureCache_RemoveBottom()
@@ -566,13 +540,13 @@ void TextureCache_LoadBackground(CachedTexture *texInfo)
     j = 0;
     for (y = 0; y < texInfo->realHeight; y++)
     {
-        ty = min(y, clampTClamp);
+        ty = std::min(y, (u32)clampTClamp);
 
         src = &swapped[bpl * ty];
 
         for (x = 0; x < texInfo->realWidth; x++)
         {
-            tx = min(x, clampSClamp);
+            tx = std::min(x, (u32)clampSClamp);
 
             if (glInternalFormat == GL_RGBA8)
                 dest[j++] = GetTexel((u64 *)src, tx, 0, texInfo->palette);
@@ -629,7 +603,7 @@ void TextureCache_Load(CachedTexture *texInfo)
     }
     else
     {
-        clampSClamp = min(texInfo->clampWidth, texInfo->width) - 1;
+        clampSClamp = std::min(texInfo->clampWidth, texInfo->width) - 1;
         maskSMask = 0xFFFF;
         mirrorSBit = 0x0000;
     }
@@ -643,7 +617,7 @@ void TextureCache_Load(CachedTexture *texInfo)
     }
     else
     {
-        clampTClamp = min(texInfo->clampHeight, texInfo->height) - 1;
+        clampTClamp = std::min(texInfo->clampHeight, texInfo->height) - 1;
         maskTMask = 0xFFFF;
         mirrorTBit = 0x0000;
     }
@@ -654,7 +628,7 @@ void TextureCache_Load(CachedTexture *texInfo)
     j = 0;
     for (y = 0; y < texInfo->realHeight; y++)
     {
-        ty = min(y, clampTClamp) & maskTMask;
+        ty = std::min(y, clampTClamp) & maskTMask;
 
         if (y & mirrorTBit) ty ^= maskTMask;
 
@@ -663,7 +637,7 @@ void TextureCache_Load(CachedTexture *texInfo)
         i = (ty & 1) << 1;
         for (x = 0; x < texInfo->realWidth; x++)
         {
-            tx = min(x, clampSClamp) & maskSMask;
+            tx = std::min(x, clampSClamp) & maskSMask;
 
             if (x & mirrorSBit) tx ^= maskSMask;
 
@@ -860,7 +834,7 @@ void TextureCache_Update(u32 t)
     lineWidth = gSP.textureTile[t]->line << imageFormat[gSP.textureTile[t]->size][gSP.textureTile[t]->format].lineShift;
 
     if (lineWidth) // Don't allow division by zero
-        lineHeight = min(maxTexels / lineWidth, tileHeight);
+        lineHeight = std::min(maxTexels / lineWidth, tileHeight);
     else
         lineHeight = 0;
 

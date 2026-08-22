@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "Config.hpp"
 #include "gSP.hpp"
 
 struct GLVertex
@@ -21,36 +22,20 @@ struct GLVertex
     float fog;
 };
 
-enum class AspectMode : uint8_t
-{
-    Pillarbox = 0,
-    Stretch = 1,
-    Widescreen = 2,
-};
-
 struct GLInfo
 {
-    BOOL context_initialized;
+    int32_t context_initialized;
 
-    DWORD width, height, windowedWidth, windowedHeight;
+    uint32_t width, height, windowedWidth, windowedHeight;
 
-    BOOL fog;
+    int32_t fog;
 
     float scaleX, scaleY;
     AspectMode aspectMode;
-    BOOL adjustScreen;
+    int32_t adjustScreen;
     float adjustScale;
     float adjustOffset;
     float widescreenScale = 1.0f;
-
-    BOOL EXT_fog_coord;           // TNT, GeForce, Rage 128, Radeon
-    BOOL EXT_texture_env_combine; // TNT, GeForce, Rage 128, Radeon
-    BOOL EXT_secondary_color;     // GeForce, Radeon
-
-    BOOL ARB_buffer_region;
-    BOOL ARB_pbuffer;
-    BOOL ARB_render_texture;
-    BOOL ARB_pixel_format;
 
     int maxTextureUnits; // TNT = 2, GeForce = 2-4, Rage 128 = 2, Radeon = 3-6
 
@@ -64,18 +49,18 @@ struct GLInfo
     int filterScale = 4;
 
     GLVertex vertices[256];
-    BYTE triangles[80][3];
-    BYTE numTriangles;
-    BYTE numVertices;
+    uint8_t triangles[80][3];
+    uint8_t numTriangles;
+    uint8_t numVertices;
 
-    BOOL usePolygonStipple;
+    int32_t usePolygonStipple;
     GLubyte stipplePattern[32][8][128];
-    BYTE lastStipple;
+    uint8_t lastStipple;
 
-    BOOL ignoreScissor;
+    int32_t ignoreScissor;
 
     // Clears the game with black color every frame regardless of what N64 asks
-    BOOL clear_override = TRUE;
+    int32_t clear_override = TRUE;
 
     bool headless{};
 

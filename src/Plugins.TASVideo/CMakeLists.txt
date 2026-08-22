@@ -4,14 +4,13 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-add_library(Mupen64RR.Plugins.Win32.TASVideo STATIC
+add_library(Mupen64RR.Plugins.TASVideo STATIC
     "VI.hpp"
     "Types.hpp"
     "Common.hpp"
     "S2DEX2.hpp"
     "S2DEX.hpp"
     "RSP.hpp"
-    "resource.h"
     "RDP.hpp"
     "OpenGL.hpp"
     "N64.hpp"
@@ -66,40 +65,54 @@ add_library(Mupen64RR.Plugins.Win32.TASVideo STATIC
     "Config.cpp"
     "Combiner.cpp"
     "2xSAI.cpp"
-
-    "Resource.rc"
 )
-target_compile_features(Mupen64RR.Plugins.Win32.TASVideo PRIVATE cxx_std_26)
-set_target_properties(Mupen64RR.Plugins.Win32.TASVideo PROPERTIES
+
+if (MUPEN64RR_BUILD_WIN32)
+    target_sources(Mupen64RR.Plugins.TASVideo PRIVATE
+        "MicrocodeDialog_Win32.hpp"
+        "ConfigDialog_Win32.hpp"
+        "Resource.h"
+
+        "MicrocodeDialog_Win32.cpp"
+        "ConfigDialog_Win32.cpp"
+        "glN64_Win32.cpp"
+        "Resource.rc"
+    )
+    target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Win32.Common)
+else()
+    target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Common)
+endif()
+
+target_compile_features(Mupen64RR.Plugins.TASVideo PRIVATE cxx_std_26)
+target_compile_definitions(Mupen64RR.Plugins.TASVideo PRIVATE
+    MUPEN64RR_BUILD_WIN32=$<BOOL:${MUPEN64RR_BUILD_WIN32}>
+    MUPEN64RR_BUILD_QT6=$<BOOL:${MUPEN64RR_BUILD_QT6}>
+)
+set_target_properties(Mupen64RR.Plugins.TASVideo PROPERTIES
     OUTPUT_NAME "TASVideo"
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_include_directories(Mupen64RR.Plugins.Win32.TASVideo PRIVATE ".")
-target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
-    Mupen64RR.Plugins.Win32.Common
-    vendor::hqx
-    vendor::xbrz
-    nlohmann_json::nlohmann_json
-    GLEW::GLEW
-    SDL3::SDL3
-)
-target_link_libraries(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
-    comctl32
-    uxtheme
-    msimg32
-    gdiplus
-    opengl32
-    glu32
-    winmm
-)
-if (MUPEN64RR_LINK_STATIC)
-    target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
-        "GLEW_STATIC"
+target_include_directories(Mupen64RR.Plugins.TASVideo PRIVATE ".")
+
+if (MUPEN64RR_BUILD_WIN32)
+    target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
+        comctl32
+        uxtheme
+        msimg32
+        opengl32
     )
 endif()
 
-target_compile_definitions(Mupen64RR.Plugins.Win32.TASVideo PRIVATE
+target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
+    vendor::hqx
+    vendor::xbrz
+    nlohmann_json::nlohmann_json
+    PkgConfig::glew
+    SDL3::SDL3
+)
+
+target_compile_definitions(Mupen64RR.Plugins.TASVideo PRIVATE
     M64RRGetMetadata=M64RRBuiltinTASVideoGetMetadata
     M64RRProcessEvent=M64RRBuiltinTASVideoProcessEvent
     M64RRProcessDList=M64RRBuiltinTASVideoProcessDList

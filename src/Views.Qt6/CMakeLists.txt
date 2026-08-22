@@ -23,7 +23,7 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.Common
     Mupen64RR.Common.Views
     Mupen64RR.Core
-    Mupen64RR.Plugins.DummyVideo
+    Mupen64RR.Plugins.TASVideo
     Mupen64RR.Plugins.TASAudio
     Mupen64RR.Plugins.DummyInput
     Mupen64RR.Plugins.TASRSP

@@ -10,7 +10,6 @@
 
 struct TASVideoContext
 {
-    HINSTANCE hinst;
 };
 
 extern TASVideoContext g_tas_ctx;

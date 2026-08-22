@@ -8,5 +8,5 @@
 
 void CRC_BuildTable();
 
-DWORD CRC_Calculate(DWORD crc, void *buffer, DWORD count);
-DWORD CRC_CalculatePalette(DWORD crc, void *buffer, DWORD count);
+uint32_t CRC_Calculate(uint32_t crc, void *buffer, uint32_t count);
+uint32_t CRC_CalculatePalette(uint32_t crc, void *buffer, uint32_t count);

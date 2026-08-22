@@ -120,7 +120,7 @@ inline void unswap_copy(uint8_t *src, uint8_t *dst, u32 num_bytes)
     if (leading_bytes != 0)
     {
         leading_bytes = 4 - leading_bytes;
-        leading_bytes = min(leading_bytes, num_bytes);
+        leading_bytes = std::min(leading_bytes, num_bytes);
 
         for (u32 i = 0; i < leading_bytes; ++i) dst[i] = src[3 - i];
 

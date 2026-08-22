@@ -91,6 +91,7 @@ find_package(spdlog CONFIG REQUIRED)
 pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
 pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 pkg_check_modules(lz4 IMPORTED_TARGET GLOBAL "liblz4")
+pkg_check_modules(glew IMPORTED_TARGET GLOBAL "glew")
 
 # libsafec (required on most runtimes to support C11 Annex K)
 if(NOT WIN32)
@@ -112,9 +113,6 @@ endif()
 
 # Windows-only dependencies
 if(MUPEN64RR_BUILD_WIN32)
-    find_package(spdlog CONFIG REQUIRED)
-    find_package(glew CONFIG REQUIRED)
-
     pkg_check_modules(speexdsp IMPORTED_TARGET GLOBAL "speexdsp")
     pkg_check_modules(libav IMPORTED_TARGET GLOBAL "libavformat" "libavcodec" "libavutil")
 endif()

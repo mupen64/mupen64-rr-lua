@@ -44,18 +44,14 @@ void OGL_InitExtensions()
 {
     glewExperimental = GL_TRUE;
     GLenum glew = glewInit();
-    if (glew != GLEW_OK)
+    if (glew != GLEW_OK && (!OGL.isGLES || glew != GLEW_ERROR_NO_GLX_DISPLAY))
     {
         g_plugin->log_error("Error initialising glew");
         return;
     }
 
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &OGL.maxTextureUnits);
-    OGL.maxTextureUnits = min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
-
-    OGL.EXT_fog_coord = GLEW_EXT_fog_coord;
-    OGL.EXT_secondary_color = GLEW_EXT_secondary_color;
-    OGL.EXT_texture_env_combine = GLEW_EXT_texture_env_combine;
+    OGL.maxTextureUnits = std::min(8, OGL.maxTextureUnits); // The plugin only supports 8, and 4 is really enough
 }
 
 void OGL_SetIdentityProjection()
@@ -511,10 +507,10 @@ void OGL_AddTriangle(SPVertex *vertices, int v0, int v1, int v2)
         if ((gSP.geometryMode & G_FOG) && OGL.fog)
         {
             if (vertices[v[i]].z < -vertices[v[i]].w)
-                OGL.vertices[OGL.numVertices].fog = max(0.0f, -(float)gSP.fog.multiplier + (float)gSP.fog.offset);
+                OGL.vertices[OGL.numVertices].fog = std::max(0.0f, -(float)gSP.fog.multiplier + (float)gSP.fog.offset);
             else
-                OGL.vertices[OGL.numVertices].fog =
-                    max(0.0f, vertices[v[i]].z / vertices[v[i]].w * (float)gSP.fog.multiplier + (float)gSP.fog.offset);
+                OGL.vertices[OGL.numVertices].fog = std::max(
+                    0.0f, vertices[v[i]].z / vertices[v[i]].w * (float)gSP.fog.multiplier + (float)gSP.fog.offset);
         }
 
         if (combiner.usesT0)
