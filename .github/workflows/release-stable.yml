@@ -12,10 +12,10 @@ jobs:
   build-stable:
     name: Build stable release artifacts
     uses: $/.github/workflows/build-stable.yml
-  
+
   draft-release:
     name: Setup draft release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-slim
     needs: build-stable
     permissions:
       contents: write
@@ -32,7 +32,7 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: git-cliff
-        
+
       - parallel:
         - name: Download windows-x86 release
           uses: actions/download-artifact@v8
@@ -44,7 +44,7 @@ jobs:
           with:
             name: mupen-release-stable-windows-x64
             skip-decompress: true
-      
+
       - name: Rename downloaded artifacts
         shell: bash
         run: |
