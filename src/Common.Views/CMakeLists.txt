@@ -14,7 +14,6 @@ add_library(Mupen64RR.Common.Views STATIC
     "include/Common.Views/Resampler.hpp"
     "include/Common.Views/Encoder.hpp"
     "include/Common.Views/IDialogService.hpp"
-    "include/Common.Views/Assert.hpp"
     "include/Common.Views/ConfigLegacy.hpp"
     "Config.cpp"
     "ConfigLegacy.cpp"

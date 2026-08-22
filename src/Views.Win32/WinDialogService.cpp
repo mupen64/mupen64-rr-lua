@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 #include <components/Statusbar.hpp>
 #include <components/Toasts.hpp>
 
@@ -33,7 +33,7 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
 
     if (silenced)
     {
-        RT_ASSERT(g_config.silent_mode_dialog_choices.contains(std::string(id)),
+        NEED(g_config.silent_mode_dialog_choices.contains(std::string(id)),
                   std::format("Expected silent mode dialog choice for '{}'", id));
         const auto default_index = g_config.silent_mode_dialog_choices[std::string(id)];
         g_view_logger->trace("[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str,

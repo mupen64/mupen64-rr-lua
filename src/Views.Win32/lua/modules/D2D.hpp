@@ -8,7 +8,7 @@
 
 #include <lua/LuaRenderer.hpp>
 #include <lua/LuaManager.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 namespace LuaCore::D2D
 {
@@ -551,7 +551,7 @@ static int draw_image2(lua_State *L)
 
     ComPtr<ID2D1DeviceContext> dc;
     const auto hr = lua->rctx.d2d_render_target_stack.top()->QueryInterface(IID_PPV_ARGS(dc.GetAddressOf()));
-    RT_ASSERT_HR(hr, "Failed to get ID2D1DeviceContext from render target");
+    NEED_HR(hr, "Failed to get ID2D1DeviceContext from render target");
 
     ComPtr<ID2D1Effect> effect;
     dc->CreateEffect(CLSID_D2D1ColorMatrix, effect.GetAddressOf());

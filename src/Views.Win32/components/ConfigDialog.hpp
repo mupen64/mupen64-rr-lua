@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 /**
  * \brief A module responsible for implementing configuration dialogs.
@@ -72,7 +72,7 @@ struct t_options_item
     t_readwrite_property current_value;
 
     t_readonly_property initial_value = t_readonly_property([] -> data_variant {
-        RT_ASSERT(false, "Initial value not set for option");
+        NEED(false, "Initial value not set for option");
         return data_variant{};
     });
 
