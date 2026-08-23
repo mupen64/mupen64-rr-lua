@@ -5,28 +5,96 @@
  */
 
 #include "MupenCore.hpp"
+#include <IOUtils.hpp>
 #include <MiscHelpers.hpp>
 
 #include <atomic>
+#include <print>
 #include <ranges>
 
 #include <QThread>
 #include <QIcon>
 #include <QUrl>
 
-#include <ViewModels.Qt6/Core.hpp>
 #include <QtUtils.hpp>
 
-static std::atomic_bool g_core_context_created = false;
+static std::atomic<CoreContext *> g_core_instance = nullptr;
 
-CoreContext::CoreContext(QObject *parent) : QObject(parent)
+static core_cfg g_core_cfg {};
+static core_params g_core_params {};
+
+static void set_core_instance(CoreContext *ptr)
 {
-    if (g_core_context_created.exchange(true)) throw std::logic_error("CoreContext should only be created once");
-    auto &params = Core::params();
+    CoreContext *expect = nullptr;
+    if (!g_core_instance.compare_exchange_strong(expect, ptr))
+        throw std::logic_error("CoreContext should not be created twice!");
+}
 
-    // Override dialog service
-    params.show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
-                                             const char *str, const char *title, core_dialog_type type) -> size_t {
+CoreContext::CoreContext(QObject *parent)
+    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params),
+      m_core_ctx(nullptr)
+{
+    set_core_instance(this);
+
+    m_core_params->cfg = m_core_cfg;
+
+#pragma region Directories
+    m_core_params->submit_task = [](const auto &cb) {
+        // Defer to the stdlib's thread pool.
+        (void)std::async(cb);
+    };
+    m_core_params->get_saves_directory = [] {
+        static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
+        if (!std::filesystem::is_directory(s_save_path)) std::filesystem::create_directories(s_save_path);
+        return s_save_path;
+    };
+    m_core_params->get_backups_directory = [] {
+        static auto s_backups_path = IOUtils::exe_path().parent_path() / "backups";
+        if (!std::filesystem::is_directory(s_backups_path)) std::filesystem::create_directories(s_backups_path);
+        return s_backups_path;
+    };
+    m_core_params->get_summercart_path = []() { return IOUtils::exe_path().parent_path() / "saves/cart.vhd"; };
+#pragma endregion
+
+#pragma region Logging
+    m_core_params->log_trace = [](std::string_view msg) { std::println(stderr, "[TRACE] {}", msg); };
+    m_core_params->log_info = [](std::string_view msg) { std::println(stderr, "[INFO]  {}", msg); };
+    m_core_params->log_warn = [](std::string_view msg) { std::println(stderr, "[WARN]  {}", msg); };
+    m_core_params->log_error = [](std::string_view msg) { std::println(stderr, "[ERROR] {}", msg); };
+#pragma endregion
+
+#pragma region Plugin integration
+
+    m_core_params->callbacks.emu_starting = [&] { m_plugins.value().emu_started(*m_core_params); };
+    m_core_params->callbacks.emu_stopped = [&] { m_plugins.value().emu_stopped(*m_core_params); };
+
+    m_core_params->load_plugins = [&] {
+        // TODO: load plugins
+        try
+        {
+            auto video_plugin = Plugin(BuiltinTAS::PluginID::TASVideo);
+            auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
+            auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
+            auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
+            m_plugins.emplace(std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin),
+                              std::move(rsp_plugin));
+            return true;
+        }
+        catch (const std::exception &err)
+        {
+            std::println(stderr, "[ERROR] Plugin load failed: {}", err.what());
+            return false;
+        }
+    };
+    m_core_params->initiate_plugins = [&] { m_plugins.value().initiate_plugins(m_core_ctx, *m_core_params); };
+    CoreUtil::clear_plugin_funcs(*m_core_params);
+
+#pragma endregion
+
+#pragma region Dialog service
+    m_core_params->show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
+                                                     const char *str, const char *title,
+                                                     core_dialog_type type) -> size_t {
         // Convert choices to Qt string
         auto q_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
@@ -45,7 +113,8 @@ CoreContext::CoreContext(QObject *parent) : QObject(parent)
         dialog_finished.wait();
         return dialog_finished.get();
     };
-    params.show_ask_dialog = [&](std::string_view id, const char *str, const char *title, bool warning) -> bool {
+    m_core_params->show_ask_dialog = [&](std::string_view id, const char *str, const char *title,
+                                         bool warning) -> bool {
         // Future waiting for GUI result
         auto dialog_finished = QtUtils::on_signal(this, &CoreContext::showAskDialogFinished);
 
@@ -60,7 +129,7 @@ CoreContext::CoreContext(QObject *parent) : QObject(parent)
         dialog_finished.wait();
         return dialog_finished.get();
     };
-    params.show_dialog = [&](const char *str, const char *title, core_dialog_type type) {
+    m_core_params->show_dialog = [&](const char *str, const char *title, core_dialog_type type) {
         // Future waiting for GUI result
         auto dialog_finished = QtUtils::on_signal(this, &CoreContext::showDialogFinished);
 
@@ -74,21 +143,51 @@ CoreContext::CoreContext(QObject *parent) : QObject(parent)
         dialog_finished.wait();
         dialog_finished.get();
     };
+#pragma endregion
 
-    Core::context();
+    core_create(m_core_params, &m_core_ctx);
 }
 
 CoreContext::~CoreContext()
 {
-    Core::context()->vr_close_rom(true);
+    // ensure ROM is closed
+    m_core_ctx->vr_close_rom(true);
 }
 
-CoreResult::Value CoreContext::vrStartROM(const QUrl &url)
+CoreContext *CoreContext::instance()
 {
-    return (CoreResult::Value)(int)Core::context()->vr_start_rom(url.toLocalFile().toStdU16String());
+    return g_core_instance;
 }
 
-CoreResult::Value CoreContext::vrCloseROM(bool resetVCR)
+CoreResult::Value CoreContext::vrStartROM(const QUrl &url) const
 {
-    return (CoreResult::Value)(int)Core::context()->vr_close_rom(resetVCR);
+    std::filesystem::path path = url.toLocalFile().toStdU16String();
+    return CoreResult::from_core(m_core_ctx->vr_start_rom(path));
+}
+
+CoreResult::Value CoreContext::vrCloseROM(bool resetVCR) const
+{
+    return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+}
+
+void CoreUtil::clear_plugin_funcs(core_params &params)
+{
+    params.video_process_dlist = [](auto...) {};
+    params.video_process_rdp_list = [](auto...) {};
+    params.video_show_cfb = [](auto...) {};
+    params.video_vi_status_changed = [](auto...) {};
+    params.video_vi_width_changed = [](auto...) {};
+    params.video_get_video_size = [](auto...) {};
+    params.video_fb_read = [](auto...) {};
+    params.video_fb_write = [](auto...) {};
+    params.video_fb_get_frame_buffer_info = [](auto...) {};
+    params.audio_ai_dacrate_changed = [](auto...) {};
+    params.audio_ai_len_changed = [](auto...) {};
+    params.audio_ai_read_length = [](auto...) { return 0; };
+    params.audio_process_alist = [](auto...) {};
+    params.input_controller_command = [](auto...) {};
+    params.input_get_keys = [](auto...) {};
+    params.input_set_keys = [](auto...) {};
+    params.input_read_controller = [](auto...) {};
+    params.rsp_do_rsp_cycles = [](auto...) { return 0; };
 }

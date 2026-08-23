@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "ViewModels.Qt6/plugins/Plugin.hpp"
+#include "Plugin.hpp"
 #include "VersionNameHelpers.hpp"
 #include <CommonPCH.hpp>
 
@@ -12,7 +12,8 @@
 #include <variant>
 #include <decan.hpp>
 
-#include <ViewModels.Qt6/Core.hpp>
+// #include <ViewModels.Qt6/Core.hpp>
+#include "MupenCore.hpp"
 
 template <class T>
 static inline void load_core_function(Plugin &plugin, const char *symbol, std::function<std::remove_pointer_t<T>> &func)
@@ -32,19 +33,19 @@ static size_t get_config_path(char *data, size_t size)
     return size + 1;
 }
 
-namespace
-{
-struct PluginSet
-{
-    Plugin video;
-    Plugin audio;
-    Plugin input;
-    Plugin rsp;
-};
-} // namespace
+// namespace
+// {
+// struct PluginSet
+// {
+//     Plugin video;
+//     Plugin audio;
+//     Plugin input;
+//     Plugin rsp;
+// };
+// } // namespace
 
-static std::optional<PluginSet> g_plugins = std::nullopt;
-static std::mutex g_plugin_lock;
+// static std::optional<PluginSet> g_plugins = std::nullopt;
+// static std::mutex g_plugin_lock;
 
 Plugin::Plugin(const std::filesystem::path &path) : m_lib(std::in_place_type<decan::library>, path), m_path(path)
 {
@@ -77,45 +78,46 @@ void Plugin::init_common()
     m_process_event = (M64RRSpec::PtrProcessEvent)load_symbol("M64RRProcessEvent");
 }
 
-void Plugin::initiate(core_ctx *ctx, core_params &params)
+void Plugin::initiate(core_ctx *ctx, core_params &params, std::unique_ptr<M64RRSpec::PluginInit>&& init_data)
 {
-    if (!m_init_data)
-    {
-        m_init_data.reset(new M64RRSpec::PluginInit);
+    m_init_data = std::move(init_data);
+    if (!m_init_data) m_init_data.reset(new M64RRSpec::PluginInit);
 
-        m_init_data->rom = ctx->rom;
-        m_init_data->rdram = (uint8_t *)ctx->rdram;
-        m_init_data->dmem = (uint8_t *)ctx->sp_dmem;
-        m_init_data->imem = (uint8_t *)ctx->sp_imem;
+    m_init_data->rom = ctx->rom;
+    m_init_data->rdram = (uint8_t *)ctx->rdram;
+    m_init_data->dmem = (uint8_t *)ctx->sp_dmem;
+    m_init_data->imem = (uint8_t *)ctx->sp_imem;
 
-        m_init_data->rdram_register = ctx->rdram_register;
-        m_init_data->mi_register = ctx->mi_register;
-        m_init_data->pi_register = ctx->pi_register;
-        m_init_data->sp_register = ctx->sp_register;
-        m_init_data->rsp_register = ctx->rsp_register;
-        m_init_data->si_register = ctx->si_register;
-        m_init_data->vi_register = ctx->vi_register;
-        m_init_data->ri_register = ctx->ri_register;
-        m_init_data->ai_register = ctx->ai_register;
-        m_init_data->dpc_register = ctx->dpc_register;
-        m_init_data->dps_register = ctx->dps_register;
+    m_init_data->rdram_register = ctx->rdram_register;
+    m_init_data->mi_register = ctx->mi_register;
+    m_init_data->pi_register = ctx->pi_register;
+    m_init_data->sp_register = ctx->sp_register;
+    m_init_data->rsp_register = ctx->rsp_register;
+    m_init_data->si_register = ctx->si_register;
+    m_init_data->vi_register = ctx->vi_register;
+    m_init_data->ri_register = ctx->ri_register;
+    m_init_data->ai_register = ctx->ai_register;
+    m_init_data->dpc_register = ctx->dpc_register;
+    m_init_data->dps_register = ctx->dps_register;
 
-        m_init_data->rcp_counter = ctx->rcp_counter;
+    m_init_data->rcp_counter = ctx->rcp_counter;
 
-        auto *video_process_dlist_ptr = (M64RRSpec::PtrProcessDList)load_symbol("M64RRProcessDList");
-        m_init_data->process_dlist = video_process_dlist_ptr;
+    auto *video_process_dlist_ptr = (M64RRSpec::PtrProcessDList)load_symbol("M64RRProcessDList");
+    m_init_data->process_dlist = video_process_dlist_ptr;
 
-        m_init_data->log_error = [](const char *msg) { std::println(stderr, "[ERROR] {}", msg); };
-        m_init_data->log_warn = [](const char *msg) { std::println(stderr, "[WARN]  {}", msg); };
-        m_init_data->log_info = [](const char *msg) { std::println(stderr, "[INFO]  {}", msg); };
-        m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[TRACE] {}", msg); };
+    m_init_data->log_error = [](const char *msg) { std::println(stderr, "[ERROR] {}", msg); };
+    m_init_data->log_warn = [](const char *msg) { std::println(stderr, "[WARN]  {}", msg); };
+    m_init_data->log_info = [](const char *msg) { std::println(stderr, "[INFO]  {}", msg); };
+    m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[TRACE] {}", msg); };
 
-        m_init_data->get_effective_speed_mode = []() { return Core::context()->vr_get_effective_speed_mode(); };
-        m_init_data->frame_skipped = []() { return Core::context()->vr_get_frame_skipped(); };
-        m_init_data->config_path = get_config_path;
+    m_init_data->get_effective_speed_mode = []() { return CoreContext::raw_context()->vr_get_effective_speed_mode(); };
+    m_init_data->frame_skipped = []() { return CoreContext::raw_context()->vr_get_frame_skipped(); };
+    m_init_data->config_path = get_config_path;
 
-        m_init_data->controllers = params.controls;
-    }
+    // TODO: handle this!
+    m_init_data->request_size = [](uint32_t, uint32_t) {};
+
+    m_init_data->controllers = params.controls;
 
     M64RRSpec::Event init_event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}};
 
@@ -167,6 +169,65 @@ void *Plugin::load_symbol(const char *symbol)
     };
     return std::visit(visitor, m_lib);
 }
+
+PluginSet::PluginSet(Plugin &&video, Plugin &&audio, Plugin &&input, Plugin &&rsp)
+    : m_video(std::move(video)), m_audio(std::move(audio)), m_input(std::move(input)), m_rsp(std::move(rsp)),
+      m_video_process_dlist((M64RRSpec::PtrProcessDList)m_video.load_symbol("M64RRProcessDList"))
+{
+}
+
+void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
+{
+    CoreUtil::clear_plugin_funcs(core_params);
+    
+    m_video.initiate(core_ctx, core_params);
+    m_audio.initiate(core_ctx, core_params);
+    m_input.initiate(core_ctx, core_params);
+    m_rsp.initiate(core_ctx, core_params);
+}
+
+void PluginSet::emu_started(core_params &core_params)
+{
+    const auto opened_event = M64RRSpec::Event { .type = M64RRSpec::Event::Type::RomOpened };
+
+    m_video.bind_functions(core_params);
+    m_audio.bind_functions(core_params);
+    m_input.bind_functions(core_params);
+    m_rsp.bind_functions(core_params);
+
+    m_video.send_event(opened_event);
+    m_audio.send_event(opened_event);
+    m_input.send_event(opened_event);
+    m_rsp.send_event(opened_event);
+}
+
+void PluginSet::emu_stopped(core_params &core_params)
+{
+    const auto closed_event = M64RRSpec::Event { .type = M64RRSpec::Event::Type::RomClosed };
+    const auto shutdown_event = M64RRSpec::Event { .type = M64RRSpec::Event::Type::Shutdown };
+
+    m_video.send_event(closed_event);
+    m_audio.send_event(closed_event);
+    m_input.send_event(closed_event);
+    m_rsp.send_event(closed_event);
+
+    m_video.send_event(shutdown_event);
+    m_audio.send_event(shutdown_event);
+    m_input.send_event(shutdown_event);
+    m_rsp.send_event(shutdown_event);
+
+    CoreUtil::clear_plugin_funcs(core_params);
+}
+
+void PluginSet::get_plugin_names(char *video, char *audio, char *input, char *rsp)
+{
+    if (video) strncpy_s(video, 64, m_video.name().c_str(), 64);
+    if (audio) strncpy_s(audio, 64, m_audio.name().c_str(), 64);
+    if (input) strncpy_s(input, 64, m_input.name().c_str(), 64);
+    if (rsp) strncpy_s(rsp, 64, m_rsp.name().c_str(), 64);
+}
+
+/*
 
 bool PluginUtil::load_plugins()
 {
@@ -233,3 +294,4 @@ void PluginUtil::send_event(M64RRSpec::Event event)
     g_plugins->input.send_event(event);
     g_plugins->rsp.send_event(event);
 }
+*/

@@ -12,8 +12,6 @@
 #include <QQmlApplicationEngine>
 #include <QtQml/QQmlExtensionPlugin>
 
-#include <ViewModels.Qt6/Core.hpp>
-
 Q_IMPORT_QML_PLUGIN(CorePlugin)
 
 static int cli_main(int argc, char* argv[]) {
@@ -24,10 +22,12 @@ static int cli_main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto res1 = Core::context()->vr_start_rom(argv[1]);
-    std::println("result: {}", (int)res1);
-    std::this_thread::sleep_for(10s);
-    Core::context()->vr_close_rom(true);
+    // auto context = 
+
+    // auto res1 = Core::context()->vr_start_rom(argv[1]);
+    // std::println("result: {}", (int)res1);
+    // std::this_thread::sleep_for(10s);
+    // Core::context()->vr_close_rom(true);
     return 0;
 }
 

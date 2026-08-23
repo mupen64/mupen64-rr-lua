@@ -17,8 +17,12 @@ set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
 )
 target_include_directories(Mupen64RR.Views.Qt6 PRIVATE ".")
 target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
-    Mupen64RR.ViewModels.Qt6
+    Mupen64RR.Common
+    Mupen64RR.Common.Views
+    Mupen64RR.Core
+
     Mupen64RR.Views.Qt6.Utils
+    Mupen64RR.Views.Qt6.Core
     Mupen64RR.Views.Qt6.Coreplugin
 
     Qt::Quick
