@@ -15,7 +15,7 @@
 #include <QUrl>
 
 #include <ViewModels.Qt6/Core.hpp>
-#include <ViewModels.Qt6/QtUtils.hpp>
+#include <QtUtils.hpp>
 
 static std::atomic_bool g_core_context_created = false;
 

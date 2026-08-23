@@ -8,14 +8,11 @@ qt_add_library(Mupen64RR.ViewModels.Qt6 STATIC
     "include/ViewModels.Qt6/plugins/BuiltinTAS.hpp"
     "include/ViewModels.Qt6/plugins/Plugin.hpp"
     "include/ViewModels.Qt6/Core.hpp"
-    "include/ViewModels.Qt6/QtIconImageProvider.hpp"
-    "include/ViewModels.Qt6/QtUtils.hpp"
 
     "plugins/BuiltinTAS.cpp"
     "plugins/Plugin.cpp"
     "Core.cpp"
     "DialogService.cpp"
-    "QtIconImageProvider.cpp"
 )
 target_compile_features(Mupen64RR.ViewModels.Qt6 PUBLIC cxx_std_26)
 target_include_directories(Mupen64RR.ViewModels.Qt6 PUBLIC "include")

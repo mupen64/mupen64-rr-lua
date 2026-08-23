@@ -40,4 +40,7 @@ class CoreContext : public QObject {
     void showDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
     void showDialogFinished();
 
+  private:
+    
+
 };
