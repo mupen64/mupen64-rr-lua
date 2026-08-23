@@ -28,13 +28,13 @@
 
 struct R4300Internal
 {
-    std::jthread emu_thread_handle;
-
     std::mutex emu_thread_mutex;
     std::condition_variable_any emu_thread_cv;
     std::condition_variable emu_thread_stopped_cv;
     bool emu_thread_start_requested;
     bool emu_session_stopped = true;
+
+    std::jthread emu_thread_handle;
 };
 
 R4300Internal s_r4300;

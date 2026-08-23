@@ -110,8 +110,8 @@ void Plugin::initiate(core_ctx *ctx, core_params &params, std::unique_ptr<M64RRS
     m_init_data->log_info = [](const char *msg) { std::println(stderr, "[INFO]  {}", msg); };
     m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[TRACE] {}", msg); };
 
-    m_init_data->get_effective_speed_mode = []() { return CoreContext::raw_context()->vr_get_effective_speed_mode(); };
-    m_init_data->frame_skipped = []() { return CoreContext::raw_context()->vr_get_frame_skipped(); };
+    m_init_data->get_effective_speed_mode = []() { return CoreContext::rawContext()->vr_get_effective_speed_mode(); };
+    m_init_data->frame_skipped = []() { return CoreContext::rawContext()->vr_get_frame_skipped(); };
     m_init_data->config_path = get_config_path;
 
     // TODO: handle this!

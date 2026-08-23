@@ -27,7 +27,7 @@ class CoreContext : public QObject {
 
     static CoreContext* instance();
 
-    static core_ctx* raw_context() {
+    static core_ctx* rawContext() {
       auto* inst = instance();
       return (inst != nullptr) ? inst->m_core_ctx : nullptr;
     }
