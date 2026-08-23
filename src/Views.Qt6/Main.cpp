@@ -12,6 +12,7 @@
 #include <QQmlApplicationEngine>
 #include <QtQml/QQmlExtensionPlugin>
 
+Q_IMPORT_QML_PLUGIN(UtilsPlugin)
 Q_IMPORT_QML_PLUGIN(CorePlugin)
 
 static int cli_main(int argc, char* argv[]) {

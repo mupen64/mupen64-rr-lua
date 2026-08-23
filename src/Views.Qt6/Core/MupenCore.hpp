@@ -12,6 +12,7 @@
 
 #include <m64rr/API.hpp>
 #include "plugin/Plugin.hpp"
+#include "QmlCallableContext.hpp"
 
 #include "CoreEnums.hpp"
 
@@ -39,8 +40,10 @@ class CoreContext : public QObject {
 
     Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true) const;
 
-    // vr_* properties
+    // TESTING
     // ==========================
+
+    Q_INVOKABLE QJSValue test();
 
   signals:
 

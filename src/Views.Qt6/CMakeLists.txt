@@ -22,6 +22,7 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Mupen64RR.Core
 
     Mupen64RR.Views.Qt6.Utils
+    Mupen64RR.Views.Qt6.Utilsplugin
     Mupen64RR.Views.Qt6.Core
     Mupen64RR.Views.Qt6.Coreplugin
 

@@ -5,15 +5,18 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 qt_add_library(Mupen64RR.Views.Qt6.Core STATIC)
-qt_add_qml_module(Mupen64RR.Views.Qt6.Core URI "Core" SOURCES 
-    "plugin/BuiltinTAS.hpp"
-    "plugin/Plugin.hpp"
-    "CoreEnums.hpp"
-    "MupenCore.hpp"
+qt_add_qml_module(Mupen64RR.Views.Qt6.Core URI "Core"
+    IMPORTS
+        TARGET Mupen64RR.Views.Qt6.Utils
+    SOURCES 
+        "plugin/BuiltinTAS.hpp"
+        "plugin/Plugin.hpp"
+        "CoreEnums.hpp"
+        "MupenCore.hpp"
 
-    "plugin/BuiltinTAS.cpp"
-    "plugin/Plugin.cpp"
-    "MupenCore.cpp"
+        "plugin/BuiltinTAS.cpp"
+        "plugin/Plugin.cpp"
+        "MupenCore.cpp"
 )
 target_compile_features(Mupen64RR.Views.Qt6.Core PUBLIC cxx_std_26)
 target_include_directories(Mupen64RR.Views.Qt6.Core PUBLIC ".")

@@ -50,7 +50,10 @@ ApplicationWindow {
         anchors.centerIn: parent
 
         text: "foo the bar"
-        onClicked: mainWindow.showMultipleChoiceDialog("dialog!", "yay, a dialog!", ["really?", "no way", "be fr rn"], CoreDialogType.Error)
+        onClicked: {
+            let fn = core.test();
+            console.log(`fn(1, 2) = ${fn(1, 2)}`)
+        }
     }
 
     // AUXILIARY OBJECTS
@@ -59,9 +62,9 @@ ApplicationWindow {
     CoreContext {
         id: core
 
-        onShowDialog: showDialog
-        onShowAskDialog: showAskDialog
-        onShowMultipleChoiceDialog: showMultipleChoiceDialog
+        // onShowDialog: showDialog
+        // onShowAskDialog: showAskDialog
+        // onShowMultipleChoiceDialog: showMultipleChoiceDialog
     }
 
     Dialogs.FileDialog {
@@ -81,7 +84,7 @@ ApplicationWindow {
         id: diaService
         standardButtons: Dialog.Ok
 
-        onAccepted: core.showDialogFinished()
+        // onAccepted: core.showDialogFinished()
     }
     function showDialog(title, content, type) {
         diaService.title = title;
@@ -95,8 +98,8 @@ ApplicationWindow {
         id: diaServiceAsk
         standardButtons: Dialog.Yes | Dialog.No
 
-        onAccepted: core.showAskDialogFinished(true)
-        onRejected: core.showAskDialogFinished(false)
+        // onAccepted: core.showAskDialogFinished(true)
+        // onRejected: core.showAskDialogFinished(false)
     }
     function showAskDialog(title, content, type) {
         diaServiceAsk.title = title;

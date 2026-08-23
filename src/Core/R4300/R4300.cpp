@@ -34,6 +34,8 @@ struct R4300Internal
     bool emu_thread_start_requested;
     bool emu_session_stopped = true;
 
+    // This is last to ensure it's stopped before any of the
+    // mutexes/condition variables.
     std::jthread emu_thread_handle;
 };
 

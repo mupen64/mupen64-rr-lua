@@ -5,7 +5,6 @@
  */
 #pragma once
 
-#include <chrono>
 #include <future>
 #include <MiscHelpers.hpp>
 #include <QObject>

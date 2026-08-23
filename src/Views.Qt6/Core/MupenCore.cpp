@@ -12,11 +12,13 @@
 #include <print>
 #include <ranges>
 
+#include <QQmlEngine>
 #include <QThread>
 #include <QIcon>
 #include <QUrl>
 
 #include <QtUtils.hpp>
+#include <QJSFunctions.hpp>
 
 static std::atomic<CoreContext *> g_core_instance = nullptr;
 
@@ -190,4 +192,13 @@ void CoreUtil::clear_plugin_funcs(core_params &params)
     params.input_set_keys = [](auto...) {};
     params.input_read_controller = [](auto...) {};
     params.rsp_do_rsp_cycles = [](auto...) { return 0; };
+}
+
+static int add(int a, int b) {
+    return a + b;
+}
+
+QJSValue CoreContext::test() {
+
+    return QJSFunctions::to_js_function(qmlEngine(this), add);
 }
