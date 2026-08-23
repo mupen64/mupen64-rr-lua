@@ -6,7 +6,6 @@
 #pragma once
 
 #include <QObject>
-#include <QFuture>
 #include <QUrl>
 #include <qqmlintegration.h>
 
@@ -19,24 +18,26 @@
 /**
  * @brief QML-owned singleton holding the core and related objects.
  */
-class CoreContext : public QObject {
+class CoreContext : public QObject
+{
     Q_OBJECT
     QML_ELEMENT
   public:
-    CoreContext(QObject* parent = nullptr);
+    CoreContext(QObject *parent = nullptr);
     virtual ~CoreContext();
 
-    static CoreContext* instance();
+    static CoreContext *instance();
 
-    static core_ctx* rawContext() {
-      auto* inst = instance();
-      return (inst != nullptr) ? inst->m_core_ctx : nullptr;
+    static core_ctx *rawContext()
+    {
+        auto *inst = instance();
+        return (inst != nullptr) ? inst->m_core_ctx : nullptr;
     }
 
     // vr_* functions
     // ==========================
 
-    Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl& url) const;
+    Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl &url) const;
 
     Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true) const;
 
@@ -49,25 +50,48 @@ class CoreContext : public QObject {
 
     // Dialog service
     // ==========================
-    // Dialog closure is notified via a separate signal.
 
-    void showMultipleChoiceDialog(QAnyStringView title, QAnyStringView content, const QList<QString>& choices, CoreDialogType::Value type);
-    void showMultipleChoiceDialogFinished(size_t result);
+    /**
+     * @brief Opens a multiple-choice dialog.
+     *
+     * @param done (type: `void(size_t)`) Function to be called when finished.
+     * @param title The dialog's title.
+     * @param content The dialog's content text.
+     * @param choices A list of choices to use for the bottom buttons.
+     * @param type The dialog's type. Used to display an icon next to the text.
+     */
+    void openMultiDialog(QJSValue done, QAnyStringView title, QAnyStringView content, const QList<QString> &choices,
+                         CoreDialogType::Value type);
 
-    void showAskDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
-    void showAskDialogFinished(bool result);
+    /**
+     * @brief Opens a yes/no dialog.
+     *
+     * @param done (type: `void(bool result)`) Function to be called when finished.
+     * @param title The dialog's title.
+     * @param content The dialog's content text.
+     * @param type The dialog's type. Used to display an icon next to the text.
+     */
+    void openAskDialog(QJSValue done, QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
 
-    void showDialog(QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
-    void showDialogFinished();
+    /**
+     * @brief Opens an info dialog.
+     *
+     * @param done (type: `void()`) Function to be called when finished.
+     * @param title The dialog's title.
+     * @param content The dialog's content text.
+     * @param type The dialog's type. Used to display an icon next to the text.
+     */
+    void openInfoDialog(QJSValue done, QAnyStringView title, QAnyStringView content, CoreDialogType::Value type);
 
   private:
-    core_cfg* m_core_cfg;
-    core_params* m_core_params;
-    core_ctx* m_core_ctx;
+    core_cfg *m_core_cfg;
+    core_params *m_core_params;
+    core_ctx *m_core_ctx;
 
     std::optional<PluginSet> m_plugins;
 };
 
-namespace CoreUtil {
-  void clear_plugin_funcs(core_params &params);
+namespace CoreUtil
+{
+void clear_plugin_funcs(core_params &params);
 }

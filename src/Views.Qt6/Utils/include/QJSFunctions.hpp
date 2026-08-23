@@ -161,8 +161,6 @@ template <class F> auto gen_cpp_trampoline(F &&callable)
 // Generates the outer wrapper for the C++ trampoline, which references the callable as a lambda.
 template <class F> auto gen_cpp_trampoline(F &callable)
 {
-    static_assert(!std::is_lvalue_reference_v<F>, "Trampoline may only be generated for rvalue references");
-
     using params_sequence = typename callable_traits<F>::params;
     using param_indices = std::make_index_sequence<params_sequence::size>;
     using result_type = std::type_identity<typename callable_traits<F>::result>;
@@ -175,18 +173,21 @@ template <class F> auto gen_cpp_trampoline(F &callable)
 } // namespace details
 
 /**
- * @brief Wraps a C++ function pointer or functor into
- * @param engine
- * @param callable
- * @return QJSValue
+ * @brief Wraps a C++ function pointer or functor into a JS callable.
+ * @param engine The JS engine to use.
+ * @param callable The callable type to use.
+ * @return A `QJSValue` containing the JS function bound to this C++ function.
  */
 template <class F> QJSValue to_js_function(QJSEngine *engine, F &&callable)
 {
     using params_sequence = typename details::callable_traits<F>::params;
     constexpr size_t params_size = params_sequence::size;
 
-    auto jsContext = engine->newQObject(new QmlCallableContext(details::gen_cpp_trampoline(callable)));
+    // Generate inner trampoline (QObject)
+    auto js_context = engine->newQObject(new QmlCallableContext(details::gen_cpp_trampoline(callable)));
+    // Generate outer trampoline (wrapping function)
+    // NOTE: JS side is forced to reparse the wrapper function each time, should this be cached?
     return engine->evaluate(QAnyStringView(details::js_trampoline<params_sequence::size>()).toString())
-        .call({jsContext});
+        .call({js_context});
 }
 } // namespace QJSFunctions

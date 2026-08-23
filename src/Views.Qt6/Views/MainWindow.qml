@@ -62,9 +62,9 @@ ApplicationWindow {
     CoreContext {
         id: core
 
-        // onShowDialog: showDialog
-        // onShowAskDialog: showAskDialog
-        // onShowMultipleChoiceDialog: showMultipleChoiceDialog
+        openInfoDialog: queueInfoDialog
+        openAskDialog: queueAskDialog
+        openMultiDialog: queueMultiDialog
     }
 
     Dialogs.FileDialog {
@@ -80,33 +80,106 @@ ApplicationWindow {
     // DIALOG SERVICE
     // =====================================
 
-    MessageBox {
-        id: diaService
-        standardButtons: Dialog.Ok
+    property list<var> dialogQueue: []
+    property var currDialog: null
 
-        // onAccepted: core.showDialogFinished()
+    function showNextDialog() {
+        // no more dialogs left; clear currDialog
+        if (dialogQueue.length === 0) {
+            currDialog = null;
+            return;
+        }
+
+        // grab the next dialog out of the queue and open it
+        currDialog = dialogQueue.shift();
+        switch (currDialog.type) {
+            case "info":
+                diaServiceInfo.title = currDialog.title;
+                diaServiceInfo.content = currDialog.content;
+                diaServiceInfo.coreType = currDialog.coreType;
+                diaServiceInfo.open()
+                break;
+            case "ask":
+                diaServiceAsk.title = currDialog.title;
+                diaServiceAsk.content = currDialog.content;
+                diaServiceAsk.coreType = currDialog.coreType;
+                diaServiceAsk.open()
+                break;
+            case "multi":
+                diaServiceAsk.title = currDialog.title;
+                diaServiceAsk.content = currDialog.content;
+                diaServiceAsk.coreType = currDialog.coreType;
+                diaServiceAsk.choices = currDialog.choices;
+                diaServiceAsk.open()
+                break;
+        }
     }
-    function showDialog(title, content, type) {
-        diaService.title = title;
-        diaService.content = content;
-        diaService.coreType = type;
 
-        diaService.open();
+    function queueInfoDialog(done, title, content, type) {
+        // queue the current dialog
+        dialogQueue.push({
+            type: "info",
+            done: done,
+            title: title,
+            content: content,
+            coreType: type,
+        });
+        // start the queue if needed
+        if (currDialog == null)
+            showNextDialog();
+    }
+
+    function queueAskDialog(done, title, content, type) {
+        dialogQueue.push({
+            type: "ask",
+            done: done,
+            title: title,
+            content: content,
+            coreType: type,
+        });
+        if (currDialog == null)
+            showNextDialog();
+    }
+
+    function queueMultiDialog(done, title, content, choices, type) {
+        dialogQueue.push({
+            type: "multi",
+            done: done,
+            title: title,
+            content: content,
+            choices: choices,
+            coreType: type,
+        });
+        if (currDialog == null)
+            showNextDialog();
+    }
+
+
+
+    MessageBox {
+        id: diaServiceInfo
+        standardButtons: Dialog.Ok
+        onAccepted: {
+            if (mainWindow.currDialog != null)
+                mainWindow.currDialog.done();
+            mainWindow.showNextDialog();
+        }
     }
 
     MessageBox {
         id: diaServiceAsk
         standardButtons: Dialog.Yes | Dialog.No
 
-        // onAccepted: core.showAskDialogFinished(true)
-        // onRejected: core.showAskDialogFinished(false)
-    }
-    function showAskDialog(title, content, type) {
-        diaServiceAsk.title = title;
-        diaServiceAsk.content = content;
-        diaServiceAsk.coreType = type;
-
-        diaServiceAsk.open();
+        onAccepted: {
+            if (mainWindow.currDialog != null)
+                mainWindow.currDialog.done(true);
+            mainWindow.showNextDialog();
+        }
+        onRejected: {
+            if (mainWindow.currDialog != null)
+                mainWindow.currDialog.done(false);
+            mainWindow.showNextDialog();
+        }
     }
 
     MessageBox {
@@ -128,14 +201,10 @@ ApplicationWindow {
             }
         }
 
-        onAccepted: core.showMultipleChoiceDialogFinished(lastSelected)
-    }
-    function showMultipleChoiceDialog(title, content, choices, type) {
-        diaServiceMulti.title = title;
-        diaServiceMulti.content = content;
-        diaServiceMulti.choices = choices;
-        diaServiceMulti.coreType = type;
-
-        diaServiceMulti.open();
+        onAccepted: {
+            if (mainWindow.currDialog != null)
+                mainWindow.currDialog.done(lastSelected);
+            mainWindow.showNextDialog();
+        }
     }
 }

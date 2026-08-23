@@ -22,8 +22,8 @@
 
 static std::atomic<CoreContext *> g_core_instance = nullptr;
 
-static core_cfg g_core_cfg {};
-static core_params g_core_params {};
+static core_cfg g_core_cfg{};
+static core_params g_core_params{};
 
 static void set_core_instance(CoreContext *ptr)
 {
@@ -33,8 +33,7 @@ static void set_core_instance(CoreContext *ptr)
 }
 
 CoreContext::CoreContext(QObject *parent)
-    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params),
-      m_core_ctx(nullptr)
+    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr)
 {
     set_core_instance(this);
 
@@ -97,53 +96,43 @@ CoreContext::CoreContext(QObject *parent)
     m_core_params->show_multiple_choice_dialog = [&](std::string_view id, const std::vector<std::string> &choices,
                                                      const char *str, const char *title,
                                                      core_dialog_type type) -> size_t {
-        // Convert choices to Qt string
-        auto q_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
+        std::promise<size_t> promise;
+        auto future = promise.get_future();
 
-        // Future waiting for GUI result
-        // FIXME: if the frontend has a dialog active this may fire early before we show our dialog
-        auto dialog_finished = QtUtils::on_signal(this, &CoreContext::showMultipleChoiceDialogFinished);
+        auto done_callback = QJSFunctions::to_js_function(
+            qmlEngine(this), [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
-        // clang-format off
-        // signal GUI to show dialog
-        return QMetaObject::invokeMethod(
-            this, &CoreContext::showMultipleChoiceDialog, Qt::AutoConnection,
-            QAnyStringView(title), QAnyStringView(str), q_choices, CoreDialogType::from_core(type));
-        // clang-format on
-
-        // wait/acknowledge result
-        dialog_finished.wait();
-        return dialog_finished.get();
+        auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
+        QMetaObject::invokeMethod(this, &CoreContext::openMultiDialog, done_callback, QAnyStringView(title),
+                                  QAnyStringView(str), qt_choices, CoreDialogType::from_core(type));
+        future.wait();
+        return future.get();
     };
     m_core_params->show_ask_dialog = [&](std::string_view id, const char *str, const char *title,
                                          bool warning) -> bool {
-        // Future waiting for GUI result
-        auto dialog_finished = QtUtils::on_signal(this, &CoreContext::showAskDialogFinished);
+        std::promise<bool> promise;
+        auto future = promise.get_future();
 
-        // clang-format off
-        // signal GUI to show dialog
-        QMetaObject::invokeMethod(
-            this, &CoreContext::showAskDialog, Qt::AutoConnection,
-            QAnyStringView(title), QAnyStringView(str), warning ? CoreDialogType::Warning : CoreDialogType::Information);
-        // clang-format on
+        auto done_callback = QJSFunctions::to_js_function(
+            qmlEngine(this), [promise = std::move(promise)](bool value) mutable { promise.set_value(value); });
 
-        // wait/acknowledge result
-        dialog_finished.wait();
-        return dialog_finished.get();
+        QMetaObject::invokeMethod(this, &CoreContext::openAskDialog, done_callback, QAnyStringView(title),
+                                  QAnyStringView(str), warning ? CoreDialogType::Warning : CoreDialogType::Information);
+
+        future.wait();
+        return future.get();
     };
     m_core_params->show_dialog = [&](const char *str, const char *title, core_dialog_type type) {
-        // Future waiting for GUI result
-        auto dialog_finished = QtUtils::on_signal(this, &CoreContext::showDialogFinished);
+        std::promise<void> promise;
+        auto future = promise.get_future();
 
-        // clang-format off
-        QMetaObject::invokeMethod(
-            this, &CoreContext::showDialog, Qt::AutoConnection, 
-            QAnyStringView(title), QAnyStringView(str), CoreDialogType::from_core(type));
-        // clang-format on
+        auto done_callback = QJSFunctions::to_js_function(
+            qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
-        // wait/acknowledge result
-        dialog_finished.wait();
-        dialog_finished.get();
+        QMetaObject::invokeMethod(this, &CoreContext::openInfoDialog, done_callback, QAnyStringView(title),
+                                  QAnyStringView(str), CoreDialogType::from_core(type));
+
+        future.wait();
     };
 #pragma endregion
 
@@ -194,11 +183,13 @@ void CoreUtil::clear_plugin_funcs(core_params &params)
     params.rsp_do_rsp_cycles = [](auto...) { return 0; };
 }
 
-static int add(int a, int b) {
+static int add(int a, int b)
+{
     return a + b;
 }
 
-QJSValue CoreContext::test() {
+QJSValue CoreContext::test()
+{
 
     return QJSFunctions::to_js_function(qmlEngine(this), add);
 }
