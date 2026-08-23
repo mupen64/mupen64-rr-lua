@@ -8,20 +8,14 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
+import QtQuick.Layouts
 
 import Core
 
 ApplicationWindow {
     id: mainWindow
-    width: 640
-    height: 480
     visible: true
-
     title: qsTr("Mupen64RR")
-
-    // onClosing: (close) => {
-    //     core.vrCloseROM();
-    // }
 
     // CONTENT
     // =====================================
@@ -36,9 +30,8 @@ ApplicationWindow {
             Action {
                 text: qsTr("&Close ROM...")
                 onTriggered: core.vrCloseROM()
-                
             }
-            MenuSeparator { }
+            MenuSeparator {}
             Action {
                 text: qsTr("&Exit")
                 onTriggered: Qt.quit()
@@ -46,26 +39,37 @@ ApplicationWindow {
         }
     }
 
-    Button {
-        anchors.centerIn: parent
+    StackLayout {
+        id: mainStack
+        anchors.fill: parent
 
-        text: "foo the bar"
-        onClicked: {
-            mainWindow.queueInfoDialog(() => {
-                console.log("done info dialog");
-            }, "dialog 1", "yay, dialog!", CoreDialogType.Information)
-            mainWindow.queueAskDialog((result) => {
-                console.log(`done ask dialog: ${result}`);
-            }, "dialog 2", "yay, more dialog!", CoreDialogType.Warning)
+        Item {
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            Button {
+                anchors.centerIn: parent
+
+                text: "foo the bar"
+                onClicked: {
+                    console.log(`${mainStack.width} x ${mainStack.height}`)
+                }
+            }
         }
     }
 
     // AUXILIARY OBJECTS
     // =====================================
 
-    CoreContext {
+    EmuContext {
         id: core
 
+        // Graphics integration
+        onGfxRequestSize: (width, height) => {
+            console.log(`gfx requested size ${width}x${height}`)
+            // mainWindow.requestedSize = 
+        }
+
+        // Dialog service
         onOpenInfoDialog: mainWindow.queueInfoDialog
         onOpenAskDialog: mainWindow.queueAskDialog
         onOpenMultiDialog: mainWindow.queueMultiDialog
@@ -81,9 +85,14 @@ ApplicationWindow {
         }
     }
 
+    // WINDOW SIZE MANAGEMENT
+    // =====================================
+    property int gfxRequestWidth
+    property int gfxRequestHeight
+
     // DIALOG SERVICE
     // =====================================
-    // TODO: can this be moved somewhere else?
+    // TODO: can this be moved to a separate file?
 
     property list<var> dialogQueue: []
     property var currDialog: null
@@ -98,25 +107,25 @@ ApplicationWindow {
         // grab the next dialog out of the queue and open it
         currDialog = dialogQueue.shift();
         switch (currDialog.type) {
-            case "info":
-                diaServiceInfo.title = currDialog.title;
-                diaServiceInfo.content = currDialog.content;
-                diaServiceInfo.coreType = currDialog.coreType;
-                diaServiceInfo.open()
-                break;
-            case "ask":
-                diaServiceAsk.title = currDialog.title;
-                diaServiceAsk.content = currDialog.content;
-                diaServiceAsk.coreType = currDialog.coreType;
-                diaServiceAsk.open()
-                break;
-            case "multi":
-                diaServiceAsk.title = currDialog.title;
-                diaServiceAsk.content = currDialog.content;
-                diaServiceAsk.coreType = currDialog.coreType;
-                diaServiceAsk.choices = currDialog.choices;
-                diaServiceAsk.open()
-                break;
+        case "info":
+            diaServiceInfo.title = currDialog.title;
+            diaServiceInfo.content = currDialog.content;
+            diaServiceInfo.coreType = currDialog.coreType;
+            diaServiceInfo.open();
+            break;
+        case "ask":
+            diaServiceAsk.title = currDialog.title;
+            diaServiceAsk.content = currDialog.content;
+            diaServiceAsk.coreType = currDialog.coreType;
+            diaServiceAsk.open();
+            break;
+        case "multi":
+            diaServiceAsk.title = currDialog.title;
+            diaServiceAsk.content = currDialog.content;
+            diaServiceAsk.coreType = currDialog.coreType;
+            diaServiceAsk.choices = currDialog.choices;
+            diaServiceAsk.open();
+            break;
         }
     }
 
@@ -127,7 +136,7 @@ ApplicationWindow {
             done: done,
             title: title,
             content: content,
-            coreType: type,
+            coreType: type
         });
         // start the queue if needed
         if (currDialog == null)
@@ -140,7 +149,7 @@ ApplicationWindow {
             done: done,
             title: title,
             content: content,
-            coreType: type,
+            coreType: type
         });
         if (currDialog == null)
             showNextDialog();
@@ -153,13 +162,11 @@ ApplicationWindow {
             title: title,
             content: content,
             choices: choices,
-            coreType: type,
+            coreType: type
         });
         if (currDialog == null)
             showNextDialog();
     }
-
-
 
     MessageBox {
         id: diaServiceInfo

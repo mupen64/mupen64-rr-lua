@@ -12,11 +12,13 @@ qt_add_qml_module(Mupen64RR.Views.Qt6.Core URI "Core"
         "plugin/BuiltinTAS.hpp"
         "plugin/Plugin.hpp"
         "CoreEnums.hpp"
-        "MupenCore.hpp"
+        "EmuContext.hpp"
+        "EmuDisplay.hpp"
 
         "plugin/BuiltinTAS.cpp"
         "plugin/Plugin.cpp"
-        "MupenCore.cpp"
+        "EmuContext.cpp"
+        "EmuDisplay.cpp"
 )
 target_compile_features(Mupen64RR.Views.Qt6.Core PUBLIC cxx_std_26)
 target_include_directories(Mupen64RR.Views.Qt6.Core PUBLIC ".")

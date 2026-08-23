@@ -12,8 +12,7 @@
 #include <variant>
 #include <decan.hpp>
 
-// #include <ViewModels.Qt6/Core.hpp>
-#include "MupenCore.hpp"
+#include "EmuContext.hpp"
 
 template <class T>
 static inline void load_core_function(Plugin &plugin, const char *symbol, std::function<std::remove_pointer_t<T>> &func)
@@ -78,10 +77,9 @@ void Plugin::init_common()
     m_process_event = (M64RRSpec::PtrProcessEvent)load_symbol("M64RRProcessEvent");
 }
 
-void Plugin::initiate(core_ctx *ctx, core_params &params, std::unique_ptr<M64RRSpec::PluginInit>&& init_data)
+void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<void(M64RRSpec::PluginInit*)>& post_init)
 {
-    m_init_data = std::move(init_data);
-    if (!m_init_data) m_init_data.reset(new M64RRSpec::PluginInit);
+    m_init_data.reset(new M64RRSpec::PluginInit);
 
     m_init_data->rom = ctx->rom;
     m_init_data->rdram = (uint8_t *)ctx->rdram;
@@ -110,14 +108,16 @@ void Plugin::initiate(core_ctx *ctx, core_params &params, std::unique_ptr<M64RRS
     m_init_data->log_info = [](const char *msg) { std::println(stderr, "[INFO]  {}", msg); };
     m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[TRACE] {}", msg); };
 
-    m_init_data->get_effective_speed_mode = []() { return CoreContext::rawContext()->vr_get_effective_speed_mode(); };
-    m_init_data->frame_skipped = []() { return CoreContext::rawContext()->vr_get_frame_skipped(); };
+    m_init_data->get_effective_speed_mode = []() { return EmuContext::rawContext()->vr_get_effective_speed_mode(); };
+    m_init_data->frame_skipped = []() { return EmuContext::rawContext()->vr_get_frame_skipped(); };
     m_init_data->config_path = get_config_path;
 
     // TODO: handle this!
     m_init_data->request_size = [](uint32_t, uint32_t) {};
 
     m_init_data->controllers = params.controls;
+
+    if (post_init) post_init(m_init_data.get());
 
     M64RRSpec::Event init_event{.initiate = {.type = M64RRSpec::Event::Type::Initiate, .init = m_init_data.get()}};
 
@@ -180,7 +180,12 @@ void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
 {
     CoreUtil::clear_plugin_funcs(core_params);
     
-    m_video.initiate(core_ctx, core_params);
+    m_video.initiate(core_ctx, core_params, [](M64RRSpec::PluginInit* init) {
+        init->request_size = [](uint32_t width, uint32_t height) {
+            // must be called on GUI thread!
+            QMetaObject::invokeMethod(EmuContext::instance(), &EmuContext::gfxRequestSize, width, height);
+        };
+    });
     m_audio.initiate(core_ctx, core_params);
     m_input.initiate(core_ctx, core_params);
     m_rsp.initiate(core_ctx, core_params);
@@ -226,72 +231,3 @@ void PluginSet::get_plugin_names(char *video, char *audio, char *input, char *rs
     if (input) strncpy_s(input, 64, m_input.name().c_str(), 64);
     if (rsp) strncpy_s(rsp, 64, m_rsp.name().c_str(), 64);
 }
-
-/*
-
-bool PluginUtil::load_plugins()
-{
-    try
-    {
-        std::scoped_lock lock(g_plugin_lock);
-        auto video_plugin = Plugin(BuiltinTAS::PluginID::TASVideo);
-        auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
-        auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
-        auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
-        g_plugins.emplace(std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin),
-                          std::move(rsp_plugin));
-        return true;
-    }
-    catch (const std::exception &err)
-    {
-        std::println(stderr, "[ERROR] Plugin load failed: {}", err.what());
-        return false;
-    }
-}
-void PluginUtil::initiate_plugins(core_ctx *ctx, core_params &params)
-{
-    std::scoped_lock lock(g_plugin_lock);
-    Core::clear_plugin_funcs(params);
-
-    if (!g_plugins.has_value()) abort();
-
-    g_plugins->video.initiate(ctx, params);
-    g_plugins->audio.initiate(ctx, params);
-    g_plugins->input.initiate(ctx, params);
-    g_plugins->rsp.initiate(ctx, params);
-}
-void PluginUtil::start_plugins(core_params &params)
-{
-
-    g_plugins->video.bind_functions(params);
-    g_plugins->audio.bind_functions(params);
-    g_plugins->input.bind_functions(params);
-    g_plugins->rsp.bind_functions(params);
-    send_event(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened});
-}
-void PluginUtil::stop_plugins()
-{
-    send_event(M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed});
-    send_event(M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown});
-    Core::clear_plugin_funcs(Core::params());
-}
-void PluginUtil::get_plugin_names(char *video, char *audio, char *input, char *rsp)
-{
-    std::scoped_lock lock(g_plugin_lock);
-    if (video) strncpy_s(video, 64, g_plugins->video.name().c_str(), 64);
-    if (audio) strncpy_s(audio, 64, g_plugins->audio.name().c_str(), 64);
-    if (input) strncpy_s(input, 64, g_plugins->input.name().c_str(), 64);
-    if (rsp) strncpy_s(rsp, 64, g_plugins->rsp.name().c_str(), 64);
-}
-void PluginUtil::send_event(M64RRSpec::Event event)
-{
-    std::scoped_lock lock(g_plugin_lock);
-
-    if (!g_plugins.has_value()) abort();
-
-    g_plugins->video.send_event(event);
-    g_plugins->audio.send_event(event);
-    g_plugins->input.send_event(event);
-    g_plugins->rsp.send_event(event);
-}
-*/

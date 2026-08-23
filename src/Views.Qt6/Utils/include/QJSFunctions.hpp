@@ -50,24 +50,26 @@ constexpr std::string gen_args_list_dyn(size_t n)
 }
 
 // Generates the JS-side trampoline for n-variable objects.
-constexpr std::string gen_trampoline_dyn(size_t n)
+constexpr std::string gen_js_trampoline_dyn(size_t n)
 {
     using namespace std::literals;
     auto args_list = gen_args_list_dyn(n);
     return std::string("c => ((") + args_list + ") => c.call([" + args_list + "]))";
 }
 
+// Constexpr-friendly wrapper for the dynamic trampoline generator.
 template <size_t N> constexpr std::string_view js_trampoline()
 {
-    static constexpr size_t len = gen_trampoline_dyn(N).size();
+    static constexpr size_t len = gen_js_trampoline_dyn(N).size();
     static constexpr std::array<char, len> data = [] {
         std::array<char, len> tmp;
-        std::ranges::copy(gen_trampoline_dyn(N), tmp.begin());
+        std::ranges::copy(gen_js_trampoline_dyn(N), tmp.begin());
         return tmp;
     }();
     return std::string_view(data.data(), len);
 }
 
+// Test cases.
 static_assert(js_trampoline<0>() == "c => (() => c.call([]))");
 static_assert(js_trampoline<1>() == "c => ((arg0) => c.call([arg0]))");
 static_assert(js_trampoline<2>() == "c => ((arg0, arg1) => c.call([arg0, arg1]))");

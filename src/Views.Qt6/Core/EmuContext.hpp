@@ -18,15 +18,17 @@
 /**
  * @brief QML-owned singleton holding the core and related objects.
  */
-class CoreContext : public QObject
+class EmuContext : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-  public:
-    CoreContext(QObject *parent = nullptr);
-    virtual ~CoreContext();
 
-    static CoreContext *instance();
+    Q_PROPERTY(bool emuLaunched READ isEmuLaunched NOTIFY emuLaunchedChanged)
+  public:
+    EmuContext(QObject *parent = nullptr);
+    virtual ~EmuContext();
+
+    static EmuContext *instance();
 
     static core_ctx *rawContext()
     {
@@ -41,15 +43,37 @@ class CoreContext : public QObject
 
     Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true) const;
 
-    // TESTING
+    // vr_* properties
     // ==========================
 
-    Q_INVOKABLE QJSValue test();
+    Q_INVOKABLE bool isEmuLaunched() const;
+
+
+    // Misc. functions
+    // ==========================
+    
+    void readVideoOutput();
 
   signals:
 
-    // Dialog service
-    // ==========================
+    // Property changes
+    // ============================================
+
+    void emuLaunchedChanged(bool value);
+
+    // Misc. signals
+    // ============================================
+
+    /**
+     * @brief Requests that the window be resized (when the emulator is open).
+     * 
+     * @param width The requested width.
+     * @param height The requested height.
+     */
+    void gfxRequestSize(uint32_t width, uint32_t height);
+
+    // Dialog service (to be handled by GUI)
+    // ============================================
 
     /**
      * @brief Opens a multiple-choice dialog.

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include "MupenCore.hpp"
+#include "EmuContext.hpp"
 #include <IOUtils.hpp>
 #include <MiscHelpers.hpp>
 
@@ -20,19 +20,19 @@
 #include <QtUtils.hpp>
 #include <QJSFunctions.hpp>
 
-static std::atomic<CoreContext *> g_core_instance = nullptr;
+static std::atomic<EmuContext *> g_core_instance = nullptr;
 
 static core_cfg g_core_cfg{};
 static core_params g_core_params{};
 
-static void set_core_instance(CoreContext *ptr)
+static void set_core_instance(EmuContext *ptr)
 {
-    CoreContext *expect = nullptr;
+    EmuContext *expect = nullptr;
     if (!g_core_instance.compare_exchange_strong(expect, ptr))
-        throw std::logic_error("CoreContext should not be created twice!");
+        throw std::logic_error("EmuContext should not be created twice!");
 }
 
-CoreContext::CoreContext(QObject *parent)
+EmuContext::EmuContext(QObject *parent)
     : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr)
 {
     set_core_instance(this);
@@ -103,7 +103,7 @@ CoreContext::CoreContext(QObject *parent)
             qmlEngine(this), [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
         auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
-        QMetaObject::invokeMethod(this, &CoreContext::openMultiDialog, done_callback, QAnyStringView(title),
+        QMetaObject::invokeMethod(this, &EmuContext::openMultiDialog, done_callback, QAnyStringView(title),
                                   QAnyStringView(str), qt_choices, CoreDialogType::from_core(type));
         future.wait();
         return future.get();
@@ -116,7 +116,7 @@ CoreContext::CoreContext(QObject *parent)
         auto done_callback = QJSFunctions::to_js_function(
             qmlEngine(this), [promise = std::move(promise)](bool value) mutable { promise.set_value(value); });
 
-        QMetaObject::invokeMethod(this, &CoreContext::openAskDialog, done_callback, QAnyStringView(title),
+        QMetaObject::invokeMethod(this, &EmuContext::openAskDialog, done_callback, QAnyStringView(title),
                                   QAnyStringView(str), warning ? CoreDialogType::Warning : CoreDialogType::Information);
 
         future.wait();
@@ -129,36 +129,45 @@ CoreContext::CoreContext(QObject *parent)
         auto done_callback = QJSFunctions::to_js_function(
             qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
-        QMetaObject::invokeMethod(this, &CoreContext::openInfoDialog, done_callback, QAnyStringView(title),
+        QMetaObject::invokeMethod(this, &EmuContext::openInfoDialog, done_callback, QAnyStringView(title),
                                   QAnyStringView(str), CoreDialogType::from_core(type));
 
         future.wait();
     };
 #pragma endregion
 
+#pragma region Signals and properties
+    m_core_params->callbacks.emu_launched_changed = [&](bool value) {
+        QMetaObject::invokeMethod(this, &EmuContext::emuLaunchedChanged, value);
+    };
+#pragma endregion
     core_create(m_core_params, &m_core_ctx);
 }
 
-CoreContext::~CoreContext()
+EmuContext::~EmuContext()
 {
     // ensure ROM is closed
     m_core_ctx->vr_close_rom(true);
 }
 
-CoreContext *CoreContext::instance()
+EmuContext *EmuContext::instance()
 {
     return g_core_instance;
 }
 
-CoreResult::Value CoreContext::vrStartROM(const QUrl &url) const
+CoreResult::Value EmuContext::vrStartROM(const QUrl &url) const
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
     return CoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
-CoreResult::Value CoreContext::vrCloseROM(bool resetVCR) const
+CoreResult::Value EmuContext::vrCloseROM(bool resetVCR) const
 {
     return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
+}
+
+bool EmuContext::isEmuLaunched() const {
+    return m_core_ctx->vr_get_launched();
 }
 
 void CoreUtil::clear_plugin_funcs(core_params &params)
@@ -181,15 +190,4 @@ void CoreUtil::clear_plugin_funcs(core_params &params)
     params.input_set_keys = [](auto...) {};
     params.input_read_controller = [](auto...) {};
     params.rsp_do_rsp_cycles = [](auto...) { return 0; };
-}
-
-static int add(int a, int b)
-{
-    return a + b;
-}
-
-QJSValue CoreContext::test()
-{
-
-    return QJSFunctions::to_js_function(qmlEngine(this), add);
 }
