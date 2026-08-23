@@ -51,8 +51,12 @@ ApplicationWindow {
 
         text: "foo the bar"
         onClicked: {
-            let fn = core.test();
-            console.log(`fn(1, 2) = ${fn(1, 2)}`)
+            mainWindow.queueInfoDialog(() => {
+                console.log("done info dialog");
+            }, "dialog 1", "yay, dialog!", CoreDialogType.Information)
+            mainWindow.queueAskDialog((result) => {
+                console.log(`done ask dialog: ${result}`);
+            }, "dialog 2", "yay, more dialog!", CoreDialogType.Warning)
         }
     }
 
@@ -62,9 +66,9 @@ ApplicationWindow {
     CoreContext {
         id: core
 
-        openInfoDialog: queueInfoDialog
-        openAskDialog: queueAskDialog
-        openMultiDialog: queueMultiDialog
+        onOpenInfoDialog: mainWindow.queueInfoDialog
+        onOpenAskDialog: mainWindow.queueAskDialog
+        onOpenMultiDialog: mainWindow.queueMultiDialog
     }
 
     Dialogs.FileDialog {
@@ -79,6 +83,7 @@ ApplicationWindow {
 
     // DIALOG SERVICE
     // =====================================
+    // TODO: can this be moved somewhere else?
 
     property list<var> dialogQueue: []
     property var currDialog: null
