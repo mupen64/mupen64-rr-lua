@@ -21,7 +21,7 @@
 #include <lua/modules/Movie.hpp>
 #include <lua/modules/Savestate.hpp>
 #include <lua/modules/WGUI.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 // these begin and end comments help to generate documentation
 // please don't remove them
@@ -261,7 +261,7 @@ static void register_function(lua_State *L, const std::string &name, const lua_C
 {
     const auto parts = StrUtils::split_string(name, ".") | std::ranges::to<std::vector>();
 
-    RT_ASSERT(parts.size() == 2, "Accessor invalid");
+    NEED(parts.size() == 2, "Accessor invalid");
 
     const auto namespace_name = std::string(parts.at(0));
     const auto function_name = std::string(parts.at(1));

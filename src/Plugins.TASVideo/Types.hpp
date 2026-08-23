@@ -44,28 +44,3 @@ using f64 = double; /* double prec floating point */
 #ifndef NULL
 #define NULL 0
 #endif
-
-static void runtime_assert_fail(const std::string &message)
-{
-#ifdef _WIN32
-    MessageBox(nullptr, message.c_str(), "Failed Runtime Assertion", MB_ICONERROR | MB_OK);
-#endif
-    std::terminate();
-}
-
-/**
- * \brief Asserts a condition at runtime.
- */
-#define RT_ASSERT(condition, message)                                                                                  \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        if (!(condition))                                                                                              \
-        {                                                                                                              \
-            runtime_assert_fail(message);                                                                              \
-        }                                                                                                              \
-    } while (0)
-
-/**
- * \brief Asserts that an HRESULT is SUCCESS at runtime.
- */
-#define RT_ASSERT_HR(hr, message) RT_ASSERT(!FAILED(hr), message)

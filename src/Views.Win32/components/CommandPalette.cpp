@@ -222,7 +222,7 @@ bool t_listbox_item::matches_query(const std::string_view query) const
         return normalized_display_name.contains(query);
     }
 
-    RT_ASSERT(false, "Unknown listbox item type in matches_query");
+    NEED(false, "Unknown listbox item type in matches_query");
 
     return false;
 }

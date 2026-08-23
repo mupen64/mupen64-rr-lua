@@ -8,11 +8,11 @@
 #include <Common.Views/Config.hpp>
 #include <components/FilePicker.hpp>
 #include <WinFilePicker.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 std::filesystem::path FilePicker::show_open_dialog(const std::string &id, HWND hwnd, const std::string &filter)
 {
-    RT_ASSERT(is_on_gui_thread(), "FilePicker::show_open_dialog called from non-GUI thread");
+    NEED(is_on_gui_thread(), "FilePicker::show_open_dialog called from non-GUI thread");
 
     std::filesystem::path restored_path =
         g_config.persistent_folder_paths.contains(id) ? g_config.persistent_folder_paths[id] : get_desktop_path();
@@ -32,7 +32,7 @@ std::filesystem::path FilePicker::show_open_dialog(const std::string &id, HWND h
 
 std::filesystem::path FilePicker::show_save_dialog(const std::string &id, HWND hwnd, const std::string &filter)
 {
-    RT_ASSERT(is_on_gui_thread(), "FilePicker::show_save_dialog called from non-GUI thread");
+    NEED(is_on_gui_thread(), "FilePicker::show_save_dialog called from non-GUI thread");
 
     std::filesystem::path restored_path =
         g_config.persistent_folder_paths.contains(id) ? g_config.persistent_folder_paths[id] : get_desktop_path();
@@ -52,7 +52,7 @@ std::filesystem::path FilePicker::show_save_dialog(const std::string &id, HWND h
 
 std::filesystem::path FilePicker::show_folder_dialog(const std::string &id, HWND hwnd)
 {
-    RT_ASSERT(is_on_gui_thread(), "FilePicker::show_folder_dialog called from non-GUI thread");
+    NEED(is_on_gui_thread(), "FilePicker::show_folder_dialog called from non-GUI thread");
 
     std::filesystem::path restored_path =
         g_config.persistent_folder_paths.contains(id) ? g_config.persistent_folder_paths[id] : get_desktop_path();

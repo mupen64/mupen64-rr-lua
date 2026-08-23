@@ -25,12 +25,6 @@ extern HWND g_main_hwnd;
 #endif
 
 /**
- * \brief Called when a runtime assertion fails.
- * \param message The assertion message.
- */
-void app_runtime_assert_fail(std::string_view message);
-
-/**
  * \return A map of default dialog choices for silent mode.
  */
 std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices();

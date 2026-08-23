@@ -5,7 +5,7 @@
  */
 
 #include <Common.Views/App.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 #include <Common.Views/WinFFmpegEncoder.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
