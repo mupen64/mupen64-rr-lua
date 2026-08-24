@@ -339,12 +339,17 @@ template <auto F> struct StaticFunctor : public details::StaticFunctorImpl<F, de
 /**
  * @brief Combines any number of functor types into a single overloaded functor.
  */
-template <class... Fs> struct Overload : Fs... { using Fs::operator()...; };
+template <class... Fs> struct Overload : Fs...
+{
+    using Fs::operator()...;
+};
 
-template <class T> struct MemberFunctionPointerTraits {};
+template <class T> struct MemberFunctionPointerTraits
+{
+};
 
-template <class R, class C, class... Args>
-struct MemberFunctionPointerTraits<R (C::*)(Args...)> {
+template <class R, class C, class... Args> struct MemberFunctionPointerTraits<R (C::*)(Args...)>
+{
     using Class = C;
     using Return = R;
 };

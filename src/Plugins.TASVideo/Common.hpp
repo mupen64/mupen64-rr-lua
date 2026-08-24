@@ -14,7 +14,6 @@
 #include <emmintrin.h>
 #include <xbrz.h>
 #include <hqx.h>
-#include <GL/glext.h>
 #include "Types.hpp"
 
 #define DEBUG_ERROR 0

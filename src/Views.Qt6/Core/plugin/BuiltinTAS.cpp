@@ -25,11 +25,11 @@ static std::array<StrUtils::unordered_string_map<void *>, (size_t)PluginID::NumP
     },
     // TASVideo
     StrUtils::unordered_string_map<void *>{
-        {"M64RRGetMetadata", (void*) M64RRBuiltinTASVideoGetMetadata},
-        {"M64RRProcessEvent", (void*) M64RRBuiltinTASVideoProcessEvent},
-        {"M64RRProcessDList", (void*) M64RRBuiltinTASVideoProcessDList},
-        {"M64RRReadVideo", (void*) M64RRBuiltinTASVideoReadVideo},
-        {"M64RRShowConfig", (void*) M64RRBuiltinTASVideoShowConfig},
+        {"M64RRGetMetadata", (void *)M64RRBuiltinTASVideoGetMetadata},
+        {"M64RRProcessEvent", (void *)M64RRBuiltinTASVideoProcessEvent},
+        {"M64RRProcessDList", (void *)M64RRBuiltinTASVideoProcessDList},
+        {"M64RRReadVideo", (void *)M64RRBuiltinTASVideoReadVideo},
+        {"M64RRShowConfig", (void *)M64RRBuiltinTASVideoShowConfig},
     },
     // TASAudio
     StrUtils::unordered_string_map<void *>{

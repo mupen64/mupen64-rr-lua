@@ -44,9 +44,9 @@ class EmuDisplay : public QQuickItem
 
     /**
      * @brief Preemptively resizes the video buffer in preparation to receive data.
-     * 
+     *
      * @param width The request
-     * @param height 
+     * @param height
      */
     Q_INVOKABLE void reserveSize(uint32_t width, uint32_t height);
 

@@ -50,16 +50,15 @@ class EmuContext : public QObject
 
     bool isEmuLaunched() const;
 
-
     // Misc. functions
     // ==========================
-    
+
     /**
      * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
-     * 
-     * @param image 
+     *
+     * @param image
      */
-    void readVideoOutput(QImage& image);
+    void readVideoOutput(QImage &image);
 
   signals:
 
@@ -73,7 +72,7 @@ class EmuContext : public QObject
 
     /**
      * @brief Requests that the window be resized (when the emulator is open).
-     * 
+     *
      * @param width The requested width.
      * @param height The requested height.
      */

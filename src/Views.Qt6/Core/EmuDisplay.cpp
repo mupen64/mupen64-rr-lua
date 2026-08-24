@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 #include "EmuDisplay.hpp"
 
 #include <print>
@@ -26,13 +31,13 @@ void EmuDisplay::readPixels()
 
 QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
-    auto* window = this->window();
-    auto* imageNode = (oldNode)? static_cast<QSGImageNode*>(oldNode) : window->createImageNode();
-    
+    auto *window = this->window();
+    auto *imageNode = (oldNode) ? static_cast<QSGImageNode *>(oldNode) : window->createImageNode();
+
     // set texture from current frame
     imageNode->setTexture(window->createTextureFromImage(m_frame));
     imageNode->setOwnsTexture(true);
-    
+
     // set display bounding boxes
     imageNode->setSourceRect(QRectF(QPoint(0, 0), m_frame.size()));
     imageNode->setRect(boundingRect());

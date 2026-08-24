@@ -46,14 +46,18 @@ void OGL_ReadPixels()
 
 void OGL_InitExtensions()
 {
-    if (OGL.isGLES) {
-        if (!gladLoadGLES2Loader((GLADloadproc) SDL_GL_GetProcAddress)) {
+    if (OGL.isGLES)
+    {
+        if (!gladLoadGLES2Loader((GLADloadproc)SDL_GL_GetProcAddress))
+        {
             g_plugin->log_error("Error initializing GLAD (OpenGL ES 2.0+)");
             return;
         }
     }
-    else {
-        if (!gladLoadGLLoader((GLADloadproc) SDL_GL_GetProcAddress)) {
+    else
+    {
+        if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+        {
             g_plugin->log_error("Error initializing GLAD (OpenGL)");
             return;
         }

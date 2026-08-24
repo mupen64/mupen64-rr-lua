@@ -77,7 +77,7 @@ void Plugin::init_common()
     m_process_event = (M64RRSpec::PtrProcessEvent)load_symbol("M64RRProcessEvent");
 }
 
-void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<void(M64RRSpec::PluginInit*)>& post_init)
+void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<void(M64RRSpec::PluginInit *)> &post_init)
 {
     m_init_data.reset(new M64RRSpec::PluginInit);
 
@@ -86,11 +86,11 @@ void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<vo
     m_init_data->dmem = (uint8_t *)ctx->sp_dmem;
     m_init_data->imem = (uint8_t *)ctx->sp_imem;
 
-    m_init_data->log_trace = [](const char* msg) { std::println(stderr, "[PTRACE] {}", msg); };
-    m_init_data->log_info = [](const char* msg) { std::println(stderr, "[PINFO]  {}", msg); };
-    m_init_data->log_warn = [](const char* msg) { std::println(stderr, "[PWARN]  {}", msg); };
-    m_init_data->log_error = [](const char* msg) { std::println(stderr, "[PERROR] {}", msg); };
-    
+    m_init_data->log_trace = [](const char *msg) { std::println(stderr, "[PTRACE] {}", msg); };
+    m_init_data->log_info = [](const char *msg) { std::println(stderr, "[PINFO]  {}", msg); };
+    m_init_data->log_warn = [](const char *msg) { std::println(stderr, "[PWARN]  {}", msg); };
+    m_init_data->log_error = [](const char *msg) { std::println(stderr, "[PERROR] {}", msg); };
+
     m_init_data->mi_register = ctx->mi_register;
     m_init_data->pi_register = ctx->pi_register;
     m_init_data->sp_register = ctx->sp_register;
@@ -183,8 +183,8 @@ PluginSet::PluginSet(Plugin &&video, Plugin &&audio, Plugin &&input, Plugin &&rs
 void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
 {
     CoreUtil::clear_plugin_funcs(core_params);
-    
-    m_video.initiate(core_ctx, core_params, [](M64RRSpec::PluginInit* init) {
+
+    m_video.initiate(core_ctx, core_params, [](M64RRSpec::PluginInit *init) {
         init->request_size = [](uint32_t width, uint32_t height) {
             // must be called on GUI thread!
             QMetaObject::invokeMethod(EmuContext::instance(), &EmuContext::gfxRequestSize, width, height);
@@ -192,14 +192,14 @@ void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
     });
     m_audio.initiate(core_ctx, core_params);
     m_input.initiate(core_ctx, core_params);
-    m_rsp.initiate(core_ctx, core_params, [&](M64RRSpec::PluginInit* init) {
-        init->process_dlist = (M64RRSpec::PtrProcessDList) m_video.load_symbol("M64RRProcessDList");
+    m_rsp.initiate(core_ctx, core_params, [&](M64RRSpec::PluginInit *init) {
+        init->process_dlist = (M64RRSpec::PtrProcessDList)m_video.load_symbol("M64RRProcessDList");
     });
 }
 
 void PluginSet::emu_started(core_params &core_params)
 {
-    const auto opened_event = M64RRSpec::Event { .type = M64RRSpec::Event::Type::RomOpened };
+    const auto opened_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomOpened};
 
     m_video.bind_functions(core_params);
     m_audio.bind_functions(core_params);
@@ -214,8 +214,8 @@ void PluginSet::emu_started(core_params &core_params)
 
 void PluginSet::emu_stopped(core_params &core_params)
 {
-    const auto closed_event = M64RRSpec::Event { .type = M64RRSpec::Event::Type::RomClosed };
-    const auto shutdown_event = M64RRSpec::Event { .type = M64RRSpec::Event::Type::Shutdown };
+    const auto closed_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::RomClosed};
+    const auto shutdown_event = M64RRSpec::Event{.type = M64RRSpec::Event::Type::Shutdown};
 
     m_video.send_event(closed_event);
     m_audio.send_event(closed_event);
