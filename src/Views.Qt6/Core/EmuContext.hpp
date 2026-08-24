@@ -22,6 +22,7 @@ class EmuContext : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
+    QML_SINGLETON
 
     Q_PROPERTY(bool emuLaunched READ isEmuLaunched NOTIFY emuLaunchedChanged)
   public:
@@ -42,6 +43,8 @@ class EmuContext : public QObject
     Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl &url) const;
 
     Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true) const;
+
+    Q_INVOKABLE CoreResult::Value vrResetROM(bool resetSaveData, bool stopVCR) const;
 
     Q_INVOKABLE void vrInvalidateVisuals() const;
 

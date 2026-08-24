@@ -163,6 +163,9 @@ EmuContext *EmuContext::instance()
     return g_core_instance;
 }
 
+// vr_* functions
+// ==========================
+
 CoreResult::Value EmuContext::vrStartROM(const QUrl &url) const
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
@@ -174,15 +177,25 @@ CoreResult::Value EmuContext::vrCloseROM(bool resetVCR) const
     return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
+CoreResult::Value EmuContext::vrResetROM(bool resetSaveData, bool stopVCR) const {
+    return CoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
+}
+
 void EmuContext::vrInvalidateVisuals() const
 {
     m_core_ctx->vr_invalidate_visuals();
 }
 
+// vr_* properties
+// ==========================
+
 bool EmuContext::isEmuLaunched() const
 {
     return m_core_ctx->vr_get_launched();
 }
+
+// Misc. functions
+// ==========================
 
 void EmuContext::readVideoOutput(QImage &image)
 {

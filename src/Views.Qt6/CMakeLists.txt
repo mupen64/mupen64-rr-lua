@@ -31,6 +31,7 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
 )
 
 qt_add_qml_module(Mupen64RR.Views.Qt6 URI "Views" QML_FILES
+    "Views/DialogService.qml"
     "Views/MainWindow.qml"
     "Views/MessageBox.qml"
 )
