@@ -18,8 +18,8 @@ ApplicationWindow {
     title: qsTr("Mupen64RR")
 
     // ensure window fits content
-    minimumWidth: mainStack.implicitWidth
-    minimumHeight: mainStack.implicitHeight
+    minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
+    minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
 
     // Core context
     // =====================================

@@ -26,11 +26,11 @@ void OGL_ReadPixels()
 {
     if (!gCapturedPixels) return;
 
-    // glFlush();
-    // glFinish();
+    glFlush();
+    glFinish();
 
-    SDL_GL_SwapWindow(s_sdl_window);
-    SDL_PumpEvents();
+    // SDL_GL_SwapWindow(s_sdl_window);
+    // SDL_PumpEvents();
 
     glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);
 
