@@ -192,7 +192,9 @@ void PluginSet::initiate_plugins(core_ctx *core_ctx, core_params &core_params)
     });
     m_audio.initiate(core_ctx, core_params);
     m_input.initiate(core_ctx, core_params);
-    m_rsp.initiate(core_ctx, core_params);
+    m_rsp.initiate(core_ctx, core_params, [&](M64RRSpec::PluginInit* init) {
+        init->process_dlist = (M64RRSpec::PtrProcessDList) m_video.load_symbol("M64RRProcessDList");
+    });
 }
 
 void PluginSet::emu_started(core_params &core_params)

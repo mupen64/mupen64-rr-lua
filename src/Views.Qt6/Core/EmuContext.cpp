@@ -197,7 +197,7 @@ void EmuContext::readVideoOutput(QImage &image)
     }
 
     m_fn_read_video(image.bits(), nullptr, nullptr);
-    std::println("pixel: {:08X}", image.pixel(320, 240));
+    // std::println("pixel: {:08X}", image.pixel(320, 240));
 }
 
 void CoreUtil::clear_plugin_funcs(core_params &params)

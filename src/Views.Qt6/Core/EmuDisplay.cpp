@@ -21,21 +21,24 @@ void EmuDisplay::readPixels()
 
     if (m_context == nullptr) return;
     m_context->readVideoOutput(m_frame);
-
-
-
     update();
 }
 
-// QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
-// {
-//     auto* window = this->window();
-//     auto* imageNode = (oldNode)? static_cast<QSGImageNode*>(oldNode) : window->createImageNode();
+QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
+{
+    auto* window = this->window();
+    auto* imageNode = (oldNode)? static_cast<QSGImageNode*>(oldNode) : window->createImageNode();
+    
+    // set texture from current frame
+    imageNode->setTexture(window->createTextureFromImage(m_frame));
+    imageNode->setOwnsTexture(true);
+    
+    // set display bounding boxes
+    imageNode->setSourceRect(QRectF(QPoint(0, 0), m_frame.size()));
+    imageNode->setRect(QRectF(boundingRect().topLeft(), m_frame.size()));
 
-//     imageNode->setSourceRect(QRectF(QPoint(0, 0), m_frame.size()));
-//     imageNode->setRect(QRectF(boundingRect().topLeft(), m_frame.size()));
-//     imageNode->setTexture(window->createTextureFromImage(m_frame));
-//     imageNode->setOwnsTexture(true);
+    // OpenGL returns pixel data flipped, reflip the texture
+    imageNode->setTextureCoordinatesTransform(QSGImageNode::MirrorVertically);
 
-//     return imageNode;
-// }
+    return imageNode;
+}
