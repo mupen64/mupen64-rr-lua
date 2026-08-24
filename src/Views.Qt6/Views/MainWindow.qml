@@ -17,8 +17,9 @@ ApplicationWindow {
     visible: true
     title: qsTr("Mupen64RR")
 
-    minimumWidth: mainStack.implicitWidth + width - contentItem.width
-    minimumHeight: mainStack.implicitHeight + height - contentItem.height
+    // ensure window fits content
+    minimumWidth: mainStack.implicitWidth
+    minimumHeight: mainStack.implicitHeight
 
     // Core context
     // =====================================
@@ -28,11 +29,11 @@ ApplicationWindow {
 
         // Graphics integration
         onGfxRequestSize: (width, height) => {
-            console.log(`gfx requested size ${width}x${height}`)
+            console.log(`gfx requested size ${width}x${height}`);
             coreDisplay.reserveSize(width, height);
         }
         onUpdateScreen: {
-            coreDisplay.readPixels()
+            coreDisplay.readPixels();
         }
 
         // Dialog service
@@ -67,7 +68,7 @@ ApplicationWindow {
         id: mainStack
         anchors.fill: parent
 
-        currentIndex: (core.emuLaunched)? 1 : 0
+        currentIndex: (core.emuLaunched) ? 1 : 0
 
         Item {
             Layout.fillHeight: true
@@ -87,9 +88,6 @@ ApplicationWindow {
                 context: core
                 anchors.top: parent.top
                 anchors.left: parent.left
-
-                Layout.minimumWidth: implicitWidth
-                Layout.minimumHeight: implicitHeight
             }
         }
     }
@@ -109,7 +107,7 @@ ApplicationWindow {
 
     FrameAnimation {
         running: core.emuLaunched
-        onTriggered: core.vrInvalidateVisuals();
+        onTriggered: core.vrInvalidateVisuals()
     }
 
     // DIALOG SERVICE

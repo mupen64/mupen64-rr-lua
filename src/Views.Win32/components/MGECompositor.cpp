@@ -93,7 +93,7 @@ static void create_d3d(const HWND hwnd)
     ID3D11DeviceContext *context_raw{};
 
     HRESULT hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels,
-                                   ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &device_raw, nullptr, &context_raw);
+        ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &device_raw, nullptr, &context_raw);
     NEED_HR(hr, "D3D11CreateDevice");
 
     mge_context.device.Attach(device_raw);
@@ -153,19 +153,19 @@ static void create_d3d(const HWND hwnd)
 
     ComPtr<ID3DBlob> vs_blob, ps_blob, err_blob;
     hr = D3DCompile(VERTEX_SHADER.data(), VERTEX_SHADER.size(), nullptr, nullptr, nullptr, "main", "vs_4_0", 0, 0,
-                    &vs_blob, &err_blob);
+        &vs_blob, &err_blob);
     NEED_HR(hr, "D3DCompile");
 
     hr = D3DCompile(FRAGMENT_SHADER.data(), FRAGMENT_SHADER.size(), nullptr, nullptr, nullptr, "main", "ps_4_0", 0, 0,
-                    &ps_blob, &err_blob);
+        &ps_blob, &err_blob);
     NEED_HR(hr, "D3DCompile");
 
-    hr = mge_context.device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr,
-                                                &mge_context.vs);
+    hr = mge_context.device->CreateVertexShader(
+        vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &mge_context.vs);
     NEED_HR(hr, "CreateVertexShader");
 
-    hr = mge_context.device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr,
-                                               &mge_context.ps);
+    hr = mge_context.device->CreatePixelShader(
+        ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &mge_context.ps);
     NEED_HR(hr, "CreatePixelShader");
 
     // Set up the pipeline

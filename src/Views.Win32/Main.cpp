@@ -1013,7 +1013,7 @@ static void enable_mitigations()
     PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ext = {0};
     ext.DisableExtensionPoints = 1;
     NEED(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
-              "Couldn't set process mitigation policy.");
+        "Couldn't set process mitigation policy.");
 
     BOOL bool_false = FALSE;
     SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &bool_false, sizeof(BOOL));
@@ -1069,9 +1069,8 @@ void Main::init_sdl()
 {
     if (!s_sdl_initialized)
     {
-        g_main_ctx.dispatcher->invoke([] {
-            NEED(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK));
-        }),
+        g_main_ctx.dispatcher->invoke(
+            [] { NEED(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK)); }),
     }
 }
 void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)

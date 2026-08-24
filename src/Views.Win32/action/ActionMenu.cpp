@@ -276,7 +276,7 @@ static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const 
 {
     ctx.menu_id_counter++;
     NEED(ctx.menu_id_counter <= IDM_RESERVED_END,
-              std::format("Menu ID counter overflow: {} (max {})", ctx.menu_id_counter, IDM_RESERVED_END).c_str());
+        std::format("Menu ID counter overflow: {} (max {})", ctx.menu_id_counter, IDM_RESERVED_END).c_str());
 
     item.id = (uint16_t)ctx.menu_id_counter;
     item.parent_menu = parent_menu;

@@ -33,7 +33,7 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
     if (silenced)
     {
         NEED(g_config.silent_mode_dialog_choices.contains(std::string(id)),
-                  std::format("Expected silent mode dialog choice for '{}'", id));
+            std::format("Expected silent mode dialog choice for '{}'", id));
         const auto default_index = g_config.silent_mode_dialog_choices[std::string(id)];
         g_view_logger->trace(
             "[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str, default_index);
