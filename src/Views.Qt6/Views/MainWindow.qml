@@ -21,6 +21,13 @@ ApplicationWindow {
     minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
     minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
 
+    Binding {
+        when: core.emuLaunched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
+        mainWindow.maximumWidth: mainWindow.minimumWidth
+        mainWindow.maximumHeight: mainWindow.minimumHeight
+    }
+
+
     // Core context
     // =====================================
 

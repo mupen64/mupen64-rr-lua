@@ -62,6 +62,9 @@ class EmuDisplay : public QQuickItem
     void contextChanged();
 
   private:
+    void visibleChangedImpl();
+
+
     EmuContext *m_context;
     QImage m_frame;
 };

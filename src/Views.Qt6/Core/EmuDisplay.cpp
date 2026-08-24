@@ -13,11 +13,12 @@
 EmuDisplay::EmuDisplay(QQuickItem *parent) : QQuickItem(parent), m_frame()
 {
     setFlags(QQuickItem::ItemHasContents);
+    connect(this, &EmuDisplay::visibleChanged, this, &EmuDisplay::visibleChangedImpl);
 }
 void EmuDisplay::reserveSize(uint32_t width, uint32_t height)
 {
-    setImplicitWidth(width);
-    setImplicitHeight(height);
+    // constrains minimum size for layout.
+    setImplicitSize(width, height);
 }
 
 void EmuDisplay::readPixels()
@@ -46,4 +47,11 @@ QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     imageNode->setTextureCoordinatesTransform(QSGImageNode::MirrorVertically);
 
     return imageNode;
+}
+
+void EmuDisplay::visibleChangedImpl() {
+    if (!isVisible()) {
+        // Don't constrain when we're not visible.
+        setImplicitSize(0, 0);
+    }
 }
