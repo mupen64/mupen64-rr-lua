@@ -191,9 +191,13 @@ void EmuContext::readVideoOutput(QImage &image)
     m_fn_read_video(nullptr, &width, &height);
 
     // reallocate if needed
-    if (image.width() != width || image.height() != height) image = QImage(width, height, QImage::Format_ARGB32);
+    if (image.width() != width || image.height() != height) {
+        image = QImage(width, height, QImage::Format_ARGB32);
+        image.fill(0x00FF8000);
+    }
 
     m_fn_read_video(image.bits(), nullptr, nullptr);
+    std::println("pixel: {:08X}", image.pixel(320, 240));
 }
 
 void CoreUtil::clear_plugin_funcs(core_params &params)

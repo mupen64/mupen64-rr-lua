@@ -26,6 +26,7 @@ void OGL_ReadPixels()
 {
     if (!gCapturedPixels) return;
 
+    glFlush();
     glFinish();
 
     glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);

@@ -25,7 +25,7 @@ class EmuDisplay : public QQuickItem
     EmuDisplay(QQuickItem *parent = nullptr);
     virtual ~EmuDisplay() {}
 
-    virtual QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updateData) override;
+    // virtual QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updateData) override;
 
     // Properties
     // ============================================
