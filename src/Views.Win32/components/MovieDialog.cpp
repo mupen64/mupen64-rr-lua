@@ -96,14 +96,13 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         RECT grid_rect = get_window_rect_client_space(hwnd, GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
         DestroyWindow(GetDlgItem(hwnd, IDC_MOVIE_INFO_TEMPLATE));
 
-        g_ctx.grid_hwnd =
-            CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
-                           WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS,
-                           grid_rect.left, grid_rect.top, grid_rect.right - grid_rect.left,
-                           grid_rect.bottom - grid_rect.top, hwnd, nullptr, g_main_ctx.hinst, NULL);
+        g_ctx.grid_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, grid_rect.left,
+            grid_rect.top, grid_rect.right - grid_rect.left, grid_rect.bottom - grid_rect.top, hwnd, nullptr,
+            g_main_ctx.hinst, NULL);
 
-        ListView_SetExtendedListViewStyle(g_ctx.grid_hwnd,
-                                          LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+        ListView_SetExtendedListViewStyle(
+            g_ctx.grid_hwnd, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
         LVCOLUMN lv_column = {0};
         lv_column.mask = LVCF_FMT | LVCF_DEFAULTWIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -121,8 +120,8 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         {
             EnableWindow(GetDlgItem(hwnd, id), false);
         }
-        SendMessage(GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::description),
-                    0);
+        SendMessage(
+            GetDlgItem(hwnd, IDC_INI_DESCRIPTION), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::description), 0);
         SendMessage(GetDlgItem(hwnd, IDC_INI_AUTHOR), EM_SETLIMITTEXT, sizeof(core_vcr_movie_header::author), 0);
 
         SetDlgItemText(hwnd, IDC_INI_AUTHOR, g_config.last_movie_author.c_str());
@@ -261,15 +260,14 @@ refresh:
 
     metadata.emplace_back(
         std::make_pair("ROM", std::format("{} ({}, {})", (char *)header.rom_name,
-                                          g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country),
-                                          std::format("{:#08x}", header.rom_crc1))));
+                                  g_main_ctx.core_ctx->vr_country_code_to_country_name(header.rom_country),
+                                  std::format("{:#08x}", header.rom_crc1))));
 
     metadata.emplace_back(
         std::make_pair("Length", std::format("{} ({} input)", header.length_vis, header.length_samples)));
     metadata.emplace_back(
         std::make_pair("Duration", format_duration((double)header.length_vis / (double)header.vis_per_second)));
-    metadata.emplace_back(std::make_pair(
-        "Rerecords",
+    metadata.emplace_back(std::make_pair("Rerecords",
         std::to_string(static_cast<uint64_t>(header.extended_data.rerecord_count) << 32 | header.rerecord_count)));
 
     metadata.emplace_back(std::make_pair("Video Plugin", header.video_plugin_name));
@@ -292,17 +290,14 @@ refresh:
     metadata.emplace_back(std::make_pair(
         "WiiVC", header.extended_version == 0 ? "Unknown" : (header.extended_flags.wii_vc ? "Enabled" : "Disabled")));
 
-    metadata.emplace_back(std::make_pair(
-        "Accurate RDP completion", header.extended_version < 3
-                                       ? "Unknown"
-                                       : (header.extended_flags.accurate_rdp_completion ? "Enabled" : "Disabled")));
+    metadata.emplace_back(std::make_pair("Accurate RDP completion",
+        header.extended_version < 3 ? "Unknown"
+                                    : (header.extended_flags.accurate_rdp_completion ? "Enabled" : "Disabled")));
 
-    metadata.emplace_back(std::make_pair("CPU counter factor", header.extended_version < 4
-                                                                   ? std::string("Unknown")
-                                                                   : std::format("{}", header.extended_data.cpu_cf)));
+    metadata.emplace_back(std::make_pair("CPU counter factor",
+        header.extended_version < 4 ? std::string("Unknown") : std::format("{}", header.extended_data.cpu_cf)));
 
-    metadata.emplace_back(std::make_pair(
-        "RCP lag factor",
+    metadata.emplace_back(std::make_pair("RCP lag factor",
         header.extended_version < 4 ? std::string("Unknown") : std::format("{}", header.extended_data.rcp_lag_factor)));
 
     char authorship[5] = {0};

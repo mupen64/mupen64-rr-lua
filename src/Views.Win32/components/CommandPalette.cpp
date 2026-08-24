@@ -128,17 +128,17 @@ t_listbox_item t_listbox_item::make_action(const std::string &action, const std:
 
     t_listbox_item item{};
     item.data = t_action_data{.text = ActionManager::get_display_name(action),
-                              .path = action,
-                              .raw_display_name = ActionManager::get_display_name(action, true),
-                              .hotkey = hotkey_str,
-                              .enabled = ActionManager::get_enabled(action),
-                              .active = ActionManager::get_active(action),
-                              .activatable = ActionManager::get_activatability(action)};
+        .path = action,
+        .raw_display_name = ActionManager::get_display_name(action, true),
+        .hotkey = hotkey_str,
+        .enabled = ActionManager::get_enabled(action),
+        .active = ActionManager::get_active(action),
+        .activatable = ActionManager::get_activatability(action)};
     return item;
 }
 
-t_listbox_item t_listbox_item::make_option(ConfigDialog::t_options_item *options_item,
-                                           const ConfigDialog::t_options_group &group)
+t_listbox_item t_listbox_item::make_option(
+    ConfigDialog::t_options_item *options_item, const ConfigDialog::t_options_group &group)
 {
     t_listbox_item item{};
     item.data = t_option_data{.item = options_item};
@@ -597,8 +597,8 @@ static void adjust_listbox_selection(const int32_t by)
     ListBox_SetCurSel(g_ctx.listbox_hwnd, new_index);
     listbox_ensure_visible(g_ctx.listbox_hwnd, new_index);
 }
-static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                                           UINT_PTR id, DWORD_PTR ref_data)
+static LRESULT CALLBACK keyboard_interaction_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
     {
@@ -684,8 +684,8 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
 
         // 3. Set a reasonable position and size for the dialog (centered horizontally, vertically top-justified)
         const RECT rc = CommandPalette::get_recommended_bounds();
-        SetWindowPos(hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-                     SWP_NOZORDER | SWP_FRAMECHANGED);
+        SetWindowPos(
+            hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_FRAMECHANGED);
 
         // 4. Build the listbox
         collect_items();
@@ -846,7 +846,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
             if (primary_text.has_value())
             {
                 DrawText(pdis->hDC, primary_text->c_str(), (int)primary_text->size(), &base_rc,
-                         DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+                    DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             }
 
             // 4. Draw the secondary text if applicable
@@ -860,7 +860,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                 const int x = base_rc.right - sz.cx;
 
                 DrawText(pdis->hDC, text.c_str(), (int)text.size(), &base_rc,
-                         DT_RIGHT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+                    DT_RIGHT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
             }
 
             if (std::holds_alternative<t_listbox_item::t_group_data>(item->data))
@@ -873,7 +873,7 @@ static INT_PTR CALLBACK command_palette_proc(const HWND hwnd, const UINT msg, co
                 GetTextExtentPoint32(pdis->hDC, group.text.c_str(), (int)group.text.size(), &sz);
 
                 MoveToEx(pdis->hDC, base_rc.left + sz.cx + 4,
-                         pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2, nullptr);
+                    pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2, nullptr);
                 LineTo(pdis->hDC, pdis->rcItem.right, pdis->rcItem.top + (pdis->rcItem.bottom - pdis->rcItem.top) / 2);
 
                 SelectObject(pdis->hDC, prev_obj);

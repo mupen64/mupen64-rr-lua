@@ -96,7 +96,7 @@ class EmuContext : public QObject
      * @param type The dialog's type. Used to display an icon next to the text.
      */
     void openMultiDialog(QJSValue done, QAnyStringView title, QAnyStringView content, const QList<QString> &choices,
-                         CoreDialogType::Value type);
+        CoreDialogType::Value type);
 
     /**
      * @brief Opens a yes/no dialog.

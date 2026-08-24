@@ -210,8 +210,8 @@ std::optional<uint32_t> HotkeyUtils::trigger_to_vk(const Hotkey::Trigger &trigge
     return std::nullopt;
 }
 
-static LRESULT CALLBACK HotkeyButtonSubclassProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                                 DWORD_PTR ref_data)
+static LRESULT CALLBACK HotkeyButtonSubclassProc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     const auto params = reinterpret_cast<DialogParams *>(ref_data);
 
@@ -269,8 +269,8 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         Static_SetText(GetDlgItem(hwnd, IDC_STATIC), params->headline.c_str());
         SetFocus(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY));
 
-        SetWindowSubclass(GetDlgItem(hwnd, IDC_CURRENT_HOTKEY), HotkeyButtonSubclassProc, 0,
-                          reinterpret_cast<DWORD_PTR>(params));
+        SetWindowSubclass(
+            GetDlgItem(hwnd, IDC_CURRENT_HOTKEY), HotkeyButtonSubclassProc, 0, reinterpret_cast<DWORD_PTR>(params));
         return TRUE;
     }
     case WM_CLOSE:
@@ -336,8 +336,8 @@ bool HotkeyUtils::show_prompt(const HWND hwnd, const std::string &caption, Hotke
     return confirmed;
 }
 
-void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::string &action, const Hotkey &new_hotkey,
-                                       const bool through_action_manager)
+void HotkeyUtils::try_associate_hotkey(
+    const HWND hwnd, const std::string &action, const Hotkey &new_hotkey, const bool through_action_manager)
 {
     const auto set_hotkey = [=](const std::string &action, const Hotkey &hotkey) {
         if (through_action_manager)
@@ -384,11 +384,10 @@ void HotkeyUtils::try_associate_hotkey(const HWND hwnd, const std::string &actio
     }
 
     const auto str = std::format("The key combination {} is already used by:\n\n{}\nHow would you like to proceed?",
-                                 new_hotkey.to_string(), conflicting_hotkey_identifiers);
+        new_hotkey.to_string(), conflicting_hotkey_identifiers);
 
-    const size_t choice =
-        DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT, {"Keep New", "Keep Old", "Proceed Anyway"},
-                                                   str, "Hotkey Conflict", fsvc_warning, hwnd);
+    const size_t choice = DialogService::show_multiple_choice_dialog(VIEW_DLG_HOTKEY_CONFLICT,
+        {"Keep New", "Keep Old", "Proceed Anyway"}, str, "Hotkey Conflict", fsvc_warning, hwnd);
 
     switch (choice)
     {

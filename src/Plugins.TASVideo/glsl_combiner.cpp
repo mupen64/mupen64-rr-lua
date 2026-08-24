@@ -107,7 +107,7 @@ static GLuint CompileShader(GLenum type, const char *source)
     {
         LogInfoLog(type == GL_VERTEX_SHADER ? "GLSL combiner: vertex shader compile failed"
                                             : "GLSL combiner: fragment shader compile failed",
-                   shader, false);
+            shader, false);
         glDeleteShader(shader);
         return 0;
     }

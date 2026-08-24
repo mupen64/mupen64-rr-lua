@@ -62,9 +62,8 @@ t_lua_environment *LuaManager::get_environment_for_state(lua_State *lua_state)
     return g_lua_env_map[lua_state];
 }
 
-std::expected<t_lua_environment *, std::string> LuaManager::create_environment(
-    const std::filesystem::path &path, const t_lua_environment::destroying_func &destroying_callback,
-    const t_lua_environment::print_func &print_callback)
+std::expected<t_lua_environment *, std::string> LuaManager::create_environment(const std::filesystem::path &path,
+    const t_lua_environment::destroying_func &destroying_callback, const t_lua_environment::print_func &print_callback)
 {
     RT_ASSERT(is_on_gui_thread(), "not on GUI thread");
 

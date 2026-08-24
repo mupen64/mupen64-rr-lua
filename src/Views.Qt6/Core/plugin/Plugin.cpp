@@ -64,8 +64,8 @@ void Plugin::init_common()
     get_metadata(&metadata);
 
     // Plugins are tied to one version of Mupen
-    std::string_view target_version{metadata.target_version,
-                                    strnlen(metadata.target_version, sizeof(metadata.target_version))};
+    std::string_view target_version{
+        metadata.target_version, strnlen(metadata.target_version, sizeof(metadata.target_version))};
     if (!target_version.empty() && target_version != CURRENT_VERSION)
         throw PluginLoadFailed("Expected target version " CURRENT_VERSION);
 
@@ -136,8 +136,8 @@ void Plugin::bind_functions(core_params &params)
         load_core_function<M64RRSpec::PtrProcessDList>(*this, "M64RRProcessDList", params.video_process_dlist);
         break;
     case M64RRSpec::PluginType::Audio:
-        load_core_function<M64RRSpec::PtrAIDacrateChanged>(*this, "M64RRAIDacrateChanged",
-                                                           params.audio_ai_dacrate_changed);
+        load_core_function<M64RRSpec::PtrAIDacrateChanged>(
+            *this, "M64RRAIDacrateChanged", params.audio_ai_dacrate_changed);
         load_core_function<M64RRSpec::PtrAILenChanged>(*this, "M64RRAILenChanged", params.audio_ai_len_changed);
         break;
     case M64RRSpec::PluginType::Input:

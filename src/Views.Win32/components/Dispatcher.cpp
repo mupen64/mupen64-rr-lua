@@ -67,7 +67,7 @@ void Dispatcher::execute()
     }
     double avg_overhead_time = overhead_sum / (double)std::size(m_overhead_times);
 
-    g_view_logger->trace("[Dispatcher] id {} overhead avg {:.0f}ns ({:.2f}%)", m_thread_id, avg_overhead_time,
-                         avg_overhead_percentage);
+    g_view_logger->trace(
+        "[Dispatcher] id {} overhead avg {:.0f}ns ({:.2f}%)", m_thread_id, avg_overhead_time, avg_overhead_percentage);
 #endif
 }

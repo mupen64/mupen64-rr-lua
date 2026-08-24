@@ -41,8 +41,8 @@ struct t_options_item
     {
         std::function<void(const data_variant &)> set{};
 
-        t_readwrite_property(const std::function<data_variant()> &get,
-                             const std::function<void(const data_variant &)> &set)
+        t_readwrite_property(
+            const std::function<data_variant()> &get, const std::function<void(const data_variant &)> &set)
             : t_readonly_property(get)
         {
             this->set = set;

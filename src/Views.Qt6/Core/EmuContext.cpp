@@ -80,8 +80,8 @@ EmuContext::EmuContext(QObject *parent)
             auto audio_plugin = Plugin(BuiltinTAS::PluginID::TASAudio);
             auto input_plugin = Plugin(BuiltinTAS::PluginID::DummyInput);
             auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
-            m_plugins.emplace(std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin),
-                              std::move(rsp_plugin));
+            m_plugins.emplace(
+                std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin), std::move(rsp_plugin));
 
             // Read video functions
             m_fn_read_video = (M64RRSpec::PtrReadVideo)m_plugins->video().load_symbol("M64RRReadVideo");
@@ -110,7 +110,7 @@ EmuContext::EmuContext(QObject *parent)
 
         auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
         QMetaObject::invokeMethod(this, &EmuContext::openMultiDialog, done_callback, QAnyStringView(title),
-                                  QAnyStringView(str), qt_choices, CoreDialogType::from_core(type));
+            QAnyStringView(str), qt_choices, CoreDialogType::from_core(type));
         future.wait();
         return future.get();
     };
@@ -123,7 +123,7 @@ EmuContext::EmuContext(QObject *parent)
             qmlEngine(this), [promise = std::move(promise)](bool value) mutable { promise.set_value(value); });
 
         QMetaObject::invokeMethod(this, &EmuContext::openAskDialog, done_callback, QAnyStringView(title),
-                                  QAnyStringView(str), warning ? CoreDialogType::Warning : CoreDialogType::Information);
+            QAnyStringView(str), warning ? CoreDialogType::Warning : CoreDialogType::Information);
 
         future.wait();
         return future.get();
@@ -136,7 +136,7 @@ EmuContext::EmuContext(QObject *parent)
             qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
         QMetaObject::invokeMethod(this, &EmuContext::openInfoDialog, done_callback, QAnyStringView(title),
-                                  QAnyStringView(str), CoreDialogType::from_core(type));
+            QAnyStringView(str), CoreDialogType::from_core(type));
 
         future.wait();
     };

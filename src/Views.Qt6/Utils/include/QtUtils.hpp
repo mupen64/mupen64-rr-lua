@@ -41,8 +41,8 @@ template <class C, class Arg0> struct SignalFnTraits<void (C::*)(const Arg0 &)>
 } // namespace details
 
 template <class F>
-std::future<typename details::SignalFnTraits<F>::Return> on_signal(typename details::SignalFnTraits<F>::Class *object,
-                                                                   F &&member)
+std::future<typename details::SignalFnTraits<F>::Return> on_signal(
+    typename details::SignalFnTraits<F>::Class *object, F &&member)
 {
     using Return = typename details::SignalFnTraits<F>::Return;
 

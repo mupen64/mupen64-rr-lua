@@ -40,10 +40,10 @@ struct t_action_manager
     bool batched_work{};
     bool work_happened{};
     bool lock_hotkeys{};
-    MicroLRU::Cache<action_filter, std::vector<std::string>> segment_cache{256,
-                                                                           [](const std::vector<std::string> &) {}};
-    MicroLRU::Cache<action_filter, std::vector<t_action *>> filter_result_cache{256,
-                                                                                [](const std::vector<t_action *> &) {}};
+    MicroLRU::Cache<action_filter, std::vector<std::string>> segment_cache{
+        256, [](const std::vector<std::string> &) {}};
+    MicroLRU::Cache<action_filter, std::vector<t_action *>> filter_result_cache{
+        256, [](const std::vector<t_action *> &) {}};
 };
 
 static t_action_manager g_mgr{};
@@ -357,7 +357,7 @@ std::vector<action_path> ActionManager::remove(const action_filter &filter)
     for (const auto &action_to_be_removed : actions)
     {
         std::erase_if(g_mgr.actions,
-                      [&](const t_action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
+            [&](const t_action &a) { return a.add_params.path == action_to_be_removed->add_params.path; });
     }
 
     g_mgr.filter_result_cache.clear();
@@ -384,7 +384,7 @@ bool ActionManager::associate_hotkey(const action_path &path, const Hotkey &hotk
     const auto normalized_path = action->add_params.path;
 
     RT_ASSERT(g_config.hotkeys.contains(normalized_path) && g_config.inital_hotkeys.contains(normalized_path),
-              "Action didn't have a hotkey entry.");
+        "Action didn't have a hotkey entry.");
 
     const bool has_assignment = g_config.hotkeys.at(normalized_path).is_assigned();
 
@@ -611,7 +611,7 @@ static bool validate_params(const t_action &action, const action_argument_map &p
         if (!params.contains(param.key))
         {
             g_view_logger->error("ActionManager::validate_params: Action '{}' missing parameter '{}'.",
-                                 action.add_params.path, param.key);
+                action.add_params.path, param.key);
             return false;
         }
 
@@ -622,7 +622,7 @@ static bool validate_params(const t_action &action, const action_argument_map &p
         if (validation_result.has_value())
         {
             g_view_logger->error("ActionManager::validate_params: Action '{}' parameter '{}' failed validation: {}",
-                                 action.add_params.path, param.key, validation_result.value());
+                action.add_params.path, param.key, validation_result.value());
             return false;
         }
     }
@@ -630,8 +630,8 @@ static bool validate_params(const t_action &action, const action_argument_map &p
     return true;
 }
 
-void ActionManager::invoke(const action_path &path, const bool up, const bool release_on_repress,
-                           const action_argument_map &params)
+void ActionManager::invoke(
+    const action_path &path, const bool up, const bool release_on_repress, const action_argument_map &params)
 {
     t_action *action = get_single_action_ptr_matching_path(path);
 

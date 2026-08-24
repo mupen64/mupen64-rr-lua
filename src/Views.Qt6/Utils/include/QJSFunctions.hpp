@@ -131,7 +131,7 @@ template <class R, class... Args> struct callable_traits<R (*)(Args...)>
 // return value back to JS.
 template <class F, class R, size_t... Is, class... Ts>
 inline QJSValue cpp_trampoline_inner(QJSEngine *engine, const QJSValue &params, F &callable, std::type_identity<R>,
-                                     std::index_sequence<Is...>, type_sequence<Ts...>)
+    std::index_sequence<Is...>, type_sequence<Ts...>)
 {
     auto result = callable(engine->fromScriptValue<Ts>(params.property(Is))...);
     return engine->toScriptValue(result);
@@ -141,7 +141,7 @@ inline QJSValue cpp_trampoline_inner(QJSEngine *engine, const QJSValue &params, 
 // function, then returns undefined.
 template <class F, size_t... Is, class... Ts>
 inline QJSValue cpp_trampoline_inner(QJSEngine *engine, const QJSValue &params, F &callable, std::type_identity<void>,
-                                     std::index_sequence<Is...>, type_sequence<Ts...>)
+    std::index_sequence<Is...>, type_sequence<Ts...>)
 {
     callable(engine->fromScriptValue<Ts>(params.property(Is))...);
     return QJSValue::UndefinedValue;

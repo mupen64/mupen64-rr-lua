@@ -10,7 +10,7 @@
 
 #define MATCH_PLUGIN_FN(name)                                                                                          \
     static_assert(std::is_same_v<decltype(&M64RR##name), M64RRSpec::Ptr##name>,                                        \
-                  "signature of M64RR" #name " does not match Ptr" #name);
+        "signature of M64RR" #name " does not match Ptr" #name);
 
 MATCH_PLUGIN_FN(GetMetadata)
 MATCH_PLUGIN_FN(ProcessEvent)

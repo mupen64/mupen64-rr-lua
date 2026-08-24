@@ -29,7 +29,7 @@ class Plugin
      * @brief Triggers the `Initiate` event and sets up necessary initialization data.
      */
     void initiate(core_ctx *core_ctx, core_params &core_params,
-                  const std::function<void(M64RRSpec::PluginInit *)> &post_init = {});
+        const std::function<void(M64RRSpec::PluginInit *)> &post_init = {});
 
     /**
      * @brief Binds the needed functions from this plugin to the core.

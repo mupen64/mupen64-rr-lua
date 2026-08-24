@@ -22,9 +22,15 @@ t_config g_config;
 static std::unordered_map<std::string, size_t> get_merged_silent_mode_dialog_choices()
 {
     const std::unordered_map<std::string, size_t> BASE_CHOICES = {
-        {CORE_DLG_FLOAT_EXCEPTION, 0},      {CORE_DLG_ST_HASH_MISMATCH, 0},      {CORE_DLG_ST_UNFREEZE_WARNING, 0},
-        {CORE_DLG_ST_NOT_FROM_MOVIE, 0},    {CORE_DLG_VCR_RAWDATA_WARNING, 0},   {CORE_DLG_VCR_GENERAL_SYNC_WARNING, 0},
-        {CORE_DLG_VCR_ROM_NAME_WARNING, 0}, {CORE_DLG_VCR_ROM_CCODE_WARNING, 0}, {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
+        {CORE_DLG_FLOAT_EXCEPTION, 0},
+        {CORE_DLG_ST_HASH_MISMATCH, 0},
+        {CORE_DLG_ST_UNFREEZE_WARNING, 0},
+        {CORE_DLG_ST_NOT_FROM_MOVIE, 0},
+        {CORE_DLG_VCR_RAWDATA_WARNING, 0},
+        {CORE_DLG_VCR_GENERAL_SYNC_WARNING, 0},
+        {CORE_DLG_VCR_ROM_NAME_WARNING, 0},
+        {CORE_DLG_VCR_ROM_CCODE_WARNING, 0},
+        {CORE_DLG_VCR_ROM_CRC_WARNING, 0},
         {CORE_DLG_VCR_CHEAT_LOAD_ERROR, 0},
     };
 
@@ -59,13 +65,10 @@ template <class T> static json convert_to_json(const T &value)
 static json convert_to_json(const std::map<std::string, Hotkey> &value)
 {
     return value | std::views::transform([](const std::pair<const std::string, Hotkey> &mapping) {
-               const auto &hotkey = mapping.second;
-               return std::pair(mapping.first, json::object({{"trigger", hotkey.trigger},
-                                                             {"ctrl", hotkey.ctrl},
-                                                             {"shift", hotkey.shift},
-                                                             {"alt", hotkey.alt}}));
-           }) |
-           std::ranges::to<json::object_t>();
+        const auto &hotkey = mapping.second;
+        return std::pair(mapping.first, json::object({{"trigger", hotkey.trigger}, {"ctrl", hotkey.ctrl},
+                                            {"shift", hotkey.shift}, {"alt", hotkey.alt}}));
+    }) | std::ranges::to<json::object_t>();
 }
 
 template <class T> static bool convert_from_json(const json &j, T &value)

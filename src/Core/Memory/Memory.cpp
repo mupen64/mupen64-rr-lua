@@ -1043,7 +1043,7 @@ static void update_MI_intr_mask_reg()
     if (MI_register.w_mi_intr_mask_reg & 0x800) MI_register.DP_intr_mask = 1;
     MI_register.mi_intr_mask_reg =
         ((MI_register.SP_intr_mask) | (MI_register.SI_intr_mask << 1) | (MI_register.AI_intr_mask << 2) |
-         (MI_register.VI_intr_mask << 3) | (MI_register.PI_intr_mask << 4) | (MI_register.DP_intr_mask << 5));
+            (MI_register.VI_intr_mask << 3) | (MI_register.PI_intr_mask << 4) | (MI_register.DP_intr_mask << 5));
 }
 
 void update_SP()
@@ -1083,10 +1083,10 @@ void update_SP()
     if (sp_register.w_sp_status_reg & 0x1000000) sp_register.signal7 = 1;
     sp_register.sp_status_reg =
         ((sp_register.halt) | (sp_register.broke << 1) | (sp_register.dma_busy << 2) | (sp_register.dma_full << 3) |
-         (sp_register.io_full << 4) | (sp_register.single_step << 5) | (sp_register.intr_break << 6) |
-         (sp_register.signal0 << 7) | (sp_register.signal1 << 8) | (sp_register.signal2 << 9) |
-         (sp_register.signal3 << 10) | (sp_register.signal4 << 11) | (sp_register.signal5 << 12) |
-         (sp_register.signal6 << 13) | (sp_register.signal7 << 14));
+            (sp_register.io_full << 4) | (sp_register.single_step << 5) | (sp_register.intr_break << 6) |
+            (sp_register.signal0 << 7) | (sp_register.signal1 << 8) | (sp_register.signal2 << 9) |
+            (sp_register.signal3 << 10) | (sp_register.signal4 << 11) | (sp_register.signal5 << 12) |
+            (sp_register.signal6 << 13) | (sp_register.signal7 << 14));
     // if (get_event(SP_INT)) return;
     if (!(sp_register.w_sp_status_reg & 0x1) && !(sp_register.w_sp_status_reg & 0x4)) return;
     if (!sp_register.halt && !sp_register.broke)
@@ -1271,9 +1271,9 @@ void update_DPC()
     if (dpc_register.w_dpc_status & 0x20) dpc_register.flush = 1;
     dpc_register.dpc_status =
         ((dpc_register.xbus_dmem_dma) | (dpc_register.freeze << 1) | (dpc_register.flush << 2) |
-         (dpc_register.start_glck << 3) | (dpc_register.tmem_busy << 4) | (dpc_register.pipe_busy << 5) |
-         (dpc_register.cmd_busy << 6) | (dpc_register.cbuf_busy << 7) | (dpc_register.dma_busy << 8) |
-         (dpc_register.end_valid << 9) | (dpc_register.start_valid << 10));
+            (dpc_register.start_glck << 3) | (dpc_register.tmem_busy << 4) | (dpc_register.pipe_busy << 5) |
+            (dpc_register.cmd_busy << 6) | (dpc_register.cbuf_busy << 7) | (dpc_register.dma_busy << 8) |
+            (dpc_register.end_valid << 9) | (dpc_register.start_valid << 10));
 }
 
 bool check_register_validity(const core_si_reg *si_reg)

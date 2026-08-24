@@ -117,24 +117,24 @@ BOOL CALLBACK ConfigDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM lP
         SendDlgItemMessage(hWndDlg, IDC_TEXTUREFILTER, CB_SETCURSEL, (int)OGL.textureFilter, 0);
         SendMessage(GetDlgItem(hWndDlg, IDC_FSCALE), TBM_SETPOS, TRUE, OGL.filterScale);
 
-        SendDlgItemMessage(hWndDlg, IDC_SCISSOR, BM_SETCHECK,
-                           OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
-        SendDlgItemMessage(hWndDlg, IDC_CLEAR, BM_SETCHECK,
-                           OGL.clear_override ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
+        SendDlgItemMessage(
+            hWndDlg, IDC_SCISSOR, BM_SETCHECK, OGL.ignoreScissor ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
+        SendDlgItemMessage(
+            hWndDlg, IDC_CLEAR, BM_SETCHECK, OGL.clear_override ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
         // Enable/disable fog
         SendDlgItemMessage(hWndDlg, IDC_FOG, BM_SETCHECK, OGL.fog ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
-        SendDlgItemMessage(hWndDlg, IDC_MSAA, BM_SETCHECK, OGL.msaa == 4 ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED,
-                           0);
+        SendDlgItemMessage(
+            hWndDlg, IDC_MSAA, BM_SETCHECK, OGL.msaa == 4 ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
         SendDlgItemMessage(hWndDlg, IDC_DITHEREDALPHATEST, BM_SETCHECK,
-                           OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
+            OGL.usePolygonStipple ? (LPARAM)BST_CHECKED : (LPARAM)BST_UNCHECKED, 0);
 
         const auto cache_size = std::to_string(cache.maxBytes / 1048576);
         SendDlgItemMessage(hWndDlg, IDC_CACHEMEGS, WM_SETTEXT, 0, (LPARAM)cache_size.c_str());
 
         SendMessage(hWndDlg, WM_COMMAND, MAKEWPARAM(IDC_TEXTUREFILTER, CBN_SELCHANGE),
-                    (LPARAM)GetDlgItem(hWndDlg, IDC_TEXTUREFILTER));
+            (LPARAM)GetDlgItem(hWndDlg, IDC_TEXTUREFILTER));
 
         return TRUE;
     }

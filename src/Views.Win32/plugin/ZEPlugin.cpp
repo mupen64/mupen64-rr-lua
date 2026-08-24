@@ -267,13 +267,13 @@ void ZEPlugin::initiate(ZESpecFuncs &funcs)
         FUNC(funcs.video_move_screen, ZESpec::MOVESCREEN, dummy_move_screen, "MoveScreen");
         FUNC(funcs.video_capture_screen, ZESpec::CAPTURESCREEN, dummy_capture_screen, "CaptureScreen");
         FUNC(funcs.video_read_screen, ZESpec::READSCREEN, (ZESpec::READSCREEN)GetProcAddress(m_module, "ReadScreen2"),
-             "ReadScreen");
+            "ReadScreen");
         FUNC(funcs.video_get_video_size, ZESpec::GETVIDEOSIZE, nullptr, "mge_get_video_size");
         FUNC(funcs.video_read_video, ZESpec::READVIDEO, nullptr, "mge_read_video2");
         FUNC(funcs.video_fb_read, ZESpec::FBREAD, dummy_fb_read, "FBRead");
         FUNC(funcs.video_fb_write, ZESpec::FBWRITE, dummy_fb_write, "FBWrite");
         FUNC(funcs.video_fb_get_frame_buffer_info, ZESpec::FBGETFRAMEBUFFERINFO, dummy_fb_get_framebuffer_info,
-             "FBGetFrameBufferInfo");
+            "FBGetFrameBufferInfo");
         funcs.video_dll_crt_free = PluginUtil::get_free_function_in_module(m_module);
 
         gfx_info.main_hwnd = g_main_ctx.hwnd;

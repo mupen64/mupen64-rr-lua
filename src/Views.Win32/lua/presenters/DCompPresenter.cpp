@@ -27,7 +27,7 @@ void DCompPresenter::create_size_dependent_resources()
     const auto dpi = (float)GetDpiForWindow(m_hwnd);
     const D2D1_BITMAP_PROPERTIES1 props =
         D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-                                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi, dpi);
+            D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), dpi, dpi);
 
     m_d2d_dc->CreateBitmapFromDxgiSurface(m_dxgi_surface.Get(), props, m_d2d_bitmap.GetAddressOf());
     m_d2d_dc->SetTarget(m_d2d_bitmap.Get());
@@ -45,8 +45,8 @@ bool DCompPresenter::init(HWND hwnd)
     m_dxgi_factory->EnumAdapters1(0, m_dxgi_adapter.GetAddressOf());
 
     D3D11CreateDevice(m_dxgi_adapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr,
-                      D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0,
-                      D3D11_SDK_VERSION, &m_d3d_device, nullptr, m_d3d_dc.GetAddressOf());
+        D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0, D3D11_SDK_VERSION,
+        &m_d3d_device, nullptr, m_d3d_dc.GetAddressOf());
 
     m_d3d_device->QueryInterface(m_dxgi_device.GetAddressOf());
     m_dxgi_device->SetMaximumFrameLatency(1);
@@ -65,15 +65,15 @@ bool DCompPresenter::init(HWND hwnd)
     swapdesc.Width = m_size.width;
     swapdesc.Height = m_size.height;
 
-    m_dxgi_factory->CreateSwapChainForComposition(m_d3d_device.Get(), &swapdesc, nullptr,
-                                                  m_dxgi_swapchain.GetAddressOf());
+    m_dxgi_factory->CreateSwapChainForComposition(
+        m_d3d_device.Get(), &swapdesc, nullptr, m_dxgi_swapchain.GetAddressOf());
     m_comp_visual->SetContent(m_dxgi_swapchain.Get());
     m_comp_target->SetRoot(m_comp_visual.Get());
 
     D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, {}, m_d2d_factory.GetAddressOf());
     m_d2d_factory->CreateDevice(m_dxgi_device.Get(), m_d2d_device.GetAddressOf());
-    m_d2d_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS,
-                                      m_d2d_dc.GetAddressOf());
+    m_d2d_device->CreateDeviceContext(
+        D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, m_d2d_dc.GetAddressOf());
 
     create_size_dependent_resources();
 
@@ -124,7 +124,7 @@ void DCompPresenter::blit(HDC hdc, RECT rect)
     m_dxgi_surface->GetDC(false, &dc);
 
     AlphaBlend(hdc, 0, 0, m_size.width, m_size.height, dc, 0, 0, m_size.width, m_size.height,
-               {.BlendOp = AC_SRC_OVER, .BlendFlags = 0, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA});
+        {.BlendOp = AC_SRC_OVER, .BlendFlags = 0, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA});
 
     m_dxgi_surface->ReleaseDC(nullptr);
 }

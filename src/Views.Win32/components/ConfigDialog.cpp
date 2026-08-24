@@ -70,8 +70,8 @@ static double get_number_value(const t_options_item::data_variant &value)
     return 0.0;
 }
 
-static t_options_item::data_variant parse_number_value(const std::string &text,
-                                                       const t_options_item::data_variant &current)
+static t_options_item::data_variant parse_number_value(
+    const std::string &text, const t_options_item::data_variant &current)
 {
     if (std::holds_alternative<int32_t>(current))
     {
@@ -176,8 +176,8 @@ bool t_options_item::edit(const HWND hwnd)
     case Type::Number: {
         const auto value = current_value.get();
         const auto result = TextEditDialog::show({.parent_hwnd = hwnd,
-                                                  .text = to_str_default(get_number_value(value)),
-                                                  .caption = std::format("Edit value for {}", name)});
+            .text = to_str_default(get_number_value(value)),
+            .caption = std::format("Edit value for {}", name)});
         if (!result.has_value())
         {
             break;
@@ -294,8 +294,7 @@ INT_PTR CALLBACK plugin_discovery_dlgproc(HWND hwnd, UINT msg, WPARAM w_param, L
         RECT rect{};
         GetClientRect(hwnd, &rect);
 
-        g_pldlv_hwnd = CreateWindowEx(
-            WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
+        g_pldlv_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS, rect.left, rect.top,
             rect.right - rect.left, rect.bottom - rect.top, hwnd, nullptr, g_main_ctx.hinst, NULL);
 
@@ -477,8 +476,7 @@ static INT_PTR CALLBACK base_pageproc(const HWND hwnd, const UINT message, const
         {
             if (!weak_compare(g_config, g_prev_config))
             {
-                const auto result = DialogService::show_ask_dialog(
-                    VIEW_DLG_CONFIRM_SETTINGS_DISCARD,
+                const auto result = DialogService::show_ask_dialog(VIEW_DLG_CONFIRM_SETTINGS_DISCARD,
                     "You have unsaved changes. Are you sure you want to discard the changes?", "Settings", true, hwnd);
 
                 if (!result)
@@ -518,7 +516,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         if (dis->CtlType == ODT_STATIC && std::ranges::contains(plugin_icon_ids, static_cast<int>(dis->CtlID)))
         {
             draw_bitmap_transparent(dis->hDC, dis->rcItem, g_main_ctx.hinst, static_cast<int>(dis->CtlID),
-                                    WinDarkMode::theme_data.bg_color == WinDarkMode::dark_theme_data.bg_color);
+                WinDarkMode::theme_data.bg_color == WinDarkMode::dark_theme_data.bg_color);
             return TRUE;
         }
         return FALSE;
@@ -533,7 +531,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         std::vector<std::pair<std::filesystem::path, std::string>> broken_plugins;
 
         std::ranges::copy_if(plugin_discovery_result.results, std::back_inserter(broken_plugins),
-                             [](const auto &pair) { return !pair.second.empty(); });
+            [](const auto &pair) { return !pair.second.empty(); });
 
         if (broken_plugins.empty())
         {
@@ -541,8 +539,7 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         }
         else
         {
-            SetDlgItemText(
-                hwnd, IDC_PLUGIN_WARNING,
+            SetDlgItemText(hwnd, IDC_PLUGIN_WARNING,
                 std::format("Not all discovered plugins shown. {} plugin(s) failed to load.", broken_plugins.size())
                     .c_str());
         }
@@ -587,8 +584,18 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
         update_plugin_selection(hwnd, IDC_COMBO_RSP, g_config.selected_rsp_plugin);
 
         const auto ids_to_enable = {
-            IDM_VIDEO_SETTINGS, IDM_AUDIO_SETTINGS, IDM_INPUT_SETTINGS, IDM_RSP_SETTINGS, IDGFXTEST,    IDSOUNDTEST,
-            IDINPUTTEST,        IDRSPTEST,          IDGFXABOUT,         IDSOUNDABOUT,     IDINPUTABOUT, IDRSPABOUT,
+            IDM_VIDEO_SETTINGS,
+            IDM_AUDIO_SETTINGS,
+            IDM_INPUT_SETTINGS,
+            IDM_RSP_SETTINGS,
+            IDGFXTEST,
+            IDSOUNDTEST,
+            IDINPUTTEST,
+            IDRSPTEST,
+            IDGFXABOUT,
+            IDSOUNDABOUT,
+            IDINPUTABOUT,
+            IDRSPABOUT,
         };
 
         EnableWindow(GetDlgItem(hwnd, IDC_COMBO_GFX), !g_main_ctx.core_ctx->vr_get_launched());
@@ -723,73 +730,70 @@ std::vector<t_options_group> get_static_option_groups()
 
 #define RWPROP(T, x, c)                                                                                                \
     t_options_item::t_readwrite_property([] { return g_config.x; },                                                    \
-                                         [](const t_options_item::data_variant &value) {                               \
-                                             g_config.x = std::get<T>(value);                                          \
-                                             do                                                                        \
-                                             {                                                                         \
-                                                 c                                                                     \
-                                             } while (0);                                                              \
-                                         })
+        [](const t_options_item::data_variant &value) {                                                                \
+            g_config.x = std::get<T>(value);                                                                           \
+            do                                                                                                         \
+            {                                                                                                          \
+                c                                                                                                      \
+            } while (0);                                                                                               \
+        })
 
 #define GENPROPS(T, x, ...) .current_value = RWPROP(T, x, __VA_ARGS__), .default_value = RPROP(T, x)
 
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
-                                   .group_id = folders_group.id,
-                                   .name = "ROMs",
-                                   .tooltip = "The path to the ROM folder.",
-                                   GENPROPS(std::string, rom_directory)});
+        .group_id = folders_group.id,
+        .name = "ROMs",
+        .tooltip = "The path to the ROM folder.",
+        GENPROPS(std::string, rom_directory)});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
-                                   .group_id = folders_group.id,
-                                   .name = "Plugins",
-                                   .tooltip = "The path to the plugin folder.",
-                                   GENPROPS(std::string, plugins_directory, { g_plugin_discovery_rescan = true; })});
+        .group_id = folders_group.id,
+        .name = "Plugins",
+        .tooltip = "The path to the plugin folder.",
+        GENPROPS(std::string, plugins_directory, { g_plugin_discovery_rescan = true; })});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
-                                   .group_id = folders_group.id,
-                                   .name = "Save Data",
-                                   .tooltip = "The path to the save data folder.",
-                                   GENPROPS(std::string, saves_directory),
-                                   .get_readonly_reason = readonly_when_emu_running});
+        .group_id = folders_group.id,
+        .name = "Save Data",
+        .tooltip = "The path to the save data folder.",
+        GENPROPS(std::string, saves_directory),
+        .get_readonly_reason = readonly_when_emu_running});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
-                                   .group_id = folders_group.id,
-                                   .name = "Screenshots",
-                                   .tooltip = "The path to the screenshot folder.",
-                                   GENPROPS(std::string, screenshots_directory)});
+        .group_id = folders_group.id,
+        .name = "Screenshots",
+        .tooltip = "The path to the screenshot folder.",
+        GENPROPS(std::string, screenshots_directory)});
     folders_group.items.push_back({.type = t_options_item::Type::Folder,
-                                   .group_id = folders_group.id,
-                                   .name = "Backup Folder",
-                                   .tooltip = "The path to the movie backup folder.",
-                                   GENPROPS(std::string, backups_directory)});
+        .group_id = folders_group.id,
+        .name = "Backup Folder",
+        .tooltip = "The path to the movie backup folder.",
+        GENPROPS(std::string, backups_directory)});
 
     interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
-                                                      .group_id = interface_group.id,
-                                                      .name = "Theme",
-                                                      .tooltip = "The UI theme to use.",
-                                                      GENPROPS(int32_t, theme),
-                                                      .possible_values = {
-                                                          std::make_pair("Light", 0),
-                                                          std::make_pair("Dark", 1),
-                                                          std::make_pair("System", 2),
-                                                      }});
+        .group_id = interface_group.id,
+        .name = "Theme",
+        .tooltip = "The UI theme to use.",
+        GENPROPS(int32_t, theme),
+        .possible_values = {
+            std::make_pair("Light", 0),
+            std::make_pair("Dark", 1),
+            std::make_pair("System", 2),
+        }});
     interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
-                                                      .group_id = interface_group.id,
-                                                      .name = "Pause when unfocused",
-                                                      .tooltip = "Pause emulation when the main window isn't in focus.",
-                                                      GENPROPS(int32_t, is_unfocused_pause_enabled)});
-    interface_group.items.emplace_back(
-        t_options_item{.type = t_options_item::Type::Bool,
-                       .group_id = interface_group.id,
-                       .name = "Automatic Update Checking",
-                       .tooltip = "Enables automatic update checking. Requires an internet connection.",
-                       GENPROPS(int32_t, automatic_update_checking)});
-    interface_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+        .group_id = interface_group.id,
+        .name = "Pause when unfocused",
+        .tooltip = "Pause emulation when the main window isn't in focus.",
+        GENPROPS(int32_t, is_unfocused_pause_enabled)});
+    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+        .group_id = interface_group.id,
+        .name = "Automatic Update Checking",
+        .tooltip = "Enables automatic update checking. Requires an internet connection.",
+        GENPROPS(int32_t, automatic_update_checking)});
+    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
         .group_id = interface_group.id,
         .name = "Silent Mode",
         .tooltip = "Suppresses all dialogs and chooses reasonable defaults for multiple-choice dialogs.\nCan cause "
                    "data loss during normal usage; only enable in automation scenarios!",
         GENPROPS(int32_t, silent_mode)});
-    statusbar_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
+    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
         .group_id = interface_group.id,
         .name = "Toast Mode",
         .tooltip = "The way toasts are displayed.\nWindow - Toasts are shown in non-modal windows.\nStatusbar - Toasts "
@@ -800,22 +804,19 @@ std::vector<t_options_group> get_static_option_groups()
             std::make_pair("Statusbar", (int32_t)t_config::ToastMode::Statusbar),
             std::make_pair("Dialog", (int32_t)t_config::ToastMode::Dialog),
         }});
-    interface_group.items.emplace_back(
-        t_options_item{.type = t_options_item::Type::Bool,
-                       .group_id = interface_group.id,
-                       .name = "Keep working directory",
-                       .tooltip = "Keep the working directory specified by the caller program at startup.\nWhen "
-                                  "disabled, mupen changes the working directory to its current path.",
-                       GENPROPS(int32_t, keep_default_working_directory)});
-    interface_group.items.emplace_back(
-        t_options_item{.type = t_options_item::Type::Bool,
-                       .group_id = interface_group.id,
-                       .name = "Auto-increment Slot",
-                       .tooltip = "Automatically increment the save slot upon saving a state.",
-                       GENPROPS(int32_t, increment_slot)});
+    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+        .group_id = interface_group.id,
+        .name = "Keep working directory",
+        .tooltip = "Keep the working directory specified by the caller program at startup.\nWhen "
+                   "disabled, mupen changes the working directory to its current path.",
+        GENPROPS(int32_t, keep_default_working_directory)});
+    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+        .group_id = interface_group.id,
+        .name = "Auto-increment Slot",
+        .tooltip = "Automatically increment the save slot upon saving a state.",
+        GENPROPS(int32_t, increment_slot)});
 
-    statusbar_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
+    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
         .group_id = statusbar_group.id,
         .name = "Layout",
         .tooltip = "The statusbar layout preset.\nClassic - The legacy layout\nModern - The new layout containing "
@@ -826,24 +827,21 @@ std::vector<t_options_group> get_static_option_groups()
             std::make_pair("Modern", (int32_t)t_config::StatusbarLayout::Modern),
             std::make_pair("Modern+", (int32_t)t_config::StatusbarLayout::ModernWithReadOnly),
         }});
-    statusbar_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Zero-index",
         .tooltip = "Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.",
         GENPROPS(int32_t, vcr_0_index)});
-    statusbar_group.items.emplace_back(
-        t_options_item{.type = t_options_item::Type::Bool,
-                       .group_id = statusbar_group.id,
-                       .name = "Scale down to fit window",
-                       .tooltip = "Whether the statusbar is allowed to scale its segments down.",
-                       GENPROPS(int32_t, statusbar_scale_down)});
-    statusbar_group.items.emplace_back(
-        t_options_item{.type = t_options_item::Type::Bool,
-                       .group_id = statusbar_group.id,
-                       .name = "Scale up to fill window",
-                       .tooltip = "Whether the statusbar is allowed to scale its segments up.",
-                       GENPROPS(int32_t, statusbar_scale_up)});
+    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+        .group_id = statusbar_group.id,
+        .name = "Scale down to fit window",
+        .tooltip = "Whether the statusbar is allowed to scale its segments down.",
+        GENPROPS(int32_t, statusbar_scale_down)});
+    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+        .group_id = statusbar_group.id,
+        .name = "Scale up to fill window",
+        .tooltip = "Whether the statusbar is allowed to scale its segments up.",
+        GENPROPS(int32_t, statusbar_scale_up)});
     piano_roll_group.items.emplace_back(t_options_item{
         .type = t_options_item::Type::Bool,
         .group_id = piano_roll_group.id,
@@ -1153,12 +1151,12 @@ std::vector<t_options_group> get_static_option_groups()
         .get_readonly_reason = readonly_when_emu_running,
     });
 
-    return {folders_group, interface_group, statusbar_group, piano_roll_group, seek_group,
-            capture_group, core_group,      vcr_group,       lua_group,        debug_group};
+    return {folders_group, interface_group, statusbar_group, piano_roll_group, seek_group, capture_group, core_group,
+        vcr_group, lua_group, debug_group};
 }
 
-LRESULT CALLBACK inline_edit_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                           DWORD_PTR ref_data)
+LRESULT CALLBACK inline_edit_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
     {
@@ -1282,8 +1280,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         }
         AppendMenu(h_menu, MF_STRING, 3, "Reset all to default");
 
-        const int offset = TrackPopupMenuEx(h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(l_param),
-                                            GET_Y_LPARAM(l_param), hwnd, 0);
+        const int offset = TrackPopupMenuEx(
+            h_menu, TPM_RETURNCMD | TPM_NONOTIFY, GET_X_LPARAM(l_param), GET_Y_LPARAM(l_param), hwnd, 0);
 
         if (offset < 0)
         {
@@ -1324,12 +1322,11 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             {
                 DialogService::show_dialog("Some settings can't be reset, as they are currently read-only. Try again "
                                            "with emulation stopped.\nNo changes have been made to the settings.",
-                                           "Reset all to default", fsvc_warning, hwnd);
+                    "Reset all to default", fsvc_warning, hwnd);
                 break;
             }
 
-            const auto result = DialogService::show_ask_dialog(
-                VIEW_DLG_RESET_SETTINGS,
+            const auto result = DialogService::show_ask_dialog(VIEW_DLG_RESET_SETTINGS,
                 "Reset all settings to their default values?\nThis will reset settings on all pages.",
                 "Reset all to default", false, hwnd);
 
@@ -1370,7 +1367,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             for (const auto &wanted_group : ctx->groups)
             {
                 auto it = std::find_if(g_option_groups.begin(), g_option_groups.end(),
-                                       [&](const t_options_group &group) { return group.name == wanted_group; });
+                    [&](const t_options_group &group) { return group.name == wanted_group; });
                 if (it != g_option_groups.end())
                 {
                     groups.emplace_back(it->id, it->name);
@@ -1434,8 +1431,8 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 item_rect.right = lv_rect.right;
 
                 ctx->edit_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-                                                item_rect.left, item_rect.top, item_rect.right - item_rect.left,
-                                                item_rect.bottom - item_rect.top, ctx->hwnd, 0, g_main_ctx.hinst, 0);
+                    item_rect.left, item_rect.top, item_rect.right - item_rect.left, item_rect.bottom - item_rect.top,
+                    ctx->hwnd, 0, g_main_ctx.hinst, 0);
                 SendMessage(ctx->edit_hwnd, WM_SETFONT, (WPARAM)SendMessage(ctx->lv_hwnd, WM_GETFONT, 0, 0), 0);
 
                 SetWindowSubclass(ctx->edit_hwnd, inline_edit_subclass_proc, 0, 0);
@@ -1690,10 +1687,9 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
                 .group_id = group.id,
                 .name = action,
                 .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(action); },
-                                                                      [=](const t_options_item::data_variant &value) {
-                                                                          g_config.hotkeys[action] =
-                                                                              std::get<Hotkey>(value);
-                                                                      }),
+                    [=](const t_options_item::data_variant &value) {
+                        g_config.hotkeys[action] = std::get<Hotkey>(value);
+                    }),
                 .default_value =
                     t_options_item::t_readonly_property([=] { return g_config.inital_hotkeys.at(action); }),
             };
