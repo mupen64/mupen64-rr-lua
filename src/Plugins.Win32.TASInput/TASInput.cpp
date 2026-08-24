@@ -1161,12 +1161,13 @@ void Status::on_config_changed()
         combos_hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_COMBOS), hwnd, combos_dlgproc, (LPARAM)this);
         CheckDlgButton(combos_hwnd, IDC_LOOP, new_config.loop_combo);
 
-        RECT expanded_rect = rect;
         RECT combos_dlg_rect{};
         GetClientRect(combos_hwnd, &combos_dlg_rect);
-        expanded_rect.bottom += combos_dlg_rect.bottom;
 
-        SetWindowPos(hwnd, nullptr, 0, 0, expanded_rect.right, expanded_rect.bottom, SWP_NOMOVE);
+        RECT rc{};
+        GetWindowRect(hwnd, &rc);
+        SetWindowPos(hwnd, nullptr, 0, 0, rc.right - rc.left,
+            rc.bottom - rc.top + (combos_dlg_rect.bottom - combos_dlg_rect.top), SWP_NOMOVE);
         SetWindowPos(combos_hwnd, nullptr, 0, initial_client_rect.bottom, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
     }
 
