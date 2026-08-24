@@ -1,5 +1,6 @@
 name: Proposal
 description: Suggest features or changes  
+type: feature
 labels: []
 body:
   - type: textarea
