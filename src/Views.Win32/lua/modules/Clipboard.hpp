@@ -7,80 +7,50 @@
 #pragma once
 
 #include <lua/LuaManager.hpp>
+#include <SDL3/SDL_clipboard.h>
 
 namespace LuaCore::Clipboard
 {
-const std::vector<std::pair<std::string, int32_t>> KNOWN_TYPES = {{"text", CF_TEXT}};
+const std::vector<std::string> KNOWN_TYPES = {"text"};
 
-static int32_t validate_type(lua_State *L, const std::string &type)
+static void validate_type(lua_State *L, const std::string &type)
 {
-    const auto it = std::ranges::find_if(KNOWN_TYPES, [&](const auto &pair) { return pair.first == type; });
+    const auto it = std::ranges::find(KNOWN_TYPES, type);
     if (it == KNOWN_TYPES.end())
     {
         luaL_error(L, "Unknown clipboard type: %s", type.c_str());
     }
-    return it->second;
 }
 
 static int get(lua_State *L)
 {
     const auto type = luaL_checkstlstring(L, 1);
+    validate_type(L, type);
 
-    const int32_t clipboard_type = validate_type(L, type);
-
-    if (!IsClipboardFormatAvailable(clipboard_type))
+    if (!SDL_HasClipboardText())
     {
         lua_pushnil(L);
         return 1;
     }
 
-    if (!OpenClipboard(nullptr))
+    char *text = SDL_GetClipboardText();
+    if (!text)
     {
         lua_pushnil(L);
         return 1;
     }
 
-    const HANDLE data = GetClipboardData(clipboard_type);
-    if (!data)
-    {
-        CloseClipboard();
-        lua_pushnil(L);
-        return 1;
-    }
-
-    const void *cb_data = GlobalLock(data);
-    if (!cb_data)
-    {
-        CloseClipboard();
-        lua_pushnil(L);
-        return 1;
-    }
-
-    if (type == "text")
-    {
-        lua_pushstring(L, static_cast<const char *>(cb_data));
-    }
-    else
-    {
-        std::unreachable();
-    }
-
-    GlobalUnlock(data);
-    CloseClipboard();
+    lua_pushstring(L, text);
+    SDL_free(text);
 
     return 1;
 }
 
 static int get_content_type(lua_State *L)
 {
-    for (const auto &[name, id] : KNOWN_TYPES)
+    if (SDL_HasClipboardText())
     {
-        if (!IsClipboardFormatAvailable(id))
-        {
-            continue;
-        }
-
-        lua_pushstring(L, name.c_str());
+        lua_pushstring(L, "text");
         return 1;
     }
 
@@ -91,77 +61,15 @@ static int get_content_type(lua_State *L)
 static int set(lua_State *L)
 {
     const auto type = luaL_checkstlstring(L, 1);
+    validate_type(L, type);
 
-    const int32_t clipboard_type = validate_type(L, type);
+    const auto str = luaL_checkstlstring(L, 2);
 
-    if (!OpenClipboard(g_main_ctx.hwnd))
+    if (!SDL_SetClipboardText(str.c_str()))
     {
         lua_pushboolean(L, false);
         return 1;
     }
-
-    if (!EmptyClipboard())
-    {
-        CloseClipboard();
-        lua_pushboolean(L, false);
-        return 1;
-    }
-
-    void *src_data;
-    size_t src_data_size;
-
-    if (type == "text")
-    {
-        const auto str = luaL_checkstlstring(L, 2);
-
-        src_data_size = str.size() + 1;
-        src_data = calloc(str.size() + 1, sizeof(char));
-        memcpy(src_data, str.c_str(), str.size());
-    }
-    else
-    {
-        std::unreachable();
-    }
-
-    if (!src_data)
-    {
-        CloseClipboard();
-        lua_pushboolean(L, false);
-        return 1;
-    }
-
-    const HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, src_data_size);
-    if (!hg)
-    {
-        CloseClipboard();
-        lua_pushboolean(L, false);
-        return 1;
-    }
-
-    void *dst = GlobalLock(hg);
-
-    if (!dst)
-    {
-        GlobalFree(hg);
-        CloseClipboard();
-        lua_pushboolean(L, false);
-        return 1;
-    }
-
-    memcpy(dst, src_data, src_data_size);
-    free(src_data);
-
-    GlobalUnlock(hg);
-
-    if (!SetClipboardData(clipboard_type, hg))
-    {
-        GlobalFree(hg);
-        CloseClipboard();
-        lua_pushboolean(L, false);
-        return 1;
-    }
-
-    CloseClipboard();
 
     lua_pushboolean(L, true);
     return 1;
@@ -169,20 +77,11 @@ static int set(lua_State *L)
 
 static int clear(lua_State *L)
 {
-    if (!OpenClipboard(g_main_ctx.hwnd))
+    if (!SDL_ClearClipboardData())
     {
         lua_pushboolean(L, false);
         return 1;
     }
-
-    if (!EmptyClipboard())
-    {
-        CloseClipboard();
-        lua_pushboolean(L, false);
-        return 1;
-    }
-
-    CloseClipboard();
 
     lua_pushboolean(L, true);
     return 1;
