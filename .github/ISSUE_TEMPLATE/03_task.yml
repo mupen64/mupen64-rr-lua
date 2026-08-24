@@ -1,0 +1,24 @@
+name: Work Task
+description: "[INTERNAL USE ONLY] Create a new work item to be completed"
+type: task
+labels: []
+body:
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: |
+        A clear and concise description of what needs to be done.
+      placeholder: Requirements
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: Technical Considerations
+      description: |
+        Things to consider during implementation.
+      placeholder: Technical Considerations
+    validations:
+      required: false
