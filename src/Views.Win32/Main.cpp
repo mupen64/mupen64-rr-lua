@@ -1070,10 +1070,10 @@ void Main::init_sdl()
 {
     if (!s_sdl_initialized)
     {
-        g_main_ctx.dispatcher->invoke(
-            [] { 
-                NEED(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), "Failed to init SDL");
-            });
+        g_main_ctx.dispatcher->invoke([] {
+            NEED(
+                SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), "Failed to init SDL");
+        });
     }
 }
 void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)

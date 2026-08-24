@@ -17,6 +17,8 @@ ApplicationWindow {
     visible: true
     title: qsTr("Mupen64RR")
 
+    property bool lockSize;
+
     // ensure window fits content
     minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
     minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding

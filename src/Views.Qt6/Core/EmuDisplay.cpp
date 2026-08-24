@@ -49,8 +49,10 @@ QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     return imageNode;
 }
 
-void EmuDisplay::visibleChangedImpl() {
-    if (!isVisible()) {
+void EmuDisplay::visibleChangedImpl()
+{
+    if (!isVisible())
+    {
         // Don't constrain when we're not visible.
         setImplicitSize(0, 0);
     }
