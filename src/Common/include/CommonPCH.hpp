@@ -63,4 +63,6 @@
 #include "MiscHelpers.hpp"
 #include "StrUtils.hpp"
 #include "IOUtils.hpp"
+#include <Assert.hpp>
+
 #pragma warning(pop)

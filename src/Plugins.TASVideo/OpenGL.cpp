@@ -214,9 +214,9 @@ bool OGL_InitContext()
 
     if (OGL.msaa > 0)
     {
-        RT_ASSERT(multisample_buffers == 1 && multisample_samples == OGL.msaa,
-            std::format("MSAA {}x is required, got {} buffers {} samples. Try updating your graphics driver.", OGL.msaa,
-                multisample_buffers, multisample_samples));
+        NEED(multisample_buffers == 1 && multisample_samples == OGL.msaa,
+                  std::format("MSAA {}x is required, got {} buffers {} samples. Try updating your graphics driver.",
+                              OGL.msaa, multisample_buffers, multisample_samples));
     }
 
     OGL_InitExtensions();

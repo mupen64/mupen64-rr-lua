@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include "Dispatcher.hpp"
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 // #define DISPATCHER_OVERHEAD_LOGGING
 
@@ -33,7 +33,7 @@ void Dispatcher::execute()
 {
     if (m_func == nullptr) return;
 
-    RT_ASSERT(GetCurrentThreadId() == m_thread_id, "Dispatcher::execute() called from incorrect thread");
+    NEED(GetCurrentThreadId() == m_thread_id, "Dispatcher::execute() called from incorrect thread");
 
 #ifdef DISPATCHER_OVERHEAD_LOGGING
     const auto execute_start = std::chrono::high_resolution_clock::now();

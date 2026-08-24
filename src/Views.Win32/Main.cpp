@@ -1012,8 +1012,8 @@ static void enable_mitigations()
 {
     PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ext = {0};
     ext.DisableExtensionPoints = 1;
-    RT_ASSERT(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
-        "Couldn't set process mitigation policy.");
+    NEED(SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext)),
+              "Couldn't set process mitigation policy.");
 
     BOOL bool_false = FALSE;
     SetUserObjectInformation(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &bool_false, sizeof(BOOL));
@@ -1034,15 +1034,6 @@ static bool is_running_under_wine()
     if (!ntdll) return false;
 
     return GetProcAddress(ntdll, "wine_get_version") != nullptr;
-}
-
-void app_runtime_assert_fail(std::string_view message)
-{
-#if defined(_DEBUG)
-    __debugbreak();
-#endif
-    DialogService::show_dialog(message, "Failed Runtime Assertion", fsvc_error);
-    std::terminate();
 }
 
 std::unordered_map<std::string, size_t> get_silent_mode_dialog_choices()
@@ -1079,13 +1070,10 @@ void Main::init_sdl()
     if (!s_sdl_initialized)
     {
         g_main_ctx.dispatcher->invoke([] {
-            RT_ASSERT(
-                SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK), "SDL_Init failed");
-        });
-        s_sdl_initialized = true;
+            NEED(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK));
+        }),
     }
 }
-
 void Main::handle_mouse_events(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -1188,7 +1176,7 @@ int CALLBACK WinMain(const HINSTANCE hInstance, HINSTANCE, LPSTR, const int nSho
     GdiplusStartup(&gdi_plus_token, &startup_input, NULL);
 
     const auto hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    RT_ASSERT(SUCCEEDED(hr), "Failed to initialize COM.");
+    NEED(SUCCEEDED(hr), "Failed to initialize COM.");
 
     WinDarkMode::init();
 

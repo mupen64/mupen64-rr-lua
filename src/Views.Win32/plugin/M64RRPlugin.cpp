@@ -11,7 +11,7 @@
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows s_mupenrr_video_get_windows_fn = nullptr;
@@ -474,7 +474,7 @@ void M64RRPlugin::initiate(ZESpecFuncs &funcs)
         break;
     }
     default:
-        RT_ASSERT(false, "Unsupported plugin type");
+        NEED(false, "Unsupported plugin type");
         break;
     }
 

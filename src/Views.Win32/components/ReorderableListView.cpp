@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include "ReorderableListView.hpp"
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 namespace ReorderableListView
 {
@@ -178,15 +178,15 @@ void make_reorderable(HWND hwnd, HWND parent_hwnd, const Params &params)
     bool success = true;
 
     success = SetProp(parent_hwnd, CTX_KEY, context);
-    RT_ASSERT(success, "Failed to set context property on parent");
+    NEED(success, "Failed to set context property on parent");
 
     success = SetProp(hwnd, CTX_KEY, context);
-    RT_ASSERT(success, "Failed to set context property on list view");
+    NEED(success, "Failed to set context property on list view");
 
     success = SetWindowSubclass(parent_hwnd, parent_subclass_proc, 0, 0);
-    RT_ASSERT(success, "Failed to set parent window subclass");
+    NEED(success, "Failed to set parent window subclass");
 
     success = SetWindowSubclass(hwnd, listview_subclass_proc, 0, 0);
-    RT_ASSERT(success, "Failed to set list view subclass");
+    NEED(success, "Failed to set list view subclass");
 }
 } // namespace ReorderableListView

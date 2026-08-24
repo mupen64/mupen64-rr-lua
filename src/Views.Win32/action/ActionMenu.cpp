@@ -9,7 +9,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <action/ActionMenu.hpp>
 #include <components/ParameterPalette.hpp>
-#include <Common.Views/Assert.hpp>
+#include <Assert.hpp>
 
 const auto MANAGED_MENU_CTX = "Mupen64_ManagedMenuContext";
 
@@ -275,8 +275,8 @@ static void build_initial_menu_tree(t_action_menu_context &ctx)
 static void add_menu_items(t_action_menu_context &ctx, t_menu_item &item, const HMENU parent_menu)
 {
     ctx.menu_id_counter++;
-    RT_ASSERT(ctx.menu_id_counter <= IDM_RESERVED_END,
-        std::format("Menu ID counter overflow: {} (max {})", ctx.menu_id_counter, IDM_RESERVED_END).c_str());
+    NEED(ctx.menu_id_counter <= IDM_RESERVED_END,
+              std::format("Menu ID counter overflow: {} (max {})", ctx.menu_id_counter, IDM_RESERVED_END).c_str());
 
     item.id = (uint16_t)ctx.menu_id_counter;
     item.parent_menu = parent_menu;
