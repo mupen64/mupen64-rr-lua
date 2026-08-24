@@ -17,6 +17,27 @@ ApplicationWindow {
     visible: true
     title: qsTr("Mupen64RR")
 
+    // Core context
+    // =====================================
+
+    EmuContext {
+        id: core
+
+        // Graphics integration
+        onGfxRequestSize: (width, height) => {
+            console.log(`gfx requested size ${width}x${height}`)
+            coreDisplay.reserveSize(width, height);
+        }
+        onUpdateScreen: {
+            coreDisplay.readPixels()
+        }
+
+        // Dialog service
+        onOpenInfoDialog: mainWindow.queueInfoDialog
+        onOpenAskDialog: mainWindow.queueAskDialog
+        onOpenMultiDialog: mainWindow.queueMultiDialog
+    }
+
     // CONTENT
     // =====================================
 
@@ -70,24 +91,6 @@ ApplicationWindow {
     // AUXILIARY OBJECTS
     // =====================================
 
-    EmuContext {
-        id: core
-
-        // Graphics integration
-        onGfxRequestSize: (width, height) => {
-            console.log(`gfx requested size ${width}x${height}`)
-            coreDisplay.reserveSize(width, height);
-        }
-        onUpdateScreen: {
-            coreDisplay.readPixels()
-        }
-
-        // Dialog service
-        onOpenInfoDialog: mainWindow.queueInfoDialog
-        onOpenAskDialog: mainWindow.queueAskDialog
-        onOpenMultiDialog: mainWindow.queueMultiDialog
-    }
-
     Dialogs.FileDialog {
         id: diaOpenRom
         title: qsTr("Open ROM...")
@@ -96,6 +99,11 @@ ApplicationWindow {
         onAccepted: {
             core.vrStartROM(selectedFile);
         }
+    }
+
+    FrameAnimation {
+        running: core.emuLaunched
+        onTriggered: core.vrInvalidateVisuals();
     }
 
     // WINDOW SIZE MANAGEMENT

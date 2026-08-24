@@ -43,6 +43,8 @@ class EmuContext : public QObject
 
     Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true) const;
 
+    Q_INVOKABLE void vrInvalidateVisuals() const;
+
     // vr_* properties
     // ==========================
 

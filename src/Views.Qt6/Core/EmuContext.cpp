@@ -143,10 +143,7 @@ EmuContext::EmuContext(QObject *parent)
 #pragma endregion
 
 #pragma region Signals and properties
-    m_core_params->update_screen = [&] {
-        std::println("next frame!");
-        QMetaObject::invokeMethod(this, &EmuContext::updateScreen);
-    };
+    m_core_params->update_screen = [&] { QMetaObject::invokeMethod(this, &EmuContext::updateScreen); };
 
     m_core_params->callbacks.emu_launched_changed = [&](bool value) {
         QMetaObject::invokeMethod(this, &EmuContext::emuLaunchedChanged, value);
@@ -177,6 +174,11 @@ CoreResult::Value EmuContext::vrCloseROM(bool resetVCR) const
     return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
+void EmuContext::vrInvalidateVisuals() const
+{
+    m_core_ctx->vr_invalidate_visuals();
+}
+
 bool EmuContext::isEmuLaunched() const
 {
     return m_core_ctx->vr_get_launched();
@@ -186,10 +188,12 @@ void EmuContext::readVideoOutput(QImage &image)
 {
     int32_t width = 0;
     int32_t height = 0;
-    m_fn_read_video(image.bits(), &width, &height);
+    m_fn_read_video(nullptr, &width, &height);
 
-    if (width != image.width() && height != image.height())
-        throw std::logic_error("Video output not pre-sized correctly!");
+    // reallocate if needed
+    if (image.width() != width || image.height() != height) image = QImage(width, height, QImage::Format_ARGB32);
+
+    m_fn_read_video(image.bits(), nullptr, nullptr);
 }
 
 void CoreUtil::clear_plugin_funcs(core_params &params)

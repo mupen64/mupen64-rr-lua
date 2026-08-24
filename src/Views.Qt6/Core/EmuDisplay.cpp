@@ -7,6 +7,7 @@
 
 EmuDisplay::EmuDisplay(QQuickItem *parent) : QQuickItem(parent), m_frame()
 {
+    setFlags(QQuickItem::ItemHasContents);
 }
 void EmuDisplay::reserveSize(uint32_t width, uint32_t height)
 {
@@ -17,11 +18,7 @@ void EmuDisplay::reserveSize(uint32_t width, uint32_t height)
 
 void EmuDisplay::readPixels()
 {
-    if (m_context == nullptr) return; 
-    // if (!isVisible()) return;
-
-    // std::println("next frame!");
-
+    if (m_context == nullptr) return;
     m_context->readVideoOutput(m_frame);
     update();
 }
@@ -31,8 +28,8 @@ QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     auto* window = this->window();
     auto* imageNode = (oldNode)? static_cast<QSGImageNode*>(oldNode) : window->createImageNode();
 
-    // imageNode->setSourceRect(QRectF(QPoint(0, 0), m_frame.size()));
-    imageNode->setRect(boundingRect());
+    imageNode->setSourceRect(QRectF(QPoint(0, 0), m_frame.size()));
+    imageNode->setRect(QRectF(boundingRect().topLeft(), m_frame.size()));
     imageNode->setTexture(window->createTextureFromImage(m_frame));
     imageNode->setOwnsTexture(true);
 
