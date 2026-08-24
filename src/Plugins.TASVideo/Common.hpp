@@ -10,7 +10,7 @@
 #include <VersionNameHelpers.hpp>
 #include <m64rr/API.hpp>
 #include <m64rr/Plugin.hpp>
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <emmintrin.h>
 #include <xbrz.h>
 #include <hqx.h>

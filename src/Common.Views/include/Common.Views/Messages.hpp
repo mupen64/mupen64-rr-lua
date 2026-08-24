@@ -342,7 +342,7 @@ template <> struct MessageData<Message::ActionActiveChanged>
 template <Message M> void broadcast(typename MessageData<M>::type data)
 {
     static_assert(!std::is_void_v<typename MessageData<M>::type>,
-                  "This message does not carry data; call broadcast<M>() instead of broadcast<M>(data).");
+        "This message does not carry data; call broadcast<M>() instead of broadcast<M>(data).");
     if constexpr (std::is_reference_v<typename MessageData<M>::type>)
     {
         // std::any cannot hold references, so deliver the address of the original object rather than moving from it.
@@ -362,7 +362,7 @@ template <Message M> void broadcast(typename MessageData<M>::type data)
 template <Message M> void broadcast()
 {
     static_assert(std::is_void_v<typename MessageData<M>::type>,
-                  "This message carries data; call broadcast<M>(data) instead of broadcast<M>().");
+        "This message carries data; call broadcast<M>(data) instead of broadcast<M>().");
     detail::broadcast_impl(detail::make_key(M), std::any{});
 }
 
@@ -383,8 +383,8 @@ template <Message M, typename F> std::function<void()> subscribe(F callback)
     else
     {
         using type = typename MessageData<M>::type;
-        static_assert(std::is_invocable_v<F, type>,
-                      "The callback for this message must be callable with its data type.");
+        static_assert(
+            std::is_invocable_v<F, type>, "The callback for this message must be callable with its data type.");
         return detail::subscribe_impl(detail::make_key(M), [cb = std::move(callback)](std::any data) {
             if constexpr (std::is_reference_v<type>)
             {

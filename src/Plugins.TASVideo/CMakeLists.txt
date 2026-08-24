@@ -105,10 +105,10 @@ if (MUPEN64RR_BUILD_WIN32)
 endif()
 
 target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE
+    vendor::glad
     vendor::hqx
     vendor::xbrz
     nlohmann_json::nlohmann_json
-    PkgConfig::glew
     SDL3::SDL3
 )
 

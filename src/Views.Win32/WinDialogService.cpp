@@ -20,8 +20,7 @@ StrUtils::unordered_string_map<size_t> dialog_choice_map;
 namespace DialogService
 {
 size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::string> &choices, std::string_view str,
-                                   std::optional<std::string_view> title, core_dialog_type type, void *hwnd,
-                                   std::optional<std::string_view> details)
+    std::optional<std::string_view> title, core_dialog_type type, void *hwnd, std::optional<std::string_view> details)
 {
     const auto wstr = IOUtils::to_wide_string(str);
     const auto wtitle = title ? std::make_optional(IOUtils::to_wide_string(*title)) : std::nullopt;
@@ -34,10 +33,10 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
     if (silenced)
     {
         NEED(g_config.silent_mode_dialog_choices.contains(std::string(id)),
-                  std::format("Expected silent mode dialog choice for '{}'", id));
+            std::format("Expected silent mode dialog choice for '{}'", id));
         const auto default_index = g_config.silent_mode_dialog_choices[std::string(id)];
-        g_view_logger->trace("[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str,
-                             default_index);
+        g_view_logger->trace(
+            "[FrontendService] show_multiple_choice_dialog: '{}', silent mode answer: {}", str, default_index);
         return std::stoi(default_index);
     }
 
@@ -45,8 +44,8 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
     if (result != dialog_choice_map.end())
     {
         const auto answer = result->second;
-        g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', dont show again answer: {}", wstr,
-                             answer);
+        g_view_logger->trace(
+            L"[FrontendService] show_multiple_choice_dialog: '{}', dont show again answer: {}", wstr, answer);
         return answer;
     }
 
@@ -98,21 +97,21 @@ size_t show_multiple_choice_dialog(std::string_view id, const std::vector<std::s
     if (dont_show_again)
     {
         // directly construct key
-        dialog_choice_map.emplace(std::piecewise_construct, std::forward_as_tuple(id),
-                                  std::forward_as_tuple(pressed_button));
+        dialog_choice_map.emplace(
+            std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(pressed_button));
     }
 
     g_view_logger->trace(L"[FrontendService] show_multiple_choice_dialog: '{}', manual answer: {}, dont show again: {}",
-                         wstr, pressed_button > 0 ? wchoices[pressed_button] : L"?", dont_show_again);
+        wstr, pressed_button > 0 ? wchoices[pressed_button] : L"?", dont_show_again);
 
     return pressed_button;
 }
 
-bool show_ask_dialog(std::string_view id, std::string_view str, std::optional<std::string_view> title, bool warning,
-                     void *hwnd)
+bool show_ask_dialog(
+    std::string_view id, std::string_view str, std::optional<std::string_view> title, bool warning, void *hwnd)
 {
-    return show_multiple_choice_dialog(id, {"Yes", "No"}, str, title, warning ? fsvc_warning : fsvc_information,
-                                       hwnd) == 0;
+    return show_multiple_choice_dialog(
+               id, {"Yes", "No"}, str, title, warning ? fsvc_warning : fsvc_information, hwnd) == 0;
 }
 
 void show_dialog(std::string_view str, std::optional<std::string_view> title, core_dialog_type type, void *hwnd)
@@ -140,7 +139,7 @@ void show_dialog(std::string_view str, std::optional<std::string_view> title, co
     if (!g_config.silent_mode)
     {
         MessageBox(static_cast<HWND>(hwnd ? hwnd : g_main_ctx.hwnd), std::string(str).c_str(),
-                   title ? std::string(*title).c_str() : nullptr, icon);
+            title ? std::string(*title).c_str() : nullptr, icon);
     }
 }
 

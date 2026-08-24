@@ -10,13 +10,13 @@
 #include <NewConfig.hpp>
 #include <GamepadManager.hpp>
 
-const auto editbox_ids = {IDC_E_A,      IDC_E_B,       IDC_E_START, IDC_E_ZTRIG,   IDC_E_LTRIG,  IDC_E_RTRIG,
-                          IDC_E_DPLEFT, IDC_E_DPRIGHT, IDC_E_DPUP,  IDC_E_DPDOWN,  IDC_E_CLEFT,  IDC_E_CRIGHT,
-                          IDC_E_CUP,    IDC_E_CDOWN,   IDC_EAS_UP,  IDC_EAS_RIGHT, IDC_EAS_LEFT, IDC_EAS_DOWN};
+const auto editbox_ids = {IDC_E_A, IDC_E_B, IDC_E_START, IDC_E_ZTRIG, IDC_E_LTRIG, IDC_E_RTRIG, IDC_E_DPLEFT,
+    IDC_E_DPRIGHT, IDC_E_DPUP, IDC_E_DPDOWN, IDC_E_CLEFT, IDC_E_CRIGHT, IDC_E_CUP, IDC_E_CDOWN, IDC_EAS_UP,
+    IDC_EAS_RIGHT, IDC_EAS_LEFT, IDC_EAS_DOWN};
 
-const auto button_ids = {IDC_B_A,      IDC_B_B,       IDC_B_START, IDC_B_ZTRIG,   IDC_B_LTRIG,  IDC_B_RTRIG,
-                         IDC_B_DPLEFT, IDC_B_DPRIGHT, IDC_B_DPUP,  IDC_B_DPDOWN,  IDC_B_CLEFT,  IDC_B_CRIGHT,
-                         IDC_B_CUP,    IDC_B_CDOWN,   IDC_BAS_UP,  IDC_BAS_RIGHT, IDC_BAS_LEFT, IDC_BAS_DOWN};
+const auto button_ids = {IDC_B_A, IDC_B_B, IDC_B_START, IDC_B_ZTRIG, IDC_B_LTRIG, IDC_B_RTRIG, IDC_B_DPLEFT,
+    IDC_B_DPRIGHT, IDC_B_DPUP, IDC_B_DPDOWN, IDC_B_CLEFT, IDC_B_CRIGHT, IDC_B_CUP, IDC_B_CDOWN, IDC_BAS_UP,
+    IDC_BAS_RIGHT, IDC_BAS_LEFT, IDC_BAS_DOWN};
 
 struct config_dialog_context
 {
@@ -305,8 +305,8 @@ static void begin_edit(int edit_id, t_axis_mapping *ptr)
         SetFocus(GetDlgItem(g_ctx.hwnd, btn_id));                                                                      \
         break;
 
-static LRESULT CALLBACK hotkey_button_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                                    DWORD_PTR ref_data)
+static LRESULT CALLBACK hotkey_button_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
     {
@@ -519,8 +519,8 @@ static LRESULT CALLBACK dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                     const auto json = nlohmann::json(controller_config);
                     const auto json_str = json.dump();
 
-                    std::span<uint8_t> bytes(reinterpret_cast<uint8_t *>(const_cast<char *>(json_str.data())),
-                                             json_str.size());
+                    std::span<uint8_t> bytes(
+                        reinterpret_cast<uint8_t *>(const_cast<char *>(json_str.data())), json_str.size());
 
                     const auto path = WinFilePicker::show_save_dialog(hwnd, "*.json");
                     if (path.empty()) break;

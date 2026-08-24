@@ -12,16 +12,131 @@
 namespace LuaCore::Wgui
 {
 const int hexTable[256] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 1, 2, 3, 4, 5, 6, 7,
-    8, 9, 0, 0, 0, 0, 0, 0, 0, 10, 11, 12, 13, 14, 15, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
 };
 
 const std::unordered_map<std::string, COLORREF> color_map = {
-    {"white", 0xFFFFFFFF},  {"black", 0xFF000000},  {"clear", 0x00000000},  {"gray", 0xFF808080},
-    {"red", 0xFF0000FF},    {"orange", 0xFF0080FF}, {"yellow", 0xFF00FFFF}, {"chartreuse", 0xFF00FF80},
-    {"green", 0xFF00FF00},  {"teal", 0xFF80FF00},   {"cyan", 0xFFFFFF00},   {"blue", 0xFFFF0000},
+    {"white", 0xFFFFFFFF},
+    {"black", 0xFF000000},
+    {"clear", 0x00000000},
+    {"gray", 0xFF808080},
+    {"red", 0xFF0000FF},
+    {"orange", 0xFF0080FF},
+    {"yellow", 0xFF00FFFF},
+    {"chartreuse", 0xFF00FF80},
+    {"green", 0xFF00FF00},
+    {"teal", 0xFF80FF00},
+    {"cyan", 0xFFFFFF00},
+    {"blue", 0xFFFF0000},
     {"purple", 0xFFFF0080},
 };
 
@@ -86,7 +201,7 @@ static int ResizeWindow(lua_State *L)
     wndRect.right -= wndRect.left;
     int w = luaL_checkinteger(L, 1), h = luaL_checkinteger(L, 2);
     SetWindowPos(g_main_ctx.hwnd, 0, 0, 0, w + (wndRect.right - clientRect.right),
-                 h + (wndRect.bottom - clientRect.bottom), SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+        h + (wndRect.bottom - clientRect.bottom), SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
 
     return 0;
 }
@@ -686,8 +801,8 @@ static int FillPolygonAlpha(lua_State *L)
     }
 
     Gdiplus::Graphics gfx(lua->rctx.gdi_back_dc);
-    Gdiplus::SolidBrush brush(Gdiplus::Color(luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_checkinteger(L, 4),
-                                             luaL_checkinteger(L, 5)));
+    Gdiplus::SolidBrush brush(Gdiplus::Color(
+        luaL_checkinteger(L, 2), luaL_checkinteger(L, 3), luaL_checkinteger(L, 4), luaL_checkinteger(L, 5)));
     gfx.FillPolygon(&brush, pts.data(), n);
 
     return 0;
@@ -813,8 +928,7 @@ static int SetClip(lua_State *L)
     auto lua = LuaManager::get_environment_for_state(L);
 
     auto rgn = CreateRectRgn(luaL_checkinteger(L, 1), luaL_checkinteger(L, 2),
-                             luaL_checkinteger(L, 1) + luaL_checkinteger(L, 3),
-                             luaL_checkinteger(L, 2) + luaL_checkinteger(L, 4));
+        luaL_checkinteger(L, 1) + luaL_checkinteger(L, 3), luaL_checkinteger(L, 2) + luaL_checkinteger(L, 4));
     SelectClipRgn(lua->rctx.gdi_back_dc, rgn);
     DeleteObject(rgn);
     return 0;

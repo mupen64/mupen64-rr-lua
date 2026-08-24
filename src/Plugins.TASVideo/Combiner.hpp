@@ -51,7 +51,7 @@
 #define EncodeCombineMode(a0, b0, c0, d0, Aa0, Ab0, Ac0, Ad0, a1, b1, c1, d1, Aa1, Ab1, Ac1, Ad1)                      \
     (u64)(((u64)(_SHIFTL(G_CCMUX_##a0, 20, 4) | _SHIFTL(G_CCMUX_##c0, 15, 5) | _SHIFTL(G_ACMUX_##Aa0, 12, 3) |         \
                  _SHIFTL(G_ACMUX_##Ac0, 9, 3) | _SHIFTL(G_CCMUX_##a1, 5, 4) | _SHIFTL(G_CCMUX_##c1, 0, 5))             \
-           << 32) |                                                                                                    \
+              << 32) |                                                                                                 \
           (u64)(_SHIFTL(G_CCMUX_##b0, 28, 4) | _SHIFTL(G_CCMUX_##d0, 15, 3) | _SHIFTL(G_ACMUX_##Ab0, 12, 3) |          \
                 _SHIFTL(G_ACMUX_##Ad0, 9, 3) | _SHIFTL(G_CCMUX_##b1, 24, 4) | _SHIFTL(G_ACMUX_##Aa1, 21, 3) |          \
                 _SHIFTL(G_ACMUX_##Ac1, 18, 3) | _SHIFTL(G_CCMUX_##d1, 6, 3) | _SHIFTL(G_ACMUX_##Ab1, 3, 3) |           \
@@ -170,44 +170,15 @@ struct CombineCycle
     int sa, sb, m, a;
 };
 
-static int saRGBExpanded[] = {COMBINED, TEXEL0, TEXEL1, PRIMITIVE, SHADE, ENVIRONMENT, ONE,  NOISE,
-                              ZERO,     ZERO,   ZERO,   ZERO,      ZERO,  ZERO,        ZERO, ZERO};
+static int saRGBExpanded[] = {COMBINED, TEXEL0, TEXEL1, PRIMITIVE, SHADE, ENVIRONMENT, ONE, NOISE, ZERO, ZERO, ZERO,
+    ZERO, ZERO, ZERO, ZERO, ZERO};
 
-static int sbRGBExpanded[] = {COMBINED, TEXEL0, TEXEL1, PRIMITIVE, SHADE, ENVIRONMENT, CENTER, K4,
-                              ZERO,     ZERO,   ZERO,   ZERO,      ZERO,  ZERO,        ZERO,   ZERO};
+static int sbRGBExpanded[] = {COMBINED, TEXEL0, TEXEL1, PRIMITIVE, SHADE, ENVIRONMENT, CENTER, K4, ZERO, ZERO, ZERO,
+    ZERO, ZERO, ZERO, ZERO, ZERO};
 
-static int mRGBExpanded[] = {COMBINED,
-                             TEXEL0,
-                             TEXEL1,
-                             PRIMITIVE,
-                             SHADE,
-                             ENVIRONMENT,
-                             SCALE,
-                             COMBINED_ALPHA,
-                             TEXEL0_ALPHA,
-                             TEXEL1_ALPHA,
-                             PRIMITIVE_ALPHA,
-                             SHADE_ALPHA,
-                             ENV_ALPHA,
-                             LOD_FRACTION,
-                             PRIM_LOD_FRAC,
-                             K5,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO,
-                             ZERO};
+static int mRGBExpanded[] = {COMBINED, TEXEL0, TEXEL1, PRIMITIVE, SHADE, ENVIRONMENT, SCALE, COMBINED_ALPHA,
+    TEXEL0_ALPHA, TEXEL1_ALPHA, PRIMITIVE_ALPHA, SHADE_ALPHA, ENV_ALPHA, LOD_FRACTION, PRIM_LOD_FRAC, K5, ZERO, ZERO,
+    ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO};
 
 static int aRGBExpanded[] = {COMBINED, TEXEL0, TEXEL1, PRIMITIVE, SHADE, ENVIRONMENT, ONE, ZERO};
 
@@ -216,7 +187,14 @@ static int saAExpanded[] = {COMBINED, TEXEL0_ALPHA, TEXEL1_ALPHA, PRIMITIVE_ALPH
 static int sbAExpanded[] = {COMBINED, TEXEL0_ALPHA, TEXEL1_ALPHA, PRIMITIVE_ALPHA, SHADE_ALPHA, ENV_ALPHA, ONE, ZERO};
 
 static int mAExpanded[] = {
-    LOD_FRACTION, TEXEL0_ALPHA, TEXEL1_ALPHA, PRIMITIVE_ALPHA, SHADE_ALPHA, ENV_ALPHA, PRIM_LOD_FRAC, ZERO,
+    LOD_FRACTION,
+    TEXEL0_ALPHA,
+    TEXEL1_ALPHA,
+    PRIMITIVE_ALPHA,
+    SHADE_ALPHA,
+    ENV_ALPHA,
+    PRIM_LOD_FRAC,
+    ZERO,
 };
 
 static int aAExpanded[] = {COMBINED, TEXEL0_ALPHA, TEXEL1_ALPHA, PRIMITIVE_ALPHA, SHADE_ALPHA, ENV_ALPHA, ONE, ZERO};

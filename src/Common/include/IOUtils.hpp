@@ -253,8 +253,8 @@ inline std::string to_utf8_string(std::wstring_view wstr)
     std::string output;
     output.resize(static_cast<size_t>(rc), '\0');
 
-    rc = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr.data(), wstr.size(), output.data(), output.size(), 0,
-                             nullptr);
+    rc = WideCharToMultiByte(
+        CP_UTF8, WC_ERR_INVALID_CHARS, wstr.data(), wstr.size(), output.data(), output.size(), 0, nullptr);
     if (rc == 0)
     {
         // throw std::system_error(rc, std::system_category(), "invalid UTF-16");
@@ -441,7 +441,7 @@ inline std::filesystem::path compute_exe_path()
     char path_buffer[MAX_PATH] = {0};
     DWORD rc;
 
-    rc = GetModuleFileName(NULL, path_buffer, sizeof(path_buffer));
+    rc = GetModuleFileNameA(NULL, path_buffer, std::size(path_buffer));
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());
@@ -469,7 +469,7 @@ inline std::filesystem::path compute_config_path()
 #ifdef _WIN32
     char path_buffer[MAX_PATH] = {0};
     DWORD rc;
-    rc = GetEnvironmentVariable("LOCALAPPDATA", path_buffer, MAX_PATH);
+    rc = GetEnvironmentVariableA("LOCALAPPDATA", path_buffer, MAX_PATH);
     if (rc == 0)
     {
         throw std::system_error((int)GetLastError(), std::system_category());

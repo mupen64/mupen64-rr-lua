@@ -37,8 +37,8 @@ inline std::string get_default_extension(std::string_view filter)
  * \param initial_path The initial path to display in the dialog.
  * \return The chosen file's path, or an empty path if the dialog was cancelled.
  */
-inline std::filesystem::path show_open_dialog(HWND hwnd, std::string_view filter,
-                                              const std::filesystem::path &initial_path = {})
+inline std::filesystem::path show_open_dialog(
+    HWND hwnd, std::string_view filter, const std::filesystem::path &initial_path = {})
 {
     const auto built_filter = build_filter(filter);
     const auto initial_dir = initial_path.string();
@@ -72,8 +72,8 @@ inline std::filesystem::path show_open_dialog(HWND hwnd, std::string_view filter
  * \param initial_path The initial path to display in the dialog.
  * \return The chosen file's path, or an empty path if the dialog was cancelled.
  */
-inline std::filesystem::path show_save_dialog(HWND hwnd, std::string_view filter,
-                                              const std::filesystem::path &initial_path = {})
+inline std::filesystem::path show_save_dialog(
+    HWND hwnd, std::string_view filter, const std::filesystem::path &initial_path = {})
 {
     const auto built_filter = build_filter(filter);
     const auto default_extension = get_default_extension(filter);

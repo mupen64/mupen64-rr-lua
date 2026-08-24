@@ -154,7 +154,7 @@ void FrameBuffer_SaveBuffer(u32 address, u16 size, u16 width, u16 height)
 
             glBindTexture(GL_TEXTURE_2D, current->texture->glName);
             glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, OGL.height - current->texture->height,
-                                current->texture->width, current->texture->height);
+                current->texture->width, current->texture->height);
             *(u32 *)&RDRAM[current->startAddress] = current->startAddress;
 
             current->changed = TRUE;
@@ -197,7 +197,7 @@ void FrameBuffer_SaveBuffer(u32 address, u16 size, u16 width, u16 height)
 
     glBindTexture(GL_TEXTURE_2D, current->texture->glName);
     glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, OGL.height - current->texture->height, current->texture->realWidth,
-                     current->texture->realHeight, 0);
+        current->texture->realHeight, 0);
     *(u32 *)&RDRAM[current->startAddress] = current->startAddress;
 
     current->changed = TRUE;

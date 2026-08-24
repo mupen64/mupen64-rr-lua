@@ -91,8 +91,8 @@ inline bool begin_listview_edit(SettingsListView::t_settings_listview_context *c
     return true;
 }
 
-inline LRESULT CALLBACK list_view_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param, UINT_PTR,
-                                       DWORD_PTR ref_data)
+inline LRESULT CALLBACK list_view_proc(
+    HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param, UINT_PTR, DWORD_PTR ref_data)
 {
     auto ctx = (SettingsListView::t_settings_listview_context *)ref_data;
 
@@ -126,8 +126,7 @@ inline HWND create_impl(const t_settings_listview_context &ctx)
     auto ctx2 = new t_settings_listview_context();
     *ctx2 = ctx;
 
-    HWND lvhwnd = CreateWindowEx(
-        WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
+    HWND lvhwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | LVS_SINGLESEL | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNTOP,
         ctx.rect.left, ctx.rect.top, ctx.rect.right - ctx.rect.left, ctx.rect.bottom - ctx.rect.top, ctx.dlg_hwnd,
         (HMENU)IDC_SETTINGS_LV, ctx.hinstance, NULL);
@@ -142,8 +141,8 @@ inline HWND create_impl(const t_settings_listview_context &ctx)
     ListView_SetImageList(lvhwnd, image_list, LVSIL_SMALL);
 
     ListView_EnableGroupView(lvhwnd, true);
-    ListView_SetExtendedListViewStyle(lvhwnd,
-                                      LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_INFOTIP | LVS_EX_LABELTIP);
+    ListView_SetExtendedListViewStyle(
+        lvhwnd, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_INFOTIP | LVS_EX_LABELTIP);
 
     LVGROUP lvgroup;
     lvgroup.cbSize = sizeof(LVGROUP);
@@ -217,8 +216,8 @@ inline bool notify_impl(HWND dlg_hwnd, HWND lvhwnd, LPARAM lparam, WPARAM wparam
             {
                 plvdi->item.iImage = ctx->get_item_image(i);
             }
-            copy_listview_text(plvdi->item.pszText, plvdi->item.cchTextMax,
-                               ctx->get_item_text(i, plvdi->item.iSubItem));
+            copy_listview_text(
+                plvdi->item.pszText, plvdi->item.cchTextMax, ctx->get_item_text(i, plvdi->item.iSubItem));
         };
 
         if (lpnmhdr->code == LVN_GETDISPINFOA)

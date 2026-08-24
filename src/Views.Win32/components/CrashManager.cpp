@@ -53,15 +53,15 @@ void create_minidump(EXCEPTION_POINTERS *e)
     MINIDUMP_EXCEPTION_INFORMATION info{};
 
     const auto minidump_path = get_minidump_path();
-    const HANDLE h_dump_file = CreateFile(minidump_path.string().c_str(), GENERIC_WRITE,
-                                          FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+    const HANDLE h_dump_file = CreateFile(
+        minidump_path.string().c_str(), GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
 
     info.ThreadId = GetCurrentThreadId();
     info.ExceptionPointers = e;
     info.ClientPointers = TRUE;
 
-    if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), h_dump_file, MiniDumpWithDataSegs, &info, NULL,
-                           NULL))
+    if (!MiniDumpWriteDump(
+            GetCurrentProcess(), GetCurrentProcessId(), h_dump_file, MiniDumpWithDataSegs, &info, NULL, NULL))
     {
         g_view_logger->error("Couldn't create minidump (error code: {})", GetLastError());
     }
@@ -128,7 +128,7 @@ static void log_crash(const std::string &additional_exception_info)
     g_view_logger->critical("Crash!");
     g_view_logger->critical(get_mupen_name());
     g_view_logger->critical(std::format("{:02}/{:02}/{} {:02}:{:02}:{:02}", time.wDay, time.wMonth, time.wYear,
-                                        time.wHour, time.wMinute, time.wSecond));
+        time.wHour, time.wMinute, time.wSecond));
     g_view_logger->critical("Video: {}", g_config.selected_video_plugin);
     g_view_logger->critical("Audio: {}", g_config.selected_audio_plugin);
     g_view_logger->critical("Input: {}", g_config.selected_input_plugin);
@@ -162,14 +162,14 @@ bool show_crash_dialog(bool continuable)
     if (continuable)
     {
         TaskDialog(g_main_ctx.hwnd, g_main_ctx.hinst, L"Error", L"An error has occured",
-                   L"Crash dumps have been automatically generated. You can choose to continue program execution.",
-                   TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON, TD_ERROR_ICON, &result);
+            L"Crash dumps have been automatically generated. You can choose to continue program execution.",
+            TDCBF_RETRY_BUTTON | TDCBF_CLOSE_BUTTON, TD_ERROR_ICON, &result);
     }
     else
     {
         TaskDialog(g_main_ctx.hwnd, g_main_ctx.hinst, L"Error", L"An error has occured",
-                   L"Crash dumps have been automatically generated. The program will now exit.", TDCBF_CLOSE_BUTTON,
-                   TD_ERROR_ICON, &result);
+            L"Crash dumps have been automatically generated. The program will now exit.", TDCBF_CLOSE_BUTTON,
+            TD_ERROR_ICON, &result);
     }
 
     return result == IDCLOSE;
@@ -194,8 +194,8 @@ LONG WINAPI exception_handler(_EXCEPTION_POINTERS *e)
     return close ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_EXECUTION;
 }
 
-void invalid_parameter_handler(const wchar_t *expression, const wchar_t *function, const wchar_t *file,
-                               unsigned int line, uintptr_t)
+void invalid_parameter_handler(
+    const wchar_t *expression, const wchar_t *function, const wchar_t *file, unsigned int line, uintptr_t)
 {
     fill_stacktrace_info();
 

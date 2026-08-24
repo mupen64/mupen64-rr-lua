@@ -259,8 +259,8 @@ action_filter normalize_filter(const action_filter &filter);
  * released before being pressed down again. If false, the action will only be pressed down. Defaults to true.
  * \param params The action parameters.
  */
-void invoke(const action_path &path, bool up = false, bool release_on_repress = true,
-            const action_argument_map &params = {});
+void invoke(
+    const action_path &path, bool up = false, bool release_on_repress = true, const action_argument_map &params = {});
 
 /**
  * \brief Locks or unlocks action invocations from hotkeys.

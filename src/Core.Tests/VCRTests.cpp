@@ -103,7 +103,12 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input", "vcr_on_controlle
 TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_2", "vcr_on_controller_poll")
 {
     const auto inputs = std::vector<CoreButtons>{
-        {0}, {0}, {1}, {1}, {2}, {2},
+        {0},
+        {0},
+        {1},
+        {1},
+        {2},
+        {2},
     };
 
     vcr.inputs = inputs;
@@ -139,7 +144,15 @@ TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_2", "vcr_on_control
 TEST_CASE_METHOD(VcrFixture, "playback_returns_correct_input_3", "vcr_on_controller_poll")
 {
     const auto inputs = std::vector<CoreButtons>{
-        {0}, {0}, {0}, {1}, {1}, {1}, {2}, {2}, {2},
+        {0},
+        {0},
+        {0},
+        {1},
+        {1},
+        {1},
+        {2},
+        {2},
+        {2},
     };
 
     vcr.inputs = inputs;
@@ -385,8 +398,8 @@ TEST_CASE_METHOD(VcrFixture, "input_callback_override_works_when_playback", "vcr
  * Tests that overriding inputs during recording using the `input` callback causes the correct overriden sample to be
  * appended to the inputs.
  */
-TEST_CASE_METHOD(VcrFixture, "correct_sample_appended_by_input_callback_override_during_recording",
-                 "vcr_on_controller_poll")
+TEST_CASE_METHOD(
+    VcrFixture, "correct_sample_appended_by_input_callback_override_during_recording", "vcr_on_controller_poll")
 {
     s_core_params.callbacks.input = [](CoreButtons *input, int index) { *input = {0xDEAD}; };
     vcr.inputs = {{1}, {2}, {3}, {4}};
@@ -577,11 +590,11 @@ TEST_CASE_METHOD(VcrFixture, "out_freeze_is_correct", "vcr_freeze")
                 .current_vi = 4,
             },
         .expected_freeze = {.size = 16 + 4 * 6,
-                            .uid = 0xDEAD,
-                            .current_sample = 2,
-                            .current_vi = 4,
-                            .length_samples = 5,
-                            .input_buffer = {{1}, {2}, {3}, {4}, {5}, {0}}},
+            .uid = 0xDEAD,
+            .current_sample = 2,
+            .current_vi = 4,
+            .length_samples = 5,
+            .input_buffer = {{1}, {2}, {3}, {4}, {5}, {0}}},
     });
 
     vcr = param.vcr;
@@ -803,8 +816,8 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_input_callback_called_while_
  * try to lock the VCR mutex.
  */
 TEST_CASE_METHOD(VcrFixture,
-                 "mutex_unlocked_during_emu_pause_changed_callback_called_while_playback_and_waiting_at_end",
-                 "vcr_on_controller_poll")
+    "mutex_unlocked_during_emu_pause_changed_callback_called_while_playback_and_waiting_at_end",
+    "vcr_on_controller_poll")
 {
     bool called{};
     s_core_params.callbacks.emu_paused_changed = [&](const bool &) {
@@ -830,8 +843,8 @@ TEST_CASE_METHOD(VcrFixture,
 /*
  * Tests that stopping the VCR during an input callback while recording does not perform any recording work.
  */
-TEST_CASE_METHOD(VcrFixture, "stopping_vcr_during_input_callback_while_recording_doesnt_do_recording_work",
-                 "vcr_on_controller_poll")
+TEST_CASE_METHOD(
+    VcrFixture, "stopping_vcr_during_input_callback_while_recording_doesnt_do_recording_work", "vcr_on_controller_poll")
 {
     s_core_params.callbacks.input = [&](CoreButtons *input, int index) { vcr_stop_all(); };
 
@@ -881,8 +894,8 @@ TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_callbacks_with_playback_task
  * This is important to avoid deadlocks when the input callback dispatches synchronous calls to other threads that also
  * try to lock the VCR mutex.
  */
-TEST_CASE_METHOD(VcrFixture, "mutex_unlocked_during_emu_paused_changed_callback_when_seek_ends",
-                 "vcr_on_controller_poll")
+TEST_CASE_METHOD(
+    VcrFixture, "mutex_unlocked_during_emu_paused_changed_callback_when_seek_ends", "vcr_on_controller_poll")
 {
     bool called{};
     s_core_params.callbacks.emu_paused_changed = [&](const bool &) {
@@ -1169,7 +1182,7 @@ TEST_CASE_METHOD(VcrFixture, "returns_warnings_when_double_values_mismatch_confi
 }
 
 TEST_CASE_METHOD(VcrFixture, "returns_no_warnings_when_rcp_lag_factor_mismatch_without_lag_emulation_enabled",
-                 "vcr_get_sync_warnings")
+    "vcr_get_sync_warnings")
 {
     s_cfg.wii_vc_emulation = false;
     s_cfg.core_type = 1;

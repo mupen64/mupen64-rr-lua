@@ -167,9 +167,8 @@ void gSPMatrix(u32 matrix, u8 param)
     {
         DebugMsg(L"// Attempting to load matrix from invalid address\n");
         DebugMsg(L"gSPMatrix( 0x%08X, %s | %s | %s );\n", matrix,
-                 (param & G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW",
-                 (param & G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL",
-                 (param & G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH");
+            (param & G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW",
+            (param & G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL", (param & G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH");
         return;
     }
 
@@ -207,8 +206,8 @@ void gSPMatrix(u32 matrix, u8 param)
     DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n", mtx[2][0], mtx[2][1], mtx[2][2], mtx[2][3]);
     DebugMsg(L"// %12.6f %12.6f %12.6f %12.6f\n", mtx[3][0], mtx[3][1], mtx[3][2], mtx[3][3]);
     DebugMsg(L"gSPMatrix( 0x%08X, %s | %s | %s );\n", matrix,
-             (param & G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW",
-             (param & G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL", (param & G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH");
+        (param & G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW",
+        (param & G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL", (param & G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH");
 }
 
 void gSPDMAMatrix(u32 matrix, u8 index, u8 multiply)
@@ -324,7 +323,7 @@ void gSPLight(u32 l, s32 n)
     }
 
     DebugMsg(L"// x = %2.6f    y = %2.6f    z = %2.6f\n", _FIXED2FLOAT(light->x, 7), _FIXED2FLOAT(light->y, 7),
-             _FIXED2FLOAT(light->z, 7));
+        _FIXED2FLOAT(light->z, 7));
     DebugMsg(L"// r = %3i    g = %3i   b = %3i\n", light->r, light->g, light->b);
     DebugMsg(L"gSPLight( 0x%08X, LIGHT_%i );\n", l, n);
 }
@@ -378,12 +377,12 @@ void gSPVertex(u32 v, u32 n, u32 v0)
             if (gSP.geometryMode & G_LIGHTING)
             {
                 DebugMsg(L"// nx = %2.6f    ny = %2.6f    nz = %2.6f\n", _FIXED2FLOAT(vertex->normal.x, 7),
-                         _FIXED2FLOAT(vertex->normal.y, 7), _FIXED2FLOAT(vertex->normal.z, 7));
+                    _FIXED2FLOAT(vertex->normal.y, 7), _FIXED2FLOAT(vertex->normal.z, 7));
             }
             else
             {
                 DebugMsg(L"// r = %3u    g = %3u    b = %3u    a = %3u\n", vertex->color.r, vertex->color.g,
-                         vertex->color.b, vertex->color.a);
+                    vertex->color.b, vertex->color.a);
             }
 
             gSPProcessVertex(i);
@@ -673,8 +672,8 @@ void gSPTriangle(s32 v0, s32 v1, s32 v2, s32 flag)
                         (-gSP.vertices[v[i]].w - gSP.vertices[v[i]].z) /
                         ((gSP.vertices[v[j]].z - gSP.vertices[v[i]].z) + (gSP.vertices[v[j]].w - gSP.vertices[v[i]].w));
 
-                    gSPInterpolateVertex(&clippedVertices[clippedIndex], percent, &gSP.vertices[v[i]],
-                                         &gSP.vertices[v[j]]);
+                    gSPInterpolateVertex(
+                        &clippedVertices[clippedIndex], percent, &gSP.vertices[v[i]], &gSP.vertices[v[j]]);
 
                     gSPCopyVertex(&nearVertices[nearIndex], &clippedVertices[clippedIndex]);
                     nearVertices[nearIndex].z = -nearVertices[nearIndex].w;
@@ -744,8 +743,8 @@ void gSP2Triangles(s32 v00, s32 v01, s32 v02, s32 flag0, s32 v10, s32 v11, s32 v
     DebugMsg(L"               %i, %i, %i, %i );\n", v10, v11, v12, flag1);
 }
 
-void gSP4Triangles(s32 v00, s32 v01, s32 v02, s32 v10, s32 v11, s32 v12, s32 v20, s32 v21, s32 v22, s32 v30, s32 v31,
-                   s32 v32)
+void gSP4Triangles(
+    s32 v00, s32 v01, s32 v02, s32 v10, s32 v11, s32 v12, s32 v20, s32 v21, s32 v22, s32 v30, s32 v31, s32 v32)
 {
     gSPTriangle(v00, v01, v02, 0);
     gSPTriangle(v10, v11, v12, 0);
@@ -911,10 +910,10 @@ void gSPPopMatrixN(u32 param, u32 num)
         DebugMsg(L"// Attempting to pop matrix stack below 0\n");
 
     DebugMsg(L"gSPPopMatrixN( %s, %i );\n",
-             (param == G_MTX_MODELVIEW)    ? "G_MTX_MODELVIEW"
-             : (param == G_MTX_PROJECTION) ? "G_MTX_PROJECTION"
-                                           : "G_MTX_INVALID",
-             num);
+        (param == G_MTX_MODELVIEW)    ? "G_MTX_MODELVIEW"
+        : (param == G_MTX_PROJECTION) ? "G_MTX_PROJECTION"
+                                      : "G_MTX_INVALID",
+        num);
 }
 
 void gSPPopMatrix(u32 param)
@@ -1105,16 +1104,15 @@ void gSPGeometryMode(u32 clear, u32 set)
     gSP.changed |= CHANGED_GEOMETRYMODE;
 
     DebugMsg(L"gSPGeometryMode( %s%s%s%s%s%s%s%s%s%s, %s%s%s%s%s%s%s%s%s%s );\n", clear & G_SHADE ? "G_SHADE | " : "",
-             clear & G_LIGHTING ? "G_LIGHTING | " : "", clear & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
-             clear & G_ZBUFFER ? "G_ZBUFFER | " : "", clear & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
-             clear & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "",
-             clear & G_CULL_FRONT ? "G_CULL_FRONT | " : "", clear & G_CULL_BACK ? "G_CULL_BACK | " : "",
-             clear & G_FOG ? "G_FOG | " : "", clear & G_CLIPPING ? "G_CLIPPING" : "", set & G_SHADE ? "G_SHADE | " : "",
-             set & G_LIGHTING ? "G_LIGHTING | " : "", set & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
-             set & G_ZBUFFER ? "G_ZBUFFER | " : "", set & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
-             set & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "", set & G_CULL_FRONT ? "G_CULL_FRONT | " : "",
-             set & G_CULL_BACK ? "G_CULL_BACK | " : "", set & G_FOG ? "G_FOG | " : "",
-             set & G_CLIPPING ? "G_CLIPPING" : "");
+        clear & G_LIGHTING ? "G_LIGHTING | " : "", clear & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
+        clear & G_ZBUFFER ? "G_ZBUFFER | " : "", clear & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
+        clear & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "", clear & G_CULL_FRONT ? "G_CULL_FRONT | " : "",
+        clear & G_CULL_BACK ? "G_CULL_BACK | " : "", clear & G_FOG ? "G_FOG | " : "",
+        clear & G_CLIPPING ? "G_CLIPPING" : "", set & G_SHADE ? "G_SHADE | " : "",
+        set & G_LIGHTING ? "G_LIGHTING | " : "", set & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
+        set & G_ZBUFFER ? "G_ZBUFFER | " : "", set & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
+        set & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "", set & G_CULL_FRONT ? "G_CULL_FRONT | " : "",
+        set & G_CULL_BACK ? "G_CULL_BACK | " : "", set & G_FOG ? "G_FOG | " : "", set & G_CLIPPING ? "G_CLIPPING" : "");
 }
 
 void gSPSetGeometryMode(u32 mode)
@@ -1123,11 +1121,11 @@ void gSPSetGeometryMode(u32 mode)
 
     gSP.changed |= CHANGED_GEOMETRYMODE;
     DebugMsg(L"gSPSetGeometryMode( %s%s%s%s%s%s%s%s%s%s );\n", mode & G_SHADE ? "G_SHADE | " : "",
-             mode & G_LIGHTING ? "G_LIGHTING | " : "", mode & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
-             mode & G_ZBUFFER ? "G_ZBUFFER | " : "", mode & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
-             mode & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "", mode & G_CULL_FRONT ? "G_CULL_FRONT | " : "",
-             mode & G_CULL_BACK ? "G_CULL_BACK | " : "", mode & G_FOG ? "G_FOG | " : "",
-             mode & G_CLIPPING ? "G_CLIPPING" : "");
+        mode & G_LIGHTING ? "G_LIGHTING | " : "", mode & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
+        mode & G_ZBUFFER ? "G_ZBUFFER | " : "", mode & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
+        mode & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "", mode & G_CULL_FRONT ? "G_CULL_FRONT | " : "",
+        mode & G_CULL_BACK ? "G_CULL_BACK | " : "", mode & G_FOG ? "G_FOG | " : "",
+        mode & G_CLIPPING ? "G_CLIPPING" : "");
 }
 
 void gSPClearGeometryMode(u32 mode)
@@ -1137,11 +1135,11 @@ void gSPClearGeometryMode(u32 mode)
     gSP.changed |= CHANGED_GEOMETRYMODE;
 
     DebugMsg(L"gSPClearGeometryMode( %s%s%s%s%s%s%s%s%s%s );\n", mode & G_SHADE ? "G_SHADE | " : "",
-             mode & G_LIGHTING ? "G_LIGHTING | " : "", mode & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
-             mode & G_ZBUFFER ? "G_ZBUFFER | " : "", mode & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
-             mode & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "", mode & G_CULL_FRONT ? "G_CULL_FRONT | " : "",
-             mode & G_CULL_BACK ? "G_CULL_BACK | " : "", mode & G_FOG ? "G_FOG | " : "",
-             mode & G_CLIPPING ? "G_CLIPPING" : "");
+        mode & G_LIGHTING ? "G_LIGHTING | " : "", mode & G_SHADING_SMOOTH ? "G_SHADING_SMOOTH | " : "",
+        mode & G_ZBUFFER ? "G_ZBUFFER | " : "", mode & G_TEXTURE_GEN ? "G_TEXTURE_GEN | " : "",
+        mode & G_TEXTURE_GEN_LINEAR ? "G_TEXTURE_GEN_LINEAR | " : "", mode & G_CULL_FRONT ? "G_CULL_FRONT | " : "",
+        mode & G_CULL_BACK ? "G_CULL_BACK | " : "", mode & G_FOG ? "G_FOG | " : "",
+        mode & G_CLIPPING ? "G_CLIPPING" : "");
 }
 
 void gSPLine3D(s32 v0, s32 v1, s32 flag)
@@ -1280,7 +1278,7 @@ void gSPObjRectangle(u32 sp)
     u32 imageH = objSprite->imageH >> 2;
 
     gDPTextureRectangle(objX, objY, objX + imageW / scaleW - 1, objY + imageH / scaleH - 1, 0, 0.0f, 0.0f,
-                        scaleW * (gDP.otherMode.cycleType == G_CYC_COPY ? 4.0f : 1.0f), scaleH);
+        scaleW * (gDP.otherMode.cycleType == G_CYC_COPY ? 4.0f : 1.0f), scaleH);
 }
 
 void gSPObjLoadTxtr(u32 tx)
@@ -1300,8 +1298,8 @@ void gSPObjLoadTxtr(u32 tx)
         case G_OBJLT_TXTRTILE:
             gDPSetTextureImage(0, 1, (objTxtr->tile.twidth + 1) << 1, objTxtr->tile.image);
             gDPSetTile(0, 1, (objTxtr->tile.twidth + 1) >> 2, objTxtr->tile.tmem, 7, 0, 0, 0, 0, 0, 0, 0);
-            gDPLoadTile(7, 0, 0, (((objTxtr->tile.twidth + 1) << 1) - 1) << 2,
-                        (((objTxtr->tile.theight + 1) >> 2) - 1) << 2);
+            gDPLoadTile(
+                7, 0, 0, (((objTxtr->tile.twidth + 1) << 1) - 1) << 2, (((objTxtr->tile.theight + 1) >> 2) - 1) << 2);
             break;
         case G_OBJLT_TLUT:
             gDPSetTextureImage(0, 2, 1, objTxtr->tlut.image);
@@ -1360,7 +1358,7 @@ void gSPObjSprite(u32 sp)
     gSP.vertices[3].t = imageH - 1;
 
     gDPSetTile(objSprite->imageFmt, objSprite->imageSiz, objSprite->imageStride, objSprite->imageAdrs, 0,
-               objSprite->imagePal, G_TX_CLAMP, G_TX_CLAMP, 0, 0, 0, 0);
+        objSprite->imagePal, G_TX_CLAMP, G_TX_CLAMP, 0, 0, 0, 0);
     gDPSetTileSize(0, 0, 0, (imageW - 1) << 2, (imageH - 1) << 2);
     gSPTexture(1.0f, 1.0f, 0, 0, TRUE);
 

@@ -143,11 +143,11 @@ static void update_dialog_position_and_size()
 {
     const RECT rc = CommandPalette::get_recommended_bounds(g_ctx.dlg_template->cy);
     SetWindowPos(g_ctx.hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-                 SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
+        SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
 }
 
-static LRESULT CALLBACK keyboard_interaction_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                                           UINT_PTR id, DWORD_PTR ref_data)
+static LRESULT CALLBACK keyboard_interaction_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     switch (msg)
     {

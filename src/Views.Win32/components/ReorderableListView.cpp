@@ -58,8 +58,8 @@ static void draw_reorder_bar(const Context &ctx, int index)
     ReleaseDC(ctx.lv_hwnd, hdc);
 }
 
-LRESULT CALLBACK parent_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                      DWORD_PTR ref_data)
+LRESULT CALLBACK parent_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     auto ctx = static_cast<Context *>(GetProp(hwnd, CTX_KEY));
 
@@ -87,8 +87,8 @@ LRESULT CALLBACK parent_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
     return DefSubclassProc(hwnd, msg, wparam, lparam);
 }
 
-LRESULT CALLBACK listview_subclass_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id,
-                                        DWORD_PTR ref_data)
+LRESULT CALLBACK listview_subclass_proc(
+    HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR ref_data)
 {
     auto ctx = static_cast<Context *>(GetProp(hwnd, CTX_KEY));
 

@@ -78,7 +78,12 @@ void Loggers::init()
     g_rsp_logger = std::make_shared<spdlog::logger>("RSP", sink_list);
 
     const auto LOGGERS = {
-        g_core_logger, g_view_logger, g_video_logger, g_audio_logger, g_input_logger, g_rsp_logger,
+        g_core_logger,
+        g_view_logger,
+        g_video_logger,
+        g_audio_logger,
+        g_input_logger,
+        g_rsp_logger,
     };
 
     for (auto &logger : LOGGERS)

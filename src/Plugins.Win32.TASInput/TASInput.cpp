@@ -609,18 +609,18 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         GetWindowRect(ctx->hwnd, &ctx->initial_window_rect);
 
         SetWindowPos(ctx->hwnd, nullptr, ctx->window_position.x, ctx->window_position.y, 0, 0,
-                     SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+            SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
         SetWindowText(ctx->hwnd, std::format("TASInput - Controller {}", ctx->controller_index + 1).c_str());
 
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERX, TBM_SETPOS, TRUE,
-                           (int)MiscHelpers::remap(new_config.controller_config[ctx->controller_index].x_scale, 0.0f,
-                                                   1.0f, 10.0f, 2010.0f));
+            (int)MiscHelpers::remap(
+                new_config.controller_config[ctx->controller_index].x_scale, 0.0f, 1.0f, 10.0f, 2010.0f));
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETRANGE, TRUE, MAKELONG(10, 2010));
         SendDlgItemMessage(ctx->hwnd, IDC_SLIDERY, TBM_SETPOS, TRUE,
-                           (int)MiscHelpers::remap(new_config.controller_config[ctx->controller_index].y_scale, 0.0f,
-                                                   1.0f, 10.0f, 2010.0f));
+            (int)MiscHelpers::remap(
+                new_config.controller_config[ctx->controller_index].y_scale, 0.0f, 1.0f, 10.0f, 2010.0f));
 
         SetDlgItemText(ctx->hwnd, IDC_X_DOWN, "3");
         SetDlgItemText(ctx->hwnd, IDC_X_UP, "4");
@@ -639,7 +639,7 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         const auto scale = GetDpiForWindow(hwnd) / 96.0;
 
         ctx->joy_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, JOYSTICK_CONTROL_CLASS, "", WS_CHILD | WS_VISIBLE, 8, 4,
-                                       131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
+            131 * scale, 131 * scale, ctx->hwnd, nullptr, g_inst, nullptr);
 
         // It can take a bit until we receive the first GetKeys, so let's just show some basic default state in the
         // meanwhile
@@ -999,9 +999,9 @@ void Status::start_edit(int id)
 {
     RECT item_rect;
     ListBox_GetItemRect(combo_listbox, id, &item_rect);
-    combo_edit_box = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left,
-                                    item_rect.top, item_rect.right - item_rect.left,
-                                    item_rect.bottom - item_rect.top + 4, combo_listbox, 0, g_inst, 0);
+    combo_edit_box =
+        CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, item_rect.left, item_rect.top,
+            item_rect.right - item_rect.left, item_rect.bottom - item_rect.top + 4, combo_listbox, 0, g_inst, 0);
     // Clear selection to prevent it from repainting randomly and fighting with our textbox
     ListBox_SetCurSel(combo_listbox, -1);
     SendMessage(combo_edit_box, WM_SETFONT, (WPARAM)SendMessage(combo_listbox, WM_GETFONT, 0, 0), 0);
@@ -1214,7 +1214,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         }
 
         icon_font = CreateFont(-20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS,
-                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
+            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Marlett"));
 
         // HACK: perform windows left handed mode check
         // and adjust accordingly
@@ -1253,7 +1253,7 @@ EXPORT void CALL M64RRProcessEvent(Event event)
             {
                 status[i].controller_index = i;
                 status[i].hwnd = CreateDialogParam(g_inst, MAKEINTRESOURCE(IDD_MAIN), g_plugin->main_window.hwnd(),
-                                                   wndproc, reinterpret_cast<LPARAM>(&status[i]));
+                    wndproc, reinterpret_cast<LPARAM>(&status[i]));
             }
         }
 

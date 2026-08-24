@@ -35,6 +35,6 @@ TEST_CASE("non_utf8_rom_name_does_not_throw", "rom_name_to_path_component")
 TEST_CASE("distinct_non_utf8_rom_names_stay_distinct", "rom_name_to_path_component")
 {
     // Otherwise two Japanese ROMs would share the same save files.
-    REQUIRE(IOUtils::rom_name_to_path_component(NORMAL_JAPANESE) !=
-            IOUtils::rom_name_to_path_component(HALF_WIDTH_CHARS));
+    REQUIRE(
+        IOUtils::rom_name_to_path_component(NORMAL_JAPANESE) != IOUtils::rom_name_to_path_component(HALF_WIDTH_CHARS));
 }

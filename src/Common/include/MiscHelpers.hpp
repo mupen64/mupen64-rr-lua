@@ -70,8 +70,8 @@ inline std::vector<uint8_t> decompress_gzip(const std::vector<uint8_t> &vec, con
     {
         out_vec.resize(buf_size);
         size_t actual_size = 0;
-        const auto result = libdeflate_gzip_decompress(decompressor, vec.data(), vec.size(), out_vec.data(),
-                                                       out_vec.size(), &actual_size);
+        const auto result = libdeflate_gzip_decompress(
+            decompressor, vec.data(), vec.size(), out_vec.data(), out_vec.size(), &actual_size);
         if (result == LIBDEFLATE_SHORT_OUTPUT || result == LIBDEFLATE_INSUFFICIENT_SPACE)
         {
             if (buf_size > std::numeric_limits<size_t>::max() / 2)
@@ -310,6 +310,10 @@ template <typename T> static T wrapping_clamp_decimal(T value, T min, T max)
     }
     return value;
 }
+
+// TYPE TRAITS
+// ===========================================
+
 namespace details
 {
 template <auto Ptr, class F> struct StaticFunctorImpl;
@@ -330,6 +334,24 @@ struct StaticFunctorImpl<Ptr, R (*)(Args...)>
  */
 template <auto F> struct StaticFunctor : public details::StaticFunctorImpl<F, decltype(F)>
 {
+};
+
+/**
+ * @brief Combines any number of functor types into a single overloaded functor.
+ */
+template <class... Fs> struct Overload : Fs...
+{
+    using Fs::operator()...;
+};
+
+template <class T> struct MemberFunctionPointerTraits
+{
+};
+
+template <class R, class C, class... Args> struct MemberFunctionPointerTraits<R (C::*)(Args...)>
+{
+    using Class = C;
+    using Return = R;
 };
 
 }; // namespace MiscHelpers
