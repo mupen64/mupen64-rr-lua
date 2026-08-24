@@ -152,7 +152,7 @@ void Plugin::send_event(M64RRSpec::Event event)
     if (m_process_event) m_process_event(event);
 }
 
-void *Plugin::load_symbol(const char *symbol)
+void *Plugin::load_symbol(const char *symbol) const
 {
     const auto visitor = MiscHelpers::Overload{
         [=](const decan::library &lib) -> void * {

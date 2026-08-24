@@ -13,8 +13,6 @@
 #include <m64rr/Plugin.hpp>
 #include "BuiltinTAS.hpp"
 
-
-
 class PluginLoadFailed : std::runtime_error
 {
   public:
@@ -30,7 +28,8 @@ class Plugin
     /**
      * @brief Triggers the `Initiate` event and sets up necessary initialization data.
      */
-    void initiate(core_ctx *core_ctx, core_params &core_params, const std::function<void(M64RRSpec::PluginInit*)>& post_init = {});
+    void initiate(core_ctx *core_ctx, core_params &core_params,
+                  const std::function<void(M64RRSpec::PluginInit *)> &post_init = {});
 
     /**
      * @brief Binds the needed functions from this plugin to the core.
@@ -64,7 +63,7 @@ class Plugin
      *
      * @return the symbol's address, or nullptr if it doesn't exist
      */
-    void *load_symbol(const char *symbol);
+    void *load_symbol(const char *symbol) const;
 
   private:
     void init_common();
@@ -80,22 +79,29 @@ class Plugin
     std::unique_ptr<M64RRSpec::PluginInit> m_init_data;
 };
 
-class PluginSet {
-public:
-  PluginSet(Plugin&& video, Plugin&& audio, Plugin&& input, Plugin&& rsp);
+class PluginSet
+{
+  public:
+    PluginSet(Plugin &&video, Plugin &&audio, Plugin &&input, Plugin &&rsp);
 
-  void initiate_plugins(core_ctx *core_ctx, core_params &core_params);
-  void emu_started(core_params &core_params);
-  void emu_stopped(core_params &core_params);
+    const Plugin &video() const { return m_video; }
+    const Plugin &audio() const { return m_audio; }
+    const Plugin &input() const { return m_input; }
+    const Plugin &rsp() const { return m_rsp; }
 
-  void get_plugin_names(char *video, char *audio, char *input, char *rsp);
-private:
-  Plugin m_video;
-  Plugin m_audio;
-  Plugin m_input;
-  Plugin m_rsp;
+    void initiate_plugins(core_ctx *core_ctx, core_params &core_params);
+    void emu_started(core_params &core_params);
+    void emu_stopped(core_params &core_params);
 
-  M64RRSpec::PtrProcessDList m_video_process_dlist;
+    void get_plugin_names(char *video, char *audio, char *input, char *rsp);
+
+  private:
+    Plugin m_video;
+    Plugin m_audio;
+    Plugin m_input;
+    Plugin m_rsp;
+
+    M64RRSpec::PtrProcessDList m_video_process_dlist;
 };
 
 // namespace PluginUtil

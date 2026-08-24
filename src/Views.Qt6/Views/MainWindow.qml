@@ -43,6 +43,8 @@ ApplicationWindow {
         id: mainStack
         anchors.fill: parent
 
+        currentIndex: (core.emuLaunched)? 1 : 0
+
         Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
@@ -50,9 +52,17 @@ ApplicationWindow {
                 anchors.centerIn: parent
 
                 text: "foo the bar"
-                onClicked: {
-                    console.log(`${mainStack.width} x ${mainStack.height}`)
-                }
+            }
+        }
+        Item {
+            EmuDisplay {
+                id: coreDisplay
+                context: core
+                anchors.top: parent.top
+                anchors.left: parent.left
+
+                Layout.minimumWidth: implicitWidth
+                Layout.minimumHeight: implicitHeight
             }
         }
     }
@@ -66,7 +76,10 @@ ApplicationWindow {
         // Graphics integration
         onGfxRequestSize: (width, height) => {
             console.log(`gfx requested size ${width}x${height}`)
-            // mainWindow.requestedSize = 
+            coreDisplay.reserveSize(width, height);
+        }
+        onUpdateScreen: {
+            coreDisplay.readPixels()
         }
 
         // Dialog service

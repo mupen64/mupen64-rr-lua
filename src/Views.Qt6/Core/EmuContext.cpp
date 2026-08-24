@@ -67,10 +67,13 @@ EmuContext::EmuContext(QObject *parent)
 #pragma region Plugin integration
 
     m_core_params->callbacks.emu_starting = [&] { m_plugins.value().emu_started(*m_core_params); };
-    m_core_params->callbacks.emu_stopped = [&] { m_plugins.value().emu_stopped(*m_core_params); };
+    m_core_params->callbacks.emu_stopped = [&] {
+        m_plugins.value().emu_stopped(*m_core_params);
+        m_plugins.reset();
+        m_fn_read_video = nullptr;
+    };
 
     m_core_params->load_plugins = [&] {
-        // TODO: load plugins
         try
         {
             auto video_plugin = Plugin(BuiltinTAS::PluginID::TASVideo);
@@ -79,6 +82,9 @@ EmuContext::EmuContext(QObject *parent)
             auto rsp_plugin = Plugin(BuiltinTAS::PluginID::TASRSP);
             m_plugins.emplace(std::move(video_plugin), std::move(audio_plugin), std::move(input_plugin),
                               std::move(rsp_plugin));
+
+            // Read video functions
+            m_fn_read_video = (M64RRSpec::PtrReadVideo)m_plugins->video().load_symbol("M64RRReadVideo");
             return true;
         }
         catch (const std::exception &err)
@@ -137,6 +143,11 @@ EmuContext::EmuContext(QObject *parent)
 #pragma endregion
 
 #pragma region Signals and properties
+    m_core_params->update_screen = [&] {
+        std::println("next frame!");
+        QMetaObject::invokeMethod(this, &EmuContext::updateScreen);
+    };
+
     m_core_params->callbacks.emu_launched_changed = [&](bool value) {
         QMetaObject::invokeMethod(this, &EmuContext::emuLaunchedChanged, value);
     };
@@ -166,8 +177,19 @@ CoreResult::Value EmuContext::vrCloseROM(bool resetVCR) const
     return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
-bool EmuContext::isEmuLaunched() const {
+bool EmuContext::isEmuLaunched() const
+{
     return m_core_ctx->vr_get_launched();
+}
+
+void EmuContext::readVideoOutput(QImage &image)
+{
+    int32_t width = 0;
+    int32_t height = 0;
+    m_fn_read_video(image.bits(), &width, &height);
+
+    if (width != image.width() && height != image.height())
+        throw std::logic_error("Video output not pre-sized correctly!");
 }
 
 void CoreUtil::clear_plugin_funcs(core_params &params)

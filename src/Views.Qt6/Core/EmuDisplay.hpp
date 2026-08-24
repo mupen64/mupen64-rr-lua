@@ -25,7 +25,7 @@ class EmuDisplay : public QQuickItem
     EmuDisplay(QQuickItem *parent = nullptr);
     virtual ~EmuDisplay() {}
 
-    // virtual QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updateData) override;
+    virtual QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *updateData) override;
 
     // Properties
     // ============================================
@@ -48,12 +48,12 @@ class EmuDisplay : public QQuickItem
      * @param width The request
      * @param height 
      */
-    void reserveSize(uint32_t width, uint32_t height);
+    Q_INVOKABLE void reserveSize(uint32_t width, uint32_t height);
 
     /**
      * @brief Reads the current context's video buffer into the internal buffer.
      */
-    void readPixels();
+    Q_INVOKABLE void readPixels();
 
   signals:
 
@@ -63,5 +63,5 @@ class EmuDisplay : public QQuickItem
 
   private:
     EmuContext *m_context;
-    QImage m_buffer;
+    QImage m_frame;
 };

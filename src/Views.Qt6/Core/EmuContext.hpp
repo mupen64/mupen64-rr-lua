@@ -46,13 +46,18 @@ class EmuContext : public QObject
     // vr_* properties
     // ==========================
 
-    Q_INVOKABLE bool isEmuLaunched() const;
+    bool isEmuLaunched() const;
 
 
     // Misc. functions
     // ==========================
     
-    void readVideoOutput();
+    /**
+     * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
+     * 
+     * @param image 
+     */
+    void readVideoOutput(QImage& image);
 
   signals:
 
@@ -61,7 +66,7 @@ class EmuContext : public QObject
 
     void emuLaunchedChanged(bool value);
 
-    // Misc. signals
+    // Graphics signals
     // ============================================
 
     /**
@@ -71,6 +76,11 @@ class EmuContext : public QObject
      * @param height The requested height.
      */
     void gfxRequestSize(uint32_t width, uint32_t height);
+
+    /**
+     * @brief Requests that the video output be updated.
+     */
+    void updateScreen();
 
     // Dialog service (to be handled by GUI)
     // ============================================
@@ -113,6 +123,7 @@ class EmuContext : public QObject
     core_ctx *m_core_ctx;
 
     std::optional<PluginSet> m_plugins;
+    M64RRSpec::PtrReadVideo m_fn_read_video;
 };
 
 namespace CoreUtil
