@@ -17,6 +17,9 @@ ApplicationWindow {
     visible: true
     title: qsTr("Mupen64RR")
 
+    minimumWidth: mainStack.implicitWidth + width - contentItem.width
+    minimumHeight: mainStack.implicitHeight + height - contentItem.height
+
     // Core context
     // =====================================
 
@@ -76,6 +79,9 @@ ApplicationWindow {
             }
         }
         Item {
+            implicitWidth: childrenRect.width
+            implicitHeight: childrenRect.height
+
             EmuDisplay {
                 id: coreDisplay
                 context: core
@@ -105,11 +111,6 @@ ApplicationWindow {
         running: core.emuLaunched
         onTriggered: core.vrInvalidateVisuals();
     }
-
-    // WINDOW SIZE MANAGEMENT
-    // =====================================
-    property int gfxRequestWidth
-    property int gfxRequestHeight
 
     // DIALOG SERVICE
     // =====================================

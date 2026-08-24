@@ -35,7 +35,7 @@ QSGNode *EmuDisplay::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     
     // set display bounding boxes
     imageNode->setSourceRect(QRectF(QPoint(0, 0), m_frame.size()));
-    imageNode->setRect(QRectF(boundingRect().topLeft(), m_frame.size()));
+    imageNode->setRect(boundingRect());
 
     // OpenGL returns pixel data flipped, reflip the texture
     imageNode->setTextureCoordinatesTransform(QSGImageNode::MirrorVertically);
