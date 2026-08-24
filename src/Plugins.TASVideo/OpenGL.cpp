@@ -26,8 +26,11 @@ void OGL_ReadPixels()
 {
     if (!gCapturedPixels) return;
 
-    glFlush();
-    glFinish();
+    // glFlush();
+    // glFinish();
+
+    SDL_GL_SwapWindow(s_sdl_window);
+    SDL_PumpEvents();
 
     glReadPixels(0, 0, OGL.width, OGL.height, GL_RGBA, GL_UNSIGNED_BYTE, gCapturedPixels);
 
@@ -43,12 +46,17 @@ void OGL_ReadPixels()
 
 void OGL_InitExtensions()
 {
-    glewExperimental = GL_TRUE;
-    GLenum glew = glewInit();
-    if (glew != GLEW_OK && (!OGL.isGLES || glew != GLEW_ERROR_NO_GLX_DISPLAY))
-    {
-        g_plugin->log_error("Error initialising glew");
-        return;
+    if (OGL.isGLES) {
+        if (!gladLoadGLES2Loader((GLADloadproc) SDL_GL_GetProcAddress)) {
+            g_plugin->log_error("Error initializing GLAD (OpenGL ES 2.0+)");
+            return;
+        }
+    }
+    else {
+        if (!gladLoadGLLoader((GLADloadproc) SDL_GL_GetProcAddress)) {
+            g_plugin->log_error("Error initializing GLAD (OpenGL)");
+            return;
+        }
     }
 
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &OGL.maxTextureUnits);
@@ -105,7 +113,7 @@ void OGL_InitStates()
 
     glPolygonOffset(-3.0f, -3.0f);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 

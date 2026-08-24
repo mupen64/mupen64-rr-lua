@@ -16,8 +16,8 @@ add_library(vendor::bs-thread-pool ALIAS bs-thread-pool)
 add_subdirectory(decan)
 add_library(vendor::decan ALIAS decan-hpp)
 
-add_subdirectory(fixed_string)
-add_library(vendor::fixed_string ALIAS fixed_string)
+add_subdirectory(glad)
+add_library(vendor::glad ALIAS glad)
 
 add_subdirectory(microlru)
 add_library(vendor::microlru ALIAS microlru)

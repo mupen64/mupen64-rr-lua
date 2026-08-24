@@ -13,8 +13,6 @@ target_link_libraries(Mupen64RR.Views.Qt6.Utils PUBLIC
     Mupen64RR.Common.Views
     Mupen64RR.Core
 
-    vendor::fixed_string
-
     Qt6::Core
     Qt6::Quick
 )

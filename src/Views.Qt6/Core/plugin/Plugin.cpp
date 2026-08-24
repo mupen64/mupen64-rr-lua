@@ -86,7 +86,11 @@ void Plugin::initiate(core_ctx *ctx, core_params &params, const std::function<vo
     m_init_data->dmem = (uint8_t *)ctx->sp_dmem;
     m_init_data->imem = (uint8_t *)ctx->sp_imem;
 
-    m_init_data->rdram_register = ctx->rdram_register;
+    m_init_data->log_trace = [](const char* msg) { std::println(stderr, "[PTRACE] {}", msg); };
+    m_init_data->log_info = [](const char* msg) { std::println(stderr, "[PINFO]  {}", msg); };
+    m_init_data->log_warn = [](const char* msg) { std::println(stderr, "[PWARN]  {}", msg); };
+    m_init_data->log_error = [](const char* msg) { std::println(stderr, "[PERROR] {}", msg); };
+    
     m_init_data->mi_register = ctx->mi_register;
     m_init_data->pi_register = ctx->pi_register;
     m_init_data->sp_register = ctx->sp_register;
