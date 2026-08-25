@@ -6,14 +6,16 @@
 #pragma once
 
 #include <QObject>
+#include <QThreadPool>
 #include <QUrl>
 #include <qqmlintegration.h>
 
+
 #include <m64rr/API.hpp>
 #include "plugin/Plugin.hpp"
-#include "QmlCallableContext.hpp"
 
 #include "CoreEnums.hpp"
+
 
 /**
  * @brief QML-owned singleton holding the core and related objects.
@@ -32,10 +34,9 @@ class EmuContext : public QObject
 
     // core_cfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
-
-    // extra properties
-    // Q_PROPERTY(int32_t stateSlot READ stateSlot WRITE setStateSlot NOTIFY )
   public:
+    static constexpr size_t NUM_SAVE_SLOTS = 10;
+
     EmuContext(QObject *parent = nullptr);
     virtual ~EmuContext();
 
@@ -65,6 +66,7 @@ class EmuContext : public QObject
     // -> vr_frame_advance
     Q_INVOKABLE void frameAdvance(size_t frames);
 
+
     // vr_* properties
     // ==========================
 
@@ -83,6 +85,23 @@ class EmuContext : public QObject
     bool isGSButton() const;
     // -> vr_set_gs_button
     void setGSButton(bool pressed);
+
+    // st_* functions
+    // ==========================
+
+    // -> st_do_file (to save slot)
+    Q_INVOKABLE void saveSlot(uint32_t index);
+
+    // -> st_do_file
+    Q_INVOKABLE void saveFile(const QUrl& url);
+
+    // -> st_do_file (to save slot)
+    Q_INVOKABLE void loadSlot(uint32_t index);
+
+    // -> st_do_file
+    Q_INVOKABLE void loadFile(const QUrl& url);
+
+
 
     // core_cfg properties
     // ==========================
@@ -184,6 +203,8 @@ class EmuContext : public QObject
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
+
+    QThreadPool m_task_pool;
 };
 
 namespace CoreUtil

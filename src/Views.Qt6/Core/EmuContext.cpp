@@ -33,16 +33,16 @@ static void set_core_instance(EmuContext *ptr)
 }
 
 EmuContext::EmuContext(QObject *parent)
-    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr)
+    : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
+      m_plugins(std::nullopt), m_fn_read_video(nullptr)
 {
     set_core_instance(this);
 
     m_core_params->cfg = m_core_cfg;
 
 #pragma region Directories
-    m_core_params->submit_task = [](const auto &cb) {
-        // Defer to the stdlib's thread pool.
-        (void)std::async(cb);
+    m_core_params->submit_task = [&](const std::function<void()> &cb) { 
+        m_task_pool.start(cb);
     };
     m_core_params->get_saves_directory = [] {
         static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
@@ -197,7 +197,8 @@ void EmuContext::invalidateVisuals()
     m_core_ctx->vr_invalidate_visuals();
 }
 
-void EmuContext::frameAdvance(size_t frames) {
+void EmuContext::frameAdvance(size_t frames)
+{
     m_core_ctx->vr_frame_advance(frames);
 }
 
@@ -232,10 +233,52 @@ bool EmuContext::isGSButton() const
 }
 void EmuContext::setGSButton(bool pressed)
 {
-    if (pressed != m_core_ctx->vr_get_gs_button()) {
+    if (pressed != m_core_ctx->vr_get_gs_button())
+    {
         m_core_ctx->vr_set_gs_button(pressed);
         gsButtonChanged(pressed);
     }
+}
+
+// st_* functions
+// ==========================
+
+// -> st_do_memory (to save slot)
+void EmuContext::saveSlot(uint32_t index)
+{
+    if (index >= NUM_SAVE_SLOTS) return;
+    // TODO implement based on config directories
+}
+
+// -> st_do_file
+void EmuContext::saveFile(const QUrl &url)
+{
+    std::filesystem::path path = url.toLocalFile().toStdU16String();
+    std::println("saving to {}", path.string());
+    // TODO: explain why save operations need to be run asynchronously.
+    m_core_ctx->vr_wait_increment();
+    m_task_pool.start([=, this] {
+        m_core_ctx->vr_wait_decrement();
+        m_core_ctx->st_do_file(path, core_st_job_save, nullptr, false);
+    });
+}
+
+// -> st_do_memory (to save slot)
+void EmuContext::loadSlot(uint32_t index)
+{
+    if (index >= NUM_SAVE_SLOTS) return;
+    // TODO implement based on config directories
+}
+
+// -> st_do_file
+void EmuContext::loadFile(const QUrl &url)
+{
+    std::filesystem::path path = url.toLocalFile().toStdU16String();
+    m_core_ctx->vr_wait_increment();
+    m_task_pool.start([=, this] {
+        m_core_ctx->vr_wait_decrement();
+        m_core_ctx->st_do_file(path, core_st_job_load, nullptr, false);
+    });
 }
 
 // core_cfg properties
@@ -274,6 +317,9 @@ void EmuContext::readVideoOutput(QImage &image)
     m_fn_read_video(image.bits(), nullptr, nullptr);
     // std::println("pixel: {:08X}", image.pixel(320, 240));
 }
+
+// Internal utilities
+// ==========================
 
 void CoreUtil::clear_plugin_funcs(core_params &params)
 {

@@ -125,6 +125,7 @@ MenuBar {
             Action {
                 text: qsTr("Save as File...")
                 enabled: root.core.launched
+                onTriggered: diaSaveState.open()
             }
             MenuSeparator {
                 id: sepSaveSlots
@@ -151,10 +152,15 @@ MenuBar {
             Action {
                 text: qsTr("Load Current Slot")
                 enabled: root.core.launched
+                onTriggered: {
+                    let currSlot = menuCurrSlot.selectedIndex;
+                    root.core.saveSlot(currSlot);
+                }
             }
             Action {
                 text: qsTr("Load from File...")
                 enabled: root.core.launched
+                onTriggered: diaLoadState.open()
             }
             MenuSeparator {
                 id: sepLoadSlots
@@ -217,6 +223,24 @@ MenuBar {
         onAccepted: {
             let result = root.core.startROM(selectedFile);
             priv.showDialogForError(result);
+        }
+    }
+    Dialogs.FileDialog {
+        id: diaLoadState
+        title: qsTr("Load from File")
+        fileMode: Dialogs.FileDialog.OpenFile
+        nameFilters: [`${qsTr("Savestates")} (*.st *.savestate)`]
+        onAccepted: {
+            root.core.loadFile(selectedFile);
+        }
+    }
+    Dialogs.FileDialog {
+        id: diaSaveState
+        title: qsTr("Save to File")
+        fileMode: Dialogs.FileDialog.SaveFile
+        nameFilters: [`${qsTr("Savestates")} (*.st *.savestate)`]
+        onAccepted: {
+            root.core.saveFile(selectedFile);
         }
     }
 
