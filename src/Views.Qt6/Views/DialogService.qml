@@ -48,7 +48,7 @@ Item {
                 showNextDialog()
         }
         function dialogClosed(result = undefined) {
-            if (result !== undefined)
+            if (result !== undefined && currDialog.done != null)
                 currDialog.done(result);
             showNextDialog();
         }

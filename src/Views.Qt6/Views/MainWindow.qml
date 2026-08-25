@@ -26,6 +26,7 @@ ApplicationWindow {
 
     header: MainMenuBar {
         core: core
+        dialogService: dialogService
     }
 
     // CONTENT VIEW
@@ -90,16 +91,6 @@ ApplicationWindow {
 
     // AUXILIARY OBJECTS
     // =====================================
-
-    Dialogs.FileDialog {
-        id: diaOpenRom
-        title: qsTr("Open ROM...")
-        fileMode: Dialogs.FileDialog.OpenFile
-        nameFilters: [`${qsTr("N64 ROMs")} (*.n64 *.z64 *.v64)`]
-        onAccepted: {
-            core.startROM(selectedFile);
-        }
-    }
 
     DialogService {
         id: dialogService
