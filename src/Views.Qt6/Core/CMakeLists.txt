@@ -33,7 +33,6 @@ target_link_libraries(Mupen64RR.Views.Qt6.Core PUBLIC
     Qt6::Core
     Qt6::Quick
 
-    vendor::bs-thread-pool
     vendor::decan
 )
 

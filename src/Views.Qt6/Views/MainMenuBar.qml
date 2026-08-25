@@ -115,6 +115,42 @@ MenuBar {
             }
         }
         // TODO: multi-frame advance
+        Action {
+            id: actMultiFrameAdvance
+            property int frameCount: 0
+
+            text: qsTr("Multi-Frame Advance")
+            enabled: root.core.launched
+            onTriggered: {
+                if (frameCount == 0) return;
+                actPause.checked = true;
+                root.core.frameAdvance(frameCount);
+            }
+        }
+        Action {
+            text: qsTr("Multi-Frame Advance +1")
+            enabled: root.core.launched
+            onTriggered: {
+                // TODO: should this be capped?
+                actMultiFrameAdvance.frameCount += 1;
+            }
+        }
+        Action {
+            text: qsTr("Multi-Frame Advance -1")
+            enabled: root.core.launched
+            onTriggered: {
+                if (actMultiFrameAdvance.frameCount > 0)
+                    actMultiFrameAdvance.frameCount -= 1;
+            }
+        }
+        Action {
+            text: qsTr("Multi-Frame Advance Reset")
+            enabled: root.core.launched
+            onTriggered: {
+                // TODO: supply this from config
+                actMultiFrameAdvance.frameCount = 0;
+            }
+        }
         Menu {
             id: menuSaveState
             title: qsTr("Save State")
@@ -246,7 +282,15 @@ MenuBar {
 
     // Bindings and signals to attach for menu items
     Binding {
-        root.core.paused: root.opened || actPause.checked
+        root.core.paused: [
+            // actually paused
+            actPause.checked,
+            // menu open
+            root.opened, 
+            // dialogs open 
+            diaLoadState.visible, 
+            diaSaveState.visible
+        ].some(value => value)
         root.core.gsButton: actGSButton.checked
     }
     Connections {

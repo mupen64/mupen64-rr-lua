@@ -10,12 +10,10 @@
 #include <QUrl>
 #include <qqmlintegration.h>
 
-
 #include <m64rr/API.hpp>
 #include "plugin/Plugin.hpp"
 
 #include "CoreEnums.hpp"
-
 
 /**
  * @brief QML-owned singleton holding the core and related objects.
@@ -66,7 +64,6 @@ class EmuContext : public QObject
     // -> vr_frame_advance
     Q_INVOKABLE void frameAdvance(size_t frames);
 
-
     // vr_* properties
     // ==========================
 
@@ -93,15 +90,13 @@ class EmuContext : public QObject
     Q_INVOKABLE void saveSlot(uint32_t index);
 
     // -> st_do_file
-    Q_INVOKABLE void saveFile(const QUrl& url);
+    Q_INVOKABLE void saveFile(const QUrl &url);
 
     // -> st_do_file (to save slot)
     Q_INVOKABLE void loadSlot(uint32_t index);
 
     // -> st_do_file
-    Q_INVOKABLE void loadFile(const QUrl& url);
-
-
+    Q_INVOKABLE void loadFile(const QUrl &url);
 
     // core_cfg properties
     // ==========================
@@ -143,7 +138,6 @@ class EmuContext : public QObject
 
     // -> .fps_modifier changed
     void speedModifierChanged(int32_t value);
-
 
     // Graphics signals
     // ============================================

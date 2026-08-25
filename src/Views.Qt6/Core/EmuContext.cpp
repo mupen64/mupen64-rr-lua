@@ -41,9 +41,7 @@ EmuContext::EmuContext(QObject *parent)
     m_core_params->cfg = m_core_cfg;
 
 #pragma region Directories
-    m_core_params->submit_task = [&](const std::function<void()> &cb) { 
-        m_task_pool.start(cb);
-    };
+    m_core_params->submit_task = [&](const std::function<void()> &cb) { m_task_pool.start(cb); };
     m_core_params->get_saves_directory = [] {
         static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
         if (!std::filesystem::is_directory(s_save_path)) std::filesystem::create_directories(s_save_path);
@@ -255,7 +253,10 @@ void EmuContext::saveFile(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
     std::println("saving to {}", path.string());
-    // TODO: explain why save operations need to be run asynchronously.
+
+    // Save operations must be issued asynchronously as they lock a mutex.
+    // To keep operations from running on the wrong frame, we also block the core from
+    // advancing until the operation is queued.
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
@@ -274,6 +275,7 @@ void EmuContext::loadSlot(uint32_t index)
 void EmuContext::loadFile(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
+    // see saveFile()
     m_core_ctx->vr_wait_increment();
     m_task_pool.start([=, this] {
         m_core_ctx->vr_wait_decrement();
