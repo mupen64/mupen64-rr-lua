@@ -143,14 +143,21 @@ EmuContext::EmuContext(QObject *parent)
 #pragma endregion
 
 #pragma region Signals and properties
+    // propagate signals from core
     m_core_params->update_screen = [&] { QMetaObject::invokeMethod(this, &EmuContext::updateScreen); };
-
     m_core_params->callbacks.emu_launched_changed = [&](bool value) {
-        QMetaObject::invokeMethod(this, &EmuContext::emuLaunchedChanged, value);
+        QMetaObject::invokeMethod(this, &EmuContext::launchedChanged, value);
     };
     m_core_params->callbacks.emu_paused_changed = [&](bool value) {
-        QMetaObject::invokeMethod(this, &EmuContext::emuPausedChanged, value);
+        QMetaObject::invokeMethod(this, &EmuContext::pausedChanged, value);
     };
+    m_core_params->callbacks.core_executing_changed = [&](bool value) {
+        QMetaObject::invokeMethod(this, &EmuContext::coreExecutingChanged, value);
+    };
+
+    // propagate signals to core
+    connect(
+        this, &EmuContext::speedModifierChanged, this, [&](int32_t) { m_core_ctx->vr_on_speed_modifier_changed(); });
 #pragma endregion
     core_create(m_core_params, &m_core_ctx);
 }
@@ -169,46 +176,82 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-CoreResult::Value EmuContext::vrStartROM(const QUrl &url)
+CoreResult::Value EmuContext::startROM(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
     return CoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
-CoreResult::Value EmuContext::vrCloseROM(bool resetVCR)
+CoreResult::Value EmuContext::closeROM(bool resetVCR)
 {
     return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
-CoreResult::Value EmuContext::vrResetROM(bool resetSaveData, bool stopVCR)
+CoreResult::Value EmuContext::resetROM(bool resetSaveData, bool stopVCR)
 {
     return CoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
 }
 
-void EmuContext::vrInvalidateVisuals()
+void EmuContext::invalidateVisuals()
 {
     m_core_ctx->vr_invalidate_visuals();
+}
+
+void EmuContext::frameAdvance(size_t frames) {
+    m_core_ctx->vr_frame_advance(frames);
 }
 
 // vr_* properties
 // ==========================
 
-bool EmuContext::isEmuLaunched() const
+bool EmuContext::isLaunched() const
 {
     return m_core_ctx->vr_get_launched();
 }
 
-bool EmuContext::isEmuPaused() const
+bool EmuContext::isPaused() const
 {
     return m_core_ctx->vr_get_paused();
 }
-
-void EmuContext::setEmuPaused(bool paused)
+void EmuContext::setPaused(bool paused)
 {
     if (paused)
         m_core_ctx->vr_pause_emu();
     else
         m_core_ctx->vr_resume_emu();
+}
+
+bool EmuContext::isCoreExecuting()
+{
+    return m_core_ctx->vr_get_core_executing();
+}
+
+bool EmuContext::isGSButton() const
+{
+    return m_core_ctx->vr_get_gs_button();
+}
+void EmuContext::setGSButton(bool pressed)
+{
+    if (pressed != m_core_ctx->vr_get_gs_button()) {
+        m_core_ctx->vr_set_gs_button(pressed);
+        gsButtonChanged(pressed);
+    }
+}
+
+// core_cfg properties
+// ==========================
+int32_t EmuContext::speedModifier()
+{
+    return m_core_cfg->fps_modifier;
+}
+void EmuContext::setSpeedModifier(int32_t valueIn)
+{
+    int32_t value = std::clamp<int32_t>(valueIn, 5, 1000);
+    if (value != m_core_cfg->fps_modifier)
+    {
+        m_core_cfg->fps_modifier = value;
+        speedModifierChanged(value);
+    }
 }
 
 // Misc. functions
@@ -224,6 +267,7 @@ void EmuContext::readVideoOutput(QImage &image)
     if (image.width() != width || image.height() != height)
     {
         image = QImage(width, height, QImage::Format_ARGB32);
+        // make the image orange in case read_video isn't working
         image.fill(0x00FF8000);
     }
 

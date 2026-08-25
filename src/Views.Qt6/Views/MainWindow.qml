@@ -21,24 +21,25 @@ ApplicationWindow {
     minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
     minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
 
-    // CONTENT
+    // MENU BAR
     // =====================================
 
     header: MenuBar {
         id: menuBar
+        // binding is not implemented here as it won't update properly
         property bool opened: false
 
         delegate: MenuBarItem {
-            id: tempItem
+            id: item
             // update menuBar.opened as needed
             Connections {
-                target: tempItem.menu
-                enabled: tempItem.menu != null
+                target: item.menu
+                enabled: item.menu != null
                 function onAboutToShow() {
-                    tempItem.updateOpened()
+                    item.updateOpened()
                 }
                 function onClosed() {
-                    tempItem.updateOpened()
+                    item.updateOpened()
                 }
             }
             function updateOpened() {
@@ -49,45 +50,58 @@ ApplicationWindow {
         Menu {
             title: qsTr("File")
             Action {
-                id: actLoadROM
                 text: qsTr("Load ROM...")
                 onTriggered: diaOpenRom.open()
             }
             Action {
-                id: actCloseROM
                 text: qsTr("Close ROM")
-                enabled: core.emuLaunched
-                onTriggered: core.vrCloseROM()
+                enabled: core.launched
+                onTriggered: core.closeROM()
             }
             Action {
                 text: qsTr("Reset ROM")
-                enabled: core.emuLaunched
-                onTriggered: core.vrResetROM()
+                enabled: core.launched
+                onTriggered: core.resetROM()
             }
         }
         Menu {
             title: qsTr("Emulation")
             Action {
                 id: actPause
-                text: qsTr("Pause")
-                enabled: core.emuLaunched
                 checkable: true
+                text: qsTr("Pause")
+                enabled: core.launched
             }
             Action {
                 text: qsTr("Speed Down")
+                enabled: core.launched
+                onTriggered: core.speedModifier -= 5
             }
             Action {
                 text: qsTr("Speed Up")
+                enabled: core.launched
+                onTriggered: core.speedModifier += 5
             }
             Action {
                 text: qsTr("Reset Speed")
+                enabled: core.launched
+                onTriggered: core.speedModifier = 100
             }
             Action {
+                id: actGSButton
+                enabled: core.launched
                 text: qsTr("GS Button")
+                checkable: true
+                
             }
             MenuSeparator {}
             Action {
                 text: qsTr("Frame Advance")
+                enabled: core.launched
+                onTriggered: {
+                    actPause.checked = true;
+                    core.frameAdvance(1);
+                }
             }
             // TODO: multi-frame advance
             MenuSeparator {}
@@ -122,11 +136,27 @@ ApplicationWindow {
         }
     }
 
+    // Bindings and signals to attach for menu items
+    Binding {
+        core.paused: menuBar.opened || actPause.checked
+        core.gsButton: actGSButton.checked
+    }
+    Connections {
+        target: core
+        function onLaunchedChanged() {
+            actPause.checked = false
+            actGSButton.checked = false
+        }
+    }
+
+    // CONTENT VIEW
+    // =====================================
+
     StackLayout {
         id: mainStack
         anchors.fill: parent
 
-        currentIndex: (core.emuLaunched) ? 1 : 0
+        currentIndex: (core.launched) ? 1 : 0
 
         Item {
             Layout.fillHeight: true
@@ -156,13 +186,6 @@ ApplicationWindow {
     EmuContext {
         id: core
 
-        onEmuLaunchedChanged: {
-            actPause.checked = false;
-        }
-
-        // pause when menu open
-        emuPaused: menuBar.opened || actPause.checked
-
         // Graphics integration
         onGfxRequestSize: (width, height) => coreDisplay.reserveSize(width, height)
         onUpdateScreen: coreDisplay.readPixels()
@@ -175,13 +198,13 @@ ApplicationWindow {
 
     // update the video output when the emulator is running
     FrameAnimation {
-        running: core.emuLaunched
-        onTriggered: core.vrInvalidateVisuals()
+        running: core.launched
+        onTriggered: core.invalidateVisuals()
     }
 
     // lock the window size when the emulator is running
     Binding {
-        when: core.emuLaunched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
+        when: core.launched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
         mainWindow.maximumWidth: mainWindow.minimumWidth
         mainWindow.maximumHeight: mainWindow.minimumHeight
     }
@@ -195,7 +218,7 @@ ApplicationWindow {
         fileMode: Dialogs.FileDialog.OpenFile
         nameFilters: [`${qsTr("N64 ROMs")} (*.n64 *.z64 *.v64)`]
         onAccepted: {
-            core.vrStartROM(selectedFile);
+            core.startROM(selectedFile);
         }
     }
 

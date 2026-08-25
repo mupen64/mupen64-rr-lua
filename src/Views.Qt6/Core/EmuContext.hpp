@@ -24,8 +24,14 @@ class EmuContext : public QObject
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(bool emuLaunched READ isEmuLaunched NOTIFY emuLaunchedChanged)
-    Q_PROPERTY(bool emuPaused READ isEmuPaused WRITE setEmuPaused NOTIFY emuPausedChanged)
+    // core_ctx properties
+    Q_PROPERTY(bool launched READ isLaunched NOTIFY launchedChanged)
+    Q_PROPERTY(bool paused READ isPaused WRITE setPaused NOTIFY pausedChanged)
+    Q_PROPERTY(bool coreExecuting READ isCoreExecuting NOTIFY coreExecutingChanged)
+    Q_PROPERTY(bool gsButton READ isGSButton WRITE setGSButton NOTIFY gsButtonChanged)
+
+    // core_cfg properties
+    Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
   public:
     EmuContext(QObject *parent = nullptr);
     virtual ~EmuContext();
@@ -42,27 +48,45 @@ class EmuContext : public QObject
     // ==========================
 
     // -> vr_start_rom
-    Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl &url);
+    Q_INVOKABLE CoreResult::Value startROM(const QUrl &url);
 
     // -> vr_close_rom
-    Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true);
+    Q_INVOKABLE CoreResult::Value closeROM(bool resetVCR = true);
 
     // -> vr_reset_rom
-    Q_INVOKABLE CoreResult::Value vrResetROM(bool resetSaveData, bool stopVCR);
+    Q_INVOKABLE CoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
 
     // -> vr_invalidate_visuals
-    Q_INVOKABLE void vrInvalidateVisuals();
+    Q_INVOKABLE void invalidateVisuals();
+
+    // -> vr_frame_advance
+    Q_INVOKABLE void frameAdvance(size_t frames);
 
     // vr_* properties
     // ==========================
 
     // -> vr_get_launched
-    bool isEmuLaunched() const;
+    bool isLaunched() const;
 
     // -> vr_get_paused
-    bool isEmuPaused() const;
+    bool isPaused() const;
     // -> vr_pause_emu/vr_resume_emu
-    void setEmuPaused(bool paused);
+    void setPaused(bool paused);
+
+    // -> vr_get_core_executing
+    bool isCoreExecuting();
+
+    // -> vr_get_gs_button
+    bool isGSButton() const;
+    // -> vr_set_gs_button
+    void setGSButton(bool pressed);
+
+    // core_cfg properties
+    // ==========================
+
+    // -> .fps_modifier
+    int32_t speedModifier();
+    void setSpeedModifier(int32_t value);
 
     // Misc. functions
     // ==========================
@@ -77,14 +101,27 @@ class EmuContext : public QObject
 
   signals:
 
-    // Property changes
-    // ============================================
+    // vr_* properties
+    // ==========================
 
     // -> callbacks.emu_launched_changed
-    void emuLaunchedChanged(bool value);
+    void launchedChanged(bool value);
 
     // -> callbacks.emu_paused_changed
-    void emuPausedChanged(bool value);
+    void pausedChanged(bool value);
+
+    // -> callbacks.core_executing_changed
+    void coreExecutingChanged(bool value);
+
+    // -> set_gs_button() called
+    void gsButtonChanged(bool value);
+
+    // core_cfg properties
+    // ==========================
+
+    // -> .fps_modifier changed
+    void speedModifierChanged(int32_t value);
+
 
     // Graphics signals
     // ============================================
