@@ -17,41 +17,61 @@ ApplicationWindow {
     visible: true
     title: qsTr("Mupen64RR")
 
-    property bool lockSize;
-
     // ensure window fits content
     minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
     minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
-
-    Binding {
-        when: EmuContext.emuLaunched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
-        mainWindow.maximumWidth: mainWindow.minimumWidth
-        mainWindow.maximumHeight: mainWindow.minimumHeight
-    }
 
     // CONTENT
     // =====================================
 
     header: MenuBar {
+        id: menuBar
+        property bool opened: false
+
+        delegate: MenuBarItem {
+            id: tempItem
+            // update menuBar.opened as needed
+            Connections {
+                target: tempItem.menu
+                enabled: tempItem.menu != null
+                function onAboutToShow() {
+                    tempItem.updateOpened()
+                }
+                function onClosed() {
+                    tempItem.updateOpened()
+                }
+            }
+            function updateOpened() {
+                menuBar.opened = menuBar.menus.some(child => child.visible);
+            }
+        }
+
         Menu {
             title: qsTr("File")
             Action {
+                id: actLoadROM
                 text: qsTr("Load ROM...")
                 onTriggered: diaOpenRom.open()
             }
             Action {
+                id: actCloseROM
                 text: qsTr("Close ROM")
-                onTriggered: EmuContext.vrCloseROM()
+                enabled: core.emuLaunched
+                onTriggered: core.vrCloseROM()
             }
             Action {
                 text: qsTr("Reset ROM")
-                onTriggered: EmuContext.vrResetROM()
+                enabled: core.emuLaunched
+                onTriggered: core.vrResetROM()
             }
         }
         Menu {
             title: qsTr("Emulation")
             Action {
+                id: actPause
                 text: qsTr("Pause")
+                enabled: core.emuLaunched
+                checkable: true
             }
             Action {
                 text: qsTr("Speed Down")
@@ -79,6 +99,7 @@ ApplicationWindow {
                 Action {
                     text: qsTr("Save as File...")
                 }
+                MenuSeparator {}
             }
             MenuSeparator {}
             Menu {
@@ -89,6 +110,7 @@ ApplicationWindow {
                 Action {
                     text: qsTr("Load from File...")
                 }
+                MenuSeparator {}
             }
             MenuSeparator {}
             Menu {
@@ -104,7 +126,7 @@ ApplicationWindow {
         id: mainStack
         anchors.fill: parent
 
-        currentIndex: (EmuContext.emuLaunched) ? 1 : 0
+        currentIndex: (core.emuLaunched) ? 1 : 0
 
         Item {
             Layout.fillHeight: true
@@ -121,11 +143,47 @@ ApplicationWindow {
 
             EmuDisplay {
                 id: coreDisplay
-                context: EmuContext
+                context: core
                 anchors.top: parent.top
                 anchors.left: parent.left
             }
         }
+    }
+
+    // Core context
+    // =====================================
+
+    EmuContext {
+        id: core
+
+        onEmuLaunchedChanged: {
+            actPause.checked = false;
+        }
+
+        // pause when menu open
+        emuPaused: menuBar.opened || actPause.checked
+
+        // Graphics integration
+        onGfxRequestSize: (width, height) => coreDisplay.reserveSize(width, height)
+        onUpdateScreen: coreDisplay.readPixels()
+
+        // Dialog service
+        onOpenInfoDialog: dialogService.queueInfoDialog
+        onOpenAskDialog: dialogService.queueAskDialog
+        onOpenMultiDialog: dialogService.queueMultiDialog
+    }
+
+    // update the video output when the emulator is running
+    FrameAnimation {
+        running: core.emuLaunched
+        onTriggered: core.vrInvalidateVisuals()
+    }
+
+    // lock the window size when the emulator is running
+    Binding {
+        when: core.emuLaunched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
+        mainWindow.maximumWidth: mainWindow.minimumWidth
+        mainWindow.maximumHeight: mainWindow.minimumHeight
     }
 
     // AUXILIARY OBJECTS
@@ -137,14 +195,8 @@ ApplicationWindow {
         fileMode: Dialogs.FileDialog.OpenFile
         nameFilters: [`${qsTr("N64 ROMs")} (*.n64 *.z64 *.v64)`]
         onAccepted: {
-            EmuContext.vrStartROM(selectedFile);
+            core.vrStartROM(selectedFile);
         }
-    }
-
-    // update the video output when the emulator is running
-    FrameAnimation {
-        running: EmuContext.emuLaunched
-        onTriggered: EmuContext.vrInvalidateVisuals()
     }
 
     DialogService {

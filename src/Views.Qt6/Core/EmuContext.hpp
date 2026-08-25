@@ -17,14 +17,15 @@
 
 /**
  * @brief QML-owned singleton holding the core and related objects.
+ * Implemented as a non-singleton, but will throw a tantrum if instantiated more than once.
  */
 class EmuContext : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-    QML_SINGLETON
 
     Q_PROPERTY(bool emuLaunched READ isEmuLaunched NOTIFY emuLaunchedChanged)
+    Q_PROPERTY(bool emuPaused READ isEmuPaused WRITE setEmuPaused NOTIFY emuPausedChanged)
   public:
     EmuContext(QObject *parent = nullptr);
     virtual ~EmuContext();
@@ -40,26 +41,37 @@ class EmuContext : public QObject
     // vr_* functions
     // ==========================
 
-    Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl &url) const;
+    // -> vr_start_rom
+    Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl &url);
 
-    Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true) const;
+    // -> vr_close_rom
+    Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true);
 
-    Q_INVOKABLE CoreResult::Value vrResetROM(bool resetSaveData, bool stopVCR) const;
+    // -> vr_reset_rom
+    Q_INVOKABLE CoreResult::Value vrResetROM(bool resetSaveData, bool stopVCR);
 
-    Q_INVOKABLE void vrInvalidateVisuals() const;
+    // -> vr_invalidate_visuals
+    Q_INVOKABLE void vrInvalidateVisuals();
 
     // vr_* properties
     // ==========================
 
+    // -> vr_get_launched
     bool isEmuLaunched() const;
+
+    // -> vr_get_paused
+    bool isEmuPaused() const;
+    // -> vr_pause_emu/vr_resume_emu
+    void setEmuPaused(bool paused);
 
     // Misc. functions
     // ==========================
 
     /**
      * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
+     * @note May reallocate the image if needed.
      *
-     * @param image
+     * @param image The image to read to.
      */
     void readVideoOutput(QImage &image);
 
@@ -68,7 +80,11 @@ class EmuContext : public QObject
     // Property changes
     // ============================================
 
+    // -> callbacks.emu_launched_changed
     void emuLaunchedChanged(bool value);
+
+    // -> callbacks.emu_paused_changed
+    void emuPausedChanged(bool value);
 
     // Graphics signals
     // ============================================

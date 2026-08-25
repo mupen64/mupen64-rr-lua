@@ -148,6 +148,9 @@ EmuContext::EmuContext(QObject *parent)
     m_core_params->callbacks.emu_launched_changed = [&](bool value) {
         QMetaObject::invokeMethod(this, &EmuContext::emuLaunchedChanged, value);
     };
+    m_core_params->callbacks.emu_paused_changed = [&](bool value) {
+        QMetaObject::invokeMethod(this, &EmuContext::emuPausedChanged, value);
+    };
 #pragma endregion
     core_create(m_core_params, &m_core_ctx);
 }
@@ -166,22 +169,23 @@ EmuContext *EmuContext::instance()
 // vr_* functions
 // ==========================
 
-CoreResult::Value EmuContext::vrStartROM(const QUrl &url) const
+CoreResult::Value EmuContext::vrStartROM(const QUrl &url)
 {
     std::filesystem::path path = url.toLocalFile().toStdU16String();
     return CoreResult::from_core(m_core_ctx->vr_start_rom(path));
 }
 
-CoreResult::Value EmuContext::vrCloseROM(bool resetVCR) const
+CoreResult::Value EmuContext::vrCloseROM(bool resetVCR)
 {
     return CoreResult::from_core(m_core_ctx->vr_close_rom(resetVCR));
 }
 
-CoreResult::Value EmuContext::vrResetROM(bool resetSaveData, bool stopVCR) const {
+CoreResult::Value EmuContext::vrResetROM(bool resetSaveData, bool stopVCR)
+{
     return CoreResult::from_core(m_core_ctx->vr_reset_rom(resetSaveData, stopVCR));
 }
 
-void EmuContext::vrInvalidateVisuals() const
+void EmuContext::vrInvalidateVisuals()
 {
     m_core_ctx->vr_invalidate_visuals();
 }
@@ -192,6 +196,19 @@ void EmuContext::vrInvalidateVisuals() const
 bool EmuContext::isEmuLaunched() const
 {
     return m_core_ctx->vr_get_launched();
+}
+
+bool EmuContext::isEmuPaused() const
+{
+    return m_core_ctx->vr_get_paused();
+}
+
+void EmuContext::setEmuPaused(bool paused)
+{
+    if (paused)
+        m_core_ctx->vr_pause_emu();
+    else
+        m_core_ctx->vr_resume_emu();
 }
 
 // Misc. functions
