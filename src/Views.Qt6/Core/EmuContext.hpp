@@ -32,6 +32,9 @@ class EmuContext : public QObject
 
     // core_cfg properties
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
+
+    // extra properties
+    // Q_PROPERTY(int32_t stateSlot READ stateSlot WRITE setStateSlot NOTIFY )
   public:
     EmuContext(QObject *parent = nullptr);
     virtual ~EmuContext();
