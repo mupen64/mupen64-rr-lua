@@ -9,7 +9,7 @@
 #include <components/FilePicker.hpp>
 #include <components/TextEditDialog.hpp>
 
-bool t_options_item::edit(const M64RRSpec::WindowHandle parent)
+bool OptionItem::edit(const M64RRSpec::WindowHandle parent)
 {
     const auto hwnd = parent.hwnd();
 

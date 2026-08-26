@@ -7,13 +7,13 @@
 #include <Common.Views/OptionItem.hpp>
 #include <Common.Views/ActionManager.hpp>
 
-std::string t_options_item::get_name() const
+std::string OptionItem::get_name() const
 {
     if (type == Type::Hotkey) return ActionManager::get_display_name(name, true);
     return name;
 }
 
-std::string t_options_item::get_value_name() const
+std::string OptionItem::get_value_name() const
 {
     const auto value = current_value.get();
 
@@ -43,17 +43,17 @@ std::string t_options_item::get_value_name() const
     case Type::Folder:
         return std::get<std::string>(value);
     default:
-        NEED(false, "Unhandled option type in t_options_item::get_value_name");
+        NEED(false, "Unhandled option type in OptionItem::get_value_name");
     }
     return "";
 }
 
-void t_options_item::reset_to_default() const
+void OptionItem::reset_to_default() const
 {
     current_value.set(default_value.get());
 }
 
-std::string t_options_item::get_friendly_info() const
+std::string OptionItem::get_friendly_info() const
 {
     std::string str;
 

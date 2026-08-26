@@ -18,9 +18,9 @@
 /**
  * Represents a settings option.
  */
-struct t_options_item
+struct OptionItem
 {
-    enum class Type
+    enum class Type : uint8_t
     {
         Bool,
         Number,
@@ -30,22 +30,21 @@ struct t_options_item
         Folder,
     };
 
-    typedef std::variant<int32_t, double, std::string, Hotkey> data_variant;
+    typedef std::variant<int32_t, double, std::string, Hotkey> DataVariant;
 
-    struct t_readonly_property
+    struct ReadableProp
     {
-        std::function<data_variant()> get{};
+        std::function<DataVariant()> get;
 
-        explicit t_readonly_property(const std::function<data_variant()> &get) { this->get = get; }
+        explicit ReadableProp(const std::function<DataVariant()> &get) { this->get = get; }
     };
 
-    struct t_readwrite_property : t_readonly_property
+    struct WritableProp : ReadableProp
     {
-        std::function<void(const data_variant &)> set{};
+        std::function<void(const DataVariant &)> set;
 
-        t_readwrite_property(
-            const std::function<data_variant()> &get, const std::function<void(const data_variant &)> &set)
-            : t_readonly_property(get)
+        WritableProp(const std::function<DataVariant()> &get, const std::function<void(const DataVariant &)> &set)
+            : ReadableProp(get)
         {
             this->set = set;
         }
@@ -64,21 +63,21 @@ struct t_options_item
     /**
      * The option's display name.
      */
-    std::string name{};
+    std::string name;
 
     /**
      * The option's tooltip, or an empty string if no tooltip is set.
      */
-    std::string tooltip{};
+    std::string tooltip;
 
-    t_readwrite_property current_value;
+    WritableProp current_value;
 
-    t_readonly_property initial_value = t_readonly_property([] -> data_variant {
+    ReadableProp initial_value = ReadableProp([] -> DataVariant {
         NEED(false, "Initial value not set for option");
-        return data_variant{};
+        return DataVariant{};
     });
 
-    t_readonly_property default_value;
+    ReadableProp default_value;
 
     std::vector<std::pair<std::string, int32_t>> possible_values;
 
@@ -118,7 +117,7 @@ struct t_options_item
 /**
  * Represents a group of options in the settings.
  */
-struct t_options_group
+struct OptionGroup
 {
     /**
      * The group's unique identifier.
@@ -133,7 +132,7 @@ struct t_options_group
     /**
      * \brief The options that belong to this group.
      */
-    std::vector<t_options_item> items{};
+    std::vector<OptionItem> items;
 };
 
 /**
@@ -146,7 +145,7 @@ inline std::string to_str_default(const double value)
     return std::format("{:.15g}", value);
 }
 
-inline double get_number_value(const t_options_item::data_variant &value)
+inline double get_number_value(const OptionItem::DataVariant &value)
 {
     if (std::holds_alternative<int32_t>(value))
     {
@@ -161,8 +160,7 @@ inline double get_number_value(const t_options_item::data_variant &value)
     return 0.0;
 }
 
-inline t_options_item::data_variant parse_number_value(
-    const std::string &text, const t_options_item::data_variant &current)
+inline OptionItem::DataVariant parse_number_value(const std::string &text, const OptionItem::DataVariant &current)
 {
     if (std::holds_alternative<int32_t>(current))
     {

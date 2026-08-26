@@ -23,6 +23,6 @@ void show_app_settings();
 /**
  * \brief Gets all option groups.
  */
-std::vector<t_options_group> get_option_groups();
+std::vector<OptionGroup> get_option_groups();
 
 } // namespace ConfigDialog
