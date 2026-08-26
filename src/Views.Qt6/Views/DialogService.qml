@@ -13,8 +13,7 @@ Item {
         id: priv
         property list<var> dialogQueue: []
         property var currDialog: null
-
-
+        
         function showNextDialog() {
             // no more dialogs left; clear currDialog
             if (dialogQueue.length === 0) {

@@ -16,6 +16,9 @@ MenuBar {
     required property EmuContext core
     required property DialogService dialogService
 
+    // True if the menu has been opened in any capacity.
+    readonly property bool opened: priv.opened
+
     QtObject {
         id: priv
         property bool opened: false
@@ -32,12 +35,9 @@ MenuBar {
         }
     }
 
-    // binding is not implemented here as it won't update properly
-    readonly property bool opened: priv.opened
-    // FIXME (MacOS): May not work as intended. More testing needed.
+    // FIXME (MacOS): May not work as intended with native menus.
     delegate: MenuBarItem {
         id: item
-        // update menuBar.opened as needed
         Connections {
             target: item.menu
             enabled: item.menu != null
@@ -280,21 +280,22 @@ MenuBar {
         }
     }
 
-    // Bindings and signals to attach for menu items
     Binding {
+        // Pause the core if we're interacting with the menu or its items
         root.core.paused: [
-            // actually paused
             actPause.checked,
-            // menu open
+            // menu interactions
             root.opened, 
-            // dialogs open 
             diaLoadState.visible, 
             diaSaveState.visible
         ].some(value => value)
+        // Tie GS button state to the GSButton item
         root.core.gsButton: actGSButton.checked
     }
     Connections {
         target: root.core
+
+        // reset toggleable actions on startup and shutdown
         function onLaunchedChanged() {
             actPause.checked = false;
             actGSButton.checked = false;

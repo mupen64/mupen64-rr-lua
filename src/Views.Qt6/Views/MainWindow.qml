@@ -17,9 +17,20 @@ ApplicationWindow {
     visible: true
     title: qsTr("Mupen64RR")
 
+    // WINDOW SIZE
+    // =====================================
+
     // ensure window fits content
     minimumWidth: mainStack.implicitWidth + leftPadding + rightPadding
     minimumHeight: mainStack.implicitHeight + topPadding + bottomPadding
+
+    // lock the window size when the emulator is running
+    Binding {
+        // minSize check is needed to ensure that everything is actually set
+        when: core.launched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
+        mainWindow.maximumWidth: mainWindow.minimumWidth
+        mainWindow.maximumHeight: mainWindow.minimumHeight
+    }
 
     // MENU BAR
     // =====================================
@@ -39,17 +50,20 @@ ApplicationWindow {
         currentIndex: (core.launched) ? 1 : 0
 
         Item {
+            // TODO: replace with ROM browser
             Layout.fillHeight: true
             Layout.fillWidth: true
             Button {
                 anchors.centerIn: parent
-                text: "foo the bar"
+                text: "MessageBox test"
                 onClicked: {
                     dialogService.queueInfoDialog(null, "Title", "Content", CoreDialogType.Error);
                 }
             }
         }
         Item {
+            // All children in the game view will be fixed in size. 
+            // Use their bounding box as the minimum size.
             implicitWidth: childrenRect.width
             implicitHeight: childrenRect.height
 
@@ -59,6 +73,7 @@ ApplicationWindow {
                 anchors.top: parent.top
                 anchors.left: parent.left
             }
+            // TODO: Lua canvas management
         }
     }
 
@@ -78,17 +93,11 @@ ApplicationWindow {
         onOpenMultiDialog: dialogService.queueMultiDialog
     }
 
-    // update the video output when the emulator is running
+    // invalidateVisuals() must be called on each UI frame to
+    // request a new frame from the core
     FrameAnimation {
         running: core.launched
         onTriggered: core.invalidateVisuals()
-    }
-
-    // lock the window size when the emulator is running
-    Binding {
-        when: core.launched && mainWindow.minimumWidth > 0 && mainWindow.minimumHeight > 0
-        mainWindow.maximumWidth: mainWindow.minimumWidth
-        mainWindow.maximumHeight: mainWindow.minimumHeight
     }
 
     // AUXILIARY OBJECTS
