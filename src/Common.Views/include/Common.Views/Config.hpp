@@ -180,7 +180,8 @@ struct t_config
     /// <summary>
     /// FFmpeg options.
     /// </summary>
-    std::string ffmpeg_options = "-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -vf \"vflip,format=yuv420p\"";
+    std::string ffmpeg_options =
+        "-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -vf \"vflip,format=yuv420p\"";
 
     /// <summary>
     /// FFmpeg binary path
