@@ -19,7 +19,7 @@ add_library(Mupen64RR.Plugins.TASVideo STATIC
     "L3D.hpp"
     "gSP.hpp"
     "glsl_combiner.hpp"
-    "glN64.hpp"
+    "TASVideo.hpp"
     "gDP.hpp"
     "GBI.hpp"
     "FrameBuffer.hpp"
@@ -50,7 +50,7 @@ add_library(Mupen64RR.Plugins.TASVideo STATIC
     "L3D.cpp"
     "gSP.cpp"
     "glsl_combiner.cpp"
-    "glN64.cpp"
+    "TASVideo.cpp"
     "gDP.cpp"
     "GBI.cpp"
     "FrameBuffer.cpp"
@@ -75,7 +75,7 @@ if (MUPEN64RR_BUILD_WIN32)
 
         "MicrocodeDialog_Win32.cpp"
         "ConfigDialog_Win32.cpp"
-        "glN64_Win32.cpp"
+        "TASVideo_Win32.cpp"
         "Resource.rc"
     )
     target_link_libraries(Mupen64RR.Plugins.TASVideo PRIVATE Mupen64RR.Plugins.Win32.Common)

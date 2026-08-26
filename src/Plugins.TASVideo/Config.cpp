@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include "Config.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "RSP.hpp"
 #include "Textures.h"
 #include "OpenGL.hpp"

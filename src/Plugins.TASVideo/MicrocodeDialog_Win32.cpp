@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include "MicrocodeDialog_Win32.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "Resource.h"
 #include "GBI.hpp"
 #include <windows.h>

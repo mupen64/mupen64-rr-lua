@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "GBI.hpp"
 #include "RDP.hpp"
 #include "RSP.hpp"

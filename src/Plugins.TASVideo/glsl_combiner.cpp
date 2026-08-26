@@ -10,7 +10,7 @@
 #include "gDP.hpp"
 #include "gSP.hpp"
 #include "GBI.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "Textures.h"
 
 struct GLSLProgram
