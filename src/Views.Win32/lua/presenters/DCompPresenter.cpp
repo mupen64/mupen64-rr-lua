@@ -49,7 +49,6 @@ bool DCompPresenter::init(HWND hwnd)
         &m_d3d_device, nullptr, m_d3d_dc.GetAddressOf());
 
     m_d3d_device->QueryInterface(m_dxgi_device.GetAddressOf());
-    m_dxgi_device->SetMaximumFrameLatency(1);
 
     DCompositionCreateDevice(m_dxgi_device.Get(), IID_PPV_ARGS(m_comp_device.GetAddressOf()));
     m_comp_device->CreateTargetForHwnd(hwnd, true, m_comp_target.GetAddressOf());
