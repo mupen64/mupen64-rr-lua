@@ -43,8 +43,10 @@ ApplicationWindow {
             Layout.fillWidth: true
             Button {
                 anchors.centerIn: parent
-
                 text: "foo the bar"
+                onClicked: {
+                    dialogService.queueInfoDialog(null, "Title", "Content", CoreDialogType.Error);
+                }
             }
         }
         Item {

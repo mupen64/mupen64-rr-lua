@@ -11,7 +11,7 @@ import QtQuick.Layouts
 import Core
 
 Dialog {
-    id: diaMessage
+    id: dialog
     modal: true
     popupType: Popup.Window
 
@@ -19,20 +19,22 @@ Dialog {
     property string content
 
     contentItem: RowLayout {
-        Window.onWindowChanged: {
+        id: root
+        onVisibleChanged: {
             // Lock the created window's width/height when it is displayed.
-            if (Window.window !== null && Window.window !== mainWindow) {
-                Window.window.width = width
-                Window.window.height = height
-
-                Window.window.minimumWidth = Window.window.width
-                Window.window.maximumWidth = Window.window.width
-                Window.window.minimumHeight = Window.window.height
-                Window.window.maximumHeight = Window.window.height
+            if (visible && Window.window !== null) {
+                let window = Window.window;
+                window.minimumWidth = Qt.binding(() => root.implicitWidth);
+                window.minimumHeight = Qt.binding(() => {
+                    let implicitTotalHeight = root.implicitHeight + dialog.header.implicitHeight + dialog.footer.implicitHeight;
+                    return Math.max(implicitTotalHeight, 128);
+                });
+                window.maximumWidth = Qt.binding(() => window.minimumWidth);
+                window.maximumHeight = Qt.binding(() => window.minimumHeight);
             }
         }
-
         spacing: 16
+
         Item {
             Layout.minimumWidth: 32
             Layout.fillHeight: true
@@ -43,7 +45,7 @@ Dialog {
                 height: 32
 
                 source: (() => {
-                    switch (diaMessage.coreType) {
+                    switch (dialog.coreType) {
                         case CoreDialogType.Error:
                             return "image://icons/dialog-error";
                         case CoreDialogType.Warning:
@@ -62,7 +64,7 @@ Dialog {
             
             verticalAlignment: Text.AlignVCenter
 
-            text: diaMessage.content
+            text: dialog.content
         }
     }
 }

@@ -8,7 +8,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
-// import QtQuick.Layouts
 
 import Core
 
@@ -19,6 +18,7 @@ MenuBar {
 
     QtObject {
         id: priv
+        property bool opened: false
         function findBaseItemIndex(menu, target) {
             return menu.contentChildren.findIndex(item => item == target) + 1
         }
@@ -33,7 +33,7 @@ MenuBar {
     }
 
     // binding is not implemented here as it won't update properly
-    property bool opened: false
+    readonly property bool opened: priv.opened
     // FIXME (MacOS): May not work as intended. More testing needed.
     delegate: MenuBarItem {
         id: item
@@ -49,7 +49,7 @@ MenuBar {
             }
         }
         function updateOpened() {
-            root.opened = root.menus.some(child => child.visible);
+            priv.opened = root.menus.some(child => child.visible);
         }
     }
 
