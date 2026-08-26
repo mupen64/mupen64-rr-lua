@@ -10,10 +10,7 @@
 #include "Main_Win32.hpp"
 #include "Resource.h"
 
-#include <commctrl.h>
-#include <windows.h>
-#include <windowsx.h>
-#include <winuser.h>
+#include <Common.Win32/Common.hpp>
 
 // Macros Windows should really have, but don't.
 #define Trackbar_GetPos(hwndCtl) ((int)(DWORD)SendMessage((hwndCtl), TBM_GETPOS, 0L, 0L))

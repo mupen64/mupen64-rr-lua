@@ -6,7 +6,6 @@
 
 #include "Common.hpp"
 #include <Common.Views/Config.hpp>
-#include <uxtheme.h>
 #include <components/RomBrowser.hpp>
 #include <components/Statusbar.hpp>
 #include <action/AppActions.hpp>

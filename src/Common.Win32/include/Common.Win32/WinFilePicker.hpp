@@ -7,8 +7,7 @@
 
 #include <filesystem>
 #if defined(_WIN32)
-#include <windows.h>
-#include <wrl/client.h>
+#include <Common.Win32/Common.hpp>
 #elif defined(__linux__)
 #error "Don't include this file on Linux"
 #endif

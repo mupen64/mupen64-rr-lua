@@ -12,7 +12,6 @@
 #include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
-#include <strsafe.h>
 #include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <action/ActionMenu.hpp>

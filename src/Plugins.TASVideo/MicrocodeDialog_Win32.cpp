@@ -9,9 +9,7 @@
 #include "TASVideo.hpp"
 #include "Resource.h"
 #include "GBI.hpp"
-#include <windows.h>
-#include <commctrl.h>
-#include <windowsx.h>
+#include <Common.Win32/Common.hpp>
 
 INT_PTR CALLBACK MicrocodeDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

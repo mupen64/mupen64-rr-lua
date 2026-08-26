@@ -13,9 +13,7 @@
 #include "OpenGL.hpp"
 #include "RSP.hpp"
 #include "Textures.h"
-#include <windows.h>
-#include <commctrl.h>
-#include <windowsx.h>
+#include <Common.Win32/Common.hpp>
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 

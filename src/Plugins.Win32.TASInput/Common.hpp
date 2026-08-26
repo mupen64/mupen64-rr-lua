@@ -8,15 +8,9 @@
 
 #include <Common/VersionNameHelpers.hpp>
 #include <m64rr/API.hpp>
-#include <tchar.h>
-#include <windows.h>
-#include <shlobj.h>
-#include <commctrl.h>
-#include <windowsx.h>
-#include <shellscalingapi.h>
+#include <Common.Win32/Common.hpp>
 #include <m64rr/Types.hpp>
 #include <Resource.h>
-#include <gdiplus.h>
 #pragma warning(pop)
 
 #include <Helpers.hpp>

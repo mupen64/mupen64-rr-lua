@@ -7,13 +7,7 @@
 
 #include <filesystem>
 
-#include <windows.h>
-#include <windowsx.h>
-#include <commdlg.h>
-#include <commctrl.h>
-#include <shlobj.h>
-#include <gdiplus.h>
-#include <wrl/client.h>
+#include <Common.Win32/Common.hpp>
 #include <spdlog/spdlog.h>
 #include <Common.Views/IDialogService.hpp>
 
