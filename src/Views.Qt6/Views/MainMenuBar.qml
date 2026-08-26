@@ -114,7 +114,6 @@ MenuBar {
                 root.core.frameAdvance(1);
             }
         }
-        // TODO: multi-frame advance
         Action {
             id: actMultiFrameAdvance
             property int frameCount: 0
@@ -285,8 +284,8 @@ MenuBar {
         root.core.paused: [
             actPause.checked,
             // menu interactions
-            root.opened, 
-            diaLoadState.visible, 
+            root.opened,
+            diaLoadState.visible,
             diaSaveState.visible
         ].some(value => value)
         // Tie GS button state to the GSButton item

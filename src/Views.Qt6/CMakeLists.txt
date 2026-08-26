@@ -33,15 +33,24 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
 qt_add_qml_module(Mupen64RR.Views.Qt6 URI "Views" QML_FILES
     "Views/DialogService.qml"
     "Views/MainMenuBar.qml"
+    "Views/MainSettings.qml"
     "Views/MainWindow.qml"
     "Views/MessageBox.qml"
 )
+# Singletons must be declared here too
+set_source_files_properties(
+    "Views/MainSettings.qml"
+    PROPERTIES
+    QT_QML_SINGLETON_TYPE ON
+)
+
 
 # MinGW needs this for std::print(ln) some reason...
 if(MINGW)
     target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE stdc++exp)
 endif()
 
+# Deploy Qt dependencies on Windows
 windeployqt6(
     TARGET Mupen64RR.Views.Qt6
     DEPLOY_TO_BUILD_DIR
