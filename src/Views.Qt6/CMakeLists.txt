@@ -29,19 +29,27 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Qt::Quick
     Qt::QuickControls2
 )
-
-qt_add_qml_module(Mupen64RR.Views.Qt6 URI "Views" QML_FILES
+set(qml_sources
     "Views/DialogService.qml"
     "Views/MainMenuBar.qml"
-    "Views/MainSettings.qml"
     "Views/MainWindow.qml"
     "Views/MessageBox.qml"
 )
-# Singletons must be declared here too
+set(qml_singleton_sources
+    "Views/SettingsCore.qml"
+    "Views/SettingsPaths.qml"
+    "Views/SettingsVCR.qml"
+)
+# mark sources as singletons *before* qt_add_qml_module as
+# generation of qmldir happens there
 set_source_files_properties(
-    "Views/MainSettings.qml"
+    ${qml_singleton_sources}
     PROPERTIES
-    QT_QML_SINGLETON_TYPE ON
+    QT_QML_SINGLETON_TYPE TRUE
+)
+qt_add_qml_module(Mupen64RR.Views.Qt6
+    URI "Views"
+    QML_FILES ${qml_sources} ${qml_singleton_sources}
 )
 
 

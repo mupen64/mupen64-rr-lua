@@ -66,7 +66,7 @@ Dialog {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: 256
-            
+
             verticalAlignment: Text.AlignVCenter
 
             text: dialog.content

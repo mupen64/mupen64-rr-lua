@@ -7,10 +7,10 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs as Dialogs
 import QtQuick.Layouts
 
 import Core
+import Views
 
 ApplicationWindow {
     id: mainWindow
@@ -32,6 +32,14 @@ ApplicationWindow {
         mainWindow.maximumHeight: mainWindow.minimumHeight
     }
 
+    // INITIALIZATION
+    // =====================================
+    Component.onCompleted: {
+        SettingsCore.sync()
+        SettingsPaths.sync()
+        SettingsVCR.sync()
+    }
+
     // MENU BAR
     // =====================================
 
@@ -39,6 +47,8 @@ ApplicationWindow {
         core: core
         dialogService: dialogService
     }
+
+
 
     // CONTENT VIEW
     // =====================================
@@ -56,13 +66,10 @@ ApplicationWindow {
             Button {
                 anchors.centerIn: parent
                 text: "MessageBox test"
-                onClicked: {
-                    dialogService.queueInfoDialog(null, "Title", "Content", CoreDialogType.Error);
-                }
             }
         }
         Item {
-            // All children in the game view will be fixed in size. 
+            // All children in the game view will be fixed in size.
             // Use their bounding box as the minimum size.
             implicitWidth: childrenRect.width
             implicitHeight: childrenRect.height
@@ -100,7 +107,7 @@ ApplicationWindow {
         onTriggered: core.invalidateVisuals()
     }
 
-    // AUXILIARY OBJECTS
+    // Auxiliary compoments
     // =====================================
 
     DialogService {
