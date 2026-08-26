@@ -13,6 +13,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # common headers and PCH
 add_subdirectory(Common)
+
+function(mupen64rr_reuse_common_pch target)
+    target_precompile_headers("${target}" REUSE_FROM Mupen64RR.Common)
+endfunction()
 # core API and headers
 add_subdirectory(Core)
 # shared view functions

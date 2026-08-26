@@ -7,7 +7,6 @@
 #include "Common.hpp"
 #include <lua/LuaCallbacks.hpp>
 #include <lua/LuaManager.hpp>
-#include <Common/Assert.hpp>
 
 #define RET_IF_NOT_REGISTERED(key)                                                                                     \
     do                                                                                                                 \

@@ -12,9 +12,8 @@
 #include <unordered_map>
 #include <cassert>
 #include <ranges>
-#include <windows.h>
-#include <windowsx.h>
-#include <commctrl.h>
+
+#include <Common.Win32/Common.hpp>
 
 namespace ResizeAnchor
 {

@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Common/CommonPCH.hpp>
 #include "Main.hpp"
 #include "Main_Win32.hpp"
 #include "Config.hpp"
-#include <Common/IOUtils.hpp>
+
 #include "SDLBackend.hpp"
 #include "m64rr/Types.hpp"
-#include <Common/VersionNameHelpers.hpp>
 #include <m64rr/Plugin.hpp>
 
 M64RRSpec::PluginInit *g_plugin = nullptr;

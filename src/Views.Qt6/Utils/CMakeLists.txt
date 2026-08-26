@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 qt_add_library(Mupen64RR.Views.Qt6.Utils STATIC)
+mupen64rr_reuse_common_pch(Mupen64RR.Views.Qt6.Utils)
 qt_add_qml_module(Mupen64RR.Views.Qt6.Utils URI "Utils" SOURCES
     "include/QJSFunctions.hpp"
     "include/QtIconImageProvider.hpp"

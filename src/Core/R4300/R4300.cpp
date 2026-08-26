@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Common/CommonPCH.hpp>
 #include "Rom.hpp"
 #include <Core.hpp>
-#include <format>
+
 #include <condition_variable>
 #include <Memory/Memory.hpp>
 #include <Memory/Pif.hpp>

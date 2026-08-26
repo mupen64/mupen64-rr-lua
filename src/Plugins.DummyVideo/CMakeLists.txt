@@ -13,6 +13,7 @@ set_target_properties(Mupen64RR.Plugins.DummyVideo PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
+mupen64rr_reuse_common_pch(Mupen64RR.Plugins.DummyVideo)
 target_link_libraries(Mupen64RR.Plugins.DummyVideo PRIVATE Mupen64RR.Plugins.Common)
 target_compile_definitions(Mupen64RR.Plugins.DummyVideo PRIVATE
     M64RRGetMetadata=M64RRBuiltinNoVideoGetMetadata

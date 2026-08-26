@@ -38,6 +38,7 @@ target_link_libraries(Mupen64RR.Plugins.TASAudio PRIVATE
     nlohmann_json::nlohmann_json
 )
 
+mupen64rr_reuse_common_pch(Mupen64RR.Plugins.TASAudio)
 target_compile_features(Mupen64RR.Plugins.TASAudio PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Plugins.TASAudio PROPERTIES
     OUTPUT_NAME "TASAudio"

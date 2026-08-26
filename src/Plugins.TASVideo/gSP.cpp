@@ -14,7 +14,6 @@
 #include "3DMath.hpp"
 #include "OpenGL.hpp"
 #include "CRC.hpp"
-#include <string.h>
 #include "convert.hpp"
 #include "S2DEX.hpp"
 #include "VI.hpp"

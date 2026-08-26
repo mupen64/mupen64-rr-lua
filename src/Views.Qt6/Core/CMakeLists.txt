@@ -5,10 +5,11 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 qt_add_library(Mupen64RR.Views.Qt6.Core STATIC)
+mupen64rr_reuse_common_pch(Mupen64RR.Views.Qt6.Core)
 qt_add_qml_module(Mupen64RR.Views.Qt6.Core URI "Core"
     IMPORTS
         TARGET Mupen64RR.Views.Qt6.Utils
-    SOURCES 
+    SOURCES
         "plugin/BuiltinTAS.hpp"
         "plugin/Plugin.hpp"
         "CoreEnums.hpp"

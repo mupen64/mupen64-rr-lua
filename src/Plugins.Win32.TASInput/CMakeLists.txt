@@ -24,6 +24,7 @@ add_library(Mupen64RR.Plugins.Win32.TASInput STATIC
 
     "Resource.rc"
 )
+mupen64rr_reuse_common_pch(Mupen64RR.Plugins.Win32.TASInput)
 target_compile_features(Mupen64RR.Plugins.Win32.TASInput PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Plugins.Win32.TASInput PROPERTIES
     CXX_STANDARD 23

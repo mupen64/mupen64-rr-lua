@@ -66,6 +66,8 @@ add_library(Mupen64RR.Plugins.TASVideo STATIC
     "2xSAI.cpp"
 )
 
+mupen64rr_reuse_common_pch(Mupen64RR.Plugins.TASVideo)
+
 if (MUPEN64RR_BUILD_WIN32)
     target_sources(Mupen64RR.Plugins.TASVideo PRIVATE
         "MicrocodeDialog_Win32.hpp"

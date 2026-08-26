@@ -5,7 +5,6 @@
  */
 
 #include "Common.hpp"
-#include <dxgi1_3.h>
 #include "DCompPresenter.hpp"
 
 void DCompPresenter::create_size_dependent_resources()

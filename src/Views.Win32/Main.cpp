@@ -5,14 +5,13 @@
  */
 
 #include "Common.hpp"
-#include <Common/Assert.hpp>
+
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/Messages.hpp>
 #include <plugin/Plugin.hpp>
 #include <ThreadPool.hpp>
-#include <strsafe.h>
 #include <CaptureManager.hpp>
 #include <components/CoreUtils.hpp>
 #include <action/ActionMenu.hpp>

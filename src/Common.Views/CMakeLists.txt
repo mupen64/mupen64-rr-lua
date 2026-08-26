@@ -32,6 +32,7 @@ if (WIN32)
     )
 endif()
 
+mupen64rr_reuse_common_pch(Mupen64RR.Common.Views)
 target_compile_features(Mupen64RR.Common.Views PUBLIC cxx_std_23)
 target_include_directories(Mupen64RR.Common.Views PUBLIC include)
 

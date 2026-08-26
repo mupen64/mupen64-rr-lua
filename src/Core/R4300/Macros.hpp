@@ -8,9 +8,7 @@
 
 #if defined(_M_X64) || defined(__x86_64__)
 #include <immintrin.h>
-#include <stdint.h>
 #include <fenv.h>
-#include <stdio.h>
 
 #ifdef _MSC_VER
 #include <intrin.h>
