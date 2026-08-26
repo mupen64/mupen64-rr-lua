@@ -138,6 +138,7 @@ INT_PTR CALLBACK toast_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
                 toast->title_hwnd, nullptr, text_x, padding, text_width, title_height, SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowPos(toast->content_hwnd, nullptr, text_x, padding + title_height, text_width,
             std::max(1, height - 2 * padding - title_height), SWP_NOZORDER | SWP_NOACTIVATE);
+        RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
         return 0;
     }
 

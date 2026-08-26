@@ -1204,6 +1204,8 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         g_inst = GetModuleHandle(nullptr);
         g_plugin = event.initiate.init;
 
+        load_config();
+
         for (int i = 0; i < 4; ++i)
         {
             g_plugin->controllers[i].present = new_config.controller_active[i];
