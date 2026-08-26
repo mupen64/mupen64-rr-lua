@@ -22,13 +22,10 @@
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
 
-using t_options_group = ConfigDialog::t_options_group;
-using t_options_item = ConfigDialog::t_options_item;
-
 t_plugin_discovery_result plugin_discovery_result;
-std::vector<t_options_group> g_option_groups;
-std::vector<t_options_item> g_option_items;
-static std::vector<t_options_group> g_static_option_groups;
+std::vector<OptionGroup> g_option_groups;
+std::vector<OptionItem> g_option_items;
+static std::vector<OptionGroup> g_static_option_groups;
 t_config g_prev_config;
 
 std::thread g_plugin_discovery_thread;
@@ -49,215 +46,6 @@ struct t_tab_context
     size_t edit_option_item_index;
     std::unordered_map<size_t, size_t> item_index_map;
 };
-
-static std::string to_str_default(const double value)
-{
-    return std::format("{:.15g}", value);
-}
-
-static double get_number_value(const t_options_item::data_variant &value)
-{
-    if (std::holds_alternative<int32_t>(value))
-    {
-        return static_cast<double>(std::get<int32_t>(value));
-    }
-    if (std::holds_alternative<double>(value))
-    {
-        return std::get<double>(value);
-    }
-
-    NEED(false, "Number option does not hold an int32_t or double value");
-    return 0.0;
-}
-
-static t_options_item::data_variant parse_number_value(
-    const std::string &text, const t_options_item::data_variant &current)
-{
-    if (std::holds_alternative<int32_t>(current))
-    {
-        return std::stoi(text);
-    }
-    if (std::holds_alternative<double>(current))
-    {
-        return std::stod(text);
-    }
-
-    NEED(false, "Number option does not hold an int32_t or double value");
-    return current;
-}
-
-std::string t_options_item::get_name() const
-{
-    if (type == Type::Hotkey) return ActionManager::get_display_name(name, true);
-    return name;
-}
-
-std::string t_options_item::get_value_name() const
-{
-    const auto value = current_value.get();
-
-    switch (type)
-    {
-    case Type::Bool:
-        return std::get<int32_t>(value) != 0 ? "On" : "Off";
-    case Type::Number:
-        return to_str_default(get_number_value(value));
-    case Type::Enum: {
-        const auto enum_value = std::get<int32_t>(value);
-
-        for (const auto &pair : possible_values)
-        {
-            if (enum_value == pair.second)
-            {
-                return pair.first;
-            }
-        }
-
-        return std::format("Unknown ({})", enum_value);
-    }
-    case Type::String:
-        return std::get<std::string>(value);
-    case Type::Hotkey:
-        return std::get<Hotkey>(value).to_string();
-    case Type::Folder:
-        return std::get<std::string>(value);
-    default:
-        NEED(false, "Unhandled option type in t_options_item::get_value_name");
-    }
-    return "";
-}
-
-void t_options_item::reset_to_default() const
-{
-    current_value.set(default_value.get());
-}
-
-std::string t_options_item::get_friendly_info() const
-{
-    std::string str;
-
-    if (get_readonly_reason().has_value())
-    {
-        str += std::format("⚠️ - {}\n\n", get_readonly_reason().value());
-    }
-
-    str += tooltip.empty() ? "(no further information available)" : tooltip;
-
-    if (possible_values.empty())
-    {
-        return str;
-    }
-
-    str += "\r\n\r\n";
-    for (const auto &pair : possible_values)
-    {
-        str += std::format("{} - {}", pair.second, pair.first);
-
-        if (pair.second == std::get<int32_t>(current_value.get()))
-        {
-            str += " (default)";
-        }
-
-        str += "\r\n";
-    }
-
-    return str;
-}
-
-bool t_options_item::edit(const HWND hwnd)
-{
-    switch (type)
-    {
-    case Type::Bool: {
-        const auto new_value = std::get<int32_t>(current_value.get()) == 0 ? 1 : 0;
-        current_value.set(new_value);
-        return true;
-    }
-    case Type::Number: {
-        const auto value = current_value.get();
-        const auto result = TextEditDialog::show({.parent_hwnd = hwnd,
-            .text = to_str_default(get_number_value(value)),
-            .caption = std::format("Edit value for {}", name)});
-        if (!result.has_value())
-        {
-            break;
-        }
-
-        try
-        {
-            current_value.set(parse_number_value(result.value(), value));
-            return true;
-        }
-        catch (...)
-        {
-        }
-        break;
-    }
-    case Type::Enum: {
-        // 1. Find the index of the currently selected item, while falling back to the first possible value if there's
-        // no match
-        int32_t val = possible_values[0].second;
-        for (const auto &[_, possible_value] : possible_values)
-        {
-            if (std::get<int32_t>(current_value.get()) == possible_value)
-            {
-                val = possible_value;
-                break;
-            }
-        }
-
-        // 2. Find the lowest and highest values in the vector
-        int32_t min_possible_value = INT32_MAX;
-        int32_t max_possible_value = INT32_MIN;
-        for (const auto &val : possible_values | std::views::values)
-        {
-            max_possible_value = std::max(val, max_possible_value);
-            min_possible_value = std::min(val, min_possible_value);
-        }
-
-        // 2. Bump it, wrapping around if needed
-        val++;
-        if (val > max_possible_value)
-        {
-            val = min_possible_value;
-        }
-
-        // 3. Apply the change
-        current_value.set(val);
-        return true;
-    }
-    case Type::String: {
-        const auto value = std::get<std::string>(current_value.get());
-        const auto result = TextEditDialog::show(
-            {.parent_hwnd = hwnd, .text = value, .caption = std::format("Edit value for {}", name)});
-        if (result.has_value())
-        {
-            current_value.set(result.value());
-            return true;
-        }
-        break;
-    }
-    case Type::Hotkey: {
-        auto hotkey = std::get<Hotkey>(current_value.get());
-        HotkeyUtils::show_prompt(hwnd, std::format("Choose a hotkey for {}", name), hotkey);
-        HotkeyUtils::try_associate_hotkey(hwnd, name, hotkey, false);
-        return true;
-    }
-    case Type::Folder: {
-        const auto path = FilePicker::show_folder_dialog(this->name, hwnd);
-        if (!path.empty())
-        {
-            current_value.set(path.string());
-            return true;
-        }
-        break;
-    }
-    default:
-        break;
-    }
-
-    return false;
-}
 
 static std::optional<std::string> readonly_when_emu_running()
 {
@@ -702,35 +490,35 @@ INT_PTR CALLBACK plugins_cfg(const HWND hwnd, const UINT message, const WPARAM w
     return TRUE;
 }
 
-std::vector<t_options_group> get_static_option_groups()
+std::vector<OptionGroup> get_static_option_groups()
 {
     size_t id = 0;
 
-    t_options_group folders_group = {.id = id++, .name = "Folders"};
+    OptionGroup folders_group = {.id = id++, .name = "Folders"};
 
-    t_options_group interface_group = {.id = id++, .name = "Interface"};
+    OptionGroup interface_group = {.id = id++, .name = "Interface"};
 
-    t_options_group statusbar_group = {.id = id++, .name = "Statusbar"};
+    OptionGroup statusbar_group = {.id = id++, .name = "Statusbar"};
 
-    t_options_group piano_roll_group = {.id = id++, .name = "Piano Roll"};
+    OptionGroup piano_roll_group = {.id = id++, .name = "Piano Roll"};
 
-    t_options_group seek_group = {.id = id++, .name = "Seek"};
+    OptionGroup seek_group = {.id = id++, .name = "Seek"};
 
-    t_options_group capture_group = {.id = id++, .name = "Capture"};
+    OptionGroup capture_group = {.id = id++, .name = "Capture"};
 
-    t_options_group core_group = {.id = id++, .name = "Core"};
+    OptionGroup core_group = {.id = id++, .name = "Core"};
 
-    t_options_group vcr_group = {.id = id++, .name = "VCR"};
+    OptionGroup vcr_group = {.id = id++, .name = "VCR"};
 
-    t_options_group lua_group = {.id = id++, .name = "Lua"};
+    OptionGroup lua_group = {.id = id++, .name = "Lua"};
 
-    t_options_group debug_group = {.id = id++, .name = "Debug"};
+    OptionGroup debug_group = {.id = id++, .name = "Debug"};
 
-#define RPROP(T, x) t_options_item::t_readonly_property([] { return Config::default_config().x; })
+#define RPROP(T, x) OptionItem::ReadableProp([] { return Config::default_config().x; })
 
 #define RWPROP(T, x, c)                                                                                                \
-    t_options_item::t_readwrite_property([] { return g_config.x; },                                                    \
-        [](const t_options_item::data_variant &value) {                                                                \
+    OptionItem::WritableProp([] { return g_config.x; },                                                    \
+        [](const OptionItem::DataVariant &value) {                                                                \
             g_config.x = std::get<T>(value);                                                                           \
             do                                                                                                         \
             {                                                                                                          \
@@ -740,34 +528,34 @@ std::vector<t_options_group> get_static_option_groups()
 
 #define GENPROPS(T, x, ...) .current_value = RWPROP(T, x, __VA_ARGS__), .default_value = RPROP(T, x)
 
-    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+    folders_group.items.push_back({.type = OptionItem::Type::Folder,
         .group_id = folders_group.id,
         .name = "ROMs",
         .tooltip = "The path to the ROM folder.",
         GENPROPS(std::string, rom_directory)});
-    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+    folders_group.items.push_back({.type = OptionItem::Type::Folder,
         .group_id = folders_group.id,
         .name = "Plugins",
         .tooltip = "The path to the plugin folder.",
         GENPROPS(std::string, plugins_directory, { g_plugin_discovery_rescan = true; })});
-    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+    folders_group.items.push_back({.type = OptionItem::Type::Folder,
         .group_id = folders_group.id,
         .name = "Save Data",
         .tooltip = "The path to the save data folder.",
         GENPROPS(std::string, saves_directory),
         .get_readonly_reason = readonly_when_emu_running});
-    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+    folders_group.items.push_back({.type = OptionItem::Type::Folder,
         .group_id = folders_group.id,
         .name = "Screenshots",
         .tooltip = "The path to the screenshot folder.",
         GENPROPS(std::string, screenshots_directory)});
-    folders_group.items.push_back({.type = t_options_item::Type::Folder,
+    folders_group.items.push_back({.type = OptionItem::Type::Folder,
         .group_id = folders_group.id,
         .name = "Backup Folder",
         .tooltip = "The path to the movie backup folder.",
         GENPROPS(std::string, backups_directory)});
 
-    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
+    interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Enum,
         .group_id = interface_group.id,
         .name = "Theme",
         .tooltip = "The UI theme to use.",
@@ -777,23 +565,23 @@ std::vector<t_options_group> get_static_option_groups()
             std::make_pair("Dark", 1),
             std::make_pair("System", 2),
         }});
-    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = interface_group.id,
         .name = "Pause when unfocused",
         .tooltip = "Pause emulation when the main window isn't in focus.",
         GENPROPS(int32_t, is_unfocused_pause_enabled)});
-    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = interface_group.id,
         .name = "Automatic Update Checking",
         .tooltip = "Enables automatic update checking. Requires an internet connection.",
         GENPROPS(int32_t, automatic_update_checking)});
-    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = interface_group.id,
         .name = "Silent Mode",
         .tooltip = "Suppresses all dialogs and chooses reasonable defaults for multiple-choice dialogs.\nCan cause "
                    "data loss during normal usage; only enable in automation scenarios!",
         GENPROPS(int32_t, silent_mode)});
-    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Enum,
         .group_id = interface_group.id,
         .name = "Toast Mode",
         .tooltip = "The way toasts are displayed.\nWindow - Toasts are shown in non-modal windows.\nStatusbar - Toasts "
@@ -804,19 +592,19 @@ std::vector<t_options_group> get_static_option_groups()
             std::make_pair("Statusbar", (int32_t)t_config::ToastMode::Statusbar),
             std::make_pair("Dialog", (int32_t)t_config::ToastMode::Dialog),
         }});
-    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = interface_group.id,
         .name = "Keep working directory",
         .tooltip = "Keep the working directory specified by the caller program at startup.\nWhen "
                    "disabled, mupen changes the working directory to its current path.",
         GENPROPS(int32_t, keep_default_working_directory)});
-    interface_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    interface_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = interface_group.id,
         .name = "Auto-increment Slot",
         .tooltip = "Automatically increment the save slot upon saving a state.",
         GENPROPS(int32_t, increment_slot)});
 
-    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Enum,
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Enum,
         .group_id = statusbar_group.id,
         .name = "Layout",
         .tooltip = "The statusbar layout preset.\nClassic - The legacy layout\nModern - The new layout containing "
@@ -827,52 +615,52 @@ std::vector<t_options_group> get_static_option_groups()
             std::make_pair("Modern", (int32_t)t_config::StatusbarLayout::Modern),
             std::make_pair("Modern+", (int32_t)t_config::StatusbarLayout::ModernWithReadOnly),
         }});
-    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Zero-index",
         .tooltip = "Show indicies in the statusbar, such as VCR frame counts, relative to 0 instead of 1.",
         GENPROPS(int32_t, vcr_0_index)});
-    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale down to fit window",
         .tooltip = "Whether the statusbar is allowed to scale its segments down.",
         GENPROPS(int32_t, statusbar_scale_down)});
-    statusbar_group.items.emplace_back(t_options_item{.type = t_options_item::Type::Bool,
+    statusbar_group.items.emplace_back(OptionItem{.type = OptionItem::Type::Bool,
         .group_id = statusbar_group.id,
         .name = "Scale up to fill window",
         .tooltip = "Whether the statusbar is allowed to scale its segments up.",
         GENPROPS(int32_t, statusbar_scale_up)});
-    piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    piano_roll_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = piano_roll_group.id,
         .name = "Constrain edit to column",
         .tooltip = "Whether piano roll edits are constrained to the column they started on.",
         GENPROPS(int32_t, piano_roll_constrain_edit_to_column),
     });
-    piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    piano_roll_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = piano_roll_group.id,
         .name = "History size",
         .tooltip = "Maximum size of the history list.",
         GENPROPS(int32_t, piano_roll_undo_stack_size),
     });
-    piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    piano_roll_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = piano_roll_group.id,
         .name = "Keep selection visible",
         .tooltip = "Whether the piano roll will try to keep the selection visible.",
         GENPROPS(int32_t, piano_roll_keep_selection_visible),
     });
-    piano_roll_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    piano_roll_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = piano_roll_group.id,
         .name = "Keep playhead visible",
         .tooltip = "Whether the piano roll will try to keep the playhead visible.",
         GENPROPS(int32_t, piano_roll_keep_playhead_visible),
     });
 
-    seek_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    seek_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = seek_group.id,
         .name = "Savestate Interval",
         .tooltip = "The interval at which to create savestates for seeking. Piano Roll is exclusively read-only if "
@@ -881,8 +669,8 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.seek_savestate_interval),
         .get_readonly_reason = readonly_when_vcr_active,
     });
-    seek_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    seek_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = seek_group.id,
         .name = "Savestate Max Count",
         .tooltip = "The maximum amount of savestates to keep in memory for seeking.\nHigher numbers might cause an "
@@ -890,15 +678,15 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.seek_savestate_max_count),
     });
 
-    capture_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    capture_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = capture_group.id,
         .name = "Delay",
         .tooltip = "Miliseconds to wait before capturing a frame. Useful for syncing with external programs.",
         GENPROPS(int32_t, capture_delay),
     });
-    capture_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
+    capture_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Enum,
         .group_id = capture_group.id,
         .name = "Encoder",
         .tooltip = "The encoder to use for capturing.",
@@ -910,8 +698,8 @@ std::vector<t_options_group> get_static_option_groups()
             },
         .get_readonly_reason = readonly_when_capturing,
     });
-    capture_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
+    capture_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Enum,
         .group_id = capture_group.id,
         .name = "Mode",
         .tooltip = "The video source to use for capturing video frames.\nPlugin - Captures frames solely from the "
@@ -928,15 +716,15 @@ std::vector<t_options_group> get_static_option_groups()
             },
         .get_readonly_reason = readonly_when_capturing,
     });
-    capture_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    capture_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = capture_group.id,
         .name = "Stop at Movie End",
         .tooltip = "Whether capturing is automatically stopped when a movie ends.",
         GENPROPS(int32_t, stop_capture_at_movie_end),
     });
-    capture_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
+    capture_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Enum,
         .group_id = capture_group.id,
         .name = "Sync",
         .tooltip = "The strategy to use for synchronizing video and audio during capture.\nNone - No "
@@ -950,16 +738,16 @@ std::vector<t_options_group> get_static_option_groups()
             },
         .get_readonly_reason = readonly_when_capturing,
     });
-    capture_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::String,
+    capture_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::String,
         .group_id = capture_group.id,
         .name = "FFmpeg Path",
         .tooltip = "The path to the FFmpeg executable to use for capturing.",
         GENPROPS(std::string, ffmpeg_path),
         .get_readonly_reason = readonly_when_capturing,
     });
-    capture_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::String,
+    capture_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::String,
         .group_id = capture_group.id,
         .name = "FFmpeg Arguments",
         .tooltip = "FFmpeg arguments to be passed to FFmpeg when capturing.",
@@ -967,8 +755,8 @@ std::vector<t_options_group> get_static_option_groups()
         .get_readonly_reason = readonly_when_capturing,
     });
 
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Enum,
         .group_id = core_group.id,
         .name = "Type",
         .tooltip =
@@ -983,81 +771,81 @@ std::vector<t_options_group> get_static_option_groups()
             },
         .get_readonly_reason = readonly_when_emu_running,
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = core_group.id,
         .name = "Undo Savestate Load",
         .tooltip = "Whether undo savestate load functionality is enabled.",
         GENPROPS(int32_t, core.st_undo_load),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = core_group.id,
         .name = "Max Lag Frames",
         .tooltip = "The maximum amount of lag frames before the core emits a warning\n0 - Disabled",
         GENPROPS(int32_t, core.max_lag),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = core_group.id,
         .name = "WiiVC Mode",
         .tooltip = "Enables WiiVC emulation.",
         GENPROPS(int32_t, core.wii_vc_emulation),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = core_group.id,
         .name = "Emulate RCP Lag",
         .tooltip = "Enables RCP lag emulation, which is a more accurate emulation of lag frames.",
         GENPROPS(int32_t, core.rcp_lag_emulation),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = core_group.id,
         .name = "CPU Counter Factor",
         .tooltip = "The CPU counter factor. Higher values reduce effective lag.",
         GENPROPS(double, core.cpu_cf),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = core_group.id,
         .name = "RCP Lag Factor",
         .tooltip = "The RCP lag factor. Lower values reduce effective lag, higher values increase it.",
         GENPROPS(double, core.rcp_lag_factor),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = core_group.id,
         .name = "Emulate Float Crashes",
         .tooltip = "Emulate float operation-related crashes which would also crash on real hardware",
         GENPROPS(int32_t, core.float_exception_emulation),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = core_group.id,
         .name = "Emulate SD Card",
         .tooltip =
             "Enable SD card emulation.\nRequires a VHD-formatted SD card file named card.vhd in the save data folder.",
         GENPROPS(int32_t, core.use_summercart),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = core_group.id,
         .name = "Instant Savestate Update",
         .tooltip = "Saves and loads game graphics to savestates to allow instant graphics updates when loading "
                    "savestates.\nGreatly increases savestate saving and loading time.",
         GENPROPS(int32_t, core.st_screenshot),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = core_group.id,
         .name = "Fast Savestates",
         .tooltip = "Compress savestates using LZ4, faster than GZip.\nDisable to create savestates that are "
                    "compatible with older Mupen versions.",
         GENPROPS(int32_t, core.st_lz4),
     });
-    core_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Number,
+    core_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Number,
         .group_id = core_group.id,
         .name = "ROM Cache Size",
         .tooltip = "Size of the ROM cache.\nImproves ROM loading performance at the cost of data staleness and high "
@@ -1065,16 +853,16 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.rom_cache_size),
     });
 
-    vcr_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    vcr_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = vcr_group.id,
         .name = "Movie Backups",
         .tooltip = "Generate a backup of the currently recorded movie when loading a savestate.\nBackups are saved in "
                    "the backups folder.",
         GENPROPS(int32_t, core.vcr_backups),
     });
-    vcr_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    vcr_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = vcr_group.id,
         .name = "Extended Movie Format",
         .tooltip = "Whether movies are written using the new extended format.\nUseful when opening movies in external "
@@ -1082,8 +870,8 @@ std::vector<t_options_group> get_static_option_groups()
                    "are set to 0.",
         GENPROPS(int32_t, core.vcr_write_extended_format),
     });
-    vcr_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    vcr_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = vcr_group.id,
         .name = "Record Resets",
         .tooltip = "Record manually performed resets to the current movie.\nThese resets will be repeated when the "
@@ -1091,8 +879,8 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.is_reset_recording_enabled),
     });
 
-    lua_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Enum,
+    lua_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Enum,
         .group_id = lua_group.id,
         .name = "Presenter",
         .tooltip =
@@ -1105,8 +893,8 @@ std::vector<t_options_group> get_static_option_groups()
             },
         .get_readonly_reason = readonly_when_lua_active,
     });
-    lua_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    lua_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = lua_group.id,
         .name = "Lazy Renderer Initialization",
         .tooltip =
@@ -1115,22 +903,22 @@ std::vector<t_options_group> get_static_option_groups()
         .get_readonly_reason = readonly_when_lua_active,
     });
 
-    debug_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    debug_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = debug_group.id,
         .name = "Audio Delay",
         .tooltip = "Whether to delay audio interrupts.",
         GENPROPS(int32_t, core.is_audio_delay_enabled),
     });
-    debug_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    debug_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = debug_group.id,
         .name = "Compiled Jump",
         .tooltip = "Whether the Dynamic Recompiler core compiles jumps.",
         GENPROPS(int32_t, core.is_compiled_jump_enabled),
     });
-    debug_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    debug_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = debug_group.id,
         .name = "Accurate C.EQ.S",
         .tooltip = "Whether the C_EQ_S instruction produces `(NaN == any) == false` when using the Dynamic Recompiler "
@@ -1139,8 +927,8 @@ std::vector<t_options_group> get_static_option_groups()
         GENPROPS(int32_t, core.c_eq_s_nan_accurate),
         .get_readonly_reason = readonly_when_emu_running,
     });
-    debug_group.items.emplace_back(t_options_item{
-        .type = t_options_item::Type::Bool,
+    debug_group.items.emplace_back(OptionItem{
+        .type = OptionItem::Type::Bool,
         .group_id = debug_group.id,
         .name = "Accurate RDP Completion",
         .tooltip = "Whether RDP task completion is signalled after RSP task completion instead of at the same "
@@ -1228,11 +1016,11 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         auto option_item = g_option_items[ctx->item_index_map.at(ctx->edit_option_item_index)];
         auto str = reinterpret_cast<char *>(l_param);
 
-        if (option_item.type == t_options_item::Type::Number)
+        if (option_item.type == OptionItem::Type::Number)
         {
             try
             {
-                option_item.current_value.set(parse_number_value(str, option_item.current_value.get()));
+                option_item.current_value.set(OptionUtils::parse_number_value(str, option_item.current_value.get()));
             }
             catch (...)
             {
@@ -1267,11 +1055,11 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         AppendMenu(h_menu, MF_SEPARATOR, 100, "");
         switch (option_item.type)
         {
-        case t_options_item::Type::Hotkey:
+        case OptionItem::Type::Hotkey:
             AppendMenu(h_menu, MF_STRING, 4, "Clear");
             AppendMenu(h_menu, MF_SEPARATOR, 100, "");
             break;
-        case t_options_item::Type::Folder:
+        case OptionItem::Type::Folder:
             AppendMenu(h_menu, MF_STRING, 5, "Show in Explorer");
             AppendMenu(h_menu, MF_SEPARATOR, 100, "");
             break;
@@ -1367,7 +1155,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
             for (const auto &wanted_group : ctx->groups)
             {
                 auto it = std::find_if(g_option_groups.begin(), g_option_groups.end(),
-                    [&](const t_options_group &group) { return group.name == wanted_group; });
+                    [&](const OptionGroup &group) { return group.name == wanted_group; });
                 if (it != g_option_groups.end())
                 {
                     groups.emplace_back(it->id, it->name);
@@ -1408,7 +1196,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 }
 
                 // We use the default detached editing, except for numbers, which are edited inline.
-                if (global_item.type != t_options_item::Type::Number)
+                if (global_item.type != OptionItem::Type::Number)
                 {
                     (void)global_item.edit(ctx->hwnd);
                     ListView_RedrawItems(ctx->lv_hwnd, 0, ListView_GetItemCount(ctx->lv_hwnd));
@@ -1439,7 +1227,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 WinDarkMode::attach(ctx->edit_hwnd);
 
                 const auto value = global_item.current_value.get();
-                Edit_SetText(ctx->edit_hwnd, to_str_default(get_number_value(value)).c_str());
+                Edit_SetText(ctx->edit_hwnd, OptionUtils::to_str_default(OptionUtils::get_number_value(value)).c_str());
 
                 PostMessage(ctx->hwnd, WM_NEXTDLGCTL, (WPARAM)ctx->edit_hwnd, TRUE);
 
@@ -1505,7 +1293,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
  * Mupen64 > Emulation > Frame Advance is grouped under "Mupen64 > Emulation"
  * SM64Lua > Match Yaw is grouped under "SM64Lua"
  */
-static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
+static std::vector<OptionGroup> generate_hotkey_groups(size_t base_id)
 {
     std::vector<std::string> unique_group_names;
     const auto all_actions = ActionManager::get_actions_matching_filter("*");
@@ -1537,12 +1325,12 @@ static std::vector<t_options_group> generate_hotkey_groups(size_t base_id)
         }
     }
 
-    std::vector<t_options_group> groups;
+    std::vector<OptionGroup> groups;
     groups.reserve(unique_group_names.size());
 
     for (const auto &name : unique_group_names)
     {
-        groups.emplace_back(t_options_group{.id = base_id++, .name = name});
+        groups.emplace_back(OptionGroup{.id = base_id++, .name = name});
     }
 
     return groups;
@@ -1658,7 +1446,7 @@ void ConfigDialog::show_app_settings()
     Messenger::broadcast<Messenger::Message::ConfigLoaded>();
 }
 
-std::vector<t_options_group> ConfigDialog::get_option_groups()
+std::vector<OptionGroup> ConfigDialog::get_option_groups()
 {
     if (g_static_option_groups.empty())
     {
@@ -1682,16 +1470,16 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
                 continue;
             }
 
-            const t_options_item item = {
-                .type = t_options_item::Type::Hotkey,
+            const OptionItem item = {
+                .type = OptionItem::Type::Hotkey,
                 .group_id = group.id,
                 .name = action,
-                .current_value = t_options_item::t_readwrite_property([=] { return g_config.hotkeys.at(action); },
-                    [=](const t_options_item::data_variant &value) {
+                .current_value = OptionItem::WritableProp([=] { return g_config.hotkeys.at(action); },
+                    [=](const OptionItem::DataVariant &value) {
                         g_config.hotkeys[action] = std::get<Hotkey>(value);
                     }),
                 .default_value =
-                    t_options_item::t_readonly_property([=] { return g_config.inital_hotkeys.at(action); }),
+                    OptionItem::ReadableProp([=] { return g_config.inital_hotkeys.at(action); }),
             };
 
             group.items.emplace_back(item);
@@ -1710,7 +1498,7 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
         option_group.name = name;
     }
 
-    std::vector<t_options_group> option_groups;
+    std::vector<OptionGroup> option_groups;
     option_groups.reserve(g_static_option_groups.size() + dynamic_option_groups.size());
     option_groups.insert(option_groups.end(), g_static_option_groups.begin(), g_static_option_groups.end());
     option_groups.insert(option_groups.end(), dynamic_option_groups.begin(), dynamic_option_groups.end());
@@ -1721,7 +1509,7 @@ std::vector<t_options_group> ConfigDialog::get_option_groups()
         for (auto &option_item : option_group.items)
         {
             const auto initial_value = option_item.current_value.get();
-            option_item.initial_value = t_options_item::t_readonly_property([=] { return initial_value; });
+            option_item.initial_value = OptionItem::ReadableProp([=] { return initial_value; });
         }
     }
 

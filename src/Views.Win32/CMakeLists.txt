@@ -75,6 +75,7 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     "ThreadPool.cpp"
     "CaptureManager.cpp"
     "HotkeyUtils.cpp"
+    "OptionItem_Win32.cpp"
     "WinDialogService.cpp"
     "components/CoreUtils.cpp"
     "components/Validators.cpp"

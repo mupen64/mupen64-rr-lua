@@ -35,7 +35,7 @@ struct t_listbox_item
 
     struct t_option_data
     {
-        ConfigDialog::t_options_item *item{};
+        OptionItem *item{};
     };
 
     struct t_rom_data
@@ -47,8 +47,8 @@ struct t_listbox_item
 
     static t_listbox_item make_group(const std::string &group_name);
     static t_listbox_item make_action(const std::string &action, const std::string &group);
-    static t_listbox_item make_option(ConfigDialog::t_options_item *item, const ConfigDialog::t_options_group &group);
-    static t_listbox_item make_option_group(const ConfigDialog::t_options_group &options_group);
+    static t_listbox_item make_option(OptionItem *item, const OptionGroup &group);
+    static t_listbox_item make_option_group(const OptionGroup &options_group);
     static t_listbox_item make_rom(const RomBrowser::t_simple_rom_info &rom);
 
     /**
@@ -99,7 +99,7 @@ struct t_command_palette_context
 
     std::string search_query{};
     std::vector<std::string> actions{};
-    std::vector<ConfigDialog::t_options_group> option_groups{};
+    std::vector<OptionGroup> option_groups{};
 };
 
 static t_command_palette_context g_ctx{};
@@ -138,14 +138,14 @@ t_listbox_item t_listbox_item::make_action(const std::string &action, const std:
 }
 
 t_listbox_item t_listbox_item::make_option(
-    ConfigDialog::t_options_item *options_item, const ConfigDialog::t_options_group &group)
+    OptionItem *options_item, const OptionGroup &group)
 {
     t_listbox_item item{};
     item.data = t_option_data{.item = options_item};
     return item;
 }
 
-t_listbox_item t_listbox_item::make_option_group(const ConfigDialog::t_options_group &options_group)
+t_listbox_item t_listbox_item::make_option_group(const OptionGroup &options_group)
 {
     t_listbox_item item{};
     item.data = t_group_data{.text = options_group.name};
@@ -474,8 +474,8 @@ static void add_options()
 
     for (auto &group : g_ctx.option_groups)
     {
-        std::erase_if(group.items, [&](ConfigDialog::t_options_item &item) {
-            return item.type == ConfigDialog::t_options_item::Type::Hotkey;
+        std::erase_if(group.items, [&](OptionItem &item) {
+            return item.type == OptionItem::Type::Hotkey;
         });
 
         if (group.items.empty())
