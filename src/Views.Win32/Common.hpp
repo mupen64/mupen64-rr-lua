@@ -49,13 +49,8 @@ extern "C"
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 #include <dwmapi.h>
-#include <xxh64.h>
 #include <strsafe.h>
 #include <commdlg.h>
-#include <unordered_set>
-#include <expected>
-#include <ranges>
-#include <set>
 #include <cwctype>
 #include <WinDarkMode.h>
 using Microsoft::WRL::ComPtr;

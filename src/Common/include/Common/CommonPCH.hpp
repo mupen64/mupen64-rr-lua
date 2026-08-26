@@ -47,6 +47,10 @@
 #include <variant>
 #include <vector>
 #include <latch>
+#include <expected>
+#include <print>
+#include <set>
+#include <unordered_set>
 #if !defined(_WIN32)
 // Implementation of C11 Annex K for Linux
 #include <safe_str_lib.h>
@@ -64,5 +68,7 @@
 #include <Common/StrUtils.hpp>
 #include <Common/IOUtils.hpp>
 #include <Common/Assert.hpp>
+#include <Common/FNV1A.hpp>
+#include <Common/VersionNameHelpers.hpp>
 
 #pragma warning(pop)

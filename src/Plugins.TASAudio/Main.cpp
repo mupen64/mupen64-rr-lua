@@ -10,7 +10,6 @@
 
 #include "SDLBackend.hpp"
 #include "m64rr/Types.hpp"
-#include <Common/VersionNameHelpers.hpp>
 #include <m64rr/Plugin.hpp>
 
 M64RRSpec::PluginInit *g_plugin = nullptr;

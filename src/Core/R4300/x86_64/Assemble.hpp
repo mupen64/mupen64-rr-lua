@@ -5,7 +5,6 @@
  */
 
 #pragma once
-#include <cstdint>
 
 #define EAX 0
 #define ECX 1

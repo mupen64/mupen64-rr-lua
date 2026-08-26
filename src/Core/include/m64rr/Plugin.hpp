@@ -16,7 +16,6 @@
 #endif
 
 #include "m64rr/Types.hpp"
-#include <cstdint>
 
 #if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
