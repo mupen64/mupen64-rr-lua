@@ -5,8 +5,8 @@
  */
 
 #pragma warning(push, 0)
-#include <CommonPCH.hpp>
-#include <VersionNameHelpers.hpp>
+#include <Common/CommonPCH.hpp>
+#include <Common/VersionNameHelpers.hpp>
 #include <m64rr/API.hpp>
 #include <filesystem>
 #include <string>

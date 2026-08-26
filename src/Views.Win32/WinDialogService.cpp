@@ -7,7 +7,7 @@
 #include "Common.hpp"
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
-#include <Assert.hpp>
+#include <Common/Assert.hpp>
 #include <components/Statusbar.hpp>
 #include <components/Toasts.hpp>
 

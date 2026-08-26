@@ -6,7 +6,7 @@
 
 // #include "../config.h"
 
-#include <CommonPCH.hpp>
+#include <Common/CommonPCH.hpp>
 #include <Core.hpp>
 #include <R4300/Interrupt.hpp>
 #include <Memory/Memory.hpp>

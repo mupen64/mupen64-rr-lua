@@ -5,8 +5,8 @@
  */
 
 #include "EmuContext.hpp"
-#include <IOUtils.hpp>
-#include <MiscHelpers.hpp>
+#include <Common/IOUtils.hpp>
+#include <Common/MiscHelpers.hpp>
 
 #include <atomic>
 #include <print>

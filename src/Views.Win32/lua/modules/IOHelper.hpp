@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <WinUtils.hpp>
+#include <Common.Win32/WinUtils.hpp>
 #include <components/FilePicker.hpp>
 #include <lua/LuaDialog.hpp>
 

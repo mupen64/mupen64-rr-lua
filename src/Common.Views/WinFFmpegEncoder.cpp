@@ -5,11 +5,11 @@
  */
 
 #include <Common.Views/App.hpp>
-#include <Assert.hpp>
+#include <Common/Assert.hpp>
 #include <Common.Views/WinFFmpegEncoder.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
-#include <IOUtils.hpp>
+#include <Common/IOUtils.hpp>
 #include <string>
 #include <filesystem>
 #include <cstdint>

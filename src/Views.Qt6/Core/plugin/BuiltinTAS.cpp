@@ -5,7 +5,7 @@
  */
 #include "BuiltinTAS.hpp"
 
-#include <StrUtils.hpp>
+#include <Common/StrUtils.hpp>
 
 namespace BuiltinTAS
 {

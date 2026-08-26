@@ -5,14 +5,14 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_library(Mupen64RR.Common INTERFACE
-    "include/Assert.hpp"
-    "include/CommonPCH.hpp"
-    "include/DummyPluginStub.hpp"
-    "include/IOUtils.hpp"
-    "include/MiscHelpers.hpp"
-    "include/StrUtils.hpp"
-    "include/VersionNameHelpers.hpp"
-    "include/FNV1A.hpp"
+    "include/Common/Assert.hpp"
+    "include/Common/CommonPCH.hpp"
+    "include/Common/DummyPluginStub.hpp"
+    "include/Common/IOUtils.hpp"
+    "include/Common/MiscHelpers.hpp"
+    "include/Common/StrUtils.hpp"
+    "include/Common/VersionNameHelpers.hpp"
+    "include/Common/FNV1A.hpp"
 )
 target_compile_features(Mupen64RR.Common INTERFACE cxx_std_26)
 target_include_directories(Mupen64RR.Common INTERFACE include)

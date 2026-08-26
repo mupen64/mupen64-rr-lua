@@ -5,8 +5,8 @@
  */
 
 #include "Plugin.hpp"
-#include "VersionNameHelpers.hpp"
-#include <CommonPCH.hpp>
+#include <Common/VersionNameHelpers.hpp>
+#include <Common/CommonPCH.hpp>
 
 #include <print>
 #include <variant>

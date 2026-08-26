@@ -6,7 +6,7 @@
 
 // BC1FL/BC1TL are fully JITed via gentestl.
 
-#include <CommonPCH.hpp>
+#include <Common/CommonPCH.hpp>
 #include <Core.hpp>
 #include <R4300/x86_64/Assemble.hpp>
 #include <R4300/Ops.hpp>

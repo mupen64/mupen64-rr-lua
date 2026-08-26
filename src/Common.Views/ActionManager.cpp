@@ -6,11 +6,11 @@
 
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/App.hpp>
-#include <Assert.hpp>
+#include <Common/Assert.hpp>
 #include <Common.Views/Messages.hpp>
 #include <microlru.h>
-#include <StrUtils.hpp>
-#include <IOUtils.hpp>
+#include <Common/StrUtils.hpp>
+#include <Common/IOUtils.hpp>
 #include <Common.Views/Config.hpp>
 #include <ranges>
 

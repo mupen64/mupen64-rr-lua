@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
+#include <Common/CommonPCH.hpp>
 #include "Disasm.hpp"
 #include <m64rr/API.hpp>
 

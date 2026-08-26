@@ -6,7 +6,7 @@
 #pragma once
 
 #include <future>
-#include <MiscHelpers.hpp>
+#include <Common/MiscHelpers.hpp>
 #include <QObject>
 
 namespace QtUtils

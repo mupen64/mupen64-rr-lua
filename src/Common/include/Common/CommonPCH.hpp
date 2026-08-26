@@ -60,9 +60,9 @@
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_audio.h>
 
-#include "MiscHelpers.hpp"
-#include "StrUtils.hpp"
-#include "IOUtils.hpp"
-#include <Assert.hpp>
+#include <Common/MiscHelpers.hpp>
+#include <Common/StrUtils.hpp>
+#include <Common/IOUtils.hpp>
+#include <Common/Assert.hpp>
 
 #pragma warning(pop)

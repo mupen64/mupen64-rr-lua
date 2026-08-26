@@ -7,7 +7,7 @@
 
 #include <filesystem>
 #include <numbers>
-#include <MiscHelpers.hpp>
+#include <Common/MiscHelpers.hpp>
 #if defined(_WIN32)
 #include <windows.h>
 #include <gdiplus.h>

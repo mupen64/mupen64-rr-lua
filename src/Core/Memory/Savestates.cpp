@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
+#include <Common/CommonPCH.hpp>
 #include <Core.hpp>
-#include <FNV1A.hpp>
+#include <Common/FNV1A.hpp>
 #include <m64rr/API.hpp>
 #include <Memory/FlashRAM.hpp>
 #include <Memory/Memory.hpp>

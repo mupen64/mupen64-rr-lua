@@ -10,7 +10,7 @@
 #include <fstream>
 #include <vector>
 
-#include "StrUtils.hpp"
+#include <Common/StrUtils.hpp>
 
 #if defined(_WIN32)
 #include <share.h>

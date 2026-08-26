@@ -6,7 +6,7 @@
 
 #ifdef _WIN32
 
-#include <CommonPCH.hpp>
+#include <Common/CommonPCH.hpp>
 #include "Config_Win32.hpp"
 #include "Main_Win32.hpp"
 #include "Resource.h"

@@ -8,7 +8,7 @@
 #include <Combo.hpp>
 #include <ConfigDialog.hpp>
 #include <GamepadManager.hpp>
-#include <JoystickControl.hpp>
+#include <Common.Win32/JoystickControl.hpp>
 #include <Main.hpp>
 #include <NewConfig.hpp>
 #include <TASInput.hpp>

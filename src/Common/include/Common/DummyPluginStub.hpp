@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <VersionNameHelpers.hpp>
+#include <Common/VersionNameHelpers.hpp>
 #include <m64rr/Plugin.hpp>
 
 #define DUMMY_PLUGIN_STUB_IMPL(plugin_type)                                                                            \

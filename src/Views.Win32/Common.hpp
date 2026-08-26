@@ -12,7 +12,7 @@
 
 #define SPDLOG_LEVEL_NAMES {"🔍", "🪲", "ℹ️", "⚠️", "❌", "💥", ""}
 
-#include <CommonPCH.hpp>
+#include <Common/CommonPCH.hpp>
 #include <m64rr/API.hpp>
 
 #pragma warning(push, 0)
@@ -62,14 +62,14 @@ using Microsoft::WRL::ComPtr;
 #pragma warning(pop)
 
 #include <Loggers.hpp>
-#include <WinUtils.hpp>
+#include <Common.Win32/WinUtils.hpp>
 #include <Main.hpp>
 #include <lua/LuaHelpers.hpp>
 #include <lua/LuaTypes.hpp>
 #include <Common.Views/Config.hpp>
-#include <ResizeAnchor.hpp>
-#include <JoystickControl.hpp>
-#include <VersionNameHelpers.hpp>
+#include <Common.Win32/ResizeAnchor.hpp>
+#include <Common.Win32/JoystickControl.hpp>
+#include <Common/VersionNameHelpers.hpp>
 #include <Common.Views/IDialogService.hpp>
 #include <Common.Views/App.hpp>
 

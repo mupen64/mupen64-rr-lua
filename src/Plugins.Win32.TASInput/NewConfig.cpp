@@ -6,7 +6,7 @@
 
 #include "Common.hpp"
 #include <NewConfig.hpp>
-#include <MiscHelpers.hpp>
+#include <Common/MiscHelpers.hpp>
 #include <Main.hpp>
 #include <GamepadManager.hpp>
 

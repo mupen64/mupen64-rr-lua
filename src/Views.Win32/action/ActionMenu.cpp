@@ -9,7 +9,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <action/ActionMenu.hpp>
 #include <components/ParameterPalette.hpp>
-#include <Assert.hpp>
+#include <Common/Assert.hpp>
 
 const auto MANAGED_MENU_CTX = "Mupen64_ManagedMenuContext";
 
