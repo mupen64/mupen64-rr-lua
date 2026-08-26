@@ -6,42 +6,40 @@
 
 #pragma once
 
+#include "TASVideo.hpp"
 #include "Types.hpp"
 
 #define MI_INTR_DP 0x20 // Bit 5: DP intr
 
-struct N64Regs
-{
-    u32 *MI_INTR;
+#define MI_INTR (&g_plugin->mi_register->mi_intr_reg)
 
-    u32 *DPC_START;
-    u32 *DPC_END;
-    u32 *DPC_CURRENT;
-    u32 *DPC_STATUS;
-    u32 *DPC_CLOCK;
-    u32 *DPC_BUFBUSY;
-    u32 *DPC_PIPEBUSY;
-    u32 *DPC_TMEM;
+#define DPC_START (&g_plugin->dpc_register->dpc_start)
+#define DPC_END (&g_plugin->dpc_register->dpc_end)
+#define DPC_CURRENT (&g_plugin->dpc_register->dpc_current)
+#define DPC_STATUS (&g_plugin->dpc_register->dpc_status)
+#define DPC_CLOCK (&g_plugin->dpc_register->dpc_clock)
+#define DPC_BUFBUSY (&g_plugin->dpc_register->dpc_bufbusy)
+#define DPC_PIPEBUSY (&g_plugin->dpc_register->dpc_pipebusy)
+#define DPC_TMEM (&g_plugin->dpc_register->dpc_tmem)
 
-    u32 *VI_STATUS;
-    u32 *VI_ORIGIN;
-    u32 *VI_WIDTH;
-    u32 *VI_INTR;
-    u32 *VI_V_CURRENT_LINE;
-    u32 *VI_TIMING;
-    u32 *VI_V_SYNC;
-    u32 *VI_H_SYNC;
-    u32 *VI_LEAP;
-    u32 *VI_H_START;
-    u32 *VI_V_START;
-    u32 *VI_V_BURST;
-    u32 *VI_X_SCALE;
-    u32 *VI_Y_SCALE;
-};
+#define VI_STATUS (&g_plugin->vi_register->vi_status)
+#define VI_ORIGIN (&g_plugin->vi_register->vi_origin)
+#define VI_WIDTH (&g_plugin->vi_register->vi_width)
+#define VI_INTR (&g_plugin->vi_register->vi_v_intr)
+#define VI_V_CURRENT_LINE (&g_plugin->vi_register->vi_current)
+#define VI_TIMING (&g_plugin->vi_register->vi_burst)
+#define VI_V_SYNC (&g_plugin->vi_register->vi_v_sync)
+#define VI_H_SYNC (&g_plugin->vi_register->vi_h_sync)
+#define VI_LEAP (&g_plugin->vi_register->vi_leap)
+#define VI_H_START (&g_plugin->vi_register->vi_h_start)
+#define VI_V_START (&g_plugin->vi_register->vi_v_start)
+#define VI_V_BURST (&g_plugin->vi_register->vi_v_burst)
+#define VI_X_SCALE (&g_plugin->vi_register->vi_x_scale)
+#define VI_Y_SCALE (&g_plugin->vi_register->vi_y_scale)
 
-extern N64Regs REG;
-extern u8 *DMEM;
-extern u8 *IMEM;
-extern u8 *RDRAM;
-extern u64 TMEM[512];
-extern u32 RDRAMSize;
+#define DMEM (g_plugin->dmem)
+#define IMEM (g_plugin->imem)
+#define RDRAM (g_plugin->rdram)
+
+inline u64 TMEM[512];
+inline u32 RDRAMSize = 0x800000;

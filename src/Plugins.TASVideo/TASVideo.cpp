@@ -7,7 +7,6 @@
 #include "Common.hpp"
 #include "TASVideo.hpp"
 #include "OpenGL.hpp"
-#include "N64.hpp"
 #include "RSP.hpp"
 #include "Config.hpp"
 
@@ -66,35 +65,6 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();
-
-        DMEM = g_plugin->dmem;
-        IMEM = g_plugin->imem;
-        RDRAM = g_plugin->rdram;
-
-        REG.MI_INTR = &g_plugin->mi_register->mi_intr_reg;
-        REG.DPC_START = &g_plugin->dpc_register->dpc_start;
-        REG.DPC_END = &g_plugin->dpc_register->dpc_end;
-        REG.DPC_CURRENT = &g_plugin->dpc_register->dpc_current;
-        REG.DPC_STATUS = &g_plugin->dpc_register->dpc_status;
-        REG.DPC_CLOCK = &g_plugin->dpc_register->dpc_clock;
-        REG.DPC_BUFBUSY = &g_plugin->dpc_register->dpc_bufbusy;
-        REG.DPC_PIPEBUSY = &g_plugin->dpc_register->dpc_pipebusy;
-        REG.DPC_TMEM = &g_plugin->dpc_register->dpc_tmem;
-
-        REG.VI_STATUS = &g_plugin->vi_register->vi_status;
-        REG.VI_ORIGIN = &g_plugin->vi_register->vi_origin;
-        REG.VI_WIDTH = &g_plugin->vi_register->vi_width;
-        REG.VI_INTR = &g_plugin->vi_register->vi_v_intr;
-        REG.VI_V_CURRENT_LINE = &g_plugin->vi_register->vi_current;
-        REG.VI_TIMING = &g_plugin->vi_register->vi_burst;
-        REG.VI_V_SYNC = &g_plugin->vi_register->vi_v_sync;
-        REG.VI_H_SYNC = &g_plugin->vi_register->vi_h_sync;
-        REG.VI_LEAP = &g_plugin->vi_register->vi_leap;
-        REG.VI_H_START = &g_plugin->vi_register->vi_h_start;
-        REG.VI_V_START = &g_plugin->vi_register->vi_v_start;
-        REG.VI_V_BURST = &g_plugin->vi_register->vi_v_burst;
-        REG.VI_X_SCALE = &g_plugin->vi_register->vi_x_scale;
-        REG.VI_Y_SCALE = &g_plugin->vi_register->vi_y_scale;
         break;
     case M64RRSpec::Event::Type::Shutdown:
         init_count++;

@@ -44,7 +44,6 @@ add_library(Mupen64RR.Plugins.TASVideo STATIC
     "RSP.cpp"
     "RDP.cpp"
     "OpenGL.cpp"
-    "N64.cpp"
     "L3DEX2.cpp"
     "L3DEX.cpp"
     "L3D.cpp"
