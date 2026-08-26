@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include <Common/Assert.hpp>
+
 #include <Common.Views/ActionManager.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>

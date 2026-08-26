@@ -76,6 +76,7 @@ add_library(Mupen64RR.Core STATIC
 
     "R4300/VCR.cpp"
 )
+mupen64rr_reuse_common_pch(Mupen64RR.Core)
 target_compile_features(Mupen64RR.Core PUBLIC cxx_std_26)
 set_target_properties(Mupen64RR.Core PROPERTIES
     OUTPUT_NAME Core
@@ -104,11 +105,11 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
     Select the dynarec backend by target architecture.
         x86-64 -> R4300/x86_64 (x86-64 recompiler)
         x86    -> R4300/x86 (original x86-32 recompiler)
-    
+
     Note that we detect using the compile triplet when Clang is used; otherwise we use CMAKE_SYSTEM_PROCESSOR.
     ]=]
     set(dynarec_dir)
-    
+
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         if ("${CMAKE_C_COMPILER_TARGET}" MATCHES "^amd64")
             set(dynarec_dir "R4300/x86_64")
@@ -134,7 +135,7 @@ if (${MUPEN64RR_ENABLE_DYNAREC})
         "${dynarec_dir}/Assemble.hpp"
         "${dynarec_dir}/Gcop1Helpers.hpp"
         "${dynarec_dir}/RegCache.hpp"
-        
+
         "${dynarec_dir}/Assemble.cpp"
         "${dynarec_dir}/GBc.cpp"
         "${dynarec_dir}/GCop0.cpp"

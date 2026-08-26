@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Common/CommonPCH.hpp>
 #include <Core.hpp>
 // #include <PlatformService.h>
-#include <format>
+
 #include <md5.h>
 #include <Memory/Memory.hpp>
 #include <R4300/R4300.hpp>

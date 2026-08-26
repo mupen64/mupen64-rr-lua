@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Common/CommonPCH.hpp>
+
 #include <Common/VersionNameHelpers.hpp>
 #include <m64rr/Plugin.hpp>
 

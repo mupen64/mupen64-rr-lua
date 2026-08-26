@@ -3,5 +3,3 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-
-#include <catch2/catch_all.hpp>

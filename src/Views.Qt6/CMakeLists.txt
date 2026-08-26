@@ -8,6 +8,7 @@ add_subdirectory(Utils)
 add_subdirectory(Core)
 
 qt_add_executable(Mupen64RR.Views.Qt6 "Main.cpp")
+mupen64rr_reuse_common_pch(Mupen64RR.Views.Qt6)
 target_compile_features(Mupen64RR.Views.Qt6 PRIVATE cxx_std_26)
 set_target_properties(Mupen64RR.Views.Qt6 PROPERTIES
     # output location

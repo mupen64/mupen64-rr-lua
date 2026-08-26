@@ -5,11 +5,9 @@
  */
 
 #include <Common.Views/Messenger.hpp>
-#include <atomic>
-#include <thread>
+
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace Messenger
 {

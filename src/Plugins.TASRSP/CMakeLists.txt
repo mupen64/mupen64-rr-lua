@@ -24,6 +24,7 @@ set_target_properties(Mupen64RR.Plugins.TASRSP PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${MUPEN64RR_PLUGIN_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
+mupen64rr_reuse_common_pch(Mupen64RR.Plugins.TASRSP)
 target_include_directories(Mupen64RR.Plugins.TASRSP PRIVATE ".")
 target_link_libraries(Mupen64RR.Plugins.TASRSP PRIVATE
     Mupen64RR.Plugins.Common

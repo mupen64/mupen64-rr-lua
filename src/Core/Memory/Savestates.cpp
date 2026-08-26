@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <Common/CommonPCH.hpp>
 #include <Core.hpp>
 #include <Common/FNV1A.hpp>
 #include <m64rr/API.hpp>

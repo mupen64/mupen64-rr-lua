@@ -8,7 +8,6 @@
 #include <Common.Views/Config.hpp>
 #include <components/FilePicker.hpp>
 #include <Common.Win32/WinFilePicker.hpp>
-#include <Common/Assert.hpp>
 
 std::filesystem::path FilePicker::show_open_dialog(const std::string &id, HWND hwnd, const std::string &filter)
 {

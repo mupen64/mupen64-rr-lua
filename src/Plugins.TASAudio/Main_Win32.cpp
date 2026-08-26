@@ -6,7 +6,6 @@
 
 #ifdef _WIN32
 
-#include <Common/CommonPCH.hpp>
 #include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"
