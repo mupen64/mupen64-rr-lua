@@ -17,6 +17,7 @@ qt_add_qml_module(Mupen64RR.Views.Qt6.Core URI "Core"
 
         "plugin/BuiltinTAS.cpp"
         "plugin/Plugin.cpp"
+        "CoreEnums.cpp"
         "EmuContext.cpp"
         "EmuDisplay.cpp"
 )

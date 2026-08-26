@@ -6,25 +6,35 @@
 #pragma once
 
 #include <QObject>
+#include <QThreadPool>
 #include <QUrl>
 #include <qqmlintegration.h>
 
 #include <m64rr/API.hpp>
 #include "plugin/Plugin.hpp"
-#include "QmlCallableContext.hpp"
 
 #include "CoreEnums.hpp"
 
 /**
  * @brief QML-owned singleton holding the core and related objects.
+ * Implemented as a non-singleton, but will throw a tantrum if instantiated more than once.
  */
 class EmuContext : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(bool emuLaunched READ isEmuLaunched NOTIFY emuLaunchedChanged)
+    // core_ctx properties
+    Q_PROPERTY(bool launched READ isLaunched NOTIFY launchedChanged)
+    Q_PROPERTY(bool paused READ isPaused WRITE setPaused NOTIFY pausedChanged)
+    Q_PROPERTY(bool coreExecuting READ isCoreExecuting NOTIFY coreExecutingChanged)
+    Q_PROPERTY(bool gsButton READ isGSButton WRITE setGSButton NOTIFY gsButtonChanged)
+
+    // core_cfg properties
+    Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
   public:
+    static constexpr size_t NUM_SAVE_SLOTS = 10;
+
     EmuContext(QObject *parent = nullptr);
     virtual ~EmuContext();
 
@@ -39,33 +49,95 @@ class EmuContext : public QObject
     // vr_* functions
     // ==========================
 
-    Q_INVOKABLE CoreResult::Value vrStartROM(const QUrl &url) const;
+    // -> vr_start_rom
+    Q_INVOKABLE CoreResult::Value startROM(const QUrl &url);
 
-    Q_INVOKABLE CoreResult::Value vrCloseROM(bool resetVCR = true) const;
+    // -> vr_close_rom
+    Q_INVOKABLE CoreResult::Value closeROM(bool resetVCR = true);
 
-    Q_INVOKABLE void vrInvalidateVisuals() const;
+    // -> vr_reset_rom
+    Q_INVOKABLE CoreResult::Value resetROM(bool resetSaveData, bool stopVCR);
+
+    // -> vr_invalidate_visuals
+    Q_INVOKABLE void invalidateVisuals();
+
+    // -> vr_frame_advance
+    Q_INVOKABLE void frameAdvance(size_t frames);
 
     // vr_* properties
     // ==========================
 
-    bool isEmuLaunched() const;
+    // -> vr_get_launched
+    bool isLaunched() const;
+
+    // -> vr_get_paused
+    bool isPaused() const;
+    // -> vr_pause_emu/vr_resume_emu
+    void setPaused(bool paused);
+
+    // -> vr_get_core_executing
+    bool isCoreExecuting();
+
+    // -> vr_get_gs_button
+    bool isGSButton() const;
+    // -> vr_set_gs_button
+    void setGSButton(bool pressed);
+
+    // st_* functions
+    // ==========================
+
+    // -> st_do_file (to save slot)
+    Q_INVOKABLE void saveSlot(uint32_t index);
+
+    // -> st_do_file
+    Q_INVOKABLE void saveFile(const QUrl &url);
+
+    // -> st_do_file (to save slot)
+    Q_INVOKABLE void loadSlot(uint32_t index);
+
+    // -> st_do_file
+    Q_INVOKABLE void loadFile(const QUrl &url);
+
+    // core_cfg properties
+    // ==========================
+
+    // -> .fps_modifier
+    int32_t speedModifier();
+    void setSpeedModifier(int32_t value);
 
     // Misc. functions
     // ==========================
 
     /**
      * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
+     * @note May reallocate the image if needed.
      *
-     * @param image
+     * @param image The image to read to.
      */
     void readVideoOutput(QImage &image);
 
   signals:
 
-    // Property changes
-    // ============================================
+    // vr_* properties
+    // ==========================
 
-    void emuLaunchedChanged(bool value);
+    // -> callbacks.emu_launched_changed
+    void launchedChanged(bool value);
+
+    // -> callbacks.emu_paused_changed
+    void pausedChanged(bool value);
+
+    // -> callbacks.core_executing_changed
+    void coreExecutingChanged(bool value);
+
+    // -> set_gs_button() called
+    void gsButtonChanged(bool value);
+
+    // core_cfg properties
+    // ==========================
+
+    // -> .fps_modifier changed
+    void speedModifierChanged(int32_t value);
 
     // Graphics signals
     // ============================================
@@ -125,6 +197,8 @@ class EmuContext : public QObject
 
     std::optional<PluginSet> m_plugins;
     M64RRSpec::PtrReadVideo m_fn_read_video;
+
+    QThreadPool m_task_pool;
 };
 
 namespace CoreUtil
