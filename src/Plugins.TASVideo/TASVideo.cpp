@@ -56,9 +56,13 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
 
 EXPORT void CALL M64RRProcessEvent(Event event)
 {
+    static int8_t init_count = 0;
+
     switch (event.type)
     {
     case M64RRSpec::Event::Type::Initiate:
+        init_count++;
+
         g_plugin = event.initiate.init;
 
         Config_LoadConfig();
@@ -91,22 +95,23 @@ EXPORT void CALL M64RRProcessEvent(Event event)
         REG.VI_V_BURST = &g_plugin->vi_register->vi_v_burst;
         REG.VI_X_SCALE = &g_plugin->vi_register->vi_x_scale;
         REG.VI_Y_SCALE = &g_plugin->vi_register->vi_y_scale;
+        break;
+    case M64RRSpec::Event::Type::Shutdown:
+        init_count++;
+        if (init_count > 0) break;
 
-        init_rsp_thread();
+        if (!RSP.thread) break;
+        if (RSP.busy) RSP.halt = TRUE;
+        RSP_SendMessage(RSPMSG_CLOSE);
+        RSP.thread->join();
+        RSP.thread.reset();
         break;
     case M64RRSpec::Event::Type::RomOpened:
-        Config_LoadConfig();
+        init_rsp_thread();
         OGL_ResizeWindow();
         break;
     case M64RRSpec::Event::Type::RomClosed:
-        if (RSP.thread)
-        {
-            if (RSP.busy) RSP.halt = TRUE;
-
-            RSP_SendMessage(RSPMSG_CLOSE);
-            RSP.thread->join();
-            RSP.thread.reset();
-        }
+        RSP_SendMessage(RSPMSG_BLACKOUT);
         break;
     default:
         break;
