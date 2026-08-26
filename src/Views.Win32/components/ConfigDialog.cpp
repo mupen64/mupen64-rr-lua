@@ -514,11 +514,11 @@ std::vector<OptionGroup> get_static_option_groups()
 
     OptionGroup debug_group = {.id = id++, .name = "Debug"};
 
-#define RPROP(T, x) OptionItem::t_readonly_property([] { return Config::default_config().x; })
+#define RPROP(T, x) OptionItem::ReadableProp([] { return Config::default_config().x; })
 
 #define RWPROP(T, x, c)                                                                                                \
-    OptionItem::t_readwrite_property([] { return g_config.x; },                                                    \
-        [](const OptionItem::data_variant &value) {                                                                \
+    OptionItem::WritableProp([] { return g_config.x; },                                                    \
+        [](const OptionItem::DataVariant &value) {                                                                \
             g_config.x = std::get<T>(value);                                                                           \
             do                                                                                                         \
             {                                                                                                          \
@@ -1474,12 +1474,12 @@ std::vector<OptionGroup> ConfigDialog::get_option_groups()
                 .type = OptionItem::Type::Hotkey,
                 .group_id = group.id,
                 .name = action,
-                .current_value = OptionItem::t_readwrite_property([=] { return g_config.hotkeys.at(action); },
+                .current_value = OptionItem::WritableProp([=] { return g_config.hotkeys.at(action); },
                     [=](const OptionItem::DataVariant &value) {
                         g_config.hotkeys[action] = std::get<Hotkey>(value);
                     }),
                 .default_value =
-                    OptionItem::t_readonly_property([=] { return g_config.inital_hotkeys.at(action); }),
+                    OptionItem::ReadableProp([=] { return g_config.inital_hotkeys.at(action); }),
             };
 
             group.items.emplace_back(item);
@@ -1509,7 +1509,7 @@ std::vector<OptionGroup> ConfigDialog::get_option_groups()
         for (auto &option_item : option_group.items)
         {
             const auto initial_value = option_item.current_value.get();
-            option_item.initial_value = OptionItem::t_readonly_property([=] { return initial_value; });
+            option_item.initial_value = OptionItem::ReadableProp([=] { return initial_value; });
         }
     }
 
