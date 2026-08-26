@@ -103,13 +103,16 @@ EmuContext::EmuContext(QObject *parent)
         std::promise<size_t> promise;
         auto future = promise.get_future();
 
-        auto done_callback = QJSFunctions::to_js_function(
-            qmlEngine(this), [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
+        QMetaObject::invokeMethod(
+            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
+                // JS objects should be instantiated on the event thread
+                auto done_callback = QJSFunctions::to_js_function(qmlEngine(this),
+                    [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
+                auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
-        auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
-        QMetaObject::invokeMethod(this, &EmuContext::openMultiDialog, done_callback, QAnyStringView(title),
-            QAnyStringView(str), qt_choices, CoreDialogType::from_core(type));
-        future.wait();
+                openMultiDialog(done_callback, title, str, qt_choices, CoreDialogType::from_core(type));
+            });
+
         return future.get();
     };
     m_core_params->show_ask_dialog = [&](std::string_view id, const char *str, const char *title,
@@ -117,26 +120,31 @@ EmuContext::EmuContext(QObject *parent)
         std::promise<bool> promise;
         auto future = promise.get_future();
 
-        auto done_callback = QJSFunctions::to_js_function(
-            qmlEngine(this), [promise = std::move(promise)](bool value) mutable { promise.set_value(value); });
+        QMetaObject::invokeMethod(this, [=, this, promise = std::move(promise), str = QString(str),
+                                            title = QString(title)] mutable {
+            // JS objects should be instantiated on the event thread
+            auto done_callback = QJSFunctions::to_js_function(qmlEngine(this),
+                [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
-        QMetaObject::invokeMethod(this, &EmuContext::openAskDialog, done_callback, QAnyStringView(title),
-            QAnyStringView(str), warning ? CoreDialogType::Warning : CoreDialogType::Information);
+            openAskDialog(done_callback, title, str, warning ? CoreDialogType::Warning : CoreDialogType::Information);
+        });
 
-        future.wait();
         return future.get();
     };
     m_core_params->show_dialog = [&](const char *str, const char *title, core_dialog_type type) {
         std::promise<void> promise;
         auto future = promise.get_future();
 
-        auto done_callback = QJSFunctions::to_js_function(
-            qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
+        QMetaObject::invokeMethod(
+            this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
+                // JS objects should be instantiated on the event thread
+                auto done_callback = QJSFunctions::to_js_function(
+                    qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
-        QMetaObject::invokeMethod(this, &EmuContext::openInfoDialog, done_callback, QAnyStringView(title),
-            QAnyStringView(str), CoreDialogType::from_core(type));
+                openAskDialog(done_callback, title, str, CoreDialogType::from_core(type));
+            });
 
-        future.wait();
+        future.get();
     };
 #pragma endregion
 
