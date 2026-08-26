@@ -61,7 +61,7 @@
 
       "inherits": "vcpkg-win64-x64",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
@@ -69,7 +69,7 @@
       "description": "Windows (x64): build for x86 (release)",
       "inherits": "vcpkg-win64-x86",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ]
