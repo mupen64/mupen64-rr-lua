@@ -22,9 +22,6 @@
 #define WM_EDIT_END (WM_USER + 19)
 #define WM_PLUGIN_DISCOVERY_FINISHED (WM_USER + 22)
 
-using t_options_group = ConfigDialog::t_options_group;
-using t_options_item = ConfigDialog::t_options_item;
-
 t_plugin_discovery_result plugin_discovery_result;
 std::vector<t_options_group> g_option_groups;
 std::vector<t_options_item> g_option_items;
@@ -49,7 +46,6 @@ struct t_tab_context
     size_t edit_option_item_index;
     std::unordered_map<size_t, size_t> item_index_map;
 };
-
 
 static std::optional<std::string> readonly_when_emu_running()
 {
@@ -1024,7 +1020,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
         {
             try
             {
-                option_item.current_value.set(parse_number_value(str, option_item.current_value.get()));
+                option_item.current_value.set(OptionUtils::parse_number_value(str, option_item.current_value.get()));
             }
             catch (...)
             {
@@ -1231,7 +1227,7 @@ INT_PTR CALLBACK generic_tab_proc(const HWND hwnd, const UINT message, const WPA
                 WinDarkMode::attach(ctx->edit_hwnd);
 
                 const auto value = global_item.current_value.get();
-                Edit_SetText(ctx->edit_hwnd, to_str_default(get_number_value(value)).c_str());
+                Edit_SetText(ctx->edit_hwnd, OptionUtils::to_str_default(OptionUtils::get_number_value(value)).c_str());
 
                 PostMessage(ctx->hwnd, WM_NEXTDLGCTL, (WPARAM)ctx->edit_hwnd, TRUE);
 

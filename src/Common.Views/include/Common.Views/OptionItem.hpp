@@ -10,7 +10,10 @@
 #include <functional>
 #include <cstdint>
 #include <string>
+#include <format>
 #include <m64rr/Plugin.hpp>
+#include <Common.Views/Hotkey.hpp>
+#include <Common/Assert.hpp>
 
 /**
  * Represents a settings option.
@@ -132,3 +135,45 @@ struct t_options_group
      */
     std::vector<t_options_item> items{};
 };
+
+/**
+ * \brief Provides utilities surrounding option items and groups.
+ */
+namespace OptionUtils
+{
+inline std::string to_str_default(const double value)
+{
+    return std::format("{:.15g}", value);
+}
+
+inline double get_number_value(const t_options_item::data_variant &value)
+{
+    if (std::holds_alternative<int32_t>(value))
+    {
+        return static_cast<double>(std::get<int32_t>(value));
+    }
+    if (std::holds_alternative<double>(value))
+    {
+        return std::get<double>(value);
+    }
+
+    NEED(false, "Number option does not hold an int32_t or double value");
+    return 0.0;
+}
+
+inline t_options_item::data_variant parse_number_value(
+    const std::string &text, const t_options_item::data_variant &current)
+{
+    if (std::holds_alternative<int32_t>(current))
+    {
+        return std::stoi(text);
+    }
+    if (std::holds_alternative<double>(current))
+    {
+        return std::stod(text);
+    }
+
+    NEED(false, "Number option does not hold an int32_t or double value");
+    return current;
+}
+} // namespace OptionUtils

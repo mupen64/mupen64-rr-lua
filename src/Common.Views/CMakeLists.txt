@@ -15,12 +15,14 @@ add_library(Mupen64RR.Common.Views STATIC
     "include/Common.Views/Encoder.hpp"
     "include/Common.Views/IDialogService.hpp"
     "include/Common.Views/ConfigLegacy.hpp"
+    "include/Common.Views/OptionItem.hpp"
     "Config.cpp"
     "ConfigLegacy.cpp"
     "Hotkey.cpp"
     "Messenger.cpp"
     "ActionManager.cpp"
     "Resampler.cpp"
+    "OptionItem.cpp"
 )
 
 if (WIN32)
