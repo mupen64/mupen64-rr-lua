@@ -32,6 +32,7 @@
 #include <initializer_list>
 #include <locale>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
