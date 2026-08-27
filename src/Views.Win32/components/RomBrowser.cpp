@@ -257,7 +257,6 @@ static void build_impl()
                 g_main_ctx.core_ctx->vr_byteswap((uint8_t *)&header);
 
                 MiscHelpers::strtrim((char *)header.nom, sizeof(header.nom));
-                header.nom[sizeof(header.nom) - 1] = '\0';
 
                 entry.header = header;
             }
