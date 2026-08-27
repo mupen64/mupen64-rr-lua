@@ -37,7 +37,6 @@ ApplicationWindow {
     Component.onCompleted: {
         SettingsCore.sync()
         SettingsPaths.sync()
-        SettingsVCR.sync()
     }
 
     // MENU BAR
@@ -47,8 +46,6 @@ ApplicationWindow {
         core: core
         dialogService: dialogService
     }
-
-
 
     // CONTENT VIEW
     // =====================================

@@ -38,7 +38,6 @@ set(qml_sources
 set(qml_singleton_sources
     "Views/SettingsCore.qml"
     "Views/SettingsPaths.qml"
-    "Views/SettingsVCR.qml"
 )
 # mark sources as singletons *before* qt_add_qml_module as
 # generation of qmldir happens there

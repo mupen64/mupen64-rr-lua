@@ -17,8 +17,8 @@
 #include <QIcon>
 #include <QUrl>
 
-#include <QtUtils.hpp>
-#include <QJSFunctions.hpp>
+// #include <QtUtils.hpp>
+#include <QJSInterop.hpp>
 
 static std::atomic<EmuContext *> g_core_instance = nullptr;
 
@@ -34,14 +34,16 @@ static void set_core_instance(EmuContext *ptr)
 
 EmuContext::EmuContext(QObject *parent)
     : QObject(parent), m_core_cfg(&g_core_cfg), m_core_params(&g_core_params), m_core_ctx(nullptr),
-      m_plugins(std::nullopt), m_fn_read_video(nullptr)
+      m_plugins(std::nullopt), m_fn_read_video(nullptr), m_options(new EmuOptions(this))
 {
     set_core_instance(this);
 
     m_core_params->cfg = m_core_cfg;
 
-#pragma region Directories
+    // use the QThreadPool available
     m_core_params->submit_task = [&](const std::function<void()> &cb) { m_task_pool.start(cb); };
+
+#pragma region Directories
     m_core_params->get_saves_directory = [] {
         static auto s_save_path = IOUtils::exe_path().parent_path() / "saves";
         if (!std::filesystem::is_directory(s_save_path)) std::filesystem::create_directories(s_save_path);
@@ -106,7 +108,7 @@ EmuContext::EmuContext(QObject *parent)
         QMetaObject::invokeMethod(
             this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
                 // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::to_js_function(qmlEngine(this),
+                auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
                     [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
                 auto qt_choices = choices | std::views::transform(QString::fromStdString) | std::ranges::to<QList>();
 
@@ -123,7 +125,7 @@ EmuContext::EmuContext(QObject *parent)
         QMetaObject::invokeMethod(this, [=, this, promise = std::move(promise), str = QString(str),
                                             title = QString(title)] mutable {
             // JS objects should be instantiated on the event thread
-            auto done_callback = QJSFunctions::to_js_function(qmlEngine(this),
+            auto done_callback = QJSFunctions::toJSFunction(qmlEngine(this),
                 [promise = std::move(promise)](uint32_t result) mutable { promise.set_value(result); });
 
             openAskDialog(done_callback, title, str, warning ? CoreDialogType::Warning : CoreDialogType::Information);
@@ -138,7 +140,7 @@ EmuContext::EmuContext(QObject *parent)
         QMetaObject::invokeMethod(
             this, [=, this, promise = std::move(promise), str = QString(str), title = QString(title)] mutable {
                 // JS objects should be instantiated on the event thread
-                auto done_callback = QJSFunctions::to_js_function(
+                auto done_callback = QJSFunctions::toJSFunction(
                     qmlEngine(this), [promise = std::move(promise)] mutable { promise.set_value(); });
 
                 openAskDialog(done_callback, title, str, CoreDialogType::from_core(type));
@@ -309,6 +311,10 @@ void EmuContext::setSpeedModifier(int32_t valueIn)
 
 // Misc. functions
 // ==========================
+EmuOptions *EmuContext::options()
+{
+    return m_options;
+}
 
 void EmuContext::readVideoOutput(QImage &image)
 {

@@ -5,14 +5,14 @@ import QtCore
 Settings {
     category: "core"
 
-    // enum CoreType {
-    //     CachedInterpreter = 0,
-    //     DynamicRecompiler = 1,
-    //     PureInterpreter = 2
-    // }
+    enum CoreType {
+        CachedInterpreter = 0,
+        DynamicRecompiler = 1,
+        PureInterpreter = 2
+    }
 
     // originally "core" group in Win32
-    property int coreType: 1
+    property int coreType: SettingsCore.CoreType.DynamicRecompiler
     property bool stUndoLoad: true
     property int maxLag: 480
     property bool wiiVCEmulation: false
@@ -30,4 +30,9 @@ Settings {
     property bool compiledJumpEnabled: true
     property bool ceqsNaNAccurate: true
     property bool accurateRDPCompletion: true
+
+    // originally "vcr" group in Win32
+    property bool vcrBackups: true
+    property bool vcrWriteExtendedFormat: true
+    property bool vcrResetRecordingEnabled: false
 }
