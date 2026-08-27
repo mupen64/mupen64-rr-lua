@@ -10,6 +10,7 @@
 #include <Common.Views/Config.hpp>
 #include <Common.Views/Messages.hpp>
 #include <components/CoreUtils.hpp>
+#include <plugin/Plugin.hpp>
 
 struct piano_roll_history_state
 {
@@ -26,7 +27,6 @@ struct piano_roll_state
 {
     HWND hwnd{};
     HWND lv_hwnd{};
-    HWND joy_hwnd{};
     HWND hist_hwnd{};
     HWND status_hwnd{};
 
@@ -129,13 +129,15 @@ static bool can_seek()
 
 static void update_joystick()
 {
-    EnableWindow(piano_roll.joy_hwnd, can_joystick_be_modified());
+    // EnableWindow(piano_roll.joy_hwnd, can_joystick_be_modified());
 
     if (!piano_roll.current_state.selected_indicies.empty() &&
         piano_roll.current_state.selected_indicies[0] < piano_roll.current_state.inputs.size())
     {
         const auto input = piano_roll.current_state.inputs[piano_roll.current_state.selected_indicies[0]];
-        JoystickControl::set_position(piano_roll.joy_hwnd, input.x, input.y);
+
+        // FIXME: Not necessarily controller 0!
+        g_plugin_funcs.input_set_keys(0, {input.value});
     }
 }
 
@@ -1134,8 +1136,6 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // We create all the child controls here because windows dialog scaling would mess our stuff up when mixing
         // dialog manager and manual creation
         piano_roll.hwnd = hwnd;
-        piano_roll.joy_hwnd = CreateWindowEx(WS_EX_STATICEDGE, JOYSTICK_CLASS, "", WS_CHILD | WS_VISIBLE, 17, 30, 131,
-            131, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         CreateWindowEx(0, WC_STATIC, "History", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_LEFT | SS_CENTERIMAGE, 17, 166,
             131, 15, piano_roll.hwnd, nullptr, g_main_ctx.hinst, nullptr);
         piano_roll.hist_hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTBOX, "",
@@ -1217,7 +1217,6 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         ResizeAnchor::add_anchors(piano_roll.hwnd,
             {
                 {piano_roll.lv_hwnd, ResizeAnchor::FULL_ANCHOR},
-                {piano_roll.joy_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
                 {piano_roll.hist_hwnd, ResizeAnchor::AnchorFlags::Left | ResizeAnchor::AnchorFlags::Top},
             });
 
@@ -1247,9 +1246,12 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         break;
     case JoystickControl::WM_JOYSTICK_POSITION_CHANGED: {
         if (!can_joystick_be_modified()) break;
-        int32_t x{};
-        int32_t y{};
-        JoystickControl::get_position(piano_roll.joy_hwnd, &x, &y);
+
+        ZESpec::Buttons buttons{};
+        g_plugin_funcs.input_get_keys(0, &buttons); // FIXME  Not necessarily controller 0
+
+        int32_t x = buttons.x;
+        int32_t y = buttons.y;
 
         SetWindowRedraw(piano_roll.lv_hwnd, false);
         for (auto selected_index : piano_roll.current_state.selected_indicies)
