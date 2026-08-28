@@ -4,10 +4,11 @@ Copyright (c) 2026, Mupen64 Organization (https://github.com/mupen64)
 SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
-qt_add_library(Mupen64RR.Views.Qt6.Core STATIC)
-qt_add_qml_module(Mupen64RR.Views.Qt6.Core URI "Core"
+qt_add_library(Mupen64RR_Views_Qt6_Core STATIC)
+mupen64rr_reuse_common_pch(Mupen64RR_Views_Qt6_Core)
+qt_add_qml_module(Mupen64RR_Views_Qt6_Core URI "Core"
     IMPORTS
-        TARGET Mupen64RR.Views.Qt6.Utils
+        TARGET Mupen64RR_Views_Qt6_Utils
     SOURCES
         "plugin/BuiltinTAS.hpp"
         "plugin/Plugin.hpp"
@@ -23,14 +24,14 @@ qt_add_qml_module(Mupen64RR.Views.Qt6.Core URI "Core"
         "EmuContext.cpp"
         "EmuDisplay.cpp"
 )
-target_compile_features(Mupen64RR.Views.Qt6.Core PUBLIC cxx_std_26)
-target_include_directories(Mupen64RR.Views.Qt6.Core PUBLIC ".")
-target_link_libraries(Mupen64RR.Views.Qt6.Core PUBLIC
-    Mupen64RR.Common
-    Mupen64RR.Common.Views
-    Mupen64RR.Core
+target_compile_features(Mupen64RR_Views_Qt6_Core PUBLIC cxx_std_26)
+target_include_directories(Mupen64RR_Views_Qt6_Core PUBLIC ".")
+target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
+    Mupen64RR_Common
+    Mupen64RR_Common_Views
+    Mupen64RR_Core
 
-    Mupen64RR.Views.Qt6.Utils
+    Mupen64RR_Views_Qt6_Utils
 
     Qt6::Core
     Qt6::Quick
@@ -38,12 +39,12 @@ target_link_libraries(Mupen64RR.Views.Qt6.Core PUBLIC
     vendor::decan
 )
 
-target_link_libraries(Mupen64RR.Views.Qt6.Core PUBLIC
-    Mupen64RR.Plugins.DummyVideo
-    Mupen64RR.Plugins.DummyAudio
-    Mupen64RR.Plugins.DummyInput
+target_link_libraries(Mupen64RR_Views_Qt6_Core PUBLIC
+    Mupen64RR_Plugins_DummyVideo
+    Mupen64RR_Plugins_DummyAudio
+    Mupen64RR_Plugins_DummyInput
 
-    Mupen64RR.Plugins.TASVideo
-    Mupen64RR.Plugins.TASAudio
-    Mupen64RR.Plugins.TASRSP
+    Mupen64RR_Plugins_TASVideo
+    Mupen64RR_Plugins_TASAudio
+    Mupen64RR_Plugins_TASRSP
 )

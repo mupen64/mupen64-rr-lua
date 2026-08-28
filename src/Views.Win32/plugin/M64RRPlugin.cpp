@@ -11,7 +11,6 @@
 #include <components/Statusbar.hpp>
 #include <plugin/M64RRPlugin.hpp>
 #include <plugin/Plugin.hpp>
-#include <Assert.hpp>
 
 static M64RRSpec::PtrProcessEvent s_mupenrr_video_event_fn = nullptr;
 static M64RRSpec::PtrGetWindows s_mupenrr_video_get_windows_fn = nullptr;
@@ -65,18 +64,6 @@ std::pair<std::string, std::unique_ptr<Plugin>> M64RRPlugin::create(HMODULE modu
 
     M64RRSpec::PluginMetadata metadata{};
     get_metadata(&metadata);
-
-    const size_t target_version_len = strnlen(metadata.target_version, std::size(metadata.target_version));
-    if (target_version_len > 0)
-    {
-        // Plugin is tied to one version of mupen
-        const auto current_version = CURRENT_VERSION;
-        const std::string target_version(metadata.target_version, target_version_len);
-        if (current_version != target_version)
-        {
-            return std::make_pair("Incompatible with this version of Mupen64", nullptr);
-        }
-    }
 
     const size_t plugin_name_len = strlen(metadata.name);
     while (plugin_name_len > 0 && metadata.name[plugin_name_len - 1] == ' ')

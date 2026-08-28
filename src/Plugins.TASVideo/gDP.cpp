@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "N64.hpp"
 #include "GBI.hpp"
 #include "RSP.hpp"
@@ -730,7 +730,7 @@ void gDPTextureRectangleFlip(f32 ulx, f32 uly, f32 lrx, f32 lry, s32 tile, f32 s
 
 void gDPFullSync()
 {
-    *REG.MI_INTR |= MI_INTR_DP;
+    *MI_INTR |= MI_INTR_DP;
 
     DebugMsg(L"gDPFullSync();\n");
 }

@@ -21,7 +21,6 @@
 #include <lua/modules/Movie.hpp>
 #include <lua/modules/Savestate.hpp>
 #include <lua/modules/WGUI.hpp>
-#include <Assert.hpp>
 
 // these begin and end comments help to generate documentation
 // please don't remove them

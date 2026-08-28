@@ -5,8 +5,6 @@
  */
 #include "BuiltinTAS.hpp"
 
-#include <StrUtils.hpp>
-
 namespace BuiltinTAS
 {
 static std::array<StrUtils::unordered_string_map<void *>, (size_t)PluginID::NumPlugins> g_builtin_symbols = {

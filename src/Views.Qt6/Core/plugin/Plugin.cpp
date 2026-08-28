@@ -5,11 +5,8 @@
  */
 
 #include "Plugin.hpp"
-#include "VersionNameHelpers.hpp"
-#include <CommonPCH.hpp>
 
-#include <print>
-#include <variant>
+
 #include <decan.hpp>
 
 #include "EmuContext.hpp"
@@ -62,12 +59,6 @@ void Plugin::init_common()
 
     M64RRSpec::PluginMetadata metadata;
     get_metadata(&metadata);
-
-    // Plugins are tied to one version of Mupen
-    std::string_view target_version{
-        metadata.target_version, strnlen(metadata.target_version, sizeof(metadata.target_version))};
-    if (!target_version.empty() && target_version != CURRENT_VERSION)
-        throw PluginLoadFailed("Expected target version " CURRENT_VERSION);
 
     std::string_view name = {metadata.name, strnlen(metadata.name, sizeof(metadata.name))};
     m_name = name;

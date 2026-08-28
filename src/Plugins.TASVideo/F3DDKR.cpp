@@ -5,7 +5,7 @@
  */
 
 #include "Common.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "F3D.hpp"
 #include "F3DDKR.hpp"
 #include "N64.hpp"

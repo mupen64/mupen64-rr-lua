@@ -6,7 +6,6 @@
 
 #include "Common.hpp"
 #include "ReorderableListView.hpp"
-#include <Assert.hpp>
 
 namespace ReorderableListView
 {

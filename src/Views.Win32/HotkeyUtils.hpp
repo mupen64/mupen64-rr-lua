@@ -7,7 +7,7 @@
 #pragma once
 
 #include <string>
-#include <windows.h>
+#include <Common.Win32/Common.hpp>
 #include <Common.Views/Hotkey.hpp>
 
 /**

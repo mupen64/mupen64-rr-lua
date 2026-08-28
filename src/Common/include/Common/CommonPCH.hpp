@@ -32,6 +32,7 @@
 #include <initializer_list>
 #include <locale>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
@@ -47,6 +48,10 @@
 #include <variant>
 #include <vector>
 #include <latch>
+#include <expected>
+#include <print>
+#include <set>
+#include <unordered_set>
 #if !defined(_WIN32)
 // Implementation of C11 Annex K for Linux
 #include <safe_str_lib.h>
@@ -60,9 +65,11 @@
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_audio.h>
 
-#include "MiscHelpers.hpp"
-#include "StrUtils.hpp"
-#include "IOUtils.hpp"
-#include <Assert.hpp>
+#include <Common/MiscHelpers.hpp>
+#include <Common/StrUtils.hpp>
+#include <Common/IOUtils.hpp>
+#include <Common/Assert.hpp>
+#include <Common/FNV1A.hpp>
+#include <Common/VersionNameHelpers.hpp>
 
 #pragma warning(pop)

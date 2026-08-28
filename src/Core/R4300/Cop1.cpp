@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include "Ops.hpp"
 #include "R4300.hpp"
 #include "Macros.hpp"

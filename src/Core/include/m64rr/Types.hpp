@@ -6,10 +6,6 @@
 
 // ReSharper disable CppInconsistentNaming
 #pragma once
-#include <cstdint>
-#include <filesystem>
-#include <functional>
-#include <string>
 
 /**
  * An enum containing results that can be returned by the core.

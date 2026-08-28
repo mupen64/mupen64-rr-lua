@@ -8,7 +8,7 @@
 #include "Config.hpp"
 #include "SDLBackend.hpp"
 #include <m64rr/Plugin.hpp>
-#include <VersionNameHelpers.hpp>
+#include <Common/VersionNameHelpers.hpp>
 
 #define PLUGIN_NAME VERSION_NAME_HELPER_GEN_NAME("TAS Audio")
 

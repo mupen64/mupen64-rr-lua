@@ -12,7 +12,6 @@
 
 #include "m64rr/Types.hpp"
 #include <optional>
-#include <stack>
 
 #ifdef __cplusplus
 extern "C"

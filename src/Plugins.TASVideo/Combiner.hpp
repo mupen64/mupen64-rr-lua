@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "OpenGL.hpp"
 #include "gDP.hpp"
 

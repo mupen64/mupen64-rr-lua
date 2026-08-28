@@ -9,7 +9,7 @@
 #include <Common.Views/ActionManager.hpp>
 #include <lua/LuaManager.hpp>
 #include <lua/modules/Hotkey.hpp>
-#include <IOUtils.hpp>
+#include <Common/IOUtils.hpp>
 
 namespace LuaCore::Action
 {

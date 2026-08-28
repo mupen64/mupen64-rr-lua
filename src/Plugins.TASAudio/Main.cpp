@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#include <CommonPCH.hpp>
 #include "Main.hpp"
 #include "Main_Win32.hpp"
 #include "Config.hpp"
-#include "IOUtils.hpp"
+
 #include "SDLBackend.hpp"
 #include "m64rr/Types.hpp"
-#include <VersionNameHelpers.hpp>
 #include <m64rr/Plugin.hpp>
 
 M64RRSpec::PluginInit *g_plugin = nullptr;
@@ -89,16 +87,12 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     const auto description = "Built-in plugin for Mupen64."
                              "\n\n"
                              "https://mupen64.com";
-    const auto target_version = CURRENT_VERSION;
 
     auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
     metadata->name[result.size] = '\0';
 
     result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
     metadata->description[result.size] = '\0';
-
-    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
-    metadata->target_version[result.size] = '\0';
 }
 
 EXPORT void CALL M64RRProcessEvent(Event event)

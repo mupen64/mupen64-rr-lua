@@ -7,15 +7,13 @@
 #include "Common.hpp"
 #include "ConfigDialog_Win32.hpp"
 #include "Config.hpp"
-#include "glN64.hpp"
+#include "TASVideo.hpp"
 #include "Resource.h"
 #include "GBI.hpp"
 #include "OpenGL.hpp"
 #include "RSP.hpp"
 #include "Textures.h"
-#include <windows.h>
-#include <commctrl.h>
-#include <windowsx.h>
+#include <Common.Win32/Common.hpp>
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 

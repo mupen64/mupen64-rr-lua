@@ -5,14 +5,9 @@
  */
 
 #include <Common.Views/App.hpp>
-#include <Assert.hpp>
 #include <Common.Views/WinFFmpegEncoder.hpp>
 #include <Common.Views/Config.hpp>
 #include <Common.Views/IDialogService.hpp>
-#include <IOUtils.hpp>
-#include <string>
-#include <filesystem>
-#include <cstdint>
 #include <windows.h>
 
 const std::string NUT_PIPE_NAME = "\\\\.\\pipe\\mupennut";

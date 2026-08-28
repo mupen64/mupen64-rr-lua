@@ -12,7 +12,6 @@
 #include <lua/LuaManager.hpp>
 #include <lua/LuaRegistry.hpp>
 #include <lua/LuaRenderer.hpp>
-#include <Assert.hpp>
 
 CoreButtons g_new_controller_data[4]{};
 bool g_overwrite_controller_data[4]{};

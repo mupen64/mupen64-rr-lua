@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <CommonPCH.hpp>
-#include <VersionNameHelpers.hpp>
+
+#include <Common/VersionNameHelpers.hpp>
 #include <m64rr/API.hpp>
 #include <m64rr/Plugin.hpp>
 #include <glad/glad.h>

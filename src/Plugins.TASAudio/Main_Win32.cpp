@@ -6,15 +6,11 @@
 
 #ifdef _WIN32
 
-#include <CommonPCH.hpp>
 #include "Main_Win32.hpp"
 #include "Config.hpp"
 #include "Config_Win32.hpp"
 #include "Main.hpp"
-#include <windows.h>
-#include <winerror.h>
-#include <winnt.h>
-#include <winreg.h>
+#include <Common.Win32/Common.hpp>
 
 EXPORT void CALL M64RRShowConfig(WindowHandle parent_window)
 {
