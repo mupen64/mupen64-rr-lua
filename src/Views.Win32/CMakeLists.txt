@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 
 
-add_executable(Mupen64RR.Views.Win32 WIN32
+add_executable(Mupen64RR_Views_Win32 WIN32
     # headers
     "Common.hpp"
     "ThreadPool.hpp"
@@ -118,18 +118,18 @@ add_executable(Mupen64RR.Views.Win32 WIN32
     # Resource script
     "Resource.rc"
 )
-mupen64rr_reuse_common_pch(Mupen64RR.Views.Win32)
-target_compile_features(Mupen64RR.Views.Win32 PRIVATE cxx_std_26)
-set_target_properties(Mupen64RR.Views.Win32 PROPERTIES
+mupen64rr_reuse_common_pch(Mupen64RR_Views_Win32)
+target_compile_features(Mupen64RR_Views_Win32 PRIVATE cxx_std_26)
+set_target_properties(Mupen64RR_Views_Win32 PROPERTIES
     # output location
     OUTPUT_NAME "mupen64"
     RUNTIME_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${MUPEN64RR_OUT_DIR}"
 )
-mupen64rr_copy_vcpkg_deps(Mupen64RR.Views.Win32)
-mupen64rr_copy_mingw_runtime(Mupen64RR.Views.Win32)
-mupen64rr_copy_msvc_runtime(Mupen64RR.Views.Win32)
-add_custom_command(TARGET Mupen64RR.Views.Win32 POST_BUILD
+mupen64rr_copy_vcpkg_deps(Mupen64RR_Views_Win32)
+mupen64rr_copy_mingw_runtime(Mupen64RR_Views_Win32)
+mupen64rr_copy_msvc_runtime(Mupen64RR_Views_Win32)
+add_custom_command(TARGET Mupen64RR_Views_Win32 POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         -D "MUPEN64RR_OUT_DIR=${MUPEN64RR_OUT_DIR}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/RenameSpeexDsp.cmake"
@@ -145,13 +145,13 @@ set_source_files_properties(
     "${CMAKE_CURRENT_SOURCE_DIR}/Lua/sandbox.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/lua-modules/inspect.lua"
 )
-target_include_directories(Mupen64RR.Views.Win32 PRIVATE ".")
-target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
-    Mupen64RR.Common
-    Mupen64RR.Common.Views
-    Mupen64RR.Common.Win32
-    Mupen64RR.Core
-    Mupen64RR.Views.Win32.Headers
+target_include_directories(Mupen64RR_Views_Win32 PRIVATE ".")
+target_link_libraries(Mupen64RR_Views_Win32 PRIVATE
+    Mupen64RR_Common
+    Mupen64RR_Common_Views
+    Mupen64RR_Common_Win32
+    Mupen64RR_Core
+    Mupen64RR_Views_Win32_Headers
     Lua::Lua
     spdlog::spdlog
     SDL3::SDL3
@@ -163,16 +163,16 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     vendor::windarkmode
     vendor::microlru
     vendor::mini
-    Mupen64RR.Plugins.DummyAudio
-    Mupen64RR.Plugins.DummyInput
-    Mupen64RR.Plugins.DummyVideo
-    Mupen64RR.Plugins.TASAudio
-    Mupen64RR.Plugins.TASRSP
-    Mupen64RR.Plugins.TASVideo
-    Mupen64RR.Plugins.Win32.TASInput
+    Mupen64RR_Plugins_DummyAudio
+    Mupen64RR_Plugins_DummyInput
+    Mupen64RR_Plugins_DummyVideo
+    Mupen64RR_Plugins_TASAudio
+    Mupen64RR_Plugins_TASRSP
+    Mupen64RR_Plugins_TASVideo
+    Mupen64RR_Plugins_Win32_TASInput
 )
 # Windows library linkages
-target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
+target_link_libraries(Mupen64RR_Views_Win32 PRIVATE
     shlwapi
     vfw32
     winmm
@@ -193,12 +193,12 @@ target_link_libraries(Mupen64RR.Views.Win32 PRIVATE
     winhttp
 )
 
-target_compile_definitions(Mupen64RR.Views.Win32 PRIVATE
+target_compile_definitions(Mupen64RR_Views_Win32 PRIVATE
     "MINI_CASE_SENSITIVE"
     "VERSION_SUFFIX=\"${MUPEN64RR_VERSION_SUFFIX}\""
     "$<$<BOOL:${MUPEN64RR_NIGHTLY}>:NIGHTLY>"
 )
 
 if(MSVC)
-    target_link_options(Mupen64RR.Views.Win32 PRIVATE "/MANIFEST:NO")
+    target_link_options(Mupen64RR_Views_Win32 PRIVATE "/MANIFEST:NO")
 endif()
