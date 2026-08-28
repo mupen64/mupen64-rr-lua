@@ -650,12 +650,18 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->ready = true;
     }
     break;
-    case WM_SHOWWINDOW:
-        if (!wparam)
+    case WM_SHOWWINDOW: {
+        if (!wparam) save_config();
+
+        constexpr int controls[] = {IDC_X_DOWN, IDC_X_UP, IDC_Y_DOWN, IDC_Y_UP};
+        for (const auto id : controls)
         {
-            save_config();
+            const auto control = GetDlgItem(hwnd, id);
+            SendMessage(control, WM_SETFONT, reinterpret_cast<WPARAM>(icon_font), TRUE);
         }
+
         break;
+    }
     case SC_MINIMIZE:
         DestroyMenu(hmenu);
         break;
@@ -1184,16 +1190,12 @@ EXPORT void CALL M64RRGetMetadata(M64RRSpec::PluginMetadata *metadata)
     const auto description = "Built-in plugin for Mupen64."
                              "\n\n"
                              "https://mupen64.com";
-    const auto target_version = CURRENT_VERSION;
 
     auto result = std::format_to_n(metadata->name, sizeof(metadata->name) - 1, "{}", name);
     metadata->name[result.size] = '\0';
 
     result = std::format_to_n(metadata->description, sizeof(metadata->description) - 1, "{}", description);
     metadata->description[result.size] = '\0';
-
-    result = std::format_to_n(metadata->target_version, sizeof(metadata->target_version) - 1, "{}", target_version);
-    metadata->target_version[result.size] = '\0';
 }
 
 EXPORT void CALL M64RRProcessEvent(Event event)
