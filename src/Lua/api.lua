@@ -1030,8 +1030,8 @@ function wgui.fillpolygona(points, color) end
 ---@return integer
 function wgui.loadimage(path) end
 
----Clears one or all images.
----@param idx integer The identifier of the image to clear. If it is 0, clear all images.
+---Deletes one or all images.
+---@param idx integer The identifier of the image to clear. If it is 0, deletes all images.
 function wgui.deleteimage(idx) end
 
 ---Saves an image to the specified path.
