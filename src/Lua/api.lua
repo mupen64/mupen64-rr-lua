@@ -1130,6 +1130,7 @@ function wgui.resetclip() end
 -- d2d functions
 --#region
 
+---An opaque handle to a Direct2D solid color brush, as returned by [d2d.create_brush](lua://d2d.create_brush).
 ---@alias brush integer
 
 ---@class D2DColor
@@ -1149,188 +1150,200 @@ function wgui.resetclip() end
 ---@field srcx2 integer? The x-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcx1` plus the natural width of the image is assumed.
 ---@field srcy2 integer? The y-coordinate of the bottom-right corner of the source rectangle. If `nil`, `srcy1` plus the natural height of the image is assumed.
 ---@field color D2DColor? The color to tint the image with. The RGB components are treated as multipliers, and the alpha component is treated as the opacity. If `nil`, the image is drawn without tinting.
----@field interpolation integer? The interpolation mode to use. 0: nearest neighbor, 1|nil: linear.
+---@field interpolation integer? The interpolation mode to use. 0: nearest neighbor, 1|nil: bilinear.
 
 ---Gets the target frequency of the `emu.atdrawd2d` and `emu.atupdatescreen` callbacks in FPS.
----@return number? # The target FPS, or nil.
+---@return number? # The target FPS, or nil if none was set with [d2d.set_target_fps](lua://d2d.set_target_fps).
+---@nodiscard
 function d2d.get_target_fps() end
 
 ---Sets the target frequency of the `emu.atdrawd2d` and `emu.atupdatescreen` callbacks in FPS.
 ---@param fps number? The target FPS. If nil, the target FPS will be the monitor's refresh rate.
 function d2d.set_target_fps(fps) end
 
----Creates a brush from a color and returns it. D2D colors range from 0 to 1.
----@param r number
----@param g number
----@param b number
----@param a number
----@return brush
+---Creates a solid color brush and returns its handle.
+---The handle must be freed with [d2d.free_brush](lua://d2d.free_brush) once it is no longer needed,
+---otherwise the brush is leaked. Brushes can be reused across frames.
+---@param r number The red component of the color in the range [0, 1].
+---@param g number The green component of the color in the range [0, 1].
+---@param b number The blue component of the color in the range [0, 1].
+---@param a number The alpha component of the color in the range [0, 1], where 0 is fully transparent and 1 is fully opaque.
+---@return brush # The handle of the created brush.
+---@nodiscard
 function d2d.create_brush(r, g, b, a) end
 
----Frees a brush.
----It is a good practice to free all brushes after you are done using them.
----@param brush brush
+---Frees a brush created with [d2d.create_brush](lua://d2d.create_brush).
+---The brush handle is invalid after this function is called.
+---@param brush brush The handle of the brush to free.
 function d2d.free_brush(brush) end
 
----Sets clear behavior.
+---Clears the screen with the specified color.
 ---If this function is never called, the screen will not be cleared.
----If it is called, the screen will be cleared with the specified color.
----@param r number
----@param g number
----@param b number
----@param a number
+---**This function may not work correctly when the Lua GDI presenter is selected.**
+---@param r number The red component of the color in the range [0, 1].
+---@param g number The green component of the color in the range [0, 1].
+---@param b number The blue component of the color in the range [0, 1].
+---@param a number The alpha component of the color in the range [0, 1].
 function d2d.clear(r, g, b, a) end
 
----Draws a filled in rectangle at the specified coordinates and color.
----@param x1 integer
----@param y1 integer
----@param x2 integer
----@param y2 integer
----@param brush brush
----@return nil
+---Draws a filled-in rectangle.
+---@param x1 integer The x-coordinate of the top-left corner.
+---@param y1 integer The y-coordinate of the top-left corner.
+---@param x2 integer The x-coordinate of the bottom-right corner.
+---@param y2 integer The y-coordinate of the bottom-right corner.
+---@param brush brush The brush to fill the rectangle with.
 function d2d.fill_rectangle(x1, y1, x2, y2, brush) end
 
----Draws the border of a rectangle at the specified coordinates and color.
----@param x1 integer
----@param y1 integer
----@param x2 integer
----@param y2 integer
----@param thickness number
----@param brush brush
----@return nil
+---Draws the border of a rectangle.
+---@param x1 integer The x-coordinate of the top-left corner.
+---@param y1 integer The y-coordinate of the top-left corner.
+---@param x2 integer The x-coordinate of the bottom-right corner.
+---@param y2 integer The y-coordinate of the bottom-right corner.
+---@param thickness number The thickness of the border in pixels.
+---@param brush brush The brush to draw the border with.
 function d2d.draw_rectangle(x1, y1, x2, y2, thickness, brush) end
 
----Draws a filled in ellipse at the specified coordinates and color.
----@param x integer
----@param y integer
----@param radiusX integer
----@param radiusY integer
----@param brush brush
----@return nil
+---Draws a filled-in ellipse.
+---@param x integer The x-coordinate of the center of the ellipse.
+---@param y integer The y-coordinate of the center of the ellipse.
+---@param radiusX integer The radius of the ellipse on the x-axis in pixels.
+---@param radiusY integer The radius of the ellipse on the y-axis in pixels.
+---@param brush brush The brush to fill the ellipse with.
 function d2d.fill_ellipse(x, y, radiusX, radiusY, brush) end
 
----Draws the border of an ellipse at the specified coordinates and color.
----@param x integer
----@param y integer
----@param radiusX integer
----@param radiusY integer
----@param thickness number
----@param brush brush
----@return nil
+---Draws the border of an ellipse.
+---@param x integer The x-coordinate of the center of the ellipse.
+---@param y integer The y-coordinate of the center of the ellipse.
+---@param radiusX integer The radius of the ellipse on the x-axis in pixels.
+---@param radiusY integer The radius of the ellipse on the y-axis in pixels.
+---@param thickness number The thickness of the border in pixels.
+---@param brush brush The brush to draw the border with.
 function d2d.draw_ellipse(x, y, radiusX, radiusY, thickness, brush) end
 
----Draws a line from `(x1, y1)` to `(x2, y2)` in the specified color.
----@param x1 integer
----@param y1 integer
----@param x2 integer
----@param y2 integer
----@param thickness number
----@param brush brush
----@return nil
+---Draws a line from `(x1, y1)` to `(x2, y2)`.
+---@param x1 integer The x-coordinate of the start point.
+---@param y1 integer The y-coordinate of the start point.
+---@param x2 integer The x-coordinate of the end point.
+---@param y2 integer The y-coordinate of the end point.
+---@param thickness number The thickness of the line in pixels.
+---@param brush brush The brush to draw the line with.
 function d2d.draw_line(x1, y1, x2, y2, thickness, brush) end
 
----Draws the text `text` at the specified coordinates, color, font, and alignment.
----@param x1 integer
----@param y1 integer
----@param x2 integer
----@param y2 integer
----@param text string
----@param fontname string
----@param fontsize number
----@param fontweight number
----@param fontstyle 0|1|2|3 0: normal, 1: bold, 2: italic, 3: bold + italic.
----@param horizalign integer
----@param vertalign integer
----@param options integer
----@param brush brush pass 0 if you don't know what you're doing
----@return nil
+---Draws text inside the specified layout rectangle.
+---@param x1 integer The x-coordinate of the top-left corner of the layout rectangle.
+---@param y1 integer The y-coordinate of the top-left corner of the layout rectangle.
+---@param x2 integer The x-coordinate of the bottom-right corner of the layout rectangle.
+---@param y2 integer The y-coordinate of the bottom-right corner of the layout rectangle.
+---@param text string The text to draw.
+---@param fontname string The name of the font to use (e.g. `"Arial"`).
+---@param fontsize number The font size in DIPs.
+---@param fontweight number The font weight, following the DirectWrite weights: 100 (thin), 200, 300, 400 (normal), 500, 600, 700 (bold), 800, 900 (black).
+---@param fontstyle 0|1|2 The font style. 0: normal, 1: oblique, 2: italic.
+---@param horizalign integer The horizontal alignment within the layout rectangle. 0: left, 1: right, 2: center, 3: justified.
+---@param vertalign integer The vertical alignment within the layout rectangle. 0: top, 1: bottom, 2: center.
+---@param options integer Bitmask of Direct2D draw text options. 0: none, 0x1: no pixel snapping, 0x2: clip to the layout rectangle, 0x4: enable color fonts. See [D2D1_DRAW_TEXT_OPTIONS](https://learn.microsoft.com/en-us/windows/win32/api/d2d1/ne-d2d1-d2d1_draw_text_options).
+---@param brush brush The brush to paint the text with. Pass 0 to use the default fill brush.
 function d2d.draw_text(x1, y1, x2, y2, text, fontname, fontsize, fontweight,
                        fontstyle, horizalign, vertalign, options, brush)
 end
 
----Returns the width and height of the specified text.
----@param text string
----@param fontname string
----@param fontsize number
----@param max_width number
----@param max_height number
----@return {width: integer, height: integer}
+---Returns the width and height the specified text would occupy when drawn.
+---The text is laid out within `max_width` and `max_height`, wrapping as
+---needed. Note that measurement always uses a normal (non-bold, non-italic)
+---font style, so the result may differ slightly from bold or italic text.
+---@param text string The text to measure.
+---@param fontname string The name of the font to measure with.
+---@param fontsize number The font size in DIPs (roughly pixels).
+---@param max_width number The maximum layout width in pixels. Text wraps beyond this width.
+---@param max_height number The maximum layout height in pixels.
+---@return {width: integer, height: integer} # The measured width (including trailing whitespace) and height in pixels.
+---@nodiscard
 function d2d.get_text_size(text, fontname, fontsize, max_width, max_height) end
 
----Specifies a rectangle to which all subsequent drawing operations are clipped.
----This clip is put onto a stack.
----It can then be popped off the stack with `wgui.d2d_pop_clip`.
----@param x1 integer
----@param y1 integer
----@param x2 integer
----@param y2 integer
----@return nil
+---Specifies an axis-aligned rectangle to which all subsequent drawing
+---operations are clipped.
+---The clip is pushed onto a stack and can be popped off the stack with
+---[d2d.pop_clip](lua://d2d.pop_clip). Clips do not persist between frames.
+---@param x1 integer The x-coordinate of the top-left corner of the clip rectangle.
+---@param y1 integer The y-coordinate of the top-left corner of the clip rectangle.
+---@param x2 integer The x-coordinate of the bottom-right corner of the clip rectangle.
+---@param y2 integer The y-coordinate of the bottom-right corner of the clip rectangle.
 function d2d.push_clip(x1, y1, x2, y2) end
 
 ---Pops the most recent clip off the clip stack.
----@return nil
+---Must be called once for every [d2d.push_clip](lua://d2d.push_clip).
 function d2d.pop_clip() end
 
----Draws a filled in rounded rectangle at the specified coordinates, color and radius.
----@param x1 integer
----@param y1 integer
----@param x2 integer
----@param y2 integer
----@param radiusX number
----@param radiusY number
----@param brush brush
----@return nil
+---Draws a filled-in rounded rectangle.
+---@param x1 integer The x-coordinate of the top-left corner.
+---@param y1 integer The y-coordinate of the top-left corner.
+---@param x2 integer The x-coordinate of the bottom-right corner.
+---@param y2 integer The y-coordinate of the bottom-right corner.
+---@param radiusX number The x-radius of the corner ellipses in pixels.
+---@param radiusY number The y-radius of the corner ellipses in pixels.
+---@param brush brush The brush to fill the rectangle with.
 function d2d.fill_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, brush) end
 
----Draws the border of a rounded rectangle at the specified coordinates, color and radius.
----@param x1 integer
----@param y1 integer
----@param x2 integer
----@param y2 integer
----@param radiusX number
----@param radiusY number
----@param thickness number
----@param brush brush
----@return nil
+---Draws the border of a rounded rectangle.
+---@param x1 integer The x-coordinate of the top-left corner.
+---@param y1 integer The y-coordinate of the top-left corner.
+---@param x2 integer The x-coordinate of the bottom-right corner.
+---@param y2 integer The y-coordinate of the bottom-right corner.
+---@param radiusX number The x-radius of the corner ellipses in pixels.
+---@param radiusY number The y-radius of the corner ellipses in pixels.
+---@param thickness number The thickness of the border in pixels.
+---@param brush brush The brush to draw the border with.
 function d2d.draw_rounded_rectangle(x1, y1, x2, y2, radiusX, radiusY, thickness,
                                     brush)
 end
 
----Loads an image file from `path` which you can then access through `identifier`.
----@param path string
----@return integer
+---Loads an image file from `path` and returns its identifier.
+---Supported formats are those supported by WIC (BMP, GIF, ICO, JPEG, PNG,
+---TIFF, among others). The identifier must be freed with
+---[d2d.free_image](lua://d2d.free_image) once it is no longer needed, otherwise the image is
+---leaked. Returns nil if the file could not be loaded.
+---@param path string The path of the image file to load.
+---@return integer? # The identifier of the loaded image, or nil on failure.
+---@nodiscard
 function d2d.load_image(path) end
 
----Frees the image at `identifier`.
----@param identifier number
----@return nil
+---Frees the image with the specified identifier.
+---Using an identifier after freeing it is undefined behavior and may crash.
+---@param identifier integer The identifier of the image to free, as returned by [d2d.load_image](lua://d2d.load_image) or [d2d.draw_to_image](lua://d2d.draw_to_image).
 function d2d.free_image(identifier) end
 
 ---Draws an image with the specified parameters.
 ---@param params D2DDrawImageParams The draw parameters.
 function d2d.draw_image2(params) end
 
----Returns the width and height of the image at `identifier`.
+---Returns the width and height of the image with the specified identifier, in pixels.
 ---@nodiscard
----@param identifier number
----@return {width: integer, height: integer}
+---@param identifier integer The identifier of the image, as returned by [d2d.load_image](lua://d2d.load_image) or [d2d.draw_to_image](lua://d2d.draw_to_image).
+---@return {width: integer, height: integer} # The width and height of the image in pixels.
 function d2d.get_image_info(identifier) end
 
 ---Sets the text antialiasing mode.
----More info [here](https://learn.microsoft.com/en-us/windows/win32/api/d2d1/ne-d2d1-d2d1_text_antialias_mode).
----@param mode 0|1|2|3|4294967295
+---0: per-primitive (default), 1: grayscale, 2: ClearType, 3: natural.
+---@param mode 0|1|2|3 The antialiasing mode to use.
 function d2d.set_text_antialias_mode(mode) end
 
----Sets the antialiasing mode.
----More info [here](https://learn.microsoft.com/en-us/windows/win32/api/d2d1/ne-d2d1-d2d1_antialias_mode).
----@param mode 0|1|4294967295
+---Sets the antialiasing mode for drawing operations.
+---0: per-primitive (default, edge antialiasing), 1: aliased (no edge antialiasing).
+---@param mode 0|1 The antialiasing mode to use.
 function d2d.set_antialias_mode(mode) end
 
----Draws to an image and returns its identifier.
----@param width integer
----@param height integer
----@param callback fun()
----@return number
+---Renders an offscreen image by drawing into it inside `callback` and returns
+---its identifier.
+---The callback is invoked immediately after calling the function.
+---While it runs, all `d2d` calls target the image instead of the screen.
+---The image starts out fully transparent black.
+---The returned identifier must be freed with [d2d.free_image](lua://d2d.free_image) once it is no longer needed.
+---The image can be drawn to the screen with [d2d.draw_image2](lua://d2d.draw_image2).
+---@param width integer The width of the image in pixels. Values below 1 are clamped to 1.
+---@param height integer The height of the image in pixels. Values below 1 are clamped to 1.
+---@param callback fun() The function to invoke with the image as the active render target.
+---@return integer # The identifier of the rendered image.
+---@nodiscard
 function d2d.draw_to_image(width, height, callback) end
 
 --#endregion
