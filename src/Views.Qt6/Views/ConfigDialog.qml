@@ -8,12 +8,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import Qt.labs.qmlmodels
-
-Dialog {
+DialogBase {
     id: dialog
-    popupType: Popup.Window
-    modal: true
 
     header: TabBar {
         id: tabs
@@ -22,23 +18,15 @@ Dialog {
         }
     }
 
+    minimumWidth: 300
+    minimumHeight: 400
+
     StackLayout {
         id: root
         currentIndex: tabs.currentIndex
 
-        onVisibleChanged: {
-            if (visible && Window.window !== null) {
-                let window = Window.window;
-                window.minimumWidth = Qt.binding(() => {
-                    return Math.max(root.implicitWidth, 300);
-                });
-                window.minimumHeight = Qt.binding(() => {
-                    let implicitTotalHeight = root.implicitHeight + dialog.header.implicitHeight + dialog.footer.implicitHeight;
-                    return Math.max(implicitTotalHeight, 500);
-                });
-            }
+        ColumnLayout {
+            // TODO: OPTIONS
         }
-
-
     }
 }

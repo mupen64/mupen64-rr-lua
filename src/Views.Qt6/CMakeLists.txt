@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 ]===]
 
 add_subdirectory(Utils)
+add_subdirectory(Components)
 add_subdirectory(Core)
 
 qt_add_executable(Mupen64RR_Views_Qt6 "Main.cpp")
@@ -24,6 +25,7 @@ target_link_libraries(Mupen64RR_Views_Qt6 PRIVATE
 
     Mupen64RR_Views_Qt6_Utils
     Mupen64RR_Views_Qt6_Utilsplugin
+    Mupen64RR_Views_Qt6_Componentsplugin
     Mupen64RR_Views_Qt6_Core
     Mupen64RR_Views_Qt6_Coreplugin
 
@@ -48,7 +50,7 @@ set_source_files_properties(
     PROPERTIES
     QT_QML_SINGLETON_TYPE TRUE
 )
-qt_add_qml_module(Mupen64RR.Views.Qt6
+qt_add_qml_module(Mupen64RR_Views_Qt6
     URI "Views"
     QML_FILES ${qml_sources} ${qml_singleton_sources}
 )
