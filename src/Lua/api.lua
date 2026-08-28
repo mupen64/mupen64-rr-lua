@@ -506,9 +506,8 @@ function emu.atupdatescreen(f, unregister) end
 function emu.atdrawd2d(f, unregister) end
 
 ---Calls the function `f` every input frame.
----The function `f` receives an argument that seems to always be `0`.
 ---If `unregister` is set to true, the function `f` will no longer be called when this event occurs, but it will error if you never registered the function.
----@param f fun(a: integer?): nil The function to be called every input frame. It receives an argument that seems to always be `0`.
+---@param f fun(controller: integer): nil The function to be called every input frame. `controller` is the controller index (0-based!).
 ---@param unregister boolean? If true, then unregister the function `f`.
 ---@return nil
 function emu.atinput(f, unregister) end
