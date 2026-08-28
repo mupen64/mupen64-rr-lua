@@ -710,28 +710,24 @@ function emu.ismainwindowinforeground() end
 ---@alias qword [integer, integer]
 
 ---Reinterprets the bits of a 4 byte integer `n` as a float and returns it.
----This does not convert from an int to a float, but reinterprets the memory.
 ---@nodiscard
 ---@param n integer
 ---@return number
 function memory.inttofloat(n) end
 
 ---Reinterprets the bits of an 8 byte integer `n` as a double and returns it.
----This does not convert from an int to a double, but reinterprets the memory.
 ---@nodiscard
 ---@param n qword
 ---@return number
 function memory.inttodouble(n) end
 
 ---Reinterprets the bits of a float `n` as a 4 byte integer and returns it.
----This does not convert from an int to a float, but reinterprets the memory.
 ---@nodiscard
 ---@param n number
 ---@return integer
 function memory.floattoint(n) end
 
 ---Reinterprets the bits of a 8 byte integer `n` as a double and returns it.
----This does not convert from an int to a float, but reinterprets the memory.
 ---@nodiscard
 ---@param n qword
 ---@return number
