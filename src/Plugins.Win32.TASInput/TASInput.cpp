@@ -650,12 +650,18 @@ INT_PTR CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         ctx->ready = true;
     }
     break;
-    case WM_SHOWWINDOW:
-        if (!wparam)
+    case WM_SHOWWINDOW: {
+        if (!wparam) save_config();
+
+        constexpr int controls[] = {IDC_X_DOWN, IDC_X_UP, IDC_Y_DOWN, IDC_Y_UP};
+        for (const auto id : controls)
         {
-            save_config();
+            const auto control = GetDlgItem(hwnd, id);
+            SendMessage(control, WM_SETFONT, reinterpret_cast<WPARAM>(icon_font), TRUE);
         }
+
         break;
+    }
     case SC_MINIMIZE:
         DestroyMenu(hmenu);
         break;
