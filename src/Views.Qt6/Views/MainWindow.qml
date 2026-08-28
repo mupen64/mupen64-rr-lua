@@ -35,8 +35,8 @@ ApplicationWindow {
     // INITIALIZATION
     // =====================================
     Component.onCompleted: {
-        SettingsCore.sync()
-        SettingsPaths.sync()
+        SettingsCore.sync();
+        SettingsPaths.sync();
     }
 
     // MENU BAR
@@ -63,6 +63,9 @@ ApplicationWindow {
             Button {
                 anchors.centerIn: parent
                 text: "MessageBox test"
+                onClicked: {
+                    dialogService.queueInfoDialog(null, "Hello there.", "General Kenobi! You are a bold one.", CoreDialogType.Error)
+                }
             }
         }
         Item {
@@ -95,6 +98,26 @@ ApplicationWindow {
         onOpenInfoDialog: dialogService.queueInfoDialog
         onOpenAskDialog: dialogService.queueAskDialog
         onOpenMultiDialog: dialogService.queueMultiDialog
+
+        // config options
+        options.coreType: SettingsCore.coreType
+        options.stUndoLoad: SettingsCore.stUndoLoad
+        options.maxLag: SettingsCore.maxLag
+        options.wiiVCEmulation: SettingsCore.wiiVCEmulation
+        options.rcpLagEmulation: SettingsCore.rcpLagEmulation
+        options.cpuCF: SettingsCore.cpuCF
+        options.rcpLagFactor: SettingsCore.rcpLagFactor
+        options.floatExceptionEmulation: SettingsCore.floatExceptionEmulation
+        options.useSummercart: SettingsCore.useSummercart
+        options.stScreenshot: SettingsCore.stScreenshot
+        options.stLZ4: SettingsCore.stLZ4
+        options.romCacheSize: SettingsCore.romCacheSize
+        options.audioDelayEnabled: SettingsCore.audioDelayEnabled
+        options.compiledJumpEnabled: SettingsCore.compiledJumpEnabled
+        options.ceqsNaNAccurate: SettingsCore.ceqsNaNAccurate
+        options.accurateRDPCompletion: SettingsCore.accurateRDPCompletion
+        options.vcrBackups: SettingsCore.vcrBackups
+        options.vcrWriteExtendedFormat: SettingsCore.vcrWriteExtendedFormat
     }
 
     // invalidateVisuals() must be called on each UI frame to
@@ -104,10 +127,13 @@ ApplicationWindow {
         onTriggered: core.invalidateVisuals()
     }
 
-    // Auxiliary compoments
+    // Auxiliary dialogs
     // =====================================
 
     DialogService {
         id: dialogService
+    }
+    ConfigDialog {
+        id: diaConfig
     }
 }

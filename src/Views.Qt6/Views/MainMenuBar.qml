@@ -248,8 +248,16 @@ MenuBar {
             }
         }
     }
+    Menu {
+        title: qsTr("Options")
 
-    // Dialogs for actions
+        Action {
+            text: qsTr("Settings...")
+            onTriggered: diaConfig.open()
+        }
+    }
+
+    // File dialogs
     Dialogs.FileDialog {
         id: diaOpenRom
         title: qsTr("Open ROM...")
@@ -277,6 +285,12 @@ MenuBar {
         onAccepted: {
             root.core.saveFile(selectedFile);
         }
+    }
+
+    // Other dialogs
+    ConfigDialog {
+        id: diaConfig
+        title: "Settings"
     }
 
     Binding {

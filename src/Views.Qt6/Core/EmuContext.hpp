@@ -38,7 +38,7 @@ class EmuContext : public QObject
     Q_PROPERTY(int32_t speedModifier READ speedModifier WRITE setSpeedModifier NOTIFY speedModifierChanged)
 
     // extra properties
-    Q_PROPERTY(EmuOptions* options READ options)
+    Q_PROPERTY(EmuOptions *options READ options)
   public:
     static constexpr size_t NUM_SAVE_SLOTS = 10;
 
@@ -119,7 +119,7 @@ class EmuContext : public QObject
      * @brief Gets the EmuOptions object associated with this context.
      * This contains many config options that don't make sense being in the main object.
      */
-    Q_INVOKABLE EmuOptions* options();
+    Q_INVOKABLE EmuOptions *options();
 
     /**
      * @brief Calls the video plugin's `ReadVideo` function, reading out to an image.
@@ -154,7 +154,7 @@ class EmuContext : public QObject
 
     // extra properties
     // ==========================
-    void configSourceChanged(const QJSValue& value);
+    void configSourceChanged(const QJSValue &value);
 
     // Graphics signals
     // ============================================
@@ -217,7 +217,7 @@ class EmuContext : public QObject
 
     QThreadPool m_task_pool;
 
-    EmuOptions* m_options;
+    EmuOptions *m_options;
 };
 
 /**
@@ -251,7 +251,7 @@ class EmuOptions : public QObject
     Q_PROPERTY(bool vcrWriteExtendedFormat READ vcrWriteExtendedFormat WRITE setVcrWriteExtendedFormat NOTIFY
             vcrWriteExtendedFormatChanged)
   public:
-    EmuOptions(QObject *parent = nullptr) : QObject(parent) {}
+    EmuOptions(EmuContext *parent) : QObject(parent), m_context(parent) {}
 
     int coreType() { return m_context->m_core_cfg->core_type; }
     void setCoreType(int value)
@@ -403,7 +403,6 @@ class EmuOptions : public QObject
   private:
     EmuContext *m_context;
 };
-
 
 namespace CoreUtil
 {

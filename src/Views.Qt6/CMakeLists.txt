@@ -30,6 +30,7 @@ target_link_libraries(Mupen64RR.Views.Qt6 PRIVATE
     Qt::QuickControls2
 )
 set(qml_sources
+    "Views/ConfigDialog.qml"
     "Views/DialogService.qml"
     "Views/MainMenuBar.qml"
     "Views/MainWindow.qml"

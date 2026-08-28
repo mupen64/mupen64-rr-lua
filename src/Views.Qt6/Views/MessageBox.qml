@@ -18,6 +18,9 @@ Dialog {
     property int coreType
     property string content
 
+    width: contentItem.implicitWidth
+    height: header.implicitHeight + contentItem.implicitHeight + footer.implicitHeight
+
     contentItem: RowLayout {
         id: root
         onVisibleChanged: {
