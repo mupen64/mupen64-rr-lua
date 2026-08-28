@@ -81,7 +81,6 @@ extern "C"
         PluginType type;
         char name[128];
         char description[1024];
-        char target_version[32];
     };
 
     /**
