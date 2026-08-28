@@ -1491,24 +1491,23 @@ function input.get_key_name_text(key) end
 -- joypad functions
 --#region
 
----@alias JoypadInputs {
----right: boolean,
----left: boolean,
----down: boolean,
----up: boolean,
----start: boolean,
----Z: boolean,
----B: boolean,
----A: boolean,
----Cright: boolean,
----Cleft: boolean,
----Cdown: boolean,
----Cup: boolean,
----R: boolean,
----L: boolean,
----Y: integer,
----X: integer,
----}
+---@class JoypadInputs
+---@field right boolean
+---@field left boolean
+---@field down boolean
+---@field up boolean
+---@field start boolean
+---@field Z boolean
+---@field B boolean
+---@field A boolean
+---@field Cright boolean
+---@field Cleft boolean
+---@field Cdown boolean
+---@field Cup boolean
+---@field R boolean
+---@field L boolean
+---@field X integer The joystick X value with range [-128, 127].
+---@field Y integer The joystick Y value with range [-128, 127].
 
 
 ---Gets the currently pressed game buttons and stick direction for a given port.
